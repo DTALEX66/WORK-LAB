@@ -241,3 +241,5 @@ hermes auth list            # 查看 OAuth 凭证
 - 部署包仅包含 3 个本地自定义技能（screenlingua/python-testing/windows-dev）
 - 建议部署后运行 `hermes doctor` 做全面检查
 - 如果 Codex++ 被删除，切到方案B 即可
+- 遇到问题请查阅 [TROUBLESHOOTING.md](TROUBLESHOOTING.md) 排坑手册
+- 包含模型切换技能：说"切换DP"/"切换GPT"一键切换
