@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>星尘收集者 | MINIGAME</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <section class="hero">
+        <p class="eyebrow">MINIGME · GAME 01</p>
+        <h1>星尘收集者</h1>
+        <p class="subtitle">驾驶小飞船收集星星，躲开陨石，在 60 秒内冲击最高分。</p>
+      </section>
+
+      <section class="hud" aria-label="游戏状态">
+        <div><span>分数</span><strong id="score">0</strong></div>
+        <div><span>生命</span><strong id="lives">3</strong></div>
+        <div><span>时间</span><strong id="time">60</strong></div>
+        <div><span>最佳</span><strong id="best">0</strong></div>
+      </section>
+
+      <canvas id="game" width="960" height="540" aria-label="星尘收集者游戏画布"></canvas>
+
+      <section class="controls">
+        <button id="startButton" type="button">开始游戏</button>
+        <button id="restartButton" type="button">重新开始</button>
+        <p>方向键 / WASD 移动，鼠标或触控拖动，空格暂停，R 重开。</p>
+      </section>
+    </main>
+
+    <script src="src/game.js"></script>
+  </body>
+</html>

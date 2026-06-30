@@ -1,0 +1,124 @@
+:root {
+  color-scheme: dark;
+  --bg: #07111f;
+  --panel: rgba(10, 24, 45, 0.78);
+  --text: #eaf4ff;
+  --muted: #93a8c5;
+  --cyan: #54d9ff;
+  --pink: #ff5fb7;
+  --gold: #ffd166;
+  --danger: #ff6b6b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  font-family: Inter, "Microsoft YaHei", system-ui, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 20% 10%, rgba(84, 217, 255, 0.26), transparent 28rem),
+    radial-gradient(circle at 80% 20%, rgba(255, 95, 183, 0.18), transparent 24rem),
+    linear-gradient(135deg, #050814, var(--bg));
+}
+
+.game-shell {
+  width: min(1080px, calc(100vw - 28px));
+  padding: 24px;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--cyan);
+  letter-spacing: 0.18em;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 7vw, 4.8rem);
+  line-height: 0.95;
+  text-shadow: 0 0 30px rgba(84, 217, 255, 0.38);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.hud div {
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: var(--panel);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 40px rgba(0,0,0,0.22);
+}
+
+.hud span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+}
+
+.hud strong {
+  font-size: 1.75rem;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid rgba(84, 217, 255, 0.28);
+  border-radius: 26px;
+  background: #050814;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.45), 0 0 40px rgba(84,217,255,0.12);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  color: var(--muted);
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 20px;
+  color: #06101d;
+  background: linear-gradient(135deg, var(--cyan), var(--gold));
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(84,217,255,0.22);
+}
+
+button:hover { transform: translateY(-1px); }
+button:active { transform: translateY(1px); }
+
+@media (max-width: 680px) {
+  .game-shell { padding: 14px; }
+  .hud { grid-template-columns: repeat(2, 1fr); }
+  .controls { align-items: flex-start; flex-direction: column; }
+}
