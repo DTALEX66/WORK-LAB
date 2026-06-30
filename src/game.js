@@ -2,6 +2,8 @@ import { AVAILABLE_ACTIONS, performAction } from './actions.js';
 import { applyAnomaly, pickNextAnomaly } from './events.js';
 import { getToneForState, summarizeFailure } from './feedback.js';
 import { createInitialState, reviveFromAd, saveSnapshot, tickState } from './state.js';
+import CONFIG from './gameConfig.js';
+import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
 
 const root = document.querySelector('.console-shell');
 const els = {
@@ -28,8 +30,10 @@ const els = {
 };
 
 let state = createInitialState();
-let nextAnomalyAt = 12;
+let nextAnomalyAt = CONFIG.anomaly.firstTriggerAt;
 let timer = null;
+let lastTone = 'normal';
+let crashPlayed = false;
 
 function labelDoor(value) {
   return value === 'open' ? '开启' : '关闭';
@@ -67,7 +71,7 @@ function render() {
   els.monitor.textContent = state.monitor;
 
   els.logs.replaceChildren();
-  for (const line of state.logs.slice(-18)) {
+  for (const line of state.logs.slice(-CONFIG.logs.displayLines)) {
     const li = document.createElement('li');
     li.className = line.type;
     li.textContent = line.text;
@@ -85,8 +89,14 @@ function render() {
 }
 
 function dispatchAction(actionId) {
+  playClick();
   const result = performAction(state, actionId);
   state = result.state;
+  if (result.ok) {
+    playSuccess();
+  } else {
+    playFail();
+  }
   render();
 }
 
@@ -95,21 +105,35 @@ function triggerAnomaly() {
   const event = pickNextAnomaly(state);
   const result = applyAnomaly(state, event.id);
   state = result.state;
-  nextAnomalyAt = state.elapsed + 13 + Math.floor(Math.random() * 6);
+  playAnomaly();
+  const cd = CONFIG.anomaly;
+  nextAnomalyAt = state.elapsed + cd.cooldownMin + Math.floor(Math.random() * (cd.cooldownMax - cd.cooldownMin + 1));
   render();
 }
 
 function loop() {
   if (state.gameOver) {
+    if (!crashPlayed) {
+      playCrash();
+      crashPlayed = true;
+    }
     render();
     return;
   }
+  crashPlayed = false;
   state = tickState(state, 1);
-  // Save a snapshot every 10 seconds for ad-revive rollback
-  if (state.elapsed > 0 && state.elapsed % 10 === 0 && state.snapshots.length < 12) {
+  // Save a snapshot on interval for ad-revive rollback
+  const ar = CONFIG.adRevive;
+  if (state.elapsed > 0 && state.elapsed % ar.snapshotInterval === 0 && state.snapshots.length < ar.maxSnapshots) {
     state = saveSnapshot(state);
   }
   if (!state.gameOver && state.elapsed >= nextAnomalyAt) triggerAnomaly();
+  // Play warning sound on tone transitions to critical/danger
+  const tone = getToneForState(state);
+  if (tone === 'danger' || tone === 'critical') {
+    if (lastTone !== tone) playWarning();
+  }
+  lastTone = tone;
   render();
 }
 
@@ -121,11 +145,15 @@ function restart() {
 
 els.forceAnomaly.addEventListener('click', triggerAnomaly);
 els.reviveButton.addEventListener('click', () => {
+  playRevive();
   state = reviveFromAd(state);
   nextAnomalyAt = state.elapsed + 8;
   render();
 });
-els.restartButton.addEventListener('click', restart);
+els.restartButton.addEventListener('click', () => {
+  playRestart();
+  restart();
+});
 
 renderActions();
 render();

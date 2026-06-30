@@ -1,18 +1,20 @@
+import CONFIG from './gameConfig.js';
 import { createFeedbackLine } from './feedback.js';
 
 export function createInitialState() {
+  const c = CONFIG.initial;
   return {
-    floor: 1,
-    door: 'closed',
-    moving: false,
-    direction: 'idle',
-    power: 100,
-    stability: 100,
-    anomalyLevel: 0,
-    passengers: 1,
-    gameOver: false,
+    floor: c.floor,
+    door: c.door,
+    moving: c.moving,
+    direction: c.direction,
+    power: c.power,
+    stability: c.stability,
+    anomalyLevel: c.anomalyLevel,
+    passengers: c.passengers,
+    gameOver: c.gameOver,
     elapsed: 0,
-    remaining: 60,
+    remaining: c.duration,
     adRevivesUsed: 0,
     hiddenLogsUnlocked: 0,
     lastAdHint: '',
@@ -30,7 +32,7 @@ export function cloneState(state) {
 export function appendLog(state, type, message) {
   const next = cloneState(state);
   next.logs.push(createFeedbackLine(type, message, next.elapsed ?? 0));
-  if (next.logs.length > 80) next.logs = next.logs.slice(-80);
+  if (next.logs.length > CONFIG.logs.maxLines) next.logs = next.logs.slice(-CONFIG.logs.maxLines);
   return next;
 }
 
@@ -40,7 +42,8 @@ export function clamp(value, min, max) {
 
 export function checkFailure(state) {
   const next = cloneState(state);
-  if (next.power <= 0 || next.stability <= 0 || next.anomalyLevel >= 6 || next.passengers < 0) {
+  const f = CONFIG.failure;
+  if (next.power <= f.powerMin || next.stability <= f.stabilityMin || next.anomalyLevel >= f.anomalyLevelMax || next.passengers < f.passengersMin) {
     next.gameOver = true;
     next.moving = false;
     next.direction = 'idle';
@@ -64,8 +67,8 @@ export function saveSnapshot(state) {
 
 export function reviveFromAd(state) {
   const snapshots = state.snapshots || [];
-  // Find the snapshot closest to (current elapsed - 30) seconds ago
-  const targetElapsed = Math.max(0, state.elapsed - 30);
+  const rollbackWindow = CONFIG.adRevive.rollbackWindow;
+  const targetElapsed = Math.max(0, state.elapsed - rollbackWindow);
   let best = null;
   let bestDist = Infinity;
   for (const snap of snapshots) {
@@ -103,13 +106,14 @@ export function reviveFromAd(state) {
 
 export function tickState(state, seconds = 1) {
   let next = cloneState(state);
+  const tk = CONFIG.tick;
   next.elapsed += seconds;
-  next.remaining = clamp(next.remaining - seconds, 0, 60);
+  next.remaining = clamp(next.remaining - seconds, 0, CONFIG.initial.duration);
   if (next.moving) {
-    next.power = clamp(next.power - seconds * 0.7, 0, 100);
-    next.stability = clamp(next.stability - seconds * 0.25, 0, 100);
+    next.power = clamp(next.power - seconds * tk.powerDrainMoving, 0, 100);
+    next.stability = clamp(next.stability - seconds * tk.stabilityDrainMoving, 0, 100);
   } else {
-    next.power = clamp(next.power - seconds * 0.18, 0, 100);
+    next.power = clamp(next.power - seconds * tk.powerDrainIdle, 0, 100);
   }
   if (next.remaining <= 0) {
     next.gameOver = true;

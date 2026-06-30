@@ -1,4 +1,5 @@
 import { appendLog, checkFailure, clamp, cloneState } from './state.js';
+import CONFIG from './gameConfig.js';
 
 export const ANOMALIES = [
   {
@@ -124,6 +125,71 @@ export const ANOMALIES = [
       return next;
     },
   },
+  {
+    id: 'door_refuse',
+    title: '电梯门拒绝关闭',
+    severity: 2,
+    monitor: '监控：关门按钮已按下，门在合拢前自动弹开。异常状态持续。',
+    adHint: '门拒绝关闭时不要连续按关门，先急停再重启系统。',
+    apply(state) {
+      const next = cloneState(state);
+      next.door = 'open';
+      next.anomalyLevel = clamp(next.anomalyLevel + 2, 0, 6);
+      next.stability = clamp(next.stability - 10, 0, 100);
+      next.activeAnomaly = 'door_refuse';
+      next.monitor = this.monitor;
+      return next;
+    },
+  },
+  {
+    id: 'weight_mismatch',
+    title: '载重数据异常',
+    severity: 1,
+    monitor: '监控：载重传感器读数 — 0kg。轿厢内有 1 名乘客。读数矛盾。',
+    adHint: '载重异常时优先查日志，乘客数可能被重置。',
+    apply(state) {
+      const next = cloneState(state);
+      next.passengers = 0;
+      next.anomalyLevel = clamp(next.anomalyLevel + 1, 0, 6);
+      next.stability = clamp(next.stability - 7, 0, 100);
+      next.activeAnomaly = 'weight_mismatch';
+      next.monitor = this.monitor;
+      return next;
+    },
+  },
+  {
+    id: 'floor_jump',
+    title: '楼层编号跳跃',
+    severity: 2,
+    monitor: '监控：电梯从 5 层直接移动到 9 层。摄像头画面缺失 4 帧。',
+    adHint: '楼层跳跃时减少移动操作，用系统重启恢复楼层显示。',
+    apply(state) {
+      const next = cloneState(state);
+      next.floor = Math.min(30, next.floor + 4);
+      next.anomalyLevel = clamp(next.anomalyLevel + 2, 0, 6);
+      next.stability = clamp(next.stability - 12, 0, 100);
+      next.power = clamp(next.power - 10, 0, 100);
+      next.activeAnomaly = 'floor_jump';
+      next.monitor = this.monitor;
+      return next;
+    },
+  },
+  {
+    id: 'emergency_lights',
+    title: '应急灯异常启动',
+    severity: 3,
+    monitor: '监控：轿厢应急灯突然亮起。备用电源消耗加速。',
+    adHint: '应急灯启动时尽量避免移动，立即重启系统可关闭应急灯。',
+    apply(state) {
+      const next = cloneState(state);
+      next.anomalyLevel = clamp(next.anomalyLevel + 3, 0, 6);
+      next.stability = clamp(next.stability - 14, 0, 100);
+      next.power = clamp(next.power - 20, 0, 100);
+      next.activeAnomaly = 'emergency_lights';
+      next.monitor = this.monitor;
+      return next;
+    },
+  },
 ];
 
 export function findAnomaly(id) {
@@ -140,7 +206,7 @@ export function applyAnomaly(state, id) {
 }
 
 export function pickNextAnomaly(state, random = Math.random) {
-  const pressure = Math.min(ANOMALIES.length - 1, Math.floor(state.anomalyLevel / 2));
+  const pressure = Math.min(ANOMALIES.length - 1, Math.floor(state.anomalyLevel / CONFIG.anomaly.pressureDivisor));
   const index = Math.min(ANOMALIES.length - 1, Math.floor(random() * ANOMALIES.length + pressure) % ANOMALIES.length);
   return ANOMALIES[index];
 }

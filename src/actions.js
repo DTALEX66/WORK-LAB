@@ -1,4 +1,5 @@
 import { appendLog, checkFailure, clamp, cloneState } from './state.js';
+import CONFIG from './gameConfig.js';
 
 const ACTIONS = {
   openDoor(state) {
@@ -21,11 +22,12 @@ const ACTIONS = {
   moveUp(state) {
     if (state.door !== 'closed') return fail(state, '门未关闭，禁止移动。');
     let next = cloneState(state);
+    const a = CONFIG.actions.moveUp;
     next.floor += 1;
     next.moving = true;
     next.direction = 'up';
-    next.power = clamp(next.power - 6, 0, 100);
-    next.stability = clamp(next.stability - 2, 0, 100);
+    next.power = clamp(next.power - a.powerCost, 0, 100);
+    next.stability = clamp(next.stability - a.stabilityCost, 0, 100);
     next.monitor = `监控：电梯上行至 ${next.floor} 层。乘客未看向摄像头。`;
     next = appendLog(next, 'info', `电梯开始上行，当前楼层 ${next.floor}。`);
     return ok(checkFailure(next), '电梯开始上行。');
@@ -34,11 +36,12 @@ const ACTIONS = {
   moveDown(state) {
     if (state.door !== 'closed') return fail(state, '门未关闭，禁止移动。');
     let next = cloneState(state);
+    const a = CONFIG.actions.moveDown;
     next.floor -= 1;
     next.moving = true;
     next.direction = 'down';
-    next.power = clamp(next.power - 6, 0, 100);
-    next.stability = clamp(next.stability - 2, 0, 100);
+    next.power = clamp(next.power - a.powerCost, 0, 100);
+    next.stability = clamp(next.stability - a.stabilityCost, 0, 100);
     next.monitor = `监控：电梯下行至 ${next.floor} 层。楼层指示灯短暂闪烁。`;
     next = appendLog(next, 'info', `电梯开始下行，当前楼层 ${next.floor}。`);
     return ok(checkFailure(next), '电梯开始下行。');
@@ -46,15 +49,16 @@ const ACTIONS = {
 
   emergencyStop(state) {
     let next = cloneState(state);
+    const es = CONFIG.actions.emergencyStop;
     if (next.activeAnomaly === 'stop_failure') {
       next.anomalyLevel = clamp(next.anomalyLevel + 1, 0, 6);
-      next.stability = clamp(next.stability - 16, 0, 100);
+      next.stability = clamp(next.stability - es.stabilityCostOnFailure, 0, 100);
       next = appendLog(next, 'danger', '急停按钮无响应。异常等级上升。');
       return fail(checkFailure(next), '急停按钮失效。');
     }
     next.moving = false;
     next.direction = 'idle';
-    next.stability = clamp(next.stability - 6, 0, 100);
+    next.stability = clamp(next.stability - es.stabilityCost, 0, 100);
     next.monitor = '监控：电梯急停。轿厢灯光闪烁 3 次。';
     next = appendLog(next, 'warn', '执行急停：移动已停止，稳定度下降。');
     return ok(checkFailure(next), '急停已执行。');
@@ -62,9 +66,10 @@ const ACTIONS = {
 
   restartSystem(state) {
     let next = cloneState(state);
-    next.anomalyLevel = Math.max(0, next.anomalyLevel - 2);
-    next.stability = clamp(next.stability + 15, 0, 100);
-    next.power = clamp(next.power - 10, 0, 100);
+    const rs = CONFIG.actions.restartSystem;
+    next.anomalyLevel = Math.max(0, next.anomalyLevel - rs.anomalyLevelReduce);
+    next.stability = clamp(next.stability + rs.stabilityRestore, 0, 100);
+    next.power = clamp(next.power - rs.powerCost, 0, 100);
     next.moving = false;
     next.direction = 'idle';
     next.activeAnomaly = null;
