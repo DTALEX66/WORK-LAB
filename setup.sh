@@ -5,7 +5,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PACK_DIR="$REPO_ROOT/hermes-pack"
+PACK_DIR="$REPO_ROOT"
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 
 echo "========================================"
