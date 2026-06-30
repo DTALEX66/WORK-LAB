@@ -4,7 +4,9 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Repo root is the directory containing this script.
+# Keep this path calculation simple so a freshly cloned repo works on any machine.
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 PACK_DIR="$REPO_ROOT"
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 

@@ -24,6 +24,64 @@ hermes-pack/
 └── README.md                  ← 本文件
 ```
 
+
+## 🗂️ 分类说明（上传仓库时保持这个结构）
+
+本仓库按 Hermes 可迁移资源分类，其他电脑 clone 后脚本会按同样分类复制到 Hermes 本地目录：
+
+| 仓库目录 | 部署目标 | 作用 |
+|---|---|---|
+| `config/` | `%LOCALAPPDATA%\hermes` 或 `~/.hermes` | Hermes 主配置、人格、环境变量模板、认证模板 |
+| `skills/model-switch/` | `skills/model-switch/` | 模型切换技能，例如“切换DP / 切换GPT” |
+| `skills/software-development/` | `skills/software-development/` | 开发相关技能：截图翻译、Python 测试、Windows 排坑 |
+| `tools/` | 手动安装/导入 | CC Switch 安装包和配置导出 |
+| `memories/` | 参考资料，不自动覆盖真实记忆 | 仅作为迁移参考，避免覆盖新机器个人记忆 |
+| `docs/` / `TROUBLESHOOTING.md` | 仓库文档 | 排错和部署说明 |
+
+> 注意：真实 `.env`、OAuth `auth.json`、API Key、Token、会话数据库不会上传。新电脑必须重新填写 API Key，并重新执行 OAuth 登录。
+
+## 🖥️ 新电脑完整部署流程
+
+### Windows 推荐流程
+
+```powershell
+git clone git@github.com:DTALEX66/hermes.git
+cd hermes
+# 如果 PowerShell 遇到中文编码问题，改用 Git Bash 执行 ./setup.sh
+.\setup.ps1
+```
+
+如果使用 Git Bash：
+
+```bash
+git clone git@github.com:DTALEX66/hermes.git
+cd hermes
+chmod +x setup.sh
+./setup.sh
+```
+
+部署后必须做三件事：
+
+1. 编辑 Hermes 的 `.env`，填入新电脑自己的 `DEEPSEEK_API_KEY`，如需 GPT 订阅访问则确认 CC Switch 代理为 `127.0.0.1:7890`。
+2. 如果用 GPT 订阅：运行 `hermes auth add openai-codex`，在浏览器完成 ChatGPT/Codex OAuth。
+3. 切换模型后执行 `/reset` 或重启 Hermes，使 provider/model 生效。
+
+### 推荐运行模式
+
+当前最稳的跨电脑模式：
+
+```text
+Hermes 管模型认证：
+  GPT      = openai-codex OAuth / ChatGPT 订阅
+  DeepSeek = DEEPSEEK_API_KEY
+
+CC Switch 管网络与 Agent 生态：
+  HTTP_PROXY / HTTPS_PROXY = http://127.0.0.1:7890
+  Codex/Hermes 配置感知、MCP、Prompt、日志管理
+```
+
+不要把 ChatGPT 订阅当作 OpenAI API Key 上传或硬编码；订阅 OAuth 必须在每台新电脑上重新登录。
+
 ## 🚀 快速部署
 
 ```powershell

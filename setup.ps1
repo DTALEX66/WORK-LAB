@@ -20,7 +20,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$RepoRoot = Split-Path -Parent $PSScriptRoot
+# Repo root is the directory containing this script.
+# Keep this path calculation simple so a freshly cloned repo works on any machine.
+$RepoRoot = $PSScriptRoot
 $PackDir = $RepoRoot
 
 function Write-Step {
