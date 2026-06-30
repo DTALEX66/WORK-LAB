@@ -31,6 +31,8 @@
             <div><dt>稳定度</dt><dd><meter id="stability" min="0" max="100" value="100"></meter><span id="stabilityText">100</span></dd></div>
             <div><dt>异常等级</dt><dd id="anomalyLevel">0</dd></div>
             <div><dt>广告复活</dt><dd id="reviveCount">0</dd></div>
+            <div><dt>加密解码</dt><dd id="adHintsCount">0</dd></div>
+            <div><dt>待解码</dt><dd id="hiddenLogsCount">0</dd></div>
           </dl>
         </section>
 
@@ -63,6 +65,20 @@
           <div class="failure-actions">
             <button id="reviveButton" type="button">观看广告复活</button>
             <button id="restartButton" class="secondary" type="button">重新开始</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 假结局 -->
+      <section id="fakeEndingOverlay" class="failure-overlay fake-ending" hidden>
+        <div class="failure-card ending-card">
+          <p class="eyebrow">⚠ SYSTEM ANOMALY DETECTED</p>
+          <h2>操作员关联异常</h2>
+          <pre id="fakeEndingText" class="ending-text"></pre>
+          <pre id="fakeEndingTruth" class="ending-truth"></pre>
+          <div class="failure-actions">
+            <button id="fakeEndingTruthBtn" type="button">观看广告揭示真相</button>
+            <button id="fakeEndingRestartBtn" class="secondary" type="button">重新开始</button>
           </div>
         </div>
       </section>

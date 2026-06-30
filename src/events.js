@@ -201,6 +201,12 @@ export function applyAnomaly(state, id) {
   if (!event) throw new Error(`Unknown anomaly: ${id}`);
   let next = event.apply(state);
   next.lastAdHint = event.adHint;
+  // 添加关联隐藏日志（不重复）
+  const hidden = HIDDEN_LOGS[id];
+  if (hidden && !next.hiddenLogs.some(h => h.id === hidden.id)) {
+    next.hiddenLogs.push({ ...hidden, locked: true });
+    next = appendLog(next, 'info', `加密记录已捕获：${hidden.title}。使用"查看日志"功能解码。`);
+  }
   next = appendLog(next, event.severity >= 3 ? 'danger' : 'warn', `异常事件：${event.title}。${event.adHint}`);
   return { event, state: checkFailure(next) };
 }
@@ -209,4 +215,76 @@ export function pickNextAnomaly(state, random = Math.random) {
   const pressure = Math.min(ANOMALIES.length - 1, Math.floor(state.anomalyLevel / CONFIG.anomaly.pressureDivisor));
   const index = Math.min(ANOMALIES.length - 1, Math.floor(random() * ANOMALIES.length + pressure) % ANOMALIES.length);
   return ANOMALIES[index];
+}
+
+/**
+ * 隐藏日志映射 — 每个异常关联一条加密记录
+ * 首次触发异常时自动加入 state.hiddenLogs
+ */
+export const HIDDEN_LOGS = {
+  phantom_floor: {
+    id: 'phantom_floor_log',
+    title: '第13层施工记录',
+    content: '2019年施工记录：第13层在竣工前被从建筑图纸中删除。\n原因：施工期间发生Ⅲ级安全事件，3名工人失踪。\n楼层控制面板已被物理封堵，但系统仍能响应来自该层的按钮信号。',
+  },
+  camera_delay: {
+    id: 'camera_delay_log',
+    title: '监控系统校准记录',
+    content: '校准日志 #4417：摄像头#03 与#07 存在 3 秒信号延迟。\n技术人员备注："延迟与第 13 层信号干扰有关，建议不要在 13 层停靠。"',
+  },
+  zero_passenger_shadow: {
+    id: 'zero_passenger_log',
+    title: '乘客记录异常说明',
+    content: '传感器技术手册（节选）：\n红外传感器在非营业时段多次检测到热源信号，但乘客计数器持续归零。\n维修记录：传感器无故障。热源信号经比对——与员工体温档案不匹配。',
+  },
+  log_echo: {
+    id: 'log_echo_log',
+    title: '日志系统诊断报告',
+    content: '诊断报告 #FD-22-019：\n系统日志缓冲区检测到重复写入操作。重复内容"不要开门"的写入时间戳早于当前值班员登录时间。\n建议：检查前一值班员的退出状态。',
+  },
+  auto_button: {
+    id: 'auto_button_log',
+    title: '控制系统审计追踪',
+    content: '审计追踪 #AUD-882：\n自动按钮信号来源追溯至 5 号服务器（已于 2022 年停用）。\n该服务器的最后一条记录："控制权移交程序未完成"。',
+  },
+  stop_failure: {
+    id: 'stop_failure_log',
+    title: '急停系统维护日志',
+    content: '维护日志 #M-341：\n急停回路#2 在定期检查中被标记为"状态：不可用"。\n签署人签名无法识别。签署时间：3 年前。没有后续维修记录。',
+  },
+  negative_floor: {
+    id: 'negative_floor_log',
+    title: '地下层勘测报告',
+    content: '建筑勘测报告（内部）：\n地下实际存在 4 层结构，但公开图纸仅标注 B1-B2。\nB3-B4 的电梯按钮在出厂时已被移除，但线路仍然通电。',
+  },
+  power_drain: {
+    id: 'power_drain_log',
+    title: '备用电源异常报告',
+    content: '异常报告 #P-877：\n备用电源在无负载状态下持续放电。经查，有一条非授权线路从备用电源柜分接至未知设备。\n线路标签："不要切断"。',
+  },
+  door_refuse: {
+    id: 'door_refuse_log',
+    title: '门控系统事故报告',
+    content: '事故报告 #D-1290：\n门控模块在连续 3 次异常重启后进入保护模式。\n模块日志输出最后一条："识别到外部干扰信号。拒绝执行 — 保护乘员安全。"',
+  },
+  weight_mismatch: {
+    id: 'weight_mismatch_log',
+    title: '传感器校验记录',
+    content: '校验记录 #W-554：\n载重传感器与红外传感器读数不一致。红外传感器在轿厢空载时检测到热源。\n技术人员备注："请确认值班员在操作前已清空轿厢。"',
+  },
+  floor_jump: {
+    id: 'floor_jump_log',
+    title: '楼层定位日志',
+    content: '定位日志 #F-213：\nGPS 楼层定位模块在校准前后记录的楼层编号不一致。\n系统自动修正失败。可能原因：参考信号源来自非标设备。',
+  },
+  emergency_lights: {
+    id: 'emergency_lights_log',
+    title: '应急照明测试报告',
+    content: '测试报告 #E-777：\n应急照明系统在无触发信号的情况下自行启动。\n供电线路检测到寄生回路。回路终端设备编号无法匹配任何已知设备清单。',
+  },
+};
+
+/** 获取异常关联的隐藏日志（没有则返回 null） */
+export function getHiddenLog(anomalyId) {
+  return HIDDEN_LOGS[anomalyId] || null;
 }

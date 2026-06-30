@@ -204,6 +204,51 @@ button.secondary {
 .hint { color: var(--amber); }
 .failure-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
+/* 假结局 */
+.fake-ending .ending-card {
+  border-color: rgba(255, 0, 80, 0.7);
+  background: linear-gradient(180deg, rgba(60, 0, 12, 0.98), rgba(5, 0, 2, 0.98));
+  animation: endingPulse 2s ease-in-out infinite;
+}
+@keyframes endingPulse {
+  0%, 100% { box-shadow: 0 30px 90px rgba(255, 0, 80, 0.25); }
+  50% { box-shadow: 0 30px 120px rgba(255, 0, 80, 0.45); }
+}
+.fake-ending h2 {
+  color: #ff0050;
+  text-shadow: 0 0 30px rgba(255, 0, 80, 0.5);
+  animation: endingFlicker 3s steps(1) infinite;
+}
+@keyframes endingFlicker {
+  0%, 90% { opacity: 1; }
+  95% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+.ending-text {
+  white-space: pre-wrap;
+  color: #ff6b8a;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  padding: 12px;
+  background: rgba(255, 0, 80, 0.06);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 0, 80, 0.2);
+  margin: 0 0 10px;
+}
+.ending-truth {
+  white-space: pre-wrap;
+  color: #bffff0;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  padding: 12px;
+  background: rgba(97, 255, 190, 0.06);
+  border-radius: 12px;
+  border: 1px solid rgba(97, 255, 190, 0.2);
+  margin: 0 0 10px;
+}
+
 @media (max-width: 820px) {
   .topbar { align-items: stretch; flex-direction: column; }
   .shift-card { text-align: left; }

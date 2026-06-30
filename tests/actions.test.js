@@ -32,3 +32,24 @@ test('restartSystem reduces anomaly level and stabilizes the system', () => {
   assert.equal(result.state.stability, 60);
   assert.equal(result.state.power, 45);
 });
+
+test('unlockHiddenLog fails when no locked logs exist', () => {
+  const result = performAction(createInitialState(), 'unlockHiddenLog');
+  assert.equal(result.ok, false);
+  assert.match(result.message, /没有待解码/);
+});
+
+test('unlockHiddenLog unlocks the first locked hidden log', () => {
+  const state = {
+    ...createInitialState(),
+    hiddenLogs: [
+      { id: 'log_a', title: 'Log A', content: 'Content A', locked: true },
+      { id: 'log_b', title: 'Log B', content: 'Content B', locked: true },
+    ],
+  };
+  const result = performAction(state, 'unlockHiddenLog');
+  assert.equal(result.ok, true);
+  assert.equal(result.state.hiddenLogs[0].locked, false);
+  assert.equal(result.state.hiddenLogs[1].locked, true);
+  assert.equal(result.state.adHintsUsed, 1);
+});

@@ -21,6 +21,11 @@ export function createInitialState() {
     monitor: '监控画面稳定：1 层轿厢内有 1 名乘客。',
     activeAnomaly: null,
     snapshots: [],
+    hiddenLogs: [],
+    adHintsUsed: 0,
+    consecutiveFailures: 0,
+    fakeEndingTriggered: false,
+    fakeEndingUnlocked: false,
     logs: [createFeedbackLine('info', '异常电梯控制台已接管。等待操作员指令。', 0)],
   };
 }

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createInitialState } from '../src/state.js';
-import { ANOMALIES, applyAnomaly, pickNextAnomaly } from '../src/events.js';
+import { ANOMALIES, applyAnomaly, pickNextAnomaly, HIDDEN_LOGS } from '../src/events.js';
 
 test('anomaly catalogue contains at least five playable events', () => {
   assert.ok(ANOMALIES.length >= 5);
@@ -54,4 +54,25 @@ test('new anomalies: emergency_lights drains significant power', () => {
   const result = applyAnomaly(state, 'emergency_lights');
   assert.ok(result.state.power < 85, 'power should drop sharply');
   assert.ok(result.state.anomalyLevel >= 3);
+});
+
+test('applyAnomaly adds a locked hidden log to state', () => {
+  const state = { ...createInitialState(), hiddenLogs: [], logs: [] };
+  const result = applyAnomaly(state, 'phantom_floor');
+  assert.equal(result.state.hiddenLogs.length, 1);
+  assert.equal(result.state.hiddenLogs[0].id, 'phantom_floor_log');
+  assert.equal(result.state.hiddenLogs[0].locked, true);
+});
+
+test('applyAnomaly does not duplicate hidden logs', () => {
+  const state = { ...createInitialState(), hiddenLogs: [], logs: [] };
+  const r1 = applyAnomaly(state, 'phantom_floor');
+  const r2 = applyAnomaly(r1.state, 'phantom_floor');
+  assert.equal(r2.state.hiddenLogs.length, 1, 'should still be 1');
+});
+
+test('all 12 anomalies have a corresponding hidden log entry', () => {
+  for (const anomaly of ANOMALIES) {
+    assert.ok(HIDDEN_LOGS[anomaly.id], `missing hidden log for ${anomaly.id}`);
+  }
 });

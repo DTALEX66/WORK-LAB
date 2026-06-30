@@ -77,8 +77,25 @@ const CONFIG = {
 
   /* ── 日志 ── */
   logs: {
-    maxLines: 80,                // 日志最大保留行数
-    displayLines: 18,            // UI 显示行数
+    maxLines: 80,
+    displayLines: 18,
+  },
+
+  /* ── 隐藏日志（广告解锁） ── */
+  hiddenLogs: {
+    maxUnlockedPerRun: 5,
+    unlockLogMessage: '模拟广告播放完成。加密记录已解码。',
+  },
+
+  /* ── 假结局 ── */
+  fakeEnding: {
+    consecutiveFailuresThreshold: 5,
+    cooldownFailures: 3,
+  },
+
+  /* ── 模拟广告 ── */
+  adContent: {
+    adVideoDuration: 2000,
   },
 };
 

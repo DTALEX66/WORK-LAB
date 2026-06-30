@@ -82,6 +82,27 @@ const ACTIONS = {
     const next = appendLog(state, 'info', '操作员查看系统日志：最近 30 秒存在未授权楼层请求。');
     return ok(next, '已查看系统日志。');
   },
+
+  unlockHiddenLog(state) {
+    // 找到第一条仍锁定的隐藏日志
+    const locked = state.hiddenLogs.find(h => h.locked);
+    if (!locked) {
+      return fail(state, '没有待解码的加密记录。');
+    }
+    const unlocked = state.adHintsUsed;
+    if (unlocked >= CONFIG.hiddenLogs.maxUnlockedPerRun) {
+      return fail(state, `本局已解码 ${unlocked} 条记录，达到上限。`);
+    }
+    let next = cloneState(state);
+    const idx = next.hiddenLogs.findIndex(h => h.id === locked.id);
+    if (idx !== -1) {
+      next.hiddenLogs[idx] = { ...next.hiddenLogs[idx], locked: false };
+    }
+    next.adHintsUsed += 1;
+    next = appendLog(next, 'ad', CONFIG.hiddenLogs.unlockLogMessage);
+    next.monitor = `解码完成：${locked.title}。完整内容已写入系统日志。`;
+    return ok(next, `已解码：${locked.title}`);
+  },
 };
 
 function ok(state, message) {
@@ -108,4 +129,5 @@ export const AVAILABLE_ACTIONS = [
   { id: 'emergencyStop', label: '急停' },
   { id: 'restartSystem', label: '系统重启' },
   { id: 'inspectLog', label: '查看日志' },
+  { id: 'unlockHiddenLog', label: '解码加密记录' },
 ];
