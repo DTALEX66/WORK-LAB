@@ -19,7 +19,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-$PackDir = Join-Path $RepoRoot "hermes-pack"
+$PackDir = $RepoRoot
 
 function Write-Step {
     param([string]$Message, [string]$Status = "⏳")
