@@ -1,0 +1,492 @@
+/**
+ * canvasRenderer.js — Canvas 渲染器
+ *
+ * 完全替代 index.html + styles.css 的 DOM 渲染。
+ * 在小游戏平台（微信/抖音）上使用 Canvas 渲染，
+ * 在浏览器中也可作为独立渲染模式。
+ *
+ * 设计宽度：750px（标准移动端设计尺寸）
+ */
+
+import { t, getSkin } from '../src/skinManager.js';
+import { getToneForState, summarizeFailure } from '../src/feedback.js';
+
+// ── 尺寸常量 ──
+const DW = 750;       // 设计宽度
+let canvas, ctx;
+let scale = 1;        // 实际像素/设计像素比例
+let DH = 1334;        // 设计高度（自适应）
+
+// ── 颜色 ──
+const COLORS = {
+  bg: '#05080b',
+  panel: 'rgba(8,18,21,0.92)',
+  line: 'rgba(97,255,190,0.22)',
+  text: '#d8fff3',
+  muted: '#789b92',
+  green: '#61ffbe',
+  amber: '#ffd166',
+  red: '#ff4d6d',
+  cyan: '#51d6ff',
+  darkRed: '#ff0050',
+};
+
+// ── Measure text ──
+function measure(text, size, bold = false) {
+  ctx.font = `${bold ? 'bold ' : ''}${size}px "Microsoft YaHei", sans-serif`;
+  return ctx.measureText(text).width;
+}
+
+// ── Draw rounded rect ──
+function roundRect(x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+}
+
+// ── 绘制背景 ──
+function drawBackground(tone) {
+  // 纯色背景
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0, 0, DW, DH);
+
+  // 径向渐变装饰
+  const grad1 = ctx.createRadialGradient(150, 0, 0, 150, 0, 400);
+  grad1.addColorStop(0, 'rgba(81,214,255,0.10)');
+  grad1.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad1;
+  ctx.fillRect(0, 0, DW, DH);
+
+  const grad2 = ctx.createRadialGradient(DW - 100, 100, 0, DW - 100, 100, 350);
+  grad2.addColorStop(0, 'rgba(255,77,109,0.10)');
+  grad2.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad2;
+  ctx.fillRect(0, 0, DW, DH);
+}
+
+// ── 绘制顶栏 ──
+function drawTopbar(state) {
+  const meta = getSkin().meta;
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
+  ctx.fillText(meta?.name || '', 24, 44);
+
+  ctx.fillStyle = COLORS.green;
+  ctx.font = '14px "Microsoft YaHei", sans-serif';
+  ctx.fillText(meta?.subtitle || '', 24, 64);
+
+  // 倒计时卡片
+  const cardX = DW - 170;
+  const cardW = 150;
+  roundRect(cardX, 14, cardW, 50, 14, COLORS.panel, COLORS.line);
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '12px "Microsoft YaHei", sans-serif';
+  ctx.fillText('值守倒计时', cardX + 12, 32);
+  ctx.fillStyle = COLORS.amber;
+  ctx.font = 'bold 28px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(Math.ceil(state.remaining).toString(), cardX + cardW - 14, 53);
+  ctx.textAlign = 'left';
+}
+
+// ── 绘制状态面板 ──
+function drawStatusPanel(state) {
+  const x = 14, y = 80, w = 260, h = 220;
+
+  // 面板背景
+  roundRect(x, y, w, h, 16, COLORS.panel, toneBorder(state));
+
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.fillText('电梯状态', x + 16, y + 28);
+
+  // 状态网格（2列）
+  const items = [
+    ['楼层', state.floor],
+    ['门状态', state.door === 'open' ? '开启' : '关闭'],
+    ['方向', { up: '上行', down: '下行', idle: '待机' }[state.direction] || '待机'],
+    ['乘客', state.passengers],
+    ['电源', `${Math.round(state.power)}%`],
+    ['稳定度', `${Math.round(state.stability)}%`],
+    ['异常等级', state.anomalyLevel],
+    ['广告复活', state.adRevivesUsed],
+    ['加密解码', state.adHintsUsed],
+    ['待解码', state.hiddenLogs.filter(h => h.locked).length],
+  ];
+
+  const colW = (w - 32) / 2;
+  items.forEach(([label, value], i) => {
+    const cx = x + 16 + (i % 2) * colW;
+    const cy = y + 44 + Math.floor(i / 2) * 26;
+
+    roundRect(cx, cy, colW - 8, 22, 8, 'rgba(0,0,0,0.18)', 'rgba(255,255,255,0.08)');
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '11px "Microsoft YaHei", sans-serif';
+    ctx.fillText(label, cx + 8, cy + 15);
+    ctx.fillStyle = COLORS.text;
+    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(String(value), cx + colW - 12, cy + 15);
+    ctx.textAlign = 'left';
+  });
+
+  // 电源/稳定度 progress bars
+  drawBar(x + 16, y + 175, w - 32, 16, '电源', state.power, COLORS.cyan);
+  drawBar(x + 16, y + 196, w - 32, 16, '稳定度', state.stability, COLORS.green);
+}
+
+function drawBar(x, y, w, h, label, value, color) {
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '11px "Microsoft YaHei", sans-serif';
+  ctx.fillText(label, x, y + 12);
+
+  const bx = x + 60, bw = w - 60;
+  roundRect(bx, y, bw, h, 6, 'rgba(255,255,255,0.06)');
+  const fillW = Math.max(0, (bw - 4) * (value / 100));
+  roundRect(bx + 2, y + 2, fillW, h - 4, 4, color);
+
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 11px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${Math.round(value)}`, bx + bw - 4, y + 12);
+  ctx.textAlign = 'left';
+}
+
+function toneBorder(state) {
+  const tone = getToneForState(state);
+  if (tone === 'danger') return 'rgba(255,77,109,0.55)';
+  if (tone === 'critical') return 'rgba(255,209,102,0.38)';
+  if (tone === 'warn') return 'rgba(255,209,102,0.38)';
+  return COLORS.line;
+}
+
+// ── 绘制监控画面 ──
+function drawMonitor(state) {
+  const x = 286, y = 80, w = 448, h = 220;
+
+  roundRect(x, y, w, h, 16, COLORS.panel, toneBorder(state));
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.fillText('监控画面', x + 16, y + 28);
+
+  // 监控内容区域
+  const mx = x + 14, my = y + 38, mw = w - 28, mh = h - 50;
+  roundRect(mx, my, mw, mh, 12, 'rgba(0,0,0,0.2)', 'rgba(97,255,190,0.12)');
+
+  // 扫描线效果
+  const scanY = (Date.now() / 100 * mh) % mh;
+  ctx.fillStyle = 'rgba(97,255,190,0.04)';
+  ctx.fillRect(mx, my + scanY, mw, 4);
+
+  // 文本
+  let displayText = getMonitorText(state);
+  ctx.fillStyle = '#bffff0';
+  ctx.font = '20px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  wrapText(displayText, mx + mw / 2, my + mh / 2 - 10, mw - 20, 28);
+  ctx.textAlign = 'left';
+}
+
+function getMonitorText(state) {
+  const unlockedHidden = state.hiddenLogs.filter(h => !h.locked);
+  if (unlockedHidden.length > 0) {
+    const last = unlockedHidden[unlockedHidden.length - 1];
+    return `${t('ui.decodePrefix')} ${last.title}\n${last.content}`;
+  }
+  return state.monitor;
+}
+
+// ── 绘制操作按钮 ──
+function drawActions(state) {
+  const x = 14, y = 312, w = 260, h = 260;
+
+  roundRect(x, y, w, h, 16, COLORS.panel, COLORS.line);
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.fillText('操作面板', x + 16, y + 28);
+
+  const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
+  const btns = [
+    { id: 'openDoor', label: '开门' },
+    { id: 'closeDoor', label: '关门' },
+    { id: 'moveUp', label: '上行' },
+    { id: 'moveDown', label: '下行' },
+    { id: 'emergencyStop', label: '急停' },
+    { id: 'restartSystem', label: '系统重启' },
+    { id: 'inspectLog', label: '查看日志' },
+  ];
+  // 有条件地添加解锁按钮
+  if (lockedCount > 0) {
+    btns.push({ id: 'unlockHiddenLog', label: `解码加密记录 (${lockedCount})` });
+  }
+
+  const btnW = (w - 40) / 2;
+  const btnH = 40;
+  const gap = 10;
+  const startY = y + 42;
+
+  btns.forEach((btn, i) => {
+    const bx = x + 16 + (i % 2) * (btnW + gap);
+    const by = startY + Math.floor(i / 2) * (btnH + gap);
+
+    const isGreen = !['emergencyStop', 'restartSystem'].includes(btn.id);
+    const color = isGreen
+      ? 'linear-gradient(135deg, #61ffbe, #51d6ff)'
+      : 'rgba(255,255,255,0.08)';
+
+    // 按钮背景
+    roundRect(bx, by, btnW, btnH, 10, color);
+    if (!isGreen) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
+      roundRect(bx, by, btnW, btnH, 10, null, 'rgba(255,255,255,0.12)');
+    }
+
+    ctx.fillStyle = isGreen ? '#02110c' : COLORS.text;
+    ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(btn.label, bx + btnW / 2, by + btnH / 2 + 5);
+    ctx.textAlign = 'left';
+  });
+
+  // 触发异常测试按钮
+  const testBtnY = startY + Math.ceil(btns.length / 2) * (btnH + gap) + 6;
+  roundRect(x + 16, testBtnY, w - 32, 34, 10, 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.12)');
+  ctx.fillStyle = COLORS.text;
+  ctx.font = '12px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('触发异常测试', x + w / 2, testBtnY + 22);
+  ctx.textAlign = 'left';
+}
+
+// ── 绘制系统日志 ──
+function drawLogs(state) {
+  const x = 286, y = 312, w = 448, h = 260;
+
+  roundRect(x, y, w, h, 16, COLORS.panel, COLORS.line);
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.fillText('系统日志', x + 16, y + 28);
+
+  const logs = state.logs.slice(-12);
+  const logY = y + 38;
+  logs.forEach((log, i) => {
+    const lx = x + 16, ly = logY + i * 19;
+    const colorMap = { warn: COLORS.amber, danger: COLORS.red, ad: COLORS.cyan, success: COLORS.green };
+    ctx.fillStyle = colorMap[log.type] || '#bfeee0';
+    ctx.font = '12px Consolas, "Microsoft YaHei", monospace';
+    ctx.fillText(log.text, lx, ly + 12);
+  });
+}
+
+// ── 绘制失败弹窗 ──
+function drawFailureOverlay(state) {
+  if (!state.gameOver) return;
+
+  // 半透明背景
+  ctx.fillStyle = 'rgba(0,0,0,0.72)';
+  ctx.fillRect(0, 0, DW, DH);
+
+  const cardW = 520, cardH = 320;
+  const cx = (DW - cardW) / 2, cy = (DH - cardH) / 2;
+
+  if (state.fakeEndingTriggered) {
+    // 假结局
+    roundRect(cx, cy, cardW, cardH, 24, 'rgba(60,0,12,0.98)', 'rgba(255,0,80,0.7)');
+
+    ctx.fillStyle = COLORS.darkRed;
+    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+    ctx.fillText('⚠ SYSTEM ANOMALY DETECTED', cx + 24, cy + 30);
+
+    ctx.fillStyle = '#ff0050';
+    ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
+    ctx.fillText('操作员关联异常', cx + 24, cy + 72);
+
+    const text = state.fakeEndingText || '';
+    ctx.fillStyle = '#ff6b8a';
+    ctx.font = '14px Consolas, "Microsoft YaHei", monospace';
+    wrapText(text, cx + 24, cy + 96, cardW - 48, 22);
+
+    if (state.fakeEndingUnlocked) {
+      ctx.fillStyle = '#bffff0';
+      ctx.font = '14px Consolas, "Microsoft YaHei", monospace';
+      const truth = state.fakeEndingTruth || '';
+      wrapText(truth, cx + 24, cy + 200, cardW - 48, 22);
+    }
+  } else {
+    // 正常失败
+    roundRect(cx, cy, cardW, cardH, 24, 'rgba(38,5,12,0.98)', 'rgba(255,77,109,0.52)');
+
+    ctx.fillStyle = COLORS.red;
+    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+    ctx.fillText('SYSTEM FAILURE', cx + 24, cy + 30);
+
+    ctx.fillStyle = COLORS.red;
+    ctx.font = 'bold 40px "Microsoft YaHei", sans-serif';
+    ctx.fillText('系统崩溃', cx + 24, cy + 80);
+
+    ctx.fillStyle = COLORS.text;
+    ctx.font = '16px "Microsoft YaHei", sans-serif';
+    const reason = summarizeFailure(state);
+    wrapText(reason, cx + 24, cy + 120, cardW - 48, 24);
+
+    if (state.lastAdHint) {
+      ctx.fillStyle = COLORS.amber;
+      ctx.font = '14px "Microsoft YaHei", sans-serif';
+      ctx.fillText(`广告提示：${state.lastAdHint}`, cx + 24, cy + 200);
+    }
+  }
+
+  // 按钮
+  const btnY = cy + cardH - 70;
+  const btnW2 = (cardW - 60) / 2;
+  // 左按钮（广告复活）
+  roundRect(cx + 20, btnY, btnW2, 46, 12, COLORS.green);
+  ctx.fillStyle = '#02110c';
+  ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  const btnLabel = state.fakeEndingTriggered && !state.fakeEndingUnlocked
+    ? '观看广告揭示真相'
+    : state.fakeEndingTriggered
+    ? '重新开始'
+    : '观看广告复活';
+  ctx.fillText(btnLabel, cx + 20 + btnW2 / 2, btnY + 29);
+  ctx.textAlign = 'left';
+
+  // 右按钮（重新开始）
+  roundRect(cx + 40 + btnW2, btnY, btnW2, 46, 12, 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.12)');
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('重新开始', cx + 40 + btnW2 + btnW2 / 2, btnY + 29);
+  ctx.textAlign = 'left';
+}
+
+// ── 文字换行 ──
+function wrapText(text, x, y, maxWidth, lineHeight) {
+  if (!text) return;
+  const lines = text.split('\n');
+  let cy = y;
+  for (const line of lines) {
+    let currentLine = '';
+    for (const char of line) {
+      const testLine = currentLine + char;
+      const tw = ctx.measureText(testLine).width;
+      if (tw > maxWidth && currentLine) {
+        ctx.fillText(currentLine, x, cy);
+        currentLine = char;
+        cy += lineHeight;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) {
+      ctx.fillText(currentLine, x, cy);
+      cy += lineHeight;
+    }
+  }
+}
+
+// ── 点击检测 ──
+let clickHandlers = {};
+
+export function onCanvasClick(x, y, state, callbacks) {
+  const { onAdRevive, onRestart, onAction, onForceAnomaly } = callbacks;
+
+  // 失败弹窗按钮检测
+  if (state.gameOver) {
+    const cardW = 520, cardH = 320;
+    const cx2 = (DW - cardW) / 2, cy2 = (DH - cardH) / 2;
+    const btnY = cy2 + cardH - 70;
+    const btnW2 = (cardW - 60) / 2;
+
+    // 左按钮
+    if (x >= cx2 + 20 && x <= cx2 + 20 + btnW2 && y >= btnY && y <= btnY + 46) {
+      if (state.fakeEndingTriggered && !state.fakeEndingUnlocked) {
+        onAdRevive?.('truth');
+      } else if (state.fakeEndingTriggered) {
+        onRestart?.();
+      } else {
+        onAdRevive?.('revive');
+      }
+      return;
+    }
+    // 右按钮
+    if (x >= cx2 + 40 + btnW2 && x <= cx2 + 40 + btnW2 * 2 && y >= btnY && y <= btnY + 46) {
+      onRestart?.();
+      return;
+    }
+    return;
+  }
+
+  // 操作按钮检测
+  const btnW = (260 - 40) / 2;
+  const btnH2 = 40;
+  const gap = 10;
+  const startY = 312 + 42;
+
+  const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
+  const btns = [
+    'openDoor', 'closeDoor', 'moveUp', 'moveDown',
+    'emergencyStop', 'restartSystem', 'inspectLog',
+  ];
+  if (lockedCount > 0) btns.push('unlockHiddenLog');
+
+  for (let i = 0; i < btns.length; i++) {
+    const bx = 14 + 16 + (i % 2) * (btnW + gap);
+    const by = startY + Math.floor(i / 2) * (btnH2 + gap);
+    if (x >= bx && x <= bx + btnW && y >= by && y <= by + btnH2) {
+      onAction?.(btns[i]);
+      return;
+    }
+  }
+
+  // 触发异常测试按钮
+  const testBtnY = startY + Math.ceil(btns.length / 2) * (btnH2 + gap) + 6;
+  if (x >= 14 + 16 && x <= 14 + 16 + (260 - 32) && y >= testBtnY && y <= testBtnY + 34) {
+    onForceAnomaly?.();
+  }
+}
+
+// ── 主渲染函数 ──
+export function render(state) {
+  if (!ctx) return;
+
+  const tone = getToneForState(state);
+  drawBackground(tone);
+  drawTopbar(state);
+  drawStatusPanel(state);
+  drawMonitor(state);
+  drawActions(state);
+  drawLogs(state);
+  drawFailureOverlay(state);
+}
+
+// ── 初始化 ──
+export function init(canvasEl) {
+  canvas = canvasEl;
+  ctx = canvas.getContext('2d');
+
+  const info = { windowWidth: DW, windowHeight: DH, pixelRatio: 1 };
+  const pw = info.windowWidth || DW;
+  const ph = info.windowHeight || DH;
+
+  // 保持设计比例
+  DH = Math.max(1334, ph * (DW / pw));
+
+  canvas.width = DW;
+  canvas.height = DH;
+  scale = 1;
+
+  return { width: DW, height: DH };
+}

@@ -1,0 +1,1192 @@
+/**
+ * MINIGAME - wechat 小游戏构建
+ * 构建时间: 2026-06-30T23:47:53.006Z
+ * 请勿手动修改此文件
+ */
+
+(function() {
+'use strict';
+
+// --- src/gameConfig.js ---
+/**
+ * gameConfig.js — MINIGAME 平衡参数配置（单一配置源）
+ *
+ * 所有游戏平衡参数集中于此，便于调优和后续换皮。
+ * 换皮时只需修改此文件即可改变游戏难度/节奏。
+ *
+ * 用法：
+ *   import CONFIG from './gameConfig.js';
+ *   CONFIG.tick.powerDrainMoving  // 0.7
+ */
+
+const CONFIG = {
+  /* ── 初始状态 ── */
+  initial: {
+    floor: 1,
+    door: 'closed',
+    moving: false,
+    direction: 'idle',
+    power: 100,
+    stability: 100,
+    anomalyLevel: 0,
+    passengers: 1,
+    gameOver: false,
+    duration: 60,          // 值守倒计时（秒）
+  },
+
+  /* ── 每 Tick（1 秒）消耗 ── */
+  tick: {
+    powerDrainMoving: 0.7,    // 移动中每秒电源消耗
+    powerDrainIdle: 0.18,     // 待机每秒电源消耗
+    stabilityDrainMoving: 0.25, // 移动中每秒稳定度消耗
+  },
+
+  /* ── 操作消耗/效果 ── */
+  actions: {
+    moveUp: {
+      powerCost: 6,
+      stabilityCost: 2,
+    },
+    moveDown: {
+      powerCost: 6,
+      stabilityCost: 2,
+    },
+    emergencyStop: {
+      stabilityCost: 6,
+      stabilityCostOnFailure: 16, // 急停失效时的额外惩罚
+    },
+    restartSystem: {
+      anomalyLevelReduce: 2,
+      stabilityRestore: 15,
+      powerCost: 10,
+    },
+  },
+
+  /* ── 失败条件 ── */
+  failure: {
+    powerMin: 0,
+    stabilityMin: 0,
+    anomalyLevelMax: 6,
+    passengersMin: 0,
+  },
+
+  /* ── 异常系统 ── */
+  anomaly: {
+    firstTriggerAt: 12,         // 首次异常触发时间（秒）
+    cooldownMin: 8,             // 异常后最短冷却
+    cooldownMax: 13,            // 异常后最长冷却
+    pressureDivisor: 2,         // pickNextAnomaly 压力算法分母
+  },
+
+  /* ── 广告复活 ── */
+  adRevive: {
+    rollbackWindow: 30,          // 回滚到多少秒前的快照
+    snapshotInterval: 10,        // 每 N 秒存一次快照
+    maxSnapshots: 12,            // 最多保留快照数
+  },
+
+  /* ── 日志 ── */
+  logs: {
+    maxLines: 80,
+    displayLines: 18,
+  },
+
+  /* ── 隐藏日志（广告解锁） ── */
+  hiddenLogs: {
+    maxUnlockedPerRun: 5,
+  },
+  /* ── 假结局 ── */
+  fakeEnding: {
+    consecutiveFailuresThreshold: 5,
+    cooldownFailures: 3,
+  },
+
+  /* ── 模拟广告 ── */
+  adContent: {
+    adVideoDuration: 2000,
+  },
+};
+
+default CONFIG;
+
+
+// --- src/feedback.js ---
+
+function createFeedbackLine(type, message, time = 0) {
+  const safeTime = Math.max(0, Math.floor(time));
+  const minutes = String(Math.floor(safeTime / 60)).padStart(2, '0');
+  const seconds = String(safeTime % 60).padStart(2, '0');
+  return {
+    type,
+    time: safeTime,
+    text: `[${minutes}:${seconds}] ${message}`,
+  };
+}
+
+function summarizeFailure(state) {
+  const reasons = [];
+  const s = state;
+  if (s.power <= 0) reasons.push(t('failure.summaries.power'));
+  if (s.stability <= 0) reasons.push(t('failure.summaries.stability'));
+  if (s.anomalyLevel >= 6) reasons.push(t('failure.summaries.anomalyLevel'));
+  if (s.passengers < 0) reasons.push(t('failure.summaries.passengers'));
+  if (reasons.length === 0) reasons.push(t('failure.summaries.default'));
+
+  const snapshots = s.snapshots || [];
+  const targetElapsed = Math.max(0, s.elapsed - 30);
+  let rollbackSec = 0;
+  if (snapshots.length > 0) {
+    let best = snapshots[0];
+    let bestDist = Math.abs(best.at - targetElapsed);
+    for (const snap of snapshots) {
+      const dist = Math.abs(snap.at - targetElapsed);
+      if (dist < bestDist) { bestDist = dist; best = snap; }
+    }
+    rollbackSec = s.elapsed - best.at;
+  }
+
+  if (snapshots.length > 0) {
+    return `${reasons.join('、')}。${t('failure.snapshotFallback', { seconds: rollbackSec })}`;
+  }
+  return `${reasons.join('、')}。${t('failure.noSnapshotFallback')}`;
+}
+
+function getToneForState(state) {
+  if (state.gameOver) return 'danger';
+  if (state.anomalyLevel >= 4 || state.stability < 35) return 'critical';
+  if (state.anomalyLevel >= 2 || state.power < 45) return 'warn';
+  return 'normal';
+}
+
+
+// --- src/skinManager.js ---
+/**
+ * skinManager.js — 换皮系统核心
+ *
+ * 负责加载皮肤 JSON 并提供模板字符串替换 (t函数)。
+ * 所有游戏内容文本集中管理，实现换皮 = 换 JSON。
+ *
+ * 用法：
+ *   import { t, anom, loadSkin } from './skinManager.js';
+ *   t('meta.name');                      // "异常电梯控制台"
+ *   t('actionLabels.openDoor');           // "开门"
+ *   t('monitor.actions.moveUp', { floor: 5 }); // 带模板参数
+ *   anom('phantom_floor').title;          // 获取异常事件数据
+ */
+
+
+let currentSkin = SKIN_DATA;
+
+/**
+ * 加载指定皮肤数据
+ * @param {object} skinData — 皮肤 JSON 对象
+ */
+function loadSkin(skinData) {
+  currentSkin = skinData;
+}
+
+/** 获取当前皮肤对象 */
+function getSkin() {
+  return currentSkin;
+}
+
+/**
+ * 根据点分 key 获取皮肤文本，支持 {param} 模板替换
+ * @param {string} key — 如 'meta.name'、'actionLabels.openDoor'
+ * @param {object} params — 可选模板参数
+ * @returns {string}
+ */
+function t(key, params = {}) {
+  const value = key.split('.').reduce((o, k) => (o != null ? o[k] : undefined), currentSkin);
+  if (value === undefined || value === null) {
+    console.warn(`[skinManager] missing key: ${key}`);
+    return `{${key}}`;
+  }
+  if (typeof value === 'string') {
+    return value.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `{${k}}`);
+  }
+  return value;
+}
+
+/**
+ * 获取所有异常事件定义（来自皮肤）
+ * @returns {Array<{id, title, severity, monitor, adHint, effects}>}
+ */
+function getAnomalies() {
+  return currentSkin.anomalies || [];
+}
+
+/**
+ * 按 ID 获取单个异常定义
+ */
+function getAnomaly(id) {
+  return (currentSkin.anomalies || []).find(a => a.id === id) || null;
+}
+
+/**
+ * 获取异常关联的隐藏日志
+ */
+function getHiddenLog(anomalyId) {
+  return currentSkin.hiddenLogs?.[anomalyId] || null;
+}
+
+/**
+ * 创建异常事件的 effects 应用到 state 上
+ * @param {object} state — 当前游戏状态
+ * @param {object} effects — 来自皮肤的 effects 对象
+ * @returns {object} 新的 state
+ */
+function applyEffects(state, effects) {
+  const next = { ...state };
+  for (const [field, value] of Object.entries(effects || {})) {
+    if (typeof value === 'number') {
+      next[field] = (next[field] ?? 0) + value;
+    } else if (typeof value === 'string' && value.startsWith('+')) {
+      next[field] = (next[field] ?? 0) + parseInt(value, 10);
+    } else {
+      // 直接赋值（如 door: 'open', floor: 13）
+      next[field] = value;
+    }
+  }
+  return next;
+}
+
+/**
+ * 获取操作反馈文本
+ */
+function actionText(actionId, key, params = {}) {
+  return t(`action${key}.${actionId}`, params);
+}
+
+/**
+ * 获取操作标签文本
+ */
+function actionLabel(actionId, count) {
+  const label = t(`actionLabels.${actionId}`);
+  if (count !== undefined) return `${label} (${count})`;
+  return label;
+}
+
+
+// --- src/skins/elevator/skin.json ---
+const SKIN_DATA = {
+  "meta": {
+    "id": "elevator",
+    "name": "异常电梯控制台",
+    "subtitle": "MINIGAME · ANOMALY SYSTEM SIM"
+  },
+  "monitor": {
+    "initial": "监控画面稳定：1 层轿厢内有 1 名乘客。",
+    "actions": {
+      "openDoor": "监控：{floor} 层电梯门已打开。门外走廊光线异常。",
+      "closeDoor": "监控：轿厢门闭合。画面存在轻微拖影。",
+      "moveUp": "监控：电梯上行至 {floor} 层。乘客未看向摄像头。",
+      "moveDown": "监控：电梯下行至 {floor} 层。楼层指示灯短暂闪烁。",
+      "emergencyStop": "监控：电梯急停。轿厢灯光闪烁 3 次。",
+      "restartSystem": "监控：系统重启后恢复画面。部分录像帧丢失。"
+    }
+  },
+  "actionLabels": {
+    "openDoor": "开门", "closeDoor": "关门", "moveUp": "上行", "moveDown": "下行",
+    "emergencyStop": "急停", "restartSystem": "系统重启", "inspectLog": "查看日志",
+    "unlockHiddenLog": "解码加密记录"
+  },
+  "doorLabels": { "open": "开启", "closed": "关闭" },
+  "directionLabels": { "up": "上行", "down": "下行", "idle": "待机" },
+  "actionFailMessages": {
+    "openDoor_moving": "电梯移动中，禁止开门。",
+    "moveUp_doorNotClosed": "门未关闭，禁止移动。",
+    "moveDown_doorNotClosed": "门未关闭，禁止移动。",
+    "gameOver": "系统已崩溃，必须复活或重新开始。"
+  },
+  "actionFeedback": {
+    "openDoor": "电梯门已打开。", "closeDoor": "电梯门已关闭。",
+    "moveUp": "电梯开始上行。", "moveDown": "电梯开始下行。",
+    "emergencyStop": "急停已执行。", "emergencyStop_fail": "急停按钮失效。", "restartSystem": "系统重启完成。",
+    "inspectLog": "已查看系统日志。",
+    "unlockHiddenLog_noLocked": "没有待解码的加密记录。",
+    "unlockHiddenLog_limit": "本局已解码 {count} 条记录，达到上限。"
+  },
+  "actionLogMessages": {
+    "openDoor": "电梯门已在 {floor} 层打开。",
+    "closeDoor": "电梯门已关闭。",
+    "moveUp": "电梯开始上行，当前楼层 {floor}。",
+    "moveDown": "电梯开始下行，当前楼层 {floor}。",
+    "emergencyStop": "执行急停：移动已停止，稳定度下降。",
+    "emergencyStop_fail": "急停按钮无响应。异常等级上升。",
+    "restartSystem": "系统重启完成：异常等级下降，但消耗 {cost} 点电源。",
+    "inspectLog": "操作员查看系统日志：最近 30 秒存在未授权楼层请求。",
+    "unlockHiddenLog_ok": "模拟广告播放完成。加密记录已解码。"
+  },
+  "anomalies": [
+    {
+      "id": "phantom_floor", "title": "不存在的楼层", "severity": 2,
+      "monitor": "监控：电梯停在 13 层。建筑图纸中不存在该楼层。",
+      "adHint": "当楼层显示 13 时，不要开门，先执行系统重启。",
+      "effects": { "floor": 13, "anomalyLevel": 2, "stability": -10 }
+    },
+    {
+      "id": "camera_delay", "title": "监控延迟", "severity": 1,
+      "monitor": "监控：画面延迟 3 秒。乘客动作与控制台记录不同步。",
+      "adHint": "监控延迟时优先查看日志，不要连续移动。",
+      "effects": { "anomalyLevel": 1, "stability": -6 }
+    },
+    {
+      "id": "zero_passenger_shadow", "title": "门外有人但乘客数为 0", "severity": 2,
+      "monitor": "监控：门外站着一个人，但乘客计数器显示 0。",
+      "adHint": "乘客数异常时保持关门，先急停再查日志。",
+      "effects": { "passengers": 0, "anomalyLevel": 2, "stability": -12 }
+    },
+    {
+      "id": "log_echo", "title": "系统日志重复字符", "severity": 1,
+      "monitor": "监控：系统日志开始重复输出\u201c不要开门\u201d。",
+      "adHint": "日志重复通常是轻度异常，系统重启可降低异常等级。",
+      "effects": { "anomalyLevel": 1, "stability": -5 }
+    },
+    {
+      "id": "auto_button", "title": "按钮自动亮起", "severity": 2,
+      "monitor": "监控：没有乘客触碰按钮，B2 与 9 层按钮自动亮起。",
+      "adHint": "按钮自动亮起时不要跟随请求移动，先关门并急停。",
+      "effects": { "anomalyLevel": 2, "power": -8 }
+    },
+    {
+      "id": "stop_failure", "title": "急停按钮失效", "severity": 3,
+      "monitor": "监控：急停按钮指示灯熄灭，控制台拒绝确认安全回路。",
+      "adHint": "急停失效时不要反复点击，优先系统重启。",
+      "effects": { "anomalyLevel": 3, "stability": -15 }
+    },
+    {
+      "id": "negative_floor", "title": "楼层显示为负数", "severity": 2,
+      "monitor": "监控：楼层显示 -1。摄像头画面出现地下走廊。",
+      "adHint": "负数楼层不是正常地下层，立即重启系统。",
+      "effects": { "floor": -1, "anomalyLevel": 2, "stability": -10 }
+    },
+    {
+      "id": "power_drain", "title": "电源异常下降", "severity": 2,
+      "monitor": "监控：备用电源自动接管，但电量仍在下降。",
+      "adHint": "电源异常下降时减少移动，优先关门与重启。",
+      "effects": { "anomalyLevel": 2, "power": -22 }
+    },
+    {
+      "id": "door_refuse", "title": "电梯门拒绝关闭", "severity": 2,
+      "monitor": "监控：关门按钮已按下，门在合拢前自动弹开。异常状态持续。",
+      "adHint": "门拒绝关闭时不要连续按关门，先急停再重启系统。",
+      "effects": { "door": "open", "anomalyLevel": 2, "stability": -10 }
+    },
+    {
+      "id": "weight_mismatch", "title": "载重数据异常", "severity": 1,
+      "monitor": "监控：载重传感器读数 — 0kg。轿厢内有 1 名乘客。读数矛盾。",
+      "adHint": "载重异常时优先查日志，乘客数可能被重置。",
+      "effects": { "passengers": 0, "anomalyLevel": 1, "stability": -7 }
+    },
+    {
+      "id": "floor_jump", "title": "楼层编号跳跃", "severity": 2,
+      "monitor": "监控：电梯从 5 层直接移动到 9 层。摄像头画面缺失 4 帧。",
+      "adHint": "楼层跳跃时减少移动操作，用系统重启恢复楼层显示。",
+      "effects": { "floor": "+4", "anomalyLevel": 2, "stability": -12, "power": -10 }
+    },
+    {
+      "id": "emergency_lights", "title": "应急灯异常启动", "severity": 3,
+      "monitor": "监控：轿厢应急灯突然亮起。备用电源消耗加速。",
+      "adHint": "应急灯启动时尽量避免移动，立即重启系统可关闭应急灯。",
+      "effects": { "anomalyLevel": 3, "stability": -14, "power": -20 }
+    }
+  ],
+  "hiddenLogs": {
+    "phantom_floor": { "title": "第13层施工记录", "content": "2019年施工记录：第13层在竣工前被从建筑图纸中删除。\n原因：施工期间发生III级安全事件，3名工人失踪。\n楼层控制面板已被物理封堵，但系统仍能响应来自该层的按钮信号。" },
+    "camera_delay": { "title": "监控系统校准记录", "content": "校准日志 #4417：摄像头#03 与#07 存在 3 秒信号延迟。\n技术人员备注：延迟与第 13 层信号干扰有关，建议不要在 13 层停靠。" },
+    "zero_passenger_shadow": { "title": "乘客记录异常说明", "content": "传感器技术手册（节选）：\n红外传感器在非营业时段多次检测到热源信号，但乘客计数器持续归零。\n维修记录：传感器无故障。热源信号经比对——与员工体温档案不匹配。" },
+    "log_echo": { "title": "日志系统诊断报告", "content": "诊断报告 #FD-22-019：\n系统日志缓冲区检测到重复写入操作。重复内容「不要开门」的写入时间戳早于当前值班员登录时间。\n建议：检查前一值班员的退出状态。" },
+    "auto_button": { "title": "控制系统审计追踪", "content": "审计追踪 #AUD-882：\n自动按钮信号来源追溯至 5 号服务器（已于 2022 年停用）。\n该服务器的最后一条记录：「控制权移交程序未完成」。" },
+    "stop_failure": { "title": "急停系统维护日志", "content": "维护日志 #M-341：\n急停回路#2 在定期检查中被标记为「状态：不可用」。\n签署人签名无法识别。签署时间：3 年前。没有后续维修记录。" },
+    "negative_floor": { "title": "地下层勘测报告", "content": "建筑勘测报告（内部）：\n地下实际存在 4 层结构，但公开图纸仅标注 B1-B2。\nB3-B4 的电梯按钮在出厂时已被移除，但线路仍然通电。" },
+    "power_drain": { "title": "备用电源异常报告", "content": "异常报告 #P-877：\n备用电源在无负载状态下持续放电。经查，有一条非授权线路从备用电源柜分接至未知设备。\n线路标签：「不要切断」。" },
+    "door_refuse": { "title": "门控系统事故报告", "content": "事故报告 #D-1290：\n门控模块在连续 3 次异常重启后进入保护模式。\n模块日志输出最后一条：「识别到外部干扰信号。拒绝执行 — 保护乘员安全」。" },
+    "weight_mismatch": { "title": "传感器校验记录", "content": "校验记录 #W-554：\n载重传感器与红外传感器读数不一致。红外传感器在轿厢空载时检测到热源。\n技术人员备注：请确认值班员在操作前已清空轿厢。" },
+    "floor_jump": { "title": "楼层定位日志", "content": "定位日志 #F-213：\nGPS 楼层定位模块在校准前后记录的楼层编号不一致。\n系统自动修正失败。可能原因：参考信号源来自非标设备。" },
+    "emergency_lights": { "title": "应急照明测试报告", "content": "测试报告 #E-777：\n应急照明系统在无触发信号的情况下自行启动。\n供电线路检测到寄生回路。回路终端设备编号无法匹配任何已知设备清单。" }
+  },
+  "failure": {
+    "summaries": { "power": "电源耗尽", "stability": "稳定度归零", "anomalyLevel": "异常等级失控", "passengers": "乘客记录出现负数", "default": "系统拒绝继续响应" },
+    "defaultHint": "先关门，再重启系统，避免连续移动。",
+    "adHintPrefix": "广告提示：{hint}",
+    "adReviveRollback": "广告复活完成：回滚 {seconds} 秒，恢复至可控状态。",
+    "adReviveMonitor": "广告复活完成：回滚到 {seconds} 秒前的系统状态。",
+    "snapshotFallback": "可观看广告复活，回滚到 {seconds} 秒前的系统状态。",
+    "noSnapshotFallback": "可观看广告复活，回滚到初始系统状态。"
+  },
+  "fakeEnding": {
+    "eyebrow": "\u26a0 SYSTEM ANOMALY DETECTED",
+    "title": "操作员关联异常",
+    "text": "系统检测到操作员第 {count} 次系统崩溃。\n根据《异常控制员守则》第 7 条，您已被标记为\u201c异常关联人员\u201d。\n前 {threshold} 次记录已被永久删除。\n建议您立即离开控制台并联系安保部门。",
+    "truthPlaceholder": "[???] 观看广告揭示真相。",
+    "truthContent": "这不是第一次，也不会是最后一次。\n这座建筑的异常系统从未被修复。\n每一任值班员最后都变成了「异常事件」本身。\n系统日志中关于「乘客」的记载——都是前任值班员的热源信号。\n你现在坐的位置，就是上一任值班员被发现的地方。"
+  },
+  "ui": {
+    "viewAd": "观看广告复活",
+    "unlockAd": "解码加密记录",
+    "restart": "重新开始",
+    "revealTruth": "观看广告揭示真相",
+    "triggerTest": "触发异常测试",
+    "decodePrefix": "[解码记录]",
+    "initialLog": "异常电梯控制台已接管。等待操作员指令。",
+    "successfulShift": "本轮值守结束。系统仍未解释全部异常。",
+    "shiftComplete": "值守完成。连续失败计数已重置。",
+    "hiddenLogCaptured": "加密记录已捕获：{title}。使用「查看日志」功能解码。",
+    "unlockResult": "已解码：{title}",
+    "decodeMonitor": "解码完成：{title}。完整内容已写入系统日志。"
+  }
+};
+
+
+// --- src/audio.js ---
+/**
+ * audio.js — 程序化音效（Web Audio API，无需外部文件）
+ *
+ * 所有声音通过 OscillatorNode + GainNode 实时合成，
+ * 初始化为惰性加载，首次用户交互时才会创建 AudioContext。
+ */
+
+let ctx = null;
+
+function getContext() {
+  if (!ctx) {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  // 某些浏览器在 user gesture 后需要 resume
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(() => {});
+  }
+  return ctx;
+}
+
+/**
+ * 播放一个简单的单频音
+ * @param {number} freq - 频率 Hz
+ * @param {number} duration - 持续秒
+ * @param {string} type - 波形类型
+ * @param {number} volume - 音量 0-1
+ */
+function beep(freq, duration, type = 'square', volume = 0.08) {
+  try {
+    const ac = getContext();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ac.currentTime);
+    gain.gain.setValueAtTime(volume, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + duration);
+  } catch {
+    // 静默失败 — 音效不是关键功能
+  }
+}
+
+/**
+ * 播放一个扫频音（用于异常/警报）
+ */
+function sweep(startFreq, endFreq, duration, type = 'sawtooth', volume = 0.06) {
+  try {
+    const ac = getContext();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(startFreq, ac.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, ac.currentTime + duration);
+    gain.gain.setValueAtTime(volume, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + duration);
+  } catch {
+    // 静默失败
+  }
+}
+
+/** 按钮点击 — 短促的咔嗒声 */
+function playClick() {
+  beep(800, 0.06, 'square', 0.06);
+}
+
+/** 操作成功 — 确认音 */
+function playSuccess() {
+  beep(1000, 0.1, 'sine', 0.07);
+}
+
+/** 操作失败 — 拒绝音 */
+function playFail() {
+  beep(300, 0.18, 'sawtooth', 0.07);
+}
+
+/** 异常触发 — 低频警报扫频 */
+function playAnomaly() {
+  sweep(200, 80, 0.45, 'sawtooth', 0.08);
+}
+
+/** 稳定度/电源危险 — 短促警告 */
+function playWarning() {
+  sweep(600, 200, 0.25, 'square', 0.06);
+}
+
+/** 系统崩溃 — 低沉衰减 */
+function playCrash() {
+  sweep(150, 30, 0.8, 'sawtooth', 0.1);
+}
+
+/** 广告复活 — 上升恢复音 */
+function playRevive() {
+  sweep(200, 1200, 0.5, 'sine', 0.08);
+}
+
+/** 游戏重启 — 重置音 */
+function playRestart() {
+  beep(600, 0.08, 'sine', 0.06);
+  setTimeout(() => beep(800, 0.1, 'sine', 0.06), 100);
+}
+
+
+// --- src/state.js ---
+
+
+
+function createInitialState() {
+  const c = CONFIG.initial;
+  return {
+    floor: c.floor,
+    door: c.door,
+    moving: c.moving,
+    direction: c.direction,
+    power: c.power,
+    stability: c.stability,
+    anomalyLevel: c.anomalyLevel,
+    passengers: c.passengers,
+    gameOver: c.gameOver,
+    elapsed: 0,
+    remaining: c.duration,
+    adRevivesUsed: 0,
+    hiddenLogsUnlocked: 0,
+    lastAdHint: '',
+    monitor: t('monitor.initial'),
+    activeAnomaly: null,
+    snapshots: [],
+    hiddenLogs: [],
+    adHintsUsed: 0,
+    consecutiveFailures: 0,
+    fakeEndingTriggered: false,
+    fakeEndingUnlocked: false,
+    logs: [createFeedbackLine('info', t('ui.initialLog'), 0)],
+  };
+}
+
+function cloneState(state) {
+  return structuredClone(state);
+}
+
+function appendLog(state, type, message) {
+  const next = cloneState(state);
+  next.logs.push(createFeedbackLine(type, message, next.elapsed ?? 0));
+  if (next.logs.length > CONFIG.logs.maxLines) next.logs = next.logs.slice(-CONFIG.logs.maxLines);
+  return next;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function checkFailure(state) {
+  const next = cloneState(state);
+  const f = CONFIG.failure;
+  if (next.power <= f.powerMin || next.stability <= f.stabilityMin || next.anomalyLevel >= f.anomalyLevelMax || next.passengers < f.passengersMin) {
+    next.gameOver = true;
+    next.moving = false;
+    next.direction = 'idle';
+  }
+  return next;
+}
+
+function saveSnapshot(state) {
+  const snapshots = [...(state.snapshots || [])];
+  // Build a clean copy of the state without the snapshots array (no nesting)
+  const clean = {};
+  for (const key of Object.keys(state)) {
+    if (key === 'snapshots') continue;
+    clean[key] = structuredClone(state[key]);
+  }
+  snapshots.push({ at: state.elapsed, state: clean });
+  const next = cloneState(state);
+  next.snapshots = snapshots;
+  return next;
+}
+
+function reviveFromAd(state) {
+  const snapshots = state.snapshots || [];
+  const rollbackWindow = CONFIG.adRevive.rollbackWindow;
+  const targetElapsed = Math.max(0, state.elapsed - rollbackWindow);
+  let best = null;
+  let bestDist = Infinity;
+  for (const snap of snapshots) {
+    const dist = Math.abs(snap.at - targetElapsed);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = snap;
+    }
+  }
+
+  let next;
+  if (best) {
+    next = cloneState(best.state);
+    next.snapshots = snapshots; // preserve snapshot history
+    next.rollbackSeconds = state.elapsed - best.at;
+  } else {
+    // No snapshot early enough — fall back to initial baseline
+    next = createInitialState();
+    next.snapshots = snapshots;
+    next.rollbackSeconds = state.elapsed;
+    next.elapsed = state.elapsed; // keep the clock running
+    next.remaining = Math.max(1, state.remaining);
+  }
+
+  next.gameOver = false;
+  next.door = 'closed';
+  next.moving = false;
+  next.direction = 'idle';
+  next.activeAnomaly = null;
+  next.adRevivesUsed += 1;
+  next.monitor = t('failure.adReviveMonitor', { seconds: next.rollbackSeconds });
+  next = appendLog(next, 'ad', t('failure.adReviveRollback', { seconds: next.rollbackSeconds }));
+  return next;
+}
+
+function tickState(state, seconds = 1) {
+  let next = cloneState(state);
+  const tk = CONFIG.tick;
+  next.elapsed += seconds;
+  next.remaining = clamp(next.remaining - seconds, 0, CONFIG.initial.duration);
+  if (next.moving) {
+    next.power = clamp(next.power - seconds * tk.powerDrainMoving, 0, 100);
+    next.stability = clamp(next.stability - seconds * tk.stabilityDrainMoving, 0, 100);
+  } else {
+    next.power = clamp(next.power - seconds * tk.powerDrainIdle, 0, 100);
+  }
+  if (next.remaining <= 0) {
+    next.gameOver = true;
+    next = appendLog(next, 'success', t('ui.successfulShift'));
+  }
+  return checkFailure(next);
+}
+
+
+// --- src/events.js ---
+
+
+
+/**
+ * 从皮肤数据动态构建异常事件数组
+ */
+function createAnomaly(skinDef) {
+  return {
+    id: skinDef.id,
+    title: skinDef.title,
+    severity: skinDef.severity,
+    monitor: skinDef.monitor,
+    adHint: skinDef.adHint,
+    apply(state) {
+      const next = cloneState(state);
+      const effects = skinDef.effects || {};
+      for (const [field, value] of Object.entries(effects)) {
+        if (field === 'floor' && typeof value === 'string' && value.startsWith('+')) {
+          // floor 的 '+X' 字符串 → 增量累加并封顶
+          const num = parseInt(value, 10);
+          next[field] = Math.min(30, (next[field] ?? 0) + num);
+        } else if (field === 'floor' || field === 'passengers' || field === 'door') {
+          // 绝对赋值（floor 数值、passengers、door）
+          next[field] = value;
+        } else if (typeof value === 'number') {
+          // 数值累加（anomalyLevel、stability、power 等）
+          next[field] = (next[field] ?? 0) + value;
+        } else if (typeof value === 'string' && value.startsWith('+')) {
+          // 其他 '+X' 字符串：增量累加
+          next[field] = (next[field] ?? 0) + parseInt(value, 10);
+        } else {
+          // 其他字符串：直接赋值
+          next[field] = value;
+        }
+      }
+      next.anomalyLevel = clamp(next.anomalyLevel, 0, 6);
+      next.stability = clamp(next.stability, 0, 100);
+      next.power = clamp(next.power, 0, 100);
+      next.activeAnomaly = skinDef.id;
+      next.monitor = skinDef.monitor;
+      return next;
+    },
+  };
+}
+
+/** 当前皮肤生成的异常事件列表 */
+const ANOMALIES = getAnomalies().map(createAnomaly);
+
+function findAnomaly(id) {
+  return ANOMALIES.find((event) => event.id === id);
+}
+
+function applyAnomaly(state, id) {
+  const event = findAnomaly(id);
+  if (!event) throw new Error(`Unknown anomaly: ${id}`);
+  let next = event.apply(state);
+  next.lastAdHint = event.adHint;
+  // 添加关联隐藏日志（不重复）
+  const raw = _getHiddenLog(id);
+  if (raw && !next.hiddenLogs.some(h => h.id === id + '_log')) {
+    next.hiddenLogs.push({ id: id + '_log', title: raw.title, content: raw.content, locked: true });
+    next = appendLog(next, 'info', t('ui.hiddenLogCaptured', { title: raw.title }));
+  }
+  next = appendLog(next, event.severity >= 3 ? 'danger' : 'warn', `异常事件：${event.title}。${event.adHint}`);
+  return { event, state: checkFailure(next) };
+}
+
+function pickNextAnomaly(state, random = Math.random) {
+  const pressure = Math.min(ANOMALIES.length - 1, Math.floor(state.anomalyLevel / CONFIG.anomaly.pressureDivisor));
+  const index = Math.min(ANOMALIES.length - 1, Math.floor(random() * ANOMALIES.length + pressure) % ANOMALIES.length);
+  return ANOMALIES[index];
+}
+
+// 向后兼容导出
+function getHiddenLog(anomalyId) {
+  return _getHiddenLog(anomalyId);
+}
+
+/** @deprecated 请使用 getHiddenLog() 代替 */
+const _buildHiddenLogsMap = () => {
+  const map = {};
+  const anomalies = getAnomalies();
+  for (const a of anomalies) {
+    const hl = _getHiddenLog(a.id);
+    if (hl) {
+      map[a.id] = { id: `${a.id}_log`, title: hl.title, content: hl.content };
+    }
+  }
+  return map;
+};
+
+const HIDDEN_LOGS = _buildHiddenLogsMap();
+
+
+// --- src/actions.js ---
+
+
+
+const ACTIONS = {
+  openDoor(state) {
+    if (state.moving) return fail(state, t('actionFailMessages.openDoor_moving'));
+    let next = cloneState(state);
+    next.door = 'open';
+    next.monitor = t('monitor.actions.openDoor', { floor: next.floor });
+    next = appendLog(next, 'info', t('actionLogMessages.openDoor', { floor: next.floor }));
+    return ok(next, t('actionFeedback.openDoor'));
+  },
+
+  closeDoor(state) {
+    let next = cloneState(state);
+    next.door = 'closed';
+    next.monitor = t('monitor.actions.closeDoor');
+    next = appendLog(next, 'info', t('actionLogMessages.closeDoor'));
+    return ok(next, t('actionFeedback.closeDoor'));
+  },
+
+  moveUp(state) {
+    if (state.door !== 'closed') return fail(state, t('actionFailMessages.moveUp_doorNotClosed'));
+    let next = cloneState(state);
+    const a = CONFIG.actions.moveUp;
+    next.floor += 1;
+    next.moving = true;
+    next.direction = 'up';
+    next.power = clamp(next.power - a.powerCost, 0, 100);
+    next.stability = clamp(next.stability - a.stabilityCost, 0, 100);
+    next.monitor = t('monitor.actions.moveUp', { floor: next.floor });
+    next = appendLog(next, 'info', t('actionLogMessages.moveUp', { floor: next.floor }));
+    return ok(checkFailure(next), t('actionFeedback.moveUp'));
+  },
+
+  moveDown(state) {
+    if (state.door !== 'closed') return fail(state, t('actionFailMessages.moveDown_doorNotClosed'));
+    let next = cloneState(state);
+    const a = CONFIG.actions.moveDown;
+    next.floor -= 1;
+    next.moving = true;
+    next.direction = 'down';
+    next.power = clamp(next.power - a.powerCost, 0, 100);
+    next.stability = clamp(next.stability - a.stabilityCost, 0, 100);
+    next.monitor = t('monitor.actions.moveDown', { floor: next.floor });
+    next = appendLog(next, 'info', t('actionLogMessages.moveDown', { floor: next.floor }));
+    return ok(checkFailure(next), t('actionFeedback.moveDown'));
+  },
+
+  emergencyStop(state) {
+    let next = cloneState(state);
+    const es = CONFIG.actions.emergencyStop;
+    if (next.activeAnomaly === 'stop_failure') {
+      next.anomalyLevel = clamp(next.anomalyLevel + 1, 0, 6);
+      next.stability = clamp(next.stability - es.stabilityCostOnFailure, 0, 100);
+      next = appendLog(next, 'danger', t('actionLogMessages.emergencyStop_fail'));
+      return fail(checkFailure(next), '急停按钮失效。');
+    }
+    next.moving = false;
+    next.direction = 'idle';
+    next.stability = clamp(next.stability - es.stabilityCost, 0, 100);
+    next.monitor = t('monitor.actions.emergencyStop');
+    next = appendLog(next, 'warn', t('actionLogMessages.emergencyStop'));
+    return ok(checkFailure(next), t('actionFeedback.emergencyStop'));
+  },
+
+  restartSystem(state) {
+    let next = cloneState(state);
+    const rs = CONFIG.actions.restartSystem;
+    next.anomalyLevel = Math.max(0, next.anomalyLevel - rs.anomalyLevelReduce);
+    next.stability = clamp(next.stability + rs.stabilityRestore, 0, 100);
+    next.power = clamp(next.power - rs.powerCost, 0, 100);
+    next.moving = false;
+    next.direction = 'idle';
+    next.activeAnomaly = null;
+    next.monitor = t('monitor.actions.restartSystem');
+    next = appendLog(next, 'warn', t('actionLogMessages.restartSystem', { cost: rs.powerCost }));
+    return ok(checkFailure(next), t('actionFeedback.restartSystem'));
+  },
+
+  inspectLog(state) {
+    const next = appendLog(state, 'info', t('actionLogMessages.inspectLog'));
+    return ok(next, t('actionFeedback.inspectLog'));
+  },
+
+  unlockHiddenLog(state) {
+    // 找到第一条仍锁定的隐藏日志
+    const locked = state.hiddenLogs.find(h => h.locked);
+    if (!locked) {
+      return fail(state, t('actionFeedback.unlockHiddenLog_noLocked'));
+    }
+    const unlocked = state.adHintsUsed;
+    if (unlocked >= CONFIG.hiddenLogs.maxUnlockedPerRun) {
+      return fail(state, t('actionFeedback.unlockHiddenLog_limit', { count: unlocked }));
+    }
+    let next = cloneState(state);
+    const idx = next.hiddenLogs.findIndex(h => h.id === locked.id);
+    if (idx !== -1) {
+      next.hiddenLogs[idx] = { ...next.hiddenLogs[idx], locked: false };
+    }
+    next.adHintsUsed += 1;
+    next = appendLog(next, 'ad', t('actionLogMessages.unlockHiddenLog_ok'));
+    next.monitor = t('ui.decodeMonitor', { title: locked.title });
+    return ok(next, t('ui.unlockResult', { title: locked.title }));
+  },
+};
+
+function ok(state, message) {
+  return { ok: true, state, message };
+}
+
+function fail(state, message) {
+  const next = appendLog(state, 'warn', message);
+  return { ok: false, state: next, message };
+}
+
+function performAction(state, actionId) {
+  const action = ACTIONS[actionId];
+  if (!action) return fail(state, `未知操作：${actionId}`);
+  if (state.gameOver && actionId !== 'inspectLog') return fail(state, t('actionFailMessages.gameOver'));
+  return action(state);
+}
+
+const AVAILABLE_ACTIONS = [
+  { id: 'openDoor', label: actionLabel('openDoor') },
+  { id: 'closeDoor', label: actionLabel('closeDoor') },
+  { id: 'moveUp', label: actionLabel('moveUp') },
+  { id: 'moveDown', label: actionLabel('moveDown') },
+  { id: 'emergencyStop', label: actionLabel('emergencyStop') },
+  { id: 'restartSystem', label: actionLabel('restartSystem') },
+  { id: 'inspectLog', label: actionLabel('inspectLog') },
+  { id: 'unlockHiddenLog', label: actionLabel('unlockHiddenLog') },
+];
+
+
+// --- src/game.js ---
+
+
+
+
+
+
+
+const root = document.querySelector('.console-shell');
+const els = {
+  remaining: document.querySelector('#remaining'),
+  floor: document.querySelector('#floor'),
+  door: document.querySelector('#door'),
+  direction: document.querySelector('#direction'),
+  passengers: document.querySelector('#passengers'),
+  power: document.querySelector('#power'),
+  powerText: document.querySelector('#powerText'),
+  stability: document.querySelector('#stability'),
+  stabilityText: document.querySelector('#stabilityText'),
+  anomalyLevel: document.querySelector('#anomalyLevel'),
+  reviveCount: document.querySelector('#reviveCount'),
+  adHintsCount: document.querySelector('#adHintsCount'),
+  hiddenLogsCount: document.querySelector('#hiddenLogsCount'),
+  fakeEndingOverlay: document.querySelector('#fakeEndingOverlay'),
+  fakeEndingText: document.querySelector('#fakeEndingText'),
+  fakeEndingTruth: document.querySelector('#fakeEndingTruth'),
+  fakeEndingTruthBtn: document.querySelector('#fakeEndingTruthBtn'),
+  fakeEndingRestartBtn: document.querySelector('#fakeEndingRestartBtn'),
+  monitor: document.querySelector('#monitor'),
+  actions: document.querySelector('#actions'),
+  logs: document.querySelector('#logs'),
+  forceAnomaly: document.querySelector('#forceAnomaly'),
+  overlay: document.querySelector('#failureOverlay'),
+  failureReason: document.querySelector('#failureReason'),
+  adHint: document.querySelector('#adHint'),
+  reviveButton: document.querySelector('#reviveButton'),
+  restartButton: document.querySelector('#restartButton'),
+};
+
+let state = createInitialState();
+let nextAnomalyAt = CONFIG.anomaly.firstTriggerAt;
+let timer = null;
+let lastTone = 'normal';
+let crashPlayed = false;
+
+function labelDoor(value) {
+  const labels = getSkin().doorLabels || { open: '开启', closed: '关闭' };
+  return labels[value] || value;
+}
+
+function labelDirection(value) {
+  const labels = getSkin().directionLabels || { up: '上行', down: '下行', idle: '待机' };
+  return labels[value] || value;
+}
+
+function renderActions() {
+  els.actions.replaceChildren();
+  const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
+  for (const action of AVAILABLE_ACTIONS) {
+    // 解码加密记录按钮只在有锁定日志时显示
+    if (action.id === 'unlockHiddenLog' && lockedCount === 0) continue;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = action.id === 'unlockHiddenLog'
+      ? actionLabel(action.id, lockedCount)
+      : action.label;
+    button.dataset.action = action.id;
+    button.addEventListener('click', () => dispatchAction(action.id));
+    els.actions.append(button);
+  }
+}
+
+function render() {
+  root.dataset.tone = getToneForState(state);
+  els.remaining.textContent = Math.ceil(state.remaining);
+  els.floor.textContent = state.floor;
+  els.door.textContent = labelDoor(state.door);
+  els.direction.textContent = labelDirection(state.direction);
+  els.passengers.textContent = state.passengers;
+  els.power.value = state.power;
+  els.powerText.textContent = Math.round(state.power);
+  els.stability.value = state.stability;
+  els.stabilityText.textContent = Math.round(state.stability);
+  els.anomalyLevel.textContent = state.anomalyLevel;
+  els.reviveCount.textContent = state.adRevivesUsed;
+
+  // 隐藏日志统计
+  const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
+  const unlockedCount = state.hiddenLogs.filter(h => !h.locked).length;
+  if (els.hiddenLogsCount) els.hiddenLogsCount.textContent = lockedCount;
+  if (els.adHintsCount) els.adHintsCount.textContent = state.adHintsUsed;
+
+  // 显示已解锁的隐藏日志内容
+  const unlockedHidden = state.hiddenLogs.filter(h => !h.locked);
+  if (unlockedHidden.length > 0) {
+    const last = unlockedHidden[unlockedHidden.length - 1];
+    els.monitor.textContent = `[解码记录] ${last.title}\n${last.content}`;
+  } else {
+    els.monitor.textContent = state.monitor;
+  }
+
+  els.logs.replaceChildren();
+  for (const line of state.logs.slice(-CONFIG.logs.displayLines)) {
+    const li = document.createElement('li');
+    li.className = line.type;
+    li.textContent = line.text;
+    els.logs.append(li);
+  }
+  els.logs.scrollTop = els.logs.scrollHeight;
+
+  if (state.gameOver) {
+    if (state.fakeEndingTriggered) {
+      // 假结局
+      els.overlay.hidden = true;
+      els.fakeEndingOverlay.hidden = false;
+      const threshold = CONFIG.fakeEnding.consecutiveFailuresThreshold;
+      els.fakeEndingText.textContent = t('fakeEnding.text', {
+        count: state.consecutiveFailures,
+        threshold: threshold,
+      });
+      if (state.fakeEndingUnlocked) {
+        els.fakeEndingTruth.textContent = t('fakeEnding.truthContent');
+        els.fakeEndingTruthBtn.hidden = true;
+      } else {
+        els.fakeEndingTruth.textContent = t('fakeEnding.truthPlaceholder');
+        els.fakeEndingTruthBtn.hidden = false;
+      }
+    } else {
+      // 正常失败
+      els.fakeEndingOverlay.hidden = true;
+      els.overlay.hidden = false;
+      els.failureReason.textContent = summarizeFailure(state);
+      els.adHint.textContent = state.lastAdHint
+        ? t('failure.adHintPrefix', { hint: state.lastAdHint })
+        : t('failure.defaultHint');
+    }
+  } else {
+    els.overlay.hidden = true;
+    els.fakeEndingOverlay.hidden = true;
+  }
+}
+
+function dispatchAction(actionId) {
+  playClick();
+  const result = performAction(state, actionId);
+  state = result.state;
+  if (result.ok) {
+    playSuccess();
+  } else {
+    playFail();
+  }
+  render();
+}
+
+function triggerAnomaly() {
+  if (state.gameOver) return;
+  const event = pickNextAnomaly(state);
+  const result = applyAnomaly(state, event.id);
+  state = result.state;
+  playAnomaly();
+  const cd = CONFIG.anomaly;
+  nextAnomalyAt = state.elapsed + cd.cooldownMin + Math.floor(Math.random() * (cd.cooldownMax - cd.cooldownMin + 1));
+  render();
+}
+
+function loop() {
+  if (state.gameOver) {
+    if (!crashPlayed) {
+      playCrash();
+      crashPlayed = true;
+    }
+    render();
+    return;
+  }
+  crashPlayed = false;
+  state = tickState(state, 1);
+
+  // 成功值守 → 重置连续失败计数
+  if (state.gameOver && state.remaining <= 0) {
+    state = structuredClone(state);
+    state.consecutiveFailures = 0;
+    state = appendLog(state, 'success', t('ui.shiftComplete'));
+    render();
+    return;
+  }
+
+  // 检测失败 → 递增连续失败计数
+  if (state.gameOver) {
+    state = structuredClone(state);
+    state.consecutiveFailures += 1;
+    const fe = CONFIG.fakeEnding;
+    if (state.consecutiveFailures >= fe.consecutiveFailuresThreshold && !state.fakeEndingTriggered) {
+      state.fakeEndingTriggered = true;
+      state.fakeEndingUnlocked = false;
+    }
+  }
+  // Save a snapshot on interval for ad-revive rollback
+  const ar = CONFIG.adRevive;
+  if (state.elapsed > 0 && state.elapsed % ar.snapshotInterval === 0 && state.snapshots.length < ar.maxSnapshots) {
+    state = saveSnapshot(state);
+  }
+  if (!state.gameOver && state.elapsed >= nextAnomalyAt) triggerAnomaly();
+  // Play warning sound on tone transitions to critical/danger
+  const tone = getToneForState(state);
+  if (tone === 'danger' || tone === 'critical') {
+    if (lastTone !== tone) playWarning();
+  }
+  lastTone = tone;
+  render();
+}
+
+function restart() {
+  state = createInitialState();
+  nextAnomalyAt = 7;
+  render();
+}
+
+els.forceAnomaly.textContent = t('ui.triggerTest');
+els.forceAnomaly.addEventListener('click', triggerAnomaly);
+els.reviveButton.textContent = t('ui.viewAd');
+els.reviveButton.addEventListener('click', () => {
+  playRevive();
+  state = reviveFromAd(state);
+  nextAnomalyAt = state.elapsed + 8;
+  render();
+});
+els.restartButton.addEventListener('click', () => {
+  playRestart();
+  restart();
+});
+
+// 假结局按钮
+els.fakeEndingTruthBtn.addEventListener('click', () => {
+  playRevive();
+  state = structuredClone(state);
+  state.fakeEndingUnlocked = true;
+  render();
+});
+els.fakeEndingRestartBtn.addEventListener('click', () => {
+  playRestart();
+  restart();
+});
+
+renderActions();
+
+// 从皮肤设置标题和副标题
+const meta = getSkin().meta;
+if (meta) {
+  const titleEl = document.querySelector('#gameTitle');
+  const subEl = document.querySelector('#gameSubtitle');
+  if (titleEl) titleEl.textContent = meta.name;
+  if (subEl) subEl.textContent = meta.subtitle;
+  root.dataset.skin = meta.id;
+}
+
+render();
+timer = window.setInterval(loop, 1000);
+window.addEventListener('beforeunload', () => window.clearInterval(timer));
+
+
+
+// ── 启动游戏 ──
+const canvas = typeof wx !== 'undefined' ? wx.createCanvas() : document.querySelector('canvas');
+if (canvas) {
+  const { init, render } = window.__MINIGAME_RENDERER__ || {};
+  if (init) init(canvas);
+
+  // 每帧渲染
+  function gameLoop() {
+    render(state);
+    requestAnimationFrame(gameLoop);
+  }
+  gameLoop();
+} else {
+  // DOM 模式 - game.js 已经处理
+  console.log('[MINIGAME] Running in DOM mode');
+}
+
+})();
