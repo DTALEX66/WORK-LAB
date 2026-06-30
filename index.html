@@ -3,33 +3,71 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>星尘收集者 | MINIGAME</title>
+    <title>异常电梯控制台 | MINIGAME</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="game-shell">
-      <section class="hero">
-        <p class="eyebrow">MINIGME · GAME 01</p>
-        <h1>星尘收集者</h1>
-        <p class="subtitle">驾驶小飞船收集星星，躲开陨石，在 60 秒内冲击最高分。</p>
+    <main class="console-shell" data-tone="normal">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">MINIGAME · ANOMALY SYSTEM SIM</p>
+          <h1>异常电梯控制台</h1>
+        </div>
+        <div class="shift-card">
+          <span>值守倒计时</span>
+          <strong id="remaining">60</strong>
+        </div>
+      </header>
+
+      <section class="grid">
+        <section class="panel status-panel">
+          <div class="panel-title">电梯状态</div>
+          <dl class="status-list">
+            <div><dt>楼层</dt><dd id="floor">1</dd></div>
+            <div><dt>门状态</dt><dd id="door">关闭</dd></div>
+            <div><dt>方向</dt><dd id="direction">待机</dd></div>
+            <div><dt>乘客</dt><dd id="passengers">1</dd></div>
+            <div><dt>电源</dt><dd><meter id="power" min="0" max="100" value="100"></meter><span id="powerText">100</span></dd></div>
+            <div><dt>稳定度</dt><dd><meter id="stability" min="0" max="100" value="100"></meter><span id="stabilityText">100</span></dd></div>
+            <div><dt>异常等级</dt><dd id="anomalyLevel">0</dd></div>
+            <div><dt>广告复活</dt><dd id="reviveCount">0</dd></div>
+          </dl>
+        </section>
+
+        <section class="panel monitor-panel">
+          <div class="panel-title">监控画面</div>
+          <div class="monitor" id="monitor">
+            监控画面稳定：1 层轿厢内有 1 名乘客。
+          </div>
+          <div class="scanline"></div>
+        </section>
+
+        <section class="panel action-panel">
+          <div class="panel-title">操作面板</div>
+          <div id="actions" class="actions"></div>
+          <button id="forceAnomaly" class="secondary" type="button">触发异常测试</button>
+        </section>
+
+        <section class="panel log-panel">
+          <div class="panel-title">系统日志</div>
+          <ol id="logs" class="logs"></ol>
+        </section>
       </section>
 
-      <section class="hud" aria-label="游戏状态">
-        <div><span>分数</span><strong id="score">0</strong></div>
-        <div><span>生命</span><strong id="lives">3</strong></div>
-        <div><span>时间</span><strong id="time">60</strong></div>
-        <div><span>最佳</span><strong id="best">0</strong></div>
-      </section>
-
-      <canvas id="game" width="960" height="540" aria-label="星尘收集者游戏画布"></canvas>
-
-      <section class="controls">
-        <button id="startButton" type="button">开始游戏</button>
-        <button id="restartButton" type="button">重新开始</button>
-        <p>方向键 / WASD 移动，鼠标或触控拖动，空格暂停，R 重开。</p>
+      <section id="failureOverlay" class="failure-overlay" hidden>
+        <div class="failure-card">
+          <p class="eyebrow">SYSTEM FAILURE</p>
+          <h2>系统崩溃</h2>
+          <p id="failureReason">异常等级失控。可观看广告复活。</p>
+          <p id="adHint" class="hint"></p>
+          <div class="failure-actions">
+            <button id="reviveButton" type="button">观看广告复活</button>
+            <button id="restartButton" class="secondary" type="button">重新开始</button>
+          </div>
+        </div>
       </section>
     </main>
 
-    <script src="src/game.js"></script>
+    <script type="module" src="src/game.js"></script>
   </body>
 </html>
