@@ -1,7 +1,7 @@
 import { AVAILABLE_ACTIONS, performAction } from './actions.js';
 import { applyAnomaly, pickNextAnomaly } from './events.js';
 import { getToneForState, summarizeFailure } from './feedback.js';
-import { createInitialState, reviveFromAd, tickState } from './state.js';
+import { createInitialState, reviveFromAd, saveSnapshot, tickState } from './state.js';
 
 const root = document.querySelector('.console-shell');
 const els = {
@@ -105,6 +105,10 @@ function loop() {
     return;
   }
   state = tickState(state, 1);
+  // Save a snapshot every 10 seconds for ad-revive rollback
+  if (state.elapsed > 0 && state.elapsed % 10 === 0 && state.snapshots.length < 12) {
+    state = saveSnapshot(state);
+  }
   if (!state.gameOver && state.elapsed >= nextAnomalyAt) triggerAnomaly();
   render();
 }

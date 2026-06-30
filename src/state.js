@@ -18,6 +18,7 @@ export function createInitialState() {
     lastAdHint: '',
     monitor: '监控画面稳定：1 层轿厢内有 1 名乘客。',
     activeAnomaly: null,
+    snapshots: [],
     logs: [createFeedbackLine('info', '异常电梯控制台已接管。等待操作员指令。', 0)],
   };
 }
@@ -47,19 +48,56 @@ export function checkFailure(state) {
   return next;
 }
 
+export function saveSnapshot(state) {
+  const snapshots = [...(state.snapshots || [])];
+  // Build a clean copy of the state without the snapshots array (no nesting)
+  const clean = {};
+  for (const key of Object.keys(state)) {
+    if (key === 'snapshots') continue;
+    clean[key] = structuredClone(state[key]);
+  }
+  snapshots.push({ at: state.elapsed, state: clean });
+  const next = cloneState(state);
+  next.snapshots = snapshots;
+  return next;
+}
+
 export function reviveFromAd(state) {
-  let next = cloneState(state);
+  const snapshots = state.snapshots || [];
+  // Find the snapshot closest to (current elapsed - 30) seconds ago
+  const targetElapsed = Math.max(0, state.elapsed - 30);
+  let best = null;
+  let bestDist = Infinity;
+  for (const snap of snapshots) {
+    const dist = Math.abs(snap.at - targetElapsed);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = snap;
+    }
+  }
+
+  let next;
+  if (best) {
+    next = cloneState(best.state);
+    next.snapshots = snapshots; // preserve snapshot history
+    next.rollbackSeconds = state.elapsed - best.at;
+  } else {
+    // No snapshot early enough — fall back to initial baseline
+    next = createInitialState();
+    next.snapshots = snapshots;
+    next.rollbackSeconds = state.elapsed;
+    next.elapsed = state.elapsed; // keep the clock running
+    next.remaining = Math.max(1, state.remaining);
+  }
+
   next.gameOver = false;
-  next.power = Math.max(45, next.power);
-  next.stability = Math.max(45, next.stability);
-  next.anomalyLevel = Math.min(2, next.anomalyLevel);
   next.door = 'closed';
   next.moving = false;
   next.direction = 'idle';
   next.activeAnomaly = null;
   next.adRevivesUsed += 1;
-  next.monitor = '广告复活完成：系统回滚到可控状态，但异常残留仍在。';
-  next = appendLog(next, 'ad', '广告复活完成：恢复电力与稳定度，异常等级暂时压低。');
+  next.monitor = `广告复活完成：回滚到 ${next.rollbackSeconds} 秒前的系统状态。`;
+  next = appendLog(next, 'ad', `广告复活完成：回滚 ${next.rollbackSeconds} 秒，恢复至可控状态。`);
   return next;
 }
 

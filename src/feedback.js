@@ -16,7 +16,25 @@ export function summarizeFailure(state) {
   if (state.anomalyLevel >= 6) reasons.push('异常等级失控');
   if (state.passengers < 0) reasons.push('乘客记录出现负数');
   if (reasons.length === 0) reasons.push('系统拒绝继续响应');
-  return `${reasons.join('、')}。可观看广告复活，回滚到 30 秒前的可控状态。`;
+
+  // Compute actual rollback time from snapshots
+  const snapshots = state.snapshots || [];
+  const targetElapsed = Math.max(0, state.elapsed - 30);
+  let rollbackSec = 0;
+  if (snapshots.length > 0) {
+    let best = snapshots[0];
+    let bestDist = Math.abs(best.at - targetElapsed);
+    for (const snap of snapshots) {
+      const dist = Math.abs(snap.at - targetElapsed);
+      if (dist < bestDist) { bestDist = dist; best = snap; }
+    }
+    rollbackSec = state.elapsed - best.at;
+  }
+
+  if (snapshots.length > 0) {
+    return `${reasons.join('、')}。可观看广告复活，回滚到 ${rollbackSec} 秒前的系统状态。`;
+  }
+  return `${reasons.join('、')}。可观看广告复活，回滚到初始系统状态。`;
 }
 
 export function getToneForState(state) {
