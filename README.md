@@ -7,14 +7,17 @@
 ```
 hermes-pack/
 ├── config/
-│   ├── config.yaml            ← 完整配置（密钥已剔除）
+│   ├── config.yaml            ← 完整配置（GPT + CC Switch 代理）
 │   ├── SOUL.md                ← Agent 人格设定
-│   ├── .env.template          ← 环境变量模板
+│   ├── .env.template          ← 环境变量（含代理配置）
 │   └── auth.json.template     ← 凭证模板
 ├── skills/software-development/
 │   ├── screenlingua/          ← 截图翻译项目技能
 │   ├── python-testing/        ← Python 测试约定
 │   └── windows-development/   ← Windows 开发排坑
+├── tools/
+│   ├── CC-Switch-v3.16.4-Windows.msi  ← CC Switch 安装包
+│   └── cc-switch-config.json          ← CC Switch 配置导出
 ├── memories/MEMORY.md         ← 跨会话记忆参考
 ├── setup.ps1                  ← Windows 一键部署脚本
 ├── setup.sh                   ← Linux/macOS 一键部署脚本
@@ -126,6 +129,32 @@ hermes config set model.default gpt-4o
 ```
 
 > 插件内置 base_url 为 `https://chatgpt.com/backend-api/codex`，无需手动设置
+
+---
+
+### 方案D：CC Switch 代理 + GPT（本机专用）
+
+> **适用场景**：网络被墙的环境，通过 CC Switch 代理翻墙访问 OpenAI  
+> **路由**：`Hermes → CC Switch 代理(:7890) → ChatGPT OAuth → GPT-5.5`
+
+**前提：** CC Switch 已安装并运行（代理端口 7890）
+
+```bash
+# CC Switch 安装包在 tools/ 目录下
+# 运行 CC-Switch-v3.16.4-Windows.msi 安装后启动即可
+
+# .env 中自动配置代理
+HTTPS_PROXY=http://127.0.0.1:7890
+HTTP_PROXY=http://127.0.0.1:7890
+
+# OAuth 认证（首次只需一次）
+hermes auth add openai-codex
+# 浏览器打开 https://auth.openai.com/codex/device，输入验证码
+
+# 切换 Provider
+hermes config set model.provider openai-codex
+hermes config set model.default gpt-5.5
+```
 
 ---
 

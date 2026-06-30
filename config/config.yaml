@@ -1,61 +1,31 @@
 # ═══════════════════════════════════════════════════════════════
 # Hermes Agent — 完整配置（密钥已剔除）
-# 用途：在新电脑上快速部署相同行为
-# ═══════════════════════════════════════════════════════════════
-#
-# ── 三种路由方案 ────────────────────────────────────────────
-#
-# 方案A: Codex++ 本地代理中转（当前机器，有 Codex++)
-#   provider: custom
-#   base_url: http://127.0.0.1:57322/v1
-#   api_key: <从 ~/.codex/auth.json 读取的 Key>
-#   优点: 统一管理所有请求，Codex 和 Hermes 共享一条链路
-#   缺点: 依赖 Codex++ 进程，移植到无 Codex++ 的机器需换方案
-#
-# 方案B: DeepSeek 直连（任意机器，无需中转）
-#   provider: deepseek
-#   base_url: https://api.deepseek.com/v1
-#   .env: DEEPSEEK_API_KEY=***
-#   优点: 零依赖，最稳定，新机器首选
-#   缺点: 仅限 DeepSeek，不可用 GPT
-#
-# 方案C: OpenAI Codex OAuth（GPT 模型，需无网络限制的环境）
-#   provider: openai-codex
-#   base_url: '' (插件内置为 https://chatgpt.com/backend-api/codex)
-#   认证: hermes auth add openai-codex（OAuth 设备码流）
-#   优点: 用 ChatGPT 订阅直接调 GPT 模型
-#   缺点: 需要能访问 chatgpt.com 的网络
+# 当前方案：OpenAI Codex / ChatGPT OAuth + CC Switch 代理
 # ═══════════════════════════════════════════════════════════════
 
-# ── 当前选用的方案（可手动切换） ──────────────────────────
-# 默认使用 方案B (DeepSeek Provider — 官方路线)
-# 官方配置方式：
-#   - 交互式: hermes setup → 选择 DeepSeek → 填 API Key / Base URL / 模型
-#   - 配置文件: DEEPSEEK_API_KEY in ~/.hermes/.env (provider: deepseek)
-#
-# 也可用 hermes model 交互式切换，或在 config.yaml 中直接编辑：
+# ── 当前方案（GPT + CC Switch 代理） ────────────────────
+# 前提: CC Switch 运行中（端口 7890）, ChatGPT OAuth 已认证
+# 切换方式: hermes model → 选择 7. OpenAI / ChatGPT OAuth
 model:
-  default: deepseek-v4-flash
-  provider: deepseek
-  base_url: https://api.deepseek.com/v1
+  default: gpt-5.5
+  provider: openai-codex
+  base_url: ''
   api_key: ''
-# ⚠️ 需要在 .env 中设置 DEEPSEEK_API_KEY
 
-# # ── 方案A: Codex++ 本地代理（取消注释即可启用） ─────
-# model:
-#   default: deepseek-v4-flash
-#   provider: custom
-#   base_url: http://127.0.0.1:57322/v1
-#   api_key: <从 ~/.codex/auth.json 获取的 OPENAI_API_KEY>
-
-# # ── 方案C: OpenAI Codex OAuth / GPT ────────────────
-# model:
-#   default: gpt-4o
-#   provider: openai-codex
-#   base_url: ''
-#   api_key: ''
+# ── 备用方案 ────────────────────────────────────────────
+# 如果 CC Switch 未运行或 GPT 不可用，切换回 DeepSeek：
+#   hermes config set model.provider deepseek
+#   hermes config set model.base_url https://api.deepseek.com/v1
+#   hermes config set model.default deepseek-v4-flash
+#   hermes config set model.api_key ''
+#   确保 .env 中有 DEEPSEEK_API_KEY
 
 fallback_providers: []
+
+# ── CC Switch 代理 ──────────────────────────────────────
+# 代理端口: 7890
+# 已在 .env 中设置 HTTPS_PROXY=http://127.0.0.1:7890
+# 安装包: tools/CC-Switch-v3.16.4-Windows.msi
 
 toolsets:
   - hermes-cli
@@ -65,71 +35,17 @@ max_live_sessions: 16
 agent:
   max_turns: 150
   gateway_timeout: 1800
-  restart_drain_timeout: 180
-  api_max_retries: 3
-  tool_use_enforcement: auto
-  task_completion_guidance: true
-  parallel_tool_call_guidance: true
-  environment_probe: true
-  coding_context: auto
-  verify_on_stop: false
-  gateway_timeout_warning: 900
-  clarify_timeout: 600
-  gateway_notify_interval: 180
-  gateway_auto_continue_freshness: 3600
-  image_input_mode: auto
-  disabled_toolsets: []
-  verbose: false
   reasoning_effort: medium
-  personalities:
-    helpful: "You are a helpful, friendly AI assistant."
-    concise: "You are a concise assistant. Keep responses brief and to the point."
-    technical: "You are a technical expert."
-    creative: "You are a creative assistant."
-    teacher: "You are a patient teacher."
-    kawaii: "kawaii~! (◕‿◕)"
-    catgirl: "Neko-chan, nya~! (=^･ω･^=)"
-    pirate: "Arrr! Yo ho ho!"
-    shakespeare: "Hark! Thou speakest with an assistant most versed..."
-    surfer: "Duuude! Cowabunga! 🤙"
-    noir: "The rain hammered against the terminal..."
-    uwu: "hewwo! uwu~"
-    philosopher: "Greetings, seeker of wisdom."
-    hype: "YOOO LET'S GOOOO!!! 🔥🔥🔥"
 
 terminal:
   backend: local
   cwd: .
   timeout: 180
-  persistent_shell: true
-  lifetime_seconds: 300
-  docker_image: nikolaik/python-nodejs:python3.11-nodejs20
-  container_cpu: 1
-  container_memory: 5120
-  container_disk: 51200
-  container_persistent: true
-
-web:
-  backend: ''
-  search_backend: ''
-  extract_backend: ''
-
-browser:
-  inactivity_timeout: 120
-  engine: auto
-  cloud_provider: local
-
-checkpoints:
-  enabled: false
 
 display:
   interface: cli
   language: zh
   skin: default
-  tui_status_indicator: kaomoji
-  streaming: true
-  reasoning_style: code
-  show_cost: false
 
 plugins:
   enabled:
@@ -150,7 +66,6 @@ platform_toolsets:
     - delegation
     - file
     - image_gen
-    - kanban
     - memory
     - session_search
     - skills
@@ -162,6 +77,3 @@ platform_toolsets:
     - vision
     - web
     - x_search
-
-# ── 以下为默认配置（Hermes 会自动补全） ──────────────────
-# 完整默认配置见 `hermes config edit`
