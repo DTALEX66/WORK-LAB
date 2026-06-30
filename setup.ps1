@@ -94,21 +94,21 @@ if (-not (Test-Path $HermesHome)) {
     New-Item -ItemType Directory -Path $HermesHome -Force | Out-Null
 }
 
-$configSrc = Join-Path $PackDir "confignfig.yaml"
+$configSrc = Join-Path $PackDir "config\config.yaml"
 $configDst = Join-Path $HermesHome "config.yaml"
 if (Test-Path $configSrc) {
     Copy-Item -Path $configSrc -Destination $configDst -Force
     Write-Host "  [OK] config.yaml copied"
 }
 
-$soulSrc = Join-Path $PackDir "configSOUL.md"
+$soulSrc = Join-Path $PackDir "config\SOUL.md"
 $soulDst = Join-Path $HermesHome "SOUL.md"
 if (Test-Path $soulSrc) {
     Copy-Item -Path $soulSrc -Destination $soulDst -Force
     Write-Host "  [OK] SOUL.md copied"
 }
 
-$envSrc = Join-Path $PackDir "config.env.template"
+$envSrc = Join-Path $PackDir "config\.env.template"
 $envDst = Join-Path $HermesHome ".env"
 if ((Test-Path $envSrc) -and -not (Test-Path $envDst)) {
     Copy-Item -Path $envSrc -Destination $envDst -Force
