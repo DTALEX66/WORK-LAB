@@ -84,9 +84,7 @@ const CONFIG = {
   /* ── 隐藏日志（广告解锁） ── */
   hiddenLogs: {
     maxUnlockedPerRun: 5,
-    unlockLogMessage: '模拟广告播放完成。加密记录已解码。',
   },
-
   /* ── 假结局 ── */
   fakeEnding: {
     consecutiveFailuresThreshold: 5,

@@ -1,9 +1,10 @@
 import { AVAILABLE_ACTIONS, performAction } from './actions.js';
 import { applyAnomaly, pickNextAnomaly } from './events.js';
 import { getToneForState, summarizeFailure } from './feedback.js';
-import { createInitialState, reviveFromAd, saveSnapshot, tickState } from './state.js';
+import { createInitialState, appendLog, reviveFromAd, saveSnapshot, tickState } from './state.js';
 import CONFIG from './gameConfig.js';
 import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
+import { t, actionLabel, getSkin } from './skinManager.js';
 
 const root = document.querySelector('.console-shell');
 const els = {
@@ -43,11 +44,13 @@ let lastTone = 'normal';
 let crashPlayed = false;
 
 function labelDoor(value) {
-  return value === 'open' ? '开启' : '关闭';
+  const labels = getSkin().doorLabels || { open: '开启', closed: '关闭' };
+  return labels[value] || value;
 }
 
 function labelDirection(value) {
-  return { up: '上行', down: '下行', idle: '待机' }[value] ?? value;
+  const labels = getSkin().directionLabels || { up: '上行', down: '下行', idle: '待机' };
+  return labels[value] || value;
 }
 
 function renderActions() {
@@ -59,7 +62,7 @@ function renderActions() {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = action.id === 'unlockHiddenLog'
-      ? `${action.label} (${lockedCount})`
+      ? actionLabel(action.id, lockedCount)
       : action.label;
     button.dataset.action = action.id;
     button.addEventListener('click', () => dispatchAction(action.id));
@@ -111,21 +114,15 @@ function render() {
       els.overlay.hidden = true;
       els.fakeEndingOverlay.hidden = false;
       const threshold = CONFIG.fakeEnding.consecutiveFailuresThreshold;
-      els.fakeEndingText.textContent =
-        `系统检测到操作员第 ${state.consecutiveFailures} 次系统崩溃。\n` +
-        `根据《异常控制员守则》第 7 条，您已被标记为"异常关联人员"。\n` +
-        `前 ${threshold - 1} 次记录已被永久删除。\n` +
-        `建议您立即离开控制台并联系安保部门。`;
+      els.fakeEndingText.textContent = t('fakeEnding.text', {
+        count: state.consecutiveFailures,
+        threshold: threshold,
+      });
       if (state.fakeEndingUnlocked) {
-        els.fakeEndingTruth.textContent =
-          '这不是第一次，也不会是最后一次。\n' +
-          '这座建筑的异常系统从未被修复。\n' +
-          '每一任值班员最后都变成了「异常事件」本身。\n' +
-          '系统日志中关于「乘客」的记载——都是前任值班员的热源信号。\n' +
-          '你现在坐的位置，就是上一任值班员被发现的地方。';
+        els.fakeEndingTruth.textContent = t('fakeEnding.truthContent');
         els.fakeEndingTruthBtn.hidden = true;
       } else {
-        els.fakeEndingTruth.textContent = '[???] 观看广告揭示真相。';
+        els.fakeEndingTruth.textContent = t('fakeEnding.truthPlaceholder');
         els.fakeEndingTruthBtn.hidden = false;
       }
     } else {
@@ -134,8 +131,8 @@ function render() {
       els.overlay.hidden = false;
       els.failureReason.textContent = summarizeFailure(state);
       els.adHint.textContent = state.lastAdHint
-        ? `广告提示：${state.lastAdHint}`
-        : '广告提示：先关门，再重启系统，避免连续移动。';
+        ? t('failure.adHintPrefix', { hint: state.lastAdHint })
+        : t('failure.defaultHint');
     }
   } else {
     els.overlay.hidden = true;
@@ -182,7 +179,7 @@ function loop() {
   if (state.gameOver && state.remaining <= 0) {
     state = structuredClone(state);
     state.consecutiveFailures = 0;
-    state = appendLog(state, 'success', '值守完成。连续失败计数已重置。');
+    state = appendLog(state, 'success', t('ui.shiftComplete'));
     render();
     return;
   }
@@ -218,7 +215,9 @@ function restart() {
   render();
 }
 
+els.forceAnomaly.textContent = t('ui.triggerTest');
 els.forceAnomaly.addEventListener('click', triggerAnomaly);
+els.reviveButton.textContent = t('ui.viewAd');
 els.reviveButton.addEventListener('click', () => {
   playRevive();
   state = reviveFromAd(state);
@@ -243,6 +242,17 @@ els.fakeEndingRestartBtn.addEventListener('click', () => {
 });
 
 renderActions();
+
+// 从皮肤设置标题和副标题
+const meta = getSkin().meta;
+if (meta) {
+  const titleEl = document.querySelector('#gameTitle');
+  const subEl = document.querySelector('#gameSubtitle');
+  if (titleEl) titleEl.textContent = meta.name;
+  if (subEl) subEl.textContent = meta.subtitle;
+  root.dataset.skin = meta.id;
+}
+
 render();
 timer = window.setInterval(loop, 1000);
 window.addEventListener('beforeunload', () => window.clearInterval(timer));

@@ -1,3 +1,5 @@
+import { t } from './skinManager.js';
+
 export function createFeedbackLine(type, message, time = 0) {
   const safeTime = Math.max(0, Math.floor(time));
   const minutes = String(Math.floor(safeTime / 60)).padStart(2, '0');
@@ -11,15 +13,15 @@ export function createFeedbackLine(type, message, time = 0) {
 
 export function summarizeFailure(state) {
   const reasons = [];
-  if (state.power <= 0) reasons.push('电源耗尽');
-  if (state.stability <= 0) reasons.push('稳定度归零');
-  if (state.anomalyLevel >= 6) reasons.push('异常等级失控');
-  if (state.passengers < 0) reasons.push('乘客记录出现负数');
-  if (reasons.length === 0) reasons.push('系统拒绝继续响应');
+  const s = state;
+  if (s.power <= 0) reasons.push(t('failure.summaries.power'));
+  if (s.stability <= 0) reasons.push(t('failure.summaries.stability'));
+  if (s.anomalyLevel >= 6) reasons.push(t('failure.summaries.anomalyLevel'));
+  if (s.passengers < 0) reasons.push(t('failure.summaries.passengers'));
+  if (reasons.length === 0) reasons.push(t('failure.summaries.default'));
 
-  // Compute actual rollback time from snapshots
-  const snapshots = state.snapshots || [];
-  const targetElapsed = Math.max(0, state.elapsed - 30);
+  const snapshots = s.snapshots || [];
+  const targetElapsed = Math.max(0, s.elapsed - 30);
   let rollbackSec = 0;
   if (snapshots.length > 0) {
     let best = snapshots[0];
@@ -28,13 +30,13 @@ export function summarizeFailure(state) {
       const dist = Math.abs(snap.at - targetElapsed);
       if (dist < bestDist) { bestDist = dist; best = snap; }
     }
-    rollbackSec = state.elapsed - best.at;
+    rollbackSec = s.elapsed - best.at;
   }
 
   if (snapshots.length > 0) {
-    return `${reasons.join('、')}。可观看广告复活，回滚到 ${rollbackSec} 秒前的系统状态。`;
+    return `${reasons.join('、')}。${t('failure.snapshotFallback', { seconds: rollbackSec })}`;
   }
-  return `${reasons.join('、')}。可观看广告复活，回滚到初始系统状态。`;
+  return `${reasons.join('、')}。${t('failure.noSnapshotFallback')}`;
 }
 
 export function getToneForState(state) {

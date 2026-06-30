@@ -1,5 +1,6 @@
 import CONFIG from './gameConfig.js';
 import { createFeedbackLine } from './feedback.js';
+import { t } from './skinManager.js';
 
 export function createInitialState() {
   const c = CONFIG.initial;
@@ -18,7 +19,7 @@ export function createInitialState() {
     adRevivesUsed: 0,
     hiddenLogsUnlocked: 0,
     lastAdHint: '',
-    monitor: '监控画面稳定：1 层轿厢内有 1 名乘客。',
+    monitor: t('monitor.initial'),
     activeAnomaly: null,
     snapshots: [],
     hiddenLogs: [],
@@ -26,7 +27,7 @@ export function createInitialState() {
     consecutiveFailures: 0,
     fakeEndingTriggered: false,
     fakeEndingUnlocked: false,
-    logs: [createFeedbackLine('info', '异常电梯控制台已接管。等待操作员指令。', 0)],
+    logs: [createFeedbackLine('info', t('ui.initialLog'), 0)],
   };
 }
 
@@ -104,8 +105,8 @@ export function reviveFromAd(state) {
   next.direction = 'idle';
   next.activeAnomaly = null;
   next.adRevivesUsed += 1;
-  next.monitor = `广告复活完成：回滚到 ${next.rollbackSeconds} 秒前的系统状态。`;
-  next = appendLog(next, 'ad', `广告复活完成：回滚 ${next.rollbackSeconds} 秒，恢复至可控状态。`);
+  next.monitor = t('failure.adReviveMonitor', { seconds: next.rollbackSeconds });
+  next = appendLog(next, 'ad', t('failure.adReviveRollback', { seconds: next.rollbackSeconds }));
   return next;
 }
 
@@ -122,7 +123,7 @@ export function tickState(state, seconds = 1) {
   }
   if (next.remaining <= 0) {
     next.gameOver = true;
-    next = appendLog(next, 'success', '本轮值守结束。系统仍未解释全部异常。');
+    next = appendLog(next, 'success', t('ui.successfulShift'));
   }
   return checkFailure(next);
 }
