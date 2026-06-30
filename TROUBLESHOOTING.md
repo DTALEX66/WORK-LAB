@@ -39,17 +39,14 @@ powershell.exe -File setup.ps1
 
 ---
 
-## 3. setup.ps1 路径错误
+## 3. setup.ps1 路径错误（已修复）
 
-**现象：** 脚本设置 `$PackDir = Join-Path $RepoRoot "hermes-pack"`，但仓库根目录就是打包内容，没有 `hermes-pack/` 子目录。
-
-**解决：** 修改为 `$PackDir = $RepoRoot`
-```powershell
-# 改前
-$PackDir = Join-Path $RepoRoot "hermes-pack"
-# 改后
-$PackDir = $RepoRoot
+**现象（旧版本）：**
 ```
+$PackDir = Join-Path $RepoRoot "hermes-pack"  # 仓库根现在是打包内容，无子目录
+```
+
+**当前状态：** 已修复。`setup.ps1` 第 27 行改为 `$PackDir = $RepoRoot`，无需手动修改。
 
 ---
 

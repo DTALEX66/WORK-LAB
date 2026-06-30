@@ -25,7 +25,7 @@ fallback_providers: []
 # ── CC Switch 代理 ──────────────────────────────────────
 # 代理端口: 7890
 # 已在 .env 中设置 HTTPS_PROXY=http://127.0.0.1:7890
-# CC Switch 安装主体不保存在本仓库；tools/cc-switch-config.json 仅作配置参考。
+# CC Switch 安装包可自行下载最新版本。
 
 toolsets:
   - hermes-cli
