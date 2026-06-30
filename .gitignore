@@ -1,12 +1,29 @@
-# 凭证文件（包含实际密钥，不提交）
+# Secrets / local credentials
 .env
+*.env
+!config/.env.template
 auth.json
+state.db
+*.db
+*.sqlite
+*.sqlite3
 
-# 操作系统文件
-.DS_Store
-Thumbs.db
-
-# Python
+# Runtime/cache/logs
+logs/
+cache/
+*.log
 __pycache__/
 *.pyc
+node_modules/
 .venv/
+venv/
+
+# Do not store application installers/bodies in this deployment repo.
+*.msi
+*.exe
+*.dmg
+*.pkg
+*.AppImage
+*.zip
+*.7z
+*.rar

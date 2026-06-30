@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    Hermes Agent one-click deployment script
+    Hermes Agent config/skills/plugins deployment script
 .DESCRIPTION
-    Auto-deploy Hermes Agent on a new machine:
-    - Install Hermes Agent
+    Deploy Hermes Agent portable assets on a new machine:
+    - Verify Hermes Agent is already installed
     - Copy config.yaml / SOUL.md / .env.template
     - Install local skills
     - Install ddgs dependency
@@ -11,6 +11,7 @@
 .NOTES
     Run from repo root (or use setup.sh via git-bash on Windows).
     After deployment, fill in API keys in .env.
+    This script does not install or package the Hermes application body.
     If encoding errors occur, use setup.sh instead.
 #>
 
@@ -54,14 +55,19 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
     $HasWinget = $true
 }
 
-# ==== Step 1: Install Hermes Agent ====
-Write-Step "Step 1: Install Hermes Agent"
+# ==== Step 1: Verify Hermes Agent ====
+# This repository does not package or install the Hermes application body.
+# Install Hermes separately first, then run this deployment script.
+Write-Step "Step 1: Verify Hermes Agent"
 
-Invoke-Command 'winget install NousResearch.HermesAgent 2>$null'
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "  winget source not found, trying pip install..."
-    Invoke-Command 'pip install hermes-agent'
+$precheckHermes = Get-Command hermes -ErrorAction SilentlyContinue
+if (-not $precheckHermes) {
+    Write-Host "  [FAIL] hermes command not found." -ForegroundColor Red
+    Write-Host "  Please install Hermes Agent on this computer first, then rerun this script." -ForegroundColor Yellow
+    Write-Host "  This repository only stores config, skills, plugins and deployment assets; it does not store the Hermes installer/application body." -ForegroundColor Yellow
+    return
 }
+Write-Host "  [OK] Hermes already installed: $($precheckHermes.Source)"
 
 # ==== Step 2: Verify Installation ====
 Write-Step "Step 2: Verify installation"

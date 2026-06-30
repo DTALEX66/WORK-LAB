@@ -1,6 +1,6 @@
-# Hermes Agent 部署包
+# Hermes Agent 配置/技能/插件部署包
 
-> 一键部署 Hermes Agent 配置/技能/插件，支持三种路由方案
+> 只保存 Hermes 可迁移配置、技能、插件/工具启用方案和部署文档；不保存 Hermes 或 CC Switch 安装主体。
 
 ## 📦 目录结构
 
@@ -16,8 +16,7 @@ hermes-pack/
 │   ├── python-testing/        ← Python 测试约定
 │   └── windows-development/   ← Windows 开发排坑
 ├── tools/
-│   ├── CC-Switch-v3.16.4-Windows.msi  ← CC Switch 安装包
-│   └── cc-switch-config.json          ← CC Switch 配置导出
+│   └── cc-switch-config.json          ← CC Switch 配置导出/参考
 ├── memories/MEMORY.md         ← 跨会话记忆参考
 ├── setup.ps1                  ← Windows 一键部署脚本
 ├── setup.sh                   ← Linux/macOS 一键部署脚本
@@ -34,11 +33,11 @@ hermes-pack/
 | `config/` | `%LOCALAPPDATA%\hermes` 或 `~/.hermes` | Hermes 主配置、人格、环境变量模板、认证模板 |
 | `skills/model-switch/` | `skills/model-switch/` | 模型切换技能，例如“切换DP / 切换GPT” |
 | `skills/software-development/` | `skills/software-development/` | 开发相关技能：截图翻译、Python 测试、Windows 排坑 |
-| `tools/` | 手动安装/导入 | CC Switch 安装包和配置导出 |
+| `tools/` | 手动导入/参考 | CC Switch 配置导出；不保存 CC Switch 安装主体 |
 | `memories/` | 参考资料，不自动覆盖真实记忆 | 仅作为迁移参考，避免覆盖新机器个人记忆 |
 | `docs/` / `TROUBLESHOOTING.md` | 仓库文档 | 排错和部署说明 |
 
-> 注意：真实 `.env`、OAuth `auth.json`、API Key、Token、会话数据库不会上传。新电脑必须重新填写 API Key，并重新执行 OAuth 登录。
+> 注意：真实 `.env`、OAuth `auth.json`、API Key、Token、会话数据库、Hermes 安装主体、CC Switch 安装主体都不会上传。新电脑必须先自行安装 Hermes/CC Switch，再填写 API Key 并重新执行 OAuth 登录。
 
 ## 🖥️ 新电脑完整部署流程
 
@@ -47,6 +46,7 @@ hermes-pack/
 ```powershell
 git clone git@github.com:DTALEX66/hermes.git
 cd hermes
+# 先确保本机已经安装 Hermes Agent 主体；本仓库不包含 Hermes 安装器
 # 如果 PowerShell 遇到中文编码问题，改用 Git Bash 执行 ./setup.sh
 .\setup.ps1
 ```
@@ -56,15 +56,17 @@ cd hermes
 ```bash
 git clone git@github.com:DTALEX66/hermes.git
 cd hermes
+# 先确保本机已经安装 Hermes Agent 主体；本仓库不包含 Hermes 安装器
 chmod +x setup.sh
 ./setup.sh
 ```
 
 部署后必须做三件事：
 
-1. 编辑 Hermes 的 `.env`，填入新电脑自己的 `DEEPSEEK_API_KEY`，如需 GPT 订阅访问则确认 CC Switch 代理为 `127.0.0.1:7890`。
-2. 如果用 GPT 订阅：运行 `hermes auth add openai-codex`，在浏览器完成 ChatGPT/Codex OAuth。
-3. 切换模型后执行 `/reset` 或重启 Hermes，使 provider/model 生效。
+1. 自行安装 Hermes Agent 主体和（可选）CC Switch 主体；本仓库只提供部署配置和技能插件。
+2. 编辑 Hermes 的 `.env`，填入新电脑自己的 `DEEPSEEK_API_KEY`，如需 GPT 订阅访问则确认 CC Switch 代理为 `127.0.0.1:7890`。
+3. 如果用 GPT 订阅：运行 `hermes auth add openai-codex`，在浏览器完成 ChatGPT/Codex OAuth。
+4. 切换模型后执行 `/reset` 或重启 Hermes，使 provider/model 生效。
 
 ### 推荐运行模式
 
@@ -198,8 +200,8 @@ hermes config set model.default gpt-4o
 **前提：** CC Switch 已安装并运行（代理端口 7890）
 
 ```bash
-# CC Switch 安装包在 tools/ 目录下
-# 运行 CC-Switch-v3.16.4-Windows.msi 安装后启动即可
+# CC Switch 安装主体不保存在本仓库；请在新电脑自行安装并启动
+# tools/cc-switch-config.json 仅作为配置导出/参考
 
 # .env 中自动配置代理
 HTTPS_PROXY=http://127.0.0.1:7890

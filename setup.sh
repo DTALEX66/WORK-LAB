@@ -1,6 +1,7 @@
 #!/bin/bash
-# Hermes Agent 一键部署脚本 (Linux/macOS)
+# Hermes Agent 配置/技能/插件部署脚本 (Linux/macOS)
 # 用法: chmod +x setup.sh && ./setup.sh
+# 注意：本脚本不安装 Hermes 主体；请先自行安装 Hermes Agent。
 
 set -euo pipefail
 
@@ -14,15 +15,18 @@ echo "========================================"
 echo " Hermes Agent 部署脚本 (Linux/macOS)"
 echo "========================================"
 
-# Step 1: Install Hermes Agent
+# Step 1: Verify Hermes Agent
+# This repository does not package or install the Hermes application body.
+# Install Hermes separately first, then run this deployment script.
 echo ""
-echo "⏳ Step 1: 安装 Hermes Agent"
+echo "⏳ Step 1: 检查 Hermes Agent"
 if command -v hermes &> /dev/null; then
     echo "  ✅ Hermes 已安装"
 else
-    echo "  > 通过 curl 安装..."
-    curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
-    echo "  ✅ Hermes 安装完成"
+    echo "  ❌ 未找到 hermes 命令"
+    echo "  请先在此电脑安装 Hermes Agent 主体，然后重新运行本脚本。"
+    echo "  本仓库只保存配置、技能、插件和部署资料，不保存 Hermes 安装主体。"
+    exit 1
 fi
 
 # Step 2: Write config
