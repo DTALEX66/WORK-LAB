@@ -112,6 +112,44 @@ npm run android:inspect
 [apk-check] OK
 ```
 
+### 5.1 发布前私有配置（不要提交真实值）
+
+仓库只提交安全占位值。真实 AppID / 激励视频广告位请放在本地私有文件：
+
+```bash
+cp release.config.example.json release.config.json
+```
+
+然后编辑 `release.config.json`：
+
+```json
+{
+  "wechat": {
+    "appid": "真实微信小游戏 AppID",
+    "projectname": "MINIGAME"
+  },
+  "adUnits": {
+    "revive": "真实复活广告位",
+    "decode": "真实日志解锁广告位",
+    "truth": "真实真相提示广告位"
+  }
+}
+```
+
+注意：
+
+- `release.config.json` 已加入 `.gitignore`，不要提交。
+- `node build.js wechat` 检测到 `release.config.json` 后，会把广告位注入生成的 `wechat-minigame/game.js`，并生成本地私有 `wechat-minigame/project.private.config.json`。
+- `wechat-minigame/project.private.config.json` 也已加入 `.gitignore`，用于微信开发者工具本地识别 AppID。
+- 源码 `src/gameConfig.js` 继续保留安全占位值，避免误泄露真实广告位。
+- 发布前运行：
+
+```bash
+npm run release:check
+```
+
+当前仓库默认占位配置下，这个命令应该失败；填入真实私有配置后才应该通过。
+
 ### 6. 安装到雷电模拟器或小米手机
 
 先确认设备：

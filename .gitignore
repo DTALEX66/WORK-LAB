@@ -13,3 +13,6 @@ android-minigame/
 .gradle/
 android-webview/.gradle/
 android-webview/app/build/
+release.config.json
+wechat-minigame/project.private.config.json
+douyin-minigame/project.private.config.json

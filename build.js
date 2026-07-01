@@ -21,6 +21,48 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
 
+function readJsonIfExists(filePath) {
+  if (!fs.existsSync(filePath)) return null;
+  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+}
+
+function loadReleaseConfig() {
+  const configPath = process.env.RELEASE_CONFIG_PATH
+    ? path.resolve(ROOT, process.env.RELEASE_CONFIG_PATH)
+    : path.join(ROOT, 'release.config.json');
+  return readJsonIfExists(configPath);
+}
+
+function stableStringifyObject(value, indent = 2) {
+  return JSON.stringify(value, null, indent);
+}
+
+function applyReleaseOverrides(code, modPath, target, releaseConfig) {
+  if (modPath !== 'src/gameConfig.js' || !releaseConfig?.adUnits) return code;
+
+  const adUnits = releaseConfig.adUnits;
+  const hasAllUnits = ['revive', 'decode', 'truth'].every(key => typeof adUnits[key] === 'string' && adUnits[key].trim());
+  if (!hasAllUnits) return code;
+
+  const replacement = `adUnits: ${stableStringifyObject(adUnits, 4).replace(/\n/g, '\n    ')},`;
+  return code.replace(/adUnits:\s*\{[\s\S]*?\n\s*\},/, replacement);
+}
+
+function writePrivateProjectConfig(target, outputDir, releaseConfig) {
+  const platformConfig = releaseConfig?.[target];
+  if (!platformConfig?.appid) return;
+
+  const privateConfig = {
+    appid: platformConfig.appid,
+    projectname: platformConfig.projectname || 'MINIGAME',
+  };
+  const privatePath = path.join(outputDir, 'project.private.config.json');
+  fs.writeFileSync(privatePath, stableStringifyObject(privateConfig, 2), 'utf-8');
+  console.log(`[build] ✅ ${target} project.private.config.json 已生成（本地私有，不提交）`);
+}
+
+const releaseConfig = loadReleaseConfig();
+
 // ── 需要打包的模块（顺序重要） ──
 // skin.json 必须在 skinManager.js 之前，因为 IIFE 顺序执行
 const CORE_MODULES = [
@@ -103,6 +145,7 @@ function bundle(target) {
       body += `// --- ${mod.path} ---\nvar __SKIN_DATA__ = ${min};\n\n`;
     } else {
       let code = stripESM(raw);
+      code = applyReleaseOverrides(code, mod.path, target, releaseConfig);
       // 替换 skinManager 中的 import 为 __SKIN_DATA__
       if (mod.path === 'src/skinManager.js') {
         code = code.replace(/\bSKIN_DATA\b/g, '__SKIN_DATA__');
@@ -149,6 +192,7 @@ fs.mkdirSync(outputDir, { recursive: true });
 const bundled = bundle(target);
 const outPath = path.join(outputDir, 'game.js');
 fs.writeFileSync(outPath, bundled, 'utf-8');
+writePrivateProjectConfig(target, outputDir, releaseConfig);
 
 console.log(`[build] ✅ ${target} 构建完成`);
 console.log(`[build]   输出: ${outPath}`);

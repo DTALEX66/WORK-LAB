@@ -16,6 +16,12 @@ function readJson(relativePath) {
   return JSON.parse(readFileSync(path, 'utf8'));
 }
 
+function readJsonIfExists(relativePath) {
+  const path = resolve(root, relativePath);
+  if (!existsSync(path)) return null;
+  return JSON.parse(readFileSync(path, 'utf8'));
+}
+
 function readText(relativePath) {
   return readFileSync(resolve(root, relativePath), 'utf8');
 }
@@ -42,31 +48,37 @@ function runNode(label, args) {
   }
 }
 
+const releaseConfigPath = process.env.RELEASE_CONFIG_PATH || 'release.config.json';
+const releaseConfig = readJsonIfExists(releaseConfigPath);
 const wechatProject = readJson('wechat-minigame/project.config.json');
+const wechatPrivateProject = readJsonIfExists('wechat-minigame/project.private.config.json');
 const douyinProject = existsSync(resolve(root, 'douyin-minigame/project.config.json'))
   ? readJson('douyin-minigame/project.config.json')
   : null;
+const douyinPrivateProject = readJsonIfExists('douyin-minigame/project.private.config.json');
 const androidProject = existsSync(resolve(root, 'android-minigame/project.config.json'))
   ? readJson('android-minigame/project.config.json')
   : null;
 const gameConfigText = readText('src/gameConfig.js');
-const adUnits = extractAdUnits(gameConfigText);
+const adUnits = releaseConfig?.adUnits ?? extractAdUnits(gameConfigText);
+const wechatAppId = releaseConfig?.wechat?.appid ?? wechatPrivateProject?.appid ?? wechatProject.appid;
+const douyinAppId = releaseConfig?.douyin?.appid ?? douyinPrivateProject?.appid ?? douyinProject?.appid;
 
 addCheck(
   'wechatAppId',
-  !isPlaceholder(wechatProject.appid),
+  !isPlaceholder(wechatAppId),
   'blocker',
-  'WeChat project.config.json must use a real Mini Game AppID',
-  `current=${wechatProject.appid}`,
+  'WeChat release config must provide a real Mini Game AppID',
+  `current=${wechatAppId}`,
 );
 
-if (douyinProject) {
+if (douyinProject || douyinAppId) {
   addCheck(
     'douyinAppId',
-    !isPlaceholder(douyinProject.appid),
+    !isPlaceholder(douyinAppId),
     'blocker',
-    'Douyin project.config.json must use a real Mini Game AppID',
-    `current=${douyinProject.appid}`,
+    'Douyin release config must use a real Mini Game AppID',
+    `current=${douyinAppId}`,
   );
 }
 
