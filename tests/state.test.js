@@ -54,6 +54,17 @@ test('saveSnapshot keeps existing snapshots', () => {
   assert.equal(second.snapshots[1].at, 20);
 });
 
+test('saveSnapshot trims history to configured maxSnapshots', () => {
+  let state = { ...createInitialState(), snapshots: [] };
+  for (let i = 1; i <= CONFIG.adRevive.maxSnapshots + 2; i += 1) {
+    state = saveSnapshot({ ...state, elapsed: i * CONFIG.adRevive.snapshotInterval });
+  }
+
+  assert.equal(state.snapshots.length, CONFIG.adRevive.maxSnapshots);
+  assert.equal(state.snapshots[0].at, 3 * CONFIG.adRevive.snapshotInterval);
+  assert.equal(state.snapshots.at(-1).at, (CONFIG.adRevive.maxSnapshots + 2) * CONFIG.adRevive.snapshotInterval);
+});
+
 test('findRollbackSnapshot selects the snapshot closest to rollback window target', () => {
   const elapsed = 58;
   const target = elapsed - CONFIG.adRevive.rollbackWindow;

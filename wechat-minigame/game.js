@@ -480,7 +480,7 @@ function saveSnapshot(state) {
   }
   snapshots.push({ at: state.elapsed, state: clean });
   const next = cloneState(state);
-  next.snapshots = snapshots;
+  next.snapshots = snapshots.slice(-CONFIG.adRevive.maxSnapshots);
   return next;
 }
 
@@ -1289,7 +1289,7 @@ function loop() {
   }
   // Save a snapshot on interval for ad-revive rollback
   const ar = CONFIG.adRevive;
-  if (state.elapsed > 0 && state.elapsed % ar.snapshotInterval === 0 && state.snapshots.length < ar.maxSnapshots) {
+  if (state.elapsed > 0 && state.elapsed % ar.snapshotInterval === 0) {
     state = saveSnapshot(state);
   }
   if (!state.gameOver && state.elapsed >= nextAnomalyAt) triggerAnomaly();

@@ -241,7 +241,7 @@ function loop() {
   }
   // Save a snapshot on interval for ad-revive rollback
   const ar = CONFIG.adRevive;
-  if (state.elapsed > 0 && state.elapsed % ar.snapshotInterval === 0 && state.snapshots.length < ar.maxSnapshots) {
+  if (state.elapsed > 0 && state.elapsed % ar.snapshotInterval === 0) {
     state = saveSnapshot(state);
   }
   if (!state.gameOver && state.elapsed >= nextAnomalyAt) triggerAnomaly();

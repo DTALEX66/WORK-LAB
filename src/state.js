@@ -70,7 +70,7 @@ export function saveSnapshot(state) {
   }
   snapshots.push({ at: state.elapsed, state: clean });
   const next = cloneState(state);
-  next.snapshots = snapshots;
+  next.snapshots = snapshots.slice(-CONFIG.adRevive.maxSnapshots);
   return next;
 }
 
