@@ -21,6 +21,7 @@ test('DOM labels use current skin labels', () => {
   assert.equal(labels.failureTitle, '安防系统崩溃');
   assert.equal(labels.start.title, '等待接管安防系统');
   assert.equal(labels.start.button, '接管安防值守');
+  assert.deepEqual(labels.start.failureRules, ['电力归零', '安保等级归零', '威胁等级失控']);
 
   loadSkin(elevatorSkin);
 });

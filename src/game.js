@@ -42,6 +42,7 @@ const els = {
   startTitle: document.querySelector('#startTitle'),
   startCopy: document.querySelector('#startCopy'),
   startChecklist: document.querySelector('#startChecklist'),
+  startFailureRules: document.querySelector('#startFailureRules'),
   startButton: document.querySelector('#startButton'),
   overlay: document.querySelector('#failureOverlay'),
   failureReason: document.querySelector('#failureReason'),
@@ -292,6 +293,16 @@ function applyDomLabels() {
       li.textContent = item;
       return li;
     }));
+  }
+  if (els.startFailureRules) {
+    els.startFailureRules.replaceChildren(
+      Object.assign(document.createElement('span'), { textContent: '失败条件' }),
+      ...labels.start.failureRules.map((item) => {
+        const badge = document.createElement('b');
+        badge.textContent = item;
+        return badge;
+      }),
+    );
   }
   els.floorLabel.textContent = labels.status.floor;
   els.doorLabel.textContent = labels.status.door;

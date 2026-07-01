@@ -21,6 +21,7 @@ export function getDomLabels() {
       title: t('ui.startTitle'),
       copy: t('ui.startCopy'),
       checklist: t('ui.startChecklist').split('\n').filter(Boolean),
+      failureRules: t('ui.startFailureRules').split('\n').filter(Boolean),
       button: t('ui.startButton'),
     },
     status: {

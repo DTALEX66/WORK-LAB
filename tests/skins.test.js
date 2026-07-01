@@ -55,6 +55,7 @@ const REQUIRED_TEXT_KEYS = [
   ['ui', 'startTitle'],
   ['ui', 'startCopy'],
   ['ui', 'startChecklist'],
+  ['ui', 'startFailureRules'],
   ['ui', 'startButton'],
   ['ui', 'hiddenLogCaptured'],
 ];

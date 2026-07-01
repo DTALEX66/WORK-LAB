@@ -190,6 +190,7 @@
     "startTitle": "等待接管安防系统",
     "startCopy": "目标：值守 60 秒，观察门禁、处理安防异常、避免系统崩溃。接管后倒计时才会启动。",
     "startChecklist": "先读安防监控和系统日志\n异常出现时按提示执行操作\n失败后可通过呼叫支援复活",
+    "startFailureRules": "电力归零\n安保等级归零\n威胁等级失控",
     "startButton": "接管安防值守",
     "successfulShift": "本轮值守结束。安防系统仍未解释全部异常。",
     "shiftComplete": "值守完成。连续失败计数已重置。",

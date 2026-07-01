@@ -427,6 +427,29 @@ button.secondary {
   font-family: "Cascadia Mono", Consolas, monospace;
 }
 .start-checklist li::marker { color: var(--green); }
+.start-rules {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+  font-family: "Cascadia Mono", Consolas, monospace;
+}
+.start-rules span {
+  color: var(--amber);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+.start-rules b {
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 77, 109, 0.34);
+  border-radius: 999px;
+  color: #ffd6df;
+  background: rgba(255, 77, 109, 0.08);
+  font-size: 0.78rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
 .start-card button {
   width: 100%;
   min-height: 58px;

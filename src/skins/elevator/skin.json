@@ -187,6 +187,7 @@
     "startTitle": "等待接管异常电梯",
     "startCopy": "目标：值守 60 秒，观察监控、处理异常、避免系统崩溃。接管后倒计时才会启动。",
     "startChecklist": "先读监控画面和系统日志\n异常出现时按提示执行操作\n失败后可通过模拟广告复活",
+    "startFailureRules": "电源归零\n稳定度归零\n异常等级失控",
     "startButton": "开始接管",
     "successfulShift": "本轮值守结束。系统仍未解释全部异常。",
     "shiftComplete": "值守完成。连续失败计数已重置。",
