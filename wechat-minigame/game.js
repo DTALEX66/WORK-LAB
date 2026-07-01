@@ -826,8 +826,6 @@ function getAvailableActions() {
   return ACTION_IDS.map(id => ({ id, label: actionLabel(id) }));
 }
 
-const AVAILABLE_ACTIONS = getAvailableActions();
-
 
 // --- src/uiLabels.js ---
 

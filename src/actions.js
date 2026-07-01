@@ -1,6 +1,6 @@
 import { appendLog, checkFailure, clamp, cloneState } from './state.js';
 import CONFIG from './gameConfig.js';
-import { t, actionLabel, actionText } from './skinManager.js';
+import { t, actionLabel } from './skinManager.js';
 
 const ACTIONS = {
   openDoor(state) {
@@ -140,5 +140,3 @@ const ACTION_IDS = [
 export function getAvailableActions() {
   return ACTION_IDS.map(id => ({ id, label: actionLabel(id) }));
 }
-
-export const AVAILABLE_ACTIONS = getAvailableActions();
