@@ -13,6 +13,7 @@ export function getDomLabels() {
     logPanel: canvas.logPanel || '系统日志',
     forceAnomaly: canvas.forceAnomaly || t('ui.triggerTest'),
     failureTitle: canvas.failureTitle || '系统崩溃',
+    failureEyebrow: canvas.failureEyebrow || 'SYSTEM FAILURE',
     revive: t('ui.viewAd'),
     restart: t('ui.restart'),
     revealTruth: t('ui.revealTruth'),

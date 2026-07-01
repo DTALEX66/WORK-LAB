@@ -70,12 +70,14 @@ test('canvas static labels use current skin copy', () => {
   assert.equal(labels.logPanel, '安防日志');
   assert.equal(labels.forceAnomaly, '触发安防异常');
   assert.equal(labels.failureTitle, '安防系统崩溃');
+  assert.equal(labels.failureEyebrow, 'SECURITY FAILURE');
   assert.equal(labels.countdown, domLabels.countdown);
   assert.equal(labels.monitorPanel, domLabels.monitorPanel);
   assert.equal(labels.actionPanel, domLabels.actionPanel);
   assert.equal(labels.logPanel, domLabels.logPanel);
   assert.equal(labels.forceAnomaly, domLabels.forceAnomaly);
   assert.equal(labels.failureTitle, domLabels.failureTitle);
+  assert.equal(labels.failureEyebrow, domLabels.failureEyebrow);
   assert.equal(labels.adRevive, domLabels.revive);
   assert.equal(labels.restart, domLabels.restart);
   assert.equal(labels.revealTruth, domLabels.revealTruth);
@@ -84,7 +86,9 @@ test('canvas static labels use current skin copy', () => {
 });
 
 test('canvas failure overlay copy uses current skin text', () => {
-  loadSkin(securitySkin);
+  const skin = structuredClone(securitySkin);
+  skin.canvasLabels.failureEyebrow = 'SECURITY FAILURE';
+  loadSkin(skin);
 
   const fakeEndingCopy = getCanvasFailureOverlayCopy({
     ...createInitialState(),
@@ -99,6 +103,7 @@ test('canvas failure overlay copy uses current skin text', () => {
     gameOver: true,
     lastAdHint: '先锁门。',
   });
+  assert.equal(failureCopy.eyebrow, 'SECURITY FAILURE');
   assert.equal(failureCopy.adHintLine, '系统提示：先锁门。');
 
   loadSkin(elevatorSkin);

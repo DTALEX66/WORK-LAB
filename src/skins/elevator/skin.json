@@ -41,7 +41,8 @@
     "actionPanel": "操作面板",
     "logPanel": "系统日志",
     "forceAnomaly": "触发异常测试",
-    "failureTitle": "系统崩溃"
+    "failureTitle": "系统崩溃",
+    "failureEyebrow": "SYSTEM FAILURE"
   },
   "actionFailMessages": {
     "openDoor_moving": "电梯移动中，禁止开门。",

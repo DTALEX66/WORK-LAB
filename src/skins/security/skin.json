@@ -42,7 +42,8 @@
     "actionPanel": "安防操作",
     "logPanel": "安防日志",
     "forceAnomaly": "触发安防异常",
-    "failureTitle": "安防系统崩溃"
+    "failureTitle": "安防系统崩溃",
+    "failureEyebrow": "SECURITY FAILURE"
   },
   "actionFailMessages": {
     "openDoor_moving": "移动中，禁止解锁门禁。",

@@ -84,6 +84,7 @@ export function getCanvasStaticLabels() {
     logPanel: labels.logPanel,
     forceAnomaly: labels.forceAnomaly,
     failureTitle: labels.failureTitle,
+    failureEyebrow: labels.failureEyebrow,
     adRevive: labels.revive,
     restart: labels.restart,
     revealTruth: labels.revealTruth,
@@ -92,7 +93,7 @@ export function getCanvasStaticLabels() {
 
 export function getCanvasFailureOverlayCopy(state) {
   return {
-    eyebrow: t('fakeEnding.eyebrow'),
+    eyebrow: state.fakeEndingTriggered ? t('fakeEnding.eyebrow') : getCanvasStaticLabels().failureEyebrow,
     title: state.fakeEndingTriggered ? t('fakeEnding.title') : getCanvasStaticLabels().failureTitle,
     adHintLine: state.lastAdHint ? t('failure.adHintPrefix', { hint: state.lastAdHint }) : '',
   };
@@ -378,7 +379,7 @@ function drawFailureOverlay(state) {
 
     ctx.fillStyle = COLORS.red;
     ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
-    ctx.fillText('SYSTEM FAILURE', cx + 24, cy + 30);
+    ctx.fillText(copy.eyebrow, cx + 24, cy + 30);
 
     ctx.fillStyle = COLORS.red;
     ctx.font = 'bold 40px "Microsoft YaHei", sans-serif';

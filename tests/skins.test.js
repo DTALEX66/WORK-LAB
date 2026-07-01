@@ -43,6 +43,7 @@ const REQUIRED_TEXT_KEYS = [
   ['canvasLabels', 'logPanel'],
   ['canvasLabels', 'forceAnomaly'],
   ['canvasLabels', 'failureTitle'],
+  ['canvasLabels', 'failureEyebrow'],
   ['actionLogMessages', 'inspectLog_hiddenRecords'],
   ['failure', 'defaultHint'],
   ['fakeEnding', 'text'],
