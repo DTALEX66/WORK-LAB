@@ -6,6 +6,7 @@ import { loadSkin } from '../src/skinManager.js';
 import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
 import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
 import { getCanvasActionButtons, getCanvasStaticLabels, getCanvasStatusItems } from '../platform/canvasRenderer.js';
+import { getDomLabels } from '../src/uiLabels.js';
 
 test('canvas action buttons use current skin labels', () => {
   loadSkin(securitySkin);
@@ -49,6 +50,7 @@ test('canvas status items use current skin status labels', () => {
 test('canvas static labels use current skin copy', () => {
   loadSkin(securitySkin);
   const labels = getCanvasStaticLabels();
+  const domLabels = getDomLabels();
 
   assert.equal(labels.countdown, '值守倒计时');
   assert.equal(labels.monitorPanel, '安防监控');
@@ -56,6 +58,15 @@ test('canvas static labels use current skin copy', () => {
   assert.equal(labels.logPanel, '安防日志');
   assert.equal(labels.forceAnomaly, '触发安防异常');
   assert.equal(labels.failureTitle, '安防系统崩溃');
+  assert.equal(labels.countdown, domLabels.countdown);
+  assert.equal(labels.monitorPanel, domLabels.monitorPanel);
+  assert.equal(labels.actionPanel, domLabels.actionPanel);
+  assert.equal(labels.logPanel, domLabels.logPanel);
+  assert.equal(labels.forceAnomaly, domLabels.forceAnomaly);
+  assert.equal(labels.failureTitle, domLabels.failureTitle);
+  assert.equal(labels.adRevive, domLabels.revive);
+  assert.equal(labels.restart, domLabels.restart);
+  assert.equal(labels.revealTruth, domLabels.revealTruth);
 
   loadSkin(elevatorSkin);
 });

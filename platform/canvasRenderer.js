@@ -10,6 +10,7 @@
 
 import { t, getSkin, actionLabel } from '../src/skinManager.js';
 import { getToneForState, summarizeFailure } from '../src/feedback.js';
+import { getDomLabels } from '../src/uiLabels.js';
 
 // ── 尺寸常量 ──
 const DW = 750;       // 设计宽度
@@ -75,17 +76,17 @@ function drawBackground(tone) {
 }
 
 export function getCanvasStaticLabels() {
+  const labels = getDomLabels();
   return {
-    countdown: '值守倒计时',
-    monitorPanel: '监控画面',
-    actionPanel: '操作面板',
-    logPanel: '系统日志',
-    forceAnomaly: t('ui.triggerTest'),
-    failureTitle: '系统崩溃',
-    adRevive: t('ui.viewAd'),
-    restart: t('ui.restart'),
-    revealTruth: t('ui.revealTruth'),
-    ...(getSkin().canvasLabels || {}),
+    countdown: labels.countdown,
+    monitorPanel: labels.monitorPanel,
+    actionPanel: labels.actionPanel,
+    logPanel: labels.logPanel,
+    forceAnomaly: labels.forceAnomaly,
+    failureTitle: labels.failureTitle,
+    adRevive: labels.revive,
+    restart: labels.restart,
+    revealTruth: labels.revealTruth,
   };
 }
 
