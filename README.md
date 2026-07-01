@@ -39,6 +39,9 @@ http://127.0.0.1:5173
 - `docs/WORKFLOW.md`：AI 协作与开发约束
 - `docs/YOLO_BOUNDARIES.md`：YOLO 自主执行边界
 - `docs/GAME_DESIGN.md`：异常电梯控制台设计总纲
+- `docs/V4_STARTER_PACK_INTEGRATION.md`：V4 Starter Pack 融合策略
+- `docs/CONTENT_PACK_SPEC.md`：内容包协议与当前 skin 映射
+- `docs/GAME_BASE_SELECTION.md`：开源小游戏底座评分表
 
 ## 开发原则
 
