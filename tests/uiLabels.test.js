@@ -19,6 +19,11 @@ test('DOM labels use current skin labels', () => {
   assert.equal(labels.logPanel, '安防日志');
   assert.equal(labels.forceAnomaly, '触发安防异常');
   assert.equal(labels.failureTitle, '安防系统崩溃');
+  assert.equal(labels.monitorSignal.stable, 'SIGNAL: SECURE');
+  assert.equal(labels.monitorSignal.unstable, 'SIGNAL: BREACHED');
+  assert.equal(labels.monitorThreat(3), 'THREAT: 3');
+  assert.deepEqual(labels.failureMetrics.map(item => item.label), ['电力', '安保', '威胁', '剩余']);
+  assert.equal(labels.start.failureRulesTitle, '失守条件');
   assert.equal(labels.start.title, '等待接管安防系统');
   assert.equal(labels.start.button, '接管安防值守');
   assert.deepEqual(labels.start.failureRules, ['电力归零', '安保等级归零', '威胁等级失控']);

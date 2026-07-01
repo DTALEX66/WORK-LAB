@@ -42,7 +42,14 @@
     "logPanel": "工控日志",
     "forceAnomaly": "触发产线异常",
     "failureTitle": "产线系统崩溃",
-    "failureEyebrow": "FACTORY FAILURE"
+    "failureEyebrow": "FACTORY FAILURE",
+    "monitorSignalStable": "SIGNAL: NOMINAL",
+    "monitorSignalUnstable": "SIGNAL: UNSTABLE",
+    "monitorSignalCorrupted": "SIGNAL: OVERLOAD",
+    "monitorThreat": "FAULT: {level}",
+    "failureMetricStability": "稳定",
+    "failureMetricAnomaly": "故障",
+    "failureMetricRemaining": "剩余"
   },
   "actionFailMessages": {
     "openDoor_moving": "传送带运行中，禁止重新启动。",
@@ -187,6 +194,7 @@
     "startTitle": "等待接管产线中控",
     "startCopy": "目标：值守 60 秒，观察产线监控、处理工控异常、避免生产系统崩溃。接管后倒计时才会启动。",
     "startChecklist": "先读产线监控和工控日志\n异常出现时按提示执行操作\n失败后可通过远程支援复活",
+    "startFailureRulesTitle": "停线条件",
     "startFailureRules": "主电源归零\n产线稳定度归零\n异常等级失控",
     "startButton": "接管产线值守",
     "successfulShift": "本轮值守结束。产线系统仍未解释全部异常。",

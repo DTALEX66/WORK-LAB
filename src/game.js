@@ -124,6 +124,7 @@ function renderActions() {
 }
 
 function render() {
+  const labels = getDomLabels();
   renderActions();
   root.dataset.tone = getToneForState(state);
   els.remaining.textContent = Math.ceil(state.remaining);
@@ -146,13 +147,13 @@ function render() {
   const tone = getToneForState(state);
   if (els.monitorSignal) {
     const signal = tone === 'danger' || tone === 'critical'
-      ? 'SIGNAL: CORRUPTED'
+      ? labels.monitorSignal.corrupted
       : state.anomalyLevel > 0 || tone === 'warn'
-        ? 'SIGNAL: UNSTABLE'
-        : 'SIGNAL: STABLE';
+        ? labels.monitorSignal.unstable
+        : labels.monitorSignal.stable;
     els.monitorSignal.textContent = signal;
   }
-  if (els.monitorThreat) els.monitorThreat.textContent = `THREAT: ${state.anomalyLevel}`;
+  if (els.monitorThreat) els.monitorThreat.textContent = labels.monitorThreat(state.anomalyLevel);
 
   // 显示已解锁的隐藏日志内容
   const unlockedHidden = state.hiddenLogs.filter(h => !h.locked);
@@ -195,12 +196,10 @@ function render() {
       els.overlay.hidden = false;
       els.failureReason.textContent = summarizeFailure(state);
       if (els.failureMetrics) {
-        const metrics = [
-          ['电源', Math.round(state.power)],
-          ['稳定度', Math.round(state.stability)],
-          ['异常', state.anomalyLevel],
-          ['剩余', Math.ceil(state.remaining)],
-        ];
+        const metrics = labels.failureMetrics.map(({ key, label }) => {
+          const value = key === 'remaining' ? Math.ceil(state.remaining) : Math.round(state[key]);
+          return [label, value];
+        });
         els.failureMetrics.replaceChildren(...metrics.map(([label, value]) => {
           const item = document.createElement('span');
           const labelEl = document.createElement('b');
@@ -330,7 +329,7 @@ function applyDomLabels() {
   }
   if (els.startFailureRules) {
     els.startFailureRules.replaceChildren(
-      Object.assign(document.createElement('span'), { textContent: '失败条件' }),
+      Object.assign(document.createElement('span'), { textContent: labels.start.failureRulesTitle }),
       ...labels.start.failureRules.map((item) => {
         const badge = document.createElement('b');
         badge.textContent = item;
