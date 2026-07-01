@@ -858,6 +858,16 @@ function restartRuntimeSession() {
   return createRuntimeSession();
 }
 
+function scheduleNextAnomalyAfterTrigger(elapsed, random = Math.random) {
+  const cd = CONFIG.anomaly;
+  const span = cd.cooldownMax - cd.cooldownMin + 1;
+  return elapsed + cd.cooldownMin + Math.floor(random() * span);
+}
+
+function scheduleNextAnomalyAfterRevive(elapsed) {
+  return elapsed + CONFIG.anomaly.cooldownMin;
+}
+
 
 // --- platform/platform.js ---
 /**
@@ -1047,7 +1057,6 @@ function getSystemInfo() {
 
 
 
-
 const root = document.querySelector('.console-shell');
 const els = {
   remaining: document.querySelector('#remaining'),
@@ -1106,7 +1115,7 @@ const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
   onReward: () => {
     playRevive();
     state = reviveFromAd(state);
-    nextAnomalyAt = state.elapsed + 8;
+    nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
     render();
   },
 });
@@ -1242,12 +1251,11 @@ function runAction(actionId) {
 
 function triggerAnomaly() {
   if (state.gameOver) return;
-  const event = pickNextAnomaly(state);
-  const result = applyAnomaly(state, event.id);
+  const picked = pickNextAnomaly(state);
+  const result = applyAnomaly(state, picked.id);
   state = result.state;
   playAnomaly();
-  const cd = CONFIG.anomaly;
-  nextAnomalyAt = state.elapsed + cd.cooldownMin + Math.floor(Math.random() * (cd.cooldownMax - cd.cooldownMin + 1));
+  nextAnomalyAt = scheduleNextAnomalyAfterTrigger(state.elapsed);
   render();
 }
 

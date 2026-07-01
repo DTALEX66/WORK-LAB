@@ -7,7 +7,12 @@ import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, 
 import { t, actionLabel, getSkin } from './skinManager.js';
 import { createRewardedAd } from '../platform/platform.js';
 import { getDomLabels } from './uiLabels.js';
-import { createRuntimeSession, restartRuntimeSession } from './runtimeSession.js';
+import {
+  createRuntimeSession,
+  restartRuntimeSession,
+  scheduleNextAnomalyAfterRevive,
+  scheduleNextAnomalyAfterTrigger,
+} from './runtimeSession.js';
 
 const root = document.querySelector('.console-shell');
 const els = {
@@ -67,7 +72,7 @@ const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
   onReward: () => {
     playRevive();
     state = reviveFromAd(state);
-    nextAnomalyAt = state.elapsed + 8;
+    nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
     render();
   },
 });
@@ -203,12 +208,11 @@ function runAction(actionId) {
 
 function triggerAnomaly() {
   if (state.gameOver) return;
-  const event = pickNextAnomaly(state);
-  const result = applyAnomaly(state, event.id);
+  const picked = pickNextAnomaly(state);
+  const result = applyAnomaly(state, picked.id);
   state = result.state;
   playAnomaly();
-  const cd = CONFIG.anomaly;
-  nextAnomalyAt = state.elapsed + cd.cooldownMin + Math.floor(Math.random() * (cd.cooldownMax - cd.cooldownMin + 1));
+  nextAnomalyAt = scheduleNextAnomalyAfterTrigger(state.elapsed);
   render();
 }
 
