@@ -416,11 +416,38 @@ button.secondary {
   font-size: 0.88rem;
   line-height: 1.55;
 }
+.logs li {
+  position: relative;
+  margin: 2px 0;
+  padding: 3px 8px 3px 4px;
+  border-radius: 8px;
+}
 .logs li::marker { color: rgba(97,255,190,0.55); }
 .logs li.warn { color: var(--amber); }
 .logs li.danger { color: var(--red); }
 .logs li.ad { color: var(--cyan); }
 .logs li.success { color: var(--green); }
+.logs li.log-priority-high,
+.logs li.log-priority-special,
+.logs li.log-priority-success {
+  font-weight: 900;
+  text-shadow: 0 0 14px currentColor;
+}
+.logs li.log-priority-high {
+  background: linear-gradient(90deg, rgba(255,77,109,0.14), transparent 72%);
+  box-shadow: inset 3px 0 0 rgba(255,77,109,0.72);
+}
+.logs li.log-priority-special {
+  background: linear-gradient(90deg, rgba(81,214,255,0.12), transparent 72%);
+  box-shadow: inset 3px 0 0 rgba(81,214,255,0.68);
+}
+.logs li.log-priority-success {
+  background: linear-gradient(90deg, rgba(97,255,190,0.12), transparent 72%);
+  box-shadow: inset 3px 0 0 rgba(97,255,190,0.72);
+}
+.logs li.log-priority-medium {
+  background: linear-gradient(90deg, rgba(255,209,102,0.09), transparent 72%);
+}
 
 .start-overlay {
   position: fixed;

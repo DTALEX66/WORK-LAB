@@ -262,12 +262,21 @@ function findRollbackSnapshot(snapshots, elapsed) {
 // --- src/feedback.js ---
 
 
+function classifyFeedbackPriority(type) {
+  if (type === 'danger') return 'high';
+  if (type === 'ad') return 'special';
+  if (type === 'success') return 'success';
+  if (type === 'warn') return 'medium';
+  return 'normal';
+}
+
 function createFeedbackLine(type, message, time = 0) {
   const safeTime = Math.max(0, Math.floor(time));
   const minutes = String(Math.floor(safeTime / 60)).padStart(2, '0');
   const seconds = String(safeTime % 60).padStart(2, '0');
   return {
     type,
+    priority: classifyFeedbackPriority(type),
     time: safeTime,
     text: `[${minutes}:${seconds}] ${message}`,
   };
@@ -1248,7 +1257,7 @@ function render() {
   els.logs.replaceChildren();
   for (const line of state.logs.slice(-CONFIG.logs.displayLines)) {
     const li = document.createElement('li');
-    li.className = line.type;
+    li.className = [line.type, line.priority ? `log-priority-${line.priority}` : 'log-priority-normal'].join(' ');
     li.textContent = line.text;
     els.logs.append(li);
   }

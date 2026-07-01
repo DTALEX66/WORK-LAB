@@ -166,7 +166,7 @@ function render() {
   els.logs.replaceChildren();
   for (const line of state.logs.slice(-CONFIG.logs.displayLines)) {
     const li = document.createElement('li');
-    li.className = line.type;
+    li.className = [line.type, line.priority ? `log-priority-${line.priority}` : 'log-priority-normal'].join(' ');
     li.textContent = line.text;
     els.logs.append(li);
   }

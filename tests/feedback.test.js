@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createInitialState } from '../src/state.js';
-import { createFeedbackLine, summarizeFailure } from '../src/feedback.js';
+import { classifyFeedbackPriority, createFeedbackLine, summarizeFailure } from '../src/feedback.js';
 import CONFIG from '../src/gameConfig.js';
 
 test('createFeedbackLine formats timestamped console feedback', () => {
@@ -10,9 +10,18 @@ test('createFeedbackLine formats timestamped console feedback', () => {
 
   assert.deepEqual(line, {
     type: 'warn',
+    priority: 'medium',
     time: 42,
     text: '[00:42] 门外检测到人影',
   });
+});
+
+test('classifyFeedbackPriority separates important log rows for UI highlighting', () => {
+  assert.equal(classifyFeedbackPriority('danger'), 'high');
+  assert.equal(classifyFeedbackPriority('ad'), 'special');
+  assert.equal(classifyFeedbackPriority('success'), 'success');
+  assert.equal(classifyFeedbackPriority('warn'), 'medium');
+  assert.equal(classifyFeedbackPriority('info'), 'normal');
 });
 
 test('summarizeFailure explains why the run ended', () => {
