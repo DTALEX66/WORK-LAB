@@ -60,7 +60,7 @@ function stripESM(code) {
 function bundle(target) {
   const top = `/**
  * MINIGAME - ${target === 'wechat' ? '微信' : '抖音'} 小游戏构建
- * 构建时间: ${new Date().toISOString()}
+ * 构建标记: deterministic
  * 请勿手动修改此文件
  */
 (function() {
