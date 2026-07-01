@@ -39,6 +39,9 @@ const els = {
   logs: document.querySelector('#logs'),
   forceAnomaly: document.querySelector('#forceAnomaly'),
   startOverlay: document.querySelector('#startOverlay'),
+  startTitle: document.querySelector('#startTitle'),
+  startCopy: document.querySelector('#startCopy'),
+  startChecklist: document.querySelector('#startChecklist'),
   startButton: document.querySelector('#startButton'),
   overlay: document.querySelector('#failureOverlay'),
   failureReason: document.querySelector('#failureReason'),
@@ -280,6 +283,16 @@ function applyDomLabels() {
   els.restartButton.textContent = labels.restart;
   els.fakeEndingTruthBtn.textContent = labels.revealTruth;
   els.fakeEndingRestartBtn.textContent = labels.restart;
+  if (els.startTitle) els.startTitle.textContent = labels.start.title;
+  if (els.startCopy) els.startCopy.textContent = labels.start.copy;
+  if (els.startButton) els.startButton.textContent = labels.start.button;
+  if (els.startChecklist) {
+    els.startChecklist.replaceChildren(...labels.start.checklist.map((item) => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      return li;
+    }));
+  }
   els.floorLabel.textContent = labels.status.floor;
   els.doorLabel.textContent = labels.status.door;
   els.directionLabel.textContent = labels.status.direction;

@@ -19,6 +19,8 @@ test('DOM labels use current skin labels', () => {
   assert.equal(labels.logPanel, '安防日志');
   assert.equal(labels.forceAnomaly, '触发安防异常');
   assert.equal(labels.failureTitle, '安防系统崩溃');
+  assert.equal(labels.start.title, '等待接管安防系统');
+  assert.equal(labels.start.button, '接管安防值守');
 
   loadSkin(elevatorSkin);
 });

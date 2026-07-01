@@ -52,6 +52,10 @@ const REQUIRED_TEXT_KEYS = [
   ['ui', 'revealTruth'],
   ['ui', 'decodePrefix'],
   ['ui', 'anomalyEventLog'],
+  ['ui', 'startTitle'],
+  ['ui', 'startCopy'],
+  ['ui', 'startChecklist'],
+  ['ui', 'startButton'],
   ['ui', 'hiddenLogCaptured'],
 ];
 

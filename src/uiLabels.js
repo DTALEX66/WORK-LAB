@@ -17,6 +17,12 @@ export function getDomLabels() {
     revive: t('ui.viewAd'),
     restart: t('ui.restart'),
     revealTruth: t('ui.revealTruth'),
+    start: {
+      title: t('ui.startTitle'),
+      copy: t('ui.startCopy'),
+      checklist: t('ui.startChecklist').split('\n').filter(Boolean),
+      button: t('ui.startButton'),
+    },
     status: {
       floor: status.floor || '楼层',
       door: status.door || '门状态',
