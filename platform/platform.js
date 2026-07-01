@@ -5,6 +5,8 @@
  * 游戏引擎只依赖此模块，不直接调用平台 API。
  */
 
+import CONFIG from '../src/gameConfig.js';
+
 // ── 环境检测 ──
 const env = (() => {
   if (typeof wx !== 'undefined' && wx && typeof wx.createRewardedVideoAd === 'function') {
@@ -110,7 +112,7 @@ export function createRewardedAd(adUnitId, callbacks = {}) {
         console.log('[ad] 模拟广告完成');
         onReward?.();
         resolve();
-      }, CONFIG?.adContent?.adVideoDuration || 2000);
+      }, CONFIG?.adContent?.adVideoDuration ?? 2000);
     });
   };
   adInstances[adUnitId] = show;
