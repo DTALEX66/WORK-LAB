@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 import { createInitialState } from '../src/state.js';
 import { ANOMALIES, applyAnomaly, pickNextAnomaly, HIDDEN_LOGS } from '../src/events.js';
+import { loadSkin } from '../src/skinManager.js';
+import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
 
 test('anomaly catalogue contains at least five playable events', () => {
   assert.ok(ANOMALIES.length >= 5);
@@ -21,6 +23,18 @@ test('applyAnomaly mutates system state and logs the event', () => {
   assert.equal(result.state.floor, 13);
   assert.equal(result.state.anomalyLevel, 2);
   assert.match(result.state.logs.at(-1).text, /不存在的楼层/);
+});
+
+test('applyAnomaly uses current skin anomaly log copy', () => {
+  const skin = structuredClone(elevatorSkin);
+  skin.ui.anomalyEventLog = '皮肤异常：{title} / {hint}';
+  loadSkin(skin);
+
+  const result = applyAnomaly(createInitialState(), 'phantom_floor');
+
+  assert.match(result.state.logs.at(-1).text, /皮肤异常：不存在的楼层 \/ 当楼层显示 13 时/);
+
+  loadSkin(elevatorSkin);
 });
 
 test('anomaly numeric effects add meters but set absolute fields', () => {

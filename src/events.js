@@ -76,7 +76,10 @@ export function applyAnomaly(state, id) {
     next.hiddenLogs.push({ id: id + '_log', title: raw.title, content: raw.content, locked: true });
     next = appendLog(next, 'info', t('ui.hiddenLogCaptured', { title: raw.title }));
   }
-  next = appendLog(next, event.severity >= 3 ? 'danger' : 'warn', `异常事件：${event.title}。${event.adHint}`);
+  next = appendLog(next, event.severity >= 3 ? 'danger' : 'warn', t('ui.anomalyEventLog', {
+    title: event.title,
+    hint: event.adHint,
+  }));
   return { event, state: checkFailure(next) };
 }
 

@@ -50,6 +50,7 @@ const REQUIRED_TEXT_KEYS = [
   ['ui', 'viewAd'],
   ['ui', 'revealTruth'],
   ['ui', 'decodePrefix'],
+  ['ui', 'anomalyEventLog'],
   ['ui', 'hiddenLogCaptured'],
 ];
 

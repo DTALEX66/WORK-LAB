@@ -182,6 +182,7 @@
     "triggerTest": "触发异常测试",
     "decodePrefix": "[解码记录]",
     "initialLog": "异常电梯控制台已接管。等待操作员指令。",
+    "anomalyEventLog": "异常事件：{title}。{hint}",
     "successfulShift": "本轮值守结束。系统仍未解释全部异常。",
     "shiftComplete": "值守完成。连续失败计数已重置。",
     "hiddenLogCaptured": "加密记录已捕获：{title}。使用「查看日志」功能解码。",
