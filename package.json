@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "serve": "node scripts/preview-server.mjs"
+    "serve": "node scripts/preview-server.mjs",
+    "android:prepare": "node scripts/prepare-android-webview.mjs",
+    "android:build": "node scripts/build-android-debug.mjs"
   }
 }

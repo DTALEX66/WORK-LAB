@@ -9,3 +9,7 @@ test-output/
 coverage/
 MINIGAME_V4_Starter_Pack.zip
 android-minigame/
+.tools/
+.gradle/
+android-webview/.gradle/
+android-webview/app/build/

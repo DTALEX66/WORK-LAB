@@ -43,9 +43,27 @@ android-webview/app/src/main/assets/game.js
 
 ## 构建 APK
 
-当前 Hermes 执行环境没有 Java / Gradle / Android SDK，因此不能在本机直接产出 APK。
+本项目已支持项目内便携 Android 工具链，默认安装在：
 
-在有 Android Studio 或 Android SDK 的机器上：
+```text
+D:\All projects\MINIGAME\.tools
+```
+
+不需要改系统环境变量。
+
+一键构建：
+
+```bash
+npm run android:build
+```
+
+等价于：
+
+```bash
+node scripts/build-android-debug.mjs
+```
+
+也可以在有 Android Studio 或 Android SDK 的机器上：
 
 ```bash
 cd android-webview
