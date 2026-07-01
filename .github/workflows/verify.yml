@@ -1,0 +1,35 @@
+name: Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install deps (none required — pure Node)
+        run: echo "No npm install needed"
+
+      - name: Run unit/regression tests
+        run: node --test tests/*.test.js
+
+      - name: Build WeChat mini-game bundle
+        run: node build.js wechat
+
+      - name: Strict bundle check
+        run: node scripts/check-wechat-bundle.mjs --strict
+
+      - name: Validate skin JSON schema
+        run: node scripts/validate-skins.mjs
+
+      - name: Release check (should fail-closed on placeholders)
+        run: node scripts/check-release-readiness.mjs; code=$?; if [ $code -eq 1 ]; then echo "release check correctly failed-closed on placeholders"; exit 0; fi; exit $code
