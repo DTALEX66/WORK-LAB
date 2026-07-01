@@ -8,6 +8,7 @@
     "serve": "node scripts/preview-server.mjs",
     "android:prepare": "node scripts/prepare-android-webview.mjs",
     "android:build": "node scripts/build-android-debug.mjs",
-    "android:inspect": "node scripts/check-apk-metadata.mjs"
+    "android:inspect": "node scripts/check-apk-metadata.mjs",
+    "verify": "node scripts/verify-all.cjs"
   }
 }

@@ -20,3 +20,14 @@ test('android inspect script verifies APK launcher metadata', () => {
   assert.match(inspectScript, /application-label:'\$\{expected\.label\}'/, 'script should assert launcher label');
   assert.match(inspectScript, /launcher icon is branded ic_launcher resource/, 'script should assert launcher icon resource');
 });
+
+test('verify script runs the full release acceptance gate', () => {
+  const verifyScript = readFileSync(new URL('../scripts/verify-all.cjs', import.meta.url), 'utf8');
+
+  assert.equal(pkg.scripts.verify, 'node scripts/verify-all.cjs');
+  assert.match(verifyScript, /npmCommand\(\), \['test'\]/, 'verify should run npm test');
+  assert.match(verifyScript, /\['build\.js', 'wechat'\]/, 'verify should build WeChat bundle');
+  assert.match(verifyScript, /check-wechat-bundle\.mjs', '--strict'/, 'verify should run WeChat strict check');
+  assert.match(verifyScript, /build-android-debug\.mjs/, 'verify should build Android APK');
+  assert.match(verifyScript, /check-apk-metadata\.mjs/, 'verify should inspect APK metadata');
+});

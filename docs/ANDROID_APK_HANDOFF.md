@@ -17,6 +17,7 @@
 
 当前已验证：
 
+- `npm run verify` 可一键执行完整验收：测试、微信构建、微信 strict、Android 构建、APK 元数据检查。
 - `npm test` 可在 Windows 当前 PATH 为微信开发者工具 Node 16 的情况下自动切到 Hermes Node 22，测试通过。
 - `npm run android:build` 可产出 debug APK。
 - `npm run android:inspect` 可用 `aapt dump badging` 验证包名、应用名、launcher icon、minSdk、targetSdk。
@@ -244,6 +245,7 @@ Uncaught RangeError: Maximum call stack size exceeded
 ## 常用命令汇总
 
 ```bash
+npm run verify
 npm test
 npm run android:build
 npm run android:inspect
