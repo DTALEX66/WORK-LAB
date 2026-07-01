@@ -8,7 +8,7 @@
  * 设计宽度：750px（标准移动端设计尺寸）
  */
 
-import { t, getSkin } from '../src/skinManager.js';
+import { t, getSkin, actionLabel } from '../src/skinManager.js';
 import { getToneForState, summarizeFailure } from '../src/feedback.js';
 
 // ── 尺寸常量 ──
@@ -206,6 +206,20 @@ function getMonitorText(state) {
   return state.monitor;
 }
 
+export function getCanvasActionButtons(state) {
+  const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
+  const buttons = [
+    'openDoor', 'closeDoor', 'moveUp', 'moveDown',
+    'emergencyStop', 'restartSystem', 'inspectLog',
+  ].map(id => ({ id, label: actionLabel(id) }));
+
+  if (lockedCount > 0) {
+    buttons.push({ id: 'unlockHiddenLog', label: actionLabel('unlockHiddenLog', lockedCount) });
+  }
+
+  return buttons;
+}
+
 // ── 绘制操作按钮 ──
 function drawActions(state) {
   const x = 14, y = 312, w = 260, h = 260;
@@ -215,20 +229,7 @@ function drawActions(state) {
   ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
   ctx.fillText('操作面板', x + 16, y + 28);
 
-  const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
-  const btns = [
-    { id: 'openDoor', label: '开门' },
-    { id: 'closeDoor', label: '关门' },
-    { id: 'moveUp', label: '上行' },
-    { id: 'moveDown', label: '下行' },
-    { id: 'emergencyStop', label: '急停' },
-    { id: 'restartSystem', label: '系统重启' },
-    { id: 'inspectLog', label: '查看日志' },
-  ];
-  // 有条件地添加解锁按钮
-  if (lockedCount > 0) {
-    btns.push({ id: 'unlockHiddenLog', label: `解码加密记录 (${lockedCount})` });
-  }
+  const btns = getCanvasActionButtons(state);
 
   const btnW = (w - 40) / 2;
   const btnH = 40;
@@ -435,12 +436,7 @@ export function onCanvasClick(x, y, state, callbacks) {
   const gap = 10;
   const startY = 312 + 42;
 
-  const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
-  const btns = [
-    'openDoor', 'closeDoor', 'moveUp', 'moveDown',
-    'emergencyStop', 'restartSystem', 'inspectLog',
-  ];
-  if (lockedCount > 0) btns.push('unlockHiddenLog');
+  const btns = getCanvasActionButtons(state).map(button => button.id);
 
   for (let i = 0; i < btns.length; i++) {
     const bx = 14 + 16 + (i % 2) * (btnW + gap);
