@@ -810,6 +810,40 @@ const AVAILABLE_ACTIONS = [
 ];
 
 
+// --- src/uiLabels.js ---
+
+function getDomLabels() {
+  const skin = getSkin();
+  const status = skin.statusLabels || {};
+  const canvas = skin.canvasLabels || {};
+
+  return {
+    countdown: canvas.countdown || '值守倒计时',
+    statusPanel: status.panelTitle || '电梯状态',
+    monitorPanel: canvas.monitorPanel || '监控画面',
+    actionPanel: canvas.actionPanel || '操作面板',
+    logPanel: canvas.logPanel || '系统日志',
+    forceAnomaly: canvas.forceAnomaly || t('ui.triggerTest'),
+    failureTitle: canvas.failureTitle || '系统崩溃',
+    revive: t('ui.viewAd'),
+    restart: t('ui.restart'),
+    revealTruth: t('ui.revealTruth'),
+    status: {
+      floor: status.floor || '楼层',
+      door: status.door || '门状态',
+      direction: status.direction || '方向',
+      passengers: status.passengers || '乘客',
+      power: status.power || '电源',
+      stability: status.stability || '稳定度',
+      anomalyLevel: status.anomalyLevel || '异常等级',
+      reviveCount: status.reviveCount || '广告复活',
+      adHintsCount: status.adHintsCount || '加密解码',
+      hiddenLogsCount: status.hiddenLogsCount || '待解码',
+    },
+  };
+}
+
+
 // --- platform/platform.js ---
 /**
  * platform.js — 平台抽象层
@@ -997,6 +1031,7 @@ function getSystemInfo() {
 
 
 
+
 const root = document.querySelector('.console-shell');
 const els = {
   remaining: document.querySelector('#remaining'),
@@ -1026,6 +1061,22 @@ const els = {
   adHint: document.querySelector('#adHint'),
   reviveButton: document.querySelector('#reviveButton'),
   restartButton: document.querySelector('#restartButton'),
+  remainingLabel: document.querySelector('#remainingLabel'),
+  statusPanelTitle: document.querySelector('#statusPanelTitle'),
+  monitorPanelTitle: document.querySelector('#monitorPanelTitle'),
+  actionPanelTitle: document.querySelector('#actionPanelTitle'),
+  logPanelTitle: document.querySelector('#logPanelTitle'),
+  failureTitle: document.querySelector('#failureTitle'),
+  floorLabel: document.querySelector('#floorLabel'),
+  doorLabel: document.querySelector('#doorLabel'),
+  directionLabel: document.querySelector('#directionLabel'),
+  passengersLabel: document.querySelector('#passengersLabel'),
+  powerLabel: document.querySelector('#powerLabel'),
+  stabilityLabel: document.querySelector('#stabilityLabel'),
+  anomalyLevelLabel: document.querySelector('#anomalyLevelLabel'),
+  reviveCountLabel: document.querySelector('#reviveCountLabel'),
+  adHintsCountLabel: document.querySelector('#adHintsCountLabel'),
+  hiddenLogsCountLabel: document.querySelector('#hiddenLogsCountLabel'),
 };
 
 let state = createInitialState();
@@ -1227,9 +1278,33 @@ function restart() {
   render();
 }
 
-els.forceAnomaly.textContent = t('ui.triggerTest');
+function applyDomLabels() {
+  const labels = getDomLabels();
+  els.remainingLabel.textContent = labels.countdown;
+  els.statusPanelTitle.textContent = labels.statusPanel;
+  els.monitorPanelTitle.textContent = labels.monitorPanel;
+  els.actionPanelTitle.textContent = labels.actionPanel;
+  els.logPanelTitle.textContent = labels.logPanel;
+  els.failureTitle.textContent = labels.failureTitle;
+  els.forceAnomaly.textContent = labels.forceAnomaly;
+  els.reviveButton.textContent = labels.revive;
+  els.restartButton.textContent = labels.restart;
+  els.fakeEndingTruthBtn.textContent = labels.revealTruth;
+  els.fakeEndingRestartBtn.textContent = labels.restart;
+  els.floorLabel.textContent = labels.status.floor;
+  els.doorLabel.textContent = labels.status.door;
+  els.directionLabel.textContent = labels.status.direction;
+  els.passengersLabel.textContent = labels.status.passengers;
+  els.powerLabel.textContent = labels.status.power;
+  els.stabilityLabel.textContent = labels.status.stability;
+  els.anomalyLevelLabel.textContent = labels.status.anomalyLevel;
+  els.reviveCountLabel.textContent = labels.status.reviveCount;
+  els.adHintsCountLabel.textContent = labels.status.adHintsCount;
+  els.hiddenLogsCountLabel.textContent = labels.status.hiddenLogsCount;
+}
+
+applyDomLabels();
 els.forceAnomaly.addEventListener('click', triggerAnomaly);
-els.reviveButton.textContent = t('ui.viewAd');
 els.reviveButton.addEventListener('click', () => {
   showReviveAd();
 });

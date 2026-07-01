@@ -6,6 +6,7 @@ import CONFIG from './gameConfig.js';
 import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
 import { t, actionLabel, getSkin } from './skinManager.js';
 import { createRewardedAd } from '../platform/platform.js';
+import { getDomLabels } from './uiLabels.js';
 
 const root = document.querySelector('.console-shell');
 const els = {
@@ -36,6 +37,22 @@ const els = {
   adHint: document.querySelector('#adHint'),
   reviveButton: document.querySelector('#reviveButton'),
   restartButton: document.querySelector('#restartButton'),
+  remainingLabel: document.querySelector('#remainingLabel'),
+  statusPanelTitle: document.querySelector('#statusPanelTitle'),
+  monitorPanelTitle: document.querySelector('#monitorPanelTitle'),
+  actionPanelTitle: document.querySelector('#actionPanelTitle'),
+  logPanelTitle: document.querySelector('#logPanelTitle'),
+  failureTitle: document.querySelector('#failureTitle'),
+  floorLabel: document.querySelector('#floorLabel'),
+  doorLabel: document.querySelector('#doorLabel'),
+  directionLabel: document.querySelector('#directionLabel'),
+  passengersLabel: document.querySelector('#passengersLabel'),
+  powerLabel: document.querySelector('#powerLabel'),
+  stabilityLabel: document.querySelector('#stabilityLabel'),
+  anomalyLevelLabel: document.querySelector('#anomalyLevelLabel'),
+  reviveCountLabel: document.querySelector('#reviveCountLabel'),
+  adHintsCountLabel: document.querySelector('#adHintsCountLabel'),
+  hiddenLogsCountLabel: document.querySelector('#hiddenLogsCountLabel'),
 };
 
 let state = createInitialState();
@@ -237,9 +254,33 @@ function restart() {
   render();
 }
 
-els.forceAnomaly.textContent = t('ui.triggerTest');
+function applyDomLabels() {
+  const labels = getDomLabels();
+  els.remainingLabel.textContent = labels.countdown;
+  els.statusPanelTitle.textContent = labels.statusPanel;
+  els.monitorPanelTitle.textContent = labels.monitorPanel;
+  els.actionPanelTitle.textContent = labels.actionPanel;
+  els.logPanelTitle.textContent = labels.logPanel;
+  els.failureTitle.textContent = labels.failureTitle;
+  els.forceAnomaly.textContent = labels.forceAnomaly;
+  els.reviveButton.textContent = labels.revive;
+  els.restartButton.textContent = labels.restart;
+  els.fakeEndingTruthBtn.textContent = labels.revealTruth;
+  els.fakeEndingRestartBtn.textContent = labels.restart;
+  els.floorLabel.textContent = labels.status.floor;
+  els.doorLabel.textContent = labels.status.door;
+  els.directionLabel.textContent = labels.status.direction;
+  els.passengersLabel.textContent = labels.status.passengers;
+  els.powerLabel.textContent = labels.status.power;
+  els.stabilityLabel.textContent = labels.status.stability;
+  els.anomalyLevelLabel.textContent = labels.status.anomalyLevel;
+  els.reviveCountLabel.textContent = labels.status.reviveCount;
+  els.adHintsCountLabel.textContent = labels.status.adHintsCount;
+  els.hiddenLogsCountLabel.textContent = labels.status.hiddenLogsCount;
+}
+
+applyDomLabels();
 els.forceAnomaly.addEventListener('click', triggerAnomaly);
-els.reviveButton.textContent = t('ui.viewAd');
 els.reviveButton.addEventListener('click', () => {
   showReviveAd();
 });
