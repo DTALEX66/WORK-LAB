@@ -38,8 +38,20 @@
 
         <section class="panel monitor-panel">
           <div class="panel-title" id="monitorPanelTitle">监控画面</div>
-          <div class="monitor" id="monitor">
-            监控画面稳定：1 层轿厢内有 1 名乘客。
+          <div class="monitor" id="monitor" aria-live="polite">
+            <div class="cctv-stage" aria-hidden="true">
+              <div class="camera-frame">
+                <div class="shaft-lines"></div>
+                <div class="elevator-car">
+                  <div class="door door-left"></div>
+                  <div class="door door-right"></div>
+                  <div class="passenger-heat"></div>
+                </div>
+                <div class="floor-indicator">F<span id="monitorFloor">1</span></div>
+                <div class="anomaly-reticle"></div>
+              </div>
+            </div>
+            <p class="monitor-caption" id="monitorCaption">监控画面稳定：1 层轿厢内有 1 名乘客。</p>
           </div>
           <div class="monitor-hud" aria-label="监控信号状态">
             <span id="monitorSignal">SIGNAL: STABLE</span>

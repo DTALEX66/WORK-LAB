@@ -1135,6 +1135,8 @@ const els = {
   fakeEndingTruthBtn: document.querySelector('#fakeEndingTruthBtn'),
   fakeEndingRestartBtn: document.querySelector('#fakeEndingRestartBtn'),
   monitor: document.querySelector('#monitor'),
+  monitorCaption: document.querySelector('#monitorCaption'),
+  monitorFloor: document.querySelector('#monitorFloor'),
   monitorSignal: document.querySelector('#monitorSignal'),
   monitorThreat: document.querySelector('#monitorThreat'),
   actions: document.querySelector('#actions'),
@@ -1267,14 +1269,19 @@ function render() {
     els.monitorSignal.textContent = signal;
   }
   if (els.monitorThreat) els.monitorThreat.textContent = labels.monitorThreat(state.anomalyLevel);
-
   // 显示已解锁的隐藏日志内容
   const unlockedHidden = state.hiddenLogs.filter(h => !h.locked);
-  if (unlockedHidden.length > 0) {
-    const last = unlockedHidden[unlockedHidden.length - 1];
-    els.monitor.textContent = getDecodedMonitorText(last);
-  } else {
-    els.monitor.textContent = state.monitor;
+  const monitorText = unlockedHidden.length > 0
+    ? getDecodedMonitorText(unlockedHidden[unlockedHidden.length - 1])
+    : state.monitor;
+  if (els.monitorCaption) els.monitorCaption.textContent = monitorText;
+  else els.monitor.textContent = monitorText;
+  if (els.monitorFloor) els.monitorFloor.textContent = state.floor;
+  if (els.monitor) {
+    els.monitor.dataset.door = state.door;
+    els.monitor.dataset.moving = String(state.moving);
+    els.monitor.dataset.anomaly = state.anomalyLevel > 0 ? 'active' : 'clear';
+    els.monitor.dataset.passengers = state.passengers > 0 ? 'present' : 'missing';
   }
 
   els.logs.replaceChildren();

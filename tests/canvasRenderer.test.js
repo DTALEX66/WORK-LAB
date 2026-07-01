@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { getAvailableActions } from '../src/actions.js';
 import { createInitialState } from '../src/state.js';
@@ -8,6 +9,8 @@ import securitySkin from '../src/skins/security/skin.json' with { type: 'json' }
 import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
 import { getCanvasActionButtons, getCanvasFailureOverlayCopy, getCanvasMeterBars, getCanvasStaticLabels, getCanvasStatusItems } from '../platform/canvasRenderer.js';
 import { getDomLabels } from '../src/uiLabels.js';
+
+const canvasRendererSource = readFileSync(new URL('../platform/canvasRenderer.js', import.meta.url), 'utf8');
 
 test('canvas action buttons use current skin labels', () => {
   loadSkin(securitySkin);
@@ -118,4 +121,10 @@ test('canvas failure overlay copy uses current skin text', () => {
   assert.equal(failureCopy.adHintLine, '系统提示：先锁门。');
 
   loadSkin(elevatorSkin);
+});
+
+test('canvas monitor renderer draws a visual CCTV scene before caption text', () => {
+  assert.match(canvasRendererSource, /function drawCctvScene/, 'Canvas mini-game monitor should include visual CCTV scene rendering');
+  assert.match(canvasRendererSource, /drawCctvScene\(state/, 'drawMonitor should call the visual scene renderer');
+  assert.match(canvasRendererSource, /heatAlpha/, 'Canvas monitor should draw passenger heat signature state');
 });

@@ -13,5 +13,8 @@ test('browser preview exposes an explicit start handoff overlay', () => {
   assert.match(html, /id="fakeEndingTitle"/, 'fake-ending overlay should expose skin-backed title');
   assert.match(html, /id="monitorSignal"/, 'monitor should expose a visual signal state strip');
   assert.match(html, /id="monitorThreat"/, 'monitor should expose a visual threat badge');
+  assert.match(html, /class="cctv-stage"/, 'monitor should include a CCTV visual stage, not just text');
+  assert.match(html, /id="monitorCaption"/, 'monitor copy should render as caption so visual layer is preserved');
+  assert.match(html, /class="passenger-heat"/, 'monitor should include a passenger heat signature visual');
   assert.match(html, /data-testid="start-handoff"/, 'start overlay should be easy to target in browser checks');
 });

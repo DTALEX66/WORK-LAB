@@ -225,22 +225,103 @@ function drawMonitor(state) {
   ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
   ctx.fillText(labels.monitorPanel, x + 16, y + 28);
 
-  // 监控内容区域
+  // 监控内容区域：视觉画面 + 字幕，不再只是大段文字
   const mx = x + 14, my = y + 38, mw = w - 28, mh = h - 50;
   roundRect(mx, my, mw, mh, 12, 'rgba(0,0,0,0.2)', 'rgba(97,255,190,0.12)');
+  drawCctvScene(state, mx + 10, my + 10, mw - 20, mh - 58);
 
   // 扫描线效果
   const scanY = (Date.now() / 100 * mh) % mh;
   ctx.fillStyle = 'rgba(97,255,190,0.04)';
   ctx.fillRect(mx, my + scanY, mw, 4);
 
-  // 文本
+  // 字幕文本
   let displayText = getMonitorText(state);
   ctx.fillStyle = '#bffff0';
-  ctx.font = '20px "Microsoft YaHei", sans-serif';
+  ctx.font = '13px "Microsoft YaHei", sans-serif';
   ctx.textAlign = 'center';
-  wrapText(displayText, mx + mw / 2, my + mh / 2 - 10, mw - 20, 28);
+  wrapText(displayText, mx + mw / 2, my + mh - 34, mw - 24, 17);
   ctx.textAlign = 'left';
+}
+
+function drawCctvScene(state, x, y, w, h) {
+  if (h <= 20) return;
+
+  const bg = ctx.createLinearGradient(x, y, x, y + h);
+  bg.addColorStop(0, 'rgba(7,30,32,0.92)');
+  bg.addColorStop(1, 'rgba(0,5,7,0.98)');
+  roundRect(x, y, w, h, 10, bg, 'rgba(97,255,190,0.12)');
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+
+  ctx.strokeStyle = 'rgba(97,255,190,0.11)';
+  ctx.lineWidth = 1;
+  for (let yy = y + 12; yy < y + h; yy += 22) {
+    ctx.beginPath();
+    ctx.moveTo(x, yy);
+    ctx.lineTo(x + w, yy);
+    ctx.stroke();
+  }
+  for (const ratio of [0.18, 0.5, 0.82]) {
+    ctx.beginPath();
+    ctx.moveTo(x + w * ratio, y);
+    ctx.lineTo(x + w * ratio, y + h);
+    ctx.stroke();
+  }
+
+  const carW = Math.min(w * 0.42, 150);
+  const carH = h * 0.76;
+  const jitter = state.moving ? Math.sin(Date.now() / 60) * 2 : 0;
+  const carX = x + w / 2 - carW / 2 + jitter;
+  const carY = y + h - carH - 8;
+  const carFill = ctx.createLinearGradient(carX, carY, carX + carW, carY);
+  carFill.addColorStop(0, 'rgba(191,255,240,0.13)');
+  carFill.addColorStop(0.5, 'rgba(0,12,14,0.72)');
+  carFill.addColorStop(1, 'rgba(191,255,240,0.10)');
+  roundRect(carX, carY, carW, carH, 8, carFill, 'rgba(191,255,240,0.42)');
+
+  const open = state.door === 'open';
+  const doorGap = open ? carW * 0.18 : 0;
+  ctx.fillStyle = 'rgba(97,255,190,0.09)';
+  ctx.fillRect(carX + doorGap, carY + 2, carW / 2 - doorGap, carH - 4);
+  ctx.fillRect(carX + carW / 2, carY + 2, carW / 2 - doorGap, carH - 4);
+  ctx.strokeStyle = 'rgba(97,255,190,0.24)';
+  ctx.beginPath();
+  ctx.moveTo(carX + carW / 2, carY + 4);
+  ctx.lineTo(carX + carW / 2, carY + carH - 4);
+  ctx.stroke();
+
+  const heatAlpha = state.passengers > 0 ? 0.9 : 0.18;
+  const heat = ctx.createRadialGradient(carX + carW / 2, carY + carH * 0.58, 4, carX + carW / 2, carY + carH * 0.58, 34);
+  heat.addColorStop(0, `rgba(255,209,102,${heatAlpha})`);
+  heat.addColorStop(0.45, `rgba(255,77,109,${heatAlpha * 0.7})`);
+  heat.addColorStop(1, 'transparent');
+  ctx.fillStyle = heat;
+  ctx.fillRect(carX + carW / 2 - 38, carY + carH * 0.28, 76, carH * 0.62);
+
+  roundRect(x + 10, y + h - 28, 58, 20, 8, 'rgba(0,0,0,0.48)', 'rgba(97,255,190,0.24)');
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 12px Consolas, monospace';
+  ctx.fillText(`F${state.floor}`, x + 18, y + h - 14);
+
+  const reticleX = x + w - 42;
+  const reticleY = y + h - 42;
+  ctx.strokeStyle = state.anomalyLevel > 0 ? 'rgba(255,77,109,0.88)' : 'rgba(97,255,190,0.32)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(reticleX, reticleY, 22 + (state.anomalyLevel > 0 ? Math.sin(Date.now() / 120) * 2 : 0), 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(reticleX - 18, reticleY);
+  ctx.lineTo(reticleX + 18, reticleY);
+  ctx.moveTo(reticleX, reticleY - 18);
+  ctx.lineTo(reticleX, reticleY + 18);
+  ctx.stroke();
+
+  ctx.restore();
 }
 
 function getMonitorText(state) {
