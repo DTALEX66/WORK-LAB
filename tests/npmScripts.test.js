@@ -11,3 +11,12 @@ test('npm test uses a Node16-compatible launcher', () => {
   assert.match(launcher, /LOCALAPPDATA/, 'launcher should support Hermes bundled Node on Windows');
   assert.match(launcher, /--test/, 'launcher should invoke the real node:test runner');
 });
+
+test('android inspect script verifies APK launcher metadata', () => {
+  const inspectScript = readFileSync(new URL('../scripts/check-apk-metadata.mjs', import.meta.url), 'utf8');
+
+  assert.equal(pkg.scripts['android:inspect'], 'node scripts/check-apk-metadata.mjs');
+  assert.match(inspectScript, /dump', 'badging'/, 'script should inspect APK badging via aapt');
+  assert.match(inspectScript, /application-label:'\$\{expected\.label\}'/, 'script should assert launcher label');
+  assert.match(inspectScript, /launcher icon is branded ic_launcher resource/, 'script should assert launcher icon resource');
+});

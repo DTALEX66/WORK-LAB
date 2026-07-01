@@ -7,6 +7,7 @@
     "test": "node scripts/run-tests.cjs",
     "serve": "node scripts/preview-server.mjs",
     "android:prepare": "node scripts/prepare-android-webview.mjs",
-    "android:build": "node scripts/build-android-debug.mjs"
+    "android:build": "node scripts/build-android-debug.mjs",
+    "android:inspect": "node scripts/check-apk-metadata.mjs"
   }
 }
