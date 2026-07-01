@@ -23,20 +23,30 @@ const ROOT = __dirname;
 
 // ── 需要打包的模块（顺序重要） ──
 // skin.json 必须在 skinManager.js 之前，因为 IIFE 顺序执行
-const ENTRY_MODULES = [
+const CORE_MODULES = [
   { path: 'src/gameConfig.js',     type: 'js' },
   { path: 'src/skins/elevator/skin.json', type: 'skin' },
   { path: 'src/skinManager.js',    type: 'js' },
   { path: 'src/rollback.js',       type: 'js' },
   { path: 'src/feedback.js',       type: 'js' },
-  { path: 'src/audio.js',          type: 'js' },
   { path: 'src/state.js',          type: 'js' },
   { path: 'src/events.js',         type: 'js' },
   { path: 'src/actions.js',        type: 'js' },
   { path: 'src/uiLabels.js',       type: 'js' },
   { path: 'src/runtimeSession.js', type: 'js' },
+];
+
+const DOM_ENTRY_MODULES = [
+  ...CORE_MODULES,
+  { path: 'src/audio.js',          type: 'js' },
   { path: 'platform/platform.js',   type: 'js' },
   { path: 'src/game.js',           type: 'js' },
+];
+
+const MINI_ENTRY_MODULES = [
+  ...CORE_MODULES,
+  { path: 'platform/canvasRenderer.js', type: 'js' },
+  { path: 'platform/miniGameRuntime.js', type: 'js' },
 ];
 
 /**
@@ -61,8 +71,12 @@ function stripESM(code) {
 }
 
 function bundle(target) {
+  const modules = target === 'wechat' || target === 'douyin'
+    ? MINI_ENTRY_MODULES
+    : DOM_ENTRY_MODULES;
+  const targetLabel = target === 'wechat' ? '微信' : target === 'douyin' ? '抖音' : 'Android WebView';
   const top = `/**
- * MINIGAME - ${target === 'wechat' ? '微信' : '抖音'} 小游戏构建
+ * MINIGAME - ${targetLabel} 小游戏构建
  * 构建标记: deterministic
  * 请勿手动修改此文件
  */
@@ -74,7 +88,7 @@ function bundle(target) {
   let body = '';
   let bottom = '';
 
-  for (const mod of ENTRY_MODULES) {
+  for (const mod of modules) {
     const fullPath = path.join(ROOT, mod.path);
     if (!fs.existsSync(fullPath)) {
       console.warn(`[build] 警告: ${mod.path} 不存在，跳过`);
@@ -107,25 +121,13 @@ function bundle(target) {
   if (target === 'wechat') {
     bottom = `
 // ── 平台入口 ──
-var platformCanvas = typeof wx !== 'undefined' ? wx.createCanvas() : null;
-if (platformCanvas) {
-  var W = 750, H = 1334;
-  platformCanvas.width = W;
-  platformCanvas.height = H;
-  var platformCtx = platformCanvas.getContext('2d');
-
-  // 简单的 canvas 渲染替代 DOM
-  function gameLoop() {
-    // 调用 game.js 的渲染逻辑
-    if (typeof render !== 'undefined') {
-      render(state);
-    }
-    requestAnimationFrame(gameLoop);
-  }
-  gameLoop();
-} else {
-  console.log('[MINIGAME] DOM mode');
-}
+startMiniGame();
+})();
+`;
+  } else if (target === 'douyin') {
+    bottom = `
+// ── 平台入口 ──
+startMiniGame();
 })();
 `;
   } else {

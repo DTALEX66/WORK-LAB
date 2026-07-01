@@ -35,31 +35,31 @@ const checks = [
     id: 'placeholderAppId',
     ok: projectConfig.appid !== '请替换为你的微信小游戏 AppID',
     level: 'warning',
-    message: 'project.config.json still uses placeholder AppID',
+    message: 'project.config.json should use a real WeChat Mini Game AppID before release',
   },
   {
     id: 'domDependency',
     ok: !/document\.(querySelector|createElement)/.test(bundle),
     level: 'blocker',
-    message: 'bundle still contains DOM APIs; real WeChat runtime has no document',
+    message: 'bundle must not contain DOM APIs; real WeChat runtime has no document',
   },
   {
     id: 'windowDependency',
     ok: !/window\.(addEventListener|setInterval|clearInterval)/.test(bundle),
     level: 'blocker',
-    message: 'bundle still contains browser window APIs; real WeChat runtime needs Canvas runtime',
+    message: 'bundle must not contain browser window APIs; real WeChat runtime needs Canvas runtime',
   },
   {
     id: 'hiddenLogAlias',
     ok: !bundle.includes('_getHiddenLog('),
     level: 'blocker',
-    message: 'bundle still references stripped import alias _getHiddenLog',
+    message: 'bundle must not reference stripped import alias _getHiddenLog',
   },
   {
     id: 'canvasRenderer',
     ok: bundle.includes('canvasRenderer.js') || bundle.includes('getCanvasActionButtons'),
     level: 'blocker',
-    message: 'bundle does not include the Canvas renderer entry used by mini-game platforms',
+    message: 'bundle must include the Canvas renderer entry used by mini-game platforms',
   },
 ];
 

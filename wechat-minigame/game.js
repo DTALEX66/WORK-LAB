@@ -312,116 +312,6 @@ function getToneForState(state) {
 }
 
 
-// --- src/audio.js ---
-/**
- * audio.js — 程序化音效（Web Audio API，无需外部文件）
- *
- * 所有声音通过 OscillatorNode + GainNode 实时合成，
- * 初始化为惰性加载，首次用户交互时才会创建 AudioContext。
- */
-
-let ctx = null;
-
-function getContext() {
-  if (!ctx) {
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  // 某些浏览器在 user gesture 后需要 resume
-  if (ctx.state === 'suspended') {
-    ctx.resume().catch(() => {});
-  }
-  return ctx;
-}
-
-/**
- * 播放一个简单的单频音
- * @param {number} freq - 频率 Hz
- * @param {number} duration - 持续秒
- * @param {string} type - 波形类型
- * @param {number} volume - 音量 0-1
- */
-function beep(freq, duration, type = 'square', volume = 0.08) {
-  try {
-    const ac = getContext();
-    const osc = ac.createOscillator();
-    const gain = ac.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, ac.currentTime);
-    gain.gain.setValueAtTime(volume, ac.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
-    osc.connect(gain);
-    gain.connect(ac.destination);
-    osc.start(ac.currentTime);
-    osc.stop(ac.currentTime + duration);
-  } catch {
-    // 静默失败 — 音效不是关键功能
-  }
-}
-
-/**
- * 播放一个扫频音（用于异常/警报）
- */
-function sweep(startFreq, endFreq, duration, type = 'sawtooth', volume = 0.06) {
-  try {
-    const ac = getContext();
-    const osc = ac.createOscillator();
-    const gain = ac.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(startFreq, ac.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(endFreq, ac.currentTime + duration);
-    gain.gain.setValueAtTime(volume, ac.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
-    osc.connect(gain);
-    gain.connect(ac.destination);
-    osc.start(ac.currentTime);
-    osc.stop(ac.currentTime + duration);
-  } catch {
-    // 静默失败
-  }
-}
-
-/** 按钮点击 — 短促的咔嗒声 */
-function playClick() {
-  beep(800, 0.06, 'square', 0.06);
-}
-
-/** 操作成功 — 确认音 */
-function playSuccess() {
-  beep(1000, 0.1, 'sine', 0.07);
-}
-
-/** 操作失败 — 拒绝音 */
-function playFail() {
-  beep(300, 0.18, 'sawtooth', 0.07);
-}
-
-/** 异常触发 — 低频警报扫频 */
-function playAnomaly() {
-  sweep(200, 80, 0.45, 'sawtooth', 0.08);
-}
-
-/** 稳定度/电源危险 — 短促警告 */
-function playWarning() {
-  sweep(600, 200, 0.25, 'square', 0.06);
-}
-
-/** 系统崩溃 — 低沉衰减 */
-function playCrash() {
-  sweep(150, 30, 0.8, 'sawtooth', 0.1);
-}
-
-/** 广告复活 — 上升恢复音 */
-function playRevive() {
-  sweep(200, 1200, 0.5, 'sine', 0.08);
-}
-
-/** 游戏重启 — 重置音 */
-function playRestart() {
-  beep(600, 0.08, 'sine', 0.06);
-  setTimeout(() => beep(800, 0.1, 'sine', 0.06), 100);
-}
-
-
 // --- src/state.js ---
 
 
@@ -924,600 +814,717 @@ function scheduleNextAnomalyAfterRevive(elapsed) {
 }
 
 
-// --- platform/platform.js ---
+// --- platform/canvasRenderer.js ---
 /**
- * platform.js — 平台抽象层
+ * canvasRenderer.js — Canvas 渲染器
  *
- * 统一浏览器/微信小游戏/抖音小游戏的 API 差异。
- * 游戏引擎只依赖此模块，不直接调用平台 API。
+ * 完全替代 index.html + styles.css 的 DOM 渲染。
+ * 在小游戏平台（微信/抖音）上使用 Canvas 渲染，
+ * 在浏览器中也可作为独立渲染模式。
+ *
+ * 设计宽度：750px（标准移动端设计尺寸）
  */
 
 
-// ── 环境检测 ──
-const env = (() => {
-  if (typeof wx !== 'undefined' && wx && typeof wx.createRewardedVideoAd === 'function') {
-    return 'wechat';
-  }
-  if (typeof tt !== 'undefined' && tt && typeof tt.createRewardedVideoAd === 'function') {
-    return 'douyin';
-  }
-  return 'browser';
-})();
-
-// ── Canvas ──
-let mainCanvas = null;
-let mainCtx = null;
-
-/**
- * 获取/创建主画布
- */
-function getCanvas(width = 750, height = 1334) {
-  if (mainCanvas) return mainCanvas;
-
-  if (env === 'wechat') {
-    mainCanvas = wx.createCanvas();
-    mainCanvas.width = width;
-    mainCanvas.height = height;
-  } else if (env === 'douyin') {
-    mainCanvas = tt.createCanvas();
-    mainCanvas.width = width;
-    mainCanvas.height = height;
-  } else {
-    // 浏览器模式 — 使用 DOM 渲染，canvas 仅作为 fallback
-    mainCanvas = document.createElement('canvas');
-    mainCanvas.width = width;
-    mainCanvas.height = height;
-    mainCanvas.style.display = 'none';
-    document.body.appendChild(mainCanvas);
-  }
-
-  mainCtx = mainCanvas.getContext('2d');
-  return mainCanvas;
-}
-
-function getContext() {
-  if (!mainCtx) getCanvas();
-  return mainCtx;
-}
-
-// ── 广告 ──
-let adInstances = {};
-
-/**
- * 创建激励视频广告
- * @param {string} adUnitId - 广告位 ID
- * @param {object} callbacks - { onReward, onError }
- * @returns {function} show() 函数
- */
-function createRewardedAd(adUnitId, callbacks = {}) {
-  if (adInstances[adUnitId]) return adInstances[adUnitId];
-
-  const { onReward, onError } = callbacks;
-
-  if (env === 'wechat') {
-    const ad = wx.createRewardedVideoAd({ adUnitId });
-    ad.onClose((res) => {
-      if (res && res.isEnded) {
-        onReward?.();
-      }
-    });
-    ad.onError((err) => {
-      console.warn('[ad] error:', err);
-      // 广告加载失败也给予奖励（避免阻塞游戏）
-      onReward?.();
-      onError?.(err);
-    });
-    const show = () => ad.show().catch(() => {
-      ad.load().then(() => ad.show()).catch(() => onReward?.());
-    });
-    adInstances[adUnitId] = show;
-    return show;
-  }
-
-  if (env === 'douyin') {
-    const ad = tt.createRewardedVideoAd({ adUnitId });
-    ad.onClose((res) => {
-      if (res && res.isEnded) onReward?.();
-    });
-    ad.onError((err) => {
-      onReward?.();
-      onError?.(err);
-    });
-    const show = () => ad.show().catch(() => {
-      ad.load().then(() => ad.show()).catch(() => onReward?.());
-    });
-    adInstances[adUnitId] = show;
-    return show;
-  }
-
-  // 浏览器模式 — 模拟广告
-  const show = () => {
-    return new Promise((resolve) => {
-      console.log('[ad] 模拟广告播放中...');
-      setTimeout(() => {
-        console.log('[ad] 模拟广告完成');
-        onReward?.();
-        resolve();
-      }, CONFIG?.adContent?.adVideoDuration ?? 2000);
-    });
-  };
-  adInstances[adUnitId] = show;
-  return show;
-}
-
-// ── 存储 ──
-function setStorage(key, value) {
-  try {
-    const data = JSON.stringify(value);
-    if (env === 'wechat') wx.setStorageSync(key, data);
-    else if (env === 'douyin') tt.setStorageSync(key, data);
-    else localStorage.setItem(key, data);
-  } catch (e) {
-    console.warn('[storage] set failed:', e);
-  }
-}
-
-function getStorage(key, fallback = null) {
-  try {
-    let data;
-    if (env === 'wechat') data = wx.getStorageSync(key);
-    else if (env === 'douyin') data = tt.getStorageSync(key);
-    else data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-// ── 事件绑定 ──
-function onTouch(canvas, handler) {
-  const cb = (e) => {
-    const touch = e.touches?.[0] || e;
-    const rect = canvas.getBoundingClientRect?.();
-    const x = (touch.clientX || touch.x) - (rect?.left || 0);
-    const y = (touch.clientY || touch.y) - (rect?.top || 0);
-    handler(x, y, e);
-  };
-
-  if (env === 'wechat') {
-    wx.onTouchStart(cb);
-  } else if (env === 'douyin') {
-    tt.onTouchStart(cb);
-  } else {
-    canvas.addEventListener('click', cb);
-  }
-}
-
-// ── 信息 ──
-function getSystemInfo() {
-  if (env === 'wechat') return wx.getSystemInfoSync();
-  if (env === 'douyin') return tt.getSystemInfoSync();
-  return {
-    windowWidth: window.innerWidth,
-    windowHeight: window.innerHeight,
-    pixelRatio: window.devicePixelRatio || 1,
-    platform: 'browser',
-  };
-}
 
 
 
-// --- src/game.js ---
+// ── 尺寸常量 ──
+const DW = 750;       // 设计宽度
+let canvas, ctx;
+let scale = 1;        // 实际像素/设计像素比例
+let DH = 1334;        // 设计高度（自适应）
 
-
-
-
-
-
-
-
-
-const root = document.querySelector('.console-shell');
-const els = {
-  remaining: document.querySelector('#remaining'),
-  floor: document.querySelector('#floor'),
-  door: document.querySelector('#door'),
-  direction: document.querySelector('#direction'),
-  passengers: document.querySelector('#passengers'),
-  power: document.querySelector('#power'),
-  powerText: document.querySelector('#powerText'),
-  stability: document.querySelector('#stability'),
-  stabilityText: document.querySelector('#stabilityText'),
-  anomalyLevel: document.querySelector('#anomalyLevel'),
-  reviveCount: document.querySelector('#reviveCount'),
-  adHintsCount: document.querySelector('#adHintsCount'),
-  hiddenLogsCount: document.querySelector('#hiddenLogsCount'),
-  fakeEndingOverlay: document.querySelector('#fakeEndingOverlay'),
-  fakeEndingEyebrow: document.querySelector('#fakeEndingEyebrow'),
-  fakeEndingTitle: document.querySelector('#fakeEndingTitle'),
-  fakeEndingText: document.querySelector('#fakeEndingText'),
-  fakeEndingTruth: document.querySelector('#fakeEndingTruth'),
-  fakeEndingTruthBtn: document.querySelector('#fakeEndingTruthBtn'),
-  fakeEndingRestartBtn: document.querySelector('#fakeEndingRestartBtn'),
-  monitor: document.querySelector('#monitor'),
-  monitorSignal: document.querySelector('#monitorSignal'),
-  monitorThreat: document.querySelector('#monitorThreat'),
-  actions: document.querySelector('#actions'),
-  logs: document.querySelector('#logs'),
-  forceAnomaly: document.querySelector('#forceAnomaly'),
-  startOverlay: document.querySelector('#startOverlay'),
-  startTitle: document.querySelector('#startTitle'),
-  startCopy: document.querySelector('#startCopy'),
-  startChecklist: document.querySelector('#startChecklist'),
-  startFailureRules: document.querySelector('#startFailureRules'),
-  startButton: document.querySelector('#startButton'),
-  overlay: document.querySelector('#failureOverlay'),
-  failureReason: document.querySelector('#failureReason'),
-  failureMetrics: document.querySelector('#failureMetrics'),
-  adHint: document.querySelector('#adHint'),
-  reviveButton: document.querySelector('#reviveButton'),
-  restartButton: document.querySelector('#restartButton'),
-  remainingLabel: document.querySelector('#remainingLabel'),
-  statusPanelTitle: document.querySelector('#statusPanelTitle'),
-  monitorPanelTitle: document.querySelector('#monitorPanelTitle'),
-  actionPanelTitle: document.querySelector('#actionPanelTitle'),
-  logPanelTitle: document.querySelector('#logPanelTitle'),
-  failureTitle: document.querySelector('#failureTitle'),
-  floorLabel: document.querySelector('#floorLabel'),
-  doorLabel: document.querySelector('#doorLabel'),
-  directionLabel: document.querySelector('#directionLabel'),
-  passengersLabel: document.querySelector('#passengersLabel'),
-  powerLabel: document.querySelector('#powerLabel'),
-  stabilityLabel: document.querySelector('#stabilityLabel'),
-  anomalyLevelLabel: document.querySelector('#anomalyLevelLabel'),
-  reviveCountLabel: document.querySelector('#reviveCountLabel'),
-  adHintsCountLabel: document.querySelector('#adHintsCountLabel'),
-  hiddenLogsCountLabel: document.querySelector('#hiddenLogsCountLabel'),
+// ── 颜色 ──
+const COLORS = {
+  bg: '#05080b',
+  panel: 'rgba(8,18,21,0.92)',
+  line: 'rgba(97,255,190,0.22)',
+  text: '#d8fff3',
+  muted: '#789b92',
+  green: '#61ffbe',
+  amber: '#ffd166',
+  red: '#ff4d6d',
+  cyan: '#51d6ff',
+  darkRed: '#ff0050',
 };
 
-let session = createRuntimeSession();
-let state = session.state;
-let nextAnomalyAt = session.nextAnomalyAt;
-let timer = null;
-let lastTone = 'normal';
-let crashPlayed = false;
-
-function ensureTimer() {
-  if (timer) return;
-  if (els.startOverlay) els.startOverlay.hidden = true;
-  timer = window.setInterval(loop, 1000);
+// ── Measure text ──
+function measure(text, size, bold = false) {
+  ctx.font = `${bold ? 'bold ' : ''}${size}px "Microsoft YaHei", sans-serif`;
+  return ctx.measureText(text).width;
 }
 
-function bindPress(element, handler) {
-  if (!element) return;
-  let handledAt = 0;
-  const run = (event) => {
-    event?.preventDefault?.();
-    const now = Date.now();
-    if (now - handledAt < 350) return;
-    handledAt = now;
-    handler(event);
-  };
-  element.addEventListener('click', run);
-  element.addEventListener('touchend', run, { passive: false });
-  element.addEventListener('pointerup', run);
+// ── Draw rounded rect ──
+function roundRect(x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
 }
 
-const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
-  onReward: () => {
-    playRevive();
-    state = reviveFromAd(state);
-    nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
-    render();
-  },
-});
-const showDecodeAd = createRewardedAd(CONFIG.adUnits.decode, {
-  onReward: () => runAction('unlockHiddenLog'),
-});
-const showTruthAd = createRewardedAd(CONFIG.adUnits.truth, {
-  onReward: () => {
-    playRevive();
-    state = structuredClone(state);
-    state.fakeEndingUnlocked = true;
-    render();
-  },
-});
+// ── 绘制背景 ──
+function drawBackground(tone) {
+  // 纯色背景
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0, 0, DW, DH);
 
+  // 径向渐变装饰
+  const grad1 = ctx.createRadialGradient(150, 0, 0, 150, 0, 400);
+  grad1.addColorStop(0, 'rgba(81,214,255,0.10)');
+  grad1.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad1;
+  ctx.fillRect(0, 0, DW, DH);
 
-function renderActions() {
-  els.actions.replaceChildren();
-  const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
-  for (const action of getAvailableActions()) {
-    // 解码加密记录按钮只在有锁定日志时显示
-    if (action.id === 'unlockHiddenLog' && lockedCount === 0) continue;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = action.id === 'unlockHiddenLog'
-      ? actionLabel(action.id, lockedCount)
-      : action.label;
-    button.dataset.action = action.id;
-    bindPress(button, () => dispatchAction(action.id));
-    els.actions.append(button);
-  }
+  const grad2 = ctx.createRadialGradient(DW - 100, 100, 0, DW - 100, 100, 350);
+  grad2.addColorStop(0, 'rgba(255,77,109,0.10)');
+  grad2.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad2;
+  ctx.fillRect(0, 0, DW, DH);
 }
 
-function render() {
+function getCanvasStaticLabels() {
   const labels = getDomLabels();
-  renderActions();
-  root.dataset.tone = getToneForState(state);
-  els.remaining.textContent = Math.ceil(state.remaining);
-  els.floor.textContent = state.floor;
-  els.door.textContent = getDoorLabel(state.door);
-  els.direction.textContent = getDirectionLabel(state.direction);
-  els.passengers.textContent = state.passengers;
-  els.power.value = state.power;
-  els.powerText.textContent = Math.round(state.power);
-  els.stability.value = state.stability;
-  els.stabilityText.textContent = Math.round(state.stability);
-  els.anomalyLevel.textContent = state.anomalyLevel;
-  els.reviveCount.textContent = state.adRevivesUsed;
+  return {
+    countdown: labels.countdown,
+    monitorPanel: labels.monitorPanel,
+    actionPanel: labels.actionPanel,
+    logPanel: labels.logPanel,
+    forceAnomaly: labels.forceAnomaly,
+    failureTitle: labels.failureTitle,
+    failureEyebrow: labels.failureEyebrow,
+    adRevive: labels.revive,
+    restart: labels.restart,
+    revealTruth: labels.revealTruth,
+  };
+}
 
-  // 隐藏日志统计
-  const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
-  const unlockedCount = state.hiddenLogs.filter(h => !h.locked).length;
-  if (els.hiddenLogsCount) els.hiddenLogsCount.textContent = lockedCount;
-  if (els.adHintsCount) els.adHintsCount.textContent = state.adHintsUsed;
+function getCanvasFailureOverlayCopy(state) {
+  return {
+    eyebrow: state.fakeEndingTriggered ? t('fakeEnding.eyebrow') : getCanvasStaticLabels().failureEyebrow,
+    title: state.fakeEndingTriggered ? t('fakeEnding.title') : getCanvasStaticLabels().failureTitle,
+    adHintLine: state.lastAdHint ? t('failure.adHintPrefix', { hint: state.lastAdHint }) : '',
+  };
+}
+
+// ── 绘制顶栏 ──
+function drawTopbar(state) {
+  const meta = getSkin().meta;
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
+  ctx.fillText(meta?.name || '', 24, 44);
+
+  ctx.fillStyle = COLORS.green;
+  ctx.font = '14px "Microsoft YaHei", sans-serif';
+  ctx.fillText(meta?.subtitle || '', 24, 64);
+
+  const labels = getCanvasStaticLabels();
+  // 倒计时卡片
+  const cardX = DW - 170;
+  const cardW = 150;
+  roundRect(cardX, 14, cardW, 50, 14, COLORS.panel, COLORS.line);
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '12px "Microsoft YaHei", sans-serif';
+  ctx.fillText(labels.countdown, cardX + 12, 32);
+  ctx.fillStyle = COLORS.amber;
+  ctx.font = 'bold 28px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(Math.ceil(state.remaining).toString(), cardX + cardW - 14, 53);
+  ctx.textAlign = 'left';
+}
+
+function getCanvasStatusItems(state) {
+  const labels = getDomLabels().status;
+
+  return [
+    { id: 'floor', label: labels.floor, value: state.floor },
+    { id: 'door', label: labels.door, value: getDoorLabel(state.door) },
+    { id: 'direction', label: labels.direction, value: getDirectionLabel(state.direction) },
+    { id: 'passengers', label: labels.passengers, value: state.passengers },
+    { id: 'power', label: labels.power, value: `${Math.round(state.power)}%` },
+    { id: 'stability', label: labels.stability, value: `${Math.round(state.stability)}%` },
+    { id: 'anomalyLevel', label: labels.anomalyLevel, value: state.anomalyLevel },
+    { id: 'reviveCount', label: labels.reviveCount, value: state.adRevivesUsed },
+    { id: 'adHintsCount', label: labels.adHintsCount, value: state.adHintsUsed },
+    { id: 'hiddenLogsCount', label: labels.hiddenLogsCount, value: state.hiddenLogs.filter(h => h.locked).length },
+  ];
+}
+
+function getCanvasMeterBars(state) {
+  const labels = getDomLabels().status;
+  return [
+    { id: 'power', label: labels.power, value: state.power, color: COLORS.cyan },
+    { id: 'stability', label: labels.stability, value: state.stability, color: COLORS.green },
+  ];
+}
+
+function getCanvasStatusPanelTitle() {
+  return getDomLabels().statusPanel;
+}
+
+// ── 绘制状态面板 ──
+function drawStatusPanel(state) {
+  const x = 14, y = 80, w = 260, h = 220;
+
+  // 面板背景
+  roundRect(x, y, w, h, 16, COLORS.panel, toneBorder(state));
+
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.fillText(getCanvasStatusPanelTitle(), x + 16, y + 28);
+
+  // 状态网格（2列）
+  const items = getCanvasStatusItems(state);
+
+  const colW = (w - 32) / 2;
+  items.forEach(({ label, value }, i) => {
+    const cx = x + 16 + (i % 2) * colW;
+    const cy = y + 44 + Math.floor(i / 2) * 26;
+
+    roundRect(cx, cy, colW - 8, 22, 8, 'rgba(0,0,0,0.18)', 'rgba(255,255,255,0.08)');
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '11px "Microsoft YaHei", sans-serif';
+    ctx.fillText(label, cx + 8, cy + 15);
+    ctx.fillStyle = COLORS.text;
+    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(String(value), cx + colW - 12, cy + 15);
+    ctx.textAlign = 'left';
+  });
+
+  getCanvasMeterBars(state).forEach(({ label, value, color }, index) => {
+    drawBar(x + 16, y + 175 + index * 21, w - 32, 16, label, value, color);
+  });
+}
+
+function drawBar(x, y, w, h, label, value, color) {
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '11px "Microsoft YaHei", sans-serif';
+  ctx.fillText(label, x, y + 12);
+
+  const bx = x + 60, bw = w - 60;
+  roundRect(bx, y, bw, h, 6, 'rgba(255,255,255,0.06)');
+  const fillW = Math.max(0, (bw - 4) * (value / 100));
+  roundRect(bx + 2, y + 2, fillW, h - 4, 4, color);
+
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 11px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${Math.round(value)}`, bx + bw - 4, y + 12);
+  ctx.textAlign = 'left';
+}
+
+function toneBorder(state) {
   const tone = getToneForState(state);
-  if (els.monitorSignal) {
-    const signal = tone === 'danger' || tone === 'critical'
-      ? labels.monitorSignal.corrupted
-      : state.anomalyLevel > 0 || tone === 'warn'
-        ? labels.monitorSignal.unstable
-        : labels.monitorSignal.stable;
-    els.monitorSignal.textContent = signal;
-  }
-  if (els.monitorThreat) els.monitorThreat.textContent = labels.monitorThreat(state.anomalyLevel);
+  if (tone === 'danger') return 'rgba(255,77,109,0.55)';
+  if (tone === 'critical') return 'rgba(255,209,102,0.38)';
+  if (tone === 'warn') return 'rgba(255,209,102,0.38)';
+  return COLORS.line;
+}
 
-  // 显示已解锁的隐藏日志内容
+// ── 绘制监控画面 ──
+function drawMonitor(state) {
+  const x = 286, y = 80, w = 448, h = 220;
+
+  const labels = getCanvasStaticLabels();
+  roundRect(x, y, w, h, 16, COLORS.panel, toneBorder(state));
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.fillText(labels.monitorPanel, x + 16, y + 28);
+
+  // 监控内容区域
+  const mx = x + 14, my = y + 38, mw = w - 28, mh = h - 50;
+  roundRect(mx, my, mw, mh, 12, 'rgba(0,0,0,0.2)', 'rgba(97,255,190,0.12)');
+
+  // 扫描线效果
+  const scanY = (Date.now() / 100 * mh) % mh;
+  ctx.fillStyle = 'rgba(97,255,190,0.04)';
+  ctx.fillRect(mx, my + scanY, mw, 4);
+
+  // 文本
+  let displayText = getMonitorText(state);
+  ctx.fillStyle = '#bffff0';
+  ctx.font = '20px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  wrapText(displayText, mx + mw / 2, my + mh / 2 - 10, mw - 20, 28);
+  ctx.textAlign = 'left';
+}
+
+function getMonitorText(state) {
   const unlockedHidden = state.hiddenLogs.filter(h => !h.locked);
   if (unlockedHidden.length > 0) {
     const last = unlockedHidden[unlockedHidden.length - 1];
-    els.monitor.textContent = getDecodedMonitorText(last);
+    return getDecodedMonitorText(last);
+  }
+  return state.monitor;
+}
+
+function getCanvasActionButtons(state) {
+  const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
+  return getAvailableActions()
+    .filter(action => action.id !== 'unlockHiddenLog' || lockedCount > 0)
+    .map(action => action.id === 'unlockHiddenLog'
+      ? { id: action.id, label: actionLabel(action.id, lockedCount) }
+      : action);
+}
+
+// ── 绘制操作按钮 ──
+function drawActions(state) {
+  const x = 14, y = 312, w = 260, h = 260;
+
+  const labels = getCanvasStaticLabels();
+  roundRect(x, y, w, h, 16, COLORS.panel, COLORS.line);
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.fillText(labels.actionPanel, x + 16, y + 28);
+
+  const btns = getCanvasActionButtons(state);
+
+  const btnW = (w - 40) / 2;
+  const btnH = 40;
+  const gap = 10;
+  const startY = y + 42;
+
+  btns.forEach((btn, i) => {
+    const bx = x + 16 + (i % 2) * (btnW + gap);
+    const by = startY + Math.floor(i / 2) * (btnH + gap);
+
+    const isGreen = !['emergencyStop', 'restartSystem'].includes(btn.id);
+    const color = isGreen
+      ? 'linear-gradient(135deg, #61ffbe, #51d6ff)'
+      : 'rgba(255,255,255,0.08)';
+
+    // 按钮背景
+    roundRect(bx, by, btnW, btnH, 10, color);
+    if (!isGreen) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
+      roundRect(bx, by, btnW, btnH, 10, null, 'rgba(255,255,255,0.12)');
+    }
+
+    ctx.fillStyle = isGreen ? '#02110c' : COLORS.text;
+    ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(btn.label, bx + btnW / 2, by + btnH / 2 + 5);
+    ctx.textAlign = 'left';
+  });
+
+  // 触发异常测试按钮
+  const testBtnY = startY + Math.ceil(btns.length / 2) * (btnH + gap) + 6;
+  roundRect(x + 16, testBtnY, w - 32, 34, 10, 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.12)');
+  ctx.fillStyle = COLORS.text;
+  ctx.font = '12px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(labels.forceAnomaly, x + w / 2, testBtnY + 22);
+  ctx.textAlign = 'left';
+}
+
+// ── 绘制系统日志 ──
+function drawLogs(state) {
+  const x = 286, y = 312, w = 448, h = 260;
+
+  const labels = getCanvasStaticLabels();
+  roundRect(x, y, w, h, 16, COLORS.panel, COLORS.line);
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.fillText(labels.logPanel, x + 16, y + 28);
+
+  const logs = state.logs.slice(-12);
+  const logY = y + 38;
+  logs.forEach((log, i) => {
+    const lx = x + 16, ly = logY + i * 19;
+    const colorMap = { warn: COLORS.amber, danger: COLORS.red, ad: COLORS.cyan, success: COLORS.green };
+    ctx.fillStyle = colorMap[log.type] || '#bfeee0';
+    ctx.font = '12px Consolas, "Microsoft YaHei", monospace';
+    ctx.fillText(log.text, lx, ly + 12);
+  });
+}
+
+// ── 绘制失败弹窗 ──
+function drawFailureOverlay(state) {
+  if (!state.gameOver) return;
+
+  // 半透明背景
+  ctx.fillStyle = 'rgba(0,0,0,0.72)';
+  ctx.fillRect(0, 0, DW, DH);
+
+  const cardW = 520, cardH = 320;
+  const cx = (DW - cardW) / 2, cy = (DH - cardH) / 2;
+
+  const labels = getCanvasStaticLabels();
+  const copy = getCanvasFailureOverlayCopy(state);
+  if (state.fakeEndingTriggered) {
+    // 假结局
+    roundRect(cx, cy, cardW, cardH, 24, 'rgba(60,0,12,0.98)', 'rgba(255,0,80,0.7)');
+
+    ctx.fillStyle = COLORS.darkRed;
+    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+    ctx.fillText(copy.eyebrow, cx + 24, cy + 30);
+
+    ctx.fillStyle = '#ff0050';
+    ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
+    ctx.fillText(copy.title, cx + 24, cy + 72);
+
+    const text = state.fakeEndingText || '';
+    ctx.fillStyle = '#ff6b8a';
+    ctx.font = '14px Consolas, "Microsoft YaHei", monospace';
+    wrapText(text, cx + 24, cy + 96, cardW - 48, 22);
+
+    if (state.fakeEndingUnlocked) {
+      ctx.fillStyle = '#bffff0';
+      ctx.font = '14px Consolas, "Microsoft YaHei", monospace';
+      const truth = state.fakeEndingTruth || '';
+      wrapText(truth, cx + 24, cy + 200, cardW - 48, 22);
+    }
   } else {
-    els.monitor.textContent = state.monitor;
+    // 正常失败
+    roundRect(cx, cy, cardW, cardH, 24, 'rgba(38,5,12,0.98)', 'rgba(255,77,109,0.52)');
+
+    ctx.fillStyle = COLORS.red;
+    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+    ctx.fillText(copy.eyebrow, cx + 24, cy + 30);
+
+    ctx.fillStyle = COLORS.red;
+    ctx.font = 'bold 40px "Microsoft YaHei", sans-serif';
+    ctx.fillText(labels.failureTitle, cx + 24, cy + 80);
+
+    ctx.fillStyle = COLORS.text;
+    ctx.font = '16px "Microsoft YaHei", sans-serif';
+    const reason = summarizeFailure(state);
+    wrapText(reason, cx + 24, cy + 120, cardW - 48, 24);
+
+    if (state.lastAdHint) {
+      ctx.fillStyle = COLORS.amber;
+      ctx.font = '14px "Microsoft YaHei", sans-serif';
+      ctx.fillText(copy.adHintLine, cx + 24, cy + 200);
+    }
   }
 
-  els.logs.replaceChildren();
-  for (const line of state.logs.slice(-CONFIG.logs.displayLines)) {
-    const li = document.createElement('li');
-    li.className = [line.type, line.priority ? `log-priority-${line.priority}` : 'log-priority-normal'].join(' ');
-    li.textContent = line.text;
-    els.logs.append(li);
-  }
-  els.logs.scrollTop = els.logs.scrollHeight;
+  // 按钮
+  const btnY = cy + cardH - 70;
+  const btnW2 = (cardW - 60) / 2;
+  // 左按钮（广告复活）
+  roundRect(cx + 20, btnY, btnW2, 46, 12, COLORS.green);
+  ctx.fillStyle = '#02110c';
+  ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  const btnLabel = state.fakeEndingTriggered && !state.fakeEndingUnlocked
+    ? labels.revealTruth
+    : state.fakeEndingTriggered
+    ? labels.restart
+    : labels.adRevive;
+  ctx.fillText(btnLabel, cx + 20 + btnW2 / 2, btnY + 29);
+  ctx.textAlign = 'left';
 
-  if (state.gameOver) {
-    if (state.fakeEndingTriggered) {
-      // 假结局
-      els.overlay.hidden = true;
-      els.fakeEndingOverlay.hidden = false;
-      const threshold = CONFIG.fakeEnding.consecutiveFailuresThreshold;
-      els.fakeEndingText.textContent = t('fakeEnding.text', {
-        count: state.fakeEndingCount || CONFIG.fakeEnding.consecutiveFailuresThreshold,
-        threshold: threshold,
-      });
-      if (state.fakeEndingUnlocked) {
-        els.fakeEndingTruth.textContent = t('fakeEnding.truthContent');
-        els.fakeEndingTruthBtn.hidden = true;
+  // 右按钮（重新开始）
+  roundRect(cx + 40 + btnW2, btnY, btnW2, 46, 12, 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.12)');
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(labels.restart, cx + 40 + btnW2 + btnW2 / 2, btnY + 29);
+  ctx.textAlign = 'left';
+}
+
+// ── 文字换行 ──
+function wrapText(text, x, y, maxWidth, lineHeight) {
+  if (!text) return;
+  const lines = text.split('\n');
+  let cy = y;
+  for (const line of lines) {
+    let currentLine = '';
+    for (const char of line) {
+      const testLine = currentLine + char;
+      const tw = ctx.measureText(testLine).width;
+      if (tw > maxWidth && currentLine) {
+        ctx.fillText(currentLine, x, cy);
+        currentLine = char;
+        cy += lineHeight;
       } else {
-        els.fakeEndingTruth.textContent = t('fakeEnding.truthPlaceholder');
-        els.fakeEndingTruthBtn.hidden = false;
+        currentLine = testLine;
       }
+    }
+    if (currentLine) {
+      ctx.fillText(currentLine, x, cy);
+      cy += lineHeight;
+    }
+  }
+}
+
+// ── 点击检测 ──
+let clickHandlers = {};
+
+function onCanvasClick(x, y, state, callbacks) {
+  const { onAdRevive, onRestart, onAction, onForceAnomaly } = callbacks;
+
+  // 失败弹窗按钮检测
+  if (state.gameOver) {
+    const cardW = 520, cardH = 320;
+    const cx2 = (DW - cardW) / 2, cy2 = (DH - cardH) / 2;
+    const btnY = cy2 + cardH - 70;
+    const btnW2 = (cardW - 60) / 2;
+
+    // 左按钮
+    if (x >= cx2 + 20 && x <= cx2 + 20 + btnW2 && y >= btnY && y <= btnY + 46) {
+      if (state.fakeEndingTriggered && !state.fakeEndingUnlocked) {
+        onAdRevive?.('truth');
+      } else if (state.fakeEndingTriggered) {
+        onRestart?.();
+      } else {
+        onAdRevive?.('revive');
+      }
+      return;
+    }
+    // 右按钮
+    if (x >= cx2 + 40 + btnW2 && x <= cx2 + 40 + btnW2 * 2 && y >= btnY && y <= btnY + 46) {
+      onRestart?.();
+      return;
+    }
+    return;
+  }
+
+  // 操作按钮检测
+  const btnW = (260 - 40) / 2;
+  const btnH2 = 40;
+  const gap = 10;
+  const startY = 312 + 42;
+
+  const btns = getCanvasActionButtons(state).map(button => button.id);
+
+  for (let i = 0; i < btns.length; i++) {
+    const bx = 14 + 16 + (i % 2) * (btnW + gap);
+    const by = startY + Math.floor(i / 2) * (btnH2 + gap);
+    if (x >= bx && x <= bx + btnW && y >= by && y <= by + btnH2) {
+      onAction?.(btns[i]);
+      return;
+    }
+  }
+
+  // 触发异常测试按钮
+  const testBtnY = startY + Math.ceil(btns.length / 2) * (btnH2 + gap) + 6;
+  if (x >= 14 + 16 && x <= 14 + 16 + (260 - 32) && y >= testBtnY && y <= testBtnY + 34) {
+    onForceAnomaly?.();
+  }
+}
+
+// ── 主渲染函数 ──
+function render(state) {
+  if (!ctx) return;
+
+  const tone = getToneForState(state);
+  drawBackground(tone);
+  drawTopbar(state);
+  drawStatusPanel(state);
+  drawMonitor(state);
+  drawActions(state);
+  drawLogs(state);
+  drawFailureOverlay(state);
+}
+
+// ── 初始化 ──
+function init(canvasEl) {
+  canvas = canvasEl;
+  ctx = canvas.getContext('2d');
+
+  const info = { windowWidth: DW, windowHeight: DH, pixelRatio: 1 };
+  const pw = info.windowWidth || DW;
+  const ph = info.windowHeight || DH;
+
+  // 保持设计比例
+  DH = Math.max(1334, ph * (DW / pw));
+
+  canvas.width = DW;
+  canvas.height = DH;
+  scale = 1;
+
+  return { width: DW, height: DH };
+}
+
+
+// --- platform/miniGameRuntime.js ---
+/**
+ * miniGameRuntime.js — 微信/抖音小游戏 Canvas 运行时入口
+ *
+ * 不依赖 DOM/window。只使用小游戏全局 API（wx/tt）或标准全局函数。
+ */
+
+
+
+
+function getHostApi() {
+  if (typeof wx !== 'undefined' && wx) return wx;
+  if (typeof tt !== 'undefined' && tt) return tt;
+  return null;
+}
+
+function getNow() {
+  return Date.now();
+}
+
+function nextFrame(api, callback) {
+  if (api && typeof api.requestAnimationFrame === 'function') {
+    return api.requestAnimationFrame(callback);
+  }
+  if (typeof requestAnimationFrame === 'function') {
+    return requestAnimationFrame(callback);
+  }
+  return setTimeout(callback, 16);
+}
+
+function getSystemInfo(api) {
+  if (api && typeof api.getSystemInfoSync === 'function') {
+    return api.getSystemInfoSync();
+  }
+  return { windowWidth: 750, windowHeight: 1334, pixelRatio: 1 };
+}
+
+function createRewardedAd(api, adUnitId, onReward) {
+  if (!api || typeof api.createRewardedVideoAd !== 'function' || !adUnitId) {
+    return () => Promise.resolve().then(onReward);
+  }
+
+  const ad = api.createRewardedVideoAd({ adUnitId });
+  let granted = false;
+  ad.onClose?.((res) => {
+    if (res && res.isEnded && !granted) {
+      granted = true;
+      onReward?.();
+    }
+  });
+  ad.onError?.(() => {
+    if (!granted) {
+      granted = true;
+      onReward?.();
+    }
+  });
+
+  return () => ad.show()
+    .catch(() => ad.load?.().then(() => ad.show()))
+    .catch(() => {
+      if (!granted) {
+        granted = true;
+        onReward?.();
+      }
+    });
+}
+
+function startMiniGame() {
+  const api = getHostApi();
+  if (!api || typeof api.createCanvas !== 'function') {
+    throw new Error('[MINIGAME] mini-game runtime requires wx.createCanvas() or tt.createCanvas()');
+  }
+
+  const canvas = api.createCanvas();
+  const info = getSystemInfo(api);
+  const dims = initCanvasRenderer(canvas);
+  let session = createRuntimeSession();
+  let state = session.state;
+  let nextAnomalyAt = session.nextAnomalyAt;
+  let lastTickAt = getNow();
+  let lastSnapshotAt = 0;
+  let failureRecorded = false;
+
+  const reviveAd = createRewardedAd(api, CONFIG.adUnits?.revive, () => {
+    state = reviveFromAd(state);
+    nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
+    failureRecorded = false;
+  });
+
+  const truthAd = createRewardedAd(api, CONFIG.adUnits?.truth, () => {
+    state = { ...state, fakeEndingUnlocked: true, fakeEndingTruth: state.lastAdHint || '' };
+  });
+
+  function restart() {
+    session = createRuntimeSession();
+    state = session.state;
+    nextAnomalyAt = session.nextAnomalyAt;
+    lastSnapshotAt = 0;
+    failureRecorded = false;
+  }
+
+  function forceAnomaly() {
+    if (state.gameOver) return;
+    const event = pickNextAnomaly(state);
+    const result = applyAnomaly(state, event.id);
+    state = result.state;
+    nextAnomalyAt = scheduleNextAnomalyAfterTrigger(state.elapsed);
+  }
+
+  function handleAction(actionId) {
+    if (state.gameOver) return;
+    const result = performAction(state, actionId);
+    state = result.state;
+  }
+
+  function handleAd(kind) {
+    if (kind === 'truth') {
+      truthAd();
     } else {
-      // 正常失败
-      els.fakeEndingOverlay.hidden = true;
-      els.overlay.hidden = false;
-      els.failureReason.textContent = summarizeFailure(state);
-      if (els.failureMetrics) {
-        const metrics = labels.failureMetrics.map(({ key, label }) => {
-          const value = key === 'remaining' ? Math.ceil(state.remaining) : Math.round(state[key]);
-          return [label, value];
-        });
-        els.failureMetrics.replaceChildren(...metrics.map(([label, value]) => {
-          const item = document.createElement('span');
-          const labelEl = document.createElement('b');
-          const valueEl = document.createElement('strong');
-          labelEl.textContent = label;
-          valueEl.textContent = value;
-          item.append(labelEl, valueEl);
-          return item;
-        }));
+      reviveAd();
+    }
+  }
+
+  function onTouch(e) {
+    const touch = e.touches?.[0] || e.changedTouches?.[0] || e;
+    const screenW = info.windowWidth || 750;
+    const screenH = info.windowHeight || 1334;
+    const x = (touch.clientX ?? touch.x ?? 0) * (750 / screenW);
+    const y = (touch.clientY ?? touch.y ?? 0) * (dims.height / screenH);
+    onCanvasClick(x, y, state, {
+      onAction: handleAction,
+      onForceAnomaly: forceAnomaly,
+      onAdRevive: handleAd,
+      onRestart: restart,
+    });
+  }
+
+  api.onTouchStart?.(onTouch);
+
+  function update() {
+    const now = getNow();
+    const delta = Math.floor((now - lastTickAt) / 1000);
+    if (delta > 0) {
+      lastTickAt += delta * 1000;
+      if (!state.gameOver) {
+        for (let i = 0; i < delta; i += 1) {
+          state = tickState(state, 1);
+          if (!state.gameOver && state.elapsed - lastSnapshotAt >= CONFIG.adRevive.snapshotInterval) {
+            state = saveSnapshot(state);
+            lastSnapshotAt = state.elapsed;
+          }
+          if (!state.gameOver && state.elapsed >= nextAnomalyAt) {
+            const event = pickNextAnomaly(state);
+            const result = applyAnomaly(state, event.id);
+            state = result.state;
+            nextAnomalyAt = scheduleNextAnomalyAfterTrigger(state.elapsed);
+          }
+        }
       }
-      els.adHint.textContent = state.lastAdHint
-        ? t('failure.adHintPrefix', { hint: state.lastAdHint })
-        : t('failure.defaultHint');
+      if (state.gameOver && !failureRecorded) {
+        state = state.remaining <= 0 ? recordSuccessfulShift(state) : recordFailure(state);
+        failureRecorded = true;
+      }
     }
-  } else {
-    els.overlay.hidden = true;
-    els.fakeEndingOverlay.hidden = true;
+
+    render(state);
+    nextFrame(api, update);
   }
+
+  render(state);
+  nextFrame(api, update);
+  return { canvas, getState: () => state, restart };
 }
-
-function dispatchAction(actionId) {
-  ensureTimer();
-  playClick();
-  if (actionId === 'unlockHiddenLog') {
-    showDecodeAd();
-    return;
-  }
-  runAction(actionId);
-}
-
-function runAction(actionId) {
-  const result = performAction(state, actionId);
-  state = result.state;
-  if (result.ok) {
-    playSuccess();
-  } else {
-    playFail();
-  }
-  render();
-}
-
-function triggerAnomaly() {
-  if (state.gameOver) return;
-  ensureTimer();
-  const picked = pickNextAnomaly(state);
-  const result = applyAnomaly(state, picked.id);
-  state = result.state;
-  playAnomaly();
-  nextAnomalyAt = scheduleNextAnomalyAfterTrigger(state.elapsed);
-  render();
-}
-
-function loop() {
-  if (state.gameOver) {
-    if (!crashPlayed) {
-      playCrash();
-      crashPlayed = true;
-    }
-    render();
-    return;
-  }
-  crashPlayed = false;
-  state = tickState(state, 1);
-
-  // 成功值守 → 重置连续失败计数
-  if (state.gameOver && state.remaining <= 0) {
-    state = recordSuccessfulShift(state);
-    render();
-    return;
-  }
-
-  // 检测失败 → 递增连续失败计数
-  if (state.gameOver) {
-    state = recordFailure(state);
-  }
-  // Save a snapshot on interval for ad-revive rollback
-  const ar = CONFIG.adRevive;
-  if (state.elapsed > 0 && state.elapsed % ar.snapshotInterval === 0) {
-    state = saveSnapshot(state);
-  }
-  if (!state.gameOver && state.elapsed >= nextAnomalyAt) triggerAnomaly();
-  // Play warning sound on tone transitions to critical/danger
-  const currentTone = getToneForState(state);
-  if (currentTone === 'danger' || currentTone === 'critical') {
-    if (lastTone !== currentTone) playWarning();
-  }
-  lastTone = currentTone;
-  render();
-}
-
-function restart() {
-  if (timer) {
-    window.clearInterval(timer);
-    timer = null;
-  }
-  if (els.startOverlay) els.startOverlay.hidden = false;
-  session = restartRuntimeSession();
-  state = session.state;
-  nextAnomalyAt = session.nextAnomalyAt;
-  render();
-}
-
-function applyDomLabels() {
-  const labels = getDomLabels();
-  els.remainingLabel.textContent = labels.countdown;
-  els.statusPanelTitle.textContent = labels.statusPanel;
-  els.monitorPanelTitle.textContent = labels.monitorPanel;
-  els.actionPanelTitle.textContent = labels.actionPanel;
-  els.logPanelTitle.textContent = labels.logPanel;
-  els.failureTitle.textContent = labels.failureTitle;
-  els.forceAnomaly.textContent = labels.forceAnomaly;
-  els.reviveButton.textContent = labels.revive;
-  els.restartButton.textContent = labels.restart;
-  els.fakeEndingTruthBtn.textContent = labels.revealTruth;
-  els.fakeEndingRestartBtn.textContent = labels.restart;
-  if (els.fakeEndingEyebrow) els.fakeEndingEyebrow.textContent = t('fakeEnding.eyebrow');
-  if (els.fakeEndingTitle) els.fakeEndingTitle.textContent = t('fakeEnding.title');
-  if (els.startTitle) els.startTitle.textContent = labels.start.title;
-  if (els.startCopy) els.startCopy.textContent = labels.start.copy;
-  if (els.startButton) els.startButton.textContent = labels.start.button;
-  if (els.startChecklist) {
-    els.startChecklist.replaceChildren(...labels.start.checklist.map((item) => {
-      const li = document.createElement('li');
-      li.textContent = item;
-      return li;
-    }));
-  }
-  if (els.startFailureRules) {
-    els.startFailureRules.replaceChildren(
-      Object.assign(document.createElement('span'), { textContent: labels.start.failureRulesTitle }),
-      ...labels.start.failureRules.map((item) => {
-        const badge = document.createElement('b');
-        badge.textContent = item;
-        return badge;
-      }),
-    );
-  }
-  els.floorLabel.textContent = labels.status.floor;
-  els.doorLabel.textContent = labels.status.door;
-  els.directionLabel.textContent = labels.status.direction;
-  els.passengersLabel.textContent = labels.status.passengers;
-  els.powerLabel.textContent = labels.status.power;
-  els.stabilityLabel.textContent = labels.status.stability;
-  els.anomalyLevelLabel.textContent = labels.status.anomalyLevel;
-  els.reviveCountLabel.textContent = labels.status.reviveCount;
-  els.adHintsCountLabel.textContent = labels.status.adHintsCount;
-  els.hiddenLogsCountLabel.textContent = labels.status.hiddenLogsCount;
-}
-
-applyDomLabels();
-bindPress(els.startButton, () => {
-  playClick();
-  ensureTimer();
-});
-bindPress(els.forceAnomaly, triggerAnomaly);
-bindPress(els.reviveButton, () => {
-  showReviveAd();
-});
-bindPress(els.restartButton, () => {
-  playRestart();
-  restart();
-});
-
-// 假结局按钮
-bindPress(els.fakeEndingTruthBtn, () => {
-  showTruthAd();
-});
-bindPress(els.fakeEndingRestartBtn, () => {
-  playRestart();
-  restart();
-});
-
-// 从皮肤设置标题和副标题
-const meta = getSkin().meta;
-if (meta) {
-  const titleEl = document.querySelector('#gameTitle');
-  const subEl = document.querySelector('#gameSubtitle');
-  if (titleEl) titleEl.textContent = meta.name;
-  if (subEl) subEl.textContent = meta.subtitle;
-  root.dataset.skin = meta.id;
-}
-
-render();
-window.addEventListener('beforeunload', () => window.clearInterval(timer));
 
 
 
 // ── 平台入口 ──
-var platformCanvas = typeof wx !== 'undefined' ? wx.createCanvas() : null;
-if (platformCanvas) {
-  var W = 750, H = 1334;
-  platformCanvas.width = W;
-  platformCanvas.height = H;
-  var platformCtx = platformCanvas.getContext('2d');
-
-  // 简单的 canvas 渲染替代 DOM
-  function gameLoop() {
-    // 调用 game.js 的渲染逻辑
-    if (typeof render !== 'undefined') {
-      render(state);
-    }
-    requestAnimationFrame(gameLoop);
-  }
-  gameLoop();
-} else {
-  console.log('[MINIGAME] DOM mode');
-}
+startMiniGame();
 })();
