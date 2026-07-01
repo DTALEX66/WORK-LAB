@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.js",
+    "test": "node scripts/run-tests.cjs",
     "serve": "node scripts/preview-server.mjs",
     "android:prepare": "node scripts/prepare-android-webview.mjs",
     "android:build": "node scripts/build-android-debug.mjs"
