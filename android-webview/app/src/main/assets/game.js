@@ -344,6 +344,9 @@ function createInitialState() {
     fakeEndingCooldownRemaining: 0,
     fakeEndingTriggered: false,
     fakeEndingUnlocked: false,
+    // 复盘统计（局内累积）
+    anomaliesTriggeredTotal: 0,
+    maxAnomalySeverity: 0,
     logs: [createFeedbackLine('info', t('ui.initialLog'), 0)],
   };
 }
@@ -542,6 +545,9 @@ function applyAnomaly(state, id) {
   if (!event) throw new Error(`Unknown anomaly: ${id}`);
   let next = event.apply(state);
   next.lastAdHint = event.adHint;
+  // 复盘统计
+  next.anomaliesTriggeredTotal = (next.anomaliesTriggeredTotal ?? 0) + 1;
+  next.maxAnomalySeverity = Math.max(next.maxAnomalySeverity ?? 0, event.severity);
   // 添加关联隐藏日志（不重复）
   const raw = getHiddenLog(id);
   if (raw && !next.hiddenLogs.some(h => h.id === id + '_log')) {
@@ -1151,6 +1157,7 @@ const els = {
   overlay: document.querySelector('#failureOverlay'),
   failureReason: document.querySelector('#failureReason'),
   failureMetrics: document.querySelector('#failureMetrics'),
+  postRunSummary: document.querySelector('#postRunSummary'),
   adHint: document.querySelector('#adHint'),
   reviveButton: document.querySelector('#reviveButton'),
   restartButton: document.querySelector('#restartButton'),
@@ -1333,6 +1340,30 @@ function render() {
       els.adHint.textContent = state.lastAdHint
         ? t('failure.adHintPrefix', { hint: state.lastAdHint })
         : t('failure.defaultHint');
+      // 局后复盘
+      if (els.postRunSummary) {
+        const unlockedLogs = state.hiddenLogs.filter(h => !h.locked).length;
+        const totalAnomalies = state.anomaliesTriggeredTotal || 0;
+        const peakSeverity = state.maxAnomalySeverity || 0;
+        const severityLabel = peakSeverity >= 4 ? '致命' : peakSeverity >= 2 ? '高' : peakSeverity > 0 ? '低' : '无';
+        const items = [
+          ['存活秒数', state.elapsed],
+          ['触发异常', totalAnomalies],
+          ['最高威胁', `${peakSeverity}（${severityLabel}）`],
+          ['解锁日志', unlockedLogs],
+          ['复活次数', state.adRevivesUsed || 0],
+        ];
+        if (state.fakeEndingTriggered) items.push(['假结局', '已触发']);
+        els.postRunSummary.replaceChildren(...items.map(([label, value]) => {
+          const item = document.createElement('span');
+          const labelEl = document.createElement('b');
+          const valueEl = document.createElement('strong');
+          labelEl.textContent = label;
+          valueEl.textContent = value;
+          item.append(labelEl, valueEl);
+          return item;
+        }));
+      }
     }
   } else {
     els.overlay.hidden = true;

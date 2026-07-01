@@ -30,6 +30,9 @@ export function createInitialState() {
     fakeEndingCooldownRemaining: 0,
     fakeEndingTriggered: false,
     fakeEndingUnlocked: false,
+    // 复盘统计（局内累积）
+    anomaliesTriggeredTotal: 0,
+    maxAnomalySeverity: 0,
     logs: [createFeedbackLine('info', t('ui.initialLog'), 0)],
   };
 }

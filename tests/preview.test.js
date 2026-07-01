@@ -17,4 +17,5 @@ test('browser preview exposes an explicit start handoff overlay', () => {
   assert.match(html, /id="monitorCaption"/, 'monitor copy should render as caption so visual layer is preserved');
   assert.match(html, /class="passenger-heat"/, 'monitor should include a passenger heat signature visual');
   assert.match(html, /data-testid="start-handoff"/, 'start overlay should be easy to target in browser checks');
+  assert.match(html, /id="postRunSummary"/, 'failure overlay should include a post-run summary for player debrief');
 });

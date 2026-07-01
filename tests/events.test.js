@@ -109,3 +109,11 @@ test('all 12 anomalies have a corresponding hidden log entry', () => {
     assert.ok(HIDDEN_LOGS[anomaly.id], `missing hidden log for ${anomaly.id}`);
   }
 });
+
+test('applyAnomaly increments post-run summary tracking counters', () => {
+  const state = { ...createInitialState(), hiddenLogs: [], logs: [] };
+  const r1 = applyAnomaly(state, 'phantom_floor');   // severity 2
+  const r2 = applyAnomaly(r1.state, 'emergency_lights'); // severity 3
+  assert.equal(r2.state.anomaliesTriggeredTotal, 2);
+  assert.equal(r2.state.maxAnomalySeverity, 3);
+});

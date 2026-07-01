@@ -137,6 +137,12 @@ test('reviveFromAd preserves snapshot history after restore', () => {
   assert.equal(revived.snapshots[0].at, 20);
 });
 
+test('initial state includes post-run summary tracking fields', () => {
+  const s = createInitialState();
+  assert.equal(s.anomaliesTriggeredTotal, 0, 'should start with zero triggered anomalies');
+  assert.equal(s.maxAnomalySeverity, 0, 'should start with zero max severity');
+});
+
 test('recordFailure triggers fake ending at threshold and starts cooldown', () => {
   let state = createInitialState();
   for (let i = 0; i < CONFIG.fakeEnding.consecutiveFailuresThreshold; i += 1) {

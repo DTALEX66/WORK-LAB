@@ -344,6 +344,9 @@ function createInitialState() {
     fakeEndingCooldownRemaining: 0,
     fakeEndingTriggered: false,
     fakeEndingUnlocked: false,
+    // 复盘统计（局内累积）
+    anomaliesTriggeredTotal: 0,
+    maxAnomalySeverity: 0,
     logs: [createFeedbackLine('info', t('ui.initialLog'), 0)],
   };
 }
@@ -542,6 +545,9 @@ function applyAnomaly(state, id) {
   if (!event) throw new Error(`Unknown anomaly: ${id}`);
   let next = event.apply(state);
   next.lastAdHint = event.adHint;
+  // 复盘统计
+  next.anomaliesTriggeredTotal = (next.anomaliesTriggeredTotal ?? 0) + 1;
+  next.maxAnomalySeverity = Math.max(next.maxAnomalySeverity ?? 0, event.severity);
   // 添加关联隐藏日志（不重复）
   const raw = getHiddenLog(id);
   if (raw && !next.hiddenLogs.some(h => h.id === id + '_log')) {
