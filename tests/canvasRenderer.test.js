@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { getAvailableActions } from '../src/actions.js';
 import { createInitialState } from '../src/state.js';
 import { loadSkin } from '../src/skinManager.js';
 import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
@@ -33,6 +34,16 @@ test('canvas action buttons show locked hidden-log count', () => {
   const labels = getCanvasActionButtons(state).map(button => button.label);
 
   assert.ok(labels.includes('解码加密记录 (2)'));
+});
+
+test('canvas action buttons use the shared action list', () => {
+  loadSkin(elevatorSkin);
+  const buttons = getCanvasActionButtons(createInitialState());
+  const expectedIds = getAvailableActions()
+    .map(action => action.id)
+    .filter(id => id !== 'unlockHiddenLog');
+
+  assert.deepEqual(buttons.map(button => button.id), expectedIds);
 });
 
 test('canvas status items use current skin status labels', () => {

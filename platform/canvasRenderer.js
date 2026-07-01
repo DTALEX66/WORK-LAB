@@ -8,6 +8,7 @@
  * 设计宽度：750px（标准移动端设计尺寸）
  */
 
+import { getAvailableActions } from '../src/actions.js';
 import { t, getSkin, actionLabel } from '../src/skinManager.js';
 import { getToneForState, summarizeFailure } from '../src/feedback.js';
 import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from '../src/uiLabels.js';
@@ -253,16 +254,11 @@ function getMonitorText(state) {
 
 export function getCanvasActionButtons(state) {
   const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
-  const buttons = [
-    'openDoor', 'closeDoor', 'moveUp', 'moveDown',
-    'emergencyStop', 'restartSystem', 'inspectLog',
-  ].map(id => ({ id, label: actionLabel(id) }));
-
-  if (lockedCount > 0) {
-    buttons.push({ id: 'unlockHiddenLog', label: actionLabel('unlockHiddenLog', lockedCount) });
-  }
-
-  return buttons;
+  return getAvailableActions()
+    .filter(action => action.id !== 'unlockHiddenLog' || lockedCount > 0)
+    .map(action => action.id === 'unlockHiddenLog'
+      ? { id: action.id, label: actionLabel(action.id, lockedCount) }
+      : action);
 }
 
 // ── 绘制操作按钮 ──
