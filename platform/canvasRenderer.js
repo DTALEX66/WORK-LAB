@@ -141,6 +141,14 @@ export function getCanvasStatusItems(state) {
   ];
 }
 
+export function getCanvasMeterBars(state) {
+  const labels = getDomLabels().status;
+  return [
+    { id: 'power', label: labels.power, value: state.power, color: COLORS.cyan },
+    { id: 'stability', label: labels.stability, value: state.stability, color: COLORS.green },
+  ];
+}
+
 function getCanvasStatusPanelTitle() {
   return getDomLabels().statusPanel;
 }
@@ -175,9 +183,9 @@ function drawStatusPanel(state) {
     ctx.textAlign = 'left';
   });
 
-  // 电源/稳定度 progress bars
-  drawBar(x + 16, y + 175, w - 32, 16, '电源', state.power, COLORS.cyan);
-  drawBar(x + 16, y + 196, w - 32, 16, '稳定度', state.stability, COLORS.green);
+  getCanvasMeterBars(state).forEach(({ label, value, color }, index) => {
+    drawBar(x + 16, y + 175 + index * 21, w - 32, 16, label, value, color);
+  });
 }
 
 function drawBar(x, y, w, h, label, value, color) {

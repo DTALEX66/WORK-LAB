@@ -5,7 +5,7 @@ import { createInitialState } from '../src/state.js';
 import { loadSkin } from '../src/skinManager.js';
 import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
 import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
-import { getCanvasActionButtons, getCanvasFailureOverlayCopy, getCanvasStaticLabels, getCanvasStatusItems } from '../platform/canvasRenderer.js';
+import { getCanvasActionButtons, getCanvasFailureOverlayCopy, getCanvasMeterBars, getCanvasStaticLabels, getCanvasStatusItems } from '../platform/canvasRenderer.js';
 import { getDomLabels } from '../src/uiLabels.js';
 
 test('canvas action buttons use current skin labels', () => {
@@ -45,6 +45,16 @@ test('canvas status items use current skin status labels', () => {
   assert.ok(labels.includes('人员'));
   assert.ok(!labels.includes('楼层'));
   assert.deepEqual(labels, Object.values(domLabels.status));
+
+  loadSkin(elevatorSkin);
+});
+
+test('canvas meter bars use current skin status labels', () => {
+  loadSkin(securitySkin);
+  const bars = getCanvasMeterBars({ ...createInitialState(), power: 42, stability: 77 });
+
+  assert.deepEqual(bars.map(bar => bar.label), ['电力', '安保等级']);
+  assert.deepEqual(bars.map(bar => bar.value), [42, 77]);
 
   loadSkin(elevatorSkin);
 });
