@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const assets = resolve(root, 'android-webview/app/src/main/assets');
+const androidMain = resolve(root, 'android-webview/app/src/main');
 
 test('android WebView assets use bundled script instead of ES modules', () => {
   execFileSync(process.execPath, ['scripts/prepare-android-webview.mjs'], { cwd: root, stdio: 'pipe' });
@@ -19,4 +20,19 @@ test('android WebView assets use bundled script instead of ES modules', () => {
   assert.match(game, /document\.querySelector/);
   assert.doesNotMatch(game, /\bSKIN_DATA\b/);
   assert.doesNotMatch(game, /\b_getHiddenLog\b/);
+});
+
+test('android package exposes branded launcher name and icon resources', () => {
+  const manifest = readFileSync(resolve(androidMain, 'AndroidManifest.xml'), 'utf8');
+  const strings = readFileSync(resolve(androidMain, 'res/values/strings.xml'), 'utf8');
+  const adaptiveIcon = readFileSync(resolve(androidMain, 'res/mipmap-anydpi-v26/ic_launcher.xml'), 'utf8');
+  const foreground = readFileSync(resolve(androidMain, 'res/drawable/ic_launcher_foreground.xml'), 'utf8');
+
+  assert.match(manifest, /android:label="@string\/app_name"/);
+  assert.match(manifest, /android:icon="@mipmap\/ic_launcher"/);
+  assert.match(manifest, /android:roundIcon="@mipmap\/ic_launcher_round"/);
+  assert.match(strings, /<string name="app_name">异常电梯控制台<\/string>/);
+  assert.match(adaptiveIcon, /<adaptive-icon/);
+  assert.match(foreground, /#61FFBE/);
+  assert.match(foreground, /#FF4D6D/);
 });
