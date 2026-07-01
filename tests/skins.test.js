@@ -1,0 +1,71 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
+import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
+import factorySkin from '../src/skins/factory/skin.json' with { type: 'json' };
+
+const skins = [
+  ['elevator', elevatorSkin],
+  ['security', securitySkin],
+  ['factory', factorySkin],
+];
+
+const REQUIRED_TEXT_KEYS = [
+  ['meta', 'id'],
+  ['meta', 'name'],
+  ['meta', 'subtitle'],
+  ['monitor', 'initial'],
+  ['actionLabels', 'openDoor'],
+  ['actionLabels', 'closeDoor'],
+  ['actionLabels', 'moveUp'],
+  ['actionLabels', 'moveDown'],
+  ['actionLabels', 'emergencyStop'],
+  ['actionLabels', 'restartSystem'],
+  ['actionLabels', 'inspectLog'],
+  ['actionLabels', 'unlockHiddenLog'],
+  ['actionLogMessages', 'inspectLog_hiddenRecords'],
+  ['failure', 'defaultHint'],
+  ['fakeEnding', 'text'],
+  ['fakeEnding', 'truthContent'],
+  ['ui', 'viewAd'],
+  ['ui', 'revealTruth'],
+  ['ui', 'hiddenLogCaptured'],
+];
+
+function getByPath(obj, path) {
+  return path.reduce((value, key) => value?.[key], obj);
+}
+
+test('all shipped skins expose required text keys', () => {
+  for (const [name, skin] of skins) {
+    for (const path of REQUIRED_TEXT_KEYS) {
+      const value = getByPath(skin, path);
+      assert.equal(typeof value, 'string', `${name} missing ${path.join('.')}`);
+      assert.ok(value.length > 0, `${name} empty ${path.join('.')}`);
+    }
+  }
+});
+
+test('all shipped skins provide complete anomaly and hidden-log catalogues', () => {
+  for (const [name, skin] of skins) {
+    assert.ok(Array.isArray(skin.anomalies), `${name} anomalies must be an array`);
+    assert.ok(skin.anomalies.length >= 12, `${name} should have at least 12 anomalies`);
+
+    const ids = new Set();
+    for (const anomaly of skin.anomalies) {
+      assert.ok(anomaly.id, `${name} anomaly missing id`);
+      assert.ok(!ids.has(anomaly.id), `${name} duplicate anomaly id ${anomaly.id}`);
+      ids.add(anomaly.id);
+      assert.equal(typeof anomaly.title, 'string', `${name}/${anomaly.id} missing title`);
+      assert.equal(typeof anomaly.monitor, 'string', `${name}/${anomaly.id} missing monitor`);
+      assert.equal(typeof anomaly.adHint, 'string', `${name}/${anomaly.id} missing adHint`);
+      assert.ok(anomaly.effects && typeof anomaly.effects === 'object', `${name}/${anomaly.id} missing effects`);
+
+      const hidden = skin.hiddenLogs?.[anomaly.id];
+      assert.ok(hidden, `${name}/${anomaly.id} missing hidden log`);
+      assert.equal(typeof hidden.title, 'string', `${name}/${anomaly.id} hidden log missing title`);
+      assert.equal(typeof hidden.content, 'string', `${name}/${anomaly.id} hidden log missing content`);
+    }
+  }
+});
