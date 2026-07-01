@@ -47,6 +47,7 @@
     "openDoor_moving": "传送带运行中，禁止重新启动。",
     "moveUp_doorNotClosed": "传送带未停止，禁止调节速度。",
     "moveDown_doorNotClosed": "传送带未停止，禁止调节速度。",
+    "unknownAction": "未知工控操作：{actionId}",
     "gameOver": "产线系统已崩溃，必须呼叫维修支援或重新投产。"
   },
   "actionFeedback": {

@@ -49,6 +49,19 @@ test('emergencyStop failure uses current skin feedback copy', () => {
   loadSkin(elevatorSkin);
 });
 
+test('unknown action uses current skin failure copy', () => {
+  const skin = structuredClone(elevatorSkin);
+  skin.actionFailMessages.unknownAction = '未知皮肤操作：{actionId}';
+  loadSkin(skin);
+
+  const result = performAction(createInitialState(), 'debugOnlyAction');
+
+  assert.equal(result.ok, false);
+  assert.equal(result.message, '未知皮肤操作：debugOnlyAction');
+
+  loadSkin(elevatorSkin);
+});
+
 test('unlockHiddenLog fails when no locked logs exist', () => {
   const result = performAction(createInitialState(), 'unlockHiddenLog');
   assert.equal(result.ok, false);

@@ -121,7 +121,7 @@ function fail(state, message) {
 
 export function performAction(state, actionId) {
   const action = ACTIONS[actionId];
-  if (!action) return fail(state, `未知操作：${actionId}`);
+  if (!action) return fail(state, t('actionFailMessages.unknownAction', { actionId }));
   if (state.gameOver && actionId !== 'inspectLog') return fail(state, t('actionFailMessages.gameOver'));
   return action(state);
 }

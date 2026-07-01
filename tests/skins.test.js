@@ -24,6 +24,7 @@ const REQUIRED_TEXT_KEYS = [
   ['actionLabels', 'restartSystem'],
   ['actionLabels', 'inspectLog'],
   ['actionLabels', 'unlockHiddenLog'],
+  ['actionFailMessages', 'unknownAction'],
   ['actionFeedback', 'emergencyStop_fail'],
   ['statusLabels', 'panelTitle'],
   ['statusLabels', 'floor'],

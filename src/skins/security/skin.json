@@ -48,6 +48,7 @@
     "openDoor_moving": "移动中，禁止解锁门禁。",
     "moveUp_doorNotClosed": "门禁未锁定，禁止无人机出发。",
     "moveDown_doorNotClosed": "门禁未锁定，禁止无人机出发。",
+    "unknownAction": "未知安防操作：{actionId}",
     "gameOver": "安防系统已崩溃。必须呼叫支援或重新部署。"
   },
   "actionFeedback": {
