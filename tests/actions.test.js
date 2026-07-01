@@ -2,10 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createInitialState } from '../src/state.js';
-import { performAction } from '../src/actions.js';
+import { getAvailableActions, performAction } from '../src/actions.js';
 import CONFIG from '../src/gameConfig.js';
 import { loadSkin } from '../src/skinManager.js';
 import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
+import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
+
+test('available actions use current skin labels', () => {
+  loadSkin(securitySkin);
+
+  const labels = getAvailableActions().map(action => action.label);
+
+  assert.ok(labels.includes('解锁门禁'));
+  assert.ok(labels.includes('锁定门禁'));
+  assert.ok(!labels.includes('开门'));
+
+  loadSkin(elevatorSkin);
+});
 
 test('elevator cannot move while the door is open', () => {
   const open = performAction(createInitialState(), 'openDoor').state;

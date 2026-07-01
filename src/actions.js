@@ -126,13 +126,19 @@ export function performAction(state, actionId) {
   return action(state);
 }
 
-export const AVAILABLE_ACTIONS = [
-  { id: 'openDoor', label: actionLabel('openDoor') },
-  { id: 'closeDoor', label: actionLabel('closeDoor') },
-  { id: 'moveUp', label: actionLabel('moveUp') },
-  { id: 'moveDown', label: actionLabel('moveDown') },
-  { id: 'emergencyStop', label: actionLabel('emergencyStop') },
-  { id: 'restartSystem', label: actionLabel('restartSystem') },
-  { id: 'inspectLog', label: actionLabel('inspectLog') },
-  { id: 'unlockHiddenLog', label: actionLabel('unlockHiddenLog') },
+const ACTION_IDS = [
+  'openDoor',
+  'closeDoor',
+  'moveUp',
+  'moveDown',
+  'emergencyStop',
+  'restartSystem',
+  'inspectLog',
+  'unlockHiddenLog',
 ];
+
+export function getAvailableActions() {
+  return ACTION_IDS.map(id => ({ id, label: actionLabel(id) }));
+}
+
+export const AVAILABLE_ACTIONS = getAvailableActions();

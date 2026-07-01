@@ -811,16 +811,22 @@ function performAction(state, actionId) {
   return action(state);
 }
 
-const AVAILABLE_ACTIONS = [
-  { id: 'openDoor', label: actionLabel('openDoor') },
-  { id: 'closeDoor', label: actionLabel('closeDoor') },
-  { id: 'moveUp', label: actionLabel('moveUp') },
-  { id: 'moveDown', label: actionLabel('moveDown') },
-  { id: 'emergencyStop', label: actionLabel('emergencyStop') },
-  { id: 'restartSystem', label: actionLabel('restartSystem') },
-  { id: 'inspectLog', label: actionLabel('inspectLog') },
-  { id: 'unlockHiddenLog', label: actionLabel('unlockHiddenLog') },
+const ACTION_IDS = [
+  'openDoor',
+  'closeDoor',
+  'moveUp',
+  'moveDown',
+  'emergencyStop',
+  'restartSystem',
+  'inspectLog',
+  'unlockHiddenLog',
 ];
+
+function getAvailableActions() {
+  return ACTION_IDS.map(id => ({ id, label: actionLabel(id) }));
+}
+
+const AVAILABLE_ACTIONS = getAvailableActions();
 
 
 // --- src/uiLabels.js ---
@@ -1163,7 +1169,7 @@ const showTruthAd = createRewardedAd(CONFIG.adUnits.truth, {
 function renderActions() {
   els.actions.replaceChildren();
   const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
-  for (const action of AVAILABLE_ACTIONS) {
+  for (const action of getAvailableActions()) {
     // 解码加密记录按钮只在有锁定日志时显示
     if (action.id === 'unlockHiddenLog' && lockedCount === 0) continue;
     const button = document.createElement('button');

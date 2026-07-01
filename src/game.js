@@ -1,4 +1,4 @@
-import { AVAILABLE_ACTIONS, performAction } from './actions.js';
+import { getAvailableActions, performAction } from './actions.js';
 import { applyAnomaly, pickNextAnomaly } from './events.js';
 import { getToneForState, summarizeFailure } from './feedback.js';
 import { recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot, tickState } from './state.js';
@@ -92,7 +92,7 @@ const showTruthAd = createRewardedAd(CONFIG.adUnits.truth, {
 function renderActions() {
   els.actions.replaceChildren();
   const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
-  for (const action of AVAILABLE_ACTIONS) {
+  for (const action of getAvailableActions()) {
     // 解码加密记录按钮只在有锁定日志时显示
     if (action.id === 'unlockHiddenLog' && lockedCount === 0) continue;
     const button = document.createElement('button');
