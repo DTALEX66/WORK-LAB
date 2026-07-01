@@ -7,17 +7,16 @@
 ```
 hermes-pack/
 ├── config/
-│   ├── config.yaml            ← 完整配置（GPT + CC Switch 代理 + public-apis MCP）
+│   ├── config.yaml            ← 完整配置（GPT + CC Switch 代理 + workflow MCP）
 │   ├── SOUL.md                ← Agent 人格设定
 │   ├── .env.template          ← 环境变量（含代理配置）
-│   └── auth.json.template     ← 凭证模板
 ├── skills/software-development/
 │   ├── screenlingua/          ← 截图翻译项目技能
 │   ├── python-testing/        ← Python 测试约定
 │   └── windows-development/   ← Windows 开发排坑
-├── tools/
-│   └── cc-switch-config.json          ← CC Switch 配置导出/参考
-├── memories/MEMORY.md         ← 跨会话记忆参考
+├── docs/                     ← 工作流/MCP/吸收清单文档
+├── templates/                ← Agent 规则、任务单模板
+├── scripts/                  ← 安全扫描等辅助脚本
 ├── setup.ps1                  ← Windows 一键部署脚本
 ├── setup.sh                   ← Linux/macOS 一键部署脚本
 └── README.md                  ← 本文件
@@ -30,12 +29,12 @@ hermes-pack/
 
 | 仓库目录 | 部署目标 | 作用 |
 |---|---|---|
-| `config/` | `%LOCALAPPDATA%\hermes` 或 `~/.hermes` | Hermes 主配置、人格、环境变量模板、认证模板 |
+| `config/` | `%LOCALAPPDATA%\hermes` 或 `~/.hermes` | Hermes 主配置、人格、环境变量模板 |
 | `skills/model-switch/` | `skills/model-switch/` | 模型切换技能，例如“切换DP / 切换GPT” |
 | `skills/software-development/` | `skills/software-development/` | 开发相关技能：截图翻译、Python 测试、Windows 排坑 |
-| `tools/` | 手动导入/参考 | CC Switch 配置导出；不保存 CC Switch 安装主体 |
-| `memories/` | 参考资料，不自动覆盖真实记忆 | 仅作为迁移参考，避免覆盖新机器个人记忆 |
-| `docs/` / `TROUBLESHOOTING.md` | 仓库文档 | 排错和部署说明 |
+| `docs/` | 仓库文档 | 工作流吸收清单、MCP 栈、排错和部署说明 |
+| `templates/` | 手动复制/项目初始化 | Agent 规则模板、CC Switch 任务单模板 |
+| `scripts/` | 手动运行 | 安全扫描、规则检查等辅助脚本 |
 
 > 注意：真实 `.env`、OAuth `auth.json`、API Key、Token、会话数据库、Hermes 安装主体、CC Switch 安装主体都不会上传。新电脑必须先自行安装 Hermes/CC Switch，再填写 API Key 并重新执行 OAuth 登录。
 
@@ -84,6 +83,20 @@ CC Switch 管网络与 Agent 生态：
 
 不要把 ChatGPT 订阅当作 OpenAI API Key 上传或硬编码；订阅 OAuth 必须在每台新电脑上重新登录。
 
+
+## 🧠 工作流强化吸收
+
+本仓库现在额外吸收了一批非 Obsidian 阶段的 Agent 工作流资产：
+
+- `docs/absorption/open-source-workflow-absorption.md`：历史对比/开源项目的吸收清单。
+- `docs/mcp/workflow-mcp-stack.md`：默认 MCP 与候选 MCP 的启用条件。
+- `skills/software-development/agent-workflow-fortress/`：证据优先、自循环、开源吸收、验证闭环 Skill。
+- `templates/agent-rules/`：`AGENTS.md` / `CODEX.md` / `SECURITY.md` / `DESIGN.md` 项目规则模板。
+- `templates/task-tickets/cc-switch-agent-task.md`：给 Codex / Claude / OpenClaw / CC Switch 生态使用的任务单。
+- `scripts/security/scan_agent_rules.py`：扫描第三方规则/Prompt 的零宽字符、注入语句和疑似密钥。
+
+默认只启用当前机器实测可运行的 MCP：`public-apis` 和 `sequential-thinking`。Context7 / Playwright MCP 在 Node 16 下实测不兼容，等 Node 20+ 后再按文档启用。
+
 ## 🚀 快速部署
 
 ```powershell
@@ -100,7 +113,7 @@ cd hermes
 chmod +x setup.sh && ./setup.sh
 ```
 
-脚本自动完成：安装 Hermes → 写入配置（含 public-apis MCP）→ 安装 3 个本地技能 → 安装依赖 → 启用 5 个插件 + 3 个工具集。
+脚本自动完成：检查 Hermes → 写入配置（含 public-apis + sequential-thinking MCP）→ 安装本地技能 → 安装依赖 → 启用 5 个插件 + 3 个工具集。
 
 ---
 
@@ -201,8 +214,6 @@ hermes config set model.default gpt-4o
 
 ```bash
 # CC Switch 安装主体不保存在本仓库；请在新电脑自行安装并启动
-# tools/cc-switch-config.json 仅作为配置导出/参考
-
 # .env 中自动配置代理
 HTTPS_PROXY=http://127.0.0.1:7890
 HTTP_PROXY=http://127.0.0.1:7890

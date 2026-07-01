@@ -53,6 +53,13 @@ mcp_servers:
       - public-apis-mcp@latest
     timeout: 120
     connect_timeout: 120
+  sequential-thinking:
+    command: npx
+    args:
+      - -y
+      - '@modelcontextprotocol/server-sequential-thinking@latest'
+    timeout: 120
+    connect_timeout: 120
 
 display:
   interface: cli
