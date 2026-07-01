@@ -7,7 +7,8 @@ const androidReadme = readFileSync(new URL('../android-webview/README.md', impor
 
 test('root README documents current verification and release gates', () => {
   assert.match(rootReadme, /npm run verify/, 'README should advertise the one-command development gate');
-  assert.match(rootReadme, /68\/68/, 'README should document the current verified test count');
+  assert.doesNotMatch(rootReadme, /\b[0-9]+\/[0-9]+\s*pass\b/, 'README should avoid stale hardcoded test count');
+  assert.match(rootReadme, /测试数以实际输出为准/, 'README should direct readers to real verify output');
   assert.match(rootReadme, /npm run release:check/, 'README should advertise release readiness check');
   assert.match(rootReadme, /release\.config\.example\.json/, 'README should document private release config template');
   assert.match(rootReadme, /android-webview\/app\/build\/outputs\/apk\/debug\/app-debug\.apk/, 'README should point to APK output');

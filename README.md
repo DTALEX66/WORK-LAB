@@ -51,7 +51,7 @@ npm run verify
 4. Android debug APK 构建
 5. Android APK 元数据检查
 
-当前已验证：`npm run verify` 通过，测试数为 68/68，微信 strict 为 0 blocker，Android APK 可构建。
+当前已验证：`npm run verify` 通过（测试数以实际输出为准），微信 strict 为 0 blocker，Android APK 可构建。
 
 ## Android APK
 
