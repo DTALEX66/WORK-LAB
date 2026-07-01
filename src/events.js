@@ -12,26 +12,31 @@ function createAnomaly(skinDef) {
     severity: skinDef.severity,
     monitor: skinDef.monitor,
     adHint: skinDef.adHint,
+    effects: skinDef.effects || {},
     apply(state) {
       const next = cloneState(state);
       const effects = skinDef.effects || {};
+      // 计算难度倍率
+      const elapsed = state.elapsed || 0;
+      const diffScale = CONFIG.anomaly.difficultyScale || 1;
+      const diffInterval = CONFIG.anomaly.difficultyInterval || 10;
+      const multiplier = Math.pow(diffScale, elapsed / diffInterval);
+
       for (const [field, value] of Object.entries(effects)) {
-        if (field === 'floor' && typeof value === 'string' && value.startsWith('+')) {
-          // floor 的 '+X' 字符串 → 增量累加并封顶
+        let adjusted = value;
+        // 负数效果（消耗类）才乘难度系数
+        if (typeof value === 'number' && value < 0) {
+          adjusted = Math.round(value * multiplier);
+        } else if (typeof value === 'string' && value.startsWith('+') && parseInt(value) < 0) {
           const num = parseInt(value, 10);
-          next[field] = Math.min(30, (next[field] ?? 0) + num);
-        } else if (field === 'floor' || field === 'passengers' || field === 'door') {
-          // 绝对赋值（floor 数值、passengers、door）
-          next[field] = value;
-        } else if (typeof value === 'number') {
-          // 数值累加（anomalyLevel、stability、power 等）
-          next[field] = (next[field] ?? 0) + value;
-        } else if (typeof value === 'string' && value.startsWith('+')) {
-          // 其他 '+X' 字符串：增量累加
-          next[field] = (next[field] ?? 0) + parseInt(value, 10);
+          adjusted = `${Math.round(num * multiplier)}`;
+        }
+        if (typeof adjusted === 'number') {
+          next[field] = clamp((next[field] ?? 0) + adjusted, 0, 100);
+        } else if (typeof adjusted === 'string' && adjusted.startsWith('+')) {
+          next[field] = Math.min(30, (next[field] ?? 0) + parseInt(adjusted, 10));
         } else {
-          // 其他字符串：直接赋值
-          next[field] = value;
+          next[field] = adjusted;
         }
       }
       next.anomalyLevel = clamp(next.anomalyLevel, 0, 6);

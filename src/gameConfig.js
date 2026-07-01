@@ -1,12 +1,14 @@
 /**
  * gameConfig.js — MINIGAME 平衡参数配置（单一配置源）
  *
- * 所有游戏平衡参数集中于此，便于调优和后续换皮。
- * 换皮时只需修改此文件即可改变游戏难度/节奏。
+ * v2.0 平衡调优：
+ * - 更平滑的难度曲线
+ * - 操作策略深度加深
+ * - 新手友好但高手有挑战
  *
  * 用法：
  *   import CONFIG from './gameConfig.js';
- *   CONFIG.tick.powerDrainMoving  // 0.7
+ *   CONFIG.tick.powerDrainMoving  // 0.5
  */
 
 const CONFIG = {
@@ -26,29 +28,29 @@ const CONFIG = {
 
   /* ── 每 Tick（1 秒）消耗 ── */
   tick: {
-    powerDrainMoving: 0.7,    // 移动中每秒电源消耗
-    powerDrainIdle: 0.18,     // 待机每秒电源消耗
-    stabilityDrainMoving: 0.25, // 移动中每秒稳定度消耗
+    powerDrainMoving: 0.5,    // 移动中每秒电源消耗（↓0.7）
+    powerDrainIdle: 0.15,     // 待机每秒电源消耗（↓0.18）
+    stabilityDrainMoving: 0.2, // 移动中每秒稳定度消耗（↓0.25）
   },
 
   /* ── 操作消耗/效果 ── */
   actions: {
     moveUp: {
-      powerCost: 6,
-      stabilityCost: 2,
+      powerCost: 5,           // ↓6
+      stabilityCost: 1.5,     // ↓2
     },
     moveDown: {
-      powerCost: 6,
-      stabilityCost: 2,
+      powerCost: 5,           // ↓6
+      stabilityCost: 1.5,     // ↓2
     },
     emergencyStop: {
-      stabilityCost: 6,
-      stabilityCostOnFailure: 16, // 急停失效时的额外惩罚
+      stabilityCost: 4,       // ↓6
+      stabilityCostOnFailure: 12, // ↓16 急停失效时的额外惩罚
     },
     restartSystem: {
       anomalyLevelReduce: 2,
-      stabilityRestore: 15,
-      powerCost: 10,
+      stabilityRestore: 20,   // ↑15 更值得用
+      powerCost: 8,           // ↓10
     },
   },
 
@@ -62,10 +64,15 @@ const CONFIG = {
 
   /* ── 异常系统 ── */
   anomaly: {
-    firstTriggerAt: 12,         // 首次异常触发时间（秒）
-    cooldownMin: 8,             // 异常后最短冷却
-    cooldownMax: 13,            // 异常后最长冷却
+    firstTriggerAt: 14,         // 首次异常触发 ↑12（更多准备时间）
+    cooldownMin: 10,            // 异常后最短冷却 ↑8
+    cooldownMax: 18,            // 异常后最长冷却 ↑13（更多节奏变化）
     pressureDivisor: 2,         // pickNextAnomaly 压力算法分母
+
+    // 难度递增：每 elapsedSeconds 的异常效果乘数
+    // formula: Math.pow(difficultyScale, elapsedSeconds / difficultyInterval)
+    difficultyScale: 1.06,      // 每 10 秒异常效果变为 1.06x
+    difficultyInterval: 10,     // 间隔秒数
   },
 
   /* ── 广告复活 ── */
@@ -85,6 +92,7 @@ const CONFIG = {
   hiddenLogs: {
     maxUnlockedPerRun: 5,
   },
+
   /* ── 假结局 ── */
   fakeEnding: {
     consecutiveFailuresThreshold: 5,
