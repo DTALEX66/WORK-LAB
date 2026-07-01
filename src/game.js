@@ -6,7 +6,7 @@ import CONFIG from './gameConfig.js';
 import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
 import { t, actionLabel, getSkin } from './skinManager.js';
 import { createRewardedAd } from '../platform/platform.js';
-import { getDecodedMonitorText, getDomLabels } from './uiLabels.js';
+import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from './uiLabels.js';
 import {
   createRuntimeSession,
   restartRuntimeSession,
@@ -88,15 +88,6 @@ const showTruthAd = createRewardedAd(CONFIG.adUnits.truth, {
   },
 });
 
-function labelDoor(value) {
-  const labels = getSkin().doorLabels || { open: '开启', closed: '关闭' };
-  return labels[value] || value;
-}
-
-function labelDirection(value) {
-  const labels = getSkin().directionLabels || { up: '上行', down: '下行', idle: '待机' };
-  return labels[value] || value;
-}
 
 function renderActions() {
   els.actions.replaceChildren();
@@ -120,8 +111,8 @@ function render() {
   root.dataset.tone = getToneForState(state);
   els.remaining.textContent = Math.ceil(state.remaining);
   els.floor.textContent = state.floor;
-  els.door.textContent = labelDoor(state.door);
-  els.direction.textContent = labelDirection(state.direction);
+  els.door.textContent = getDoorLabel(state.door);
+  els.direction.textContent = getDirectionLabel(state.direction);
   els.passengers.textContent = state.passengers;
   els.power.value = state.power;
   els.powerText.textContent = Math.round(state.power);

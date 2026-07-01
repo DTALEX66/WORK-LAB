@@ -10,7 +10,7 @@
 
 import { t, getSkin, actionLabel } from '../src/skinManager.js';
 import { getToneForState, summarizeFailure } from '../src/feedback.js';
-import { getDomLabels } from '../src/uiLabels.js';
+import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from '../src/uiLabels.js';
 
 // ── 尺寸常量 ──
 const DW = 750;       // 设计宽度
@@ -117,15 +117,12 @@ function drawTopbar(state) {
 }
 
 export function getCanvasStatusItems(state) {
-  const skin = getSkin();
   const labels = getDomLabels().status;
-  const doorLabels = skin.doorLabels || { open: '开启', closed: '关闭' };
-  const directionLabels = skin.directionLabels || { up: '上行', down: '下行', idle: '待机' };
 
   return [
     { id: 'floor', label: labels.floor, value: state.floor },
-    { id: 'door', label: labels.door, value: doorLabels[state.door] || state.door },
-    { id: 'direction', label: labels.direction, value: directionLabels[state.direction] || state.direction },
+    { id: 'door', label: labels.door, value: getDoorLabel(state.door) },
+    { id: 'direction', label: labels.direction, value: getDirectionLabel(state.direction) },
     { id: 'passengers', label: labels.passengers, value: state.passengers },
     { id: 'power', label: labels.power, value: `${Math.round(state.power)}%` },
     { id: 'stability', label: labels.stability, value: `${Math.round(state.stability)}%` },
@@ -232,7 +229,7 @@ function getMonitorText(state) {
   const unlockedHidden = state.hiddenLogs.filter(h => !h.locked);
   if (unlockedHidden.length > 0) {
     const last = unlockedHidden[unlockedHidden.length - 1];
-    return `${t('ui.decodePrefix')} ${last.title}\n${last.content}`;
+    return getDecodedMonitorText(last);
   }
   return state.monitor;
 }

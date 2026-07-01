@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { loadSkin } from '../src/skinManager.js';
 import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
 import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
-import { getDecodedMonitorText, getDomLabels } from '../src/uiLabels.js';
+import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from '../src/uiLabels.js';
 
 test('DOM labels use current skin labels', () => {
   loadSkin(securitySkin);
@@ -31,6 +31,20 @@ test('decoded monitor text uses current skin decode prefix', () => {
   const text = getDecodedMonitorText({ title: 'Log A', content: 'Content A' });
 
   assert.equal(text, '[CUSTOM DECODE] Log A\nContent A');
+
+  loadSkin(elevatorSkin);
+});
+
+test('door and direction labels use the current skin value maps', () => {
+  loadSkin(securitySkin);
+
+  assert.equal(getDoorLabel('open'), '已解锁');
+  assert.equal(getDoorLabel('closed'), '已锁定');
+  assert.equal(getDoorLabel('jammed'), 'jammed');
+  assert.equal(getDirectionLabel('up'), '巡逻中');
+  assert.equal(getDirectionLabel('down'), '回防中');
+  assert.equal(getDirectionLabel('idle'), '待命');
+  assert.equal(getDirectionLabel('sideways'), 'sideways');
 
   loadSkin(elevatorSkin);
 });

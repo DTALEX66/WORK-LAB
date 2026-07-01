@@ -34,3 +34,13 @@ export function getDomLabels() {
 export function getDecodedMonitorText(hiddenLog) {
   return `${t('ui.decodePrefix')} ${hiddenLog.title}\n${hiddenLog.content}`;
 }
+
+export function getDoorLabel(value) {
+  const labels = getSkin().doorLabels || { open: '开启', closed: '关闭' };
+  return labels[value] || value;
+}
+
+export function getDirectionLabel(value) {
+  const labels = getSkin().directionLabels || { up: '上行', down: '下行', idle: '待机' };
+  return labels[value] || value;
+}
