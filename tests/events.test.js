@@ -23,6 +23,18 @@ test('applyAnomaly mutates system state and logs the event', () => {
   assert.match(result.state.logs.at(-1).text, /不存在的楼层/);
 });
 
+test('anomaly numeric effects add meters but set absolute fields', () => {
+  const state = { ...createInitialState(), floor: 1, passengers: 2, anomalyLevel: 2 };
+
+  const floorResult = applyAnomaly(state, 'phantom_floor');
+  assert.equal(floorResult.state.floor, 13, 'floor should be set to absolute skin value');
+  assert.equal(floorResult.state.anomalyLevel, 4, 'anomaly level should increase by skin value');
+
+  const passengerResult = applyAnomaly(state, 'zero_passenger_shadow');
+  assert.equal(passengerResult.state.passengers, 0, 'passengers should be set to absolute skin value');
+  assert.equal(passengerResult.state.anomalyLevel, 4, 'anomaly level should increase by skin value');
+});
+
 test('anomaly catalogue contains at least 12 events for good variety', () => {
   assert.ok(ANOMALIES.length >= 12);
   const ids = ANOMALIES.map(e => e.id);
