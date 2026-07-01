@@ -45,6 +45,7 @@
     "emergencyStop_fail": "急停按钮无响应。异常等级上升。",
     "restartSystem": "系统重启完成：异常等级下降，但消耗 {cost} 点电源。",
     "inspectLog": "操作员查看系统日志：最近 30 秒存在未授权楼层请求。",
+    "inspectLog_hiddenRecords": "发现 {count} 条待解码加密记录。可观看模拟广告解锁完整内容。",
     "unlockHiddenLog_ok": "模拟广告播放完成。加密记录已解码。"
   },
   "anomalies": [

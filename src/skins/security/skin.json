@@ -48,6 +48,7 @@
     "emergencyStop_fail": "急停按钮无响应。威胁等级上升。",
     "restartSystem": "安防系统重启完成：威胁等级下降，但消耗 {cost} 点电力。",
     "inspectLog": "操作员查看安防日志：最近 30 秒存在未授权访问请求。",
+    "inspectLog_hiddenRecords": "发现 {count} 条待解码加密记录。可观看模拟广告解锁完整内容。",
     "unlockHiddenLog_ok": "模拟广告播放完成。加密记录已解码。"
   },
   "anomalies": [

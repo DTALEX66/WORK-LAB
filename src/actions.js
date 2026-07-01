@@ -80,7 +80,11 @@ const ACTIONS = {
   },
 
   inspectLog(state) {
-    const next = appendLog(state, 'info', t('actionLogMessages.inspectLog'));
+    let next = appendLog(state, 'info', t('actionLogMessages.inspectLog'));
+    const lockedCount = next.hiddenLogs.filter(h => h.locked).length;
+    if (lockedCount > 0) {
+      next = appendLog(next, 'ad', t('actionLogMessages.inspectLog_hiddenRecords', { count: lockedCount }));
+    }
     return ok(next, t('actionFeedback.inspectLog'));
   },
 

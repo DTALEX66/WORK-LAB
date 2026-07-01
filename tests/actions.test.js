@@ -54,3 +54,19 @@ test('unlockHiddenLog unlocks the first locked hidden log', () => {
   assert.equal(result.state.hiddenLogs[1].locked, true);
   assert.equal(result.state.adHintsUsed, 1);
 });
+
+test('inspectLog reports locked hidden records when available', () => {
+  const state = {
+    ...createInitialState(),
+    hiddenLogs: [
+      { id: 'log_a', title: 'Log A', content: 'Content A', locked: true },
+      { id: 'log_b', title: 'Log B', content: 'Content B', locked: false },
+      { id: 'log_c', title: 'Log C', content: 'Content C', locked: true },
+    ],
+  };
+
+  const result = performAction(state, 'inspectLog');
+
+  assert.equal(result.ok, true);
+  assert.match(result.state.logs.at(-1).text, /2 条待解码加密记录/);
+});

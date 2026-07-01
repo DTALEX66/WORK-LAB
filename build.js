@@ -39,8 +39,8 @@ const ENTRY_MODULES = [
  * 移除 ESM import/export 语句（支持单行和多行）
  */
 function stripESM(code) {
-  // 移除 import ... from '...' (单行)
-  code = code.replace(/^import\s+.+\s+from\s+['"].+['"];?\s*$/gm, '');
+  // 移除 import ... from '...'，兼容 JSON import attributes: with { type: 'json' }
+  code = code.replace(/^import\s+.+\s+from\s+['"].+['"](?:\s+with\s+\{[^}]+\})?;?\s*$/gm, '');
   // 移除多行 import { \n ... \n } from '...'
   code = code.replace(/^import\s*\{[\s\S]*?\}\s*from\s*['"].+['"];?\s*/gm, '');
   // 移除顶级 import '...'
@@ -98,12 +98,12 @@ function bundle(target) {
   if (target === 'wechat') {
     bottom = `
 // ── 平台入口 ──
-var canvas = typeof wx !== 'undefined' ? wx.createCanvas() : null;
-if (canvas) {
+var platformCanvas = typeof wx !== 'undefined' ? wx.createCanvas() : null;
+if (platformCanvas) {
   var W = 750, H = 1334;
-  canvas.width = W;
-  canvas.height = H;
-  var ctx = canvas.getContext('2d');
+  platformCanvas.width = W;
+  platformCanvas.height = H;
+  var platformCtx = platformCanvas.getContext('2d');
 
   // 简单的 canvas 渲染替代 DOM
   function gameLoop() {

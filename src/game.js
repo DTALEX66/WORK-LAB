@@ -71,6 +71,7 @@ function renderActions() {
 }
 
 function render() {
+  renderActions();
   root.dataset.tone = getToneForState(state);
   els.remaining.textContent = Math.ceil(state.remaining);
   els.floor.textContent = state.floor;
@@ -240,8 +241,6 @@ els.fakeEndingRestartBtn.addEventListener('click', () => {
   playRestart();
   restart();
 });
-
-renderActions();
 
 // 从皮肤设置标题和副标题
 const meta = getSkin().meta;
