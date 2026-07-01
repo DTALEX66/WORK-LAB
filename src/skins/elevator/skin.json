@@ -22,6 +22,19 @@
   },
   "doorLabels": { "open": "开启", "closed": "关闭" },
   "directionLabels": { "up": "上行", "down": "下行", "idle": "待机" },
+  "statusLabels": {
+    "panelTitle": "电梯状态",
+    "floor": "楼层",
+    "door": "门状态",
+    "direction": "方向",
+    "passengers": "乘客",
+    "power": "电源",
+    "stability": "稳定度",
+    "anomalyLevel": "异常等级",
+    "reviveCount": "广告复活",
+    "adHintsCount": "加密解码",
+    "hiddenLogsCount": "待解码"
+  },
   "actionFailMessages": {
     "openDoor_moving": "电梯移动中，禁止开门。",
     "moveUp_doorNotClosed": "门未关闭，禁止移动。",

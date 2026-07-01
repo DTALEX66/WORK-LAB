@@ -99,6 +99,42 @@ function drawTopbar(state) {
   ctx.textAlign = 'left';
 }
 
+export function getCanvasStatusItems(state) {
+  const skin = getSkin();
+  const labels = skin.statusLabels || {
+    panelTitle: '电梯状态',
+    floor: '楼层',
+    door: '门状态',
+    direction: '方向',
+    passengers: '乘客',
+    power: '电源',
+    stability: '稳定度',
+    anomalyLevel: '异常等级',
+    reviveCount: '广告复活',
+    adHintsCount: '加密解码',
+    hiddenLogsCount: '待解码',
+  };
+  const doorLabels = skin.doorLabels || { open: '开启', closed: '关闭' };
+  const directionLabels = skin.directionLabels || { up: '上行', down: '下行', idle: '待机' };
+
+  return [
+    { id: 'floor', label: labels.floor, value: state.floor },
+    { id: 'door', label: labels.door, value: doorLabels[state.door] || state.door },
+    { id: 'direction', label: labels.direction, value: directionLabels[state.direction] || state.direction },
+    { id: 'passengers', label: labels.passengers, value: state.passengers },
+    { id: 'power', label: labels.power, value: `${Math.round(state.power)}%` },
+    { id: 'stability', label: labels.stability, value: `${Math.round(state.stability)}%` },
+    { id: 'anomalyLevel', label: labels.anomalyLevel, value: state.anomalyLevel },
+    { id: 'reviveCount', label: labels.reviveCount, value: state.adRevivesUsed },
+    { id: 'adHintsCount', label: labels.adHintsCount, value: state.adHintsUsed },
+    { id: 'hiddenLogsCount', label: labels.hiddenLogsCount, value: state.hiddenLogs.filter(h => h.locked).length },
+  ];
+}
+
+function getCanvasStatusPanelTitle() {
+  return getSkin().statusLabels?.panelTitle || '电梯状态';
+}
+
 // ── 绘制状态面板 ──
 function drawStatusPanel(state) {
   const x = 14, y = 80, w = 260, h = 220;
@@ -108,24 +144,13 @@ function drawStatusPanel(state) {
 
   ctx.fillStyle = COLORS.green;
   ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
-  ctx.fillText('电梯状态', x + 16, y + 28);
+  ctx.fillText(getCanvasStatusPanelTitle(), x + 16, y + 28);
 
   // 状态网格（2列）
-  const items = [
-    ['楼层', state.floor],
-    ['门状态', state.door === 'open' ? '开启' : '关闭'],
-    ['方向', { up: '上行', down: '下行', idle: '待机' }[state.direction] || '待机'],
-    ['乘客', state.passengers],
-    ['电源', `${Math.round(state.power)}%`],
-    ['稳定度', `${Math.round(state.stability)}%`],
-    ['异常等级', state.anomalyLevel],
-    ['广告复活', state.adRevivesUsed],
-    ['加密解码', state.adHintsUsed],
-    ['待解码', state.hiddenLogs.filter(h => h.locked).length],
-  ];
+  const items = getCanvasStatusItems(state);
 
   const colW = (w - 32) / 2;
-  items.forEach(([label, value], i) => {
+  items.forEach(({ label, value }, i) => {
     const cx = x + 16 + (i % 2) * colW;
     const cy = y + 44 + Math.floor(i / 2) * 26;
 

@@ -23,6 +23,19 @@
   },
   "doorLabels": { "open": "已解锁", "closed": "已锁定" },
   "directionLabels": { "up": "巡逻中", "down": "回防中", "idle": "待命" },
+  "statusLabels": {
+    "panelTitle": "安防状态",
+    "floor": "区域",
+    "door": "门禁",
+    "direction": "巡逻",
+    "passengers": "人员",
+    "power": "电力",
+    "stability": "安保等级",
+    "anomalyLevel": "威胁等级",
+    "reviveCount": "广告支援",
+    "adHintsCount": "加密解码",
+    "hiddenLogsCount": "待解码"
+  },
   "actionFailMessages": {
     "openDoor_moving": "移动中，禁止解锁门禁。",
     "moveUp_doorNotClosed": "门禁未锁定，禁止无人机出发。",

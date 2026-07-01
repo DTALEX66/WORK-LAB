@@ -22,6 +22,19 @@
   },
   "doorLabels": { "open": "运转", "closed": "停止" },
   "directionLabels": { "up": "正向", "down": "反向", "idle": "待机" },
+  "statusLabels": {
+    "panelTitle": "产线状态",
+    "floor": "工段",
+    "door": "线体",
+    "direction": "方向",
+    "passengers": "产线人员",
+    "power": "电力",
+    "stability": "线体稳定",
+    "anomalyLevel": "故障等级",
+    "reviveCount": "广告维修",
+    "adHintsCount": "加密解码",
+    "hiddenLogsCount": "待解码"
+  },
   "actionFailMessages": {
     "openDoor_moving": "传送带运行中，禁止重新启动。",
     "moveUp_doorNotClosed": "传送带未停止，禁止调节速度。",
