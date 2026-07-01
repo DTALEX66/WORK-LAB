@@ -42,6 +42,18 @@ terminal:
   cwd: .
   timeout: 180
 
+# ── MCP Servers ─────────────────────────────────────────
+# public-apis: 查询 github.com/public-apis/public-apis 的公共 API 目录。
+# 修改后需 /reload-mcp；如果当前会话仍未加载，执行 /reset 或重启 Hermes。
+mcp_servers:
+  public-apis:
+    command: npx
+    args:
+      - -y
+      - public-apis-mcp@latest
+    timeout: 120
+    connect_timeout: 120
+
 display:
   interface: cli
   language: zh

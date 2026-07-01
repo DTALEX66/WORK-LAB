@@ -7,7 +7,7 @@
 ```
 hermes-pack/
 ├── config/
-│   ├── config.yaml            ← 完整配置（GPT + CC Switch 代理）
+│   ├── config.yaml            ← 完整配置（GPT + CC Switch 代理 + public-apis MCP）
 │   ├── SOUL.md                ← Agent 人格设定
 │   ├── .env.template          ← 环境变量（含代理配置）
 │   └── auth.json.template     ← 凭证模板
@@ -66,7 +66,7 @@ chmod +x setup.sh
 1. 自行安装 Hermes Agent 主体和（可选）CC Switch 主体；本仓库只提供部署配置和技能插件。
 2. 编辑 Hermes 的 `.env`，填入新电脑自己的 `DEEPSEEK_API_KEY`，如需 GPT 订阅访问则确认 CC Switch 代理为 `127.0.0.1:7890`。
 3. 如果用 GPT 订阅：运行 `hermes auth add openai-codex`，在浏览器完成 ChatGPT/Codex OAuth。
-4. 切换模型后执行 `/reset` 或重启 Hermes，使 provider/model 生效。
+4. 切换模型后执行 `/reset` 或重启 Hermes，使 provider/model 生效；如需立即加载 MCP，执行 `/reload-mcp`。
 
 ### 推荐运行模式
 
@@ -100,7 +100,7 @@ cd hermes
 chmod +x setup.sh && ./setup.sh
 ```
 
-脚本自动完成：安装 Hermes → 写入配置 → 安装 3 个本地技能 → 安装依赖 → 启用 5 个插件 + 3 个工具集。
+脚本自动完成：安装 Hermes → 写入配置（含 public-apis MCP）→ 安装 3 个本地技能 → 安装依赖 → 启用 5 个插件 + 3 个工具集。
 
 ---
 
