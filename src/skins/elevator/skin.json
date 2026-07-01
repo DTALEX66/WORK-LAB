@@ -35,6 +35,14 @@
     "adHintsCount": "加密解码",
     "hiddenLogsCount": "待解码"
   },
+  "canvasLabels": {
+    "countdown": "值守倒计时",
+    "monitorPanel": "监控画面",
+    "actionPanel": "操作面板",
+    "logPanel": "系统日志",
+    "forceAnomaly": "触发异常测试",
+    "failureTitle": "系统崩溃"
+  },
   "actionFailMessages": {
     "openDoor_moving": "电梯移动中，禁止开门。",
     "moveUp_doorNotClosed": "门未关闭，禁止移动。",

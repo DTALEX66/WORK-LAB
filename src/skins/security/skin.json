@@ -36,6 +36,14 @@
     "adHintsCount": "加密解码",
     "hiddenLogsCount": "待解码"
   },
+  "canvasLabels": {
+    "countdown": "值守倒计时",
+    "monitorPanel": "安防监控",
+    "actionPanel": "安防操作",
+    "logPanel": "安防日志",
+    "forceAnomaly": "触发安防异常",
+    "failureTitle": "安防系统崩溃"
+  },
   "actionFailMessages": {
     "openDoor_moving": "移动中，禁止解锁门禁。",
     "moveUp_doorNotClosed": "门禁未锁定，禁止无人机出发。",

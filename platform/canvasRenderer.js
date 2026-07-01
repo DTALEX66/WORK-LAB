@@ -74,6 +74,21 @@ function drawBackground(tone) {
   ctx.fillRect(0, 0, DW, DH);
 }
 
+export function getCanvasStaticLabels() {
+  return {
+    countdown: '值守倒计时',
+    monitorPanel: '监控画面',
+    actionPanel: '操作面板',
+    logPanel: '系统日志',
+    forceAnomaly: t('ui.triggerTest'),
+    failureTitle: '系统崩溃',
+    adRevive: t('ui.viewAd'),
+    restart: t('ui.restart'),
+    revealTruth: t('ui.revealTruth'),
+    ...(getSkin().canvasLabels || {}),
+  };
+}
+
 // ── 绘制顶栏 ──
 function drawTopbar(state) {
   const meta = getSkin().meta;
@@ -85,13 +100,14 @@ function drawTopbar(state) {
   ctx.font = '14px "Microsoft YaHei", sans-serif';
   ctx.fillText(meta?.subtitle || '', 24, 64);
 
+  const labels = getCanvasStaticLabels();
   // 倒计时卡片
   const cardX = DW - 170;
   const cardW = 150;
   roundRect(cardX, 14, cardW, 50, 14, COLORS.panel, COLORS.line);
   ctx.fillStyle = COLORS.muted;
   ctx.font = '12px "Microsoft YaHei", sans-serif';
-  ctx.fillText('值守倒计时', cardX + 12, 32);
+  ctx.fillText(labels.countdown, cardX + 12, 32);
   ctx.fillStyle = COLORS.amber;
   ctx.font = 'bold 28px "Microsoft YaHei", sans-serif';
   ctx.textAlign = 'right';
@@ -199,10 +215,11 @@ function toneBorder(state) {
 function drawMonitor(state) {
   const x = 286, y = 80, w = 448, h = 220;
 
+  const labels = getCanvasStaticLabels();
   roundRect(x, y, w, h, 16, COLORS.panel, toneBorder(state));
   ctx.fillStyle = COLORS.green;
   ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
-  ctx.fillText('监控画面', x + 16, y + 28);
+  ctx.fillText(labels.monitorPanel, x + 16, y + 28);
 
   // 监控内容区域
   const mx = x + 14, my = y + 38, mw = w - 28, mh = h - 50;
@@ -249,10 +266,11 @@ export function getCanvasActionButtons(state) {
 function drawActions(state) {
   const x = 14, y = 312, w = 260, h = 260;
 
+  const labels = getCanvasStaticLabels();
   roundRect(x, y, w, h, 16, COLORS.panel, COLORS.line);
   ctx.fillStyle = COLORS.green;
   ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
-  ctx.fillText('操作面板', x + 16, y + 28);
+  ctx.fillText(labels.actionPanel, x + 16, y + 28);
 
   const btns = getCanvasActionButtons(state);
 
@@ -291,7 +309,7 @@ function drawActions(state) {
   ctx.fillStyle = COLORS.text;
   ctx.font = '12px "Microsoft YaHei", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('触发异常测试', x + w / 2, testBtnY + 22);
+  ctx.fillText(labels.forceAnomaly, x + w / 2, testBtnY + 22);
   ctx.textAlign = 'left';
 }
 
@@ -299,10 +317,11 @@ function drawActions(state) {
 function drawLogs(state) {
   const x = 286, y = 312, w = 448, h = 260;
 
+  const labels = getCanvasStaticLabels();
   roundRect(x, y, w, h, 16, COLORS.panel, COLORS.line);
   ctx.fillStyle = COLORS.green;
   ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
-  ctx.fillText('系统日志', x + 16, y + 28);
+  ctx.fillText(labels.logPanel, x + 16, y + 28);
 
   const logs = state.logs.slice(-12);
   const logY = y + 38;
@@ -326,6 +345,7 @@ function drawFailureOverlay(state) {
   const cardW = 520, cardH = 320;
   const cx = (DW - cardW) / 2, cy = (DH - cardH) / 2;
 
+  const labels = getCanvasStaticLabels();
   if (state.fakeEndingTriggered) {
     // 假结局
     roundRect(cx, cy, cardW, cardH, 24, 'rgba(60,0,12,0.98)', 'rgba(255,0,80,0.7)');
@@ -359,7 +379,7 @@ function drawFailureOverlay(state) {
 
     ctx.fillStyle = COLORS.red;
     ctx.font = 'bold 40px "Microsoft YaHei", sans-serif';
-    ctx.fillText('系统崩溃', cx + 24, cy + 80);
+    ctx.fillText(labels.failureTitle, cx + 24, cy + 80);
 
     ctx.fillStyle = COLORS.text;
     ctx.font = '16px "Microsoft YaHei", sans-serif';
@@ -382,10 +402,10 @@ function drawFailureOverlay(state) {
   ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
   ctx.textAlign = 'center';
   const btnLabel = state.fakeEndingTriggered && !state.fakeEndingUnlocked
-    ? '观看广告揭示真相'
+    ? labels.revealTruth
     : state.fakeEndingTriggered
-    ? '重新开始'
-    : '观看广告复活';
+    ? labels.restart
+    : labels.adRevive;
   ctx.fillText(btnLabel, cx + 20 + btnW2 / 2, btnY + 29);
   ctx.textAlign = 'left';
 
@@ -394,7 +414,7 @@ function drawFailureOverlay(state) {
   ctx.fillStyle = COLORS.text;
   ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('重新开始', cx + 40 + btnW2 + btnW2 / 2, btnY + 29);
+  ctx.fillText(labels.restart, cx + 40 + btnW2 + btnW2 / 2, btnY + 29);
   ctx.textAlign = 'left';
 }
 
