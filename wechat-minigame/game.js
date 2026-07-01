@@ -71,6 +71,11 @@ const CONFIG = {
     passengersMin: 0,
   },
 
+  /* ── 世界边界 ── */
+  bounds: {
+    maxFloor: 30,
+  },
+
   /* ── 异常系统 ── */
   anomaly: {
     firstTriggerAt: 14,         // 首次异常触发 ↑12（更多准备时间）
@@ -602,7 +607,7 @@ function createAnomaly(skinDef) {
         if (typeof adjusted === 'number' && shouldAddNumericEffect(field, adjusted)) {
           next[field] = clamp((next[field] ?? 0) + adjusted, 0, 100);
         } else if (typeof adjusted === 'string' && isDeltaEffect(adjusted)) {
-          next[field] = Math.min(30, (next[field] ?? 0) + parseInt(adjusted, 10));
+          next[field] = Math.min(CONFIG.bounds.maxFloor, (next[field] ?? 0) + parseInt(adjusted, 10));
         } else {
           next[field] = adjusted;
         }

@@ -62,6 +62,11 @@ const CONFIG = {
     passengersMin: 0,
   },
 
+  /* ── 世界边界 ── */
+  bounds: {
+    maxFloor: 30,
+  },
+
   /* ── 异常系统 ── */
   anomaly: {
     firstTriggerAt: 14,         // 首次异常触发 ↑12（更多准备时间）

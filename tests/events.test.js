@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import CONFIG from '../src/gameConfig.js';
 import { createInitialState } from '../src/state.js';
 import { ANOMALIES, applyAnomaly, pickNextAnomaly, HIDDEN_LOGS } from '../src/events.js';
 import { loadSkin } from '../src/skinManager.js';
@@ -47,6 +48,12 @@ test('anomaly numeric effects add meters but set absolute fields', () => {
   const passengerResult = applyAnomaly(state, 'zero_passenger_shadow');
   assert.equal(passengerResult.state.passengers, 0, 'passengers should be set to absolute skin value');
   assert.equal(passengerResult.state.anomalyLevel, 4, 'anomaly level should increase by skin value');
+});
+
+test('anomaly string delta effects clamp meter fields', () => {
+  const result = applyAnomaly({ ...createInitialState(), floor: CONFIG.bounds.maxFloor - 1 }, 'floor_jump');
+
+  assert.equal(result.state.floor, CONFIG.bounds.maxFloor, 'string delta floor effects should clamp to playable max floor');
 });
 
 test('anomaly catalogue contains at least 12 events for good variety', () => {

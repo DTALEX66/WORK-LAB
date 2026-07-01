@@ -34,7 +34,7 @@ function createAnomaly(skinDef) {
         if (typeof adjusted === 'number' && shouldAddNumericEffect(field, adjusted)) {
           next[field] = clamp((next[field] ?? 0) + adjusted, 0, 100);
         } else if (typeof adjusted === 'string' && isDeltaEffect(adjusted)) {
-          next[field] = Math.min(30, (next[field] ?? 0) + parseInt(adjusted, 10));
+          next[field] = Math.min(CONFIG.bounds.maxFloor, (next[field] ?? 0) + parseInt(adjusted, 10));
         } else {
           next[field] = adjusted;
         }
