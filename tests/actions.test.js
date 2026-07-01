@@ -55,6 +55,23 @@ test('unlockHiddenLog unlocks the first locked hidden log', () => {
   assert.equal(result.state.adHintsUsed, 1);
 });
 
+test('unlockHiddenLog respects the configured per-run unlock limit', () => {
+  const state = {
+    ...createInitialState(),
+    adHintsUsed: CONFIG.hiddenLogs.maxUnlockedPerRun,
+    hiddenLogs: [
+      { id: 'log_a', title: 'Log A', content: 'Content A', locked: true },
+    ],
+  };
+
+  const result = performAction(state, 'unlockHiddenLog');
+
+  assert.equal(result.ok, false);
+  assert.equal(result.state.hiddenLogs[0].locked, true);
+  assert.equal(result.state.adHintsUsed, CONFIG.hiddenLogs.maxUnlockedPerRun);
+  assert.match(result.message, new RegExp(String(CONFIG.hiddenLogs.maxUnlockedPerRun)));
+});
+
 test('inspectLog reports locked hidden records when available', () => {
   const state = {
     ...createInitialState(),
