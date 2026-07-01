@@ -31,3 +31,14 @@ test('verify script runs the full release acceptance gate', () => {
   assert.match(verifyScript, /build-android-debug\.mjs/, 'verify should build Android APK');
   assert.match(verifyScript, /check-apk-metadata\.mjs/, 'verify should inspect APK metadata');
 });
+
+test('release check blocks placeholder publishing configuration', () => {
+  const releaseScript = readFileSync(new URL('../scripts/check-release-readiness.mjs', import.meta.url), 'utf8');
+
+  assert.equal(pkg.scripts['release:check'], 'node scripts/check-release-readiness.mjs');
+  assert.match(releaseScript, /wechatAppId/, 'release check should validate WeChat AppID');
+  assert.match(releaseScript, /CONFIG\.adUnits\.\$\{key\}/, 'release check should validate rewarded-video ad units');
+  assert.match(releaseScript, /Release is NOT ready/, 'release check should fail closed when blockers exist');
+  assert.match(releaseScript, /wechatBundleBlockers/, 'release check should include runtime bundle blockers');
+  assert.match(releaseScript, /androidApkMetadata/, 'release check should include Android APK metadata');
+});

@@ -18,6 +18,7 @@
 当前已验证：
 
 - `npm run verify` 可一键执行完整验收：测试、微信构建、微信 strict、Android 构建、APK 元数据检查。
+- `npm run release:check` 用于发布前强校验：真实 AppID、真实激励视频广告位、微信 runtime blocker、APK 元数据；当前占位配置下会故意失败，避免误发布。
 - `npm test` 可在 Windows 当前 PATH 为微信开发者工具 Node 16 的情况下自动切到 Hermes Node 22，测试通过。
 - `npm run android:build` 可产出 debug APK。
 - `npm run android:inspect` 可用 `aapt dump badging` 验证包名、应用名、launcher icon、minSdk、targetSdk。
@@ -246,6 +247,7 @@ Uncaught RangeError: Maximum call stack size exceeded
 
 ```bash
 npm run verify
+npm run release:check  # 发布前检查：当前占位 AppID/adUnitId 下应失败
 npm test
 npm run android:build
 npm run android:inspect
