@@ -17,4 +17,6 @@ test('android WebView assets use bundled script instead of ES modules', () => {
   assert.match(html, /user-scalable=no/);
   assert.match(game, /MINIGAME - 抖音 小游戏构建|MINIGAME - android 小游戏构建/);
   assert.match(game, /document\.querySelector/);
+  assert.doesNotMatch(game, /\bSKIN_DATA\b/);
+  assert.doesNotMatch(game, /\b_getHiddenLog\b/);
 });

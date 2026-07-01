@@ -85,6 +85,21 @@ function ensureTimer() {
   timer = window.setInterval(loop, 1000);
 }
 
+function bindPress(element, handler) {
+  if (!element) return;
+  let handledAt = 0;
+  const run = (event) => {
+    event?.preventDefault?.();
+    const now = Date.now();
+    if (now - handledAt < 350) return;
+    handledAt = now;
+    handler(event);
+  };
+  element.addEventListener('click', run);
+  element.addEventListener('touchend', run, { passive: false });
+  element.addEventListener('pointerup', run);
+}
+
 const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
   onReward: () => {
     playRevive();
@@ -118,7 +133,7 @@ function renderActions() {
       ? actionLabel(action.id, lockedCount)
       : action.label;
     button.dataset.action = action.id;
-    button.addEventListener('click', () => dispatchAction(action.id));
+    bindPress(button, () => dispatchAction(action.id));
     els.actions.append(button);
   }
 }
@@ -350,24 +365,24 @@ function applyDomLabels() {
 }
 
 applyDomLabels();
-els.startButton?.addEventListener('click', () => {
+bindPress(els.startButton, () => {
   playClick();
   ensureTimer();
 });
-els.forceAnomaly.addEventListener('click', triggerAnomaly);
-els.reviveButton.addEventListener('click', () => {
+bindPress(els.forceAnomaly, triggerAnomaly);
+bindPress(els.reviveButton, () => {
   showReviveAd();
 });
-els.restartButton.addEventListener('click', () => {
+bindPress(els.restartButton, () => {
   playRestart();
   restart();
 });
 
 // 假结局按钮
-els.fakeEndingTruthBtn.addEventListener('click', () => {
+bindPress(els.fakeEndingTruthBtn, () => {
   showTruthAd();
 });
-els.fakeEndingRestartBtn.addEventListener('click', () => {
+bindPress(els.fakeEndingRestartBtn, () => {
   playRestart();
   restart();
 });

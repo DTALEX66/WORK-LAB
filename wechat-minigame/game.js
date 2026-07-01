@@ -148,7 +148,7 @@ var __SKIN_DATA__ = {"meta":{"id":"elevator","name":"异常电梯控制台","sub
  */
 
 
-let currentSkin = SKIN_DATA;
+let currentSkin = __SKIN_DATA__;
 
 /**
  * 加载指定皮肤数据
@@ -653,7 +653,7 @@ function applyAnomaly(state, id) {
   let next = event.apply(state);
   next.lastAdHint = event.adHint;
   // 添加关联隐藏日志（不重复）
-  const raw = _getHiddenLog(id);
+  const raw = getHiddenLog(id);
   if (raw && !next.hiddenLogs.some(h => h.id === id + '_log')) {
     next.hiddenLogs.push({ id: id + '_log', title: raw.title, content: raw.content, locked: true });
     next = appendLog(next, 'info', t('ui.hiddenLogCaptured', { title: raw.title }));
@@ -670,18 +670,12 @@ function pickNextAnomaly(state, random = Math.random) {
   const index = Math.min(ANOMALIES.length - 1, Math.floor(random() * ANOMALIES.length + pressure) % ANOMALIES.length);
   return ANOMALIES[index];
 }
-
-// 向后兼容导出
-function getHiddenLog(anomalyId) {
-  return _getHiddenLog(anomalyId);
-}
-
 /** @deprecated 请使用 getHiddenLog() 代替 */
 const _buildHiddenLogsMap = () => {
   const map = {};
   const anomalies = getAnomalies();
   for (const a of anomalies) {
-    const hl = _getHiddenLog(a.id);
+    const hl = getHiddenLog(a.id);
     if (hl) {
       map[a.id] = { id: `${a.id}_log`, title: hl.title, content: hl.content };
     }
@@ -1189,6 +1183,21 @@ function ensureTimer() {
   timer = window.setInterval(loop, 1000);
 }
 
+function bindPress(element, handler) {
+  if (!element) return;
+  let handledAt = 0;
+  const run = (event) => {
+    event?.preventDefault?.();
+    const now = Date.now();
+    if (now - handledAt < 350) return;
+    handledAt = now;
+    handler(event);
+  };
+  element.addEventListener('click', run);
+  element.addEventListener('touchend', run, { passive: false });
+  element.addEventListener('pointerup', run);
+}
+
 const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
   onReward: () => {
     playRevive();
@@ -1222,7 +1231,7 @@ function renderActions() {
       ? actionLabel(action.id, lockedCount)
       : action.label;
     button.dataset.action = action.id;
-    button.addEventListener('click', () => dispatchAction(action.id));
+    bindPress(button, () => dispatchAction(action.id));
     els.actions.append(button);
   }
 }
@@ -1454,24 +1463,24 @@ function applyDomLabels() {
 }
 
 applyDomLabels();
-els.startButton?.addEventListener('click', () => {
+bindPress(els.startButton, () => {
   playClick();
   ensureTimer();
 });
-els.forceAnomaly.addEventListener('click', triggerAnomaly);
-els.reviveButton.addEventListener('click', () => {
+bindPress(els.forceAnomaly, triggerAnomaly);
+bindPress(els.reviveButton, () => {
   showReviveAd();
 });
-els.restartButton.addEventListener('click', () => {
+bindPress(els.restartButton, () => {
   playRestart();
   restart();
 });
 
 // 假结局按钮
-els.fakeEndingTruthBtn.addEventListener('click', () => {
+bindPress(els.fakeEndingTruthBtn, () => {
   showTruthAd();
 });
-els.fakeEndingRestartBtn.addEventListener('click', () => {
+bindPress(els.fakeEndingRestartBtn, () => {
   playRestart();
   restart();
 });

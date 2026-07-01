@@ -90,8 +90,13 @@ function bundle(target) {
     } else {
       let code = stripESM(raw);
       // 替换 skinManager 中的 import 为 __SKIN_DATA__
-      code = code.replace(/import SKIN_DATA from\s+['"].+['"];?/g, '');
-      code = code.replace(/const SKIN_DATA = .+;/g, 'const SKIN_DATA = __SKIN_DATA__;');
+      if (mod.path === 'src/skinManager.js') {
+        code = code.replace(/\bSKIN_DATA\b/g, '__SKIN_DATA__');
+      }
+      if (mod.path === 'src/events.js') {
+        code = code.replace(/\n\s*\/\/ 向后兼容导出\s*\nfunction getHiddenLog\(anomalyId\)\s*\{\s*return _getHiddenLog\(anomalyId\);\s*\}\s*\n/g, '\n');
+        code = code.replace(/\b_getHiddenLog\b/g, 'getHiddenLog');
+      }
       // 移除 skinManager 中死代码（buildHiddenLogsMap 的 require mock）
       code = code.replace(/function buildHiddenLogsMap[\s\S]*?\n\}/g, 'function buildHiddenLogsMap() { return {}; }');
       body += `// --- ${mod.path} ---\n${code}\n\n`;

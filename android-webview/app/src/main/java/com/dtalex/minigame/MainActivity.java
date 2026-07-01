@@ -7,9 +7,11 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.webkit.WebChromeClient;
+import android.webkit.ConsoleMessage;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.util.Log;
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -52,7 +54,15 @@ public class MainActivity extends Activity {
         settings.setTextZoom(100);
         webView.setBackgroundColor(0xFF020405);
         webView.setWebViewClient(new WebViewClient());
-        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                Log.d("MINIGAME_WEBVIEW", consoleMessage.message()
+                    + " @" + consoleMessage.sourceId()
+                    + ":" + consoleMessage.lineNumber());
+                return true;
+            }
+        });
     }
 
     @Override
