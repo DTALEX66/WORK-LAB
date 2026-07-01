@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../src/state.js';
 import { performAction } from '../src/actions.js';
 import CONFIG from '../src/gameConfig.js';
+import { loadSkin } from '../src/skinManager.js';
+import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
 
 test('elevator cannot move while the door is open', () => {
   const open = performAction(createInitialState(), 'openDoor').state;
@@ -32,6 +34,19 @@ test('restartSystem reduces anomaly level and stabilizes the system', () => {
   assert.equal(result.state.anomalyLevel, 2);
   assert.equal(result.state.stability, 45 + CONFIG.actions.restartSystem.stabilityRestore);
   assert.equal(result.state.power, 55 - CONFIG.actions.restartSystem.powerCost);
+});
+
+test('emergencyStop failure uses current skin feedback copy', () => {
+  const skin = structuredClone(elevatorSkin);
+  skin.actionFeedback.emergencyStop_fail = '自定义急停失败反馈。';
+  loadSkin(skin);
+
+  const result = performAction({ ...createInitialState(), activeAnomaly: 'stop_failure' }, 'emergencyStop');
+
+  assert.equal(result.ok, false);
+  assert.equal(result.message, '自定义急停失败反馈。');
+
+  loadSkin(elevatorSkin);
 });
 
 test('unlockHiddenLog fails when no locked logs exist', () => {

@@ -55,7 +55,7 @@ const ACTIONS = {
       next.anomalyLevel = clamp(next.anomalyLevel + 1, 0, 6);
       next.stability = clamp(next.stability - es.stabilityCostOnFailure, 0, 100);
       next = appendLog(next, 'danger', t('actionLogMessages.emergencyStop_fail'));
-      return fail(checkFailure(next), '急停按钮失效。');
+      return fail(checkFailure(next), t('actionFeedback.emergencyStop_fail'));
     }
     next.moving = false;
     next.direction = 'idle';
