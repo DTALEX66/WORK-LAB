@@ -77,8 +77,8 @@ export function createRewardedAd(adUnitId, callbacks = {}) {
     });
     ad.onError((err) => {
       console.warn('[ad] error:', err);
-      // 广告加载失败也给予奖励（避免阻塞游戏）
-      onReward?.();
+      // 开发模式：广告失败也给予奖励（避免阻塞游戏）
+      if (!CONFIG.releaseMode) onReward?.();
       onError?.(err);
     });
     const show = () => ad.show().catch(() => {
@@ -94,7 +94,7 @@ export function createRewardedAd(adUnitId, callbacks = {}) {
       if (res && res.isEnded) onReward?.();
     });
     ad.onError((err) => {
-      onReward?.();
+      if (!CONFIG.releaseMode) onReward?.();
       onError?.(err);
     });
     const show = () => ad.show().catch(() => {

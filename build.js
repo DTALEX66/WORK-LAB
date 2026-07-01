@@ -44,8 +44,11 @@ function applyReleaseOverrides(code, modPath, target, releaseConfig) {
   const hasAllUnits = ['revive', 'decode', 'truth'].every(key => typeof adUnits[key] === 'string' && adUnits[key].trim());
   if (!hasAllUnits) return code;
 
-  const replacement = `adUnits: ${stableStringifyObject(adUnits, 4).replace(/\n/g, '\n    ')},`;
-  return code.replace(/adUnits:\s*\{[\s\S]*?\n\s*\},/, replacement);
+  let result = code.replace(/adUnits:\s*\{[\s\S]*?\n\s*\},/, `adUnits: ${stableStringifyObject(adUnits, 4).replace(/\n/g, '\n    ')},`);
+  if (releaseConfig.releaseMode) {
+    result = result.replace(/(releaseMode:\s*)false/, '$1true');
+  }
+  return result;
 }
 
 function writePrivateProjectConfig(target, outputDir, releaseConfig) {

@@ -104,6 +104,12 @@ const CONFIG = {
     cooldownFailures: 3,
   },
 
+  /* ── 发布模式 ──
+     - false: 开发模式，广告失败也给奖励，方便本地测试
+     - true:  发布模式，广告失败提示重试，不无条件发奖励
+  */
+  releaseMode: false,
+
   /* ── 模拟广告 ── */
   adContent: {
     adVideoDuration: 2000,

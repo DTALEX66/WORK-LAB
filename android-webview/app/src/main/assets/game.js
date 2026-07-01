@@ -113,6 +113,12 @@ const CONFIG = {
     cooldownFailures: 3,
   },
 
+  /* ── 发布模式 ──
+     - false: 开发模式，广告失败也给奖励，方便本地测试
+     - true:  发布模式，广告失败提示重试，不无条件发奖励
+  */
+  releaseMode: false,
+
   /* ── 模拟广告 ── */
   adContent: {
     adVideoDuration: 2000,
@@ -1009,8 +1015,8 @@ function createRewardedAd(adUnitId, callbacks = {}) {
     });
     ad.onError((err) => {
       console.warn('[ad] error:', err);
-      // 广告加载失败也给予奖励（避免阻塞游戏）
-      onReward?.();
+      // 开发模式：广告失败也给予奖励（避免阻塞游戏）
+      if (!CONFIG.releaseMode) onReward?.();
       onError?.(err);
     });
     const show = () => ad.show().catch(() => {
@@ -1026,7 +1032,7 @@ function createRewardedAd(adUnitId, callbacks = {}) {
       if (res && res.isEnded) onReward?.();
     });
     ad.onError((err) => {
-      onReward?.();
+      if (!CONFIG.releaseMode) onReward?.();
       onError?.(err);
     });
     const show = () => ad.show().catch(() => {
