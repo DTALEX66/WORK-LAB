@@ -103,6 +103,13 @@ const CONFIG = {
   adContent: {
     adVideoDuration: 2000,
   },
+
+  /* ── 广告位 ── */
+  adUnits: {
+    revive: 'adunit-xxxxx_revive',
+    decode: 'adunit-xxxxx_decode',
+    truth: 'adunit-xxxxx_truth',
+  },
 };
 
 export default CONFIG;

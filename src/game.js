@@ -5,6 +5,7 @@ import { createInitialState, recordFailure, recordSuccessfulShift, reviveFromAd,
 import CONFIG from './gameConfig.js';
 import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
 import { t, actionLabel, getSkin } from './skinManager.js';
+import { createRewardedAd } from '../platform/platform.js';
 
 const root = document.querySelector('.console-shell');
 const els = {
@@ -42,6 +43,26 @@ let nextAnomalyAt = CONFIG.anomaly.firstTriggerAt;
 let timer = null;
 let lastTone = 'normal';
 let crashPlayed = false;
+
+const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
+  onReward: () => {
+    playRevive();
+    state = reviveFromAd(state);
+    nextAnomalyAt = state.elapsed + 8;
+    render();
+  },
+});
+const showDecodeAd = createRewardedAd(CONFIG.adUnits.decode, {
+  onReward: () => runAction('unlockHiddenLog'),
+});
+const showTruthAd = createRewardedAd(CONFIG.adUnits.truth, {
+  onReward: () => {
+    playRevive();
+    state = structuredClone(state);
+    state.fakeEndingUnlocked = true;
+    render();
+  },
+});
 
 function labelDoor(value) {
   const labels = getSkin().doorLabels || { open: '开启', closed: '关闭' };
@@ -143,6 +164,14 @@ function render() {
 
 function dispatchAction(actionId) {
   playClick();
+  if (actionId === 'unlockHiddenLog') {
+    showDecodeAd();
+    return;
+  }
+  runAction(actionId);
+}
+
+function runAction(actionId) {
   const result = performAction(state, actionId);
   state = result.state;
   if (result.ok) {
@@ -212,10 +241,7 @@ els.forceAnomaly.textContent = t('ui.triggerTest');
 els.forceAnomaly.addEventListener('click', triggerAnomaly);
 els.reviveButton.textContent = t('ui.viewAd');
 els.reviveButton.addEventListener('click', () => {
-  playRevive();
-  state = reviveFromAd(state);
-  nextAnomalyAt = state.elapsed + 8;
-  render();
+  showReviveAd();
 });
 els.restartButton.addEventListener('click', () => {
   playRestart();
@@ -224,10 +250,7 @@ els.restartButton.addEventListener('click', () => {
 
 // 假结局按钮
 els.fakeEndingTruthBtn.addEventListener('click', () => {
-  playRevive();
-  state = structuredClone(state);
-  state.fakeEndingUnlocked = true;
-  render();
+  showTruthAd();
 });
 els.fakeEndingRestartBtn.addEventListener('click', () => {
   playRestart();
