@@ -90,6 +90,14 @@ export function getCanvasStaticLabels() {
   };
 }
 
+export function getCanvasFailureOverlayCopy(state) {
+  return {
+    eyebrow: t('fakeEnding.eyebrow'),
+    title: state.fakeEndingTriggered ? t('fakeEnding.title') : getCanvasStaticLabels().failureTitle,
+    adHintLine: state.lastAdHint ? t('failure.adHintPrefix', { hint: state.lastAdHint }) : '',
+  };
+}
+
 // ── 绘制顶栏 ──
 function drawTopbar(state) {
   const meta = getSkin().meta;
@@ -332,17 +340,18 @@ function drawFailureOverlay(state) {
   const cx = (DW - cardW) / 2, cy = (DH - cardH) / 2;
 
   const labels = getCanvasStaticLabels();
+  const copy = getCanvasFailureOverlayCopy(state);
   if (state.fakeEndingTriggered) {
     // 假结局
     roundRect(cx, cy, cardW, cardH, 24, 'rgba(60,0,12,0.98)', 'rgba(255,0,80,0.7)');
 
     ctx.fillStyle = COLORS.darkRed;
     ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
-    ctx.fillText('⚠ SYSTEM ANOMALY DETECTED', cx + 24, cy + 30);
+    ctx.fillText(copy.eyebrow, cx + 24, cy + 30);
 
     ctx.fillStyle = '#ff0050';
     ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
-    ctx.fillText('操作员关联异常', cx + 24, cy + 72);
+    ctx.fillText(copy.title, cx + 24, cy + 72);
 
     const text = state.fakeEndingText || '';
     ctx.fillStyle = '#ff6b8a';
@@ -375,7 +384,7 @@ function drawFailureOverlay(state) {
     if (state.lastAdHint) {
       ctx.fillStyle = COLORS.amber;
       ctx.font = '14px "Microsoft YaHei", sans-serif';
-      ctx.fillText(`广告提示：${state.lastAdHint}`, cx + 24, cy + 200);
+      ctx.fillText(copy.adHintLine, cx + 24, cy + 200);
     }
   }
 

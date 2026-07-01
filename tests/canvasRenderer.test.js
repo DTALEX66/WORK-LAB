@@ -5,7 +5,7 @@ import { createInitialState } from '../src/state.js';
 import { loadSkin } from '../src/skinManager.js';
 import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
 import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
-import { getCanvasActionButtons, getCanvasStaticLabels, getCanvasStatusItems } from '../platform/canvasRenderer.js';
+import { getCanvasActionButtons, getCanvasFailureOverlayCopy, getCanvasStaticLabels, getCanvasStatusItems } from '../platform/canvasRenderer.js';
 import { getDomLabels } from '../src/uiLabels.js';
 
 test('canvas action buttons use current skin labels', () => {
@@ -69,6 +69,27 @@ test('canvas static labels use current skin copy', () => {
   assert.equal(labels.adRevive, domLabels.revive);
   assert.equal(labels.restart, domLabels.restart);
   assert.equal(labels.revealTruth, domLabels.revealTruth);
+
+  loadSkin(elevatorSkin);
+});
+
+test('canvas failure overlay copy uses current skin text', () => {
+  loadSkin(securitySkin);
+
+  const fakeEndingCopy = getCanvasFailureOverlayCopy({
+    ...createInitialState(),
+    gameOver: true,
+    fakeEndingTriggered: true,
+  });
+  assert.equal(fakeEndingCopy.eyebrow, '⚠ SYSTEM ANOMALY DETECTED');
+  assert.equal(fakeEndingCopy.title, '值班员关联异常');
+
+  const failureCopy = getCanvasFailureOverlayCopy({
+    ...createInitialState(),
+    gameOver: true,
+    lastAdHint: '先锁门。',
+  });
+  assert.equal(failureCopy.adHintLine, '系统提示：先锁门。');
 
   loadSkin(elevatorSkin);
 });
