@@ -295,6 +295,47 @@ meter {
   font-size: 0.72rem;
   letter-spacing: 0.16em;
 }
+.monitor-hud {
+  position: absolute;
+  z-index: 2;
+  left: 34px;
+  right: 34px;
+  bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+}
+.monitor-hud span {
+  padding: 7px 10px;
+  border: 1px solid rgba(97, 255, 190, 0.22);
+  border-radius: 999px;
+  color: rgba(216, 255, 243, 0.86);
+  background: rgba(0, 10, 12, 0.72);
+  box-shadow: 0 0 18px rgba(97,255,190,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.console-shell[data-tone="warn"] .monitor-hud span {
+  border-color: rgba(255, 209, 102, 0.38);
+  color: #ffeab2;
+}
+.console-shell[data-tone="danger"] .monitor-hud span,
+.console-shell[data-tone="critical"] .monitor-hud span {
+  border-color: rgba(255, 77, 109, 0.46);
+  color: #ffd6df;
+  background: rgba(40, 0, 8, 0.76);
+}
+.console-shell[data-tone="danger"] .monitor,
+.console-shell[data-tone="critical"] .monitor {
+  animation: monitorGlitch 900ms steps(2) infinite;
+}
+@keyframes monitorGlitch {
+  0%, 100% { transform: translate(0); filter: saturate(1); }
+  35% { transform: translate(1px, -1px); filter: saturate(1.4) hue-rotate(-8deg); }
+  70% { transform: translate(-1px, 1px); filter: saturate(1.25) hue-rotate(8deg); }
+}
 .scanline {
   position: absolute;
   left: 0;

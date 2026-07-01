@@ -11,5 +11,7 @@ test('browser preview exposes an explicit start handoff overlay', () => {
   assert.match(html, /id="failureMetrics"/, 'failure overlay should expose system metrics for review');
   assert.match(html, /id="fakeEndingEyebrow"/, 'fake-ending overlay should expose skin-backed eyebrow');
   assert.match(html, /id="fakeEndingTitle"/, 'fake-ending overlay should expose skin-backed title');
+  assert.match(html, /id="monitorSignal"/, 'monitor should expose a visual signal state strip');
+  assert.match(html, /id="monitorThreat"/, 'monitor should expose a visual threat badge');
   assert.match(html, /data-testid="start-handoff"/, 'start overlay should be easy to target in browser checks');
 });

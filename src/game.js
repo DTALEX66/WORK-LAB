@@ -37,6 +37,8 @@ const els = {
   fakeEndingTruthBtn: document.querySelector('#fakeEndingTruthBtn'),
   fakeEndingRestartBtn: document.querySelector('#fakeEndingRestartBtn'),
   monitor: document.querySelector('#monitor'),
+  monitorSignal: document.querySelector('#monitorSignal'),
+  monitorThreat: document.querySelector('#monitorThreat'),
   actions: document.querySelector('#actions'),
   logs: document.querySelector('#logs'),
   forceAnomaly: document.querySelector('#forceAnomaly'),
@@ -141,6 +143,16 @@ function render() {
   const unlockedCount = state.hiddenLogs.filter(h => !h.locked).length;
   if (els.hiddenLogsCount) els.hiddenLogsCount.textContent = lockedCount;
   if (els.adHintsCount) els.adHintsCount.textContent = state.adHintsUsed;
+  const tone = getToneForState(state);
+  if (els.monitorSignal) {
+    const signal = tone === 'danger' || tone === 'critical'
+      ? 'SIGNAL: CORRUPTED'
+      : state.anomalyLevel > 0 || tone === 'warn'
+        ? 'SIGNAL: UNSTABLE'
+        : 'SIGNAL: STABLE';
+    els.monitorSignal.textContent = signal;
+  }
+  if (els.monitorThreat) els.monitorThreat.textContent = `THREAT: ${state.anomalyLevel}`;
 
   // 显示已解锁的隐藏日志内容
   const unlockedHidden = state.hiddenLogs.filter(h => !h.locked);
@@ -271,11 +283,11 @@ function loop() {
   }
   if (!state.gameOver && state.elapsed >= nextAnomalyAt) triggerAnomaly();
   // Play warning sound on tone transitions to critical/danger
-  const tone = getToneForState(state);
-  if (tone === 'danger' || tone === 'critical') {
-    if (lastTone !== tone) playWarning();
+  const currentTone = getToneForState(state);
+  if (currentTone === 'danger' || currentTone === 'critical') {
+    if (lastTone !== currentTone) playWarning();
   }
-  lastTone = tone;
+  lastTone = currentTone;
   render();
 }
 
