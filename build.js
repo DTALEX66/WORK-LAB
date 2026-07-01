@@ -1,11 +1,17 @@
 /**
- * build.js — 小游戏构建脚本
+ * build.js — 小游戏构建脚本 v2
  *
- * 将 src/ 下的 ES module 源码打包为单个文件，
+ * 将 src/ 下的 ES module 源码打包为单个 IIFE 文件，
  * 供微信/抖音小游戏使用（小游戏不支持 ESM）。
  *
+ * 改进：
+ *  - 修复多行 import/export 正则
+ *  - 正确处理 JSON 导入顺序
+ *  - 注入平台适配层
+ *  - 移除运行时不需要的代码（clamp polyfill 等）
+ *
  * 用法：node build.js [platform]
- *   platform: wechat (默认) | douyin | browser
+ *   platform: wechat (默认) | douyin
  */
 
 import fs from 'fs';
@@ -15,83 +21,116 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
 
-// ── 需要打包的入口模块 ──
-// 顺序重要：依赖在前
+// ── 需要打包的模块（顺序重要） ──
+// skin.json 必须在 skinManager.js 之前，因为 IIFE 顺序执行
 const ENTRY_MODULES = [
-  'src/gameConfig.js',
-  'src/feedback.js',
-  'src/skinManager.js',
-  'src/skins/elevator/skin.json',
-  'src/audio.js',
-  'src/state.js',
-  'src/events.js',
-  'src/actions.js',
-  'src/game.js',
+  { path: 'src/gameConfig.js',     type: 'js' },
+  { path: 'src/skins/elevator/skin.json', type: 'skin' },
+  { path: 'src/skinManager.js',    type: 'js' },
+  { path: 'src/feedback.js',       type: 'js' },
+  { path: 'src/audio.js',          type: 'js' },
+  { path: 'src/state.js',          type: 'js' },
+  { path: 'src/events.js',         type: 'js' },
+  { path: 'src/actions.js',        type: 'js' },
+  { path: 'src/game.js',           type: 'js' },
 ];
 
 /**
- * 简易打包：将所有模块拼接为一个 IIFE
- * 注意：这假设模块间没有循环依赖，且所有 export 被入口使用
+ * 移除 ESM import/export 语句（支持单行和多行）
  */
+function stripESM(code) {
+  // 移除 import ... from '...' (单行)
+  code = code.replace(/^import\s+.+\s+from\s+['"].+['"];?\s*$/gm, '');
+  // 移除多行 import { \n ... \n } from '...'
+  code = code.replace(/^import\s*\{[\s\S]*?\}\s*from\s*['"].+['"];?\s*/gm, '');
+  // 移除顶级 import '...'
+  code = code.replace(/^import\s+['"].+['"];?\s*$/gm, '');
+  // 移除 export default
+  code = code.replace(/^export\s+default\s+/gm, '');
+  // 移除 export function / const / let / var / class
+  code = code.replace(/^export\s+(function|const|let|var|class)\s+/gm, '$1 ');
+  // 移除单行 export { ... }
+  code = code.replace(/^export\s*\{[^}]+\};?\s*$/gm, '');
+  // 移除多行 export { \n ... \n }
+  code = code.replace(/^export\s*\{[\s\S]*?\};?\s*/gm, '');
+  return code;
+}
+
 function bundle(target) {
-  let output = `/**
- * MINIGAME - ${target} 小游戏构建
+  const top = `/**
+ * MINIGAME - ${target === 'wechat' ? '微信' : '抖音'} 小游戏构建
  * 构建时间: ${new Date().toISOString()}
  * 请勿手动修改此文件
- */\n\n`;
+ */
+(function() {
+'use strict';
 
-  // 注入平台 polyfill
-  output += `(function() {\n'use strict';\n\n`;
+`;
 
-  // 读取并拼接所有模块
-  for (const modPath of ENTRY_MODULES) {
-    const fullPath = path.join(ROOT, modPath);
+  let body = '';
+  let bottom = '';
+
+  for (const mod of ENTRY_MODULES) {
+    const fullPath = path.join(ROOT, mod.path);
     if (!fs.existsSync(fullPath)) {
-      console.warn(`[build] 警告: ${modPath} 不存在，跳过`);
+      console.warn(`[build] 警告: ${mod.path} 不存在，跳过`);
       continue;
     }
 
-    let content = fs.readFileSync(fullPath, 'utf-8');
+    const raw = fs.readFileSync(fullPath, 'utf-8');
 
-    // 处理 skin.json - 转为 JS 对象赋值
-    if (modPath.endsWith('.json')) {
-      content = `const SKIN_DATA = ${content.trim()};\n`;
+    if (mod.type === 'skin') {
+      // 将 JSON 注入为全局变量
+      const min = JSON.stringify(JSON.parse(raw)); // 压缩+验证
+      body += `// --- ${mod.path} ---\nvar __SKIN_DATA__ = ${min};\n\n`;
     } else {
-      // 移除 ESM import/export 语句
-      content = content
-        .replace(/^import .+ from\s+['"].+['"];?\s*$/gm, '')  // 移除 import
-        .replace(/^export (default |const |function |let |var )/gm, '$1')  // 移除 export
-        .replace(/^export \{.+};?\s*$/gm, '');  // 移除 export { ... }
+      let code = stripESM(raw);
+      // 替换 skinManager 中的 import 为 __SKIN_DATA__
+      code = code.replace(/import SKIN_DATA from\s+['"].+['"];?/g, '');
+      code = code.replace(/const SKIN_DATA = .+;/g, 'const SKIN_DATA = __SKIN_DATA__;');
+      // 移除 skinManager 中死代码（buildHiddenLogsMap 的 require mock）
+      code = code.replace(/function buildHiddenLogsMap[\s\S]*?\n\}/g, 'function buildHiddenLogsMap() { return {}; }');
+      body += `// --- ${mod.path} ---\n${code}\n\n`;
     }
-
-    output += `// --- ${modPath} ---\n${content}\n\n`;
   }
 
-  // 添加启动代码
-  output += `
-// ── 启动游戏 ──
-const canvas = typeof wx !== 'undefined' ? wx.createCanvas() : document.querySelector('canvas');
+  // 注入平台启动代码
+  if (target === 'wechat') {
+    bottom = `
+// ── 平台入口 ──
+var canvas = typeof wx !== 'undefined' ? wx.createCanvas() : null;
 if (canvas) {
-  const { init, render } = window.__MINIGAME_RENDERER__ || {};
-  if (init) init(canvas);
+  var W = 750, H = 1334;
+  canvas.width = W;
+  canvas.height = H;
+  var ctx = canvas.getContext('2d');
 
-  // 每帧渲染
+  // 简单的 canvas 渲染替代 DOM
   function gameLoop() {
-    render(state);
+    // 调用 game.js 的渲染逻辑
+    if (typeof render !== 'undefined') {
+      render(state);
+    }
     requestAnimationFrame(gameLoop);
   }
   gameLoop();
 } else {
-  // DOM 模式 - game.js 已经处理
-  console.log('[MINIGAME] Running in DOM mode');
+  console.log('[MINIGAME] DOM mode');
 }
+})();
 `;
+  } else {
+    bottom = `
+// ── 启动 ──
+console.log('[MINIGAME] Running on', '${target}');
+})();
+`;
+  }
 
-  output += `\n})();\n`;
-  return output;
+  return top + body + bottom;
 }
 
-// ── 写入输出 ──
+// ── 写入 ──
 const target = process.argv[2] || 'wechat';
 const outputDir = path.join(ROOT, `${target}-minigame`);
 fs.mkdirSync(outputDir, { recursive: true });
