@@ -49,6 +49,7 @@ const REQUIRED_TEXT_KEYS = [
   ['fakeEnding', 'truthContent'],
   ['ui', 'viewAd'],
   ['ui', 'revealTruth'],
+  ['ui', 'decodePrefix'],
   ['ui', 'hiddenLogCaptured'],
 ];
 

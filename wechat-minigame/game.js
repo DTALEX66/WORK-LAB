@@ -848,6 +848,10 @@ function getDomLabels() {
   };
 }
 
+function getDecodedMonitorText(hiddenLog) {
+  return `${t('ui.decodePrefix')} ${hiddenLog.title}\n${hiddenLog.content}`;
+}
+
 
 // --- src/runtimeSession.js ---
 
@@ -1188,7 +1192,7 @@ function render() {
   const unlockedHidden = state.hiddenLogs.filter(h => !h.locked);
   if (unlockedHidden.length > 0) {
     const last = unlockedHidden[unlockedHidden.length - 1];
-    els.monitor.textContent = `[解码记录] ${last.title}\n${last.content}`;
+    els.monitor.textContent = getDecodedMonitorText(last);
   } else {
     els.monitor.textContent = state.monitor;
   }

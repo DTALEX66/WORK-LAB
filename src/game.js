@@ -6,7 +6,7 @@ import CONFIG from './gameConfig.js';
 import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
 import { t, actionLabel, getSkin } from './skinManager.js';
 import { createRewardedAd } from '../platform/platform.js';
-import { getDomLabels } from './uiLabels.js';
+import { getDecodedMonitorText, getDomLabels } from './uiLabels.js';
 import {
   createRuntimeSession,
   restartRuntimeSession,
@@ -140,7 +140,7 @@ function render() {
   const unlockedHidden = state.hiddenLogs.filter(h => !h.locked);
   if (unlockedHidden.length > 0) {
     const last = unlockedHidden[unlockedHidden.length - 1];
-    els.monitor.textContent = `[解码记录] ${last.title}\n${last.content}`;
+    els.monitor.textContent = getDecodedMonitorText(last);
   } else {
     els.monitor.textContent = state.monitor;
   }

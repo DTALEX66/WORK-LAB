@@ -30,3 +30,7 @@ export function getDomLabels() {
     },
   };
 }
+
+export function getDecodedMonitorText(hiddenLog) {
+  return `${t('ui.decodePrefix')} ${hiddenLog.title}\n${hiddenLog.content}`;
+}
