@@ -24,7 +24,7 @@
 ## 本地运行
 
 ```bash
-python -m http.server 5173
+npm run serve
 ```
 
 然后访问：
@@ -37,6 +37,7 @@ http://127.0.0.1:5173
 
 - `docs/PROJECT_CONTEXT.md`：项目单一事实源
 - `docs/WORKFLOW.md`：AI 协作与开发约束
+- `docs/YOLO_BOUNDARIES.md`：YOLO 自主执行边界
 - `docs/GAME_DESIGN.md`：异常电梯控制台设计总纲
 
 ## 开发原则
