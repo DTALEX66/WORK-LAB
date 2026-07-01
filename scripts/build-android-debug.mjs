@@ -1,8 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = resolve(import.meta.dirname, '..');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = resolve(__dirname, '..');
 const javaHome = resolve(root, '.tools/java/jdk-17');
 const androidHome = resolve(root, '.tools/android-sdk');
 const gradleBin = resolve(root, '.tools/gradle/gradle-8.10.2/bin');

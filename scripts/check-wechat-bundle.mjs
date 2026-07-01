@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = resolve(import.meta.dirname, '..');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = resolve(__dirname, '..');
 const bundlePath = resolve(root, 'wechat-minigame', 'game.js');
 const gameJsonPath = resolve(root, 'wechat-minigame', 'game.json');
 const projectConfigPath = resolve(root, 'wechat-minigame', 'project.config.json');
