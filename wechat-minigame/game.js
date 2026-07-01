@@ -236,6 +236,24 @@ function actionLabel(actionId, count) {
 }
 
 
+// --- src/rollback.js ---
+
+function findRollbackSnapshot(snapshots, elapsed) {
+  if (!snapshots || snapshots.length === 0) return null;
+  const targetElapsed = Math.max(0, elapsed - CONFIG.adRevive.rollbackWindow);
+  let best = snapshots[0];
+  let bestDist = Math.abs(best.at - targetElapsed);
+  for (const snap of snapshots) {
+    const dist = Math.abs(snap.at - targetElapsed);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = snap;
+    }
+  }
+  return best;
+}
+
+
 // --- src/feedback.js ---
 
 
@@ -260,15 +278,9 @@ function summarizeFailure(state) {
   if (reasons.length === 0) reasons.push(t('failure.summaries.default'));
 
   const snapshots = s.snapshots || [];
-  const targetElapsed = Math.max(0, s.elapsed - CONFIG.adRevive.rollbackWindow);
   let rollbackSec = 0;
   if (snapshots.length > 0) {
-    let best = snapshots[0];
-    let bestDist = Math.abs(best.at - targetElapsed);
-    for (const snap of snapshots) {
-      const dist = Math.abs(snap.at - targetElapsed);
-      if (dist < bestDist) { bestDist = dist; best = snap; }
-    }
+    const best = findRollbackSnapshot(snapshots, s.elapsed);
     rollbackSec = s.elapsed - best.at;
   }
 
@@ -400,6 +412,7 @@ function playRestart() {
 
 
 
+
 function createInitialState() {
   const c = CONFIG.initial;
   return {
@@ -471,19 +484,10 @@ function saveSnapshot(state) {
   return next;
 }
 
+
 function reviveFromAd(state) {
   const snapshots = state.snapshots || [];
-  const rollbackWindow = CONFIG.adRevive.rollbackWindow;
-  const targetElapsed = Math.max(0, state.elapsed - rollbackWindow);
-  let best = null;
-  let bestDist = Infinity;
-  for (const snap of snapshots) {
-    const dist = Math.abs(snap.at - targetElapsed);
-    if (dist < bestDist) {
-      bestDist = dist;
-      best = snap;
-    }
-  }
+  const best = findRollbackSnapshot(snapshots, state.elapsed);
 
   let next;
   if (best) {

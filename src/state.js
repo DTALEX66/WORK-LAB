@@ -1,5 +1,6 @@
 import CONFIG from './gameConfig.js';
 import { createFeedbackLine } from './feedback.js';
+import { findRollbackSnapshot } from './rollback.js';
 import { t } from './skinManager.js';
 
 export function createInitialState() {
@@ -73,19 +74,10 @@ export function saveSnapshot(state) {
   return next;
 }
 
+
 export function reviveFromAd(state) {
   const snapshots = state.snapshots || [];
-  const rollbackWindow = CONFIG.adRevive.rollbackWindow;
-  const targetElapsed = Math.max(0, state.elapsed - rollbackWindow);
-  let best = null;
-  let bestDist = Infinity;
-  for (const snap of snapshots) {
-    const dist = Math.abs(snap.at - targetElapsed);
-    if (dist < bestDist) {
-      bestDist = dist;
-      best = snap;
-    }
-  }
+  const best = findRollbackSnapshot(snapshots, state.elapsed);
 
   let next;
   if (best) {

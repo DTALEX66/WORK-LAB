@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { findRollbackSnapshot } from '../src/rollback.js';
 import { createInitialState, cloneState, recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot } from '../src/state.js';
 import CONFIG from '../src/gameConfig.js';
 
@@ -51,6 +52,21 @@ test('saveSnapshot keeps existing snapshots', () => {
   assert.equal(second.snapshots.length, 2);
   assert.equal(second.snapshots[0].at, 10);
   assert.equal(second.snapshots[1].at, 20);
+});
+
+test('findRollbackSnapshot selects the snapshot closest to rollback window target', () => {
+  const elapsed = 58;
+  const target = elapsed - CONFIG.adRevive.rollbackWindow;
+  const snapshots = [
+    { at: target - 10, state: { floor: 1 } },
+    { at: target, state: { floor: 2 } },
+    { at: target + 10, state: { floor: 3 } },
+  ];
+
+  const found = findRollbackSnapshot(snapshots, elapsed);
+
+  assert.equal(found.at, target);
+  assert.equal(found.state.floor, 2);
 });
 
 test('reviveFromAd restores from the closest snapshot within 30 seconds of rollback', () => {

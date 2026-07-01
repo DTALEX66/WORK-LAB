@@ -1,4 +1,4 @@
-import CONFIG from './gameConfig.js';
+import { findRollbackSnapshot } from './rollback.js';
 import { t } from './skinManager.js';
 
 export function createFeedbackLine(type, message, time = 0) {
@@ -22,15 +22,9 @@ export function summarizeFailure(state) {
   if (reasons.length === 0) reasons.push(t('failure.summaries.default'));
 
   const snapshots = s.snapshots || [];
-  const targetElapsed = Math.max(0, s.elapsed - CONFIG.adRevive.rollbackWindow);
   let rollbackSec = 0;
   if (snapshots.length > 0) {
-    let best = snapshots[0];
-    let bestDist = Math.abs(best.at - targetElapsed);
-    for (const snap of snapshots) {
-      const dist = Math.abs(snap.at - targetElapsed);
-      if (dist < bestDist) { bestDist = dist; best = snap; }
-    }
+    const best = findRollbackSnapshot(snapshots, s.elapsed);
     rollbackSec = s.elapsed - best.at;
   }
 

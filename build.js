@@ -27,6 +27,7 @@ const ENTRY_MODULES = [
   { path: 'src/gameConfig.js',     type: 'js' },
   { path: 'src/skins/elevator/skin.json', type: 'skin' },
   { path: 'src/skinManager.js',    type: 'js' },
+  { path: 'src/rollback.js',       type: 'js' },
   { path: 'src/feedback.js',       type: 'js' },
   { path: 'src/audio.js',          type: 'js' },
   { path: 'src/state.js',          type: 'js' },
