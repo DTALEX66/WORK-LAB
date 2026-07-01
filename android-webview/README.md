@@ -1,17 +1,25 @@
 # Android APK WebView Adaptation
 
-本目录是当前 H5 游戏的 Android WebView 包装工程，用于后续生成 APK，在小米 17 和雷电模拟器中验收。
+本目录是当前 H5 游戏的 Android WebView 包装工程，用于生成 debug APK，在小米手机和雷电模拟器中验收。
 
 ## 当前策略
 
-- 不替换当前游戏源码。
-- 不接入微信 Canvas runtime。
-- Android 先走 WebView 包装当前 H5 版本。
-- JS 使用 `build.js android` 生成的单文件 IIFE，避免 Android `file://` 下 ES module 加载限制。
+- Android 走 WebView 包装当前 H5 版本。
+- JS 使用 `build.js android` 生成单文件 IIFE，避免 Android `file://` 下 ES module 加载限制。
+- H5/Android 共用 DOM 版 UI：`100dvh` 一屏控制台、CCTV 视觉监控、面板内滚动。
+- Android 工程只负责壳、沉浸式全屏、WebView 设置、APK 资源与安装包元数据。
+
+## 已验证能力
+
+- 项目内便携工具链可构建：JDK 17、Gradle 8.10.2、Android SDK platform/build-tools 35。
+- `npm run android:build` 可产出 debug APK。
+- `npm run android:inspect` 可验证包名、应用名、launcher icon、minSdk、targetSdk。
+- APK 使用自定义应用名 `异常电梯控制台` 与定制 launcher icon。
+- WebView console 已接入 logcat tag：`MINIGAME_WEBVIEW`。
 
 ## 适配目标
 
-### 小米 17
+### 小米/真机竖屏
 
 - 竖屏锁定。
 - 全屏沉浸式。
@@ -30,6 +38,12 @@
 在项目根目录运行：
 
 ```bash
+npm run android:prepare
+```
+
+等价于：
+
+```bash
 node scripts/prepare-android-webview.mjs
 ```
 
@@ -43,14 +57,6 @@ android-webview/app/src/main/assets/game.js
 
 ## 构建 APK
 
-本项目已支持项目内便携 Android 工具链，默认安装在：
-
-```text
-D:\All projects\MINIGAME\.tools
-```
-
-不需要改系统环境变量。
-
 一键构建：
 
 ```bash
@@ -63,40 +69,74 @@ npm run android:build
 node scripts/build-android-debug.mjs
 ```
 
-也可以在有 Android Studio 或 Android SDK 的机器上：
-
-```bash
-cd android-webview
-./gradlew assembleDebug
-```
-
-或在 Windows Android Studio 中导入：
-
-```text
-D:\All projects\MINIGAME\android-webview
-```
-
-产物路径通常为：
+产物路径：
 
 ```text
 android-webview/app/build/outputs/apk/debug/app-debug.apk
 ```
 
+## 检查 APK 元数据
+
+```bash
+npm run android:inspect
+```
+
+应看到：
+
+```text
+[apk-check] PASS: package is com.dtalex.minigame
+[apk-check] PASS: label is 异常电梯控制台
+[apk-check] PASS: launcher icon is branded ic_launcher resource
+[apk-check] PASS: min sdk is 23
+[apk-check] PASS: target sdk is 35
+[apk-check] OK
+```
+
+## 导入 Android Studio
+
+如需使用 Android Studio 调试，可导入：
+
+```text
+D:\All projects\MINIGAME\android-webview
+```
+
+也可以在该目录手动执行：
+
+```bash
+gradle --no-daemon assembleDebug
+```
+
 ## 验收清单
 
-1. 安装到小米 17 或雷电模拟器。
+1. 安装到小米手机或雷电模拟器。
 2. 启动后应全屏竖屏显示“等待接管异常电梯”。
-3. 点击“开始接管”。
-4. 点击“触发异常测试”。
-5. 检查：
-   - 监控 HUD 出现 `SIGNAL: UNSTABLE` / `THREAT`。
+3. 桌面/启动器应显示应用名“异常电梯控制台”和定制图标。
+4. 点击“开始接管”。
+5. 主游戏界面应一屏内可玩，不需要拖动整页。
+6. 监控面板应显示 CCTV/电梯轿厢/乘客热源/异常准星，文字只作为下方字幕。
+7. 点击“触发异常测试”。
+8. 检查：
+   - 监控 HUD 出现 `SIGNAL` / `THREAT`。
    - 操作按钮可点击。
    - 日志高亮清晰。
    - 失败弹层可滚动、按钮可点。
    - 没有横向滚动、遮挡或表单感。
+   - logcat 未出现 `SKIN_DATA is not defined`、`_getHiddenLog`、`RangeError`。
 
-## 已知限制
+## 常用调试命令
 
-- 当前未集成原生广告 SDK；广告仍为模拟广告。
-- 当前 APK 是 WebView 包装，不是微信小游戏 Canvas runtime。
-- 当前环境缺少 Android 构建工具，需在装有 Android Studio/SDK 的机器上产出 APK。
+```bash
+adb devices -l
+adb install -r android-webview/app/build/outputs/apk/debug/app-debug.apk
+adb shell am force-stop com.dtalex.minigame
+adb shell am start -n com.dtalex.minigame/.MainActivity
+adb logcat -d -t 300 | grep -iE 'MINIGAME_WEBVIEW|Uncaught|ReferenceError|TypeError|RangeError|FATAL'
+```
+
+## 完整交接
+
+更完整的安装、调试、发布私有配置说明见：
+
+```text
+docs/ANDROID_APK_HANDOFF.md
+```
