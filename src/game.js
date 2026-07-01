@@ -30,6 +30,8 @@ const els = {
   adHintsCount: document.querySelector('#adHintsCount'),
   hiddenLogsCount: document.querySelector('#hiddenLogsCount'),
   fakeEndingOverlay: document.querySelector('#fakeEndingOverlay'),
+  fakeEndingEyebrow: document.querySelector('#fakeEndingEyebrow'),
+  fakeEndingTitle: document.querySelector('#fakeEndingTitle'),
   fakeEndingText: document.querySelector('#fakeEndingText'),
   fakeEndingTruth: document.querySelector('#fakeEndingTruth'),
   fakeEndingTruthBtn: document.querySelector('#fakeEndingTruthBtn'),
@@ -302,6 +304,8 @@ function applyDomLabels() {
   els.restartButton.textContent = labels.restart;
   els.fakeEndingTruthBtn.textContent = labels.revealTruth;
   els.fakeEndingRestartBtn.textContent = labels.restart;
+  if (els.fakeEndingEyebrow) els.fakeEndingEyebrow.textContent = t('fakeEnding.eyebrow');
+  if (els.fakeEndingTitle) els.fakeEndingTitle.textContent = t('fakeEnding.title');
   if (els.startTitle) els.startTitle.textContent = labels.start.title;
   if (els.startCopy) els.startCopy.textContent = labels.start.copy;
   if (els.startButton) els.startButton.textContent = labels.start.button;
