@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { createInitialState } from '../src/state.js';
 import { performAction } from '../src/actions.js';
+import CONFIG from '../src/gameConfig.js';
 
 test('elevator cannot move while the door is open', () => {
   const open = performAction(createInitialState(), 'openDoor').state;
@@ -18,7 +19,7 @@ test('moveUp consumes power, changes floor, and emits feedback log', () => {
 
   assert.equal(result.ok, true);
   assert.equal(result.state.floor, 2);
-  assert.equal(result.state.power, 94);
+  assert.equal(result.state.power, CONFIG.initial.power - CONFIG.actions.moveUp.powerCost);
   assert.equal(result.state.direction, 'up');
   assert.match(result.state.logs.at(-1).text, /上行/);
 });
@@ -29,8 +30,8 @@ test('restartSystem reduces anomaly level and stabilizes the system', () => {
 
   assert.equal(result.ok, true);
   assert.equal(result.state.anomalyLevel, 2);
-  assert.equal(result.state.stability, 60);
-  assert.equal(result.state.power, 45);
+  assert.equal(result.state.stability, 45 + CONFIG.actions.restartSystem.stabilityRestore);
+  assert.equal(result.state.power, 55 - CONFIG.actions.restartSystem.powerCost);
 });
 
 test('unlockHiddenLog fails when no locked logs exist', () => {

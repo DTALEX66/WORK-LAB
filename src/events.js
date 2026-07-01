@@ -27,13 +27,13 @@ function createAnomaly(skinDef) {
         // 负数效果（消耗类）才乘难度系数
         if (typeof value === 'number' && value < 0) {
           adjusted = Math.round(value * multiplier);
-        } else if (typeof value === 'string' && value.startsWith('+') && parseInt(value) < 0) {
+        } else if (typeof value === 'string' && isDeltaEffect(value) && parseInt(value, 10) < 0) {
           const num = parseInt(value, 10);
           adjusted = `${Math.round(num * multiplier)}`;
         }
-        if (typeof adjusted === 'number') {
+        if (typeof adjusted === 'number' && shouldAddNumericEffect(field, adjusted)) {
           next[field] = clamp((next[field] ?? 0) + adjusted, 0, 100);
-        } else if (typeof adjusted === 'string' && adjusted.startsWith('+')) {
+        } else if (typeof adjusted === 'string' && isDeltaEffect(adjusted)) {
           next[field] = Math.min(30, (next[field] ?? 0) + parseInt(adjusted, 10));
         } else {
           next[field] = adjusted;
@@ -47,6 +47,15 @@ function createAnomaly(skinDef) {
       return next;
     },
   };
+}
+
+function isDeltaEffect(value) {
+  return /^[+-]\d+$/.test(value);
+}
+
+function shouldAddNumericEffect(field, value) {
+  if (value < 0) return true;
+  return field === 'power' || field === 'stability' || field === 'anomalyLevel';
 }
 
 /** 当前皮肤生成的异常事件列表 */

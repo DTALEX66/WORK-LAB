@@ -12,7 +12,7 @@
  *   anom('phantom_floor').title;          // 获取异常事件数据
  */
 
-import SKIN_DATA from './skins/elevator/skin.json';
+import SKIN_DATA from './skins/elevator/skin.json' with { type: 'json' };
 
 let currentSkin = SKIN_DATA;
 
