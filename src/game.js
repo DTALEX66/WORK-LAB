@@ -1,7 +1,7 @@
 import { AVAILABLE_ACTIONS, performAction } from './actions.js';
 import { applyAnomaly, pickNextAnomaly } from './events.js';
 import { getToneForState, summarizeFailure } from './feedback.js';
-import { createInitialState, appendLog, reviveFromAd, saveSnapshot, tickState } from './state.js';
+import { createInitialState, recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot, tickState } from './state.js';
 import CONFIG from './gameConfig.js';
 import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
 import { t, actionLabel, getSkin } from './skinManager.js';
@@ -116,7 +116,7 @@ function render() {
       els.fakeEndingOverlay.hidden = false;
       const threshold = CONFIG.fakeEnding.consecutiveFailuresThreshold;
       els.fakeEndingText.textContent = t('fakeEnding.text', {
-        count: state.consecutiveFailures,
+        count: state.fakeEndingCount || CONFIG.fakeEnding.consecutiveFailuresThreshold,
         threshold: threshold,
       });
       if (state.fakeEndingUnlocked) {
@@ -178,22 +178,14 @@ function loop() {
 
   // 成功值守 → 重置连续失败计数
   if (state.gameOver && state.remaining <= 0) {
-    state = structuredClone(state);
-    state.consecutiveFailures = 0;
-    state = appendLog(state, 'success', t('ui.shiftComplete'));
+    state = recordSuccessfulShift(state);
     render();
     return;
   }
 
   // 检测失败 → 递增连续失败计数
   if (state.gameOver) {
-    state = structuredClone(state);
-    state.consecutiveFailures += 1;
-    const fe = CONFIG.fakeEnding;
-    if (state.consecutiveFailures >= fe.consecutiveFailuresThreshold && !state.fakeEndingTriggered) {
-      state.fakeEndingTriggered = true;
-      state.fakeEndingUnlocked = false;
-    }
+    state = recordFailure(state);
   }
   // Save a snapshot on interval for ad-revive rollback
   const ar = CONFIG.adRevive;

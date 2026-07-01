@@ -1,6 +1,6 @@
 /**
  * MINIGAME - 微信 小游戏构建
- * 构建时间: 2026-07-01T01:35:21.268Z
+ * 构建时间: 2026-07-01T01:37:49.150Z
  * 请勿手动修改此文件
  */
 (function() {
@@ -415,6 +415,8 @@ function createInitialState() {
     hiddenLogs: [],
     adHintsUsed: 0,
     consecutiveFailures: 0,
+    fakeEndingCount: 0,
+    fakeEndingCooldownRemaining: 0,
     fakeEndingTriggered: false,
     fakeEndingUnlocked: false,
     logs: [createFeedbackLine('info', t('ui.initialLog'), 0)],
@@ -516,6 +518,39 @@ function tickState(state, seconds = 1) {
     next = appendLog(next, 'success', t('ui.successfulShift'));
   }
   return checkFailure(next);
+}
+
+function recordSuccessfulShift(state) {
+  let next = cloneState(state);
+  next.consecutiveFailures = 0;
+  next.fakeEndingCooldownRemaining = 0;
+  next.fakeEndingTriggered = false;
+  next.fakeEndingUnlocked = false;
+  next.fakeEndingCount = 0;
+  next = appendLog(next, 'success', t('ui.shiftComplete'));
+  return next;
+}
+
+function recordFailure(state) {
+  const fe = CONFIG.fakeEnding;
+  const next = cloneState(state);
+  next.consecutiveFailures += 1;
+
+  if (next.fakeEndingCooldownRemaining > 0) {
+    next.fakeEndingCooldownRemaining -= 1;
+    next.fakeEndingTriggered = false;
+    return next;
+  }
+
+  if (next.consecutiveFailures >= fe.consecutiveFailuresThreshold) {
+    next.fakeEndingTriggered = true;
+    next.fakeEndingUnlocked = false;
+    next.fakeEndingCount = next.consecutiveFailures;
+    next.consecutiveFailures = 0;
+    next.fakeEndingCooldownRemaining = fe.cooldownFailures;
+  }
+
+  return next;
 }
 
 
@@ -886,7 +921,7 @@ function render() {
       els.fakeEndingOverlay.hidden = false;
       const threshold = CONFIG.fakeEnding.consecutiveFailuresThreshold;
       els.fakeEndingText.textContent = t('fakeEnding.text', {
-        count: state.consecutiveFailures,
+        count: state.fakeEndingCount || CONFIG.fakeEnding.consecutiveFailuresThreshold,
         threshold: threshold,
       });
       if (state.fakeEndingUnlocked) {
@@ -948,22 +983,14 @@ function loop() {
 
   // 成功值守 → 重置连续失败计数
   if (state.gameOver && state.remaining <= 0) {
-    state = structuredClone(state);
-    state.consecutiveFailures = 0;
-    state = appendLog(state, 'success', t('ui.shiftComplete'));
+    state = recordSuccessfulShift(state);
     render();
     return;
   }
 
   // 检测失败 → 递增连续失败计数
   if (state.gameOver) {
-    state = structuredClone(state);
-    state.consecutiveFailures += 1;
-    const fe = CONFIG.fakeEnding;
-    if (state.consecutiveFailures >= fe.consecutiveFailuresThreshold && !state.fakeEndingTriggered) {
-      state.fakeEndingTriggered = true;
-      state.fakeEndingUnlocked = false;
-    }
+    state = recordFailure(state);
   }
   // Save a snapshot on interval for ad-revive rollback
   const ar = CONFIG.adRevive;

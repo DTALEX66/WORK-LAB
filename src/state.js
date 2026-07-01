@@ -25,6 +25,8 @@ export function createInitialState() {
     hiddenLogs: [],
     adHintsUsed: 0,
     consecutiveFailures: 0,
+    fakeEndingCount: 0,
+    fakeEndingCooldownRemaining: 0,
     fakeEndingTriggered: false,
     fakeEndingUnlocked: false,
     logs: [createFeedbackLine('info', t('ui.initialLog'), 0)],
@@ -126,4 +128,37 @@ export function tickState(state, seconds = 1) {
     next = appendLog(next, 'success', t('ui.successfulShift'));
   }
   return checkFailure(next);
+}
+
+export function recordSuccessfulShift(state) {
+  let next = cloneState(state);
+  next.consecutiveFailures = 0;
+  next.fakeEndingCooldownRemaining = 0;
+  next.fakeEndingTriggered = false;
+  next.fakeEndingUnlocked = false;
+  next.fakeEndingCount = 0;
+  next = appendLog(next, 'success', t('ui.shiftComplete'));
+  return next;
+}
+
+export function recordFailure(state) {
+  const fe = CONFIG.fakeEnding;
+  const next = cloneState(state);
+  next.consecutiveFailures += 1;
+
+  if (next.fakeEndingCooldownRemaining > 0) {
+    next.fakeEndingCooldownRemaining -= 1;
+    next.fakeEndingTriggered = false;
+    return next;
+  }
+
+  if (next.consecutiveFailures >= fe.consecutiveFailuresThreshold) {
+    next.fakeEndingTriggered = true;
+    next.fakeEndingUnlocked = false;
+    next.fakeEndingCount = next.consecutiveFailures;
+    next.consecutiveFailures = 0;
+    next.fakeEndingCooldownRemaining = fe.cooldownFailures;
+  }
+
+  return next;
 }

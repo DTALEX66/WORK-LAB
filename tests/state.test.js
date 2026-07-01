@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createInitialState, cloneState, reviveFromAd, saveSnapshot } from '../src/state.js';
+import { createInitialState, cloneState, recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot } from '../src/state.js';
+import CONFIG from '../src/gameConfig.js';
 
 test('createInitialState returns the elevator console baseline', () => {
   const state = createInitialState();
@@ -107,4 +108,46 @@ test('reviveFromAd preserves snapshot history after restore', () => {
   const revived = reviveFromAd(failed);
   assert.equal(revived.snapshots.length, 1, 'snapshot history should be preserved');
   assert.equal(revived.snapshots[0].at, 20);
+});
+
+test('recordFailure triggers fake ending at threshold and starts cooldown', () => {
+  let state = createInitialState();
+  for (let i = 0; i < CONFIG.fakeEnding.consecutiveFailuresThreshold; i += 1) {
+    state = recordFailure(state);
+  }
+
+  assert.equal(state.fakeEndingTriggered, true);
+  assert.equal(state.fakeEndingUnlocked, false);
+  assert.equal(state.fakeEndingCount, CONFIG.fakeEnding.consecutiveFailuresThreshold);
+  assert.equal(state.consecutiveFailures, 0);
+  assert.equal(state.fakeEndingCooldownRemaining, CONFIG.fakeEnding.cooldownFailures);
+});
+
+test('recordFailure respects fake ending cooldown', () => {
+  const state = recordFailure({
+    ...createInitialState(),
+    consecutiveFailures: CONFIG.fakeEnding.consecutiveFailuresThreshold - 1,
+    fakeEndingCooldownRemaining: 1,
+  });
+
+  assert.equal(state.fakeEndingTriggered, false);
+  assert.equal(state.fakeEndingCooldownRemaining, 0);
+});
+
+test('recordSuccessfulShift resets fake ending counters', () => {
+  const state = recordSuccessfulShift({
+    ...createInitialState(),
+    consecutiveFailures: 3,
+    fakeEndingCount: 5,
+    fakeEndingCooldownRemaining: 2,
+    fakeEndingTriggered: true,
+    fakeEndingUnlocked: true,
+  });
+
+  assert.equal(state.consecutiveFailures, 0);
+  assert.equal(state.fakeEndingCount, 0);
+  assert.equal(state.fakeEndingCooldownRemaining, 0);
+  assert.equal(state.fakeEndingTriggered, false);
+  assert.equal(state.fakeEndingUnlocked, false);
+  assert.match(state.logs.at(-1).text, /值守完成/);
 });
