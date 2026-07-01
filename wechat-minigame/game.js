@@ -1143,6 +1143,11 @@ let timer = null;
 let lastTone = 'normal';
 let crashPlayed = false;
 
+function ensureTimer() {
+  if (timer) return;
+  timer = window.setInterval(loop, 1000);
+}
+
 const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
   onReward: () => {
     playRevive();
@@ -1253,6 +1258,7 @@ function render() {
 }
 
 function dispatchAction(actionId) {
+  ensureTimer();
   playClick();
   if (actionId === 'unlockHiddenLog') {
     showDecodeAd();
@@ -1274,6 +1280,7 @@ function runAction(actionId) {
 
 function triggerAnomaly() {
   if (state.gameOver) return;
+  ensureTimer();
   const picked = pickNextAnomaly(state);
   const result = applyAnomaly(state, picked.id);
   state = result.state;
@@ -1321,6 +1328,10 @@ function loop() {
 }
 
 function restart() {
+  if (timer) {
+    window.clearInterval(timer);
+    timer = null;
+  }
   session = restartRuntimeSession();
   state = session.state;
   nextAnomalyAt = session.nextAnomalyAt;
@@ -1382,7 +1393,6 @@ if (meta) {
 }
 
 render();
-timer = window.setInterval(loop, 1000);
 window.addEventListener('beforeunload', () => window.clearInterval(timer));
 
 
