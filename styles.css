@@ -649,6 +649,16 @@ button.secondary {
 .post-run-summary strong { display: block; }
 .post-run-summary b { color: rgba(212, 186, 255, 0.68); font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; }
 .post-run-summary strong { color: var(--accent); font-size: 0.96rem; margin-top: 2px; }
+.archive-card { border-color: rgba(167, 139, 250, 0.55); background: linear-gradient(180deg, rgba(15, 8, 30, 0.98), rgba(5, 3, 15, 0.98)); max-height: 90dvh; overflow-y: auto; }
+.archive-card h2 { color: var(--accent); text-shadow: 0 0 22px rgba(167, 139, 250, 0.25); }
+.archive-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; margin: 10px 0; }
+.archive-stats span { padding: 8px; border: 1px solid rgba(167, 139, 250, 0.22); border-radius: 12px; background: rgba(167, 139, 250, 0.05); }
+.archive-stats b { display: block; color: rgba(212, 186, 255, 0.6); font-size: 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.archive-stats strong { display: block; color: #e2d4ff; font-size: 1.05rem; margin-top: 2px; }
+.archive-list { margin: 10px 0; }
+.anomaly-entry { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; border: 1px solid rgba(167, 139, 250, 0.15); border-radius: 10px; margin: 4px 0; background: rgba(167, 139, 250, 0.04); }
+.anomaly-entry span { color: #c8b8f0; font-size: 0.82rem; }
+.anomaly-entry strong { color: var(--accent); font-size: 0.88rem; }
 .hint { color: var(--amber); }
 .failure-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 

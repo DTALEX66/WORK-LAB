@@ -5,8 +5,10 @@ import { recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot, tickS
 import CONFIG from './gameConfig.js';
 import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
 import { t, actionLabel, getSkin } from './skinManager.js';
+import { getAnomalies } from './events.js';
 import { createRewardedAd } from '../platform/platform.js';
 import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from './uiLabels.js';
+import { loadArchive, commitSessionToArchive } from './archive.js';
 import {
   createRuntimeSession,
   restartRuntimeSession,
@@ -50,6 +52,11 @@ const els = {
   startChecklist: document.querySelector('#startChecklist'),
   startFailureRules: document.querySelector('#startFailureRules'),
   startButton: document.querySelector('#startButton'),
+  openArchiveBtn: document.querySelector('#openArchiveBtn'),
+  archiveOverlay: document.querySelector('#archiveOverlay'),
+  archiveStats: document.querySelector('#archiveStats'),
+  archiveAnomalyList: document.querySelector('#archiveAnomalyList'),
+  closeArchiveBtn: document.querySelector('#closeArchiveBtn'),
   overlay: document.querySelector('#failureOverlay'),
   failureReason: document.querySelector('#failureReason'),
   failureMetrics: document.querySelector('#failureMetrics'),
@@ -304,6 +311,18 @@ function loop() {
     if (!crashPlayed) {
       playCrash();
       crashPlayed = true;
+      // 提交本局数据到跨局档案库
+      try {
+        const ids = state.hiddenLogs?.map(h => h.id).filter(Boolean) || [];
+        const unlockedIds = state.hiddenLogs?.filter(h => !h.locked).map(h => h.id) || [];
+        commitSessionToArchive({
+          anomaliesTriggeredTotal: state.anomaliesTriggeredTotal || 0,
+          maxAnomalySeverity: state.maxAnomalySeverity || 0,
+          anomalyIds: ids,
+          unlockedLogIds: unlockedIds,
+        });
+        refreshArchiveButton();
+      } catch { /* localStorage unavailable — skip */ }
     }
     render();
     return;
@@ -347,6 +366,53 @@ function restart() {
   state = session.state;
   nextAnomalyAt = session.nextAnomalyAt;
   render();
+  refreshArchiveButton();
+}
+
+function refreshArchiveButton() {
+  if (!els.openArchiveBtn) return;
+  const archive = loadArchive();
+  els.openArchiveBtn.hidden = archive.sessionsPlayed === 0;
+}
+
+function renderArchive() {
+  const archive = loadArchive();
+  if (els.archiveStats) {
+    const ids = Object.keys(archive.encounteredAnomalies).length;
+    const logs = Object.keys(archive.unlockedLogs).length;
+    const items = [
+      ['总场次', archive.sessionsPlayed],
+      ['遭遇异常', ids],
+      ['解锁日志', logs],
+      ['总异常数', archive.totalAnomaliesTriggered],
+      ['最高威胁', archive.highestSeverity],
+    ];
+    els.archiveStats.replaceChildren(...items.map(([label, value]) => {
+      const item = document.createElement('span');
+      const labelEl = document.createElement('b');
+      const valueEl = document.createElement('strong');
+      labelEl.textContent = label;
+      valueEl.textContent = value;
+      item.append(labelEl, valueEl);
+      return item;
+    }));
+  }
+  if (els.archiveAnomalyList) {
+    const anomalies = getAnomalies();
+    els.archiveAnomalyList.replaceChildren(...Object.entries(archive.encounteredAnomalies)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id, count]) => {
+        const def = anomalies.find(a => a.id === id);
+        const item = document.createElement('div');
+        item.className = 'anomaly-entry';
+        const name = document.createElement('span');
+        name.textContent = def?.title || id;
+        const badge = document.createElement('strong');
+        badge.textContent = `×${count}`;
+        item.append(name, badge);
+        return item;
+      }));
+  }
 }
 
 function applyDomLabels() {
@@ -397,6 +463,7 @@ function applyDomLabels() {
 }
 
 applyDomLabels();
+refreshArchiveButton();
 bindPress(els.startButton, () => {
   playClick();
   ensureTimer();
@@ -417,6 +484,15 @@ bindPress(els.fakeEndingTruthBtn, () => {
 bindPress(els.fakeEndingRestartBtn, () => {
   playRestart();
   restart();
+});
+
+// 档案库
+bindPress(els.openArchiveBtn, () => {
+  renderArchive();
+  els.archiveOverlay.hidden = false;
+});
+bindPress(els.closeArchiveBtn, () => {
+  els.archiveOverlay.hidden = true;
 });
 
 // 从皮肤设置标题和副标题

@@ -18,4 +18,6 @@ test('browser preview exposes an explicit start handoff overlay', () => {
   assert.match(html, /class="passenger-heat"/, 'monitor should include a passenger heat signature visual');
   assert.match(html, /data-testid="start-handoff"/, 'start overlay should be easy to target in browser checks');
   assert.match(html, /id="postRunSummary"/, 'failure overlay should include a post-run summary for player debrief');
+  assert.match(html, /id="openArchiveBtn"/, 'start overlay should include an archive button');
+  assert.match(html, /id="archiveOverlay"/, 'archive overlay should be present for cross-session collection');
 });

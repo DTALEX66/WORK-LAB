@@ -86,6 +86,7 @@
             <span>失败条件</span>
           </div>
           <button id="startButton" type="button">开始接管</button>
+          <button id="openArchiveBtn" type="button" class="secondary" hidden>📋 异常档案库</button>
         </div>
       </section>
 
@@ -101,6 +102,17 @@
             <button id="reviveButton" type="button">观看广告复活</button>
             <button id="restartButton" class="secondary" type="button">重新开始</button>
           </div>
+        </div>
+      </section>
+
+      <!-- 异常档案库 -->
+      <section id="archiveOverlay" class="failure-overlay archive-overlay" hidden>
+        <div class="failure-card archive-card">
+          <p class="eyebrow">ANOMALY ARCHIVE</p>
+          <h2>异常档案库</h2>
+          <div id="archiveStats" class="archive-stats" aria-label="档案统计"></div>
+          <div id="archiveAnomalyList" class="archive-list" aria-label="已遭遇异常"></div>
+          <button id="closeArchiveBtn" type="button" class="secondary">关闭档案库</button>
         </div>
       </section>
 
