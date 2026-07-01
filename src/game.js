@@ -1,12 +1,13 @@
 import { AVAILABLE_ACTIONS, performAction } from './actions.js';
 import { applyAnomaly, pickNextAnomaly } from './events.js';
 import { getToneForState, summarizeFailure } from './feedback.js';
-import { createInitialState, recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot, tickState } from './state.js';
+import { recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot, tickState } from './state.js';
 import CONFIG from './gameConfig.js';
 import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
 import { t, actionLabel, getSkin } from './skinManager.js';
 import { createRewardedAd } from '../platform/platform.js';
 import { getDomLabels } from './uiLabels.js';
+import { createRuntimeSession, restartRuntimeSession } from './runtimeSession.js';
 
 const root = document.querySelector('.console-shell');
 const els = {
@@ -55,8 +56,9 @@ const els = {
   hiddenLogsCountLabel: document.querySelector('#hiddenLogsCountLabel'),
 };
 
-let state = createInitialState();
-let nextAnomalyAt = CONFIG.anomaly.firstTriggerAt;
+let session = createRuntimeSession();
+let state = session.state;
+let nextAnomalyAt = session.nextAnomalyAt;
 let timer = null;
 let lastTone = 'normal';
 let crashPlayed = false;
@@ -249,8 +251,9 @@ function loop() {
 }
 
 function restart() {
-  state = createInitialState();
-  nextAnomalyAt = 7;
+  session = restartRuntimeSession();
+  state = session.state;
+  nextAnomalyAt = session.nextAnomalyAt;
   render();
 }
 

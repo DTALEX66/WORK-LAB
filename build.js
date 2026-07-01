@@ -33,6 +33,7 @@ const ENTRY_MODULES = [
   { path: 'src/events.js',         type: 'js' },
   { path: 'src/actions.js',        type: 'js' },
   { path: 'src/uiLabels.js',       type: 'js' },
+  { path: 'src/runtimeSession.js', type: 'js' },
   { path: 'platform/platform.js',   type: 'js' },
   { path: 'src/game.js',           type: 'js' },
 ];

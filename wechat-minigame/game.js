@@ -844,6 +844,21 @@ function getDomLabels() {
 }
 
 
+// --- src/runtimeSession.js ---
+
+
+function createRuntimeSession() {
+  return {
+    state: createInitialState(),
+    nextAnomalyAt: CONFIG.anomaly.firstTriggerAt,
+  };
+}
+
+function restartRuntimeSession() {
+  return createRuntimeSession();
+}
+
+
 // --- platform/platform.js ---
 /**
  * platform.js — 平台抽象层
@@ -1032,6 +1047,7 @@ function getSystemInfo() {
 
 
 
+
 const root = document.querySelector('.console-shell');
 const els = {
   remaining: document.querySelector('#remaining'),
@@ -1079,8 +1095,9 @@ const els = {
   hiddenLogsCountLabel: document.querySelector('#hiddenLogsCountLabel'),
 };
 
-let state = createInitialState();
-let nextAnomalyAt = CONFIG.anomaly.firstTriggerAt;
+let session = createRuntimeSession();
+let state = session.state;
+let nextAnomalyAt = session.nextAnomalyAt;
 let timer = null;
 let lastTone = 'normal';
 let crashPlayed = false;
@@ -1273,8 +1290,9 @@ function loop() {
 }
 
 function restart() {
-  state = createInitialState();
-  nextAnomalyAt = 7;
+  session = restartRuntimeSession();
+  state = session.state;
+  nextAnomalyAt = session.nextAnomalyAt;
   render();
 }
 
