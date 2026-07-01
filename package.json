@@ -10,6 +10,7 @@
     "android:build": "node scripts/build-android-debug.mjs",
     "android:inspect": "node scripts/check-apk-metadata.mjs",
     "release:check": "node scripts/check-release-readiness.mjs",
-    "verify": "node scripts/verify-all.cjs"
+    "verify": "node scripts/verify-all.cjs",
+    "skins:check": "node scripts/validate-skins.mjs"
   }
 }
