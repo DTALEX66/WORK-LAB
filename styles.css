@@ -480,6 +480,33 @@ button.secondary {
   color: var(--red);
   text-shadow: 0 0 22px rgba(255,77,109,0.34);
 }
+.failure-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0;
+}
+.failure-metrics span {
+  padding: 10px;
+  border: 1px solid rgba(255, 77, 109, 0.28);
+  border-radius: 14px;
+  background: rgba(255, 77, 109, 0.07);
+  font-family: "Cascadia Mono", Consolas, monospace;
+}
+.failure-metrics b,
+.failure-metrics strong {
+  display: block;
+}
+.failure-metrics b {
+  color: rgba(255, 214, 223, 0.72);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+.failure-metrics strong {
+  margin-top: 4px;
+  color: #fff1f4;
+  font-size: 1.28rem;
+}
 .hint { color: var(--amber); }
 .failure-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
@@ -539,6 +566,7 @@ button.secondary {
   .console-shell { width: min(100vw - 16px, 1320px); padding-top: 10px; }
   .status-list,
   .actions,
+  .failure-metrics,
   .failure-actions { grid-template-columns: 1fr; }
   h1 { font-size: clamp(2.2rem, 16vw, 4rem); }
   .panel { padding: 14px; }

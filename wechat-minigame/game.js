@@ -1128,6 +1128,7 @@ const els = {
   startButton: document.querySelector('#startButton'),
   overlay: document.querySelector('#failureOverlay'),
   failureReason: document.querySelector('#failureReason'),
+  failureMetrics: document.querySelector('#failureMetrics'),
   adHint: document.querySelector('#adHint'),
   reviveButton: document.querySelector('#reviveButton'),
   restartButton: document.querySelector('#restartButton'),
@@ -1261,6 +1262,23 @@ function render() {
       els.fakeEndingOverlay.hidden = true;
       els.overlay.hidden = false;
       els.failureReason.textContent = summarizeFailure(state);
+      if (els.failureMetrics) {
+        const metrics = [
+          ['电源', Math.round(state.power)],
+          ['稳定度', Math.round(state.stability)],
+          ['异常', state.anomalyLevel],
+          ['剩余', Math.ceil(state.remaining)],
+        ];
+        els.failureMetrics.replaceChildren(...metrics.map(([label, value]) => {
+          const item = document.createElement('span');
+          const labelEl = document.createElement('b');
+          const valueEl = document.createElement('strong');
+          labelEl.textContent = label;
+          valueEl.textContent = value;
+          item.append(labelEl, valueEl);
+          return item;
+        }));
+      }
       els.adHint.textContent = state.lastAdHint
         ? t('failure.adHintPrefix', { hint: state.lastAdHint })
         : t('failure.defaultHint');
