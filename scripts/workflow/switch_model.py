@@ -31,11 +31,23 @@ def hermes_home() -> Path:
     return Path.home() / '.hermes'
 
 
-def redact(text: str) -> str:
-    text = re.sub(r'sk-[A-Za-z0-9_-]{8,}', 'sk-[REDACTED]', text)
-    text = re.sub(r'(?i)(token|secret|password|api[_-]?key)\s*[:=]\s*[^\s]+', r'\1=[REDACTED]', text)
-    return text
+SECRET_PATTERNS = [
+    (re.compile(r'Bearer\s+[A-Za-z0-9._~+/=-]{16,}', re.I), 'Bearer [REDACTED]'),
+    (re.compile(r'eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}'), 'jwt-[REDACTED]'),
+    (re.compile(r'github_pat_[A-Za-z0-9_]{20,}'), 'github_pat_[REDACTED]'),
+    (re.compile(r'gh[pousr]_[A-Za-z0-9_]{20,}'), 'gh_[REDACTED]'),
+    (re.compile(r'npm_[A-Za-z0-9]{20,}'), 'npm_[REDACTED]'),
+    (re.compile(r'xox[baprs]-[A-Za-z0-9-]{10,}'), 'xox-[REDACTED]'),
+    (re.compile(r'sk-[A-Za-z0-9_-]{8,}'), 'sk-[REDACTED]'),
+    (re.compile(r'(?i)(access[_-]?token|refresh[_-]?token|id[_-]?token|bearer[_-]?token|api[_-]?key|secret|password)\s*[:=]\s*["\']?[^\s,}\]\"\']+'), r'\1=[REDACTED]'),
+    (re.compile(r'(?i)(access[_-]?token|refresh[_-]?token|id[_-]?token|bearer[_-]?token|api[_-]?key|secret|password)["\']?\s*[:=]\s*["\'][^"\']+["\']'), r'\1=[REDACTED]'),
+]
 
+
+def redact(text: str) -> str:
+    for pat, repl in SECRET_PATTERNS:
+        text = pat.sub(repl, text)
+    return text
 
 def port_open(host: str, port: int, timeout: float = 1.0) -> bool:
     try:

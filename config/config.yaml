@@ -50,21 +50,21 @@ mcp_servers:
     command: hermes-npx
     args:
       - -y
-      - public-apis-mcp@latest
+      - public-apis-mcp@0.0.10
     timeout: 120
     connect_timeout: 120
   sequential-thinking:
     command: hermes-npx
     args:
       - -y
-      - '@modelcontextprotocol/server-sequential-thinking@latest'
+      - '@modelcontextprotocol/server-sequential-thinking@2025.12.18'
     timeout: 120
     connect_timeout: 120
   context7:
     command: hermes-npx
     args:
       - -y
-      - '@upstash/context7-mcp@latest'
+      - '@upstash/context7-mcp@3.2.2'
     timeout: 120
     connect_timeout: 120
 

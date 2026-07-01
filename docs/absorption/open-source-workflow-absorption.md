@@ -31,28 +31,28 @@
 
 ## 后续升级条件
 
-1. 新电脑 Node >= 20 后，可把 Context7 MCP 加入 `config.yaml`：
+1. Context7 已默认启用；必须固定版本，并通过 `hermes-npx` 使用 Hermes bundled Node：
 
 ```yaml
 mcp_servers:
   context7:
-    command: npx
+    command: hermes-npx
     args:
       - -y
-      - '@upstash/context7-mcp@latest'
+      - '@upstash/context7-mcp@3.2.2'
     timeout: 120
     connect_timeout: 120
 ```
 
-2. 如果需要网页自动化 MCP，而 Hermes browser 工具不够用，再启用 Playwright MCP：
+2. 如果需要网页自动化 MCP，而 Hermes browser/computer_use 工具不够用，再单独固定版本、审计后启用 Playwright MCP：
 
 ```yaml
 mcp_servers:
   playwright:
-    command: npx
+    command: hermes-npx
     args:
       - -y
-      - '@playwright/mcp@latest'
+      - '@playwright/mcp@<pinned-version>'
     timeout: 120
     connect_timeout: 120
 ```

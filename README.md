@@ -113,7 +113,7 @@ cd hermes
 ```
 
 ```bash
-# Linux / macOS
+# Linux / macOS；Windows 请优先用 setup.ps1，Git Bash 下 setup.sh 会写入 %LOCALAPPDATA%/hermes
 git clone git@github.com:DTALEX66/hermes.git
 cd hermes
 chmod +x setup.sh && ./setup.sh
@@ -256,7 +256,7 @@ model:
 
 # 切换方案C（GPT OAuth）
 model:
-  default: gpt-4o
+  default: gpt-5.5
   provider: openai-codex
   base_url: ''
   api_key: ''

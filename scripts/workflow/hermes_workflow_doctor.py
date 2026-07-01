@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Audit the Hermes ⇄ GPT/DeepSeek ⇄ CC Switch ⇄ Codex workflow.
 
-The report is redacted by default and safe to paste into issues/PRs. It checks:
+The report is redacted by default (best effort) and intended to be safe to paste into issues/PRs. It checks:
 - Hermes config/auth/MCP state
 - GPT via CC Switch proxy reachability
 - DeepSeek reachability
@@ -11,7 +11,6 @@ The report is redacted by default and safe to paste into issues/PRs. It checks:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import shutil
@@ -21,8 +20,15 @@ import sys
 from pathlib import Path
 
 SECRET_PATTERNS = [
+    (re.compile(r'Bearer\s+[A-Za-z0-9._~+/=-]{16,}', re.I), 'Bearer [REDACTED]'),
+    (re.compile(r'eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}'), 'jwt-[REDACTED]'),
+    (re.compile(r'github_pat_[A-Za-z0-9_]{20,}'), 'github_pat_[REDACTED]'),
+    (re.compile(r'gh[pousr]_[A-Za-z0-9_]{20,}'), 'gh_[REDACTED]'),
+    (re.compile(r'npm_[A-Za-z0-9]{20,}'), 'npm_[REDACTED]'),
+    (re.compile(r'xox[baprs]-[A-Za-z0-9-]{10,}'), 'xox-[REDACTED]'),
     (re.compile(r'sk-[A-Za-z0-9_-]{8,}'), 'sk-[REDACTED]'),
-    (re.compile(r'(?i)(access_token|refresh_token|id_token|bearer_token|api[_-]?key|token|secret|password)\s*[:=]\s*[^\s,}\]]+'), r'\1=[REDACTED]'),
+    (re.compile(r'(?i)(access[_-]?token|refresh[_-]?token|id[_-]?token|bearer[_-]?token|api[_-]?key|secret|password)\s*[:=]\s*["\']?[^\s,}\]\"\']+'), r'\1=[REDACTED]'),
+    (re.compile(r'(?i)(access[_-]?token|refresh[_-]?token|id[_-]?token|bearer[_-]?token|api[_-]?key|secret|password)["\']?\s*[:=]\s*["\'][^"\']+["\']'), r'\1=[REDACTED]'),
 ]
 
 
@@ -30,7 +36,6 @@ def redact(text: str) -> str:
     for pat, repl in SECRET_PATTERNS:
         text = pat.sub(repl, text)
     return text
-
 
 def run(cmd, timeout=30, env=None):
     try:
@@ -83,8 +88,7 @@ def print_cmd(label, cmd, timeout=30, env=None, max_lines=40):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--json', action='store_true', help='reserved for future machine-readable output')
-    args = ap.parse_args()
+    ap.parse_args()
 
     failures = []
     hhome = hermes_home()
@@ -129,9 +133,9 @@ def main():
         npx_cmd = nodedir / ('npx.cmd' if (nodedir / 'npx.cmd').exists() else 'npx')
         print(f'[OK] Hermes bundled node dir: {nodedir}')
         print_cmd('Hermes node', [str(node_cmd), '--version'], env=env)
-        print_cmd('Context7 help', [str(npx_cmd), '-y', '@upstash/context7-mcp', '--help'], timeout=60, env=env, max_lines=12)
-        print_cmd('Sequential Thinking help', [str(npx_cmd), '-y', '@modelcontextprotocol/server-sequential-thinking', '--help'], timeout=60, env=env, max_lines=12)
-        print_cmd('public-apis help', [str(npx_cmd), '-y', 'public-apis-mcp@latest', '--help'], timeout=60, env=env, max_lines=12)
+        print_cmd('Context7 help', [str(npx_cmd), '-y', '@upstash/context7-mcp@3.2.2', '--help'], timeout=60, env=env, max_lines=12)
+        print_cmd('Sequential Thinking help', [str(npx_cmd), '-y', '@modelcontextprotocol/server-sequential-thinking@2025.12.18', '--help'], timeout=60, env=env, max_lines=12)
+        print_cmd('public-apis help', [str(npx_cmd), '-y', 'public-apis-mcp@0.0.10', '--help'], timeout=60, env=env, max_lines=12)
     else:
         print('[WARN] Hermes bundled node not found; MCPs will rely on PATH node')
 

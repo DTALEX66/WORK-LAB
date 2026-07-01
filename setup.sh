@@ -9,17 +9,26 @@ set -euo pipefail
 # Keep this path calculation simple so a freshly cloned repo works on any machine.
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 PACK_DIR="$REPO_ROOT"
-HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+if [ -z "${HERMES_HOME:-}" ]; then
+    case "$(uname -s 2>/dev/null || echo unknown)" in
+        MINGW*|MSYS*|CYGWIN*) HERMES_HOME="${LOCALAPPDATA:-$HOME/AppData/Local}/hermes" ;;
+        *) HERMES_HOME="$HOME/.hermes" ;;
+    esac
+fi
 
 echo "========================================"
-echo " Hermes Agent 部署脚本 (Linux/macOS)"
+echo " Hermes Agent 部署脚本 (Linux/macOS/Git Bash)"
 echo "========================================"
 
 # Step 1: Verify Hermes Agent
 # This repository does not package or install the Hermes application body.
 # Install Hermes separately first, then run this deployment script.
 echo ""
-echo "⏳ Step 1: 检查 Hermes Agent"
+echo "⏳ Step 1: 检查 Hermes Agent 与依赖"
+if ! command -v python3 &> /dev/null; then
+    echo "  ❌ 未找到 python3；为避免半部署，请先安装 python3 或改用 Windows setup.ps1。"
+    exit 1
+fi
 if command -v hermes &> /dev/null; then
     echo "  ✅ Hermes 已安装"
 else
