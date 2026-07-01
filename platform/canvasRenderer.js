@@ -118,19 +118,7 @@ function drawTopbar(state) {
 
 export function getCanvasStatusItems(state) {
   const skin = getSkin();
-  const labels = skin.statusLabels || {
-    panelTitle: '电梯状态',
-    floor: '楼层',
-    door: '门状态',
-    direction: '方向',
-    passengers: '乘客',
-    power: '电源',
-    stability: '稳定度',
-    anomalyLevel: '异常等级',
-    reviveCount: '广告复活',
-    adHintsCount: '加密解码',
-    hiddenLogsCount: '待解码',
-  };
+  const labels = getDomLabels().status;
   const doorLabels = skin.doorLabels || { open: '开启', closed: '关闭' };
   const directionLabels = skin.directionLabels || { up: '上行', down: '下行', idle: '待机' };
 
@@ -149,7 +137,7 @@ export function getCanvasStatusItems(state) {
 }
 
 function getCanvasStatusPanelTitle() {
-  return getSkin().statusLabels?.panelTitle || '电梯状态';
+  return getDomLabels().statusPanel;
 }
 
 // ── 绘制状态面板 ──

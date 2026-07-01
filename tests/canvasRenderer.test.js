@@ -38,11 +38,13 @@ test('canvas action buttons show locked hidden-log count', () => {
 test('canvas status items use current skin status labels', () => {
   loadSkin(securitySkin);
   const labels = getCanvasStatusItems(createInitialState()).map(item => item.label);
+  const domLabels = getDomLabels();
 
   assert.ok(labels.includes('区域'));
   assert.ok(labels.includes('门禁'));
   assert.ok(labels.includes('人员'));
   assert.ok(!labels.includes('楼层'));
+  assert.deepEqual(labels, Object.values(domLabels.status));
 
   loadSkin(elevatorSkin);
 });
