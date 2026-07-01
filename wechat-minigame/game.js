@@ -238,6 +238,7 @@ function actionLabel(actionId, count) {
 
 // --- src/feedback.js ---
 
+
 function createFeedbackLine(type, message, time = 0) {
   const safeTime = Math.max(0, Math.floor(time));
   const minutes = String(Math.floor(safeTime / 60)).padStart(2, '0');
@@ -259,7 +260,7 @@ function summarizeFailure(state) {
   if (reasons.length === 0) reasons.push(t('failure.summaries.default'));
 
   const snapshots = s.snapshots || [];
-  const targetElapsed = Math.max(0, s.elapsed - 30);
+  const targetElapsed = Math.max(0, s.elapsed - CONFIG.adRevive.rollbackWindow);
   let rollbackSec = 0;
   if (snapshots.length > 0) {
     let best = snapshots[0];
