@@ -1113,6 +1113,8 @@ const els = {
   actions: document.querySelector('#actions'),
   logs: document.querySelector('#logs'),
   forceAnomaly: document.querySelector('#forceAnomaly'),
+  startOverlay: document.querySelector('#startOverlay'),
+  startButton: document.querySelector('#startButton'),
   overlay: document.querySelector('#failureOverlay'),
   failureReason: document.querySelector('#failureReason'),
   adHint: document.querySelector('#adHint'),
@@ -1145,6 +1147,7 @@ let crashPlayed = false;
 
 function ensureTimer() {
   if (timer) return;
+  if (els.startOverlay) els.startOverlay.hidden = true;
   timer = window.setInterval(loop, 1000);
 }
 
@@ -1332,6 +1335,7 @@ function restart() {
     window.clearInterval(timer);
     timer = null;
   }
+  if (els.startOverlay) els.startOverlay.hidden = false;
   session = restartRuntimeSession();
   state = session.state;
   nextAnomalyAt = session.nextAnomalyAt;
@@ -1364,6 +1368,10 @@ function applyDomLabels() {
 }
 
 applyDomLabels();
+els.startButton?.addEventListener('click', () => {
+  playClick();
+  ensureTimer();
+});
 els.forceAnomaly.addEventListener('click', triggerAnomaly);
 els.reviveButton.addEventListener('click', () => {
   showReviveAd();
