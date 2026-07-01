@@ -43,21 +43,28 @@ terminal:
   timeout: 180
 
 # ── MCP Servers ─────────────────────────────────────────
-# public-apis: 查询 github.com/public-apis/public-apis 的公共 API 目录。
-# 修改后需 /reload-mcp；如果当前会话仍未加载，执行 /reset 或重启 Hermes。
+# 默认 MCP 使用 hermes-npx wrapper，优先调用 Hermes 自带 Node v22，避免系统 PATH 旧 Node 造成兼容问题。
+# setup.ps1/setup.sh 会把部署后的 command: hermes-npx 改写为 Hermes home 下的绝对 wrapper 路径。
 mcp_servers:
   public-apis:
-    command: npx
+    command: hermes-npx
     args:
       - -y
       - public-apis-mcp@latest
     timeout: 120
     connect_timeout: 120
   sequential-thinking:
-    command: npx
+    command: hermes-npx
     args:
       - -y
       - '@modelcontextprotocol/server-sequential-thinking@latest'
+    timeout: 120
+    connect_timeout: 120
+  context7:
+    command: hermes-npx
+    args:
+      - -y
+      - '@upstash/context7-mcp@latest'
     timeout: 120
     connect_timeout: 120
 

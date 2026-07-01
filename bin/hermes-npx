@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+candidates=()
+if [ -n "${HERMES_HOME:-}" ]; then
+  candidates+=("$HERMES_HOME/node/npx")
+fi
+candidates+=("$HOME/.hermes/node/npx")
+candidates+=("$HOME/AppData/Local/hermes/node/npx")
+candidates+=("/c/Users/${USERNAME:-$USER}/AppData/Local/hermes/node/npx")
+for npx_bin in "${candidates[@]}"; do
+  if [ -x "$npx_bin" ]; then
+    exec "$npx_bin" "$@"
+  fi
+done
+exec npx "$@"

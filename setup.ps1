@@ -117,6 +117,24 @@ if ((Test-Path $envSrc) -and -not (Test-Path $envDst)) {
     Write-Host "  [OK] .env exists, keeping current config"
 }
 
+# ==== Step 3b: Install MCP Node wrapper ====
+Write-Step "Step 3b: Install hermes-npx MCP wrapper"
+$binSrc = Join-Path $PackDir "bin"
+$binDst = Join-Path $HermesHome "bin"
+if (Test-Path $binSrc) {
+    if (-not (Test-Path $binDst)) {
+        New-Item -ItemType Directory -Path $binDst -Force | Out-Null
+    }
+    Copy-Item -Path (Join-Path $binSrc "*") -Destination $binDst -Force
+    $wrapper = (Join-Path $binDst "hermes-npx.cmd").Replace("\\", "/")
+    if (Test-Path $configDst) {
+        $cfgText = Get-Content -Raw -Path $configDst
+        $cfgText = $cfgText -replace 'command: hermes-npx', ('command: "' + $wrapper + '"')
+        Set-Content -Path $configDst -Value $cfgText -Encoding UTF8
+    }
+    Write-Host "  [OK] hermes-npx installed to $binDst"
+}
+
 # ==== Step 4: Install Skills ====
 Write-Step "Step 4: Install local skills"
 

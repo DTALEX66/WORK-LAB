@@ -8,6 +8,7 @@
 hermes-pack/
 ├── config/
 │   ├── config.yaml            ← 完整配置（GPT + CC Switch 代理 + workflow MCP）
+├── bin/                       ← hermes-npx wrapper（固定 Hermes Node v22）
 │   ├── SOUL.md                ← Agent 人格设定
 │   ├── .env.template          ← 环境变量（含代理配置）
 ├── skills/software-development/
@@ -34,7 +35,8 @@ hermes-pack/
 | `skills/software-development/` | `skills/software-development/` | 开发相关技能：截图翻译、Python 测试、Windows 排坑 |
 | `docs/` | 仓库文档 | 工作流吸收清单、MCP 栈、排错和部署说明 |
 | `templates/` | 手动复制/项目初始化 | Agent 规则模板、CC Switch 任务单模板 |
-| `scripts/` | 手动运行 | 安全扫描、规则检查等辅助脚本 |
+| `scripts/` | 手动运行 | 安全扫描、规则检查、模型切换、工作流 doctor |
+| `bin/` | `$HERMES_HOME/bin` | MCP Node wrapper，优先使用 Hermes bundled Node |
 
 > 注意：真实 `.env`、OAuth `auth.json`、API Key、Token、会话数据库、Hermes 安装主体、CC Switch 安装主体都不会上传。新电脑必须先自行安装 Hermes/CC Switch，再填写 API Key 并重新执行 OAuth 登录。
 
@@ -94,8 +96,12 @@ CC Switch 管网络与 Agent 生态：
 - `templates/agent-rules/`：`AGENTS.md` / `CODEX.md` / `SECURITY.md` / `DESIGN.md` 项目规则模板。
 - `templates/task-tickets/cc-switch-agent-task.md`：给 Codex / Claude / OpenClaw / CC Switch 生态使用的任务单。
 - `scripts/security/scan_agent_rules.py`：扫描第三方规则/Prompt 的零宽字符、注入语句和疑似密钥。
+- `scripts/workflow/switch_model.py`：一键切换 GPT / DeepSeek 官方 Provider 路线。
+- `scripts/workflow/hermes_workflow_doctor.py`：审计 Hermes、GPT/DeepSeek、CC Switch、Codex、MCP、Node 基线。
+- `bin/hermes-npx*`：MCP wrapper，优先使用 Hermes 自带 Node v22，避免系统 PATH Node v16 造成 Context7/Playwright 兼容问题。
+- `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：三引擎全链路升级说明。
 
-默认只启用当前机器实测可运行的 MCP：`public-apis` 和 `sequential-thinking`。Context7 / Playwright MCP 在 Node 16 下实测不兼容，等 Node 20+ 后再按文档启用。
+默认启用当前机器实测可运行且权限面低的 MCP：`public-apis`、`sequential-thinking`、`context7`。Playwright MCP 已用 Hermes Node v22 smoke test 可启动，但与 Hermes 原生 browser/computer_use 重叠，暂列候选不默认启用。
 
 ## 🚀 快速部署
 
@@ -113,7 +119,7 @@ cd hermes
 chmod +x setup.sh && ./setup.sh
 ```
 
-脚本自动完成：检查 Hermes → 写入配置（含 public-apis + sequential-thinking MCP）→ 安装本地技能 → 安装依赖 → 启用 5 个插件 + 3 个工具集。
+脚本自动完成：检查 Hermes → 写入配置（含 public-apis + sequential-thinking + context7 MCP）→ 安装 hermes-npx wrapper → 安装本地技能 → 安装依赖 → 启用 5 个插件 + 3 个工具集。
 
 ---
 
@@ -180,7 +186,7 @@ hermes config set model.default deepseek-v4-flash
 > **配置方式**：`hermes model (ChatGPT OAuth, uses Codex models)`
 
 ```
-Hermes ──→ ChatGPT Codex API (chatgpt.com/backend-api/codex) ──→ GPT-4o
+Hermes ──→ ChatGPT Codex API (chatgpt.com/backend-api/codex) ──→ GPT-5.5
 ```
 
 **交互式配置（推荐）：**
@@ -198,7 +204,7 @@ hermes auth add openai-codex
 
 # 2. 切换 Provider
 hermes config set model.provider openai-codex
-hermes config set model.default gpt-4o
+hermes config set model.default gpt-5.5
 ```
 
 > 插件内置 base_url 为 `https://chatgpt.com/backend-api/codex`，无需手动设置

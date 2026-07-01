@@ -52,6 +52,30 @@ elif [ -f "$HERMES_HOME/.env" ]; then
     echo "  ✅ .env 已存在，保留现有配置"
 fi
 
+# Step 2b: Install MCP Node wrapper
+echo ""
+echo "⏳ Step 2b: 安装 hermes-npx MCP wrapper"
+BIN_SRC="$PACK_DIR/bin"
+BIN_DST="$HERMES_HOME/bin"
+if [ -d "$BIN_SRC" ]; then
+    mkdir -p "$BIN_DST"
+    cp "$BIN_SRC"/* "$BIN_DST/"
+    chmod +x "$BIN_DST/hermes-npx" 2>/dev/null || true
+    if [ -f "$HERMES_HOME/config.yaml" ]; then
+        WRAPPER="$BIN_DST/hermes-npx"
+        python3 - "$HERMES_HOME/config.yaml" "$WRAPPER" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+wrapper = sys.argv[2]
+text = p.read_text(encoding='utf-8')
+text = text.replace('command: hermes-npx', f'command: "{wrapper}"')
+p.write_text(text, encoding='utf-8')
+PY
+    fi
+    echo "  ✅ hermes-npx 已安装到 $BIN_DST"
+fi
+
 # Step 3: Install skills
 echo ""
 echo "⏳ Step 3: 安装本地技能"

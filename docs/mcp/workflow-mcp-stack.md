@@ -14,24 +14,25 @@
 
 - 包：`@modelcontextprotocol/server-sequential-thinking@latest`
 - 作用：复杂任务拆解、反思、逐步推理。
-- 实测：当前机器 Node v16.13.1 下可启动。
+- 实测：Hermes bundled Node v22.23.1 下可启动。
 - 状态：已在 `config/config.yaml` 中启用。
-
-## 候选但不默认启用
 
 ### Context7
 
 - 包：`@upstash/context7-mcp@latest`
 - 价值：实时读取库文档，减少过期 API 用法。
-- 当前问题：Node v16 下 `ReadableStream is not defined`。
-- 启用条件：Node >= 20。
+- 实测：Hermes bundled Node v22.23.1 下 `--help` 通过。
+- 状态：已在 `config/config.yaml` 中启用，通过 `hermes-npx` wrapper 避免系统 Node v16。
+
+## 候选但不默认启用
 
 ### Playwright MCP
 
 - 包：`@playwright/mcp@latest`
 - 价值：浏览器自动化和网页 QA。
-- 当前问题：Node v16 下 `GlobalRequest` 兼容错误。
-- 启用条件：Node >= 20，且 Hermes browser/computer_use 不够用。
+- 实测：Hermes bundled Node v22.23.1 下 `--help` 通过。
+- 不默认原因：权限面大，且 Hermes 原生 `browser` / `computer_use` 已覆盖多数网页自动化。
+- 启用条件：明确需要 Playwright MCP 与外部 Agent 共享浏览器自动化能力。
 
 ### Memory / Filesystem MCP
 
@@ -42,8 +43,9 @@
 ```bash
 node --version
 npm --version
-npx -y @modelcontextprotocol/server-sequential-thinking --help
-npx -y public-apis-mcp@latest --help
+bin/hermes-npx -y @modelcontextprotocol/server-sequential-thinking --help
+bin/hermes-npx -y public-apis-mcp@latest --help
+bin/hermes-npx -y @upstash/context7-mcp --help
 ```
 
 如新增 MCP，先运行 smoke test，再写入默认配置。
