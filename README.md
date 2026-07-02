@@ -25,6 +25,7 @@
 - 发布安全：真实 AppID / adUnitId 走 ignored 私有配置，不提交源码
 - 数据基础：轻量 `src/analytics.js` 埋点接口已接入 H5 游戏关键路径
 - 留存基础：跨局异常档案库已按皮肤记录遭遇异常、解锁日志和收集进度
+- 视觉资产：`docs/IMAGE_GENERATION_PROMPT_PACK.md` 收录真实 CCTV / 控制台 / HUD 材质生成词汇
 
 ## 快速开始
 
