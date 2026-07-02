@@ -1,6 +1,6 @@
 # MINIGAME 后续任务列表
 
-> 当前基线：`npm test` 77/77 pass；`npm run verify:summary` 通过；微信 strict 为 0 blocker；Android APK build/inspect 通过；`npm run release:check` 在默认占位配置下预期失败。
+> 当前基线：`npm test` 89/89 pass；`npm run verify:summary` 通过；微信 strict 为 0 blocker；Android APK build/inspect 通过；Android WebView 已安装验证；`npm run release:check` 在默认占位配置下预期失败。
 
 ## 已完成的近期地基
 
@@ -13,6 +13,7 @@
 - P3：皮肤生成脚本 `scripts/create-skin-from-template.mjs` 与 `npm run skin:new -- <id> [名称]`。
 - P2：轻量埋点接口 `src/analytics.js`，已接入 H5 开始、失败、广告、操作、异常路径。
 - P2：跨局异常档案库已按皮肤记录场次、遭遇异常、解锁日志和收集进度。
+- P5：监控画面已接入生成的暗色 CCTV 背景 `assets/generated/monitor-cctv-elevator.png`，并在 Android WebView 资源准备脚本中打包验证。
 - P4：GitHub Actions verify workflow。
 - P4：`npm run android:install` 真机/模拟器安装启动命令。
 
@@ -145,15 +146,16 @@ npm run release:check
 - 第一次异常时提示“应该优先看监控/日志”。
 - 第一次失败时解释复活逻辑。
 
-### 11. 监控画面继续拟真化
+### 11. 监控画面异常态继续拟真化
 
-当前已有 CCTV 视觉层，但还能增强：
+当前已有生成式 CCTV 背景、REC/时间码、多摄像头小窗、热源与 HUD。下一步只做异常态增强：
 
-- 信号雪花噪声
-- 画面撕裂
-- 红外轮廓闪烁
-- 异常发生时短暂 freeze frame
-- 不同皮肤不同监控视觉元素
+- 异常发生时短暂画面撕裂 / freeze frame
+- 红外轮廓闪烁与信号雪花增强
+- `data-anomaly="active"` 下才启用强干扰，正常状态保持可读
+- 不同皮肤支持不同监控背景资产，例如医院病房 CCTV、地铁站台 CCTV
+
+验收：浏览器截图 + Android WebView 截图都能看出正常态/异常态差异，且操作按钮不被遮挡。
 
 ### 12. 音效和震动反馈增强
 
@@ -169,7 +171,8 @@ npm run release:check
 ## 建议下一步执行顺序
 
 1. P3-7：第 5 套皮肤候选（建议深夜医院值班台）。
-2. P4-8：Android release APK / 签名流程。
-3. P5-10：游戏内新手引导压缩。
-4. P1-2：微信开发者工具真实导入测试。
-5. P4-9：GitHub Actions APK artifact 上传。
+2. P5-11：异常态监控撕裂 / freeze frame / 红外闪烁。
+3. P4-8：Android release APK / 签名流程。
+4. P5-10：游戏内新手引导压缩。
+5. P1-2：微信开发者工具真实导入测试。
+6. P4-9：GitHub Actions APK artifact 上传。
