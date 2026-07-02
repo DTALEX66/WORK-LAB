@@ -22,8 +22,8 @@ test('android WebView assets use bundled script instead of ES modules', () => {
   assert.match(game, /document\.querySelector/);
   assert.match(game, /function loadArchive\(/, 'archive storage helper must be bundled before game.js');
   assert.match(game, /function getArchiveSkinProgress\(/, 'per-skin archive progress selector must be bundled');
-  assert.match(css, /monitor-cctv-elevator\.png/, 'Android WebView CSS should reference the generated CCTV monitor background');
-  assert.equal(existsSync(resolve(assets, 'assets/generated/monitor-cctv-elevator.png')), true, 'Android WebView assets should include the generated monitor image');
+  assert.match(css, /monitor-cctv-real-basement-lift\.png/, 'Android WebView CSS should reference the realistic CCTV monitor background');
+  assert.equal(existsSync(resolve(assets, 'assets/generated/monitor-cctv-real-basement-lift.png')), true, 'Android WebView assets should include the realistic monitor image');
   assert.doesNotMatch(game, /\bSKIN_DATA\b/);
   assert.doesNotMatch(game, /\b_getHiddenLog\b/);
 });

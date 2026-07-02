@@ -17,8 +17,8 @@ execFileSync(process.execPath, ['build.js', 'android'], { cwd: root, stdio: 'pip
 copyFileSync(resolve(root, 'android-minigame/game.js'), resolve(assetsDir, 'game.js'));
 copyFileSync(resolve(root, 'styles.css'), resolve(assetsDir, 'styles.css'));
 copyFileSync(
-  resolve(root, 'assets/generated/monitor-cctv-elevator.png'),
-  resolve(generatedAssetsDir, 'monitor-cctv-elevator.png'),
+  resolve(root, 'assets/generated/monitor-cctv-real-basement-lift.png'),
+  resolve(generatedAssetsDir, 'monitor-cctv-real-basement-lift.png'),
 );
 
 let html = readFileSync(resolve(root, 'index.html'), 'utf8');
@@ -35,7 +35,7 @@ const files = [
   'app/src/main/assets/index.html',
   'app/src/main/assets/styles.css',
   'app/src/main/assets/game.js',
-  'app/src/main/assets/assets/generated/monitor-cctv-elevator.png',
+  'app/src/main/assets/assets/generated/monitor-cctv-real-basement-lift.png',
 ];
 
 for (const file of files) {

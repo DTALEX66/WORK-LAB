@@ -302,7 +302,7 @@ meter {
   overflow: hidden;
   background:
     linear-gradient(rgba(1, 14, 14, 0.22), rgba(0, 4, 5, 0.72)),
-    url("assets/generated/monitor-cctv-elevator.png") center / cover no-repeat,
+    url("assets/generated/monitor-cctv-real-basement-lift.png") center / cover no-repeat,
     radial-gradient(circle at 50% 44%, rgba(97,255,190,0.18), transparent 34%),
     linear-gradient(180deg, rgba(5, 22, 24, 0.95), rgba(0, 5, 6, 0.98));
   border: 1px solid rgba(97,255,190,0.16);

@@ -10,10 +10,11 @@
 - P3：`schemas/skin.schema.json`、`scripts/validate-skins.mjs`、`npm run skins:check`。
 - P3：`templates/skin-template.json` 与 `docs/SKIN_AUTHORING_GUIDE.md`。
 - P3：第 4 套皮肤 `src/skins/subway/skin.json`（地铁末班调度室）。
+- P3：第 5 套皮肤 `src/skins/hospital/skin.json`（深夜医院值班台）。
 - P3：皮肤生成脚本 `scripts/create-skin-from-template.mjs` 与 `npm run skin:new -- <id> [名称]`。
 - P2：轻量埋点接口 `src/analytics.js`，已接入 H5 开始、失败、广告、操作、异常路径。
 - P2：跨局异常档案库已按皮肤记录场次、遭遇异常、解锁日志和收集进度。
-- P5：监控画面已接入生成的暗色 CCTV 背景 `assets/generated/monitor-cctv-elevator.png`，并在 Android WebView 资源准备脚本中打包验证。
+- P5：监控画面已接入更真实的低清 CCTV 背景 `assets/generated/monitor-cctv-real-basement-lift.png`，并在 Android WebView 资源准备脚本中打包验证。
 - P4：GitHub Actions verify workflow。
 - P4：`npm run android:install` 真机/模拟器安装启动命令。
 
@@ -101,16 +102,16 @@ npm run release:check
 
 ## P3｜批量复制 / 换皮生产系统
 
-### 7. 第 5 套皮肤候选
+### 7. 第 6 套皮肤候选
 
 可选题材：
 
-1. 深夜医院值班台
-2. 无人酒店前台
-3. 海上钻井平台控制室
-4. 校园广播室异常值班
+1. 无人酒店前台
+2. 海上钻井平台控制室
+3. 校园广播室异常值班
+4. 深夜高速收费站
 
-建议下一套优先 **深夜医院值班台**：恐怖感强、素材直观、适合病房 CCTV / 值班终端 / 生命体征仪表。
+建议下一套优先 **无人酒店前台**：空间直观，适合前台监控、房卡门禁、电梯厅 CCTV、午夜入住异常。
 
 ## P4｜平台工程 / CI
 
@@ -170,7 +171,7 @@ npm run release:check
 
 ## 建议下一步执行顺序
 
-1. P3-7：第 5 套皮肤候选（建议深夜医院值班台）。
+1. P3-7：第 6 套皮肤候选（建议无人酒店前台）。
 2. P5-11：异常态监控撕裂 / freeze frame / 红外闪烁。
 3. P4-8：Android release APK / 签名流程。
 4. P5-10：游戏内新手引导压缩。
