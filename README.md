@@ -146,6 +146,7 @@ node build.js wechat     # 构建微信小游戏 bundle
 - `docs/ANDROID_APK_HANDOFF.md`：Android APK 构建/安装/调试交接
 - `docs/NEXT_TASKS.md`：后续任务列表与建议执行顺序
 - `docs/CONTENT_PACK_SPEC.md`：内容包协议与当前 skin 映射
+- `docs/SKIN_AUTHORING_GUIDE.md`：新皮肤生成流程与模板使用说明
 - `docs/GAME_BASE_SELECTION.md`：开源小游戏底座评分表
 
 ## 开发原则
