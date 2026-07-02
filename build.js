@@ -83,6 +83,7 @@ const CORE_MODULES = [
 
 const DOM_ENTRY_MODULES = [
   ...CORE_MODULES,
+  { path: 'src/analytics.js',      type: 'js' },
   { path: 'src/audio.js',          type: 'js' },
   { path: 'platform/platform.js',   type: 'js' },
   { path: 'src/game.js',           type: 'js' },

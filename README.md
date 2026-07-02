@@ -23,6 +23,7 @@
 - 换皮系统：皮肤 JSON 驱动，已包含电梯、安防、工厂、地铁 4 套皮肤
 - Android APK：项目内便携 JDK/Gradle/Android SDK 工具链已验证可构建 debug APK
 - 发布安全：真实 AppID / adUnitId 走 ignored 私有配置，不提交源码
+- 数据基础：轻量 `src/analytics.js` 埋点接口已接入 H5 游戏关键路径
 
 ## 快速开始
 

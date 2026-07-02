@@ -9,6 +9,7 @@ import { getAnomalies } from './events.js';
 import { createRewardedAd } from '../platform/platform.js';
 import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from './uiLabels.js';
 import { loadArchive, commitSessionToArchive } from './archive.js';
+import { trackEvent } from './analytics.js';
 import {
   createRuntimeSession,
   restartRuntimeSession,
@@ -88,11 +89,23 @@ let nextAnomalyAt = session.nextAnomalyAt;
 let timer = null;
 let lastTone = 'normal';
 let crashPlayed = false;
+let fakeEndingTracked = false;
+
+function analyticsPayload(extra = {}) {
+  return {
+    skinId: getSkin().meta?.id,
+    elapsed: state.elapsed,
+    remaining: state.remaining,
+    anomalyLevel: state.anomalyLevel,
+    ...extra,
+  };
+}
 
 function ensureTimer() {
   if (timer) return;
   if (els.startOverlay) els.startOverlay.hidden = true;
   timer = window.setInterval(loop, 1000);
+  trackEvent('game_start', analyticsPayload());
 }
 
 function bindPress(element, handler) {
@@ -112,6 +125,7 @@ function bindPress(element, handler) {
 
 const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
   onReward: () => {
+    trackEvent('revive_ad_reward', analyticsPayload({ adUnitId: CONFIG.adUnits.revive }));
     playRevive();
     state = reviveFromAd(state);
     nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
@@ -119,7 +133,13 @@ const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
   },
 });
 const showDecodeAd = createRewardedAd(CONFIG.adUnits.decode, {
-  onReward: () => runAction('unlockHiddenLog'),
+  onReward: () => {
+    const before = state.adHintsUsed;
+    runAction('unlockHiddenLog');
+    if (state.adHintsUsed > before) {
+      trackEvent('hidden_log_unlock', analyticsPayload({ adUnitId: CONFIG.adUnits.decode }));
+    }
+  },
 });
 const showTruthAd = createRewardedAd(CONFIG.adUnits.truth, {
   onReward: () => {
@@ -277,7 +297,9 @@ function render() {
 function dispatchAction(actionId) {
   ensureTimer();
   playClick();
+  trackEvent('action_click', analyticsPayload({ actionId }));
   if (actionId === 'unlockHiddenLog') {
+    trackEvent('hidden_log_ad_start', analyticsPayload({ adUnitId: CONFIG.adUnits.decode }));
     showDecodeAd();
     return;
   }
@@ -301,6 +323,10 @@ function triggerAnomaly() {
   const picked = pickNextAnomaly(state);
   const result = applyAnomaly(state, picked.id);
   state = result.state;
+  trackEvent('anomaly_trigger', analyticsPayload({
+    anomalyId: result.event.id,
+    severity: result.event.severity,
+  }));
   playAnomaly();
   nextAnomalyAt = scheduleNextAnomalyAfterTrigger(state.elapsed);
   render();
@@ -311,6 +337,11 @@ function loop() {
     if (!crashPlayed) {
       playCrash();
       crashPlayed = true;
+      trackEvent('game_over', analyticsPayload({
+        reason: summarizeFailure(state).reason,
+        anomaliesTriggeredTotal: state.anomaliesTriggeredTotal || 0,
+        maxAnomalySeverity: state.maxAnomalySeverity || 0,
+      }));
       // 提交本局数据到跨局档案库
       try {
         const ids = state.hiddenLogs?.map(h => h.id).filter(Boolean) || [];
@@ -328,6 +359,7 @@ function loop() {
     return;
   }
   crashPlayed = false;
+  fakeEndingTracked = false;
   state = tickState(state, 1);
 
   // 成功值守 → 重置连续失败计数
@@ -340,6 +372,12 @@ function loop() {
   // 检测失败 → 递增连续失败计数
   if (state.gameOver) {
     state = recordFailure(state);
+    if (state.fakeEndingTriggered && !fakeEndingTracked) {
+      fakeEndingTracked = true;
+      trackEvent('fake_ending_trigger', analyticsPayload({
+        fakeEndingCount: state.fakeEndingCount,
+      }));
+    }
   }
   // Save a snapshot on interval for ad-revive rollback
   const ar = CONFIG.adRevive;
@@ -365,6 +403,7 @@ function restart() {
   session = restartRuntimeSession();
   state = session.state;
   nextAnomalyAt = session.nextAnomalyAt;
+  fakeEndingTracked = false;
   render();
   refreshArchiveButton();
 }
@@ -470,6 +509,7 @@ bindPress(els.startButton, () => {
 });
 bindPress(els.forceAnomaly, triggerAnomaly);
 bindPress(els.reviveButton, () => {
+  trackEvent('revive_ad_start', analyticsPayload({ adUnitId: CONFIG.adUnits.revive }));
   showReviveAd();
 });
 bindPress(els.restartButton, () => {

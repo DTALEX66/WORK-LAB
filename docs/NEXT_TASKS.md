@@ -11,6 +11,7 @@
 - P3：`templates/skin-template.json` 与 `docs/SKIN_AUTHORING_GUIDE.md`。
 - P3：第 4 套皮肤 `src/skins/subway/skin.json`（地铁末班调度室）。
 - P3：皮肤生成脚本 `scripts/create-skin-from-template.mjs` 与 `npm run skin:new -- <id> [名称]`。
+- P2：轻量埋点接口 `src/analytics.js`，已接入 H5 开始、失败、广告、操作、异常路径。
 - P4：GitHub Actions verify workflow。
 - P4：`npm run android:install` 真机/模拟器安装启动命令。
 
@@ -108,28 +109,6 @@ npm run release:check
 
 价值：从单局小游戏变成可留存产品。
 
-### 6. 轻量数据埋点接口
-
-新增：
-
-```text
-src/analytics.js
-```
-
-记录事件：
-
-- `game_start`
-- `game_over`
-- `revive_ad_start`
-- `revive_ad_reward`
-- `hidden_log_ad_start`
-- `hidden_log_unlock`
-- `fake_ending_trigger`
-- `action_click`
-- `anomaly_trigger`
-
-浏览器先 `console.log`，微信/抖音后续接平台分析。
-
 ## P3｜批量复制 / 换皮生产系统
 
 ### 7. 第 5 套皮肤候选
@@ -201,7 +180,7 @@ src/analytics.js
 ## 建议下一步执行顺序
 
 1. P2-5：异常档案库长期收集系统，增强留存。
-2. P2-6：轻量数据埋点接口，为后续投放/调参准备。
-3. P3-7：第 5 套皮肤候选（建议深夜医院值班台）。
+2. P3-7：第 5 套皮肤候选（建议深夜医院值班台）。
+3. P4-8：Android release APK / 签名流程。
 4. P1-2：微信开发者工具真实导入测试。
-5. P4-8：Android release APK / 签名流程。
+5. P4-9：GitHub Actions APK artifact 上传。
