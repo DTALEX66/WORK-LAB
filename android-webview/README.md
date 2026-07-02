@@ -153,6 +153,14 @@ gradle --no-daemon assembleDebug
 
 ## 常用调试命令
 
+一键安装并启动 debug APK：
+
+```bash
+npm run android:install
+```
+
+手动 ADB 调试命令：
+
 ```bash
 adb devices -l
 adb install -r android-webview/app/build/outputs/apk/debug/app-debug.apk

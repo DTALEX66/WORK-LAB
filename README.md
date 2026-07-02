@@ -129,6 +129,7 @@ npm test                 # Node16 兼容测试入口
 npm run verify           # 一键开发验收
 npm run android:build    # 构建 Android WebView debug APK
 npm run android:inspect  # 检查 APK 包名、应用名、图标、SDK
+npm run android:install  # 安装并启动 Android debug APK（需 adb 设备在线）
 npm run release:check    # 发布前检查：真实 AppID/adUnitId + runtime blocker
 node build.js wechat     # 构建微信小游戏 bundle
 ```

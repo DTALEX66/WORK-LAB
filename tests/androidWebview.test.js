@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '..');
 const assets = resolve(root, 'android-webview/app/src/main/assets');
 const androidMain = resolve(root, 'android-webview/app/src/main');
+const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 
 test('android WebView assets use bundled script instead of ES modules', () => {
   execFileSync(process.execPath, ['scripts/prepare-android-webview.mjs'], { cwd: root, stdio: 'pipe' });
@@ -35,4 +36,15 @@ test('android package exposes branded launcher name and icon resources', () => {
   assert.match(adaptiveIcon, /<adaptive-icon/);
   assert.match(foreground, /#61FFBE/);
   assert.match(foreground, /#FF4D6D/);
+});
+
+test('android install script installs and launches the debug APK through adb', () => {
+  const installScript = readFileSync(resolve(root, 'scripts/install-android-debug.mjs'), 'utf8');
+
+  assert.equal(pkg.scripts['android:install'], 'node scripts/install-android-debug.mjs');
+  assert.match(installScript, /adb devices -l/, 'script should show connected devices before installing');
+  assert.match(installScript, /install', '-r'/, 'script should reinstall the debug APK');
+  assert.match(installScript, /am', 'force-stop'/, 'script should restart the app from a clean state');
+  assert.match(installScript, /am', 'start'/, 'script should launch MainActivity after install');
+  assert.match(installScript, /com\.dtalex\.minigame\/.MainActivity/, 'script should launch the packaged activity');
 });

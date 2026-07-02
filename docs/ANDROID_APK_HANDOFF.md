@@ -171,6 +171,12 @@ adb devices -l
 安装：
 
 ```bash
+npm run android:install
+```
+
+或手动执行：
+
+```bash
 adb install -r android-webview/app/build/outputs/apk/debug/app-debug.apk
 ```
 

@@ -12,6 +12,7 @@ const requiredCommands = [
   'npm run verify',
   'npm run android:build',
   'npm run android:inspect',
+  'npm run android:install',
   'npm run release:check',
   'release.config.example.json',
 ];
