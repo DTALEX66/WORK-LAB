@@ -5,12 +5,14 @@ import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' }
 import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
 import factorySkin from '../src/skins/factory/skin.json' with { type: 'json' };
 import subwaySkin from '../src/skins/subway/skin.json' with { type: 'json' };
+import hospitalSkin from '../src/skins/hospital/skin.json' with { type: 'json' };
 
 const skins = [
   ['elevator', elevatorSkin],
   ['security', securitySkin],
   ['factory', factorySkin],
   ['subway', subwaySkin],
+  ['hospital', hospitalSkin],
 ];
 
 const REQUIRED_TEXT_KEYS = [
@@ -116,5 +118,21 @@ test('subway skin validates the fourth-skin production workflow', () => {
   const serialized = JSON.stringify(subwaySkin);
   for (const forbidden of ['电梯', '轿厢', '楼层']) {
     assert.doesNotMatch(serialized, new RegExp(forbidden), `subway skin should not keep elevator term: ${forbidden}`);
+  }
+});
+
+test('hospital skin validates the fifth-skin production workflow', () => {
+  assert.equal(hospitalSkin.meta.id, 'hospital');
+  assert.equal(hospitalSkin.meta.name, '深夜医院值班台');
+  assert.match(hospitalSkin.actionLabels.openDoor, /病房门|隔离门/);
+  assert.match(hospitalSkin.canvasLabels.monitorSignalStable, /VITALS|WARD|ICU/);
+
+  const ids = hospitalSkin.anomalies.map((anomaly) => anomaly.id);
+  assert.equal(new Set(ids).size, ids.length, 'hospital anomaly ids should be unique');
+  assert.ok(hospitalSkin.anomalies.length >= 12, 'hospital should ship with at least 12 anomalies');
+
+  const serialized = JSON.stringify(hospitalSkin);
+  for (const forbidden of ['电梯', '轿厢', '楼层', '站台', '列车', '屏蔽门']) {
+    assert.doesNotMatch(serialized, new RegExp(forbidden), `hospital skin should not keep old-domain term: ${forbidden}`);
   }
 });
