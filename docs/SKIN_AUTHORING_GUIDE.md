@@ -36,7 +36,21 @@ src/skins/subway/skin.json
 
 ## 最短生成步骤
 
-1. 复制模板：
+1. 使用脚本从模板生成新皮肤：
+
+   ```bash
+   npm run skin:new -- subway 地铁末班调度室
+   ```
+
+   脚本会创建：
+
+   ```text
+   src/skins/subway/skin.json
+   ```
+
+   并自动写入 `meta.id` / `meta.name`。
+
+   如果需要手动复制，也可以：
 
    ```bash
    mkdir -p src/skins/subway

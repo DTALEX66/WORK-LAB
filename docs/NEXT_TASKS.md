@@ -10,6 +10,7 @@
 - P3：`schemas/skin.schema.json`、`scripts/validate-skins.mjs`、`npm run skins:check`。
 - P3：`templates/skin-template.json` 与 `docs/SKIN_AUTHORING_GUIDE.md`。
 - P3：第 4 套皮肤 `src/skins/subway/skin.json`（地铁末班调度室）。
+- P3：皮肤生成脚本 `scripts/create-skin-from-template.mjs` 与 `npm run skin:new -- <id> [名称]`。
 - P4：GitHub Actions verify workflow。
 - P4：`npm run android:install` 真机/模拟器安装启动命令。
 
@@ -131,25 +132,7 @@ src/analytics.js
 
 ## P3｜批量复制 / 换皮生产系统
 
-### 7. 皮肤生成脚本
-
-已有模板和作者指南，下一步可把复制模板流程脚本化。
-
-建议新增：
-
-```text
-scripts/create-skin-from-template.mjs
-npm run skin:new -- subway
-```
-
-功能：
-
-- 创建 `src/skins/<id>/skin.json`。
-- 自动写入 `meta.id`。
-- 防止覆盖已有皮肤。
-- 输出后续编辑和验证命令。
-
-### 8. 第 5 套皮肤候选
+### 7. 第 5 套皮肤候选
 
 可选题材：
 
@@ -162,7 +145,7 @@ npm run skin:new -- subway
 
 ## P4｜平台工程 / CI
 
-### 9. Android release APK / 签名流程
+### 8. Android release APK / 签名流程
 
 当前是 debug APK。
 
@@ -173,7 +156,7 @@ npm run skin:new -- subway
 - 私有 keystore 不提交。
 - 输出 `app-release.apk`。
 
-### 10. GitHub Actions 增强
+### 9. GitHub Actions 增强
 
 当前已有基础 verify workflow，后续可增强：
 
@@ -184,7 +167,7 @@ npm run skin:new -- subway
 
 ## P5｜体验打磨
 
-### 11. 游戏内新手引导压缩
+### 10. 游戏内新手引导压缩
 
 首局玩家可能还不知道每个按钮的风险。
 
@@ -194,7 +177,7 @@ npm run skin:new -- subway
 - 第一次异常时提示“应该优先看监控/日志”。
 - 第一次失败时解释复活逻辑。
 
-### 12. 监控画面继续拟真化
+### 11. 监控画面继续拟真化
 
 当前已有 CCTV 视觉层，但还能增强：
 
@@ -204,7 +187,7 @@ npm run skin:new -- subway
 - 异常发生时短暂 freeze frame
 - 不同皮肤不同监控视觉元素
 
-### 13. 音效和震动反馈增强
+### 12. 音效和震动反馈增强
 
 已有 Web Audio 程序化音效，移动端可继续增加：
 
@@ -217,8 +200,8 @@ npm run skin:new -- subway
 
 ## 建议下一步执行顺序
 
-1. P3-7：皮肤生成脚本 `skin:new`，把换皮流程从文档推进到自动化。
-2. P2-5：异常档案库长期收集系统，增强留存。
-3. P2-6：轻量数据埋点接口，为后续投放/调参准备。
+1. P2-5：异常档案库长期收集系统，增强留存。
+2. P2-6：轻量数据埋点接口，为后续投放/调参准备。
+3. P3-7：第 5 套皮肤候选（建议深夜医院值班台）。
 4. P1-2：微信开发者工具真实导入测试。
-5. P4-9：Android release APK / 签名流程。
+5. P4-8：Android release APK / 签名流程。

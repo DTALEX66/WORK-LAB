@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const templatePath = resolve(root, 'templates/skin-template.json');
 const guidePath = resolve(root, 'docs/SKIN_AUTHORING_GUIDE.md');
 const schemaPath = resolve(root, 'schemas/skin.schema.json');
+const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 
 function validate(instance, subschema, path = '$', failures = []) {
   const allowedTypes = Array.isArray(subschema.type) ? subschema.type : [subschema.type];
@@ -79,5 +81,38 @@ test('skin authoring guide documents the repeatable production workflow', () => 
     '地铁末班调度室',
   ]) {
     assert.match(guide, new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+});
+
+test('skin:new creates a new skin from the template without overwriting existing skins', () => {
+  const skinId = 'autogen_test_skin';
+  const skinName = '自动生成测试皮肤';
+  const skinDir = resolve(root, 'src/skins', skinId);
+  const skinPath = resolve(skinDir, 'skin.json');
+
+  assert.equal(pkg.scripts['skin:new'], 'node scripts/create-skin-from-template.mjs');
+  rmSync(skinDir, { recursive: true, force: true });
+
+  try {
+    const output = execFileSync(process.execPath, ['scripts/create-skin-from-template.mjs', skinId, skinName], {
+      cwd: root,
+      encoding: 'utf8',
+    });
+    assert.match(output, /created/i);
+    assert.ok(existsSync(skinPath));
+
+    const generated = JSON.parse(readFileSync(skinPath, 'utf8'));
+    assert.equal(generated.meta.id, skinId);
+    assert.equal(generated.meta.name, skinName);
+    assert.equal(generated.meta.subtitle, 'MINIGAME · ANOMALY SYSTEM SIM');
+    assert.ok(generated.anomalies.length >= 12);
+
+    assert.throws(() => execFileSync(process.execPath, ['scripts/create-skin-from-template.mjs', skinId], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    }), /already exists|Command failed/);
+  } finally {
+    rmSync(skinDir, { recursive: true, force: true });
   }
 });
