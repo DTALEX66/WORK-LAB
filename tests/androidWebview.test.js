@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
@@ -12,6 +12,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 test('android WebView assets use bundled script instead of ES modules', () => {
   execFileSync(process.execPath, ['scripts/prepare-android-webview.mjs'], { cwd: root, stdio: 'pipe' });
   const html = readFileSync(resolve(assets, 'index.html'), 'utf8');
+  const css = readFileSync(resolve(assets, 'styles.css'), 'utf8');
   const game = readFileSync(resolve(assets, 'game.js'), 'utf8');
 
   assert.match(html, /<script src="game\.js"><\/script>/);
@@ -21,6 +22,8 @@ test('android WebView assets use bundled script instead of ES modules', () => {
   assert.match(game, /document\.querySelector/);
   assert.match(game, /function loadArchive\(/, 'archive storage helper must be bundled before game.js');
   assert.match(game, /function getArchiveSkinProgress\(/, 'per-skin archive progress selector must be bundled');
+  assert.match(css, /monitor-cctv-elevator\.png/, 'Android WebView CSS should reference the generated CCTV monitor background');
+  assert.equal(existsSync(resolve(assets, 'assets/generated/monitor-cctv-elevator.png')), true, 'Android WebView assets should include the generated monitor image');
   assert.doesNotMatch(game, /\bSKIN_DATA\b/);
   assert.doesNotMatch(game, /\b_getHiddenLog\b/);
 });

@@ -7,13 +7,19 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
 const appRoot = resolve(root, 'android-webview');
 const assetsDir = resolve(appRoot, 'app/src/main/assets');
+const generatedAssetsDir = resolve(assetsDir, 'assets/generated');
 
 rmSync(assetsDir, { recursive: true, force: true });
 mkdirSync(assetsDir, { recursive: true });
+mkdirSync(generatedAssetsDir, { recursive: true });
 
 execFileSync(process.execPath, ['build.js', 'android'], { cwd: root, stdio: 'pipe' });
 copyFileSync(resolve(root, 'android-minigame/game.js'), resolve(assetsDir, 'game.js'));
 copyFileSync(resolve(root, 'styles.css'), resolve(assetsDir, 'styles.css'));
+copyFileSync(
+  resolve(root, 'assets/generated/monitor-cctv-elevator.png'),
+  resolve(generatedAssetsDir, 'monitor-cctv-elevator.png'),
+);
 
 let html = readFileSync(resolve(root, 'index.html'), 'utf8');
 html = html.replace('<script type="module" src="src/game.js"></script>', '<script src="game.js"></script>');
@@ -29,6 +35,7 @@ const files = [
   'app/src/main/assets/index.html',
   'app/src/main/assets/styles.css',
   'app/src/main/assets/game.js',
+  'app/src/main/assets/assets/generated/monitor-cctv-elevator.png',
 ];
 
 for (const file of files) {

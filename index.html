@@ -40,8 +40,15 @@
           <div class="panel-title" id="monitorPanelTitle">监控画面</div>
           <div class="monitor" id="monitor" aria-live="polite">
             <div class="cctv-stage" aria-hidden="true">
+              <div class="camera-label">CAM-03 · ELEVATOR SHAFT</div>
+              <div class="camera-timecode">23:59:47 · REC</div>
+              <div class="cctv-noise"></div>
               <div class="camera-frame">
+                <div class="hall-perspective">
+                  <span></span><span></span><span></span>
+                </div>
                 <div class="shaft-lines"></div>
+                <div class="doorway-depth"></div>
                 <div class="elevator-car">
                   <div class="door door-left"></div>
                   <div class="door door-right"></div>
@@ -49,6 +56,11 @@
                 </div>
                 <div class="floor-indicator">F<span id="monitorFloor">1</span></div>
                 <div class="anomaly-reticle"></div>
+              </div>
+              <div class="cctv-multiview" aria-label="辅助摄像头">
+                <div><b>CAM-01</b><i></i></div>
+                <div><b>CAM-07</b><i></i></div>
+                <div><b>THERM</b><i></i></div>
               </div>
             </div>
             <p class="monitor-caption" id="monitorCaption">监控画面稳定：1 层轿厢内有 1 名乘客。</p>
