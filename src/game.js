@@ -8,7 +8,7 @@ import { t, actionLabel, getSkin } from './skinManager.js';
 import { getAnomalies } from './events.js';
 import { createRewardedAd } from '../platform/platform.js';
 import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from './uiLabels.js';
-import { loadArchive, commitSessionToArchive } from './archive.js';
+import { loadArchive, commitSessionToArchive, getArchiveSkinProgress } from './archive.js';
 import { trackEvent } from './analytics.js';
 import {
   createRuntimeSession,
@@ -344,9 +344,10 @@ function loop() {
       }));
       // 提交本局数据到跨局档案库
       try {
-        const ids = state.hiddenLogs?.map(h => h.id).filter(Boolean) || [];
+        const ids = state.hiddenLogs?.map(h => h.id?.replace(/_log$/, '')).filter(Boolean) || [];
         const unlockedIds = state.hiddenLogs?.filter(h => !h.locked).map(h => h.id) || [];
         commitSessionToArchive({
+          skinId: getSkin().meta?.id,
           anomaliesTriggeredTotal: state.anomaliesTriggeredTotal || 0,
           maxAnomalySeverity: state.maxAnomalySeverity || 0,
           anomalyIds: ids,
@@ -416,6 +417,7 @@ function refreshArchiveButton() {
 
 function renderArchive() {
   const archive = loadArchive();
+  const skinProgress = getArchiveSkinProgress(archive, getSkin().meta?.id, getAnomalies());
   if (els.archiveStats) {
     const ids = Object.keys(archive.encounteredAnomalies).length;
     const logs = Object.keys(archive.unlockedLogs).length;
@@ -425,6 +427,8 @@ function renderArchive() {
       ['解锁日志', logs],
       ['总异常数', archive.totalAnomaliesTriggered],
       ['最高威胁', archive.highestSeverity],
+      ['皮肤进度', `${skinProgress.encounteredCount}/${skinProgress.totalAnomalies}`],
+      ['日志解锁', `${skinProgress.unlockedLogsCount}/${skinProgress.totalAnomalies}`],
     ];
     els.archiveStats.replaceChildren(...items.map(([label, value]) => {
       const item = document.createElement('span');

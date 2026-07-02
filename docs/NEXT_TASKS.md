@@ -12,6 +12,7 @@
 - P3：第 4 套皮肤 `src/skins/subway/skin.json`（地铁末班调度室）。
 - P3：皮肤生成脚本 `scripts/create-skin-from-template.mjs` 与 `npm run skin:new -- <id> [名称]`。
 - P2：轻量埋点接口 `src/analytics.js`，已接入 H5 开始、失败、广告、操作、异常路径。
+- P2：跨局异常档案库已按皮肤记录场次、遭遇异常、解锁日志和收集进度。
 - P4：GitHub Actions verify workflow。
 - P4：`npm run android:install` 真机/模拟器安装启动命令。
 
@@ -97,18 +98,6 @@ npm run release:check
 
 价值：增强循环、增加广告触点、提高重玩动机。
 
-### 5. 异常档案库长期收集系统
-
-当前隐藏日志已可局内解锁，后续需要跨局收藏目标。
-
-任务：
-
-- 新增本地存档：已见过异常、已解锁隐藏日志、皮肤维度收集进度。
-- UI 增加“档案库”。
-- 广告解锁可推进档案收集。
-
-价值：从单局小游戏变成可留存产品。
-
 ## P3｜批量复制 / 换皮生产系统
 
 ### 7. 第 5 套皮肤候选
@@ -179,8 +168,8 @@ npm run release:check
 
 ## 建议下一步执行顺序
 
-1. P2-5：异常档案库长期收集系统，增强留存。
-2. P3-7：第 5 套皮肤候选（建议深夜医院值班台）。
-3. P4-8：Android release APK / 签名流程。
+1. P3-7：第 5 套皮肤候选（建议深夜医院值班台）。
+2. P4-8：Android release APK / 签名流程。
+3. P5-10：游戏内新手引导压缩。
 4. P1-2：微信开发者工具真实导入测试。
 5. P4-9：GitHub Actions APK artifact 上传。
