@@ -4,11 +4,13 @@ import assert from 'node:assert/strict';
 import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
 import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
 import factorySkin from '../src/skins/factory/skin.json' with { type: 'json' };
+import subwaySkin from '../src/skins/subway/skin.json' with { type: 'json' };
 
 const skins = [
   ['elevator', elevatorSkin],
   ['security', securitySkin],
   ['factory', factorySkin],
+  ['subway', subwaySkin],
 ];
 
 const REQUIRED_TEXT_KEYS = [
@@ -102,5 +104,17 @@ test('all shipped skins provide complete anomaly and hidden-log catalogues', () 
       assert.equal(typeof hidden.title, 'string', `${name}/${anomaly.id} hidden log missing title`);
       assert.equal(typeof hidden.content, 'string', `${name}/${anomaly.id} hidden log missing content`);
     }
+  }
+});
+
+test('subway skin validates the fourth-skin production workflow', () => {
+  assert.equal(subwaySkin.meta.id, 'subway');
+  assert.equal(subwaySkin.meta.name, '地铁末班调度室');
+  assert.match(subwaySkin.actionLabels.openDoor, /屏蔽门/);
+  assert.match(subwaySkin.canvasLabels.monitorSignalStable, /SIGNAL: CLEAR/);
+
+  const serialized = JSON.stringify(subwaySkin);
+  for (const forbidden of ['电梯', '轿厢', '楼层']) {
+    assert.doesNotMatch(serialized, new RegExp(forbidden), `subway skin should not keep elevator term: ${forbidden}`);
   }
 });

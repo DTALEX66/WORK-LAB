@@ -20,7 +20,7 @@
 
 - H5/Android WebView：`100dvh` 竖屏一屏布局，页面级滚动关闭，面板内滚动
 - 微信/抖音小游戏：独立 Canvas runtime，严格检查已确保不依赖 DOM/window
-- 换皮系统：皮肤 JSON 驱动，已包含电梯、安防、工厂 3 套皮肤
+- 换皮系统：皮肤 JSON 驱动，已包含电梯、安防、工厂、地铁 4 套皮肤
 - Android APK：项目内便携 JDK/Gradle/Android SDK 工具链已验证可构建 debug APK
 - 发布安全：真实 AppID / adUnitId 走 ignored 私有配置，不提交源码
 
