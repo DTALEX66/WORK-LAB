@@ -12,10 +12,22 @@
 ## 已验证能力
 
 - 项目内便携工具链可构建：JDK 17、Gradle 8.10.2、Android SDK platform/build-tools 35。
+- `npm run verify` 可执行完整开发验收：测试、微信 strict、Android 构建、APK 元数据检查。
 - `npm run android:build` 可产出 debug APK。
 - `npm run android:inspect` 可验证包名、应用名、launcher icon、minSdk、targetSdk。
+- `npm run release:check` 用于发布前强校验真实 AppID / 广告位和平台 runtime blocker。
 - APK 使用自定义应用名 `异常电梯控制台` 与定制 launcher icon。
 - WebView console 已接入 logcat tag：`MINIGAME_WEBVIEW`。
+
+## 完整验收
+
+在项目根目录运行：
+
+```bash
+npm run verify
+```
+
+该命令覆盖 Node 测试、微信小游戏 strict bundle 检查、Android debug APK 构建与 APK 元数据检查。
 
 ## 适配目标
 
@@ -91,6 +103,22 @@ npm run android:inspect
 [apk-check] PASS: target sdk is 35
 [apk-check] OK
 ```
+
+## 发布前私有配置
+
+真实微信 AppID 和激励广告位不提交到仓库。需要发布前在项目根目录复制模板：
+
+```bash
+cp release.config.example.json release.config.json
+```
+
+填入真实值后运行：
+
+```bash
+npm run release:check
+```
+
+默认占位配置下 `npm run release:check` 会故意失败；只有本地私有配置完整时才应通过。
 
 ## 导入 Android Studio
 

@@ -42,10 +42,6 @@ function findModernNode() {
   return null;
 }
 
-function npmCommand() {
-  return process.platform === 'win32' ? 'npm.cmd' : 'npm';
-}
-
 function run(label, command, args, options = {}) {
   console.log(`\n[verify] === ${label} ===`);
   const result = spawnSync(command, args, {
@@ -75,7 +71,7 @@ if (!modern) {
 
 console.log(`[verify] using modern Node ${modern.version} at ${modern.executable}`);
 
-run('unit/regression tests via npm test', npmCommand(), ['test']);
+run('unit/regression tests', modern.executable, ['scripts/run-tests.cjs']);
 run('WeChat mini-game build', modern.executable, ['build.js', 'wechat']);
 run('WeChat strict bundle check', modern.executable, ['scripts/check-wechat-bundle.mjs', '--strict']);
 run('Android debug APK build', modern.executable, ['scripts/build-android-debug.mjs']);

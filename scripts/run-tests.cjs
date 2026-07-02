@@ -56,7 +56,7 @@ if (!modern) {
   process.exit(1);
 }
 
-const args = ['--test', 'tests/*.test.js'];
+const args = ['--test', '--test-concurrency=1', 'tests/*.test.js'];
 console.log(`[test] using ${modern.version} at ${modern.executable}`);
 const result = spawnSync(modern.executable, args, {
   stdio: 'inherit',

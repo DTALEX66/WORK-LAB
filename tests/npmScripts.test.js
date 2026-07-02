@@ -10,6 +10,7 @@ test('npm test uses a Node16-compatible launcher', () => {
   assert.match(launcher, /findModernNode/, 'launcher should locate a modern bundled Node');
   assert.match(launcher, /LOCALAPPDATA/, 'launcher should support Hermes bundled Node on Windows');
   assert.match(launcher, /--test/, 'launcher should invoke the real node:test runner');
+  assert.match(launcher, /--test-concurrency=1/, 'launcher should serialize build-output tests to avoid generated-bundle races');
 });
 
 test('android inspect script verifies APK launcher metadata', () => {
@@ -25,7 +26,8 @@ test('verify script runs the full release acceptance gate', () => {
   const verifyScript = readFileSync(new URL('../scripts/verify-all.cjs', import.meta.url), 'utf8');
 
   assert.equal(pkg.scripts.verify, 'node scripts/verify-all.cjs');
-  assert.match(verifyScript, /npmCommand\(\), \['test'\]/, 'verify should run npm test');
+  assert.doesNotMatch(verifyScript, /npmCommand/, 'verify should avoid spawning npm.cmd inside Git Bash on Windows');
+  assert.match(verifyScript, /modern\.executable, \['scripts\/run-tests\.cjs'\]/, 'verify should run tests through the modern Node launcher');
   assert.match(verifyScript, /\['build\.js', 'wechat'\]/, 'verify should build WeChat bundle');
   assert.match(verifyScript, /check-wechat-bundle\.mjs', '--strict'/, 'verify should run WeChat strict check');
   assert.match(verifyScript, /build-android-debug\.mjs/, 'verify should build Android APK');
