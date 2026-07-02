@@ -19,6 +19,8 @@ test('android WebView assets use bundled script instead of ES modules', () => {
   assert.match(html, /user-scalable=no/);
   assert.match(game, /MINIGAME - Android WebView 小游戏构建/);
   assert.match(game, /document\.querySelector/);
+  assert.match(game, /function loadArchive\(/, 'archive storage helper must be bundled before game.js');
+  assert.match(game, /function getArchiveSkinProgress\(/, 'per-skin archive progress selector must be bundled');
   assert.doesNotMatch(game, /\bSKIN_DATA\b/);
   assert.doesNotMatch(game, /\b_getHiddenLog\b/);
 });
