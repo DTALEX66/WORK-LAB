@@ -16,3 +16,4 @@ android-webview/app/build/
 release.config.json
 wechat-minigame/project.private.config.json
 douyin-minigame/project.private.config.json
+.hermes/
