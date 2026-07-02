@@ -26,8 +26,14 @@ test('verify script runs the full release acceptance gate', () => {
   const verifyScript = readFileSync(new URL('../scripts/verify-all.cjs', import.meta.url), 'utf8');
 
   assert.equal(pkg.scripts.verify, 'node scripts/verify-all.cjs');
+  assert.equal(pkg.scripts['verify:summary'], 'node scripts/verify-all.cjs --summary');
   assert.doesNotMatch(verifyScript, /npmCommand/, 'verify should avoid spawning npm.cmd inside Git Bash on Windows');
   assert.match(verifyScript, /modern\.executable, \['scripts\/run-tests\.cjs'\]/, 'verify should run tests through the modern Node launcher');
+  assert.match(verifyScript, /--summary/, 'verify should support a compact summary mode');
+  assert.match(verifyScript, /\[verify\] tests: pass/, 'summary mode should print test result line');
+  assert.match(verifyScript, /\[verify\] wechat strict: 0 blocker/, 'summary mode should print strict bundle result line');
+  assert.match(verifyScript, /\[verify\] android build: OK/, 'summary mode should print Android build result line');
+  assert.match(verifyScript, /\[verify\] apk metadata: OK/, 'summary mode should print APK metadata result line');
   assert.match(verifyScript, /\['build\.js', 'wechat'\]/, 'verify should build WeChat bundle');
   assert.match(verifyScript, /check-wechat-bundle\.mjs', '--strict'/, 'verify should run WeChat strict check');
   assert.match(verifyScript, /build-android-debug\.mjs/, 'verify should build Android APK');

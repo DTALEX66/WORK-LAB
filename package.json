@@ -11,6 +11,7 @@
     "android:inspect": "node scripts/check-apk-metadata.mjs",
     "release:check": "node scripts/check-release-readiness.mjs",
     "verify": "node scripts/verify-all.cjs",
+    "verify:summary": "node scripts/verify-all.cjs --summary",
     "skins:check": "node scripts/validate-skins.mjs"
   }
 }

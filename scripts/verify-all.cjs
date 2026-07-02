@@ -10,6 +10,8 @@ const { existsSync } = require('node:fs');
 const { join } = require('node:path');
 const { spawnSync } = require('node:child_process');
 
+const summaryMode = process.argv.includes('--summary');
+
 function parseMajor(version) {
   const match = /^v?(\d+)/.exec(version || '');
   return match ? Number(match[1]) : 0;
@@ -43,13 +45,14 @@ function findModernNode() {
 }
 
 function run(label, command, args, options = {}) {
-  console.log(`\n[verify] === ${label} ===`);
+  if (!summaryMode) console.log(`\n[verify] === ${label} ===`);
   const result = spawnSync(command, args, {
     cwd: process.cwd(),
     env: process.env,
-    stdio: 'inherit',
+    stdio: summaryMode ? 'pipe' : 'inherit',
     shell: false,
     windowsHide: true,
+    encoding: summaryMode ? 'utf8' : undefined,
     ...options,
   });
   if (result.error) {
@@ -60,6 +63,11 @@ function run(label, command, args, options = {}) {
     console.error(`[verify] ${label} failed with exit code ${result.status}`);
     process.exit(result.status || 1);
   }
+  return result;
+}
+
+function printSummary(message) {
+  if (summaryMode) console.log(message);
 }
 
 const modern = findModernNode();
@@ -69,12 +77,16 @@ if (!modern) {
   process.exit(1);
 }
 
-console.log(`[verify] using modern Node ${modern.version} at ${modern.executable}`);
+if (!summaryMode) console.log(`[verify] using modern Node ${modern.version} at ${modern.executable}`);
 
 run('unit/regression tests', modern.executable, ['scripts/run-tests.cjs']);
+printSummary('[verify] tests: pass');
 run('WeChat mini-game build', modern.executable, ['build.js', 'wechat']);
 run('WeChat strict bundle check', modern.executable, ['scripts/check-wechat-bundle.mjs', '--strict']);
+printSummary('[verify] wechat strict: 0 blocker');
 run('Android debug APK build', modern.executable, ['scripts/build-android-debug.mjs']);
+printSummary('[verify] android build: OK');
 run('Android APK metadata inspection', modern.executable, ['scripts/check-apk-metadata.mjs']);
+printSummary('[verify] apk metadata: OK');
 
-console.log('\n[verify] ✅ all checks passed');
+if (!summaryMode) console.log('\n[verify] ✅ all checks passed');
