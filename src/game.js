@@ -4,8 +4,7 @@ import { getToneForState, summarizeFailure } from './feedback.js';
 import { recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot, tickState } from './state.js';
 import CONFIG from './gameConfig.js';
 import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
-import { t, actionLabel, getSkin } from './skinManager.js';
-import { getAnomalies } from './events.js';
+import { t, actionLabel, getSkin, getAnomalies } from './skinManager.js';
 import { createRewardedAd } from '../platform/platform.js';
 import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from './uiLabels.js';
 import { loadArchive, commitSessionToArchive, getArchiveSkinProgress } from './archive.js';
@@ -150,6 +149,17 @@ const showTruthAd = createRewardedAd(CONFIG.adUnits.truth, {
   },
 });
 
+const ACTION_ICONS = {
+  openDoor: '◀▯▶',
+  closeDoor: '▶▯◀',
+  moveUp: '▲',
+  moveDown: '▼',
+  emergencyStop: 'STOP',
+  restartSystem: '↻',
+  inspectLog: 'LOG',
+  unlockHiddenLog: 'KEY',
+};
+
 
 function renderActions() {
   els.actions.replaceChildren();
@@ -159,10 +169,17 @@ function renderActions() {
     if (action.id === 'unlockHiddenLog' && lockedCount === 0) continue;
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = action.id === 'unlockHiddenLog'
+    button.dataset.action = action.id;
+    const icon = document.createElement('span');
+    icon.className = 'action-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = ACTION_ICONS[action.id] || '●';
+    const label = document.createElement('span');
+    label.className = 'action-label';
+    label.textContent = action.id === 'unlockHiddenLog'
       ? actionLabel(action.id, lockedCount)
       : action.label;
-    button.dataset.action = action.id;
+    button.append(icon, label);
     bindPress(button, () => dispatchAction(action.id));
     els.actions.append(button);
   }

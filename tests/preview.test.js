@@ -57,3 +57,20 @@ test('CCTV anomaly overlays share one target axis instead of drifting apart', ()
   assert.match(css, /\.thermal-ghost[\s\S]*left:\s*var\(--cctv-target-x\)/, 'thermal ghost should use the shared target axis');
   assert.match(css, /\.detection-corners[\s\S]*left:\s*var\(--cctv-target-x\)/, 'detection corners should use the shared target axis');
 });
+
+test('CCTV monitor uses animated GIF-like surveillance loops', () => {
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  assert.match(css, /\.cctv-loop/, 'monitor should expose a dedicated animated CCTV loop layer');
+  assert.match(css, /@keyframes\s+cctvDoorLoop/, 'door-gap glow should loop like an animated surveillance feed');
+  assert.match(css, /@keyframes\s+thermalGhostLoop/, 'thermal ghost should shimmer as a loop instead of a static marker');
+  assert.match(css, /@keyframes\s+cameraMicroShake/, 'CCTV frame should have subtle camera motion');
+});
+
+test('action buttons render elevator-specific icons beside labels', () => {
+  const js = readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
+  for (const actionId of ['openDoor', 'closeDoor', 'moveUp', 'moveDown', 'emergencyStop', 'restartSystem', 'inspectLog']) {
+    assert.match(js, new RegExp(`${actionId}:`), `icon map should include ${actionId}`);
+  }
+  assert.match(js, /className\s*=\s*'action-icon'/, 'action buttons should include an icon node');
+  assert.match(js, /className\s*=\s*'action-label'/, 'action buttons should preserve readable labels beside icons');
+});
