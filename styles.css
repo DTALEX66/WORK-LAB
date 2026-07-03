@@ -1900,3 +1900,75 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
   pointer-events: auto;
 }
 .start-card { margin-left: auto; }
+
+
+/* Mobile portrait final pass: keep CCTV first and keep the start strip reachable. */
+@media (max-width: 700px) and (orientation: portrait) {
+  html, body { height: auto; min-height: 100dvh; overflow-x: hidden; overflow-y: auto; }
+  .console-shell {
+    width: 100vw;
+    height: auto;
+    min-height: 100dvh;
+    display: block;
+    padding: max(6px, env(safe-area-inset-top)) 6px max(10px, env(safe-area-inset-bottom));
+    overflow: visible;
+  }
+  .topbar {
+    grid-template-columns: minmax(0, 1fr) 72px;
+    margin-bottom: 6px;
+    padding: 7px 8px;
+  }
+  .game-title { font-size: clamp(1.05rem, 6vw, 1.45rem); }
+  .shift-card { padding: 5px 6px; }
+  .shift-card span { font-size: 0.48rem; }
+  .shift-card strong { font-size: 1.42rem; }
+  .grid {
+    height: auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas: "monitor" "actions" "status" "logs";
+    gap: 6px;
+    overflow: visible;
+  }
+  .panel { min-height: 0; padding: 8px; border-radius: 14px; }
+  .monitor-panel { min-height: 0; padding: 8px; }
+  .monitor { min-height: 0; height: auto; padding: 8px; gap: 6px; }
+  .cctv-stage { min-height: clamp(230px, 48vh, 390px); }
+  .camera-frame { inset: 10px 76px 10px 10px; }
+  .cctv-multiview { width: 64px; right: 8px; top: 38px; bottom: 8px; gap: 5px; }
+  .monitor-caption { max-height: 2.6em; font-size: 0.68rem; line-height: 1.24; }
+  .monitor-hud { margin-top: 6px; font-size: 0.52rem; gap: 5px; }
+  .actions { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin-bottom: 0; }
+  .actions button { min-height: 48px; border-radius: 12px; padding: 4px; }
+  .action-keycap { grid-template-rows: 25px auto; gap: 1px; }
+  .action-icon { width: 32px; min-width: 32px; height: 25px; font-size: 0.8rem; }
+  .action-label { font-size: 0.54rem; }
+  #forceAnomaly { top: 6px; right: 6px; min-height: 18px; min-width: 36px; font-size: 0.5rem; }
+  .status-list { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .status-list div { min-height: 42px; padding: 4px 3px; grid-template-columns: 1fr; grid-template-areas: "icon" "value"; justify-items: center; }
+  .status-list dt { display: none; }
+  .status-list dd { font-size: 0.82rem; line-height: 1; margin-top: 1px; }
+  .hud-icon { width: 28px; height: 20px; font-size: 0.62rem; }
+  .logs { height: 76px; min-height: 0; padding: 7px 8px 7px 24px; font-size: 0.62rem; line-height: 1.2; overflow: auto; }
+  .start-overlay {
+    position: static;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 6px;
+    padding: 0;
+    background: transparent;
+  }
+  .start-card {
+    width: min(100%, 420px);
+    min-height: 42px;
+    transform: none;
+    padding: 7px 8px 7px 10px;
+    border-radius: 999px;
+  }
+  .start-card h2 { font-size: 0.76rem; }
+  .start-copy { font-size: 0.5rem; }
+  .start-card button[data-role="primary-start"] { min-height: 30px; min-width: 96px; font-size: 0.68rem; }
+}

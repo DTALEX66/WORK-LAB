@@ -132,3 +132,14 @@ test('default elevator bottom HUD reports system state, not camera signal state'
   assert.match(skin, /"monitorSignalStable":\s*"SYSTEM: STABLE"/, 'bottom HUD should describe system state');
   assert.doesNotMatch(skin, /"monitorSignalStable":\s*"SIGNAL: STABLE"/, 'bottom HUD should not conflict with camera SIGNAL DEGRADED label');
 });
+
+test('portrait mobile layout keeps CCTV first and start strip reachable without overlay', () => {
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  assert.match(css, /Mobile portrait final pass[\s\S]*@media \(max-width:\s*700px\) and \(orientation:\s*portrait\)/, 'mobile portrait should have a final override pass');
+  assert.match(css, /html, body \{ height:\s*auto; min-height:\s*100dvh; overflow-x:\s*hidden; overflow-y:\s*auto;/, 'mobile portrait should allow vertical scrolling instead of clipping the handoff strip');
+  assert.match(css, /\.console-shell[\s\S]*height:\s*auto;[\s\S]*overflow:\s*visible/, 'mobile shell should not lock content into an unscrollable viewport');
+  assert.match(css, /grid-template-areas:\s*"monitor"\s*"actions"\s*"status"\s*"logs"/, 'mobile should keep CCTV first, then controls, telemetry, logs');
+  assert.match(css, /\.start-overlay[\s\S]*position:\s*static;[\s\S]*justify-content:\s*center/, 'mobile start strip should stay in flow and centered, not overlay panels');
+  assert.match(css, /\.start-card[\s\S]*width:\s*min\(100%,\s*420px\)/, 'mobile start strip should be full-width constrained for thumb reach');
+  assert.match(css, /\.actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/, 'mobile controls should remain four-column keycaps');
+});
