@@ -1633,3 +1633,153 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
 .actions button[data-action="unlockHiddenLog"] .action-label {
   font-size: 0.68rem;
 }
+
+
+/* Monitor-dominant composition pass: CCTV is the play surface, chrome is support. */
+.game-title {
+  font-size: clamp(1.4rem, 3.2vw, 3rem);
+  max-width: 520px;
+  letter-spacing: -0.055em;
+}
+.topbar {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  padding: 7px 10px;
+  margin-bottom: 8px;
+  border-radius: 18px;
+  opacity: 0.96;
+}
+.topbar::after {
+  right: 132px;
+  top: 9px;
+  font-size: 0.52rem;
+  opacity: 0.42;
+}
+.shift-card {
+  min-width: 104px;
+  padding: 7px 8px;
+  border-radius: 14px;
+}
+.shift-card span { font-size: 0.52rem; }
+.shift-card strong { font-size: 2.2rem; }
+.grid {
+  grid-template-columns: 0.52fr 1.48fr;
+  grid-template-areas:
+    "status monitor"
+    "actions monitor"
+    "logs monitor";
+  gap: 8px;
+  align-items: stretch;
+}
+.panel { padding: 10px; border-radius: 16px; }
+.panel-title {
+  margin-bottom: 6px;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  opacity: 0.68;
+}
+.monitor-panel {
+  min-height: 560px;
+  padding: 12px;
+  border-color: rgba(97,255,190,0.34);
+  box-shadow: 0 28px 110px rgba(0,0,0,0.62), inset 0 0 0 1px rgba(97,255,190,0.08);
+}
+.monitor {
+  min-height: 498px;
+  padding: 12px;
+}
+.cctv-stage { min-height: 398px; }
+.monitor-caption {
+  max-height: 30px;
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+.monitor-hud {
+  margin-top: 7px;
+  font-size: 0.66rem;
+}
+.status-panel,
+.action-panel,
+.log-panel { min-height: 0; }
+.status-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+.status-list div {
+  min-height: 50px;
+  padding: 5px 6px;
+  grid-template-columns: 24px 1fr;
+  border-radius: 10px;
+  background: rgba(0, 8, 10, 0.48);
+}
+.hud-icon {
+  width: 24px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+}
+.status-list dt { font-size: 0.48rem; opacity: 0.5; }
+.status-list dd { font-size: 1rem; }
+.status-list meter { width: 50%; height: 6px; }
+.actions {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.actions button {
+  min-height: 54px;
+  border-radius: 13px;
+  padding: 4px;
+}
+.action-keycap { grid-template-rows: 30px auto; gap: 2px; }
+.action-icon { width: 38px; min-width: 38px; height: 30px; font-size: 0.95rem; border-radius: 9px; }
+.action-label { font-size: 0.58rem; }
+.logs {
+  height: 86px;
+  padding: 8px 10px 8px 24px;
+  font-size: 0.62rem;
+  opacity: 0.78;
+}
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "monitor"
+      "actions"
+      "status"
+      "logs";
+  }
+  .monitor-panel { min-height: 430px; }
+  .monitor { min-height: 350px; }
+  .cctv-stage { min-height: 250px; }
+}
+
+
+/* Subdue start handoff so the CCTV remains the first read. */
+.start-overlay {
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.34), rgba(0,0,0,0.08) 32%, transparent 74%);
+  pointer-events: none;
+}
+.start-card {
+  opacity: 0.78;
+  transform: scale(0.92);
+  transform-origin: left center;
+  filter: saturate(0.78) brightness(0.86);
+  background: rgba(0, 9, 11, 0.52);
+  box-shadow: 0 14px 46px rgba(0,0,0,0.38), inset 3px 0 0 rgba(97,255,190,0.38);
+  pointer-events: auto;
+}
+.start-card h2 { font-size: clamp(1.05rem, 3vw, 1.62rem); }
+.start-copy { font-size: 0.66rem; opacity: 0.62; }
+.mission-strip span,
+.risk-strip span { opacity: 0.68; min-height: 24px; font-size: 0.52rem; }
+.start-card button[data-role="primary-start"] {
+  min-height: 42px;
+  filter: saturate(0.72) brightness(0.84);
+  box-shadow: 0 0 18px rgba(97,255,190,0.12);
+}
+.start-card:focus-within,
+.start-card:hover {
+  opacity: 0.94;
+  filter: saturate(0.9) brightness(0.94);
+}

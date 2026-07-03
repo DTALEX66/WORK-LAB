@@ -97,3 +97,13 @@ test('debug trigger is demoted and action labels stay short in the HUD', () => {
   assert.match(html, /class="secondary diagnostic-trigger"/, 'force anomaly control should be a demoted diagnostic trigger');
   assert.match(css, /#forceAnomaly[\s\S]*position:\s*absolute/, 'diagnostic trigger should not occupy the main control deck');
 });
+
+test('layout makes CCTV the dominant play surface over chrome', () => {
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  assert.match(css, /grid-template-columns:\s*0\.52fr\s+1\.48fr/, 'desktop layout should bias space toward the CCTV monitor');
+  assert.match(css, /\.monitor-panel[\s\S]*min-height:\s*560px/, 'monitor panel should be taller than supporting status chrome');
+  assert.match(css, /\.status-list div[\s\S]*min-height:\s*50px/, 'status tiles should compress into a secondary instrument rail');
+  assert.match(css, /\.game-title[\s\S]*font-size:\s*clamp\(1\.4rem/, 'top title should be compact so it does not compete with the monitor');
+  assert.match(css, /\.start-card[\s\S]*opacity:\s*0\.78/, 'start handoff should be subdued so it does not steal focus from CCTV');
+  assert.match(css, /\.start-card button\[data-role="primary-start"\][\s\S]*filter:\s*saturate\(0\.72\)/, 'OVERRIDE button should be visually quieter than the monitor');
+});
