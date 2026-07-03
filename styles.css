@@ -1247,3 +1247,357 @@ button.secondary {
   color: #ffeec2;
   text-shadow: 0 0 12px rgba(255,209,102,0.82);
 }
+
+
+/* YOLO visual-density pass: game HUD over text-heavy menu. */
+.game-title {
+  font-size: clamp(2rem, 4.8vw, 4.4rem);
+  max-width: 620px;
+}
+.topbar {
+  grid-template-columns: minmax(0, 1fr) 132px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.topbar::after {
+  content: "CCTV / LIFT / NIGHT SHIFT";
+  right: 160px;
+  top: 12px;
+  opacity: 0.72;
+}
+.eyebrow { font-size: 0.64rem; letter-spacing: 0.2em; }
+.shift-card {
+  min-width: 116px;
+  padding: 10px;
+  border-radius: 18px;
+}
+.shift-card span { font-size: 0.62rem; }
+.shift-card strong { font-size: 2.5rem; }
+.grid {
+  grid-template-columns: 0.66fr 1.34fr;
+  grid-template-areas:
+    "status monitor"
+    "actions monitor"
+    "logs logs";
+  gap: 10px;
+}
+.panel { padding: 14px; border-radius: 20px; }
+.panel-title {
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  opacity: 0.86;
+}
+.status-panel { min-height: 0; }
+.status-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.status-list div {
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  grid-template-areas:
+    "icon label"
+    "icon value";
+  align-items: center;
+  gap: 0 8px;
+  padding: 8px;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 16px 18px, rgba(97,255,190,0.14), transparent 42px),
+    rgba(0, 8, 10, 0.56);
+}
+.hud-icon {
+  grid-area: icon;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 42px;
+  border: 1px solid rgba(97,255,190,0.24);
+  border-radius: 10px;
+  color: #d8fff3;
+  background: rgba(0,22,18,0.64);
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-weight: 1000;
+  text-shadow: 0 0 12px rgba(97,255,190,0.75);
+}
+.hud-icon.danger { color: #ffd6df; border-color: rgba(255,77,109,0.5); text-shadow: 0 0 12px rgba(255,77,109,0.9); }
+.status-list dt {
+  grid-area: label;
+  font-size: 0.58rem;
+  opacity: 0.68;
+  white-space: nowrap;
+}
+.status-list dd {
+  grid-area: value;
+  margin: 0;
+  font-size: 1.36rem;
+}
+.status-list meter { width: 58%; height: 8px; }
+.monitor-panel { min-height: 470px; }
+.monitor { min-height: 388px; }
+.monitor-caption {
+  max-height: 42px;
+  overflow: hidden;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+.action-panel { min-height: 0; }
+.actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.actions button {
+  min-height: 72px;
+  display: block;
+  padding: 6px;
+  text-align: center;
+  border-radius: 18px;
+}
+.action-keycap {
+  display: grid;
+  grid-template-rows: 44px auto;
+  align-items: center;
+  justify-items: center;
+  gap: 4px;
+  width: 100%;
+}
+.action-icon {
+  width: 52px;
+  min-width: 52px;
+  height: 42px;
+}
+.action-label {
+  max-width: 100%;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  opacity: 0.86;
+}
+#forceAnomaly {
+  min-height: 42px;
+  padding: 8px;
+  font-size: 0.72rem;
+  opacity: 0.72;
+}
+.log-panel { min-height: 0; }
+.logs {
+  height: 148px;
+  padding: 10px 12px 10px 28px;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+.start-overlay {
+  padding: 18px;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.72), rgba(0,0,0,0.24) 38%, rgba(0,0,0,0.06) 78%),
+    radial-gradient(circle at 66% 40%, rgba(255,77,109,0.10), transparent 20rem);
+}
+.start-card {
+  width: min(390px, 88vw);
+  padding: 22px;
+  border-radius: 24px;
+}
+.start-card h2 {
+  font-size: clamp(1.7rem, 5.2vw, 2.7rem);
+  letter-spacing: -0.05em;
+}
+.start-copy {
+  margin: 10px 0 12px;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: rgba(216,255,243,0.78);
+}
+.mission-strip,
+.risk-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+.mission-strip span,
+.risk-strip span {
+  display: grid;
+  place-items: center;
+  min-height: 38px;
+  border: 1px solid rgba(97,255,190,0.2);
+  border-radius: 12px;
+  background: rgba(0, 14, 15, 0.62);
+  color: #d8fff3;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+.risk-strip span { color: #ffd6df; border-color: rgba(255,77,109,0.25); background: rgba(255,77,109,0.07); }
+.start-card button[data-role="primary-start"] {
+  margin-top: 12px;
+  min-height: 54px;
+  font-size: 0.96rem;
+}
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "monitor"
+      "actions"
+      "status"
+      "logs";
+  }
+  .monitor-panel { min-height: 420px; }
+  .actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .actions button { min-height: 66px; }
+  .action-label { font-size: 0.62rem; }
+  .status-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .status-list div { grid-template-columns: 1fr; grid-template-areas: "icon" "value"; justify-items: center; }
+  .status-list dt { display: none; }
+  .hud-icon { width: 34px; height: 26px; }
+  .start-overlay { align-items: end; justify-items: center; }
+  .start-card { width: min(560px, 94vw); }
+}
+
+
+/* Extreme HUD pass: remove onboarding-card feel. */
+.start-card {
+  width: min(320px, 84vw);
+  padding: 18px;
+  border-radius: 18px;
+  background:
+    linear-gradient(90deg, rgba(97,255,190,0.08), transparent 46%),
+    rgba(0, 9, 11, 0.70);
+  box-shadow: 0 22px 80px rgba(0,0,0,0.54), inset 4px 0 0 rgba(97,255,190,0.68), 0 0 34px rgba(97,255,190,0.08);
+}
+.start-card .eyebrow {
+  margin-bottom: 6px;
+  font-size: 0.56rem;
+  color: rgba(97,255,190,0.72);
+}
+.start-card h2 {
+  font-size: clamp(1.4rem, 4.2vw, 2.25rem);
+  text-transform: uppercase;
+  color: #f1fff9;
+}
+.start-copy {
+  margin: 6px 0 10px;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 0.78rem;
+  color: rgba(216,255,243,0.64);
+}
+.mission-strip,
+.risk-strip {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 8px 0;
+}
+.mission-strip span,
+.risk-strip span {
+  min-height: 30px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  background: rgba(0, 20, 18, 0.42);
+}
+.mission-strip span::before,
+.risk-strip span::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+.mission-strip span,
+.risk-strip span { display: flex; align-items: center; justify-content: center; }
+.start-card button[data-role="primary-start"] {
+  margin-top: 10px;
+  min-height: 48px;
+  border-radius: 14px;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 0.9rem;
+  letter-spacing: 0.16em;
+  background: linear-gradient(135deg, rgba(255,209,102,0.96), rgba(97,255,190,0.92));
+}
+.log-panel {
+  max-height: 208px;
+}
+.logs {
+  height: 112px;
+  border-radius: 14px;
+  mask-image: linear-gradient(180deg, transparent, #000 18%, #000 88%, transparent);
+}
+.logs li:not(:last-child) { opacity: 0.58; }
+.logs li:last-child {
+  background: linear-gradient(90deg, rgba(97,255,190,0.16), transparent 74%);
+  box-shadow: inset 3px 0 0 rgba(97,255,190,0.7);
+}
+.monitor-hud span {
+  font-size: 0.68rem;
+  border-radius: 999px;
+  padding: 6px 9px;
+}
+@media (max-width: 860px) {
+  .start-card {
+    width: min(360px, 92vw);
+    justify-self: start;
+  }
+  .logs { height: 96px; }
+}
+
+
+/* Clarity pass: less fog, clearer hierarchy. */
+body::before { opacity: 0.18; }
+.console-shell { width: min(1240px, calc(100vw - 24px)); }
+h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
+.panel {
+  background:
+    linear-gradient(rgba(1, 10, 12, 0.90), rgba(1, 5, 7, 0.94)),
+    var(--hud-glass-texture) center / cover no-repeat,
+    linear-gradient(180deg, var(--panel-2), var(--panel));
+  box-shadow: 0 18px 62px rgba(0,0,0,0.64), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.monitor {
+  box-shadow: inset 0 0 0 1px rgba(97,255,190,0.16), 0 0 30px rgba(0,0,0,0.36);
+}
+.cctv-stage::before { opacity: 0.26; }
+.cctv-stage::after { opacity: 0.66; }
+.cctv-loop { opacity: 0.44; }
+.status-list div {
+  background:
+    radial-gradient(circle at 16px 18px, rgba(97,255,190,0.10), transparent 42px),
+    rgba(0, 10, 12, 0.76);
+}
+.actions button {
+  filter: saturate(0.86) brightness(0.88);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.actions button[data-action="openDoor"],
+.actions button[data-action="closeDoor"],
+.actions button[data-action="moveUp"],
+.actions button[data-action="moveDown"] {
+  filter: saturate(0.98) brightness(0.98);
+}
+.actions button[data-action="emergencyStop"] {
+  filter: saturate(1.18) brightness(1.06);
+  box-shadow: 0 0 28px rgba(255,77,109,0.32), inset 0 1px 0 rgba(255,255,255,0.26);
+}
+.actions button[data-action="restartSystem"],
+.actions button[data-action="inspectLog"] {
+  opacity: 0.82;
+}
+.start-overlay {
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.84), rgba(0,0,0,0.34) 36%, rgba(0,0,0,0.08) 78%),
+    radial-gradient(circle at 64% 40%, rgba(255,77,109,0.08), transparent 20rem);
+  backdrop-filter: none;
+}
+.start-card {
+  background:
+    linear-gradient(90deg, rgba(97,255,190,0.10), transparent 42%),
+    rgba(0, 8, 10, 0.88);
+}
+.shift-card strong {
+  color: #ffe28a;
+  text-shadow: 0 0 18px rgba(255,209,102,0.42), 0 0 42px rgba(255,209,102,0.16);
+}

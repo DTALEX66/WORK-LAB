@@ -74,3 +74,14 @@ test('action buttons render elevator-specific icons beside labels', () => {
   assert.match(js, /className\s*=\s*'action-icon'/, 'action buttons should include an icon node');
   assert.match(js, /className\s*=\s*'action-label'/, 'action buttons should preserve readable labels beside icons');
 });
+
+test('game UI keeps onboarding and controls icon-first with low text density', () => {
+  assert.match(html, /class="mission-strip"/, 'start overlay should use compact mission chips instead of a prose menu');
+  assert.match(html, /class="hud-icon"/, 'status tiles should expose icon-first HUD affordances');
+  const js = readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
+  assert.match(js, /className\s*=\s*'action-keycap'/, 'actions should render as hardware-style keycaps');
+  assert.match(html, /data-role="primary-start"/, 'start button should be a single primary handoff control');
+  assert.doesNotMatch(html, /class="start-checklist"/, 'start overlay should not render a text-heavy checklist');
+  assert.doesNotMatch(html, /class="start-rules"/, 'start overlay should not render rule badges as a menu');
+  assert.doesNotMatch(html, /目标：值守 60 秒/, 'start overlay should not ship prose-like instruction copy');
+});

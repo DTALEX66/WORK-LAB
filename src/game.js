@@ -170,6 +170,8 @@ function renderActions() {
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.action = action.id;
+    const keycap = document.createElement('span');
+    keycap.className = 'action-keycap';
     const icon = document.createElement('span');
     icon.className = 'action-icon';
     icon.setAttribute('aria-hidden', 'true');
@@ -179,7 +181,8 @@ function renderActions() {
     label.textContent = action.id === 'unlockHiddenLog'
       ? actionLabel(action.id, lockedCount)
       : action.label;
-    button.append(icon, label);
+    keycap.append(icon, label);
+    button.append(keycap);
     bindPress(button, () => dispatchAction(action.id));
     els.actions.append(button);
   }
@@ -490,25 +493,24 @@ function applyDomLabels() {
   els.fakeEndingRestartBtn.textContent = labels.restart;
   if (els.fakeEndingEyebrow) els.fakeEndingEyebrow.textContent = t('fakeEnding.eyebrow');
   if (els.fakeEndingTitle) els.fakeEndingTitle.textContent = t('fakeEnding.title');
-  if (els.startTitle) els.startTitle.textContent = labels.start.title;
-  if (els.startCopy) els.startCopy.textContent = labels.start.copy;
-  if (els.startButton) els.startButton.textContent = labels.start.button;
+  if (els.startTitle) els.startTitle.textContent = '接管电梯';
+  if (els.startCopy) els.startCopy.textContent = '看监控，按键救场。';
+  if (els.startButton) els.startButton.textContent = 'OVERRIDE';
   if (els.startChecklist) {
-    els.startChecklist.replaceChildren(...labels.start.checklist.map((item) => {
-      const li = document.createElement('li');
-      li.textContent = item;
-      return li;
+    const compactMissions = ['60s', 'CCTV', 'CONTROL'];
+    els.startChecklist.replaceChildren(...compactMissions.map((item) => {
+      const chip = document.createElement('span');
+      chip.textContent = item;
+      return chip;
     }));
   }
   if (els.startFailureRules) {
-    els.startFailureRules.replaceChildren(
-      Object.assign(document.createElement('span'), { textContent: labels.start.failureRulesTitle }),
-      ...labels.start.failureRules.map((item) => {
-        const badge = document.createElement('b');
-        badge.textContent = item;
-        return badge;
-      }),
-    );
+    const compactRisks = ['POWER', 'STABILITY', 'ANOMALY'];
+    els.startFailureRules.replaceChildren(...compactRisks.map((item) => {
+      const chip = document.createElement('span');
+      chip.textContent = item;
+      return chip;
+    }));
   }
   els.floorLabel.textContent = labels.status.floor;
   els.doorLabel.textContent = labels.status.door;
