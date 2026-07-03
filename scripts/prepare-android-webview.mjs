@@ -9,6 +9,19 @@ const appRoot = resolve(root, 'android-webview');
 const assetsDir = resolve(appRoot, 'app/src/main/assets');
 const generatedAssetsDir = resolve(assetsDir, 'assets/generated');
 
+const GENERATED_ASSETS = [
+  'cctv-basement-lift-real.png',
+  'cctv-hospital-ward-real.png',
+  'cctv-security-room-real.png',
+  'cctv-factory-real.png',
+  'cctv-subway-platform-real.png',
+  'cctv-hotel-lobby-real.png',
+  'texture-control-panel.png',
+  'texture-hud-glass.png',
+  'overlay-cctv-noise.png',
+  'overlay-signal-tear.png',
+];
+
 rmSync(assetsDir, { recursive: true, force: true });
 mkdirSync(assetsDir, { recursive: true });
 mkdirSync(generatedAssetsDir, { recursive: true });
@@ -16,10 +29,9 @@ mkdirSync(generatedAssetsDir, { recursive: true });
 execFileSync(process.execPath, ['build.js', 'android'], { cwd: root, stdio: 'pipe' });
 copyFileSync(resolve(root, 'android-minigame/game.js'), resolve(assetsDir, 'game.js'));
 copyFileSync(resolve(root, 'styles.css'), resolve(assetsDir, 'styles.css'));
-copyFileSync(
-  resolve(root, 'assets/generated/monitor-cctv-real-basement-lift.png'),
-  resolve(generatedAssetsDir, 'monitor-cctv-real-basement-lift.png'),
-);
+for (const asset of GENERATED_ASSETS) {
+  copyFileSync(resolve(root, 'assets/generated', asset), resolve(generatedAssetsDir, asset));
+}
 
 let html = readFileSync(resolve(root, 'index.html'), 'utf8');
 html = html.replace('<script type="module" src="src/game.js"></script>', '<script src="game.js"></script>');
@@ -35,7 +47,7 @@ const files = [
   'app/src/main/assets/index.html',
   'app/src/main/assets/styles.css',
   'app/src/main/assets/game.js',
-  'app/src/main/assets/assets/generated/monitor-cctv-real-basement-lift.png',
+  ...GENERATED_ASSETS.map((asset) => `app/src/main/assets/assets/generated/${asset}`),
 ];
 
 for (const file of files) {

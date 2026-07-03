@@ -26,3 +26,21 @@ test('browser preview exposes an explicit start handoff overlay', () => {
   assert.match(html, /id="openArchiveBtn"/, 'start overlay should include an archive button');
   assert.match(html, /id="archiveOverlay"/, 'archive overlay should be present for cross-session collection');
 });
+
+test('browser preview CSS consumes generated realistic UI and CCTV assets', () => {
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  for (const asset of [
+    'cctv-basement-lift-real.png',
+    'cctv-hospital-ward-real.png',
+    'cctv-security-room-real.png',
+    'cctv-factory-real.png',
+    'cctv-subway-platform-real.png',
+    'cctv-hotel-lobby-real.png',
+    'texture-control-panel.png',
+    'texture-hud-glass.png',
+    'overlay-cctv-noise.png',
+    'overlay-signal-tear.png',
+  ]) {
+    assert.match(css, new RegExp(asset.replace(/[.]/g, '\\.')), `CSS should reference generated asset ${asset}`);
+  }
+});
