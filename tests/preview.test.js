@@ -107,3 +107,28 @@ test('layout makes CCTV the dominant play surface over chrome', () => {
   assert.match(css, /\.start-card[\s\S]*opacity:\s*0\.78/, 'start handoff should be subdued so it does not steal focus from CCTV');
   assert.match(css, /\.start-card button\[data-role="primary-start"\][\s\S]*filter:\s*saturate\(0\.72\)/, 'OVERRIDE button should be visually quieter than the monitor');
 });
+
+test('left support rail prioritizes critical elevator telemetry', () => {
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  assert.match(html, /data-priority="critical"[^>]*><span class="hud-icon">F<\/span>/, 'floor tile should be marked as critical telemetry');
+  assert.match(html, /data-priority="critical"[^>]*><span class="hud-icon">▯<\/span>/, 'door tile should be marked as critical telemetry');
+  assert.match(html, /data-priority="danger"[^>]*><span class="hud-icon danger">!<\/span>/, 'anomaly tile should be marked as danger telemetry');
+  assert.match(css, /\.status-list div\[data-priority="critical"\][\s\S]*border-color:\s*rgba\(97,255,190,0\.42\)/, 'critical tiles should have higher contrast borders');
+  assert.match(css, /\.status-list div\[data-priority="secondary"\][\s\S]*opacity:\s*0\.62/, 'secondary telemetry should be visually de-emphasized');
+  assert.match(css, /\.status-list div::after[\s\S]*display:\s*none/, 'decorative circles should be removed from dense rail tiles');
+});
+
+test('start handoff is a compact authorization strip, not a second status panel', () => {
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  assert.match(css, /\.start-overlay[\s\S]*position:\s*static/, 'start handoff should be in document flow rather than covering the rail');
+  assert.match(css, /\.start-overlay[\s\S]*justify-content:\s*end/, 'start handoff should sit as a low global authorization strip');
+  assert.match(css, /\.start-card[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/, 'start card should become a compact authorization strip');
+  assert.match(css, /\.start-card \.eyebrow,[\s\S]*\.risk-strip \{\s*display:\s*none/, 'decorative onboarding chips should be hidden visually');
+  assert.match(css, /\.start-card h2[\s\S]*font-size:\s*0\.82rem/, 'handoff title should not compete with telemetry');
+});
+
+test('default elevator bottom HUD reports system state, not camera signal state', () => {
+  const skin = readFileSync(new URL('../src/skins/elevator/skin.json', import.meta.url), 'utf8');
+  assert.match(skin, /"monitorSignalStable":\s*"SYSTEM: STABLE"/, 'bottom HUD should describe system state');
+  assert.doesNotMatch(skin, /"monitorSignalStable":\s*"SIGNAL: STABLE"/, 'bottom HUD should not conflict with camera SIGNAL DEGRADED label');
+});
