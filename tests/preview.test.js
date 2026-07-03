@@ -85,3 +85,15 @@ test('game UI keeps onboarding and controls icon-first with low text density', (
   assert.doesNotMatch(html, /class="start-rules"/, 'start overlay should not render rule badges as a menu');
   assert.doesNotMatch(html, /目标：值守 60 秒/, 'start overlay should not ship prose-like instruction copy');
 });
+
+test('debug trigger is demoted and action labels stay short in the HUD', () => {
+  const js = readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  assert.match(js, /ACTION_SHORT_LABELS/, 'runtime should map long action names to short HUD labels');
+  assert.match(js, /restartSystem:\s*'重启'/, 'restart action should use a compact HUD label');
+  assert.match(js, /inspectLog:\s*'日志'/, 'log action should use a compact HUD label');
+  assert.match(js, /unlockHiddenLog:\s*'解码'/, 'decode action should use a compact HUD label');
+  assert.match(js, /forceAnomaly\.textContent\s*=\s*'ANOM'/, 'diagnostic trigger should render as a short HUD code');
+  assert.match(html, /class="secondary diagnostic-trigger"/, 'force anomaly control should be a demoted diagnostic trigger');
+  assert.match(css, /#forceAnomaly[\s\S]*position:\s*absolute/, 'diagnostic trigger should not occupy the main control deck');
+});

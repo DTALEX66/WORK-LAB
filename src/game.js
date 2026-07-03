@@ -160,6 +160,17 @@ const ACTION_ICONS = {
   unlockHiddenLog: 'KEY',
 };
 
+const ACTION_SHORT_LABELS = {
+  openDoor: '开门',
+  closeDoor: '关门',
+  moveUp: '上行',
+  moveDown: '下行',
+  emergencyStop: '急停',
+  restartSystem: '重启',
+  inspectLog: '日志',
+  unlockHiddenLog: '解码',
+};
+
 
 function renderActions() {
   els.actions.replaceChildren();
@@ -178,9 +189,12 @@ function renderActions() {
     icon.textContent = ACTION_ICONS[action.id] || '●';
     const label = document.createElement('span');
     label.className = 'action-label';
-    label.textContent = action.id === 'unlockHiddenLog'
+    label.textContent = ACTION_SHORT_LABELS[action.id] || (action.id === 'unlockHiddenLog'
       ? actionLabel(action.id, lockedCount)
-      : action.label;
+      : action.label);
+    button.setAttribute('aria-label', action.id === 'unlockHiddenLog'
+      ? actionLabel(action.id, lockedCount)
+      : action.label);
     keycap.append(icon, label);
     button.append(keycap);
     bindPress(button, () => dispatchAction(action.id));
@@ -486,7 +500,8 @@ function applyDomLabels() {
   els.actionPanelTitle.textContent = labels.actionPanel;
   els.logPanelTitle.textContent = labels.logPanel;
   els.failureTitle.textContent = labels.failureTitle;
-  els.forceAnomaly.textContent = labels.forceAnomaly;
+  els.forceAnomaly.textContent = 'ANOM';
+  els.forceAnomaly.setAttribute('aria-label', labels.forceAnomaly);
   els.reviveButton.textContent = labels.revive;
   els.restartButton.textContent = labels.restart;
   els.fakeEndingTruthBtn.textContent = labels.revealTruth;

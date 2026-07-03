@@ -1601,3 +1601,35 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
   color: #ffe28a;
   text-shadow: 0 0 18px rgba(255,209,102,0.42), 0 0 42px rgba(255,209,102,0.16);
 }
+
+
+/* Hide debug affordance from the main game control deck. */
+.action-panel { position: relative; }
+#forceAnomaly.diagnostic-trigger {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  z-index: 3;
+  width: auto;
+  min-height: 0;
+  padding: 5px 8px;
+  border-radius: 999px;
+  border-color: rgba(255,209,102,0.18);
+  color: rgba(255,238,194,0.52);
+  background: rgba(255,209,102,0.04);
+  box-shadow: none;
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  opacity: 0.42;
+}
+#forceAnomaly.diagnostic-trigger:hover,
+#forceAnomaly.diagnostic-trigger:focus-visible {
+  opacity: 0.9;
+  color: #ffeec2;
+  box-shadow: 0 0 18px rgba(255,209,102,0.14);
+}
+.actions button[data-action="restartSystem"] .action-label,
+.actions button[data-action="inspectLog"] .action-label,
+.actions button[data-action="unlockHiddenLog"] .action-label {
+  font-size: 0.68rem;
+}
