@@ -49,3 +49,11 @@ test('browser preview CSS consumes generated realistic UI and CCTV assets', () =
     assert.match(css, new RegExp(asset.replace(/[.]/g, '\\.')), `CSS should reference generated asset ${asset}`);
   }
 });
+
+test('CCTV anomaly overlays share one target axis instead of drifting apart', () => {
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  assert.match(css, /--cctv-target-x:\s*50%/, 'CCTV target should be anchored to the scene center axis');
+  assert.match(css, /\.door-gap-glow[\s\S]*left:\s*var\(--cctv-target-x\)/, 'door glow should use the shared target axis');
+  assert.match(css, /\.thermal-ghost[\s\S]*left:\s*var\(--cctv-target-x\)/, 'thermal ghost should use the shared target axis');
+  assert.match(css, /\.detection-corners[\s\S]*left:\s*var\(--cctv-target-x\)/, 'detection corners should use the shared target axis');
+});
