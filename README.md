@@ -110,6 +110,7 @@ CC Switch 管网络与 Agent 生态：
 - `scripts/workflow/hermes_workflow_doctor.py`：审计 Hermes、GPT/DeepSeek、CC Switch、Codex、MCP、Node 基线。
 - `bin/hermes-npx*`：MCP wrapper，优先使用 Hermes 自带 Node v22，避免系统 PATH Node v16 造成 Context7/Playwright 兼容问题。
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：三引擎全链路升级说明。
+- `docs/workflow/error-fixes-2026-07-04.md`：本轮云端/本地/live Hermes 互验中遇到的错误、根因、修复和复验命令。
 
 默认启用当前机器实测可运行且权限面低的 MCP：`public-apis`、`sequential-thinking`、`context7`。Playwright MCP 已用 Hermes Node v22 smoke test 可启动，但与 Hermes 原生 browser/computer_use 重叠，暂列候选不默认启用。
 

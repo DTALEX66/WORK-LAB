@@ -59,7 +59,7 @@ def copyfile(src: Path, dst: Path, *, apply: bool) -> None:
 
 
 def backup_paths(home: Path, rels: Iterable[str], *, apply: bool) -> Path:
-    stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     backup = home / "backups" / f"workflow-assistance-sync-{stamp}"
     print(f"backup root: {backup}")
     if not apply:
