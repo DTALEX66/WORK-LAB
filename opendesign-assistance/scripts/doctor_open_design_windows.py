@@ -13,13 +13,16 @@ import os
 import shutil
 import socket
 import subprocess
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 DEFAULT_MODEL = "gpt-5.5"
 DEFAULT_PORTS = (5294, 5499)
+DEFAULT_PERMISSION_ROOT = Path(r"D:\All projects")
 LOCATION_ID = "loc_open_design_assistance"
+PERMISSION_LOCATION_ID = "loc_all_projects"
 
 
 @dataclass
@@ -53,6 +56,15 @@ def read_json(path: Path) -> tuple[dict[str, Any] | None, str]:
         return json.loads(path.read_text(encoding="utf-8")), "ok"
     except Exception as exc:  # noqa: BLE001 - diagnostic script should report any parse failure.
         return None, f"invalid json: {exc}"
+
+
+def read_toml(path: Path) -> tuple[dict[str, Any] | None, str]:
+    if not path.exists():
+        return None, "missing"
+    try:
+        return tomllib.loads(path.read_text(encoding="utf-8")), "ok"
+    except Exception as exc:  # noqa: BLE001
+        return None, f"invalid toml: {exc}"
 
 
 def find_codex_bin(config: dict[str, Any] | None, explicit: str | None) -> str | None:
@@ -115,8 +127,32 @@ def git_clean(project_root: Path) -> tuple[bool, str]:
     return clean, proc.stdout.strip()
 
 
+def norm(path: object) -> str:
+    return str(path).replace("/", "\\").rstrip("\\").lower()
+
+
+def codex_permission_checks(codex_home: Path, permission_root: Path) -> tuple[Check, Check]:
+    config, status = read_toml(codex_home / "config.toml")
+    if config is None:
+        detail = f"{codex_home / 'config.toml'} ({status})"
+        return Check("Codex permission root writable", False, detail), Check("Codex permission root trusted", False, detail)
+
+    root = norm(permission_root)
+    writable_roots = ((config.get("sandbox_workspace_write") or {}).get("writable_roots") or [])
+    writable_ok = any(norm(item) == root for item in writable_roots)
+
+    projects = config.get("projects") or {}
+    trusted = projects.get(str(permission_root).lower()) or projects.get(str(permission_root)) or {}
+    trusted_ok = trusted.get("trust_level") == "trusted"
+    return (
+        Check("Codex permission root writable", writable_ok, str(permission_root)),
+        Check("Codex permission root trusted", trusted_ok, str(permission_root)),
+    )
+
+
 def diagnose(args: argparse.Namespace) -> list[Check]:
     project_root = Path(args.project_root).resolve()
+    permission_root = Path(args.permission_root).resolve()
     config_path = Path(args.config)
     open_design_exe = Path(args.open_design_exe)
     codex_home = Path(args.codex_home)
@@ -126,16 +162,19 @@ def diagnose(args: argparse.Namespace) -> list[Check]:
     codex_bin = find_codex_bin(config, args.codex_bin)
     project_locations = (config or {}).get("projectLocations") or []
     location_paths = {str(loc.get("path")) for loc in project_locations if isinstance(loc, dict)}
+    location_ids = {str(loc.get("id")) for loc in project_locations if isinstance(loc, dict)}
     default_location = (config or {}).get("defaultProjectLocationId")
     model = (((config or {}).get("agentModels") or {}).get("codex") or {}).get("model")
 
     checks = [
         Check("project root exists", project_root.exists(), str(project_root)),
+        Check("permission root exists", permission_root.exists(), str(permission_root)),
         Check("Open Design executable exists", open_design_exe.exists(), str(open_design_exe)),
         Check("app-config.json valid", config is not None, f"{config_path} ({config_status})"),
         Check("agentId is codex", (config or {}).get("agentId") == "codex", str((config or {}).get("agentId"))),
         Check("default model configured", model == args.expected_model, str(model)),
         Check("project location registered", str(project_root) in location_paths, str(project_root)),
+        Check("permission root registered", str(permission_root) in location_paths or PERMISSION_LOCATION_ID in location_ids, str(permission_root)),
         Check("default project location selected", default_location == LOCATION_ID, str(default_location)),
         Check("Codex home exists", codex_home.exists(), str(codex_home)),
         Check("Codex OAuth/login present", has_codex_login(codex_home), str(codex_home / "auth.json")),
@@ -145,6 +184,7 @@ def diagnose(args: argparse.Namespace) -> list[Check]:
         Check("plugin workspace exists", (project_root / "opendesign-assistance" / "plugins").exists()),
         Check("repo is clean and tracks origin", *git_clean(project_root)),
     ]
+    checks.extend(codex_permission_checks(codex_home, permission_root))
 
     if codex_bin:
         ok, version = run_version(codex_bin, codex_home)
@@ -162,6 +202,7 @@ def diagnose(args: argparse.Namespace) -> list[Check]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Read-only doctor for Open Design + OPEN-DESIGN-Assistance on Windows.")
     parser.add_argument("--project-root", default=str(Path.cwd()), help="OPEN-DESIGN-Assistance clone")
+    parser.add_argument("--permission-root", default=str(DEFAULT_PERMISSION_ROOT), help="Codex writable/trusted root expected for Open Design calls")
     parser.add_argument("--config", default=str(default_config_path()), help="Open Design app-config.json")
     parser.add_argument("--open-design-exe", default=str(default_open_design_exe()), help="Open Design.exe path")
     parser.add_argument("--codex-bin", default=None, help="Optional explicit codex.exe/codex.cmd path")
@@ -178,14 +219,18 @@ def main() -> None:
     checks = diagnose(args)
     required_names = {
         "project root exists",
+        "permission root exists",
         "app-config.json valid",
         "agentId is codex",
         "default model configured",
         "project location registered",
+        "permission root registered",
         "default project location selected",
         "Codex home exists",
         "Codex OAuth/login present",
         "Codex executable discovered",
+        "Codex permission root writable",
+        "Codex permission root trusted",
         "Codex CLI runs",
         "portable setup doc exists",
         "repo is clean and tracks origin",

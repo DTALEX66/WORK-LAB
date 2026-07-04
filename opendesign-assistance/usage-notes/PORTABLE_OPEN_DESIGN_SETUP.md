@@ -69,7 +69,8 @@ python opendesign-assistance/scripts/configure_open_design_windows.py \
 4. 设置 Codex 模型，默认 `gpt-5.5`。
 5. 写入本机 `CODEX_BIN` 和 `CODEX_HOME`。
 6. 把 Open Design 默认项目位置设为本仓库。
-7. 创建代理启动器：
+7. 把 `D:\All projects` 注册为 Open Design 可选项目位置，并写入 Codex `config.toml` 的 writable/trusted root，避免 Open Design 调 Codex 时被目录权限拦截。
+8. 创建代理启动器：
 
 ```text
 D:\Programs\Open Design\Open Design - GPT Codex Proxy.bat
@@ -119,6 +120,34 @@ python opendesign-assistance/scripts/configure_open_design_windows.py \
   --project-root "D:\All projects\OPEN-DESIGN-Assistance" \
   --dry-run
 ```
+
+### 调整 Codex 权限覆盖根
+
+默认权限覆盖根是：
+
+```text
+D:\All projects
+```
+
+如果 Open Design 调 Codex 时提示目录权限不足，重新运行：
+
+```bash
+python opendesign-assistance/scripts/configure_open_design_windows.py \
+  --project-root "D:\All projects\OPEN-DESIGN-Assistance" \
+  --permission-root "D:\All projects"
+```
+
+这会修改本机 `%USERPROFILE%\.codex\config.toml`：
+
+```toml
+[sandbox_workspace_write]
+writable_roots = ['D:\All projects']
+
+[projects.'d:\all projects']
+trust_level = "trusted"
+```
+
+不要把 `C:\`、`D:\` 整盘、Windows 系统目录或 `E:\` 加进 writable roots；只给明确需要的项目根目录。
 
 ## 配置成功输出
 
@@ -171,7 +200,15 @@ curl http://127.0.0.1:<port>/api/app-config
 ```text
 agentId = codex
 projectLocations 包含 D:\All projects\OPEN-DESIGN-Assistance
+projectLocations 包含 D:\All projects
 CODEX_HOME 指向本机 %USERPROFILE%\.codex
+```
+
+同时运行 doctor 确认：
+
+```text
+PASS Codex permission root writable: D:\All projects
+PASS Codex permission root trusted: D:\All projects
 ```
 
 ## 不要提交的内容
