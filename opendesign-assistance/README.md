@@ -14,10 +14,11 @@ opendesign-assistance/ = 给 Open Design 提供提示词、模板、适配器、
 ## 目录方向
 
 ```text
+scripts/      换电脑配置 Open Design/Codex/项目位置的脚本
+usage-notes/  Open Design 软件使用、配置、调用 AI、落地样板的说明
+templates/    可复制的任务单、scorecard、artifact、Schema/Tokens、配置模板
 prompts/      给 Open Design / Agent 使用的高质量提示词
 adapters/     Open Design 与 Codex/GPT/Hermes/运行样板之间的连接说明或脚本
-templates/    可复制的任务单、scorecard、artifact、Schema/Tokens 模板
-usage-notes/  Open Design 软件使用、配置、调用 AI、落地样板的说明
 ```
 
 ## 主规则

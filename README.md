@@ -41,7 +41,7 @@ D:\All projects\MINIGAME
 ## 目录职责
 
 ```text
-opendesign-assistance/     面向 Open Design 软件本体的增强资料：prompts / adapters / templates / usage notes
+opendesign-assistance/     面向 Open Design 软件本体的增强资料：scripts / prompts / adapters / templates / usage notes
 design-system/             已吸收的设计协议资产：DESIGN.md / Schema / Tokens / component rules，供 Open Design 参考或导入
 minigame-runtime/          已精简的游戏系统参考样板：运行时、平台样板、测试、精选素材，供 Open Design 生成/验证时参考
 project-memory/            项目定义、迁移记录、吸收边界、清理决策记录
@@ -74,6 +74,8 @@ project-memory/PROJECT_DEFINITION.md
 project-memory/MIGRATION_STATUS.md
 project-memory/MINIGAME_RUNTIME_CLEANUP.md
 opendesign-assistance/README.md
+opendesign-assistance/usage-notes/PORTABLE_OPEN_DESIGN_SETUP.md
+opendesign-assistance/scripts/configure_open_design_windows.py
 opendesign-assistance/prompts/OPEN_DESIGN_MAIN_WINDOW_UI_PROMPT.md
 design-system/DESIGN.md
 minigame-runtime/README.md
