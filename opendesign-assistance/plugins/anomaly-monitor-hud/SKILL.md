@@ -40,3 +40,15 @@ Use this skill for dark surveillance, monitoring-room, CCTV, anomaly-detection, 
 7. Responsive behavior
 8. Implementation prompt
 ```
+
+## Local template references
+
+Use these local references before generating:
+
+```text
+opendesign-assistance/templates/layouts/mobile-menu.md
+opendesign-assistance/templates/motion/motion-system.md
+opendesign-assistance/templates/typography/cjk-ui-typography.md
+opendesign-assistance/templates/design-systems/style-reference-index.md
+opendesign-assistance/assets/visual-packs/anomaly-monitor-cctv/manifest.json
+```

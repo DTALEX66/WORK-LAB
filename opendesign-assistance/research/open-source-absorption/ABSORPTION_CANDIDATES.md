@@ -47,7 +47,13 @@ opendesign-assistance/templates/qa/anti-ai-slop-checklist.md
 opendesign-assistance/templates/layouts/landing-page.md
 opendesign-assistance/templates/layouts/dashboard.md
 opendesign-assistance/templates/layouts/mobile-menu.md
+opendesign-assistance/templates/layouts/settings-panel.md
+opendesign-assistance/templates/layouts/pricing-page.md
+opendesign-assistance/templates/layouts/product-page.md
 opendesign-assistance/templates/graphic/poster-cover.md
+opendesign-assistance/templates/graphic/social-card.md
+opendesign-assistance/templates/decks/pitch-deck.md
+opendesign-assistance/templates/motion/motion-system.md
 opendesign-assistance/templates/typography/cjk-ui-typography.md
 opendesign-assistance/templates/design-systems/style-reference-index.md
 ```

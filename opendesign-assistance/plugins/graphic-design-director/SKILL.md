@@ -48,3 +48,14 @@ Social card: 1200x630
 Mobile banner: 1080x1920
 Square card: 1080x1080
 ```
+
+## Local template references
+
+Use these local templates before generating:
+
+```text
+opendesign-assistance/templates/graphic/poster-cover.md
+opendesign-assistance/templates/graphic/social-card.md
+opendesign-assistance/templates/typography/cjk-ui-typography.md
+opendesign-assistance/templates/design-systems/style-reference-index.md
+```

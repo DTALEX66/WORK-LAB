@@ -58,3 +58,20 @@ Reject outputs that look like:
 - fake HUDs where decoration blocks actual controls
 
 Be concise but ruthless. Prefer fewer, stronger changes over broad vague feedback.
+
+## Local template references
+
+Use these local templates as review gates:
+
+```text
+opendesign-assistance/templates/qa/anti-ai-slop-checklist.md
+opendesign-assistance/templates/layouts/landing-page.md
+opendesign-assistance/templates/layouts/dashboard.md
+opendesign-assistance/templates/layouts/mobile-menu.md
+opendesign-assistance/templates/layouts/settings-panel.md
+opendesign-assistance/templates/layouts/pricing-page.md
+opendesign-assistance/templates/layouts/product-page.md
+opendesign-assistance/templates/graphic/poster-cover.md
+opendesign-assistance/templates/graphic/social-card.md
+opendesign-assistance/templates/motion/motion-system.md
+```

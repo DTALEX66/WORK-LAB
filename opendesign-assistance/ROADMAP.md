@@ -189,6 +189,12 @@ opendesign-assistance/templates/layouts/landing-page.md
 opendesign-assistance/templates/layouts/dashboard.md
 opendesign-assistance/templates/layouts/mobile-menu.md
 opendesign-assistance/templates/graphic/poster-cover.md
+opendesign-assistance/templates/layouts/product-page.md
+opendesign-assistance/templates/layouts/settings-panel.md
+opendesign-assistance/templates/layouts/pricing-page.md
+opendesign-assistance/templates/graphic/social-card.md
+opendesign-assistance/templates/decks/pitch-deck.md
+opendesign-assistance/templates/motion/motion-system.md
 opendesign-assistance/templates/typography/cjk-ui-typography.md
 opendesign-assistance/templates/design-systems/style-reference-index.md
 ```
@@ -233,4 +239,4 @@ opendesign-assistance/templates/design-systems/style-reference-index.md
 
 - 第一批增强已经覆盖设计能力、平面能力、UI/UX、菜单/网站布局和游戏 HUD。
 - 下一步不是继续堆文档，而是确认 Open Design 软件能识别这些 plugin/skill。
-- 验证后继续扩展模板库：settings panel、pricing page、product page、social card、pitch deck、motion system。
+- 验证后继续扩展：Open Design 插件安装说明、插件打包/发布说明、brand-to-design-system、plugin scaffold generator。

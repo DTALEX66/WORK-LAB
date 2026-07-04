@@ -58,3 +58,16 @@ Return a concise design package:
 ```
 
 If producing HTML, make it a self-contained prototype with responsive mobile-first CSS.
+
+## Local template references
+
+Use these local references before generating:
+
+```text
+opendesign-assistance/templates/layouts/mobile-menu.md
+opendesign-assistance/templates/layouts/settings-panel.md
+opendesign-assistance/templates/graphic/social-card.md
+opendesign-assistance/templates/motion/motion-system.md
+opendesign-assistance/templates/qa/anti-ai-slop-checklist.md
+opendesign-assistance/assets/visual-packs/anomaly-monitor-cctv/manifest.json
+```
