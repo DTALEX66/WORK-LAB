@@ -12,6 +12,15 @@ D:\All projects\OPEN-DESIGN-Assistance
 https://github.com/DTALEX66/OPEN-DESIGN-Assistance
 ```
 
+## 当前项目定义
+
+```text
+OPEN-DESIGN-Assistance = 全面辅助增强 Open Design 软件的资料/样板/提示词/适配器仓库
+Open Design 软件本体 = 实际设计流程、主窗口画布与 AI 调用入口
+```
+
+用户后续实际进行设计流程与 AI 调用时，以 Open Design 软件为主；本仓库只提供增强材料、参考实现、配置经验和落地样板。
+
 ## 迁移状态
 
 ```text
@@ -22,9 +31,9 @@ https://github.com/DTALEX66/OPEN-DESIGN-Assistance
 已完成：Open Design 默认项目位置 → OPEN-DESIGN-Assistance
 ```
 
-## 新目录是唯一主入口
+## 新目录是唯一主仓库
 
-从现在开始，和 Open Design 增强、MINIGAME 设计系统、游戏运行样板、提示词、Schema/Tokens、视觉验收相关的工作，默认都在：
+从现在开始，和 Open Design 增强资料、提示词、样板、配置经验、参考实现、Schema/Tokens、视觉资产相关的内容，默认都在：
 
 ```text
 D:\All projects\OPEN-DESIGN-Assistance
@@ -40,10 +49,10 @@ D:\All projects\MINIGAME
 ## 新目录内的职责
 
 ```text
-design-system/             Open Design-first 设计系统与 Design Command Center
-minigame-runtime/          原 MINIGAME 游戏生产系统运行样板
-opendesign-assistance/     Open Design 增强层：prompts / adapters / templates / workflows
-project-memory/            吸收、迁移、决策、边界记录
+opendesign-assistance/     Open Design 软件增强层：prompts / adapters / templates / usage notes
+design-system/             被吸收的设计资产：DESIGN.md / Schema / Tokens / component rules
+minigame-runtime/          被吸收的游戏运行样板：源码 / 平台样板 / tests / assets
+project-memory/            项目定义、吸收、迁移、决策、边界记录
 ```
 
 ## 注意
@@ -51,4 +60,5 @@ project-memory/            吸收、迁移、决策、边界记录
 - 不直接删除旧目录，除非用户明确要求。
 - 不再从旧目录继续开发新功能。
 - 如果旧目录后续出现新改动，需要先判断是否同步吸收到本主仓。
-- Open Design 主窗口设计以 Open Design 为主；外部 Figma 仅作协作/导入导出/精修备选。
+- 设计流程、AI 调用、主窗口设计以 Open Design 软件本体为主。
+- 本仓库不再被定义为工作流中心或独立设计系统产品。

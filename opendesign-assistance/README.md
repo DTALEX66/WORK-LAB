@@ -1,16 +1,28 @@
 # OpenDesign Assistance Layer
 
-这里是后续专门增强 Open Design 软件的工作区。
+这里是后续主开发区：专门为 **Open Design 软件本体** 做辅助增强。
 
-## 目标
+## 定位
 
-把原 MINIGAME 和 Design-system 中已经沉淀的能力，转成 Open Design 可直接使用的增强资料：
+```text
+Open Design 软件 = 设计流程、主窗口画布、AI 调用、原型生成的实际入口
+opendesign-assistance/ = 给 Open Design 提供提示词、模板、适配器、参考说明和落地样板连接
+```
 
-- `prompts/`：Open Design 设计/原型/验收提示词
-- `adapters/`：Open Design 与 Codex/GPT/Hermes/MINIGAME 的交接说明或脚本
-- `templates/`：设计任务单、scorecard、artifact 模板
-- `workflows/`：Open Design 主窗口设计、导出、验收、回写流程
+这里不负责替代 Open Design 的工作流，也不负责把设计流程从 Open Design 软件里搬出来。
+
+## 目录方向
+
+```text
+prompts/      给 Open Design / Agent 使用的高质量提示词
+adapters/     Open Design 与 Codex/GPT/Hermes/运行样板之间的连接说明或脚本
+templates/    可复制的任务单、scorecard、artifact、Schema/Tokens 模板
+usage-notes/  Open Design 软件使用、配置、调用 AI、落地样板的说明
+```
 
 ## 主规则
 
-Open Design 是主窗口设计平台；外部 Figma 只是协作/导入导出备选。
+- 用户实际设计时进入 Open Design 软件。
+- 用户实际调用 AI 时也在 Open Design 软件里完成。
+- 本目录只负责让 Open Design 更好用、更懂项目、更容易把输出落地。
+- Open Design 内置/Figma-like 主窗口设计能力优先；外部 Figma 只是协作、导入导出或精修备选。

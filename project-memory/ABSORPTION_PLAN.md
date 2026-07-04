@@ -1,4 +1,4 @@
-# Absorption Plan｜把原游戏系统并入 OPEN-DESIGN-Assistance
+# Absorption Record｜吸收原内容到 OPEN-DESIGN-Assistance
 
 ## 用户决策
 
@@ -14,32 +14,34 @@ DTALEX66/OPEN-DESIGN-Assistance
 D:\All projects\OPEN-DESIGN-Assistance
 ```
 
-后续方向改为：
+最新项目定义：
 
 ```text
-增强 Open Design 软件为主
+全面辅助增强 Open Design 软件
 ```
 
-因此原来的游戏系统、设计系统、Open Design 配置经验都要吸收到本仓库中。
+也就是说：设计流程、主窗口画布、AI 调用、设计生成都在 Open Design 软件本体内完成。本仓库吸收原来的游戏系统、设计系统、Open Design 配置经验，是为了给 Open Design 提供更好的上下文、样板、提示词、适配器和落地参考。
 
 ## 吸收原则
 
-1. **不覆盖原仓库**：`D:\All projects\MINIGAME` 和 `D:\All projects\Design-system` 原目录不删除、不重写。
-2. **新仓库成为总中枢**：OPEN-DESIGN-Assistance 以后承载 Open Design 增强、设计协议、游戏样板、提示词、验收标准。
-3. **保留可运行样板**：原 MINIGAME 源码、测试、H5/Android/微信样板、skins、schemas、docs、generated assets 进入 `minigame-runtime/`。
-4. **保留设计协议**：原 Design-system 整体进入 `design-system/`。
-5. **排除本地缓存/工具链**：`.git`、`.gradle`、`.tools`、`.tmp`、`.hermes`、`node_modules` 等不进入 Git。
-6. **Open Design 主窗口为准**：Open Design 内置/包含 Figma-like/Figma 主窗口能力；外部 Figma 只作为协作或导入导出备选。
+1. **Open Design 软件本体是主入口**：用户去 Open Design 里做设计流程和 AI 调用。
+2. **本仓库只做辅助增强**：不再定义自己为工作流中心、独立设计系统产品或替代设计界面。
+3. **不覆盖原仓库**：`D:\All projects\MINIGAME` 和 `D:\All projects\Design-system` 原目录不删除、不重写。
+4. **保留可运行样板**：原 MINIGAME 源码、测试、H5/Android/微信样板、skins、schemas、docs、generated assets 进入 `minigame-runtime/`。
+5. **保留设计资产**：原 Design-system 整体进入 `design-system/`，作为 Open Design 的设计上下文和 Schema/Tokens 参考。
+6. **排除本地缓存/工具链**：`.git`、`.gradle`、`.tools`、`.tmp`、`.hermes`、`node_modules` 等不进入 Git。
 
-## 目标结构
+## 当前结构
 
 ```text
 OPEN-DESIGN-Assistance/
 ├─ README.md
+├─ opendesign-assistance/
+│  ├─ README.md
+│  └─ prompts/
 ├─ design-system/
-│  ├─ OPEN_DESIGN_START_HERE.md
-│  ├─ OPEN_DESIGN_WORKFLOW.md
 │  ├─ DESIGN.md
+│  ├─ OPEN_DESIGN_START_HERE.md
 │  └─ 05_DESIGN_COMMAND_CENTER/
 ├─ minigame-runtime/
 │  ├─ src/
@@ -49,46 +51,32 @@ OPEN-DESIGN-Assistance/
 │  ├─ android-webview/
 │  ├─ wechat-minigame/
 │  └─ package.json
-├─ opendesign-assistance/
-│  ├─ README.md
-│  ├─ prompts/
-│  ├─ adapters/
-│  ├─ templates/
-│  └─ workflows/
 └─ project-memory/
+   ├─ PROJECT_DEFINITION.md
+   ├─ MIGRATION_STATUS.md
    └─ ABSORPTION_PLAN.md
 ```
 
-## 后续开发方向
+## 吸收后的角色
 
-### Phase 1：吸收
+### opendesign-assistance/
 
-- 把 Design-system 并入 `design-system/`。
-- 把 MINIGAME 并入 `minigame-runtime/`。
-- 建立 Open Design 增强层骨架。
-- 提交并推送到新 GitHub 仓库。
-
-### Phase 2：增强 Open Design
-
-把过去散落在 MINIGAME / Design-system 的流程，提炼成 Open Design 能直接使用的：
+后续主开发区。用于沉淀 Open Design 软件的增强材料：
 
 - prompts
-- DESIGN.md 合同
-- component rules
-- schema/tokens handoff
-- visual QA scorecards
-- artifact generation workflows
-- Codex/GPT subscription agent integration notes
+- adapters
+- templates
+- usage notes
+- agent/Codex 集成说明
+- Open Design 输出落地到运行样板的说明
 
-### Phase 3：把游戏系统变成 Open Design 样板库
+### design-system/
 
-原游戏系统不再只是单独游戏仓库，而是作为 Open Design 的：
+已吸收资产。现在是 Open Design 的设计上下文、Schema/Tokens 参考和视觉合同样板。
 
-- anomaly game runtime sample
-- Canvas/H5 implementation reference
-- platform adaptation reference
-- skin/reskin contract reference
-- visual QA reference
+### minigame-runtime/
+
+已吸收样板。现在是 Open Design 生成游戏 UI、验证落地、检查平台适配时的运行参考。
 
 ## 当前吸收边界
 

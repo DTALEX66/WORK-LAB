@@ -1,25 +1,22 @@
 # OPEN-DESIGN-Assistance
 
-Open Design 增强与 MINIGAME 生产系统总仓。
+全面辅助增强 **Open Design 软件** 的主仓库。
 
-本仓库的主方向已经调整为：**增强 Open Design 软件为主**，把原来的 MINIGAME 游戏生产系统、Design-system / Design Command Center、Open Design 配置经验与提示词全部吸收进来，形成一个面向 Open Design 的设计-实现-验收中枢。
+本项目不是新的设计系统软件，也不是替代 Open Design 的工作流平台。它的定位是：把已经吸收进来的 MINIGAME、Design-system、提示词、Schema/Tokens、运行样板、视觉资产和 Open Design/Codex 配置经验，全部沉淀为 **Open Design 软件的辅助增强包**。
 
-## 核心定位
+用户实际进行设计流程、主窗口画布操作、AI 调用和设计生成时，以 **Open Design 软件本体** 为主。
 
-```text
-Open Design Desktop = 主前端设计界面 / 主窗口设计平台 / Figma-like 画布
-OPEN-DESIGN-Assistance = 增强 Open Design 的协议、提示词、模板、游戏系统样板与自动化资料库
-MINIGAME runtime = 被吸收的原游戏生产系统样板，可供 Open Design 生成和验收时参考/复用
-Design-system = 被吸收的 Open Design-first 设计系统与 Design Command Center
-```
-
-## 目录结构
+## 项目定义
 
 ```text
-design-system/             原 D:\All projects\Design-system，Open Design-first 设计系统
-minigame-runtime/          原 D:\All projects\MINIGAME 的游戏生产系统源码/文档/测试/平台样板
-opendesign-assistance/     后续新增的 Open Design 增强层：适配器、提示词、工作流、模板
-project-memory/            吸收记录、迁移说明、决策与边界
+Open Design 软件
+  = 真正的设计入口、主窗口/Figma-like 画布、AI 调用界面、设计流程执行处
+
+OPEN-DESIGN-Assistance
+  = Open Design 的辅助增强仓库：资料、样板、提示词、接口约定、参考实现、配置经验、验收材料
+
+被吸收的 MINIGAME / Design-system
+  = 给 Open Design 提供参考、样板、素材、Schema/Tokens、运行时验证对象；不再单独定义主流程
 ```
 
 ## 当前主目录
@@ -28,40 +25,68 @@ project-memory/            吸收记录、迁移说明、决策与边界
 D:\All projects\OPEN-DESIGN-Assistance
 ```
 
-从现在开始，本目录是 Open Design 增强、设计系统、MINIGAME 运行样板和提示词工作流的唯一主入口。旧目录 `D:\All projects\Design-system` 与 `D:\All projects\MINIGAME` 仅作为历史来源/临时备份，不再作为主开发入口。
-
-## 使用入口
-
-优先阅读：
+云端仓库：
 
 ```text
+https://github.com/DTALEX66/OPEN-DESIGN-Assistance
+```
+
+旧目录仅作为历史来源/临时备份，不再作为主开发入口：
+
+```text
+D:\All projects\Design-system
+D:\All projects\MINIGAME
+```
+
+## 目录职责
+
+```text
+opendesign-assistance/     面向 Open Design 软件本体的增强资料：prompts / adapters / templates / usage notes
+design-system/             已吸收的设计协议资产：DESIGN.md / Schema / Tokens / component rules，供 Open Design 参考或导入
+minigame-runtime/          已吸收的游戏系统样板：运行时、平台样板、测试、素材，供 Open Design 生成/验证时参考
+project-memory/            项目定义、迁移记录、吸收边界、决策记录
+```
+
+## 主规则
+
+1. **Open Design 软件本体是主角**  
+   设计流程、主窗口设计、AI 调用、设计生成都在 Open Design 软件里完成。
+
+2. **本仓库只辅助增强 Open Design**  
+   本仓库提供资料、提示词、样板、配置说明、Schema/Tokens、视觉资产、运行时参考和验证材料。
+
+3. **不再把本仓库定义为工作流中心**  
+   工作流问题、设计流程执行、AI 模型选择与调用，以 Open Design 软件界面为准。本仓库只记录和增强，不抢主入口。
+
+4. **不再单独强调 Design-system 为主线**  
+   `design-system/` 是被吸收的设计资产库，服务 Open Design；不是新的主产品。
+
+5. **原 MINIGAME 变成参考样板**  
+   `minigame-runtime/` 是 Open Design 做游戏 UI / 运行时验证 / 平台适配时的样板和参考实现。
+
+6. **Open Design 内置 Figma-like 主窗口能力优先**  
+   主窗口设计以 Open Design 为主；外部 Figma 仅作为协作、导入导出或精修备选。
+
+## 优先阅读
+
+```text
+project-memory/PROJECT_DEFINITION.md
 project-memory/MIGRATION_STATUS.md
-project-memory/ABSORPTION_PLAN.md
-design-system/OPEN_DESIGN_START_HERE.md
-design-system/OPEN_DESIGN_WORKFLOW.md
+opendesign-assistance/README.md
+opendesign-assistance/prompts/OPEN_DESIGN_MAIN_WINDOW_UI_PROMPT.md
 design-system/DESIGN.md
 minigame-runtime/README.md
 ```
 
-## Open Design 主规则
-
-Open Design 里已经有 Figma 主窗口 / Figma-like 画布能力，因此：
-
-```text
-主窗口设计以 Open Design 为主
-外部 Figma 只作为协作、导入导出或精修备选
-Codex/GPT 只按 Schema / Tokens / Component Rules / Artifact 实现
-```
-
-## 被吸收内容
+## 已吸收内容
 
 - 原 MINIGAME 游戏生产系统：源码、H5、Canvas、Android WebView、微信小游戏样板、skins、schemas、tests、docs、generated CCTV assets。
 - 原 Design-system：Open Design-first Design Command Center、DESIGN.md、UI Schema、Design Tokens、component rules、Open Design prompts。
 - Open Design GPT/Codex 订阅配置经验：通过本地 Codex CLI 与 `CODEX_HOME` 使用订阅登录态，不要求 OpenAI API Key。
 
-## 不纳入 Git 的本地内容
+这些内容现在统一作为 Open Design 的辅助增强材料使用。
 
-为了避免仓库膨胀和泄露本机环境，以下本地运行/缓存类目录不并入 Git：
+## 不纳入 Git 的本地内容
 
 ```text
 .git/
