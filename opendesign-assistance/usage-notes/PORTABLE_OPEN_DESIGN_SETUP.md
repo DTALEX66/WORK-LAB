@@ -236,6 +236,12 @@ PASS Codex permission root writable: D:\All projects
 PASS Codex permission root trusted: D:\All projects
 ```
 
+技能/连接器状态不要混淆“当前会话可用”“本地 `.od-skills` 可读”“Codex 自动注册/自动触发”。详见：
+
+```text
+opendesign-assistance/usage-notes/OPEN_DESIGN_SKILL_STATUS.md
+```
+
 ## 不要提交的内容
 
 永远不要提交：

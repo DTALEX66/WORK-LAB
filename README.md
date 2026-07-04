@@ -83,6 +83,7 @@ opendesign-assistance/scripts/scaffold_open_design_plugin.py
 opendesign-assistance/plugins/INDEX.md
 opendesign-assistance/templates/INDEX.md
 opendesign-assistance/usage-notes/OPEN_DESIGN_PLUGIN_INSTALL.md
+opendesign-assistance/usage-notes/OPEN_DESIGN_SKILL_STATUS.md
 opendesign-assistance/plugins/uiux-layout-director/README.md
 opendesign-assistance/plugins/graphic-design-director/README.md
 opendesign-assistance/plugins/minigame-ui-director/README.md

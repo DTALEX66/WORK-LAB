@@ -46,6 +46,14 @@ python opendesign-assistance/scripts/scaffold_open_design_plugin.py my-plugin-di
 opendesign-assistance/usage-notes/OPEN_DESIGN_PLUGIN_INSTALL.md
 ```
 
+技能/连接器可用性状态说明：
+
+```text
+opendesign-assistance/usage-notes/OPEN_DESIGN_SKILL_STATUS.md
+```
+
+注意：本地 `.od-skills` 文件存在且可读，不等于已经被当前 Codex 会话注册成自动触发的正式系统技能。需要 Open Design daemon/API 或真实调用证据确认后才能升级状态。
+
 ## 主规则
 
 - 用户实际设计时进入 Open Design 软件。
