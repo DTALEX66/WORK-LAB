@@ -14,7 +14,7 @@ opendesign-assistance/ = 给 Open Design 提供提示词、模板、适配器、
 ## 目录方向
 
 ```text
-scripts/      换电脑配置/诊断 Open Design/Codex/项目位置的脚本
+scripts/      换电脑配置/诊断/验证 Open Design/Codex/项目位置和增强资产的脚本
 plugins/      Open Design 本地插件：UI/UX、平面、品牌、文化墙/展厅、2D/3D、小游戏 UI、HUD、设计审查
 design-systems/ Open Design 原生设计系统包
 assets/       Open Design 可引用的视觉资产包 manifest
@@ -24,6 +24,14 @@ research/     开源插件/技能/DESIGN.md 可吸收清单与取舍记录
 prompts/      给 Open Design / Agent 使用的高质量提示词
 adapters/     Open Design 与 Codex/GPT/Hermes/运行样板之间的连接说明或脚本
 ```
+
+## 验证
+
+```bash
+python opendesign-assistance/scripts/verify_open_design_assistance.py
+```
+
+该脚本统一检查 Open Design 插件 manifest、SKILL 引用、模板库、设计系统、视觉资产包和关键 README 入口。
 
 ## 主规则
 

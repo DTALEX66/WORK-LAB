@@ -77,6 +77,7 @@ project-memory/OPEN_DESIGN_ENHANCEMENT_RESEARCH.md
 opendesign-assistance/README.md
 opendesign-assistance/ROADMAP.md
 opendesign-assistance/scripts/doctor_open_design_windows.py
+opendesign-assistance/scripts/verify_open_design_assistance.py
 opendesign-assistance/plugins/uiux-layout-director/README.md
 opendesign-assistance/plugins/graphic-design-director/README.md
 opendesign-assistance/plugins/minigame-ui-director/README.md

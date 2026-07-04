@@ -6,9 +6,13 @@
   "version": "0.1.0",
   "description": "Open Design skill for posters, covers, social graphics, banners, and visual campaign concepts.",
   "license": "MIT",
+  "entry": "SKILL.md",
   "tags": ["graphic-design", "poster", "cover", "banner", "campaign", "visual-design"],
   "od": {
     "kind": "skill",
+    "categories": ["graphic-design", "poster", "cover", "banner", "campaign", "visual-design"],
+    "capabilities": ["prompt:inject", "artifact:image-brief", "artifact:html"],
+    "suggestedInputs": ["format", "campaign", "tone"],
     "taskKind": "new-generation",
     "useCase": {
       "query": "Create a {{format}} graphic concept for {{campaign}}."
@@ -21,7 +25,6 @@
       { "name": "format", "type": "string", "default": "poster" },
       { "name": "campaign", "type": "string", "default": "product launch" },
       { "name": "tone", "type": "string", "default": "premium" }
-    ],
-    "capabilities": ["prompt:inject", "artifact:image-brief", "artifact:html"]
+    ]
   }
 }

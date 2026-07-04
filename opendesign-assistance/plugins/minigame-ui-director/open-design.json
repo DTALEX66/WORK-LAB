@@ -6,9 +6,13 @@
   "version": "0.1.0",
   "description": "Open Design skill for mobile minigame HUD, console, and IAA screen generation.",
   "license": "MIT",
+  "entry": "SKILL.md",
   "tags": ["game-ui", "hud", "mobile", "minigame", "open-design-assistance"],
   "od": {
     "kind": "skill",
+    "categories": ["game-ui", "hud", "mobile", "minigame", "iaa"],
+    "capabilities": ["prompt:inject", "design-system:reference", "artifact:html"],
+    "suggestedInputs": ["platform", "screen", "theme", "monetization"],
     "taskKind": "new-generation",
     "useCase": {
       "query": "Design a {{screen}} screen for a {{platform}} minigame using {{theme}}."
@@ -22,7 +26,6 @@
       { "name": "screen", "type": "string", "default": "main" },
       { "name": "theme", "type": "string", "default": "anomaly-monitor-dark" },
       { "name": "monetization", "type": "string", "default": "rewarded-ad" }
-    ],
-    "capabilities": ["prompt:inject", "design-system:reference", "artifact:html"]
+    ]
   }
 }

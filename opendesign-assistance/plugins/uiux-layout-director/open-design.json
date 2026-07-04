@@ -6,9 +6,13 @@
   "version": "0.1.0",
   "description": "Open Design skill for UI/UX, website, menu, dashboard, and navigation layout generation.",
   "license": "MIT",
+  "entry": "SKILL.md",
   "tags": ["uiux", "layout", "website", "menu", "navigation", "dashboard"],
   "od": {
     "kind": "skill",
+    "categories": ["uiux", "layout", "website", "menu", "navigation", "dashboard"],
+    "capabilities": ["prompt:inject", "artifact:html", "design-system:reference"],
+    "suggestedInputs": ["surface", "audience", "style"],
     "taskKind": "new-generation",
     "useCase": {
       "query": "Design a {{surface}} with strong UI/UX hierarchy for {{audience}}."
@@ -21,7 +25,6 @@
       { "name": "surface", "type": "string", "default": "website" },
       { "name": "audience", "type": "string", "default": "general users" },
       { "name": "style", "type": "string", "default": "modern product UI" }
-    ],
-    "capabilities": ["prompt:inject", "artifact:html", "design-system:reference"]
+    ]
   }
 }
