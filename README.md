@@ -78,6 +78,11 @@ opendesign-assistance/README.md
 opendesign-assistance/ROADMAP.md
 opendesign-assistance/scripts/doctor_open_design_windows.py
 opendesign-assistance/scripts/verify_open_design_assistance.py
+opendesign-assistance/scripts/generate_open_design_indexes.py
+opendesign-assistance/scripts/scaffold_open_design_plugin.py
+opendesign-assistance/plugins/INDEX.md
+opendesign-assistance/templates/INDEX.md
+opendesign-assistance/usage-notes/OPEN_DESIGN_PLUGIN_INSTALL.md
 opendesign-assistance/plugins/uiux-layout-director/README.md
 opendesign-assistance/plugins/graphic-design-director/README.md
 opendesign-assistance/plugins/minigame-ui-director/README.md

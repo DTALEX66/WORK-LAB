@@ -29,9 +29,22 @@ adapters/     Open Design 与 Codex/GPT/Hermes/运行样板之间的连接说明
 
 ```bash
 python opendesign-assistance/scripts/verify_open_design_assistance.py
+python opendesign-assistance/scripts/generate_open_design_indexes.py
 ```
 
-该脚本统一检查 Open Design 插件 manifest、SKILL 引用、模板库、设计系统、视觉资产包和关键 README 入口。
+该验证脚本统一检查 Open Design 插件 manifest、SKILL 引用、模板库、索引、设计系统、视觉资产包和关键 README 入口。
+
+新增插件时使用：
+
+```bash
+python opendesign-assistance/scripts/scaffold_open_design_plugin.py my-plugin-director
+```
+
+插件安装/调用说明：
+
+```text
+opendesign-assistance/usage-notes/OPEN_DESIGN_PLUGIN_INSTALL.md
+```
 
 ## 主规则
 

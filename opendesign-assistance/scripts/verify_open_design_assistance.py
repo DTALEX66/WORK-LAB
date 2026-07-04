@@ -217,6 +217,47 @@ def verify_json_files(root: Path, results: list[Result]) -> None:
     check(results, "all opendesign-assistance JSON files parse", not errors, "\n".join(errors))
 
 
+def verify_indexes(root: Path, results: list[Result]) -> None:
+    plugins_index = root / ASSISTANCE_DIR / "plugins" / "INDEX.md"
+    templates_index = root / ASSISTANCE_DIR / "templates" / "INDEX.md"
+    require_file(results, root, str(plugins_index.relative_to(root)), min_bytes=500)
+    require_file(results, root, str(templates_index.relative_to(root)), min_bytes=500)
+
+    plugins_text = read_text(plugins_index) if plugins_index.is_file() else ""
+    for plugin_dir in iter_plugin_dirs(root):
+        if (plugin_dir / "open-design.json").is_file():
+            check(results, f"plugins index mentions {plugin_dir.name}", plugin_dir.name in plugins_text)
+
+    templates_text = read_text(templates_index) if templates_index.is_file() else ""
+    required_sections = [
+        "Brand / 品牌",
+        "Graphic / 平面",
+        "Layouts / UIUX",
+        "Spatial / 文化墙展厅",
+        "Visual / 2D/3D",
+        "QA / 审查",
+    ]
+    for section in required_sections:
+        check(results, f"templates index has section {section}", section in templates_text)
+
+
+def verify_scripts(root: Path, results: list[Result]) -> None:
+    scripts = [
+        "opendesign-assistance/scripts/verify_open_design_assistance.py",
+        "opendesign-assistance/scripts/generate_open_design_indexes.py",
+        "opendesign-assistance/scripts/scaffold_open_design_plugin.py",
+    ]
+    import py_compile
+
+    for rel in scripts:
+        path = require_file(results, root, rel, min_bytes=500)
+        try:
+            py_compile.compile(str(path), doraise=True)
+            check(results, f"script compiles: {rel}", True)
+        except Exception as exc:  # noqa: BLE001
+            check(results, f"script compiles: {rel}", False, str(exc))
+
+
 def verify_docs(root: Path, results: list[Result]) -> None:
     required_refs = [
         "opendesign-assistance/plugins/brand-visual-director/README.md",
@@ -224,6 +265,11 @@ def verify_docs(root: Path, results: list[Result]) -> None:
         "opendesign-assistance/templates/spatial/culture-wall.md",
         "opendesign-assistance/templates/visual/3d-design.md",
         "opendesign-assistance/scripts/verify_open_design_assistance.py",
+        "opendesign-assistance/scripts/generate_open_design_indexes.py",
+        "opendesign-assistance/scripts/scaffold_open_design_plugin.py",
+        "opendesign-assistance/plugins/INDEX.md",
+        "opendesign-assistance/templates/INDEX.md",
+        "opendesign-assistance/usage-notes/OPEN_DESIGN_PLUGIN_INSTALL.md",
     ]
     root_readme = root / "README.md"
     assistance_readme = root / ASSISTANCE_DIR / "README.md"
@@ -256,6 +302,8 @@ def main() -> int:
     verify_design_systems(root, results)
     verify_visual_packs(root, results)
     verify_json_files(root, results)
+    verify_indexes(root, results)
+    verify_scripts(root, results)
     verify_docs(root, results)
     return print_results(results)
 

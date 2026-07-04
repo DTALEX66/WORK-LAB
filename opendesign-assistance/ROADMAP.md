@@ -219,7 +219,29 @@ opendesign-assistance/templates/design-systems/style-reference-index.md
 
 原则：先吸收方法、模板、审查门槛和风格索引，不批量复制第三方仓库。
 
-## Phase 6：上游贡献候选
+## Phase 6：插件可维护性与本地安装闭环
+
+状态：完成第一批维护工具。
+
+已创建：
+
+```text
+opendesign-assistance/usage-notes/OPEN_DESIGN_PLUGIN_INSTALL.md
+opendesign-assistance/plugins/INDEX.md
+opendesign-assistance/templates/INDEX.md
+opendesign-assistance/scripts/generate_open_design_indexes.py
+opendesign-assistance/scripts/scaffold_open_design_plugin.py
+```
+
+用途：
+
+- 固定本地插件安装、调用、smoke test 和排查流程。
+- 从 `open-design.json` 自动生成插件索引。
+- 从 `templates/**/*.md` 自动生成模板索引。
+- 新增插件时用脚手架生成 `SKILL.md`、`open-design.json`、`README.md` 三件套。
+- 统一验证器覆盖索引和脚本编译。
+
+## Phase 7：上游贡献候选
 
 低风险方向：
 
@@ -240,11 +262,11 @@ opendesign-assistance/templates/design-systems/style-reference-index.md
 直接做：
 
 ```text
-把这些本地插件在 Open Design 软件中安装/调用一遍，形成 OPEN_DESIGN_PLUGIN_INSTALL.md
+brand-to-design-system 插件 + 插件发布/打包说明 OPEN_DESIGN_PLUGIN_PUBLISHING.md
 ```
 
 原因：
 
-- 第一批增强已经覆盖设计能力、平面能力、UI/UX、菜单/网站布局和游戏 HUD。
-- 下一步不是继续堆文档，而是确认 Open Design 软件能识别这些 plugin/skill。
-- 验证后继续扩展：Open Design 插件安装说明、插件打包/发布说明、brand-to-design-system、plugin scaffold generator。
+- 插件安装说明、索引和脚手架已经完成。
+- 下一步可以把“品牌输入 → DESIGN.md/tokens/应用规则”的能力做成可复用插件。
+- 同时补发布规范，避免本地插件未来扩展时 manifest/README/SKILL 结构漂移。
