@@ -171,33 +171,34 @@ Do not make it look like a web form, survey page, SaaS admin dashboard, clean da
 
 ## 9. 生成后放入项目的文件名
 
-生成完图片后，建议按以下路径放入：
+当前仓库不再囤积非运行必需的生成 PNG。生成图只作为 Open Design 临时参考或外部资产包候选；确认被运行时引用后再入库。
+
+当前允许入库的运行必需资产只有：
 
 ```text
-assets/generated/cctv-basement-lift-real.png
-assets/generated/cctv-hospital-ward-real.png
-assets/generated/cctv-security-room-real.png
-assets/generated/cctv-factory-real.png
-assets/generated/cctv-subway-platform-real.png
-assets/generated/cctv-hotel-lobby-real.png
-
-assets/generated/ui-reference-main-console.png
-assets/generated/ui-reference-start-screen.png
-assets/generated/ui-reference-failure-screen.png
-
-assets/generated/overlay-cctv-noise.png
-assets/generated/overlay-signal-tear.png
+assets/generated/cctv-basement-lift-door-open-lite-loop.gif
+assets/generated/cctv-hospital-ward-native-lite-loop.gif
+assets/generated/cctv-security-room-native-lite-loop.gif
+assets/generated/cctv-factory-native-lite-loop.gif
+assets/generated/cctv-subway-platform-native-lite-loop.gif
+assets/generated/cctv-hotel-lobby-native-lite-loop.gif
 assets/generated/texture-hud-glass.png
 assets/generated/texture-control-panel.png
 ```
 
+临时参考图建议放在本地忽略目录，不进 Git：
+
+```text
+.tmp/generated-reference/
+```
+
 ## 10. 接入优先级
 
-1. 先接入 `cctv-basement-lift-real.png` 替换默认监控主图。
+1. 优先接入/保留运行时实际引用的轻量 CCTV GIF。
 2. 再接入 `texture-control-panel.png` 重做底部按钮区。
 3. 再接入 `texture-hud-glass.png` 重做面板质感。
-4. 再按皮肤切换 CCTV 背景：医院、安防、工厂、地铁、酒店。
-5. 最后接入异常态叠层：`overlay-cctv-noise.png`、`overlay-signal-tear.png`。
+4. 其他 CCTV still、UI reference、overlay still 只作为 Open Design 临时参考，不再入库囤积。
+5. 确认某个生成资产被 runtime / Open Design plugin manifest 实际引用后，再加入 Git。
 
 ## 11. 验收标准
 

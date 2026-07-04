@@ -131,7 +131,7 @@ design-system/05_DESIGN_COMMAND_CENTER/component-rules/monitor_console.component
 opendesign-assistance/assets/visual-packs/anomaly-monitor-cctv/
 ```
 
-先不复制大图，使用 manifest 指向：
+先不复制大图，使用 manifest 指向仍保留的运行必需资产：
 
 ```text
 minigame-runtime/assets/generated/*

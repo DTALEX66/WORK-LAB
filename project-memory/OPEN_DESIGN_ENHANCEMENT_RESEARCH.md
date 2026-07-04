@@ -273,7 +273,7 @@ preview/index.html
 
 ### P3：资产包化精选视觉素材
 
-把 `minigame-runtime/assets/generated/` 中 19 个精选资产提取成 Open Design 可读资产包：
+把 `minigame-runtime/assets/generated/` 中仍保留的 8 个运行必需资产转成 Open Design 可读资产包：
 
 ```text
 opendesign-assistance/assets/visual-packs/anomaly-monitor-cctv/
