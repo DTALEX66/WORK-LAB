@@ -131,23 +131,67 @@ def norm(path: object) -> str:
     return str(path).replace("/", "\\").rstrip("\\").lower()
 
 
-def codex_permission_checks(codex_home: Path, permission_root: Path) -> tuple[Check, Check]:
+def discover_od_skill_roots(permission_root: Path) -> list[Path]:
+    try:
+        return sorted(path for path in permission_root.rglob(".od-skills") if path.is_dir())
+    except OSError:
+        return []
+
+
+def powershell_read_dir(path: Path) -> tuple[bool, str]:
+    env = os.environ.copy()
+    env["OD_SKILLS_PATH"] = str(path)
+    try:
+        proc = subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                "$ErrorActionPreference='Stop'; Get-ChildItem -LiteralPath $env:OD_SKILLS_PATH -Force | Select-Object -First 1 -ExpandProperty Name",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            timeout=30,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return False, str(exc)
+    detail = (proc.stdout or b"").decode("utf-8", errors="replace").strip()
+    if not detail:
+        detail = (proc.stderr or b"").decode("utf-8", errors="replace").strip()
+    return proc.returncode == 0, detail or str(path)
+
+
+def codex_root_checks(config: dict[str, Any], root: Path, label: str) -> tuple[Check, Check]:
+    root_norm = norm(root)
+    writable_roots = ((config.get("sandbox_workspace_write") or {}).get("writable_roots") or [])
+    writable_ok = any(norm(item) == root_norm for item in writable_roots)
+
+    projects = config.get("projects") or {}
+    trusted = projects.get(str(root).lower()) or projects.get(str(root)) or {}
+    trusted_ok = trusted.get("trust_level") == "trusted"
+    return (
+        Check(f"Codex {label} writable", writable_ok, str(root)),
+        Check(f"Codex {label} trusted", trusted_ok, str(root)),
+    )
+
+
+def codex_permission_checks(codex_home: Path, permission_root: Path) -> list[Check]:
     config, status = read_toml(codex_home / "config.toml")
     if config is None:
         detail = f"{codex_home / 'config.toml'} ({status})"
-        return Check("Codex permission root writable", False, detail), Check("Codex permission root trusted", False, detail)
+        return [Check("Codex permission root writable", False, detail), Check("Codex permission root trusted", False, detail)]
 
-    root = norm(permission_root)
-    writable_roots = ((config.get("sandbox_workspace_write") or {}).get("writable_roots") or [])
-    writable_ok = any(norm(item) == root for item in writable_roots)
-
-    projects = config.get("projects") or {}
-    trusted = projects.get(str(permission_root).lower()) or projects.get(str(permission_root)) or {}
-    trusted_ok = trusted.get("trust_level") == "trusted"
-    return (
-        Check("Codex permission root writable", writable_ok, str(permission_root)),
-        Check("Codex permission root trusted", trusted_ok, str(permission_root)),
-    )
+    checks = list(codex_root_checks(config, permission_root, "permission root"))
+    od_skill_roots = discover_od_skill_roots(permission_root)
+    checks.append(Check(".od-skills directories discovered", bool(od_skill_roots), ", ".join(str(path) for path in od_skill_roots) or "none"))
+    for path in od_skill_roots:
+        checks.extend(codex_root_checks(config, path, ".od-skills root"))
+        ok, detail = powershell_read_dir(path)
+        checks.append(Check("PowerShell .od-skills read", ok, f"{path} -> {detail}"))
+    return checks
 
 
 def diagnose(args: argparse.Namespace) -> list[Check]:
@@ -231,6 +275,10 @@ def main() -> None:
         "Codex executable discovered",
         "Codex permission root writable",
         "Codex permission root trusted",
+        ".od-skills directories discovered",
+        "Codex .od-skills root writable",
+        "Codex .od-skills root trusted",
+        "PowerShell .od-skills read",
         "Codex CLI runs",
         "portable setup doc exists",
         "repo is clean and tracks origin",

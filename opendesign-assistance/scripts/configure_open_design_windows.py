@@ -121,6 +121,43 @@ def toml_literal_path(path: Path) -> str:
     return str(path).replace("'", "\\'")
 
 
+def discover_od_skill_roots(permission_root: Path) -> list[Path]:
+    try:
+        return sorted(path for path in permission_root.rglob(".od-skills") if path.is_dir())
+    except OSError:
+        return []
+
+
+def add_writable_root(text: str, root: Path) -> str:
+    root_text = toml_literal_path(root)
+    writable_match = re.search(r"(?m)^writable_roots\s*=\s*\[(.*?)\]\s*$", text)
+    if writable_match:
+        current = writable_match.group(1)
+        if root_text.lower() in current.lower():
+            return text
+        updated = current.rstrip()
+        if updated:
+            updated += ", "
+        updated += f"'{root_text}'"
+        return text[: writable_match.start(1)] + updated + text[writable_match.end(1) :]
+    if "[sandbox_workspace_write]" in text:
+        return re.sub(
+            r"(?m)^\[sandbox_workspace_write\]\s*$",
+            lambda _match: f"[sandbox_workspace_write]\nwritable_roots = ['{root_text}']",
+            text,
+            count=1,
+        )
+    return text.rstrip() + f"\n\n[sandbox_workspace_write]\nwritable_roots = ['{root_text}']\n"
+
+
+def add_trusted_project(text: str, root: Path) -> str:
+    root_key = str(root).lower()
+    project_header = f"[projects.'{root_key}']"
+    if project_header.lower() in text.lower():
+        return text
+    return text.rstrip() + f"\n\n{project_header}\ntrust_level = \"trusted\"\n"
+
+
 def update_codex_permissions(codex_home: Path, permission_root: Path, dry_run: bool) -> Path | None:
     """Grant Codex workspace-write access to permission_root.
 
@@ -129,33 +166,13 @@ def update_codex_permissions(codex_home: Path, permission_root: Path, dry_run: b
     is trusted/writable here.
     """
     config_path = codex_home / "config.toml"
-    root_text = toml_literal_path(permission_root)
-    root_key = str(permission_root).lower()
     text = config_path.read_text(encoding="utf-8") if config_path.exists() else ""
     backup_path = backup_codex_config(config_path, dry_run)
 
-    writable_match = re.search(r"(?m)^writable_roots\s*=\s*\[(.*?)\]\s*$", text)
-    if writable_match:
-        current = writable_match.group(1)
-        if root_text.lower() not in current.lower():
-            updated = current.rstrip()
-            if updated:
-                updated += ", "
-            updated += f"'{root_text}'"
-            text = text[: writable_match.start(1)] + updated + text[writable_match.end(1) :]
-    elif "[sandbox_workspace_write]" in text:
-        text = re.sub(
-            r"(?m)^\[sandbox_workspace_write\]\s*$",
-            lambda _match: f"[sandbox_workspace_write]\nwritable_roots = ['{root_text}']",
-            text,
-            count=1,
-        )
-    else:
-        text = text.rstrip() + f"\n\n[sandbox_workspace_write]\nwritable_roots = ['{root_text}']\n"
-
-    project_header = f"[projects.'{root_key}']"
-    if project_header.lower() not in text.lower():
-        text = text.rstrip() + f"\n\n{project_header}\ntrust_level = \"trusted\"\n"
+    permission_roots = [permission_root, *discover_od_skill_roots(permission_root)]
+    for root in permission_roots:
+        text = add_writable_root(text, root)
+        text = add_trusted_project(text, root)
 
     if not dry_run:
         config_path.parent.mkdir(parents=True, exist_ok=True)

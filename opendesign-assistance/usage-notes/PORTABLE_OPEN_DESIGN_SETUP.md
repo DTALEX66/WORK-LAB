@@ -137,17 +137,42 @@ python opendesign-assistance/scripts/configure_open_design_windows.py \
   --permission-root "D:\All projects"
 ```
 
-这会修改本机 `%USERPROFILE%\.codex\config.toml`：
+这会修改本机 `%USERPROFILE%\.codex\config.toml`，同时写入总权限根和自动发现到的 `.od-skills` 精确子目录：
 
 ```toml
 [sandbox_workspace_write]
-writable_roots = ['D:\All projects']
+writable_roots = ['D:\All projects', 'D:\All projects\...\.od-skills']
 
 [projects.'d:\all projects']
+trust_level = "trusted"
+
+[projects.'d:\all projects\...\.od-skills']
 trust_level = "trusted"
 ```
 
 不要把 `C:\`、`D:\` 整盘、Windows 系统目录或 `E:\` 加进 writable roots；只给明确需要的项目根目录。
+
+### PowerShell 读取 `.od-skills` 的安全写法
+
+不要在 Codex/Open Design 调用里裸写带空格路径：
+
+```powershell
+# 容易被拆成 D:\All，表现为权限/策略失败
+Get-ChildItem D:\All projects\xxx\.od-skills
+```
+
+推荐通过环境变量传路径，再用 `-LiteralPath`：
+
+```powershell
+$env:OD_SKILLS_PATH = 'D:\All projects\xxx\.od-skills'
+Get-ChildItem -LiteralPath $env:OD_SKILLS_PATH -Force
+```
+
+如果 PowerShell 仍不稳定，Node 只读路径可作为备用探针：
+
+```bash
+node -e "const fs=require('fs'); console.log(fs.readdirSync(process.env.OD_SKILLS_PATH))"
+```
 
 ## 配置成功输出
 
