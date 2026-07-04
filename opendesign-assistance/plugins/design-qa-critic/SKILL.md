@@ -73,5 +73,11 @@ opendesign-assistance/templates/layouts/pricing-page.md
 opendesign-assistance/templates/layouts/product-page.md
 opendesign-assistance/templates/graphic/poster-cover.md
 opendesign-assistance/templates/graphic/social-card.md
+opendesign-assistance/templates/brand/brand-identity-system.md
+opendesign-assistance/templates/spatial/culture-wall.md
+opendesign-assistance/templates/spatial/exhibition-hall.md
+opendesign-assistance/templates/visual/art-direction.md
+opendesign-assistance/templates/visual/2d-design.md
+opendesign-assistance/templates/visual/3d-design.md
 opendesign-assistance/templates/motion/motion-system.md
 ```

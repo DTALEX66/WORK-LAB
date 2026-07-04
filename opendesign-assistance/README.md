@@ -15,7 +15,7 @@ opendesign-assistance/ = 给 Open Design 提供提示词、模板、适配器、
 
 ```text
 scripts/      换电脑配置/诊断 Open Design/Codex/项目位置的脚本
-plugins/      Open Design 本地插件：UI/UX、平面设计、小游戏 UI、HUD、设计审查
+plugins/      Open Design 本地插件：UI/UX、平面、品牌、文化墙/展厅、2D/3D、小游戏 UI、HUD、设计审查
 design-systems/ Open Design 原生设计系统包
 assets/       Open Design 可引用的视觉资产包 manifest
 usage-notes/  Open Design 软件使用、配置、调用 AI、落地样板的说明

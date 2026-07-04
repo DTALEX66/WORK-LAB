@@ -56,6 +56,10 @@ Use these local templates before generating:
 ```text
 opendesign-assistance/templates/graphic/poster-cover.md
 opendesign-assistance/templates/graphic/social-card.md
+opendesign-assistance/templates/brand/brand-identity-system.md
+opendesign-assistance/templates/visual/art-direction.md
+opendesign-assistance/templates/visual/2d-design.md
+opendesign-assistance/templates/spatial/culture-wall.md
 opendesign-assistance/templates/typography/cjk-ui-typography.md
 opendesign-assistance/templates/design-systems/style-reference-index.md
 ```

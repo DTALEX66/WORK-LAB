@@ -1,0 +1,17 @@
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "brand-visual-director",
+  "title": "Brand Visual Director",
+  "version": "0.1.0",
+  "description": "Open Design skill for brand identity, visual design, key visuals, 2D graphics, and campaign art direction.",
+  "author": "OPEN-DESIGN-Assistance",
+  "license": "MIT",
+  "entry": "SKILL.md",
+  "od": {
+    "kind": "skill",
+    "categories": ["brand", "visual-design", "graphic-design", "2d", "art-direction"],
+    "capabilities": ["prompt:inject", "artifact:image-brief", "design-system:reference"],
+    "suggestedInputs": ["brand", "audience", "tone", "applications", "constraints"]
+  }
+}

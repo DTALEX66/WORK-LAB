@@ -58,6 +58,10 @@ opendesign-assistance/templates/layouts/mobile-menu.md
 opendesign-assistance/templates/layouts/settings-panel.md
 opendesign-assistance/templates/layouts/pricing-page.md
 opendesign-assistance/templates/layouts/product-page.md
+opendesign-assistance/templates/spatial/culture-wall.md
+opendesign-assistance/templates/spatial/exhibition-hall.md
+opendesign-assistance/templates/visual/2d-design.md
+opendesign-assistance/templates/visual/3d-design.md
 opendesign-assistance/templates/typography/cjk-ui-typography.md
 opendesign-assistance/templates/design-systems/style-reference-index.md
 ```

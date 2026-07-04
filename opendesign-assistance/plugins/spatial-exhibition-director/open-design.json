@@ -1,0 +1,17 @@
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "spatial-exhibition-director",
+  "title": "Spatial Exhibition Director",
+  "version": "0.1.0",
+  "description": "Open Design skill for culture walls, exhibition halls, showrooms, spatial 2D/3D visuals, and production-aware environmental graphics.",
+  "author": "OPEN-DESIGN-Assistance",
+  "license": "MIT",
+  "entry": "SKILL.md",
+  "od": {
+    "kind": "skill",
+    "categories": ["spatial-design", "exhibition", "culture-wall", "3d", "environmental-graphics"],
+    "capabilities": ["prompt:inject", "artifact:html", "design-system:reference"],
+    "suggestedInputs": ["space", "scale", "audience", "content", "output"]
+  }
+}
