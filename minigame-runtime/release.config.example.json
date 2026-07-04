@@ -1,0 +1,16 @@
+{
+  "wechat": {
+    "appid": "wx_your_real_mini_game_appid",
+    "projectname": "MINIGAME"
+  },
+  "douyin": {
+    "appid": "tt_your_real_mini_game_appid",
+    "projectname": "MINIGAME"
+  },
+  "adUnits": {
+    "revive": "adunit-your-real-revive-id",
+    "decode": "adunit-your-real-decode-id",
+    "truth": "adunit-your-real-truth-id"
+  },
+  "releaseMode": false
+}

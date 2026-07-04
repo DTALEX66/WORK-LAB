@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.env
+.tmp/
+tmp/
+test-output/
+coverage/
+# Absorbed into OPEN-DESIGN-Assistance for archival/reference completeness.
+# MINIGAME_V4_Starter_Pack.zip
+# android-minigame/
+.tools/
+.gradle/
+android-webview/.gradle/
+android-webview/app/build/
+release.config.json
+wechat-minigame/project.private.config.json
+douyin-minigame/project.private.config.json
+.hermes/

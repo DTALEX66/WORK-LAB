@@ -1,0 +1,39 @@
+# Dependencies / package caches
+node_modules/
+.pnpm-store/
+
+# Build outputs and caches
+dist/
+build/
+coverage/
+.gradle/
+.tmp/
+tmp/
+test-output/
+
+# Local toolchains and downloaded SDKs
+.tools/
+**/.tools/
+**/.gradle/
+
+# Hermes local runtime attachments / session data
+.hermes/
+**/.hermes/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Secrets / local config
+.env
+.env.*
+!.env.example
+release.config.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
