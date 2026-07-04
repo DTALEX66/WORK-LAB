@@ -51,8 +51,8 @@ D:\All projects\MINIGAME
 ```text
 opendesign-assistance/     Open Design 软件增强层：prompts / adapters / templates / usage notes
 design-system/             被吸收的设计资产：DESIGN.md / Schema / Tokens / component rules
-minigame-runtime/          被吸收的游戏运行样板：源码 / 平台样板 / tests / assets
-project-memory/            项目定义、吸收、迁移、决策、边界记录
+minigame-runtime/          被吸收并精简的游戏运行样板：源码 / 平台样板 / tests / 精选 assets
+project-memory/            项目定义、吸收、迁移、清理、决策、边界记录
 ```
 
 ## 注意

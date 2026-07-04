@@ -7,13 +7,14 @@ dist/
 tmp/
 test-output/
 coverage/
-# Absorbed into OPEN-DESIGN-Assistance for archival/reference completeness.
-# MINIGAME_V4_Starter_Pack.zip
+MINIGAME_V4_Starter_Pack.zip
+# Keep the tiny Canvas platform sample; ignore regenerated Android WebView packed assets.
 # android-minigame/
 .tools/
 .gradle/
 android-webview/.gradle/
 android-webview/app/build/
+android-webview/app/src/main/assets/
 release.config.json
 wechat-minigame/project.private.config.json
 douyin-minigame/project.private.config.json
