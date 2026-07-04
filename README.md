@@ -1,11 +1,21 @@
-# Hermes Agent 配置/技能/插件部署包
+# HERMES + CC Switch + Codex 工作流增强项目
 
-> 只保存 Hermes 可迁移配置、技能、插件/工具启用方案和部署文档；不保存 Hermes 或 CC Switch 安装主体。
+> `Workflow-assistance` 是 DTALEX66 的 HERMES + CC Switch + Codex 工作流增强项目：沉淀 Hermes 配置、CC Switch 代理路径、Codex/GPT OAuth 协作、MCP、技能、脚本、模板和排错手册。
+>
+> 本仓库只保存可迁移的工作流增强资产；不保存 Hermes、CC Switch、Codex CLI 安装主体，也不保存 `.env`、OAuth `auth.json`、API Key、Token、会话数据库、缓存或日志。
+
+## 🎯 项目定义
+
+- **GitHub 云端项目**：`DTALEX66/Workflow-assistance`，作为跨电脑同步的 HERMES + CC Switch + Codex 工作流增强资产库。
+- **本地项目**：`D:\All projects\Workflow-assistance`，作为可编辑、可验证、可提交、可部署的工作流增强源目录。
+- **核心目标**：让 Hermes 负责 Agent 执行与配置，CC Switch 负责本地代理/网络通道，Codex/OpenAI OAuth 负责 GPT 订阅模型路径，并把三者的最佳实践固化为脚本、技能、模板和文档。
+
+详见：[docs/workflow/project-definition.md](docs/workflow/project-definition.md)。
 
 ## 📦 目录结构
 
 ```
-hermes-pack/
+Workflow-assistance/
 ├── config/
 │   ├── config.yaml            ← 完整配置（GPT + CC Switch 代理 + workflow MCP）
 ├── bin/                       ← hermes-npx wrapper（固定 Hermes Node v22）
@@ -45,8 +55,8 @@ hermes-pack/
 ### Windows 推荐流程
 
 ```powershell
-git clone git@github.com:DTALEX66/hermes.git
-cd hermes
+git clone git@github.com:DTALEX66/Workflow-assistance.git
+cd Workflow-assistance
 # 先确保本机已经安装 Hermes Agent 主体；本仓库不包含 Hermes 安装器
 # 如果 PowerShell 遇到中文编码问题，改用 Git Bash 执行 ./setup.sh
 .\setup.ps1
@@ -55,8 +65,8 @@ cd hermes
 如果使用 Git Bash：
 
 ```bash
-git clone git@github.com:DTALEX66/hermes.git
-cd hermes
+git clone git@github.com:DTALEX66/Workflow-assistance.git
+cd Workflow-assistance
 # 先确保本机已经安装 Hermes Agent 主体；本仓库不包含 Hermes 安装器
 chmod +x setup.sh
 ./setup.sh
@@ -88,7 +98,7 @@ CC Switch 管网络与 Agent 生态：
 
 ## 🧠 工作流强化吸收
 
-本仓库现在额外吸收了一批非 Obsidian 阶段的 Agent 工作流资产：
+本仓库作为 HERMES + CC Switch + Codex 工作流增强项目，持续吸收 Agent 工作流资产：
 
 - `docs/absorption/open-source-workflow-absorption.md`：历史对比/开源项目的吸收清单。
 - `docs/mcp/workflow-mcp-stack.md`：默认 MCP 与候选 MCP 的启用条件。
@@ -107,19 +117,19 @@ CC Switch 管网络与 Agent 生态：
 
 ```powershell
 # Windows（管理员 PowerShell）
-git clone git@github.com:DTALEX66/hermes.git
-cd hermes
+git clone git@github.com:DTALEX66/Workflow-assistance.git
+cd Workflow-assistance
 .\setup.ps1
 ```
 
 ```bash
 # Linux / macOS；Windows 请优先用 setup.ps1，Git Bash 下 setup.sh 会写入 %LOCALAPPDATA%/hermes
-git clone git@github.com:DTALEX66/hermes.git
-cd hermes
+git clone git@github.com:DTALEX66/Workflow-assistance.git
+cd Workflow-assistance
 chmod +x setup.sh && ./setup.sh
 ```
 
-脚本自动完成：检查 Hermes → 写入配置（含 public-apis + sequential-thinking + context7 MCP）→ 安装 hermes-npx wrapper → 安装本地技能 → 安装依赖 → 启用 5 个插件 + 3 个工具集。
+脚本自动完成：检查 Hermes → 写入配置（含 public-apis + sequential-thinking + context7 MCP）→ 安装 hermes-npx wrapper → 安装本地技能 → 安装依赖 → 启用插件和工具集。
 
 ---
 
@@ -315,8 +325,8 @@ hermes auth list            # 查看 OAuth 凭证
 ## 📝 备注
 
 - 内置 62 个技能由 Hermes 自动安装
-- 部署包仅包含 3 个本地自定义技能（screenlingua/python-testing/windows-dev）
+- 本仓库当前沉淀本地自定义技能、模型切换技能、Agent 工作流技能、MCP/代理/Codex 协作脚本与模板
 - 建议部署后运行 `hermes doctor` 做全面检查
-- 如果 Codex++ 被删除，切到方案B 即可
+- 如果 Codex++ 或本地代理路线不可用，切到 DeepSeek 直连或 OpenAI Codex OAuth 官方 Provider 路线即可
 - 遇到问题请查阅 [TROUBLESHOOTING.md](TROUBLESHOOTING.md) 排坑手册
 - 包含模型切换技能：说"切换DP"/"切换GPT"一键切换

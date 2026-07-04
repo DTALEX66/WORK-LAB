@@ -16,7 +16,7 @@ tags: [hermes, provider, routing, deepseek, openai, codex, proxy, cc-switch, mcp
 
 ## 优先使用脚本
 
-在 `hermes-pack` 仓库内，优先使用已审计脚本：
+在 `Workflow-assistance` 仓库内，优先使用已审计脚本：
 
 ```bash
 # 查看当前配置与前提

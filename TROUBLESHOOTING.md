@@ -1,6 +1,6 @@
 # 部署排坑手册
 
-> 记录 DTALEX66/hermes 部署过程中遇到的错误及解决方法
+> 记录 DTALEX66/Workflow-assistance（HERMES + CC Switch + Codex 工作流增强项目）部署和迁移过程中遇到的错误及解决方法
 
 ---
 
@@ -8,14 +8,14 @@
 
 **现象：**
 ```
-fatal: unable to access 'https://github.com/DTALEX66/hermes.git/': Recv failure: Connection was reset
+fatal: unable to access 'https://github.com/DTALEX66/Workflow-assistance.git/': Recv failure: Connection was reset
 ```
 
 **原因：** 网络环境（被墙/代理）导致 HTTPS 连接被重置。
 
 **解决：** 改用 SSH 克隆
 ```bash
-git clone git@github.com:DTALEX66/hermes.git
+git clone git@github.com:DTALEX66/Workflow-assistance.git
 ```
 前提：已配置 GitHub SSH 密钥（`~/.ssh/id_ed25519_github`）。
 
@@ -43,7 +43,7 @@ powershell.exe -File setup.ps1
 
 **现象（旧版本）：**
 ```
-$PackDir = Join-Path $RepoRoot "hermes-pack"  # 仓库根现在是打包内容，无子目录
+$PackDir = Join-Path $RepoRoot "Workflow-assistance"  # 旧版本误以为仓库根下还有子目录；当前仓库根就是打包内容
 ```
 
 **当前状态：** 已修复。`setup.ps1` 第 27 行改为 `$PackDir = $RepoRoot`，无需手动修改。
