@@ -136,6 +136,33 @@ git config --global user.email "your@email.com"
 
 ---
 
+## 10. Windows MCP wrapper 指到 bash 脚本导致 Hermes 闪退/断连
+
+**现象：**
+```text
+MCP server initial connection failed: [WinError 193] %1 不是有效的 Win32 应用程序
+GUI/TUI WebSocket client_disconnect(code=1006)
+```
+
+**原因：** Windows 上 Hermes 直接 spawn MCP `command` 时，不能把命令指向 POSIX bash 脚本 `bin/hermes-npx`；必须指向 `bin/hermes-npx.cmd`，否则 MCP 初始化失败，严重时会造成界面断连/闪退。
+
+**解决：**
+```yaml
+mcp_servers:
+  context7:
+    command: C:/Users/admin/AppData/Local/hermes/bin/hermes-npx.cmd
+```
+
+如果 Hermes bundled Node 不存在，但 PATH 中 Node >=20 且 `npx` 可用，`hermes-npx.cmd` 会自动回退到 PATH `npx`。修复后运行：
+
+```bash
+hermes mcp test public-apis
+hermes mcp test sequential-thinking
+hermes mcp test context7
+```
+
+---
+
 ## 快速参考
 
 | 想做什么 | 命令 |

@@ -71,12 +71,15 @@ if [ -d "$BIN_SRC" ]; then
     cp "$BIN_SRC"/* "$BIN_DST/"
     chmod +x "$BIN_DST/hermes-npx" 2>/dev/null || true
     if [ -f "$HERMES_HOME/config.yaml" ]; then
-        WRAPPER="$BIN_DST/hermes-npx"
+        case "$(uname -s 2>/dev/null || echo unknown)" in
+            MINGW*|MSYS*|CYGWIN*) WRAPPER="$BIN_DST/hermes-npx.cmd" ;;
+            *) WRAPPER="$BIN_DST/hermes-npx" ;;
+        esac
         python3 - "$HERMES_HOME/config.yaml" "$WRAPPER" <<'PY'
 from pathlib import Path
 import sys
 p = Path(sys.argv[1])
-wrapper = sys.argv[2]
+wrapper = sys.argv[2].replace('\\', '/')
 text = p.read_text(encoding='utf-8')
 text = text.replace('command: hermes-npx', f'command: "{wrapper}"')
 p.write_text(text, encoding='utf-8')

@@ -90,3 +90,34 @@ except ValueError:
 ```bash
 python -m unittest discover -s tests
 ```
+
+## SQLite Testing: Persistent State Across Tests
+
+When testing SQLite-backed code, the database file persists across test runs.
+Searches may return stale data from previous test executions, causing
+`results[0]["id"] == expected_id` to fail even when your test correctly
+inserted the record.
+
+**Fix**: use `any()` for existence checks instead of positional assertions:
+
+```python
+# WRONG — fails when previous runs left data in the DB:
+results = search_core_objects("MVP development", top_k=5)
+assert results[0]["id"] == "test_obj_001"
+
+# RIGHT — checks that your record exists somewhere in results:
+results = search_core_objects("MVP development", top_k=5)
+assert any(r["id"] == "test_obj_001" for r in results)
+```
+
+**Alternative**: clean the database in `setUp()` or use an in-memory SQLite
+(`:memory:`) for isolated test runs:
+
+```python
+class TestSQLite:
+    def setup_method(self):
+        # Use in-memory DB or delete the file before each test
+        import app.memory.database as db
+        db.DB_PATH = Path(":memory:")  # or temp file
+        db.init_db()
+```
