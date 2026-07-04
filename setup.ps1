@@ -117,8 +117,8 @@ if ((Test-Path $envSrc) -and -not (Test-Path $envDst)) {
     Write-Host "  [OK] .env exists, keeping current config"
 }
 
-# ==== Step 3b: Install MCP Node wrapper ====
-Write-Step "Step 3b: Install hermes-npx MCP wrapper"
+# ==== Step 3b: Install workflow launchers ====
+Write-Step "Step 3b: Install workflow launchers (hermes-npx + codex)"
 $binSrc = Join-Path $PackDir "bin"
 $binDst = Join-Path $HermesHome "bin"
 if (Test-Path $binSrc) {
@@ -132,7 +132,7 @@ if (Test-Path $binSrc) {
         $cfgText = $cfgText -replace 'command: hermes-npx', ('command: "' + $wrapper + '"')
         Set-Content -Path $configDst -Value $cfgText -Encoding UTF8
     }
-    Write-Host "  [OK] hermes-npx installed to $binDst"
+    Write-Host "  [OK] workflow launchers installed to $binDst"
 }
 
 # ==== Step 4: Install Skills ====

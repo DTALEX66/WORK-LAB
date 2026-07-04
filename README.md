@@ -18,7 +18,7 @@
 Workflow-assistance/
 ├── config/
 │   ├── config.yaml            ← 完整配置（GPT + CC Switch 代理 + workflow MCP）
-├── bin/                       ← hermes-npx wrapper（优先 bundled Node，Windows 用 .cmd）
+├── bin/                       ← hermes-npx + codex wrapper（Windows 用 .cmd）
 │   ├── SOUL.md                ← Agent 人格设定
 │   ├── .env.template          ← 环境变量（含代理配置）
 ├── skills/software-development/
@@ -46,7 +46,7 @@ Workflow-assistance/
 | `docs/` | 仓库文档 | 工作流吸收清单、MCP 栈、排错和部署说明 |
 | `templates/` | 手动复制/项目初始化 | Agent 规则模板、CC Switch 任务单模板 |
 | `scripts/` | 手动运行 | 安全扫描、规则检查、模型切换、工作流 doctor |
-| `bin/` | `$HERMES_HOME/bin` | MCP Node wrapper，优先使用 Hermes bundled Node |
+| `bin/` | `$HERMES_HOME/bin`，可另复制到 `~/bin` | MCP Node wrapper + Codex launcher；前者优先 Hermes bundled Node，后者定位已安装的 Codex CLI/插件 |
 
 > 注意：真实 `.env`、OAuth `auth.json`、API Key、Token、会话数据库、Hermes 安装主体、CC Switch 安装主体都不会上传。新电脑必须先自行安装 Hermes/CC Switch，再填写 API Key 并重新执行 OAuth 登录。
 
@@ -108,7 +108,8 @@ CC Switch 管网络与 Agent 生态：
 - `scripts/security/scan_agent_rules.py`：扫描第三方规则/Prompt 的零宽字符、注入语句和疑似密钥。
 - `scripts/workflow/switch_model.py`：一键切换 GPT / DeepSeek 官方 Provider 路线。
 - `scripts/workflow/hermes_workflow_doctor.py`：审计 Hermes、GPT/DeepSeek、CC Switch、Codex、MCP、Node 基线。
-- `bin/hermes-npx*`：MCP wrapper，Windows live config 指向 `.cmd`；优先使用 Hermes bundled Node，缺失时可回退 PATH Node >=20。
+- `bin/hermes-npx*`：MCP wrapper，Windows live config 指向 `.cmd`；优先使用 Hermes bundled Node，缺失时仅显式允许才回退 PATH Node >=20。
+- `bin/codex*`：Codex CLI launcher；不打包 Codex/凭证，只定位本机已安装的 `~/.codex/plugins/.plugin-appserver/codex.exe` 或 `CODEX_CLI`。
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：三引擎全链路升级说明。
 - `docs/workflow/error-fixes-2026-07-04.md`：本轮云端/本地/live Hermes 互验中遇到的错误、根因、修复和复验命令。
 

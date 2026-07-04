@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import hashlib
+import os
 import shutil
 from pathlib import Path
 from typing import Iterable
@@ -22,6 +23,23 @@ try:
     import yaml
 except Exception as exc:  # pragma: no cover - environment guard
     raise SystemExit(f"PyYAML is required: {exc}")
+
+
+def default_repo_root() -> Path:
+    """Return the repository root from this script location."""
+    return Path(__file__).resolve().parents[2]
+
+
+def default_hermes_home() -> Path:
+    """Resolve the active Hermes home without hardcoding a Windows username."""
+    if os.environ.get("HERMES_HOME"):
+        return Path(os.environ["HERMES_HOME"])
+    if os.name == "nt":
+        localappdata = os.environ.get("LOCALAPPDATA")
+        if localappdata:
+            return Path(localappdata) / "hermes"
+        return Path.home() / "AppData" / "Local" / "hermes"
+    return Path.home() / ".hermes"
 
 
 def sha_tree(path: Path) -> tuple[str | None, int]:
@@ -313,8 +331,8 @@ def merge_live_config(repo: Path, home: Path, *, apply: bool) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--repo", default="D:/All projects/Workflow-assistance")
-    parser.add_argument("--home", default="C:/Users/admin/AppData/Local/hermes")
+    parser.add_argument("--repo", default=str(default_repo_root()), help="Workflow-assistance repo root (default: this script's repo)")
+    parser.add_argument("--home", default=str(default_hermes_home()), help="Hermes home (default: HERMES_HOME or platform default)")
     parser.add_argument("--apply", action="store_true", help="Actually write changes. Without this, print intended operations only.")
     args = parser.parse_args()
 
@@ -336,11 +354,16 @@ def main() -> None:
         "skills/software-development/agent-workflow-fortress",
     ], apply=args.apply)
 
-    # live -> repo for richer portable skills.
-    copytree(home / "skills/software-development/python-testing", repo / "skills/software-development/python-testing", apply=args.apply)
-    copytree(home / "skills/software-development/windows-development-environment", repo / "skills/software-development/windows-development-environment", apply=args.apply)
-    if (home / "skills/model-switch/references").exists():
-        copytree(home / "skills/model-switch/references", repo / "skills/model-switch/references", apply=args.apply)
+    # live -> repo for supplemental reference files only.
+    # The repo's SKILL.md files are the portable canonical versions; do not
+    # blindly overwrite them with shorter/stale live copies.
+    for rel in [
+        "skills/software-development/python-testing/references",
+        "skills/software-development/windows-development-environment/references",
+        "skills/software-development/agent-workflow-fortress/references",
+        "skills/model-switch/references",
+    ]:
+        copytree(home / rel, repo / rel, apply=args.apply)
 
     # Merged repo model-switch wins, preserving useful live notes.
     if args.apply:

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Portable Codex CLI launcher for Workflow-assistance.
+# It does not bundle Codex or credentials; it only locates an already-installed Codex binary.
+
+candidates=()
+if [ -n "${CODEX_CLI:-}" ]; then
+  candidates+=("$CODEX_CLI")
+fi
+candidates+=("$HOME/.codex/plugins/.plugin-appserver/codex.exe")
+candidates+=("$HOME/AppData/Local/OpenAI/Codex/bin/codex.exe")
+win_user="${USERNAME:-${USER:-}}"
+if [ -n "$win_user" ]; then
+  candidates+=("/c/Users/$win_user/.codex/plugins/.plugin-appserver/codex.exe")
+fi
+
+for codex_bin in "${candidates[@]}"; do
+  if [ -x "$codex_bin" ]; then
+    exec "$codex_bin" "$@"
+  fi
+done
+
+if command -v codex.exe >/dev/null 2>&1; then
+  exec codex.exe "$@"
+fi
+
+echo "codex wrapper: Codex CLI not found." >&2
+echo "Install/login Codex first, or set CODEX_CLI to the Codex executable path." >&2
+exit 127

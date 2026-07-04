@@ -61,15 +61,15 @@ elif [ -f "$HERMES_HOME/.env" ]; then
     echo "  ✅ .env 已存在，保留现有配置"
 fi
 
-# Step 2b: Install MCP Node wrapper
+# Step 2b: Install workflow launchers
 echo ""
-echo "⏳ Step 2b: 安装 hermes-npx MCP wrapper"
+echo "⏳ Step 2b: 安装 hermes-npx / codex workflow launchers"
 BIN_SRC="$PACK_DIR/bin"
 BIN_DST="$HERMES_HOME/bin"
 if [ -d "$BIN_SRC" ]; then
     mkdir -p "$BIN_DST"
     cp "$BIN_SRC"/* "$BIN_DST/"
-    chmod +x "$BIN_DST/hermes-npx" 2>/dev/null || true
+    chmod +x "$BIN_DST/hermes-npx" "$BIN_DST/codex" 2>/dev/null || true
     if [ -f "$HERMES_HOME/config.yaml" ]; then
         case "$(uname -s 2>/dev/null || echo unknown)" in
             MINGW*|MSYS*|CYGWIN*) WRAPPER="$BIN_DST/hermes-npx.cmd" ;;
@@ -85,7 +85,7 @@ text = text.replace('command: hermes-npx', f'command: "{wrapper}"')
 p.write_text(text, encoding='utf-8')
 PY
     fi
-    echo "  ✅ hermes-npx 已安装到 $BIN_DST"
+    echo "  ✅ workflow launchers 已安装到 $BIN_DST"
 fi
 
 # Step 3: Install skills
