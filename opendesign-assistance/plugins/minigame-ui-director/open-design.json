@@ -1,0 +1,28 @@
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "minigame-ui-director",
+  "title": "Minigame UI Director",
+  "version": "0.1.0",
+  "description": "Open Design skill for mobile minigame HUD, console, and IAA screen generation.",
+  "license": "MIT",
+  "tags": ["game-ui", "hud", "mobile", "minigame", "open-design-assistance"],
+  "od": {
+    "kind": "skill",
+    "taskKind": "new-generation",
+    "useCase": {
+      "query": "Design a {{screen}} screen for a {{platform}} minigame using {{theme}}."
+    },
+    "context": {
+      "skills": [{ "ref": "minigame-ui-director" }],
+      "atoms": ["layout-zones", "visual-style-notes", "implementation-hints"]
+    },
+    "inputs": [
+      { "name": "platform", "type": "string", "default": "h5" },
+      { "name": "screen", "type": "string", "default": "main" },
+      { "name": "theme", "type": "string", "default": "anomaly-monitor-dark" },
+      { "name": "monetization", "type": "string", "default": "rewarded-ad" }
+    ],
+    "capabilities": ["prompt:inject", "design-system:reference", "artifact:html"]
+  }
+}

@@ -75,6 +75,17 @@ python opendesign-assistance/scripts/configure_open_design_windows.py \
 D:\Programs\Open Design\Open Design - GPT Codex Proxy.bat
 ```
 
+## 配置后诊断
+
+配置完成后运行只读 doctor：
+
+```bash
+python opendesign-assistance/scripts/doctor_open_design_windows.py \
+  --project-root "D:\All projects\OPEN-DESIGN-Assistance"
+```
+
+doctor 会检查 Open Design 配置、Codex CLI、Codex 登录态、默认项目位置、启动器、Git 状态和本地端口探测；它不会打印 OAuth token 或 API key。
+
 ## 常用参数
 
 ### 指定 Open Design 路径

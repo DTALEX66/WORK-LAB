@@ -1,0 +1,27 @@
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "anomaly-monitor-hud",
+  "title": "Anomaly Monitor HUD",
+  "version": "0.1.0",
+  "description": "Open Design skill for CCTV, surveillance, anomaly monitor, and control-console HUD interfaces.",
+  "license": "MIT",
+  "tags": ["cctv", "hud", "surveillance", "console", "game-ui", "dark-ui"],
+  "od": {
+    "kind": "skill",
+    "taskKind": "new-generation",
+    "useCase": {
+      "query": "Design a {{surface}} CCTV/HUD interface for a {{scene}} anomaly monitor at {{riskLevel}} risk."
+    },
+    "context": {
+      "skills": [{ "ref": "anomaly-monitor-hud" }],
+      "atoms": ["hud-layout", "telemetry-chips", "control-console"]
+    },
+    "inputs": [
+      { "name": "scene", "type": "string", "default": "elevator" },
+      { "name": "riskLevel", "type": "string", "default": "medium" },
+      { "name": "surface", "type": "string", "default": "mobile" }
+    ],
+    "capabilities": ["prompt:inject", "design-system:reference", "artifact:html"]
+  }
+}

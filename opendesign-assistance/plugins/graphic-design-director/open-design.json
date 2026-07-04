@@ -1,0 +1,27 @@
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "graphic-design-director",
+  "title": "Graphic Design Director",
+  "version": "0.1.0",
+  "description": "Open Design skill for posters, covers, social graphics, banners, and visual campaign concepts.",
+  "license": "MIT",
+  "tags": ["graphic-design", "poster", "cover", "banner", "campaign", "visual-design"],
+  "od": {
+    "kind": "skill",
+    "taskKind": "new-generation",
+    "useCase": {
+      "query": "Create a {{format}} graphic concept for {{campaign}}."
+    },
+    "context": {
+      "skills": [{ "ref": "graphic-design-director" }],
+      "atoms": ["composition-grid", "typography-hierarchy", "export-sizes"]
+    },
+    "inputs": [
+      { "name": "format", "type": "string", "default": "poster" },
+      { "name": "campaign", "type": "string", "default": "product launch" },
+      { "name": "tone", "type": "string", "default": "premium" }
+    ],
+    "capabilities": ["prompt:inject", "artifact:image-brief", "artifact:html"]
+  }
+}

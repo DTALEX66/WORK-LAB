@@ -13,21 +13,18 @@ OPEN-DESIGN-Assistance = 增强 Open Design 的插件、脚本、设计系统、
 
 ## Phase 1：可用性与迁移复用
 
-状态：部分完成。
+状态：完成第一版。
 
 已有：
 
 ```text
 opendesign-assistance/scripts/configure_open_design_windows.py
+opendesign-assistance/scripts/doctor_open_design_windows.py
 opendesign-assistance/usage-notes/PORTABLE_OPEN_DESIGN_SETUP.md
 opendesign-assistance/templates/open-design-app-config.template.md
 ```
 
-下一步：
-
-```text
-opendesign-assistance/scripts/doctor_open_design_windows.py
-```
+下一步：把 doctor 输出接入 Open Design usage note，形成新电脑安装后的固定验收清单。
 
 检查内容：
 
@@ -43,11 +40,15 @@ opendesign-assistance/scripts/doctor_open_design_windows.py
 
 目标：让 Open Design 软件里能直接选择/安装我们的项目增强能力。
 
+状态：完成第一批专项设计插件。
+
 创建：
 
 ```text
 opendesign-assistance/plugins/minigame-ui-director/
 opendesign-assistance/plugins/anomaly-monitor-hud/
+opendesign-assistance/plugins/uiux-layout-director/
+opendesign-assistance/plugins/graphic-design-director/
 opendesign-assistance/plugins/design-qa-critic/
 ```
 
@@ -80,6 +81,34 @@ theme: anomaly-monitor-dark | custom
 ```text
 scene: elevator | hospital | security | factory | subway | hotel
 riskLevel: low | medium | high | critical
+```
+
+### uiux-layout-director
+
+用途：专项增强菜单、网站、产品页、dashboard、信息架构与响应式布局。
+
+重点：
+
+```text
+- 导航分组与状态
+- 页面主次层级
+- mobile/tablet/desktop 响应式
+- 产品化布局节奏
+- 避免普通表单/后台感
+```
+
+### graphic-design-director
+
+用途：专项增强平面设计、海报、封面、banner、社媒图和视觉 campaign。
+
+重点：
+
+```text
+- 构图网格
+- 字体层级
+- 视觉焦点
+- 出图尺寸
+- 安全/高级/传播型三种方向
 ```
 
 ### design-qa-critic
@@ -168,12 +197,11 @@ prompts.md
 直接做：
 
 ```text
-opendesign-assistance/plugins/minigame-ui-director/
+把这些本地插件在 Open Design 软件中安装/调用一遍，形成 OPEN_DESIGN_PLUGIN_INSTALL.md
 ```
 
 原因：
 
-- 最贴近 Open Design 官方 plugin/skill 扩展机制。
-- 能最快吸收原 MINIGAME 和 Design-system 的价值。
-- 不需要改 Open Design 官方源码。
-- 可直接在 Open Design 软件中尝试本地安装/调用。
+- 第一批增强已经覆盖设计能力、平面能力、UI/UX、菜单/网站布局和游戏 HUD。
+- 下一步不是继续堆文档，而是确认 Open Design 软件能识别这些 plugin/skill。
+- 验证后再进入更细的模板库：landing page、dashboard、mobile menu、settings panel、poster/cover。

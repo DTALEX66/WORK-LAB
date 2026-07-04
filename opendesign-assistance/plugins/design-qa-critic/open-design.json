@@ -1,0 +1,26 @@
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "design-qa-critic",
+  "title": "Design QA Critic",
+  "version": "0.1.0",
+  "description": "Open Design skill for strict visual, UI/UX, layout, menu, and implementation quality review.",
+  "license": "MIT",
+  "tags": ["design-qa", "critique", "uiux", "accessibility", "layout", "visual-polish"],
+  "od": {
+    "kind": "skill",
+    "taskKind": "new-generation",
+    "useCase": {
+      "query": "Review this design artifact for {{surface}} and propose the next improvement prompt."
+    },
+    "context": {
+      "skills": [{ "ref": "design-qa-critic" }],
+      "atoms": ["scorecard", "fix-list", "next-prompt"]
+    },
+    "inputs": [
+      { "name": "surface", "type": "string", "default": "UI screen" },
+      { "name": "strictness", "type": "string", "default": "high" }
+    ],
+    "capabilities": ["prompt:inject", "artifact:critique", "design-system:reference"]
+  }
+}
