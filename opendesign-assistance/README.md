@@ -19,7 +19,8 @@ plugins/      Open Design 本地插件：UI/UX、平面设计、小游戏 UI、H
 design-systems/ Open Design 原生设计系统包
 assets/       Open Design 可引用的视觉资产包 manifest
 usage-notes/  Open Design 软件使用、配置、调用 AI、落地样板的说明
-templates/    可复制的任务单、scorecard、artifact、Schema/Tokens、配置模板
+templates/    UI/UX、平面、菜单、网站、排版、QA 等可复用设计能力模板
+research/     开源插件/技能/DESIGN.md 可吸收清单与取舍记录
 prompts/      给 Open Design / Agent 使用的高质量提示词
 adapters/     Open Design 与 Codex/GPT/Hermes/运行样板之间的连接说明或脚本
 ```

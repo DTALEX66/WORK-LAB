@@ -81,6 +81,11 @@ opendesign-assistance/plugins/uiux-layout-director/README.md
 opendesign-assistance/plugins/graphic-design-director/README.md
 opendesign-assistance/plugins/minigame-ui-director/README.md
 opendesign-assistance/plugins/design-qa-critic/README.md
+opendesign-assistance/research/open-source-absorption/ABSORPTION_CANDIDATES.md
+opendesign-assistance/templates/qa/anti-ai-slop-checklist.md
+opendesign-assistance/templates/layouts/landing-page.md
+opendesign-assistance/templates/layouts/dashboard.md
+opendesign-assistance/templates/graphic/poster-cover.md
 opendesign-assistance/design-systems/anomaly-monitor-dark/README.md
 opendesign-assistance/assets/visual-packs/anomaly-monitor-cctv/README.md
 opendesign-assistance/usage-notes/PORTABLE_OPEN_DESIGN_SETUP.md

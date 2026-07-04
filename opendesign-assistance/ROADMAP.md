@@ -176,7 +176,36 @@ prompts.md
 
 用途：Open Design 生成 CCTV/HUD 视觉时引用真实资产和提示词。
 
-## Phase 5：上游贡献候选
+## Phase 5：开源技能吸收与专项模板库
+
+状态：完成第一批吸收清单和模板。
+
+已创建：
+
+```text
+opendesign-assistance/research/open-source-absorption/ABSORPTION_CANDIDATES.md
+opendesign-assistance/templates/qa/anti-ai-slop-checklist.md
+opendesign-assistance/templates/layouts/landing-page.md
+opendesign-assistance/templates/layouts/dashboard.md
+opendesign-assistance/templates/layouts/mobile-menu.md
+opendesign-assistance/templates/graphic/poster-cover.md
+opendesign-assistance/templates/typography/cjk-ui-typography.md
+opendesign-assistance/templates/design-systems/style-reference-index.md
+```
+
+吸收来源类型：
+
+```text
+- Open Design 官方 plugins/spec、design-templates、design-systems
+- Hallmark 类 anti-AI-slop 审查规则
+- VoltAgent/awesome-design-md 类 DESIGN.md 风格库
+- Nothing Design 类工业/HUD/点阵/机械控件语言
+- Baoyu/StyleSeed/Material/Stitch 类高保真与组件判断方法
+```
+
+原则：先吸收方法、模板、审查门槛和风格索引，不批量复制第三方仓库。
+
+## Phase 6：上游贡献候选
 
 低风险方向：
 
@@ -204,4 +233,4 @@ prompts.md
 
 - 第一批增强已经覆盖设计能力、平面能力、UI/UX、菜单/网站布局和游戏 HUD。
 - 下一步不是继续堆文档，而是确认 Open Design 软件能识别这些 plugin/skill。
-- 验证后再进入更细的模板库：landing page、dashboard、mobile menu、settings panel、poster/cover。
+- 验证后继续扩展模板库：settings panel、pricing page、product page、social card、pitch deck、motion system。
