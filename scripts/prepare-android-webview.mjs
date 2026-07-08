@@ -10,7 +10,9 @@ const assetsDir = resolve(appRoot, 'app/src/main/assets');
 const generatedAssetsDir = resolve(assetsDir, 'assets/generated');
 
 const GENERATED_ASSETS = [
-  'cctv-basement-lift-real.png',
+  'cctv-elevator-corridor-clear.png',
+  'cctv-elevator-corridor-warp.png',
+  'cctv-elevator-corridor-figure.png',
   'cctv-hospital-ward-real.png',
   'cctv-security-room-real.png',
   'cctv-factory-real.png',

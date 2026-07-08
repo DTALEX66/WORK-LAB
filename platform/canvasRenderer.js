@@ -10,8 +10,9 @@
 
 import { getAvailableActions } from '../src/actions.js';
 import { t, getSkin, actionLabel } from '../src/skinManager.js';
-import { getToneForState, summarizeFailure } from '../src/feedback.js';
+import { summarizeFailure } from '../src/feedback.js';
 import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from '../src/uiLabels.js';
+import { deriveVisualState } from '../src/visualState.js';
 
 // ── 尺寸常量 ──
 const DW = 750;       // 设计宽度
@@ -208,7 +209,7 @@ function drawBar(x, y, w, h, label, value, color) {
 }
 
 function toneBorder(state) {
-  const tone = getToneForState(state);
+  const tone = deriveVisualState(state).tone;
   if (tone === 'danger') return 'rgba(255,77,109,0.55)';
   if (tone === 'critical') return 'rgba(255,209,102,0.38)';
   if (tone === 'warn') return 'rgba(255,209,102,0.38)';
@@ -246,6 +247,7 @@ function drawMonitor(state) {
 
 function drawCctvScene(state, x, y, w, h) {
   if (h <= 20) return;
+  const visual = deriveVisualState(state);
 
   const bg = ctx.createLinearGradient(x, y, x, y + h);
   bg.addColorStop(0, 'rgba(7,30,32,0.92)');
@@ -321,6 +323,40 @@ function drawCctvScene(state, x, y, w, h) {
   ctx.lineTo(reticleX, reticleY + 18);
   ctx.stroke();
 
+  if (visual.glitch) {
+    drawCanvasAnomalyArtifacts(visual, x, y, w, h);
+  }
+
+  ctx.restore();
+}
+
+function drawCanvasAnomalyArtifacts(visual, x, y, w, h) {
+  const now = Date.now();
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = Math.min(0.9, visual.noise);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  for (let i = 0; i < 16; i += 1) {
+    const yy = y + ((i * 17 + Math.floor(now / 40) * 9) % h);
+    ctx.fillRect(x, yy, w, 1);
+  }
+  ctx.globalAlpha = 0.42;
+  ctx.fillStyle = 'rgba(255,77,109,0.18)';
+  ctx.fillRect(x + ((now / 30) % 12) - 6, y + h * 0.32, w, 5);
+  ctx.fillStyle = 'rgba(81,214,255,0.16)';
+  ctx.fillRect(x - ((now / 34) % 10), y + h * 0.58, w, 4);
+  ctx.globalAlpha = visual.tone === 'critical' || visual.tone === 'danger' ? 0.34 : 0.18;
+  const infrared = ctx.createRadialGradient(x + w * 0.52, y + h * 0.52, 4, x + w * 0.52, y + h * 0.52, Math.min(w, h) * 0.42);
+  infrared.addColorStop(0, 'rgba(255,209,102,0.72)');
+  infrared.addColorStop(0.46, 'rgba(255,77,109,0.28)');
+  infrared.addColorStop(1, 'transparent');
+  ctx.fillStyle = infrared;
+  ctx.fillRect(x, y, w, h);
+  if (visual.shake) {
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = 'rgba(216,255,243,0.22)';
+    ctx.fillRect(x, y, w, h);
+  }
   ctx.restore();
 }
 
@@ -335,11 +371,12 @@ function getMonitorText(state) {
 
 export function getCanvasActionButtons(state) {
   const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
+  const visual = deriveVisualState(state);
   return getAvailableActions()
     .filter(action => action.id !== 'unlockHiddenLog' || lockedCount > 0)
     .map(action => action.id === 'unlockHiddenLog'
-      ? { id: action.id, label: actionLabel(action.id, lockedCount) }
-      : action);
+      ? { id: action.id, label: actionLabel(action.id, lockedCount), recommended: visual.highlightAction === action.id }
+      : { ...action, recommended: visual.highlightAction === action.id });
 }
 
 // ── 绘制操作按钮 ──
@@ -370,6 +407,9 @@ function drawActions(state) {
 
     // 按钮背景
     roundRect(bx, by, btnW, btnH, 10, color);
+    if (btn.recommended) {
+      roundRect(bx - 2, by - 2, btnW + 4, btnH + 4, 12, null, 'rgba(255,209,102,0.82)');
+    }
     if (!isGreen) {
       ctx.strokeStyle = 'rgba(255,255,255,0.12)';
       ctx.lineWidth = 1;

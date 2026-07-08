@@ -6,6 +6,62 @@
  */
 
 let ctx = null;
+let muted = false;
+
+export const AUDIO_LAYERS = Object.freeze({
+  button: Object.freeze({ kind: 'beep', freq: 800, duration: 0.06, type: 'square', volume: 0.06 }),
+  success: Object.freeze({ kind: 'beep', freq: 1000, duration: 0.1, type: 'sine', volume: 0.07 }),
+  error: Object.freeze({ kind: 'beep', freq: 300, duration: 0.18, type: 'sawtooth', volume: 0.07 }),
+  anomaly: Object.freeze({ kind: 'sweep', startFreq: 200, endFreq: 80, duration: 0.45, type: 'sawtooth', volume: 0.08 }),
+  warning: Object.freeze({ kind: 'sweep', startFreq: 600, endFreq: 200, duration: 0.25, type: 'square', volume: 0.06 }),
+  failure: Object.freeze({ kind: 'sweep', startFreq: 150, endFreq: 30, duration: 0.8, type: 'sawtooth', volume: 0.1 }),
+  revive: Object.freeze({ kind: 'sweep', startFreq: 200, endFreq: 1200, duration: 0.5, type: 'sine', volume: 0.08 }),
+  restart: Object.freeze({ kind: 'sequence', steps: [
+    Object.freeze({ at: 0, kind: 'beep', freq: 600, duration: 0.08, type: 'sine', volume: 0.06 }),
+    Object.freeze({ at: 100, kind: 'beep', freq: 800, duration: 0.1, type: 'sine', volume: 0.06 }),
+  ] }),
+});
+
+export function setAudioMuted(value) {
+  muted = Boolean(value);
+  return muted;
+}
+
+export function isAudioMuted() {
+  return muted;
+}
+
+export function toggleAudioMuted() {
+  return setAudioMuted(!muted);
+}
+
+export function getAudioLayer(layerId) {
+  return AUDIO_LAYERS[layerId] ?? null;
+}
+
+export function playLayer(layerId) {
+  if (muted) return false;
+  const layer = getAudioLayer(layerId);
+  if (!layer) return false;
+  if (layer.kind === 'beep') {
+    beep(layer.freq, layer.duration, layer.type, layer.volume);
+    return true;
+  }
+  if (layer.kind === 'sweep') {
+    sweep(layer.startFreq, layer.endFreq, layer.duration, layer.type, layer.volume);
+    return true;
+  }
+  if (layer.kind === 'sequence') {
+    for (const step of layer.steps) {
+      window.setTimeout(() => {
+        if (!muted && step.kind === 'beep') beep(step.freq, step.duration, step.type, step.volume);
+        if (!muted && step.kind === 'sweep') sweep(step.startFreq, step.endFreq, step.duration, step.type, step.volume);
+      }, step.at);
+    }
+    return true;
+  }
+  return false;
+}
 
 function getContext() {
   if (!ctx) {
@@ -67,41 +123,40 @@ function sweep(startFreq, endFreq, duration, type = 'sawtooth', volume = 0.06) {
 
 /** 按钮点击 — 短促的咔嗒声 */
 export function playClick() {
-  beep(800, 0.06, 'square', 0.06);
+  return playLayer('button');
 }
 
 /** 操作成功 — 确认音 */
 export function playSuccess() {
-  beep(1000, 0.1, 'sine', 0.07);
+  return playLayer('success');
 }
 
 /** 操作失败 — 拒绝音 */
 export function playFail() {
-  beep(300, 0.18, 'sawtooth', 0.07);
+  return playLayer('error');
 }
 
 /** 异常触发 — 低频警报扫频 */
 export function playAnomaly() {
-  sweep(200, 80, 0.45, 'sawtooth', 0.08);
+  return playLayer('anomaly');
 }
 
 /** 稳定度/电源危险 — 短促警告 */
 export function playWarning() {
-  sweep(600, 200, 0.25, 'square', 0.06);
+  return playLayer('warning');
 }
 
 /** 系统崩溃 — 低沉衰减 */
 export function playCrash() {
-  sweep(150, 30, 0.8, 'sawtooth', 0.1);
+  return playLayer('failure');
 }
 
 /** 广告复活 — 上升恢复音 */
 export function playRevive() {
-  sweep(200, 1200, 0.5, 'sine', 0.08);
+  return playLayer('revive');
 }
 
 /** 游戏重启 — 重置音 */
 export function playRestart() {
-  beep(600, 0.08, 'sine', 0.06);
-  setTimeout(() => beep(800, 0.1, 'sine', 0.06), 100);
+  return playLayer('restart');
 }

@@ -136,7 +136,7 @@ CONFIG;
 
 
 // --- src/skins/elevator/skin.json ---
-var __SKIN_DATA__ = {"meta":{"id":"elevator","name":"异常电梯控制台","subtitle":"MINIGAME · ANOMALY SYSTEM SIM"},"monitor":{"initial":"监控画面稳定：1 层轿厢内有 1 名乘客。","actions":{"openDoor":"监控：{floor} 层电梯门已打开。门外走廊光线异常。","closeDoor":"监控：轿厢门闭合。画面存在轻微拖影。","moveUp":"监控：电梯上行至 {floor} 层。乘客未看向摄像头。","moveDown":"监控：电梯下行至 {floor} 层。楼层指示灯短暂闪烁。","emergencyStop":"监控：电梯急停。轿厢灯光闪烁 3 次。","restartSystem":"监控：系统重启后恢复画面。部分录像帧丢失。"}},"actionLabels":{"openDoor":"开门","closeDoor":"关门","moveUp":"上行","moveDown":"下行","emergencyStop":"急停","restartSystem":"系统重启","inspectLog":"查看日志","unlockHiddenLog":"解码加密记录"},"doorLabels":{"open":"开启","closed":"关闭"},"directionLabels":{"up":"上行","down":"下行","idle":"待机"},"statusLabels":{"panelTitle":"电梯状态","floor":"楼层","door":"门状态","direction":"方向","passengers":"乘客","power":"电源","stability":"稳定度","anomalyLevel":"异常等级","reviveCount":"广告复活","adHintsCount":"加密解码","hiddenLogsCount":"待解码"},"canvasLabels":{"countdown":"值守倒计时","monitorPanel":"监控画面","actionPanel":"操作面板","logPanel":"系统日志","forceAnomaly":"触发异常测试","failureTitle":"系统崩溃","failureEyebrow":"SYSTEM FAILURE","monitorSignalStable":"SIGNAL: STABLE","monitorSignalUnstable":"SIGNAL: UNSTABLE","monitorSignalCorrupted":"SIGNAL: CORRUPTED","monitorThreat":"THREAT: {level}","failureMetricStability":"稳定度","failureMetricAnomaly":"异常","failureMetricRemaining":"剩余"},"actionFailMessages":{"openDoor_moving":"电梯移动中，禁止开门。","moveUp_doorNotClosed":"门未关闭，禁止移动。","moveDown_doorNotClosed":"门未关闭，禁止移动。","unknownAction":"未知操作：{actionId}","gameOver":"系统已崩溃，必须复活或重新开始。"},"actionFeedback":{"openDoor":"电梯门已打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行。","moveDown":"电梯开始下行。","emergencyStop":"急停已执行。","emergencyStop_fail":"急停按钮失效。","restartSystem":"系统重启完成。","inspectLog":"已查看系统日志。","unlockHiddenLog_noLocked":"没有待解码的加密记录。","unlockHiddenLog_limit":"本局已解码 {count} 条记录，达到上限。"},"actionLogMessages":{"openDoor":"电梯门已在 {floor} 层打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行，当前楼层 {floor}。","moveDown":"电梯开始下行，当前楼层 {floor}。","emergencyStop":"执行急停：移动已停止，稳定度下降。","emergencyStop_fail":"急停按钮无响应。异常等级上升。","restartSystem":"系统重启完成：异常等级下降，但消耗 {cost} 点电源。","inspectLog":"操作员查看系统日志：最近 30 秒存在未授权楼层请求。","inspectLog_hiddenRecords":"发现 {count} 条待解码加密记录。可观看模拟广告解锁完整内容。","unlockHiddenLog_ok":"模拟广告播放完成。加密记录已解码。"},"anomalies":[{"id":"phantom_floor","title":"不存在的楼层","severity":2,"monitor":"监控：电梯停在 13 层。建筑图纸中不存在该楼层。","adHint":"当楼层显示 13 时，不要开门，先执行系统重启。","effects":{"floor":13,"anomalyLevel":2,"stability":-10}},{"id":"camera_delay","title":"监控延迟","severity":1,"monitor":"监控：画面延迟 3 秒。乘客动作与控制台记录不同步。","adHint":"监控延迟时优先查看日志，不要连续移动。","effects":{"anomalyLevel":1,"stability":-6}},{"id":"zero_passenger_shadow","title":"门外有人但乘客数为 0","severity":2,"monitor":"监控：门外站着一个人，但乘客计数器显示 0。","adHint":"乘客数异常时保持关门，先急停再查日志。","effects":{"passengers":0,"anomalyLevel":2,"stability":-12}},{"id":"log_echo","title":"系统日志重复字符","severity":1,"monitor":"监控：系统日志开始重复输出“不要开门”。","adHint":"日志重复通常是轻度异常，系统重启可降低异常等级。","effects":{"anomalyLevel":1,"stability":-5}},{"id":"auto_button","title":"按钮自动亮起","severity":2,"monitor":"监控：没有乘客触碰按钮，B2 与 9 层按钮自动亮起。","adHint":"按钮自动亮起时不要跟随请求移动，先关门并急停。","effects":{"anomalyLevel":2,"power":-8}},{"id":"stop_failure","title":"急停按钮失效","severity":3,"monitor":"监控：急停按钮指示灯熄灭，控制台拒绝确认安全回路。","adHint":"急停失效时不要反复点击，优先系统重启。","effects":{"anomalyLevel":3,"stability":-15}},{"id":"negative_floor","title":"楼层显示为负数","severity":2,"monitor":"监控：楼层显示 -1。摄像头画面出现地下走廊。","adHint":"负数楼层不是正常地下层，立即重启系统。","effects":{"floor":-1,"anomalyLevel":2,"stability":-10}},{"id":"power_drain","title":"电源异常下降","severity":2,"monitor":"监控：备用电源自动接管，但电量仍在下降。","adHint":"电源异常下降时减少移动，优先关门与重启。","effects":{"anomalyLevel":2,"power":-22}},{"id":"door_refuse","title":"电梯门拒绝关闭","severity":2,"monitor":"监控：关门按钮已按下，门在合拢前自动弹开。异常状态持续。","adHint":"门拒绝关闭时不要连续按关门，先急停再重启系统。","effects":{"door":"open","anomalyLevel":2,"stability":-10}},{"id":"weight_mismatch","title":"载重数据异常","severity":1,"monitor":"监控：载重传感器读数 — 0kg。轿厢内有 1 名乘客。读数矛盾。","adHint":"载重异常时优先查日志，乘客数可能被重置。","effects":{"passengers":0,"anomalyLevel":1,"stability":-7}},{"id":"floor_jump","title":"楼层编号跳跃","severity":2,"monitor":"监控：电梯从 5 层直接移动到 9 层。摄像头画面缺失 4 帧。","adHint":"楼层跳跃时减少移动操作，用系统重启恢复楼层显示。","effects":{"floor":"+4","anomalyLevel":2,"stability":-12,"power":-10}},{"id":"emergency_lights","title":"应急灯异常启动","severity":3,"monitor":"监控：轿厢应急灯突然亮起。备用电源消耗加速。","adHint":"应急灯启动时尽量避免移动，立即重启系统可关闭应急灯。","effects":{"anomalyLevel":3,"stability":-14,"power":-20}}],"hiddenLogs":{"phantom_floor":{"title":"第13层施工记录","content":"2019年施工记录：第13层在竣工前被从建筑图纸中删除。\n原因：施工期间发生III级安全事件，3名工人失踪。\n楼层控制面板已被物理封堵，但系统仍能响应来自该层的按钮信号。"},"camera_delay":{"title":"监控系统校准记录","content":"校准日志 #4417：摄像头#03 与#07 存在 3 秒信号延迟。\n技术人员备注：延迟与第 13 层信号干扰有关，建议不要在 13 层停靠。"},"zero_passenger_shadow":{"title":"乘客记录异常说明","content":"传感器技术手册（节选）：\n红外传感器在非营业时段多次检测到热源信号，但乘客计数器持续归零。\n维修记录：传感器无故障。热源信号经比对——与员工体温档案不匹配。"},"log_echo":{"title":"日志系统诊断报告","content":"诊断报告 #FD-22-019：\n系统日志缓冲区检测到重复写入操作。重复内容「不要开门」的写入时间戳早于当前值班员登录时间。\n建议：检查前一值班员的退出状态。"},"auto_button":{"title":"控制系统审计追踪","content":"审计追踪 #AUD-882：\n自动按钮信号来源追溯至 5 号服务器（已于 2022 年停用）。\n该服务器的最后一条记录：「控制权移交程序未完成」。"},"stop_failure":{"title":"急停系统维护日志","content":"维护日志 #M-341：\n急停回路#2 在定期检查中被标记为「状态：不可用」。\n签署人签名无法识别。签署时间：3 年前。没有后续维修记录。"},"negative_floor":{"title":"地下层勘测报告","content":"建筑勘测报告（内部）：\n地下实际存在 4 层结构，但公开图纸仅标注 B1-B2。\nB3-B4 的电梯按钮在出厂时已被移除，但线路仍然通电。"},"power_drain":{"title":"备用电源异常报告","content":"异常报告 #P-877：\n备用电源在无负载状态下持续放电。经查，有一条非授权线路从备用电源柜分接至未知设备。\n线路标签：「不要切断」。"},"door_refuse":{"title":"门控系统事故报告","content":"事故报告 #D-1290：\n门控模块在连续 3 次异常重启后进入保护模式。\n模块日志输出最后一条：「识别到外部干扰信号。拒绝执行 — 保护乘员安全」。"},"weight_mismatch":{"title":"传感器校验记录","content":"校验记录 #W-554：\n载重传感器与红外传感器读数不一致。红外传感器在轿厢空载时检测到热源。\n技术人员备注：请确认值班员在操作前已清空轿厢。"},"floor_jump":{"title":"楼层定位日志","content":"定位日志 #F-213：\nGPS 楼层定位模块在校准前后记录的楼层编号不一致。\n系统自动修正失败。可能原因：参考信号源来自非标设备。"},"emergency_lights":{"title":"应急照明测试报告","content":"测试报告 #E-777：\n应急照明系统在无触发信号的情况下自行启动。\n供电线路检测到寄生回路。回路终端设备编号无法匹配任何已知设备清单。"}},"failure":{"summaries":{"power":"电源耗尽","stability":"稳定度归零","anomalyLevel":"异常等级失控","passengers":"乘客记录出现负数","default":"系统拒绝继续响应"},"defaultHint":"先关门，再重启系统，避免连续移动。","adHintPrefix":"广告提示：{hint}","adReviveRollback":"广告复活完成：回滚 {seconds} 秒，恢复至可控状态。","adReviveMonitor":"广告复活完成：回滚到 {seconds} 秒前的系统状态。","snapshotFallback":"可观看广告复活，回滚到 {seconds} 秒前的系统状态。","noSnapshotFallback":"可观看广告复活，回滚到初始系统状态。"},"fakeEnding":{"eyebrow":"⚠ SYSTEM ANOMALY DETECTED","title":"操作员关联异常","text":"系统检测到操作员第 {count} 次系统崩溃。\n根据《异常控制员守则》第 7 条，您已被标记为“异常关联人员”。\n前 {threshold} 次记录已被永久删除。\n建议您立即离开控制台并联系安保部门。","truthPlaceholder":"[???] 观看广告揭示真相。","truthContent":"这不是第一次，也不会是最后一次。\n这座建筑的异常系统从未被修复。\n每一任值班员最后都变成了「异常事件」本身。\n系统日志中关于「乘客」的记载——都是前任值班员的热源信号。\n你现在坐的位置，就是上一任值班员被发现的地方。"},"ui":{"viewAd":"观看广告复活","unlockAd":"解码加密记录","restart":"重新开始","revealTruth":"观看广告揭示真相","triggerTest":"触发异常测试","decodePrefix":"[解码记录]","initialLog":"异常电梯控制台已接管。等待操作员指令。","anomalyEventLog":"异常事件：{title}。{hint}","startTitle":"等待接管异常电梯","startCopy":"目标：值守 60 秒，观察监控、处理异常、避免系统崩溃。接管后倒计时才会启动。","startChecklist":"先读监控画面和系统日志\n异常出现时按提示执行操作\n失败后可通过模拟广告复活","startFailureRulesTitle":"失败条件","startFailureRules":"电源归零\n稳定度归零\n异常等级失控","startButton":"开始接管","successfulShift":"本轮值守结束。系统仍未解释全部异常。","shiftComplete":"值守完成。连续失败计数已重置。","hiddenLogCaptured":"加密记录已捕获：{title}。使用「查看日志」功能解码。","unlockResult":"已解码：{title}","decodeMonitor":"解码完成：{title}。完整内容已写入系统日志。"}};
+var __SKIN_DATA__ = {"meta":{"id":"elevator","name":"异常电梯控制台","subtitle":"MINIGAME · ANOMALY SYSTEM SIM"},"monitor":{"initial":"监控画面稳定：1 层轿厢内有 1 名乘客。","actions":{"openDoor":"监控：{floor} 层电梯门已打开。门外走廊光线异常。","closeDoor":"监控：轿厢门闭合。画面存在轻微拖影。","moveUp":"监控：电梯上行至 {floor} 层。乘客未看向摄像头。","moveDown":"监控：电梯下行至 {floor} 层。楼层指示灯短暂闪烁。","emergencyStop":"监控：电梯急停。轿厢灯光闪烁 3 次。","restartSystem":"监控：系统重启后恢复画面。部分录像帧丢失。"}},"actionLabels":{"openDoor":"开门","closeDoor":"关门","moveUp":"上行","moveDown":"下行","emergencyStop":"急停","restartSystem":"系统重启","inspectLog":"查看日志","unlockHiddenLog":"解码加密记录"},"doorLabels":{"open":"开启","closed":"关闭"},"directionLabels":{"up":"上行","down":"下行","idle":"待机"},"statusLabels":{"panelTitle":"电梯状态","floor":"楼层","door":"门状态","direction":"方向","passengers":"乘客","power":"电源","stability":"稳定度","anomalyLevel":"异常等级","reviveCount":"广告复活","adHintsCount":"加密解码","hiddenLogsCount":"待解码"},"canvasLabels":{"countdown":"值守倒计时","monitorPanel":"监控画面","actionPanel":"操作面板","logPanel":"系统日志","forceAnomaly":"触发异常测试","failureTitle":"系统崩溃","failureEyebrow":"SYSTEM FAILURE","monitorSignalStable":"SYSTEM: STABLE","monitorSignalUnstable":"SYSTEM: UNSTABLE","monitorSignalCorrupted":"SYSTEM: CORRUPTED","monitorThreat":"THREAT: {level}","failureMetricStability":"稳定度","failureMetricAnomaly":"异常","failureMetricRemaining":"剩余"},"actionFailMessages":{"openDoor_moving":"电梯移动中，禁止开门。","moveUp_doorNotClosed":"门未关闭，禁止移动。","moveDown_doorNotClosed":"门未关闭，禁止移动。","unknownAction":"未知操作：{actionId}","gameOver":"系统已崩溃，必须复活或重新开始。"},"actionFeedback":{"openDoor":"电梯门已打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行。","moveDown":"电梯开始下行。","emergencyStop":"急停已执行。","emergencyStop_fail":"急停按钮失效。","restartSystem":"系统重启完成。","inspectLog":"已查看系统日志。","unlockHiddenLog_noLocked":"没有待解码的加密记录。","unlockHiddenLog_limit":"本局已解码 {count} 条记录，达到上限。"},"actionLogMessages":{"openDoor":"电梯门已在 {floor} 层打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行，当前楼层 {floor}。","moveDown":"电梯开始下行，当前楼层 {floor}。","emergencyStop":"执行急停：移动已停止，稳定度下降。","emergencyStop_fail":"急停按钮无响应。异常等级上升。","restartSystem":"系统重启完成：异常等级下降，但消耗 {cost} 点电源。","inspectLog":"操作员查看系统日志：最近 30 秒存在未授权楼层请求。","inspectLog_hiddenRecords":"发现 {count} 条待解码加密记录。可观看模拟广告解锁完整内容。","unlockHiddenLog_ok":"模拟广告播放完成。加密记录已解码。"},"anomalies":[{"id":"phantom_floor","title":"不存在的楼层","severity":2,"monitor":"监控：电梯停在 13 层。建筑图纸中不存在该楼层。","adHint":"当楼层显示 13 时，不要开门，先执行系统重启。","effects":{"floor":13,"anomalyLevel":2,"stability":-10}},{"id":"camera_delay","title":"监控延迟","severity":1,"monitor":"监控：画面延迟 3 秒。乘客动作与控制台记录不同步。","adHint":"监控延迟时优先查看日志，不要连续移动。","effects":{"anomalyLevel":1,"stability":-6}},{"id":"zero_passenger_shadow","title":"门外有人但乘客数为 0","severity":2,"monitor":"监控：门外站着一个人，但乘客计数器显示 0。","adHint":"乘客数异常时保持关门，先急停再查日志。","effects":{"passengers":0,"anomalyLevel":2,"stability":-12}},{"id":"log_echo","title":"系统日志重复字符","severity":1,"monitor":"监控：系统日志开始重复输出“不要开门”。","adHint":"日志重复通常是轻度异常，系统重启可降低异常等级。","effects":{"anomalyLevel":1,"stability":-5}},{"id":"auto_button","title":"按钮自动亮起","severity":2,"monitor":"监控：没有乘客触碰按钮，B2 与 9 层按钮自动亮起。","adHint":"按钮自动亮起时不要跟随请求移动，先关门并急停。","effects":{"anomalyLevel":2,"power":-8}},{"id":"stop_failure","title":"急停按钮失效","severity":3,"monitor":"监控：急停按钮指示灯熄灭，控制台拒绝确认安全回路。","adHint":"急停失效时不要反复点击，优先系统重启。","effects":{"anomalyLevel":3,"stability":-15}},{"id":"negative_floor","title":"楼层显示为负数","severity":2,"monitor":"监控：楼层显示 -1。摄像头画面出现地下走廊。","adHint":"负数楼层不是正常地下层，立即重启系统。","effects":{"floor":-1,"anomalyLevel":2,"stability":-10}},{"id":"power_drain","title":"电源异常下降","severity":2,"monitor":"监控：备用电源自动接管，但电量仍在下降。","adHint":"电源异常下降时减少移动，优先关门与重启。","effects":{"anomalyLevel":2,"power":-22}},{"id":"door_refuse","title":"电梯门拒绝关闭","severity":2,"monitor":"监控：关门按钮已按下，门在合拢前自动弹开。异常状态持续。","adHint":"门拒绝关闭时不要连续按关门，先急停再重启系统。","effects":{"door":"open","anomalyLevel":2,"stability":-10}},{"id":"weight_mismatch","title":"载重数据异常","severity":1,"monitor":"监控：载重传感器读数 — 0kg。轿厢内有 1 名乘客。读数矛盾。","adHint":"载重异常时优先查日志，乘客数可能被重置。","effects":{"passengers":0,"anomalyLevel":1,"stability":-7}},{"id":"floor_jump","title":"楼层编号跳跃","severity":2,"monitor":"监控：电梯从 5 层直接移动到 9 层。摄像头画面缺失 4 帧。","adHint":"楼层跳跃时减少移动操作，用系统重启恢复楼层显示。","effects":{"floor":"+4","anomalyLevel":2,"stability":-12,"power":-10}},{"id":"emergency_lights","title":"应急灯异常启动","severity":3,"monitor":"监控：轿厢应急灯突然亮起。备用电源消耗加速。","adHint":"应急灯启动时尽量避免移动，立即重启系统可关闭应急灯。","effects":{"anomalyLevel":3,"stability":-14,"power":-20}}],"hiddenLogs":{"phantom_floor":{"title":"第13层施工记录","content":"2019年施工记录：第13层在竣工前被从建筑图纸中删除。\n原因：施工期间发生III级安全事件，3名工人失踪。\n楼层控制面板已被物理封堵，但系统仍能响应来自该层的按钮信号。"},"camera_delay":{"title":"监控系统校准记录","content":"校准日志 #4417：摄像头#03 与#07 存在 3 秒信号延迟。\n技术人员备注：延迟与第 13 层信号干扰有关，建议不要在 13 层停靠。"},"zero_passenger_shadow":{"title":"乘客记录异常说明","content":"传感器技术手册（节选）：\n红外传感器在非营业时段多次检测到热源信号，但乘客计数器持续归零。\n维修记录：传感器无故障。热源信号经比对——与员工体温档案不匹配。"},"log_echo":{"title":"日志系统诊断报告","content":"诊断报告 #FD-22-019：\n系统日志缓冲区检测到重复写入操作。重复内容「不要开门」的写入时间戳早于当前值班员登录时间。\n建议：检查前一值班员的退出状态。"},"auto_button":{"title":"控制系统审计追踪","content":"审计追踪 #AUD-882：\n自动按钮信号来源追溯至 5 号服务器（已于 2022 年停用）。\n该服务器的最后一条记录：「控制权移交程序未完成」。"},"stop_failure":{"title":"急停系统维护日志","content":"维护日志 #M-341：\n急停回路#2 在定期检查中被标记为「状态：不可用」。\n签署人签名无法识别。签署时间：3 年前。没有后续维修记录。"},"negative_floor":{"title":"地下层勘测报告","content":"建筑勘测报告（内部）：\n地下实际存在 4 层结构，但公开图纸仅标注 B1-B2。\nB3-B4 的电梯按钮在出厂时已被移除，但线路仍然通电。"},"power_drain":{"title":"备用电源异常报告","content":"异常报告 #P-877：\n备用电源在无负载状态下持续放电。经查，有一条非授权线路从备用电源柜分接至未知设备。\n线路标签：「不要切断」。"},"door_refuse":{"title":"门控系统事故报告","content":"事故报告 #D-1290：\n门控模块在连续 3 次异常重启后进入保护模式。\n模块日志输出最后一条：「识别到外部干扰信号。拒绝执行 — 保护乘员安全」。"},"weight_mismatch":{"title":"传感器校验记录","content":"校验记录 #W-554：\n载重传感器与红外传感器读数不一致。红外传感器在轿厢空载时检测到热源。\n技术人员备注：请确认值班员在操作前已清空轿厢。"},"floor_jump":{"title":"楼层定位日志","content":"定位日志 #F-213：\nGPS 楼层定位模块在校准前后记录的楼层编号不一致。\n系统自动修正失败。可能原因：参考信号源来自非标设备。"},"emergency_lights":{"title":"应急照明测试报告","content":"测试报告 #E-777：\n应急照明系统在无触发信号的情况下自行启动。\n供电线路检测到寄生回路。回路终端设备编号无法匹配任何已知设备清单。"}},"failure":{"summaries":{"power":"电源耗尽","stability":"稳定度归零","anomalyLevel":"异常等级失控","passengers":"乘客记录出现负数","default":"系统拒绝继续响应"},"defaultHint":"先关门，再重启系统，避免连续移动。","adHintPrefix":"广告提示：{hint}","adReviveRollback":"广告复活完成：回滚 {seconds} 秒，恢复至可控状态。","adReviveMonitor":"广告复活完成：回滚到 {seconds} 秒前的系统状态。","snapshotFallback":"可观看广告复活，回滚到 {seconds} 秒前的系统状态。","noSnapshotFallback":"可观看广告复活，回滚到初始系统状态。"},"fakeEnding":{"eyebrow":"⚠ SYSTEM ANOMALY DETECTED","title":"操作员关联异常","text":"系统检测到操作员第 {count} 次系统崩溃。\n根据《异常控制员守则》第 7 条，您已被标记为“异常关联人员”。\n前 {threshold} 次记录已被永久删除。\n建议您立即离开控制台并联系安保部门。","truthPlaceholder":"[???] 观看广告揭示真相。","truthContent":"这不是第一次，也不会是最后一次。\n这座建筑的异常系统从未被修复。\n每一任值班员最后都变成了「异常事件」本身。\n系统日志中关于「乘客」的记载——都是前任值班员的热源信号。\n你现在坐的位置，就是上一任值班员被发现的地方。"},"ui":{"viewAd":"观看广告复活","unlockAd":"解码加密记录","restart":"重新开始","revealTruth":"观看广告揭示真相","triggerTest":"触发异常测试","decodePrefix":"[解码记录]","initialLog":"异常电梯控制台已接管。等待操作员指令。","anomalyEventLog":"异常事件：{title}。{hint}","startTitle":"等待接管异常电梯","startCopy":"目标：值守 60 秒，观察监控、处理异常、避免系统崩溃。接管后倒计时才会启动。","startChecklist":"先读监控画面和系统日志\n异常出现时按提示执行操作\n失败后可通过模拟广告复活","startFailureRulesTitle":"失败条件","startFailureRules":"电源归零\n稳定度归零\n异常等级失控","startButton":"开始接管","successfulShift":"本轮值守结束。系统仍未解释全部异常。","shiftComplete":"值守完成。连续失败计数已重置。","hiddenLogCaptured":"加密记录已捕获：{title}。使用「查看日志」功能解码。","unlockResult":"已解码：{title}","decodeMonitor":"解码完成：{title}。完整内容已写入系统日志。"}};
 
 // --- src/skinManager.js ---
 /**
@@ -315,6 +315,62 @@ function getToneForState(state) {
   if (state.anomalyLevel >= 4 || state.stability < 35) return 'critical';
   if (state.anomalyLevel >= 2 || state.power < 45) return 'warn';
   return 'normal';
+}
+
+
+// --- src/visualState.js ---
+function clampVisualValue(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+const ACTIVE_ANOMALY_ACTION_HINTS = Object.freeze({
+  stop_failure: 'restartSystem',
+  door_refuse: 'closeDoor',
+  phantom_floor: 'inspectLog',
+  camera_delay: 'inspectLog',
+  log_echo: 'inspectLog',
+  auto_button: 'restartSystem',
+  floor_jump: 'inspectLog',
+  zero_passenger_shadow: 'inspectLog',
+  negative_floor: 'inspectLog',
+  weight_mismatch: 'inspectLog',
+  power_drain: 'restartSystem',
+  light_flicker: 'restartSystem',
+  emergency_lights: 'restartSystem',
+  passenger_duplicate: 'closeDoor',
+  door_gap_whisper: 'closeDoor',
+  camera_blackout: 'inspectLog',
+});
+
+function getTone(anomalyLevel, gameOver) {
+  if (gameOver) return 'danger';
+  if (anomalyLevel >= 4) return 'critical';
+  if (anomalyLevel >= 1) return 'warn';
+  return 'normal';
+}
+
+function getHighlightAction(state) {
+  if (state.gameOver) return 'restartSystem';
+  if (state.activeAnomaly && ACTIVE_ANOMALY_ACTION_HINTS[state.activeAnomaly]) {
+    return ACTIVE_ANOMALY_ACTION_HINTS[state.activeAnomaly];
+  }
+  if (state.anomalyLevel >= 4) return 'restartSystem';
+  if (state.anomalyLevel >= 2) return 'inspectLog';
+  return null;
+}
+
+function deriveVisualState(state) {
+  const anomalyLevel = Number(state?.anomalyLevel ?? 0);
+  const active = Boolean(state?.activeAnomaly) || anomalyLevel > 0 || Boolean(state?.gameOver);
+  const pressure = clampVisualValue(anomalyLevel / 6, 0, 1);
+
+  return {
+    tone: getTone(anomalyLevel, Boolean(state?.gameOver)),
+    glitch: active,
+    shake: Boolean(state?.gameOver) || anomalyLevel >= 4,
+    noise: Boolean(state?.gameOver) ? 1 : Number((0.18 + pressure * 0.82).toFixed(2)),
+    highlightAction: getHighlightAction(state ?? {}),
+  };
 }
 
 
@@ -826,6 +882,188 @@ function scheduleNextAnomalyAfterRevive(elapsed) {
 }
 
 
+// --- src/analytics.js ---
+const ANALYTICS_EVENTS = Object.freeze([
+  'game_start',
+  'game_over',
+  'revive_ad_start',
+  'revive_ad_reward',
+  'hidden_log_ad_start',
+  'hidden_log_unlock',
+  'fake_ending_trigger',
+  'action_click',
+  'anomaly_trigger',
+]);
+
+const EVENT_SET = new Set(ANALYTICS_EVENTS);
+
+function createConsoleAnalyticsSink(logger = console) {
+  return (event) => {
+    logger.log('[analytics]', event.name, event);
+  };
+}
+
+let analyticsSink = createConsoleAnalyticsSink();
+
+function setAnalyticsSink(sink) {
+  if (typeof sink !== 'function') {
+    throw new TypeError('analytics sink must be a function');
+  }
+  analyticsSink = sink;
+}
+
+function resetAnalyticsSink() {
+  analyticsSink = createConsoleAnalyticsSink();
+}
+
+function trackEvent(name, payload = {}, options = {}) {
+  if (!EVENT_SET.has(name)) {
+    throw new Error(`Unknown analytics event: ${name}`);
+  }
+
+  const now = options.now || Date.now;
+  const event = {
+    name,
+    ts: now(),
+    ...payload,
+  };
+
+  analyticsSink(event);
+  return event;
+}
+
+
+// --- src/archive.js ---
+// archive.js — cross-session anomaly archive (localStorage-backed).
+// Survives page reloads and browser restarts on the same device.
+
+const STORAGE_KEY = 'minigame_archive_v1';
+
+const DEFAULT_SKIN_PROGRESS = {
+  sessionsPlayed: 0,
+  totalAnomaliesTriggered: 0,
+  totalLogsUnlocked: 0,
+  encounteredAnomalies: {},   // id → count
+  unlockedLogs: {},           // log id → true
+  highestSeverity: 0,
+};
+
+const DEFAULT = {
+  sessionsPlayed: 0,
+  totalAnomaliesTriggered: 0,
+  totalLogsUnlocked: 0,
+  encounteredAnomalies: {},   // id → count
+  unlockedLogs: {},           // log id → true
+  highestSeverity: 0,
+  skins: {},                  // skinId → DEFAULT_SKIN_PROGRESS
+};
+
+function cloneDefaultSkinProgress() {
+  return structuredClone(DEFAULT_SKIN_PROGRESS);
+}
+
+function normalizeArchive(raw) {
+  const archive = { ...structuredClone(DEFAULT), ...(raw || {}) };
+  archive.encounteredAnomalies ||= {};
+  archive.unlockedLogs ||= {};
+  archive.skins ||= {};
+  for (const [skinId, progress] of Object.entries(archive.skins)) {
+    archive.skins[skinId] = {
+      ...cloneDefaultSkinProgress(),
+      ...(progress || {}),
+      encounteredAnomalies: { ...(progress?.encounteredAnomalies || {}) },
+      unlockedLogs: { ...(progress?.unlockedLogs || {}) },
+    };
+  }
+  return archive;
+}
+
+function getOrCreateSkinProgress(archive, skinId) {
+  if (!skinId) return null;
+  if (!archive.skins[skinId]) archive.skins[skinId] = cloneDefaultSkinProgress();
+  return archive.skins[skinId];
+}
+
+/** @returns {typeof DEFAULT} */
+function loadArchive() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return structuredClone(DEFAULT);
+    return normalizeArchive(JSON.parse(raw));
+  } catch {
+    return structuredClone(DEFAULT);
+  }
+}
+
+function saveArchive(archive) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(archive));
+  } catch {
+    // quota exceeded or private browsing — silently skip
+  }
+}
+
+/**
+ * Merge one session's results into the archive.
+ * @param {object} sessionSummary
+ * @param {string} [sessionSummary.skinId]
+ * @param {number} sessionSummary.anomaliesTriggeredTotal
+ * @param {number} sessionSummary.maxAnomalySeverity
+ * @param {string[]} sessionSummary.anomalyIds — all anomaly IDs triggered this session
+ * @param {string[]} sessionSummary.unlockedLogIds — hidden log IDs unlocked this session
+ */
+function commitSessionToArchive(sessionSummary) {
+  const archive = loadArchive();
+  const skinProgress = getOrCreateSkinProgress(archive, sessionSummary.skinId);
+  const unlockedLogIds = sessionSummary.unlockedLogIds || [];
+
+  archive.sessionsPlayed += 1;
+  archive.totalAnomaliesTriggered += sessionSummary.anomaliesTriggeredTotal || 0;
+  archive.totalLogsUnlocked += unlockedLogIds.length;
+  archive.highestSeverity = Math.max(archive.highestSeverity, sessionSummary.maxAnomalySeverity || 0);
+
+  if (skinProgress) {
+    skinProgress.sessionsPlayed += 1;
+    skinProgress.totalAnomaliesTriggered += sessionSummary.anomaliesTriggeredTotal || 0;
+    skinProgress.totalLogsUnlocked += unlockedLogIds.length;
+    skinProgress.highestSeverity = Math.max(skinProgress.highestSeverity, sessionSummary.maxAnomalySeverity || 0);
+  }
+
+  for (const id of sessionSummary.anomalyIds || []) {
+    archive.encounteredAnomalies[id] = (archive.encounteredAnomalies[id] || 0) + 1;
+    if (skinProgress) {
+      skinProgress.encounteredAnomalies[id] = (skinProgress.encounteredAnomalies[id] || 0) + 1;
+    }
+  }
+  for (const id of unlockedLogIds) {
+    archive.unlockedLogs[id] = true;
+    if (skinProgress) skinProgress.unlockedLogs[id] = true;
+  }
+  saveArchive(archive);
+  return archive;
+}
+
+function getArchiveSkinProgress(archive, skinId, anomalyCatalog = []) {
+  const normalized = normalizeArchive(archive);
+  const progress = normalized.skins[skinId] || cloneDefaultSkinProgress();
+  const totalAnomalies = anomalyCatalog.length;
+  const encounteredCount = Object.keys(progress.encounteredAnomalies).length;
+  const unlockedLogsCount = Object.keys(progress.unlockedLogs).length;
+
+  return {
+    skinId,
+    sessionsPlayed: progress.sessionsPlayed,
+    encounteredCount,
+    unlockedLogsCount,
+    totalAnomalies,
+    completionRate: totalAnomalies ? encounteredCount / totalAnomalies : 0,
+    logCompletionRate: totalAnomalies ? unlockedLogsCount / totalAnomalies : 0,
+    highestSeverity: progress.highestSeverity,
+    totalAnomaliesTriggered: progress.totalAnomaliesTriggered,
+  };
+}
+
+
 // --- src/audio.js ---
 /**
  * audio.js — 程序化音效（Web Audio API，无需外部文件）
@@ -835,6 +1073,62 @@ function scheduleNextAnomalyAfterRevive(elapsed) {
  */
 
 let ctx = null;
+let muted = false;
+
+const AUDIO_LAYERS = Object.freeze({
+  button: Object.freeze({ kind: 'beep', freq: 800, duration: 0.06, type: 'square', volume: 0.06 }),
+  success: Object.freeze({ kind: 'beep', freq: 1000, duration: 0.1, type: 'sine', volume: 0.07 }),
+  error: Object.freeze({ kind: 'beep', freq: 300, duration: 0.18, type: 'sawtooth', volume: 0.07 }),
+  anomaly: Object.freeze({ kind: 'sweep', startFreq: 200, endFreq: 80, duration: 0.45, type: 'sawtooth', volume: 0.08 }),
+  warning: Object.freeze({ kind: 'sweep', startFreq: 600, endFreq: 200, duration: 0.25, type: 'square', volume: 0.06 }),
+  failure: Object.freeze({ kind: 'sweep', startFreq: 150, endFreq: 30, duration: 0.8, type: 'sawtooth', volume: 0.1 }),
+  revive: Object.freeze({ kind: 'sweep', startFreq: 200, endFreq: 1200, duration: 0.5, type: 'sine', volume: 0.08 }),
+  restart: Object.freeze({ kind: 'sequence', steps: [
+    Object.freeze({ at: 0, kind: 'beep', freq: 600, duration: 0.08, type: 'sine', volume: 0.06 }),
+    Object.freeze({ at: 100, kind: 'beep', freq: 800, duration: 0.1, type: 'sine', volume: 0.06 }),
+  ] }),
+});
+
+function setAudioMuted(value) {
+  muted = Boolean(value);
+  return muted;
+}
+
+function isAudioMuted() {
+  return muted;
+}
+
+function toggleAudioMuted() {
+  return setAudioMuted(!muted);
+}
+
+function getAudioLayer(layerId) {
+  return AUDIO_LAYERS[layerId] ?? null;
+}
+
+function playLayer(layerId) {
+  if (muted) return false;
+  const layer = getAudioLayer(layerId);
+  if (!layer) return false;
+  if (layer.kind === 'beep') {
+    beep(layer.freq, layer.duration, layer.type, layer.volume);
+    return true;
+  }
+  if (layer.kind === 'sweep') {
+    sweep(layer.startFreq, layer.endFreq, layer.duration, layer.type, layer.volume);
+    return true;
+  }
+  if (layer.kind === 'sequence') {
+    for (const step of layer.steps) {
+      window.setTimeout(() => {
+        if (!muted && step.kind === 'beep') beep(step.freq, step.duration, step.type, step.volume);
+        if (!muted && step.kind === 'sweep') sweep(step.startFreq, step.endFreq, step.duration, step.type, step.volume);
+      }, step.at);
+    }
+    return true;
+  }
+  return false;
+}
 
 function getContext() {
   if (!ctx) {
@@ -896,43 +1190,42 @@ function sweep(startFreq, endFreq, duration, type = 'sawtooth', volume = 0.06) {
 
 /** 按钮点击 — 短促的咔嗒声 */
 function playClick() {
-  beep(800, 0.06, 'square', 0.06);
+  return playLayer('button');
 }
 
 /** 操作成功 — 确认音 */
 function playSuccess() {
-  beep(1000, 0.1, 'sine', 0.07);
+  return playLayer('success');
 }
 
 /** 操作失败 — 拒绝音 */
 function playFail() {
-  beep(300, 0.18, 'sawtooth', 0.07);
+  return playLayer('error');
 }
 
 /** 异常触发 — 低频警报扫频 */
 function playAnomaly() {
-  sweep(200, 80, 0.45, 'sawtooth', 0.08);
+  return playLayer('anomaly');
 }
 
 /** 稳定度/电源危险 — 短促警告 */
 function playWarning() {
-  sweep(600, 200, 0.25, 'square', 0.06);
+  return playLayer('warning');
 }
 
 /** 系统崩溃 — 低沉衰减 */
 function playCrash() {
-  sweep(150, 30, 0.8, 'sawtooth', 0.1);
+  return playLayer('failure');
 }
 
 /** 广告复活 — 上升恢复音 */
 function playRevive() {
-  sweep(200, 1200, 0.5, 'sine', 0.08);
+  return playLayer('revive');
 }
 
 /** 游戏重启 — 重置音 */
 function playRestart() {
-  beep(600, 0.08, 'sine', 0.06);
-  setTimeout(() => beep(800, 0.1, 'sine', 0.06), 100);
+  return playLayer('restart');
 }
 
 
@@ -1198,11 +1491,23 @@ let nextAnomalyAt = session.nextAnomalyAt;
 let timer = null;
 let lastTone = 'normal';
 let crashPlayed = false;
+let fakeEndingTracked = false;
+
+function analyticsPayload(extra = {}) {
+  return {
+    skinId: getSkin().meta?.id,
+    elapsed: state.elapsed,
+    remaining: state.remaining,
+    anomalyLevel: state.anomalyLevel,
+    ...extra,
+  };
+}
 
 function ensureTimer() {
   if (timer) return;
   if (els.startOverlay) els.startOverlay.hidden = true;
   timer = window.setInterval(loop, 1000);
+  trackEvent('game_start', analyticsPayload());
 }
 
 function bindPress(element, handler) {
@@ -1222,6 +1527,7 @@ function bindPress(element, handler) {
 
 const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
   onReward: () => {
+    trackEvent('revive_ad_reward', analyticsPayload({ adUnitId: CONFIG.adUnits.revive }));
     playRevive();
     state = reviveFromAd(state);
     nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
@@ -1229,7 +1535,13 @@ const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
   },
 });
 const showDecodeAd = createRewardedAd(CONFIG.adUnits.decode, {
-  onReward: () => runAction('unlockHiddenLog'),
+  onReward: () => {
+    const before = state.adHintsUsed;
+    runAction('unlockHiddenLog');
+    if (state.adHintsUsed > before) {
+      trackEvent('hidden_log_unlock', analyticsPayload({ adUnitId: CONFIG.adUnits.decode }));
+    }
+  },
 });
 const showTruthAd = createRewardedAd(CONFIG.adUnits.truth, {
   onReward: () => {
@@ -1240,8 +1552,30 @@ const showTruthAd = createRewardedAd(CONFIG.adUnits.truth, {
   },
 });
 
+const ACTION_ICONS = {
+  openDoor: '◀▯▶',
+  closeDoor: '▶▯◀',
+  moveUp: '▲',
+  moveDown: '▼',
+  emergencyStop: 'STOP',
+  restartSystem: '↻',
+  inspectLog: 'LOG',
+  unlockHiddenLog: 'KEY',
+};
 
-function renderActions() {
+const ACTION_SHORT_LABELS = {
+  openDoor: '开门',
+  closeDoor: '关门',
+  moveUp: '上行',
+  moveDown: '下行',
+  emergencyStop: '急停',
+  restartSystem: '重启',
+  inspectLog: '日志',
+  unlockHiddenLog: '解码',
+};
+
+
+function renderActions(visual = deriveVisualState(state)) {
   els.actions.replaceChildren();
   const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
   for (const action of getAvailableActions()) {
@@ -1249,10 +1583,24 @@ function renderActions() {
     if (action.id === 'unlockHiddenLog' && lockedCount === 0) continue;
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = action.id === 'unlockHiddenLog'
-      ? actionLabel(action.id, lockedCount)
-      : action.label;
     button.dataset.action = action.id;
+    button.dataset.recommended = String(visual.highlightAction === action.id);
+    const keycap = document.createElement('span');
+    keycap.className = 'action-keycap';
+    const icon = document.createElement('span');
+    icon.className = 'action-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = ACTION_ICONS[action.id] || '●';
+    const label = document.createElement('span');
+    label.className = 'action-label';
+    label.textContent = ACTION_SHORT_LABELS[action.id] || (action.id === 'unlockHiddenLog'
+      ? actionLabel(action.id, lockedCount)
+      : action.label);
+    button.setAttribute('aria-label', action.id === 'unlockHiddenLog'
+      ? actionLabel(action.id, lockedCount)
+      : action.label);
+    keycap.append(icon, label);
+    button.append(keycap);
     bindPress(button, () => dispatchAction(action.id));
     els.actions.append(button);
   }
@@ -1260,8 +1608,9 @@ function renderActions() {
 
 function render() {
   const labels = getDomLabels();
-  renderActions();
-  root.dataset.tone = getToneForState(state);
+  const visual = deriveVisualState(state);
+  renderActions(visual);
+  root.dataset.tone = visual.tone;
   els.remaining.textContent = Math.ceil(state.remaining);
   els.floor.textContent = state.floor;
   els.door.textContent = getDoorLabel(state.door);
@@ -1279,7 +1628,7 @@ function render() {
   const unlockedCount = state.hiddenLogs.filter(h => !h.locked).length;
   if (els.hiddenLogsCount) els.hiddenLogsCount.textContent = lockedCount;
   if (els.adHintsCount) els.adHintsCount.textContent = state.adHintsUsed;
-  const tone = getToneForState(state);
+  const tone = visual.tone;
   if (els.monitorSignal) {
     const signal = tone === 'danger' || tone === 'critical'
       ? labels.monitorSignal.corrupted
@@ -1300,7 +1649,10 @@ function render() {
   if (els.monitor) {
     els.monitor.dataset.door = state.door;
     els.monitor.dataset.moving = String(state.moving);
-    els.monitor.dataset.anomaly = state.anomalyLevel > 0 ? 'active' : 'clear';
+    els.monitor.dataset.anomaly = visual.glitch ? 'active' : 'clear';
+    els.monitor.dataset.glitch = String(visual.glitch);
+    els.monitor.dataset.shake = String(visual.shake);
+    els.monitor.style.setProperty('--cctv-noise', String(visual.noise));
     els.monitor.dataset.passengers = state.passengers > 0 ? 'present' : 'missing';
   }
 
@@ -1387,7 +1739,9 @@ function render() {
 function dispatchAction(actionId) {
   ensureTimer();
   playClick();
+  trackEvent('action_click', analyticsPayload({ actionId }));
   if (actionId === 'unlockHiddenLog') {
+    trackEvent('hidden_log_ad_start', analyticsPayload({ adUnitId: CONFIG.adUnits.decode }));
     showDecodeAd();
     return;
   }
@@ -1411,6 +1765,10 @@ function triggerAnomaly() {
   const picked = pickNextAnomaly(state);
   const result = applyAnomaly(state, picked.id);
   state = result.state;
+  trackEvent('anomaly_trigger', analyticsPayload({
+    anomalyId: result.event.id,
+    severity: result.event.severity,
+  }));
   playAnomaly();
   nextAnomalyAt = scheduleNextAnomalyAfterTrigger(state.elapsed);
   render();
@@ -1421,11 +1779,17 @@ function loop() {
     if (!crashPlayed) {
       playCrash();
       crashPlayed = true;
+      trackEvent('game_over', analyticsPayload({
+        reason: summarizeFailure(state).reason,
+        anomaliesTriggeredTotal: state.anomaliesTriggeredTotal || 0,
+        maxAnomalySeverity: state.maxAnomalySeverity || 0,
+      }));
       // 提交本局数据到跨局档案库
       try {
-        const ids = state.hiddenLogs?.map(h => h.id).filter(Boolean) || [];
+        const ids = state.hiddenLogs?.map(h => h.id?.replace(/_log$/, '')).filter(Boolean) || [];
         const unlockedIds = state.hiddenLogs?.filter(h => !h.locked).map(h => h.id) || [];
         commitSessionToArchive({
+          skinId: getSkin().meta?.id,
           anomaliesTriggeredTotal: state.anomaliesTriggeredTotal || 0,
           maxAnomalySeverity: state.maxAnomalySeverity || 0,
           anomalyIds: ids,
@@ -1438,6 +1802,7 @@ function loop() {
     return;
   }
   crashPlayed = false;
+  fakeEndingTracked = false;
   state = tickState(state, 1);
 
   // 成功值守 → 重置连续失败计数
@@ -1450,6 +1815,12 @@ function loop() {
   // 检测失败 → 递增连续失败计数
   if (state.gameOver) {
     state = recordFailure(state);
+    if (state.fakeEndingTriggered && !fakeEndingTracked) {
+      fakeEndingTracked = true;
+      trackEvent('fake_ending_trigger', analyticsPayload({
+        fakeEndingCount: state.fakeEndingCount,
+      }));
+    }
   }
   // Save a snapshot on interval for ad-revive rollback
   const ar = CONFIG.adRevive;
@@ -1458,7 +1829,7 @@ function loop() {
   }
   if (!state.gameOver && state.elapsed >= nextAnomalyAt) triggerAnomaly();
   // Play warning sound on tone transitions to critical/danger
-  const currentTone = getToneForState(state);
+  const currentTone = deriveVisualState(state).tone;
   if (currentTone === 'danger' || currentTone === 'critical') {
     if (lastTone !== currentTone) playWarning();
   }
@@ -1475,6 +1846,7 @@ function restart() {
   session = restartRuntimeSession();
   state = session.state;
   nextAnomalyAt = session.nextAnomalyAt;
+  fakeEndingTracked = false;
   render();
   refreshArchiveButton();
 }
@@ -1487,6 +1859,7 @@ function refreshArchiveButton() {
 
 function renderArchive() {
   const archive = loadArchive();
+  const skinProgress = getArchiveSkinProgress(archive, getSkin().meta?.id, getAnomalies());
   if (els.archiveStats) {
     const ids = Object.keys(archive.encounteredAnomalies).length;
     const logs = Object.keys(archive.unlockedLogs).length;
@@ -1496,6 +1869,8 @@ function renderArchive() {
       ['解锁日志', logs],
       ['总异常数', archive.totalAnomaliesTriggered],
       ['最高威胁', archive.highestSeverity],
+      ['皮肤进度', `${skinProgress.encounteredCount}/${skinProgress.totalAnomalies}`],
+      ['日志解锁', `${skinProgress.unlockedLogsCount}/${skinProgress.totalAnomalies}`],
     ];
     els.archiveStats.replaceChildren(...items.map(([label, value]) => {
       const item = document.createElement('span');
@@ -1533,32 +1908,32 @@ function applyDomLabels() {
   els.actionPanelTitle.textContent = labels.actionPanel;
   els.logPanelTitle.textContent = labels.logPanel;
   els.failureTitle.textContent = labels.failureTitle;
-  els.forceAnomaly.textContent = labels.forceAnomaly;
+  els.forceAnomaly.textContent = 'ANOM';
+  els.forceAnomaly.setAttribute('aria-label', labels.forceAnomaly);
   els.reviveButton.textContent = labels.revive;
   els.restartButton.textContent = labels.restart;
   els.fakeEndingTruthBtn.textContent = labels.revealTruth;
   els.fakeEndingRestartBtn.textContent = labels.restart;
   if (els.fakeEndingEyebrow) els.fakeEndingEyebrow.textContent = t('fakeEnding.eyebrow');
   if (els.fakeEndingTitle) els.fakeEndingTitle.textContent = t('fakeEnding.title');
-  if (els.startTitle) els.startTitle.textContent = labels.start.title;
-  if (els.startCopy) els.startCopy.textContent = labels.start.copy;
-  if (els.startButton) els.startButton.textContent = labels.start.button;
+  if (els.startTitle) els.startTitle.textContent = '接管电梯';
+  if (els.startCopy) els.startCopy.textContent = '看监控，按键救场。';
+  if (els.startButton) els.startButton.textContent = 'OVERRIDE';
   if (els.startChecklist) {
-    els.startChecklist.replaceChildren(...labels.start.checklist.map((item) => {
-      const li = document.createElement('li');
-      li.textContent = item;
-      return li;
+    const compactMissions = ['60s', 'CCTV', 'CONTROL'];
+    els.startChecklist.replaceChildren(...compactMissions.map((item) => {
+      const chip = document.createElement('span');
+      chip.textContent = item;
+      return chip;
     }));
   }
   if (els.startFailureRules) {
-    els.startFailureRules.replaceChildren(
-      Object.assign(document.createElement('span'), { textContent: labels.start.failureRulesTitle }),
-      ...labels.start.failureRules.map((item) => {
-        const badge = document.createElement('b');
-        badge.textContent = item;
-        return badge;
-      }),
-    );
+    const compactRisks = ['POWER', 'STABILITY', 'ANOMALY'];
+    els.startFailureRules.replaceChildren(...compactRisks.map((item) => {
+      const chip = document.createElement('span');
+      chip.textContent = item;
+      return chip;
+    }));
   }
   els.floorLabel.textContent = labels.status.floor;
   els.doorLabel.textContent = labels.status.door;
@@ -1580,6 +1955,7 @@ bindPress(els.startButton, () => {
 });
 bindPress(els.forceAnomaly, triggerAnomaly);
 bindPress(els.reviveButton, () => {
+  trackEvent('revive_ad_start', analyticsPayload({ adUnitId: CONFIG.adUnits.revive }));
   showReviveAd();
 });
 bindPress(els.restartButton, () => {

@@ -23,7 +23,9 @@ test('android WebView assets use bundled script instead of ES modules', () => {
   assert.match(game, /function loadArchive\(/, 'archive storage helper must be bundled before game.js');
   assert.match(game, /function getArchiveSkinProgress\(/, 'per-skin archive progress selector must be bundled');
   for (const asset of [
-    'cctv-basement-lift-real.png',
+    'cctv-elevator-corridor-clear.png',
+    'cctv-elevator-corridor-warp.png',
+    'cctv-elevator-corridor-figure.png',
     'cctv-hospital-ward-real.png',
     'cctv-security-room-real.png',
     'cctv-factory-real.png',

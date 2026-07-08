@@ -13,11 +13,14 @@
   --red: #ff4d6d;
   --cyan: #51d6ff;
   --shadow: rgba(0, 0, 0, 0.58);
-  --cctv-feed: url("assets/generated/cctv-basement-lift-real.png");
+  --cctv-feed: url("assets/generated/cctv-elevator-corridor-clear.png");
+  --cctv-feed-anomaly: url("assets/generated/cctv-elevator-corridor-warp.png");
+  --cctv-feed-danger: url("assets/generated/cctv-elevator-corridor-figure.png");
   --hud-glass-texture: url("assets/generated/texture-hud-glass.png");
   --control-panel-texture: url("assets/generated/texture-control-panel.png");
   --cctv-noise-texture: url("assets/generated/overlay-cctv-noise.png");
   --signal-tear-texture: url("assets/generated/overlay-signal-tear.png");
+  --cctv-noise: 0.18;
 }
 
 * { box-sizing: border-box; }
@@ -72,7 +75,11 @@ body::before {
 .console-shell[data-tone="danger"] .panel,
 .console-shell[data-tone="critical"] .monitor { border-color: rgba(255, 77, 109, 0.68); }
 
-.console-shell[data-skin="elevator"] { --cctv-feed: url("assets/generated/cctv-basement-lift-real.png"); }
+.console-shell[data-skin="elevator"] {
+  --cctv-feed: url("assets/generated/cctv-elevator-corridor-clear.png");
+  --cctv-feed-anomaly: url("assets/generated/cctv-elevator-corridor-warp.png");
+  --cctv-feed-danger: url("assets/generated/cctv-elevator-corridor-figure.png");
+}
 .console-shell[data-skin="hospital"] { --cctv-feed: url("assets/generated/cctv-hospital-ward-real.png"); }
 .console-shell[data-skin="security"] { --cctv-feed: url("assets/generated/cctv-security-room-real.png"); }
 .console-shell[data-skin="factory"] { --cctv-feed: url("assets/generated/cctv-factory-real.png"); }
@@ -328,6 +335,13 @@ meter {
     linear-gradient(180deg, rgba(5, 22, 24, 0.95), rgba(0, 5, 6, 0.98));
   border: 1px solid rgba(97,255,190,0.16);
   box-shadow: inset 0 0 34px rgba(0,0,0,0.72), inset 0 0 90px rgba(97,255,190,0.08);
+}
+.monitor[data-anomaly="active"] .cctv-stage {
+  --cctv-feed: var(--cctv-feed-anomaly);
+}
+.console-shell[data-tone="critical"] .monitor[data-anomaly="active"] .cctv-stage,
+.console-shell[data-tone="danger"] .monitor[data-anomaly="active"] .cctv-stage {
+  --cctv-feed: var(--cctv-feed-danger);
 }
 .cctv-stage::before,
 .cctv-stage::after {
@@ -851,7 +865,7 @@ button.secondary {
     repeating-radial-gradient(circle at 18% 24%, rgba(255,255,255,0.08) 0 1px, transparent 1px 4px),
     repeating-linear-gradient(90deg, rgba(97,255,190,0.025) 0 1px, transparent 1px 3px);
   mix-blend-mode: screen;
-  opacity: 0.18;
+  opacity: var(--cctv-noise, 0.18);
   animation: sensorNoise 460ms steps(2) infinite;
 }
 @keyframes sensorNoise { 50% { transform: translate(1px, -1px); opacity: 0.27; } }
@@ -1085,6 +1099,83 @@ button.secondary {
 @keyframes shadowDrift { 50% { transform: translate(calc(-50% + 5px), calc(-50% - 2px)) skewX(-10deg) scale(0.86); } }
 @keyframes thermalBreak { 50% { clip-path: polygon(0 0, 100% 0, 100% 22%, 18% 22%, 18% 35%, 100% 35%, 100% 100%, 0 100%); } }
 @keyframes detectionBlink { 50% { opacity: 0.28; transform: translate(calc(-50% + 2px), -50%); } }
+
+/* CCTV anomaly-state layers: all readable UI remains DOM text; these layers only add camera artifacts. */
+.signal-tear-layer,
+.freeze-frame,
+.infrared-flicker,
+.snow-burst {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+}
+.signal-tear-layer {
+  background:
+    var(--signal-tear-texture) center / cover no-repeat,
+    linear-gradient(0deg, transparent 0 18%, rgba(255,77,109,0.30) 18% 20%, transparent 20% 42%, rgba(81,214,255,0.22) 42% 43%, transparent 43% 100%);
+  mix-blend-mode: screen;
+}
+.freeze-frame {
+  background:
+    linear-gradient(rgba(216,255,243,0.13), rgba(0,0,0,0.10)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 3px);
+  mix-blend-mode: screen;
+}
+.infrared-flicker {
+  background:
+    radial-gradient(circle at var(--cctv-target-x, 50%) 46%, rgba(255,209,102,0.35), transparent 18%),
+    radial-gradient(ellipse at var(--cctv-target-x, 50%) 58%, rgba(255,77,109,0.42), transparent 32%);
+  mix-blend-mode: color-dodge;
+}
+.snow-burst {
+  background:
+    var(--cctv-noise-texture) center / cover no-repeat,
+    repeating-radial-gradient(circle at 20% 35%, rgba(255,255,255,0.18) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 4px);
+  mix-blend-mode: screen;
+}
+.monitor[data-anomaly="active"] .signal-tear-layer {
+  opacity: 0.72;
+  animation: signalTearBurst 520ms steps(3) infinite;
+}
+.monitor[data-anomaly="active"] .freeze-frame {
+  opacity: 0.22;
+  animation: cctvFreezeFrame 1.4s steps(1) infinite;
+}
+.monitor[data-anomaly="active"] .infrared-flicker {
+  opacity: 0.58;
+  animation: infraredFlicker 680ms steps(2) infinite;
+}
+.monitor[data-anomaly="active"] .snow-burst {
+  opacity: calc(var(--cctv-noise, 0.18) * 0.82);
+  animation: signalSnowBurst 360ms steps(2) infinite;
+}
+.monitor[data-shake="true"] .cctv-stage { animation: cctvStageShake 240ms steps(2) infinite; }
+.actions button[data-recommended="true"] {
+  border-color: rgba(255,209,102,0.86);
+  box-shadow: 0 0 0 2px rgba(255,209,102,0.18), 0 0 28px rgba(255,209,102,0.32), inset 0 1px 0 rgba(255,255,255,0.42);
+}
+@keyframes signalTearBurst {
+  0%, 100% { transform: translate(0, 0) scaleX(1); filter: hue-rotate(0deg); }
+  33% { transform: translate(5px, -1px) scaleX(1.012); filter: hue-rotate(-16deg); }
+  66% { transform: translate(-4px, 2px) scaleX(0.992); filter: hue-rotate(14deg); }
+}
+@keyframes cctvFreezeFrame {
+  0%, 78%, 100% { opacity: 0; }
+  79%, 88% { opacity: 0.34; filter: contrast(1.6) saturate(0.45); }
+}
+@keyframes infraredFlicker {
+  0%, 100% { filter: hue-rotate(0deg) saturate(1); transform: scale(1); }
+  50% { filter: hue-rotate(-24deg) saturate(1.8); transform: scale(1.01); }
+}
+@keyframes signalSnowBurst {
+  50% { transform: translate(-1px, 1px); opacity: calc(var(--cctv-noise, 0.18) * 0.96); }
+}
+@keyframes cctvStageShake {
+  50% { transform: translate(2px, -1px); }
+}
 
 .shaft-lines,
 .doorway-depth,

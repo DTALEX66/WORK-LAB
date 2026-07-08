@@ -35,7 +35,9 @@ test('browser preview exposes an explicit start handoff overlay', () => {
 test('browser preview CSS consumes generated realistic UI and CCTV assets', () => {
   const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
   for (const asset of [
-    'cctv-basement-lift-real.png',
+    'cctv-elevator-corridor-clear.png',
+    'cctv-elevator-corridor-warp.png',
+    'cctv-elevator-corridor-figure.png',
     'cctv-hospital-ward-real.png',
     'cctv-security-room-real.png',
     'cctv-factory-real.png',

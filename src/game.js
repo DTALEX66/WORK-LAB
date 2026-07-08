@@ -1,6 +1,6 @@
 import { getAvailableActions, performAction } from './actions.js';
 import { applyAnomaly, pickNextAnomaly } from './events.js';
-import { getToneForState, summarizeFailure } from './feedback.js';
+import { summarizeFailure } from './feedback.js';
 import { recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot, tickState } from './state.js';
 import CONFIG from './gameConfig.js';
 import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
@@ -15,6 +15,7 @@ import {
   scheduleNextAnomalyAfterRevive,
   scheduleNextAnomalyAfterTrigger,
 } from './runtimeSession.js';
+import { deriveVisualState } from './visualState.js';
 
 const root = document.querySelector('.console-shell');
 const els = {
@@ -172,7 +173,7 @@ const ACTION_SHORT_LABELS = {
 };
 
 
-function renderActions() {
+function renderActions(visual = deriveVisualState(state)) {
   els.actions.replaceChildren();
   const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
   for (const action of getAvailableActions()) {
@@ -181,6 +182,7 @@ function renderActions() {
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.action = action.id;
+    button.dataset.recommended = String(visual.highlightAction === action.id);
     const keycap = document.createElement('span');
     keycap.className = 'action-keycap';
     const icon = document.createElement('span');
@@ -204,8 +206,9 @@ function renderActions() {
 
 function render() {
   const labels = getDomLabels();
-  renderActions();
-  root.dataset.tone = getToneForState(state);
+  const visual = deriveVisualState(state);
+  renderActions(visual);
+  root.dataset.tone = visual.tone;
   els.remaining.textContent = Math.ceil(state.remaining);
   els.floor.textContent = state.floor;
   els.door.textContent = getDoorLabel(state.door);
@@ -223,7 +226,7 @@ function render() {
   const unlockedCount = state.hiddenLogs.filter(h => !h.locked).length;
   if (els.hiddenLogsCount) els.hiddenLogsCount.textContent = lockedCount;
   if (els.adHintsCount) els.adHintsCount.textContent = state.adHintsUsed;
-  const tone = getToneForState(state);
+  const tone = visual.tone;
   if (els.monitorSignal) {
     const signal = tone === 'danger' || tone === 'critical'
       ? labels.monitorSignal.corrupted
@@ -244,7 +247,10 @@ function render() {
   if (els.monitor) {
     els.monitor.dataset.door = state.door;
     els.monitor.dataset.moving = String(state.moving);
-    els.monitor.dataset.anomaly = state.anomalyLevel > 0 ? 'active' : 'clear';
+    els.monitor.dataset.anomaly = visual.glitch ? 'active' : 'clear';
+    els.monitor.dataset.glitch = String(visual.glitch);
+    els.monitor.dataset.shake = String(visual.shake);
+    els.monitor.style.setProperty('--cctv-noise', String(visual.noise));
     els.monitor.dataset.passengers = state.passengers > 0 ? 'present' : 'missing';
   }
 
@@ -421,7 +427,7 @@ function loop() {
   }
   if (!state.gameOver && state.elapsed >= nextAnomalyAt) triggerAnomaly();
   // Play warning sound on tone transitions to critical/danger
-  const currentTone = getToneForState(state);
+  const currentTone = deriveVisualState(state).tone;
   if (currentTone === 'danger' || currentTone === 'critical') {
     if (lastTone !== currentTone) playWarning();
   }
