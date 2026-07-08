@@ -47,6 +47,12 @@ const els = {
   operatorCue: document.querySelector('#operatorCue'),
   monitorThreat: document.querySelector('#monitorThreat'),
   actions: document.querySelector('#actions'),
+  moreActions: document.querySelector('#moreActions'),
+  secondaryActionCount: document.querySelector('#secondaryActionCount'),
+  secondaryActionsSheet: document.querySelector('#secondaryActionsSheet'),
+  secondaryActionsBackdrop: document.querySelector('#secondaryActionsBackdrop'),
+  closeSecondaryActions: document.querySelector('#closeSecondaryActions'),
+  secondaryActions: document.querySelector('#secondaryActions'),
   logs: document.querySelector('#logs'),
   forceAnomaly: document.querySelector('#forceAnomaly'),
   startOverlay: document.querySelector('#startOverlay'),
@@ -174,35 +180,72 @@ const ACTION_SHORT_LABELS = {
   unlockHiddenLog: '解码',
 };
 
+const PRIMARY_ACTION_IDS = new Set(['closeDoor', 'moveUp', 'emergencyStop']);
+
+function isPrimaryAction(actionId) {
+  return PRIMARY_ACTION_IDS.has(actionId);
+}
+
+function closeSecondaryActions() {
+  if (!els.secondaryActionsSheet) return;
+  els.secondaryActionsSheet.hidden = true;
+  if (els.moreActions) els.moreActions.setAttribute('aria-expanded', 'false');
+}
+
+function openSecondaryActions() {
+  if (!els.secondaryActionsSheet) return;
+  els.secondaryActionsSheet.hidden = false;
+  if (els.moreActions) els.moreActions.setAttribute('aria-expanded', 'true');
+}
+
+function createActionButton(action, lockedCount, visual) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.dataset.action = action.id;
+  button.dataset.recommended = String(visual.highlightAction === action.id);
+  const keycap = document.createElement('span');
+  keycap.className = 'action-keycap';
+  const icon = document.createElement('span');
+  icon.className = 'action-icon';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = ACTION_ICONS[action.id] || '●';
+  const label = document.createElement('span');
+  label.className = 'action-label';
+  label.textContent = ACTION_SHORT_LABELS[action.id] || (action.id === 'unlockHiddenLog'
+    ? actionLabel(action.id, lockedCount)
+    : action.label);
+  button.setAttribute('aria-label', action.id === 'unlockHiddenLog'
+    ? actionLabel(action.id, lockedCount)
+    : action.label);
+  keycap.append(icon, label);
+  button.append(keycap);
+  bindPress(button, () => dispatchAction(action.id));
+  return button;
+}
 
 function renderActions(visual = deriveVisualState(state)) {
   els.actions.replaceChildren();
+  els.secondaryActions?.replaceChildren();
   const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
+  let secondaryCount = 0;
+  let secondaryRecommended = false;
   for (const action of getAvailableActions()) {
     // 解码加密记录按钮只在有锁定日志时显示
     if (action.id === 'unlockHiddenLog' && lockedCount === 0) continue;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.action = action.id;
-    button.dataset.recommended = String(visual.highlightAction === action.id);
-    const keycap = document.createElement('span');
-    keycap.className = 'action-keycap';
-    const icon = document.createElement('span');
-    icon.className = 'action-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = ACTION_ICONS[action.id] || '●';
-    const label = document.createElement('span');
-    label.className = 'action-label';
-    label.textContent = ACTION_SHORT_LABELS[action.id] || (action.id === 'unlockHiddenLog'
-      ? actionLabel(action.id, lockedCount)
-      : action.label);
-    button.setAttribute('aria-label', action.id === 'unlockHiddenLog'
-      ? actionLabel(action.id, lockedCount)
-      : action.label);
-    keycap.append(icon, label);
-    button.append(keycap);
-    bindPress(button, () => dispatchAction(action.id));
-    els.actions.append(button);
+    const button = createActionButton(action, lockedCount, visual);
+    if (isPrimaryAction(action.id) || !els.secondaryActions) {
+      els.actions.append(button);
+    } else {
+      secondaryCount += 1;
+      if (visual.highlightAction === action.id) secondaryRecommended = true;
+      els.secondaryActions.append(button);
+    }
+  }
+  if (els.secondaryActionCount) els.secondaryActionCount.textContent = String(secondaryCount);
+  if (els.moreActions) {
+    els.moreActions.hidden = secondaryCount === 0;
+    els.moreActions.dataset.recommended = String(secondaryRecommended);
+    if (secondaryCount === 0) closeSecondaryActions();
   }
 }
 
@@ -343,6 +386,7 @@ function render() {
 function dispatchAction(actionId) {
   ensureTimer();
   playClick();
+  closeSecondaryActions();
   trackEvent('action_click', analyticsPayload({ actionId }));
   if (actionId === 'unlockHiddenLog') {
     trackEvent('hidden_log_ad_start', analyticsPayload({ adUnitId: CONFIG.adUnits.decode }));
@@ -558,6 +602,12 @@ bindPress(els.startButton, () => {
   ensureTimer();
 });
 bindPress(els.forceAnomaly, triggerAnomaly);
+bindPress(els.moreActions, openSecondaryActions);
+bindPress(els.closeSecondaryActions, closeSecondaryActions);
+bindPress(els.secondaryActionsBackdrop, closeSecondaryActions);
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeSecondaryActions();
+});
 bindPress(els.reviveButton, () => {
   trackEvent('revive_ad_start', analyticsPayload({ adUnitId: CONFIG.adUnits.revive }));
   showReviveAd();

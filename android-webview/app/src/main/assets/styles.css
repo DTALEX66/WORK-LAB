@@ -567,6 +567,100 @@ meter {
   gap: 10px;
   margin-bottom: 12px;
 }
+.action-dock {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 10px;
+  align-items: stretch;
+}
+.more-actions-button {
+  position: relative;
+  min-height: 62px;
+  padding: 8px 7px;
+  text-align: center;
+}
+.more-actions-button[hidden] { display: none; }
+.more-actions-button .action-keycap {
+  display: grid;
+  grid-template-rows: 42px auto;
+  gap: 5px;
+  justify-items: center;
+}
+.more-actions-button .action-icon {
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+}
+.more-action-count {
+  position: absolute;
+  right: 7px;
+  top: 6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,209,102,0.94);
+  color: #140b00;
+  font-size: 0.58rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.secondary-actions-sheet[hidden] { display: none; }
+.secondary-actions-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  align-items: end;
+  pointer-events: none;
+}
+.secondary-actions-backdrop {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgba(0,0,0,0.52);
+  pointer-events: auto;
+}
+.secondary-actions-panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 520px);
+  margin: 0 auto;
+  padding: 18px;
+  border: 1px solid rgba(97,255,190,0.28);
+  border-radius: 22px 22px 0 0;
+  background:
+    linear-gradient(180deg, rgba(4,18,20,0.98), rgba(1,8,10,0.99)),
+    var(--metal-texture) center / cover no-repeat;
+  box-shadow: 0 -24px 64px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.08);
+  pointer-events: auto;
+}
+.secondary-actions-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.secondary-actions-head h2 {
+  margin: 2px 0 0;
+  font-size: 1.12rem;
+  letter-spacing: -0.01em;
+}
+.sheet-close {
+  min-height: 38px;
+  padding: 8px 13px;
+}
+.secondary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
 
 button {
   position: relative;
@@ -826,8 +920,10 @@ button.secondary {
     letter-spacing: 0.03em;
   }
   .monitor-hud span { padding: 4px 5px; }
-  .actions { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin-bottom: 5px; }
+  .action-dock { grid-template-columns: minmax(0, 1fr) 66px; gap: 5px; }
+  .actions { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; margin-bottom: 5px; }
   button { min-height: 34px; padding: 6px 5px; border-radius: 10px; font-size: 0.76rem; }
+  .more-actions-button { min-height: 34px; padding: 5px 3px; }
   button::before { display: none; }
   #forceAnomaly { min-height: 30px; font-size: 0.68rem; }
   .status-list { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
@@ -1170,7 +1266,9 @@ button.secondary {
   animation: signalSnowBurst 360ms steps(2) infinite;
 }
 .monitor[data-shake="true"] .cctv-stage { animation: cctvStageShake 240ms steps(2) infinite; }
-.actions button[data-recommended="true"] {
+.actions button[data-recommended="true"],
+.secondary-actions button[data-recommended="true"],
+.more-actions-button[data-recommended="true"] {
   border-color: rgba(255,209,102,0.86);
   box-shadow: 0 0 0 2px rgba(255,209,102,0.18), 0 0 28px rgba(255,209,102,0.32), inset 0 1px 0 rgba(255,255,255,0.42);
 }
@@ -1262,7 +1360,8 @@ button.secondary {
   50% { translate: 1px -1px; }
 }
 
-.actions button {
+.actions button,
+.secondary-actions button {
   display: grid;
   grid-template-columns: 46px minmax(0, 1fr);
   align-items: center;
@@ -1271,7 +1370,8 @@ button.secondary {
   padding: 8px 12px 8px 8px;
   text-align: left;
 }
-.actions button::before { display: none; }
+.actions button::before,
+.secondary-actions button::before { display: none; }
 .action-icon {
   display: grid;
   place-items: center;
@@ -1294,24 +1394,32 @@ button.secondary {
   white-space: nowrap;
 }
 .actions button[data-action="openDoor"] .action-icon,
-.actions button[data-action="closeDoor"] .action-icon {
+.actions button[data-action="closeDoor"] .action-icon,
+.secondary-actions button[data-action="openDoor"] .action-icon,
+.secondary-actions button[data-action="closeDoor"] .action-icon {
   letter-spacing: -0.18em;
   padding-right: 0.18em;
 }
 .actions button[data-action="moveUp"] .action-icon,
-.actions button[data-action="moveDown"] .action-icon {
+.actions button[data-action="moveDown"] .action-icon,
+.secondary-actions button[data-action="moveUp"] .action-icon,
+.secondary-actions button[data-action="moveDown"] .action-icon {
   color: #001a24;
   background: rgba(81,214,255,0.22);
 }
-.actions button[data-action="emergencyStop"] {
+.actions button[data-action="emergencyStop"],
+.secondary-actions button[data-action="emergencyStop"] {
   background: linear-gradient(135deg, rgba(255,77,109,0.96), rgba(255,209,102,0.88));
 }
-.actions button[data-action="restartSystem"] .action-icon { animation: restartIconSpin 2.4s linear infinite; }
+.actions button[data-action="restartSystem"] .action-icon,
+.secondary-actions button[data-action="restartSystem"] .action-icon { animation: restartIconSpin 2.4s linear infinite; }
 @keyframes restartIconSpin { to { rotate: 360deg; } }
 
 
 /* Stronger elevator-control key readability. */
-.actions button {
+.actions button,
+.secondary-actions button,
+.more-actions-button {
   border-color: rgba(97,255,190,0.34);
   background:
     linear-gradient(180deg, rgba(216,255,243,0.98), rgba(97,255,190,0.92) 52%, rgba(81,214,255,0.88)),
@@ -1328,19 +1436,24 @@ button.secondary {
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 18px rgba(97,255,190,0.22);
 }
 .actions button[data-action="openDoor"] .action-icon,
-.actions button[data-action="closeDoor"] .action-icon {
+.actions button[data-action="closeDoor"] .action-icon,
+.secondary-actions button[data-action="openDoor"] .action-icon,
+.secondary-actions button[data-action="closeDoor"] .action-icon {
   font-size: 0.96rem;
   letter-spacing: -0.16em;
   color: #d8fff3;
 }
 .actions button[data-action="moveUp"] .action-icon,
-.actions button[data-action="moveDown"] .action-icon {
+.actions button[data-action="moveDown"] .action-icon,
+.secondary-actions button[data-action="moveUp"] .action-icon,
+.secondary-actions button[data-action="moveDown"] .action-icon {
   font-size: 1.62rem;
   color: #bff5ff;
   background: linear-gradient(180deg, rgba(0,39,48,0.96), rgba(0,11,18,0.98));
   text-shadow: 0 0 14px rgba(81,214,255,0.86);
 }
-.actions button[data-action="emergencyStop"] .action-icon {
+.actions button[data-action="emergencyStop"] .action-icon,
+.secondary-actions button[data-action="emergencyStop"] .action-icon {
   color: #fff1f4;
   background: linear-gradient(180deg, rgba(102,0,20,0.96), rgba(28,0,8,0.98));
   border-color: rgba(255,77,109,0.68);
@@ -1349,7 +1462,9 @@ button.secondary {
   text-shadow: 0 0 12px rgba(255,77,109,0.95);
 }
 .actions button[data-action="inspectLog"] .action-icon,
-.actions button[data-action="unlockHiddenLog"] .action-icon {
+.actions button[data-action="unlockHiddenLog"] .action-icon,
+.secondary-actions button[data-action="inspectLog"] .action-icon,
+.secondary-actions button[data-action="unlockHiddenLog"] .action-icon {
   font-size: 0.76rem;
   letter-spacing: 0.04em;
   color: #ffeec2;
@@ -1554,7 +1669,8 @@ button.secondary {
       "logs";
   }
   .monitor-panel { min-height: 420px; }
-  .actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .action-dock { grid-template-columns: minmax(0, 1fr) 82px; }
+  .actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .actions button { min-height: 66px; }
   .action-label { font-size: 0.62rem; }
   .status-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
@@ -1676,22 +1792,31 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
     radial-gradient(circle at 16px 18px, rgba(97,255,190,0.10), transparent 42px),
     rgba(0, 10, 12, 0.76);
 }
-.actions button {
+.actions button,
+.secondary-actions button,
+.more-actions-button {
   filter: saturate(0.86) brightness(0.88);
   box-shadow: 0 8px 18px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.18);
 }
 .actions button[data-action="openDoor"],
 .actions button[data-action="closeDoor"],
 .actions button[data-action="moveUp"],
-.actions button[data-action="moveDown"] {
+.actions button[data-action="moveDown"],
+.secondary-actions button[data-action="openDoor"],
+.secondary-actions button[data-action="closeDoor"],
+.secondary-actions button[data-action="moveUp"],
+.secondary-actions button[data-action="moveDown"] {
   filter: saturate(0.98) brightness(0.98);
 }
-.actions button[data-action="emergencyStop"] {
+.actions button[data-action="emergencyStop"],
+.secondary-actions button[data-action="emergencyStop"] {
   filter: saturate(1.18) brightness(1.06);
   box-shadow: 0 0 28px rgba(255,77,109,0.32), inset 0 1px 0 rgba(255,255,255,0.26);
 }
 .actions button[data-action="restartSystem"],
-.actions button[data-action="inspectLog"] {
+.actions button[data-action="inspectLog"],
+.secondary-actions button[data-action="restartSystem"],
+.secondary-actions button[data-action="inspectLog"] {
   opacity: 0.82;
 }
 .start-overlay {
@@ -1738,7 +1863,10 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
 }
 .actions button[data-action="restartSystem"] .action-label,
 .actions button[data-action="inspectLog"] .action-label,
-.actions button[data-action="unlockHiddenLog"] .action-label {
+.actions button[data-action="unlockHiddenLog"] .action-label,
+.secondary-actions button[data-action="restartSystem"] .action-label,
+.secondary-actions button[data-action="inspectLog"] .action-label,
+.secondary-actions button[data-action="unlockHiddenLog"] .action-label {
   font-size: 0.68rem;
 }
 
@@ -1829,11 +1957,16 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
 .status-list dt { font-size: 0.48rem; opacity: 0.5; }
 .status-list dd { font-size: 1rem; }
 .status-list meter { width: 50%; height: 6px; }
-.actions {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  .action-dock {
+    grid-template-columns: minmax(0, 1fr) 74px;
+    gap: 5px;
+  }
+  .actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 5px;
 }
-.actions button {
+.actions button,
+.more-actions-button {
   min-height: 54px;
   border-radius: 13px;
   padding: 4px;
@@ -2048,11 +2181,18 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
   .cctv-multiview { width: 64px; right: 8px; top: 38px; bottom: 8px; gap: 5px; }
   .monitor-caption { max-height: 2.6em; font-size: 0.68rem; line-height: 1.24; }
   .monitor-hud { margin-top: 6px; font-size: 0.52rem; gap: 5px; }
-  .actions { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin-bottom: 0; }
-  .actions button { min-height: 48px; border-radius: 12px; padding: 4px; }
+  .action-dock { grid-template-columns: minmax(0, 1fr) 68px; gap: 5px; }
+  .actions { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; margin-bottom: 0; }
+  .actions button,
+  .more-actions-button { min-height: 48px; border-radius: 12px; padding: 4px; }
   .action-keycap { grid-template-rows: 25px auto; gap: 1px; }
   .action-icon { width: 32px; min-width: 32px; height: 25px; font-size: 0.8rem; }
   .action-label { font-size: 0.54rem; }
+  .more-actions-button .action-icon { width: 32px; min-width: 32px; font-size: 0.46rem; letter-spacing: 0.06em; }
+  .more-action-count { right: 3px; top: 3px; min-width: 15px; height: 15px; font-size: 0.5rem; }
+  .secondary-actions-panel { width: 100%; padding: 14px; border-radius: 18px 18px 0 0; }
+  .secondary-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .secondary-actions button { min-height: 48px; border-radius: 12px; padding: 5px; }
   #forceAnomaly { top: 6px; right: 6px; min-height: 18px; min-width: 36px; font-size: 0.5rem; }
   .status-list { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
   .status-list div { min-height: 42px; padding: 4px 3px; grid-template-columns: 1fr; grid-template-areas: "icon" "value"; justify-items: center; }

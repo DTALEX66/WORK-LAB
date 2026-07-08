@@ -83,6 +83,8 @@ test('game UI keeps onboarding and controls icon-first with low text density', (
   assert.match(html, /class="hud-icon"/, 'status tiles should expose icon-first HUD affordances');
   const js = readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
   assert.match(js, /className\s*=\s*'action-keycap'/, 'actions should render as hardware-style keycaps');
+  assert.match(html, /id="moreActions"/, 'secondary actions should move behind a thumb-reachable more control');
+  assert.match(html, /id="secondaryActionsSheet"/, 'low-frequency actions should render in a dedicated bottom sheet');
   assert.match(html, /data-role="primary-start"/, 'start button should be a single primary handoff control');
   assert.doesNotMatch(html, /class="start-checklist"/, 'start overlay should not render a text-heavy checklist');
   assert.doesNotMatch(html, /class="start-rules"/, 'start overlay should not render rule badges as a menu');
@@ -96,6 +98,7 @@ test('debug trigger is demoted and action labels stay short in the HUD', () => {
   assert.match(js, /restartSystem:\s*'重启'/, 'restart action should use a compact HUD label');
   assert.match(js, /inspectLog:\s*'日志'/, 'log action should use a compact HUD label');
   assert.match(js, /unlockHiddenLog:\s*'解码'/, 'decode action should use a compact HUD label');
+  assert.match(js, /PRIMARY_ACTION_IDS\s*=\s*new Set\(\['closeDoor', 'moveUp', 'emergencyStop'\]\)/, 'mobile HUD should keep only the three highest-frequency actions visible');
   assert.match(js, /forceAnomaly\.textContent\s*=\s*'ANOM'/, 'diagnostic trigger should render as a short HUD code');
   assert.match(html, /class="secondary diagnostic-trigger"/, 'force anomaly control should be a demoted diagnostic trigger');
   assert.match(css, /#forceAnomaly[\s\S]*position:\s*absolute/, 'diagnostic trigger should not occupy the main control deck');
@@ -152,5 +155,7 @@ test('portrait mobile layout keeps CCTV first and start strip reachable without 
   assert.match(css, /grid-template-areas:\s*"monitor"\s*"actions"\s*"status"\s*"logs"/, 'mobile should keep CCTV first, then controls, telemetry, logs');
   assert.match(css, /\.start-overlay[\s\S]*position:\s*static;[\s\S]*justify-content:\s*center/, 'mobile start strip should stay in flow and centered, not overlay panels');
   assert.match(css, /\.start-card[\s\S]*width:\s*min\(100%,\s*420px\)/, 'mobile start strip should be full-width constrained for thumb reach');
-  assert.match(css, /\.actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/, 'mobile controls should remain four-column keycaps');
+  assert.match(css, /Mobile portrait final pass[\s\S]*\.action-dock\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*68px/, 'mobile controls should reserve one thumb column for more actions');
+  assert.match(css, /Mobile portrait final pass[\s\S]*\.actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, 'mobile controls should keep only three primary keycaps visible');
+  assert.match(css, /Mobile portrait final pass[\s\S]*\.secondary-actions-panel[\s\S]*border-radius:\s*18px 18px 0 0/, 'secondary controls should open as a bottom sheet');
 });

@@ -77,7 +77,16 @@
 
         <section class="panel action-panel">
           <div class="panel-title" id="actionPanelTitle">操作面板</div>
-          <div id="actions" class="actions"></div>
+          <div class="action-dock" aria-label="主要操作">
+            <div id="actions" class="actions"></div>
+            <button id="moreActions" class="more-actions-button" type="button" aria-expanded="false" aria-controls="secondaryActionsSheet">
+              <span class="action-keycap">
+                <span class="action-icon" aria-hidden="true">MORE</span>
+                <span class="action-label">更多</span>
+              </span>
+              <span id="secondaryActionCount" class="more-action-count">0</span>
+            </button>
+          </div>
           <button id="forceAnomaly" class="secondary diagnostic-trigger" type="button">ANOM</button>
         </section>
 
@@ -115,6 +124,20 @@
             <button id="reviveButton" type="button">观看广告复活</button>
             <button id="restartButton" class="secondary" type="button">重新开始</button>
           </div>
+        </div>
+      </section>
+
+      <section id="secondaryActionsSheet" class="secondary-actions-sheet" hidden>
+        <button id="secondaryActionsBackdrop" class="secondary-actions-backdrop" type="button" aria-label="关闭更多操作"></button>
+        <div class="secondary-actions-panel" role="dialog" aria-modal="true" aria-labelledby="secondaryActionsTitle">
+          <div class="secondary-actions-head">
+            <div>
+              <p class="eyebrow">SECONDARY CONTROLS</p>
+              <h2 id="secondaryActionsTitle">低频操作</h2>
+            </div>
+            <button id="closeSecondaryActions" class="secondary sheet-close" type="button">收起</button>
+          </div>
+          <div id="secondaryActions" class="secondary-actions"></div>
         </div>
       </section>
 
