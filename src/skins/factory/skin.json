@@ -169,6 +169,7 @@
   "failure": {
     "summaries": { "power": "电力耗尽", "stability": "线体稳定度归零", "anomalyLevel": "故障等级失控", "passengers": "产出数据异常", "default": "系统拒绝继续响应" },
     "defaultHint": "先停止所有传送带，再执行系统复位。",
+    "firstRunAdvice": "下次优先看监控和日志；黄色描边就是推荐按键。",
     "adHintPrefix": "维修提示：{hint}",
     "adReviveRollback": "呼叫维修支援完成：回滚 {seconds} 秒，恢复至可控状态。",
     "adReviveMonitor": "呼叫维修支援完成：回滚到 {seconds} 秒前的系统状态。",

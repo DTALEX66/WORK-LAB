@@ -87,9 +87,13 @@ export function applyAnomaly(state, id) {
 }
 
 export function pickNextAnomaly(state, random = Math.random) {
-  const pressure = Math.min(ANOMALIES.length - 1, Math.floor(state.anomalyLevel / CONFIG.anomaly.pressureDivisor));
-  const index = Math.min(ANOMALIES.length - 1, Math.floor(random() * ANOMALIES.length + pressure) % ANOMALIES.length);
-  return ANOMALIES[index];
+  const firstRunPool = (state.anomaliesTriggeredTotal ?? 0) === 0
+    ? ANOMALIES.filter(event => event.severity <= CONFIG.anomaly.firstMaxSeverity)
+    : ANOMALIES;
+  const pool = firstRunPool.length > 0 ? firstRunPool : ANOMALIES;
+  const pressure = Math.min(pool.length - 1, Math.floor(state.anomalyLevel / CONFIG.anomaly.pressureDivisor));
+  const index = Math.min(pool.length - 1, Math.floor(random() * pool.length + pressure) % pool.length);
+  return pool[index];
 }
 
 // 向后兼容导出

@@ -251,6 +251,7 @@
       "default": "调度系统拒绝继续响应"
     },
     "defaultHint": "先关屏蔽门，再重启信号，避免连续发车。",
+    "firstRunAdvice": "下次优先看 CCTV 和信号日志；黄色描边就是推荐按键。",
     "adHintPrefix": "广告提示：{hint}",
     "adReviveRollback": "广告复活完成：回滚 {seconds} 秒，恢复至可控调度状态。",
     "adReviveMonitor": "广告复活完成：回滚到 {seconds} 秒前的站台状态。",

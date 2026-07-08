@@ -13,6 +13,7 @@ test('browser preview exposes an explicit start handoff overlay', () => {
   assert.match(html, /id="fakeEndingTitle"/, 'fake-ending overlay should expose skin-backed title');
   assert.match(html, /id="monitorSignal"/, 'monitor should expose a visual signal state strip');
   assert.match(html, /id="monitorThreat"/, 'monitor should expose a visual threat badge');
+  assert.match(html, /id="operatorCue"/, 'monitor should expose a compact first-run operator cue');
   assert.match(html, /class="cctv-stage"/, 'monitor should include a CCTV visual stage, not just text');
   assert.match(html, /id="monitorCaption"/, 'monitor copy should render as caption so visual layer is preserved');
   assert.match(html, /class="door-gap-glow"/, 'monitor anomaly should live inside the CCTV scene as a door-gap glow');
@@ -98,6 +99,14 @@ test('debug trigger is demoted and action labels stay short in the HUD', () => {
   assert.match(js, /forceAnomaly\.textContent\s*=\s*'ANOM'/, 'diagnostic trigger should render as a short HUD code');
   assert.match(html, /class="secondary diagnostic-trigger"/, 'force anomaly control should be a demoted diagnostic trigger');
   assert.match(css, /#forceAnomaly[\s\S]*position:\s*absolute/, 'diagnostic trigger should not occupy the main control deck');
+});
+
+test('first-run guidance stays HUD-like and not tutorial prose', () => {
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  const js = readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
+  assert.match(js, /getOperatorCue/, 'runtime should compute first-run guidance from game state');
+  assert.match(css, /\.operator-cue/, 'operator cue should have a dedicated HUD style');
+  assert.doesNotMatch(html, /class="tutorial"/, 'first-run guidance should not add a tutorial panel');
 });
 
 test('layout makes CCTV the dominant play surface over chrome', () => {

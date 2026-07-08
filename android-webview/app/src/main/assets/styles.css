@@ -517,6 +517,23 @@ meter {
   background: rgba(0, 10, 12, 0.72);
   box-shadow: 0 0 18px rgba(97,255,190,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
 }
+.monitor-hud .operator-cue {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  border-color: rgba(255, 209, 102, 0.36);
+  color: #ffeab2;
+  background: linear-gradient(90deg, rgba(255,209,102,0.10), rgba(0,10,12,0.72), rgba(255,77,109,0.08));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.monitor[data-anomaly="active"] ~ .monitor-hud .operator-cue,
+.console-shell[data-tone="danger"] .operator-cue,
+.console-shell[data-tone="critical"] .operator-cue {
+  border-color: rgba(255,209,102,0.72);
+  box-shadow: 0 0 22px rgba(255,209,102,0.16), inset 0 1px 0 rgba(255,255,255,0.08);
+}
 .console-shell[data-tone="warn"] .monitor-hud span { border-color: rgba(255, 209, 102, 0.38); color: #ffeab2; }
 .console-shell[data-tone="danger"] .monitor-hud span,
 .console-shell[data-tone="critical"] .monitor-hud span {

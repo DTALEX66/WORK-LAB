@@ -37,10 +37,14 @@ export function summarizeFailure(state) {
     rollbackSec = s.elapsed - best.at;
   }
 
+  const firstRunAdvice = s.adRevivesUsed === 0 && (s.anomaliesTriggeredTotal ?? 0) <= 1
+    ? ` ${t('failure.firstRunAdvice')}`
+    : '';
+
   if (snapshots.length > 0) {
-    return `${reasons.join('、')}。${t('failure.snapshotFallback', { seconds: rollbackSec })}`;
+    return `${reasons.join('、')}。${t('failure.snapshotFallback', { seconds: rollbackSec })}${firstRunAdvice}`;
   }
-  return `${reasons.join('、')}。${t('failure.noSnapshotFallback')}`;
+  return `${reasons.join('、')}。${t('failure.noSnapshotFallback')}${firstRunAdvice}`;
 }
 
 export function getToneForState(state) {

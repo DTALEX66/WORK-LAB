@@ -17,8 +17,8 @@ games/find-anomaly/elevator-console
 
 下一步目录治理建议：
 
-1. 增加首页/启动页的游戏选择入口。
-2. 让 build 脚本读取 `game.manifest.json`。
+1. 玩家入口继续保持当前单游戏直进，不做合集首页/游戏选择页。
+2. `games/`、manifest 和 runtime 映射先作为后台生产目录保留。
 3. 新游戏一律先进入 `games/<category>/<game-id>/`，再决定是否复用现有 runtime。
 
 ## 已完成的近期地基
@@ -191,10 +191,10 @@ npm run release:check
 
 ## 建议下一步执行顺序
 
-1. P0：让首页/启动页体现“小游戏合集平台”，并从 manifest 读取当前游戏。
-2. P3-7：第 6 套皮肤候选（建议无人酒店前台）。
+1. P5-10：继续压缩首局体验，确保 10 秒内看见异常、知道推荐按键。
+2. P2-4：局后复盘页继续产品化，强化复玩和广告复活循环。
 3. P5-11：异常态监控撕裂 / freeze frame / 红外闪烁。
 4. P4-8：Android release APK / 签名流程。
-5. P5-10：游戏内新手引导压缩。
+5. P3-7：第 6 套皮肤候选（建议无人酒店前台，等 Game001 单局体验更稳后再做）。
 6. P1-2：微信开发者工具真实导入测试。
 7. P4-9：GitHub Actions APK artifact 上传。

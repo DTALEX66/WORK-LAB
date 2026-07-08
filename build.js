@@ -80,6 +80,7 @@ const CORE_MODULES = [
   { path: 'src/actions.js',        type: 'js' },
   { path: 'src/uiLabels.js',       type: 'js' },
   { path: 'src/runtimeSession.js', type: 'js' },
+  { path: 'src/firstRunGuidance.js', type: 'js' },
 ];
 
 const DOM_ENTRY_MODULES = [

@@ -57,6 +57,7 @@ const REQUIRED_TEXT_KEYS = [
   ['canvasLabels', 'failureMetricRemaining'],
   ['actionLogMessages', 'inspectLog_hiddenRecords'],
   ['failure', 'defaultHint'],
+  ['failure', 'firstRunAdvice'],
   ['fakeEnding', 'text'],
   ['fakeEnding', 'truthContent'],
   ['ui', 'viewAd'],

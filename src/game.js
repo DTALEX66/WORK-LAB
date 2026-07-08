@@ -16,6 +16,7 @@ import {
   scheduleNextAnomalyAfterTrigger,
 } from './runtimeSession.js';
 import { deriveVisualState } from './visualState.js';
+import { getOperatorCue } from './firstRunGuidance.js';
 
 const root = document.querySelector('.console-shell');
 const els = {
@@ -43,6 +44,7 @@ const els = {
   monitorCaption: document.querySelector('#monitorCaption'),
   monitorFloor: document.querySelector('#monitorFloor'),
   monitorSignal: document.querySelector('#monitorSignal'),
+  operatorCue: document.querySelector('#operatorCue'),
   monitorThreat: document.querySelector('#monitorThreat'),
   actions: document.querySelector('#actions'),
   logs: document.querySelector('#logs'),
@@ -236,6 +238,10 @@ function render() {
     els.monitorSignal.textContent = signal;
   }
   if (els.monitorThreat) els.monitorThreat.textContent = labels.monitorThreat(state.anomalyLevel);
+  if (els.operatorCue) {
+    const recommendedLabel = visual.highlightAction ? (ACTION_SHORT_LABELS[visual.highlightAction] || actionLabel(visual.highlightAction)) : null;
+    els.operatorCue.textContent = getOperatorCue(state, nextAnomalyAt, recommendedLabel);
+  }
   // 显示已解锁的隐藏日志内容
   const unlockedHidden = state.hiddenLogs.filter(h => !h.locked);
   const monitorText = unlockedHidden.length > 0

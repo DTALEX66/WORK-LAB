@@ -69,7 +69,8 @@ const CONFIG = {
 
   /* ── 异常系统 ── */
   anomaly: {
-    firstTriggerAt: 14,         // 首次异常触发 ↑12（更多准备时间）
+    firstTriggerAt: 8,          // 首局 10 秒内抛出异常，尽快进入找异常循环
+    firstMaxSeverity: 2,        // 首个异常只做教学压力，不直接抽高危事件
     cooldownMin: 10,            // 异常后最短冷却 ↑8
     cooldownMax: 18,            // 异常后最长冷却 ↑13（更多节奏变化）
     pressureDivisor: 2,         // pickNextAnomaly 压力算法分母

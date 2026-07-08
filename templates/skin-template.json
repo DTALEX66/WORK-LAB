@@ -131,6 +131,7 @@
       "default": "系统拒绝继续响应"
     },
     "defaultHint": "先关闭通道，再重启系统，避免连续移动。",
+    "firstRunAdvice": "下次优先看监控和日志；黄色描边就是推荐按键。",
     "adHintPrefix": "广告提示：{hint}",
     "adReviveRollback": "广告复活完成：回滚 {seconds} 秒，恢复至可控状态。",
     "adReviveMonitor": "广告复活完成：回滚到 {seconds} 秒前的系统状态。",

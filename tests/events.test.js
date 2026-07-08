@@ -68,6 +68,13 @@ test('pickNextAnomaly is deterministic when random source is injected', () => {
   assert.equal(selected.id, ANOMALIES[0].id);
 });
 
+test('first anomaly is limited to teachable low or medium severity events', () => {
+  for (const random of [() => 0, () => 0.5, () => 0.999]) {
+    const selected = pickNextAnomaly(createInitialState(), random);
+    assert.ok(selected.severity <= CONFIG.anomaly.firstMaxSeverity, `${selected.id} should not be too punishing as the first anomaly`);
+  }
+});
+
 test('new anomalies: door_refuse forces door open', () => {
   const state = createInitialState();
   const result = applyAnomaly(state, 'door_refuse');
