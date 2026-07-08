@@ -18,6 +18,7 @@ scripts/      换电脑配置/诊断/验证 Open Design/Codex/项目位置和增
 plugins/      Open Design 本地插件：UI/UX、平面、品牌、文化墙/展厅、2D/3D、小游戏 UI、HUD、设计审查
 design-systems/ Open Design 原生设计系统包
 assets/       Open Design 可引用的视觉资产包 manifest
+exports/      Open Design 生成/交接出的自包含原型与视觉资产
 usage-notes/  Open Design 软件使用、配置、调用 AI、落地样板的说明
 templates/    UI/UX、平面、菜单、网站、排版、QA 等可复用设计能力模板
 research/     开源插件/技能/DESIGN.md 可吸收清单与取舍记录

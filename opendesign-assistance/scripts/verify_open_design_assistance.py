@@ -207,6 +207,37 @@ def verify_visual_packs(root: Path, results: list[Result]) -> None:
         check(results, f"visual pack path exists: {asset.get('id')}", resolved.exists(), str(resolved))
 
 
+def png_size(path: Path) -> tuple[int, int] | None:
+    data = path.read_bytes()[:24]
+    if len(data) < 24 or data[:8] != b"\x89PNG\r\n\x1a\n":
+        return None
+    return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+
+
+def verify_exports(root: Path, results: list[Result]) -> None:
+    export = root / ASSISTANCE_DIR / "exports" / "minigame-mobile-controls"
+    require_file(results, root, str((export / "README.md").relative_to(root)), min_bytes=500)
+    html = require_file(results, root, str((export / "index.html").relative_to(root)), min_bytes=20_000)
+    require_file(results, root, str((export / "implementation-handoff.md").relative_to(root)), min_bytes=300)
+    require_file(results, root, str((export / "critique.json").relative_to(root)), min_bytes=300)
+    require_file(results, root, str((export / "index.html.artifact.json").relative_to(root)), min_bytes=100)
+    require_file(results, root, str((export / ".open-design" / "project.json").relative_to(root)), min_bytes=100)
+
+    html_text = read_text(html) if html.is_file() else ""
+    check(results, "minigame export uses local asset paths", "../../MINIGAME" not in html_text)
+    expected_assets = [
+        "cctv-elevator-corridor-clear.png",
+        "cctv-elevator-corridor-warp.png",
+        "cctv-elevator-corridor-figure.png",
+    ]
+    for name in expected_assets:
+        rel = f"opendesign-assistance/exports/minigame-mobile-controls/assets/{name}"
+        asset = require_file(results, root, rel, min_bytes=500_000)
+        check(results, f"minigame export html references {name}", f"assets/{name}" in html_text)
+        size = png_size(asset) if asset.is_file() else None
+        check(results, f"minigame export PNG dimensions readable: {name}", bool(size), str(size))
+
+
 def verify_json_files(root: Path, results: list[Result]) -> None:
     errors: list[str] = []
     for path in (root / ASSISTANCE_DIR).rglob("*.json"):
@@ -270,6 +301,7 @@ def verify_docs(root: Path, results: list[Result]) -> None:
         "opendesign-assistance/plugins/INDEX.md",
         "opendesign-assistance/templates/INDEX.md",
         "opendesign-assistance/usage-notes/OPEN_DESIGN_PLUGIN_INSTALL.md",
+        "opendesign-assistance/exports/minigame-mobile-controls/README.md",
     ]
     root_readme = root / "README.md"
     assistance_readme = root / ASSISTANCE_DIR / "README.md"
@@ -301,6 +333,7 @@ def main() -> int:
     verify_templates(root, results)
     verify_design_systems(root, results)
     verify_visual_packs(root, results)
+    verify_exports(root, results)
     verify_json_files(root, results)
     verify_indexes(root, results)
     verify_scripts(root, results)

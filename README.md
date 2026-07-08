@@ -109,6 +109,7 @@ opendesign-assistance/templates/visual/2d-design.md
 opendesign-assistance/templates/visual/3d-design.md
 opendesign-assistance/design-systems/anomaly-monitor-dark/README.md
 opendesign-assistance/assets/visual-packs/anomaly-monitor-cctv/README.md
+opendesign-assistance/exports/minigame-mobile-controls/README.md
 opendesign-assistance/usage-notes/PORTABLE_OPEN_DESIGN_SETUP.md
 opendesign-assistance/scripts/configure_open_design_windows.py
 opendesign-assistance/prompts/OPEN_DESIGN_MAIN_WINDOW_UI_PROMPT.md
