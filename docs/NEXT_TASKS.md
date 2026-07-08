@@ -1,6 +1,25 @@
 # MINIGAME 后续任务列表
 
-> 当前基线：`npm test` 89/89 pass；`npm run verify:summary` 通过；微信 strict 为 0 blocker；Android APK build/inspect 通过；Android WebView 已安装验证；`npm run release:check` 在默认占位配置下预期失败。
+> 当前基线以实际命令输出为准：本轮 `npm test` 已通过；微信 strict 为 0 blocker；Android APK build/inspect 依赖项目内便携 `.tools` 工具链，缺失时需要先恢复工具链；`npm run release:check` 在默认占位配置下预期失败。
+
+
+## P0｜平台定位 / 目录治理
+
+### 0. 小游戏合集平台目录已建立
+
+当前定位已调整为：MINIGAME 是小游戏合集平台，首发游戏是：
+
+```text
+games/find-anomaly/elevator-console
+```
+
+当前只建立分类、manifest 和 runtime 映射，不移动 `src/` 源码，避免破坏 H5 / 微信 / Android 验收链。
+
+下一步目录治理建议：
+
+1. 增加首页/启动页的游戏选择入口。
+2. 让 build 脚本读取 `game.manifest.json`。
+3. 新游戏一律先进入 `games/<category>/<game-id>/`，再决定是否复用现有 runtime。
 
 ## 已完成的近期地基
 
@@ -172,9 +191,10 @@ npm run release:check
 
 ## 建议下一步执行顺序
 
-1. P3-7：第 6 套皮肤候选（建议无人酒店前台）。
-2. P5-11：异常态监控撕裂 / freeze frame / 红外闪烁。
-3. P4-8：Android release APK / 签名流程。
-4. P5-10：游戏内新手引导压缩。
-5. P1-2：微信开发者工具真实导入测试。
-6. P4-9：GitHub Actions APK artifact 上传。
+1. P0：让首页/启动页体现“小游戏合集平台”，并从 manifest 读取当前游戏。
+2. P3-7：第 6 套皮肤候选（建议无人酒店前台）。
+3. P5-11：异常态监控撕裂 / freeze frame / 红外闪烁。
+4. P4-8：Android release APK / 签名流程。
+5. P5-10：游戏内新手引导压缩。
+6. P1-2：微信开发者工具真实导入测试。
+7. P4-9：GitHub Actions APK artifact 上传。

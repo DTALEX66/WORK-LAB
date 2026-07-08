@@ -1,14 +1,16 @@
 # MINIGAME
 
-> 单人 AI 驱动的小游戏生产与变现系统（Indie AI Game Production System）
+> 面向微信 / 抖音 / H5 / Android WebView 的小游戏合集平台与 AI 生产系统
 
-当前主线不是普通小游戏合集，而是围绕 **异常系统模拟类小游戏** 建立可复制、可换皮、可接入 IAA 广告变现的生产系统。
+当前定位是 **小游戏合集平台**：以“找异常”分类为首发方向，沉淀可复制、可换皮、可接入 IAA 广告变现的小游戏生产系统。
 
-## 当前原型
+## 当前首发游戏
 
-**异常电梯控制台**
+**找异常：异常电梯控制台**
 
-玩家扮演夜班电梯异常控制员，不是在看剧情，而是在操作一个不断出错的系统：
+本地分类目录：`games/find-anomaly/elevator-console/`
+
+玩家扮演夜班异常值守员，不是在看剧情，而是在 CCTV、状态 HUD 与日志中找异常并处置：
 
 - 观察楼层、电梯门、电源、稳定度、异常等级、乘客数量
 - 在一屏控制台里执行开门、关门、上行、下行、急停、系统重启、查看日志
@@ -26,6 +28,21 @@
 - 数据基础：轻量 `src/analytics.js` 埋点接口已接入 H5 游戏关键路径
 - 留存基础：跨局异常档案库已按皮肤记录遭遇异常、解锁日志和收集进度
 - 视觉资产：`docs/IMAGE_GENERATION_PROMPT_PACK.md` 收录真实 CCTV / 控制台 / HUD 材质生成词汇
+
+
+## 平台目录
+
+```text
+games/                         # 小游戏合集分类目录
+games/find-anomaly/            # 找异常分类
+games/find-anomaly/elevator-console/  # 当前首发游戏 manifest / 运行时映射
+```
+
+关键文档：
+
+- `docs/PLATFORM_POSITIONING.md`：MINIGAME 新平台定位
+- `docs/DIRECTORY_MAP.md`：本地目录分层与后续迁移边界
+- `games/README.md`：小游戏合集分类入口
 
 ## 快速开始
 
@@ -140,6 +157,8 @@ node build.js wechat     # 构建微信小游戏 bundle
 
 ## 当前文档
 
+- `docs/PLATFORM_POSITIONING.md`：小游戏合集平台定位
+- `docs/DIRECTORY_MAP.md`：目录分层与游戏分类
 - `docs/PROJECT_CONTEXT.md`：项目单一事实源
 - `docs/WORKFLOW.md`：AI 协作与开发约束
 - `docs/YOLO_BOUNDARIES.md`：YOLO 自主执行边界
@@ -158,5 +177,5 @@ node build.js wechat     # 构建微信小游戏 bundle
 - 每次只做一个功能
 - 先设计，后开发
 - 所有修改必须可回滚
-- 不偏离“异常系统模拟类小游戏”主线
+- 不偏离“小游戏合集平台 + 找异常首发游戏”的定位
 - 真实 AppID / adUnitId / 私密配置只放 ignored 本地文件，不提交源码

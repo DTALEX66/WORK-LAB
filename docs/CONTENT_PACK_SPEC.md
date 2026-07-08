@@ -1,10 +1,10 @@
 # Content Pack Spec
 
-本文件吸收自 `MINIGAME_V4_Starter_Pack.zip`，用于定义 MINIGAME 后续换皮 / 题材复制的内容包协议。
+本文件吸收自 `MINIGAME_V4_Starter_Pack.zip`，用于定义 MINIGAME 小游戏合集平台的内容包协议。当前首发分类是 `find-anomaly`。
 
 ## 目标
 
-内容包负责题材和玩法配置，底座负责运行。
+内容包负责题材、玩法配置和广告钩子，平台底座负责运行、构建和发布。
 
 ```text
 content-pack.json → 当前 skin.json / anomaly catalog / hidden logs / ad slots / marketing hooks
