@@ -20,3 +20,15 @@
 - `cctv-elevator-corridor-warp.png`：异常态背景，仅在 `data-anomaly="active"` 时切换。
 - `cctv-elevator-corridor-figure.png`：critical / danger 异常背景。
 - 以上三张图已去除源图右下角生成器水印；后续替换时必须重复水印/文字检查。
+
+## 资产落点分类
+
+`D:\All projects\MINIGAME` 是小游戏合集总目录，不是单个游戏目录。
+
+- 合集级资产：仅放跨多个游戏复用的素材，例如平台通用模板、共享运行时资源、跨游戏公共图标或构建产物。
+- 游戏级资产：凡只服务某一个游戏的 UI、CCTV 状态图、按钮贴图、音效、皮肤参考、overlay、spritesheet 和 manifest，必须放到该游戏目录下。
+- 当前首发游戏“找异常：异常电梯控制台”的游戏级资产统一放在 `games/find-anomaly/elevator-console/assets/`。
+- 新游戏按同一模式放在 `games/<category>/<game-id>/assets/`。
+- 只有明确被两个及以上游戏复用的资产，才能从游戏目录提升到合集级 `assets/` 或其他共享目录。
+
+Open Design 工作区只允许保留临时传输文件、预览文件和交付说明。确认采用的正式资产必须归档到 `D:\All projects\MINIGAME` 的正确层级；同步完成后，Open Design 工作区不应继续保留正式资产副本。

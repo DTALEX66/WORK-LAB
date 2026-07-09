@@ -49,3 +49,23 @@ games/<category>/<game-id>/
 1. 先把游戏配置和皮肤入口抽成 manifest 驱动。
 2. 再把 `src/` 拆成 `src/shared/` 与 `games/find-anomaly/elevator-console/runtime/`。
 3. 最后更新 build/test 脚本，让不同 game manifest 能选择不同入口。
+
+## 资产归属规则
+
+`D:\All projects\MINIGAME` 是小游戏合集总目录。只属于合集平台、跨游戏复用、构建/发布/模板/通用运行时的内容，才能放在总目录层级。
+
+首发游戏“找异常：异常电梯控制台”的专属内容，统一放入：
+
+```text
+games/find-anomaly/elevator-console/
+```
+
+其中，首发游戏专属 UI、CCTV、按钮、overlay、spritesheet、状态图等视觉资产统一放入：
+
+```text
+games/find-anomaly/elevator-console/assets/
+```
+
+后续新增游戏遵循同一规则：游戏专属内容放入 `games/<category>/<game-id>/`；只有确定可跨多个游戏复用的内容，才提升到合集总目录或共享目录。
+
+Open Design 工作区只作为临时传输、预览和交付空间。确认采用的正式项目资产必须同步到 `D:\All projects\MINIGAME` 对应目录；Open Design 工作区或根目录不得长期保留正式资产副本。

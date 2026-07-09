@@ -85,6 +85,9 @@ test('game UI keeps onboarding and controls icon-first with low text density', (
   assert.match(js, /className\s*=\s*'action-keycap'/, 'actions should render as hardware-style keycaps');
   assert.match(html, /id="moreActions"/, 'secondary actions should move behind a thumb-reachable more control');
   assert.match(html, /id="secondaryActionsSheet"/, 'low-frequency actions should render in a dedicated bottom sheet');
+  assert.match(html, /class="action-guide"/, 'desktop action panel should include compact guidance cards');
+  assert.match(html, /先看 CCTV/, 'guidance should reinforce CCTV-first play');
+  assert.match(html, /按推荐键/, 'guidance should explain recommended action highlighting');
   assert.match(html, /data-role="primary-start"/, 'start button should be a single primary handoff control');
   assert.doesNotMatch(html, /class="start-checklist"/, 'start overlay should not render a text-heavy checklist');
   assert.doesNotMatch(html, /class="start-rules"/, 'start overlay should not render rule badges as a menu');
@@ -156,6 +159,7 @@ test('portrait mobile layout keeps CCTV first and start strip reachable without 
   assert.match(css, /\.start-overlay[\s\S]*position:\s*static;[\s\S]*justify-content:\s*center/, 'mobile start strip should stay in flow and centered, not overlay panels');
   assert.match(css, /\.start-card[\s\S]*width:\s*min\(100%,\s*420px\)/, 'mobile start strip should be full-width constrained for thumb reach');
   assert.match(css, /Mobile portrait final pass[\s\S]*\.action-dock\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*68px/, 'mobile controls should reserve one thumb column for more actions');
+  assert.match(css, /Mobile portrait final pass[\s\S]*\.action-guide\s*\{\s*display:\s*none;\s*\}/, 'mobile controls should hide desktop guidance cards');
   assert.match(css, /Mobile portrait final pass[\s\S]*\.actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, 'mobile controls should keep only three primary keycaps visible');
   assert.match(css, /Mobile portrait final pass[\s\S]*\.secondary-actions-panel[\s\S]*border-radius:\s*18px 18px 0 0/, 'secondary controls should open as a bottom sheet');
 });

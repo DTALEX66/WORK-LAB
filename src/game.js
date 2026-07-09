@@ -299,6 +299,7 @@ function render() {
     els.monitor.dataset.anomaly = visual.glitch ? 'active' : 'clear';
     els.monitor.dataset.glitch = String(visual.glitch);
     els.monitor.dataset.shake = String(visual.shake);
+    els.monitor.dataset.cctvState = visual.cctvState;
     els.monitor.style.setProperty('--cctv-noise', String(visual.noise));
     els.monitor.dataset.passengers = state.passengers > 0 ? 'present' : 'missing';
   }
