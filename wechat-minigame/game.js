@@ -547,7 +547,9 @@ function tickState(state, seconds = 1) {
     next.gameOver = true;
     next.result = 'success';
     next = appendLog(next, 'success', t('ui.successfulShift'));
+    return next;
   }
+
   return checkFailure(next);
 }
 

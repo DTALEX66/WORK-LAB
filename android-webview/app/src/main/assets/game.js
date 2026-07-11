@@ -547,7 +547,9 @@ function tickState(state, seconds = 1) {
     next.gameOver = true;
     next.result = 'success';
     next = appendLog(next, 'success', t('ui.successfulShift'));
+    return next;
   }
+
   return checkFailure(next);
 }
 
@@ -1376,6 +1378,37 @@ function getContext() {
 // ── 广告 ──
 let adInstances = {};
 
+function createHostRewardedAd(hostApi, adUnitId, callbacks, label) {
+  const { onReward, onError } = callbacks;
+  const ad = hostApi.createRewardedVideoAd({ adUnitId });
+  let attempt = null;
+
+  const settle = ({ rewarded = false, error = null } = {}) => {
+    if (!attempt || attempt.settled) return;
+    attempt.settled = true;
+    if (error) console.warn(`[ad:${label}] error:`, error);
+    if (rewarded || (error && !CONFIG.releaseMode)) onReward?.();
+    if (error) onError?.(error);
+  };
+
+  ad.onClose((res) => settle({ rewarded: Boolean(res?.isEnded) }));
+  ad.onError((error) => settle({ error }));
+
+  return () => {
+    if (attempt && !attempt.settled) return Promise.resolve();
+    attempt = { settled: false };
+    return Promise.resolve()
+      .then(() => ad.show())
+      .catch((showError) => {
+        if (attempt?.settled) return undefined;
+        return Promise.resolve()
+          .then(() => ad.load?.())
+          .then(() => ad.show())
+          .catch((loadError) => settle({ error: loadError || showError }));
+      });
+  };
+}
+
 /**
  * 创建激励视频广告
  * @param {string} adUnitId - 广告位 ID
@@ -1388,42 +1421,13 @@ function createRewardedAd(adUnitId, callbacks = {}) {
   const { onReward, onError } = callbacks;
 
   if (env === 'wechat') {
-    const ad = wx.createRewardedVideoAd({ adUnitId });
-    ad.onClose((res) => {
-      if (res && res.isEnded) {
-        onReward?.();
-      }
-    });
-    const handleFailure = (err) => {
-      console.warn('[ad] error:', err);
-      if (!CONFIG.releaseMode) onReward?.();
-      onError?.(err);
-    };
-    ad.onError(handleFailure);
-    const show = () => ad.show().catch((showError) => {
-      return ad.load()
-        .then(() => ad.show())
-        .catch((loadError) => handleFailure(loadError || showError));
-    });
+    const show = createHostRewardedAd(wx, adUnitId, callbacks, 'wechat');
     adInstances[adUnitId] = show;
     return show;
   }
 
   if (env === 'douyin') {
-    const ad = tt.createRewardedVideoAd({ adUnitId });
-    ad.onClose((res) => {
-      if (res && res.isEnded) onReward?.();
-    });
-    const handleFailure = (err) => {
-      if (!CONFIG.releaseMode) onReward?.();
-      onError?.(err);
-    };
-    ad.onError(handleFailure);
-    const show = () => ad.show().catch((showError) => {
-      return ad.load()
-        .then(() => ad.show())
-        .catch((loadError) => handleFailure(loadError || showError));
-    });
+    const show = createHostRewardedAd(tt, adUnitId, callbacks, 'douyin');
     adInstances[adUnitId] = show;
     return show;
   }

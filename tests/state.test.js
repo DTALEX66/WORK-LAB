@@ -152,6 +152,19 @@ test('successful countdown produces a success result rather than a failure overl
   assert.match(completed.logs.at(-1).text, /值守/);
 });
 
+test('countdown completion wins when a resource threshold is crossed in the same tick', () => {
+  const completed = tickState({
+    ...createInitialState(),
+    remaining: 1,
+    power: 0.1,
+  }, 1);
+
+  assert.equal(completed.gameOver, true);
+  assert.equal(completed.result, 'success');
+  assert.match(completed.logs.at(-1).text, /值守/);
+  assert.doesNotMatch(completed.logs.at(-1).text, /崩溃/);
+});
+
 test('resource exhaustion produces an explicit failure result', () => {
   const failed = checkFailure({ ...createInitialState(), power: 0 });
 

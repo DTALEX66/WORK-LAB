@@ -4,6 +4,16 @@ import test from 'node:test';
 
 const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
 
+test('short portrait devices fall back to shell scrolling instead of clipping panels', () => {
+  const marker = '/* Mobile portrait final pass: keep CCTV first and keep the start strip reachable. */';
+  const finalMobile = css.slice(css.lastIndexOf(marker));
+
+  assert.match(finalMobile, /@media \(max-width:\s*700px\) and \(orientation:\s*portrait\) and \(max-height:\s*620px\)/, 'short portrait devices need an explicit fallback');
+  assert.match(finalMobile, /max-height:\s*620px[\s\S]*\.console-shell\s*\{[\s\S]*height:\s*100dvh;[\s\S]*overflow-y:\s*auto/, 'short portrait shell should scroll internally rather than clip content');
+  assert.match(finalMobile, /max-height:\s*620px[\s\S]*\.grid\s*\{[\s\S]*height:\s*auto;[\s\S]*grid-template-rows:\s*minmax\(120px,\s*32vh\)\s+auto\s+auto\s+minmax\(44px,\s*12vh\)/, 'short portrait should retain a useful CCTV minimum and compact log row');
+  assert.match(finalMobile, /padding-bottom:\s*max\([^;]*env\(safe-area-inset-bottom\)/, 'mobile shell should reserve bottom safe-area space');
+});
+
 test('mobile layout keeps overlays scrollable internally and controls reachable in one viewport', () => {
   const marker = '/* Mobile portrait final pass: keep CCTV first and keep the start strip reachable. */';
   const finalMobile = css.slice(css.lastIndexOf(marker));

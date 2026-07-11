@@ -2240,6 +2240,7 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
     grid-template-rows: auto minmax(0, 1fr) auto;
     gap: 6px;
     padding: max(6px, env(safe-area-inset-top)) 6px max(10px, env(safe-area-inset-bottom));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
     overflow: hidden;
   }
   .topbar {
@@ -2309,6 +2310,25 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
   .start-card h2 { font-size: 0.76rem; }
   .start-copy { font-size: 0.5rem; }
   .start-card button[data-role="primary-start"] { min-height: 30px; min-width: 96px; font-size: 0.68rem; }
+}
+
+/* Short portrait fail-safe: preserve every panel by scrolling the shell, never by clipping it. */
+@media (max-width: 700px) and (orientation: portrait) and (max-height: 620px) {
+  .console-shell {
+    height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .grid {
+    height: auto;
+    min-height: 0;
+    grid-template-rows: minmax(120px, 32vh) auto auto minmax(44px, 12vh);
+    overflow: visible;
+  }
+  .monitor,
+  .cctv-stage { min-height: 96px; }
+  .logs { min-height: 44px; max-height: 12vh; }
 }
 
 /* Imported first-game visual kit: labels stay in DOM; sprites skin the hardware surface only. */
