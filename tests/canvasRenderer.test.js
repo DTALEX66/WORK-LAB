@@ -7,10 +7,32 @@ import { createInitialState } from '../src/state.js';
 import { loadSkin } from '../src/skinManager.js';
 import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
 import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
-import { getCanvasActionButtons, getCanvasCctvTreatment, getCanvasFailureOverlayCopy, getCanvasMeterBars, getCanvasStaticLabels, getCanvasStatusItems } from '../platform/canvasRenderer.js';
+import { getCanvasActionButtons, getCanvasCctvTreatment, getCanvasFailureOverlayCopy, getCanvasLayout, getCanvasMeterBars, getCanvasStaticLabels, getCanvasStatusItems, onCanvasClick } from '../platform/canvasRenderer.js';
 import { getDomLabels } from '../src/uiLabels.js';
 
 const canvasRendererSource = readFileSync(new URL('../platform/canvasRenderer.js', import.meta.url), 'utf8');
+
+test('Canvas V3 uses a vertical CCTV-first cockpit with 44 CSS-pixel action targets', () => {
+  const layout = getCanvasLayout(1334);
+  assert.ok(layout.monitor.w > 700 && layout.monitor.h >= 500);
+  assert.equal(layout.actions.columns, 4);
+  assert.ok(layout.actions.buttonH >= 88, '750px design canvas is displayed around 0.5x on 375px devices');
+  assert.ok(layout.actions.y > layout.monitor.y + layout.monitor.h);
+  assert.ok(layout.status.y > layout.actions.y + layout.actions.h);
+  assert.ok(layout.logs.y > layout.status.y + layout.status.h);
+});
+
+test('Canvas V3 hit testing shares the four-column action layout', () => {
+  loadSkin(elevatorSkin);
+  const state = createInitialState();
+  const layout = getCanvasLayout(1334).actions;
+  const expected = getCanvasActionButtons(state)[3].id;
+  let selected = null;
+  const x = layout.x + 16 + 3 * (layout.buttonW + layout.gap) + layout.buttonW / 2;
+  const y = layout.startY + layout.buttonH / 2;
+  onCanvasClick(x, y, state, { onAction: id => { selected = id; } });
+  assert.equal(selected, expected);
+});
 
 test('canvas action buttons use current skin labels', () => {
   loadSkin(securitySkin);

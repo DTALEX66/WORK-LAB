@@ -10,7 +10,7 @@
 
 import { getAvailableActions } from '../src/actions.js';
 import { t, getSkin, actionLabel } from '../src/skinManager.js';
-import { getToneForState, summarizeFailure } from '../src/feedback.js';
+import { summarizeFailure } from '../src/feedback.js';
 import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from '../src/uiLabels.js';
 import { deriveVisualState } from '../src/visualState.js';
 
@@ -22,17 +22,34 @@ let DH = 1334;        // 设计高度（自适应）
 
 // ── 颜色 ──
 const COLORS = {
-  bg: '#05080b',
-  panel: 'rgba(8,18,21,0.92)',
-  line: 'rgba(97,255,190,0.22)',
-  text: '#d8fff3',
-  muted: '#789b92',
-  green: '#61ffbe',
-  amber: '#ffd166',
-  red: '#ff4d6d',
-  cyan: '#51d6ff',
-  darkRed: '#ff0050',
+  bg: '#07090a',
+  panel: '#101314',
+  panelRaised: '#1a1f20',
+  line: 'rgba(195,200,190,0.24)',
+  text: '#e7e2d5',
+  muted: '#8e928c',
+  green: '#79d6a3',
+  amber: '#e1a84b',
+  red: '#e75c4f',
+  cyan: '#84b9b0',
+  darkRed: '#a52e38',
 };
+
+export function getCanvasLayout(height = 1334) {
+  const monitor = { x: 14, y: 82, w: 722, h: 510 };
+  const actions = {
+    x: 14, y: 600, w: 722, h: 238,
+    columns: 4, gap: 10, buttonH: 88, startY: 638,
+  };
+  actions.buttonW = (actions.w - 32 - (actions.columns - 1) * actions.gap) / actions.columns;
+  return {
+    topbar: { x: 14, y: 12, w: 722, h: 62 },
+    monitor,
+    actions,
+    status: { x: 14, y: 846, w: 722, h: 198 },
+    logs: { x: 14, y: 1052, w: 722, h: Math.max(180, height - 1066) },
+  };
+}
 
 // ── Measure text ──
 function measure(text, size, bold = false) {
@@ -58,22 +75,21 @@ function roundRect(x, y, w, h, r, fill, stroke) {
 }
 
 // ── 绘制背景 ──
-function drawBackground(tone) {
-  // 纯色背景
+function drawBackground() {
   ctx.fillStyle = COLORS.bg;
   ctx.fillRect(0, 0, DW, DH);
-
-  // 径向渐变装饰
-  const grad1 = ctx.createRadialGradient(150, 0, 0, 150, 0, 400);
-  grad1.addColorStop(0, 'rgba(81,214,255,0.10)');
-  grad1.addColorStop(1, 'transparent');
-  ctx.fillStyle = grad1;
-  ctx.fillRect(0, 0, DW, DH);
-
-  const grad2 = ctx.createRadialGradient(DW - 100, 100, 0, DW - 100, 100, 350);
-  grad2.addColorStop(0, 'rgba(255,77,109,0.10)');
-  grad2.addColorStop(1, 'transparent');
-  ctx.fillStyle = grad2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.018)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < DH; y += 24) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(DW, y);
+    ctx.stroke();
+  }
+  const glow = ctx.createRadialGradient(DW / 2, 0, 0, DW / 2, 0, 520);
+  glow.addColorStop(0, 'rgba(225,168,75,0.06)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
   ctx.fillRect(0, 0, DW, DH);
 }
 
@@ -103,27 +119,26 @@ export function getCanvasFailureOverlayCopy(state) {
 
 // ── 绘制顶栏 ──
 function drawTopbar(state) {
+  const { x, y, w, h } = getCanvasLayout(DH).topbar;
   const meta = getSkin().meta;
-  ctx.fillStyle = COLORS.text;
-  ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
-  ctx.fillText(meta?.name || '', 24, 44);
-
+  roundRect(x, y, w, h, 6, COLORS.panel, COLORS.line);
   ctx.fillStyle = COLORS.green;
-  ctx.font = '14px "Microsoft YaHei", sans-serif';
-  ctx.fillText(meta?.subtitle || '', 24, 64);
+  ctx.fillRect(x, y, 5, h);
 
-  const labels = getCanvasStaticLabels();
-  // 倒计时卡片
-  const cardX = DW - 170;
-  const cardW = 150;
-  roundRect(cardX, 14, cardW, 50, 14, COLORS.panel, COLORS.line);
-  ctx.fillStyle = COLORS.muted;
-  ctx.font = '12px "Microsoft YaHei", sans-serif';
-  ctx.fillText(labels.countdown, cardX + 12, 32);
-  ctx.fillStyle = COLORS.amber;
+  ctx.fillStyle = COLORS.text;
   ctx.font = 'bold 28px "Microsoft YaHei", sans-serif';
-  ctx.textAlign = 'right';
-  ctx.fillText(Math.ceil(state.remaining).toString(), cardX + cardW - 14, 53);
+  ctx.fillText(meta?.name || '', x + 18, y + 37);
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '11px Consolas, "Microsoft YaHei", monospace';
+  ctx.fillText(meta?.subtitle || '', x + 19, y + 53);
+
+  const cardW = 116;
+  const cardX = x + w - cardW - 10;
+  roundRect(cardX, y + 9, cardW, h - 18, 4, '#080a0a', 'rgba(225,168,75,0.48)');
+  ctx.fillStyle = COLORS.amber;
+  ctx.font = 'bold 30px Consolas, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(Math.ceil(state.remaining).toString(), cardX + cardW / 2, y + 42);
   ctx.textAlign = 'left';
 }
 
@@ -158,36 +173,34 @@ function getCanvasStatusPanelTitle() {
 
 // ── 绘制状态面板 ──
 function drawStatusPanel(state) {
-  const x = 14, y = 80, w = 260, h = 220;
+  const { x, y, w, h } = getCanvasLayout(DH).status;
+  roundRect(x, y, w, h, 6, COLORS.panel, toneBorder(state));
+  ctx.fillStyle = '#bbb9af';
+  ctx.font = 'bold 12px Consolas, "Microsoft YaHei", monospace';
+  ctx.fillText(`■ ${getCanvasStatusPanelTitle()}`, x + 14, y + 24);
 
-  // 面板背景
-  roundRect(x, y, w, h, 16, COLORS.panel, toneBorder(state));
-
-  ctx.fillStyle = COLORS.green;
-  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
-  ctx.fillText(getCanvasStatusPanelTitle(), x + 16, y + 28);
-
-  // 状态网格（2列）
-  const items = getCanvasStatusItems(state);
-
-  const colW = (w - 32) / 2;
-  items.forEach(({ label, value }, i) => {
-    const cx = x + 16 + (i % 2) * colW;
-    const cy = y + 44 + Math.floor(i / 2) * 26;
-
-    roundRect(cx, cy, colW - 8, 22, 8, 'rgba(0,0,0,0.18)', 'rgba(255,255,255,0.08)');
+  const coreIds = new Set(['floor', 'door', 'direction', 'passengers', 'power', 'stability', 'anomalyLevel']);
+  const items = getCanvasStatusItems(state).filter(item => coreIds.has(item.id));
+  const columns = 4;
+  const gap = 8;
+  const cardW = (w - 32 - gap * (columns - 1)) / columns;
+  items.forEach(({ id, label, value }, i) => {
+    const cx = x + 16 + (i % columns) * (cardW + gap);
+    const cy = y + 36 + Math.floor(i / columns) * 54;
+    const stroke = id === 'anomalyLevel' ? 'rgba(231,92,79,0.58)' : 'rgba(121,214,163,0.28)';
+    roundRect(cx, cy, cardW, 46, 3, '#090b0c', stroke);
     ctx.fillStyle = COLORS.muted;
-    ctx.font = '11px "Microsoft YaHei", sans-serif';
+    ctx.font = '10px "Microsoft YaHei", sans-serif';
     ctx.fillText(label, cx + 8, cy + 15);
     ctx.fillStyle = COLORS.text;
-    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 17px Consolas, "Microsoft YaHei", monospace';
     ctx.textAlign = 'right';
-    ctx.fillText(String(value), cx + colW - 12, cy + 15);
+    ctx.fillText(String(value), cx + cardW - 8, cy + 35);
     ctx.textAlign = 'left';
   });
 
   getCanvasMeterBars(state).forEach(({ label, value, color }, index) => {
-    drawBar(x + 16, y + 175 + index * 21, w - 32, 16, label, value, color);
+    drawBar(x + 16, y + 148 + index * 20, w - 32, 14, label, value, color);
   });
 }
 
@@ -218,30 +231,26 @@ function toneBorder(state) {
 
 // ── 绘制监控画面 ──
 function drawMonitor(state) {
-  const x = 286, y = 80, w = 448, h = 220;
-
+  const { x, y, w, h } = getCanvasLayout(DH).monitor;
   const labels = getCanvasStaticLabels();
-  roundRect(x, y, w, h, 16, COLORS.panel, toneBorder(state));
-  ctx.fillStyle = COLORS.green;
-  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
-  ctx.fillText(labels.monitorPanel, x + 16, y + 28);
+  roundRect(x, y, w, h, 6, COLORS.panel, toneBorder(state));
+  ctx.fillStyle = '#bbb9af';
+  ctx.font = 'bold 12px Consolas, "Microsoft YaHei", monospace';
+  ctx.fillText(`■ ${labels.monitorPanel}`, x + 14, y + 24);
 
-  // 监控内容区域：视觉画面 + 字幕，不再只是大段文字
-  const mx = x + 14, my = y + 38, mw = w - 28, mh = h - 50;
-  roundRect(mx, my, mw, mh, 12, 'rgba(0,0,0,0.2)', 'rgba(97,255,190,0.12)');
-  drawCctvScene(state, mx + 10, my + 10, mw - 20, mh - 58);
+  const mx = x + 14, my = y + 34, mw = w - 28, mh = h - 48;
+  roundRect(mx, my, mw, mh, 3, '#050807', 'rgba(121,214,163,0.22)');
+  drawCctvScene(state, mx + 8, my + 8, mw - 16, mh - 52);
 
-  // 扫描线效果
-  const scanY = (Date.now() / 100 * mh) % mh;
-  ctx.fillStyle = 'rgba(97,255,190,0.04)';
-  ctx.fillRect(mx, my + scanY, mw, 4);
+  const scanY = (Date.now() / 100 * (mh - 52)) % (mh - 52);
+  ctx.fillStyle = 'rgba(121,214,163,0.04)';
+  ctx.fillRect(mx + 8, my + 8 + scanY, mw - 16, 4);
 
-  // 字幕文本
-  let displayText = getMonitorText(state);
-  ctx.fillStyle = '#bffff0';
+  const displayText = getMonitorText(state);
+  ctx.fillStyle = '#c8c6bd';
   ctx.font = '13px "Microsoft YaHei", sans-serif';
   ctx.textAlign = 'center';
-  wrapText(displayText, mx + mw / 2, my + mh - 34, mw - 24, 17);
+  wrapText(displayText, mx + mw / 2, my + mh - 28, mw - 28, 17);
   ctx.textAlign = 'left';
 }
 
@@ -406,76 +415,61 @@ export function getCanvasActionButtons(state) {
 
 // ── 绘制操作按钮 ──
 function drawActions(state) {
-  const x = 14, y = 312, w = 260, h = 260;
-
+  const layout = getCanvasLayout(DH).actions;
+  const { x, y, w, h, columns, gap, buttonW, buttonH, startY } = layout;
   const labels = getCanvasStaticLabels();
-  roundRect(x, y, w, h, 16, COLORS.panel, COLORS.line);
-  ctx.fillStyle = COLORS.green;
-  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
-  ctx.fillText(labels.actionPanel, x + 16, y + 28);
+  roundRect(x, y, w, h, 6, COLORS.panel, COLORS.line);
+  ctx.fillStyle = '#bbb9af';
+  ctx.font = 'bold 12px Consolas, "Microsoft YaHei", monospace';
+  ctx.fillText(`■ ${labels.actionPanel}`, x + 14, y + 24);
 
-  const btns = getCanvasActionButtons(state);
-
-  const btnW = (w - 40) / 2;
-  const btnH = 40;
-  const gap = 10;
-  const startY = y + 42;
-
+  const btns = getCanvasActionButtons(state).slice(0, 8);
   btns.forEach((btn, i) => {
-    const bx = x + 16 + (i % 2) * (btnW + gap);
-    const by = startY + Math.floor(i / 2) * (btnH + gap);
-
-    const isGreen = !['emergencyStop', 'restartSystem'].includes(btn.id);
-    const color = isGreen
-      ? 'linear-gradient(135deg, #61ffbe, #51d6ff)'
-      : 'rgba(255,255,255,0.08)';
-
-    // 按钮背景
-    roundRect(bx, by, btnW, btnH, 10, color);
+    const bx = x + 16 + (i % columns) * (buttonW + gap);
+    const by = startY + Math.floor(i / columns) * (buttonH + gap);
+    const danger = btn.id === 'emergencyStop';
+    const fill = ctx.createLinearGradient(0, by, 0, by + buttonH);
+    fill.addColorStop(0, danger ? '#492420' : '#2a2f30');
+    fill.addColorStop(0.2, danger ? '#321614' : '#1b1f20');
+    fill.addColorStop(1, danger ? '#100909' : '#090b0c');
+    roundRect(bx, by, buttonW, buttonH, 5, fill, danger ? 'rgba(231,92,79,0.78)' : '#4b504e');
+    roundRect(bx + 5, by + 5, buttonW - 10, buttonH - 10, 3, null, 'rgba(0,0,0,0.72)');
     if (btn.recommended) {
-      roundRect(bx - 2, by - 2, btnW + 4, btnH + 4, 12, null, 'rgba(255,209,102,0.82)');
-    }
-    if (!isGreen) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-      ctx.lineWidth = 1;
-      roundRect(bx, by, btnW, btnH, 10, null, 'rgba(255,255,255,0.12)');
+      roundRect(bx - 2, by - 2, buttonW + 4, buttonH + 4, 6, null, 'rgba(225,168,75,0.94)');
     }
 
-    ctx.fillStyle = isGreen ? '#02110c' : COLORS.text;
-    ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = danger ? COLORS.red : COLORS.green;
+    ctx.beginPath();
+    ctx.arc(bx + buttonW / 2, by + 22, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = COLORS.text;
+    ctx.font = 'bold 15px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(btn.label, bx + btnW / 2, by + btnH / 2 + 5);
+    ctx.fillText(btn.label, bx + buttonW / 2, by + 57);
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '10px Consolas, monospace';
+    ctx.fillText(btn.id.toUpperCase().slice(0, 12), bx + buttonW / 2, by + 74);
     ctx.textAlign = 'left';
   });
-
-  // 触发异常测试按钮
-  const testBtnY = startY + Math.ceil(btns.length / 2) * (btnH + gap) + 6;
-  roundRect(x + 16, testBtnY, w - 32, 34, 10, 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.12)');
-  ctx.fillStyle = COLORS.text;
-  ctx.font = '12px "Microsoft YaHei", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(labels.forceAnomaly, x + w / 2, testBtnY + 22);
-  ctx.textAlign = 'left';
 }
 
 // ── 绘制系统日志 ──
 function drawLogs(state) {
-  const x = 286, y = 312, w = 448, h = 260;
-
+  const { x, y, w, h } = getCanvasLayout(DH).logs;
   const labels = getCanvasStaticLabels();
-  roundRect(x, y, w, h, 16, COLORS.panel, COLORS.line);
-  ctx.fillStyle = COLORS.green;
-  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
-  ctx.fillText(labels.logPanel, x + 16, y + 28);
+  roundRect(x, y, w, h, 6, COLORS.panel, COLORS.line);
+  ctx.fillStyle = '#bbb9af';
+  ctx.font = 'bold 12px Consolas, "Microsoft YaHei", monospace';
+  ctx.fillText(`■ ${labels.logPanel}`, x + 14, y + 24);
 
-  const logs = state.logs.slice(-12);
-  const logY = y + 38;
+  const maxRows = Math.max(3, Math.floor((h - 48) / 22));
+  const logs = state.logs.slice(-maxRows);
   logs.forEach((log, i) => {
-    const lx = x + 16, ly = logY + i * 19;
+    const lx = x + 18, ly = y + 38 + i * 22;
     const colorMap = { warn: COLORS.amber, danger: COLORS.red, ad: COLORS.cyan, success: COLORS.green };
-    ctx.fillStyle = colorMap[log.type] || '#bfeee0';
+    ctx.fillStyle = colorMap[log.type] || '#aeb4ad';
     ctx.font = '12px Consolas, "Microsoft YaHei", monospace';
-    ctx.fillText(log.text, lx, ly + 12);
+    ctx.fillText(`${i + 1}. ${log.text}`, lx, ly + 12, w - 36);
   });
 }
 
@@ -487,7 +481,7 @@ function drawFailureOverlay(state) {
   ctx.fillStyle = 'rgba(0,0,0,0.72)';
   ctx.fillRect(0, 0, DW, DH);
 
-  const cardW = 520, cardH = 320;
+  const cardW = 620, cardH = 350;
   const cx = (DW - cardW) / 2, cy = (DH - cardH) / 2;
 
   const labels = getCanvasStaticLabels();
@@ -495,7 +489,7 @@ function drawFailureOverlay(state) {
   const isSuccess = state.result === 'success';
   if (!isSuccess && state.fakeEndingTriggered) {
     // 假结局
-    roundRect(cx, cy, cardW, cardH, 24, 'rgba(60,0,12,0.98)', 'rgba(255,0,80,0.7)');
+    roundRect(cx, cy, cardW, cardH, 8, '#211013', 'rgba(231,92,79,0.72)');
 
     ctx.fillStyle = COLORS.darkRed;
     ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
@@ -522,8 +516,8 @@ function drawFailureOverlay(state) {
       cy,
       cardW,
       cardH,
-      24,
-      isSuccess ? 'rgba(3,34,25,0.98)' : 'rgba(38,5,12,0.98)',
+      8,
+      '#111415',
       isSuccess ? 'rgba(97,255,190,0.62)' : 'rgba(255,77,109,0.52)',
     );
 
@@ -551,8 +545,8 @@ function drawFailureOverlay(state) {
   const btnY = cy + cardH - 70;
   if (!isSuccess) {
     const btnW2 = (cardW - 60) / 2;
-    roundRect(cx + 20, btnY, btnW2, 46, 12, COLORS.green);
-    ctx.fillStyle = '#02110c';
+    roundRect(cx + 20, btnY, btnW2, 46, 5, '#17352a', 'rgba(121,214,163,0.7)');
+    ctx.fillStyle = COLORS.text;
     ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     const btnLabel = state.fakeEndingTriggered && !state.fakeEndingUnlocked
@@ -563,15 +557,15 @@ function drawFailureOverlay(state) {
     ctx.fillText(btnLabel, cx + 20 + btnW2 / 2, btnY + 29);
     ctx.textAlign = 'left';
 
-    roundRect(cx + 40 + btnW2, btnY, btnW2, 46, 12, 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.12)');
+    roundRect(cx + 40 + btnW2, btnY, btnW2, 46, 5, '#202425', 'rgba(195,200,190,0.24)');
     ctx.fillStyle = COLORS.text;
     ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(labels.restart, cx + 40 + btnW2 + btnW2 / 2, btnY + 29);
     ctx.textAlign = 'left';
   } else {
-    roundRect(cx + 20, btnY, cardW - 40, 46, 12, COLORS.green);
-    ctx.fillStyle = '#02110c';
+    roundRect(cx + 20, btnY, cardW - 40, 46, 5, '#17352a', 'rgba(121,214,163,0.7)');
+    ctx.fillStyle = COLORS.text;
     ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(labels.restart, cx + cardW / 2, btnY + 29);
@@ -608,11 +602,11 @@ function wrapText(text, x, y, maxWidth, lineHeight) {
 let clickHandlers = {};
 
 export function onCanvasClick(x, y, state, callbacks) {
-  const { onAdRevive, onRestart, onAction, onForceAnomaly } = callbacks;
+  const { onAdRevive, onRestart, onAction } = callbacks;
 
   // 失败弹窗按钮检测
   if (state.gameOver) {
-    const cardW = 520, cardH = 320;
+    const cardW = 620, cardH = 350;
     const cx2 = (DW - cardW) / 2, cy2 = (DH - cardH) / 2;
     const btnY = cy2 + cardH - 70;
     if (state.result === 'success') {
@@ -642,27 +636,16 @@ export function onCanvasClick(x, y, state, callbacks) {
     return;
   }
 
-  // 操作按钮检测
-  const btnW = (260 - 40) / 2;
-  const btnH2 = 40;
-  const gap = 10;
-  const startY = 312 + 42;
-
-  const btns = getCanvasActionButtons(state).map(button => button.id);
-
-  for (let i = 0; i < btns.length; i++) {
-    const bx = 14 + 16 + (i % 2) * (btnW + gap);
-    const by = startY + Math.floor(i / 2) * (btnH2 + gap);
-    if (x >= bx && x <= bx + btnW && y >= by && y <= by + btnH2) {
+  // 操作按钮检测 — 与 V3 四列硬件键轨使用同一布局数据。
+  const layout = getCanvasLayout(DH).actions;
+  const btns = getCanvasActionButtons(state).slice(0, 8).map(button => button.id);
+  for (let i = 0; i < btns.length; i += 1) {
+    const bx = layout.x + 16 + (i % layout.columns) * (layout.buttonW + layout.gap);
+    const by = layout.startY + Math.floor(i / layout.columns) * (layout.buttonH + layout.gap);
+    if (x >= bx && x <= bx + layout.buttonW && y >= by && y <= by + layout.buttonH) {
       onAction?.(btns[i]);
       return;
     }
-  }
-
-  // 触发异常测试按钮
-  const testBtnY = startY + Math.ceil(btns.length / 2) * (btnH2 + gap) + 6;
-  if (x >= 14 + 16 && x <= 14 + 16 + (260 - 32) && y >= testBtnY && y <= testBtnY + 34) {
-    onForceAnomaly?.();
   }
 }
 
@@ -670,8 +653,7 @@ export function onCanvasClick(x, y, state, callbacks) {
 export function render(state) {
   if (!ctx) return;
 
-  const tone = getToneForState(state);
-  drawBackground(tone);
+  drawBackground();
   drawTopbar(state);
   drawStatusPanel(state);
   drawMonitor(state);

@@ -79,7 +79,7 @@
 
 ### 自动化测试
 
-测试数由 **125** 增至 **152**（含同步远端 `ddd1ee1` 后新增的资源覆盖测试），新增覆盖：
+测试数由 **125** 增至 **156**（含同步远端 `ddd1ee1` 后新增的资源覆盖测试与 UI V3 契约测试），新增覆盖：
 
 - 成功/失败/复活结果状态；
 - 成功结算 H5/Canvas 分支；
@@ -95,7 +95,19 @@
 - H5/Canvas 广告 attempt 携带发起局 `runToken`，重开后到达的旧 revive/decode/truth 回调会被拒绝；
 - Canvas CCTV 向量场景消费共享 `cctvState`，对断电、信号故障、实体与高威胁状态采用不同处理；
 - ≤620px 短竖屏使用 shell 内滚动防止固定视口裁切；
+- UI V3 桌面三列驾驶舱、移动四按钮操作轨和可达开始层；
+- Canvas V3 使用 CCTV-first 纵向布局、88 设计像素按钮和共享点击热区；
 - 发布检查要求 fail-closed 模式。
+
+### UI V3 全量视觉重构
+
+`MINIGAME_UI_All_Assets_Pack_v2.zip` 已实测审查：428 PNG 中存在高比例近重复、AI 伪文字、边缘零留白和自动切片残片，因此未直接入库。已改用原生 CSS/Canvas 组件与项目现有无文字 CCTV 状态图，完整规格及尺寸证据见：
+
+- `docs/UI_V3_FULL_REDESIGN_2026-07-12.md`
+- 桌面：1365×768，CCTV 实测 845×676px；
+- 竖屏：390×844 无横向溢出；
+- 短屏：360×640 无横向/纵向页面溢出，四键均为 81×56px；
+- Android WebView 与微信 bundle 已由 `npm run verify` 重新生成。
 
 ## 4. 尚未完成的问题（下一轮按顺序处理）
 
@@ -178,7 +190,7 @@ npm run release:check
 
 预期：
 
-- `npm test`：152/152 通过；
+- `npm test`：156/156 通过；
 - `npm run verify`：单元测试、微信 strict、Android APK build/metadata 全部通过；
 - `npm run release:check`：在没有私有发布配置时应**失败关闭**，列出 `releaseMode/AppID/adUnits` 等 blocker，这不是测试失败，而是发布保护生效。
 

@@ -4,6 +4,26 @@ import test from 'node:test';
 
 const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
 
+test('UI V3 Night Relay keeps a three-column desktop cockpit and a complete four-key mobile rail', () => {
+  const marker = '/* UI V3 NIGHT RELAY — Monitor primary, Operate secondary. */';
+  const v3 = css.slice(css.lastIndexOf(marker));
+  assert.ok(v3.startsWith(marker), 'V3 final override must be the winning CSS pass');
+  assert.match(v3, /grid-template-columns:\s*236px minmax\(0,\s*1fr\) 252px/, 'desktop should use instrumentation, CCTV, and action columns');
+  assert.match(v3, /grid-template-areas:\s*"status monitor actions"\s*"logs monitor actions"/, 'CCTV should span the two desktop cockpit rows');
+  assert.match(v3, /@media \(max-width:\s*700px\)[\s\S]*\.action-dock\s*\{[\s\S]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/, 'mobile should expose three primary actions plus More as four complete keys');
+  assert.match(v3, /@media \(max-width:\s*700px\)[\s\S]*\.actions\s*\{\s*display:\s*contents/, 'nested primary actions should participate in the four-key rail');
+  assert.match(v3, /\.actions button,[\s\S]*\.more-actions-button\s*\{[\s\S]*min-height:\s*56px/, 'all primary touch targets should be at least 56px high');
+});
+
+test('UI V3 start handoff is a reachable modal instead of a clipped horizontal pill', () => {
+  const marker = '/* UI V3 NIGHT RELAY — Monitor primary, Operate secondary. */';
+  const v3 = css.slice(css.lastIndexOf(marker));
+  assert.match(v3, /\.start-overlay\s*\{[\s\S]*position:\s*fixed/, 'start handoff should overlay the cockpit');
+  assert.match(v3, /\.start-card\s*\{[\s\S]*border-radius:\s*8px/, 'start card should use the industrial panel geometry');
+  assert.match(v3, /@media \(max-width:\s*700px\)[\s\S]*\.start-overlay\s*\{[\s\S]*align-items:\s*end/, 'mobile start handoff should become a reachable bottom sheet');
+  assert.match(v3, /button\[data-role="primary-start"\][\s\S]*min-height:\s*48px/, 'start action should preserve a full touch target');
+});
+
 test('short portrait devices fall back to shell scrolling instead of clipping panels', () => {
   const marker = '/* Mobile portrait final pass: keep CCTV first and keep the start strip reachable. */';
   const finalMobile = css.slice(css.lastIndexOf(marker));
