@@ -15,6 +15,7 @@ export function createInitialState() {
     anomalyLevel: c.anomalyLevel,
     passengers: c.passengers,
     gameOver: c.gameOver,
+    result: 'playing',
     elapsed: 0,
     remaining: c.duration,
     adRevivesUsed: 0,
@@ -57,6 +58,7 @@ export function checkFailure(state) {
   const f = CONFIG.failure;
   if (next.power <= f.powerMin || next.stability <= f.stabilityMin || next.anomalyLevel >= f.anomalyLevelMax || next.passengers < f.passengersMin) {
     next.gameOver = true;
+    next.result = 'failure';
     next.moving = false;
     next.direction = 'idle';
   }
@@ -97,6 +99,7 @@ export function reviveFromAd(state) {
   }
 
   next.gameOver = false;
+  next.result = 'playing';
   next.door = 'closed';
   next.moving = false;
   next.direction = 'idle';
@@ -120,6 +123,7 @@ export function tickState(state, seconds = 1) {
   }
   if (next.remaining <= 0) {
     next.gameOver = true;
+    next.result = 'success';
     next = appendLog(next, 'success', t('ui.successfulShift'));
   }
   return checkFailure(next);
@@ -127,6 +131,7 @@ export function tickState(state, seconds = 1) {
 
 export function recordSuccessfulShift(state) {
   let next = cloneState(state);
+  next.result = 'success';
   next.consecutiveFailures = 0;
   next.fakeEndingCooldownRemaining = 0;
   next.fakeEndingTriggered = false;
@@ -139,6 +144,7 @@ export function recordSuccessfulShift(state) {
 export function recordFailure(state) {
   const fe = CONFIG.fakeEnding;
   const next = cloneState(state);
+  next.result = 'failure';
   next.consecutiveFailures += 1;
 
   if (next.fakeEndingCooldownRemaining > 0) {

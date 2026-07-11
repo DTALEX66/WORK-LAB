@@ -123,6 +123,11 @@ test('canvas failure overlay copy uses current skin text', () => {
   loadSkin(elevatorSkin);
 });
 
+test('canvas renderer distinguishes success settlement from failure', () => {
+  assert.match(canvasRendererSource, /state\.result === 'success'/, 'Canvas overlay should branch on explicit success result');
+  assert.match(canvasRendererSource, /if \(!isSuccess\)[\s\S]*labels\.adRevive/, 'Canvas success settlement should omit rewarded-revive CTA');
+});
+
 test('canvas monitor renderer draws a visual CCTV scene before caption text', () => {
   assert.match(canvasRendererSource, /function drawCctvScene/, 'Canvas mini-game monitor should include visual CCTV scene rendering');
   assert.match(canvasRendererSource, /drawCctvScene\(state/, 'drawMonitor should call the visual scene renderer');

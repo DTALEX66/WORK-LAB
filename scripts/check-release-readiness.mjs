@@ -61,8 +61,17 @@ const androidProject = existsSync(resolve(root, 'android-minigame/project.config
   : null;
 const gameConfigText = readText('src/gameConfig.js');
 const adUnits = releaseConfig?.adUnits ?? extractAdUnits(gameConfigText);
+const releaseMode = releaseConfig?.releaseMode ?? /releaseMode:\s*true/.test(gameConfigText);
 const wechatAppId = releaseConfig?.wechat?.appid ?? wechatPrivateProject?.appid ?? wechatProject.appid;
 const douyinAppId = releaseConfig?.douyin?.appid ?? douyinPrivateProject?.appid ?? douyinProject?.appid;
+
+addCheck(
+  'releaseMode',
+  releaseMode === true,
+  'blocker',
+  'Release config must set releaseMode=true so rewarded-ad failures never grant rewards',
+  `current=${releaseMode}`,
+);
 
 addCheck(
   'wechatAppId',

@@ -33,6 +33,13 @@ test('browser preview exposes an explicit start handoff overlay', () => {
   assert.match(html, /id="archiveOverlay"/, 'archive overlay should be present for cross-session collection');
 });
 
+test('browser preview renders a distinct success settlement without revive CTA', () => {
+  const js = readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
+  assert.match(js, /state\.result === 'success'/, 'DOM runtime should branch on explicit success result');
+  assert.match(js, /reviveButton\.hidden\s*=\s*isSuccess/, 'success settlement must hide the rewarded-revive CTA');
+  assert.match(js, /overlay\.dataset\.result\s*=\s*isSuccess \? 'success' : 'failure'/, 'overlay should expose success/failure styling state');
+});
+
 test('browser preview CSS consumes generated realistic UI and CCTV assets', () => {
   const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
   for (const asset of [
@@ -94,7 +101,7 @@ test('game UI keeps onboarding and controls icon-first with low text density', (
   assert.doesNotMatch(html, /目标：值守 60 秒/, 'start overlay should not ship prose-like instruction copy');
 });
 
-test('debug trigger is demoted and action labels stay short in the HUD', () => {
+test('debug trigger is hidden outside explicit debug mode and action labels stay short', () => {
   const js = readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
   assert.match(js, /ACTION_SHORT_LABELS/, 'runtime should map long action names to short HUD labels');
@@ -102,8 +109,9 @@ test('debug trigger is demoted and action labels stay short in the HUD', () => {
   assert.match(js, /inspectLog:\s*'日志'/, 'log action should use a compact HUD label');
   assert.match(js, /unlockHiddenLog:\s*'解码'/, 'decode action should use a compact HUD label');
   assert.match(js, /PRIMARY_ACTION_IDS\s*=\s*new Set\(\['closeDoor', 'moveUp', 'emergencyStop'\]\)/, 'mobile HUD should keep only the three highest-frequency actions visible');
-  assert.match(js, /forceAnomaly\.textContent\s*=\s*'ANOM'/, 'diagnostic trigger should render as a short HUD code');
-  assert.match(html, /class="secondary diagnostic-trigger"/, 'force anomaly control should be a demoted diagnostic trigger');
+  assert.match(js, /URLSearchParams[\s\S]*debug/, 'diagnostic controls should require an explicit debug query flag');
+  assert.match(js, /forceAnomaly\.hidden\s*=\s*!debugMode/, 'diagnostic trigger should be hidden by default');
+  assert.match(html, /class="secondary diagnostic-trigger"/, 'force anomaly control should remain available to debug mode');
   assert.match(css, /#forceAnomaly[\s\S]*position:\s*absolute/, 'diagnostic trigger should not occupy the main control deck');
 });
 
@@ -150,16 +158,19 @@ test('default elevator bottom HUD reports system state, not camera signal state'
   assert.doesNotMatch(skin, /"monitorSignalStable":\s*"SIGNAL: STABLE"/, 'bottom HUD should not conflict with camera SIGNAL DEGRADED label');
 });
 
-test('portrait mobile layout keeps CCTV first and start strip reachable without overlay', () => {
+test('portrait mobile layout keeps the full playable surface in one viewport', () => {
   const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
-  assert.match(css, /Mobile portrait final pass[\s\S]*@media \(max-width:\s*700px\) and \(orientation:\s*portrait\)/, 'mobile portrait should have a final override pass');
-  assert.match(css, /html, body \{ height:\s*auto; min-height:\s*100dvh; overflow-x:\s*hidden; overflow-y:\s*auto;/, 'mobile portrait should allow vertical scrolling instead of clipping the handoff strip');
-  assert.match(css, /\.console-shell[\s\S]*height:\s*auto;[\s\S]*overflow:\s*visible/, 'mobile shell should not lock content into an unscrollable viewport');
-  assert.match(css, /grid-template-areas:\s*"monitor"\s*"actions"\s*"status"\s*"logs"/, 'mobile should keep CCTV first, then controls, telemetry, logs');
-  assert.match(css, /\.start-overlay[\s\S]*position:\s*static;[\s\S]*justify-content:\s*center/, 'mobile start strip should stay in flow and centered, not overlay panels');
-  assert.match(css, /\.start-card[\s\S]*width:\s*min\(100%,\s*420px\)/, 'mobile start strip should be full-width constrained for thumb reach');
-  assert.match(css, /Mobile portrait final pass[\s\S]*\.action-dock\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*68px/, 'mobile controls should reserve one thumb column for more actions');
-  assert.match(css, /Mobile portrait final pass[\s\S]*\.action-guide\s*\{\s*display:\s*none;\s*\}/, 'mobile controls should hide desktop guidance cards');
-  assert.match(css, /Mobile portrait final pass[\s\S]*\.actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, 'mobile controls should keep only three primary keycaps visible');
-  assert.match(css, /Mobile portrait final pass[\s\S]*\.secondary-actions-panel[\s\S]*border-radius:\s*18px 18px 0 0/, 'secondary controls should open as a bottom sheet');
+  const marker = '/* Mobile portrait final pass: keep CCTV first and keep the start strip reachable. */';
+  const finalMobile = css.slice(css.lastIndexOf(marker));
+
+  assert.ok(finalMobile.startsWith(marker), 'mobile portrait should have one final authoritative override pass');
+  assert.match(finalMobile, /html, body \{ height:\s*100%; min-height:\s*100dvh; overflow:\s*hidden;/, 'final mobile rule should prohibit page-level scrolling');
+  assert.match(finalMobile, /\.console-shell\s*\{[\s\S]*width:\s*100%;[\s\S]*height:\s*100dvh;[\s\S]*display:\s*grid;[\s\S]*overflow:\s*hidden/, 'mobile shell should fit the available viewport without scrollbar-width overflow');
+  assert.doesNotMatch(finalMobile, /width:\s*100vw/, 'mobile shell must not use 100vw because the vertical scrollbar can clip the right edge');
+  assert.match(finalMobile, /grid-template-areas:\s*"monitor"\s*"actions"\s*"status"\s*"logs"/, 'mobile should keep CCTV first, then controls, telemetry, logs');
+  assert.match(finalMobile, /\.start-overlay[\s\S]*position:\s*static;[\s\S]*justify-content:\s*center/, 'mobile start strip should stay in flow and centered, not overlay panels');
+  assert.match(finalMobile, /\.start-card[\s\S]*width:\s*min\(100%,\s*420px\)/, 'mobile start strip should be full-width constrained for thumb reach');
+  assert.match(finalMobile, /\.action-dock\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*68px/, 'mobile controls should reserve one thumb column for more actions');
+  assert.match(finalMobile, /\.actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, 'mobile controls should keep only three primary keycaps visible');
+  assert.match(finalMobile, /\.secondary-actions-panel[\s\S]*border-radius:\s*18px 18px 0 0/, 'secondary controls should open as a bottom sheet');
 });

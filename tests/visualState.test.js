@@ -74,6 +74,20 @@ test('visualState maps normal elevator conditions to imported CCTV states', () =
   assert.equal(deriveVisualState({ ...createInitialState(), anomalyLevel: 2, activeAnomaly: 'door_refuse' }).cctvState, '09_door_jammed');
 });
 
+test('visualState keeps successful settlement calm while highlighting restart', () => {
+  const visual = deriveVisualState({
+    ...createInitialState(),
+    gameOver: true,
+    result: 'success',
+    remaining: 0,
+  });
+
+  assert.equal(visual.tone, 'normal');
+  assert.equal(visual.glitch, false);
+  assert.equal(visual.shake, false);
+  assert.equal(visual.highlightAction, 'restartSystem');
+});
+
 test('visualState provides an action hint for every shipped anomaly id', () => {
   for (const anomaly of ANOMALIES) {
     const visual = deriveVisualState({

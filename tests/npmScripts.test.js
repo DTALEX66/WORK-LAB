@@ -46,6 +46,7 @@ test('release check blocks placeholder publishing configuration', () => {
   assert.equal(pkg.scripts['release:check'], 'node scripts/check-release-readiness.mjs');
   assert.match(releaseScript, /wechatAppId/, 'release check should validate WeChat AppID');
   assert.match(releaseScript, /CONFIG\.adUnits\.\$\{key\}/, 'release check should validate rewarded-video ad units');
+  assert.match(releaseScript, /releaseMode/, 'release check should require fail-closed ad behavior');
   assert.match(releaseScript, /Release is NOT ready/, 'release check should fail closed when blockers exist');
   assert.match(releaseScript, /wechatBundleBlockers/, 'release check should include runtime bundle blockers');
   assert.match(releaseScript, /androidApkMetadata/, 'release check should include Android APK metadata');

@@ -48,6 +48,7 @@ export function summarizeFailure(state) {
 }
 
 export function getToneForState(state) {
+  if (state.result === 'success') return 'normal';
   if (state.gameOver) return 'danger';
   if (state.anomalyLevel >= 4 || state.stability < 35) return 'critical';
   if (state.anomalyLevel >= 2 || state.power < 45) return 'warn';

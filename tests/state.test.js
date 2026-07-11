@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { findRollbackSnapshot } from '../src/rollback.js';
-import { createInitialState, cloneState, recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot } from '../src/state.js';
+import { createInitialState, cloneState, checkFailure, recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot, tickState } from '../src/state.js';
 import CONFIG from '../src/gameConfig.js';
 
 test('createInitialState returns the elevator console baseline', () => {
@@ -17,6 +17,7 @@ test('createInitialState returns the elevator console baseline', () => {
   assert.equal(state.anomalyLevel, 0);
   assert.equal(state.passengers, 1);
   assert.equal(state.gameOver, false);
+  assert.equal(state.result, 'playing');
   assert.equal(state.adRevivesUsed, 0);
   assert.ok(Array.isArray(state.logs));
   assert.ok(Array.isArray(state.snapshots), 'snapshots should be initialized as empty array');
@@ -141,6 +142,33 @@ test('initial state includes post-run summary tracking fields', () => {
   const s = createInitialState();
   assert.equal(s.anomaliesTriggeredTotal, 0, 'should start with zero triggered anomalies');
   assert.equal(s.maxAnomalySeverity, 0, 'should start with zero max severity');
+});
+
+test('successful countdown produces a success result rather than a failure overlay state', () => {
+  const completed = tickState({ ...createInitialState(), remaining: 1 }, 1);
+
+  assert.equal(completed.gameOver, true);
+  assert.equal(completed.result, 'success');
+  assert.match(completed.logs.at(-1).text, /值守/);
+});
+
+test('resource exhaustion produces an explicit failure result', () => {
+  const failed = checkFailure({ ...createInitialState(), power: 0 });
+
+  assert.equal(failed.gameOver, true);
+  assert.equal(failed.result, 'failure');
+});
+
+test('reviveFromAd restores the active playing result', () => {
+  const revived = reviveFromAd({
+    ...createInitialState(),
+    gameOver: true,
+    result: 'failure',
+    anomalyLevel: CONFIG.failure.anomalyLevelMax,
+  });
+
+  assert.equal(revived.gameOver, false);
+  assert.equal(revived.result, 'playing');
 });
 
 test('recordFailure triggers fake ending at threshold and starts cooldown', () => {

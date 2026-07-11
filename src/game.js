@@ -19,6 +19,7 @@ import { deriveVisualState } from './visualState.js';
 import { getOperatorCue } from './firstRunGuidance.js';
 
 const root = document.querySelector('.console-shell');
+const debugMode = new URLSearchParams(window.location.search).get('debug') === '1';
 const els = {
   remaining: document.querySelector('#remaining'),
   floor: document.querySelector('#floor'),
@@ -314,7 +315,8 @@ function render() {
   els.logs.scrollTop = els.logs.scrollHeight;
 
   if (state.gameOver) {
-    if (state.fakeEndingTriggered) {
+    const isSuccess = state.result === 'success';
+    if (!isSuccess && state.fakeEndingTriggered) {
       // 假结局
       els.overlay.hidden = true;
       els.fakeEndingOverlay.hidden = false;
@@ -334,7 +336,11 @@ function render() {
       // 正常失败
       els.fakeEndingOverlay.hidden = true;
       els.overlay.hidden = false;
-      els.failureReason.textContent = summarizeFailure(state);
+      els.overlay.dataset.result = isSuccess ? 'success' : 'failure';
+      els.failureTitle.textContent = isSuccess ? t('ui.shiftComplete') : labels.failureTitle;
+      els.failureReason.textContent = isSuccess ? t('ui.successfulShift') : summarizeFailure(state);
+      els.reviveButton.hidden = isSuccess;
+      els.adHint.hidden = isSuccess;
       if (els.failureMetrics) {
         const metrics = labels.failureMetrics.map(({ key, label }) => {
           const value = key === 'remaining' ? Math.ceil(state.remaining) : Math.round(state[key]);
@@ -426,10 +432,13 @@ function triggerAnomaly() {
 function loop() {
   if (state.gameOver) {
     if (!crashPlayed) {
-      playCrash();
+      const isSuccess = state.result === 'success';
+      if (isSuccess) playSuccess();
+      else playCrash();
       crashPlayed = true;
       trackEvent('game_over', analyticsPayload({
-        reason: summarizeFailure(state).reason,
+        result: state.result,
+        reason: isSuccess ? 'shift_complete' : summarizeFailure(state),
         anomaliesTriggeredTotal: state.anomaliesTriggeredTotal || 0,
         maxAnomalySeverity: state.maxAnomalySeverity || 0,
       }));
@@ -492,7 +501,7 @@ function restart() {
     timer = null;
   }
   if (els.startOverlay) els.startOverlay.hidden = false;
-  session = restartRuntimeSession();
+  session = restartRuntimeSession({ state });
   state = session.state;
   nextAnomalyAt = session.nextAnomalyAt;
   fakeEndingTracked = false;
@@ -559,6 +568,7 @@ function applyDomLabels() {
   els.failureTitle.textContent = labels.failureTitle;
   els.forceAnomaly.textContent = 'ANOM';
   els.forceAnomaly.setAttribute('aria-label', labels.forceAnomaly);
+  els.forceAnomaly.hidden = !debugMode;
   els.reviveButton.textContent = labels.revive;
   els.restartButton.textContent = labels.restart;
   els.fakeEndingTruthBtn.textContent = labels.revealTruth;

@@ -10,7 +10,7 @@
 
 import { getAvailableActions } from '../src/actions.js';
 import { t, getSkin, actionLabel } from '../src/skinManager.js';
-import { summarizeFailure } from '../src/feedback.js';
+import { getToneForState, summarizeFailure } from '../src/feedback.js';
 import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from '../src/uiLabels.js';
 import { deriveVisualState } from '../src/visualState.js';
 
@@ -467,7 +467,8 @@ function drawFailureOverlay(state) {
 
   const labels = getCanvasStaticLabels();
   const copy = getCanvasFailureOverlayCopy(state);
-  if (state.fakeEndingTriggered) {
+  const isSuccess = state.result === 'success';
+  if (!isSuccess && state.fakeEndingTriggered) {
     // 假结局
     roundRect(cx, cy, cardW, cardH, 24, 'rgba(60,0,12,0.98)', 'rgba(255,0,80,0.7)');
 
@@ -491,23 +492,30 @@ function drawFailureOverlay(state) {
       wrapText(truth, cx + 24, cy + 200, cardW - 48, 22);
     }
   } else {
-    // 正常失败
-    roundRect(cx, cy, cardW, cardH, 24, 'rgba(38,5,12,0.98)', 'rgba(255,77,109,0.52)');
+    roundRect(
+      cx,
+      cy,
+      cardW,
+      cardH,
+      24,
+      isSuccess ? 'rgba(3,34,25,0.98)' : 'rgba(38,5,12,0.98)',
+      isSuccess ? 'rgba(97,255,190,0.62)' : 'rgba(255,77,109,0.52)',
+    );
 
-    ctx.fillStyle = COLORS.red;
+    ctx.fillStyle = isSuccess ? COLORS.green : COLORS.red;
     ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
-    ctx.fillText(copy.eyebrow, cx + 24, cy + 30);
+    ctx.fillText(isSuccess ? t('ui.shiftComplete') : copy.eyebrow, cx + 24, cy + 30);
 
-    ctx.fillStyle = COLORS.red;
+    ctx.fillStyle = isSuccess ? COLORS.green : COLORS.red;
     ctx.font = 'bold 40px "Microsoft YaHei", sans-serif';
-    ctx.fillText(labels.failureTitle, cx + 24, cy + 80);
+    ctx.fillText(isSuccess ? t('ui.shiftComplete') : labels.failureTitle, cx + 24, cy + 80);
 
     ctx.fillStyle = COLORS.text;
     ctx.font = '16px "Microsoft YaHei", sans-serif';
-    const reason = summarizeFailure(state);
+    const reason = isSuccess ? t('ui.successfulShift') : summarizeFailure(state);
     wrapText(reason, cx + 24, cy + 120, cardW - 48, 24);
 
-    if (state.lastAdHint) {
+    if (!isSuccess && state.lastAdHint) {
       ctx.fillStyle = COLORS.amber;
       ctx.font = '14px "Microsoft YaHei", sans-serif';
       ctx.fillText(copy.adHintLine, cx + 24, cy + 200);
@@ -516,27 +524,34 @@ function drawFailureOverlay(state) {
 
   // 按钮
   const btnY = cy + cardH - 70;
-  const btnW2 = (cardW - 60) / 2;
-  // 左按钮（广告复活）
-  roundRect(cx + 20, btnY, btnW2, 46, 12, COLORS.green);
-  ctx.fillStyle = '#02110c';
-  ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
-  ctx.textAlign = 'center';
-  const btnLabel = state.fakeEndingTriggered && !state.fakeEndingUnlocked
-    ? labels.revealTruth
-    : state.fakeEndingTriggered
-    ? labels.restart
-    : labels.adRevive;
-  ctx.fillText(btnLabel, cx + 20 + btnW2 / 2, btnY + 29);
-  ctx.textAlign = 'left';
+  if (!isSuccess) {
+    const btnW2 = (cardW - 60) / 2;
+    roundRect(cx + 20, btnY, btnW2, 46, 12, COLORS.green);
+    ctx.fillStyle = '#02110c';
+    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    const btnLabel = state.fakeEndingTriggered && !state.fakeEndingUnlocked
+      ? labels.revealTruth
+      : state.fakeEndingTriggered
+      ? labels.restart
+      : labels.adRevive;
+    ctx.fillText(btnLabel, cx + 20 + btnW2 / 2, btnY + 29);
+    ctx.textAlign = 'left';
 
-  // 右按钮（重新开始）
-  roundRect(cx + 40 + btnW2, btnY, btnW2, 46, 12, 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.12)');
-  ctx.fillStyle = COLORS.text;
-  ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(labels.restart, cx + 40 + btnW2 + btnW2 / 2, btnY + 29);
-  ctx.textAlign = 'left';
+    roundRect(cx + 40 + btnW2, btnY, btnW2, 46, 12, 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.12)');
+    ctx.fillStyle = COLORS.text;
+    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(labels.restart, cx + 40 + btnW2 + btnW2 / 2, btnY + 29);
+    ctx.textAlign = 'left';
+  } else {
+    roundRect(cx + 20, btnY, cardW - 40, 46, 12, COLORS.green);
+    ctx.fillStyle = '#02110c';
+    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(labels.restart, cx + cardW / 2, btnY + 29);
+    ctx.textAlign = 'left';
+  }
 }
 
 // ── 文字换行 ──
@@ -575,6 +590,12 @@ export function onCanvasClick(x, y, state, callbacks) {
     const cardW = 520, cardH = 320;
     const cx2 = (DW - cardW) / 2, cy2 = (DH - cardH) / 2;
     const btnY = cy2 + cardH - 70;
+    if (state.result === 'success') {
+      if (x >= cx2 + 20 && x <= cx2 + cardW - 20 && y >= btnY && y <= btnY + 46) {
+        onRestart?.();
+      }
+      return;
+    }
     const btnW2 = (cardW - 60) / 2;
 
     // 左按钮

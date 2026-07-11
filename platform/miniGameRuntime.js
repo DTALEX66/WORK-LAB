@@ -17,6 +17,7 @@ import {
 } from '../src/state.js';
 import {
   createRuntimeSession,
+  restartRuntimeSession,
   scheduleNextAnomalyAfterRevive,
   scheduleNextAnomalyAfterTrigger,
 } from '../src/runtimeSession.js';
@@ -49,34 +50,45 @@ function getSystemInfo(api) {
   return { windowWidth: 750, windowHeight: 1334, pixelRatio: 1 };
 }
 
-function createRewardedAd(api, adUnitId, onReward) {
+export function createMiniGameRewardedAd(api, adUnitId, options = {}) {
+  const {
+    onReward,
+    onError,
+    releaseMode = CONFIG.releaseMode,
+  } = options;
+
   if (!api || typeof api.createRewardedVideoAd !== 'function' || !adUnitId) {
-    return () => Promise.resolve().then(onReward);
+    return () => {
+      const error = new Error('[MINIGAME] rewarded ad API or adUnitId unavailable');
+      if (!releaseMode) onReward?.();
+      onError?.(error);
+      return Promise.resolve();
+    };
   }
 
   const ad = api.createRewardedVideoAd({ adUnitId });
-  let granted = false;
-  ad.onClose?.((res) => {
-    if (res && res.isEnded && !granted) {
-      granted = true;
-      onReward?.();
-    }
-  });
-  ad.onError?.(() => {
-    if (!granted) {
-      granted = true;
-      onReward?.();
-    }
-  });
+  let attempt = null;
 
-  return () => ad.show()
-    .catch(() => ad.load?.().then(() => ad.show()))
-    .catch(() => {
-      if (!granted) {
-        granted = true;
-        onReward?.();
-      }
-    });
+  const settle = (rewarded, error = null) => {
+    if (!attempt || attempt.settled) return;
+    attempt.settled = true;
+    if (rewarded || (!releaseMode && error)) onReward?.();
+    if (error) onError?.(error);
+  };
+
+  ad.onClose?.((res) => settle(Boolean(res?.isEnded)));
+  ad.onError?.((error) => settle(false, error));
+
+  return () => {
+    if (attempt && !attempt.settled) return Promise.resolve();
+    attempt = { settled: false };
+    return Promise.resolve()
+      .then(() => ad.show())
+      .catch((showError) => Promise.resolve()
+        .then(() => ad.load?.())
+        .then(() => ad.show())
+        .catch((loadError) => settle(false, loadError || showError)));
+  };
 }
 
 export function startMiniGame() {
@@ -95,18 +107,35 @@ export function startMiniGame() {
   let lastSnapshotAt = 0;
   let failureRecorded = false;
 
-  const reviveAd = createRewardedAd(api, CONFIG.adUnits?.revive, () => {
-    state = reviveFromAd(state);
-    nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
-    failureRecorded = false;
+  const reviveAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.revive, {
+    releaseMode: CONFIG.releaseMode,
+    onReward: () => {
+      state = reviveFromAd(state);
+      nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
+      failureRecorded = false;
+    },
+    onError: (error) => console.warn('[MINIGAME] revive ad failed', error),
   });
 
-  const truthAd = createRewardedAd(api, CONFIG.adUnits?.truth, () => {
-    state = { ...state, fakeEndingUnlocked: true, fakeEndingTruth: state.lastAdHint || '' };
+  const truthAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.truth, {
+    releaseMode: CONFIG.releaseMode,
+    onReward: () => {
+      state = { ...state, fakeEndingUnlocked: true, fakeEndingTruth: state.lastAdHint || '' };
+    },
+    onError: (error) => console.warn('[MINIGAME] truth ad failed', error),
+  });
+
+  const decodeAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.decode, {
+    releaseMode: CONFIG.releaseMode,
+    onReward: () => {
+      const result = performAction(state, 'unlockHiddenLog');
+      state = result.state;
+    },
+    onError: (error) => console.warn('[MINIGAME] decode ad failed', error),
   });
 
   function restart() {
-    session = createRuntimeSession();
+    session = restartRuntimeSession({ state });
     state = session.state;
     nextAnomalyAt = session.nextAnomalyAt;
     lastSnapshotAt = 0;
@@ -123,6 +152,10 @@ export function startMiniGame() {
 
   function handleAction(actionId) {
     if (state.gameOver) return;
+    if (actionId === 'unlockHiddenLog') {
+      decodeAd();
+      return;
+    }
     const result = performAction(state, actionId);
     state = result.state;
   }

@@ -75,14 +75,16 @@ export function createRewardedAd(adUnitId, callbacks = {}) {
         onReward?.();
       }
     });
-    ad.onError((err) => {
+    const handleFailure = (err) => {
       console.warn('[ad] error:', err);
-      // 开发模式：广告失败也给予奖励（避免阻塞游戏）
       if (!CONFIG.releaseMode) onReward?.();
       onError?.(err);
-    });
-    const show = () => ad.show().catch(() => {
-      ad.load().then(() => ad.show()).catch(() => onReward?.());
+    };
+    ad.onError(handleFailure);
+    const show = () => ad.show().catch((showError) => {
+      return ad.load()
+        .then(() => ad.show())
+        .catch((loadError) => handleFailure(loadError || showError));
     });
     adInstances[adUnitId] = show;
     return show;
@@ -93,12 +95,15 @@ export function createRewardedAd(adUnitId, callbacks = {}) {
     ad.onClose((res) => {
       if (res && res.isEnded) onReward?.();
     });
-    ad.onError((err) => {
+    const handleFailure = (err) => {
       if (!CONFIG.releaseMode) onReward?.();
       onError?.(err);
-    });
-    const show = () => ad.show().catch(() => {
-      ad.load().then(() => ad.show()).catch(() => onReward?.());
+    };
+    ad.onError(handleFailure);
+    const show = () => ad.show().catch((showError) => {
+      return ad.load()
+        .then(() => ad.show())
+        .catch((loadError) => handleFailure(loadError || showError));
     });
     adInstances[adUnitId] = show;
     return show;

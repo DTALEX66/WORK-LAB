@@ -316,6 +316,7 @@ function summarizeFailure(state) {
 }
 
 function getToneForState(state) {
+  if (state.result === 'success') return 'normal';
   if (state.gameOver) return 'danger';
   if (state.anomalyLevel >= 4 || state.stability < 35) return 'critical';
   if (state.anomalyLevel >= 2 || state.power < 45) return 'warn';
@@ -384,6 +385,7 @@ function getHighlightAction(state) {
 }
 
 function getCctvState(state, anomalyLevel) {
+  if (state.result === 'success') return '19_stabilized';
   if (state.gameOver || anomalyLevel >= 5) return '20_threat_high';
   if (state.activeAnomaly && ACTIVE_ANOMALY_CCTV_STATES[state.activeAnomaly]) {
     return ACTIVE_ANOMALY_CCTV_STATES[state.activeAnomaly];
@@ -402,15 +404,16 @@ function getCctvState(state, anomalyLevel) {
 
 function deriveVisualState(state) {
   const anomalyLevel = Number(state?.anomalyLevel ?? 0);
-  const active = Boolean(state?.activeAnomaly) || anomalyLevel > 0 || Boolean(state?.gameOver);
+  const success = state?.result === 'success';
+  const active = !success && (Boolean(state?.activeAnomaly) || anomalyLevel > 0 || Boolean(state?.gameOver));
   const pressure = clampVisualValue(anomalyLevel / 6, 0, 1);
   const safeState = state ?? {};
 
   return {
-    tone: getTone(anomalyLevel, Boolean(state?.gameOver)),
+    tone: success ? 'normal' : getTone(anomalyLevel, Boolean(state?.gameOver)),
     glitch: active,
-    shake: Boolean(state?.gameOver) || anomalyLevel >= 4,
-    noise: Boolean(state?.gameOver) ? 1 : Number((0.18 + pressure * 0.82).toFixed(2)),
+    shake: !success && (Boolean(state?.gameOver) || anomalyLevel >= 4),
+    noise: success ? 0.18 : Boolean(state?.gameOver) ? 1 : Number((0.18 + pressure * 0.82).toFixed(2)),
     highlightAction: getHighlightAction(safeState),
     cctvState: getCctvState(safeState, anomalyLevel),
   };
@@ -434,6 +437,7 @@ function createInitialState() {
     anomalyLevel: c.anomalyLevel,
     passengers: c.passengers,
     gameOver: c.gameOver,
+    result: 'playing',
     elapsed: 0,
     remaining: c.duration,
     adRevivesUsed: 0,
@@ -476,6 +480,7 @@ function checkFailure(state) {
   const f = CONFIG.failure;
   if (next.power <= f.powerMin || next.stability <= f.stabilityMin || next.anomalyLevel >= f.anomalyLevelMax || next.passengers < f.passengersMin) {
     next.gameOver = true;
+    next.result = 'failure';
     next.moving = false;
     next.direction = 'idle';
   }
@@ -516,6 +521,7 @@ function reviveFromAd(state) {
   }
 
   next.gameOver = false;
+  next.result = 'playing';
   next.door = 'closed';
   next.moving = false;
   next.direction = 'idle';
@@ -539,6 +545,7 @@ function tickState(state, seconds = 1) {
   }
   if (next.remaining <= 0) {
     next.gameOver = true;
+    next.result = 'success';
     next = appendLog(next, 'success', t('ui.successfulShift'));
   }
   return checkFailure(next);
@@ -546,6 +553,7 @@ function tickState(state, seconds = 1) {
 
 function recordSuccessfulShift(state) {
   let next = cloneState(state);
+  next.result = 'success';
   next.consecutiveFailures = 0;
   next.fakeEndingCooldownRemaining = 0;
   next.fakeEndingTriggered = false;
@@ -558,6 +566,7 @@ function recordSuccessfulShift(state) {
 function recordFailure(state) {
   const fe = CONFIG.fakeEnding;
   const next = cloneState(state);
+  next.result = 'failure';
   next.consecutiveFailures += 1;
 
   if (next.fakeEndingCooldownRemaining > 0) {
@@ -914,8 +923,17 @@ function createRuntimeSession() {
   };
 }
 
-function restartRuntimeSession() {
-  return createRuntimeSession();
+function restartRuntimeSession(previousSession = null) {
+  const session = createRuntimeSession();
+  const previous = previousSession?.state;
+  if (!previous) return session;
+
+  session.state.consecutiveFailures = previous.consecutiveFailures || 0;
+  session.state.fakeEndingCooldownRemaining = previous.fakeEndingCooldownRemaining || 0;
+  session.state.fakeEndingCount = previous.fakeEndingCount || 0;
+  session.state.fakeEndingTriggered = false;
+  session.state.fakeEndingUnlocked = false;
+  return session;
 }
 
 function scheduleNextAnomalyAfterTrigger(elapsed, random = Math.random) {
@@ -1376,14 +1394,16 @@ function createRewardedAd(adUnitId, callbacks = {}) {
         onReward?.();
       }
     });
-    ad.onError((err) => {
+    const handleFailure = (err) => {
       console.warn('[ad] error:', err);
-      // 开发模式：广告失败也给予奖励（避免阻塞游戏）
       if (!CONFIG.releaseMode) onReward?.();
       onError?.(err);
-    });
-    const show = () => ad.show().catch(() => {
-      ad.load().then(() => ad.show()).catch(() => onReward?.());
+    };
+    ad.onError(handleFailure);
+    const show = () => ad.show().catch((showError) => {
+      return ad.load()
+        .then(() => ad.show())
+        .catch((loadError) => handleFailure(loadError || showError));
     });
     adInstances[adUnitId] = show;
     return show;
@@ -1394,12 +1414,15 @@ function createRewardedAd(adUnitId, callbacks = {}) {
     ad.onClose((res) => {
       if (res && res.isEnded) onReward?.();
     });
-    ad.onError((err) => {
+    const handleFailure = (err) => {
       if (!CONFIG.releaseMode) onReward?.();
       onError?.(err);
-    });
-    const show = () => ad.show().catch(() => {
-      ad.load().then(() => ad.show()).catch(() => onReward?.());
+    };
+    ad.onError(handleFailure);
+    const show = () => ad.show().catch((showError) => {
+      return ad.load()
+        .then(() => ad.show())
+        .catch((loadError) => handleFailure(loadError || showError));
     });
     adInstances[adUnitId] = show;
     return show;
@@ -1490,6 +1513,7 @@ function getSystemInfo() {
 
 
 const root = document.querySelector('.console-shell');
+const debugMode = new URLSearchParams(window.location.search).get('debug') === '1';
 const els = {
   remaining: document.querySelector('#remaining'),
   floor: document.querySelector('#floor'),
@@ -1785,7 +1809,8 @@ function render() {
   els.logs.scrollTop = els.logs.scrollHeight;
 
   if (state.gameOver) {
-    if (state.fakeEndingTriggered) {
+    const isSuccess = state.result === 'success';
+    if (!isSuccess && state.fakeEndingTriggered) {
       // 假结局
       els.overlay.hidden = true;
       els.fakeEndingOverlay.hidden = false;
@@ -1805,7 +1830,11 @@ function render() {
       // 正常失败
       els.fakeEndingOverlay.hidden = true;
       els.overlay.hidden = false;
-      els.failureReason.textContent = summarizeFailure(state);
+      els.overlay.dataset.result = isSuccess ? 'success' : 'failure';
+      els.failureTitle.textContent = isSuccess ? t('ui.shiftComplete') : labels.failureTitle;
+      els.failureReason.textContent = isSuccess ? t('ui.successfulShift') : summarizeFailure(state);
+      els.reviveButton.hidden = isSuccess;
+      els.adHint.hidden = isSuccess;
       if (els.failureMetrics) {
         const metrics = labels.failureMetrics.map(({ key, label }) => {
           const value = key === 'remaining' ? Math.ceil(state.remaining) : Math.round(state[key]);
@@ -1897,10 +1926,13 @@ function triggerAnomaly() {
 function loop() {
   if (state.gameOver) {
     if (!crashPlayed) {
-      playCrash();
+      const isSuccess = state.result === 'success';
+      if (isSuccess) playSuccess();
+      else playCrash();
       crashPlayed = true;
       trackEvent('game_over', analyticsPayload({
-        reason: summarizeFailure(state).reason,
+        result: state.result,
+        reason: isSuccess ? 'shift_complete' : summarizeFailure(state),
         anomaliesTriggeredTotal: state.anomaliesTriggeredTotal || 0,
         maxAnomalySeverity: state.maxAnomalySeverity || 0,
       }));
@@ -1963,7 +1995,7 @@ function restart() {
     timer = null;
   }
   if (els.startOverlay) els.startOverlay.hidden = false;
-  session = restartRuntimeSession();
+  session = restartRuntimeSession({ state });
   state = session.state;
   nextAnomalyAt = session.nextAnomalyAt;
   fakeEndingTracked = false;
@@ -2030,6 +2062,7 @@ function applyDomLabels() {
   els.failureTitle.textContent = labels.failureTitle;
   els.forceAnomaly.textContent = 'ANOM';
   els.forceAnomaly.setAttribute('aria-label', labels.forceAnomaly);
+  els.forceAnomaly.hidden = !debugMode;
   els.reviveButton.textContent = labels.revive;
   els.restartButton.textContent = labels.restart;
   els.fakeEndingTruthBtn.textContent = labels.revealTruth;

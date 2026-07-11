@@ -1212,7 +1212,7 @@ button.secondary {
     linear-gradient(180deg, transparent, rgba(255,77,109,0.14) 16%, rgba(255,77,109,0.82) 52%, rgba(255,77,109,0.10) 88%, transparent),
     linear-gradient(90deg, transparent, rgba(255,209,102,0.55), transparent);
   filter: blur(1.2px) drop-shadow(0 0 16px rgba(255,77,109,0.52));
-  opacity: 0.50;
+  opacity: 0;
 }
 .distant-shadow {
   left: var(--cctv-target-x);
@@ -1226,7 +1226,7 @@ button.secondary {
     radial-gradient(circle at 50% 16%, rgba(0,0,0,0.72) 0 12px, transparent 14px),
     radial-gradient(ellipse at 50% 58%, rgba(0,0,0,0.62), rgba(0,0,0,0.22) 54%, transparent 66%);
   filter: blur(1.4px);
-  opacity: 0.38;
+  opacity: 0;
   mix-blend-mode: multiply;
 }
 .thermal-ghost {
@@ -1242,7 +1242,7 @@ button.secondary {
     radial-gradient(ellipse at 50% 62%, rgba(255,77,109,0.55), rgba(255,209,102,0.12) 44%, transparent 65%),
     repeating-linear-gradient(0deg, rgba(255,77,109,0.28) 0 2px, transparent 2px 7px);
   filter: blur(0.6px) drop-shadow(0 0 14px rgba(255,77,109,0.42));
-  opacity: 0.56;
+  opacity: 0;
   mask-image: linear-gradient(180deg, #000 0 66%, transparent 100%);
 }
 .detection-corners {
@@ -1252,7 +1252,7 @@ button.secondary {
   height: 154px;
   z-index: 4;
   transform: translate(-50%, -50%);
-  opacity: 0.58;
+  opacity: 0;
   background:
     linear-gradient(var(--red), var(--red)) left top / 28px 1px no-repeat,
     linear-gradient(var(--red), var(--red)) left top / 1px 22px no-repeat,
@@ -1388,7 +1388,7 @@ button.secondary {
     linear-gradient(90deg, transparent 0 46%, rgba(255,77,109,0.13) 49%, rgba(255,209,102,0.18) 50%, rgba(255,77,109,0.13) 51%, transparent 55%),
     repeating-linear-gradient(180deg, transparent 0 11px, rgba(255,255,255,0.04) 11px 12px);
   mix-blend-mode: screen;
-  opacity: 0.52;
+  opacity: 0;
   animation: cctvDoorLoop 1.45s steps(4) infinite, cameraMicroShake 5.5s steps(2) infinite;
 }
 .cctv-loop::before,
@@ -1862,7 +1862,8 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
 }
 .cctv-stage::before { opacity: 0.26; }
 .cctv-stage::after { opacity: 0.66; }
-.cctv-loop { opacity: 0.44; }
+.cctv-loop { opacity: 0; }
+.monitor[data-anomaly="active"] .cctv-loop { opacity: 0.62; }
 .status-list div {
   background:
     radial-gradient(circle at 16px 18px, rgba(97,255,190,0.10), transparent 42px),
@@ -2219,16 +2220,27 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
 .start-card { margin-left: auto; }
 
 
+/* Success settlement: distinct from failure and never shows the revive CTA. */
+.failure-overlay[data-result="success"] .failure-card {
+  border-color: rgba(97, 255, 190, 0.58);
+  background: linear-gradient(180deg, rgba(3, 34, 25, 0.96), rgba(3, 12, 12, 0.99));
+  box-shadow: 0 30px 90px rgba(0,0,0,0.62), 0 0 50px rgba(97,255,190,0.14);
+}
+.failure-overlay[data-result="success"] .failure-card h2 { color: var(--green); text-shadow: 0 0 22px rgba(97,255,190,0.34); }
+.failure-overlay[data-result="success"] .failure-actions { grid-template-columns: 1fr; }
+
 /* Mobile portrait final pass: keep CCTV first and keep the start strip reachable. */
 @media (max-width: 700px) and (orientation: portrait) {
-  html, body { height: auto; min-height: 100dvh; overflow-x: hidden; overflow-y: auto; }
+  html, body { height: 100%; min-height: 100dvh; overflow: hidden; }
   .console-shell {
-    width: 100vw;
-    height: auto;
-    min-height: 100dvh;
-    display: block;
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 6px;
     padding: max(6px, env(safe-area-inset-top)) 6px max(10px, env(safe-area-inset-bottom));
-    overflow: visible;
+    overflow: hidden;
   }
   .topbar {
     grid-template-columns: minmax(0, 1fr) 72px;
@@ -2240,19 +2252,19 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
   .shift-card span { font-size: 0.48rem; }
   .shift-card strong { font-size: 1.42rem; }
   .grid {
-    height: auto;
+    height: 100%;
     min-height: 0;
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: minmax(0, 1fr) auto auto minmax(58px, 0.28fr);
     grid-template-areas: "monitor" "actions" "status" "logs";
     gap: 6px;
-    overflow: visible;
+    overflow: hidden;
   }
   .panel { min-height: 0; padding: 8px; border-radius: 14px; }
   .monitor-panel { min-height: 0; padding: 8px; }
-  .monitor { min-height: 0; height: auto; padding: 8px; gap: 6px; }
-  .cctv-stage { min-height: clamp(230px, 48vh, 390px); }
+  .monitor { min-height: 0; height: calc(100% - 20px); padding: 8px; gap: 6px; }
+  .cctv-stage { min-height: 0; height: 100%; }
   .camera-frame { inset: 10px 76px 10px 10px; }
   .cctv-multiview { width: 64px; right: 8px; top: 38px; bottom: 8px; gap: 5px; }
   .monitor-caption { max-height: 2.6em; font-size: 0.68rem; line-height: 1.24; }
@@ -2276,13 +2288,14 @@ h1.game-title { font-size: clamp(1.8rem, 4.2vw, 3.8rem); }
   .status-list dt { display: none; }
   .status-list dd { font-size: 0.82rem; line-height: 1; margin-top: 1px; }
   .hud-icon { width: 28px; height: 20px; font-size: 0.62rem; }
-  .logs { height: 76px; min-height: 0; padding: 7px 8px 7px 24px; font-size: 0.62rem; line-height: 1.2; overflow: auto; }
+  .log-panel { max-height: none; overflow: hidden; }
+  .logs { height: 100%; min-height: 0; padding: 7px 8px 7px 24px; font-size: 0.62rem; line-height: 1.2; overflow: auto; }
   .start-overlay {
     position: static;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 6px;
+    margin-top: 0;
     padding: 0;
     background: transparent;
   }

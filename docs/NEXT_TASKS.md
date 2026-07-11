@@ -1,5 +1,7 @@
 # MINIGAME 后续任务列表
 
+> 2026-07-11 全面审计、首批 P0 修复与后续接手顺序见：[`PROJECT_AUDIT_HANDOFF_2026-07-11.md`](./PROJECT_AUDIT_HANDOFF_2026-07-11.md)。本文保留历史任务；如有冲突，以交接文档和当前测试为准。
+
 > 当前基线以实际命令输出为准：本轮 `npm test` 已通过；微信 strict 为 0 blocker；Android APK build/inspect 依赖项目内便携 `.tools` 工具链，缺失时需要先恢复工具链；`npm run release:check` 在默认占位配置下预期失败。
 
 

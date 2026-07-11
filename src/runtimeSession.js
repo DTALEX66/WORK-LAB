@@ -8,8 +8,17 @@ export function createRuntimeSession() {
   };
 }
 
-export function restartRuntimeSession() {
-  return createRuntimeSession();
+export function restartRuntimeSession(previousSession = null) {
+  const session = createRuntimeSession();
+  const previous = previousSession?.state;
+  if (!previous) return session;
+
+  session.state.consecutiveFailures = previous.consecutiveFailures || 0;
+  session.state.fakeEndingCooldownRemaining = previous.fakeEndingCooldownRemaining || 0;
+  session.state.fakeEndingCount = previous.fakeEndingCount || 0;
+  session.state.fakeEndingTriggered = false;
+  session.state.fakeEndingUnlocked = false;
+  return session;
 }
 
 export function scheduleNextAnomalyAfterTrigger(elapsed, random = Math.random) {

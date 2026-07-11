@@ -49,6 +49,13 @@ test('data-anomaly active enables tear freeze infrared flicker and stronger snow
   }
 });
 
+test('clear CCTV establishes a clean baseline before anomaly-specific entities appear', () => {
+  for (const className of ['door-gap-glow', 'distant-shadow', 'thermal-ghost', 'detection-corners', 'cctv-loop']) {
+    assert.match(css, new RegExp(`\\.${className}\\s*\\{[\\s\\S]*?opacity:\\s*0(?:[;\\s])`), `${className} should be hidden in clear state`);
+  }
+  assert.match(css, /\.monitor\[data-anomaly="active"\] \.cctv-loop[\s\S]*opacity:\s*0\.[1-9]/, 'active anomaly should reveal the animated CCTV target');
+});
+
 test('elevator CCTV feed switches between processed calm anomaly and danger assets', () => {
   assert.match(css, /--cctv-feed:\s*url\("games\/find-anomaly\/elevator-console\/assets\/abnormal_elevator_visual_assets\/cctv_states\/00_idle_closed\.png"\)/, 'calm elevator feed should use the first-game imported closed-door asset');
   assert.match(css, /--cctv-feed-anomaly:\s*url\("games\/find-anomaly\/elevator-console\/assets\/abnormal_elevator_visual_assets\/cctv_states\/11_camera_glitch\.png"\)/, 'active anomaly should use the first-game imported camera glitch asset');

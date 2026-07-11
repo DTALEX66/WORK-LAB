@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createInitialState } from '../src/state.js';
-import { classifyFeedbackPriority, createFeedbackLine, summarizeFailure } from '../src/feedback.js';
+import { classifyFeedbackPriority, createFeedbackLine, getToneForState, summarizeFailure } from '../src/feedback.js';
 import CONFIG from '../src/gameConfig.js';
 
 test('createFeedbackLine formats timestamped console feedback', () => {
@@ -22,6 +22,10 @@ test('classifyFeedbackPriority separates important log rows for UI highlighting'
   assert.equal(classifyFeedbackPriority('success'), 'success');
   assert.equal(classifyFeedbackPriority('warn'), 'medium');
   assert.equal(classifyFeedbackPriority('info'), 'normal');
+});
+
+test('successful result uses a calm tone instead of failure danger', () => {
+  assert.equal(getToneForState({ ...createInitialState(), gameOver: true, result: 'success' }), 'normal');
 });
 
 test('summarizeFailure explains why the run ended', () => {

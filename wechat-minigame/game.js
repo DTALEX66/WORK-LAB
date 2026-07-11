@@ -316,6 +316,7 @@ function summarizeFailure(state) {
 }
 
 function getToneForState(state) {
+  if (state.result === 'success') return 'normal';
   if (state.gameOver) return 'danger';
   if (state.anomalyLevel >= 4 || state.stability < 35) return 'critical';
   if (state.anomalyLevel >= 2 || state.power < 45) return 'warn';
@@ -384,6 +385,7 @@ function getHighlightAction(state) {
 }
 
 function getCctvState(state, anomalyLevel) {
+  if (state.result === 'success') return '19_stabilized';
   if (state.gameOver || anomalyLevel >= 5) return '20_threat_high';
   if (state.activeAnomaly && ACTIVE_ANOMALY_CCTV_STATES[state.activeAnomaly]) {
     return ACTIVE_ANOMALY_CCTV_STATES[state.activeAnomaly];
@@ -402,15 +404,16 @@ function getCctvState(state, anomalyLevel) {
 
 function deriveVisualState(state) {
   const anomalyLevel = Number(state?.anomalyLevel ?? 0);
-  const active = Boolean(state?.activeAnomaly) || anomalyLevel > 0 || Boolean(state?.gameOver);
+  const success = state?.result === 'success';
+  const active = !success && (Boolean(state?.activeAnomaly) || anomalyLevel > 0 || Boolean(state?.gameOver));
   const pressure = clampVisualValue(anomalyLevel / 6, 0, 1);
   const safeState = state ?? {};
 
   return {
-    tone: getTone(anomalyLevel, Boolean(state?.gameOver)),
+    tone: success ? 'normal' : getTone(anomalyLevel, Boolean(state?.gameOver)),
     glitch: active,
-    shake: Boolean(state?.gameOver) || anomalyLevel >= 4,
-    noise: Boolean(state?.gameOver) ? 1 : Number((0.18 + pressure * 0.82).toFixed(2)),
+    shake: !success && (Boolean(state?.gameOver) || anomalyLevel >= 4),
+    noise: success ? 0.18 : Boolean(state?.gameOver) ? 1 : Number((0.18 + pressure * 0.82).toFixed(2)),
     highlightAction: getHighlightAction(safeState),
     cctvState: getCctvState(safeState, anomalyLevel),
   };
@@ -434,6 +437,7 @@ function createInitialState() {
     anomalyLevel: c.anomalyLevel,
     passengers: c.passengers,
     gameOver: c.gameOver,
+    result: 'playing',
     elapsed: 0,
     remaining: c.duration,
     adRevivesUsed: 0,
@@ -476,6 +480,7 @@ function checkFailure(state) {
   const f = CONFIG.failure;
   if (next.power <= f.powerMin || next.stability <= f.stabilityMin || next.anomalyLevel >= f.anomalyLevelMax || next.passengers < f.passengersMin) {
     next.gameOver = true;
+    next.result = 'failure';
     next.moving = false;
     next.direction = 'idle';
   }
@@ -516,6 +521,7 @@ function reviveFromAd(state) {
   }
 
   next.gameOver = false;
+  next.result = 'playing';
   next.door = 'closed';
   next.moving = false;
   next.direction = 'idle';
@@ -539,6 +545,7 @@ function tickState(state, seconds = 1) {
   }
   if (next.remaining <= 0) {
     next.gameOver = true;
+    next.result = 'success';
     next = appendLog(next, 'success', t('ui.successfulShift'));
   }
   return checkFailure(next);
@@ -546,6 +553,7 @@ function tickState(state, seconds = 1) {
 
 function recordSuccessfulShift(state) {
   let next = cloneState(state);
+  next.result = 'success';
   next.consecutiveFailures = 0;
   next.fakeEndingCooldownRemaining = 0;
   next.fakeEndingTriggered = false;
@@ -558,6 +566,7 @@ function recordSuccessfulShift(state) {
 function recordFailure(state) {
   const fe = CONFIG.fakeEnding;
   const next = cloneState(state);
+  next.result = 'failure';
   next.consecutiveFailures += 1;
 
   if (next.fakeEndingCooldownRemaining > 0) {
@@ -914,8 +923,17 @@ function createRuntimeSession() {
   };
 }
 
-function restartRuntimeSession() {
-  return createRuntimeSession();
+function restartRuntimeSession(previousSession = null) {
+  const session = createRuntimeSession();
+  const previous = previousSession?.state;
+  if (!previous) return session;
+
+  session.state.consecutiveFailures = previous.consecutiveFailures || 0;
+  session.state.fakeEndingCooldownRemaining = previous.fakeEndingCooldownRemaining || 0;
+  session.state.fakeEndingCount = previous.fakeEndingCount || 0;
+  session.state.fakeEndingTriggered = false;
+  session.state.fakeEndingUnlocked = false;
+  return session;
 }
 
 function scheduleNextAnomalyAfterTrigger(elapsed, random = Math.random) {
@@ -1421,7 +1439,8 @@ function drawFailureOverlay(state) {
 
   const labels = getCanvasStaticLabels();
   const copy = getCanvasFailureOverlayCopy(state);
-  if (state.fakeEndingTriggered) {
+  const isSuccess = state.result === 'success';
+  if (!isSuccess && state.fakeEndingTriggered) {
     // 假结局
     roundRect(cx, cy, cardW, cardH, 24, 'rgba(60,0,12,0.98)', 'rgba(255,0,80,0.7)');
 
@@ -1445,23 +1464,30 @@ function drawFailureOverlay(state) {
       wrapText(truth, cx + 24, cy + 200, cardW - 48, 22);
     }
   } else {
-    // 正常失败
-    roundRect(cx, cy, cardW, cardH, 24, 'rgba(38,5,12,0.98)', 'rgba(255,77,109,0.52)');
+    roundRect(
+      cx,
+      cy,
+      cardW,
+      cardH,
+      24,
+      isSuccess ? 'rgba(3,34,25,0.98)' : 'rgba(38,5,12,0.98)',
+      isSuccess ? 'rgba(97,255,190,0.62)' : 'rgba(255,77,109,0.52)',
+    );
 
-    ctx.fillStyle = COLORS.red;
+    ctx.fillStyle = isSuccess ? COLORS.green : COLORS.red;
     ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
-    ctx.fillText(copy.eyebrow, cx + 24, cy + 30);
+    ctx.fillText(isSuccess ? t('ui.shiftComplete') : copy.eyebrow, cx + 24, cy + 30);
 
-    ctx.fillStyle = COLORS.red;
+    ctx.fillStyle = isSuccess ? COLORS.green : COLORS.red;
     ctx.font = 'bold 40px "Microsoft YaHei", sans-serif';
-    ctx.fillText(labels.failureTitle, cx + 24, cy + 80);
+    ctx.fillText(isSuccess ? t('ui.shiftComplete') : labels.failureTitle, cx + 24, cy + 80);
 
     ctx.fillStyle = COLORS.text;
     ctx.font = '16px "Microsoft YaHei", sans-serif';
-    const reason = summarizeFailure(state);
+    const reason = isSuccess ? t('ui.successfulShift') : summarizeFailure(state);
     wrapText(reason, cx + 24, cy + 120, cardW - 48, 24);
 
-    if (state.lastAdHint) {
+    if (!isSuccess && state.lastAdHint) {
       ctx.fillStyle = COLORS.amber;
       ctx.font = '14px "Microsoft YaHei", sans-serif';
       ctx.fillText(copy.adHintLine, cx + 24, cy + 200);
@@ -1470,27 +1496,34 @@ function drawFailureOverlay(state) {
 
   // 按钮
   const btnY = cy + cardH - 70;
-  const btnW2 = (cardW - 60) / 2;
-  // 左按钮（广告复活）
-  roundRect(cx + 20, btnY, btnW2, 46, 12, COLORS.green);
-  ctx.fillStyle = '#02110c';
-  ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
-  ctx.textAlign = 'center';
-  const btnLabel = state.fakeEndingTriggered && !state.fakeEndingUnlocked
-    ? labels.revealTruth
-    : state.fakeEndingTriggered
-    ? labels.restart
-    : labels.adRevive;
-  ctx.fillText(btnLabel, cx + 20 + btnW2 / 2, btnY + 29);
-  ctx.textAlign = 'left';
+  if (!isSuccess) {
+    const btnW2 = (cardW - 60) / 2;
+    roundRect(cx + 20, btnY, btnW2, 46, 12, COLORS.green);
+    ctx.fillStyle = '#02110c';
+    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    const btnLabel = state.fakeEndingTriggered && !state.fakeEndingUnlocked
+      ? labels.revealTruth
+      : state.fakeEndingTriggered
+      ? labels.restart
+      : labels.adRevive;
+    ctx.fillText(btnLabel, cx + 20 + btnW2 / 2, btnY + 29);
+    ctx.textAlign = 'left';
 
-  // 右按钮（重新开始）
-  roundRect(cx + 40 + btnW2, btnY, btnW2, 46, 12, 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.12)');
-  ctx.fillStyle = COLORS.text;
-  ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(labels.restart, cx + 40 + btnW2 + btnW2 / 2, btnY + 29);
-  ctx.textAlign = 'left';
+    roundRect(cx + 40 + btnW2, btnY, btnW2, 46, 12, 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.12)');
+    ctx.fillStyle = COLORS.text;
+    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(labels.restart, cx + 40 + btnW2 + btnW2 / 2, btnY + 29);
+    ctx.textAlign = 'left';
+  } else {
+    roundRect(cx + 20, btnY, cardW - 40, 46, 12, COLORS.green);
+    ctx.fillStyle = '#02110c';
+    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(labels.restart, cx + cardW / 2, btnY + 29);
+    ctx.textAlign = 'left';
+  }
 }
 
 // ── 文字换行 ──
@@ -1529,6 +1562,12 @@ function onCanvasClick(x, y, state, callbacks) {
     const cardW = 520, cardH = 320;
     const cx2 = (DW - cardW) / 2, cy2 = (DH - cardH) / 2;
     const btnY = cy2 + cardH - 70;
+    if (state.result === 'success') {
+      if (x >= cx2 + 20 && x <= cx2 + cardW - 20 && y >= btnY && y <= btnY + 46) {
+        onRestart?.();
+      }
+      return;
+    }
     const btnW2 = (cardW - 60) / 2;
 
     // 左按钮
@@ -1645,34 +1684,45 @@ function getSystemInfo(api) {
   return { windowWidth: 750, windowHeight: 1334, pixelRatio: 1 };
 }
 
-function createRewardedAd(api, adUnitId, onReward) {
+function createMiniGameRewardedAd(api, adUnitId, options = {}) {
+  const {
+    onReward,
+    onError,
+    releaseMode = CONFIG.releaseMode,
+  } = options;
+
   if (!api || typeof api.createRewardedVideoAd !== 'function' || !adUnitId) {
-    return () => Promise.resolve().then(onReward);
+    return () => {
+      const error = new Error('[MINIGAME] rewarded ad API or adUnitId unavailable');
+      if (!releaseMode) onReward?.();
+      onError?.(error);
+      return Promise.resolve();
+    };
   }
 
   const ad = api.createRewardedVideoAd({ adUnitId });
-  let granted = false;
-  ad.onClose?.((res) => {
-    if (res && res.isEnded && !granted) {
-      granted = true;
-      onReward?.();
-    }
-  });
-  ad.onError?.(() => {
-    if (!granted) {
-      granted = true;
-      onReward?.();
-    }
-  });
+  let attempt = null;
 
-  return () => ad.show()
-    .catch(() => ad.load?.().then(() => ad.show()))
-    .catch(() => {
-      if (!granted) {
-        granted = true;
-        onReward?.();
-      }
-    });
+  const settle = (rewarded, error = null) => {
+    if (!attempt || attempt.settled) return;
+    attempt.settled = true;
+    if (rewarded || (!releaseMode && error)) onReward?.();
+    if (error) onError?.(error);
+  };
+
+  ad.onClose?.((res) => settle(Boolean(res?.isEnded)));
+  ad.onError?.((error) => settle(false, error));
+
+  return () => {
+    if (attempt && !attempt.settled) return Promise.resolve();
+    attempt = { settled: false };
+    return Promise.resolve()
+      .then(() => ad.show())
+      .catch((showError) => Promise.resolve()
+        .then(() => ad.load?.())
+        .then(() => ad.show())
+        .catch((loadError) => settle(false, loadError || showError)));
+  };
 }
 
 function startMiniGame() {
@@ -1691,18 +1741,35 @@ function startMiniGame() {
   let lastSnapshotAt = 0;
   let failureRecorded = false;
 
-  const reviveAd = createRewardedAd(api, CONFIG.adUnits?.revive, () => {
-    state = reviveFromAd(state);
-    nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
-    failureRecorded = false;
+  const reviveAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.revive, {
+    releaseMode: CONFIG.releaseMode,
+    onReward: () => {
+      state = reviveFromAd(state);
+      nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
+      failureRecorded = false;
+    },
+    onError: (error) => console.warn('[MINIGAME] revive ad failed', error),
   });
 
-  const truthAd = createRewardedAd(api, CONFIG.adUnits?.truth, () => {
-    state = { ...state, fakeEndingUnlocked: true, fakeEndingTruth: state.lastAdHint || '' };
+  const truthAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.truth, {
+    releaseMode: CONFIG.releaseMode,
+    onReward: () => {
+      state = { ...state, fakeEndingUnlocked: true, fakeEndingTruth: state.lastAdHint || '' };
+    },
+    onError: (error) => console.warn('[MINIGAME] truth ad failed', error),
+  });
+
+  const decodeAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.decode, {
+    releaseMode: CONFIG.releaseMode,
+    onReward: () => {
+      const result = performAction(state, 'unlockHiddenLog');
+      state = result.state;
+    },
+    onError: (error) => console.warn('[MINIGAME] decode ad failed', error),
   });
 
   function restart() {
-    session = createRuntimeSession();
+    session = restartRuntimeSession({ state });
     state = session.state;
     nextAnomalyAt = session.nextAnomalyAt;
     lastSnapshotAt = 0;
@@ -1719,6 +1786,10 @@ function startMiniGame() {
 
   function handleAction(actionId) {
     if (state.gameOver) return;
+    if (actionId === 'unlockHiddenLog') {
+      decodeAd();
+      return;
+    }
     const result = performAction(state, actionId);
     state = result.state;
   }

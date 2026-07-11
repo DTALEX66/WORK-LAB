@@ -12,5 +12,5 @@
     "decode": "adunit-your-real-decode-id",
     "truth": "adunit-your-real-truth-id"
   },
-  "releaseMode": false
+  "releaseMode": true
 }
