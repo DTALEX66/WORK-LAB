@@ -17,6 +17,7 @@ import {
 } from './runtimeSession.js';
 import { deriveVisualState } from './visualState.js';
 import { getOperatorCue } from './firstRunGuidance.js';
+import { shouldApplyReward } from './rewardGuard.js';
 
 const root = document.querySelector('.console-shell');
 const debugMode = new URLSearchParams(window.location.search).get('debug') === '1';
@@ -99,6 +100,7 @@ let timer = null;
 let lastTone = 'normal';
 let crashPlayed = false;
 let fakeEndingTracked = false;
+let runToken = 0;
 
 function analyticsPayload(extra = {}) {
   return {
@@ -133,7 +135,8 @@ function bindPress(element, handler) {
 }
 
 const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
-  onReward: () => {
+  onReward: (meta) => {
+    if (!shouldApplyReward(meta, runToken, 'revive', state)) return;
     trackEvent('revive_ad_reward', analyticsPayload({ adUnitId: CONFIG.adUnits.revive }));
     playRevive();
     state = reviveFromAd(state);
@@ -142,7 +145,8 @@ const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
   },
 });
 const showDecodeAd = createRewardedAd(CONFIG.adUnits.decode, {
-  onReward: () => {
+  onReward: (meta) => {
+    if (!shouldApplyReward(meta, runToken, 'decode', state)) return;
     const before = state.adHintsUsed;
     runAction('unlockHiddenLog');
     if (state.adHintsUsed > before) {
@@ -151,7 +155,8 @@ const showDecodeAd = createRewardedAd(CONFIG.adUnits.decode, {
   },
 });
 const showTruthAd = createRewardedAd(CONFIG.adUnits.truth, {
-  onReward: () => {
+  onReward: (meta) => {
+    if (!shouldApplyReward(meta, runToken, 'truth', state)) return;
     playRevive();
     state = structuredClone(state);
     state.fakeEndingUnlocked = true;
@@ -397,7 +402,7 @@ function dispatchAction(actionId) {
   trackEvent('action_click', analyticsPayload({ actionId }));
   if (actionId === 'unlockHiddenLog') {
     trackEvent('hidden_log_ad_start', analyticsPayload({ adUnitId: CONFIG.adUnits.decode }));
-    showDecodeAd();
+    showDecodeAd({ runToken });
     return;
   }
   runAction(actionId);
@@ -464,7 +469,7 @@ function loop() {
   state = tickState(state, 1);
 
   // 成功值守 → 重置连续失败计数
-  if (state.gameOver && state.remaining <= 0) {
+  if (state.gameOver && state.result === 'success') {
     state = recordSuccessfulShift(state);
     render();
     return;
@@ -496,6 +501,7 @@ function loop() {
 }
 
 function restart() {
+  runToken += 1;
   if (timer) {
     window.clearInterval(timer);
     timer = null;
@@ -621,7 +627,7 @@ window.addEventListener('keydown', (event) => {
 });
 bindPress(els.reviveButton, () => {
   trackEvent('revive_ad_start', analyticsPayload({ adUnitId: CONFIG.adUnits.revive }));
-  showReviveAd();
+  showReviveAd({ runToken });
 });
 bindPress(els.restartButton, () => {
   playRestart();
@@ -630,7 +636,7 @@ bindPress(els.restartButton, () => {
 
 // 假结局按钮
 bindPress(els.fakeEndingTruthBtn, () => {
-  showTruthAd();
+  showTruthAd({ runToken });
 });
 bindPress(els.fakeEndingRestartBtn, () => {
   playRestart();

@@ -2,7 +2,7 @@
 
 > 仓库：`DTALEX66/MINIGAME`
 > 本地：`D:\All projects\MINIGAME`
-> 基线：`main` / `d744c1a`
+> 审计起始基线：`main` / `d744c1a`；交付前已同步远端视觉资源提交 `ddd1ee1`
 > 本文将工具/测试证据与产品判断分开记录；完成度百分比是审计估算，不是可自动证明的验收结果。测试通过也不等于真机或发布验收完成。
 
 ## 1. 结论先行
@@ -79,7 +79,7 @@
 
 ### 自动化测试
 
-测试数由 **125** 增至 **148**（含同步远端 `ddd1ee1` 后新增的资源覆盖测试），新增覆盖：
+测试数由 **125** 增至 **152**（含同步远端 `ddd1ee1` 后新增的资源覆盖测试），新增覆盖：
 
 - 成功/失败/复活结果状态；
 - 成功结算 H5/Canvas 分支；
@@ -92,6 +92,8 @@
 - 最终移动 portrait 规则和默认隐藏调试按钮；
 - 同一 tick 倒计时归零与资源越界时，成功结算具有明确优先级；
 - 微信/抖音重复 close/error、乱序回调和并发 show 只结算一次；
+- H5/Canvas 广告 attempt 携带发起局 `runToken`，重开后到达的旧 revive/decode/truth 回调会被拒绝；
+- Canvas CCTV 向量场景消费共享 `cctvState`，对断电、信号故障、实体与高威胁状态采用不同处理；
 - ≤620px 短竖屏使用 shell 内滚动防止固定视口裁切；
 - 发布检查要求 fail-closed 模式。
 
@@ -176,7 +178,7 @@ npm run release:check
 
 预期：
 
-- `npm test`：148/148 通过；
+- `npm test`：152/152 通过；
 - `npm run verify`：单元测试、微信 strict、Android APK build/metadata 全部通过；
 - `npm run release:check`：在没有私有发布配置时应**失败关闭**，列出 `releaseMode/AppID/adUnits` 等 blocker，这不是测试失败，而是发布保护生效。
 

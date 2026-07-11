@@ -62,13 +62,14 @@ test('mini-game rewarded ads reward exactly once only after completed close', as
 });
 
 test('mini-game rewarded ads ignore duplicate show attempts until close', async () => {
-  let closeHandler;
+  const closeHandlers = [];
   let showCalls = 0;
   let rewards = 0;
+  let rewardMeta;
   const api = {
     createRewardedVideoAd() {
       return {
-        onClose(handler) { closeHandler = handler; },
+        onClose(handler) { closeHandlers.push(handler); },
         onError() {},
         show: async () => { showCalls += 1; },
         load: async () => {},
@@ -77,17 +78,27 @@ test('mini-game rewarded ads ignore duplicate show attempts until close', async 
   };
   const show = createMiniGameRewardedAd(api, 'adunit-real', {
     releaseMode: true,
-    onReward: () => { rewards += 1; },
+    onReward: (meta) => { rewards += 1; rewardMeta = meta; },
   });
 
-  await Promise.all([show(), show()]);
+  await Promise.all([show({ runToken: 12 }), show({ runToken: 12 })]);
   assert.equal(showCalls, 1);
-  closeHandler({ isEnded: true });
+  closeHandlers[0]({ isEnded: true });
   assert.equal(rewards, 1);
+  assert.equal(rewardMeta?.context?.runToken, 12);
+
+  await show({ runToken: 13 });
+  closeHandlers[0]({ isEnded: true });
+  assert.equal(rewards, 1, 'stale close from first attempt must not settle the second attempt');
+  closeHandlers[1]({ isEnded: true });
+  assert.equal(rewards, 2);
+  assert.equal(rewardMeta?.context?.runToken, 13);
 });
 
 test('mini-game decode action is gated by the decode rewarded-ad slot', () => {
   const source = readFileSync(new URL('../platform/miniGameRuntime.js', import.meta.url), 'utf8');
   assert.match(source, /const decodeAd = createMiniGameRewardedAd/, 'runtime should create a dedicated decode ad');
-  assert.match(source, /actionId === 'unlockHiddenLog'[\s\S]*decodeAd\(\)/, 'decode action must not call performAction before ad reward');
+  assert.match(source, /onReward:\s*\(meta\)[\s\S]*shouldApplyReward\(meta, runToken, 'decode', state\)/, 'decode reward should reject stale or invalid state');
+  assert.match(source, /actionId === 'unlockHiddenLog'[\s\S]*decodeAd\(\{ runToken \}\)/, 'decode action must carry the originating run token');
+  assert.match(source, /state\.result === 'success' \? recordSuccessfulShift/, 'Canvas loop should consume the state-machine result');
 });

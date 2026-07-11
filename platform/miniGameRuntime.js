@@ -22,6 +22,7 @@ import {
   scheduleNextAnomalyAfterTrigger,
 } from '../src/runtimeSession.js';
 import { init as initCanvasRenderer, onCanvasClick, render } from './canvasRenderer.js';
+import { shouldApplyReward } from '../src/rewardGuard.js';
 
 function getHostApi() {
   if (typeof wx !== 'undefined' && wx) return wx;
@@ -58,36 +59,56 @@ export function createMiniGameRewardedAd(api, adUnitId, options = {}) {
   } = options;
 
   if (!api || typeof api.createRewardedVideoAd !== 'function' || !adUnitId) {
-    return () => {
+    return (context = null) => {
       const error = new Error('[MINIGAME] rewarded ad API or adUnitId unavailable');
-      if (!releaseMode) onReward?.();
-      onError?.(error);
+      const meta = { attemptId: null, context };
+      if (!releaseMode) onReward?.(meta);
+      onError?.(error, meta);
       return Promise.resolve();
     };
   }
 
-  const ad = api.createRewardedVideoAd({ adUnitId });
-  let attempt = null;
+  let activeAttempt = null;
+  let attemptSequence = 0;
 
-  const settle = (rewarded, error = null) => {
+  const settle = (attempt, rewarded, error = null) => {
     if (!attempt || attempt.settled) return;
     attempt.settled = true;
-    if (rewarded || (!releaseMode && error)) onReward?.();
-    if (error) onError?.(error);
+    if (activeAttempt === attempt) activeAttempt = null;
+    const meta = { attemptId: attempt.id, context: attempt.context };
+    if (rewarded || (!releaseMode && error)) onReward?.(meta);
+    if (error) onError?.(error, meta);
+    attempt.ad.offClose?.(attempt.closeHandler);
+    attempt.ad.offError?.(attempt.errorHandler);
+    attempt.ad.destroy?.();
   };
 
-  ad.onClose?.((res) => settle(Boolean(res?.isEnded)));
-  ad.onError?.((error) => settle(false, error));
+  return (context = null) => {
+    if (activeAttempt && !activeAttempt.settled) return Promise.resolve();
+    const ad = api.createRewardedVideoAd({ adUnitId });
+    const attempt = {
+      id: ++attemptSequence,
+      context,
+      settled: false,
+      ad,
+      closeHandler: null,
+      errorHandler: null,
+    };
+    attempt.closeHandler = (res) => settle(attempt, Boolean(res?.isEnded));
+    attempt.errorHandler = (error) => settle(attempt, false, error);
+    activeAttempt = attempt;
+    ad.onClose?.(attempt.closeHandler);
+    ad.onError?.(attempt.errorHandler);
 
-  return () => {
-    if (attempt && !attempt.settled) return Promise.resolve();
-    attempt = { settled: false };
     return Promise.resolve()
       .then(() => ad.show())
-      .catch((showError) => Promise.resolve()
-        .then(() => ad.load?.())
-        .then(() => ad.show())
-        .catch((loadError) => settle(false, loadError || showError)));
+      .catch((showError) => {
+        if (attempt.settled) return undefined;
+        return Promise.resolve()
+          .then(() => ad.load?.())
+          .then(() => ad.show())
+          .catch((loadError) => settle(attempt, false, loadError || showError));
+      });
   };
 }
 
@@ -106,10 +127,12 @@ export function startMiniGame() {
   let lastTickAt = getNow();
   let lastSnapshotAt = 0;
   let failureRecorded = false;
+  let runToken = 0;
 
   const reviveAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.revive, {
     releaseMode: CONFIG.releaseMode,
-    onReward: () => {
+    onReward: (meta) => {
+      if (!shouldApplyReward(meta, runToken, 'revive', state)) return;
       state = reviveFromAd(state);
       nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
       failureRecorded = false;
@@ -119,7 +142,8 @@ export function startMiniGame() {
 
   const truthAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.truth, {
     releaseMode: CONFIG.releaseMode,
-    onReward: () => {
+    onReward: (meta) => {
+      if (!shouldApplyReward(meta, runToken, 'truth', state)) return;
       state = { ...state, fakeEndingUnlocked: true, fakeEndingTruth: state.lastAdHint || '' };
     },
     onError: (error) => console.warn('[MINIGAME] truth ad failed', error),
@@ -127,7 +151,8 @@ export function startMiniGame() {
 
   const decodeAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.decode, {
     releaseMode: CONFIG.releaseMode,
-    onReward: () => {
+    onReward: (meta) => {
+      if (!shouldApplyReward(meta, runToken, 'decode', state)) return;
       const result = performAction(state, 'unlockHiddenLog');
       state = result.state;
     },
@@ -135,6 +160,7 @@ export function startMiniGame() {
   });
 
   function restart() {
+    runToken += 1;
     session = restartRuntimeSession({ state });
     state = session.state;
     nextAnomalyAt = session.nextAnomalyAt;
@@ -153,7 +179,7 @@ export function startMiniGame() {
   function handleAction(actionId) {
     if (state.gameOver) return;
     if (actionId === 'unlockHiddenLog') {
-      decodeAd();
+      decodeAd({ runToken });
       return;
     }
     const result = performAction(state, actionId);
@@ -162,9 +188,9 @@ export function startMiniGame() {
 
   function handleAd(kind) {
     if (kind === 'truth') {
-      truthAd();
+      truthAd({ runToken });
     } else {
-      reviveAd();
+      reviveAd({ runToken });
     }
   }
 
@@ -205,7 +231,7 @@ export function startMiniGame() {
         }
       }
       if (state.gameOver && !failureRecorded) {
-        state = state.remaining <= 0 ? recordSuccessfulShift(state) : recordFailure(state);
+        state = state.result === 'success' ? recordSuccessfulShift(state) : recordFailure(state);
         failureRecorded = true;
       }
     }

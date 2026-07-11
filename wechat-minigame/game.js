@@ -1219,9 +1219,23 @@ function drawMonitor(state) {
   ctx.textAlign = 'left';
 }
 
+function getCanvasCctvTreatment(cctvState = '00_idle_closed') {
+  const glitch = ['10_signal_lost', '11_camera_glitch', '17_loop_corridor'].includes(cctvState);
+  const entity = ['13_entity_near', '14_shadow_inside', '15_anomaly_wandering'].includes(cctvState);
+  const threat = ['08_emergency_stop', '09_door_jammed', '16_wrong_floor', '20_threat_high'].includes(cctvState);
+  const darkness = cctvState === '07_power_outage' ? 0.62 : cctvState === '10_signal_lost' ? 0.38 : 0;
+  const tint = threat
+    ? 'rgba(255,77,109,0.16)'
+    : cctvState === '19_stabilized' || cctvState === '23_cooldown_safe'
+      ? 'rgba(97,255,190,0.12)'
+      : 'rgba(97,255,190,0.05)';
+  return { tint, darkness, entity, glitch, threat };
+}
+
 function drawCctvScene(state, x, y, w, h) {
   if (h <= 20) return;
   const visual = deriveVisualState(state);
+  const treatment = getCanvasCctvTreatment(visual.cctvState);
 
   const bg = ctx.createLinearGradient(x, y, x, y + h);
   bg.addColorStop(0, 'rgba(7,30,32,0.92)');
@@ -1232,6 +1246,13 @@ function drawCctvScene(state, x, y, w, h) {
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
+
+  ctx.fillStyle = treatment.tint;
+  ctx.fillRect(x, y, w, h);
+  if (treatment.darkness > 0) {
+    ctx.fillStyle = `rgba(0,0,0,${treatment.darkness})`;
+    ctx.fillRect(x, y, w, h);
+  }
 
   ctx.strokeStyle = 'rgba(97,255,190,0.11)';
   ctx.lineWidth = 1;
@@ -1270,7 +1291,7 @@ function drawCctvScene(state, x, y, w, h) {
   ctx.lineTo(carX + carW / 2, carY + carH - 4);
   ctx.stroke();
 
-  const heatAlpha = state.passengers > 0 ? 0.9 : 0.18;
+  const heatAlpha = treatment.entity ? 0.98 : state.passengers > 0 ? 0.55 : 0.12;
   const heat = ctx.createRadialGradient(carX + carW / 2, carY + carH * 0.58, 4, carX + carW / 2, carY + carH * 0.58, 34);
   heat.addColorStop(0, `rgba(255,209,102,${heatAlpha})`);
   heat.addColorStop(0.45, `rgba(255,77,109,${heatAlpha * 0.7})`);
@@ -1285,10 +1306,11 @@ function drawCctvScene(state, x, y, w, h) {
 
   const reticleX = x + w - 42;
   const reticleY = y + h - 42;
-  ctx.strokeStyle = state.anomalyLevel > 0 ? 'rgba(255,77,109,0.88)' : 'rgba(97,255,190,0.32)';
+  const reticleThreat = treatment.threat || state.anomalyLevel > 0;
+  ctx.strokeStyle = reticleThreat ? 'rgba(255,77,109,0.88)' : 'rgba(97,255,190,0.32)';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.arc(reticleX, reticleY, 22 + (state.anomalyLevel > 0 ? Math.sin(Date.now() / 120) * 2 : 0), 0, Math.PI * 2);
+  ctx.arc(reticleX, reticleY, 22 + (reticleThreat ? Math.sin(Date.now() / 120) * 2 : 0), 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(reticleX - 18, reticleY);
@@ -1297,8 +1319,11 @@ function drawCctvScene(state, x, y, w, h) {
   ctx.lineTo(reticleX, reticleY + 18);
   ctx.stroke();
 
-  if (visual.glitch) {
-    drawCanvasAnomalyArtifacts(visual, x, y, w, h);
+  if (visual.glitch || treatment.glitch) {
+    const artifactVisual = treatment.glitch
+      ? { ...visual, glitch: true, noise: Math.max(0.72, visual.noise) }
+      : visual;
+    drawCanvasAnomalyArtifacts(artifactVisual, x, y, w, h);
   }
 
   ctx.restore();
@@ -1694,36 +1719,56 @@ function createMiniGameRewardedAd(api, adUnitId, options = {}) {
   } = options;
 
   if (!api || typeof api.createRewardedVideoAd !== 'function' || !adUnitId) {
-    return () => {
+    return (context = null) => {
       const error = new Error('[MINIGAME] rewarded ad API or adUnitId unavailable');
-      if (!releaseMode) onReward?.();
-      onError?.(error);
+      const meta = { attemptId: null, context };
+      if (!releaseMode) onReward?.(meta);
+      onError?.(error, meta);
       return Promise.resolve();
     };
   }
 
-  const ad = api.createRewardedVideoAd({ adUnitId });
-  let attempt = null;
+  let activeAttempt = null;
+  let attemptSequence = 0;
 
-  const settle = (rewarded, error = null) => {
+  const settle = (attempt, rewarded, error = null) => {
     if (!attempt || attempt.settled) return;
     attempt.settled = true;
-    if (rewarded || (!releaseMode && error)) onReward?.();
-    if (error) onError?.(error);
+    if (activeAttempt === attempt) activeAttempt = null;
+    const meta = { attemptId: attempt.id, context: attempt.context };
+    if (rewarded || (!releaseMode && error)) onReward?.(meta);
+    if (error) onError?.(error, meta);
+    attempt.ad.offClose?.(attempt.closeHandler);
+    attempt.ad.offError?.(attempt.errorHandler);
+    attempt.ad.destroy?.();
   };
 
-  ad.onClose?.((res) => settle(Boolean(res?.isEnded)));
-  ad.onError?.((error) => settle(false, error));
+  return (context = null) => {
+    if (activeAttempt && !activeAttempt.settled) return Promise.resolve();
+    const ad = api.createRewardedVideoAd({ adUnitId });
+    const attempt = {
+      id: ++attemptSequence,
+      context,
+      settled: false,
+      ad,
+      closeHandler: null,
+      errorHandler: null,
+    };
+    attempt.closeHandler = (res) => settle(attempt, Boolean(res?.isEnded));
+    attempt.errorHandler = (error) => settle(attempt, false, error);
+    activeAttempt = attempt;
+    ad.onClose?.(attempt.closeHandler);
+    ad.onError?.(attempt.errorHandler);
 
-  return () => {
-    if (attempt && !attempt.settled) return Promise.resolve();
-    attempt = { settled: false };
     return Promise.resolve()
       .then(() => ad.show())
-      .catch((showError) => Promise.resolve()
-        .then(() => ad.load?.())
-        .then(() => ad.show())
-        .catch((loadError) => settle(false, loadError || showError)));
+      .catch((showError) => {
+        if (attempt.settled) return undefined;
+        return Promise.resolve()
+          .then(() => ad.load?.())
+          .then(() => ad.show())
+          .catch((loadError) => settle(attempt, false, loadError || showError));
+      });
   };
 }
 
@@ -1742,10 +1787,12 @@ function startMiniGame() {
   let lastTickAt = getNow();
   let lastSnapshotAt = 0;
   let failureRecorded = false;
+  let runToken = 0;
 
   const reviveAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.revive, {
     releaseMode: CONFIG.releaseMode,
-    onReward: () => {
+    onReward: (meta) => {
+      if (!shouldApplyReward(meta, runToken, 'revive', state)) return;
       state = reviveFromAd(state);
       nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
       failureRecorded = false;
@@ -1755,7 +1802,8 @@ function startMiniGame() {
 
   const truthAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.truth, {
     releaseMode: CONFIG.releaseMode,
-    onReward: () => {
+    onReward: (meta) => {
+      if (!shouldApplyReward(meta, runToken, 'truth', state)) return;
       state = { ...state, fakeEndingUnlocked: true, fakeEndingTruth: state.lastAdHint || '' };
     },
     onError: (error) => console.warn('[MINIGAME] truth ad failed', error),
@@ -1763,7 +1811,8 @@ function startMiniGame() {
 
   const decodeAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.decode, {
     releaseMode: CONFIG.releaseMode,
-    onReward: () => {
+    onReward: (meta) => {
+      if (!shouldApplyReward(meta, runToken, 'decode', state)) return;
       const result = performAction(state, 'unlockHiddenLog');
       state = result.state;
     },
@@ -1771,6 +1820,7 @@ function startMiniGame() {
   });
 
   function restart() {
+    runToken += 1;
     session = restartRuntimeSession({ state });
     state = session.state;
     nextAnomalyAt = session.nextAnomalyAt;
@@ -1789,7 +1839,7 @@ function startMiniGame() {
   function handleAction(actionId) {
     if (state.gameOver) return;
     if (actionId === 'unlockHiddenLog') {
-      decodeAd();
+      decodeAd({ runToken });
       return;
     }
     const result = performAction(state, actionId);
@@ -1798,9 +1848,9 @@ function startMiniGame() {
 
   function handleAd(kind) {
     if (kind === 'truth') {
-      truthAd();
+      truthAd({ runToken });
     } else {
-      reviveAd();
+      reviveAd({ runToken });
     }
   }
 
@@ -1841,7 +1891,7 @@ function startMiniGame() {
         }
       }
       if (state.gameOver && !failureRecorded) {
-        state = state.remaining <= 0 ? recordSuccessfulShift(state) : recordFailure(state);
+        state = state.result === 'success' ? recordSuccessfulShift(state) : recordFailure(state);
         failureRecorded = true;
       }
     }

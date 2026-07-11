@@ -7,7 +7,7 @@ import { createInitialState } from '../src/state.js';
 import { loadSkin } from '../src/skinManager.js';
 import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
 import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
-import { getCanvasActionButtons, getCanvasFailureOverlayCopy, getCanvasMeterBars, getCanvasStaticLabels, getCanvasStatusItems } from '../platform/canvasRenderer.js';
+import { getCanvasActionButtons, getCanvasCctvTreatment, getCanvasFailureOverlayCopy, getCanvasMeterBars, getCanvasStaticLabels, getCanvasStatusItems } from '../platform/canvasRenderer.js';
 import { getDomLabels } from '../src/uiLabels.js';
 
 const canvasRendererSource = readFileSync(new URL('../platform/canvasRenderer.js', import.meta.url), 'utf8');
@@ -126,6 +126,16 @@ test('canvas failure overlay copy uses current skin text', () => {
 test('canvas renderer distinguishes success settlement from failure', () => {
   assert.match(canvasRendererSource, /state\.result === 'success'/, 'Canvas overlay should branch on explicit success result');
   assert.match(canvasRendererSource, /if \(!isSuccess\)[\s\S]*labels\.adRevive/, 'Canvas success settlement should omit rewarded-revive CTA');
+});
+
+test('canvas CCTV treatment consumes the shared cctvState mapping', () => {
+  assert.deepEqual(getCanvasCctvTreatment('00_idle_closed'), {
+    tint: 'rgba(97,255,190,0.05)', darkness: 0, entity: false, glitch: false, threat: false,
+  });
+  assert.equal(getCanvasCctvTreatment('13_entity_near').entity, true);
+  assert.equal(getCanvasCctvTreatment('20_threat_high').threat, true);
+  assert.equal(getCanvasCctvTreatment('10_signal_lost').glitch, true);
+  assert.match(canvasRendererSource, /getCanvasCctvTreatment\(visual\.cctvState\)/, 'Canvas scene should consume deriveVisualState cctvState');
 });
 
 test('canvas monitor renderer draws a visual CCTV scene before caption text', () => {

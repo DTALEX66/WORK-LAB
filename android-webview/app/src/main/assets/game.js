@@ -1380,31 +1380,47 @@ let adInstances = {};
 
 function createHostRewardedAd(hostApi, adUnitId, callbacks, label) {
   const { onReward, onError } = callbacks;
-  const ad = hostApi.createRewardedVideoAd({ adUnitId });
-  let attempt = null;
+  let activeAttempt = null;
+  let attemptSequence = 0;
 
-  const settle = ({ rewarded = false, error = null } = {}) => {
+  const settle = (attempt, { rewarded = false, error = null } = {}) => {
     if (!attempt || attempt.settled) return;
     attempt.settled = true;
+    if (activeAttempt === attempt) activeAttempt = null;
+    const meta = { attemptId: attempt.id, context: attempt.context };
     if (error) console.warn(`[ad:${label}] error:`, error);
-    if (rewarded || (error && !CONFIG.releaseMode)) onReward?.();
-    if (error) onError?.(error);
+    if (rewarded || (error && !CONFIG.releaseMode)) onReward?.(meta);
+    if (error) onError?.(error, meta);
+    attempt.ad.offClose?.(attempt.closeHandler);
+    attempt.ad.offError?.(attempt.errorHandler);
+    attempt.ad.destroy?.();
   };
 
-  ad.onClose((res) => settle({ rewarded: Boolean(res?.isEnded) }));
-  ad.onError((error) => settle({ error }));
+  return (context = null) => {
+    if (activeAttempt && !activeAttempt.settled) return Promise.resolve();
+    const ad = hostApi.createRewardedVideoAd({ adUnitId });
+    const attempt = {
+      id: ++attemptSequence,
+      context,
+      settled: false,
+      ad,
+      closeHandler: null,
+      errorHandler: null,
+    };
+    attempt.closeHandler = (res) => settle(attempt, { rewarded: Boolean(res?.isEnded) });
+    attempt.errorHandler = (error) => settle(attempt, { error });
+    activeAttempt = attempt;
+    ad.onClose(attempt.closeHandler);
+    ad.onError(attempt.errorHandler);
 
-  return () => {
-    if (attempt && !attempt.settled) return Promise.resolve();
-    attempt = { settled: false };
     return Promise.resolve()
       .then(() => ad.show())
       .catch((showError) => {
-        if (attempt?.settled) return undefined;
+        if (attempt.settled) return undefined;
         return Promise.resolve()
           .then(() => ad.load?.())
           .then(() => ad.show())
-          .catch((loadError) => settle({ error: loadError || showError }));
+          .catch((loadError) => settle(attempt, { error: loadError || showError }));
       });
   };
 }
@@ -1432,13 +1448,19 @@ function createRewardedAd(adUnitId, callbacks = {}) {
     return show;
   }
 
-  // 浏览器模式 — 模拟广告
-  const show = () => {
+  // 浏览器模式 — 模拟广告；同样回传发起时上下文，供运行时拒绝陈旧奖励。
+  let browserAttempt = null;
+  let browserAttemptSequence = 0;
+  const show = (context = null) => {
+    if (browserAttempt && !browserAttempt.settled) return Promise.resolve();
+    browserAttempt = { id: ++browserAttemptSequence, context, settled: false };
+    const activeAttempt = browserAttempt;
     return new Promise((resolve) => {
       console.log('[ad] 模拟广告播放中...');
       setTimeout(() => {
+        activeAttempt.settled = true;
         console.log('[ad] 模拟广告完成');
-        onReward?.();
+        onReward?.({ attemptId: activeAttempt.id, context: activeAttempt.context });
         resolve();
       }, CONFIG?.adContent?.adVideoDuration ?? 2000);
     });
@@ -1597,6 +1619,7 @@ let timer = null;
 let lastTone = 'normal';
 let crashPlayed = false;
 let fakeEndingTracked = false;
+let runToken = 0;
 
 function analyticsPayload(extra = {}) {
   return {
@@ -1631,7 +1654,8 @@ function bindPress(element, handler) {
 }
 
 const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
-  onReward: () => {
+  onReward: (meta) => {
+    if (!shouldApplyReward(meta, runToken, 'revive', state)) return;
     trackEvent('revive_ad_reward', analyticsPayload({ adUnitId: CONFIG.adUnits.revive }));
     playRevive();
     state = reviveFromAd(state);
@@ -1640,7 +1664,8 @@ const showReviveAd = createRewardedAd(CONFIG.adUnits.revive, {
   },
 });
 const showDecodeAd = createRewardedAd(CONFIG.adUnits.decode, {
-  onReward: () => {
+  onReward: (meta) => {
+    if (!shouldApplyReward(meta, runToken, 'decode', state)) return;
     const before = state.adHintsUsed;
     runAction('unlockHiddenLog');
     if (state.adHintsUsed > before) {
@@ -1649,7 +1674,8 @@ const showDecodeAd = createRewardedAd(CONFIG.adUnits.decode, {
   },
 });
 const showTruthAd = createRewardedAd(CONFIG.adUnits.truth, {
-  onReward: () => {
+  onReward: (meta) => {
+    if (!shouldApplyReward(meta, runToken, 'truth', state)) return;
     playRevive();
     state = structuredClone(state);
     state.fakeEndingUnlocked = true;
@@ -1895,7 +1921,7 @@ function dispatchAction(actionId) {
   trackEvent('action_click', analyticsPayload({ actionId }));
   if (actionId === 'unlockHiddenLog') {
     trackEvent('hidden_log_ad_start', analyticsPayload({ adUnitId: CONFIG.adUnits.decode }));
-    showDecodeAd();
+    showDecodeAd({ runToken });
     return;
   }
   runAction(actionId);
@@ -1962,7 +1988,7 @@ function loop() {
   state = tickState(state, 1);
 
   // 成功值守 → 重置连续失败计数
-  if (state.gameOver && state.remaining <= 0) {
+  if (state.gameOver && state.result === 'success') {
     state = recordSuccessfulShift(state);
     render();
     return;
@@ -1994,6 +2020,7 @@ function loop() {
 }
 
 function restart() {
+  runToken += 1;
   if (timer) {
     window.clearInterval(timer);
     timer = null;
@@ -2119,7 +2146,7 @@ window.addEventListener('keydown', (event) => {
 });
 bindPress(els.reviveButton, () => {
   trackEvent('revive_ad_start', analyticsPayload({ adUnitId: CONFIG.adUnits.revive }));
-  showReviveAd();
+  showReviveAd({ runToken });
 });
 bindPress(els.restartButton, () => {
   playRestart();
@@ -2128,7 +2155,7 @@ bindPress(els.restartButton, () => {
 
 // 假结局按钮
 bindPress(els.fakeEndingTruthBtn, () => {
-  showTruthAd();
+  showTruthAd({ runToken });
 });
 bindPress(els.fakeEndingRestartBtn, () => {
   playRestart();

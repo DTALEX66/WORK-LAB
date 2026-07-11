@@ -30,19 +30,21 @@ test('host rewarded ads settle each attempt once across duplicate and out-of-ord
     const originalWx = globalThis.wx;
     const originalTt = globalThis.tt;
     const originalReleaseMode = CONFIG.releaseMode;
-    let closeHandler;
-    let errorHandler;
+    const closeHandlers = [];
+    const errorHandlers = [];
     let showCalls = 0;
     let rewards = 0;
     let errors = 0;
+    let rewardMeta;
+    let errorMeta;
 
     delete globalThis.wx;
     delete globalThis.tt;
     globalThis[hostName] = {
       createRewardedVideoAd() {
         return {
-          onClose(handler) { closeHandler = handler; },
-          onError(handler) { errorHandler = handler; },
+          onClose(handler) { closeHandlers.push(handler); },
+          onError(handler) { errorHandlers.push(handler); },
           show: async () => { showCalls += 1; },
           load: async () => {},
         };
@@ -53,24 +55,28 @@ test('host rewarded ads settle each attempt once across duplicate and out-of-ord
     try {
       const platform = await import(`../platform/platform.js?${hostName}-attempt=${Date.now()}-${Math.random()}`);
       const show = platform.createRewardedAd(`adunit-${hostName}-attempt`, {
-        onReward: () => { rewards += 1; },
-        onError: () => { errors += 1; },
+        onReward: (meta) => { rewards += 1; rewardMeta = meta; },
+        onError: (_error, meta) => { errors += 1; errorMeta = meta; },
       });
 
-      await Promise.all([show(), show()]);
+      await Promise.all([show({ runToken: 7 }), show({ runToken: 7 })]);
       assert.equal(showCalls, 1, `${hostName} should ignore a concurrent show`);
-      closeHandler({ isEnded: true });
-      closeHandler({ isEnded: true });
-      errorHandler(new Error('late error'));
+      closeHandlers[0]({ isEnded: true });
+      closeHandlers[0]({ isEnded: true });
+      errorHandlers[0](new Error('late error'));
       assert.equal(rewards, 1, `${hostName} should reward a completed attempt once`);
       assert.equal(errors, 0, `${hostName} should ignore callbacks after settlement`);
+      assert.equal(rewardMeta?.context?.runToken, 7, `${hostName} should return the originating run token`);
 
-      await show();
-      errorHandler(new Error('ad failed'));
-      errorHandler(new Error('duplicate failure'));
-      closeHandler({ isEnded: true });
+      await show({ runToken: 8 });
+      closeHandlers[0]({ isEnded: true });
+      assert.equal(rewards, 1, `${hostName} should ignore a stale callback from the prior attempt`);
+      errorHandlers[1](new Error('ad failed'));
+      errorHandlers[1](new Error('duplicate failure'));
+      closeHandlers[1]({ isEnded: true });
       assert.equal(rewards, 1, `${hostName} should not reward a failed release attempt`);
       assert.equal(errors, 1, `${hostName} should report a failed attempt once`);
+      assert.equal(errorMeta?.context?.runToken, 8, `${hostName} should report the failed attempt context`);
     } finally {
       CONFIG.releaseMode = originalReleaseMode;
       if (originalWx === undefined) delete globalThis.wx;

@@ -59,31 +59,47 @@ let adInstances = {};
 
 function createHostRewardedAd(hostApi, adUnitId, callbacks, label) {
   const { onReward, onError } = callbacks;
-  const ad = hostApi.createRewardedVideoAd({ adUnitId });
-  let attempt = null;
+  let activeAttempt = null;
+  let attemptSequence = 0;
 
-  const settle = ({ rewarded = false, error = null } = {}) => {
+  const settle = (attempt, { rewarded = false, error = null } = {}) => {
     if (!attempt || attempt.settled) return;
     attempt.settled = true;
+    if (activeAttempt === attempt) activeAttempt = null;
+    const meta = { attemptId: attempt.id, context: attempt.context };
     if (error) console.warn(`[ad:${label}] error:`, error);
-    if (rewarded || (error && !CONFIG.releaseMode)) onReward?.();
-    if (error) onError?.(error);
+    if (rewarded || (error && !CONFIG.releaseMode)) onReward?.(meta);
+    if (error) onError?.(error, meta);
+    attempt.ad.offClose?.(attempt.closeHandler);
+    attempt.ad.offError?.(attempt.errorHandler);
+    attempt.ad.destroy?.();
   };
 
-  ad.onClose((res) => settle({ rewarded: Boolean(res?.isEnded) }));
-  ad.onError((error) => settle({ error }));
+  return (context = null) => {
+    if (activeAttempt && !activeAttempt.settled) return Promise.resolve();
+    const ad = hostApi.createRewardedVideoAd({ adUnitId });
+    const attempt = {
+      id: ++attemptSequence,
+      context,
+      settled: false,
+      ad,
+      closeHandler: null,
+      errorHandler: null,
+    };
+    attempt.closeHandler = (res) => settle(attempt, { rewarded: Boolean(res?.isEnded) });
+    attempt.errorHandler = (error) => settle(attempt, { error });
+    activeAttempt = attempt;
+    ad.onClose(attempt.closeHandler);
+    ad.onError(attempt.errorHandler);
 
-  return () => {
-    if (attempt && !attempt.settled) return Promise.resolve();
-    attempt = { settled: false };
     return Promise.resolve()
       .then(() => ad.show())
       .catch((showError) => {
-        if (attempt?.settled) return undefined;
+        if (attempt.settled) return undefined;
         return Promise.resolve()
           .then(() => ad.load?.())
           .then(() => ad.show())
-          .catch((loadError) => settle({ error: loadError || showError }));
+          .catch((loadError) => settle(attempt, { error: loadError || showError }));
       });
   };
 }
@@ -111,13 +127,19 @@ export function createRewardedAd(adUnitId, callbacks = {}) {
     return show;
   }
 
-  // 浏览器模式 — 模拟广告
-  const show = () => {
+  // 浏览器模式 — 模拟广告；同样回传发起时上下文，供运行时拒绝陈旧奖励。
+  let browserAttempt = null;
+  let browserAttemptSequence = 0;
+  const show = (context = null) => {
+    if (browserAttempt && !browserAttempt.settled) return Promise.resolve();
+    browserAttempt = { id: ++browserAttemptSequence, context, settled: false };
+    const activeAttempt = browserAttempt;
     return new Promise((resolve) => {
       console.log('[ad] 模拟广告播放中...');
       setTimeout(() => {
+        activeAttempt.settled = true;
         console.log('[ad] 模拟广告完成');
-        onReward?.();
+        onReward?.({ attemptId: activeAttempt.id, context: activeAttempt.context });
         resolve();
       }, CONFIG?.adContent?.adVideoDuration ?? 2000);
     });

@@ -33,9 +33,19 @@ test('browser preview exposes an explicit start handoff overlay', () => {
   assert.match(html, /id="archiveOverlay"/, 'archive overlay should be present for cross-session collection');
 });
 
+test('browser rewarded callbacks are bound to the originating run and valid state', () => {
+  const js = readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
+  assert.match(js, /shouldApplyReward\(meta, runToken, 'revive', state\)/, 'revive reward should reject stale runs and invalid settlement state');
+  assert.match(js, /shouldApplyReward\(meta, runToken, 'decode', state\)/, 'decode reward should reject stale runs and ended games');
+  assert.match(js, /shouldApplyReward\(meta, runToken, 'truth', state\)/, 'truth reward should require the active fake ending');
+  assert.match(js, /showReviveAd\(\{ runToken \}\)/, 'ad show should capture the active run token');
+  assert.match(js, /function restart\(\)[\s\S]*runToken \+= 1/, 'restart should invalidate outstanding ad callbacks');
+});
+
 test('browser preview renders a distinct success settlement without revive CTA', () => {
   const js = readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
   assert.match(js, /state\.result === 'success'/, 'DOM runtime should branch on explicit success result');
+  assert.match(js, /state\.gameOver && state\.result === 'success'/, 'DOM loop should consume the state-machine result instead of reclassifying from remaining time');
   assert.match(js, /reviveButton\.hidden\s*=\s*isSuccess/, 'success settlement must hide the rewarded-revive CTA');
   assert.match(js, /overlay\.dataset\.result\s*=\s*isSuccess \? 'success' : 'failure'/, 'overlay should expose success/failure styling state');
 });

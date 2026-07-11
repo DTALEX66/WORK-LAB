@@ -245,9 +245,23 @@ function drawMonitor(state) {
   ctx.textAlign = 'left';
 }
 
+export function getCanvasCctvTreatment(cctvState = '00_idle_closed') {
+  const glitch = ['10_signal_lost', '11_camera_glitch', '17_loop_corridor'].includes(cctvState);
+  const entity = ['13_entity_near', '14_shadow_inside', '15_anomaly_wandering'].includes(cctvState);
+  const threat = ['08_emergency_stop', '09_door_jammed', '16_wrong_floor', '20_threat_high'].includes(cctvState);
+  const darkness = cctvState === '07_power_outage' ? 0.62 : cctvState === '10_signal_lost' ? 0.38 : 0;
+  const tint = threat
+    ? 'rgba(255,77,109,0.16)'
+    : cctvState === '19_stabilized' || cctvState === '23_cooldown_safe'
+      ? 'rgba(97,255,190,0.12)'
+      : 'rgba(97,255,190,0.05)';
+  return { tint, darkness, entity, glitch, threat };
+}
+
 function drawCctvScene(state, x, y, w, h) {
   if (h <= 20) return;
   const visual = deriveVisualState(state);
+  const treatment = getCanvasCctvTreatment(visual.cctvState);
 
   const bg = ctx.createLinearGradient(x, y, x, y + h);
   bg.addColorStop(0, 'rgba(7,30,32,0.92)');
@@ -258,6 +272,13 @@ function drawCctvScene(state, x, y, w, h) {
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
+
+  ctx.fillStyle = treatment.tint;
+  ctx.fillRect(x, y, w, h);
+  if (treatment.darkness > 0) {
+    ctx.fillStyle = `rgba(0,0,0,${treatment.darkness})`;
+    ctx.fillRect(x, y, w, h);
+  }
 
   ctx.strokeStyle = 'rgba(97,255,190,0.11)';
   ctx.lineWidth = 1;
@@ -296,7 +317,7 @@ function drawCctvScene(state, x, y, w, h) {
   ctx.lineTo(carX + carW / 2, carY + carH - 4);
   ctx.stroke();
 
-  const heatAlpha = state.passengers > 0 ? 0.9 : 0.18;
+  const heatAlpha = treatment.entity ? 0.98 : state.passengers > 0 ? 0.55 : 0.12;
   const heat = ctx.createRadialGradient(carX + carW / 2, carY + carH * 0.58, 4, carX + carW / 2, carY + carH * 0.58, 34);
   heat.addColorStop(0, `rgba(255,209,102,${heatAlpha})`);
   heat.addColorStop(0.45, `rgba(255,77,109,${heatAlpha * 0.7})`);
@@ -311,10 +332,11 @@ function drawCctvScene(state, x, y, w, h) {
 
   const reticleX = x + w - 42;
   const reticleY = y + h - 42;
-  ctx.strokeStyle = state.anomalyLevel > 0 ? 'rgba(255,77,109,0.88)' : 'rgba(97,255,190,0.32)';
+  const reticleThreat = treatment.threat || state.anomalyLevel > 0;
+  ctx.strokeStyle = reticleThreat ? 'rgba(255,77,109,0.88)' : 'rgba(97,255,190,0.32)';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.arc(reticleX, reticleY, 22 + (state.anomalyLevel > 0 ? Math.sin(Date.now() / 120) * 2 : 0), 0, Math.PI * 2);
+  ctx.arc(reticleX, reticleY, 22 + (reticleThreat ? Math.sin(Date.now() / 120) * 2 : 0), 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(reticleX - 18, reticleY);
@@ -323,8 +345,11 @@ function drawCctvScene(state, x, y, w, h) {
   ctx.lineTo(reticleX, reticleY + 18);
   ctx.stroke();
 
-  if (visual.glitch) {
-    drawCanvasAnomalyArtifacts(visual, x, y, w, h);
+  if (visual.glitch || treatment.glitch) {
+    const artifactVisual = treatment.glitch
+      ? { ...visual, glitch: true, noise: Math.max(0.72, visual.noise) }
+      : visual;
+    drawCanvasAnomalyArtifacts(artifactVisual, x, y, w, h);
   }
 
   ctx.restore();
