@@ -244,7 +244,15 @@ test('canvas CCTV treatment consumes the shared cctvState mapping', () => {
   assert.equal(getCanvasCctvTreatment('13_entity_near').entity, true);
   assert.equal(getCanvasCctvTreatment('20_threat_high').threat, true);
   assert.equal(getCanvasCctvTreatment('10_signal_lost').glitch, true);
-  assert.match(canvasRendererSource, /getCanvasCctvTreatment\(visual\.cctvState\)/, 'Canvas scene should consume deriveVisualState cctvState');
+  assert.match(canvasRendererSource, /const cctvState = motion\?\.cctvState \|\| baseVisual\.cctvState/, 'Canvas scene should prefer the live motion timeline and fall back to deriveVisualState');
+  assert.match(canvasRendererSource, /getCanvasCctvTreatment\(cctvState\)/);
+});
+
+test('canvas monitor masks baked CCTV answers and replaces them with neutral runtime clues', () => {
+  assert.match(canvasRendererSource, /状态图含固定英文诊断与固定楼层/);
+  assert.match(canvasRendererSource, /\['phantom_floor', 'floor_jump', 'negative_floor'\]/);
+  assert.match(canvasRendererSource, /CABIN FEED/);
+  assert.doesNotMatch(canvasRendererSource, /fillText\(['"]FLOOR MISMATCH/);
 });
 
 test('canvas monitor renderer draws a visual CCTV scene before caption text', () => {

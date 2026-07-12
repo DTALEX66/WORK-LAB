@@ -66,7 +66,9 @@ test('visualState maps game over to danger failure visuals', () => {
 
 test('visualState maps normal elevator conditions to imported CCTV states', () => {
   assert.equal(deriveVisualState({ ...createInitialState(), door: 'open' }).cctvState, '01_door_open');
+  assert.equal(deriveVisualState({ ...createInitialState(), door: 'open', elapsed: 1 }).cctvState, '01_door_open', 'stability must not hide a visibly open door');
   assert.equal(deriveVisualState({ ...createInitialState(), direction: 'up' }).cctvState, '04_moving_up');
+  assert.equal(deriveVisualState({ ...createInitialState(), direction: 'up', elapsed: 1 }).cctvState, '04_moving_up', 'stability must not hide active movement');
   assert.equal(deriveVisualState({ ...createInitialState(), direction: 'down' }).cctvState, '05_moving_down');
   assert.equal(deriveVisualState({ ...createInitialState(), power: 18 }).cctvState, '06_power_low');
   assert.equal(deriveVisualState({ ...createInitialState(), power: 4 }).cctvState, '07_power_outage');

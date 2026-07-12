@@ -56,7 +56,8 @@
     "moveUp_doorNotClosed": "传送带未停止，禁止调节速度。",
     "moveDown_doorNotClosed": "传送带未停止，禁止调节速度。",
     "unknownAction": "未知工控操作：{actionId}",
-    "gameOver": "产线系统已崩溃，必须呼叫维修支援或重新投产。"
+    "gameOver": "产线系统已崩溃，必须呼叫维修支援或重新投产。",
+    "systemBusy": "当前工序尚未完成，请等待设备状态稳定。"
   },
   "actionFeedback": {
     "openDoor": "传送带已启动。", "closeDoor": "传送带已停止。",

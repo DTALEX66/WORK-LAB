@@ -120,6 +120,16 @@ test('mini-game rewarded ads ignore duplicate show attempts until close', async 
   assert.equal(rewardMeta?.context?.runToken, 13);
 });
 
+test('mini-game runtime drives and pauses the CCTV motion timeline', () => {
+  const source = readFileSync(new URL('../platform/miniGameRuntime.js', import.meta.url), 'utf8');
+  assert.match(source, /createCctvMotionController\(getNow\)/);
+  assert.match(source, /cctvMotion\.startAction\(actionId, before, state\)/);
+  assert.match(source, /cctvMotion\.startAnomaly\(beforeAnomaly, state\)/);
+  assert.match(source, /cctvMotion:\s*cctvMotion\.sample\(state\)/);
+  assert.match(source, /clock\.pause\(\);[\s\S]*cctvMotion\.pause\(\)/);
+  assert.match(source, /clock\.resume\(\);[\s\S]*cctvMotion\.resume\(\)/);
+});
+
 test('mini-game decode action is gated by the decode rewarded-ad slot', () => {
   const source = readFileSync(new URL('../platform/miniGameRuntime.js', import.meta.url), 'utf8');
   assert.match(source, /const decodeAd = createMiniGameRewardedAd/, 'runtime should create a dedicated decode ad');

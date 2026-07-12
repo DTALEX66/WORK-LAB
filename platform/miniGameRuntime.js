@@ -27,6 +27,7 @@ import { init, onCanvasClick, render } from './canvasRenderer.js';
 import { bindMiniGameLifecycle, checkDouyinSidebar, navigateToDouyinSidebar } from './douyinIntegration.js';
 import { createMiniGameAudio } from './miniGameAudio.js';
 import { createMiniGameClock } from './miniGameClock.js';
+import { createCctvMotionController } from './cctvMotion.js';
 import { shouldApplyReward } from '../src/rewardGuard.js';
 
 function getHostApi() {
@@ -135,6 +136,7 @@ export function startMiniGame() {
   const info = getSystemInfo(api);
   const dims = init(canvas, info);
   const clock = createMiniGameClock(getNow);
+  const cctvMotion = createCctvMotionController(getNow);
   const audio = createMiniGameAudio(api);
   const audioStorageKey = 'minigame_audio_muted_v1';
   try {
@@ -161,12 +163,16 @@ export function startMiniGame() {
   function pauseForAd() {
     adPauseActive = true;
     clock.pause();
+    cctvMotion.pause();
     audio.stopAll();
   }
 
   function resumeAfterAd() {
     adPauseActive = false;
-    if (!lifecycleHidden) clock.resume();
+    if (!lifecycleHidden) {
+      clock.resume();
+      cctvMotion.resume();
+    }
   }
 
   function showAdError() {
@@ -178,6 +184,7 @@ export function startMiniGame() {
     onReward: (meta) => {
       if (!shouldApplyReward(meta, runToken, 'revive', state)) return;
       state = reviveFromAd(state);
+      cctvMotion.reset();
       state = { ...state, inspection: null };
       nextNormalInspectionAt = state.elapsed + 4;
       audio.play('result');
@@ -227,6 +234,7 @@ export function startMiniGame() {
       paused: clock.isPaused(),
       muted: audio.isMuted(),
       sidebarAvailable,
+      cctvMotion: cctvMotion.sample(state),
     };
   }
 
@@ -264,6 +272,7 @@ export function startMiniGame() {
     clock.start();
     session = restartRuntimeSession({ state });
     state = session.state;
+    cctvMotion.reset();
     state = openInspection(state, {
       id: `baseline-${runToken}`,
       kind: 'normal',
@@ -292,8 +301,10 @@ export function startMiniGame() {
       decodeAd({ runToken });
       return;
     }
+    const before = state;
     const result = performAction(state, actionId);
     state = result.state;
+    if (result.ok) cctvMotion.startAction(actionId, before, state);
   }
 
   function handleAd(kind) {
@@ -326,12 +337,16 @@ export function startMiniGame() {
     onPause: () => {
       lifecycleHidden = true;
       clock.pause();
+      cctvMotion.pause();
       audio.stopAll();
     },
     onResume: () => {
       lifecycleHidden = false;
       refreshSidebarAvailability();
-      if (!adPauseActive) clock.resume();
+      if (!adPauseActive) {
+        clock.resume();
+        cctvMotion.resume();
+      }
     },
   });
 
@@ -369,6 +384,7 @@ export function startMiniGame() {
           }
           if (!state.gameOver && state.elapsed >= nextAnomalyAt) {
             const event = pickNextAnomaly(state);
+            const beforeAnomaly = state;
             audio.play('anomaly');
             const result = applyAnomaly(state, event.id);
             state = openInspection(result.state, {
@@ -377,6 +393,7 @@ export function startMiniGame() {
               title: t('ui.anomalyInspectionTitle'),
               duration: 7,
             });
+            cctvMotion.startAnomaly(beforeAnomaly, state);
             nextNormalInspectionAt = Number.POSITIVE_INFINITY;
             nextAnomalyAt = scheduleNextAnomalyAfterTrigger(state.elapsed);
           }

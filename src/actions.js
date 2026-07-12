@@ -8,6 +8,10 @@ const ACTIONS = {
     if (state.moving) return fail(state, t('actionFailMessages.openDoor_moving'));
     let next = cloneState(state);
     next.door = 'open';
+    next.transition = {
+      kind: 'doorOpening', duration: 1, remaining: 1,
+      fromDoor: state.door, toDoor: 'open',
+    };
     next.monitor = t('monitor.actions.openDoor', { floor: next.floor });
     next = appendLog(next, 'info', t('actionLogMessages.openDoor', { floor: next.floor }));
     return ok(next, t('actionFeedback.openDoor'));
@@ -16,6 +20,10 @@ const ACTIONS = {
   closeDoor(state) {
     let next = cloneState(state);
     next.door = 'closed';
+    next.transition = {
+      kind: 'doorClosing', duration: 1, remaining: 1,
+      fromDoor: state.door, toDoor: 'closed',
+    };
     next.monitor = t('monitor.actions.closeDoor');
     next = appendLog(next, 'info', t('actionLogMessages.closeDoor'));
     return ok(next, t('actionFeedback.closeDoor'));
@@ -25,9 +33,14 @@ const ACTIONS = {
     if (state.door !== 'closed') return fail(state, t('actionFailMessages.moveUp_doorNotClosed'));
     let next = cloneState(state);
     const a = CONFIG.actions.moveUp;
+    const fromFloor = next.floor;
     next.floor += 1;
     next.moving = true;
     next.direction = 'up';
+    next.transition = {
+      kind: 'movingUp', duration: 2, remaining: 2,
+      fromFloor, toFloor: next.floor,
+    };
     next.power = clamp(next.power - a.powerCost, 0, 100);
     next.stability = clamp(next.stability - a.stabilityCost, 0, 100);
     next.monitor = t('monitor.actions.moveUp', { floor: next.floor });
@@ -39,9 +52,14 @@ const ACTIONS = {
     if (state.door !== 'closed') return fail(state, t('actionFailMessages.moveDown_doorNotClosed'));
     let next = cloneState(state);
     const a = CONFIG.actions.moveDown;
+    const fromFloor = next.floor;
     next.floor -= 1;
     next.moving = true;
     next.direction = 'down';
+    next.transition = {
+      kind: 'movingDown', duration: 2, remaining: 2,
+      fromFloor, toFloor: next.floor,
+    };
     next.power = clamp(next.power - a.powerCost, 0, 100);
     next.stability = clamp(next.stability - a.stabilityCost, 0, 100);
     next.monitor = t('monitor.actions.moveDown', { floor: next.floor });
@@ -60,6 +78,7 @@ const ACTIONS = {
     }
     next.moving = false;
     next.direction = 'idle';
+    next.transition = { kind: 'emergencyStop', duration: 1, remaining: 1 };
     next.stability = clamp(next.stability - es.stabilityCost, 0, 100);
     next.monitor = t('monitor.actions.emergencyStop');
     next = appendLog(next, 'warn', t('actionLogMessages.emergencyStop'));
@@ -74,6 +93,7 @@ const ACTIONS = {
     next.power = clamp(next.power - rs.powerCost, 0, 100);
     next.moving = false;
     next.direction = 'idle';
+    next.transition = { kind: 'systemReboot', duration: 2, remaining: 2 };
     next.activeAnomaly = null;
     next.monitor = t('monitor.actions.restartSystem');
     next = appendLog(next, 'warn', t('actionLogMessages.restartSystem', { cost: rs.powerCost }));
@@ -124,6 +144,10 @@ export function performAction(state, actionId) {
   const action = ACTIONS[actionId];
   if (!action) return fail(state, t('actionFailMessages.unknownAction', { actionId }));
   if (state.gameOver && actionId !== 'inspectLog') return fail(state, t('actionFailMessages.gameOver'));
+  const hasSpecificDoorFailure = ['moveUp', 'moveDown'].includes(actionId) && state.door !== 'closed';
+  if (state.transition && !hasSpecificDoorFailure && !['emergencyStop', 'inspectLog', 'unlockHiddenLog'].includes(actionId)) {
+    return fail(state, t('actionFailMessages.systemBusy'));
+  }
   const activeAnomaly = state.activeAnomaly;
   const result = action(state);
   if (!result.ok || !activeAnomaly || getAnomalyResolutionAction(activeAnomaly) !== actionId) {

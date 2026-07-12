@@ -99,6 +99,7 @@ const MINI_ENTRY_MODULES = [
   { path: 'platform/canvasLabels.js', type: 'js' },
   { path: 'platform/canvasAssets.js', type: 'js' },
   { path: 'platform/miniGameClock.js', type: 'js' },
+  { path: 'platform/cctvMotion.js', type: 'js' },
   { path: 'platform/miniGameAudio.js', type: 'js' },
   { path: 'platform/douyinIntegration.js', type: 'js' },
   { path: 'platform/canvasRenderer.js', type: 'js' },

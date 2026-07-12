@@ -68,7 +68,8 @@
     "moveUp_doorNotClosed": "隔离门未关闭，禁止转入上层病区。",
     "moveDown_doorNotClosed": "隔离门未关闭，禁止转入下层病区。",
     "unknownAction": "未知护理指令：{actionId}",
-    "gameOver": "值班系统已失控，必须复活或重新开始。"
+    "gameOver": "值班系统已失控，必须复活或重新开始。",
+    "systemBusy": "当前处置尚未完成，请等待设备状态稳定。"
   },
   "actionFeedback": {
     "openDoor": "隔离门已开启。",

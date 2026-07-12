@@ -70,10 +70,10 @@ function getCctvState(state, anomalyLevel) {
   if (state.fakeEndingCooldownRemaining > 0) return '23_cooldown_safe';
   if (state.power <= 5) return '07_power_outage';
   if (state.power <= 22) return '06_power_low';
-  if (state.stability >= 92 && state.elapsed > 0) return '19_stabilized';
   if (state.direction === 'up') return '04_moving_up';
   if (state.direction === 'down') return '05_moving_down';
   if (state.door === 'open') return '01_door_open';
+  if (state.stability >= 92 && state.elapsed > 0) return '19_stabilized';
   if (anomalyLevel >= 3) return '13_entity_near';
   if (anomalyLevel > 0) return '11_camera_glitch';
   return '00_idle_closed';

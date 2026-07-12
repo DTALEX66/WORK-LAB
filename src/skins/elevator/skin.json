@@ -56,7 +56,8 @@
     "moveUp_doorNotClosed": "门未关闭，禁止移动。",
     "moveDown_doorNotClosed": "门未关闭，禁止移动。",
     "unknownAction": "未知操作：{actionId}",
-    "gameOver": "系统已崩溃，必须复活或重新开始。"
+    "gameOver": "系统已崩溃，必须复活或重新开始。",
+    "systemBusy": "当前动作尚未完成，请等待电梯状态稳定。"
   },
   "actionFeedback": {
     "openDoor": "电梯门已打开。", "closeDoor": "电梯门已关闭。",

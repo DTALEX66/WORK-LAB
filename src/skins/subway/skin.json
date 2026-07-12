@@ -68,7 +68,8 @@
     "moveUp_doorNotClosed": "屏蔽门未关闭，禁止上行发车。",
     "moveDown_doorNotClosed": "屏蔽门未关闭，禁止返站调度。",
     "unknownAction": "未知调度指令：{actionId}",
-    "gameOver": "调度系统已失控，必须复活或重新开始。"
+    "gameOver": "调度系统已失控，必须复活或重新开始。",
+    "systemBusy": "当前调度动作尚未完成，请等待列车状态稳定。"
   },
   "actionFeedback": {
     "openDoor": "屏蔽门已开启。",

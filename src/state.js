@@ -10,6 +10,7 @@ export function createInitialState() {
     door: c.door,
     moving: c.moving,
     direction: c.direction,
+    transition: null,
     power: c.power,
     stability: c.stability,
     anomalyLevel: c.anomalyLevel,
@@ -69,6 +70,7 @@ export function checkFailure(state) {
     next.result = 'failure';
     next.moving = false;
     next.direction = 'idle';
+    next.transition = null;
   }
   return next;
 }
@@ -111,6 +113,7 @@ export function reviveFromAd(state) {
   next.door = 'closed';
   next.moving = false;
   next.direction = 'idle';
+  next.transition = null;
   next.activeAnomaly = null;
   next.adRevivesUsed += 1;
   next.monitor = t('failure.adReviveMonitor', { seconds: next.rollbackSeconds });
@@ -128,6 +131,16 @@ export function tickState(state, seconds = 1) {
     next.stability = clamp(next.stability - seconds * tk.stabilityDrainMoving, 0, 100);
   } else {
     next.power = clamp(next.power - seconds * tk.powerDrainIdle, 0, 100);
+  }
+  if (next.transition) {
+    next.transition.remaining = Math.max(0, Number(next.transition.remaining || 0) - seconds);
+    if (next.transition.remaining <= 0) {
+      if (next.transition.kind === 'movingUp' || next.transition.kind === 'movingDown') {
+        next.moving = false;
+        next.direction = 'idle';
+      }
+      next.transition = null;
+    }
   }
   if (next.remaining <= 0) {
     next.gameOver = true;

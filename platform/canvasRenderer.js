@@ -206,7 +206,7 @@ function getCanvasStatusPanelTitle() {
 }
 
 // ── 绘制状态面板 ──
-function drawStatusPanel(state) {
+function drawStatusPanel(state, motion = null) {
   const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).status;
   roundRect(x, y, w, h, 6, COLORS.panel, toneBorder(state));
   ctx.fillStyle = '#bbb9af';
@@ -214,7 +214,11 @@ function drawStatusPanel(state) {
   ctx.fillText(`■ ${getCanvasStatusPanelTitle()}`, x + 14, y + 24);
 
   const coreIds = new Set(['floor', 'door', 'direction', 'passengers', 'power', 'stability', 'anomalyLevel']);
-  const items = getCanvasStatusItems(state).filter(item => coreIds.has(item.id));
+  const items = getCanvasStatusItems(state)
+    .filter(item => coreIds.has(item.id))
+    .map(item => item.id === 'floor' && motion?.active
+      ? { ...item, value: Number(motion.floorReel).toFixed(1) }
+      : item);
   const columns = 4;
   const gap = 8;
   const cardW = (w - 32 - gap * (columns - 1)) / columns;
@@ -264,7 +268,7 @@ function toneBorder(state) {
 }
 
 // ── 绘制监控画面 ──
-function drawMonitor(state) {
+function drawMonitor(state, motion = null) {
   const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).monitor;
   const labels = getCanvasStaticLabels();
   roundRect(x, y, w, h, 6, COLORS.panel, toneBorder(state));
@@ -274,7 +278,7 @@ function drawMonitor(state) {
 
   const mx = x + 14, my = y + 34, mw = w - 28, mh = h - 48;
   roundRect(mx, my, mw, mh, 3, '#050807', 'rgba(121,214,163,0.22)');
-  drawCctvScene(state, mx + 8, my + 8, mw - 16, mh - 52);
+  drawCctvScene(state, mx + 8, my + 8, mw - 16, mh - 52, motion);
 
   const scanY = (Date.now() / 100 * (mh - 52)) % (mh - 52);
   ctx.fillStyle = 'rgba(121,214,163,0.04)';
@@ -329,30 +333,125 @@ function drawImageCover(image, x, y, w, h, fallbackWidth = 720, fallbackHeight =
   ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
 }
 
-function drawCctvScene(state, x, y, w, h) {
+function drawCctvScene(state, x, y, w, h, motion = null) {
   if (h <= 20) return;
-  const visual = deriveVisualState(state);
-  const treatment = getCanvasCctvTreatment(visual.cctvState);
-  const sceneImage = assetStore?.getCctv(visual.cctvState);
+  const baseVisual = deriveVisualState(state);
+  const cctvState = motion?.cctvState || baseVisual.cctvState;
+  const visual = { ...baseVisual, cctvState, glitch: baseVisual.glitch || Number(motion?.glitchAlpha || 0) > 0 };
+  const treatment = getCanvasCctvTreatment(cctvState);
+  const sceneImage = assetStore?.getCctv(cctvState);
 
   if (sceneImage) {
     ctx.save();
     ctx.beginPath();
     ctx.rect(x, y, w, h);
     ctx.clip();
-    drawImageCover(sceneImage, x, y, w, h);
 
-    // 状态图已内置监控边框、扫描线和暗角；这里只叠加随运行状态变化的效果，
-    // 避免重复纹理把关键异常线索压暗。
+    const zoom = Math.max(1, Number(motion?.zoom || 1));
+    const drawW = w * zoom, drawH = h * zoom;
+    const drawX = x - (drawW - w) / 2 + Number(motion?.offsetX || 0);
+    const drawY = y - (drawH - h) / 2 + Number(motion?.offsetY || 0);
+    const previousImage = motion?.active && motion.previousCctvState !== cctvState
+      ? assetStore.getCctv(motion.previousCctvState)
+      : null;
+    const isMove = motion?.kind === 'moveUp' || motion?.kind === 'moveDown';
+    const blend = motion?.active ? (isMove ? 1 : Math.min(1, motion.progress * 2.5)) : 1;
+    if (previousImage && blend < 1) {
+      ctx.globalAlpha = 1 - blend;
+      drawImageCover(previousImage, drawX, drawY, drawW, drawH);
+    }
+    ctx.globalAlpha = blend;
+    drawImageCover(sceneImage, drawX, drawY, drawW, drawH);
+    ctx.globalAlpha = 1;
+
+    // 状态图已内置基础监控纹理，只叠加真正随时间变化的警报与干扰。
     const alert = treatment.threat ? assetStore.getOverlay('redAlert') : null;
     const glitchOverlay = treatment.glitch ? assetStore.getOverlay('glitch') : null;
     const sweep = state.inspection?.status === 'pending' ? assetStore.getOverlay('sweep') : null;
-    for (const [image, alpha] of [[alert, 0.76], [glitchOverlay, 0.68], [sweep, 0.38]]) {
+    for (const [image, alpha] of [[alert, 0.72], [glitchOverlay, 0.36], [sweep, 0.28]]) {
       if (!image) continue;
       ctx.globalAlpha = alpha;
       ctx.drawImage(image, x, y, w, h);
     }
     ctx.globalAlpha = 1;
+
+    const glitchAlpha = Math.max(0, Math.min(1, Number(motion?.glitchAlpha || 0)));
+    if (glitchAlpha > 0) {
+      ctx.globalAlpha = glitchAlpha;
+      for (let i = 0; i < 4; i += 1) {
+        const tearY = y + ((Date.now() / (23 + i * 7) + i * 137) % h);
+        const tearH = 3 + i * 2;
+        ctx.fillStyle = i % 2 ? 'rgba(255,77,109,0.42)' : 'rgba(121,214,163,0.34)';
+        ctx.fillRect(x + Math.sin(Date.now() / (19 + i)) * 18, tearY, w, tearH);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    const flickerAlpha = Math.max(0, Math.min(1, Number(motion?.flickerAlpha || 0)));
+    if (flickerAlpha > 0) {
+      ctx.fillStyle = `rgba(0,0,0,${flickerAlpha})`;
+      ctx.fillRect(x, y, w, h);
+    }
+
+    const scanPhase = Number(motion?.scanPhase || 0) % 1;
+    const scanY = y + scanPhase * h;
+    const scanGradient = ctx.createLinearGradient(x, scanY - 24, x, scanY + 24);
+    scanGradient.addColorStop(0, 'rgba(121,214,163,0)');
+    scanGradient.addColorStop(0.5, 'rgba(121,214,163,0.16)');
+    scanGradient.addColorStop(1, 'rgba(121,214,163,0)');
+    ctx.fillStyle = scanGradient;
+    ctx.fillRect(x, scanY - 24, w, 48);
+
+    // 状态图含固定英文诊断与固定楼层；遮盖后只绘制运行时中性线索，避免直接泄露答案。
+    ctx.fillStyle = 'rgba(3,8,8,0.94)';
+    ctx.fillRect(x, y, w, 34);
+    roundRect(x + w / 2 - 190, y + 58, 380, 120, 3, 'rgba(3,8,8,0.96)', treatment.border);
+    ctx.fillRect(x, y + h - 38, w, 38);
+    ctx.strokeStyle = treatment.border;
+    ctx.globalAlpha = 0.72;
+    ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+    ctx.globalAlpha = 1;
+
+    const floorValue = Number(motion?.floorReel ?? state.floor ?? 0);
+    // 原始状态图固定烘焙了“07”，用实时楼层牌覆盖，避免与游戏状态冲突。
+    roundRect(x + w / 2 - 55, y + 12, 110, 112, 4, 'rgba(3,10,9,0.97)', 'rgba(121,214,163,0.55)');
+    ctx.fillStyle = motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown') ? COLORS.amber : COLORS.green;
+    ctx.font = 'bold 24px Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown')
+      ? floorValue.toFixed(1)
+      : String(Math.round(floorValue)).padStart(2, '0'), x + w / 2, y + 50);
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '10px Consolas, monospace';
+    ctx.fillText('LIVE FLOOR', x + w / 2, y + 78);
+
+    const inspectionPending = state.inspection?.status === 'pending';
+    const floorDiscrepancy = ['phantom_floor', 'floor_jump', 'negative_floor'].includes(state.activeAnomaly);
+    let feedLabel = 'FEED ONLINE';
+    if (floorDiscrepancy) {
+      if (inspectionPending) {
+        const observedFloor = ((Number(state.floor || 1) + 2) % 9) + 1;
+        feedLabel = `CABIN FEED ${String(observedFloor).padStart(2, '0')}`;
+      } else feedLabel = 'FLOOR DESYNC';
+    } else if (inspectionPending) feedLabel = 'SIGNAL VARIANCE';
+    else if (state.activeAnomaly) feedLabel = 'ANOMALY CONFIRMED';
+    else if (motion?.kind === 'moveUp') feedLabel = 'ASCENDING';
+    else if (motion?.kind === 'moveDown') feedLabel = 'DESCENDING';
+    else if (motion?.kind === 'openDoor' || cctvState === '01_door_open') feedLabel = 'DOOR OPEN';
+    else if (motion?.kind === 'closeDoor') feedLabel = 'DOOR TRANSIT';
+    roundRect(x + w / 2 - 115, y + 136, 230, 34, 3, 'rgba(3,10,9,0.96)', inspectionPending ? 'rgba(225,168,75,0.58)' : 'rgba(121,214,163,0.4)');
+    ctx.fillStyle = inspectionPending ? COLORS.amber : COLORS.green;
+    ctx.font = 'bold 13px Consolas, monospace';
+    ctx.fillText(feedLabel, x + w / 2, y + 158);
+
+    if (motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown')) {
+      roundRect(x + w / 2 - 115, y + 178, 230, 44, 3, 'rgba(3,10,9,0.98)', 'rgba(225,168,75,0.48)');
+      ctx.fillStyle = COLORS.amber;
+      ctx.font = 'bold 16px Consolas, monospace';
+      ctx.fillText(`${Math.round(motion.fromFloor)}F → ${Math.round(motion.toFloor)}F`, x + w / 2, y + 205);
+    }
+    ctx.textAlign = 'left';
+
     if (visual.glitch || treatment.glitch) drawCanvasAnomalyArtifacts(visual, x, y, w, h);
     ctx.restore();
     return;
@@ -496,7 +595,11 @@ export function getCanvasActionButtons(state) {
     .filter(action => action.id !== 'unlockHiddenLog' || lockedCount > 0)
     .map(action => action.id === 'unlockHiddenLog'
       ? { id: action.id, label: actionLabel(action.id, lockedCount), recommended: visual.highlightAction === action.id }
-      : { ...action, recommended: visual.highlightAction === action.id });
+      : { ...action, recommended: visual.highlightAction === action.id })
+    .map(action => ({
+      ...action,
+      disabled: Boolean(state.transition) && !['emergencyStop', 'inspectLog', 'unlockHiddenLog'].includes(action.id),
+    }));
 
   if (state.inspection?.status === 'pending') {
     const concealedOperations = operations.slice(0, 6).map(action => ({
@@ -892,8 +995,8 @@ export function render(state, viewState = { started: true, paused: false }) {
 
   drawBackground();
   drawTopbar(state);
-  drawStatusPanel(state);
-  drawMonitor(state);
+  drawStatusPanel(state, viewState.cctvMotion);
+  drawMonitor(state, viewState.cctvMotion);
   drawActions(state);
   drawLogs(state);
   drawFailureOverlay(state);
