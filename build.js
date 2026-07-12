@@ -74,6 +74,7 @@ const CORE_MODULES = [
   { path: 'src/skinManager.js',    type: 'js' },
   { path: 'src/rollback.js',       type: 'js' },
   { path: 'src/feedback.js',       type: 'js' },
+  { path: 'src/anomalyContent.js', type: 'js' },
   { path: 'src/visualState.js',    type: 'js' },
   { path: 'src/state.js',          type: 'js' },
   { path: 'src/incidentDecision.js', type: 'js' },

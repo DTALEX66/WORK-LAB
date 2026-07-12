@@ -25,6 +25,10 @@ import {
   isDataConsistent,
   getConflictFields,
   NORMAL_VARIANTS,
+  getAnomalyCctvState,
+  getAnomaliesByCctvState,
+  getNormalCctvStates,
+  getAnomalyCctvStates,
 } from '../src/anomalyContent.js';
 import { ANOMALIES } from '../src/events.js';
 import { createInitialState } from '../src/state.js';
@@ -147,7 +151,7 @@ test('findAnomalyContent returns the correct entry by ID', () => {
   assert.equal(phantom.correctDecision, 'lockdown');
 });
 
-test('isDataConsistent returns false for all anomalies', () => {
+test('field-level anomalies have inconsistent screenData/panelData while compound anomalies have consistent data but non-field conflicts', () => {
   for (const a of ALL) {
     // 只有 screenData !== panelData 时 isDataConsistent 才返回 false
     // 但对于三要素一致但仍是异常的类型（log_echo, auto_button 等），
@@ -211,4 +215,63 @@ test('inspection timeout penalizes exactly once (non-teaching)', () => {
   const again = expireInspection({ ...expired.state, elapsed: 20 });
   assert.equal(again.timedOut, false, 'second expire should not fire again');
   assert.equal(again.state.stability, 92, 'stability should not drop on second call');
+});
+
+// ─── K. CCTV 状态映射验证 ───────────────────────────────────
+
+test('getAnomalyCctvState returns correct state for all 12 anomalies', () => {
+  for (const a of ALL) {
+    const state = getAnomalyCctvState(a.id);
+    assert.equal(state, a.visualState, `${a.id}: expected visualState ${a.visualState}, got ${state}`);
+  }
+});
+
+test('getAnomalyCctvState returns null for unknown anomaly IDs', () => {
+  assert.equal(getAnomalyCctvState('nonexistent'), null);
+});
+
+test('getAnomaliesByCctvState returns all anomalies sharing a CCTV state', () => {
+  // 16_wrong_floor is shared by phantom_floor, negative_floor, floor_jump
+  const wrongFloor = getAnomaliesByCctvState('16_wrong_floor');
+  assert.ok(wrongFloor.length >= 3, `expected >=3 anomalies for 16_wrong_floor, got ${wrongFloor.length}`);
+  assert.ok(wrongFloor.includes('phantom_floor'));
+  assert.ok(wrongFloor.includes('negative_floor'));
+  assert.ok(wrongFloor.includes('floor_jump'));
+});
+
+test('getAnomaliesByCctvState returns empty array for normal-only states', () => {
+  assert.equal(getAnomaliesByCctvState('00_idle_closed').length, 0);
+  assert.equal(getAnomaliesByCctvState('19_stabilized').length, 0);
+});
+
+test('getNormalCctvStates lists only non-anomaly states', () => {
+  const normalStates = getNormalCctvStates();
+  const anomalyStates = getAnomalyCctvStates();
+  // no overlap between normal and anomaly states
+  for (const ns of normalStates) {
+    assert.equal(anomalyStates.includes(ns), false,
+      `normal state ${ns} should not appear in anomaly states`);
+  }
+});
+
+test('getAnomalyCctvStates covers all anomaly visualStates', () => {
+  const states = getAnomalyCctvStates();
+  for (const a of ALL) {
+    assert.ok(states.includes(a.visualState), `${a.id}: visualState ${a.visualState} not in anomaly Cctv states`);
+  }
+});
+
+// ─── L. visualState 与 anomalyContent 一致性 ─────────────────
+
+test('anomaly content visualState is used by deriveVisualState for active anomalies', async () => {
+  for (const a of ALL) {
+    const state = createInitialState();
+    state.activeAnomaly = a.id;
+    // Use an anomalyLevel that won't override the anomaly-specific state
+    state.anomalyLevel = 2;
+    // deriveVisualState should return the correct CCTV state for this anomaly
+    const visual = await import('../src/visualState.js').then(m => m.deriveVisualState(state));
+    assert.equal(visual.cctvState, a.visualState,
+      `${a.id}: expected CCTV state ${a.visualState} from deriveVisualState, got ${visual.cctvState}`);
+  }
 });

@@ -408,3 +408,39 @@ export const NORMAL_VARIANTS = [
 export function pickNormalVariant(random = Math.random) {
   return NORMAL_VARIANTS[Math.floor(random() * NORMAL_VARIANTS.length)];
 }
+
+// ─── CCTV 状态映射 ──────────────────────────────────
+//
+// 完整 CCTV 资产状态列表（按 ID 排序以匹配 asset manifest）
+// 00_idle_closed    01_door_open     02_door_opening  03_door_closing
+// 04_moving_up      05_moving_down   06_power_low     07_power_outage
+// 08_emergency_stop 09_door_jammed   10_signal_lost   11_camera_glitch
+// 12_scan_active    13_entity_near   14_shadow_inside 15_anomaly_wandering
+// 16_wrong_floor    17_loop_corridor 18_corridor_dark 19_stabilized
+// 20_threat_high    21_containment   22_system_reboot 23_cooldown_safe
+
+/** 按 anomaly ID 获取 CCTV 状态 */
+export function getAnomalyCctvState(anomalyId) {
+  return ANOMALY_CONTENTS.find(a => a.id === anomalyId)?.visualState || null;
+}
+
+/** 按 CCTV 状态 ID 获取该状态对应的所有异常 ID */
+export function getAnomaliesByCctvState(cctvState) {
+  return ANOMALY_CONTENTS
+    .filter(a => a.visualState === cctvState)
+    .map(a => a.id);
+}
+
+/** 获取所有正常 CCTV 状态列表（无异常时可见） */
+export function getNormalCctvStates() {
+  return [
+    '00_idle_closed', '01_door_open', '02_door_opening', '03_door_closing',
+    '04_moving_up', '05_moving_down', '19_stabilized', '23_cooldown_safe',
+  ];
+}
+
+/** 获取所有异常 CCTV 状态列表 */
+export function getAnomalyCctvStates() {
+  const states = new Set(ANOMALY_CONTENTS.map(a => a.visualState));
+  return [...states];
+}
