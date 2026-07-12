@@ -64,19 +64,19 @@ export const ANOMALY_CONTENTS = [
     difficulty: 1,
     correctDecision: 'lockdown',
 
-    screenData: { floor: 13, passengers: 1, door: 'closed', direction: 'idle' },
-    panelData:  { floor: 1,  passengers: 1, door: 'closed', direction: 'idle' },
+    screenData: { floor: 4, passengers: 1, door: 'closed', direction: 'idle' },
+    panelData:  { floor: 2,  passengers: 1, door: 'closed', direction: 'idle' },
 
-    primaryConflict: '画面楼层 13 与控制台楼层 1 不一致',
-    explanation: '电梯在建筑图纸中不存在的楼层停靠。该楼层在施工期间因安全事故被物理封堵，但控制面板仍能收到来自该层的信号。',
+    primaryConflict: '画面楼层比控制台高 2 层（画面层 4，控制台层 2）',
+    explanation: '电梯在建筑图纸不存在的夹层停靠。该夹层位于正常楼层之间，施工记录已丢失，但控制面板仍能收到来自该层的信号。',
     visualState: '16_wrong_floor',
     audioCue: 'anomaly',
     resolutionAction: 'restartSystem',
-    monitorTemplate: '监控：电梯停在 13 层。建筑图纸中不存在该楼层。',
+    monitorTemplate: '监控：楼层读数跳到 {normalFloorPlus2} 层。该楼层在建筑图纸中不存在。',
     stabilityPenalty: -10,
     powerPenalty: 0,
 
-    normalVariant: { floor: 1, passengers: 1, door: 'closed', direction: 'idle' },
+    normalVariant: { floor: 2, passengers: 1, door: 'closed', direction: 'idle' },
   },
 
   {
