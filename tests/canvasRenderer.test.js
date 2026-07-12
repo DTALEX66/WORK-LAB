@@ -269,6 +269,8 @@ test('canvas monitor masks baked CCTV answers and replaces them with neutral run
   assert.match(canvasRendererSource, /画面楼层/);
   assert.doesNotMatch(canvasRendererSource, /CABIN FEED|SIGNAL VARIANCE|ANOMALY CONFIRMED/);
   assert.doesNotMatch(canvasRendererSource, /fillText\(['"]FLOOR MISMATCH/);
+  assert.doesNotMatch(canvasRendererSource, /const barH = 80|fillRect\(x, barY, w, barH\)/,
+    '不得用黑条遮挡移动电梯素材；固定楼层文字应在源素材中局部修除');
 });
 
 test('Canvas V4 render path removes dashboard clutter and keeps gameplay type readable', () => {
