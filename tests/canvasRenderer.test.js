@@ -265,7 +265,7 @@ test('canvas monitor masks baked CCTV answers and replaces them with neutral run
   assert.match(canvasRendererSource, /状态图含固定英文诊断与固定楼层/);
   assert.match(canvasRendererSource, /\['phantom_floor', 'floor_jump', 'negative_floor'\]/);
   assert.match(canvasRendererSource, /源图已裁掉烘焙答案区/);
-  assert.match(canvasRendererSource, /const observedFloor = floorDiscrepancy/);
+  assert.match(canvasRendererSource, /始终显示实际楼层/);
   assert.match(canvasRendererSource, /画面楼层/);
   assert.doesNotMatch(canvasRendererSource, /CABIN FEED|SIGNAL VARIANCE|ANOMALY CONFIRMED/);
   assert.doesNotMatch(canvasRendererSource, /fillText\(['"]FLOOR MISMATCH/);

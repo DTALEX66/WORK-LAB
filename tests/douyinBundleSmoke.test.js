@@ -148,7 +148,9 @@ test('generated Douyin bundle keeps tutorial order and auto-isolates timed-out a
   now += 2_000;
   nextFrame();
   assert.ok(text.includes('发现矛盾，点击封锁'), 'second class must still be the fixed anomaly lesson');
-  assert.ok(text.includes('08') && text.includes('05'), 'fixed floor-jump lesson must expose two different floors');
+  // V4: 始终显示实际楼层，不再混淆画面楼层。
+  // 画面楼层角标与面板数据一致，玩家通过画面与数据的全局检查发现矛盾。
+  assert.ok(text.includes('05'), 'floor-jump should show floor 05 in the badge');
 
   text.length = 0;
   now += 5_000;

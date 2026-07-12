@@ -2652,9 +2652,9 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     ctx.globalAlpha = 1;
 
     const floorValue = Number(motion?.floorReel ?? state.floor ?? 0);
-    const observedFloor = floorDiscrepancy && inspectionPending
-      ? ((Number(state.floor || 1) + 2) % 9) + 1
-      : floorValue;
+    // V4: 始终显示实际楼层，不因异常混淆画面楼层。
+    // 玩家必须通过真实画面与面板数据的矛盾自行判断。
+    const observedFloor = floorValue;
     roundRect(x + 16, y + 14, 126, 70, 2, 'rgba(3,10,9,0.92)', 'rgba(121,214,163,0.52)');
     ctx.fillStyle = motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown') ? COLORS.amber : COLORS.green;
     ctx.font = 'bold 30px Consolas, monospace';
@@ -2684,22 +2684,24 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     // 运行时楼层覆盖：覆盖素材中烘焙的固定楼层动画（如 7F→8F），显示真实运行时楼层。
     const isMoving = motion?.kind === 'moveUp' || motion?.kind === 'moveDown';
     if (isMoving) {
-      const overlayH = 70;
+      const overlayH = 90;
+      const overlayW = 340;
       const overlayY = y + (h - overlayH) / 2;
-      ctx.fillStyle = 'rgba(2,7,7,0.84)';
-      ctx.fillRect(x + w / 2 - 130, overlayY, 260, overlayH);
-      ctx.strokeStyle = 'rgba(121,214,163,0.28)';
+      const overlayX = x + (w - overlayW) / 2;
+      ctx.fillStyle = '#020707';
+      ctx.fillRect(overlayX, overlayY, overlayW, overlayH);
+      ctx.strokeStyle = 'rgba(121,214,163,0.12)';
       ctx.lineWidth = 1;
-      ctx.strokeRect(x + w / 2 - 130, overlayY, 260, overlayH);
+      ctx.strokeRect(overlayX, overlayY, overlayW, overlayH);
       ctx.fillStyle = COLORS.amber;
-      ctx.font = 'bold 36px Consolas, monospace';
+      ctx.font = 'bold 44px Consolas, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const movingFloor = Number(motion?.floorReel ?? floorValue ?? 0);
-      ctx.fillText(`${Math.round(movingFloor)}F`, x + w / 2, overlayY + overlayH / 2 - 2);
-      ctx.fillStyle = 'rgba(121,214,163,0.6)';
-      ctx.font = '18px Consolas, monospace';
-      ctx.fillText(motion?.kind === 'moveUp' ? '▲ 上行中' : '▼ 下行中', x + w / 2, overlayY + overlayH / 2 + 22);
+      ctx.fillText(`${Math.round(movingFloor)}F`, x + w / 2, overlayY + overlayH / 2 - 4);
+      ctx.fillStyle = 'rgba(121,214,163,0.5)';
+      ctx.font = '20px Consolas, monospace';
+      ctx.fillText(motion?.kind === 'moveUp' ? '上行' : '下行', x + w / 2, overlayY + overlayH / 2 + 26);
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = 'left';
     }
