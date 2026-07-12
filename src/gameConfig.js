@@ -21,7 +21,7 @@ const CONFIG = {
     power: 100,
     stability: 100,
     anomalyLevel: 0,
-    passengers: 1,
+    passengers: 0,
     gameOver: false,
     duration: 60,          // 值守倒计时（秒）
   },
@@ -71,8 +71,8 @@ const CONFIG = {
   anomaly: {
     firstTriggerAt: 8,          // 首局 10 秒内抛出异常，尽快进入找异常循环
     firstMaxSeverity: 2,        // 首个异常只做教学压力，不直接抽高危事件
-    cooldownMin: 10,            // 异常后最短冷却 ↑8
-    cooldownMax: 18,            // 异常后最长冷却 ↑13（更多节奏变化）
+    cooldownMin: 8,             // 双按钮循环：每局约 6–7 个异常
+    cooldownMax: 11,            // 异常间插入正常班次，保持高密度但可观察
     pressureDivisor: 2,         // pickNextAnomaly 压力算法分母
 
     // 难度递增：每 elapsedSeconds 的异常效果乘数

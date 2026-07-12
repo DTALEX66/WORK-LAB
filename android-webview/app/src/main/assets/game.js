@@ -30,7 +30,7 @@ const CONFIG = {
     power: 100,
     stability: 100,
     anomalyLevel: 0,
-    passengers: 1,
+    passengers: 0,
     gameOver: false,
     duration: 60,          // 值守倒计时（秒）
   },
@@ -80,8 +80,8 @@ const CONFIG = {
   anomaly: {
     firstTriggerAt: 8,          // 首局 10 秒内抛出异常，尽快进入找异常循环
     firstMaxSeverity: 2,        // 首个异常只做教学压力，不直接抽高危事件
-    cooldownMin: 10,            // 异常后最短冷却 ↑8
-    cooldownMax: 18,            // 异常后最长冷却 ↑13（更多节奏变化）
+    cooldownMin: 8,             // 双按钮循环：每局约 6–7 个异常
+    cooldownMax: 11,            // 异常间插入正常班次，保持高密度但可观察
     pressureDivisor: 2,         // pickNextAnomaly 压力算法分母
 
     // 难度递增：每 elapsedSeconds 的异常效果乘数
@@ -137,7 +137,7 @@ CONFIG;
 
 
 // --- src/skins/elevator/skin.json ---
-var __SKIN_DATA__ = {"meta":{"id":"elevator","name":"异常电梯控制台","subtitle":"MINIGAME · ANOMALY SYSTEM SIM"},"monitor":{"initial":"监控画面稳定：1 层轿厢内有 1 名乘客。","actions":{"openDoor":"监控：{floor} 层电梯门已打开。门外走廊光线异常。","closeDoor":"监控：轿厢门闭合。画面存在轻微拖影。","moveUp":"监控：电梯上行至 {floor} 层。乘客未看向摄像头。","moveDown":"监控：电梯下行至 {floor} 层。楼层指示灯短暂闪烁。","emergencyStop":"监控：电梯急停。轿厢灯光闪烁 3 次。","restartSystem":"监控：系统重启后恢复画面。部分录像帧丢失。"}},"actionLabels":{"openDoor":"开门","closeDoor":"关门","moveUp":"上行","moveDown":"下行","emergencyStop":"急停","restartSystem":"系统重启","inspectLog":"查看日志","unlockHiddenLog":"解码加密记录"},"doorLabels":{"open":"开启","closed":"关闭"},"directionLabels":{"up":"上行","down":"下行","idle":"待机"},"statusLabels":{"panelTitle":"电梯状态","floor":"楼层","door":"门状态","direction":"方向","passengers":"乘客","power":"电源","stability":"稳定度","anomalyLevel":"异常等级","reviveCount":"广告复活","adHintsCount":"加密解码","hiddenLogsCount":"待解码"},"canvasLabels":{"countdown":"值守倒计时","monitorPanel":"监控画面","actionPanel":"操作面板","logPanel":"系统日志","forceAnomaly":"触发异常测试","failureTitle":"系统崩溃","failureEyebrow":"SYSTEM FAILURE","monitorSignalStable":"SYSTEM: STABLE","monitorSignalUnstable":"SYSTEM: UNSTABLE","monitorSignalCorrupted":"SYSTEM: CORRUPTED","monitorThreat":"THREAT: {level}","failureMetricStability":"稳定度","failureMetricAnomaly":"异常","failureMetricRemaining":"剩余"},"actionFailMessages":{"openDoor_moving":"电梯移动中，禁止开门。","moveUp_doorNotClosed":"门未关闭，禁止移动。","moveDown_doorNotClosed":"门未关闭，禁止移动。","unknownAction":"未知操作：{actionId}","gameOver":"系统已崩溃，必须复活或重新开始。","systemBusy":"当前动作尚未完成，请等待电梯状态稳定。"},"actionFeedback":{"openDoor":"电梯门已打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行。","moveDown":"电梯开始下行。","emergencyStop":"急停已执行。","emergencyStop_fail":"急停按钮失效。","restartSystem":"系统重启完成。","inspectLog":"已查看系统日志。","unlockHiddenLog_noLocked":"没有待解码的加密记录。","unlockHiddenLog_limit":"本局已解码 {count} 条记录，达到上限。"},"actionLogMessages":{"openDoor":"电梯门已在 {floor} 层打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行，当前楼层 {floor}。","moveDown":"电梯开始下行，当前楼层 {floor}。","emergencyStop":"执行急停：移动已停止，稳定度下降。","emergencyStop_fail":"急停按钮无响应。异常等级上升。","restartSystem":"系统重启完成：异常等级下降，但消耗 {cost} 点电源。","inspectLog":"操作员查看系统日志：最近 30 秒存在未授权楼层请求。","inspectLog_hiddenRecords":"发现 {count} 条待解码加密记录。可观看模拟广告解锁完整内容。","unlockHiddenLog_ok":"模拟广告播放完成。加密记录已解码。"},"anomalies":[{"id":"phantom_floor","title":"不存在的楼层","severity":2,"monitor":"监控：电梯停在 13 层。建筑图纸中不存在该楼层。","adHint":"当楼层显示 13 时，不要开门，先执行系统重启。","effects":{"floor":13,"anomalyLevel":2,"stability":-10}},{"id":"camera_delay","title":"监控延迟","severity":1,"monitor":"监控：画面延迟 3 秒。乘客动作与控制台记录不同步。","adHint":"监控延迟时优先查看日志，不要连续移动。","effects":{"anomalyLevel":1,"stability":-6}},{"id":"zero_passenger_shadow","title":"门外有人但乘客数为 0","severity":2,"monitor":"监控：门外站着一个人，但乘客计数器显示 0。","adHint":"乘客数异常时保持关门，先急停再查日志。","effects":{"passengers":0,"anomalyLevel":2,"stability":-12}},{"id":"log_echo","title":"系统日志重复字符","severity":1,"monitor":"监控：系统日志开始重复输出“不要开门”。","adHint":"日志重复通常是轻度异常，系统重启可降低异常等级。","effects":{"anomalyLevel":1,"stability":-5}},{"id":"auto_button","title":"按钮自动亮起","severity":2,"monitor":"监控：没有乘客触碰按钮，B2 与 9 层按钮自动亮起。","adHint":"按钮自动亮起时不要跟随请求移动，先关门并急停。","effects":{"anomalyLevel":2,"power":-8}},{"id":"stop_failure","title":"急停按钮失效","severity":3,"monitor":"监控：急停按钮指示灯熄灭，控制台拒绝确认安全回路。","adHint":"急停失效时不要反复点击，优先系统重启。","effects":{"anomalyLevel":3,"stability":-15}},{"id":"negative_floor","title":"楼层显示为负数","severity":2,"monitor":"监控：楼层显示 -1。摄像头画面出现地下走廊。","adHint":"负数楼层不是正常地下层，立即重启系统。","effects":{"floor":-1,"anomalyLevel":2,"stability":-10}},{"id":"power_drain","title":"电源异常下降","severity":2,"monitor":"监控：备用电源自动接管，但电量仍在下降。","adHint":"电源异常下降时减少移动，优先关门与重启。","effects":{"anomalyLevel":2,"power":-22}},{"id":"door_refuse","title":"电梯门拒绝关闭","severity":2,"monitor":"监控：关门按钮已按下，门在合拢前自动弹开。异常状态持续。","adHint":"门拒绝关闭时不要连续按关门，先急停再重启系统。","effects":{"door":"open","anomalyLevel":2,"stability":-10}},{"id":"weight_mismatch","title":"载重数据异常","severity":1,"monitor":"监控：载重传感器读数 — 0kg。轿厢内有 1 名乘客。读数矛盾。","adHint":"载重异常时优先查日志，乘客数可能被重置。","effects":{"passengers":0,"anomalyLevel":1,"stability":-7}},{"id":"floor_jump","title":"楼层编号跳跃","severity":2,"monitor":"监控：电梯从 5 层直接移动到 9 层。摄像头画面缺失 4 帧。","adHint":"楼层跳跃时减少移动操作，用系统重启恢复楼层显示。","effects":{"floor":"+4","anomalyLevel":2,"stability":-12,"power":-10}},{"id":"emergency_lights","title":"应急灯异常启动","severity":3,"monitor":"监控：轿厢应急灯突然亮起。备用电源消耗加速。","adHint":"应急灯启动时尽量避免移动，立即重启系统可关闭应急灯。","effects":{"anomalyLevel":3,"stability":-14,"power":-20}}],"hiddenLogs":{"phantom_floor":{"title":"第13层施工记录","content":"2019年施工记录：第13层在竣工前被从建筑图纸中删除。\n原因：施工期间发生III级安全事件，3名工人失踪。\n楼层控制面板已被物理封堵，但系统仍能响应来自该层的按钮信号。"},"camera_delay":{"title":"监控系统校准记录","content":"校准日志 #4417：摄像头#03 与#07 存在 3 秒信号延迟。\n技术人员备注：延迟与第 13 层信号干扰有关，建议不要在 13 层停靠。"},"zero_passenger_shadow":{"title":"乘客记录异常说明","content":"传感器技术手册（节选）：\n红外传感器在非营业时段多次检测到热源信号，但乘客计数器持续归零。\n维修记录：传感器无故障。热源信号经比对——与员工体温档案不匹配。"},"log_echo":{"title":"日志系统诊断报告","content":"诊断报告 #FD-22-019：\n系统日志缓冲区检测到重复写入操作。重复内容「不要开门」的写入时间戳早于当前值班员登录时间。\n建议：检查前一值班员的退出状态。"},"auto_button":{"title":"控制系统审计追踪","content":"审计追踪 #AUD-882：\n自动按钮信号来源追溯至 5 号服务器（已于 2022 年停用）。\n该服务器的最后一条记录：「控制权移交程序未完成」。"},"stop_failure":{"title":"急停系统维护日志","content":"维护日志 #M-341：\n急停回路#2 在定期检查中被标记为「状态：不可用」。\n签署人签名无法识别。签署时间：3 年前。没有后续维修记录。"},"negative_floor":{"title":"地下层勘测报告","content":"建筑勘测报告（内部）：\n地下实际存在 4 层结构，但公开图纸仅标注 B1-B2。\nB3-B4 的电梯按钮在出厂时已被移除，但线路仍然通电。"},"power_drain":{"title":"备用电源异常报告","content":"异常报告 #P-877：\n备用电源在无负载状态下持续放电。经查，有一条非授权线路从备用电源柜分接至未知设备。\n线路标签：「不要切断」。"},"door_refuse":{"title":"门控系统事故报告","content":"事故报告 #D-1290：\n门控模块在连续 3 次异常重启后进入保护模式。\n模块日志输出最后一条：「识别到外部干扰信号。拒绝执行 — 保护乘员安全」。"},"weight_mismatch":{"title":"传感器校验记录","content":"校验记录 #W-554：\n载重传感器与红外传感器读数不一致。红外传感器在轿厢空载时检测到热源。\n技术人员备注：请确认值班员在操作前已清空轿厢。"},"floor_jump":{"title":"楼层定位日志","content":"定位日志 #F-213：\nGPS 楼层定位模块在校准前后记录的楼层编号不一致。\n系统自动修正失败。可能原因：参考信号源来自非标设备。"},"emergency_lights":{"title":"应急照明测试报告","content":"测试报告 #E-777：\n应急照明系统在无触发信号的情况下自行启动。\n供电线路检测到寄生回路。回路终端设备编号无法匹配任何已知设备清单。"}},"failure":{"summaries":{"power":"电源耗尽","stability":"稳定度归零","anomalyLevel":"异常等级失控","passengers":"乘客记录出现负数","default":"系统拒绝继续响应"},"defaultHint":"先关门，再重启系统，避免连续移动。","firstRunAdvice":"下次优先看监控和日志；黄色描边就是推荐按键。","adHintPrefix":"广告提示：{hint}","adReviveRollback":"广告复活完成：回滚 {seconds} 秒，恢复至可控状态。","adReviveMonitor":"广告复活完成：回滚到 {seconds} 秒前的系统状态。","snapshotFallback":"可观看广告复活，回滚到 {seconds} 秒前的系统状态。","noSnapshotFallback":"可观看广告复活，回滚到初始系统状态。"},"fakeEnding":{"eyebrow":"⚠ SYSTEM ANOMALY DETECTED","title":"操作员关联异常","text":"系统检测到操作员第 {count} 次系统崩溃。\n根据《异常控制员守则》第 7 条，您已被标记为“异常关联人员”。\n前 {threshold} 次记录已被永久删除。\n建议您立即离开控制台并联系安保部门。","truthPlaceholder":"[???] 观看广告揭示真相。","truthContent":"这不是第一次，也不会是最后一次。\n这座建筑的异常系统从未被修复。\n每一任值班员最后都变成了「异常事件」本身。\n系统日志中关于「乘客」的记载——都是前任值班员的热源信号。\n你现在坐的位置，就是上一任值班员被发现的地方。"},"ui":{"viewAd":"观看广告复活","unlockAd":"解码加密记录","restart":"重新开始","revealTruth":"观看广告揭示真相","triggerTest":"触发异常测试","decodePrefix":"[解码记录]","initialLog":"异常电梯控制台已接管。等待操作员指令。","anomalyEventLog":"异常事件：{title}。{hint}","startTitle":"等待接管异常电梯","startCopy":"目标：值守 60 秒。每次巡检先判断画面正常或异常，再使用控制台完成处置。接管后倒计时才会启动。","startChecklist":"先看监控并选择「判为正常 / 报告异常」\n异常上报后按现场状态操作控制台\n误判或超时会降低稳定度","startFailureRulesTitle":"失败条件","startFailureRules":"电源归零\n稳定度归零\n异常等级失控","startButton":"开始接管","sidebarEntry":"侧边栏入口","pausedTitle":"值守已暂停","pausedCopy":"返回前台后继续，不计算后台时间","audioOn":"声音开","audioOff":"已静音","adUnavailable":"广告暂不可用，请稍后重试","reportNormal":"判为正常","reportAnomaly":"报告异常","inspectionLabel":"巡检判定 {seconds}s","baselineInspectionTitle":"当前监控画面未见异常","anomalyInspectionTitle":"监控信号发生变化，请判断画面","anomalyResolved":"处置完成：{action} 已解除当前异常。","anomalyResolvedMonitor":"监控恢复稳定，等待下一轮巡检。","inspectionPrompt":"巡检判定：{title}（{seconds}秒内响应）","inspectionCorrectNormal":"判定正确：当前画面正常。","inspectionCorrectAnomaly":"判定正确：异常已上报，系统压力下降。","inspectionWrong":"判定错误：稳定度下降，异常压力上升。","inspectionTimeout":"判定超时：未完成本次巡检。","successfulShift":"本轮值守结束。系统仍未解释全部异常。","shiftComplete":"值守完成。连续失败计数已重置。","hiddenLogCaptured":"加密记录已捕获：{title}。使用「查看日志」功能解码。","unlockResult":"已解码：{title}","decodeMonitor":"解码完成：{title}。完整内容已写入系统日志。"}};
+var __SKIN_DATA__ = {"meta":{"id":"elevator","name":"异常电梯控制台","subtitle":"MINIGAME · ANOMALY SYSTEM SIM"},"monitor":{"initial":"监控画面稳定：1 层轿厢为空。","actions":{"openDoor":"监控：{floor} 层电梯门已打开。门外走廊光线异常。","closeDoor":"监控：轿厢门闭合。画面存在轻微拖影。","moveUp":"监控：电梯上行至 {floor} 层。乘客未看向摄像头。","moveDown":"监控：电梯下行至 {floor} 层。楼层指示灯短暂闪烁。","emergencyStop":"监控：电梯急停。轿厢灯光闪烁 3 次。","restartSystem":"监控：系统重启后恢复画面。部分录像帧丢失。"}},"actionLabels":{"openDoor":"开门","closeDoor":"关门","moveUp":"上行","moveDown":"下行","emergencyStop":"急停","restartSystem":"系统重启","inspectLog":"查看日志","unlockHiddenLog":"解码加密记录"},"doorLabels":{"open":"开启","closed":"关闭"},"directionLabels":{"up":"上行","down":"下行","idle":"待机"},"statusLabels":{"panelTitle":"电梯状态","floor":"楼层","door":"门状态","direction":"方向","passengers":"乘客","power":"电源","stability":"稳定度","anomalyLevel":"异常等级","reviveCount":"广告复活","adHintsCount":"加密解码","hiddenLogsCount":"待解码"},"canvasLabels":{"countdown":"值守倒计时","monitorPanel":"监控画面","actionPanel":"操作面板","logPanel":"系统日志","forceAnomaly":"触发异常测试","failureTitle":"系统崩溃","failureEyebrow":"SYSTEM FAILURE","monitorSignalStable":"SYSTEM: STABLE","monitorSignalUnstable":"SYSTEM: UNSTABLE","monitorSignalCorrupted":"SYSTEM: CORRUPTED","monitorThreat":"THREAT: {level}","failureMetricStability":"稳定度","failureMetricAnomaly":"异常","failureMetricRemaining":"剩余"},"actionFailMessages":{"openDoor_moving":"电梯移动中，禁止开门。","moveUp_doorNotClosed":"门未关闭，禁止移动。","moveDown_doorNotClosed":"门未关闭，禁止移动。","unknownAction":"未知操作：{actionId}","gameOver":"系统已崩溃，必须复活或重新开始。","systemBusy":"当前动作尚未完成，请等待电梯状态稳定。"},"actionFeedback":{"openDoor":"电梯门已打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行。","moveDown":"电梯开始下行。","emergencyStop":"急停已执行。","emergencyStop_fail":"急停按钮失效。","restartSystem":"系统重启完成。","inspectLog":"已查看系统日志。","unlockHiddenLog_noLocked":"没有待解码的加密记录。","unlockHiddenLog_limit":"本局已解码 {count} 条记录，达到上限。"},"actionLogMessages":{"openDoor":"电梯门已在 {floor} 层打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行，当前楼层 {floor}。","moveDown":"电梯开始下行，当前楼层 {floor}。","emergencyStop":"执行急停：移动已停止，稳定度下降。","emergencyStop_fail":"急停按钮无响应。异常等级上升。","restartSystem":"系统重启完成：异常等级下降，但消耗 {cost} 点电源。","inspectLog":"操作员查看系统日志：最近 30 秒存在未授权楼层请求。","inspectLog_hiddenRecords":"发现 {count} 条待解码加密记录。可观看模拟广告解锁完整内容。","unlockHiddenLog_ok":"模拟广告播放完成。加密记录已解码。"},"anomalies":[{"id":"phantom_floor","title":"不存在的楼层","severity":2,"monitor":"监控：电梯停在 13 层。建筑图纸中不存在该楼层。","adHint":"当楼层显示 13 时，不要开门，先执行系统重启。","effects":{"floor":13,"anomalyLevel":2,"stability":-10}},{"id":"camera_delay","title":"监控延迟","severity":1,"monitor":"监控：画面延迟 3 秒。乘客动作与控制台记录不同步。","adHint":"监控延迟时优先查看日志，不要连续移动。","effects":{"anomalyLevel":1,"stability":-6}},{"id":"zero_passenger_shadow","title":"门外有人但乘客数为 0","severity":2,"monitor":"监控：门外站着一个人，但乘客计数器显示 0。","adHint":"乘客数异常时保持关门，先急停再查日志。","effects":{"passengers":0,"anomalyLevel":2,"stability":-12}},{"id":"log_echo","title":"系统日志重复字符","severity":1,"monitor":"监控：系统日志开始重复输出“不要开门”。","adHint":"日志重复通常是轻度异常，系统重启可降低异常等级。","effects":{"anomalyLevel":1,"stability":-5}},{"id":"auto_button","title":"按钮自动亮起","severity":2,"monitor":"监控：没有乘客触碰按钮，B2 与 9 层按钮自动亮起。","adHint":"按钮自动亮起时不要跟随请求移动，先关门并急停。","effects":{"anomalyLevel":2,"power":-8}},{"id":"stop_failure","title":"急停按钮失效","severity":3,"monitor":"监控：急停按钮指示灯熄灭，控制台拒绝确认安全回路。","adHint":"急停失效时不要反复点击，优先系统重启。","effects":{"anomalyLevel":3,"stability":-15}},{"id":"negative_floor","title":"楼层显示为负数","severity":2,"monitor":"监控：楼层显示 -1。摄像头画面出现地下走廊。","adHint":"负数楼层不是正常地下层，立即重启系统。","effects":{"floor":-1,"anomalyLevel":2,"stability":-10}},{"id":"power_drain","title":"电源异常下降","severity":2,"monitor":"监控：备用电源自动接管，但电量仍在下降。","adHint":"电源异常下降时减少移动，优先关门与重启。","effects":{"anomalyLevel":2,"power":-22}},{"id":"door_refuse","title":"电梯门拒绝关闭","severity":2,"monitor":"监控：关门按钮已按下，门在合拢前自动弹开。异常状态持续。","adHint":"门拒绝关闭时不要连续按关门，先急停再重启系统。","effects":{"door":"open","anomalyLevel":2,"stability":-10}},{"id":"weight_mismatch","title":"载重数据异常","severity":1,"monitor":"监控：载重传感器读数 — 0kg。轿厢内有 1 名乘客。读数矛盾。","adHint":"载重异常时优先查日志，乘客数可能被重置。","effects":{"passengers":0,"anomalyLevel":1,"stability":-7}},{"id":"floor_jump","title":"楼层编号跳跃","severity":2,"monitor":"监控：电梯从 5 层直接移动到 9 层。摄像头画面缺失 4 帧。","adHint":"楼层跳跃时减少移动操作，用系统重启恢复楼层显示。","effects":{"floor":"+4","anomalyLevel":2,"stability":-12,"power":-10}},{"id":"emergency_lights","title":"应急灯异常启动","severity":3,"monitor":"监控：轿厢应急灯突然亮起。备用电源消耗加速。","adHint":"应急灯启动时尽量避免移动，立即重启系统可关闭应急灯。","effects":{"anomalyLevel":3,"stability":-14,"power":-20}}],"hiddenLogs":{"phantom_floor":{"title":"第13层施工记录","content":"2019年施工记录：第13层在竣工前被从建筑图纸中删除。\n原因：施工期间发生III级安全事件，3名工人失踪。\n楼层控制面板已被物理封堵，但系统仍能响应来自该层的按钮信号。"},"camera_delay":{"title":"监控系统校准记录","content":"校准日志 #4417：摄像头#03 与#07 存在 3 秒信号延迟。\n技术人员备注：延迟与第 13 层信号干扰有关，建议不要在 13 层停靠。"},"zero_passenger_shadow":{"title":"乘客记录异常说明","content":"传感器技术手册（节选）：\n红外传感器在非营业时段多次检测到热源信号，但乘客计数器持续归零。\n维修记录：传感器无故障。热源信号经比对——与员工体温档案不匹配。"},"log_echo":{"title":"日志系统诊断报告","content":"诊断报告 #FD-22-019：\n系统日志缓冲区检测到重复写入操作。重复内容「不要开门」的写入时间戳早于当前值班员登录时间。\n建议：检查前一值班员的退出状态。"},"auto_button":{"title":"控制系统审计追踪","content":"审计追踪 #AUD-882：\n自动按钮信号来源追溯至 5 号服务器（已于 2022 年停用）。\n该服务器的最后一条记录：「控制权移交程序未完成」。"},"stop_failure":{"title":"急停系统维护日志","content":"维护日志 #M-341：\n急停回路#2 在定期检查中被标记为「状态：不可用」。\n签署人签名无法识别。签署时间：3 年前。没有后续维修记录。"},"negative_floor":{"title":"地下层勘测报告","content":"建筑勘测报告（内部）：\n地下实际存在 4 层结构，但公开图纸仅标注 B1-B2。\nB3-B4 的电梯按钮在出厂时已被移除，但线路仍然通电。"},"power_drain":{"title":"备用电源异常报告","content":"异常报告 #P-877：\n备用电源在无负载状态下持续放电。经查，有一条非授权线路从备用电源柜分接至未知设备。\n线路标签：「不要切断」。"},"door_refuse":{"title":"门控系统事故报告","content":"事故报告 #D-1290：\n门控模块在连续 3 次异常重启后进入保护模式。\n模块日志输出最后一条：「识别到外部干扰信号。拒绝执行 — 保护乘员安全」。"},"weight_mismatch":{"title":"传感器校验记录","content":"校验记录 #W-554：\n载重传感器与红外传感器读数不一致。红外传感器在轿厢空载时检测到热源。\n技术人员备注：请确认值班员在操作前已清空轿厢。"},"floor_jump":{"title":"楼层定位日志","content":"定位日志 #F-213：\nGPS 楼层定位模块在校准前后记录的楼层编号不一致。\n系统自动修正失败。可能原因：参考信号源来自非标设备。"},"emergency_lights":{"title":"应急照明测试报告","content":"测试报告 #E-777：\n应急照明系统在无触发信号的情况下自行启动。\n供电线路检测到寄生回路。回路终端设备编号无法匹配任何已知设备清单。"}},"failure":{"summaries":{"power":"电源耗尽","stability":"稳定度归零","anomalyLevel":"异常等级失控","passengers":"乘客记录出现负数","default":"系统拒绝继续响应"},"defaultHint":"先关门，再重启系统，避免连续移动。","firstRunAdvice":"下次先核对画面、楼层、人数和门状态；一致放行，矛盾封锁。","adHintPrefix":"广告提示：{hint}","adReviveRollback":"广告复活完成：回滚 {seconds} 秒，恢复至可控状态。","adReviveMonitor":"广告复活完成：回滚到 {seconds} 秒前的系统状态。","snapshotFallback":"可观看广告复活，回滚到 {seconds} 秒前的系统状态。","noSnapshotFallback":"可观看广告复活，回滚到初始系统状态。"},"fakeEnding":{"eyebrow":"⚠ SYSTEM ANOMALY DETECTED","title":"操作员关联异常","text":"系统检测到操作员第 {count} 次系统崩溃。\n根据《异常控制员守则》第 7 条，您已被标记为“异常关联人员”。\n前 {threshold} 次记录已被永久删除。\n建议您立即离开控制台并联系安保部门。","truthPlaceholder":"[???] 观看广告揭示真相。","truthContent":"这不是第一次，也不会是最后一次。\n这座建筑的异常系统从未被修复。\n每一任值班员最后都变成了「异常事件」本身。\n系统日志中关于「乘客」的记载——都是前任值班员的热源信号。\n你现在坐的位置，就是上一任值班员被发现的地方。"},"ui":{"viewAd":"观看广告复活","unlockAd":"解码加密记录","restart":"重新开始","revealTruth":"观看广告揭示真相","triggerTest":"触发异常测试","decodePrefix":"[解码记录]","initialLog":"异常电梯控制台已接管。等待操作员指令。","initialFeedback":"等待下一班电梯","tutorialNormal":"信息一致，点击放行","tutorialAnomaly":"发现矛盾，点击封锁","coreRule":"核对画面和数据：一致放行，矛盾封锁","standby":"等待下一班","wrongTutorial":"再看一眼：核对楼层、人数和门状态","wrongTreatment":"处置错误，异常仍在持续。","inspectionReady":"请核对当前画面和三项数据","treatmentTutorial":"最后一步：按亮起的处置键解除异常","wrongTreatmentTutorial":"这项处置不对应当前线索，再看一次","autoResolutionCorrect":"封锁成功，系统已自动处置","autoResolutionWrong":"判断错误，系统已紧急隔离","autoResolutionTimeout":"判断超时，系统已自动隔离","anomalyEventLog":"异常事件：{title}。{hint}","startTitle":"等待接管异常电梯","startCopy":"核对楼层、人数和门状态：对得上就放行，对不上就封锁。前两班会在实际画面中教会你。","startChecklist":"三项一致：放行\n任意一项矛盾：封锁\n前两班点错不会扣分","startFailureRulesTitle":"失败条件","startFailureRules":"电源归零\n稳定度归零\n异常等级失控","startButton":"开始接管","sidebarEntry":"侧边栏入口","pausedTitle":"值守已暂停","pausedCopy":"返回前台后继续，不计算后台时间","audioOn":"声音开","audioOff":"已静音","adUnavailable":"广告暂不可用，请稍后重试","reportNormal":"放行","reportAnomaly":"封锁","inspectionLabel":"请在 {seconds}s 内判断","baselineInspectionTitle":"核对画面与数据","anomalyInspectionTitle":"核对画面与数据","anomalyResolved":"处置完成：{action} 已解除当前异常。","anomalyResolvedMonitor":"监控恢复稳定，等待下一轮巡检。","inspectionPrompt":"巡检判定：{title}（{seconds}秒内响应）","inspectionCorrectNormal":"判定正确：当前画面正常。","inspectionCorrectAnomaly":"判定正确：异常已上报，系统压力下降。","inspectionWrong":"判定错误：稳定度下降，异常压力上升。","inspectionTimeout":"判定超时：未完成本次巡检。","successfulShift":"本轮结束，连续失败计数已重置。","shiftComplete":"值守完成","hiddenLogCaptured":"加密记录已捕获：{title}。使用「查看日志」功能解码。","unlockResult":"已解码：{title}","decodeMonitor":"解码完成：{title}。完整内容已写入系统日志。"}};
 
 // --- src/skinManager.js ---
 /**
@@ -407,17 +407,20 @@ function getCctvState(state, anomalyLevel) {
 }
 
 function deriveVisualState(state) {
-  const anomalyLevel = Number(state?.anomalyLevel ?? 0);
-  const success = state?.result === 'success';
-  const active = !success && (Boolean(state?.activeAnomaly) || anomalyLevel > 0 || Boolean(state?.gameOver));
+  const neutralInspection = state?.inspection?.status === 'pending' && state?.inspection?.kind === 'normal';
+  const anomalyLevel = neutralInspection ? 0 : Number(state?.anomalyLevel ?? 0);
+  const safeState = neutralInspection
+    ? { ...(state ?? {}), activeAnomaly: null, anomalyLevel: 0 }
+    : (state ?? {});
+  const success = safeState.result === 'success';
+  const active = !success && (Boolean(safeState.activeAnomaly) || anomalyLevel > 0 || Boolean(safeState.gameOver));
   const pressure = clampVisualValue(anomalyLevel / 6, 0, 1);
-  const safeState = state ?? {};
 
   return {
-    tone: success ? 'normal' : getTone(anomalyLevel, Boolean(state?.gameOver)),
+    tone: success ? 'normal' : getTone(anomalyLevel, Boolean(safeState.gameOver)),
     glitch: active,
-    shake: !success && (Boolean(state?.gameOver) || anomalyLevel >= 4),
-    noise: success ? 0.18 : Boolean(state?.gameOver) ? 1 : Number((0.18 + pressure * 0.82).toFixed(2)),
+    shake: !success && (Boolean(safeState.gameOver) || anomalyLevel >= 4),
+    noise: success ? 0.18 : Boolean(safeState.gameOver) ? 1 : Number((0.18 + pressure * 0.82).toFixed(2)),
     highlightAction: getHighlightAction(safeState),
     cctvState: getCctvState(safeState, anomalyLevel),
   };
@@ -464,6 +467,11 @@ function createInitialState() {
     inspection: null,
     decisionsCorrect: 0,
     decisionsWrong: 0,
+    score: 0,
+    streak: 0,
+    bestStreak: 0,
+    tutorialStep: 0,
+    lastFeedback: t('ui.initialFeedback'),
     logs: [createFeedbackLine('info', t('ui.initialLog'), 0)],
   };
 }
@@ -571,7 +579,13 @@ function tickState(state, seconds = 1) {
   if (next.remaining <= 0) {
     next.gameOver = true;
     next.result = 'success';
-    next = appendLog(next, 'success', t('ui.successfulShift'));
+    next.activeAnomaly = null;
+    next.inspection = null;
+    next.transition = null;
+    next.moving = false;
+    next.direction = 'idle';
+    next.lastFeedback = t('ui.successfulShift');
+    next = appendLog(next, 'success', next.lastFeedback);
     return next;
   }
 
@@ -629,6 +643,7 @@ function openInspection(state, options) {
     status: 'pending',
     choice: null,
   };
+  next.lastFeedback = t('ui.inspectionReady');
   next = appendLog(next, 'info', t('ui.inspectionPrompt', {
     title: options.title,
     seconds: duration,
@@ -645,6 +660,17 @@ function submitInspection(state, choice) {
   let next = cloneState(state);
   const normalizedChoice = choice === 'anomaly' ? 'anomaly' : 'normal';
   const correct = normalizedChoice === inspection.kind;
+  const tutorialStep = Number(next.tutorialStep || 0);
+  const guidedRound = (tutorialStep === 0 && inspection.kind === 'normal')
+    || (tutorialStep === 1 && inspection.kind === 'anomaly');
+
+  // 首两轮用实际操作教学：点错不扣资源、不结束题目，直接在原画面上纠正。
+  if (guidedRound && !correct) {
+    next.lastFeedback = t('ui.wrongTutorial');
+    next = appendLog(next, 'info', next.lastFeedback);
+    return { state: next, accepted: false, correct: false, coached: true };
+  }
+
   next.inspection = {
     ...inspection,
     status: 'resolved',
@@ -656,19 +682,29 @@ function submitInspection(state, choice) {
   next.decisionsWrong = (next.decisionsWrong ?? 0) + (correct ? 0 : 1);
 
   if (correct) {
+    const secondsLeft = Math.max(0, Math.ceil((inspection.expiresAt ?? next.elapsed ?? 0) - (next.elapsed ?? 0)));
+    const points = 100 + secondsLeft * 10;
+    next.score = (next.score ?? 0) + points;
+    next.streak = (next.streak ?? 0) + 1;
+    next.bestStreak = Math.max(next.bestStreak ?? 0, next.streak);
+    if (guidedRound) next.tutorialStep = Math.min(2, tutorialStep + 1);
     next.stability = clamp((next.stability ?? 0) + 4, 0, 100);
     if (inspection.kind === 'anomaly') {
       next.anomalyLevel = clamp((next.anomalyLevel ?? 0) - 1, 0, 6);
     }
-    next = appendLog(next, 'success', t(
+    next.lastFeedback = t(
       inspection.kind === 'anomaly' ? 'ui.inspectionCorrectAnomaly' : 'ui.inspectionCorrectNormal',
-    ));
+    );
+    next = appendLog(next, 'success', next.lastFeedback);
   } else {
+    next.streak = 0;
     next.stability = clamp((next.stability ?? 0) - 12, 0, 100);
     next.anomalyLevel = clamp((next.anomalyLevel ?? 0) + 1, 0, 6);
-    next = appendLog(next, 'danger', t('ui.inspectionWrong'));
+    next.lastFeedback = t('ui.inspectionWrong');
+    next = appendLog(next, 'danger', next.lastFeedback);
   }
 
+  if (tutorialStep === 3) next.tutorialStep = 4;
   return { state: checkFailure(next), accepted: true, correct };
 }
 
@@ -680,6 +716,9 @@ function expireInspection(state) {
   }
 
   let next = cloneState(state);
+  const tutorialStep = Number(next.tutorialStep || 0);
+  const guidedTimeout = (tutorialStep === 0 && inspection.kind === 'normal')
+    || (tutorialStep === 1 && inspection.kind === 'anomaly');
   next.inspection = {
     ...inspection,
     status: 'expired',
@@ -687,9 +726,18 @@ function expireInspection(state) {
     correct: false,
     resolvedAt: next.elapsed ?? 0,
   };
+  if (guidedTimeout) {
+    next.tutorialStep = tutorialStep + 1;
+    next.lastFeedback = t('ui.wrongTutorial');
+    next = appendLog(next, 'info', next.lastFeedback);
+    return { state: next, timedOut: true, coached: true };
+  }
   next.decisionsWrong = (next.decisionsWrong ?? 0) + 1;
+  next.streak = 0;
   next.stability = clamp((next.stability ?? 0) - 8, 0, 100);
-  next = appendLog(next, 'warn', t('ui.inspectionTimeout'));
+  if (Number(next.tutorialStep || 0) === 3) next.tutorialStep = 4;
+  next.lastFeedback = t('ui.inspectionTimeout');
+  next = appendLog(next, 'warn', next.lastFeedback);
   return { state: checkFailure(next), timedOut: true };
 }
 
@@ -903,7 +951,6 @@ const ACTIONS = {
     next.moving = false;
     next.direction = 'idle';
     next.transition = { kind: 'systemReboot', duration: 2, remaining: 2 };
-    next.activeAnomaly = null;
     next.monitor = t('monitor.actions.restartSystem');
     next = appendLog(next, 'warn', t('actionLogMessages.restartSystem', { cost: rs.powerCost }));
     return ok(checkFailure(next), t('actionFeedback.restartSystem'));
@@ -958,18 +1005,38 @@ function performAction(state, actionId) {
     return fail(state, t('actionFailMessages.systemBusy'));
   }
   const activeAnomaly = state.activeAnomaly;
+  const resolutionAction = activeAnomaly ? getAnomalyResolutionAction(activeAnomaly) : null;
+  const preservesSpecificStopFailure = activeAnomaly === 'stop_failure' && actionId === 'emergencyStop';
+  if (activeAnomaly && resolutionAction && resolutionAction !== actionId && !preservesSpecificStopFailure) {
+    let next = cloneState(state);
+    if (Number(next.tutorialStep || 0) === 2) {
+      next.lastFeedback = t('ui.wrongTreatmentTutorial');
+      next = appendLog(next, 'info', next.lastFeedback);
+      return { ok: false, state: next, message: next.lastFeedback, coached: true };
+    }
+    next.stability = clamp((next.stability ?? 0) - 6, 0, 100);
+    next.anomalyLevel = clamp((next.anomalyLevel ?? 0) + 1, 0, 6);
+    next.streak = 0;
+    next.lastFeedback = t('ui.wrongTreatment');
+    next = appendLog(next, 'danger', next.lastFeedback);
+    return { ok: false, state: checkFailure(next), message: next.lastFeedback };
+  }
+
   const result = action(state);
-  if (!result.ok || !activeAnomaly || getAnomalyResolutionAction(activeAnomaly) !== actionId) {
+  if (!result.ok || !activeAnomaly || resolutionAction !== actionId) {
     return result;
   }
 
   let next = cloneState(result.state);
   next.activeAnomaly = null;
+  next.score = (next.score ?? 0) + 150;
+  if (Number(next.tutorialStep || 0) === 2) next.tutorialStep = 3;
   if (result.state.activeAnomaly === activeAnomaly) {
     next.anomalyLevel = Math.min(next.anomalyLevel, Math.max(0, state.anomalyLevel - 1));
   }
   next.monitor = t('ui.anomalyResolvedMonitor');
   const message = t('ui.anomalyResolved', { action: actionLabel(actionId) });
+  next.lastFeedback = message;
   next = appendLog(next, 'success', message);
   return ok(checkFailure(next), message);
 }
@@ -1077,6 +1144,7 @@ function restartRuntimeSession(previousSession = null) {
   session.state.consecutiveFailures = previous.consecutiveFailures || 0;
   session.state.fakeEndingCooldownRemaining = previous.fakeEndingCooldownRemaining || 0;
   session.state.fakeEndingCount = previous.fakeEndingCount || 0;
+  session.state.tutorialStep = Math.min(4, previous.tutorialStep || 0);
   session.state.fakeEndingTriggered = false;
   session.state.fakeEndingUnlocked = false;
   return session;
@@ -1119,25 +1187,24 @@ function shouldApplyReward(meta, currentRunToken, kind, state) {
 
 
 // --- src/firstRunGuidance.js ---
-function getOperatorCue(state, nextAnomalyAt, recommendedActionLabel = null) {
+function getOperatorCue(state, nextAnomalyAt) {
   const elapsed = Math.max(0, Math.floor(state?.elapsed ?? 0));
   const firstAnomalySeen = (state?.anomaliesTriggeredTotal ?? 0) > 0;
 
   if (state?.gameOver) {
-    return 'DEBRIEF: 先看崩溃原因；广告复活会回滚到可控状态。';
+    return '先看本轮结果，再决定复活或重新值守。';
   }
 
   if (state?.activeAnomaly) {
-    const action = recommendedActionLabel ? ` 执行：${recommendedActionLabel}` : '';
-    return `CUE: CCTV/日志先读；黄色描边是推荐按键。${action}`;
+    return '异常已封锁：系统正在自动处置。';
   }
 
   if (!firstAnomalySeen) {
     const seconds = Math.max(0, Math.ceil((nextAnomalyAt ?? elapsed) - elapsed));
-    return `STANDBY: 首个异常 ${seconds}s 内出现；盯住 CCTV。`;
+    return `首班 ${seconds} 秒内到达：三项一致就放行。`;
   }
 
-  return 'CUE: 异常升高先看日志；危险态优先重启。';
+  return '对得上就放行，对不上就封锁。';
 }
 
 

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { findRollbackSnapshot } from '../src/rollback.js';
 import { createInitialState, cloneState, checkFailure, recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot, tickState } from '../src/state.js';
@@ -15,13 +16,20 @@ test('createInitialState returns the elevator console baseline', () => {
   assert.equal(state.power, 100);
   assert.equal(state.stability, 100);
   assert.equal(state.anomalyLevel, 0);
-  assert.equal(state.passengers, 1);
+  assert.equal(state.passengers, 0);
   assert.equal(state.gameOver, false);
   assert.equal(state.result, 'playing');
   assert.equal(state.adRevivesUsed, 0);
   assert.ok(Array.isArray(state.logs));
   assert.ok(Array.isArray(state.snapshots), 'snapshots should be initialized as empty array');
   assert.equal(state.snapshots.length, 0);
+});
+
+test('elevator skin initial monitor copy matches the zero-passenger baseline', () => {
+  const skin = JSON.parse(readFileSync(new URL('../src/skins/elevator/skin.json', import.meta.url), 'utf8'));
+  assert.equal(CONFIG.initial.passengers, 0);
+  assert.match(skin.monitor.initial, /为空|0 名乘客/);
+  assert.doesNotMatch(skin.monitor.initial, /1 名乘客/);
 });
 
 test('cloneState creates a deep copy suitable for rollback snapshots', () => {
@@ -138,6 +146,14 @@ test('reviveFromAd preserves snapshot history after restore', () => {
   assert.equal(revived.snapshots[0].at, 20);
 });
 
+test('initial state includes mobile score, streak and progressive tutorial fields', () => {
+  const state = createInitialState();
+  assert.equal(state.score, 0);
+  assert.equal(state.streak, 0);
+  assert.equal(state.bestStreak, 0);
+  assert.equal(state.tutorialStep, 0);
+});
+
 test('initial state includes post-run summary tracking fields', () => {
   const s = createInitialState();
   assert.equal(s.anomaliesTriggeredTotal, 0, 'should start with zero triggered anomalies');
@@ -145,11 +161,19 @@ test('initial state includes post-run summary tracking fields', () => {
 });
 
 test('successful countdown produces a success result rather than a failure overlay state', () => {
-  const completed = tickState({ ...createInitialState(), remaining: 1 }, 1);
+  const completed = tickState({
+    ...createInitialState(),
+    remaining: 1,
+    activeAnomaly: 'floor_jump',
+    inspection: { id: 'floor_jump', kind: 'anomaly', status: 'pending' },
+  }, 1);
 
   assert.equal(completed.gameOver, true);
   assert.equal(completed.result, 'success');
-  assert.match(completed.logs.at(-1).text, /值守/);
+  assert.equal(completed.activeAnomaly, null);
+  assert.equal(completed.inspection, null);
+  assert.match(completed.lastFeedback, /本轮结束/);
+  assert.match(completed.logs.at(-1).text, /本轮结束|值守/);
 });
 
 test('countdown completion wins when a resource threshold is crossed in the same tick', () => {
@@ -161,7 +185,7 @@ test('countdown completion wins when a resource threshold is crossed in the same
 
   assert.equal(completed.gameOver, true);
   assert.equal(completed.result, 'success');
-  assert.match(completed.logs.at(-1).text, /值守/);
+  assert.match(completed.logs.at(-1).text, /本轮结束|值守/);
   assert.doesNotMatch(completed.logs.at(-1).text, /崩溃/);
 });
 

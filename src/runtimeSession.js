@@ -16,6 +16,7 @@ export function restartRuntimeSession(previousSession = null) {
   session.state.consecutiveFailures = previous.consecutiveFailures || 0;
   session.state.fakeEndingCooldownRemaining = previous.fakeEndingCooldownRemaining || 0;
   session.state.fakeEndingCount = previous.fakeEndingCount || 0;
+  session.state.tutorialStep = Math.min(4, previous.tutorialStep || 0);
   session.state.fakeEndingTriggered = false;
   session.state.fakeEndingUnlocked = false;
   return session;

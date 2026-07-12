@@ -8,7 +8,8 @@ import CONFIG from '../src/gameConfig.js';
 import { expireInspection, openInspection, submitInspection } from '../src/incidentDecision.js';
 import { t } from '../src/skinManager.js';
 import { performAction } from '../src/actions.js';
-import { applyAnomaly, pickNextAnomaly } from '../src/events.js';
+import { getAnomalyResolutionAction } from '../src/visualState.js';
+import { applyAnomaly, findAnomaly, pickNextAnomaly } from '../src/events.js';
 import {
   createInitialState,
   reviveFromAd,
@@ -52,9 +53,12 @@ function nextFrame(api, callback) {
 
 function getSystemInfo(api) {
   if (api && typeof api.getSystemInfoSync === 'function') {
-    return api.getSystemInfoSync();
+    const info = api.getSystemInfoSync();
+    let menuButtonRect = null;
+    try { menuButtonRect = api.getMenuButtonBoundingClientRect?.() || null; } catch { /* optional host API */ }
+    return { ...info, menuButtonRect };
   }
-  return { windowWidth: 750, windowHeight: 1334, pixelRatio: 1 };
+  return { windowWidth: 750, windowHeight: 1334, pixelRatio: 1, menuButtonRect: null };
 }
 
 export function createMiniGameRewardedAd(api, adUnitId, options = {}) {
@@ -138,6 +142,9 @@ export function startMiniGame() {
   const clock = createMiniGameClock(getNow);
   const cctvMotion = createCctvMotionController(getNow);
   const audio = createMiniGameAudio(api);
+  const vibrate = (type = 'light') => {
+    try { api.vibrateShort?.({ type }); } catch { /* optional haptics */ }
+  };
   const audioStorageKey = 'minigame_audio_muted_v1';
   try {
     audio.setMuted(api.getStorageSync?.(audioStorageKey) === true);
@@ -249,7 +256,7 @@ export function startMiniGame() {
 
   function start() {
     if (clock.isStarted()) return;
-    audio.play('click');
+    audio.play('boot');
     state = openInspection(state, {
       id: `baseline-${runToken}`,
       kind: 'normal',
@@ -268,7 +275,7 @@ export function startMiniGame() {
 
   function restart() {
     runToken += 1;
-    audio.play('click');
+    audio.play('boot');
     clock.start();
     session = restartRuntimeSession({ state });
     state = session.state;
@@ -285,18 +292,70 @@ export function startMiniGame() {
     failureRecorded = false;
   }
 
+  function resolveActiveAnomalyAutomatically(feedbackKey) {
+    if (!state.activeAnomaly) return false;
+    const automaticAction = getAnomalyResolutionAction(state.activeAnomaly);
+    const before = state;
+    const scoreBeforeTreatment = state.score || 0;
+    const automatic = automaticAction ? performAction(state, automaticAction) : { ok: false, state };
+    state = {
+      ...automatic.state,
+      activeAnomaly: null,
+      score: scoreBeforeTreatment,
+      lastFeedback: t(feedbackKey),
+    };
+    if (automatic.ok) cctvMotion.startAction(automaticAction, before, state);
+    return automatic.ok;
+  }
+
   function handleDecision(choice) {
     if (state.gameOver) return;
+    const inspectionKind = state.inspection?.kind;
     const result = submitInspection(state, choice);
-    if (!result.accepted) return;
     state = result.state;
-    audio.play(result.correct ? 'click' : 'result');
-    nextNormalInspectionAt = state.elapsed + 8;
+    if (!result.accepted) {
+      if (result.coached) {
+        audio.play('wrong');
+        vibrate('medium');
+      }
+      return;
+    }
+    if (result.correct && inspectionKind === 'normal') {
+      audio.play('release');
+      vibrate('light');
+    } else if (result.correct && inspectionKind === 'anomaly') {
+      audio.play('lockdown');
+      vibrate('medium');
+    } else {
+      audio.play('wrong');
+      vibrate('heavy');
+    }
+
+    // 基础模式不增加第二次按钮学习：异常判断结束后由系统自动执行对应处置。
+    if (inspectionKind === 'anomaly' && state.activeAnomaly) {
+      resolveActiveAnomalyAutomatically(result.correct ? 'ui.autoResolutionCorrect' : 'ui.autoResolutionWrong');
+    }
+
+    // 正常放行后电梯自动离站：操作成为结果反馈，不再让新手学习四键驾驶。
+    if (result.correct && inspectionKind === 'normal' && !state.activeAnomaly) {
+      const automaticAction = state.door === 'closed' ? 'moveUp' : 'closeDoor';
+      const before = state;
+      const automatic = performAction(state, automaticAction);
+      state = automatic.state;
+      if (automatic.ok) {
+        cctvMotion.startAction(automaticAction, before, state);
+        audio.play(automaticAction === 'moveUp' ? 'motor' : 'click');
+      }
+    }
+    // 教学第二班必须直接进入异常，不允许中间插入随机正常巡检。
+    const tutorialStep = Number(state.tutorialStep || 0);
+    nextNormalInspectionAt = tutorialStep === 1
+      ? Number.POSITIVE_INFINITY
+      : state.elapsed + (tutorialStep === 3 ? 2 : 4);
   }
 
   function handleAction(actionId) {
     if (state.gameOver) return;
-    audio.play('click');
     if (actionId === 'unlockHiddenLog') {
       decodeAd({ runToken });
       return;
@@ -304,7 +363,14 @@ export function startMiniGame() {
     const before = state;
     const result = performAction(state, actionId);
     state = result.state;
-    if (result.ok) cctvMotion.startAction(actionId, before, state);
+    if (result.ok) {
+      cctvMotion.startAction(actionId, before, state);
+      audio.play('release');
+      vibrate('light');
+    } else {
+      audio.play('wrong');
+      vibrate('heavy');
+    }
   }
 
   function handleAd(kind) {
@@ -357,41 +423,59 @@ export function startMiniGame() {
         for (let i = 0; i < delta; i += 1) {
           state = tickState(state, 1);
           if (!state.gameOver) {
+            const expiredKind = state.inspection?.kind;
             const expiry = expireInspection(state);
             state = expiry.state;
             if (expiry.timedOut) {
-              audio.play('result');
-              nextNormalInspectionAt = state.elapsed + 8;
+              audio.play(expiry.coached ? 'wrong' : 'result');
+              if (expiredKind === 'anomaly' && state.activeAnomaly) {
+                resolveActiveAnomalyAutomatically('ui.autoResolutionTimeout');
+              }
+              const stepAfterTimeout = Number(state.tutorialStep || 0);
+              nextNormalInspectionAt = stepAfterTimeout === 1
+                ? Number.POSITIVE_INFINITY
+                : state.elapsed + (stepAfterTimeout === 3 ? 2 : 4);
             }
           }
           if (
             !state.gameOver
             && state.inspection?.status !== 'pending'
+            && !state.activeAnomaly
             && state.elapsed >= nextNormalInspectionAt
-            && state.elapsed + 6 < nextAnomalyAt
+            && (Number(state.tutorialStep || 0) === 3 || state.elapsed + 3 < nextAnomalyAt)
           ) {
+            cctvMotion.reset();
             state = openInspection(state, {
               id: `baseline-${runToken}-${state.elapsed}`,
               kind: 'normal',
               title: t('ui.baselineInspectionTitle'),
-              duration: 6,
+              duration: 4,
             });
+            audio.play('boot');
             nextNormalInspectionAt = Number.POSITIVE_INFINITY;
           }
           if (!state.gameOver && state.elapsed - lastSnapshotAt >= CONFIG.adRevive.snapshotInterval) {
             state = saveSnapshot(state);
             lastSnapshotAt = state.elapsed;
           }
-          if (!state.gameOver && state.elapsed >= nextAnomalyAt) {
-            const event = pickNextAnomaly(state);
+          if (
+            !state.gameOver
+            && state.inspection?.status !== 'pending'
+            && !state.activeAnomaly
+            && state.elapsed >= nextAnomalyAt
+          ) {
+            // 第二班固定为楼层跳变，确保教学展示具体可比较的画面/主控矛盾。
+            const event = Number(state.tutorialStep || 0) === 1
+              ? (findAnomaly('floor_jump') || pickNextAnomaly(state))
+              : pickNextAnomaly(state);
             const beforeAnomaly = state;
-            audio.play('anomaly');
+            audio.play('boot');
             const result = applyAnomaly(state, event.id);
             state = openInspection(result.state, {
               id: event.id,
               kind: 'anomaly',
               title: t('ui.anomalyInspectionTitle'),
-              duration: 7,
+              duration: 5,
             });
             cctvMotion.startAnomaly(beforeAnomaly, state);
             nextNormalInspectionAt = Number.POSITIVE_INFINITY;

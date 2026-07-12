@@ -74,23 +74,93 @@ test('generated Douyin bundle boots against the tt Canvas contract', () => {
   assert.equal(typeof onHide, 'function');
   assert.equal(typeof onShow, 'function');
   assert.equal(typeof nextFrame, 'function');
-  assert.ok(text.includes('等待接管异常电梯'));
+  assert.ok(text.includes('异常电梯'));
+  assert.ok(text.includes('夜班值守许可'));
   assert.ok(text.includes('开始接管'));
   assert.ok(text.includes('侧边栏入口'));
   assert.equal(imageSources.length, 38, 'all shipped Canvas visual assets should preload');
   assert.ok(imageSources.includes('visual/cctv/00_idle_closed_mobile.png'));
   assert.ok(imageSources.includes('visual/buttons/btn_stop_danger.png'));
-  assert.ok(drawImageCalls >= 2, 'the first render should draw the CCTV state and its dynamic inspection overlay');
+  assert.ok(drawImageCalls >= 1, 'the first render should draw the production CCTV state');
 
-  onTouchStart({ touches: [{ screenX: 570 * 390 / 750, screenY: 930 * 844 / canvas.height }] });
+  onTouchStart({ touches: [{ screenX: 375 * 390 / 750, screenY: 1075 * 844 / canvas.height }] });
   assert.equal(sidebarOptions?.scene, 'sidebar');
-  onTouchStart({ touches: [{ screenX: 275 * 390 / 750, screenY: 930 * 844 / canvas.height }] });
+  onTouchStart({ touches: [{ screenX: 375 * 390 / 750, screenY: 962 * 844 / canvas.height }] });
+  // 第一班教学：画面与数据一致，点击放行。
+  onTouchStart({ touches: [{ screenX: 199 * 390 / 750, screenY: 1396 * 844 / canvas.height }] });
   now += 8_000;
   nextFrame();
-  assert.ok(text.includes('报告异常'), 'first anomaly should expose a real classify decision');
-  assert.ok(text.includes('判为正常'), 'normal/anomaly choices should stay paired');
+  assert.ok(text.includes('封锁'), 'first anomaly should expose the simple lockdown decision');
+  assert.ok(text.includes('放行'), 'release and lockdown choices should stay paired');
+  // 第二班教学：封锁后应由系统自动处置，不出现第二层玩家按钮。
+  onTouchStart({ touches: [{ screenX: 551 * 390 / 750, screenY: 1396 * 844 / canvas.height }] });
+  nextFrame();
+  assert.ok(text.includes('封锁成功，系统已自动处置'));
+  assert.ok(text.includes('等待下一班'));
   onHide();
   onShow({ scene: '021036' });
+});
+
+test('generated Douyin bundle keeps tutorial order and auto-isolates timed-out anomalies', () => {
+  execFileSync(process.execPath, ['build.js', 'douyin'], { cwd: root, stdio: 'pipe' });
+  const bundle = readFileSync(resolve(root, 'douyin-minigame', 'game.js'), 'utf8');
+  const text = [];
+  const gradient = { addColorStop() {} };
+  const ctx = new Proxy({
+    measureText(value) { return { width: String(value).length * 16 }; },
+    fillText(value) { text.push(String(value)); },
+    drawImage() {},
+    createLinearGradient() { return gradient; },
+    createRadialGradient() { return gradient; },
+  }, {
+    get(target, key) { return key in target ? target[key] : () => {}; },
+    set(target, key, value) { target[key] = value; return true; },
+  });
+  const canvas = { width: 0, height: 0, getContext: () => ctx };
+  let onTouchStart;
+  let nextFrame;
+  let now = 1_000;
+  const tt = {
+    createCanvas: () => canvas,
+    getSystemInfoSync: () => ({ windowWidth: 390, windowHeight: 844, safeArea: { top: 47 } }),
+    requestAnimationFrame(callback) { nextFrame = callback; return 1; },
+    onTouchStart(callback) { onTouchStart = callback; },
+    onHide() {}, onShow() {},
+    checkScene: options => options.success?.({ isExist: false }),
+    createImage() {
+      const image = { onload: null };
+      Object.defineProperty(image, 'src', { set() { image.onload?.(); } });
+      return image;
+    },
+    createInnerAudioContext: () => ({ play() {}, stop() {}, seek() {}, destroy() {} }),
+  };
+  vm.runInContext(bundle, vm.createContext({
+    tt, console, Date: { now: () => now }, Promise, setTimeout, clearTimeout,
+  }), { filename: 'douyin-minigame/game.js' });
+
+  onTouchStart({ touches: [{ screenX: 375 * 390 / 750, screenY: 962 * 844 / canvas.height }] });
+  text.length = 0;
+  now += 6_000;
+  nextFrame();
+  assert.ok(text.some(line => line.includes('再看一眼')), 'first guided timeout should coach without punishment');
+
+  text.length = 0;
+  now += 2_000;
+  nextFrame();
+  assert.ok(text.includes('发现矛盾，点击封锁'), 'second class must still be the fixed anomaly lesson');
+  assert.ok(text.includes('08') && text.includes('05'), 'fixed floor-jump lesson must expose two different floors');
+
+  text.length = 0;
+  now += 5_000;
+  nextFrame();
+  assert.ok(text.includes('判断超时，系统已自动隔离'), 'timed-out anomaly must be auto-isolated');
+  assert.ok(text.includes('等待下一班'), 'scheduler must not remain blocked by activeAnomaly');
+
+  text.length = 0;
+  now += 2_000;
+  nextFrame();
+  assert.ok(text.includes('放行') && text.includes('封锁'));
+  assert.equal(text.includes('点这里'), false, 'third class must be an unprompted independent judgment');
 });
 
 test('generated Douyin bundle settles rewarded-ad completion, cancellation, error and stale guards safely', async () => {

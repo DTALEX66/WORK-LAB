@@ -252,7 +252,7 @@
       "default": "值班系统拒绝继续响应"
     },
     "defaultHint": "先关隔离门，再重启护士站，避免连续转运。",
-    "firstRunAdvice": "下次优先看病区监控和护理日志；黄色描边就是推荐按键。",
+    "firstRunAdvice": "下次先核对画面和三项数据；一致放行，矛盾封锁。",
     "adHintPrefix": "广告提示：{hint}",
     "adReviveRollback": "广告复活完成：回滚 {seconds} 秒，恢复至可控值班状态。",
     "adReviveMonitor": "广告复活完成：回滚到 {seconds} 秒前的病区状态。",

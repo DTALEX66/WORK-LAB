@@ -38,6 +38,11 @@ export function createInitialState() {
     inspection: null,
     decisionsCorrect: 0,
     decisionsWrong: 0,
+    score: 0,
+    streak: 0,
+    bestStreak: 0,
+    tutorialStep: 0,
+    lastFeedback: t('ui.initialFeedback'),
     logs: [createFeedbackLine('info', t('ui.initialLog'), 0)],
   };
 }
@@ -145,7 +150,13 @@ export function tickState(state, seconds = 1) {
   if (next.remaining <= 0) {
     next.gameOver = true;
     next.result = 'success';
-    next = appendLog(next, 'success', t('ui.successfulShift'));
+    next.activeAnomaly = null;
+    next.inspection = null;
+    next.transition = null;
+    next.moving = false;
+    next.direction = 'idle';
+    next.lastFeedback = t('ui.successfulShift');
+    next = appendLog(next, 'success', next.lastFeedback);
     return next;
   }
 

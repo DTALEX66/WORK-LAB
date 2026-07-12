@@ -82,7 +82,7 @@ test('douyin build emits a tracked import-ready project with target-specific met
   assert.equal(game.deviceOrientation, 'portrait');
   assert.equal(game.showStatusBar, false);
   assert.deepEqual(game.subPackages, []);
-  for (const cue of ['click.wav', 'anomaly.wav', 'result.wav']) {
+  for (const cue of ['click.wav', 'anomaly.wav', 'result.wav', 'boot.wav', 'release.wav', 'lockdown.wav', 'motor.wav', 'wrong.wav']) {
     assert.equal(existsSync(resolve(root, 'douyin-minigame', 'audio', cue)), true, `${cue} should ship in the Douyin package`);
   }
   assert.doesNotMatch(gitignore, /^douyin-minigame\/$/m, 'the release project itself must be tracked');

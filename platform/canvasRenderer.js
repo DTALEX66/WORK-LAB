@@ -21,8 +21,8 @@ let canvas, ctx;
 let scale = 1;        // 实际像素/设计像素比例
 let DH = 1334;        // 设计高度（自适应）
 let safeInsetTop = 0; // 全面屏安全区折算到设计坐标
+let menuButtonLeft = Number.POSITIVE_INFINITY; // 平台胶囊左边界（设计坐标）
 let assetStore = null; // 真实 CCTV / 控制台视觉资产
-let actionDeckPage = 0; // 0=四键主操作台，1+=次级操作页
 
 // ── 颜色 ──
 const COLORS = {
@@ -44,45 +44,55 @@ export function getCanvasViewportMetrics(systemInfo = {}) {
   const windowHeight = Number(systemInfo.windowHeight) || 1334;
   const ratio = DW / windowWidth;
   const safeTop = Math.max(0, Number(systemInfo.safeArea?.top ?? systemInfo.statusBarHeight) || 0) * ratio;
+  const capsuleLeft = Number(systemInfo.menuButtonRect?.left);
   return {
     width: DW,
     height: Math.max(1334, windowHeight * ratio),
     safeTop,
+    menuButtonLeft: Number.isFinite(capsuleLeft) ? capsuleLeft * ratio : Number.POSITIVE_INFINITY,
   };
 }
 
 export function getCanvasLayout(height = 1334, safeTop = 0) {
-  // 移动端以 CCTV 为绝对主视觉；比例对齐原始 H5 成品，而不是后台仪表盘。
-  const monitor = { x: 14, y: 102 + safeTop, w: 722, h: 740 };
+  // V4：一块大监控、三项读数、一个双选任务。禁止把桌面后台缩进手机。
+  const topbar = { x: 14, y: 12 + safeTop, w: 722, h: 76 };
+  const rule = { x: 14, y: 96 + safeTop, w: 722, h: 66 };
+  const monitorH = Math.max(520, Math.min(880, height - safeTop - 644));
+  const monitor = { x: 14, y: 170 + safeTop, w: 722, h: monitorH };
+  const readings = { x: 14, y: monitor.y + monitor.h + 12, w: 722, h: 108 };
   const actions = {
-    x: 14, y: 852 + safeTop, w: 722, h: 188,
-    columns: 4, gap: 10, buttonH: 138, startY: 890 + safeTop,
+    x: 14, y: readings.y + readings.h + 12, w: 722, h: 220,
+    columns: 2, gap: 14, buttonH: 164,
   };
-  actions.buttonW = (actions.w - 32 - (actions.columns - 1) * actions.gap) / actions.columns;
+  actions.startY = actions.y + 42;
+  actions.buttonW = (actions.w - 32 - actions.gap) / 2;
+  const feedbackY = actions.y + actions.h + 12;
   return {
-    topbar: { x: 14, y: 12 + safeTop, w: 722, h: 82 },
+    topbar,
+    rule,
     monitor,
+    readings,
     actions,
-    status: { x: 14, y: 1050 + safeTop, w: 722, h: 198 },
-    logs: { x: 14, y: 1258 + safeTop, w: 722, h: Math.max(180, height - 1272 - safeTop) },
+    feedback: { x: 14, y: feedbackY, w: 722, h: Math.max(90, height - feedbackY - 18) },
   };
 }
 
 export function getCanvasStartControls(height = 1334, safeTop = 0) {
-  const cardY = Math.max(150 + safeTop, (height - 390) / 2);
+  const cardH = 650;
+  const cardY = Math.max(118 + safeTop, (height - cardH) / 2);
   return {
-    card: { x: 55, y: cardY, w: 640, h: 390 },
-    start: { x: 75, y: cardY + 270, w: 380, h: 86 },
-    sidebar: { x: 469, y: cardY + 270, w: 206, h: 86 },
+    card: { x: 55, y: cardY, w: 640, h: cardH },
+    start: { x: 85, y: cardY + 424, w: 580, h: 104 },
+    sidebar: { x: 85, y: cardY + 546, w: 580, h: 86 },
   };
 }
 
 export function getCanvasMuteControl(height = 1334, safeTop = 0, started = true) {
   if (!started) {
     const { card } = getCanvasStartControls(height, safeTop);
-    return { x: card.x + card.w - 112, y: card.y - 6, w: 88, h: 86, visualOffsetY: 24, visualH: 38 };
+    return { x: card.x + card.w - 112, y: card.y + 4, w: 88, h: 86, visualOffsetY: 12, visualH: 54 };
   }
-  return { x: 638, y: 804 + safeTop, w: 84, h: 86, visualOffsetY: 48, visualH: 30 };
+  return { x: 644, y: 92 + safeTop, w: 88, h: 86, visualOffsetY: 12, visualH: 54 };
 }
 
 // ── Measure text ──
@@ -106,6 +116,28 @@ function roundRect(x, y, w, h, r, fill, stroke) {
   ctx.closePath();
   if (fill) { ctx.fillStyle = fill; ctx.fill(); }
   if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+}
+
+function drawIndustrialPanel(x, y, w, h, accent = 'rgba(195,200,190,0.34)') {
+  const metal = ctx.createLinearGradient(0, y, 0, y + h);
+  metal.addColorStop(0, '#272b2a');
+  metal.addColorStop(0.08, '#161918');
+  metal.addColorStop(0.92, '#0b0d0d');
+  metal.addColorStop(1, '#242826');
+  roundRect(x, y, w, h, 3, metal, accent);
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.strokeRect(x + 5, y + 5, w - 10, h - 10);
+  for (const [bx, by] of [[x + 10, y + 10], [x + w - 10, y + 10], [x + 10, y + h - 10], [x + w - 10, y + h - 10]]) {
+    ctx.fillStyle = '#050606';
+    ctx.beginPath();
+    ctx.arc(bx, by, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(210,218,207,0.22)';
+    ctx.beginPath();
+    ctx.moveTo(bx - 2, by);
+    ctx.lineTo(bx + 2, by);
+    ctx.stroke();
+  }
 }
 
 // ── 绘制背景 ──
@@ -154,26 +186,120 @@ export function getCanvasFailureOverlayCopy(state) {
 function drawTopbar(state) {
   const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).topbar;
   const meta = getSkin().meta;
-  roundRect(x, y, w, h, 6, COLORS.panel, COLORS.line);
+  drawIndustrialPanel(x, y, w, h, 'rgba(121,214,163,0.42)');
   ctx.fillStyle = COLORS.green;
-  ctx.fillRect(x, y, 5, h);
+  ctx.fillRect(x + 5, y + 5, 6, h - 10);
 
   ctx.fillStyle = COLORS.text;
-  ctx.font = 'bold 36px "Microsoft YaHei", sans-serif';
-  ctx.fillText(meta?.name || '', x + 18, y + 48);
-  ctx.fillStyle = COLORS.muted;
-  ctx.font = '12px Consolas, "Microsoft YaHei", monospace';
-  ctx.fillText(meta?.subtitle || '', x + 19, y + 68);
+  ctx.font = 'bold 40px "Microsoft YaHei", sans-serif';
+  const title = String(meta?.name || '异常电梯').replace(/控制台|中控|调度台/g, '').trim();
+  ctx.fillText(title || '异常电梯', x + 26, y + 50, 236);
 
-  // 抖音右上角系统胶囊占据约 160 设计像素；倒计时放到其左侧安全区。
-  const cardW = 116;
-  const cardX = x + w - cardW - 170;
-  roundRect(cardX, y + 9, cardW, h - 18, 4, '#080a0a', 'rgba(225,168,75,0.48)');
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '22px "Microsoft YaHei", sans-serif';
+  ctx.fillText(`得分 ${Math.round(state.score || 0)}`, x + 286, y + 47);
+  ctx.fillStyle = (state.streak || 0) >= 3 ? COLORS.amber : COLORS.green;
+  ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
+  ctx.fillText(`连击${state.streak || 0}`, x + 390, y + 47);
+
+  // 倒计时位于抖音胶囊左侧，避免系统控件遮挡。
+  const cardW = 104;
+  const fallbackX = x + w - cardW - 170;
+  const cardX = Number.isFinite(menuButtonLeft)
+    ? Math.min(x + w - cardW - 18, menuButtonLeft - cardW - 12)
+    : fallbackX;
+  roundRect(cardX, y + 8, cardW, h - 16, 2, '#070808', 'rgba(225,168,75,0.64)');
   ctx.fillStyle = COLORS.amber;
   ctx.font = 'bold 34px Consolas, monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(Math.ceil(state.remaining).toString(), cardX + cardW / 2, y + 54);
+  ctx.fillText(Math.ceil(state.remaining).toString(), cardX + cardW / 2, y + 49);
   ctx.textAlign = 'left';
+}
+
+function getRuleCopy(state) {
+  const pending = state.inspection?.status === 'pending';
+  const step = Number(state.tutorialStep || 0);
+  if (pending && step === 0 && state.inspection?.kind === 'normal') return t('ui.tutorialNormal');
+  if (pending && step === 1 && state.inspection?.kind === 'anomaly') return t('ui.tutorialAnomaly');
+  if (!pending && state.activeAnomaly) return '系统正在自动处置，无需额外操作';
+  return t('ui.coreRule');
+}
+
+function drawRuleStrip(state) {
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).rule;
+  drawIndustrialPanel(x, y, w, h, 'rgba(225,168,75,0.40)');
+  const guided = Number(state.tutorialStep || 0) < 2 && state.inspection?.status === 'pending';
+  ctx.fillStyle = guided ? COLORS.amber : COLORS.green;
+  ctx.fillRect(x + 6, y + 6, 7, h - 12);
+  ctx.fillStyle = COLORS.text;
+  ctx.font = '26px "Microsoft YaHei", sans-serif';
+  ctx.fillText(getRuleCopy(state), x + 30, y + 43, w - 142);
+}
+
+export function getCanvasReadings(state, motion = null) {
+  const floor = Number(motion?.floorReel ?? state.floor ?? 0);
+  const moving = motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown');
+  const activeId = typeof state.activeAnomaly === 'string' ? state.activeAnomaly : state.activeAnomaly?.id;
+  const floorMismatch = ['phantom_floor', 'floor_jump', 'negative_floor'].includes(activeId);
+  return [
+    {
+      id: 'floor', label: '楼层',
+      value: moving ? floor.toFixed(1) : String(Math.round(floor)).padStart(2, '0'),
+      clue: '主控读数',
+      danger: floorMismatch && state.inspection?.status !== 'pending',
+    },
+    { id: 'passengers', label: '人数', value: String(state.passengers ?? 0), clue: '载重计数', danger: false },
+    { id: 'door', label: '门状态', value: getCanvasDoorLabel(state.door), clue: '安全回路', danger: false },
+  ];
+}
+
+function drawReadings(state, motion = null) {
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).readings;
+  drawIndustrialPanel(x, y, w, h, 'rgba(121,214,163,0.34)');
+  const values = getCanvasReadings(state, motion);
+  const cellW = (w - 28) / 3;
+  values.forEach((item, index) => {
+    const cx = x + 14 + index * cellW;
+    if (index > 0) {
+      ctx.strokeStyle = 'rgba(195,200,190,0.20)';
+      ctx.beginPath();
+      ctx.moveTo(cx, y + 14);
+      ctx.lineTo(cx, y + h - 14);
+      ctx.stroke();
+    }
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '22px "Microsoft YaHei", sans-serif';
+    ctx.fillText(item.label, cx + 18, y + 35);
+    ctx.fillStyle = item.danger ? COLORS.amber : COLORS.text;
+    ctx.font = 'bold 32px "Microsoft YaHei", sans-serif';
+    ctx.fillText(item.value, cx + 18, y + 75);
+    ctx.fillStyle = item.danger ? COLORS.amber : COLORS.green;
+    ctx.font = '22px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(item.clue, cx + cellW - 18, y + 74, cellW - 80);
+    ctx.textAlign = 'left';
+  });
+}
+
+function drawFeedback(state) {
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).feedback;
+  drawIndustrialPanel(x, y, w, h, toneBorder(state));
+  const message = state.lastFeedback || t('ui.initialFeedback');
+  const pending = state.inspection?.status === 'pending';
+  ctx.fillStyle = state.activeAnomaly && !pending ? COLORS.amber : COLORS.text;
+  ctx.font = 'bold 26px "Microsoft YaHei", sans-serif';
+  ctx.fillText(message, x + 24, y + 42, w - 180);
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '22px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(pending ? '等待判断' : `安全 ${Math.round(state.stability || 0)}%`, x + w - 24, y + 42);
+  ctx.textAlign = 'left';
+  const barY = y + Math.min(h - 22, 62);
+  roundRect(x + 24, barY, w - 48, 12, 2, 'rgba(255,255,255,0.08)');
+  if (!pending) {
+    roundRect(x + 24, barY, Math.max(0, (w - 48) * ((state.stability || 0) / 100)), 12, 2,
+      state.stability < 35 ? COLORS.red : COLORS.green);
+  }
 }
 
 export function getCanvasStatusItems(state) {
@@ -260,6 +386,7 @@ function drawBar(x, y, w, h, label, value, color) {
 }
 
 function toneBorder(state) {
+  if (state.inspection?.status === 'pending') return COLORS.line;
   const tone = deriveVisualState(state).tone;
   if (tone === 'danger') return 'rgba(255,77,109,0.55)';
   if (tone === 'critical') return 'rgba(255,209,102,0.38)';
@@ -270,39 +397,33 @@ function toneBorder(state) {
 // ── 绘制监控画面 ──
 function drawMonitor(state, motion = null) {
   const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).monitor;
-  const labels = getCanvasStaticLabels();
-  roundRect(x, y, w, h, 6, COLORS.panel, toneBorder(state));
-  ctx.fillStyle = '#bbb9af';
-  ctx.font = 'bold 12px Consolas, "Microsoft YaHei", monospace';
-  ctx.fillText(`■ ${labels.monitorPanel}`, x + 14, y + 24);
+  drawIndustrialPanel(x, y, w, h, toneBorder(state));
+  ctx.fillStyle = '#d8d4c8';
+  ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+  ctx.fillText('实时监控', x + 24, y + 34);
+  ctx.fillStyle = COLORS.green;
+  ctx.beginPath();
+  ctx.arc(x + 142, y + 26, 5, 0, Math.PI * 2);
+  ctx.fill();
 
-  const mx = x + 14, my = y + 34, mw = w - 28, mh = h - 48;
-  roundRect(mx, my, mw, mh, 3, '#050807', 'rgba(121,214,163,0.22)');
-  drawCctvScene(state, mx + 8, my + 8, mw - 16, mh - 52, motion);
+  const mx = x + 12, my = y + 48, mw = w - 24, mh = h - 60;
+  roundRect(mx, my, mw, mh, 2, '#020505', 'rgba(121,214,163,0.28)');
+  drawCctvScene(state, mx + 6, my + 6, mw - 12, mh - 12, motion);
 
   const frameTime = Number(motion?.frameTime ?? Date.now());
-  const scanY = (frameTime / 100 * (mh - 52)) % (mh - 52);
+  const scanY = (frameTime / 100 * (mh - 12)) % (mh - 12);
   ctx.fillStyle = 'rgba(121,214,163,0.04)';
-  ctx.fillRect(mx + 8, my + 8 + scanY, mw - 16, 4);
+  ctx.fillRect(mx + 6, my + 6 + scanY, mw - 12, 4);
 
   if (state.inspection?.status === 'pending') {
     const seconds = Math.max(0, Math.ceil(state.inspection.expiresAt - state.elapsed));
-    roundRect(mx + 22, my + 18, mw - 44, 48, 4, 'rgba(20,12,8,0.9)', 'rgba(225,168,75,0.82)');
+    roundRect(x + w - 150, y + 8, 124, 36, 2, '#090b0b', 'rgba(225,168,75,0.64)');
     ctx.fillStyle = COLORS.amber;
-    ctx.font = 'bold 15px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${seconds} 秒`, x + w - 88, y + 34);
     ctx.textAlign = 'left';
-    ctx.fillText(t('ui.inspectionLabel', { seconds }), mx + 38, my + 48);
-    ctx.fillStyle = COLORS.text;
-    ctx.font = '14px "Microsoft YaHei", sans-serif';
-    ctx.fillText(state.inspection.title, mx + 165, my + 48, mw - 220);
   }
-
-  const displayText = getMonitorText(state);
-  ctx.fillStyle = '#c8c6bd';
-  ctx.font = '13px "Microsoft YaHei", sans-serif';
-  ctx.textAlign = 'center';
-  wrapText(displayText, mx + mw / 2, my + mh - 28, mw - 28, 17);
-  ctx.textAlign = 'left';
 }
 
 export function getCanvasCctvTreatment(cctvState = '00_idle_closed') {
@@ -334,6 +455,26 @@ function drawImageCover(image, x, y, w, h, fallbackWidth = 720, fallbackHeight =
   ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
 }
 
+function drawCctvImage(image, x, y, w, h) {
+  const sourceW = Number(image.width || image.naturalWidth) || 720;
+  const sourceH = Number(image.height || image.naturalHeight) || 420;
+  // 生产状态图顶部/底部烘焙了英文诊断和固定HUD；先裁掉答案区，再按主画面 cover。
+  const cropTop = Math.min(58, sourceH * 0.14);
+  const cropBottom = Math.min(30, sourceH * 0.08);
+  const usableH = sourceH - cropTop - cropBottom;
+  const sourceRatio = sourceW / usableH;
+  const targetRatio = w / h;
+  let sx = 0, sy = cropTop, sw = sourceW, sh = usableH;
+  if (sourceRatio > targetRatio) {
+    sw = usableH * targetRatio;
+    sx = (sourceW - sw) / 2;
+  } else {
+    sh = sourceW / targetRatio;
+    sy = cropTop + (usableH - sh) / 2;
+  }
+  ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+}
+
 function drawCctvScene(state, x, y, w, h, motion = null) {
   if (h <= 20) return;
   const baseVisual = deriveVisualState(state);
@@ -360,14 +501,15 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     const blend = motion?.active ? (isMove ? 1 : Math.min(1, motion.progress * 2.5)) : 1;
     if (previousImage && blend < 1) {
       ctx.globalAlpha = 1 - blend;
-      drawImageCover(previousImage, drawX, drawY, drawW, drawH);
+      drawCctvImage(previousImage, drawX, drawY, drawW, drawH);
     }
     ctx.globalAlpha = blend;
-    drawImageCover(sceneImage, drawX, drawY, drawW, drawH);
+    drawCctvImage(sceneImage, drawX, drawY, drawW, drawH);
     ctx.globalAlpha = 1;
 
     // 状态图已内置基础监控纹理，只叠加真正随时间变化的警报与干扰。
-    const alert = treatment.threat ? assetStore.getOverlay('redAlert') : null;
+    const pendingDecision = state.inspection?.status === 'pending';
+    const alert = treatment.threat && !pendingDecision ? assetStore.getOverlay('redAlert') : null;
     const glitchOverlay = treatment.glitch ? assetStore.getOverlay('glitch') : null;
     const sweep = state.inspection?.status === 'pending' ? assetStore.getOverlay('sweep') : null;
     for (const [image, alpha] of [[alert, 0.72], [glitchOverlay, 0.36], [sweep, 0.28]]) {
@@ -404,54 +546,55 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     ctx.fillStyle = scanGradient;
     ctx.fillRect(x, scanY - 24, w, 48);
 
-    // 状态图含固定英文诊断与固定楼层；遮盖后只绘制运行时中性线索，避免直接泄露答案。
-    ctx.fillStyle = 'rgba(3,8,8,0.94)';
-    ctx.fillRect(x, y, w, 34);
-    roundRect(x + w / 2 - 190, y + 58, 380, 120, 3, 'rgba(3,8,8,0.96)', treatment.border);
-    ctx.fillRect(x, y + h - 38, w, 38);
-    ctx.strokeStyle = treatment.border;
+    // 实体式顶部遮光罩：覆盖素材中烘焙的 07 / STABILIZED / 英文诊断，而不是再贴一块中央黑卡。
+    const hudShade = ctx.createLinearGradient(0, y, 0, y + 104);
+    hudShade.addColorStop(0, '#020707');
+    hudShade.addColorStop(0.82, '#020707');
+    hudShade.addColorStop(1, 'rgba(2,7,7,0)');
+    ctx.fillStyle = hudShade;
+    ctx.fillRect(x, y, w, 112);
+    ctx.strokeStyle = 'rgba(121,214,163,0.22)';
+    ctx.beginPath();
+    ctx.moveTo(x, y + 96);
+    ctx.lineTo(x + w, y + 96);
+    ctx.stroke();
+
+    // 状态图含固定英文诊断与固定楼层；源图已裁掉烘焙答案区，这里只叠加中文运行时状态。
+    const inspectionPending = state.inspection?.status === 'pending';
+    const activeId = typeof state.activeAnomaly === 'string' ? state.activeAnomaly : state.activeAnomaly?.id;
+    const floorDiscrepancy = ['phantom_floor', 'floor_jump', 'negative_floor'].includes(activeId);
+    const neutralBorder = inspectionPending ? 'rgba(195,200,190,0.34)' : treatment.border;
+    ctx.strokeStyle = neutralBorder;
     ctx.globalAlpha = 0.72;
     ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
     ctx.globalAlpha = 1;
 
     const floorValue = Number(motion?.floorReel ?? state.floor ?? 0);
-    // 原始状态图固定烘焙了“07”，用实时楼层牌覆盖，避免与游戏状态冲突。
-    roundRect(x + w / 2 - 55, y + 12, 110, 112, 4, 'rgba(3,10,9,0.97)', 'rgba(121,214,163,0.55)');
+    const observedFloor = floorDiscrepancy && inspectionPending
+      ? ((Number(state.floor || 1) + 2) % 9) + 1
+      : floorValue;
+    roundRect(x + 16, y + 14, 126, 70, 2, 'rgba(3,10,9,0.92)', 'rgba(121,214,163,0.52)');
     ctx.fillStyle = motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown') ? COLORS.amber : COLORS.green;
-    ctx.font = 'bold 24px Consolas, monospace';
+    ctx.font = 'bold 30px Consolas, monospace';
     ctx.textAlign = 'center';
     ctx.fillText(motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown')
-      ? floorValue.toFixed(1)
-      : String(Math.round(floorValue)).padStart(2, '0'), x + w / 2, y + 50);
-    ctx.fillStyle = COLORS.muted;
-    ctx.font = '10px Consolas, monospace';
-    ctx.fillText('LIVE FLOOR', x + w / 2, y + 78);
+      ? observedFloor.toFixed(1)
+      : String(Math.round(observedFloor)).padStart(2, '0'), x + 79, y + 50);
+    ctx.fillStyle = COLORS.text;
+    ctx.font = '22px "Microsoft YaHei", sans-serif';
+    ctx.fillText('画面楼层', x + 79, y + 76);
 
-    const inspectionPending = state.inspection?.status === 'pending';
-    const floorDiscrepancy = ['phantom_floor', 'floor_jump', 'negative_floor'].includes(state.activeAnomaly);
-    let feedLabel = 'FEED ONLINE';
-    if (floorDiscrepancy) {
-      if (inspectionPending) {
-        const observedFloor = ((Number(state.floor || 1) + 2) % 9) + 1;
-        feedLabel = `CABIN FEED ${String(observedFloor).padStart(2, '0')}`;
-      } else feedLabel = 'FLOOR DESYNC';
-    } else if (inspectionPending) feedLabel = 'SIGNAL VARIANCE';
-    else if (state.activeAnomaly) feedLabel = 'ANOMALY CONFIRMED';
-    else if (motion?.kind === 'moveUp') feedLabel = 'ASCENDING';
-    else if (motion?.kind === 'moveDown') feedLabel = 'DESCENDING';
-    else if (motion?.kind === 'openDoor' || cctvState === '01_door_open') feedLabel = 'DOOR OPEN';
-    else if (motion?.kind === 'closeDoor') feedLabel = 'DOOR TRANSIT';
-    roundRect(x + w / 2 - 115, y + 136, 230, 34, 3, 'rgba(3,10,9,0.96)', inspectionPending ? 'rgba(225,168,75,0.58)' : 'rgba(121,214,163,0.4)');
-    ctx.fillStyle = inspectionPending ? COLORS.amber : COLORS.green;
-    ctx.font = 'bold 13px Consolas, monospace';
-    ctx.fillText(feedLabel, x + w / 2, y + 158);
-
-    if (motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown')) {
-      roundRect(x + w / 2 - 115, y + 178, 230, 44, 3, 'rgba(3,10,9,0.98)', 'rgba(225,168,75,0.48)');
-      ctx.fillStyle = COLORS.amber;
-      ctx.font = 'bold 16px Consolas, monospace';
-      ctx.fillText(`${Math.round(motion.fromFloor)}F → ${Math.round(motion.toFloor)}F`, x + w / 2, y + 205);
-    }
+    let feedLabel = '监控稳定';
+    if (inspectionPending) feedLabel = '核对画面与数据';
+    else if (state.activeAnomaly) feedLabel = '异常已封锁';
+    else if (motion?.kind === 'moveUp') feedLabel = '电梯上行';
+    else if (motion?.kind === 'moveDown') feedLabel = '电梯下行';
+    else if (motion?.kind === 'openDoor' || cctvState === '01_door_open') feedLabel = '电梯门开启';
+    else if (motion?.kind === 'closeDoor') feedLabel = '电梯门关闭';
+    roundRect(x + w - 220, y + 18, 198, 46, 2, 'rgba(3,10,9,0.92)', neutralBorder);
+    ctx.fillStyle = state.activeAnomaly && !inspectionPending ? COLORS.red : inspectionPending ? COLORS.amber : COLORS.green;
+    ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+    ctx.fillText(feedLabel, x + w - 121, y + 49);
     ctx.textAlign = 'left';
 
     if (visual.glitch || treatment.glitch) drawCanvasAnomalyArtifacts(visual, x, y, w, h, frameTime);
@@ -618,82 +761,90 @@ export function getCanvasActionButtons(state) {
   return operations;
 }
 
-export function getCanvasVisibleActionButtons(state, page = actionDeckPage) {
-  const all = getCanvasActionButtons(state);
-  if (state.inspection?.status === 'pending') return all.slice(0, 2);
-
-  const preferredIds = ['closeDoor', 'moveUp', 'emergencyStop'];
-  const recommended = all.find(button => button.recommended && !preferredIds.includes(button.id));
-  const primaryIds = recommended
-    ? ['closeDoor', recommended.id, 'emergencyStop']
-    : preferredIds;
-  const primary = primaryIds.map(id => all.find(button => button.id === id)).filter(Boolean);
-  if (page === 0) {
-    return [...primary, { id: 'moreActions', label: '更多', deckControl: 'more' }].slice(0, 4);
+export function getCanvasVisibleActionButtons(state) {
+  if (state.inspection?.status === 'pending') {
+    return [
+      { id: 'reportNormal', label: t('ui.reportNormal'), sublabel: '画面数据一致', decision: 'normal' },
+      { id: 'reportAnomaly', label: t('ui.reportAnomaly'), sublabel: '发现任意矛盾', decision: 'anomaly' },
+    ];
   }
 
-  const secondary = all.filter(button => !primaryIds.includes(button.id));
-  const pageCount = Math.max(1, Math.ceil(secondary.length / 3));
-  const normalizedPage = ((page - 1) % pageCount + pageCount) % pageCount;
-  const pageButtons = secondary.slice(normalizedPage * 3, normalizedPage * 3 + 3);
-  const atLastPage = normalizedPage === pageCount - 1;
-  return [
-    ...pageButtons,
-    { id: atLastPage ? 'backActions' : 'nextActions', label: atLastPage ? '返回' : '下一组', deckControl: atLastPage ? 'back' : 'next' },
-  ];
+  const activeId = typeof state.activeAnomaly === 'string' ? state.activeAnomaly : state.activeAnomaly?.id;
+  if (activeId) {
+    return [{ id: 'autoTreatment', label: '系统处置中', sublabel: '无需额外操作', disabled: true, wide: true }];
+  }
+
+  return [{ id: 'standby', label: t('ui.standby'), sublabel: '监控自动运行', disabled: true, wide: true }];
 }
 
 // ── 绘制操作按钮 ──
 function drawActions(state) {
   const layout = getCanvasLayout(DH, safeInsetTop).actions;
   const { x, y, w, h, gap, buttonH, startY } = layout;
-  const labels = getCanvasStaticLabels();
-  roundRect(x, y, w, h, 6, COLORS.panel, COLORS.line);
-  ctx.fillStyle = '#bbb9af';
-  ctx.font = 'bold 12px Consolas, "Microsoft YaHei", monospace';
-  ctx.fillText(`■ ${labels.actionPanel}`, x + 14, y + 24);
+  drawIndustrialPanel(x, y, w, h, 'rgba(195,200,190,0.34)');
+  ctx.fillStyle = '#d8d4c8';
+  ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+  ctx.fillText(state.activeAnomaly && state.inspection?.status !== 'pending' ? '系统处置' : '当前判断', x + 24, y + 31);
 
   const btns = getCanvasVisibleActionButtons(state);
-  const columns = btns.length === 2 ? 2 : 4;
-  const buttonW = (w - 32 - (columns - 1) * gap) / columns;
+  const columns = btns.length === 1 ? 1 : 2;
+  const buttonW = columns === 1 ? w - 32 : (w - 32 - gap) / 2;
   btns.forEach((btn, i) => {
     ctx.save();
-    if (btn.disabled) ctx.globalAlpha = 0.36;
+    if (btn.disabled) ctx.globalAlpha = 0.48;
     const bx = x + 16 + (i % columns) * (buttonW + gap);
-    const by = startY + Math.floor(i / columns) * (buttonH + gap);
-    const danger = btn.id === 'emergencyStop' || btn.id === 'reportAnomaly';
-    const semanticSpriteKind = getSkin().meta?.id === 'elevator'
-      ? ({ closeDoor: 'default', moveUp: 'recommended', emergencyStop: 'danger', moreActions: 'more' })[btn.id]
-      : null;
-    const buttonSprite = semanticSpriteKind ? assetStore?.getButton(semanticSpriteKind) : null;
-    if (buttonSprite) {
-      ctx.globalAlpha = btn.disabled ? 0.36 : 1;
-      ctx.drawImage(buttonSprite, bx, by, buttonW, buttonH);
-      ctx.globalAlpha = 1;
-    } else {
-      const fill = ctx.createLinearGradient(0, by, 0, by + buttonH);
-      fill.addColorStop(0, danger ? '#492420' : '#2a2f30');
-      fill.addColorStop(0.2, danger ? '#321614' : '#1b1f20');
-      fill.addColorStop(1, danger ? '#100909' : '#090b0c');
-      roundRect(bx, by, buttonW, buttonH, 5, fill, danger ? 'rgba(231,92,79,0.78)' : '#4b504e');
-      roundRect(bx + 5, by + 5, buttonW - 10, buttonH - 10, 3, null, 'rgba(0,0,0,0.72)');
+    const by = startY;
+    const danger = btn.id === 'reportAnomaly';
+    const safe = btn.id === 'reportNormal';
+    const accent = danger ? COLORS.red : safe ? COLORS.green : COLORS.amber;
+    const fill = ctx.createLinearGradient(0, by, 0, by + buttonH);
+    fill.addColorStop(0, danger ? '#512723' : safe ? '#214436' : '#37311f');
+    fill.addColorStop(0.12, danger ? '#321512' : safe ? '#142b22' : '#211d13');
+    fill.addColorStop(0.86, '#090a0a');
+    fill.addColorStop(1, '#262928');
+    roundRect(bx, by, buttonW, buttonH, 3, fill, accent);
+    ctx.strokeStyle = 'rgba(0,0,0,0.86)';
+    ctx.strokeRect(bx + 7, by + 7, buttonW - 14, buttonH - 14);
 
-      ctx.fillStyle = danger ? COLORS.red : COLORS.green;
+    for (const sx of [bx + 13, bx + buttonW - 13]) {
+      ctx.fillStyle = '#050606';
       ctx.beginPath();
-      ctx.arc(bx + buttonW / 2, by + 28, 6, 0, Math.PI * 2);
+      ctx.arc(sx, by + 13, 4, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = COLORS.text;
-      ctx.font = 'bold 20px "Microsoft YaHei", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(btn.label, bx + buttonW / 2, by + 83);
-      ctx.fillStyle = COLORS.muted;
-      ctx.font = '11px Consolas, monospace';
-      ctx.fillText(btn.id.toUpperCase().slice(0, 12), bx + buttonW / 2, by + 112);
-      ctx.textAlign = 'left';
+      ctx.beginPath();
+      ctx.arc(sx, by + buttonH - 13, 4, 0, Math.PI * 2);
+      ctx.fill();
     }
-    if (btn.recommended) {
-      roundRect(bx - 2, by - 2, buttonW + 4, buttonH + 4, 6, null, 'rgba(225,168,75,0.94)');
+
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = btn.disabled ? 0 : 12;
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.arc(bx + buttonW / 2, by + 31, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = COLORS.text;
+    ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(btn.label, bx + buttonW / 2, by + 94);
+    ctx.fillStyle = '#b5b8b1';
+    ctx.font = '24px "Microsoft YaHei", sans-serif';
+    ctx.fillText(btn.sublabel || '', bx + buttonW / 2, by + 132);
+
+    const guidedIndex = Number(state.tutorialStep || 0);
+    const guided = (state.inspection?.status === 'pending'
+      && ((guidedIndex === 0 && btn.id === 'reportNormal') || (guidedIndex === 1 && btn.id === 'reportAnomaly')))
+      || (guidedIndex === 2 && btn.recommended);
+    if (guided) {
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(bx - 4, by - 4, buttonW + 8, buttonH + 8);
+      ctx.fillStyle = accent;
+      ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+      ctx.fillText('点这里', bx + buttonW / 2, by - 12);
     }
+    ctx.textAlign = 'left';
     ctx.restore();
   });
 }
@@ -734,7 +885,7 @@ function drawFailureOverlay(state) {
   ctx.fillStyle = 'rgba(0,0,0,0.72)';
   ctx.fillRect(0, 0, DW, DH);
 
-  const cardW = 620, cardH = 390;
+  const cardW = 640, cardH = 520;
   const cx = (DW - cardW) / 2, cy = (DH - cardH) / 2;
 
   const labels = getCanvasStaticLabels();
@@ -745,23 +896,23 @@ function drawFailureOverlay(state) {
     roundRect(cx, cy, cardW, cardH, 8, '#211013', 'rgba(231,92,79,0.72)');
 
     ctx.fillStyle = COLORS.darkRed;
-    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
-    ctx.fillText(copy.eyebrow, cx + 24, cy + 30);
+    ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+    ctx.fillText(copy.eyebrow, cx + 30, cy + 42);
 
-    ctx.fillStyle = '#ff0050';
-    ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
-    ctx.fillText(copy.title, cx + 24, cy + 72);
+    ctx.fillStyle = '#ff315f';
+    ctx.font = 'bold 46px "Microsoft YaHei", sans-serif';
+    ctx.fillText(copy.title, cx + 30, cy + 102);
 
     const text = state.fakeEndingText || '';
-    ctx.fillStyle = '#ff6b8a';
-    ctx.font = '14px Consolas, "Microsoft YaHei", monospace';
-    wrapText(text, cx + 24, cy + 96, cardW - 48, 22);
+    ctx.fillStyle = '#ff8ba3';
+    ctx.font = '24px "Microsoft YaHei", sans-serif';
+    wrapText(text, cx + 30, cy + 146, cardW - 60, 34);
 
     if (state.fakeEndingUnlocked) {
       ctx.fillStyle = '#bffff0';
-      ctx.font = '14px Consolas, "Microsoft YaHei", monospace';
+      ctx.font = '24px "Microsoft YaHei", sans-serif';
       const truth = state.fakeEndingTruth || '';
-      wrapText(truth, cx + 24, cy + 200, cardW - 48, 22);
+      wrapText(truth, cx + 30, cy + 280, cardW - 60, 34);
     }
   } else {
     roundRect(
@@ -775,22 +926,29 @@ function drawFailureOverlay(state) {
     );
 
     ctx.fillStyle = isSuccess ? COLORS.green : COLORS.red;
-    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
-    ctx.fillText(isSuccess ? t('ui.shiftComplete') : copy.eyebrow, cx + 24, cy + 30);
+    ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+    ctx.fillText(isSuccess ? '本轮结算' : copy.eyebrow, cx + 30, cy + 42);
 
     ctx.fillStyle = isSuccess ? COLORS.green : COLORS.red;
-    ctx.font = 'bold 40px "Microsoft YaHei", sans-serif';
-    ctx.fillText(isSuccess ? t('ui.shiftComplete') : labels.failureTitle, cx + 24, cy + 80);
+    ctx.font = 'bold 48px "Microsoft YaHei", sans-serif';
+    ctx.fillText(isSuccess ? t('ui.shiftComplete') : labels.failureTitle, cx + 30, cy + 106);
 
     ctx.fillStyle = COLORS.text;
-    ctx.font = '16px "Microsoft YaHei", sans-serif';
+    ctx.font = '26px "Microsoft YaHei", sans-serif';
     const reason = isSuccess ? t('ui.successfulShift') : summarizeFailure(state);
-    wrapText(reason, cx + 24, cy + 120, cardW - 48, 24);
+    wrapText(reason, cx + 30, cy + 154, cardW - 60, 38);
+
+    ctx.fillStyle = COLORS.amber;
+    ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
+    ctx.fillText(`得分 ${Math.round(state.score || 0)}`, cx + 30, cy + 270);
+    ctx.fillStyle = COLORS.text;
+    ctx.font = '26px "Microsoft YaHei", sans-serif';
+    ctx.fillText(`最高连击 ${state.bestStreak || 0}`, cx + 30, cy + 312);
 
     if (!isSuccess && state.lastAdHint) {
       ctx.fillStyle = COLORS.amber;
-      ctx.font = '14px "Microsoft YaHei", sans-serif';
-      ctx.fillText(copy.adHintLine, cx + 24, cy + 200);
+      ctx.font = '24px "Microsoft YaHei", sans-serif';
+      ctx.fillText(copy.adHintLine, cx + 30, cy + 352, cardW - 60);
     }
   }
 
@@ -800,7 +958,7 @@ function drawFailureOverlay(state) {
     const btnW2 = (cardW - 60) / 2;
     roundRect(cx + 20, btnY, btnW2, 86, 5, '#17352a', 'rgba(121,214,163,0.7)');
     ctx.fillStyle = COLORS.text;
-    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 26px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     const btnLabel = state.fakeEndingTriggered && !state.fakeEndingUnlocked
       ? labels.revealTruth
@@ -812,14 +970,14 @@ function drawFailureOverlay(state) {
 
     roundRect(cx + 40 + btnW2, btnY, btnW2, 86, 5, '#202425', 'rgba(195,200,190,0.24)');
     ctx.fillStyle = COLORS.text;
-    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 26px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(labels.restart, cx + 40 + btnW2 + btnW2 / 2, btnY + 50);
     ctx.textAlign = 'left';
   } else {
     roundRect(cx + 20, btnY, cardW - 40, 86, 5, '#17352a', 'rgba(121,214,163,0.7)');
     ctx.fillStyle = COLORS.text;
-    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 26px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(labels.restart, cx + cardW / 2, btnY + 50);
     ctx.textAlign = 'left';
@@ -831,7 +989,7 @@ function drawMuteControl(viewState) {
   const visualY = control.y + control.visualOffsetY;
   roundRect(control.x, visualY, control.w, control.visualH, 4, '#141819', 'rgba(195,200,190,0.34)');
   ctx.fillStyle = viewState.muted ? COLORS.amber : COLORS.green;
-  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(
     t(viewState.muted ? 'ui.audioOff' : 'ui.audioOn'),
@@ -844,35 +1002,58 @@ function drawMuteControl(viewState) {
 function drawStartOverlay(viewState = {}) {
   const controls = getCanvasStartControls(DH, safeInsetTop);
   const { card, start, sidebar } = controls;
-  ctx.fillStyle = 'rgba(2,3,3,0.82)';
+  ctx.fillStyle = 'rgba(2,3,3,0.88)';
   ctx.fillRect(0, 0, DW, DH);
-  roundRect(card.x, card.y, card.w, card.h, 8, '#111415', 'rgba(121,214,163,0.52)');
+  drawIndustrialPanel(card.x, card.y, card.w, card.h, 'rgba(121,214,163,0.56)');
+  ctx.fillStyle = COLORS.green;
+  ctx.fillRect(card.x + 8, card.y + 8, 8, card.h - 16);
+
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 52px "Microsoft YaHei", sans-serif';
+  ctx.fillText('异常电梯', card.x + 34, card.y + 76);
+  ctx.fillStyle = COLORS.amber;
+  ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+  ctx.fillText('夜班值守许可', card.x + 36, card.y + 116);
+
+  ctx.fillStyle = '#d1d2cb';
+  ctx.font = '26px "Microsoft YaHei", sans-serif';
+  wrapText(t('ui.startCopy'), card.x + 36, card.y + 164, card.w - 72, 38);
+
+  roundRect(card.x + 36, card.y + 252, card.w - 72, 70, 2, '#10251d', 'rgba(121,214,163,0.62)');
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 30px "Microsoft YaHei", sans-serif';
+  ctx.fillText('三项一致', card.x + 58, card.y + 297);
+  ctx.fillStyle = COLORS.text;
+  ctx.textAlign = 'right';
+  ctx.fillText('放行', card.x + card.w - 58, card.y + 297);
+  ctx.textAlign = 'left';
+
+  roundRect(card.x + 36, card.y + 334, card.w - 72, 70, 2, '#2b1513', 'rgba(231,92,79,0.70)');
+  ctx.fillStyle = COLORS.red;
+  ctx.font = 'bold 30px "Microsoft YaHei", sans-serif';
+  ctx.fillText('任意矛盾', card.x + 58, card.y + 379);
+  ctx.fillStyle = COLORS.text;
+  ctx.textAlign = 'right';
+  ctx.fillText('封锁', card.x + card.w - 58, card.y + 379);
+  ctx.textAlign = 'left';
+
+  const startFill = ctx.createLinearGradient(0, start.y, 0, start.y + start.h);
+  startFill.addColorStop(0, '#2b5b48');
+  startFill.addColorStop(0.15, '#183d2e');
+  startFill.addColorStop(1, '#08110d');
+  roundRect(start.x, start.y, start.w, start.h, 3, startFill, 'rgba(121,214,163,0.88)');
   ctx.fillStyle = COLORS.text;
   ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
-  ctx.fillText(t('ui.startTitle'), card.x + 24, card.y + 72);
-  ctx.fillStyle = '#b8bbb5';
-  ctx.font = '18px "Microsoft YaHei", sans-serif';
-  wrapText(t('ui.startCopy'), card.x + 24, card.y + 115, card.w - 48, 28);
-
-  roundRect(start.x, start.y, start.w, start.h, 5, '#17352a', 'rgba(121,214,163,0.8)');
-  ctx.fillStyle = COLORS.text;
-  ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(t('ui.startButton'), start.x + start.w / 2, start.y + 52);
+  ctx.fillText(t('ui.startButton'), start.x + start.w / 2, start.y + 65);
 
   const sidebarEnabled = viewState.sidebarAvailable === true;
-  roundRect(
-    sidebar.x,
-    sidebar.y,
-    sidebar.w,
-    sidebar.h,
-    5,
-    sidebarEnabled ? '#282d2e' : '#151718',
-    sidebarEnabled ? 'rgba(225,168,75,0.72)' : 'rgba(195,200,190,0.16)',
-  );
-  ctx.fillStyle = sidebarEnabled ? COLORS.amber : '#686d69';
-  ctx.font = 'bold 17px "Microsoft YaHei", sans-serif';
-  ctx.fillText(t('ui.sidebarEntry'), sidebar.x + sidebar.w / 2, sidebar.y + 52);
+  roundRect(sidebar.x, sidebar.y, sidebar.w, sidebar.h, 2,
+    sidebarEnabled ? '#24211a' : '#111313',
+    sidebarEnabled ? 'rgba(225,168,75,0.64)' : 'rgba(195,200,190,0.18)');
+  ctx.fillStyle = sidebarEnabled ? COLORS.amber : '#666a66';
+  ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+  ctx.fillText(t('ui.sidebarEntry'), sidebar.x + sidebar.w / 2, sidebar.y + 54);
   ctx.textAlign = 'left';
 }
 
@@ -939,7 +1120,7 @@ export function onCanvasClick(x, y, state, callbacks, viewState = { started: tru
 
   // 失败弹窗按钮检测
   if (state.gameOver) {
-    const cardW = 620, cardH = 390;
+    const cardW = 640, cardH = 520;
     const cx2 = (DW - cardW) / 2, cy2 = (DH - cardH) / 2;
     const btnY = cy2 + cardH - 106;
     if (state.result === 'success') {
@@ -969,21 +1150,17 @@ export function onCanvasClick(x, y, state, callbacks, viewState = { started: tru
     return;
   }
 
-  // 操作按钮检测 — 与当前四键操作台/次级操作页共享布局数据。
+  // V4 双选任务点击检测，与绘制布局共用同一组按钮数据。
   const layout = getCanvasLayout(DH, safeInsetTop).actions;
   const buttons = getCanvasVisibleActionButtons(state);
-  const columns = buttons.length === 2 ? 2 : 4;
-  const buttonW = (layout.w - 32 - (columns - 1) * layout.gap) / columns;
+  const columns = buttons.length === 1 ? 1 : 2;
+  const buttonW = columns === 1 ? layout.w - 32 : (layout.w - 32 - layout.gap) / 2;
   for (let i = 0; i < buttons.length; i += 1) {
     const bx = layout.x + 16 + (i % columns) * (buttonW + layout.gap);
-    const by = layout.startY + Math.floor(i / columns) * (layout.buttonH + layout.gap);
+    const by = layout.startY;
     if (x >= bx && x <= bx + buttonW && y >= by && y <= by + layout.buttonH) {
       if (buttons[i].disabled) return;
-      if (buttons[i].deckControl === 'more') actionDeckPage = 1;
-      else if (buttons[i].deckControl === 'next') actionDeckPage += 1;
-      else if (buttons[i].deckControl === 'back') actionDeckPage = 0;
-      else if (buttons[i].decision) {
-        actionDeckPage = 0;
+      if (buttons[i].decision) {
         onDecision?.(buttons[i].decision);
       } else onAction?.(buttons[i].id);
       return;
@@ -997,10 +1174,11 @@ export function render(state, viewState = { started: true, paused: false }) {
 
   drawBackground();
   drawTopbar(state);
-  drawStatusPanel(state, viewState.cctvMotion);
+  drawRuleStrip(state);
   drawMonitor(state, viewState.cctvMotion);
+  drawReadings(state, viewState.cctvMotion);
   drawActions(state);
-  drawLogs(state);
+  drawFeedback(state);
   drawFailureOverlay(state);
   if (viewState.started === false) drawStartOverlay(viewState);
   else if (viewState.paused === true) drawPauseOverlay();
@@ -1015,6 +1193,7 @@ export function init(canvasEl, systemInfo = {}) {
   const metrics = getCanvasViewportMetrics(systemInfo);
   DH = metrics.height;
   safeInsetTop = metrics.safeTop;
+  menuButtonLeft = metrics.menuButtonLeft;
 
   canvas.width = metrics.width;
   canvas.height = metrics.height;
@@ -1028,7 +1207,6 @@ export function init(canvasEl, systemInfo = {}) {
   };
   assetStore = createCanvasAssetStore(imageFactory);
   assetStore.preload();
-  actionDeckPage = 0;
 
   return { width: DW, height: DH };
 }

@@ -18,6 +18,19 @@ test('visualState keeps clear state calm with no highlighted action', () => {
   });
 });
 
+test('visualState keeps a pending normal inspection visually neutral despite prior pressure', () => {
+  const visual = deriveVisualState({
+    ...createInitialState(),
+    anomalyLevel: 2,
+    activeAnomaly: null,
+    inspection: { kind: 'normal', status: 'pending' },
+  });
+  assert.equal(visual.tone, 'normal');
+  assert.equal(visual.glitch, false);
+  assert.equal(visual.highlightAction, null);
+  assert.equal(visual.cctvState, '00_idle_closed');
+});
+
 test('visualState maps active anomaly to warning effects and an action hint', () => {
   const visual = deriveVisualState({
     ...createInitialState(),

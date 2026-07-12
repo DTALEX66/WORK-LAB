@@ -94,7 +94,6 @@ const ACTIONS = {
     next.moving = false;
     next.direction = 'idle';
     next.transition = { kind: 'systemReboot', duration: 2, remaining: 2 };
-    next.activeAnomaly = null;
     next.monitor = t('monitor.actions.restartSystem');
     next = appendLog(next, 'warn', t('actionLogMessages.restartSystem', { cost: rs.powerCost }));
     return ok(checkFailure(next), t('actionFeedback.restartSystem'));
@@ -149,18 +148,38 @@ export function performAction(state, actionId) {
     return fail(state, t('actionFailMessages.systemBusy'));
   }
   const activeAnomaly = state.activeAnomaly;
+  const resolutionAction = activeAnomaly ? getAnomalyResolutionAction(activeAnomaly) : null;
+  const preservesSpecificStopFailure = activeAnomaly === 'stop_failure' && actionId === 'emergencyStop';
+  if (activeAnomaly && resolutionAction && resolutionAction !== actionId && !preservesSpecificStopFailure) {
+    let next = cloneState(state);
+    if (Number(next.tutorialStep || 0) === 2) {
+      next.lastFeedback = t('ui.wrongTreatmentTutorial');
+      next = appendLog(next, 'info', next.lastFeedback);
+      return { ok: false, state: next, message: next.lastFeedback, coached: true };
+    }
+    next.stability = clamp((next.stability ?? 0) - 6, 0, 100);
+    next.anomalyLevel = clamp((next.anomalyLevel ?? 0) + 1, 0, 6);
+    next.streak = 0;
+    next.lastFeedback = t('ui.wrongTreatment');
+    next = appendLog(next, 'danger', next.lastFeedback);
+    return { ok: false, state: checkFailure(next), message: next.lastFeedback };
+  }
+
   const result = action(state);
-  if (!result.ok || !activeAnomaly || getAnomalyResolutionAction(activeAnomaly) !== actionId) {
+  if (!result.ok || !activeAnomaly || resolutionAction !== actionId) {
     return result;
   }
 
   let next = cloneState(result.state);
   next.activeAnomaly = null;
+  next.score = (next.score ?? 0) + 150;
+  if (Number(next.tutorialStep || 0) === 2) next.tutorialStep = 3;
   if (result.state.activeAnomaly === activeAnomaly) {
     next.anomalyLevel = Math.min(next.anomalyLevel, Math.max(0, state.anomalyLevel - 1));
   }
   next.monitor = t('ui.anomalyResolvedMonitor');
   const message = t('ui.anomalyResolved', { action: actionLabel(actionId) });
+  next.lastFeedback = message;
   next = appendLog(next, 'success', message);
   return ok(checkFailure(next), message);
 }

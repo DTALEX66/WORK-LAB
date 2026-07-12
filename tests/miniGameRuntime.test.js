@@ -128,6 +128,18 @@ test('mini-game runtime drives and pauses the CCTV motion timeline', () => {
   assert.match(source, /cctvMotion:\s*cctvMotion\.sample\(state\)/);
   assert.match(source, /clock\.pause\(\);[\s\S]*cctvMotion\.pause\(\)/);
   assert.match(source, /clock\.resume\(\);[\s\S]*cctvMotion\.resume\(\)/);
+  assert.match(source, /cctvMotion\.reset\(\);\s*state = openInspection/, 'each new normal class must clear stale anomaly/action motion');
+});
+
+test('base 60-second mode auto-resolves reported anomalies without a second player control layer', () => {
+  const runtimeSource = readFileSync(new URL('../platform/miniGameRuntime.js', import.meta.url), 'utf8');
+  const rendererSource = readFileSync(new URL('../platform/canvasRenderer.js', import.meta.url), 'utf8');
+  assert.match(runtimeSource, /getAnomalyResolutionAction\(state\.activeAnomaly\)/);
+  assert.match(runtimeSource, /基础模式不增加第二次按钮学习/);
+  assert.match(runtimeSource, /教学第二班必须直接进入异常/);
+  assert.match(runtimeSource, /findAnomaly\('floor_jump'\)/);
+  assert.match(rendererSource, /系统处置中/);
+  assert.doesNotMatch(rendererSource.match(/export function getCanvasVisibleActionButtons[\s\S]*?\n}/)?.[0] || '', /recommended:\s*true/);
 });
 
 test('mini-game decode action is gated by the decode rewarded-ad slot', () => {

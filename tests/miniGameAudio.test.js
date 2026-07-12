@@ -17,10 +17,13 @@ test('mini-game audio maps semantic cues to bundled local files', () => {
     },
   };
   const audio = createMiniGameAudio(api);
-  assert.equal(audio.play('click'), true);
-  assert.equal(audio.play('anomaly'), true);
-  assert.equal(audio.play('result'), true);
-  assert.deepEqual(played, ['audio/click.wav', 'audio/anomaly.wav', 'audio/result.wav']);
+  for (const cue of ['click', 'anomaly', 'result', 'boot', 'release', 'lockdown', 'motor', 'wrong']) {
+    assert.equal(audio.play(cue), true);
+  }
+  assert.deepEqual(played, [
+    'audio/click.wav', 'audio/anomaly.wav', 'audio/result.wav', 'audio/boot.wav',
+    'audio/release.wav', 'audio/lockdown.wav', 'audio/motor.wav', 'audio/wrong.wav',
+  ]);
 });
 
 test('mini-game audio can be muted and fails safely without host audio API', () => {

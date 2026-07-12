@@ -80,17 +80,20 @@ function getCctvState(state, anomalyLevel) {
 }
 
 export function deriveVisualState(state) {
-  const anomalyLevel = Number(state?.anomalyLevel ?? 0);
-  const success = state?.result === 'success';
-  const active = !success && (Boolean(state?.activeAnomaly) || anomalyLevel > 0 || Boolean(state?.gameOver));
+  const neutralInspection = state?.inspection?.status === 'pending' && state?.inspection?.kind === 'normal';
+  const anomalyLevel = neutralInspection ? 0 : Number(state?.anomalyLevel ?? 0);
+  const safeState = neutralInspection
+    ? { ...(state ?? {}), activeAnomaly: null, anomalyLevel: 0 }
+    : (state ?? {});
+  const success = safeState.result === 'success';
+  const active = !success && (Boolean(safeState.activeAnomaly) || anomalyLevel > 0 || Boolean(safeState.gameOver));
   const pressure = clampVisualValue(anomalyLevel / 6, 0, 1);
-  const safeState = state ?? {};
 
   return {
-    tone: success ? 'normal' : getTone(anomalyLevel, Boolean(state?.gameOver)),
+    tone: success ? 'normal' : getTone(anomalyLevel, Boolean(safeState.gameOver)),
     glitch: active,
-    shake: !success && (Boolean(state?.gameOver) || anomalyLevel >= 4),
-    noise: success ? 0.18 : Boolean(state?.gameOver) ? 1 : Number((0.18 + pressure * 0.82).toFixed(2)),
+    shake: !success && (Boolean(safeState.gameOver) || anomalyLevel >= 4),
+    noise: success ? 0.18 : Boolean(safeState.gameOver) ? 1 : Number((0.18 + pressure * 0.82).toFixed(2)),
     highlightAction: getHighlightAction(safeState),
     cctvState: getCctvState(safeState, anomalyLevel),
   };

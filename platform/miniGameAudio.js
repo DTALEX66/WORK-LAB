@@ -2,6 +2,11 @@ const SOURCES = Object.freeze({
   click: 'audio/click.wav',
   anomaly: 'audio/anomaly.wav',
   result: 'audio/result.wav',
+  boot: 'audio/boot.wav',
+  release: 'audio/release.wav',
+  lockdown: 'audio/lockdown.wav',
+  motor: 'audio/motor.wav',
+  wrong: 'audio/wrong.wav',
 });
 
 export function createMiniGameAudio(api) {
@@ -14,7 +19,7 @@ export function createMiniGameAudio(api) {
     const context = api.createInnerAudioContext();
     context.autoplay = false;
     context.loop = false;
-    context.volume = cue === 'anomaly' ? 0.28 : 0.22;
+    context.volume = ({ anomaly: 0.34, lockdown: 0.36, release: 0.28, motor: 0.18, boot: 0.24, wrong: 0.27 }[cue] ?? 0.22);
     context.src = SOURCES[cue];
     contexts.set(cue, context);
     return context;

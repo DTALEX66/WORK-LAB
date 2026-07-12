@@ -12,14 +12,19 @@ import { getDomLabels } from '../src/uiLabels.js';
 
 const canvasRendererSource = readFileSync(new URL('../platform/canvasRenderer.js', import.meta.url), 'utf8');
 
-test('Canvas V3 uses a vertical CCTV-first cockpit with 44 CSS-pixel action targets', () => {
+test('Canvas V4 uses one dominant CCTV, three large readings and a two-button thumb zone', () => {
   const layout = getCanvasLayout(1334);
-  assert.ok(layout.monitor.w > 700 && layout.monitor.h >= 500);
-  assert.equal(layout.actions.columns, 4);
-  assert.ok(layout.actions.buttonH >= 88, '750px design canvas is displayed around 0.5x on 375px devices');
-  assert.ok(layout.actions.y > layout.monitor.y + layout.monitor.h);
-  assert.ok(layout.status.y > layout.actions.y + layout.actions.h);
-  assert.ok(layout.logs.y > layout.status.y + layout.status.h);
+  const cssScale = 393 / 750;
+  assert.ok(layout.monitor.w > 700 && layout.monitor.h >= 520);
+  assert.ok(layout.readings.y > layout.monitor.y + layout.monitor.h);
+  assert.ok(layout.actions.y > layout.readings.y + layout.readings.h);
+  assert.equal(layout.actions.columns, 2);
+  assert.ok(layout.actions.buttonH * cssScale >= 48);
+  assert.ok(layout.actions.buttonH * (360 / 750) >= 48, 'short 360px phones keep full-size thumb targets');
+  assert.ok(layout.feedback.y > layout.actions.y + layout.actions.h);
+  assert.ok(layout.feedback.y + layout.feedback.h <= 1334, '360x640 design-height viewport must not clip feedback');
+  assert.equal(layout.logs, undefined);
+  assert.equal(layout.status, undefined);
 });
 
 test('Canvas mute control remains reachable before and during play', () => {
@@ -47,21 +52,22 @@ test('Canvas mute control remains reachable before and during play', () => {
   assert.equal(toggles, 2);
 });
 
-test('Canvas action deck opens secondary controls from the fourth hardware key', () => {
+test('Canvas V4 removes the four-key deck and exposes only the current two-choice task', () => {
   loadSkin(elevatorSkin);
-  const state = createInitialState();
-  const layout = getCanvasLayout(1334).actions;
-  let selected = null;
+  const idle = getCanvasVisibleActionButtons(createInitialState());
+  assert.equal(idle.length, 1);
+  assert.equal(idle[0].disabled, true);
 
-  const fourthX = layout.x + 16 + 3 * (layout.buttonW + layout.gap) + layout.buttonW / 2;
-  const y = layout.startY + layout.buttonH / 2;
-  onCanvasClick(fourthX, y, state, { onAction: id => { selected = id; } });
-  assert.equal(selected, null, 'the fourth primary key opens More rather than firing gameplay');
-
-  const expected = getCanvasVisibleActionButtons(state, 1)[0].id;
-  const firstX = layout.x + 16 + layout.buttonW / 2;
-  onCanvasClick(firstX, y, state, { onAction: id => { selected = id; } });
-  assert.equal(selected, expected);
+  const anomaly = {
+    ...createInitialState(),
+    activeAnomaly: 'phantom_floor',
+    inspection: { id: 'phantom_floor', kind: 'anomaly', status: 'resolved' },
+  };
+  const treatment = getCanvasVisibleActionButtons(anomaly);
+  assert.equal(treatment.length, 1);
+  assert.equal(treatment[0].id, 'autoTreatment');
+  assert.equal(treatment[0].disabled, true);
+  assert.equal(treatment.some(button => button.recommended), false);
 });
 
 test('canvas action buttons use current skin labels', () => {
@@ -109,7 +115,7 @@ test('pending inspection promotes normal/anomaly decisions to the first two cont
   };
   const buttons = getCanvasActionButtons(state);
   assert.deepEqual(buttons.slice(0, 2).map(button => button.id), ['reportNormal', 'reportAnomaly']);
-  assert.deepEqual(buttons.slice(0, 2).map(button => button.label), ['判为正常', '报告异常']);
+  assert.deepEqual(buttons.slice(0, 2).map(button => button.label), ['放行', '封锁']);
 });
 
 test('pending anomaly hides answer-giving logs and operational highlights until classified', () => {
@@ -258,8 +264,21 @@ test('canvas CCTV effects consume the pausable motion frame clock', () => {
 test('canvas monitor masks baked CCTV answers and replaces them with neutral runtime clues', () => {
   assert.match(canvasRendererSource, /状态图含固定英文诊断与固定楼层/);
   assert.match(canvasRendererSource, /\['phantom_floor', 'floor_jump', 'negative_floor'\]/);
-  assert.match(canvasRendererSource, /CABIN FEED/);
+  assert.match(canvasRendererSource, /源图已裁掉烘焙答案区/);
+  assert.match(canvasRendererSource, /const observedFloor = floorDiscrepancy/);
+  assert.match(canvasRendererSource, /画面楼层/);
+  assert.doesNotMatch(canvasRendererSource, /CABIN FEED|SIGNAL VARIANCE|ANOMALY CONFIRMED/);
   assert.doesNotMatch(canvasRendererSource, /fillText\(['"]FLOOR MISMATCH/);
+});
+
+test('Canvas V4 render path removes dashboard clutter and keeps gameplay type readable', () => {
+  const renderBlock = canvasRendererSource.match(/export function render[\s\S]*?\n}/)?.[0] || '';
+  assert.doesNotMatch(renderBlock, /drawStatusPanel/);
+  assert.doesNotMatch(renderBlock, /drawLogs/);
+  assert.match(renderBlock, /drawRuleStrip/);
+  assert.match(renderBlock, /drawReadings/);
+  assert.match(canvasRendererSource, /bold 34px [^\n]*Microsoft YaHei/);
+  assert.match(canvasRendererSource, /font = '26px [^\n]*Microsoft YaHei/);
 });
 
 test('canvas monitor renderer draws a visual CCTV scene before caption text', () => {

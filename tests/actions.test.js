@@ -62,6 +62,27 @@ test('recommended anomaly treatment clears the active anomaly and restores monit
   }
 });
 
+test('wrong contextual treatment keeps anomaly active and applies an immediate readable penalty', () => {
+  const state = {
+    ...createInitialState(),
+    activeAnomaly: 'phantom_floor',
+    anomalyLevel: 2,
+    stability: 80,
+    streak: 3,
+  };
+  const wrong = performAction(state, 'restartSystem');
+  assert.equal(wrong.ok, false);
+  assert.equal(wrong.state.activeAnomaly, 'phantom_floor');
+  assert.equal(wrong.state.stability, 74);
+  assert.equal(wrong.state.anomalyLevel, 3);
+  assert.equal(wrong.state.streak, 0);
+
+  const correct = performAction(state, 'inspectLog');
+  assert.equal(correct.ok, true);
+  assert.equal(correct.state.activeAnomaly, null);
+  assert.equal(correct.state.score, 150);
+});
+
 test('restartSystem reduces anomaly level and stabilizes the system', () => {
   const state = { ...createInitialState(), anomalyLevel: 4, stability: 45, power: 55 };
   const result = performAction(state, 'restartSystem');

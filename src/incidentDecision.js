@@ -13,6 +13,7 @@ export function openInspection(state, options) {
     status: 'pending',
     choice: null,
   };
+  next.lastFeedback = t('ui.inspectionReady');
   next = appendLog(next, 'info', t('ui.inspectionPrompt', {
     title: options.title,
     seconds: duration,
@@ -29,6 +30,17 @@ export function submitInspection(state, choice) {
   let next = cloneState(state);
   const normalizedChoice = choice === 'anomaly' ? 'anomaly' : 'normal';
   const correct = normalizedChoice === inspection.kind;
+  const tutorialStep = Number(next.tutorialStep || 0);
+  const guidedRound = (tutorialStep === 0 && inspection.kind === 'normal')
+    || (tutorialStep === 1 && inspection.kind === 'anomaly');
+
+  // 首两轮用实际操作教学：点错不扣资源、不结束题目，直接在原画面上纠正。
+  if (guidedRound && !correct) {
+    next.lastFeedback = t('ui.wrongTutorial');
+    next = appendLog(next, 'info', next.lastFeedback);
+    return { state: next, accepted: false, correct: false, coached: true };
+  }
+
   next.inspection = {
     ...inspection,
     status: 'resolved',
@@ -40,19 +52,29 @@ export function submitInspection(state, choice) {
   next.decisionsWrong = (next.decisionsWrong ?? 0) + (correct ? 0 : 1);
 
   if (correct) {
+    const secondsLeft = Math.max(0, Math.ceil((inspection.expiresAt ?? next.elapsed ?? 0) - (next.elapsed ?? 0)));
+    const points = 100 + secondsLeft * 10;
+    next.score = (next.score ?? 0) + points;
+    next.streak = (next.streak ?? 0) + 1;
+    next.bestStreak = Math.max(next.bestStreak ?? 0, next.streak);
+    if (guidedRound) next.tutorialStep = Math.min(2, tutorialStep + 1);
     next.stability = clamp((next.stability ?? 0) + 4, 0, 100);
     if (inspection.kind === 'anomaly') {
       next.anomalyLevel = clamp((next.anomalyLevel ?? 0) - 1, 0, 6);
     }
-    next = appendLog(next, 'success', t(
+    next.lastFeedback = t(
       inspection.kind === 'anomaly' ? 'ui.inspectionCorrectAnomaly' : 'ui.inspectionCorrectNormal',
-    ));
+    );
+    next = appendLog(next, 'success', next.lastFeedback);
   } else {
+    next.streak = 0;
     next.stability = clamp((next.stability ?? 0) - 12, 0, 100);
     next.anomalyLevel = clamp((next.anomalyLevel ?? 0) + 1, 0, 6);
-    next = appendLog(next, 'danger', t('ui.inspectionWrong'));
+    next.lastFeedback = t('ui.inspectionWrong');
+    next = appendLog(next, 'danger', next.lastFeedback);
   }
 
+  if (tutorialStep === 3) next.tutorialStep = 4;
   return { state: checkFailure(next), accepted: true, correct };
 }
 
@@ -64,6 +86,9 @@ export function expireInspection(state) {
   }
 
   let next = cloneState(state);
+  const tutorialStep = Number(next.tutorialStep || 0);
+  const guidedTimeout = (tutorialStep === 0 && inspection.kind === 'normal')
+    || (tutorialStep === 1 && inspection.kind === 'anomaly');
   next.inspection = {
     ...inspection,
     status: 'expired',
@@ -71,8 +96,17 @@ export function expireInspection(state) {
     correct: false,
     resolvedAt: next.elapsed ?? 0,
   };
+  if (guidedTimeout) {
+    next.tutorialStep = tutorialStep + 1;
+    next.lastFeedback = t('ui.wrongTutorial');
+    next = appendLog(next, 'info', next.lastFeedback);
+    return { state: next, timedOut: true, coached: true };
+  }
   next.decisionsWrong = (next.decisionsWrong ?? 0) + 1;
+  next.streak = 0;
   next.stability = clamp((next.stability ?? 0) - 8, 0, 100);
-  next = appendLog(next, 'warn', t('ui.inspectionTimeout'));
+  if (Number(next.tutorialStep || 0) === 3) next.tutorialStep = 4;
+  next.lastFeedback = t('ui.inspectionTimeout');
+  next = appendLog(next, 'warn', next.lastFeedback);
   return { state: checkFailure(next), timedOut: true };
 }

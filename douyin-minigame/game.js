@@ -30,7 +30,7 @@ const CONFIG = {
     power: 100,
     stability: 100,
     anomalyLevel: 0,
-    passengers: 1,
+    passengers: 0,
     gameOver: false,
     duration: 60,          // 值守倒计时（秒）
   },
@@ -80,8 +80,8 @@ const CONFIG = {
   anomaly: {
     firstTriggerAt: 8,          // 首局 10 秒内抛出异常，尽快进入找异常循环
     firstMaxSeverity: 2,        // 首个异常只做教学压力，不直接抽高危事件
-    cooldownMin: 10,            // 异常后最短冷却 ↑8
-    cooldownMax: 18,            // 异常后最长冷却 ↑13（更多节奏变化）
+    cooldownMin: 8,             // 双按钮循环：每局约 6–7 个异常
+    cooldownMax: 11,            // 异常间插入正常班次，保持高密度但可观察
     pressureDivisor: 2,         // pickNextAnomaly 压力算法分母
 
     // 难度递增：每 elapsedSeconds 的异常效果乘数
@@ -137,7 +137,7 @@ CONFIG;
 
 
 // --- src/skins/elevator/skin.json ---
-var __SKIN_DATA__ = {"meta":{"id":"elevator","name":"异常电梯控制台","subtitle":"MINIGAME · ANOMALY SYSTEM SIM"},"monitor":{"initial":"监控画面稳定：1 层轿厢内有 1 名乘客。","actions":{"openDoor":"监控：{floor} 层电梯门已打开。门外走廊光线异常。","closeDoor":"监控：轿厢门闭合。画面存在轻微拖影。","moveUp":"监控：电梯上行至 {floor} 层。乘客未看向摄像头。","moveDown":"监控：电梯下行至 {floor} 层。楼层指示灯短暂闪烁。","emergencyStop":"监控：电梯急停。轿厢灯光闪烁 3 次。","restartSystem":"监控：系统重启后恢复画面。部分录像帧丢失。"}},"actionLabels":{"openDoor":"开门","closeDoor":"关门","moveUp":"上行","moveDown":"下行","emergencyStop":"急停","restartSystem":"系统重启","inspectLog":"查看日志","unlockHiddenLog":"解码加密记录"},"doorLabels":{"open":"开启","closed":"关闭"},"directionLabels":{"up":"上行","down":"下行","idle":"待机"},"statusLabels":{"panelTitle":"电梯状态","floor":"楼层","door":"门状态","direction":"方向","passengers":"乘客","power":"电源","stability":"稳定度","anomalyLevel":"异常等级","reviveCount":"广告复活","adHintsCount":"加密解码","hiddenLogsCount":"待解码"},"canvasLabels":{"countdown":"值守倒计时","monitorPanel":"监控画面","actionPanel":"操作面板","logPanel":"系统日志","failureTitle":"系统崩溃","failureEyebrow":"SYSTEM FAILURE","monitorSignalStable":"SYSTEM: STABLE","monitorSignalUnstable":"SYSTEM: UNSTABLE","monitorSignalCorrupted":"SYSTEM: CORRUPTED","monitorThreat":"THREAT: {level}","failureMetricStability":"稳定度","failureMetricAnomaly":"异常","failureMetricRemaining":"剩余"},"actionFailMessages":{"openDoor_moving":"电梯移动中，禁止开门。","moveUp_doorNotClosed":"门未关闭，禁止移动。","moveDown_doorNotClosed":"门未关闭，禁止移动。","unknownAction":"未知操作：{actionId}","gameOver":"系统已崩溃，必须复活或重新开始。","systemBusy":"当前动作尚未完成，请等待电梯状态稳定。"},"actionFeedback":{"openDoor":"电梯门已打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行。","moveDown":"电梯开始下行。","emergencyStop":"急停已执行。","emergencyStop_fail":"急停按钮失效。","restartSystem":"系统重启完成。","inspectLog":"已查看系统日志。","unlockHiddenLog_noLocked":"没有待解码的加密记录。","unlockHiddenLog_limit":"本局已解码 {count} 条记录，达到上限。"},"actionLogMessages":{"openDoor":"电梯门已在 {floor} 层打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行，当前楼层 {floor}。","moveDown":"电梯开始下行，当前楼层 {floor}。","emergencyStop":"执行急停：移动已停止，稳定度下降。","emergencyStop_fail":"急停按钮无响应。异常等级上升。","restartSystem":"系统重启完成：异常等级下降，但消耗 {cost} 点电源。","inspectLog":"操作员查看系统日志：最近 30 秒存在未授权楼层请求。","inspectLog_hiddenRecords":"发现 {count} 条待解码加密记录。可观看模拟广告解锁完整内容。","unlockHiddenLog_ok":"模拟广告播放完成。加密记录已解码。"},"anomalies":[{"id":"phantom_floor","title":"不存在的楼层","severity":2,"monitor":"监控：电梯停在 13 层。建筑图纸中不存在该楼层。","adHint":"当楼层显示 13 时，不要开门，先执行系统重启。","effects":{"floor":13,"anomalyLevel":2,"stability":-10}},{"id":"camera_delay","title":"监控延迟","severity":1,"monitor":"监控：画面延迟 3 秒。乘客动作与控制台记录不同步。","adHint":"监控延迟时优先查看日志，不要连续移动。","effects":{"anomalyLevel":1,"stability":-6}},{"id":"zero_passenger_shadow","title":"门外有人但乘客数为 0","severity":2,"monitor":"监控：门外站着一个人，但乘客计数器显示 0。","adHint":"乘客数异常时保持关门，先急停再查日志。","effects":{"passengers":0,"anomalyLevel":2,"stability":-12}},{"id":"log_echo","title":"系统日志重复字符","severity":1,"monitor":"监控：系统日志开始重复输出“不要开门”。","adHint":"日志重复通常是轻度异常，系统重启可降低异常等级。","effects":{"anomalyLevel":1,"stability":-5}},{"id":"auto_button","title":"按钮自动亮起","severity":2,"monitor":"监控：没有乘客触碰按钮，B2 与 9 层按钮自动亮起。","adHint":"按钮自动亮起时不要跟随请求移动，先关门并急停。","effects":{"anomalyLevel":2,"power":-8}},{"id":"stop_failure","title":"急停按钮失效","severity":3,"monitor":"监控：急停按钮指示灯熄灭，控制台拒绝确认安全回路。","adHint":"急停失效时不要反复点击，优先系统重启。","effects":{"anomalyLevel":3,"stability":-15}},{"id":"negative_floor","title":"楼层显示为负数","severity":2,"monitor":"监控：楼层显示 -1。摄像头画面出现地下走廊。","adHint":"负数楼层不是正常地下层，立即重启系统。","effects":{"floor":-1,"anomalyLevel":2,"stability":-10}},{"id":"power_drain","title":"电源异常下降","severity":2,"monitor":"监控：备用电源自动接管，但电量仍在下降。","adHint":"电源异常下降时减少移动，优先关门与重启。","effects":{"anomalyLevel":2,"power":-22}},{"id":"door_refuse","title":"电梯门拒绝关闭","severity":2,"monitor":"监控：关门按钮已按下，门在合拢前自动弹开。异常状态持续。","adHint":"门拒绝关闭时不要连续按关门，先急停再重启系统。","effects":{"door":"open","anomalyLevel":2,"stability":-10}},{"id":"weight_mismatch","title":"载重数据异常","severity":1,"monitor":"监控：载重传感器读数 — 0kg。轿厢内有 1 名乘客。读数矛盾。","adHint":"载重异常时优先查日志，乘客数可能被重置。","effects":{"passengers":0,"anomalyLevel":1,"stability":-7}},{"id":"floor_jump","title":"楼层编号跳跃","severity":2,"monitor":"监控：电梯从 5 层直接移动到 9 层。摄像头画面缺失 4 帧。","adHint":"楼层跳跃时减少移动操作，用系统重启恢复楼层显示。","effects":{"floor":"+4","anomalyLevel":2,"stability":-12,"power":-10}},{"id":"emergency_lights","title":"应急灯异常启动","severity":3,"monitor":"监控：轿厢应急灯突然亮起。备用电源消耗加速。","adHint":"应急灯启动时尽量避免移动，立即重启系统可关闭应急灯。","effects":{"anomalyLevel":3,"stability":-14,"power":-20}}],"hiddenLogs":{"phantom_floor":{"title":"第13层施工记录","content":"2019年施工记录：第13层在竣工前被从建筑图纸中删除。\n原因：施工期间发生III级安全事件，3名工人失踪。\n楼层控制面板已被物理封堵，但系统仍能响应来自该层的按钮信号。"},"camera_delay":{"title":"监控系统校准记录","content":"校准日志 #4417：摄像头#03 与#07 存在 3 秒信号延迟。\n技术人员备注：延迟与第 13 层信号干扰有关，建议不要在 13 层停靠。"},"zero_passenger_shadow":{"title":"乘客记录异常说明","content":"传感器技术手册（节选）：\n红外传感器在非营业时段多次检测到热源信号，但乘客计数器持续归零。\n维修记录：传感器无故障。热源信号经比对——与员工体温档案不匹配。"},"log_echo":{"title":"日志系统诊断报告","content":"诊断报告 #FD-22-019：\n系统日志缓冲区检测到重复写入操作。重复内容「不要开门」的写入时间戳早于当前值班员登录时间。\n建议：检查前一值班员的退出状态。"},"auto_button":{"title":"控制系统审计追踪","content":"审计追踪 #AUD-882：\n自动按钮信号来源追溯至 5 号服务器（已于 2022 年停用）。\n该服务器的最后一条记录：「控制权移交程序未完成」。"},"stop_failure":{"title":"急停系统维护日志","content":"维护日志 #M-341：\n急停回路#2 在定期检查中被标记为「状态：不可用」。\n签署人签名无法识别。签署时间：3 年前。没有后续维修记录。"},"negative_floor":{"title":"地下层勘测报告","content":"建筑勘测报告（内部）：\n地下实际存在 4 层结构，但公开图纸仅标注 B1-B2。\nB3-B4 的电梯按钮在出厂时已被移除，但线路仍然通电。"},"power_drain":{"title":"备用电源异常报告","content":"异常报告 #P-877：\n备用电源在无负载状态下持续放电。经查，有一条非授权线路从备用电源柜分接至未知设备。\n线路标签：「不要切断」。"},"door_refuse":{"title":"门控系统事故报告","content":"事故报告 #D-1290：\n门控模块在连续 3 次异常重启后进入保护模式。\n模块日志输出最后一条：「识别到外部干扰信号。拒绝执行 — 保护乘员安全」。"},"weight_mismatch":{"title":"传感器校验记录","content":"校验记录 #W-554：\n载重传感器与红外传感器读数不一致。红外传感器在轿厢空载时检测到热源。\n技术人员备注：请确认值班员在操作前已清空轿厢。"},"floor_jump":{"title":"楼层定位日志","content":"定位日志 #F-213：\nGPS 楼层定位模块在校准前后记录的楼层编号不一致。\n系统自动修正失败。可能原因：参考信号源来自非标设备。"},"emergency_lights":{"title":"应急照明测试报告","content":"测试报告 #E-777：\n应急照明系统在无触发信号的情况下自行启动。\n供电线路检测到寄生回路。回路终端设备编号无法匹配任何已知设备清单。"}},"failure":{"summaries":{"power":"电源耗尽","stability":"稳定度归零","anomalyLevel":"异常等级失控","passengers":"乘客记录出现负数","default":"系统拒绝继续响应"},"defaultHint":"先关门，再重启系统，避免连续移动。","firstRunAdvice":"下次优先看监控和日志；黄色描边就是推荐按键。","adHintPrefix":"广告提示：{hint}","adReviveRollback":"广告复活完成：回滚 {seconds} 秒，恢复至可控状态。","adReviveMonitor":"广告复活完成：回滚到 {seconds} 秒前的系统状态。","snapshotFallback":"可观看广告复活，回滚到 {seconds} 秒前的系统状态。","noSnapshotFallback":"可观看广告复活，回滚到初始系统状态。"},"fakeEnding":{"eyebrow":"⚠ SYSTEM ANOMALY DETECTED","title":"操作员关联异常","text":"系统检测到操作员第 {count} 次系统崩溃。\n根据《异常控制员守则》第 7 条，您已被标记为“异常关联人员”。\n前 {threshold} 次记录已被永久删除。\n建议您立即离开控制台并联系安保部门。","truthPlaceholder":"[???] 观看广告揭示真相。","truthContent":"这不是第一次，也不会是最后一次。\n这座建筑的异常系统从未被修复。\n每一任值班员最后都变成了「异常事件」本身。\n系统日志中关于「乘客」的记载——都是前任值班员的热源信号。\n你现在坐的位置，就是上一任值班员被发现的地方。"},"ui":{"viewAd":"观看广告复活","unlockAd":"解码加密记录","restart":"重新开始","revealTruth":"观看广告揭示真相","triggerTest":"触发异常测试","decodePrefix":"[解码记录]","initialLog":"异常电梯控制台已接管。等待操作员指令。","anomalyEventLog":"异常事件：{title}。{hint}","startTitle":"等待接管异常电梯","startCopy":"目标：值守 60 秒。每次巡检先判断画面正常或异常，再使用控制台完成处置。接管后倒计时才会启动。","startChecklist":"先看监控并选择「判为正常 / 报告异常」\n异常上报后按现场状态操作控制台\n误判或超时会降低稳定度","startFailureRulesTitle":"失败条件","startFailureRules":"电源归零\n稳定度归零\n异常等级失控","startButton":"开始接管","sidebarEntry":"侧边栏入口","pausedTitle":"值守已暂停","pausedCopy":"返回前台后继续，不计算后台时间","audioOn":"声音开","audioOff":"已静音","adUnavailable":"广告暂不可用，请稍后重试","reportNormal":"判为正常","reportAnomaly":"报告异常","inspectionLabel":"巡检判定 {seconds}s","baselineInspectionTitle":"当前监控画面未见异常","anomalyInspectionTitle":"监控信号发生变化，请判断画面","anomalyResolved":"处置完成：{action} 已解除当前异常。","anomalyResolvedMonitor":"监控恢复稳定，等待下一轮巡检。","inspectionPrompt":"巡检判定：{title}（{seconds}秒内响应）","inspectionCorrectNormal":"判定正确：当前画面正常。","inspectionCorrectAnomaly":"判定正确：异常已上报，系统压力下降。","inspectionWrong":"判定错误：稳定度下降，异常压力上升。","inspectionTimeout":"判定超时：未完成本次巡检。","successfulShift":"本轮值守结束。系统仍未解释全部异常。","shiftComplete":"值守完成。连续失败计数已重置。","hiddenLogCaptured":"加密记录已捕获：{title}。使用「查看日志」功能解码。","unlockResult":"已解码：{title}","decodeMonitor":"解码完成：{title}。完整内容已写入系统日志。"}};
+var __SKIN_DATA__ = {"meta":{"id":"elevator","name":"异常电梯控制台","subtitle":"MINIGAME · ANOMALY SYSTEM SIM"},"monitor":{"initial":"监控画面稳定：1 层轿厢为空。","actions":{"openDoor":"监控：{floor} 层电梯门已打开。门外走廊光线异常。","closeDoor":"监控：轿厢门闭合。画面存在轻微拖影。","moveUp":"监控：电梯上行至 {floor} 层。乘客未看向摄像头。","moveDown":"监控：电梯下行至 {floor} 层。楼层指示灯短暂闪烁。","emergencyStop":"监控：电梯急停。轿厢灯光闪烁 3 次。","restartSystem":"监控：系统重启后恢复画面。部分录像帧丢失。"}},"actionLabels":{"openDoor":"开门","closeDoor":"关门","moveUp":"上行","moveDown":"下行","emergencyStop":"急停","restartSystem":"系统重启","inspectLog":"查看日志","unlockHiddenLog":"解码加密记录"},"doorLabels":{"open":"开启","closed":"关闭"},"directionLabels":{"up":"上行","down":"下行","idle":"待机"},"statusLabels":{"panelTitle":"电梯状态","floor":"楼层","door":"门状态","direction":"方向","passengers":"乘客","power":"电源","stability":"稳定度","anomalyLevel":"异常等级","reviveCount":"广告复活","adHintsCount":"加密解码","hiddenLogsCount":"待解码"},"canvasLabels":{"countdown":"值守倒计时","monitorPanel":"监控画面","actionPanel":"操作面板","logPanel":"系统日志","failureTitle":"系统崩溃","failureEyebrow":"SYSTEM FAILURE","monitorSignalStable":"SYSTEM: STABLE","monitorSignalUnstable":"SYSTEM: UNSTABLE","monitorSignalCorrupted":"SYSTEM: CORRUPTED","monitorThreat":"THREAT: {level}","failureMetricStability":"稳定度","failureMetricAnomaly":"异常","failureMetricRemaining":"剩余"},"actionFailMessages":{"openDoor_moving":"电梯移动中，禁止开门。","moveUp_doorNotClosed":"门未关闭，禁止移动。","moveDown_doorNotClosed":"门未关闭，禁止移动。","unknownAction":"未知操作：{actionId}","gameOver":"系统已崩溃，必须复活或重新开始。","systemBusy":"当前动作尚未完成，请等待电梯状态稳定。"},"actionFeedback":{"openDoor":"电梯门已打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行。","moveDown":"电梯开始下行。","emergencyStop":"急停已执行。","emergencyStop_fail":"急停按钮失效。","restartSystem":"系统重启完成。","inspectLog":"已查看系统日志。","unlockHiddenLog_noLocked":"没有待解码的加密记录。","unlockHiddenLog_limit":"本局已解码 {count} 条记录，达到上限。"},"actionLogMessages":{"openDoor":"电梯门已在 {floor} 层打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行，当前楼层 {floor}。","moveDown":"电梯开始下行，当前楼层 {floor}。","emergencyStop":"执行急停：移动已停止，稳定度下降。","emergencyStop_fail":"急停按钮无响应。异常等级上升。","restartSystem":"系统重启完成：异常等级下降，但消耗 {cost} 点电源。","inspectLog":"操作员查看系统日志：最近 30 秒存在未授权楼层请求。","inspectLog_hiddenRecords":"发现 {count} 条待解码加密记录。可观看模拟广告解锁完整内容。","unlockHiddenLog_ok":"模拟广告播放完成。加密记录已解码。"},"anomalies":[{"id":"phantom_floor","title":"不存在的楼层","severity":2,"monitor":"监控：电梯停在 13 层。建筑图纸中不存在该楼层。","adHint":"当楼层显示 13 时，不要开门，先执行系统重启。","effects":{"floor":13,"anomalyLevel":2,"stability":-10}},{"id":"camera_delay","title":"监控延迟","severity":1,"monitor":"监控：画面延迟 3 秒。乘客动作与控制台记录不同步。","adHint":"监控延迟时优先查看日志，不要连续移动。","effects":{"anomalyLevel":1,"stability":-6}},{"id":"zero_passenger_shadow","title":"门外有人但乘客数为 0","severity":2,"monitor":"监控：门外站着一个人，但乘客计数器显示 0。","adHint":"乘客数异常时保持关门，先急停再查日志。","effects":{"passengers":0,"anomalyLevel":2,"stability":-12}},{"id":"log_echo","title":"系统日志重复字符","severity":1,"monitor":"监控：系统日志开始重复输出“不要开门”。","adHint":"日志重复通常是轻度异常，系统重启可降低异常等级。","effects":{"anomalyLevel":1,"stability":-5}},{"id":"auto_button","title":"按钮自动亮起","severity":2,"monitor":"监控：没有乘客触碰按钮，B2 与 9 层按钮自动亮起。","adHint":"按钮自动亮起时不要跟随请求移动，先关门并急停。","effects":{"anomalyLevel":2,"power":-8}},{"id":"stop_failure","title":"急停按钮失效","severity":3,"monitor":"监控：急停按钮指示灯熄灭，控制台拒绝确认安全回路。","adHint":"急停失效时不要反复点击，优先系统重启。","effects":{"anomalyLevel":3,"stability":-15}},{"id":"negative_floor","title":"楼层显示为负数","severity":2,"monitor":"监控：楼层显示 -1。摄像头画面出现地下走廊。","adHint":"负数楼层不是正常地下层，立即重启系统。","effects":{"floor":-1,"anomalyLevel":2,"stability":-10}},{"id":"power_drain","title":"电源异常下降","severity":2,"monitor":"监控：备用电源自动接管，但电量仍在下降。","adHint":"电源异常下降时减少移动，优先关门与重启。","effects":{"anomalyLevel":2,"power":-22}},{"id":"door_refuse","title":"电梯门拒绝关闭","severity":2,"monitor":"监控：关门按钮已按下，门在合拢前自动弹开。异常状态持续。","adHint":"门拒绝关闭时不要连续按关门，先急停再重启系统。","effects":{"door":"open","anomalyLevel":2,"stability":-10}},{"id":"weight_mismatch","title":"载重数据异常","severity":1,"monitor":"监控：载重传感器读数 — 0kg。轿厢内有 1 名乘客。读数矛盾。","adHint":"载重异常时优先查日志，乘客数可能被重置。","effects":{"passengers":0,"anomalyLevel":1,"stability":-7}},{"id":"floor_jump","title":"楼层编号跳跃","severity":2,"monitor":"监控：电梯从 5 层直接移动到 9 层。摄像头画面缺失 4 帧。","adHint":"楼层跳跃时减少移动操作，用系统重启恢复楼层显示。","effects":{"floor":"+4","anomalyLevel":2,"stability":-12,"power":-10}},{"id":"emergency_lights","title":"应急灯异常启动","severity":3,"monitor":"监控：轿厢应急灯突然亮起。备用电源消耗加速。","adHint":"应急灯启动时尽量避免移动，立即重启系统可关闭应急灯。","effects":{"anomalyLevel":3,"stability":-14,"power":-20}}],"hiddenLogs":{"phantom_floor":{"title":"第13层施工记录","content":"2019年施工记录：第13层在竣工前被从建筑图纸中删除。\n原因：施工期间发生III级安全事件，3名工人失踪。\n楼层控制面板已被物理封堵，但系统仍能响应来自该层的按钮信号。"},"camera_delay":{"title":"监控系统校准记录","content":"校准日志 #4417：摄像头#03 与#07 存在 3 秒信号延迟。\n技术人员备注：延迟与第 13 层信号干扰有关，建议不要在 13 层停靠。"},"zero_passenger_shadow":{"title":"乘客记录异常说明","content":"传感器技术手册（节选）：\n红外传感器在非营业时段多次检测到热源信号，但乘客计数器持续归零。\n维修记录：传感器无故障。热源信号经比对——与员工体温档案不匹配。"},"log_echo":{"title":"日志系统诊断报告","content":"诊断报告 #FD-22-019：\n系统日志缓冲区检测到重复写入操作。重复内容「不要开门」的写入时间戳早于当前值班员登录时间。\n建议：检查前一值班员的退出状态。"},"auto_button":{"title":"控制系统审计追踪","content":"审计追踪 #AUD-882：\n自动按钮信号来源追溯至 5 号服务器（已于 2022 年停用）。\n该服务器的最后一条记录：「控制权移交程序未完成」。"},"stop_failure":{"title":"急停系统维护日志","content":"维护日志 #M-341：\n急停回路#2 在定期检查中被标记为「状态：不可用」。\n签署人签名无法识别。签署时间：3 年前。没有后续维修记录。"},"negative_floor":{"title":"地下层勘测报告","content":"建筑勘测报告（内部）：\n地下实际存在 4 层结构，但公开图纸仅标注 B1-B2。\nB3-B4 的电梯按钮在出厂时已被移除，但线路仍然通电。"},"power_drain":{"title":"备用电源异常报告","content":"异常报告 #P-877：\n备用电源在无负载状态下持续放电。经查，有一条非授权线路从备用电源柜分接至未知设备。\n线路标签：「不要切断」。"},"door_refuse":{"title":"门控系统事故报告","content":"事故报告 #D-1290：\n门控模块在连续 3 次异常重启后进入保护模式。\n模块日志输出最后一条：「识别到外部干扰信号。拒绝执行 — 保护乘员安全」。"},"weight_mismatch":{"title":"传感器校验记录","content":"校验记录 #W-554：\n载重传感器与红外传感器读数不一致。红外传感器在轿厢空载时检测到热源。\n技术人员备注：请确认值班员在操作前已清空轿厢。"},"floor_jump":{"title":"楼层定位日志","content":"定位日志 #F-213：\nGPS 楼层定位模块在校准前后记录的楼层编号不一致。\n系统自动修正失败。可能原因：参考信号源来自非标设备。"},"emergency_lights":{"title":"应急照明测试报告","content":"测试报告 #E-777：\n应急照明系统在无触发信号的情况下自行启动。\n供电线路检测到寄生回路。回路终端设备编号无法匹配任何已知设备清单。"}},"failure":{"summaries":{"power":"电源耗尽","stability":"稳定度归零","anomalyLevel":"异常等级失控","passengers":"乘客记录出现负数","default":"系统拒绝继续响应"},"defaultHint":"先关门，再重启系统，避免连续移动。","firstRunAdvice":"下次先核对画面、楼层、人数和门状态；一致放行，矛盾封锁。","adHintPrefix":"广告提示：{hint}","adReviveRollback":"广告复活完成：回滚 {seconds} 秒，恢复至可控状态。","adReviveMonitor":"广告复活完成：回滚到 {seconds} 秒前的系统状态。","snapshotFallback":"可观看广告复活，回滚到 {seconds} 秒前的系统状态。","noSnapshotFallback":"可观看广告复活，回滚到初始系统状态。"},"fakeEnding":{"eyebrow":"⚠ SYSTEM ANOMALY DETECTED","title":"操作员关联异常","text":"系统检测到操作员第 {count} 次系统崩溃。\n根据《异常控制员守则》第 7 条，您已被标记为“异常关联人员”。\n前 {threshold} 次记录已被永久删除。\n建议您立即离开控制台并联系安保部门。","truthPlaceholder":"[???] 观看广告揭示真相。","truthContent":"这不是第一次，也不会是最后一次。\n这座建筑的异常系统从未被修复。\n每一任值班员最后都变成了「异常事件」本身。\n系统日志中关于「乘客」的记载——都是前任值班员的热源信号。\n你现在坐的位置，就是上一任值班员被发现的地方。"},"ui":{"viewAd":"观看广告复活","unlockAd":"解码加密记录","restart":"重新开始","revealTruth":"观看广告揭示真相","triggerTest":"触发异常测试","decodePrefix":"[解码记录]","initialLog":"异常电梯控制台已接管。等待操作员指令。","initialFeedback":"等待下一班电梯","tutorialNormal":"信息一致，点击放行","tutorialAnomaly":"发现矛盾，点击封锁","coreRule":"核对画面和数据：一致放行，矛盾封锁","standby":"等待下一班","wrongTutorial":"再看一眼：核对楼层、人数和门状态","wrongTreatment":"处置错误，异常仍在持续。","inspectionReady":"请核对当前画面和三项数据","treatmentTutorial":"最后一步：按亮起的处置键解除异常","wrongTreatmentTutorial":"这项处置不对应当前线索，再看一次","autoResolutionCorrect":"封锁成功，系统已自动处置","autoResolutionWrong":"判断错误，系统已紧急隔离","autoResolutionTimeout":"判断超时，系统已自动隔离","anomalyEventLog":"异常事件：{title}。{hint}","startTitle":"等待接管异常电梯","startCopy":"核对楼层、人数和门状态：对得上就放行，对不上就封锁。前两班会在实际画面中教会你。","startChecklist":"三项一致：放行\n任意一项矛盾：封锁\n前两班点错不会扣分","startFailureRulesTitle":"失败条件","startFailureRules":"电源归零\n稳定度归零\n异常等级失控","startButton":"开始接管","sidebarEntry":"侧边栏入口","pausedTitle":"值守已暂停","pausedCopy":"返回前台后继续，不计算后台时间","audioOn":"声音开","audioOff":"已静音","adUnavailable":"广告暂不可用，请稍后重试","reportNormal":"放行","reportAnomaly":"封锁","inspectionLabel":"请在 {seconds}s 内判断","baselineInspectionTitle":"核对画面与数据","anomalyInspectionTitle":"核对画面与数据","anomalyResolved":"处置完成：{action} 已解除当前异常。","anomalyResolvedMonitor":"监控恢复稳定，等待下一轮巡检。","inspectionPrompt":"巡检判定：{title}（{seconds}秒内响应）","inspectionCorrectNormal":"判定正确：当前画面正常。","inspectionCorrectAnomaly":"判定正确：异常已上报，系统压力下降。","inspectionWrong":"判定错误：稳定度下降，异常压力上升。","inspectionTimeout":"判定超时：未完成本次巡检。","successfulShift":"本轮结束，连续失败计数已重置。","shiftComplete":"值守完成","hiddenLogCaptured":"加密记录已捕获：{title}。使用「查看日志」功能解码。","unlockResult":"已解码：{title}","decodeMonitor":"解码完成：{title}。完整内容已写入系统日志。"}};
 
 // --- src/skinManager.js ---
 /**
@@ -407,17 +407,20 @@ function getCctvState(state, anomalyLevel) {
 }
 
 function deriveVisualState(state) {
-  const anomalyLevel = Number(state?.anomalyLevel ?? 0);
-  const success = state?.result === 'success';
-  const active = !success && (Boolean(state?.activeAnomaly) || anomalyLevel > 0 || Boolean(state?.gameOver));
+  const neutralInspection = state?.inspection?.status === 'pending' && state?.inspection?.kind === 'normal';
+  const anomalyLevel = neutralInspection ? 0 : Number(state?.anomalyLevel ?? 0);
+  const safeState = neutralInspection
+    ? { ...(state ?? {}), activeAnomaly: null, anomalyLevel: 0 }
+    : (state ?? {});
+  const success = safeState.result === 'success';
+  const active = !success && (Boolean(safeState.activeAnomaly) || anomalyLevel > 0 || Boolean(safeState.gameOver));
   const pressure = clampVisualValue(anomalyLevel / 6, 0, 1);
-  const safeState = state ?? {};
 
   return {
-    tone: success ? 'normal' : getTone(anomalyLevel, Boolean(state?.gameOver)),
+    tone: success ? 'normal' : getTone(anomalyLevel, Boolean(safeState.gameOver)),
     glitch: active,
-    shake: !success && (Boolean(state?.gameOver) || anomalyLevel >= 4),
-    noise: success ? 0.18 : Boolean(state?.gameOver) ? 1 : Number((0.18 + pressure * 0.82).toFixed(2)),
+    shake: !success && (Boolean(safeState.gameOver) || anomalyLevel >= 4),
+    noise: success ? 0.18 : Boolean(safeState.gameOver) ? 1 : Number((0.18 + pressure * 0.82).toFixed(2)),
     highlightAction: getHighlightAction(safeState),
     cctvState: getCctvState(safeState, anomalyLevel),
   };
@@ -464,6 +467,11 @@ function createInitialState() {
     inspection: null,
     decisionsCorrect: 0,
     decisionsWrong: 0,
+    score: 0,
+    streak: 0,
+    bestStreak: 0,
+    tutorialStep: 0,
+    lastFeedback: t('ui.initialFeedback'),
     logs: [createFeedbackLine('info', t('ui.initialLog'), 0)],
   };
 }
@@ -571,7 +579,13 @@ function tickState(state, seconds = 1) {
   if (next.remaining <= 0) {
     next.gameOver = true;
     next.result = 'success';
-    next = appendLog(next, 'success', t('ui.successfulShift'));
+    next.activeAnomaly = null;
+    next.inspection = null;
+    next.transition = null;
+    next.moving = false;
+    next.direction = 'idle';
+    next.lastFeedback = t('ui.successfulShift');
+    next = appendLog(next, 'success', next.lastFeedback);
     return next;
   }
 
@@ -629,6 +643,7 @@ function openInspection(state, options) {
     status: 'pending',
     choice: null,
   };
+  next.lastFeedback = t('ui.inspectionReady');
   next = appendLog(next, 'info', t('ui.inspectionPrompt', {
     title: options.title,
     seconds: duration,
@@ -645,6 +660,17 @@ function submitInspection(state, choice) {
   let next = cloneState(state);
   const normalizedChoice = choice === 'anomaly' ? 'anomaly' : 'normal';
   const correct = normalizedChoice === inspection.kind;
+  const tutorialStep = Number(next.tutorialStep || 0);
+  const guidedRound = (tutorialStep === 0 && inspection.kind === 'normal')
+    || (tutorialStep === 1 && inspection.kind === 'anomaly');
+
+  // 首两轮用实际操作教学：点错不扣资源、不结束题目，直接在原画面上纠正。
+  if (guidedRound && !correct) {
+    next.lastFeedback = t('ui.wrongTutorial');
+    next = appendLog(next, 'info', next.lastFeedback);
+    return { state: next, accepted: false, correct: false, coached: true };
+  }
+
   next.inspection = {
     ...inspection,
     status: 'resolved',
@@ -656,19 +682,29 @@ function submitInspection(state, choice) {
   next.decisionsWrong = (next.decisionsWrong ?? 0) + (correct ? 0 : 1);
 
   if (correct) {
+    const secondsLeft = Math.max(0, Math.ceil((inspection.expiresAt ?? next.elapsed ?? 0) - (next.elapsed ?? 0)));
+    const points = 100 + secondsLeft * 10;
+    next.score = (next.score ?? 0) + points;
+    next.streak = (next.streak ?? 0) + 1;
+    next.bestStreak = Math.max(next.bestStreak ?? 0, next.streak);
+    if (guidedRound) next.tutorialStep = Math.min(2, tutorialStep + 1);
     next.stability = clamp((next.stability ?? 0) + 4, 0, 100);
     if (inspection.kind === 'anomaly') {
       next.anomalyLevel = clamp((next.anomalyLevel ?? 0) - 1, 0, 6);
     }
-    next = appendLog(next, 'success', t(
+    next.lastFeedback = t(
       inspection.kind === 'anomaly' ? 'ui.inspectionCorrectAnomaly' : 'ui.inspectionCorrectNormal',
-    ));
+    );
+    next = appendLog(next, 'success', next.lastFeedback);
   } else {
+    next.streak = 0;
     next.stability = clamp((next.stability ?? 0) - 12, 0, 100);
     next.anomalyLevel = clamp((next.anomalyLevel ?? 0) + 1, 0, 6);
-    next = appendLog(next, 'danger', t('ui.inspectionWrong'));
+    next.lastFeedback = t('ui.inspectionWrong');
+    next = appendLog(next, 'danger', next.lastFeedback);
   }
 
+  if (tutorialStep === 3) next.tutorialStep = 4;
   return { state: checkFailure(next), accepted: true, correct };
 }
 
@@ -680,6 +716,9 @@ function expireInspection(state) {
   }
 
   let next = cloneState(state);
+  const tutorialStep = Number(next.tutorialStep || 0);
+  const guidedTimeout = (tutorialStep === 0 && inspection.kind === 'normal')
+    || (tutorialStep === 1 && inspection.kind === 'anomaly');
   next.inspection = {
     ...inspection,
     status: 'expired',
@@ -687,9 +726,18 @@ function expireInspection(state) {
     correct: false,
     resolvedAt: next.elapsed ?? 0,
   };
+  if (guidedTimeout) {
+    next.tutorialStep = tutorialStep + 1;
+    next.lastFeedback = t('ui.wrongTutorial');
+    next = appendLog(next, 'info', next.lastFeedback);
+    return { state: next, timedOut: true, coached: true };
+  }
   next.decisionsWrong = (next.decisionsWrong ?? 0) + 1;
+  next.streak = 0;
   next.stability = clamp((next.stability ?? 0) - 8, 0, 100);
-  next = appendLog(next, 'warn', t('ui.inspectionTimeout'));
+  if (Number(next.tutorialStep || 0) === 3) next.tutorialStep = 4;
+  next.lastFeedback = t('ui.inspectionTimeout');
+  next = appendLog(next, 'warn', next.lastFeedback);
   return { state: checkFailure(next), timedOut: true };
 }
 
@@ -903,7 +951,6 @@ const ACTIONS = {
     next.moving = false;
     next.direction = 'idle';
     next.transition = { kind: 'systemReboot', duration: 2, remaining: 2 };
-    next.activeAnomaly = null;
     next.monitor = t('monitor.actions.restartSystem');
     next = appendLog(next, 'warn', t('actionLogMessages.restartSystem', { cost: rs.powerCost }));
     return ok(checkFailure(next), t('actionFeedback.restartSystem'));
@@ -958,18 +1005,38 @@ function performAction(state, actionId) {
     return fail(state, t('actionFailMessages.systemBusy'));
   }
   const activeAnomaly = state.activeAnomaly;
+  const resolutionAction = activeAnomaly ? getAnomalyResolutionAction(activeAnomaly) : null;
+  const preservesSpecificStopFailure = activeAnomaly === 'stop_failure' && actionId === 'emergencyStop';
+  if (activeAnomaly && resolutionAction && resolutionAction !== actionId && !preservesSpecificStopFailure) {
+    let next = cloneState(state);
+    if (Number(next.tutorialStep || 0) === 2) {
+      next.lastFeedback = t('ui.wrongTreatmentTutorial');
+      next = appendLog(next, 'info', next.lastFeedback);
+      return { ok: false, state: next, message: next.lastFeedback, coached: true };
+    }
+    next.stability = clamp((next.stability ?? 0) - 6, 0, 100);
+    next.anomalyLevel = clamp((next.anomalyLevel ?? 0) + 1, 0, 6);
+    next.streak = 0;
+    next.lastFeedback = t('ui.wrongTreatment');
+    next = appendLog(next, 'danger', next.lastFeedback);
+    return { ok: false, state: checkFailure(next), message: next.lastFeedback };
+  }
+
   const result = action(state);
-  if (!result.ok || !activeAnomaly || getAnomalyResolutionAction(activeAnomaly) !== actionId) {
+  if (!result.ok || !activeAnomaly || resolutionAction !== actionId) {
     return result;
   }
 
   let next = cloneState(result.state);
   next.activeAnomaly = null;
+  next.score = (next.score ?? 0) + 150;
+  if (Number(next.tutorialStep || 0) === 2) next.tutorialStep = 3;
   if (result.state.activeAnomaly === activeAnomaly) {
     next.anomalyLevel = Math.min(next.anomalyLevel, Math.max(0, state.anomalyLevel - 1));
   }
   next.monitor = t('ui.anomalyResolvedMonitor');
   const message = t('ui.anomalyResolved', { action: actionLabel(actionId) });
+  next.lastFeedback = message;
   next = appendLog(next, 'success', message);
   return ok(checkFailure(next), message);
 }
@@ -1008,6 +1075,7 @@ function restartRuntimeSession(previousSession = null) {
   session.state.consecutiveFailures = previous.consecutiveFailures || 0;
   session.state.fakeEndingCooldownRemaining = previous.fakeEndingCooldownRemaining || 0;
   session.state.fakeEndingCount = previous.fakeEndingCount || 0;
+  session.state.tutorialStep = Math.min(4, previous.tutorialStep || 0);
   session.state.fakeEndingTriggered = false;
   session.state.fakeEndingUnlocked = false;
   return session;
@@ -1050,25 +1118,24 @@ function shouldApplyReward(meta, currentRunToken, kind, state) {
 
 
 // --- src/firstRunGuidance.js ---
-function getOperatorCue(state, nextAnomalyAt, recommendedActionLabel = null) {
+function getOperatorCue(state, nextAnomalyAt) {
   const elapsed = Math.max(0, Math.floor(state?.elapsed ?? 0));
   const firstAnomalySeen = (state?.anomaliesTriggeredTotal ?? 0) > 0;
 
   if (state?.gameOver) {
-    return 'DEBRIEF: 先看崩溃原因；广告复活会回滚到可控状态。';
+    return '先看本轮结果，再决定复活或重新值守。';
   }
 
   if (state?.activeAnomaly) {
-    const action = recommendedActionLabel ? ` 执行：${recommendedActionLabel}` : '';
-    return `CUE: CCTV/日志先读；黄色描边是推荐按键。${action}`;
+    return '异常已封锁：系统正在自动处置。';
   }
 
   if (!firstAnomalySeen) {
     const seconds = Math.max(0, Math.ceil((nextAnomalyAt ?? elapsed) - elapsed));
-    return `STANDBY: 首个异常 ${seconds}s 内出现；盯住 CCTV。`;
+    return `首班 ${seconds} 秒内到达：三项一致就放行。`;
   }
 
-  return 'CUE: 异常升高先看日志；危险态优先重启。';
+  return '对得上就放行，对不上就封锁。';
 }
 
 
@@ -1414,6 +1481,11 @@ const SOURCES = Object.freeze({
   click: 'audio/click.wav',
   anomaly: 'audio/anomaly.wav',
   result: 'audio/result.wav',
+  boot: 'audio/boot.wav',
+  release: 'audio/release.wav',
+  lockdown: 'audio/lockdown.wav',
+  motor: 'audio/motor.wav',
+  wrong: 'audio/wrong.wav',
 });
 
 function createMiniGameAudio(api) {
@@ -1426,7 +1498,7 @@ function createMiniGameAudio(api) {
     const context = api.createInnerAudioContext();
     context.autoplay = false;
     context.loop = false;
-    context.volume = cue === 'anomaly' ? 0.28 : 0.22;
+    context.volume = ({ anomaly: 0.34, lockdown: 0.36, release: 0.28, motor: 0.18, boot: 0.24, wrong: 0.27 }[cue] ?? 0.22);
     context.src = SOURCES[cue];
     contexts.set(cue, context);
     return context;
@@ -1552,8 +1624,8 @@ let canvas, ctx;
 let scale = 1;        // 实际像素/设计像素比例
 let DH = 1334;        // 设计高度（自适应）
 let safeInsetTop = 0; // 全面屏安全区折算到设计坐标
+let menuButtonLeft = Number.POSITIVE_INFINITY; // 平台胶囊左边界（设计坐标）
 let assetStore = null; // 真实 CCTV / 控制台视觉资产
-let actionDeckPage = 0; // 0=四键主操作台，1+=次级操作页
 
 // ── 颜色 ──
 const COLORS = {
@@ -1575,45 +1647,55 @@ function getCanvasViewportMetrics(systemInfo = {}) {
   const windowHeight = Number(systemInfo.windowHeight) || 1334;
   const ratio = DW / windowWidth;
   const safeTop = Math.max(0, Number(systemInfo.safeArea?.top ?? systemInfo.statusBarHeight) || 0) * ratio;
+  const capsuleLeft = Number(systemInfo.menuButtonRect?.left);
   return {
     width: DW,
     height: Math.max(1334, windowHeight * ratio),
     safeTop,
+    menuButtonLeft: Number.isFinite(capsuleLeft) ? capsuleLeft * ratio : Number.POSITIVE_INFINITY,
   };
 }
 
 function getCanvasLayout(height = 1334, safeTop = 0) {
-  // 移动端以 CCTV 为绝对主视觉；比例对齐原始 H5 成品，而不是后台仪表盘。
-  const monitor = { x: 14, y: 102 + safeTop, w: 722, h: 740 };
+  // V4：一块大监控、三项读数、一个双选任务。禁止把桌面后台缩进手机。
+  const topbar = { x: 14, y: 12 + safeTop, w: 722, h: 76 };
+  const rule = { x: 14, y: 96 + safeTop, w: 722, h: 66 };
+  const monitorH = Math.max(520, Math.min(880, height - safeTop - 644));
+  const monitor = { x: 14, y: 170 + safeTop, w: 722, h: monitorH };
+  const readings = { x: 14, y: monitor.y + monitor.h + 12, w: 722, h: 108 };
   const actions = {
-    x: 14, y: 852 + safeTop, w: 722, h: 188,
-    columns: 4, gap: 10, buttonH: 138, startY: 890 + safeTop,
+    x: 14, y: readings.y + readings.h + 12, w: 722, h: 220,
+    columns: 2, gap: 14, buttonH: 164,
   };
-  actions.buttonW = (actions.w - 32 - (actions.columns - 1) * actions.gap) / actions.columns;
+  actions.startY = actions.y + 42;
+  actions.buttonW = (actions.w - 32 - actions.gap) / 2;
+  const feedbackY = actions.y + actions.h + 12;
   return {
-    topbar: { x: 14, y: 12 + safeTop, w: 722, h: 82 },
+    topbar,
+    rule,
     monitor,
+    readings,
     actions,
-    status: { x: 14, y: 1050 + safeTop, w: 722, h: 198 },
-    logs: { x: 14, y: 1258 + safeTop, w: 722, h: Math.max(180, height - 1272 - safeTop) },
+    feedback: { x: 14, y: feedbackY, w: 722, h: Math.max(90, height - feedbackY - 18) },
   };
 }
 
 function getCanvasStartControls(height = 1334, safeTop = 0) {
-  const cardY = Math.max(150 + safeTop, (height - 390) / 2);
+  const cardH = 650;
+  const cardY = Math.max(118 + safeTop, (height - cardH) / 2);
   return {
-    card: { x: 55, y: cardY, w: 640, h: 390 },
-    start: { x: 75, y: cardY + 270, w: 380, h: 86 },
-    sidebar: { x: 469, y: cardY + 270, w: 206, h: 86 },
+    card: { x: 55, y: cardY, w: 640, h: cardH },
+    start: { x: 85, y: cardY + 424, w: 580, h: 104 },
+    sidebar: { x: 85, y: cardY + 546, w: 580, h: 86 },
   };
 }
 
 function getCanvasMuteControl(height = 1334, safeTop = 0, started = true) {
   if (!started) {
     const { card } = getCanvasStartControls(height, safeTop);
-    return { x: card.x + card.w - 112, y: card.y - 6, w: 88, h: 86, visualOffsetY: 24, visualH: 38 };
+    return { x: card.x + card.w - 112, y: card.y + 4, w: 88, h: 86, visualOffsetY: 12, visualH: 54 };
   }
-  return { x: 638, y: 804 + safeTop, w: 84, h: 86, visualOffsetY: 48, visualH: 30 };
+  return { x: 644, y: 92 + safeTop, w: 88, h: 86, visualOffsetY: 12, visualH: 54 };
 }
 
 // ── Measure text ──
@@ -1637,6 +1719,28 @@ function roundRect(x, y, w, h, r, fill, stroke) {
   ctx.closePath();
   if (fill) { ctx.fillStyle = fill; ctx.fill(); }
   if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+}
+
+function drawIndustrialPanel(x, y, w, h, accent = 'rgba(195,200,190,0.34)') {
+  const metal = ctx.createLinearGradient(0, y, 0, y + h);
+  metal.addColorStop(0, '#272b2a');
+  metal.addColorStop(0.08, '#161918');
+  metal.addColorStop(0.92, '#0b0d0d');
+  metal.addColorStop(1, '#242826');
+  roundRect(x, y, w, h, 3, metal, accent);
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.strokeRect(x + 5, y + 5, w - 10, h - 10);
+  for (const [bx, by] of [[x + 10, y + 10], [x + w - 10, y + 10], [x + 10, y + h - 10], [x + w - 10, y + h - 10]]) {
+    ctx.fillStyle = '#050606';
+    ctx.beginPath();
+    ctx.arc(bx, by, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(210,218,207,0.22)';
+    ctx.beginPath();
+    ctx.moveTo(bx - 2, by);
+    ctx.lineTo(bx + 2, by);
+    ctx.stroke();
+  }
 }
 
 // ── 绘制背景 ──
@@ -1685,26 +1789,120 @@ function getCanvasFailureOverlayCopy(state) {
 function drawTopbar(state) {
   const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).topbar;
   const meta = getSkin().meta;
-  roundRect(x, y, w, h, 6, COLORS.panel, COLORS.line);
+  drawIndustrialPanel(x, y, w, h, 'rgba(121,214,163,0.42)');
   ctx.fillStyle = COLORS.green;
-  ctx.fillRect(x, y, 5, h);
+  ctx.fillRect(x + 5, y + 5, 6, h - 10);
 
   ctx.fillStyle = COLORS.text;
-  ctx.font = 'bold 36px "Microsoft YaHei", sans-serif';
-  ctx.fillText(meta?.name || '', x + 18, y + 48);
-  ctx.fillStyle = COLORS.muted;
-  ctx.font = '12px Consolas, "Microsoft YaHei", monospace';
-  ctx.fillText(meta?.subtitle || '', x + 19, y + 68);
+  ctx.font = 'bold 40px "Microsoft YaHei", sans-serif';
+  const title = String(meta?.name || '异常电梯').replace(/控制台|中控|调度台/g, '').trim();
+  ctx.fillText(title || '异常电梯', x + 26, y + 50, 236);
 
-  // 抖音右上角系统胶囊占据约 160 设计像素；倒计时放到其左侧安全区。
-  const cardW = 116;
-  const cardX = x + w - cardW - 170;
-  roundRect(cardX, y + 9, cardW, h - 18, 4, '#080a0a', 'rgba(225,168,75,0.48)');
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '22px "Microsoft YaHei", sans-serif';
+  ctx.fillText(`得分 ${Math.round(state.score || 0)}`, x + 286, y + 47);
+  ctx.fillStyle = (state.streak || 0) >= 3 ? COLORS.amber : COLORS.green;
+  ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
+  ctx.fillText(`连击${state.streak || 0}`, x + 390, y + 47);
+
+  // 倒计时位于抖音胶囊左侧，避免系统控件遮挡。
+  const cardW = 104;
+  const fallbackX = x + w - cardW - 170;
+  const cardX = Number.isFinite(menuButtonLeft)
+    ? Math.min(x + w - cardW - 18, menuButtonLeft - cardW - 12)
+    : fallbackX;
+  roundRect(cardX, y + 8, cardW, h - 16, 2, '#070808', 'rgba(225,168,75,0.64)');
   ctx.fillStyle = COLORS.amber;
   ctx.font = 'bold 34px Consolas, monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(Math.ceil(state.remaining).toString(), cardX + cardW / 2, y + 54);
+  ctx.fillText(Math.ceil(state.remaining).toString(), cardX + cardW / 2, y + 49);
   ctx.textAlign = 'left';
+}
+
+function getRuleCopy(state) {
+  const pending = state.inspection?.status === 'pending';
+  const step = Number(state.tutorialStep || 0);
+  if (pending && step === 0 && state.inspection?.kind === 'normal') return t('ui.tutorialNormal');
+  if (pending && step === 1 && state.inspection?.kind === 'anomaly') return t('ui.tutorialAnomaly');
+  if (!pending && state.activeAnomaly) return '系统正在自动处置，无需额外操作';
+  return t('ui.coreRule');
+}
+
+function drawRuleStrip(state) {
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).rule;
+  drawIndustrialPanel(x, y, w, h, 'rgba(225,168,75,0.40)');
+  const guided = Number(state.tutorialStep || 0) < 2 && state.inspection?.status === 'pending';
+  ctx.fillStyle = guided ? COLORS.amber : COLORS.green;
+  ctx.fillRect(x + 6, y + 6, 7, h - 12);
+  ctx.fillStyle = COLORS.text;
+  ctx.font = '26px "Microsoft YaHei", sans-serif';
+  ctx.fillText(getRuleCopy(state), x + 30, y + 43, w - 142);
+}
+
+function getCanvasReadings(state, motion = null) {
+  const floor = Number(motion?.floorReel ?? state.floor ?? 0);
+  const moving = motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown');
+  const activeId = typeof state.activeAnomaly === 'string' ? state.activeAnomaly : state.activeAnomaly?.id;
+  const floorMismatch = ['phantom_floor', 'floor_jump', 'negative_floor'].includes(activeId);
+  return [
+    {
+      id: 'floor', label: '楼层',
+      value: moving ? floor.toFixed(1) : String(Math.round(floor)).padStart(2, '0'),
+      clue: '主控读数',
+      danger: floorMismatch && state.inspection?.status !== 'pending',
+    },
+    { id: 'passengers', label: '人数', value: String(state.passengers ?? 0), clue: '载重计数', danger: false },
+    { id: 'door', label: '门状态', value: getCanvasDoorLabel(state.door), clue: '安全回路', danger: false },
+  ];
+}
+
+function drawReadings(state, motion = null) {
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).readings;
+  drawIndustrialPanel(x, y, w, h, 'rgba(121,214,163,0.34)');
+  const values = getCanvasReadings(state, motion);
+  const cellW = (w - 28) / 3;
+  values.forEach((item, index) => {
+    const cx = x + 14 + index * cellW;
+    if (index > 0) {
+      ctx.strokeStyle = 'rgba(195,200,190,0.20)';
+      ctx.beginPath();
+      ctx.moveTo(cx, y + 14);
+      ctx.lineTo(cx, y + h - 14);
+      ctx.stroke();
+    }
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '22px "Microsoft YaHei", sans-serif';
+    ctx.fillText(item.label, cx + 18, y + 35);
+    ctx.fillStyle = item.danger ? COLORS.amber : COLORS.text;
+    ctx.font = 'bold 32px "Microsoft YaHei", sans-serif';
+    ctx.fillText(item.value, cx + 18, y + 75);
+    ctx.fillStyle = item.danger ? COLORS.amber : COLORS.green;
+    ctx.font = '22px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(item.clue, cx + cellW - 18, y + 74, cellW - 80);
+    ctx.textAlign = 'left';
+  });
+}
+
+function drawFeedback(state) {
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).feedback;
+  drawIndustrialPanel(x, y, w, h, toneBorder(state));
+  const message = state.lastFeedback || t('ui.initialFeedback');
+  const pending = state.inspection?.status === 'pending';
+  ctx.fillStyle = state.activeAnomaly && !pending ? COLORS.amber : COLORS.text;
+  ctx.font = 'bold 26px "Microsoft YaHei", sans-serif';
+  ctx.fillText(message, x + 24, y + 42, w - 180);
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '22px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(pending ? '等待判断' : `安全 ${Math.round(state.stability || 0)}%`, x + w - 24, y + 42);
+  ctx.textAlign = 'left';
+  const barY = y + Math.min(h - 22, 62);
+  roundRect(x + 24, barY, w - 48, 12, 2, 'rgba(255,255,255,0.08)');
+  if (!pending) {
+    roundRect(x + 24, barY, Math.max(0, (w - 48) * ((state.stability || 0) / 100)), 12, 2,
+      state.stability < 35 ? COLORS.red : COLORS.green);
+  }
 }
 
 function getCanvasStatusItems(state) {
@@ -1791,6 +1989,7 @@ function drawBar(x, y, w, h, label, value, color) {
 }
 
 function toneBorder(state) {
+  if (state.inspection?.status === 'pending') return COLORS.line;
   const tone = deriveVisualState(state).tone;
   if (tone === 'danger') return 'rgba(255,77,109,0.55)';
   if (tone === 'critical') return 'rgba(255,209,102,0.38)';
@@ -1801,39 +2000,33 @@ function toneBorder(state) {
 // ── 绘制监控画面 ──
 function drawMonitor(state, motion = null) {
   const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).monitor;
-  const labels = getCanvasStaticLabels();
-  roundRect(x, y, w, h, 6, COLORS.panel, toneBorder(state));
-  ctx.fillStyle = '#bbb9af';
-  ctx.font = 'bold 12px Consolas, "Microsoft YaHei", monospace';
-  ctx.fillText(`■ ${labels.monitorPanel}`, x + 14, y + 24);
+  drawIndustrialPanel(x, y, w, h, toneBorder(state));
+  ctx.fillStyle = '#d8d4c8';
+  ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+  ctx.fillText('实时监控', x + 24, y + 34);
+  ctx.fillStyle = COLORS.green;
+  ctx.beginPath();
+  ctx.arc(x + 142, y + 26, 5, 0, Math.PI * 2);
+  ctx.fill();
 
-  const mx = x + 14, my = y + 34, mw = w - 28, mh = h - 48;
-  roundRect(mx, my, mw, mh, 3, '#050807', 'rgba(121,214,163,0.22)');
-  drawCctvScene(state, mx + 8, my + 8, mw - 16, mh - 52, motion);
+  const mx = x + 12, my = y + 48, mw = w - 24, mh = h - 60;
+  roundRect(mx, my, mw, mh, 2, '#020505', 'rgba(121,214,163,0.28)');
+  drawCctvScene(state, mx + 6, my + 6, mw - 12, mh - 12, motion);
 
   const frameTime = Number(motion?.frameTime ?? Date.now());
-  const scanY = (frameTime / 100 * (mh - 52)) % (mh - 52);
+  const scanY = (frameTime / 100 * (mh - 12)) % (mh - 12);
   ctx.fillStyle = 'rgba(121,214,163,0.04)';
-  ctx.fillRect(mx + 8, my + 8 + scanY, mw - 16, 4);
+  ctx.fillRect(mx + 6, my + 6 + scanY, mw - 12, 4);
 
   if (state.inspection?.status === 'pending') {
     const seconds = Math.max(0, Math.ceil(state.inspection.expiresAt - state.elapsed));
-    roundRect(mx + 22, my + 18, mw - 44, 48, 4, 'rgba(20,12,8,0.9)', 'rgba(225,168,75,0.82)');
+    roundRect(x + w - 150, y + 8, 124, 36, 2, '#090b0b', 'rgba(225,168,75,0.64)');
     ctx.fillStyle = COLORS.amber;
-    ctx.font = 'bold 15px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${seconds} 秒`, x + w - 88, y + 34);
     ctx.textAlign = 'left';
-    ctx.fillText(t('ui.inspectionLabel', { seconds }), mx + 38, my + 48);
-    ctx.fillStyle = COLORS.text;
-    ctx.font = '14px "Microsoft YaHei", sans-serif';
-    ctx.fillText(state.inspection.title, mx + 165, my + 48, mw - 220);
   }
-
-  const displayText = getMonitorText(state);
-  ctx.fillStyle = '#c8c6bd';
-  ctx.font = '13px "Microsoft YaHei", sans-serif';
-  ctx.textAlign = 'center';
-  wrapText(displayText, mx + mw / 2, my + mh - 28, mw - 28, 17);
-  ctx.textAlign = 'left';
 }
 
 function getCanvasCctvTreatment(cctvState = '00_idle_closed') {
@@ -1865,6 +2058,26 @@ function drawImageCover(image, x, y, w, h, fallbackWidth = 720, fallbackHeight =
   ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
 }
 
+function drawCctvImage(image, x, y, w, h) {
+  const sourceW = Number(image.width || image.naturalWidth) || 720;
+  const sourceH = Number(image.height || image.naturalHeight) || 420;
+  // 生产状态图顶部/底部烘焙了英文诊断和固定HUD；先裁掉答案区，再按主画面 cover。
+  const cropTop = Math.min(58, sourceH * 0.14);
+  const cropBottom = Math.min(30, sourceH * 0.08);
+  const usableH = sourceH - cropTop - cropBottom;
+  const sourceRatio = sourceW / usableH;
+  const targetRatio = w / h;
+  let sx = 0, sy = cropTop, sw = sourceW, sh = usableH;
+  if (sourceRatio > targetRatio) {
+    sw = usableH * targetRatio;
+    sx = (sourceW - sw) / 2;
+  } else {
+    sh = sourceW / targetRatio;
+    sy = cropTop + (usableH - sh) / 2;
+  }
+  ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+}
+
 function drawCctvScene(state, x, y, w, h, motion = null) {
   if (h <= 20) return;
   const baseVisual = deriveVisualState(state);
@@ -1891,14 +2104,15 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     const blend = motion?.active ? (isMove ? 1 : Math.min(1, motion.progress * 2.5)) : 1;
     if (previousImage && blend < 1) {
       ctx.globalAlpha = 1 - blend;
-      drawImageCover(previousImage, drawX, drawY, drawW, drawH);
+      drawCctvImage(previousImage, drawX, drawY, drawW, drawH);
     }
     ctx.globalAlpha = blend;
-    drawImageCover(sceneImage, drawX, drawY, drawW, drawH);
+    drawCctvImage(sceneImage, drawX, drawY, drawW, drawH);
     ctx.globalAlpha = 1;
 
     // 状态图已内置基础监控纹理，只叠加真正随时间变化的警报与干扰。
-    const alert = treatment.threat ? assetStore.getOverlay('redAlert') : null;
+    const pendingDecision = state.inspection?.status === 'pending';
+    const alert = treatment.threat && !pendingDecision ? assetStore.getOverlay('redAlert') : null;
     const glitchOverlay = treatment.glitch ? assetStore.getOverlay('glitch') : null;
     const sweep = state.inspection?.status === 'pending' ? assetStore.getOverlay('sweep') : null;
     for (const [image, alpha] of [[alert, 0.72], [glitchOverlay, 0.36], [sweep, 0.28]]) {
@@ -1935,54 +2149,55 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     ctx.fillStyle = scanGradient;
     ctx.fillRect(x, scanY - 24, w, 48);
 
-    // 状态图含固定英文诊断与固定楼层；遮盖后只绘制运行时中性线索，避免直接泄露答案。
-    ctx.fillStyle = 'rgba(3,8,8,0.94)';
-    ctx.fillRect(x, y, w, 34);
-    roundRect(x + w / 2 - 190, y + 58, 380, 120, 3, 'rgba(3,8,8,0.96)', treatment.border);
-    ctx.fillRect(x, y + h - 38, w, 38);
-    ctx.strokeStyle = treatment.border;
+    // 实体式顶部遮光罩：覆盖素材中烘焙的 07 / STABILIZED / 英文诊断，而不是再贴一块中央黑卡。
+    const hudShade = ctx.createLinearGradient(0, y, 0, y + 104);
+    hudShade.addColorStop(0, '#020707');
+    hudShade.addColorStop(0.82, '#020707');
+    hudShade.addColorStop(1, 'rgba(2,7,7,0)');
+    ctx.fillStyle = hudShade;
+    ctx.fillRect(x, y, w, 112);
+    ctx.strokeStyle = 'rgba(121,214,163,0.22)';
+    ctx.beginPath();
+    ctx.moveTo(x, y + 96);
+    ctx.lineTo(x + w, y + 96);
+    ctx.stroke();
+
+    // 状态图含固定英文诊断与固定楼层；源图已裁掉烘焙答案区，这里只叠加中文运行时状态。
+    const inspectionPending = state.inspection?.status === 'pending';
+    const activeId = typeof state.activeAnomaly === 'string' ? state.activeAnomaly : state.activeAnomaly?.id;
+    const floorDiscrepancy = ['phantom_floor', 'floor_jump', 'negative_floor'].includes(activeId);
+    const neutralBorder = inspectionPending ? 'rgba(195,200,190,0.34)' : treatment.border;
+    ctx.strokeStyle = neutralBorder;
     ctx.globalAlpha = 0.72;
     ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
     ctx.globalAlpha = 1;
 
     const floorValue = Number(motion?.floorReel ?? state.floor ?? 0);
-    // 原始状态图固定烘焙了“07”，用实时楼层牌覆盖，避免与游戏状态冲突。
-    roundRect(x + w / 2 - 55, y + 12, 110, 112, 4, 'rgba(3,10,9,0.97)', 'rgba(121,214,163,0.55)');
+    const observedFloor = floorDiscrepancy && inspectionPending
+      ? ((Number(state.floor || 1) + 2) % 9) + 1
+      : floorValue;
+    roundRect(x + 16, y + 14, 126, 70, 2, 'rgba(3,10,9,0.92)', 'rgba(121,214,163,0.52)');
     ctx.fillStyle = motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown') ? COLORS.amber : COLORS.green;
-    ctx.font = 'bold 24px Consolas, monospace';
+    ctx.font = 'bold 30px Consolas, monospace';
     ctx.textAlign = 'center';
     ctx.fillText(motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown')
-      ? floorValue.toFixed(1)
-      : String(Math.round(floorValue)).padStart(2, '0'), x + w / 2, y + 50);
-    ctx.fillStyle = COLORS.muted;
-    ctx.font = '10px Consolas, monospace';
-    ctx.fillText('LIVE FLOOR', x + w / 2, y + 78);
+      ? observedFloor.toFixed(1)
+      : String(Math.round(observedFloor)).padStart(2, '0'), x + 79, y + 50);
+    ctx.fillStyle = COLORS.text;
+    ctx.font = '22px "Microsoft YaHei", sans-serif';
+    ctx.fillText('画面楼层', x + 79, y + 76);
 
-    const inspectionPending = state.inspection?.status === 'pending';
-    const floorDiscrepancy = ['phantom_floor', 'floor_jump', 'negative_floor'].includes(state.activeAnomaly);
-    let feedLabel = 'FEED ONLINE';
-    if (floorDiscrepancy) {
-      if (inspectionPending) {
-        const observedFloor = ((Number(state.floor || 1) + 2) % 9) + 1;
-        feedLabel = `CABIN FEED ${String(observedFloor).padStart(2, '0')}`;
-      } else feedLabel = 'FLOOR DESYNC';
-    } else if (inspectionPending) feedLabel = 'SIGNAL VARIANCE';
-    else if (state.activeAnomaly) feedLabel = 'ANOMALY CONFIRMED';
-    else if (motion?.kind === 'moveUp') feedLabel = 'ASCENDING';
-    else if (motion?.kind === 'moveDown') feedLabel = 'DESCENDING';
-    else if (motion?.kind === 'openDoor' || cctvState === '01_door_open') feedLabel = 'DOOR OPEN';
-    else if (motion?.kind === 'closeDoor') feedLabel = 'DOOR TRANSIT';
-    roundRect(x + w / 2 - 115, y + 136, 230, 34, 3, 'rgba(3,10,9,0.96)', inspectionPending ? 'rgba(225,168,75,0.58)' : 'rgba(121,214,163,0.4)');
-    ctx.fillStyle = inspectionPending ? COLORS.amber : COLORS.green;
-    ctx.font = 'bold 13px Consolas, monospace';
-    ctx.fillText(feedLabel, x + w / 2, y + 158);
-
-    if (motion?.active && (motion.kind === 'moveUp' || motion.kind === 'moveDown')) {
-      roundRect(x + w / 2 - 115, y + 178, 230, 44, 3, 'rgba(3,10,9,0.98)', 'rgba(225,168,75,0.48)');
-      ctx.fillStyle = COLORS.amber;
-      ctx.font = 'bold 16px Consolas, monospace';
-      ctx.fillText(`${Math.round(motion.fromFloor)}F → ${Math.round(motion.toFloor)}F`, x + w / 2, y + 205);
-    }
+    let feedLabel = '监控稳定';
+    if (inspectionPending) feedLabel = '核对画面与数据';
+    else if (state.activeAnomaly) feedLabel = '异常已封锁';
+    else if (motion?.kind === 'moveUp') feedLabel = '电梯上行';
+    else if (motion?.kind === 'moveDown') feedLabel = '电梯下行';
+    else if (motion?.kind === 'openDoor' || cctvState === '01_door_open') feedLabel = '电梯门开启';
+    else if (motion?.kind === 'closeDoor') feedLabel = '电梯门关闭';
+    roundRect(x + w - 220, y + 18, 198, 46, 2, 'rgba(3,10,9,0.92)', neutralBorder);
+    ctx.fillStyle = state.activeAnomaly && !inspectionPending ? COLORS.red : inspectionPending ? COLORS.amber : COLORS.green;
+    ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+    ctx.fillText(feedLabel, x + w - 121, y + 49);
     ctx.textAlign = 'left';
 
     if (visual.glitch || treatment.glitch) drawCanvasAnomalyArtifacts(visual, x, y, w, h, frameTime);
@@ -2149,82 +2364,90 @@ function getCanvasActionButtons(state) {
   return operations;
 }
 
-function getCanvasVisibleActionButtons(state, page = actionDeckPage) {
-  const all = getCanvasActionButtons(state);
-  if (state.inspection?.status === 'pending') return all.slice(0, 2);
-
-  const preferredIds = ['closeDoor', 'moveUp', 'emergencyStop'];
-  const recommended = all.find(button => button.recommended && !preferredIds.includes(button.id));
-  const primaryIds = recommended
-    ? ['closeDoor', recommended.id, 'emergencyStop']
-    : preferredIds;
-  const primary = primaryIds.map(id => all.find(button => button.id === id)).filter(Boolean);
-  if (page === 0) {
-    return [...primary, { id: 'moreActions', label: '更多', deckControl: 'more' }].slice(0, 4);
+function getCanvasVisibleActionButtons(state) {
+  if (state.inspection?.status === 'pending') {
+    return [
+      { id: 'reportNormal', label: t('ui.reportNormal'), sublabel: '画面数据一致', decision: 'normal' },
+      { id: 'reportAnomaly', label: t('ui.reportAnomaly'), sublabel: '发现任意矛盾', decision: 'anomaly' },
+    ];
   }
 
-  const secondary = all.filter(button => !primaryIds.includes(button.id));
-  const pageCount = Math.max(1, Math.ceil(secondary.length / 3));
-  const normalizedPage = ((page - 1) % pageCount + pageCount) % pageCount;
-  const pageButtons = secondary.slice(normalizedPage * 3, normalizedPage * 3 + 3);
-  const atLastPage = normalizedPage === pageCount - 1;
-  return [
-    ...pageButtons,
-    { id: atLastPage ? 'backActions' : 'nextActions', label: atLastPage ? '返回' : '下一组', deckControl: atLastPage ? 'back' : 'next' },
-  ];
+  const activeId = typeof state.activeAnomaly === 'string' ? state.activeAnomaly : state.activeAnomaly?.id;
+  if (activeId) {
+    return [{ id: 'autoTreatment', label: '系统处置中', sublabel: '无需额外操作', disabled: true, wide: true }];
+  }
+
+  return [{ id: 'standby', label: t('ui.standby'), sublabel: '监控自动运行', disabled: true, wide: true }];
 }
 
 // ── 绘制操作按钮 ──
 function drawActions(state) {
   const layout = getCanvasLayout(DH, safeInsetTop).actions;
   const { x, y, w, h, gap, buttonH, startY } = layout;
-  const labels = getCanvasStaticLabels();
-  roundRect(x, y, w, h, 6, COLORS.panel, COLORS.line);
-  ctx.fillStyle = '#bbb9af';
-  ctx.font = 'bold 12px Consolas, "Microsoft YaHei", monospace';
-  ctx.fillText(`■ ${labels.actionPanel}`, x + 14, y + 24);
+  drawIndustrialPanel(x, y, w, h, 'rgba(195,200,190,0.34)');
+  ctx.fillStyle = '#d8d4c8';
+  ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+  ctx.fillText(state.activeAnomaly && state.inspection?.status !== 'pending' ? '系统处置' : '当前判断', x + 24, y + 31);
 
   const btns = getCanvasVisibleActionButtons(state);
-  const columns = btns.length === 2 ? 2 : 4;
-  const buttonW = (w - 32 - (columns - 1) * gap) / columns;
+  const columns = btns.length === 1 ? 1 : 2;
+  const buttonW = columns === 1 ? w - 32 : (w - 32 - gap) / 2;
   btns.forEach((btn, i) => {
     ctx.save();
-    if (btn.disabled) ctx.globalAlpha = 0.36;
+    if (btn.disabled) ctx.globalAlpha = 0.48;
     const bx = x + 16 + (i % columns) * (buttonW + gap);
-    const by = startY + Math.floor(i / columns) * (buttonH + gap);
-    const danger = btn.id === 'emergencyStop' || btn.id === 'reportAnomaly';
-    const semanticSpriteKind = getSkin().meta?.id === 'elevator'
-      ? ({ closeDoor: 'default', moveUp: 'recommended', emergencyStop: 'danger', moreActions: 'more' })[btn.id]
-      : null;
-    const buttonSprite = semanticSpriteKind ? assetStore?.getButton(semanticSpriteKind) : null;
-    if (buttonSprite) {
-      ctx.globalAlpha = btn.disabled ? 0.36 : 1;
-      ctx.drawImage(buttonSprite, bx, by, buttonW, buttonH);
-      ctx.globalAlpha = 1;
-    } else {
-      const fill = ctx.createLinearGradient(0, by, 0, by + buttonH);
-      fill.addColorStop(0, danger ? '#492420' : '#2a2f30');
-      fill.addColorStop(0.2, danger ? '#321614' : '#1b1f20');
-      fill.addColorStop(1, danger ? '#100909' : '#090b0c');
-      roundRect(bx, by, buttonW, buttonH, 5, fill, danger ? 'rgba(231,92,79,0.78)' : '#4b504e');
-      roundRect(bx + 5, by + 5, buttonW - 10, buttonH - 10, 3, null, 'rgba(0,0,0,0.72)');
+    const by = startY;
+    const danger = btn.id === 'reportAnomaly';
+    const safe = btn.id === 'reportNormal';
+    const accent = danger ? COLORS.red : safe ? COLORS.green : COLORS.amber;
+    const fill = ctx.createLinearGradient(0, by, 0, by + buttonH);
+    fill.addColorStop(0, danger ? '#512723' : safe ? '#214436' : '#37311f');
+    fill.addColorStop(0.12, danger ? '#321512' : safe ? '#142b22' : '#211d13');
+    fill.addColorStop(0.86, '#090a0a');
+    fill.addColorStop(1, '#262928');
+    roundRect(bx, by, buttonW, buttonH, 3, fill, accent);
+    ctx.strokeStyle = 'rgba(0,0,0,0.86)';
+    ctx.strokeRect(bx + 7, by + 7, buttonW - 14, buttonH - 14);
 
-      ctx.fillStyle = danger ? COLORS.red : COLORS.green;
+    for (const sx of [bx + 13, bx + buttonW - 13]) {
+      ctx.fillStyle = '#050606';
       ctx.beginPath();
-      ctx.arc(bx + buttonW / 2, by + 28, 6, 0, Math.PI * 2);
+      ctx.arc(sx, by + 13, 4, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = COLORS.text;
-      ctx.font = 'bold 20px "Microsoft YaHei", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(btn.label, bx + buttonW / 2, by + 83);
-      ctx.fillStyle = COLORS.muted;
-      ctx.font = '11px Consolas, monospace';
-      ctx.fillText(btn.id.toUpperCase().slice(0, 12), bx + buttonW / 2, by + 112);
-      ctx.textAlign = 'left';
+      ctx.beginPath();
+      ctx.arc(sx, by + buttonH - 13, 4, 0, Math.PI * 2);
+      ctx.fill();
     }
-    if (btn.recommended) {
-      roundRect(bx - 2, by - 2, buttonW + 4, buttonH + 4, 6, null, 'rgba(225,168,75,0.94)');
+
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = btn.disabled ? 0 : 12;
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.arc(bx + buttonW / 2, by + 31, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = COLORS.text;
+    ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(btn.label, bx + buttonW / 2, by + 94);
+    ctx.fillStyle = '#b5b8b1';
+    ctx.font = '24px "Microsoft YaHei", sans-serif';
+    ctx.fillText(btn.sublabel || '', bx + buttonW / 2, by + 132);
+
+    const guidedIndex = Number(state.tutorialStep || 0);
+    const guided = (state.inspection?.status === 'pending'
+      && ((guidedIndex === 0 && btn.id === 'reportNormal') || (guidedIndex === 1 && btn.id === 'reportAnomaly')))
+      || (guidedIndex === 2 && btn.recommended);
+    if (guided) {
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(bx - 4, by - 4, buttonW + 8, buttonH + 8);
+      ctx.fillStyle = accent;
+      ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+      ctx.fillText('点这里', bx + buttonW / 2, by - 12);
     }
+    ctx.textAlign = 'left';
     ctx.restore();
   });
 }
@@ -2265,7 +2488,7 @@ function drawFailureOverlay(state) {
   ctx.fillStyle = 'rgba(0,0,0,0.72)';
   ctx.fillRect(0, 0, DW, DH);
 
-  const cardW = 620, cardH = 390;
+  const cardW = 640, cardH = 520;
   const cx = (DW - cardW) / 2, cy = (DH - cardH) / 2;
 
   const labels = getCanvasStaticLabels();
@@ -2276,23 +2499,23 @@ function drawFailureOverlay(state) {
     roundRect(cx, cy, cardW, cardH, 8, '#211013', 'rgba(231,92,79,0.72)');
 
     ctx.fillStyle = COLORS.darkRed;
-    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
-    ctx.fillText(copy.eyebrow, cx + 24, cy + 30);
+    ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+    ctx.fillText(copy.eyebrow, cx + 30, cy + 42);
 
-    ctx.fillStyle = '#ff0050';
-    ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
-    ctx.fillText(copy.title, cx + 24, cy + 72);
+    ctx.fillStyle = '#ff315f';
+    ctx.font = 'bold 46px "Microsoft YaHei", sans-serif';
+    ctx.fillText(copy.title, cx + 30, cy + 102);
 
     const text = state.fakeEndingText || '';
-    ctx.fillStyle = '#ff6b8a';
-    ctx.font = '14px Consolas, "Microsoft YaHei", monospace';
-    wrapText(text, cx + 24, cy + 96, cardW - 48, 22);
+    ctx.fillStyle = '#ff8ba3';
+    ctx.font = '24px "Microsoft YaHei", sans-serif';
+    wrapText(text, cx + 30, cy + 146, cardW - 60, 34);
 
     if (state.fakeEndingUnlocked) {
       ctx.fillStyle = '#bffff0';
-      ctx.font = '14px Consolas, "Microsoft YaHei", monospace';
+      ctx.font = '24px "Microsoft YaHei", sans-serif';
       const truth = state.fakeEndingTruth || '';
-      wrapText(truth, cx + 24, cy + 200, cardW - 48, 22);
+      wrapText(truth, cx + 30, cy + 280, cardW - 60, 34);
     }
   } else {
     roundRect(
@@ -2306,22 +2529,29 @@ function drawFailureOverlay(state) {
     );
 
     ctx.fillStyle = isSuccess ? COLORS.green : COLORS.red;
-    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
-    ctx.fillText(isSuccess ? t('ui.shiftComplete') : copy.eyebrow, cx + 24, cy + 30);
+    ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+    ctx.fillText(isSuccess ? '本轮结算' : copy.eyebrow, cx + 30, cy + 42);
 
     ctx.fillStyle = isSuccess ? COLORS.green : COLORS.red;
-    ctx.font = 'bold 40px "Microsoft YaHei", sans-serif';
-    ctx.fillText(isSuccess ? t('ui.shiftComplete') : labels.failureTitle, cx + 24, cy + 80);
+    ctx.font = 'bold 48px "Microsoft YaHei", sans-serif';
+    ctx.fillText(isSuccess ? t('ui.shiftComplete') : labels.failureTitle, cx + 30, cy + 106);
 
     ctx.fillStyle = COLORS.text;
-    ctx.font = '16px "Microsoft YaHei", sans-serif';
+    ctx.font = '26px "Microsoft YaHei", sans-serif';
     const reason = isSuccess ? t('ui.successfulShift') : summarizeFailure(state);
-    wrapText(reason, cx + 24, cy + 120, cardW - 48, 24);
+    wrapText(reason, cx + 30, cy + 154, cardW - 60, 38);
+
+    ctx.fillStyle = COLORS.amber;
+    ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
+    ctx.fillText(`得分 ${Math.round(state.score || 0)}`, cx + 30, cy + 270);
+    ctx.fillStyle = COLORS.text;
+    ctx.font = '26px "Microsoft YaHei", sans-serif';
+    ctx.fillText(`最高连击 ${state.bestStreak || 0}`, cx + 30, cy + 312);
 
     if (!isSuccess && state.lastAdHint) {
       ctx.fillStyle = COLORS.amber;
-      ctx.font = '14px "Microsoft YaHei", sans-serif';
-      ctx.fillText(copy.adHintLine, cx + 24, cy + 200);
+      ctx.font = '24px "Microsoft YaHei", sans-serif';
+      ctx.fillText(copy.adHintLine, cx + 30, cy + 352, cardW - 60);
     }
   }
 
@@ -2331,7 +2561,7 @@ function drawFailureOverlay(state) {
     const btnW2 = (cardW - 60) / 2;
     roundRect(cx + 20, btnY, btnW2, 86, 5, '#17352a', 'rgba(121,214,163,0.7)');
     ctx.fillStyle = COLORS.text;
-    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 26px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     const btnLabel = state.fakeEndingTriggered && !state.fakeEndingUnlocked
       ? labels.revealTruth
@@ -2343,14 +2573,14 @@ function drawFailureOverlay(state) {
 
     roundRect(cx + 40 + btnW2, btnY, btnW2, 86, 5, '#202425', 'rgba(195,200,190,0.24)');
     ctx.fillStyle = COLORS.text;
-    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 26px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(labels.restart, cx + 40 + btnW2 + btnW2 / 2, btnY + 50);
     ctx.textAlign = 'left';
   } else {
     roundRect(cx + 20, btnY, cardW - 40, 86, 5, '#17352a', 'rgba(121,214,163,0.7)');
     ctx.fillStyle = COLORS.text;
-    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 26px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(labels.restart, cx + cardW / 2, btnY + 50);
     ctx.textAlign = 'left';
@@ -2362,7 +2592,7 @@ function drawMuteControl(viewState) {
   const visualY = control.y + control.visualOffsetY;
   roundRect(control.x, visualY, control.w, control.visualH, 4, '#141819', 'rgba(195,200,190,0.34)');
   ctx.fillStyle = viewState.muted ? COLORS.amber : COLORS.green;
-  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(
     t(viewState.muted ? 'ui.audioOff' : 'ui.audioOn'),
@@ -2375,35 +2605,58 @@ function drawMuteControl(viewState) {
 function drawStartOverlay(viewState = {}) {
   const controls = getCanvasStartControls(DH, safeInsetTop);
   const { card, start, sidebar } = controls;
-  ctx.fillStyle = 'rgba(2,3,3,0.82)';
+  ctx.fillStyle = 'rgba(2,3,3,0.88)';
   ctx.fillRect(0, 0, DW, DH);
-  roundRect(card.x, card.y, card.w, card.h, 8, '#111415', 'rgba(121,214,163,0.52)');
+  drawIndustrialPanel(card.x, card.y, card.w, card.h, 'rgba(121,214,163,0.56)');
+  ctx.fillStyle = COLORS.green;
+  ctx.fillRect(card.x + 8, card.y + 8, 8, card.h - 16);
+
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 52px "Microsoft YaHei", sans-serif';
+  ctx.fillText('异常电梯', card.x + 34, card.y + 76);
+  ctx.fillStyle = COLORS.amber;
+  ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+  ctx.fillText('夜班值守许可', card.x + 36, card.y + 116);
+
+  ctx.fillStyle = '#d1d2cb';
+  ctx.font = '26px "Microsoft YaHei", sans-serif';
+  wrapText(t('ui.startCopy'), card.x + 36, card.y + 164, card.w - 72, 38);
+
+  roundRect(card.x + 36, card.y + 252, card.w - 72, 70, 2, '#10251d', 'rgba(121,214,163,0.62)');
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 30px "Microsoft YaHei", sans-serif';
+  ctx.fillText('三项一致', card.x + 58, card.y + 297);
+  ctx.fillStyle = COLORS.text;
+  ctx.textAlign = 'right';
+  ctx.fillText('放行', card.x + card.w - 58, card.y + 297);
+  ctx.textAlign = 'left';
+
+  roundRect(card.x + 36, card.y + 334, card.w - 72, 70, 2, '#2b1513', 'rgba(231,92,79,0.70)');
+  ctx.fillStyle = COLORS.red;
+  ctx.font = 'bold 30px "Microsoft YaHei", sans-serif';
+  ctx.fillText('任意矛盾', card.x + 58, card.y + 379);
+  ctx.fillStyle = COLORS.text;
+  ctx.textAlign = 'right';
+  ctx.fillText('封锁', card.x + card.w - 58, card.y + 379);
+  ctx.textAlign = 'left';
+
+  const startFill = ctx.createLinearGradient(0, start.y, 0, start.y + start.h);
+  startFill.addColorStop(0, '#2b5b48');
+  startFill.addColorStop(0.15, '#183d2e');
+  startFill.addColorStop(1, '#08110d');
+  roundRect(start.x, start.y, start.w, start.h, 3, startFill, 'rgba(121,214,163,0.88)');
   ctx.fillStyle = COLORS.text;
   ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
-  ctx.fillText(t('ui.startTitle'), card.x + 24, card.y + 72);
-  ctx.fillStyle = '#b8bbb5';
-  ctx.font = '18px "Microsoft YaHei", sans-serif';
-  wrapText(t('ui.startCopy'), card.x + 24, card.y + 115, card.w - 48, 28);
-
-  roundRect(start.x, start.y, start.w, start.h, 5, '#17352a', 'rgba(121,214,163,0.8)');
-  ctx.fillStyle = COLORS.text;
-  ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(t('ui.startButton'), start.x + start.w / 2, start.y + 52);
+  ctx.fillText(t('ui.startButton'), start.x + start.w / 2, start.y + 65);
 
   const sidebarEnabled = viewState.sidebarAvailable === true;
-  roundRect(
-    sidebar.x,
-    sidebar.y,
-    sidebar.w,
-    sidebar.h,
-    5,
-    sidebarEnabled ? '#282d2e' : '#151718',
-    sidebarEnabled ? 'rgba(225,168,75,0.72)' : 'rgba(195,200,190,0.16)',
-  );
-  ctx.fillStyle = sidebarEnabled ? COLORS.amber : '#686d69';
-  ctx.font = 'bold 17px "Microsoft YaHei", sans-serif';
-  ctx.fillText(t('ui.sidebarEntry'), sidebar.x + sidebar.w / 2, sidebar.y + 52);
+  roundRect(sidebar.x, sidebar.y, sidebar.w, sidebar.h, 2,
+    sidebarEnabled ? '#24211a' : '#111313',
+    sidebarEnabled ? 'rgba(225,168,75,0.64)' : 'rgba(195,200,190,0.18)');
+  ctx.fillStyle = sidebarEnabled ? COLORS.amber : '#666a66';
+  ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+  ctx.fillText(t('ui.sidebarEntry'), sidebar.x + sidebar.w / 2, sidebar.y + 54);
   ctx.textAlign = 'left';
 }
 
@@ -2470,7 +2723,7 @@ function onCanvasClick(x, y, state, callbacks, viewState = { started: true }) {
 
   // 失败弹窗按钮检测
   if (state.gameOver) {
-    const cardW = 620, cardH = 390;
+    const cardW = 640, cardH = 520;
     const cx2 = (DW - cardW) / 2, cy2 = (DH - cardH) / 2;
     const btnY = cy2 + cardH - 106;
     if (state.result === 'success') {
@@ -2500,21 +2753,17 @@ function onCanvasClick(x, y, state, callbacks, viewState = { started: true }) {
     return;
   }
 
-  // 操作按钮检测 — 与当前四键操作台/次级操作页共享布局数据。
+  // V4 双选任务点击检测，与绘制布局共用同一组按钮数据。
   const layout = getCanvasLayout(DH, safeInsetTop).actions;
   const buttons = getCanvasVisibleActionButtons(state);
-  const columns = buttons.length === 2 ? 2 : 4;
-  const buttonW = (layout.w - 32 - (columns - 1) * layout.gap) / columns;
+  const columns = buttons.length === 1 ? 1 : 2;
+  const buttonW = columns === 1 ? layout.w - 32 : (layout.w - 32 - layout.gap) / 2;
   for (let i = 0; i < buttons.length; i += 1) {
     const bx = layout.x + 16 + (i % columns) * (buttonW + layout.gap);
-    const by = layout.startY + Math.floor(i / columns) * (layout.buttonH + layout.gap);
+    const by = layout.startY;
     if (x >= bx && x <= bx + buttonW && y >= by && y <= by + layout.buttonH) {
       if (buttons[i].disabled) return;
-      if (buttons[i].deckControl === 'more') actionDeckPage = 1;
-      else if (buttons[i].deckControl === 'next') actionDeckPage += 1;
-      else if (buttons[i].deckControl === 'back') actionDeckPage = 0;
-      else if (buttons[i].decision) {
-        actionDeckPage = 0;
+      if (buttons[i].decision) {
         onDecision?.(buttons[i].decision);
       } else onAction?.(buttons[i].id);
       return;
@@ -2528,10 +2777,11 @@ function render(state, viewState = { started: true, paused: false }) {
 
   drawBackground();
   drawTopbar(state);
-  drawStatusPanel(state, viewState.cctvMotion);
+  drawRuleStrip(state);
   drawMonitor(state, viewState.cctvMotion);
+  drawReadings(state, viewState.cctvMotion);
   drawActions(state);
-  drawLogs(state);
+  drawFeedback(state);
   drawFailureOverlay(state);
   if (viewState.started === false) drawStartOverlay(viewState);
   else if (viewState.paused === true) drawPauseOverlay();
@@ -2546,6 +2796,7 @@ function init(canvasEl, systemInfo = {}) {
   const metrics = getCanvasViewportMetrics(systemInfo);
   DH = metrics.height;
   safeInsetTop = metrics.safeTop;
+  menuButtonLeft = metrics.menuButtonLeft;
 
   canvas.width = metrics.width;
   canvas.height = metrics.height;
@@ -2559,7 +2810,6 @@ function init(canvasEl, systemInfo = {}) {
   };
   assetStore = createCanvasAssetStore(imageFactory);
   assetStore.preload();
-  actionDeckPage = 0;
 
   return { width: DW, height: DH };
 }
@@ -2571,6 +2821,7 @@ function init(canvasEl, systemInfo = {}) {
  *
  * 不依赖 DOM/window。只使用小游戏全局 API（wx/tt）或标准全局函数。
  */
+
 
 
 
@@ -2599,9 +2850,12 @@ function nextFrame(api, callback) {
 
 function getSystemInfo(api) {
   if (api && typeof api.getSystemInfoSync === 'function') {
-    return api.getSystemInfoSync();
+    const info = api.getSystemInfoSync();
+    let menuButtonRect = null;
+    try { menuButtonRect = api.getMenuButtonBoundingClientRect?.() || null; } catch { /* optional host API */ }
+    return { ...info, menuButtonRect };
   }
-  return { windowWidth: 750, windowHeight: 1334, pixelRatio: 1 };
+  return { windowWidth: 750, windowHeight: 1334, pixelRatio: 1, menuButtonRect: null };
 }
 
 function createMiniGameRewardedAd(api, adUnitId, options = {}) {
@@ -2685,6 +2939,9 @@ function startMiniGame() {
   const clock = createMiniGameClock(getNow);
   const cctvMotion = createCctvMotionController(getNow);
   const audio = createMiniGameAudio(api);
+  const vibrate = (type = 'light') => {
+    try { api.vibrateShort?.({ type }); } catch { /* optional haptics */ }
+  };
   const audioStorageKey = 'minigame_audio_muted_v1';
   try {
     audio.setMuted(api.getStorageSync?.(audioStorageKey) === true);
@@ -2796,7 +3053,7 @@ function startMiniGame() {
 
   function start() {
     if (clock.isStarted()) return;
-    audio.play('click');
+    audio.play('boot');
     state = openInspection(state, {
       id: `baseline-${runToken}`,
       kind: 'normal',
@@ -2815,7 +3072,7 @@ function startMiniGame() {
 
   function restart() {
     runToken += 1;
-    audio.play('click');
+    audio.play('boot');
     clock.start();
     session = restartRuntimeSession({ state });
     state = session.state;
@@ -2832,18 +3089,70 @@ function startMiniGame() {
     failureRecorded = false;
   }
 
+  function resolveActiveAnomalyAutomatically(feedbackKey) {
+    if (!state.activeAnomaly) return false;
+    const automaticAction = getAnomalyResolutionAction(state.activeAnomaly);
+    const before = state;
+    const scoreBeforeTreatment = state.score || 0;
+    const automatic = automaticAction ? performAction(state, automaticAction) : { ok: false, state };
+    state = {
+      ...automatic.state,
+      activeAnomaly: null,
+      score: scoreBeforeTreatment,
+      lastFeedback: t(feedbackKey),
+    };
+    if (automatic.ok) cctvMotion.startAction(automaticAction, before, state);
+    return automatic.ok;
+  }
+
   function handleDecision(choice) {
     if (state.gameOver) return;
+    const inspectionKind = state.inspection?.kind;
     const result = submitInspection(state, choice);
-    if (!result.accepted) return;
     state = result.state;
-    audio.play(result.correct ? 'click' : 'result');
-    nextNormalInspectionAt = state.elapsed + 8;
+    if (!result.accepted) {
+      if (result.coached) {
+        audio.play('wrong');
+        vibrate('medium');
+      }
+      return;
+    }
+    if (result.correct && inspectionKind === 'normal') {
+      audio.play('release');
+      vibrate('light');
+    } else if (result.correct && inspectionKind === 'anomaly') {
+      audio.play('lockdown');
+      vibrate('medium');
+    } else {
+      audio.play('wrong');
+      vibrate('heavy');
+    }
+
+    // 基础模式不增加第二次按钮学习：异常判断结束后由系统自动执行对应处置。
+    if (inspectionKind === 'anomaly' && state.activeAnomaly) {
+      resolveActiveAnomalyAutomatically(result.correct ? 'ui.autoResolutionCorrect' : 'ui.autoResolutionWrong');
+    }
+
+    // 正常放行后电梯自动离站：操作成为结果反馈，不再让新手学习四键驾驶。
+    if (result.correct && inspectionKind === 'normal' && !state.activeAnomaly) {
+      const automaticAction = state.door === 'closed' ? 'moveUp' : 'closeDoor';
+      const before = state;
+      const automatic = performAction(state, automaticAction);
+      state = automatic.state;
+      if (automatic.ok) {
+        cctvMotion.startAction(automaticAction, before, state);
+        audio.play(automaticAction === 'moveUp' ? 'motor' : 'click');
+      }
+    }
+    // 教学第二班必须直接进入异常，不允许中间插入随机正常巡检。
+    const tutorialStep = Number(state.tutorialStep || 0);
+    nextNormalInspectionAt = tutorialStep === 1
+      ? Number.POSITIVE_INFINITY
+      : state.elapsed + (tutorialStep === 3 ? 2 : 4);
   }
 
   function handleAction(actionId) {
     if (state.gameOver) return;
-    audio.play('click');
     if (actionId === 'unlockHiddenLog') {
       decodeAd({ runToken });
       return;
@@ -2851,7 +3160,14 @@ function startMiniGame() {
     const before = state;
     const result = performAction(state, actionId);
     state = result.state;
-    if (result.ok) cctvMotion.startAction(actionId, before, state);
+    if (result.ok) {
+      cctvMotion.startAction(actionId, before, state);
+      audio.play('release');
+      vibrate('light');
+    } else {
+      audio.play('wrong');
+      vibrate('heavy');
+    }
   }
 
   function handleAd(kind) {
@@ -2904,41 +3220,59 @@ function startMiniGame() {
         for (let i = 0; i < delta; i += 1) {
           state = tickState(state, 1);
           if (!state.gameOver) {
+            const expiredKind = state.inspection?.kind;
             const expiry = expireInspection(state);
             state = expiry.state;
             if (expiry.timedOut) {
-              audio.play('result');
-              nextNormalInspectionAt = state.elapsed + 8;
+              audio.play(expiry.coached ? 'wrong' : 'result');
+              if (expiredKind === 'anomaly' && state.activeAnomaly) {
+                resolveActiveAnomalyAutomatically('ui.autoResolutionTimeout');
+              }
+              const stepAfterTimeout = Number(state.tutorialStep || 0);
+              nextNormalInspectionAt = stepAfterTimeout === 1
+                ? Number.POSITIVE_INFINITY
+                : state.elapsed + (stepAfterTimeout === 3 ? 2 : 4);
             }
           }
           if (
             !state.gameOver
             && state.inspection?.status !== 'pending'
+            && !state.activeAnomaly
             && state.elapsed >= nextNormalInspectionAt
-            && state.elapsed + 6 < nextAnomalyAt
+            && (Number(state.tutorialStep || 0) === 3 || state.elapsed + 3 < nextAnomalyAt)
           ) {
+            cctvMotion.reset();
             state = openInspection(state, {
               id: `baseline-${runToken}-${state.elapsed}`,
               kind: 'normal',
               title: t('ui.baselineInspectionTitle'),
-              duration: 6,
+              duration: 4,
             });
+            audio.play('boot');
             nextNormalInspectionAt = Number.POSITIVE_INFINITY;
           }
           if (!state.gameOver && state.elapsed - lastSnapshotAt >= CONFIG.adRevive.snapshotInterval) {
             state = saveSnapshot(state);
             lastSnapshotAt = state.elapsed;
           }
-          if (!state.gameOver && state.elapsed >= nextAnomalyAt) {
-            const event = pickNextAnomaly(state);
+          if (
+            !state.gameOver
+            && state.inspection?.status !== 'pending'
+            && !state.activeAnomaly
+            && state.elapsed >= nextAnomalyAt
+          ) {
+            // 第二班固定为楼层跳变，确保教学展示具体可比较的画面/主控矛盾。
+            const event = Number(state.tutorialStep || 0) === 1
+              ? (findAnomaly('floor_jump') || pickNextAnomaly(state))
+              : pickNextAnomaly(state);
             const beforeAnomaly = state;
-            audio.play('anomaly');
+            audio.play('boot');
             const result = applyAnomaly(state, event.id);
             state = openInspection(result.state, {
               id: event.id,
               kind: 'anomaly',
               title: t('ui.anomalyInspectionTitle'),
-              duration: 7,
+              duration: 5,
             });
             cctvMotion.startAnomaly(beforeAnomaly, state);
             nextNormalInspectionAt = Number.POSITIVE_INFINITY;

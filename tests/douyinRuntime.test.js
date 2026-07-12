@@ -36,10 +36,12 @@ test('canvas viewport follows the real device aspect ratio and safe area', () =>
     windowWidth: 390,
     windowHeight: 844,
     safeArea: { top: 47 },
+    menuButtonRect: { left: 306 },
   });
   assert.equal(metrics.width, 750);
   assert.ok(metrics.height > 1623 && metrics.height < 1624);
   assert.ok(metrics.safeTop > 90 && metrics.safeTop < 91);
+  assert.ok(metrics.menuButtonLeft > 588 && metrics.menuButtonLeft < 589);
 });
 
 test('canvas start gate exposes separate start and Douyin sidebar targets', () => {
@@ -122,8 +124,11 @@ test('mini-game runtime wires explicit start, lifecycle pause, real viewport and
   assert.match(source, /getStorageSync/);
   assert.match(source, /setStorageSync/);
   assert.match(source, /onToggleMute:\s*toggleMute/);
-  assert.match(source, /audio\.play\(['"]click['"]\)/);
-  assert.match(source, /audio\.play\(['"]anomaly['"]\)/);
+  for (const cue of ['boot', 'release', 'lockdown', 'wrong']) {
+    assert.match(source, new RegExp(`audio\\.play\\(['\"]${cue}['\"]\\)`));
+  }
+  assert.match(source, /vibrateShort/);
+  assert.match(source, /getMenuButtonBoundingClientRect/);
   assert.match(source, /bindMiniGameLifecycle/);
   assert.match(source, /navigateToDouyinSidebar/);
   assert.match(source, /init\(canvas, info\)/);
