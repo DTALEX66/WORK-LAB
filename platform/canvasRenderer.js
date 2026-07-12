@@ -499,13 +499,20 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
       : null;
     const isMove = motion?.kind === 'moveUp' || motion?.kind === 'moveDown';
     const blend = motion?.active ? (isMove ? 1 : Math.min(1, motion.progress * 2.5)) : 1;
-    if (previousImage && blend < 1) {
-      ctx.globalAlpha = 1 - blend;
-      drawCctvImage(previousImage, drawX, drawY, drawW, drawH);
+    // 移动期间使用纯黑背景 + 运行时 floorReel 楼层文字，
+    // 不显示素材中烘焙的固定楼层动画（如 7F→8F）。
+    if (isMove) {
+      ctx.fillStyle = '#020707';
+      ctx.fillRect(x, y, w, h);
+    } else {
+      if (previousImage && blend < 1) {
+        ctx.globalAlpha = 1 - blend;
+        drawCctvImage(previousImage, drawX, drawY, drawW, drawH);
+      }
+      ctx.globalAlpha = blend;
+      drawCctvImage(sceneImage, drawX, drawY, drawW, drawH);
+      ctx.globalAlpha = 1;
     }
-    ctx.globalAlpha = blend;
-    drawCctvImage(sceneImage, drawX, drawY, drawW, drawH);
-    ctx.globalAlpha = 1;
 
     // 状态图已内置基础监控纹理，只叠加真正随时间变化的警报与干扰。
     const pendingDecision = state.inspection?.status === 'pending';
@@ -599,27 +606,18 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
 
     if (visual.glitch || treatment.glitch) drawCanvasAnomalyArtifacts(visual, x, y, w, h, frameTime);
 
-    // 运行时楼层覆盖：覆盖素材中烘焙的固定楼层动画（如 7F→8F），显示真实运行时楼层。
+    // 移动动画中央楼层显示：此时整个 CCTV 已填充纯黑背景，只叠加运行时楼层与方向。
     const isMoving = motion?.kind === 'moveUp' || motion?.kind === 'moveDown';
     if (isMoving) {
-      const overlayH = 90;
-      const overlayW = 340;
-      const overlayY = y + (h - overlayH) / 2;
-      const overlayX = x + (w - overlayW) / 2;
-      ctx.fillStyle = '#020707';
-      ctx.fillRect(overlayX, overlayY, overlayW, overlayH);
-      ctx.strokeStyle = 'rgba(121,214,163,0.12)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(overlayX, overlayY, overlayW, overlayH);
       ctx.fillStyle = COLORS.amber;
-      ctx.font = 'bold 44px Consolas, monospace';
+      ctx.font = 'bold 52px Consolas, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const movingFloor = Number(motion?.floorReel ?? floorValue ?? 0);
-      ctx.fillText(`${Math.round(movingFloor)}F`, x + w / 2, overlayY + overlayH / 2 - 4);
+      ctx.fillText(`${Math.round(movingFloor)}F`, x + w / 2, y + h / 2 - 14);
       ctx.fillStyle = 'rgba(121,214,163,0.5)';
-      ctx.font = '20px Consolas, monospace';
-      ctx.fillText(motion?.kind === 'moveUp' ? '上行' : '下行', x + w / 2, overlayY + overlayH / 2 + 26);
+      ctx.font = '22px Consolas, monospace';
+      ctx.fillText(motion?.kind === 'moveUp' ? '上行' : '下行', x + w / 2, y + h / 2 + 26);
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = 'left';
     }
