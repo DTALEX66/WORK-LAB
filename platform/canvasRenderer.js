@@ -323,13 +323,12 @@ function drawCctvScene(state, x, y, w, h) {
     ctx.clip();
     ctx.drawImage(sceneImage, x, y, w, h);
 
-    const scanlines = assetStore.getOverlay('scanlines');
-    const vignette = assetStore.getOverlay('vignette');
-    const frame = assetStore.getOverlay('frame');
+    // 状态图已内置监控边框、扫描线和暗角；这里只叠加随运行状态变化的效果，
+    // 避免重复纹理把关键异常线索压暗。
     const alert = treatment.threat ? assetStore.getOverlay('redAlert') : null;
     const glitchOverlay = treatment.glitch ? assetStore.getOverlay('glitch') : null;
     const sweep = state.inspection?.status === 'pending' ? assetStore.getOverlay('sweep') : null;
-    for (const [image, alpha] of [[scanlines, 0.34], [vignette, 0.72], [frame, 0.72], [alert, 0.76], [glitchOverlay, 0.68], [sweep, 0.48]]) {
+    for (const [image, alpha] of [[alert, 0.76], [glitchOverlay, 0.68], [sweep, 0.38]]) {
       if (!image) continue;
       ctx.globalAlpha = alpha;
       ctx.drawImage(image, x, y, w, h);

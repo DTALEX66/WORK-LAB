@@ -80,7 +80,7 @@ test('generated Douyin bundle boots against the tt Canvas contract', () => {
   assert.equal(imageSources.length, 38, 'all shipped Canvas visual assets should preload');
   assert.ok(imageSources.includes('visual/cctv/00_idle_closed_mobile.png'));
   assert.ok(imageSources.includes('visual/buttons/btn_stop_danger.png'));
-  assert.ok(drawImageCalls >= 4, 'the first render should draw the CCTV state and visual overlays');
+  assert.ok(drawImageCalls >= 2, 'the first render should draw the CCTV state and its dynamic inspection overlay');
 
   onTouchStart({ touches: [{ screenX: 570 * 390 / 750, screenY: 930 * 844 / canvas.height }] });
   assert.equal(sidebarOptions?.scene, 'sidebar');
