@@ -598,6 +598,30 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     ctx.textAlign = 'left';
 
     if (visual.glitch || treatment.glitch) drawCanvasAnomalyArtifacts(visual, x, y, w, h, frameTime);
+
+    // 运行时楼层覆盖：覆盖素材中烘焙的固定楼层动画（如 7F→8F），显示真实运行时楼层。
+    const isMoving = motion?.kind === 'moveUp' || motion?.kind === 'moveDown';
+    if (isMoving) {
+      const overlayH = 70;
+      const overlayY = y + (h - overlayH) / 2;
+      ctx.fillStyle = 'rgba(2,7,7,0.84)';
+      ctx.fillRect(x + w / 2 - 130, overlayY, 260, overlayH);
+      ctx.strokeStyle = 'rgba(121,214,163,0.28)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + w / 2 - 130, overlayY, 260, overlayH);
+      ctx.fillStyle = COLORS.amber;
+      ctx.font = 'bold 36px Consolas, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const movingFloor = Number(motion?.floorReel ?? floorValue ?? 0);
+      ctx.fillText(`${Math.round(movingFloor)}F`, x + w / 2, overlayY + overlayH / 2 - 2);
+      ctx.fillStyle = 'rgba(121,214,163,0.6)';
+      ctx.font = '18px Consolas, monospace';
+      ctx.fillText(motion?.kind === 'moveUp' ? '▲ 上行中' : '▼ 下行中', x + w / 2, overlayY + overlayH / 2 + 22);
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'left';
+    }
+
     ctx.restore();
     return;
   }
