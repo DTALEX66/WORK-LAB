@@ -280,7 +280,8 @@ function drawMonitor(state, motion = null) {
   roundRect(mx, my, mw, mh, 3, '#050807', 'rgba(121,214,163,0.22)');
   drawCctvScene(state, mx + 8, my + 8, mw - 16, mh - 52, motion);
 
-  const scanY = (Date.now() / 100 * (mh - 52)) % (mh - 52);
+  const frameTime = Number(motion?.frameTime ?? Date.now());
+  const scanY = (frameTime / 100 * (mh - 52)) % (mh - 52);
   ctx.fillStyle = 'rgba(121,214,163,0.04)';
   ctx.fillRect(mx + 8, my + 8 + scanY, mw - 16, 4);
 
@@ -336,6 +337,7 @@ function drawImageCover(image, x, y, w, h, fallbackWidth = 720, fallbackHeight =
 function drawCctvScene(state, x, y, w, h, motion = null) {
   if (h <= 20) return;
   const baseVisual = deriveVisualState(state);
+  const frameTime = Number(motion?.frameTime ?? Date.now());
   const cctvState = motion?.cctvState || baseVisual.cctvState;
   const visual = { ...baseVisual, cctvState, glitch: baseVisual.glitch || Number(motion?.glitchAlpha || 0) > 0 };
   const treatment = getCanvasCctvTreatment(cctvState);
@@ -379,10 +381,10 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     if (glitchAlpha > 0) {
       ctx.globalAlpha = glitchAlpha;
       for (let i = 0; i < 4; i += 1) {
-        const tearY = y + ((Date.now() / (23 + i * 7) + i * 137) % h);
+        const tearY = y + ((frameTime / (23 + i * 7) + i * 137) % h);
         const tearH = 3 + i * 2;
         ctx.fillStyle = i % 2 ? 'rgba(255,77,109,0.42)' : 'rgba(121,214,163,0.34)';
-        ctx.fillRect(x + Math.sin(Date.now() / (19 + i)) * 18, tearY, w, tearH);
+        ctx.fillRect(x + Math.sin(frameTime / (19 + i)) * 18, tearY, w, tearH);
       }
       ctx.globalAlpha = 1;
     }
@@ -452,7 +454,7 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     }
     ctx.textAlign = 'left';
 
-    if (visual.glitch || treatment.glitch) drawCanvasAnomalyArtifacts(visual, x, y, w, h);
+    if (visual.glitch || treatment.glitch) drawCanvasAnomalyArtifacts(visual, x, y, w, h, frameTime);
     ctx.restore();
     return;
   }
@@ -491,7 +493,7 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
 
   const carW = Math.min(w * 0.42, 150);
   const carH = h * 0.76;
-  const jitter = state.moving ? Math.sin(Date.now() / 60) * 2 : 0;
+  const jitter = state.moving ? Math.sin(frameTime / 60) * 2 : 0;
   const carX = x + w / 2 - carW / 2 + jitter;
   const carY = y + h - carH - 8;
   const carFill = ctx.createLinearGradient(carX, carY, carX + carW, carY);
@@ -530,7 +532,7 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
   ctx.strokeStyle = reticleThreat ? 'rgba(255,77,109,0.88)' : 'rgba(97,255,190,0.32)';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.arc(reticleX, reticleY, 22 + (reticleThreat ? Math.sin(Date.now() / 120) * 2 : 0), 0, Math.PI * 2);
+  ctx.arc(reticleX, reticleY, 22 + (reticleThreat ? Math.sin(frameTime / 120) * 2 : 0), 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(reticleX - 18, reticleY);
@@ -543,14 +545,14 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     const artifactVisual = treatment.glitch
       ? { ...visual, glitch: true, noise: Math.max(0.72, visual.noise) }
       : visual;
-    drawCanvasAnomalyArtifacts(artifactVisual, x, y, w, h);
+    drawCanvasAnomalyArtifacts(artifactVisual, x, y, w, h, frameTime);
   }
 
   ctx.restore();
 }
 
-function drawCanvasAnomalyArtifacts(visual, x, y, w, h) {
-  const now = Date.now();
+function drawCanvasAnomalyArtifacts(visual, x, y, w, h, frameTime = Date.now()) {
+  const now = frameTime;
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
   ctx.globalAlpha = Math.min(0.9, visual.noise);

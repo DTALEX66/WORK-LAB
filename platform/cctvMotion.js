@@ -36,6 +36,7 @@ function settledFrame(state, now) {
     glitchAlpha: glitchState ? 0.18 + Math.abs(Math.sin(signalPhase * 17)) * 0.28 : 0,
     flickerAlpha: visual.cctvState === '07_power_outage' ? 0.45 + Math.abs(Math.sin(signalPhase * 13)) * 0.45 : 0,
     scanPhase: signalPhase % 1,
+    frameTime: now,
   };
 }
 

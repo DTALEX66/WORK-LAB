@@ -57,13 +57,18 @@ test('CCTV motion pauses with ads/background and resumes without skipping frames
   const after = { ...before, floor: 2, moving: true, direction: 'up' };
   controller.startAction('moveUp', before, after);
   now = 5500;
-  const beforePause = controller.sample(after).progress;
+  const beforePauseFrame = controller.sample(after);
+  const beforePause = beforePauseFrame.progress;
   controller.pause();
   now = 8500;
-  assert.equal(controller.sample(after).progress, beforePause);
+  const pausedFrame = controller.sample(after);
+  assert.equal(pausedFrame.progress, beforePause);
+  assert.equal(pausedFrame.frameTime, beforePauseFrame.frameTime);
   controller.resume();
   now = 8800;
-  assert.ok(controller.sample(after).progress > beforePause);
+  const resumedFrame = controller.sample(after);
+  assert.ok(resumedFrame.progress > beforePause);
+  assert.ok(resumedFrame.frameTime > pausedFrame.frameTime);
 });
 
 test('anomaly reveal produces time-varying glitch instead of a static image swap', () => {

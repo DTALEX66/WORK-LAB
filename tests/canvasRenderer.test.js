@@ -248,6 +248,13 @@ test('canvas CCTV treatment consumes the shared cctvState mapping', () => {
   assert.match(canvasRendererSource, /getCanvasCctvTreatment\(cctvState\)/);
 });
 
+test('canvas CCTV effects consume the pausable motion frame clock', () => {
+  assert.match(canvasRendererSource, /const frameTime = Number\(motion\?\.frameTime/);
+  assert.match(canvasRendererSource, /drawCanvasAnomalyArtifacts\(visual, x, y, w, h, frameTime\)/);
+  assert.doesNotMatch(canvasRendererSource, /Math\.sin\(Date\.now\(\)/);
+  assert.doesNotMatch(canvasRendererSource, /tearY[\s\S]{0,80}Date\.now\(\)/);
+});
+
 test('canvas monitor masks baked CCTV answers and replaces them with neutral runtime clues', () => {
   assert.match(canvasRendererSource, /状态图含固定英文诊断与固定楼层/);
   assert.match(canvasRendererSource, /\['phantom_floor', 'floor_jump', 'negative_floor'\]/);
