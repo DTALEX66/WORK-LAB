@@ -83,8 +83,12 @@ test('visualState maps normal elevator conditions to imported CCTV states', () =
   assert.equal(deriveVisualState({ ...createInitialState(), direction: 'up' }).cctvState, '04_moving_up');
   assert.equal(deriveVisualState({ ...createInitialState(), direction: 'up', elapsed: 1 }).cctvState, '04_moving_up', 'stability must not hide active movement');
   assert.equal(deriveVisualState({ ...createInitialState(), direction: 'down' }).cctvState, '05_moving_down');
-  assert.equal(deriveVisualState({ ...createInitialState(), power: 18 }).cctvState, '06_power_low');
-  assert.equal(deriveVisualState({ ...createInitialState(), power: 4 }).cctvState, '07_power_outage');
+  // 正常运行且无活动异常时不再显示残余数值的异常 CCTV 状态
+  assert.equal(deriveVisualState({ ...createInitialState(), power: 18 }).cctvState, '00_idle_closed', 'normal running should not show power-based CCTV');
+  assert.equal(deriveVisualState({ ...createInitialState(), power: 4 }).cctvState, '00_idle_closed', 'normal running should not show power-outage CCTV');
+  // 异常活动期间仍应显示对应的电源警报
+  assert.equal(deriveVisualState({ ...createInitialState(), power: 18, activeAnomaly: 'power_drain' }).cctvState, '06_power_low', 'anomaly-active power low should still show');
+  assert.equal(deriveVisualState({ ...createInitialState(), power: 4, activeAnomaly: 'emergency_lights' }).cctvState, '07_power_outage', 'anomaly-active power outage should still show');
   assert.equal(deriveVisualState({ ...createInitialState(), fakeEndingCooldownRemaining: 1 }).cctvState, '23_cooldown_safe');
   assert.equal(deriveVisualState({ ...createInitialState(), anomalyLevel: 2, activeAnomaly: 'door_refuse' }).cctvState, '09_door_jammed');
 });
