@@ -1355,6 +1355,7 @@ let scale = 1;        // 实际像素/设计像素比例
 let DH = 1334;        // 设计高度（自适应）
 let safeInsetTop = 0; // 全面屏安全区折算到设计坐标
 let assetStore = null; // 真实 CCTV / 控制台视觉资产
+let actionDeckPage = 0; // 0=四键主操作台，1+=次级操作页
 
 // ── 颜色 ──
 const COLORS = {
@@ -1384,18 +1385,19 @@ function getCanvasViewportMetrics(systemInfo = {}) {
 }
 
 function getCanvasLayout(height = 1334, safeTop = 0) {
-  const monitor = { x: 14, y: 82 + safeTop, w: 722, h: 510 };
+  // 移动端以 CCTV 为绝对主视觉；比例对齐原始 H5 成品，而不是后台仪表盘。
+  const monitor = { x: 14, y: 102 + safeTop, w: 722, h: 740 };
   const actions = {
-    x: 14, y: 600 + safeTop, w: 722, h: 238,
-    columns: 4, gap: 10, buttonH: 88, startY: 638 + safeTop,
+    x: 14, y: 852 + safeTop, w: 722, h: 188,
+    columns: 4, gap: 10, buttonH: 138, startY: 890 + safeTop,
   };
   actions.buttonW = (actions.w - 32 - (actions.columns - 1) * actions.gap) / actions.columns;
   return {
-    topbar: { x: 14, y: 12 + safeTop, w: 722, h: 62 },
+    topbar: { x: 14, y: 12 + safeTop, w: 722, h: 82 },
     monitor,
     actions,
-    status: { x: 14, y: 846 + safeTop, w: 722, h: 198 },
-    logs: { x: 14, y: 1052 + safeTop, w: 722, h: Math.max(180, height - 1066 - safeTop) },
+    status: { x: 14, y: 1050 + safeTop, w: 722, h: 198 },
+    logs: { x: 14, y: 1258 + safeTop, w: 722, h: Math.max(180, height - 1272 - safeTop) },
   };
 }
 
@@ -1413,7 +1415,7 @@ function getCanvasMuteControl(height = 1334, safeTop = 0, started = true) {
     const { card } = getCanvasStartControls(height, safeTop);
     return { x: card.x + card.w - 112, y: card.y - 6, w: 88, h: 86, visualOffsetY: 24, visualH: 38 };
   }
-  return { x: 638, y: 548 + safeTop, w: 84, h: 86, visualOffsetY: 48, visualH: 30 };
+  return { x: 638, y: 804 + safeTop, w: 84, h: 86, visualOffsetY: 48, visualH: 30 };
 }
 
 // ── Measure text ──
@@ -1490,19 +1492,20 @@ function drawTopbar(state) {
   ctx.fillRect(x, y, 5, h);
 
   ctx.fillStyle = COLORS.text;
-  ctx.font = 'bold 28px "Microsoft YaHei", sans-serif';
-  ctx.fillText(meta?.name || '', x + 18, y + 37);
+  ctx.font = 'bold 36px "Microsoft YaHei", sans-serif';
+  ctx.fillText(meta?.name || '', x + 18, y + 48);
   ctx.fillStyle = COLORS.muted;
-  ctx.font = '11px Consolas, "Microsoft YaHei", monospace';
-  ctx.fillText(meta?.subtitle || '', x + 19, y + 53);
+  ctx.font = '12px Consolas, "Microsoft YaHei", monospace';
+  ctx.fillText(meta?.subtitle || '', x + 19, y + 68);
 
+  // 抖音右上角系统胶囊占据约 160 设计像素；倒计时放到其左侧安全区。
   const cardW = 116;
-  const cardX = x + w - cardW - 10;
+  const cardX = x + w - cardW - 170;
   roundRect(cardX, y + 9, cardW, h - 18, 4, '#080a0a', 'rgba(225,168,75,0.48)');
   ctx.fillStyle = COLORS.amber;
-  ctx.font = 'bold 30px Consolas, monospace';
+  ctx.font = 'bold 34px Consolas, monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(Math.ceil(state.remaining).toString(), cardX + cardW / 2, y + 42);
+  ctx.fillText(Math.ceil(state.remaining).toString(), cardX + cardW / 2, y + 54);
   ctx.textAlign = 'left';
 }
 
@@ -1643,6 +1646,22 @@ function getCanvasCctvTreatment(cctvState = '00_idle_closed') {
   return { tint, darkness, entity, glitch, threat };
 }
 
+function drawImageCover(image, x, y, w, h, fallbackWidth = 720, fallbackHeight = 420) {
+  const sourceW = Number(image.width || image.naturalWidth) || fallbackWidth;
+  const sourceH = Number(image.height || image.naturalHeight) || fallbackHeight;
+  const sourceRatio = sourceW / sourceH;
+  const targetRatio = w / h;
+  let sx = 0, sy = 0, sw = sourceW, sh = sourceH;
+  if (sourceRatio > targetRatio) {
+    sw = sourceH * targetRatio;
+    sx = (sourceW - sw) / 2;
+  } else {
+    sh = sourceW / targetRatio;
+    sy = (sourceH - sh) / 2;
+  }
+  ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+}
+
 function drawCctvScene(state, x, y, w, h) {
   if (h <= 20) return;
   const visual = deriveVisualState(state);
@@ -1654,7 +1673,7 @@ function drawCctvScene(state, x, y, w, h) {
     ctx.beginPath();
     ctx.rect(x, y, w, h);
     ctx.clip();
-    ctx.drawImage(sceneImage, x, y, w, h);
+    drawImageCover(sceneImage, x, y, w, h);
 
     // 状态图已内置监控边框、扫描线和暗角；这里只叠加随运行状态变化的效果，
     // 避免重复纹理把关键异常线索压暗。
@@ -1827,65 +1846,82 @@ function getCanvasActionButtons(state) {
   return operations;
 }
 
+function getCanvasVisibleActionButtons(state, page = actionDeckPage) {
+  const all = getCanvasActionButtons(state);
+  if (state.inspection?.status === 'pending') return all.slice(0, 2);
+
+  const preferredIds = ['closeDoor', 'moveUp', 'emergencyStop'];
+  const recommended = all.find(button => button.recommended && !preferredIds.includes(button.id));
+  const primaryIds = recommended
+    ? ['closeDoor', recommended.id, 'emergencyStop']
+    : preferredIds;
+  const primary = primaryIds.map(id => all.find(button => button.id === id)).filter(Boolean);
+  if (page === 0) {
+    return [...primary, { id: 'moreActions', label: '更多', deckControl: 'more' }].slice(0, 4);
+  }
+
+  const secondary = all.filter(button => !primaryIds.includes(button.id));
+  const pageCount = Math.max(1, Math.ceil(secondary.length / 3));
+  const normalizedPage = ((page - 1) % pageCount + pageCount) % pageCount;
+  const pageButtons = secondary.slice(normalizedPage * 3, normalizedPage * 3 + 3);
+  const atLastPage = normalizedPage === pageCount - 1;
+  return [
+    ...pageButtons,
+    { id: atLastPage ? 'backActions' : 'nextActions', label: atLastPage ? '返回' : '下一组', deckControl: atLastPage ? 'back' : 'next' },
+  ];
+}
+
 // ── 绘制操作按钮 ──
 function drawActions(state) {
   const layout = getCanvasLayout(DH, safeInsetTop).actions;
-  const { x, y, w, h, columns, gap, buttonW, buttonH, startY } = layout;
+  const { x, y, w, h, gap, buttonH, startY } = layout;
   const labels = getCanvasStaticLabels();
   roundRect(x, y, w, h, 6, COLORS.panel, COLORS.line);
   ctx.fillStyle = '#bbb9af';
   ctx.font = 'bold 12px Consolas, "Microsoft YaHei", monospace';
   ctx.fillText(`■ ${labels.actionPanel}`, x + 14, y + 24);
 
-  const btns = getCanvasActionButtons(state).slice(0, 8);
+  const btns = getCanvasVisibleActionButtons(state);
+  const columns = btns.length === 2 ? 2 : 4;
+  const buttonW = (w - 32 - (columns - 1) * gap) / columns;
   btns.forEach((btn, i) => {
     ctx.save();
     if (btn.disabled) ctx.globalAlpha = 0.36;
     const bx = x + 16 + (i % columns) * (buttonW + gap);
     const by = startY + Math.floor(i / columns) * (buttonH + gap);
     const danger = btn.id === 'emergencyStop' || btn.id === 'reportAnomaly';
-    const buttonKind = btn.disabled
-      ? 'disabled'
-      : btn.recommended
-        ? 'recommended'
-        : danger
-          ? 'danger'
-          : btn.id === 'inspectLog'
-            ? 'inspectLog'
-            : btn.id === 'unlockHiddenLog'
-              ? 'unlockHiddenLog'
-              : 'default';
-    const buttonSprite = assetStore?.getButton(buttonKind);
+    const semanticSpriteKind = getSkin().meta?.id === 'elevator'
+      ? ({ closeDoor: 'default', moveUp: 'recommended', emergencyStop: 'danger', moreActions: 'more' })[btn.id]
+      : null;
+    const buttonSprite = semanticSpriteKind ? assetStore?.getButton(semanticSpriteKind) : null;
     if (buttonSprite) {
-      ctx.globalAlpha = 0.92;
+      ctx.globalAlpha = btn.disabled ? 0.36 : 1;
       ctx.drawImage(buttonSprite, bx, by, buttonW, buttonH);
       ctx.globalAlpha = 1;
-      ctx.fillStyle = 'rgba(5,9,9,0.94)';
-      ctx.fillRect(bx + 12, by + 6, buttonW - 24, buttonH - 12);
     } else {
       const fill = ctx.createLinearGradient(0, by, 0, by + buttonH);
       fill.addColorStop(0, danger ? '#492420' : '#2a2f30');
       fill.addColorStop(0.2, danger ? '#321614' : '#1b1f20');
       fill.addColorStop(1, danger ? '#100909' : '#090b0c');
       roundRect(bx, by, buttonW, buttonH, 5, fill, danger ? 'rgba(231,92,79,0.78)' : '#4b504e');
+      roundRect(bx + 5, by + 5, buttonW - 10, buttonH - 10, 3, null, 'rgba(0,0,0,0.72)');
+
+      ctx.fillStyle = danger ? COLORS.red : COLORS.green;
+      ctx.beginPath();
+      ctx.arc(bx + buttonW / 2, by + 28, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = COLORS.text;
+      ctx.font = 'bold 20px "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(btn.label, bx + buttonW / 2, by + 83);
+      ctx.fillStyle = COLORS.muted;
+      ctx.font = '11px Consolas, monospace';
+      ctx.fillText(btn.id.toUpperCase().slice(0, 12), bx + buttonW / 2, by + 112);
+      ctx.textAlign = 'left';
     }
-    roundRect(bx + 5, by + 5, buttonW - 10, buttonH - 10, 3, null, 'rgba(0,0,0,0.72)');
     if (btn.recommended) {
       roundRect(bx - 2, by - 2, buttonW + 4, buttonH + 4, 6, null, 'rgba(225,168,75,0.94)');
     }
-
-    ctx.fillStyle = danger ? COLORS.red : COLORS.green;
-    ctx.beginPath();
-    ctx.arc(bx + buttonW / 2, by + 22, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = COLORS.text;
-    ctx.font = 'bold 15px "Microsoft YaHei", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(btn.label, bx + buttonW / 2, by + 57);
-    ctx.fillStyle = COLORS.muted;
-    ctx.font = '10px Consolas, monospace';
-    ctx.fillText(btn.id.toUpperCase().slice(0, 12), bx + buttonW / 2, by + 74);
-    ctx.textAlign = 'left';
     ctx.restore();
   });
 }
@@ -1907,7 +1943,7 @@ function drawLogs(state) {
   ctx.font = 'bold 12px Consolas, "Microsoft YaHei", monospace';
   ctx.fillText(`■ ${labels.logPanel}`, x + 14, y + 24);
 
-  const maxRows = Math.max(3, Math.floor((h - 48) / 22));
+  const maxRows = Math.min(5, Math.max(3, Math.floor((h - 48) / 22)));
   const logs = getCanvasVisibleLogs(state, maxRows);
   logs.forEach((log, i) => {
     const lx = x + 18, ly = y + 38 + i * 22;
@@ -2161,16 +2197,23 @@ function onCanvasClick(x, y, state, callbacks, viewState = { started: true }) {
     return;
   }
 
-  // 操作按钮检测 — 与 V3 四列硬件键轨使用同一布局数据。
+  // 操作按钮检测 — 与当前四键操作台/次级操作页共享布局数据。
   const layout = getCanvasLayout(DH, safeInsetTop).actions;
-  const buttons = getCanvasActionButtons(state).slice(0, 8);
+  const buttons = getCanvasVisibleActionButtons(state);
+  const columns = buttons.length === 2 ? 2 : 4;
+  const buttonW = (layout.w - 32 - (columns - 1) * layout.gap) / columns;
   for (let i = 0; i < buttons.length; i += 1) {
-    const bx = layout.x + 16 + (i % layout.columns) * (layout.buttonW + layout.gap);
-    const by = layout.startY + Math.floor(i / layout.columns) * (layout.buttonH + layout.gap);
-    if (x >= bx && x <= bx + layout.buttonW && y >= by && y <= by + layout.buttonH) {
+    const bx = layout.x + 16 + (i % columns) * (buttonW + layout.gap);
+    const by = layout.startY + Math.floor(i / columns) * (layout.buttonH + layout.gap);
+    if (x >= bx && x <= bx + buttonW && y >= by && y <= by + layout.buttonH) {
       if (buttons[i].disabled) return;
-      if (buttons[i].decision) onDecision?.(buttons[i].decision);
-      else onAction?.(buttons[i].id);
+      if (buttons[i].deckControl === 'more') actionDeckPage = 1;
+      else if (buttons[i].deckControl === 'next') actionDeckPage += 1;
+      else if (buttons[i].deckControl === 'back') actionDeckPage = 0;
+      else if (buttons[i].decision) {
+        actionDeckPage = 0;
+        onDecision?.(buttons[i].decision);
+      } else onAction?.(buttons[i].id);
       return;
     }
   }
@@ -2213,6 +2256,7 @@ function init(canvasEl, systemInfo = {}) {
   };
   assetStore = createCanvasAssetStore(imageFactory);
   assetStore.preload();
+  actionDeckPage = 0;
 
   return { width: DW, height: DH };
 }

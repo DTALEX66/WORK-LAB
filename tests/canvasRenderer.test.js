@@ -7,7 +7,7 @@ import { createInitialState } from '../src/state.js';
 import { loadSkin } from '../src/skinManager.js';
 import securitySkin from '../src/skins/security/skin.json' with { type: 'json' };
 import elevatorSkin from '../src/skins/elevator/skin.json' with { type: 'json' };
-import { getCanvasActionButtons, getCanvasCctvTreatment, getCanvasFailureOverlayCopy, getCanvasLayout, getCanvasMeterBars, getCanvasMuteControl, getCanvasStaticLabels, getCanvasStatusItems, getCanvasVisibleLogs, onCanvasClick } from '../platform/canvasRenderer.js';
+import { getCanvasActionButtons, getCanvasCctvTreatment, getCanvasFailureOverlayCopy, getCanvasLayout, getCanvasMeterBars, getCanvasMuteControl, getCanvasStaticLabels, getCanvasStatusItems, getCanvasVisibleActionButtons, getCanvasVisibleLogs, onCanvasClick } from '../platform/canvasRenderer.js';
 import { getDomLabels } from '../src/uiLabels.js';
 
 const canvasRendererSource = readFileSync(new URL('../platform/canvasRenderer.js', import.meta.url), 'utf8');
@@ -47,15 +47,20 @@ test('Canvas mute control remains reachable before and during play', () => {
   assert.equal(toggles, 2);
 });
 
-test('Canvas V3 hit testing shares the four-column action layout', () => {
+test('Canvas action deck opens secondary controls from the fourth hardware key', () => {
   loadSkin(elevatorSkin);
   const state = createInitialState();
   const layout = getCanvasLayout(1334).actions;
-  const expected = getCanvasActionButtons(state)[3].id;
   let selected = null;
-  const x = layout.x + 16 + 3 * (layout.buttonW + layout.gap) + layout.buttonW / 2;
+
+  const fourthX = layout.x + 16 + 3 * (layout.buttonW + layout.gap) + layout.buttonW / 2;
   const y = layout.startY + layout.buttonH / 2;
-  onCanvasClick(x, y, state, { onAction: id => { selected = id; } });
+  onCanvasClick(fourthX, y, state, { onAction: id => { selected = id; } });
+  assert.equal(selected, null, 'the fourth primary key opens More rather than firing gameplay');
+
+  const expected = getCanvasVisibleActionButtons(state, 1)[0].id;
+  const firstX = layout.x + 16 + layout.buttonW / 2;
+  onCanvasClick(firstX, y, state, { onAction: id => { selected = id; } });
   assert.equal(selected, expected);
 });
 
