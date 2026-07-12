@@ -5,6 +5,8 @@
  */
 
 import CONFIG from '../src/gameConfig.js';
+import { expireInspection, openInspection, submitInspection } from '../src/incidentDecision.js';
+import { t } from '../src/skinManager.js';
 import { performAction } from '../src/actions.js';
 import { applyAnomaly, pickNextAnomaly } from '../src/events.js';
 import {
@@ -21,7 +23,10 @@ import {
   scheduleNextAnomalyAfterRevive,
   scheduleNextAnomalyAfterTrigger,
 } from '../src/runtimeSession.js';
-import { init as initCanvasRenderer, onCanvasClick, render } from './canvasRenderer.js';
+import { init, onCanvasClick, render } from './canvasRenderer.js';
+import { bindMiniGameLifecycle, checkDouyinSidebar, navigateToDouyinSidebar } from './douyinIntegration.js';
+import { createMiniGameAudio } from './miniGameAudio.js';
+import { createMiniGameClock } from './miniGameClock.js';
 import { shouldApplyReward } from '../src/rewardGuard.js';
 
 function getHostApi() {
@@ -55,6 +60,8 @@ export function createMiniGameRewardedAd(api, adUnitId, options = {}) {
   const {
     onReward,
     onError,
+    onStart,
+    onSettled,
     releaseMode = CONFIG.releaseMode,
   } = options;
 
@@ -64,6 +71,7 @@ export function createMiniGameRewardedAd(api, adUnitId, options = {}) {
       const meta = { attemptId: null, context };
       if (!releaseMode) onReward?.(meta);
       onError?.(error, meta);
+      onSettled?.(meta);
       return Promise.resolve();
     };
   }
@@ -76,11 +84,15 @@ export function createMiniGameRewardedAd(api, adUnitId, options = {}) {
     attempt.settled = true;
     if (activeAttempt === attempt) activeAttempt = null;
     const meta = { attemptId: attempt.id, context: attempt.context };
-    if (rewarded || (!releaseMode && error)) onReward?.(meta);
-    if (error) onError?.(error, meta);
-    attempt.ad.offClose?.(attempt.closeHandler);
-    attempt.ad.offError?.(attempt.errorHandler);
-    attempt.ad.destroy?.();
+    try {
+      if (rewarded || (!releaseMode && error)) onReward?.(meta);
+      if (error) onError?.(error, meta);
+    } finally {
+      onSettled?.(meta);
+      attempt.ad.offClose?.(attempt.closeHandler);
+      attempt.ad.offError?.(attempt.errorHandler);
+      attempt.ad.destroy?.();
+    }
   };
 
   return (context = null) => {
@@ -97,6 +109,7 @@ export function createMiniGameRewardedAd(api, adUnitId, options = {}) {
     attempt.closeHandler = (res) => settle(attempt, Boolean(res?.isEnded));
     attempt.errorHandler = (error) => settle(attempt, false, error);
     activeAttempt = attempt;
+    onStart?.({ attemptId: attempt.id, context: attempt.context });
     ad.onClose?.(attempt.closeHandler);
     ad.onError?.(attempt.errorHandler);
 
@@ -120,24 +133,63 @@ export function startMiniGame() {
 
   const canvas = api.createCanvas();
   const info = getSystemInfo(api);
-  const dims = initCanvasRenderer(canvas);
+  const dims = init(canvas, info);
+  const clock = createMiniGameClock(getNow);
+  const audio = createMiniGameAudio(api);
+  const audioStorageKey = 'minigame_audio_muted_v1';
+  try {
+    audio.setMuted(api.getStorageSync?.(audioStorageKey) === true);
+  } catch {
+    audio.setMuted(false);
+  }
+  let sidebarAvailable = typeof api.navigateToScene === 'function' && typeof api.checkScene === 'function';
+  const refreshSidebarAvailability = () => checkDouyinSidebar(api).then((available) => {
+    sidebarAvailable = available;
+    return available;
+  });
+  refreshSidebarAvailability();
   let session = createRuntimeSession();
   let state = session.state;
   let nextAnomalyAt = session.nextAnomalyAt;
-  let lastTickAt = getNow();
   let lastSnapshotAt = 0;
   let failureRecorded = false;
   let runToken = 0;
+  let nextNormalInspectionAt = Number.POSITIVE_INFINITY;
+  let lifecycleHidden = false;
+  let adPauseActive = false;
+
+  function pauseForAd() {
+    adPauseActive = true;
+    clock.pause();
+    audio.stopAll();
+  }
+
+  function resumeAfterAd() {
+    adPauseActive = false;
+    if (!lifecycleHidden) clock.resume();
+  }
+
+  function showAdError() {
+    api.showToast?.({ title: t('ui.adUnavailable'), icon: 'none' });
+  }
 
   const reviveAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.revive, {
     releaseMode: CONFIG.releaseMode,
     onReward: (meta) => {
       if (!shouldApplyReward(meta, runToken, 'revive', state)) return;
       state = reviveFromAd(state);
+      state = { ...state, inspection: null };
+      nextNormalInspectionAt = state.elapsed + 4;
+      audio.play('result');
       nextAnomalyAt = scheduleNextAnomalyAfterRevive(state.elapsed);
       failureRecorded = false;
     },
-    onError: (error) => console.warn('[MINIGAME] revive ad failed', error),
+    onStart: pauseForAd,
+    onSettled: resumeAfterAd,
+    onError: (error) => {
+      console.warn('[MINIGAME] revive ad failed', error);
+      showAdError();
+    },
   });
 
   const truthAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.truth, {
@@ -146,7 +198,12 @@ export function startMiniGame() {
       if (!shouldApplyReward(meta, runToken, 'truth', state)) return;
       state = { ...state, fakeEndingUnlocked: true, fakeEndingTruth: state.lastAdHint || '' };
     },
-    onError: (error) => console.warn('[MINIGAME] truth ad failed', error),
+    onStart: pauseForAd,
+    onSettled: resumeAfterAd,
+    onError: (error) => {
+      console.warn('[MINIGAME] truth ad failed', error);
+      showAdError();
+    },
   });
 
   const decodeAd = createMiniGameRewardedAd(api, CONFIG.adUnits?.decode, {
@@ -156,28 +213,81 @@ export function startMiniGame() {
       const result = performAction(state, 'unlockHiddenLog');
       state = result.state;
     },
-    onError: (error) => console.warn('[MINIGAME] decode ad failed', error),
+    onStart: pauseForAd,
+    onSettled: resumeAfterAd,
+    onError: (error) => {
+      console.warn('[MINIGAME] decode ad failed', error);
+      showAdError();
+    },
   });
+
+  function getViewState() {
+    return {
+      started: clock.isStarted(),
+      paused: clock.isPaused(),
+      muted: audio.isMuted(),
+      sidebarAvailable,
+    };
+  }
+
+  function toggleMute() {
+    const muted = audio.setMuted(!audio.isMuted());
+    try {
+      api.setStorageSync?.(audioStorageKey, muted);
+    } catch {
+      // Audio preference persistence is best-effort and never blocks play.
+    }
+  }
+
+  function start() {
+    if (clock.isStarted()) return;
+    audio.play('click');
+    state = openInspection(state, {
+      id: `baseline-${runToken}`,
+      kind: 'normal',
+      title: t('ui.baselineInspectionTitle'),
+      duration: 6,
+    });
+    nextNormalInspectionAt = Number.POSITIVE_INFINITY;
+    clock.start();
+  }
+
+  function openSidebar() {
+    navigateToDouyinSidebar(api).then((opened) => {
+      if (!opened) api.showToast?.({ title: '当前环境无法打开侧边栏', icon: 'none' });
+    });
+  }
 
   function restart() {
     runToken += 1;
+    audio.play('click');
+    clock.start();
     session = restartRuntimeSession({ state });
     state = session.state;
+    state = openInspection(state, {
+      id: `baseline-${runToken}`,
+      kind: 'normal',
+      title: t('ui.baselineInspectionTitle'),
+      duration: 6,
+    });
+    nextNormalInspectionAt = Number.POSITIVE_INFINITY;
     nextAnomalyAt = session.nextAnomalyAt;
     lastSnapshotAt = 0;
     failureRecorded = false;
   }
 
-  function forceAnomaly() {
+  function handleDecision(choice) {
     if (state.gameOver) return;
-    const event = pickNextAnomaly(state);
-    const result = applyAnomaly(state, event.id);
+    const result = submitInspection(state, choice);
+    if (!result.accepted) return;
     state = result.state;
-    nextAnomalyAt = scheduleNextAnomalyAfterTrigger(state.elapsed);
+    audio.play(result.correct ? 'click' : 'result');
+    nextNormalInspectionAt = state.elapsed + 8;
   }
 
   function handleAction(actionId) {
     if (state.gameOver) return;
+    audio.play('click');
     if (actionId === 'unlockHiddenLog') {
       decodeAd({ runToken });
       return;
@@ -198,49 +308,92 @@ export function startMiniGame() {
     const touch = e.touches?.[0] || e.changedTouches?.[0] || e;
     const screenW = info.windowWidth || 750;
     const screenH = info.windowHeight || 1334;
-    const x = (touch.clientX ?? touch.x ?? 0) * (750 / screenW);
-    const y = (touch.clientY ?? touch.y ?? 0) * (dims.height / screenH);
+    const x = (touch.clientX ?? touch.screenX ?? touch.x ?? 0) * (750 / screenW);
+    const y = (touch.clientY ?? touch.screenY ?? touch.y ?? 0) * (dims.height / screenH);
     onCanvasClick(x, y, state, {
       onAction: handleAction,
-      onForceAnomaly: forceAnomaly,
+      onDecision: handleDecision,
+      onToggleMute: toggleMute,
       onAdRevive: handleAd,
       onRestart: restart,
-    });
+      onStart: start,
+      onSidebar: openSidebar,
+    }, getViewState());
   }
 
   api.onTouchStart?.(onTouch);
+  bindMiniGameLifecycle(api, {
+    onPause: () => {
+      lifecycleHidden = true;
+      clock.pause();
+      audio.stopAll();
+    },
+    onResume: () => {
+      lifecycleHidden = false;
+      refreshSidebarAvailability();
+      if (!adPauseActive) clock.resume();
+    },
+  });
 
   function update() {
-    const now = getNow();
-    const delta = Math.floor((now - lastTickAt) / 1000);
+    const delta = clock.consumeDeltaSeconds();
     if (delta > 0) {
-      lastTickAt += delta * 1000;
       if (!state.gameOver) {
         for (let i = 0; i < delta; i += 1) {
           state = tickState(state, 1);
+          if (!state.gameOver) {
+            const expiry = expireInspection(state);
+            state = expiry.state;
+            if (expiry.timedOut) {
+              audio.play('result');
+              nextNormalInspectionAt = state.elapsed + 8;
+            }
+          }
+          if (
+            !state.gameOver
+            && state.inspection?.status !== 'pending'
+            && state.elapsed >= nextNormalInspectionAt
+            && state.elapsed + 6 < nextAnomalyAt
+          ) {
+            state = openInspection(state, {
+              id: `baseline-${runToken}-${state.elapsed}`,
+              kind: 'normal',
+              title: t('ui.baselineInspectionTitle'),
+              duration: 6,
+            });
+            nextNormalInspectionAt = Number.POSITIVE_INFINITY;
+          }
           if (!state.gameOver && state.elapsed - lastSnapshotAt >= CONFIG.adRevive.snapshotInterval) {
             state = saveSnapshot(state);
             lastSnapshotAt = state.elapsed;
           }
           if (!state.gameOver && state.elapsed >= nextAnomalyAt) {
             const event = pickNextAnomaly(state);
+            audio.play('anomaly');
             const result = applyAnomaly(state, event.id);
-            state = result.state;
+            state = openInspection(result.state, {
+              id: event.id,
+              kind: 'anomaly',
+              title: t('ui.anomalyInspectionTitle'),
+              duration: 7,
+            });
+            nextNormalInspectionAt = Number.POSITIVE_INFINITY;
             nextAnomalyAt = scheduleNextAnomalyAfterTrigger(state.elapsed);
           }
         }
       }
       if (state.gameOver && !failureRecorded) {
         state = state.result === 'success' ? recordSuccessfulShift(state) : recordFailure(state);
+        audio.play('result');
         failureRecorded = true;
       }
     }
 
-    render(state);
+    render(state, getViewState());
     nextFrame(api, update);
   }
 
-  render(state);
+  render(state, getViewState());
   nextFrame(api, update);
-  return { canvas, getState: () => state, restart };
+  return { canvas, getState: () => state, restart, start };
 }

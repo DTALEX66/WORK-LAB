@@ -32,6 +32,31 @@ test('mini-game rewarded ads fail closed in release mode', async () => {
   assert.equal(errors, 1);
 });
 
+test('mini-game rewarded ads expose start and settlement hooks for active clock pause', async () => {
+  let closeHandler;
+  let starts = 0;
+  let settlements = 0;
+  const api = {
+    createRewardedVideoAd() {
+      return {
+        onClose(handler) { closeHandler = handler; },
+        onError() {},
+        show: () => Promise.resolve(),
+      };
+    },
+  };
+  const show = createMiniGameRewardedAd(api, 'adunit-real', {
+    releaseMode: true,
+    onStart: () => { starts += 1; },
+    onSettled: () => { settlements += 1; },
+  });
+  await show();
+  assert.equal(starts, 1);
+  assert.equal(settlements, 0);
+  closeHandler({ isEnded: false });
+  assert.equal(settlements, 1);
+});
+
 test('mini-game rewarded ads reward exactly once only after completed close', async () => {
   let closeHandler;
   let rewards = 0;
@@ -100,5 +125,9 @@ test('mini-game decode action is gated by the decode rewarded-ad slot', () => {
   assert.match(source, /const decodeAd = createMiniGameRewardedAd/, 'runtime should create a dedicated decode ad');
   assert.match(source, /onReward:\s*\(meta\)[\s\S]*shouldApplyReward\(meta, runToken, 'decode', state\)/, 'decode reward should reject stale or invalid state');
   assert.match(source, /actionId === 'unlockHiddenLog'[\s\S]*decodeAd\(\{ runToken \}\)/, 'decode action must carry the originating run token');
+  assert.match(source, /onStart:\s*pauseForAd/);
+  assert.match(source, /onSettled:\s*resumeAfterAd/);
+  assert.match(source, /function pauseForAd\(\)[\s\S]*clock\.pause\(\)/);
+  assert.match(source, /function resumeAfterAd\(\)[\s\S]*!lifecycleHidden[\s\S]*clock\.resume\(\)/);
   assert.match(source, /state\.result === 'success' \? recordSuccessfulShift/, 'Canvas loop should consume the state-machine result');
 });

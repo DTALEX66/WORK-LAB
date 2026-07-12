@@ -11,7 +11,7 @@
 import { getAvailableActions } from '../src/actions.js';
 import { t, getSkin, actionLabel } from '../src/skinManager.js';
 import { summarizeFailure } from '../src/feedback.js';
-import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from '../src/uiLabels.js';
+import { getCanvasDecodedMonitorText, getCanvasDirectionLabel, getCanvasDoorLabel, getCanvasLabels } from './canvasLabels.js';
 import { deriveVisualState } from '../src/visualState.js';
 
 // ── 尺寸常量 ──
@@ -19,6 +19,7 @@ const DW = 750;       // 设计宽度
 let canvas, ctx;
 let scale = 1;        // 实际像素/设计像素比例
 let DH = 1334;        // 设计高度（自适应）
+let safeInsetTop = 0; // 全面屏安全区折算到设计坐标
 
 // ── 颜色 ──
 const COLORS = {
@@ -35,20 +36,49 @@ const COLORS = {
   darkRed: '#a52e38',
 };
 
-export function getCanvasLayout(height = 1334) {
-  const monitor = { x: 14, y: 82, w: 722, h: 510 };
+export function getCanvasViewportMetrics(systemInfo = {}) {
+  const windowWidth = Number(systemInfo.windowWidth) || 750;
+  const windowHeight = Number(systemInfo.windowHeight) || 1334;
+  const ratio = DW / windowWidth;
+  const safeTop = Math.max(0, Number(systemInfo.safeArea?.top ?? systemInfo.statusBarHeight) || 0) * ratio;
+  return {
+    width: DW,
+    height: Math.max(1334, windowHeight * ratio),
+    safeTop,
+  };
+}
+
+export function getCanvasLayout(height = 1334, safeTop = 0) {
+  const monitor = { x: 14, y: 82 + safeTop, w: 722, h: 510 };
   const actions = {
-    x: 14, y: 600, w: 722, h: 238,
-    columns: 4, gap: 10, buttonH: 88, startY: 638,
+    x: 14, y: 600 + safeTop, w: 722, h: 238,
+    columns: 4, gap: 10, buttonH: 88, startY: 638 + safeTop,
   };
   actions.buttonW = (actions.w - 32 - (actions.columns - 1) * actions.gap) / actions.columns;
   return {
-    topbar: { x: 14, y: 12, w: 722, h: 62 },
+    topbar: { x: 14, y: 12 + safeTop, w: 722, h: 62 },
     monitor,
     actions,
-    status: { x: 14, y: 846, w: 722, h: 198 },
-    logs: { x: 14, y: 1052, w: 722, h: Math.max(180, height - 1066) },
+    status: { x: 14, y: 846 + safeTop, w: 722, h: 198 },
+    logs: { x: 14, y: 1052 + safeTop, w: 722, h: Math.max(180, height - 1066 - safeTop) },
   };
+}
+
+export function getCanvasStartControls(height = 1334, safeTop = 0) {
+  const cardY = Math.max(150 + safeTop, (height - 390) / 2);
+  return {
+    card: { x: 55, y: cardY, w: 640, h: 390 },
+    start: { x: 75, y: cardY + 270, w: 380, h: 86 },
+    sidebar: { x: 469, y: cardY + 270, w: 206, h: 86 },
+  };
+}
+
+export function getCanvasMuteControl(height = 1334, safeTop = 0, started = true) {
+  if (!started) {
+    const { card } = getCanvasStartControls(height, safeTop);
+    return { x: card.x + card.w - 112, y: card.y - 6, w: 88, h: 86, visualOffsetY: 24, visualH: 38 };
+  }
+  return { x: 638, y: 548 + safeTop, w: 84, h: 86, visualOffsetY: 48, visualH: 30 };
 }
 
 // ── Measure text ──
@@ -94,13 +124,12 @@ function drawBackground() {
 }
 
 export function getCanvasStaticLabels() {
-  const labels = getDomLabels();
+  const labels = getCanvasLabels();
   return {
     countdown: labels.countdown,
     monitorPanel: labels.monitorPanel,
     actionPanel: labels.actionPanel,
     logPanel: labels.logPanel,
-    forceAnomaly: labels.forceAnomaly,
     failureTitle: labels.failureTitle,
     failureEyebrow: labels.failureEyebrow,
     adRevive: labels.revive,
@@ -119,7 +148,7 @@ export function getCanvasFailureOverlayCopy(state) {
 
 // ── 绘制顶栏 ──
 function drawTopbar(state) {
-  const { x, y, w, h } = getCanvasLayout(DH).topbar;
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).topbar;
   const meta = getSkin().meta;
   roundRect(x, y, w, h, 6, COLORS.panel, COLORS.line);
   ctx.fillStyle = COLORS.green;
@@ -143,12 +172,12 @@ function drawTopbar(state) {
 }
 
 export function getCanvasStatusItems(state) {
-  const labels = getDomLabels().status;
+  const labels = getCanvasLabels().status;
 
   return [
     { id: 'floor', label: labels.floor, value: state.floor },
-    { id: 'door', label: labels.door, value: getDoorLabel(state.door) },
-    { id: 'direction', label: labels.direction, value: getDirectionLabel(state.direction) },
+    { id: 'door', label: labels.door, value: getCanvasDoorLabel(state.door) },
+    { id: 'direction', label: labels.direction, value: getCanvasDirectionLabel(state.direction) },
     { id: 'passengers', label: labels.passengers, value: state.passengers },
     { id: 'power', label: labels.power, value: `${Math.round(state.power)}%` },
     { id: 'stability', label: labels.stability, value: `${Math.round(state.stability)}%` },
@@ -160,7 +189,7 @@ export function getCanvasStatusItems(state) {
 }
 
 export function getCanvasMeterBars(state) {
-  const labels = getDomLabels().status;
+  const labels = getCanvasLabels().status;
   return [
     { id: 'power', label: labels.power, value: state.power, color: COLORS.cyan },
     { id: 'stability', label: labels.stability, value: state.stability, color: COLORS.green },
@@ -168,12 +197,12 @@ export function getCanvasMeterBars(state) {
 }
 
 function getCanvasStatusPanelTitle() {
-  return getDomLabels().statusPanel;
+  return getCanvasLabels().statusPanel;
 }
 
 // ── 绘制状态面板 ──
 function drawStatusPanel(state) {
-  const { x, y, w, h } = getCanvasLayout(DH).status;
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).status;
   roundRect(x, y, w, h, 6, COLORS.panel, toneBorder(state));
   ctx.fillStyle = '#bbb9af';
   ctx.font = 'bold 12px Consolas, "Microsoft YaHei", monospace';
@@ -231,7 +260,7 @@ function toneBorder(state) {
 
 // ── 绘制监控画面 ──
 function drawMonitor(state) {
-  const { x, y, w, h } = getCanvasLayout(DH).monitor;
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).monitor;
   const labels = getCanvasStaticLabels();
   roundRect(x, y, w, h, 6, COLORS.panel, toneBorder(state));
   ctx.fillStyle = '#bbb9af';
@@ -245,6 +274,18 @@ function drawMonitor(state) {
   const scanY = (Date.now() / 100 * (mh - 52)) % (mh - 52);
   ctx.fillStyle = 'rgba(121,214,163,0.04)';
   ctx.fillRect(mx + 8, my + 8 + scanY, mw - 16, 4);
+
+  if (state.inspection?.status === 'pending') {
+    const seconds = Math.max(0, Math.ceil(state.inspection.expiresAt - state.elapsed));
+    roundRect(mx + 22, my + 18, mw - 44, 48, 4, 'rgba(20,12,8,0.9)', 'rgba(225,168,75,0.82)');
+    ctx.fillStyle = COLORS.amber;
+    ctx.font = 'bold 15px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(t('ui.inspectionLabel', { seconds }), mx + 38, my + 48);
+    ctx.fillStyle = COLORS.text;
+    ctx.font = '14px "Microsoft YaHei", sans-serif';
+    ctx.fillText(state.inspection.title, mx + 165, my + 48, mw - 220);
+  }
 
   const displayText = getMonitorText(state);
   ctx.fillStyle = '#c8c6bd';
@@ -398,7 +439,7 @@ function getMonitorText(state) {
   const unlockedHidden = state.hiddenLogs.filter(h => !h.locked);
   if (unlockedHidden.length > 0) {
     const last = unlockedHidden[unlockedHidden.length - 1];
-    return getDecodedMonitorText(last);
+    return getCanvasDecodedMonitorText(last);
   }
   return state.monitor;
 }
@@ -406,16 +447,30 @@ function getMonitorText(state) {
 export function getCanvasActionButtons(state) {
   const lockedCount = state.hiddenLogs.filter(h => h.locked).length;
   const visual = deriveVisualState(state);
-  return getAvailableActions()
+  const operations = getAvailableActions()
     .filter(action => action.id !== 'unlockHiddenLog' || lockedCount > 0)
     .map(action => action.id === 'unlockHiddenLog'
       ? { id: action.id, label: actionLabel(action.id, lockedCount), recommended: visual.highlightAction === action.id }
       : { ...action, recommended: visual.highlightAction === action.id });
+
+  if (state.inspection?.status === 'pending') {
+    const concealedOperations = operations.slice(0, 6).map(action => ({
+      ...action,
+      recommended: false,
+      disabled: true,
+    }));
+    return [
+      { id: 'reportNormal', label: t('ui.reportNormal'), decision: 'normal' },
+      { id: 'reportAnomaly', label: t('ui.reportAnomaly'), decision: 'anomaly' },
+      ...concealedOperations,
+    ];
+  }
+  return operations;
 }
 
 // ── 绘制操作按钮 ──
 function drawActions(state) {
-  const layout = getCanvasLayout(DH).actions;
+  const layout = getCanvasLayout(DH, safeInsetTop).actions;
   const { x, y, w, h, columns, gap, buttonW, buttonH, startY } = layout;
   const labels = getCanvasStaticLabels();
   roundRect(x, y, w, h, 6, COLORS.panel, COLORS.line);
@@ -425,9 +480,11 @@ function drawActions(state) {
 
   const btns = getCanvasActionButtons(state).slice(0, 8);
   btns.forEach((btn, i) => {
+    ctx.save();
+    if (btn.disabled) ctx.globalAlpha = 0.36;
     const bx = x + 16 + (i % columns) * (buttonW + gap);
     const by = startY + Math.floor(i / columns) * (buttonH + gap);
-    const danger = btn.id === 'emergencyStop';
+    const danger = btn.id === 'emergencyStop' || btn.id === 'reportAnomaly';
     const fill = ctx.createLinearGradient(0, by, 0, by + buttonH);
     fill.addColorStop(0, danger ? '#492420' : '#2a2f30');
     fill.addColorStop(0.2, danger ? '#321614' : '#1b1f20');
@@ -450,12 +507,21 @@ function drawActions(state) {
     ctx.font = '10px Consolas, monospace';
     ctx.fillText(btn.id.toUpperCase().slice(0, 12), bx + buttonW / 2, by + 74);
     ctx.textAlign = 'left';
+    ctx.restore();
   });
 }
 
 // ── 绘制系统日志 ──
+export function getCanvasVisibleLogs(state, maxRows = Number.POSITIVE_INFINITY) {
+  let logs = state.logs || [];
+  if (state.inspection?.kind === 'anomaly' && state.inspection?.status === 'pending') {
+    logs = logs.filter(log => log.time < state.inspection.openedAt);
+  }
+  return Number.isFinite(maxRows) ? logs.slice(-maxRows) : logs;
+}
+
 function drawLogs(state) {
-  const { x, y, w, h } = getCanvasLayout(DH).logs;
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).logs;
   const labels = getCanvasStaticLabels();
   roundRect(x, y, w, h, 6, COLORS.panel, COLORS.line);
   ctx.fillStyle = '#bbb9af';
@@ -463,7 +529,7 @@ function drawLogs(state) {
   ctx.fillText(`■ ${labels.logPanel}`, x + 14, y + 24);
 
   const maxRows = Math.max(3, Math.floor((h - 48) / 22));
-  const logs = state.logs.slice(-maxRows);
+  const logs = getCanvasVisibleLogs(state, maxRows);
   logs.forEach((log, i) => {
     const lx = x + 18, ly = y + 38 + i * 22;
     const colorMap = { warn: COLORS.amber, danger: COLORS.red, ad: COLORS.cyan, success: COLORS.green };
@@ -481,7 +547,7 @@ function drawFailureOverlay(state) {
   ctx.fillStyle = 'rgba(0,0,0,0.72)';
   ctx.fillRect(0, 0, DW, DH);
 
-  const cardW = 620, cardH = 350;
+  const cardW = 620, cardH = 390;
   const cx = (DW - cardW) / 2, cy = (DH - cardH) / 2;
 
   const labels = getCanvasStaticLabels();
@@ -542,10 +608,10 @@ function drawFailureOverlay(state) {
   }
 
   // 按钮
-  const btnY = cy + cardH - 70;
+  const btnY = cy + cardH - 106;
   if (!isSuccess) {
     const btnW2 = (cardW - 60) / 2;
-    roundRect(cx + 20, btnY, btnW2, 46, 5, '#17352a', 'rgba(121,214,163,0.7)');
+    roundRect(cx + 20, btnY, btnW2, 86, 5, '#17352a', 'rgba(121,214,163,0.7)');
     ctx.fillStyle = COLORS.text;
     ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
@@ -554,23 +620,88 @@ function drawFailureOverlay(state) {
       : state.fakeEndingTriggered
       ? labels.restart
       : labels.adRevive;
-    ctx.fillText(btnLabel, cx + 20 + btnW2 / 2, btnY + 29);
+    ctx.fillText(btnLabel, cx + 20 + btnW2 / 2, btnY + 50);
     ctx.textAlign = 'left';
 
-    roundRect(cx + 40 + btnW2, btnY, btnW2, 46, 5, '#202425', 'rgba(195,200,190,0.24)');
+    roundRect(cx + 40 + btnW2, btnY, btnW2, 86, 5, '#202425', 'rgba(195,200,190,0.24)');
     ctx.fillStyle = COLORS.text;
     ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(labels.restart, cx + 40 + btnW2 + btnW2 / 2, btnY + 29);
+    ctx.fillText(labels.restart, cx + 40 + btnW2 + btnW2 / 2, btnY + 50);
     ctx.textAlign = 'left';
   } else {
-    roundRect(cx + 20, btnY, cardW - 40, 46, 5, '#17352a', 'rgba(121,214,163,0.7)');
+    roundRect(cx + 20, btnY, cardW - 40, 86, 5, '#17352a', 'rgba(121,214,163,0.7)');
     ctx.fillStyle = COLORS.text;
     ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(labels.restart, cx + cardW / 2, btnY + 29);
+    ctx.fillText(labels.restart, cx + cardW / 2, btnY + 50);
     ctx.textAlign = 'left';
   }
+}
+
+function drawMuteControl(viewState) {
+  const control = getCanvasMuteControl(DH, safeInsetTop, viewState.started !== false);
+  const visualY = control.y + control.visualOffsetY;
+  roundRect(control.x, visualY, control.w, control.visualH, 4, '#141819', 'rgba(195,200,190,0.34)');
+  ctx.fillStyle = viewState.muted ? COLORS.amber : COLORS.green;
+  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(
+    t(viewState.muted ? 'ui.audioOff' : 'ui.audioOn'),
+    control.x + control.w / 2,
+    visualY + control.visualH / 2 + 5,
+  );
+  ctx.textAlign = 'left';
+}
+
+function drawStartOverlay(viewState = {}) {
+  const controls = getCanvasStartControls(DH, safeInsetTop);
+  const { card, start, sidebar } = controls;
+  ctx.fillStyle = 'rgba(2,3,3,0.82)';
+  ctx.fillRect(0, 0, DW, DH);
+  roundRect(card.x, card.y, card.w, card.h, 8, '#111415', 'rgba(121,214,163,0.52)');
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
+  ctx.fillText(t('ui.startTitle'), card.x + 24, card.y + 72);
+  ctx.fillStyle = '#b8bbb5';
+  ctx.font = '18px "Microsoft YaHei", sans-serif';
+  wrapText(t('ui.startCopy'), card.x + 24, card.y + 115, card.w - 48, 28);
+
+  roundRect(start.x, start.y, start.w, start.h, 5, '#17352a', 'rgba(121,214,163,0.8)');
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(t('ui.startButton'), start.x + start.w / 2, start.y + 52);
+
+  const sidebarEnabled = viewState.sidebarAvailable === true;
+  roundRect(
+    sidebar.x,
+    sidebar.y,
+    sidebar.w,
+    sidebar.h,
+    5,
+    sidebarEnabled ? '#282d2e' : '#151718',
+    sidebarEnabled ? 'rgba(225,168,75,0.72)' : 'rgba(195,200,190,0.16)',
+  );
+  ctx.fillStyle = sidebarEnabled ? COLORS.amber : '#686d69';
+  ctx.font = 'bold 17px "Microsoft YaHei", sans-serif';
+  ctx.fillText(t('ui.sidebarEntry'), sidebar.x + sidebar.w / 2, sidebar.y + 52);
+  ctx.textAlign = 'left';
+}
+
+function drawPauseOverlay() {
+  ctx.fillStyle = 'rgba(2,3,3,0.72)';
+  ctx.fillRect(0, 0, DW, DH);
+  const w = 430, h = 150, x = (DW - w) / 2, y = (DH - h) / 2;
+  roundRect(x, y, w, h, 7, '#111415', 'rgba(225,168,75,0.56)');
+  ctx.fillStyle = COLORS.amber;
+  ctx.font = 'bold 28px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(t('ui.pausedTitle'), DW / 2, y + 68);
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '15px "Microsoft YaHei", sans-serif';
+  ctx.fillText(t('ui.pausedCopy'), DW / 2, y + 106);
+  ctx.textAlign = 'left';
 }
 
 // ── 文字换行 ──
@@ -601,16 +732,31 @@ function wrapText(text, x, y, maxWidth, lineHeight) {
 // ── 点击检测 ──
 let clickHandlers = {};
 
-export function onCanvasClick(x, y, state, callbacks) {
-  const { onAdRevive, onRestart, onAction } = callbacks;
+export function onCanvasClick(x, y, state, callbacks, viewState = { started: true }) {
+  const { onAdRevive, onRestart, onAction, onDecision, onToggleMute, onStart, onSidebar } = callbacks;
+  const inside = (rect) => x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+  const muteControl = getCanvasMuteControl(DH, safeInsetTop, viewState.started !== false);
+  if (!state.gameOver && inside(muteControl)) {
+    onToggleMute?.();
+    return;
+  }
+
+  if (viewState.started === false) {
+    const controls = getCanvasStartControls(DH, safeInsetTop);
+    if (inside(controls.start)) onStart?.();
+    else if (viewState.sidebarAvailable === true && inside(controls.sidebar)) onSidebar?.();
+    return;
+  }
+
+  if (viewState.paused === true) return;
 
   // 失败弹窗按钮检测
   if (state.gameOver) {
-    const cardW = 620, cardH = 350;
+    const cardW = 620, cardH = 390;
     const cx2 = (DW - cardW) / 2, cy2 = (DH - cardH) / 2;
-    const btnY = cy2 + cardH - 70;
+    const btnY = cy2 + cardH - 106;
     if (state.result === 'success') {
-      if (x >= cx2 + 20 && x <= cx2 + cardW - 20 && y >= btnY && y <= btnY + 46) {
+      if (x >= cx2 + 20 && x <= cx2 + cardW - 20 && y >= btnY && y <= btnY + 86) {
         onRestart?.();
       }
       return;
@@ -618,7 +764,7 @@ export function onCanvasClick(x, y, state, callbacks) {
     const btnW2 = (cardW - 60) / 2;
 
     // 左按钮
-    if (x >= cx2 + 20 && x <= cx2 + 20 + btnW2 && y >= btnY && y <= btnY + 46) {
+    if (x >= cx2 + 20 && x <= cx2 + 20 + btnW2 && y >= btnY && y <= btnY + 86) {
       if (state.fakeEndingTriggered && !state.fakeEndingUnlocked) {
         onAdRevive?.('truth');
       } else if (state.fakeEndingTriggered) {
@@ -629,7 +775,7 @@ export function onCanvasClick(x, y, state, callbacks) {
       return;
     }
     // 右按钮
-    if (x >= cx2 + 40 + btnW2 && x <= cx2 + 40 + btnW2 * 2 && y >= btnY && y <= btnY + 46) {
+    if (x >= cx2 + 40 + btnW2 && x <= cx2 + 40 + btnW2 * 2 && y >= btnY && y <= btnY + 86) {
       onRestart?.();
       return;
     }
@@ -637,20 +783,22 @@ export function onCanvasClick(x, y, state, callbacks) {
   }
 
   // 操作按钮检测 — 与 V3 四列硬件键轨使用同一布局数据。
-  const layout = getCanvasLayout(DH).actions;
-  const btns = getCanvasActionButtons(state).slice(0, 8).map(button => button.id);
-  for (let i = 0; i < btns.length; i += 1) {
+  const layout = getCanvasLayout(DH, safeInsetTop).actions;
+  const buttons = getCanvasActionButtons(state).slice(0, 8);
+  for (let i = 0; i < buttons.length; i += 1) {
     const bx = layout.x + 16 + (i % layout.columns) * (layout.buttonW + layout.gap);
     const by = layout.startY + Math.floor(i / layout.columns) * (layout.buttonH + layout.gap);
     if (x >= bx && x <= bx + layout.buttonW && y >= by && y <= by + layout.buttonH) {
-      onAction?.(btns[i]);
+      if (buttons[i].disabled) return;
+      if (buttons[i].decision) onDecision?.(buttons[i].decision);
+      else onAction?.(buttons[i].id);
       return;
     }
   }
 }
 
 // ── 主渲染函数 ──
-export function render(state) {
+export function render(state, viewState = { started: true, paused: false }) {
   if (!ctx) return;
 
   drawBackground();
@@ -660,22 +808,22 @@ export function render(state) {
   drawActions(state);
   drawLogs(state);
   drawFailureOverlay(state);
+  if (viewState.started === false) drawStartOverlay(viewState);
+  else if (viewState.paused === true) drawPauseOverlay();
+  if (!state.gameOver) drawMuteControl(viewState);
 }
 
 // ── 初始化 ──
-export function init(canvasEl) {
+export function init(canvasEl, systemInfo = {}) {
   canvas = canvasEl;
   ctx = canvas.getContext('2d');
 
-  const info = { windowWidth: DW, windowHeight: DH, pixelRatio: 1 };
-  const pw = info.windowWidth || DW;
-  const ph = info.windowHeight || DH;
+  const metrics = getCanvasViewportMetrics(systemInfo);
+  DH = metrics.height;
+  safeInsetTop = metrics.safeTop;
 
-  // 保持设计比例
-  DH = Math.max(1334, ph * (DW / pw));
-
-  canvas.width = DW;
-  canvas.height = DH;
+  canvas.width = metrics.width;
+  canvas.height = metrics.height;
   scale = 1;
 
   return { width: DW, height: DH };

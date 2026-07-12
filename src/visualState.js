@@ -47,6 +47,10 @@ function getTone(anomalyLevel, gameOver) {
   return 'normal';
 }
 
+export function getAnomalyResolutionAction(anomalyId) {
+  return ACTIVE_ANOMALY_ACTION_HINTS[anomalyId] || null;
+}
+
 function getHighlightAction(state) {
   if (state.gameOver) return 'restartSystem';
   if (state.activeAnomaly && ACTIVE_ANOMALY_ACTION_HINTS[state.activeAnomaly]) {

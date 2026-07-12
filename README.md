@@ -66,12 +66,12 @@ npm run verify
 该命令会完整执行：
 
 1. `npm test`
-2. 微信小游戏构建
-3. 微信 strict bundle 检查
+2. 微信小游戏构建与 strict bundle 检查
+3. 抖音小游戏构建、真实 `tt` Canvas 冒烟测试与合规静态检查
 4. Android debug APK 构建
 5. Android APK 元数据检查
 
-当前已验证：`npm run verify` 通过（测试数以实际输出为准），微信 strict 为 0 blocker，Android APK 可构建。
+当前验收状态与测试数以实际输出为准，不以 README 中的历史记录代替。
 
 ## Android APK
 
@@ -97,17 +97,28 @@ docs/ANDROID_APK_HANDOFF.md
 ```bash
 node build.js wechat
 node scripts/check-wechat-bundle.mjs --strict
+npm run douyin:build
+npm run douyin:check
+npm run douyin:compliance
 ```
 
-微信产物：
+平台产物：
 
 ```text
-wechat-minigame/game.js
-wechat-minigame/game.json
-wechat-minigame/project.config.json
+wechat-minigame/{game.js,game.json,project.config.json,audio/}
+douyin-minigame/{game.js,game.json,project.config.json,audio/}
 ```
 
-> `project.config.json` 中的公开 AppID 是占位值，真实发布 AppID 不应提交到仓库。
+抖音正式发布门禁与打包：
+
+```bash
+npm run douyin:release:check
+npm run douyin:package
+```
+
+`douyin:package` 只在真实抖音 AppID、三个真实激励广告位和全部代码门禁通过后生成 `dist/douyin-minigame-release.zip` 与 SHA-256 manifest。完整交接见 `docs/DOUYIN_RELEASE_HANDOFF_2026-07-12.md`。
+
+> 公开 `project.config.json` 使用游客/占位 AppID；真实 AppID 由 ignored `release.config.json` 写入 `project.private.config.json`，不得提交。
 
 ## 发布前私有配置
 
@@ -121,14 +132,22 @@ cp release.config.example.json release.config.json
 
 ```json
 {
+  "releaseMode": true,
   "wechat": {
     "appid": "真实微信小游戏 AppID",
-    "projectname": "MINIGAME"
+    "adUnits": {
+      "revive": "真实微信复活广告位",
+      "decode": "真实微信日志解锁广告位",
+      "truth": "真实微信真相提示广告位"
+    }
   },
-  "adUnits": {
-    "revive": "真实复活广告位",
-    "decode": "真实日志解锁广告位",
-    "truth": "真实真相提示广告位"
+  "douyin": {
+    "appid": "真实抖音小游戏 AppID",
+    "adUnits": {
+      "revive": "真实抖音复活广告位",
+      "decode": "真实抖音日志解锁广告位",
+      "truth": "真实抖音真相提示广告位"
+    }
   }
 }
 ```
@@ -150,7 +169,12 @@ npm run verify           # 一键开发验收
 npm run android:build    # 构建 Android WebView debug APK
 npm run android:inspect  # 检查 APK 包名、应用名、图标、SDK
 npm run android:install  # 安装并启动 Android debug APK（需 adb 设备在线）
-npm run release:check    # 发布前检查：真实 AppID/adUnitId + runtime blocker
+npm run douyin:build     # 生成可导入抖音开发者工具的 Canvas 工程
+npm run douyin:check     # 抖音目录、包体、tt API 与 runtime 静态门禁
+npm run douyin:compliance # 隐私、适龄、素材与敏感 API 门禁
+npm run douyin:release:check # 仅检查抖音真实发布配置
+npm run douyin:package   # 真实配置通过后生成发布 ZIP + SHA-256 manifest
+npm run release:check    # 全平台发布前检查
 npm run skin:new -- <id> [名称]  # 从模板生成新皮肤
 node build.js wechat     # 构建微信小游戏 bundle
 ```
@@ -167,6 +191,7 @@ node build.js wechat     # 构建微信小游戏 bundle
 - `docs/P2_SKINNING_SYSTEM.md`：换皮系统设计
 - `docs/P3_PLATFORM_ADAPTATION.md`：平台适配设计
 - `docs/ANDROID_APK_HANDOFF.md`：Android APK 构建/安装/调试交接
+- `docs/DOUYIN_RELEASE_HANDOFF_2026-07-12.md`：抖音构建、检查、材料与发布阻塞交接
 - `docs/NEXT_TASKS.md`：后续任务列表与建议执行顺序
 - `docs/CONTENT_PACK_SPEC.md`：内容包协议与当前 skin 映射
 - `docs/SKIN_AUTHORING_GUIDE.md`：新皮肤生成流程与模板使用说明

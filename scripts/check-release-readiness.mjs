@@ -4,6 +4,15 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const targetArg = process.argv.find(arg => arg.startsWith('--target='));
+const target = targetArg ? targetArg.split('=')[1] : 'all';
+if (!['all', 'wechat', 'douyin', 'android'].includes(target)) {
+  console.error(`[release-check] Unsupported target: ${target}`);
+  process.exit(2);
+}
+const includeWechat = target === 'all' || target === 'wechat';
+const includeDouyin = target === 'all' || target === 'douyin';
+const includeAndroid = target === 'all' || target === 'android';
 
 const checks = [];
 
@@ -29,7 +38,7 @@ function readText(relativePath) {
 function isPlaceholder(value) {
   return typeof value !== 'string'
     || value.trim() === ''
-    || /请替换|placeholder|xxxxx|your_|YOUR_|test-|demo-/i.test(value);
+    || /请替换|placeholder|touristappid|xxxxx|your_|YOUR_|test-|demo-/i.test(value);
 }
 
 function extractAdUnits(configText) {
@@ -60,7 +69,15 @@ const androidProject = existsSync(resolve(root, 'android-minigame/project.config
   ? readJson('android-minigame/project.config.json')
   : null;
 const gameConfigText = readText('src/gameConfig.js');
-const adUnits = releaseConfig?.adUnits ?? extractAdUnits(gameConfigText);
+const sourceAdUnits = extractAdUnits(gameConfigText);
+const targetAdUnits = target !== 'all' ? releaseConfig?.[target]?.adUnits : null;
+const adUnits = targetAdUnits ?? releaseConfig?.adUnits ?? sourceAdUnits;
+const adUnitSets = target === 'all'
+  ? [
+      ['wechat', releaseConfig?.wechat?.adUnits ?? releaseConfig?.adUnits ?? sourceAdUnits],
+      ['douyin', releaseConfig?.douyin?.adUnits ?? releaseConfig?.adUnits ?? sourceAdUnits],
+    ]
+  : [[target, adUnits]];
 const releaseMode = releaseConfig?.releaseMode ?? /releaseMode:\s*true/.test(gameConfigText);
 const wechatAppId = releaseConfig?.wechat?.appid ?? wechatPrivateProject?.appid ?? wechatProject.appid;
 const douyinAppId = releaseConfig?.douyin?.appid ?? douyinPrivateProject?.appid ?? douyinProject?.appid;
@@ -73,15 +90,17 @@ addCheck(
   `current=${releaseMode}`,
 );
 
-addCheck(
-  'wechatAppId',
-  !isPlaceholder(wechatAppId),
-  'blocker',
-  'WeChat release config must provide a real Mini Game AppID',
-  `current=${wechatAppId}`,
-);
+if (includeWechat) {
+  addCheck(
+    'wechatAppId',
+    !isPlaceholder(wechatAppId),
+    'blocker',
+    'WeChat release config must provide a real Mini Game AppID',
+    `current=${wechatAppId}`,
+  );
+}
 
-if (douyinProject || douyinAppId) {
+if (includeDouyin) {
   addCheck(
     'douyinAppId',
     !isPlaceholder(douyinAppId),
@@ -91,7 +110,7 @@ if (douyinProject || douyinAppId) {
   );
 }
 
-if (androidProject) {
+if (includeAndroid && androidProject) {
   addCheck(
     'androidMiniGameAppId',
     !isPlaceholder(androidProject.appid),
@@ -101,30 +120,60 @@ if (androidProject) {
   );
 }
 
-for (const key of ['revive', 'decode', 'truth']) {
-  addCheck(
-    `adUnit:${key}`,
-    !isPlaceholder(adUnits[key]),
-    'blocker',
-    `CONFIG.adUnits.${key} must use a real rewarded-video ad unit id before release`,
-    `current=${adUnits[key] ?? '<missing>'}`,
-  );
+for (const [platform, units] of adUnitSets) {
+  for (const key of ['revive', 'decode', 'truth']) {
+    addCheck(
+      `adUnit:${platform}:${key}`,
+      !isPlaceholder(units[key]),
+      'blocker',
+      `CONFIG.adUnits.${key} must use a real ${platform} rewarded-video ad unit id before release`,
+      `current=${units[key] ?? '<missing>'}`,
+    );
+  }
 }
 
-runNode('wechatStrictBundle', ['build.js', 'wechat']);
-try {
-  execFileSync(process.execPath, ['scripts/check-wechat-bundle.mjs', '--strict'], {
-    cwd: root,
-    encoding: 'utf8',
-    stdio: 'pipe',
-  });
-  addCheck('wechatBundleBlockers', true, 'blocker', 'WeChat bundle has no runtime blockers');
-} catch (error) {
-  const output = `${error.stdout || ''}${error.stderr || ''}`.trim();
-  addCheck('wechatBundleBlockers', false, 'blocker', 'WeChat bundle has runtime blockers', output);
+if (includeWechat) {
+  runNode('wechatStrictBundle', ['build.js', 'wechat']);
+  try {
+    execFileSync(process.execPath, ['scripts/check-wechat-bundle.mjs', '--strict'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    });
+    addCheck('wechatBundleBlockers', true, 'blocker', 'WeChat bundle has no runtime blockers');
+  } catch (error) {
+    const output = `${error.stdout || ''}${error.stderr || ''}`.trim();
+    addCheck('wechatBundleBlockers', false, 'blocker', 'WeChat bundle has runtime blockers', output);
+  }
 }
 
-if (existsSync(resolve(root, 'android-webview/app/build/outputs/apk/debug/app-debug.apk'))) {
+if (includeDouyin) {
+  runNode('douyinStrictBundle', ['build.js', 'douyin']);
+  try {
+    execFileSync(process.execPath, ['scripts/check-douyin-bundle.mjs', '--strict'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    });
+    addCheck('douyinBundleBlockers', true, 'blocker', 'Douyin bundle has no runtime blockers');
+  } catch (error) {
+    const output = `${error.stdout || ''}${error.stderr || ''}`.trim();
+    addCheck('douyinBundleBlockers', false, 'blocker', 'Douyin bundle has runtime blockers', output);
+  }
+  try {
+    execFileSync(process.execPath, ['scripts/check-douyin-compliance.mjs', '--strict'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    });
+    addCheck('douyinCompliance', true, 'blocker', 'Douyin compliance code checks pass');
+  } catch (error) {
+    const output = `${error.stdout || ''}${error.stderr || ''}`.trim();
+    addCheck('douyinCompliance', false, 'blocker', 'Douyin compliance code checks fail', output);
+  }
+}
+
+if (includeAndroid && existsSync(resolve(root, 'android-webview/app/build/outputs/apk/debug/app-debug.apk'))) {
   try {
     execFileSync(process.execPath, ['scripts/check-apk-metadata.mjs'], {
       cwd: root,
@@ -136,7 +185,7 @@ if (existsSync(resolve(root, 'android-webview/app/build/outputs/apk/debug/app-de
     const output = `${error.stdout || ''}${error.stderr || ''}`.trim();
     addCheck('androidApkMetadata', false, 'blocker', 'Android APK metadata check fails', output);
   }
-} else {
+} else if (includeAndroid) {
   addCheck('androidApkMetadata', false, 'blocker', 'Android APK is missing; run npm run android:build first');
 }
 

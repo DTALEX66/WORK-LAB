@@ -36,8 +36,19 @@ test('verify script runs the full release acceptance gate', () => {
   assert.match(verifyScript, /\[verify\] apk metadata: OK/, 'summary mode should print APK metadata result line');
   assert.match(verifyScript, /\['build\.js', 'wechat'\]/, 'verify should build WeChat bundle');
   assert.match(verifyScript, /check-wechat-bundle\.mjs', '--strict'/, 'verify should run WeChat strict check');
+  assert.match(verifyScript, /\['build\.js', 'douyin'\]/, 'verify should build Douyin bundle');
+  assert.match(verifyScript, /check-douyin-bundle\.mjs', '--strict'/, 'verify should run Douyin strict check');
+  assert.match(verifyScript, /check-douyin-compliance\.mjs', '--strict'/, 'verify should run Douyin compliance check');
   assert.match(verifyScript, /build-android-debug\.mjs/, 'verify should build Android APK');
   assert.match(verifyScript, /check-apk-metadata\.mjs/, 'verify should inspect APK metadata');
+});
+
+test('Douyin scripts provide build, strict validation, target release gate and package commands', () => {
+  assert.equal(pkg.scripts['douyin:build'], 'node build.js douyin');
+  assert.equal(pkg.scripts['douyin:check'], 'node scripts/check-douyin-bundle.mjs --strict');
+  assert.equal(pkg.scripts['douyin:compliance'], 'node scripts/check-douyin-compliance.mjs --strict');
+  assert.equal(pkg.scripts['douyin:release:check'], 'node scripts/check-release-readiness.mjs --target=douyin');
+  assert.equal(pkg.scripts['douyin:package'], 'node scripts/package-douyin-release.mjs');
 });
 
 test('release check blocks placeholder publishing configuration', () => {
@@ -49,5 +60,8 @@ test('release check blocks placeholder publishing configuration', () => {
   assert.match(releaseScript, /releaseMode/, 'release check should require fail-closed ad behavior');
   assert.match(releaseScript, /Release is NOT ready/, 'release check should fail closed when blockers exist');
   assert.match(releaseScript, /wechatBundleBlockers/, 'release check should include runtime bundle blockers');
+  assert.match(releaseScript, /douyinBundleBlockers/, 'release check should include Douyin runtime bundle blockers');
+  assert.match(releaseScript, /douyinCompliance/, 'release check should include Douyin compliance blockers');
+  assert.match(releaseScript, /target/, 'release check should support a platform target');
   assert.match(releaseScript, /androidApkMetadata/, 'release check should include Android APK metadata');
 });

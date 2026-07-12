@@ -38,9 +38,9 @@ function stableStringifyObject(value, indent = 2) {
 }
 
 function applyReleaseOverrides(code, modPath, target, releaseConfig) {
-  if (modPath !== 'src/gameConfig.js' || !releaseConfig?.adUnits) return code;
+  const adUnits = releaseConfig?.[target]?.adUnits ?? releaseConfig?.adUnits;
+  if (modPath !== 'src/gameConfig.js' || !adUnits) return code;
 
-  const adUnits = releaseConfig.adUnits;
   const hasAllUnits = ['revive', 'decode', 'truth'].every(key => typeof adUnits[key] === 'string' && adUnits[key].trim());
   if (!hasAllUnits) return code;
 
@@ -76,10 +76,12 @@ const CORE_MODULES = [
   { path: 'src/feedback.js',       type: 'js' },
   { path: 'src/visualState.js',    type: 'js' },
   { path: 'src/state.js',          type: 'js' },
+  { path: 'src/incidentDecision.js', type: 'js' },
   { path: 'src/events.js',         type: 'js' },
   { path: 'src/actions.js',        type: 'js' },
   { path: 'src/uiLabels.js',       type: 'js' },
   { path: 'src/runtimeSession.js', type: 'js' },
+  { path: 'src/rewardGuard.js', type: 'js' },
   { path: 'src/firstRunGuidance.js', type: 'js' },
 ];
 
@@ -93,7 +95,11 @@ const DOM_ENTRY_MODULES = [
 ];
 
 const MINI_ENTRY_MODULES = [
-  ...CORE_MODULES,
+  ...CORE_MODULES.filter(module => module.path !== 'src/uiLabels.js'),
+  { path: 'platform/canvasLabels.js', type: 'js' },
+  { path: 'platform/miniGameClock.js', type: 'js' },
+  { path: 'platform/miniGameAudio.js', type: 'js' },
+  { path: 'platform/douyinIntegration.js', type: 'js' },
   { path: 'platform/canvasRenderer.js', type: 'js' },
   { path: 'platform/miniGameRuntime.js', type: 'js' },
 ];
@@ -147,8 +153,12 @@ function bundle(target) {
     const raw = fs.readFileSync(fullPath, 'utf-8');
 
     if (mod.type === 'skin') {
-      // 将 JSON 注入为全局变量
-      const min = JSON.stringify(JSON.parse(raw)); // 压缩+验证
+      // 将 JSON 注入为全局变量；小游戏发布包移除浏览器专用调试字段。
+      const skinData = JSON.parse(raw);
+      if ((target === 'wechat' || target === 'douyin') && skinData.canvasLabels) {
+        delete skinData.canvasLabels.forceAnomaly;
+      }
+      const min = JSON.stringify(skinData); // 压缩+验证
       body += `// --- ${mod.path} ---\nvar __SKIN_DATA__ = ${min};\n\n`;
     } else {
       let code = stripESM(raw);
@@ -201,48 +211,68 @@ const outPath = path.join(outputDir, 'game.js');
 fs.writeFileSync(outPath, bundled, 'utf-8');
 writePrivateProjectConfig(target, outputDir, releaseConfig);
 
+const miniGameAudioSource = path.join(ROOT, 'assets', 'minigame-audio');
+const miniGameAudioOutput = path.join(outputDir, 'audio');
+fs.mkdirSync(miniGameAudioOutput, { recursive: true });
+fs.cpSync(miniGameAudioSource, miniGameAudioOutput, { recursive: true, force: true });
+for (const name of fs.readdirSync(miniGameAudioOutput)) {
+  if (!fs.existsSync(path.join(miniGameAudioSource, name))) {
+    fs.rmSync(path.join(miniGameAudioOutput, name), { recursive: true, force: true, maxRetries: 3, retryDelay: 50 });
+  }
+}
+
 console.log(`[build] ✅ ${target} 构建完成`);
 console.log(`[build]   输出: ${outPath}`);
 console.log(`[build]   大小: ${(bundled.length / 1024).toFixed(1)} KB`);
 
-// ── 创建 project.config.json ──
-if (!fs.existsSync(path.join(outputDir, 'project.config.json'))) {
-  const projConfig = {
-    description: 'MINIGAME - 异常系统模拟类小游戏',
-    setting: {
-      urlCheck: true,
-      es6: true,
-      postcss: true,
-      minified: true,
-      enhance: true,
-      condition: false,
-    },
-    compileType: 'game',
-    libVersion: 'latest',
-    appid: '请替换为你的微信小游戏 AppID',
-    projectname: 'MINIGAME',
-    condition: {},
-  };
-  fs.writeFileSync(
-    path.join(outputDir, 'project.config.json'),
-    JSON.stringify(projConfig, null, 2),
-    'utf-8'
-  );
-  console.log('[build] ✅ project.config.json 已创建（请替换 appid）');
-}
+// ── 创建确定性公开项目配置（真实 AppID 只写入 ignored 私有配置） ──
+const projectConfig = target === 'douyin'
+  ? {
+      description: 'MINIGAME - 异常电梯控制台（抖音小游戏）',
+      miniprogramRoot: './',
+      setting: {
+        urlCheck: true,
+        es6: true,
+        minified: true,
+      },
+      compileType: 'game',
+      libVersion: 'latest',
+      appid: 'touristappid',
+      projectname: '异常电梯控制台',
+      condition: {},
+    }
+  : {
+      description: 'MINIGAME - 异常系统模拟类小游戏',
+      setting: {
+        urlCheck: true,
+        es6: true,
+        postcss: true,
+        minified: true,
+        enhance: true,
+        condition: false,
+      },
+      compileType: 'game',
+      libVersion: 'latest',
+      appid: '请替换为你的微信小游戏 AppID',
+      projectname: 'MINIGAME',
+      condition: {},
+    };
+fs.writeFileSync(
+  path.join(outputDir, 'project.config.json'),
+  JSON.stringify(projectConfig, null, 2),
+  'utf-8',
+);
+console.log(`[build] ✅ ${target} project.config.json 已生成`);
 
-// ── 创建 game.json ──
-if (!fs.existsSync(path.join(outputDir, 'game.json'))) {
-  const gameConfig = {
-    deviceOrientation: 'portrait',
-    showStatusBar: false,
-    networkTimeout: { request: 5000, connectSocket: 5000 },
-    workers: null,
-  };
-  fs.writeFileSync(
-    path.join(outputDir, 'game.json'),
-    JSON.stringify(gameConfig, null, 2),
-    'utf-8'
-  );
-  console.log('[build] ✅ game.json 已创建');
-}
+const gameConfig = {
+  deviceOrientation: 'portrait',
+  showStatusBar: false,
+  networkTimeout: { request: 5000, connectSocket: 5000 },
+  subPackages: [],
+};
+fs.writeFileSync(
+  path.join(outputDir, 'game.json'),
+  JSON.stringify(gameConfig, null, 2),
+  'utf-8',
+);
+console.log(`[build] ✅ ${target} game.json 已生成`);

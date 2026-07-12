@@ -34,12 +34,20 @@ export function createInitialState() {
     // 复盘统计（局内累积）
     anomaliesTriggeredTotal: 0,
     maxAnomalySeverity: 0,
+    inspection: null,
+    decisionsCorrect: 0,
+    decisionsWrong: 0,
     logs: [createFeedbackLine('info', t('ui.initialLog'), 0)],
   };
 }
 
+function cloneValue(value) {
+  if (value === undefined || value === null) return value;
+  return JSON.parse(JSON.stringify(value));
+}
+
 export function cloneState(state) {
-  return structuredClone(state);
+  return cloneValue(state);
 }
 
 export function appendLog(state, type, message) {
@@ -71,7 +79,7 @@ export function saveSnapshot(state) {
   const clean = {};
   for (const key of Object.keys(state)) {
     if (key === 'snapshots') continue;
-    clean[key] = structuredClone(state[key]);
+    clean[key] = cloneValue(state[key]);
   }
   snapshots.push({ at: state.elapsed, state: clean });
   const next = cloneState(state);

@@ -39,6 +39,29 @@ test('moveUp consumes power, changes floor, and emits feedback log', () => {
   assert.match(result.state.logs.at(-1).text, /上行/);
 });
 
+test('recommended anomaly treatment clears the active anomaly and restores monitoring', () => {
+  const cases = [
+    ['door_refuse', 'closeDoor', { door: 'open' }],
+    ['phantom_floor', 'inspectLog', {}],
+    ['camera_delay', 'inspectLog', {}],
+    ['stop_failure', 'restartSystem', {}],
+  ];
+
+  for (const [anomalyId, actionId, overrides] of cases) {
+    const state = {
+      ...createInitialState(),
+      ...overrides,
+      activeAnomaly: anomalyId,
+      anomalyLevel: 3,
+    };
+    const result = performAction(state, actionId);
+    assert.equal(result.ok, true, `${anomalyId} treatment should succeed`);
+    assert.equal(result.state.activeAnomaly, null, `${anomalyId} should be cleared`);
+    assert.ok(result.state.anomalyLevel < state.anomalyLevel, `${anomalyId} pressure should decrease`);
+    assert.match(result.state.logs.at(-1).text, /解除当前异常/);
+  }
+});
+
 test('restartSystem reduces anomaly level and stabilizes the system', () => {
   const state = { ...createInitialState(), anomalyLevel: 4, stability: 45, power: 55 };
   const result = performAction(state, 'restartSystem');

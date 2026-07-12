@@ -6,6 +6,10 @@ import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const output = resolve(root, 'wechat-minigame', 'game.js');
+const douyinOutput = resolve(root, 'douyin-minigame', 'game.js');
+const douyinProjectOutput = resolve(root, 'douyin-minigame', 'project.config.json');
+const douyinGameConfigOutput = resolve(root, 'douyin-minigame', 'game.json');
+const douyinPrivateConfigOutput = resolve(root, 'douyin-minigame', 'project.private.config.json');
 const privateConfigOutput = resolve(root, 'wechat-minigame', 'project.private.config.json');
 const tempDir = resolve(root, '.tmp');
 const tempReleaseConfig = resolve(tempDir, 'release-test.config.json');
@@ -58,5 +62,72 @@ test('release config can inject private AppID and ad units into generated files'
     if (existsSync(privateConfigOutput)) rmSync(privateConfigOutput, { force: true });
     if (existsSync(tempReleaseConfig)) rmSync(tempReleaseConfig, { force: true });
     execFileSync(process.execPath, ['build.js', 'wechat'], { cwd: root, stdio: 'pipe' });
+  }
+});
+
+test('douyin build emits a tracked import-ready project with target-specific metadata', () => {
+  execFileSync(process.execPath, ['build.js', 'douyin'], { cwd: root, stdio: 'pipe' });
+  const first = readFileSync(douyinOutput, 'utf8');
+  execFileSync(process.execPath, ['build.js', 'douyin'], { cwd: root, stdio: 'pipe' });
+  const second = readFileSync(douyinOutput, 'utf8');
+  const project = JSON.parse(readFileSync(douyinProjectOutput, 'utf8'));
+  const game = JSON.parse(readFileSync(douyinGameConfigOutput, 'utf8'));
+  const gitignore = readFileSync(resolve(root, '.gitignore'), 'utf8');
+
+  assert.equal(second, first);
+  assert.match(second, /MINIGAME - 抖音 小游戏构建/);
+  assert.equal(project.compileType, 'game');
+  assert.equal(project.appid, 'touristappid');
+  assert.equal(project.miniprogramRoot, './');
+  assert.equal(game.deviceOrientation, 'portrait');
+  assert.equal(game.showStatusBar, false);
+  assert.deepEqual(game.subPackages, []);
+  for (const cue of ['click.wav', 'anomaly.wav', 'result.wav']) {
+    assert.equal(existsSync(resolve(root, 'douyin-minigame', 'audio', cue)), true, `${cue} should ship in the Douyin package`);
+  }
+  assert.doesNotMatch(gitignore, /^douyin-minigame\/$/m, 'the release project itself must be tracked');
+  assert.match(gitignore, /douyin-minigame\/project\.private\.config\.json/);
+});
+
+test('douyin release build injects douyin-specific ad units and private AppID', () => {
+  mkdirSync(tempDir, { recursive: true });
+  writeFileSync(tempReleaseConfig, JSON.stringify({
+    douyin: {
+      appid: 'tt_real_release_test_appid',
+      projectname: 'MINIGAME_DOUYIN_TEST',
+      adUnits: {
+        revive: 'ttad-real-revive-test',
+        decode: 'ttad-real-decode-test',
+        truth: 'ttad-real-truth-test',
+      },
+    },
+    adUnits: {
+      revive: 'shared-ad-revive-should-not-win',
+      decode: 'shared-ad-decode-should-not-win',
+      truth: 'shared-ad-truth-should-not-win',
+    },
+    releaseMode: true,
+  }, null, 2));
+
+  try {
+    execFileSync(process.execPath, ['build.js', 'douyin'], {
+      cwd: root,
+      env: { ...process.env, RELEASE_CONFIG_PATH: tempReleaseConfig },
+      stdio: 'pipe',
+    });
+    const bundle = readFileSync(douyinOutput, 'utf8');
+    const privateConfig = JSON.parse(readFileSync(douyinPrivateConfigOutput, 'utf8'));
+
+    assert.match(bundle, /ttad-real-revive-test/);
+    assert.match(bundle, /ttad-real-decode-test/);
+    assert.match(bundle, /ttad-real-truth-test/);
+    assert.doesNotMatch(bundle, /shared-ad-revive-should-not-win/);
+    assert.match(bundle, /releaseMode:\s*true/);
+    assert.equal(privateConfig.appid, 'tt_real_release_test_appid');
+    assert.equal(privateConfig.projectname, 'MINIGAME_DOUYIN_TEST');
+  } finally {
+    if (existsSync(douyinPrivateConfigOutput)) rmSync(douyinPrivateConfigOutput, { force: true });
+    if (existsSync(tempReleaseConfig)) rmSync(tempReleaseConfig, { force: true });
+    execFileSync(process.execPath, ['build.js', 'douyin'], { cwd: root, stdio: 'pipe' });
   }
 });

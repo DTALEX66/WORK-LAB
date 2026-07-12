@@ -1,6 +1,7 @@
 import { appendLog, checkFailure, clamp, cloneState } from './state.js';
 import CONFIG from './gameConfig.js';
 import { t, actionLabel } from './skinManager.js';
+import { getAnomalyResolutionAction } from './visualState.js';
 
 const ACTIONS = {
   openDoor(state) {
@@ -123,7 +124,21 @@ export function performAction(state, actionId) {
   const action = ACTIONS[actionId];
   if (!action) return fail(state, t('actionFailMessages.unknownAction', { actionId }));
   if (state.gameOver && actionId !== 'inspectLog') return fail(state, t('actionFailMessages.gameOver'));
-  return action(state);
+  const activeAnomaly = state.activeAnomaly;
+  const result = action(state);
+  if (!result.ok || !activeAnomaly || getAnomalyResolutionAction(activeAnomaly) !== actionId) {
+    return result;
+  }
+
+  let next = cloneState(result.state);
+  next.activeAnomaly = null;
+  if (result.state.activeAnomaly === activeAnomaly) {
+    next.anomalyLevel = Math.min(next.anomalyLevel, Math.max(0, state.anomalyLevel - 1));
+  }
+  next.monitor = t('ui.anomalyResolvedMonitor');
+  const message = t('ui.anomalyResolved', { action: actionLabel(actionId) });
+  next = appendLog(next, 'success', message);
+  return ok(checkFailure(next), message);
 }
 
 const ACTION_IDS = [
