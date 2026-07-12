@@ -27,6 +27,7 @@ function walk(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     if (entry.name.startsWith('.') || entry.name === 'node_modules') return [];
     const path = resolve(dir, entry.name);
+    if (entry.isDirectory() && existsSync(resolve(path, '.douyin-local-workspace'))) return [];
     return entry.isDirectory() ? walk(path) : [path];
   });
 }

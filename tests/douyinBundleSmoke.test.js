@@ -11,10 +11,13 @@ test('generated Douyin bundle boots against the tt Canvas contract', () => {
   execFileSync(process.execPath, ['build.js', 'douyin'], { cwd: root, stdio: 'pipe' });
   const bundle = readFileSync(resolve(root, 'douyin-minigame', 'game.js'), 'utf8');
   const text = [];
+  const imageSources = [];
+  let drawImageCalls = 0;
   const gradient = { addColorStop() {} };
   const ctx = new Proxy({
     measureText(value) { return { width: String(value).length * 16 }; },
     fillText(value) { text.push(String(value)); },
+    drawImage() { drawImageCalls += 1; },
     createLinearGradient() { return gradient; },
     createRadialGradient() { return gradient; },
   }, {
@@ -43,6 +46,14 @@ test('generated Douyin bundle boots against the tt Canvas contract', () => {
     onShow: fn => { onShow = fn; },
     checkScene: options => options.success?.({ isExist: true }),
     navigateToScene: options => { sidebarOptions = options; options.success?.({}); },
+    createImage() {
+      const image = { onload: null, onerror: null, _src: '' };
+      Object.defineProperty(image, 'src', {
+        set(value) { image._src = value; imageSources.push(value); image.onload?.(); },
+        get() { return image._src; },
+      });
+      return image;
+    },
     createInnerAudioContext() {
       return { play() {}, stop() {}, seek() {}, destroy() {} };
     },
@@ -66,6 +77,10 @@ test('generated Douyin bundle boots against the tt Canvas contract', () => {
   assert.ok(text.includes('等待接管异常电梯'));
   assert.ok(text.includes('开始接管'));
   assert.ok(text.includes('侧边栏入口'));
+  assert.equal(imageSources.length, 38, 'all shipped Canvas visual assets should preload');
+  assert.ok(imageSources.includes('visual/cctv/00_idle_closed_mobile.png'));
+  assert.ok(imageSources.includes('visual/buttons/btn_stop_danger.png'));
+  assert.ok(drawImageCalls >= 4, 'the first render should draw the CCTV state and visual overlays');
 
   onTouchStart({ touches: [{ screenX: 570 * 390 / 750, screenY: 930 * 844 / canvas.height }] });
   assert.equal(sidebarOptions?.scene, 'sidebar');

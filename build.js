@@ -97,6 +97,7 @@ const DOM_ENTRY_MODULES = [
 const MINI_ENTRY_MODULES = [
   ...CORE_MODULES.filter(module => module.path !== 'src/uiLabels.js'),
   { path: 'platform/canvasLabels.js', type: 'js' },
+  { path: 'platform/canvasAssets.js', type: 'js' },
   { path: 'platform/miniGameClock.js', type: 'js' },
   { path: 'platform/miniGameAudio.js', type: 'js' },
   { path: 'platform/douyinIntegration.js', type: 'js' },
@@ -211,15 +212,25 @@ const outPath = path.join(outputDir, 'game.js');
 fs.writeFileSync(outPath, bundled, 'utf-8');
 writePrivateProjectConfig(target, outputDir, releaseConfig);
 
-const miniGameAudioSource = path.join(ROOT, 'assets', 'minigame-audio');
-const miniGameAudioOutput = path.join(outputDir, 'audio');
-fs.mkdirSync(miniGameAudioOutput, { recursive: true });
-fs.cpSync(miniGameAudioSource, miniGameAudioOutput, { recursive: true, force: true });
-for (const name of fs.readdirSync(miniGameAudioOutput)) {
-  if (!fs.existsSync(path.join(miniGameAudioSource, name))) {
-    fs.rmSync(path.join(miniGameAudioOutput, name), { recursive: true, force: true, maxRetries: 3, retryDelay: 50 });
+function syncAssetDirectory(sourceDir, outputDir) {
+  fs.mkdirSync(outputDir, { recursive: true });
+  fs.cpSync(sourceDir, outputDir, { recursive: true, force: true });
+  for (const name of fs.readdirSync(outputDir)) {
+    if (!fs.existsSync(path.join(sourceDir, name))) {
+      fs.rmSync(path.join(outputDir, name), { recursive: true, force: true, maxRetries: 3, retryDelay: 50 });
+    }
   }
 }
+
+const miniGameAudioSource = path.join(ROOT, 'assets', 'minigame-audio');
+const miniGameAudioOutput = path.join(outputDir, 'audio');
+syncAssetDirectory(miniGameAudioSource, miniGameAudioOutput);
+
+const visualSource = path.join(ROOT, 'games', 'find-anomaly', 'elevator-console', 'assets', 'abnormal_elevator_visual_assets');
+const visualOutput = path.join(outputDir, 'visual');
+syncAssetDirectory(path.join(visualSource, 'mobile_cctv_states'), path.join(visualOutput, 'cctv'));
+syncAssetDirectory(path.join(visualSource, 'button_sprites'), path.join(visualOutput, 'buttons'));
+syncAssetDirectory(path.join(visualSource, 'overlays'), path.join(visualOutput, 'overlays'));
 
 console.log(`[build] ✅ ${target} 构建完成`);
 console.log(`[build]   输出: ${outPath}`);

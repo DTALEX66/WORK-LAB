@@ -1083,6 +1083,93 @@ function getCanvasDirectionLabel(value) {
 }
 
 
+// --- platform/canvasAssets.js ---
+const CCTV_STATE_IDS = Object.freeze([
+  '00_idle_closed', '01_door_open', '02_door_opening', '03_door_closing',
+  '04_moving_up', '05_moving_down', '06_power_low', '07_power_outage',
+  '08_emergency_stop', '09_door_jammed', '10_signal_lost', '11_camera_glitch',
+  '12_scan_active', '13_entity_near', '14_shadow_inside', '15_anomaly_wandering',
+  '16_wrong_floor', '17_loop_corridor', '18_locked', '19_stabilized',
+  '20_threat_high', '21_maintenance_mode', '22_system_reboot', '23_cooldown_safe',
+]);
+
+const BUTTON_ASSETS = Object.freeze({
+  default: 'visual/buttons/btn_close_default.png',
+  recommended: 'visual/buttons/btn_up_recommended.png',
+  danger: 'visual/buttons/btn_stop_danger.png',
+  disabled: 'visual/buttons/btn_disabled.png',
+  inspectLog: 'visual/buttons/btn_log_secondary.png',
+  unlockHiddenLog: 'visual/buttons/btn_scan_default.png',
+  pressed: 'visual/buttons/btn_pressed.png',
+  more: 'visual/buttons/btn_more_secondary.png',
+});
+
+const OVERLAY_ASSETS = Object.freeze({
+  frame: 'visual/overlays/overlay_cctv_frame.png',
+  scanlines: 'visual/overlays/overlay_scanlines.png',
+  vignette: 'visual/overlays/overlay_vignette.png',
+  redAlert: 'visual/overlays/overlay_red_alert_frame.png',
+  glitch: 'visual/overlays/overlay_glitch_blocks.png',
+  sweep: 'visual/overlays/overlay_scan_sweep.png',
+});
+
+function getCanvasVisualAssetManifest() {
+  return {
+    cctv: Object.fromEntries(CCTV_STATE_IDS.map(id => [id, `visual/cctv/${id}_mobile.png`])),
+    buttons: { ...BUTTON_ASSETS },
+    overlays: { ...OVERLAY_ASSETS },
+  };
+}
+
+function createCanvasAssetStore(imageFactory) {
+  const manifest = getCanvasVisualAssetManifest();
+  const records = new Map();
+
+  function load(path) {
+    if (!path || records.has(path) || typeof imageFactory !== 'function') return;
+    const record = { image: null, loaded: false, failed: false };
+    records.set(path, record);
+    try {
+      const image = imageFactory();
+      if (!image) {
+        record.failed = true;
+        return;
+      }
+      record.image = image;
+      image.onload = () => { record.loaded = true; };
+      image.onerror = () => { record.failed = true; };
+      image.src = path;
+    } catch {
+      record.failed = true;
+    }
+  }
+
+  function preload() {
+    for (const path of Object.values(manifest.cctv)) load(path);
+    for (const path of Object.values(manifest.buttons)) load(path);
+    for (const path of Object.values(manifest.overlays)) load(path);
+  }
+
+  function get(path) {
+    const record = records.get(path);
+    return record?.loaded ? record.image : null;
+  }
+
+  return {
+    manifest,
+    preload,
+    getCctv: stateId => get(manifest.cctv[stateId] || manifest.cctv['00_idle_closed']),
+    getButton: kind => get(manifest.buttons[kind] || manifest.buttons.default),
+    getOverlay: kind => get(manifest.overlays[kind]),
+    getStatus: () => ({
+      total: records.size,
+      loaded: [...records.values()].filter(record => record.loaded).length,
+      failed: [...records.values()].filter(record => record.failed).length,
+    }),
+  };
+}
+
+
 // --- platform/miniGameClock.js ---
 function createMiniGameClock(now = () => Date.now()) {
   let started = false;
@@ -1260,12 +1347,14 @@ function navigateToDouyinSidebar(api) {
 
 
 
+
 // ── 尺寸常量 ──
 const DW = 750;       // 设计宽度
 let canvas, ctx;
 let scale = 1;        // 实际像素/设计像素比例
 let DH = 1334;        // 设计高度（自适应）
 let safeInsetTop = 0; // 全面屏安全区折算到设计坐标
+let assetStore = null; // 真实 CCTV / 控制台视觉资产
 
 // ── 颜色 ──
 const COLORS = {
@@ -1558,6 +1647,31 @@ function drawCctvScene(state, x, y, w, h) {
   if (h <= 20) return;
   const visual = deriveVisualState(state);
   const treatment = getCanvasCctvTreatment(visual.cctvState);
+  const sceneImage = assetStore?.getCctv(visual.cctvState);
+
+  if (sceneImage) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip();
+    ctx.drawImage(sceneImage, x, y, w, h);
+
+    const scanlines = assetStore.getOverlay('scanlines');
+    const vignette = assetStore.getOverlay('vignette');
+    const frame = assetStore.getOverlay('frame');
+    const alert = treatment.threat ? assetStore.getOverlay('redAlert') : null;
+    const glitchOverlay = treatment.glitch ? assetStore.getOverlay('glitch') : null;
+    const sweep = state.inspection?.status === 'pending' ? assetStore.getOverlay('sweep') : null;
+    for (const [image, alpha] of [[scanlines, 0.34], [vignette, 0.72], [frame, 0.72], [alert, 0.76], [glitchOverlay, 0.68], [sweep, 0.48]]) {
+      if (!image) continue;
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(image, x, y, w, h);
+    }
+    ctx.globalAlpha = 1;
+    if (visual.glitch || treatment.glitch) drawCanvasAnomalyArtifacts(visual, x, y, w, h);
+    ctx.restore();
+    return;
+  }
 
   const bg = ctx.createLinearGradient(x, y, x, y + h);
   bg.addColorStop(0, 'rgba(7,30,32,0.92)');
@@ -1731,11 +1845,31 @@ function drawActions(state) {
     const bx = x + 16 + (i % columns) * (buttonW + gap);
     const by = startY + Math.floor(i / columns) * (buttonH + gap);
     const danger = btn.id === 'emergencyStop' || btn.id === 'reportAnomaly';
-    const fill = ctx.createLinearGradient(0, by, 0, by + buttonH);
-    fill.addColorStop(0, danger ? '#492420' : '#2a2f30');
-    fill.addColorStop(0.2, danger ? '#321614' : '#1b1f20');
-    fill.addColorStop(1, danger ? '#100909' : '#090b0c');
-    roundRect(bx, by, buttonW, buttonH, 5, fill, danger ? 'rgba(231,92,79,0.78)' : '#4b504e');
+    const buttonKind = btn.disabled
+      ? 'disabled'
+      : btn.recommended
+        ? 'recommended'
+        : danger
+          ? 'danger'
+          : btn.id === 'inspectLog'
+            ? 'inspectLog'
+            : btn.id === 'unlockHiddenLog'
+              ? 'unlockHiddenLog'
+              : 'default';
+    const buttonSprite = assetStore?.getButton(buttonKind);
+    if (buttonSprite) {
+      ctx.globalAlpha = 0.92;
+      ctx.drawImage(buttonSprite, bx, by, buttonW, buttonH);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = 'rgba(5,9,9,0.94)';
+      ctx.fillRect(bx + 12, by + 6, buttonW - 24, buttonH - 12);
+    } else {
+      const fill = ctx.createLinearGradient(0, by, 0, by + buttonH);
+      fill.addColorStop(0, danger ? '#492420' : '#2a2f30');
+      fill.addColorStop(0.2, danger ? '#321614' : '#1b1f20');
+      fill.addColorStop(1, danger ? '#100909' : '#090b0c');
+      roundRect(bx, by, buttonW, buttonH, 5, fill, danger ? 'rgba(231,92,79,0.78)' : '#4b504e');
+    }
     roundRect(bx + 5, by + 5, buttonW - 10, buttonH - 10, 3, null, 'rgba(0,0,0,0.72)');
     if (btn.recommended) {
       roundRect(bx - 2, by - 2, buttonW + 4, buttonH + 4, 6, null, 'rgba(225,168,75,0.94)');
@@ -2071,6 +2205,15 @@ function init(canvasEl, systemInfo = {}) {
   canvas.width = metrics.width;
   canvas.height = metrics.height;
   scale = 1;
+
+  const imageFactory = () => {
+    if (typeof tt !== 'undefined' && typeof tt.createImage === 'function') return tt.createImage();
+    if (typeof wx !== 'undefined' && typeof wx.createImage === 'function') return wx.createImage();
+    if (typeof canvas.createImage === 'function') return canvas.createImage();
+    return null;
+  };
+  assetStore = createCanvasAssetStore(imageFactory);
+  assetStore.preload();
 
   return { width: DW, height: DH };
 }
