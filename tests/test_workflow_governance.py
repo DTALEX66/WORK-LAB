@@ -1,0 +1,259 @@
+from __future__ import annotations
+
+import importlib.util
+import re
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+import yaml
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class WorkflowGovernanceTests(unittest.TestCase):
+    def test_portable_config_defaults_to_context7_only(self) -> None:
+        config = yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(set(config["mcp_servers"]), {"context7"})
+        self.assertEqual(
+            set(config["plugins"]["enabled"]),
+            {"security-guidance", "web/ddgs"},
+        )
+        non_core = {"spotify", "x_search", "video", "tts"}
+        self.assertTrue(non_core.isdisjoint(config["platform_toolsets"]["cli"]))
+
+    def test_sync_uses_repo_skills_as_single_source(self) -> None:
+        source = (ROOT / "scripts/workflow/sync_hermes_workflow_assets.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("MERGED_MODEL_SWITCH", source)
+        self.assertNotIn("write_text(MERGED_MODEL_SWITCH", source)
+
+    def test_sync_removes_retired_managed_mcps_and_preserves_model(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            repo = temp / "repo"
+            home = temp / "home"
+            (repo / "config").mkdir(parents=True)
+            home.mkdir()
+            (repo / "config/config.yaml").write_text(
+                "mcp_servers:\n  context7:\n    command: hermes-npx\n    args: [-y, context7]\n"
+                "plugins:\n  enabled: [security-guidance, web/ddgs]\n",
+                encoding="utf-8",
+            )
+            (home / "config.yaml").write_text(
+                "model:\n  provider: openai-codex\n  default: gpt-current\n"
+                "mcp_servers:\n  public-apis: {}\n  sequential-thinking: {}\n  custom: {}\n"
+                "plugins:\n  enabled: [disk-cleanup, google_meet, spotify, custom-plugin]\n",
+                encoding="utf-8",
+            )
+
+            module.merge_live_config(repo, home, apply=True)
+            result = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8"))
+            self.assertEqual(result["model"]["default"], "gpt-current")
+            self.assertEqual(set(result["mcp_servers"]), {"context7", "custom"})
+            self.assertEqual(
+                set(result["plugins"]["enabled"]),
+                {"security-guidance", "web/ddgs", "custom-plugin"},
+            )
+
+            result["plugins"]["enabled"].append("spotify")
+            (home / "config.yaml").write_text(
+                yaml.safe_dump(result, sort_keys=False), encoding="utf-8"
+            )
+            module.merge_live_config(repo, home, apply=True)
+            rerun = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8"))
+            self.assertIn("spotify", rerun["plugins"]["enabled"])
+            self.assertTrue((home / ".workflow-assistance-state.yaml").exists())
+
+    def test_sync_removes_only_explicitly_retired_managed_skill_assets(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_retired", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw)
+            retired = [
+                "model-switch/references/oauth-credential-sync.md",
+                "software-development/windows-development-environment/references/github-credential-extraction.md",
+                "software-development/windows-development-environment/references/codex++-proxy-routing.md",
+                "software-development/hermes-provider-routing/SKILL.md",
+            ]
+            for relative in retired:
+                target = home / "skills" / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text("stale", encoding="utf-8")
+            keep = home / "skills/custom-skill/SKILL.md"
+            keep.parent.mkdir(parents=True)
+            keep.write_text("keep", encoding="utf-8")
+
+            module.remove_retired_managed_assets(home, apply=True)
+            self.assertTrue(keep.exists())
+            for relative in retired:
+                self.assertFalse((home / "skills" / relative).exists(), relative)
+
+    def test_sync_initializes_missing_live_config_from_portable_baseline(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_new", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            repo = temp / "repo"
+            home = temp / "home"
+            (repo / "config").mkdir(parents=True)
+            home.mkdir()
+            (repo / "config/config.yaml").write_text(
+                "model:\n  provider: openai-codex\n  default: gpt-portable\n"
+                "platform_toolsets:\n  cli: [terminal, file]\n"
+                "mcp_servers:\n  context7:\n    command: hermes-npx\n",
+                encoding="utf-8",
+            )
+
+            module.merge_live_config(repo, home, apply=True)
+            result = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8"))
+            self.assertEqual(result["model"]["default"], "gpt-portable")
+            self.assertEqual(result["platform_toolsets"]["cli"], ["terminal", "file"])
+            self.assertEqual(set(result["mcp_servers"]), {"context7"})
+
+    def test_setup_does_not_default_enable_optional_capabilities(self) -> None:
+        scripts = "\n".join(
+            (ROOT / name).read_text(encoding="utf-8") for name in ("setup.sh", "setup.ps1")
+        )
+        for command in (
+            "tools enable x_search",
+            "tools enable video",
+            "tools enable spotify",
+            "plugins enable disk-cleanup",
+            "plugins enable google_meet",
+            "plugins enable spotify",
+        ):
+            self.assertNotIn(command, scripts)
+        self.assertNotIn("[switch]$DryRun", (ROOT / "setup.ps1").read_text(encoding="utf-8"))
+        for name in ("setup.sh", "setup.ps1"):
+            setup = (ROOT / name).read_text(encoding="utf-8")
+            self.assertIn("sync_hermes_workflow_assets.py", setup)
+            self.assertIn("--apply", setup)
+        self.assertNotIn('cp "$PACK_DIR/config/config.yaml"', (ROOT / "setup.sh").read_text(encoding="utf-8"))
+        self.assertNotIn("Copy-Item -Path $configSrc -Destination $configDst -Force", (ROOT / "setup.ps1").read_text(encoding="utf-8"))
+
+    def test_readme_never_extracts_credentials_from_auth_files(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertNotIn("json.load(open(r'~/.codex/auth.json'))", readme)
+        self.assertIn("skills/model-switch/SKILL.md", readme)
+
+    def test_doctor_distinguishes_structural_and_live_checks(self) -> None:
+        doctor = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("server-sequential-thinking", doctor)
+        self.assertNotIn("public-apis-mcp", doctor)
+        self.assertIn("['hermes', 'mcp', 'test', 'context7']", doctor)
+        self.assertIn("--live", doctor)
+        self.assertIn("structural checks do not prove provider execution", doctor)
+
+        sys.path.insert(0, str(ROOT / "scripts/workflow"))
+        try:
+            spec = importlib.util.spec_from_file_location(
+                "workflow_doctor", ROOT / "scripts/workflow/hermes_workflow_doctor.py"
+            )
+            self.assertIsNotNone(spec)
+            self.assertIsNotNone(spec.loader)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        finally:
+            sys.path.pop(0)
+        self.assertFalse(module.has_exact_marker("Only reply OK_LIVE", "OK_LIVE"))
+        self.assertFalse(module.has_exact_marker("prompt: OK_LIVE", "OK_LIVE"))
+        self.assertTrue(module.has_exact_marker("noise\nOK_LIVE\n", "OK_LIVE"))
+        leaked = "github_pat_" + "A" * 30 + " npm_" + "B" * 30 + " xoxb-" + "C" * 30
+        redacted = module.redact(leaked)
+        self.assertNotIn("A" * 30, redacted)
+        self.assertNotIn("B" * 30, redacted)
+        self.assertNotIn("C" * 30, redacted)
+
+        json_secret = '"access_token": "' + "D" * 30 + '"'
+        redacted_json = module.redact(json_secret)
+        self.assertNotIn("D" * 30, redacted_json)
+        self.assertIn("[REDACTED]", redacted_json)
+
+    def test_windows_skill_does_not_bypass_provider_or_credential_boundaries(self) -> None:
+        skill = ROOT / "skills/software-development/windows-development-environment"
+        body = (skill / "SKILL.md").read_text(encoding="utf-8")
+        self.assertNotIn("hermes config set model.provider", body)
+        self.assertNotIn('cp config/config.yaml "$HERMES_HOME/config.yaml"', body)
+        self.assertNotIn('cp -r skills/* "$HERMES_HOME/skills/"', body)
+        self.assertNotIn("tools enable x_search", body)
+        self.assertIn("sync_hermes_workflow_assets.py", body)
+        for name in (
+            "codex++-proxy-routing.md",
+            "provider-network-troubleshooting.md",
+            "third-party-proxy-setup.md",
+            "credential-audit-and-template.md",
+            "github-credential-extraction.md",
+        ):
+            self.assertFalse((skill / "references" / name).exists(), name)
+
+    def test_portable_skills_do_not_link_to_missing_references(self) -> None:
+        for skill in (ROOT / "skills").rglob("SKILL.md"):
+            body = skill.read_text(encoding="utf-8")
+            references = re.findall(r"references/[A-Za-z0-9._+/-]+\.md", body)
+            missing = [ref for ref in references if not (skill.parent / ref).exists()]
+            self.assertEqual(missing, [], skill.relative_to(ROOT).as_posix())
+
+    def test_codex_skill_matches_current_noninteractive_boundary(self) -> None:
+        body = (ROOT / "skills/autonomous-ai-agents/codex/SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("`codex exec`, `codex review`", body)
+        self.assertIn("use `pty=false`", body)
+        self.assertIn("One writer per checkout", body)
+        self.assertNotIn("codex --yolo exec", body)
+        self.assertNotIn("exec --full-auto", body)
+        self.assertNotIn("background=true, pty=true", body)
+
+    def test_review_alias_has_no_second_commit_or_autofix_pipeline(self) -> None:
+        body = (ROOT / "skills/software-development/requesting-code-review/SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("agent-workflow-fortress", body)
+        self.assertNotIn("git add -A &&", body)
+        self.assertNotIn("Auto-fix loop", body)
+        self.assertNotIn("git stash", body)
+        self.assertNotIn("frozen-review references", body)
+
+    def test_model_routing_has_one_executable_source_of_truth(self) -> None:
+        active = [
+            ROOT / "config/config.yaml",
+            ROOT / "scripts/workflow/switch_model.py",
+            ROOT / "scripts/workflow/hermes_workflow_doctor.py",
+            ROOT / "skills/model-switch/SKILL.md",
+        ]
+        combined = "\n".join(path.read_text(encoding="utf-8") for path in active)
+        self.assertNotIn("gpt-5.5", combined)
+        self.assertIn("from switch_model import DEEPSEEK_MODEL, GPT_MODEL", combined)
+        self.assertNotIn("hermes config set model.provider", (active[-1]).read_text(encoding="utf-8"))
+        refs = ROOT / "skills/model-switch/references"
+        self.assertFalse((refs / "cc-switch-codex-hermes.md").exists())
+        self.assertFalse((refs / "oauth-credential-sync.md").exists())
+        fortress_ref = ROOT / "skills/software-development/agent-workflow-fortress/references/hermes-provider-mcp-workflow.md"
+        self.assertFalse(fortress_ref.exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -16,6 +16,10 @@ import sys
 from pathlib import Path
 
 
+GPT_MODEL = os.environ.get("HERMES_GPT_MODEL", "gpt-5.6-sol")
+DEEPSEEK_MODEL = os.environ.get("HERMES_DEEPSEEK_MODEL", "deepseek-v4-flash")
+
+
 def run(cmd: list[str], timeout: int = 30, check: bool = False) -> subprocess.CompletedProcess[str]:
     cp = subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
     if check and cp.returncode != 0:
@@ -111,7 +115,7 @@ def main() -> int:
         set_config([
             ('model.provider', 'deepseek'),
             ('model.base_url', 'https://api.deepseek.com/v1'),
-            ('model.default', 'deepseek-v4-flash'),
+            ('model.default', DEEPSEEK_MODEL),
             ('model.api_key', ''),
         ])
         print('Switched to DeepSeek. Start a new session or /reset for it to take effect.')
@@ -122,7 +126,7 @@ def main() -> int:
             raise SystemExit('CC Switch proxy 127.0.0.1:7890 is not open')
         set_config([
             ('model.provider', 'openai-codex'),
-            ('model.default', 'gpt-5.5'),
+            ('model.default', GPT_MODEL),
             ('model.base_url', ''),
             ('model.api_key', ''),
         ])

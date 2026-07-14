@@ -42,57 +42,21 @@ powershell.exe -Command "
 "
 ```
 
-### 1a. Fallback: manual step-by-step when .ps1 fails
+### 1a. Deployment scripts: use the canonical sync path
 
-When a deployment `.ps1` can't run due to encoding (or any other reason),
-execute its steps manually in bash instead. Common Hermes deployment steps:
+Do not translate a failed deployment wrapper into ad-hoc `cp` commands. Direct config copies overwrite live provider/model, skill overlays leave deleted files active, and remembered tool enables violate the current minimal baseline.
+
+Invoke the repository's canonical sync entry directly:
 
 ```bash
-HERMES_HOME="$HOME/AppData/Local/hermes"
-
-# 1. Verify Hermes installation
-which hermes && hermes --version
-
-# 2. Copy config files (backup existing first)
-cp "$HERMES_HOME/config.yaml" "$HERMES_HOME/config.yaml.backup.$(date +%Y%m%d_%H%M%S)"
-cp config/config.yaml "$HERMES_HOME/config.yaml"
-cp config/SOUL.md "$HERMES_HOME/SOUL.md"
-[ ! -f "$HERMES_HOME/.env" ] && cp config/.env.template "$HERMES_HOME/.env"
-
-# 3. Copy skills
-mkdir -p "$HERMES_HOME/skills"
-cp -r skills/* "$HERMES_HOME/skills/"
-
-# 4. Install extra deps (find Hermes venv pip)
-"$HERMES_HOME/hermes-agent/venv/Scripts/pip.exe" install ddgs
-
-# 5. Enable toolsets + plugins
-hermes tools enable x_search
-hermes plugins enable web/ddgs
-# ... etc
-
-# 6. Verify
-hermes doctor
-hermes skills list
+REPO_ROOT="D:/All projects/Workflow-assistance"
+HERMES_HOME="${LOCALAPPDATA:-$HOME/AppData/Local}/hermes"
+python "$REPO_ROOT/scripts/workflow/sync_hermes_workflow_assets.py" \
+  --repo "$REPO_ROOT" --home "$HERMES_HOME" --apply
+hermes config check
 ```
 
-This pattern applies to any PowerShell script blocked by encoding issues —
-read the script, understand each step, then run the equivalent bash commands.
-
-#### 1b. Deployment repo path mismatch
-
-Some older Hermes deployment repos assumed a nested pack directory in `setup.ps1`,
-but this project keeps config/, skills/, scripts/, templates/, and bin/ at the repo root. When `$PackDir` doesn't exist, the script copies nothing. Fix:
-
-```powershell
-# Before (broken):
-$PackDir = Join-Path $RepoRoot "Workflow-assistance"
-
-# After (fixed):
-$PackDir = $RepoRoot
-```
-
-Then run the script or manually execute its steps in bash if encoding also blocks.
+If another deployment repository has no canonical merge/sync entry, stop and inspect its preservation, backup, retirement and minimal-plugin contracts. Never overwrite a live config or overlay skills as a fallback.
 
 ### 2. Node.js PATH shadowing
 
@@ -105,11 +69,11 @@ Hermes bundles Node v22 at `AppData/Local/hermes/node/node.exe`, but other tools
 export PATH="$HERMES_HOME/node:$PATH"
 ```
 
-### 3. `child_process.spawn` EINVAL on Windows
+### 3. `child_process.spawn` / Python `subprocess` launcher issues on Windows
 
-On Windows under Git Bash, `.cmd` files are not directly spawnable.
+On Windows under Git Bash, `.cmd` files are not directly spawnable by APIs that call Win32 `CreateProcess` without a shell. This affects Node `child_process.spawn` and Python `subprocess.run(['tool'])`: Git-Bash may resolve `tool` to a shell wrapper or `.cmd`, while Python/Node may fail with `WinError 2`, `EINVAL`, or silently pick a later `.exe` in PATH.
 
-**Fix:** Use `cmd.exe` as the command:
+**Fix for Node:** Use `cmd.exe` as the command when launching `.cmd` tools:
 ```js
 const child = spawn(
   process.platform === 'win32'
@@ -120,6 +84,18 @@ const child = spawn(
     : ['next', 'build'],
   { stdio: 'inherit', env, shell: false },
 );
+```
+
+**Fix for Python/subprocess or agent toolchains:** prefer a real `.exe` earlier in PATH, or call the `.cmd` through `cmd.exe /d /s /c`. For portable wrappers that must work from both Git-Bash and Python subprocesses, ship a bash/`.cmd` wrapper in the repo and, on the local machine only, put the real executable or a trusted `.exe` shim in `~/bin` before stale tool directories.
+
+Example verification:
+```bash
+command -v tool && tool --version
+python - <<'PY'
+import shutil, subprocess
+print(shutil.which('tool'))
+print(subprocess.run(['tool','--version'], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
+PY
 ```
 
 ### 4. `package-lock.json` registry lock-in
@@ -141,70 +117,11 @@ npm install --ignore-scripts --no-audit --no-fund
 | `ETIMEDOUT` | Internal registry URLs | Regenerate lockfile |
 | Wrong Node version | PATH shadowing | Prepend Hermes Node |
 
-### 6. Hermes + CC Switch proxy & OAuth setup
+### 6. Hermes + CC Switch / provider routing boundary
 
-**CC Switch identity:** On this user's machine, CC Switch is **FlyintPro** (commercial GUI)
-which wraps the open-source **FlClashCore** kernel. The process running on port 7890 is
-`C:\Program Files\FlyintPro\FlClashCore.exe` (PID can be found via `netstat -ano | findstr :7890`).
-The GUI frontend is `FlyintPro.exe` and its version is the one that matters (FlClashCore.exe
-has no embedded file version). To check the installed CC Switch version:
+Provider switching, proxy/router diagnosis, OAuth state and live GPT/DeepSeek/Codex smokes belong exclusively to the `model-switch` skill and Hermes official auth/config commands. Do not duplicate model names, ports or credential procedures in this Windows skill.
 
-```bash
-python -c "import subprocess; r=subprocess.run(['powershell','-Command',
-'(Get-Item \"C:\\Program Files\\FlyintPro\\FlyintPro.exe\").VersionInfo.FileVersion'],
-capture_output=True,text=True,timeout=10); print(r.stdout.strip())"
-```
-
-The underlying FlClash kernel has independent GitHub releases at
-`https://github.com/chen08209/FlClash` — check that separately for kernel-level fixes.
-
-When Hermes runs behind CC Switch proxy (port 7890) for accessing
-blocked endpoints like `auth.openai.com` or `chatgpt.com`:
-
-1. **Proxy must be in `.env`** — `HTTPS_PROXY=http://127.0.0.1:7890` AND
-   `HTTP_PROXY=http://127.0.0.1:7890`. Without this, Hermes cannot reach
-   OAuth endpoints.
-2. **Proxy must be exported in the shell** before `hermes auth add openai-codex`:
-   ```bash
-   export HTTPS_PROXY=http://127.0.0.1:7890 HTTP_PROXY=http://127.0.0.1:7890
-   hermes auth add openai-codex
-   ```
-3. **OAuth device codes expire** — if the user doesn't complete the
-   browser flow quickly, kill the process and re-run.
-4. **Verify proxy connectivity** before starting OAuth:
-   ```bash
-   curl -x http://127.0.0.1:7890 -sI https://auth.openai.com 2>&1 | head -5
-   # Look for "200 Connection established"
-   ```
-5. After OAuth completes, switch provider:
-   ```bash
-   hermes config set model.provider openai-codex
-   hermes config set model.default gpt-5.5
-   ```
-   Then `/reset` or restart Hermes.
-
-**Pitfall:** setting proxy only in `.env` is not enough for `hermes auth`
-— the auth command runs before Hermes reads `.env` for proxy settings,
-so you must also `export` the vars in the shell session.
-
-**Pitfall:** `hermes auth add openai-codex` in foreground mode can hit the
-default 180s timeout waiting for the user to complete the browser flow.
-Use background mode instead:
-
-```bash
-terminal(command="export HTTPS_PROXY=http://127.0.0.1:7890 HTTP_PROXY=http://127.0.0.1:7890 && hermes auth add openai-codex", background=true, notify_on_complete=true)
-# Then poll for the device code:
-process(action="poll", session_id="...")
-```
-
-**Pitfall:** Even with CC Switch proxy, `auth.openai.com/codex/device` may
-show a Cloudflare "正在进行安全验证" challenge in the agent's headless
-browser. The user must open the URL in their own proxy-configured browser
-and manually pass the Cloudflare check before entering the device code.
-
-**Pitfall:** `~/.hermes/.env` is a credential store that the `read_file`
-tool cannot access directly (defense-in-depth). Use the terminal tool
-instead: `grep KEY "$HOME/AppData/Local/hermes/.env"`.
+Windows-only pitfall: an OAuth device page may require the user’s normal proxy-configured browser to pass an interactive challenge. Never read or parse `.env`, `auth.json`, Windows Credential Store, browser cookies or bearer tokens as a workaround; report the prompt and let the user complete the supported login flow.
 
 ### 7. `python3` shadowed by Microsoft Store stub
 
@@ -383,27 +300,9 @@ When creating a repository that should let another Windows machine reproduce a H
 - In setup scripts for deployment packs, verify prerequisites (`hermes` installed, CC Switch running) and copy/enable assets; do not silently download/install the main app unless the user explicitly asked for a bootstrap installer.
 - Use quoted POSIX paths in Git Bash and avoid hand-escaping Windows backslashes in JSON/YAML; prefer forward slashes or single-quoted MSYS paths in shell examples.
 
-### 15. Model/provider switching requires `/reset`
+### 15. Model/provider changes require a new session
 
-Model and provider changes via `hermes config set` do NOT take effect
-in the current session — they are locked at session startup. After
-changing provider/model, type `/reset` to start a fresh session with
-the new settings.
-
-Quick switch recipes:
-
-```bash
-# To GPT via openai-codex (requires OAuth + CC Switch proxy)
-hermes config set model.provider openai-codex
-hermes config set model.default gpt-5.5
-# → then /reset
-
-# To DeepSeek (requires DEEPSEEK_API_KEY in .env)
-hermes config set model.provider deepseek
-hermes config set model.base_url https://api.deepseek.com/v1
-hermes config set model.default deepseek-v4-flash
-# → then /reset
-```
+Hermes snapshots provider/model/tool availability at session start. After an authorized change made through `model-switch` or Hermes official configuration, use `/reset` or restart. This section defines only the Windows session-lifecycle pitfall; all switch recipes and route values live in `model-switch`.
 
 ### 14. Hermes ecosystem update check (Hermes + Codex + CC Switch)
 
@@ -624,7 +523,61 @@ If CRLF appears in touched text files, normalize only the touched files to
 UTF-8 + LF, add/strengthen `.gitattributes` rules such as `*.vue text eol=lf`,
 rerun tests/build, then commit the normalization separately when appropriate.
 
-### 23. Git clone into Windows paths with spaces from Git-Bash/MSYS
+### 23. Git-Bash redirection to `NUL` creates a real reserved-name file
+
+On this Windows host, terminal commands run through Git-Bash/MSYS. A command or test that uses Windows-style redirection such as `>NUL` can create a real repository file named `NUL`. Git for Windows may then fail while staging with:
+
+```text
+fatal: mmap failed: Invalid argument
+```
+
+Diagnosis and repair:
+
+```bash
+git status --short       # look for `?? NUL`
+stat -c '%n %s bytes' NUL
+rm -f NUL
+git add -A
+git diff --cached --check
+```
+
+If `git add` still fails after removing `NUL`, the underlying issue may be filesystem-level (mmap failure on the drive partition). In that case, retry the command from a fresh shell or use `git add <specific-file>...` to stage files individually, isolating the problematic path.
+
+Prevention: use POSIX redirection in Git-Bash (`>/dev/null 2>&1`), not `>NUL`. If a build script deliberately invokes `cmd.exe`, keep `NUL` only inside the quoted `cmd.exe /c` command.
+
+### 25. 抖音开发者工具 CDP 交互（computer_use 返回空时的后备）
+
+当 `computer_use(action='capture')` 对 抖音开发者工具 返回 0×0 空截图时，该工具的 Electron 进程自带 CDP 服务器（默认端口 `127.0.0.1:8935`），可以直接通过 HTTP POST 操作。
+
+**发现端口上的所有页面：**
+```bash
+curl --noproxy '*' -s http://127.0.0.1:8935/json | python -c "import json,sys; [print(x.get('title'),x.get('type')) for x in json.load(sys.stdin)]"
+```
+
+**两个关键页面：**
+- 工作台 → title 包含 `workbenchMode=workbench`
+- 模拟器 Webview → title 包含 `MiniApp Webview`
+
+**三种 CDP 操作：**
+
+| 操作 | 脚本 | 参数 |
+|---|---|---|
+| 执行 JS | `node .tmp/cdp-eval.mjs '<title>' '<js>'` | title 子串 + JS 表达式 |
+| 点击坐标 | `node .tmp/cdp-click.mjs '<title>' <x> <y>` | title 子串 + x y 坐标 |
+| 截图保存 | `node .tmp/cdp-shot.mjs '<title>' '<output.png>'` | title 子串 + 输出路径 |
+
+**查找工具栏按钮：** 抖音开发者工具的"上传/编译/预览"等按钮不是 `<button>` 标签，而是 `<div class="tila-toolbar-item-container">`。用 `textContent` 而非 `innerText` 查找，因为嵌套元素有 aria-hidden。
+
+```js
+const btn = [...document.querySelectorAll('div,span')]
+  .find(e => e.textContent.trim() === '上传' && e.offsetWidth > 0);
+const {x, y} = btn.getBoundingClientRect();
+// 点击 (x+5, y+5)
+```
+
+**陷阱：** 截图命令可能因 Webview 加载中超时；编译后 Webview 短暂变白需等待 3-5 秒。
+
+### 26. Git clone into Windows paths with spaces from Git-Bash/MSYS
 
 When cloning into paths such as `D:\All projects\Repo` from Hermes on Windows,
 Git-Bash/MSYS path conversion can be fragile after an interrupted clone or when

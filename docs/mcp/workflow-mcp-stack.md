@@ -1,52 +1,41 @@
 # Workflow MCP Stack
 
-当前 Hermes 部署包的 MCP 目标不是“越多越好”，而是：少量、稳定、可验证、不会扩大危险权限面。
+目标是少量、稳定、可验证，并避免与 Hermes 原生工具或模型能力重复。
 
-## 默认启用
-
-### public-apis
-
-- 包：`public-apis-mcp@0.0.10`
-- 作用：查询公共 API 目录，用于项目选型、数据源发现、原型调研。
-- 状态：已在 `config/config.yaml` 中启用。
-
-### sequential-thinking
-
-- 包：`@modelcontextprotocol/server-sequential-thinking@2025.12.18`
-- 作用：复杂任务拆解、反思、逐步推理。
-- 实测：Hermes bundled Node v22.23.1 下可启动。
-- 状态：已在 `config/config.yaml` 中启用。
-
-### Context7
+## 默认启用：Context7
 
 - 包：`@upstash/context7-mcp@3.2.2`
-- 价值：实时读取库文档，减少过期 API 用法。
-- 实测：Hermes bundled Node v22.23.1 下 `--help` 通过。
-- 状态：已在 `config/config.yaml` 中启用，通过 `hermes-npx` wrapper 避免系统 Node v16。
-- 信任边界：Context7 会把库名/文档查询发送到其服务；不要把私有代码、密钥、客户数据当查询词发送。默认只用于公开库文档。
+- 价值：查询公开库的当前文档，降低过期 API 用法风险。
+- 传输：Hermes `hermes-npx` wrapper，优先 bundled Node。
+- 隐私：查询会发送到外部服务；不得包含私有代码、密钥、客户数据或内部项目名。
 
-## 候选但不默认启用
-
-### Playwright MCP
-
-- 包：`@playwright/mcp`（候选项，启用前必须固定版本并单独 smoke test）
-- 价值：浏览器自动化和网页 QA。
-- 实测：Hermes bundled Node v22.23.1 下 `--help` 通过。
-- 不默认原因：权限面大，且 Hermes 原生 `browser` / `computer_use` 已覆盖多数网页自动化。
-- 启用条件：明确需要 Playwright MCP 与外部 Agent 共享浏览器自动化能力。
-
-### Memory / Filesystem MCP
-
-不默认启用。Hermes 已有原生 `memory` / `file` 工具，重复 MCP 会增加上下文噪声和权限面。
-
-## 验证命令
+验证配置而不是直接启动一个旁路进程：
 
 ```bash
-node --version
-npm --version
-bin/hermes-npx -y @modelcontextprotocol/server-sequential-thinking@2025.12.18 --help
-bin/hermes-npx -y public-apis-mcp@0.0.10 --help
-bin/hermes-npx -y @upstash/context7-mcp@3.2.2 --help
+hermes mcp test context7
 ```
 
-如新增 MCP，先固定版本、运行 smoke test，再写入默认配置；不要默认使用浮动 latest 版本。
+## 不默认启用
+
+| 能力 | 原因 | 替代 |
+|---|---|---|
+| sequential-thinking | 与模型原生推理、plan/TDD/debug skills 重复并增加 tool schema | 原生推理 + 对应 skill |
+| public-apis | 单一公共 API 目录，低频且可搜索 | `web_search` / GitHub public-apis |
+| Playwright MCP | 与 `browser` / `computer_use` 重叠，权限面更大 | Hermes 原生浏览器工具 |
+| filesystem MCP | 与 Hermes `file` 重叠 | Hermes `file` toolset |
+| memory MCP | 与 Hermes `memory` 重叠 | Hermes `memory` toolset |
+
+如果具体任务证明原生能力不足，使用 `hermes mcp add/configure/test` 按需启用，并在新会话验证；不要把临时选择重新写回默认 portable config。
+
+## 变更门禁
+
+新增默认 MCP 必须同时满足：
+
+1. 有原生工具无法覆盖的明确增益；
+2. 固定版本和许可证/来源检查；
+3. `hermes mcp test <name>` 通过；
+4. 记录外发数据、文件/网络权限和密钥需求；
+5. 测量 `hermes prompt-size --json` 的工具 schema 增量；
+6. 同步更新 `config/config.yaml` 与治理测试。
+
+默认 MCP 的唯一机器可读来源是 `config/config.yaml`；本文只解释选择理由。

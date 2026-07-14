@@ -85,11 +85,33 @@ except ValueError:
     rel_path = str(resolved_path)
 ```
 
-## Reporting Task
+## Monorepo Testing & Dedup Patterns
 
-```bash
-python -m unittest discover -s tests
+Key patterns:
+- Subdirectory test imports with `sys.path` for hyphen-named directories
+- SQL-free service module testing (pass `list[dict]` instead of querying DB)
+- OS-specific `pytest.raises` match patterns
+- Dataclass with defaults — no TypeError on empty init
+
+## Similarity / Vector Search Tests Need Strong Anchors
+
+Embedding and vector-search tests can be flaky when the “relevant” sample does not actually share query terms or strong semantic anchors. Hash/ngram embedders especially may rank an unrelated short text above a vaguely related text.
+
+```python
+# WEAK — query terms are absent from the expected top document; ranking may drift:
+index_card("c1", "backpropagation algorithm explained")
+index_card("c2", "how to make pizza dough")
+results = search_cards("neural network training", top_k=2)
+assert results[0][0] == "c1"
+
+# STRONG — expected document contains the query anchors being asserted:
+index_card("c1", "neural network training backpropagation algorithm explained")
+index_card("c2", "how to make pizza dough")
+results = search_cards("neural network training", top_k=2)
+assert results[0][0] == "c1"
 ```
+
+If a test is meant to verify no-error behavior rather than exact ranking, assert shape/count or membership instead of first-place ordering.
 
 ## SQLite Testing: Persistent State Across Tests
 
@@ -98,16 +120,22 @@ Searches may return stale data from previous test executions, causing
 `results[0]["id"] == expected_id` to fail even when your test correctly
 inserted the record.
 
-**Fix**: use `any()` for existence checks instead of positional assertions:
+**Fix**: use `any()` for existence checks instead of positional assertions, and make the query window large enough for persistent DB tables:
 
 ```python
-# WRONG — fails when previous runs left data in the DB:
+# WRONG — fails when previous runs left data in the DB or limit is too small:
 results = search_core_objects("MVP development", top_k=5)
 assert results[0]["id"] == "test_obj_001"
 
-# RIGHT — checks that your record exists somewhere in results:
-results = search_core_objects("MVP development", top_k=5)
+traces = list_traces_db(limit=10)
+assert any(t["id"] == "trace_test_001" for t in traces)  # may be crowded out
+
+# RIGHT — checks that your record exists somewhere in a wide enough result set:
+results = search_core_objects("MVP development", top_k=50)
 assert any(r["id"] == "test_obj_001" for r in results)
+
+traces = list_traces_db(limit=500)
+assert any(t["id"] == "trace_test_001" for t in traces)
 ```
 
 **Alternative**: clean the database in `setUp()` or use an in-memory SQLite

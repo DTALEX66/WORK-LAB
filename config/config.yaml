@@ -1,35 +1,14 @@
-# ═══════════════════════════════════════════════════════════════
-# Hermes Agent — 完整配置（密钥已剔除）
-# 当前方案：OpenAI Codex / ChatGPT OAuth + CC Switch 代理
-# ═══════════════════════════════════════════════════════════════
-
-# ── 当前方案（GPT + CC Switch 代理） ────────────────────
-# 前提: CC Switch 运行中（端口 7890）, ChatGPT OAuth 已认证
-# 切换方式: hermes model → 选择 7. OpenAI / ChatGPT OAuth
+# Portable Hermes workflow baseline. Secrets and OAuth state never belong here.
+# Pick the live provider with `hermes model` or scripts/workflow/switch_model.py.
 model:
-  default: gpt-5.5
+  default: gpt-5.6-sol
   provider: openai-codex
   base_url: ''
   api_key: ''
 
-# ── 备用方案 ────────────────────────────────────────────
-# 如果 CC Switch 未运行或 GPT 不可用，切换回 DeepSeek：
-#   hermes config set model.provider deepseek
-#   hermes config set model.base_url https://api.deepseek.com/v1
-#   hermes config set model.default deepseek-v4-flash
-#   hermes config set model.api_key ''
-#   确保 .env 中有 DEEPSEEK_API_KEY
-
 fallback_providers: []
-
-# ── CC Switch 代理 ──────────────────────────────────────
-# 代理端口: 7890
-# 已在 .env 中设置 HTTPS_PROXY=http://127.0.0.1:7890
-# CC Switch 安装包可自行下载最新版本。
-
 toolsets:
   - hermes-cli
-
 max_live_sessions: 16
 
 agent:
@@ -42,24 +21,9 @@ terminal:
   cwd: .
   timeout: 180
 
-# ── MCP Servers ─────────────────────────────────────────
-# 默认 MCP 使用 hermes-npx wrapper，优先调用 Hermes 自带 Node v22，避免系统 PATH 旧 Node 造成兼容问题。
-# setup.ps1/setup.sh 会把部署后的 command: hermes-npx 改写为 Hermes home 下的绝对 wrapper 路径。
+# Context7 adds current public library documentation. Other MCPs are opt-in:
+# sequential-thinking duplicates model reasoning; public-apis duplicates web discovery.
 mcp_servers:
-  public-apis:
-    command: hermes-npx
-    args:
-      - -y
-      - public-apis-mcp@0.0.10
-    timeout: 120
-    connect_timeout: 120
-  sequential-thinking:
-    command: hermes-npx
-    args:
-      - -y
-      - '@modelcontextprotocol/server-sequential-thinking@2025.12.18'
-    timeout: 120
-    connect_timeout: 120
   context7:
     command: hermes-npx
     args:
@@ -73,12 +37,10 @@ display:
   language: zh
   skin: default
 
+# Lowest-risk portable defaults. Media, Spotify, X and meeting plugins are opt-in.
 plugins:
   enabled:
-    - disk-cleanup
-    - google_meet
     - security-guidance
-    - spotify
     - web/ddgs
   disabled: []
 
@@ -95,11 +57,7 @@ platform_toolsets:
     - memory
     - session_search
     - skills
-    - spotify
     - terminal
     - todo
-    - tts
-    - video
     - vision
     - web
-    - x_search
