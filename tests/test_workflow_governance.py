@@ -254,6 +254,62 @@ class WorkflowGovernanceTests(unittest.TestCase):
         fortress_ref = ROOT / "skills/software-development/agent-workflow-fortress/references/hermes-provider-mcp-workflow.md"
         self.assertFalse(fortress_ref.exists())
 
+    def test_external_harness_absorption_is_model_and_paid_api_neutral(self) -> None:
+        fortress = ROOT / "skills/software-development/agent-workflow-fortress"
+        reference = fortress / "references/free-local-agent-harness-absorption.md"
+        template = ROOT / "templates/task-tickets/model-neutral-agent-task.md"
+        self.assertTrue(reference.exists())
+        self.assertTrue(template.exists())
+
+        skill = (fortress / "SKILL.md").read_text(encoding="utf-8")
+        reference_body = reference.read_text(encoding="utf-8")
+        template_body = template.read_text(encoding="utf-8")
+        combined = "\n".join((skill, reference_body, template_body))
+
+        self.assertIn("references/free-local-agent-harness-absorption.md", skill)
+        self.assertIn("https://github.com/xai-org/grok-build", reference_body)
+        for marker in (
+            "Completion contract",
+            "Structured run state",
+            "Fail-closed safety",
+            "Single writer",
+            "Exact-tree evidence",
+        ):
+            self.assertIn(marker, combined)
+        for section in (
+            "## Completion Contract",
+            "## Run State Contract",
+            "## Isolation and Permissions",
+            "## Verification Evidence",
+            "## Cost and Network Boundary",
+        ):
+            self.assertIn(section, template_body)
+
+        forbidden = (
+            "XAI_API_KEY",
+            "api.x.ai",
+            "provider: xai",
+            "grok -p",
+            "--model",
+            "grok-4",
+            "grok-build-0",
+        )
+        for marker in forbidden:
+            self.assertNotIn(marker, combined)
+
+    def test_model_neutral_absorption_is_discoverable_and_audited(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        audit = ROOT / "docs/audit/model-neutral-agent-harness-absorption-2026-07.md"
+        self.assertIn("templates/task-tickets/model-neutral-agent-task.md", readme)
+        self.assertTrue(audit.exists())
+        body = audit.read_text(encoding="utf-8")
+        self.assertIn("https://github.com/xai-org/grok-build", body)
+        self.assertIn("已吸收", body)
+        self.assertIn("明确排除", body)
+        self.assertIn("未安装外部执行器", body)
+        for marker in ("api.x.ai", "XAI_API_KEY", "grok -p", "--model"):
+            self.assertNotIn(marker, body)
+
 
 if __name__ == "__main__":
     unittest.main()

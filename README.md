@@ -11,6 +11,7 @@
 | Codex | 独立编码执行器；写任务使用隔离 worktree 和单写者 | Hermes bundled `codex` skill、`bin/codex*` |
 | Provider 切换 | GPT OAuth / DeepSeek 的切换与诊断 | `skills/model-switch/SKILL.md` |
 | 多代理发布流程 | task ticket、单写者、冻结复审、commit/push/CI | `skills/software-development/agent-workflow-fortress/SKILL.md` |
+| 模型/API 中立执行契约 | 完成信号、结构化状态、失败关闭、隔离写者、exact-tree 证据 | `templates/task-tickets/model-neutral-agent-task.md` |
 | MCP 默认集 | 只定义默认与按需启用边界 | `docs/mcp/workflow-mcp-stack.md` |
 
 不要在 README、部署脚本或同步脚本里复制 skill 正文、模型名称或端口判断逻辑。
@@ -24,7 +25,7 @@ skills/                     portable skills 的唯一仓库源
 bin/hermes-npx*             优先 Hermes bundled Node 的 MCP wrapper
 bin/codex*                  定位已安装 Codex 的 launcher
 scripts/workflow/           model switch、doctor、单向 repo→live sync
-templates/                  跨 agent 规则与 task ticket
+templates/                  跨 agent 规则与 task ticket；含模型/API 中立执行契约
 ```
 
 ## 默认能力

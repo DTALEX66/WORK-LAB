@@ -1,7 +1,7 @@
 ---
 name: agent-workflow-fortress
 description: Use when strengthening Hermes/Codex/CC Switch work loops, absorbing open-source workflow ideas, running autonomous project iterations, or deciding what tools/skills/MCPs should become part of the portable Hermes pack.
-version: 1.4.5
+version: 1.4.6
 author: Hermes Agent
 license: MIT
 metadata:
@@ -61,6 +61,10 @@ For product/reference projects (RSSHub, FreshRSS, Karakeep, linkding, Linkwarden
 - UX principle
 
 Do not automatically vendor their code or add them as runtime dependencies.
+
+### Model/API-neutral harness absorption
+
+When the user excludes models or non-free APIs, absorb only executor-independent workflow mechanics: Completion contract, Structured run state, Fail-closed safety, Single writer ownership, and Exact-tree evidence. Do not add a provider, model route, hosted endpoint, credential, external binary, telemetry path, or duplicate Hermes subsystem. Use `templates/task-tickets/model-neutral-agent-task.md` for execution tickets and load [`references/free-local-agent-harness-absorption.md`](references/free-local-agent-harness-absorption.md) for the full boundary and negative controls.
 
 ### Default-enable only if smoke-tested
 
