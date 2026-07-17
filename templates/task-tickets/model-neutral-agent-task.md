@@ -67,8 +67,13 @@ Terminal states are monotonic. A late process must not overwrite `failed`, `bloc
 - Network access: `disabled` unless a free, explicitly approved source is required
 - One checkout has one writer.
 - Write-capable work uses a dedicated worktree or clone.
-- Planning/review blocks edit tools, shell writes, redirection, and write-capable child workers.
-- Safety checks fail closed on errors, timeouts, or uninspectable input.
+- Declaring `plan` or `review` does not enforce read-only behavior.
+- Enforcement mechanism: `<external sandbox/container/VM plus path and tool policy>`
+- Tool deny list: `<edit, shell, redirection, child-worker and other denied capabilities>`
+- Sandbox support verified: `<OS, command, result, or no>`
+- Negative-control command/result: `<prove shell writes, chained commands and child writes are denied>`
+- If enforcement or a negative control is unavailable, the task is `blocked`; do not claim read-only execution.
+- Policy checks fail closed on errors, timeouts, malformed output, or uninspectable input.
 
 ## Source Docs to Read First
 

@@ -284,6 +284,20 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "## Cost and Network Boundary",
         ):
             self.assertIn(section, template_body)
+        self.assertNotIn(
+            "Planning/review blocks edit tools, shell writes, redirection, and write-capable child workers.",
+            template_body,
+        )
+        for enforcement_field in (
+            "Enforcement mechanism: `<external sandbox/container/VM plus path and tool policy>`",
+            "Tool deny list: `<edit, shell, redirection, child-worker and other denied capabilities>`",
+            "Sandbox support verified: `<OS, command, result, or no>`",
+            "Negative-control command/result: `<prove shell writes, chained commands and child writes are denied>`",
+            "Declaring `plan` or `review` does not enforce read-only behavior.",
+            "If enforcement or a negative control is unavailable, the task is `blocked`; do not claim read-only execution.",
+            "Policy checks fail closed on errors, timeouts, malformed output, or uninspectable input.",
+        ):
+            self.assertIn(enforcement_field, template_body)
 
         forbidden = (
             "XAI_API_KEY",
