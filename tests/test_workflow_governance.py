@@ -314,10 +314,46 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_model_neutral_absorption_is_discoverable_and_audited(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         audit = ROOT / "docs/audit/model-neutral-agent-harness-absorption-2026-07.md"
+        manifest_path = ROOT / "docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml"
         self.assertIn("templates/task-tickets/model-neutral-agent-task.md", readme)
         self.assertTrue(audit.exists())
+        self.assertTrue(manifest_path.exists())
+
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["schema_version"], 1)
+        self.assertEqual(
+            manifest["source"]["commit"],
+            "98c3b2438aa922fbbe6178a5c0a4c48f85edc8ce",
+        )
+        self.assertEqual(
+            manifest["source"]["source_revision"],
+            "124d85bc5dc6e7805560215fcc6d5413944920e1",
+        )
+        self.assertEqual(manifest["source"]["license"], "Apache-2.0")
+        self.assertEqual(manifest["runtime_assets"], [])
+        self.assertEqual(
+            set(manifest["excluded_capabilities"]),
+            {"models", "paid_apis", "providers", "credentials", "external_binaries"},
+        )
+        local_artifacts = manifest["local_artifacts"]
+        self.assertGreaterEqual(len(local_artifacts), 6)
+        for relative in local_artifacts:
+            self.assertTrue((ROOT / relative).is_file(), relative)
+            self.assertFalse(relative.startswith(("config/", "scripts/", "bin/")), relative)
+        for evidence in manifest["evidence"]:
+            self.assertTrue(evidence["upstream_paths"])
+            self.assertTrue(evidence["local_paths"])
+            for upstream_path in evidence["upstream_paths"]:
+                self.assertFalse(upstream_path.startswith("http"), upstream_path)
+            for local_path in evidence["local_paths"]:
+                self.assertIn(local_path, local_artifacts)
+                self.assertTrue((ROOT / local_path).is_file(), local_path)
+
         body = audit.read_text(encoding="utf-8")
-        self.assertIn("https://github.com/xai-org/grok-build", body)
+        self.assertIn("https://github.com/xai-org/grok-build/tree/", body)
+        self.assertIn(manifest["source"]["commit"], body)
+        self.assertIn(manifest["source"]["source_revision"], body)
+        self.assertIn("契约要求，不是运行时隔离证明", body)
         self.assertIn("已吸收", body)
         self.assertIn("明确排除", body)
         self.assertIn("未安装外部执行器", body)
