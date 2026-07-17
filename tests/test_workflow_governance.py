@@ -157,6 +157,65 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("json.load(open(r'~/.codex/auth.json'))", readme)
         self.assertIn("skills/model-switch/SKILL.md", readme)
 
+    def test_readme_documents_the_complete_current_feature_surface(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        for heading in (
+            "## 项目定位",
+            "## 功能总览",
+            "## Portable 部署与安全同步",
+            "## 模型切换与路由诊断",
+            "## Codex 编码执行器",
+            "## MCP 与 Hermes 原生工具",
+            "## Agent 工作流治理",
+            "## Skills 能力库",
+            "## 安全与隐私",
+            "## 模板、文档与审计",
+            "## 测试与持续集成",
+            "## 使用边界",
+        ):
+            self.assertIn(heading, readme)
+        for command_or_path in (
+            "scripts/workflow/sync_hermes_workflow_assets.py",
+            "scripts/workflow/switch_model.py",
+            "scripts/workflow/hermes_workflow_doctor.py",
+            "scripts/security/scan_agent_rules.py",
+            "templates/task-tickets/model-neutral-agent-task.md",
+            "docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml",
+            "hermes mcp test context7",
+            "git write-tree",
+            "--live",
+        ):
+            self.assertIn(command_or_path, readme)
+        for skill in (ROOT / "skills").rglob("SKILL.md"):
+            self.assertIn(skill.parent.name, readme, skill.relative_to(ROOT).as_posix())
+        for template in (ROOT / "templates").rglob("*.md"):
+            self.assertIn(template.name, readme, template.relative_to(ROOT).as_posix())
+        for document in (ROOT / "docs").rglob("*"):
+            if document.is_file() and document.suffix in {".md", ".yaml"}:
+                self.assertIn(document.relative_to(ROOT).as_posix(), readme)
+        config = yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))
+        for toolset in config["platform_toolsets"]["cli"]:
+            self.assertIn(f"`{toolset}`", readme)
+        for semantic in (
+            "创建时间戳备份",
+            "退役 managed MCP 每次同步都会移除",
+            "一次性迁移状态只保护退役插件",
+            "输出 repo/live 目录哈希",
+            "绝不把 live skills",
+            "显示脱敏后的 Hermes Provider/模型配置",
+            "Hermes 版本、配置、认证 inventory 和 MCP inventory",
+            "普通端口、HTTP 状态和结构检查不等于真实模型执行",
+            "Context7 查询会外发数据",
+            "一个 checkout 只能有一个 writer",
+            "Task Ticket、plan mode、hook、路径声明和 worktree 都不是安全 sandbox",
+            "每次 push 和 pull request",
+            "CI verdict 绑定提交 SHA",
+        ):
+            self.assertIn(semantic, readme)
+        self.assertNotIn("避免后续误删用户重新启用的功能", readme)
+        self.assertIn("不会安装 Hermes、Codex 或 CC Switch 主体", readme)
+        self.assertIn("结构检查不等于真实模型执行", readme)
+
     def test_doctor_distinguishes_structural_and_live_checks(self) -> None:
         doctor = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(
             encoding="utf-8"
