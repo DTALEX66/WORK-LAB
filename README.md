@@ -31,6 +31,7 @@ Workflow-assistance
 | 全链路诊断 | Hermes、认证、MCP、代理端口、Node、Codex 版本和可选真实执行 smoke | `scripts/workflow/hermes_workflow_doctor.py` |
 | Codex 执行 | 跨平台 launcher、非交互执行规则、只读审查、隔离 worktree | `bin/codex*`、`skills/autonomous-ai-agents/codex/` |
 | 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
+| 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `bin/hermes-project-data.py`、`skills/software-development/project-data-boundary/` |
 | MCP | 默认固定 Context7；记录隐私、版本和新增 MCP 门禁 | `docs/mcp/workflow-mcp-stack.md` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
 | 安全扫描 | Prompt/规则隐藏字符、注入特征和疑似硬编码秘密扫描 | `scripts/security/scan_agent_rules.py` |
@@ -214,6 +215,18 @@ hermes mcp test context7
 - 开源能力“吸收方法、不盲目 vendor”的治理；
 - 上下文/token 卫生、可持续后台队列和真实任务计数。
 
+### 项目任务数据锁定
+
+所有会生成临时文件、缓存、测试环境、日志、下载物或 review 产物的任务都必须先使用：
+
+```bash
+python "$HERMES_HOME/bin/hermes-project-data.py" --project . check
+python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- python -m pytest
+python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards list
+```
+
+该执行器以 Git 根为边界，要求 `.hermes/` 已被 Git 忽略，并把 `TMP`、`TEMP`、`TMPDIR`、XDG/pip/uv/npm/yarn/Playwright/Rust/Ruff/mypy/pre-commit cache 与 Python bytecode 指向 `<project>/.hermes/task-runtime/`。它同时将原生 Kanban 的 `HERMES_KANBAN_HOME` 固定在 `<project>/.hermes/kanban/`；禁止直接创建全局项目 board。显式项目外输出路径必须拒绝；它不是 OS sandbox，不能替代路径审查。项目证据归档到同项目 `.hermes/task-artifacts/`；认证、会话库、全局 config/skills 和 cron scheduler 元数据仍属于 Hermes 全局运行时，禁止误迁移。同步器仅保留最近两份自身生成的 workflow backup，避免每次部署重复膨胀全局 backup 目录。
+
 ### 模型/API 中立任务契约
 
 `templates/task-tickets/model-neutral-agent-task.md` 提供不绑定特定模型或收费 API 的任务票据：
@@ -238,6 +251,7 @@ hermes mcp test context7
 | `model-switch` | GPT OAuth / DeepSeek 安全切换、代理与 Provider 真实 marker 诊断 |
 | `agent-workflow-fortress` | 多 Agent 编排、TDD、单写者、冻结复审、发布和开源吸收治理 |
 | `sleep-mode` | 项目级持久自动推进：cron 调度、单 writer、状态账本、恢复与安全阻断 |
+| `project-data-boundary` | 项目任务数据 containment：Git-ignore fail-closed、受控临时目录、缓存、日志和产物路径 |
 | `python-testing` | unittest/pytest 模式、测试隔离、fixture 和常见陷阱 |
 | `requesting-code-review` | 代码复审兼容入口，统一转入 fortress 的 exact-tree 流程 |
 | `windows-development-environment` | PowerShell 编码、PATH 遮蔽、spawn/lockfile、便携工具链和 Windows 环境问题 |
@@ -293,6 +307,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 ### 文档和审计
 
 - `docs/workflow/project-definition.md`：项目定义与职责边界；
+- `docs/workflow/project-data-boundary.md`：项目任务数据归属、迁移、保留与 fail-closed 执行器；
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
 - `docs/workflow/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录；
 - `docs/mcp/workflow-mcp-stack.md`：MCP 默认策略；

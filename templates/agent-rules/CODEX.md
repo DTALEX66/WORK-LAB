@@ -13,6 +13,7 @@
 - If two patches in the same region fail, re-read the file and rewrite the complete small function/file.
 - Add or update tests when behavior changes.
 - Keep Windows path/encoding issues in mind: UTF-8, LF in repo, no PowerShell-only assumptions unless documented.
+- For commands that create temporary files, test environments, caches, logs or artifacts, first use `python "$HERMES_HOME/bin/hermes-project-data.py" --project . check`, then invoke `... run -- <command>`. The project `.hermes/` root must be Git-ignored; never use user-home, desktop, global Hermes or sibling-project paths for task output.
 
 ## Output Contract
 

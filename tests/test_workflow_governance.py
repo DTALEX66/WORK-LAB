@@ -289,6 +289,25 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertIn('copytree(repo / "skills", home / "skills", apply=args.apply)', sync)
 
+    def test_project_data_boundary_is_deployable_and_fail_closed(self) -> None:
+        helper = ROOT / "bin/hermes-project-data.py"
+        skill = ROOT / "skills/software-development/project-data-boundary/SKILL.md"
+        doc = ROOT / "docs/workflow/project-data-boundary.md"
+        self.assertTrue(helper.exists())
+        self.assertTrue(skill.exists())
+        self.assertTrue(doc.exists())
+        body = helper.read_text(encoding="utf-8")
+        for marker in (
+            "git-ignored",
+            "check-ignore",
+            "TMP",
+            "PIP_CACHE_DIR",
+            "PYTHONPYCACHEPREFIX",
+            "path escapes project root",
+        ):
+            self.assertIn(marker, body)
+        self.assertIn("hermes-project-data.py", (ROOT / "README.md").read_text(encoding="utf-8"))
+
     def test_portable_skills_do_not_link_to_missing_references(self) -> None:
         for skill in (ROOT / "skills").rglob("SKILL.md"):
             body = skill.read_text(encoding="utf-8")

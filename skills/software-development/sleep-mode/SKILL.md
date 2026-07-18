@@ -1,14 +1,14 @@
 ---
 name: sleep-mode
 description: "为当前项目启动、恢复或停止可持续自动推进的单写者任务队列；由用户说‘开启睡眠模式’和‘停止任务’触发。"
-version: 1.0.0
+version: 1.1.0
 author: Hermes Agent
 license: MIT
 platforms: [windows, linux, macos]
 metadata:
   hermes:
-    tags: [sleep-mode, durable-queue, cron, autonomous, project-workflow]
-    related_skills: [hermes-agent, agent-workflow-fortress, plan]
+    tags: [sleep-mode, durable-queue, cron, autonomous, project-workflow, evidence]
+    related_skills: [hermes-agent, agent-workflow-fortress, plan, project-data-boundary]
 ---
 
 # 项目睡眠模式（持久自动推进）
@@ -23,7 +23,7 @@ metadata:
 
 ## Durable state contract
 
-所有控制产物只可写入 Git 忽略的项目目录：
+所有控制产物只可写入 Git 忽略的项目目录；任何测试、缓存、日志或 review 产物还必须经 `project-data-boundary` 的 wrapper 落入 `.hermes/task-runtime/`：
 
 ```text
 .hermes/sleep-mode/
@@ -46,6 +46,7 @@ metadata:
   "baseline_head": null,
   "last_head": null,
   "last_evidence": null,
+  "failure_streak": 0,
   "stop_reason": null,
   "updated_at": "ISO-8601"
 }
@@ -69,13 +70,23 @@ metadata:
    - 首个未解决门禁失败时 stop/block。
 6. **可见证明。** 立即报告项目路径、job ID、首个任务、baseline HEAD 与状态文件路径。job ID 本身不是运行证明；须同时给出首个真实任务/证据。
 
+## 从本地睡眠引擎吸收的通用安全契约
+
+以下是可跨项目复用的治理规则，而不是移植某个项目的 FastAPI/SQLite/PM2 实现：
+
+- **完成必须有证据。** `done` 只能在实际工具结果含可核验路径、测试/lint 结果、检索条目/计数、Git/CI artifact 等证据时写入；`echo`、心跳、上下文构建、任务生成、dry-run、preview 和重复旧报告都不计入进度。
+- **有界执行。** 每轮只处理一个有依赖证据的任务；默认不重复种子任务。必须限制单任务超时、重试次数、衍生任务数量和总运行时长，避免无界队列或无限循环。
+- **失败熔断。** 单任务先按有限次数重试；连续失败达到项目预设阈值、任务超时、账本不可写、资源异常或高风险门禁时，原子标记 `blocked` 并暂停对应 cron，而不是继续制造失败输出。
+- **失败保留现场。** 不自动删除项目内失败日志、TaskPack、状态和证据；只清除确认可再生的 `task-runtime` 数据。成功任务在归档必要证据后执行项目 wrapper 的 `cleanup`。
+- **禁止自产生永久工作。** 队列清空应进入 `completed`，除非用户明确声明重复/持续目标，并同时给出最大轮次或时间上限。
+
+不要迁入项目特有的 HTTP endpoint、SQLite 表、PM2 daemon、`kb_search/mk_search/safe_write` executor 名称、产品数据路径或项目专属风险正则。Hermes 睡眠模式的唯一调度器仍是原生 cron，不增加第二个常驻 worker。
+
 ## 默认边界
 
 可自动执行：live-state 对账、只读审查、范围明确的低风险实现、定向测试/lint、项目本地文档；只有当项目既定工作流允许时才创建 checkpoint commit。
 
 必须阻塞并等待用户或独立门禁：凭据处理、破坏性清理、force push/历史重写、merge、生产写入、数据库/Schema migration、权限或认证变更、依赖变更、部署/发布、GitHub approval，以及任何影响不明确的任务。
-
-心跳、任务生成、`echo`、dry-run、preview，或重复旧报告都**不计入进度**。
 
 ## Cron worker prompt 必备项
 
@@ -85,8 +96,8 @@ metadata:
 - 不得访问项目根目录以外的路径，不得读取用户 Vault 或无关仓库；
 - one writer, one bounded task per cycle；
 - 由 live Git/CI/roadmap 证据决定下一任务；过期任务清单仅可作为输入；
-- 将任务选择、文件路径、命令结果、HEAD 和 stop/block 原因写入账本；
-- 若 `mode != active`、发现并发 writer、接管前 checkout 已脏，或出现高风险门禁，立即停止；
+- 将任务选择、文件路径、命令结果、HEAD、证据和 stop/block 原因写入账本；
+- 若 `mode != active`、发现并发 writer、接管前 checkout 已脏、证据不充分，或出现高风险门禁，立即停止；
 - 不得伪造完成；未经用户明确授权不得 merge/release/执行破坏性 Git 操作。
 
 ## 停止协议

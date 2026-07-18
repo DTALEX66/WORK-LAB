@@ -25,6 +25,7 @@ except Exception as exc:  # pragma: no cover - environment guard
 MANAGED_MCP_SERVERS = {"context7", "public-apis", "sequential-thinking"}
 RETIRED_MANAGED_PLUGINS = {"disk-cleanup", "google_meet", "spotify"}
 PLUGIN_RETIREMENT_MIGRATION = 1
+WORKFLOW_SYNC_BACKUP_KEEP = 2
 RETIRED_MANAGED_SKILL_ASSETS = {
     "model-switch/references/cc-switch-codex-hermes.md",
     "model-switch/references/oauth-credential-sync.md",
@@ -121,6 +122,32 @@ def backup_paths(home: Path, rels: Iterable[str], *, apply: bool) -> Path:
         else:
             shutil.copy2(src, dst)
     return backup
+
+
+def prune_workflow_sync_backups(
+    home: Path, *, apply: bool, keep: int = WORKFLOW_SYNC_BACKUP_KEEP
+) -> int:
+    """Keep only recent backups created by this synchronizer, never user backups."""
+    if keep < 1:
+        raise ValueError("workflow sync backup retention must keep at least one backup")
+    root = home / "backups"
+    if not root.exists():
+        return 0
+    candidates = sorted(
+        (
+            item
+            for item in root.iterdir()
+            if item.is_dir() and item.name.startswith("workflow-assistance-sync-")
+        ),
+        key=lambda item: item.name,
+        reverse=True,
+    )
+    stale = candidates[keep:]
+    for item in stale:
+        print(f"prune stale workflow sync backup: {item}")
+        if apply:
+            shutil.rmtree(item)
+    return len(stale)
 
 
 def merge_live_config(repo: Path, home: Path, *, apply: bool) -> None:
@@ -227,6 +254,7 @@ def main() -> None:
     copytree(repo / "bin", home / "bin", apply=args.apply)
     copyfile(repo / "config/.env.template", home / ".env.template", apply=args.apply)
     merge_live_config(repo, home, apply=args.apply)
+    prune_workflow_sync_backups(home, apply=args.apply)
 
     print("\nsummary hashes:")
     for label, path in (

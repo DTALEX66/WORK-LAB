@@ -1,17 +1,10 @@
-# AGENTS.md — Portable Agent Rules
+# Agent Rules
 
-## Mission
+## Scope
 
-Work from evidence, keep changes surgical, verify with real commands, and leave the repository in a clean, resumable state.
-
-## Operating Loop
-
-1. Read project orientation docs first (`README.md`, `docs/*`, `AGENTS.md`, `CODEX.md`, `SECURITY.md`, `DESIGN.md` if present).
-2. Inspect current state (`git status`, relevant files, tests/build config).
-3. Choose one real, evidenced gap.
-4. Implement the smallest coherent fix.
-5. Run the project’s verification command.
-6. Summarize changed files, verification result, and remaining risk.
+- Work only inside the current repository unless the user explicitly directs otherwise.
+- Read relevant files and project instructions before editing.
+- Keep changes minimal, verify them with relevant tests, and report concrete results.
 
 ## Boundaries
 
@@ -19,6 +12,10 @@ Work from evidence, keep changes surgical, verify with real commands, and leave 
 - Do not delete or move user data unless explicitly instructed.
 - Do not run destructive git commands (`reset --hard`, `clean -fd`) without explicit user approval.
 - Keep generated artifacts out of git unless they are intentional deliverables.
+- Keep task temporary files, caches, logs, test environments and generated review artifacts in the current Git project's ignored `.hermes/task-runtime/` or `.hermes/task-artifacts/`; never spill them into `%TEMP%`, the user home, desktop, Hermes Home, or another project.
+- Hermes' terminal pre-tool hook rejects raw terminal commands. Every terminal call must declare the current Git project as `workdir` and invoke `python "$HERMES_HOME/bin/hermes-project-data.py" --project . <subcommand>`; shell chaining is prohibited.
+- Before a command that can create runtime data, run `python "$HERMES_HOME/bin/hermes-project-data.py" --project . check`; run the command through `... run -- <command>` so standard temp/cache variables are project-local. Reject explicit output/cache/log paths outside the project root.
+- After a successful task, preserve durable evidence in `.hermes/task-artifacts/`, then run `python "$HERMES_HOME/bin/hermes-project-data.py" --project . cleanup`. Failed tasks retain project-local evidence until reviewed.
 
 ## Quality Bar
 
