@@ -11,6 +11,7 @@ state.db
 # Runtime/cache/logs
 logs/
 cache/
+.hermes/
 *.log
 __pycache__/
 *.pyc

@@ -268,6 +268,27 @@ class WorkflowGovernanceTests(unittest.TestCase):
         ):
             self.assertFalse((skill / "references" / name).exists(), name)
 
+    def test_sleep_mode_is_portable_and_enforces_durable_queue_boundaries(self) -> None:
+        skill = ROOT / "skills/software-development/sleep-mode/SKILL.md"
+        self.assertTrue(skill.exists())
+        body = skill.read_text(encoding="utf-8")
+        for marker in (
+            ".hermes/sleep-mode/",
+            "state.json",
+            "activity.jsonl",
+            "每个项目只允许一条活跃写队列",
+            "one writer, one bounded task per cycle",
+            "不计入进度",
+            "mode != active",
+            "高风险",
+        ):
+            self.assertIn(marker, body)
+
+        sync = (ROOT / "scripts/workflow/sync_hermes_workflow_assets.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('copytree(repo / "skills", home / "skills", apply=args.apply)', sync)
+
     def test_portable_skills_do_not_link_to_missing_references(self) -> None:
         for skill in (ROOT / "skills").rglob("SKILL.md"):
             body = skill.read_text(encoding="utf-8")

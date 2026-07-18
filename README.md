@@ -30,6 +30,7 @@ Workflow-assistance
 | 模型切换 | GPT OAuth 与 DeepSeek 官方 Provider 状态检查和安全切换 | `scripts/workflow/switch_model.py` |
 | 全链路诊断 | Hermes、认证、MCP、代理端口、Node、Codex 版本和可选真实执行 smoke | `scripts/workflow/hermes_workflow_doctor.py` |
 | Codex 执行 | 跨平台 launcher、非交互执行规则、只读审查、隔离 worktree | `bin/codex*`、`skills/autonomous-ai-agents/codex/` |
+| 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
 | MCP | 默认固定 Context7；记录隐私、版本和新增 MCP 门禁 | `docs/mcp/workflow-mcp-stack.md` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
 | 安全扫描 | Prompt/规则隐藏字符、注入特征和疑似硬编码秘密扫描 | `scripts/security/scan_agent_rules.py` |
@@ -236,6 +237,7 @@ hermes mcp test context7
 | `codex` | 调用 Codex 进行有边界的实现或只读审查，规范 PTY、sandbox 和 worktree |
 | `model-switch` | GPT OAuth / DeepSeek 安全切换、代理与 Provider 真实 marker 诊断 |
 | `agent-workflow-fortress` | 多 Agent 编排、TDD、单写者、冻结复审、发布和开源吸收治理 |
+| `sleep-mode` | 项目级持久自动推进：cron 调度、单 writer、状态账本、恢复与安全阻断 |
 | `python-testing` | unittest/pytest 模式、测试隔离、fixture 和常见陷阱 |
 | `requesting-code-review` | 代码复审兼容入口，统一转入 fortress 的 exact-tree 流程 |
 | `windows-development-environment` | PowerShell 编码、PATH 遮蔽、spawn/lockfile、便携工具链和 Windows 环境问题 |
