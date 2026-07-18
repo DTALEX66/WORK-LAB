@@ -29,6 +29,8 @@ mcp_servers:
     args:
       - -y
       - '@upstash/context7-mcp@3.2.2'
+    env:
+      HERMES_NPX_ALLOW_PATH_FALLBACK: '1'
     timeout: 120
     connect_timeout: 120
 
