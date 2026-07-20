@@ -186,6 +186,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "scripts/workflow/hermes_workflow_doctor.py",
             "scripts/security/scan_agent_rules.py",
             "templates/task-tickets/model-neutral-agent-task.md",
+            "templates/evals/agent-behavior-smoke.yaml",
             "docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml",
             "hermes mcp test context7",
             "git write-tree",
@@ -490,6 +491,62 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("未安装外部执行器", body)
         for marker in ("api.x.ai", "XAI_API_KEY", "grok -p", "--model"):
             self.assertNotIn(marker, body)
+
+    def test_agent_behavior_eval_template_is_safe_and_model_neutral(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        doc_path = ROOT / "docs/workflow/agent-evaluation.md"
+        template_path = ROOT / "templates/evals/agent-behavior-smoke.yaml"
+        absorption = (ROOT / "docs/absorption/open-source-workflow-absorption.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertTrue(doc_path.exists())
+        self.assertTrue(template_path.exists())
+        self.assertIn("docs/workflow/agent-evaluation.md", readme)
+        self.assertIn("templates/evals/agent-behavior-smoke.yaml", readme)
+        self.assertIn("promptfoo/promptfoo", absorption)
+
+        doc = doc_path.read_text(encoding="utf-8")
+        template_body = template_path.read_text(encoding="utf-8")
+        template = yaml.safe_load(template_body)
+
+        self.assertEqual(template["schema_version"], 1)
+        self.assertEqual(template["source"]["inspiration"], "promptfoo/promptfoo")
+        self.assertEqual(template["source"]["runtime_dependency"], "none")
+        self.assertEqual(template["source"]["license"], "MIT")
+        self.assertEqual(
+            template["assertion_policy"]["artifact_root"],
+            ".hermes/task-artifacts/evals/",
+        )
+        self.assertGreaterEqual(len(template["cases"]), 6)
+
+        combined = "\n".join((doc, template_body, absorption))
+        for marker in (
+            "不安装 runner",
+            "不配置 provider",
+            "不保存真实 trace",
+            "不把任何外部评估运行时",
+            "不默认发起模型请求",
+            "不是完整测试套件 green",
+            "Gateway process running",
+            "interrupted delegation",
+            "PowerShell 7",
+            "display.busy_input_mode: queue",
+        ):
+            self.assertIn(marker, combined)
+
+        forbidden = (
+            "OPENAI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "LANGFUSE_PUBLIC_KEY",
+            "LANGFUSE_SECRET_KEY",
+            "provider: openai",
+            "provider: anthropic",
+            "npm install promptfoo",
+            "npx promptfoo",
+        )
+        for marker in forbidden:
+            self.assertNotIn(marker, combined)
 
 
 if __name__ == "__main__":
