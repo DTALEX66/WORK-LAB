@@ -37,6 +37,7 @@ RETIRED_MANAGED_SKILL_ASSETS = {
     "software-development/windows-development-environment/references/provider-network-troubleshooting.md",
     "software-development/windows-development-environment/references/third-party-proxy-setup.md",
 }
+MANAGED_DISPLAY_KEYS = {"busy_input_mode"}
 
 
 def default_repo_root() -> Path:
@@ -205,6 +206,14 @@ def merge_live_config(repo: Path, home: Path, *, apply: bool) -> None:
         )
         plugins["enabled"] = list(dict.fromkeys(retained + repo_enabled))
         plugins.setdefault("disabled", [])
+
+    repo_display = repo_data.get("display") or {}
+    live_display = live_data.setdefault("display", {})
+    if not isinstance(repo_display, dict) or not isinstance(live_display, dict):
+        raise ValueError("display must be a mapping")
+    for key in MANAGED_DISPLAY_KEYS:
+        if key in repo_display:
+            live_display[key] = repo_display[key]
 
     model = live_data.get("model") or {}
     print("merge live config: preserve provider/model =", model.get("provider"), model.get("default"))

@@ -38,6 +38,9 @@ display:
   interface: cli
   language: zh
   skin: default
+  # Busy input queues the next message instead of interrupting the active turn.
+  # Use explicit /interrupt when cancellation is intended.
+  busy_input_mode: queue
 
 # Lowest-risk portable defaults. Media, Spotify, X and meeting plugins are opt-in.
 plugins:

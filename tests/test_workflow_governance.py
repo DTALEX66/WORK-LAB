@@ -21,6 +21,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             set(config["plugins"]["enabled"]),
             {"security-guidance", "web/ddgs"},
         )
+        self.assertEqual(config["display"]["busy_input_mode"], "queue")
         non_core = {"spotify", "x_search", "video", "tts"}
         self.assertTrue(non_core.isdisjoint(config["platform_toolsets"]["cli"]))
 
@@ -47,13 +48,15 @@ class WorkflowGovernanceTests(unittest.TestCase):
             home.mkdir()
             (repo / "config/config.yaml").write_text(
                 "mcp_servers:\n  context7:\n    command: hermes-npx\n    args: [-y, context7]\n"
-                "plugins:\n  enabled: [security-guidance, web/ddgs]\n",
+                "plugins:\n  enabled: [security-guidance, web/ddgs]\n"
+                "display:\n  busy_input_mode: queue\n  skin: portable\n",
                 encoding="utf-8",
             )
             (home / "config.yaml").write_text(
                 "model:\n  provider: openai-codex\n  default: gpt-current\n"
                 "mcp_servers:\n  public-apis: {}\n  sequential-thinking: {}\n  custom: {}\n"
-                "plugins:\n  enabled: [disk-cleanup, google_meet, spotify, custom-plugin]\n",
+                "plugins:\n  enabled: [disk-cleanup, google_meet, spotify, custom-plugin]\n"
+                "display:\n  busy_input_mode: interrupt\n  skin: live\n",
                 encoding="utf-8",
             )
 
@@ -65,6 +68,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 set(result["plugins"]["enabled"]),
                 {"security-guidance", "web/ddgs", "custom-plugin"},
             )
+            self.assertEqual(result["display"]["busy_input_mode"], "queue")
+            self.assertEqual(result["display"]["skin"], "live")
 
             result["plugins"]["enabled"].append("spotify")
             (home / "config.yaml").write_text(
@@ -73,6 +78,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             module.merge_live_config(repo, home, apply=True)
             rerun = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8"))
             self.assertIn("spotify", rerun["plugins"]["enabled"])
+            self.assertEqual(rerun["display"]["busy_input_mode"], "queue")
             self.assertTrue((home / ".workflow-assistance-state.yaml").exists())
 
     def test_sync_removes_only_explicitly_retired_managed_skill_assets(self) -> None:

@@ -31,6 +31,7 @@ Workflow-assistance
 | 全链路诊断 | Hermes、认证、MCP、代理端口、Node、Codex 版本和可选真实执行 smoke | `scripts/workflow/hermes_workflow_doctor.py` |
 | Codex 执行 | 跨平台 launcher、非交互执行规则、只读审查、隔离 worktree | `bin/codex*`、`skills/autonomous-ai-agents/codex/` |
 | 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
+| Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/workflow/gateway-cron-delivery.md` |
 | 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `bin/hermes-project-data.py`、`skills/software-development/project-data-boundary/` |
 | MCP | 默认固定 Context7；记录隐私、版本和新增 MCP 门禁 | `docs/mcp/workflow-mcp-stack.md` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
@@ -91,6 +92,7 @@ python scripts/workflow/sync_hermes_workflow_assets.py --apply
 `config/config.yaml` 当前定义：
 
 - Hermes CLI 中文界面；
+- 忙时输入默认排队：`display.busy_input_mode = queue`，避免新输入隐式打断当前 turn；
 - 本地 terminal backend；
 - `hermes-cli` toolset；
 - 原生 `browser`、`clarify`、`code_execution`、`computer_use`、`cronjob`、`delegation`、`file`、`image_gen`、`memory`、`session_search`、`skills`、`terminal`、`todo`、`vision`、`web` 工具集；
@@ -308,6 +310,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 
 - `docs/workflow/project-definition.md`：项目定义与职责边界；
 - `docs/workflow/project-data-boundary.md`：项目任务数据归属、迁移、保留与 fail-closed 执行器；
+- `docs/workflow/gateway-cron-delivery.md`：Gateway、cron、sleep-mode、TUI 与外部消息平台的投递边界；
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
 - `docs/workflow/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录；
 - `docs/mcp/workflow-mcp-stack.md`：MCP 默认策略；
