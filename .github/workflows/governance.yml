@@ -16,10 +16,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: python -m pip install PyYAML
-      - run: python tests/test_workflow_governance.py -v
-      - run: python -m py_compile scripts/workflow/switch_model.py scripts/workflow/hermes_workflow_doctor.py scripts/workflow/sync_hermes_workflow_assets.py
-      - run: bash -n setup.sh
-      - run: python scripts/security/scan_agent_rules.py skills templates README.md docs/mcp/workflow-mcp-stack.md
+      - run: python scripts/workflow/run_quality_gate.py verify
 
   windows:
     runs-on: windows-latest
@@ -29,17 +26,4 @@ jobs:
         with:
           python-version: "3.11"
       - run: python -m pip install PyYAML
-      - run: python tests/test_workflow_governance.py -v
-      - run: python -m py_compile scripts/workflow/switch_model.py scripts/workflow/hermes_workflow_doctor.py scripts/workflow/sync_hermes_workflow_assets.py
-      - name: Parse setup.ps1 without executing it
-        shell: pwsh
-        run: |
-          $tokens = $null
-          $errors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile(
-            (Resolve-Path ./setup.ps1), [ref]$tokens, [ref]$errors
-          ) | Out-Null
-          if ($errors.Count -gt 0) {
-            $errors | ForEach-Object { Write-Error $_ }
-            exit 1
-          }
+      - run: python scripts/workflow/run_quality_gate.py verify

@@ -185,9 +185,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
         for command_or_path in (
             "scripts/workflow/sync_hermes_workflow_assets.py",
             "scripts/workflow/build_context_pack.py",
+            "scripts/workflow/run_quality_gate.py",
             "scripts/workflow/switch_model.py",
             "scripts/workflow/hermes_workflow_doctor.py",
             "scripts/security/scan_agent_rules.py",
+            "Justfile",
             "templates/task-tickets/model-neutral-agent-task.md",
             "templates/evals/agent-behavior-smoke.yaml",
             "templates/ui/skin-presets.yaml",
@@ -228,6 +230,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
             ".hermes/task-artifacts/context-pack.md",
             "UI/Skin 系统",
             "不默认安装 UI runtime",
+            "本地 quality gate runner 命令顺序",
+            "python scripts/workflow/run_quality_gate.py verify",
             "每次 push 和 pull request",
             "CI verdict 绑定提交 SHA",
         ):
@@ -408,6 +412,83 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 module.write_context_pack(repo, Path("context-pack.md"), max_chars=20000)
             with self.assertRaises(SystemExit):
                 module.write_context_pack(repo, Path("../context-pack.md"), max_chars=20000)
+
+    def test_quality_gate_runner_is_canonical_and_just_is_optional(self) -> None:
+        runner = ROOT / "scripts/workflow/run_quality_gate.py"
+        justfile = ROOT / "Justfile"
+        doc = ROOT / "docs/workflow/local-quality-gates.md"
+        workflow = ROOT / ".github/workflows/governance.yml"
+        self.assertTrue(runner.exists())
+        self.assertTrue(justfile.exists())
+        self.assertTrue(doc.exists())
+
+        spec = importlib.util.spec_from_file_location("quality_gate", runner)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        self.assertEqual(
+            module.VERIFY_ORDER,
+            ("governance", "compile", "security", "context-pack", "shell", "powershell"),
+        )
+        self.assertEqual(set(module.GATES), set(module.VERIFY_ORDER))
+        self.assertIn("scripts/workflow/run_quality_gate.py", module.tracked_python_files())
+        self.assertIn("tests/test_workflow_governance.py", module.tracked_python_files())
+
+        body = runner.read_text(encoding="utf-8")
+        for marker in (
+            "QUALITY_GATE_PASS",
+            "QUALITY_GATE_FAIL",
+            "build_context_pack.py",
+            "scan_agent_rules.py",
+            "usable_bash()",
+            "Git Bash / GNU bash not found",
+            "shutil.which(\"pwsh\") or shutil.which(\"powershell.exe\")",
+            "ParseFile((Resolve-Path ./setup.ps1)",
+        ):
+            self.assertIn(marker, body)
+        self.assertNotIn("shell=True", body)
+        self.assertNotIn("npm install just", body)
+        self.assertNotIn("choco install just", body)
+
+        just = justfile.read_text(encoding="utf-8")
+        self.assertIn("python scripts/workflow/run_quality_gate.py verify", just)
+        self.assertIn("just is not a required dependency", just)
+
+        combined = "\n".join(
+            (
+                doc.read_text(encoding="utf-8"),
+                workflow.read_text(encoding="utf-8"),
+                (ROOT / "README.md").read_text(encoding="utf-8"),
+            )
+        )
+        for marker in (
+            "python scripts/workflow/run_quality_gate.py verify",
+            "just is not a required dependency",
+            "QUALITY_GATE_PASS",
+            "QUALITY_GATE_FAIL",
+            "context-pack",
+            "PowerShell gate 优先 `pwsh`",
+        ):
+            self.assertIn(marker, combined)
+        self.assertEqual(
+            workflow.read_text(encoding="utf-8").count(
+                "python scripts/workflow/run_quality_gate.py verify"
+            ),
+            2,
+        )
+        for setup in ("setup.sh", "setup.ps1"):
+            self.assertNotIn("just", (ROOT / setup).read_text(encoding="utf-8").lower())
+
+        list_result = subprocess.run(
+            [sys.executable, str(runner), "list"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        self.assertIn("verify: Run governance, compile, security", list_result.stdout)
 
     def test_portable_skills_do_not_link_to_missing_references(self) -> None:
         for skill in (ROOT / "skills").rglob("SKILL.md"):

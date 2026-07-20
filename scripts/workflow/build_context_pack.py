@@ -19,6 +19,7 @@ SELECTED_TEXT_FILES = (
     "docs/workflow/gateway-cron-delivery.md",
     "docs/workflow/agent-evaluation.md",
     "docs/workflow/context-pack.md",
+    "docs/workflow/local-quality-gates.md",
     "docs/workflow/ui-skin-system.md",
     "docs/workflow/project-data-boundary.md",
     "docs/mcp/workflow-mcp-stack.md",

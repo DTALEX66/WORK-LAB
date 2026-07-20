@@ -78,6 +78,10 @@ For new-session handoff, Codex/CC Switch review context, or context-overflow rec
 
 For Hermes Agent + CC Switch + Codex visual workflow polish, absorb Catppuccin/shadcn-ui/assistant-ui ideas as **tokens and UI patterns**, not runtime dependencies. Keep skin presets under `templates/ui/`, terminal schemes under `templates/windows-terminal/`, and docs under `docs/workflow/`. Do not auto-install Open WebUI, NextChat, Vercel AI Chatbot, React/Next.js, component libraries, auth/database adapters, or telemetry. Do not auto-write Windows Terminal, VS Code, Hermes live config, provider/model, MCP, plugin, or approval settings. Treat skin templates as available-but-not-applied until config/readback or visual evidence proves activation. See [`references/ui-skin-absorption.md`](references/ui-skin-absorption.md).
 
+### Local quality gate absorption
+
+For Workflow-assistance-style portable packs, expose one canonical local gate command: `python scripts/workflow/run_quality_gate.py verify`. Optional wrappers like `Justfile` may call that runner, but do not make `just` a default dependency or install it from setup/CI. The runner should be cross-platform, use argument lists rather than `shell=True`, stop on first failing gate, and print `QUALITY_GATE_PASS` / `QUALITY_GATE_FAIL` markers. Shell and PowerShell parsing gates may skip when their tool is unavailable; on Windows, avoid the `C:\Windows\System32\bash.exe` WSL shim and prefer Git Bash / GNU bash. PowerShell should prefer `pwsh` and only fall back to `powershell.exe`.
+
 ### Default-enable only if smoke-tested
 
 Before adding any tool/MCP to default config, run the smallest real command:
