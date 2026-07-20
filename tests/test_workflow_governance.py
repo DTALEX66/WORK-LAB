@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import re
 import subprocess
 import sys
@@ -189,6 +190,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "scripts/security/scan_agent_rules.py",
             "templates/task-tickets/model-neutral-agent-task.md",
             "templates/evals/agent-behavior-smoke.yaml",
+            "templates/ui/skin-presets.yaml",
+            "templates/windows-terminal/catppuccin-mocha.json",
             "docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml",
             "hermes mcp test context7",
             "git write-tree",
@@ -223,6 +226,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "只对本仓库有用的临时脚本不得被包装成默认全局能力",
             "Context Pack",
             ".hermes/task-artifacts/context-pack.md",
+            "UI/Skin 系统",
+            "不默认安装 UI runtime",
             "每次 push 和 pull request",
             "CI verdict 绑定提交 SHA",
         ):
@@ -607,6 +612,104 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "provider: anthropic",
             "npm install promptfoo",
             "npx promptfoo",
+        )
+        for marker in forbidden:
+            self.assertNotIn(marker, combined)
+
+    def test_ui_skin_absorption_pack_is_lightweight_and_runtime_neutral(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        doc_path = ROOT / "docs/workflow/ui-skin-system.md"
+        presets_path = ROOT / "templates/ui/skin-presets.yaml"
+        patterns_path = ROOT / "templates/ui/agent-chat-ui-patterns.md"
+        checklist_path = ROOT / "templates/ui/terminal-theme-checklist.md"
+        terminal_path = ROOT / "templates/windows-terminal/catppuccin-mocha.json"
+        absorption = (ROOT / "docs/absorption/open-source-workflow-absorption.md").read_text(
+            encoding="utf-8"
+        )
+        skill = (
+            ROOT / "skills/software-development/agent-workflow-fortress/SKILL.md"
+        ).read_text(encoding="utf-8")
+        reference = (
+            ROOT
+            / "skills/software-development/agent-workflow-fortress/references/ui-skin-absorption.md"
+        ).read_text(encoding="utf-8")
+
+        for path in (doc_path, presets_path, patterns_path, checklist_path, terminal_path):
+            self.assertTrue(path.exists(), path.relative_to(ROOT).as_posix())
+            self.assertIn(path.relative_to(ROOT).as_posix(), readme)
+
+        presets = yaml.safe_load(presets_path.read_text(encoding="utf-8"))
+        terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(presets["schema_version"], 1)
+        self.assertEqual(presets["runtime_dependency"], "none")
+        self.assertFalse(presets["default_applied"])
+        self.assertEqual(
+            presets["presets"]["catppuccin-mocha"]["colors"]["base"],
+            "#1e1e2e",
+        )
+        self.assertEqual(
+            presets["presets"]["catppuccin-mocha"]["colors"]["mauve"],
+            "#cba6f7",
+        )
+        self.assertEqual(
+            terminal["name"],
+            "Catppuccin Mocha - Workflow Assistance",
+        )
+        self.assertEqual(terminal["background"], "#1e1e2e")
+        self.assertEqual(terminal["foreground"], "#cdd6f4")
+
+        sources = {item["repository"] for item in presets["sources"]}
+        self.assertTrue(
+            {
+                "catppuccin/catppuccin",
+                "catppuccin/windows-terminal",
+                "shadcn-ui/ui",
+                "assistant-ui/assistant-ui",
+            }.issubset(sources)
+        )
+        self.assertTrue(presets["boundaries"]["no_default_install"])
+        self.assertTrue(presets["boundaries"]["no_runtime_assets"])
+        self.assertTrue(presets["boundaries"]["no_terminal_settings_write"])
+        self.assertTrue(presets["boundaries"]["no_hermes_live_config_write"])
+
+        combined = "\n".join(
+            (
+                doc_path.read_text(encoding="utf-8"),
+                presets_path.read_text(encoding="utf-8"),
+                patterns_path.read_text(encoding="utf-8"),
+                checklist_path.read_text(encoding="utf-8"),
+                absorption,
+                skill,
+                reference,
+            )
+        )
+        for marker in (
+            "Catppuccin",
+            "shadcn-ui",
+            "assistant-ui",
+            "template available, not applied",
+            "不默认安装 UI runtime",
+            "不自动修改 Hermes live config",
+            "不自动改用户 settings",
+            "repo/live/session",
+            "tool call timeline",
+            "verification evidence",
+            "Open WebUI / NextChat / Vercel AI Chatbot",
+        ):
+            self.assertIn(marker, combined)
+
+        forbidden = (
+            "npm install shadcn",
+            "npx shadcn",
+            "npm install assistant-ui",
+            "npm install open-webui",
+            "git clone https://github.com/open-webui/open-webui",
+            "Copy-Item",
+            "Set-Content $env:LOCALAPPDATA",
+            "hermes config set model.provider",
+            "hermes mcp add",
+            "plugins enable",
         )
         for marker in forbidden:
             self.assertNotIn(marker, combined)

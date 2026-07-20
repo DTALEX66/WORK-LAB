@@ -74,6 +74,10 @@ When strengthening a portable Hermes Agent + CC Switch + Codex workflow pack, ab
 
 For new-session handoff, Codex/CC Switch review context, or context-overflow recovery, absorb repomix/gitingest-style **repo → LLM-friendly context pack** mechanics without default-installing their runtime or copying secrets. A context pack must be generated inside the target Git project, write only to a Git-ignored `.hermes/task-artifacts/` path, redact secret-like values, read only tracked allowlisted files plus Git metadata, and exclude `.env`, `auth.json`, `state.db`, sessions, logs, caches, dependencies, and `.hermes/` runtime data. Treat context-pack generation as handoff/evidence only; it is not real product work and must not count as a completed autonomous-loop task.
 
+### UI/Skin absorption
+
+For Hermes Agent + CC Switch + Codex visual workflow polish, absorb Catppuccin/shadcn-ui/assistant-ui ideas as **tokens and UI patterns**, not runtime dependencies. Keep skin presets under `templates/ui/`, terminal schemes under `templates/windows-terminal/`, and docs under `docs/workflow/`. Do not auto-install Open WebUI, NextChat, Vercel AI Chatbot, React/Next.js, component libraries, auth/database adapters, or telemetry. Do not auto-write Windows Terminal, VS Code, Hermes live config, provider/model, MCP, plugin, or approval settings. Treat skin templates as available-but-not-applied until config/readback or visual evidence proves activation. See [`references/ui-skin-absorption.md`](references/ui-skin-absorption.md).
+
 ### Default-enable only if smoke-tested
 
 Before adding any tool/MCP to default config, run the smallest real command:
