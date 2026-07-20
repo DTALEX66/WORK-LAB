@@ -2,16 +2,35 @@
 
 ## 一句话定位
 
-`Workflow-assistance` 是 DTALEX66 的 **HERMES + CC Switch + Codex 工作流增强项目**：用于沉淀、迁移和持续强化 Hermes Agent 在 Windows / GitHub / Codex / CC Switch 环境下的配置、技能、MCP、排错经验、验证脚本和自动化工作流。
+`Workflow-assistance` 是 DTALEX66 的 **Hermes Agent + CC Switch + Codex 全局工作流增强项目**：用于沉淀、迁移和持续强化用户所有项目里的 Hermes 会话习惯、模型/provider 切换、CC Switch 代理路径、Codex 执行与复审方式、MCP 默认策略、长任务持久化、项目数据边界、排错经验、验证脚本和自动化工作流。
+
+本仓库只是这些全局增强资产的可审计源目录，不是增强目标本身。增强目标是用户的整体 Agent 工作流：Hermes Agent 是运行与编排入口，CC Switch 是网络/路由辅助层，Codex 是编码执行与复审协作面；`D:\All projects\Workflow-assistance` 负责保存可迁移、可验证、可同步到 live Hermes Home 的配置、脚本、技能、模板和规范。
 
 ## 项目边界
 
-本项目保存的是“工作流增强资产”，不是任何运行时主体的安装包：
+本项目保存的是“全局工作流增强资产”，不是任何运行时主体的安装包，也不是只对本仓库生效的局部工具集：
 
 - 不包含 Hermes Agent 安装主体。
 - 不包含 CC Switch 安装主体。
 - 不包含 Codex CLI / ChatGPT OAuth 的真实凭证。
 - 不提交 `.env`、`auth.json`、API Key、Token、会话数据库、缓存或日志。
+
+## 全局增强边界
+
+| 范围 | 属于本项目 | 不属于本项目 |
+|---|---|---|
+| Hermes Agent | 可迁移配置基线、skills、MCP 默认策略、Gateway/cron/sleep-mode 说明、live 同步脚本 | Hermes Agent 核心源码、真实凭据、会话数据库、运行日志 |
+| CC Switch | 代理端口/网络路径排错、Provider 前置检查、环境变量模板 | CC Switch 主程序安装包、用户真实代理凭据 |
+| Codex | launcher、任务票据、单写者/worktree 规范、只读复审与 exact-tree 证据规则 | Codex CLI 主体、OpenAI OAuth token、模型服务凭据 |
+| 任意业务项目 | `.hermes/` 项目数据边界、任务 artifact/ledger 规范、可复制 Agent rules | 业务项目源码本身、项目私有数据、临时一次性修复 |
+| Workflow-assistance 仓库 | 全局增强资产源、文档、治理测试、同步/doctor 脚本 | 把本仓库当成唯一使用场景或运行时 sandbox |
+
+新增内容必须回答两个问题：
+
+1. 它是否增强 **Hermes Agent + CC Switch + Codex 的全局工作流**，而不是只方便当前仓库一次操作？
+2. 它是否可以安全迁移到其他机器/项目，而不携带密钥、会话、日志、缓存或用户私有数据？
+
+如果答案是否定的，只能放在项目本地 `.hermes/` 或一次性任务 artifact 中，不得进入默认 portable config、全局 skill、默认 MCP 或同步脚本。
 
 ## 三层职责
 

@@ -214,6 +214,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "Context7 查询会外发数据",
             "一个 checkout 只能有一个 writer",
             "Task Ticket、plan mode、hook、路径声明和 worktree 都不是安全 sandbox",
+            "全局可迁移工作流增强包",
+            "不是只服务本仓库的项目内脚本集合",
+            "live Hermes Home 才是运行时落点",
+            "只对本仓库有用的临时脚本不得被包装成默认全局能力",
             "每次 push 和 pull request",
             "CI verdict 绑定提交 SHA",
         ):
@@ -221,6 +225,22 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("避免后续误删用户重新启用的功能", readme)
         self.assertIn("不会安装 Hermes、Codex 或 CC Switch 主体", readme)
         self.assertIn("结构检查不等于真实模型执行", readme)
+
+    def test_project_definition_scope_is_global_workflow_enhancement(self) -> None:
+        definition = (ROOT / "docs/workflow/project-definition.md").read_text(
+            encoding="utf-8"
+        )
+        for marker in (
+            "全局工作流增强项目",
+            "本仓库只是这些全局增强资产的可审计源目录",
+            "增强目标是用户的整体 Agent 工作流",
+            "## 全局增强边界",
+            "任意业务项目",
+            "不得进入默认 portable config、全局 skill、默认 MCP 或同步脚本",
+        ):
+            self.assertIn(marker, definition)
+        self.assertIn("Hermes Agent + CC Switch + Codex 的全局工作流", definition)
+        self.assertNotIn("只对本仓库生效的局部工具集：\n\n## 三层职责", definition)
 
     def test_doctor_distinguishes_structural_and_live_checks(self) -> None:
         doctor = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(

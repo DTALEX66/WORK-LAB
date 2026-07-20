@@ -2,11 +2,24 @@
 
 [![workflow-governance](https://github.com/DTALEX66/Workflow-assistance/actions/workflows/governance.yml/badge.svg)](https://github.com/DTALEX66/Workflow-assistance/actions/workflows/governance.yml)
 
-面向 Windows、Linux 与 macOS 的 **Hermes + CC Switch + Codex 可迁移工作流包**：集中维护无密钥配置、模型切换、链路诊断、Context7 MCP、Agent Skills、任务契约、安全同步、治理测试和跨平台 CI。
+面向 Windows、Linux 与 macOS 的 **Hermes Agent + CC Switch + Codex 全局可迁移工作流增强包**：集中维护无密钥配置、模型切换、链路诊断、Context7 MCP、Agent Skills、任务契约、安全同步、治理测试和跨平台 CI。
 
 ## 项目定位
 
-`Workflow-assistance` 不是另一个 Agent Runtime，也不是 Hermes、Codex 或 CC Switch 的安装包。它是这些组件之上的**可迁移控制与治理层**：
+`Workflow-assistance` 不是另一个 Agent Runtime，也不是 Hermes、Codex 或 CC Switch 的安装包；它也不是只服务本仓库的项目内脚本集合。它是覆盖用户全局 Hermes Agent + CC Switch + Codex 日常工作的**可迁移控制与治理层**：本仓库只是这些全局增强资产的可审计源目录，live Hermes Home 才是运行时落点。
+
+全局增强范围包括：所有项目里的 Hermes 会话习惯、模型/provider 切换、CC Switch 代理路径、Codex 执行与复审方式、MCP 默认策略、长任务持久化、项目数据边界、排错手册、任务票据、Agent 规则和验证门禁。任何新增能力都必须先判断它增强的是这条全局工作流，还是只对本仓库有用；只对本仓库有用的临时脚本不得被包装成默认全局能力。
+
+```text
+Global workflow surface
+├─ Hermes Agent runtime usage     sessions, skills, tools, MCP, memory, cron/gateway
+├─ CC Switch routing              local proxy/network path and provider preflight
+├─ Codex execution                launcher, task tickets, review and worktree rules
+├─ Project task containment       per-repo .hermes runtime/artifacts boundaries
+└─ Workflow-assistance repo       portable source of truth, tests, docs and sync scripts
+```
+
+本仓库承载的全局增强资产包括：
 
 ```text
 Workflow-assistance
