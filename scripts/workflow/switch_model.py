@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Safe Hermes GPT/DeepSeek switcher for the DTALEX66 Hermes workflow.
+"""Safe Hermes model switcher for the DTALEX66 Hermes workflow.
 
 No secrets are printed. The script only writes Hermes config via official
 `hermes config set` commands and performs prerequisite diagnostics.
@@ -18,6 +18,8 @@ from pathlib import Path
 
 GPT_MODEL = os.environ.get("HERMES_GPT_MODEL", "gpt-5.6-sol")
 DEEPSEEK_MODEL = os.environ.get("HERMES_DEEPSEEK_MODEL", "deepseek-v4-flash")
+KIMI_MODEL = os.environ.get("HERMES_KIMI_MODEL", "kimi-k3")
+KIMI_BASE_URL = os.environ.get("HERMES_KIMI_BASE_URL", "https://api.moonshot.cn/v1")
 
 
 def run(cmd: list[str], timeout: int = 30, check: bool = False) -> subprocess.CompletedProcess[str]:
@@ -91,6 +93,7 @@ def status() -> None:
             print(line)
     print('\n=== Prerequisites ===')
     print(f'HERMES_HOME={hermes_home()}')
+    print(f'KIMI_API_KEY={"present" if env_has("KIMI_API_KEY") or env_has("KIMI_CN_API_KEY") else "missing"}')
     print(f'DEEPSEEK_API_KEY={"present" if env_has("DEEPSEEK_API_KEY") else "missing"}')
     print(f'CC Switch 127.0.0.1:7890={"open" if port_open("127.0.0.1", 7890) else "closed"}')
     print(f'Codex proxy 127.0.0.1:15721={"open" if port_open("127.0.0.1", 15721) else "closed"}')
@@ -100,13 +103,25 @@ def status() -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description='Switch Hermes between GPT OAuth and DeepSeek official provider')
-    ap.add_argument('target', choices=['gpt', 'deepseek', 'dp', 'status'])
+    ap = argparse.ArgumentParser(description='Switch Hermes between the curated DTALEX66 model lanes')
+    ap.add_argument('target', choices=['gpt', 'chatgpt', 'deepseek', 'dp', 'kimi', 'k3', 'status'])
     ap.add_argument('--no-verify', action='store_true', help='skip prerequisite checks')
     args = ap.parse_args()
 
     if args.target == 'status':
         status()
+        return 0
+
+    if args.target in {'kimi', 'k3'}:
+        if not args.no_verify and not (env_has('KIMI_API_KEY') or env_has('KIMI_CN_API_KEY')):
+            raise SystemExit('KIMI_API_KEY/KIMI_CN_API_KEY missing in environment or Hermes .env')
+        set_config([
+            ('model.provider', 'kimi-coding'),
+            ('model.base_url', KIMI_BASE_URL),
+            ('model.default', KIMI_MODEL),
+            ('model.api_key', ''),
+        ])
+        print('Switched to Kimi K3. Start a new session or /reset for it to take effect.')
         return 0
 
     if args.target in {'deepseek', 'dp'}:
@@ -121,7 +136,7 @@ def main() -> int:
         print('Switched to DeepSeek. Start a new session or /reset for it to take effect.')
         return 0
 
-    if args.target == 'gpt':
+    if args.target in {'gpt', 'chatgpt'}:
         if not args.no_verify and not port_open('127.0.0.1', 7890):
             raise SystemExit('CC Switch proxy 127.0.0.1:7890 is not open')
         set_config([
