@@ -14,8 +14,9 @@ python scripts/workflow/run_quality_gate.py verify
 2. `compile` — `python -m py_compile` for workflow scripts, security scripts and governance tests
 3. `security` — `python scripts/security/scan_agent_rules.py templates skills docs scripts README.md`
 4. `context-pack` — `python scripts/workflow/build_context_pack.py --max-chars 30000`
-5. `shell` — `bash -n setup.sh` when Git Bash / GNU bash is available
-6. `powershell` — parse `setup.ps1` with PowerShell AST when `pwsh` or `powershell.exe` is available
+5. `mcp-audit` — `python scripts/workflow/mcp_candidate_audit.py --write-template .hermes/task-artifacts/mcp-candidate-template.yaml`
+6. `shell` — `bash -n setup.sh` when Git Bash / GNU bash is available
+7. `powershell` — parse `setup.ps1` with PowerShell AST when `pwsh` or `powershell.exe` is available
 
 The runner stops at the first failing gate and prints:
 
@@ -26,7 +27,7 @@ QUALITY_GATE_FAIL gate=<name> exit_code=<code>
 When every gate passes it prints:
 
 ```text
-QUALITY_GATE_PASS gates=governance,compile,security,context-pack,shell,powershell
+QUALITY_GATE_PASS gates=governance,compile,security,context-pack,mcp-audit,shell,powershell
 ```
 
 ## Individual gates
@@ -37,6 +38,7 @@ python scripts/workflow/run_quality_gate.py governance
 python scripts/workflow/run_quality_gate.py compile
 python scripts/workflow/run_quality_gate.py security
 python scripts/workflow/run_quality_gate.py context-pack
+python scripts/workflow/run_quality_gate.py mcp-audit
 python scripts/workflow/run_quality_gate.py shell
 python scripts/workflow/run_quality_gate.py powershell
 ```
@@ -51,6 +53,7 @@ just governance
 just compile
 just security
 just context-pack
+just mcp-audit
 just shell
 just powershell
 ```

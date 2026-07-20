@@ -94,6 +94,8 @@ npx -y <package> --help
 
 If it errors on the current environment, document it as optional and include the enable condition.
 
+For MCP candidates, first run `python scripts/workflow/mcp_candidate_audit.py --write-template <ignored-artifact.yaml>` and audit the filled file. A passing candidate audit means the metadata is complete, not that the MCP is configured, running, safe, or default-enabled. Candidate files must document pinned package/version, repository, license, data externality, permissions, native Hermes overlap, distinct advantage, smoke evidence, and prompt schema budget.
+
 ### Avoid duplicate capability
 
 If Hermes already has a native tool, do not add an MCP that exposes the same permission unless it adds a real advantage:

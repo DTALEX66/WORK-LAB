@@ -25,7 +25,9 @@ hermes mcp test context7
 | filesystem MCP | 与 Hermes `file` 重叠 | Hermes `file` toolset |
 | memory MCP | 与 Hermes `memory` 重叠 | Hermes `memory` toolset |
 
-如果具体任务证明原生能力不足，使用 `hermes mcp add/configure/test` 按需启用，并在新会话验证；不要把临时选择重新写回默认 portable config。
+如果具体任务证明原生能力不足，先用 `scripts/workflow/mcp_candidate_audit.py` 记录候选边界，再使用 `hermes mcp add/configure/test` 按需启用，并在新会话验证；不要把临时选择重新写回默认 portable config。
+
+候选审计细则见 `docs/mcp/mcp-catalog-governance.md`。
 
 ## 变更门禁
 
@@ -37,5 +39,14 @@ hermes mcp test context7
 4. 记录外发数据、文件/网络权限和密钥需求；
 5. 测量 `hermes prompt-size --json` 的工具 schema 增量；
 6. 同步更新 `config/config.yaml` 与治理测试。
+
+候选阶段可以通过：
+
+```bash
+python scripts/workflow/mcp_candidate_audit.py --write-template .hermes/task-artifacts/mcp-candidate.yaml
+python scripts/workflow/mcp_candidate_audit.py .hermes/task-artifacts/mcp-candidate.yaml
+```
+
+审计通过只表示候选元数据完整；不等于 server 已配置、已运行、已安全或已默认启用。
 
 默认 MCP 的唯一机器可读来源是 `config/config.yaml`；本文只解释选择理由。

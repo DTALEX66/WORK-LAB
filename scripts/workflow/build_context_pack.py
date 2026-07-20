@@ -23,6 +23,7 @@ SELECTED_TEXT_FILES = (
     "docs/workflow/ui-skin-system.md",
     "docs/workflow/project-data-boundary.md",
     "docs/mcp/workflow-mcp-stack.md",
+    "docs/mcp/mcp-catalog-governance.md",
     "docs/absorption/open-source-workflow-absorption.md",
     "config/config.yaml",
     "config/SOUL.md",

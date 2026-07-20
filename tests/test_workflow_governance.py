@@ -185,6 +185,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         for command_or_path in (
             "scripts/workflow/sync_hermes_workflow_assets.py",
             "scripts/workflow/build_context_pack.py",
+            "scripts/workflow/mcp_candidate_audit.py",
             "scripts/workflow/run_quality_gate.py",
             "scripts/workflow/switch_model.py",
             "scripts/workflow/hermes_workflow_doctor.py",
@@ -228,6 +229,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "只对本仓库有用的临时脚本不得被包装成默认全局能力",
             "Context Pack",
             ".hermes/task-artifacts/context-pack.md",
+            "MCP_CANDIDATE_AUDIT_PASS",
             "UI/Skin 系统",
             "不默认安装 UI runtime",
             "本地 quality gate runner 命令顺序",
@@ -430,7 +432,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
         self.assertEqual(
             module.VERIFY_ORDER,
-            ("governance", "compile", "security", "context-pack", "shell", "powershell"),
+            ("governance", "compile", "security", "context-pack", "mcp-audit", "shell", "powershell"),
         )
         self.assertEqual(set(module.GATES), set(module.VERIFY_ORDER))
         self.assertIn("scripts/workflow/run_quality_gate.py", module.tracked_python_files())
@@ -441,6 +443,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "QUALITY_GATE_PASS",
             "QUALITY_GATE_FAIL",
             "build_context_pack.py",
+            "mcp_candidate_audit.py",
             "scan_agent_rules.py",
             "usable_bash()",
             "Git Bash / GNU bash not found",
@@ -454,6 +457,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
         just = justfile.read_text(encoding="utf-8")
         self.assertIn("python scripts/workflow/run_quality_gate.py verify", just)
+        self.assertIn("python scripts/workflow/run_quality_gate.py mcp-audit", just)
         self.assertIn("just is not a required dependency", just)
 
         combined = "\n".join(
@@ -469,6 +473,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "QUALITY_GATE_PASS",
             "QUALITY_GATE_FAIL",
             "context-pack",
+            "mcp-audit",
             "PowerShell gate 优先 `pwsh`",
         ):
             self.assertIn(marker, combined)
@@ -488,7 +493,111 @@ class WorkflowGovernanceTests(unittest.TestCase):
             capture_output=True,
             check=True,
         )
-        self.assertIn("verify: Run governance, compile, security", list_result.stdout)
+        self.assertIn("verify: Run governance, compile, security, context-pack, mcp-audit", list_result.stdout)
+
+    def test_mcp_candidate_audit_is_fail_closed_and_does_not_enable_defaults(self) -> None:
+        script = ROOT / "scripts/workflow/mcp_candidate_audit.py"
+        doc = ROOT / "docs/mcp/mcp-catalog-governance.md"
+        stack = ROOT / "docs/mcp/workflow-mcp-stack.md"
+        self.assertTrue(script.exists())
+        self.assertTrue(doc.exists())
+
+        spec = importlib.util.spec_from_file_location("mcp_candidate_audit", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        good = {
+            "schema_version": 1,
+            "name": "docs-search-mcp",
+            "status": "candidate",
+            "default_enable": False,
+            "source": {
+                "package": "@example/docs-search-mcp@1.2.3",
+                "repository": "https://github.com/example/docs-search-mcp",
+                "license": "MIT",
+                "version": "1.2.3",
+            },
+            "purpose": "Search a public docs index not covered by Context7.",
+            "distinct_advantage": "Narrow public docs index with stable citations.",
+            "data_external": True,
+            "permissions": {
+                "filesystem": "none",
+                "network": "public docs API",
+                "browser": "none",
+                "credentials": [],
+            },
+            "required_env": [],
+            "overlaps_native_tools": ["web_search"],
+            "smoke": {
+                "command": "hermes mcp test docs-search-mcp",
+                "status": "not_run",
+                "evidence": "candidate only",
+            },
+            "prompt_schema_budget": {
+                "measured": False,
+                "command": "hermes prompt-size --json",
+                "delta_tokens": None,
+            },
+        }
+        passed, findings = module.audit_candidate(good)
+        self.assertTrue(passed, findings)
+
+        bad = dict(good)
+        bad["default_enable"] = True
+        bad["source"] = dict(good["source"], package="@example/docs-search-mcp@latest", version="latest")
+        bad["smoke"] = dict(good["smoke"], status="not_run")
+        passed, findings = module.audit_candidate(bad)
+        self.assertFalse(passed)
+        codes = {finding["code"] for finding in findings}
+        self.assertTrue(
+            {
+                "default_enable_requested",
+                "default_without_smoke_pass",
+                "default_without_prompt_budget",
+                "unpinned_version",
+            }.issubset(codes),
+            findings,
+        )
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            template = temp / "candidate.yaml"
+            module.write_template(template)
+            template_body = yaml.safe_load(template.read_text(encoding="utf-8"))
+            self.assertFalse(template_body["default_enable"])
+            result = subprocess.run(
+                [sys.executable, str(script), str(template)],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            self.assertIn("MCP_CANDIDATE_AUDIT_PASS", result.stdout)
+
+        combined = "\n".join(
+            (
+                script.read_text(encoding="utf-8"),
+                doc.read_text(encoding="utf-8"),
+                stack.read_text(encoding="utf-8"),
+                (ROOT / "README.md").read_text(encoding="utf-8"),
+            )
+        )
+        for marker in (
+            "MCP_CANDIDATE_AUDIT_PASS",
+            "MCP_CANDIDATE_AUDIT_FAIL",
+            "default_enable_requested",
+            "overlaps_native_tools",
+            "prompt_schema_budget",
+            "不等于 server 已配置、已运行、已安全或已默认启用",
+        ):
+            self.assertIn(marker, combined)
+        self.assertNotIn("hermes mcp add", script.read_text(encoding="utf-8"))
+        self.assertEqual(
+            set(yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))["mcp_servers"]),
+            {"context7"},
+        )
 
     def test_portable_skills_do_not_link_to_missing_references(self) -> None:
         for skill in (ROOT / "skills").rglob("SKILL.md"):

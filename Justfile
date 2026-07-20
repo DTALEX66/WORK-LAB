@@ -22,6 +22,9 @@ security:
 context-pack:
     python scripts/workflow/run_quality_gate.py context-pack
 
+mcp-audit:
+    python scripts/workflow/run_quality_gate.py mcp-audit
+
 shell:
     python scripts/workflow/run_quality_gate.py shell
 

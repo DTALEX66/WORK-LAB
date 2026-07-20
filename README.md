@@ -46,12 +46,12 @@ Workflow-assistance
 | 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
 | Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/workflow/gateway-cron-delivery.md` |
 | 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `bin/hermes-project-data.py`、`skills/software-development/project-data-boundary/` |
-| MCP | 默认固定 Context7；记录隐私、版本和新增 MCP 门禁 | `docs/mcp/workflow-mcp-stack.md` |
+| MCP | 默认固定 Context7；记录隐私、版本和新增 MCP 候选审计门禁 | `docs/mcp/workflow-mcp-stack.md`、`docs/mcp/mcp-catalog-governance.md`、`scripts/workflow/mcp_candidate_audit.py` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
 | Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.hermes/task-artifacts/`，用于新会话与 Codex handoff | `scripts/workflow/build_context_pack.py`、`docs/workflow/context-pack.md` |
 | Agent 行为评估 | promptfoo 风格声明式 smoke cases，评估工作流边界回答；不默认安装 runner/provider | `docs/workflow/agent-evaluation.md`、`templates/evals/agent-behavior-smoke.yaml` |
 | UI/Skin 系统 | Catppuccin、shadcn/ui、assistant-ui 风格吸收，提供主题 token、Agent UI patterns 和 Windows Terminal scheme；不默认安装 UI runtime | `docs/workflow/ui-skin-system.md`、`templates/ui/`、`templates/windows-terminal/` |
-| 本地质量门禁 | 跨平台 canonical gate runner，统一治理测试、语法、安全扫描、Context Pack、Shell/PowerShell 解析 | `scripts/workflow/run_quality_gate.py`、`Justfile`、`docs/workflow/local-quality-gates.md` |
+| 本地质量门禁 | 跨平台 canonical gate runner，统一治理测试、语法、安全扫描、Context Pack、MCP 候选审计、Shell/PowerShell 解析 | `scripts/workflow/run_quality_gate.py`、`Justfile`、`docs/workflow/local-quality-gates.md` |
 | 安全扫描 | Prompt/规则隐藏字符、注入特征和疑似硬编码秘密扫描 | `scripts/security/scan_agent_rules.py` |
 | 模板库 | AGENTS/CODEX/DESIGN/SECURITY 规则模板及多类任务票据 | `templates/` |
 | 审计与证据 | 开源能力吸收记录、固定上游 SHA、机器可读清单、明确排除项 | `docs/audit/` |
@@ -215,6 +215,15 @@ hermes mcp test context7
 
 新增默认 MCP 必须固定版本、核验来源/许可证、真实运行 `hermes mcp test`、说明数据外发与权限，并测量工具 schema 对 Prompt 大小的影响。
 
+新增候选先走审计器，不直接写默认配置：
+
+```bash
+python scripts/workflow/mcp_candidate_audit.py --write-template .hermes/task-artifacts/mcp-candidate.yaml
+python scripts/workflow/mcp_candidate_audit.py .hermes/task-artifacts/mcp-candidate.yaml
+```
+
+`MCP_CANDIDATE_AUDIT_PASS` 只表示候选元数据完整，不等于 server 已配置、已运行、已安全或已默认启用。候选治理细则见 `docs/mcp/mcp-catalog-governance.md`。
+
 ## Agent 工作流治理
 
 `skills/software-development/agent-workflow-fortress/` 是本仓库的统一工作流治理入口，覆盖：
@@ -233,6 +242,7 @@ hermes mcp test context7
 - commit、push 和 exact-SHA CI 闭环；
 - 开源能力“吸收方法、不盲目 vendor”的治理；
 - repomix/gitingest 风格 Context Pack，用项目内忽略产物承载新会话和 Codex handoff 摘要；
+- MCP candidate audit，用 fail-closed 元数据检查约束新增 MCP 的版本、许可证、权限、数据外发、原生工具重叠和 smoke 证据；
 - promptfoo 风格 Agent 行为评估模板，用声明式 cases 检查边界回答但不默认引入外部 runner；
 - Catppuccin / shadcn-ui / assistant-ui 风格 UI/Skin 吸收，用 token 和 patterns 统一工作流可视状态但不默认安装前端 runtime；
 - 本地质量门禁统一入口，用 Python runner 作为 canonical command，`Justfile` 仅作可选快捷方式；
@@ -354,6 +364,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
 - `docs/workflow/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录；
 - `docs/mcp/workflow-mcp-stack.md`：MCP 默认策略；
+- `docs/mcp/mcp-catalog-governance.md`：MCP 候选审计 schema、阻断规则和默认启用边界；
 - `docs/absorption/open-source-workflow-absorption.md`：开源工作流吸收清单；
 - `docs/audit/workflow-absorption-audit-2026-07.md`：总体吸收审计；
 - `docs/audit/model-neutral-agent-harness-absorption-2026-07.md`：模型/API 中立 Agent Harness 审计；
@@ -374,7 +385,7 @@ python scripts/workflow/run_quality_gate.py verify
 just verify
 ```
 
-`just` 不是默认依赖；缺少时直接使用 Python runner。`verify` 依次运行 governance、compile、security、context-pack、shell 和 powershell gate。PowerShell gate 优先 `pwsh`，仅在缺少时回退 `powershell.exe`，并且只用 AST parser 解析 `setup.ps1`，不执行安装动作。Shell/PowerShell 工具不可用时对应 gate 会显式 skip。
+`just` 不是默认依赖；缺少时直接使用 Python runner。`verify` 依次运行 governance、compile、security、context-pack、mcp-audit、shell 和 powershell gate。PowerShell gate 优先 `pwsh`，仅在缺少时回退 `powershell.exe`，并且只用 AST parser 解析 `setup.ps1`，不执行安装动作。Shell/PowerShell 工具不可用时对应 gate 会显式 skip。
 
 治理测试覆盖：
 
@@ -386,6 +397,7 @@ just verify
 - doctor 结构检查与 live marker 区分；
 - secret redaction；
 - Context Pack 输出路径、Git-ignore fail-closed、秘密脱敏和项目内 artifact 边界；
+- MCP 候选审计器的 pinned version、许可证、权限、native overlap、default-enable 阻断和输出 marker；
 - 本地 quality gate runner 命令顺序、fail-fast 语义、Justfile 可选性和 CI 对齐；
 - UI/Skin token JSON/YAML 解析、开源吸收来源、runtime-neutral 边界和“不自动应用用户 UI 设置”；
 - skills 引用完整性；
@@ -444,6 +456,10 @@ python scripts/workflow/sync_hermes_workflow_assets.py --apply
 
 # 生成新会话 / Codex handoff 上下文包；输出到 .hermes/task-artifacts/context-pack.md
 python scripts/workflow/build_context_pack.py
+
+# 生成 / 审计 MCP 候选；只写项目内忽略产物，不默认启用
+python scripts/workflow/mcp_candidate_audit.py --write-template .hermes/task-artifacts/mcp-candidate.yaml
+python scripts/workflow/mcp_candidate_audit.py .hermes/task-artifacts/mcp-candidate.yaml
 
 # 仓库完整门禁
 python scripts/workflow/run_quality_gate.py verify

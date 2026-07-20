@@ -98,6 +98,16 @@ def gate_context_pack() -> int:
     return run_python(["scripts/workflow/build_context_pack.py", "--max-chars", "30000"])
 
 
+def gate_mcp_audit() -> int:
+    return run_python(
+        [
+            "scripts/workflow/mcp_candidate_audit.py",
+            "--write-template",
+            ".hermes/task-artifacts/mcp-candidate-template.yaml",
+        ]
+    )
+
+
 def gate_shell() -> int:
     bash = usable_bash()
     if not bash:
@@ -124,11 +134,12 @@ GATES: dict[str, Gate] = {
     "compile": Gate("compile", "Compile repository Python workflow/security/test files.", gate_compile),
     "security": Gate("security", "Scan templates, skills, docs, scripts and README for prompt/security hazards.", gate_security),
     "context-pack": Gate("context-pack", "Generate the safe ignored Context Pack smoke artifact.", gate_context_pack),
+    "mcp-audit": Gate("mcp-audit", "Smoke the MCP candidate audit template generator.", gate_mcp_audit),
     "shell": Gate("shell", "Parse setup.sh with bash -n when bash is available.", gate_shell),
     "powershell": Gate("powershell", "Parse setup.ps1 with PowerShell AST when pwsh/powershell.exe is available.", gate_powershell),
 }
 
-VERIFY_ORDER = ("governance", "compile", "security", "context-pack", "shell", "powershell")
+VERIFY_ORDER = ("governance", "compile", "security", "context-pack", "mcp-audit", "shell", "powershell")
 
 
 def run_gate_sequence(names: tuple[str, ...]) -> int:
