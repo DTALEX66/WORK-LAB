@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 import datetime as dt
 import hashlib
 import os
@@ -95,16 +96,56 @@ def git_root(start: Path) -> Path:
     return Path(result.stdout.strip()).resolve()
 
 
+def _windows_long_path(path: Path) -> Path:
+    """Return a stable long-name path for existing Windows paths.
+
+    GitHub Actions can expose the same temp directory as both
+    ``C:\\Users\\runneradmin`` and the DOS 8.3 alias ``C:\\Users\\RUNNER~1``.
+    ``Path.relative_to`` is purely lexical, so normalize existing path prefixes
+    before containment checks.
+    """
+    if os.name != "nt":
+        return path
+    text = str(path)
+    buffer_size = ctypes.windll.kernel32.GetLongPathNameW(text, None, 0)
+    if buffer_size <= 0:
+        return path
+    buffer = ctypes.create_unicode_buffer(buffer_size)
+    written = ctypes.windll.kernel32.GetLongPathNameW(text, buffer, buffer_size)
+    if written <= 0:
+        return path
+    return Path(buffer.value)
+
+
+def canonical_path(path: Path) -> Path:
+    """Canonicalize a path, including Windows short-name aliases.
+
+    Works for paths that do not exist yet by canonicalizing the nearest existing
+    ancestor and appending the unresolved suffix.
+    """
+    resolved = path.resolve(strict=False)
+    existing = resolved
+    suffix: list[str] = []
+    while not existing.exists() and existing != existing.parent:
+        suffix.append(existing.name)
+        existing = existing.parent
+    existing = _windows_long_path(existing.resolve(strict=False))
+    for part in reversed(suffix):
+        existing = existing / part
+    return existing
+
+
 def is_relative_to(path: Path, parent: Path) -> bool:
     try:
-        path.resolve().relative_to(parent.resolve())
+        canonical_path(path).relative_to(canonical_path(parent))
         return True
     except ValueError:
         return False
 
 
 def require_ignored_output(root: Path, output: Path) -> None:
-    output = output.resolve()
+    output = canonical_path(output)
+    root = canonical_path(root)
     if not is_relative_to(output, root):
         raise SystemExit(f"output path escapes project root: {output}")
     relative = output.relative_to(root).as_posix()
@@ -238,9 +279,11 @@ def build_context_pack(root: Path, max_chars: int = DEFAULT_MAX_CHARS) -> str:
 
 
 def write_context_pack(root: Path, output: Path, max_chars: int) -> Path:
+    root = canonical_path(root)
     if not output.is_absolute():
         output = root / output
     require_ignored_output(root, output)
+    output = canonical_path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     content = build_context_pack(root, max_chars=max_chars)
     output.write_text(content, encoding="utf-8")
@@ -284,7 +327,7 @@ def main(argv: list[str] | None = None) -> int:
         print(build_context_pack(root, max_chars=args.max_chars), end="")
         return 0
     output = write_context_pack(root, args.output, args.max_chars)
-    relative = output.relative_to(root).as_posix()
+    relative = output.relative_to(canonical_path(root)).as_posix()
     print(f"context_pack={relative}")
     print(f"bytes={output.stat().st_size}")
     return 0

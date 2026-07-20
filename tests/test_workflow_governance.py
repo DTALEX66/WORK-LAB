@@ -415,6 +415,50 @@ class WorkflowGovernanceTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 module.write_context_pack(repo, Path("../context-pack.md"), max_chars=20000)
 
+    def test_context_pack_uses_canonical_paths_for_windows_short_name_aliases(self) -> None:
+        script = ROOT / "scripts/workflow/build_context_pack.py"
+        spec = importlib.util.spec_from_file_location("context_pack_alias", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True)
+            (repo / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+            (repo / "README.md").write_text("# Demo\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "add", ".gitignore", "README.md"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+            )
+
+            alias_root = Path(str(repo) + "-SHORT-ALIAS")
+            real_canonical_path = module.canonical_path
+
+            def fake_canonical_path(path: Path) -> Path:
+                text = str(path)
+                alias = str(alias_root)
+                if text == alias or text.startswith(alias + "\\") or text.startswith(alias + "/"):
+                    suffix = text[len(alias) :].lstrip("\\/")
+                    return repo / suffix if suffix else repo
+                return real_canonical_path(path)
+
+            module.canonical_path = fake_canonical_path
+            try:
+                output = module.write_context_pack(
+                    alias_root, Path(".hermes/task-artifacts/context-pack.md"), max_chars=20000
+                )
+            finally:
+                module.canonical_path = real_canonical_path
+
+            self.assertEqual(
+                output.relative_to(repo).as_posix(),
+                ".hermes/task-artifacts/context-pack.md",
+            )
+
     def test_quality_gate_runner_is_canonical_and_just_is_optional(self) -> None:
         runner = ROOT / "scripts/workflow/run_quality_gate.py"
         justfile = ROOT / "Justfile"
