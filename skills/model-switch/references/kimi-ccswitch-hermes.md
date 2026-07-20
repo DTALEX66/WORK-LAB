@@ -60,6 +60,38 @@ Hermes 的 `/model` / picker 使用内置 curated list，不会自动读取 CC S
 
 可确认的结论：`Hermes → Moonshot/Kimi API → request model kimi-k3 → response model kimi-k3`。不要夸大为“外部可证明后端内部权重等级”；外部只能证明 API 暴露并服务端确认的模型 ID 与路由。
 
+## Brotli streaming decode 报错
+
+症状：
+
+```text
+API call failed after 3 retries: brotli: decoder process called with data when 'can_accept_more_data()' is False
+```
+
+已知触发条件：Kimi/Moonshot OpenAI-compatible streaming + 超大上下文/长 SSE 响应 + Python 环境安装了 `brotlicffi` 时，httpx/openai 的 streaming Brotli 解码路径可能在响应中途失败。日志通常显示：
+
+- `provider=kimi-for-coding` 或 `kimi-coding`
+- `base_url=https://api.moonshot.cn/v1`
+- `model=kimi-k3`
+- `tokens=~150k+` 或更大上下文
+
+判断：这不是 Kimi key 错，也不是 `kimi-k3` 模型不存在；小请求和同会话后续请求可成功，失败点是 HTTP Brotli 解码。
+
+修复/规避：对 Kimi-family endpoint 禁用 `br` 协商，让服务端返回 gzip/deflate：
+
+```text
+Accept-Encoding: gzip, deflate
+```
+
+Hermes core 已在 `agent/agent_init.py` 对 `api.moonshot.cn`、`api.moonshot.ai`、`api.kimi.com` 自动注入该 header，并保留既有 provider headers（例如 `api.kimi.com` 的 `User-Agent`）。修改运行时代码后必须重启 Desktop/backend；单独 `/reset` 只刷新会话，不一定重载已运行 backend 代码。
+
+验证：
+
+```bash
+PYTHONPATH=. python -m pytest tests/agent/test_kimi_brotli_headers.py -q --tb=short -n 0
+hermes chat --provider kimi-for-coding -m kimi-k3 -q "Reply exactly: KIMI_BROTLI_FIX_OK" -Q --toolsets safe
+```
+
 ## 推荐汇报格式
 
 - CC Switch 侧模型名列表：只列模型名，不输出 key。

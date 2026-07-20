@@ -22,7 +22,7 @@ tags: [hermes, provider, routing, deepseek, openai, codex, proxy, cc-switch]
 
 | 请求 | 动作 |
 |---|---|
-| 整理/切换用户当前三条模型线 | 以 Kimi K3、DeepSeek V4、ChatGPT 5.6 为准；用户常用斜杠入口是 `/切换KIMI`、`/切换DP`、`/切换GPT`（config 中 quick command 键名为小写 canonical：`切换kimi`/`切换dp`/`切换gpt`），脚本入口是 `python scripts/workflow/switch_model.py kimi|deepseek|gpt`；每次切换后用 `hermes chat -q` marker 验证，并提示 `/reset` 或新会话 |
+| 整理/切换用户当前三条模型线 | 以 Kimi K3、DeepSeek V4、ChatGPT 5.6 为准；用户常用斜杠入口是 `/切换KIMI`、`/切换DP`、`/切换GPT`，Kimi 慢时提供 `/切换KIMI极速` 到官方高速 `kimi-k2.7-code-highspeed`、`/切换KIMI快` 到 `kimi-k2.7-code`、`/切换KIMI稳` 回 `kimi-k3`（config 中 quick command 键名为小写 canonical：`切换kimi`/`切换kimi极速`/`切换kimi快`/`切换kimi稳`/`切换dp`/`切换gpt`），脚本入口是 `python scripts/workflow/switch_model.py kimi|kimi-fast|kimi-turbo|deepseek|gpt`；每次切换后用 `hermes chat -q` marker 验证，并提示 `/reset` 或新会话 |
 | 接入 CC Switch 中已有的 Kimi/Moonshot API-key provider | 只读解析 `.cc-switch/cc-switch.db` 的 provider metadata，复制 key 到 Hermes `.env` 的 `KIMI_API_KEY`/`KIMI_CN_API_KEY`（绝不打印），设置 `model.provider=kimi-coding`、`model.default=<CC model>`、`model.base_url=<CC baseURL>`，用 `hermes chat -q` marker 验证；细节见 `references/kimi-ccswitch-hermes.md` |
 | Kimi 模型列表缺项或质疑是否真 K3 | 不以 picker 为准；Hermes picker 是内置 curated list，不自动同步 CC Switch models。用直接 Moonshot API 验证 `request_model/response_model`，K3 需 `temperature=1`；无效模型 404 作为对照。见 `references/kimi-ccswitch-hermes.md` |
 | 检查模型/CC Switch/Codex | 结构 doctor；需要证明可执行时加 `--live` |
@@ -36,6 +36,8 @@ cd "D:/All projects/Workflow-assistance"
 
 python scripts/workflow/switch_model.py status
 python scripts/workflow/switch_model.py kimi      # Kimi K3 (default recommended)
+python scripts/workflow/switch_model.py kimi-fast # Kimi K2.7 Code
+python scripts/workflow/switch_model.py kimi-turbo # Kimi K2.7 Code HighSpeed
 python scripts/workflow/switch_model.py deepseek  # DeepSeek V4
 python scripts/workflow/switch_model.py gpt       # ChatGPT 5.6 via openai-codex OAuth
 
@@ -59,7 +61,7 @@ python scripts/workflow/hermes_workflow_doctor.py --live
 ## 速度与视觉
 
 - 图片能力先做真实视觉 smoke，不能仅凭模型标签断言。
-- 速度诊断顺序：压缩/新会话 → reasoning/fast 模式 → 精简 toolset → 同 provider 模型 → 最后切 provider。
+- 速度诊断顺序：压缩/新会话 → `agent.reasoning_effort=low`/fast 模式 → 精简 toolset → 同 provider 模型（优先 `kimi-k2.7-code-highspeed`）→ 最后切 provider。Kimi 延迟细节见 `references/latency-tuning.md`。
 - `model_picker.custom_lanes.enabled=true` 时，Hermes `/model` / Desktop picker 显示用户专属三系列列表：`KIMI 系列`、`DEEPSEEK 系列`、`CHATGPT 系列`；每行包含对应“几点几”版本模型；保留底层 provider registry，不删除官方模型。
 - 系统代理细节见 `references/proxy-system-config.md`。
 

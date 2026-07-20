@@ -17,6 +17,7 @@ model_picker:
         provider: kimi-coding
         models:
           - kimi-k3
+          - kimi-k2.7-code-highspeed
           - kimi-k2.7-code
           - kimi-k2.6
           - kimi-k2.5
@@ -47,7 +48,7 @@ model_picker:
 
 | User-facing lane | Slash command | Hermes provider | Default model | Series shown in picker | Notes |
 |---|---|---|---|---|---|
-| KIMI 系列 | `/切换KIMI` | `kimi-coding` | `kimi-k3` | K3, K2.7, K2.6, K2.5, K2 thinking/turbo variants | Uses Kimi/Moonshot API key imported from CC Switch and `https://api.moonshot.cn/v1`. |
+| KIMI 系列 | `/切换KIMI` / `/切换KIMI稳` / `/切换KIMI快` / `/切换KIMI极速` | `kimi-coding` | `kimi-k3`; fast lane `kimi-k2.7-code`; turbo lane `kimi-k2.7-code-highspeed` | K3, K2.7 HighSpeed, K2.7, K2.6, K2.5, K2 thinking/turbo variants | Uses Kimi/Moonshot API key imported from CC Switch and `https://api.moonshot.cn/v1`. K3 is highest quality but slower; K2.7 HighSpeed is the official speed lane. |
 | DEEPSEEK 系列 | `/切换DP` | `deepseek` | `deepseek-v4-flash` | V4 Pro, V4 Flash, Chat, Reasoner | Direct DeepSeek official provider. |
 | CHATGPT 系列 | `/切换GPT` | `openai-codex` | `gpt-5.6-sol` | 5.6 Sol/Terra/Luna, 5.5, 5.3 Codex Spark, 5.6 Pro variants | ChatGPT/Codex OAuth lane via OpenAI Codex route; requires fresh session after switch. |
 
@@ -57,6 +58,9 @@ The user-facing slash forms are uppercase for readability:
 
 ```text
 /切换KIMI
+/切换KIMI稳
+/切换KIMI快
+/切换KIMI极速
 /切换DP
 /切换GPT
 ```
@@ -69,6 +73,18 @@ quick_commands:
     type: alias
     target: /model kimi-k3 --provider kimi-coding
     description: 切换到 KIMI K3
+  切换kimi稳:
+    type: alias
+    target: /model kimi-k3 --provider kimi-coding
+    description: 切换到 KIMI K3 旗舰模型
+  切换kimi快:
+    type: alias
+    target: /model kimi-k2.7-code --provider kimi-coding
+    description: 切换到 KIMI 快速模型 kimi-k2.7-code
+  切换kimi极速:
+    type: alias
+    target: /model kimi-k2.7-code-highspeed --provider kimi-coding
+    description: 切换到 KIMI 官方高速模型 kimi-k2.7-code-highspeed
   切换dp:
     type: alias
     target: /model deepseek-v4-flash --provider deepseek
@@ -88,6 +104,8 @@ Run from `D:/All projects/Workflow-assistance`:
 ```bash
 python scripts/workflow/switch_model.py status
 python scripts/workflow/switch_model.py kimi
+python scripts/workflow/switch_model.py kimi-fast
+python scripts/workflow/switch_model.py kimi-turbo
 python scripts/workflow/switch_model.py deepseek
 python scripts/workflow/switch_model.py gpt
 ```
@@ -95,6 +113,8 @@ python scripts/workflow/switch_model.py gpt
 Aliases currently supported by the script:
 
 - `k3` → Kimi K3
+- `kimi-fast` → Kimi K2.7 Code
+- `kimi-turbo` → Kimi K2.7 Code HighSpeed
 - `dp` → DeepSeek V4
 - `chatgpt` → ChatGPT 5.6
 
@@ -111,3 +131,19 @@ Treat these as examples of the pattern, not permanent proof for future sessions.
 ## Picker caveat
 
 Hermes `/model` and Desktop model picker are filtered by `model_picker.custom_lanes`, but the official provider/model registry is not deleted. Typed `/model <model> --provider <provider>` remains available for non-listed models when needed.
+
+## Desktop picker click caveat
+
+If the user says clicking a model inside Desktop "没反应" while an answer/tool run is still active, check whether the live session is busy. Desktop hot-switches an active chat through JSON-RPC `config.set` with value `<model> --provider <provider>`. The backend intentionally rejects this during an in-flight turn with:
+
+```text
+session busy — /interrupt the current turn before switching models
+```
+
+Global `/api/model/set` / Settings changes affect new sessions only; they do not mutate an already-running chat. For the current chat, switch only after the turn is idle, or type the explicit slash command:
+
+```text
+/model gpt-5.6-sol --provider openai-codex
+```
+
+Desktop UI fix: `ModelPickerDialog` must await the async `onSelect` result and keep the dialog open when the switch returns `false`; otherwise a busy-session rejection closes the picker and looks like a dead click.

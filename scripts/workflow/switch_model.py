@@ -19,6 +19,8 @@ from pathlib import Path
 GPT_MODEL = os.environ.get("HERMES_GPT_MODEL", "gpt-5.6-sol")
 DEEPSEEK_MODEL = os.environ.get("HERMES_DEEPSEEK_MODEL", "deepseek-v4-flash")
 KIMI_MODEL = os.environ.get("HERMES_KIMI_MODEL", "kimi-k3")
+KIMI_FAST_MODEL = os.environ.get("HERMES_KIMI_FAST_MODEL", "kimi-k2.7-code")
+KIMI_TURBO_MODEL = os.environ.get("HERMES_KIMI_TURBO_MODEL", "kimi-k2.7-code-highspeed")
 KIMI_BASE_URL = os.environ.get("HERMES_KIMI_BASE_URL", "https://api.moonshot.cn/v1")
 
 
@@ -104,7 +106,7 @@ def status() -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description='Switch Hermes between the curated DTALEX66 model lanes')
-    ap.add_argument('target', choices=['gpt', 'chatgpt', 'deepseek', 'dp', 'kimi', 'k3', 'status'])
+    ap.add_argument('target', choices=['gpt', 'chatgpt', 'deepseek', 'dp', 'kimi', 'k3', 'kimi-fast', 'kimi-turbo', 'status'])
     ap.add_argument('--no-verify', action='store_true', help='skip prerequisite checks')
     args = ap.parse_args()
 
@@ -112,16 +114,25 @@ def main() -> int:
         status()
         return 0
 
-    if args.target in {'kimi', 'k3'}:
+    if args.target in {'kimi', 'k3', 'kimi-fast', 'kimi-turbo'}:
         if not args.no_verify and not (env_has('KIMI_API_KEY') or env_has('KIMI_CN_API_KEY')):
             raise SystemExit('KIMI_API_KEY/KIMI_CN_API_KEY missing in environment or Hermes .env')
+        if args.target == 'kimi-turbo':
+            model = KIMI_TURBO_MODEL
+            label = 'Kimi K2.7 Code HighSpeed'
+        elif args.target == 'kimi-fast':
+            model = KIMI_FAST_MODEL
+            label = 'Kimi K2.7 Code'
+        else:
+            model = KIMI_MODEL
+            label = 'Kimi K3'
         set_config([
             ('model.provider', 'kimi-coding'),
             ('model.base_url', KIMI_BASE_URL),
-            ('model.default', KIMI_MODEL),
+            ('model.default', model),
             ('model.api_key', ''),
         ])
-        print('Switched to Kimi K3. Start a new session or /reset for it to take effect.')
+        print(f'Switched to {label}. Start a new session or /reset for it to take effect.')
         return 0
 
     if args.target in {'deepseek', 'dp'}:
