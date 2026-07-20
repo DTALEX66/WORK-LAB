@@ -401,7 +401,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             output = module.write_context_pack(repo, module.DEFAULT_OUTPUT, max_chars=20000)
             body = output.read_text(encoding="utf-8")
             self.assertEqual(
-                output.relative_to(repo).as_posix(),
+                module.canonical_path(output).relative_to(module.canonical_path(repo)).as_posix(),
                 ".hermes/task-artifacts/context-pack.md",
             )
             self.assertIn("Workflow-assistance Context Pack", body)
@@ -455,7 +455,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 module.canonical_path = real_canonical_path
 
             self.assertEqual(
-                output.relative_to(repo).as_posix(),
+                module.canonical_path(output).relative_to(module.canonical_path(repo)).as_posix(),
                 ".hermes/task-artifacts/context-pack.md",
             )
 
