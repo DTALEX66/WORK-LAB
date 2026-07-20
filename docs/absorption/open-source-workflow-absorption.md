@@ -17,6 +17,7 @@
 | MINIGAME 自循环经验 | 写入 workflow skill | ✅ 已吸收 | 吸收“技能先加载 → 真实缺口 → 实现 → npm verify → git 同步”的循环。 |
 | Star-Trails-Log 开源对标经验 | 写入 workflow skill | ✅ 已吸收 | 吸收 RSSHub/FreshRSS/Karakeep 等“借鉴设计，不盲目引入依赖”的原则。 |
 | `promptfoo/promptfoo` | 新增 `docs/workflow/agent-evaluation.md` 与 `templates/evals/agent-behavior-smoke.yaml` | ✅ 已吸收方法 | 吸收声明式 eval cases、assertions 和 CI-friendly 布局；不安装 runner、不配置 provider、不保存真实 trace。 |
+| `yamadashy/repomix` / `coderamp-labs/gitingest` | 新增 `scripts/workflow/build_context_pack.py` 与 `docs/workflow/context-pack.md` | ✅ 已吸收方法 | 吸收 repo → LLM-friendly context pack 思路；输出锁定项目 `.hermes/task-artifacts/`，不读取密钥、会话、日志或缓存。 |
 
 ## 已识别但暂不默认启用
 

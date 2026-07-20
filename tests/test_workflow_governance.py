@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -182,6 +183,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertIn(heading, readme)
         for command_or_path in (
             "scripts/workflow/sync_hermes_workflow_assets.py",
+            "scripts/workflow/build_context_pack.py",
             "scripts/workflow/switch_model.py",
             "scripts/workflow/hermes_workflow_doctor.py",
             "scripts/security/scan_agent_rules.py",
@@ -219,6 +221,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "不是只服务本仓库的项目内脚本集合",
             "live Hermes Home 才是运行时落点",
             "只对本仓库有用的临时脚本不得被包装成默认全局能力",
+            "Context Pack",
+            ".hermes/task-artifacts/context-pack.md",
             "每次 push 和 pull request",
             "CI verdict 绑定提交 SHA",
         ):
@@ -340,6 +344,65 @@ class WorkflowGovernanceTests(unittest.TestCase):
         ):
             self.assertIn(marker, body)
         self.assertIn("hermes-project-data.py", (ROOT / "README.md").read_text(encoding="utf-8"))
+
+    def test_context_pack_generator_is_project_local_and_secret_redacting(self) -> None:
+        script = ROOT / "scripts/workflow/build_context_pack.py"
+        doc = ROOT / "docs/workflow/context-pack.md"
+        self.assertTrue(script.exists())
+        self.assertTrue(doc.exists())
+
+        spec = importlib.util.spec_from_file_location("context_pack", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True)
+            (repo / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+            (repo / "README.md").write_text("# Demo\n", encoding="utf-8")
+            (repo / "config").mkdir()
+            secret = "github_pat_" + "A" * 30
+            (repo / "config/config.yaml").write_text(
+                f"display:\n  busy_input_mode: queue\napi_key: {secret}\n",
+                encoding="utf-8",
+            )
+            (repo / "docs/workflow").mkdir(parents=True)
+            (repo / "docs/workflow/project-definition.md").write_text(
+                "# Definition\nHermes Agent + CC Switch + Codex\n",
+                encoding="utf-8",
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "add",
+                    ".gitignore",
+                    "README.md",
+                    "config/config.yaml",
+                    "docs/workflow/project-definition.md",
+                ],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+            )
+
+            output = module.write_context_pack(repo, module.DEFAULT_OUTPUT, max_chars=20000)
+            body = output.read_text(encoding="utf-8")
+            self.assertEqual(
+                output.relative_to(repo).as_posix(),
+                ".hermes/task-artifacts/context-pack.md",
+            )
+            self.assertIn("Workflow-assistance Context Pack", body)
+            self.assertIn("global Hermes Agent + CC Switch + Codex workflow", body)
+            self.assertIn("[REDACTED]", body)
+            self.assertNotIn(secret, body)
+            self.assertNotIn("auth.json", "\n".join(module.tracked_inventory(repo)))
+
+            with self.assertRaises(SystemExit):
+                module.write_context_pack(repo, Path("context-pack.md"), max_chars=20000)
+            with self.assertRaises(SystemExit):
+                module.write_context_pack(repo, Path("../context-pack.md"), max_chars=20000)
 
     def test_portable_skills_do_not_link_to_missing_references(self) -> None:
         for skill in (ROOT / "skills").rglob("SKILL.md"):

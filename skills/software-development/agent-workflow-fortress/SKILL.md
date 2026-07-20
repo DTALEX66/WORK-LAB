@@ -66,6 +66,14 @@ Do not automatically vendor their code or add them as runtime dependencies.
 
 When the user excludes models or non-free APIs, absorb only executor-independent workflow mechanics: Completion contract, Structured run state, Fail-closed safety, Single writer ownership, and Exact-tree evidence. Do not add a provider, model route, hosted endpoint, credential, external binary, telemetry path, or duplicate Hermes subsystem. Use `templates/task-tickets/model-neutral-agent-task.md` for execution tickets and load [`references/free-local-agent-harness-absorption.md`](references/free-local-agent-harness-absorption.md) for the full boundary and negative controls.
 
+### Agent behavior evaluation absorption
+
+When strengthening a portable Hermes Agent + CC Switch + Codex workflow pack, absorb promptfoo-style **declarative eval cases** for agent behavior boundaries, but do not default-install an eval runner or provider. Templates should remain model/provider neutral, use placeholders, avoid secrets/traces/raw private prompts, and write any run artifacts under project-local `.hermes/task-artifacts/evals/`. Good smoke cases cover repo/live/session layering, Gateway delivery layering, busy queue vs durable task execution, interrupted delegation evidence, Windows PowerShell selection, verification honesty, and secret/runtime boundaries. See [`references/agent-behavior-evaluation.md`](references/agent-behavior-evaluation.md).
+
+### Context pack absorption
+
+For new-session handoff, Codex/CC Switch review context, or context-overflow recovery, absorb repomix/gitingest-style **repo → LLM-friendly context pack** mechanics without default-installing their runtime or copying secrets. A context pack must be generated inside the target Git project, write only to a Git-ignored `.hermes/task-artifacts/` path, redact secret-like values, read only tracked allowlisted files plus Git metadata, and exclude `.env`, `auth.json`, `state.db`, sessions, logs, caches, dependencies, and `.hermes/` runtime data. Treat context-pack generation as handoff/evidence only; it is not real product work and must not count as a completed autonomous-loop task.
+
 ### Default-enable only if smoke-tested
 
 Before adding any tool/MCP to default config, run the smallest real command:
