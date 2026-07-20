@@ -16,6 +16,27 @@ tags: [windows, nodejs, nextjs, powershell, spawn, npm-ci, path, cross-platform]
 
 ## Key patterns
 
+### 0. PowerShell selection policy
+
+Hermes `terminal` runs through Git-Bash/MSYS by default on this Windows host, so
+plain terminal commands should use POSIX shell syntax. When a task specifically
+requires PowerShell, prefer **PowerShell 7** via `pwsh`:
+
+```bash
+pwsh -NoProfile -Command '...'
+```
+
+Use Windows PowerShell 5.1 (`powershell.exe`) only when a legacy Windows module,
+Desktop-only COM integration, or other compatibility requirement fails under
+PowerShell 7:
+
+```bash
+powershell.exe -NoProfile -Command '...'
+```
+
+Do not imply that Hermes terminal's default shell is PowerShell; it is Git-Bash
+unless `pwsh` or `powershell.exe` is invoked explicitly.
+
 ### 1. PowerShell `.ps1` with CJK characters fails from git-bash
 
 When a `.ps1` script containing Chinese, Japanese, Korean, or other non-ASCII

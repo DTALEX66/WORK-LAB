@@ -96,10 +96,11 @@ hermes mcp test context7
 
 1. 在本地仓库修改配置、技能、脚本或文档。
 2. 运行语法检查、安全扫描和 Git 状态检查。
-3. 用 conventional commit 提交。
-4. 推送到 GitHub。
-5. 新电脑 clone 后执行 `setup.ps1` 或 `setup.sh`，再手动补齐本机私密凭证和 OAuth。
-6. 对 live Hermes Home 做同步时优先使用 `scripts/workflow/sync_hermes_workflow_assets.py --apply`，不要全量覆盖真实 `.env`、auth、session、logs。
+3. Windows 上 Hermes terminal 默认是 Git-Bash/MSYS；需要 PowerShell 时优先显式使用 PowerShell 7：`pwsh -NoProfile -Command ...`，只有旧模块/COM/Desktop edition 兼容问题才回退 `powershell.exe` 5.1。
+4. 用 conventional commit 提交。
+5. 推送到 GitHub。
+6. 新电脑 clone 后执行 `setup.ps1` 或 `setup.sh`，再手动补齐本机私密凭证和 OAuth。
+7. 对 live Hermes Home 做同步时优先使用 `scripts/workflow/sync_hermes_workflow_assets.py --apply`，不要全量覆盖真实 `.env`、auth、session、logs。
 
 ## 目标状态
 

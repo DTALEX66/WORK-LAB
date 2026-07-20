@@ -285,6 +285,12 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn('cp -r skills/* "$HERMES_HOME/skills/"', body)
         self.assertNotIn("tools enable x_search", body)
         self.assertIn("sync_hermes_workflow_assets.py", body)
+        for marker in (
+            "PowerShell selection policy",
+            "prefer **PowerShell 7** via `pwsh`",
+            "powershell.exe",
+        ):
+            self.assertIn(marker, body)
         for name in (
             "codex++-proxy-routing.md",
             "provider-network-troubleshooting.md",
