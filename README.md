@@ -126,8 +126,16 @@ python scripts/workflow/sync_hermes_workflow_assets.py --apply
 
 `skills/model-switch/SKILL.md` 与切换脚本共同定义这条路线的操作边界。
 
+KIMI 线路把稳定性与速度选择明确分开：`kimi` 使用 K3；`kimi-fast`
+使用 K2.7 Code；`kimi-turbo` 使用官方 K2.7 Code HighSpeed。以下命令只在
+用户明确决定切换时执行；不会自动更改当前会话，切换后必须新建会话或执行
+`/reset`。
+
 ```bash
 python scripts/workflow/switch_model.py status
+python scripts/workflow/switch_model.py kimi       # Kimi K3
+python scripts/workflow/switch_model.py kimi-fast  # Kimi K2.7 Code
+python scripts/workflow/switch_model.py kimi-turbo # Kimi K2.7 Code HighSpeed
 python scripts/workflow/switch_model.py gpt
 python scripts/workflow/switch_model.py deepseek
 ```
@@ -437,7 +445,10 @@ TROUBLESHOOTING.md   故障排查
 # 查看当前 Provider、认证和代理前置条件
 python scripts/workflow/switch_model.py status
 
-# 切换 Provider
+# 切换 Provider（仅在用户明确决定后；切换后新建会话或执行 /reset）
+python scripts/workflow/switch_model.py kimi       # Kimi K3
+python scripts/workflow/switch_model.py kimi-fast  # Kimi K2.7 Code
+python scripts/workflow/switch_model.py kimi-turbo # Kimi K2.7 Code HighSpeed
 python scripts/workflow/switch_model.py gpt
 python scripts/workflow/switch_model.py deepseek
 

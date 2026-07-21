@@ -50,6 +50,17 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertTrue(all(spec["type"] == "alias" for spec in quick.values()))
 
+    def test_readme_documents_kimi_speed_lane_commands_without_auto_switching(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        for command in (
+            "python scripts/workflow/switch_model.py kimi       # Kimi K3",
+            "python scripts/workflow/switch_model.py kimi-fast  # Kimi K2.7 Code",
+            "python scripts/workflow/switch_model.py kimi-turbo # Kimi K2.7 Code HighSpeed",
+        ):
+            self.assertIn(command, readme)
+        self.assertIn("不会自动更改当前会话", readme)
+        self.assertIn("`/reset`", readme)
+
     def test_sync_uses_repo_skills_as_single_source(self) -> None:
         source = (ROOT / "scripts/workflow/sync_hermes_workflow_assets.py").read_text(
             encoding="utf-8"
