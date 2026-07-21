@@ -477,16 +477,24 @@ class WorkflowGovernanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             project = Path(raw)
             subprocess.run(["git", "init", "-q"], cwd=project, check=True, capture_output=True)
+            canonical_project = Path(
+                subprocess.run(
+                    ["git", "-C", str(project), "rev-parse", "--show-toplevel"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
+            ).resolve()
             default_workspace = module.resolve_live_codex_workspace(project, None)
             self.assertEqual(
-                default_workspace.relative_to(project).as_posix(),
+                default_workspace.relative_to(canonical_project).as_posix(),
                 ".hermes/task-runtime",
             )
             custom_workspace = module.resolve_live_codex_workspace(
                 project, Path(".hermes/task-runtime/custom-codex-smoke")
             )
             self.assertEqual(
-                custom_workspace.relative_to(project).as_posix(),
+                custom_workspace.relative_to(canonical_project).as_posix(),
                 ".hermes/task-runtime/custom-codex-smoke",
             )
             with self.assertRaises(SystemExit):
