@@ -688,6 +688,35 @@ class WorkflowGovernanceTests(unittest.TestCase):
         fortress_ref = ROOT / "skills/software-development/agent-workflow-fortress/references/hermes-provider-mcp-workflow.md"
         self.assertFalse(fortress_ref.exists())
 
+    def test_kimi_speed_lane_contract_is_consistent(self) -> None:
+        switcher = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")
+        skill = (ROOT / "skills/model-switch/SKILL.md").read_text(encoding="utf-8")
+        lanes = (ROOT / "skills/model-switch/references/current-model-lanes.md").read_text(
+            encoding="utf-8"
+        )
+        latency = (ROOT / "skills/model-switch/references/latency-tuning.md").read_text(
+            encoding="utf-8"
+        )
+
+        for marker in (
+            'KIMI_MODEL = os.environ.get("HERMES_KIMI_MODEL", "kimi-k3")',
+            'KIMI_FAST_MODEL = os.environ.get("HERMES_KIMI_FAST_MODEL", "kimi-k2.7-code")',
+            'KIMI_TURBO_MODEL = os.environ.get("HERMES_KIMI_TURBO_MODEL", "kimi-k2.7-code-highspeed")',
+            "'kimi-fast'",
+            "'kimi-turbo'",
+            "if args.target == 'kimi-turbo':",
+            "elif args.target == 'kimi-fast':",
+        ):
+            self.assertIn(marker, switcher)
+
+        for document in (skill, lanes, latency):
+            self.assertIn("kimi-k2.7-code", document)
+            self.assertIn("kimi-k2.7-code-highspeed", document)
+        self.assertIn("/切换KIMI快", lanes)
+        self.assertIn("/切换KIMI极速", lanes)
+        self.assertIn("kimi-fast` → Kimi K2.7 Code", lanes)
+        self.assertIn("kimi-turbo` → Kimi K2.7 Code HighSpeed", lanes)
+
     def test_external_harness_absorption_is_model_and_paid_api_neutral(self) -> None:
         fortress = ROOT / "skills/software-development/agent-workflow-fortress"
         reference = fortress / "references/free-local-agent-harness-absorption.md"
