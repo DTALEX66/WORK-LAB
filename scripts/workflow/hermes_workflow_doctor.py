@@ -127,8 +127,19 @@ def codex_candidates() -> list[Path]:
 def resolve_live_codex_workspace(project_root: Path, requested: Path | None) -> Path:
     """Return a project-local runtime parent for the ephemeral Codex smoke repo."""
 
-    project = project_root.resolve()
-    if not (project / ".git").exists():
+    supplied = project_root.resolve()
+    result = subprocess.run(
+        ["git", "-C", str(supplied), "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode:
+        raise SystemExit("--live Codex smoke must run from a Git project root")
+    # Git yields a canonical working-tree spelling on Windows, avoiding a mix
+    # of 8.3 and long path aliases in containment checks.
+    project = Path(result.stdout.strip()).resolve()
+    if not os.path.samefile(supplied, project):
         raise SystemExit("--live Codex smoke must run from a Git project root")
     runtime = (project / ".hermes/task-runtime").resolve()
     candidate = requested if requested is not None else Path(".hermes/task-runtime")

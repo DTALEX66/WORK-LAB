@@ -38,11 +38,15 @@ class ProjectDataBoundaryTests(unittest.TestCase):
 
         layout = module.prepare_layout(repo)
 
-        self.assertEqual(layout.project_root, repo.resolve())
+        # Git may canonicalize Windows 8.3 aliases (for example RUNNER~1) to
+        # the long user-directory form. Compare all contained outputs against
+        # the resolved Git root returned by the runtime boundary itself.
+        project_root = layout.project_root
+        self.assertEqual(project_root, module.discover_project_root(repo))
         for path in layout.paths.values():
             self.assertTrue(path.is_dir(), path)
-            self.assertTrue(path.resolve().is_relative_to(repo.resolve()), path)
-        self.assertTrue(layout.paths["tmp"].is_relative_to(repo / ".hermes" / "task-runtime"))
+            self.assertTrue(path.resolve().is_relative_to(project_root), path)
+        self.assertTrue(layout.paths["tmp"].is_relative_to(project_root / ".hermes" / "task-runtime"))
         self.assertEqual(layout.env["TMP"], str(layout.paths["tmp"]))
         self.assertEqual(layout.env["TEMP"], str(layout.paths["tmp"]))
         self.assertEqual(layout.env["TMPDIR"], str(layout.paths["tmp"]))
@@ -50,7 +54,7 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         self.assertEqual(layout.env["PYTHONPYCACHEPREFIX"], str(layout.paths["pycache"]))
         self.assertEqual(layout.env["UV_CACHE_DIR"], str(layout.paths["cache"] / "uv"))
         self.assertEqual(layout.env["NPM_CONFIG_CACHE"], str(layout.paths["cache"] / "npm"))
-        self.assertEqual(layout.env["HERMES_KANBAN_HOME"], str(repo / ".hermes"))
+        self.assertEqual(layout.env["HERMES_KANBAN_HOME"], str(project_root / ".hermes"))
 
     def test_prepare_fails_closed_when_project_runtime_root_is_not_git_ignored(self) -> None:
         module = load_module()
@@ -102,7 +106,7 @@ class ProjectDataBoundaryTests(unittest.TestCase):
 
         policy = module.write_task_data_policy(layout)
 
-        self.assertEqual(policy, repo / ".hermes" / "TASK_DATA_POLICY.md")
+        self.assertEqual(policy, layout.project_root / ".hermes" / "TASK_DATA_POLICY.md")
         content = policy.read_text(encoding="utf-8")
         self.assertIn("HERMES_KANBAN_HOME", content)
         self.assertIn("global Hermes home", content)
