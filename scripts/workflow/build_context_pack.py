@@ -12,7 +12,10 @@ from pathlib import Path
 
 DEFAULT_OUTPUT = Path(".hermes/task-artifacts/context-pack.md")
 MAX_SECTION_CHARS = 8000
-DEFAULT_MAX_CHARS = 50000
+# Keep a new-session handoff inside the portable token policy default. Callers may
+# explicitly raise this up to the documented 30k hard ceiling for audits.
+DEFAULT_MAX_CHARS = 12000
+HARD_MAX_CHARS = 30000
 
 SELECTED_TEXT_FILES = (
     "README.md",
@@ -274,7 +277,8 @@ def build_context_pack(root: Path, max_chars: int = DEFAULT_MAX_CHARS) -> str:
     digest = sha256_text(content.replace("filled-after-render", ""))[:16]
     content = content.replace("filled-after-render", digest)
     if len(content) > max_chars:
-        content = content[:max_chars] + f"\n\n[context pack truncated at {max_chars} characters]\n"
+        marker = f"\n\n[context pack truncated at {max_chars} characters]\n"
+        content = content[: max_chars - len(marker)] + marker
     return content
 
 
@@ -322,6 +326,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
+    if not 1 <= args.max_chars <= HARD_MAX_CHARS:
+        raise SystemExit(f"--max-chars must be between 1 and {HARD_MAX_CHARS}")
     root = git_root(args.project).resolve()
     if args.stdout:
         print(build_context_pack(root, max_chars=args.max_chars), end="")
@@ -329,7 +335,8 @@ def main(argv: list[str] | None = None) -> int:
     output = write_context_pack(root, args.output, args.max_chars)
     relative = output.relative_to(canonical_path(root)).as_posix()
     print(f"context_pack={relative}")
-    print(f"bytes={output.stat().st_size}")
+    print(f"chars={len(output.read_text(encoding='utf-8'))}")
+    print(f"utf8_bytes={output.stat().st_size}")
     return 0
 
 

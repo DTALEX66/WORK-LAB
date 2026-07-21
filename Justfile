@@ -22,6 +22,12 @@ security:
 context-pack:
     python scripts/workflow/run_quality_gate.py context-pack
 
+portable-install:
+    python scripts/workflow/run_quality_gate.py portable-install
+
+provider-inventory:
+    python scripts/workflow/run_quality_gate.py provider-inventory
+
 mcp-audit:
     python scripts/workflow/run_quality_gate.py mcp-audit
 

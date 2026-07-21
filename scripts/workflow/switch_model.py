@@ -15,6 +15,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import yaml
+
 
 GPT_MODEL = os.environ.get("HERMES_GPT_MODEL", "gpt-5.6-sol")
 DEEPSEEK_MODEL = os.environ.get("HERMES_DEEPSEEK_MODEL", "deepseek-v4-flash")
@@ -77,14 +79,64 @@ def env_has(name: str) -> bool:
     return False
 
 
+def _config_value(data: dict, dotted_key: str) -> object:
+    current: object = data
+    for part in dotted_key.split('.'):
+        if not isinstance(current, dict):
+            return None
+        current = current.get(part)
+    return current
+
+
+def _load_config_snapshot() -> dict:
+    config_path = hermes_home() / 'config.yaml'
+    if not config_path.exists():
+        return {}
+    loaded = yaml.safe_load(config_path.read_text(encoding='utf-8')) or {}
+    if not isinstance(loaded, dict):
+        raise SystemExit('Hermes config root must be a mapping')
+    return loaded
+
+
+def _restore_config(applied: list[tuple[str, object]]) -> None:
+    for key, previous in reversed(applied):
+        if isinstance(previous, (str, int, float, bool)) or previous is None:
+            run(['hermes', 'config', 'set', key, '' if previous is None else str(previous)], timeout=30)
+
+
 def set_config(pairs: list[tuple[str, str]]) -> None:
     if not shutil.which('hermes'):
         raise SystemExit('hermes command not found')
+    before = _load_config_snapshot()
+    applied: list[tuple[str, object]] = []
     for key, value in pairs:
         cp = run(['hermes', 'config', 'set', key, value], timeout=30)
         print(redact(cp.stdout).strip() or f'set {key}')
         if cp.returncode != 0:
-            raise SystemExit(cp.returncode)
+            _restore_config(applied)
+            raise SystemExit(f'config update failed at {key}; restored {len(applied)} prior field(s)')
+        applied.append((key, _config_value(before, key)))
+
+    after = _load_config_snapshot()
+    mismatches = [key for key, value in pairs if _config_value(after, key) != value]
+    if mismatches:
+        _restore_config(applied)
+        raise SystemExit('config verification failed; restored prior fields: ' + ', '.join(mismatches))
+
+
+def codex_auth_present() -> bool:
+    cp = run(['hermes', 'auth', 'list', 'openai-codex'], timeout=30)
+    return cp.returncode == 0 and 'credentials' in cp.stdout.lower()
+
+
+def live_marker(provider: str, model: str, marker: str) -> None:
+    cp = run(
+        ['hermes', 'chat', '--provider', provider, '-m', model, '-q', f'Reply exactly: {marker}', '-Q', '--toolsets', 'safe'],
+        timeout=180,
+    )
+    if cp.returncode != 0 or marker not in cp.stdout.splitlines():
+        raise SystemExit(f'LIVE verification failed for {provider}/{model}: {redact(cp.stdout)}')
+    print(f'LIVE_OK provider={provider} model={model}')
 
 
 def status() -> None:
@@ -108,6 +160,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description='Switch Hermes between the curated DTALEX66 model lanes')
     ap.add_argument('target', choices=['gpt', 'chatgpt', 'deepseek', 'dp', 'kimi', 'k3', 'kimi-fast', 'kimi-turbo', 'status'])
     ap.add_argument('--no-verify', action='store_true', help='skip prerequisite checks')
+    ap.add_argument('--live', action='store_true', help='run a real marker after writing config (uses provider quota)')
     args = ap.parse_args()
 
     if args.target == 'status':
@@ -132,6 +185,8 @@ def main() -> int:
             ('model.default', model),
             ('model.api_key', ''),
         ])
+        if args.live:
+            live_marker('kimi-coding', model, 'OK_KIMI_SWITCH_LIVE')
         print(f'Switched to {label}. Start a new session or /reset for it to take effect.')
         return 0
 
@@ -144,18 +199,24 @@ def main() -> int:
             ('model.default', DEEPSEEK_MODEL),
             ('model.api_key', ''),
         ])
+        if args.live:
+            live_marker('deepseek', DEEPSEEK_MODEL, 'OK_DEEPSEEK_SWITCH_LIVE')
         print('Switched to DeepSeek. Start a new session or /reset for it to take effect.')
         return 0
 
     if args.target in {'gpt', 'chatgpt'}:
         if not args.no_verify and not port_open('127.0.0.1', 7890):
             raise SystemExit('CC Switch proxy 127.0.0.1:7890 is not open')
+        if not args.no_verify and not codex_auth_present():
+            raise SystemExit('No openai-codex OAuth credential found; run: hermes auth add openai-codex')
         set_config([
             ('model.provider', 'openai-codex'),
             ('model.default', GPT_MODEL),
             ('model.base_url', ''),
             ('model.api_key', ''),
         ])
+        if args.live:
+            live_marker('openai-codex', GPT_MODEL, 'OK_GPT_SWITCH_LIVE')
         print('Switched to GPT via openai-codex OAuth. Start a new session or /reset for it to take effect.')
         return 0
     return 2

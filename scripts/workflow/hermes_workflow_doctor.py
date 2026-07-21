@@ -173,7 +173,10 @@ def main() -> int:
     print_command("Hermes MCP inventory", ["hermes", "mcp", "list"], max_lines=20)
 
     print("\n=== Network / route structure ===")
-    for port, role in ((7890, "CC Switch network proxy"), (15721, "Codex API router")):
+    for port, role in (
+        (7890, "CC Switch network proxy"),
+        (15721, "CC Switch Codex router (optional; native Codex OAuth does not depend on it)"),
+    ):
         print(f"[{'OK' if port_open(port) else 'WARN'}] {role} 127.0.0.1:{port} = {'open' if port_open(port) else 'closed'}")
     print_command(
         "DeepSeek HTTP reachability (HTTP 401 is reachable, not authenticated)",

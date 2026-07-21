@@ -1,0 +1,33 @@
+# Declarative ownership contract for repo -> live Hermes config merge.
+# Never list secrets, OAuth credentials, or active provider routing as managed data.
+schema_version: 1
+managed:
+  display.busy_input_mode: replace
+  display.streaming: replace
+  agent.reasoning_effort: replace
+  model.max_tokens: replace
+  model_picker.custom_lanes: replace
+  quick_commands:
+    strategy: replace_owned
+    owned_prefix: 切换
+  mcp_servers:
+    strategy: merge_owned
+    owned_names: [context7]
+  plugins.enabled:
+    strategy: merge_additive
+preserved:
+  - model.provider
+  - model.default
+  - model.base_url
+  - model.api_key
+  - credentials
+  - auth.json
+  - mcp_servers.user_defined
+  - quick_commands.user_defined
+  - plugins.user_enabled
+forbidden:
+  - .env
+  - OAuth tokens
+  - refresh tokens
+  - browser cookies
+  - credential stores

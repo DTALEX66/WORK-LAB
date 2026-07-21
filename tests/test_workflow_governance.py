@@ -16,6 +16,81 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class WorkflowGovernanceTests(unittest.TestCase):
+    def test_portable_package_declares_config_ownership_and_compatibility(self) -> None:
+        ownership_path = ROOT / "config/managed-config-schema.yaml"
+        manifest_path = ROOT / "workflow-manifest.yaml"
+        self.assertTrue(ownership_path.exists())
+        self.assertTrue(manifest_path.exists())
+
+        ownership = yaml.safe_load(ownership_path.read_text(encoding="utf-8"))
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(ownership["schema_version"], 1)
+        self.assertEqual(ownership["managed"]["model.max_tokens"], "replace")
+        self.assertEqual(ownership["managed"]["model_picker.custom_lanes"], "replace")
+        self.assertIn("model.provider", ownership["preserved"])
+        self.assertIn("model.api_key", ownership["preserved"])
+        self.assertEqual(manifest["schema_version"], 1)
+        self.assertIn("portable_config", manifest["capabilities"])
+        self.assertIn("custom_model_lanes", manifest["capabilities"])
+
+    def test_portable_install_verifier_accepts_isolated_empty_home(self) -> None:
+        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        self.assertTrue(script.exists())
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / "isolated-home"
+            result = subprocess.run(
+                [sys.executable, str(script), "--repo", str(ROOT), "--home", str(home)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("PORTABLE_INSTALL_VERIFY_PASS", result.stdout)
+
+    def test_project_bootstrap_dry_run_is_non_destructive_and_lists_outputs(self) -> None:
+        script = ROOT / "scripts/workflow/bootstrap_project.py"
+        self.assertTrue(script.exists())
+        with tempfile.TemporaryDirectory() as raw:
+            target = Path(raw) / "new-project"
+            target.mkdir()
+            (target / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+            subprocess.run(["git", "init", "-q", str(target)], check=True)
+            result = subprocess.run(
+                [sys.executable, str(script), str(target), "--dry-run"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("BOOTSTRAP_DRY_RUN", result.stdout)
+            self.assertFalse((target / ".hermes").exists())
+
+    def test_provider_health_generates_secret_free_unverified_inventory(self) -> None:
+        script = ROOT / "scripts/workflow/provider_health.py"
+        self.assertTrue(script.exists())
+        with tempfile.TemporaryDirectory() as raw:
+            output = Path(raw) / "provider-health.json"
+            result = subprocess.run(
+                [sys.executable, str(script), "--config", str(ROOT / "config/config.yaml"), "--output", str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            report = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(report["schema_version"], 1)
+        self.assertTrue(report["secret_free"])
+        self.assertEqual(report["overall_status"], "UNVERIFIED")
+        self.assertIn("openai-codex/gpt-5.6-sol", report["models"])
+
+    def test_context_budget_policy_has_hard_tool_and_session_limits(self) -> None:
+        policy_path = ROOT / "config/context-budget.yaml"
+        self.assertTrue(policy_path.exists())
+        policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
+        self.assertEqual(policy["schema_version"], 1)
+        self.assertGreater(policy["session"]["hard_tokens"], policy["session"]["warning_tokens"])
+        self.assertGreater(policy["tool_output"]["failure_chars"], policy["tool_output"]["default_chars"])
+
     def test_portable_config_defaults_to_context7_only(self) -> None:
         config = yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))
         self.assertEqual(set(config["mcp_servers"]), {"context7"})
@@ -24,6 +99,19 @@ class WorkflowGovernanceTests(unittest.TestCase):
             {"security-guidance", "web/ddgs"},
         )
         self.assertEqual(config["display"]["busy_input_mode"], "queue")
+        self.assertTrue(config["display"]["streaming"])
+        self.assertEqual(config["agent"]["reasoning_effort"], "low")
+        self.assertEqual(config["model"]["max_tokens"], 8192)
+        lanes = config["model_picker"]["custom_lanes"]
+        self.assertTrue(lanes["enabled"])
+        self.assertEqual(
+            [lane["label"] for lane in lanes["lanes"]],
+            ["KIMI 系列", "DEEPSEEK 系列", "CHATGPT 系列"],
+        )
+        self.assertEqual(
+            set(config["quick_commands"]),
+            {"切换kimi", "切换kimi稳", "切换kimi快", "切换kimi极速", "切换dp", "切换gpt"},
+        )
         non_core = {"spotify", "x_search", "video", "tts"}
         self.assertTrue(non_core.isdisjoint(config["platform_toolsets"]["cli"]))
 
@@ -180,6 +268,45 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(result["model"]["default"], "gpt-portable")
             self.assertEqual(result["platform_toolsets"]["cli"], ["terminal", "file"])
             self.assertEqual(set(result["mcp_servers"]), {"context7"})
+
+    def test_sync_manages_portable_model_ux_but_preserves_active_route(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_model_ux", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            repo = temp / "repo"
+            home = temp / "home"
+            (repo / "config").mkdir(parents=True)
+            home.mkdir()
+            (repo / "config/config.yaml").write_text(
+                "model:\n  max_tokens: 8192\n"
+                "agent:\n  reasoning_effort: low\n"
+                "display:\n  streaming: true\n"
+                "model_picker:\n  custom_lanes:\n    enabled: true\n    lanes: [{label: KIMI 系列}]\n"
+                "quick_commands:\n  切换kimi: {type: alias, target: /model kimi-k3 --provider kimi-coding}\n",
+                encoding="utf-8",
+            )
+            (home / "config.yaml").write_text(
+                "model:\n  provider: deepseek\n  default: deepseek-v4-pro\n  max_tokens: 123\n"
+                "agent:\n  reasoning_effort: high\n"
+                "display:\n  streaming: false\n"
+                "quick_commands:\n  切换旧模型: {type: alias, target: /model old}\n  我的命令: {type: alias, target: /help}\n",
+                encoding="utf-8",
+            )
+            module.merge_live_config(repo, home, apply=True)
+            result = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8"))
+            self.assertEqual(result["model"]["provider"], "deepseek")
+            self.assertEqual(result["model"]["default"], "deepseek-v4-pro")
+            self.assertEqual(result["model"]["max_tokens"], 8192)
+            self.assertEqual(result["agent"]["reasoning_effort"], "low")
+            self.assertTrue(result["display"]["streaming"])
+            self.assertTrue(result["model_picker"]["custom_lanes"]["enabled"])
+            self.assertEqual(set(result["quick_commands"]), {"切换kimi", "我的命令"})
 
     def test_setup_does_not_default_enable_optional_capabilities(self) -> None:
         scripts = "\n".join(
@@ -552,7 +679,17 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
         self.assertEqual(
             module.VERIFY_ORDER,
-            ("governance", "compile", "security", "context-pack", "mcp-audit", "shell", "powershell"),
+            (
+                "governance",
+                "compile",
+                "security",
+                "context-pack",
+                "portable-install",
+                "provider-inventory",
+                "mcp-audit",
+                "shell",
+                "powershell",
+            ),
         )
         self.assertEqual(set(module.GATES), set(module.VERIFY_ORDER))
         self.assertIn("scripts/workflow/run_quality_gate.py", module.tracked_python_files())
@@ -613,7 +750,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             capture_output=True,
             check=True,
         )
-        self.assertIn("verify: Run governance, compile, security, context-pack, mcp-audit", list_result.stdout)
+        self.assertIn("verify: Run governance, compile, security, context-pack, portable-install, provider-inventory, mcp-audit", list_result.stdout)
 
     def test_mcp_candidate_audit_is_fail_closed_and_does_not_enable_defaults(self) -> None:
         script = ROOT / "scripts/workflow/mcp_candidate_audit.py"
@@ -755,9 +892,12 @@ class WorkflowGovernanceTests(unittest.TestCase):
             ROOT / "skills/model-switch/SKILL.md",
         ]
         combined = "\n".join(path.read_text(encoding="utf-8") for path in active)
-        self.assertNotIn("gpt-5.5", combined)
+        self.assertIn("gpt-5.6-sol", combined)
         self.assertIn("from switch_model import DEEPSEEK_MODEL, GPT_MODEL", combined)
         self.assertNotIn("hermes config set model.provider", (active[-1]).read_text(encoding="utf-8"))
+        switcher = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")
+        self.assertIn("config update failed", switcher)
+        self.assertIn("--live", switcher)
         refs = ROOT / "skills/model-switch/references"
         self.assertFalse((refs / "cc-switch-codex-hermes.md").exists())
         self.assertFalse((refs / "oauth-credential-sync.md").exists())

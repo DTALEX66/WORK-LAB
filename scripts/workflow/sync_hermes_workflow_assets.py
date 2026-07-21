@@ -37,7 +37,10 @@ RETIRED_MANAGED_SKILL_ASSETS = {
     "software-development/windows-development-environment/references/provider-network-troubleshooting.md",
     "software-development/windows-development-environment/references/third-party-proxy-setup.md",
 }
-MANAGED_DISPLAY_KEYS = {"busy_input_mode"}
+MANAGED_DISPLAY_KEYS = {"busy_input_mode", "streaming"}
+MANAGED_MODEL_KEYS = {"max_tokens"}
+MANAGED_AGENT_KEYS = {"reasoning_effort"}
+MANAGED_QUICK_COMMAND_PREFIX = "切换"
 
 
 def default_repo_root() -> Path:
@@ -51,6 +54,33 @@ def default_hermes_home() -> Path:
         root = os.environ.get("LOCALAPPDATA")
         return Path(root) / "hermes" if root else Path.home() / "AppData/Local/hermes"
     return Path.home() / ".hermes"
+
+
+def load_config_contract(repo: Path) -> dict:
+    """Load the reviewed portable ownership contract before merging config."""
+
+    path = repo / "config/managed-config-schema.yaml"
+    # Keep the library-level merge API compatible with minimal test/consumer
+    # repositories. Full package deployment separately requires this file.
+    data = (
+        yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        if path.exists()
+        else {
+            "schema_version": 1,
+            "managed": {"display.busy_input_mode": "replace", "display.streaming": "replace", "agent.reasoning_effort": "replace", "model.max_tokens": "replace", "model_picker.custom_lanes": "replace", "quick_commands": {"owned_prefix": "切换"}},
+            "preserved": ["model.provider", "model.default", "model.api_key"],
+        }
+    )
+    if not isinstance(data, dict) or data.get("schema_version") != 1:
+        raise ValueError("managed config contract schema_version must be 1")
+    managed = data.get("managed")
+    preserved = data.get("preserved")
+    if not isinstance(managed, dict) or not isinstance(preserved, list):
+        raise ValueError("managed config contract must define managed mappings and preserved paths")
+    for required in ("model.provider", "model.default", "model.api_key"):
+        if required not in preserved:
+            raise ValueError(f"managed config contract must preserve {required}")
+    return data
 
 
 def sha_tree(path: Path) -> tuple[str | None, int]:
@@ -159,6 +189,7 @@ def merge_live_config(repo: Path, home: Path, *, apply: bool) -> None:
     if not repo_cfg.exists():
         print("skip config merge: missing repository config")
         return
+    contract = load_config_contract(repo)
     repo_data = yaml.safe_load(repo_cfg.read_text(encoding="utf-8")) or {}
     live_data = (
         yaml.safe_load(live_cfg.read_text(encoding="utf-8")) or {}
@@ -215,6 +246,23 @@ def merge_live_config(repo: Path, home: Path, *, apply: bool) -> None:
         if key in repo_display:
             live_display[key] = repo_display[key]
 
+    repo_model = repo_data.get("model") or {}
+    live_model = live_data.setdefault("model", {})
+    if not isinstance(repo_model, dict) or not isinstance(live_model, dict):
+        raise ValueError("model must be a mapping")
+    for key in MANAGED_MODEL_KEYS:
+        if key in repo_model:
+            live_model[key] = repo_model[key]
+
+    repo_agent = repo_data.get("agent") or {}
+    live_agent = live_data.setdefault("agent", {})
+    if not isinstance(repo_agent, dict) or not isinstance(live_agent, dict):
+        raise ValueError("agent must be a mapping")
+    for key in MANAGED_AGENT_KEYS:
+        if key in repo_agent:
+            live_agent[key] = repo_agent[key]
+
+    # Picker lanes are portable UX, not credentials or current session state.
     repo_picker = repo_data.get("model_picker") or {}
     live_picker = live_data.setdefault("model_picker", {})
     if not isinstance(repo_picker, dict) or not isinstance(live_picker, dict):
@@ -222,13 +270,19 @@ def merge_live_config(repo: Path, home: Path, *, apply: bool) -> None:
     if "custom_lanes" in repo_picker:
         live_picker["custom_lanes"] = deepcopy(repo_picker["custom_lanes"])
 
-    repo_quick = repo_data.get("quick_commands") or {}
-    live_quick = live_data.setdefault("quick_commands", {})
-    if not isinstance(repo_quick, dict) or not isinstance(live_quick, dict):
-        raise ValueError("quick_commands must be a mapping")
-    live_quick.update(deepcopy(repo_quick))
+    # Replace only workflow-owned aliases; preserve unrelated user commands.
+    repo_commands = repo_data.get("quick_commands") or {}
+    live_commands = live_data.setdefault("quick_commands", {})
+    if not isinstance(repo_commands, dict) or not isinstance(live_commands, dict):
+        raise ValueError("quick_commands must be mappings")
+    for name in list(live_commands):
+        if name.startswith(MANAGED_QUICK_COMMAND_PREFIX):
+            live_commands.pop(name)
+    live_commands.update(deepcopy(repo_commands))
 
     model = live_data.get("model") or {}
+    managed_paths = ",".join(sorted(contract["managed"]))
+    print("merge live config: contract managed =", managed_paths)
     print("merge live config: preserve provider/model =", model.get("provider"), model.get("default"))
     print("merge live config: mcp =", list(live_mcp))
     if apply:

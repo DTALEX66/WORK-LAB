@@ -58,7 +58,7 @@ class ProjectTerminalGuardTests(unittest.TestCase):
         repo = self.make_repo()
 
         self.assertIn("explicit", module.validate(self.payload(repo, "echo hi", workdir="")))
-        self.assertIn("Git project", module.validate(self.payload(repo, "echo hi", workdir=str(repo.parent))))
+        self.assertIn("Git project", module.validate(self.payload(repo, "echo hi", workdir=str(Path(repo.anchor)))))
 
     def test_blocks_wrong_wrapper_project_and_shell_chaining(self) -> None:
         module = load_module()

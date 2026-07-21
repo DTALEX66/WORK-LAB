@@ -1,76 +1,82 @@
-# Hermes + GPT/DeepSeek + CC Switch + Codex 全链路工作流
+# Hermes + KIMI / DeepSeek / ChatGPT + CC Switch + Codex 工作流
 
-## 目标
+> **状态：current（2026-07）**。运行时可用性必须由当前机器上的
+> `hermes_workflow_doctor.py --live` 或独立 marker 证明；本文件不保存历史
+> token、固定用户名、端口“已可用”的结论。
 
-把个人 Hermes 工作流升级成可迁移、可审计、可给对公项目复用的三引擎体系：
+## 职责边界
 
 ```text
-Hermes 负责：任务编排、技能、记忆、MCP、审计、跨会话沉淀
-GPT     负责：高质量复杂推理/编码（openai-codex OAuth + ChatGPT 订阅）
-DeepSeek负责：直连备用、低延迟/低成本中文与代码任务
-CC Switch负责：代理网络与 Codex/ChatGPT 生态连通
-Codex   负责：独立编码 Agent、插件生态、任务执行面
+Hermes      编排、skills、工具、会话与审计
+KIMI        K3 复杂推理；K2.7 / HighSpeed 日常快速路线
+DeepSeek    官方直连的备用/低延迟路线
+ChatGPT     openai-codex OAuth 路线
+CC Switch   网络代理和 Codex/ChatGPT 生态连通，不持有 Hermes OAuth 真相
+Codex       独立编码/复审执行面
 ```
 
-## 当前实测状态（2026-07）
+## 当前默认策略
 
-| 组件 | 状态 | 证据/命令 |
+| 需求 | 路线 | 入口 |
 |---|---|---|
-| Hermes | 可用 | `hermes --version` |
-| GPT | 可用 | `openai-codex` OAuth 凭证存在，当前模型 `gpt-5.5` |
-| DeepSeek | 可用 | `DEEPSEEK_API_KEY` 存在，`api.deepseek.com` 可达 |
-| CC Switch | 可用 | `127.0.0.1:7890` 监听，`curl --proxy ... https://chatgpt.com` |
-| Codex | 可用，已提供 wrapper | `bin/codex --version` 或 `~/.codex/plugins/.plugin-appserver/codex.exe --version` |
-| Codex proxy | 可用 | `127.0.0.1:15721` 监听 |
-| MCP Node | 已修复路径风险 | PATH Node v24.18.0；Hermes bundled Node v22.23.1；通过 `hermes-npx` wrapper 固定优先使用 Hermes Node |
+| 快速日常工作 | Kimi HighSpeed | `/切换KIMI极速` |
+| Kimi 常规编码 | Kimi K2.7 Code | `/切换KIMI快` |
+| 复杂推理 | Kimi K3 | `/切换KIMI稳` |
+| 直连备用 | DeepSeek V4 Flash | `/切换DP` |
+| ChatGPT / Codex OAuth | GPT 5.6 Sol | `/切换GPT` |
 
-## 路由矩阵
+Picker、快捷命令、`streaming=true`、`reasoning_effort=low` 和
+`model.max_tokens=8192` 是可迁移的非秘密 UX 策略；同步时保留当前
+provider/model、OAuth/API key、私有 MCP 和用户自定义命令。
 
-| 场景 | 推荐路线 | 命令 |
-|---|---|---|
-| 默认高质量推理/编码 | GPT via CC Switch | `python scripts/workflow/switch_model.py gpt` |
-| 代理不可用/成本优先 | DeepSeek 直连 | `python scripts/workflow/switch_model.py deepseek` |
-| Codex 独立执行任务 | Codex CLI/插件 | 使用 `templates/task-tickets/cc-switch-agent-task.md` |
-| 新机器体检 | Doctor | `python scripts/workflow/hermes_workflow_doctor.py` |
+## 验证层级
 
-## 默认 MCP 策略
-
-默认启用：
-
-1. `public-apis`：公共 API 发现。
-2. `sequential-thinking`：复杂任务拆解。
-3. `context7`：实时库文档，减少过期 API 用法。
-
-不默认启用：
-
-- `@playwright/mcp`：已用 Hermes Node v22 smoke test 可启动，但 Hermes 已有 `browser`/`computer_use`。除非要把同一 Playwright MCP 暴露给多 Agent，否则不默认扩大浏览器权限面。
-- filesystem/memory MCP：Hermes 已有原生 file/memory 工具，重复会增加权限面和上下文噪声。
-
-## 对公项目标准循环
-
-1. `git status --short --branch`，确认工作区。
-2. `python scripts/workflow/hermes_workflow_doctor.py`，确认 Hermes/GPT/DeepSeek/CC Switch/Codex 基线。
-3. 生成任务单：复制 `templates/task-tickets/cc-switch-agent-task.md`，填写 allowed/forbidden paths、测试命令、输出契约；需要独立编码 Agent 时用 `codex exec --sandbox read-only|workspace-write --cd <repo> '<task>'`。
-4. Hermes 做编排和审计；Codex/子 Agent 做隔离实现；DeepSeek 作为备用 Provider。
-5. 每次落地前运行：
+1. **结构**：`python scripts/workflow/hermes_workflow_doctor.py`
+2. **真实推理**：`python scripts/workflow/hermes_workflow_doctor.py --live`
+3. **切换后单线 marker**：
    ```bash
-   python scripts/security/scan_agent_rules.py templates skills docs scripts
-   python scripts/workflow/hermes_workflow_doctor.py
-   git diff --check
+   python scripts/workflow/switch_model.py gpt --live
+   python scripts/workflow/switch_model.py deepseek --live
+   python scripts/workflow/switch_model.py kimi-turbo --live
    ```
-6. 提交前必须确认：无 `.env`、`auth.json`、Token、OAuth 文件、安装主体或大二进制。
 
-## 新机器部署注意
+配置写入、端口监听和 HTTP 200/401 只证明部分链路，不能替代 marker。
 
-- 本仓库不保存 Hermes/CC Switch/Codex 安装主体。
-- `setup.ps1` / `setup.sh` 会复制 `bin/hermes-npx*` 和 `bin/codex*` 到 Hermes home，并把部署后的 `config.yaml` 的 MCP 命令改为绝对 wrapper 路径。
-- 这避免系统 PATH 中旧 Node（如 v16）导致 Context7/Playwright 等 MCP 启动失败。
-- GPT OAuth 必须每台机器重新登录：`hermes auth add openai-codex`。
-- DeepSeek Key 写入 `.env`，不要写进 `config.yaml` 或仓库。
+## GPT OAuth 故障
 
-## 故障优先级
+`token_revoked` / HTTP 401 表示 Hermes 的 OAuth 凭据失效。CC Switch 显示
+“已连接”只证明网络路线可用，不证明 Hermes 有可推理的 token。
 
-1. GPT 不通：先查 `127.0.0.1:7890`，再查 `auth.openai.com/chatgpt.com` 代理访问。
-2. 模型不对：查 `hermes config` 的 `model.provider/default/base_url/api_key`，切换后 `/reset` 或重启。
-3. MCP 不通：查 `hermes mcp list/test`，再查 `hermes-npx` 是否使用 Hermes Node v22。
-4. Codex 不通：查 `codex --version`、`~/.codex/config.toml` 的 `base_url` / `model` / `wire_api`，确认 `127.0.0.1:15721` 监听；不要输出 bearer token。
+```bash
+hermes auth add openai-codex
+```
+
+在用户浏览器完成官方 device-code 登录后，`/reset` 或新建会话，并运行：
+
+```bash
+hermes chat --provider openai-codex -m gpt-5.6-sol \
+  -q "Reply exactly: GPT-OAUTH-LIVE-OK" -Q --toolsets safe
+```
+
+不得读取、复制、导入或打印 `auth.json`、refresh token、browser cookie 或
+Credential Manager 内容。
+
+## 默认 MCP
+
+默认仅启用 Context7：
+
+```bash
+hermes mcp test context7
+```
+
+`public-apis` 和 `sequential-thinking` 是历史方案，已经退役；如某项目确有
+缺口，先用 `mcp_candidate_audit.py` 审计，再按需启用，不能回写为默认项。
+
+## 标准项目循环
+
+1. `git status --short --branch`。
+2. 通过 `hermes-project-data.py --project . check/run` 锁定任务产物。
+3. 用 doctor 检查结构；需要证明执行时再用 `--live`。
+4. 编码写入在独立 worktree/单 writer 中完成；复审绑定 frozen tree。
+5. 运行 `python scripts/workflow/run_quality_gate.py verify`、相关测试和 `git diff --check`。
+6. 提交、推送，并以 exact SHA CI 作为最终门禁。

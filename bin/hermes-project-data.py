@@ -9,6 +9,7 @@ must use this wrapper and project rules must deny external output paths.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -145,13 +146,51 @@ durable handoffs, task records, and evidence required for audit or recovery.
     return policy_path
 
 
-def run_command(layout: RuntimeLayout, command: Sequence[str]) -> subprocess.CompletedProcess[str]:
-    if not command:
+def prepare_command(
+    layout: RuntimeLayout,
+    command: Sequence[str],
+    *,
+    windows: bool | None = None,
+    limit: int = 30_000,
+) -> list[str]:
+    """Keep known long Python inline commands below Windows CreateProcess limits.
+
+    Generic executables have incompatible response-file syntaxes, so they fail
+    closed with actionable guidance rather than silently retrying a broken command.
+    """
+
+    prepared = list(command)
+    if not prepared:
         raise ProjectDataBoundaryError("run requires a command after --")
+    on_windows = os.name == "nt" if windows is None else windows
+    if not on_windows or len(subprocess.list2cmdline(prepared)) <= limit:
+        return prepared
+    executable = Path(prepared[0]).name.lower()
+    if len(prepared) >= 3 and prepared[1] == "-c" and executable.startswith("python"):
+        source = prepared[2]
+        digest = hashlib.sha256(source.encode("utf-8")).hexdigest()[:16]
+        script = layout.paths["tmp"] / f"inline-command-{digest}.py"
+        require_contained(layout.project_root, script)
+        script.write_text(source, encoding="utf-8")
+        return [prepared[0], str(script), *prepared[3:]]
+    raise ProjectDataBoundaryError(
+        "Windows command line exceeds safe limit; use the tool's response file/input-file option "
+        "or place the payload under .hermes/task-runtime/"
+    )
+
+
+def run_command(
+    layout: RuntimeLayout,
+    command: Sequence[str],
+    *,
+    windows: bool | None = None,
+    limit: int = 30_000,
+) -> subprocess.CompletedProcess[str]:
+    prepared = prepare_command(layout, command, windows=windows, limit=limit)
     env = os.environ.copy()
     env.update(layout.env)
     return subprocess.run(
-        list(command),
+        prepared,
         cwd=layout.project_root,
         env=env,
         capture_output=True,

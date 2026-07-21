@@ -24,6 +24,8 @@ python scripts/workflow/build_context_pack.py
 .hermes/task-artifacts/context-pack.md
 ```
 
+默认上限是 `12000` 字符；用于审计时可显式提升，但硬上限为 `30000` 字符。超过上限时，优先传递文件路径、行号、失败尾部和 artifact 路径，而不是再次注入整份日志或完整历史。
+
 该目录必须被 Git 忽略；否则脚本 fail-closed。当前仓库 `.gitignore` 已包含：
 
 ```text
@@ -77,4 +79,4 @@ python tests/test_workflow_governance.py -v
 python scripts/security/scan_agent_rules.py templates skills docs scripts README.md
 ```
 
-如果系统要求 fresh ad-hoc evidence，可在 `C:\Users\admin\AppData\Local\Temp\hermes-verify-*` 创建临时脚本，检查默认输出路径、Git-ignore fail-closed、脱敏和单测方法。
+如果系统要求 fresh ad-hoc evidence，应只在当前项目 Git-ignored 的 `.hermes/task-runtime/` 内创建临时脚本，检查默认输出路径、Git-ignore fail-closed、脱敏和单测方法；不得使用用户 Home 或系统 Temp 作为项目运行时落点。

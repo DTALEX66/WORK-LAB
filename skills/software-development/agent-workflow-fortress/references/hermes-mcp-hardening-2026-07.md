@@ -37,8 +37,6 @@ bash -n bin/hermes-npx
 python3 scripts/security/scan_agent_rules.py templates skills docs scripts bin
 grep -RInE '@latest|gpt-4o|--json' README.md config docs scripts skills bin setup.sh setup.ps1 templates || true
 hermes mcp test context7
-hermes mcp test sequential-thinking
-hermes mcp test public-apis
-```
+hermes mcp test context7
 
 The grep should return no unintended copy-pastable stale examples; if it intentionally matches a warning phrase, rewrite the phrase to avoid a literal risky command.

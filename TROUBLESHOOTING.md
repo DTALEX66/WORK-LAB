@@ -156,8 +156,6 @@ mcp_servers:
 如果 Hermes bundled Node 不存在，但 PATH 中 Node >=20 且 `npx` 可用，`hermes-npx.cmd` 会自动回退到 PATH `npx`。修复后运行：
 
 ```bash
-hermes mcp test public-apis
-hermes mcp test sequential-thinking
 hermes mcp test context7
 ```
 

@@ -1,0 +1,28 @@
+schema_version: 1
+package:
+  name: Workflow-assistance
+  distribution: git
+  portable_source: true
+capabilities:
+  - portable_config
+  - managed_config_ownership
+  - custom_model_lanes
+  - quick_model_commands
+  - project_data_boundary
+  - context_pack
+  - local_quality_gate
+  - isolated_portable_install_verification
+requirements:
+  python: '>=3.11'
+  pyyaml: required
+  hermes: preinstalled
+compatibility:
+  config_version: 33
+  required_runtime_features:
+    - quick_commands
+    - model_picker.custom_lanes
+    - hermes_config_check
+security:
+  secrets_portable: false
+  credential_copying: forbidden
+  live_provider_route: preserved

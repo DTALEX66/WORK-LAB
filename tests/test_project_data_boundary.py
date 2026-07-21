@@ -74,6 +74,27 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         observed = json.loads(result.stdout)
         self.assertEqual(observed, {key: layout.env[key] for key in observed})
 
+    def test_windows_long_python_inline_command_is_materialized_inside_project_runtime(self) -> None:
+        module = load_module()
+        repo = self.make_repo(ignored=True)
+        layout = module.prepare_layout(repo)
+        command = [sys.executable, "-c", "print('ok')\n" + "# padding\n" * 4000]
+
+        prepared = module.prepare_command(layout, command, windows=True, limit=1000)
+
+        self.assertEqual(prepared[0], sys.executable)
+        self.assertTrue(Path(prepared[1]).is_relative_to(layout.paths["tmp"]))
+        self.assertTrue(Path(prepared[1]).is_file())
+        self.assertEqual(module.run_command(layout, command, windows=True, limit=1000).stdout.strip(), "ok")
+
+    def test_windows_long_non_python_command_fails_with_response_file_guidance(self) -> None:
+        module = load_module()
+        repo = self.make_repo(ignored=True)
+        layout = module.prepare_layout(repo)
+
+        with self.assertRaisesRegex(module.ProjectDataBoundaryError, "response file"):
+            module.prepare_command(layout, ["tool", "x" * 2000], windows=True, limit=1000)
+
     def test_init_policy_covers_native_kanban_without_touching_source_files(self) -> None:
         module = load_module()
         repo = self.make_repo(ignored=True)

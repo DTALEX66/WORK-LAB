@@ -6,8 +6,8 @@
 
 | 来源 / 开源项目 | 吸收方式 | 状态 | 说明 |
 |---|---|---:|---|
-| public-apis-mcp | `config/config.yaml` 已配置 MCP | ✅ 已有 | 用于查询公共 API 目录，辅助项目选型/数据源发现。 |
-| `@modelcontextprotocol/server-sequential-thinking` | 新增 `sequential-thinking` MCP | ✅ 已实测 | 当前 Node v16 下可启动，适合复杂任务分解、反思和多步推理。 |
+| public-apis-mcp | 历史评估记录 | ⛔ 已退役 | 低频目录型能力由 `web_search` / GitHub 公共目录覆盖，不作为默认 MCP。 |
+| `@modelcontextprotocol/server-sequential-thinking` | 历史评估记录 | ⛔ 已退役 | 与模型原生推理、plan/TDD/debug skills 重复，不再默认启用。 |
 | Hermes skill system | 新增 `agent-workflow-fortress` skill | ✅ 已吸收 | 把“证据优先、自循环、技能主动使用、验证闭环、开源吸收筛选”固化为工作流。 |
 | Codex / AGENTS.md 规则思路 | 新增 `templates/agent-rules/AGENTS.md` / `CODEX.md` | ✅ 已吸收 | 作为每个项目可复制的 Agent 协作规则模板。 |
 | 安全规则模板 | 新增 `templates/agent-rules/SECURITY.md` + 扫描脚本 | ✅ 已吸收 | 约束密钥、跨目录、第三方提示词、危险命令。 |

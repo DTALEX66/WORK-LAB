@@ -1,29 +1,35 @@
 # Workflow Absorption Audit — 2026-07
 
-## 已全量吸收
+> **状态：current。** 本文记录已被当前 portable workflow 采用的方法；历史
+> 验证不等于当前机器仍可用，运行时状态必须重新执行 doctor/marker。
 
-| 类型 | 吸收资产 | 状态 |
+## 已吸收的可迁移能力
+
+| 类型 | 吸收资产 | 当前策略 |
 |---|---|---|
-| Provider 切换 | `scripts/workflow/switch_model.py` + `skills/model-switch` | 已落地 |
-| 工作流体检 | `scripts/workflow/hermes_workflow_doctor.py` | 已落地 |
-| MCP 稳定性 | `bin/hermes-npx*` + setup 自动改写 config | 已落地 |
-| MCP 默认栈 | public-apis / sequential-thinking / Context7 | 已落地 |
-| MCP 候选栈 | Playwright MCP | 文档候选，不默认启用 |
-| 对公任务单 | `templates/task-tickets/cc-switch-agent-task.md` | 已落地 |
-| Agent 规则 | AGENTS/CODEX/SECURITY/DESIGN 模板 | 已落地 |
-| 安全审计 | `scripts/security/scan_agent_rules.py` | 已落地 |
+| Provider 切换 | `scripts/workflow/switch_model.py` + `skills/model-switch` | 三模型线；配置回滚、写后校验、可选 live marker |
+| 工作流体检 | `scripts/workflow/hermes_workflow_doctor.py` | 结构检查与真实推理分层 |
+| MCP 稳定性 | `bin/hermes-npx*` | 默认仅 Context7，固定版本 |
+| MCP 候选治理 | `mcp_candidate_audit.py` | 候选元数据通过不等于默认启用 |
+| Agent 规则 | AGENTS/CODEX/SECURITY/DESIGN 模板 | 单写者、路径边界、验证闭环 |
+| 安全审计 | `scan_agent_rules.py` | 扫描可提交工作流资产，不读取凭据 |
+| 模型 UX | portable `model_picker` / `quick_commands` | 同步 picker、快捷命令、streaming、tokens/reasoning 策略，保留 live route/credentials |
 
-## 本轮关键修正
+## 明确不吸收 / 不默认启用
 
-以前判断 Context7 / Playwright MCP 受 Node v16 阻塞。新审计发现 Hermes 自带 Node v22.23.1，故不再把 Node v16 作为硬阻塞；改为通过 `hermes-npx` wrapper 固定优先使用 Hermes bundled Node。
+- `public-apis`、`sequential-thinking`：历史 MCP，不再是默认栈；由 web/native skills 覆盖。
+- Playwright、filesystem、memory MCP：与 Hermes 原生工具重叠，必须按任务审计。
+- `.env`、`auth.json`、OAuth refresh token、cookie、Credential Manager：永不读取、复制或提交。
+- 第三方源码 vendoring：不做，除非完成许可证、供应链和维护边界审查。
 
-## 默认启用判定
+## 当前默认 MCP
 
-- Context7：默认启用。价值高、权限面低、Hermes Node v22 下 help smoke test 通过。
-- Playwright MCP：不默认启用。虽然 Hermes Node v22 下可启动，但权限面大且与 Hermes 原生 browser/computer_use 重叠。
+```text
+context7
+```
 
-## 不吸收项
+验证：
 
-- 第三方源码 vendoring：不做，避免维护/许可证/供应链负担。
-- memory/filesystem MCP：不做，Hermes 原生能力已覆盖。
-- 真实 `.env` / `auth.json` / Codex bearer token：禁止吸收。
+```bash
+hermes mcp test context7
+```

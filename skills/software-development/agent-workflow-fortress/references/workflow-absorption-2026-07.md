@@ -22,7 +22,7 @@
 
 ## Candidate handling example
 
-- `@modelcontextprotocol/server-sequential-thinking`: smoke-tested successfully, safe to default-enable.
+- `@modelcontextprotocol/server-sequential-thinking`: historical smoke result only; retired from the default stack because it overlaps native reasoning and workflow skills.
 - `@upstash/context7-mcp`: useful for library docs, but only enable after Node >= 20 if current runtime lacks required web stream globals.
 - `@playwright/mcp`: useful when native Hermes browser/computer tools are insufficient; enable after Node >= 20 and a local smoke test.
 - MarkItDown/OpenDataLoader/Cognee/GBrain/Talos: defer when current scope excludes knowledge-base/Obsidian ingestion.

@@ -67,14 +67,12 @@ def run_python(args: list[str]) -> int:
 
 
 def tracked_python_files() -> list[str]:
-    roots = [ROOT / "scripts" / "workflow", ROOT / "scripts" / "security"]
-    files = [path.relative_to(ROOT).as_posix() for root in roots for path in sorted(root.glob("*.py"))]
-    files.append("tests/test_workflow_governance.py")
-    return files
+    roots = [ROOT / "scripts" / "workflow", ROOT / "scripts" / "security", ROOT / "tests"]
+    return [path.relative_to(ROOT).as_posix() for root in roots for path in sorted(root.glob("*.py"))]
 
 
 def gate_governance() -> int:
-    return run_python(["tests/test_workflow_governance.py", "-v"])
+    return run_python(["-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py", "-v"])
 
 
 def gate_compile() -> int:
@@ -96,6 +94,22 @@ def gate_security() -> int:
 
 def gate_context_pack() -> int:
     return run_python(["scripts/workflow/build_context_pack.py", "--max-chars", "30000"])
+
+
+def gate_portable_install() -> int:
+    return run_python(["scripts/workflow/verify_portable_install.py"])
+
+
+def gate_provider_inventory() -> int:
+    return run_python(
+        [
+            "scripts/workflow/provider_health.py",
+            "--config",
+            "config/config.yaml",
+            "--output",
+            ".hermes/task-artifacts/provider-health.json",
+        ]
+    )
 
 
 def gate_mcp_audit() -> int:
@@ -130,16 +144,18 @@ def gate_powershell() -> int:
 
 
 GATES: dict[str, Gate] = {
-    "governance": Gate("governance", "Run WorkflowGovernanceTests.", gate_governance),
+    "governance": Gate("governance", "Run all portable workflow and project-boundary tests.", gate_governance),
     "compile": Gate("compile", "Compile repository Python workflow/security/test files.", gate_compile),
     "security": Gate("security", "Scan templates, skills, docs, scripts and README for prompt/security hazards.", gate_security),
     "context-pack": Gate("context-pack", "Generate the safe ignored Context Pack smoke artifact.", gate_context_pack),
+    "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
+    "provider-inventory": Gate("provider-inventory", "Generate the secret-free configured provider/model inventory.", gate_provider_inventory),
     "mcp-audit": Gate("mcp-audit", "Smoke the MCP candidate audit template generator.", gate_mcp_audit),
     "shell": Gate("shell", "Parse setup.sh with bash -n when bash is available.", gate_shell),
     "powershell": Gate("powershell", "Parse setup.ps1 with PowerShell AST when pwsh/powershell.exe is available.", gate_powershell),
 }
 
-VERIFY_ORDER = ("governance", "compile", "security", "context-pack", "mcp-audit", "shell", "powershell")
+VERIFY_ORDER = ("governance", "compile", "security", "context-pack", "portable-install", "provider-inventory", "mcp-audit", "shell", "powershell")
 
 
 def run_gate_sequence(names: tuple[str, ...]) -> int:

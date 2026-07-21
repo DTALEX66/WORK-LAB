@@ -102,7 +102,27 @@ python scripts/workflow/sync_hermes_workflow_assets.py --apply
 - 一次性迁移状态只保护退役插件：首次迁移会清除旧包管理插件，之后用户重新启用的插件不再被同步脚本删除；
 - 只删除有明确路径登记的退役 skill 资产；
 - 输出 repo/live 目录哈希和文件数用于核验；
+- 使用 `config/managed-config-schema.yaml` 声明哪些非秘密体验字段由包管理、哪些本机路由/认证字段必须保留；
 - 绝不把 live skills、`.env`、认证、会话或日志反向复制到仓库。
+
+### 可复制性与兼容性验证
+
+每次发布前，质量门禁都会在一个空的、隔离 Hermes Home 中执行 portable sync：
+
+```bash
+python scripts/workflow/verify_portable_install.py
+```
+
+它不调用模型、不读取现有 Hermes Home、不读取认证文件；只验证 portable config、skills、bin、Context7、模型 lanes 与快捷命令可被部署。兼容性承诺和功能清单位于 `workflow-manifest.yaml`。
+
+新项目应先忽略 `.hermes/`，再使用最小项目初始化器：
+
+```bash
+python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject --dry-run
+python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject
+```
+
+该入口只写目标项目的 Git-ignored `.hermes/` 运行时说明和 bootstrap manifest，绝不复制 OAuth、API key、provider route、会话或用户数据。
 
 ### Portable Hermes 基线
 
@@ -177,6 +197,18 @@ python scripts/workflow/hermes_workflow_doctor.py --live
 ```
 
 `--live` 会实际调用 GPT、DeepSeek 和 Codex，并要求输出独立 marker。普通端口、HTTP 状态和结构检查不等于真实模型执行；只有 live marker 通过才能证明当前执行链路可用。`--live` 可能产生网络请求或模型用量，因此不会默认运行。必须从 Git 项目根目录运行：Codex smoke 的临时 Git 仓库默认只会创建在当前项目 `.hermes/task-runtime/`，运行后自动清除；如需指定其父目录，传入同一项目范围内的 `--codex-workdir .hermes/task-runtime/<name>`，项目外路径会被拒绝。
+
+### Provider / 模型健康库存
+
+默认只生成不含秘密、不会发起请求的模型库存：
+
+```bash
+python scripts/workflow/provider_health.py \
+  --config config/config.yaml \
+  --output .hermes/task-artifacts/provider-health.json
+```
+
+默认状态为 `UNVERIFIED`，表示模型被配置到 lane 中但尚未做真实调用；只有明确传入 `--live` 才逐一执行 marker 请求并消耗额度。报告不包含 token、OAuth 内容、cookie、API key、base URL 或凭据文件内容。
 
 ## Codex 编码执行器
 

@@ -42,14 +42,14 @@
 
 ## 当前同步状态
 
-截至 2026-07-04，本项目已完成 GitHub 云端、本地仓库与 live Hermes Home 的三层互验：
+运行时状态必须由现场 doctor/marker 重新验证；本文件不保存机器专属路径、凭据状态或历史 smoke 结论。
 
 - 本地仓库：`D:\All projects\Workflow-assistance`
 - 云端仓库：`https://github.com/DTALEX66/Workflow-assistance`
-- live Hermes Home：`C:\Users\admin\AppData\Local\hermes`
-- Git 状态：本地 `main` 与 `origin/main` 同步，工作区干净。
-- live provider/model：保留当前 Hermes 运行配置，不由仓库模板强行覆盖。
-- 默认 MCP：`public-apis`、`sequential-thinking`、`context7` 已完成 smoke test。
+- live Hermes Home：`%LOCALAPPDATA%\hermes`（或 `$HERMES_HOME`）。
+- Git / live / provider 状态：用 `git status`、`hermes_workflow_doctor.py` 与需要时的 `--live` marker 现场确认。
+- 同步保留当前 provider/model、OAuth/API key、私有 MCP 和用户自定义命令；同步 portable 的模型 picker、快捷命令与速度策略。
+- 默认 MCP：仅 `context7`；其他 MCP 必须按任务审计后启用。
 
 ## 可迁移资产清单
 
@@ -85,8 +85,6 @@ bash -n setup.sh
 bash -n bin/hermes-npx
 python -m py_compile scripts/workflow/sync_hermes_workflow_assets.py scripts/workflow/hermes_workflow_doctor.py scripts/workflow/switch_model.py scripts/security/scan_agent_rules.py
 python scripts/security/scan_agent_rules.py .
-hermes mcp test public-apis
-hermes mcp test sequential-thinking
 hermes mcp test context7
 ```
 
