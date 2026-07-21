@@ -215,6 +215,19 @@ def merge_live_config(repo: Path, home: Path, *, apply: bool) -> None:
         if key in repo_display:
             live_display[key] = repo_display[key]
 
+    repo_picker = repo_data.get("model_picker") or {}
+    live_picker = live_data.setdefault("model_picker", {})
+    if not isinstance(repo_picker, dict) or not isinstance(live_picker, dict):
+        raise ValueError("model_picker must be a mapping")
+    if "custom_lanes" in repo_picker:
+        live_picker["custom_lanes"] = deepcopy(repo_picker["custom_lanes"])
+
+    repo_quick = repo_data.get("quick_commands") or {}
+    live_quick = live_data.setdefault("quick_commands", {})
+    if not isinstance(repo_quick, dict) or not isinstance(live_quick, dict):
+        raise ValueError("quick_commands must be a mapping")
+    live_quick.update(deepcopy(repo_quick))
+
     model = live_data.get("model") or {}
     print("merge live config: preserve provider/model =", model.get("provider"), model.get("default"))
     print("merge live config: mcp =", list(live_mcp))

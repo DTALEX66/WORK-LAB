@@ -27,6 +27,29 @@ class WorkflowGovernanceTests(unittest.TestCase):
         non_core = {"spotify", "x_search", "video", "tts"}
         self.assertTrue(non_core.isdisjoint(config["platform_toolsets"]["cli"]))
 
+    def test_portable_config_has_documented_kimi_speed_lanes_and_aliases(self) -> None:
+        config = yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))
+        lanes = config["model_picker"]["custom_lanes"]
+        self.assertTrue(lanes["enabled"])
+        kimi = next(lane for lane in lanes["lanes"] if lane["label"] == "KIMI 系列")
+        self.assertEqual(kimi["provider"], "kimi-coding")
+        self.assertEqual(
+            kimi["models"][:3],
+            ["kimi-k3", "kimi-k2.7-code-highspeed", "kimi-k2.7-code"],
+        )
+        quick = config["quick_commands"]
+        self.assertEqual(quick["切换kimi"]["target"], "/model kimi-k3 --provider kimi-coding")
+        self.assertEqual(quick["切换kimi稳"]["target"], "/model kimi-k3 --provider kimi-coding")
+        self.assertEqual(
+            quick["切换kimi快"]["target"],
+            "/model kimi-k2.7-code --provider kimi-coding",
+        )
+        self.assertEqual(
+            quick["切换kimi极速"]["target"],
+            "/model kimi-k2.7-code-highspeed --provider kimi-coding",
+        )
+        self.assertTrue(all(spec["type"] == "alias" for spec in quick.values()))
+
     def test_sync_uses_repo_skills_as_single_source(self) -> None:
         source = (ROOT / "scripts/workflow/sync_hermes_workflow_assets.py").read_text(
             encoding="utf-8"
@@ -51,14 +74,18 @@ class WorkflowGovernanceTests(unittest.TestCase):
             (repo / "config/config.yaml").write_text(
                 "mcp_servers:\n  context7:\n    command: hermes-npx\n    args: [-y, context7]\n"
                 "plugins:\n  enabled: [security-guidance, web/ddgs]\n"
-                "display:\n  busy_input_mode: queue\n  skin: portable\n",
+                "display:\n  busy_input_mode: queue\n  skin: portable\n"
+                "model_picker:\n  custom_lanes:\n    enabled: true\n    lanes: []\n"
+                "quick_commands:\n  portable: {type: alias, target: /model kimi-k3 --provider kimi-coding}\n",
                 encoding="utf-8",
             )
             (home / "config.yaml").write_text(
                 "model:\n  provider: openai-codex\n  default: gpt-current\n"
                 "mcp_servers:\n  public-apis: {}\n  sequential-thinking: {}\n  custom: {}\n"
                 "plugins:\n  enabled: [disk-cleanup, google_meet, spotify, custom-plugin]\n"
-                "display:\n  busy_input_mode: interrupt\n  skin: live\n",
+                "display:\n  busy_input_mode: interrupt\n  skin: live\n"
+                "model_picker:\n  custom_lanes:\n    enabled: false\n  local_picker_flag: true\n"
+                "quick_commands:\n  custom: {type: alias, target: /help}\n",
                 encoding="utf-8",
             )
 
@@ -72,6 +99,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
             )
             self.assertEqual(result["display"]["busy_input_mode"], "queue")
             self.assertEqual(result["display"]["skin"], "live")
+            self.assertTrue(result["model_picker"]["custom_lanes"]["enabled"])
+            self.assertTrue(result["model_picker"]["local_picker_flag"])
+            self.assertEqual(result["quick_commands"]["portable"]["type"], "alias")
+            self.assertEqual(result["quick_commands"]["custom"]["target"], "/help")
 
             result["plugins"]["enabled"].append("spotify")
             (home / "config.yaml").write_text(

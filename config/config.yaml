@@ -6,6 +6,42 @@ model:
   base_url: ''
   api_key: ''
 
+# Curated display lanes do not remove models from Hermes' provider registry.
+model_picker:
+  custom_lanes:
+    enabled: true
+    lanes:
+      - label: KIMI 系列
+        provider: kimi-coding
+        models:
+          - kimi-k3
+          - kimi-k2.7-code-highspeed
+          - kimi-k2.7-code
+          - kimi-k2.6
+          - kimi-k2.5
+          - kimi-for-coding
+          - kimi-k2-thinking
+          - kimi-k2-thinking-turbo
+          - kimi-k2-turbo-preview
+          - kimi-k2-0905-preview
+      - label: DEEPSEEK 系列
+        provider: deepseek
+        models:
+          - deepseek-v4-pro
+          - deepseek-v4-flash
+          - deepseek-chat
+          - deepseek-reasoner
+      - label: CHATGPT 系列
+        provider: openai-codex
+        models:
+          - gpt-5.6-sol
+          - gpt-5.6-terra
+          - gpt-5.6-luna
+          - gpt-5.3-codex-spark
+          - gpt-5.6-sol-pro
+          - gpt-5.6-terra-pro
+          - gpt-5.6-luna-pro
+
 fallback_providers: []
 toolsets:
   - hermes-cli
@@ -41,6 +77,33 @@ display:
   # Busy input queues the next message instead of interrupting the active turn.
   # Use explicit /interrupt when cancellation is intended.
   busy_input_mode: queue
+
+# Aliases use Hermes' /model handler; they never auto-switch the current session.
+quick_commands:
+  切换kimi:
+    type: alias
+    target: /model kimi-k3 --provider kimi-coding
+    description: 切换到 KIMI K3
+  切换kimi稳:
+    type: alias
+    target: /model kimi-k3 --provider kimi-coding
+    description: 切换到 KIMI K3 旗舰模型
+  切换kimi快:
+    type: alias
+    target: /model kimi-k2.7-code --provider kimi-coding
+    description: 切换到 KIMI 快速模型 kimi-k2.7-code
+  切换kimi极速:
+    type: alias
+    target: /model kimi-k2.7-code-highspeed --provider kimi-coding
+    description: 切换到 KIMI 官方高速模型 kimi-k2.7-code-highspeed
+  切换dp:
+    type: alias
+    target: /model deepseek-v4-flash --provider deepseek
+    description: 切换到 DEEPSEEK V4 Flash
+  切换gpt:
+    type: alias
+    target: /model gpt-5.6-sol --provider openai-codex
+    description: 切换到 CHATGPT 5.6 Sol
 
 # Lowest-risk portable defaults. Media, Spotify, X and meeting plugins are opt-in.
 plugins:
