@@ -27,15 +27,21 @@
    - `model.base_url=https://api.moonshot.cn/v1`
 4. `/reset` 或新会话后生效；当前已启动的会话模型/provider 已冻结。
 
-## 当前三条推荐切换线
+## 当前三条默认线与 Kimi 速度线
 
 ```bash
-python scripts/workflow/switch_model.py kimi      # Kimi K3
-python scripts/workflow/switch_model.py deepseek  # DeepSeek V4
-python scripts/workflow/switch_model.py gpt       # ChatGPT 5.6
+python scripts/workflow/switch_model.py kimi       # Kimi K3（默认推荐）
+python scripts/workflow/switch_model.py kimi-fast  # Kimi K2.7 Code
+python scripts/workflow/switch_model.py kimi-turbo # Kimi K2.7 Code HighSpeed
+python scripts/workflow/switch_model.py deepseek   # DeepSeek V4
+python scripts/workflow/switch_model.py gpt        # ChatGPT 5.6
 ```
 
-每次切换后用 `hermes chat -q` marker 验证真实推理，再提示 `/reset` 或新会话。
+`kimi-fast`（`kimi-k2.7-code`）与 `kimi-turbo`
+（`kimi-k2.7-code-highspeed`）是 Kimi 线路内的可选速度 lane，不会自动切换当前
+模型或会话。Desktop 的对应入口是 `/切换KIMI快`（K2.7 Code）和
+`/切换KIMI极速`（K2.7 Code HighSpeed）；只有用户明确选择后才执行切换。每次
+切换后用 `hermes chat -q` marker 验证真实推理，并提示用户 `/reset` 或新会话。
 
 ## 重要陷阱：模型列表 ≠ 实际可用模型全集
 

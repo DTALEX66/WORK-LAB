@@ -736,6 +736,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
         lanes = (ROOT / "skills/model-switch/references/current-model-lanes.md").read_text(
             encoding="utf-8"
         )
+        integration = (ROOT / "skills/model-switch/references/kimi-ccswitch-hermes.md").read_text(
+            encoding="utf-8"
+        )
         latency = (ROOT / "skills/model-switch/references/latency-tuning.md").read_text(
             encoding="utf-8"
         )
@@ -751,11 +754,14 @@ class WorkflowGovernanceTests(unittest.TestCase):
         ):
             self.assertIn(marker, switcher)
 
-        for document in (skill, lanes, latency):
+        for document in (skill, lanes, integration, latency):
             self.assertIn("kimi-k2.7-code", document)
             self.assertIn("kimi-k2.7-code-highspeed", document)
         self.assertIn("/切换KIMI快", lanes)
         self.assertIn("/切换KIMI极速", lanes)
+        self.assertIn("/切换KIMI快", integration)
+        self.assertIn("/切换KIMI极速", integration)
+        self.assertIn("不会自动切换当前", integration)
         self.assertIn("kimi-fast` → Kimi K2.7 Code", lanes)
         self.assertIn("kimi-turbo` → Kimi K2.7 Code HighSpeed", lanes)
 
