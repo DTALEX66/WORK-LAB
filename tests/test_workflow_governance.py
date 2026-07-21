@@ -335,6 +335,40 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("D" * 30, redacted_json)
         self.assertIn("[REDACTED]", redacted_json)
 
+    def test_doctor_live_codex_workspace_is_confined_to_project_runtime(self) -> None:
+        script = ROOT / "scripts/workflow/hermes_workflow_doctor.py"
+        sys.path.insert(0, str(ROOT / "scripts/workflow"))
+        try:
+            spec = importlib.util.spec_from_file_location("workflow_doctor_workspace", script)
+            self.assertIsNotNone(spec)
+            self.assertIsNotNone(spec.loader)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        finally:
+            sys.path.pop(0)
+
+        with tempfile.TemporaryDirectory() as raw:
+            project = Path(raw)
+            subprocess.run(["git", "init", "-q"], cwd=project, check=True, capture_output=True)
+            default_workspace = module.resolve_live_codex_workspace(project, None)
+            self.assertEqual(
+                default_workspace.relative_to(project).as_posix(),
+                ".hermes/task-runtime",
+            )
+            custom_workspace = module.resolve_live_codex_workspace(
+                project, Path(".hermes/task-runtime/custom-codex-smoke")
+            )
+            self.assertEqual(
+                custom_workspace.relative_to(project).as_posix(),
+                ".hermes/task-runtime/custom-codex-smoke",
+            )
+            with self.assertRaises(SystemExit):
+                module.resolve_live_codex_workspace(project, Path("../outside"))
+            non_project = project / "not-a-git-project"
+            non_project.mkdir()
+            with self.assertRaises(SystemExit):
+                module.resolve_live_codex_workspace(non_project, None)
+
     def test_windows_skill_does_not_bypass_provider_or_credential_boundaries(self) -> None:
         skill = ROOT / "skills/software-development/windows-development-environment"
         body = (skill / "SKILL.md").read_text(encoding="utf-8")

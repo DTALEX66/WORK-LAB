@@ -176,7 +176,7 @@ python scripts/workflow/hermes_workflow_doctor.py
 python scripts/workflow/hermes_workflow_doctor.py --live
 ```
 
-`--live` 会实际调用 GPT、DeepSeek 和 Codex，并要求输出独立 marker。普通端口、HTTP 状态和结构检查不等于真实模型执行；只有 live marker 通过才能证明当前执行链路可用。`--live` 可能产生网络请求或模型用量，因此不会默认运行。
+`--live` 会实际调用 GPT、DeepSeek 和 Codex，并要求输出独立 marker。普通端口、HTTP 状态和结构检查不等于真实模型执行；只有 live marker 通过才能证明当前执行链路可用。`--live` 可能产生网络请求或模型用量，因此不会默认运行。必须从 Git 项目根目录运行：Codex smoke 的临时 Git 仓库默认只会创建在当前项目 `.hermes/task-runtime/`，运行后自动清除；如需指定其父目录，传入同一项目范围内的 `--codex-workdir .hermes/task-runtime/<name>`，项目外路径会被拒绝。
 
 ## Codex 编码执行器
 

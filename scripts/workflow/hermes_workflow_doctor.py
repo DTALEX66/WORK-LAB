@@ -124,12 +124,38 @@ def codex_candidates() -> list[Path]:
     return result
 
 
+def resolve_live_codex_workspace(project_root: Path, requested: Path | None) -> Path:
+    """Return a project-local runtime parent for the ephemeral Codex smoke repo."""
+
+    project = project_root.resolve()
+    if not (project / ".git").exists():
+        raise SystemExit("--live Codex smoke must run from a Git project root")
+    runtime = (project / ".hermes/task-runtime").resolve()
+    candidate = requested if requested is not None else Path(".hermes/task-runtime")
+    if not candidate.is_absolute():
+        candidate = project / candidate
+    candidate = candidate.resolve()
+    try:
+        candidate.relative_to(runtime)
+    except ValueError as exc:
+        raise SystemExit(
+            "--codex-workdir must stay under the current project's .hermes/task-runtime"
+        ) from exc
+    return candidate
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--live",
         action="store_true",
         help="run real GPT, DeepSeek and Codex execution smokes (network/model usage)",
+    )
+    parser.add_argument(
+        "--codex-workdir",
+        type=Path,
+        metavar="PATH",
+        help="project-local parent for the ephemeral Codex smoke repo (must be under .hermes/task-runtime)",
     )
     args = parser.parse_args()
     failures: list[str] = []
@@ -204,7 +230,9 @@ def main() -> int:
         ):
             failures.append("DeepSeek live smoke")
         if candidates:
-            with tempfile.TemporaryDirectory() as raw:
+            workspace = resolve_live_codex_workspace(Path.cwd(), args.codex_workdir)
+            workspace.mkdir(parents=True, exist_ok=True)
+            with tempfile.TemporaryDirectory(prefix="codex-live-", dir=workspace) as raw:
                 workdir = Path(raw)
                 run(["git", "init", "-q"], cwd=workdir)
                 if not marker_smoke(
