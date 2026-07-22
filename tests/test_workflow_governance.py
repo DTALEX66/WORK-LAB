@@ -934,6 +934,20 @@ class WorkflowGovernanceTests(unittest.TestCase):
         fortress_ref = ROOT / "skills/software-development/agent-workflow-fortress/references/hermes-provider-mcp-workflow.md"
         self.assertFalse(fortress_ref.exists())
 
+    def test_gpt_oauth_switch_does_not_require_cc_switch_proxy(self) -> None:
+        switcher = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")
+        skill = (ROOT / "skills/model-switch/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("codex_auth_present", switcher)
+        self.assertNotIn("CC Switch proxy 127.0.0.1:7890 is not open", switcher)
+        self.assertIn("不能因该端口关闭而阻断", skill)
+
+    def test_windows_skill_requires_explicit_interpreter_selection(self) -> None:
+        skill = (ROOT / "skills/software-development/windows-development-environment/SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Do not assume `python` and `python3` resolve to the same interpreter.", skill)
+        self.assertIn("Hermes workflow scripts use `python`", skill)
+
     def test_kimi_speed_lane_contract_is_consistent(self) -> None:
         switcher = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")
         skill = (ROOT / "skills/model-switch/SKILL.md").read_text(encoding="utf-8")

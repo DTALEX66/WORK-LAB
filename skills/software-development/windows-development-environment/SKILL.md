@@ -144,27 +144,22 @@ Provider switching, proxy/router diagnosis, OAuth state and live GPT/DeepSeek/Co
 
 Windows-only pitfall: an OAuth device page may require the user’s normal proxy-configured browser to pass an interactive challenge. Never read or parse `.env`, `auth.json`, Windows Credential Store, browser cookies or bearer tokens as a workaround; report the prompt and let the user complete the supported login flow.
 
-### 7. `python3` shadowed by Microsoft Store stub
+### 7. Python interpreter selection on Windows
 
-On Windows, typing `python3` usually opens the Microsoft Store instead of
-running a real Python interpreter. The actual Python is named `python`:
-
-```bash
-# Wrong:
-python3 -c "print('hello')"  # → Microsoft Store popup or "not found"
-
-# Right:
-python -c "print('hello')"
-```
-
-The Hermes venv also uses `python.exe`, not `python3.exe`.
+Do not assume `python` and `python3` resolve to the same interpreter. On this
+host they can select different installed versions, while other Windows systems
+may route `python3` to a Store stub. Use the project's declared interpreter or
+the active virtual environment; Hermes workflow scripts use `python`.
 
 **Verification:**
 ```bash
-which python && python --version
-# If python3 is needed, check:
-ls "$LOCALAPPDATA/Microsoft/WindowsApps/python3.exe" 2>/dev/null && echo "STUB DETECTED"
+python --version
+python3 --version
+python -c "import sys; print(sys.executable)"
 ```
+
+The Hermes venv uses `python.exe`; invoke its full path for reproducible
+maintenance rather than relying on either global alias.
 
 ### 8. Git identity for fresh sub-repos and inline workaround
 
@@ -280,6 +275,28 @@ HTTP_PROXY= HTTPS_PROXY= curl http://127.0.0.1:5173/
 **Fix for browser tools:** Hermes browser tools (Browserbase) access `127.0.0.1`
 through cloud bridge — they are NOT affected by local proxy env vars. `browser_click`
 failures on overlays are a coordinate/rendering issue, not proxy-related.
+
+### 13a. Relocating portable Scoop and Rust toolchains safely
+
+Use this when a Windows project must free its repository or user-profile disk
+space by moving reusable developer tools (Scoop apps, Rustup/Cargo homes, or
+language datasets) to a dedicated toolchain root. Keep project-owned `.venv`,
+`node_modules`, build targets, databases, logs and task evidence in their
+owning project unless the user explicitly scopes them in.
+
+1. Audit disk capacity, active processes, project references and environment
+   variables before moving anything.
+2. Copy, compare file count/bytes, and validate real executables before deleting
+   the source. For Rust, use `cargo metadata --no-deps` with explicit homes.
+3. Keep `CARGO_TARGET_DIR` project-local. Regenerate Scoop `current` links and
+   shims after relocation; copied shims may contain absolute paths.
+4. Change user environment variables only after validation from a fresh child
+   process. Delete an old root only after no process executes beneath it.
+
+Git-Bash paths such as `/d/tools` are not automatically valid environment values
+for Windows child processes; convert with `cygpath -w`. Do not claim that a
+copied Visual Studio Build Tools directory is portable—use a verified installer
+layout instead. See `references/portable-toolchain-relocation.md`.
 
 ### 13. Portable deployment repos: encoding, escaping, and installers
 

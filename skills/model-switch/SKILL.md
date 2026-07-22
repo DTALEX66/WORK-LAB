@@ -54,7 +54,7 @@ python scripts/workflow/hermes_workflow_doctor.py --live
 
 1. HTTP 200/401/403 只能证明网络链路到达，不能证明 provider 可推理。
 2. 只有 `--live` marker 成功才可报告 GPT/DeepSeek/Codex 可执行。
-3. CC Switch 网络代理与 API router 是不同角色；端口必须现场监听并经协议 smoke 才能声称接管。
+3. CC Switch 网络代理与 API router 是不同角色；仅在用户明确要求代理诊断时，才检查端口和协议 smoke。`openai-codex` OAuth 切换不依赖 `127.0.0.1:7890`，不能因该端口关闭而阻断。
 4. Codex 优先使用桌面插件执行体；PATH 版本漂移只报 WARN，不自动删除旧 exe。
 5. Context7 是默认 MCP；其他 MCP/插件按任务启用，不能因“已安装”声称当前可调用。
 

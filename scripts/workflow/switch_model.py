@@ -213,8 +213,6 @@ def main() -> int:
         return 0
 
     if args.target in {'gpt', 'chatgpt'}:
-        if not args.no_verify and not port_open('127.0.0.1', 7890):
-            raise SystemExit('CC Switch proxy 127.0.0.1:7890 is not open')
         if not args.no_verify and not codex_auth_present():
             raise SystemExit('No openai-codex OAuth credential found; run: hermes auth add openai-codex')
         set_config([
