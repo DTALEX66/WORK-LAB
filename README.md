@@ -408,6 +408,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/mcp/mcp-catalog-governance.md`：MCP 候选审计 schema、阻断规则和默认启用边界；
 - `docs/absorption/open-source-workflow-absorption.md`：开源工作流吸收清单；
 - `docs/audit/workflow-absorption-audit-2026-07.md`：总体吸收审计；
+- `docs/audit/hermes-workflow-recovery-2026-07-22.md`：Hermes Desktop、CC Switch、Codex、GitHub 全链路故障、执行错误、恢复过程和数据保护证据；
 - `docs/audit/model-neutral-agent-harness-absorption-2026-07.md`：模型/API 中立 Agent Harness 审计；
 - `docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml`：固定来源和本地落点的机器可读证据；
 - `TROUBLESHOOTING.md`：常见部署、代理、认证和工具链问题。
