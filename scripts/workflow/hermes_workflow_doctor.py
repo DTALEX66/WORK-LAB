@@ -12,10 +12,19 @@ import re
 import shutil
 import socket
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 from switch_model import DEEPSEEK_MODEL, GPT_MODEL
+
+
+def configure_console_output() -> None:
+    """Keep a diagnostic report running on legacy Windows code pages."""
+
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="backslashreplace")
 
 
 SECRET_PATTERNS = [
@@ -53,11 +62,13 @@ def run(command: list[str], *, timeout: int = 30, cwd: Path | None = None) -> tu
             command,
             cwd=cwd,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             timeout=timeout,
         )
-        return completed.returncode, redact(completed.stdout.strip())
+        return completed.returncode, redact((completed.stdout or "").strip())
     except Exception as exc:
         return 124, f"{type(exc).__name__}: {exc}"
 
@@ -105,6 +116,20 @@ def hermes_home() -> Path:
         root = os.environ.get("LOCALAPPDATA")
         return Path(root) / "hermes" if root else Path.home() / "AppData/Local/hermes"
     return Path.home() / ".hermes"
+
+
+def hermes_managed_node() -> Path | None:
+    """Return Hermes' bundled Node before consulting the ambient PATH.
+
+    Windows often has several unrelated Node installations.  The workflow's
+    desktop build and MCP wrappers are intentionally owned by Hermes' bundled
+    runtime, so reporting whichever `node` happens to appear first on PATH is
+    misleading and can hide a working Hermes installation.
+    """
+
+    home = hermes_home()
+    candidates = [home / "node" / "node.exe", home / "node" / "bin" / "node"]
+    return next((candidate for candidate in candidates if candidate.exists()), None)
 
 
 def codex_candidates() -> list[Path]:
@@ -156,6 +181,7 @@ def resolve_live_codex_workspace(project_root: Path, requested: Path | None) -> 
 
 
 def main() -> int:
+    configure_console_output()
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--live",
@@ -204,7 +230,11 @@ def main() -> int:
         )
 
     print("\n=== Node / configured MCP ===")
-    print_command("PATH Node", ["node", "--version"])
+    managed_node = hermes_managed_node()
+    if managed_node:
+        print_command("Hermes managed Node", [str(managed_node), "--version"])
+    else:
+        print_command("PATH Node (Hermes managed Node missing)", ["node", "--version"])
     print_command("Configured Context7", ['hermes', 'mcp', 'test', 'context7'], timeout=90)
 
     print("\n=== Codex structure ===")

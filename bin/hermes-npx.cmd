@@ -2,6 +2,9 @@
 setlocal EnableExtensions EnableDelayedExpansion
 if "%HERMES_HOME%"=="" set "HERMES_HOME=%LOCALAPPDATA%\hermes"
 if exist "%HERMES_HOME%\node\npx.cmd" (
+  rem npx starts its package via `env node`; make the Hermes-owned runtime
+  rem win over unrelated Node installations earlier on the global PATH.
+  set "PATH=%HERMES_HOME%\node;%PATH%"
   "%HERMES_HOME%\node\npx.cmd" %*
   exit /b %ERRORLEVEL%
 )

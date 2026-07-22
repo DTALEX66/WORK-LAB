@@ -38,11 +38,13 @@ def live_check(provider: str, model: str) -> str:
     result = subprocess.run(
         ["hermes", "chat", "--provider", provider, "-m", model, "-q", f"Reply exactly: {marker}", "-Q", "--toolsets", "safe"],
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         check=False,
         timeout=180,
     )
-    return "LIVE_OK" if result.returncode == 0 and marker in result.stdout.splitlines() else "LIVE_FAILED"
+    return "LIVE_OK" if result.returncode == 0 and marker in (result.stdout or "").splitlines() else "LIVE_FAILED"
 
 
 def build_report(config: dict, *, live: bool) -> dict[str, object]:

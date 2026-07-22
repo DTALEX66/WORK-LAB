@@ -21,11 +21,6 @@ model_picker:
           - kimi-k2.7-code
           - kimi-k2.6
           - kimi-k2.5
-          - kimi-for-coding
-          - kimi-k2-thinking
-          - kimi-k2-thinking-turbo
-          - kimi-k2-turbo-preview
-          - kimi-k2-0905-preview
       - label: DEEPSEEK 系列
         provider: deepseek
         models:
@@ -41,16 +36,13 @@ model_picker:
           - gpt-5.6-luna
           - gpt-5.5
           - gpt-5.3-codex-spark
-          - gpt-5.6-sol-pro
-          - gpt-5.6-terra-pro
-          - gpt-5.6-luna-pro
 ```
 
 | User-facing lane | Slash command | Hermes provider | Default model | Series shown in picker | Notes |
 |---|---|---|---|---|---|
-| KIMI 系列 | `/切换KIMI` / `/切换KIMI稳` / `/切换KIMI快` / `/切换KIMI极速` | `kimi-coding` | `kimi-k3`; fast lane `kimi-k2.7-code`; turbo lane `kimi-k2.7-code-highspeed` | K3, K2.7 HighSpeed, K2.7, K2.6, K2.5, K2 thinking/turbo variants | Uses Kimi/Moonshot API key imported from CC Switch and `https://api.moonshot.cn/v1`. K3 is highest quality but slower; K2.7 HighSpeed is the official speed lane. |
+| KIMI 系列 | `/切换KIMI` / `/切换KIMI稳` / `/切换KIMI快` / `/切换KIMI极速` | `kimi-coding` | `kimi-k3`; fast lane `kimi-k2.7-code`; turbo lane `kimi-k2.7-code-highspeed` | K3, K2.7 HighSpeed, K2.7, K2.6, K2.5 | Uses Kimi/Moonshot API key imported from CC Switch and `https://api.moonshot.cn/v1`. K3 is highest quality but slower; K2.7 HighSpeed is the official speed lane. |
 | DEEPSEEK 系列 | `/切换DP` | `deepseek` | `deepseek-v4-flash` | V4 Pro, V4 Flash, Chat, Reasoner | Direct DeepSeek official provider. |
-| CHATGPT 系列 | `/切换GPT` | `openai-codex` | `gpt-5.6-sol` | 5.6 Sol/Terra/Luna, 5.5, 5.3 Codex Spark, 5.6 Pro variants | ChatGPT/Codex OAuth lane via OpenAI Codex route; requires fresh session after switch. |
+| CHATGPT 系列 | `/切换GPT` / `/切换GPT快` | `openai-codex` | `gpt-5.6-sol`; fast lane `gpt-5.3-codex-spark` | 5.6 Sol/Terra/Luna, 5.5, 5.3 Codex Spark | ChatGPT/Codex OAuth lane via OpenAI Codex route; requires fresh session after switch. |
 
 ## Slash quick commands
 
@@ -63,6 +55,7 @@ The user-facing slash forms are uppercase for readability:
 /切换KIMI极速
 /切换DP
 /切换GPT
+/切换GPT快
 ```
 
 Hermes lowercases slash command names before matching, so the stored `quick_commands` config keys are the lowercase canonical forms:
@@ -93,6 +86,10 @@ quick_commands:
     type: alias
     target: /model gpt-5.6-sol --provider openai-codex
     description: 切换到 CHATGPT 5.6 Sol
+  切换gpt快:
+    type: alias
+    target: /model gpt-5.3-codex-spark --provider openai-codex
+    description: 切换到 CHATGPT Codex Spark 快速模型
 ```
 
 Do not implement these as `exec` quick commands. They should be `alias` commands that route into Hermes' own `/model` handler so in-place session switching, persistence behavior, confirmation, model guardrails, and UI state all stay consistent.
@@ -108,6 +105,7 @@ python scripts/workflow/switch_model.py kimi-fast
 python scripts/workflow/switch_model.py kimi-turbo
 python scripts/workflow/switch_model.py deepseek
 python scripts/workflow/switch_model.py gpt
+python scripts/workflow/switch_model.py gpt-fast
 ```
 
 Aliases currently supported by the script:
@@ -117,6 +115,7 @@ Aliases currently supported by the script:
 - `kimi-turbo` → Kimi K2.7 Code HighSpeed
 - `dp` → DeepSeek V4
 - `chatgpt` → ChatGPT 5.6
+- `gpt-fast` / `spark` → ChatGPT Codex Spark
 
 ## Verification contract
 

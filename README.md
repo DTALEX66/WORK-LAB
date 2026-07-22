@@ -400,6 +400,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/workflow/local-quality-gates.md`：本地 canonical quality gate runner、Justfile 快捷入口和 CI 对齐方式；
 - `docs/workflow/ui-skin-system.md`：UI/Skin 分层、主题 token、Agent UI 状态表达与 runtime-neutral 边界；
 - `docs/workflow/project-data-boundary.md`：项目任务数据归属、迁移、保留与 fail-closed 执行器；
+- `docs/workflow/hermes-runtime-layout.md`：Hermes 全局运行目录分层、可恢复迁移、升级验证与清理边界；
 - `docs/workflow/gateway-cron-delivery.md`：Gateway、cron、sleep-mode、TUI 与外部消息平台的投递边界；
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
 - `docs/workflow/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录；

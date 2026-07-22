@@ -110,7 +110,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertEqual(
             set(config["quick_commands"]),
-            {"切换kimi", "切换kimi稳", "切换kimi快", "切换kimi极速", "切换dp", "切换gpt"},
+            {"切换kimi", "切换kimi稳", "切换kimi快", "切换kimi极速", "切换dp", "切换gpt", "切换gpt快"},
         )
         non_core = {"spotify", "x_search", "video", "tts"}
         self.assertTrue(non_core.isdisjoint(config["platform_toolsets"]["cli"]))

@@ -12,6 +12,9 @@ if [ -n "$win_user" ]; then
 fi
 for npx_bin in "${candidates[@]}"; do
   if [ -x "$npx_bin" ]; then
+    # Packages launched by npx may resolve `node` through PATH. Keep that
+    # resolution bound to the same Hermes-managed runtime as npx itself.
+    export PATH="$(dirname "$npx_bin"):$PATH"
     exec "$npx_bin" "$@"
   fi
 done

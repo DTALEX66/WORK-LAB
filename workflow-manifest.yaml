@@ -12,6 +12,7 @@ capabilities:
   - context_pack
   - local_quality_gate
   - isolated_portable_install_verification
+  - hermes_runtime_layout_and_upgrade_safety
 requirements:
   python: '>=3.11'
   pyyaml: required
