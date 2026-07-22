@@ -1,7 +1,7 @@
 ---
 name: agent-workflow-fortress
 description: Use when strengthening Hermes/Codex/CC Switch work loops, absorbing open-source workflow ideas, running autonomous project iterations, or deciding what tools/skills/MCPs should become part of the portable Hermes pack.
-version: 1.4.6
+version: 1.4.7
 author: Hermes Agent
 license: MIT
 metadata:
@@ -106,6 +106,14 @@ If Hermes already has a native tool, do not add an MCP that exposes the same per
 | `file` tools | filesystem MCP |
 | `browser` / `computer_use` | browser MCP unless needed |
 | `web_search` / `web_extract` | search wrappers without clear gain |
+
+## Portable Handoff and Project-Adapter Contract
+
+When a project supplies a compact `HERMES_HANDOFF.md` after a long or compressed session, treat it as the **continuation entry point**, not an instruction to resume the oversized session. Read it first, then re-check live Git state, current user intent, active writers, and the relevant project policy before acting. A handoff records history; newer user direction and live repository/CI evidence always win.
+
+Absorb only cross-project governance into this global pack: handoff discipline, single-writer ownership, risk-stratified verification, exact-tree review, project-local runtime-data boundaries, and cloud-first continuity. Keep product runtime, schemas, daemons, data paths, domain prompts, and project-specific executors in their owning repository.
+
+The global `run_taskpack_agent.py` runner is an orchestration primitive, not a project fork template. Every invocation must explicitly select the target repository, its active remote ref, and the applicable project skill(s); never silently assume `origin/main` or preload a project-specific skill globally. Low-risk checkpoints use directed RED→GREEN and changed-file gates, then batch one full gate plus exact-SHA CI at the phase Release Train. Security, permissions, databases/migrations, architecture, packaging, dependencies, deployment, and release/merge actions bypass batching and close independently.
 
 ## Rapid Parallel Autonomy
 

@@ -20,23 +20,17 @@ model_picker:
           - kimi-k3
           - kimi-k2.7-code-highspeed
           - kimi-k2.7-code
-          - kimi-k2.6
-          - kimi-k2.5
       - label: DEEPSEEK 系列
         provider: deepseek
         models:
           - deepseek-v4-pro
           - deepseek-v4-flash
-          - deepseek-chat
-          - deepseek-reasoner
       - label: CHATGPT 系列
         provider: openai-codex
         models:
           - gpt-5.6-sol
           - gpt-5.6-terra
           - gpt-5.6-luna
-          - gpt-5.5
-          - gpt-5.3-codex-spark
 
 fallback_providers: []
 toolsets:
@@ -101,10 +95,6 @@ quick_commands:
     type: alias
     target: /model gpt-5.6-sol --provider openai-codex
     description: 切换到 CHATGPT 5.6 Sol
-  切换gpt快:
-    type: alias
-    target: /model gpt-5.3-codex-spark --provider openai-codex
-    description: 切换到 CHATGPT Codex Spark 快速模型
 
 # Lowest-risk portable defaults. Media, Spotify, X and meeting plugins are opt-in.
 plugins:

@@ -203,6 +203,7 @@ class TaskPackRunner:
         agent: AgentBackend,
         max_review_rounds: int = 3,
         release_ref: str = "origin/main",
+        publish: bool = False,
     ) -> None:
         if max_review_rounds < 1:
             raise ValueError("max_review_rounds must be positive")
@@ -210,6 +211,7 @@ class TaskPackRunner:
         self.agent = agent
         self.max_review_rounds = max_review_rounds
         self.release_ref = release_ref
+        self.publish = publish
 
     def run(self, mission: str, *, risk: str) -> None:
         if risk not in {"low", "high"}:
@@ -221,10 +223,18 @@ class TaskPackRunner:
             raise RunnerError(f"TaskPack must start from a clean worktree:\n{baseline_status}")
 
         if risk == "low":
-            result = self.agent.run_writer(self._low_risk_prompt(mission, self.release_ref))
+            prompt = (
+                self._low_risk_publish_prompt(mission, self.release_ref)
+                if self.publish
+                else self._low_risk_stage_prompt(mission)
+            )
+            result = self.agent.run_writer(prompt)
             if not result.session_id:
                 raise RunnerError("writer session ID is empty")
-            self.repo.verify_released(baseline_head)
+            if self.publish:
+                self.repo.verify_released(baseline_head)
+            else:
+                self._assert_frozen(baseline_head, baseline_tree)
             return
 
         result = self.agent.run_writer(self._freeze_prompt(mission))
@@ -240,6 +250,8 @@ class TaskPackRunner:
                 raise RunnerError("reviewer changed the frozen tree or worktree status")
             decision = self._review_decision(review)
             if decision == "GO":
+                if not self.publish:
+                    return
                 result = self.agent.run_writer(
                     self._release_prompt(mission, frozen_tree, review, self.release_ref), resume=session_id
                 )
@@ -306,7 +318,19 @@ Your final response must report READY_FOR_REVIEW plus git write-tree and test ev
 """
 
     @staticmethod
-    def _low_risk_prompt(mission: str, release_ref: str) -> str:
+    def _low_risk_stage_prompt(mission: str) -> str:
+        return f"""Execute exactly one LOW-RISK TaskPack in this repository.
+
+MISSION:
+{mission}
+
+Use RED -> GREEN and affected checks during development, then stage only the intended
+files and stop. Do not commit, push, create a PR, or start CI. Your final response must
+report READY_FOR_RELEASE plus git write-tree and test evidence for an explicit publisher.
+"""
+
+    @staticmethod
+    def _low_risk_publish_prompt(mission: str, release_ref: str) -> str:
         return f"""Execute exactly one LOW-RISK TaskPack end to end in this repository.
 
 MISSION:
@@ -370,8 +394,17 @@ def _parse_args() -> argparse.Namespace:
     mission.add_argument("--mission-file", type=Path, help="UTF-8 mission file")
     parser.add_argument("--risk", choices=("low", "high"), required=True)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
-    parser.add_argument("--remote-ref", default="origin/main")
+    parser.add_argument(
+        "--remote-ref",
+        required=True,
+        help="Exact remote ref for this TaskPack; pass the active branch explicitly.",
+    )
     parser.add_argument("--max-review-rounds", type=int, default=3)
+    parser.add_argument(
+        "--publish",
+        action="store_true",
+        help="Explicitly allow commit, push and exact-SHA CI after the TaskPack is ready.",
+    )
     parser.add_argument("--skills", default=DEFAULT_SKILLS)
     parser.add_argument("--hermes", default="hermes")
     return parser.parse_args()
@@ -391,6 +424,7 @@ def main() -> int:
         agent=agent,
         max_review_rounds=args.max_review_rounds,
         release_ref=args.remote_ref,
+        publish=args.publish,
     ).run(mission, risk=args.risk)
     return 0
 

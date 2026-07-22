@@ -36,6 +36,8 @@ RETIRED_MANAGED_SKILL_ASSETS = {
     "software-development/windows-development-environment/references/github-credential-extraction.md",
     "software-development/windows-development-environment/references/provider-network-troubleshooting.md",
     "software-development/windows-development-environment/references/third-party-proxy-setup.md",
+    "software-development/cognitive-loop-os",
+    "software-development/screenlingua",
 }
 MANAGED_DISPLAY_KEYS = {"busy_input_mode", "streaming"}
 MANAGED_MODEL_KEYS = {"max_tokens"}

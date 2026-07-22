@@ -19,7 +19,6 @@ import yaml
 
 
 GPT_MODEL = os.environ.get("HERMES_GPT_MODEL", "gpt-5.6-sol")
-GPT_FAST_MODEL = os.environ.get("HERMES_GPT_FAST_MODEL", "gpt-5.3-codex-spark")
 DEEPSEEK_MODEL = os.environ.get("HERMES_DEEPSEEK_MODEL", "deepseek-v4-flash")
 KIMI_MODEL = os.environ.get("HERMES_KIMI_MODEL", "kimi-k3")
 KIMI_FAST_MODEL = os.environ.get("HERMES_KIMI_FAST_MODEL", "kimi-k2.7-code")
@@ -167,7 +166,7 @@ def status() -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description='Switch Hermes between the curated DTALEX66 model lanes')
-    ap.add_argument('target', choices=['gpt', 'chatgpt', 'gpt-fast', 'spark', 'deepseek', 'dp', 'kimi', 'k3', 'kimi-fast', 'kimi-turbo', 'status'])
+    ap.add_argument('target', choices=['gpt', 'chatgpt', 'deepseek', 'dp', 'kimi', 'k3', 'kimi-fast', 'kimi-turbo', 'status'])
     ap.add_argument('--no-verify', action='store_true', help='skip prerequisite checks')
     ap.add_argument('--live', action='store_true', help='run a real marker after writing config (uses provider quota)')
     args = ap.parse_args()
@@ -213,22 +212,20 @@ def main() -> int:
         print('Switched to DeepSeek. Start a new session or /reset for it to take effect.')
         return 0
 
-    if args.target in {'gpt', 'chatgpt', 'gpt-fast', 'spark'}:
+    if args.target in {'gpt', 'chatgpt'}:
         if not args.no_verify and not port_open('127.0.0.1', 7890):
             raise SystemExit('CC Switch proxy 127.0.0.1:7890 is not open')
         if not args.no_verify and not codex_auth_present():
             raise SystemExit('No openai-codex OAuth credential found; run: hermes auth add openai-codex')
-        model = GPT_FAST_MODEL if args.target in {'gpt-fast', 'spark'} else GPT_MODEL
-        label = 'GPT fast (Codex Spark)' if args.target in {'gpt-fast', 'spark'} else 'GPT'
         set_config([
             ('model.provider', 'openai-codex'),
-            ('model.default', model),
+            ('model.default', GPT_MODEL),
             ('model.base_url', ''),
             ('model.api_key', ''),
         ])
         if args.live:
-            live_marker('openai-codex', model, 'OK_GPT_SWITCH_LIVE')
-        print(f'Switched to {label} via openai-codex OAuth. Start a new session or /reset for it to take effect.')
+            live_marker('openai-codex', GPT_MODEL, 'OK_GPT_SWITCH_LIVE')
+        print('Switched to GPT via openai-codex OAuth. Start a new session or /reset for it to take effect.')
         return 0
     return 2
 

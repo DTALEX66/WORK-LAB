@@ -10,6 +10,8 @@
 
 此目录必须被 Git 忽略。长期恢复证据使用同项目的 `.hermes/task-artifacts/`，而不是另建用户目录。
 
+`E:\` 是用户保护的数据区。默认禁止枚举、读取、复制、写入、移动、重命名或删除其任何内容；只有当前请求中明确给出的精确路径与操作范围可获一次性授权，且读取授权不包含写入、移动或删除。
+
 ## 可部署执行器与强制 gate
 
 仓库的 `bin/hermes-project-data.py` 与 `bin/hermes-project-terminal-guard.py` 会随 `sync_hermes_workflow_assets.py --apply` 部署到 `$HERMES_HOME/bin/`。

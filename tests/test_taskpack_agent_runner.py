@@ -13,6 +13,7 @@ from scripts.workflow.run_taskpack_agent import (
     HermesAgentBackend,
     RunnerError,
     TaskPackRunner,
+    _parse_args,
 )
 
 
@@ -94,7 +95,7 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         repo = FakeRepo()
         agent = FakeAgent(repo, ["NO-GO\nshared/migration.py:10 missing proof", "GO"])
 
-        TaskPackRunner(repo=repo, agent=agent, max_review_rounds=3).run(
+        TaskPackRunner(repo=repo, agent=agent, max_review_rounds=3, publish=True).run(
             "repair the migration", risk="high"
         )
 
@@ -120,7 +121,7 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         repo = FakeRepo()
         agent = FakeAgent(repo, [])
 
-        TaskPackRunner(repo=repo, agent=agent, release_ref="origin/feat/sleep").run(
+        TaskPackRunner(repo=repo, agent=agent, release_ref="origin/feat/sleep", publish=True).run(
             "add a pure adapter", risk="low"
         )
 
@@ -133,7 +134,7 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         repo = FakeRepo()
         agent = FakeAgent(repo, ["GO"])
 
-        TaskPackRunner(repo=repo, agent=agent, release_ref="origin/feat/sleep").run(
+        TaskPackRunner(repo=repo, agent=agent, release_ref="origin/feat/sleep", publish=True).run(
             "repair a governed boundary", risk="high"
         )
 
@@ -141,10 +142,27 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         self.assertIn("origin/feat/sleep", release_prompt)
         self.assertNotIn("HEAD equal to origin/main", release_prompt)
 
+    def test_default_runner_stages_without_releasing(self) -> None:
+        repo = FakeRepo()
+        agent = FakeAgent(repo, [])
+
+        TaskPackRunner(repo=repo, agent=agent).run("stage a bounded task", risk="low")
+
+        self.assertFalse(repo.released)
+        self.assertIn("Do not commit, push", agent.writer_calls[0][1])
+
     def test_default_skills_are_global_not_cognitive_os_specific(self) -> None:
         skills = DEFAULT_SKILLS.split(",")
         self.assertIn("project-data-boundary", skills)
         self.assertNotIn("cognitive-loop-os", skills)
+
+    def test_cli_requires_an_explicit_remote_ref(self) -> None:
+        with patch(
+            "sys.argv",
+            ["run_taskpack_agent.py", "--risk", "low", "--mission", "bounded task"],
+        ):
+            with self.assertRaises(SystemExit):
+                _parse_args()
 
 
 if __name__ == "__main__":

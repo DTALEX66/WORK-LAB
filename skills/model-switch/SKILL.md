@@ -23,7 +23,7 @@ tags: [hermes, provider, routing, deepseek, openai, codex, proxy, cc-switch]
 | 请求 | 动作 |
 |---|---|
 | 整理/切换用户当前三条模型线 | 以 Kimi K3、DeepSeek V4、ChatGPT 5.6 为准；用户常用斜杠入口是 `/切换KIMI`、`/切换DP`、`/切换GPT`，Kimi 慢时提供 `/切换KIMI极速` 到官方高速 `kimi-k2.7-code-highspeed`、`/切换KIMI快` 到 `kimi-k2.7-code`、`/切换KIMI稳` 回 `kimi-k3`（config 中 quick command 键名为小写 canonical：`切换kimi`/`切换kimi极速`/`切换kimi快`/`切换kimi稳`/`切换dp`/`切换gpt`），脚本入口是 `python scripts/workflow/switch_model.py kimi|kimi-fast|kimi-turbo|deepseek|gpt`；每次切换后用 `hermes chat -q` marker 验证，并提示 `/reset` 或新会话 |
-| 接入 CC Switch 中已有的 Kimi/Moonshot API-key provider | 只读解析 `.cc-switch/cc-switch.db` 的 provider metadata，复制 key 到 Hermes `.env` 的 `KIMI_API_KEY`/`KIMI_CN_API_KEY`（绝不打印），设置 `model.provider=kimi-coding`、`model.default=<CC model>`、`model.base_url=<CC baseURL>`，用 `hermes chat -q` marker 验证；细节见 `references/kimi-ccswitch-hermes.md` |
+| 接入 CC Switch 中已有的 Kimi/Moonshot provider | 不读取 CC Switch 数据库、密钥或 provider 原始配置。由用户通过受控环境变量/官方 Hermes 配置完成凭据设置；之后仅用 `switch_model.py status`、端口 preflight 与 `hermes chat -q` marker 验证路由。细节见 `references/kimi-ccswitch-hermes.md` |
 | Kimi 模型列表缺项或质疑是否真 K3 | 不以 picker 为准；Hermes picker 是内置 curated list，不自动同步 CC Switch models。用直接 Moonshot API 验证 `request_model/response_model`，K3 需 `temperature=1`；无效模型 404 作为对照。见 `references/kimi-ccswitch-hermes.md` |
 | 检查模型/CC Switch/Codex | 结构 doctor；需要证明可执行时加 `--live` |
 | 图片/截图分析 | 确认当前 provider 有视觉能力；必要时切 GPT 后新会话 |

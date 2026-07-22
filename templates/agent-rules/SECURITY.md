@@ -13,6 +13,11 @@ Never read, copy, print, commit, or summarize secrets from:
 
 Use templates with placeholder values instead.
 
+## Protected user data
+
+- `E:\` is a protected data zone. Do not access, copy, move, rename, modify, or delete its contents unless the user explicitly authorizes the exact path and operation in the current request.
+- A previous read authorization does not authorize subsequent writes, moves, or deletion.
+
 ## Filesystem Boundaries
 
 - Only modify files inside the current project unless the user explicitly names another path.

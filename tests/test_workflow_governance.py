@@ -110,7 +110,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertEqual(
             set(config["quick_commands"]),
-            {"切换kimi", "切换kimi稳", "切换kimi快", "切换kimi极速", "切换dp", "切换gpt", "切换gpt快"},
+            {"切换kimi", "切换kimi稳", "切换kimi快", "切换kimi极速", "切换dp", "切换gpt"},
         )
         non_core = {"spotify", "x_search", "video", "tts"}
         self.assertTrue(non_core.isdisjoint(config["platform_toolsets"]["cli"]))
@@ -125,6 +125,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
             kimi["models"][:3],
             ["kimi-k3", "kimi-k2.7-code-highspeed", "kimi-k2.7-code"],
         )
+        self.assertEqual(kimi["models"], ["kimi-k3", "kimi-k2.7-code-highspeed", "kimi-k2.7-code"])
+        deepseek = next(lane for lane in lanes["lanes"] if lane["label"] == "DEEPSEEK 系列")
+        self.assertEqual(deepseek["models"], ["deepseek-v4-pro", "deepseek-v4-flash"])
+        gpt = next(lane for lane in lanes["lanes"] if lane["label"] == "CHATGPT 系列")
+        self.assertEqual(gpt["models"], ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"])
         quick = config["quick_commands"]
         self.assertEqual(quick["切换kimi"]["target"], "/model kimi-k3 --provider kimi-coding")
         self.assertEqual(quick["切换kimi稳"]["target"], "/model kimi-k3 --provider kimi-coding")
@@ -137,6 +142,21 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "/model kimi-k2.7-code-highspeed --provider kimi-coding",
         )
         self.assertTrue(all(spec["type"] == "alias" for spec in quick.values()))
+
+    def test_model_switch_docs_never_instruct_credential_or_cc_switch_db_access(self) -> None:
+        source = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in (ROOT / "skills/model-switch").rglob("*.md")
+        )
+        self.assertNotIn("cc-switch.db", source)
+        self.assertNotIn("sqlite3.connect", source)
+        self.assertNotIn("gpt-5.3-codex-spark", source)
+        self.assertNotIn("gpt-fast", source)
+
+    def test_workflow_doctor_never_reads_private_codex_config(self) -> None:
+        source = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(encoding="utf-8")
+        self.assertNotIn('Path.home() / ".codex/config.toml"', source)
+        self.assertIn("private config is intentionally not inspected", source)
 
     def test_readme_documents_kimi_speed_lane_commands_without_auto_switching(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -228,6 +248,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "software-development/windows-development-environment/references/github-credential-extraction.md",
                 "software-development/windows-development-environment/references/codex++-proxy-routing.md",
                 "software-development/hermes-provider-routing/SKILL.md",
+                "software-development/cognitive-loop-os/SKILL.md",
+                "software-development/screenlingua/SKILL.md",
             ]
             for relative in retired:
                 target = home / "skills" / relative

@@ -56,6 +56,14 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         self.assertEqual(layout.env["NPM_CONFIG_CACHE"], str(layout.paths["cache"] / "npm"))
         self.assertEqual(layout.env["HERMES_KANBAN_HOME"], str(project_root / ".hermes"))
 
+    def test_global_skill_requires_explicit_current_request_for_e_drive_access(self) -> None:
+        skill = Path("skills/software-development/project-data-boundary/SKILL.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("`E:\\\\` 是用户保护的数据区", skill)
+        self.assertIn("读权限不等于写/移动/删除权限", skill)
+
     def test_prepare_fails_closed_when_project_runtime_root_is_not_git_ignored(self) -> None:
         module = load_module()
         repo = self.make_repo(ignored=False)

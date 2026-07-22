@@ -58,7 +58,7 @@
 | Hermes 配置模板 | `config/config.yaml` | `config.yaml` | 新机器基线；同步脚本合并时保留 live provider/model，并管理 `display.busy_input_mode=queue` |
 | 环境变量模板 | `config/.env.template` | `.env.template` | 只放占位说明，不放真实密钥 |
 | MCP wrapper | `bin/hermes-npx*` | `bin/hermes-npx*` | Windows live config 指向 `.cmd`；优先 bundled Node，缺失时可回退 PATH Node >=20 |
-| 技能 | `skills/` | `skills/` | 包含 codex、model-switch、sleep-mode、project-data-boundary、python-testing、windows-development-environment、screenlingua、agent-workflow-fortress；其中 sleep-mode 通过项目 `.hermes/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
+| 技能 | `skills/` | `skills/` | 包含 codex、model-switch、sleep-mode、project-data-boundary、python-testing、windows-development-environment、agent-workflow-fortress；其中 sleep-mode 通过项目 `.hermes/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
 | 项目数据执行器 | `bin/hermes-project-data.py` | `bin/hermes-project-data.py` | fail-closed 验证 Git ignore，并把任务临时文件、缓存、日志、测试环境与产物锁到 `<project>/.hermes/task-runtime/` |
 | 同步脚本 | `scripts/workflow/sync_hermes_workflow_assets.py` | 手动运行 | repo ↔ live 定向同步；每次 apply 前备份可迁移资产 |
 | 排错记录 | `TROUBLESHOOTING.md`、`docs/workflow/error-fixes-2026-07-04.md`、`docs/workflow/gateway-cron-delivery.md` | 仓库文档 | 记录 Windows MCP、路径、GitHub CLI、Gateway/cron delivery、验证等已踩坑 |

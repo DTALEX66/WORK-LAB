@@ -62,31 +62,9 @@ HTTP_PROXY=http://127.0.0.1:7890
 
 **陷阱：** `.env` 只在 Hermes 完全重启时读取。`/reset` 不足以重新加载代理变量。需关闭 Hermes 桌面应用重开。
 
-## CC Switch 数据库配置
+## CC Switch 配置边界
 
-CC Switch 的代理设置在 SQLite 数据库中：
-
-```python
-import sqlite3
-conn = sqlite3.connect(r'~/.cc-switch/cc-switch.db')
-# 启用代理
-cur.execute('UPDATE proxy_config SET proxy_enabled=1, enabled=1 WHERE app_type=?', ('codex',))
-conn.commit()
-```
-
-settings.json 中的 `enableLocalProxy` 也需设为 `true`：
-
-```bash
-# 用 Python 修改
-python3 -c "
-import json
-with open(r'~/.cc-switch/settings.json') as f:
-    s = json.load(f)
-s['enableLocalProxy'] = True
-with open(r'~/.cc-switch/settings.json', 'w') as f:
-    json.dump(s, f, indent=2)
-"
-```
+不要直接修改 CC Switch 的数据库、settings 文件或凭据。通过 CC Switch 的 UI 完成代理开关，并以监听与连通 smoke 验证结果。`switch_model.py status` 和 `hermes_workflow_doctor.py` 只读检查运行状态；它们不应成为写入 CC Switch 内部状态的替代入口。
 
 ## 排查网络问题
 

@@ -42,7 +42,7 @@ Workflow-assistance
 | 安全部署 | Windows / Bash 安装入口、自动备份、单向同步、保留 live Provider 与自定义能力 | `setup.ps1`、`setup.sh` |
 | 模型切换 | GPT OAuth 与 DeepSeek 官方 Provider 状态检查和安全切换 | `scripts/workflow/switch_model.py` |
 | 全链路诊断 | Hermes、认证、MCP、代理端口、Node、Codex 版本和可选真实执行 smoke | `scripts/workflow/hermes_workflow_doctor.py` |
-| Codex 执行 | 跨平台 launcher、非交互执行规则、只读审查、隔离 worktree、TaskPack exact-tree runner | `bin/codex*`、`scripts/workflow/run_taskpack_agent.py`、`skills/autonomous-ai-agents/codex/` |
+| Codex 执行 | 跨平台 launcher、非交互执行规则、只读审查、隔离 worktree、TaskPack exact-tree runner；默认只冻结，需显式 `--publish` 才可发布 | `bin/codex*`、`scripts/workflow/run_taskpack_agent.py`、`skills/autonomous-ai-agents/codex/` |
 | 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
 | Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/workflow/gateway-cron-delivery.md` |
 | 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `bin/hermes-project-data.py`、`skills/software-development/project-data-boundary/` |
@@ -188,7 +188,7 @@ python scripts/workflow/hermes_workflow_doctor.py
 3. DeepSeek 与 ChatGPT 的 HTTP 传输可达性；
 4. Node 版本和已配置的 Context7 MCP；
 5. Codex desktop/plugin/PATH 候选二进制与版本漂移；
-6. Codex 配置中的选定字段，并对输出统一脱敏。
+6. Codex 私有配置不读取，以可执行文件、监听和可选 live smoke 作为链路证据。
 
 真实执行 smoke：
 
@@ -328,7 +328,6 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards li
 | `python-testing` | unittest/pytest 模式、测试隔离、fixture 和常见陷阱 |
 | `requesting-code-review` | 代码复审兼容入口，统一转入 fortress 的 exact-tree 流程 |
 | `windows-development-environment` | PowerShell 编码、PATH 遮蔽、spawn/lockfile、便携工具链和 Windows 环境问题 |
-| `screenlingua` | 本地截图翻译应用的项目知识：React + Tauri + FastAPI、本地 OCR 与翻译；不随本仓库安装应用主体 |
 
 同步脚本会把仓库中的 skills 作为 portable 单一事实源部署到 Hermes Home，但不会反向吸收 live 私有 skill 或运行数据。
 
@@ -411,7 +410,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/audit/hermes-workflow-recovery-2026-07-22.md`：Hermes Desktop、CC Switch、Codex、GitHub 全链路故障、执行错误、恢复过程和数据保护证据；
 - `docs/audit/model-neutral-agent-harness-absorption-2026-07.md`：模型/API 中立 Agent Harness 审计；
 - `docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml`：固定来源和本地落点的机器可读证据；
-- `docs/handoffs/cognitive-loop-os-workflow-extraction-2026-07-22.md`：Cognitive-Loop-OS 的全局 Hermes/CC/Codex 工作流资产迁移交接与项目边界；
+
 - `TROUBLESHOOTING.md`：常见部署、代理、认证和工具链问题。
 
 ## 测试与持续集成
@@ -428,7 +427,7 @@ python scripts/workflow/run_quality_gate.py verify
 just verify
 ```
 
-`just` 不是默认依赖；缺少时直接使用 Python runner。`verify` 依次运行 governance、compile、security、context-pack、mcp-audit、shell 和 powershell gate。PowerShell gate 优先 `pwsh`，仅在缺少时回退 `powershell.exe`，并且只用 AST parser 解析 `setup.ps1`，不执行安装动作。Shell/PowerShell 工具不可用时对应 gate 会显式 skip。
+`just` 不是默认依赖；缺少时直接使用 Python runner。`verify` 依次运行 governance、compile、security、context-pack、portable-install、provider-inventory、mcp-audit、shell 和 powershell gate。PowerShell gate 优先 `pwsh`，仅在缺少时回退 `powershell.exe`，并且只用 AST parser 解析 `setup.ps1`，不执行安装动作。Shell/PowerShell 工具不可用时对应 gate 会显式 skip。
 
 治理测试覆盖：
 
@@ -514,7 +513,7 @@ just verify  # optional; only if just is installed
 
 ## 使用边界
 
-- 本仓库不会安装或升级 Hermes、Codex、CC Switch、Screenlingua 或其他应用主体；
+- 本仓库不会安装或升级 Hermes、Codex、CC Switch 或其他应用主体；
 - 不会把 live Provider、凭据、会话和用户自定义配置反向上传；
 - 默认配置不会启用与 Hermes 原生工具重复或权限面更大的 MCP；
 - 普通 doctor 只证明结构与传输可达，结构检查不等于真实模型执行；

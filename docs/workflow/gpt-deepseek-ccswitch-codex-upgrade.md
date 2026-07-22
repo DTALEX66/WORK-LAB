@@ -24,7 +24,6 @@ Codex       独立编码/复审执行面
 | 复杂推理 | Kimi K3 | `/切换KIMI稳` |
 | 直连备用 | DeepSeek V4 Flash | `/切换DP` |
 | ChatGPT / Codex OAuth（复杂任务） | GPT 5.6 Sol | `/切换GPT` |
-| ChatGPT / Codex OAuth（低延迟） | GPT 5.3 Codex Spark | `/切换GPT快` 或 `switch_model.py gpt-fast` |
 
 Picker、快捷命令、`streaming=true`、`reasoning_effort=low` 和
 `model.max_tokens=8192` 是可迁移的非秘密 UX 策略；同步时保留当前
@@ -37,7 +36,6 @@ provider/model、OAuth/API key、私有 MCP 和用户自定义命令。
 3. **切换后单线 marker**：
    ```bash
    python scripts/workflow/switch_model.py gpt --live
-   python scripts/workflow/switch_model.py gpt-fast --live
    python scripts/workflow/switch_model.py deepseek --live
    python scripts/workflow/switch_model.py kimi-turbo --live
    ```

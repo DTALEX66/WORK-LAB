@@ -250,12 +250,7 @@ def main() -> int:
     elif len({version for _, version in versions}) > 1:
         print("[WARN] Codex version drift detected; plugin binary is the preferred execution path")
 
-    config = Path.home() / ".codex/config.toml"
-    if config.exists():
-        print("[OK] Codex config found; selected lines are redacted")
-        for line in config.read_text(encoding="utf-8-sig", errors="ignore").splitlines():
-            if any(key in line.lower() for key in ("model", "base_url", "wire_api", "mcp_servers", "enabled")):
-                print("  " + redact(line))
+    print("[INFO] Codex private config is intentionally not inspected; use executable, listener and live smoke evidence.")
 
     if args.live:
         print("\n=== LIVE execution smokes ===")
