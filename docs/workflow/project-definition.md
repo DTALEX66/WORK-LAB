@@ -1,10 +1,10 @@
-# 项目定义：HERMES + CC Switch + Codex 工作流增强项目
+# 项目定义：HERMES + CC Switch + Codex + GitHub 工作流增强项目
 
 ## 一句话定位
 
-`Workflow-assistance` 是 DTALEX66 的 **Hermes Agent + CC Switch + Codex 全局工作流增强项目**：用于沉淀、迁移和持续强化用户所有项目里的 Hermes 会话习惯、模型/provider 切换、CC Switch 代理路径、Codex 执行与复审方式、MCP 默认策略、长任务持久化、项目数据边界、排错经验、验证脚本和自动化工作流。
+`Workflow-assistance` 是 DTALEX66 的 **Hermes Agent + CC Switch + Codex + GitHub 全局工作流增强项目**：用于沉淀、迁移和持续强化用户所有项目里的 Hermes 会话习惯、模型/provider 切换、CC Switch 代理路径、Codex 执行与复审方式、GitHub 分支/发布/exact-SHA CI 闭环、MCP 默认策略、长任务持久化、项目数据边界、排错经验、验证脚本和自动化工作流。
 
-本仓库只是这些全局增强资产的可审计源目录，不是增强目标本身。增强目标是用户的整体 Agent 工作流：Hermes Agent 是运行与编排入口，CC Switch 是网络/路由辅助层，Codex 是编码执行与复审协作面；`D:\All projects\Workflow-assistance` 负责保存可迁移、可验证、可同步到 live Hermes Home 的配置、脚本、技能、模板和规范。
+本仓库只是这些全局增强资产的可审计源目录，不是增强目标本身。增强目标是用户的整体 Agent 工作流：Hermes Agent 是运行与编排入口，CC Switch 是网络/路由辅助层，Codex 是编码执行与复审协作面，GitHub 是跨设备 source-of-truth、发布及 exact-SHA CI 证据面；`D:\All projects\Workflow-assistance` 负责保存可迁移、可验证、可同步到 live Hermes Home 的配置、脚本、技能、模板和规范。
 
 ## 项目边界
 
@@ -13,6 +13,7 @@
 - 不包含 Hermes Agent 安装主体。
 - 不包含 CC Switch 安装主体。
 - 不包含 Codex CLI / ChatGPT OAuth 的真实凭证。
+- 不包含业务项目的 GitHub 私有数据、Actions secrets、release artifact 或运行日志。
 - 不提交 `.env`、`auth.json`、API Key、Token、会话数据库、缓存或日志。
 
 ## 全局增强边界
@@ -22,23 +23,25 @@
 | Hermes Agent | 可迁移配置基线、skills、MCP 默认策略、Gateway/cron/sleep-mode 说明、live 同步脚本 | Hermes Agent 核心源码、真实凭据、会话数据库、运行日志 |
 | CC Switch | 代理端口/网络路径排错、Provider 前置检查、环境变量模板 | CC Switch 主程序安装包、用户真实代理凭据 |
 | Codex | launcher、任务票据、单写者/worktree 规范、只读复审与 exact-tree 证据规则 | Codex CLI 主体、OpenAI OAuth token、模型服务凭据 |
+| GitHub | `main` 跨设备 SSOT、提交/分支治理、exact-SHA CI、发布与恢复证据 | GitHub Actions secrets、业务项目 release artifact、业务仓库私有数据 |
 | 任意业务项目 | `.hermes/` 项目数据边界、任务 artifact/ledger 规范、可复制 Agent rules | 业务项目源码本身、项目私有数据、临时一次性修复 |
 | Workflow-assistance 仓库 | 全局增强资产源、文档、治理测试、同步/doctor 脚本 | 把本仓库当成唯一使用场景或运行时 sandbox |
 
 新增内容必须回答两个问题：
 
-1. 它是否增强 **Hermes Agent + CC Switch + Codex 的全局工作流**，而不是只方便当前仓库一次操作？
+1. 它是否增强 **Hermes Agent + CC Switch + Codex + GitHub 的全局工作流**，而不是只方便当前仓库一次操作？
 2. 它是否可以安全迁移到其他机器/项目，而不携带密钥、会话、日志、缓存或用户私有数据？
 
 如果答案是否定的，只能放在项目本地 `.hermes/` 或一次性任务 artifact 中，不得进入默认 portable config、全局 skill、默认 MCP 或同步脚本。
 
-## 三层职责
+## 四层职责
 
 | 层级 | 责任 | 本仓库沉淀内容 |
 |---|---|---|
 | Hermes Agent | Agent 运行、模型/provider、工具、技能、MCP、记忆与会话 | `config/`、`skills/`、`bin/hermes-npx*`、Hermes doctor/切换脚本 |
 | CC Switch | 本地代理、网络通道、Agent 生态辅助 | 代理环境变量模板、排错手册、与 Hermes/Codex 协作约定 |
 | Codex / OpenAI OAuth | GPT 订阅/OAuth 路线、Codex CLI/工作流协作 | OAuth 流程说明、任务单模板、`CODEX.md`/Agent rules 模板 |
+| GitHub | 跨设备源代码事实源、分支、提交、CI 与发布证据 | `.github/` CI、exact-SHA 门禁、交接与恢复规范 |
 
 ## 当前同步状态
 

@@ -446,8 +446,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "不得进入默认 portable config、全局 skill、默认 MCP 或同步脚本",
         ):
             self.assertIn(marker, definition)
-        self.assertIn("Hermes Agent + CC Switch + Codex 的全局工作流", definition)
-        self.assertNotIn("只对本仓库生效的局部工具集：\n\n## 三层职责", definition)
+        self.assertIn(
+            "Hermes Agent + CC Switch + Codex + GitHub 的全局工作流", definition
+        )
+        self.assertNotIn("只对本仓库生效的局部工具集：\n\n## 四层职责", definition)
 
     def test_doctor_distinguishes_structural_and_live_checks(self) -> None:
         doctor = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(

@@ -2,19 +2,20 @@
 
 [![workflow-governance](https://github.com/DTALEX66/Workflow-assistance/actions/workflows/governance.yml/badge.svg)](https://github.com/DTALEX66/Workflow-assistance/actions/workflows/governance.yml)
 
-面向 Windows、Linux 与 macOS 的 **Hermes Agent + CC Switch + Codex 全局可迁移工作流增强包**：集中维护无密钥配置、模型切换、链路诊断、Context7 MCP、Agent Skills、任务契约、安全同步、治理测试和跨平台 CI。
+面向 Windows、Linux 与 macOS 的 **Hermes Agent + CC Switch + Codex + GitHub 全局可迁移工作流增强包**：集中维护无密钥配置、模型切换、链路诊断、Context7 MCP、Agent Skills、任务契约、安全同步、GitHub exact-SHA 发布证据、治理测试和跨平台 CI。
 
 ## 项目定位
 
-`Workflow-assistance` 不是另一个 Agent Runtime，也不是 Hermes、Codex 或 CC Switch 的安装包；它也不是只服务本仓库的项目内脚本集合。它是覆盖用户全局 Hermes Agent + CC Switch + Codex 日常工作的**可迁移控制与治理层**：本仓库只是这些全局增强资产的可审计源目录，live Hermes Home 才是运行时落点。
+`Workflow-assistance` 不是另一个 Agent Runtime，也不是 Hermes、Codex 或 CC Switch 的安装包；它也不是只服务本仓库的项目内脚本集合。它是覆盖用户全局 **Hermes Agent + CC Switch + Codex + GitHub** 日常工作的**可迁移控制与治理层**：本仓库是可审计源目录，live Hermes Home 才是运行时落点，GitHub 是跨设备的 source-of-truth、发布与 exact-SHA CI 证据面。
 
-全局增强范围包括：所有项目里的 Hermes 会话习惯、模型/provider 切换、CC Switch 代理路径、Codex 执行与复审方式、MCP 默认策略、长任务持久化、项目数据边界、排错手册、任务票据、Agent 规则和验证门禁。任何新增能力都必须先判断它增强的是这条全局工作流，还是只对本仓库有用；只对本仓库有用的临时脚本不得被包装成默认全局能力。
+全局增强范围包括：所有项目里的 Hermes 会话习惯、模型/provider 切换、CC Switch 代理路径、Codex 执行与复审方式、GitHub 分支/提交/exact-SHA CI 发布闭环、MCP 默认策略、长任务持久化、项目数据边界、排错手册、任务票据、Agent 规则和验证门禁。任何新增能力都必须先判断它增强的是这条全局工作流，还是只对本仓库有用；只对本仓库有用的临时脚本不得被包装成默认全局能力。
 
 ```text
 Global workflow surface
 ├─ Hermes Agent runtime usage     sessions, skills, tools, MCP, memory, cron/gateway
 ├─ CC Switch routing              local proxy/network path and provider preflight
 ├─ Codex execution                launcher, task tickets, review and worktree rules
+├─ GitHub delivery                 main as SSOT, exact-SHA CI, release evidence and recovery
 ├─ Project task containment       per-repo .hermes runtime/artifacts boundaries
 └─ Workflow-assistance repo       portable source of truth, tests, docs and sync scripts
 ```
@@ -43,6 +44,7 @@ Workflow-assistance
 | 模型切换 | GPT OAuth 与 DeepSeek 官方 Provider 状态检查和安全切换 | `scripts/workflow/switch_model.py` |
 | 全链路诊断 | Hermes、认证、MCP、代理端口、Node、Codex 版本和可选真实执行 smoke | `scripts/workflow/hermes_workflow_doctor.py` |
 | Codex 执行 | 跨平台 launcher、非交互执行规则、只读审查、隔离 worktree、TaskPack exact-tree runner；默认只冻结，需显式 `--publish` 才可发布 | `bin/codex*`、`scripts/workflow/run_taskpack_agent.py`、`skills/autonomous-ai-agents/codex/` |
+| GitHub 交付 | `main` 作为跨设备 SSOT；仅以 exact-SHA CI 与目标分支包含关系确认发布闭环 | `.github/workflows/governance.yml`、`agent-workflow-fortress` |
 | 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
 | Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/workflow/gateway-cron-delivery.md` |
 | 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `bin/hermes-project-data.py`、`skills/software-development/project-data-boundary/` |

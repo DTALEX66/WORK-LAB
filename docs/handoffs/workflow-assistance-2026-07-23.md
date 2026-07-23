@@ -6,21 +6,14 @@
 
 - 本地仓库：`D:\All projects\Workflow-assistance`
 - 云端仓库：`DTALEX66/Workflow-assistance`
-- 职责：Hermes Agent、CC Switch、Codex 的可迁移工作流增强资产 source-of-truth。
+- 职责：Hermes Agent、CC Switch、Codex、GitHub 的可迁移工作流增强资产 source-of-truth；GitHub 同时是跨设备 SSOT、发布与 exact-SHA CI 证据面。
 - 不承担：Hermes/CC Switch/Codex 安装主体、业务项目 runtime、业务数据、凭据、会话或日志。
 - E 盘：默认禁止访问、读取、移动、修改或删除；必须由用户在当前请求精确授权路径与操作。
 - 项目执行数据：必须留在 `<project>/.hermes/` 下的受忽略目录；禁止把 cache、测试输出、日志、artifact、任务状态写到项目根外或用户 Temp。
 
 ## 当前已发布基线
 
-最新已发布提交：
-
-```text
-fa65d2c3a33cb2f4c37242a04997b7c78d28a5b7
-fix(workflow): remove stale provider and toolchain drift
-```
-
-该提交已推送到 `origin/main`，并由 GitHub Actions `workflow-governance` 通过（Linux 与 Windows）。恢复前仍需执行：
+交接文档中的静态 SHA 会在下一次提交后失效，因此不把它当作恢复事实。GitHub `main` 是跨设备 SSOT；恢复前必须执行：
 
 ```bash
 git fetch --prune origin
