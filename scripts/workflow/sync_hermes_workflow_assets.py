@@ -36,6 +36,9 @@ RETIRED_MANAGED_SKILL_ASSETS = {
     "software-development/windows-development-environment/references/github-credential-extraction.md",
     "software-development/windows-development-environment/references/provider-network-troubleshooting.md",
     "software-development/windows-development-environment/references/third-party-proxy-setup.md",
+    "software-development/windows-development-environment/references/cognitive-loop-os-tauri-build.md",
+    "software-development/windows-development-environment/references/cognitive-loop-os-desktop-workflow.md",
+    "software-development/python-testing/references/deterministic-e2e-test-pattern.md",
     "software-development/cognitive-loop-os",
     "software-development/screenlingua",
 }

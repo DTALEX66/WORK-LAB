@@ -413,6 +413,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/audit/model-neutral-agent-harness-absorption-2026-07.md`：模型/API 中立 Agent Harness 审计；
 - `docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml`：固定来源和本地落点的机器可读证据；
 - `docs/handoffs/workflow-assistance-2026-07-23.md`：无密阶段交接、恢复顺序、已发布基线与会话卫生边界；
+- `docs/handoffs/hermes-desktop-source-root-repair-2026-07-24.md`：Desktop source-root/canonical runtime 修复的无密 Codex 交接、验证与回滚边界。
 
 - `TROUBLESHOOTING.md`：常见部署、代理、认证和工具链问题。
 

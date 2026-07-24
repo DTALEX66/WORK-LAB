@@ -640,3 +640,63 @@ git status --short
 If a previous clone was interrupted, inspect the target first. If it contains
 only a partial `.git`, retry safely; if it contains user/project files, do not
 remove or overwrite it without explicit scope confirmation.
+
+### 27. Hermes Desktop shortcut icon repair
+
+A blank Hermes desktop icon is not proof that `Hermes.exe` is missing. Windows
+shortcuts store the executable target and the icon resource independently.
+Inspect both through `WScript.Shell.CreateShortcut()` before changing anything:
+
+```python
+from pathlib import Path
+import win32com.client
+
+link = Path.home() / "Desktop" / "Hermes.lnk"
+shortcut = win32com.client.Dispatch("WScript.Shell").CreateShortcut(str(link))
+print(shortcut.TargetPath, Path(shortcut.TargetPath).is_file())
+print(shortcut.IconLocation)
+```
+
+If the target exists but `IconLocation` points at a retired install tree, locate
+`resources/icon.ico` beside the target's active `win-unpacked` directory, set
+`shortcut.IconLocation = f"{icon},0"`, then save and verify both paths. Ask
+Explorer to refresh its icon view if needed.
+
+Do **not** change the shortcut target, rebuild Desktop, update Hermes, or kill a
+running Desktop process merely to repair the icon. Those are separate runtime
+operations and can interrupt the active chat; apply them only when their own
+symptom is verified and the user has authorized the restart.
+
+### 28. Hermes Desktop appearance persistence and self-update audit
+
+When Hermes Desktop reopens with the same unexpected color, distinguish the
+persisted renderer skin from the OS light/dark mode and the backend's CLI skin.
+The Desktop renderer persists its own appearance in Chromium Local Storage; the
+current source uses keys such as `hermes-desktop-theme-v2`,
+`hermes-desktop-profile-themes-v1`, and `hermes-desktop-mode-v1`. A value of
+`midnight` is intentionally a deep blue-violet palette, not a random blue
+switch. `native-theme.json` / `themeSource: dark` only describes native
+light/dark appearance and does not select a blue palette.
+
+Audit without touching secrets or whole browser storage:
+
+1. Read the non-secret theme implementation and identify the storage key,
+   default skin, profile fallback, and boot-time read path.
+2. Inspect only the exact Local Storage records needed for the theme key; do not
+   dump the complete LevelDB because it can contain provider/session state.
+3. Check `gateway.ready` handling. A correct Desktop should seed backend skin
+   metadata without clobbering the user's persisted Desktop theme; only an
+   explicit `skin.changed` event should repaint it.
+4. Treat a stored `midnight`/`slate` value as the primary cause before blaming
+   Windows theme settings, the proxy, or a new backend connection.
+5. Change the skin through the Desktop Appearance UI when possible. If the UI
+   is broken, obtain the user's exact desired skin before deleting or editing a
+   single storage key; never clear the whole Local Storage directory.
+
+When Desktop shows `isn't a git checkout — desktop self-update only runs against
+a source install`, report that the current runtime is not a Git source checkout.
+This is an updater-capability diagnosis, not proof that the executable or
+shortcut target is missing. Do not convert a slow or blocked upstream download
+into an unverified replacement runtime, and remove any incomplete temporary
+clone before concluding the audit. Keep Desktop/CLI version drift and appearance
+persistence as separate hypotheses; do not infer either from a screenshot alone.
