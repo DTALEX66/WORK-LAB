@@ -73,7 +73,7 @@ class Repository(Protocol):
 
     def snapshot(self) -> tuple[str, str]: ...
 
-    def verify_released(self, baseline_head: str) -> None: ...
+    def verify_released(self, baseline_head: str, expected_tree: str | None = None) -> None: ...
 
 
 class AgentBackend(Protocol):
@@ -92,11 +92,15 @@ class GitRepository:
         root: Path,
         *,
         remote_ref: str = "origin/main",
+        required_workflows: tuple[str, ...] = ("workflow-governance",),
         ci_timeout_seconds: int = 1200,
         ci_poll_seconds: int = 6,
     ) -> None:
         self.root = root.resolve()
         self.remote_ref = remote_ref
+        self.required_workflows = required_workflows
+        if not self.required_workflows:
+            raise RunnerError("required_workflows must contain at least one exact-SHA CI workflow")
         self.ci_timeout_seconds = ci_timeout_seconds
         self.ci_poll_seconds = ci_poll_seconds
 
@@ -124,7 +128,16 @@ class GitRepository:
     def snapshot(self) -> tuple[str, str]:
         return self.staged_tree(), self._git("status", "--porcelain=v1", "--untracked-files=all")
 
-    def verify_released(self, baseline_head: str) -> None:
+    def _remote_name(self) -> str:
+        remote, separator, branch = self.remote_ref.partition("/")
+        if not separator or not remote or not branch:
+            raise RunnerError(
+                "remote_ref must be in '<remote>/<branch>' form; "
+                f"received {self.remote_ref!r}"
+            )
+        return remote
+
+    def verify_released(self, baseline_head: str, expected_tree: str | None = None) -> None:
         tree, status = self.snapshot()
         del tree
         if status:
@@ -132,7 +145,14 @@ class GitRepository:
         head = self.head()
         if head == baseline_head:
             raise RunnerError("writer did not create a release commit")
-        self._git("fetch", "--prune", "origin")
+        if expected_tree is not None:
+            actual_tree = self.head_tree()
+            if actual_tree != expected_tree:
+                raise RunnerError(
+                    "release commit tree differs from the exact tree approved by reviewer: "
+                    f"expected={expected_tree} actual={actual_tree}"
+                )
+        self._git("fetch", "--prune", self._remote_name())
         remote_head = self._git("rev-parse", self.remote_ref)
         if head != remote_head:
             raise RunnerError(f"release is not synchronized: HEAD={head} {self.remote_ref}={remote_head}")
@@ -162,11 +182,36 @@ class GitRepository:
             )
             if result.returncode:
                 raise RunnerError(f"gh run list failed: {result.stderr.strip()}")
-            runs = json.loads(result.stdout)
-            if runs and all(run["status"] == "completed" for run in runs):
-                failed = [run for run in runs if run.get("conclusion") != "success"]
-                if failed:
-                    raise RunnerError(f"exact-SHA CI failed: {json.dumps(failed, ensure_ascii=False)}")
+            try:
+                runs = json.loads(result.stdout)
+            except json.JSONDecodeError as exc:
+                raise RunnerError("gh run list returned invalid JSON") from exc
+            if not isinstance(runs, list):
+                raise RunnerError("gh run list returned a non-list response")
+
+            required_runs = {
+                workflow: [run for run in runs if run.get("name") == workflow]
+                for workflow in self.required_workflows
+            }
+            missing = [workflow for workflow, workflow_runs in required_runs.items() if not workflow_runs]
+            pending = [
+                workflow
+                for workflow, workflow_runs in required_runs.items()
+                if workflow_runs and any(run.get("status") != "completed" for run in workflow_runs)
+            ]
+            failed = [
+                run
+                for workflow_runs in required_runs.values()
+                for run in workflow_runs
+                if run.get("status") == "completed" and run.get("conclusion") != "success"
+            ]
+            if failed:
+                raise RunnerError(f"required exact-SHA CI failed: {json.dumps(failed, ensure_ascii=False)}")
+            if missing and runs and all(run.get("status") == "completed" for run in runs):
+                raise RunnerError(
+                    "required workflow missing for exact-SHA CI: " + ", ".join(sorted(missing))
+                )
+            if not missing and not pending:
                 return
             time.sleep(self.ci_poll_seconds)
         raise RunnerError(f"timed out waiting for exact-SHA CI for {head}")
@@ -395,7 +440,7 @@ class TaskPackRunner:
                 )
                 session_id = result.session_id
                 del session_id
-                self.repo.verify_released(baseline_head)
+                self.repo.verify_released(baseline_head, frozen_tree)
                 return
 
             if review_round > self.max_review_rounds:
@@ -539,6 +584,15 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--max-review-rounds", type=int, default=3)
     parser.add_argument(
+        "--required-workflow",
+        action="append",
+        default=[],
+        help=(
+            "Repeatable exact-SHA GitHub workflow name required before release; "
+            "defaults to workflow-governance."
+        ),
+    )
+    parser.add_argument(
         "--publish",
         action="store_true",
         help="Explicitly allow commit, push and exact-SHA CI after the TaskPack is ready.",
@@ -568,7 +622,11 @@ def main() -> int:
         if args.mission_file is not None
         else args.mission
     )
-    repo = GitRepository(args.repo, remote_ref=args.remote_ref)
+    repo = GitRepository(
+        args.repo,
+        remote_ref=args.remote_ref,
+        required_workflows=tuple(args.required_workflow) or ("workflow-governance",),
+    )
     agent = HermesAgentBackend(args.repo, hermes=args.hermes, skills=args.skills)
     reviewer: ReviewerBackend | None = None
     if args.reviewer == "codex":

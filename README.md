@@ -226,6 +226,7 @@ TaskPack 的高风险冻结复审默认由 Hermes 完成；需要独立第二执
 ```bash
 python scripts/workflow/run_taskpack_agent.py \
   --repo . --remote-ref origin/main --risk high --reviewer codex \
+  --required-workflow workflow-governance \
   --mission "<明确任务>"
 ```
 
@@ -234,6 +235,13 @@ python scripts/workflow/run_taskpack_agent.py \
 bypass，不创建 Codex 会话产物。TaskPack 只读取并删除项目 runtime 中的最终消息与
 schema 临时文件；任何 finding 都 fail-closed 为 `NO-GO`。`--reviewer codex` 仅适用于
 high-risk TaskPack；TaskPack 仍会在每次复审前后核对 `git write-tree` 与工作区状态。
+
+只有显式 `--publish` 才允许 TaskPack 提交、推送和等待 CI。高风险发布会把
+release commit 的 `HEAD^{tree}` 与 reviewer GO 时的 frozen tree 逐字节绑定；不一致即
+拒绝交付。`--remote-ref <remote>/<branch>` 同时决定 fetch 的 remote 与需要相等的远端
+HEAD，不再隐式假定 `origin`。exact-SHA CI 默认必须有名为 `workflow-governance` 的成功
+run；可重复传入 `--required-workflow <name>` 增加额外门禁。缺失、等待中、取消、失败或
+仅有无关 workflow 的 success 都不会通过发布验证。
 
 `skills/autonomous-ai-agents/codex/SKILL.md` 定义：
 
