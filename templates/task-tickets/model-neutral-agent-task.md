@@ -51,6 +51,12 @@ finished_at
 process_handle
 baseline_tree
 result_tree
+reviewed_tree
+release_tree
+remote_ref
+required_workflows
+release_commit
+exact_sha_ci_urls
 verification_command
 verification_exit_code
 output_path
@@ -103,6 +109,8 @@ Record:
 - full relevant gate output;
 - changed paths;
 - exact staged tree from `git write-tree` when release review is required;
+- exact release tree from `git rev-parse HEAD^{tree}` and proof it equals the reviewed tree;
+- remote ref, required workflow names, release commit SHA and exact-SHA CI run URLs when published;
 - rollback procedure.
 
 ## Cost and Network Boundary

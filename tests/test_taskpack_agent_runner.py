@@ -11,6 +11,7 @@ from scripts.workflow.run_taskpack_agent import (
     DEFAULT_SKILLS,
     AgentResult,
     CodexReviewBackend,
+    GitRepository,
     HermesAgentBackend,
     RunnerError,
     TaskPackRunner,
@@ -24,6 +25,7 @@ class FakeRepo:
     staged_tree_value: str = "tree-base"
     status_value: str = ""
     released: bool = False
+    release_args: tuple[str, ...] = ()
 
     def head(self) -> str:
         return self.head_value
@@ -37,9 +39,10 @@ class FakeRepo:
     def snapshot(self) -> tuple[str, str]:
         return self.staged_tree_value, self.status_value
 
-    def verify_released(self, baseline_head: str) -> None:
-        if baseline_head != "base":
-            raise AssertionError(f"unexpected baseline: {baseline_head}")
+    def verify_released(self, *args: str) -> None:
+        self.release_args = args
+        if not args or args[0] != "base":
+            raise AssertionError(f"unexpected baseline: {args}")
         self.released = True
 
 
@@ -143,6 +146,55 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         self.assertIn("origin/feat/sleep", release_prompt)
         self.assertNotIn("HEAD equal to origin/main", release_prompt)
 
+    def test_high_risk_release_binds_delivery_to_reviewed_frozen_tree(self) -> None:
+        repo = FakeRepo()
+        agent = FakeAgent(repo, ["GO"])
+
+        TaskPackRunner(repo=repo, agent=agent, publish=True).run(
+            "release only the reviewed tree", risk="high"
+        )
+
+        self.assertEqual(repo.release_args, ("base", "tree-v1"))
+
+    def test_release_fetches_remote_selected_by_remote_ref(self) -> None:
+        calls: list[tuple[str, ...]] = []
+        repo = GitRepository(Path("."), remote_ref="upstream/release")
+
+        def fake_git(*args: str) -> str:
+            calls.append(args)
+            values = {
+                ("status", "--porcelain=v1", "--untracked-files=all"): "",
+                ("write-tree",): "index-tree",
+                ("rev-parse", "HEAD"): "release",
+                ("rev-parse", "HEAD^{tree}"): "reviewed-tree",
+                ("rev-parse", "upstream/release"): "release",
+            }
+            return values.get(args, "")
+
+        with patch.object(repo, "_git", side_effect=fake_git), patch.object(repo, "_wait_for_ci"):
+            repo.verify_released("base", "reviewed-tree")
+
+        self.assertIn(("fetch", "--prune", "upstream"), calls)
+
+    def test_exact_sha_ci_rejects_completed_unrelated_workflow(self) -> None:
+        repo = GitRepository(Path("."), ci_timeout_seconds=1, ci_poll_seconds=0)
+        result = subprocess.CompletedProcess(
+            ["gh"],
+            0,
+            stdout='[{"status":"completed","conclusion":"success","name":"unrelated"}]',
+            stderr="",
+        )
+        with patch("scripts.workflow.run_taskpack_agent.shutil.which", return_value="gh"), patch(
+            "scripts.workflow.run_taskpack_agent.subprocess.run", return_value=result
+        ), patch(
+            "scripts.workflow.run_taskpack_agent.time.monotonic", side_effect=[0, 0, 2]
+        ), self.assertRaisesRegex(RunnerError, "required workflow"):
+            repo._wait_for_ci("release")
+
+    def test_release_repository_rejects_empty_required_workflow_contract(self) -> None:
+        with self.assertRaisesRegex(RunnerError, "required_workflows"):
+            GitRepository(Path("."), required_workflows=())
+
     def test_default_runner_stages_without_releasing(self) -> None:
         repo = FakeRepo()
         agent = FakeAgent(repo, [])
@@ -226,6 +278,22 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         ):
             with self.assertRaises(SystemExit):
                 _parse_args()
+
+    def test_cli_accepts_repeatable_required_workflow_contract(self) -> None:
+        with patch(
+            "sys.argv",
+            [
+                "run_taskpack_agent.py",
+                "--risk", "high",
+                "--remote-ref", "origin/main",
+                "--required-workflow", "workflow-governance",
+                "--required-workflow", "release-verification",
+                "--mission", "bounded task",
+            ],
+        ):
+            args = _parse_args()
+
+        self.assertEqual(args.required_workflow, ["workflow-governance", "release-verification"])
 
     def test_high_risk_runner_can_use_independent_reviewer_backend(self) -> None:
         repo = FakeRepo()
