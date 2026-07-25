@@ -192,7 +192,7 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         self.assertEqual(command[9:], ["review tree"])
         self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", command)
         self.assertNotIn("--dangerously-bypass-hook-trust", command)
-        self.assertEqual(kwargs["cwd"], root)
+        self.assertEqual(kwargs["cwd"], root.resolve())
 
     def test_codex_reviewer_fails_closed_for_any_non_no_findings_output(self) -> None:
         def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
