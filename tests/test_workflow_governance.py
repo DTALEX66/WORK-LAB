@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -488,6 +489,36 @@ class WorkflowGovernanceTests(unittest.TestCase):
         redacted_json = module.redact(json_secret)
         self.assertNotIn("D" * 30, redacted_json)
         self.assertIn("[REDACTED]", redacted_json)
+
+        with patch.dict(
+            "os.environ",
+            {"HTTPS_PROXY": "http://user:password@127.0.0.1:7890"},
+            clear=True,
+        ):
+            summary = module.proxy_environment_summary("HTTPS_PROXY")
+        self.assertIn("HTTPS_PROXY=set", summary)
+        self.assertIn("local_loopback=yes", summary)
+        self.assertIn("credentials=present-redacted", summary)
+        self.assertNotIn("user", summary)
+        self.assertNotIn("password", summary)
+
+        with patch.dict("os.environ", {"HTTPS_PROXY": "http://[::1"}, clear=True):
+            invalid_summary = module.proxy_environment_summary("HTTPS_PROXY")
+        self.assertEqual(
+            invalid_summary,
+            "HTTPS_PROXY=set scheme=invalid local_loopback=unknown credentials=redacted",
+        )
+
+        with patch.dict("os.environ", {"HTTPS_PROXY": "secret-token:rest"}, clear=True):
+            secret_prefix_summary = module.proxy_environment_summary("HTTPS_PROXY")
+        self.assertEqual(
+            secret_prefix_summary,
+            "HTTPS_PROXY=set scheme=invalid local_loopback=unknown credentials=redacted",
+        )
+
+        with patch.dict("os.environ", {"HTTPS_PROXY": "http://127.0.0.2:7890"}, clear=True):
+            loopback_summary = module.proxy_environment_summary("HTTPS_PROXY")
+        self.assertIn("local_loopback=yes", loopback_summary)
 
     def test_doctor_live_codex_workspace_is_confined_to_project_runtime(self) -> None:
         script = ROOT / "scripts/workflow/hermes_workflow_doctor.py"

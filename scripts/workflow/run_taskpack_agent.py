@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
+import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,6 +24,33 @@ DEFAULT_SKILLS = (
     "systematic-debugging,github-pr-workflow"
 )
 SESSION_PATTERN = re.compile(r"(?m)^session_id:\s*(\S+)\s*$")
+CODEX_REVIEW_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["decision", "findings"],
+    "properties": {
+        "decision": {
+            "type": "string",
+            "enum": ["GO", "NO-GO"],
+            "description": "GO only when findings is empty; otherwise NO-GO.",
+        },
+        "findings": {
+            "type": "array",
+            "description": "Every reportable review finding. Empty only for GO.",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["severity", "file", "line", "detail"],
+                "properties": {
+                    "severity": {"type": "string", "enum": ["blocker", "high", "medium", "low"]},
+                    "file": {"type": "string"},
+                    "line": {"type": "integer", "minimum": 1},
+                    "detail": {"type": "string"},
+                },
+            },
+        },
+    },
+}
 
 
 class RunnerError(RuntimeError):
@@ -50,6 +79,10 @@ class Repository(Protocol):
 class AgentBackend(Protocol):
     def run_writer(self, prompt: str, *, resume: str | None = None) -> AgentResult: ...
 
+    def run_reviewer(self, prompt: str) -> str: ...
+
+
+class ReviewerBackend(Protocol):
     def run_reviewer(self, prompt: str) -> str: ...
 
 
@@ -195,12 +228,116 @@ class HermesAgentBackend:
         return result.stdout.strip()
 
 
+def resolve_codex_executable(configured: str | None = None) -> str:
+    """Locate an installed Codex CLI without reading its configuration or auth."""
+
+    candidates: list[Path] = []
+    if configured:
+        candidates.append(Path(configured).expanduser())
+    if os.environ.get("CODEX_CLI"):
+        candidates.append(Path(os.environ["CODEX_CLI"]).expanduser())
+    candidates.extend(
+        [
+            Path.home() / ".codex/plugins/.plugin-appserver/codex.exe",
+            Path.home() / "AppData/Local/OpenAI/Codex/bin/codex.exe",
+        ]
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    for name in ("codex.exe", "codex"):
+        resolved = shutil.which(name)
+        if resolved:
+            return resolved
+    raise RunnerError(
+        "Codex executable not found; install/login Codex first or pass --codex with its executable path"
+    )
+
+
+class CodexReviewBackend:
+    """Run Codex as a read-only, prompt-aware independent TaskPack reviewer.
+
+    The caller snapshots Git before and after this command. Codex's specialised
+    ``exec review --uncommitted`` accepts neither TaskPack's exact-tree prompt
+    nor a reliable final-message artifact on the verified CLI. Use generic
+    ``exec`` instead: it accepts the exact staged-tree prompt, runs under an
+    explicit read-only sandbox and emits a temporary JSON verdict. A validated
+    GO is returned directly; every finding is fail-closed as NO-GO.
+    """
+
+    def __init__(
+        self,
+        root: Path,
+        *, codex: str | None = None,
+    ) -> None:
+        self.root = root.resolve()
+        self.codex = resolve_codex_executable(codex)
+
+    def run_reviewer(self, prompt: str) -> str:
+        runtime = self.root / ".hermes" / "task-runtime"
+        runtime.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", prefix="codex-review-", dir=runtime, delete=False
+        ) as handle:
+            final_message = Path(handle.name)
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".json", prefix="codex-review-schema-", dir=runtime, delete=False
+        ) as handle:
+            output_schema = Path(handle.name)
+        output_schema.write_text(json.dumps(CODEX_REVIEW_SCHEMA), encoding="utf-8")
+        try:
+            result = subprocess.run(
+                [
+                    self.codex,
+                    "exec",
+                    "--sandbox",
+                    "read-only",
+                    "--ephemeral",
+                    "--output-last-message",
+                    str(final_message),
+                    "--output-schema",
+                    str(output_schema),
+                    prompt,
+                ],
+                cwd=self.root,
+                check=False,
+                text=True,
+                capture_output=True,
+                timeout=600,
+            )
+            if result.returncode:
+                detail = (result.stderr or result.stdout).strip()
+                raise RunnerError(f"Codex review exited {result.returncode}: {detail}")
+            review = final_message.read_text(encoding="utf-8").strip()
+            if not review:
+                raise RunnerError("Codex review produced no final output")
+        finally:
+            final_message.unlink(missing_ok=True)
+            output_schema.unlink(missing_ok=True)
+        try:
+            payload = json.loads(review)
+        except json.JSONDecodeError as exc:
+            raise RunnerError("Codex review final output did not match the required JSON schema") from exc
+        if not isinstance(payload, dict) or set(payload) != {"decision", "findings"}:
+            raise RunnerError("Codex review final output did not match the required JSON schema")
+        decision = payload.get("decision")
+        findings = payload.get("findings")
+        if decision not in {"GO", "NO-GO"} or not isinstance(findings, list):
+            raise RunnerError("Codex review final output did not match the required JSON schema")
+        if decision == "GO" and findings:
+            raise RunnerError("Codex review returned GO with findings")
+        if decision == "NO-GO":
+            return "NO-GO\nCodex native pre-review:\n" + json.dumps(payload, ensure_ascii=False)
+        return "GO\nCodex structured exact-tree review found no findings"
+
+
 class TaskPackRunner:
     def __init__(
         self,
         *,
         repo: Repository,
         agent: AgentBackend,
+        reviewer: ReviewerBackend | None = None,
         max_review_rounds: int = 3,
         release_ref: str = "origin/main",
         publish: bool = False,
@@ -209,6 +346,7 @@ class TaskPackRunner:
             raise ValueError("max_review_rounds must be positive")
         self.repo = repo
         self.agent = agent
+        self.reviewer = reviewer or agent
         self.max_review_rounds = max_review_rounds
         self.release_ref = release_ref
         self.publish = publish
@@ -243,7 +381,7 @@ class TaskPackRunner:
 
         for review_round in range(1, self.max_review_rounds + 2):
             frozen_tree, frozen_status = self.repo.snapshot()
-            review = self.agent.run_reviewer(
+            review = self.reviewer.run_reviewer(
                 self._review_prompt(mission, frozen_tree, review_round)
             )
             if self.repo.snapshot() != (frozen_tree, frozen_status):
@@ -407,7 +545,20 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--skills", default=DEFAULT_SKILLS)
     parser.add_argument("--hermes", default="hermes")
-    return parser.parse_args()
+    parser.add_argument(
+        "--reviewer",
+        choices=("hermes", "codex"),
+        default="hermes",
+        help="Exact-tree reviewer backend; Codex uses native exec review in ephemeral mode.",
+    )
+    parser.add_argument(
+        "--codex",
+        help="Optional Codex executable path when --reviewer codex is selected.",
+    )
+    args = parser.parse_args()
+    if args.reviewer == "codex" and args.risk != "high":
+        parser.error("--reviewer codex is only valid with --risk high")
+    return args
 
 
 def main() -> int:
@@ -419,9 +570,13 @@ def main() -> int:
     )
     repo = GitRepository(args.repo, remote_ref=args.remote_ref)
     agent = HermesAgentBackend(args.repo, hermes=args.hermes, skills=args.skills)
+    reviewer: ReviewerBackend | None = None
+    if args.reviewer == "codex":
+        reviewer = CodexReviewBackend(args.repo, codex=args.codex)
     TaskPackRunner(
         repo=repo,
         agent=agent,
+        reviewer=reviewer,
         max_review_rounds=args.max_review_rounds,
         release_ref=args.remote_ref,
         publish=args.publish,

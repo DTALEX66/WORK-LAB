@@ -7,6 +7,9 @@ runs real provider and Codex execution smokes; only live markers prove execution
 from __future__ import annotations
 
 import argparse
+import csv
+import io
+import ipaddress
 import os
 import re
 import shutil
@@ -15,6 +18,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from switch_model import DEEPSEEK_MODEL, GPT_MODEL
 
@@ -107,6 +111,75 @@ def port_open(port: int) -> bool:
             return True
     except OSError:
         return False
+
+
+def proxy_environment_summary(name: str) -> str:
+    """Classify a proxy variable without printing its endpoint or credentials."""
+
+    value = os.environ.get(name)
+    if not value:
+        return f"{name}=unset"
+    if name == "NO_PROXY":
+        return "NO_PROXY=set entries=redacted"
+    try:
+        parsed = urlsplit(value)
+        scheme = parsed.scheme.lower()
+        host = (parsed.hostname or "").lower()
+        credentials = "present-redacted" if parsed.username or parsed.password else "none"
+    except ValueError:
+        return f"{name}=set scheme=invalid local_loopback=unknown credentials=redacted"
+    if scheme not in {"http", "https", "socks4", "socks5", "socks5h"} or not host:
+        return f"{name}=set scheme=invalid local_loopback=unknown credentials=redacted"
+    try:
+        loopback = host == "localhost" or ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        loopback = False
+    return (
+        f"{name}=set scheme={scheme} local_loopback={'yes' if loopback else 'no'} "
+        f"credentials={credentials}"
+    )
+
+
+def windows_listener_owner(port: int) -> str | None:
+    """Return a local listener image/PID on Windows without reading app config."""
+
+    if os.name != "nt":
+        return None
+    try:
+        netstat = subprocess.run(
+            ["netstat", "-ano", "-p", "tcp"],
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=8,
+        )
+    except OSError:
+        return None
+    pid: str | None = None
+    for line in netstat.stdout.splitlines():
+        columns = line.split()
+        if len(columns) >= 5 and columns[1].endswith(f":{port}") and columns[3] == "LISTENING":
+            pid = columns[-1]
+            break
+    if not pid:
+        return None
+    try:
+        tasklist = subprocess.run(
+            ["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"],
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=8,
+        )
+        rows = list(csv.reader(io.StringIO(tasklist.stdout)))
+        image = rows[0][0] if rows and rows[0] and rows[0][0] != "INFO: No tasks are running" else "unknown"
+    except OSError:
+        image = "unknown"
+    return f"pid={pid} image={image}"
 
 
 def hermes_home() -> Path:
@@ -210,11 +283,17 @@ def main() -> int:
     print_command("Hermes MCP inventory", ["hermes", "mcp", "list"], max_lines=20)
 
     print("\n=== Network / route structure ===")
+    print("[INFO] Proxy environment (endpoint and credentials withheld)")
+    for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"):
+        print("  " + proxy_environment_summary(name))
     for port, role in (
-        (7890, "CC Switch network proxy"),
-        (15721, "CC Switch Codex router (optional; native Codex OAuth does not depend on it)"),
+        (7890, "Local network proxy (route tool owner is reported when available)"),
+        (15721, "Local Codex router (optional; native Codex OAuth does not depend on it)"),
     ):
-        print(f"[{'OK' if port_open(port) else 'WARN'}] {role} 127.0.0.1:{port} = {'open' if port_open(port) else 'closed'}")
+        open_now = port_open(port)
+        owner = windows_listener_owner(port) if open_now else None
+        owner_detail = f"; {owner}" if owner else ""
+        print(f"[{'OK' if open_now else 'WARN'}] {role} 127.0.0.1:{port} = {'open' if open_now else 'closed'}{owner_detail}")
     print_command(
         "DeepSeek HTTP reachability (HTTP 401 is reachable, not authenticated)",
         ["curl", "-sSI", "--max-time", "8", "https://api.deepseek.com"],

@@ -220,6 +220,21 @@ python scripts/workflow/provider_health.py \
 - `bin/codex.cmd`：Windows launcher；
 - 优先使用更新的 desktop/plugin Codex 二进制，避免 PATH 中旧版本遮蔽。
 
+TaskPack 的高风险冻结复审默认由 Hermes 完成；需要独立第二执行体时可显式
+选择 Codex 原生 review（不改变默认行为）：
+
+```bash
+python scripts/workflow/run_taskpack_agent.py \
+  --repo . --remote-ref origin/main --risk high --reviewer codex \
+  --mission "<明确任务>"
+```
+
+该路径使用通用 `codex exec --sandbox read-only --ephemeral`，将 exact staged-tree
+任务 prompt 与临时 JSON Schema 一起交给 Codex；不会使用危险 sandbox/approval
+bypass，不创建 Codex 会话产物。TaskPack 只读取并删除项目 runtime 中的最终消息与
+schema 临时文件；任何 finding 都 fail-closed 为 `NO-GO`。`--reviewer codex` 仅适用于
+high-risk TaskPack；TaskPack 仍会在每次复审前后核对 `git write-tree` 与工作区状态。
+
 `skills/autonomous-ai-agents/codex/SKILL.md` 定义：
 
 - `codex exec` / `codex review` 使用非交互模式；

@@ -10,6 +10,7 @@ from unittest.mock import patch
 from scripts.workflow.run_taskpack_agent import (
     DEFAULT_SKILLS,
     AgentResult,
+    CodexReviewBackend,
     HermesAgentBackend,
     RunnerError,
     TaskPackRunner,
@@ -163,6 +164,85 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         ):
             with self.assertRaises(SystemExit):
                 _parse_args()
+
+    def test_codex_reviewer_uses_native_ephemeral_uncommitted_review_without_bypass(self) -> None:
+        calls: list[tuple[list[str], dict[str, object]]] = []
+
+        def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append((command, kwargs))
+            output_file = Path(command[command.index("--output-last-message") + 1])
+            output_file.write_text('{"decision": "GO", "findings": []}', encoding="utf-8")
+            return subprocess.CompletedProcess(command, 0, stdout="process transcript", stderr="")
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            codex = root / "codex.exe"
+            codex.write_text("placeholder", encoding="utf-8")
+            with patch("scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run):
+                review = CodexReviewBackend(root, codex=str(codex)).run_reviewer("review tree")
+
+        self.assertEqual(review, "GO\nCodex structured exact-tree review found no findings")
+        command, kwargs = calls[0]
+        self.assertEqual(
+            command[:7],
+            [str(codex), "exec", "--sandbox", "read-only", "--ephemeral", "--output-last-message", command[6]],
+        )
+        self.assertEqual(command[7], "--output-schema")
+        self.assertTrue(command[8].endswith(".json"))
+        self.assertEqual(command[9:], ["review tree"])
+        self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", command)
+        self.assertNotIn("--dangerously-bypass-hook-trust", command)
+        self.assertEqual(kwargs["cwd"], root)
+
+    def test_codex_reviewer_fails_closed_for_any_non_no_findings_output(self) -> None:
+        def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+            output_file = Path(command[command.index("--output-last-message") + 1])
+            output_file.write_text(
+                '{"decision": "NO-GO", "findings": [{"severity": "high", "file": "x.py", "line": 1, "detail": "test gap"}]}',
+                encoding="utf-8",
+            )
+            return subprocess.CompletedProcess(command, 0, stdout="process transcript", stderr="")
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            codex = root / "codex.exe"
+            codex.write_text("placeholder", encoding="utf-8")
+            with patch("scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run):
+                review = CodexReviewBackend(root, codex=str(codex)).run_reviewer("ignored")
+
+        self.assertIn("NO-GO\nCodex native pre-review:\n", review)
+        self.assertIn('"severity": "high"', review)
+
+    def test_cli_rejects_codex_reviewer_for_low_risk_taskpack(self) -> None:
+        with patch(
+            "sys.argv",
+            [
+                "run_taskpack_agent.py",
+                "--risk", "low",
+                "--reviewer", "codex",
+                "--remote-ref", "origin/main",
+                "--mission", "bounded task",
+            ],
+        ):
+            with self.assertRaises(SystemExit):
+                _parse_args()
+
+    def test_high_risk_runner_can_use_independent_reviewer_backend(self) -> None:
+        repo = FakeRepo()
+        writer = FakeAgent(repo, [])
+
+        class IndependentReviewer:
+            def __init__(self) -> None:
+                self.calls: list[str] = []
+
+            def run_reviewer(self, prompt: str) -> str:
+                self.calls.append(prompt)
+                return "GO"
+
+        reviewer = IndependentReviewer()
+        TaskPackRunner(repo=repo, agent=writer, reviewer=reviewer).run("review independently", risk="high")
+        self.assertEqual(len(reviewer.calls), 1)
+        self.assertEqual(writer.review_calls, [])
 
 
 if __name__ == "__main__":
