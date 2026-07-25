@@ -115,7 +115,11 @@ python scripts/workflow/sync_hermes_workflow_assets.py --apply
 python scripts/workflow/verify_portable_install.py
 ```
 
-它不调用模型、不读取现有 Hermes Home、不读取认证文件；只验证 portable config、skills、bin、Context7、模型 lanes 与快捷命令可被部署。兼容性承诺和功能清单位于 `workflow-manifest.yaml`。
+它不调用模型、不读取现有 Hermes Home、不读取认证文件；它会 fail-closed 验证
+`workflow-manifest.yaml` 声明的 config compatibility/runtime features、portable config、skills、
+bin、Context7 的 copied wrapper 与 pinned package、模型 lanes 和快捷命令都可被部署。它不把
+结构检查伪装成 MCP spawn 或 `hermes config check`；后二者只能在明确启用的隔离 integration
+gate 中执行。兼容性承诺和功能清单位于 `workflow-manifest.yaml`。
 
 新项目应先忽略 `.hermes/`，再使用最小项目初始化器：
 

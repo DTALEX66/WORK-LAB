@@ -48,6 +48,21 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("PORTABLE_INSTALL_VERIFY_PASS", result.stdout)
 
+    def test_portable_install_verifier_enforces_manifest_and_context7_wrapper_contract(self) -> None:
+        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        spec = importlib.util.spec_from_file_location("portable_install_verify", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            checks = module.verify(ROOT, Path(raw) / "isolated-home")
+
+        self.assertIn("manifest.config_version", checks)
+        self.assertIn("manifest.required_runtime_features", checks)
+        self.assertIn("context7.wrapper", checks)
+
     def test_project_bootstrap_dry_run_is_non_destructive_and_lists_outputs(self) -> None:
         script = ROOT / "scripts/workflow/bootstrap_project.py"
         self.assertTrue(script.exists())
