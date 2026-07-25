@@ -2,7 +2,39 @@
 
 > Date: 2026-07-24
 > Scope: Hermes Desktop runtime/update path only
-> Executor: Codex (after the current Hermes Desktop session is fully closed)
+> Executor: Codex (only after the active Hermes Desktop session is fully closed)
+
+## 0. Current state — revalidated 2026-07-25
+
+The original safe launcher/rebuild transition described below has since been
+superseded by a canonical Git-root runtime. Treat this section as authoritative
+for any continuation; retain the earlier sections only as historical recovery
+context.
+
+```text
+Current Desktop shortcut target
+→ C:\Users\ALEX\AppData\Local\hermes\hermes-agent\apps\desktop\release\win-unpacked\Hermes.exe
+
+Current canonical Hermes root
+→ C:\Users\ALEX\AppData\Local\hermes\hermes-agent
+→ .git present
+→ remote: NousResearch/hermes-agent
+
+Retired transition paths
+→ C:\Users\ALEX\AppData\Local\hermes\hermes-desktop-source-root.cmd
+→ C:\Users\ALEX\AppData\Local\hermes\hermes-agent-rebuild\hermes-agent-main
+```
+
+The legacy launcher and rebuild checkout are no longer present. Do **not** try
+to recreate, invoke, or roll back to those retired paths merely because they
+appear in this historical handoff.
+
+The canonical root is not yet update-safe: at revalidation it has two modified
+Desktop chat-message files and is `ahead 6, behind 1` of `origin/main`. Before
+running `hermes update`, resetting files, rebasing, or replacing runtime data,
+Codex must first identify the owner and intent of those modifications, preserve
+a rollback point, then complete a normal Desktop restart and UI acceptance
+check. No update command is authorized while that working tree is dirty.
 
 ## 1. Task objective
 
