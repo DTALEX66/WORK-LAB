@@ -14,23 +14,23 @@ entries:
 - name: codex
   source: skills/autonomous-ai-agents/codex/SKILL.md
   live: skills/autonomous-ai-agents/codex/SKILL.md
-  source_sha256: 117377dfda684401b9c09b1abe9e181de41f169e28a3de4eae5714f697c96f0d
+  source_sha256: f2149ad17c15e5a29e9fdb2d7adf65b394084e0493740267c7b76a14f26196d2
   version: 2.0.0
   trust: repository-controlled
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 117377dfda684401b9c09b1abe9e181de41f169e28a3de4eae5714f697c96f0d
+  live_sha256: f2149ad17c15e5a29e9fdb2d7adf65b394084e0493740267c7b76a14f26196d2
 - name: model-switch
   source: skills/model-switch/SKILL.md
   live: skills/model-switch/SKILL.md
-  source_sha256: b4ff55a2af9db653f1615fb9b435aa50856269f357072d58029a1e78bbd16862
+  source_sha256: fb512b8d0456a8b3047d0f7dace932797860bf224bc79be254cd052128e9f258
   version: 1.3.0
   trust: repository-controlled
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: b4ff55a2af9db653f1615fb9b435aa50856269f357072d58029a1e78bbd16862
+  live_sha256: fb512b8d0456a8b3047d0f7dace932797860bf224bc79be254cd052128e9f258
 - name: project-data-boundary
   source: skills/software-development/project-data-boundary/SKILL.md
   live: skills/software-development/project-data-boundary/SKILL.md
@@ -44,23 +44,23 @@ entries:
 - name: python-testing
   source: skills/software-development/python-testing/SKILL.md
   live: skills/software-development/python-testing/SKILL.md
-  source_sha256: 99f08283f9e0c73a75b84f4846fbfa3a853351b2ffd68bc2e480db07437e32df
+  source_sha256: e49208f3aa25e295a68e850eb23490056aff13b7d62b67390d715206e4341eb3
   version: 1.0.0
   trust: repository-controlled
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 99f08283f9e0c73a75b84f4846fbfa3a853351b2ffd68bc2e480db07437e32df
+  live_sha256: e49208f3aa25e295a68e850eb23490056aff13b7d62b67390d715206e4341eb3
 - name: requesting-code-review
   source: skills/software-development/requesting-code-review/SKILL.md
   live: skills/software-development/requesting-code-review/SKILL.md
-  source_sha256: bbe85caa052246bd9c6f9304c5b64d77b41d9195acec4a1d561e9a6169d4c1f0
+  source_sha256: d506d7eddd42931dc3122440e64f2e2f6d5757b54e6f5984c6dd5eb43e5f377a
   version: 3.0.0
   trust: repository-controlled
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: bbe85caa052246bd9c6f9304c5b64d77b41d9195acec4a1d561e9a6169d4c1f0
+  live_sha256: d506d7eddd42931dc3122440e64f2e2f6d5757b54e6f5984c6dd5eb43e5f377a
 - name: sleep-mode
   source: skills/software-development/sleep-mode/SKILL.md
   live: skills/software-development/sleep-mode/SKILL.md
@@ -85,7 +85,7 @@ entries:
   source: profile-live-only/github/github-auth/SKILL.md
   live: skills/github/github-auth/SKILL.md
   source_sha256: profile-live-only
-  live_sha256: eceed45ae817a425dc98f9631723851b46c30bbf4d121af8ce74745b7bed71ba
+  live_sha256: 7fdf94afcf01350108bcc9b6941bde62e962f563ac878835473d9b0d3b62753f
   version: 1.1.0
   trust: profile-controlled-reviewed
   enabled: true
@@ -95,7 +95,7 @@ entries:
   source: profile-live-only/github/github-code-review/SKILL.md
   live: skills/github/github-code-review/SKILL.md
   source_sha256: profile-live-only
-  live_sha256: 31218c1cfa680a1f9f94f168d2c5285b612d4deebfd40a4bb779ab4017e1b8bc
+  live_sha256: aadd9bf645c2aec2a66c7a390d047868601891f62c2d402bd533db68f6d4c454
   version: 1.1.0
   trust: profile-controlled-reviewed
   enabled: true
@@ -105,7 +105,7 @@ entries:
   source: profile-live-only/github/github-issues/SKILL.md
   live: skills/github/github-issues/SKILL.md
   source_sha256: profile-live-only
-  live_sha256: 9e570f87ca5476448d25deba75f9453e6788bab26c2a59b7661f71bd4db0a21a
+  live_sha256: a7220d7cbfe1b3146545558337eddfeb9c805e18a570e426f11611bd9b871a30
   version: 1.1.0
   trust: profile-controlled-reviewed
   enabled: true
@@ -115,7 +115,7 @@ entries:
   source: profile-live-only/github/github-pr-workflow/SKILL.md
   live: skills/github/github-pr-workflow/SKILL.md
   source_sha256: profile-live-only
-  live_sha256: 77d4e96f95f43265ec91fb602996664d78f944cae342a83d08c05995e1256770
+  live_sha256: be481de25d19aff627f27ccab9aec0df914f8fe217f4c999f5b922e22d36454a
   version: 1.1.0
   trust: profile-controlled-reviewed
   enabled: true
@@ -125,7 +125,7 @@ entries:
   source: profile-live-only/github/github-repo-management/SKILL.md
   live: skills/github/github-repo-management/SKILL.md
   source_sha256: profile-live-only
-  live_sha256: f824ab01b08d00f3007b43d50de47d07e88060b2baf955277a911c119cbf0758
+  live_sha256: 5a58a713375a86ade9e7e1faa50bdefe1f4176e64a6f9a35a96247e7189190f8
   version: 1.1.0
   trust: profile-controlled-reviewed
   enabled: true
