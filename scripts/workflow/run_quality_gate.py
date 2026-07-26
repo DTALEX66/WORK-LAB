@@ -54,10 +54,40 @@ def usable_bash() -> str | None:
     return None
 
 
+def project_runtime_environment(root: Path) -> dict[str, str]:
+    runtime = (root / ".hermes" / "task-runtime").resolve()
+    paths = {
+        "tmp": runtime / "tmp",
+        "cache": runtime / "cache",
+        "logs": runtime / "logs",
+        "artifacts": root / ".hermes" / "task-artifacts",
+        "pycache": runtime / "pycache",
+    }
+    for path in paths.values():
+        path.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env.update(
+        {
+            "TMP": str(paths["tmp"]),
+            "TEMP": str(paths["tmp"]),
+            "TMPDIR": str(paths["tmp"]),
+            "XDG_CACHE_HOME": str(paths["cache"]),
+            "PIP_CACHE_DIR": str(paths["cache"] / "pip"),
+            "UV_CACHE_DIR": str(paths["cache"] / "uv"),
+            "PYTHONPYCACHEPREFIX": str(paths["pycache"]),
+            "HERMES_PROJECT_RUNTIME_ROOT": str(runtime),
+            "HERMES_PROJECT_ARTIFACTS": str(paths["artifacts"]),
+            "HERMES_PROJECT_LOGS": str(paths["logs"]),
+            "HERMES_KANBAN_HOME": str(root / ".hermes"),
+        }
+    )
+    return env
+
+
 def run(argv: list[str], *, cwd: Path = ROOT) -> int:
     printable = " ".join(argv)
     print(f"\n=== {printable} ===")
-    result = subprocess.run(argv, cwd=cwd, text=True)
+    result = subprocess.run(argv, cwd=cwd, text=True, env=project_runtime_environment(cwd))
     print(f"=== exit {result.returncode}: {printable} ===")
     return result.returncode
 
@@ -67,7 +97,7 @@ def run_python(args: list[str]) -> int:
 
 
 def tracked_python_files() -> list[str]:
-    roots = [ROOT / "scripts" / "workflow", ROOT / "scripts" / "security", ROOT / "tests"]
+    roots = [ROOT / "bin", ROOT / "scripts" / "workflow", ROOT / "scripts" / "security", ROOT / "tests"]
     return [path.relative_to(ROOT).as_posix() for root in roots for path in sorted(root.glob("*.py"))]
 
 
@@ -88,6 +118,16 @@ def gate_security() -> int:
             "docs",
             "scripts",
             "README.md",
+        ]
+    )
+
+
+def gate_skill_provenance() -> int:
+    return run_python(
+        [
+            "scripts/security/check_skill_provenance.py",
+            "--manifest",
+            "config/skill-provenance.yaml",
         ]
     )
 
@@ -146,6 +186,7 @@ def gate_powershell() -> int:
 GATES: dict[str, Gate] = {
     "governance": Gate("governance", "Run all portable workflow and project-boundary tests.", gate_governance),
     "compile": Gate("compile", "Compile repository Python workflow/security/test files.", gate_compile),
+    "skill-provenance": Gate("skill-provenance", "Validate source skill metadata, references, and provenance hashes.", gate_skill_provenance),
     "security": Gate("security", "Scan templates, skills, docs, scripts and README for prompt/security hazards.", gate_security),
     "context-pack": Gate("context-pack", "Generate the safe ignored Context Pack smoke artifact.", gate_context_pack),
     "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
@@ -155,7 +196,7 @@ GATES: dict[str, Gate] = {
     "powershell": Gate("powershell", "Parse setup.ps1 with PowerShell AST when pwsh/powershell.exe is available.", gate_powershell),
 }
 
-VERIFY_ORDER = ("governance", "compile", "security", "context-pack", "portable-install", "provider-inventory", "mcp-audit", "shell", "powershell")
+VERIFY_ORDER = ("governance", "compile", "skill-provenance", "security", "context-pack", "portable-install", "provider-inventory", "mcp-audit", "shell", "powershell")
 
 
 def run_gate_sequence(names: tuple[str, ...]) -> int:

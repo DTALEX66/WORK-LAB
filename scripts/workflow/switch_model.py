@@ -7,6 +7,7 @@ No secrets are printed. The script only writes Hermes config via official
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -14,9 +15,6 @@ import socket
 import subprocess
 import sys
 from pathlib import Path
-
-import yaml
-
 
 GPT_MODEL = os.environ.get("HERMES_GPT_MODEL", "gpt-5.6-sol")
 DEEPSEEK_MODEL = os.environ.get("HERMES_DEEPSEEK_MODEL", "deepseek-v4-flash")
@@ -76,15 +74,9 @@ def port_open(host: str, port: int, timeout: float = 1.0) -> bool:
 
 
 def env_has(name: str) -> bool:
-    if os.environ.get(name):
-        return True
-    p = hermes_home() / '.env'
-    if not p.exists():
-        return False
-    for line in p.read_text(encoding='utf-8', errors='ignore').splitlines():
-        if line.strip().startswith(name + '=') and line.split('=', 1)[1].strip():
-            return True
-    return False
+    """Check only the current process environment; never inspect Hermes .env."""
+
+    return bool(os.environ.get(name))
 
 
 def _config_value(data: dict, dotted_key: str) -> object:
@@ -96,14 +88,16 @@ def _config_value(data: dict, dotted_key: str) -> object:
     return current
 
 
-def _load_config_snapshot() -> dict:
-    config_path = hermes_home() / 'config.yaml'
-    if not config_path.exists():
-        return {}
-    loaded = yaml.safe_load(config_path.read_text(encoding='utf-8')) or {}
-    if not isinstance(loaded, dict):
-        raise SystemExit('Hermes config root must be a mapping')
-    return loaded
+def _get_config_value(key: str) -> object:
+    """Read one non-secret field through the official Hermes CLI only."""
+
+    cp = run(['hermes', 'config', 'get', '--json', key], timeout=30)
+    if cp.returncode != 0:
+        return None
+    try:
+        return json.loads(cp.stdout.strip())
+    except json.JSONDecodeError:
+        return None
 
 
 def _restore_config(applied: list[tuple[str, object]]) -> None:
@@ -115,7 +109,7 @@ def _restore_config(applied: list[tuple[str, object]]) -> None:
 def set_config(pairs: list[tuple[str, str]]) -> None:
     if not shutil.which('hermes'):
         raise SystemExit('hermes command not found')
-    before = _load_config_snapshot()
+    before = {key: _get_config_value(key) for key, _ in pairs}
     applied: list[tuple[str, object]] = []
     for key, value in pairs:
         cp = run(['hermes', 'config', 'set', key, value], timeout=30)
@@ -123,10 +117,10 @@ def set_config(pairs: list[tuple[str, str]]) -> None:
         if cp.returncode != 0:
             _restore_config(applied)
             raise SystemExit(f'config update failed at {key}; restored {len(applied)} prior field(s)')
-        applied.append((key, _config_value(before, key)))
+        applied.append((key, before.get(key)))
 
-    after = _load_config_snapshot()
-    mismatches = [key for key, value in pairs if _config_value(after, key) != value]
+    after = {key: _get_config_value(key) for key, _ in pairs}
+    mismatches = [key for key, value in pairs if after.get(key) != value]
     if mismatches:
         _restore_config(applied)
         raise SystemExit('config verification failed; restored prior fields: ' + ', '.join(mismatches))
@@ -148,11 +142,10 @@ def live_marker(provider: str, model: str, marker: str) -> None:
 
 
 def status() -> None:
-    print('=== Hermes config ===')
-    cp = run(['hermes', 'config'], timeout=30)
-    for line in redact(cp.stdout).splitlines():
-        if any(k in line for k in ['provider', 'default', 'base_url', 'api_key']):
-            print(line)
+    print('=== Hermes config summary ===')
+    for key in ('model.provider', 'model.default'):
+        cp = run(['hermes', 'config', 'get', '--json', key], timeout=30)
+        print(f'{key}={redact(cp.stdout.strip()) if cp.returncode == 0 else "unavailable"}')
     print('\n=== Prerequisites ===')
     print(f'HERMES_HOME={hermes_home()}')
     print(f'KIMI_API_KEY={"present" if env_has("KIMI_API_KEY") or env_has("KIMI_CN_API_KEY") else "missing"}')
@@ -177,7 +170,7 @@ def main() -> int:
 
     if args.target in {'kimi', 'k3', 'kimi-fast', 'kimi-turbo'}:
         if not args.no_verify and not (env_has('KIMI_API_KEY') or env_has('KIMI_CN_API_KEY')):
-            raise SystemExit('KIMI_API_KEY/KIMI_CN_API_KEY missing in environment or Hermes .env')
+            raise SystemExit('KIMI_API_KEY/KIMI_CN_API_KEY missing in the current environment')
         if args.target == 'kimi-turbo':
             model = KIMI_TURBO_MODEL
             label = 'Kimi K2.7 Code HighSpeed'

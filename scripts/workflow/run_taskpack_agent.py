@@ -57,6 +57,43 @@ class RunnerError(RuntimeError):
     """Raised when an orchestration or release invariant fails."""
 
 
+def project_runtime_environment(root: Path) -> dict[str, str]:
+    """Return a project-owned environment for every child Agent process."""
+
+    runtime = root.resolve() / ".hermes" / "task-runtime"
+    paths = {
+        "tmp": runtime / "tmp",
+        "cache": runtime / "cache",
+        "logs": runtime / "logs",
+        "artifacts": runtime / "artifacts",
+        "pip-cache": runtime / "pip-cache",
+        "pycache": runtime / "pycache",
+    }
+    for path in paths.values():
+        path.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env.update({
+        "TMP": str(paths["tmp"]),
+        "TEMP": str(paths["tmp"]),
+        "TMPDIR": str(paths["tmp"]),
+        "XDG_CACHE_HOME": str(paths["cache"]),
+        "PIP_CACHE_DIR": str(paths["pip-cache"]),
+        "UV_CACHE_DIR": str(paths["cache"] / "uv"),
+        "NPM_CONFIG_CACHE": str(paths["cache"] / "npm"),
+        "YARN_CACHE_FOLDER": str(paths["cache"] / "yarn"),
+        "PLAYWRIGHT_BROWSERS_PATH": str(paths["cache"] / "playwright"),
+        "RUSTUP_HOME": str(paths["cache"] / "rustup"),
+        "CARGO_HOME": str(paths["cache"] / "cargo"),
+        "RUFF_CACHE_DIR": str(paths["cache"] / "ruff"),
+        "PYTHONPYCACHEPREFIX": str(paths["pycache"]),
+        "HERMES_KANBAN_HOME": str(root.resolve() / ".hermes"),
+        "HERMES_PROJECT_RUNTIME_ROOT": str(runtime),
+        "HERMES_PROJECT_ARTIFACTS": str(paths["artifacts"]),
+        "HERMES_PROJECT_LOGS": str(paths["logs"]),
+    })
+    return env
+
+
 @dataclass(frozen=True)
 class AgentResult:
     stdout: str
@@ -97,6 +134,7 @@ class GitRepository:
         ci_poll_seconds: int = 6,
     ) -> None:
         self.root = root.resolve()
+        self.env = project_runtime_environment(self.root)
         self.remote_ref = remote_ref
         self.required_workflows = required_workflows
         if not self.required_workflows:
@@ -173,12 +211,13 @@ class GitRepository:
                     "--limit",
                     "20",
                     "--json",
-                    "status,conclusion,name,url,databaseId",
+                    "status,conclusion,name,url,databaseId,headSha,attempt,createdAt",
                 ],
                 cwd=self.root,
                 check=False,
                 text=True,
                 capture_output=True,
+                env=self.env,
             )
             if result.returncode:
                 raise RunnerError(f"gh run list failed: {result.stderr.strip()}")
@@ -189,10 +228,17 @@ class GitRepository:
             if not isinstance(runs, list):
                 raise RunnerError("gh run list returned a non-list response")
 
-            required_runs = {
-                workflow: [run for run in runs if run.get("name") == workflow]
-                for workflow in self.required_workflows
-            }
+            required_runs: dict[str, list[dict[str, object]]] = {}
+            for workflow in self.required_workflows:
+                exact = [
+                    run for run in runs
+                    if run.get("name") == workflow and run.get("headSha") == head
+                ]
+                if exact:
+                    exact.sort(key=lambda run: (int(run.get("attempt") or 0), str(run.get("createdAt") or "")), reverse=True)
+                    required_runs[workflow] = [exact[0]]
+                else:
+                    required_runs[workflow] = []
             missing = [workflow for workflow, workflow_runs in required_runs.items() if not workflow_runs]
             pending = [
                 workflow
@@ -212,6 +258,12 @@ class GitRepository:
                     "required workflow missing for exact-SHA CI: " + ", ".join(sorted(missing))
                 )
             if not missing and not pending:
+                evidence = [
+                    f"{workflow}:run={run.get('databaseId')} attempt={run.get('attempt')} url={run.get('url')} headSha={run.get('headSha')}"
+                    for workflow, workflow_runs in required_runs.items()
+                    for run in workflow_runs
+                ]
+                print("EXACT_SHA_CI_PASS " + " | ".join(evidence))
                 return
             time.sleep(self.ci_poll_seconds)
         raise RunnerError(f"timed out waiting for exact-SHA CI for {head}")
@@ -231,6 +283,7 @@ class HermesAgentBackend:
         self.root = root.resolve()
         self.hermes = executable
         self.skills = skills
+        self.env = project_runtime_environment(self.root)
 
     def _run(self, command: list[str]) -> subprocess.CompletedProcess[str]:
         result = subprocess.run(
@@ -239,6 +292,7 @@ class HermesAgentBackend:
             check=False,
             text=True,
             capture_output=True,
+            env=self.env,
         )
         if result.stdout:
             print(result.stdout, end="" if result.stdout.endswith("\n") else "\n", flush=True)
@@ -269,7 +323,7 @@ class HermesAgentBackend:
         return AgentResult(result.stdout, result.stderr, match.group(1))
 
     def run_reviewer(self, prompt: str) -> str:
-        result = self._run([self.hermes, "-t", "terminal,file", "-z", prompt])
+        result = self._run([self.hermes, "-t", "safe", "-z", prompt])
         return result.stdout.strip()
 
 
@@ -317,6 +371,7 @@ class CodexReviewBackend:
     ) -> None:
         self.root = root.resolve()
         self.codex = resolve_codex_executable(codex)
+        self.env = project_runtime_environment(self.root)
 
     def run_reviewer(self, prompt: str) -> str:
         runtime = self.root / ".hermes" / "task-runtime"
@@ -338,6 +393,8 @@ class CodexReviewBackend:
                     "--sandbox",
                     "read-only",
                     "--ephemeral",
+                    "--ignore-user-config",
+                    "--ignore-rules",
                     "--output-last-message",
                     str(final_message),
                     "--output-schema",
@@ -349,6 +406,7 @@ class CodexReviewBackend:
                 text=True,
                 capture_output=True,
                 timeout=600,
+                env=self.env,
             )
             if result.returncode:
                 detail = (result.stderr or result.stdout).strip()

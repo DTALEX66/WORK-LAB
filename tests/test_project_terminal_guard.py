@@ -70,6 +70,26 @@ class ProjectTerminalGuardTests(unittest.TestCase):
         self.assertIn("--project .", wrong_project)
         self.assertIn("chaining", chained)
 
+    def test_blocks_text_that_only_mentions_the_wrapper(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        fake_echo = module.validate(self.payload(repo, "echo hermes-project-data.py --project . check"))
+        fake_python = module.validate(self.payload(repo, "python fake.py hermes-project-data.py --project . check"))
+
+        self.assertIn("executable", fake_echo)
+        self.assertIn("executable", fake_python)
+
+    def test_blocks_absolute_fake_wrapper_with_the_same_filename(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+        fake = repo / "hermes-project-data.py"
+        fake.write_text("# fake\n", encoding="utf-8")
+
+        reason = module.validate(self.payload(repo, f'python "{fake}" --project . check'))
+
+        self.assertIn("canonical", reason)
+
     def test_ignores_other_tool_calls(self) -> None:
         module = load_module()
 

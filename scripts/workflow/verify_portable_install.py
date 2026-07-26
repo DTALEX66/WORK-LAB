@@ -64,12 +64,15 @@ def verify(repo: Path, home: Path) -> list[str]:
         raise RuntimeError("managed-config-schema.yaml is required")
     compatibility = load_manifest(repo)
 
-    home.mkdir(parents=True, exist_ok=True)
+    if home.exists():
+        if not home.is_dir():
+            raise RuntimeError("isolated Hermes home must be a directory")
+        if any(home.iterdir()):
+            raise RuntimeError("isolated Hermes home must be empty")
+    else:
+        home.mkdir(parents=True, exist_ok=False)
     sync = load_sync(repo)
-    sync.copytree(repo / "skills", home / "skills", apply=True)
-    sync.copytree(repo / "bin", home / "bin", apply=True)
-    sync.copyfile(repo / "config/.env.template", home / ".env.template", apply=True)
-    sync.merge_live_config(repo, home, apply=True)
+    sync.deploy_portable(repo, home, apply=True, include_backup=False)
 
     config = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8")) or {}
     runtime_feature_checks = {
@@ -130,7 +133,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.home:
         checks = verify(args.repo, args.home)
     else:
-        with tempfile.TemporaryDirectory() as raw:
+        runtime = args.repo.resolve() / ".hermes" / "task-runtime" / "portable-install"
+        runtime.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=runtime) as raw:
             checks = verify(args.repo, Path(raw) / "hermes")
     print("PORTABLE_INSTALL_VERIFY_PASS checks=" + ",".join(checks))
     return 0

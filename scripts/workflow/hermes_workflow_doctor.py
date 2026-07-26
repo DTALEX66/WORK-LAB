@@ -262,6 +262,11 @@ def main() -> int:
         help="run real GPT, DeepSeek and Codex execution smokes (network/model usage)",
     )
     parser.add_argument(
+        "--network",
+        action="store_true",
+        help="run local route, HTTP reachability and MCP checks without provider markers",
+    )
+    parser.add_argument(
         "--codex-workdir",
         type=Path,
         metavar="PATH",
@@ -282,31 +287,33 @@ def main() -> int:
     print_command("Hermes auth inventory", ["hermes", "auth", "list"], max_lines=40)
     print_command("Hermes MCP inventory", ["hermes", "mcp", "list"], max_lines=20)
 
-    print("\n=== Network / route structure ===")
-    print("[INFO] Proxy environment (endpoint and credentials withheld)")
-    for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"):
-        print("  " + proxy_environment_summary(name))
-    for port, role in (
-        (7890, "Local network proxy (route tool owner is reported when available)"),
-        (15721, "Local Codex router (optional; native Codex OAuth does not depend on it)"),
-    ):
-        open_now = port_open(port)
-        owner = windows_listener_owner(port) if open_now else None
-        owner_detail = f"; {owner}" if owner else ""
-        print(f"[{'OK' if open_now else 'WARN'}] {role} 127.0.0.1:{port} = {'open' if open_now else 'closed'}{owner_detail}")
-    print_command(
-        "DeepSeek HTTP reachability (HTTP 401 is reachable, not authenticated)",
-        ["curl", "-sSI", "--max-time", "8", "https://api.deepseek.com"],
-        timeout=12,
-        max_lines=5,
-    )
-    if port_open(7890):
+    network_checks = args.network or args.live
+    if network_checks:
+        print("\n=== Network / route structure ===")
+        print("[INFO] Proxy environment (endpoint and credentials withheld)")
+        for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"):
+            print("  " + proxy_environment_summary(name))
+        for port, role in (
+            (7890, "Local network proxy (route tool owner is reported when available)"),
+            (15721, "Local Codex router (optional; native Codex OAuth does not depend on it)"),
+        ):
+            open_now = port_open(port)
+            owner = windows_listener_owner(port) if open_now else None
+            owner_detail = f"; {owner}" if owner else ""
+            print(f"[{'OK' if open_now else 'WARN'}] {role} 127.0.0.1:{port} = {'open' if open_now else 'closed'}{owner_detail}")
         print_command(
-            "ChatGPT through proxy (HTTP 403 still proves only transport reachability)",
-            ["curl", "-sSI", "--proxy", "http://127.0.0.1:7890", "--max-time", "12", "https://chatgpt.com"],
-            timeout=15,
-            max_lines=6,
+            "DeepSeek HTTP reachability (HTTP 401 is reachable, not authenticated)",
+            ["curl", "-sSI", "--max-time", "8", "https://api.deepseek.com"],
+            timeout=12,
+            max_lines=5,
         )
+        if port_open(7890):
+            print_command(
+                "ChatGPT through proxy (HTTP 403 still proves only transport reachability)",
+                ["curl", "-sSI", "--proxy", "http://127.0.0.1:7890", "--max-time", "12", "https://chatgpt.com"],
+                timeout=15,
+                max_lines=6,
+            )
 
     print("\n=== Node / configured MCP ===")
     managed_node = hermes_managed_node()
@@ -314,7 +321,10 @@ def main() -> int:
         print_command("Hermes managed Node", [str(managed_node), "--version"])
     else:
         print_command("PATH Node (Hermes managed Node missing)", ["node", "--version"])
-    print_command("Configured Context7", ['hermes', 'mcp', 'test', 'context7'], timeout=90)
+    if network_checks:
+        print_command("Configured Context7", ['hermes', 'mcp', 'test', 'context7'], timeout=90)
+    else:
+        print("[SKIP] Context7 MCP connectivity (use --network or --live)")
 
     print("\n=== Codex structure ===")
     candidates = codex_candidates()

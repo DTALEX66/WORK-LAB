@@ -15,7 +15,7 @@ metadata:
 
 ## 触发条件
 
-当任务会生成临时文件、缓存、测试环境、日志、评审报告、下载物或运行时产物时加载。默认目标是**当前 Git 项目**，而不是用户 Home、系统 Temp、Hermes Home 或相邻项目。
+当任务会生成临时文件、缓存、测试环境、日志、评审报告、下载物或运行时产物时加载。先判定数据所有权，再选择路径；**当前 Git 项目只有在数据确实属于该项目时才是目标**。Hermes/Codex/CC Switch/GitHub 编排数据属于工作流基础设施，不因文件名包含项目名而迁移进业务项目；归属不明的外部文件不得删除或移动。
 
 ## 强制边界
 
@@ -34,7 +34,7 @@ metadata:
 
 3. `.hermes/` 必须被 Git 忽略；否则 helper fail-closed，先由项目维护者加入忽略规则或在本地 Git exclude 中显式隔离。
 4. 禁止把项目产物写到 `%TEMP%`、`~/.cache`、`~/.hermes/tmp`、桌面、用户 Home 或另一个项目。Hermes 的认证、会话数据库、配置、全局技能和 scheduler 元数据仍是**全局运行时状态**，不是项目产物，不能移动或删除。
-5. Hermes Kanban 原生支持 `HERMES_KANBAN_HOME`，因此项目任务板不是全局状态：必须经本 helper 运行，固定落入 `<project>/.hermes/kanban/`；不得直接使用未固定 board root 的 `hermes kanban`。
+5. Hermes Kanban 原生支持 `HERMES_KANBAN_HOME`，因此项目任务板不是全局状态：必须经本 helper 运行，固定落入 `<project>/.hermes/`；不得直接使用未固定 board root 的 `hermes kanban`。
 6. 显式绝对路径会绕过任何环境变量；执行前必须拒绝项目根外的 output/cache/log 参数。此 helper 不是 OS sandbox，不能把任意恶意/错误子进程伪装成安全。
 7. `E:\\` 是用户保护的数据区：默认禁止枚举、读取、复制、写入、移动、重命名或删除其任何数据。只有用户在**当前请求**中明确给出精确路径和操作范围时才可访问；授权按路径和本次任务限定，读权限不等于写/移动/删除权限，任务结束即失效。
 

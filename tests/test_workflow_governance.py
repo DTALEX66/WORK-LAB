@@ -63,6 +63,23 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("manifest.required_runtime_features", checks)
         self.assertIn("context7.wrapper", checks)
 
+    def test_portable_install_verifier_rejects_nonempty_home_without_writing(self) -> None:
+        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        spec = importlib.util.spec_from_file_location("portable_install_nonempty", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / "isolated-home"
+            home.mkdir()
+            sentinel = home / "sentinel.txt"
+            sentinel.write_text("keep", encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "empty"):
+                module.verify(ROOT, home)
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
+
     def test_project_bootstrap_dry_run_is_non_destructive_and_lists_outputs(self) -> None:
         script = ROOT / "scripts/workflow/bootstrap_project.py"
         self.assertTrue(script.exists())
@@ -173,6 +190,35 @@ class WorkflowGovernanceTests(unittest.TestCase):
         source = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(encoding="utf-8")
         self.assertNotIn('Path.home() / ".codex/config.toml"', source)
         self.assertIn("private config is intentionally not inspected", source)
+
+    def test_model_switcher_uses_environment_and_official_single_field_reads_only(self) -> None:
+        source = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")
+        self.assertIn("never inspect Hermes .env", source)
+        self.assertIn("hermes', 'config', 'get', '--json'", source)
+        self.assertNotIn("read_text(encoding='utf-8', errors='ignore').splitlines()", source)
+        self.assertNotIn("yaml.safe_load", source)
+
+    def test_doctor_network_checks_are_explicit(self) -> None:
+        source = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(encoding="utf-8")
+        self.assertIn('"--network"', source)
+        self.assertIn("network_checks = args.network or args.live", source)
+        self.assertIn("Context7 MCP connectivity (use --network or --live)", source)
+
+    def test_skill_provenance_manifest_and_gate_are_present(self) -> None:
+        manifest = ROOT / "config/skill-provenance.yaml"
+        checker = ROOT / "scripts/security/check_skill_provenance.py"
+        gate = (ROOT / "scripts/workflow/run_quality_gate.py").read_text(encoding="utf-8")
+        self.assertTrue(manifest.exists())
+        self.assertTrue(checker.exists())
+        self.assertIn("skill-provenance", gate)
+
+    def test_governance_actions_are_commit_pinned_and_dependency_versioned(self) -> None:
+        workflow = (ROOT / ".github/workflows/governance.yml").read_text(encoding="utf-8")
+        self.assertNotIn("actions/checkout@v", workflow)
+        self.assertNotIn("actions/setup-python@v", workflow)
+        self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", workflow)
+        self.assertIn("actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38", workflow)
+        self.assertIn("PyYAML==6.0.2", workflow)
 
     def test_readme_documents_kimi_speed_lane_commands_without_auto_switching(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -619,7 +665,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
         sync = (ROOT / "scripts/workflow/sync_hermes_workflow_assets.py").read_text(
             encoding="utf-8"
         )
-        self.assertIn('copytree(repo / "skills", home / "skills", apply=args.apply)', sync)
+        self.assertIn("def deploy_portable", sync)
+        self.assertIn('copytree(repo / "skills", home / "skills", apply=apply)', sync)
 
     def test_project_data_boundary_is_deployable_and_fail_closed(self) -> None:
         helper = ROOT / "bin/hermes-project-data.py"
@@ -763,6 +810,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             (
                 "governance",
                 "compile",
+                "skill-provenance",
                 "security",
                 "context-pack",
                 "portable-install",
@@ -775,6 +823,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertEqual(set(module.GATES), set(module.VERIFY_ORDER))
         self.assertIn("scripts/workflow/run_quality_gate.py", module.tracked_python_files())
         self.assertIn("tests/test_workflow_governance.py", module.tracked_python_files())
+        self.assertIn("bin/hermes-project-data.py", module.tracked_python_files())
+        self.assertIn("bin/hermes-project-terminal-guard.py", module.tracked_python_files())
 
         body = runner.read_text(encoding="utf-8")
         for marker in (
@@ -831,7 +881,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             capture_output=True,
             check=True,
         )
-        self.assertIn("verify: Run governance, compile, security, context-pack, portable-install, provider-inventory, mcp-audit", list_result.stdout)
+        self.assertIn("verify: Run governance, compile, skill-provenance, security, context-pack, portable-install, provider-inventory, mcp-audit", list_result.stdout)
 
     def test_mcp_candidate_audit_is_fail_closed_and_does_not_enable_defaults(self) -> None:
         script = ROOT / "scripts/workflow/mcp_candidate_audit.py"

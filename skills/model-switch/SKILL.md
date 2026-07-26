@@ -1,7 +1,15 @@
 ---
 name: model-switch
 description: 在 Hermes 的 Kimi K3、DeepSeek V4、ChatGPT 5.6 三条模型线之间安全切换，并用真实 marker 诊断 Hermes/Codex/CC Switch 路由。
+version: 1.3.0
+author: Hermes Agent
+license: MIT
+platforms: [windows, linux, macos]
 tags: [hermes, provider, routing, deepseek, openai, codex, proxy, cc-switch]
+metadata:
+  hermes:
+    tags: [hermes, provider, routing, deepseek, openai, codex, proxy, cc-switch]
+    related_skills: [project-data-boundary, agent-workflow-fortress, codex]
 ---
 
 # Hermes Provider 路由切换

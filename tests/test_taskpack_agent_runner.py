@@ -94,6 +94,8 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         self.assertEqual(result.session_id, "continued-session")
         self.assertEqual(calls[0][0][calls[0][0].index("--resume") + 1], "initial-session")
         self.assertNotIn("timeout", calls[0][1])
+        self.assertIn("HERMES_PROJECT_RUNTIME_ROOT", calls[0][1]["env"])
+        self.assertEqual(calls[0][1]["env"]["TEMP"], calls[0][1]["env"]["TMP"])
 
     def test_high_risk_runner_resumes_one_writer_lineage_until_review_go(self) -> None:
         repo = FakeRepo()
@@ -191,6 +193,29 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         ), self.assertRaisesRegex(RunnerError, "required workflow"):
             repo._wait_for_ci("release")
 
+    def test_exact_sha_ci_accepts_latest_success_for_required_workflow(self) -> None:
+        repo = GitRepository(
+            Path("."),
+            required_workflows=("workflow-governance",),
+            ci_timeout_seconds=1,
+            ci_poll_seconds=0,
+        )
+        result = subprocess.CompletedProcess(
+            ["gh"],
+            0,
+            stdout=(
+                '[{"status":"completed","conclusion":"success",'
+                '"name":"workflow-governance","url":"https://example.invalid/run/42",'
+                '"databaseId":42,"headSha":"release","attempt":2,'
+                '"createdAt":"2026-07-26T12:00:00Z"}]'
+            ),
+            stderr="",
+        )
+        with patch("scripts.workflow.run_taskpack_agent.shutil.which", return_value="gh"), patch(
+            "scripts.workflow.run_taskpack_agent.subprocess.run", return_value=result
+        ), patch("scripts.workflow.run_taskpack_agent.time.monotonic", side_effect=[0, 0]):
+            repo._wait_for_ci("release")
+
     def test_release_repository_rejects_empty_required_workflow_contract(self) -> None:
         with self.assertRaisesRegex(RunnerError, "required_workflows"):
             GitRepository(Path("."), required_workflows=())
@@ -235,13 +260,13 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
 
         self.assertEqual(review, "GO\nCodex structured exact-tree review found no findings")
         command, kwargs = calls[0]
-        self.assertEqual(
-            command[:7],
-            [str(codex), "exec", "--sandbox", "read-only", "--ephemeral", "--output-last-message", command[6]],
-        )
-        self.assertEqual(command[7], "--output-schema")
-        self.assertTrue(command[8].endswith(".json"))
-        self.assertEqual(command[9:], ["review tree"])
+        self.assertEqual(command[:5], [str(codex), "exec", "--sandbox", "read-only", "--ephemeral"])
+        self.assertIn("--output-last-message", command)
+        self.assertIn("--output-schema", command)
+        self.assertIn("--ignore-user-config", command)
+        self.assertIn("--ignore-rules", command)
+        self.assertTrue(command[command.index("--output-schema") + 1].endswith(".json"))
+        self.assertEqual(command[-1:], ["review tree"])
         self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", command)
         self.assertNotIn("--dangerously-bypass-hook-trust", command)
         self.assertEqual(kwargs["cwd"], root.resolve())

@@ -1,7 +1,15 @@
 ---
 name: windows-development-environment
 description: "Windows-specific quirks and fixes for development: PowerShell encoding, PATH shadowing, spawn EINVAL, lockfile registry portability, and environment setup."
+version: 1.1.0
+author: Hermes Agent
+license: MIT
+platforms: [windows]
 tags: [windows, nodejs, nextjs, powershell, spawn, npm-ci, path, cross-platform]
+metadata:
+  hermes:
+    tags: [windows, nodejs, nextjs, powershell, spawn, npm-ci, path, cross-platform]
+    related_skills: [project-data-boundary]
 ---
 
 # Windows Development Environment
