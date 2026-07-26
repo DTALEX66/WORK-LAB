@@ -11,7 +11,9 @@ coded absolute paths can still escape OS-level containment.
 from __future__ import annotations
 
 import json
+import os
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -20,9 +22,26 @@ from typing import Any
 
 BLOCK_PREFIX = "PROJECT DATA BOUNDARY BLOCKED:"
 SHELL_CONTROL = re.compile(r"(?:;|&&|\|\||(?<!\|)\|(?!\|)|\n|\r)")
-PROJECT_CURRENT = re.compile(r"(?:^|\s)--project\s+(?:[\"']?\.[\\/]?[\"']?)(?=\s|$)")
-WRAPPER = re.compile(r"(?:^|[\s\"'])[^\s\"']*hermes-project-data\.py(?=[\s\"'])", re.IGNORECASE)
-SUBCOMMAND = re.compile(r"(?:^|\s)(?:init|check|policy|cleanup|run|kanban)(?=\s|$)")
+
+WRAPPER_NAME = "hermes-project-data.py"
+SUBCOMMANDS = {"init", "check", "policy", "cleanup", "run", "kanban"}
+
+
+def canonical_wrapper(raw: str) -> bool:
+    normalized = raw.replace("\\", "/")
+    if normalized in {"$HERMES_HOME/bin/hermes-project-data.py", "${HERMES_HOME}/bin/hermes-project-data.py"}:
+        return True
+    candidate = Path(raw).expanduser()
+    if not candidate.is_absolute():
+        return False
+    home = os.environ.get("HERMES_HOME")
+    if home:
+        expected = (Path(home) / "bin" / WRAPPER_NAME).resolve()
+        try:
+            return candidate.resolve(strict=True) == expected
+        except (OSError, RuntimeError):
+            return False
+    return False
 
 
 def block(reason: str) -> int:
@@ -67,13 +86,26 @@ def validate(payload: dict[str, Any]) -> str | None:
         return "terminal command is missing."
     if SHELL_CONTROL.search(command):
         return "shell chaining/redirection is forbidden; invoke one wrapper command only."
-    if not WRAPPER.search(command):
-        return "invoke hermes-project-data.py --project . <subcommand> instead of a raw terminal command."
-    if not PROJECT_CURRENT.search(command):
+    try:
+        argv = shlex.split(command, posix=True)
+    except ValueError:
+        return "terminal command quoting is invalid."
+    if len(argv) < 4:
+        return "invoke hermes-project-data.py with the wrapper executable and arguments."
+    if Path(argv[0]).name.lower() not in {"python", "python3", "python.exe", "python3.exe"}:
+        return "the wrapper executable must be invoked by Python."
+    wrapper = Path(argv[1]).name.lower()
+    if wrapper != WRAPPER_NAME:
+        return "the command executable must be hermes-project-data.py, not a textual mention."
+    if not canonical_wrapper(argv[1]):
+        return "the wrapper path must be the canonical deployed Hermes wrapper, not a fake same-name executable."
+    if "--project" not in argv or argv[argv.index("--project") + 1 : argv.index("--project") + 2] != ["."]:
         return "the wrapper must use --project . so it is pinned to terminal.workdir."
-    if not SUBCOMMAND.search(command):
+    project_index = argv.index("--project")
+    subcommand_index = project_index + 2
+    if len(argv) <= subcommand_index or argv[subcommand_index] not in SUBCOMMANDS:
         return "the wrapper subcommand must be init, check, policy, cleanup, run, or kanban."
-    if re.search(r"(?:^|\s)run(?=\s|$)", command) and " -- " not in command:
+    if argv[subcommand_index] == "run" and (len(argv) <= subcommand_index + 1 or argv[subcommand_index + 1] != "--"):
         return "wrapper run requires -- before the child command."
     return None
 

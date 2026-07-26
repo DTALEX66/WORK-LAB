@@ -2,7 +2,7 @@
 
 ## 目的
 
-所有项目任务的临时文件、缓存、日志、测试环境和可再生产物都必须随项目保存，避免泄漏到 Windows `%TEMP%`、用户目录、桌面或 `Hermes Home`。标准根目录是：
+先判定真实数据所有权，再判定存储路径。属于项目的临时文件、缓存、日志、测试环境和可再生产物必须随项目保存，避免泄漏到 Windows `%TEMP%`、用户目录、桌面或 `Hermes Home`。Hermes/Codex/CC Switch/GitHub 编排数据属于工作流基础设施；仅凭项目名、文件名或 prompt 不能证明归属，归属不明的外部文件不得删除或移动。项目数据标准根目录是：
 
 ```text
 <git-project>/.hermes/task-runtime/
@@ -61,7 +61,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . cleanup --all-regen
 
 以下内容属于 Hermes 自身的全局服务状态，不能为了“归档项目数据”而移动或删除：认证/凭据、`state.db` 会话库、全局配置、全局技能、原生 cron 调度元数据和已安装运行时。`state.db` 是当前桌面会话与跨项目搜索的共享事实库，必须通过官方 session retention/auto-prune 维护，不能将每个项目会话库粗暴拆分。
 
-Kanban 是例外：Hermes 原生支持 `HERMES_KANBAN_HOME`，因此所有项目 task board 都必须经本 helper 启动并落入 `<project>/.hermes/kanban/`。Cron job 定义与其调度输出当前由 Hermes Home 统一管理；每个项目 cron 的 `workdir` 和执行命令仍必须指向项目，并使用本 helper 写入项目内 evidence。无活动 cron job 时，已确认归属某项目的孤儿输出可以先复制、hash 校验后归档至该项目 `.hermes/task-artifacts/`。
+Kanban 是例外：Hermes 原生支持 `HERMES_KANBAN_HOME`，因此所有项目 task board 都必须经本 helper 启动并落入 `<project>/.hermes/`。Cron job 定义与其调度输出当前由 Hermes Home 统一管理；每个项目 cron 的 `workdir` 和执行命令仍必须指向项目，并使用本 helper 写入项目内 evidence。无活动 cron job 时，已确认归属某项目的孤儿输出可以先复制、hash 校验后归档至该项目 `.hermes/task-artifacts/`。
 
 ## 迁移规则
 

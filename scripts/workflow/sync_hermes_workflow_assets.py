@@ -303,6 +303,36 @@ def merge_live_config(repo: Path, home: Path, *, apply: bool) -> None:
             )
 
 
+def deploy_portable(repo: Path, home: Path, *, apply: bool, include_backup: bool = True) -> None:
+    """Run the single deployment orchestration used by CLI and verifier."""
+
+    repo = repo.resolve()
+    home = home.resolve()
+    if not repo.is_dir() or not home.is_dir():
+        raise ValueError("portable deployment requires existing repo and home directories")
+    if include_backup:
+        backup_paths(
+            home,
+            [
+                "config.yaml",
+                ".env.template",
+                ".workflow-assistance-state.yaml",
+                "bin",
+                "skills/autonomous-ai-agents/codex",
+                "skills/model-switch",
+                "skills/software-development",
+            ],
+            apply=apply,
+        )
+    copytree(repo / "skills", home / "skills", apply=apply)
+    remove_retired_managed_assets(home, apply=apply)
+    copytree(repo / "bin", home / "bin", apply=apply)
+    copyfile(repo / "config/.env.template", home / ".env.template", apply=apply)
+    merge_live_config(repo, home, apply=apply)
+    if include_backup:
+        prune_workflow_sync_backups(home, apply=apply)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", default=str(default_repo_root()))
@@ -317,25 +347,7 @@ def main() -> None:
     if not home.exists():
         raise SystemExit(f"Hermes home not found: {home}")
 
-    backup_paths(
-        home,
-        [
-            "config.yaml",
-            ".env.template",
-            ".workflow-assistance-state.yaml",
-            "bin",
-            "skills/autonomous-ai-agents/codex",
-            "skills/model-switch",
-            "skills/software-development",
-        ],
-        apply=args.apply,
-    )
-    copytree(repo / "skills", home / "skills", apply=args.apply)
-    remove_retired_managed_assets(home, apply=args.apply)
-    copytree(repo / "bin", home / "bin", apply=args.apply)
-    copyfile(repo / "config/.env.template", home / ".env.template", apply=args.apply)
-    merge_live_config(repo, home, apply=args.apply)
-    prune_workflow_sync_backups(home, apply=args.apply)
+    deploy_portable(repo, home, apply=args.apply)
 
     print("\nsummary hashes:")
     for label, path in (

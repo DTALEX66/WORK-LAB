@@ -158,6 +158,16 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         with self.assertRaisesRegex(module.ProjectDataBoundaryError, "escapes project root"):
             module.require_contained(repo, repo.parent / "outside")
 
+    def test_child_tempfile_resolves_inside_project_runtime(self) -> None:
+        module = load_module()
+        repo = self.make_repo(ignored=True)
+        layout = module.prepare_layout(repo)
+        command = [sys.executable, "-c", "import tempfile; print(tempfile.gettempdir())"]
+
+        result = module.run_command(layout, command)
+
+        self.assertEqual(Path(result.stdout.strip()).resolve(), layout.paths["tmp"].resolve())
+
 
 if __name__ == "__main__":
     unittest.main()
