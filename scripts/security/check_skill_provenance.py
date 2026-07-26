@@ -37,7 +37,10 @@ LIVE_ONLY_GITHUB_SKILLS = (
 
 
 def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    """Hash canonical UTF-8 text so Windows CRLF and Linux LF agree."""
+
+    data = path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(data).hexdigest()
 
 
 def frontmatter(path: Path) -> dict[str, Any]:
