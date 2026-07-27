@@ -78,8 +78,9 @@ test('generated Douyin bundle boots against the tt Canvas contract', () => {
   assert.ok(text.includes('夜班值守许可'));
   assert.ok(text.includes('开始接管'));
   assert.ok(text.includes('侧边栏入口'));
-  assert.equal(imageSources.length, 38, 'all shipped Canvas visual assets should preload');
+  assert.equal(imageSources.length, 46, 'all shipped Canvas visual assets should preload');
   assert.ok(imageSources.includes('visual/cctv/00_idle_closed_mobile.png'));
+  assert.ok(imageSources.includes('visual/cctv/v5_02_investigation_mobile.png'));
   assert.ok(imageSources.includes('visual/buttons/btn_stop_danger.png'));
   assert.ok(drawImageCalls >= 1, 'the first render should draw the production CCTV state');
 
@@ -87,13 +88,13 @@ test('generated Douyin bundle boots against the tt Canvas contract', () => {
   assert.equal(sidebarOptions?.scene, 'sidebar');
   onTouchStart({ touches: [{ screenX: 375 * 390 / 750, screenY: 962 * 844 / canvas.height }] });
   // 第一班教学：画面与数据一致，点击放行。
-  onTouchStart({ touches: [{ screenX: 199 * 390 / 750, screenY: 1396 * 844 / canvas.height }] });
+  onTouchStart({ touches: [{ screenX: 199 * 390 / 750, screenY: 1323 * 844 / canvas.height }] });
   now += 8_000;
   nextFrame();
   assert.ok(text.includes('封锁'), 'first anomaly should expose the simple lockdown decision');
   assert.ok(text.includes('放行'), 'release and lockdown choices should stay paired');
   // 第二班教学：封锁后应由系统自动处置，不出现第二层玩家按钮。
-  onTouchStart({ touches: [{ screenX: 551 * 390 / 750, screenY: 1396 * 844 / canvas.height }] });
+  onTouchStart({ touches: [{ screenX: 551 * 390 / 750, screenY: 1323 * 844 / canvas.height }] });
   nextFrame();
   assert.ok(text.includes('封锁成功，系统已自动处置'));
   assert.ok(text.includes('等待下一班'));

@@ -6,7 +6,12 @@
 (function() {
 'use strict';
 
+// --- V5 content (deterministic) ---
+var __V5_CONTENT__ = {"anomalies":[{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"person","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":1,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"duplicate_face","contradicts":true,"id":"duplicate_face_cam01","observation":"同一乘客在 CAM-01 出现两次，但 CAM-03 只有一次进入记录。","source":"cam01"}],"cam03":[{"conflictKey":"duplicate_face","contradicts":true,"id":"duplicate_face_cam03","observation":"同一乘客在 CAM-01 出现两次，但 CAM-03 只有一次进入记录。","source":"cam03"}],"cam07":[{"conflictKey":"duplicate_face","contradicts":false,"id":"duplicate_face_cam07","observation":"同一乘客在 CAM-01 出现两次，但 CAM-03 只有一次进入记录。","source":"cam07"}]},"replay":{"conflictKey":"duplicate_face","contradicts":false,"id":"duplicate_face_replay","observation":"同一乘客在 CAM-01 出现两次，但 CAM-03 只有一次进入记录。","source":"replay"},"thermal":{"conflictKey":"duplicate_face","contradicts":false,"id":"duplicate_face_thermal","observation":"同一乘客在 CAM-01 出现两次，但 CAM-03 只有一次进入记录。","source":"thermal"}},"explanation":"同一乘客在 CAM-01 出现两次，但 CAM-03 只有一次进入记录。","highRisk":false,"id":"person_duplicate_face","name":"重复面孔","normalVariants":["normal_shift_01","normal_shift_02"],"panelData":{"door":"closed","floor":2,"passengers":1},"primaryConflict":"duplicate_face","protocolDependent":false,"protocolTags":["person","identity"],"resolutionAction":"lockdown","roundType":"identity","screenData":{"door":"closed","floor":2,"passengers":1},"silentEvidence":["cam01","cam03"],"visualState":"13_entity_near"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"person","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":1,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"wrong_badge","contradicts":true,"id":"wrong_badge_cam01","observation":"自称维修员的人佩戴红色胸牌，不符合黄色胸牌协议。","source":"cam01"}],"cam03":[{"conflictKey":"wrong_badge","contradicts":false,"id":"wrong_badge_cam03","observation":"自称维修员的人佩戴红色胸牌，不符合黄色胸牌协议。","source":"cam03"}],"cam07":[{"conflictKey":"wrong_badge","contradicts":false,"id":"wrong_badge_cam07","observation":"自称维修员的人佩戴红色胸牌，不符合黄色胸牌协议。","source":"cam07"}]},"replay":{"conflictKey":"wrong_badge","contradicts":false,"id":"wrong_badge_replay","observation":"自称维修员的人佩戴红色胸牌，不符合黄色胸牌协议。","source":"replay"},"thermal":{"conflictKey":"wrong_badge","contradicts":false,"id":"wrong_badge_thermal","observation":"自称维修员的人佩戴红色胸牌，不符合黄色胸牌协议。","source":"thermal"}},"explanation":"自称维修员的人佩戴红色胸牌，不符合黄色胸牌协议。","highRisk":false,"id":"person_wrong_badge","name":"错误胸牌","normalVariants":["normal_shift_02","normal_shift_03"],"panelData":{"door":"closed","floor":3,"passengers":1},"primaryConflict":"wrong_badge","protocolDependent":true,"protocolTags":["person","identity"],"resolutionAction":"lockdown","roundType":"identity","screenData":{"door":"closed","floor":3,"passengers":1},"silentEvidence":["cam01","protocol"],"visualState":"13_entity_near"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"person","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":1,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"cold_passenger","contradicts":true,"id":"cold_passenger_cam01","observation":"画面中乘客轮廓清晰，但热源扫描没有生命反应。","source":"cam01"}],"cam03":[{"conflictKey":"cold_passenger","contradicts":false,"id":"cold_passenger_cam03","observation":"画面中乘客轮廓清晰，但热源扫描没有生命反应。","source":"cam03"}],"cam07":[{"conflictKey":"cold_passenger","contradicts":false,"id":"cold_passenger_cam07","observation":"画面中乘客轮廓清晰，但热源扫描没有生命反应。","source":"cam07"}]},"replay":{"conflictKey":"cold_passenger","contradicts":false,"id":"cold_passenger_replay","observation":"画面中乘客轮廓清晰，但热源扫描没有生命反应。","source":"replay"},"thermal":{"conflictKey":"cold_passenger","contradicts":true,"id":"cold_passenger_thermal","observation":"画面中乘客轮廓清晰，但热源扫描没有生命反应。","source":"thermal"}},"explanation":"画面中乘客轮廓清晰，但热源扫描没有生命反应。","highRisk":false,"id":"person_cold_passenger","name":"无热源人物","normalVariants":["normal_shift_03","normal_shift_04"],"panelData":{"door":"closed","floor":4,"passengers":1},"primaryConflict":"cold_passenger","protocolDependent":false,"protocolTags":["person"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":4,"passengers":1},"silentEvidence":["cam01","thermal"],"visualState":"13_entity_near"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"person","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":1,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"unknown_identity","contradicts":true,"id":"unknown_identity_cam01","observation":"乘客工号不在当夜授权名单，目标楼层却被请求。","source":"cam01"}],"cam03":[{"conflictKey":"unknown_identity","contradicts":false,"id":"unknown_identity_cam03","observation":"乘客工号不在当夜授权名单，目标楼层却被请求。","source":"cam03"}],"cam07":[{"conflictKey":"unknown_identity","contradicts":false,"id":"unknown_identity_cam07","observation":"乘客工号不在当夜授权名单，目标楼层却被请求。","source":"cam07"}]},"replay":{"conflictKey":"unknown_identity","contradicts":false,"id":"unknown_identity_replay","observation":"乘客工号不在当夜授权名单，目标楼层却被请求。","source":"replay"},"thermal":{"conflictKey":"unknown_identity","contradicts":false,"id":"unknown_identity_thermal","observation":"乘客工号不在当夜授权名单，目标楼层却被请求。","source":"thermal"}},"explanation":"乘客工号不在当夜授权名单，目标楼层却被请求。","highRisk":false,"id":"person_unknown_identity","name":"不存在的工号","normalVariants":["normal_shift_04","normal_shift_05"],"panelData":{"door":"closed","floor":5,"passengers":1},"primaryConflict":"unknown_identity","protocolDependent":true,"protocolTags":["person","identity"],"resolutionAction":"lockdown","roundType":"identity","screenData":{"door":"closed","floor":5,"passengers":1},"silentEvidence":["cam01","protocol"],"visualState":"13_entity_near"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"person","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":1,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"shadow_mismatch","contradicts":true,"id":"shadow_mismatch_cam01","observation":"一名乘客对应两道独立移动的影子。","source":"cam01"}],"cam03":[{"conflictKey":"shadow_mismatch","contradicts":false,"id":"shadow_mismatch_cam03","observation":"一名乘客对应两道独立移动的影子。","source":"cam03"}],"cam07":[{"conflictKey":"shadow_mismatch","contradicts":false,"id":"shadow_mismatch_cam07","observation":"一名乘客对应两道独立移动的影子。","source":"cam07"}]},"replay":{"conflictKey":"shadow_mismatch","contradicts":true,"id":"shadow_mismatch_replay","observation":"一名乘客对应两道独立移动的影子。","source":"replay"},"thermal":{"conflictKey":"shadow_mismatch","contradicts":false,"id":"shadow_mismatch_thermal","observation":"一名乘客对应两道独立移动的影子。","source":"thermal"}},"explanation":"一名乘客对应两道独立移动的影子。","highRisk":false,"id":"person_shadow_mismatch","name":"影子人数异常","normalVariants":["normal_shift_05","normal_shift_06"],"panelData":{"door":"closed","floor":6,"passengers":1},"primaryConflict":"shadow_mismatch","protocolDependent":false,"protocolTags":["person"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":6,"passengers":1},"silentEvidence":["cam01","replay"],"visualState":"13_entity_near"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"count","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":1,"duration":8,"evidence":{"cameras":{"cam01":[{"conflictKey":"panel_undercount","contradicts":true,"id":"panel_undercount_cam01","observation":"CAM-01 可见两名乘客，主控只记录一人。","source":"cam01"}],"cam03":[{"conflictKey":"panel_undercount","contradicts":false,"id":"panel_undercount_cam03","observation":"CAM-01 可见两名乘客，主控只记录一人。","source":"cam03"}],"cam07":[{"conflictKey":"panel_undercount","contradicts":false,"id":"panel_undercount_cam07","observation":"CAM-01 可见两名乘客，主控只记录一人。","source":"cam07"}]},"replay":{"conflictKey":"panel_undercount","contradicts":false,"id":"panel_undercount_replay","observation":"CAM-01 可见两名乘客，主控只记录一人。","source":"replay"},"thermal":{"conflictKey":"panel_undercount","contradicts":false,"id":"panel_undercount_thermal","observation":"CAM-01 可见两名乘客，主控只记录一人。","source":"thermal"}},"explanation":"CAM-01 可见两名乘客，主控只记录一人。","highRisk":false,"id":"count_panel_undercount","name":"主控少计一人","normalVariants":["normal_shift_06","normal_shift_07"],"panelData":{"door":"closed","floor":7,"passengers":2},"primaryConflict":"panel_undercount","protocolDependent":false,"protocolTags":["count"],"resolutionAction":"lockdown","roundType":"quick","screenData":{"door":"closed","floor":7,"passengers":1},"silentEvidence":["cam01","panel"],"visualState":"14_duplicate_subject"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"count","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":1,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"empty_weight","contradicts":true,"id":"empty_weight_cam01","observation":"轿厢无人，但载重连续两次记录为一人。","source":"cam01"}],"cam03":[{"conflictKey":"empty_weight","contradicts":false,"id":"empty_weight_cam03","observation":"轿厢无人，但载重连续两次记录为一人。","source":"cam03"}],"cam07":[{"conflictKey":"empty_weight","contradicts":false,"id":"empty_weight_cam07","observation":"轿厢无人，但载重连续两次记录为一人。","source":"cam07"}]},"replay":{"conflictKey":"empty_weight","contradicts":true,"id":"empty_weight_replay","observation":"轿厢无人，但载重连续两次记录为一人。","source":"replay"},"thermal":{"conflictKey":"empty_weight","contradicts":false,"id":"empty_weight_thermal","observation":"轿厢无人，但载重连续两次记录为一人。","source":"thermal"}},"explanation":"轿厢无人，但载重连续两次记录为一人。","highRisk":false,"id":"count_empty_weight","name":"空厢载重","normalVariants":["normal_shift_07","normal_shift_08"],"panelData":{"door":"closed","floor":8,"passengers":0},"primaryConflict":"empty_weight","protocolDependent":false,"protocolTags":["count"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":8,"passengers":1},"silentEvidence":["cam01","replay"],"visualState":"14_duplicate_subject"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"count","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":1,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"maintenance_counted","contradicts":true,"id":"maintenance_counted_cam01","observation":"黄色胸牌维修员按协议应忽略，主控却计入人数。","source":"cam01"}],"cam03":[{"conflictKey":"maintenance_counted","contradicts":false,"id":"maintenance_counted_cam03","observation":"黄色胸牌维修员按协议应忽略，主控却计入人数。","source":"cam03"}],"cam07":[{"conflictKey":"maintenance_counted","contradicts":false,"id":"maintenance_counted_cam07","observation":"黄色胸牌维修员按协议应忽略，主控却计入人数。","source":"cam07"}]},"replay":{"conflictKey":"maintenance_counted","contradicts":false,"id":"maintenance_counted_replay","observation":"黄色胸牌维修员按协议应忽略，主控却计入人数。","source":"replay"},"thermal":{"conflictKey":"maintenance_counted","contradicts":false,"id":"maintenance_counted_thermal","observation":"黄色胸牌维修员按协议应忽略，主控却计入人数。","source":"thermal"}},"explanation":"黄色胸牌维修员按协议应忽略，主控却计入人数。","highRisk":false,"id":"count_maintenance_counted","name":"维修员计数错误","normalVariants":["normal_shift_08","normal_shift_09"],"panelData":{"door":"closed","floor":9,"passengers":2},"primaryConflict":"maintenance_counted","protocolDependent":true,"protocolTags":["count","identity"],"resolutionAction":"lockdown","roundType":"identity","screenData":{"door":"closed","floor":9,"passengers":1},"silentEvidence":["cam01","protocol"],"visualState":"14_duplicate_subject"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"count","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":1,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"reflection_count","contradicts":true,"id":"reflection_count_cam01","observation":"镜面中的人影动作与乘客不同步，人数传感器多计一人。","source":"cam01"}],"cam03":[{"conflictKey":"reflection_count","contradicts":false,"id":"reflection_count_cam03","observation":"镜面中的人影动作与乘客不同步，人数传感器多计一人。","source":"cam03"}],"cam07":[{"conflictKey":"reflection_count","contradicts":false,"id":"reflection_count_cam07","observation":"镜面中的人影动作与乘客不同步，人数传感器多计一人。","source":"cam07"}]},"replay":{"conflictKey":"reflection_count","contradicts":true,"id":"reflection_count_replay","observation":"镜面中的人影动作与乘客不同步，人数传感器多计一人。","source":"replay"},"thermal":{"conflictKey":"reflection_count","contradicts":false,"id":"reflection_count_thermal","observation":"镜面中的人影动作与乘客不同步，人数传感器多计一人。","source":"thermal"}},"explanation":"镜面中的人影动作与乘客不同步，人数传感器多计一人。","highRisk":false,"id":"count_reflection_count","name":"倒影独立计数","normalVariants":["normal_shift_09","normal_shift_10"],"panelData":{"door":"closed","floor":10,"passengers":0},"primaryConflict":"reflection_count","protocolDependent":false,"protocolTags":["count"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":10,"passengers":1},"silentEvidence":["cam01","replay"],"visualState":"14_duplicate_subject"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"count","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":1,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"exit_without_decrement","contradicts":false,"id":"exit_without_decrement_cam01","observation":"CAM-03 显示乘客离开，主控人数仍未减少。","source":"cam01"}],"cam03":[{"conflictKey":"exit_without_decrement","contradicts":true,"id":"exit_without_decrement_cam03","observation":"CAM-03 显示乘客离开，主控人数仍未减少。","source":"cam03"}],"cam07":[{"conflictKey":"exit_without_decrement","contradicts":false,"id":"exit_without_decrement_cam07","observation":"CAM-03 显示乘客离开，主控人数仍未减少。","source":"cam07"}]},"replay":{"conflictKey":"exit_without_decrement","contradicts":false,"id":"exit_without_decrement_replay","observation":"CAM-03 显示乘客离开，主控人数仍未减少。","source":"replay"},"thermal":{"conflictKey":"exit_without_decrement","contradicts":false,"id":"exit_without_decrement_thermal","observation":"CAM-03 显示乘客离开，主控人数仍未减少。","source":"thermal"}},"explanation":"CAM-03 显示乘客离开，主控人数仍未减少。","highRisk":false,"id":"count_exit_without_decrement","name":"离开后未减员","normalVariants":["normal_shift_10","normal_shift_01"],"panelData":{"door":"closed","floor":11,"passengers":2},"primaryConflict":"exit_without_decrement","protocolDependent":false,"protocolTags":["count"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":11,"passengers":1},"silentEvidence":["cam03","panel"],"visualState":"14_duplicate_subject"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"space","contaminationEffects":{"onCorrect":-2,"onMiss":12},"decision":"anomaly","difficulty":2,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"floor_13","contradicts":false,"id":"floor_13_cam01","observation":"楼层请求指向协议中不存在的 13 层。","source":"cam01"}],"cam03":[{"conflictKey":"floor_13","contradicts":false,"id":"floor_13_cam03","observation":"楼层请求指向协议中不存在的 13 层。","source":"cam03"}],"cam07":[{"conflictKey":"floor_13","contradicts":true,"id":"floor_13_cam07","observation":"楼层请求指向协议中不存在的 13 层。","source":"cam07"}]},"replay":{"conflictKey":"floor_13","contradicts":false,"id":"floor_13_replay","observation":"楼层请求指向协议中不存在的 13 层。","source":"replay"},"thermal":{"conflictKey":"floor_13","contradicts":false,"id":"floor_13_thermal","observation":"楼层请求指向协议中不存在的 13 层。","source":"thermal"}},"explanation":"楼层请求指向协议中不存在的 13 层。","highRisk":true,"id":"space_floor_13","name":"不存在楼层","normalVariants":["normal_shift_01","normal_shift_02"],"panelData":{"door":"closed","floor":13,"passengers":1},"primaryConflict":"floor_13","protocolDependent":true,"protocolTags":["space"],"resolutionAction":"lockdown_floor","roundType":"highRisk","screenData":{"door":"closed","floor":13,"passengers":1},"silentEvidence":["cam07","protocol"],"visualState":"16_wrong_floor"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"space","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":2,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"wrong_corridor","contradicts":false,"id":"wrong_corridor_cam01","observation":"CAM-03 显示的走廊结构与目标楼层档案不符。","source":"cam01"}],"cam03":[{"conflictKey":"wrong_corridor","contradicts":true,"id":"wrong_corridor_cam03","observation":"CAM-03 显示的走廊结构与目标楼层档案不符。","source":"cam03"}],"cam07":[{"conflictKey":"wrong_corridor","contradicts":false,"id":"wrong_corridor_cam07","observation":"CAM-03 显示的走廊结构与目标楼层档案不符。","source":"cam07"}]},"replay":{"conflictKey":"wrong_corridor","contradicts":false,"id":"wrong_corridor_replay","observation":"CAM-03 显示的走廊结构与目标楼层档案不符。","source":"replay"},"thermal":{"conflictKey":"wrong_corridor","contradicts":false,"id":"wrong_corridor_thermal","observation":"CAM-03 显示的走廊结构与目标楼层档案不符。","source":"thermal"}},"explanation":"CAM-03 显示的走廊结构与目标楼层档案不符。","highRisk":false,"id":"space_wrong_corridor","name":"错误走廊","normalVariants":["normal_shift_02","normal_shift_03"],"panelData":{"door":"closed","floor":1,"passengers":1},"primaryConflict":"wrong_corridor","protocolDependent":true,"protocolTags":["space"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":1,"passengers":1},"silentEvidence":["cam03","protocol"],"visualState":"16_wrong_floor"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"space","contaminationEffects":{"onCorrect":-2,"onMiss":12},"decision":"anomaly","difficulty":2,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"simultaneous_cameras","contradicts":true,"id":"simultaneous_cameras_cam01","observation":"同一乘客同时出现在 CAM-01 与 CAM-03。","source":"cam01"}],"cam03":[{"conflictKey":"simultaneous_cameras","contradicts":true,"id":"simultaneous_cameras_cam03","observation":"同一乘客同时出现在 CAM-01 与 CAM-03。","source":"cam03"}],"cam07":[{"conflictKey":"simultaneous_cameras","contradicts":false,"id":"simultaneous_cameras_cam07","observation":"同一乘客同时出现在 CAM-01 与 CAM-03。","source":"cam07"}]},"replay":{"conflictKey":"simultaneous_cameras","contradicts":false,"id":"simultaneous_cameras_replay","observation":"同一乘客同时出现在 CAM-01 与 CAM-03。","source":"replay"},"thermal":{"conflictKey":"simultaneous_cameras","contradicts":false,"id":"simultaneous_cameras_thermal","observation":"同一乘客同时出现在 CAM-01 与 CAM-03。","source":"thermal"}},"explanation":"同一乘客同时出现在 CAM-01 与 CAM-03。","highRisk":true,"id":"space_simultaneous_cameras","name":"双处出现","normalVariants":["normal_shift_03","normal_shift_04"],"panelData":{"door":"closed","floor":2,"passengers":1},"primaryConflict":"simultaneous_cameras","protocolDependent":false,"protocolTags":["space"],"resolutionAction":"lockdown_floor","roundType":"highRisk","screenData":{"door":"closed","floor":2,"passengers":1},"silentEvidence":["cam01","cam03"],"visualState":"16_wrong_floor"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"space","contaminationEffects":{"onCorrect":-2,"onMiss":12},"decision":"anomaly","difficulty":2,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"shaft_entry","contradicts":false,"id":"shaft_entry_cam01","observation":"CAM-07 记录到乘客在轿厢到达前进入井道。","source":"cam01"}],"cam03":[{"conflictKey":"shaft_entry","contradicts":false,"id":"shaft_entry_cam03","observation":"CAM-07 记录到乘客在轿厢到达前进入井道。","source":"cam03"}],"cam07":[{"conflictKey":"shaft_entry","contradicts":true,"id":"shaft_entry_cam07","observation":"CAM-07 记录到乘客在轿厢到达前进入井道。","source":"cam07"}]},"replay":{"conflictKey":"shaft_entry","contradicts":true,"id":"shaft_entry_replay","observation":"CAM-07 记录到乘客在轿厢到达前进入井道。","source":"replay"},"thermal":{"conflictKey":"shaft_entry","contradicts":false,"id":"shaft_entry_thermal","observation":"CAM-07 记录到乘客在轿厢到达前进入井道。","source":"thermal"}},"explanation":"CAM-07 记录到乘客在轿厢到达前进入井道。","highRisk":true,"id":"space_shaft_entry","name":"井道提前进入","normalVariants":["normal_shift_04","normal_shift_05"],"panelData":{"door":"closed","floor":3,"passengers":1},"primaryConflict":"shaft_entry","protocolDependent":false,"protocolTags":["space"],"resolutionAction":"lockdown_floor","roundType":"highRisk","screenData":{"door":"closed","floor":3,"passengers":1},"silentEvidence":["cam07","replay"],"visualState":"16_wrong_floor"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"space","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":2,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"door_to_wall","contradicts":true,"id":"door_to_wall_cam01","observation":"开门后出现封闭墙面，而主控仍报告楼层走廊。","source":"cam01"}],"cam03":[{"conflictKey":"door_to_wall","contradicts":true,"id":"door_to_wall_cam03","observation":"开门后出现封闭墙面，而主控仍报告楼层走廊。","source":"cam03"}],"cam07":[{"conflictKey":"door_to_wall","contradicts":false,"id":"door_to_wall_cam07","observation":"开门后出现封闭墙面，而主控仍报告楼层走廊。","source":"cam07"}]},"replay":{"conflictKey":"door_to_wall","contradicts":false,"id":"door_to_wall_replay","observation":"开门后出现封闭墙面，而主控仍报告楼层走廊。","source":"replay"},"thermal":{"conflictKey":"door_to_wall","contradicts":false,"id":"door_to_wall_thermal","observation":"开门后出现封闭墙面，而主控仍报告楼层走廊。","source":"thermal"}},"explanation":"开门后出现封闭墙面，而主控仍报告楼层走廊。","highRisk":false,"id":"space_door_to_wall","name":"门后墙体","normalVariants":["normal_shift_05","normal_shift_06"],"panelData":{"door":"closed","floor":4,"passengers":1},"primaryConflict":"door_to_wall","protocolDependent":false,"protocolTags":["space"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":4,"passengers":1},"silentEvidence":["cam01","cam03"],"visualState":"16_wrong_floor"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"time","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":2,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"motion_loop","contradicts":true,"id":"motion_loop_cam01","observation":"三秒回放显示乘客动作逐帧完全重复。","source":"cam01"}],"cam03":[{"conflictKey":"motion_loop","contradicts":false,"id":"motion_loop_cam03","observation":"三秒回放显示乘客动作逐帧完全重复。","source":"cam03"}],"cam07":[{"conflictKey":"motion_loop","contradicts":false,"id":"motion_loop_cam07","observation":"三秒回放显示乘客动作逐帧完全重复。","source":"cam07"}]},"replay":{"conflictKey":"motion_loop","contradicts":true,"id":"motion_loop_replay","observation":"三秒回放显示乘客动作逐帧完全重复。","source":"replay"},"thermal":{"conflictKey":"motion_loop","contradicts":false,"id":"motion_loop_thermal","observation":"三秒回放显示乘客动作逐帧完全重复。","source":"thermal"}},"explanation":"三秒回放显示乘客动作逐帧完全重复。","highRisk":false,"id":"time_motion_loop","name":"动作循环","normalVariants":["normal_shift_06","normal_shift_07"],"panelData":{"door":"closed","floor":5,"passengers":1},"primaryConflict":"motion_loop","protocolDependent":false,"protocolTags":["time"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":5,"passengers":1},"silentEvidence":["cam01","replay"],"visualState":"11_camera_glitch"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"time","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":2,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"clock_stall","contradicts":false,"id":"clock_stall_cam01","observation":"CAM-07 时间码停止，但主控时钟继续前进。","source":"cam01"}],"cam03":[{"conflictKey":"clock_stall","contradicts":false,"id":"clock_stall_cam03","observation":"CAM-07 时间码停止，但主控时钟继续前进。","source":"cam03"}],"cam07":[{"conflictKey":"clock_stall","contradicts":true,"id":"clock_stall_cam07","observation":"CAM-07 时间码停止，但主控时钟继续前进。","source":"cam07"}]},"replay":{"conflictKey":"clock_stall","contradicts":false,"id":"clock_stall_replay","observation":"CAM-07 时间码停止，但主控时钟继续前进。","source":"replay"},"thermal":{"conflictKey":"clock_stall","contradicts":false,"id":"clock_stall_thermal","observation":"CAM-07 时间码停止，但主控时钟继续前进。","source":"thermal"}},"explanation":"CAM-07 时间码停止，但主控时钟继续前进。","highRisk":false,"id":"time_clock_stall","name":"时间停止","normalVariants":["normal_shift_07","normal_shift_08"],"panelData":{"door":"closed","floor":6,"passengers":1},"primaryConflict":"clock_stall","protocolDependent":false,"protocolTags":["time"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":6,"passengers":1},"silentEvidence":["cam07","panel"],"visualState":"11_camera_glitch"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"time","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":2,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"early_arrival","contradicts":false,"id":"early_arrival_cam01","observation":"井道记录显示轿厢在调度命令前已经到站。","source":"cam01"}],"cam03":[{"conflictKey":"early_arrival","contradicts":false,"id":"early_arrival_cam03","observation":"井道记录显示轿厢在调度命令前已经到站。","source":"cam03"}],"cam07":[{"conflictKey":"early_arrival","contradicts":true,"id":"early_arrival_cam07","observation":"井道记录显示轿厢在调度命令前已经到站。","source":"cam07"}]},"replay":{"conflictKey":"early_arrival","contradicts":true,"id":"early_arrival_replay","observation":"井道记录显示轿厢在调度命令前已经到站。","source":"replay"},"thermal":{"conflictKey":"early_arrival","contradicts":false,"id":"early_arrival_thermal","observation":"井道记录显示轿厢在调度命令前已经到站。","source":"thermal"}},"explanation":"井道记录显示轿厢在调度命令前已经到站。","highRisk":false,"id":"time_early_arrival","name":"提前到达","normalVariants":["normal_shift_08","normal_shift_09"],"panelData":{"door":"closed","floor":7,"passengers":1},"primaryConflict":"early_arrival","protocolDependent":false,"protocolTags":["time"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":7,"passengers":1},"silentEvidence":["cam07","replay"],"visualState":"11_camera_glitch"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"time","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":2,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"delay_overrun","contradicts":false,"id":"delay_overrun_cam01","observation":"CAM-07 延迟超过协议允许的固定两秒。","source":"cam01"}],"cam03":[{"conflictKey":"delay_overrun","contradicts":false,"id":"delay_overrun_cam03","observation":"CAM-07 延迟超过协议允许的固定两秒。","source":"cam03"}],"cam07":[{"conflictKey":"delay_overrun","contradicts":true,"id":"delay_overrun_cam07","observation":"CAM-07 延迟超过协议允许的固定两秒。","source":"cam07"}]},"replay":{"conflictKey":"delay_overrun","contradicts":false,"id":"delay_overrun_replay","observation":"CAM-07 延迟超过协议允许的固定两秒。","source":"replay"},"thermal":{"conflictKey":"delay_overrun","contradicts":false,"id":"delay_overrun_thermal","observation":"CAM-07 延迟超过协议允许的固定两秒。","source":"thermal"}},"explanation":"CAM-07 延迟超过协议允许的固定两秒。","highRisk":false,"id":"time_delay_overrun","name":"延迟超限","normalVariants":["normal_shift_09","normal_shift_10"],"panelData":{"door":"closed","floor":8,"passengers":1},"primaryConflict":"delay_overrun","protocolDependent":true,"protocolTags":["time"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":8,"passengers":1},"silentEvidence":["cam07","protocol"],"visualState":"11_camera_glitch"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"time","contaminationEffects":{"onCorrect":-2,"onMiss":12},"decision":"anomaly","difficulty":2,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"future_frame","contradicts":true,"id":"future_frame_cam01","observation":"回放中出现三秒后才发生的开门动作。","source":"cam01"}],"cam03":[{"conflictKey":"future_frame","contradicts":false,"id":"future_frame_cam03","observation":"回放中出现三秒后才发生的开门动作。","source":"cam03"}],"cam07":[{"conflictKey":"future_frame","contradicts":false,"id":"future_frame_cam07","observation":"回放中出现三秒后才发生的开门动作。","source":"cam07"}]},"replay":{"conflictKey":"future_frame","contradicts":true,"id":"future_frame_replay","observation":"回放中出现三秒后才发生的开门动作。","source":"replay"},"thermal":{"conflictKey":"future_frame","contradicts":false,"id":"future_frame_thermal","observation":"回放中出现三秒后才发生的开门动作。","source":"thermal"}},"explanation":"回放中出现三秒后才发生的开门动作。","highRisk":true,"id":"time_future_frame","name":"未来帧","normalVariants":["normal_shift_10","normal_shift_01"],"panelData":{"door":"closed","floor":9,"passengers":1},"primaryConflict":"future_frame","protocolDependent":false,"protocolTags":["time"],"resolutionAction":"lockdown_floor","roundType":"highRisk","screenData":{"door":"closed","floor":9,"passengers":1},"silentEvidence":["cam01","replay"],"visualState":"11_camera_glitch"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"device","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":3,"duration":8,"evidence":{"cameras":{"cam01":[{"conflictKey":"door_state","contradicts":true,"id":"door_state_cam01","observation":"画面中门已开启，主控仍报告关闭。","source":"cam01"}],"cam03":[{"conflictKey":"door_state","contradicts":false,"id":"door_state_cam03","observation":"画面中门已开启，主控仍报告关闭。","source":"cam03"}],"cam07":[{"conflictKey":"door_state","contradicts":false,"id":"door_state_cam07","observation":"画面中门已开启，主控仍报告关闭。","source":"cam07"}]},"replay":{"conflictKey":"door_state","contradicts":false,"id":"door_state_replay","observation":"画面中门已开启，主控仍报告关闭。","source":"replay"},"thermal":{"conflictKey":"door_state","contradicts":false,"id":"door_state_thermal","observation":"画面中门已开启，主控仍报告关闭。","source":"thermal"}},"explanation":"画面中门已开启，主控仍报告关闭。","highRisk":false,"id":"device_door_state","name":"门状态冲突","normalVariants":["normal_shift_01","normal_shift_02"],"panelData":{"door":"open","floor":10,"passengers":1},"primaryConflict":"door_state","protocolDependent":false,"protocolTags":["device"],"resolutionAction":"lockdown","roundType":"quick","screenData":{"door":"closed","floor":10,"passengers":1},"silentEvidence":["cam01","panel"],"visualState":"09_door_jammed"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"device","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":3,"duration":8,"evidence":{"cameras":{"cam01":[{"conflictKey":"floor_sensor","contradicts":false,"id":"floor_sensor_cam01","observation":"CAM-03 楼层标识与主控楼层传感器不一致。","source":"cam01"}],"cam03":[{"conflictKey":"floor_sensor","contradicts":true,"id":"floor_sensor_cam03","observation":"CAM-03 楼层标识与主控楼层传感器不一致。","source":"cam03"}],"cam07":[{"conflictKey":"floor_sensor","contradicts":false,"id":"floor_sensor_cam07","observation":"CAM-03 楼层标识与主控楼层传感器不一致。","source":"cam07"}]},"replay":{"conflictKey":"floor_sensor","contradicts":false,"id":"floor_sensor_replay","observation":"CAM-03 楼层标识与主控楼层传感器不一致。","source":"replay"},"thermal":{"conflictKey":"floor_sensor","contradicts":false,"id":"floor_sensor_thermal","observation":"CAM-03 楼层标识与主控楼层传感器不一致。","source":"thermal"}},"explanation":"CAM-03 楼层标识与主控楼层传感器不一致。","highRisk":false,"id":"device_floor_sensor","name":"楼层传感错误","normalVariants":["normal_shift_02","normal_shift_03"],"panelData":{"door":"closed","floor":11,"passengers":1},"primaryConflict":"floor_sensor","protocolDependent":false,"protocolTags":["device"],"resolutionAction":"lockdown","roundType":"quick","screenData":{"door":"closed","floor":11,"passengers":1},"silentEvidence":["cam03","panel"],"visualState":"09_door_jammed"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"device","contaminationEffects":{"onCorrect":-2,"onMiss":12},"decision":"anomaly","difficulty":3,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"camera_substitution","contradicts":false,"id":"camera_substitution_cam01","observation":"CAM-07 时间码变化但画面像素完全不变。","source":"cam01"}],"cam03":[{"conflictKey":"camera_substitution","contradicts":false,"id":"camera_substitution_cam03","observation":"CAM-07 时间码变化但画面像素完全不变。","source":"cam03"}],"cam07":[{"conflictKey":"camera_substitution","contradicts":true,"id":"camera_substitution_cam07","observation":"CAM-07 时间码变化但画面像素完全不变。","source":"cam07"}]},"replay":{"conflictKey":"camera_substitution","contradicts":true,"id":"camera_substitution_replay","observation":"CAM-07 时间码变化但画面像素完全不变。","source":"replay"},"thermal":{"conflictKey":"camera_substitution","contradicts":false,"id":"camera_substitution_thermal","observation":"CAM-07 时间码变化但画面像素完全不变。","source":"thermal"}},"explanation":"CAM-07 时间码变化但画面像素完全不变。","highRisk":true,"id":"device_camera_substitution","name":"画面被替换","normalVariants":["normal_shift_03","normal_shift_04"],"panelData":{"door":"closed","floor":12,"passengers":1},"primaryConflict":"camera_substitution","protocolDependent":false,"protocolTags":["device"],"resolutionAction":"lockdown_floor","roundType":"highRisk","screenData":{"door":"closed","floor":12,"passengers":1},"silentEvidence":["cam07","replay"],"visualState":"09_door_jammed"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"device","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":3,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"thermal_ghost","contradicts":true,"id":"thermal_ghost_cam01","observation":"空轿厢出现移动热源，三台摄像头均无人。","source":"cam01"}],"cam03":[{"conflictKey":"thermal_ghost","contradicts":false,"id":"thermal_ghost_cam03","observation":"空轿厢出现移动热源，三台摄像头均无人。","source":"cam03"}],"cam07":[{"conflictKey":"thermal_ghost","contradicts":false,"id":"thermal_ghost_cam07","observation":"空轿厢出现移动热源，三台摄像头均无人。","source":"cam07"}]},"replay":{"conflictKey":"thermal_ghost","contradicts":false,"id":"thermal_ghost_replay","observation":"空轿厢出现移动热源，三台摄像头均无人。","source":"replay"},"thermal":{"conflictKey":"thermal_ghost","contradicts":true,"id":"thermal_ghost_thermal","observation":"空轿厢出现移动热源，三台摄像头均无人。","source":"thermal"}},"explanation":"空轿厢出现移动热源，三台摄像头均无人。","highRisk":false,"id":"device_thermal_ghost","name":"虚假热源","normalVariants":["normal_shift_04","normal_shift_05"],"panelData":{"door":"closed","floor":1,"passengers":1},"primaryConflict":"thermal_ghost","protocolDependent":false,"protocolTags":["device"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":1,"passengers":1},"silentEvidence":["thermal","cam01"],"visualState":"09_door_jammed"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"device","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":3,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"door_cycle","contradicts":true,"id":"door_cycle_cam01","observation":"维护状态下门循环超过协议允许的一次。","source":"cam01"}],"cam03":[{"conflictKey":"door_cycle","contradicts":false,"id":"door_cycle_cam03","observation":"维护状态下门循环超过协议允许的一次。","source":"cam03"}],"cam07":[{"conflictKey":"door_cycle","contradicts":false,"id":"door_cycle_cam07","observation":"维护状态下门循环超过协议允许的一次。","source":"cam07"}]},"replay":{"conflictKey":"door_cycle","contradicts":false,"id":"door_cycle_replay","observation":"维护状态下门循环超过协议允许的一次。","source":"replay"},"thermal":{"conflictKey":"door_cycle","contradicts":false,"id":"door_cycle_thermal","observation":"维护状态下门循环超过协议允许的一次。","source":"thermal"}},"explanation":"维护状态下门循环超过协议允许的一次。","highRisk":false,"id":"device_door_cycle","name":"门循环超限","normalVariants":["normal_shift_05","normal_shift_06"],"panelData":{"door":"closed","floor":2,"passengers":1},"primaryConflict":"door_cycle","protocolDependent":true,"protocolTags":["device"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":2,"passengers":1},"silentEvidence":["cam01","protocol"],"visualState":"09_door_jammed"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"dynamic","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":3,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"instant_shift","contradicts":true,"id":"instant_shift_cam01","observation":"乘客在相邻帧从轿厢左侧瞬移到门外。","source":"cam01"}],"cam03":[{"conflictKey":"instant_shift","contradicts":false,"id":"instant_shift_cam03","observation":"乘客在相邻帧从轿厢左侧瞬移到门外。","source":"cam03"}],"cam07":[{"conflictKey":"instant_shift","contradicts":false,"id":"instant_shift_cam07","observation":"乘客在相邻帧从轿厢左侧瞬移到门外。","source":"cam07"}]},"replay":{"conflictKey":"instant_shift","contradicts":true,"id":"instant_shift_replay","observation":"乘客在相邻帧从轿厢左侧瞬移到门外。","source":"replay"},"thermal":{"conflictKey":"instant_shift","contradicts":false,"id":"instant_shift_thermal","observation":"乘客在相邻帧从轿厢左侧瞬移到门外。","source":"thermal"}},"explanation":"乘客在相邻帧从轿厢左侧瞬移到门外。","highRisk":false,"id":"dynamic_instant_shift","name":"人物瞬移","normalVariants":["normal_shift_06","normal_shift_07"],"panelData":{"door":"closed","floor":3,"passengers":1},"primaryConflict":"instant_shift","protocolDependent":false,"protocolTags":["dynamic"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":3,"passengers":1},"silentEvidence":["cam01","replay"],"visualState":"13_entity_near"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"dynamic","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":3,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"delayed_shadow","contradicts":true,"id":"delayed_shadow_cam01","observation":"乘客停止后影子仍继续移动两秒。","source":"cam01"}],"cam03":[{"conflictKey":"delayed_shadow","contradicts":false,"id":"delayed_shadow_cam03","observation":"乘客停止后影子仍继续移动两秒。","source":"cam03"}],"cam07":[{"conflictKey":"delayed_shadow","contradicts":false,"id":"delayed_shadow_cam07","observation":"乘客停止后影子仍继续移动两秒。","source":"cam07"}]},"replay":{"conflictKey":"delayed_shadow","contradicts":true,"id":"delayed_shadow_replay","observation":"乘客停止后影子仍继续移动两秒。","source":"replay"},"thermal":{"conflictKey":"delayed_shadow","contradicts":false,"id":"delayed_shadow_thermal","observation":"乘客停止后影子仍继续移动两秒。","source":"thermal"}},"explanation":"乘客停止后影子仍继续移动两秒。","highRisk":false,"id":"dynamic_delayed_shadow","name":"影子延迟","normalVariants":["normal_shift_07","normal_shift_08"],"panelData":{"door":"closed","floor":4,"passengers":1},"primaryConflict":"delayed_shadow","protocolDependent":false,"protocolTags":["dynamic"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":4,"passengers":1},"silentEvidence":["cam01","replay"],"visualState":"13_entity_near"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"dynamic","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":3,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"reverse_walk","contradicts":true,"id":"reverse_walk_cam01","observation":"乘客向前行走但位置持续向后移动。","source":"cam01"}],"cam03":[{"conflictKey":"reverse_walk","contradicts":false,"id":"reverse_walk_cam03","observation":"乘客向前行走但位置持续向后移动。","source":"cam03"}],"cam07":[{"conflictKey":"reverse_walk","contradicts":false,"id":"reverse_walk_cam07","observation":"乘客向前行走但位置持续向后移动。","source":"cam07"}]},"replay":{"conflictKey":"reverse_walk","contradicts":true,"id":"reverse_walk_replay","observation":"乘客向前行走但位置持续向后移动。","source":"replay"},"thermal":{"conflictKey":"reverse_walk","contradicts":false,"id":"reverse_walk_thermal","observation":"乘客向前行走但位置持续向后移动。","source":"thermal"}},"explanation":"乘客向前行走但位置持续向后移动。","highRisk":false,"id":"dynamic_reverse_walk","name":"逆向动作","normalVariants":["normal_shift_08","normal_shift_09"],"panelData":{"door":"closed","floor":5,"passengers":1},"primaryConflict":"reverse_walk","protocolDependent":false,"protocolTags":["dynamic"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":5,"passengers":1},"silentEvidence":["cam01","replay"],"visualState":"13_entity_near"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"dynamic","contaminationEffects":{"onCorrect":-2,"onMiss":6},"decision":"anomaly","difficulty":3,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"frozen_passenger","contradicts":true,"id":"frozen_passenger_cam01","observation":"轿厢震动时乘客轮廓保持像素级静止。","source":"cam01"}],"cam03":[{"conflictKey":"frozen_passenger","contradicts":false,"id":"frozen_passenger_cam03","observation":"轿厢震动时乘客轮廓保持像素级静止。","source":"cam03"}],"cam07":[{"conflictKey":"frozen_passenger","contradicts":true,"id":"frozen_passenger_cam07","observation":"轿厢震动时乘客轮廓保持像素级静止。","source":"cam07"}]},"replay":{"conflictKey":"frozen_passenger","contradicts":false,"id":"frozen_passenger_replay","observation":"轿厢震动时乘客轮廓保持像素级静止。","source":"replay"},"thermal":{"conflictKey":"frozen_passenger","contradicts":false,"id":"frozen_passenger_thermal","observation":"轿厢震动时乘客轮廓保持像素级静止。","source":"thermal"}},"explanation":"轿厢震动时乘客轮廓保持像素级静止。","highRisk":false,"id":"dynamic_frozen_passenger","name":"局部静止","normalVariants":["normal_shift_09","normal_shift_10"],"panelData":{"door":"closed","floor":6,"passengers":1},"primaryConflict":"frozen_passenger","protocolDependent":false,"protocolTags":["dynamic"],"resolutionAction":"lockdown","roundType":"investigation","screenData":{"door":"closed","floor":6,"passengers":1},"silentEvidence":["cam01","cam07"],"visualState":"13_entity_near"},{"audioCue":null,"availableTools":["camera","thermal","replay","protocol"],"category":"dynamic","contaminationEffects":{"onCorrect":-2,"onMiss":12},"decision":"anomaly","difficulty":3,"duration":14,"evidence":{"cameras":{"cam01":[{"conflictKey":"door_crossing","contradicts":true,"id":"door_crossing_cam01","observation":"门关闭期间人物轮廓穿过实体门板。","source":"cam01"}],"cam03":[{"conflictKey":"door_crossing","contradicts":false,"id":"door_crossing_cam03","observation":"门关闭期间人物轮廓穿过实体门板。","source":"cam03"}],"cam07":[{"conflictKey":"door_crossing","contradicts":false,"id":"door_crossing_cam07","observation":"门关闭期间人物轮廓穿过实体门板。","source":"cam07"}]},"replay":{"conflictKey":"door_crossing","contradicts":true,"id":"door_crossing_replay","observation":"门关闭期间人物轮廓穿过实体门板。","source":"replay"},"thermal":{"conflictKey":"door_crossing","contradicts":false,"id":"door_crossing_thermal","observation":"门关闭期间人物轮廓穿过实体门板。","source":"thermal"}},"explanation":"门关闭期间人物轮廓穿过实体门板。","highRisk":true,"id":"dynamic_door_crossing","name":"穿门而过","normalVariants":["normal_shift_10","normal_shift_01"],"panelData":{"door":"closed","floor":7,"passengers":1},"primaryConflict":"door_crossing","protocolDependent":false,"protocolTags":["dynamic"],"resolutionAction":"lockdown_floor","roundType":"highRisk","screenData":{"door":"closed","floor":7,"passengers":1},"silentEvidence":["cam01","replay"],"visualState":"13_entity_near"}],"endings":[{"conditions":{"requiredFlag":"camera_chain_compromised"},"id":"camera_taken","name":"替换信号","priority":5,"summary":"你完成了值守，但 CAM-07 留下的已不是今晚的画面。"},{"conditions":{"requiredFlag":"floor_chain_compromised"},"id":"floor_consumed","name":"第十三层","priority":5,"summary":"主控恢复正常，楼层表却从此多出一个无法删除的编号。"},{"conditions":{"minContamination":76},"id":"contaminated_survivor","name":"带回来的夜班","priority":3,"summary":"你活过了夜班，但系统污染已经跟随档案进入下一次值守。"},{"conditions":{"maxContamination":25,"minAccuracy":0.8},"id":"clean_shift","name":"清醒交班","priority":1,"summary":"每次决定都有证据支撑。晨班接管时，所有摄像头仍可信。"},{"conditions":{},"id":"uncertain_shift","name":"未决记录","priority":0,"summary":"你完成了交班，但有几段记录无法证明究竟发生过什么。"}],"eventChains":[{"consequences":[{"contaminationDelta":18,"flag":"chain_compromised","nextShiftModifier":"duplicate_feed"}],"id":"duplicate_passenger","initialFlags":[],"steps":[{"contentId":"normal_shift_02","id":"first_visit","onWrongFlags":["trusted_duplicate"],"roundType":"identity","trigger":"first_duplicate_candidate"},{"contentId":"person_duplicate_face","id":"repeated_motion","onWrongFlags":["motion_ignored"],"roundType":"investigation","trigger":"trusted_duplicate_or_next_shift"},{"contentId":"space_simultaneous_cameras","id":"simultaneous_presence","onWrongFlags":["chain_compromised"],"roundType":"highRisk","trigger":"second_duplicate_seen"}]},{"consequences":[{"contaminationDelta":22,"flag":"floor_chain_compromised","nextShiftModifier":"floor_13_bleed"}],"id":"nonexistent_floor","initialFlags":[],"steps":[{"contentId":"device_floor_sensor","id":"floor_flash","onWrongFlags":["floor_flash_ignored"],"roundType":"quick","trigger":"floor_display_flash"},{"contentId":"person_unknown_identity","id":"passenger_request","onWrongFlags":["invalid_request_allowed"],"roundType":"identity","trigger":"floor_flash_ignored_or_next_shift"},{"contentId":"space_floor_13","id":"impossible_space","onWrongFlags":["floor_chain_compromised"],"roundType":"highRisk","trigger":"invalid_request_allowed_or_escalation"}]},{"consequences":[{"contaminationDelta":20,"flag":"camera_chain_compromised","nextShiftModifier":"unreliable_cam07"}],"id":"camera_replacement","initialFlags":[],"steps":[{"contentId":"time_delay_overrun","id":"cam07_delay","onWrongFlags":["delay_accepted"],"roundType":"investigation","trigger":"cam07_delay"},{"contentId":"time_clock_stall","id":"time_stops","onWrongFlags":["clock_stop_ignored"],"roundType":"investigation","trigger":"delay_accepted_or_next_shift"},{"contentId":"device_camera_substitution","id":"feed_replaced","onWrongFlags":["camera_chain_compromised"],"roundType":"highRisk","trigger":"clock_stop_ignored_or_escalation"}]}],"normalShifts":[{"evidence":{"cameras":{"cam01":[{"contradicts":false,"id":"normal_shift_01_cam01","observation":"画面与主控一致。","source":"cam01"}],"cam03":[{"contradicts":false,"id":"normal_shift_01_cam03","observation":"进出记录一致。","source":"cam03"}],"cam07":[{"contradicts":false,"id":"normal_shift_01_cam07","observation":"井道时序正常。","source":"cam07"}]}},"id":"normal_shift_01","panelData":{"door":"closed","floor":2,"passengers":1},"passengerIds":["resident_001"],"protocolTags":["personnel"],"roundType":"investigation","screenData":{"door":"closed","floor":2,"passengers":1}},{"evidence":{"cameras":{"cam01":[{"contradicts":false,"id":"normal_shift_02_cam01","observation":"画面与主控一致。","source":"cam01"}],"cam03":[{"contradicts":false,"id":"normal_shift_02_cam03","observation":"进出记录一致。","source":"cam03"}],"cam07":[{"contradicts":false,"id":"normal_shift_02_cam07","observation":"井道时序正常。","source":"cam07"}]}},"id":"normal_shift_02","panelData":{"door":"closed","floor":3,"passengers":1},"passengerIds":["worker_001"],"protocolTags":["personnel"],"roundType":"identity","screenData":{"door":"closed","floor":3,"passengers":1}},{"evidence":{"cameras":{"cam01":[{"contradicts":false,"id":"normal_shift_03_cam01","observation":"画面与主控一致。","source":"cam01"}],"cam03":[{"contradicts":false,"id":"normal_shift_03_cam03","observation":"进出记录一致。","source":"cam03"}],"cam07":[{"contradicts":false,"id":"normal_shift_03_cam07","observation":"井道时序正常。","source":"cam07"}]}},"id":"normal_shift_03","panelData":{"door":"open","floor":4,"passengers":0},"passengerIds":[],"protocolTags":["device"],"roundType":"quick","screenData":{"door":"open","floor":4,"passengers":0}},{"evidence":{"cameras":{"cam01":[{"contradicts":false,"id":"normal_shift_04_cam01","observation":"画面与主控一致。","source":"cam01"}],"cam03":[{"contradicts":false,"id":"normal_shift_04_cam03","observation":"进出记录一致。","source":"cam03"}],"cam07":[{"contradicts":false,"id":"normal_shift_04_cam07","observation":"井道时序正常。","source":"cam07"}]}},"id":"normal_shift_04","panelData":{"door":"closed","floor":5,"passengers":1},"passengerIds":["cleaner_001"],"protocolTags":["personnel"],"roundType":"investigation","screenData":{"door":"closed","floor":5,"passengers":1}},{"evidence":{"cameras":{"cam01":[{"contradicts":false,"id":"normal_shift_05_cam01","observation":"画面与主控一致。","source":"cam01"}],"cam03":[{"contradicts":false,"id":"normal_shift_05_cam03","observation":"进出记录一致。","source":"cam03"}],"cam07":[{"contradicts":false,"id":"normal_shift_05_cam07","observation":"井道时序正常。","source":"cam07"}]}},"id":"normal_shift_05","panelData":{"door":"closed","floor":6,"passengers":1},"passengerIds":["security_001"],"protocolTags":["personnel"],"roundType":"identity","screenData":{"door":"closed","floor":6,"passengers":1}},{"evidence":{"cameras":{"cam01":[{"contradicts":false,"id":"normal_shift_06_cam01","observation":"画面与主控一致。","source":"cam01"}],"cam03":[{"contradicts":false,"id":"normal_shift_06_cam03","observation":"进出记录一致。","source":"cam03"}],"cam07":[{"contradicts":false,"id":"normal_shift_06_cam07","observation":"井道时序正常。","source":"cam07"}]}},"id":"normal_shift_06","panelData":{"door":"open","floor":7,"passengers":1},"passengerIds":["resident_001"],"protocolTags":["device"],"roundType":"quick","screenData":{"door":"open","floor":7,"passengers":1}},{"evidence":{"cameras":{"cam01":[{"contradicts":false,"id":"normal_shift_07_cam01","observation":"画面与主控一致。","source":"cam01"}],"cam03":[{"contradicts":false,"id":"normal_shift_07_cam03","observation":"进出记录一致。","source":"cam03"}],"cam07":[{"contradicts":false,"id":"normal_shift_07_cam07","observation":"井道时序正常。","source":"cam07"}]}},"id":"normal_shift_07","panelData":{"door":"closed","floor":8,"passengers":1},"passengerIds":["worker_001"],"protocolTags":["personnel"],"roundType":"investigation","screenData":{"door":"closed","floor":8,"passengers":1}},{"evidence":{"cameras":{"cam01":[{"contradicts":false,"id":"normal_shift_08_cam01","observation":"画面与主控一致。","source":"cam01"}],"cam03":[{"contradicts":false,"id":"normal_shift_08_cam03","observation":"进出记录一致。","source":"cam03"}],"cam07":[{"contradicts":false,"id":"normal_shift_08_cam07","observation":"井道时序正常。","source":"cam07"}]}},"id":"normal_shift_08","panelData":{"door":"closed","floor":9,"passengers":0},"passengerIds":[],"protocolTags":["personnel"],"roundType":"identity","screenData":{"door":"closed","floor":9,"passengers":0}},{"evidence":{"cameras":{"cam01":[{"contradicts":false,"id":"normal_shift_09_cam01","observation":"画面与主控一致。","source":"cam01"}],"cam03":[{"contradicts":false,"id":"normal_shift_09_cam03","observation":"进出记录一致。","source":"cam03"}],"cam07":[{"contradicts":false,"id":"normal_shift_09_cam07","observation":"井道时序正常。","source":"cam07"}]}},"id":"normal_shift_09","panelData":{"door":"open","floor":10,"passengers":1},"passengerIds":["cleaner_001"],"protocolTags":["device"],"roundType":"quick","screenData":{"door":"open","floor":10,"passengers":1}},{"evidence":{"cameras":{"cam01":[{"contradicts":false,"id":"normal_shift_10_cam01","observation":"画面与主控一致。","source":"cam01"}],"cam03":[{"contradicts":false,"id":"normal_shift_10_cam03","observation":"进出记录一致。","source":"cam03"}],"cam07":[{"contradicts":false,"id":"normal_shift_10_cam07","observation":"井道时序正常。","source":"cam07"}]}},"id":"normal_shift_10","panelData":{"door":"closed","floor":11,"passengers":1},"passengerIds":["security_001"],"protocolTags":["personnel"],"roundType":"investigation","screenData":{"door":"closed","floor":11,"passengers":1}}],"passengers":[{"allowedFloors":["B2","8"],"badge":"yellow","countMode":"ignore","id":"worker_001","name":"张伟","role":"maintenance","verificationPaths":["cam01","protocol"]},{"allowedFloors":["3","6","9"],"badge":"blue","countMode":"normal","id":"resident_001","name":"林岚","role":"resident","verificationPaths":["cam01","registry"]},{"allowedFloors":["1","2","3"],"badge":"orange","countMode":"normal","id":"courier_001","name":"陈杰","role":"courier","verificationPaths":["cam03","registry"]},{"allowedFloors":["2","4","6","8","10","12"],"badge":"green","countMode":"normal","id":"cleaner_001","name":"赵梅","role":"cleaner","verificationPaths":["cam01","protocol"]},{"allowedFloors":["B2","1","13"],"badge":"white","countMode":"normal","id":"security_001","name":"周启","role":"security","verificationPaths":["cam01","protocol"]}],"protocols":[{"category":"floor","condition":{"field":"floor","operator":"equals","value":13},"decision":"lockdown","id":"floor_13_forbidden","protocolTags":["floor"],"text":"13 层不存在，任何前往 13 层的请求必须封锁。","verificationPaths":["protocol","cam07"]},{"category":"identity","condition":{"field":"identity","operator":"equals","value":"maintenance_without_yellow_badge"},"decision":"lockdown","id":"maintenance_badge_required","protocolTags":["identity","personnel"],"text":"维修人员不计入人数，但必须佩戴黄色胸牌。","verificationPaths":["cam01","thermal"]},{"category":"device","condition":{"field":"cameraDelayMs","operator":"lte","value":2000},"decision":"release","id":"cam07_delay_expected","protocolTags":["device"],"text":"CAM-07 固定延迟两秒，延迟本身不属于异常。","verificationPaths":["cam01","replay"]},{"category":"time","condition":{"field":"cleanerOddFloorAfterMidnight","operator":"truthy"},"decision":"lockdown","id":"cleaner_after_midnight","protocolTags":["time","personnel"],"text":"零点后清洁人员只能前往偶数楼层。","verificationPaths":["protocol","cam01"]},{"category":"personnel","condition":{"field":"emptyWeightDelayCount","operator":"gte","value":2},"decision":"lockdown","id":"empty_car_weight_tolerance","protocolTags":["personnel","device"],"text":"空轿厢允许一次载重计数延迟，但第二次必须封锁。","verificationPaths":["cam01","replay"]},{"category":"device","condition":{"field":"maintenanceDoorCycles","operator":"lte","value":1},"decision":"release","id":"door_cycle_maintenance","protocolTags":["device"],"text":"维护灯亮起时允许一次门状态循环。","verificationPaths":["cam01","cam03"]}]};
+
 // --- src/gameConfig.js ---
+var __exports_src_gameConfig_js = {};
+{
 /**
  * gameConfig.js — MINIGAME 平衡参数配置（单一配置源）
  *
@@ -135,11 +140,16 @@ const CONFIG = {
 
 CONFIG;
 
+__exports_src_gameConfig_js["CONFIG"] = CONFIG;
+}
+var CONFIG = __exports_src_gameConfig_js["CONFIG"];
 
 // --- src/skins/elevator/skin.json ---
-var __SKIN_DATA__ = {"meta":{"id":"elevator","name":"异常电梯控制台","subtitle":"MINIGAME · ANOMALY SYSTEM SIM"},"monitor":{"initial":"监控画面稳定：1 层轿厢为空。","actions":{"openDoor":"监控：{floor} 层电梯门已打开。门外走廊光线异常。","closeDoor":"监控：轿厢门闭合。画面存在轻微拖影。","moveUp":"监控：电梯上行至 {floor} 层。乘客未看向摄像头。","moveDown":"监控：电梯下行至 {floor} 层。楼层指示灯短暂闪烁。","emergencyStop":"监控：电梯急停。轿厢灯光闪烁 3 次。","restartSystem":"监控：系统重启后恢复画面。部分录像帧丢失。"}},"actionLabels":{"openDoor":"开门","closeDoor":"关门","moveUp":"上行","moveDown":"下行","emergencyStop":"急停","restartSystem":"系统重启","inspectLog":"查看日志","unlockHiddenLog":"解码加密记录"},"doorLabels":{"open":"开启","closed":"关闭"},"directionLabels":{"up":"上行","down":"下行","idle":"待机"},"statusLabels":{"panelTitle":"电梯状态","floor":"楼层","door":"门状态","direction":"方向","passengers":"乘客","power":"电源","stability":"稳定度","anomalyLevel":"异常等级","reviveCount":"广告复活","adHintsCount":"加密解码","hiddenLogsCount":"待解码"},"canvasLabels":{"countdown":"值守倒计时","monitorPanel":"监控画面","actionPanel":"操作面板","logPanel":"系统日志","failureTitle":"系统崩溃","failureEyebrow":"SYSTEM FAILURE","monitorSignalStable":"SYSTEM: STABLE","monitorSignalUnstable":"SYSTEM: UNSTABLE","monitorSignalCorrupted":"SYSTEM: CORRUPTED","monitorThreat":"THREAT: {level}","failureMetricStability":"稳定度","failureMetricAnomaly":"异常","failureMetricRemaining":"剩余"},"actionFailMessages":{"openDoor_moving":"电梯移动中，禁止开门。","moveUp_doorNotClosed":"门未关闭，禁止移动。","moveDown_doorNotClosed":"门未关闭，禁止移动。","unknownAction":"未知操作：{actionId}","gameOver":"系统已崩溃，必须复活或重新开始。","systemBusy":"当前动作尚未完成，请等待电梯状态稳定。"},"actionFeedback":{"openDoor":"电梯门已打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行。","moveDown":"电梯开始下行。","emergencyStop":"急停已执行。","emergencyStop_fail":"急停按钮失效。","restartSystem":"系统重启完成。","inspectLog":"已查看系统日志。","unlockHiddenLog_noLocked":"没有待解码的加密记录。","unlockHiddenLog_limit":"本局已解码 {count} 条记录，达到上限。"},"actionLogMessages":{"openDoor":"电梯门已在 {floor} 层打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行，当前楼层 {floor}。","moveDown":"电梯开始下行，当前楼层 {floor}。","emergencyStop":"执行急停：移动已停止，稳定度下降。","emergencyStop_fail":"急停按钮无响应。异常等级上升。","restartSystem":"系统重启完成：异常等级下降，但消耗 {cost} 点电源。","inspectLog":"操作员查看系统日志：最近 30 秒存在未授权楼层请求。","inspectLog_hiddenRecords":"发现 {count} 条待解码加密记录。可观看模拟广告解锁完整内容。","unlockHiddenLog_ok":"模拟广告播放完成。加密记录已解码。"},"anomalies":[{"id":"phantom_floor","title":"不存在的楼层","severity":2,"monitor":"监控：楼层读数跳到 {normalFloorPlus2} 层。该楼层在建筑图纸中不存在。","adHint":"楼层显示异常时不要开门，先执行系统重启。","effects":{"floor":"+2","anomalyLevel":2,"stability":-10}},{"id":"camera_delay","title":"监控延迟","severity":1,"monitor":"监控：画面延迟 3 秒。乘客动作与控制台记录不同步。","adHint":"监控延迟时优先查看日志，不要连续移动。","effects":{"anomalyLevel":1,"stability":-6}},{"id":"zero_passenger_shadow","title":"门外有人但乘客数为 0","severity":2,"monitor":"监控：门外站着一个人，但乘客计数器显示 0。","adHint":"乘客数异常时保持关门，先急停再查日志。","effects":{"passengers":0,"anomalyLevel":2,"stability":-12}},{"id":"log_echo","title":"系统日志重复字符","severity":1,"monitor":"监控：系统日志开始重复输出“不要开门”。","adHint":"日志重复通常是轻度异常，系统重启可降低异常等级。","effects":{"anomalyLevel":1,"stability":-5}},{"id":"auto_button","title":"按钮自动亮起","severity":2,"monitor":"监控：没有乘客触碰按钮，B2 与 9 层按钮自动亮起。","adHint":"按钮自动亮起时不要跟随请求移动，先关门并急停。","effects":{"anomalyLevel":2,"power":-8}},{"id":"stop_failure","title":"急停按钮失效","severity":3,"monitor":"监控：急停按钮指示灯熄灭，控制台拒绝确认安全回路。","adHint":"急停失效时不要反复点击，优先系统重启。","effects":{"anomalyLevel":3,"stability":-15}},{"id":"negative_floor","title":"楼层显示为负数","severity":2,"monitor":"监控：楼层显示 -1。摄像头画面出现地下走廊。","adHint":"负数楼层不是正常地下层，立即重启系统。","effects":{"floor":-1,"anomalyLevel":2,"stability":-10}},{"id":"power_drain","title":"电源异常下降","severity":2,"monitor":"监控：备用电源自动接管，但电量仍在下降。","adHint":"电源异常下降时减少移动，优先关门与重启。","effects":{"anomalyLevel":2,"power":-22}},{"id":"door_refuse","title":"电梯门拒绝关闭","severity":2,"monitor":"监控：关门按钮已按下，门在合拢前自动弹开。异常状态持续。","adHint":"门拒绝关闭时不要连续按关门，先急停再重启系统。","effects":{"door":"open","anomalyLevel":2,"stability":-10}},{"id":"weight_mismatch","title":"载重数据异常","severity":1,"monitor":"监控：载重传感器读数 — 0kg。轿厢内有 1 名乘客。读数矛盾。","adHint":"载重异常时优先查日志，乘客数可能被重置。","effects":{"passengers":0,"anomalyLevel":1,"stability":-7}},{"id":"floor_jump","title":"楼层编号跳跃","severity":2,"monitor":"监控：电梯从 5 层直接移动到 9 层。摄像头画面缺失 4 帧。","adHint":"楼层跳跃时减少移动操作，用系统重启恢复楼层显示。","effects":{"floor":"+4","anomalyLevel":2,"stability":-12,"power":-10}},{"id":"emergency_lights","title":"应急灯异常启动","severity":3,"monitor":"监控：轿厢应急灯突然亮起。备用电源消耗加速。","adHint":"应急灯启动时尽量避免移动，立即重启系统可关闭应急灯。","effects":{"anomalyLevel":3,"stability":-14,"power":-20}}],"hiddenLogs":{"phantom_floor":{"title":"未归档楼层施工记录","content":"施工记录（编号模糊）：存在未归档的夹层结构，位于正常楼层之间。\\n档案中未找到该夹层的施工许可或验收记录。\\n控制面板能收到来自该夹层的按钮信号，尽管物理按钮不存在于任何楼层。\\n技术人员备注：该信号可能与 3 年前失踪的 3 名工人有关。"},"camera_delay":{"title":"监控系统校准记录","content":"校准日志 #4417：摄像头#03 与#07 存在 3 秒信号延迟。\n技术人员备注：延迟与第 13 层信号干扰有关，建议不要在 13 层停靠。"},"zero_passenger_shadow":{"title":"乘客记录异常说明","content":"传感器技术手册（节选）：\n红外传感器在非营业时段多次检测到热源信号，但乘客计数器持续归零。\n维修记录：传感器无故障。热源信号经比对——与员工体温档案不匹配。"},"log_echo":{"title":"日志系统诊断报告","content":"诊断报告 #FD-22-019：\n系统日志缓冲区检测到重复写入操作。重复内容「不要开门」的写入时间戳早于当前值班员登录时间。\n建议：检查前一值班员的退出状态。"},"auto_button":{"title":"控制系统审计追踪","content":"审计追踪 #AUD-882：\n自动按钮信号来源追溯至 5 号服务器（已于 2022 年停用）。\n该服务器的最后一条记录：「控制权移交程序未完成」。"},"stop_failure":{"title":"急停系统维护日志","content":"维护日志 #M-341：\n急停回路#2 在定期检查中被标记为「状态：不可用」。\n签署人签名无法识别。签署时间：3 年前。没有后续维修记录。"},"negative_floor":{"title":"地下层勘测报告","content":"建筑勘测报告（内部）：\n地下实际存在 4 层结构，但公开图纸仅标注 B1-B2。\nB3-B4 的电梯按钮在出厂时已被移除，但线路仍然通电。"},"power_drain":{"title":"备用电源异常报告","content":"异常报告 #P-877：\n备用电源在无负载状态下持续放电。经查，有一条非授权线路从备用电源柜分接至未知设备。\n线路标签：「不要切断」。"},"door_refuse":{"title":"门控系统事故报告","content":"事故报告 #D-1290：\n门控模块在连续 3 次异常重启后进入保护模式。\n模块日志输出最后一条：「识别到外部干扰信号。拒绝执行 — 保护乘员安全」。"},"weight_mismatch":{"title":"传感器校验记录","content":"校验记录 #W-554：\n载重传感器与红外传感器读数不一致。红外传感器在轿厢空载时检测到热源。\n技术人员备注：请确认值班员在操作前已清空轿厢。"},"floor_jump":{"title":"楼层定位日志","content":"定位日志 #F-213：\nGPS 楼层定位模块在校准前后记录的楼层编号不一致。\n系统自动修正失败。可能原因：参考信号源来自非标设备。"},"emergency_lights":{"title":"应急照明测试报告","content":"测试报告 #E-777：\n应急照明系统在无触发信号的情况下自行启动。\n供电线路检测到寄生回路。回路终端设备编号无法匹配任何已知设备清单。"}},"failure":{"summaries":{"power":"电源耗尽","stability":"稳定度归零","anomalyLevel":"异常等级失控","passengers":"乘客记录出现负数","default":"系统拒绝继续响应"},"defaultHint":"先关门，再重启系统，避免连续移动。","firstRunAdvice":"下次先核对画面、楼层、人数和门状态；一致放行，矛盾封锁。","adHintPrefix":"广告提示：{hint}","adReviveRollback":"广告复活完成：回滚 {seconds} 秒，恢复至可控状态。","adReviveMonitor":"广告复活完成：回滚到 {seconds} 秒前的系统状态。","snapshotFallback":"可观看广告复活，回滚到 {seconds} 秒前的系统状态。","noSnapshotFallback":"可观看广告复活，回滚到初始系统状态。"},"fakeEnding":{"eyebrow":"⚠ SYSTEM ANOMALY DETECTED","title":"操作员关联异常","text":"系统检测到操作员第 {count} 次系统崩溃。\n根据《异常控制员守则》第 7 条，您已被标记为“异常关联人员”。\n前 {threshold} 次记录已被永久删除。\n建议您立即离开控制台并联系安保部门。","truthPlaceholder":"[???] 观看广告揭示真相。","truthContent":"这不是第一次，也不会是最后一次。\n这座建筑的异常系统从未被修复。\n每一任值班员最后都变成了「异常事件」本身。\n系统日志中关于「乘客」的记载——都是前任值班员的热源信号。\n你现在坐的位置，就是上一任值班员被发现的地方。"},"ui":{"viewAd":"观看广告复活","unlockAd":"解码加密记录","restart":"重新开始","revealTruth":"观看广告揭示真相","triggerTest":"触发异常测试","decodePrefix":"[解码记录]","initialLog":"异常电梯控制台已接管。等待操作员指令。","initialFeedback":"等待下一班电梯","tutorialNormal":"信息一致，点击放行","tutorialAnomaly":"发现矛盾，点击封锁","coreRule":"核对画面和数据：一致放行，矛盾封锁","standby":"等待下一班","wrongTutorial":"再看一眼：核对楼层、人数和门状态","wrongTreatment":"处置错误，异常仍在持续。","inspectionReady":"请核对当前画面和三项数据","treatmentTutorial":"最后一步：按亮起的处置键解除异常","wrongTreatmentTutorial":"这项处置不对应当前线索，再看一次","autoResolutionCorrect":"封锁成功，系统已自动处置","autoResolutionWrong":"判断错误，系统已紧急隔离","autoResolutionTimeout":"判断超时，系统已自动隔离","anomalyEventLog":"异常事件：{title}。{hint}","startTitle":"等待接管异常电梯","startCopy":"核对楼层、人数和门状态：对得上就放行，对不上就封锁。前两班会在实际画面中教会你。","startChecklist":"三项一致：放行\n任意一项矛盾：封锁\n前两班点错不会扣分","startFailureRulesTitle":"失败条件","startFailureRules":"电源归零\n稳定度归零\n异常等级失控","startButton":"开始接管","sidebarEntry":"侧边栏入口","pausedTitle":"值守已暂停","pausedCopy":"返回前台后继续，不计算后台时间","audioOn":"声音开","audioOff":"已静音","adUnavailable":"广告暂不可用，请稍后重试","reportNormal":"放行","reportAnomaly":"封锁","inspectionLabel":"请在 {seconds}s 内判断","baselineInspectionTitle":"核对画面与数据","anomalyInspectionTitle":"核对画面与数据","anomalyResolved":"处置完成：{action} 已解除当前异常。","anomalyResolvedMonitor":"监控恢复稳定，等待下一轮巡检。","inspectionPrompt":"巡检判定：{title}（{seconds}秒内响应）","inspectionCorrectNormal":"判定正确：当前画面正常。","inspectionCorrectAnomaly":"判定正确：异常已上报，系统压力下降。","inspectionWrong":"判定错误：稳定度下降，异常压力上升。","inspectionTimeout":"判定超时：未完成本次巡检。","successfulShift":"本轮结束，连续失败计数已重置。","shiftComplete":"值守完成","hiddenLogCaptured":"加密记录已捕获：{title}。使用「查看日志」功能解码。","unlockResult":"已解码：{title}","decodeMonitor":"解码完成：{title}。完整内容已写入系统日志。"}};
+var __SKIN_DATA__ = {"meta":{"id":"elevator","name":"异常电梯控制台","subtitle":"MINIGAME · ANOMALY SYSTEM SIM"},"monitor":{"initial":"监控画面稳定：1 层轿厢为空。","actions":{"openDoor":"监控：{floor} 层电梯门已打开。门外走廊光线异常。","closeDoor":"监控：轿厢门闭合。画面存在轻微拖影。","moveUp":"监控：电梯上行至 {floor} 层。乘客未看向摄像头。","moveDown":"监控：电梯下行至 {floor} 层。楼层指示灯短暂闪烁。","emergencyStop":"监控：电梯急停。轿厢灯光闪烁 3 次。","restartSystem":"监控：系统重启后恢复画面。部分录像帧丢失。"}},"actionLabels":{"openDoor":"开门","closeDoor":"关门","moveUp":"上行","moveDown":"下行","emergencyStop":"急停","restartSystem":"系统重启","inspectLog":"查看日志","unlockHiddenLog":"解码加密记录"},"doorLabels":{"open":"开启","closed":"关闭"},"directionLabels":{"up":"上行","down":"下行","idle":"待机"},"statusLabels":{"panelTitle":"电梯状态","floor":"楼层","door":"门状态","direction":"方向","passengers":"乘客","power":"电源","stability":"稳定度","anomalyLevel":"异常等级","reviveCount":"广告复活","adHintsCount":"加密解码","hiddenLogsCount":"待解码"},"canvasLabels":{"countdown":"值守倒计时","monitorPanel":"监控画面","actionPanel":"操作面板","logPanel":"系统日志","failureTitle":"系统崩溃","failureEyebrow":"系统故障","monitorSignalStable":"SYSTEM: STABLE","monitorSignalUnstable":"SYSTEM: UNSTABLE","monitorSignalCorrupted":"SYSTEM: CORRUPTED","monitorThreat":"THREAT: {level}","failureMetricStability":"稳定度","failureMetricAnomaly":"异常","failureMetricRemaining":"剩余"},"actionFailMessages":{"openDoor_moving":"电梯移动中，禁止开门。","moveUp_doorNotClosed":"门未关闭，禁止移动。","moveDown_doorNotClosed":"门未关闭，禁止移动。","unknownAction":"未知操作：{actionId}","gameOver":"系统已崩溃，必须复活或重新开始。","systemBusy":"当前动作尚未完成，请等待电梯状态稳定。"},"actionFeedback":{"openDoor":"电梯门已打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行。","moveDown":"电梯开始下行。","emergencyStop":"急停已执行。","emergencyStop_fail":"急停按钮失效。","restartSystem":"系统重启完成。","inspectLog":"已查看系统日志。","unlockHiddenLog_noLocked":"没有待解码的加密记录。","unlockHiddenLog_limit":"本局已解码 {count} 条记录，达到上限。"},"actionLogMessages":{"openDoor":"电梯门已在 {floor} 层打开。","closeDoor":"电梯门已关闭。","moveUp":"电梯开始上行，当前楼层 {floor}。","moveDown":"电梯开始下行，当前楼层 {floor}。","emergencyStop":"执行急停：移动已停止，稳定度下降。","emergencyStop_fail":"急停按钮无响应。异常等级上升。","restartSystem":"系统重启完成：异常等级下降，但消耗 {cost} 点电源。","inspectLog":"操作员查看系统日志：最近 30 秒存在未授权楼层请求。","inspectLog_hiddenRecords":"发现 {count} 条待解码加密记录。可观看模拟广告解锁完整内容。","unlockHiddenLog_ok":"模拟广告播放完成。加密记录已解码。"},"anomalies":[{"id":"phantom_floor","title":"不存在的楼层","severity":2,"monitor":"监控：楼层读数跳到 {normalFloorPlus2} 层。该楼层在建筑图纸中不存在。","adHint":"楼层显示异常时不要开门，先执行系统重启。","effects":{"floor":"+2","anomalyLevel":2,"stability":-10}},{"id":"camera_delay","title":"监控延迟","severity":1,"monitor":"监控：画面延迟 3 秒。乘客动作与控制台记录不同步。","adHint":"监控延迟时优先查看日志，不要连续移动。","effects":{"anomalyLevel":1,"stability":-6}},{"id":"zero_passenger_shadow","title":"门外有人但乘客数为 0","severity":2,"monitor":"监控：门外站着一个人，但乘客计数器显示 0。","adHint":"乘客数异常时保持关门，先急停再查日志。","effects":{"passengers":0,"anomalyLevel":2,"stability":-12}},{"id":"log_echo","title":"系统日志重复字符","severity":1,"monitor":"监控：系统日志开始重复输出“不要开门”。","adHint":"日志重复通常是轻度异常，系统重启可降低异常等级。","effects":{"anomalyLevel":1,"stability":-5}},{"id":"auto_button","title":"按钮自动亮起","severity":2,"monitor":"监控：没有乘客触碰按钮，B2 与 9 层按钮自动亮起。","adHint":"按钮自动亮起时不要跟随请求移动，先关门并急停。","effects":{"anomalyLevel":2,"power":-8}},{"id":"stop_failure","title":"急停按钮失效","severity":3,"monitor":"监控：急停按钮指示灯熄灭，控制台拒绝确认安全回路。","adHint":"急停失效时不要反复点击，优先系统重启。","effects":{"anomalyLevel":3,"stability":-15}},{"id":"negative_floor","title":"楼层显示为负数","severity":2,"monitor":"监控：楼层显示 -1。摄像头画面出现地下走廊。","adHint":"负数楼层不是正常地下层，立即重启系统。","effects":{"floor":-1,"anomalyLevel":2,"stability":-10}},{"id":"power_drain","title":"电源异常下降","severity":2,"monitor":"监控：备用电源自动接管，但电量仍在下降。","adHint":"电源异常下降时减少移动，优先关门与重启。","effects":{"anomalyLevel":2,"power":-22}},{"id":"door_refuse","title":"电梯门拒绝关闭","severity":2,"monitor":"监控：关门按钮已按下，门在合拢前自动弹开。异常状态持续。","adHint":"门拒绝关闭时不要连续按关门，先急停再重启系统。","effects":{"door":"open","anomalyLevel":2,"stability":-10}},{"id":"weight_mismatch","title":"载重数据异常","severity":1,"monitor":"监控：载重传感器读数 — 0kg。轿厢内有 1 名乘客。读数矛盾。","adHint":"载重异常时优先查日志，乘客数可能被重置。","effects":{"passengers":0,"anomalyLevel":1,"stability":-7}},{"id":"floor_jump","title":"楼层编号跳跃","severity":2,"monitor":"监控：电梯从 5 层直接移动到 9 层。摄像头画面缺失 4 帧。","adHint":"楼层跳跃时减少移动操作，用系统重启恢复楼层显示。","effects":{"floor":"+4","anomalyLevel":2,"stability":-12,"power":-10}},{"id":"emergency_lights","title":"应急灯异常启动","severity":3,"monitor":"监控：轿厢应急灯突然亮起。备用电源消耗加速。","adHint":"应急灯启动时尽量避免移动，立即重启系统可关闭应急灯。","effects":{"anomalyLevel":3,"stability":-14,"power":-20}}],"hiddenLogs":{"phantom_floor":{"title":"未归档楼层施工记录","content":"施工记录（编号模糊）：存在未归档的夹层结构，位于正常楼层之间。\\n档案中未找到该夹层的施工许可或验收记录。\\n控制面板能收到来自该夹层的按钮信号，尽管物理按钮不存在于任何楼层。\\n技术人员备注：该信号可能与 3 年前失踪的 3 名工人有关。"},"camera_delay":{"title":"监控系统校准记录","content":"校准日志 #4417：摄像头#03 与#07 存在 3 秒信号延迟。\n技术人员备注：延迟与第 13 层信号干扰有关，建议不要在 13 层停靠。"},"zero_passenger_shadow":{"title":"乘客记录异常说明","content":"传感器技术手册（节选）：\n红外传感器在非营业时段多次检测到热源信号，但乘客计数器持续归零。\n维修记录：传感器无故障。热源信号经比对——与员工体温档案不匹配。"},"log_echo":{"title":"日志系统诊断报告","content":"诊断报告 #FD-22-019：\n系统日志缓冲区检测到重复写入操作。重复内容「不要开门」的写入时间戳早于当前值班员登录时间。\n建议：检查前一值班员的退出状态。"},"auto_button":{"title":"控制系统审计追踪","content":"审计追踪 #AUD-882：\n自动按钮信号来源追溯至 5 号服务器（已于 2022 年停用）。\n该服务器的最后一条记录：「控制权移交程序未完成」。"},"stop_failure":{"title":"急停系统维护日志","content":"维护日志 #M-341：\n急停回路#2 在定期检查中被标记为「状态：不可用」。\n签署人签名无法识别。签署时间：3 年前。没有后续维修记录。"},"negative_floor":{"title":"地下层勘测报告","content":"建筑勘测报告（内部）：\n地下实际存在 4 层结构，但公开图纸仅标注 B1-B2。\nB3-B4 的电梯按钮在出厂时已被移除，但线路仍然通电。"},"power_drain":{"title":"备用电源异常报告","content":"异常报告 #P-877：\n备用电源在无负载状态下持续放电。经查，有一条非授权线路从备用电源柜分接至未知设备。\n线路标签：「不要切断」。"},"door_refuse":{"title":"门控系统事故报告","content":"事故报告 #D-1290：\n门控模块在连续 3 次异常重启后进入保护模式。\n模块日志输出最后一条：「识别到外部干扰信号。拒绝执行 — 保护乘员安全」。"},"weight_mismatch":{"title":"传感器校验记录","content":"校验记录 #W-554：\n载重传感器与红外传感器读数不一致。红外传感器在轿厢空载时检测到热源。\n技术人员备注：请确认值班员在操作前已清空轿厢。"},"floor_jump":{"title":"楼层定位日志","content":"定位日志 #F-213：\nGPS 楼层定位模块在校准前后记录的楼层编号不一致。\n系统自动修正失败。可能原因：参考信号源来自非标设备。"},"emergency_lights":{"title":"应急照明测试报告","content":"测试报告 #E-777：\n应急照明系统在无触发信号的情况下自行启动。\n供电线路检测到寄生回路。回路终端设备编号无法匹配任何已知设备清单。"}},"failure":{"summaries":{"power":"电源耗尽","stability":"稳定度归零","anomalyLevel":"异常等级失控","passengers":"乘客记录出现负数","default":"系统拒绝继续响应"},"defaultHint":"先关门，再重启系统，避免连续移动。","firstRunAdvice":"下次先核对画面、楼层、人数和门状态；一致放行，矛盾封锁。","adHintPrefix":"广告提示：{hint}","adReviveRollback":"广告复活完成：回滚 {seconds} 秒，恢复至可控状态。","adReviveMonitor":"广告复活完成：回滚到 {seconds} 秒前的系统状态。","snapshotFallback":"可观看广告复活，回滚到 {seconds} 秒前的系统状态。","noSnapshotFallback":"可观看广告复活，回滚到初始系统状态。"},"fakeEnding":{"eyebrow":"⚠ SYSTEM ANOMALY DETECTED","title":"操作员关联异常","text":"系统检测到操作员第 {count} 次系统崩溃。\n根据《异常控制员守则》第 7 条，您已被标记为“异常关联人员”。\n前 {threshold} 次记录已被永久删除。\n建议您立即离开控制台并联系安保部门。","truthPlaceholder":"[???] 观看广告揭示真相。","truthContent":"这不是第一次，也不会是最后一次。\n这座建筑的异常系统从未被修复。\n每一任值班员最后都变成了「异常事件」本身。\n系统日志中关于「乘客」的记载——都是前任值班员的热源信号。\n你现在坐的位置，就是上一任值班员被发现的地方。"},"ui":{"viewAd":"观看广告复活","unlockAd":"解码加密记录","restart":"重新开始","revealTruth":"观看广告揭示真相","triggerTest":"触发异常测试","decodePrefix":"[解码记录]","initialLog":"异常电梯控制台已接管。等待操作员指令。","initialFeedback":"等待下一班电梯","tutorialNormal":"信息一致，点击放行","tutorialAnomaly":"发现矛盾，点击封锁","coreRule":"核对画面和数据：一致放行，矛盾封锁","standby":"等待下一班","wrongTutorial":"再看一眼：核对楼层、人数和门状态","wrongTreatment":"处置错误，异常仍在持续。","inspectionReady":"请核对当前画面和三项数据","treatmentTutorial":"最后一步：按亮起的处置键解除异常","wrongTreatmentTutorial":"这项处置不对应当前线索，再看一次","autoResolutionCorrect":"封锁成功，系统已自动处置","autoResolutionWrong":"判断错误，系统已紧急隔离","autoResolutionTimeout":"判断超时，系统已自动隔离","anomalyEventLog":"异常事件：{title}。{hint}","startTitle":"等待接管异常电梯","startCopy":"核对楼层、人数和门状态：对得上就放行，对不上就封锁。前两班会在实际画面中教会你。","startChecklist":"三项一致：放行\n任意一项矛盾：封锁\n前两班点错不会扣分","startFailureRulesTitle":"失败条件","startFailureRules":"电源归零\n稳定度归零\n异常等级失控","startButton":"开始接管","sidebarEntry":"侧边栏入口","pausedTitle":"值守已暂停","pausedCopy":"返回前台后继续，不计算后台时间","audioOn":"声音开","audioOff":"已静音","adUnavailable":"广告暂不可用，请稍后重试","reportNormal":"放行","reportAnomaly":"封锁","inspectionLabel":"请在 {seconds}s 内判断","baselineInspectionTitle":"核对画面与数据","anomalyInspectionTitle":"核对画面与数据","anomalyResolved":"处置完成：{action} 已解除当前异常。","anomalyResolvedMonitor":"监控恢复稳定，等待下一轮巡检。","inspectionPrompt":"巡检判定：{title}（{seconds}秒内响应）","inspectionCorrectNormal":"判定正确：当前画面正常。","inspectionCorrectAnomaly":"判定正确：异常已上报，系统压力下降。","inspectionWrong":"判定错误：稳定度下降，异常压力上升。","inspectionTimeout":"判定超时：未完成本次巡检。","successfulShift":"本轮结束，连续失败计数已重置。","shiftComplete":"值守完成","hiddenLogCaptured":"加密记录已捕获：{title}。使用「查看日志」功能解码。","unlockResult":"已解码：{title}","decodeMonitor":"解码完成：{title}。完整内容已写入系统日志。"}};
 
 // --- src/skinManager.js ---
+var __exports_src_skinManager_js = {};
+{
 /**
  * skinManager.js — 换皮系统核心
  *
@@ -247,8 +257,29 @@ function actionLabel(actionId, count) {
   return label;
 }
 
+__exports_src_skinManager_js["loadSkin"] = loadSkin;
+__exports_src_skinManager_js["getSkin"] = getSkin;
+__exports_src_skinManager_js["t"] = t;
+__exports_src_skinManager_js["getAnomalies"] = getAnomalies;
+__exports_src_skinManager_js["getAnomaly"] = getAnomaly;
+__exports_src_skinManager_js["getHiddenLog"] = getHiddenLog;
+__exports_src_skinManager_js["applyEffects"] = applyEffects;
+__exports_src_skinManager_js["actionText"] = actionText;
+__exports_src_skinManager_js["actionLabel"] = actionLabel;
+}
+var loadSkin = __exports_src_skinManager_js["loadSkin"];
+var getSkin = __exports_src_skinManager_js["getSkin"];
+var t = __exports_src_skinManager_js["t"];
+var getAnomalies = __exports_src_skinManager_js["getAnomalies"];
+var getAnomaly = __exports_src_skinManager_js["getAnomaly"];
+var getHiddenLog = __exports_src_skinManager_js["getHiddenLog"];
+var applyEffects = __exports_src_skinManager_js["applyEffects"];
+var actionText = __exports_src_skinManager_js["actionText"];
+var actionLabel = __exports_src_skinManager_js["actionLabel"];
 
 // --- src/rollback.js ---
+var __exports_src_rollback_js = {};
+{
 
 function findRollbackSnapshot(snapshots, elapsed) {
   if (!snapshots || snapshots.length === 0) return null;
@@ -265,8 +296,13 @@ function findRollbackSnapshot(snapshots, elapsed) {
   return best;
 }
 
+__exports_src_rollback_js["findRollbackSnapshot"] = findRollbackSnapshot;
+}
+var findRollbackSnapshot = __exports_src_rollback_js["findRollbackSnapshot"];
 
 // --- src/feedback.js ---
+var __exports_src_feedback_js = {};
+{
 
 
 function classifyFeedbackPriority(type) {
@@ -323,8 +359,676 @@ function getToneForState(state) {
   return 'normal';
 }
 
+__exports_src_feedback_js["classifyFeedbackPriority"] = classifyFeedbackPriority;
+__exports_src_feedback_js["createFeedbackLine"] = createFeedbackLine;
+__exports_src_feedback_js["summarizeFailure"] = summarizeFailure;
+__exports_src_feedback_js["getToneForState"] = getToneForState;
+}
+var classifyFeedbackPriority = __exports_src_feedback_js["classifyFeedbackPriority"];
+var createFeedbackLine = __exports_src_feedback_js["createFeedbackLine"];
+var summarizeFailure = __exports_src_feedback_js["summarizeFailure"];
+var getToneForState = __exports_src_feedback_js["getToneForState"];
+
+// --- src/protocolEngine.js ---
+var __exports_src_protocolEngine_js = {};
+{
+function compare(value, operator, expected) {
+  if (operator === 'equals') return value === expected;
+  if (operator === 'lte') return Number(value) <= Number(expected);
+  if (operator === 'gte') return Number(value) >= Number(expected);
+  if (operator === 'truthy') return Boolean(value);
+  return false;
+}
+
+function protocolAppliesToShift(protocol, shift = {}) {
+  const tags = new Set(shift.protocolTags || []);
+  return (protocol.protocolTags || []).some(tag => tags.has(tag));
+}
+
+function evaluateProtocolDecision(protocol, shift = {}) {
+  const condition = protocol?.condition || {};
+  const observed = shift.screenData?.[condition.field]
+    ?? shift.panelData?.[condition.field]
+    ?? shift.evidence?.[condition.field];
+  const matched = compare(observed, condition.operator, condition.value);
+  const violated = protocol?.decision === 'lockdown' ? matched : !matched;
+  return {
+    violated,
+    decision: violated ? 'lockdown' : 'release',
+    observed,
+    expected: condition.value,
+    verificationPaths: [...(protocol?.verificationPaths || [])],
+  };
+}
+
+function evaluateNightProtocolSet(protocols = [], shift = {}) {
+  const applied = protocols.filter(protocol => protocolAppliesToShift(protocol, shift));
+  const results = applied.map(protocol => ({ protocol, result: evaluateProtocolDecision(protocol, shift) }));
+  const violated = results.filter(item => item.result.violated);
+  return {
+    decision: violated.length ? 'lockdown' : 'release',
+    appliedProtocolIds: applied.map(protocol => protocol.id),
+    violatedProtocolIds: violated.map(item => item.protocol.id),
+    verificationPaths: [...new Set(results.flatMap(item => item.result.verificationPaths))].sort(),
+  };
+}
+
+function generateNightProtocols({ protocols = [], shifts = [], count = 2, random = Math.random } = {}) {
+  const target = Math.max(2, Math.min(3, Math.trunc(count || 2)));
+  const applicable = protocols.filter(protocol => shifts.some(shift => protocolAppliesToShift(protocol, shift)));
+  const selected = [];
+  if (applicable.length) selected.push(applicable[Math.floor(random() * applicable.length) % applicable.length]);
+  const remaining = protocols.filter(protocol => !selected.some(item => item.id === protocol.id));
+  while (selected.length < target && remaining.length) {
+    const index = Math.floor(random() * remaining.length) % remaining.length;
+    selected.push(remaining.splice(index, 1)[0]);
+  }
+  return selected;
+}
+
+__exports_src_protocolEngine_js["protocolAppliesToShift"] = protocolAppliesToShift;
+__exports_src_protocolEngine_js["evaluateProtocolDecision"] = evaluateProtocolDecision;
+__exports_src_protocolEngine_js["evaluateNightProtocolSet"] = evaluateNightProtocolSet;
+__exports_src_protocolEngine_js["generateNightProtocols"] = generateNightProtocols;
+}
+var protocolAppliesToShift = __exports_src_protocolEngine_js["protocolAppliesToShift"];
+var evaluateProtocolDecision = __exports_src_protocolEngine_js["evaluateProtocolDecision"];
+var evaluateNightProtocolSet = __exports_src_protocolEngine_js["evaluateNightProtocolSet"];
+var generateNightProtocols = __exports_src_protocolEngine_js["generateNightProtocols"];
+
+// --- src/evidenceEngine.js ---
+var __exports_src_evidenceEngine_js = {};
+{
+const CORE_FIELDS = Object.freeze(['floor', 'passengers', 'door']);
+const FIELD_LABELS = Object.freeze({ floor: '楼层', passengers: '人数', door: '门状态' });
+
+function compareCoreEvidence(screenData = {}, panelData = {}) {
+  return CORE_FIELDS
+    .filter(field => screenData[field] !== panelData[field])
+    .map(field => ({ field, screen: screenData[field], panel: panelData[field] }));
+}
+
+function evaluateEvidence({ screenData = {}, panelData = {}, protocolResult = null } = {}) {
+  const conflicts = compareCoreEvidence(screenData, panelData);
+  if (protocolResult?.violated) {
+    conflicts.push({ field: 'protocol', screen: protocolResult.observed, panel: protocolResult.expected });
+  }
+  const decision = conflicts.length ? 'lockdown' : 'release';
+  const explanation = conflicts.length
+    ? conflicts.map(item => `${FIELD_LABELS[item.field] || '协议'}不一致`).join('；')
+    : '画面与主控数据一致。';
+  return {
+    decision,
+    conflicts,
+    explanation,
+    presentationTone: 'neutral',
+    highlightConflictBeforeDecision: false,
+  };
+}
+
+function evaluateInvestigationEvidence(discoveredEvidence = []) {
+  const contradictions = discoveredEvidence.filter(item => item?.contradicts && item?.conflictKey && item?.source);
+  const groups = new Map();
+  for (const evidence of contradictions) {
+    const sources = groups.get(evidence.conflictKey) || new Set();
+    sources.add(evidence.source);
+    groups.set(evidence.conflictKey, sources);
+  }
+  const corroborated = [...groups.entries()].filter(([, sources]) => sources.size >= 2);
+  const verificationPaths = [...new Set(
+    corroborated.flatMap(([, sources]) => [...sources]),
+  )].sort();
+  const ready = corroborated.length > 0;
+  return {
+    ready,
+    decision: ready ? 'lockdown' : null,
+    conflicts: corroborated.map(([conflictKey]) => conflictKey),
+    verificationPaths,
+    presentationTone: 'neutral',
+  };
+}
+
+function isEvidenceJudgeableWithoutAudio(shift = {}) {
+  const conflicts = compareCoreEvidence(shift.screenData, shift.panelData);
+  const cameras = shift.evidence?.cameras || [];
+  const tools = shift.evidence?.tools || [];
+  return conflicts.length > 0 || cameras.length > 0 || tools.some(tool => tool !== 'audio');
+}
+
+__exports_src_evidenceEngine_js["compareCoreEvidence"] = compareCoreEvidence;
+__exports_src_evidenceEngine_js["evaluateEvidence"] = evaluateEvidence;
+__exports_src_evidenceEngine_js["evaluateInvestigationEvidence"] = evaluateInvestigationEvidence;
+__exports_src_evidenceEngine_js["isEvidenceJudgeableWithoutAudio"] = isEvidenceJudgeableWithoutAudio;
+}
+var compareCoreEvidence = __exports_src_evidenceEngine_js["compareCoreEvidence"];
+var evaluateEvidence = __exports_src_evidenceEngine_js["evaluateEvidence"];
+var evaluateInvestigationEvidence = __exports_src_evidenceEngine_js["evaluateInvestigationEvidence"];
+var isEvidenceJudgeableWithoutAudio = __exports_src_evidenceEngine_js["isEvidenceJudgeableWithoutAudio"];
+
+// --- src/investigationTools.js ---
+var __exports_src_investigationTools_js = {};
+{
+const TOOL_CONFIG = Object.freeze({
+  thermal: Object.freeze({ uses: 2, powerCost: 8, evidenceKey: 'thermal' }),
+  replay: Object.freeze({ uses: 2, powerCost: 4, evidenceKey: 'replay' }),
+  protocol: Object.freeze({ uses: Number.POSITIVE_INFINITY, powerCost: 0, evidenceKey: 'protocol' }),
+});
+
+function cloneInvestigationState(state) {
+  return {
+    ...state,
+    tools: Object.fromEntries(
+      Object.entries(state.tools || {}).map(([id, tool]) => [id, { ...tool }]),
+    ),
+    discoveredEvidence: [...(state.discoveredEvidence || [])],
+  };
+}
+
+function createInvestigationState({ power = 100 } = {}) {
+  return {
+    power: Math.max(0, Number(power) || 0),
+    activeCamera: 'cam01',
+    tools: Object.fromEntries(
+      Object.entries(TOOL_CONFIG).map(([id, config]) => [id, {
+        remaining: config.uses,
+        powerCost: config.powerCost,
+      }]),
+    ),
+    discoveredEvidence: [],
+  };
+}
+
+function switchCamera(state, cameraId, shift = {}) {
+  if (!(shift.cameras || []).includes(cameraId)) {
+    return { state, accepted: false, reason: 'camera-unavailable', visibleEvidence: [] };
+  }
+  const next = cloneInvestigationState(state);
+  next.activeCamera = cameraId;
+  const visibleEvidence = [...(shift.evidence?.cameras?.[cameraId] || [])];
+  for (const evidence of visibleEvidence) {
+    if (!next.discoveredEvidence.some(item => item.id === evidence.id)) next.discoveredEvidence.push(evidence);
+  }
+  return { state: next, accepted: true, visibleEvidence };
+}
+
+function useInvestigationTool(state, toolId, shift = {}) {
+  const config = TOOL_CONFIG[toolId];
+  const currentTool = state?.tools?.[toolId];
+  if (!config || !currentTool) return { state, accepted: false, reason: 'unknown-tool' };
+  if (currentTool.remaining <= 0) return { state, accepted: false, reason: 'no-uses' };
+  if ((state.power ?? 0) < config.powerCost) return { state, accepted: false, reason: 'insufficient-power' };
+
+  const next = cloneInvestigationState(state);
+  next.power = Math.max(0, next.power - config.powerCost);
+  if (Number.isFinite(next.tools[toolId].remaining)) next.tools[toolId].remaining -= 1;
+  const discoveredEvidence = toolId === 'protocol'
+    ? [...(shift.activeProtocols || [])]
+    : shift.evidence?.[config.evidenceKey] ?? null;
+  const evidenceItems = Array.isArray(discoveredEvidence)
+    ? discoveredEvidence
+    : discoveredEvidence ? [discoveredEvidence] : [];
+  for (const evidence of evidenceItems) {
+    if (!next.discoveredEvidence.some(item => item.id === evidence.id)) next.discoveredEvidence.push(evidence);
+  }
+  return { state: next, accepted: true, discoveredEvidence };
+}
+
+__exports_src_investigationTools_js["createInvestigationState"] = createInvestigationState;
+__exports_src_investigationTools_js["switchCamera"] = switchCamera;
+__exports_src_investigationTools_js["useInvestigationTool"] = useInvestigationTool;
+}
+var createInvestigationState = __exports_src_investigationTools_js["createInvestigationState"];
+var switchCamera = __exports_src_investigationTools_js["switchCamera"];
+var useInvestigationTool = __exports_src_investigationTools_js["useInvestigationTool"];
+
+// --- src/identitySystem.js ---
+var __exports_src_identitySystem_js = {};
+{
+function verifyPassengerIdentity(passenger = {}, observation = {}) {
+  const conflicts = [];
+  if (passenger.badge != null && observation.badge !== passenger.badge) conflicts.push('badge');
+  if (Array.isArray(passenger.allowedFloors)
+    && !passenger.allowedFloors.map(String).includes(String(observation.requestedFloor))) {
+    conflicts.push('floor');
+  }
+  return {
+    valid: conflicts.length === 0,
+    conflicts,
+    passengerId: passenger.id ?? null,
+    verificationPaths: ['cam01', 'protocol'],
+  };
+}
+
+function countPassengersForPanel(passengers = []) {
+  return passengers.filter(passenger => passenger.countMode !== 'ignore').length;
+}
+
+__exports_src_identitySystem_js["verifyPassengerIdentity"] = verifyPassengerIdentity;
+__exports_src_identitySystem_js["countPassengersForPanel"] = countPassengersForPanel;
+}
+var verifyPassengerIdentity = __exports_src_identitySystem_js["verifyPassengerIdentity"];
+var countPassengersForPanel = __exports_src_identitySystem_js["countPassengersForPanel"];
+
+// --- src/eventChainEngine.js ---
+var __exports_src_eventChainEngine_js = {};
+{
+function cloneChainState(state) {
+  return {
+    chains: Object.fromEntries(Object.entries(state.chains || {}).map(([id, value]) => [id, { ...value }])),
+    flags: [...(state.flags || [])],
+    history: [...(state.history || [])],
+  };
+}
+
+function createEventChainState(chains = []) {
+  return {
+    chains: Object.fromEntries(chains.map(chain => [chain.id, { stepIndex: 0, completed: false }])),
+    flags: [...new Set(chains.flatMap(chain => chain.initialFlags || []))],
+    history: [],
+  };
+}
+
+function getCurrentEventStep(state, chain) {
+  const progress = state?.chains?.[chain.id];
+  if (!progress || progress.completed) return null;
+  return chain.steps?.[progress.stepIndex] ?? null;
+}
+
+function advanceEventChain(state, chain, outcome = {}) {
+  const progress = state?.chains?.[chain.id];
+  if (!progress || progress.completed) return { state, accepted: false, completed: Boolean(progress?.completed), consequences: [] };
+  const step = chain.steps?.[progress.stepIndex];
+  if (!step) return { state, accepted: false, completed: true, consequences: [] };
+
+  const next = cloneChainState(state);
+  if (outcome.correct === false) {
+    next.flags.push(...(step.onWrongFlags || []));
+    next.flags = [...new Set(next.flags)];
+  }
+  const nextIndex = progress.stepIndex + 1;
+  const completed = nextIndex >= chain.steps.length;
+  next.chains[chain.id] = { stepIndex: nextIndex, completed };
+  next.history.push({ chainId: chain.id, stepId: step.id, correct: outcome.correct !== false });
+  const consequences = completed
+    ? (chain.consequences || []).filter(item => !item.flag || next.flags.includes(item.flag))
+    : [];
+  return { state: next, accepted: true, completed, consequences };
+}
+
+__exports_src_eventChainEngine_js["createEventChainState"] = createEventChainState;
+__exports_src_eventChainEngine_js["getCurrentEventStep"] = getCurrentEventStep;
+__exports_src_eventChainEngine_js["advanceEventChain"] = advanceEventChain;
+}
+var createEventChainState = __exports_src_eventChainEngine_js["createEventChainState"];
+var getCurrentEventStep = __exports_src_eventChainEngine_js["getCurrentEventStep"];
+var advanceEventChain = __exports_src_eventChainEngine_js["advanceEventChain"];
+
+// --- src/highRiskResolution.js ---
+var __exports_src_highRiskResolution_js = {};
+{
+const HIGH_RISK_ACTIONS = Object.freeze(['emergencyStop', 'restart', 'lockdownFloor']);
+
+function cloneHighRiskState(state) {
+  return {
+    ...state,
+    resolvedEvents: [...(state.resolvedEvents || [])],
+    nextShiftModifiers: [...(state.nextShiftModifiers || [])],
+    history: [...(state.history || [])],
+  };
+}
+
+function createHighRiskState({ power = 100 } = {}) {
+  return {
+    power: Math.max(0, Number(power) || 0),
+    resolvedEvents: [],
+    nextShiftModifiers: [],
+    history: [],
+    gameOver: false,
+  };
+}
+
+function resolveHighRiskAction(state, event = {}, action) {
+  if (!HIGH_RISK_ACTIONS.includes(action)) return { state, accepted: false, correct: false, reason: 'unknown-action' };
+  const cost = Math.max(0, Number(event.costs?.[action] || 0));
+  if ((state.power ?? 0) < cost) return { state, accepted: false, correct: false, reason: 'insufficient-power' };
+
+  const next = cloneHighRiskState(state);
+  next.power -= cost;
+  const correct = (event.acceptedActions || []).includes(action);
+  if (correct && event.id && !next.resolvedEvents.includes(event.id)) next.resolvedEvents.push(event.id);
+  const modifier = correct ? event.successModifier : event.wrongModifiers?.[action];
+  if (modifier && !next.nextShiftModifiers.includes(modifier)) next.nextShiftModifiers.push(modifier);
+  next.history.push({ eventId: event.id ?? null, action, correct, powerCost: cost });
+  return { state: next, accepted: true, correct };
+}
+
+__exports_src_highRiskResolution_js["createHighRiskState"] = createHighRiskState;
+__exports_src_highRiskResolution_js["resolveHighRiskAction"] = resolveHighRiskAction;
+}
+var createHighRiskState = __exports_src_highRiskResolution_js["createHighRiskState"];
+var resolveHighRiskAction = __exports_src_highRiskResolution_js["resolveHighRiskAction"];
+
+// --- src/contamination.js ---
+var __exports_src_contamination_js = {};
+{
+function clamp(value, min = 0, max = 100) {
+  return Math.max(min, Math.min(max, Number(value) || 0));
+}
+
+function getContaminationTier(value) {
+  const normalized = clamp(value);
+  if (normalized >= 76) return 'severe';
+  if (normalized >= 51) return 'medium';
+  if (normalized >= 26) return 'light';
+  return 'normal';
+}
+
+function createContaminationState(value = 0) {
+  const normalized = clamp(value);
+  return { value: normalized, tier: getContaminationTier(normalized), history: [] };
+}
+
+function changeContamination(state, delta, reason) {
+  const current = state || createContaminationState();
+  const value = clamp(current.value + Number(delta || 0));
+  return {
+    value,
+    tier: getContaminationTier(value),
+    history: [...(current.history || []), { delta: Number(delta || 0), reason, value }],
+  };
+}
+
+function applyDecisionContamination(state, decision = {}) {
+  const effects = decision.contaminationEffects || {};
+  const delta = decision.correct === false
+    ? Number(effects.onMiss || 0)
+    : Number(effects.onCorrect || 0);
+  return changeContamination(state, delta, {
+    type: decision.correct === false ? 'wrong-decision' : 'correct-decision',
+    contentId: decision.contentId ?? null,
+  });
+}
+
+function deriveContaminationEffects(value) {
+  const tier = getContaminationTier(value);
+  const reliability = {
+    normal: {
+      reliable: ['panel', 'cam01', 'cam03', 'cam07', 'thermal', 'replay'],
+      unreliable: [],
+    },
+    light: {
+      reliable: ['panel', 'cam01', 'cam03', 'thermal', 'replay'],
+      unreliable: ['cam07'],
+    },
+    medium: {
+      reliable: ['cam01', 'thermal', 'replay'],
+      unreliable: ['panel', 'cam07'],
+    },
+    severe: {
+      reliable: ['thermal', 'replay'],
+      unreliable: ['panel', 'cam01', 'cam03', 'cam07'],
+    },
+  }[tier];
+  const effects = {
+    tier,
+    chromaticAberration: tier === 'normal' ? 0 : tier === 'light' ? 0.08 : tier === 'medium' ? 0.16 : 0.24,
+    timecodeJitter: tier === 'medium' || tier === 'severe',
+    edgeGhosting: tier !== 'normal',
+    protocolGlyphDropout: tier === 'severe',
+    audioDropout: tier === 'medium' || tier === 'severe',
+    reliableVerificationPaths: reliability.reliable,
+    unreliableVerificationPaths: reliability.unreliable,
+  };
+  return effects;
+}
+
+__exports_src_contamination_js["getContaminationTier"] = getContaminationTier;
+__exports_src_contamination_js["createContaminationState"] = createContaminationState;
+__exports_src_contamination_js["changeContamination"] = changeContamination;
+__exports_src_contamination_js["applyDecisionContamination"] = applyDecisionContamination;
+__exports_src_contamination_js["deriveContaminationEffects"] = deriveContaminationEffects;
+}
+var getContaminationTier = __exports_src_contamination_js["getContaminationTier"];
+var createContaminationState = __exports_src_contamination_js["createContaminationState"];
+var changeContamination = __exports_src_contamination_js["changeContamination"];
+var applyDecisionContamination = __exports_src_contamination_js["applyDecisionContamination"];
+var deriveContaminationEffects = __exports_src_contamination_js["deriveContaminationEffects"];
+
+// --- src/debriefTimeline.js ---
+var __exports_src_debriefTimeline_js = {};
+{
+function timelineItem(type, entry) {
+  return { type, ...entry, sequence: Number(entry.sequence || 0) };
+}
+
+function buildDebriefTimeline({ decisions = [], eventHistory = [], contaminationHistory = [] } = {}) {
+  const timeline = [
+    ...decisions.map(entry => timelineItem('decision', entry)),
+    ...eventHistory.map(entry => timelineItem('event-chain', entry)),
+    ...contaminationHistory.map(entry => timelineItem('contamination', entry)),
+  ].sort((a, b) => a.sequence - b.sequence);
+  const correct = decisions.filter(item => item.correct).length;
+  const wrong = decisions.length - correct;
+  const peakContamination = contaminationHistory.reduce(
+    (peak, item) => Math.max(peak, Number(item.value || 0)),
+    0,
+  );
+  return {
+    timeline,
+    summary: {
+      decisions: decisions.length,
+      correct,
+      wrong,
+      accuracy: decisions.length ? correct / decisions.length : 0,
+      peakContamination,
+      eventStages: eventHistory.length,
+    },
+  };
+}
+
+function matchesEnding(ending, result) {
+  const condition = ending.condition || ending.conditions || {};
+  if (condition.requiredFlag && !(result.flags || []).includes(condition.requiredFlag)) return false;
+  if (condition.minContamination != null && result.contamination < condition.minContamination) return false;
+  if (condition.maxContamination != null && result.contamination > condition.maxContamination) return false;
+  if (condition.minAccuracy != null && result.accuracy < condition.minAccuracy) return false;
+  if (condition.maxAccuracy != null && result.accuracy > condition.maxAccuracy) return false;
+  return true;
+}
+
+function selectNightEnding(endings = [], result = {}) {
+  return [...endings]
+    .filter(ending => matchesEnding(ending, result))
+    .sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0) || a.id.localeCompare(b.id))[0] ?? null;
+}
+
+__exports_src_debriefTimeline_js["buildDebriefTimeline"] = buildDebriefTimeline;
+__exports_src_debriefTimeline_js["selectNightEnding"] = selectNightEnding;
+}
+var buildDebriefTimeline = __exports_src_debriefTimeline_js["buildDebriefTimeline"];
+var selectNightEnding = __exports_src_debriefTimeline_js["selectNightEnding"];
+
+// --- src/nightInteraction.js ---
+var __exports_src_nightInteraction_js = {};
+{
+
+
+
+const CATEGORIES = Object.freeze(['person', 'quantity', 'space', 'time', 'device', 'dynamic']);
+const HIGH_RISK_COSTS = Object.freeze({ emergencyStop: 15, restart: 10, lockdownFloor: 12 });
+
+function clone(value) {
+  if (Array.isArray(value)) return value.map(clone);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, clone(item)]));
+  }
+  return value;
+}
+
+function appendDecision(state, decision) {
+  const next = clone(state);
+  const decisions = next.night.decisions || [];
+  const sequence = Number(next.night.timelineSequence || 0) + 1;
+  next.night.timelineSequence = sequence;
+  decisions.push({ sequence, ...decision });
+  next.night.decisions = decisions;
+  return next;
+}
+
+function openProtocolQuery(state) {
+  const next = clone(state);
+  next.night.overlay = 'protocolQuery';
+  next.night.protocolQuery = clone(next.night.activeProtocols || []);
+  return next;
+}
+
+function closeProtocolQuery(state) {
+  const next = clone(state);
+  next.night.overlay = null;
+  return next;
+}
+
+function verifyCurrentIdentity(state) {
+  const shift = state?.night?.currentShift;
+  if (!shift || state?.night?.roundType !== 'identity') {
+    return { state, accepted: false, reason: 'not-identity-round' };
+  }
+  const evidence = shift.evidence?.cameras?.cam01?.[0];
+  if (!evidence) return { state, accepted: false, reason: 'identity-evidence-missing' };
+  const next = clone(state);
+  const discovered = next.investigation.discoveredEvidence || [];
+  if (!discovered.some(item => item.id === evidence.id)) discovered.push(clone(evidence));
+  next.investigation.discoveredEvidence = discovered;
+  next.lastFeedback = `核验结果：${evidence.observation}`;
+  return { state: next, accepted: true, evidence: clone(evidence) };
+}
+
+function resolveIdentityDecision(state, choice) {
+  const shift = state?.night?.currentShift;
+  if (!shift || state?.night?.roundType !== 'identity' || !['release', 'reject'].includes(choice)) {
+    return { state, accepted: false, correct: false, reason: 'invalid-identity-decision' };
+  }
+  const expected = shift.decision === 'anomaly' ? 'reject' : 'release';
+  const correct = choice === expected;
+  let next = appendDecision(state, {
+    contentId: shift.id,
+    choice: `identity:${choice}`,
+    correct,
+  });
+  next.contamination = applyDecisionContamination(next.contamination, {
+    correct,
+    contentId: shift.id,
+    contaminationEffects: shift.contaminationEffects,
+  });
+  next.night.roundType = 'quick';
+  next.lastFeedback = correct
+    ? (choice === 'release' ? '身份一致，准予放行' : '身份冲突，拒绝通行')
+    : '身份判断错误，污染已影响后续班次';
+  next.gameOver = false;
+  return { state: next, accepted: true, correct };
+}
+
+function classifyCurrentShift(state, category) {
+  const shift = state?.night?.currentShift;
+  if (!shift || !CATEGORIES.includes(category)) {
+    return { state, accepted: false, correct: false, reason: 'invalid-classification' };
+  }
+  const correct = shift.category === category;
+  let next = appendDecision(state, {
+    contentId: shift.id,
+    choice: 'classification',
+    classification: category,
+    correct,
+  });
+  next.contamination = applyDecisionContamination(next.contamination, {
+    correct,
+    contentId: shift.id,
+    contaminationEffects: shift.contaminationEffects,
+  });
+  next.night.overlay = null;
+  next.night.roundType = shift.roundType === 'highRisk' || shift.highRisk ? 'highRisk' : 'quick';
+  next.lastFeedback = correct ? `分类确认：${category}` : `分类不符：${category}`;
+  return { state: next, accepted: true, correct };
+}
+
+function acceptedHighRiskAction(shift) {
+  if (shift.resolutionAction === 'emergencyStop') return 'emergencyStop';
+  if (shift.resolutionAction === 'restart') return 'restart';
+  return 'lockdownFloor';
+}
+
+function resolveCurrentHighRisk(state, action) {
+  const shift = state?.night?.currentShift;
+  if (!shift || state?.night?.roundType !== 'highRisk') {
+    return { state, accepted: false, correct: false, reason: 'not-high-risk' };
+  }
+  const highRisk = createHighRiskState({ power: state.power });
+  highRisk.nextShiftModifiers = clone(state.night.nextShiftModifiers || []);
+  const result = resolveHighRiskAction(highRisk, {
+    id: shift.id,
+    acceptedActions: [acceptedHighRiskAction(shift)],
+    costs: HIGH_RISK_COSTS,
+    successModifier: `resolved:${shift.id}`,
+    wrongModifiers: {
+      emergencyStop: 'power-grid-stress',
+      restart: 'control-reliability-down',
+      lockdownFloor: 'camera-delay',
+    },
+  }, action);
+  if (!result.accepted) return { ...result, state };
+  let next = appendDecision(state, {
+    contentId: shift.id,
+    choice: 'highRisk',
+    action,
+    correct: result.correct,
+  });
+  next.power = result.state.power;
+  next.investigation.power = result.state.power;
+  next.night.nextShiftModifiers = result.state.nextShiftModifiers;
+  next.night.roundType = 'quick';
+  next.lastFeedback = result.correct ? '高危处置完成' : '处置失误已影响后续班次';
+  next.gameOver = false;
+  return { state: next, accepted: true, correct: result.correct };
+}
+
+function createNightDebrief(state, endings = []) {
+  const report = buildDebriefTimeline({
+    decisions: state?.night?.decisions || [],
+    eventHistory: state?.night?.eventChainHistory || Object.values(state?.night?.eventChains || {}).flatMap(chain => chain.history || []),
+    contaminationHistory: state?.contamination?.history || [],
+  });
+  const eventChainFlags = state?.night?.eventChainFlags || [];
+  const nextShiftModifiers = state?.night?.nextShiftModifiers || [];
+  return {
+    ...report,
+    nextShiftModifiers: [...nextShiftModifiers],
+    ending: selectNightEnding(endings, {
+      flags: eventChainFlags,
+      contamination: Number(state?.contamination?.value || 0),
+      accuracy: report.summary.accuracy,
+    }),
+  };
+}
+
+__exports_src_nightInteraction_js["openProtocolQuery"] = openProtocolQuery;
+__exports_src_nightInteraction_js["closeProtocolQuery"] = closeProtocolQuery;
+__exports_src_nightInteraction_js["verifyCurrentIdentity"] = verifyCurrentIdentity;
+__exports_src_nightInteraction_js["resolveIdentityDecision"] = resolveIdentityDecision;
+__exports_src_nightInteraction_js["classifyCurrentShift"] = classifyCurrentShift;
+__exports_src_nightInteraction_js["resolveCurrentHighRisk"] = resolveCurrentHighRisk;
+__exports_src_nightInteraction_js["createNightDebrief"] = createNightDebrief;
+}
+var openProtocolQuery = __exports_src_nightInteraction_js["openProtocolQuery"];
+var closeProtocolQuery = __exports_src_nightInteraction_js["closeProtocolQuery"];
+var verifyCurrentIdentity = __exports_src_nightInteraction_js["verifyCurrentIdentity"];
+var resolveIdentityDecision = __exports_src_nightInteraction_js["resolveIdentityDecision"];
+var classifyCurrentShift = __exports_src_nightInteraction_js["classifyCurrentShift"];
+var resolveCurrentHighRisk = __exports_src_nightInteraction_js["resolveCurrentHighRisk"];
+var createNightDebrief = __exports_src_nightInteraction_js["createNightDebrief"];
 
 // --- src/anomalyContent.js ---
+var __exports_src_anomalyContent_js = {};
+{
 /**
  * anomalyContent.js — 异常内容模式定义与结构化数据
  *
@@ -772,8 +1476,33 @@ function getAnomalyCctvStates() {
   return [...states];
 }
 
+__exports_src_anomalyContent_js["ANOMALY_CONTENTS"] = ANOMALY_CONTENTS;
+__exports_src_anomalyContent_js["findAnomalyContent"] = findAnomalyContent;
+__exports_src_anomalyContent_js["getAllAnomalyContents"] = getAllAnomalyContents;
+__exports_src_anomalyContent_js["isDataConsistent"] = isDataConsistent;
+__exports_src_anomalyContent_js["getConflictFields"] = getConflictFields;
+__exports_src_anomalyContent_js["NORMAL_VARIANTS"] = NORMAL_VARIANTS;
+__exports_src_anomalyContent_js["pickNormalVariant"] = pickNormalVariant;
+__exports_src_anomalyContent_js["getAnomalyCctvState"] = getAnomalyCctvState;
+__exports_src_anomalyContent_js["getAnomaliesByCctvState"] = getAnomaliesByCctvState;
+__exports_src_anomalyContent_js["getNormalCctvStates"] = getNormalCctvStates;
+__exports_src_anomalyContent_js["getAnomalyCctvStates"] = getAnomalyCctvStates;
+}
+var ANOMALY_CONTENTS = __exports_src_anomalyContent_js["ANOMALY_CONTENTS"];
+var findAnomalyContent = __exports_src_anomalyContent_js["findAnomalyContent"];
+var getAllAnomalyContents = __exports_src_anomalyContent_js["getAllAnomalyContents"];
+var isDataConsistent = __exports_src_anomalyContent_js["isDataConsistent"];
+var getConflictFields = __exports_src_anomalyContent_js["getConflictFields"];
+var NORMAL_VARIANTS = __exports_src_anomalyContent_js["NORMAL_VARIANTS"];
+var pickNormalVariant = __exports_src_anomalyContent_js["pickNormalVariant"];
+var getAnomalyCctvState = __exports_src_anomalyContent_js["getAnomalyCctvState"];
+var getAnomaliesByCctvState = __exports_src_anomalyContent_js["getAnomaliesByCctvState"];
+var getNormalCctvStates = __exports_src_anomalyContent_js["getNormalCctvStates"];
+var getAnomalyCctvStates = __exports_src_anomalyContent_js["getAnomalyCctvStates"];
 
 // --- src/visualState.js ---
+var __exports_src_visualState_js = {};
+{
 /**
  * visualState.js — 驱动 CCTV 视觉状态的核心映射
  *
@@ -905,11 +1634,35 @@ function deriveVisualState(state) {
   };
 }
 
+__exports_src_visualState_js["getAnomalyResolutionAction"] = getAnomalyResolutionAction;
+__exports_src_visualState_js["deriveVisualState"] = deriveVisualState;
+}
+var getAnomalyResolutionAction = __exports_src_visualState_js["getAnomalyResolutionAction"];
+var deriveVisualState = __exports_src_visualState_js["deriveVisualState"];
 
 // --- src/state.js ---
+var __exports_src_state_js = {};
+{
 
 
 
+
+
+
+function createNightState() {
+  return {
+    activeProtocols: [],
+    currentShift: null,
+    roundType: 'quick',
+    shiftIndex: 0,
+    decisions: [],
+    eventChains: {},
+    eventChainFlags: [],
+    eventChainHistory: [],
+    timelineSequence: 0,
+    nextShiftModifiers: [],
+  };
+}
 
 function createInitialState() {
   const c = CONFIG.initial;
@@ -922,6 +1675,9 @@ function createInitialState() {
     power: c.power,
     stability: c.stability,
     anomalyLevel: c.anomalyLevel,
+    contamination: createContaminationState(),
+    night: createNightState(),
+    investigation: createInvestigationState({ power: c.power }),
     passengers: c.passengers,
     gameOver: c.gameOver,
     result: 'playing',
@@ -1106,8 +1862,31 @@ function recordFailure(state) {
   return next;
 }
 
+__exports_src_state_js["createInitialState"] = createInitialState;
+__exports_src_state_js["cloneState"] = cloneState;
+__exports_src_state_js["appendLog"] = appendLog;
+__exports_src_state_js["clamp"] = clamp;
+__exports_src_state_js["checkFailure"] = checkFailure;
+__exports_src_state_js["saveSnapshot"] = saveSnapshot;
+__exports_src_state_js["reviveFromAd"] = reviveFromAd;
+__exports_src_state_js["tickState"] = tickState;
+__exports_src_state_js["recordSuccessfulShift"] = recordSuccessfulShift;
+__exports_src_state_js["recordFailure"] = recordFailure;
+}
+var createInitialState = __exports_src_state_js["createInitialState"];
+var cloneState = __exports_src_state_js["cloneState"];
+var appendLog = __exports_src_state_js["appendLog"];
+var clamp = __exports_src_state_js["clamp"];
+var checkFailure = __exports_src_state_js["checkFailure"];
+var saveSnapshot = __exports_src_state_js["saveSnapshot"];
+var reviveFromAd = __exports_src_state_js["reviveFromAd"];
+var tickState = __exports_src_state_js["tickState"];
+var recordSuccessfulShift = __exports_src_state_js["recordSuccessfulShift"];
+var recordFailure = __exports_src_state_js["recordFailure"];
 
 // --- src/incidentDecision.js ---
+var __exports_src_incidentDecision_js = {};
+{
 
 
 function openInspection(state, options) {
@@ -1220,10 +1999,21 @@ function expireInspection(state) {
   return { state: checkFailure(next), timedOut: true };
 }
 
+__exports_src_incidentDecision_js["openInspection"] = openInspection;
+__exports_src_incidentDecision_js["submitInspection"] = submitInspection;
+__exports_src_incidentDecision_js["expireInspection"] = expireInspection;
+}
+var openInspection = __exports_src_incidentDecision_js["openInspection"];
+var submitInspection = __exports_src_incidentDecision_js["submitInspection"];
+var expireInspection = __exports_src_incidentDecision_js["expireInspection"];
 
 // --- src/events.js ---
+var __exports_src_events_js = {};
+{
 
 
+
+const skinHiddenLogLookup = getHiddenLog;
 
 /**
  * 从皮肤数据动态构建异常事件数组
@@ -1297,7 +2087,7 @@ function applyAnomaly(state, id) {
   next.anomaliesTriggeredTotal = (next.anomaliesTriggeredTotal ?? 0) + 1;
   next.maxAnomalySeverity = Math.max(next.maxAnomalySeverity ?? 0, event.severity);
   // 添加关联隐藏日志（不重复）
-  const raw = getHiddenLog(id);
+  const raw = skinHiddenLogLookup(id);
   if (raw && !next.hiddenLogs.some(h => h.id === id + '_log')) {
     next.hiddenLogs.push({ id: id + '_log', title: raw.title, content: raw.content, locked: true });
     next = appendLog(next, 'info', t('ui.hiddenLogCaptured', { title: raw.title }));
@@ -1323,7 +2113,7 @@ const _buildHiddenLogsMap = () => {
   const map = {};
   const anomalies = getAnomalies();
   for (const a of anomalies) {
-    const hl = getHiddenLog(a.id);
+    const hl = skinHiddenLogLookup(a.id);
     if (hl) {
       map[a.id] = { id: `${a.id}_log`, title: hl.title, content: hl.content };
     }
@@ -1333,8 +2123,21 @@ const _buildHiddenLogsMap = () => {
 
 const HIDDEN_LOGS = _buildHiddenLogsMap();
 
+__exports_src_events_js["ANOMALIES"] = ANOMALIES;
+__exports_src_events_js["findAnomaly"] = findAnomaly;
+__exports_src_events_js["applyAnomaly"] = applyAnomaly;
+__exports_src_events_js["pickNextAnomaly"] = pickNextAnomaly;
+__exports_src_events_js["HIDDEN_LOGS"] = HIDDEN_LOGS;
+}
+var ANOMALIES = __exports_src_events_js["ANOMALIES"];
+var findAnomaly = __exports_src_events_js["findAnomaly"];
+var applyAnomaly = __exports_src_events_js["applyAnomaly"];
+var pickNextAnomaly = __exports_src_events_js["pickNextAnomaly"];
+var HIDDEN_LOGS = __exports_src_events_js["HIDDEN_LOGS"];
 
 // --- src/actions.js ---
+var __exports_src_actions_js = {};
+{
 
 
 
@@ -1535,19 +2338,216 @@ function getAvailableActions() {
   return ACTION_IDS.map(id => ({ id, label: actionLabel(id) }));
 }
 
+__exports_src_actions_js["performAction"] = performAction;
+__exports_src_actions_js["getAvailableActions"] = getAvailableActions;
+}
+var performAction = __exports_src_actions_js["performAction"];
+var getAvailableActions = __exports_src_actions_js["getAvailableActions"];
+
+// --- src/nightScheduler.js ---
+var __exports_src_nightScheduler_js = {};
+{
+
+
+
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function requireContentList(content, key) {
+  const list = content?.[key];
+  if (!Array.isArray(list) || list.length === 0) {
+    throw new Error(`V5 night scheduler requires non-empty ${key}`);
+  }
+  return list;
+}
+
+function pick(list, random) {
+  const value = Number(random());
+  const normalized = Number.isFinite(value) ? Math.max(0, Math.min(0.999999999999, value)) : 0;
+  return list[Math.floor(normalized * list.length)];
+}
+
+const NEXT_SHIFT_MODIFIER_VISUALS = Object.freeze({
+  duplicate_feed: '14_duplicate_subject',
+  floor_13_bleed: '16_wrong_floor',
+  unreliable_cam07: '10_signal_lost',
+});
+
+function installShift(state, shift, shiftKind, shiftIndex, activeProtocols, eventMeta = null) {
+  const next = clone(state);
+  const protocols = clone(activeProtocols);
+  const pendingModifiers = [...(next.night.nextShiftModifiers || [])];
+  const modifierVisualState = pendingModifiers
+    .map(modifier => NEXT_SHIFT_MODIFIER_VISUALS[modifier])
+    .find(Boolean);
+  next.night.activeProtocols = protocols;
+  next.night.currentShift = {
+    ...clone(shift),
+    ...(modifierVisualState ? { visualState: modifierVisualState } : {}),
+    ...(pendingModifiers.length ? { appliedModifiers: pendingModifiers } : {}),
+    shiftKind,
+    activeProtocols: clone(protocols),
+    ...(eventMeta ? {
+      eventChainId: eventMeta.chainId,
+      eventChainStep: eventMeta.stepId,
+    } : {}),
+  };
+  next.night.nextShiftModifiers = [];
+  next.night.roundType = shift.roundType || 'quick';
+  next.night.shiftIndex = shiftIndex;
+  next.investigation = createInvestigationState({ power: next.power });
+  return next;
+}
+
+function initialiseEventChains(state, content, random) {
+  if (!Array.isArray(content?.eventChains) || content.eventChains.length === 0) return state;
+  const next = clone(state);
+  const chainState = createEventChainState(content.eventChains);
+  next.night.eventChains = chainState.chains;
+  next.night.eventChainFlags = chainState.flags;
+  next.night.eventChainHistory = chainState.history;
+  next.night.activeEventChainId = pick(content.eventChains, random).id;
+  return next;
+}
+
+function getActiveChainStep(state, content) {
+  if (Number(state?.tutorialStep || 0) < 4) return null;
+  const chainId = state?.night?.activeEventChainId;
+  const chain = content?.eventChains?.find(item => item.id === chainId);
+  const progress = state?.night?.eventChains?.[chainId];
+  if (!chain || !progress || progress.completed) return null;
+  const step = chain.steps?.[progress.stepIndex];
+  if (!step) return null;
+  const shift = [...(content.normalShifts || []), ...(content.anomalies || [])]
+    .find(item => item.id === step.contentId);
+  return shift ? { chain, progress, step, shift } : null;
+}
+
+function createNightSchedule(state, content, options = {}) {
+  const normalShifts = requireContentList(content, 'normalShifts');
+  const anomalies = requireContentList(content, 'anomalies');
+  const protocols = requireContentList(content, 'protocols');
+  const random = options.random || Math.random;
+  const firstShift = pick(normalShifts, random);
+  const activeProtocols = generateNightProtocols({
+    protocols,
+    shifts: [...normalShifts, ...anomalies],
+    count: options.protocolCount ?? 3,
+    random,
+  });
+  const scheduled = installShift(state, firstShift, 'normal', 0, activeProtocols);
+  return initialiseEventChains(scheduled, content, random);
+}
+
+function scheduleNextNightShift(state, content, options = {}) {
+  requireContentList(content, 'normalShifts');
+  requireContentList(content, 'anomalies');
+  const random = options.random || Math.random;
+  const nextIndex = Number(state?.night?.shiftIndex || 0) + 1;
+  const activeProtocols = state?.night?.activeProtocols?.length
+    ? state.night.activeProtocols
+    : requireContentList(content, 'protocols');
+  const chainStep = getActiveChainStep(state, content);
+  if (chainStep) {
+    return installShift(
+      state,
+      chainStep.shift,
+      chainStep.shift.decision === 'anomaly' ? 'anomaly' : 'normal',
+      nextIndex,
+      activeProtocols,
+      { chainId: chainStep.chain.id, stepId: chainStep.step.id },
+    );
+  }
+  const shiftKind = nextIndex % 2 === 0 ? 'normal' : 'anomaly';
+  const shift = pick(content[shiftKind === 'normal' ? 'normalShifts' : 'anomalies'], random);
+  return installShift(state, shift, shiftKind, nextIndex, activeProtocols);
+}
+
+function advanceCurrentNightEventChain(state, content, outcome) {
+  if (Number(state?.tutorialStep || 0) < 4) return { state, advanced: false };
+  const chainId = state?.night?.activeEventChainId;
+  if (!chainId || !state?.night?.eventChains?.[chainId]) return { state, advanced: false };
+  const chain = content?.eventChains?.find(item => item.id === chainId);
+  if (!chain) return { state, advanced: false };
+  const chainState = {
+    chains: state.night.eventChains,
+    flags: state.night.eventChainFlags || [],
+    history: state.night.eventChainHistory || [],
+  };
+  const result = advanceEventChain(chainState, chain, outcome);
+  const next = clone(state);
+  let timelineSequence = Number(next.night.timelineSequence || 0);
+  const eventHistory = result.state.history.map(item => {
+    if (Number.isFinite(Number(item.sequence))) return item;
+    timelineSequence += 1;
+    return { ...item, sequence: timelineSequence };
+  });
+  next.night.timelineSequence = timelineSequence;
+  next.night.eventChains = {
+    ...next.night.eventChains,
+    [chainId]: {
+      ...result.state.chains[chainId],
+      history: eventHistory.filter(item => item.chainId === chainId),
+    },
+  };
+  next.night.eventChainFlags = result.state.flags;
+  next.night.eventChainHistory = eventHistory;
+  if (result.completed) next.night.activeEventChainId = null;
+  for (const consequence of result.consequences || []) {
+    if (Number(consequence.contaminationDelta || 0) !== 0) {
+      next.contamination = changeContamination(
+        next.contamination,
+        Number(consequence.contaminationDelta),
+        `event-chain:${chainId}`,
+      );
+      const history = next.contamination.history || [];
+      if (history.length > 0 && !Number.isFinite(Number(history.at(-1).sequence))) {
+        next.night.timelineSequence += 1;
+        history[history.length - 1] = {
+          ...history.at(-1),
+          sequence: next.night.timelineSequence,
+        };
+        next.contamination.history = history;
+      }
+    }
+    if (consequence.nextShiftModifier) {
+      next.night.nextShiftModifiers = [
+        ...(next.night.nextShiftModifiers || []),
+        consequence.nextShiftModifier,
+      ];
+    }
+  }
+  return { state: next, advanced: true, completed: Boolean(result.completed), result };
+}
+
+__exports_src_nightScheduler_js["createNightSchedule"] = createNightSchedule;
+__exports_src_nightScheduler_js["scheduleNextNightShift"] = scheduleNextNightShift;
+__exports_src_nightScheduler_js["advanceCurrentNightEventChain"] = advanceCurrentNightEventChain;
+}
+var createNightSchedule = __exports_src_nightScheduler_js["createNightSchedule"];
+var scheduleNextNightShift = __exports_src_nightScheduler_js["scheduleNextNightShift"];
+var advanceCurrentNightEventChain = __exports_src_nightScheduler_js["advanceCurrentNightEventChain"];
 
 // --- src/runtimeSession.js ---
+var __exports_src_runtimeSession_js = {};
+{
 
 
-function createRuntimeSession() {
+
+function createRuntimeSession(options = {}) {
+  const initialState = createInitialState();
   return {
-    state: createInitialState(),
+    state: options.content
+      ? createNightSchedule(initialState, options.content, options)
+      : initialState,
     nextAnomalyAt: CONFIG.anomaly.firstTriggerAt,
   };
 }
 
-function restartRuntimeSession(previousSession = null) {
-  const session = createRuntimeSession();
+function restartRuntimeSession(previousSession = null, options = {}) {
+  const session = createRuntimeSession(options);
   const previous = previousSession?.state;
   if (!previous) return session;
 
@@ -1570,8 +2570,19 @@ function scheduleNextAnomalyAfterRevive(elapsed) {
   return elapsed + CONFIG.anomaly.cooldownMin;
 }
 
+__exports_src_runtimeSession_js["createRuntimeSession"] = createRuntimeSession;
+__exports_src_runtimeSession_js["restartRuntimeSession"] = restartRuntimeSession;
+__exports_src_runtimeSession_js["scheduleNextAnomalyAfterTrigger"] = scheduleNextAnomalyAfterTrigger;
+__exports_src_runtimeSession_js["scheduleNextAnomalyAfterRevive"] = scheduleNextAnomalyAfterRevive;
+}
+var createRuntimeSession = __exports_src_runtimeSession_js["createRuntimeSession"];
+var restartRuntimeSession = __exports_src_runtimeSession_js["restartRuntimeSession"];
+var scheduleNextAnomalyAfterTrigger = __exports_src_runtimeSession_js["scheduleNextAnomalyAfterTrigger"];
+var scheduleNextAnomalyAfterRevive = __exports_src_runtimeSession_js["scheduleNextAnomalyAfterRevive"];
 
 // --- src/rewardGuard.js ---
+var __exports_src_rewardGuard_js = {};
+{
 function shouldApplyReward(meta, currentRunToken, kind, state) {
   if (meta?.context?.runToken !== currentRunToken || !state) return false;
 
@@ -1595,8 +2606,13 @@ function shouldApplyReward(meta, currentRunToken, kind, state) {
   return false;
 }
 
+__exports_src_rewardGuard_js["shouldApplyReward"] = shouldApplyReward;
+}
+var shouldApplyReward = __exports_src_rewardGuard_js["shouldApplyReward"];
 
 // --- src/firstRunGuidance.js ---
+var __exports_src_firstRunGuidance_js = {};
+{
 function getOperatorCue(state, nextAnomalyAt) {
   const elapsed = Math.max(0, Math.floor(state?.elapsed ?? 0));
   const firstAnomalySeen = (state?.anomaliesTriggeredTotal ?? 0) > 0;
@@ -1617,8 +2633,13 @@ function getOperatorCue(state, nextAnomalyAt) {
   return '对得上就放行，对不上就封锁。';
 }
 
+__exports_src_firstRunGuidance_js["getOperatorCue"] = getOperatorCue;
+}
+var getOperatorCue = __exports_src_firstRunGuidance_js["getOperatorCue"];
 
 // --- platform/canvasLabels.js ---
+var __exports_platform_canvasLabels_js = {};
+{
 
 function getCanvasLabels() {
   const skin = getSkin();
@@ -1632,7 +2653,7 @@ function getCanvasLabels() {
     actionPanel: canvas.actionPanel || '操作面板',
     logPanel: canvas.logPanel || '系统日志',
     failureTitle: canvas.failureTitle || '系统崩溃',
-    failureEyebrow: canvas.failureEyebrow || 'SYSTEM FAILURE',
+    failureEyebrow: canvas.failureEyebrow || '系统故障',
     revive: t('ui.viewAd'),
     restart: t('ui.restart'),
     revealTruth: t('ui.revealTruth'),
@@ -1665,8 +2686,19 @@ function getCanvasDirectionLabel(value) {
   return labels[value] || value;
 }
 
+__exports_platform_canvasLabels_js["getCanvasLabels"] = getCanvasLabels;
+__exports_platform_canvasLabels_js["getCanvasDecodedMonitorText"] = getCanvasDecodedMonitorText;
+__exports_platform_canvasLabels_js["getCanvasDoorLabel"] = getCanvasDoorLabel;
+__exports_platform_canvasLabels_js["getCanvasDirectionLabel"] = getCanvasDirectionLabel;
+}
+var getCanvasLabels = __exports_platform_canvasLabels_js["getCanvasLabels"];
+var getCanvasDecodedMonitorText = __exports_platform_canvasLabels_js["getCanvasDecodedMonitorText"];
+var getCanvasDoorLabel = __exports_platform_canvasLabels_js["getCanvasDoorLabel"];
+var getCanvasDirectionLabel = __exports_platform_canvasLabels_js["getCanvasDirectionLabel"];
 
 // --- platform/canvasAssets.js ---
+var __exports_platform_canvasAssets_js = {};
+{
 const CCTV_STATE_IDS = Object.freeze([
   '00_idle_closed', '01_door_open', '02_door_opening', '03_door_closing',
   '04_moving_up', '05_moving_down', '06_power_low', '07_power_outage',
@@ -1675,6 +2707,22 @@ const CCTV_STATE_IDS = Object.freeze([
   '16_wrong_floor', '17_loop_corridor', '18_locked', '19_stabilized',
   '20_threat_high', '21_maintenance_mode', '22_system_reboot', '23_cooldown_safe',
 ]);
+
+const CCTV_STATE_ALIASES = Object.freeze({
+  // V5 内容描述“重复主体”，现有移动素材以影子主体表现同一类空间入侵；保留内容 ID，显式复用已发布图。
+  '14_duplicate_subject': '14_shadow_inside',
+});
+
+const V5_CCTV_ASSETS = Object.freeze({
+  protocolStart: 'visual/cctv/v5_00_protocol_start_mobile.png',
+  quick: 'visual/cctv/v5_01_quick_mobile.png',
+  investigation: 'visual/cctv/v5_02_investigation_mobile.png',
+  identity: 'visual/cctv/v5_03_identity_mobile.png',
+  classification: 'visual/cctv/v5_04_classification_mobile.png',
+  highRisk: 'visual/cctv/v5_05_high_risk_mobile.png',
+  protocolQuery: 'visual/cctv/v5_06_protocol_query_mobile.png',
+  debrief: 'visual/cctv/v5_07_debrief_mobile.png',
+});
 
 const BUTTON_ASSETS = Object.freeze({
   default: 'visual/buttons/btn_close_default.png',
@@ -1698,7 +2746,11 @@ const OVERLAY_ASSETS = Object.freeze({
 
 function getCanvasVisualAssetManifest() {
   return {
-    cctv: Object.fromEntries(CCTV_STATE_IDS.map(id => [id, `visual/cctv/${id}_mobile.png`])),
+    cctv: Object.fromEntries([
+      ...CCTV_STATE_IDS.map(id => [id, `visual/cctv/${id}_mobile.png`]),
+      ...Object.entries(CCTV_STATE_ALIASES).map(([id, target]) => [id, `visual/cctv/${target}_mobile.png`]),
+    ]),
+    v5Cctv: { ...V5_CCTV_ASSETS },
     buttons: { ...BUTTON_ASSETS },
     overlays: { ...OVERLAY_ASSETS },
   };
@@ -1729,6 +2781,7 @@ function createCanvasAssetStore(imageFactory) {
 
   function preload() {
     for (const path of Object.values(manifest.cctv)) load(path);
+    for (const path of Object.values(manifest.v5Cctv)) load(path);
     for (const path of Object.values(manifest.buttons)) load(path);
     for (const path of Object.values(manifest.overlays)) load(path);
   }
@@ -1742,6 +2795,7 @@ function createCanvasAssetStore(imageFactory) {
     manifest,
     preload,
     getCctv: stateId => get(manifest.cctv[stateId] || manifest.cctv['00_idle_closed']),
+    getV5Cctv: screenId => get(manifest.v5Cctv[screenId] || manifest.v5Cctv.quick),
     getButton: kind => get(manifest.buttons[kind] || manifest.buttons.default),
     getOverlay: kind => get(manifest.overlays[kind]),
     getStatus: () => ({
@@ -1752,8 +2806,15 @@ function createCanvasAssetStore(imageFactory) {
   };
 }
 
+__exports_platform_canvasAssets_js["getCanvasVisualAssetManifest"] = getCanvasVisualAssetManifest;
+__exports_platform_canvasAssets_js["createCanvasAssetStore"] = createCanvasAssetStore;
+}
+var getCanvasVisualAssetManifest = __exports_platform_canvasAssets_js["getCanvasVisualAssetManifest"];
+var createCanvasAssetStore = __exports_platform_canvasAssets_js["createCanvasAssetStore"];
 
 // --- platform/miniGameClock.js ---
+var __exports_platform_miniGameClock_js = {};
+{
 function createMiniGameClock(now = () => Date.now()) {
   let started = false;
   let paused = false;
@@ -1793,8 +2854,13 @@ function createMiniGameClock(now = () => Date.now()) {
   };
 }
 
+__exports_platform_miniGameClock_js["createMiniGameClock"] = createMiniGameClock;
+}
+var createMiniGameClock = __exports_platform_miniGameClock_js["createMiniGameClock"];
 
 // --- platform/cctvMotion.js ---
+var __exports_platform_cctvMotion_js = {};
+{
 
 const ACTION_DURATIONS = Object.freeze({
   openDoor: 1000,
@@ -1954,8 +3020,13 @@ function createCctvMotionController(now = () => Date.now()) {
   return { startAction, startAnomaly, sample, pause, resume, reset };
 }
 
+__exports_platform_cctvMotion_js["createCctvMotionController"] = createCctvMotionController;
+}
+var createCctvMotionController = __exports_platform_cctvMotion_js["createCctvMotionController"];
 
 // --- platform/miniGameAudio.js ---
+var __exports_platform_miniGameAudio_js = {};
+{
 const SOURCES = Object.freeze({
   click: 'audio/click.wav',
   anomaly: 'audio/anomaly.wav',
@@ -1967,8 +3038,37 @@ const SOURCES = Object.freeze({
   wrong: 'audio/wrong.wav',
 });
 
+const MUSIC_SOURCES = Object.freeze({
+  calm: 'audio/bgm-night-shift-loop.wav',
+  pressure: 'audio/bgm-anomaly-pressure-loop.wav',
+});
+
+const V5_FEEDBACK_PROFILES = Object.freeze({
+  camera: Object.freeze({ cue: 'click', haptic: 'light' }),
+  'tool:thermal': Object.freeze({ cue: 'anomaly', haptic: 'medium' }),
+  'tool:replay': Object.freeze({ cue: 'motor', haptic: 'light' }),
+  'tool:protocol': Object.freeze({ cue: 'boot', haptic: 'light' }),
+  'protocol:close': Object.freeze({ cue: 'release', haptic: 'light' }),
+  'identity:verify': Object.freeze({ cue: 'boot', haptic: 'light' }),
+  'identity:correct': Object.freeze({ cue: 'release', haptic: 'medium' }),
+  'identity:wrong': Object.freeze({ cue: 'wrong', haptic: 'heavy' }),
+  'classification:enter': Object.freeze({ cue: 'anomaly', haptic: 'medium' }),
+  'classification:correct': Object.freeze({ cue: 'lockdown', haptic: 'medium' }),
+  'classification:wrong': Object.freeze({ cue: 'wrong', haptic: 'heavy' }),
+  'highRisk:correct': Object.freeze({ cue: 'lockdown', haptic: 'heavy' }),
+  'highRisk:wrong': Object.freeze({ cue: 'wrong', haptic: 'heavy' }),
+});
+
+function getV5FeedbackProfile(kind) {
+  const profile = V5_FEEDBACK_PROFILES[kind] || V5_FEEDBACK_PROFILES.camera;
+  return { ...profile };
+}
+
 function createMiniGameAudio(api) {
   const contexts = new Map();
+  let musicContext = null;
+  let musicState = null;
+  let musicPaused = true;
   let muted = false;
 
   function getContext(cue) {
@@ -1983,7 +3083,27 @@ function createMiniGameAudio(api) {
     return context;
   }
 
-  return {
+  function getMusicContext() {
+    if (musicContext) return musicContext;
+    if (!api || typeof api.createInnerAudioContext !== 'function') return null;
+    musicContext = api.createInnerAudioContext();
+    musicContext.autoplay = false;
+    musicContext.loop = true;
+    musicContext.volume = 0.12;
+    return musicContext;
+  }
+
+  function safePlay(context) {
+    try {
+      const result = context?.play?.();
+      result?.catch?.(() => {});
+      return Boolean(context && typeof context.play === 'function');
+    } catch {
+      return false;
+    }
+  }
+
+  const controller = {
     play(cue) {
       if (muted || !SOURCES[cue]) return false;
       const context = getContext(cue);
@@ -1991,33 +3111,82 @@ function createMiniGameAudio(api) {
       try {
         context.stop?.();
         context.seek?.(0);
-        const result = context.play();
-        result?.catch?.(() => {});
-        return true;
+        return safePlay(context);
       } catch {
         return false;
       }
     },
+    setMusicState(nextState) {
+      if (!MUSIC_SOURCES[nextState]) return false;
+      musicState = nextState;
+      if (muted) return false;
+      const context = getMusicContext();
+      if (!context) return false;
+      if (context.src !== MUSIC_SOURCES[nextState]) {
+        context.stop?.();
+        context.src = MUSIC_SOURCES[nextState];
+        context.loop = true;
+        context.volume = nextState === 'pressure' ? 0.10 : 0.12;
+        context.seek?.(0);
+      }
+      musicPaused = false;
+      return safePlay(context);
+    },
+    pauseMusic() {
+      musicContext?.pause?.();
+      musicPaused = true;
+    },
+    resumeMusic() {
+      if (muted || !musicState || !musicPaused) return false;
+      const context = getMusicContext();
+      if (!context) return false;
+      context.src = MUSIC_SOURCES[musicState];
+      context.loop = true;
+      context.volume = musicState === 'pressure' ? 0.10 : 0.12;
+      musicPaused = false;
+      return safePlay(context);
+    },
+    stopMusic() {
+      musicContext?.stop?.();
+      musicPaused = true;
+    },
+    getMusicState() {
+      return musicState;
+    },
     stopAll() {
       for (const context of contexts.values()) context.stop?.();
+      controller.stopMusic();
     },
     destroy() {
       for (const context of contexts.values()) context.destroy?.();
       contexts.clear();
+      musicContext?.destroy?.();
+      musicContext = null;
+      musicState = null;
+      musicPaused = true;
     },
     setMuted(value) {
       muted = Boolean(value);
-      if (muted) this.stopAll();
+      if (muted) controller.stopAll();
       return muted;
     },
     isMuted() {
       return muted;
     },
   };
+
+  return controller;
 }
 
+__exports_platform_miniGameAudio_js["getV5FeedbackProfile"] = getV5FeedbackProfile;
+__exports_platform_miniGameAudio_js["createMiniGameAudio"] = createMiniGameAudio;
+}
+var getV5FeedbackProfile = __exports_platform_miniGameAudio_js["getV5FeedbackProfile"];
+var createMiniGameAudio = __exports_platform_miniGameAudio_js["createMiniGameAudio"];
 
 // --- platform/douyinIntegration.js ---
+var __exports_platform_douyinIntegration_js = {};
+{
 function bindMiniGameLifecycle(api, handlers = {}) {
   const onPause = () => handlers.onPause?.();
   const onResume = (options) => handlers.onResume?.(options);
@@ -2079,8 +3248,17 @@ function navigateToDouyinSidebar(api) {
   });
 }
 
+__exports_platform_douyinIntegration_js["bindMiniGameLifecycle"] = bindMiniGameLifecycle;
+__exports_platform_douyinIntegration_js["checkDouyinSidebar"] = checkDouyinSidebar;
+__exports_platform_douyinIntegration_js["navigateToDouyinSidebar"] = navigateToDouyinSidebar;
+}
+var bindMiniGameLifecycle = __exports_platform_douyinIntegration_js["bindMiniGameLifecycle"];
+var checkDouyinSidebar = __exports_platform_douyinIntegration_js["checkDouyinSidebar"];
+var navigateToDouyinSidebar = __exports_platform_douyinIntegration_js["navigateToDouyinSidebar"];
 
 // --- platform/canvasRenderer.js ---
+var __exports_platform_canvasRenderer_js = {};
+{
 /**
  * canvasRenderer.js — Canvas 渲染器
  *
@@ -2136,24 +3314,38 @@ function getCanvasViewportMetrics(systemInfo = {}) {
 }
 
 function getCanvasLayout(height = 1334, safeTop = 0) {
-  // V4：一块大监控、三项读数、一个双选任务。禁止把桌面后台缩进手机。
+  // V5：协议与 CAM 使用原生 Canvas 行；大 CCTV 仍是最大单一表面。
   const topbar = { x: 14, y: 12 + safeTop, w: 722, h: 76 };
-  const rule = { x: 14, y: 96 + safeTop, w: 722, h: 66 };
-  const monitorH = Math.max(520, Math.min(880, height - safeTop - 644));
-  const monitor = { x: 14, y: 170 + safeTop, w: 722, h: monitorH };
+  const protocolBar = { x: 14, y: 96 + safeTop, w: 722, h: 66 };
+  const cameraTabs = {
+    x: 14, y: 170 + safeTop, w: 722, h: 54, gap: 8,
+    hitY: 146 + safeTop, hitH: 94,
+  };
+  // Match the two official V5 portrait frames: 360×640 uses a compact 230px CCTV,
+  // while 393×852 spends the extra vertical room on a 360px CCTV. Interpolation
+  // keeps intermediate phones fluid without creating a dead area below the monitor.
+  const monitorH = Math.max(479, Math.min(687, 479 + (height - 1334) * (208 / 291)));
+  const monitor = { x: 14, y: 232 + safeTop, w: 722, h: monitorH };
   const readings = { x: 14, y: monitor.y + monitor.h + 12, w: 722, h: 108 };
+  const tools = {
+    x: 14, y: readings.y + readings.h + 12, w: 722, h: 76, gap: 10,
+    hitY: readings.y + readings.h + 2, hitH: 100,
+  };
   const actions = {
-    x: 14, y: readings.y + readings.h + 12, w: 722, h: 220,
-    columns: 2, gap: 14, buttonH: 164,
+    x: 14, y: tools.y + tools.h + 12, w: 722, h: 146,
+    columns: 2, gap: 14, buttonH: 104,
   };
   actions.startY = actions.y + 42;
   actions.buttonW = (actions.w - 32 - actions.gap) / 2;
   const feedbackY = actions.y + actions.h + 12;
   return {
     topbar,
-    rule,
+    rule: protocolBar,
+    protocolBar,
+    cameraTabs,
     monitor,
     readings,
+    tools,
     actions,
     feedback: { x: 14, y: feedbackY, w: 722, h: Math.max(90, height - feedbackY - 18) },
   };
@@ -2307,15 +3499,64 @@ function getRuleCopy(state) {
   return t('ui.coreRule');
 }
 
-function drawRuleStrip(state) {
-  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).rule;
+function getCanvasProtocolItems(state) {
+  return (state?.night?.activeProtocols || []).slice(0, 3).map(protocol => ({
+    id: protocol.id,
+    category: protocol.category || 'protocol',
+    text: protocol.text || protocol.id,
+  }));
+}
+
+function getCanvasProtocolSummary(protocols = []) {
+  return protocols.map((protocol, index) => {
+    const text = String(protocol?.text || protocol?.id || '');
+    const compact = text.length > 14 ? `${text.slice(0, 14)}…` : text;
+    return `${index + 1}.${compact}`;
+  }).join('  ');
+}
+
+function drawProtocolBar(state) {
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).protocolBar;
   drawIndustrialPanel(x, y, w, h, 'rgba(225,168,75,0.40)');
-  const guided = Number(state.tutorialStep || 0) < 2 && state.inspection?.status === 'pending';
-  ctx.fillStyle = guided ? COLORS.amber : COLORS.green;
+  const protocols = getCanvasProtocolItems(state);
+  ctx.fillStyle = protocols.length ? COLORS.amber : COLORS.green;
   ctx.fillRect(x + 6, y + 6, 7, h - 12);
   ctx.fillStyle = COLORS.text;
-  ctx.font = '26px "Microsoft YaHei", sans-serif';
-  ctx.fillText(getRuleCopy(state), x + 30, y + 43, w - 142);
+  ctx.font = 'bold 20px "Microsoft YaHei", sans-serif';
+  ctx.fillText('夜班协议', x + 28, y + 26);
+  ctx.font = '20px "Microsoft YaHei", sans-serif';
+  const guided = Number(state.tutorialStep || 0) < 2 && state.inspection?.status === 'pending';
+  const summary = guided || !protocols.length
+    ? getRuleCopy(state)
+    : getCanvasProtocolSummary(protocols);
+  ctx.fillText(summary, x + 28, y + 52, w - 52);
+}
+
+function getCanvasCameraTabs(state) {
+  const cameras = Object.keys(state?.night?.currentShift?.evidence?.cameras || {});
+  const activeCamera = state?.investigation?.activeCamera || 'cam01';
+  return ['cam01', 'cam03', 'cam07']
+    .filter(id => cameras.includes(id))
+    .map(id => ({ id, label: id.replace('cam', 'CAM-'), active: id === activeCamera }));
+}
+
+function drawCameraTabs(state) {
+  const layout = getCanvasLayout(DH, safeInsetTop).cameraTabs;
+  const tabs = getCanvasCameraTabs(state);
+  if (!tabs.length) return;
+  const tabW = (layout.w - layout.gap * (tabs.length - 1)) / tabs.length;
+  tabs.forEach((tab, index) => {
+    const x = layout.x + index * (tabW + layout.gap);
+    roundRect(x, layout.y, tabW, layout.h, 2,
+      tab.active ? '#17352a' : '#101314',
+      tab.active ? 'rgba(121,214,163,0.78)' : 'rgba(195,200,190,0.24)');
+    ctx.fillStyle = tab.active ? COLORS.green : COLORS.muted;
+    ctx.font = 'bold 22px Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(tab.label, x + tabW / 2, layout.y + 35);
+    drawPressShade(x, layout.y, tabW, layout.h, getPressDepth(tab.id));
+  });
+  ctx.textAlign = 'left';
 }
 
 function getCanvasReadings(state, motion = null) {
@@ -2376,7 +3617,14 @@ function drawFeedback(state) {
   ctx.textAlign = 'right';
   ctx.fillText(pending ? '等待判断' : `安全 ${Math.round(state.stability || 0)}%`, x + w - 24, y + 42);
   ctx.textAlign = 'left';
-  const barY = y + Math.min(h - 22, 62);
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '20px "Microsoft YaHei", sans-serif';
+  const power = Math.max(0, Math.min(100, Math.round(Number(state.power) || 0)));
+  const contamination = Math.max(0, Math.min(100, Math.round(Number(state.contamination?.value) || 0)));
+  ctx.fillText(`电力 ${power}%`, x + 24, y + 70);
+  ctx.fillStyle = contamination >= 51 ? COLORS.red : contamination >= 26 ? COLORS.amber : COLORS.cyan;
+  ctx.fillText(`污染 ${contamination}%`, x + 168, y + 70);
+  const barY = y + Math.min(h - 22, 78);
   roundRect(x + 24, barY, w - 48, 12, 2, 'rgba(255,255,255,0.08)');
   if (!pending) {
     roundRect(x + 24, barY, Math.max(0, (w - 48) * ((state.stability || 0) / 100)), 12, 2,
@@ -2513,12 +3761,22 @@ function getCanvasCctvTreatment(cctvState = '00_idle_closed') {
   const entity = ['13_entity_near', '14_shadow_inside', '15_anomaly_wandering'].includes(cctvState);
   const threat = ['08_emergency_stop', '09_door_jammed', '16_wrong_floor', '20_threat_high'].includes(cctvState);
   const darkness = cctvState === '07_power_outage' ? 0.62 : cctvState === '10_signal_lost' ? 0.38 : 0;
+  const calm = cctvState === '19_stabilized' || cctvState === '23_cooldown_safe';
   const tint = threat
     ? 'rgba(255,77,109,0.16)'
-    : cctvState === '19_stabilized' || cctvState === '23_cooldown_safe'
+    : calm
       ? 'rgba(97,255,190,0.12)'
       : 'rgba(97,255,190,0.05)';
-  return { tint, darkness, entity, glitch, threat };
+  const border = threat
+    ? 'rgba(255,77,109,0.85)'
+    : glitch
+      ? 'rgba(225,168,75,0.62)'
+      : entity
+        ? 'rgba(178,132,255,0.62)'
+        : calm
+          ? 'rgba(97,255,190,0.52)'
+          : 'rgba(121,214,163,0.34)';
+  return { tint, darkness, entity, glitch, threat, border };
 }
 
 function drawImageCover(image, x, y, w, h, fallbackWidth = 720, fallbackHeight = 420) {
@@ -2537,34 +3795,109 @@ function drawImageCover(image, x, y, w, h, fallbackWidth = 720, fallbackHeight =
   ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
 }
 
-function drawCctvImage(image, x, y, w, h) {
-  const sourceW = Number(image.width || image.naturalWidth) || 720;
-  const sourceH = Number(image.height || image.naturalHeight) || 420;
-  // 生产状态图顶部/底部烘焙了英文诊断和固定HUD；先裁掉答案区，再按主画面 cover。
-  const cropTop = Math.min(58, sourceH * 0.14);
-  const cropBottom = Math.min(30, sourceH * 0.08);
-  const usableH = sourceH - cropTop - cropBottom;
-  const sourceRatio = sourceW / usableH;
-  const targetRatio = w / h;
-  let sx = 0, sy = cropTop, sw = sourceW, sh = usableH;
-  if (sourceRatio > targetRatio) {
-    sw = usableH * targetRatio;
-    sx = (sourceW - sw) / 2;
-  } else {
-    sh = sourceW / targetRatio;
-    sy = cropTop + (usableH - sh) / 2;
+function drawCctvAtmosphere(state, x, y, w, h, treatment, frameTime = 0) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+
+  // 真实监控感：扫描线 + 镜头暗角 + 轻微色偏。三层均只作用于 CCTV，不污染按钮和协议。
+  const scanlines = assetStore?.getOverlay('scanlines');
+  const vignette = assetStore?.getOverlay('vignette');
+  const frame = assetStore?.getOverlay('frame');
+  if (scanlines) {
+    ctx.globalAlpha = treatment.threat ? 0.38 : 0.24;
+    ctx.drawImage(scanlines, x, y, w, h);
   }
-  ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+  if (vignette) {
+    ctx.globalAlpha = treatment.threat ? 0.82 : 0.62;
+    ctx.drawImage(vignette, x, y, w, h);
+  }
+  ctx.globalAlpha = 1;
+
+  if (treatment.tint) {
+    ctx.fillStyle = treatment.tint;
+    ctx.fillRect(x, y, w, h);
+  }
+
+  // 慢速 CRT 扫描带：比静态噪点更容易让玩家感到“摄像头正在工作”。
+  const phase = ((frameTime / 1800) % 1 + 1) % 1;
+  const beamY = y + phase * h;
+  const beam = ctx.createLinearGradient(x, beamY - 30, x, beamY + 30);
+  beam.addColorStop(0, 'rgba(97,255,190,0)');
+  beam.addColorStop(0.5, treatment.threat ? 'rgba(255,77,109,0.30)' : 'rgba(97,255,190,0.22)');
+  beam.addColorStop(1, 'rgba(97,255,190,0)');
+  ctx.fillStyle = beam;
+  ctx.fillRect(x, beamY - 30, w, 60);
+
+  // 录制指示器与镜头角标是运行时 HUD，不泄露答案，只建立“夜班监控”语境。
+  const pulse = 0.72 + Math.sin(frameTime / 170) * 0.22;
+  ctx.globalAlpha = pulse;
+  ctx.fillStyle = treatment.threat ? COLORS.red : '#ff5d67';
+  ctx.beginPath();
+  ctx.arc(x + 20, y + 22, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#e4e8df';
+  ctx.font = 'bold 16px Consolas, monospace';
+  ctx.fillText('REC', x + 32, y + 28);
+  ctx.fillStyle = treatment.threat ? '#ff9a9f' : '#b4c4bb';
+  ctx.font = '14px Consolas, monospace';
+  const activeCamera = String(state?.investigation?.activeCamera || 'cam01').toUpperCase().replace('CAM', 'CAM-');
+  ctx.fillText(`${activeCamera} // NIGHT WATCH`, x + 20, y + h - 18);
+
+  // 角框比一整圈发光边框更克制，但会让 CCTV 从“普通图片”变成监控窗口。
+  if (frame) {
+    ctx.globalAlpha = 0.72;
+    ctx.drawImage(frame, x, y, w, h);
+    ctx.globalAlpha = 1;
+  }
+  ctx.strokeStyle = treatment.border || 'rgba(121,214,163,0.44)';
+  ctx.lineWidth = treatment.threat ? 3 + Math.max(0, Math.sin(frameTime / 130)) : 2;
+  ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+
+  if (treatment.threat) {
+    ctx.globalAlpha = 0.72 + Math.sin(frameTime / 110) * 0.18;
+    ctx.strokeStyle = COLORS.red;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x + 8, y + 8, w - 16, h - 16);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+function drawCctvImage(image, x, y, w, h) {
+  // CCTV 窗口保持主布局尺寸；素材 cover 铺满窗口：无拉伸变形、无黑边、不叠第二层背景。
+  // 高竖屏窗口下中央裁掉两侧边缘，轿厢主体始终居中完整。
+  drawImageCover(image, x, y, w, h);
+}
+
+// V5 阶段场景映射：夜班各回合使用交接包对应场景，运动/异常瞬时态仍回退 24 状态机图。
+function getV5CctvScreenId(state) {
+  if (state?.night?.overlay === 'protocolQuery') return 'protocolQuery';
+  const roundType = state?.night?.roundType;
+  if (!state?.night?.currentShift) return null;
+  return {
+    quick: 'quick',
+    investigation: 'investigation',
+    identity: 'identity',
+    classification: 'classification',
+    highRisk: 'highRisk',
+  }[roundType] || null;
 }
 
 function drawCctvScene(state, x, y, w, h, motion = null) {
   if (h <= 20) return;
   const baseVisual = deriveVisualState(state);
   const frameTime = Number(motion?.frameTime ?? Date.now());
-  const cctvState = motion?.cctvState || baseVisual.cctvState;
+  const cctvState = motion?.cctvState
+    || state?.night?.currentShift?.visualState
+    || baseVisual.cctvState;
   const visual = { ...baseVisual, cctvState, glitch: baseVisual.glitch || Number(motion?.glitchAlpha || 0) > 0 };
   const treatment = getCanvasCctvTreatment(cctvState);
-  const sceneImage = assetStore?.getCctv(cctvState);
+  const v5ScreenId = motion?.active ? null : getV5CctvScreenId(state);
+  const sceneImage = (v5ScreenId ? assetStore?.getV5Cctv(v5ScreenId) : null)
+    || assetStore?.getCctv(cctvState);
 
   if (sceneImage) {
     ctx.save();
@@ -2589,17 +3922,31 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     drawCctvImage(sceneImage, drawX, drawY, drawW, drawH);
     ctx.globalAlpha = 1;
 
+    drawCctvAtmosphere(state, x, y, w, h, treatment, frameTime);
+
     // 状态图已内置基础监控纹理，只叠加真正随时间变化的警报与干扰。
     const pendingDecision = state.inspection?.status === 'pending';
     const alert = treatment.threat && !pendingDecision ? assetStore.getOverlay('redAlert') : null;
     const glitchOverlay = treatment.glitch ? assetStore.getOverlay('glitch') : null;
-    const sweep = state.inspection?.status === 'pending' ? assetStore.getOverlay('sweep') : null;
-    for (const [image, alpha] of [[alert, 0.72], [glitchOverlay, 0.36], [sweep, 0.28]]) {
+    for (const [image, alpha] of [[alert, 0.72], [glitchOverlay, 0.36]]) {
       if (!image) continue;
       ctx.globalAlpha = alpha;
       ctx.drawImage(image, x, y, w, h);
     }
     ctx.globalAlpha = 1;
+
+    // 待判定扫描光束随时间自上而下扫过，给出“系统正在核对”的活体感。
+    const sweep = pendingDecision ? assetStore.getOverlay('sweep') : null;
+    if (sweep) {
+      const sweepH = Math.max(96, Math.floor(h * 0.38));
+      const sweepPhase = (frameTime / 2100) % 1.45;
+      if (sweepPhase <= 1) {
+        const sweepY = y - sweepH + sweepPhase * (h + sweepH * 2);
+        ctx.globalAlpha = 0.34;
+        ctx.drawImage(sweep, x, sweepY, w, sweepH);
+        ctx.globalAlpha = 1;
+      }
+    }
 
     const glitchAlpha = Math.max(0, Math.min(1, Number(motion?.glitchAlpha || 0)));
     if (glitchAlpha > 0) {
@@ -2628,23 +3975,8 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     ctx.fillStyle = scanGradient;
     ctx.fillRect(x, scanY - 24, w, 48);
 
-    // 实体式顶部遮光罩：覆盖素材中烘焙的 07 / STABILIZED / 英文诊断，而不是再贴一块中央黑卡。
-    const hudShade = ctx.createLinearGradient(0, y, 0, y + 104);
-    hudShade.addColorStop(0, '#020707');
-    hudShade.addColorStop(0.82, '#020707');
-    hudShade.addColorStop(1, 'rgba(2,7,7,0)');
-    ctx.fillStyle = hudShade;
-    ctx.fillRect(x, y, w, 112);
-    ctx.strokeStyle = 'rgba(121,214,163,0.22)';
-    ctx.beginPath();
-    ctx.moveTo(x, y + 96);
-    ctx.lineTo(x + w, y + 96);
-    ctx.stroke();
-
-    // 状态图含固定英文诊断与固定楼层；源图已裁掉烘焙答案区，这里只叠加中文运行时状态。
+    // 替换图无烘焙 HUD；只绘制运行时楼层和状态标签，不覆盖电梯主体。
     const inspectionPending = state.inspection?.status === 'pending';
-    const activeId = typeof state.activeAnomaly === 'string' ? state.activeAnomaly : state.activeAnomaly?.id;
-    const floorDiscrepancy = ['phantom_floor', 'floor_jump', 'negative_floor'].includes(activeId);
     const neutralBorder = inspectionPending ? 'rgba(195,200,190,0.34)' : treatment.border;
     ctx.strokeStyle = neutralBorder;
     ctx.globalAlpha = 0.72;
@@ -2844,12 +4176,65 @@ function getCanvasActionButtons(state) {
   return operations;
 }
 
+const TOOL_LABELS = {
+  thermal: '热源扫描',
+  replay: '三秒回放',
+  protocol: '夜班协议',
+};
+
+function getCanvasToolButtons(state) {
+  const investigation = state?.investigation || {};
+  return ['thermal', 'replay', 'protocol'].map(id => {
+    const tool = investigation.tools?.[id] || {};
+    const remaining = tool.remaining;
+    const unlimited = !Number.isFinite(remaining);
+    const disabled = !unlimited && (remaining <= 0 || (investigation.power ?? 0) < (tool.powerCost || 0));
+    return {
+      id,
+      label: TOOL_LABELS[id],
+      meta: unlimited ? '不限次' : `${remaining || 0}次 · ${tool.powerCost || 0}电`,
+      disabled,
+    };
+  });
+}
+
+const ROUND_ACTIONS = {
+  quick: [
+    { id: 'release', label: '放行', sublabel: '画面数据一致', decision: 'normal' },
+    { id: 'lockdown', label: '封锁', sublabel: '发现任意矛盾', decision: 'anomaly' },
+  ],
+  investigation: [
+    { id: 'markSuspicion', label: '标记疑点', sublabel: '保留当前证据' },
+    { id: 'enterClassification', label: '进入分类', sublabel: '提交异常类型' },
+  ],
+  identity: [
+    { id: 'identityRelease', label: '放行', sublabel: '身份一致' },
+    { id: 'identityReject', label: '拒绝', sublabel: '身份冲突' },
+    { id: 'identityVerify', label: '核验', sublabel: '查看胸牌与权限' },
+  ],
+  classification: [
+    { id: 'classify:person', label: '人物', sublabel: '身份/外观' },
+    { id: 'classify:quantity', label: '数量', sublabel: '人数/载重' },
+    { id: 'classify:space', label: '空间', sublabel: '楼层/位置' },
+    { id: 'classify:time', label: '时间', sublabel: '时序/回放' },
+    { id: 'classify:device', label: '设备', sublabel: '信号/读数' },
+    { id: 'classify:dynamic', label: '动态', sublabel: '移动/变化' },
+  ],
+  highRisk: [
+    { id: 'highRisk:emergencyStop', label: '急停', sublabel: '消耗 15 电' },
+    { id: 'highRisk:restart', label: '重启', sublabel: '消耗 10 电' },
+    { id: 'highRisk:lockdownFloor', label: '封锁楼层', sublabel: '消耗 12 电' },
+  ],
+};
+
 function getCanvasVisibleActionButtons(state) {
   if (state.inspection?.status === 'pending') {
-    return [
+    if (Number(state.tutorialStep || 0) < 2) return [
       { id: 'reportNormal', label: t('ui.reportNormal'), sublabel: '画面数据一致', decision: 'normal' },
       { id: 'reportAnomaly', label: t('ui.reportAnomaly'), sublabel: '发现任意矛盾', decision: 'anomaly' },
     ];
+    if (Number(state.tutorialStep || 0) === 3) return ROUND_ACTIONS.quick;
+    return ROUND_ACTIONS[state?.night?.roundType] || ROUND_ACTIONS.quick;
   }
 
   const activeId = typeof state.activeAnomaly === 'string' ? state.activeAnomaly : state.activeAnomaly?.id;
@@ -2858,6 +4243,28 @@ function getCanvasVisibleActionButtons(state) {
   }
 
   return [{ id: 'standby', label: t('ui.standby'), sublabel: '监控自动运行', disabled: true, wide: true }];
+}
+
+function drawTools(state) {
+  const layout = getCanvasLayout(DH, safeInsetTop).tools;
+  const tools = getCanvasToolButtons(state);
+  const buttonW = (layout.w - 24 - layout.gap * 2) / 3;
+  tools.forEach((tool, index) => {
+    const x = layout.x + 12 + index * (buttonW + layout.gap);
+    ctx.save();
+    if (tool.disabled) ctx.globalAlpha = 0.42;
+    roundRect(x, layout.y, buttonW, layout.h, 2, '#101716', tool.disabled ? COLORS.line : 'rgba(132,185,176,0.62)');
+    ctx.fillStyle = tool.disabled ? COLORS.muted : COLORS.cyan;
+    ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(tool.label, x + buttonW / 2, layout.y + 31);
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '18px "Microsoft YaHei", sans-serif';
+    ctx.fillText(tool.meta, x + buttonW / 2, layout.y + 58);
+    drawPressShade(x, layout.y, buttonW, layout.h, getPressDepth(tool.id));
+    ctx.restore();
+  });
+  ctx.textAlign = 'left';
 }
 
 // ── 绘制操作按钮 ──
@@ -2870,8 +4277,8 @@ function drawActions(state) {
   ctx.fillText(state.activeAnomaly && state.inspection?.status !== 'pending' ? '系统处置' : '当前判断', x + 24, y + 31);
 
   const btns = getCanvasVisibleActionButtons(state);
-  const columns = btns.length === 1 ? 1 : 2;
-  const buttonW = columns === 1 ? w - 32 : (w - 32 - gap) / 2;
+  const columns = btns.length === 1 ? 1 : btns.length === 6 ? 6 : btns.length === 3 ? 3 : 2;
+  const buttonW = columns === 1 ? w - 32 : (w - 32 - gap * (columns - 1)) / columns;
   btns.forEach((btn, i) => {
     ctx.save();
     if (btn.disabled) ctx.globalAlpha = 0.48;
@@ -2903,17 +4310,18 @@ function drawActions(state) {
     ctx.shadowBlur = btn.disabled ? 0 : 12;
     ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.arc(bx + buttonW / 2, by + 31, 9, 0, Math.PI * 2);
+    ctx.arc(bx + buttonW / 2, by + 18, 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
     ctx.fillStyle = COLORS.text;
-    ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 28px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(btn.label, bx + buttonW / 2, by + 94);
+    ctx.fillText(btn.label, bx + buttonW / 2, by + 57);
     ctx.fillStyle = '#b5b8b1';
-    ctx.font = '24px "Microsoft YaHei", sans-serif';
-    ctx.fillText(btn.sublabel || '', bx + buttonW / 2, by + 132);
+    ctx.font = '19px "Microsoft YaHei", sans-serif';
+    ctx.fillText(btn.sublabel || '', bx + buttonW / 2, by + 86, buttonW - 20);
+    drawPressShade(bx, by, buttonW, buttonH, getPressDepth(btn.id));
 
     const guidedIndex = Number(state.tutorialStep || 0);
     const guided = (state.inspection?.status === 'pending'
@@ -2958,6 +4366,59 @@ function drawLogs(state) {
     ctx.font = '12px Consolas, "Microsoft YaHei", monospace';
     ctx.fillText(`${i + 1}. ${log.text}`, lx, ly + 12, w - 36);
   });
+}
+
+function getCanvasOverlayCloseButton(height = 1334, safeTop = 0) {
+  const x = 55, w = 640, h = 430;
+  const y = Math.max(150 + safeTop, (height - h) / 2);
+  return { x: x + 32, y: y + h - 88, w: w - 64, h: 60 };
+}
+
+function getCanvasOverlayModel(state) {
+  if (state?.night?.overlay === 'protocolQuery') {
+    return {
+      type: 'protocolQuery',
+      title: '夜班协议查询',
+      lines: (state.night.protocolQuery || []).map(item => item.text || item.id),
+      action: 'closeOverlay',
+    };
+  }
+  if (state?.night?.overlay === 'debrief' && state.night.debrief) {
+    const { summary = {}, ending = {} } = state.night.debrief;
+    return {
+      type: 'debrief',
+      title: `局后复盘 · ${ending.name || '未决记录'}`,
+      lines: [
+        `判断 ${summary.decisions || 0} 次 · 准确率 ${Math.round((summary.accuracy || 0) * 100)}%`,
+        `污染峰值 ${summary.peakContamination || 0}`,
+        ending.summary || '',
+      ].filter(Boolean),
+      action: 'closeOverlay',
+    };
+  }
+  return null;
+}
+
+function drawNightOverlay(state) {
+  const model = getCanvasOverlayModel(state);
+  if (!model) return;
+  ctx.fillStyle = 'rgba(0,0,0,0.76)';
+  ctx.fillRect(0, 0, DW, DH);
+  const x = 55, w = 640, h = 430, y = Math.max(150 + safeInsetTop, (DH - h) / 2);
+  drawIndustrialPanel(x, y, w, h, 'rgba(225,168,75,0.72)');
+  ctx.fillStyle = COLORS.amber;
+  ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
+  ctx.fillText(model.title, x + 32, y + 58, w - 64);
+  ctx.fillStyle = COLORS.text;
+  ctx.font = '26px "Microsoft YaHei", sans-serif';
+  model.lines.forEach((line, index) => wrapText(`${index + 1}. ${line}`, x + 32, y + 112 + index * 62, w - 64, 32));
+  const closeButton = getCanvasOverlayCloseButton(DH, safeInsetTop);
+  roundRect(closeButton.x, closeButton.y, closeButton.w, closeButton.h, 3, '#17352a', 'rgba(121,214,163,0.72)');
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 26px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('返回监控', closeButton.x + closeButton.w / 2, closeButton.y + 39);
+  ctx.textAlign = 'left';
 }
 
 // ── 绘制失败弹窗 ──
@@ -3180,11 +4641,42 @@ function wrapText(text, x, y, maxWidth, lineHeight) {
   }
 }
 
+// ── 按压反馈 ──
+const pressFx = new Map();
+const PRESS_FX_MS = 180;
+
+function noteCanvasPress(id) {
+  if (id) pressFx.set(id, Date.now());
+}
+
+function getPressDepth(id) {
+  const at = pressFx.get(id);
+  if (!Number.isFinite(at)) return 0;
+  const age = Date.now() - at;
+  if (age > PRESS_FX_MS) {
+    pressFx.delete(id);
+    return 0;
+  }
+  return 1 - age / PRESS_FX_MS;
+}
+
+function drawPressShade(x, y, w, h, depth) {
+  if (depth <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = 0.3 * depth;
+  roundRect(x + 2, y + 2, w - 4, h - 4, 2, '#000000');
+  ctx.globalAlpha = 0.5 * depth;
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 5, y + 5, w - 10, h - 10);
+  ctx.restore();
+}
+
 // ── 点击检测 ──
 let clickHandlers = {};
 
 function onCanvasClick(x, y, state, callbacks, viewState = { started: true }) {
-  const { onAdRevive, onRestart, onAction, onDecision, onToggleMute, onStart, onSidebar } = callbacks;
+  const { onAdRevive, onRestart, onAction, onDecision, onTool, onCameraSwitch, onToggleMute, onStart, onSidebar } = callbacks;
   const inside = (rect) => x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
   const muteControl = getCanvasMuteControl(DH, safeInsetTop, viewState.started !== false);
   if (!state.gameOver && inside(muteControl)) {
@@ -3200,6 +4692,11 @@ function onCanvasClick(x, y, state, callbacks, viewState = { started: true }) {
   }
 
   if (viewState.paused === true) return;
+
+  if (getCanvasOverlayModel(state)) {
+    if (inside(getCanvasOverlayCloseButton(DH, safeInsetTop))) onAction?.('closeOverlay');
+    return;
+  }
 
   // 失败弹窗按钮检测
   if (state.gameOver) {
@@ -3233,16 +4730,47 @@ function onCanvasClick(x, y, state, callbacks, viewState = { started: true }) {
     return;
   }
 
-  // V4 双选任务点击检测，与绘制布局共用同一组按钮数据。
+  const cameraLayout = getCanvasLayout(DH, safeInsetTop).cameraTabs;
+  const cameraTabs = getCanvasCameraTabs(state);
+  const cameraHit = { ...cameraLayout, y: cameraLayout.hitY ?? cameraLayout.y, h: cameraLayout.hitH ?? cameraLayout.h };
+  if (cameraTabs.length && inside(cameraHit)) {
+    const tabW = (cameraLayout.w - cameraLayout.gap * (cameraTabs.length - 1)) / cameraTabs.length;
+    for (let index = 0; index < cameraTabs.length; index += 1) {
+      const tabX = cameraLayout.x + index * (tabW + cameraLayout.gap);
+      if (x >= tabX && x <= tabX + tabW) {
+        noteCanvasPress(cameraTabs[index].id);
+        onCameraSwitch?.(cameraTabs[index].id);
+      }
+    }
+    return;
+  }
+
+  const toolLayout = getCanvasLayout(DH, safeInsetTop).tools;
+  const toolHit = { ...toolLayout, y: toolLayout.hitY ?? toolLayout.y, h: toolLayout.hitH ?? toolLayout.h };
+  if (inside(toolHit)) {
+    const tools = getCanvasToolButtons(state);
+    const buttonW = (toolLayout.w - 24 - toolLayout.gap * 2) / 3;
+    for (let index = 0; index < tools.length; index += 1) {
+      const toolX = toolLayout.x + 12 + index * (buttonW + toolLayout.gap);
+      if (x >= toolX && x <= toolX + buttonW && !tools[index].disabled) {
+        noteCanvasPress(tools[index].id);
+        onTool?.(tools[index].id);
+      }
+    }
+    return;
+  }
+
+  // V5 动态任务点击检测，与绘制布局共用同一组按钮数据。
   const layout = getCanvasLayout(DH, safeInsetTop).actions;
   const buttons = getCanvasVisibleActionButtons(state);
-  const columns = buttons.length === 1 ? 1 : 2;
-  const buttonW = columns === 1 ? layout.w - 32 : (layout.w - 32 - layout.gap) / 2;
+  const columns = buttons.length === 1 ? 1 : buttons.length === 6 ? 6 : buttons.length === 3 ? 3 : 2;
+  const buttonW = columns === 1 ? layout.w - 32 : (layout.w - 32 - layout.gap * (columns - 1)) / columns;
   for (let i = 0; i < buttons.length; i += 1) {
     const bx = layout.x + 16 + (i % columns) * (buttonW + layout.gap);
     const by = layout.startY;
     if (x >= bx && x <= bx + buttonW && y >= by && y <= by + layout.buttonH) {
       if (buttons[i].disabled) return;
+      noteCanvasPress(buttons[i].id);
       if (buttons[i].decision) {
         onDecision?.(buttons[i].decision);
       } else onAction?.(buttons[i].id);
@@ -3257,19 +4785,22 @@ function render(state, viewState = { started: true, paused: false }) {
 
   drawBackground();
   drawTopbar(state);
-  drawRuleStrip(state);
+  drawProtocolBar(state);
+  drawCameraTabs(state);
   drawMonitor(state, viewState.cctvMotion);
   drawReadings(state, viewState.cctvMotion);
+  drawTools(state);
   drawActions(state);
   drawFeedback(state);
   drawFailureOverlay(state);
+  drawNightOverlay(state);
   if (viewState.started === false) drawStartOverlay(viewState);
   else if (viewState.paused === true) drawPauseOverlay();
   if (!state.gameOver) drawMuteControl(viewState);
 }
 
 // ── 初始化 ──
-function init(canvasEl, systemInfo = {}) {
+function init(canvasEl, systemInfo = {}, options = {}) {
   canvas = canvasEl;
   ctx = canvas.getContext('2d');
 
@@ -3282,20 +4813,73 @@ function init(canvasEl, systemInfo = {}) {
   canvas.height = metrics.height;
   scale = 1;
 
-  const imageFactory = () => {
+  // 小游戏运行时优先 wx/tt createImage；浏览器验收 harness 通过 options.imageFactory 注入 DOM Image，
+  // 使发布 bundle 不含任何 document/window 引用。
+  const imageFactory = options.imageFactory || (() => {
     if (typeof tt !== 'undefined' && typeof tt.createImage === 'function') return tt.createImage();
     if (typeof wx !== 'undefined' && typeof wx.createImage === 'function') return wx.createImage();
     if (typeof canvas.createImage === 'function') return canvas.createImage();
     return null;
-  };
+  });
   assetStore = createCanvasAssetStore(imageFactory);
   assetStore.preload();
 
   return { width: DW, height: DH };
 }
 
+__exports_platform_canvasRenderer_js["getCanvasViewportMetrics"] = getCanvasViewportMetrics;
+__exports_platform_canvasRenderer_js["getCanvasLayout"] = getCanvasLayout;
+__exports_platform_canvasRenderer_js["getCanvasStartControls"] = getCanvasStartControls;
+__exports_platform_canvasRenderer_js["getCanvasMuteControl"] = getCanvasMuteControl;
+__exports_platform_canvasRenderer_js["getCanvasStaticLabels"] = getCanvasStaticLabels;
+__exports_platform_canvasRenderer_js["getCanvasFailureOverlayCopy"] = getCanvasFailureOverlayCopy;
+__exports_platform_canvasRenderer_js["getCanvasProtocolItems"] = getCanvasProtocolItems;
+__exports_platform_canvasRenderer_js["getCanvasProtocolSummary"] = getCanvasProtocolSummary;
+__exports_platform_canvasRenderer_js["getCanvasCameraTabs"] = getCanvasCameraTabs;
+__exports_platform_canvasRenderer_js["getCanvasReadings"] = getCanvasReadings;
+__exports_platform_canvasRenderer_js["getCanvasStatusItems"] = getCanvasStatusItems;
+__exports_platform_canvasRenderer_js["getCanvasMeterBars"] = getCanvasMeterBars;
+__exports_platform_canvasRenderer_js["getCanvasCctvTreatment"] = getCanvasCctvTreatment;
+__exports_platform_canvasRenderer_js["getV5CctvScreenId"] = getV5CctvScreenId;
+__exports_platform_canvasRenderer_js["getCanvasActionButtons"] = getCanvasActionButtons;
+__exports_platform_canvasRenderer_js["getCanvasToolButtons"] = getCanvasToolButtons;
+__exports_platform_canvasRenderer_js["getCanvasVisibleActionButtons"] = getCanvasVisibleActionButtons;
+__exports_platform_canvasRenderer_js["getCanvasVisibleLogs"] = getCanvasVisibleLogs;
+__exports_platform_canvasRenderer_js["getCanvasOverlayCloseButton"] = getCanvasOverlayCloseButton;
+__exports_platform_canvasRenderer_js["getCanvasOverlayModel"] = getCanvasOverlayModel;
+__exports_platform_canvasRenderer_js["noteCanvasPress"] = noteCanvasPress;
+__exports_platform_canvasRenderer_js["onCanvasClick"] = onCanvasClick;
+__exports_platform_canvasRenderer_js["render"] = render;
+__exports_platform_canvasRenderer_js["init"] = init;
+}
+var getCanvasViewportMetrics = __exports_platform_canvasRenderer_js["getCanvasViewportMetrics"];
+var getCanvasLayout = __exports_platform_canvasRenderer_js["getCanvasLayout"];
+var getCanvasStartControls = __exports_platform_canvasRenderer_js["getCanvasStartControls"];
+var getCanvasMuteControl = __exports_platform_canvasRenderer_js["getCanvasMuteControl"];
+var getCanvasStaticLabels = __exports_platform_canvasRenderer_js["getCanvasStaticLabels"];
+var getCanvasFailureOverlayCopy = __exports_platform_canvasRenderer_js["getCanvasFailureOverlayCopy"];
+var getCanvasProtocolItems = __exports_platform_canvasRenderer_js["getCanvasProtocolItems"];
+var getCanvasProtocolSummary = __exports_platform_canvasRenderer_js["getCanvasProtocolSummary"];
+var getCanvasCameraTabs = __exports_platform_canvasRenderer_js["getCanvasCameraTabs"];
+var getCanvasReadings = __exports_platform_canvasRenderer_js["getCanvasReadings"];
+var getCanvasStatusItems = __exports_platform_canvasRenderer_js["getCanvasStatusItems"];
+var getCanvasMeterBars = __exports_platform_canvasRenderer_js["getCanvasMeterBars"];
+var getCanvasCctvTreatment = __exports_platform_canvasRenderer_js["getCanvasCctvTreatment"];
+var getV5CctvScreenId = __exports_platform_canvasRenderer_js["getV5CctvScreenId"];
+var getCanvasActionButtons = __exports_platform_canvasRenderer_js["getCanvasActionButtons"];
+var getCanvasToolButtons = __exports_platform_canvasRenderer_js["getCanvasToolButtons"];
+var getCanvasVisibleActionButtons = __exports_platform_canvasRenderer_js["getCanvasVisibleActionButtons"];
+var getCanvasVisibleLogs = __exports_platform_canvasRenderer_js["getCanvasVisibleLogs"];
+var getCanvasOverlayCloseButton = __exports_platform_canvasRenderer_js["getCanvasOverlayCloseButton"];
+var getCanvasOverlayModel = __exports_platform_canvasRenderer_js["getCanvasOverlayModel"];
+var noteCanvasPress = __exports_platform_canvasRenderer_js["noteCanvasPress"];
+var onCanvasClick = __exports_platform_canvasRenderer_js["onCanvasClick"];
+var render = __exports_platform_canvasRenderer_js["render"];
+var init = __exports_platform_canvasRenderer_js["init"];
 
 // --- platform/miniGameRuntime.js ---
+var __exports_platform_miniGameRuntime_js = {};
+{
 /**
  * miniGameRuntime.js — 微信/抖音小游戏 Canvas 运行时入口
  *
@@ -3422,6 +5006,11 @@ function startMiniGame() {
   const vibrate = (type = 'light') => {
     try { api.vibrateShort?.({ type }); } catch { /* optional haptics */ }
   };
+  const playV5Feedback = (kind) => {
+    const profile = getV5FeedbackProfile(kind);
+    audio.play(profile.cue);
+    vibrate(profile.haptic);
+  };
   const audioStorageKey = 'minigame_audio_muted_v1';
   try {
     audio.setMuted(api.getStorageSync?.(audioStorageKey) === true);
@@ -3434,7 +5023,7 @@ function startMiniGame() {
     return available;
   });
   refreshSidebarAvailability();
-  let session = createRuntimeSession();
+  let session = createRuntimeSession({ content: __V5_CONTENT__ });
   let state = session.state;
   let nextAnomalyAt = session.nextAnomalyAt;
   let lastSnapshotAt = 0;
@@ -3456,6 +5045,7 @@ function startMiniGame() {
     if (!lifecycleHidden) {
       clock.resume();
       cctvMotion.resume();
+      if (clock.isStarted() && !state.gameOver) audio.resumeMusic();
     }
   }
 
@@ -3524,6 +5114,9 @@ function startMiniGame() {
 
   function toggleMute() {
     const muted = audio.setMuted(!audio.isMuted());
+    if (!muted && clock.isStarted() && !state.gameOver && !lifecycleHidden && !adPauseActive) {
+      audio.resumeMusic() || audio.setMusicState(state.activeAnomaly ? 'pressure' : 'calm');
+    }
     try {
       api.setStorageSync?.(audioStorageKey, muted);
     } catch {
@@ -3534,6 +5127,7 @@ function startMiniGame() {
   function start() {
     if (clock.isStarted()) return;
     audio.play('boot');
+    audio.setMusicState('calm');
     state = openInspection(state, {
       id: `baseline-${runToken}`,
       kind: 'normal',
@@ -3553,8 +5147,9 @@ function startMiniGame() {
   function restart() {
     runToken += 1;
     audio.play('boot');
+    audio.setMusicState('calm');
     clock.start();
-    session = restartRuntimeSession({ state });
+    session = restartRuntimeSession({ state }, { content: __V5_CONTENT__ });
     state = session.state;
     cctvMotion.reset();
     state = openInspection(state, {
@@ -3567,6 +5162,22 @@ function startMiniGame() {
     nextAnomalyAt = session.nextAnomalyAt;
     lastSnapshotAt = 0;
     failureRecorded = false;
+  }
+
+  function openScheduledNightInspection(nextState) {
+    const shift = nextState.night?.currentShift;
+    if (!shift) return nextState;
+    return openInspection(nextState, {
+      id: `night-${shift.id}-${nextState.night.shiftIndex}`,
+      kind: shift.shiftKind === 'anomaly' || shift.decision === 'anomaly' ? 'anomaly' : 'normal',
+      title: shift.name || shift.id,
+      duration: shift.duration ?? 10,
+    });
+  }
+
+  function scheduleFollowingNightShift(currentState, outcome) {
+    const advanced = advanceCurrentNightEventChain(currentState, __V5_CONTENT__, outcome);
+    return openScheduledNightInspection(scheduleNextNightShift(advanced.state, __V5_CONTENT__));
   }
 
   function resolveActiveAnomalyAutomatically(feedbackKey) {
@@ -3626,13 +5237,70 @@ function startMiniGame() {
     }
     // 教学第二班必须直接进入异常，不允许中间插入随机正常巡检。
     const tutorialStep = Number(state.tutorialStep || 0);
+    if (tutorialStep === 4 && state.night?.activeEventChainId) {
+      state = openScheduledNightInspection(scheduleNextNightShift(state, __V5_CONTENT__));
+      nextNormalInspectionAt = Number.POSITIVE_INFINITY;
+      nextAnomalyAt = Number.POSITIVE_INFINITY;
+      return;
+    }
     nextNormalInspectionAt = tutorialStep === 1
       ? Number.POSITIVE_INFINITY
       : state.elapsed + (tutorialStep === 3 ? 2 : 4);
   }
 
   function handleAction(actionId) {
-    if (state.gameOver) return;
+    if (state.gameOver && actionId !== 'closeOverlay') return;
+    if (actionId === 'closeOverlay') {
+      state = closeProtocolQuery(state);
+      playV5Feedback('protocol:close');
+      return;
+    }
+    if (actionId === 'identityVerify') {
+      const result = verifyCurrentIdentity(state);
+      if (!result.accepted) {
+        playV5Feedback('identity:wrong');
+        return;
+      }
+      state = result.state;
+      playV5Feedback('identity:verify');
+      return;
+    }
+    if (actionId === 'identityRelease' || actionId === 'identityReject') {
+      const result = resolveIdentityDecision(state, actionId === 'identityRelease' ? 'release' : 'reject');
+      if (!result.accepted) return;
+      playV5Feedback(`identity:${result.correct ? 'correct' : 'wrong'}`);
+      state = scheduleFollowingNightShift(result.state, { correct: result.correct });
+      return;
+    }
+    if (actionId === 'enterClassification' || actionId === 'markSuspicion') {
+      state = {
+        ...state,
+        night: { ...state.night, roundType: 'classification' },
+        lastFeedback: '请选择异常分类',
+      };
+      playV5Feedback('classification:enter');
+      return;
+    }
+    if (actionId.startsWith('classify:')) {
+      const result = classifyCurrentShift(state, actionId.slice('classify:'.length));
+      if (!result.accepted) return;
+      state = result.state;
+      playV5Feedback(`classification:${result.correct ? 'correct' : 'wrong'}`);
+      if (state.night.roundType !== 'highRisk') {
+        state = scheduleFollowingNightShift(result.state, { correct: result.correct });
+      }
+      return;
+    }
+    if (actionId.startsWith('highRisk:')) {
+      const result = resolveCurrentHighRisk(state, actionId.slice('highRisk:'.length));
+      if (!result.accepted) {
+        playV5Feedback('highRisk:wrong');
+        return;
+      }
+      state = scheduleFollowingNightShift(result.state, { correct: result.correct });
+      playV5Feedback(`highRisk:${result.correct ? 'correct' : 'wrong'}`);
+      return;
+    }
     if (actionId === 'unlockHiddenLog') {
       decodeAd({ runToken });
       return;
@@ -3648,6 +5316,42 @@ function startMiniGame() {
       audio.play('wrong');
       vibrate('heavy');
     }
+  }
+
+  function handleCameraSwitch(cameraId) {
+    const shift = state.night?.currentShift;
+    if (!shift) return;
+    const result = switchCamera(state.investigation, cameraId, {
+      ...shift,
+      cameras: Object.keys(shift.evidence?.cameras || {}),
+    });
+    if (!result.accepted) return;
+    state = { ...state, investigation: result.state };
+    playV5Feedback('camera');
+  }
+
+  function handleTool(toolId) {
+    const shift = state.night?.currentShift;
+    if (!shift) return;
+    const result = useInvestigationTool(state.investigation, toolId, shift);
+    if (!result.accepted) {
+      audio.play('wrong');
+      vibrate('heavy');
+      return;
+    }
+    const count = Array.isArray(result.discoveredEvidence)
+      ? result.discoveredEvidence.length
+      : result.discoveredEvidence ? 1 : 0;
+    state = {
+      ...state,
+      investigation: result.state,
+      power: result.state.power,
+      lastFeedback: toolId === 'protocol'
+        ? `已调取 ${count} 条当前夜班协议`
+        : `${toolId === 'thermal' ? '热源扫描' : '三秒回放'}发现 ${count} 条证据`,
+    };
+    if (toolId === 'protocol') state = openProtocolQuery(state);
+    playV5Feedback(`tool:${toolId}`);
   }
 
   function handleAd(kind) {
@@ -3667,6 +5371,8 @@ function startMiniGame() {
     onCanvasClick(x, y, state, {
       onAction: handleAction,
       onDecision: handleDecision,
+      onTool: handleTool,
+      onCameraSwitch: handleCameraSwitch,
       onToggleMute: toggleMute,
       onAdRevive: handleAd,
       onRestart: restart,
@@ -3689,6 +5395,7 @@ function startMiniGame() {
       if (!adPauseActive) {
         clock.resume();
         cctvMotion.resume();
+        if (clock.isStarted() && !state.gameOver) audio.resumeMusic();
       }
     },
   });
@@ -3700,11 +5407,20 @@ function startMiniGame() {
         for (let i = 0; i < delta; i += 1) {
           state = tickState(state, 1);
           if (!state.gameOver) {
+            const expiredNightShift = Number(state.tutorialStep || 0) >= 4
+              && Boolean(state.night?.activeEventChainId)
+              && Boolean(state.night?.currentShift?.id);
             const expiredKind = state.inspection?.kind;
             const expiry = expireInspection(state);
             state = expiry.state;
             if (expiry.timedOut) {
               audio.play(expiry.coached ? 'wrong' : 'result');
+              if (expiredNightShift && !state.gameOver) {
+                state = scheduleFollowingNightShift(state, { correct: false });
+                nextNormalInspectionAt = Number.POSITIVE_INFINITY;
+                nextAnomalyAt = Number.POSITIVE_INFINITY;
+                continue;
+              }
               if (expiredKind === 'anomaly' && state.activeAnomaly) {
                 resolveActiveAnomalyAutomatically('ui.autoResolutionTimeout');
               }
@@ -3762,9 +5478,24 @@ function startMiniGame() {
       }
       if (state.gameOver && !failureRecorded) {
         state = state.result === 'success' ? recordSuccessfulShift(state) : recordFailure(state);
+        state = {
+          ...state,
+          night: {
+            ...state.night,
+            overlay: 'debrief',
+            debrief: createNightDebrief(state, __V5_CONTENT__.endings),
+          },
+        };
         audio.play('result');
         failureRecorded = true;
       }
+    }
+
+    if (state.gameOver) {
+      audio.stopMusic();
+    } else if (clock.isStarted() && !lifecycleHidden && !adPauseActive && !audio.isMuted()) {
+      const desiredMusic = state.activeAnomaly ? 'pressure' : 'calm';
+      if (audio.getMusicState() !== desiredMusic) audio.setMusicState(desiredMusic);
     }
 
     render(state, getViewState());
@@ -3776,6 +5507,11 @@ function startMiniGame() {
   return { canvas, getState: () => state, restart, start };
 }
 
+__exports_platform_miniGameRuntime_js["createMiniGameRewardedAd"] = createMiniGameRewardedAd;
+__exports_platform_miniGameRuntime_js["startMiniGame"] = startMiniGame;
+}
+var createMiniGameRewardedAd = __exports_platform_miniGameRuntime_js["createMiniGameRewardedAd"];
+var startMiniGame = __exports_platform_miniGameRuntime_js["startMiniGame"];
 
 
 // ── 平台入口 ──

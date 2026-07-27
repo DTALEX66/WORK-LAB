@@ -16,9 +16,7 @@
     "cctv_states": "1024×576 CCTV 电梯状态图，适合监控画面主体。",
     "mobile_cctv_states": "720×420 手机端裁切版，适合直接放进顶部 CCTV 区。",
     "button_sprites": "工业物理触控键 PNG 贴图。",
-    "icons": "控制按钮 SVG 线性图标。",
     "overlays": "透明 PNG 遮罩：扫描线、CCTV框、红警、扫描光束、故障块、暗角。",
-    "spritesheets": "总览图和按钮图集。",
     "docs": "资源说明、状态表、导入建议。"
   },
   "cctv_states": [
@@ -273,12 +271,6 @@
     {
       "id": "overlay_vignette",
       "png": "overlays/overlay_vignette.png"
-    }
-  ],
-  "icons": [
-    {
-      "id": "control_icons",
-      "svg": "icons/control_icons.svg"
     }
   ]
 }

@@ -42,7 +42,7 @@
     "logPanel": "系统日志",
     "forceAnomaly": "触发异常测试",
     "failureTitle": "系统崩溃",
-    "failureEyebrow": "SYSTEM FAILURE",
+    "failureEyebrow": "系统故障",
     "monitorSignalStable": "SYSTEM: STABLE",
     "monitorSignalUnstable": "SYSTEM: UNSTABLE",
     "monitorSignalCorrupted": "SYSTEM: CORRUPTED",

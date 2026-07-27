@@ -169,22 +169,19 @@ Do not make it look like a web form, survey page, SaaS admin dashboard, clean da
 不要像表单、调查问卷、后台管理系统、SaaS 仪表盘、普通网页、普通 App、赛博朋克全息屏、卡通游戏、科幻飞船驾驶舱。
 ```
 
-## 9. 生成后放入项目的文件名
+## 9. 当前保留的运行时生成资产
 
-生成完图片后，建议按以下路径放入：
+项目清理后只保留已被 H5/CSS 实际引用的背景、纹理和干扰层：
 
 ```text
-assets/generated/cctv-basement-lift-real.png
 assets/generated/cctv-hospital-ward-real.png
 assets/generated/cctv-security-room-real.png
 assets/generated/cctv-factory-real.png
 assets/generated/cctv-subway-platform-real.png
 assets/generated/cctv-hotel-lobby-real.png
-
-assets/generated/ui-reference-main-console.png
-assets/generated/ui-reference-start-screen.png
-assets/generated/ui-reference-failure-screen.png
-
+assets/generated/cctv-elevator-corridor-clear.png
+assets/generated/cctv-elevator-corridor-figure.png
+assets/generated/cctv-elevator-corridor-warp.png
 assets/generated/overlay-cctv-noise.png
 assets/generated/overlay-signal-tear.png
 assets/generated/texture-hud-glass.png
@@ -193,11 +190,10 @@ assets/generated/texture-control-panel.png
 
 ## 10. 接入优先级
 
-1. 先接入 `cctv-basement-lift-real.png` 替换默认监控主图。
-2. 再接入 `texture-control-panel.png` 重做底部按钮区。
-3. 再接入 `texture-hud-glass.png` 重做面板质感。
-4. 再按皮肤切换 CCTV 背景：医院、安防、工厂、地铁、酒店。
-5. 最后接入异常态叠层：`overlay-cctv-noise.png`、`overlay-signal-tear.png`。
+1. 保持当前 CCTV 状态图和运行时 HUD 为正式玩家版本。
+2. `texture-control-panel.png`、`texture-hud-glass.png` 继续服务 H5 Debug Console。
+3. 其它皮肤继续使用各自已接线的背景。
+4. 异常态叠层继续使用 `overlay-cctv-noise.png`、`overlay-signal-tear.png`。
 
 ## 11. 验收标准
 

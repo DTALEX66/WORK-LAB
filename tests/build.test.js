@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import vm from 'node:vm';
 
 const root = resolve(import.meta.dirname, '..');
 const output = resolve(root, 'wechat-minigame', 'game.js');
@@ -22,6 +23,61 @@ test('wechat build output is deterministic across repeated runs', () => {
   const second = readFileSync(output, 'utf8');
 
   assert.equal(second, first);
+});
+
+test('generated mini-game bundle injects deterministic V5 content containers', () => {
+  execFileSync(process.execPath, ['build.js', 'douyin'], { cwd: root, stdio: 'pipe' });
+  const first = readFileSync(douyinOutput, 'utf8');
+  execFileSync(process.execPath, ['build.js', 'douyin'], { cwd: root, stdio: 'pipe' });
+  const second = readFileSync(douyinOutput, 'utf8');
+
+  assert.equal(second, first, 'content injection must not make repeated builds drift');
+  assert.match(first, /\/\/ --- V5 content \(deterministic\) ---\nvar __V5_CONTENT__ = /);
+
+  const bundle = first.replace(
+    'startMiniGame();\n})();',
+    'globalThis.__bundleContent = __V5_CONTENT__;\n})();',
+  );
+  const sandbox = vm.createContext({ console, Promise, setTimeout, clearTimeout });
+  vm.runInContext(bundle, sandbox, { filename: 'douyin-minigame/game.js' });
+
+  assert.deepEqual(Object.keys(sandbox.__bundleContent), [
+    'anomalies', 'endings', 'eventChains', 'normalShifts', 'passengers', 'protocols',
+  ]);
+  assert.equal(sandbox.__bundleContent.anomalies.length, 30);
+  assert.equal(sandbox.__bundleContent.normalShifts.length, 10);
+  assert.equal(sandbox.__bundleContent.passengers.length, 5);
+  assert.equal(sandbox.__bundleContent.protocols.length, 6);
+});
+
+test('generated mini-game bundle isolates module lexical scopes and remains executable', () => {
+  execFileSync(process.execPath, ['build.js', 'douyin'], { cwd: root, stdio: 'pipe' });
+  const rawBundle = readFileSync(douyinOutput, 'utf8');
+
+  assert.match(
+    rawBundle,
+    /\/\/ --- src\/protocolEngine\.js ---\nvar __exports_src_protocolEngine_js = \{\};\n\{\n/,
+    'each source module should have its own lexical block so private names cannot collide',
+  );
+
+  const bundle = rawBundle.replace(
+    'startMiniGame();\n})();',
+    'globalThis.__bundleTest = { createInitialState, createInvestigationState, createRuntimeSession, content: __V5_CONTENT__ };\n})();',
+  );
+  const sandbox = vm.createContext({ console, Promise, setTimeout, clearTimeout });
+  vm.runInContext(bundle, sandbox, { filename: 'douyin-minigame/game.js' });
+
+  const state = sandbox.__bundleTest.createInitialState();
+  const investigation = sandbox.__bundleTest.createInvestigationState({ power: 64 });
+  assert.equal(state.result, 'playing');
+  assert.equal(investigation.power, 64);
+  const session = sandbox.__bundleTest.createRuntimeSession({
+    content: sandbox.__bundleTest.content,
+    random: () => 0,
+  });
+  assert.equal(session.state.night.activeProtocols.length, 3);
+  assert.equal(session.state.night.currentShift.id, 'normal_shift_01');
+  assert.equal(session.state.night.roundType, 'investigation');
 });
 
 test('release config can inject private AppID and ad units into generated files', () => {
@@ -77,11 +133,15 @@ test('douyin build emits a tracked import-ready project with target-specific met
   assert.equal(second, first);
   assert.match(second, /MINIGAME - 抖音 小游戏构建/);
   assert.equal(project.compileType, 'game');
-  assert.equal(project.appid, 'touristappid');
+  const localReleaseConfigPath = resolve(root, 'release.config.json');
+  const expectedAppId = existsSync(localReleaseConfigPath)
+    ? JSON.parse(readFileSync(localReleaseConfigPath, 'utf8')).douyin?.appid || 'touristappid'
+    : 'touristappid';
+  assert.equal(project.appid, expectedAppId);
   assert.equal(project.miniprogramRoot, './');
   assert.equal(game.deviceOrientation, 'portrait');
   assert.equal(game.showStatusBar, false);
-  assert.deepEqual(game.subPackages, []);
+  assert.deepEqual(game.subPackages, [{ root: 'visual', name: 'v5-visual' }]);
   for (const cue of ['click.wav', 'anomaly.wav', 'result.wav', 'boot.wav', 'release.wav', 'lockdown.wav', 'motor.wav', 'wrong.wav']) {
     assert.equal(existsSync(resolve(root, 'douyin-minigame', 'audio', cue)), true, `${cue} should ship in the Douyin package`);
   }
@@ -117,6 +177,7 @@ test('douyin release build injects douyin-specific ad units and private AppID', 
     });
     const bundle = readFileSync(douyinOutput, 'utf8');
     const privateConfig = JSON.parse(readFileSync(douyinPrivateConfigOutput, 'utf8'));
+    const projectConfig = JSON.parse(readFileSync(douyinProjectOutput, 'utf8'));
 
     assert.match(bundle, /ttad-real-revive-test/);
     assert.match(bundle, /ttad-real-decode-test/);
@@ -124,6 +185,7 @@ test('douyin release build injects douyin-specific ad units and private AppID', 
     assert.doesNotMatch(bundle, /shared-ad-revive-should-not-win/);
     assert.match(bundle, /releaseMode:\s*true/);
     assert.equal(privateConfig.appid, 'tt_real_release_test_appid');
+    assert.equal(projectConfig.appid, 'tt_real_release_test_appid');
     assert.equal(privateConfig.projectname, 'MINIGAME_DOUYIN_TEST');
   } finally {
     if (existsSync(douyinPrivateConfigOutput)) rmSync(douyinPrivateConfigOutput, { force: true });

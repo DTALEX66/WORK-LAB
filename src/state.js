@@ -2,6 +2,23 @@ import CONFIG from './gameConfig.js';
 import { createFeedbackLine } from './feedback.js';
 import { findRollbackSnapshot } from './rollback.js';
 import { t } from './skinManager.js';
+import { createContaminationState } from './contamination.js';
+import { createInvestigationState } from './investigationTools.js';
+
+function createNightState() {
+  return {
+    activeProtocols: [],
+    currentShift: null,
+    roundType: 'quick',
+    shiftIndex: 0,
+    decisions: [],
+    eventChains: {},
+    eventChainFlags: [],
+    eventChainHistory: [],
+    timelineSequence: 0,
+    nextShiftModifiers: [],
+  };
+}
 
 export function createInitialState() {
   const c = CONFIG.initial;
@@ -14,6 +31,9 @@ export function createInitialState() {
     power: c.power,
     stability: c.stability,
     anomalyLevel: c.anomalyLevel,
+    contamination: createContaminationState(),
+    night: createNightState(),
+    investigation: createInvestigationState({ power: c.power }),
     passengers: c.passengers,
     gameOver: c.gameOver,
     result: 'playing',

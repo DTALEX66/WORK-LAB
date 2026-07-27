@@ -3,7 +3,7 @@ import { applyAnomaly, pickNextAnomaly } from './events.js';
 import { summarizeFailure } from './feedback.js';
 import { recordFailure, recordSuccessfulShift, reviveFromAd, saveSnapshot, tickState } from './state.js';
 import CONFIG from './gameConfig.js';
-import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart } from './audio.js';
+import { playClick, playSuccess, playFail, playAnomaly, playWarning, playCrash, playRevive, playRestart, setMusicState, pauseMusic, resumeMusic, stopMusic } from './audio.js';
 import { t, actionLabel, getSkin, getAnomalies } from './skinManager.js';
 import { createRewardedAd } from '../platform/platform.js';
 import { getDecodedMonitorText, getDirectionLabel, getDomLabels, getDoorLabel } from './uiLabels.js';
@@ -101,6 +101,7 @@ let lastTone = 'normal';
 let crashPlayed = false;
 let fakeEndingTracked = false;
 let runToken = 0;
+let musicStarted = false;
 
 function analyticsPayload(extra = {}) {
   return {
@@ -258,6 +259,10 @@ function renderActions(visual = deriveVisualState(state)) {
 function render() {
   const labels = getDomLabels();
   const visual = deriveVisualState(state);
+  if (musicStarted) {
+    if (state.gameOver) stopMusic();
+    else setMusicState(state.activeAnomaly ? 'pressure' : 'calm');
+  }
   renderActions(visual);
   root.dataset.tone = visual.tone;
   els.remaining.textContent = Math.ceil(state.remaining);
@@ -616,6 +621,8 @@ applyDomLabels();
 refreshArchiveButton();
 bindPress(els.startButton, () => {
   playClick();
+  musicStarted = true;
+  setMusicState('calm');
   ensureTimer();
 });
 bindPress(els.forceAnomaly, triggerAnomaly);
@@ -663,4 +670,11 @@ if (meta) {
 }
 
 render();
-window.addEventListener('beforeunload', () => window.clearInterval(timer));
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) pauseMusic();
+  else if (musicStarted && !state.gameOver) resumeMusic();
+});
+window.addEventListener('beforeunload', () => {
+  window.clearInterval(timer);
+  stopMusic();
+});

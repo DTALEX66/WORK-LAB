@@ -1,15 +1,19 @@
 import CONFIG from './gameConfig.js';
 import { createInitialState } from './state.js';
+import { createNightSchedule } from './nightScheduler.js';
 
-export function createRuntimeSession() {
+export function createRuntimeSession(options = {}) {
+  const initialState = createInitialState();
   return {
-    state: createInitialState(),
+    state: options.content
+      ? createNightSchedule(initialState, options.content, options)
+      : initialState,
     nextAnomalyAt: CONFIG.anomaly.firstTriggerAt,
   };
 }
 
-export function restartRuntimeSession(previousSession = null) {
-  const session = createRuntimeSession();
+export function restartRuntimeSession(previousSession = null, options = {}) {
+  const session = createRuntimeSession(options);
   const previous = previousSession?.state;
   if (!previous) return session;
 

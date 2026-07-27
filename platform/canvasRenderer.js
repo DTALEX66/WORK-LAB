@@ -54,24 +54,38 @@ export function getCanvasViewportMetrics(systemInfo = {}) {
 }
 
 export function getCanvasLayout(height = 1334, safeTop = 0) {
-  // V4：一块大监控、三项读数、一个双选任务。禁止把桌面后台缩进手机。
+  // V5：协议与 CAM 使用原生 Canvas 行；大 CCTV 仍是最大单一表面。
   const topbar = { x: 14, y: 12 + safeTop, w: 722, h: 76 };
-  const rule = { x: 14, y: 96 + safeTop, w: 722, h: 66 };
-  const monitorH = Math.max(520, Math.min(880, height - safeTop - 644));
-  const monitor = { x: 14, y: 170 + safeTop, w: 722, h: monitorH };
+  const protocolBar = { x: 14, y: 96 + safeTop, w: 722, h: 66 };
+  const cameraTabs = {
+    x: 14, y: 170 + safeTop, w: 722, h: 54, gap: 8,
+    hitY: 146 + safeTop, hitH: 94,
+  };
+  // Match the two official V5 portrait frames: 360×640 uses a compact 230px CCTV,
+  // while 393×852 spends the extra vertical room on a 360px CCTV. Interpolation
+  // keeps intermediate phones fluid without creating a dead area below the monitor.
+  const monitorH = Math.max(479, Math.min(687, 479 + (height - 1334) * (208 / 291)));
+  const monitor = { x: 14, y: 232 + safeTop, w: 722, h: monitorH };
   const readings = { x: 14, y: monitor.y + monitor.h + 12, w: 722, h: 108 };
+  const tools = {
+    x: 14, y: readings.y + readings.h + 12, w: 722, h: 76, gap: 10,
+    hitY: readings.y + readings.h + 2, hitH: 100,
+  };
   const actions = {
-    x: 14, y: readings.y + readings.h + 12, w: 722, h: 220,
-    columns: 2, gap: 14, buttonH: 164,
+    x: 14, y: tools.y + tools.h + 12, w: 722, h: 146,
+    columns: 2, gap: 14, buttonH: 104,
   };
   actions.startY = actions.y + 42;
   actions.buttonW = (actions.w - 32 - actions.gap) / 2;
   const feedbackY = actions.y + actions.h + 12;
   return {
     topbar,
-    rule,
+    rule: protocolBar,
+    protocolBar,
+    cameraTabs,
     monitor,
     readings,
+    tools,
     actions,
     feedback: { x: 14, y: feedbackY, w: 722, h: Math.max(90, height - feedbackY - 18) },
   };
@@ -225,15 +239,64 @@ function getRuleCopy(state) {
   return t('ui.coreRule');
 }
 
-function drawRuleStrip(state) {
-  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).rule;
+export function getCanvasProtocolItems(state) {
+  return (state?.night?.activeProtocols || []).slice(0, 3).map(protocol => ({
+    id: protocol.id,
+    category: protocol.category || 'protocol',
+    text: protocol.text || protocol.id,
+  }));
+}
+
+export function getCanvasProtocolSummary(protocols = []) {
+  return protocols.map((protocol, index) => {
+    const text = String(protocol?.text || protocol?.id || '');
+    const compact = text.length > 14 ? `${text.slice(0, 14)}…` : text;
+    return `${index + 1}.${compact}`;
+  }).join('  ');
+}
+
+function drawProtocolBar(state) {
+  const { x, y, w, h } = getCanvasLayout(DH, safeInsetTop).protocolBar;
   drawIndustrialPanel(x, y, w, h, 'rgba(225,168,75,0.40)');
-  const guided = Number(state.tutorialStep || 0) < 2 && state.inspection?.status === 'pending';
-  ctx.fillStyle = guided ? COLORS.amber : COLORS.green;
+  const protocols = getCanvasProtocolItems(state);
+  ctx.fillStyle = protocols.length ? COLORS.amber : COLORS.green;
   ctx.fillRect(x + 6, y + 6, 7, h - 12);
   ctx.fillStyle = COLORS.text;
-  ctx.font = '26px "Microsoft YaHei", sans-serif';
-  ctx.fillText(getRuleCopy(state), x + 30, y + 43, w - 142);
+  ctx.font = 'bold 20px "Microsoft YaHei", sans-serif';
+  ctx.fillText('夜班协议', x + 28, y + 26);
+  ctx.font = '20px "Microsoft YaHei", sans-serif';
+  const guided = Number(state.tutorialStep || 0) < 2 && state.inspection?.status === 'pending';
+  const summary = guided || !protocols.length
+    ? getRuleCopy(state)
+    : getCanvasProtocolSummary(protocols);
+  ctx.fillText(summary, x + 28, y + 52, w - 52);
+}
+
+export function getCanvasCameraTabs(state) {
+  const cameras = Object.keys(state?.night?.currentShift?.evidence?.cameras || {});
+  const activeCamera = state?.investigation?.activeCamera || 'cam01';
+  return ['cam01', 'cam03', 'cam07']
+    .filter(id => cameras.includes(id))
+    .map(id => ({ id, label: id.replace('cam', 'CAM-'), active: id === activeCamera }));
+}
+
+function drawCameraTabs(state) {
+  const layout = getCanvasLayout(DH, safeInsetTop).cameraTabs;
+  const tabs = getCanvasCameraTabs(state);
+  if (!tabs.length) return;
+  const tabW = (layout.w - layout.gap * (tabs.length - 1)) / tabs.length;
+  tabs.forEach((tab, index) => {
+    const x = layout.x + index * (tabW + layout.gap);
+    roundRect(x, layout.y, tabW, layout.h, 2,
+      tab.active ? '#17352a' : '#101314',
+      tab.active ? 'rgba(121,214,163,0.78)' : 'rgba(195,200,190,0.24)');
+    ctx.fillStyle = tab.active ? COLORS.green : COLORS.muted;
+    ctx.font = 'bold 22px Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(tab.label, x + tabW / 2, layout.y + 35);
+    drawPressShade(x, layout.y, tabW, layout.h, getPressDepth(tab.id));
+  });
+  ctx.textAlign = 'left';
 }
 
 export function getCanvasReadings(state, motion = null) {
@@ -294,7 +357,14 @@ function drawFeedback(state) {
   ctx.textAlign = 'right';
   ctx.fillText(pending ? '等待判断' : `安全 ${Math.round(state.stability || 0)}%`, x + w - 24, y + 42);
   ctx.textAlign = 'left';
-  const barY = y + Math.min(h - 22, 62);
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = '20px "Microsoft YaHei", sans-serif';
+  const power = Math.max(0, Math.min(100, Math.round(Number(state.power) || 0)));
+  const contamination = Math.max(0, Math.min(100, Math.round(Number(state.contamination?.value) || 0)));
+  ctx.fillText(`电力 ${power}%`, x + 24, y + 70);
+  ctx.fillStyle = contamination >= 51 ? COLORS.red : contamination >= 26 ? COLORS.amber : COLORS.cyan;
+  ctx.fillText(`污染 ${contamination}%`, x + 168, y + 70);
+  const barY = y + Math.min(h - 22, 78);
   roundRect(x + 24, barY, w - 48, 12, 2, 'rgba(255,255,255,0.08)');
   if (!pending) {
     roundRect(x + 24, barY, Math.max(0, (w - 48) * ((state.stability || 0) / 100)), 12, 2,
@@ -431,12 +501,22 @@ export function getCanvasCctvTreatment(cctvState = '00_idle_closed') {
   const entity = ['13_entity_near', '14_shadow_inside', '15_anomaly_wandering'].includes(cctvState);
   const threat = ['08_emergency_stop', '09_door_jammed', '16_wrong_floor', '20_threat_high'].includes(cctvState);
   const darkness = cctvState === '07_power_outage' ? 0.62 : cctvState === '10_signal_lost' ? 0.38 : 0;
+  const calm = cctvState === '19_stabilized' || cctvState === '23_cooldown_safe';
   const tint = threat
     ? 'rgba(255,77,109,0.16)'
-    : cctvState === '19_stabilized' || cctvState === '23_cooldown_safe'
+    : calm
       ? 'rgba(97,255,190,0.12)'
       : 'rgba(97,255,190,0.05)';
-  return { tint, darkness, entity, glitch, threat };
+  const border = threat
+    ? 'rgba(255,77,109,0.85)'
+    : glitch
+      ? 'rgba(225,168,75,0.62)'
+      : entity
+        ? 'rgba(178,132,255,0.62)'
+        : calm
+          ? 'rgba(97,255,190,0.52)'
+          : 'rgba(121,214,163,0.34)';
+  return { tint, darkness, entity, glitch, threat, border };
 }
 
 function drawImageCover(image, x, y, w, h, fallbackWidth = 720, fallbackHeight = 420) {
@@ -455,34 +535,109 @@ function drawImageCover(image, x, y, w, h, fallbackWidth = 720, fallbackHeight =
   ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
 }
 
-function drawCctvImage(image, x, y, w, h) {
-  const sourceW = Number(image.width || image.naturalWidth) || 720;
-  const sourceH = Number(image.height || image.naturalHeight) || 420;
-  // 生产状态图顶部/底部烘焙了英文诊断和固定HUD；先裁掉答案区，再按主画面 cover。
-  const cropTop = Math.min(58, sourceH * 0.14);
-  const cropBottom = Math.min(30, sourceH * 0.08);
-  const usableH = sourceH - cropTop - cropBottom;
-  const sourceRatio = sourceW / usableH;
-  const targetRatio = w / h;
-  let sx = 0, sy = cropTop, sw = sourceW, sh = usableH;
-  if (sourceRatio > targetRatio) {
-    sw = usableH * targetRatio;
-    sx = (sourceW - sw) / 2;
-  } else {
-    sh = sourceW / targetRatio;
-    sy = cropTop + (usableH - sh) / 2;
+function drawCctvAtmosphere(state, x, y, w, h, treatment, frameTime = 0) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+
+  // 真实监控感：扫描线 + 镜头暗角 + 轻微色偏。三层均只作用于 CCTV，不污染按钮和协议。
+  const scanlines = assetStore?.getOverlay('scanlines');
+  const vignette = assetStore?.getOverlay('vignette');
+  const frame = assetStore?.getOverlay('frame');
+  if (scanlines) {
+    ctx.globalAlpha = treatment.threat ? 0.38 : 0.24;
+    ctx.drawImage(scanlines, x, y, w, h);
   }
-  ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+  if (vignette) {
+    ctx.globalAlpha = treatment.threat ? 0.82 : 0.62;
+    ctx.drawImage(vignette, x, y, w, h);
+  }
+  ctx.globalAlpha = 1;
+
+  if (treatment.tint) {
+    ctx.fillStyle = treatment.tint;
+    ctx.fillRect(x, y, w, h);
+  }
+
+  // 慢速 CRT 扫描带：比静态噪点更容易让玩家感到“摄像头正在工作”。
+  const phase = ((frameTime / 1800) % 1 + 1) % 1;
+  const beamY = y + phase * h;
+  const beam = ctx.createLinearGradient(x, beamY - 30, x, beamY + 30);
+  beam.addColorStop(0, 'rgba(97,255,190,0)');
+  beam.addColorStop(0.5, treatment.threat ? 'rgba(255,77,109,0.30)' : 'rgba(97,255,190,0.22)');
+  beam.addColorStop(1, 'rgba(97,255,190,0)');
+  ctx.fillStyle = beam;
+  ctx.fillRect(x, beamY - 30, w, 60);
+
+  // 录制指示器与镜头角标是运行时 HUD，不泄露答案，只建立“夜班监控”语境。
+  const pulse = 0.72 + Math.sin(frameTime / 170) * 0.22;
+  ctx.globalAlpha = pulse;
+  ctx.fillStyle = treatment.threat ? COLORS.red : '#ff5d67';
+  ctx.beginPath();
+  ctx.arc(x + 20, y + 22, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#e4e8df';
+  ctx.font = 'bold 16px Consolas, monospace';
+  ctx.fillText('REC', x + 32, y + 28);
+  ctx.fillStyle = treatment.threat ? '#ff9a9f' : '#b4c4bb';
+  ctx.font = '14px Consolas, monospace';
+  const activeCamera = String(state?.investigation?.activeCamera || 'cam01').toUpperCase().replace('CAM', 'CAM-');
+  ctx.fillText(`${activeCamera} // NIGHT WATCH`, x + 20, y + h - 18);
+
+  // 角框比一整圈发光边框更克制，但会让 CCTV 从“普通图片”变成监控窗口。
+  if (frame) {
+    ctx.globalAlpha = 0.72;
+    ctx.drawImage(frame, x, y, w, h);
+    ctx.globalAlpha = 1;
+  }
+  ctx.strokeStyle = treatment.border || 'rgba(121,214,163,0.44)';
+  ctx.lineWidth = treatment.threat ? 3 + Math.max(0, Math.sin(frameTime / 130)) : 2;
+  ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+
+  if (treatment.threat) {
+    ctx.globalAlpha = 0.72 + Math.sin(frameTime / 110) * 0.18;
+    ctx.strokeStyle = COLORS.red;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x + 8, y + 8, w - 16, h - 16);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+function drawCctvImage(image, x, y, w, h) {
+  // CCTV 窗口保持主布局尺寸；素材 cover 铺满窗口：无拉伸变形、无黑边、不叠第二层背景。
+  // 高竖屏窗口下中央裁掉两侧边缘，轿厢主体始终居中完整。
+  drawImageCover(image, x, y, w, h);
+}
+
+// V5 阶段场景映射：夜班各回合使用交接包对应场景，运动/异常瞬时态仍回退 24 状态机图。
+export function getV5CctvScreenId(state) {
+  if (state?.night?.overlay === 'protocolQuery') return 'protocolQuery';
+  const roundType = state?.night?.roundType;
+  if (!state?.night?.currentShift) return null;
+  return {
+    quick: 'quick',
+    investigation: 'investigation',
+    identity: 'identity',
+    classification: 'classification',
+    highRisk: 'highRisk',
+  }[roundType] || null;
 }
 
 function drawCctvScene(state, x, y, w, h, motion = null) {
   if (h <= 20) return;
   const baseVisual = deriveVisualState(state);
   const frameTime = Number(motion?.frameTime ?? Date.now());
-  const cctvState = motion?.cctvState || baseVisual.cctvState;
+  const cctvState = motion?.cctvState
+    || state?.night?.currentShift?.visualState
+    || baseVisual.cctvState;
   const visual = { ...baseVisual, cctvState, glitch: baseVisual.glitch || Number(motion?.glitchAlpha || 0) > 0 };
   const treatment = getCanvasCctvTreatment(cctvState);
-  const sceneImage = assetStore?.getCctv(cctvState);
+  const v5ScreenId = motion?.active ? null : getV5CctvScreenId(state);
+  const sceneImage = (v5ScreenId ? assetStore?.getV5Cctv(v5ScreenId) : null)
+    || assetStore?.getCctv(cctvState);
 
   if (sceneImage) {
     ctx.save();
@@ -507,17 +662,31 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     drawCctvImage(sceneImage, drawX, drawY, drawW, drawH);
     ctx.globalAlpha = 1;
 
+    drawCctvAtmosphere(state, x, y, w, h, treatment, frameTime);
+
     // 状态图已内置基础监控纹理，只叠加真正随时间变化的警报与干扰。
     const pendingDecision = state.inspection?.status === 'pending';
     const alert = treatment.threat && !pendingDecision ? assetStore.getOverlay('redAlert') : null;
     const glitchOverlay = treatment.glitch ? assetStore.getOverlay('glitch') : null;
-    const sweep = state.inspection?.status === 'pending' ? assetStore.getOverlay('sweep') : null;
-    for (const [image, alpha] of [[alert, 0.72], [glitchOverlay, 0.36], [sweep, 0.28]]) {
+    for (const [image, alpha] of [[alert, 0.72], [glitchOverlay, 0.36]]) {
       if (!image) continue;
       ctx.globalAlpha = alpha;
       ctx.drawImage(image, x, y, w, h);
     }
     ctx.globalAlpha = 1;
+
+    // 待判定扫描光束随时间自上而下扫过，给出“系统正在核对”的活体感。
+    const sweep = pendingDecision ? assetStore.getOverlay('sweep') : null;
+    if (sweep) {
+      const sweepH = Math.max(96, Math.floor(h * 0.38));
+      const sweepPhase = (frameTime / 2100) % 1.45;
+      if (sweepPhase <= 1) {
+        const sweepY = y - sweepH + sweepPhase * (h + sweepH * 2);
+        ctx.globalAlpha = 0.34;
+        ctx.drawImage(sweep, x, sweepY, w, sweepH);
+        ctx.globalAlpha = 1;
+      }
+    }
 
     const glitchAlpha = Math.max(0, Math.min(1, Number(motion?.glitchAlpha || 0)));
     if (glitchAlpha > 0) {
@@ -546,23 +715,8 @@ function drawCctvScene(state, x, y, w, h, motion = null) {
     ctx.fillStyle = scanGradient;
     ctx.fillRect(x, scanY - 24, w, 48);
 
-    // 实体式顶部遮光罩：覆盖素材中烘焙的 07 / STABILIZED / 英文诊断，而不是再贴一块中央黑卡。
-    const hudShade = ctx.createLinearGradient(0, y, 0, y + 104);
-    hudShade.addColorStop(0, '#020707');
-    hudShade.addColorStop(0.82, '#020707');
-    hudShade.addColorStop(1, 'rgba(2,7,7,0)');
-    ctx.fillStyle = hudShade;
-    ctx.fillRect(x, y, w, 112);
-    ctx.strokeStyle = 'rgba(121,214,163,0.22)';
-    ctx.beginPath();
-    ctx.moveTo(x, y + 96);
-    ctx.lineTo(x + w, y + 96);
-    ctx.stroke();
-
-    // 状态图含固定英文诊断与固定楼层；源图已裁掉烘焙答案区，这里只叠加中文运行时状态。
+    // 替换图无烘焙 HUD；只绘制运行时楼层和状态标签，不覆盖电梯主体。
     const inspectionPending = state.inspection?.status === 'pending';
-    const activeId = typeof state.activeAnomaly === 'string' ? state.activeAnomaly : state.activeAnomaly?.id;
-    const floorDiscrepancy = ['phantom_floor', 'floor_jump', 'negative_floor'].includes(activeId);
     const neutralBorder = inspectionPending ? 'rgba(195,200,190,0.34)' : treatment.border;
     ctx.strokeStyle = neutralBorder;
     ctx.globalAlpha = 0.72;
@@ -762,12 +916,65 @@ export function getCanvasActionButtons(state) {
   return operations;
 }
 
+const TOOL_LABELS = {
+  thermal: '热源扫描',
+  replay: '三秒回放',
+  protocol: '夜班协议',
+};
+
+export function getCanvasToolButtons(state) {
+  const investigation = state?.investigation || {};
+  return ['thermal', 'replay', 'protocol'].map(id => {
+    const tool = investigation.tools?.[id] || {};
+    const remaining = tool.remaining;
+    const unlimited = !Number.isFinite(remaining);
+    const disabled = !unlimited && (remaining <= 0 || (investigation.power ?? 0) < (tool.powerCost || 0));
+    return {
+      id,
+      label: TOOL_LABELS[id],
+      meta: unlimited ? '不限次' : `${remaining || 0}次 · ${tool.powerCost || 0}电`,
+      disabled,
+    };
+  });
+}
+
+const ROUND_ACTIONS = {
+  quick: [
+    { id: 'release', label: '放行', sublabel: '画面数据一致', decision: 'normal' },
+    { id: 'lockdown', label: '封锁', sublabel: '发现任意矛盾', decision: 'anomaly' },
+  ],
+  investigation: [
+    { id: 'markSuspicion', label: '标记疑点', sublabel: '保留当前证据' },
+    { id: 'enterClassification', label: '进入分类', sublabel: '提交异常类型' },
+  ],
+  identity: [
+    { id: 'identityRelease', label: '放行', sublabel: '身份一致' },
+    { id: 'identityReject', label: '拒绝', sublabel: '身份冲突' },
+    { id: 'identityVerify', label: '核验', sublabel: '查看胸牌与权限' },
+  ],
+  classification: [
+    { id: 'classify:person', label: '人物', sublabel: '身份/外观' },
+    { id: 'classify:quantity', label: '数量', sublabel: '人数/载重' },
+    { id: 'classify:space', label: '空间', sublabel: '楼层/位置' },
+    { id: 'classify:time', label: '时间', sublabel: '时序/回放' },
+    { id: 'classify:device', label: '设备', sublabel: '信号/读数' },
+    { id: 'classify:dynamic', label: '动态', sublabel: '移动/变化' },
+  ],
+  highRisk: [
+    { id: 'highRisk:emergencyStop', label: '急停', sublabel: '消耗 15 电' },
+    { id: 'highRisk:restart', label: '重启', sublabel: '消耗 10 电' },
+    { id: 'highRisk:lockdownFloor', label: '封锁楼层', sublabel: '消耗 12 电' },
+  ],
+};
+
 export function getCanvasVisibleActionButtons(state) {
   if (state.inspection?.status === 'pending') {
-    return [
+    if (Number(state.tutorialStep || 0) < 2) return [
       { id: 'reportNormal', label: t('ui.reportNormal'), sublabel: '画面数据一致', decision: 'normal' },
       { id: 'reportAnomaly', label: t('ui.reportAnomaly'), sublabel: '发现任意矛盾', decision: 'anomaly' },
     ];
+    if (Number(state.tutorialStep || 0) === 3) return ROUND_ACTIONS.quick;
+    return ROUND_ACTIONS[state?.night?.roundType] || ROUND_ACTIONS.quick;
   }
 
   const activeId = typeof state.activeAnomaly === 'string' ? state.activeAnomaly : state.activeAnomaly?.id;
@@ -776,6 +983,28 @@ export function getCanvasVisibleActionButtons(state) {
   }
 
   return [{ id: 'standby', label: t('ui.standby'), sublabel: '监控自动运行', disabled: true, wide: true }];
+}
+
+function drawTools(state) {
+  const layout = getCanvasLayout(DH, safeInsetTop).tools;
+  const tools = getCanvasToolButtons(state);
+  const buttonW = (layout.w - 24 - layout.gap * 2) / 3;
+  tools.forEach((tool, index) => {
+    const x = layout.x + 12 + index * (buttonW + layout.gap);
+    ctx.save();
+    if (tool.disabled) ctx.globalAlpha = 0.42;
+    roundRect(x, layout.y, buttonW, layout.h, 2, '#101716', tool.disabled ? COLORS.line : 'rgba(132,185,176,0.62)');
+    ctx.fillStyle = tool.disabled ? COLORS.muted : COLORS.cyan;
+    ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(tool.label, x + buttonW / 2, layout.y + 31);
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = '18px "Microsoft YaHei", sans-serif';
+    ctx.fillText(tool.meta, x + buttonW / 2, layout.y + 58);
+    drawPressShade(x, layout.y, buttonW, layout.h, getPressDepth(tool.id));
+    ctx.restore();
+  });
+  ctx.textAlign = 'left';
 }
 
 // ── 绘制操作按钮 ──
@@ -788,8 +1017,8 @@ function drawActions(state) {
   ctx.fillText(state.activeAnomaly && state.inspection?.status !== 'pending' ? '系统处置' : '当前判断', x + 24, y + 31);
 
   const btns = getCanvasVisibleActionButtons(state);
-  const columns = btns.length === 1 ? 1 : 2;
-  const buttonW = columns === 1 ? w - 32 : (w - 32 - gap) / 2;
+  const columns = btns.length === 1 ? 1 : btns.length === 6 ? 6 : btns.length === 3 ? 3 : 2;
+  const buttonW = columns === 1 ? w - 32 : (w - 32 - gap * (columns - 1)) / columns;
   btns.forEach((btn, i) => {
     ctx.save();
     if (btn.disabled) ctx.globalAlpha = 0.48;
@@ -821,17 +1050,18 @@ function drawActions(state) {
     ctx.shadowBlur = btn.disabled ? 0 : 12;
     ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.arc(bx + buttonW / 2, by + 31, 9, 0, Math.PI * 2);
+    ctx.arc(bx + buttonW / 2, by + 18, 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
     ctx.fillStyle = COLORS.text;
-    ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
+    ctx.font = 'bold 28px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(btn.label, bx + buttonW / 2, by + 94);
+    ctx.fillText(btn.label, bx + buttonW / 2, by + 57);
     ctx.fillStyle = '#b5b8b1';
-    ctx.font = '24px "Microsoft YaHei", sans-serif';
-    ctx.fillText(btn.sublabel || '', bx + buttonW / 2, by + 132);
+    ctx.font = '19px "Microsoft YaHei", sans-serif';
+    ctx.fillText(btn.sublabel || '', bx + buttonW / 2, by + 86, buttonW - 20);
+    drawPressShade(bx, by, buttonW, buttonH, getPressDepth(btn.id));
 
     const guidedIndex = Number(state.tutorialStep || 0);
     const guided = (state.inspection?.status === 'pending'
@@ -876,6 +1106,59 @@ function drawLogs(state) {
     ctx.font = '12px Consolas, "Microsoft YaHei", monospace';
     ctx.fillText(`${i + 1}. ${log.text}`, lx, ly + 12, w - 36);
   });
+}
+
+export function getCanvasOverlayCloseButton(height = 1334, safeTop = 0) {
+  const x = 55, w = 640, h = 430;
+  const y = Math.max(150 + safeTop, (height - h) / 2);
+  return { x: x + 32, y: y + h - 88, w: w - 64, h: 60 };
+}
+
+export function getCanvasOverlayModel(state) {
+  if (state?.night?.overlay === 'protocolQuery') {
+    return {
+      type: 'protocolQuery',
+      title: '夜班协议查询',
+      lines: (state.night.protocolQuery || []).map(item => item.text || item.id),
+      action: 'closeOverlay',
+    };
+  }
+  if (state?.night?.overlay === 'debrief' && state.night.debrief) {
+    const { summary = {}, ending = {} } = state.night.debrief;
+    return {
+      type: 'debrief',
+      title: `局后复盘 · ${ending.name || '未决记录'}`,
+      lines: [
+        `判断 ${summary.decisions || 0} 次 · 准确率 ${Math.round((summary.accuracy || 0) * 100)}%`,
+        `污染峰值 ${summary.peakContamination || 0}`,
+        ending.summary || '',
+      ].filter(Boolean),
+      action: 'closeOverlay',
+    };
+  }
+  return null;
+}
+
+function drawNightOverlay(state) {
+  const model = getCanvasOverlayModel(state);
+  if (!model) return;
+  ctx.fillStyle = 'rgba(0,0,0,0.76)';
+  ctx.fillRect(0, 0, DW, DH);
+  const x = 55, w = 640, h = 430, y = Math.max(150 + safeInsetTop, (DH - h) / 2);
+  drawIndustrialPanel(x, y, w, h, 'rgba(225,168,75,0.72)');
+  ctx.fillStyle = COLORS.amber;
+  ctx.font = 'bold 34px "Microsoft YaHei", sans-serif';
+  ctx.fillText(model.title, x + 32, y + 58, w - 64);
+  ctx.fillStyle = COLORS.text;
+  ctx.font = '26px "Microsoft YaHei", sans-serif';
+  model.lines.forEach((line, index) => wrapText(`${index + 1}. ${line}`, x + 32, y + 112 + index * 62, w - 64, 32));
+  const closeButton = getCanvasOverlayCloseButton(DH, safeInsetTop);
+  roundRect(closeButton.x, closeButton.y, closeButton.w, closeButton.h, 3, '#17352a', 'rgba(121,214,163,0.72)');
+  ctx.fillStyle = COLORS.green;
+  ctx.font = 'bold 26px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('返回监控', closeButton.x + closeButton.w / 2, closeButton.y + 39);
+  ctx.textAlign = 'left';
 }
 
 // ── 绘制失败弹窗 ──
@@ -1098,11 +1381,42 @@ function wrapText(text, x, y, maxWidth, lineHeight) {
   }
 }
 
+// ── 按压反馈 ──
+const pressFx = new Map();
+const PRESS_FX_MS = 180;
+
+export function noteCanvasPress(id) {
+  if (id) pressFx.set(id, Date.now());
+}
+
+function getPressDepth(id) {
+  const at = pressFx.get(id);
+  if (!Number.isFinite(at)) return 0;
+  const age = Date.now() - at;
+  if (age > PRESS_FX_MS) {
+    pressFx.delete(id);
+    return 0;
+  }
+  return 1 - age / PRESS_FX_MS;
+}
+
+function drawPressShade(x, y, w, h, depth) {
+  if (depth <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = 0.3 * depth;
+  roundRect(x + 2, y + 2, w - 4, h - 4, 2, '#000000');
+  ctx.globalAlpha = 0.5 * depth;
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 5, y + 5, w - 10, h - 10);
+  ctx.restore();
+}
+
 // ── 点击检测 ──
 let clickHandlers = {};
 
 export function onCanvasClick(x, y, state, callbacks, viewState = { started: true }) {
-  const { onAdRevive, onRestart, onAction, onDecision, onToggleMute, onStart, onSidebar } = callbacks;
+  const { onAdRevive, onRestart, onAction, onDecision, onTool, onCameraSwitch, onToggleMute, onStart, onSidebar } = callbacks;
   const inside = (rect) => x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
   const muteControl = getCanvasMuteControl(DH, safeInsetTop, viewState.started !== false);
   if (!state.gameOver && inside(muteControl)) {
@@ -1118,6 +1432,11 @@ export function onCanvasClick(x, y, state, callbacks, viewState = { started: tru
   }
 
   if (viewState.paused === true) return;
+
+  if (getCanvasOverlayModel(state)) {
+    if (inside(getCanvasOverlayCloseButton(DH, safeInsetTop))) onAction?.('closeOverlay');
+    return;
+  }
 
   // 失败弹窗按钮检测
   if (state.gameOver) {
@@ -1151,16 +1470,47 @@ export function onCanvasClick(x, y, state, callbacks, viewState = { started: tru
     return;
   }
 
-  // V4 双选任务点击检测，与绘制布局共用同一组按钮数据。
+  const cameraLayout = getCanvasLayout(DH, safeInsetTop).cameraTabs;
+  const cameraTabs = getCanvasCameraTabs(state);
+  const cameraHit = { ...cameraLayout, y: cameraLayout.hitY ?? cameraLayout.y, h: cameraLayout.hitH ?? cameraLayout.h };
+  if (cameraTabs.length && inside(cameraHit)) {
+    const tabW = (cameraLayout.w - cameraLayout.gap * (cameraTabs.length - 1)) / cameraTabs.length;
+    for (let index = 0; index < cameraTabs.length; index += 1) {
+      const tabX = cameraLayout.x + index * (tabW + cameraLayout.gap);
+      if (x >= tabX && x <= tabX + tabW) {
+        noteCanvasPress(cameraTabs[index].id);
+        onCameraSwitch?.(cameraTabs[index].id);
+      }
+    }
+    return;
+  }
+
+  const toolLayout = getCanvasLayout(DH, safeInsetTop).tools;
+  const toolHit = { ...toolLayout, y: toolLayout.hitY ?? toolLayout.y, h: toolLayout.hitH ?? toolLayout.h };
+  if (inside(toolHit)) {
+    const tools = getCanvasToolButtons(state);
+    const buttonW = (toolLayout.w - 24 - toolLayout.gap * 2) / 3;
+    for (let index = 0; index < tools.length; index += 1) {
+      const toolX = toolLayout.x + 12 + index * (buttonW + toolLayout.gap);
+      if (x >= toolX && x <= toolX + buttonW && !tools[index].disabled) {
+        noteCanvasPress(tools[index].id);
+        onTool?.(tools[index].id);
+      }
+    }
+    return;
+  }
+
+  // V5 动态任务点击检测，与绘制布局共用同一组按钮数据。
   const layout = getCanvasLayout(DH, safeInsetTop).actions;
   const buttons = getCanvasVisibleActionButtons(state);
-  const columns = buttons.length === 1 ? 1 : 2;
-  const buttonW = columns === 1 ? layout.w - 32 : (layout.w - 32 - layout.gap) / 2;
+  const columns = buttons.length === 1 ? 1 : buttons.length === 6 ? 6 : buttons.length === 3 ? 3 : 2;
+  const buttonW = columns === 1 ? layout.w - 32 : (layout.w - 32 - layout.gap * (columns - 1)) / columns;
   for (let i = 0; i < buttons.length; i += 1) {
     const bx = layout.x + 16 + (i % columns) * (buttonW + layout.gap);
     const by = layout.startY;
     if (x >= bx && x <= bx + buttonW && y >= by && y <= by + layout.buttonH) {
       if (buttons[i].disabled) return;
+      noteCanvasPress(buttons[i].id);
       if (buttons[i].decision) {
         onDecision?.(buttons[i].decision);
       } else onAction?.(buttons[i].id);
@@ -1175,19 +1525,22 @@ export function render(state, viewState = { started: true, paused: false }) {
 
   drawBackground();
   drawTopbar(state);
-  drawRuleStrip(state);
+  drawProtocolBar(state);
+  drawCameraTabs(state);
   drawMonitor(state, viewState.cctvMotion);
   drawReadings(state, viewState.cctvMotion);
+  drawTools(state);
   drawActions(state);
   drawFeedback(state);
   drawFailureOverlay(state);
+  drawNightOverlay(state);
   if (viewState.started === false) drawStartOverlay(viewState);
   else if (viewState.paused === true) drawPauseOverlay();
   if (!state.gameOver) drawMuteControl(viewState);
 }
 
 // ── 初始化 ──
-export function init(canvasEl, systemInfo = {}) {
+export function init(canvasEl, systemInfo = {}, options = {}) {
   canvas = canvasEl;
   ctx = canvas.getContext('2d');
 
@@ -1200,12 +1553,14 @@ export function init(canvasEl, systemInfo = {}) {
   canvas.height = metrics.height;
   scale = 1;
 
-  const imageFactory = () => {
+  // 小游戏运行时优先 wx/tt createImage；浏览器验收 harness 通过 options.imageFactory 注入 DOM Image，
+  // 使发布 bundle 不含任何 document/window 引用。
+  const imageFactory = options.imageFactory || (() => {
     if (typeof tt !== 'undefined' && typeof tt.createImage === 'function') return tt.createImage();
     if (typeof wx !== 'undefined' && typeof wx.createImage === 'function') return wx.createImage();
     if (typeof canvas.createImage === 'function') return canvas.createImage();
     return null;
-  };
+  });
   assetStore = createCanvasAssetStore(imageFactory);
   assetStore.preload();
 

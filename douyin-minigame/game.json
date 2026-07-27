@@ -5,5 +5,10 @@
     "request": 5000,
     "connectSocket": 5000
   },
-  "subPackages": []
+  "subPackages": [
+    {
+      "root": "visual",
+      "name": "v5-visual"
+    }
+  ]
 }

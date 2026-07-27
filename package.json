@@ -19,6 +19,7 @@
     "verify": "node scripts/verify-all.cjs",
     "verify:summary": "node scripts/verify-all.cjs --summary",
     "skins:check": "node scripts/validate-skins.mjs",
+    "content:v5:check": "node scripts/validate-v5-content.mjs",
     "skin:new": "node scripts/create-skin-from-template.mjs"
   }
 }

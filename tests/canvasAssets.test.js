@@ -5,7 +5,9 @@ import { createCanvasAssetStore, getCanvasVisualAssetManifest } from '../platfor
 
 test('Canvas visual manifest maps every shipped CCTV state and production component family', () => {
   const manifest = getCanvasVisualAssetManifest();
-  assert.equal(Object.keys(manifest.cctv).length, 24);
+  assert.equal(Object.keys(manifest.cctv).length, 25);
+  assert.equal(Object.keys(manifest.v5Cctv).length, 8);
+  assert.equal(manifest.v5Cctv.investigation, 'visual/cctv/v5_02_investigation_mobile.png');
   assert.equal(manifest.cctv['13_entity_near'], 'visual/cctv/13_entity_near_mobile.png');
   assert.equal(manifest.buttons.danger, 'visual/buttons/btn_stop_danger.png');
   assert.equal(manifest.buttons.disabled, 'visual/buttons/btn_disabled.png');
@@ -28,11 +30,12 @@ test('Canvas asset store preloads real images and exposes loaded state assets', 
   });
   store.preload();
 
-  assert.equal(store.getStatus().total, 38);
-  assert.equal(store.getStatus().loaded, 38);
+  assert.equal(store.getStatus().total, 46);
+  assert.equal(store.getStatus().loaded, 46);
   assert.equal(store.getStatus().failed, 0);
   assert.match(store.getCctv('13_entity_near').src, /13_entity_near_mobile\.png$/);
+  assert.match(store.getV5Cctv('investigation').src, /v5_02_investigation_mobile\.png$/);
   assert.match(store.getButton('danger').src, /btn_stop_danger\.png$/);
   assert.match(store.getOverlay('frame').src, /overlay_cctv_frame\.png$/);
-  assert.equal(created.length, 38);
+  assert.equal(created.length, 46);
 });

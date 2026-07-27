@@ -26,10 +26,21 @@ import {
 } from '../src/runtimeSession.js';
 import { init, onCanvasClick, render } from './canvasRenderer.js';
 import { bindMiniGameLifecycle, checkDouyinSidebar, navigateToDouyinSidebar } from './douyinIntegration.js';
-import { createMiniGameAudio } from './miniGameAudio.js';
+import { createMiniGameAudio, getV5FeedbackProfile } from './miniGameAudio.js';
 import { createMiniGameClock } from './miniGameClock.js';
 import { createCctvMotionController } from './cctvMotion.js';
 import { shouldApplyReward } from '../src/rewardGuard.js';
+import { switchCamera, useInvestigationTool } from '../src/investigationTools.js';
+import { scheduleNextNightShift, advanceCurrentNightEventChain } from '../src/nightScheduler.js';
+import {
+  classifyCurrentShift,
+  closeProtocolQuery,
+  createNightDebrief,
+  openProtocolQuery,
+  resolveCurrentHighRisk,
+  resolveIdentityDecision,
+  verifyCurrentIdentity,
+} from '../src/nightInteraction.js';
 
 function getHostApi() {
   if (typeof wx !== 'undefined' && wx) return wx;
@@ -145,6 +156,11 @@ export function startMiniGame() {
   const vibrate = (type = 'light') => {
     try { api.vibrateShort?.({ type }); } catch { /* optional haptics */ }
   };
+  const playV5Feedback = (kind) => {
+    const profile = getV5FeedbackProfile(kind);
+    audio.play(profile.cue);
+    vibrate(profile.haptic);
+  };
   const audioStorageKey = 'minigame_audio_muted_v1';
   try {
     audio.setMuted(api.getStorageSync?.(audioStorageKey) === true);
@@ -157,7 +173,7 @@ export function startMiniGame() {
     return available;
   });
   refreshSidebarAvailability();
-  let session = createRuntimeSession();
+  let session = createRuntimeSession({ content: __V5_CONTENT__ });
   let state = session.state;
   let nextAnomalyAt = session.nextAnomalyAt;
   let lastSnapshotAt = 0;
@@ -179,6 +195,7 @@ export function startMiniGame() {
     if (!lifecycleHidden) {
       clock.resume();
       cctvMotion.resume();
+      if (clock.isStarted() && !state.gameOver) audio.resumeMusic();
     }
   }
 
@@ -247,6 +264,9 @@ export function startMiniGame() {
 
   function toggleMute() {
     const muted = audio.setMuted(!audio.isMuted());
+    if (!muted && clock.isStarted() && !state.gameOver && !lifecycleHidden && !adPauseActive) {
+      audio.resumeMusic() || audio.setMusicState(state.activeAnomaly ? 'pressure' : 'calm');
+    }
     try {
       api.setStorageSync?.(audioStorageKey, muted);
     } catch {
@@ -257,6 +277,7 @@ export function startMiniGame() {
   function start() {
     if (clock.isStarted()) return;
     audio.play('boot');
+    audio.setMusicState('calm');
     state = openInspection(state, {
       id: `baseline-${runToken}`,
       kind: 'normal',
@@ -276,8 +297,9 @@ export function startMiniGame() {
   function restart() {
     runToken += 1;
     audio.play('boot');
+    audio.setMusicState('calm');
     clock.start();
-    session = restartRuntimeSession({ state });
+    session = restartRuntimeSession({ state }, { content: __V5_CONTENT__ });
     state = session.state;
     cctvMotion.reset();
     state = openInspection(state, {
@@ -290,6 +312,22 @@ export function startMiniGame() {
     nextAnomalyAt = session.nextAnomalyAt;
     lastSnapshotAt = 0;
     failureRecorded = false;
+  }
+
+  function openScheduledNightInspection(nextState) {
+    const shift = nextState.night?.currentShift;
+    if (!shift) return nextState;
+    return openInspection(nextState, {
+      id: `night-${shift.id}-${nextState.night.shiftIndex}`,
+      kind: shift.shiftKind === 'anomaly' || shift.decision === 'anomaly' ? 'anomaly' : 'normal',
+      title: shift.name || shift.id,
+      duration: shift.duration ?? 10,
+    });
+  }
+
+  function scheduleFollowingNightShift(currentState, outcome) {
+    const advanced = advanceCurrentNightEventChain(currentState, __V5_CONTENT__, outcome);
+    return openScheduledNightInspection(scheduleNextNightShift(advanced.state, __V5_CONTENT__));
   }
 
   function resolveActiveAnomalyAutomatically(feedbackKey) {
@@ -349,13 +387,70 @@ export function startMiniGame() {
     }
     // 教学第二班必须直接进入异常，不允许中间插入随机正常巡检。
     const tutorialStep = Number(state.tutorialStep || 0);
+    if (tutorialStep === 4 && state.night?.activeEventChainId) {
+      state = openScheduledNightInspection(scheduleNextNightShift(state, __V5_CONTENT__));
+      nextNormalInspectionAt = Number.POSITIVE_INFINITY;
+      nextAnomalyAt = Number.POSITIVE_INFINITY;
+      return;
+    }
     nextNormalInspectionAt = tutorialStep === 1
       ? Number.POSITIVE_INFINITY
       : state.elapsed + (tutorialStep === 3 ? 2 : 4);
   }
 
   function handleAction(actionId) {
-    if (state.gameOver) return;
+    if (state.gameOver && actionId !== 'closeOverlay') return;
+    if (actionId === 'closeOverlay') {
+      state = closeProtocolQuery(state);
+      playV5Feedback('protocol:close');
+      return;
+    }
+    if (actionId === 'identityVerify') {
+      const result = verifyCurrentIdentity(state);
+      if (!result.accepted) {
+        playV5Feedback('identity:wrong');
+        return;
+      }
+      state = result.state;
+      playV5Feedback('identity:verify');
+      return;
+    }
+    if (actionId === 'identityRelease' || actionId === 'identityReject') {
+      const result = resolveIdentityDecision(state, actionId === 'identityRelease' ? 'release' : 'reject');
+      if (!result.accepted) return;
+      playV5Feedback(`identity:${result.correct ? 'correct' : 'wrong'}`);
+      state = scheduleFollowingNightShift(result.state, { correct: result.correct });
+      return;
+    }
+    if (actionId === 'enterClassification' || actionId === 'markSuspicion') {
+      state = {
+        ...state,
+        night: { ...state.night, roundType: 'classification' },
+        lastFeedback: '请选择异常分类',
+      };
+      playV5Feedback('classification:enter');
+      return;
+    }
+    if (actionId.startsWith('classify:')) {
+      const result = classifyCurrentShift(state, actionId.slice('classify:'.length));
+      if (!result.accepted) return;
+      state = result.state;
+      playV5Feedback(`classification:${result.correct ? 'correct' : 'wrong'}`);
+      if (state.night.roundType !== 'highRisk') {
+        state = scheduleFollowingNightShift(result.state, { correct: result.correct });
+      }
+      return;
+    }
+    if (actionId.startsWith('highRisk:')) {
+      const result = resolveCurrentHighRisk(state, actionId.slice('highRisk:'.length));
+      if (!result.accepted) {
+        playV5Feedback('highRisk:wrong');
+        return;
+      }
+      state = scheduleFollowingNightShift(result.state, { correct: result.correct });
+      playV5Feedback(`highRisk:${result.correct ? 'correct' : 'wrong'}`);
+      return;
+    }
     if (actionId === 'unlockHiddenLog') {
       decodeAd({ runToken });
       return;
@@ -371,6 +466,42 @@ export function startMiniGame() {
       audio.play('wrong');
       vibrate('heavy');
     }
+  }
+
+  function handleCameraSwitch(cameraId) {
+    const shift = state.night?.currentShift;
+    if (!shift) return;
+    const result = switchCamera(state.investigation, cameraId, {
+      ...shift,
+      cameras: Object.keys(shift.evidence?.cameras || {}),
+    });
+    if (!result.accepted) return;
+    state = { ...state, investigation: result.state };
+    playV5Feedback('camera');
+  }
+
+  function handleTool(toolId) {
+    const shift = state.night?.currentShift;
+    if (!shift) return;
+    const result = useInvestigationTool(state.investigation, toolId, shift);
+    if (!result.accepted) {
+      audio.play('wrong');
+      vibrate('heavy');
+      return;
+    }
+    const count = Array.isArray(result.discoveredEvidence)
+      ? result.discoveredEvidence.length
+      : result.discoveredEvidence ? 1 : 0;
+    state = {
+      ...state,
+      investigation: result.state,
+      power: result.state.power,
+      lastFeedback: toolId === 'protocol'
+        ? `已调取 ${count} 条当前夜班协议`
+        : `${toolId === 'thermal' ? '热源扫描' : '三秒回放'}发现 ${count} 条证据`,
+    };
+    if (toolId === 'protocol') state = openProtocolQuery(state);
+    playV5Feedback(`tool:${toolId}`);
   }
 
   function handleAd(kind) {
@@ -390,6 +521,8 @@ export function startMiniGame() {
     onCanvasClick(x, y, state, {
       onAction: handleAction,
       onDecision: handleDecision,
+      onTool: handleTool,
+      onCameraSwitch: handleCameraSwitch,
       onToggleMute: toggleMute,
       onAdRevive: handleAd,
       onRestart: restart,
@@ -412,6 +545,7 @@ export function startMiniGame() {
       if (!adPauseActive) {
         clock.resume();
         cctvMotion.resume();
+        if (clock.isStarted() && !state.gameOver) audio.resumeMusic();
       }
     },
   });
@@ -423,11 +557,20 @@ export function startMiniGame() {
         for (let i = 0; i < delta; i += 1) {
           state = tickState(state, 1);
           if (!state.gameOver) {
+            const expiredNightShift = Number(state.tutorialStep || 0) >= 4
+              && Boolean(state.night?.activeEventChainId)
+              && Boolean(state.night?.currentShift?.id);
             const expiredKind = state.inspection?.kind;
             const expiry = expireInspection(state);
             state = expiry.state;
             if (expiry.timedOut) {
               audio.play(expiry.coached ? 'wrong' : 'result');
+              if (expiredNightShift && !state.gameOver) {
+                state = scheduleFollowingNightShift(state, { correct: false });
+                nextNormalInspectionAt = Number.POSITIVE_INFINITY;
+                nextAnomalyAt = Number.POSITIVE_INFINITY;
+                continue;
+              }
               if (expiredKind === 'anomaly' && state.activeAnomaly) {
                 resolveActiveAnomalyAutomatically('ui.autoResolutionTimeout');
               }
@@ -485,9 +628,24 @@ export function startMiniGame() {
       }
       if (state.gameOver && !failureRecorded) {
         state = state.result === 'success' ? recordSuccessfulShift(state) : recordFailure(state);
+        state = {
+          ...state,
+          night: {
+            ...state.night,
+            overlay: 'debrief',
+            debrief: createNightDebrief(state, __V5_CONTENT__.endings),
+          },
+        };
         audio.play('result');
         failureRecorded = true;
       }
+    }
+
+    if (state.gameOver) {
+      audio.stopMusic();
+    } else if (clock.isStarted() && !lifecycleHidden && !adPauseActive && !audio.isMuted()) {
+      const desiredMusic = state.activeAnomaly ? 'pressure' : 'calm';
+      if (audio.getMusicState() !== desiredMusic) audio.setMusicState(desiredMusic);
     }
 
     render(state, getViewState());

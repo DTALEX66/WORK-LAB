@@ -7,6 +7,22 @@ const CCTV_STATE_IDS = Object.freeze([
   '20_threat_high', '21_maintenance_mode', '22_system_reboot', '23_cooldown_safe',
 ]);
 
+const CCTV_STATE_ALIASES = Object.freeze({
+  // V5 内容描述“重复主体”，现有移动素材以影子主体表现同一类空间入侵；保留内容 ID，显式复用已发布图。
+  '14_duplicate_subject': '14_shadow_inside',
+});
+
+const V5_CCTV_ASSETS = Object.freeze({
+  protocolStart: 'visual/cctv/v5_00_protocol_start_mobile.png',
+  quick: 'visual/cctv/v5_01_quick_mobile.png',
+  investigation: 'visual/cctv/v5_02_investigation_mobile.png',
+  identity: 'visual/cctv/v5_03_identity_mobile.png',
+  classification: 'visual/cctv/v5_04_classification_mobile.png',
+  highRisk: 'visual/cctv/v5_05_high_risk_mobile.png',
+  protocolQuery: 'visual/cctv/v5_06_protocol_query_mobile.png',
+  debrief: 'visual/cctv/v5_07_debrief_mobile.png',
+});
+
 const BUTTON_ASSETS = Object.freeze({
   default: 'visual/buttons/btn_close_default.png',
   recommended: 'visual/buttons/btn_up_recommended.png',
@@ -29,7 +45,11 @@ const OVERLAY_ASSETS = Object.freeze({
 
 export function getCanvasVisualAssetManifest() {
   return {
-    cctv: Object.fromEntries(CCTV_STATE_IDS.map(id => [id, `visual/cctv/${id}_mobile.png`])),
+    cctv: Object.fromEntries([
+      ...CCTV_STATE_IDS.map(id => [id, `visual/cctv/${id}_mobile.png`]),
+      ...Object.entries(CCTV_STATE_ALIASES).map(([id, target]) => [id, `visual/cctv/${target}_mobile.png`]),
+    ]),
+    v5Cctv: { ...V5_CCTV_ASSETS },
     buttons: { ...BUTTON_ASSETS },
     overlays: { ...OVERLAY_ASSETS },
   };
@@ -60,6 +80,7 @@ export function createCanvasAssetStore(imageFactory) {
 
   function preload() {
     for (const path of Object.values(manifest.cctv)) load(path);
+    for (const path of Object.values(manifest.v5Cctv)) load(path);
     for (const path of Object.values(manifest.buttons)) load(path);
     for (const path of Object.values(manifest.overlays)) load(path);
   }
@@ -73,6 +94,7 @@ export function createCanvasAssetStore(imageFactory) {
     manifest,
     preload,
     getCctv: stateId => get(manifest.cctv[stateId] || manifest.cctv['00_idle_closed']),
+    getV5Cctv: screenId => get(manifest.v5Cctv[screenId] || manifest.v5Cctv.quick),
     getButton: kind => get(manifest.buttons[kind] || manifest.buttons.default),
     getOverlay: kind => get(manifest.overlays[kind]),
     getStatus: () => ({

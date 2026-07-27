@@ -4,12 +4,13 @@ dist/
 *.log
 .env
 .tmp/
+.tmp-chrome*/
 tmp/
 test-output/
 coverage/
 MINIGAME_V4_Starter_Pack.zip
 android-minigame/
-android-webview/app/src/main/assets/assets/
+android-webview/app/src/main/assets/
 .tools/
 .gradle/
 android-webview/.gradle/
