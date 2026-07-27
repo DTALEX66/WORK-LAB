@@ -32,7 +32,7 @@ MINIGAME / games / find-anomaly / elevator-console
 | 资产包 | 路径 | 用途 |
 |---|---|---|
 | UI 组件包 | `assets/abnormal_elevator_ui_kit/` | 移动端控制台组件、按钮状态、组件 tokens、图标预览 |
-| 视觉状态包 | `assets/abnormal_elevator_visual_assets/` | CCTV 状态图、移动端裁切图、按钮贴图、overlays、spritesheets、manifest |
+| 视觉状态包 | `assets/abnormal_elevator_visual_assets/` | CCTV 状态图、移动端裁切图、按钮贴图、overlays、manifest |
 
 当前 H5 / Android WebView 运行时代码仍引用仓库根部 `assets/generated/` 中的既有背景资源；新资产包已归档到游戏目录，后续接线时再按 manifest 替换运行时引用。
 
@@ -61,7 +61,6 @@ MINIGAME / games / find-anomaly / elevator-console
 - `assets/abnormal_elevator_visual_assets/mobile_cctv_states/`：24 张移动端裁切图已接入移动端 CSS 覆盖层。
 - `assets/abnormal_elevator_visual_assets/button_sprites/`：8 张按钮贴图已作为控制键外观层接入，按钮文字仍由 DOM 渲染。
 - `assets/abnormal_elevator_visual_assets/overlays/`：6 张 overlay 已接入 CCTV 框、扫描线、故障块、红警框、暗角和扫描光束。
-- `assets/abnormal_elevator_visual_assets/spritesheets/`：仅作总览和人工检查，不直接进入运行时。
 - `assets/abnormal_elevator_ui_kit/`：作为组件参考和 tokens 归档，不直接覆盖当前可玩 UI。
 
 Android WebView 通过 `scripts/prepare-android-webview.mjs` 复制上述视觉资源，并把 CSS 中的游戏目录路径重写为包内 `assets/abnormal_elevator_visual_assets/`。

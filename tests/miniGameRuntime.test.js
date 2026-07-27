@@ -131,6 +131,16 @@ test('mini-game runtime drives and pauses the CCTV motion timeline', () => {
   assert.match(source, /cctvMotion\.reset\(\);\s*state = openInspection/, 'each new normal class must clear stale anomaly/action motion');
 });
 
+test('mini-game runtime starts calm BGM after user gesture and switches with anomaly pressure', () => {
+  const source = readFileSync(new URL('../platform/miniGameRuntime.js', import.meta.url), 'utf8');
+  assert.match(source, /function start\(\)[\s\S]*audio\.setMusicState\('calm'\)/);
+  assert.match(source, /state\.activeAnomaly \? 'pressure' : 'calm'/);
+  assert.match(source, /pauseForAd[\s\S]*audio\.stopAll\(\)/);
+  assert.match(source, /resumeAfterAd[\s\S]*audio\.resumeMusic\(\)/);
+  assert.match(source, /onPause:[\s\S]*audio\.stopAll\(\)/);
+  assert.match(source, /onResume:[\s\S]*audio\.resumeMusic\(\)/);
+});
+
 test('base 60-second mode auto-resolves reported anomalies without a second player control layer', () => {
   const runtimeSource = readFileSync(new URL('../platform/miniGameRuntime.js', import.meta.url), 'utf8');
   const rendererSource = readFileSync(new URL('../platform/canvasRenderer.js', import.meta.url), 'utf8');
@@ -140,6 +150,13 @@ test('base 60-second mode auto-resolves reported anomalies without a second play
   assert.match(runtimeSource, /findAnomaly\('floor_jump'\)/);
   assert.match(rendererSource, /系统处置中/);
   assert.doesNotMatch(rendererSource.match(/export function getCanvasVisibleActionButtons[\s\S]*?\n}/)?.[0] || '', /recommended:\s*true/);
+});
+
+test('quick V5 tutorial handoff installs the first chain shift, while later outcomes advance it', () => {
+  const source = readFileSync(new URL('../platform/miniGameRuntime.js', import.meta.url), 'utf8');
+  assert.match(source, /openScheduledNightInspection\(scheduleNextNightShift\(state, __V5_CONTENT__\)\)/);
+  assert.match(source, /function scheduleFollowingNightShift[\s\S]*advanceCurrentNightEventChain[\s\S]*openScheduledNightInspection/);
+  assert.match(source, /expiredNightShift[\s\S]*scheduleFollowingNightShift\(state, \{ correct: false \}\)/);
 });
 
 test('mini-game decode action is gated by the decode rewarded-ad slot', () => {

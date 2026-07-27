@@ -7,6 +7,12 @@
 
 let ctx = null;
 let muted = false;
+let music = null;
+let musicState = null;
+const MUSIC_SOURCES = Object.freeze({
+  calm: 'assets/minigame-audio/bgm-night-shift-loop.wav',
+  pressure: 'assets/minigame-audio/bgm-anomaly-pressure-loop.wav',
+});
 
 export const AUDIO_LAYERS = Object.freeze({
   button: Object.freeze({ kind: 'beep', freq: 800, duration: 0.06, type: 'square', volume: 0.06 }),
@@ -24,7 +30,53 @@ export const AUDIO_LAYERS = Object.freeze({
 
 export function setAudioMuted(value) {
   muted = Boolean(value);
+  if (muted) pauseMusic();
   return muted;
+}
+
+function getMusic() {
+  if (music) return music;
+  if (typeof Audio !== 'function') return null;
+  music = new Audio(MUSIC_SOURCES.calm);
+  music.loop = true;
+  music.preload = 'auto';
+  music.volume = 0.12;
+  return music;
+}
+
+export function setMusicState(nextState) {
+  if (muted || !MUSIC_SOURCES[nextState]) return false;
+  const player = getMusic();
+  if (!player) return false;
+  if (musicState === nextState && player.paused === false) return true;
+  if (musicState !== nextState) {
+    player.pause?.();
+    player.src = MUSIC_SOURCES[nextState];
+    player.currentTime = 0;
+    player.volume = nextState === 'pressure' ? 0.10 : 0.12;
+    musicState = nextState;
+  }
+  player.loop = true;
+  const result = player.play?.();
+  result?.catch?.(() => {});
+  return true;
+}
+
+export function pauseMusic() {
+  music?.pause?.();
+}
+
+export function resumeMusic() {
+  if (muted || !musicState || !music) return false;
+  const result = music.play?.();
+  result?.catch?.(() => {});
+  return true;
+}
+
+export function stopMusic() {
+  if (!music) return;
+  music.pause?.();
+  try { music.currentTime = 0; } catch { /* optional browser behavior */ }
 }
 
 export function isAudioMuted() {

@@ -32,4 +32,13 @@ jobs:
         run: node scripts/validate-skins.mjs
 
       - name: Release check (should fail-closed on placeholders)
-        run: node scripts/check-release-readiness.mjs; code=$?; if [ $code -eq 1 ]; then echo "release check correctly failed-closed on placeholders"; exit 0; fi; exit $code
+        run: |
+          set +e
+          node scripts/check-release-readiness.mjs
+          code=$?
+          set -e
+          if [ "$code" -eq 1 ]; then
+            echo "release check correctly failed-closed on placeholders"
+            exit 0
+          fi
+          exit "$code"

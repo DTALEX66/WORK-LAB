@@ -37,6 +37,33 @@ function stableStringifyObject(value, indent = 2) {
   return JSON.stringify(value, null, indent);
 }
 
+function sortJsonValue(value) {
+  if (Array.isArray(value)) return value.map(sortJsonValue);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.keys(value).sort().map(key => [key, sortJsonValue(value[key])]),
+    );
+  }
+  return value;
+}
+
+const V5_CONTENT_FILES = [
+  'anomalies',
+  'endings',
+  'eventChains',
+  'normalShifts',
+  'passengers',
+  'protocols',
+];
+
+function buildV5ContentInjection() {
+  const content = Object.fromEntries(V5_CONTENT_FILES.map(name => {
+    const filePath = path.join(ROOT, 'src', 'content', `${name}.json`);
+    return [name, sortJsonValue(JSON.parse(fs.readFileSync(filePath, 'utf-8')))];
+  }));
+  return `// --- V5 content (deterministic) ---\nvar __V5_CONTENT__ = ${JSON.stringify(content)};\n\n`;
+}
+
 function applyReleaseOverrides(code, modPath, target, releaseConfig) {
   const adUnits = releaseConfig?.[target]?.adUnits ?? releaseConfig?.adUnits;
   if (modPath !== 'src/gameConfig.js' || !adUnits) return code;
@@ -74,6 +101,15 @@ const CORE_MODULES = [
   { path: 'src/skinManager.js',    type: 'js' },
   { path: 'src/rollback.js',       type: 'js' },
   { path: 'src/feedback.js',       type: 'js' },
+  { path: 'src/protocolEngine.js', type: 'js' },
+  { path: 'src/evidenceEngine.js', type: 'js' },
+  { path: 'src/investigationTools.js', type: 'js' },
+  { path: 'src/identitySystem.js', type: 'js' },
+  { path: 'src/eventChainEngine.js', type: 'js' },
+  { path: 'src/highRiskResolution.js', type: 'js' },
+  { path: 'src/contamination.js',  type: 'js' },
+  { path: 'src/debriefTimeline.js', type: 'js' },
+  { path: 'src/nightInteraction.js', type: 'js' },
   { path: 'src/anomalyContent.js', type: 'js' },
   { path: 'src/visualState.js',    type: 'js' },
   { path: 'src/state.js',          type: 'js' },
@@ -81,6 +117,7 @@ const CORE_MODULES = [
   { path: 'src/events.js',         type: 'js' },
   { path: 'src/actions.js',        type: 'js' },
   { path: 'src/uiLabels.js',       type: 'js' },
+  { path: 'src/nightScheduler.js', type: 'js' },
   { path: 'src/runtimeSession.js', type: 'js' },
   { path: 'src/rewardGuard.js', type: 'js' },
   { path: 'src/firstRunGuidance.js', type: 'js' },
@@ -128,6 +165,46 @@ function stripESM(code) {
   return code;
 }
 
+function collectModuleExports(code) {
+  const exports = [];
+  const seen = new Set();
+  const add = (local, exported = local) => {
+    const key = `${local}:${exported}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      exports.push({ local, exported });
+    }
+  };
+
+  for (const match of code.matchAll(/^export\s+(?:async\s+)?(?:function|const|let|var|class)\s+([A-Za-z_$][\w$]*)/gm)) {
+    add(match[1]);
+  }
+  for (const match of code.matchAll(/^export\s*\{([^}]+)\};?\s*$/gm)) {
+    for (const specifier of match[1].split(',')) {
+      const [local, exported = local] = specifier.trim().split(/\s+as\s+/);
+      if (local) add(local, exported);
+    }
+  }
+  const defaultMatch = code.match(/^export\s+default\s+([A-Za-z_$][\w$]*)\s*;?\s*$/m);
+  if (defaultMatch) add(defaultMatch[1]);
+  return exports;
+}
+
+function isolateModule(code, modPath) {
+  const moduleExports = collectModuleExports(code);
+  const stripped = stripESM(code);
+  const safeModuleId = modPath.replace(/[^A-Za-z0-9_$]/g, '_');
+  const exportBag = `__exports_${safeModuleId}`;
+  const captures = moduleExports
+    .map(({ local, exported }) => `${exportBag}[${JSON.stringify(exported)}] = ${local};`)
+    .join('\n');
+  const lifts = moduleExports
+    .map(({ exported }) => `var ${exported} = ${exportBag}[${JSON.stringify(exported)}];`)
+    .join('\n');
+
+  return `var ${exportBag} = {};\n{\n${stripped}\n${captures}\n}\n${lifts}`;
+}
+
 function bundle(target) {
   const modules = target === 'wechat' || target === 'douyin'
     ? MINI_ENTRY_MODULES
@@ -143,7 +220,7 @@ function bundle(target) {
 
 `;
 
-  let body = '';
+  let body = buildV5ContentInjection();
   let bottom = '';
 
   for (const mod of modules) {
@@ -164,19 +241,25 @@ function bundle(target) {
       const min = JSON.stringify(skinData); // 压缩+验证
       body += `// --- ${mod.path} ---\nvar __SKIN_DATA__ = ${min};\n\n`;
     } else {
-      let code = stripESM(raw);
-      code = applyReleaseOverrides(code, mod.path, target, releaseConfig);
+      let code = applyReleaseOverrides(raw, mod.path, target, releaseConfig);
       // 替换 skinManager 中的 import 为 __SKIN_DATA__
       if (mod.path === 'src/skinManager.js') {
         code = code.replace(/\bSKIN_DATA\b/g, '__SKIN_DATA__');
       }
       if (mod.path === 'src/events.js') {
-        code = code.replace(/\n\s*\/\/ 向后兼容导出\s*\nfunction getHiddenLog\(anomalyId\)\s*\{\s*return _getHiddenLog\(anomalyId\);\s*\}\s*\n/g, '\n');
-        code = code.replace(/\b_getHiddenLog\b/g, 'getHiddenLog');
+        code = code.replace(
+          /\n\s*\/\/ 向后兼容导出\s*\nexport\s+function getHiddenLog\(anomalyId\)\s*\{\s*return _getHiddenLog\(anomalyId\);\s*\}\s*\n/g,
+          '\n',
+        );
+        code = code.replace(
+          /(import\s+\{\s*getAnomalies,\s*getHiddenLog\s+as\s+_getHiddenLog,\s*t\s*\}\s+from\s+['"]\.\/skinManager\.js['"];?)/,
+          '$1\nconst _getHiddenLog = getHiddenLog;',
+        );
+        code = code.replace(/\b_getHiddenLog\b/g, 'skinHiddenLogLookup');
       }
       // 移除 skinManager 中死代码（buildHiddenLogsMap 的 require mock）
       code = code.replace(/function buildHiddenLogsMap[\s\S]*?\n\}/g, 'function buildHiddenLogsMap() { return {}; }');
-      body += `// --- ${mod.path} ---\n${code}\n\n`;
+      body += `// --- ${mod.path} ---\n${isolateModule(code, mod.path)}\n\n`;
     }
   }
 
@@ -208,6 +291,11 @@ console.log('[MINIGAME] Running on', '${target}');
 const target = process.argv[2] || 'wechat';
 const outputDir = path.join(ROOT, `${target}-minigame`);
 fs.mkdirSync(outputDir, { recursive: true });
+const legacyOutputDir = path.join(outputDir, '电梯异常');
+if (fs.existsSync(legacyOutputDir)) {
+  fs.rmSync(legacyOutputDir, { recursive: true, force: true });
+  console.log(`[build] ✅ 已清理旧版输出目录: ${legacyOutputDir}`);
+}
 
 const bundled = bundle(target);
 const outPath = path.join(outputDir, 'game.js');
@@ -238,7 +326,7 @@ console.log(`[build] ✅ ${target} 构建完成`);
 console.log(`[build]   输出: ${outPath}`);
 console.log(`[build]   大小: ${(bundled.length / 1024).toFixed(1)} KB`);
 
-// ── 创建确定性公开项目配置（真实 AppID 只写入 ignored 私有配置） ──
+// ── 创建项目配置；存在 ignored release.config.json 时让开发工具直接读取真实 AppID ──
 const projectConfig = target === 'douyin'
   ? {
       description: 'MINIGAME - 异常电梯控制台（抖音小游戏）',
@@ -250,8 +338,8 @@ const projectConfig = target === 'douyin'
       },
       compileType: 'game',
       libVersion: 'latest',
-      appid: 'touristappid',
-      projectname: '异常电梯控制台',
+      appid: releaseConfig?.douyin?.appid || 'touristappid',
+      projectname: releaseConfig?.douyin?.projectname || '异常电梯控制台',
       condition: {},
     }
   : {
@@ -266,8 +354,8 @@ const projectConfig = target === 'douyin'
       },
       compileType: 'game',
       libVersion: 'latest',
-      appid: '请替换为你的微信小游戏 AppID',
-      projectname: 'MINIGAME',
+      appid: releaseConfig?.wechat?.appid || 'touristappid',
+      projectname: releaseConfig?.wechat?.projectname || 'MINIGAME',
       condition: {},
     };
 fs.writeFileSync(
@@ -281,7 +369,9 @@ const gameConfig = {
   deviceOrientation: 'portrait',
   showStatusBar: false,
   networkTimeout: { request: 5000, connectSocket: 5000 },
-  subPackages: [],
+  subPackages: [
+    { root: 'visual', name: 'v5-visual' },
+  ],
 };
 fs.writeFileSync(
   path.join(outputDir, 'game.json'),

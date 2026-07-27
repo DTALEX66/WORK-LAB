@@ -62,11 +62,14 @@ test('android WebView assets use bundled script instead of ES modules', () => {
     24,
     'Android WebView should include every imported desktop CCTV state',
   );
+  const mobileCctvStates = readdirSync(resolve(assets, 'assets/abnormal_elevator_visual_assets/mobile_cctv_states'))
+    .filter(name => name.endsWith('.png'));
   assert.equal(
-    readdirSync(resolve(assets, 'assets/abnormal_elevator_visual_assets/mobile_cctv_states')).filter(name => name.endsWith('.png')).length,
-    24,
-    'Android WebView should include every imported mobile CCTV state',
+    mobileCctvStates.length,
+    32,
+    'Android WebView should include 24 V4 states and 8 V5 investigation scenes',
   );
+  assert.ok(mobileCctvStates.includes('v5_02_investigation_mobile.png'));
   assert.doesNotMatch(css, /games\/find-anomaly\/elevator-console\/assets\/abnormal_elevator_visual_assets/, 'Android WebView CSS should not point outside packaged assets');
   assert.doesNotMatch(game, /\bSKIN_DATA\b/);
   assert.doesNotMatch(game, /\b_getHiddenLog\b/);

@@ -10,7 +10,7 @@
   },
   "compileType": "game",
   "libVersion": "latest",
-  "appid": "请替换为你的微信小游戏 AppID",
+  "appid": "touristappid",
   "projectname": "MINIGAME",
   "condition": {}
 }

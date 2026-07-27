@@ -35,7 +35,7 @@ games/find-anomaly/elevator-console
 - P3：皮肤生成脚本 `scripts/create-skin-from-template.mjs` 与 `npm run skin:new -- <id> [名称]`。
 - P2：轻量埋点接口 `src/analytics.js`，已接入 H5 开始、失败、广告、操作、异常路径。
 - P2：跨局异常档案库已按皮肤记录场次、遭遇异常、解锁日志和收集进度。
-- P5：监控画面已接入更真实的低清 CCTV 背景 `assets/generated/monitor-cctv-real-basement-lift.png`，并在 Android WebView 资源准备脚本中打包验证。
+- P5：H5 Debug Console 的低清 CCTV 背景已由 `styles.css` 中当前仍被引用的生成资产提供；未接线旧候选图已清理。
 - P5：图像生成提示词包已落地 `docs/IMAGE_GENERATION_PROMPT_PACK.md`，用于后续重做 UI/监控画面资产。
 - P4：GitHub Actions verify workflow。
 - P4：`npm run android:install` 真机/模拟器安装启动命令。

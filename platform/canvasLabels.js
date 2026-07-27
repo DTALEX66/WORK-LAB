@@ -12,7 +12,7 @@ export function getCanvasLabels() {
     actionPanel: canvas.actionPanel || '操作面板',
     logPanel: canvas.logPanel || '系统日志',
     failureTitle: canvas.failureTitle || '系统崩溃',
-    failureEyebrow: canvas.failureEyebrow || 'SYSTEM FAILURE',
+    failureEyebrow: canvas.failureEyebrow || '系统故障',
     revive: t('ui.viewAd'),
     restart: t('ui.restart'),
     revealTruth: t('ui.revealTruth'),
