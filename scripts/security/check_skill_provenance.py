@@ -27,15 +27,6 @@ KNOWN_PROFILE_SKILLS = {
     "systematic-debugging",
     "test-driven-development",
 }
-LIVE_ONLY_GITHUB_SKILLS = (
-    "github-auth",
-    "github-code-review",
-    "github-issues",
-    "github-pr-workflow",
-    "github-repo-management",
-)
-
-
 def sha256(path: Path) -> str:
     """Hash canonical UTF-8 text so Windows CRLF and Linux LF agree."""
 
@@ -167,27 +158,6 @@ def build_manifest(repo_root: Path, live_root: Path | None = None) -> dict[str, 
         else:
             entry["live_sha256"] = "pending-live-sync"
         entries.append(entry)
-    if live_root is not None:
-        for name in LIVE_ONLY_GITHUB_SKILLS:
-            live_rel = f"skills/github/{name}/SKILL.md"
-            live_path = live_root / live_rel
-            if not live_path.is_file():
-                raise ValueError(f"cannot build manifest: live-only skill missing: {live_path}")
-            live_data = frontmatter(live_path)
-            entries.append(
-                {
-                    "name": name,
-                    "source": f"profile-live-only/github/{name}/SKILL.md",
-                    "live": live_rel,
-                    "source_sha256": "profile-live-only",
-                    "live_sha256": sha256(live_path),
-                    "version": str(live_data.get("version", "unknown")),
-                    "trust": "profile-controlled-reviewed",
-                    "enabled": True,
-                    "permission": "gh-authenticated-api-only",
-                    "profile_scope": "default",
-                }
-            )
     return {"schema_version": 1, "profile_scope": "default", "entries": entries}
 
 
