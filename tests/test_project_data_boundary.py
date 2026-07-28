@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -167,6 +168,13 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         result = module.run_command(layout, command)
 
         self.assertEqual(Path(result.stdout.strip()).resolve(), layout.paths["tmp"].resolve())
+
+    def test_temp_roots_stay_inside_project_runtime(self) -> None:
+        runtime_root = ROOT / ".hermes" / "task-runtime"
+        tmp_path = Path(tempfile.mkdtemp(dir=runtime_root / "tmp"))
+        self.addCleanup(lambda: shutil.rmtree(tmp_path, ignore_errors=True))
+
+        self.assertTrue(tmp_path.resolve().is_relative_to(runtime_root.resolve()))
 
 
 if __name__ == "__main__":
