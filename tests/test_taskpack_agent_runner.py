@@ -15,6 +15,7 @@ from scripts.workflow.run_taskpack_agent import (
     HermesAgentBackend,
     RunnerError,
     TaskPackRunner,
+    effective_task_risk,
     _parse_args,
 )
 
@@ -71,6 +72,11 @@ class FakeAgent:
 
 
 class TaskPackAgentRunnerTests(unittest.TestCase):
+    def test_declared_low_cannot_bypass_forced_high_task_risk(self) -> None:
+        self.assertEqual(effective_task_risk("low", "update config/managed-config-schema.yaml"), "high")
+        self.assertEqual(effective_task_risk("low", "rotate credentials and deploy"), "high")
+        self.assertEqual(effective_task_risk("low", "add a pure adapter"), "low")
+
     def test_hermes_backend_resumes_without_agent_timeout(self) -> None:
         calls: list[tuple[list[str], dict[str, object]]] = []
 

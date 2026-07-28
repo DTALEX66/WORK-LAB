@@ -100,10 +100,17 @@ def _get_config_value(key: str) -> object:
         return None
 
 
-def _restore_config(applied: list[tuple[str, object]]) -> None:
+def _restore_config(applied: list[tuple[str, object]]) -> list[str]:
+    failures: list[str] = []
     for key, previous in reversed(applied):
         if isinstance(previous, (str, int, float, bool)) or previous is None:
-            run(['hermes', 'config', 'set', key, '' if previous is None else str(previous)], timeout=30)
+            restored = run(
+                ['hermes', 'config', 'set', key, '' if previous is None else str(previous)],
+                timeout=30,
+            )
+            if restored.returncode != 0:
+                failures.append(key)
+    return failures
 
 
 def set_config(pairs: list[tuple[str, str]]) -> None:
@@ -115,15 +122,21 @@ def set_config(pairs: list[tuple[str, str]]) -> None:
         cp = run(['hermes', 'config', 'set', key, value], timeout=30)
         print(redact(cp.stdout).strip() or f'set {key}')
         if cp.returncode != 0:
-            _restore_config(applied)
-            raise SystemExit(f'config update failed at {key}; restored {len(applied)} prior field(s)')
+            rollback_failures = _restore_config(applied)
+            suffix = f'; rollback failed for {rollback_failures}' if rollback_failures else ''
+            raise SystemExit(f'config update failed at {key}; restored {len(applied)} prior field(s){suffix}')
         applied.append((key, before.get(key)))
 
     after = {key: _get_config_value(key) for key, _ in pairs}
     mismatches = [key for key, value in pairs if after.get(key) != value]
     if mismatches:
-        _restore_config(applied)
-        raise SystemExit('config verification failed; restored prior fields: ' + ', '.join(mismatches))
+        rollback_failures = _restore_config(applied)
+        suffix = f'; rollback failed for {rollback_failures}' if rollback_failures else ''
+        raise SystemExit(
+            'config verification failed; restored prior fields: '
+            + ', '.join(mismatches)
+            + suffix
+        )
 
 
 def codex_auth_present() -> bool:
@@ -184,7 +197,6 @@ def main() -> int:
             ('model.provider', 'kimi-coding'),
             ('model.base_url', KIMI_BASE_URL),
             ('model.default', model),
-            ('model.api_key', ''),
         ])
         if args.live:
             live_marker('kimi-coding', model, 'OK_KIMI_SWITCH_LIVE')
@@ -198,7 +210,6 @@ def main() -> int:
             ('model.provider', 'deepseek'),
             ('model.base_url', 'https://api.deepseek.com/v1'),
             ('model.default', DEEPSEEK_MODEL),
-            ('model.api_key', ''),
         ])
         if args.live:
             live_marker('deepseek', DEEPSEEK_MODEL, 'OK_DEEPSEEK_SWITCH_LIVE')
@@ -212,7 +223,6 @@ def main() -> int:
             ('model.provider', 'openai-codex'),
             ('model.default', GPT_MODEL),
             ('model.base_url', ''),
-            ('model.api_key', ''),
         ])
         if args.live:
             live_marker('openai-codex', GPT_MODEL, 'OK_GPT_SWITCH_LIVE')

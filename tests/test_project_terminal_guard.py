@@ -53,6 +53,66 @@ class ProjectTerminalGuardTests(unittest.TestCase):
 
         self.assertIn("hermes-project-data.py", reason)
 
+    def test_blocks_wrapper_run_with_external_absolute_output_path(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        reason = module.validate(
+            self.payload(
+                repo,
+                'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- '
+                'python -c "open(\\"C:/outside-task-artifact.txt\\", \\"w\\")"',
+            )
+        )
+
+        self.assertIn("project", reason)
+
+    def test_blocks_wrapper_run_with_embedded_posix_absolute_path(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        for child in (
+            'python -c "write(--output=/tmp/outside-task-artifact.txt)"',
+            'python -c "write(--output:/tmp/outside-task-artifact.txt)"',
+            'python -c "write(/tmp/outside-task-artifact.txt)"',
+        ):
+            with self.subTest(child=child):
+                reason = module.validate(
+                    self.payload(
+                        repo,
+                        'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- ' + child,
+                    )
+                )
+                self.assertIn("project", reason)
+
+    def test_blocks_wrapper_run_with_unc_absolute_path(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        reason = module.validate(
+            self.payload(
+                repo,
+                r'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- '
+                r'python --output=\\server\share\outside-task-artifact.txt',
+            )
+        )
+
+        self.assertIn("project", reason)
+
+    def test_blocks_wrapper_run_with_embedded_unc_absolute_path(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        reason = module.validate(
+            self.payload(
+                repo,
+                r'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- '
+                r'python -c "write(path:\\server\share\outside.txt)"',
+            )
+        )
+
+        self.assertIn("project", reason)
+
     def test_blocks_implicit_or_non_git_workdir(self) -> None:
         module = load_module()
         repo = self.make_repo()

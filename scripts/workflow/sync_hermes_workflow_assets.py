@@ -186,7 +186,109 @@ def prune_workflow_sync_backups(
     return len(stale)
 
 
-def merge_live_config(repo: Path, home: Path, *, apply: bool) -> None:
+def _remove_path(path: Path) -> None:
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+    elif path.exists() or path.is_symlink():
+        path.unlink()
+
+
+def _fsync_path(path: Path) -> None:
+    """Flush a replaced file; directory fsync is unavailable on Windows."""
+    if path.is_file():
+        with path.open("r+b") as handle:
+            os.fsync(handle.fileno())
+    elif os.name != "nt":
+        flags = getattr(os, "O_DIRECTORY", 0)
+        fd = os.open(path, os.O_RDONLY | flags)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
+
+def atomic_replace_paths(staging: Path, home: Path, rels: Iterable[str]) -> None:
+    """Replace managed roots as one rollback-capable filesystem transaction."""
+    stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    rollback = home / f".workflow-assistance-rollback-{stamp}"
+    records: list[tuple[Path, Path | None, bool]] = []
+    rollback_failed = False
+    operation_failed = False
+    rollback.mkdir(parents=True, exist_ok=False)
+    try:
+        for relative in rels:
+            source = staging / relative
+            if not source.exists():
+                continue
+            target = home / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            previous = rollback / relative
+            had_target = target.exists()
+            records.append((target, previous if had_target else None, False))
+            if had_target:
+                previous.parent.mkdir(parents=True, exist_ok=True)
+                os.replace(target, previous)
+            os.replace(source, target)
+            records[-1] = (target, previous if had_target else None, True)
+            _fsync_path(target)
+    except Exception:
+        operation_failed = True
+        for target, previous, installed in reversed(records):
+            if installed and target.exists():
+                try:
+                    _remove_path(target)
+                except Exception:
+                    rollback_failed = True
+            if previous is not None and previous.exists():
+                try:
+                    os.replace(previous, target)
+                except Exception:
+                    rollback_failed = True
+        if rollback_failed:
+            print(f"ROLLBACK_INCOMPLETE preserved={rollback}")
+        raise
+    finally:
+        if rollback.exists() and not rollback_failed:
+            try:
+                shutil.rmtree(rollback)
+            except Exception:
+                rollback_failed = True
+                print(f"ROLLBACK_CLEANUP_INCOMPLETE preserved={rollback}")
+                if not operation_failed:
+                    raise
+        if staging.exists():
+            shutil.rmtree(staging, ignore_errors=True)
+
+
+def prepare_staging(repo: Path, home: Path) -> Path:
+    """Build a complete managed view without mutating the live Hermes home."""
+    stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    staging = home / f".workflow-assistance-staging-{stamp}"
+    staging.mkdir(parents=True, exist_ok=False)
+    for relative in ("skills", "bin"):
+        live = home / relative
+        if live.exists():
+            shutil.copytree(live, staging / relative, dirs_exist_ok=True)
+    for relative in ("config.yaml", ".env.template", ".workflow-assistance-state.yaml"):
+        live = home / relative
+        if live.exists():
+            (staging / relative).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(live, staging / relative)
+    copytree(repo / "skills", staging / "skills", apply=True)
+    copytree(repo / "bin", staging / "bin", apply=True)
+    copyfile(repo / "config/.env.template", staging / ".env.template", apply=True)
+    remove_retired_managed_assets(staging, apply=True)
+    merge_live_config(repo, staging, apply=True, wrapper_root=home)
+    return staging
+
+
+def merge_live_config(
+    repo: Path,
+    home: Path,
+    *,
+    apply: bool,
+    wrapper_root: Path | None = None,
+) -> None:
     """Merge portable entries while preserving live provider/model and custom MCPs."""
 
     repo_cfg = repo / "config/config.yaml"
@@ -211,9 +313,11 @@ def merge_live_config(repo: Path, home: Path, *, apply: bool) -> None:
     for retired in MANAGED_MCP_SERVERS - set(repo_mcp):
         live_mcp.pop(retired, None)
 
-    cmd_wrapper = home / "bin/hermes-npx.cmd"
-    sh_wrapper = home / "bin/hermes-npx"
-    wrapper = (cmd_wrapper if cmd_wrapper.exists() else sh_wrapper).as_posix()
+    wrapper_home = wrapper_root or home
+    source_cmd_wrapper = home / "bin/hermes-npx.cmd"
+    cmd_wrapper = wrapper_home / "bin/hermes-npx.cmd"
+    sh_wrapper = wrapper_home / "bin/hermes-npx"
+    wrapper = (cmd_wrapper if source_cmd_wrapper.exists() else sh_wrapper).as_posix()
     for name, config in repo_mcp.items():
         if not isinstance(config, dict):
             raise ValueError(f"mcp server {name!r} must be a mapping")
@@ -221,6 +325,31 @@ def merge_live_config(repo: Path, home: Path, *, apply: bool) -> None:
         if deployed.get("command") == "hermes-npx":
             deployed["command"] = wrapper
         live_mcp[name] = deployed
+
+    repo_hooks = repo_data.get("hooks") or {}
+    live_hooks = live_data.setdefault("hooks", {})
+    if not isinstance(repo_hooks, dict) or not isinstance(live_hooks, dict):
+        raise ValueError("hooks must be mappings")
+    repo_pre_tool = repo_hooks.get("pre_tool_call") or []
+    live_pre_tool = live_hooks.get("pre_tool_call") or []
+    if not isinstance(repo_pre_tool, list) or not isinstance(live_pre_tool, list):
+        raise ValueError("hooks.pre_tool_call must be lists")
+    managed_pre_tool = []
+    for hook in repo_pre_tool:
+        if not isinstance(hook, dict):
+            raise ValueError("pre_tool_call entries must be mappings")
+        deployed_hook = deepcopy(hook)
+        if deployed_hook.get("matcher") == "terminal":
+            guard = (wrapper_home / "bin/hermes-project-terminal-guard.py").as_posix()
+            deployed_hook["command"] = f'python "{guard}"'
+        managed_pre_tool.append(deployed_hook)
+    if managed_pre_tool:
+        custom_pre_tool = [
+            hook
+            for hook in live_pre_tool
+            if isinstance(hook, dict) and hook.get("matcher") != "terminal"
+        ]
+        live_hooks["pre_tool_call"] = custom_pre_tool + managed_pre_tool
 
     plugins = live_data.setdefault("plugins", {})
     repo_enabled = (repo_data.get("plugins") or {}).get("enabled") or []
@@ -324,11 +453,25 @@ def deploy_portable(repo: Path, home: Path, *, apply: bool, include_backup: bool
             ],
             apply=apply,
         )
-    copytree(repo / "skills", home / "skills", apply=apply)
-    remove_retired_managed_assets(home, apply=apply)
-    copytree(repo / "bin", home / "bin", apply=apply)
-    copyfile(repo / "config/.env.template", home / ".env.template", apply=apply)
-    merge_live_config(repo, home, apply=apply)
+    if apply:
+        staging = prepare_staging(repo, home)
+        atomic_replace_paths(
+            staging,
+            home,
+            (
+                "skills",
+                "bin",
+                "config.yaml",
+                ".env.template",
+                ".workflow-assistance-state.yaml",
+            ),
+        )
+    else:
+        copytree(repo / "skills", home / "skills", apply=False)
+        remove_retired_managed_assets(home, apply=False)
+        copytree(repo / "bin", home / "bin", apply=False)
+        copyfile(repo / "config/.env.template", home / ".env.template", apply=False)
+        merge_live_config(repo, home, apply=False)
     if include_backup:
         prune_workflow_sync_backups(home, apply=apply)
 

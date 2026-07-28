@@ -9,6 +9,7 @@ capabilities:
   - custom_model_lanes
   - quick_model_commands
   - project_data_boundary
+  - terminal_pre_tool_hook
   - context_pack
   - local_quality_gate
   - isolated_portable_install_verification
@@ -17,7 +18,7 @@ capabilities:
 requirements:
   python: '>=3.11'
   pyyaml: required
-  hermes: preinstalled
+  hermes: hermes-agent==0.19.0
 compatibility:
   config_version: 33
   required_runtime_features:
@@ -28,3 +29,8 @@ security:
   secrets_portable: false
   credential_copying: forbidden
   live_provider_route: preserved
+delivery:
+  remote_ref: origin/main
+  required_workflows:
+    - workflow-governance
+  exact_sha_ci: true

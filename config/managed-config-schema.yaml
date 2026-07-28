@@ -13,6 +13,9 @@ managed:
   mcp_servers:
     strategy: merge_owned
     owned_names: [context7]
+  hooks.pre_tool_call:
+    strategy: replace_owned_matcher
+    owned_matcher: terminal
   plugins.enabled:
     strategy: merge_additive
 preserved:
