@@ -1,6 +1,15 @@
 # Declarative ownership contract for repo -> live Hermes config merge.
 # Never list secrets, OAuth credentials, or active provider routing as managed data.
 schema_version: 1
+global_workflow:
+  scope: hermes-cc-switch-codex-github
+  source_of_truth: repository
+  owned_asset_roots:
+    - skills/autonomous-ai-agents/codex
+    - skills/github
+    - skills/model-switch
+    - skills/software-development
+  deployment: repo-to-live
 managed:
   display.busy_input_mode: replace
   display.streaming: replace

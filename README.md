@@ -371,6 +371,11 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards li
 | Skill | 功能 |
 |---|---|
 | `codex` | 调用 Codex 进行有边界的实现或只读审查，规范 PTY、sandbox 和 worktree |
+| `github-auth` | 全局 GitHub 认证前置检查与安全的 `gh` / Git 认证流程 |
+| `github-code-review` | 本地 diff、PR diff、CI 和 exact-tree 代码审查 |
+| `github-issues` | GitHub Issue 的读取、创建、分类、标签、分配和闭环管理 |
+| `github-pr-workflow` | 分支、commit、PR、exact-SHA CI、review 和 merge 生命周期 |
+| `github-repo-management` | GitHub 仓库 clone、remote、fork、Actions 和 release 管理 |
 | `model-switch` | GPT OAuth / DeepSeek 安全切换、代理与 Provider 真实 marker 诊断 |
 | `agent-workflow-fortress` | 多 Agent 编排、TDD、单写者、冻结复审、发布和开源吸收治理 |
 | `sleep-mode` | 项目级持久自动推进：cron 调度、单 writer、状态账本、恢复与安全阻断 |
@@ -379,7 +384,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards li
 | `requesting-code-review` | 代码复审兼容入口，统一转入 fortress 的 exact-tree 流程 |
 | `windows-development-environment` | PowerShell 编码、PATH 遮蔽、spawn/lockfile、便携工具链和 Windows 环境问题 |
 
-同步脚本会把仓库中的 skills 作为 portable 单一事实源部署到 Hermes Home，但不会反向吸收 live 私有 skill 或运行数据。
+这 13 个 skill 都是本项目全局工作流增强的 repository-controlled portable source；同步脚本会把仓库中的 skills 作为单一事实源部署到 Hermes Home，但不会反向吸收 live 私有 skill 或运行数据。
 
 ## 安全与隐私
 
