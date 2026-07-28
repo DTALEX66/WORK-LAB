@@ -143,6 +143,10 @@ python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject
 - 默认插件为 `security-guidance` 与 `web/ddgs`；
 - Provider 与模型字段仅作为 portable 初始基线，部署到既有环境时保留 live 选择；
 - API Key 字段保持为空，真实秘密只存在于 live 环境。
+- `hooks.pre_tool_call` 默认注册项目 terminal guard；它只允许 canonical project wrapper，阻止未声明
+  workdir、shell chaining 和项目外输出。同步器会保留非-terminal 自定义 hook，并对 terminal hook 做
+  staging → atomic replace → rollback；live hook 脚本更新后必须由用户显式重新批准，不能静默绕过 Hermes
+  hook trust。
 
 `config/SOUL.md` 保存可迁移的 Agent 行为风格；`config/.env.template` 只列环境变量名称，不含真实值。
 
@@ -246,6 +250,10 @@ release commit 的 `HEAD^{tree}` 与 reviewer GO 时的 frozen tree 逐字节绑
 HEAD，不再隐式假定 `origin`。exact-SHA CI 默认必须有名为 `workflow-governance` 的成功
 run；可重复传入 `--required-workflow <name>` 增加额外门禁。缺失、等待中、取消、失败或
 仅有无关 workflow 的 success 都不会通过发布验证。
+
+远端 `main` 由 `main-workflow-governance` ruleset 保护：禁止删除和非快进更新，并要求
+`linux` 与 `windows` 两个 GitHub Actions status check（对应 `workflow-governance` workflow）。ruleset
+状态必须通过 GitHub API 读取核验，不能用本地配置或旧 run 摘要替代。
 
 `skills/autonomous-ai-agents/codex/SKILL.md` 定义：
 

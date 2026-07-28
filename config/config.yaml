@@ -47,6 +47,14 @@ terminal:
   cwd: .
   timeout: 180
 
+# Every Hermes terminal call must pass the project-local data boundary hook.
+# The synchronizer rewrites this portable path to the deployed Hermes home.
+hooks:
+  pre_tool_call:
+    - matcher: terminal
+      command: python ${HERMES_HOME}/bin/hermes-project-terminal-guard.py
+      timeout: 10
+
 # Context7 adds current public library documentation. Other MCPs are opt-in:
 # sequential-thinking duplicates model reasoning; public-apis duplicates web discovery.
 mcp_servers:

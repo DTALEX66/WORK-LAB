@@ -89,6 +89,13 @@ def print_command(label: str, command: list[str], *, timeout: int = 30, max_line
     return code, output
 
 
+def required_command(label: str, command: list[str], *, timeout: int = 30) -> bool:
+    """Run a structural command whose non-zero exit must fail the doctor."""
+
+    code, _ = print_command(label, command, timeout=timeout)
+    return code == 0
+
+
 def has_exact_marker(output: str, marker: str) -> bool:
     """Accept only a standalone response line, never a marker embedded in an echoed prompt."""
 
@@ -282,10 +289,14 @@ def main() -> int:
     if not shutil.which("hermes"):
         print("[FAIL] hermes command not found")
         return 1
-    print_command("Hermes version", ["hermes", "--version"])
-    print_command("Hermes config check", ["hermes", "config", "check"], timeout=60)
-    print_command("Hermes auth inventory", ["hermes", "auth", "list"], max_lines=40)
-    print_command("Hermes MCP inventory", ["hermes", "mcp", "list"], max_lines=20)
+    if not required_command("Hermes version", ["hermes", "--version"]):
+        failures.append("Hermes version")
+    if not required_command("Hermes config check", ["hermes", "config", "check"], timeout=60):
+        failures.append("Hermes config check")
+    if not required_command("Hermes auth inventory", ["hermes", "auth", "list"], timeout=60):
+        failures.append("Hermes auth inventory")
+    if not required_command("Hermes MCP inventory", ["hermes", "mcp", "list"], timeout=60):
+        failures.append("Hermes MCP inventory")
 
     network_checks = args.network or args.live
     if network_checks:
@@ -336,6 +347,8 @@ def main() -> int:
     if not candidates:
         print("[FAIL] Codex executable not found")
         failures.append("codex missing")
+    elif not versions:
+        failures.append("Codex version")
     elif len({version for _, version in versions}) > 1:
         print("[WARN] Codex version drift detected; plugin binary is the preferred execution path")
 

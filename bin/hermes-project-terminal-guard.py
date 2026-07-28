@@ -11,6 +11,7 @@ coded absolute paths can still escape OS-level containment.
 from __future__ import annotations
 
 import json
+import ntpath
 import os
 import re
 import shlex
@@ -21,7 +22,11 @@ from typing import Any
 
 
 BLOCK_PREFIX = "PROJECT DATA BOUNDARY BLOCKED:"
-SHELL_CONTROL = re.compile(r"(?:;|&&|\|\||(?<!\|)\|(?!\|)|\n|\r)")
+SHELL_CONTROL = re.compile(r"(?:;|&&|\|\||(?<!\|)\|(?!\|)|<|>|\n|\r)")
+ABSOLUTE_PATH = re.compile(
+    r"(?:(?:[A-Za-z]:[\\/])|(?:\\\\[^\\s\"']+)|(?:^|(?<=[\\s\"'=<>:([{]))/)[^\\s\"']+"
+)
+RAW_UNC_PATH = re.compile(r"(?:^|(?<=[\\s\"'=]))(\\\\[^\\s\"']+)")
 
 WRAPPER_NAME = "hermes-project-data.py"
 SUBCOMMANDS = {"init", "check", "policy", "cleanup", "run", "kanban"}
@@ -42,6 +47,45 @@ def canonical_wrapper(raw: str) -> bool:
         except (OSError, RuntimeError):
             return False
     return False
+
+
+def external_child_path(argv: list[str], separator_index: int, root: Path) -> str | None:
+    """Reject explicit child paths outside the declared Git project."""
+    child = argv[separator_index + 1 :]
+    for token in child:
+        candidates = [token, *ABSOLUTE_PATH.findall(token)]
+        for candidate in candidates:
+            raw = candidate.strip('"\'')
+            path = Path(raw)
+            windows_absolute = ntpath.isabs(raw)
+            if not (path.is_absolute() or windows_absolute):
+                continue
+            if os.name != "nt" and windows_absolute and not path.is_absolute():
+                return candidate
+            try:
+                if not path.resolve(strict=False).is_relative_to(root):
+                    return candidate
+            except (OSError, RuntimeError):
+                return candidate
+    return None
+
+
+def external_raw_unc(command: str, root: Path) -> str | None:
+    """Check UNC paths before POSIX shlex parsing can strip backslashes."""
+    for index in range(len(command) - 1):
+        if command[index : index + 2] != "\\\\":
+            continue
+        end = index + 2
+        while end < len(command) and command[end] not in " \t\"'":
+            end += 1
+        candidate = command[index:end]
+        if os.name != "nt":
+            return candidate
+        raw = ntpath.normcase(ntpath.normpath(candidate))
+        project = ntpath.normcase(ntpath.normpath(str(root)))
+        if raw != project and not raw.startswith(project.rstrip("\\") + "\\"):
+            return candidate
+    return None
 
 
 def block(reason: str) -> int:
@@ -78,7 +122,8 @@ def validate(payload: dict[str, Any]) -> str | None:
     workdir = tool_input.get("workdir")
     if not isinstance(workdir, str) or not workdir.strip():
         return "terminal calls must declare an explicit Git-project workdir."
-    if project_root(workdir.strip()) is None:
+    root = project_root(workdir.strip())
+    if root is None:
         return "workdir must resolve inside an existing Git project."
 
     command = tool_input.get("command")
@@ -86,6 +131,9 @@ def validate(payload: dict[str, Any]) -> str | None:
         return "terminal command is missing."
     if SHELL_CONTROL.search(command):
         return "shell chaining/redirection is forbidden; invoke one wrapper command only."
+    external_unc = external_raw_unc(command, root)
+    if external_unc:
+        return f"child command contains an absolute UNC path outside the Git project: {external_unc}"
     try:
         argv = shlex.split(command, posix=True)
     except ValueError:
@@ -107,6 +155,10 @@ def validate(payload: dict[str, Any]) -> str | None:
         return "the wrapper subcommand must be init, check, policy, cleanup, run, or kanban."
     if argv[subcommand_index] == "run" and (len(argv) <= subcommand_index + 1 or argv[subcommand_index + 1] != "--"):
         return "wrapper run requires -- before the child command."
+    if argv[subcommand_index] == "run":
+        external = external_child_path(argv, subcommand_index + 1, root)
+        if external:
+            return f"child command contains an absolute path outside the Git project: {external}"
     return None
 
 

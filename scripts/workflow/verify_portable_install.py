@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import os
+import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -57,7 +60,27 @@ def load_manifest(repo: Path) -> dict:
     return compatibility
 
 
-def verify(repo: Path, home: Path) -> list[str]:
+def run_isolated_hermes_config_check(home: Path) -> None:
+    """Run the real Hermes config check against the isolated home only."""
+
+    executable = shutil.which("hermes")
+    if executable is None:
+        raise RuntimeError("hermes executable is required for --runtime verification")
+    env = os.environ.copy()
+    env["HERMES_HOME"] = str(home)
+    result = subprocess.run(
+        [executable, "config", "check"],
+        cwd=home,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError("isolated Hermes config check failed")
+
+
+def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
     repo = repo.resolve()
     home = home.resolve()
     if not (repo / "config/managed-config-schema.yaml").exists():
@@ -80,12 +103,11 @@ def verify(repo: Path, home: Path) -> list[str]:
         "model_picker.custom_lanes": bool(
             config.get("model_picker", {}).get("custom_lanes", {}).get("enabled")
         ),
-        # This structural verifier proves the portable declaration only. A real
-        # `hermes config check` belongs to an explicit isolated integration gate.
-        "hermes_config_check": True,
     }
     missing_features = [
-        feature for feature in compatibility["required_runtime_features"] if not runtime_feature_checks[feature]
+        feature
+        for feature in compatibility["required_runtime_features"]
+        if feature in runtime_feature_checks and not runtime_feature_checks[feature]
     ]
     if missing_features:
         raise RuntimeError("isolated config lacks manifest runtime features: " + ", ".join(missing_features))
@@ -122,22 +144,33 @@ def verify(repo: Path, home: Path) -> list[str]:
         raise RuntimeError("isolated config missing: " + ", ".join(failed))
     if (home / ".env").exists() or (home / "auth.json").exists():
         raise RuntimeError("isolated verification must not create credentials")
+    if run_runtime:
+        run_isolated_hermes_config_check(home)
     return sorted(required)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Verify portable workflow installation into an isolated Hermes home.")
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[2])
-    parser.add_argument("--home", type=Path, help="Empty isolated home; omitted uses a temporary directory.")
+    parser.add_argument("--home", type=Path, help="Empty isolated Hermes home; omitted uses a temporary directory.")
+    parser.add_argument(
+        "--runtime",
+        action="store_true",
+        help="Run the real Hermes config check against the isolated home after structural verification.",
+    )
     args = parser.parse_args(argv)
     if args.home:
-        checks = verify(args.repo, args.home)
+        checks = verify(args.repo, args.home, run_runtime=args.runtime)
     else:
         runtime = args.repo.resolve() / ".hermes" / "task-runtime" / "portable-install"
         runtime.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=runtime) as raw:
-            checks = verify(args.repo, Path(raw) / "hermes")
-    print("PORTABLE_INSTALL_VERIFY_PASS checks=" + ",".join(checks))
+            checks = verify(args.repo, Path(raw) / "hermes", run_runtime=args.runtime)
+    if args.runtime:
+        print("PORTABLE_INSTALL_VERIFY_PASS checks=" + ",".join(checks) + ",hermes_config_check")
+    else:
+        print("STRUCTURAL_PORTABLE_PASS checks=" + ",".join(checks))
+        print("RUNTIME_COMPATIBILITY_UNVERIFIED hermes_config_check")
     return 0
 
 
