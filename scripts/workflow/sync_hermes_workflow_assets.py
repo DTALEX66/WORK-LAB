@@ -476,6 +476,7 @@ def deploy_portable(
                 "bin",
                 "skills/autonomous-ai-agents/codex",
                 "skills/model-switch",
+                "skills/github",
                 "skills/software-development",
             ],
             apply=apply,

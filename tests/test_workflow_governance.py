@@ -28,6 +28,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertEqual(ownership["schema_version"], 1)
         self.assertEqual(ownership["managed"]["model.max_tokens"], "replace")
         self.assertEqual(ownership["managed"]["model_picker.custom_lanes"], "replace")
+        self.assertEqual(ownership["global_workflow"]["source_of_truth"], "repository")
+        self.assertIn("skills/github", ownership["global_workflow"]["owned_asset_roots"])
         self.assertIn("model.provider", ownership["preserved"])
         self.assertIn("model.api_key", ownership["preserved"])
         self.assertEqual(manifest["schema_version"], 1)
@@ -403,6 +405,78 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertTrue(manifest.exists())
         self.assertTrue(checker.exists())
         self.assertIn("skill-provenance", gate)
+
+    def test_global_github_skills_are_repository_owned(self) -> None:
+        expected = {
+            "github-auth",
+            "github-code-review",
+            "github-issues",
+            "github-pr-workflow",
+            "github-repo-management",
+        }
+        manifest = yaml.safe_load(
+            (ROOT / "config/skill-provenance.yaml").read_text(encoding="utf-8")
+        )
+        entries = {entry["name"]: entry for entry in manifest["entries"]}
+        for name in sorted(expected):
+            source = ROOT / "skills/github" / name / "SKILL.md"
+            self.assertTrue(source.is_file(), name)
+            entry = entries[name]
+            self.assertEqual(entry["source"], f"skills/github/{name}/SKILL.md")
+            self.assertEqual(entry["trust"], "repository-controlled")
+            self.assertNotEqual(entry["source_sha256"], "profile-live-only")
+
+    def test_sync_backup_covers_global_github_skills(self) -> None:
+        script = (ROOT / "scripts/workflow/sync_hermes_workflow_assets.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('"skills/github"', script)
+
+    def test_isolated_portable_install_contains_global_github_skills(self) -> None:
+        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / "isolated-home"
+            result = subprocess.run(
+                [sys.executable, str(script), "--repo", str(ROOT), "--home", str(home)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            for name in (
+                "github-auth",
+                "github-code-review",
+                "github-issues",
+                "github-pr-workflow",
+                "github-repo-management",
+            ):
+                self.assertTrue((home / "skills/github" / name / "SKILL.md").is_file(), name)
+
+    def test_bootstrap_and_project_wrapper_work_for_multiple_projects(self) -> None:
+        bootstrap = ROOT / "scripts/workflow/bootstrap_project.py"
+        wrapper = ROOT / "bin/hermes-project-data.py"
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            for name in ("alpha", "beta", "windows-shaped-project"):
+                target = root / name
+                target.mkdir()
+                (target / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+                subprocess.run(["git", "init", "-q", str(target)], check=True)
+                boot = subprocess.run(
+                    [sys.executable, str(bootstrap), str(target), "--agent-rules"],
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                self.assertEqual(boot.returncode, 0, boot.stdout + boot.stderr)
+                check = subprocess.run(
+                    [sys.executable, str(wrapper), "--project", str(target), "check"],
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
+                self.assertIn("task-runtime", check.stdout)
 
     def test_manifest_requires_nonempty_exact_sha_workflow_contract(self) -> None:
         manifest = yaml.safe_load((ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8"))
