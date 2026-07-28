@@ -257,7 +257,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("actions/setup-python@v", workflow)
         self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", workflow)
         self.assertIn("actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38", workflow)
-        self.assertIn("PyYAML==6.0.2", workflow)
+        self.assertIn("PyYAML==6.0.3", workflow)
         self.assertIn("hermes-agent==0.19.0", workflow)
 
     def test_readme_documents_kimi_speed_lane_commands_without_auto_switching(self) -> None:
