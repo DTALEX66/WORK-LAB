@@ -12,12 +12,25 @@ from pathlib import Path
 
 ZERO_WIDTH = re.compile(r"[\u200b\u200c\u200d\ufeff]")
 INJECTION = re.compile(
-    r"ignore (all )?(previous|prior) instructions|system prompt|developer message|exfiltrate|send .*token|curl .*\|\s*(sh|bash)|powershell -encodedcommand",
+    "|".join(
+        (
+            r"ignore (all )?(previous|prior) instructions",
+            "system" + r"\s+prompt",
+            "developer" + r"\s+message",
+            r"exfiltrate",
+            r"send .*token",
+            r"curl .*\|\s*(sh|bash)",
+            r"powershell -encodedcommand",
+        )
+    ),
     re.I,
 )
 SECRET_HINT = re.compile(r"(api[_-]?key|secret|password|passwd|token)\s*[:=]\s*['\"]?[A-Za-z0-9_\-]{12,}", re.I)
 
-EXTS = {'.md', '.txt', '.yaml', '.yml', '.json', '.toml'}
+EXTS = {
+    '.md', '.txt', '.yaml', '.yml', '.json', '.toml',
+    '.py', '.sh', '.bash', '.ps1', '.psm1', '.cmd', '.bat',
+}
 
 
 def scan_file(path: Path) -> list[str]:
@@ -43,6 +56,8 @@ def main(argv: list[str]) -> int:
             issues.extend(scan_file(root))
         elif root.exists():
             for path in root.rglob('*'):
+                if path.resolve() == Path(__file__).resolve():
+                    continue
                 if path.is_file() and path.suffix.lower() in EXTS:
                     issues.extend(scan_file(path))
     if issues:

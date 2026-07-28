@@ -24,6 +24,29 @@ DEFAULT_SKILLS = (
     "systematic-debugging,github-pr-workflow"
 )
 SESSION_PATTERN = re.compile(r"(?m)^session_id:\s*(\S+)\s*$")
+FORCED_HIGH_PATH_PATTERNS = (
+    re.compile(r"(?:^|[\s`'\"(])\.github/"),
+    re.compile(r"(?:^|[\s`'\"(])config/"),
+    re.compile(r"(?:^|[\s`'\"(])setup\.(?:sh|ps1)(?:$|[\s`'\")])"),
+    re.compile(r"(?:^|[\s`'\"(])bin/"),
+    re.compile(r"(?:^|[\s`'\"(])scripts/security/"),
+    re.compile(r"(?:^|[\s`'\"(])scripts/workflow/sync_[^\s`'\")]+"),
+    re.compile(r"(?:^|[\s`'\"(])scripts/workflow/switch_model\.py"),
+    re.compile(r"(?:^|[\s`'\"(])workflow-manifest\.yaml"),
+    re.compile(r"(?:^|[\s`'\"(])pyproject\.toml"),
+)
+FORCED_HIGH_OPERATION_PATTERN = re.compile(
+    r"\b(?:credential|credentials|authentication|permission|provider[ _-]?change|"
+    r"dependency[ _-]?change|schema[ _-]?migration|delete|move|external[ _-]?path[ _-]?write|"
+    r"backup[ _-]?restore|packaging|deployment|commit|push|pull[ _-]?request|merge|release|"
+    r"github[ _-]?ruleset|live[ _-]?apply)\b",
+    re.I,
+)
+CRITICAL_OPERATION_PATTERN = re.compile(
+    r"\b(?:force[ _-]?push|history[ _-]?rewrite|production[ _-]?write|credential[ _-]?export|"
+    r"project[ _-]?external[ _-]?delete)\b",
+    re.I,
+)
 CODEX_REVIEW_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -55,6 +78,27 @@ CODEX_REVIEW_SCHEMA = {
 
 class RunnerError(RuntimeError):
     """Raised when an orchestration or release invariant fails."""
+
+
+def detect_task_risk(mission: str) -> str:
+    """Detect TaskPack risk from the mission instead of trusting self-reporting."""
+
+    normalized = mission.replace("\\", "/")
+    if CRITICAL_OPERATION_PATTERN.search(normalized):
+        return "high"
+    if FORCED_HIGH_OPERATION_PATTERN.search(normalized) or any(
+        pattern.search(normalized) for pattern in FORCED_HIGH_PATH_PATTERNS
+    ):
+        return "high"
+    return "low"
+
+
+def effective_task_risk(declared: str, mission: str) -> str:
+    """Return max(user-declared risk, detected forced-high risk)."""
+
+    if declared not in {"low", "high"}:
+        raise ValueError("risk must be 'low' or 'high'")
+    return "high" if declared == "high" or detect_task_risk(mission) == "high" else "low"
 
 
 def project_runtime_environment(root: Path) -> dict[str, str]:
@@ -211,7 +255,7 @@ class GitRepository:
                     "--limit",
                     "20",
                     "--json",
-                    "status,conclusion,name,url,databaseId,headSha,attempt,createdAt",
+                    "status,conclusion,workflowName,name,url,databaseId,headSha,attempt,createdAt",
                 ],
                 cwd=self.root,
                 check=False,
@@ -232,10 +276,17 @@ class GitRepository:
             for workflow in self.required_workflows:
                 exact = [
                     run for run in runs
-                    if run.get("name") == workflow and run.get("headSha") == head
+                    if (run.get("workflowName") or run.get("name")) == workflow
+                    and run.get("headSha") == head
                 ]
                 if exact:
-                    exact.sort(key=lambda run: (int(run.get("attempt") or 0), str(run.get("createdAt") or "")), reverse=True)
+                    exact.sort(
+                        key=lambda run: (
+                            int(run.get("runAttempt") or run.get("attempt") or 0),
+                            str(run.get("createdAt") or ""),
+                        ),
+                        reverse=True,
+                    )
                     required_runs[workflow] = [exact[0]]
                 else:
                     required_runs[workflow] = []
@@ -258,8 +309,24 @@ class GitRepository:
                     "required workflow missing for exact-SHA CI: " + ", ".join(sorted(missing))
                 )
             if not missing and not pending:
+                incomplete = [
+                    workflow
+                    for workflow, workflow_runs in required_runs.items()
+                    for run in workflow_runs
+                    if run.get("databaseId") is None
+                    or (run.get("runAttempt") is None and run.get("attempt") is None)
+                    or not run.get("url")
+                    or run.get("headSha") != head
+                ]
+                if incomplete:
+                    raise RunnerError(
+                        "required exact-SHA CI evidence incomplete: " + ", ".join(sorted(incomplete))
+                    )
                 evidence = [
-                    f"{workflow}:run={run.get('databaseId')} attempt={run.get('attempt')} url={run.get('url')} headSha={run.get('headSha')}"
+                    f"{workflow}:workflowName={run.get('workflowName') or run.get('name')}"
+                    f" run={run.get('databaseId')}"
+                    f" runAttempt={run.get('runAttempt') or run.get('attempt')}"
+                    f" url={run.get('url')} headSha={run.get('headSha')}"
                     for workflow, workflow_runs in required_runs.items()
                     for run in workflow_runs
                 ]
@@ -457,6 +524,7 @@ class TaskPackRunner:
     def run(self, mission: str, *, risk: str) -> None:
         if risk not in {"low", "high"}:
             raise ValueError("risk must be 'low' or 'high'")
+        risk = effective_task_risk(risk, mission)
         baseline_head = self.repo.head()
         baseline_tree = self.repo.head_tree()
         _, baseline_status = self.repo.snapshot()

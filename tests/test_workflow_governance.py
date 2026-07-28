@@ -46,7 +46,21 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 check=False,
             )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("PORTABLE_INSTALL_VERIFY_PASS", result.stdout)
+        self.assertIn("STRUCTURAL_PORTABLE_PASS", result.stdout)
+
+    def test_portable_install_verifier_marks_runtime_compatibility_unverified_by_default(self) -> None:
+        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / "isolated-home"
+            result = subprocess.run(
+                [sys.executable, str(script), "--repo", str(ROOT), "--home", str(home)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("STRUCTURAL_PORTABLE_PASS", result.stdout)
+        self.assertIn("RUNTIME_COMPATIBILITY_UNVERIFIED", result.stdout)
 
     def test_portable_install_verifier_enforces_manifest_and_context7_wrapper_contract(self) -> None:
         script = ROOT / "scripts/workflow/verify_portable_install.py"
@@ -135,6 +149,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertTrue(config["display"]["streaming"])
         self.assertEqual(config["agent"]["reasoning_effort"], "low")
         self.assertEqual(config["model"]["max_tokens"], 8192)
+        terminal_hooks = [
+            hook for hook in config["hooks"]["pre_tool_call"] if hook["matcher"] == "terminal"
+        ]
+        self.assertEqual(len(terminal_hooks), 1)
+        self.assertIn("hermes-project-terminal-guard.py", terminal_hooks[0]["command"])
         lanes = config["model_picker"]["custom_lanes"]
         self.assertTrue(lanes["enabled"])
         self.assertEqual(
@@ -197,12 +216,27 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("hermes', 'config', 'get', '--json'", source)
         self.assertNotIn("read_text(encoding='utf-8', errors='ignore').splitlines()", source)
         self.assertNotIn("yaml.safe_load", source)
+        self.assertNotIn("model.api_key", source)
 
     def test_doctor_network_checks_are_explicit(self) -> None:
         source = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(encoding="utf-8")
         self.assertIn('"--network"', source)
         self.assertIn("network_checks = args.network or args.live", source)
         self.assertIn("Context7 MCP connectivity (use --network or --live)", source)
+
+    def test_security_scanner_covers_executable_rule_files(self) -> None:
+        scanner = ROOT / "scripts/security/scan_agent_rules.py"
+        with tempfile.TemporaryDirectory() as raw:
+            sample = Path(raw) / "agent.py"
+            sample.write_text('api_key = "' + "A" * 32 + '"\n', encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(scanner), str(sample)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("possible hardcoded secret", result.stdout)
 
     def test_skill_provenance_manifest_and_gate_are_present(self) -> None:
         manifest = ROOT / "config/skill-provenance.yaml"
@@ -212,6 +246,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertTrue(checker.exists())
         self.assertIn("skill-provenance", gate)
 
+    def test_manifest_requires_nonempty_exact_sha_workflow_contract(self) -> None:
+        manifest = yaml.safe_load((ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8"))
+        self.assertTrue(manifest["delivery"]["exact_sha_ci"])
+        self.assertEqual(manifest["delivery"]["required_workflows"], ["workflow-governance"])
+
     def test_governance_actions_are_commit_pinned_and_dependency_versioned(self) -> None:
         workflow = (ROOT / ".github/workflows/governance.yml").read_text(encoding="utf-8")
         self.assertNotIn("actions/checkout@v", workflow)
@@ -219,6 +258,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", workflow)
         self.assertIn("actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38", workflow)
         self.assertIn("PyYAML==6.0.2", workflow)
+        self.assertIn("hermes-agent==0.19.0", workflow)
 
     def test_readme_documents_kimi_speed_lane_commands_without_auto_switching(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -237,6 +277,66 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertNotIn("MERGED_MODEL_SWITCH", source)
         self.assertNotIn("write_text(MERGED_MODEL_SWITCH", source)
+
+    def test_sync_atomic_replace_rolls_back_when_install_fails(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_atomic", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            home = temp / "home"
+            staging = temp / "staging"
+            home.mkdir()
+            staging.mkdir()
+            (home / "config.yaml").write_text("old", encoding="utf-8")
+            (staging / "config.yaml").write_text("new", encoding="utf-8")
+            real_replace = module.os.replace
+            calls = 0
+
+            def flaky_replace(source: str | Path, target: str | Path) -> None:
+                nonlocal calls
+                calls += 1
+                if calls == 2:
+                    raise OSError("simulated atomic install failure")
+                real_replace(source, target)
+
+            with patch.object(module.os, "replace", side_effect=flaky_replace):
+                with self.assertRaisesRegex(OSError, "simulated atomic install failure"):
+                    module.atomic_replace_paths(staging, home, ["config.yaml"])
+            self.assertEqual((home / "config.yaml").read_text(encoding="utf-8"), "old")
+            self.assertFalse(any(home.glob(".workflow-assistance-rollback-*")))
+
+    def test_sync_preserves_rollback_when_cleanup_fails(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_cleanup", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            home = temp / "home"
+            staging = temp / "staging"
+            home.mkdir()
+            staging.mkdir()
+            (home / "config.yaml").write_text("old", encoding="utf-8")
+            (staging / "config.yaml").write_text("new", encoding="utf-8")
+            real_rmtree = module.shutil.rmtree
+
+            def fail_rollback_cleanup(path: str | Path, *args: object, **kwargs: object) -> None:
+                if Path(path).name.startswith(".workflow-assistance-rollback-"):
+                    raise OSError("simulated rollback cleanup failure")
+                real_rmtree(path, *args, **kwargs)
+
+            with patch.object(module.shutil, "rmtree", side_effect=fail_rollback_cleanup):
+                with self.assertRaisesRegex(OSError, "simulated rollback cleanup failure"):
+                    module.atomic_replace_paths(staging, home, ["config.yaml"])
+            self.assertTrue(any(home.glob(".workflow-assistance-rollback-*")))
 
     def test_sync_removes_retired_managed_mcps_and_preserves_model(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
@@ -294,6 +394,40 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertIn("spotify", rerun["plugins"]["enabled"])
             self.assertEqual(rerun["display"]["busy_input_mode"], "queue")
             self.assertTrue((home / ".workflow-assistance-state.yaml").exists())
+
+    def test_sync_installs_terminal_hook_and_preserves_custom_hooks(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_hooks", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            repo = temp / "repo"
+            home = temp / "home"
+            (repo / "config").mkdir(parents=True)
+            home.mkdir()
+            (repo / "config/config.yaml").write_text(
+                "hooks:\n  pre_tool_call:\n"
+                "    - matcher: terminal\n"
+                "      command: python ${HERMES_HOME}/bin/hermes-project-terminal-guard.py\n"
+                "      timeout: 10\n",
+                encoding="utf-8",
+            )
+            (home / "config.yaml").write_text(
+                "hooks:\n  pre_tool_call:\n"
+                "    - matcher: browser\n      command: custom-browser-hook\n",
+                encoding="utf-8",
+            )
+
+            module.merge_live_config(repo, home, apply=True)
+            result = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8"))
+            hooks = result["hooks"]["pre_tool_call"]
+            self.assertEqual({hook["matcher"] for hook in hooks}, {"browser", "terminal"})
+            terminal = next(hook for hook in hooks if hook["matcher"] == "terminal")
+            self.assertIn(str(home / "bin/hermes-project-terminal-guard.py").replace("\\", "/"), terminal["command"])
 
     def test_sync_removes_only_explicitly_retired_managed_skill_assets(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
@@ -540,6 +674,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertFalse(module.has_exact_marker("Only reply OK_LIVE", "OK_LIVE"))
         self.assertFalse(module.has_exact_marker("prompt: OK_LIVE", "OK_LIVE"))
         self.assertTrue(module.has_exact_marker("noise\nOK_LIVE\n", "OK_LIVE"))
+        with patch.object(module, "print_command", return_value=(1, "simulated required failure")):
+            self.assertFalse(module.required_command("required smoke", ["fake"], timeout=1))
         leaked = "github_pat_" + "A" * 30 + " npm_" + "B" * 30 + " xoxb-" + "C" * 30
         redacted = module.redact(leaked)
         self.assertNotIn("A" * 30, redacted)
@@ -666,7 +802,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("def deploy_portable", sync)
-        self.assertIn('copytree(repo / "skills", home / "skills", apply=apply)', sync)
+        self.assertIn("def prepare_staging", sync)
+        self.assertIn("def atomic_replace_paths", sync)
+        self.assertIn("rollback-capable filesystem transaction", sync)
 
     def test_project_data_boundary_is_deployable_and_fail_closed(self) -> None:
         helper = ROOT / "bin/hermes-project-data.py"
@@ -814,6 +952,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "security",
                 "context-pack",
                 "portable-install",
+                "portable-install-runtime",
                 "provider-inventory",
                 "mcp-audit",
                 "shell",
@@ -832,6 +971,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "QUALITY_GATE_FAIL",
             "build_context_pack.py",
             "mcp_candidate_audit.py",
+            "portable-install-runtime",
+            "--runtime",
             "scan_agent_rules.py",
             "usable_bash()",
             "Git Bash / GNU bash not found",
@@ -881,7 +1022,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
             capture_output=True,
             check=True,
         )
-        self.assertIn("verify: Run governance, compile, skill-provenance, security, context-pack, portable-install, provider-inventory, mcp-audit", list_result.stdout)
+        self.assertIn(
+            "verify: Run governance, compile, skill-provenance, security, context-pack, "
+            "portable-install, portable-install-runtime, provider-inventory, mcp-audit",
+            list_result.stdout,
+        )
 
     def test_mcp_candidate_audit_is_fail_closed_and_does_not_enable_defaults(self) -> None:
         script = ROOT / "scripts/workflow/mcp_candidate_audit.py"

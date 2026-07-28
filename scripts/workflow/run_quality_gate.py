@@ -140,6 +140,13 @@ def gate_portable_install() -> int:
     return run_python(["scripts/workflow/verify_portable_install.py"])
 
 
+def gate_portable_install_runtime() -> int:
+    if not command_exists("hermes"):
+        print("\n=== FAIL portable-install-runtime: hermes CLI not found; runtime compatibility is required ===")
+        return 1
+    return run_python(["scripts/workflow/verify_portable_install.py", "--runtime"])
+
+
 def gate_provider_inventory() -> int:
     return run_python(
         [
@@ -190,13 +197,30 @@ GATES: dict[str, Gate] = {
     "security": Gate("security", "Scan templates, skills, docs, scripts and README for prompt/security hazards.", gate_security),
     "context-pack": Gate("context-pack", "Generate the safe ignored Context Pack smoke artifact.", gate_context_pack),
     "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
+    "portable-install-runtime": Gate(
+        "portable-install-runtime",
+        "Run the real Hermes config check against an isolated portable home.",
+        gate_portable_install_runtime,
+    ),
     "provider-inventory": Gate("provider-inventory", "Generate the secret-free configured provider/model inventory.", gate_provider_inventory),
     "mcp-audit": Gate("mcp-audit", "Smoke the MCP candidate audit template generator.", gate_mcp_audit),
     "shell": Gate("shell", "Parse setup.sh with bash -n when bash is available.", gate_shell),
     "powershell": Gate("powershell", "Parse setup.ps1 with PowerShell AST when pwsh/powershell.exe is available.", gate_powershell),
 }
 
-VERIFY_ORDER = ("governance", "compile", "skill-provenance", "security", "context-pack", "portable-install", "provider-inventory", "mcp-audit", "shell", "powershell")
+VERIFY_ORDER = (
+    "governance",
+    "compile",
+    "skill-provenance",
+    "security",
+    "context-pack",
+    "portable-install",
+    "portable-install-runtime",
+    "provider-inventory",
+    "mcp-audit",
+    "shell",
+    "powershell",
+)
 
 
 def run_gate_sequence(names: tuple[str, ...]) -> int:
