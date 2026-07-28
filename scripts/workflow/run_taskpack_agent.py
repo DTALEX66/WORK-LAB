@@ -25,15 +25,15 @@ DEFAULT_SKILLS = (
 )
 SESSION_PATTERN = re.compile(r"(?m)^session_id:\s*(\S+)\s*$")
 FORCED_HIGH_PATH_PATTERNS = (
-    re.compile(r"(?:^|[\s`'\"(])\.github/"),
-    re.compile(r"(?:^|[\s`'\"(])config/"),
-    re.compile(r"(?:^|[\s`'\"(])setup\.(?:sh|ps1)(?:$|[\s`'\")])"),
-    re.compile(r"(?:^|[\s`'\"(])bin/"),
-    re.compile(r"(?:^|[\s`'\"(])scripts/security/"),
-    re.compile(r"(?:^|[\s`'\"(])scripts/workflow/sync_[^\s`'\")]+"),
-    re.compile(r"(?:^|[\s`'\"(])scripts/workflow/switch_model\.py"),
-    re.compile(r"(?:^|[\s`'\"(])workflow-manifest\.yaml"),
-    re.compile(r"(?:^|[\s`'\"(])pyproject\.toml"),
+    re.compile(r"(?:^|[\s`'\"(])\.github/", re.I),
+    re.compile(r"(?:^|[\s`'\"(])config/", re.I),
+    re.compile(r"(?:^|[\s`'\"(])setup\.(?:sh|ps1)(?:$|[\s`'\")])", re.I),
+    re.compile(r"(?:^|[\s`'\"(])bin/", re.I),
+    re.compile(r"(?:^|[\s`'\"(])scripts/security/", re.I),
+    re.compile(r"(?:^|[\s`'\"(])scripts/workflow/sync_[^\s`'\")]+", re.I),
+    re.compile(r"(?:^|[\s`'\"(])scripts/workflow/switch_model\.py", re.I),
+    re.compile(r"(?:^|[\s`'\"(])workflow-manifest\.yaml", re.I),
+    re.compile(r"(?:^|[\s`'\"(])pyproject\.toml", re.I),
 )
 FORCED_HIGH_OPERATION_PATTERN = re.compile(
     r"\b(?:credential|credentials|authentication|permission|provider[ _-]?change|"
@@ -84,6 +84,7 @@ def detect_task_risk(mission: str) -> str:
     """Detect TaskPack risk from the mission instead of trusting self-reporting."""
 
     normalized = mission.replace("\\", "/")
+    normalized = re.sub(r"(^|[\s`'\"(])(?:\./)+", r"\1", normalized)
     if CRITICAL_OPERATION_PATTERN.search(normalized):
         return "high"
     if FORCED_HIGH_OPERATION_PATTERN.search(normalized) or any(
@@ -219,6 +220,17 @@ class GitRepository:
             )
         return remote
 
+    def _github_repository(self) -> str:
+        """Return ``owner/repository`` for the release remote, fail closed otherwise."""
+        remote_url = self._git("remote", "get-url", self._remote_name()).strip()
+        match = re.search(r"github\.com[:/]([^/\s]+)/([^/\s]+?)(?:\.git)?/?$", remote_url, re.I)
+        if not match:
+            raise RunnerError(
+                "remote_ref must point at a GitHub owner/repository for exact-SHA CI; "
+                f"received remote URL {remote_url!r}"
+            )
+        return f"{match.group(1)}/{match.group(2)}"
+
     def verify_released(self, baseline_head: str, expected_tree: str | None = None) -> None:
         tree, status = self.snapshot()
         del tree
@@ -243,6 +255,7 @@ class GitRepository:
     def _wait_for_ci(self, head: str) -> None:
         if not shutil.which("gh"):
             raise RunnerError("gh executable not found; cannot verify exact-SHA CI")
+        repository = self._github_repository()
         deadline = time.monotonic() + self.ci_timeout_seconds
         while time.monotonic() < deadline:
             result = subprocess.run(
@@ -250,6 +263,8 @@ class GitRepository:
                     "gh",
                     "run",
                     "list",
+                    "--repo",
+                    repository,
                     "--commit",
                     head,
                     "--limit",

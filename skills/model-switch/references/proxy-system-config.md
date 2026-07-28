@@ -14,7 +14,7 @@
 
 ### 启用
 ```powershell
-# 设置为 FlClashCore / CC Switch 代理端口
+# 设置为本地网络代理端口；不要把代理进程误认成 CC Switch
 Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings' -Name ProxyEnable -Value 1
 Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings' -Name ProxyServer -Value '127.0.0.1:7890'
 ```

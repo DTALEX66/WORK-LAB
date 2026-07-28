@@ -74,18 +74,18 @@ entries:
 - name: windows-development-environment
   source: skills/software-development/windows-development-environment/SKILL.md
   live: skills/software-development/windows-development-environment/SKILL.md
-  source_sha256: 338c66a65fbc80ecb1c930ba755424f7246d96fc95ffe7be98a72b4215c63553
-  version: 1.1.0
+  source_sha256: ee2062504a5e733120771701dd1b3b8e9124f97abd562dd92f68655a66b64ef2
+  version: 1.1.1
   trust: repository-controlled
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 338c66a65fbc80ecb1c930ba755424f7246d96fc95ffe7be98a72b4215c63553
+  live_sha256: ee2062504a5e733120771701dd1b3b8e9124f97abd562dd92f68655a66b64ef2
 - name: github-auth
   source: profile-live-only/github/github-auth/SKILL.md
   live: skills/github/github-auth/SKILL.md
   source_sha256: profile-live-only
-  live_sha256: 7fdf94afcf01350108bcc9b6941bde62e962f563ac878835473d9b0d3b62753f
+  live_sha256: cceb00bfa8908c45976316321fb27d99f5a5ffb26cebf8cd6efe69c6ede9c544
   version: 1.1.0
   trust: profile-controlled-reviewed
   enabled: true
@@ -95,7 +95,7 @@ entries:
   source: profile-live-only/github/github-code-review/SKILL.md
   live: skills/github/github-code-review/SKILL.md
   source_sha256: profile-live-only
-  live_sha256: aadd9bf645c2aec2a66c7a390d047868601891f62c2d402bd533db68f6d4c454
+  live_sha256: af1f8aea62ed1f7e0107f00bfeccb2ac68ce6646ee2326ae27a33765f5ace203
   version: 1.1.0
   trust: profile-controlled-reviewed
   enabled: true
@@ -105,7 +105,7 @@ entries:
   source: profile-live-only/github/github-issues/SKILL.md
   live: skills/github/github-issues/SKILL.md
   source_sha256: profile-live-only
-  live_sha256: a7220d7cbfe1b3146545558337eddfeb9c805e18a570e426f11611bd9b871a30
+  live_sha256: 3b0316d2598d391288b8b3ddffcd1429cb97153476bce99680cb78ea3d1b2c3c
   version: 1.1.0
   trust: profile-controlled-reviewed
   enabled: true
@@ -115,7 +115,7 @@ entries:
   source: profile-live-only/github/github-pr-workflow/SKILL.md
   live: skills/github/github-pr-workflow/SKILL.md
   source_sha256: profile-live-only
-  live_sha256: be481de25d19aff627f27ccab9aec0df914f8fe217f4c999f5b922e22d36454a
+  live_sha256: f3a35d81e880ea73acde23ce080e1c047b745527eb713a93d40c3c379fb3954d
   version: 1.1.0
   trust: profile-controlled-reviewed
   enabled: true
@@ -125,7 +125,7 @@ entries:
   source: profile-live-only/github/github-repo-management/SKILL.md
   live: skills/github/github-repo-management/SKILL.md
   source_sha256: profile-live-only
-  live_sha256: 5a58a713375a86ade9e7e1faa50bdefe1f4176e64a6f9a35a96247e7189190f8
+  live_sha256: 27362c86fd1dfcd58e7b65a19f96e438026149de6eaf7a39dc28320353835144
   version: 1.1.0
   trust: profile-controlled-reviewed
   enabled: true

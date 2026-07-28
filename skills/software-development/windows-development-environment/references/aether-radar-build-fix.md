@@ -8,7 +8,7 @@ Aether-Radar v3.1, branch `codex/consolidate-warehouse-projects`. Next.js 16.2.9
 
 | Symptom | Error | Root cause | Fix |
 |---|---|---|---|
-| `npm ci` and `npm install` hang then fail | `Exit handler never called!` + `ETIMEDOUT` on every package | `package-lock.json` hardcoded OpenAI internal Artifactory URLs (`packages.applied-caas-gateway1.internal.api.openai.org`) | `rm -rf node_modules package-lock.json && npm install --ignore-scripts --no-audit --no-fund` |
+| `npm ci` and `npm install` hang then fail | `Exit handler never called!` + `ETIMEDOUT` on every package | `package-lock.json` hardcoded OpenAI internal Artifactory URLs (`packages.applied-caas-gateway1.internal.api.openai.org`) | After explicit approval and a reviewable lockfile backup, remove only the confirmed project dependency directory and lockfile, then regenerate with scripts disabled |
 | `npm run build:ci` fails | `spawn EINVAL` at `build-ci.mjs:9` | `child_process.spawn('npx.cmd')` not supported in Git Bash | Patch `scripts/build-ci.mjs` to use `cmd.exe /d /s /c 'npx next build'` on Windows |
 | `node --version` shows old version | Another Node (WeChat Dev Tools) higher in $PATH | Shadowed Hermes v22 | `export PATH="$HERMES_HOME/node:$PATH"` |
 

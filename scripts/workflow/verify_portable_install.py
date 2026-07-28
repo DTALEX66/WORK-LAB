@@ -73,6 +73,8 @@ def run_isolated_hermes_config_check(home: Path) -> None:
         cwd=home,
         env=env,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         check=False,
     )
@@ -95,7 +97,13 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
     else:
         home.mkdir(parents=True, exist_ok=False)
     sync = load_sync(repo)
-    sync.deploy_portable(repo, home, apply=True, include_backup=False)
+    sync.deploy_portable(
+        repo,
+        home,
+        apply=True,
+        include_backup=False,
+        allow_project_runtime_home=True,
+    )
 
     config = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8")) or {}
     runtime_feature_checks = {
@@ -115,8 +123,8 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
     context7 = (config.get("mcp_servers") or {}).get("context7")
     if not isinstance(context7, dict):
         raise RuntimeError("isolated config missing context7 mapping")
-    wrappers = [home / "bin/hermes-npx.cmd", home / "bin/hermes-npx"]
-    wrapper = next((candidate for candidate in wrappers if candidate.exists()), None)
+    preferred_wrapper = home / "bin/hermes-npx.cmd" if os.name == "nt" else home / "bin/hermes-npx"
+    wrapper = preferred_wrapper if preferred_wrapper.exists() else None
     if wrapper is None or Path(str(context7.get("command", ""))).resolve() != wrapper.resolve():
         raise RuntimeError("isolated config context7 command does not reference the copied wrapper")
     args = context7.get("args") or []

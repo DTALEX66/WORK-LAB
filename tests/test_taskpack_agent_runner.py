@@ -74,6 +74,8 @@ class FakeAgent:
 class TaskPackAgentRunnerTests(unittest.TestCase):
     def test_declared_low_cannot_bypass_forced_high_task_risk(self) -> None:
         self.assertEqual(effective_task_risk("low", "update config/managed-config-schema.yaml"), "high")
+        self.assertEqual(effective_task_risk("low", "update CONFIG/managed-config-schema.yaml"), "high")
+        self.assertEqual(effective_task_risk("low", "update ./.github/workflows/governance.yml"), "high")
         self.assertEqual(effective_task_risk("low", "rotate credentials and deploy"), "high")
         self.assertEqual(effective_task_risk("low", "add a pure adapter"), "low")
 
@@ -194,7 +196,7 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         )
         with patch("scripts.workflow.run_taskpack_agent.shutil.which", return_value="gh"), patch(
             "scripts.workflow.run_taskpack_agent.subprocess.run", return_value=result
-        ), patch(
+        ), patch.object(repo, "_github_repository", return_value="owner/repository"), patch(
             "scripts.workflow.run_taskpack_agent.time.monotonic", side_effect=[0, 0, 2]
         ), self.assertRaisesRegex(RunnerError, "required workflow"):
             repo._wait_for_ci("release")
@@ -217,10 +219,20 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
             ),
             stderr="",
         )
+        calls: list[list[str]] = []
+
+        def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append(command)
+            return result
+
         with patch("scripts.workflow.run_taskpack_agent.shutil.which", return_value="gh"), patch(
-            "scripts.workflow.run_taskpack_agent.subprocess.run", return_value=result
-        ), patch("scripts.workflow.run_taskpack_agent.time.monotonic", side_effect=[0, 0]):
+            "scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run
+        ), patch.object(repo, "_github_repository", return_value="owner/repository"), patch(
+            "scripts.workflow.run_taskpack_agent.time.monotonic", side_effect=[0, 0]
+        ):
             repo._wait_for_ci("release")
+
+        self.assertEqual(calls[0][0:5], ["gh", "run", "list", "--repo", "owner/repository"])
 
     def test_release_repository_rejects_empty_required_workflow_contract(self) -> None:
         with self.assertRaisesRegex(RunnerError, "required_workflows"):

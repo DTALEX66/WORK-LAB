@@ -61,6 +61,22 @@ def default_hermes_home() -> Path:
     return Path.home() / ".hermes"
 
 
+def validate_deployment_paths(repo: Path, home: Path, *, allow_project_runtime_home: bool = False) -> None:
+    """Reject overlapping source and deployment roots before any backup or write."""
+    runtime_root = repo / ".hermes" / "task-runtime"
+    if allow_project_runtime_home and home.is_relative_to(runtime_root):
+        return
+    try:
+        overlaps = repo == home or repo.is_relative_to(home) or home.is_relative_to(repo)
+    except ValueError:
+        overlaps = False
+    if overlaps:
+        raise ValueError(
+            "portable deployment repo and Hermes home must be distinct, non-overlapping directories: "
+            f"repo={repo} home={home}"
+        )
+
+
 def load_config_contract(repo: Path) -> dict:
     """Load the reviewed portable ownership contract before merging config."""
 
@@ -314,10 +330,12 @@ def merge_live_config(
         live_mcp.pop(retired, None)
 
     wrapper_home = wrapper_root or home
-    source_cmd_wrapper = home / "bin/hermes-npx.cmd"
     cmd_wrapper = wrapper_home / "bin/hermes-npx.cmd"
     sh_wrapper = wrapper_home / "bin/hermes-npx"
-    wrapper = (cmd_wrapper if source_cmd_wrapper.exists() else sh_wrapper).as_posix()
+    # The config is prepared in staging but consumed after promotion into
+    # ``wrapper_home``. Select by target platform, never by staging-time
+    # existence of the final path.
+    wrapper = (cmd_wrapper if os.name == "nt" else sh_wrapper).as_posix()
     for name, config in repo_mcp.items():
         if not isinstance(config, dict):
             raise ValueError(f"mcp server {name!r} must be a mapping")
@@ -341,7 +359,8 @@ def merge_live_config(
         deployed_hook = deepcopy(hook)
         if deployed_hook.get("matcher") == "terminal":
             guard = (wrapper_home / "bin/hermes-project-terminal-guard.py").as_posix()
-            deployed_hook["command"] = f'python "{guard}"'
+            python_command = "python" if os.name == "nt" else "python3"
+            deployed_hook["command"] = f'{python_command} "{guard}"'
         managed_pre_tool.append(deployed_hook)
     if managed_pre_tool:
         custom_pre_tool = [
@@ -432,13 +451,21 @@ def merge_live_config(
             )
 
 
-def deploy_portable(repo: Path, home: Path, *, apply: bool, include_backup: bool = True) -> None:
+def deploy_portable(
+    repo: Path,
+    home: Path,
+    *,
+    apply: bool,
+    include_backup: bool = True,
+    allow_project_runtime_home: bool = False,
+) -> None:
     """Run the single deployment orchestration used by CLI and verifier."""
 
     repo = repo.resolve()
     home = home.resolve()
     if not repo.is_dir() or not home.is_dir():
         raise ValueError("portable deployment requires existing repo and home directories")
+    validate_deployment_paths(repo, home, allow_project_runtime_home=allow_project_runtime_home)
     if include_backup:
         backup_paths(
             home,

@@ -9,6 +9,7 @@ if [ -z "${HERMES_HOME:-}" ]; then
         *) HERMES_HOME="$HOME/.hermes" ;;
     esac
 fi
+export HERMES_HOME
 
 command -v hermes >/dev/null || { echo "Hermes Agent is not installed" >&2; exit 1; }
 command -v python3 >/dev/null || { echo "python3 is required" >&2; exit 1; }
@@ -16,6 +17,10 @@ mkdir -p "$HERMES_HOME"
 
 python3 "$REPO_ROOT/scripts/workflow/sync_hermes_workflow_assets.py" \
     --repo "$REPO_ROOT" --home "$HERMES_HOME" --apply
+
+# Git checkouts created on Windows can lose POSIX executable bits. The deployed
+# wrapper is owned by this installer, so restore only that known executable.
+chmod +x "$HERMES_HOME/bin/hermes-npx"
 
 # Keep portable defaults minimal. Optional media/X/Spotify/meeting tools stay opt-in.
 hermes plugins enable security-guidance 2>/dev/null || true

@@ -2,7 +2,7 @@
 """Scan agent rule/prompt files for common safety issues.
 
 Usage:
-  python scripts/security/scan_agent_rules.py templates skills docs
+  python scripts/security/scan_agent_rules.py [paths...]
 """
 from __future__ import annotations
 
@@ -31,6 +31,21 @@ EXTS = {
     '.md', '.txt', '.yaml', '.yml', '.json', '.toml',
     '.py', '.sh', '.bash', '.ps1', '.psm1', '.cmd', '.bat',
 }
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_ROOTS = (
+    REPO_ROOT / "templates",
+    REPO_ROOT / "skills",
+    REPO_ROOT / "docs",
+    REPO_ROOT / "config",
+    REPO_ROOT / "bin",
+    REPO_ROOT / "scripts",
+    REPO_ROOT / ".github",
+    REPO_ROOT / "README.md",
+    REPO_ROOT / "AGENTS.md",
+    REPO_ROOT / "setup.sh",
+    REPO_ROOT / "setup.ps1",
+)
+SKIP_PARTS = {".git", ".hermes", "__pycache__", "node_modules", ".venv", "venv"}
 
 
 def scan_file(path: Path) -> list[str]:
@@ -48,18 +63,26 @@ def scan_file(path: Path) -> list[str]:
     return issues
 
 
+def iter_scannable(root: Path):
+    if root.is_file() and root.suffix.lower() in EXTS:
+        yield root
+        return
+    if not root.exists():
+        return
+    for path in root.rglob("*"):
+        if any(part in SKIP_PARTS for part in path.parts):
+            continue
+        if path.is_file() and path.suffix.lower() in EXTS:
+            yield path
+
+
 def main(argv: list[str]) -> int:
-    roots = [Path(a) for a in argv[1:]] or [Path('templates'), Path('skills'), Path('docs')]
+    roots = [Path(a) for a in argv[1:]] or list(DEFAULT_ROOTS)
     issues: list[str] = []
     for root in roots:
-        if root.is_file() and root.suffix.lower() in EXTS:
-            issues.extend(scan_file(root))
-        elif root.exists():
-            for path in root.rglob('*'):
-                if path.resolve() == Path(__file__).resolve():
-                    continue
-                if path.is_file() and path.suffix.lower() in EXTS:
-                    issues.extend(scan_file(path))
+        for path in iter_scannable(root):
+            if path.resolve() != Path(__file__).resolve():
+                issues.extend(scan_file(path))
     if issues:
         print('\n'.join(issues))
         return 1

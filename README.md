@@ -125,7 +125,7 @@ gate 中执行。兼容性承诺和功能清单位于 `workflow-manifest.yaml`�
 
 ```bash
 python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject --dry-run
-python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject
+python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject --agent-rules
 ```
 
 该入口只写目标项目的 Git-ignored `.hermes/` 运行时说明和 bootstrap manifest，绝不复制 OAuth、API key、provider route、会话或用户数据。
@@ -221,6 +221,19 @@ python scripts/workflow/provider_health.py \
 默认状态为 `UNVERIFIED`，表示模型被配置到 lane 中但尚未做真实调用；只有明确传入 `--live` 才逐一执行 marker 请求并消耗额度。报告不包含 token、OAuth 内容、cookie、API key、base URL 或凭据文件内容。
 
 ## Codex 编码执行器
+
+Codex 会在新任务启动时读取用户目录 `.codex/AGENTS.md`，再由项目内更具体的
+`AGENTS.md` 继续约束。仓库提供的是一个短小的全局基线安装器：它只会新建缺失文件，
+绝不覆盖已有 `AGENTS.md`；若检测到优先级更高的 `AGENTS.override.md` 则停止，不伪造
+“已生效”。先预览，再显式应用：
+
+```powershell
+python scripts/workflow/install_codex_global_guidance.py --codex-home "$env:USERPROFILE\.codex"
+python scripts/workflow/install_codex_global_guidance.py --codex-home "$env:USERPROFILE\.codex" --apply
+```
+
+安装后新开一个 Codex 任务即可重建规则链。全局基线只负责通用的数据边界；项目根的
+`AGENTS.md` 才负责 Hermes 的项目内运行器和该项目的具体规则。
 
 仓库不捆绑 Codex，可通过 launcher 定位本机已安装版本：
 
@@ -401,6 +414,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 `templates/agent-rules/`：
 
 - `AGENTS.md`：跨 Agent 项目规则；
+- `CODEX_GLOBAL_AGENTS.md`：仅在 Codex Home 没有用户规则时安全新建的全局基线；
 - `CODEX.md`：Codex 专用规则；
 - `DESIGN.md`：设计约束与结构说明；
 - `SECURITY.md`：项目安全边界。

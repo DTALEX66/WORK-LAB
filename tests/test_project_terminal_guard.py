@@ -113,6 +113,84 @@ class ProjectTerminalGuardTests(unittest.TestCase):
 
         self.assertIn("project", reason)
 
+    def test_blocks_windows_backslash_paths_and_parent_traversal_before_shlex(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        for child in (
+            r'python -c "open(\"C:\\tmp\\outside-task-artifact.txt\", \"w\")"',
+            r'python --dest=C:\\tmp\\outside-task-artifact.txt',
+            r'python -c "open(\"..\\outside-task-artifact.txt\", \"w\")"',
+            r'python -c "open(\"../outside-task-artifact.txt\", \"w\")"',
+        ):
+            with self.subTest(child=child):
+                reason = module.validate(
+                    self.payload(
+                        repo,
+                        'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- ' + child,
+                    )
+                )
+                self.assertIn("project", reason)
+
+    def test_blocks_shell_expansion_that_runs_before_the_wrapper(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        for child in (
+            r'python -c "open(\"$HOME/outside-task-artifact.txt\", \"w\")"',
+            r'python -c "open(\"${TMPDIR}/outside-task-artifact.txt\", \"w\")"',
+            r'$(python -c "print(\"unsafe\")") python -m pytest',
+            r'`python -c "print(\"unsafe\")"` python -m pytest',
+        ):
+            with self.subTest(child=child):
+                reason = module.validate(
+                    self.payload(
+                        repo,
+                        'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- ' + child,
+                    )
+                )
+                self.assertIn("shell expansion", reason)
+
+    def test_blocks_wrapper_prefix_variable_that_is_not_hermes_home(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        reason = module.validate(
+            self.payload(
+                repo,
+                '$HERMES_HOME_EVASION python "$HERMES_HOME/bin/hermes-project-data.py" --project . check',
+            )
+        )
+
+        self.assertIn("shell expansion", reason)
+
+    def test_blocks_single_ampersand_shell_chaining(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        reason = module.validate(
+            self.payload(
+                repo,
+                'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- python -m pytest & echo unsafe',
+            )
+        )
+
+        self.assertIn("chaining", reason)
+
+    def test_permits_shell_control_characters_inside_quoted_child_text(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        reason = module.validate(
+            self.payload(
+                repo,
+                "python \"$HERMES_HOME/bin/hermes-project-data.py\" --project . run -- "
+                "python -c 'print(\"literal; &\")'",
+            )
+        )
+
+        self.assertIsNone(reason)
+
     def test_blocks_implicit_or_non_git_workdir(self) -> None:
         module = load_module()
         repo = self.make_repo()
