@@ -252,7 +252,7 @@ run；可重复传入 `--required-workflow <name>` 增加额外门禁。缺失�
 仅有无关 workflow 的 success 都不会通过发布验证。
 
 远端 `main` 由 `main-workflow-governance` ruleset 保护：禁止删除和非快进更新，并要求
-`workflow-governance / linux` 与 `workflow-governance / windows` 两个 status check。ruleset
+`linux` 与 `windows` 两个 GitHub Actions status check（对应 `workflow-governance` workflow）。ruleset
 状态必须通过 GitHub API 读取核验，不能用本地配置或旧 run 摘要替代。
 
 `skills/autonomous-ai-agents/codex/SKILL.md` 定义：
