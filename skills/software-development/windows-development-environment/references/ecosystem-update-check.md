@@ -54,34 +54,26 @@ curl -s --max-time 15 "https://api.github.com/repos/openai/codex/releases/tags/r
   | python -c "import sys,json; print(json.load(sys.stdin).get('body','')[:600])"
 
 # Update
-npm install -g @openai/codex@latest
+# Prefer Codex Desktop's updater. A global npm update changes user-wide state
+# and requires explicit approval, version/source review, and a rollback plan.
 ```
 
-## 3. CC Switch (FlyintPro + FlClash)
+## 3. CC Switch desktop app
 
 ```bash
-# CC Switch runs as FlClashCore.exe on port 7890
-# Find the process:
-cmd.exe //c "netstat -ano | findstr :7890 | findstr LISTENING"
-# → PID is the second column
-
-# Get process details:
-cmd.exe //c "wmic process where processid=<PID> get name,executablepath"
-
-# Get FlyintPro GUI version (FlClashCore.exe has no embedded version):
+# CC Switch is a separate desktop app. Do not infer it from a proxy port or
+# from FlyintPro/FlClash processes.
+# Get the installed executable version (adjust only if the user chose a custom install path):
 python -c "
 import subprocess
 r = subprocess.run(['powershell', '-Command',
-    '(Get-Item \"C:\\Program Files\\FlyintPro\\FlyintPro.exe\").VersionInfo.FileVersion'],
+    '(Get-Item \"$env:LOCALAPPDATA\\Programs\\CC Switch\\cc-switch.exe\").VersionInfo.FileVersion'],
     capture_output=True, text=True, timeout=10)
-print('FlyintPro version:', r.stdout.strip())
+print('CC Switch version:', r.stdout.strip())
 "
 
-# Check underlying FlClash kernel for updates:
-curl -s --max-time 15 "https://api.github.com/repos/chen08209/FlClash/releases/latest" \
-  | python -c "import sys,json; d=json.load(sys.stdin); print(f'FlClash: {d.get(\"tag_name\",\"?\")} ({d.get(\"published_at\",\"?\")[:10]})')"
-
-# CC Switch updates must be done via FlyintPro GUI — no CLI update path.
+# Use CC Switch's About/update UI or its documented official release channel.
+# A local proxy's port (for example 7890) is only a network-route diagnostic.
 ```
 
 ## 4. DTALEX66/hermes Deployment Repo

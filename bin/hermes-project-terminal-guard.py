@@ -22,11 +22,15 @@ from typing import Any
 
 
 BLOCK_PREFIX = "PROJECT DATA BOUNDARY BLOCKED:"
-SHELL_CONTROL = re.compile(r"(?:;|&&|\|\||(?<!\|)\|(?!\|)|<|>|\n|\r)")
 ABSOLUTE_PATH = re.compile(
-    r"(?:(?:[A-Za-z]:[\\/])|(?:\\\\[^\\s\"']+)|(?:^|(?<=[\\s\"'=<>:([{]))/)[^\\s\"']+"
+    r"(?:(?:[A-Za-z]:[\\/])|(?:\\\\[^\s\"']+)|(?:^|(?<=[\s\"'=<>:([{]))/)[^\s\"']+"
 )
-RAW_UNC_PATH = re.compile(r"(?:^|(?<=[\\s\"'=]))(\\\\[^\\s\"']+)")
+RAW_UNC_PATH = re.compile(r"(?:^|(?<=[\s\"'=]))(\\\\[^\s\"']+)")
+RAW_WINDOWS_ABSOLUTE_PATH = re.compile(
+    r"(?:^|(?<=[\s\"'=<>:([{]))([A-Za-z]:[\\/][^\s\"']+)"
+)
+RAW_PARENT_TRAVERSAL = re.compile(r"(?:^|(?<=[\s\"'=<>:([{]))\.\.[\\/]")
+RAW_RUN_SEPARATOR = re.compile(r"(?:^|\s)run\s+--\s+")
 
 WRAPPER_NAME = "hermes-project-data.py"
 SUBCOMMANDS = {"init", "check", "policy", "cleanup", "run", "kanban"}
@@ -88,6 +92,106 @@ def external_raw_unc(command: str, root: Path) -> str | None:
     return None
 
 
+def external_raw_windows_path(command: str, root: Path) -> str | None:
+    """Check drive-qualified paths before POSIX shlex can strip backslashes."""
+    for match in RAW_WINDOWS_ABSOLUTE_PATH.finditer(command):
+        candidate = match.group(1)
+        if os.name != "nt":
+            return candidate
+        raw = ntpath.normcase(ntpath.normpath(candidate))
+        project = ntpath.normcase(ntpath.normpath(str(root)))
+        if raw != project and not raw.startswith(project.rstrip("\\") + "\\"):
+            return candidate
+    return None
+
+
+def has_raw_parent_traversal(command: str) -> bool:
+    """Reject path traversal in the shell source before argument parsing."""
+    return RAW_PARENT_TRAVERSAL.search(command) is not None
+
+
+def has_shell_control(command: str) -> bool:
+    """Detect shell control operators only when they are not shell-quoted."""
+    quote: str | None = None
+    escaped = False
+    for char in command:
+        if char in {"\n", "\r"}:
+            return True
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\" and quote != "'":
+            escaped = True
+            continue
+        if char in {"'", '"'}:
+            quote = None if quote == char else char if quote is None else quote
+            continue
+        if quote is None and char in {";", "|", "&", "<", ">"}:
+            return True
+    return False
+
+
+def has_shell_expansion(command: str) -> bool:
+    """Reject child shell expansions while permitting literal single-quoted text."""
+    quote: str | None = None
+    escaped = False
+    for char in command:
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\" and quote != "'":
+            escaped = True
+            continue
+        if char in {"'", '"'}:
+            quote = None if quote == char else char if quote is None else quote
+            continue
+        if quote != "'" and char in {"$", "`"}:
+            return True
+    return False
+
+
+def has_unsafe_wrapper_expansion(command: str) -> bool:
+    """Allow only the wrapper's exact HERMES_HOME expansion before ``run --``."""
+    quote: str | None = None
+    escaped = False
+    index = 0
+    while index < len(command):
+        char = command[index]
+        if escaped:
+            escaped = False
+            index += 1
+            continue
+        if char == "\\" and quote != "'":
+            escaped = True
+            index += 1
+            continue
+        if char in {"'", '"'}:
+            quote = None if quote == char else char if quote is None else quote
+            index += 1
+            continue
+        if quote != "'" and char == "`":
+            return True
+        if quote != "'" and char == "$":
+            if command.startswith("${HERMES_HOME}", index):
+                index += len("${HERMES_HOME}")
+                continue
+            if command.startswith("$HERMES_HOME", index):
+                end = index + len("$HERMES_HOME")
+                if end == len(command) or not (command[end].isalnum() or command[end] == "_"):
+                    index = end
+                    continue
+                return True
+            return True
+        index += 1
+    return False
+
+
+def raw_child_command(command: str) -> str:
+    """Return source text after the wrapper's ``run --`` separator."""
+    match = RAW_RUN_SEPARATOR.search(command)
+    return command[match.end() :] if match else ""
+
+
 def block(reason: str) -> int:
     print(json.dumps({"action": "block", "message": f"{BLOCK_PREFIX} {reason}"}))
     return 0
@@ -129,11 +233,10 @@ def validate(payload: dict[str, Any]) -> str | None:
     command = tool_input.get("command")
     if not isinstance(command, str) or not command.strip():
         return "terminal command is missing."
-    if SHELL_CONTROL.search(command):
+    if has_shell_control(command):
         return "shell chaining/redirection is forbidden; invoke one wrapper command only."
-    external_unc = external_raw_unc(command, root)
-    if external_unc:
-        return f"child command contains an absolute UNC path outside the Git project: {external_unc}"
+    if has_unsafe_wrapper_expansion(command):
+        return "shell expansion before wrapper execution is forbidden."
     try:
         argv = shlex.split(command, posix=True)
     except ValueError:
@@ -156,6 +259,17 @@ def validate(payload: dict[str, Any]) -> str | None:
     if argv[subcommand_index] == "run" and (len(argv) <= subcommand_index + 1 or argv[subcommand_index + 1] != "--"):
         return "wrapper run requires -- before the child command."
     if argv[subcommand_index] == "run":
+        child_source = raw_child_command(command)
+        if has_shell_expansion(child_source):
+            return "child command contains shell expansion before wrapper execution."
+        external_unc = external_raw_unc(child_source, root)
+        if external_unc:
+            return f"child command contains an absolute UNC path outside the Git project: {external_unc}"
+        external_windows = external_raw_windows_path(child_source, root)
+        if external_windows:
+            return f"child command contains an absolute Windows path outside the Git project: {external_windows}"
+        if has_raw_parent_traversal(child_source):
+            return "child command contains parent-directory traversal outside the Git project."
         external = external_child_path(argv, subcommand_index + 1, root)
         if external:
             return f"child command contains an absolute path outside the Git project: {external}"

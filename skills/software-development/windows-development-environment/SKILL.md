@@ -1,7 +1,7 @@
 ---
 name: windows-development-environment
 description: "Windows-specific quirks and fixes for development: PowerShell encoding, PATH shadowing, spawn EINVAL, lockfile registry portability, and environment setup."
-version: 1.1.0
+version: 1.1.1
 author: Hermes Agent
 license: MIT
 platforms: [windows]
@@ -131,11 +131,10 @@ PY
 
 When a lockfile hardcodes internal registry URLs, `npm ci` times out.
 
-**Fix:** Regenerate:
-```bash
-rm -rf node_modules package-lock.json
-npm install --ignore-scripts --no-audit --no-fund
-```
+**Fix:** regeneration is destructive. First list the exact `node_modules` and
+`package-lock.json` paths, preserve a reviewable lockfile copy or Git diff, and
+obtain explicit user approval. Then remove only those two confirmed project
+paths and regenerate with `npm install --ignore-scripts --no-audit --no-fund`.
 
 ### 5. Common Windows npm failures
 
@@ -362,15 +361,16 @@ Quick-reference table (distilled from the reference):
 | Tool | Version check | Latest check | Update command |
 |------|--------------|-------------|----------------|
 | Hermes | `hermes --version` | GitHub API `/repos/NousResearch/hermes-agent/releases/latest` | `hermes update` |
-| Codex CLI | `codex --version` | `npm view @openai/codex version` | `npm i -g @openai/codex@latest` |
-| CC Switch | PowerShell `FlyintPro.exe` FileVersion | GitHub `/repos/chen08209/FlClash/releases/latest` (kernel) | Manual via FlyintPro GUI |
+| Codex CLI | `codex --version` | `npm view @openai/codex version` | Use the desktop updater, or perform a global npm update only after explicit approval, version/source review, and rollback planning |
+| CC Switch | PowerShell `cc-switch.exe` FileVersion | Its own About/update UI or documented official release channel | Manual via CC Switch GUI |
 
 **Pitfall:** `codex` may not be on `$PATH` in git-bash — it lives at
 `C:\Users\<user>\AppData\Local\Microsoft\WindowsApps\codex.cmd`.  Use
 `cmd.exe //c "codex --version"` from bash, or invoke the `.cmd` directly.
 
-**Pitfall:** FlClashCore.exe has no embedded version info (`FileVersion: 0.0.0.0`).
-Use `FlyintPro.exe` path instead, or check `unins000.dat` for build metadata.
+**Pitfall:** a local proxy listener such as `FlClashCore.exe` on port 7890 is not
+CC Switch. Identify `cc-switch.exe` directly before reporting its version or
+update status.
 
 **Pitfall:** Git fetch of the Hermes upstream repo (`hermes-agent/`) times out
 behind CC Switch on this machine. Use `export HTTPS_PROXY=http://127.0.0.1:7890`

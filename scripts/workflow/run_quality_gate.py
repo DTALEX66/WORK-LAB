@@ -47,6 +47,8 @@ def usable_bash() -> str | None:
         result = subprocess.run(
             [str(path), "--version"],
             text=True,
+            encoding="utf-8",
+            errors="replace",
             capture_output=True,
         )
         if result.returncode == 0 and "GNU bash" in result.stdout:
@@ -87,7 +89,14 @@ def project_runtime_environment(root: Path) -> dict[str, str]:
 def run(argv: list[str], *, cwd: Path = ROOT) -> int:
     printable = " ".join(argv)
     print(f"\n=== {printable} ===")
-    result = subprocess.run(argv, cwd=cwd, text=True, env=project_runtime_environment(cwd))
+    result = subprocess.run(
+        argv,
+        cwd=cwd,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=project_runtime_environment(cwd),
+    )
     print(f"=== exit {result.returncode}: {printable} ===")
     return result.returncode
 

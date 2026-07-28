@@ -184,7 +184,7 @@ def sha256_text(text: str) -> str:
 
 def read_safe_text(root: Path, relative: str, max_chars: int = MAX_SECTION_CHARS) -> str | None:
     path = root / relative
-    if not path.is_file() or forbidden_path(Path(relative)):
+    if not is_relative_to(path, root) or not path.is_file() or forbidden_path(Path(relative)):
         return None
     data = path.read_text(encoding="utf-8", errors="replace")
     data = redact(data)

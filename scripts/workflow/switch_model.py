@@ -163,7 +163,7 @@ def status() -> None:
     print(f'HERMES_HOME={hermes_home()}')
     print(f'KIMI_API_KEY={"present" if env_has("KIMI_API_KEY") or env_has("KIMI_CN_API_KEY") else "missing"}')
     print(f'DEEPSEEK_API_KEY={"present" if env_has("DEEPSEEK_API_KEY") else "missing"}')
-    print(f'CC Switch 127.0.0.1:7890={"open" if port_open("127.0.0.1", 7890) else "closed"}')
+    print(f'Local network proxy 127.0.0.1:7890={"open" if port_open("127.0.0.1", 7890) else "closed"}')
     print(f'Codex proxy 127.0.0.1:15721={"open" if port_open("127.0.0.1", 15721) else "closed"}')
     cp = run(['hermes', 'auth', 'list'], timeout=30)
     print('\n=== Auth providers (redacted) ===')

@@ -94,6 +94,22 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 module.verify(ROOT, home)
             self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
 
+    def test_sync_rejects_repo_and_hermes_home_path_overlap_before_writing(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_overlap", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw) / "repo"
+            repo.mkdir()
+            home = repo / "hermes-home"
+            home.mkdir()
+            with self.assertRaisesRegex(ValueError, "non-overlapping"):
+                module.deploy_portable(repo, home, apply=False, include_backup=False)
+
     def test_project_bootstrap_dry_run_is_non_destructive_and_lists_outputs(self) -> None:
         script = ROOT / "scripts/workflow/bootstrap_project.py"
         self.assertTrue(script.exists())
@@ -111,6 +127,148 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("BOOTSTRAP_DRY_RUN", result.stdout)
             self.assertFalse((target / ".hermes").exists())
+
+    def test_project_bootstrap_can_add_agent_rules_without_overwriting_existing_rules(self) -> None:
+        script = ROOT / "scripts/workflow/bootstrap_project.py"
+        with tempfile.TemporaryDirectory() as raw:
+            target = Path(raw) / "new-project"
+            target.mkdir()
+            (target / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+            subprocess.run(["git", "init", "-q", str(target)], check=True)
+
+            created = subprocess.run(
+                [sys.executable, str(script), str(target), "--agent-rules"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            self.assertIn("AGENTS.md", created.stdout)
+            self.assertIn("Agent Rules", (target / "AGENTS.md").read_text(encoding="utf-8"))
+
+            (target / "AGENTS.md").write_text("# existing rules\n", encoding="utf-8")
+            rerun = subprocess.run(
+                [sys.executable, str(script), str(target), "--agent-rules"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(rerun.returncode, 0, rerun.stdout + rerun.stderr)
+            self.assertEqual((target / "AGENTS.md").read_text(encoding="utf-8"), "# existing rules\n")
+
+    def test_project_bootstrap_preserves_existing_project_runtime_metadata(self) -> None:
+        script = ROOT / "scripts/workflow/bootstrap_project.py"
+        with tempfile.TemporaryDirectory() as raw:
+            target = Path(raw) / "existing-project"
+            runtime = target / ".hermes"
+            runtime.mkdir(parents=True)
+            (target / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+            subprocess.run(["git", "init", "-q", str(target)], check=True)
+            readme = runtime / "README.md"
+            manifest = runtime / "BOOTSTRAP_MANIFEST.yaml"
+            readme.write_text("# project-specific runtime notes\n", encoding="utf-8")
+            manifest.write_text("source: project-specific\n", encoding="utf-8")
+
+            result = subprocess.run(
+                [sys.executable, str(script), str(target)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(readme.read_text(encoding="utf-8"), "# project-specific runtime notes\n")
+            self.assertEqual(manifest.read_text(encoding="utf-8"), "source: project-specific\n")
+
+    def test_codex_global_guidance_install_is_non_destructive_and_respects_override(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        self.assertTrue(script.exists())
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            dry_run = subprocess.run(
+                [sys.executable, str(script), "--codex-home", str(home)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(dry_run.returncode, 0, dry_run.stdout + dry_run.stderr)
+            self.assertIn("CODEX_GUIDANCE_READY", dry_run.stdout)
+            self.assertFalse((home / "AGENTS.md").exists())
+
+            created = subprocess.run(
+                [sys.executable, str(script), "--codex-home", str(home), "--apply"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            self.assertIn("CODEX_GUIDANCE_WRITTEN", created.stdout)
+            self.assertIn("Global Codex baseline", (home / "AGENTS.md").read_text(encoding="utf-8"))
+
+            existing = subprocess.run(
+                [sys.executable, str(script), "--codex-home", str(home), "--apply"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(existing.returncode, 0, existing.stdout + existing.stderr)
+            self.assertIn("CODEX_GUIDANCE_EXISTS", existing.stdout)
+
+            (home / "AGENTS.override.md").write_text("# user override\n", encoding="utf-8")
+            override = subprocess.run(
+                [sys.executable, str(script), "--codex-home", str(home), "--apply"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(override.returncode, 0, override.stdout + override.stderr)
+            self.assertIn("CODEX_GUIDANCE_BLOCKED_OVERRIDE", override.stdout)
+
+    def test_codex_global_guidance_apply_does_not_overwrite_a_concurrent_user_file(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_atomic", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            target = home / "AGENTS.md"
+
+            def ready_then_user_creates_file(_codex_home: Path) -> tuple[int, str, Path]:
+                target.write_text("# user rules\n", encoding="utf-8")
+                return 0, "CODEX_GUIDANCE_READY", target
+
+            with patch.object(module, "plan", side_effect=ready_then_user_creates_file):
+                self.assertEqual(module.main(["--codex-home", str(home), "--apply"]), 0)
+
+            self.assertEqual(target.read_text(encoding="utf-8"), "# user rules\n")
+
+    def test_codex_global_guidance_rejects_a_linked_ancestor_directory(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            physical_parent = root / "physical-parent"
+            physical_parent.mkdir()
+            linked_parent = root / "linked-parent"
+            try:
+                linked_parent.symlink_to(physical_parent, target_is_directory=True)
+            except OSError as error:
+                self.skipTest(f"symlink creation is unavailable: {error}")
+
+            home = linked_parent / ".codex"
+            result = subprocess.run(
+                [sys.executable, str(script), "--codex-home", str(home), "--apply"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("CODEX_GUIDANCE_BLOCKED_LINK", result.stdout)
+            self.assertFalse((physical_parent / ".codex" / "AGENTS.md").exists())
 
     def test_provider_health_generates_secret_free_unverified_inventory(self) -> None:
         script = ROOT / "scripts/workflow/provider_health.py"
@@ -878,6 +1036,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertIn("[REDACTED]", body)
             self.assertNotIn(secret, body)
             self.assertNotIn("auth.json", "\n".join(module.tracked_inventory(repo)))
+            outside = repo.parent / "outside-context.txt"
+            outside.write_text("must not enter context", encoding="utf-8")
+            self.assertIsNone(module.read_safe_text(repo, "../outside-context.txt"))
 
             with self.assertRaises(SystemExit):
                 module.write_context_pack(repo, Path("context-pack.md"), max_chars=20000)

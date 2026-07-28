@@ -23,18 +23,22 @@ This can break Vite/Next/uni-app builds because the executable and package manag
 
 ## Preferred fix without touching WeChat
 
-1. Install an independent Node:
+1. If the user explicitly approves a user-wide Node installation, install an
+   independent Node with the user's chosen package manager. Record the package,
+   version, install scope, source and rollback plan first. For example, an
+   approved Scoop workflow may use:
 
 ```bash
 scoop install nodejs-lts
 scoop reset nodejs-lts
 ```
 
-2. Install/refresh Corepack from the same Node distribution if missing or shadowed:
+2. If Corepack is missing or shadowed, prefer the Node distribution's bundled
+   Corepack. Do not globally install or upgrade it without explicit approval.
+   First place the selected Node distribution first on PATH:
 
 ```bash
 export PATH="$HOME/scoop/apps/nodejs-lts/current:$HOME/scoop/persist/nodejs-lts/bin:$PATH"
-npm install -g corepack@latest
 ```
 
 3. Add durable wrappers. Use both `~/bin` (persists across Git upgrades) and Git Bash `usr/local/bin` (often first in Hermes/Git-Bash PATH). The wrapper must prepend the real Node directory before launching Node; otherwise Node's own `child_process` calls may still find a later `node.exe` such as Hermes bundled Node or WeChat Node.
