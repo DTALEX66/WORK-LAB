@@ -60,11 +60,11 @@
 |---|---|---|---|
 | Hermes 配置模板 | `config/config.yaml` | `config.yaml` | 新机器基线；同步脚本合并时保留 live provider/model，并管理 `display.busy_input_mode=queue` |
 | 环境变量模板 | `config/.env.template` | `.env.template` | 只放占位说明，不放真实密钥 |
-| MCP wrapper | `bin/hermes-npx*` | `bin/hermes-npx*` | Windows live config 指向 `.cmd`；优先 bundled Node，缺失时可回退 PATH Node >=20 |
-| 技能 | `skills/` | `skills/` | 包含 codex、model-switch、sleep-mode、project-data-boundary、python-testing、windows-development-environment、agent-workflow-fortress；其中 sleep-mode 通过项目 `.hermes/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
+| MCP wrapper | `bin/hermes-npx*` | `bin/hermes-npx*` | Windows live config 指向 `.cmd`；优先 bundled Node，缺失时可在用户信任且兼容的 PATH Node 环境中回退 |
+| 技能 | `skills/` | `skills/` | 包含 codex、五个 GitHub workflow skills、model-switch、sleep-mode、project-data-boundary、python-testing、windows-development-environment、agent-workflow-fortress；当前共 13 个 repository-controlled skill，其中 sleep-mode 通过项目 `.hermes/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
 | 项目数据执行器 | `bin/hermes-project-data.py` | `bin/hermes-project-data.py` | fail-closed 验证 Git ignore，并把任务临时文件、缓存、日志、测试环境与产物锁到 `<project>/.hermes/task-runtime/` |
 | 同步脚本 | `scripts/workflow/sync_hermes_workflow_assets.py` | 手动运行 | repo ↔ live 定向同步；每次 apply 前备份可迁移资产 |
-| 排错记录 | `TROUBLESHOOTING.md`、`docs/workflow/error-fixes-2026-07-04.md`、`docs/workflow/gateway-cron-delivery.md` | 仓库文档 | 记录 Windows MCP、路径、GitHub CLI、Gateway/cron delivery、验证等已踩坑 |
+| 排错记录 | `TROUBLESHOOTING.md`、`docs/workflow/error-fixes-2026-07-04.md`、`docs/workflow/error-fixes-2026-07-28.md`、`docs/workflow/gateway-cron-delivery.md` | 仓库文档 | 记录 Windows MCP、路径、GitHub CLI、GitHub skill ownership、凭据安全、PowerShell、Gateway/cron delivery、验证等已踩坑 |
 
 ## 本地项目定义
 
@@ -76,7 +76,7 @@
 
 - 云端仓库：`https://github.com/DTALEX66/Workflow-assistance`
 - 云端角色：跨电脑同步的 HERMES + CC Switch + Codex 工作流增强资产库。
-- 云端应保持：README 定位清晰、部署命令指向 `Workflow-assistance`、topics/description 能反映 Hermes、CC Switch、Codex、MCP、workflow automation。
+- 云端应保持：README 定位清晰、部署命令指向 `Workflow-assistance`、topics/description 能反映 Hermes、CC Switch、Codex、GitHub skills、MCP、provenance、workflow automation 和 exact-SHA CI。
 
 ## 验证基线
 

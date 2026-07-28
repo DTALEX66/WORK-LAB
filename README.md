@@ -35,6 +35,22 @@ Workflow-assistance
 
 它保存可以安全提交到 Git 的工作流资产；不会安装 Hermes、Codex 或 CC Switch 主体，也不会保存 OAuth 状态、API Key、会话数据库、日志、缓存、模型权重或用户数据。
 
+## 2026-07-28 发布状态与错误总结
+
+本轮已将 `github-auth`、`github-code-review`、`github-issues`、`github-pr-workflow` 和
+`github-repo-management` 纳入仓库托管的全局 GitHub 工作流资产。当前 13 个 skill 都是
+`repository-controlled` portable source，经过 provenance、repo → live atomic sync、隔离
+portable install、Linux/Windows CI 和 live runtime 回归。
+
+本轮复审修正了 GitHub skill 的 source ownership 缺口、未认证 curl/凭据持久化误导、PR
+changed-files 分页缺失、SSH 私钥无授权写入、PowerShell/POSIX 命令不兼容和文档定位不一致。
+完整的错误、根因、修复和证据记录见
+[`docs/workflow/error-fixes-2026-07-28.md`](docs/workflow/error-fixes-2026-07-28.md)。
+
+GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它是非阻断上游维护提示。
+本项目不在 workflow 中硬编码 Node 版本，也不为了消除提示随意替换 action；若后续处理，必须
+走审阅后的自动依赖更新策略。
+
 ## 功能总览
 
 | 功能域 | 当前能力 | 主要入口 |

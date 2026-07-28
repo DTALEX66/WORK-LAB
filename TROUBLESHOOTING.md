@@ -1,6 +1,6 @@
 # 部署排坑手册
 
-> 记录 DTALEX66/Workflow-assistance（HERMES + CC Switch + Codex 工作流增强项目）部署和迁移过程中遇到的错误及解决方法
+> 记录 DTALEX66/Workflow-assistance（Hermes Agent + CC Switch + Codex + GitHub 全局、可迁移、可审计工作流增强项目）部署和迁移过程中遇到的错误及解决方法。完整的本轮 GitHub workflow 错误总结见 [`docs/workflow/error-fixes-2026-07-28.md`](docs/workflow/error-fixes-2026-07-28.md)。
 
 ---
 
@@ -13,11 +13,11 @@ fatal: unable to access 'https://github.com/DTALEX66/Workflow-assistance.git/': 
 
 **原因：** 网络环境（被墙/代理）导致 HTTPS 连接被重置。
 
-**解决：** 改用 SSH 克隆
+**解决：** 根据用户已经授权的 GitHub 认证方式选择 SSH 或 HTTPS；不要把某一种协议、CLI 或 credential helper 写成唯一方案。
 ```bash
 git clone git@github.com:DTALEX66/Workflow-assistance.git
 ```
-前提：已配置 GitHub SSH 密钥（`~/.ssh/id_ed25519_github`）。
+如果选择 SSH，必须由用户自行确认 exact key path、检查目标文件是否已存在并交互输入 passphrase；Agent 不读取或生成空 passphrase 私钥。
 
 ---
 
@@ -31,11 +31,7 @@ powershell.exe -File setup.ps1
 
 **原因：** PowerShell 脚本含中文注释，从 bash (MSYS) 调用时编码不兼容。
 
-**解决：** 不走 PowerShell，用 bash 手动执行各步骤：
-- `cp` 复制配置文件
-- `cp -r` 复制技能
-- `pip install ddgs`
-- `hermes tools enable` / `hermes plugins enable`
+**历史状态：** 旧版 setup 入口曾有编码兼容问题。当前应使用仓库提供的 canonical setup 入口和同步器；不要把 bash 手工复制、明文配置或未审阅的独立安装命令当作默认修复。
 
 ---
 
@@ -54,13 +50,7 @@ $PackDir = Join-Path $RepoRoot "Workflow-assistance"  # 旧版本误以为仓库
 
 **现象：** 部署保留了现有 `.env`，但 CC Switch 代理变量未写入。
 
-**解决：** 手动追加
-```bash
-cat >> ~/AppData/Local/hermes/.env << 'EOF'
-HTTPS_PROXY=http://127.0.0.1:7890
-HTTP_PROXY=http://127.0.0.1:7890
-EOF
-```
+**当前规则：** 不在排坑文档中追加或打印 `.env`、代理凭据或任何真实环境变量。同步器只部署无密钥模板并保留 live 本机路由；代理是否可用必须通过脱敏 doctor 或用户授权的连通性检查确认。
 
 ---
 
@@ -114,14 +104,14 @@ Author identity unknown
 fatal: unable to auto-detect email address
 ```
 
-**解决：** 临时指定或全局设置
+**解决：** 使用仓库局部、用户授权的身份设置；不默认修改全局 Git 配置。
 ```bash
 # 临时（单次提交）
 git -c user.name="DTALEX66" -c user.email="your@email.com" commit -m "..."
 
-# 永久
-git config --global user.name "DTALEX66"
-git config --global user.email "your@email.com"
+# 当前仓库局部
+git config --local user.name "DTALEX66"
+git config --local user.email "your@email.com"
 ```
 
 ---
@@ -150,10 +140,10 @@ GUI/TUI WebSocket client_disconnect(code=1006)
 ```yaml
 mcp_servers:
   context7:
-    command: C:/Users/admin/AppData/Local/hermes/bin/hermes-npx.cmd
+    command: <HERMES_HOME>/bin/hermes-npx.cmd
 ```
 
-如果 Hermes bundled Node 不存在，但 PATH 中 Node >=20 且 `npx` 可用，`hermes-npx.cmd` 会自动回退到 PATH `npx`。修复后运行：
+如果 Hermes bundled Node 不存在，但 PATH 中存在兼容的 Node 与 `npx`，`hermes-npx.cmd` 会自动回退到 PATH `npx`。不要在项目文档中写死用户目录或 Node 版本。修复后运行：
 
 ```bash
 hermes mcp test context7
