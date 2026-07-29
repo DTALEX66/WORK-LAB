@@ -138,7 +138,7 @@ GitHub Actions 曾报告 checkout/setup-python action 的 Node.js 20 runtime 弃
 - sandbox/Ask for approval 需要重新开启；
 - 外观 → 主题 → Codex 自定义主题不能稳定保存。
 
-本节只记录已核验的 Codex/ChatGPT 官方规则、本项目静态配置和当前本机运行证据；不把尚未完成的关机/重启复测写成已修复。
+本节记录已核验的 Codex/ChatGPT 官方规则、本项目静态配置、Desktop 日志时间线，以及正常退出和多轮冷启动后的最终边界。
 
 ### 官方规则
 
@@ -169,43 +169,44 @@ GitHub Actions 曾报告 checkout/setup-python action 的 Node.js 20 runtime 弃
 
 因此，项目工作流不是本次 Desktop 设置重置的直接根因。
 
-### 本机证据与修复
+### 本机日志时间线与根因
 
-审计前用户级 Codex 配置只有 `[windows].sandbox = "elevated"`，缺少全局 `approval_policy` 和 `sandbox_mode`。在用户明确要求继续后，使用备份、staging、TOML 预解析和 atomic replace 方式，仅补入：
+已确认的重复登录与权限配置变化分别落在 Codex Desktop 的认证 bootstrap 和共享配置状态层；自定义主题的持久化机制仍未确认。Hermes 更新与这些现象同时发生，但没有直接写入关系：
 
-```toml
-approval_policy = "on-request"
-sandbox_mode = "workspace-write"
-```
+1. **登录 bootstrap 未附加现有 token。** Desktop 日志先记录 `auth_token_missing`、`hadToken=false`、`no_token_attached` 和 401，随后才进入 `account/login/start`。认证文件当时仍存在，因此不是项目删除认证，也不能仅归因于代理启动较晚。
+2. **共享配置原子替换与 bundled-plugin reconcile 同窗口发生。** marketplace 重建、`config.toml` 原子替换和 reconcile 完成时间紧邻；替换后早期人工补入的 `approval_policy` 和 `sandbox_mode` 消失。现有日志不能独立识别执行替换的具体进程，因此只记录时间相关性。这两个键不再被描述为最终修复，也没有通过只读锁阻断官方 plugin 更新。
+3. **Hermes 自动更新是独立事件。** Hermes installer 同时检测到 managed checkout 的本地改动并执行 stash/reset，但代码和日志中没有发现它写入 Codex 登录、Desktop profile 或共享配置的证据。项目 wrapper、TaskPack 和 guidance installer 也没有对应写路径。
 
-原有配置保持：
+### 实际修复
 
-```toml
-[windows]
-sandbox = "elevated"
-```
+- Hermes managed checkout 恢复为干净的官方 `origin/main`；冲突本地 UI 改动导出为项目忽略区中的离线恢复补丁，没有重新应用到 managed install。
+- 删除会抢占 PATH 的旧用户级 `codex.exe`，并删除两个与 Hermes managed wrapper 逐字节相同的重复 wrapper；保留 Codex 官方 plugin app-server executable。
+- 通过 Codex Desktop 官方“完成 Windows 设置”流程创建 Windows sandbox，没有手工构造 sandbox 状态；配置最终由官方流程保留：
 
-这次用户配置修复的证据：
+  ```toml
+  [windows]
+  sandbox = "elevated"
+  ```
 
-- Codex 配置回读：三个键均为预期值；
-- `codex login status`：`Logged in using ChatGPT`；
-- `codex doctor`：`config.toml parse ok`；
-- `codex doctor`：`restricted fs + restricted network · approval OnRequest`；
-- `codex doctor`：ChatGPT endpoint 返回 HTTP 403，说明当前网络路径可达；
-- `codex doctor`：`17 ok · 1 idle · 0 warn · 0 fail`；
-- 仓库工作树保持干净，认证文件、Cookies、Local Storage 和主题数据库没有被修改。
+- Desktop 权限 UI 最终显示官方“替我审批”，没有选择“完全访问权限”。
+- 保留认证、sessions、archived sessions、SQLite/WAL/SHM、skills、rules、bundled marketplace、Chromium profile、LevelDB 和用户配置；只迁移或删除经哈希、引用和解析路径证明为重复或可恢复的对象。
 
-### 根因分类与边界
+### 冷启动与完整性证据
 
-1. **sandbox 默认缺失：已修复，但 Desktop 仍需重启后验证。** 用户配置此前没有全局默认；这不是项目仓库写入造成的。
-2. **开机重复登录：高概率为代理/网络启动时序问题，尚未完成重启级验证。** 早期 Doctor 曾报告 ChatGPT backend timeout；修复后当前 Doctor 能收到 HTTP 403，但这不能替代 Windows 开机复测。
-3. **自定义主题：未确认存在官方持久化配置。** 当前 Windows Store Desktop 包为 `OpenAI.Codex_26.721.4979.0`，配套 Codex CLI 为 `0.146.0-alpha.3.1`；检查 Desktop profile 的非敏感 Preferences/LevelDB 元数据时未发现可确认的 Desktop 自定义主题键。因此不能声称是项目覆盖，也不能未经验证断言为官方 bug。
+- 多次 `Ctrl+Q` 正常退出后，`ChatGPT.exe`/`codex.exe` 进程归零；多轮冷启动均无需重新登录，`codex login status` 持续返回 `Logged in using ChatGPT`。
+- 新启动日志中 `auth_token_missing=0`、登录 401 为 0、sandbox failure 为 0、LevelDB corruption/recovery 为 0；账号 bootstrap 成功。
+- Codex sessions 为 167 个、archived sessions 为 9 个、skills 为 54 个；相对修复前基线没有修改或减少。
+- 四个 Codex SQLite 数据库的 `PRAGMA quick_check` 均为 `ok`。
+- 三个 bundled plugins 最终均为 `installed, enabled`；marketplace resolve/write failure 为 0。
+- `codex --strict-config doctor --json` 最终 `overallStatus=ok`，无 fail/warn；Windows sandbox smoke 返回 `FINAL_CODEX_SANDBOX_OK`。
+- 当前 Store 包为 `OpenAI.Codex_26.721.4979.0`、AppX status 为 `Ok`；CLI 为 `0.146.0-alpha.3.1`，Bash/CMD/PowerShell 均解析到 Hermes managed wrapper。
+- 仓库未提交任何认证、profile、日志、session、数据库或恢复材料；任务证据位于 Git 忽略的 `.hermes/task-artifacts/`。
 
-### 后续验证与回滚
+### 已知上游边界
 
-- 完全退出并重新打开 Codex Desktop，验证 `workspace-write`、OnRequest 和自定义主题；
-- 在代理 `127.0.0.1:7890` 就绪后进行一次 Windows 重启级登录复测；
-- 如果主题仍重置，优先更新/回退到官方稳定 Desktop 版本，再考虑提交产品缺陷；不要删除认证或 Chromium profile；
-- 用户配置修复可用本次生成的同目录备份回滚；备份不属于本仓库，也没有上传。
+- 当前 Desktop 每次冷启动的第一轮 reconcile 可能短暂卸载 `browser`，第二轮会自动恢复；最终配置和 plugin list 稳定。内部触发条件尚未独立确认，因此只把它记录为可重复观察到的启动中间态，不通过修改官方包或锁死配置掩盖。
+- Codex Doctor 的 provider HTTP 探针使用约 3 秒超时，在本机代理链上偶发刚好超时；代理端口、ChatGPT/OpenAI HTTP、Desktop 账号与 WebSocket 均可达，安静窗口的最终 strict-config Doctor 全绿。
+- 即使通过官方 `Ctrl+Q` 且进程完全退出，Chromium Preferences 仍可能保留 `profile.exit_type="Crashed"`；实际冷启动没有 LevelDB corruption/recovery。不能直接编辑 Preferences/LevelDB 伪造 `Normal`。
+- Desktop 自定义主题没有已确认的官方 `config.toml` 持久化键；本轮没有编辑 LevelDB，也没有把 CLI `tui.theme` 冒充 Desktop 主题修复。因此登录、sandbox 和配置完整性已经验证，Desktop 自定义主题仍属于官方产品状态边界。
 
-本节不宣称 Desktop 登录和主题问题已经完全解决；它只发布截至本次审计已真实验证的规则、根因判断、最小修复和验证边界。
+以上结论区分“已修复且实测通过”“启动中间态会自愈”和“当前官方包仍未提供可验证持久化契约”的三类状态，不把一次 Doctor、单次 HTTP 响应或人工配置写入当成完整修复。
