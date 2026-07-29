@@ -113,7 +113,8 @@ python scripts/workflow/sync_hermes_workflow_assets.py --apply
 实际行为：
 
 - 在 Hermes Home 下创建时间戳备份；
-- 部署 `skills/`、`bin/` 和无密钥 `.env.template`；
+- 从 `config/managed-config-schema.yaml` 读取精确的 13 个 managed skill 根并逐根事务替换，删除这些子树中已不在权威源里的旧附件；不提升整个 `skills/` 根，因此 staging 后新增的 Hermes bundled 或用户 skill 也会保留；
+- 逐文件部署 schema 声明的 6 个 managed launcher/guard，保留 live `bin/` 中其它 Hermes 官方或用户入口；同时部署无密钥 `.env.template`；
 - 合并 portable MCP 与插件基线；
 - 保留 live Provider、模型、本机凭据、自定义 MCP 和非退役插件；
 - `public-apis` / `sequential-thinking` 等退役 managed MCP 每次同步都会移除；
@@ -132,8 +133,8 @@ python scripts/workflow/verify_portable_install.py
 ```
 
 它不调用模型、不读取现有 Hermes Home、不读取认证文件；它会 fail-closed 验证
-`workflow-manifest.yaml` 声明的 config compatibility/runtime features、portable config、skills、
-bin、Context7 的 copied wrapper 与 pinned package、模型 lanes 和快捷命令都可被部署。它不把
+`workflow-manifest.yaml` 声明的 config compatibility/runtime features、model/provider-neutral
+portable config、13 个 managed skill 根、6 个 managed binary、Context7 的 copied wrapper 与 pinned package 都可部署。它不把
 结构检查伪装成 MCP spawn 或 `hermes config check`；后二者只能在明确启用的隔离 integration
 gate 中执行。兼容性承诺和功能清单位于 `workflow-manifest.yaml`。
 
@@ -152,13 +153,11 @@ python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject --agent-
 
 - Hermes CLI 中文界面；
 - 忙时输入默认排队：`display.busy_input_mode = queue`，避免新输入隐式打断当前 turn；
-- 本地 terminal backend；
-- `hermes-cli` toolset；
 - 原生 `browser`、`clarify`、`code_execution`、`computer_use`、`cronjob`、`delegation`、`file`、`image_gen`、`memory`、`session_search`、`skills`、`terminal`、`todo`、`vision`、`web` 工具集；
 - 默认 MCP 仅 Context7；
 - 默认插件为 `security-guidance` 与 `web/ddgs`；
-- Provider 与模型字段仅作为 portable 初始基线，部署到既有环境时保留 live 选择；
-- API Key 字段保持为空，真实秘密只存在于 live 环境。
+- 会话不自动裁剪，并启用用户记忆与 profile；
+- **不定义** Provider、模型、base URL、API key、fallback、model picker lane 或模型切换命令；这些值完全由官方 Hermes setup 和 live 用户状态负责，overlay 合并时只保留其语义值。
 - `hooks.pre_tool_call` 默认注册项目 terminal guard；它只允许 canonical project wrapper，阻止未声明
   workdir、shell chaining 和项目外输出。同步器会保留非-terminal 自定义 hook，并对 terminal hook 做
   staging → atomic replace → rollback；live hook 脚本更新后必须由用户显式重新批准，不能静默绕过 Hermes
@@ -234,13 +233,13 @@ python scripts/workflow/provider_health.py \
   --output .hermes/task-artifacts/provider-health.json
 ```
 
-默认状态为 `UNVERIFIED`，表示模型被配置到 lane 中但尚未做真实调用；只有明确传入 `--live` 才逐一执行 marker 请求并消耗额度。报告不包含 token、OAuth 内容、cookie、API key、base URL 或凭据文件内容。
+默认状态为 `UNVERIFIED`，只表示显式提供或从当前运行时发现的模型尚未做真实调用；model/provider-neutral overlay 自身允许库存为空。只有明确传入 `--live` 才逐一执行 marker 请求并消耗额度。报告不包含 token、OAuth 内容、cookie、API key、base URL 或凭据文件内容。
 
 ## Codex 编码执行器
 
 Codex 会在新任务启动时读取用户目录 `.codex/AGENTS.md`，再由项目内更具体的
-`AGENTS.md` 继续约束。仓库提供的是一个短小的全局基线安装器：它只会新建缺失文件，
-绝不覆盖已有 `AGENTS.md`；若检测到优先级更高的 `AGENTS.override.md` 则停止，不伪造
+`AGENTS.md` 继续约束。仓库提供的是一个短小的全局基线安装器：它只会以独占创建方式
+新建缺失文件，连已有的零字节 `AGENTS.md` 也不会原地填充；若检测到已有文件或优先级更高的 `AGENTS.override.md` 则停止，不伪造
 “已生效”。先预览，再显式应用：
 
 ```powershell
@@ -400,7 +399,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards li
 | `requesting-code-review` | 代码复审兼容入口，统一转入 fortress 的 exact-tree 流程 |
 | `windows-development-environment` | PowerShell 编码、PATH 遮蔽、spawn/lockfile、便携工具链和 Windows 环境问题 |
 
-这 13 个 skill 都是本项目全局工作流增强的 repository-controlled portable source；同步脚本会把仓库中的 skills 作为单一事实源部署到 Hermes Home，但不会反向吸收 live 私有 skill 或运行数据。
+这 13 个 skill 都是本项目全局工作流增强的 repository-controlled portable source；同步脚本会把每个仓库负责的 skill 目录作为完整子树精确部署到 Hermes Home，不保留同目录里的旧 references、scripts 或 provenance 残片。其它 Hermes bundled 和用户安装 skills 保持原样，也不会把 live 私有 skill 或运行数据反向吸收到仓库。
 
 ## 安全与隐私
 
