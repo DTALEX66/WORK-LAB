@@ -1,62 +1,19 @@
-# Portable Hermes workflow baseline. Secrets and OAuth state never belong here.
-# Pick the live provider with `hermes model` or scripts/workflow/switch_model.py.
-model:
-  default: gpt-5.6-sol
-  provider: openai-codex
-  base_url: ''
-  api_key: ''
-  # Bound runaway answers without changing the active provider/model selection.
-  max_tokens: 8192
+# Workflow-assistance user overlay for a stock Hermes installation.
+#
+# This file intentionally contains no model, provider, base URL, API key,
+# fallback route, model picker lane, or model-switching command. Hermes setup
+# and built-in defaults own the base environment; this repository layers only
+# reviewed user workflow assets on top.
 
-# Curated display lanes do not remove models from Hermes' provider registry.
-# Sync preserves the active provider/model and credentials on existing machines.
-model_picker:
-  custom_lanes:
-    enabled: true
-    lanes:
-      - label: KIMI 系列
-        provider: kimi-coding
-        models:
-          - kimi-k3
-          - kimi-k2.7-code-highspeed
-          - kimi-k2.7-code
-      - label: DEEPSEEK 系列
-        provider: deepseek
-        models:
-          - deepseek-v4-pro
-          - deepseek-v4-flash
-      - label: CHATGPT 系列
-        provider: openai-codex
-        models:
-          - gpt-5.6-sol
-          - gpt-5.6-terra
-          - gpt-5.6-luna
-
-fallback_providers: []
-toolsets:
-  - hermes-cli
-max_live_sessions: 16
-
-agent:
-  max_turns: 150
-  gateway_timeout: 1800
-  reasoning_effort: low
-
-terminal:
-  backend: local
-  cwd: .
-  timeout: 180
-
-# Every Hermes terminal call must pass the project-local data boundary hook.
-# The synchronizer rewrites this portable path to the deployed Hermes home.
+# Keep terminal mutations inside each Git project's ignored .hermes boundary.
+# The synchronizer rewrites the portable path to the deployed Hermes home.
 hooks:
   pre_tool_call:
     - matcher: terminal
       command: python ${HERMES_HOME}/bin/hermes-project-terminal-guard.py
       timeout: 10
 
-# Context7 adds current public library documentation. Other MCPs are opt-in:
-# sequential-thinking duplicates model reasoning; public-apis duplicates web discovery.
+# Context7 is the only repository-managed MCP. User-defined MCPs are preserved.
 mcp_servers:
   context7:
     command: hermes-npx
@@ -68,49 +25,32 @@ mcp_servers:
     timeout: 120
     connect_timeout: 120
 
+# User-facing preferences layered on top of Hermes defaults.
 display:
-  interface: cli
   language: zh
-  skin: default
-  streaming: true
-  # Busy input queues the next message instead of interrupting the active turn.
-  # Use explicit /interrupt when cancellation is intended.
+  skin: purple-gemstone
   busy_input_mode: queue
 
-# Aliases use Hermes' /model handler; they never auto-switch the current session.
-quick_commands:
-  切换kimi:
-    type: alias
-    target: /model kimi-k3 --provider kimi-coding
-    description: 切换到 KIMI K3
-  切换kimi稳:
-    type: alias
-    target: /model kimi-k3 --provider kimi-coding
-    description: 切换到 KIMI K3 旗舰模型
-  切换kimi快:
-    type: alias
-    target: /model kimi-k2.7-code --provider kimi-coding
-    description: 切换到 KIMI 快速模型 kimi-k2.7-code
-  切换kimi极速:
-    type: alias
-    target: /model kimi-k2.7-code-highspeed --provider kimi-coding
-    description: 切换到 KIMI 官方高速模型 kimi-k2.7-code-highspeed
-  切换dp:
-    type: alias
-    target: /model deepseek-v4-flash --provider deepseek
-    description: 切换到 DEEPSEEK V4 Flash
-  切换gpt:
-    type: alias
-    target: /model gpt-5.6-sol --provider openai-codex
-    description: 切换到 CHATGPT 5.6 Sol
+# The user explicitly requires durable conversation history.
+sessions:
+  auto_prune: false
 
-# Lowest-risk portable defaults. Media, Spotify, X and meeting plugins are opt-in.
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  memory_char_limit: 2200
+  user_char_limit: 1375
+
+# Lowest-risk portable plugins. Media, Spotify, X, and meeting plugins remain
+# opt-in and are never enabled by this overlay.
 plugins:
   enabled:
     - security-guidance
     - web/ddgs
   disabled: []
 
+# Reviewed user workflow surface. This replaces only the CLI platform list;
+# the official core defaults and Desktop-managed capabilities remain intact.
 platform_toolsets:
   cli:
     - browser

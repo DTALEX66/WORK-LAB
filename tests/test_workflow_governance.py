@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -26,15 +27,31 @@ class WorkflowGovernanceTests(unittest.TestCase):
         ownership = yaml.safe_load(ownership_path.read_text(encoding="utf-8"))
         manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(ownership["schema_version"], 1)
-        self.assertEqual(ownership["managed"]["model.max_tokens"], "replace")
-        self.assertEqual(ownership["managed"]["model_picker.custom_lanes"], "replace")
+        for forbidden in (
+            "model.max_tokens",
+            "agent.reasoning_effort",
+            "model_picker.custom_lanes",
+            "quick_commands",
+        ):
+            self.assertNotIn(forbidden, ownership["managed"])
+        self.assertEqual(ownership["managed"]["platform_toolsets.cli"], "replace")
+        self.assertEqual(ownership["managed"]["sessions.auto_prune"], "replace")
         self.assertEqual(ownership["global_workflow"]["source_of_truth"], "repository")
-        self.assertIn("skills/github", ownership["global_workflow"]["owned_asset_roots"])
+        owned_roots = ownership["global_workflow"]["owned_asset_roots"]
+        self.assertEqual(len(owned_roots), 13)
+        self.assertIn("skills/github/github-auth", owned_roots)
+        self.assertNotIn("skills/github", owned_roots)
+        self.assertNotIn("skills/software-development", owned_roots)
+        owned_binaries = ownership["global_workflow"]["owned_binary_paths"]
+        self.assertEqual(len(owned_binaries), 6)
+        self.assertIn("bin/codex", owned_binaries)
+        self.assertNotIn("bin", owned_binaries)
         self.assertIn("model.provider", ownership["preserved"])
         self.assertIn("model.api_key", ownership["preserved"])
         self.assertEqual(manifest["schema_version"], 1)
         self.assertIn("portable_config", manifest["capabilities"])
-        self.assertIn("custom_model_lanes", manifest["capabilities"])
+        self.assertNotIn("custom_model_lanes", manifest["capabilities"])
+        self.assertNotIn("quick_model_commands", manifest["capabilities"])
 
     def test_portable_install_verifier_accepts_isolated_empty_home(self) -> None:
         script = ROOT / "scripts/workflow/verify_portable_install.py"
@@ -248,6 +265,87 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
             self.assertEqual(target.read_text(encoding="utf-8"), "# user rules\n")
 
+    def test_codex_global_guidance_refuses_an_empty_existing_file(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            target = home / "AGENTS.md"
+            target.write_bytes(b"")
+
+            result = subprocess.run(
+                [sys.executable, str(script), "--codex-home", str(home), "--apply"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("CODEX_GUIDANCE_BLOCKED_EMPTY", result.stdout)
+            self.assertEqual(target.read_bytes(), b"")
+
+            target.write_text("# user rules\n", encoding="utf-8")
+            preserved = subprocess.run(
+                [sys.executable, str(script), "--codex-home", str(home), "--apply"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertIn("CODEX_GUIDANCE_EXISTS", preserved.stdout)
+            self.assertEqual(target.read_text(encoding="utf-8"), "# user rules\n")
+
+    def test_codex_global_guidance_rechecks_a_concurrent_override(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_override_race", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            target = home / "AGENTS.md"
+
+            def ready_then_override(_codex_home: Path) -> tuple[int, str, Path]:
+                home.mkdir()
+                (home / "AGENTS.override.md").write_text("# user override\n", encoding="utf-8")
+                return 0, "CODEX_GUIDANCE_READY", target
+
+            with patch.object(module, "plan", side_effect=ready_then_override):
+                self.assertEqual(module.main(["--codex-home", str(home), "--apply"]), 0)
+
+            self.assertFalse(target.exists())
+            self.assertEqual(
+                (home / "AGENTS.override.md").read_text(encoding="utf-8"),
+                "# user override\n",
+            )
+
+    def test_codex_global_guidance_refuses_a_hardlinked_empty_file(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            home = root / ".codex"
+            home.mkdir()
+            outside = root / "outside-user-rules.md"
+            outside.write_bytes(b"")
+            target = home / "AGENTS.md"
+            try:
+                os.link(outside, target)
+            except OSError as error:
+                self.skipTest(f"hardlink creation is unavailable: {error}")
+
+            result = subprocess.run(
+                [sys.executable, str(script), "--codex-home", str(home), "--apply"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("CODEX_GUIDANCE_BLOCKED_HARDLINK", result.stdout)
+            self.assertEqual(target.read_bytes(), b"")
+            self.assertEqual(outside.read_bytes(), b"")
+
     def test_codex_global_guidance_rejects_a_linked_ancestor_directory(self) -> None:
         script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
         with tempfile.TemporaryDirectory() as raw:
@@ -288,7 +386,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertEqual(report["schema_version"], 1)
         self.assertTrue(report["secret_free"])
         self.assertEqual(report["overall_status"], "UNVERIFIED")
-        self.assertIn("openai-codex/gpt-5.6-sol", report["models"])
+        self.assertEqual(report["models"], {})
 
     def test_context_budget_policy_has_hard_tool_and_session_limits(self) -> None:
         policy_path = ROOT / "config/context-budget.yaml"
@@ -300,60 +398,32 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_portable_config_defaults_to_context7_only(self) -> None:
         config = yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))
+        for forbidden in ("model", "fallback_providers", "model_picker", "quick_commands", "agent"):
+            self.assertNotIn(forbidden, config)
         self.assertEqual(set(config["mcp_servers"]), {"context7"})
         self.assertEqual(
             set(config["plugins"]["enabled"]),
             {"security-guidance", "web/ddgs"},
         )
         self.assertEqual(config["display"]["busy_input_mode"], "queue")
-        self.assertTrue(config["display"]["streaming"])
-        self.assertEqual(config["agent"]["reasoning_effort"], "low")
-        self.assertEqual(config["model"]["max_tokens"], 8192)
+        self.assertEqual(config["display"]["skin"], "purple-gemstone")
+        self.assertEqual(config["display"]["language"], "zh")
+        self.assertFalse(config["sessions"]["auto_prune"])
+        self.assertTrue(config["memory"]["memory_enabled"])
+        self.assertTrue(config["memory"]["user_profile_enabled"])
         terminal_hooks = [
             hook for hook in config["hooks"]["pre_tool_call"] if hook["matcher"] == "terminal"
         ]
         self.assertEqual(len(terminal_hooks), 1)
         self.assertIn("hermes-project-terminal-guard.py", terminal_hooks[0]["command"])
-        lanes = config["model_picker"]["custom_lanes"]
-        self.assertTrue(lanes["enabled"])
-        self.assertEqual(
-            [lane["label"] for lane in lanes["lanes"]],
-            ["KIMI 系列", "DEEPSEEK 系列", "CHATGPT 系列"],
-        )
-        self.assertEqual(
-            set(config["quick_commands"]),
-            {"切换kimi", "切换kimi稳", "切换kimi快", "切换kimi极速", "切换dp", "切换gpt"},
-        )
         non_core = {"spotify", "x_search", "video", "tts"}
         self.assertTrue(non_core.isdisjoint(config["platform_toolsets"]["cli"]))
 
-    def test_portable_config_has_documented_kimi_speed_lanes_and_aliases(self) -> None:
+    def test_portable_config_is_model_and_provider_neutral(self) -> None:
         config = yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))
-        lanes = config["model_picker"]["custom_lanes"]
-        self.assertTrue(lanes["enabled"])
-        kimi = next(lane for lane in lanes["lanes"] if lane["label"] == "KIMI 系列")
-        self.assertEqual(kimi["provider"], "kimi-coding")
-        self.assertEqual(
-            kimi["models"][:3],
-            ["kimi-k3", "kimi-k2.7-code-highspeed", "kimi-k2.7-code"],
-        )
-        self.assertEqual(kimi["models"], ["kimi-k3", "kimi-k2.7-code-highspeed", "kimi-k2.7-code"])
-        deepseek = next(lane for lane in lanes["lanes"] if lane["label"] == "DEEPSEEK 系列")
-        self.assertEqual(deepseek["models"], ["deepseek-v4-pro", "deepseek-v4-flash"])
-        gpt = next(lane for lane in lanes["lanes"] if lane["label"] == "CHATGPT 系列")
-        self.assertEqual(gpt["models"], ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"])
-        quick = config["quick_commands"]
-        self.assertEqual(quick["切换kimi"]["target"], "/model kimi-k3 --provider kimi-coding")
-        self.assertEqual(quick["切换kimi稳"]["target"], "/model kimi-k3 --provider kimi-coding")
-        self.assertEqual(
-            quick["切换kimi快"]["target"],
-            "/model kimi-k2.7-code --provider kimi-coding",
-        )
-        self.assertEqual(
-            quick["切换kimi极速"]["target"],
-            "/model kimi-k2.7-code-highspeed --provider kimi-coding",
-        )
-        self.assertTrue(all(spec["type"] == "alias" for spec in quick.values()))
+        serialized = yaml.safe_dump(config, allow_unicode=True, sort_keys=False)
+        for forbidden in ("model:", "provider:", "base_url:", "model_picker:", "quick_commands:"):
+            self.assertNotIn(forbidden, serialized)
 
     def test_model_switch_docs_never_instruct_credential_or_cc_switch_db_access(self) -> None:
         source = "\n".join(
@@ -427,10 +497,44 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertNotEqual(entry["source_sha256"], "profile-live-only")
 
     def test_sync_backup_covers_global_github_skills(self) -> None:
-        script = (ROOT / "scripts/workflow/sync_hermes_workflow_assets.py").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn('"skills/github"', script)
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_backup_inventory", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / "home"
+            home.mkdir()
+            with patch.object(module, "backup_paths") as backup:
+                module.deploy_portable(
+                    ROOT,
+                    home,
+                    apply=False,
+                    allow_project_runtime_home=True,
+                )
+
+        backup_rels = set(backup.call_args.args[1])
+        for name in (
+            "github-auth",
+            "github-code-review",
+            "github-issues",
+            "github-pr-workflow",
+            "github-repo-management",
+        ):
+            self.assertIn(f"skills/github/{name}", backup_rels)
+        self.assertNotIn("skills/github", backup_rels)
+        for relative in (
+            "bin/codex",
+            "bin/codex.cmd",
+            "bin/hermes-npx",
+            "bin/hermes-npx.cmd",
+            "bin/hermes-project-data.py",
+            "bin/hermes-project-terminal-guard.py",
+        ):
+            self.assertIn(relative, backup_rels)
+        self.assertNotIn("bin", backup_rels)
 
     def test_isolated_portable_install_contains_global_github_skills(self) -> None:
         script = ROOT / "scripts/workflow/verify_portable_install.py"
@@ -510,6 +614,124 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("MERGED_MODEL_SWITCH", source)
         self.assertNotIn("write_text(MERGED_MODEL_SWITCH", source)
 
+    def test_sync_replaces_repo_owned_skill_trees_without_stale_live_assets(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_skills", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            repo = temp / "repo"
+            staging = temp / "staging"
+            managed_root = "skills/software-development/managed"
+            managed_repo = repo / managed_root
+            managed_live = staging / managed_root
+            custom_live = staging / "skills/custom/keep-me"
+
+            (managed_repo / "references").mkdir(parents=True)
+            managed_repo.joinpath("SKILL.md").write_text("repo", encoding="utf-8")
+            managed_repo.joinpath("references/current.md").write_text(
+                "current", encoding="utf-8"
+            )
+            (managed_live / "references").mkdir(parents=True)
+            managed_live.joinpath("SKILL.md").write_text("old", encoding="utf-8")
+            managed_live.joinpath("references/stale.md").write_text(
+                "stale", encoding="utf-8"
+            )
+            managed_live.joinpath(".hermes-origin.json").write_text(
+                "{}", encoding="utf-8"
+            )
+            custom_live.mkdir(parents=True)
+            custom_live.joinpath("SKILL.md").write_text("keep", encoding="utf-8")
+
+            module.replace_managed_skill_trees(repo, staging, [managed_root])
+
+            self.assertEqual(managed_live.joinpath("SKILL.md").read_text(), "repo")
+            self.assertTrue(managed_live.joinpath("references/current.md").exists())
+            self.assertFalse(managed_live.joinpath("references/stale.md").exists())
+            self.assertFalse(managed_live.joinpath(".hermes-origin.json").exists())
+            self.assertEqual(custom_live.joinpath("SKILL.md").read_text(), "keep")
+
+    def test_sync_promotion_preserves_a_concurrent_nonmanaged_skill(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_concurrent_skill", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            home = temp / "home"
+            staging = temp / "staging"
+            managed_root = "skills/software-development/managed"
+            managed_live = home / managed_root
+            managed_staged = staging / managed_root
+            concurrent = home / "skills/custom/concurrent/SKILL.md"
+            managed_live.mkdir(parents=True)
+            managed_live.joinpath("SKILL.md").write_text("old", encoding="utf-8")
+            managed_staged.mkdir(parents=True)
+            managed_staged.joinpath("SKILL.md").write_text("new", encoding="utf-8")
+
+            # Simulate a user-installed skill appearing after staging and before promotion.
+            concurrent.parent.mkdir(parents=True)
+            concurrent.write_text("keep", encoding="utf-8")
+            module.atomic_replace_paths(staging, home, [managed_root])
+
+            self.assertEqual(managed_live.joinpath("SKILL.md").read_text(), "new")
+            self.assertEqual(concurrent.read_text(encoding="utf-8"), "keep")
+
+    def test_sync_promotion_preserves_nonmanaged_live_bin_entries(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_live_bin", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            home = temp / "home"
+            staging = temp / "staging"
+            managed = "bin/codex"
+            (home / managed).parent.mkdir(parents=True)
+            (home / managed).write_text("old-wrapper", encoding="utf-8")
+            (staging / managed).parent.mkdir(parents=True)
+            (staging / managed).write_text("new-wrapper", encoding="utf-8")
+            official = home / "bin/official-runtime-entry"
+            official.write_text("preserve", encoding="utf-8")
+
+            module.atomic_replace_paths(staging, home, [managed])
+
+            self.assertEqual((home / managed).read_text(encoding="utf-8"), "new-wrapper")
+            self.assertEqual(official.read_text(encoding="utf-8"), "preserve")
+
+    def test_sync_prepare_failure_removes_partial_staging(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_prepare_cleanup", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            repo = temp / "repo"
+            home = temp / "home"
+            managed_root = "skills/software-development/managed"
+            (repo / managed_root).mkdir(parents=True)
+            (repo / managed_root / "SKILL.md").write_text("repo", encoding="utf-8")
+            home.mkdir()
+
+            with patch.object(module.shutil, "copytree", side_effect=OSError("prepare failed")):
+                with self.assertRaisesRegex(OSError, "prepare failed"):
+                    module.prepare_staging(repo, home, [managed_root], [])
+
+            self.assertFalse(any(home.glob(".workflow-assistance-staging-*")))
+
     def test_sync_atomic_replace_rolls_back_when_install_fails(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_atomic", script)
@@ -541,6 +763,75 @@ class WorkflowGovernanceTests(unittest.TestCase):
                     module.atomic_replace_paths(staging, home, ["config.yaml"])
             self.assertEqual((home / "config.yaml").read_text(encoding="utf-8"), "old")
             self.assertFalse(any(home.glob(".workflow-assistance-rollback-*")))
+
+    def test_sync_atomic_replace_rolls_back_earlier_roots_when_a_later_root_fails(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_multi_root", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            home = temp / "home"
+            staging = temp / "staging"
+            home.mkdir()
+            staging.mkdir()
+            for name in ("first", "second"):
+                (home / name).write_text(f"old-{name}", encoding="utf-8")
+                (staging / name).write_text(f"new-{name}", encoding="utf-8")
+            real_replace = module.os.replace
+
+            def fail_second_install(source: str | Path, target: str | Path) -> None:
+                if Path(source) == staging / "second":
+                    raise OSError("simulated later-root failure")
+                real_replace(source, target)
+
+            with patch.object(module.os, "replace", side_effect=fail_second_install):
+                with self.assertRaisesRegex(OSError, "simulated later-root failure"):
+                    module.atomic_replace_paths(staging, home, ["first", "second"])
+
+            self.assertEqual((home / "first").read_text(encoding="utf-8"), "old-first")
+            self.assertEqual((home / "second").read_text(encoding="utf-8"), "old-second")
+            self.assertFalse(any(home.glob(".workflow-assistance-rollback-*")))
+
+    def test_sync_atomic_remove_is_restored_when_a_later_install_fails(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_remove_rollback", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp = Path(raw)
+            home = temp / "home"
+            staging = temp / "staging"
+            retired = "skills/retired/SKILL.md"
+            (home / retired).parent.mkdir(parents=True)
+            (home / retired).write_text("retired-user-visible", encoding="utf-8")
+            (staging / "config.yaml").parent.mkdir(parents=True)
+            (staging / "config.yaml").write_text("new-config", encoding="utf-8")
+            (home / "config.yaml").write_text("old-config", encoding="utf-8")
+            real_replace = module.os.replace
+
+            def fail_config_install(source: str | Path, target: str | Path) -> None:
+                if Path(source) == staging / "config.yaml":
+                    raise OSError("simulated config failure")
+                real_replace(source, target)
+
+            with patch.object(module.os, "replace", side_effect=fail_config_install):
+                with self.assertRaisesRegex(OSError, "simulated config failure"):
+                    module.atomic_replace_paths(
+                        staging,
+                        home,
+                        [retired, "config.yaml"],
+                        remove_rels=[retired],
+                    )
+
+            self.assertEqual((home / retired).read_text(encoding="utf-8"), "retired-user-visible")
+            self.assertEqual((home / "config.yaml").read_text(encoding="utf-8"), "old-config")
 
     def test_sync_preserves_rollback_when_cleanup_fails(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
@@ -587,9 +878,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             (repo / "config/config.yaml").write_text(
                 "mcp_servers:\n  context7:\n    command: hermes-npx\n    args: [-y, context7]\n"
                 "plugins:\n  enabled: [security-guidance, web/ddgs]\n"
-                "display:\n  busy_input_mode: queue\n  skin: portable\n"
-                "model_picker:\n  custom_lanes:\n    enabled: true\n    lanes: []\n"
-                "quick_commands:\n  portable: {type: alias, target: /model kimi-k3 --provider kimi-coding}\n",
+                "display:\n  busy_input_mode: queue\n  skin: portable\n",
                 encoding="utf-8",
             )
             (home / "config.yaml").write_text(
@@ -611,10 +900,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 {"security-guidance", "web/ddgs", "custom-plugin"},
             )
             self.assertEqual(result["display"]["busy_input_mode"], "queue")
-            self.assertEqual(result["display"]["skin"], "live")
-            self.assertTrue(result["model_picker"]["custom_lanes"]["enabled"])
+            self.assertEqual(result["display"]["skin"], "portable")
+            self.assertFalse(result["model_picker"]["custom_lanes"]["enabled"])
             self.assertTrue(result["model_picker"]["local_picker_flag"])
-            self.assertEqual(result["quick_commands"]["portable"]["type"], "alias")
             self.assertEqual(result["quick_commands"]["custom"]["target"], "/help")
 
             result["plugins"]["enabled"].append("spotify")
@@ -695,7 +983,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             for relative in retired:
                 self.assertFalse((home / "skills" / relative).exists(), relative)
 
-    def test_sync_initializes_missing_live_config_from_portable_baseline(self) -> None:
+    def test_sync_initializes_missing_live_config_without_injecting_a_model_route(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_new", script)
         self.assertIsNotNone(spec)
@@ -718,11 +1006,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
             module.merge_live_config(repo, home, apply=True)
             result = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8"))
-            self.assertEqual(result["model"]["default"], "gpt-portable")
+            self.assertNotIn("model", result)
             self.assertEqual(result["platform_toolsets"]["cli"], ["terminal", "file"])
             self.assertEqual(set(result["mcp_servers"]), {"context7"})
 
-    def test_sync_manages_portable_model_ux_but_preserves_active_route(self) -> None:
+    def test_sync_is_model_neutral_and_manages_only_user_workflow_overlay(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_model_ux", script)
         self.assertIsNotNone(spec)
@@ -739,15 +1027,19 @@ class WorkflowGovernanceTests(unittest.TestCase):
             (repo / "config/config.yaml").write_text(
                 "model:\n  max_tokens: 8192\n"
                 "agent:\n  reasoning_effort: low\n"
-                "display:\n  streaming: true\n"
+                "display:\n  busy_input_mode: queue\n"
                 "model_picker:\n  custom_lanes:\n    enabled: true\n    lanes: [{label: KIMI 系列}]\n"
-                "quick_commands:\n  切换kimi: {type: alias, target: /model kimi-k3 --provider kimi-coding}\n",
+                "quick_commands:\n  切换kimi: {type: alias, target: /model kimi-k3 --provider kimi-coding}\n"
+                "platform_toolsets:\n  cli: [terminal, file, skills]\n"
+                "sessions:\n  auto_prune: false\n"
+                "memory:\n  memory_enabled: true\n  user_profile_enabled: true\n",
                 encoding="utf-8",
             )
             (home / "config.yaml").write_text(
                 "model:\n  provider: deepseek\n  default: deepseek-v4-pro\n  max_tokens: 123\n"
                 "agent:\n  reasoning_effort: high\n"
-                "display:\n  streaming: false\n"
+                "display:\n  busy_input_mode: interrupt\n"
+                "model_picker:\n  custom_lanes:\n    enabled: false\n"
                 "quick_commands:\n  切换旧模型: {type: alias, target: /model old}\n  我的命令: {type: alias, target: /help}\n",
                 encoding="utf-8",
             )
@@ -755,11 +1047,14 @@ class WorkflowGovernanceTests(unittest.TestCase):
             result = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8"))
             self.assertEqual(result["model"]["provider"], "deepseek")
             self.assertEqual(result["model"]["default"], "deepseek-v4-pro")
-            self.assertEqual(result["model"]["max_tokens"], 8192)
-            self.assertEqual(result["agent"]["reasoning_effort"], "low")
-            self.assertTrue(result["display"]["streaming"])
-            self.assertTrue(result["model_picker"]["custom_lanes"]["enabled"])
-            self.assertEqual(set(result["quick_commands"]), {"切换kimi", "我的命令"})
+            self.assertEqual(result["model"]["max_tokens"], 123)
+            self.assertEqual(result["agent"]["reasoning_effort"], "high")
+            self.assertEqual(result["display"]["busy_input_mode"], "queue")
+            self.assertFalse(result["model_picker"]["custom_lanes"]["enabled"])
+            self.assertEqual(set(result["quick_commands"]), {"切换旧模型", "我的命令"})
+            self.assertEqual(result["platform_toolsets"]["cli"], ["terminal", "file", "skills"])
+            self.assertFalse(result["sessions"]["auto_prune"])
+            self.assertTrue(result["memory"]["memory_enabled"])
 
     def test_setup_does_not_default_enable_optional_capabilities(self) -> None:
         scripts = "\n".join(

@@ -20,8 +20,9 @@ import yaml
 MANIFEST_SCHEMA_VERSION = 1
 SUPPORTED_CONFIG_VERSION = 33
 SUPPORTED_RUNTIME_FEATURES = {
-    "quick_commands",
-    "model_picker.custom_lanes",
+    "platform_toolsets.cli",
+    "sessions.auto_prune=false",
+    "memory.enabled",
     "hermes_config_check",
 }
 
@@ -97,6 +98,20 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
     else:
         home.mkdir(parents=True, exist_ok=False)
     sync = load_sync(repo)
+    managed_roots = sync.load_managed_skill_roots(repo)
+    managed_binaries = sync.load_managed_binary_paths(repo)
+    provenance_path = repo / "config/skill-provenance.yaml"
+    provenance = yaml.safe_load(provenance_path.read_text(encoding="utf-8")) or {}
+    entries = provenance.get("entries") if isinstance(provenance, dict) else None
+    if not isinstance(entries, list):
+        raise RuntimeError("skill provenance entries must be a list")
+    provenance_roots = {
+        Path(entry["source"]).parent.as_posix()
+        for entry in entries
+        if isinstance(entry, dict) and isinstance(entry.get("source"), str)
+    }
+    if set(managed_roots) != provenance_roots:
+        raise RuntimeError("managed skill roots must exactly match skill provenance entries")
     sync.deploy_portable(
         repo,
         home,
@@ -107,9 +122,11 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
 
     config = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8")) or {}
     runtime_feature_checks = {
-        "quick_commands": bool(config.get("quick_commands")),
-        "model_picker.custom_lanes": bool(
-            config.get("model_picker", {}).get("custom_lanes", {}).get("enabled")
+        "platform_toolsets.cli": bool(config.get("platform_toolsets", {}).get("cli")),
+        "sessions.auto_prune=false": config.get("sessions", {}).get("auto_prune") is False,
+        "memory.enabled": (
+            config.get("memory", {}).get("memory_enabled") is True
+            and config.get("memory", {}).get("user_profile_enabled") is True
         ),
     }
     missing_features = [
@@ -139,13 +156,22 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
     required = {
         "manifest.config_version": True,
         "manifest.required_runtime_features": True,
-        "display.streaming": config.get("display", {}).get("streaming") is True,
-        "agent.reasoning_effort": config.get("agent", {}).get("reasoning_effort") == "low",
-        "model.max_tokens": config.get("model", {}).get("max_tokens") == 8192,
-        "model_picker.custom_lanes": bool(config.get("model_picker", {}).get("custom_lanes", {}).get("enabled")),
-        "quick_commands": bool(config.get("quick_commands")),
+        "model_provider_neutral": all(
+            key not in config
+            for key in ("model", "fallback_providers", "model_picker", "quick_commands")
+        ),
+        "display.busy_input_mode": config.get("display", {}).get("busy_input_mode") == "queue",
+        "display.language": config.get("display", {}).get("language") == "zh",
+        "display.skin": config.get("display", {}).get("skin") == "purple-gemstone",
+        "sessions.auto_prune": config.get("sessions", {}).get("auto_prune") is False,
+        "memory.enabled": runtime_feature_checks["memory.enabled"],
+        "platform_toolsets.cli": runtime_feature_checks["platform_toolsets.cli"],
         "context7": "context7" in (config.get("mcp_servers") or {}),
         "context7.wrapper": True,
+        "managed_skills.exact_inventory": len(managed_roots) == 13
+        and all((home / relative / "SKILL.md").is_file() for relative in managed_roots),
+        "managed_binaries.exact_inventory": len(managed_binaries) == 6
+        and all((home / relative).is_file() for relative in managed_binaries),
     }
     failed = [name for name, ok in required.items() if not ok]
     if failed:

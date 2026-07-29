@@ -2,23 +2,40 @@
 # Never list secrets, OAuth credentials, or active provider routing as managed data.
 schema_version: 1
 global_workflow:
-  scope: hermes-cc-switch-codex-github
+  scope: hermes-codex-github-user-overlay
   source_of_truth: repository
   owned_asset_roots:
     - skills/autonomous-ai-agents/codex
-    - skills/github
+    - skills/github/github-auth
+    - skills/github/github-code-review
+    - skills/github/github-issues
+    - skills/github/github-pr-workflow
+    - skills/github/github-repo-management
     - skills/model-switch
-    - skills/software-development
+    - skills/software-development/agent-workflow-fortress
+    - skills/software-development/project-data-boundary
+    - skills/software-development/python-testing
+    - skills/software-development/requesting-code-review
+    - skills/software-development/sleep-mode
+    - skills/software-development/windows-development-environment
+  owned_binary_paths:
+    - bin/codex
+    - bin/codex.cmd
+    - bin/hermes-npx
+    - bin/hermes-npx.cmd
+    - bin/hermes-project-data.py
+    - bin/hermes-project-terminal-guard.py
   deployment: repo-to-live
 managed:
   display.busy_input_mode: replace
-  display.streaming: replace
-  agent.reasoning_effort: replace
-  model.max_tokens: replace
-  model_picker.custom_lanes: replace
-  quick_commands:
-    strategy: replace_owned
-    owned_prefix: 切换
+  display.language: replace
+  display.skin: replace
+  sessions.auto_prune: replace
+  memory.memory_enabled: replace
+  memory.user_profile_enabled: replace
+  memory.memory_char_limit: replace
+  memory.user_char_limit: replace
+  platform_toolsets.cli: replace
   mcp_servers:
     strategy: merge_owned
     owned_names: [context7]
@@ -32,12 +49,19 @@ preserved:
   - model.default
   - model.base_url
   - model.api_key
+  - model.other
   - credentials
   - auth.json
   - mcp_servers.user_defined
   - quick_commands.user_defined
+  - model_picker.user_defined
   - plugins.user_enabled
+  - sessions
+  - memories
 forbidden:
+  - model routes
+  - model picker lanes
+  - model-switching quick commands
   - .env
   - OAuth tokens
   - refresh tokens
