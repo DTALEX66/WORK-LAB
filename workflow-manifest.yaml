@@ -6,8 +6,8 @@ package:
 capabilities:
   - portable_config
   - managed_config_ownership
-  - custom_model_lanes
-  - quick_model_commands
+  - model_provider_neutral_overlay
+  - durable_session_retention
   - project_data_boundary
   - terminal_pre_tool_hook
   - context_pack
@@ -22,8 +22,9 @@ requirements:
 compatibility:
   config_version: 33
   required_runtime_features:
-    - quick_commands
-    - model_picker.custom_lanes
+    - platform_toolsets.cli
+    - sessions.auto_prune=false
+    - memory.enabled
     - hermes_config_check
 security:
   secrets_portable: false

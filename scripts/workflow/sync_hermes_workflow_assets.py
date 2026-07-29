@@ -42,10 +42,14 @@ RETIRED_MANAGED_SKILL_ASSETS = {
     "software-development/cognitive-loop-os",
     "software-development/screenlingua",
 }
-MANAGED_DISPLAY_KEYS = {"busy_input_mode", "streaming"}
-MANAGED_MODEL_KEYS = {"max_tokens"}
-MANAGED_AGENT_KEYS = {"reasoning_effort"}
-MANAGED_QUICK_COMMAND_PREFIX = "切换"
+MANAGED_DISPLAY_KEYS = {"busy_input_mode", "language", "skin"}
+MANAGED_SESSION_KEYS = {"auto_prune"}
+MANAGED_MEMORY_KEYS = {
+    "memory_enabled",
+    "user_profile_enabled",
+    "memory_char_limit",
+    "user_char_limit",
+}
 
 
 def default_repo_root() -> Path:
@@ -88,7 +92,17 @@ def load_config_contract(repo: Path) -> dict:
         if path.exists()
         else {
             "schema_version": 1,
-            "managed": {"display.busy_input_mode": "replace", "display.streaming": "replace", "agent.reasoning_effort": "replace", "model.max_tokens": "replace", "model_picker.custom_lanes": "replace", "quick_commands": {"owned_prefix": "切换"}},
+            "managed": {
+                "display.busy_input_mode": "replace",
+                "display.language": "replace",
+                "display.skin": "replace",
+                "sessions.auto_prune": "replace",
+                "memory.memory_enabled": "replace",
+                "memory.user_profile_enabled": "replace",
+                "memory.memory_char_limit": "replace",
+                "memory.user_char_limit": "replace",
+                "platform_toolsets.cli": "replace",
+            },
             "preserved": ["model.provider", "model.default", "model.api_key"],
         }
     )
@@ -102,6 +116,57 @@ def load_config_contract(repo: Path) -> dict:
         if required not in preserved:
             raise ValueError(f"managed config contract must preserve {required}")
     return data
+
+
+def load_managed_skill_roots(repo: Path) -> tuple[str, ...]:
+    """Return the exact repository-owned skill roots declared by the contract."""
+
+    contract = load_config_contract(repo)
+    workflow = contract.get("global_workflow")
+    roots = workflow.get("owned_asset_roots") if isinstance(workflow, dict) else None
+    if not isinstance(roots, list) or not roots:
+        raise ValueError("managed config contract must declare exact owned_asset_roots")
+
+    normalized: list[str] = []
+    for raw in roots:
+        if not isinstance(raw, str):
+            raise ValueError("owned_asset_roots entries must be strings")
+        relative = Path(raw)
+        if relative.is_absolute() or ".." in relative.parts or relative.parts[:1] != ("skills",):
+            raise ValueError(f"invalid managed skill root: {raw}")
+        value = relative.as_posix()
+        if value in normalized:
+            raise ValueError(f"duplicate managed skill root: {value}")
+        source = repo / relative
+        if not (source / "SKILL.md").is_file():
+            raise ValueError(f"managed skill root is missing SKILL.md: {value}")
+        normalized.append(value)
+    return tuple(normalized)
+
+
+def load_managed_binary_paths(repo: Path) -> tuple[str, ...]:
+    """Return exact repository-owned binary/launcher paths from the contract."""
+
+    contract = load_config_contract(repo)
+    workflow = contract.get("global_workflow")
+    paths = workflow.get("owned_binary_paths") if isinstance(workflow, dict) else None
+    if not isinstance(paths, list) or not paths:
+        raise ValueError("managed config contract must declare exact owned_binary_paths")
+
+    normalized: list[str] = []
+    for raw in paths:
+        if not isinstance(raw, str):
+            raise ValueError("owned_binary_paths entries must be strings")
+        relative = Path(raw)
+        if relative.is_absolute() or ".." in relative.parts or relative.parts[:1] != ("bin",):
+            raise ValueError(f"invalid managed binary path: {raw}")
+        value = relative.as_posix()
+        if value in normalized:
+            raise ValueError(f"duplicate managed binary path: {value}")
+        if not (repo / relative).is_file():
+            raise ValueError(f"managed binary path is missing: {value}")
+        normalized.append(value)
+    return tuple(normalized)
 
 
 def sha_tree(path: Path) -> tuple[str | None, int]:
@@ -223,30 +288,65 @@ def _fsync_path(path: Path) -> None:
             os.close(fd)
 
 
-def atomic_replace_paths(staging: Path, home: Path, rels: Iterable[str]) -> None:
+def replace_managed_skill_trees(
+    repo: Path,
+    staging: Path,
+    managed_roots: Iterable[str],
+) -> None:
+    """Replace repo-owned skill directories without retaining stale live files.
+
+    The live skills root also contains Hermes-bundled and user-installed skills,
+    so replacing the whole root would destroy unrelated data. A plain
+    ``copytree(..., dirs_exist_ok=True)`` is not sufficient either: files that
+    were removed from an owned skill in the repository would remain active in
+    the live directory. Replace only the exact subtrees declared by the reviewed
+    ownership contract.
+    """
+
+    for relative_text in managed_roots:
+        relative = Path(relative_text)
+        source = repo / relative
+        target = staging / relative
+        print(f"replace managed skill tree: {source} -> {target}")
+        if target.exists() or target.is_symlink():
+            _remove_path(target)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source, target)
+
+
+def atomic_replace_paths(
+    staging: Path,
+    home: Path,
+    rels: Iterable[str],
+    *,
+    remove_rels: Iterable[str] = (),
+) -> None:
     """Replace managed roots as one rollback-capable filesystem transaction."""
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     rollback = home / f".workflow-assistance-rollback-{stamp}"
     records: list[tuple[Path, Path | None, bool]] = []
     rollback_failed = False
     operation_failed = False
+    removal_set = set(remove_rels)
     rollback.mkdir(parents=True, exist_ok=False)
     try:
         for relative in rels:
             source = staging / relative
-            if not source.exists():
+            source_exists = source.exists() or source.is_symlink()
+            if not source_exists and relative not in removal_set:
                 continue
             target = home / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             previous = rollback / relative
-            had_target = target.exists()
+            had_target = target.exists() or target.is_symlink()
             records.append((target, previous if had_target else None, False))
             if had_target:
                 previous.parent.mkdir(parents=True, exist_ok=True)
                 os.replace(target, previous)
-            os.replace(source, target)
-            records[-1] = (target, previous if had_target else None, True)
-            _fsync_path(target)
+            if source_exists:
+                os.replace(source, target)
+                records[-1] = (target, previous if had_target else None, True)
+                _fsync_path(target)
     except Exception:
         operation_failed = True
         for target, previous, installed in reversed(records):
@@ -276,26 +376,35 @@ def atomic_replace_paths(staging: Path, home: Path, rels: Iterable[str]) -> None
             shutil.rmtree(staging, ignore_errors=True)
 
 
-def prepare_staging(repo: Path, home: Path) -> Path:
+def prepare_staging(
+    repo: Path,
+    home: Path,
+    managed_roots: Iterable[str],
+    managed_binaries: Iterable[str],
+) -> Path:
     """Build a complete managed view without mutating the live Hermes home."""
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     staging = home / f".workflow-assistance-staging-{stamp}"
     staging.mkdir(parents=True, exist_ok=False)
-    for relative in ("skills", "bin"):
-        live = home / relative
-        if live.exists():
-            shutil.copytree(live, staging / relative, dirs_exist_ok=True)
-    for relative in ("config.yaml", ".env.template", ".workflow-assistance-state.yaml"):
-        live = home / relative
-        if live.exists():
-            (staging / relative).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(live, staging / relative)
-    copytree(repo / "skills", staging / "skills", apply=True)
-    copytree(repo / "bin", staging / "bin", apply=True)
-    copyfile(repo / "config/.env.template", staging / ".env.template", apply=True)
-    remove_retired_managed_assets(staging, apply=True)
-    merge_live_config(repo, staging, apply=True, wrapper_root=home)
-    return staging
+    try:
+        for relative in ("config.yaml", ".workflow-assistance-state.yaml"):
+            live = home / relative
+            if live.exists():
+                (staging / relative).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(live, staging / relative)
+        replace_managed_skill_trees(repo, staging, managed_roots)
+        for relative in managed_binaries:
+            copyfile(repo / relative, staging / relative, apply=True)
+        copyfile(repo / "config/.env.template", staging / ".env.template", apply=True)
+        merge_live_config(repo, staging, apply=True, wrapper_root=home)
+        return staging
+    except Exception:
+        try:
+            shutil.rmtree(staging)
+        except Exception as cleanup_error:
+            print(f"STAGING_CLEANUP_INCOMPLETE preserved={staging}")
+            raise RuntimeError(f"failed to clean partial staging directory: {staging}") from cleanup_error
+        raise
 
 
 def merge_live_config(
@@ -317,7 +426,7 @@ def merge_live_config(
     live_data = (
         yaml.safe_load(live_cfg.read_text(encoding="utf-8")) or {}
         if live_cfg.exists()
-        else deepcopy(repo_data)
+        else {}
     )
     if not isinstance(live_data, dict) or not isinstance(repo_data, dict):
         raise ValueError("config roots must be mappings")
@@ -399,44 +508,39 @@ def merge_live_config(
         if key in repo_display:
             live_display[key] = repo_display[key]
 
-    repo_model = repo_data.get("model") or {}
-    live_model = live_data.setdefault("model", {})
-    if not isinstance(repo_model, dict) or not isinstance(live_model, dict):
-        raise ValueError("model must be a mapping")
-    for key in MANAGED_MODEL_KEYS:
-        if key in repo_model:
-            live_model[key] = repo_model[key]
+    repo_sessions = repo_data.get("sessions") or {}
+    live_sessions = live_data.setdefault("sessions", {})
+    if not isinstance(repo_sessions, dict) or not isinstance(live_sessions, dict):
+        raise ValueError("sessions must be mappings")
+    for key in MANAGED_SESSION_KEYS:
+        if key in repo_sessions:
+            live_sessions[key] = deepcopy(repo_sessions[key])
 
-    repo_agent = repo_data.get("agent") or {}
-    live_agent = live_data.setdefault("agent", {})
-    if not isinstance(repo_agent, dict) or not isinstance(live_agent, dict):
-        raise ValueError("agent must be a mapping")
-    for key in MANAGED_AGENT_KEYS:
-        if key in repo_agent:
-            live_agent[key] = repo_agent[key]
+    repo_memory = repo_data.get("memory") or {}
+    live_memory = live_data.setdefault("memory", {})
+    if not isinstance(repo_memory, dict) or not isinstance(live_memory, dict):
+        raise ValueError("memory must be mappings")
+    for key in MANAGED_MEMORY_KEYS:
+        if key in repo_memory:
+            live_memory[key] = deepcopy(repo_memory[key])
 
-    # Picker lanes are portable UX, not credentials or current session state.
-    repo_picker = repo_data.get("model_picker") or {}
-    live_picker = live_data.setdefault("model_picker", {})
-    if not isinstance(repo_picker, dict) or not isinstance(live_picker, dict):
-        raise ValueError("model_picker must be a mapping")
-    if "custom_lanes" in repo_picker:
-        live_picker["custom_lanes"] = deepcopy(repo_picker["custom_lanes"])
+    repo_platforms = repo_data.get("platform_toolsets") or {}
+    live_platforms = live_data.setdefault("platform_toolsets", {})
+    if not isinstance(repo_platforms, dict) or not isinstance(live_platforms, dict):
+        raise ValueError("platform_toolsets must be mappings")
+    if "cli" in repo_platforms:
+        cli = repo_platforms["cli"]
+        if not isinstance(cli, list) or not all(isinstance(name, str) for name in cli):
+            raise ValueError("platform_toolsets.cli must be a list of names")
+        live_platforms["cli"] = deepcopy(cli)
 
-    # Replace only workflow-owned aliases; preserve unrelated user commands.
-    repo_commands = repo_data.get("quick_commands") or {}
-    live_commands = live_data.setdefault("quick_commands", {})
-    if not isinstance(repo_commands, dict) or not isinstance(live_commands, dict):
-        raise ValueError("quick_commands must be mappings")
-    for name in list(live_commands):
-        if name.startswith(MANAGED_QUICK_COMMAND_PREFIX):
-            live_commands.pop(name)
-    live_commands.update(deepcopy(repo_commands))
-
-    model = live_data.get("model") or {}
+    # Model/provider routing, model picker lanes, and model-switching commands
+    # are deliberately outside repository ownership. This merge leaves their
+    # semantic values untouched, although YAML serialization may normalize the
+    # file representation.
     managed_paths = ",".join(sorted(contract["managed"]))
     print("merge live config: contract managed =", managed_paths)
-    print("merge live config: preserve provider/model =", model.get("provider"), model.get("default"))
+    print("merge live config: model/provider routing = preserved, unmanaged")
     print("merge live config: mcp =", list(live_mcp))
     if apply:
         live_cfg.write_text(
@@ -466,38 +570,51 @@ def deploy_portable(
     if not repo.is_dir() or not home.is_dir():
         raise ValueError("portable deployment requires existing repo and home directories")
     validate_deployment_paths(repo, home, allow_project_runtime_home=allow_project_runtime_home)
+    managed_roots = load_managed_skill_roots(repo)
+    managed_binaries = load_managed_binary_paths(repo)
+    retired_roots = tuple(f"skills/{relative}" for relative in RETIRED_MANAGED_SKILL_ASSETS)
     if include_backup:
         backup_paths(
             home,
-            [
-                "config.yaml",
-                ".env.template",
-                ".workflow-assistance-state.yaml",
-                "bin",
-                "skills/autonomous-ai-agents/codex",
-                "skills/model-switch",
-                "skills/github",
-                "skills/software-development",
-            ],
+            tuple(
+                dict.fromkeys(
+                    (
+                        "config.yaml",
+                        ".env.template",
+                        ".workflow-assistance-state.yaml",
+                        *managed_roots,
+                        *managed_binaries,
+                        *retired_roots,
+                    )
+                )
+            ),
             apply=apply,
         )
     if apply:
-        staging = prepare_staging(repo, home)
+        staging = prepare_staging(repo, home, managed_roots, managed_binaries)
         atomic_replace_paths(
             staging,
             home,
-            (
-                "skills",
-                "bin",
-                "config.yaml",
-                ".env.template",
-                ".workflow-assistance-state.yaml",
+            tuple(
+                dict.fromkeys(
+                    (
+                        *managed_roots,
+                        *managed_binaries,
+                        "config.yaml",
+                        ".env.template",
+                        ".workflow-assistance-state.yaml",
+                        *retired_roots,
+                    )
+                )
             ),
+            remove_rels=retired_roots,
         )
     else:
-        copytree(repo / "skills", home / "skills", apply=False)
+        for relative in managed_roots:
+            copytree(repo / relative, home / relative, apply=False)
         remove_retired_managed_assets(home, apply=False)
-        copytree(repo / "bin", home / "bin", apply=False)
+        for relative in managed_binaries:
+            copyfile(repo / relative, home / relative, apply=False)
         copyfile(repo / "config/.env.template", home / ".env.template", apply=False)
         merge_live_config(repo, home, apply=False)
     if include_backup:

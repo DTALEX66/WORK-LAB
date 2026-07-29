@@ -21,7 +21,7 @@
 | --- | --- | --- |
 | 便携源 | `Workflow-assistance` Git 仓库 | 唯一可提交、可复制的工作流定义；不含密钥或会话。 |
 | 活动运行时 | Hermes Python 环境和当前桌面包 | 保持单一活动版本；桌面快捷方式只指向当前包。 |
-| 用户状态 | Hermes Home 的配置、认证、会话、用户技能 | 原样保留，不由仓库同步覆盖。 |
+| 用户状态 | Hermes Home 的配置、认证、会话、用户技能与运行入口 | 配置/认证/会话、非仓库负责的 skills 和非仓库负责的 `bin/` 入口原样保留；仓库负责的 13 个 skill 子树和 6 个 binary 按权威源逐项替换。 |
 | 同步回滚 | `backups/workflow-assistance-sync-*` | 同步器只保留最近两份，并且只会清理自己创建的目录。 |
 | 人工升级备份 | `pre-update-*`、`state-snapshots/` | 不自动删除；完成恢复演练后再由用户决定保留期。 |
 
@@ -32,10 +32,11 @@
 ## 标准升级顺序
 
 1. 运行 `scripts/workflow/verify_portable_install.py`，确认仓库可安装到隔离空目录，且不复制凭据。
-2. 使用 `sync_hermes_workflow_assets.py --apply` 部署仓库所拥有的配置、技能和工具；该脚本保留活动模型、provider、API 配置和自定义 MCP。
-3. 用 `hermes_workflow_doctor.py --live` 验证 Hermes、GPT OAuth、DeepSeek、Codex、Context7 和 CC Switch 路由。
-4. 启动当前桌面快捷方式，确认日志出现 `Hermes backend is ready. Finalizing desktop startup`，并打开一个新会话。旧版日志的历史错误不能当作本次启动失败。
-5. 仅在第 1–4 步均通过后，处理明确已退役的桌面包或可再生缓存；会话、认证、配置、技能和人工备份不在此步骤内。
+2. 使用官方 `hermes update` 把 managed checkout、依赖、bundled skills 和 Desktop 恢复到当前官方基线；不得在活动 venv 被占用时使用 `--force-venv`。
+3. 使用 `sync_hermes_workflow_assets.py --apply` 部署仓库所拥有的配置、技能和工具；该脚本保留活动模型、provider、API 配置、自定义 MCP 和非仓库负责的 skills，并精确替换仓库负责的 skill 子树。
+4. 用 `hermes config check`、skill provenance 和 `hermes_workflow_doctor.py` 验证结构；只有显式要求 live 网络验证时才运行 `--live`。
+5. 启动当前桌面快捷方式，确认日志出现 `Hermes backend is ready. Finalizing desktop startup`，并打开一个新会话。旧版日志的历史错误不能当作本次启动失败。
+6. 仅在第 1–5 步均通过后，处理明确已退役的桌面包或可再生缓存；会话、认证、配置、非仓库负责的技能和人工备份不在此步骤内。
 
 ## 迁移与恢复
 
