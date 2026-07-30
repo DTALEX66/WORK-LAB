@@ -1,710 +1,238 @@
 ---
 name: windows-development-environment
-description: "Windows-specific quirks and fixes for development: PowerShell encoding, PATH shadowing, spawn EINVAL, lockfile registry portability, and environment setup."
-version: 1.1.1
+description: "Use when debugging Windows Node, Python, Git-Bash, PowerShell, path, encoding, or local-server failures."
+version: 1.2.0
 author: Hermes Agent
 license: MIT
 platforms: [windows]
-tags: [windows, nodejs, nextjs, powershell, spawn, npm-ci, path, cross-platform]
+tags: [windows, nodejs, powershell, python, git-bash, encoding, paths]
 metadata:
   hermes:
-    tags: [windows, nodejs, nextjs, powershell, spawn, npm-ci, path, cross-platform]
+    tags: [windows, nodejs, powershell, python, git-bash, encoding, paths]
     related_skills: [project-data-boundary]
 ---
 
 # Windows Development Environment
 
-## When to load
+## Overview
 
-- Any task that involves **Node.js scripts**, **Next.js builds**, or **npm operations on Windows**.
-- Any task where `child_process.spawn` or `npm ci` fails with obscure errors (`EINVAL`, `Exit handler never called!`, `ETIMEDOUT`).
-- Any task where the wrong Node.js version is active and Hermes bundles Node v22.
-- Any task running **PowerShell `.ps1` scripts from git-bash/MSYS** — especially scripts with CJK/non-ASCII content.
-- Any task cloning or moving Git repositories on Windows paths with spaces, especially from Hermes Git-Bash/MSYS into `D:\All projects\...`.
+Use this skill for Windows-specific development failures and for safe execution from Hermes' Git-Bash/MSYS terminal. It covers shell selection, encoding, executable resolution, subprocess launching, paths, local servers, Git, and small deployment-pack checks.
 
-## Key patterns
+This skill is **not** a provider, VPN, proxy, plugin, Desktop-layout, or credential-management skill. Use `model-switch` for provider/model work, `project-data-boundary` for project containment, and the official Hermes/Codex commands for authentication or runtime configuration.
 
-### 0. PowerShell selection policy
+## When to use
 
-Hermes `terminal` runs through Git-Bash/MSYS by default on this Windows host, so
-plain terminal commands should use POSIX shell syntax. When a task specifically
-requires PowerShell, prefer **PowerShell 7** via `pwsh`:
+- Node.js, Next.js, npm, Python, or Git operations on Windows.
+- `spawn EINVAL`, `WinError 2`, `ETIMEDOUT`, or npm exit-handler failures.
+- PowerShell scripts with CJK/non-ASCII content.
+- Git-Bash commands involving spaces, Unicode, or Windows `.cmd` wrappers.
+- Local development servers that fail after a restart or appear on the wrong port.
+- A repository or deployment pack needs encoding, path, or staging verification.
+
+## 1. Shell and encoding
+
+### PowerShell selection policy
+
+Hermes `terminal` uses Git-Bash/MSYS by default. Use POSIX syntax there; do not assume the shell is PowerShell.
+
+When PowerShell is required, prefer **PowerShell 7** via `pwsh`:
 
 ```bash
 pwsh -NoProfile -Command '...'
 ```
 
-Use Windows PowerShell 5.1 (`powershell.exe`) only when a legacy Windows module,
-Desktop-only COM integration, or other compatibility requirement fails under
-PowerShell 7:
+Use `powershell.exe -NoProfile` only for a legacy module or Desktop-only compatibility case.
+
+PowerShell 5.1 can misparse UTF-8 scripts containing CJK when launched from Git-Bash. Prefer an ASCII-only `.ps1`, or save the script as UTF-8 with BOM before retrying. Keep explanations in Markdown rather than embedding large non-ASCII blocks in PowerShell source.
+
+Check touched text files before upload:
 
 ```bash
-powershell.exe -NoProfile -Command '...'
+python -c "from pathlib import Path; p=Path('script.ps1'); b=p.read_bytes(); print('utf8', end=' '); b.decode('utf-8'); print('ok', 'crlf', b'\\r\\n' in b)"
+git diff --check
 ```
 
-Do not imply that Hermes terminal's default shell is PowerShell; it is Git-Bash
-unless `pwsh` or `powershell.exe` is invoked explicitly.
+Do not normalize unrelated historical files merely to remove noise; check the current change set.
 
-### 1. PowerShell `.ps1` with CJK characters fails from git-bash
+## 2. Executable and subprocess resolution
 
-When a `.ps1` script containing Chinese, Japanese, Korean, or other non-ASCII
-characters is run via `powershell.exe -File` from git-bash/MSYS, it can fail
-with encoding-related parser errors:
+### PATH shadowing
 
-```
-MissingEndParenthesisInFunctionParameterList
-Missing closing '}' in statement block
-```
-
-**Root cause**: git-bash writes UTF-8 without BOM, but PowerShell's default
-parser expects UTF-16 LE or UTF-8 with BOM for scripts containing non-ASCII
-characters.
-
-**Workaround**: execute the script's steps manually in bash instead, or
-re-save the file as UTF-8 with BOM:
+Hermes may bundle a Node runtime, while another Node or tool wrapper appears earlier in `PATH`.
 
 ```bash
-# Convert to UTF-8 with BOM and retry
-powershell.exe -Command "
-  \$content = Get-Content -Path 'script.ps1' -Raw -Encoding UTF8
-  [System.IO.File]::WriteAllText('script.ps1', \$content, [System.Text.UTF8Encoding]::new(\$true))
-"
+command -v node
+node --version
+python -c "import sys; print(sys.executable)"
 ```
 
-### 1a. Deployment scripts: use the canonical sync path
+Use the project interpreter or active virtual environment. Do not assume `python` and `python3` resolve to the same interpreter. Do not guess that they refer to the same installation. Hermes workflow scripts use `python`.
 
-Do not translate a failed deployment wrapper into ad-hoc `cp` commands. Direct config copies overwrite live provider/model, skill overlays leave deleted files active, and remembered tool enables violate the current minimal baseline.
+### `.cmd` launchers
 
-Invoke the repository's canonical sync entry directly:
+Win32 `CreateProcess` callers such as Node `child_process.spawn` and Python `subprocess.run` may not launch a `.cmd` wrapper directly. Prefer a real `.exe`; otherwise invoke the wrapper through `cmd.exe`:
 
 ```bash
-REPO_ROOT="D:/All projects/Workflow-assistance"
-HERMES_HOME="${LOCALAPPDATA:-$HOME/AppData/Local}/hermes"
-python "$REPO_ROOT/scripts/workflow/sync_hermes_workflow_assets.py" \
+cmd.exe /d /s /c "tool --version"
+```
+
+Node example:
+
+```js
+const command = process.platform === 'win32'
+  ? (process.env.ComSpec || 'cmd.exe')
+  : 'tool';
+const args = process.platform === 'win32'
+  ? ['/d', '/s', '/c', 'tool --version']
+  : ['--version'];
+spawn(command, args, {shell: false, stdio: 'inherit'});
+```
+
+Verify both shell and Python resolution before changing code:
+
+```bash
+command -v tool
+python -c "import shutil; print(shutil.which('tool'))"
+```
+
+## 3. Paths, workdirs, and Git-Bash
+
+- Quote paths containing spaces: `cd '/d/All projects/example'`.
+- Prefer forward slashes in Bash commands and JSON/YAML values.
+- If a tool rejects a Unicode `workdir`, leave the tool workdir unset and `cd` inside the command instead.
+- Do not rename a project merely to work around a shell path parser.
+- For a clone destination containing spaces, inspect it first; never delete a non-empty target without explicit scope.
+
+```bash
+TARGET_POSIX='/d/All projects/example'
+TARGET_WIN=$(cygpath -w "$TARGET_POSIX")
+GIT_TERMINAL_PROMPT=0 git clone <approved-remote> "$TARGET_WIN"
+cd "$TARGET_POSIX"
+git status --short
+```
+
+If Git reports dubious ownership, inspect the repository and ask before changing global `safe.directory`. Do not add a global trust exception silently.
+
+## 4. npm and lockfiles
+
+Common symptoms:
+
+| Symptom | Likely cause | First check |
+|---|---|---|
+| `spawn EINVAL` | `.cmd` launched without `cmd.exe` | executable path and launcher type |
+| `Exit handler never called!` | registry or npm process failure | registry configuration and network status |
+| `ETIMEDOUT` | lockfile points at an unavailable registry | lockfile URLs, without printing credentials |
+| wrong Node version | PATH shadowing | `command -v node`, `node --version` |
+
+Lockfile regeneration is destructive. Before changing `package-lock.json` or `node_modules`:
+
+1. identify the exact project paths;
+2. save a reviewable backup or Git diff;
+3. obtain explicit approval;
+4. remove only those confirmed paths;
+5. regenerate with the project's documented command, commonly:
+
+```bash
+npm install --ignore-scripts --no-audit --no-fund
+```
+
+Never print `.npmrc`, tokens, credential files, or private registry credentials.
+
+## 5. Local Windows servers
+
+After forcibly stopping a development server, the port may remain in `TIME_WAIT` briefly. Verify the listener before restarting; do not infer ownership from a remembered port.
+
+```bash
+sleep 2
+netstat -ano | grep ':5173' | grep LISTENING || echo PORT_CLEAR
+python -m http.server 5173 --bind 127.0.0.1
+```
+
+For several projects, probe the page title or a known health endpoint on each candidate port before opening a browser preview. Do not use an old screenshot or stale tab as evidence that the current project is running.
+
+For Git-Bash commands with non-ASCII JSON, write the payload to a UTF-8 file and pass `curl -d @file`; do not rely on inline shell encoding.
+
+Avoid Windows redirection `>NUL` in Git-Bash: it can create a real repository file named `NUL`. Use `>/dev/null 2>&1` for Bash commands, or keep `NUL` inside a deliberately quoted `cmd.exe /c` command.
+
+## 6. Workflow-assistance deployment boundary
+
+Use the repository's canonical synchronizer. Do not replace it with ad-hoc `cp` commands:
+
+```bash
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+HERMES_HOME="${HERMES_HOME:?Set HERMES_HOME to the intended Hermes Home}"
+python scripts/workflow/sync_hermes_workflow_assets.py \
+  --repo "$REPO_ROOT" --home "$HERMES_HOME"
+```
+
+The command without `--apply` is the reviewable dry-run. After checking its paths,
+ownership decisions, and drift results, an explicitly authorized deployment may use:
+
+```bash
+python scripts/workflow/sync_hermes_workflow_assets.py \
   --repo "$REPO_ROOT" --home "$HERMES_HOME" --apply
 hermes config check
 ```
 
-If another deployment repository has no canonical merge/sync entry, stop and inspect its preservation, backup, retirement and minimal-plugin contracts. Never overwrite a live config or overlay skills as a fallback.
+The post-apply config check is part of the deployment proof. Keep the generated
+backup until the check and targeted runtime verification pass. If promotion or
+verification fails, stop using the affected live assets and follow the synchronizer's
+recorded backup/rollback path; do not repair the live Home with hand-copied files.
 
-### 2. Node.js PATH shadowing
+The normal sync path:
 
-Hermes bundles Node v22 at `AppData/Local/hermes/node/node.exe`, but other tools may appear earlier in `$PATH`.
+- deploys only explicitly owned skill roots, binaries, and file mappings;
+- never promotes mixed-ownership `config.yaml` or workflow state;
+- preserves provider/model/auth/MCP/plugin/session/memory and network-routing state;
+- uses backup and rollback evidence;
+- must fail closed on an unsafe path or ownership drift.
 
-**Check:** `which node && node --version`
+A drifted live managed root may be a user customization. Do not overwrite it silently. Either skip that exact root with a recorded reason or stop for explicit approval. Do not use this skill to enable plugins, change MCP servers, edit `AGENTS.md`, change provider routes, or copy credentials.
 
-**Fix:** Prepend Hermes Node to PATH:
-```bash
-export PATH="$HERMES_HOME/node:$PATH"
-```
+For a portable verification, use an empty Home under the project's ignored runtime. A structural portable pass is not proof that a real profile loaded every file.
 
-### 3. `child_process.spawn` / Python `subprocess` launcher issues on Windows
+## 7. Git changes and upload hygiene
 
-On Windows under Git Bash, `.cmd` files are not directly spawnable by APIs that call Win32 `CreateProcess` without a shell. This affects Node `child_process.spawn` and Python `subprocess.run(['tool'])`: Git-Bash may resolve `tool` to a shell wrapper or `.cmd`, while Python/Node may fail with `WinError 2`, `EINVAL`, or silently pick a later `.exe` in PATH.
-
-**Fix for Node:** Use `cmd.exe` as the command when launching `.cmd` tools:
-```js
-const child = spawn(
-  process.platform === 'win32'
-    ? process.env.COMSPEC || 'cmd.exe'
-    : 'npx',
-  process.platform === 'win32'
-    ? ['/d', '/s', '/c', 'npx next build']
-    : ['next', 'build'],
-  { stdio: 'inherit', env, shell: false },
-);
-```
-
-**Fix for Python/subprocess or agent toolchains:** prefer a real `.exe` earlier in PATH, or call the `.cmd` through `cmd.exe /d /s /c`. For portable wrappers that must work from both Git-Bash and Python subprocesses, ship a bash/`.cmd` wrapper in the repo and, on the local machine only, put the real executable or a trusted `.exe` shim in `~/bin` before stale tool directories.
-
-Example verification:
-```bash
-command -v tool && tool --version
-python - <<'PY'
-import shutil, subprocess
-print(shutil.which('tool'))
-print(subprocess.run(['tool','--version'], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
-PY
-```
-
-### 4. `package-lock.json` registry lock-in
-
-When a lockfile hardcodes internal registry URLs, `npm ci` times out.
-
-**Fix:** regeneration is destructive. First list the exact `node_modules` and
-`package-lock.json` paths, preserve a reviewable lockfile copy or Git diff, and
-obtain explicit user approval. Then remove only those two confirmed project
-paths and regenerate with `npm install --ignore-scripts --no-audit --no-fund`.
-
-### 5. Common Windows npm failures
-
-| Error | Likely cause | Fix |
-|---|---|---|
-| `Exit handler never called!` | Registry unreachable | Regenerate lockfile |
-| `spawn EINVAL` | `.cmd` without shell | Use `cmd.exe /d /s /c` |
-| `ETIMEDOUT` | Internal registry URLs | Regenerate lockfile |
-| Wrong Node version | PATH shadowing | Prepend Hermes Node |
-
-### 6. Hermes + CC Switch / provider routing boundary
-
-Provider switching, proxy/router diagnosis, OAuth state and live GPT/DeepSeek/Codex smokes belong exclusively to the `model-switch` skill and Hermes official auth/config commands. Do not duplicate model names, ports or credential procedures in this Windows skill.
-
-Windows-only pitfall: an OAuth device page may require the user’s normal proxy-configured browser to pass an interactive challenge. Never read or parse `.env`, `auth.json`, Windows Credential Store, browser cookies or bearer tokens as a workaround; report the prompt and let the user complete the supported login flow.
-
-### 7. Python interpreter selection on Windows
-
-Do not assume `python` and `python3` resolve to the same interpreter. On this
-host they can select different installed versions, while other Windows systems
-may route `python3` to a Store stub. Use the project's declared interpreter or
-the active virtual environment; Hermes workflow scripts use `python`.
-
-**Verification:**
-```bash
-python --version
-python3 --version
-python -c "import sys; print(sys.executable)"
-```
-
-The Hermes venv uses `python.exe`; invoke its full path for reproducible
-maintenance rather than relying on either global alias.
-
-### 8. Git identity for fresh sub-repos and inline workaround
-
-When `git init` creates a new repo inside a parent project (monorepo sub-repos), Windows git-bash/MSYS often fails to auto-detect user identity. Commands fail with:
-
-```
-Author identity unknown
-fatal: unable to auto-detect email address (got 'admin@DESKTOP-FSE02M9.(none)')
-```
-
-**Fix for fresh sub-repos:** set config per-repo before committing:
+Before editing:
 
 ```bash
-cd sub-repo-dir
-git config user.email "DTALEX66@users.noreply.github.com"
-git config user.name "DTALEX66"
-```
-
-This is REQUIRED for any `git init` in a new directory — don't assume global config propagates on Windows.
-
-**If GitHub CLI is authenticated, prefer the exact noreply identity from GitHub:**
-
-```bash
-GH_LOGIN=$(gh api user --jq '.login')
-GH_ID=$(gh api user --jq '.id')
-git config user.name "$GH_LOGIN"
-git config user.email "${GH_ID}+${GH_LOGIN}@users.noreply.github.com"
-```
-
-This avoids exposing a real email address and matches GitHub's verified noreply format.
-
-**Fix for inline identity** (single commit, no config change):
-
-```bash
-git -c user.name="YourName" -c user.email="your@email.com" commit -m "..."
-```
-
-### 9. Unicode path / `workdir` fallback in Hermes terminal
-
-On Windows, project paths may contain Chinese or other non-ASCII characters.
-If a terminal call rejects `workdir` with a message like `workdir contains disallowed character`, do not give up or rename the project. Leave `workdir` unset and `cd` inside the bash command instead:
-
-```bash
-cd '/c/Users/admin/Documents/脑力宫殿/brain-palace' && npm run check
-```
-
-This keeps execution in the intended project while avoiding tool-side `workdir` validation issues.
-
-### 10. Git dubious ownership on copied/sandboxed Windows repos
-
-Old or sandbox-created repos may fail Git commands with:
-
-```text
-detected dubious ownership in repository
-```
-
-Inspecting `.git/config` is still safe for remote/context, but status/log/diff may be blocked. If the user wants to operate on that repo, suggest adding a safe-directory exception:
-
-```bash
-git config --global --add safe.directory 'C:/path/to/project'
-```
-
-Do not make this global config change silently; it affects future Git trust decisions.
-
-### 11. Windows port recycling (TIME_WAIT after taskkill)
-
-After `taskkill //PID <n> //F` on a server process (python http.server, node, etc.),
-the port enters TIME_WAIT state. Restarting the server immediately can fail with
-"Address already in use" or silently bind to a broken socket.
-
-**Symptom checklist:**
-- `netstat -ano | grep ':PORT'` shows TIME_WAIT entries even after killing the listener
-- New server starts but returns 502 or ERR_EMPTY_RESPONSE
-- Browser navigates to `http://127.0.0.1:PORT` and gets nothing
-
-**Fix:** Wait 2-3 seconds after `taskkill` before restarting:
-
-```bash
-taskkill.exe //PID <pid> //F 2>/dev/null
-sleep 2
-netstat -ano | grep ':PORT' | grep LISTEN || echo "PORT_CLEAR"
-# Only then start the new server
-```
-
-**Prevention:** Bind python http.server explicitly to 127.0.0.1 (not 0.0.0.0 or ::):
-
-```bash
-python -m http.server 5173 --bind 127.0.0.1
-```
-
-This avoids dual-stack IPv4/IPv6 binding which doubles cleanup overhead on Windows.
-
-### 12. CC Switch proxy poisons localhost connections
-
-When `HTTP_PROXY=http://127.0.0.1:7890` and `HTTPS_PROXY=http://127.0.0.1:7890`
-are set in `.env`, tools that respect these env vars (curl, some Node.js HTTP
-clients, Python `requests`) will route **localhost** traffic through the proxy
-too, causing 502 errors:
-
-```bash
-# This goes through the proxy → 502
-curl http://127.0.0.1:5173/
-```
-
-**Fix for ad-hoc curl:** use `--noproxy` or unset the env for that command:
-
-```bash
-curl --noproxy '*' http://127.0.0.1:5173/
-# or:
-HTTP_PROXY= HTTPS_PROXY= curl http://127.0.0.1:5173/
-```
-
-**Fix for browser tools:** Hermes browser tools (Browserbase) access `127.0.0.1`
-through cloud bridge — they are NOT affected by local proxy env vars. `browser_click`
-failures on overlays are a coordinate/rendering issue, not proxy-related.
-
-### 13a. Relocating portable Scoop and Rust toolchains safely
-
-Use this when a Windows project must free its repository or user-profile disk
-space by moving reusable developer tools (Scoop apps, Rustup/Cargo homes, or
-language datasets) to a dedicated toolchain root. Keep project-owned `.venv`,
-`node_modules`, build targets, databases, logs and task evidence in their
-owning project unless the user explicitly scopes them in.
-
-1. Audit disk capacity, active processes, project references and environment
-   variables before moving anything.
-2. Copy, compare file count/bytes, and validate real executables before deleting
-   the source. For Rust, use `cargo metadata --no-deps` with explicit homes.
-3. Keep `CARGO_TARGET_DIR` project-local. Regenerate Scoop `current` links and
-   shims after relocation; copied shims may contain absolute paths.
-4. Change user environment variables only after validation from a fresh child
-   process. Delete an old root only after no process executes beneath it.
-
-Git-Bash paths such as `/d/tools` are not automatically valid environment values
-for Windows child processes; convert with `cygpath -w`. Do not claim that a
-copied Visual Studio Build Tools directory is portable—use a verified installer
-layout instead. See `references/portable-toolchain-relocation.md`.
-
-### 13. Portable deployment repos: encoding, escaping, and installers
-
-When creating a repository that should let another Windows machine reproduce a Hermes/tool setup, package **deployment assets**, not application bodies. See `references/deployment-packaging-checklist.md` for a copyable checklist and baseline `.gitignore`/`.gitattributes` patterns:
-
-- Do **not** commit installers or app binaries (`*.msi`, `*.exe`, `*.dmg`, `*.pkg`, `*.AppImage`, archives). Keep only config templates, skills/plugins, docs, small config exports, and setup scripts.
-- Add `.gitignore` rules for installers, `.env`, `auth.json`, `state.db`, `*.db`, logs, caches, venvs, and `node_modules`.
-- Add `.gitattributes` to keep text stable across Windows/macOS/Linux:
-  ```gitattributes
-  * text=auto eol=lf
-  *.sh text eol=lf
-  *.ps1 text eol=lf
-  *.md text eol=lf
-  *.yaml text eol=lf
-  *.json text eol=lf
-  *.template text eol=lf
-  *.msi binary
-  *.exe binary
-  *.zip binary
-  ```
-- Normalize text to UTF-8 + LF before commit and run `git diff --check`. For normal app repos, prefer checking only files touched in the current change to avoid noisy historical CRLF churn; for deployment packs, check the whole repo. A deterministic check pattern:
-  ```bash
-  python - <<'PY'
-  from pathlib import Path
-  # Replace with the touched files for an app repo, or use Path('.').rglob('*') for deployment packs.
-  files = [p for p in Path('.').rglob('*') if '.git' not in p.parts and p.is_file()]
-  bad=[]; nul=[]; crlf=[]
-  for p in files:
-      data=p.read_bytes()
-      if b'\x00' in data[:4096]: nul.append(str(p)); continue
-      try: data.decode('utf-8')
-      except UnicodeDecodeError: bad.append(str(p))
-      if b'\r\n' in data: crlf.append(str(p))
-  print('non_utf8', bad); print('binary_or_nul', nul); print('crlf', crlf)
-  PY
-  ```
-- When a user explicitly calls out encoding concerns on a Windows repo, verify the latest/touched commit files with `decode('utf-8')` and absence of `\r\n`; if needed, add or tighten `.gitattributes` (`*.ts`, `*.vue`, `*.json`, `*.md`, `*.py`, `*.yml`, `.gitattributes` as `text eol=lf`) and commit that normalization separately.
-- Avoid Chinese/emoji in `.ps1` files unless saved in a PowerShell-safe encoding. Prefer ASCII-only PowerShell scripts and put Chinese explanations in README files.
-- In setup scripts for deployment packs, verify prerequisites (`hermes` installed, CC Switch running) and copy/enable assets; do not silently download/install the main app unless the user explicitly asked for a bootstrap installer.
-- Use quoted POSIX paths in Git Bash and avoid hand-escaping Windows backslashes in JSON/YAML; prefer forward slashes or single-quoted MSYS paths in shell examples.
-
-### 15. Model/provider changes require a new session
-
-Hermes snapshots provider/model/tool availability at session start. After an authorized change made through `model-switch` or Hermes official configuration, use `/reset` or restart. This section defines only the Windows session-lifecycle pitfall; all switch recipes and route values live in `model-switch`.
-
-### 14. Hermes ecosystem update check (Hermes + Codex + CC Switch)
-
-When the user asks to check for updates, the three tools that matter are
-Hermes Agent itself, OpenAI Codex CLI, and CC Switch. Run all three checks
-in parallel where possible. See `references/ecosystem-update-check.md` for a
-complete checklist with exact commands and version-capture patterns.
-
-Quick-reference table (distilled from the reference):
-
-| Tool | Version check | Latest check | Update command |
-|------|--------------|-------------|----------------|
-| Hermes | `hermes --version` | GitHub API `/repos/NousResearch/hermes-agent/releases/latest` | `hermes update` |
-| Codex CLI | `codex --version` | `npm view @openai/codex version` | Use the desktop updater, or perform a global npm update only after explicit approval, version/source review, and rollback planning |
-| CC Switch | PowerShell `cc-switch.exe` FileVersion | Its own About/update UI or documented official release channel | Manual via CC Switch GUI |
-
-**Pitfall:** `codex` may not be on `$PATH` in git-bash — it lives at
-`C:\Users\<user>\AppData\Local\Microsoft\WindowsApps\codex.cmd`.  Use
-`cmd.exe //c "codex --version"` from bash, or invoke the `.cmd` directly.
-
-**Pitfall:** a local proxy listener such as `FlClashCore.exe` on port 7890 is not
-CC Switch. Identify `cc-switch.exe` directly before reporting its version or
-update status.
-
-**Pitfall:** Git fetch of the Hermes upstream repo (`hermes-agent/`) times out
-behind CC Switch on this machine. Use `export HTTPS_PROXY=http://127.0.0.1:7890`
-before `git fetch` to route through the proxy.
-
-### 16. Portable Hermes deployment packs for other Windows machines
-
-When packaging a Hermes config/skills/tools repo for reuse on other computers,
-make it clone-and-run portable rather than mirroring the current machine's live
-state.
-
-Checklist:
-
-1. **Classify files by deployment target** — keep `config/`, `skills/<category>/`,
-   `tools/`, `memories/` (reference only), and docs separate. Do not flatten all
-   skills into one directory when the user asked for categories.
-2. **Script root must be the script directory, not its parent** for a freshly
-   cloned repo:
-   ```bash
-   # setup.sh
-   REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
-   PACK_DIR="$REPO_ROOT"
-   ```
-   ```powershell
-   # setup.ps1
-   $RepoRoot = $PSScriptRoot
-   $PackDir = $RepoRoot
-   ```
-3. **Never upload live credentials** — include `.env.template` with blank values,
-   `auth.json.template`, and instructions to rerun OAuth on each new machine.
-   ChatGPT/Codex subscription OAuth is per-machine and must not be copied as a
-   real token file.
-4. **Normalize encoding/line endings** before committing. Add `.gitattributes`
-   with LF for text and binary rules for installers/assets:
-   ```gitattributes
-   * text=auto eol=lf
-   *.sh text eol=lf
-   *.ps1 text eol=lf
-   *.md text eol=lf
-   *.yaml text eol=lf
-   *.json text eol=lf
-   *.template text eol=lf
-   *.msi binary
-   *.exe binary
-   *.png binary
-   *.zip binary
-   ```
-5. **Verify portability after edits** — UTF-8 decode all text files, run
-   `bash -n setup.sh`, parse YAML if possible, `git diff --check`, and confirm
-   the remote raw files decode as UTF-8 after push.
-6. **Explain post-clone manual steps** — fill API keys, start CC Switch if used,
-   rerun `hermes auth add openai-codex` for GPT subscription, then `/reset` or
-   restart Hermes after provider/model changes.
-7. **When renaming or redefining a deployment/workflow repo**, update both local
-   docs and GitHub metadata in one closed loop:
-   - Add or update a class-level project definition doc such as
-     `docs/workflow/project-definition.md`.
-   - Update `README.md`, troubleshooting docs, and any packaged skills/templates
-     that still mention the old repo name or clone URL.
-   - Search for stale identity strings before commit:
-     ```bash
-     grep -RInE 'old-owner/old-repo\.git|cd old-repo|old-pack-name|old project title' . --exclude-dir=.git
-     ```
-   - Run syntax/security checks, commit, push, then update GitHub description and
-     topics with `gh repo edit ... --description ... --add-topic ...`.
-   - If using Hermes Desktop/TUI, create or switch the local Project so the chat
-     workspace is anchored to the new repo path.
-
-See `references/hermes-deployment-pack-portability.md` for a concise reusable
-verification checklist.
-
-### 17. Multi-project localhost preview and screenshot hygiene
-
-When several dev servers are running on nearby ports, never assume a remembered
-port still belongs to the current repo. Before sending a browser preview or a
-screenshot to the user:
-
-```bash
-for p in 5173 5174 5175 5176 5177 5178; do
-  echo "---$p"
-  curl --noproxy '*' -s --max-time 2 http://127.0.0.1:$p/ \
-    | grep -oi '<title>[^<]*' | sed 's/<title>//i' || true
-done
-```
-
-Then navigate the browser to the verified `127.0.0.1:<port>` URL, not a stale
-`localhost` tab. After `browser_vision`, use the screenshot path from the latest
-screenshot result/list, not a cached path from a previous turn. If the user says
-the preview is the wrong project, immediately re-audit port titles and resend a
-fresh screenshot.
-
-### 18. curl + Chinese/Unicode POST body in git-bash
-
-When `curl -d` contains Chinese or other non-ASCII characters in git-bash/MSYS,
-the body can be mangled before reaching the server, producing "error parsing body".
-
-**Root cause**: MSYS shell encoding interacts poorly with `curl -d` inline JSON.
-
-**Fix**: write the payload to a temp file and use `-d @file`:
-
-```bash
-# WRONG — Chinese chars may be garbled:
-curl -s -X POST http://127.0.0.1:8000/run \
-  -H "Content-Type: application/json" \
-  -d '{"content":"请帮我生成一份B线MVP开发计划"}'
-
-# RIGHT — write to file first:
-echo '{"content":"请帮我生成一份B线MVP开发计划"}' > /tmp/payload.json
-curl -s -X POST http://127.0.0.1:8000/run \
-  -H "Content-Type: application/json" \
-  -d @/tmp/payload.json
-```
-
-### 19. Python imports from hyphenated directories
-
-Directories with hyphens (e.g. `Inspiration-Research/`, `Knowledge-Base/`)
-cannot be used as Python module names. `from Inspiration-Research.api import app`
-is a SyntaxError.
-
-**Fix**: use `sys.path.insert` to add the directory, then import without the hyphen:
-
-```python
-import sys
-from pathlib import Path
-
-_PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(_PROJECT_ROOT))
-sys.path.insert(0, str(_PROJECT_ROOT / "Inspiration-Research"))
-
-# Now import from the directory content directly:
-from intake.generator import generate_intake_card
-from contracts.generator import generate_contract
-```
-
-For uvicorn, run from project root with the module path using the hyphenated name:
-```bash
-python -m uvicorn Inspiration-Research.api:app --port 8001
-```
-
-The `sys.path.insert` inside api.py handles the rest at import time.
-
-### 20. Empty `__init__.py` shows as "binary" in `file` command
-
-When running `file -b --mime-encoding __init__.py` on empty files (0 bytes),
-the result is "binary". This is NOT an encoding issue — empty files have no
-encoding. Skip empty files when auditing encoding.
-
-### 21. UTF-16LE detection and conversion
-
-On Windows, some files may be saved as UTF-16LE (especially from PowerShell or
-legacy tools). `git diff` may show "binary files differ" for these.
-
-**Detect**: `file path/to/file.py` → "UTF-16, little-endian"
-**Convert**: `iconv -f UTF-16LE -t UTF-8 input.py > output.py`
-
-```bash
-# Find all non-UTF-8 files in the repo:
-git ls-files | while read f; do
-  test -s "$f" || continue
-  encoding=$(file -b --mime-encoding "$f" 2>/dev/null)
-  case "$encoding" in
-    *utf-8*|*us-ascii*) ;;
-    *binary*) test -z "$(cat "$f")" && continue; echo "WARN: $f = $encoding";;
-    *) echo "WARN: $f = $encoding";;
-  esac
-done
-```
-
-### 22. Uploading Windows repo changes with encoding hygiene
-
-Before pushing code from Windows, especially files containing Chinese text or
-new Vue/TS/JSON files, verify the exact files being uploaded are UTF-8 and have
-stable LF line endings. Do not let local SQLite DBs, `__pycache__`, or browser
-smoke-test state slip into commits.
-
-```bash
-# Worktree and whitespace
-cd '<repo>' && git status --short && git diff --check
-
-# Check only the files changed in the latest commit or current upload set
-python - <<'PY'
-from pathlib import Path
-files = ['.gitattributes']  # replace/add touched text files
-bad=[]; crlf=[]
-for f in files:
-    data=Path(f).read_bytes()
-    try: data.decode('utf-8')
-    except UnicodeDecodeError: bad.append(f)
-    if b'\r\n' in data: crlf.append(f)
-print('non_utf8=' + (','.join(bad) if bad else 'none'))
-print('crlf=' + (','.join(crlf) if crlf else 'none'))
-PY
-```
-
-If CRLF appears in touched text files, normalize only the touched files to
-UTF-8 + LF, add/strengthen `.gitattributes` rules such as `*.vue text eol=lf`,
-rerun tests/build, then commit the normalization separately when appropriate.
-
-### 23. Git-Bash redirection to `NUL` creates a real reserved-name file
-
-On this Windows host, terminal commands run through Git-Bash/MSYS. A command or test that uses Windows-style redirection such as `>NUL` can create a real repository file named `NUL`. Git for Windows may then fail while staging with:
-
-```text
-fatal: mmap failed: Invalid argument
-```
-
-Diagnosis and repair:
-
-```bash
-git status --short       # look for `?? NUL`
-stat -c '%n %s bytes' NUL
-rm -f NUL
-git add -A
-git diff --cached --check
-```
-
-If `git add` still fails after removing `NUL`, the underlying issue may be filesystem-level (mmap failure on the drive partition). In that case, retry the command from a fresh shell or use `git add <specific-file>...` to stage files individually, isolating the problematic path.
-
-Prevention: use POSIX redirection in Git-Bash (`>/dev/null 2>&1`), not `>NUL`. If a build script deliberately invokes `cmd.exe`, keep `NUL` only inside the quoted `cmd.exe /c` command.
-
-### 25. 抖音开发者工具 CDP 交互（computer_use 返回空时的后备）
-
-当 `computer_use(action='capture')` 对 抖音开发者工具 返回 0×0 空截图时，该工具的 Electron 进程自带 CDP 服务器（默认端口 `127.0.0.1:8935`），可以直接通过 HTTP POST 操作。
-
-**发现端口上的所有页面：**
-```bash
-curl --noproxy '*' -s http://127.0.0.1:8935/json | python -c "import json,sys; [print(x.get('title'),x.get('type')) for x in json.load(sys.stdin)]"
-```
-
-**两个关键页面：**
-- 工作台 → title 包含 `workbenchMode=workbench`
-- 模拟器 Webview → title 包含 `MiniApp Webview`
-
-**三种 CDP 操作：**
-
-| 操作 | 脚本 | 参数 |
-|---|---|---|
-| 执行 JS | `node .tmp/cdp-eval.mjs '<title>' '<js>'` | title 子串 + JS 表达式 |
-| 点击坐标 | `node .tmp/cdp-click.mjs '<title>' <x> <y>` | title 子串 + x y 坐标 |
-| 截图保存 | `node .tmp/cdp-shot.mjs '<title>' '<output.png>'` | title 子串 + 输出路径 |
-
-**查找工具栏按钮：** 抖音开发者工具的"上传/编译/预览"等按钮不是 `<button>` 标签，而是 `<div class="tila-toolbar-item-container">`。用 `textContent` 而非 `innerText` 查找，因为嵌套元素有 aria-hidden。
-
-```js
-const btn = [...document.querySelectorAll('div,span')]
-  .find(e => e.textContent.trim() === '上传' && e.offsetWidth > 0);
-const {x, y} = btn.getBoundingClientRect();
-// 点击 (x+5, y+5)
-```
-
-**陷阱：** 截图命令可能因 Webview 加载中超时；编译后 Webview 短暂变白需等待 3-5 秒。
-
-### 26. Git clone into Windows paths with spaces from Git-Bash/MSYS
-
-When cloning into paths such as `D:\All projects\Repo` from Hermes on Windows,
-Git-Bash/MSYS path conversion can be fragile after an interrupted clone or when
-the destination contains spaces. A POSIX path like `/d/All projects/Repo` may be
-visible to Python or `find`, while `git clone` still reports the destination as
-non-empty or shell `cd` intermittently fails.
-
-**Robust pattern:** convert the POSIX destination to a native Windows path for
-`git clone`, then use the POSIX path for verification and follow-up commands:
-
-```bash
-TARGET_POSIX='/d/All projects/Repo'
-TARGET_WIN=$(cygpath -w "$TARGET_POSIX")
-mkdir -p "$(dirname "$TARGET_POSIX")"
-GIT_TERMINAL_PROMPT=0 git clone https://github.com/owner/Repo.git "$TARGET_WIN"
-cd "$TARGET_POSIX"
-git branch --show-current
-git rev-parse --short HEAD
 git status --short
+git branch --show-current
+git rev-parse --show-toplevel
 ```
 
-If a previous clone was interrupted, inspect the target first. If it contains
-only a partial `.git`, retry safely; if it contains user/project files, do not
-remove or overwrite it without explicit scope confirmation.
+Before staging:
 
-### 27. Hermes Desktop shortcut icon repair
-
-A blank Hermes desktop icon is not proof that `Hermes.exe` is missing. Windows
-shortcuts store the executable target and the icon resource independently.
-Inspect both through `WScript.Shell.CreateShortcut()` before changing anything:
-
-```python
-from pathlib import Path
-import win32com.client
-
-link = Path.home() / "Desktop" / "Hermes.lnk"
-shortcut = win32com.client.Dispatch("WScript.Shell").CreateShortcut(str(link))
-print(shortcut.TargetPath, Path(shortcut.TargetPath).is_file())
-print(shortcut.IconLocation)
+```bash
+git status --short
+git diff --check
+git diff --stat
 ```
 
-If the target exists but `IconLocation` points at a retired install tree, locate
-`resources/icon.ico` beside the target's active `win-unpacked` directory, set
-`shortcut.IconLocation = f"{icon},0"`, then save and verify both paths. Ask
-Explorer to refresh its icon view if needed.
+Stage explicit paths only. Never stage `.env`, `auth.json`, databases, logs, caches, virtual environments, browser state, or generated runtime evidence. A clean local test is not release evidence; use the repository's canonical quality gate and verify CI against the exact commit SHA.
 
-Do **not** change the shortcut target, rebuild Desktop, update Hermes, or kill a
-running Desktop process merely to repair the icon. Those are separate runtime
-operations and can interrupt the active chat; apply them only when their own
-symptom is verified and the user has authorized the restart.
+## Common pitfalls
 
-### 28. Hermes Desktop appearance persistence and self-update audit
+1. Treating Git-Bash as PowerShell.
+2. Launching a `.cmd` through Python/Node without `cmd.exe`.
+3. Fixing PATH shadowing by editing global configuration instead of verifying the executable first.
+4. Regenerating a lockfile before preserving the exact diff.
+5. Restarting a server before checking `TIME_WAIT` and listener ownership.
+6. Using a stale localhost port or cached screenshot as proof of the current project.
+7. Replacing a canonical deployment with direct copies.
+8. Treating a managed-root drift as permission to overwrite possible user customization.
+9. Reading or printing credentials while diagnosing registry, OAuth, proxy, or provider symptoms.
+10. Staging `NUL`, `.env`, runtime databases, or task artifacts.
 
-When Hermes Desktop reopens with the same unexpected color, distinguish the
-persisted renderer skin from the OS light/dark mode and the backend's CLI skin.
-The Desktop renderer persists its own appearance in Chromium Local Storage; the
-current source uses keys such as `hermes-desktop-theme-v2`,
-`hermes-desktop-profile-themes-v1`, and `hermes-desktop-mode-v1`. A value of
-`midnight` is intentionally a deep blue-violet palette, not a random blue
-switch. `native-theme.json` / `themeSource: dark` only describes native
-light/dark appearance and does not select a blue palette.
+## Verification checklist
 
-Audit without touching secrets or whole browser storage:
-
-1. Read the non-secret theme implementation and identify the storage key,
-   default skin, profile fallback, and boot-time read path.
-2. Inspect only the exact Local Storage records needed for the theme key; do not
-   dump the complete LevelDB because it can contain provider/session state.
-3. Check `gateway.ready` handling. A correct Desktop should seed backend skin
-   metadata without clobbering the user's persisted Desktop theme; only an
-   explicit `skin.changed` event should repaint it.
-4. Treat a stored `midnight`/`slate` value as the primary cause before blaming
-   Windows theme settings, the proxy, or a new backend connection.
-5. Change the skin through the Desktop Appearance UI when possible. If the UI
-   is broken, obtain the user's exact desired skin before deleting or editing a
-   single storage key; never clear the whole Local Storage directory.
-
-When Desktop shows `isn't a git checkout — desktop self-update only runs against
-a source install`, report that the current runtime is not a Git source checkout.
-This is an updater-capability diagnosis, not proof that the executable or
-shortcut target is missing. Do not convert a slow or blocked upstream download
-into an unverified replacement runtime, and remove any incomplete temporary
-clone before concluding the audit. Keep Desktop/CLI version drift and appearance
-persistence as separate hypotheses; do not infer either from a screenshot alone.
+- [ ] Shell and interpreter were identified explicitly.
+- [ ] Executable resolution was checked before changing code.
+- [ ] Touched text files are UTF-8 and pass `git diff --check`.
+- [ ] Paths were quoted and no unsafe deletion or global trust change was made.
+- [ ] Local server ownership and port state were verified if relevant.
+- [ ] Deployment used the canonical path and only owned assets.
+- [ ] User configuration, credentials, provider/model routes, plugins, MCP, sessions, and memory were preserved.
+- [ ] Runtime artifacts remain under the project ignored runtime/evidence directories.
+- [ ] Tests and the canonical quality gate were run after edits.
+- [ ] Exact changed paths, commit, and verification evidence are recorded.

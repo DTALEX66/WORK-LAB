@@ -422,7 +422,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards li
 | `project-data-boundary` | 项目任务数据 containment：Git-ignore fail-closed、受控临时目录、缓存、日志和产物路径 |
 | `python-testing` | unittest/pytest 模式、测试隔离、fixture 和常见陷阱 |
 | `requesting-code-review` | 代码复审兼容入口，统一转入 fortress 的 exact-tree 流程 |
-| `windows-development-environment` | PowerShell 编码、PATH 遮蔽、spawn/lockfile、便携工具链和 Windows 环境问题 |
+| `windows-development-environment` | PowerShell 编码、PATH 遮蔽、spawn/lockfile、路径和 Windows 环境问题 |
 
 这 13 个 skill 都是本项目全局工作流增强的 repository-controlled portable source；同步脚本会把每个仓库负责的 skill 目录作为完整子树精确部署到 Hermes Home，不保留同目录里的旧 references、scripts 或 provenance 残片。其它 Hermes bundled 和用户安装 skills 保持原样，也不会把 live 私有 skill 或运行数据反向吸收到仓库。
 
@@ -525,7 +525,7 @@ python scripts/workflow/run_quality_gate.py verify
 just verify
 ```
 
-`just` 不是默认依赖；缺少时直接使用 Python runner。`verify` 依次运行 governance、compile、security、context-pack、portable-install、provider-inventory、mcp-audit、shell 和 powershell gate。PowerShell gate 优先 `pwsh`，仅在缺少时回退 `powershell.exe`，并且只用 AST parser 解析 `setup.ps1`，不执行安装动作。Shell/PowerShell 工具不可用时对应 gate 会显式 skip。
+`just` 不是默认依赖；缺少时直接使用 Python runner。`verify` 依次运行 governance、compile、skill-provenance、security、context-pack、portable-install、portable-install-runtime、provider-inventory、mcp-audit、shell 和 powershell gate。PowerShell gate 优先 `pwsh`，仅在缺少时回退 `powershell.exe`，并且只用 AST parser 解析 `setup.ps1`，不执行安装动作。Shell/PowerShell 工具不可用时对应 gate 会显式 skip。
 
 治理测试覆盖：
 
