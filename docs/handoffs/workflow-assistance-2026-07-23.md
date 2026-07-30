@@ -37,21 +37,20 @@ git rev-parse origin/main
 
 - `run_taskpack_agent.py` 要求显式 `--remote-ref`。
 - TaskPack 默认不发布；只有 `--publish` 才允许 commit/push/PR/CI。
-- `sync_hermes_workflow_assets.py --apply` 是 repo → live Hermes 的唯一受控同步路径；它保留 live provider/model、凭据、私有 MCP 与用户命令，不得用手工复制替代。
+- `sync_hermes_workflow_assets.py` 是 repo → live Hermes 的唯一受控同步路径；先运行不带 `--apply` 的 dry-run，审查 ownership/drift 和目标路径，再在明确授权后 `--apply`。它保留 live provider/model、凭据、私有 MCP 与用户命令，不得用手工复制替代。
 - 默认 MCP 为 Context7；其他 MCP 只在完成审计与 smoke 后按需启用。
 
 ### 模型与 Windows 环境
 
 - 当前受控模型 lanes：Kimi K3/K2.7 Code/K2.7 HighSpeed，DeepSeek V4 Pro/V4 Flash，ChatGPT 5.6 Sol/Terra/Luna。
-- `switch_model.py` 的 GPT OAuth 切换不再依赖 CC Switch `127.0.0.1:7890`；该端口仅是显式代理诊断项。
 - Windows 不得假设 `python` 与 `python3` 指向同一解释器；仓库工作流使用 `python` 或显式 venv 解释器。
-- 便携 Scoop/Rust 工具链迁移规则已进入 `windows-development-environment` skill 与其 `portable-toolchain-relocation.md` 参考文件；项目 `.venv`、构建输出、数据库、日志与任务证据不得混入共享工具链。
+- `windows-development-environment` 只负责 Windows shell、解释器、路径、编码、子进程、本地服务器、Git 和 canonical workflow deployment 边界；便携 Scoop/Rust 工具链迁移不属于该 skill。
 
 ### 清理与运行时状态
 
 - 已删除引用退休 `cognitive-loop-os` skill 的暂停 sleep cron；恢复时不要重建项目专属全局 cron。
 - live managed skills 已通过 source-to-live 文件哈希比对；后续同步或运行环境变化后必须重新验证。
-- Hermes Desktop 快捷方式的图标路径已修复。Desktop 设置页的最终可视验证应在当前 Desktop 会话自然退出并重新打开后完成；不要为此强杀承载当前对话的 Hermes 进程。
+
 
 ## 推荐恢复顺序
 
@@ -65,11 +64,16 @@ git rev-parse origin/main
    git diff --check
    ```
 
-5. 对需部署到 live Hermes 的受控资产运行：
+5. 对需部署到 live Hermes 的受控资产，先运行 dry-run：
 
    ```bash
-   python scripts/workflow/sync_hermes_workflow_assets.py --apply
+   REPO_ROOT="$(git rev-parse --show-toplevel)"
+   HERMES_HOME="${HERMES_HOME:?Set HERMES_HOME to the intended Hermes Home}"
+   python scripts/workflow/sync_hermes_workflow_assets.py \
+     --repo "$REPO_ROOT" --home "$HERMES_HOME"
    ```
+
+   只有 dry-run、drift 审查和 backup 确认通过，并获得明确授权后，才运行 `--apply`；apply 后执行 `hermes config check` 和定向 runtime 验证。
 
 6. 用户要求上传时：扫描暂存候选中的 secrets/二进制/runtime 文件，记录 `git write-tree`，提交、推送、核验 `origin/main` exact SHA，并等待对应 GitHub Actions。
 

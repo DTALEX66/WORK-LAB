@@ -16,6 +16,9 @@ governance:
 compile:
     python scripts/workflow/run_quality_gate.py compile
 
+skill-provenance:
+    python scripts/workflow/run_quality_gate.py skill-provenance
+
 security:
     python scripts/workflow/run_quality_gate.py security
 
@@ -24,6 +27,9 @@ context-pack:
 
 portable-install:
     python scripts/workflow/run_quality_gate.py portable-install
+
+portable-install-runtime:
+    python scripts/workflow/run_quality_gate.py portable-install-runtime
 
 provider-inventory:
     python scripts/workflow/run_quality_gate.py provider-inventory
