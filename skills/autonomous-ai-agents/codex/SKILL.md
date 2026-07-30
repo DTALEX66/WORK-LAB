@@ -1,7 +1,7 @@
 ---
 name: codex
 description: "Delegate bounded coding or read-only review tasks to the OpenAI Codex CLI; use isolated worktrees for writers."
-version: 2.0.0
+version: 2.0.1
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -25,11 +25,9 @@ Current verified CLI: `codex-cli 0.144.2`.
 - A normal task should run in a Git repository. For an intentional read-only/scratch non-repo task, use the documented `--skip-git-repo-check` option if `codex exec --help` still lists it.
 - Re-check `codex --version` and relevant `--help` when commands fail; flags are not stable contracts.
 
-On this Windows machine, prefer the desktop plugin binary when it is newer than PATH:
-
-```text
-C:/Users/ALEX/.codex/plugins/.plugin-appserver/codex.exe
-```
+On Windows, resolve Codex through the active user's supported launcher or
+`PATH`, and verify it with `codex --version`. Do not record an account-specific
+desktop-plugin executable path in this portable skill.
 
 Do not read or copy Codex/Hermes auth files. Use each product's supported login flow.
 

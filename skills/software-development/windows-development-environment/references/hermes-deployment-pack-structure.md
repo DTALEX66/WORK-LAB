@@ -1,66 +1,36 @@
-# Hermes 跨机器部署包结构
+# Workflow-assistance 跨机器 Overlay 结构
 
-## 仓库结构（当前）
+## 当前契约
 
-```
-hermes/                         # GitHub: DTALEX66/hermes
-├── .gitattributes              # LF 换行规范
-├── .gitignore                  # 排除 .env / auth.json
-├── README.md                   # 部署说明（含三种路由方案 + CC Switch）
-├── TROUBLESHOOTING.md          # 排坑手册
-├── setup.ps1                   # Windows 部署脚本（不安装 Hermes 本体）
-├── setup.sh                    # Linux/macOS 部署脚本
-├── config/
-│   ├── config.yaml             # 完整配置（GPT-5.5 + CC Switch 代理）
-│   ├── SOUL.md                 # Agent 人格设定（中文）
-│   └── .env.template           # 脱敏环境变量模板（含代理配置）
-└── skills/
-    ├── model-switch/SKILL.md   # 模型切换技能（DP/GPT）
-    └── software-development/
-        ├── screenlingua/       # 截图翻译项目
-        ├── python-testing/     # Python 测试约定
-        └── windows-development/# Windows 排坑
-```
+本仓库是 routing-neutral 的 Hermes/Codex/GitHub 工作流 overlay，不是
+Hermes 应用安装器，也不是 Provider、认证、网络或桌面插件的迁移工具。
 
-## 部署流程
+受管清单以 `config/managed-config-schema.yaml` 为唯一机器可读来源：
 
-### 新电脑（Windows）
+- 精确登记的 skill roots 与 `bin/` launcher paths；
+- `config/SOUL.md → $HERMES_HOME/SOUL.md` 的单文件 mapping；
+- isolated baseline verification 所需的 UI、memory、toolset、terminal hook 及
+  `mcp_servers.owned_names` 结构契约；它们不授权写入真实 profile config。
 
-```powershell
-git clone git@github.com:DTALEX66/hermes.git
-.\setup.ps1                     # 复制配置/技能/启用插件
-```
+同步器对这些文件执行 backup → staging → per-item atomic promotion →
+rollback。它不整体替换 `skills/`、`bin/` 或 Hermes Home。
 
-### 部署后手动步骤
+## 不属于 Overlay 的状态
 
-1. **设置 API Key** — 编辑 `%LOCALAPPDATA%\hermes\.env`
-2. **OAuth 认证** — `hermes auth add openai-codex`（GPT 方案需要）
-3. **启动 CC Switch**（如果网络受限需要翻墙）
-4. **选择路由方案** — 按网络环境选方案，修改 config.yaml 或 `hermes config set`
-5. `/reset` 或重启 Hermes
+以下内容始终由官方应用与当前用户保有：provider/model/base URL、认证、
+API key、用户 MCP、用户插件、rules、sessions、memories 以及网络路由。
+同步器不读取、不比较也不 promotion live `config.yaml`；因此没有 config-drift
+检查与替换之间的竞态窗口。该文件只能在受控 project runtime 下的 empty isolated
+Home 中构造，用于 portable compatibility verification。
 
-### setup.ps1 自动完成的内容
+## 跨机器使用
 
-| 步骤 | 操作 |
-|------|------|
-| 1 | 复制 config.yaml / SOUL.md |
-| 2 | 如 .env 不存在则从 .env.template 创建 |
-| 3 | 安装本地技能到 skills/ 目录 |
-| 4 | pip install ddgs |
-| 5 | 启用工具集 x_search / video / spotify |
-| 6 | 启用插件 disk-cleanup / google_meet / security-guidance / spotify / web/ddgs |
+1. 用官方渠道安装或更新 Hermes/Codex；应用升级、schema migration 与
+   Desktop layout 验收是独立步骤。
+2. 在目标机运行同步器 dry-run，审查 schema 所列 exact managed inventory。
+3. 只有用户明确批准后才执行 `--apply`；保留同步器创建的 backup 作为恢复
+   证据。
+4. 完成后分别验证结构、isolated runtime compatibility、hook trust 和
+   Desktop cold-start；不要将其中任一项当成其它项的替代证据。
 
-## 凭证注意事项
-
-1. **永不提交** `.env` 或 `auth.json` 到 Git（有 `.gitignore` 保护）
-2. **OAuth 令牌**（ChatGPT OAuth）存储在 `auth.json`，新电脑需重新运行 `hermes auth add openai-codex`
-3. **CC Switch 安装包**不包含在仓库中（因体积大已被移除），需自行下载
-4. **.env 中 `HTTPS_PROXY`** 写入后需**完全重启 Hermes** 才生效（环境变量在进程启动时读取）
-
-## 路由方案速查
-
-| 方案 | Provider | 环境要求 | 配置方式 |
-|:----:|----------|---------|---------|
-| DeepSeek 直连 | `deepseek` | `api.deepseek.com` 可达 | `.env` 设 `DEEPSEEK_API_KEY` |
-| GPT OAuth | `openai-codex` | `chatgpt.com` 可达 | `hermes auth add openai-codex` |
-| GPT + 代理 | `openai-codex` + `HTTPS_PROXY` | CC Switch 运行中 | 同上 + `.env` 设代理 |
+凭据文件、用户路由和应用私有状态不得读入、复制进或从本仓库恢复。

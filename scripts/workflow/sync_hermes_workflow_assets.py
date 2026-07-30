@@ -14,7 +14,7 @@ import hashlib
 import os
 import shutil
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable
 
 try:
     import yaml
@@ -22,7 +22,6 @@ except Exception as exc:  # pragma: no cover - environment guard
     raise SystemExit(f"PyYAML is required: {exc}")
 
 
-MANAGED_MCP_SERVERS = {"context7", "public-apis", "sequential-thinking"}
 RETIRED_MANAGED_PLUGINS = {"disk-cleanup", "google_meet", "spotify"}
 PLUGIN_RETIREMENT_MIGRATION = 1
 WORKFLOW_SYNC_BACKUP_KEEP = 2
@@ -50,6 +49,27 @@ MANAGED_MEMORY_KEYS = {
     "memory_char_limit",
     "user_char_limit",
 }
+# Root-level files are particularly sensitive in a user-owned Hermes home.
+# Keep this a closed, reviewed inventory rather than treating schema input as
+# authority to introduce future config/auth/environment targets.
+APPROVED_MANAGED_FILE_MAPPINGS = frozenset({("config/SOUL.md", "SOUL.md")})
+
+
+class PreservedConfigPromotionGuard:
+    """Semantic user-owned config snapshot captured from the staged source."""
+
+    def __init__(
+        self,
+        *,
+        snapshot: dict,
+        repo_data: dict,
+        contract: dict,
+        retiring_legacy_plugins: bool,
+    ) -> None:
+        self.snapshot = snapshot
+        self.repo_data = repo_data
+        self.contract = contract
+        self.retiring_legacy_plugins = retiring_legacy_plugins
 
 
 def default_repo_root() -> Path:
@@ -102,8 +122,22 @@ def load_config_contract(repo: Path) -> dict:
                 "memory.memory_char_limit": "replace",
                 "memory.user_char_limit": "replace",
                 "platform_toolsets.cli": "replace",
+                "mcp_servers": {"strategy": "merge_owned", "owned_names": ["context7"]},
+                "hooks.pre_tool_call": "replace_owned_matcher",
+                "plugins.enabled": "merge_additive",
             },
-            "preserved": ["model.provider", "model.default", "model.api_key"],
+            "preserved": [
+                "model.provider",
+                "model.default",
+                "model.base_url",
+                "model.api_key",
+                "model.other",
+                "credentials",
+                "mcp_servers.user_defined",
+                "quick_commands.user_defined",
+                "model_picker.user_defined",
+                "plugins.user_enabled",
+            ],
         }
     )
     if not isinstance(data, dict) or data.get("schema_version") != 1:
@@ -116,6 +150,150 @@ def load_config_contract(repo: Path) -> dict:
         if required not in preserved:
             raise ValueError(f"managed config contract must preserve {required}")
     return data
+
+
+def managed_mcp_names(contract: dict) -> set[str]:
+    """Return exactly the MCP names the declarative contract grants to the pack."""
+
+    managed = contract.get("managed")
+    mcp_contract = managed.get("mcp_servers") if isinstance(managed, dict) else None
+    if not isinstance(mcp_contract, dict) or mcp_contract.get("strategy") != "merge_owned":
+        raise ValueError("managed config contract must define mcp_servers merge_owned strategy")
+    names = mcp_contract.get("owned_names")
+    if not isinstance(names, list) or not names or not all(isinstance(name, str) and name for name in names):
+        raise ValueError("managed config contract mcp_servers.owned_names must be a non-empty string list")
+    if len(set(names)) != len(names):
+        raise ValueError("managed config contract mcp_servers.owned_names must be unique")
+    return set(names)
+
+
+def snapshot_preserved_live_config(
+    live_data: dict,
+    repo_data: dict,
+    contract: dict,
+    *,
+    retiring_legacy_plugins: bool = False,
+) -> dict:
+    """Capture the user-owned config surface before a workflow overlay merge.
+
+    The ownership contract intentionally grants the repository a narrow set of
+    direct keys plus three merge-owned collections.  Everything else is a live
+    user choice and must remain semantically identical after a future sync.
+    This snapshot contains no rendered configuration and is only used for an
+    in-process equality check before a staged config can be promoted.
+    """
+
+    managed = contract.get("managed")
+    if not isinstance(managed, dict):
+        raise ValueError("managed config contract must define managed mappings")
+
+    managed_children: dict[str, set[str | None]] = {}
+    for raw_path in managed:
+        if not isinstance(raw_path, str) or not raw_path:
+            raise ValueError("managed config paths must be non-empty strings")
+        root, *children = raw_path.split(".")
+        managed_children.setdefault(root, set()).add(children[0] if children else None)
+
+    snapshot: dict = {}
+    for root, value in live_data.items():
+        children = managed_children.get(root)
+        if children is None:
+            snapshot[root] = deepcopy(value)
+            continue
+        if None in children:
+            # Whole-root merge strategies (currently MCP servers) receive a
+            # narrower, ownership-aware snapshot below.
+            continue
+        if not isinstance(value, dict):
+            snapshot[root] = deepcopy(value)
+            continue
+        preserved_children = {
+            key: deepcopy(child)
+            for key, child in value.items()
+            if key not in children
+        }
+        if preserved_children:
+            snapshot[root] = preserved_children
+
+    live_mcp = live_data.get("mcp_servers")
+    if isinstance(live_mcp, dict):
+        owned_mcp_names = managed_mcp_names(contract)
+        user_mcp = {
+            name: deepcopy(value)
+            for name, value in live_mcp.items()
+            if name not in owned_mcp_names
+        }
+        if user_mcp:
+            snapshot["mcp_servers.user_defined"] = user_mcp
+
+    live_hooks = live_data.get("hooks")
+    if isinstance(live_hooks, dict):
+        pre_tool = live_hooks.get("pre_tool_call")
+        if isinstance(pre_tool, list):
+            user_pre_tool = [
+                deepcopy(hook)
+                for hook in pre_tool
+                if not isinstance(hook, dict) or hook.get("matcher") != "terminal"
+            ]
+            if user_pre_tool:
+                snapshot["hooks.pre_tool_call.user_defined"] = user_pre_tool
+
+    live_plugins = live_data.get("plugins")
+    repo_plugins = repo_data.get("plugins")
+    if isinstance(live_plugins, dict) and isinstance(repo_plugins, dict):
+        current_enabled = live_plugins.get("enabled")
+        repo_enabled = repo_plugins.get("enabled")
+        if isinstance(current_enabled, list) and isinstance(repo_enabled, list):
+            managed_plugin_names = set(repo_enabled)
+            if retiring_legacy_plugins:
+                managed_plugin_names.update(RETIRED_MANAGED_PLUGINS)
+            user_enabled = [
+                name
+                for name in current_enabled
+                if name not in managed_plugin_names
+            ]
+            if user_enabled:
+                snapshot["plugins.user_enabled"] = user_enabled
+
+    return snapshot
+
+
+def assert_preserved_live_config(
+    snapshot: dict,
+    live_data: dict,
+    repo_data: dict,
+    contract: dict,
+    *,
+    retiring_legacy_plugins: bool = False,
+) -> None:
+    """Fail closed if a workflow sync changed any user-owned config state."""
+
+    if snapshot != snapshot_preserved_live_config(
+        live_data,
+        repo_data,
+        contract,
+        retiring_legacy_plugins=retiring_legacy_plugins,
+    ):
+        raise ValueError("preserved live config changed by workflow sync")
+
+
+def assert_preserved_live_config_before_promotion(
+    guard: PreservedConfigPromotionGuard,
+    home: Path,
+) -> None:
+    """Reject a live user-config change immediately before config replacement."""
+
+    live_cfg = home / "config.yaml"
+    live_data = yaml.safe_load(live_cfg.read_text(encoding="utf-8")) or {} if live_cfg.exists() else {}
+    if not isinstance(live_data, dict):
+        raise ValueError("live config root must be a mapping before workflow promotion")
+    assert_preserved_live_config(
+        guard.snapshot,
+        live_data,
+        guard.repo_data,
+        guard.contract,
+        retiring_legacy_plugins=guard.retiring_legacy_plugins,
+    )
 
 
 def load_managed_skill_roots(repo: Path) -> tuple[str, ...]:
@@ -166,6 +344,51 @@ def load_managed_binary_paths(repo: Path) -> tuple[str, ...]:
         if not (repo / relative).is_file():
             raise ValueError(f"managed binary path is missing: {value}")
         normalized.append(value)
+    return tuple(normalized)
+
+
+def load_managed_file_mappings(repo: Path) -> tuple[tuple[str, str], ...]:
+    """Return exact repository-file to live-file mappings from the contract."""
+
+    contract = load_config_contract(repo)
+    workflow = contract.get("global_workflow")
+    mappings = workflow.get("owned_file_mappings") if isinstance(workflow, dict) else None
+    if not isinstance(mappings, list) or not mappings:
+        raise ValueError("managed config contract must declare exact owned_file_mappings")
+
+    normalized: list[tuple[str, str]] = []
+    targets: set[str] = set()
+    for raw in mappings:
+        if not isinstance(raw, dict) or set(raw) != {"source", "target"}:
+            raise ValueError("owned_file_mappings entries must contain only source and target")
+        source_raw = raw["source"]
+        target_raw = raw["target"]
+        if not isinstance(source_raw, str) or not isinstance(target_raw, str):
+            raise ValueError("owned_file_mappings source and target must be strings")
+        source = Path(source_raw)
+        target = Path(target_raw)
+        if (
+            source.is_absolute()
+            or ".." in source.parts
+            or source.parts[:1] != ("config",)
+            or not (repo / source).is_file()
+        ):
+            raise ValueError(f"invalid managed file source: {source_raw}")
+        if (
+            target.is_absolute()
+            or ".." in target.parts
+            or len(target.parts) != 1
+            or target.name != target_raw
+        ):
+            raise ValueError(f"invalid managed file target: {target_raw}")
+        source_value = source.as_posix()
+        target_value = target.as_posix()
+        if target_value in targets:
+            raise ValueError(f"duplicate managed file target: {target_value}")
+        targets.add(target_value)
+        normalized.append((source_value, target_value))
+    if frozenset(normalized) != APPROVED_MANAGED_FILE_MAPPINGS:
+        raise ValueError("owned_file_mappings must exactly match the approved managed file mapping allowlist")
     return tuple(normalized)
 
 
@@ -320,6 +543,7 @@ def atomic_replace_paths(
     rels: Iterable[str],
     *,
     remove_rels: Iterable[str] = (),
+    before_replace: Callable[[str], None] | None = None,
 ) -> None:
     """Replace managed roots as one rollback-capable filesystem transaction."""
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
@@ -335,6 +559,8 @@ def atomic_replace_paths(
             source_exists = source.exists() or source.is_symlink()
             if not source_exists and relative not in removal_set:
                 continue
+            if before_replace is not None:
+                before_replace(relative)
             target = home / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             previous = rollback / relative
@@ -379,25 +605,34 @@ def atomic_replace_paths(
 def prepare_staging(
     repo: Path,
     home: Path,
-    managed_roots: Iterable[str],
-    managed_binaries: Iterable[str],
-) -> Path:
+    managed_roots: tuple[str, ...],
+    managed_binaries: tuple[str, ...],
+    managed_file_mappings: tuple[tuple[str, str], ...],
+    *,
+    include_config: bool = False,
+) -> tuple[Path, PreservedConfigPromotionGuard | None]:
     """Build a complete managed view without mutating the live Hermes home."""
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    staging = home / f".workflow-assistance-staging-{stamp}"
+    # Keep nested managed skill paths below legacy Windows MAX_PATH limits.
+    staging = home / f".wa-stg-{stamp}"
     staging.mkdir(parents=True, exist_ok=False)
     try:
-        for relative in ("config.yaml", ".workflow-assistance-state.yaml"):
-            live = home / relative
-            if live.exists():
-                (staging / relative).parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(live, staging / relative)
+        if include_config:
+            for relative in ("config.yaml", ".workflow-assistance-state.yaml"):
+                live = home / relative
+                if live.exists():
+                    (staging / relative).parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(live, staging / relative)
         replace_managed_skill_trees(repo, staging, managed_roots)
         for relative in managed_binaries:
             copyfile(repo / relative, staging / relative, apply=True)
+        for source_relative, target_relative in managed_file_mappings:
+            copyfile(repo / source_relative, staging / target_relative, apply=True)
         copyfile(repo / "config/.env.template", staging / ".env.template", apply=True)
-        merge_live_config(repo, staging, apply=True, wrapper_root=home)
-        return staging
+        config_guard = (
+            merge_live_config(repo, staging, apply=True, wrapper_root=home) if include_config else None
+        )
+        return staging, config_guard
     except Exception:
         try:
             shutil.rmtree(staging)
@@ -413,14 +648,14 @@ def merge_live_config(
     *,
     apply: bool,
     wrapper_root: Path | None = None,
-) -> None:
+) -> PreservedConfigPromotionGuard | None:
     """Merge portable entries while preserving live provider/model and custom MCPs."""
 
     repo_cfg = repo / "config/config.yaml"
     live_cfg = home / "config.yaml"
     if not repo_cfg.exists():
         print("skip config merge: missing repository config")
-        return
+        return None
     contract = load_config_contract(repo)
     repo_data = yaml.safe_load(repo_cfg.read_text(encoding="utf-8")) or {}
     live_data = (
@@ -430,12 +665,33 @@ def merge_live_config(
     )
     if not isinstance(live_data, dict) or not isinstance(repo_data, dict):
         raise ValueError("config roots must be mappings")
+    state_file = home / ".workflow-assistance-state.yaml"
+    state = (
+        yaml.safe_load(state_file.read_text(encoding="utf-8")) or {}
+        if state_file.exists()
+        else {}
+    )
+    if not isinstance(state, dict):
+        raise ValueError("workflow assistance state must be a mapping")
+    retire_legacy_plugins = state.get("plugin_retirement_migration", 0) < PLUGIN_RETIREMENT_MIGRATION
+    preserved_snapshot = snapshot_preserved_live_config(
+        live_data,
+        repo_data,
+        contract,
+        retiring_legacy_plugins=retire_legacy_plugins,
+    )
 
     live_mcp = live_data.setdefault("mcp_servers", {})
     repo_mcp = repo_data.get("mcp_servers") or {}
     if not isinstance(live_mcp, dict) or not isinstance(repo_mcp, dict):
         raise ValueError("mcp_servers must be mappings")
-    for retired in MANAGED_MCP_SERVERS - set(repo_mcp):
+    owned_mcp_names = managed_mcp_names(contract)
+    undeclared_repo_mcp = set(repo_mcp) - owned_mcp_names
+    if undeclared_repo_mcp:
+        raise ValueError(
+            "repository config declares MCPs outside managed ownership: " + ", ".join(sorted(undeclared_repo_mcp))
+        )
+    for retired in owned_mcp_names - set(repo_mcp):
         live_mcp.pop(retired, None)
 
     wrapper_home = wrapper_root or home
@@ -481,15 +737,6 @@ def merge_live_config(
 
     plugins = live_data.setdefault("plugins", {})
     repo_enabled = (repo_data.get("plugins") or {}).get("enabled") or []
-    state_file = home / ".workflow-assistance-state.yaml"
-    state = (
-        yaml.safe_load(state_file.read_text(encoding="utf-8")) or {}
-        if state_file.exists()
-        else {}
-    )
-    if not isinstance(state, dict):
-        raise ValueError("workflow assistance state must be a mapping")
-    retire_legacy_plugins = state.get("plugin_retirement_migration", 0) < PLUGIN_RETIREMENT_MIGRATION
     if isinstance(plugins, dict):
         current_enabled = plugins.get("enabled") or []
         retained = (
@@ -498,7 +745,6 @@ def merge_live_config(
             else list(current_enabled)
         )
         plugins["enabled"] = list(dict.fromkeys(retained + repo_enabled))
-        plugins.setdefault("disabled", [])
 
     repo_display = repo_data.get("display") or {}
     live_display = live_data.setdefault("display", {})
@@ -534,10 +780,17 @@ def merge_live_config(
             raise ValueError("platform_toolsets.cli must be a list of names")
         live_platforms["cli"] = deepcopy(cli)
 
-    # Model/provider routing, model picker lanes, and model-switching commands
+    # model picker lanes, and model-switching commands
     # are deliberately outside repository ownership. This merge leaves their
     # semantic values untouched, although YAML serialization may normalize the
     # file representation.
+    assert_preserved_live_config(
+        preserved_snapshot,
+        live_data,
+        repo_data,
+        contract,
+        retiring_legacy_plugins=retire_legacy_plugins,
+    )
     managed_paths = ",".join(sorted(contract["managed"]))
     print("merge live config: contract managed =", managed_paths)
     print("merge live config: model/provider routing = preserved, unmanaged")
@@ -553,6 +806,12 @@ def merge_live_config(
                 yaml.safe_dump(state, allow_unicode=True, sort_keys=False),
                 encoding="utf-8",
             )
+    return PreservedConfigPromotionGuard(
+        snapshot=preserved_snapshot,
+        repo_data=repo_data,
+        contract=contract,
+        retiring_legacy_plugins=retire_legacy_plugins,
+    )
 
 
 def deploy_portable(
@@ -572,6 +831,8 @@ def deploy_portable(
     validate_deployment_paths(repo, home, allow_project_runtime_home=allow_project_runtime_home)
     managed_roots = load_managed_skill_roots(repo)
     managed_binaries = load_managed_binary_paths(repo)
+    managed_file_mappings = load_managed_file_mappings(repo)
+    managed_files = tuple(target for _, target in managed_file_mappings)
     retired_roots = tuple(f"skills/{relative}" for relative in RETIRED_MANAGED_SKILL_ASSETS)
     if include_backup:
         backup_paths(
@@ -579,11 +840,10 @@ def deploy_portable(
             tuple(
                 dict.fromkeys(
                     (
-                        "config.yaml",
                         ".env.template",
-                        ".workflow-assistance-state.yaml",
                         *managed_roots,
                         *managed_binaries,
+                        *managed_files,
                         *retired_roots,
                     )
                 )
@@ -591,7 +851,15 @@ def deploy_portable(
             apply=apply,
         )
     if apply:
-        staging = prepare_staging(repo, home, managed_roots, managed_binaries)
+        staging, _ = prepare_staging(
+            repo,
+            home,
+            managed_roots,
+            managed_binaries,
+            managed_file_mappings,
+            include_config=False,
+        )
+
         atomic_replace_paths(
             staging,
             home,
@@ -600,9 +868,8 @@ def deploy_portable(
                     (
                         *managed_roots,
                         *managed_binaries,
-                        "config.yaml",
+                        *managed_files,
                         ".env.template",
-                        ".workflow-assistance-state.yaml",
                         *retired_roots,
                     )
                 )
@@ -615,8 +882,10 @@ def deploy_portable(
         remove_retired_managed_assets(home, apply=False)
         for relative in managed_binaries:
             copyfile(repo / relative, home / relative, apply=False)
+        for source_relative, target_relative in managed_file_mappings:
+            copyfile(repo / source_relative, home / target_relative, apply=False)
         copyfile(repo / "config/.env.template", home / ".env.template", apply=False)
-        merge_live_config(repo, home, apply=False)
+        print("skip mixed-ownership live config.yaml: portable sync never promotes it")
     if include_backup:
         prune_workflow_sync_backups(home, apply=apply)
 
