@@ -10,17 +10,17 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: a67d7e5412728aeed230a07c50b3adee48c1efedcf7a29bf3bff9bdd0c7e574b
+  live_sha256: pending-live-sync
 - name: codex
   source: skills/autonomous-ai-agents/codex/SKILL.md
   live: skills/autonomous-ai-agents/codex/SKILL.md
-  source_sha256: f2149ad17c15e5a29e9fdb2d7adf65b394084e0493740267c7b76a14f26196d2
-  version: 2.0.0
+  source_sha256: 339ae83ceac26f1bb3269b37a7e9d1e3c664b76b3df3382c82e5d5323b7a1b62
+  version: 2.0.1
   trust: repository-controlled
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: f2149ad17c15e5a29e9fdb2d7adf65b394084e0493740267c7b76a14f26196d2
+  live_sha256: pending-live-sync
 - name: github-auth
   source: skills/github/github-auth/SKILL.md
   live: skills/github/github-auth/SKILL.md
@@ -30,7 +30,7 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 5a4463dc0f70b3a8a6acc6b82119cf99832f82f14106efc012925cfd2cc5cc08
+  live_sha256: pending-live-sync
 - name: github-code-review
   source: skills/github/github-code-review/SKILL.md
   live: skills/github/github-code-review/SKILL.md
@@ -40,7 +40,7 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 9c45fad547ebd9a779656c0fb85a1f671b779d18ff51b89786a1957aa9d7d1e5
+  live_sha256: pending-live-sync
 - name: github-issues
   source: skills/github/github-issues/SKILL.md
   live: skills/github/github-issues/SKILL.md
@@ -50,7 +50,7 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 4a50f1606618e4b09d57394530e31e41ab77346e398627306919cbaab8f51f44
+  live_sha256: pending-live-sync
 - name: github-pr-workflow
   source: skills/github/github-pr-workflow/SKILL.md
   live: skills/github/github-pr-workflow/SKILL.md
@@ -60,7 +60,7 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: a359651470c607f7074c589ced336607fefe7f9db802c28dd34d995b8fd15eca
+  live_sha256: pending-live-sync
 - name: github-repo-management
   source: skills/github/github-repo-management/SKILL.md
   live: skills/github/github-repo-management/SKILL.md
@@ -70,7 +70,7 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: af0da4c8b9d6293540d494495db7d0bf4881a3d0e69c8c5c93309979ae25af43
+  live_sha256: pending-live-sync
 - name: model-switch
   source: skills/model-switch/SKILL.md
   live: skills/model-switch/SKILL.md
@@ -80,7 +80,7 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: fb512b8d0456a8b3047d0f7dace932797860bf224bc79be254cd052128e9f258
+  live_sha256: pending-live-sync
 - name: project-data-boundary
   source: skills/software-development/project-data-boundary/SKILL.md
   live: skills/software-development/project-data-boundary/SKILL.md
@@ -90,7 +90,7 @@ entries:
   enabled: true
   permission: read-write-via-explicit-wrapper
   profile_scope: default
-  live_sha256: f4dba64dedb64a1e2fef2a77627e1f2afb68ba852c361d91e57a5e21fdeaa1e0
+  live_sha256: pending-live-sync
 - name: python-testing
   source: skills/software-development/python-testing/SKILL.md
   live: skills/software-development/python-testing/SKILL.md
@@ -100,7 +100,7 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: e49208f3aa25e295a68e850eb23490056aff13b7d62b67390d715206e4341eb3
+  live_sha256: pending-live-sync
 - name: requesting-code-review
   source: skills/software-development/requesting-code-review/SKILL.md
   live: skills/software-development/requesting-code-review/SKILL.md
@@ -110,7 +110,7 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: d506d7eddd42931dc3122440e64f2e2f6d5757b54e6f5984c6dd5eb43e5f377a
+  live_sha256: pending-live-sync
 - name: sleep-mode
   source: skills/software-development/sleep-mode/SKILL.md
   live: skills/software-development/sleep-mode/SKILL.md
@@ -120,7 +120,7 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 68e7926bddcc563ff5743fc8094e71972c26822452956916bd614824f5b06ab6
+  live_sha256: pending-live-sync
 - name: windows-development-environment
   source: skills/software-development/windows-development-environment/SKILL.md
   live: skills/software-development/windows-development-environment/SKILL.md
@@ -130,4 +130,4 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: ee2062504a5e733120771701dd1b3b8e9124f97abd562dd92f68655a66b64ef2
+  live_sha256: pending-live-sync

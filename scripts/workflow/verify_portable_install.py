@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """Verify Workflow-assistance can populate an isolated empty Hermes home.
 
-This is a structural portability contract. It never invokes Hermes, reads a
-real home, copies credentials, or issues network/model requests.
+The default mode is a structural portability contract and never invokes
+Hermes. ``--runtime`` explicitly runs ``hermes config check`` against the same
+isolated temporary home. Neither mode reads a real home, copies credentials,
+or issues network/model requests.
 """
 from __future__ import annotations
 
@@ -25,6 +27,23 @@ SUPPORTED_RUNTIME_FEATURES = {
     "memory.enabled",
     "hermes_config_check",
 }
+
+
+def isolated_runtime_root(repo: Path) -> Path:
+    """Return the only reviewed root for verifier-created Homes."""
+
+    return repo / ".hermes" / "task-runtime" / "portable-install"
+
+
+def validate_isolated_home(repo: Path, home: Path) -> None:
+    """Reject arbitrary empty directories before the verifier writes anything."""
+
+    runtime_root = isolated_runtime_root(repo).resolve()
+    if not home.is_relative_to(runtime_root):
+        raise RuntimeError(
+            "isolated Hermes home must be under the project runtime root: "
+            f"{runtime_root}"
+        )
 
 
 def load_sync(repo: Path):
@@ -88,6 +107,7 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
     home = home.resolve()
     if not (repo / "config/managed-config-schema.yaml").exists():
         raise RuntimeError("managed-config-schema.yaml is required")
+    validate_isolated_home(repo, home)
     compatibility = load_manifest(repo)
 
     if home.exists():
@@ -100,6 +120,7 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
     sync = load_sync(repo)
     managed_roots = sync.load_managed_skill_roots(repo)
     managed_binaries = sync.load_managed_binary_paths(repo)
+    managed_file_mappings = sync.load_managed_file_mappings(repo)
     provenance_path = repo / "config/skill-provenance.yaml"
     provenance = yaml.safe_load(provenance_path.read_text(encoding="utf-8")) or {}
     entries = provenance.get("entries") if isinstance(provenance, dict) else None
@@ -119,6 +140,11 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
         include_backup=False,
         allow_project_runtime_home=True,
     )
+    # This verifier owns a newly created, explicitly isolated empty Home. It
+    # may construct the portable config there for compatibility checks; the
+    # repo-to-live synchronizer deliberately never promotes mixed-ownership
+    # config.yaml into an existing user Home.
+    sync.merge_live_config(repo, home, apply=True, wrapper_root=home)
 
     config = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8")) or {}
     runtime_feature_checks = {
@@ -172,6 +198,11 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
         and all((home / relative / "SKILL.md").is_file() for relative in managed_roots),
         "managed_binaries.exact_inventory": len(managed_binaries) == 6
         and all((home / relative).is_file() for relative in managed_binaries),
+        "managed_root_files.exact_inventory": all(
+            (home / target).is_file()
+            and (home / target).read_bytes() == (repo / source).read_bytes()
+            for source, target in managed_file_mappings
+        ),
     }
     failed = [name for name, ok in required.items() if not ok]
     if failed:
@@ -196,7 +227,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.home:
         checks = verify(args.repo, args.home, run_runtime=args.runtime)
     else:
-        runtime = args.repo.resolve() / ".hermes" / "task-runtime" / "portable-install"
+        runtime = isolated_runtime_root(args.repo.resolve())
         runtime.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=runtime) as raw:
             checks = verify(args.repo, Path(raw) / "hermes", run_runtime=args.runtime)

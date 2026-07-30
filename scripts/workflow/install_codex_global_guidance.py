@@ -1,14 +1,34 @@
 #!/usr/bin/env python
-"""Safely install the portable global Codex baseline without overwriting user rules."""
+"""Install the Codex baseline into an existing real Codex Home without overwrites."""
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
+import errno
 import os
 from pathlib import Path
+import secrets
+from typing import Iterator
 
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "templates" / "agent-rules" / "CODEX_GLOBAL_AGENTS.md"
+
+
+class CleanupIncompleteError(RuntimeError):
+    """The installer could not prove that its newly created target was removed."""
+
+
+class DirectoryFinalizeError(OSError):
+    """The pinned Codex Home handle could not be closed cleanly."""
+
+
+class StagingCreateError(OSError):
+    """A private staging object could not be converted into a Python descriptor."""
+
+
+class AtomicPublishUnsupportedError(OSError):
+    """The platform cannot publish a complete staging object without replacement."""
 
 
 def is_link_or_reparse_point(path: Path) -> bool:
@@ -33,10 +53,329 @@ def linked_ancestor(path: Path) -> Path | None:
         current = parent
 
 
+@contextmanager
+def pinned_directory(path: Path) -> Iterator[int]:
+    """Pin a real directory while the target is created inside it.
+
+    A Windows GENERIC_READ directory handle opened without FILE_SHARE_DELETE
+    prevents the directory from being renamed into a junction after the final
+    reparse check. POSIX callers receive an O_NOFOLLOW dirfd for relative
+    target operations.
+    """
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+
+        create_file = ctypes.WinDLL("kernel32", use_last_error=True).CreateFileW
+        create_file.argtypes = [
+            wintypes.LPCWSTR,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.LPVOID,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.HANDLE,
+        ]
+        create_file.restype = wintypes.HANDLE
+        close_handle = ctypes.WinDLL("kernel32", use_last_error=True).CloseHandle
+        close_handle.argtypes = [wintypes.HANDLE]
+        close_handle.restype = wintypes.BOOL
+
+        generic_read = 0x80000000
+        share_read_write = 0x00000001 | 0x00000002
+        open_existing = 3
+        backup_semantics = 0x02000000
+        open_reparse_point = 0x00200000
+        handle = create_file(
+            str(path),
+            generic_read,
+            share_read_write,
+            None,
+            open_existing,
+            backup_semantics | open_reparse_point,
+            None,
+        )
+        invalid_handle = ctypes.c_void_p(-1).value
+        if handle in (None, invalid_handle):
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            yield int(handle)
+        finally:
+            if not close_handle(handle):
+                error = ctypes.WinError(ctypes.get_last_error())
+                raise DirectoryFinalizeError(str(error)) from error
+        return
+
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags)
+    try:
+        if not os.path.samestat(os.fstat(descriptor), path.lstat()):
+            raise OSError("Codex Home changed while its directory handle was opened")
+        yield descriptor
+    finally:
+        try:
+            os.close(descriptor)
+        except OSError as error:
+            raise DirectoryFinalizeError(str(error)) from error
+
+
+def entry_exists(parent: Path, name: str, directory_fd: int | None) -> bool:
+    """Check an entry without following links, relative to a pinned dirfd when available."""
+    try:
+        if os.name == "nt" or directory_fd is None:
+            (parent / name).lstat()
+        else:
+            os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+    except FileNotFoundError:
+        return False
+    return True
+
+
+def _windows_close_raw_handle(handle: int) -> None:
+    import ctypes
+    from ctypes import wintypes
+
+    close_handle = ctypes.WinDLL("kernel32", use_last_error=True).CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+    if not close_handle(handle):
+        raise ctypes.WinError(ctypes.get_last_error())
+
+
+def _windows_set_handle_delete(handle: int, delete_file: bool) -> None:
+    import ctypes
+    from ctypes import wintypes
+
+    class FileDispositionInfo(ctypes.Structure):
+        _fields_ = [("DeleteFile", wintypes.BOOL)]
+
+    set_file_information = ctypes.WinDLL(
+        "kernel32",
+        use_last_error=True,
+    ).SetFileInformationByHandle
+    set_file_information.argtypes = [
+        wintypes.HANDLE,
+        ctypes.c_int,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+    ]
+    set_file_information.restype = wintypes.BOOL
+    information = FileDispositionInfo(delete_file)
+    if not set_file_information(
+        handle,
+        4,  # FileDispositionInfo
+        ctypes.byref(information),
+        ctypes.sizeof(information),
+    ):
+        raise ctypes.WinError(ctypes.get_last_error())
+
+
+def _windows_mark_handle_for_delete(handle: int) -> None:
+    _windows_set_handle_delete(handle, True)
+
+
+def _windows_discard_descriptor(descriptor: int) -> None:
+    import msvcrt
+
+    handle = msvcrt.get_osfhandle(descriptor)
+    try:
+        _windows_mark_handle_for_delete(handle)
+    except OSError:
+        os.close(descriptor)
+        raise
+    os.close(descriptor)
+
+
+def create_private_staging(codex_home: Path, directory_fd: int) -> tuple[int, str | None]:
+    """Create a private staging object; ``None`` means an unnamed POSIX inode."""
+    staging_name = f".workflow-assistance-AGENTS-{secrets.token_hex(16)}.tmp"
+    if os.name == "nt":
+        import ctypes
+        import msvcrt
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        create_file = kernel32.CreateFileW
+        create_file.argtypes = [
+            wintypes.LPCWSTR,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.LPVOID,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.HANDLE,
+        ]
+        create_file.restype = wintypes.HANDLE
+        staging_path = codex_home / staging_name
+        handle = create_file(
+            str(staging_path),
+            0x40000000 | 0x00010000,  # GENERIC_WRITE | DELETE
+            0x00000001,  # FILE_SHARE_READ; no concurrent write/delete
+            None,
+            1,  # CREATE_NEW
+            0x00000080 | 0x00200000,  # NORMAL | OPEN_REPARSE_POINT
+            None,
+        )
+        invalid_handle = ctypes.c_void_p(-1).value
+        if handle in (None, invalid_handle):
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            _windows_mark_handle_for_delete(handle)
+        except OSError as error:
+            try:
+                _windows_close_raw_handle(handle)
+            except OSError as close_error:
+                raise CleanupIncompleteError from close_error
+            raise CleanupIncompleteError from error
+        try:
+            descriptor = msvcrt.open_osfhandle(
+                handle,
+                os.O_WRONLY | getattr(os, "O_BINARY", 0),
+            )
+        except BaseException as error:
+            try:
+                _windows_close_raw_handle(handle)
+            except OSError as cleanup_error:
+                raise CleanupIncompleteError from cleanup_error
+            raise StagingCreateError(str(error)) from error
+        return descriptor, staging_name
+
+    anonymous_flag = getattr(os, "O_TMPFILE", 0)
+    if not anonymous_flag:
+        raise AtomicPublishUnsupportedError("O_TMPFILE is unavailable")
+    try:
+        descriptor = os.open(
+            ".",
+            os.O_RDWR | anonymous_flag,
+            0o600,
+            dir_fd=directory_fd,
+        )
+    except OSError as error:
+        if error.errno in {errno.EINVAL, errno.EOPNOTSUPP, errno.ENOTSUP}:
+            raise AtomicPublishUnsupportedError("O_TMPFILE is unavailable") from error
+        raise
+    return descriptor, None
+
+
+def discard_private_staging(descriptor: int, staging_name: str | None) -> bool:
+    """Close staging safely; return whether an unremovable staging file remains."""
+    try:
+        if os.name == "nt":
+            _windows_discard_descriptor(descriptor)
+            return False
+        os.close(descriptor)
+        return False
+    except OSError as error:
+        raise CleanupIncompleteError from error
+
+
+def publish_private_staging(
+    target: Path,
+    descriptor: int,
+    directory_fd: int,
+    staging_name: str | None,
+) -> None:
+    """Atomically expose complete content at AGENTS.md without replacement."""
+    if os.name == "nt":
+        import ctypes
+        import msvcrt
+        from ctypes import wintypes
+
+        destination = str(target)
+
+        class FileRenameInfo(ctypes.Structure):
+            _fields_ = [
+                ("ReplaceIfExists", wintypes.BOOL),
+                ("RootDirectory", wintypes.HANDLE),
+                ("FileNameLength", wintypes.DWORD),
+                ("FileName", wintypes.WCHAR * (len(destination) + 1)),
+            ]
+
+        information = FileRenameInfo()
+        information.ReplaceIfExists = False
+        information.RootDirectory = None
+        information.FileNameLength = len(destination.encode("utf-16-le"))
+        information.FileName = destination
+        set_file_information = ctypes.WinDLL(
+            "kernel32",
+            use_last_error=True,
+        ).SetFileInformationByHandle
+        set_file_information.argtypes = [
+            wintypes.HANDLE,
+            ctypes.c_int,
+            wintypes.LPVOID,
+            wintypes.DWORD,
+        ]
+        set_file_information.restype = wintypes.BOOL
+        # Delete-pending staging blocks new opens and hardlinks while content
+        # is written. Clear it only after all content and pre-publish checks;
+        # this function performs no further writes before the atomic rename.
+        _windows_set_handle_delete(msvcrt.get_osfhandle(descriptor), False)
+        if not set_file_information(
+            msvcrt.get_osfhandle(descriptor),
+            3,  # FileRenameInfo
+            ctypes.byref(information),
+            ctypes.sizeof(information),
+        ):
+            error_code = ctypes.get_last_error()
+            if error_code in {80, 183}:
+                raise FileExistsError(errno.EEXIST, "Codex guidance target exists", str(target))
+            raise ctypes.WinError(error_code)
+        return
+
+    import ctypes
+
+    libc = ctypes.CDLL(None, use_errno=True)
+    linkat = getattr(libc, "linkat", None)
+    if linkat is None:
+        raise AtomicPublishUnsupportedError("linkat is unavailable")
+    linkat.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
+    linkat.restype = ctypes.c_int
+    if linkat(descriptor, b"", directory_fd, os.fsencode(target.name), 0x1000) != 0:
+        error_code = ctypes.get_errno()
+        if error_code == errno.EEXIST:
+            raise FileExistsError(errno.EEXIST, "Codex guidance target exists", str(target))
+        raise OSError(error_code, os.strerror(error_code), str(target))
+
+
+def home_identity_matches(codex_home: Path, directory_fd: int) -> bool:
+    if os.name == "nt":
+        return linked_ancestor(codex_home) is None and codex_home.is_dir()
+    try:
+        return os.path.samestat(os.fstat(directory_fd), codex_home.lstat())
+    except FileNotFoundError:
+        return False
+
+
+def public_target_matches(target: Path, descriptor: int, directory_fd: int) -> bool:
+    try:
+        if os.name == "nt":
+            current = target.lstat()
+        else:
+            current = os.stat(target.name, dir_fd=directory_fd, follow_symlinks=False)
+        return os.path.samestat(os.fstat(descriptor), current)
+    except FileNotFoundError:
+        return False
+
+
+def write_all(descriptor: int, content: bytes) -> None:
+    """Write every byte while preserving the open handle for failure cleanup."""
+    offset = 0
+    while offset < len(content):
+        written = os.write(descriptor, content[offset:])
+        if written <= 0:
+            raise OSError(f"short Codex guidance write: {offset}/{len(content)} bytes")
+        offset += written
+
+
 def plan(codex_home: Path) -> tuple[int, str, Path]:
     """Return a non-destructive action code, marker, and target path."""
     target = codex_home / "AGENTS.md"
     override = codex_home / "AGENTS.override.md"
+    if not codex_home.exists():
+        return 5, "CODEX_GUIDANCE_HOME_MISSING", target
+    if not codex_home.is_dir():
+        return 6, "CODEX_GUIDANCE_HOME_INVALID", target
     if override.exists():
         return 2, "CODEX_GUIDANCE_BLOCKED_OVERRIDE", target
     if target.exists():
@@ -50,13 +389,19 @@ def plan(codex_home: Path) -> tuple[int, str, Path]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Install the Workflow-assistance Codex global baseline only when no user rule file exists."
+        description=(
+            "Install the Workflow-assistance Codex global baseline only when Codex Home already exists "
+            "and no user rule file exists."
+        )
     )
     parser.add_argument("--codex-home", type=Path, default=Path.home() / ".codex")
     parser.add_argument(
         "--apply",
         action="store_true",
-        help="exclusively create AGENTS.md only when it is absent; existing empty files are preserved",
+        help=(
+            "require an existing Codex Home and exclusively create AGENTS.md only when it is absent; "
+            "existing empty files are preserved"
+        ),
     )
     args = parser.parse_args(argv)
 
@@ -71,35 +416,177 @@ def main(argv: list[str] | None = None) -> int:
     if code in {1, 2, 3, 4}:
         print("No existing Codex rule file was changed.")
         return 0
+    if code in {5, 6}:
+        print("Initialize Codex Home with the official Codex application before installing guidance.")
+        return 1 if args.apply else 0
     if not args.apply:
         print("Run again with --apply to create the global baseline.")
         return 0
 
-    content = TEMPLATE.read_bytes()
-    codex_home.mkdir(parents=True, exist_ok=True)
-    unsafe_ancestor = linked_ancestor(target)
-    if unsafe_ancestor is not None:
-        print(f"CODEX_GUIDANCE_BLOCKED_LINK target={target} ancestor={unsafe_ancestor}")
-        print("No existing Codex rule file was changed.")
-        return 0
-    # Re-check the higher-priority override after creating Codex Home. If it
-    # appeared after planning, fail closed before creating AGENTS.md.
-    if (codex_home / "AGENTS.override.md").exists():
-        print(f"CODEX_GUIDANCE_BLOCKED_OVERRIDE target={target}")
-        print("No existing Codex rule file was changed.")
-        return 0
     try:
-        descriptor = os.open(
-            target,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0),
-            0o600,
+        content = TEMPLATE.read_bytes()
+    except OSError as error:
+        print(f"CODEX_GUIDANCE_TEMPLATE_READ_FAILED target={target} reason={type(error).__name__}")
+        return 1
+
+    staging_created = False
+    public_target_created = False
+    try:
+        with pinned_directory(codex_home) as directory_fd:
+            unsafe_ancestor = linked_ancestor(target)
+            if unsafe_ancestor is not None:
+                print(f"CODEX_GUIDANCE_BLOCKED_LINK target={target} ancestor={unsafe_ancestor}")
+                print("No existing Codex rule file was changed.")
+                return 0
+            # Re-check the higher-priority override while Codex Home is pinned.
+            if entry_exists(codex_home, "AGENTS.override.md", directory_fd):
+                print(f"CODEX_GUIDANCE_BLOCKED_OVERRIDE target={target}")
+                print("No existing Codex rule file was changed.")
+                return 0
+            # A user rule file may have appeared after the initial preview.
+            # Re-plan before allocating staging so an existing user target is
+            # preserved even on filesystems without anonymous staging support.
+            current_code, current_marker, _ = plan(codex_home)
+            if current_code in {1, 2, 3, 4}:
+                print(f"{current_marker} target={target}")
+                print("No existing Codex rule file was changed.")
+                return 0
+            try:
+                descriptor, staging_name = create_private_staging(codex_home, directory_fd)
+            except StagingCreateError as error:
+                print(
+                    f"CODEX_GUIDANCE_STAGING_CREATE_FAILED_CLEANED target={target} "
+                    f"reason={type(error.__cause__).__name__}"
+                )
+                return 1
+            except AtomicPublishUnsupportedError:
+                print(f"CODEX_GUIDANCE_ATOMIC_PUBLISH_UNSUPPORTED target={target}")
+                print("No public AGENTS.md or private staging object was created.")
+                return 1
+            staging_created = True
+
+            try:
+                write_all(descriptor, content)
+            except OSError as error:
+                retained = discard_private_staging(descriptor, staging_name)
+                marker = (
+                    "CODEX_GUIDANCE_WRITE_INCOMPLETE"
+                    if retained
+                    else "CODEX_GUIDANCE_WRITE_FAILED_CLEANED"
+                )
+                print(f"{marker} target={target} reason={type(error).__name__}")
+                print("No public AGENTS.md was created; inspect any reported private staging file.")
+                return 1
+
+            if not home_identity_matches(codex_home, directory_fd):
+                retained = discard_private_staging(descriptor, staging_name)
+                print(f"CODEX_GUIDANCE_HOME_CHANGED target={target} staging_retained={retained}")
+                print("No public AGENTS.md was created.")
+                return 1
+
+            if entry_exists(codex_home, "AGENTS.override.md", directory_fd):
+                retained = discard_private_staging(descriptor, staging_name)
+                print(
+                    f"CODEX_GUIDANCE_OVERRIDE_BEFORE_PUBLICATION target={target} "
+                    f"staging_retained={retained}"
+                )
+                print("No public AGENTS.md was created.")
+                return 1
+
+            if not home_identity_matches(codex_home, directory_fd):
+                retained = discard_private_staging(descriptor, staging_name)
+                print(f"CODEX_GUIDANCE_HOME_CHANGED target={target} staging_retained={retained}")
+                print("No public AGENTS.md was created.")
+                return 1
+
+            # NTFS reports a delete-pending file with zero visible links even
+            # while our HANDLE remains valid; POSIX always uses an anonymous
+            # O_TMPFILE inode and likewise has zero links.
+            expected_links = 0
+            if os.fstat(descriptor).st_nlink != expected_links:
+                retained = discard_private_staging(descriptor, staging_name)
+                print(
+                    f"CODEX_GUIDANCE_STAGING_LINKED target={target} "
+                    f"staging_retained={retained}"
+                )
+                return 1
+
+            try:
+                publish_private_staging(target, descriptor, directory_fd, staging_name)
+            except FileExistsError:
+                retained = discard_private_staging(descriptor, staging_name)
+                if retained:
+                    print(f"CODEX_GUIDANCE_EXISTS_STAGING_RETAINED target={target}")
+                    return 1
+                print(f"CODEX_GUIDANCE_EXISTS target={target}")
+                print("No existing Codex rule file was changed.")
+                return 0
+            except (AtomicPublishUnsupportedError, OSError) as error:
+                retained = discard_private_staging(descriptor, staging_name)
+                print(
+                    f"CODEX_GUIDANCE_PUBLISH_FAILED target={target} "
+                    f"reason={type(error).__name__} staging_retained={retained}"
+                )
+                return 1
+            public_target_created = True
+
+            # A third override check covers creation concurrent with publication.
+            if entry_exists(codex_home, "AGENTS.override.md", directory_fd):
+                if os.name == "nt":
+                    _windows_discard_descriptor(descriptor)
+                    print(f"CODEX_GUIDANCE_OVERRIDE_AFTER_PUBLICATION_ROLLED_BACK target={target}")
+                    print("The complete public target was removed through its open handle.")
+                    return 1
+                try:
+                    os.close(descriptor)
+                except OSError as error:
+                    print(
+                        f"CODEX_GUIDANCE_FINALIZE_INCOMPLETE target={target} "
+                        f"reason={type(error).__name__}"
+                    )
+                    return 1
+                print(f"CODEX_GUIDANCE_OVERRIDE_AFTER_PUBLICATION target={target}")
+                print("A complete public target remains; inspect it before retrying.")
+                return 1
+
+            if not home_identity_matches(codex_home, directory_fd):
+                os.close(descriptor)
+                print(f"CODEX_GUIDANCE_HOME_CHANGED target={target} public_target_created=True")
+                return 1
+
+            if not public_target_matches(target, descriptor, directory_fd):
+                os.close(descriptor)
+                print(f"CODEX_GUIDANCE_PUBLIC_TARGET_CHANGED target={target}")
+                return 1
+
+            try:
+                os.close(descriptor)
+            except OSError as error:
+                print(
+                    f"CODEX_GUIDANCE_FINALIZE_INCOMPLETE target={target} "
+                    f"reason={type(error).__name__}"
+                )
+                print("The target may be complete, but finalization was not verified; inspect it manually.")
+                return 1
+
+    except DirectoryFinalizeError as error:
+        print(
+            f"CODEX_GUIDANCE_DIRECTORY_FINALIZE_INCOMPLETE target={target} "
+            f"reason={type(error.__cause__).__name__}"
         )
-    except FileExistsError:
-        print(f"CODEX_GUIDANCE_EXISTS target={target}")
+        return 1
+    except CleanupIncompleteError as error:
+        print(f"CODEX_GUIDANCE_CLEANUP_INCOMPLETE target={target} reason={type(error.__cause__).__name__}")
+        print("A private or public installer object may remain; inspect it before retrying.")
+        return 1
+    except OSError as error:
+        if staging_created or public_target_created:
+            print(f"CODEX_GUIDANCE_FINALIZE_INCOMPLETE target={target} reason={type(error).__name__}")
+            print("An installer object may remain; inspect it before retrying.")
+            return 1
+        print(f"CODEX_GUIDANCE_DIRECTORY_PIN_FAILED target={target} reason={type(error).__name__}")
         print("No existing Codex rule file was changed.")
-        return 0
-    with os.fdopen(descriptor, "wb") as handle:
-        handle.write(content)
+        return 1
     print(f"CODEX_GUIDANCE_WRITTEN target={target}")
     return 0
 

@@ -49,4 +49,7 @@ python scripts/workflow/mcp_candidate_audit.py .hermes/task-artifacts/mcp-candid
 
 审计通过只表示候选元数据完整；不等于 server 已配置、已运行、已安全或已默认启用。
 
-默认 MCP 的唯一机器可读来源是 `config/config.yaml`；本文只解释选择理由。
+默认 MCP baseline 的内容来源是 `config/config.yaml`；`config/managed-config-schema.yaml`
+中的 `mcp_servers.owned_names` 仅定义 isolated verifier 构造该 baseline 时的结构
+所有权，不授权同步器替换或移除真实 Hermes Home 中的 MCP。新增默认 MCP 时必须同步
+更新两者；本文只解释选择理由。

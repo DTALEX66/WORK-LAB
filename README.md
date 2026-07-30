@@ -115,10 +115,10 @@ python scripts/workflow/sync_hermes_workflow_assets.py --apply
 - 在 Hermes Home 下创建时间戳备份；
 - 从 `config/managed-config-schema.yaml` 读取精确的 13 个 managed skill 根并逐根事务替换，删除这些子树中已不在权威源里的旧附件；不提升整个 `skills/` 根，因此 staging 后新增的 Hermes bundled 或用户 skill 也会保留；
 - 逐文件部署 schema 声明的 6 个 managed launcher/guard，保留 live `bin/` 中其它 Hermes 官方或用户入口；同时部署无密钥 `.env.template`；
-- 合并 portable MCP 与插件基线；
-- 保留 live Provider、模型、本机凭据、自定义 MCP 和非退役插件；
-- `public-apis` / `sequential-thinking` 等退役 managed MCP 每次同步都会移除；
-- 一次性迁移状态只保护退役插件：首次迁移会清除旧包管理插件，之后用户重新启用的插件不再被同步脚本删除；
+- **绝不 promotion live `config.yaml`**：它同时包含用户的 provider/model、认证、MCP、plugin、hook、会话与未来字段，无法对外部写入实现可移植的原子 compare-and-replace。同步器只输出“skip mixed-ownership live config.yaml”；用户若要调整这些设置，必须明确使用官方 Hermes 配置入口并自行复核；
+- `config/config.yaml` 只作为无密钥 portable baseline，由空的 isolated Home verifier 构造并验证，不能据此声称已部署到真实 profile；
+- `mcp_servers.owned_names` 仅定义 baseline 的结构所有权与 isolated 验证范围，不授权同步器替换或删除真实 Home 中的 MCP；历史或用户 MCP（例如 `public-apis`、`sequential-thinking`）不受同步器影响；
+- plugin migration state 同属 mixed-ownership config，不会由同步器写入真实 Home；
 - 只删除有明确路径登记的退役 skill 资产；
 - 输出 repo/live 目录哈希和文件数用于核验；
 - 使用 `config/managed-config-schema.yaml` 声明哪些非秘密体验字段由包管理、哪些本机路由/认证字段必须保留；
@@ -157,13 +157,15 @@ python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject --agent-
 - 默认 MCP 仅 Context7；
 - 默认插件为 `security-guidance` 与 `web/ddgs`；
 - 会话不自动裁剪，并启用用户记忆与 profile；
-- **不定义** Provider、模型、base URL、API key、fallback、model picker lane 或模型切换命令；这些值完全由官方 Hermes setup 和 live 用户状态负责，overlay 合并时只保留其语义值。
+- **不定义** Provider、模型、base URL、API key、fallback、model picker lane 或模型切换命令；这些值完全由官方 Hermes setup 和 live 用户状态负责。repo→live sync 不读取、合并或写回 live config；
 - `hooks.pre_tool_call` 默认注册项目 terminal guard；它只允许 canonical project wrapper，阻止未声明
-  workdir、shell chaining 和项目外输出。同步器会保留非-terminal 自定义 hook，并对 terminal hook 做
-  staging → atomic replace → rollback；live hook 脚本更新后必须由用户显式重新批准，不能静默绕过 Hermes
-  hook trust。
+  workdir、shell chaining 和项目外输出。该 hook baseline 仅在 isolated verifier 中构造；真实 profile 的 hook
+  由用户使用官方入口显式管理与批准，不能通过同步器静默绕过 Hermes hook trust。
 
-`config/SOUL.md` 保存可迁移的 Agent 行为风格；`config/.env.template` 只列环境变量名称，不含真实值。
+`config/SOUL.md` 保存可迁移的 Agent 行为风格，并通过
+`managed-config-schema.yaml` 的 `owned_file_mappings` 以
+`config/SOUL.md → $HERMES_HOME/SOUL.md` 的明确单文件映射进入同一套
+backup → staging → atomic promotion 流程；`config/.env.template` 只列环境变量名称，不含真实值。
 
 ## 模型切换与路由诊断
 
@@ -238,14 +240,37 @@ python scripts/workflow/provider_health.py \
 ## Codex 编码执行器
 
 Codex 会在新任务启动时读取用户目录 `.codex/AGENTS.md`，再由项目内更具体的
-`AGENTS.md` 继续约束。仓库提供的是一个短小的全局基线安装器：它只会以独占创建方式
-新建缺失文件，连已有的零字节 `AGENTS.md` 也不会原地填充；若检测到已有文件或优先级更高的 `AGENTS.override.md` 则停止，不伪造
-“已生效”。先预览，再显式应用：
+`AGENTS.md` 继续约束。仓库提供的是一个短小的全局基线安装器：它先把完整内容写入 Windows
+私有或 POSIX 匿名 staging 对象，再以不替换已有名称的原子操作发布缺失的 `AGENTS.md`；公开名称存在期间
+不会继续写入内容。已有的零字节文件、hardlink、symlink/reparse point 或并发创建文件都不会
+被填充或替换。安装器要求 Codex Home 已由官方 Codex 应用初始化，绝不自行创建缺失目录；
+应用期间固定 Codex Home 目录身份，并在 staging 写完前后及公开发布后复核优先级更高的
+`AGENTS.override.md`、Home 身份和公开目标身份。若检测到已有文件、目录重定向竞态或
+override，则 fail-closed，不伪造“已生效”。先预览，再显式应用：
 
 ```powershell
 python scripts/workflow/install_codex_global_guidance.py --codex-home "$env:USERPROFILE\.codex"
 python scripts/workflow/install_codex_global_guidance.py --codex-home "$env:USERPROFILE\.codex" --apply
 ```
+
+Windows staging HANDLE 不共享写入或删除，且在创建后立即标为 delete-pending，阻断新的打开和
+hardlink；写完并完成预发布检查后才清除该状态，再通过当前 HANDLE 的
+`FileRenameInfo(ReplaceIfExists=False)` 发布。转换、写入、override 或发布失败只通过该 HANDLE
+的 delete disposition 精确撤销，不执行 close 后的路径删除。POSIX 必须使用 `O_TMPFILE` 匿名
+inode，并通过 `linkat(AT_EMPTY_PATH)` 无覆盖发布；不支持匿名 inode 时，安装器会在写入前以
+`CODEX_GUIDANCE_ATOMIC_PUBLISH_UNSUPPORTED` 非零退出，绝不降级为可被替换的 named staging。
+
+`CODEX_GUIDANCE_ATOMIC_PUBLISH_UNSUPPORTED`、`CODEX_GUIDANCE_STAGING_CREATE_FAILED_CLEANED`、`CODEX_GUIDANCE_WRITE_FAILED_CLEANED`、
+`CODEX_GUIDANCE_WRITE_INCOMPLETE`、`CODEX_GUIDANCE_OVERRIDE_BEFORE_PUBLICATION`、
+`CODEX_GUIDANCE_OVERRIDE_AFTER_PUBLICATION`、`CODEX_GUIDANCE_HOME_CHANGED`、
+`CODEX_GUIDANCE_PUBLIC_TARGET_CHANGED`、`CODEX_GUIDANCE_PUBLISH_FAILED`、
+`CODEX_GUIDANCE_HOME_MISSING`、`CODEX_GUIDANCE_HOME_INVALID`、`CODEX_GUIDANCE_CLEANUP_INCOMPLETE`、
+`CODEX_GUIDANCE_DIRECTORY_PIN_FAILED`、`CODEX_GUIDANCE_DIRECTORY_FINALIZE_INCOMPLETE` 或 `CODEX_GUIDANCE_FINALIZE_INCOMPLETE`
+都不表示已生效；按输出确认公开目标和可能保留的私有 staging 后再重试。
+`CODEX_GUIDANCE_HOME_MISSING` 与 `CODEX_GUIDANCE_HOME_INVALID` 在 preview 模式仅表示诊断完成并返回
+`0`；使用 `--apply` 时返回 `1`，且不会创建或修改 Codex Home。
+在 `--apply` 中，`CODEX_GUIDANCE_OVERRIDE_BEFORE_PUBLICATION` 和
+`CODEX_GUIDANCE_DIRECTORY_PIN_FAILED` 也都返回 `1`：它们表示请求的安装没有完成，而不是成功的 no-op。
 
 安装后新开一个 Codex 任务即可重建规则链。全局基线只负责通用的数据边界；项目根的
 `AGENTS.md` 才负责 Hermes 的项目内运行器和该项目的具体规则。

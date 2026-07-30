@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import importlib.util
+import contextlib
+import errno
+import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -18,6 +22,24 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class WorkflowGovernanceTests(unittest.TestCase):
+    def require_posix_anonymous_staging(self, home: Path) -> None:
+        """Skip POSIX staging-race tests when the current filesystem lacks O_TMPFILE."""
+        if os.name == "nt":
+            return
+        anonymous_flag = getattr(os, "O_TMPFILE", 0)
+        if not anonymous_flag:
+            self.skipTest("current POSIX runtime does not expose O_TMPFILE")
+        directory_fd = os.open(home, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+        descriptor: int | None = None
+        try:
+            descriptor = os.open(".", os.O_RDWR | anonymous_flag, 0o600, dir_fd=directory_fd)
+        except OSError as error:
+            self.skipTest(f"current filesystem does not support O_TMPFILE: errno={error.errno}")
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
+            os.close(directory_fd)
+
     def test_portable_package_declares_config_ownership_and_compatibility(self) -> None:
         ownership_path = ROOT / "config/managed-config-schema.yaml"
         manifest_path = ROOT / "workflow-manifest.yaml"
@@ -46,6 +68,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertEqual(len(owned_binaries), 6)
         self.assertIn("bin/codex", owned_binaries)
         self.assertNotIn("bin", owned_binaries)
+        owned_file_mappings = ownership["global_workflow"]["owned_file_mappings"]
+        self.assertEqual(
+            owned_file_mappings,
+            [{"source": "config/SOUL.md", "target": "SOUL.md"}],
+        )
         self.assertIn("model.provider", ownership["preserved"])
         self.assertIn("model.api_key", ownership["preserved"])
         self.assertEqual(manifest["schema_version"], 1)
@@ -56,7 +83,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_portable_install_verifier_accepts_isolated_empty_home(self) -> None:
         script = ROOT / "scripts/workflow/verify_portable_install.py"
         self.assertTrue(script.exists())
-        with tempfile.TemporaryDirectory() as raw:
+        runtime = ROOT / ".hermes" / "task-runtime" / "portable-install"
+        runtime.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=runtime) as raw:
             home = Path(raw) / "isolated-home"
             result = subprocess.run(
                 [sys.executable, str(script), "--repo", str(ROOT), "--home", str(home)],
@@ -67,9 +96,61 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("STRUCTURAL_PORTABLE_PASS", result.stdout)
 
+    def test_portable_deployment_copies_exact_owned_root_file_mappings(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_root_files", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            raw_path = Path(raw)
+            repo = raw_path / "repo"
+            home = raw_path / "home"
+            for directory in ("config", "skills", "bin"):
+                shutil.copytree(ROOT / directory, repo / directory)
+            home.mkdir()
+
+            module.deploy_portable(
+                repo,
+                home,
+                apply=True,
+                include_backup=False,
+                allow_project_runtime_home=True,
+            )
+
+            self.assertEqual(
+                (home / "SOUL.md").read_bytes(),
+                (repo / "config/SOUL.md").read_bytes(),
+            )
+
+    def test_sync_rejects_managed_file_mapping_outside_the_soul_allowlist(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_mapping_allowlist", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw) / "repo"
+            shutil.copytree(ROOT / "config", repo / "config")
+            schema = repo / "config/managed-config-schema.yaml"
+            contract = yaml.safe_load(schema.read_text(encoding="utf-8"))
+            contract["global_workflow"]["owned_file_mappings"] = [
+                {"source": "config/SOUL.md", "target": "auth.json"}
+            ]
+            schema.write_text(yaml.safe_dump(contract, sort_keys=False), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "approved managed file mapping"):
+                module.load_managed_file_mappings(repo)
+
     def test_portable_install_verifier_marks_runtime_compatibility_unverified_by_default(self) -> None:
         script = ROOT / "scripts/workflow/verify_portable_install.py"
-        with tempfile.TemporaryDirectory() as raw:
+        runtime = ROOT / ".hermes" / "task-runtime" / "portable-install"
+        runtime.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=runtime) as raw:
             home = Path(raw) / "isolated-home"
             result = subprocess.run(
                 [sys.executable, str(script), "--repo", str(ROOT), "--home", str(home)],
@@ -89,12 +170,49 @@ class WorkflowGovernanceTests(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
-        with tempfile.TemporaryDirectory() as raw:
+        runtime = ROOT / ".hermes" / "task-runtime" / "portable-install"
+        runtime.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=runtime) as raw:
             checks = module.verify(ROOT, Path(raw) / "isolated-home")
 
         self.assertIn("manifest.config_version", checks)
         self.assertIn("manifest.required_runtime_features", checks)
         self.assertIn("context7.wrapper", checks)
+
+    def test_portable_runtime_verifier_uses_only_isolated_home_and_fails_closed(self) -> None:
+        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        spec = importlib.util.spec_from_file_location("portable_install_runtime", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / "isolated-home"
+            home.mkdir()
+            with patch.object(module.shutil, "which", return_value="fake-hermes"):
+                with patch.object(
+                    module.subprocess,
+                    "run",
+                    return_value=subprocess.CompletedProcess(["fake-hermes"], 0, "ok", ""),
+                ) as run:
+                    module.run_isolated_hermes_config_check(home)
+            self.assertEqual(run.call_args.args[0], ["fake-hermes", "config", "check"])
+            self.assertEqual(run.call_args.kwargs["cwd"], home)
+            self.assertEqual(run.call_args.kwargs["env"]["HERMES_HOME"], str(home))
+
+            with patch.object(module.shutil, "which", return_value=None):
+                with self.assertRaisesRegex(RuntimeError, "executable"):
+                    module.run_isolated_hermes_config_check(home)
+
+            with patch.object(module.shutil, "which", return_value="fake-hermes"):
+                with patch.object(
+                    module.subprocess,
+                    "run",
+                    return_value=subprocess.CompletedProcess(["fake-hermes"], 1, "", "failed"),
+                ):
+                    with self.assertRaisesRegex(RuntimeError, "config check failed"):
+                        module.run_isolated_hermes_config_check(home)
 
     def test_portable_install_verifier_rejects_nonempty_home_without_writing(self) -> None:
         script = ROOT / "scripts/workflow/verify_portable_install.py"
@@ -104,7 +222,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
-        with tempfile.TemporaryDirectory() as raw:
+        runtime = ROOT / ".hermes" / "task-runtime" / "portable-install"
+        runtime.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=runtime) as raw:
             home = Path(raw) / "isolated-home"
             home.mkdir()
             sentinel = home / "sentinel.txt"
@@ -112,6 +232,20 @@ class WorkflowGovernanceTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "empty"):
                 module.verify(ROOT, home)
             self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
+
+    def test_portable_install_verifier_rejects_uncontrolled_empty_home_without_writing(self) -> None:
+        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        spec = importlib.util.spec_from_file_location("portable_install_outside_runtime", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / "isolated-home"
+            with self.assertRaisesRegex(RuntimeError, "project runtime root"):
+                module.verify(ROOT, home)
+            self.assertFalse(home.exists())
 
     def test_sync_rejects_repo_and_hermes_home_path_overlap_before_writing(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
@@ -204,6 +338,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertTrue(script.exists())
         with tempfile.TemporaryDirectory() as raw:
             home = Path(raw) / ".codex"
+            home.mkdir()
+            self.require_posix_anonymous_staging(home)
             dry_run = subprocess.run(
                 [sys.executable, str(script), "--codex-home", str(home)],
                 text=True,
@@ -243,6 +379,33 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(override.returncode, 0, override.stdout + override.stderr)
             self.assertIn("CODEX_GUIDANCE_BLOCKED_OVERRIDE", override.stdout)
 
+    def test_codex_global_guidance_returns_nonzero_for_override_after_publication(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_late_override", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            self.require_posix_anonymous_staging(home)
+            override = home / "AGENTS.override.md"
+            real_publish = module.publish_private_staging
+
+            def publish_then_create_override(*args: object) -> None:
+                real_publish(*args)
+                override.write_text("# user override\n", encoding="utf-8")
+
+            with patch.object(module, "publish_private_staging", side_effect=publish_then_create_override):
+                result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 1)
+            self.assertTrue(override.is_file())
+            if os.name == "nt":
+                self.assertFalse((home / "AGENTS.md").exists())
+
     def test_codex_global_guidance_apply_does_not_overwrite_a_concurrent_user_file(self) -> None:
         script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_atomic", script)
@@ -255,14 +418,21 @@ class WorkflowGovernanceTests(unittest.TestCase):
             home = Path(raw) / ".codex"
             home.mkdir()
             target = home / "AGENTS.md"
+            real_plan = module.plan
+            plan_calls = 0
 
             def ready_then_user_creates_file(_codex_home: Path) -> tuple[int, str, Path]:
-                target.write_text("# user rules\n", encoding="utf-8")
-                return 0, "CODEX_GUIDANCE_READY", target
+                nonlocal plan_calls
+                plan_calls += 1
+                if plan_calls == 1:
+                    target.write_text("# user rules\n", encoding="utf-8")
+                    return 0, "CODEX_GUIDANCE_READY", target
+                return real_plan(_codex_home)
 
             with patch.object(module, "plan", side_effect=ready_then_user_creates_file):
                 self.assertEqual(module.main(["--codex-home", str(home), "--apply"]), 0)
 
+            self.assertEqual(plan_calls, 2)
             self.assertEqual(target.read_text(encoding="utf-8"), "# user rules\n")
 
     def test_codex_global_guidance_refuses_an_empty_existing_file(self) -> None:
@@ -294,6 +464,66 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertIn("CODEX_GUIDANCE_EXISTS", preserved.stdout)
             self.assertEqual(target.read_text(encoding="utf-8"), "# user rules\n")
 
+    def test_codex_global_guidance_reports_missing_or_invalid_home_by_mode(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            missing_home = root / "missing-home"
+            invalid_home = root / "invalid-home"
+            invalid_home.write_text("not a directory\n", encoding="utf-8")
+
+            for home, marker in (
+                (missing_home, "CODEX_GUIDANCE_HOME_MISSING"),
+                (invalid_home, "CODEX_GUIDANCE_HOME_INVALID"),
+            ):
+                preview = subprocess.run(
+                    [sys.executable, str(script), "--codex-home", str(home)],
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                self.assertEqual(preview.returncode, 0, preview.stdout + preview.stderr)
+                self.assertIn(marker, preview.stdout)
+
+                applied = subprocess.run(
+                    [sys.executable, str(script), "--codex-home", str(home), "--apply"],
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                self.assertEqual(applied.returncode, 1, applied.stdout + applied.stderr)
+                self.assertIn(marker, applied.stdout)
+
+    @unittest.skipIf(os.name == "nt", "POSIX anonymous staging semantics")
+    def test_codex_global_guidance_refuses_publish_without_anonymous_staging(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_no_otmpfile", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            target = home / "AGENTS.md"
+            real_open = module.os.open
+
+            def reject_anonymous_staging(path: object, flags: int, *args: object, **kwargs: object) -> int:
+                if path == "." and flags & module.os.O_TMPFILE:
+                    raise OSError(errno.EOPNOTSUPP, "O_TMPFILE unavailable")
+                return real_open(path, flags, *args, **kwargs)
+
+            stdout = io.StringIO()
+            with patch.object(module.os, "open", side_effect=reject_anonymous_staging):
+                with contextlib.redirect_stdout(stdout):
+                    result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 1)
+            self.assertIn("CODEX_GUIDANCE_ATOMIC_PUBLISH_UNSUPPORTED", stdout.getvalue())
+            self.assertFalse(target.exists())
+            self.assertEqual(list(home.iterdir()), [])
+
     def test_codex_global_guidance_rechecks_a_concurrent_override(self) -> None:
         script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_override_race", script)
@@ -319,6 +549,562 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 (home / "AGENTS.override.md").read_text(encoding="utf-8"),
                 "# user override\n",
             )
+
+    def test_codex_global_guidance_rechecks_override_after_exclusive_create(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_late_override", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            self.require_posix_anonymous_staging(home)
+            target = home / "AGENTS.md"
+            override = home / "AGENTS.override.md"
+            real_entry_exists = module.entry_exists
+            override_checks = 0
+
+            def override_after_target_create(
+                parent: Path,
+                name: str,
+                directory_fd: int | None,
+            ) -> bool:
+                nonlocal override_checks
+                if name == "AGENTS.override.md":
+                    override_checks += 1
+                if name == "AGENTS.override.md" and override_checks == 2:
+                    self.assertFalse(target.exists(), "public target must not exist before publication")
+                    staging_files = list(home.glob(".workflow-assistance-AGENTS-*.tmp"))
+                    self.assertLessEqual(len(staging_files), 1)
+                    if os.name != "nt":
+                        for staging in staging_files:
+                            self.assertEqual(staging.stat().st_size, module.TEMPLATE.stat().st_size)
+                    override.write_text("# late user override\n", encoding="utf-8")
+                return real_entry_exists(parent, name, directory_fd)
+
+            stdout = io.StringIO()
+            with patch.object(
+                module,
+                "entry_exists",
+                side_effect=override_after_target_create,
+            ):
+                with contextlib.redirect_stdout(stdout):
+                    result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(override_checks, 2)
+            self.assertEqual(result, 1)
+            self.assertIn("CODEX_GUIDANCE_OVERRIDE_BEFORE_PUBLICATION", stdout.getvalue())
+            self.assertFalse(target.exists())
+            self.assertEqual(override.read_text(encoding="utf-8"), "# late user override\n")
+
+    def test_codex_global_guidance_returns_nonzero_when_pinning_home_fails(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_pin_failure", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            stdout = io.StringIO()
+            with patch.object(module, "pinned_directory", side_effect=PermissionError("injected pin failure")):
+                with contextlib.redirect_stdout(stdout):
+                    result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 1)
+            self.assertIn("CODEX_GUIDANCE_DIRECTORY_PIN_FAILED", stdout.getvalue())
+            self.assertFalse((home / "AGENTS.md").exists())
+
+    def test_codex_global_guidance_handles_partial_target_after_write_failure(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_partial_write", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            self.require_posix_anonymous_staging(home)
+            target = home / "AGENTS.md"
+            real_write = module.os.write
+            calls = 0
+
+            def partial_write_then_fail(descriptor: int, content: bytes) -> int:
+                nonlocal calls
+                calls += 1
+                if calls == 1:
+                    return real_write(descriptor, content[:1])
+                raise OSError("injected write failure")
+
+            stdout = io.StringIO()
+            with patch.object(module.os, "write", side_effect=partial_write_then_fail):
+                with contextlib.redirect_stdout(stdout):
+                    result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 1)
+            self.assertGreaterEqual(calls, 2)
+            if os.name == "nt":
+                self.assertIn("CODEX_GUIDANCE_WRITE_FAILED_CLEANED", stdout.getvalue())
+                self.assertFalse(target.exists())
+            else:
+                self.assertFalse(target.exists())
+                staging_files = list(home.glob(".workflow-assistance-AGENTS-*.tmp"))
+                expected_marker = (
+                    "CODEX_GUIDANCE_WRITE_INCOMPLETE"
+                    if staging_files
+                    else "CODEX_GUIDANCE_WRITE_FAILED_CLEANED"
+                )
+                self.assertIn(expected_marker, stdout.getvalue())
+                for staging in staging_files:
+                    self.assertEqual(staging.read_bytes(), module.TEMPLATE.read_bytes()[:1])
+
+    @unittest.skipIf(os.name == "nt", "POSIX dirfd cleanup semantics")
+    def test_codex_global_guidance_never_unlinks_a_posix_race_target(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_posix_no_unlink", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            self.require_posix_anonymous_staging(home)
+            target = home / "AGENTS.md"
+            override = home / "AGENTS.override.md"
+            real_entry_exists = module.entry_exists
+            checks = 0
+
+            def late_override(parent: Path, name: str, directory_fd: int | None) -> bool:
+                nonlocal checks
+                if name == "AGENTS.override.md":
+                    checks += 1
+                if name == "AGENTS.override.md" and checks == 2:
+                    override.write_text("# late override\n", encoding="utf-8")
+                return real_entry_exists(parent, name, directory_fd)
+
+            stdout = io.StringIO()
+            with patch.object(module, "entry_exists", side_effect=late_override):
+                with patch.object(
+                    module.os,
+                    "unlink",
+                    side_effect=AssertionError("POSIX installer must not unlink a contested target name"),
+                ):
+                    with contextlib.redirect_stdout(stdout):
+                        result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 1)
+            self.assertIn("CODEX_GUIDANCE_OVERRIDE_BEFORE_PUBLICATION", stdout.getvalue())
+            self.assertFalse(target.exists())
+            self.assertEqual(override.read_text(encoding="utf-8"), "# late override\n")
+
+    @unittest.skipUnless(os.name == "nt", "Windows parent-junction semantics")
+    def test_codex_global_guidance_does_not_create_a_missing_home_through_a_swapped_parent(
+        self,
+    ) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_missing_home_race", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            requested_parent = root / "requested-parent"
+            requested_parent.mkdir()
+            moved_parent = root / "moved-parent"
+            outside_parent = root / "outside-parent"
+            outside_parent.mkdir()
+            home = requested_parent / ".codex"
+            concrete_path_type = type(home)
+            real_mkdir = concrete_path_type.mkdir
+            swapped = False
+
+            def swap_parent_before_mkdir(candidate: Path, *args: object, **kwargs: object) -> None:
+                nonlocal swapped
+                if candidate == home and not swapped:
+                    swapped = True
+                    requested_parent.rename(moved_parent)
+                    junction = subprocess.run(
+                        [
+                            "cmd.exe",
+                            "/d",
+                            "/c",
+                            "mklink",
+                            "/J",
+                            str(requested_parent),
+                            str(outside_parent),
+                        ],
+                        capture_output=True,
+                        check=False,
+                    )
+                    self.assertEqual(junction.returncode, 0, junction.stdout + junction.stderr)
+                real_mkdir(candidate, *args, **kwargs)
+
+            stdout = io.StringIO()
+            with patch.object(
+                concrete_path_type,
+                "mkdir",
+                autospec=True,
+                side_effect=swap_parent_before_mkdir,
+            ):
+                with contextlib.redirect_stdout(stdout):
+                    result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 1)
+            self.assertIn("CODEX_GUIDANCE_HOME_MISSING", stdout.getvalue())
+            self.assertFalse((outside_parent / ".codex").exists())
+
+    @unittest.skipUnless(os.name == "nt", "Windows target handle semantics")
+    def test_codex_global_guidance_reports_finalize_failure_without_claiming_a_race_block(
+        self,
+    ) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_finalize_failure", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            target = home / "AGENTS.md"
+            real_close = module.os.close
+
+            def close_then_fail(descriptor: int) -> None:
+                real_close(descriptor)
+                raise OSError("injected finalize failure")
+
+            stdout = io.StringIO()
+            with patch.object(module.os, "close", side_effect=close_then_fail):
+                with contextlib.redirect_stdout(stdout):
+                    result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 1)
+            self.assertIn("CODEX_GUIDANCE_FINALIZE_INCOMPLETE", stdout.getvalue())
+            self.assertNotIn("CODEX_GUIDANCE_BLOCKED_RACE", stdout.getvalue())
+            self.assertEqual(target.read_bytes(), module.TEMPLATE.read_bytes())
+
+    @unittest.skipUnless(os.name == "nt", "Windows HANDLE ownership semantics")
+    def test_codex_global_guidance_cleans_staging_if_open_osfhandle_fails(self) -> None:
+        import msvcrt
+
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_osfhandle_failure", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            target = home / "AGENTS.md"
+            stdout = io.StringIO()
+
+            with patch.object(msvcrt, "open_osfhandle", side_effect=OSError("injected conversion failure")):
+                with contextlib.redirect_stdout(stdout):
+                    result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 1)
+            self.assertIn("CODEX_GUIDANCE_STAGING_CREATE_FAILED_CLEANED", stdout.getvalue())
+            self.assertFalse(target.exists())
+            self.assertEqual(list(home.iterdir()), [])
+
+    @unittest.skipUnless(os.name == "nt", "Windows share-mode semantics")
+    def test_codex_global_guidance_never_writes_after_the_public_target_exists(self) -> None:
+        import ctypes
+        import msvcrt
+        from ctypes import wintypes
+
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_private_write", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            target = home / "AGENTS.md"
+            real_write_all = module.write_all
+            writer_opened = False
+            staging_writer_opened = False
+
+            def probe_public_target(descriptor: int, content: bytes) -> None:
+                nonlocal staging_writer_opened, writer_opened
+                real_write_all(descriptor, content)
+                create_file = ctypes.WinDLL("kernel32", use_last_error=True).CreateFileW
+                create_file.argtypes = [
+                    wintypes.LPCWSTR,
+                    wintypes.DWORD,
+                    wintypes.DWORD,
+                    wintypes.LPVOID,
+                    wintypes.DWORD,
+                    wintypes.DWORD,
+                    wintypes.HANDLE,
+                ]
+                create_file.restype = wintypes.HANDLE
+                handle = create_file(
+                    str(target),
+                    0x40000000,
+                    0x00000001 | 0x00000002 | 0x00000004,
+                    None,
+                    3,
+                    0x00000080,
+                    None,
+                )
+                invalid = ctypes.c_void_p(-1).value
+                if handle not in (None, invalid):
+                    writer_opened = True
+                    concurrent_fd = msvcrt.open_osfhandle(
+                        handle,
+                        os.O_WRONLY | getattr(os, "O_BINARY", 0),
+                    )
+                    os.write(concurrent_fd, b"X")
+                    os.close(concurrent_fd)
+                staging_files = list(home.glob(".workflow-assistance-AGENTS-*.tmp"))
+                self.assertEqual(len(staging_files), 1)
+                staging_handle = create_file(
+                    str(staging_files[0]),
+                    0x40000000,
+                    0x00000001 | 0x00000002 | 0x00000004,
+                    None,
+                    3,
+                    0x00000080,
+                    None,
+                )
+                if staging_handle not in (None, invalid):
+                    staging_writer_opened = True
+                    ctypes.WinDLL("kernel32", use_last_error=True).CloseHandle(staging_handle)
+
+            with patch.object(module, "write_all", side_effect=probe_public_target):
+                result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 0)
+            self.assertFalse(writer_opened, "AGENTS.md became public before its content was complete")
+            self.assertFalse(staging_writer_opened, "private staging accepted a concurrent writer")
+            self.assertEqual(target.read_bytes(), module.TEMPLATE.read_bytes())
+
+    @unittest.skipUnless(os.name == "nt", "Windows hardlink semantics")
+    def test_codex_global_guidance_does_not_write_through_a_post_create_hardlink(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_late_hardlink", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            home = root / ".codex"
+            home.mkdir()
+            target = home / "AGENTS.md"
+            outside = root / "outside-hardlink.md"
+            real_entry_exists = module.entry_exists
+            checks = 0
+            linked = False
+            hardlink_blocked = False
+
+            def link_at_final_override_check(parent: Path, name: str, directory_fd: int | None) -> bool:
+                nonlocal checks, hardlink_blocked, linked
+                if name == "AGENTS.override.md":
+                    checks += 1
+                if name == "AGENTS.override.md" and checks == 2:
+                    staging_files = list(home.glob(".workflow-assistance-AGENTS-*.tmp"))
+                    self.assertEqual(len(staging_files), 1)
+                    try:
+                        os.link(staging_files[0], outside)
+                    except OSError:
+                        hardlink_blocked = True
+                    else:
+                        linked = True
+                return real_entry_exists(parent, name, directory_fd)
+
+            with patch.object(module, "entry_exists", side_effect=link_at_final_override_check):
+                result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 0)
+            self.assertTrue(hardlink_blocked, "private staging was linkable while content was being written")
+            self.assertFalse(linked)
+            self.assertFalse(outside.exists())
+            self.assertEqual(target.read_bytes(), module.TEMPLATE.read_bytes())
+
+    @unittest.skipIf(os.name == "nt", "POSIX public-path identity semantics")
+    def test_codex_global_guidance_does_not_publish_into_a_moved_home(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_posix_home_swap", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            home = root / ".codex"
+            home.mkdir()
+            self.require_posix_anonymous_staging(home)
+            moved_home = root / "moved-codex"
+            real_entry_exists = module.entry_exists
+            checks = 0
+
+            def move_home_before_publish(parent: Path, name: str, directory_fd: int | None) -> bool:
+                nonlocal checks
+                if name == "AGENTS.override.md":
+                    checks += 1
+                if name == "AGENTS.override.md" and checks == 2:
+                    home.rename(moved_home)
+                    home.mkdir()
+                return real_entry_exists(parent, name, directory_fd)
+
+            stdout = io.StringIO()
+            with patch.object(module, "entry_exists", side_effect=move_home_before_publish):
+                with contextlib.redirect_stdout(stdout):
+                    result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 1)
+            self.assertIn("CODEX_GUIDANCE_HOME_CHANGED", stdout.getvalue())
+            self.assertFalse((home / "AGENTS.md").exists())
+            self.assertFalse((moved_home / "AGENTS.md").exists())
+
+    @unittest.skipIf(os.name == "nt", "POSIX public-target identity semantics")
+    def test_codex_global_guidance_reports_a_public_target_replacement(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_posix_target_swap", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            self.require_posix_anonymous_staging(home)
+            target = home / "AGENTS.md"
+            moved_target = home / "installer-reservation.md"
+            real_entry_exists = module.entry_exists
+            checks = 0
+
+            def replace_after_publish(parent: Path, name: str, directory_fd: int | None) -> bool:
+                nonlocal checks
+                if name == "AGENTS.override.md":
+                    checks += 1
+                if name == "AGENTS.override.md" and checks == 3:
+                    target.rename(moved_target)
+                    target.write_text("# concurrent user target\n", encoding="utf-8")
+                return real_entry_exists(parent, name, directory_fd)
+
+            stdout = io.StringIO()
+            with patch.object(module, "entry_exists", side_effect=replace_after_publish):
+                with contextlib.redirect_stdout(stdout):
+                    result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(checks, 3)
+            self.assertEqual(result, 1)
+            self.assertIn("CODEX_GUIDANCE_PUBLIC_TARGET_CHANGED", stdout.getvalue())
+            self.assertEqual(target.read_text(encoding="utf-8"), "# concurrent user target\n")
+            self.assertEqual(moved_target.read_bytes(), module.TEMPLATE.read_bytes())
+
+    def test_codex_global_guidance_reports_directory_finalize_failure_nonzero(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_directory_close", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        real_pinned_directory = module.pinned_directory
+
+        @contextlib.contextmanager
+        def directory_close_fails(path: Path) -> object:
+            with real_pinned_directory(path) as directory_fd:
+                yield directory_fd
+            cause = OSError("injected directory close failure")
+            raise module.DirectoryFinalizeError(str(cause)) from cause
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw) / ".codex"
+            home.mkdir()
+            target = home / "AGENTS.md"
+            target.write_text("# concurrent user target\n", encoding="utf-8")
+            stdout = io.StringIO()
+            with patch.object(module, "pinned_directory", side_effect=directory_close_fails):
+                with patch.object(module, "plan", return_value=(0, "CODEX_GUIDANCE_READY", target)):
+                    with patch.object(
+                        module,
+                        "create_private_staging",
+                        side_effect=module.AtomicPublishUnsupportedError("injected"),
+                    ):
+                        with contextlib.redirect_stdout(stdout):
+                            result = module.main(["--codex-home", str(home), "--apply"])
+
+            self.assertEqual(result, 1)
+            self.assertIn("CODEX_GUIDANCE_DIRECTORY_FINALIZE_INCOMPLETE", stdout.getvalue())
+            self.assertEqual(target.read_text(encoding="utf-8"), "# concurrent user target\n")
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction semantics")
+    def test_codex_global_guidance_pins_home_against_late_junction_swap(self) -> None:
+        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        spec = importlib.util.spec_from_file_location("codex_guidance_junction_race", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            home = root / ".codex"
+            home.mkdir()
+            moved_home = root / "moved-codex"
+            outside = root / "outside"
+            outside.mkdir()
+            target = home / "AGENTS.md"
+            real_create = module.create_private_staging
+            swap_attempted = False
+            swap_blocked = False
+
+            def swap_home_immediately_before_staging_create(
+                candidate_home: Path,
+                directory_fd: int,
+            ) -> tuple[int, str | None]:
+                nonlocal swap_attempted, swap_blocked
+                if not swap_attempted and candidate_home == home:
+                    swap_attempted = True
+                    try:
+                        home.rename(moved_home)
+                    except PermissionError:
+                        swap_blocked = True
+                    else:
+                        junction = subprocess.run(
+                            ["cmd.exe", "/d", "/c", "mklink", "/J", str(home), str(outside)],
+                            capture_output=True,
+                            check=False,
+                        )
+                        self.assertEqual(junction.returncode, 0, junction.stdout + junction.stderr)
+                return real_create(candidate_home, directory_fd)
+
+            with patch.object(
+                module,
+                "create_private_staging",
+                side_effect=swap_home_immediately_before_staging_create,
+            ):
+                self.assertEqual(module.main(["--codex-home", str(home), "--apply"]), 0)
+
+            self.assertTrue(swap_attempted)
+            self.assertTrue(swap_blocked, "Codex Home was renamed after the final link check")
+            self.assertFalse((outside / "AGENTS.md").exists())
+            self.assertTrue(target.is_file())
 
     def test_codex_global_guidance_refuses_a_hardlinked_empty_file(self) -> None:
         script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
@@ -538,7 +1324,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_isolated_portable_install_contains_global_github_skills(self) -> None:
         script = ROOT / "scripts/workflow/verify_portable_install.py"
-        with tempfile.TemporaryDirectory() as raw:
+        runtime = ROOT / ".hermes" / "task-runtime" / "portable-install"
+        runtime.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=runtime) as raw:
             home = Path(raw) / "isolated-home"
             result = subprocess.run(
                 [sys.executable, str(script), "--repo", str(ROOT), "--home", str(home)],
@@ -728,9 +1516,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
             with patch.object(module.shutil, "copytree", side_effect=OSError("prepare failed")):
                 with self.assertRaisesRegex(OSError, "prepare failed"):
-                    module.prepare_staging(repo, home, [managed_root], [])
+                    module.prepare_staging(repo, home, [managed_root], [], [])
 
-            self.assertFalse(any(home.glob(".workflow-assistance-staging-*")))
+            self.assertFalse(any(home.glob(".wa-stg-*")))
 
     def test_sync_atomic_replace_rolls_back_when_install_fails(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
@@ -861,7 +1649,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                     module.atomic_replace_paths(staging, home, ["config.yaml"])
             self.assertTrue(any(home.glob(".workflow-assistance-rollback-*")))
 
-    def test_sync_removes_retired_managed_mcps_and_preserves_model(self) -> None:
+    def test_sync_preserves_unowned_historical_mcps_and_model(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync", script)
         self.assertIsNotNone(spec)
@@ -894,7 +1682,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
             module.merge_live_config(repo, home, apply=True)
             result = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8"))
             self.assertEqual(result["model"]["default"], "gpt-current")
-            self.assertEqual(set(result["mcp_servers"]), {"context7", "custom"})
+            self.assertEqual(
+                set(result["mcp_servers"]),
+                {"context7", "public-apis", "sequential-thinking", "custom"},
+            )
             self.assertEqual(
                 set(result["plugins"]["enabled"]),
                 {"security-guidance", "web/ddgs", "custom-plugin"},
@@ -1056,6 +1847,121 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertFalse(result["sessions"]["auto_prune"])
             self.assertTrue(result["memory"]["memory_enabled"])
 
+    def test_sync_rejects_changes_to_user_owned_config_snapshot(self) -> None:
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_preservation", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        contract = {
+            "managed": {
+                "display.skin": "replace",
+                "mcp_servers": {"strategy": "merge_owned", "owned_names": ["context7"]},
+                "hooks.pre_tool_call": "replace_owned_matcher",
+                "plugins.enabled": "merge_additive",
+            },
+            "preserved": [
+                "model.provider",
+                "model.default",
+                "model.base_url",
+                "model.api_key",
+                "model.other",
+                "credentials",
+                "model_picker.user_defined",
+                "quick_commands.user_defined",
+                "mcp_servers.user_defined",
+                "plugins.user_enabled",
+            ],
+        }
+        live = {
+            "model": {
+                "provider": "user-provider",
+                "default": "user-model",
+                "base_url": "https://user.example.invalid/v1",
+                "api_key": "[REDACTED]",
+                "extra": {"user_flag": True},
+            },
+            "credentials": {"user_owned": True},
+            "model_picker": {"lanes": ["user lane"]},
+            "quick_commands": {"user-command": {"target": "/help"}},
+            "mcp_servers": {"context7": {"command": "managed"}, "custom": {"command": "user"}},
+            "plugins": {"enabled": ["security-guidance", "custom-plugin"], "disabled": ["user-disabled"]},
+            "hooks": {
+                "pre_tool_call": [
+                    {"matcher": "terminal", "command": "managed"},
+                    {"matcher": "browser", "command": "user"},
+                ],
+                "custom_hook_setting": "keep",
+            },
+            "display": {"skin": "managed", "custom_display_setting": "keep"},
+            "unknown_future_section": {"user_value": "keep"},
+        }
+        repo_data = {
+            "mcp_servers": {"context7": {"command": "managed"}},
+            "plugins": {"enabled": ["security-guidance"]},
+        }
+
+        snapshot = module.snapshot_preserved_live_config(live, repo_data, contract)
+
+        def assert_rejected(changed: dict) -> None:
+            with self.assertRaisesRegex(ValueError, "preserved live config"):
+                module.assert_preserved_live_config(snapshot, changed, repo_data, contract)
+
+        for label, path, value in (
+            ("model route", ("model", "base_url"), "https://overwritten.invalid/v1"),
+            ("unknown future field", ("unknown_future_section", "user_value"), "overwritten"),
+            ("custom MCP", ("mcp_servers", "custom", "command"), "overwritten"),
+            ("custom hook", ("hooks", "custom_hook_setting"), "overwritten"),
+            ("managed sibling", ("display", "custom_display_setting"), "overwritten"),
+        ):
+            changed = yaml.safe_load(yaml.safe_dump(live))
+            target = changed
+            for key in path[:-1]:
+                target = target[key]
+            target[path[-1]] = value
+            with self.subTest(label=label):
+                assert_rejected(changed)
+
+        changed = yaml.safe_load(yaml.safe_dump(live))
+        changed["plugins"]["enabled"].remove("custom-plugin")
+        assert_rejected(changed)
+
+    def test_sync_never_promotes_live_config_during_apply(self) -> None:
+        """A repo-to-live asset sync must not overwrite mixed-ownership config."""
+
+        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        spec = importlib.util.spec_from_file_location("workflow_sync_no_config_promotion", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as raw:
+            temp_root = Path(raw)
+            repo = temp_root / "portable-repo"
+            for relative in ("config", "skills", "bin"):
+                shutil.copytree(ROOT / relative, repo / relative)
+            home = temp_root / "home"
+            home.mkdir()
+            config = home / "config.yaml"
+            original = (
+                b"model:\n  provider: user-provider\n  default: user-model\n"
+                b"mcp_servers:\n  user-owned: {command: user-command}\n"
+            )
+            config.write_bytes(original)
+
+            with patch.object(module.shutil, "copy2", wraps=module.shutil.copy2) as copy2:
+                module.deploy_portable(repo, home, apply=True, include_backup=False)
+
+            self.assertEqual(config.read_bytes(), original)
+            copied_sources = {Path(call.args[0]) for call in copy2.call_args_list}
+            self.assertNotIn(config, copied_sources)
+            self.assertNotIn(home / ".workflow-assistance-state.yaml", copied_sources)
+            self.assertTrue((home / "SOUL.md").is_file())
+            self.assertFalse(any(home.glob(".workflow-assistance-staging-*")))
+
     def test_setup_does_not_default_enable_optional_capabilities(self) -> None:
         scripts = "\n".join(
             (ROOT / name).read_text(encoding="utf-8") for name in ("setup.sh", "setup.ps1")
@@ -1130,8 +2036,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertIn(f"`{toolset}`", readme)
         for semantic in (
             "创建时间戳备份",
-            "退役 managed MCP 每次同步都会移除",
-            "一次性迁移状态只保护退役插件",
+            "mcp_servers.owned_names",
+            "历史或用户 MCP",
+            "绝不 promotion live `config.yaml`",
+            "plugin migration state 同属 mixed-ownership config",
             "输出 repo/live 目录哈希",
             "绝不把 live skills",
             "显示脱敏后的 Hermes Provider/模型配置",
@@ -1155,6 +2063,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "CI verdict 绑定提交 SHA",
         ):
             self.assertIn(semantic, readme)
+        self.assertNotIn("一次性迁移状态只保护退役插件", readme)
         self.assertNotIn("避免后续误删用户重新启用的功能", readme)
         self.assertIn("不会安装 Hermes、Codex 或 CC Switch 主体", readme)
         self.assertIn("结构检查不等于真实模型执行", readme)
@@ -1679,6 +2588,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("codex --yolo exec", body)
         self.assertNotIn("exec --full-auto", body)
         self.assertNotIn("background=true, pty=true", body)
+        self.assertNotIn("C:/Users/", body)
 
     def test_review_alias_has_no_second_commit_or_autofix_pipeline(self) -> None:
         body = (ROOT / "skills/software-development/requesting-code-review/SKILL.md").read_text(
@@ -1723,6 +2633,14 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertIn("Do not assume `python` and `python3` resolve to the same interpreter.", skill)
         self.assertIn("Hermes workflow scripts use `python`", skill)
+        legacy_deployment = (
+            ROOT
+            / "skills/software-development/windows-development-environment/references"
+            / "hermes-deployment-pack-structure.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("routing-neutral", legacy_deployment)
+        self.assertNotIn("CC Switch", legacy_deployment)
+        self.assertNotIn("复制 config.yaml / SOUL.md", legacy_deployment)
 
     def test_kimi_speed_lane_contract_is_consistent(self) -> None:
         switcher = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")

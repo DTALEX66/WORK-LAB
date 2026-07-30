@@ -1,5 +1,5 @@
-# Declarative ownership contract for repo -> live Hermes config merge.
-# Never list secrets, OAuth credentials, or active provider routing as managed data.
+# Declarative ownership contract for repo-managed assets and isolated config baseline checks.
+# It never authorizes repo -> live config merge or lists secrets, OAuth credentials, or routing.
 schema_version: 1
 global_workflow:
   scope: hermes-codex-github-user-overlay
@@ -25,6 +25,9 @@ global_workflow:
     - bin/hermes-npx.cmd
     - bin/hermes-project-data.py
     - bin/hermes-project-terminal-guard.py
+  owned_file_mappings:
+    - source: config/SOUL.md
+      target: SOUL.md
   deployment: repo-to-live
 managed:
   display.busy_input_mode: replace
@@ -37,12 +40,15 @@ managed:
   memory.user_char_limit: replace
   platform_toolsets.cli: replace
   mcp_servers:
+    # Isolated baseline construction only; never a live Home deployment instruction.
     strategy: merge_owned
     owned_names: [context7]
   hooks.pre_tool_call:
+    # Isolated baseline construction only; never a live Home deployment instruction.
     strategy: replace_owned_matcher
     owned_matcher: terminal
   plugins.enabled:
+    # Isolated baseline construction only; never a live Home deployment instruction.
     strategy: merge_additive
 preserved:
   - model.provider
