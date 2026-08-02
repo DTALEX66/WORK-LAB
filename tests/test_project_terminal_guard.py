@@ -132,6 +132,25 @@ class ProjectTerminalGuardTests(unittest.TestCase):
                 )
                 self.assertIn("project", reason)
 
+    def test_blocks_known_windows_external_spill_roots(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        for child in (
+            r'python -c "open(\"D:\\tmp\\outside.txt\", \"w\")"',
+            r'python --dest=D:\\d\\outside.txt',
+            r'python --dest=D:\\dev\\outside.txt',
+            r'python --dest=D:\\a\\outside.txt',
+        ):
+            with self.subTest(child=child):
+                reason = module.validate(
+                    self.payload(
+                        repo,
+                        'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- ' + child,
+                    )
+                )
+                self.assertIn("project-local cache/temp redirection", reason)
+
     def test_blocks_shell_expansion_that_runs_before_the_wrapper(self) -> None:
         module = load_module()
         repo = self.make_repo()

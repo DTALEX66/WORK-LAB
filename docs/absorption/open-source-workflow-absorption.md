@@ -25,7 +25,7 @@
 
 | 来源 / 开源项目 | 当前结论 | 原因 / 后续条件 |
 |---|---|---|
-| `@upstash/context7-mcp` | 已吸收（默认） | 已通过 Hermes bundled Node 固定封装启用，用于实时拉取库文档；保留旧 Node v16 失败记录仅作历史背景。 |
+| `@upstash/context7-mcp` | 已吸收（默认） | 已通过 Hermes bundled Node wrapper 启用，用于实时拉取库文档；portable runtime 只声明官方包名，由 resolver 选择版本；保留旧 Node v16 失败记录仅作历史背景。 |
 | `@playwright/mcp` | 候选 | 当前 Node v16 实测报 `GlobalRequest` 相关错误；升级 Node 20+ 后再启用。Hermes 已有 browser/computer_use，非 P0。 |
 | `@modelcontextprotocol/server-memory` | 不默认启用 | Hermes 已有原生 memory；避免双记忆源冲突。 |
 | filesystem MCP | 不默认启用 | Hermes 已有 file 工具；额外文件系统 MCP 会扩大权限面。 |
@@ -36,7 +36,7 @@
 
 ## 后续升级条件
 
-1. Context7 已默认启用；必须固定版本，并通过 `hermes-npx` 使用 Hermes bundled Node：
+1. Context7 已默认启用；portable runtime 不固定版本，通过 `hermes-npx` 使用 Hermes bundled Node；candidate audit 如需复现历史供应链结果，另行记录 pinned provenance：
 
 ```yaml
 mcp_servers:
@@ -44,7 +44,7 @@ mcp_servers:
     command: hermes-npx
     args:
       - -y
-      - '@upstash/context7-mcp@3.2.2'
+      - '@upstash/context7-mcp'
     timeout: 120
     connect_timeout: 120
 ```

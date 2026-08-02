@@ -9,7 +9,7 @@
 |---|---|---|
 | Provider 切换 | `scripts/workflow/switch_model.py` + `skills/model-switch` | 三模型线；配置回滚、写后校验、可选 live marker |
 | 工作流体检 | `scripts/workflow/hermes_workflow_doctor.py` | 结构检查与真实推理分层 |
-| MCP 稳定性 | `bin/hermes-npx*` | 默认仅 Context7，固定版本 |
+| MCP 稳定性 | `bin/hermes-npx*` | 默认仅使用官方 Context7 包名，由 runtime resolver 选择版本；候选审计单独要求 pinned provenance |
 | MCP 候选治理 | `mcp_candidate_audit.py` | 候选元数据通过不等于默认启用 |
 | Agent 规则 | AGENTS/CODEX/SECURITY/DESIGN 模板 | 单写者、路径边界、验证闭环 |
 | 安全审计 | `scan_agent_rules.py` | 扫描可提交工作流资产，不读取凭据 |

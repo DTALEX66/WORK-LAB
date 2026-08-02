@@ -73,9 +73,11 @@ log_path
 
 - Writer: `<Hermes / Codex / other>`; exactly one writer owns the checkout.
 - Review backend: `<Hermes / Codex native review>`; review the exact frozen tree `<git write-tree>`.
-- Codex review, when selected: use generic `codex exec --sandbox read-only --ephemeral` with an
-  exact-tree prompt and a temporary JSON output schema; no sandbox or approval bypass is permitted.
-  Any finding is fail-closed as NO-GO.
+- Codex review, when selected: first run `codex --version`, then `codex exec --help`, and only use
+  flags confirmed by the current help output; require read-only sandbox, ephemeral execution and
+  structured output before launching `codex exec`. Preserve user config, rules and plugin discovery;
+  do not use `--ignore-user-config` or `--ignore-rules`. Use an exact-tree prompt and temporary JSON
+  output schema; no sandbox or approval bypass is permitted. Any finding is fail-closed as NO-GO.
 - Route evidence: record only listener/transport status; do not copy proxy URLs, subscriptions,
   OAuth files, tokens or route databases.
 - No automatic commit, push, PR, merge, or CI trigger unless the ticket explicitly selects `publish`.
