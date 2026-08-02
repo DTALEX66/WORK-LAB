@@ -125,14 +125,19 @@ def project_runtime_environment(root: Path) -> dict[str, str]:
         "PIP_CACHE_DIR": str(paths["pip-cache"]),
         "UV_CACHE_DIR": str(paths["cache"] / "uv"),
         "NPM_CONFIG_CACHE": str(paths["cache"] / "npm"),
+        "npm_config_cache": str(paths["cache"] / "npm"),
         "YARN_CACHE_FOLDER": str(paths["cache"] / "yarn"),
-        "PLAYWRIGHT_BROWSERS_PATH": str(paths["cache"] / "playwright"),
+        "PLAYWRIGHT_BROWSERS_PATH": str(paths["cache"] / "playwright-browsers"),
         "RUSTUP_HOME": str(paths["cache"] / "rustup"),
         "CARGO_HOME": str(paths["cache"] / "cargo"),
+        "CARGO_TARGET_DIR": str(paths["cache"] / "cargo-target"),
         "RUFF_CACHE_DIR": str(paths["cache"] / "ruff"),
+        "MYPY_CACHE_DIR": str(paths["cache"] / "mypy"),
+        "PRE_COMMIT_HOME": str(paths["cache"] / "pre-commit"),
         "PYTHONPYCACHEPREFIX": str(paths["pycache"]),
         "HERMES_KANBAN_HOME": str(root.resolve() / ".hermes"),
         "HERMES_PROJECT_RUNTIME_ROOT": str(runtime),
+        "HERMES_PROJECT_ROOT": str(root.resolve()),
         "HERMES_PROJECT_ARTIFACTS": str(paths["artifacts"]),
         "HERMES_PROJECT_LOGS": str(paths["logs"]),
     })
@@ -419,8 +424,8 @@ def resolve_codex_executable(configured: str | None = None) -> str:
         candidates.append(Path(os.environ["CODEX_CLI"]).expanduser())
     candidates.extend(
         [
-            Path.home() / ".codex/plugins/.plugin-appserver/codex.exe",
             Path.home() / "AppData/Local/OpenAI/Codex/bin/codex.exe",
+            Path.home() / ".codex/plugins/.plugin-appserver/codex.exe",
         ]
     )
     for candidate in candidates:
@@ -433,6 +438,45 @@ def resolve_codex_executable(configured: str | None = None) -> str:
     raise RunnerError(
         "Codex executable not found; install/login Codex first or pass --codex with its executable path"
     )
+
+
+def discover_codex_exec_flags(codex: str, *, env: dict[str, str]) -> set[str]:
+    """Discover the installed CLI's exec flags instead of assuming a version contract."""
+
+    result = subprocess.run(
+        [codex, "exec", "--help"],
+        cwd=env.get("HERMES_PROJECT_ROOT"),
+        check=False,
+        text=True,
+        capture_output=True,
+        timeout=60,
+        env=env,
+    )
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        raise RunnerError(f"Codex capability discovery failed: {detail}")
+    return set(re.findall(r"--([a-z0-9-]+)\b", result.stdout))
+
+
+def discover_codex_version(codex: str, *, env: dict[str, str]) -> str:
+    """Record the installed runtime version as run evidence, never as a compatibility pin."""
+
+    result = subprocess.run(
+        [codex, "--version"],
+        cwd=env.get("HERMES_PROJECT_ROOT"),
+        check=False,
+        text=True,
+        capture_output=True,
+        timeout=60,
+        env=env,
+    )
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        raise RunnerError(f"Codex version discovery failed: {detail}")
+    version = (result.stdout or result.stderr).strip()
+    if not version:
+        raise RunnerError("Codex version discovery returned no version")
+    return version
 
 
 class CodexReviewBackend:
@@ -468,6 +512,14 @@ class CodexReviewBackend:
             output_schema = Path(handle.name)
         output_schema.write_text(json.dumps(CODEX_REVIEW_SCHEMA), encoding="utf-8")
         try:
+            discover_codex_version(self.codex, env=self.env)
+            available_flags = discover_codex_exec_flags(self.codex, env=self.env)
+            required_flags = {"sandbox", "ephemeral", "output-last-message", "output-schema"}
+            missing_flags = sorted(required_flags - available_flags)
+            if missing_flags:
+                raise RunnerError(
+                    "Codex exec capability discovery is missing required flags: " + ", ".join(missing_flags)
+                )
             result = subprocess.run(
                 [
                     self.codex,
@@ -475,8 +527,6 @@ class CodexReviewBackend:
                     "--sandbox",
                     "read-only",
                     "--ephemeral",
-                    "--ignore-user-config",
-                    "--ignore-rules",
                     "--output-last-message",
                     str(final_message),
                     "--output-schema",

@@ -55,6 +55,9 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         self.assertEqual(layout.env["PYTHONPYCACHEPREFIX"], str(layout.paths["pycache"]))
         self.assertEqual(layout.env["UV_CACHE_DIR"], str(layout.paths["cache"] / "uv"))
         self.assertEqual(layout.env["NPM_CONFIG_CACHE"], str(layout.paths["cache"] / "npm"))
+        self.assertEqual(layout.env["CARGO_HOME"], str(layout.paths["cache"] / "cargo"))
+        self.assertEqual(layout.env["CARGO_TARGET_DIR"], str(layout.paths["cache"] / "cargo-target"))
+        self.assertEqual(layout.env["RUSTUP_HOME"], str(layout.paths["cache"] / "rustup"))
         self.assertEqual(layout.env["HERMES_KANBAN_HOME"], str(project_root / ".hermes"))
 
     def test_global_skill_requires_explicit_current_request_for_e_drive_access(self) -> None:

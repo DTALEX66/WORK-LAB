@@ -30,7 +30,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- python -m py
 - 以 `git rev-parse --show-toplevel` 确定实际项目根；
 - 用 `git check-ignore --no-index` 验证 `.hermes/task-runtime/` 被忽略，不满足则 fail-closed；
 - 拒绝解析后落在项目根外的 helper 路径及符号链接逃逸；
-- 向子进程注入项目内 `TMP`/`TEMP`/`TMPDIR`、Python bytecode、pip、uv、npm/yarn、Playwright、Rust target、Ruff/mypy/pre-commit cache 位置；
+- 在子进程启动前创建并注入项目内 `TMP`/`TEMP`/`TMPDIR`、Python bytecode、pip、uv、npm/yarn、Playwright、Cargo home/target、Rust target、Ruff/mypy/pre-commit cache 位置；
 - 提供受控的 `logs/`、`artifacts/` 目录供脚本显式使用；
 - 将 `HERMES_KANBAN_HOME` 固定到 `<project>/.hermes/`。
 
@@ -57,7 +57,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . cleanup --all-regen
 
 ## 边界与例外
 
-这是一层 Hermes 工具调用 gate 和子进程环境隔离，不是 OS sandbox。独立于 Hermes 启动的程序、绕过 `terminal` 工具的桌面应用、以及恶意/错误程序使用硬编码项目外绝对路径，不能由 YAML 配置本身完全阻止。若需要对不可信程序提供真正的文件系统隔离，必须使用隔离 Windows 账户、Windows Sandbox/VM 或配置完成并验证的容器后端；本机当前未安装 Docker，不能把容器隔离虚报为已启用。
+这是一层 Hermes 工具调用 gate 和子进程环境隔离，不是 OS sandbox。正常路径是启动前把工具环境绑定到项目目录；只有独立于 Hermes 启动、绕过 `terminal` 工具或硬编码项目外绝对路径的程序才会脱离这层绑定，guard 对已知历史外溢路径提供 fail-closed 兜底。若需要对不可信程序提供真正的文件系统隔离，必须使用隔离 Windows 账户、Windows Sandbox/VM 或配置完成并验证的容器后端；本机当前未安装 Docker，不能把容器隔离虚报为已启用。
 
 以下内容属于 Hermes 自身的全局服务状态，不能为了“归档项目数据”而移动或删除：认证/凭据、`state.db` 会话库、全局配置、全局技能、原生 cron 调度元数据和已安装运行时。`state.db` 是当前桌面会话与跨项目搜索的共享事实库，必须通过官方 session retention/auto-prune 维护，不能将每个项目会话库粗暴拆分。
 

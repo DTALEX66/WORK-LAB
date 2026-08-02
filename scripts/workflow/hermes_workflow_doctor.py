@@ -216,8 +216,8 @@ def codex_candidates() -> list[Path]:
     """Prefer the desktop/plugin binary; PATH wrappers may lag behind it."""
 
     candidates = [
-        Path.home() / ".codex/plugins/.plugin-appserver/codex.exe",
         Path.home() / "AppData/Local/OpenAI/Codex/bin/codex.exe",
+        Path.home() / ".codex/plugins/.plugin-appserver/codex.exe",
     ]
     path_binary = shutil.which("codex")
     if path_binary:
