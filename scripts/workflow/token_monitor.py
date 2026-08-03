@@ -270,53 +270,110 @@ def run_gui(path: Path, poll_ms: int) -> int:
         return 2
 
     class App:
+        COLORS = {
+            "bg": "#0d0f18",
+            "surface": "#151925",
+            "surface_alt": "#1c2130",
+            "border": "#292f43",
+            "text": "#f4f4f5",
+            "muted": "#9298ad",
+            "purple": "#9b7cff",
+            "purple_dark": "#6d4ee6",
+            "cyan": "#38d9e9",
+            "green": "#42d392",
+            "orange": "#f7b955",
+            "red": "#fb7185",
+        }
+
         def __init__(self, root: Any) -> None:
             self.root = root
             self.monitor = UsageMonitor(path)
             self.running = False
+            self.styles = ttk.Style(root)
+            try:
+                self.styles.theme_use("clam")
+            except tk.TclError:
+                pass
+            self.configure_styles()
             root.title("Hermes Token Monitor")
-            root.geometry("720x460")
-            root.minsize(640, 380)
+            root.geometry("980x650")
+            root.minsize(820, 560)
+            root.configure(bg=self.COLORS["bg"])
             root.columnconfigure(0, weight=1)
-            root.rowconfigure(2, weight=1)
+            root.rowconfigure(3, weight=1)
 
-            top = ttk.Frame(root, padding=10)
-            top.grid(row=0, column=0, sticky="ew")
-            top.columnconfigure(1, weight=1)
-            ttk.Label(top, text="日志文件").grid(row=0, column=0, padx=(0, 6))
+            header = tk.Frame(root, bg=self.COLORS["bg"], padx=26, pady=22)
+            header.grid(row=0, column=0, sticky="ew")
+            header.columnconfigure(1, weight=1)
+            mark = tk.Canvas(header, width=42, height=42, bg=self.COLORS["bg"], highlightthickness=0)
+            mark.grid(row=0, column=0, rowspan=2, padx=(0, 13))
+            mark.create_oval(4, 4, 38, 38, fill=self.COLORS["purple_dark"], outline="")
+            mark.create_oval(13, 13, 29, 29, fill=self.COLORS["cyan"], outline="")
+            tk.Label(header, text="HERMES", bg=self.COLORS["bg"], fg=self.COLORS["muted"], font=("Segoe UI", 9, "bold")).grid(row=0, column=1, sticky="sw")
+            tk.Label(header, text="Token Monitor", bg=self.COLORS["bg"], fg=self.COLORS["text"], font=("Segoe UI", 22, "bold")).grid(row=1, column=1, sticky="nw")
+            self.badge = tk.Label(header, text="●  IDLE", bg=self.COLORS["surface_alt"], fg=self.COLORS["muted"], padx=12, pady=6, font=("Segoe UI", 9, "bold"))
+            self.badge.grid(row=0, column=2, rowspan=2, sticky="e")
+
+            source = tk.Frame(root, bg=self.COLORS["surface"], padx=16, pady=14, highlightbackground=self.COLORS["border"], highlightthickness=1)
+            source.grid(row=1, column=0, padx=26, pady=(0, 14), sticky="ew")
+            source.columnconfigure(1, weight=1)
+            tk.Label(source, text="数据源", bg=self.COLORS["surface"], fg=self.COLORS["muted"], font=("Segoe UI", 9, "bold")).grid(row=0, column=0, padx=(0, 12))
             self.path_var = tk.StringVar(value=str(path))
-            ttk.Entry(top, textvariable=self.path_var).grid(row=0, column=1, sticky="ew")
-            ttk.Button(top, text="选择", command=self.choose_file).grid(row=0, column=2, padx=6)
-            self.toggle = ttk.Button(top, text="开始监控", command=self.toggle_monitor)
+            self.path_entry = tk.Entry(source, textvariable=self.path_var, bg=self.COLORS["surface_alt"], fg=self.COLORS["text"], insertbackground=self.COLORS["text"], relief="flat", font=("Segoe UI", 10))
+            self.path_entry.grid(row=0, column=1, ipady=8, sticky="ew")
+            ttk.Button(source, text="选择文件", style="Ghost.TButton", command=self.choose_file).grid(row=0, column=2, padx=(10, 8))
+            self.toggle = ttk.Button(source, text="▶  开始监控", style="Accent.TButton", command=self.toggle_monitor)
             self.toggle.grid(row=0, column=3)
 
-            stats = ttk.Frame(root, padding=(10, 0, 10, 8))
-            stats.grid(row=1, column=0, sticky="ew")
+            stats = tk.Frame(root, bg=self.COLORS["bg"], padx=26)
+            stats.grid(row=2, column=0, sticky="ew")
             self.labels: dict[str, tk.StringVar] = {}
-            for column, (key, title) in enumerate(
-                (("input", "输入"), ("output", "输出"), ("total", "总计"), ("records", "请求数"), ("unknown", "未识别行"))
-            ):
-                box = ttk.LabelFrame(stats, text=title, padding=8)
-                box.grid(row=0, column=column, padx=(0, 6), sticky="ew")
+            cards = (("input", "输入 Tokens", self.COLORS["purple"], "PROMPT / INPUT"), ("output", "输出 Tokens", self.COLORS["cyan"], "COMPLETION / OUTPUT"), ("total", "总 Tokens", self.COLORS["green"], "EXACT USAGE"), ("records", "请求次数", self.COLORS["orange"], "REQUESTS"), ("unknown", "未识别行", self.COLORS["red"], "NO USAGE"))
+            for column, (key, title, color, caption) in enumerate(cards):
                 stats.columnconfigure(column, weight=1)
+                card = tk.Frame(stats, bg=self.COLORS["surface"], padx=15, pady=13, highlightbackground=self.COLORS["border"], highlightthickness=1)
+                card.grid(row=0, column=column, padx=(0 if column == 0 else 6, 0), sticky="ew")
+                tk.Frame(card, bg=color, height=3).pack(fill="x", side="top", pady=(0, 10))
+                tk.Label(card, text=caption, bg=self.COLORS["surface"], fg=self.COLORS["muted"], font=("Segoe UI", 8, "bold")).pack(anchor="w")
                 var = tk.StringVar(value="0")
                 self.labels[key] = var
-                ttk.Label(box, textvariable=var, font=("Segoe UI", 15, "bold")).pack()
+                tk.Label(card, textvariable=var, bg=self.COLORS["surface"], fg=color, font=("Segoe UI", 19, "bold")).pack(anchor="w", pady=(3, 0))
+                tk.Label(card, text=title, bg=self.COLORS["surface"], fg=self.COLORS["muted"], font=("Segoe UI", 9)).pack(anchor="w")
 
-            body = ttk.Frame(root, padding=(10, 0, 10, 10))
-            body.grid(row=2, column=0, sticky="nsew")
+            body = tk.Frame(root, bg=self.COLORS["surface"], padx=18, pady=16, highlightbackground=self.COLORS["border"], highlightthickness=1)
+            body.grid(row=3, column=0, padx=26, pady=(16, 14), sticky="nsew")
             body.columnconfigure(0, weight=1)
-            body.rowconfigure(0, weight=1)
-            self.table = ttk.Treeview(body, columns=("model", "input", "output", "total", "records"), show="headings")
-            for key, heading, width in (("model", "模型", 250), ("input", "输入", 90), ("output", "输出", 90), ("total", "总计", 90), ("records", "请求数", 80)):
+            body.rowconfigure(1, weight=1)
+            title_row = tk.Frame(body, bg=self.COLORS["surface"])
+            title_row.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+            tk.Label(title_row, text="模型用量排行", bg=self.COLORS["surface"], fg=self.COLORS["text"], font=("Segoe UI", 13, "bold")).pack(side="left")
+            tk.Label(title_row, text="仅显示日志中明确的真实 usage", bg=self.COLORS["surface"], fg=self.COLORS["muted"], font=("Segoe UI", 9)).pack(side="right")
+            self.table = ttk.Treeview(body, columns=("model", "input", "output", "total", "records"), show="headings", style="Dashboard.Treeview")
+            for key, heading, width in (("model", "模型", 300), ("input", "输入", 120), ("output", "输出", 120), ("total", "总计", 120), ("records", "请求数", 100)):
                 self.table.heading(key, text=heading)
                 self.table.column(key, width=width, anchor="e" if key != "model" else "w")
-            self.table.grid(row=0, column=0, sticky="nsew")
+            self.table.grid(row=1, column=0, sticky="nsew")
             scrollbar = ttk.Scrollbar(body, orient="vertical", command=self.table.yview)
-            scrollbar.grid(row=0, column=1, sticky="ns")
+            scrollbar.grid(row=1, column=1, sticky="ns", padx=(8, 0))
             self.table.configure(yscrollcommand=scrollbar.set)
-            self.status = tk.StringVar(value="未启动；不会读取文件，直到点击“开始监控”。")
-            ttk.Label(root, textvariable=self.status, padding=(10, 0, 10, 8)).grid(row=3, column=0, sticky="w")
+            self.empty = tk.Label(body, text="还没有检测到 usage\n开始监控后，真实 token 数据会出现在这里", bg=self.COLORS["surface"], fg=self.COLORS["muted"], font=("Segoe UI", 11), justify="center")
+            self.empty.place(relx=0.5, rely=0.58, anchor="center")
+            self.status = tk.StringVar(value="就绪 · 不会读取文件，直到点击“开始监控”")
+            footer = tk.Frame(root, bg=self.COLORS["bg"], padx=26, pady=12)
+            footer.grid(row=4, column=0, sticky="ew")
+            tk.Label(footer, text="●", textvariable=None, bg=self.COLORS["bg"], fg=self.COLORS["purple"], font=("Segoe UI", 10)).pack(side="left")
+            tk.Label(footer, textvariable=self.status, bg=self.COLORS["bg"], fg=self.COLORS["muted"], font=("Segoe UI", 9)).pack(side="left", padx=(6, 0))
+
+        def configure_styles(self) -> None:
+            c = self.COLORS
+            self.styles.configure("Accent.TButton", background=c["purple_dark"], foreground="white", borderwidth=0, padding=(14, 8), font=("Segoe UI", 9, "bold"))
+            self.styles.map("Accent.TButton", background=[("active", c["purple"]), ("disabled", c["border"])])
+            self.styles.configure("Ghost.TButton", background=c["surface_alt"], foreground=c["text"], borderwidth=0, padding=(12, 8), font=("Segoe UI", 9))
+            self.styles.map("Ghost.TButton", background=[("active", c["border"])])
+            self.styles.configure("Dashboard.Treeview", background=c["surface"], fieldbackground=c["surface"], foreground=c["text"], borderwidth=0, rowheight=34, font=("Segoe UI", 10))
+            self.styles.configure("Dashboard.Treeview.Heading", background=c["surface_alt"], foreground=c["muted"], relief="flat", font=("Segoe UI", 9, "bold"))
+            self.styles.map("Dashboard.Treeview", background=[("selected", c["purple_dark"])], foreground=[("selected", "white")])
+            self.styles.configure("Vertical.TScrollbar", background=c["surface_alt"], troughcolor=c["surface"], borderwidth=0, arrowsize=12)
 
         def choose_file(self) -> None:
             selected = filedialog.askopenfilename(title="选择 Hermes 日志", filetypes=(("日志文件", "*.log *.jsonl *.json"), ("所有文件", "*.*")))
@@ -326,14 +383,16 @@ def run_gui(path: Path, poll_ms: int) -> int:
         def toggle_monitor(self) -> None:
             if self.running:
                 self.running = False
-                self.toggle.configure(text="开始监控")
-                self.status.set("已暂停")
+                self.toggle.configure(text="▶  开始监控")
+                self.badge.configure(text="●  PAUSED", fg=self.COLORS["orange"])
+                self.status.set("已暂停 · 日志不会继续读取")
                 return
             selected = Path(self.path_var.get()).expanduser()
             self.monitor = UsageMonitor(selected)
             self.running = True
-            self.toggle.configure(text="暂停监控")
-            self.status.set(f"监控中：{selected}")
+            self.toggle.configure(text="Ⅱ  暂停监控")
+            self.badge.configure(text="●  LIVE", fg=self.COLORS["green"])
+            self.status.set(f"实时监控中 · {selected}")
             self.tick()
 
         def tick(self) -> None:
@@ -350,6 +409,10 @@ def run_gui(path: Path, poll_ms: int) -> int:
                 self.table.delete(item)
             for model, values in sorted(totals.by_model.items()):
                 self.table.insert("", "end", values=(model, values.input_tokens, values.output_tokens, values.total_tokens, values.records))
+            if totals.records:
+                self.empty.place_forget()
+            else:
+                self.empty.place(relx=0.5, rely=0.58, anchor="center")
             self.root.after(poll_ms, self.tick)
 
     root = tk.Tk()
