@@ -29,6 +29,7 @@ Workflow-assistance
 ├─ route operations       GPT OAuth / DeepSeek 切换与链路诊断
 ├─ coding-agent workflow  Codex launcher、任务票据、单写者与冻结复审
 ├─ MCP policy             默认只启用 Context7，其他能力按需开启
+├─ token monitor          本地实时读取真实 usage，不做字符估算
 ├─ reusable skills        Agent、测试、Windows、代码复审等知识资产
 └─ governance             安全扫描、治理测试、Linux/Windows CI、吸收审计
 ```
@@ -64,6 +65,7 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 | 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
 | Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/workflow/gateway-cron-delivery.md` |
 | 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `bin/hermes-project-data.py`、`skills/software-development/project-data-boundary/` |
+| Token 监视器 | Windows 本地 Tkinter 窗口，增量读取 JSON/JSONL usage，按模型显示输入/输出/总 token；无 usage 时不估算 | `scripts/workflow/token_monitor.py`、`docs/workflow/token-monitor.md` |
 | MCP | 默认使用官方 Context7 包名，由 runtime resolver 选择版本；候选 MCP 另行执行 pinned provenance 审计 | `docs/mcp/workflow-mcp-stack.md`、`docs/mcp/mcp-catalog-governance.md`、`scripts/workflow/mcp_candidate_audit.py` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
 | Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.hermes/task-artifacts/`，用于新会话与 Codex handoff | `scripts/workflow/build_context_pack.py`、`docs/workflow/context-pack.md` |
@@ -499,6 +501,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/workflow/local-quality-gates.md`：本地 canonical quality gate runner、Justfile 快捷入口和 CI 对齐方式；
 - `docs/workflow/ui-skin-system.md`：UI/Skin 分层、主题 token、Agent UI 状态表达与 runtime-neutral 边界；
 - `docs/workflow/project-data-boundary.md`：项目任务数据归属、迁移、保留与 fail-closed 执行器；
+- `docs/workflow/token-monitor.md`：本地 Token Monitor 的真实 usage 口径、启动方式和 Codex OAuth 限制；
 - `docs/workflow/hermes-runtime-layout.md`：Hermes 全局运行目录分层、可恢复迁移、升级验证与清理边界；
 - `docs/workflow/gateway-cron-delivery.md`：Gateway、cron、sleep-mode、TUI 与外部消息平台的投递边界；
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
