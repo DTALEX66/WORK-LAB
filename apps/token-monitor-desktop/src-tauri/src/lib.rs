@@ -106,13 +106,20 @@ fn contains_usage_descendant(value: &Value) -> bool {
     }
 }
 
-fn provider_for(model: &str, file_name: &str) -> String {
+fn provider_for(model: &str, provider_hint: Option<&str>, file_name: &str) -> String {
+    if let Some(hint) = provider_hint.filter(|hint| !hint.trim().is_empty()) {
+        return provider_for_text(hint);
+    }
     let model_name = model.to_lowercase();
     let haystack = if model_name != "unknown-model" {
         model_name
     } else {
         file_name.to_lowercase()
     };
+    provider_for_text(&haystack)
+}
+
+fn provider_for_text(haystack: &str) -> String {
     if haystack.contains("deepseek") {
         "DeepSeek".to_string()
     } else if haystack.contains("kimi") || haystack.contains("moonshot") {
@@ -130,6 +137,7 @@ fn visit(
     file_name: &str,
     location: &str,
     inherited_model: Option<&str>,
+    inherited_provider: Option<&str>,
     acc: &mut Accumulator,
 ) {
     match value {
@@ -140,6 +148,7 @@ fn visit(
                     file_name,
                     &format!("{location}[{index}]"),
                     inherited_model,
+                    inherited_provider,
                     acc,
                 );
             }
@@ -147,6 +156,8 @@ fn visit(
         Value::Object(object) => {
             let model = string_value(object, &["model", "model_name", "engine"])
                 .or_else(|| inherited_model.map(str::to_owned));
+            let provider_hint = string_value(object, &["provider", "provider_name", "vendor"])
+                .or_else(|| inherited_provider.map(str::to_owned));
             let nested_usage = object.values().any(contains_usage_descendant);
             if contains_usage(object) && !nested_usage {
                 let input = token_value(object, &["prompt_tokens", "input_tokens"]).unwrap_or(0);
@@ -170,7 +181,7 @@ fn visit(
                 let timestamp = string_value(object, &["timestamp", "created_at", "created"])
                     .unwrap_or_else(|| "unknown".to_string());
                 let model = model.clone().unwrap_or_else(|| "unknown-model".to_string());
-                let provider = provider_for(&model, file_name);
+                let provider = provider_for(&model, provider_hint.as_deref(), file_name);
                 let fingerprint = format!(
                     "{file_name}|{location}|{model}|{timestamp}|{input}|{output}|{cached}|{reasoning}|{total}"
                 );
@@ -185,7 +196,7 @@ fn visit(
                 acc.snapshot.total_tokens += total;
                 let entry = acc
                     .models
-                    .entry(model.clone())
+                    .entry(format!("{provider}::{model}"))
                     .or_insert_with(|| ModelStats {
                         provider: provider.clone(),
                         model: model.clone(),
@@ -222,6 +233,7 @@ fn visit(
                     file_name,
                     &format!("{location}.{key}"),
                     model.as_deref(),
+                    provider_hint.as_deref(),
                     acc,
                 );
             }
@@ -257,6 +269,7 @@ fn scan_file(path: &Path, acc: &mut Accumulator) {
                         &file_name,
                         &format!("line:{line_number}"),
                         None,
+                        None,
                         acc,
                     );
                     if before == acc.snapshot.recognized_requests {
@@ -270,7 +283,7 @@ fn scan_file(path: &Path, acc: &mut Accumulator) {
         match serde_json::from_str::<Value>(&content) {
             Ok(value) => {
                 let before = acc.snapshot.recognized_requests;
-                visit(&value, &file_name, "document", None, acc);
+                visit(&value, &file_name, "document", None, None, acc);
                 if before == acc.snapshot.recognized_requests {
                     acc.snapshot.unknown_records += 1;
                 }
@@ -369,7 +382,26 @@ pub fn scan_sources(source_list: &str) -> Result<Snapshot, String> {
     if sources.len() <= 1 {
         return scan_source(sources.first().copied().unwrap_or(source_list));
     }
-    let mut iter = sources.iter().map(|source| scan_source(source));
+    let mut roots: Vec<PathBuf> = sources
+        .iter()
+        .map(|source| {
+            fs::canonicalize(source).map_err(|error| format!("数据源不可用：{source} ({error})"))
+        })
+        .collect::<Result<_, _>>()?;
+    roots.sort_by_key(|path| path.components().count());
+    roots.dedup();
+    let mut covered = Vec::new();
+    for root in roots {
+        if !covered
+            .iter()
+            .any(|parent: &PathBuf| root.starts_with(parent))
+        {
+            covered.push(root);
+        }
+    }
+    let mut iter = covered
+        .iter()
+        .map(|source| scan_source(&source.to_string_lossy()));
     let mut merged = iter.next().ok_or_else(|| "没有数据源".to_string())??;
     for result in iter {
         let next = result?;
@@ -381,6 +413,7 @@ pub fn scan_sources(source_list: &str) -> Result<Snapshot, String> {
         merged.cached_input_tokens += next.cached_input_tokens;
         merged.reasoning_tokens += next.reasoning_tokens;
         merged.total_tokens += next.total_tokens;
+        merged.file_sizes.extend(next.file_sizes);
         for provider in next.providers {
             if let Some(existing) = merged
                 .providers
@@ -399,7 +432,7 @@ pub fn scan_sources(source_list: &str) -> Result<Snapshot, String> {
             if let Some(existing) = merged
                 .models
                 .iter_mut()
-                .find(|item| item.model == model.model)
+                .find(|item| item.model == model.model && item.provider == model.provider)
             {
                 existing.input_tokens += model.input_tokens;
                 existing.output_tokens += model.output_tokens;
@@ -584,6 +617,31 @@ mod tests {
         let snapshot = scan_source(dir.to_str().unwrap()).unwrap();
         assert_eq!(snapshot.recognized_requests, 1);
         assert_eq!(snapshot.total_tokens, 5);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn respects_explicit_provider_and_keeps_same_model_separate() {
+        let dir = fixture(
+            r#"{"provider":"deepseek","model":"shared-model","input_tokens":1,"output_tokens":2}
+{"provider":"openai","model":"shared-model","input_tokens":3,"output_tokens":4}"#,
+        );
+        let snapshot = scan_source(dir.to_str().unwrap()).unwrap();
+        assert_eq!(snapshot.recognized_requests, 2);
+        assert_eq!(snapshot.models.len(), 2);
+        assert_eq!(snapshot.providers.len(), 2);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn ignores_overlapping_parent_and_child_sources() {
+        let dir = fixture(r#"{"model":"gpt-test","input_tokens":1,"output_tokens":2}"#);
+        let child = dir.join("nested");
+        fs::create_dir_all(&child).unwrap();
+        let source_list = format!("{};{}", dir.display(), child.display());
+        let snapshot = scan_sources(&source_list).unwrap();
+        assert_eq!(snapshot.recognized_requests, 1);
+        assert_eq!(snapshot.total_tokens, 3);
         fs::remove_dir_all(dir).unwrap();
     }
 }
