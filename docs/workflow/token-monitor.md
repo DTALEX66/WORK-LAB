@@ -1,6 +1,11 @@
 # Hermes Token Monitor
 
-`scripts/workflow/token_monitor.py` 是一个本地 Windows/Tkinter 桌面监视器，用来跟踪 Hermes 或其它 OpenAI-compatible 客户端产生的 JSON/JSONL usage 日志。
+本项目提供两个层次的本地监视器：
+
+- `apps/token-monitor-desktop/`：主版本，Windows Tauri 2 Dashboard，按 Provider/模型实时展示；
+- `scripts/workflow/token_monitor.py`：兼容性探针和无 GUI 自检工具。
+
+主版本默认面向 Codex session JSON/JSONL，也可以扫描多个本地 JSON/JSONL 目录。多个目录使用分号分隔，适合分别接入 GPT/Codex、DeepSeek、Kimi 或本地 Router 导出的 usage 文件。
 
 ## 设计边界
 
@@ -11,8 +16,34 @@
 - 不显示原始 prompt、response、日志行、API key、OAuth、Cookie 或认证内容；
 - 文件以只读方式增量跟踪，支持追加、truncate 和日志轮转；
 - 默认不会打开或读取日志，必须在窗口点击“开始监控”。
+- 主版本点击“开始监控”后每 3 秒刷新；停止窗口即停止读取。
+- Provider 由模型名和来源路径脱敏归类为 `GPT / Codex`、`DeepSeek`、`Kimi` 或 `Other`。
 
 ## 启动
+
+### Tauri 桌面主版本
+
+先安装 Node.js、Rust 和 Windows WebView2，然后从应用目录运行：
+
+```powershell
+cd apps/token-monitor-desktop
+npm install
+npm run tauri dev
+```
+
+生产前端构建：
+
+```powershell
+npm run build
+```
+
+数据源输入支持单个路径或多个以分号分隔的路径，例如：
+
+```text
+%USERPROFILE%\.codex\sessions;%LOCALAPPDATA%\my-router\usage
+```
+
+主版本只读取 `.json` / `.jsonl`，不会读取 OAuth、Cookie、API key 或 provider credential 文件。
 
 从仓库根目录运行：
 
@@ -41,6 +72,14 @@ python scripts/workflow/token_monitor.py `
 - 已识别请求数；
 - 未识别日志行数；
 - 按模型聚合统计。
+
+Tauri 主版本额外显示：
+
+- GPT / Codex、DeepSeek、Kimi、Other Provider 卡片；
+- 每个 Provider 的输入、输出、请求数和总 token；
+- 3 秒刷新状态；
+- 14 日 usage 趋势；
+- Provider + 模型联合排行。
 
 ## 自检与测试
 
@@ -71,6 +110,8 @@ python -m unittest tests.test_token_monitor -v
 ### Codex OAuth
 
 `openai-codex` OAuth 链路不保证把完整 usage 字段写入 Hermes 日志。如果日志没有真实 usage，窗口会显示未识别行，不会制造一个看似精确的估算数字。
+
+当前 Hermes `agent.log` 可能只包含 workflow 事件或上下文估计字段；这类日志不是模型响应 usage 数据。要显示 GPT / DeepSeek / Kimi 的真实 token，应选择包含明确 `usage` 对象或 token 字段的 session/Router JSONL 来源。
 
 因此本软件区分：
 
