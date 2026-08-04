@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import './style.css';
 
 const app = document.querySelector('#app');
-const state = { loading: false, timer: null, started: false, baseline: null, current: null, mode: 'live' };
+const state = { loading: false, timer: null, started: false, baseline: null, current: null, mode: 'live', sourceKey: '' };
 const nf = new Intl.NumberFormat('en-US');
 const format = (value) => nf.format(value || 0);
 const compact = (value) => new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value || 0);
@@ -71,6 +71,11 @@ function liveSnapshot(snapshot) {
     notice: snapshot.notice,
   };
 }
+function sourceRotated(snapshot) {
+  const previous = state.baseline?.file_sizes || {};
+  const current = snapshot.file_sizes || {};
+  return Object.entries(previous).some(([path, size]) => current[path] === undefined || current[path] < size);
+}
 function render(snapshot) {
   const exact = snapshot.confidence === 'exact' && snapshot.recognized_requests > 0;
   statusText.textContent = exact ? 'LIVE · EXACT USAGE' : 'LIVE · NO USAGE FOUND';
@@ -111,7 +116,23 @@ async function scan() {
   state.loading = true; statusText.textContent = 'SCANNING'; statusDot.classList.remove('live');
   document.querySelector('#scan').textContent = '扫描中…';
   try {
+    if (state.sourceKey !== source.value.trim()) {
+      state.sourceKey = source.value.trim();
+      state.baseline = null;
+      state.current = null;
+    }
     const snapshot = await invoke('scan_usage', { source: source.value });
+    if (state.baseline && sourceRotated(snapshot)) {
+      state.current = snapshot;
+      if (state.timer) clearInterval(state.timer);
+      state.timer = null;
+      state.started = false;
+      render(snapshot);
+      statusText.textContent = 'SOURCE ROTATED · RESTART MONITOR';
+      statusDot.classList.remove('live');
+      notice.innerHTML = '<div class="notice">检测到数据源截断、轮转或文件替换。为避免把历史数据误报为实时 usage，监控已暂停；请重新点击“开始监控”建立新基线。</div>';
+      return;
+    }
     if (!state.baseline) state.baseline = snapshot;
     state.current = snapshot;
     render(state.mode === 'history' ? snapshot : liveSnapshot(snapshot));
@@ -120,10 +141,30 @@ async function scan() {
   } catch (error) {
     notice.innerHTML = `<div class="notice">${escapeHtml(error)}</div>`;
     statusText.textContent = 'SOURCE ERROR'; footerStatus.textContent = '数据源不可用';
-  } finally { state.loading = false; document.querySelector('#scan').textContent = '监控中 · 立即刷新'; }
+  } finally { state.loading = false; document.querySelector('#scan').textContent = state.started ? '停止监控' : '开始监控'; }
 }
-document.querySelector('#scan').addEventListener('click', scan);
-document.querySelector('#refresh').addEventListener('click', scan);
+function stopMonitoring() {
+  if (state.timer) clearInterval(state.timer);
+  state.timer = null;
+  state.started = false;
+  statusText.textContent = '已暂停';
+  statusDot.classList.remove('live');
+  document.querySelector('#scan').textContent = '开始监控';
+}
+async function toggleMonitoring() {
+  if (state.started) { stopMonitoring(); return; }
+  state.baseline = null;
+  state.current = null;
+  await scan();
+}
+document.querySelector('#scan').addEventListener('click', toggleMonitoring);
+document.querySelector('#refresh').addEventListener('click', async () => {
+  if (!state.started) {
+    notice.innerHTML = '<div class="notice">请先点击“开始监控”；刷新不会在后台静默读取数据源。</div>';
+    return;
+  }
+  await scan();
+});
 document.querySelector('#view-mode').addEventListener('click', () => {
   state.mode = state.mode === 'live' ? 'history' : 'live';
   document.querySelector('#view-mode').textContent = state.mode === 'live' ? '历史累计' : '本次新增';

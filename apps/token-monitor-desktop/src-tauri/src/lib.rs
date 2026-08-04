@@ -2,8 +2,12 @@ use serde::Serialize;
 use serde_json::Value;
 use std::collections::{BTreeMap, HashSet};
 use std::fs;
+use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+use tauri::menu::{Menu, MenuItem};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri::{Manager, WindowEvent};
 
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct ModelStats {
@@ -50,6 +54,7 @@ pub struct Snapshot {
     pub updated_at: u64,
     pub confidence: String,
     pub notice: Option<String>,
+    pub file_sizes: BTreeMap<String, u64>,
 }
 
 #[derive(Debug, Default)]
@@ -91,8 +96,23 @@ fn contains_usage(object: &serde_json::Map<String, Value>) -> bool {
     .any(|key| object.contains_key(*key))
 }
 
+fn contains_usage_descendant(value: &Value) -> bool {
+    match value {
+        Value::Object(object) => {
+            contains_usage(object) || object.values().any(contains_usage_descendant)
+        }
+        Value::Array(items) => items.iter().any(contains_usage_descendant),
+        _ => false,
+    }
+}
+
 fn provider_for(model: &str, file_name: &str) -> String {
-    let haystack = format!("{} {}", model, file_name).to_lowercase();
+    let model_name = model.to_lowercase();
+    let haystack = if model_name != "unknown-model" {
+        model_name
+    } else {
+        file_name.to_lowercase()
+    };
     if haystack.contains("deepseek") {
         "DeepSeek".to_string()
     } else if haystack.contains("kimi") || haystack.contains("moonshot") {
@@ -105,17 +125,30 @@ fn provider_for(model: &str, file_name: &str) -> String {
     }
 }
 
-fn visit(value: &Value, file_name: &str, inherited_model: Option<&str>, acc: &mut Accumulator) {
+fn visit(
+    value: &Value,
+    file_name: &str,
+    location: &str,
+    inherited_model: Option<&str>,
+    acc: &mut Accumulator,
+) {
     match value {
         Value::Array(items) => {
-            for item in items {
-                visit(item, file_name, inherited_model, acc);
+            for (index, item) in items.iter().enumerate() {
+                visit(
+                    item,
+                    file_name,
+                    &format!("{location}[{index}]"),
+                    inherited_model,
+                    acc,
+                );
             }
         }
         Value::Object(object) => {
             let model = string_value(object, &["model", "model_name", "engine"])
                 .or_else(|| inherited_model.map(str::to_owned));
-            if contains_usage(object) {
+            let nested_usage = object.values().any(contains_usage_descendant);
+            if contains_usage(object) && !nested_usage {
                 let input = token_value(object, &["prompt_tokens", "input_tokens"]).unwrap_or(0);
                 let output =
                     token_value(object, &["completion_tokens", "output_tokens"]).unwrap_or(0);
@@ -139,7 +172,7 @@ fn visit(value: &Value, file_name: &str, inherited_model: Option<&str>, acc: &mu
                 let model = model.clone().unwrap_or_else(|| "unknown-model".to_string());
                 let provider = provider_for(&model, file_name);
                 let fingerprint = format!(
-                    "{file_name}|{model}|{timestamp}|{input}|{output}|{cached}|{reasoning}|{total}"
+                    "{file_name}|{location}|{model}|{timestamp}|{input}|{output}|{cached}|{reasoning}|{total}"
                 );
                 if !acc.seen.insert(fingerprint) {
                     return;
@@ -183,8 +216,14 @@ fn visit(value: &Value, file_name: &str, inherited_model: Option<&str>, acc: &mu
                 day_entry.total_tokens += total;
                 day_entry.requests += 1;
             }
-            for child in object.values() {
-                visit(child, file_name, model.as_deref(), acc);
+            for (key, child) in object {
+                visit(
+                    child,
+                    file_name,
+                    &format!("{location}.{key}"),
+                    model.as_deref(),
+                    acc,
+                );
             }
         }
         _ => {}
@@ -192,6 +231,11 @@ fn visit(value: &Value, file_name: &str, inherited_model: Option<&str>, acc: &mu
 }
 
 fn scan_file(path: &Path, acc: &mut Accumulator) {
+    if let Ok(metadata) = fs::metadata(path) {
+        acc.snapshot
+            .file_sizes
+            .insert(path.to_string_lossy().to_string(), metadata.len());
+    }
     let Ok(content) = fs::read_to_string(path) else {
         acc.snapshot.unknown_records += 1;
         return;
@@ -200,11 +244,21 @@ fn scan_file(path: &Path, acc: &mut Accumulator) {
     let file_name = path.to_string_lossy().to_string();
     let is_jsonl = path.extension().is_some_and(|ext| ext == "jsonl");
     if is_jsonl {
-        for line in content.lines().filter(|line| !line.trim().is_empty()) {
+        for (line_number, line) in content
+            .lines()
+            .filter(|line| !line.trim().is_empty())
+            .enumerate()
+        {
             match serde_json::from_str::<Value>(line) {
                 Ok(value) => {
                     let before = acc.snapshot.recognized_requests;
-                    visit(&value, &file_name, None, acc);
+                    visit(
+                        &value,
+                        &file_name,
+                        &format!("line:{line_number}"),
+                        None,
+                        acc,
+                    );
                     if before == acc.snapshot.recognized_requests {
                         acc.snapshot.unknown_records += 1;
                     }
@@ -216,7 +270,7 @@ fn scan_file(path: &Path, acc: &mut Accumulator) {
         match serde_json::from_str::<Value>(&content) {
             Ok(value) => {
                 let before = acc.snapshot.recognized_requests;
-                visit(&value, &file_name, None, acc);
+                visit(&value, &file_name, "document", None, acc);
                 if before == acc.snapshot.recognized_requests {
                     acc.snapshot.unknown_records += 1;
                 }
@@ -227,6 +281,10 @@ fn scan_file(path: &Path, acc: &mut Accumulator) {
 }
 
 fn collect_files(path: &Path, files: &mut Vec<PathBuf>) -> std::io::Result<()> {
+    let metadata = fs::symlink_metadata(path)?;
+    if metadata.file_type().is_symlink() || metadata.file_attributes() & 0x400 != 0 {
+        return Ok(());
+    }
     if path.is_file() {
         if path
             .extension()
@@ -239,6 +297,10 @@ fn collect_files(path: &Path, files: &mut Vec<PathBuf>) -> std::io::Result<()> {
     for entry in fs::read_dir(path)? {
         let entry = entry?;
         let child = entry.path();
+        let metadata = fs::symlink_metadata(&child)?;
+        if metadata.file_type().is_symlink() || metadata.file_attributes() & 0x400 != 0 {
+            continue;
+        }
         if child.is_dir() {
             collect_files(&child, files)?;
         } else if child
@@ -385,6 +447,56 @@ fn scan_usage(source: String) -> Result<Snapshot, String> {
 
 pub fn run() {
     tauri::Builder::default()
+        .setup(|app| {
+            let show = MenuItem::with_id(app, "show", "显示监控器", true, None::<&str>)?;
+            let hide = MenuItem::with_id(app, "hide", "隐藏到托盘", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&show, &hide, &quit])?;
+            TrayIconBuilder::new()
+                .icon(
+                    app.default_window_icon()
+                        .expect("configured app icon")
+                        .clone(),
+                )
+                .menu(&menu)
+                .tooltip("Hermes Token Monitor")
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "show" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "hide" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.hide();
+                        }
+                    }
+                    "quit" => app.exit(0),
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        if let Some(window) = tray.app_handle().get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+            Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
+        })
         .invoke_handler(tauri::generate_handler![default_source, scan_usage])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Token Monitor");
@@ -440,6 +552,38 @@ mod tests {
         let snapshot = scan_source(dir.to_str().unwrap()).unwrap();
         assert_eq!(snapshot.total_tokens, 12);
         assert_eq!(snapshot.reasoning_tokens, 3);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn preserves_identical_requests_on_distinct_jsonl_lines() {
+        let line = r#"{"timestamp":"2026-08-04T10:00:00Z","model":"gpt-test","usage":{"input_tokens":2,"output_tokens":3,"total_tokens":5}}"#;
+        let dir = fixture(&format!("{line}\n{line}\n"));
+        let snapshot = scan_source(dir.to_str().unwrap()).unwrap();
+        assert_eq!(snapshot.recognized_requests, 2);
+        assert_eq!(snapshot.total_tokens, 10);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn does_not_double_count_parent_summary_with_nested_usage() {
+        let dir = fixture(
+            r#"{"model":"gpt-test","total_tokens":5,"usage":{"input_tokens":2,"output_tokens":3,"total_tokens":5}}"#,
+        );
+        let snapshot = scan_source(dir.to_str().unwrap()).unwrap();
+        assert_eq!(snapshot.recognized_requests, 1);
+        assert_eq!(snapshot.total_tokens, 5);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn does_not_double_count_deeply_nested_usage() {
+        let dir = fixture(
+            r#"{"total_tokens":5,"response":{"payload":{"usage":{"input_tokens":2,"output_tokens":3,"total_tokens":5}}}}"#,
+        );
+        let snapshot = scan_source(dir.to_str().unwrap()).unwrap();
+        assert_eq!(snapshot.recognized_requests, 1);
+        assert_eq!(snapshot.total_tokens, 5);
         fs::remove_dir_all(dir).unwrap();
     }
 }

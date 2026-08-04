@@ -14,10 +14,12 @@
 - `total_tokens` 缺失时，仅在 input 和 output 都是明确整数时计算二者之和；
 - 没有 usage 的行只计入“未识别行”，不计入 token；
 - 不显示原始 prompt、response、日志行、API key、OAuth、Cookie 或认证内容；
-- 文件以只读方式增量跟踪，支持追加、truncate 和日志轮转；
+- 文件以只读方式跟踪，支持追加；检测到 truncate、轮转、删除或替换时会暂停实时模式并要求重新建立基线，避免把历史数据误报为新增 usage；
 - 默认不会打开或读取日志，必须在窗口点击“开始监控”。
 - 主版本点击“开始监控”后每 3 秒刷新；停止窗口即停止读取。
+- 主版本默认显示“本次新增” usage；“历史累计”是显式切换，不把历史数据伪装成当前调用。
 - Provider 由模型名和来源路径脱敏归类为 `GPT / Codex`、`DeepSeek`、`Kimi` 或 `Other`。
+- Windows 窗口可关闭到通知区域；托盘菜单支持显示、隐藏和退出。
 
 ## 启动
 
@@ -98,7 +100,7 @@ TOKEN_MONITOR_SELF_TEST_PASS
 项目测试：
 
 ```powershell
-python -m unittest tests.test_token_monitor -v
+python tests/test_token_monitor.py -v
 ```
 
 ## 重要限制
