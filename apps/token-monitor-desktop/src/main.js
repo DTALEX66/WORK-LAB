@@ -41,9 +41,10 @@ function providerCard(item, max) {
   return `<article class="provider-card"><div class="provider-head"><span class="provider-name"><i class="provider-dot ${color}"></i>${escapeHtml(item.provider)}</span><span class="provider-requests">${format(item.requests)} requests</span></div><div class="provider-total ${color}">${compact(item.total_tokens)}</div><div class="provider-breakdown"><span>输入 ${format(item.input_tokens)}</span><span>输出 ${format(item.output_tokens)}</span></div><div class="provider-progress"><i class="${color}" style="width:${Math.max(2, item.total_tokens / max * 100)}%"></i></div></article>`;
 }
 function subtractList(current, baseline, key) {
-  const old = new Map((baseline || []).map((item) => [item[key], item]));
+  const identity = typeof key === 'function' ? key : (item) => item[key];
+  const old = new Map((baseline || []).map((item) => [identity(item), item]));
   return (current || []).map((item) => {
-    const previous = old.get(item[key]) || {};
+    const previous = old.get(identity(item)) || {};
     return {
       ...item,
       input_tokens: Math.max(0, (item.input_tokens || 0) - (previous.input_tokens || 0)),
@@ -66,7 +67,7 @@ function liveSnapshot(snapshot) {
     total_tokens: Math.max(0, snapshot.total_tokens - state.baseline.total_tokens),
     recognized_requests: Math.max(0, snapshot.recognized_requests - state.baseline.recognized_requests),
     providers: subtractList(snapshot.providers, state.baseline.providers, 'provider'),
-    models: subtractList(snapshot.models, state.baseline.models, 'model'),
+    models: subtractList(snapshot.models, state.baseline.models, (item) => `${item.provider}::${item.model}`),
     days: subtractList(snapshot.days, state.baseline.days, 'day'),
     notice: snapshot.notice,
   };
