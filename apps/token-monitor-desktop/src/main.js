@@ -12,14 +12,14 @@ app.innerHTML = `
   <main class="shell">
     <header class="topbar">
       <div class="brand"><div class="logo">✦</div><div><h1>Hermes Token Monitor</h1><p class="subtitle">Local-first usage observability · GPT / DeepSeek / Kimi</p></div></div>
-      <div class="status"><i class="dot" id="status-dot"></i><span id="status-text">准备就绪</span></div>
+      <div class="status" role="status" aria-live="polite"><i class="dot" id="status-dot"></i><span id="status-text">准备就绪</span></div>
     </header>
-    <section class="sourcebar"><label for="source">数据源</label><input id="source" spellcheck="false" placeholder="多个目录用分号分隔：Codex;Router logs;session logs" /><button class="secondary" id="view-mode">历史累计</button><button class="secondary" id="refresh">刷新</button><button class="primary" id="scan">开始监控</button></section>
+    <section class="sourcebar"><label for="source">数据源</label><input id="source" aria-describedby="source-help" spellcheck="false" placeholder="多个目录用分号分隔：Codex;Router logs;session logs" /><span id="source-help" class="sr-only">只在点击开始监控后读取本地 JSON 或 JSONL 数据源</span><button type="button" class="secondary" id="view-mode">历史累计</button><button type="button" class="secondary" id="refresh">刷新</button><button type="button" class="primary" id="scan">开始监控</button></section>
     <section class="grid" id="metrics"></section>
     <section class="provider-grid" id="providers"></section>
     <section class="section"><div class="section-head"><h2>Token 趋势</h2><span class="section-note" id="trend-note">等待监控</span></div><div class="chart" id="chart"></div></section>
     <section class="section"><div class="section-head"><h2>模型用量</h2><span class="section-note">只显示明确 usage</span></div><div id="models"></div></section>
-    <div id="notice"></div>
+    <div id="notice" role="alert" aria-live="assertive"></div>
     <footer class="footer"><span id="footer-status">未读取任何文件</span><span>不读取凭据 · 不上传日志 · 不做字符估算 · 3 秒自动刷新</span></footer>
   </main>`;
 
@@ -79,7 +79,8 @@ function sourceRotated(snapshot) {
 }
 function render(snapshot) {
   const exact = snapshot.confidence === 'exact' && snapshot.recognized_requests > 0;
-  statusText.textContent = exact ? 'LIVE · EXACT USAGE' : 'LIVE · NO USAGE FOUND';
+  const statusPrefix = state.mode === 'history' ? 'HISTORY' : state.started ? 'LIVE' : 'PAUSED';
+  statusText.textContent = exact ? `${statusPrefix} · EXACT USAGE` : `${statusPrefix} · NO USAGE FOUND`;
   statusDot.classList.toggle('live', exact);
   metrics.innerHTML = [
     metric('总 Tokens', compact(snapshot.total_tokens), `${format(snapshot.recognized_requests)} 个 usage 记录`, 'accent-purple'),
@@ -110,7 +111,7 @@ function render(snapshot) {
     models.innerHTML = `<table class="table"><thead><tr><th>Provider</th><th>模型</th><th>请求</th><th>输入</th><th>输出</th><th>总量</th><th>占比</th></tr></thead><tbody>${modelItems.map((model) => `<tr><td><span class="provider-tag">${escapeHtml(model.provider)}</span></td><td><div class="model-cell"><span class="model-icon">AI</span>${escapeHtml(model.model)}</div></td><td>${format(model.requests)}</td><td>${format(model.input_tokens)}</td><td>${format(model.output_tokens)}</td><td><b>${format(model.total_tokens)}</b></td><td><div class="progress"><i style="width:${model.total_tokens / max * 100}%"></i></div></td></tr>`).join('')}</tbody></table>`;
   }
   notice.innerHTML = snapshot.notice ? `<div class="notice">${escapeHtml(snapshot.notice)}</div>` : '';
-  footerStatus.textContent = `${escapeHtml(snapshot.source)} · ${format(snapshot.scanned_files)} files · ${new Date().toLocaleTimeString()} 刷新完成`;
+  footerStatus.textContent = `${snapshot.source} · ${format(snapshot.scanned_files)} files · ${new Date().toLocaleTimeString()} 刷新完成`;
 }
 async function scan() {
   if (state.loading || !source.value.trim()) return;
@@ -136,8 +137,8 @@ async function scan() {
     }
     if (!state.baseline) state.baseline = snapshot;
     state.current = snapshot;
-    render(state.mode === 'history' ? snapshot : liveSnapshot(snapshot));
     state.started = true;
+    render(state.mode === 'history' ? snapshot : liveSnapshot(snapshot));
     if (!state.timer) state.timer = setInterval(scan, 3000);
   } catch (error) {
     notice.innerHTML = `<div class="notice">${escapeHtml(error)}</div>`;
