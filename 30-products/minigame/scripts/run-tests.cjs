@@ -6,7 +6,7 @@
  * Node 16 does not support `node --test`, so `npm test` must bootstrap a
  * modern Node executable before invoking the real Node test runner.
  */
-const { existsSync } = require('node:fs');
+const { existsSync, readFileSync, writeFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { spawnSync } = require('node:child_process');
 
@@ -58,11 +58,22 @@ if (!modern) {
 
 const args = ['--test', '--test-concurrency=1', 'tests/*.test.js'];
 console.log(`[test] using ${modern.version} at ${modern.executable}`);
-const result = spawnSync(modern.executable, args, {
-  stdio: 'inherit',
-  shell: false,
-  windowsHide: true,
-});
+const trackedDouyinProjectConfig = join(__dirname, '..', 'douyin-minigame', 'project.config.json');
+const originalDouyinProjectConfig = existsSync(trackedDouyinProjectConfig)
+  ? readFileSync(trackedDouyinProjectConfig)
+  : null;
+let result;
+try {
+  result = spawnSync(modern.executable, args, {
+    stdio: 'inherit',
+    shell: false,
+    windowsHide: true,
+  });
+} finally {
+  if (originalDouyinProjectConfig) {
+    writeFileSync(trackedDouyinProjectConfig, originalDouyinProjectConfig);
+  }
+}
 
 if (result.error) {
   console.error('[test] failed to launch test runner:', result.error.message);

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab-migration-status/v1",
-  "status": "PUBLISHED_CANDIDATE_HANDOFF",
+  "status": "AUDITED_ABSORBED_PENDING_LOCAL_CUTOOver",
   "repository": "DTALEX66/WORK-LAB",
   "candidateRun": "20260805T091816Z",
   "modules": ["10-workflow/workflow-assistance", "20-design/open-design", "30-products/minigame"],
@@ -8,7 +8,8 @@
   "governanceTasks": {"GOV-001":"PASS","GOV-002":"PASS","GOV-003":"PASS","GOV-004":"PASS","GOV-005":"PASS","GOV-006":"PASS","GOV-007":"PASS","GOV-008":"PASS"},
   "externalPublication": "user-authorized",
   "activeLocalPathSwitch": "NOT_EXECUTED",
-  "legacyCloudArchive": "NOT_EXECUTED",
+  "legacyCloudArchive": "COMPLETED_ARCHIVED_READBACK",
+  "globalWorkflowRole": "WORK-LAB root task-pack control plane plus portable global workflow source in 10-workflow/workflow-assistance; Hermes Home remains external platform state",
   "productionRelease": "NOT_CLAIMED",
   "evidencePath": "local .hermes/task-artifacts/work-lab-migration-v6 (ignored)"
 }
