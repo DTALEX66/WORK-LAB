@@ -13,12 +13,12 @@ git rev-parse HEAD
 
 ## 下载迁移执行包
 
-从 GitHub Release `migration-handoff-20260805T091816Z` 下载：
+从 GitHub Release `migration-handoff-20260805T091816Z-v2` 下载：
 
 ```bash
-gh release download migration-handoff-20260805T091816Z \
+gh release download migration-handoff-20260805T091816Z-v2 \
   --repo DTALEX66/WORK-LAB \
-  --pattern 'work-lab-migration-handoff-20260805T091816Z.zip'
+  --pattern 'work-lab-migration-handoff-20260805T091816Z-v2.zip'
 ```
 
 解压后保留以下内容：
