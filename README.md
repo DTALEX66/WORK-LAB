@@ -29,6 +29,7 @@ Workflow-assistance
 ├─ route operations       GPT OAuth / DeepSeek 切换与链路诊断
 ├─ coding-agent workflow  Codex launcher、任务票据、单写者与冻结复审
 ├─ MCP policy             默认只启用 Context7，其他能力按需开启
+├─ token monitor          本地实时读取真实 usage，不做字符估算
 ├─ reusable skills        Agent、测试、Windows、代码复审等知识资产
 └─ governance             安全扫描、治理测试、Linux/Windows CI、吸收审计
 ```
@@ -47,6 +48,9 @@ changed-files 分页缺失、SSH 私钥无授权写入、PowerShell/POSIX 命令
 完整的错误、根因、修复和证据记录见
 [`docs/workflow/error-fixes-2026-07-28.md`](docs/workflow/error-fixes-2026-07-28.md)。
 
+Token Monitor 本轮的交接、验证证据、错误根因、剩余事项和恢复顺序见
+[`docs/workflow/token-monitor-handoff.md`](docs/workflow/token-monitor-handoff.md)。
+
 GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它是非阻断上游维护提示。
 本项目不在 workflow 中硬编码 Node 版本，也不为了消除提示随意替换 action；若后续处理，必须
 走审阅后的自动依赖更新策略。
@@ -64,7 +68,8 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 | 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
 | Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/workflow/gateway-cron-delivery.md` |
 | 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `bin/hermes-project-data.py`、`skills/software-development/project-data-boundary/` |
-| MCP | 默认固定 Context7；记录隐私、版本和新增 MCP 候选审计门禁 | `docs/mcp/workflow-mcp-stack.md`、`docs/mcp/mcp-catalog-governance.md`、`scripts/workflow/mcp_candidate_audit.py` |
+| Token 监视器 | Windows Tauri 2 Dashboard，实时扫描本地 JSON/JSONL usage，按 GPT/Codex、DeepSeek、Kimi 和模型显示输入/输出/缓存/reasoning/总 token；无 usage 时不估算 | `apps/token-monitor-desktop/`、`scripts/workflow/token_monitor.py`、`docs/workflow/token-monitor.md` |
+| MCP | 默认固定 Context7 包版本；候选 MCP 另行执行 pinned provenance 审计 | `docs/mcp/workflow-mcp-stack.md`、`docs/mcp/mcp-catalog-governance.md`、`scripts/workflow/mcp_candidate_audit.py` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
 | Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.hermes/task-artifacts/`，用于新会话与 Codex handoff | `scripts/workflow/build_context_pack.py`、`docs/workflow/context-pack.md` |
 | Agent 行为评估 | promptfoo 风格声明式 smoke cases，评估工作流边界回答；不默认安装 runner/provider | `docs/workflow/agent-evaluation.md`、`templates/evals/agent-behavior-smoke.yaml` |
@@ -284,7 +289,7 @@ inode，并通过 `linkat(AT_EMPTY_PATH)` 无覆盖发布；不支持匿名 inod
 
 - `bin/codex`：Bash/Git Bash launcher；
 - `bin/codex.cmd`：Windows launcher；
-- 优先使用更新的 desktop/plugin Codex 二进制，避免 PATH 中旧版本遮蔽。
+- Windows 优先动态解析唯一的 `OpenAI.Codex` Store package，使 CLI 与桌面 GUI 使用同一 runtime 层；不锁定具体版本，也不静默切换到 plugin app-server。
 
 TaskPack 的高风险冻结复审默认由 Hermes 完成；需要独立第二执行体时可显式
 选择 Codex 原生 review（不改变默认行为）：
@@ -296,7 +301,10 @@ python scripts/workflow/run_taskpack_agent.py \
   --mission "<明确任务>"
 ```
 
-该路径使用通用 `codex exec --sandbox read-only --ephemeral`，将 exact staged-tree
+该路径会先通过当前 Codex 的 `codex exec --help` 做能力 preflight，仅在确认存在所需的
+read-only sandbox、ephemeral 和结构化输出参数后，才使用等价的 `codex exec` 调用；
+不会把任何具体 Codex runtime 版本或固定 flag 集合写成长期兼容契约。它默认保留用户配置、
+用户/项目规则及 plugin discovery，不使用 `--ignore-user-config` 或 `--ignore-rules`。
 任务 prompt 与临时 JSON Schema 一起交给 Codex；不会使用危险 sandbox/approval
 bypass，不创建 Codex 会话产物。TaskPack 只读取并删除项目 runtime 中的最终消息与
 schema 临时文件；任何 finding 都 fail-closed 为 `NO-GO`。`--reviewer codex` 仅适用于
@@ -348,7 +356,7 @@ hermes mcp test context7
 | filesystem MCP | 与 Hermes file tools 重叠 | Hermes 原生文件工具 |
 | memory MCP | 与 Hermes memory 重叠 | Hermes 原生记忆工具 |
 
-新增默认 MCP 必须固定版本、核验来源/许可证、真实运行 `hermes mcp test`、说明数据外发与权限，并测量工具 schema 对 Prompt 大小的影响。
+新增候选 MCP（不含当前 Context7 portable baseline 的官方包名例外）必须固定 candidate 版本、核验来源/许可证、真实运行 `hermes mcp test`、说明数据外发与权限，并测量工具 schema 对 Prompt 大小的影响；Context7 runtime 由 resolver 选择版本。
 
 新增候选先走审计器，不直接写默认配置：
 
@@ -393,7 +401,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- python -m py
 python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards list
 ```
 
-该执行器以 Git 根为边界，要求 `.hermes/` 已被 Git 忽略，并把 `TMP`、`TEMP`、`TMPDIR`、XDG/pip/uv/npm/yarn/Playwright/Rust/Ruff/mypy/pre-commit cache 与 Python bytecode 指向 `<project>/.hermes/task-runtime/`。它同时将原生 Kanban 的 `HERMES_KANBAN_HOME` 固定在 `<project>/.hermes/kanban/`；禁止直接创建全局项目 board。显式项目外输出路径必须拒绝；它不是 OS sandbox，不能替代路径审查。项目证据归档到同项目 `.hermes/task-artifacts/`；认证、会话库、全局 config/skills 和 cron scheduler 元数据仍属于 Hermes 全局运行时，禁止误迁移。同步器仅保留最近两份自身生成的 workflow backup，避免每次部署重复膨胀全局 backup 目录。
+该执行器以 Git 根为边界，要求 `.hermes/` 已被 Git 忽略，并在子进程启动前把 `TMP`、`TEMP`、`TMPDIR`、XDG/pip/uv/npm/yarn/Playwright/Cargo home+target/Rust/Ruff/mypy/pre-commit cache 与 Python bytecode 指向 `<project>/.hermes/task-runtime/`。它同时将原生 Kanban 的 `HERMES_KANBAN_HOME` 固定在 `<project>/.hermes/kanban/`；禁止直接创建全局项目 board。只有显式硬编码项目外输出路径、绕过项目环境绑定时才拒绝并提示改用项目目录；它不是 OS sandbox，不能替代路径审查。项目证据归档到同项目 `.hermes/task-artifacts/`；认证、会话库、全局 config/skills 和 cron scheduler 元数据仍属于 Hermes 全局运行时，禁止误迁移。同步器仅保留最近两份自身生成的 workflow backup，避免每次部署重复膨胀全局 backup 目录。
 
 ### 模型/API 中立任务契约
 
@@ -500,6 +508,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/workflow/local-quality-gates.md`：本地 canonical quality gate runner、Justfile 快捷入口和 CI 对齐方式；
 - `docs/workflow/ui-skin-system.md`：UI/Skin 分层、主题 token、Agent UI 状态表达与 runtime-neutral 边界；
 - `docs/workflow/project-data-boundary.md`：项目任务数据归属、迁移、保留与 fail-closed 执行器；
+- `docs/workflow/token-monitor.md`：本地 Token Monitor 的真实 usage 口径、启动方式和 Codex OAuth 限制；
 - `docs/workflow/hermes-runtime-layout.md`：Hermes 全局运行目录分层、可恢复迁移、升级验证与清理边界；
 - `docs/workflow/gateway-cron-delivery.md`：Gateway、cron、sleep-mode、TUI 与外部消息平台的投递边界；
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
@@ -511,6 +520,8 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/audit/hermes-workflow-recovery-2026-07-22.md`：Hermes Desktop、CC Switch、Codex、GitHub 全链路故障、执行错误、恢复过程和数据保护证据；
 - `docs/audit/model-neutral-agent-harness-absorption-2026-07.md`：模型/API 中立 Agent Harness 审计；
 - `docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml`：固定来源和本地落点的机器可读证据；
+- `docs/audit/project-data-boundary-handoff-2026-08-02.md`：本次项目数据边界审计、交接、错误总结和上传前验证；
+- `docs/audit/project-data-boundary-handoff-2026-08-02.json`：本次审计的机器可读 manifest；
 - `docs/handoffs/workflow-assistance-2026-07-23.md`：无密阶段交接、恢复顺序、已发布基线与会话卫生边界；
 - `docs/handoffs/hermes-desktop-source-root-repair-2026-07-24.md`：Desktop source-root/canonical runtime 修复的无密 Codex 交接、验证与回滚边界。
 

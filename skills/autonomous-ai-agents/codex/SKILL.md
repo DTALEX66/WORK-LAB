@@ -1,7 +1,7 @@
 ---
 name: codex
 description: "Delegate bounded coding or read-only review tasks to the OpenAI Codex CLI; use isolated worktrees for writers."
-version: 2.0.1
+version: 2.0.3
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -17,7 +17,22 @@ Use Codex for a clearly bounded coding task, refactor, or independent review. Th
 
 ## Live CLI semantics
 
-Current verified CLI: `codex-cli 0.144.2`.
+The Codex runtime version is intentionally **not pinned** by this skill. Resolve
+Codex through PATH or the supported launcher, record the discovered output of
+`codex --version` as run-specific evidence, and use the current
+`codex exec --help` output as the authoritative capability contract.
+
+- Before each bounded run, discover the executable with the platform-supported
+  launcher/PATH and verify it with `codex --version`.
+- Before relying on a flag, check the relevant current help output. Use
+  `--sandbox` and `--skip-git-repo-check` only when the installed CLI lists
+  them; otherwise stop and adapt the invocation rather than guessing.
+- The current verification observed `--sandbox` and
+  `--skip-git-repo-check`, but this is evidence for that run, not a permanent
+  version or compatibility promise.
+- Treat a runtime update as a new compatibility check: rediscover the binary,
+  inspect help/schema/manifest as available, run the portable verifier and
+  relevant quality gates, then record the resulting evidence separately.
 
 - `codex` without a subcommand is an interactive TUI: use `pty=true`.
 - `codex exec`, `codex review`, and `codex exec review` are non-interactive: use `pty=false` (default).

@@ -25,6 +25,10 @@ cache/
 __pycache__/
 *.pyc
 node_modules/
+apps/**/node_modules/
+apps/**/dist/
+apps/**/target/
+apps/**/src-tauri/gen/
 .venv/
 venv/
 

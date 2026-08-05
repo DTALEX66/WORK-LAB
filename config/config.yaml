@@ -19,6 +19,7 @@ mcp_servers:
     command: hermes-npx
     args:
       - -y
+      # Keep the official package version pinned for reproducible portable installs.
       - '@upstash/context7-mcp@3.2.2'
     env:
       HERMES_NPX_ALLOW_PATH_FALLBACK: '1'

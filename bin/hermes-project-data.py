@@ -19,6 +19,9 @@ from pathlib import Path
 from typing import Mapping, Sequence
 
 
+WINDOWS_REPARSE_POINT = 0x400
+
+
 class ProjectDataBoundaryError(RuntimeError):
     """Raised when task runtime data cannot be safely contained."""
 
@@ -45,10 +48,32 @@ def discover_project_root(start: Path | str = ".") -> Path:
 
 def require_contained(project_root: Path, candidate: Path) -> Path:
     root = project_root.resolve()
+    _reject_reparse_components(root, candidate)
     resolved = candidate.resolve(strict=False)
     if not resolved.is_relative_to(root):
         raise ProjectDataBoundaryError(f"path escapes project root: {candidate}")
     return resolved
+
+
+def _reject_reparse_components(root: Path, candidate: Path) -> None:
+    """Reject junctions/reparse points before ``Path.resolve`` can follow them."""
+    try:
+        relative = candidate.absolute().relative_to(root.absolute())
+    except ValueError as exc:
+        raise ProjectDataBoundaryError(f"path escapes project root: {candidate}") from exc
+    current = root
+    for component in relative.parts:
+        current /= component
+        if not current.exists():
+            continue
+        try:
+            attributes = getattr(current.stat(), "st_file_attributes", 0)
+        except OSError as exc:
+            raise ProjectDataBoundaryError(f"cannot inspect project path: {current}") from exc
+        if attributes & WINDOWS_REPARSE_POINT:
+            raise ProjectDataBoundaryError(
+                f"reparse point is forbidden in project runtime path: {current}"
+            )
 
 
 def require_ignored(project_root: Path, relative_path: Path) -> None:
@@ -93,6 +118,8 @@ def prepare_layout(start: Path | str = ".") -> RuntimeLayout:
         "npm_config_cache": str(paths["cache"] / "npm"),
         "YARN_CACHE_FOLDER": str(paths["cache"] / "yarn"),
         "PLAYWRIGHT_BROWSERS_PATH": str(paths["cache"] / "playwright-browsers"),
+        "RUSTUP_HOME": str(paths["cache"] / "rustup"),
+        "CARGO_HOME": str(paths["cache"] / "cargo"),
         "CARGO_TARGET_DIR": str(paths["cache"] / "cargo-target"),
         "MYPY_CACHE_DIR": str(paths["cache"] / "mypy"),
         "RUFF_CACHE_DIR": str(paths["cache"] / "ruff"),
