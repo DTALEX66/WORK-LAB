@@ -10,6 +10,8 @@ from pathlib import Path
 
 ASSISTANCE_DIR = "opendesign-assistance"
 PLUGIN_SCHEMA = "https://open-design.ai/schemas/plugin.v1.json"
+DEFAULT_PRODUCT_FAMILIES = ["brief-routing", "visual-quality", "domain-scenarios"]
+DEFAULT_PRODUCTION_PROFILES = ["digital-ui"]
 
 
 def repo_root() -> Path:
@@ -90,14 +92,65 @@ def manifest(name: str, title: str, description: str, categories: list[str], cap
         "title": title,
         "version": "0.1.0",
         "description": description,
-        "author": "OPEN-DESIGN-Assistance",
+        "author": {
+            "name": "DTALEX66 OPEN-DESIGN-Assistance",
+        },
         "license": "MIT",
         "entry": "SKILL.md",
+        "publishedAt": "2026-08-04T00:00:00Z",
+        "compat": {
+            "agentSkills": [{"path": "./SKILL.md"}],
+            "preservesV1Plugin": True,
+            "upgradeTrack": "v3-compatibility",
+            "runtimeRegistration": "pending-open-design-e3",
+        },
         "od": {
             "kind": "skill",
+            "mode": "compat-plugin",
+            "taskKind": "new-generation",
             "categories": categories,
             "capabilities": capabilities,
             "suggestedInputs": inputs,
+            "useCase": {
+                "query": {
+                    "en": description,
+                    "zh-CN": description,
+                },
+            },
+            "context": {
+                "skills": [{"ref": name}],
+                "schemas": [
+                    "opendesign-assistance/schemas/design-brief.schema.json",
+                    "opendesign-assistance/schemas/design-direction.schema.json",
+                    "opendesign-assistance/schemas/design-critique.schema.json",
+                ],
+                "productFamilies": DEFAULT_PRODUCT_FAMILIES,
+                "productionProfiles": DEFAULT_PRODUCTION_PROFILES,
+            },
+            "v3": {
+                "productFamilies": DEFAULT_PRODUCT_FAMILIES,
+                "productionProfiles": DEFAULT_PRODUCTION_PROFILES,
+                "outputContracts": [
+                    "design brief",
+                    "Open Design generation prompt",
+                    "quality gate checklist",
+                ],
+                "evidence": {
+                    "level": "E1",
+                    "state": "NOT_RUN",
+                    "claim": "Scaffolded V3 compatibility manifest; run repository verifiers before promoting beyond structural evidence.",
+                    "verifiedBy": [],
+                },
+                "runtime": {
+                    "status": "pending-e3",
+                    "requires": [
+                        "Open Design runtime registration",
+                        "runtime ID/version read-back",
+                        "minimal task execution",
+                        "artifact and provenance read-back",
+                    ],
+                },
+            },
         },
     }
     return json.dumps(data, ensure_ascii=False, indent=2) + "\n"
