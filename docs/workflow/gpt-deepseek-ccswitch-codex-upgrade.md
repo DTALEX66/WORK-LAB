@@ -15,19 +15,21 @@ CC Switch   网络代理和 Codex/ChatGPT 生态连通，不持有 Hermes OAuth 
 Codex       独立编码/复审执行面
 ```
 
-## 当前默认策略
+## Provider / 模型选择
 
-| 需求 | 路线 | 入口 |
-|---|---|---|
-| 快速日常工作 | Kimi HighSpeed | `/切换KIMI极速` |
-| Kimi 常规编码 | Kimi K2.7 Code | `/切换KIMI快` |
-| 复杂推理 | Kimi K3 | `/切换KIMI稳` |
-| 直连备用 | DeepSeek V4 Flash | `/切换DP` |
-| ChatGPT / Codex OAuth（复杂任务） | GPT 5.6 Sol | `/切换GPT` |
+仓库不设置默认模型，也不替用户决定 Kimi、DeepSeek 或 ChatGPT/Codex 的具体
+model ID。三条 Provider 路线只是可选入口；用户必须通过官方 Hermes 配置、
+`switch_model.py --model` 或当前进程的 `HERMES_*_MODEL` 环境变量显式选择。
 
-Picker、快捷命令、`streaming=true`、`reasoning_effort=low` 和
-`model.max_tokens=8192` 是可迁移的非秘密 UX 策略；同步时保留当前
-provider/model、OAuth/API key、私有 MCP 和用户自定义命令。
+```bash
+python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
+python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
+```
+
+这些命令只在用户明确决定切换时执行；不会自动更改当前会话，切换后必须
+新建会话或执行 `/reset`。未提供模型 ID 时脚本应 fail-closed，而不是猜测
+默认模型。
 
 ## 验证层级
 
@@ -35,9 +37,9 @@ provider/model、OAuth/API key、私有 MCP 和用户自定义命令。
 2. **真实推理**：`python scripts/workflow/hermes_workflow_doctor.py --live`
 3. **切换后单线 marker**：
    ```bash
-   python scripts/workflow/switch_model.py gpt --live
-   python scripts/workflow/switch_model.py deepseek --live
-   python scripts/workflow/switch_model.py kimi-turbo --live
+   python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL" --live
+   python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL" --live
+   python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL" --live
    ```
 
 配置写入、端口监听和 HTTP 200/401 只证明部分链路，不能替代 marker。
@@ -54,7 +56,7 @@ hermes auth add openai-codex
 在用户浏览器完成官方 device-code 登录后，`/reset` 或新建会话，并运行：
 
 ```bash
-hermes chat --provider openai-codex -m gpt-5.6-sol \
+hermes chat --provider openai-codex -m "$HERMES_GPT_MODEL" \
   -q "Reply exactly: GPT-OAUTH-LIVE-OK" -Q --toolsets safe
 ```
 

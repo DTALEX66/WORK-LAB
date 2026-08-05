@@ -16,12 +16,19 @@ import subprocess
 import sys
 from pathlib import Path
 
-GPT_MODEL = os.environ.get("HERMES_GPT_MODEL", "gpt-5.6-sol")
-DEEPSEEK_MODEL = os.environ.get("HERMES_DEEPSEEK_MODEL", "deepseek-v4-flash")
-KIMI_MODEL = os.environ.get("HERMES_KIMI_MODEL", "kimi-k3")
-KIMI_FAST_MODEL = os.environ.get("HERMES_KIMI_FAST_MODEL", "kimi-k2.7-code")
-KIMI_TURBO_MODEL = os.environ.get("HERMES_KIMI_TURBO_MODEL", "kimi-k2.7-code-highspeed")
+# Model IDs are intentionally never defaulted here.  The user chooses them
+# explicitly with --model or the matching HERMES_*_MODEL environment variable.
 KIMI_BASE_URL = os.environ.get("HERMES_KIMI_BASE_URL", "https://api.moonshot.cn/v1")
+
+
+def selected_model(override: str | None, env_name: str, target: str) -> str:
+    model = (override or os.environ.get(env_name, "")).strip()
+    if not model:
+        raise SystemExit(
+            f"No model selected for {target}; pass --model MODEL or set {env_name}. "
+            "The workflow never chooses a model automatically."
+        )
+    return model
 
 
 def run(cmd: list[str], timeout: int = 30, check: bool = False) -> subprocess.CompletedProcess[str]:
@@ -171,8 +178,9 @@ def status() -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description='Switch Hermes between the curated DTALEX66 model lanes')
+    ap = argparse.ArgumentParser(description='Switch Hermes between user-selected provider lanes')
     ap.add_argument('target', choices=['gpt', 'chatgpt', 'deepseek', 'dp', 'kimi', 'k3', 'kimi-fast', 'kimi-turbo', 'status'])
+    ap.add_argument('--model', help='explicit model ID; required for every switch target')
     ap.add_argument('--no-verify', action='store_true', help='skip prerequisite checks')
     ap.add_argument('--live', action='store_true', help='run a real marker after writing config (uses provider quota)')
     args = ap.parse_args()
@@ -185,14 +193,14 @@ def main() -> int:
         if not args.no_verify and not (env_has('KIMI_API_KEY') or env_has('KIMI_CN_API_KEY')):
             raise SystemExit('KIMI_API_KEY/KIMI_CN_API_KEY missing in the current environment')
         if args.target == 'kimi-turbo':
-            model = KIMI_TURBO_MODEL
-            label = 'Kimi K2.7 Code HighSpeed'
+            model = selected_model(args.model, 'HERMES_KIMI_TURBO_MODEL', args.target)
+            label = 'Kimi selected model'
         elif args.target == 'kimi-fast':
-            model = KIMI_FAST_MODEL
-            label = 'Kimi K2.7 Code'
+            model = selected_model(args.model, 'HERMES_KIMI_FAST_MODEL', args.target)
+            label = 'Kimi selected model'
         else:
-            model = KIMI_MODEL
-            label = 'Kimi K3'
+            model = selected_model(args.model, 'HERMES_KIMI_MODEL', args.target)
+            label = 'Kimi selected model'
         set_config([
             ('model.provider', 'kimi-coding'),
             ('model.base_url', KIMI_BASE_URL),
@@ -206,26 +214,28 @@ def main() -> int:
     if args.target in {'deepseek', 'dp'}:
         if not args.no_verify and not env_has('DEEPSEEK_API_KEY'):
             raise SystemExit('DEEPSEEK_API_KEY missing in environment or Hermes .env')
+        model = selected_model(args.model, 'HERMES_DEEPSEEK_MODEL', args.target)
         set_config([
             ('model.provider', 'deepseek'),
             ('model.base_url', 'https://api.deepseek.com/v1'),
-            ('model.default', DEEPSEEK_MODEL),
+            ('model.default', model),
         ])
         if args.live:
-            live_marker('deepseek', DEEPSEEK_MODEL, 'OK_DEEPSEEK_SWITCH_LIVE')
+            live_marker('deepseek', model, 'OK_DEEPSEEK_SWITCH_LIVE')
         print('Switched to DeepSeek. Start a new session or /reset for it to take effect.')
         return 0
 
     if args.target in {'gpt', 'chatgpt'}:
         if not args.no_verify and not codex_auth_present():
             raise SystemExit('No openai-codex OAuth credential found; run: hermes auth add openai-codex')
+        model = selected_model(args.model, 'HERMES_GPT_MODEL', args.target)
         set_config([
             ('model.provider', 'openai-codex'),
-            ('model.default', GPT_MODEL),
+            ('model.default', model),
             ('model.base_url', ''),
         ])
         if args.live:
-            live_marker('openai-codex', GPT_MODEL, 'OK_GPT_SWITCH_LIVE')
+            live_marker('openai-codex', model, 'OK_GPT_SWITCH_LIVE')
         print('Switched to GPT via openai-codex OAuth. Start a new session or /reset for it to take effect.')
         return 0
     return 2

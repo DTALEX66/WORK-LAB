@@ -26,7 +26,7 @@ A port check or successful config write is not proof of inference. Run one
 small, real marker request:
 
 ```bash
-hermes chat --provider openai-codex -m gpt-5.6-sol \
+hermes chat --provider openai-codex -m "$HERMES_GPT_MODEL" \
   -q "Reply exactly: GPT-OAUTH-LIVE-OK" -Q --toolsets safe
 ```
 

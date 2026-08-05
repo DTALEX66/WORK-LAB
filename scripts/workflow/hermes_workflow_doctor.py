@@ -20,8 +20,6 @@ import tempfile
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from switch_model import DEEPSEEK_MODEL, GPT_MODEL
-
 
 def configure_console_output() -> None:
     """Keep a diagnostic report running on legacy Windows code pages."""
@@ -198,6 +196,13 @@ def hermes_home() -> Path:
     return Path.home() / ".hermes"
 
 
+def configured_model(env_name: str) -> str | None:
+    """Return a user-selected model without inventing a provider default."""
+
+    value = os.environ.get(env_name, "").strip()
+    return value or None
+
+
 def hermes_managed_node() -> Path | None:
     """Return Hermes' bundled Node before consulting the ambient PATH.
 
@@ -266,7 +271,7 @@ def main() -> int:
     parser.add_argument(
         "--live",
         action="store_true",
-        help="run real GPT, DeepSeek and Codex execution smokes (network/model usage)",
+        help="run execution smokes for explicitly selected models (network/model usage)",
     )
     parser.add_argument(
         "--network",
@@ -281,6 +286,7 @@ def main() -> int:
     )
     args = parser.parse_args()
     failures: list[str] = []
+    live_skips: list[str] = []
 
     print("Hermes workflow doctor (redacted)")
     print(f"HERMES_HOME={hermes_home()}")
@@ -356,20 +362,31 @@ def main() -> int:
 
     if args.live:
         print("\n=== LIVE execution smokes ===")
-        if not marker_smoke(
-            "Hermes GPT OAuth",
-            ["hermes", "chat", "-Q", "--provider", "openai-codex", "-m", GPT_MODEL, "-q", "Only reply OK_GPT_LIVE"],
-            "OK_GPT_LIVE",
-            timeout=180,
-        ):
-            failures.append("GPT live smoke")
-        if not marker_smoke(
-            "Hermes DeepSeek",
-            ["hermes", "chat", "-Q", "--provider", "deepseek", "-m", DEEPSEEK_MODEL, "-q", "Only reply OK_DEEPSEEK_LIVE"],
-            "OK_DEEPSEEK_LIVE",
-            timeout=180,
-        ):
-            failures.append("DeepSeek live smoke")
+        gpt_model = configured_model("HERMES_GPT_MODEL")
+        if gpt_model:
+            if not marker_smoke(
+                "Hermes GPT OAuth",
+                ["hermes", "chat", "-Q", "--provider", "openai-codex", "-m", gpt_model, "-q", "Only reply OK_GPT_LIVE"],
+                "OK_GPT_LIVE",
+                timeout=180,
+            ):
+                failures.append("GPT live smoke")
+        else:
+            print("[SKIP] Hermes GPT OAuth: set HERMES_GPT_MODEL or pass an explicit model to switch_model.py")
+            live_skips.append("GPT model not selected")
+
+        deepseek_model = configured_model("HERMES_DEEPSEEK_MODEL")
+        if deepseek_model:
+            if not marker_smoke(
+                "Hermes DeepSeek",
+                ["hermes", "chat", "-Q", "--provider", "deepseek", "-m", deepseek_model, "-q", "Only reply OK_DEEPSEEK_LIVE"],
+                "OK_DEEPSEEK_LIVE",
+                timeout=180,
+            ):
+                failures.append("DeepSeek live smoke")
+        else:
+            print("[SKIP] Hermes DeepSeek: set HERMES_DEEPSEEK_MODEL or pass an explicit model to switch_model.py")
+            live_skips.append("DeepSeek model not selected")
         if candidates:
             workspace = resolve_live_codex_workspace(Path.cwd(), args.codex_workdir)
             workspace.mkdir(parents=True, exist_ok=True)
@@ -392,7 +409,10 @@ def main() -> int:
         print("[FAIL] " + ", ".join(failures))
         return 1
     if args.live:
-        print("[OK] structural checks and live execution markers passed")
+        if live_skips:
+            print("[OK] selected live execution markers passed; skipped=" + ", ".join(live_skips))
+        else:
+            print("[OK] selected live execution markers passed")
     else:
         print("[OK] structural checks completed; provider execution remains unverified")
     return 0
