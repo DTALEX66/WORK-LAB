@@ -1,0 +1,20 @@
+# Keep portable text files stable across Windows/macOS/Linux.
+* text=auto eol=lf
+
+# Scripts and configs should stay LF/UTF-8 friendly.
+*.sh text eol=lf
+*.ps1 text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.template text eol=lf
+
+# Binary installers/assets.
+*.msi binary
+*.exe binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.zip binary

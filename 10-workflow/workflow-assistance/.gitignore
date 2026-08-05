@@ -1,0 +1,43 @@
+# Secrets / local credentials
+.env
+*.env
+!.env.example
+!config/.env.template
+.env.local
+.env.*.local
+.npmrc
+.pypirc
+*.pem
+*.key
+id_ed25519
+id_rsa
+auth.json
+state.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Runtime/cache/logs
+logs/
+cache/
+.hermes/
+*.log
+__pycache__/
+*.pyc
+node_modules/
+apps/**/node_modules/
+apps/**/dist/
+apps/**/target/
+apps/**/src-tauri/gen/
+.venv/
+venv/
+
+# Do not store application installers/bodies in this deployment repo.
+*.msi
+*.exe
+*.dmg
+*.pkg
+*.AppImage
+*.zip
+*.7z
+*.rar

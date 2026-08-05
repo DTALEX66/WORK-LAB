@@ -1,0 +1,37 @@
+schema_version: 1
+package:
+  name: Workflow-assistance
+  distribution: git
+  portable_source: true
+capabilities:
+  - portable_config
+  - managed_config_ownership
+  - model_provider_neutral_overlay
+  - durable_session_retention
+  - project_data_boundary
+  - terminal_pre_tool_hook
+  - context_pack
+  - local_quality_gate
+  - isolated_portable_install_verification
+  - manifest_compatibility_preflight
+  - hermes_runtime_layout_and_upgrade_safety
+requirements:
+  python: '>=3.11'
+  pyyaml: required
+  hermes: hermes-agent==0.19.0
+compatibility:
+  config_version: 33
+  required_runtime_features:
+    - platform_toolsets.cli
+    - sessions.auto_prune=false
+    - memory.enabled
+    - hermes_config_check
+security:
+  secrets_portable: false
+  credential_copying: forbidden
+  live_provider_route: preserved
+delivery:
+  remote_ref: origin/main
+  required_workflows:
+    - workflow-governance
+  exact_sha_ci: true

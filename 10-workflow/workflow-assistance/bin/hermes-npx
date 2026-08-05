@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+candidates=()
+if [ -n "${HERMES_HOME:-}" ]; then
+  candidates+=("$HERMES_HOME/node/npx")
+fi
+candidates+=("$HOME/.hermes/node/npx")
+candidates+=("$HOME/AppData/Local/hermes/node/npx")
+win_user="${USERNAME:-${USER:-}}"
+if [ -n "$win_user" ]; then
+  candidates+=("/c/Users/$win_user/AppData/Local/hermes/node/npx")
+fi
+for npx_bin in "${candidates[@]}"; do
+  if [ -x "$npx_bin" ]; then
+    # Packages launched by npx may resolve `node` through PATH. Keep that
+    # resolution bound to the same Hermes-managed runtime as npx itself.
+    export PATH="$(dirname "$npx_bin"):$PATH"
+    exec "$npx_bin" "$@"
+  fi
+done
+if [ "${HERMES_NPX_ALLOW_PATH_FALLBACK:-0}" = "1" ]; then
+  node_major="$(node -p 'process.versions.node.split(`.`)[0]' 2>/dev/null || echo 0)"
+  if [ "${node_major:-0}" -ge 20 ] 2>/dev/null; then
+    exec npx "$@"
+  fi
+  echo "hermes-npx: PATH fallback requested but Node >=20 not found." >&2
+  exit 127
+fi
+echo "hermes-npx: Hermes bundled npx not found. Install Hermes bundled Node or set HERMES_HOME." >&2
+echo "Set HERMES_NPX_ALLOW_PATH_FALLBACK=1 only if PATH Node is trusted and >=20." >&2
+exit 127
