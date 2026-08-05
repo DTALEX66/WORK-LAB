@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "work-lab-migration-status/v1",
+  "status": "PUBLISHED_CANDIDATE_HANDOFF",
+  "repository": "DTALEX66/WORK-LAB",
+  "candidateRun": "20260805T091816Z",
+  "modules": ["10-workflow/workflow-assistance", "20-design/open-design", "30-products/minigame"],
+  "migrationTasks": {"MIG-001":"PASS","MIG-002":"PASS","MIG-003":"PASS","MIG-004":"PASS","MIG-005":"PASS","MIG-006":"PASS","MIG-007":"PASS","MIG-008":"PASS"},
+  "governanceTasks": {"GOV-001":"PASS","GOV-002":"PASS","GOV-003":"PASS","GOV-004":"PASS","GOV-005":"PASS","GOV-006":"PASS","GOV-007":"PASS","GOV-008":"PASS"},
+  "externalPublication": "user-authorized",
+  "activeLocalPathSwitch": "NOT_EXECUTED",
+  "legacyCloudArchive": "NOT_EXECUTED",
+  "productionRelease": "NOT_CLAIMED",
+  "evidencePath": "local .hermes/task-artifacts/work-lab-migration-v6 (ignored)"
+}

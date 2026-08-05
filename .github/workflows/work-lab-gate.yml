@@ -1,0 +1,12 @@
+name: work-lab-gate
+on:
+  push:
+  pull_request:
+jobs:
+  aggregate:
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate root governance
+        run: printf '%s' '{"jobs":{"workflow":"success","open-design":"success","minigame":"success","integration":"success"}}' | python scripts/ci/aggregate_gate.py

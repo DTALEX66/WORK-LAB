@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "work-lab-module-ownership/v1",
+  "singleWriter": true,
+  "modules": {
+    "workflow-assistance": {"path": "10-workflow/workflow-assistance", "owner": "workflow", "releasePrefix": "workflow"},
+    "open-design": {"path": "20-design/open-design", "owner": "open-design", "releasePrefix": "open-design"},
+    "minigame": {"path": "30-products/minigame", "owner": "minigame", "releasePrefix": "minigame"}
+  },
+  "rootOwnedPaths": ["00-governance", "40-knowledge", "50-taskpacks", "90-archive-manifests", ".github", "scripts", "tests"],
+  "crossModuleWrites": "explicit-cross-task-only"
+}
