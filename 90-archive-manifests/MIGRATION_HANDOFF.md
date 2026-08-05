@@ -15,9 +15,7 @@
 | MINIGAME | `30-products/minigame` | `d4bf0b3d33d0d97c469dbfedd969f4ec4801bfa2` |
 
 Each imported tip is a merge parent of the candidate migration commit and its
-module tree is parity-checked against the selected source tree. The MINIGAME
-local tip `ddd1ee18…` and all dirty/local-only state remain preserved outside
-this active Git root; remote `main` was selected by user direction.
+module tree is parity-checked against the selected source tree. The MINIGAME local tip `ddd1ee18…` and all dirty/local-only state remain preserved outside this active Git root; the local committed tip is also published as `migration/minigame-local-head` and tag `minigame/local-head-20260805T091816Z`. Remote `main` keeps the user-selected freeze `d4bf0b3d…`.
 
 ## Evidence and recovery
 
