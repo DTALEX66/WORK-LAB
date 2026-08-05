@@ -1,0 +1,38 @@
+{
+  "$schema": "../schemas/capability-status.schema.json",
+  "schemaVersion": "open-design-assistance/capability-status/v1",
+  "evidenceLevels": [
+    {"id": "E0", "label": "declared", "claim": "intent or documentation exists", "proof": "document path or task card"},
+    {"id": "E1", "label": "structural", "claim": "files, schema, manifest or static validation passes", "proof": "hash, parser, schema or linter output"},
+    {"id": "E2", "label": "isolated-runtime", "claim": "isolated staging command succeeds", "proof": "command, exit code, output summary and read-back artifact"},
+    {"id": "E3", "label": "live-runtime", "claim": "current Open Design/Agent runtime executes the capability", "proof": "runtime ID/version, task ID, artifact hash, stage/provenance read-back"},
+    {"id": "E4", "label": "release", "claim": "reviewed exact tree is published with exact-SHA CI evidence", "proof": "commit, push/PR/release, workflow run and remote read-back"},
+    {"id": "E5", "label": "commercial", "claim": "external customer/developer/production acceptance exists", "proof": "acceptance record, production feedback or delivery sign-off"}
+  ],
+  "states": ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "UNVERIFIED", "SKIPPED_OPTIONAL"],
+  "capabilityStates": [
+    "missing",
+    "declared-only",
+    "structural-pass",
+    "isolated-pass",
+    "runtime-pass",
+    "release-verified",
+    "commercially-proven",
+    "blocked",
+    "superseded"
+  ],
+  "promotionRules": [
+    {"from": "declared-only", "to": "structural-pass", "requires": ["JSON/Markdown/schema parse", "referenced local paths exist", "status PASS"]},
+    {"from": "structural-pass", "to": "isolated-pass", "requires": ["staging command executed", "exit code 0", "artifact/read-back evidence"]},
+    {"from": "isolated-pass", "to": "runtime-pass", "requires": ["Open Design runtime registration", "minimal scenario/atom task", "artifact/provenance read-back"]},
+    {"from": "runtime-pass", "to": "release-verified", "requires": ["frozen exact tree", "independent review", "commit/push or release authorization", "exact-SHA CI success"]},
+    {"from": "release-verified", "to": "commercially-proven", "requires": ["real project", "human/external review", "production/developer/customer acceptance", "external acceptance record"]}
+  ],
+  "hardRules": [
+    "Static files do not prove Open Design runtime availability.",
+    "Model or VLM self-score alone does not prove design quality.",
+    "Reference-only or license-unclear material cannot enter runtime prompts as absorbed content.",
+    "A previous successful CI run on another SHA is not release evidence for the current tree.",
+    "Commercially proven requires external acceptance, not an internal demo."
+  ]
+}
