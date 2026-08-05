@@ -163,7 +163,7 @@ GitHub Actions 曾报告 checkout/setup-python action 的 Node.js 20 runtime 弃
 
 - 仓库没有 `.codex/config.toml`；
 - 项目 wrapper 只定位 Codex 可执行文件，不设置 `CODEX_HOME`、`approval_policy`、`sandbox_mode` 或主题；
-- TaskPack reviewer 的 `--sandbox read-only --ephemeral --ignore-user-config --ignore-rules` 仅作用于隔离的只读审查；
+- TaskPack reviewer 先通过 `codex exec --help` 做能力发现，再使用 `--sandbox read-only --ephemeral` 和结构化输出参数；它保留用户配置、规则与 plugin discovery，不使用 `--ignore-user-config` 或 `--ignore-rules`；
 - 全局 guidance 安装器只管理规则文件，不修改登录、sandbox 或 Desktop 外观；
 - 未发现项目级 `CODEX_HOME`、Codex `requirements.toml` 或启动清理任务。
 
@@ -199,7 +199,7 @@ GitHub Actions 曾报告 checkout/setup-python action 的 Node.js 20 runtime 弃
 - 四个 Codex SQLite 数据库的 `PRAGMA quick_check` 均为 `ok`。
 - 三个 bundled plugins 最终均为 `installed, enabled`；marketplace resolve/write failure 为 0。
 - `codex --strict-config doctor --json` 最终 `overallStatus=ok`，无 fail/warn；Windows sandbox smoke 返回 `FINAL_CODEX_SANDBOX_OK`。
-- 当前 Store 包为 `OpenAI.Codex_26.721.4979.0`、AppX status 为 `Ok`；CLI 为 `0.146.0-alpha.3.1`，Bash/CMD/PowerShell 均解析到 Hermes managed wrapper。
+- 当时审计中 Store 包与 AppX 状态正常；CLI 通过 `codex --version` 发现，并由 Bash/CMD/PowerShell 解析到 Hermes managed wrapper。具体 runtime/package 版本只作该次审计的历史证据，不作为 workflow compatibility requirement；后续更新必须重新执行版本、帮助和能力发现。
 - 仓库未提交任何认证、profile、日志、session、数据库或恢复材料；任务证据位于 Git 忽略的 `.hermes/task-artifacts/`。
 
 ### 已知上游边界

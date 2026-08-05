@@ -102,6 +102,17 @@ def run_isolated_hermes_config_check(home: Path) -> None:
         raise RuntimeError("isolated Hermes config check failed")
 
 
+def has_pinned_context7_package(args: object) -> bool:
+    """Require an explicit Context7 package version for reproducible installs."""
+
+    return isinstance(args, list) and any(
+        isinstance(arg, str)
+        and arg.startswith("@upstash/context7-mcp@")
+        and not arg.endswith("@latest")
+        for arg in args
+    )
+
+
 def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
     repo = repo.resolve()
     home = home.resolve()
@@ -171,12 +182,7 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
     if wrapper is None or Path(str(context7.get("command", ""))).resolve() != wrapper.resolve():
         raise RuntimeError("isolated config context7 command does not reference the copied wrapper")
     args = context7.get("args") or []
-    if not any(
-        isinstance(arg, str)
-        and arg.startswith("@upstash/context7-mcp@")
-        and not arg.endswith("@latest")
-        for arg in args
-    ):
+    if not has_pinned_context7_package(args):
         raise RuntimeError("isolated config context7 package must use a pinned version")
 
     required = {

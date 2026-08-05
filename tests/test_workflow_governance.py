@@ -96,6 +96,45 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("STRUCTURAL_PORTABLE_PASS", result.stdout)
 
+    def test_windows_codex_launchers_share_the_store_runtime_owner(self) -> None:
+        bash_launcher = (ROOT / "bin/codex").read_text(encoding="utf-8")
+        cmd_launcher = (ROOT / "bin/codex.cmd").read_text(encoding="utf-8")
+        runner = (ROOT / "scripts/workflow/run_taskpack_agent.py").read_text(encoding="utf-8")
+        self.assertIn("Get-AppxPackage -Name OpenAI.Codex", bash_launcher)
+        self.assertIn("Get-AppxPackage -Name OpenAI.Codex", cmd_launcher)
+        self.assertIn("app/resources/codex.exe", bash_launcher)
+        self.assertIn("app\\resources\\codex.exe", cmd_launcher)
+        self.assertLess(
+            runner.index("AppData/Local/OpenAI/Codex/bin/codex.exe"),
+            runner.index(".codex/plugins/.plugin-appserver/codex.exe"),
+        )
+
+    def test_codex_runner_discovers_current_exec_flags_without_user_layer_bypass(self) -> None:
+        script = ROOT / "scripts/workflow/run_taskpack_agent.py"
+        spec = importlib.util.spec_from_file_location("workflow_taskpack_runner", script)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+
+        help_output = """
+          -s, --sandbox <SANDBOX_MODE>
+              --ephemeral
+              --output-last-message <FILE>
+              --output-schema <FILE>
+              --ignore-user-config
+              --ignore-rules
+        """
+        completed = subprocess.CompletedProcess(
+            ["codex", "exec", "--help"], 0, stdout=help_output, stderr=""
+        )
+        with patch("subprocess.run", return_value=completed) as run:
+            flags = module.discover_codex_exec_flags("codex", env={"HERMES_PROJECT_ROOT": str(ROOT)})
+
+        self.assertTrue({"sandbox", "ephemeral", "output-last-message", "output-schema"} <= flags)
+        self.assertIn(["codex", "exec", "--help"], [call.args[0] for call in run.call_args_list])
+
     def test_portable_deployment_copies_exact_owned_root_file_mappings(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_root_files", script)
@@ -178,6 +217,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("manifest.config_version", checks)
         self.assertIn("manifest.required_runtime_features", checks)
         self.assertIn("context7.wrapper", checks)
+
+        self.assertTrue(module.has_pinned_context7_package(["-y", "@upstash/context7-mcp@3.2.2"]))
+        self.assertFalse(module.has_pinned_context7_package(["-y", "@upstash/context7-mcp"]))
+        self.assertFalse(module.has_pinned_context7_package(["-y", "@upstash/context7-mcp@latest"]))
+        self.assertFalse(module.has_pinned_context7_package(["-y", "@other/context7-mcp@1.0.0"]))
 
     def test_portable_runtime_verifier_uses_only_isolated_home_and_fails_closed(self) -> None:
         script = ROOT / "scripts/workflow/verify_portable_install.py"
