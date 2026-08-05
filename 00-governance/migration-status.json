@@ -11,6 +11,8 @@
   "publishedCommit": "3df92cbba39e9385fdf5a4e2bba0caa8c285a593",
   "publishedTree": "4d7e23b21c171456d09b6a4830e17c3cc6bd7575",
   "localRecoveryRef": "recovery/pre-cutover-3df92cbba39e",
+  "legacyLocalCheckoutArchive": "BLOCKED_PROCESS_LOCK",
+  "legacyLocalPaths": ["D:/All projects/Workflow-assistance", "D:/All projects/OPEN-DESIGN-Assistance", "D:/All projects/MINIGAME"],
   "legacyCloudArchive": "COMPLETED_ARCHIVED_READBACK",
   "globalWorkflowRole": "WORK-LAB root task-pack control plane plus portable global workflow source in 10-workflow/workflow-assistance; Hermes Home remains external platform state",
   "productionRelease": "NOT_CLAIMED",
