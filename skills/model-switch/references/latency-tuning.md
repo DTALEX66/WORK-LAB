@@ -1,6 +1,9 @@
-# Hermes / Kimi latency tuning
+# Hermes / Kimi latency tuning (historical benchmark)
 
-Use this when the user says Hermes or Kimi feels slow, hangs, or needs "满血满速" behavior.
+Use this when the user says Hermes or Kimi feels slow, hangs, or needs a measured
+comparison. The observations below are examples, not a portable default or a
+recommended model. Every current run must use a model ID explicitly selected by
+the user and record that ID in its evidence.
 
 ## Official Kimi facts checked 2026-07-20
 
@@ -10,9 +13,11 @@ Use this when the user says Hermes or Kimi feels slow, hangs, or needs "满血�
 - `kimi-k2.7-code-highspeed` is Kimi's official high-speed K2.7 Code variant, documented around ~180 tok/s and up to ~260 tok/s in short-context scenarios, subject to capacity fluctuation.
 - Kimi docs recommend reducing tool inventory: do not send every tool definition when many tools exist; dynamically load/search tools where possible.
 
-## Local Hermes defaults for DTALEX66
+## Historical environment snapshot
 
-Speed-focused default config:
+The following values describe an old measured environment only. They must not be
+copied into the portable config or treated as current defaults. Use the user's
+selected model and current official provider documentation instead.
 
 ```yaml
 display:
