@@ -1,0 +1,44 @@
+{
+  "id": "find-anomaly.elevator-console",
+  "slug": "elevator-console",
+  "title": "找异常：异常电梯控制台",
+  "category": "find-anomaly",
+  "categoryName": "找异常",
+  "status": "playable-prototype",
+  "platformRole": "launch-game",
+  "description": "MINIGAME 小游戏合集平台的首发找异常游戏：玩家观察 CCTV、HUD 与日志，在倒计时内识别异常并处置。",
+  "runtime": {
+    "h5Entry": "index.html",
+    "domEntry": "src/game.js",
+    "canvasEntry": "platform/miniGameRuntime.js",
+    "buildScript": "build.js",
+    "skinsRoot": "src/skins"
+  },
+  "buildTargets": [
+    "h5",
+    "wechat-minigame",
+    "douyin-minigame",
+    "android-webview"
+  ],
+  "monetization": {
+    "model": "IAA",
+    "adSlots": [
+      "revive",
+      "decode-hidden-log",
+      "reveal-fake-ending-truth"
+    ]
+  },
+  "contentPacks": [
+    "elevator",
+    "security",
+    "factory",
+    "subway",
+    "hospital"
+  ],
+  "nextContentPackCandidate": "hotel",
+  "acceptanceGates": [
+    "npm test",
+    "node build.js wechat",
+    "node scripts/check-wechat-bundle.mjs --strict"
+  ]
+}
