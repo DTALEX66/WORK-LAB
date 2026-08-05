@@ -1,0 +1,276 @@
+{
+  "pack": "Abnormal Elevator Console Visual Assets",
+  "version": "1.0.0",
+  "base_resolution": {
+    "cctv_wide": [
+      1024,
+      576
+    ],
+    "mobile_cctv": [
+      720,
+      420
+    ]
+  },
+  "style": "dark industrial CCTV, old security terminal, low green/cyan signal, warning red",
+  "directories": {
+    "cctv_states": "1024×576 CCTV 电梯状态图，适合监控画面主体。",
+    "mobile_cctv_states": "720×420 手机端裁切版，适合直接放进顶部 CCTV 区。",
+    "button_sprites": "工业物理触控键 PNG 贴图。",
+    "overlays": "透明 PNG 遮罩：扫描线、CCTV框、红警、扫描光束、故障块、暗角。",
+    "docs": "资源说明、状态表、导入建议。"
+  },
+  "cctv_states": [
+    {
+      "id": "00_idle_closed",
+      "zh_name": "正常待机 / 门关闭",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/00_idle_closed.png",
+      "mobile_png": "mobile_cctv_states/00_idle_closed_mobile.png",
+      "state_tag": "IDLE / DOOR CLOSED"
+    },
+    {
+      "id": "01_door_open",
+      "zh_name": "门已打开",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/01_door_open.png",
+      "mobile_png": "mobile_cctv_states/01_door_open_mobile.png",
+      "state_tag": "DOOR OPEN"
+    },
+    {
+      "id": "02_door_opening",
+      "zh_name": "正在开门",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/02_door_opening.png",
+      "mobile_png": "mobile_cctv_states/02_door_opening_mobile.png",
+      "state_tag": "DOOR OPENING"
+    },
+    {
+      "id": "03_door_closing",
+      "zh_name": "正在关门",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/03_door_closing.png",
+      "mobile_png": "mobile_cctv_states/03_door_closing_mobile.png",
+      "state_tag": "DOOR CLOSING"
+    },
+    {
+      "id": "04_moving_up",
+      "zh_name": "上行中",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/04_moving_up.png",
+      "mobile_png": "mobile_cctv_states/04_moving_up_mobile.png",
+      "state_tag": "MOVING UP"
+    },
+    {
+      "id": "05_moving_down",
+      "zh_name": "下行中",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/05_moving_down.png",
+      "mobile_png": "mobile_cctv_states/05_moving_down_mobile.png",
+      "state_tag": "MOVING DOWN"
+    },
+    {
+      "id": "06_power_low",
+      "zh_name": "电力不足",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/06_power_low.png",
+      "mobile_png": "mobile_cctv_states/06_power_low_mobile.png",
+      "state_tag": "POWER LOW"
+    },
+    {
+      "id": "07_power_outage",
+      "zh_name": "断电",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/07_power_outage.png",
+      "mobile_png": "mobile_cctv_states/07_power_outage_mobile.png",
+      "state_tag": "POWER OUTAGE"
+    },
+    {
+      "id": "08_emergency_stop",
+      "zh_name": "急停锁定",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/08_emergency_stop.png",
+      "mobile_png": "mobile_cctv_states/08_emergency_stop_mobile.png",
+      "state_tag": "EMERGENCY STOP"
+    },
+    {
+      "id": "09_door_jammed",
+      "zh_name": "门体卡滞",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/09_door_jammed.png",
+      "mobile_png": "mobile_cctv_states/09_door_jammed_mobile.png",
+      "state_tag": "DOOR JAMMED"
+    },
+    {
+      "id": "10_signal_lost",
+      "zh_name": "监控信号丢失",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/10_signal_lost.png",
+      "mobile_png": "mobile_cctv_states/10_signal_lost_mobile.png",
+      "state_tag": "SIGNAL LOST"
+    },
+    {
+      "id": "11_camera_glitch",
+      "zh_name": "摄像头故障",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/11_camera_glitch.png",
+      "mobile_png": "mobile_cctv_states/11_camera_glitch_mobile.png",
+      "state_tag": "CAMERA GLITCH"
+    },
+    {
+      "id": "12_scan_active",
+      "zh_name": "扫描中",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/12_scan_active.png",
+      "mobile_png": "mobile_cctv_states/12_scan_active_mobile.png",
+      "state_tag": "SCAN ACTIVE"
+    },
+    {
+      "id": "13_entity_near",
+      "zh_name": "门前出现实体",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/13_entity_near.png",
+      "mobile_png": "mobile_cctv_states/13_entity_near_mobile.png",
+      "state_tag": "ENTITY NEAR"
+    },
+    {
+      "id": "14_shadow_inside",
+      "zh_name": "轿厢内阴影",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/14_shadow_inside.png",
+      "mobile_png": "mobile_cctv_states/14_shadow_inside_mobile.png",
+      "state_tag": "SHADOW INSIDE"
+    },
+    {
+      "id": "15_anomaly_wandering",
+      "zh_name": "异常徘徊",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/15_anomaly_wandering.png",
+      "mobile_png": "mobile_cctv_states/15_anomaly_wandering_mobile.png",
+      "state_tag": "ANOMALY WANDERING"
+    },
+    {
+      "id": "16_wrong_floor",
+      "zh_name": "楼层编号错位",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/16_wrong_floor.png",
+      "mobile_png": "mobile_cctv_states/16_wrong_floor_mobile.png",
+      "state_tag": "WRONG FLOOR"
+    },
+    {
+      "id": "17_loop_corridor",
+      "zh_name": "走廊循环",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/17_loop_corridor.png",
+      "mobile_png": "mobile_cctv_states/17_loop_corridor_mobile.png",
+      "state_tag": "LOOP CORRIDOR"
+    },
+    {
+      "id": "18_locked",
+      "zh_name": "系统锁定",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/18_locked.png",
+      "mobile_png": "mobile_cctv_states/18_locked_mobile.png",
+      "state_tag": "SYSTEM LOCKED"
+    },
+    {
+      "id": "19_stabilized",
+      "zh_name": "稳定恢复",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/19_stabilized.png",
+      "mobile_png": "mobile_cctv_states/19_stabilized_mobile.png",
+      "state_tag": "STABILIZED"
+    },
+    {
+      "id": "20_threat_high",
+      "zh_name": "威胁等级高",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/20_threat_high.png",
+      "mobile_png": "mobile_cctv_states/20_threat_high_mobile.png",
+      "state_tag": "THREAT HIGH"
+    },
+    {
+      "id": "21_maintenance_mode",
+      "zh_name": "维护模式",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/21_maintenance_mode.png",
+      "mobile_png": "mobile_cctv_states/21_maintenance_mode_mobile.png",
+      "state_tag": "MAINTENANCE"
+    },
+    {
+      "id": "22_system_reboot",
+      "zh_name": "系统重启",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/22_system_reboot.png",
+      "mobile_png": "mobile_cctv_states/22_system_reboot_mobile.png",
+      "state_tag": "SYSTEM REBOOT"
+    },
+    {
+      "id": "23_cooldown_safe",
+      "zh_name": "冷却安全期",
+      "use": "CCTV 顶部监控画面状态图",
+      "wide_png": "cctv_states/23_cooldown_safe.png",
+      "mobile_png": "mobile_cctv_states/23_cooldown_safe_mobile.png",
+      "state_tag": "COOLDOWN SAFE"
+    }
+  ],
+  "button_sprites": [
+    {
+      "id": "btn_close_default",
+      "png": "button_sprites/btn_close_default.png"
+    },
+    {
+      "id": "btn_up_recommended",
+      "png": "button_sprites/btn_up_recommended.png"
+    },
+    {
+      "id": "btn_stop_danger",
+      "png": "button_sprites/btn_stop_danger.png"
+    },
+    {
+      "id": "btn_scan_default",
+      "png": "button_sprites/btn_scan_default.png"
+    },
+    {
+      "id": "btn_log_secondary",
+      "png": "button_sprites/btn_log_secondary.png"
+    },
+    {
+      "id": "btn_more_secondary",
+      "png": "button_sprites/btn_more_secondary.png"
+    },
+    {
+      "id": "btn_disabled",
+      "png": "button_sprites/btn_disabled.png"
+    },
+    {
+      "id": "btn_pressed",
+      "png": "button_sprites/btn_pressed.png"
+    }
+  ],
+  "overlays": [
+    {
+      "id": "overlay_cctv_frame",
+      "png": "overlays/overlay_cctv_frame.png"
+    },
+    {
+      "id": "overlay_glitch_blocks",
+      "png": "overlays/overlay_glitch_blocks.png"
+    },
+    {
+      "id": "overlay_red_alert_frame",
+      "png": "overlays/overlay_red_alert_frame.png"
+    },
+    {
+      "id": "overlay_scan_sweep",
+      "png": "overlays/overlay_scan_sweep.png"
+    },
+    {
+      "id": "overlay_scanlines",
+      "png": "overlays/overlay_scanlines.png"
+    },
+    {
+      "id": "overlay_vignette",
+      "png": "overlays/overlay_vignette.png"
+    }
+  ]
+}
