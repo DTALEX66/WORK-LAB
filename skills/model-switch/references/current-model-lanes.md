@@ -1,135 +1,71 @@
-# Current curated Hermes model lanes
+# User-selected Hermes model lanes
 
 ## Purpose
 
-Use this when the user asks to clean up or switch the Hermes model list. The user's active picker is intentionally limited to three provider-family rows, but each row includes the useful version series ("几点几") for that family.
+Use this reference when the user asks to inspect or switch the Hermes model list.
+The repository provides provider-family entry points, but it does **not** define a
+default model, a default picker, or a preferred model for the user.
 
-## Lanes
+## Provider lanes
 
-Hermes picker is customized via `config.yaml`:
+| Entry point | Hermes provider | Model selection | Ownership |
+|---|---|---|---|
+| `kimi`, `kimi-fast`, `kimi-turbo` | `kimi-coding` or the user-configured Kimi provider | `--model MODEL` or `HERMES_KIMI_MODEL`, `HERMES_KIMI_FAST_MODEL`, `HERMES_KIMI_TURBO_MODEL` | User |
+| `deepseek` / `dp` | `deepseek` | `--model MODEL` or `HERMES_DEEPSEEK_MODEL` | User |
+| `gpt` / `chatgpt` | `openai-codex` | `--model MODEL` or `HERMES_GPT_MODEL` | User |
 
-```yaml
-model_picker:
-  custom_lanes:
-    enabled: true
-    lanes:
-      - label: KIMI 系列
-        provider: kimi-coding
-        models:
-          - kimi-k3
-          - kimi-k2.7-code-highspeed
-          - kimi-k2.7-code
-      - label: DEEPSEEK 系列
-        provider: deepseek
-        models:
-          - deepseek-v4-pro
-          - deepseek-v4-flash
-      - label: CHATGPT 系列
-        provider: openai-codex
-        models:
-          - gpt-5.6-sol
-          - gpt-5.6-terra
-          - gpt-5.6-luna
-```
+The provider and model values are written only after an explicit user command.
+The script fails closed when a model ID is missing; it never guesses a model.
 
-| User-facing lane | Slash command | Hermes provider | Default model | Series shown in picker | Notes |
-|---|---|---|---|---|---|
-| KIMI 系列 | `/切换KIMI` / `/切换KIMI稳` / `/切换KIMI快` / `/切换KIMI极速` | `kimi-coding` | `kimi-k3`; fast lane `kimi-k2.7-code`; turbo lane `kimi-k2.7-code-highspeed` | K3, K2.7 HighSpeed, K2.7 | Kimi/Moonshot 凭据由用户在 Hermes 受控环境配置；K3 适合复杂任务，K2.7 HighSpeed 是速度 lane。 |
-| DEEPSEEK 系列 | `/切换DP` | `deepseek` | `deepseek-v4-flash` | V4 Pro, V4 Flash | Direct DeepSeek official provider. |
-| CHATGPT 系列 | `/切换GPT` | `openai-codex` | `gpt-5.6-sol` | 5.6 Sol/Terra/Luna | ChatGPT/Codex OAuth lane via OpenAI Codex route; requires fresh session after switch. |
+## User-owned picker and aliases
 
-## Slash quick commands
+The portable overlay intentionally does not write `model_picker`, `quick_commands`,
+Provider routes, or model IDs. If the user has configured Hermes picker lanes or
+slash aliases through the official Hermes entry point, those values remain user-
+owned and must not be replaced by this repository.
 
-The user-facing slash forms are uppercase for readability:
-
-```text
-/切换KIMI
-/切换KIMI稳
-/切换KIMI快
-/切换KIMI极速
-/切换DP
-/切换GPT
-```
-
-Hermes lowercases slash command names before matching, so the stored `quick_commands` config keys are the lowercase canonical forms:
+A user-owned alias may target a selected model, for example:
 
 ```yaml
 quick_commands:
   切换kimi:
     type: alias
-    target: /model kimi-k3 --provider kimi-coding
-    description: 切换到 KIMI K3
-  切换kimi稳:
-    type: alias
-    target: /model kimi-k3 --provider kimi-coding
-    description: 切换到 KIMI K3 旗舰模型
-  切换kimi快:
-    type: alias
-    target: /model kimi-k2.7-code --provider kimi-coding
-    description: 切换到 KIMI 快速模型 kimi-k2.7-code
-  切换kimi极速:
-    type: alias
-    target: /model kimi-k2.7-code-highspeed --provider kimi-coding
-    description: 切换到 KIMI 官方高速模型 kimi-k2.7-code-highspeed
-  切换dp:
-    type: alias
-    target: /model deepseek-v4-flash --provider deepseek
-    description: 切换到 DEEPSEEK V4 Flash
-  切换gpt:
-    type: alias
-    target: /model gpt-5.6-sol --provider openai-codex
-    description: 切换到 CHATGPT 5.6 Sol
+    target: /model <user-selected-model> --provider kimi-coding
+    description: User-selected Kimi model
 ```
 
-Do not implement these as `exec` quick commands. They should be `alias` commands that route into Hermes' own `/model` handler so in-place session switching, persistence behavior, confirmation, model guardrails, and UI state all stay consistent.
+Do not convert these aliases into shell `exec` commands. Keep them inside Hermes'
+own `/model` handler so session state, confirmation, and UI behavior stay consistent.
 
-## Script fallback
+## Explicit switch commands
 
 Run from `D:/All projects/Workflow-assistance`:
 
 ```bash
 python scripts/workflow/switch_model.py status
-python scripts/workflow/switch_model.py kimi
-python scripts/workflow/switch_model.py kimi-fast
-python scripts/workflow/switch_model.py kimi-turbo
-python scripts/workflow/switch_model.py deepseek
-python scripts/workflow/switch_model.py gpt
+python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
+python scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
+python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
+python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 ```
 
-Aliases currently supported by the script:
-
-- `k3` → Kimi K3
-- `kimi-fast` → Kimi K2.7 Code
-- `kimi-turbo` → Kimi K2.7 Code HighSpeed
-- `dp` → DeepSeek V4
-- `chatgpt` → ChatGPT 5.6
+`--live` is opt-in and may consume provider quota. Switching does not mutate an
+in-flight session; start a new session or run `/reset` afterward.
 
 ## Verification contract
 
-After each switch, do not claim success from config alone. Run a small `hermes chat -q` marker through the selected lane and report the marker plus the resulting provider/model/base_url summary. The current conversation confirmed all three default lanes with markers:
-
-- `lane-kimi-k3-ok`
-- `lane-deepseek-v4-ok`
-- `lane-chatgpt-56-ok`
-
-Treat these as examples of the pattern, not permanent proof for future sessions. Re-run fresh markers when asked to verify.
-
-## Picker caveat
-
-Hermes `/model` and Desktop model picker are filtered by `model_picker.custom_lanes`, but the official provider/model registry is not deleted. Typed `/model <model> --provider <provider>` remains available for non-listed models when needed.
+After each switch, do not claim success from config alone. If the user requests
+execution proof, run a small `hermes chat -q` marker through the explicitly
+selected provider/model and report the marker plus the redacted provider/model
+summary. Marker text must be unique to that run; old benchmark markers are not
+proof for a future session.
 
 ## Desktop picker click caveat
 
-If the user says clicking a model inside Desktop "没反应" while an answer/tool run is still active, check whether the live session is busy. Desktop hot-switches an active chat through JSON-RPC `config.set` with value `<model> --provider <provider>`. The backend intentionally rejects this during an in-flight turn with:
-
-```text
-session busy — /interrupt the current turn before switching models
-```
-
-Global `/api/model/set` / Settings changes affect new sessions only; they do not mutate an already-running chat. For the current chat, switch only after the turn is idle, or type the explicit slash command:
-
-```text
-/model gpt-5.6-sol --provider openai-codex
-```
-
-Desktop UI fix: `ModelPickerDialog` must await the async `onSelect` result and keep the dialog open when the switch returns `false`; otherwise a busy-session rejection closes the picker and looks like a dead click.
+If a model picker click appears to do nothing while a turn or tool run is active,
+check whether the session is busy. The backend may reject a hot switch during an
+in-flight turn. Interrupt or wait for the turn, then apply the user's explicit
+`/model <selected-model> --provider <selected-provider>` command, or start a new
+session. A UI must keep the picker open when the asynchronous switch returns a
+busy-session rejection; it must not claim that the model changed.
