@@ -4,7 +4,7 @@
 
 ## 默认启用：Context7
 
-- 包：`@upstash/context7-mcp@3.2.2`
+- 包名与版本：`@upstash/context7-mcp@3.2.2`（portable baseline 固定版本）
 - 价值：查询公开库的当前文档，降低过期 API 用法风险。
 - 传输：Hermes `hermes-npx` wrapper，优先 bundled Node。
 - 隐私：查询会发送到外部服务；不得包含私有代码、密钥、客户数据或内部项目名。
@@ -31,10 +31,10 @@ hermes mcp test context7
 
 ## 变更门禁
 
-新增默认 MCP 必须同时满足：
+新增默认 MCP 候选（不含当前 Context7 portable baseline 的官方包名例外）必须同时满足：
 
 1. 有原生工具无法覆盖的明确增益；
-2. 固定版本和许可证/来源检查；
+2. candidate audit 中固定版本和许可证/来源检查；portable baseline 同样固定官方 Context7 包版本；
 3. `hermes mcp test <name>` 通过；
 4. 记录外发数据、文件/网络权限和密钥需求；
 5. 测量 `hermes prompt-size --json` 的工具 schema 增量；

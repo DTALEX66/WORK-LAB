@@ -63,10 +63,10 @@ The candidate audit can pass for an optional MCP with `smoke.status: not_run`; t
 
 ## Default-enable policy
 
-Default MCP enablement still requires all existing Workflow MCP Stack gates:
+Default enablement for a new candidate MCP still requires all existing Workflow MCP Stack gates; the existing Context7 portable baseline is pinned to the documented official package/version:
 
 1. Native Hermes tools cannot cover the use case.
-2. Version and license/source are pinned.
+2. Candidate version and license/source are pinned; the Context7 portable baseline is pinned as well.
 3. `hermes mcp test <name>` passes.
 4. Data externality, filesystem/network/browser permissions and credential needs are documented.
 5. Tool schema prompt-size delta is measured.

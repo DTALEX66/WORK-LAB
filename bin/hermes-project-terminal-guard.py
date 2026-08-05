@@ -34,6 +34,7 @@ RAW_RUN_SEPARATOR = re.compile(r"(?:^|\s)run\s+--\s+")
 
 WRAPPER_NAME = "hermes-project-data.py"
 SUBCOMMANDS = {"init", "check", "policy", "cleanup", "run", "kanban"}
+LEGACY_EXTERNAL_SPILL_ROOTS = ("d:/a", "d:/d", "d:/dev", "d:/tmp")
 
 
 def canonical_wrapper(raw: str) -> bool:
@@ -102,6 +103,18 @@ def external_raw_windows_path(command: str, root: Path) -> str | None:
         project = ntpath.normcase(ntpath.normpath(str(root)))
         if raw != project and not raw.startswith(project.rstrip("\\") + "\\"):
             return candidate
+    return None
+
+
+def external_spill_path_needing_project_redirect(command: str) -> str | None:
+    """Catch explicit legacy spill paths that bypass project env injection."""
+    for match in RAW_WINDOWS_ABSOLUTE_PATH.finditer(command):
+        candidate = ntpath.normcase(ntpath.normpath(match.group(1))).replace("\\", "/")
+        if any(
+            candidate == root or candidate.startswith(root + "/")
+            for root in LEGACY_EXTERNAL_SPILL_ROOTS
+        ):
+            return match.group(1)
     return None
 
 
@@ -262,6 +275,12 @@ def validate(payload: dict[str, Any]) -> str | None:
         child_source = raw_child_command(command)
         if has_shell_expansion(child_source):
             return "child command contains shell expansion before wrapper execution."
+        external_spill = external_spill_path_needing_project_redirect(child_source)
+        if external_spill:
+            return (
+                "child command bypasses project-local cache/temp redirection; "
+                f"move the output under .hermes/task-runtime instead of {external_spill}"
+            )
         external_unc = external_raw_unc(child_source, root)
         if external_unc:
             return f"child command contains an absolute UNC path outside the Git project: {external_unc}"

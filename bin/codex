@@ -2,17 +2,39 @@
 set -euo pipefail
 
 # Portable Codex CLI launcher for Workflow-assistance.
-# It does not bundle Codex or credentials; it only locates an already-installed Codex binary.
+# On Windows, the Store package is the single runtime owner for both GUI and CLI.
+# The launcher resolves its current version dynamically; it does not pin or bundle
+# Codex, and it never reads credentials.
 
 candidates=()
 if [ -n "${CODEX_CLI:-}" ]; then
   candidates+=("$CODEX_CLI")
 fi
-candidates+=("$HOME/.codex/plugins/.plugin-appserver/codex.exe")
-candidates+=("$HOME/AppData/Local/OpenAI/Codex/bin/codex.exe")
-win_user="${USERNAME:-${USER:-}}"
-if [ -n "$win_user" ]; then
-  candidates+=("/c/Users/$win_user/.codex/plugins/.plugin-appserver/codex.exe")
+
+# Git Bash on Windows has powershell.exe. Resolve the current official Store
+# package instead of silently selecting the separately-installed plugin runtime.
+if command -v powershell.exe >/dev/null 2>&1; then
+  store_root="$(powershell.exe -NoProfile -Command '(Get-AppxPackage -Name OpenAI.Codex | Select-Object -First 1 -ExpandProperty InstallLocation)' 2>/dev/null | tr -d '\r' | tail -n 1)"
+  store_bin="$store_root/app/resources/codex.exe"
+  plugin_bin="$HOME/.codex/plugins/.plugin-appserver/codex.exe"
+  if [ -f "$store_bin" ]; then
+    # WindowsApps ACLs can block Git Bash from executing the Store copy. The
+    # plugin copy is allowed only when its bytes exactly match the Store owner.
+    store_win="$(cygpath -w "$store_bin" 2>/dev/null || printf '%s' "$store_bin")"
+    plugin_win="$(cygpath -w "$plugin_bin" 2>/dev/null || printf '%s' "$plugin_bin")"
+    store_hash="$(powershell.exe -NoProfile -Command "(Get-FileHash -LiteralPath '$store_win' -Algorithm SHA256).Hash" 2>/dev/null | tr -d '\r' | tail -n 1)"
+    plugin_hash="$(powershell.exe -NoProfile -Command "if (Test-Path -LiteralPath '$plugin_win') {(Get-FileHash -LiteralPath '$plugin_win' -Algorithm SHA256).Hash}" 2>/dev/null | tr -d '\r' | tail -n 1)"
+    if [ -n "$store_hash" ] && [ "$store_hash" = "$plugin_hash" ]; then
+      candidates+=("$plugin_bin")
+    else
+      candidates+=("$store_bin")
+    fi
+  fi
+  candidates+=("$HOME/AppData/Local/OpenAI/Codex/bin/codex.exe")
+else
+  # Non-Windows portable environments may use the plugin runtime or PATH.
+  candidates+=("$HOME/.codex/plugins/.plugin-appserver/codex.exe")
+  candidates+=("$HOME/AppData/Local/OpenAI/Codex/bin/codex.exe")
 fi
 
 for codex_bin in "${candidates[@]}"; do

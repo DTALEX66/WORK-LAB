@@ -27,6 +27,19 @@ not rely on one desktop session or one agent implementation.
   safety, configuration, or portability.
 - Project-scoped runtime data belongs in ignored `.hermes/`; do not write task
   caches, logs, or generated artifacts to a user profile or another project.
+- On Windows, task launchers must redirect temporary files, caches, build
+  outputs and logs into the owning project's ignored `.hermes/task-runtime/`
+  before starting the child process. `D:\\a`, `D:\\d`, `D:\\dev`, and `D:\\tmp`
+  are legacy spill/staging roots, not destinations; an explicit child path to
+  one of them is a bypass and must fail with guidance to use the project-local
+  runtime. Useful historical evidence found there is recovered into the
+  owning project's `.hermes/task-artifacts/` with a handoff summary and
+  manifest.
+- External-artifact recovery is copy/hash-verify/delete: never overwrite an
+  existing destination, never follow a symlink/junction/reparse point, and do
+  not delete the source until every copied file has been read back and matched.
+  Regenerable Cargo/Python/pytest caches are not handoff evidence and may be
+  deleted only after an active-process check and exact post-delete scan.
 - Clearly distinguish structural checks from live execution checks. Never
   claim a component is globally active unless its installed location and
   runtime behavior were both verified.

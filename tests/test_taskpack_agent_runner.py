@@ -260,11 +260,20 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 _parse_args()
 
-    def test_codex_reviewer_uses_native_ephemeral_uncommitted_review_without_bypass(self) -> None:
+    def test_codex_reviewer_preflights_flags_and_preserves_user_layer(self) -> None:
         calls: list[tuple[list[str], dict[str, object]]] = []
 
         def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
             calls.append((command, kwargs))
+            if command[-1:] == ["--version"]:
+                return subprocess.CompletedProcess(command, 0, stdout="codex-cli test", stderr="")
+            if command[-2:] == ["exec", "--help"]:
+                return subprocess.CompletedProcess(
+                    command,
+                    0,
+                    stdout="--sandbox --ephemeral --output-last-message --output-schema",
+                    stderr="",
+                )
             output_file = Path(command[command.index("--output-last-message") + 1])
             output_file.write_text('{"decision": "GO", "findings": []}', encoding="utf-8")
             return subprocess.CompletedProcess(command, 0, stdout="process transcript", stderr="")
@@ -277,12 +286,14 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
                 review = CodexReviewBackend(root, codex=str(codex)).run_reviewer("review tree")
 
         self.assertEqual(review, "GO\nCodex structured exact-tree review found no findings")
-        command, kwargs = calls[0]
+        self.assertEqual(calls[0][0][-1:], ["--version"])
+        self.assertEqual(calls[1][0][-2:], ["exec", "--help"])
+        command, kwargs = calls[2]
         self.assertEqual(command[:5], [str(codex), "exec", "--sandbox", "read-only", "--ephemeral"])
         self.assertIn("--output-last-message", command)
         self.assertIn("--output-schema", command)
-        self.assertIn("--ignore-user-config", command)
-        self.assertIn("--ignore-rules", command)
+        self.assertNotIn("--ignore-user-config", command)
+        self.assertNotIn("--ignore-rules", command)
         self.assertTrue(command[command.index("--output-schema") + 1].endswith(".json"))
         self.assertEqual(command[-1:], ["review tree"])
         self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", command)
@@ -291,6 +302,15 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
 
     def test_codex_reviewer_fails_closed_for_any_non_no_findings_output(self) -> None:
         def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+            if command[-1:] == ["--version"]:
+                return subprocess.CompletedProcess(command, 0, stdout="codex-cli test", stderr="")
+            if command[-2:] == ["exec", "--help"]:
+                return subprocess.CompletedProcess(
+                    command,
+                    0,
+                    stdout="--sandbox --ephemeral --output-last-message --output-schema",
+                    stderr="",
+                )
             output_file = Path(command[command.index("--output-last-message") + 1])
             output_file.write_text(
                 '{"decision": "NO-GO", "findings": [{"severity": "high", "file": "x.py", "line": 1, "detail": "test gap"}]}',
@@ -307,6 +327,47 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
 
         self.assertIn("NO-GO\nCodex native pre-review:\n", review)
         self.assertIn('"severity": "high"', review)
+
+    def test_codex_reviewer_fails_closed_before_execution_when_required_flag_is_missing(self) -> None:
+        calls: list[list[str]] = []
+
+        def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append(command)
+            if command[-1:] == ["--version"]:
+                return subprocess.CompletedProcess(command, 0, stdout="codex-cli test", stderr="")
+            return subprocess.CompletedProcess(command, 0, stdout="--sandbox --ephemeral", stderr="")
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            codex = root / "codex.exe"
+            codex.write_text("placeholder", encoding="utf-8")
+            with patch("scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run):
+                with self.assertRaisesRegex(RunnerError, "missing required flags"):
+                    CodexReviewBackend(root, codex=str(codex)).run_reviewer("ignored")
+
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(calls[0][-1:], ["--version"])
+        self.assertEqual(calls[1][-2:], ["exec", "--help"])
+
+    def test_codex_reviewer_fails_closed_before_help_when_version_probe_fails_or_is_empty(self) -> None:
+        for returncode, stdout, stderr in ((1, "", "version failure"), (0, "", "")):
+            with self.subTest(returncode=returncode, stdout=stdout, stderr=stderr):
+                calls: list[list[str]] = []
+
+                def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                    calls.append(command)
+                    return subprocess.CompletedProcess(command, returncode, stdout=stdout, stderr=stderr)
+
+                with tempfile.TemporaryDirectory() as raw:
+                    root = Path(raw)
+                    codex = root / "codex.exe"
+                    codex.write_text("placeholder", encoding="utf-8")
+                    with patch("scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run):
+                        with self.assertRaisesRegex(RunnerError, "version discovery"):
+                            CodexReviewBackend(root, codex=str(codex)).run_reviewer("ignored")
+
+                self.assertEqual(len(calls), 1)
+                self.assertEqual(calls[0][-1:], ["--version"])
 
     def test_cli_rejects_codex_reviewer_for_low_risk_taskpack(self) -> None:
         with patch(
