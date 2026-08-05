@@ -1,0 +1,16 @@
+{
+  "description": "MINIGAME - 异常系统模拟类小游戏",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "enhance": true,
+    "condition": false
+  },
+  "compileType": "game",
+  "libVersion": "latest",
+  "appid": "请替换为你的微信小游戏 AppID",
+  "projectname": "MINIGAME",
+  "condition": {}
+}
