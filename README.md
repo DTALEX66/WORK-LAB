@@ -48,6 +48,9 @@ changed-files 分页缺失、SSH 私钥无授权写入、PowerShell/POSIX 命令
 完整的错误、根因、修复和证据记录见
 [`docs/workflow/error-fixes-2026-07-28.md`](docs/workflow/error-fixes-2026-07-28.md)。
 
+Token Monitor 本轮的交接、验证证据、错误根因、剩余事项和恢复顺序见
+[`docs/workflow/token-monitor-handoff.md`](docs/workflow/token-monitor-handoff.md)。
+
 GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它是非阻断上游维护提示。
 本项目不在 workflow 中硬编码 Node 版本，也不为了消除提示随意替换 action；若后续处理，必须
 走审阅后的自动依赖更新策略。
