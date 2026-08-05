@@ -1,5 +1,7 @@
 # Hermes Token Monitor
 
+交接与验证摘要见 [`token-monitor-handoff.md`](./token-monitor-handoff.md)。
+
 本项目提供两个层次的本地监视器：
 
 - `apps/token-monitor-desktop/`：主版本，Windows Tauri 2 Dashboard，按 Provider/模型实时展示；
