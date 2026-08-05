@@ -10,6 +10,8 @@
   "activeLocalPathSwitch": "COMPLETED_EXACT_TREE_REF_CUTOVER",
   "publishedCommit": "3df92cbba39e9385fdf5a4e2bba0caa8c285a593",
   "publishedTree": "4d7e23b21c171456d09b6a4830e17c3cc6bd7575",
+  "currentMainCommit": "c4972a0cec2734bd73b46e253b76e778d78f61b0",
+  "currentMainTree": "59135ce382b5d0c564e770cfe8121290d912a90b",
   "localRecoveryRef": "recovery/pre-cutover-3df92cbba39e",
   "legacyLocalCheckoutArchive": "BLOCKED_PROCESS_LOCK",
   "legacyLocalPaths": ["D:/All projects/Workflow-assistance", "D:/All projects/OPEN-DESIGN-Assistance", "D:/All projects/MINIGAME"],
