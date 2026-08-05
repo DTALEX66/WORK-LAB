@@ -1,8 +1,8 @@
 # OPEN-DESIGN-Assistance
 
-全面辅助增强 **Open Design 软件** 的主仓库。
+面向 **Open Design 软件** 的 Open Design-first / Agent-compatible 商业设计智能、视觉质量、专业生产与可编辑交付增强仓。
 
-本项目不是新的设计系统软件，也不是替代 Open Design 的工作流平台。它的定位是：把已经吸收进来的 MINIGAME、Design-system、提示词、Schema/Tokens、运行样板、视觉资产和 Open Design/Codex 配置经验，全部沉淀为 **Open Design 软件的辅助增强包**。
+本项目不是新的设计系统软件，也不是替代 Open Design 的工作流平台。V3 定位是：把已经吸收进来的 MINIGAME、Design-system、提示词、Schema/Tokens、运行样板、视觉资产、Open Design/Codex 配置经验，以及 V2/V2.1 的专业设计协议，沉淀为 **Open Design-first 的商业设计增强层**。
 
 用户实际进行设计流程、主窗口画布操作、AI 调用和设计生成时，以 **Open Design 软件本体** 为主。
 
@@ -13,7 +13,7 @@ Open Design 软件
   = 真正的设计入口、主窗口/Figma-like 画布、AI 调用界面、设计流程执行处
 
 OPEN-DESIGN-Assistance
-  = Open Design 的辅助增强仓库：资料、样板、提示词、接口约定、参考实现、配置经验、验收材料
+  = Open Design 的增强层：Brief/来源/权利、专业设计方法、风格谱系、大师方法、质量门禁、生产预检、可编辑交付、案例、commercial evidence 与 provenance 证据
 
 被吸收的 MINIGAME / Design-system
   = 给 Open Design 提供参考、样板、素材、Schema/Tokens、运行时验证对象；不再单独定义主流程
@@ -47,37 +47,47 @@ minigame-runtime/          已精简的游戏系统参考样板：运行时、�
 project-memory/            项目定义、迁移记录、吸收边界、清理决策记录
 ```
 
-## 主规则
+## V3 主规则
 
-1. **Open Design 软件本体是主角**  
+1. **Open Design 软件本体是主角**
    设计流程、主窗口设计、AI 调用、设计生成都在 Open Design 软件里完成。
 
-2. **本仓库只辅助增强 Open Design**  
-   本仓库提供资料、提示词、样板、配置说明、Schema/Tokens、视觉资产、运行时参考和验证材料。
+2. **本仓库增强 Open Design 的专业判断与交付能力**
+   本仓库提供资料、提示词、样板、配置说明、Schema/Tokens、视觉资产、运行时参考、质量 Rubric、生产预检、可编辑交付合同和能力证据。
 
-3. **不再把本仓库定义为工作流中心**  
-   工作流问题、设计流程执行、AI 模型选择与调用，以 Open Design 软件界面为准。本仓库只记录和增强，不抢主入口。
+3. **不把本仓库定义为 Open Design 替代品**
+   工作流问题、设计流程执行、AI 模型选择与调用，以 Open Design 软件界面为准。本仓库只定义可复用协议、专业知识、运行验证和交付证据，不抢主入口。
 
-4. **不再单独强调 Design-system 为主线**  
+4. **不把文件存在冒充运行可用**
+   静态文件/Manifest 只能证明 E0/E1；Open Design daemon 注册、插件可见、Scenario/Atom 真运行和产物读回才是 E3。
+
+5. **不再单独强调 Design-system 为主线**
    `design-system/` 是被吸收的设计资产库，服务 Open Design；不是新的主产品。
 
-5. **原 MINIGAME 变成参考样板**  
+6. **原 MINIGAME 变成参考样板**
    `minigame-runtime/` 是 Open Design 做游戏 UI / 运行时验证 / 平台适配时的样板和参考实现。
 
-6. **Open Design 内置 Figma-like 主窗口能力优先**  
+7. **Open Design 内置 Figma-like 主窗口能力优先**
    主窗口设计以 Open Design 为主；外部 Figma 仅作为协作、导入导出或精修备选。
 
 ## 优先阅读
 
 ```text
 project-memory/PROJECT_DEFINITION.md
+project-memory/PROJECT_DEFINITION_V3.md
 project-memory/MIGRATION_STATUS.md
 project-memory/MINIGAME_RUNTIME_CLEANUP.md
 project-memory/OPEN_DESIGN_ENHANCEMENT_RESEARCH.md
 opendesign-assistance/README.md
+opendesign-assistance/ARCHITECTURE_V3.md
 opendesign-assistance/ROADMAP.md
+opendesign-assistance/config/product-manifest.json
+opendesign-assistance/config/capability-status.json
 opendesign-assistance/scripts/doctor_open_design_windows.py
 opendesign-assistance/scripts/verify_open_design_assistance.py
+opendesign-assistance/scripts/verify_product_manifest_v3.py
+opendesign-assistance/scripts/verify_runtime_contracts_v3.py
+opendesign-assistance/scripts/verify_visual_scoring_v3.py
 opendesign-assistance/scripts/generate_open_design_indexes.py
 opendesign-assistance/scripts/scaffold_open_design_plugin.py
 opendesign-assistance/plugins/INDEX.md

@@ -1,0 +1,75 @@
+{
+  "$schema": "../schemas/product-manifest.schema.json",
+  "schemaVersion": "open-design-assistance/product-manifest/v1",
+  "product": {
+    "id": "open-design-assistance",
+    "name": "OPEN-DESIGN-Assistance",
+    "version": "3.0.0-staging",
+    "positioning": "Open Design-first, Agent-compatible commercial design intelligence, visual quality, production preflight, and editable delivery enhancement layer.",
+    "primaryRuntime": "Open Design",
+    "agentRuntimes": ["Hermes", "Codex", "compatible local CLI agents"],
+    "nonGoals": [
+      "replace Open Design app, daemon, Studio/canvas, or model routing",
+      "copy protected master signatures, branded assets, fonts, logos, images, or layouts",
+      "vendor unreviewed third-party repositories, model weights, fonts, installers, credentials, or private runtime state",
+      "claim runtime or commercial readiness from static files alone"
+    ]
+  },
+  "evidencePolicy": {
+    "levels": ["E0", "E1", "E2", "E3", "E4", "E5"],
+    "states": ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "UNVERIFIED", "SKIPPED_OPTIONAL"],
+    "runtimeReadyRequires": [
+      "Open Design runtime registration",
+      "runtime ID/version read-back",
+      "minimal task execution",
+      "artifact and provenance read-back",
+      "failure/recovery evidence"
+    ]
+  },
+  "directoryRoles": [
+    {"path": "opendesign-assistance/config/", "role": "machine-readable product, capability and execution policy SSOT"},
+    {"path": "opendesign-assistance/schemas/", "role": "contracts for brief, direction, state, scoring, preflight, delivery, provenance and manifest validation"},
+    {"path": "opendesign-assistance/plugins/", "role": "V1 compatibility Open Design skill surfaces"},
+    {"path": "opendesign-assistance/atoms/", "role": "bounded testable V2/V2.1 capabilities"},
+    {"path": "opendesign-assistance/scenarios/", "role": "ordered commercial design and visual-quality pipelines"},
+    {"path": "opendesign-assistance/bundles/", "role": "capability bundles for commercial design core and visual quality core"},
+    {"path": "opendesign-assistance/knowledge/", "role": "source-grounded professional design, style, master-method, standards and governance rules"},
+    {"path": "opendesign-assistance/evals/", "role": "rubrics, baselines, regression cases and quality gates"},
+    {"path": "opendesign-assistance/profiles/", "role": "domain and production preflight profiles"},
+    {"path": "opendesign-assistance/research/", "role": "source registries, master registries, style lineages and visual-quality research"},
+    {"path": "opendesign-assistance/design-systems/", "role": "Open Design-native design-system packages"},
+    {"path": "opendesign-assistance/assets/", "role": "asset-pack manifests and reviewed local reference assets"},
+    {"path": "opendesign-assistance/exports/", "role": "self-contained generated examples and handoff artifacts"},
+    {"path": "design-system/", "role": "absorbed DESIGN.md and token reference material"},
+    {"path": "minigame-runtime/", "role": "reference runtime and regression sample, not primary product flow"},
+    {"path": "project-memory/", "role": "project definition, migration and decision record"}
+  ],
+  "capabilityFamilies": [
+    {"id": "source-governance", "title": "Source, rights and security governance", "paths": ["knowledge/governance/", "research/global-absorption/", "LICENSING_DECISION_REQUIRED.md"], "minimumEvidence": "E1"},
+    {"id": "brief-routing", "title": "Brief normalization and commercial design routing", "paths": ["atoms/brief-normalizer/", "atoms/source-intake-gate/", "scenarios/commercial-design-router/"], "minimumEvidence": "E2"},
+    {"id": "visual-quality", "title": "Visual quality, design feeling and anti-AI-slop engine", "paths": ["bundles/visual-quality-core/", "evals/rubrics/visual-quality-core.rubric.json", "knowledge/visual-quality/", "scripts/score_visual_quality.py", "scripts/score_design_critique.py", "scripts/compare_visual_iterations.py", "scripts/verify_visual_scoring_v3.py"], "minimumEvidence": "E2"},
+    {"id": "style-master-method", "title": "Style lineage and anonymous master-method translation", "paths": ["research/style-lineages/", "research/master-studies/", "scenarios/master-method-visual-upgrade/"], "minimumEvidence": "E2"},
+    {"id": "domain-scenarios", "title": "Commercial design domain scenarios", "paths": ["scenarios/", "profiles/", "evals/rubrics/"], "minimumEvidence": "E2"},
+    {"id": "production-handoff", "title": "Production preflight and editable delivery", "paths": ["atoms/commercial-preflight/", "atoms/delivery-packager/", "schemas/preflight.schema.json", "schemas/design-handoff.schema.json", "schemas/provenance.schema.json"], "minimumEvidence": "E2"},
+    {"id": "runtime-integration", "title": "Open Design runtime registration and live task evidence", "paths": ["plugins/", "atoms/", "scenarios/", "bundles/", "schemas/design-project-state.schema.json", "schemas/provenance.schema.json"], "minimumEvidence": "E3"},
+    {"id": "release-evidence", "title": "Review, exact-SHA CI and release evidence", "paths": [".github/workflows/", "opendesign-assistance/evals/", "opendesign-assistance/config/capability-status.json"], "minimumEvidence": "E4"}
+  ],
+  "entrypoints": {
+    "human": ["README.md", "opendesign-assistance/README.md", "project-memory/PROJECT_DEFINITION_V3.md"],
+    "machine": ["opendesign-assistance/config/product-manifest.json", "opendesign-assistance/config/capability-status.json"],
+    "verification": [
+      "opendesign-assistance/scripts/verify_open_design_assistance.py",
+      "opendesign-assistance/scripts/verify_product_manifest_v3.py",
+      "opendesign-assistance/scripts/verify_runtime_contracts_v3.py",
+      "opendesign-assistance/scripts/verify_visual_scoring_v3.py",
+      "opendesign-assistance/scripts/verify_source_registry_v2.py",
+      "opendesign-assistance/scripts/verify_v2_protocols.py",
+      "opendesign-assistance/scripts/verify_visual_quality_v21.py"
+    ]
+  },
+  "safetyBoundaries": {
+    "forbiddenRoots": ["E:/"],
+    "forbiddenSecrets": [".env", "auth.json", "token", "credential", "cookie", "private key"],
+    "requiresExplicitAuthorization": ["live apply to main", "commit", "push", "pull request", "merge", "ruleset", "release"]
+  }
+}

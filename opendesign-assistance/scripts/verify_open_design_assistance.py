@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,6 +18,18 @@ from typing import Iterable
 
 PLUGIN_SCHEMA = "https://open-design.ai/schemas/plugin.v1.json"
 ASSISTANCE_DIR = "opendesign-assistance"
+PRODUCT_MANIFEST_REL = f"{ASSISTANCE_DIR}/config/product-manifest.json"
+EVIDENCE_LEVELS = {"E0", "E1", "E2", "E3", "E4", "E5"}
+EVIDENCE_STATES = {"NOT_RUN", "PASS", "FAIL", "BLOCKED", "UNVERIFIED", "SKIPPED_OPTIONAL"}
+LEGACY_PLUGIN_NAMES = {
+    "anomaly-monitor-hud",
+    "brand-visual-director",
+    "design-qa-critic",
+    "graphic-design-director",
+    "minigame-ui-director",
+    "spatial-exhibition-director",
+    "uiux-layout-director",
+}
 
 
 @dataclass
@@ -62,6 +75,19 @@ def iter_plugin_dirs(root: Path) -> Iterable[Path]:
 def verify_plugin_manifests(root: Path, results: list[Result]) -> None:
     plugins = list(iter_plugin_dirs(root))
     check(results, "at least one Open Design plugin exists", bool(plugins), str(len(plugins)))
+    product_families: set[str] = set()
+    product_manifest_path = root / PRODUCT_MANIFEST_REL
+    if product_manifest_path.is_file():
+        try:
+            product_manifest = load_json(product_manifest_path)
+            if isinstance(product_manifest, dict):
+                product_families = {
+                    str(item.get("id"))
+                    for item in product_manifest.get("capabilityFamilies", [])
+                    if isinstance(item, dict) and item.get("id")
+                }
+        except Exception as exc:  # noqa: BLE001 - reported by JSON checks too.
+            check(results, "product manifest loads for plugin family checks", False, str(exc))
 
     for plugin_dir in plugins:
         name = plugin_dir.name
@@ -87,6 +113,12 @@ def verify_plugin_manifests(root: Path, results: list[Result]) -> None:
         capabilities = od.get("capabilities") or []
         categories = od.get("categories") or []
         suggested_inputs = od.get("suggestedInputs") or []
+        compat = manifest.get("compat") if isinstance(manifest.get("compat"), dict) else {}
+        agent_skills = compat.get("agentSkills") if isinstance(compat.get("agentSkills"), list) else []
+        v3 = od.get("v3") if isinstance(od.get("v3"), dict) else {}
+        evidence = v3.get("evidence") if isinstance(v3.get("evidence"), dict) else {}
+        runtime = v3.get("runtime") if isinstance(v3.get("runtime"), dict) else {}
+        v3_families = v3.get("productFamilies") if isinstance(v3.get("productFamilies"), list) else []
 
         check(results, f"plugin {name}: schema", manifest.get("$schema") == PLUGIN_SCHEMA, str(manifest.get("$schema")))
         check(results, f"plugin {name}: specVersion", manifest.get("specVersion") == "1.0.0", str(manifest.get("specVersion")))
@@ -97,6 +129,26 @@ def verify_plugin_manifests(root: Path, results: list[Result]) -> None:
         check(results, f"plugin {name}: prompt injection capability", "prompt:inject" in capabilities, str(capabilities))
         check(results, f"plugin {name}: categories present", bool(categories), str(categories))
         check(results, f"plugin {name}: suggested inputs present", bool(suggested_inputs), str(suggested_inputs))
+        check(results, f"plugin {name}: compat agent skill present", bool(agent_skills), str(agent_skills))
+        for item in agent_skills:
+            rel = item.get("path") if isinstance(item, dict) else None
+            check(results, f"plugin {name}: compat agent skill path shape", isinstance(rel, str) and rel.endswith(".md"), str(item))
+            if isinstance(rel, str):
+                check(results, f"plugin {name}: compat agent skill path exists", (plugin_dir / rel).exists(), rel)
+        check(results, f"plugin {name}: v3 mode", od.get("mode") == "compat-plugin", str(od.get("mode")))
+        check(results, f"plugin {name}: v3 product families present", bool(v3_families), str(v3_families))
+        unknown_families = sorted(set(str(item) for item in v3_families) - product_families)
+        check(results, f"plugin {name}: v3 product families known", not unknown_families, str(unknown_families))
+        check(results, f"plugin {name}: v3 evidence level valid", evidence.get("level") in EVIDENCE_LEVELS, str(evidence))
+        check(results, f"plugin {name}: v3 evidence state valid", evidence.get("state") in EVIDENCE_STATES, str(evidence))
+        check(results, f"plugin {name}: v3 runtime pending E3", runtime.get("status") == "pending-e3", str(runtime))
+        check(results, f"plugin {name}: v3 runtime requires provenance", "artifact and provenance read-back" in (runtime.get("requires") or []), str(runtime.get("requires")))
+        if name in LEGACY_PLUGIN_NAMES:
+            check(results, f"legacy plugin {name}: preserves v1", compat.get("preservesV1Plugin") is True, str(compat))
+            check(results, f"legacy plugin {name}: upgraded evidence is E2", evidence.get("level") == "E2", str(evidence))
+            check(results, f"legacy plugin {name}: upgraded evidence passed", evidence.get("state") == "PASS", str(evidence))
+            verified_by = evidence.get("verifiedBy") if isinstance(evidence.get("verifiedBy"), list) else []
+            check(results, f"legacy plugin {name}: verifier evidence recorded", "opendesign-assistance/scripts/verify_open_design_assistance.py" in verified_by, str(verified_by))
 
 
 def referenced_local_paths(text: str) -> set[str]:
@@ -275,8 +327,17 @@ def verify_indexes(root: Path, results: list[Result]) -> None:
 def verify_scripts(root: Path, results: list[Result]) -> None:
     scripts = [
         "opendesign-assistance/scripts/verify_open_design_assistance.py",
+        "opendesign-assistance/scripts/verify_product_manifest_v3.py",
+        "opendesign-assistance/scripts/verify_runtime_contracts_v3.py",
+        "opendesign-assistance/scripts/verify_visual_scoring_v3.py",
+        "opendesign-assistance/scripts/verify_source_registry_v2.py",
+        "opendesign-assistance/scripts/verify_v2_protocols.py",
+        "opendesign-assistance/scripts/verify_visual_quality_v21.py",
         "opendesign-assistance/scripts/generate_open_design_indexes.py",
         "opendesign-assistance/scripts/scaffold_open_design_plugin.py",
+        "opendesign-assistance/scripts/score_visual_quality.py",
+        "opendesign-assistance/scripts/score_design_critique.py",
+        "opendesign-assistance/scripts/compare_visual_iterations.py",
     ]
     import py_compile
 
@@ -287,6 +348,32 @@ def verify_scripts(root: Path, results: list[Result]) -> None:
             check(results, f"script compiles: {rel}", True)
         except Exception as exc:  # noqa: BLE001
             check(results, f"script compiles: {rel}", False, str(exc))
+
+
+def verify_secondary_verifiers(root: Path, results: list[Result]) -> None:
+    verifiers = [
+        "opendesign-assistance/scripts/verify_product_manifest_v3.py",
+        "opendesign-assistance/scripts/verify_runtime_contracts_v3.py",
+        "opendesign-assistance/scripts/verify_visual_scoring_v3.py",
+        "opendesign-assistance/scripts/verify_source_registry_v2.py",
+        "opendesign-assistance/scripts/verify_v2_protocols.py",
+        "opendesign-assistance/scripts/verify_visual_quality_v21.py",
+    ]
+    for rel in verifiers:
+        path = root / rel
+        if not path.is_file():
+            check(results, f"secondary verifier exists: {rel}", False)
+            continue
+        completed = subprocess.run(
+            [sys.executable, str(path)],
+            cwd=root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False,
+        )
+        summary = "\n".join(completed.stdout.strip().splitlines()[-8:])
+        check(results, f"secondary verifier passes: {rel}", completed.returncode == 0, summary)
 
 
 def verify_docs(root: Path, results: list[Result]) -> None:
@@ -302,6 +389,13 @@ def verify_docs(root: Path, results: list[Result]) -> None:
         "opendesign-assistance/templates/INDEX.md",
         "opendesign-assistance/usage-notes/OPEN_DESIGN_PLUGIN_INSTALL.md",
         "opendesign-assistance/exports/minigame-mobile-controls/README.md",
+        "project-memory/PROJECT_DEFINITION_V3.md",
+        "opendesign-assistance/ARCHITECTURE_V3.md",
+        "opendesign-assistance/config/product-manifest.json",
+        "opendesign-assistance/config/capability-status.json",
+        "opendesign-assistance/scripts/verify_product_manifest_v3.py",
+        "opendesign-assistance/scripts/verify_runtime_contracts_v3.py",
+        "opendesign-assistance/scripts/verify_visual_scoring_v3.py",
     ]
     root_readme = root / "README.md"
     assistance_readme = root / ASSISTANCE_DIR / "README.md"
@@ -337,6 +431,7 @@ def main() -> int:
     verify_json_files(root, results)
     verify_indexes(root, results)
     verify_scripts(root, results)
+    verify_secondary_verifiers(root, results)
     verify_docs(root, results)
     return print_results(results)
 

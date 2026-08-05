@@ -7,24 +7,132 @@
   "description": "Open Design skill for UI/UX, website, menu, dashboard, and navigation layout generation.",
   "license": "MIT",
   "entry": "SKILL.md",
-  "tags": ["uiux", "layout", "website", "menu", "navigation", "dashboard"],
+  "tags": [
+    "uiux",
+    "layout",
+    "website",
+    "menu",
+    "navigation",
+    "dashboard"
+  ],
   "od": {
     "kind": "skill",
-    "categories": ["uiux", "layout", "website", "menu", "navigation", "dashboard"],
-    "capabilities": ["prompt:inject", "artifact:html", "design-system:reference"],
-    "suggestedInputs": ["surface", "audience", "style"],
+    "categories": [
+      "uiux",
+      "layout",
+      "website",
+      "menu",
+      "navigation",
+      "dashboard"
+    ],
+    "capabilities": [
+      "prompt:inject",
+      "artifact:html",
+      "design-system:reference"
+    ],
+    "suggestedInputs": [
+      "surface",
+      "audience",
+      "style"
+    ],
     "taskKind": "new-generation",
     "useCase": {
-      "query": "Design a {{surface}} with strong UI/UX hierarchy for {{audience}}."
+      "query": {
+        "en": "Design a {{surface}} with strong UI/UX hierarchy for {{audience}}.",
+        "zh-CN": "Design a {{surface}} with strong UI/UX hierarchy for {{audience}}."
+      }
     },
     "context": {
-      "skills": [{ "ref": "uiux-layout-director" }],
-      "atoms": ["navigation-model", "responsive-layout", "component-inventory"]
+      "skills": [
+        {
+          "ref": "uiux-layout-director"
+        }
+      ],
+      "atoms": [
+        "navigation-model",
+        "responsive-layout",
+        "component-inventory"
+      ],
+      "schemas": [
+        "opendesign-assistance/schemas/design-brief.schema.json",
+        "opendesign-assistance/schemas/design-direction.schema.json",
+        "opendesign-assistance/schemas/design-handoff.schema.json"
+      ],
+      "productFamilies": [
+        "brief-routing",
+        "visual-quality",
+        "domain-scenarios",
+        "production-handoff"
+      ],
+      "productionProfiles": [
+        "digital-ui"
+      ]
     },
     "inputs": [
-      { "name": "surface", "type": "string", "default": "website" },
-      { "name": "audience", "type": "string", "default": "general users" },
-      { "name": "style", "type": "string", "default": "modern product UI" }
-    ]
+      {
+        "name": "surface",
+        "type": "string",
+        "default": "website"
+      },
+      {
+        "name": "audience",
+        "type": "string",
+        "default": "general users"
+      },
+      {
+        "name": "style",
+        "type": "string",
+        "default": "modern product UI"
+      }
+    ],
+    "mode": "compat-plugin",
+    "v3": {
+      "productFamilies": [
+        "brief-routing",
+        "visual-quality",
+        "domain-scenarios",
+        "production-handoff"
+      ],
+      "productionProfiles": [
+        "digital-ui"
+      ],
+      "outputContracts": [
+        "HTML prototype",
+        "responsive layout brief",
+        "DESIGN.md/DTCG reference"
+      ],
+      "evidence": {
+        "level": "E2",
+        "state": "PASS",
+        "claim": "V1 plugin manifest upgraded for V3 compatibility and verified in isolated staging; live Open Design runtime registration remains E3-pending.",
+        "verifiedBy": [
+          "opendesign-assistance/scripts/verify_open_design_assistance.py",
+          "opendesign-assistance/scripts/verify_product_manifest_v3.py"
+        ]
+      },
+      "runtime": {
+        "status": "pending-e3",
+        "requires": [
+          "Open Design runtime registration",
+          "runtime ID/version read-back",
+          "minimal task execution",
+          "artifact and provenance read-back"
+        ]
+      }
+    }
+  },
+  "author": {
+    "name": "DTALEX66 OPEN-DESIGN-Assistance"
+  },
+  "publishedAt": "2026-08-04T00:00:00Z",
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ],
+    "preservesV1Plugin": true,
+    "upgradeTrack": "v3-compatibility",
+    "runtimeRegistration": "pending-open-design-e3"
   }
 }
