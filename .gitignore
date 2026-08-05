@@ -1,0 +1,31 @@
+# Generated local runtime and evidence
+80-evidence/
+.hermes/task-runtime/
+.hermes/task-artifacts/
+
+# Python / Node / build caches
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+node_modules/
+dist/
+build/
+*.log
+
+# Local secrets and credentials (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*
+*token*
+*oauth*
+*cookie*
+
+# Local archive/staging must remain outside this root
+WORK-LAB-ARCHIVE/
+WORK-LAB-STAGING-*/

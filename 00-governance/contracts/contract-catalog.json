@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "work-lab-contract-catalog/v1",
+  "contracts": [
+    {"id": "module-profile", "owner": "root-governance", "consumers": ["workflow", "ci"]},
+    {"id": "task-card", "owner": "workflow", "consumers": ["writer", "reviewer"]},
+    {"id": "runtime-lock", "owner": "workflow", "consumers": ["evidence", "reviewer"]},
+    {"id": "design-brief", "owner": "open-design", "consumers": ["open-design", "minigame"]},
+    {"id": "domain-pack", "owner": "open-design", "consumers": ["workflow", "minigame"]},
+    {"id": "evidence-envelope", "owner": "root-governance", "consumers": ["reviewer", "console"]},
+    {"id": "release-manifest", "owner": "root-governance", "consumers": ["github", "audit"]}
+  ],
+  "breakingChange": "version-plus-migration-fixture",
+  "implementationDuplication": "forbidden"
+}

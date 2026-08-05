@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "work-lab-monorepo/v1",
+  "workspaceId": "work-lab",
+  "repository": "DTALEX66/WORK-LAB",
+  "rootResolution": ["explicit-argument", "manifest-relative-path", "environment-variable", "current-git-root"],
+  "modules": [
+    {
+      "id": "workflow-assistance",
+      "path": "10-workflow/workflow-assistance",
+      "legacyRepository": "DTALEX66/Workflow-assistance",
+      "role": "client-neutral workflow governance, execution control and observability",
+      "releasePrefix": "workflow",
+      "owner": "DTALEX66",
+      "dependsOn": []
+    },
+    {
+      "id": "open-design",
+      "path": "20-design/open-design",
+      "legacyRepository": "DTALEX66/OPEN-DESIGN-Assistance",
+      "role": "professional design knowledge, visual quality and production handoff",
+      "releasePrefix": "open-design",
+      "owner": "DTALEX66",
+      "dependsOn": ["workflow-assistance"]
+    },
+    {
+      "id": "minigame",
+      "path": "30-products/minigame",
+      "legacyRepository": "DTALEX66/MINIGAME",
+      "role": "independent revenue-seeking game product and integration proof",
+      "releasePrefix": "minigame",
+      "owner": "DTALEX66",
+      "dependsOn": ["workflow-assistance", "open-design"]
+    }
+  ],
+  "singleWriter": true,
+  "forbiddenRoots": ["E:\\"],
+  "generatedData": { "evidencePath": "80-evidence", "tracked": false },
+  "externalMutationDefault": false
+}
