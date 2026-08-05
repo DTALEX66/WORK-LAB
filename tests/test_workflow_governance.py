@@ -1387,9 +1387,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_readme_documents_kimi_speed_lane_commands_without_auto_switching(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         for command in (
-            "python scripts/workflow/switch_model.py kimi       # Kimi K3",
-            "python scripts/workflow/switch_model.py kimi-fast  # Kimi K2.7 Code",
-            "python scripts/workflow/switch_model.py kimi-turbo # Kimi K2.7 Code HighSpeed",
+            'python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"',
+            'python scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"',
+            'python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"',
         ):
             self.assertIn(command, readme)
         self.assertIn("不会自动更改当前会话", readme)
@@ -2607,12 +2607,16 @@ class WorkflowGovernanceTests(unittest.TestCase):
             ROOT / "scripts/workflow/hermes_workflow_doctor.py",
             ROOT / "skills/model-switch/SKILL.md",
         ]
-        combined = "\n".join(path.read_text(encoding="utf-8") for path in active)
-        self.assertIn("gpt-5.6-sol", combined)
-        self.assertIn("from switch_model import DEEPSEEK_MODEL, GPT_MODEL", combined)
-        self.assertNotIn("hermes config set model.provider", (active[-1]).read_text(encoding="utf-8"))
+        config = yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))
         switcher = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")
-        self.assertIn("config update failed", switcher)
+        doctor = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(encoding="utf-8")
+        self.assertNotIn("model", config)
+        self.assertIn("selected_model", switcher)
+        self.assertIn("--model", switcher)
+        self.assertIn("HERMES_GPT_MODEL", switcher)
+        self.assertIn("configured_model", doctor)
+        self.assertNotIn("from switch_model import DEEPSEEK_MODEL, GPT_MODEL", doctor)
+        self.assertNotIn('os.environ.get("HERMES_GPT_MODEL", "gpt-5.6-sol")', switcher)
         self.assertIn("--live", switcher)
         refs = ROOT / "skills/model-switch/references"
         self.assertFalse((refs / "cc-switch-codex-hermes.md").exists())
@@ -2656,9 +2660,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
 
         for marker in (
-            'KIMI_MODEL = os.environ.get("HERMES_KIMI_MODEL", "kimi-k3")',
-            'KIMI_FAST_MODEL = os.environ.get("HERMES_KIMI_FAST_MODEL", "kimi-k2.7-code")',
-            'KIMI_TURBO_MODEL = os.environ.get("HERMES_KIMI_TURBO_MODEL", "kimi-k2.7-code-highspeed")',
+            "def selected_model(override: str | None, env_name: str, target: str)",
+            "HERMES_KIMI_MODEL",
+            "HERMES_KIMI_FAST_MODEL",
+            "HERMES_KIMI_TURBO_MODEL",
             "'kimi-fast'",
             "'kimi-turbo'",
             "if args.target == 'kimi-turbo':",
@@ -2666,16 +2671,19 @@ class WorkflowGovernanceTests(unittest.TestCase):
         ):
             self.assertIn(marker, switcher)
 
-        for document in (skill, lanes, integration, latency):
+        self.assertIn("Provider 路线只作为入口", skill)
+        self.assertIn("具体模型必须由用户", skill)
+        for document in (latency,):
             self.assertIn("kimi-k2.7-code", document)
             self.assertIn("kimi-k2.7-code-highspeed", document)
-        self.assertIn("/切换KIMI快", lanes)
-        self.assertIn("/切换KIMI极速", lanes)
-        self.assertIn("/切换KIMI快", integration)
-        self.assertIn("/切换KIMI极速", integration)
+        self.assertIn("HERMES_KIMI_MODEL", lanes)
+        self.assertIn("HERMES_DEEPSEEK_MODEL", lanes)
+        self.assertIn("HERMES_GPT_MODEL", lanes)
+        self.assertIn("default model", lanes)
+        self.assertIn("--model", lanes)
         self.assertIn("不会自动切换当前", integration)
-        self.assertIn("kimi-fast` → Kimi K2.7 Code", lanes)
-        self.assertIn("kimi-turbo` → Kimi K2.7 Code HighSpeed", lanes)
+        self.assertIn("--model", integration)
+        self.assertIn("explicitly selected", latency)
 
     def test_external_harness_absorption_is_model_and_paid_api_neutral(self) -> None:
         fortress = ROOT / "skills/software-development/agent-workflow-fortress"

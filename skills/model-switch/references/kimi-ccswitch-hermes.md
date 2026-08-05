@@ -2,7 +2,7 @@
 
 ## 适用场景
 
-用户已自行在 Hermes 配好 Kimi/Moonshot provider，希望确认 Hermes 是否真实路由到指定 Kimi 模型（例如 `kimi-k3`）。CC Switch 仅作为本机网络/路由前置条件，不是凭据来源。
+用户已自行在 Hermes 配好 Kimi/Moonshot provider，希望确认 Hermes 是否真实路由到用户指定的 Kimi 模型。CC Switch 仅作为本机网络/路由前置条件，不是凭据来源。
 
 ## 安全边界
 
@@ -14,24 +14,23 @@
 
 1. 用户先在其受控 Hermes 环境完成 Kimi 凭据配置；Agent 不读取或写入该秘密。
 2. 运行 `python scripts/workflow/switch_model.py status`，只确认 Kimi prerequisite 是否存在、相关监听是否正常。
-3. 运行 `python scripts/workflow/switch_model.py kimi --live`，以独立 marker 验证 Kimi 路由。
+3. 运行 `python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL" --live`，以独立 marker 验证用户选定的 Kimi 路由。
 4. `/reset` 或新会话后生效；当前已启动的会话模型/provider 已冻结。
 
-## 当前三条默认线与 Kimi 速度线
+## 用户选定的 Provider 线与 Kimi 速度线
 
 ```bash
-python scripts/workflow/switch_model.py kimi       # Kimi K3（默认推荐）
-python scripts/workflow/switch_model.py kimi-fast  # Kimi K2.7 Code
-python scripts/workflow/switch_model.py kimi-turbo # Kimi K2.7 Code HighSpeed
-python scripts/workflow/switch_model.py deepseek   # DeepSeek V4
-python scripts/workflow/switch_model.py gpt        # ChatGPT 5.6
+python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
+python scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
+python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
+python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 ```
 
-`kimi-fast`（`kimi-k2.7-code`）与 `kimi-turbo`
-（`kimi-k2.7-code-highspeed`）是 Kimi 线路内的可选速度 lane，不会自动切换当前
-模型或会话。Desktop 的对应入口是 `/切换KIMI快`（K2.7 Code）和
-`/切换KIMI极速`（K2.7 Code HighSpeed）；只有用户明确选择后才执行切换。每次
-切换后用 `hermes chat -q` marker 验证真实推理，并提示用户 `/reset` 或新会话。
+`kimi-fast` 与 `kimi-turbo` 只是用户可以自行命名的 Kimi 速度入口，不绑定
+任何仓库默认模型。它们不会自动切换当前模型或会话；只有用户明确提供模型
+ID 后才执行切换。每次切换后用 `hermes chat -q` marker 验证真实推理，并提示
+用户 `/reset` 或新会话。
 
 ## 重要陷阱：模型列表 ≠ 实际可用模型全集
 
@@ -39,22 +38,24 @@ Hermes 的 `/model` / picker 使用本仓库管理的 curated list，不会自�
 
 判断标准不是“列表里有没有”，而是 API / Hermes live marker 是否真实成功。
 
-## Kimi K3 真实性验证模式
+## 用户选定模型的真实性验证模式
 
 不要问模型“你是谁”。应直接验证服务端响应：
 
 1. 直接请求 Moonshot OpenAI-compatible endpoint：
    - `POST {KIMI_BASE_URL}/chat/completions`
-   - body 中 `model: "kimi-k3"`
-2. 对 K3 使用 `temperature: 1`。该模型会拒绝 `temperature: 0`，错误为 `invalid temperature: only 1 is allowed for this model`；这反而说明服务端识别到了 `kimi-k3` 且有模型专属参数约束。
+   - body 中 `model: "<user-selected-model>"`
+2. 模型专属参数必须以该模型当前官方文档为准，不把另一模型的约束复制过来。
 3. 验证返回中：
    - HTTP 200
-   - `response_model == "kimi-k3"`
+   - `response_model == "<user-selected-model>"`
    - `object == "chat.completion"`
-   - `usage.completion_tokens_details.reasoning_tokens` 可作为推理路径证据（若出现）
-4. 再请求一个不存在模型名（如 `kimi-definitely-not-a-real-model`），应返回 404 `resource_not_found_error`。这证明不是任意 model string 都被静默映射。
+   - usage 字段（若出现）可作为辅助证据
+4. 再请求一个明确不存在的模型名，应返回 404 `resource_not_found_error`，证明服务端没有静默把任意 model string 映射成另一个模型。
 
-可确认的结论：`Hermes → Moonshot/Kimi API → request model kimi-k3 → response model kimi-k3`。不要夸大为“外部可证明后端内部权重等级”；外部只能证明 API 暴露并服务端确认的模型 ID 与路由。
+可确认的结论：`Hermes → Moonshot/Kimi API → 用户请求模型 → 服务端响应模型`。
+不要夸大为“外部可证明后端内部权重等级”；外部只能证明 API 暴露并服务端
+确认的模型 ID 与路由。
 
 ## Brotli streaming decode 报错
 
@@ -68,10 +69,10 @@ API call failed after 3 retries: brotli: decoder process called with data when '
 
 - `provider=kimi-for-coding` 或 `kimi-coding`
 - `base_url=https://api.moonshot.cn/v1`
-- `model=kimi-k3`
+- `model=<user-selected-kimi-model>`
 - `tokens=~150k+` 或更大上下文
 
-判断：这不是 Kimi key 错，也不是 `kimi-k3` 模型不存在；小请求和同会话后续请求可成功，失败点是 HTTP Brotli 解码。
+判断：这不是 Kimi key 错，也不能据此判断用户选择的模型不存在；小请求和同会话后续请求可成功，失败点是 HTTP Brotli 解码。
 
 修复/规避：对 Kimi-family endpoint 禁用 `br` 协商，让服务端返回 gzip/deflate：
 
@@ -85,12 +86,12 @@ Hermes core 已在 `agent/agent_init.py` 对 `api.moonshot.cn`、`api.moonshot.a
 
 ```bash
 PYTHONPATH=. python -m pytest tests/agent/test_kimi_brotli_headers.py -q --tb=short -n 0
-hermes chat --provider kimi-for-coding -m kimi-k3 -q "Reply exactly: KIMI_BROTLI_FIX_OK" -Q --toolsets safe
+hermes chat --provider kimi-for-coding -m "$HERMES_KIMI_MODEL" -q "Reply exactly: KIMI_BROTLI_FIX_OK" -Q --toolsets safe
 ```
 
 ## 推荐汇报格式
 
 - CC Switch 侧模型名列表：只列模型名，不输出 key。
 - Hermes config：provider/model/base_url。
-- Live marker：`hermes chat --provider kimi-coding -m kimi-k3 ...` 或默认模型 marker。
+- Live marker：`hermes chat --provider kimi-coding -m "$HERMES_KIMI_MODEL" ...` 或用户显式选定的模型 marker。
 - Direct API proof：request_model、response_model、HTTP status、usage keys；key 前缀最多脱敏显示，不显示完整值。

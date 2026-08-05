@@ -173,18 +173,23 @@ backup → staging → atomic promotion 流程；`config/.env.template` 只列�
 
 `skills/model-switch/SKILL.md` 与切换脚本共同定义这条路线的操作边界。
 
-KIMI 线路把稳定性与速度选择明确分开：`kimi` 使用 K3；`kimi-fast`
-使用 K2.7 Code；`kimi-turbo` 使用官方 K2.7 Code HighSpeed。以下命令只在
-用户明确决定切换时执行；不会自动更改当前会话，切换后必须新建会话或执行
-`/reset`。
+模型切换完全由用户决定：仓库不设置默认模型，也不会替用户选择 Kimi、DeepSeek 或 GPT 的具体模型。`kimi`、`kimi-fast`、`kimi-turbo`、`gpt` 和 `deepseek` 只是 Provider 路线别名；每次切换必须通过 `--model` 或对应的 `HERMES_*_MODEL` 显式提供模型 ID。脚本只在用户明确执行时工作，不会自动更改当前会话；切换后必须新建会话或执行 `/reset`。
 
 ```bash
 python scripts/workflow/switch_model.py status
-python scripts/workflow/switch_model.py kimi       # Kimi K3
-python scripts/workflow/switch_model.py kimi-fast  # Kimi K2.7 Code
-python scripts/workflow/switch_model.py kimi-turbo # Kimi K2.7 Code HighSpeed
-python scripts/workflow/switch_model.py gpt
-python scripts/workflow/switch_model.py deepseek
+python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
+python scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
+python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
+python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
+python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+```
+
+也可以先在当前进程环境中设置用户自己的模型 ID：
+
+```bash
+export HERMES_KIMI_MODEL='<user-selected-kimi-model>'
+export HERMES_DEEPSEEK_MODEL='<user-selected-deepseek-model>'
+export HERMES_GPT_MODEL='<user-selected-openai-codex-model>'
 ```
 
 支持能力：
@@ -577,12 +582,12 @@ TROUBLESHOOTING.md   故障排查
 # 查看当前 Provider、认证和代理前置条件
 python scripts/workflow/switch_model.py status
 
-# 切换 Provider（仅在用户明确决定后；切换后新建会话或执行 /reset）
-python scripts/workflow/switch_model.py kimi       # Kimi K3
-python scripts/workflow/switch_model.py kimi-fast  # Kimi K2.7 Code
-python scripts/workflow/switch_model.py kimi-turbo # Kimi K2.7 Code HighSpeed
-python scripts/workflow/switch_model.py gpt
-python scripts/workflow/switch_model.py deepseek
+# 切换 Provider（仅在用户明确决定后；必须显式提供自己的模型；切换后新建会话或执行 /reset）
+python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
+python scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
+python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
+python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
+python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
 
 # 结构诊断；不产生模型调用
 python scripts/workflow/hermes_workflow_doctor.py
