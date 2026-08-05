@@ -61,7 +61,7 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         self.assertEqual(layout.env["HERMES_KANBAN_HOME"], str(project_root / ".hermes"))
 
     def test_global_skill_requires_explicit_current_request_for_e_drive_access(self) -> None:
-        skill = Path("skills/software-development/project-data-boundary/SKILL.md").read_text(
+        skill = (ROOT / "skills/software-development/project-data-boundary/SKILL.md").read_text(
             encoding="utf-8"
         )
 
@@ -174,6 +174,7 @@ class ProjectDataBoundaryTests(unittest.TestCase):
 
     def test_temp_roots_stay_inside_project_runtime(self) -> None:
         runtime_root = ROOT / ".hermes" / "task-runtime"
+        (runtime_root / "tmp").mkdir(parents=True, exist_ok=True)
         tmp_path = Path(tempfile.mkdtemp(dir=runtime_root / "tmp"))
         self.addCleanup(lambda: shutil.rmtree(tmp_path, ignore_errors=True))
 

@@ -1,7 +1,6 @@
 # Generated local runtime and evidence
 80-evidence/
-.hermes/task-runtime/
-.hermes/task-artifacts/
+.hermes/
 
 # Python / Node / build caches
 __pycache__/
@@ -16,15 +15,21 @@ build/
 *.log
 
 # Local secrets and credentials (never commit)
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-*credentials*
-*token*
-*oauth*
-*cookie*
+# Keep these rules exact: token/oauth/cookie/credential are also legitimate
+# source, test, and governance vocabulary in this monorepo.
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/auth.json
+**/credentials.json
+**/cookies.json
+**/cookie.sqlite
+**/id_rsa*
+**/id_ed25519*
 
 # Local archive/staging must remain outside this root
 WORK-LAB-ARCHIVE/

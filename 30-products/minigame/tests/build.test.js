@@ -14,6 +14,13 @@ const douyinPrivateConfigOutput = resolve(root, 'douyin-minigame', 'project.priv
 const privateConfigOutput = resolve(root, 'wechat-minigame', 'project.private.config.json');
 const tempDir = resolve(root, '.tmp');
 const tempReleaseConfig = resolve(tempDir, 'release-test.config.json');
+const trackedDouyinProjectConfig = readFileSync(douyinProjectOutput);
+const restoreTrackedDouyinProjectConfig = () => {
+  writeFileSync(douyinProjectOutput, trackedDouyinProjectConfig);
+};
+
+test.after(restoreTrackedDouyinProjectConfig);
+process.on('exit', restoreTrackedDouyinProjectConfig);
 
 test('wechat build output is deterministic across repeated runs', () => {
   execFileSync(process.execPath, ['build.js', 'wechat'], { cwd: root, stdio: 'pipe' });
