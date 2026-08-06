@@ -1,9 +1,18 @@
 # Task-pack summary
 
-WORK-LAB is the global project-workflow control plane plus three delivery
-modules. The root task-pack system owns task scope, writer/reviewer boundaries,
-evidence contracts, recovery and cross-module integration; it does not own a
-fourth product implementation.
+WORK-LAB is the v2 global project-workflow control plane plus three canonical
+active modules. The root task-pack system owns task scope, writer/reviewer
+boundaries, evidence contracts, recovery and cross-module integration; it does
+not own a fourth product implementation.
+
+The active module registry is authoritative:
+
+- `10-workflow/workflow-assistance` — client-neutral workflow governance;
+- `20-design/open-design` — Open Design-first design knowledge and handoff;
+- `30-observer/work-lab-observer` — strictly read-only observation and evidence.
+
+`30-products/minigame` is product history/fixture/archive material, not an
+active v2 canonical module. See `00-governance/PROJECT_POSITIONING.md`.
 
 Historical migration/governance snapshot (not the current attachment task-pack
 completion state):
@@ -16,14 +25,14 @@ completion state):
   this active summary because the attached task-pack reuses some IDs with
   different acceptance criteria.
 
-Final active task-pack baseline:
+Current active task-pack baseline:
 
-- Source: `WORK-LAB-HERMES-TASKPACK-v1.0.0.zip`.
+- Source: `WORK-LAB-HERMES-TASKPACK-v2.0.0.zip`.
 - Canonical reconciliation: `WORK-LAB-HERMES-TASKPACK-RECONCILIATION.md` and
   `.json` in this directory.
 - Full current per-ID evidence remains under the ignored
   `.hermes/task-artifacts/taskpack-assessment-20260806.json`.
-- The attachment is the final priority source; compatible historical work is
+- The v2 attachment is the final priority source; compatible historical work is
   retained, divergent historical work cannot override it, and unresolved
   destructive/live/Git actions remain separately approval-gated.
 

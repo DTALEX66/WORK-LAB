@@ -1,10 +1,15 @@
 # WORK-LAB
 
-`DTALEX66/WORK-LAB` is the canonical workspace for the user's **global project
-workflow task system** and its three independently owned delivery modules. It is
-not a fourth product. The root is the control plane for task packs, governance,
-evidence, ownership, data boundaries and recoverable cross-module delivery;
-module roots contain the actual product/knowledge implementations.
+`DTALEX66/WORK-LAB` is the canonical v2 monorepo control plane for the user's
+**client-neutral AI project workflow**. It is not an agent runtime, product
+platform or fourth product. The root controls task packs, governance, evidence,
+ownership, data boundaries, recovery and cross-module delivery; module roots
+contain the actual implementations.
+
+> **Current positioning:** the only active v2 modules are Workflow-assistance,
+> Open Design and the strictly read-only WORK-LAB Observer. `30-products/minigame`
+> is retained as product history/fixture/archive material, not as a canonical
+> active module. See [`00-governance/PROJECT_POSITIONING.md`](00-governance/PROJECT_POSITIONING.md).
 
 ## Workspace mission
 
@@ -26,12 +31,18 @@ metadata, provider routes and live caches remain **global platform state**; they
 are never absorbed into this repository. Project task data and generated
 evidence stay under the current Git root's ignored `.hermes/` boundary.
 
-## Delivery modules
+## Canonical v2 modules
 
 - `10-workflow/workflow-assistance` — global, client-neutral workflow governance,
   task execution control, observability and portable workflow assets
 - `20-design/open-design` — design knowledge, visual quality and production handoff
-- `30-products/minigame` — independent game product and revenue proof
+- `30-observer/work-lab-observer` — strictly read-only derived observation,
+  projections and evidence reports
+
+`30-products/minigame` remains outside the active three-module registry as
+product history, fixture/reference material and migration/archive evidence. It
+does not imply a current platform release, commercial experiment or automatic
+merge/deletion decision.
 
 The repository preserves source history and keeps module implementations under
 their canonical prefixes. Root governance owns stable contracts, task/evidence
@@ -55,4 +66,7 @@ dirty ownership, boundary violations or incomplete required jobs fail closed.
 - External mutation, active-path switching and release actions require explicit approval.
 - Windows paths are checked case-insensitively before release.
 
-See `00-governance/`, module `AGENTS.md` files, and `MIGRATION_LEDGER.json` for the current migration record.
+See `00-governance/PROJECT_POSITIONING.md`, `00-governance/projects.json`,
+module `AGENTS.md` files, and
+`50-taskpacks/WORK-LAB-HERMES-TASKPACK-RECONCILIATION.md` for the current
+positioning and migration record.

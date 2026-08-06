@@ -1,8 +1,9 @@
 # Task packs
 
-`50-taskpacks/` is the root control surface for WORK-LAB's global project-task
-workflow. It coordinates work across the three canonical modules without turning
-the root into a fourth product.
+`50-taskpacks/` is the root control surface for WORK-LAB's v2 global project-task
+workflow. It coordinates work across the three canonical active modules without
+turning the root into a fourth product. The authoritative public positioning is
+`00-governance/PROJECT_POSITIONING.md`.
 
 Every non-trivial task pack records:
 
@@ -21,7 +22,7 @@ The task-pack directory stores reviewed manifests and stable summaries only; liv
 queues, logs, caches, sessions, credentials and scheduler state remain runtime
 data outside the tracked tree.
 
-The current attachment reconciliation is recorded in
+The current v2 attachment reconciliation is recorded in
 `WORK-LAB-HERMES-TASKPACK-RECONCILIATION.md` and its machine-readable `.json`
 counterpart. Historical task IDs are namespaced as `HIST-*` there so they do not
 silently satisfy the final attachment task graph.
