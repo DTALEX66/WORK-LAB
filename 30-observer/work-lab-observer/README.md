@@ -18,6 +18,12 @@ WORK-LAB Observer 是严格只读的观测与证据层，负责从 Workflow Assi
 两者，拒绝同名外部目录、symlink/junction 越界目录和非 Git 项目根。它写入
 Observer-owned JSONL，并在读取时重新执行 schema、敏感字段和重复 event ID 校验。
 
+`src/observer_evidence.py` 提供一个受控跨模块投影入口：只接受 Workflow
+Evidence Envelope 与 Open Design benchmark registry 的脱敏摘要，写入
+Observer-owned normalized events；原始 payload、brief 和 evidence body 不会进入
+Observer store，只保留 source digest 与受控 evidence references。它不修改两个
+来源模块的权威状态，也不执行审批或晋级。
+
 ## 禁止的能力
 
 - 修改 Workflow Registry、Task Ledger、Open Design Registry 或项目源码；
@@ -30,4 +36,5 @@ Observer-owned JSONL，并在读取时重新执行 schema、敏感字段和重�
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python scripts/verify_observer_skeleton.py
 PYTHONDONTWRITEBYTECODE=1 python tests/test_observer_skeleton.py
+PYTHONDONTWRITEBYTECODE=1 python tests/test_observer_evidence.py
 ```
