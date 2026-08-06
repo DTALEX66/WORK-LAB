@@ -88,6 +88,9 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 
 先通过官方方式独立安装 Hermes Agent，再克隆本仓库：
 
+部署脚本需要 Python 和 `PyYAML>=6,<7`。它不会自动修改全局 Python 环境；
+依赖缺失时会在任何 Hermes Home 写入前 fail-closed。
+
 ```bash
 git clone git@github.com:DTALEX66/WORK-LAB.git
 cd WORK-LAB/10-workflow/workflow-assistance
@@ -99,7 +102,8 @@ cd WORK-LAB/10-workflow/workflow-assistance
 .\setup.ps1
 ```
 
-两个 setup 入口都会调用：
+两个 setup 入口默认只生成 ActionPlan，不写 live Home。显式传入
+`setup.sh --apply` 或 `setup.ps1 -Apply` 后才会调用：
 
 ```bash
 python scripts/workflow/sync_hermes_workflow_assets.py --apply --approved
@@ -525,6 +529,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml`：固定来源和本地落点的机器可读证据；
 - `docs/audit/project-data-boundary-handoff-2026-08-02.md`：本次项目数据边界审计、交接、错误总结和上传前验证；
 - `docs/audit/project-data-boundary-handoff-2026-08-02.json`：本次审计的机器可读 manifest；
+- `docs/audit/workflow-baseline-audit-2026-08-06.md`：官方 Hermes 基线、全局规则、技能/插件部署、同步边界与 Windows 目录锁的脱敏综合审计；
 - `docs/handoffs/workflow-assistance-2026-07-23.md`：无密阶段交接、恢复顺序、已发布基线与会话卫生边界；
 - `docs/handoffs/hermes-desktop-source-root-repair-2026-07-24.md`：Desktop source-root/canonical runtime 修复的无密 Codex 交接、验证与回滚边界。
 

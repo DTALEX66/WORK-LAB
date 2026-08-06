@@ -1976,8 +1976,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
         changed["plugins"]["enabled"].remove("custom-plugin")
         assert_rejected(changed)
 
-    def test_sync_promotes_managed_config_and_preserves_user_config(self) -> None:
-        """A repo-to-live sync applies the managed overlay without overwriting user config."""
+    def test_isolated_baseline_can_merge_managed_config_and_preserve_user_config(self) -> None:
+        """The isolated verifier path can construct the portable config baseline."""
 
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_config_promotion", script)
@@ -2000,7 +2000,14 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            module.deploy_portable(repo, home, apply=True, include_backup=False)
+            module.deploy_portable(
+                repo,
+                home,
+                apply=True,
+                include_backup=False,
+                include_config=True,
+                allow_project_runtime_home=True,
+            )
 
             live = yaml.safe_load(config.read_text(encoding="utf-8"))
             self.assertEqual(live["model"]["provider"], "user-provider")
@@ -2015,6 +2022,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
         scripts = "\n".join(
             (ROOT / name).read_text(encoding="utf-8") for name in ("setup.sh", "setup.ps1")
         )
+        self.assertIn("PyYAML >=6,<7 is required", scripts)
+        self.assertIn("import yaml", scripts)
         for command in (
             "tools enable x_search",
             "tools enable video",

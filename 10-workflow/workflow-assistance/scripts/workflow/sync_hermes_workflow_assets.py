@@ -500,6 +500,7 @@ def build_action_plan(repo: Path, home: Path) -> dict[str, object]:
     managed_binaries = load_managed_binary_paths(repo)
     managed_file_mappings = load_managed_file_mappings(repo)
     retired_roots = tuple(f"skills/{relative}" for relative in RETIRED_MANAGED_SKILL_ASSETS)
+    live_config = home / "config.yaml"
     mapped_paths = [(relative, relative) for relative in (*managed_roots, *managed_binaries)]
     mapped_paths.extend(managed_file_mappings)
     mapped_paths.append(("config/.env.template", ".env.template"))
@@ -527,10 +528,21 @@ def build_action_plan(repo: Path, home: Path) -> dict[str, object]:
         "steps": steps,
         "config": {
             "target": "config.yaml",
-            "operation": "merge_managed_preserve_user_owned",
-            "before": _path_state(home / "config.yaml"),
+            "operation": "skip_mixed_ownership",
+            "before": {
+                "exists": live_config.exists(),
+                "kind": "directory"
+                if live_config.is_dir()
+                else "file"
+                if live_config.is_file()
+                else "missing",
+            },
             "contract": load_config_contract(repo),
-            "rollback": {"available": True, "strategy": "backup-before-publish"},
+            "rollback": {"available": False, "strategy": "not-written"},
+            "reason": (
+                "live config.yaml has mixed user/platform ownership and is never "
+                "promoted by portable sync"
+            ),
         },
         "rollback": {"available": True, "strategy": "backup-before-publish-and-atomic-replace"},
     }
@@ -964,7 +976,7 @@ def deploy_portable(
     *,
     apply: bool,
     include_backup: bool = True,
-    include_config: bool = True,
+    include_config: bool = False,
     allow_project_runtime_home: bool = False,
 ) -> None:
     """Run the single deployment orchestration used by CLI and verifier."""
@@ -1077,7 +1089,7 @@ def main() -> int:
         output.write_text(rendered_plan + "\n", encoding="utf-8")
         print(f"ACTION_PLAN_WRITTEN path={output}")
 
-    deploy_portable(repo, home, apply=args.apply)
+    deploy_portable(repo, home, apply=args.apply, include_config=False)
     if args.apply:
         verify_action_plan_readback(plan, repo, home)
         print("ACTION_PLAN_READBACK_PASS")

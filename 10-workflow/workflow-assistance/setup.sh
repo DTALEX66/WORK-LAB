@@ -49,6 +49,10 @@ else
     echo "a working python or python3 is required" >&2
     exit 1
 fi
+"$PYTHON_BIN" -c 'import yaml; assert 6 <= int(yaml.__version__.split(".")[0]) < 7' >/dev/null 2>&1 || {
+    echo "PyYAML >=6,<7 is required. Install it into this Python environment before running setup." >&2
+    exit 1
+}
 [ -d "$HERMES_HOME" ] || { echo "Hermes home must already exist; refusing to create a live target: $HERMES_HOME" >&2; exit 1; }
 
 SYNC_ARGS=(

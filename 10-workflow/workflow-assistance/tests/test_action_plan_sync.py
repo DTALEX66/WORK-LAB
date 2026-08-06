@@ -42,6 +42,8 @@ class ActionPlanSyncTests(unittest.TestCase):
             targets = {step["target"] for step in plan["steps"]}
             self.assertIn("SOUL.md", targets)
             self.assertIn(".env.template", targets)
+            self.assertEqual(plan["config"]["operation"], "skip_mixed_ownership")
+            self.assertNotIn("sha256", plan["config"]["before"])
             self.assertFalse(any(home.iterdir()))
 
     def test_apply_requires_explicit_approval(self) -> None:
@@ -72,14 +74,19 @@ class ActionPlanSyncTests(unittest.TestCase):
             self.assertIn("ACTION_PLAN_READBACK_PASS", result.stdout)
             self.assertTrue((home / "SOUL.md").is_file())
 
-    def test_approved_apply_merges_managed_config_and_preserves_user_config(self) -> None:
+    def test_approved_apply_does_not_read_or_replace_live_config(self) -> None:
         module = load_module()
         with tempfile.TemporaryDirectory() as raw:
             repo, home = make_isolated_roots(raw)
-            (home / "config.yaml").write_text(
-                "model:\n  provider: user-provider\n  default: user-model\nmcp_servers:\n  user_mcp:\n    command: user-command\ndisplay:\n  language: en\n  skin: stock\n  busy_input_mode: immediate\nplugins:\n  enabled: [user-plugin]\nplatform_toolsets:\n  cli: [terminal]\n",
-                encoding="utf-8",
+            live_config = home / "config.yaml"
+            original = (
+                "model:\n  provider: user-provider\n  default: user-model\n"
+                "mcp_servers:\n  user_mcp:\n    command: user-command\n"
+                "display:\n  language: en\n  skin: stock\n"
+                "  busy_input_mode: immediate\nplugins:\n"
+                "  enabled: [user-plugin]\nplatform_toolsets:\n  cli: [terminal]\n"
             )
+            live_config.write_text(original, encoding="utf-8")
             module.deploy_portable(
                 repo,
                 home,
@@ -87,19 +94,8 @@ class ActionPlanSyncTests(unittest.TestCase):
                 include_backup=False,
                 allow_project_runtime_home=True,
             )
-            import yaml
-
-            live = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8"))
-            self.assertEqual(live["model"]["provider"], "user-provider")
-            self.assertEqual(live["model"]["default"], "user-model")
-            self.assertEqual(live["display"]["language"], "zh")
-            self.assertEqual(live["display"]["skin"], "stock")
-            self.assertEqual(live["sessions"]["auto_prune"], False)
-            self.assertEqual(live["memory"]["memory_enabled"], True)
-            self.assertEqual(live["platform_toolsets"]["cli"], repo_config := yaml.safe_load((repo / "config/config.yaml").read_text(encoding="utf-8"))["platform_toolsets"]["cli"])
-            self.assertIn("user_mcp", live["mcp_servers"])
-            self.assertIn("context7", live["mcp_servers"])
-            self.assertIn("user-plugin", live["plugins"]["enabled"])
+            self.assertEqual(live_config.read_text(encoding="utf-8"), original)
+            self.assertFalse((home / ".workflow-assistance-state.yaml").exists())
 
 
     def test_readback_rejects_source_mutation_after_plan(self) -> None:
