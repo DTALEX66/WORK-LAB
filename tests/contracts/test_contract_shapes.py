@@ -24,7 +24,7 @@ class ContractShapeTests(unittest.TestCase):
         self.assertEqual([m["path"] for m in data["modules"]], [
             "10-workflow/workflow-assistance",
             "20-design/open-design",
-            "30-products/minigame",
+            "30-observer/work-lab-observer",
         ])
         self.assertTrue(data["singleWriter"])
         self.assertFalse(data["externalMutationDefault"])

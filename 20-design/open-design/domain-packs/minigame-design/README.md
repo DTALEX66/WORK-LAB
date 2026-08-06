@@ -22,3 +22,7 @@
 ```
 
 MINIGAME 产品源码仍保留在历史路径，不由本 Domain Pack 自动复制、移动或删除。
+
+事实源边界见 [`SOURCE_OF_TRUTH.md`](SOURCE_OF_TRUTH.md)：领域合同以
+`manifest.json` 为准，运行验证只使用仓内 `minigame-runtime/` fixture；外部历史
+目录不是第二个 live source。
