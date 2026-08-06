@@ -30,6 +30,7 @@ def event(event_id: str, *, task_id: str = "WA-001", quality: str = "source-exac
 
 class ObserverStoreTests(unittest.TestCase):
     def make_root(self, raw: str) -> Path:
+        (Path(raw) / ".git").mkdir()
         root = Path(raw) / ".hermes" / "task-runtime" / "observer"
         root.mkdir(parents=True)
         return root
@@ -37,10 +38,10 @@ class ObserverStoreTests(unittest.TestCase):
     def test_restart_preserves_events_and_rebuilds_projection(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = self.make_root(raw)
-            first = ObserverStore(root)
+            first = ObserverStore(root, project_root=Path(raw))
             self.assertEqual(first.append([event("e1"), event("e2", task_id="OD-004", quality="partial")]), 2)
 
-            restarted = ObserverStore(root)
+            restarted = ObserverStore(root, project_root=Path(raw))
             self.assertEqual(restarted.read_events(), [event("e1"), event("e2", task_id="OD-004", quality="partial")])
             projection = restarted.rebuild_projection()
             self.assertEqual(projection["tasks"]["OD-004"]["events"], 1)
@@ -48,7 +49,7 @@ class ObserverStoreTests(unittest.TestCase):
 
     def test_duplicate_events_are_not_written_twice(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            store = ObserverStore(self.make_root(raw))
+            store = ObserverStore(self.make_root(raw), project_root=Path(raw))
             self.assertEqual(store.append([event("e1"), event("e1")]), 1)
             self.assertEqual(store.append([event("e1")]), 0)
             self.assertEqual(len(store.read_events()), 1)
@@ -62,12 +63,23 @@ class ObserverStoreTests(unittest.TestCase):
             unsafe["payload"] = {"prompt": "must not persist"}
             path.write_text(json.dumps(unsafe) + "\n", encoding="utf-8")
             with self.assertRaises(ObserverInputError):
-                ObserverStore(root).read_events()
+                ObserverStore(root, project_root=Path(raw)).read_events()
 
     def test_store_rejects_non_project_runtime_root(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
+            (Path(raw) / ".git").mkdir()
+            outside = Path(raw) / ".hermes" / "task-runtime" / "outside"
+            outside.mkdir(parents=True)
             with self.assertRaises(ValueError):
-                ObserverStore(Path(raw) / "outside")
+                ObserverStore(outside, project_root=Path(raw))
+
+    def test_store_rejects_runtime_root_outside_project_even_with_matching_names(self) -> None:
+        with tempfile.TemporaryDirectory() as project_raw, tempfile.TemporaryDirectory() as other_raw:
+            (Path(project_raw) / ".git").mkdir()
+            outside = Path(other_raw) / ".hermes" / "task-runtime" / "observer"
+            outside.mkdir(parents=True)
+            with self.assertRaises(ValueError):
+                ObserverStore(outside, project_root=Path(project_raw))
 
 
 if __name__ == "__main__":

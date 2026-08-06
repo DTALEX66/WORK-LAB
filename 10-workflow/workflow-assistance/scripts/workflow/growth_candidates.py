@@ -46,6 +46,8 @@ def validate_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("invalid candidate status")
     if candidate["risk"] not in RISKS:
         raise ValueError("invalid candidate risk")
+    if candidate["status"] not in {"discovered", "blocked"} and "sourceDigest" not in candidate:
+        raise ValueError("source digest is required for this candidate status")
     if "sourceDigest" in candidate and not isinstance(candidate["sourceDigest"], str):
         raise ValueError("candidate digest must be a string")
     if "sourceDigest" in candidate and not DIGEST.fullmatch(candidate["sourceDigest"]):
@@ -80,7 +82,7 @@ def transition(candidate: dict[str, Any], target: str, *, source_digest: str | N
 
 
 def promote(candidate: dict[str, Any], *, approval: bool = False) -> dict[str, Any]:
-    if not approval:
+    if approval is not True:
         raise ValueError("explicit approval is required before promotion")
     return transition(candidate, "approved")
 
