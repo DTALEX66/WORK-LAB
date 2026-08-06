@@ -1,8 +1,10 @@
 # WORK-LAB Hermes Task-Pack Reconciliation
 
-- **最终优先级来源**：`.hermes/desktop-attachments/WORK-LAB-HERMES-TASKPACK-v1.0.0.zip`
+Current source of truth: v2.0.0 supersedes the historical v1 snapshot. See 00-governance/PROJECT_POSITIONING.md and 50-taskpacks/WORK-LAB-V2-HANDOFF.md.
+
+- **最终优先级来源**：`.hermes/desktop-attachments/WORK-LAB-HERMES-TASKPACK-v2.0.0.zip`
 - **附件 SHA-256**：`e404fc15048be0eb583bbc35999b2be060949b32e1a5fa4493dd137dc496c610`
-- **任务图**：`work-lab/task-cards/v1`
+- **任务图**：`work-lab/task-cards/v2`
 - **当前 HEAD**：`f89b2acbe5de2b6aade12861d9e6036de3a5b858`
 - **当前停止点**：`READY_FOR_USER_APPROVAL`
 
@@ -23,13 +25,13 @@
 ```text
 root governance: 5/5 PASS
 root governance contracts: 6/6 PASS
-root contract catalog: 7/7 PASS
+root contract catalog: 20/20 PASS
 module dependencies: PASS; runtime_edges=0
 project data boundary: PASS
 supply chain: PASS
-Workflow: 183 PASS, 4 skipped
+Workflow: 193 PASS, 4 skipped
 Open Design: 203/203 + 223/223 + 10/10 + 460/460 PASS
-MINIGAME: 319/319 PASS
+MINIGAME local product gate: 321/321 PASS (historical/fixture evidence only; not an active canonical module)
 ```
 
 旧 Workflow-assistance 与 WORK-LAB 目标模块（排除 `.git`、`.hermes`、`node_modules`、构建物、缓存和 Python bytecode）：
