@@ -1,0 +1,134 @@
+{
+  "schema_version": "workflow/adapter-registry/v1",
+  "interface": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+  "entries": [
+    {
+      "id": "hermes",
+      "display_name": "Hermes",
+      "support_level": "deep",
+      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "repository",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[0]",
+        "version": ">=0.19,<0.21",
+        "scope": "portable-workflow-adapter",
+        "risk": "high",
+        "status": "active",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "Hermes runtime package is not vendored in WORK-LAB", "files": []}
+      }
+    },
+    {
+      "id": "codex",
+      "display_name": "Codex",
+      "support_level": "deep",
+      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[1]",
+        "version": "UNVERIFIED",
+        "scope": "portable-workflow-adapter",
+        "risk": "high",
+        "status": "quarantined",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "Codex runtime package is external and not vendored", "files": []}
+      }
+    },
+    {
+      "id": "cc-switch",
+      "display_name": "CC Switch",
+      "support_level": "deep",
+      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[2]",
+        "version": "UNVERIFIED",
+        "scope": "portable-workflow-adapter",
+        "risk": "high",
+        "status": "quarantined",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "CC Switch runtime package is external and not vendored", "files": []}
+      }
+    },
+    {
+      "id": "github",
+      "display_name": "GitHub",
+      "support_level": "deep",
+      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[3]",
+        "version": "UNVERIFIED",
+        "scope": "portable-workflow-adapter",
+        "risk": "high",
+        "status": "quarantined",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "GitHub CLI/API runtime package is external and not vendored", "files": []}
+      }
+    },
+    {
+      "id": "open-design",
+      "display_name": "Open Design",
+      "support_level": "deep",
+      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "repository",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[4]",
+        "version": "WORK-LAB-local",
+        "scope": "open-design-assistance-contract",
+        "risk": "high",
+        "status": "quarantined",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "Open Design runtime source is a separate module and not hashed by this registry", "files": []}
+      }
+    },
+    {
+      "id": "cursor",
+      "display_name": "Cursor",
+      "support_level": "manifest-only",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[5]",
+        "version": "UNVERIFIED",
+        "scope": "manifest-only",
+        "risk": "medium",
+        "status": "blocked",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "No Cursor adapter package is vendored", "files": []}
+      }
+    },
+    {
+      "id": "claude-code",
+      "display_name": "Claude Code",
+      "support_level": "manifest-only",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[6]",
+        "version": "UNVERIFIED",
+        "scope": "manifest-only",
+        "risk": "medium",
+        "status": "blocked",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "No Claude Code adapter package is vendored", "files": []}
+      }
+    },
+    {
+      "id": "workbuddy",
+      "display_name": "WorkBuddy",
+      "support_level": "manifest-only",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[7]",
+        "version": "UNVERIFIED",
+        "scope": "manifest-only",
+        "risk": "medium",
+        "status": "blocked",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "No WorkBuddy adapter package is vendored", "files": []}
+      }
+    }
+  ]
+}

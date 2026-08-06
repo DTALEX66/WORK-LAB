@@ -2902,19 +2902,20 @@ meter {
   position: fixed;
   inset: 0;
   z-index: 70;
-  display: grid;
-  place-items: center;
-  justify-content: center;
-  align-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  align-content: normal;
   margin: 0;
-  padding: 16px;
-  background: rgba(2,3,3,0.72);
-  backdrop-filter: blur(3px);
+  padding: 8px;
+  background: linear-gradient(90deg, rgba(2,3,3,0.02) 0 68%, rgba(2,3,3,0.46) 100%);
+  backdrop-filter: none;
   pointer-events: auto;
 }
 .start-card {
-  width: min(430px, calc(100vw - 32px));
-  margin: 0;
+  align-self: center;
+  width: min(252px, calc(100vw - 32px));
+  margin: 0 0 0 auto;
   padding: 22px;
   display: block;
   border: 1px solid rgba(225,168,75,0.54);

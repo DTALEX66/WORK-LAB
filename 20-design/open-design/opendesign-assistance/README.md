@@ -159,12 +159,12 @@ E4 还需要冻结的精确树、独立审查、用户授权的提交/推送和�
 
 ```bash
 python scripts/configure_open_design_windows.py \
-  --project-root "D:\\All projects\\OPEN-DESIGN-Assistance" \
+  --project-root "D:\\All projects\\WORK-LAB\\20-design\\open-design" \
   --permission-root "D:\\All projects" \
   --dry-run
 
 python scripts/doctor_open_design_windows.py \
-  --project-root "D:\\All projects\\OPEN-DESIGN-Assistance" \
+  --project-root "D:\\All projects\\WORK-LAB\\20-design\\open-design" \
   --strict
 ```
 

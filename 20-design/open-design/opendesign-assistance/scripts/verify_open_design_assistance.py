@@ -42,7 +42,9 @@ class Result:
 def repo_root() -> Path:
     current = Path(__file__).resolve()
     for parent in [current, *current.parents]:
-        if (parent / ASSISTANCE_DIR).is_dir() and (parent / ".git").exists():
+        if not (parent / ASSISTANCE_DIR).is_dir():
+            continue
+        if any((ancestor / ".git").exists() for ancestor in [parent, *parent.parents]):
             return parent
     raise SystemExit("Could not locate repository root")
 
@@ -333,6 +335,7 @@ def verify_scripts(root: Path, results: list[Result]) -> None:
         "opendesign-assistance/scripts/verify_source_registry_v2.py",
         "opendesign-assistance/scripts/verify_v2_protocols.py",
         "opendesign-assistance/scripts/verify_visual_quality_v21.py",
+        "opendesign-assistance/scripts/verify_benchmark_registry.py",
         "opendesign-assistance/scripts/generate_open_design_indexes.py",
         "opendesign-assistance/scripts/scaffold_open_design_plugin.py",
         "opendesign-assistance/scripts/score_visual_quality.py",
@@ -358,6 +361,7 @@ def verify_secondary_verifiers(root: Path, results: list[Result]) -> None:
         "opendesign-assistance/scripts/verify_source_registry_v2.py",
         "opendesign-assistance/scripts/verify_v2_protocols.py",
         "opendesign-assistance/scripts/verify_visual_quality_v21.py",
+        "opendesign-assistance/scripts/verify_benchmark_registry.py",
     ]
     for rel in verifiers:
         path = root / rel

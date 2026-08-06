@@ -4,7 +4,7 @@
   "name": "minigame-ui-director",
   "title": "Minigame UI Director",
   "version": "0.1.0",
-  "description": "Open Design skill for mobile minigame HUD, console, and IAA screen generation.",
+  "description": "Open Design fixture skill for generating mobile game HUD, CCTV console, and interaction-state design packages.",
   "license": "MIT",
   "entry": "SKILL.md",
   "tags": [
@@ -21,7 +21,7 @@
       "hud",
       "mobile",
       "minigame",
-      "iaa"
+      "interaction-states"
     ],
     "capabilities": [
       "prompt:inject",
@@ -29,16 +29,16 @@
       "artifact:html"
     ],
     "suggestedInputs": [
-      "platform",
+      "viewport",
       "screen",
       "theme",
-      "monetization"
+      "evidenceLevel"
     ],
     "taskKind": "new-generation",
     "useCase": {
       "query": {
-        "en": "Design a {{screen}} screen for a {{platform}} minigame using {{theme}}.",
-        "zh-CN": "Design a {{screen}} screen for a {{platform}} minigame using {{theme}}."
+        "en": "Design a {{screen}} screen for a {{viewport}} mobile game fixture using {{theme}}.",
+        "zh-CN": "Design a {{screen}} screen for a {{viewport}} mobile game fixture using {{theme}}."
       }
     },
     "context": {
@@ -69,9 +69,9 @@
     },
     "inputs": [
       {
-        "name": "platform",
+        "name": "viewport",
         "type": "string",
-        "default": "h5"
+        "default": "390x844"
       },
       {
         "name": "screen",
@@ -84,9 +84,9 @@
         "default": "anomaly-monitor-dark"
       },
       {
-        "name": "monetization",
+        "name": "evidenceLevel",
         "type": "string",
-        "default": "rewarded-ad"
+        "default": "E2"
       }
     ],
     "mode": "compat-plugin",
@@ -103,7 +103,7 @@
       "outputContracts": [
         "HUD/mobile control layout",
         "runtime reference mapping",
-        "playable export checklist"
+        "fixture smoke checklist"
       ],
       "evidence": {
         "level": "E2",

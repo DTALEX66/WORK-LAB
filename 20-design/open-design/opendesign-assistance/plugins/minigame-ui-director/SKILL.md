@@ -15,10 +15,10 @@ Use this skill inside Open Design when the user wants a playable/mobile game int
 
 ## Inputs to ask for
 
-- `platform`: `h5`, `wechat`, `douyin`, `android-webview`, or `generic-mobile`.
-- `screen`: `start`, `main`, `failure`, `archive`, `skin-select`, `settings`, or `shop`.
+- `viewport`: `375x667`, `390x844`, or another explicitly recorded fixture viewport.
+- `screen`: `start`, `main`, `failure`, `archive`, `debrief`, or `settings`.
 - `theme`: default to `anomaly-monitor-dark` unless the user provides another theme.
-- `monetization`: `rewarded-ad`, `interstitial`, `banner`, or `none`.
+- `evidenceLevel`: default to `E2` for an isolated local design/fixture review.
 
 ## Mandatory visual direction
 
@@ -54,10 +54,10 @@ Return a concise design package:
 4. Visual style notes
 5. Interaction notes
 6. Asset references
-7. Implementation hints for minigame-runtime
+7. Fixture implementation hints for minigame-runtime
 ```
 
-If producing HTML, make it a self-contained prototype with responsive mobile-first CSS.
+If producing HTML, make it a self-contained prototype with responsive mobile-first CSS. Do not add platform release, advertising, revenue, or player-operations behavior.
 
 ## Local template references
 

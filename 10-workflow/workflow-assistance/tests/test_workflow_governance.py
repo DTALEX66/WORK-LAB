@@ -1236,7 +1236,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             {"security-guidance", "web/ddgs"},
         )
         self.assertEqual(config["display"]["busy_input_mode"], "queue")
-        self.assertEqual(config["display"]["skin"], "purple-gemstone")
+        self.assertNotIn("skin", config["display"])
         self.assertEqual(config["display"]["language"], "zh")
         self.assertFalse(config["sessions"]["auto_prune"])
         self.assertTrue(config["memory"]["memory_enabled"])
@@ -1421,13 +1421,17 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_governance_actions_are_commit_pinned_and_dependency_versioned(self) -> None:
         workflow = (ROOT / ".github/workflows/governance.yml").read_text(encoding="utf-8")
+        manifest = yaml.safe_load((ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8"))
         self.assertNotIn("actions/checkout@v", workflow)
         self.assertNotIn("actions/setup-python@v", workflow)
         self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", workflow)
         self.assertIn("actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38", workflow)
-        self.assertIn("PyYAML==6.0.3", workflow)
-        self.assertIn("hermes-agent==0.19.0", workflow)
-
+        self.assertIn("PyYAML>=6,<7", workflow)
+        self.assertIn("hermes-agent>=0.19,<0.21", workflow)
+        self.assertNotIn("hermes", manifest["requirements"])
+        self.assertIn("hermes", manifest["requirements"]["optional_adapters"])
+        self.assertEqual(manifest["compatibility"]["config_version_range"], ">=33,<35")
+        self.assertEqual(manifest["compatibility"]["config_version_snapshot"], 33)
     def test_readme_documents_kimi_speed_lane_commands_without_auto_switching(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         for command in (
@@ -1710,7 +1714,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             (repo / "config/config.yaml").write_text(
                 "mcp_servers:\n  context7:\n    command: hermes-npx\n    args: [-y, context7]\n"
                 "plugins:\n  enabled: [security-guidance, web/ddgs]\n"
-                "display:\n  busy_input_mode: queue\n  skin: portable\n",
+                "display:\n  busy_input_mode: queue\n",
                 encoding="utf-8",
             )
             (home / "config.yaml").write_text(
@@ -1735,7 +1739,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 {"security-guidance", "web/ddgs", "custom-plugin"},
             )
             self.assertEqual(result["display"]["busy_input_mode"], "queue")
-            self.assertEqual(result["display"]["skin"], "portable")
+            self.assertEqual(result["display"]["skin"], "live")
             self.assertFalse(result["model_picker"]["custom_lanes"]["enabled"])
             self.assertTrue(result["model_picker"]["local_picker_flag"])
             self.assertEqual(result["quick_commands"]["custom"]["target"], "/help")
@@ -1901,7 +1905,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
         contract = {
             "managed": {
-                "display.skin": "replace",
+
                 "mcp_servers": {"strategy": "merge_owned", "owned_names": ["context7"]},
                 "hooks.pre_tool_call": "replace_owned_matcher",
                 "plugins.enabled": "merge_additive",
@@ -1972,11 +1976,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
         changed["plugins"]["enabled"].remove("custom-plugin")
         assert_rejected(changed)
 
-    def test_sync_never_promotes_live_config_during_apply(self) -> None:
-        """A repo-to-live asset sync must not overwrite mixed-ownership config."""
+    def test_sync_promotes_managed_config_and_preserves_user_config(self) -> None:
+        """A repo-to-live sync applies the managed overlay without overwriting user config."""
 
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
-        spec = importlib.util.spec_from_file_location("workflow_sync_no_config_promotion", script)
+        spec = importlib.util.spec_from_file_location("workflow_sync_config_promotion", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
         module = importlib.util.module_from_spec(spec)
@@ -1990,19 +1994,20 @@ class WorkflowGovernanceTests(unittest.TestCase):
             home = temp_root / "home"
             home.mkdir()
             config = home / "config.yaml"
-            original = (
-                b"model:\n  provider: user-provider\n  default: user-model\n"
-                b"mcp_servers:\n  user-owned: {command: user-command}\n"
+            config.write_text(
+                "model:\n  provider: user-provider\n  default: user-model\n"
+                "mcp_servers:\n  user-owned: {command: user-command}\n",
+                encoding="utf-8",
             )
-            config.write_bytes(original)
 
-            with patch.object(module.shutil, "copy2", wraps=module.shutil.copy2) as copy2:
-                module.deploy_portable(repo, home, apply=True, include_backup=False)
+            module.deploy_portable(repo, home, apply=True, include_backup=False)
 
-            self.assertEqual(config.read_bytes(), original)
-            copied_sources = {Path(call.args[0]) for call in copy2.call_args_list}
-            self.assertNotIn(config, copied_sources)
-            self.assertNotIn(home / ".workflow-assistance-state.yaml", copied_sources)
+            live = yaml.safe_load(config.read_text(encoding="utf-8"))
+            self.assertEqual(live["model"]["provider"], "user-provider")
+            self.assertEqual(live["model"]["default"], "user-model")
+            self.assertIn("user-owned", live["mcp_servers"])
+            self.assertIn("context7", live["mcp_servers"])
+            self.assertEqual(live["display"]["language"], "zh")
             self.assertTrue((home / "SOUL.md").is_file())
             self.assertFalse(any(home.glob(".workflow-assistance-staging-*")))
 
@@ -2020,12 +2025,16 @@ class WorkflowGovernanceTests(unittest.TestCase):
         ):
             self.assertNotIn(command, scripts)
         self.assertNotIn("[switch]$DryRun", (ROOT / "setup.ps1").read_text(encoding="utf-8"))
-        for name in ("setup.sh", "setup.ps1"):
-            setup = (ROOT / name).read_text(encoding="utf-8")
+        ps_setup = (ROOT / "setup.ps1").read_text(encoding="utf-8")
+        sh_setup = (ROOT / "setup.sh").read_text(encoding="utf-8")
+        self.assertIn("[switch]$Apply", ps_setup)
+        self.assertIn("APPLY=0", sh_setup)
+        for setup in (ps_setup, sh_setup):
             self.assertIn("sync_hermes_workflow_assets.py", setup)
-            self.assertIn("--apply", setup)
-        self.assertNotIn('cp "$PACK_DIR/config/config.yaml"', (ROOT / "setup.sh").read_text(encoding="utf-8"))
-        self.assertNotIn("Copy-Item -Path $configSrc -Destination $configDst -Force", (ROOT / "setup.ps1").read_text(encoding="utf-8"))
+            self.assertIn("--plan-json", setup)
+            self.assertIn("--approved", setup)
+        self.assertNotIn("--apply --approved\n", ps_setup)
+        self.assertNotIn("--apply --approved \\\n", sh_setup)
 
     def test_readme_never_extracts_credentials_from_auth_files(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -2092,9 +2101,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "Context7 查询会外发数据",
             "一个 checkout 只能有一个 writer",
             "Task Ticket、plan mode、hook、路径声明和 worktree 都不是安全 sandbox",
-            "全局可迁移工作流增强包",
-            "不是只服务本仓库的项目内脚本集合",
-            "live Hermes Home 才是运行时落点",
+            "客户端中立工作流控制、治理、任务、交付与可观测层",
+            "不是 Agent Runtime、聊天软件、模型网关",
+            "Hermes 当前仍是一级深度支持 Adapter，但不是核心架构前提",
             "只对本仓库有用的临时脚本不得被包装成默认全局能力",
             "Context Pack",
             ".hermes/task-artifacts/context-pack.md",
@@ -2117,17 +2126,15 @@ class WorkflowGovernanceTests(unittest.TestCase):
             encoding="utf-8"
         )
         for marker in (
-            "全局工作流增强项目",
-            "本仓库只是这些全局增强资产的可审计源目录",
-            "增强目标是用户的整体 Agent 工作流",
+            "客户端中立的工作流控制、治理、任务、交付与可观测层",
+            "本仓库是可审计的 portable source",
+            "Hermes、Codex、CC Switch、GitHub、Open Design 是可替换 Adapter",
             "## 全局增强边界",
             "任意业务项目",
             "不得进入默认 portable config、全局 skill、默认 MCP 或同步脚本",
         ):
             self.assertIn(marker, definition)
-        self.assertIn(
-            "Hermes Agent + CC Switch + Codex + GitHub 的全局工作流", definition
-        )
+        self.assertIn("核心不是 Agent、聊天软件或模型网关", definition)
         self.assertNotIn("只对本仓库生效的局部工具集：\n\n## 四层职责", definition)
 
     def test_doctor_distinguishes_structural_and_live_checks(self) -> None:
@@ -2434,6 +2441,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "skill-provenance",
                 "security",
                 "context-pack",
+                "client-neutral-manifest",
+                "core-schemas",
+                "adapter-registry",
+                "adapter-conformance",
                 "portable-install",
                 "portable-install-runtime",
                 "provider-inventory",
@@ -2454,6 +2465,12 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "QUALITY_GATE_FAIL",
             "build_context_pack.py",
             "mcp_candidate_audit.py",
+            "verify_client_neutral_manifest.py",
+            "client-neutral-manifest",
+            "verify_core_schemas.py",
+            "core-schemas",
+            "verify_adapter_registry.py",
+            "adapter-registry",
             "portable-install-runtime",
             "--runtime",
             "scan_agent_rules.py",
@@ -2485,6 +2502,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "QUALITY_GATE_PASS",
             "QUALITY_GATE_FAIL",
             "context-pack",
+            "client-neutral-manifest",
+            "core-schemas",
             "mcp-audit",
             "PowerShell gate 优先 `pwsh`",
         ):
@@ -2507,7 +2526,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertIn(
             "verify: Run governance, compile, skill-provenance, security, context-pack, "
-            "portable-install, portable-install-runtime, provider-inventory, mcp-audit",
+            "client-neutral-manifest, core-schemas, adapter-registry, adapter-conformance, portable-install, portable-install-runtime, provider-inventory, mcp-audit",
             list_result.stdout,
         )
 

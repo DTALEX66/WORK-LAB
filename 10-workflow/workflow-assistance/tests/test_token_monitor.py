@@ -59,6 +59,17 @@ class TokenMonitorTests(unittest.TestCase):
         module = load_module()
         self.assertEqual(module.run_self_test(), 0)
 
+    def test_tail_resets_after_truncation_and_counts_new_record(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as raw:
+            path = Path(raw) / "agent.log"
+            path.write_text(json.dumps({"model": "m", "usage": {"input_tokens": 5, "output_tokens": 2, "total_tokens": 7}}) + "\n", encoding="utf-8")
+            monitor = module.UsageMonitor(path)
+            self.assertEqual(monitor.poll(), 1)
+            path.write_text(json.dumps({"usage": {"total_tokens": 3}}) + "\n", encoding="utf-8")
+            self.assertEqual(monitor.poll(), 1)
+            self.assertEqual(monitor.totals.total_tokens, 10)
+
 
 if __name__ == "__main__":
     unittest.main()

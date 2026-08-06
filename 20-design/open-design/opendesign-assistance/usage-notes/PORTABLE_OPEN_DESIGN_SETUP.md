@@ -49,7 +49,10 @@ codex --version
 ### 3. 克隆本仓库
 
 ```bash
-git clone git@github.com:DTALEX66/OPEN-DESIGN-Assistance.git "D:\All projects\OPEN-DESIGN-Assistance"
+git clone git@github.com:DTALEX66/WORK-LAB.git "D:\All projects\WORK-LAB"
+
+# Open Design assistance module:
+# D:\All projects\WORK-LAB\20-design\open-design
 ```
 
 ## 一键配置 Open Design
@@ -58,7 +61,7 @@ git clone git@github.com:DTALEX66/OPEN-DESIGN-Assistance.git "D:\All projects\OP
 
 ```bash
 python opendesign-assistance/scripts/configure_open_design_windows.py \
-  --project-root "D:\All projects\OPEN-DESIGN-Assistance"
+  --project-root "D:\All projects\WORK-LAB\20-design\open-design"
 ```
 
 脚本会：
@@ -82,7 +85,7 @@ D:\Programs\Open Design\Open Design - GPT Codex Proxy.bat
 
 ```bash
 python opendesign-assistance/scripts/doctor_open_design_windows.py \
-  --project-root "D:\All projects\OPEN-DESIGN-Assistance"
+  --project-root "D:\All projects\WORK-LAB\20-design\open-design"
 ```
 
 doctor 会检查 Open Design 配置、Codex CLI、Codex 登录态、默认项目位置、启动器、Git 状态和本地端口探测；它不会打印 OAuth token 或 API key。
@@ -93,7 +96,7 @@ doctor 会检查 Open Design 配置、Codex CLI、Codex 登录态、默认项目
 
 ```bash
 python opendesign-assistance/scripts/configure_open_design_windows.py \
-  --project-root "D:\All projects\OPEN-DESIGN-Assistance" \
+  --project-root "D:\All projects\WORK-LAB\20-design\open-design" \
   --open-design-exe "D:\Programs\Open Design\Open Design.exe"
 ```
 
@@ -101,7 +104,7 @@ python opendesign-assistance/scripts/configure_open_design_windows.py \
 
 ```bash
 python opendesign-assistance/scripts/configure_open_design_windows.py \
-  --project-root "D:\All projects\OPEN-DESIGN-Assistance" \
+  --project-root "D:\All projects\WORK-LAB\20-design\open-design" \
   --codex-bin "C:\Users\admin\AppData\Local\OpenAI\Codex\bin\xxxx\codex.exe"
 ```
 
@@ -109,7 +112,7 @@ python opendesign-assistance/scripts/configure_open_design_windows.py \
 
 ```bash
 python opendesign-assistance/scripts/configure_open_design_windows.py \
-  --project-root "D:\All projects\OPEN-DESIGN-Assistance" \
+  --project-root "D:\All projects\WORK-LAB\20-design\open-design" \
   --no-proxy
 ```
 
@@ -117,7 +120,7 @@ python opendesign-assistance/scripts/configure_open_design_windows.py \
 
 ```bash
 python opendesign-assistance/scripts/configure_open_design_windows.py \
-  --project-root "D:\All projects\OPEN-DESIGN-Assistance" \
+  --project-root "D:\All projects\WORK-LAB\20-design\open-design" \
   --dry-run
 ```
 
@@ -133,7 +136,7 @@ D:\All projects
 
 ```bash
 python opendesign-assistance/scripts/configure_open_design_windows.py \
-  --project-root "D:\All projects\OPEN-DESIGN-Assistance" \
+  --project-root "D:\All projects\WORK-LAB\20-design\open-design" \
   --permission-root "D:\All projects"
 ```
 
@@ -224,7 +227,7 @@ curl http://127.0.0.1:<port>/api/app-config
 
 ```text
 agentId = codex
-projectLocations 包含 D:\All projects\OPEN-DESIGN-Assistance
+projectLocations 包含 D:\All projects\WORK-LAB\20-design\open-design
 projectLocations 包含 D:\All projects
 CODEX_HOME 指向本机 %USERPROFILE%\.codex
 ```

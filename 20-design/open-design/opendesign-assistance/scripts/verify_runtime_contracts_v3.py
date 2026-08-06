@@ -53,7 +53,9 @@ class Result:
 def repo_root() -> Path:
     current = Path(__file__).resolve()
     for parent in [current, *current.parents]:
-        if (parent / ASSISTANCE_DIR).is_dir() and (parent / ".git").exists():
+        if not (parent / ASSISTANCE_DIR).is_dir():
+            continue
+        if any((ancestor / ".git").exists() for ancestor in [parent, *parent.parents]):
             return parent
     raise SystemExit("Could not locate repository root")
 

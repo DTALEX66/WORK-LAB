@@ -20,8 +20,12 @@ import yaml
 
 
 MANIFEST_SCHEMA_VERSION = 1
-SUPPORTED_CONFIG_VERSION = 33
+SUPPORTED_CONFIG_VERSION_RANGE = ">=33,<35"
+SUPPORTED_CONFIG_VERSION_SNAPSHOT = 33
 SUPPORTED_RUNTIME_FEATURES = {
+    "portable_manifest",
+    "project_data_boundary",
+    "client_neutral_adapter_contract",
     "platform_toolsets.cli",
     "sessions.auto_prune=false",
     "memory.enabled",
@@ -66,10 +70,20 @@ def load_manifest(repo: Path) -> dict:
     compatibility = manifest.get("compatibility")
     if not isinstance(compatibility, dict):
         raise RuntimeError("workflow manifest compatibility must be a mapping")
-    if compatibility.get("config_version") != SUPPORTED_CONFIG_VERSION:
+    if compatibility.get("config_version_range") != SUPPORTED_CONFIG_VERSION_RANGE:
         raise RuntimeError(
-            "workflow manifest config_version must be "
-            f"{SUPPORTED_CONFIG_VERSION} for this portable verifier"
+            "workflow manifest config_version_range must be "
+            f"{SUPPORTED_CONFIG_VERSION_RANGE} for this portable verifier"
+        )
+    snapshot = compatibility.get("config_version_snapshot")
+    if (
+        isinstance(snapshot, bool)
+        or not isinstance(snapshot, int)
+        or not 33 <= snapshot < 35
+    ):
+        raise RuntimeError(
+            "workflow manifest config_version_snapshot must remain inside "
+            f"{SUPPORTED_CONFIG_VERSION_RANGE}"
         )
     features = compatibility.get("required_runtime_features")
     if not isinstance(features, list) or not features or not all(isinstance(item, str) for item in features):
@@ -194,7 +208,7 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
         ),
         "display.busy_input_mode": config.get("display", {}).get("busy_input_mode") == "queue",
         "display.language": config.get("display", {}).get("language") == "zh",
-        "display.skin": config.get("display", {}).get("skin") == "purple-gemstone",
+
         "sessions.auto_prune": config.get("sessions", {}).get("auto_prune") is False,
         "memory.enabled": runtime_feature_checks["memory.enabled"],
         "platform_toolsets.cli": runtime_feature_checks["platform_toolsets.cli"],

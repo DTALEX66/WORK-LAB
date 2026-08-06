@@ -28,8 +28,8 @@ mcp_servers:
 
 # User-facing preferences layered on top of Hermes defaults.
 display:
+# Skin/theme remains user-selected and is intentionally not managed here.
   language: zh
-  skin: purple-gemstone
   busy_input_mode: queue
 
 # The user explicitly requires durable conversation history.

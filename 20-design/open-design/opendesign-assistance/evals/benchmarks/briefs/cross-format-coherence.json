@@ -1,0 +1,28 @@
+{
+  "schema_version": "open-design/benchmark-brief/v1",
+  "benchmark_id": "cross-format-coherence",
+  "discipline": "cross-format",
+  "version": "1.0.0",
+  "seed": "work-lab-cross-format-coherence-v1",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "device_scale_factor": 1
+  },
+  "variables": [
+    "artifact_path",
+    "design_goal",
+    "audience",
+    "constraints"
+  ],
+  "outputs": [
+    "visual-quality-report",
+    "before-after-comparison",
+    "artifact-hash"
+  ],
+  "hard_gates": [
+    "source-and-license-record",
+    "no-sensitive-data",
+    "human-calibration-before-promotion"
+  ]
+}

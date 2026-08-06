@@ -11,6 +11,7 @@ import argparse
 from copy import deepcopy
 import datetime as dt
 import hashlib
+import json
 import os
 import shutil
 from pathlib import Path
@@ -41,7 +42,7 @@ RETIRED_MANAGED_SKILL_ASSETS = {
     "software-development/cognitive-loop-os",
     "software-development/screenlingua",
 }
-MANAGED_DISPLAY_KEYS = {"busy_input_mode", "language", "skin"}
+MANAGED_DISPLAY_KEYS = {"busy_input_mode", "language"}
 MANAGED_SESSION_KEYS = {"auto_prune"}
 MANAGED_MEMORY_KEYS = {
     "memory_enabled",
@@ -115,7 +116,7 @@ def load_config_contract(repo: Path) -> dict:
             "managed": {
                 "display.busy_input_mode": "replace",
                 "display.language": "replace",
-                "display.skin": "replace",
+
                 "sessions.auto_prune": "replace",
                 "memory.memory_enabled": "replace",
                 "memory.user_profile_enabled": "replace",
@@ -296,6 +297,73 @@ def assert_preserved_live_config_before_promotion(
     )
 
 
+def verify_managed_config_readback(
+    repo: Path,
+    home: Path,
+    guard: PreservedConfigPromotionGuard,
+) -> None:
+    """Verify the managed overlay landed without changing user-owned config."""
+
+    live_cfg = home / "config.yaml"
+    live_data = yaml.safe_load(live_cfg.read_text(encoding="utf-8")) or {}
+    if not isinstance(live_data, dict):
+        raise RuntimeError("CONFIG_READBACK_FAIL config root must be a mapping")
+    assert_preserved_live_config(
+        guard.snapshot,
+        live_data,
+        guard.repo_data,
+        guard.contract,
+        retiring_legacy_plugins=guard.retiring_legacy_plugins,
+    )
+
+    def value_at(data: dict, dotted: str):
+        current: object = data
+        for part in dotted.split("."):
+            if not isinstance(current, dict) or part not in current:
+                raise RuntimeError(f"CONFIG_READBACK_FAIL missing managed key={dotted}")
+            current = current[part]
+        return current
+
+    managed = guard.contract.get("managed") or {}
+    managed_keys = [key for key, rule in managed.items() if isinstance(rule, str) and rule == "replace"]
+    for dotted in managed_keys:
+        expected = value_at(guard.repo_data, dotted)
+        if value_at(live_data, dotted) != expected:
+            raise RuntimeError(f"CONFIG_READBACK_FAIL managed key={dotted}")
+
+    repo_mcp = guard.repo_data.get("mcp_servers") or {}
+    live_mcp = live_data.get("mcp_servers") or {}
+    if not isinstance(repo_mcp, dict) or not isinstance(live_mcp, dict):
+        raise RuntimeError("CONFIG_READBACK_FAIL mcp_servers must be mappings")
+    for name, repo_config in repo_mcp.items():
+        live_config = live_mcp.get(name)
+        if not isinstance(repo_config, dict) or not isinstance(live_config, dict):
+            raise RuntimeError(f"CONFIG_READBACK_FAIL mcp={name}")
+        for key, expected in repo_config.items():
+            if key == "command" and expected == "hermes-npx":
+                expected = (home / "bin/hermes-npx.cmd" if os.name == "nt" else home / "bin/hermes-npx").as_posix()
+            if live_config.get(key) != expected:
+                raise RuntimeError(f"CONFIG_READBACK_FAIL mcp={name} key={key}")
+
+    repo_hooks = guard.repo_data.get("hooks") or {}
+    live_hooks = live_data.get("hooks") or {}
+    repo_pre_tool = repo_hooks.get("pre_tool_call") or []
+    live_pre_tool = live_hooks.get("pre_tool_call") or []
+    expected_terminal = f'{"python" if os.name == "nt" else "python3"} "{(home / "bin/hermes-project-terminal-guard.py").as_posix()}"'
+    if not any(
+        isinstance(hook, dict)
+        and hook.get("matcher") == "terminal"
+        and hook.get("command") == expected_terminal
+        for hook in live_pre_tool
+    ):
+        raise RuntimeError("CONFIG_READBACK_FAIL terminal hook")
+
+    repo_enabled = (guard.repo_data.get("plugins") or {}).get("enabled") or []
+    live_enabled = (live_data.get("plugins") or {}).get("enabled") or []
+    if not all(name in live_enabled for name in repo_enabled):
+        raise RuntimeError("CONFIG_READBACK_FAIL managed plugins")
+    print(f"CONFIG_READBACK_PASS managed_keys={len(managed_keys)} preserved_user_owned=true")
+
 def load_managed_skill_roots(repo: Path) -> tuple[str, ...]:
     """Return the exact repository-owned skill roots declared by the contract."""
 
@@ -395,6 +463,8 @@ def load_managed_file_mappings(repo: Path) -> tuple[tuple[str, str], ...]:
 def sha_tree(path: Path) -> tuple[str | None, int]:
     if not path.exists():
         return None, 0
+    if path.is_file():
+        return hashlib.sha256(path.read_bytes()).hexdigest()[:16], 1
     digest = hashlib.sha256()
     count = 0
     ignored = {".git", "__pycache__", ".cache", "logs", "sessions"}
@@ -405,6 +475,80 @@ def sha_tree(path: Path) -> tuple[str | None, int]:
         digest.update(file.read_bytes())
         count += 1
     return digest.hexdigest()[:16], count
+
+
+def _path_state(path: Path) -> dict[str, object]:
+    digest, count = sha_tree(path)
+    return {
+        "exists": path.exists(),
+        "kind": "directory" if path.is_dir() else "file" if path.is_file() else "missing",
+        "sha256": digest,
+        "entries": count,
+        "permission": oct(path.stat().st_mode & 0o777) if path.exists() else None,
+    }
+
+
+def build_action_plan(repo: Path, home: Path) -> dict[str, object]:
+    """Return the exact reviewed deployment plan without writing either root."""
+
+    repo = repo.resolve()
+    home = home.resolve()
+    if not repo.is_dir() or not home.is_dir():
+        raise ValueError("action plan requires existing repo and home directories")
+    validate_deployment_paths(repo, home)
+    managed_roots = load_managed_skill_roots(repo)
+    managed_binaries = load_managed_binary_paths(repo)
+    managed_file_mappings = load_managed_file_mappings(repo)
+    retired_roots = tuple(f"skills/{relative}" for relative in RETIRED_MANAGED_SKILL_ASSETS)
+    mapped_paths = [(relative, relative) for relative in (*managed_roots, *managed_binaries)]
+    mapped_paths.extend(managed_file_mappings)
+    mapped_paths.append(("config/.env.template", ".env.template"))
+    mapped_paths.extend((None, relative) for relative in retired_roots)
+    steps = []
+    for source_relative, target_relative in mapped_paths:
+        is_retired = source_relative is None
+        steps.append(
+            {
+                "id": f"replace-{target_relative.replace('/', '-')}",
+                "target": target_relative,
+                "operation": "remove_retired_asset" if is_retired else "replace_managed_asset",
+                "before": _path_state(home / target_relative),
+                "after": _path_state(repo / source_relative) if not is_retired else {"exists": False, "kind": "missing", "sha256": None, "entries": 0, "permission": None},
+                "rollback": {"available": True, "strategy": "backup-before-publish"},
+                "permissions": {"source": _path_state(repo / source_relative).get("permission") if not is_retired else None, "target": _path_state(home / target_relative).get("permission")},
+            }
+        )
+    return {
+        "schema_version": "workflow/action-plan/v1",
+        "plan_id": "workflow-assistance-portable-sync",
+        "status": "WAITING_APPROVAL",
+        "target": {"adapter": "hermes", "operation": "portable_sync", "project_root": str(repo), "live_root": str(home)},
+        "approval": {"approval_required": True, "status": "PENDING"},
+        "steps": steps,
+        "config": {
+            "target": "config.yaml",
+            "operation": "merge_managed_preserve_user_owned",
+            "before": _path_state(home / "config.yaml"),
+            "contract": load_config_contract(repo),
+            "rollback": {"available": True, "strategy": "backup-before-publish"},
+        },
+        "rollback": {"available": True, "strategy": "backup-before-publish-and-atomic-replace"},
+    }
+
+
+def verify_action_plan_readback(plan: dict[str, object], repo: Path, home: Path) -> None:
+    """Fail closed when any managed target differs from the planned after state."""
+
+    for step in plan.get("steps", []):
+        if not isinstance(step, dict):
+            raise ValueError("action plan steps must be mappings")
+        target = step.get("target")
+        expected = step.get("after")
+        if not isinstance(target, str) or not isinstance(expected, dict):
+            raise ValueError("action plan step is missing target/after state")
+        actual = _path_state(home / target)
+        if actual != expected:
+            raise RuntimeError(f"ACTION_PLAN_READBACK_FAIL target={target} expected={expected} actual={actual}")
 
 
 def copytree(src: Path, dst: Path, *, apply: bool) -> None:
@@ -820,6 +964,7 @@ def deploy_portable(
     *,
     apply: bool,
     include_backup: bool = True,
+    include_config: bool = True,
     allow_project_runtime_home: bool = False,
 ) -> None:
     """Run the single deployment orchestration used by CLI and verifier."""
@@ -834,6 +979,7 @@ def deploy_portable(
     managed_file_mappings = load_managed_file_mappings(repo)
     managed_files = tuple(target for _, target in managed_file_mappings)
     retired_roots = tuple(f"skills/{relative}" for relative in RETIRED_MANAGED_SKILL_ASSETS)
+    managed_config_files = ("config.yaml", ".workflow-assistance-state.yaml") if include_config else ()
     if include_backup:
         backup_paths(
             home,
@@ -844,6 +990,7 @@ def deploy_portable(
                         *managed_roots,
                         *managed_binaries,
                         *managed_files,
+                        *managed_config_files,
                         *retired_roots,
                     )
                 )
@@ -851,14 +998,16 @@ def deploy_portable(
             apply=apply,
         )
     if apply:
-        staging, _ = prepare_staging(
+        staging, config_guard = prepare_staging(
             repo,
             home,
             managed_roots,
             managed_binaries,
             managed_file_mappings,
-            include_config=False,
+            include_config=include_config,
         )
+        if config_guard is not None:
+            assert_preserved_live_config_before_promotion(config_guard, home)
 
         atomic_replace_paths(
             staging,
@@ -869,6 +1018,7 @@ def deploy_portable(
                         *managed_roots,
                         *managed_binaries,
                         *managed_files,
+                        *managed_config_files,
                         ".env.template",
                         *retired_roots,
                     )
@@ -876,6 +1026,8 @@ def deploy_portable(
             ),
             remove_rels=retired_roots,
         )
+        if config_guard is not None:
+            verify_managed_config_readback(repo, home, config_guard)
     else:
         for relative in managed_roots:
             copytree(repo / relative, home / relative, apply=False)
@@ -885,16 +1037,21 @@ def deploy_portable(
         for source_relative, target_relative in managed_file_mappings:
             copyfile(repo / source_relative, home / target_relative, apply=False)
         copyfile(repo / "config/.env.template", home / ".env.template", apply=False)
-        print("skip mixed-ownership live config.yaml: portable sync never promotes it")
+        if include_config:
+            merge_live_config(repo, home, apply=False, wrapper_root=home)
+        else:
+            print("skip mixed-ownership live config.yaml: portable sync never promotes it")
     if include_backup:
         prune_workflow_sync_backups(home, apply=apply)
 
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", default=str(default_repo_root()))
     parser.add_argument("--home", default=str(default_hermes_home()))
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--approved", action="store_true", help="explicitly approve the generated ActionPlan")
+    parser.add_argument("--plan-json", help="write the plan only inside <repo>/.hermes/task-artifacts/")
     args = parser.parse_args()
 
     repo = Path(args.repo)
@@ -904,7 +1061,26 @@ def main() -> None:
     if not home.exists():
         raise SystemExit(f"Hermes home not found: {home}")
 
+    if args.apply and not args.approved:
+        print("ACTION_PLAN_BLOCKED approval_required=true use --approved after reviewing the plan")
+        return 2
+
+    plan = build_action_plan(repo, home)
+    rendered_plan = json.dumps(plan, ensure_ascii=False, indent=2)
+    print(rendered_plan)
+    if args.plan_json:
+        output = Path(args.plan_json).resolve()
+        artifact_root = (repo / ".hermes" / "task-artifacts").resolve()
+        if not output.is_relative_to(artifact_root):
+            raise SystemExit("plan output must stay inside <repo>/.hermes/task-artifacts/")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered_plan + "\n", encoding="utf-8")
+        print(f"ACTION_PLAN_WRITTEN path={output}")
+
     deploy_portable(repo, home, apply=args.apply)
+    if args.apply:
+        verify_action_plan_readback(plan, repo, home)
+        print("ACTION_PLAN_READBACK_PASS")
 
     print("\nsummary hashes:")
     for label, path in (
@@ -914,7 +1090,8 @@ def main() -> None:
         ("live bin", home / "bin"),
     ):
         print(label, sha_tree(path))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

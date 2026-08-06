@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "work-lab/visual-qa-report/v1",
   "title": "Visual Quality Report",
   "type": "object",
   "required": [

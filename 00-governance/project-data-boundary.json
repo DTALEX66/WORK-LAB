@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "work-lab-project-data-boundary/v1",
+  "platformNeutral": true,
+  "runtimeRoot": ".hermes/task-runtime",
+  "taskArtifactsRoot": ".hermes/task-artifacts",
+  "logsRoot": ".hermes/task-runtime/logs",
+  "cacheRoot": ".hermes/task-runtime/cache",
+  "canonicalEvidenceRoot": "80-evidence",
+  "responsibilities": {
+    "runtimeRoot": "temporary task state, caches, logs and reproducible local runtime artifacts",
+    "taskArtifactsRoot": "sanitized task evidence and machine-readable assessment records",
+    "canonicalEvidenceRoot": "stable ignored evidence packages intended for project handoff",
+    "legacyWorkLabRoot": "input-only historical reference; not a write target"
+  },
+  "legacyAliases": [".work-lab", ".work-lab/evidence"],
+  "forbiddenExternalRoots": ["E:/", "E:\\"]
+}

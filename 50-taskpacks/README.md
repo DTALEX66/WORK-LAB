@@ -20,3 +20,8 @@ fail-closed. Execution evidence belongs in ignored `.hermes/task-artifacts/` or
 The task-pack directory stores reviewed manifests and stable summaries only; live
 queues, logs, caches, sessions, credentials and scheduler state remain runtime
 data outside the tracked tree.
+
+The current attachment reconciliation is recorded in
+`WORK-LAB-HERMES-TASKPACK-RECONCILIATION.md` and its machine-readable `.json`
+counterpart. Historical task IDs are namespaced as `HIST-*` there so they do not
+silently satisfy the final attachment task graph.
