@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 16,
+    "total": 17,
     "by_classification": {
       "entrypoint": 4,
-      "contract_drift": 6,
+      "contract_drift": 7,
       "test_behavior_alignment": 2,
       "working_directory_recovery": 2,
       "evidence_state": 2
@@ -305,6 +305,24 @@
       "evidence_level": "local-focused",
       "repeat_prevention": "Canonical CI inputs must be tracked or explicitly provisioned; never require an ignored runtime artifact in a fresh checkout.",
       "remaining_boundary": "The next exact-SHA CI run must verify the repaired integration and aggregate jobs.",
+      "status_before": "FAIL",
+      "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-017",
+      "task_id": "ROOT-003",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "scripts/ci/aggregate_gate.py",
+      "command": "python scripts/ci/aggregate_gate.py",
+      "exit_code": 1,
+      "observed_error": "Remote aggregate reported missing_or_failed minigame after workflow, open-design, observer and integration all succeeded.",
+      "root_cause": "The v1 aggregate gate still required the retired minigame job instead of the v2 observer job.",
+      "fix": "Changed the canonical required job set to workflow, open-design, observer and integration and added positive/negative regression tests.",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python tests/ci/test_aggregate_gate.py",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Any module job rename must update the aggregate required set, workflow payload, root tests and exact-SHA CI readback together.",
+      "remaining_boundary": "A new exact-SHA CI run must confirm aggregate success after this fix.",
       "status_before": "FAIL",
       "status_after": "PASS"
     }

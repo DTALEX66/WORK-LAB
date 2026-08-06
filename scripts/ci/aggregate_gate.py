@@ -2,7 +2,7 @@ from __future__ import annotations
 import json
 import sys
 
-REQUIRED = {"workflow", "open-design", "minigame", "integration"}
+REQUIRED = {"workflow", "open-design", "observer", "integration"}
 
 def main(payload: str) -> int:
     data = json.loads(payload)
