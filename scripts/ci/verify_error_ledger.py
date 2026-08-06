@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-LEDGER_REL = Path(".hermes/task-artifacts/error-ledger-20260806.json")
+LEDGER_REL = Path("50-taskpacks/error-ledger.json")
 ALLOWED_PHASES = {
     "AUDIT_ONLY",
     "PLAN",
