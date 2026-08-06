@@ -34,6 +34,10 @@ $PythonVersion = & $PythonCommand @PythonPrefixArgs --version 2>&1
 if ($LASTEXITCODE -ne 0) {
     throw "Python interpreter could not be executed: $PythonCommand"
 }
+& $PythonCommand @PythonPrefixArgs -c "import yaml; assert 6 <= int(yaml.__version__.split('.')[0]) < 7" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    throw "PyYAML >=6,<7 is required. Install it into this Python environment before running setup."
+}
 if (-not (Test-Path -LiteralPath $HermesHome -PathType Container)) {
     throw "Hermes home must already exist; refusing to create a live target: $HermesHome"
 }
