@@ -44,6 +44,8 @@ class GrowthCandidateLifecycleTests(unittest.TestCase):
             value = module.transition(value, target, source_digest="a" * 64)
         with self.assertRaisesRegex(ValueError, "approval"):
             module.promote(value)
+        with self.assertRaisesRegex(ValueError, "approval"):
+            module.promote(value, approval="false")
         approved = module.promote(value, approval=True)
         self.assertEqual(approved["status"], "approved")
 
@@ -69,6 +71,10 @@ class GrowthCandidateLifecycleTests(unittest.TestCase):
             module.validate_candidate(bad)
         with self.assertRaisesRegex(ValueError, "digest"):
             module.transition(candidate(module), "isolated", source_digest="bad")
+        missing_digest = candidate(module, "approved")
+        del missing_digest["sourceDigest"]
+        with self.assertRaisesRegex(ValueError, "source digest"):
+            module.validate_candidate(missing_digest)
 
 
 if __name__ == "__main__":

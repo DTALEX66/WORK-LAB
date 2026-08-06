@@ -13,10 +13,10 @@ WORK-LAB Observer 是严格只读的观测与证据层，负责从 Workflow Assi
 - 展示 source/coverage/quality/evidence 状态；
 - 在 Observer 数据损坏后重建派生 Projection。
 
-持久化入口为 `src/observer_store.py`。它只接受位于项目 `.hermes/task-runtime/`
-下的 Observer runtime root，写入 Observer-owned JSONL，并在读取时重新执行 schema、
-敏感字段和重复 event ID 校验。它不修改 Workflow Ledger、Open Design Registry 或
-其他权威源。
+下层持久化入口为 `src/observer_store.py`。调用时必须同时传入
+`project_root` 和 `project_root/.hermes/task-runtime/observer`；它会解析并严格比较
+两者，拒绝同名外部目录、symlink/junction 越界目录和非 Git 项目根。它写入
+Observer-owned JSONL，并在读取时重新执行 schema、敏感字段和重复 event ID 校验。
 
 ## 禁止的能力
 

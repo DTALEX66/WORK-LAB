@@ -19,13 +19,16 @@ class ObserverStore:
 
     FILENAME = "observer-events.jsonl"
 
-    def __init__(self, runtime_root: Path, *, max_events: int = 256) -> None:
+    def __init__(self, runtime_root: Path, *, project_root: Path, max_events: int = 256) -> None:
+        self.project_root = Path(project_root).resolve()
+        if not (self.project_root / ".git").exists():
+            raise ValueError("Observer store project root must be a Git project")
         self.runtime_root = Path(runtime_root).resolve()
         if not self.runtime_root.is_dir():
             raise ValueError("Observer runtime root must already exist")
-        parts = {part.lower() for part in self.runtime_root.parts}
-        if ".hermes" not in parts or "task-runtime" not in parts:
-            raise ValueError("Observer store must stay inside .hermes/task-runtime")
+        expected = (self.project_root / ".hermes" / "task-runtime" / "observer").resolve()
+        if self.runtime_root != expected:
+            raise ValueError("Observer store must stay in the project Observer runtime root")
         if max_events < 1:
             raise ValueError("max_events must be positive")
         self.max_events = max_events
