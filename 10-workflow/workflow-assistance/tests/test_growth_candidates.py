@@ -76,6 +76,18 @@ class GrowthCandidateLifecycleTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source digest"):
             module.validate_candidate(missing_digest)
 
+    def test_intake_binds_canonical_source_and_readback_is_exact(self) -> None:
+        module = load_module()
+        source = {"origin": "fixture", "payload": {"b": 2, "a": 1}}
+        value = module.intake("candidate-1", "fixture", "learn", "low", source)
+        self.assertEqual(value["status"], "discovered")
+        self.assertEqual(value["sourceDigest"], module.source_digest(source))
+        self.assertEqual(module.readback(value, dict(value)), value)
+        tampered = dict(value)
+        tampered["origin"] = "tampered"
+        with self.assertRaisesRegex(ValueError, "readback mismatch"):
+            module.readback(value, tampered)
+
 
 if __name__ == "__main__":
     unittest.main()
