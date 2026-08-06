@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 import re
 from typing import Any
 
@@ -65,6 +67,34 @@ def discover(candidate_id: str, origin: str, classification: str, risk: str) -> 
         "risk": risk,
     }
     return validate_candidate(candidate)
+
+
+def source_digest(source: Any) -> str:
+    """Return the stable digest used to bind a candidate to its intake source."""
+    canonical = json.dumps(source, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def intake(
+    candidate_id: str,
+    origin: str,
+    classification: str,
+    risk: str,
+    source: Any,
+) -> dict[str, Any]:
+    """Create a discovered candidate while retaining only a source digest."""
+    candidate = discover(candidate_id, origin, classification, risk)
+    candidate["sourceDigest"] = source_digest(source)
+    return validate_candidate(candidate)
+
+
+def readback(candidate: dict[str, Any], persisted: dict[str, Any]) -> dict[str, Any]:
+    """Validate that a persisted candidate is an exact contract readback."""
+    expected = validate_candidate(copy.deepcopy(candidate))
+    actual = validate_candidate(copy.deepcopy(persisted))
+    if actual != expected:
+        raise ValueError("candidate readback mismatch")
+    return actual
 
 
 def transition(candidate: dict[str, Any], target: str, *, source_digest: str | None = None) -> dict[str, Any]:
