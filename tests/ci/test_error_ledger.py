@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/ci/verify_error_ledger.py"
-LEDGER = ROOT / ".hermes/task-artifacts/error-ledger-20260806.json"
+LEDGER = ROOT / "50-taskpacks/error-ledger.json"
 
 
 def load_module():

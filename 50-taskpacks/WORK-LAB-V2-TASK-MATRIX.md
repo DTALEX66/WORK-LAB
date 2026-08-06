@@ -2,18 +2,24 @@
 
 This is a handoff index, not a replacement for the authoritative v2 task graph. Statuses are evidence-scoped and must not be promoted across layers.
 
+**2026-08-06 current-tree note:** the authoritative v2 task graph attachment is not
+present in the local attachment directory. A visible older taskpack maps `WA-003`
+and `WA-004` to different titles than the v2 handoff. The rows below therefore keep
+the v2 labels as unresolved identity, while recording only evidence produced by the
+current tree; no taskpack identity is inferred from the older ZIP.
+
 | Scope | Current status | Evidence | Remaining boundary |
 |---|---|---|---|
 | ROOT governance/contracts/dependencies | `LOCAL_PASS` | Root gates, contract catalog `20/20`, module dependencies PASS | Fresh CI must match the final pushed SHA |
 | ROOT error ledger | `LOCAL_PASS` | `ERROR_LEDGER_PASS entries=17 classifications=5 raw_sensitive_data=false counts_consistent=true` | Keep sanitized canonical copy in `50-taskpacks/error-ledger.json` |
 | CONT-005..008 continuity | `LOCAL_PARTIAL` | Focused ledger/reconciliation implementation and tests | Canonical assessment/reconciliation writeback not independently confirmed |
-| WA core/schema/adapter conformance | `LOCAL_PASS` | Full Workflow suite previously `193 PASS, 4 skipped`; adapter focused tests pass | Growth/promotion and delivery reconciliation remain open |
-| WA-003 / WA-004 | `NOT_RUN` / incomplete | No canonical completion evidence | Growth discovery, classification, quarantine, promotion and rollback gates |
+| WA core/schema/adapter conformance | `LOCAL_PASS` | Current Workflow `QUALITY_GATE_PASS`; adapter focused tests and core schema checks pass | Growth input discovery and Git/GitHub delivery reconciliation remain open |
+| WA-003 / WA-004 | `LOCAL_PARTIAL` / task identity unresolved | `growth_candidates.py`; 5 lifecycle tests; compile/governance gate pass | Authoritative v2 task mapping, real discovery/scanning input, and delivery reconciliation |
 | WA-007 / WA-008 | `PARTIAL` / incomplete | Delivery boundary and existing workflow assets | Git/GitHub evidence reconciliation and responsibility split |
-| OD domain pack/benchmark registry | `LOCAL_PASS` / `E2 isolated-runtime` | Domain pack `3/3`; benchmark registry `12`, human calibration required | E3 live runtime and human calibration not complete |
+| OD domain pack/benchmark registry | `LOCAL_PASS` / `E2 isolated-runtime` | Domain boundary verifier PASS; Open Design verifier `460/460`; benchmark registry `12`, human calibration required | E3 live runtime and human calibration not complete |
 | OD-002 / OD-007 | `BLOCKED_USER_DECISION` | Dual-source and license boundaries documented | Select source-of-truth and license policy |
 | OD-004 / OD-006 / OD-008 | `PARTIAL` / incomplete | Design contracts and verifier exist | Master method cards, human QA, product receipt and device regression |
-| Observer skeleton/runtime | `LOCAL_PASS` | Skeleton/runtime tests and read-only mutation boundary pass | Tauri UI, real projections, budgets, quality persistence and isolation |
+| Observer skeleton/runtime | `LOCAL_PARTIAL` | Skeleton/runtime tests plus `observer_store` persistence/readback `4/4` pass | Tauri UI, real projections, budgets, quality persistence and isolation |
 | OBS-001 / OBS-005..009 | `PARTIAL` / incomplete | Structural/runtime evidence only | Full runtime integrations and UI are not implemented |
 | MINIGAME local analytics | `LOCAL_PASS` | `321/321 PASS`; generated files restored | Product is archive/fixture only in v2 root |
 | MG-003 / MG-004 / MG-005 / MG-007 / MG-008 | `BLOCKED` / `BLOCKED_USER_DECISION` | Boundaries and duplicate-source counts recorded | Fact-source decision, platform/device/commercial/product acceptance |

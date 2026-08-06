@@ -4,7 +4,7 @@ WORK-LAB Observer 是严格只读的观测与证据层，负责从 Workflow Assi
 
 ## 当前阶段
 
-这是 v2 架构迁移的兼容骨架。当前只建立模块边界、契约和结构验证，不迁移 Tauri UI、不读取凭据/Prompt/Response/Session，也不提供任务执行、批准、配置应用或 Git 写入入口。
+这是 v2 架构迁移的只读运行时基础。当前已建立模块边界、事件契约、项目内 JSONL 持久化、重启 readback、Projection 重建和结构验证；不迁移 Tauri UI、不读取凭据/Prompt/Response/Session，也不提供任务执行、批准、配置应用或 Git 写入入口。
 
 ## 允许的能力
 
@@ -12,6 +12,11 @@ WORK-LAB Observer 是严格只读的观测与证据层，负责从 Workflow Assi
 - 写入 Observer 自己的缓存、事件索引、Projection 和报告；
 - 展示 source/coverage/quality/evidence 状态；
 - 在 Observer 数据损坏后重建派生 Projection。
+
+持久化入口为 `src/observer_store.py`。它只接受位于项目 `.hermes/task-runtime/`
+下的 Observer runtime root，写入 Observer-owned JSONL，并在读取时重新执行 schema、
+敏感字段和重复 event ID 校验。它不修改 Workflow Ledger、Open Design Registry 或
+其他权威源。
 
 ## 禁止的能力
 

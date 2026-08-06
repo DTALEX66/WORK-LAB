@@ -67,8 +67,9 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 | 全链路诊断 | Hermes、认证、MCP、代理端口、Node、Codex 版本和可选真实执行 smoke | `scripts/workflow/hermes_workflow_doctor.py` |
 | Codex 执行 | 跨平台 launcher、非交互执行规则、只读审查、隔离 worktree、TaskPack exact-tree runner；默认只冻结，需显式 `--publish` 才可发布 | `bin/codex*`、`scripts/workflow/run_taskpack_agent.py`、`skills/autonomous-ai-agents/codex/` |
 | GitHub 交付 | `main` 作为跨设备 SSOT；仅以 exact-SHA CI 与目标分支包含关系确认发布闭环 | `../../.github/workflows/work-lab-gate.yml`、`agent-workflow-fortress` |
-| 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
-| Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/workflow/gateway-cron-delivery.md` |
+|| 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
+|| Growth candidates | 候选发现、隔离、扫描、评估、显式审批晋级、隔离阻断与退役回滚；默认不自动批准 | `schemas/workflow/growth-candidate.schema.json`、`scripts/workflow/growth_candidates.py` |
+|| Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/workflow/gateway-cron-delivery.md` |
 | 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `bin/hermes-project-data.py`、`skills/software-development/project-data-boundary/` |
 | Token 监视器 | Windows Tauri 2 Dashboard，实时扫描本地 JSON/JSONL usage，按 GPT/Codex、DeepSeek、Kimi 和模型显示输入/输出/缓存/reasoning/总 token；无 usage 时不估算 | `apps/token-monitor-desktop/`、`scripts/workflow/token_monitor.py`、`docs/workflow/token-monitor.md` |
 | MCP | 默认固定 Context7 包版本；候选 MCP 另行执行 pinned provenance 审计 | `docs/mcp/workflow-mcp-stack.md`、`docs/mcp/mcp-catalog-governance.md`、`scripts/workflow/mcp_candidate_audit.py` |
