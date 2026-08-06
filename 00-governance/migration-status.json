@@ -1,6 +1,9 @@
 {
   "schemaVersion": "work-lab-migration-status/v1",
-  "status": "AUDITED_ABSORBED_LOCAL_CUTOVER_COMPLETE",
+  "taskIdNamespace": "historical-migration-v6; attachment-taskpack-v1-is-final",
+  "activeTaskpackReconciliation": "50-taskpacks/WORK-LAB-HERMES-TASKPACK-RECONCILIATION.json",
+  "status": "HISTORICAL_SNAPSHOT_STALE_FOR_CURRENT_TREE",
+  "historicalStatus": "AUDITED_ABSORBED_LOCAL_CUTOVER_COMPLETE",
   "repository": "DTALEX66/WORK-LAB",
   "candidateRun": "20260805T091816Z",
   "modules": ["10-workflow/workflow-assistance", "20-design/open-design", "30-products/minigame"],
@@ -12,6 +15,14 @@
   "publishedTree": "4d7e23b21c171456d09b6a4830e17c3cc6bd7575",
   "statusRecordedAgainstCommit": "c4972a0cec2734bd73b46e253b76e778d78f61b0",
   "statusRecordedAgainstTree": "59135ce382b5d0c564e770cfe8121290d912a90b",
+  "currentTreeEvidence": {
+    "head": "f89b2acbe5de2b6aade12861d9e6036de3a5b858",
+    "branch": "main",
+    "worktree": "DIRTY_UNCOMMITTED",
+    "publishedCommitMatchesCurrentHead": false,
+    "statusRecordedCommitMatchesCurrentHead": false,
+    "freshMigrationReconciliation": "PENDING"
+  },
   "localRecoveryRef": "recovery/pre-cutover-3df92cbba39e",
   "legacyLocalCheckoutArchive": "PHYSICAL_RENAME_COMPLETED_SOURCE_COPY_PRESERVED",
   "legacyLocalArchiveManifest": "D:/All projects/WORK-LAB-ARCHIVE/migration-20260805T120000Z/source-checkouts-archive-manifest.json",

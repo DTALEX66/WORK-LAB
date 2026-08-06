@@ -24,6 +24,19 @@ test('UI V3 start handoff is a reachable modal instead of a clipped horizontal p
   assert.match(v3, /button\[data-role="primary-start"\][\s\S]*min-height:\s*48px/, 'start action should preserve a full touch target');
 });
 
+test('wide start handoff preserves the CCTV monitor as the primary surface', () => {
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  const marker = '/* UI V3 NIGHT RELAY — Monitor primary, Operate secondary. */';
+  const v3 = css.slice(css.lastIndexOf(marker));
+
+  assert.match(v3, /\.start-overlay\s*\{[\s\S]*justify-content:\s*end/, 'wide handoff should dock to the side instead of centering over CCTV');
+  assert.match(v3, /\.start-overlay\s*\{[\s\S]*backdrop-filter:\s*none/, 'wide handoff should not blur the monitor');
+  assert.match(v3, /\.start-card\s*\{[\s\S]*width:\s*min\(252px,\s*calc\(100vw\s*-\s*32px\)\)/, 'wide handoff card should fit the dedicated action rail');
+  assert.match(v3, /\.start-card\s*\{[\s\S]*margin:\s*0\s+0\s+0\s+auto/, 'wide handoff card should dock exactly to the right edge');
+  assert.match(v3, /@media \(max-width:\s*700px\)[\s\S]*\.start-overlay\s*\{[\s\S]*align-items:\s*end/, 'mobile handoff should remain a bottom sheet');
+});
+
+
 test('short portrait devices fall back to shell scrolling instead of clipping panels', () => {
   const marker = '/* Mobile portrait final pass: keep CCTV first and keep the start strip reachable. */';
   const finalMobile = css.slice(css.lastIndexOf(marker));

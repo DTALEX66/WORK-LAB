@@ -1,257 +1,42 @@
-# WORK-LAB Workflow Assistance
+# Workflow-assistance
 
-> 面向多种 AI 工作流软件的客户端中立治理、执行增强与只读观测模块。
+[![workflow-governance](https://github.com/DTALEX66/WORK-LAB/actions/workflows/work-lab-gate.yml/badge.svg)](https://github.com/DTALEX66/WORK-LAB/actions/workflows/work-lab-gate.yml)
 
-Workflow Assistance 是 WORK-LAB 中负责提升 AI 辅助开发与生产工作流可靠性、效率和可审计性的基础模块。
-
-它不再创建一个新的智能体，也不替代 Hermes、Codex、Cursor、WorkBuddy、Claude Code 或其他工作流软件。它负责统一管理这些软件需要的配置、Plugins、Skills、MCP、Rules、AGENTS、TaskPack、Context 和执行边界，并通过只读观测界面记录任务、Token、流量、错误、Git、CI 和交付证据。
-
-实际的模型推理、工具调用、文件修改、上传下载、Git 操作和发布动作，最终仍由对应的软件或智能体完成。
+面向 Windows、Linux 与 macOS 的 **客户端中立工作流控制、治理、任务、交付与可观测层**：以可迁移合同和 Adapter 连接 Hermes、Codex、CC Switch、GitHub、Open Design 等入口；集中维护无密钥配置、ActionPlan、项目边界、任务证据、链路诊断、Context7 MCP、Agent Skills、治理测试和跨平台 CI。
 
 ## 项目定位
 
-Workflow Assistance 的核心定位是：
+`Workflow-assistance` 不是 Agent Runtime、聊天软件、模型网关，也不是 Hermes、Codex 或 CC Switch 的安装包。它是一个**客户端中立的工作流控制与治理层**：核心只解析 manifest、合同、任务、证据和边界；具体执行入口通过可替换 Adapter 接入。Hermes 当前仍是一级深度支持 Adapter，但不是核心架构前提。
 
-> AI 工作流软件之上的治理与增强层，以及一个只读的工作流观测台。
+当前一级 Adapter：`Hermes`、`Codex`、`CC Switch`、`GitHub`、`Open Design`。Cursor、Claude Code、WorkBuddy 先以 manifest-only/只读检测方式登记，必须有真实证据后才升级支持级别。
 
-它是面向多种 AI 工作流软件的**全局可迁移工作流增强包**，不是只服务本仓库的项目内脚本集合。只对本仓库有用的临时脚本不得被包装成默认全局能力。它不会安装 Hermes、Codex 或 CC Switch 主体，只提供配置治理、任务准备、边界约束和只读观测。仓库是可审计源目录；live Hermes Home 才是运行时落点，外部客户端自己的运行目录才是对应软件的运行时落点。Workflow Assistance 不把仓库伪装成外部客户端运行时，也不替代外部软件执行实际动作。
+核心不负责：Agent 人格、聊天/Prompt 输入、模型推理、Provider 路由、凭据管理、自动批准外部写入。每个写操作都必须从用户批准的 ActionPlan 进入对应 Adapter。
 
-它解决的不是“再做一个会聊天的 Agent”，而是解决多个 AI 工作软件在真实使用中经常出现的工作流问题：
-
-- 全局配置、插件、Skills 和规则分散，升级后容易漂移。
-- AI 软件容易遗漏 AGENTS、RULES、TaskPack 和项目边界。
-- 上下文重复、无关文件过多，导致 Token 浪费。
-- 失败后重复盲试，缺少明确的重试、恢复和停止条件。
-- Git、上传、下载、PR、CI 和交付过程不连续。
-- 不同客户端的配置、模型路线、权限和输出格式不统一。
-- 任务状态、Token 消耗、网络元数据和错误记录分散，难以判断真实效率。
-
-Workflow Assistance 把这些问题统一为配置治理、能力适配、执行规范、效率优化、可靠交付和证据观测六类能力。
-
-## 三层工作关系
+全局增强范围包括：跨客户端任务生命周期、配置/权限边界、项目数据隔离、ActionPlan 与回滚、交付和 evidence envelope、token/网络/GitHub/artifact 观测，以及各 Adapter 的安全接入。任何新增能力都必须先判断它增强的是这条通用工作流，还是只对本仓库有用；只对本仓库有用的临时脚本不得被包装成默认全局能力。
 
 ```text
-┌──────────────────────────────────────────────┐
-│ WORK-LAB Workflow Assistance                  │
-│ 配置治理 · 规则规范 · TaskPack · Context      │
-│ 客户端适配 · 边界约束 · 效率优化 · 证据规范   │
-└──────────────────────┬───────────────────────┘
-                       │ 提供合同、规则、任务包和验证标准
-                       ▼
-┌──────────────────────────────────────────────┐
-│ 外部 AI 工作流软件与智能体                    │
-│ Hermes · Codex · Cursor · WorkBuddy · 其他    │
-│ 实际推理 · 工具调用 · 文件修改 · Git与发布    │
-└──────────────────────┬───────────────────────┘
-                       │ 输出日志、事件、usage、Git和CI事实
-                       ▼
-┌──────────────────────────────────────────────┐
-│ WORK-LAB Workflow Observability               │
-│ 只读状态 · Token · 流量元数据 · 任务记录      │
-│ 错误 · Git · CI · 交付证据 · 历史审计          │
-└──────────────────────────────────────────────┘
+Client-neutral workflow control plane
+├─ Core contracts     manifest, adapters, domain packs, plans, runs, events, evidence
+├─ Adapter boundary   Hermes / Codex / CC Switch / GitHub / Open Design / other clients
+├─ Governance         approval, project containment, rollback, redaction, exact-SHA CI
+└─ Replaceable entry  client-specific runtime remains optional and independently verified
 ```
 
-## 核心能力
-
-### 1. 全局工作流资产治理
-
-统一登记、规范和检查：
-
-- 配置文件和模型路线。
-- Plugins、Skills、MCP。
-- AGENTS、RULES、SOUL 和项目规范。
-- TaskPack、任务模板和验收清单。
-- Context Pack、项目摘要和交接材料。
-- 启动器、Hooks、环境声明和兼容性信息。
-
-每项资产都应记录来源、用途、所有权、摘要、兼容能力和变更状态，支持差异预览、漂移检测、备份和验证。
-
-Workflow Assistance 可以生成配置计划、差异报告和验证报告；可视化界面不直接 Apply 或修改外部软件配置。
-
-### 2. 客户端中立适配
-
-不同软件通过能力合同接入，不把某个软件或版本永久写死。
-
-适配器按实际能力声明：
-
-- Detect：检测软件是否存在。
-- Read Config：读取非敏感配置摘要。
-- Read Events：读取公开日志、JSON、JSONL、OTel 或 Hook 事件。
-- Observe：关联任务、会话、模型、Token、错误和结果。
-- Prepare：生成适合客户端消费的任务包和上下文。
-- Verify：读取公开输出并验证结果。
-
-当前重点覆盖 Hermes、Codex、CC Switch 和 GitHub。Cursor、WorkBuddy、Claude Code 以及其他国内外软件通过同一合同逐步加入。
-
-如果某个软件没有稳定接口，系统显示 `DETECT_ONLY`、`READ_ONLY`、`PARTIAL` 或 `UNAVAILABLE`，不会通过屏幕自动化假装实现深度适配。
-
-### 3. 执行增强
-
-Workflow Assistance 不承担模型执行，而是为外部软件提供更可靠的执行条件：
-
-- 执行前环境和边界预检。
-- 任务目标、允许路径和禁止路径。
-- 最小必要 Context Pack。
-- 规则、Skills 和工具能力的结构化交接。
-- Token、时间、步骤和修复轮次预算。
-- 重复调用抑制和无效重试识别。
-- 失败分类、Checkpoint、恢复条件和停止条件。
-- 验证、Review、Git 和交付证据要求。
-
-自动循环的规则可以写入 TaskPack 或客户端工作流，但实际推理和工具调用仍由外部软件完成。Workflow Assistance 不建设新的 Agent Runtime。
-
-### 4. Token 与效率优化
-
-目标不是单纯减少 Prompt，而是降低“达到已验证结果”的总成本：
-
-- 减少无关文件和重复上下文。
-- 复用稳定规则和未变化证据。
-- 抑制输入未变化的重复调用。
-- 统计无产出调用和无进展重试。
-- 记录首轮通过率、恢复成功率和验证耗时。
-- 按已验证任务计算 Token 消耗。
-
-Token 数据必须标记来源和精度：
-
-- `exact`：Provider 或客户端提供明确 usage。
-- `estimated`：经过明确说明的本地估算。
-- `unavailable`：没有可靠数据。
-
-不可获得的数据不能显示为零，也不能伪造为精确值。
-
-### 5. Git、网络和交付可靠性
-
-Workflow Assistance 统一记录和验证：
-
-- Git 工作树、分支、远端和精确 SHA。
-- Fetch、Pull、Push、PR、CI 和交付状态。
-- 上传下载的来源、目标、大小、摘要和校验结果。
-- 超时、限流、网络失败、代理异常和传输中断。
-- 断点恢复、幂等重试和远端分叉状态。
-
-具体上传、下载、Push、PR、Merge 和发布动作仍由用户授权的工具或智能体执行；观测界面只读取和记录结果。
-
-## 只读工作流观测台
-
-可视化界面是任务管理器式的观察界面，不是控制台。
-
-### 可以查看和记录
-
-- 当前运行的软件、客户端版本和能力状态。
-- 任务名称、项目、工作目录、分支和 `run_id`。
-- 任务状态、耗时、最近活动和阻塞原因。
-- 当前模型、Provider、Token、请求次数和流量元数据。
-- CPU、内存、进程和网络资源等可读取状态。
-- 工具调用结果摘要、错误、重试和验证状态。
-- 文件摘要、Git、PR、CI 和交付证据。
-- 配置、规则、插件和 Skills 的状态快照。
-- 历史事件、时间线和效率趋势。
-
-### 不负责操作
-
-界面不提供也不调用：
-
-- 暂停、继续、取消、重试或终止任务。
-- 修改配置、规则、Plugins、Skills 或 MCP。
-- 执行 Shell、Git、上传、下载、Push、PR、Merge 或 Release。
-- 直接控制任何外部智能体或客户端进程。
-- 自动批准权限或绕过安全边界。
-
-界面只允许写入 WORK-LAB 自己的脱敏观测记录和派生统计，不写入外部客户端的 live 配置。
-
-## 数据与隐私边界
-
-默认只采集任务相关元数据：
-
-- Token 数量和来源。
-- Provider、模型和客户端标识。
-- 请求次数、耗时、状态、错误、重试和字节数。
-- 任务状态、Git、CI、文件摘要和证据引用。
-
-默认不采集：
-
-- API Key、OAuth、Cookie、Bearer Token 和私钥。
-- auth store、认证数据库和会话数据库。
-- Prompt、模型回复正文和请求/响应正文。
-- 全机网络数据包和 TLS 解密内容。
-- 未经授权的项目业务源代码。
-
-数据来源分为：
-
-- `authoritative`：客户端、Provider、Git 或 GitHub 的权威事实。
-- `derived`：由已记录事实计算出的指标。
-- `declared`：用户或配置声明但尚未独立验证的内容。
-
-## 兼容性原则
-
-- 不永久绑定 Hermes 为唯一入口。
-- 不把某个客户端版本写死为架构前提。
-- 运行时记录真实软件版本、可执行文件摘要和能力结果。
-- 新客户端通过 Adapter、Manifest 和能力探测接入。
-- 不读取私有协议、私有 IPC 或不稳定的内部数据库作为核心依赖。
-- 没有可靠数据时明确显示 `UNAVAILABLE`，不猜测。
-
-## 与其他项目的关系
-
-WORK-LAB 是统一总目录和治理边界，但各模块职责保持独立：
+本仓库承载的全局增强资产包括：
 
 ```text
-WORK-LAB/
-├─ 10-workflow/workflow-assistance   # AI 工作流治理、增强与观测
-├─ 20-design/open-design              # 设计研究、审美与设计生产辅助
-└─ 30-products/minigame               # 独立小游戏产品与商业验证
+Workflow-assistance
+├─ portable config        客户端中立、无密钥的核心基线与可选 Adapter overlay
+├─ safe deployment        repo → live 单向同步、备份、保留本机状态
+├─ route operations       GPT OAuth / DeepSeek 切换与链路诊断
+├─ coding-agent workflow  Codex launcher、任务票据、单写者与冻结复审
+├─ MCP policy             默认只启用 Context7，其他能力按需开启
+├─ token monitor          本地实时读取真实 usage，不做字符估算
+├─ reusable skills        Agent、测试、Windows、代码复审等知识资产
+└─ governance             安全扫描、治理测试、Linux/Windows CI、吸收审计
 ```
 
-Open Design 和 MINIGAME 不属于 Workflow Assistance 的实现代码。Workflow Assistance 只提供跨项目的工作流规范、边界和观测能力。
-
-`NousResearch/hermes-agent` 与 `fathah/hermes-desktop` 仅作为外部问询和参考对象，不作为本项目依赖、子模块、源码来源或运行内核。
-
-## 非目标
-
-本项目不建设：
-
-- 新的智能体或模型推理引擎。
-- 聊天客户端或新的 IDE。
-- 模型网关、Provider 中转服务或 Prompt 网关。
-- 全机抓包、TLS 解密或凭据托管平台。
-- 多租户云控制台、账号系统或团队协作 SaaS。
-- 新的 Git、下载协议、CI 系统或模型路由器。
-- 通过复制第三方桌面客户端获得功能。
-
-## 当前状态
-
-项目处于持续整合和增强阶段。
-
-当前已有本地 Token Monitor 的实现基础，后续将逐步完成：
-
-1. 全局资产和客户端能力合同。
-2. 统一任务事件与证据账本。
-3. 只读任务、Token、流量和交付观测。
-4. Context 与 Token 效率指标。
-5. Windows 原生桌面验证。
-6. Hermes、Codex、CC Switch、GitHub 以及其他客户端的能力适配。
-
-文档中的规划能力不等同于已经完成的功能，所有实现必须通过真实代码、测试和运行证据验证。
-
-## 设计原则
-
-- 客户端中立，入口可替换。
-- 规则优先，边界明确。
-- 观察和记录必须可追溯。
-- 缺失数据必须诚实显示。
-- 默认最小权限和最小采集。
-- 版本可替换，能力可探测。
-- 不重复建设 Agent、IDE、模型网关和第三方运行时。
-- 先保证真实效率和可靠性，再增加界面复杂度。
-
-## 项目目标
-
-最终目标不是让 WORK-LAB 自己成为一个新的智能体，而是让现有的 AI 工作软件在更清晰的规则、更少的 Token 浪费、更可靠的边界、更稳定的交付和更完整的证据下工作。
-
----
-
-# 已实现功能与验证入口
+它保存可以安全提交到 Git 的工作流资产；不会安装 Hermes、Codex 或 CC Switch 主体，也不会保存 OAuth 状态、API Key、会话数据库、日志、缓存、模型权重或用户数据。
 
 ## 2026-07-28 发布状态与错误总结
 
@@ -281,7 +66,7 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 | 模型切换 | GPT OAuth 与 DeepSeek 官方 Provider 状态检查和安全切换 | `scripts/workflow/switch_model.py` |
 | 全链路诊断 | Hermes、认证、MCP、代理端口、Node、Codex 版本和可选真实执行 smoke | `scripts/workflow/hermes_workflow_doctor.py` |
 | Codex 执行 | 跨平台 launcher、非交互执行规则、只读审查、隔离 worktree、TaskPack exact-tree runner；默认只冻结，需显式 `--publish` 才可发布 | `bin/codex*`、`scripts/workflow/run_taskpack_agent.py`、`skills/autonomous-ai-agents/codex/` |
-| GitHub 交付 | `main` 作为跨设备 SSOT；仅以 exact-SHA CI 与目标分支包含关系确认发布闭环 | `.github/workflows/governance.yml`、`agent-workflow-fortress` |
+| GitHub 交付 | `main` 作为跨设备 SSOT；仅以 exact-SHA CI 与目标分支包含关系确认发布闭环 | `../../.github/workflows/work-lab-gate.yml`、`agent-workflow-fortress` |
 | 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
 | Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/workflow/gateway-cron-delivery.md` |
 | 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `bin/hermes-project-data.py`、`skills/software-development/project-data-boundary/` |
@@ -295,7 +80,7 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 | 安全扫描 | Prompt/规则隐藏字符、注入特征和疑似硬编码秘密扫描 | `scripts/security/scan_agent_rules.py` |
 | 模板库 | AGENTS/CODEX/DESIGN/SECURITY 规则模板及多类任务票据 | `templates/` |
 | 审计与证据 | 开源能力吸收记录、固定上游 SHA、机器可读清单、明确排除项 | `docs/audit/` |
-| 跨平台验证 | Python 治理测试、语法检查、Shell/PowerShell 解析、Linux/Windows Actions | `.github/workflows/governance.yml` |
+| 跨平台验证 | Python 治理测试、语法检查、Shell/PowerShell 解析、Linux/Windows Actions | `../../.github/workflows/work-lab-gate.yml` |
 
 ## Portable 部署与安全同步
 
@@ -304,8 +89,8 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 先通过官方方式独立安装 Hermes Agent，再克隆本仓库：
 
 ```bash
-git clone git@github.com:DTALEX66/Workflow-assistance.git
-cd Workflow-assistance
+git clone git@github.com:DTALEX66/WORK-LAB.git
+cd WORK-LAB/10-workflow/workflow-assistance
 
 # Linux / macOS / Git Bash
 ./setup.sh
@@ -317,7 +102,7 @@ cd Workflow-assistance
 两个 setup 入口都会调用：
 
 ```bash
-python scripts/workflow/sync_hermes_workflow_assets.py --apply
+python scripts/workflow/sync_hermes_workflow_assets.py --apply --approved
 ```
 
 ### 单向同步模型
@@ -329,7 +114,7 @@ python scripts/workflow/sync_hermes_workflow_assets.py --apply
 python scripts/workflow/sync_hermes_workflow_assets.py
 
 # 备份后应用
-python scripts/workflow/sync_hermes_workflow_assets.py --apply
+python scripts/workflow/sync_hermes_workflow_assets.py --apply --approved
 ```
 
 实际行为：
@@ -720,6 +505,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 ### 文档和审计
 
 - `docs/workflow/project-definition.md`：项目定义与职责边界；
+- `docs/workflow/error-governance.md`：错误入口、根因、回归验证、证据等级和防复发规则；
 - `docs/workflow/agent-evaluation.md`：Agent 行为评估边界、promptfoo 方法吸收和默认不安装策略；
 - `docs/workflow/context-pack.md`：安全 Context Pack 生成器、输出边界和 handoff 使用方式；
 - `docs/workflow/local-quality-gates.md`：本地 canonical quality gate runner、Justfile 快捷入口和 CI 对齐方式；
@@ -758,7 +544,7 @@ python scripts/workflow/run_quality_gate.py verify
 just verify
 ```
 
-`just` 不是默认依赖；缺少时直接使用 Python runner。`verify` 依次运行 governance、compile、skill-provenance、security、context-pack、portable-install、portable-install-runtime、provider-inventory、mcp-audit、shell 和 powershell gate。PowerShell gate 优先 `pwsh`，仅在缺少时回退 `powershell.exe`，并且只用 AST parser 解析 `setup.ps1`，不执行安装动作。Shell/PowerShell 工具不可用时对应 gate 会显式 skip。
+`just` 不是默认依赖；缺少时直接使用 Python runner。`verify` 依次运行 governance、compile、skill-provenance、security、context-pack、client-neutral-manifest、core-schemas、portable-install、portable-install-runtime、provider-inventory、mcp-audit、shell 和 powershell gate。PowerShell gate 优先 `pwsh`，仅在缺少时回退 `powershell.exe`，并且只用 AST parser 解析 `setup.ps1`，不执行安装动作。Shell/PowerShell 工具不可用时对应 gate 会显式 skip。
 
 治理测试覆盖：
 
@@ -782,7 +568,7 @@ just verify
 
 ### GitHub Actions
 
-`.github/workflows/governance.yml` 在每次 push 和 pull request 上运行：
+WORK-LAB 根目录的 `../../.github/workflows/work-lab-gate.yml` 在每次 push 和 pull request 上运行；模块内的 `.github/workflows/governance.yml` 仅作为历史/模块级治理入口保留：
 
 - Ubuntu / Windows：调用同一个 `python scripts/workflow/run_quality_gate.py verify`；
 - 平台工具缺失时 shell / powershell 子 gate 显式 skip，而不是伪装通过；
@@ -828,7 +614,7 @@ hermes mcp test context7
 
 # 预览 / 应用 portable 同步
 python scripts/workflow/sync_hermes_workflow_assets.py
-python scripts/workflow/sync_hermes_workflow_assets.py --apply
+python scripts/workflow/sync_hermes_workflow_assets.py --apply --approved
 
 # 生成新会话 / Codex handoff 上下文包；输出到 .hermes/task-artifacts/context-pack.md
 python scripts/workflow/build_context_pack.py

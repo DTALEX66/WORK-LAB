@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 
 import {
   ANALYTICS_EVENTS,
+  ANALYTICS_SCHEMA_VERSION,
   createConsoleAnalyticsSink,
+  createAnalyticsSink,
   resetAnalyticsSink,
   setAnalyticsSink,
   trackEvent,
@@ -42,6 +44,7 @@ test('trackEvent sends normalized payloads to the injected sink', () => {
       skinId: 'subway',
       elapsed: 12,
       actionId: 'openDoor',
+      schema_version: ANALYTICS_SCHEMA_VERSION,
     });
     assert.deepEqual(calls, [result]);
   } finally {
@@ -66,4 +69,28 @@ test('console analytics sink logs a stable prefix and event payload', () => {
     'game_start',
     { name: 'game_start', ts: 1, skinId: 'elevator' },
   ]]);
+});
+
+test('analytics separates development console and production transport sinks', () => {
+  const developmentCalls = [];
+  const productionCalls = [];
+  const development = createAnalyticsSink({
+    environment: 'development',
+    logger: { log: (...args) => developmentCalls.push(args) },
+  });
+  const production = createAnalyticsSink({
+    environment: 'production',
+    logger: { log: () => { throw new Error('production must not log'); } },
+    transport: (event) => productionCalls.push(event),
+  });
+
+  const event = { name: 'game_start', ts: 1, schema_version: ANALYTICS_SCHEMA_VERSION };
+  development(event);
+  production(event);
+  assert.equal(developmentCalls.length, 1);
+  assert.deepEqual(productionCalls, [event]);
+});
+
+test('analytics rejects sensitive payload keys', () => {
+  assert.throws(() => trackEvent('game_start', { token: 'should-not-enter-events' }), /Sensitive/);
 });

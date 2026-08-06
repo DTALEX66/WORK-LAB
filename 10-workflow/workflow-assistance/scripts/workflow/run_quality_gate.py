@@ -158,6 +158,32 @@ def gate_portable_install() -> int:
     return run_python(["scripts/workflow/verify_portable_install.py"])
 
 
+def gate_client_neutral_manifest() -> int:
+    return run_python(["scripts/workflow/verify_client_neutral_manifest.py"])
+
+
+def gate_core_schemas() -> int:
+    return run_python(["scripts/workflow/verify_core_schemas.py", "--schema-dir", "schemas/workflow"])
+
+
+def gate_adapter_registry() -> int:
+    return run_python(
+        [
+            "scripts/workflow/verify_adapter_registry.py",
+            "--registry",
+            "config/adapter-registry.json",
+            "--schema",
+            "schemas/workflow/adapter-registry.schema.json",
+            "--root",
+            ".",
+        ]
+    )
+
+
+def gate_adapter_conformance() -> int:
+    return run_python(["tests/test_adapter_conformance.py"])
+
+
 def gate_portable_install_runtime() -> int:
     if not command_exists("hermes"):
         print("\n=== FAIL portable-install-runtime: hermes CLI not found; runtime compatibility is required ===")
@@ -214,6 +240,26 @@ GATES: dict[str, Gate] = {
     "skill-provenance": Gate("skill-provenance", "Validate source skill metadata, references, and provenance hashes.", gate_skill_provenance),
     "security": Gate("security", "Scan templates, skills, docs, scripts and README for prompt/security hazards.", gate_security),
     "context-pack": Gate("context-pack", "Generate the safe ignored Context Pack smoke artifact.", gate_context_pack),
+    "client-neutral-manifest": Gate(
+        "client-neutral-manifest",
+        "Verify the client-neutral product and adapter manifest without a Hermes runtime.",
+        gate_client_neutral_manifest,
+    ),
+    "core-schemas": Gate(
+        "core-schemas",
+        "Verify client-neutral ActionPlan, Domain Pack, Adapter, and evidence schemas.",
+        gate_core_schemas,
+    ),
+    "adapter-registry": Gate(
+        "adapter-registry",
+        "Verify adapter provenance, risk, status, and package hash evidence.",
+        gate_adapter_registry,
+    ),
+    "adapter-conformance": Gate(
+        "adapter-conformance",
+        "Verify the seven-interface fake adapter contract and approval boundary.",
+        gate_adapter_conformance,
+    ),
     "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
     "portable-install-runtime": Gate(
         "portable-install-runtime",
@@ -232,6 +278,10 @@ VERIFY_ORDER = (
     "skill-provenance",
     "security",
     "context-pack",
+    "client-neutral-manifest",
+    "core-schemas",
+    "adapter-registry",
+    "adapter-conformance",
     "portable-install",
     "portable-install-runtime",
     "provider-inventory",

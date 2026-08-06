@@ -3,6 +3,20 @@ package:
   name: Workflow-assistance
   distribution: git
   portable_source: true
+product:
+  architecture: client-neutral
+  positioning: workflow control, governance, task execution, delivery, and observability layer
+  non_goals:
+    - agent
+    - chat
+    - model_gateway
+  entrypoint: replaceable_client_adapters
+  first_class_adapters:
+    - hermes
+    - codex
+    - cc-switch
+    - github
+    - open-design
 capabilities:
   - portable_config
   - managed_config_ownership
@@ -18,14 +32,84 @@ capabilities:
 requirements:
   python: '>=3.11'
   pyyaml: required
-  hermes: hermes-agent==0.19.0
+  core_runtime: no Hermes installation required
+  optional_adapters:
+    hermes: "hermes-agent>=0.19,<0.21"
 compatibility:
-  config_version: 33
+  config_version_range: ">=33,<35"
+  config_version_snapshot: 33
   required_runtime_features:
-    - platform_toolsets.cli
-    - sessions.auto_prune=false
-    - memory.enabled
-    - hermes_config_check
+    - portable_manifest
+    - project_data_boundary
+    - client_neutral_adapter_contract
+  adapter_runtime_features:
+    hermes:
+      - platform_toolsets.cli
+      - sessions.auto_prune=false
+      - memory.enabled
+      - hermes_config_check
+adapters:
+  interface:
+    - detect
+    - capabilities
+    - plan
+    - apply
+    - invoke
+    - observe
+    - rollback
+  apply_policy: approval_required_action_plan
+  entries:
+    - id: hermes
+      support: deep
+      detection: optional_cli_and_config_check
+      writes: approval_required
+    - id: codex
+      support: deep
+      detection: optional_cli_version_check
+      writes: approval_required
+    - id: cc-switch
+      support: deep
+      detection: optional_local_router_check
+      writes: approval_required
+    - id: github
+      support: deep
+      detection: optional_gh_read_only_check
+      writes: approval_required
+    - id: open-design
+      support: deep
+      detection: official_cli_only
+      writes: approval_required
+    - id: cursor
+      support: manifest-only
+      detection: manifest_only
+      writes: unavailable
+    - id: claude-code
+      support: manifest-only
+      detection: manifest_only
+      writes: unavailable
+    - id: workbuddy
+      support: manifest-only
+      detection: manifest_only
+      writes: unavailable
+contracts:
+  schema_directory: schemas/workflow
+  schemas:
+    - client-adapter.schema.json
+    - adapter-registry.schema.json
+    - domain-pack.schema.json
+    - action-plan.schema.json
+    - run-event.schema.json
+    - evidence-envelope.schema.json
+    - error.schema.json
+    - task-card.schema.json
+    - task-ledger.schema.json
+    - observer-event.schema.json
+    - rule-asset.schema.json
+    - skill-package.schema.json
+    - growth-candidate.schema.json
+  instance_controls:
+    positive: schemas/workflow/examples/valid-action-plan.json
+    negative: schemas/workflow/examples/invalid-action-plan.json
 security:
   secrets_portable: false
   credential_copying: forbidden

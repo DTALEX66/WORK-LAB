@@ -23,17 +23,22 @@
       "dependsOn": ["workflow-assistance"]
     },
     {
-      "id": "minigame",
-      "path": "30-products/minigame",
-      "legacyRepository": "DTALEX66/MINIGAME",
-      "role": "independent revenue-seeking game product and integration proof",
-      "releasePrefix": "minigame",
+      "id": "work-lab-observer",
+      "path": "30-observer/work-lab-observer",
+      "legacyRepository": null,
+      "role": "strictly read-only derived observation and evidence projections",
+      "releasePrefix": "observer",
       "owner": "DTALEX66",
       "dependsOn": ["workflow-assistance", "open-design"]
     }
   ],
   "singleWriter": true,
   "forbiddenRoots": ["E:\\"],
-  "generatedData": { "evidencePath": "80-evidence", "tracked": false },
+  "generatedData": {
+    "runtimeRoot": ".hermes/task-runtime",
+    "taskArtifactsPath": ".hermes/task-artifacts",
+    "evidencePath": "80-evidence",
+    "tracked": false
+  },
   "externalMutationDefault": false
 }

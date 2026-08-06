@@ -1,12 +1,96 @@
 name: work-lab-gate
+
 on:
   push:
   pull_request:
+
+permissions:
+  contents: read
+
 jobs:
-  aggregate:
-    if: always()
+  workflow:
+    name: workflow-assistance
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Validate root governance
-        run: printf '%s' '{"jobs":{"workflow":"success","open-design":"success","minigame":"success","integration":"success"}}' | python scripts/ci/aggregate_gate.py
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install workflow validator dependencies
+        run: python -m pip install --disable-pip-version-check --no-input "PyYAML>=6,<7" "jsonschema>=4,<5"
+      - name: Run workflow structural and contract gates
+        run: |
+          # portable-install-runtime requires an explicitly provisioned Hermes binary;
+          # it remains a separate runtime/readback gate, not a fabricated CI success.
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py governance
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py compile
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py skill-provenance
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py security
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py context-pack
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py client-neutral-manifest
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py core-schemas
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py adapter-registry
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py adapter-conformance
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py portable-install
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py provider-inventory
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py mcp-audit
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py shell
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py powershell
+
+  open-design:
+    name: open-design
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Verify Open Design assistance assets
+        run: python 20-design/open-design/opendesign-assistance/scripts/verify_open_design_assistance.py
+
+  observer:
+    name: observer
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 30-observer/work-lab-observer
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Verify Observer read-only skeleton
+        run: |
+          python scripts/verify_observer_skeleton.py
+          python tests/test_observer_skeleton.py
+
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Run root governance tests
+        run: python tests/ci/test_governance_gate.py
+      - name: Verify contract catalog references
+        run: python scripts/ci/verify_contract_catalog.py
+      - name: Verify typed module dependencies
+        run: python scripts/ci/verify_module_dependencies.py
+      - name: Verify project data boundary
+        run: python scripts/ci/verify_project_data_boundary.py
+      - name: Verify supply-chain pins
+        run: python scripts/ci/verify_supply_chain.py
+      - name: Verify sanitized error ledger
+        run: python scripts/ci/verify_error_ledger.py
+      - name: Run root governance contract tests
+        run: python tests/ci/test_root_governance_contracts.py
+
+  aggregate:
+    name: aggregate
+    if: always()
+    needs:
+      - workflow
+      - open-design
+      - observer
+      - integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Aggregate actual job results
+        env:
+          WORKFLOW_RESULT: ${{ needs.workflow.result }}
+          OPEN_DESIGN_RESULT: ${{ needs.open-design.result }}
+          OBSERVER_RESULT: ${{ needs.observer.result }}
+          INTEGRATION_RESULT: ${{ needs.integration.result }}
+        run: |
+          python -c 'import json, os, subprocess, sys; payload=json.dumps({"jobs": {"workflow": os.environ["WORKFLOW_RESULT"], "open-design": os.environ["OPEN_DESIGN_RESULT"], "observer": os.environ["OBSERVER_RESULT"], "integration": os.environ["INTEGRATION_RESULT"]}}); result=subprocess.run([sys.executable, "scripts/ci/aggregate_gate.py"], input=payload, text=True); raise SystemExit(result.returncode)'

@@ -4,7 +4,7 @@ moduleTreeDigestRequired: true
 releasePrefixes:
   workflow: workflow/
   open-design: open-design/
-  minigame: minigame/
+  observer: observer/
 versioning: independent-module-versioning
 forcePush: forbidden
 remoteReleaseMutation: approval-required

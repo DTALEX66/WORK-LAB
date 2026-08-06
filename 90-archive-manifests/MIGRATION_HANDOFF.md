@@ -24,9 +24,19 @@ Recoverable bundles and working-state preservation are outside the active root:
 are in the local ignored task artifacts and the committed governance summary.
 Do not delete the archive until an independent restore drill passes.
 
-## Remaining approvals / known limits
+## Historical handoff boundary
 
-The active root and remote publication are complete as a migration handoff.
-Local active-path switching, legacy cloud archive, product release, and any
-force/destructive operation remain approval-gated. This handoff does not claim
-live platform builds or production release evidence.
+This document records the historical migration handoff and must not be read as
+current completion evidence for the attached task-pack. The current tree is
+dirty and its migration status is explicitly marked
+`HISTORICAL_SNAPSHOT_STALE_FOR_CURRENT_TREE`.
+
+The final active task graph is the attached
+`WORK-LAB-HERMES-TASKPACK-v1.0.0.zip`; its reconciliation is recorded at
+`50-taskpacks/WORK-LAB-HERMES-TASKPACK-RECONCILIATION.md`. Historical `MIG-*`
+and `GOV-*` claims are namespaced as `HIST-*` in that reconciliation.
+
+Local active-path switching, legacy archive changes, product release, Hermes
+live apply, and any force/destructive operation remain approval-gated. This
+handoff does not claim current live platform builds, cloud CI, or production
+release evidence.

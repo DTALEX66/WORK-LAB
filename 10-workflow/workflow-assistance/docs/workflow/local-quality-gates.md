@@ -15,12 +15,14 @@ python scripts/workflow/run_quality_gate.py verify
 3. `skill-provenance` — validate source skill metadata, references, and provenance hashes
 4. `security` — `python scripts/security/scan_agent_rules.py templates skills docs scripts README.md`
 5. `context-pack` — `python scripts/workflow/build_context_pack.py --max-chars 30000`
-6. `portable-install` — verify an isolated empty Hermes Home can receive only portable assets
-7. `portable-install-runtime` — run the real Hermes config check against the isolated portable Home
-8. `provider-inventory` — generate a secret-free configured provider/model inventory without live requests
-9. `mcp-audit` — `python scripts/workflow/mcp_candidate_audit.py --write-template .hermes/task-artifacts/mcp-candidate-template.yaml`
-10. `shell` — `bash -n setup.sh` when Git Bash / GNU bash is available
-11. `powershell` — parse `setup.ps1` with PowerShell AST when `pwsh` or `powershell.exe` is available
+6. `client-neutral-manifest` — parse and validate the product/Adapter manifest without a Hermes runtime
+7. `core-schemas` — validate the client-neutral Domain Pack, ActionPlan, Adapter, and evidence contracts
+8. `portable-install` — verify an isolated empty Hermes Home can receive only portable assets
+9. `portable-install-runtime` — run the real Hermes config check against the isolated portable Home
+10. `provider-inventory` — generate a secret-free configured provider/model inventory without live requests
+11. `mcp-audit` — `python scripts/workflow/mcp_candidate_audit.py --write-template .hermes/task-artifacts/mcp-candidate-template.yaml`
+12. `shell` — `bash -n setup.sh` when Git Bash / GNU bash is available
+13. `powershell` — parse `setup.ps1` with PowerShell AST when `pwsh` or `powershell.exe` is available
 
 The runner stops at the first failing gate and prints:
 
@@ -31,7 +33,7 @@ QUALITY_GATE_FAIL gate=<name> exit_code=<code>
 When every gate passes it prints:
 
 ```text
-QUALITY_GATE_PASS gates=governance,compile,skill-provenance,security,context-pack,portable-install,portable-install-runtime,provider-inventory,mcp-audit,shell,powershell
+QUALITY_GATE_PASS gates=governance,compile,skill-provenance,security,context-pack,client-neutral-manifest,core-schemas,portable-install,portable-install-runtime,provider-inventory,mcp-audit,shell,powershell
 ```
 
 ## Individual gates
@@ -43,6 +45,8 @@ python scripts/workflow/run_quality_gate.py compile
 python scripts/workflow/run_quality_gate.py skill-provenance
 python scripts/workflow/run_quality_gate.py security
 python scripts/workflow/run_quality_gate.py context-pack
+python scripts/workflow/run_quality_gate.py client-neutral-manifest
+python scripts/workflow/run_quality_gate.py core-schemas
 python scripts/workflow/run_quality_gate.py portable-install
 python scripts/workflow/run_quality_gate.py portable-install-runtime
 python scripts/workflow/run_quality_gate.py provider-inventory

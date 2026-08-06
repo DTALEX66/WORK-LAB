@@ -22,7 +22,7 @@ OPEN-DESIGN-Assistance
 ## 当前主目录
 
 ```text
-D:\All projects\OPEN-DESIGN-Assistance
+D:\All projects\WORK-LAB\20-design\open-design
 ```
 
 云端仓库：
@@ -266,12 +266,12 @@ VERIFY_VISUAL_QUALITY_V21=OK
 
 ```bash
 python opendesign-assistance/scripts/configure_open_design_windows.py \
-  --project-root "D:\\All projects\\OPEN-DESIGN-Assistance" \
+  --project-root "D:\\All projects\\WORK-LAB\\20-design\\open-design" \
   --permission-root "D:\\All projects" \
   --dry-run
 
 python opendesign-assistance/scripts/doctor_open_design_windows.py \
-  --project-root "D:\\All projects\\OPEN-DESIGN-Assistance" \
+  --project-root "D:\\All projects\\WORK-LAB\\20-design\\open-design" \
   --strict
 ```
 

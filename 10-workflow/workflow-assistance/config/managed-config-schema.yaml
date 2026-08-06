@@ -32,7 +32,6 @@ global_workflow:
 managed:
   display.busy_input_mode: replace
   display.language: replace
-  display.skin: replace
   sessions.auto_prune: replace
   memory.memory_enabled: replace
   memory.user_profile_enabled: replace

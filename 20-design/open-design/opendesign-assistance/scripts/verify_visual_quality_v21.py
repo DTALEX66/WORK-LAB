@@ -29,6 +29,8 @@ if masters:
  if len(ids)!=len(set(ids)):errors.append('duplicate master id')
  if masters.get('count')!=len(ids):errors.append('master count mismatch')
  for x in masters.get('masters',[]):
+  if not x.get('generation_eligibility'):errors.append(f"master lacks generation eligibility: {x.get('id')}")
+  if not x.get('evidence_requirement'):errors.append(f"master lacks evidence requirement: {x.get('id')}")
   if x.get('study_status')=='research-seed-unverified' and x.get('default_lineages'):errors.append(f"unverified seed has default lineage: {x['id']}")
   if x.get('generation_eligibility','').startswith('research-only') and not x.get('evidence_requirement'):errors.append(f"research-only seed lacks evidence gate: {x['id']}")
 if cards:

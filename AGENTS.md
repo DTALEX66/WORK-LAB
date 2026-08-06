@@ -2,9 +2,10 @@
 
 ## Scope
 
-This is a single-root monorepo. Allowed module roots are exactly:
+This is a single-root monorepo. Allowed active module roots are exactly:
 `10-workflow/workflow-assistance`, `20-design/open-design`, and
-`30-products/minigame`.
+`30-observer/work-lab-observer`. The legacy `30-products/minigame` tree is
+preserved as an archive/fixture source and is not an active product module.
 
 ## Ownership
 

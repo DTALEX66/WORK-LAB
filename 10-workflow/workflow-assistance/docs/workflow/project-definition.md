@@ -1,10 +1,43 @@
-# 项目定义：HERMES + CC Switch + Codex + GitHub 工作流增强项目
+# 项目定义：客户端中立工作流控制与治理层
 
 ## 一句话定位
 
-`Workflow-assistance` 是 DTALEX66 的 **Hermes Agent + CC Switch + Codex + GitHub 全局工作流增强项目**：用于沉淀、迁移和持续强化用户所有项目里的 Hermes 会话习惯、模型/provider 切换、CC Switch 代理路径、Codex 执行与复审方式、GitHub 分支/发布/exact-SHA CI 闭环、MCP 默认策略、长任务持久化、项目数据边界、排错经验、验证脚本和自动化工作流。
+`Workflow-assistance` 是一个**客户端中立的工作流控制、治理、任务、交付与可观测层**：用 manifest、Adapter、Domain Pack、ActionPlan、Run Ledger、事件和 evidence envelope 连接不同执行入口。Hermes、Codex、CC Switch、GitHub、Open Design 是可替换 Adapter；Hermes 当前一级支持，但不是核心运行前提。
 
-本仓库只是这些全局增强资产的可审计源目录，不是增强目标本身。增强目标是用户的整体 Agent 工作流：Hermes Agent 是运行与编排入口，CC Switch 是网络/路由辅助层，Codex 是编码执行与复审协作面，GitHub 是跨设备 source-of-truth、发布及 exact-SHA CI 证据面；`D:\All projects\Workflow-assistance` 负责保存可迁移、可验证、可同步到 live Hermes Home 的配置、脚本、技能、模板和规范。
+核心不是 Agent、聊天软件或模型网关，不负责 Prompt 输入、模型推理、Provider 路由、凭据管理或自动批准外部写入。核心在没有 Hermes 安装的隔离环境中也必须能够解析 manifest、验证合同并列出 Adapter 状态。
+
+本仓库是可审计的 portable source：保存合同、治理规则、适配器声明、任务边界、项目内 evidence 规范、脚本、模板和 CI。具体客户端的安装、登录、模型与私有运行时状态由对应 Adapter/官方入口独立管理，不能反向成为核心依赖。
+
+## 产品边界
+
+属于核心：
+
+- 客户端中立的 manifest、Domain Pack、ActionPlan、Run/Event、Evidence 合同；
+- detect/capabilities/plan/apply/invoke/observe/rollback 的 Adapter 边界；
+- 用户批准、精确目标、before/after hash、权限、回滚和失败分类；
+- 项目数据边界、任务恢复、Token 真实 usage、网络/Git/artifact 观测；
+- 可替换入口和真实证据驱动的支持级别。
+
+不属于核心：
+
+- Agent 人格、聊天 UI、Prompt 编排或模型执行；
+- Provider/API 路由、凭据、登录态、会话库和用户级私有配置；
+- 任一客户端的安装主体或只能服务单台机器的路径；
+- 没有证据的“可用”声明，或未经批准的 live apply。
+
+## Adapter 支持级别
+
+| Adapter | 当前级别 | 检测/能力原则 |
+|---|---|---|
+| Hermes | deep | 保留现有 portable overlay、项目边界和显式 runtime 检查；核心不要求安装 |
+| Codex | deep | launcher、TaskPack、review 和 worktree 通过 Adapter 合同接入 |
+| CC Switch | deep | 仅做明确的本地路由/网络前置检查，不读取认证数据库 |
+| GitHub | deep | 复用只读状态、exact-SHA CI、分支和交付证据 |
+| Open Design | deep | 仅调用官方 CLI 的明确只读检查，写入必须消费 ActionPlan |
+| Cursor | manifest-only | 只登记能力，缺少真实证据时不可宣称可用 |
+| Claude Code | manifest-only | 只登记能力，缺少真实证据时不可宣称可用 |
+| WorkBuddy | manifest-only | 只登记能力，缺少真实证据时不可宣称可用 |
+
 
 ## 项目边界
 
@@ -34,21 +67,22 @@
 
 如果答案是否定的，只能放在项目本地 `.hermes/` 或一次性任务 artifact 中，不得进入默认 portable config、全局 skill、默认 MCP 或同步脚本。
 
-## 四层职责
+## Core 与 Adapter 职责
 
 | 层级 | 责任 | 本仓库沉淀内容 |
 |---|---|---|
-| Hermes Agent | Agent 运行、模型/provider、工具、技能、MCP、记忆与会话 | `config/`、`skills/`、`bin/hermes-npx*`、Hermes doctor/切换脚本 |
-| CC Switch | 本地代理、网络通道、Agent 生态辅助 | 代理环境变量模板、排错手册、与 Hermes/Codex 协作约定 |
-| Codex / OpenAI OAuth | GPT 订阅/OAuth 路线、Codex CLI/工作流协作 | OAuth 流程说明、任务单模板、`CODEX.md`/Agent rules 模板 |
-| GitHub | 跨设备源代码事实源、分支、提交、CI 与发布证据 | `.github/` CI、exact-SHA 门禁、交接与恢复规范 |
+| Core control plane | manifest、合同、任务、计划、审批、恢复、观测、证据和项目边界 | `workflow-manifest.yaml`、`scripts/workflow/`、`docs/`、治理测试 |
+| Hermes Adapter | Hermes 配置基线、skills、MCP 默认策略、Gateway/cron/sleep-mode 和显式 runtime 检查 | `config/`、`skills/`、`bin/hermes-npx*`、Hermes 专用脚本 |
+| Codex / CC Switch / Open Design Adapters | launcher、路由/网络前置检查、官方 CLI 只读验证、任务与复审边界 | adapter 声明、任务票据、只读审计和证据模板 |
+| GitHub Adapter | 跨设备源代码事实源、分支、提交、CI 与发布证据 | `.github/` CI、exact-SHA 门禁、交接与恢复规范 |
 
 ## 当前同步状态
 
 运行时状态必须由现场 doctor/marker 重新验证；本文件不保存机器专属路径、凭据状态或历史 smoke 结论。
 
-- 本地仓库：`D:\All projects\Workflow-assistance`
-- 云端仓库：`https://github.com/DTALEX66/Workflow-assistance`
+- 本地仓库：`D:\All projects\WORK-LAB\10-workflow\workflow-assistance`
+- 旧本地来源：`D:\All projects\Workflow-assistance`（legacy，保持只读 dirty 状态）
+- 云端仓库：`https://github.com/DTALEX66/WORK-LAB`
 - live Hermes Home：`%LOCALAPPDATA%\hermes`（或 `$HERMES_HOME`）。
 - Git / live / provider 状态：用 `git status`、`hermes_workflow_doctor.py` 与需要时的 `--live` marker 现场确认。
 - 同步保留当前 provider/model、OAuth/API key、私有 MCP 和用户自定义命令；同步 portable 的模型 picker、快捷命令与速度策略。
@@ -68,13 +102,13 @@
 
 ## 本地项目定义
 
-- 本地路径：`D:\All projects\Workflow-assistance`
+- 本地路径：`D:\All projects\WORK-LAB\10-workflow\workflow-assistance`
 - 本地角色：可编辑、可验证、可提交的工作流增强资产源目录。
 - 本地操作原则：先检查 → 小步修改 → 语法/安全/MCP 或 ad-hoc 验证 → commit → push。
 
 ## GitHub 云端项目定义
 
-- 云端仓库：`https://github.com/DTALEX66/Workflow-assistance`
+- 云端仓库：`https://github.com/DTALEX66/WORK-LAB`
 - 云端角色：跨电脑同步的 HERMES + CC Switch + Codex 工作流增强资产库。
 - 云端应保持：README 定位清晰、部署命令指向 `Workflow-assistance`、topics/description 能反映 Hermes、CC Switch、Codex、GitHub skills、MCP、provenance、workflow automation 和 exact-SHA CI。
 
@@ -101,7 +135,7 @@ hermes mcp test context7
 4. 用 conventional commit 提交。
 5. 推送到 GitHub。
 6. 新电脑 clone 后执行 `setup.ps1` 或 `setup.sh`，再手动补齐本机私密凭证和 OAuth。
-7. 对 live Hermes Home 做同步时优先使用 `scripts/workflow/sync_hermes_workflow_assets.py --apply`，不要全量覆盖真实 `.env`、auth、session、logs。
+7. 对 live Hermes Home 做同步时优先使用 `scripts/workflow/sync_hermes_workflow_assets.py --apply --approved`，不要全量覆盖真实 `.env`、auth、session、logs。
 
 ## 目标状态
 

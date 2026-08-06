@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "work-lab-module-dependencies/v1",
+  "dependencyTypes": ["governance", "runtime", "build", "handoff", "observed-by", "fixture", "archive-of"],
+  "modules": {
+    "workflow-assistance": {
+      "path": "10-workflow/workflow-assistance",
+      "dependencies": [],
+      "observedBy": ["work-lab-observer"]
+    },
+    "open-design": {
+      "path": "20-design/open-design",
+      "dependencies": [
+        {"module": "workflow-assistance", "types": ["governance"]}
+      ],
+      "observedBy": ["work-lab-observer"]
+    },
+    "work-lab-observer": {
+      "path": "30-observer/work-lab-observer",
+      "dependencies": [
+        {"module": "workflow-assistance", "types": ["governance"]},
+        {"module": "open-design", "types": ["observed-by"]}
+      ],
+      "observedBy": []
+    }
+  },
+  "runtimeEdges": [],
+  "policy": {
+    "crossModuleRuntimeCoupling": "forbidden-unless-explicitly-approved",
+    "buildAndHandoffAreNotRuntimeDependencies": true,
+    "observedByIsReadOnly": true
+  }
+}
