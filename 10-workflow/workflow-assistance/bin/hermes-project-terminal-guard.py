@@ -29,6 +29,9 @@ RAW_UNC_PATH = re.compile(r"(?:^|(?<=[\s\"'=]))(\\\\[^\s\"']+)")
 RAW_WINDOWS_ABSOLUTE_PATH = re.compile(
     r"(?:^|(?<=[\s\"'=<>:([{]))([A-Za-z]:[\\/][^\s\"']+)"
 )
+RAW_POSIX_ABSOLUTE_PATH = re.compile(
+    r"(?:^|(?<=[\s\"'=<>:([{]))(/(?!/)[^\s\"']+)"
+)
 RAW_PARENT_TRAVERSAL = re.compile(r"(?:^|(?<=[\s\"'=<>:([{]))\.\.[\\/]")
 RAW_RUN_SEPARATOR = re.compile(r"(?:^|\s)run\s+--\s+")
 
@@ -102,6 +105,23 @@ def external_raw_windows_path(command: str, root: Path) -> str | None:
         raw = ntpath.normcase(ntpath.normpath(candidate))
         project = ntpath.normcase(ntpath.normpath(str(root)))
         if raw != project and not raw.startswith(project.rstrip("\\") + "\\"):
+            return candidate
+    return None
+
+
+def external_raw_posix_path(command: str, root: Path) -> str | None:
+    """Check rooted POSIX paths before Windows ``Path`` resolution changes them."""
+    for match in RAW_POSIX_ABSOLUTE_PATH.finditer(command):
+        candidate = match.group(1)
+        if os.name == "nt":
+            drive = root.drive or Path.cwd().drive
+            path = Path(f"{drive}{candidate}")
+        else:
+            path = Path(candidate)
+        try:
+            if not path.resolve(strict=False).is_relative_to(root):
+                return candidate
+        except (OSError, RuntimeError):
             return candidate
     return None
 
@@ -287,6 +307,9 @@ def validate(payload: dict[str, Any]) -> str | None:
         external_windows = external_raw_windows_path(child_source, root)
         if external_windows:
             return f"child command contains an absolute Windows path outside the Git project: {external_windows}"
+        external_posix = external_raw_posix_path(child_source, root)
+        if external_posix:
+            return f"child command contains an absolute POSIX path outside the Git project: {external_posix}"
         if has_raw_parent_traversal(child_source):
             return "child command contains parent-directory traversal outside the Git project."
         external = external_child_path(argv, subcommand_index + 1, root)
