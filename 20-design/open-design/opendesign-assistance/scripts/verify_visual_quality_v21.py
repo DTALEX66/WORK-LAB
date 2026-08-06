@@ -38,6 +38,18 @@ if cards:
  if len(ids)!=len(set(ids)):errors.append('duplicate card id')
  if cards.get('count')!=len(ids):errors.append('card count mismatch')
  if any(x.get('card_status')!='curated-local-synthesis-draft' for x in cards.get('cards',[])):errors.append('anchor card status missing')
+ if masters and cards:
+  card_ids={x['id'] for x in cards.get('cards',[])}
+  for x in masters.get('masters',[]):
+   method_card=x.get('method_card')
+   if x.get('study_status')=='curated-method-card-draft' and method_card not in card_ids:
+    errors.append(f"curated master missing anchor method card: {x.get('id')}")
+  for x in cards.get('cards',[]):
+   required=x.get('required_evidence',{})
+   if required.get('minimum_sources',0)<2 or required.get('minimum_projects_or_phases',0)<3:
+    errors.append(f"anchor card evidence minimum too weak: {x.get('id')}")
+   if required.get('primary_or_institutional_source_required') is not True:
+    errors.append(f"anchor card lacks primary or institutional source gate: {x.get('id')}")
 if sources:
  for e in sources.get('entries',[]):
   if e['integration_mode']=='quarantine' and e['status']=='adopt-now':errors.append(f"quarantine source marked adopt-now: {e['id']}")
