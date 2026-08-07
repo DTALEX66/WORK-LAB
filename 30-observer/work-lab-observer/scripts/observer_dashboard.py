@@ -354,6 +354,9 @@ def make_handler(store: ObserverStore):
             self.end_headers()
             self.wfile.write(body)
 
+        def _send_405(self) -> None:
+            self._send(405, "application/json; charset=utf-8", b'{"status":"method_not_allowed"}')
+
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlsplit(self.path)
             path = parsed.path
@@ -365,18 +368,41 @@ def make_handler(store: ObserverStore):
             except Exception as exc:  # fail closed without exposing event contents
                 self._send(500, "application/json; charset=utf-8", json.dumps({"status": "observer_error", "error": type(exc).__name__}).encode())
                 return
+            from observer_runtime import project_projection
             if path == "/":
                 self._send(200, "text/html; charset=utf-8", _render_dashboard(projection, view=view, theme=theme).encode("utf-8"))
             elif path == "/api/dashboard":
                 self._send(200, "application/json; charset=utf-8", json.dumps(projection, ensure_ascii=False, sort_keys=True).encode("utf-8"))
             elif path == "/api/projects":
-                from observer_runtime import project_projection
-                projects = project_projection(store.read_events())
-                self._send(200, "application/json; charset=utf-8", json.dumps(projects, ensure_ascii=False, sort_keys=True).encode("utf-8"))
+                self._send(200, "application/json; charset=utf-8", json.dumps(project_projection(store.read_events()), ensure_ascii=False, sort_keys=True).encode("utf-8"))
+            elif path == "/api/tasks":
+                tasks = projection.get("tasks", {})
+                self._send(200, "application/json; charset=utf-8", json.dumps({"count": len(tasks), "tasks": tasks}, ensure_ascii=False, sort_keys=True).encode("utf-8"))
+            elif path == "/api/usage":
+                self._send(200, "application/json; charset=utf-8", json.dumps({"usage": projection.get("usage", {}), "cost": projection.get("cost", {})}, ensure_ascii=False, sort_keys=True).encode("utf-8"))
+            elif path == "/api/quality":
+                self._send(200, "application/json; charset=utf-8", json.dumps({"quality": projection.get("quality", {}), "dataQuality": projection.get("dataQuality", {})}, ensure_ascii=False, sort_keys=True).encode("utf-8"))
+            elif path == "/api/ci":
+                # CI/GitHub status is derived from governance/quality view; no write, no credentials.
+                self._send(200, "application/json; charset=utf-8", json.dumps({"status": "read-only-view", "source": "governance", "mutationSurface": projection.get("mutationSurface", {})}, ensure_ascii=False, sort_keys=True).encode("utf-8"))
+            elif path == "/api/governance":
+                self._send(200, "application/json; charset=utf-8", json.dumps({"mutationSurface": projection.get("mutationSurface", {}), "overview": projection.get("overview", {})}, ensure_ascii=False, sort_keys=True).encode("utf-8"))
             elif path == "/healthz":
                 self._send(200, "application/json; charset=utf-8", b'{"status":"ok","readOnly":true}')
             else:
                 self._send(404, "application/json; charset=utf-8", b'{"status":"not_found"}')
+
+        def do_POST(self) -> None:  # noqa: N802
+            self._send_405()
+
+        def do_PUT(self) -> None:  # noqa: N802
+            self._send_405()
+
+        def do_PATCH(self) -> None:  # noqa: N802
+            self._send_405()
+
+        def do_DELETE(self) -> None:  # noqa: N802
+            self._send_405()
 
         def log_message(self, format: str, *args: Any) -> None:
             return
