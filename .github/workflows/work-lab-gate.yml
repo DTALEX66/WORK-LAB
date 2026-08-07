@@ -126,6 +126,8 @@ jobs:
         run: python scripts/ci/verify_source_ledger.py --root .
       - name: Run source ledger tests
         run: python tests/ci/test_source_ledger.py
+      - name: Verify WL inheritance matrix
+        run: python scripts/ci/verify_wl_inheritance_matrix.py
       - name: Run current state tests
         run: python tests/ci/test_current_state.py
       - name: Run root governance contract tests
