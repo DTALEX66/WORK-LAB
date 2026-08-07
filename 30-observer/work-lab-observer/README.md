@@ -35,6 +35,19 @@ coverage, data-quality warnings, usage/cost status, and the explicit
 `externalMutation=false` boundary. It does not provide task controls, approval,
 retry, execution, or Ledger write-back.
 
+### Four views (Full/Compact × Dark/Light)
+
+All four views render the same Projection and share one set of Design Tokens.
+
+| View | Query | Content |
+|---|---|---|
+| Full Dark | `/?view=full&theme=dark` | hero + 4 metrics + tasks + usage/cost + data quality |
+| Full Light | `/?view=full&theme=light` | same layout, light surface |
+| Compact Dark | `/?view=compact&theme=dark` | 360–420px wide, essentials only |
+| Compact Light | `/?view=compact&theme=light` | essentials only, light surface |
+
+In-page nav links toggle view/theme without reloading the Projection.
+
 ### Visual direction
 
 The dashboard intentionally combines the project-approved visual vocabulary:
