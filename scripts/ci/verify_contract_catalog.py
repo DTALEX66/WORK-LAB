@@ -29,6 +29,12 @@ EXPECTED = {
     "visual-qa-report": "open-design",
     "benchmark-result": "open-design",
     "archive-manifest": "root-governance",
+    "project-profile": "workflow",
+    "gate-registry": "workflow",
+    "gate-plan": "workflow",
+    "blocker": "workflow",
+    "ci-observation": "workflow",
+    "evidence-manifest": "workflow",
 }
 CANONICAL_SCHEMA_PREFIXES = {
     "module-profile": ("00-governance/",),
@@ -51,6 +57,12 @@ CANONICAL_SCHEMA_PREFIXES = {
     "visual-qa-report": ("20-design/",),
     "benchmark-result": ("20-design/",),
     "archive-manifest": ("00-governance/",),
+    "project-profile": ("10-workflow/",),
+    "gate-registry": ("10-workflow/",),
+    "gate-plan": ("10-workflow/",),
+    "blocker": ("10-workflow/",),
+    "ci-observation": ("10-workflow/",),
+    "evidence-manifest": ("10-workflow/",),
 }
 
 

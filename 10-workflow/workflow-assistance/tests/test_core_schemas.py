@@ -24,6 +24,12 @@ EXPECTED = {
     "rule-asset.schema.json",
     "skill-package.schema.json",
     "growth-candidate.schema.json",
+    "project-profile.schema.json",
+    "gate-registry.schema.json",
+    "gate-plan.schema.json",
+    "blocker.schema.json",
+    "ci-observation.schema.json",
+    "evidence-manifest.schema.json",
 }
 
 
@@ -56,7 +62,7 @@ class CoreSchemaTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("CORE_SCHEMA_CONTRACT_PASS", result.stdout)
-        self.assertIn("schemas=13", result.stdout)
+        self.assertIn("schemas=19", result.stdout)
 
     def test_verifier_rejects_schema_missing_required_contract(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

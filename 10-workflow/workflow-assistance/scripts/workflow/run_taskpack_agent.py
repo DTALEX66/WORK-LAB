@@ -38,7 +38,7 @@ FORCED_HIGH_PATH_PATTERNS = (
 FORCED_HIGH_OPERATION_PATTERN = re.compile(
     r"\b(?:credential|credentials|authentication|permission|provider[ _-]?change|"
     r"dependency[ _-]?change|schema[ _-]?migration|delete|move|external[ _-]?path[ _-]?write|"
-    r"backup[ _-]?restore|packaging|deployment|commit|push|pull[ _-]?request|merge|release|"
+    r"backup[ _-]?restore|packaging|deployment|release|"
     r"github[ _-]?ruleset|live[ _-]?apply)\b",
     re.I,
 )
@@ -187,8 +187,6 @@ class GitRepository:
         self.env = project_runtime_environment(self.root)
         self.remote_ref = remote_ref
         self.required_workflows = required_workflows
-        if not self.required_workflows:
-            raise RunnerError("required_workflows must contain at least one exact-SHA CI workflow")
         self.ci_timeout_seconds = ci_timeout_seconds
         self.ci_poll_seconds = ci_poll_seconds
 
@@ -251,10 +249,21 @@ class GitRepository:
                     "release commit tree differs from the exact tree approved by reviewer: "
                     f"expected={expected_tree} actual={actual_tree}"
                 )
+        self.verify_remote_sync(head)
+        self.observe_ci(head)
+
+    def verify_remote_sync(self, head: str) -> None:
         self._git("fetch", "--prune", self._remote_name())
         remote_head = self._git("rev-parse", self.remote_ref)
         if head != remote_head:
             raise RunnerError(f"release is not synchronized: HEAD={head} {self.remote_ref}={remote_head}")
+
+    def observe_ci(self, head: str) -> None:
+        if not self.required_workflows:
+            raise RunnerError(
+                "CI observation is BLOCKED: no required exact-SHA workflows are configured; "
+                "absence of configuration must not be treated as CI success"
+            )
         self._wait_for_ci(head)
 
     def _wait_for_ci(self, head: str) -> None:

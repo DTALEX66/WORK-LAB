@@ -77,7 +77,15 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         self.assertEqual(effective_task_risk("low", "update CONFIG/managed-config-schema.yaml"), "high")
         self.assertEqual(effective_task_risk("low", "update ./.github/workflows/governance.yml"), "high")
         self.assertEqual(effective_task_risk("low", "rotate credentials and deploy"), "high")
+        self.assertEqual(effective_task_risk("low", "commit and push the already verified documentation"), "low")
+        self.assertEqual(effective_task_risk("low", "open a pull request after local verification"), "low")
+        self.assertEqual(effective_task_risk("low", "prepare a release"), "high")
         self.assertEqual(effective_task_risk("low", "add a pure adapter"), "low")
+
+    def test_empty_required_workflows_is_explicit_ci_blocker_not_constructor_success(self) -> None:
+        repo = GitRepository(Path.cwd(), required_workflows=())
+        with self.assertRaisesRegex(RunnerError, "BLOCKED"):
+            repo.observe_ci("commit")
 
     def test_hermes_backend_resumes_without_agent_timeout(self) -> None:
         calls: list[tuple[list[str], dict[str, object]]] = []
@@ -234,9 +242,10 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
 
         self.assertEqual(calls[0][0:5], ["gh", "run", "list", "--repo", "owner/repository"])
 
-    def test_release_repository_rejects_empty_required_workflow_contract(self) -> None:
-        with self.assertRaisesRegex(RunnerError, "required_workflows"):
-            GitRepository(Path("."), required_workflows=())
+    def test_release_repository_marks_empty_required_workflow_contract_blocked_at_observation(self) -> None:
+        repo = GitRepository(Path("."), required_workflows=())
+        with self.assertRaisesRegex(RunnerError, "BLOCKED"):
+            repo.observe_ci("release")
 
     def test_default_runner_stages_without_releasing(self) -> None:
         repo = FakeRepo()
