@@ -1,6 +1,6 @@
 # Workflow-assistance
 
-[![workflow-governance](https://github.com/DTALEX66/WORK-LAB/actions/workflows/work-lab-gate.yml/badge.svg)](https://github.com/DTALEX66/WORK-LAB/actions/workflows/work-lab-gate.yml)
+[![work-lab-gate](https://github.com/DTALEX66/WORK-LAB/actions/workflows/work-lab-gate.yml/badge.svg)](https://github.com/DTALEX66/WORK-LAB/actions/workflows/work-lab-gate.yml)
 
 面向 Windows、Linux 与 macOS 的 **客户端中立工作流控制、治理、任务、交付与可观测层**：以可迁移合同和 Adapter 连接 Hermes、Codex、CC Switch、GitHub、Open Design 等入口；集中维护无密钥配置、ActionPlan、项目边界、任务证据、链路诊断、Context7 MCP、Agent Skills、治理测试和跨平台 CI。
 
@@ -8,7 +8,7 @@
 
 `Workflow-assistance` 不是 Agent Runtime、聊天软件、模型网关，也不是 Hermes、Codex 或 CC Switch 的安装包。它是一个**客户端中立的工作流控制与治理层**：核心只解析 manifest、合同、任务、证据和边界；具体执行入口通过可替换 Adapter 接入。Hermes 当前仍是一级深度支持 Adapter，但不是核心架构前提。
 
-当前一级 Adapter：`Hermes`、`Codex`、`CC Switch`、`GitHub`、`Open Design`。Cursor、Claude Code、WorkBuddy 先以 manifest-only/只读检测方式登记，必须有真实证据后才升级支持级别。
+当前一级 Adapter：`Hermes`、`Codex`、`CC Switch`、`GitHub`。Cursor、Claude Code、WorkBuddy 先以 manifest-only/只读检测方式登记，必须有真实证据后才升级支持级别。Open Design 已迁出并由独立仓库维护，不再是本模块 Adapter。
 
 核心不负责：Agent 人格、聊天/Prompt 输入、模型推理、Provider 路由、凭据管理、自动批准外部写入。每个写操作都必须从用户批准的 ActionPlan 进入对应 Adapter。
 
@@ -304,7 +304,7 @@ TaskPack 的高风险冻结复审默认由 Hermes 完成；需要独立第二执
 ```bash
 python scripts/workflow/run_taskpack_agent.py \
   --repo . --remote-ref origin/main --risk high --reviewer codex \
-  --required-workflow workflow-governance \
+  --required-workflow work-lab-gate \
   --mission "<明确任务>"
 ```
 
@@ -320,12 +320,12 @@ high-risk TaskPack；TaskPack 仍会在每次复审前后核对 `git write-tree`
 只有显式 `--publish` 才允许 TaskPack 提交、推送和等待 CI。高风险发布会把
 release commit 的 `HEAD^{tree}` 与 reviewer GO 时的 frozen tree 逐字节绑定；不一致即
 拒绝交付。`--remote-ref <remote>/<branch>` 同时决定 fetch 的 remote 与需要相等的远端
-HEAD，不再隐式假定 `origin`。exact-SHA CI 默认必须有名为 `workflow-governance` 的成功
+HEAD，不再隐式假定 `origin`。exact-SHA CI 默认必须有名为 `work-lab-gate` 的成功
 run；可重复传入 `--required-workflow <name>` 增加额外门禁。缺失、等待中、取消、失败或
 仅有无关 workflow 的 success 都不会通过发布验证。
 
-远端 `main` 由 `main-workflow-governance` ruleset 保护：禁止删除和非快进更新，并要求
-`linux` 与 `windows` 两个 GitHub Actions status check（对应 `workflow-governance` workflow）。ruleset
+远端 `main` 的保护规则由 GitHub 管理：禁止删除和非快进更新，并要求当前项目 profile
+声明的 `work-lab-gate` exact-SHA aggregate 证据。ruleset
 状态必须通过 GitHub API 读取核验，不能用本地配置或旧 run 摘要替代。
 
 `skills/autonomous-ai-agents/codex/SKILL.md` 定义：

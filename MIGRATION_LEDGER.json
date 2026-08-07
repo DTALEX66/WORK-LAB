@@ -12,8 +12,9 @@
       "modulePath": "10-workflow/workflow-assistance"
     },
     "openDesign": {
-      "frozenRef": "c8212401e891e7c3f0e4a6f36cdb11dbcca24e27",
-      "modulePath": "20-design/open-design"
+      "repository": "DTALEX66/OPEN-DESIGN-Assistance",
+      "migrationBranch": "migration/work-lab-design-extraction-20260807",
+      "status": "transferred; see 90-archive-manifests/OPEN-DESIGN-MIGRATION-POINTER-2026-08-07.md"
     },
     "minigame": {
       "frozenRef": "d4bf0b3d33d0d97c469dbfedd969f4ec4801bfa2",

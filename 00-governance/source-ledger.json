@@ -1,0 +1,83 @@
+{
+  "$schema": "work-lab/source-ledger/v3",
+  "schemaVersion": "work-lab/source-ledger/v3",
+  "ledgerVersion": 3,
+  "scope": ["workflow-assistance", "work-lab-observer"],
+  "entries": [
+    {
+      "id": "work-lab-workflow-module",
+      "decisionStatus": "derive",
+      "implementationStatus": "local-verified",
+      "canonicalUrl": "https://github.com/DTALEX66/WORK-LAB",
+      "reviewedCommit": "471e90a99b4234e4f5c031c4280c2eba8b065439",
+      "license": "UNKNOWN",
+      "spdx": "UNKNOWN",
+      "owner": "workflow-assistance",
+      "targetPaths": ["10-workflow/workflow-assistance"],
+      "tests": ["10-workflow/workflow-assistance/tests"],
+      "controls": {"network": false, "telemetry": false, "credentials": false, "scripts": true, "sizeBytes": null},
+      "freshness": "current-head",
+      "rollback": "revert the source-ledger entry; source code remains governed by Git history"
+    },
+    {
+      "id": "work-lab-observer-module",
+      "decisionStatus": "derive",
+      "implementationStatus": "local-verified",
+      "canonicalUrl": "https://github.com/DTALEX66/WORK-LAB",
+      "reviewedCommit": "471e90a99b4234e4f5c031c4280c2eba8b065439",
+      "license": "UNKNOWN",
+      "spdx": "UNKNOWN",
+      "owner": "work-lab-observer",
+      "targetPaths": ["30-observer/work-lab-observer"],
+      "tests": ["30-observer/work-lab-observer/tests"],
+      "controls": {"network": false, "telemetry": false, "credentials": false, "scripts": true, "sizeBytes": null},
+      "freshness": "current-head",
+      "rollback": "revert the source-ledger entry; Observer event history remains under the ignored runtime boundary"
+    },
+    {
+      "id": "opentelemetry-genai-reference",
+      "decisionStatus": "reference",
+      "implementationStatus": "not-implemented",
+      "canonicalUrl": "https://opentelemetry.io/docs/specs/semconv/gen-ai/",
+      "reviewedCommit": null,
+      "license": "UNKNOWN",
+      "spdx": "UNKNOWN",
+      "owner": "workflow-assistance",
+      "targetPaths": [],
+      "tests": [],
+      "controls": {"network": false, "telemetry": false, "credentials": false, "scripts": false, "sizeBytes": null},
+      "freshness": "unknown",
+      "rollback": "remove the reference entry; no vendored source or runtime dependency exists"
+    },
+    {
+      "id": "openinference-reference",
+      "decisionStatus": "reference",
+      "implementationStatus": "not-implemented",
+      "canonicalUrl": "https://arize-ai.github.io/openinference/",
+      "reviewedCommit": null,
+      "license": "UNKNOWN",
+      "spdx": "UNKNOWN",
+      "owner": "work-lab-observer",
+      "targetPaths": [],
+      "tests": [],
+      "controls": {"network": false, "telemetry": false, "credentials": false, "scripts": false, "sizeBytes": null},
+      "freshness": "unknown",
+      "rollback": "remove the reference entry; no vendored source or runtime dependency exists"
+    },
+    {
+      "id": "ccusage-external-optional",
+      "decisionStatus": "external-optional",
+      "implementationStatus": "not-implemented",
+      "canonicalUrl": "https://github.com/ryoppippi/ccusage",
+      "reviewedCommit": null,
+      "license": "UNKNOWN",
+      "spdx": "UNKNOWN",
+      "owner": "work-lab-observer",
+      "targetPaths": [],
+      "tests": [],
+      "controls": {"network": false, "telemetry": false, "credentials": false, "scripts": false, "sizeBytes": null},
+      "freshness": "review-required",
+      "rollback": "do not install or invoke; delete the optional reference entry"
+    }
+  ]
+}

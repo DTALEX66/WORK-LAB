@@ -54,6 +54,20 @@
       "required": ["stable_aggregate_check", "exact_sha_required_for", "outage_blocks"],
       "properties": {
         "stable_aggregate_check": {"type": "string", "minLength": 1},
+        "stable_aggregate_job": {"type": "string", "minLength": 1},
+        "workflow_file": {"type": "string", "minLength": 1},
+        "workflow_name": {"type": "string", "minLength": 1},
+        "watcher_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "base_delay_seconds": {"type": "integer", "minimum": 1},
+            "max_delay_seconds": {"type": "integer", "minimum": 1},
+            "observation_window_seconds": {"type": "integer", "minimum": 1},
+            "queue_stall_seconds": {"type": "integer", "minimum": 1},
+            "retry_budget": {"type": "integer", "minimum": 0}
+          }
+        },
         "exact_sha_required_for": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
         "outage_blocks": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
       }

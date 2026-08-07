@@ -1417,7 +1417,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_manifest_requires_nonempty_exact_sha_workflow_contract(self) -> None:
         manifest = yaml.safe_load((ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8"))
         self.assertTrue(manifest["delivery"]["exact_sha_ci"])
-        self.assertEqual(manifest["delivery"]["required_workflows"], ["workflow-governance"])
+        self.assertEqual(manifest["delivery"]["required_workflows"], ["work-lab-gate"])
 
     def test_governance_actions_are_commit_pinned_and_dependency_versioned(self) -> None:
         workflow = (ROOT / ".github/workflows/governance.yml").read_text(encoding="utf-8")

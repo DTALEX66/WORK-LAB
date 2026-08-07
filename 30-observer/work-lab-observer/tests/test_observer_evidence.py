@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import sys
 from pathlib import Path
 import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from observer_evidence import open_design_benchmark_event, workflow_evidence_events  # noqa: E402
+from observer_evidence import telemetry_events, token_usage_events, workflow_evidence_events  # noqa: E402
 from observer_runtime import ObserverInputError  # noqa: E402
 from observer_store import ObserverStore  # noqa: E402
 
@@ -28,22 +27,12 @@ class ObserverEvidenceTests(unittest.TestCase):
             "checks": ["targeted-test"],
         }
 
-    def registry(self) -> dict:
-        return {
-            "schema_version": "open-design/benchmark-registry/v1",
-            "repeatability": {"human_calibration_required_for_promotion": True},
-            "benchmarks": [{"id": "bench-layout", "discipline": "layout"}],
-        }
-
-    def test_normalizes_workflow_and_design_inputs_without_payloads(self) -> None:
+    def test_normalizes_workflow_input_without_payloads(self) -> None:
         workflow = workflow_evidence_events([self.envelope()])[0]
-        design = open_design_benchmark_event(self.registry())
         self.assertEqual(workflow["eventType"], "evidence.pass")
         self.assertEqual(workflow["sourceModule"], "workflow-assistance")
-        self.assertEqual(design["sourceModule"], "open-design")
         self.assertNotIn("artifacts", workflow)
         self.assertEqual(len(workflow["contentDigest"]), 64)
-        self.assertEqual(len(design["contentDigest"]), 64)
 
     def test_persists_and_rebuilds_cross_module_projection(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -53,21 +42,46 @@ class ObserverEvidenceTests(unittest.TestCase):
             root.mkdir(parents=True)
             store = ObserverStore(root, project_root=project)
             self.assertEqual(store.append(workflow_evidence_events([self.envelope()])), 1)
-            self.assertEqual(store.append([open_design_benchmark_event(self.registry())]), 1)
             restarted = ObserverStore(root, project_root=project)
             projection = restarted.rebuild_projection()
             self.assertEqual(projection["tasks"]["WA-001"]["events"], 1)
-            self.assertEqual(projection["tasks"]["OD-BENCHMARK-REGISTRY"]["events"], 1)
 
-    def test_reads_the_tracked_open_design_registry_contract(self) -> None:
-        registry_path = (
-            Path(__file__).resolve().parents[3]
-            / "20-design/open-design/opendesign-assistance/evals/benchmarks/benchmark-registry.json"
-        )
-        registry = json.loads(registry_path.read_text(encoding="utf-8"))
-        event = open_design_benchmark_event(registry)
-        self.assertEqual(event["sourceId"], "benchmark-registry")
-        self.assertEqual(len(event["evidenceRefs"]), 12)
+    def test_token_usage_adapter_emits_sanitized_observer_event(self) -> None:
+        events = token_usage_events([{"input_tokens": 12, "output_tokens": 8, "total_tokens": 20, "records": 1}])
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["eventType"], "usage.summary")
+        self.assertEqual(events[0]["usage"]["total_tokens"], 20)
+        self.assertNotIn("model", events[0])
+
+    def test_telemetry_adapter_keeps_only_stable_fields(self) -> None:
+        events = telemetry_events([{"operation": "chat", "provider": "fixture", "model": "unknown", "task_id": "WA-001", "source_digest": hashlib.sha256(b"source").hexdigest(), "input_tokens": 12, "output_tokens": 8, "latency_ms": 12, "outcome": "ok"}])
+        self.assertEqual(events[0]["eventType"], "telemetry.summary")
+        self.assertEqual(events[0]["coverage"], "full")
+        self.assertNotIn("prompt", events[0])
+        self.assertEqual(events[0]["telemetry"]["input_tokens"], 12)
+
+    def test_telemetry_missing_optional_data_is_partial_without_zero_inference(self) -> None:
+        event = telemetry_events([{"operation": "chat", "provider": "fixture", "task_id": "WA-001", "outcome": "unknown"}])[0]
+        self.assertEqual(event["coverage"], "partial")
+        self.assertNotIn("input_tokens", event["telemetry"])
+
+    def test_telemetry_rejects_invalid_source_digest_and_numeric_values(self) -> None:
+        with self.assertRaises(ObserverInputError):
+            telemetry_events([{"operation": "chat", "provider": "fixture", "task_id": "WA-001", "source_digest": "not-a-digest"}])
+        with self.assertRaises(ObserverInputError):
+            telemetry_events([{"operation": "chat", "provider": "fixture", "task_id": "WA-001", "latency_ms": -1}])
+
+    def test_telemetry_rejects_body_and_unknown_fields(self) -> None:
+        with self.assertRaises(ObserverInputError):
+            telemetry_events([{"operation": "chat", "provider": "fixture", "task_id": "WA-001", "prompt": "body"}])
+        with self.assertRaises(ObserverInputError):
+            telemetry_events([{"operation": "chat", "provider": "fixture", "task_id": "WA-001", "unknown": 1}])
+
+    def test_token_usage_adapter_rejects_raw_or_inferred_usage(self) -> None:
+        with self.assertRaises(ObserverInputError):
+            token_usage_events([{"input_tokens": 1, "output_tokens": 2, "total_tokens": 3, "records": 1, "log_line": "raw"}])
+        with self.assertRaises(ObserverInputError):
+            token_usage_events([{"input_tokens": 1, "output_tokens": 2, "records": 1}])
 
     def test_sensitive_and_unsafe_states_fail_closed(self) -> None:
         unsafe = self.envelope()
@@ -77,10 +91,7 @@ class ObserverEvidenceTests(unittest.TestCase):
         unsafe_state = self.envelope(state="APPROVED")
         with self.assertRaises(ObserverInputError):
             workflow_evidence_events([unsafe_state])
-        registry = self.registry()
-        registry["repeatability"]["human_calibration_required_for_promotion"] = False
-        with self.assertRaises(ObserverInputError):
-            open_design_benchmark_event(registry)
+
 
 
 if __name__ == "__main__":

@@ -10,11 +10,14 @@ WORK-LAB is the auditable control plane for client-neutral AI workflow governanc
 
 ## Current canonical modules
 
-These are the only active v2 module roots:
+These are the only active module roots:
 
 1. `10-workflow/workflow-assistance` — client-neutral workflow governance, execution control, portable contracts and delivery boundaries.
-2. `20-design/open-design` — Open Design-first professional design knowledge, visual quality, production handoff and provenance evidence.
-3. `30-observer/work-lab-observer` — strictly read-only derived observation, projections and evidence reports.
+2. `30-observer/work-lab-observer` — strictly read-only derived observation, projections and evidence reports.
+
+Open Design was transferred to `DTALEX66/OPEN-DESIGN-Assistance` on the
+authorized migration branch. WORK-LAB retains only the one-time pointer under
+`90-archive-manifests/`; it no longer owns or executes that module.
 
 The root owns governance and integration. It does not duplicate module implementations.
 
@@ -30,7 +33,7 @@ WORK-LAB is **not**:
 
 ## MINIGAME boundary
 
-`30-products/minigame` is retained as product history, fixture/reference material and migration/archive evidence. It is not one of the three active v2 canonical modules. No automatic merge, deletion, retirement, platform selection, real-device validation or commercial claim is implied.
+`30-products/minigame` is retained as product history, fixture/reference material and migration/archive evidence. It is not an active canonical module. No automatic merge, deletion, retirement, platform selection, real-device validation or commercial claim is implied.
 
 ## Evidence boundary
 

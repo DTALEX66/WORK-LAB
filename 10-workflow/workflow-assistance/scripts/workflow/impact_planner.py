@@ -30,14 +30,18 @@ def _matches(path: str, patterns: list[str]) -> bool:
 
 
 def _digest(payload: dict[str, Any]) -> dict[str, str]:
-    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    digest_payload = {
+        key: value for key, value in payload.items() if key not in {"generated_at", "plan_id"}
+    }
+    canonical = json.dumps(digest_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return {"algorithm": "sha256", "value": hashlib.sha256(canonical).hexdigest()}
 
 
 def load_profile(path: Path) -> dict[str, Any]:
     profile = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if not isinstance(profile, dict) or profile.get("schema") != "work-lab-project-profile/v1":
-        raise ValueError("profile must declare schema work-lab-project-profile/v1")
+    declared_schema = profile.get("schema_version", profile.get("schema")) if isinstance(profile, dict) else None
+    if declared_schema != "workflow/project-profile/v1" and declared_schema != "work-lab-project-profile/v1":
+        raise ValueError("profile must declare schema workflow/project-profile/v1")
     for key in ("project", "modules", "risk_zones", "gates", "ci"):
         if not isinstance(profile.get(key), dict):
             raise ValueError(f"profile field must be an object: {key}")
@@ -60,14 +64,20 @@ def build_plan(
     gates = profile["gates"]
     direct: set[str] = set()
     critical = False
+    unknown_paths: list[str] = []
     for path in changed_paths:
-        if _matches(path, profile.get("risk_zones", {}).get("critical", [])):
+        normalized_path = path.replace("\\", "/")
+        if _matches(normalized_path, profile.get("risk_zones", {}).get("critical", [])):
             critical = True
+        matched = False
         for module_id, module in modules.items():
             roots = module.get("roots", []) if isinstance(module, dict) else []
-            if any(path.replace("\\", "/").startswith(root.rstrip("/") + "/") or path == root for root in roots):
+            if any(normalized_path.startswith(root.rstrip("/") + "/") or normalized_path == root for root in roots):
+                matched = True
                 if module_id in gates:
                     direct.add(module_id)
+        if not matched:
+            unknown_paths.append(normalized_path)
 
     reverse: dict[str, set[str]] = {name: set() for name in modules}
     for module_id, module in modules.items():
@@ -82,10 +92,15 @@ def build_plan(
                 affected.add(dependent)
                 queue.append(dependent)
 
-    if any(path.startswith("00-governance/") or path.startswith(".github/") for path in changed_paths):
+    if unknown_paths or any(
+        path.startswith("00-governance/")
+        or path.startswith(".github/")
+        or path.startswith("scripts/ci/")
+        for path in changed_paths
+    ):
         critical = True
-        if "integration" in gates:
-            affected.add("integration")
+    if critical:
+        affected.update(gates)
 
     required = sorted(affected)
     skipped = [

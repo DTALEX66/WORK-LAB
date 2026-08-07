@@ -123,6 +123,48 @@ class TaskLedgerTests(unittest.TestCase):
             replacement = ledger.acquire_lease("task-a", "worker-b", ttl_seconds=10, now="2026-01-01T00:00:11Z")
             self.assertGreater(replacement["fence"], lease["fence"])
 
+    def test_release_lease_requires_current_fence_and_clears_holder(self) -> None:
+        module = load_module()
+        with tempfile.TemporaryDirectory() as raw:
+            ledger = module.TaskLedger(Path(raw) / "ledger.json")
+            ledger.create("task-a", "idem-a")
+            lease = ledger.acquire_lease("task-a", "worker-a", ttl_seconds=10, now="2026-01-01T00:00:00Z")
+            with self.assertRaisesRegex(ValueError, "fence"):
+                ledger.release_lease("task-a", "worker-b", lease["fence"])
+            released = ledger.release_lease("task-a", "worker-a", lease["fence"], now="2026-01-01T00:00:01Z")
+            self.assertIsNone(released["lease"])
+
+    def test_heartbeat_and_zombie_detection_preserve_fencing(self) -> None:
+        module = load_module()
+        with tempfile.TemporaryDirectory() as raw:
+            ledger = module.TaskLedger(Path(raw) / "ledger.json")
+            ledger.create("task-a", "idem-a")
+            lease = ledger.acquire_lease("task-a", "worker-a", ttl_seconds=10, now="2026-01-01T00:00:00Z")
+            heartbeat = ledger.heartbeat("task-a", "worker-a", lease["fence"], now="2026-01-01T00:00:05Z")
+            self.assertEqual(heartbeat["heartbeat_at"], "2026-01-01T00:00:05Z")
+            self.assertFalse(ledger.detect_zombie("task-a", now="2026-01-01T00:00:09Z"))
+            self.assertTrue(ledger.detect_zombie("task-a", now="2026-01-01T00:00:10Z"))
+            replacement = ledger.acquire_lease("task-a", "worker-b", ttl_seconds=10, now="2026-01-01T00:00:10Z")
+            with self.assertRaisesRegex(ValueError, "fence"):
+                ledger.heartbeat("task-a", "worker-a", lease["fence"], now="2026-01-01T00:00:11Z")
+            self.assertGreater(replacement["fence"], lease["fence"])
+
+    def test_waitpoint_releases_and_resumes_a_versioned_cursor(self) -> None:
+        module = load_module()
+        with tempfile.TemporaryDirectory() as raw:
+            ledger = module.TaskLedger(Path(raw) / "ledger.json")
+            ledger.create("task-a", "idem-a")
+            ledger.transition("task-a", "PLANNING")
+            ledger.transition("task-a", "RUNNING")
+            lease = ledger.acquire_lease("task-a", "worker-a", now="2026-01-01T00:00:00Z")
+            waiting = ledger.set_waitpoint("task-a", "CI_JOB", {"run": "unknown"}, holder="worker-a", fence=lease["fence"], now="2026-01-01T00:00:01Z")
+            self.assertEqual(waiting["status"], "WAITING_APPROVAL")
+            self.assertEqual(waiting["waitpoint"]["kind"], "CI_JOB")
+            self.assertEqual(waiting["cursor_version"], 1)
+            resumed = ledger.clear_waitpoint("task-a", "worker-a", lease["fence"], now="2026-01-01T00:00:02Z")
+            self.assertEqual(resumed["status"], "RUNNING")
+            self.assertIsNone(resumed["waitpoint"])
+
     def test_budget_usage_blocks_after_token_time_or_tool_limit(self) -> None:
         module = load_module()
         with tempfile.TemporaryDirectory() as raw:

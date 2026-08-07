@@ -5,7 +5,7 @@
 This card authorizes one cross-module, read-only vertical slice for WORK-LAB:
 
 ```text
-Workflow Evidence Envelope + Open Design Benchmark Registry
+Workflow Evidence Envelope only
     -> Observer-owned normalized events
     -> project-local persistent projection/readback
 ```
@@ -20,7 +20,7 @@ Workflow Evidence Envelope + Open Design Benchmark Registry
 ## Allowed source contracts
 
 - `10-workflow/workflow-assistance/schemas/workflow/evidence-envelope.schema.json`
-- `20-design/open-design/opendesign-assistance/evals/benchmarks/benchmark-registry.json`
+- Open Design benchmark events are no longer a WORK-LAB input after the module transfer.
 
 ## Forbidden actions
 
@@ -35,8 +35,7 @@ Workflow Evidence Envelope + Open Design Benchmark Registry
 ## Acceptance
 
 1. Valid Workflow evidence envelopes become Observer events without copying payloads.
-2. Open Design benchmark registry summaries become Observer events without copying briefs or evidence bodies.
-3. Source content is represented by deterministic SHA-256 only.
-4. Malformed, sensitive, unapproved or unsupported inputs fail closed.
-5. Events persist through `ObserverStore` and rebuild after restart.
-6. Existing module and root gates remain green.
+2. Source content is represented by deterministic SHA-256 only.
+3. Malformed, sensitive, unapproved or unsupported inputs fail closed.
+4. Events persist through `ObserverStore` and rebuild after restart.
+5. Existing module and root gates remain green.

@@ -10,9 +10,11 @@ from jsonschema import Draft202012Validator, SchemaError
 
 EXPECTED = {
     "module-profile": "root-governance",
+    "source-ledger": "root-governance",
+    "capability-conformance": "root-governance",
     "task-card": "workflow",
     "runtime-lock": "workflow",
-    "design-brief": "open-design",
+
     "domain-pack": "workflow",
     "evidence-envelope": "root-governance",
     "release-manifest": "root-governance",
@@ -23,11 +25,9 @@ EXPECTED = {
     "skill-package": "workflow",
     "growth-candidate": "workflow",
     "observer-event": "observer",
+    "observer-pricing": "observer",
     "data-quality": "observer",
-    "design-profile": "open-design",
-    "asset-manifest": "open-design",
-    "visual-qa-report": "open-design",
-    "benchmark-result": "open-design",
+
     "archive-manifest": "root-governance",
     "project-profile": "workflow",
     "gate-registry": "workflow",
@@ -35,12 +35,17 @@ EXPECTED = {
     "blocker": "workflow",
     "ci-observation": "workflow",
     "evidence-manifest": "workflow",
+    "model-policy": "workflow",
+    "memory-record": "workflow",
+    "rule-drift": "workflow",
 }
 CANONICAL_SCHEMA_PREFIXES = {
     "module-profile": ("00-governance/",),
+    "source-ledger": ("00-governance/",),
+    "capability-conformance": ("00-governance/",),
     "task-card": ("10-workflow/",),
     "runtime-lock": ("00-governance/",),
-    "design-brief": ("20-design/",),
+
     "domain-pack": ("10-workflow/",),
     "evidence-envelope": ("00-governance/",),
     "release-manifest": ("00-governance/",),
@@ -51,11 +56,9 @@ CANONICAL_SCHEMA_PREFIXES = {
     "skill-package": ("10-workflow/",),
     "growth-candidate": ("10-workflow/",),
     "observer-event": ("30-observer/",),
+    "observer-pricing": ("30-observer/",),
     "data-quality": ("30-observer/",),
-    "design-profile": ("20-design/",),
-    "asset-manifest": ("20-design/",),
-    "visual-qa-report": ("20-design/",),
-    "benchmark-result": ("20-design/",),
+
     "archive-manifest": ("00-governance/",),
     "project-profile": ("10-workflow/",),
     "gate-registry": ("10-workflow/",),
@@ -63,6 +66,9 @@ CANONICAL_SCHEMA_PREFIXES = {
     "blocker": ("10-workflow/",),
     "ci-observation": ("10-workflow/",),
     "evidence-manifest": ("10-workflow/",),
+    "model-policy": ("10-workflow/",),
+    "memory-record": ("10-workflow/",),
+    "rule-drift": ("10-workflow/",),
 }
 
 

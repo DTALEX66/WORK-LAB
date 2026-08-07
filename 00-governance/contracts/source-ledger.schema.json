@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "work-lab/source-ledger/v3",
+  "title": "WORK-LAB Source Ledger V3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "ledgerVersion", "scope", "entries"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "work-lab/source-ledger/v3"},
+    "ledgerVersion": {"const": 3},
+    "scope": {"const": ["workflow-assistance", "work-lab-observer"]},
+    "entries": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/entry"}
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "decisionStatus", "implementationStatus", "canonicalUrl", "reviewedCommit", "license", "spdx", "owner", "targetPaths", "tests", "controls", "freshness", "rollback"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+        "decisionStatus": {"enum": ["derive", "adapter", "vendor-adapt", "external-optional", "reference", "defer", "reject"]},
+        "implementationStatus": {"enum": ["local-verified", "local-partial", "not-implemented", "blocked", "transferred-out"]},
+        "canonicalUrl": {"type": "string", "format": "uri"},
+        "reviewedCommit": {"type": ["string", "null"]},
+        "license": {"type": "string"},
+        "spdx": {"type": "string"},
+        "owner": {"type": "string", "minLength": 1},
+        "targetPaths": {"type": "array", "items": {"type": "string"}},
+        "tests": {"type": "array", "items": {"type": "string"}},
+        "controls": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["network", "telemetry", "credentials", "scripts", "sizeBytes"],
+          "properties": {
+            "network": {"type": "boolean"},
+            "telemetry": {"type": "boolean"},
+            "credentials": {"type": "boolean"},
+            "scripts": {"type": "boolean"},
+            "sizeBytes": {"type": ["integer", "null"], "minimum": 0}
+          }
+        },
+        "freshness": {"type": "string", "enum": ["current-head", "review-required", "unknown"]},
+        "rollback": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

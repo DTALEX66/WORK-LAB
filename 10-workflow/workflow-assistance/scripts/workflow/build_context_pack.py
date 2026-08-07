@@ -10,6 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from context_lines import normalize_context_lines, render_context_lines
+
 DEFAULT_OUTPUT = Path(".hermes/task-artifacts/context-pack.md")
 MAX_SECTION_CHARS = 8000
 # Keep a new-session handoff inside the portable token policy default. Callers may
@@ -215,7 +217,12 @@ def skill_inventory(root: Path) -> list[str]:
     return items
 
 
-def build_context_pack(root: Path, max_chars: int = DEFAULT_MAX_CHARS) -> str:
+def build_context_pack(
+    root: Path,
+    max_chars: int = DEFAULT_MAX_CHARS,
+    context_lines: list[dict[str, object]] | None = None,
+    context_project_id: str | None = None,
+) -> str:
     now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
     head = run_git(root, "rev-parse", "--short", "HEAD") or "unknown"
     branch = run_git(root, "branch", "--show-current") or "unknown"
@@ -242,6 +249,10 @@ def build_context_pack(root: Path, max_chars: int = DEFAULT_MAX_CHARS) -> str:
         "- Secret-like values are redacted before rendering.\n"
         "- It strengthens the global Hermes Agent + CC Switch + Codex workflow; it is not proof that live Hermes has reloaded these assets.\n"
     )
+    if context_lines:
+        project_id = context_project_id or root.name
+        safe_lines = normalize_context_lines(context_lines, project_id=project_id)
+        sections.append(render_context_lines(safe_lines))
     sections.append(f"## Git Status\n\n```text\n{status}\n```\n")
     sections.append(f"## Recent Commits\n\n```text\n{recent}\n```\n")
     sections.append(
@@ -263,7 +274,6 @@ def build_context_pack(root: Path, max_chars: int = DEFAULT_MAX_CHARS) -> str:
         "- Keep one writer per checkout; context-pack generation is evidence/handoff, not completed product work by itself.\n"
         "- If output is used in another project, regenerate inside that project so paths and git evidence match.\n"
     )
-
     for relative in SELECTED_TEXT_FILES:
         text = read_safe_text(root, relative)
         if text is None:

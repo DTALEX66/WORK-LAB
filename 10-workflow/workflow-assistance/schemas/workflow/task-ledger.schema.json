@@ -18,13 +18,26 @@
     "task": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["task_id", "run_id", "idempotency_key", "status", "checkpoint", "retry_count", "budget", "usage", "lease", "evidence", "parent_task_id", "dependencies", "children", "external_effects", "reconciliation", "created_at", "updated_at", "errors"],
+      "required": ["task_id", "run_id", "idempotency_key", "status", "checkpoint", "cursor_version", "waitpoint", "retry_count", "budget", "usage", "lease", "evidence", "parent_task_id", "dependencies", "children", "external_effects", "reconciliation", "created_at", "updated_at", "errors"],
       "properties": {
         "task_id": {"type": "string", "minLength": 1},
         "run_id": {"type": "string", "minLength": 1},
         "idempotency_key": {"type": "string", "minLength": 1},
         "status": {"enum": ["QUEUED", "PLANNING", "WAITING_APPROVAL", "RUNNING", "RETRYING", "PAUSED", "BLOCKED", "REVIEWING", "COMPLETED", "FAILED", "CANCELLED"]},
         "checkpoint": {"type": ["object", "null"]},
+        "cursor_version": {"type": "integer", "minimum": 0},
+        "waitpoint": {
+          "type": ["object", "null"],
+          "properties": {
+            "kind": {"type": "string", "minLength": 1},
+            "cursor": {"type": "object"},
+            "holder": {"type": "string", "minLength": 1},
+            "fence": {"type": "integer", "minimum": 1},
+            "created_at": {"type": "string", "minLength": 1}
+          },
+          "required": ["kind", "cursor", "holder", "fence", "created_at"],
+          "additionalProperties": false
+        },
         "retry_count": {"type": "integer", "minimum": 0},
         "budget": {
           "type": "object",
@@ -53,9 +66,10 @@
             "holder": {"type": "string", "minLength": 1},
             "fence": {"type": "integer", "minimum": 1},
             "acquired_at": {"type": "string", "minLength": 1},
+            "heartbeat_at": {"type": "string", "minLength": 1},
             "expires_at": {"type": "string", "minLength": 1}
           },
-          "required": ["holder", "fence", "acquired_at", "expires_at"],
+          "required": ["holder", "fence", "acquired_at", "heartbeat_at", "expires_at"],
           "additionalProperties": false
         },
         "evidence": {

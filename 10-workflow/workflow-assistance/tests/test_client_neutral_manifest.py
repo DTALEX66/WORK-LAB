@@ -41,7 +41,7 @@ class ClientNeutralManifestTests(unittest.TestCase):
         self.assertNotIn("hermes", manifest["requirements"])
         self.assertEqual(manifest["requirements"]["optional_adapters"]["hermes"], "hermes-agent>=0.19,<0.21")
         adapters = {item["id"]: item for item in manifest["adapters"]["entries"]}
-        self.assertEqual(set(adapters), {"hermes", "codex", "cc-switch", "github", "open-design", "cursor", "claude-code", "workbuddy"})
+        self.assertEqual(set(adapters), {"hermes", "codex", "cc-switch", "github", "cursor", "claude-code", "workbuddy"})
         self.assertEqual(adapters["hermes"]["support"], "deep")
         self.assertEqual(adapters["cursor"]["support"], "manifest-only")
         self.assertEqual(manifest["adapters"]["interface"], ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"])
@@ -68,7 +68,7 @@ class ClientNeutralManifestTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("CLIENT_NEUTRAL_MANIFEST_PASS", result.stdout)
-        self.assertIn("adapters=8", result.stdout)
+        self.assertIn("adapters=7", result.stdout)
         self.assertNotIn("hermes-agent", result.stdout)
 
     def test_verifier_rejects_missing_adapter_interface(self) -> None:

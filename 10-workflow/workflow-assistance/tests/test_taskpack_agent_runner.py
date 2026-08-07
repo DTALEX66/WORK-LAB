@@ -15,9 +15,12 @@ from scripts.workflow.run_taskpack_agent import (
     HermesAgentBackend,
     RunnerError,
     TaskPackRunner,
+    discover_ci_identity,
     effective_task_risk,
+    resolve_ci_identity,
     _parse_args,
 )
+from scripts.workflow.task_ledger import TaskLedger
 
 
 @dataclass
@@ -87,6 +90,14 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         with self.assertRaisesRegex(RunnerError, "BLOCKED"):
             repo.observe_ci("commit")
 
+    def test_ci_identity_uses_work_lab_profile_and_aggregate_job(self) -> None:
+        root = Path(__file__).resolve().parents[3]
+        self.assertEqual(resolve_ci_identity(root), (("work-lab-gate",), "aggregate"))
+
+    def test_ci_identity_discovers_workflow_without_profile(self) -> None:
+        root = Path(__file__).resolve().parents[3]
+        self.assertEqual(discover_ci_identity(root), (("work-lab-gate",), "aggregate"))
+
     def test_hermes_backend_resumes_without_agent_timeout(self) -> None:
         calls: list[tuple[list[str], dict[str, object]]] = []
 
@@ -152,6 +163,19 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         self.assertNotIn("HEAD equal to origin/main", prompt)
         self.assertTrue(repo.released)
 
+    def test_runner_uses_task_ledger_lease_checkpoint_and_release(self) -> None:
+        repo = FakeRepo()
+        agent = FakeAgent(repo, [])
+        with tempfile.TemporaryDirectory() as raw:
+            ledger = TaskLedger(Path(raw) / "ledger")
+            runner = TaskPackRunner(repo=repo, agent=agent, ledger=ledger)
+            runner.run("ledger-backed bounded task", risk="low")
+            self.assertIsNotNone(runner.last_task_id)
+            task = ledger.get(runner.last_task_id or "")
+            self.assertEqual(task["status"], "COMPLETED")
+            self.assertIsNone(task["lease"])
+            self.assertEqual(task["checkpoint"]["phase"], "runner_complete")
+
     def test_high_risk_runner_uses_configured_release_ref(self) -> None:
         repo = FakeRepo()
         agent = FakeAgent(repo, ["GO"])
@@ -176,7 +200,9 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
 
     def test_release_fetches_remote_selected_by_remote_ref(self) -> None:
         calls: list[tuple[str, ...]] = []
-        repo = GitRepository(Path("."), remote_ref="upstream/release")
+        repo = GitRepository(
+            Path("."), remote_ref="upstream/release", required_workflows=("workflow-governance",)
+        )
 
         def fake_git(*args: str) -> str:
             calls.append(args)
@@ -195,7 +221,9 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         self.assertIn(("fetch", "--prune", "upstream"), calls)
 
     def test_exact_sha_ci_rejects_completed_unrelated_workflow(self) -> None:
-        repo = GitRepository(Path("."), ci_timeout_seconds=1, ci_poll_seconds=0)
+        repo = GitRepository(
+            Path("."), required_workflows=("workflow-governance",), ci_timeout_seconds=1, ci_poll_seconds=0
+        )
         result = subprocess.CompletedProcess(
             ["gh"],
             0,
@@ -241,6 +269,46 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
             repo._wait_for_ci("release")
 
         self.assertEqual(calls[0][0:5], ["gh", "run", "list", "--repo", "owner/repository"])
+
+    def test_exact_sha_ci_reads_stable_aggregate_job_for_selected_run(self) -> None:
+        repo = GitRepository(
+            Path("."),
+            required_workflows=("work-lab-gate",),
+            stable_aggregate_job="aggregate",
+            ci_timeout_seconds=1,
+            ci_poll_seconds=0,
+        )
+        run_list = subprocess.CompletedProcess(
+            ["gh"],
+            0,
+            stdout=(
+                '[{"status":"completed","conclusion":"success",'
+                '"name":"work-lab-gate","url":"https://example.invalid/run/42",'
+                '"databaseId":42,"headSha":"release","attempt":1}]'
+            ),
+            stderr="",
+        )
+        aggregate = subprocess.CompletedProcess(
+            ["gh"],
+            0,
+            stdout='{"headSha":"release","jobs":[{"name":"aggregate","status":"completed","conclusion":"success"}]}',
+            stderr="",
+        )
+        calls: list[list[str]] = []
+
+        def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append(command)
+            return run_list if command[1:3] == ["run", "list"] else aggregate
+
+        with patch("scripts.workflow.run_taskpack_agent.shutil.which", return_value="gh"), patch(
+            "scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run
+        ), patch.object(repo, "_github_repository", return_value="owner/repository"), patch(
+            "scripts.workflow.run_taskpack_agent.time.monotonic", side_effect=[0, 0]
+        ):
+            repo._wait_for_ci("release")
+
+        self.assertEqual(calls[1][0:4], ["gh", "run", "view", "42"])
+        self.assertIn("headSha,jobs", calls[1])
 
     def test_release_repository_marks_empty_required_workflow_contract_blocked_at_observation(self) -> None:
         repo = GitRepository(Path("."), required_workflows=())

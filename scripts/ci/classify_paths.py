@@ -4,7 +4,6 @@ from pathlib import Path
 
 ROOTS = {
     "workflow": Path("10-workflow/workflow-assistance"),
-    "open-design": Path("20-design/open-design"),
     "observer": Path("30-observer/work-lab-observer"),
 }
 

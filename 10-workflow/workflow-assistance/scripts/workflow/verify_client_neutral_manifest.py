@@ -30,7 +30,7 @@ EXPECTED_ADAPTERS = {
     "codex": "deep",
     "cc-switch": "deep",
     "github": "deep",
-    "open-design": "deep",
+
     "cursor": "manifest-only",
     "claude-code": "manifest-only",
     "workbuddy": "manifest-only",
@@ -40,7 +40,7 @@ FIRST_CLASS_ADAPTERS = [
     "codex",
     "cc-switch",
     "github",
-    "open-design",
+
 ]
 HERMES_ADAPTER_REQUIREMENT = "hermes-agent>=0.19,<0.21"
 
@@ -68,7 +68,7 @@ def load_and_validate(path: Path) -> dict[str, Any]:
         raise ValueError("product.non_goals must exclude agent, chat, and model_gateway")
     first_class = product.get("first_class_adapters")
     if first_class != FIRST_CLASS_ADAPTERS:
-        raise ValueError("product.first_class_adapters must list the five first-class adapters")
+        raise ValueError("product.first_class_adapters must list the four first-class adapters")
 
     requirements = _mapping(root.get("requirements"), "requirements")
     if "hermes" in requirements:

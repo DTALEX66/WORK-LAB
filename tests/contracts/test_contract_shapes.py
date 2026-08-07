@@ -19,13 +19,9 @@ class ContractShapeTests(unittest.TestCase):
             data = json.loads(path.read_text(encoding="utf-8"))
             self.assertTrue(data.get("schemaVersion") or data.get("$id"), path.as_posix())
 
-    def test_projects_preserve_three_module_paths(self):
+    def test_projects_preserve_two_active_module_paths(self):
         data = json.loads((ROOT / "00-governance/projects.json").read_text(encoding="utf-8"))
-        self.assertEqual([m["path"] for m in data["modules"]], [
-            "10-workflow/workflow-assistance",
-            "20-design/open-design",
-            "30-observer/work-lab-observer",
-        ])
+        self.assertEqual([m["path"] for m in data["modules"]], ["10-workflow/workflow-assistance", "30-observer/work-lab-observer"])
         self.assertTrue(data["singleWriter"])
         self.assertFalse(data["externalMutationDefault"])
 

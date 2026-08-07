@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Any, Iterable
 
 from observer_runtime import ObserverInputError, validate_event
@@ -36,6 +37,10 @@ def _digest(value: Any) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def _is_digest(value: Any) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"[a-f0-9]{64}", value) is not None
+
+
 def _reject_sensitive(value: Any) -> None:
     sensitive = sorted(_keys(value) & SENSITIVE_KEYS)
     if sensitive:
@@ -47,7 +52,7 @@ def _event(*, event_id: str, task_id: str, event_type: str, source_id: str, sour
         "eventId": event_id,
         "schemaVersion": EVENT_SCHEMA,
         "eventType": event_type,
-        "sourceModule": "workflow-assistance" if event_type.startswith("evidence.") else "open-design",
+        "sourceModule": "workflow-assistance",
         "sourceId": source_id,
         "taskId": task_id,
         "observedAt": "source-bound",
@@ -57,6 +62,33 @@ def _event(*, event_id: str, task_id: str, event_type: str, source_id: str, sour
         "evidenceRefs": evidence_refs,
     }
     return validate_event(event)
+
+
+def token_usage_events(summaries: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Normalize Token Monitor summaries into read-only Observer usage events."""
+    events: list[dict[str, Any]] = []
+    allowed = {"input_tokens", "output_tokens", "total_tokens", "records"}
+    for summary in summaries:
+        if not isinstance(summary, dict) or set(summary) != allowed:
+            raise ObserverInputError("token usage summary must contain only explicit metrics")
+        if any(isinstance(summary[key], bool) or not isinstance(summary[key], int) or summary[key] < 0 for key in allowed):
+            raise ObserverInputError("token usage metrics must be non-negative integers")
+        digest = _digest(summary)
+        event = {
+            "eventId": f"token-usage:{digest[:16]}",
+            "schemaVersion": EVENT_SCHEMA,
+            "eventType": "usage.summary",
+            "sourceModule": "workflow-assistance",
+            "sourceId": "token-monitor",
+            "taskId": "WL-USAGE",
+            "observedAt": "source-bound",
+            "contentDigest": digest,
+            "coverage": "full",
+            "quality": "source-exact",
+            "usage": dict(summary),
+        }
+        events.append(validate_event(event))
+    return events
 
 
 def workflow_evidence_events(envelopes: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -87,23 +119,46 @@ def workflow_evidence_events(envelopes: Iterable[dict[str, Any]]) -> list[dict[s
     return events
 
 
-def open_design_benchmark_event(registry: dict[str, Any]) -> dict[str, Any]:
-    if not isinstance(registry, dict) or registry.get("schema_version") != "open-design/benchmark-registry/v1":
-        raise ObserverInputError("unsupported Open Design benchmark registry")
-    _reject_sensitive(registry)
-    benchmarks = registry.get("benchmarks")
-    repeatability = registry.get("repeatability")
-    if not isinstance(benchmarks, list) or not benchmarks or not isinstance(repeatability, dict):
-        raise ObserverInputError("Open Design benchmark registry is incomplete")
-    if repeatability.get("human_calibration_required_for_promotion") is not True:
-        raise ObserverInputError("benchmark promotion must require human calibration")
-    refs = [entry["id"] for entry in benchmarks if isinstance(entry, dict) and isinstance(entry.get("id"), str)]
-    return _event(
-        event_id=f"open-design-benchmark:{_digest(registry)[:16]}",
-        task_id="OD-BENCHMARK-REGISTRY",
-        event_type="benchmark.registry",
-        source_id="benchmark-registry",
-        source_digest=_digest(registry),
-        quality="partial",
-        evidence_refs=refs,
-    )
+def telemetry_events(summaries: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Normalize OTel/OpenInference-like summaries without retaining bodies."""
+    events: list[dict[str, Any]] = []
+    telemetry_fields = {
+        "operation", "provider", "model", "input_tokens", "output_tokens", "total_tokens",
+        "reasoning_tokens", "cache_read_tokens", "cache_write_tokens", "latency_ms", "outcome", "error_class",
+    }
+    integer_fields = {"input_tokens", "output_tokens", "total_tokens", "reasoning_tokens", "cache_read_tokens", "cache_write_tokens"}
+    for summary in summaries:
+        if not isinstance(summary, dict):
+            raise ObserverInputError("telemetry summary must be an object")
+        _reject_sensitive(summary)
+        if not {"operation", "provider", "task_id"}.issubset(summary):
+            raise ObserverInputError("telemetry summary is incomplete")
+        unknown = set(summary) - telemetry_fields - {"task_id", "source_digest"}
+        if unknown:
+            raise ObserverInputError("telemetry summary contains non-allowlisted fields")
+        safe = {key: summary[key] for key in telemetry_fields if key in summary}
+        for key in integer_fields:
+            if key in safe and (isinstance(safe[key], bool) or not isinstance(safe[key], int) or safe[key] < 0):
+                raise ObserverInputError("telemetry token fields must be non-negative integers")
+        if "latency_ms" in safe and (isinstance(safe["latency_ms"], bool) or not isinstance(safe["latency_ms"], (int, float)) or safe["latency_ms"] < 0):
+            raise ObserverInputError("telemetry latency must be non-negative")
+        source_digest = summary.get("source_digest") or _digest(safe)
+        if not _is_digest(source_digest):
+            raise ObserverInputError("telemetry source_digest must be a lowercase SHA-256")
+        complete_fields = {"operation", "provider", "model", "latency_ms", "outcome"}
+        has_usage = bool(integer_fields & safe.keys())
+        event = {
+            "eventId": f"telemetry:{source_digest[:16]}",
+            "schemaVersion": EVENT_SCHEMA,
+            "eventType": "telemetry.summary",
+            "sourceModule": "workflow-assistance",
+            "sourceId": "otel-openinference-fixture",
+            "taskId": summary["task_id"],
+            "observedAt": "source-bound",
+            "contentDigest": _digest(safe),
+            "coverage": "full" if complete_fields.issubset(safe) and has_usage else "partial",
+            "quality": "source-exact",
+            "telemetry": safe,
+        }
+        events.append(validate_event(event))
+    return events

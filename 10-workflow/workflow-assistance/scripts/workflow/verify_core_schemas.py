@@ -30,6 +30,9 @@ EXPECTED = {
     "blocker.schema.json": ("workflow/blocker/v1", {"schema_version", "blocker_id", "class", "scope", "retry_policy", "fingerprint", "message", "created_at"}),
     "ci-observation.schema.json": ("workflow/ci-observation/v1", {"schema_version", "observation_id", "repository", "commit", "state", "observed_at", "retry_budget"}),
     "evidence-manifest.schema.json": ("workflow/evidence-manifest/v1", {"schema_version", "manifest_id", "source_identity", "plan", "evidence", "redaction"}),
+    "model-policy.schema.json": ("workflow/model-policy/v1", {"schema_version", "policy_id", "task_class", "model_class", "selection", "context_budget", "cost", "redaction", "degradation"}),
+    "memory-record.schema.json": ("workflow/memory-record/v1", {"schema_version", "memory_id", "layer", "kind", "status", "source_digest", "content_digest", "confidence", "promotion", "redaction"}),
+    "rule-drift.schema.json": ("workflow/rule-drift/v1", {"schema_version", "drift_id", "rule_id", "baseline_digest", "observed_digest", "state", "severity", "action"}),
 }
 FORBIDDEN_KEYS = {"api_key", "apikey", "authorization", "password", "secret", "token", "provider", "model"}
 
