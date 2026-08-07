@@ -1,0 +1,160 @@
+{
+  "schemaVersion": "work-lab/observer-projection/v2",
+  "mode": "LIVE",
+  "generatedAt": "2026-08-07T17:38:39.008975+00:00",
+  "freshness": {
+    "state": "fresh",
+    "ageSeconds": null,
+    "lastGoodAt": null
+  },
+  "summary": {
+    "registeredProjects": 2,
+    "activeProjects": 2,
+    "tasks": {
+      "running": 2,
+      "waiting": 0,
+      "blocked": 0,
+      "failed": 0,
+      "completed": 0,
+      "unknown": 0
+    }
+  },
+  "projects": [
+    {
+      "projectId": "workflow-assistance",
+      "displayName": "Workflow Assistance",
+      "repository": "DTALEX66/WORK-LAB",
+      "agentPlatform": "hermes",
+      "task": null,
+      "state": "running",
+      "stage": null,
+      "durationSeconds": null,
+      "blockerSummary": null,
+      "branch": "main",
+      "headSha": null,
+      "ciState": null,
+      "lastEventAt": null,
+      "quality": {
+        "evidenceCompleteness": "complete",
+        "dataQuality": "exact",
+        "freshness": "fresh",
+        "sourceRef": "task-ledger"
+      }
+    },
+    {
+      "projectId": "work-lab-observer",
+      "displayName": "Work Lab Observer",
+      "repository": "DTALEX66/WORK-LAB",
+      "agentPlatform": "hermes",
+      "task": null,
+      "state": "running",
+      "stage": null,
+      "durationSeconds": null,
+      "blockerSummary": null,
+      "branch": "main",
+      "headSha": null,
+      "ciState": null,
+      "lastEventAt": null,
+      "quality": {
+        "evidenceCompleteness": "complete",
+        "dataQuality": "exact",
+        "freshness": "fresh",
+        "sourceRef": "task-ledger"
+      }
+    }
+  ],
+  "primaryBlocker": null,
+  "usage": {
+    "inputTokens": 5190,
+    "outputTokens": 2445,
+    "reasoningTokens": null,
+    "cacheReadTokens": null,
+    "cacheWriteTokens": null,
+    "cost": {
+      "amount": null,
+      "currency": null,
+      "status": "unknown",
+      "billingType": "unknown",
+      "sourceRef": null,
+      "effectiveAt": null
+    },
+    "subscriptionUsage": null,
+    "series": [],
+    "quality": {
+      "evidenceCompleteness": "complete",
+      "dataQuality": "exact",
+      "freshness": "fresh"
+    }
+  },
+  "ci": {
+    "exactShaBound": 0,
+    "exactShaRequired": 0,
+    "queuedNoJob": 0,
+    "running": 0,
+    "passed": 0,
+    "failed": 0,
+    "unknown": 0,
+    "quality": {
+      "evidenceCompleteness": "partial",
+      "dataQuality": "exact",
+      "freshness": "fresh"
+    }
+  },
+  "governance": {
+    "rules": {
+      "current": 4,
+      "drift": 0,
+      "quarantined": 0,
+      "conflicts": 0,
+      "stale": 0
+    },
+    "skills": {
+      "current": 13,
+      "drift": 0,
+      "quarantined": 0,
+      "conflicts": 0,
+      "stale": 0
+    },
+    "adapters": {
+      "current": 7,
+      "drift": 0,
+      "quarantined": 0,
+      "conflicts": 0,
+      "stale": 0
+    },
+    "memoryContext": {
+      "current": 0,
+      "drift": 0,
+      "quarantined": 0,
+      "conflicts": 0,
+      "stale": 0
+    }
+  },
+  "quality": {
+    "sourceCoverage": {
+      "numerator": 10,
+      "denominator": 12,
+      "scope": "observed-events"
+    },
+    "evidenceCompleteness": "partial",
+    "freshness": "fresh",
+    "unknown": 0,
+    "malformed": 0,
+    "dropped": 0,
+    "duplicate": 0,
+    "projectionLagMs": null,
+    "lastGoodAt": null
+  },
+  "sourceRefs": [],
+  "mutationSurface": {
+    "externalMutation": false,
+    "ledgerMutation": false,
+    "approvalMutation": false,
+    "gitControl": false,
+    "allowedWrites": [
+      "observer-owned-events",
+      "observer-owned-projections",
+      "observer-owned-reports"
+    ]
+  }
+}

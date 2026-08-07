@@ -1,0 +1,202 @@
+/* WORK-LAB Observer — Design Tokens
+   Apple Liquid Glass component style: transparent canvas (desktop shows through),
+   vibrancy glass shell, layered translucent surfaces. Theme via data-theme. */
+
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  --wl-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --wl-font-size-11: 11px;
+  --wl-font-size-12: 12px;
+  --wl-font-size-13: 13px;
+  --wl-font-size-14: 14px;
+  --wl-font-size-16: 16px;
+  --wl-font-size-20: 20px;
+  --wl-font-size-28: 28px;
+
+  --wl-space-1: 4px;
+  --wl-space-2: 8px;
+  --wl-space-3: 12px;
+  --wl-space-4: 16px;
+  --wl-space-5: 20px;
+  --wl-space-6: 24px;
+  --wl-space-8: 32px;
+
+  --wl-radius-sm: 10px;
+  --wl-radius-md: 14px;
+  --wl-radius-lg: 18px;
+  --wl-radius-shell: 28px;
+  --wl-border-width: 1px;
+  --wl-motion-fast: 140ms;
+  --wl-motion-normal: 180ms;
+
+  /* Apple semantic palette */
+  --wl-blue: #0a84ff;
+  --wl-green: #30d158;
+  --wl-amber: #ff9f0a;
+  --wl-red: #ff453a;
+  --wl-purple: #bf5af2;
+  --wl-cyan: #64d2ff;
+}
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  /* Transparent canvas — desktop wallpaper shows through (component, not a page). */
+  --wl-canvas: transparent;
+  --wl-canvas-gradient-a: transparent;
+  --wl-canvas-gradient-b: transparent;
+
+  /* Liquid-glass shell: translucent + vibrancy blur, layered over desktop. */
+  --wl-shell: rgba(20, 32, 45, 0.42);
+  --wl-shell-highlight: rgba(255, 255, 255, 0.14);
+  --wl-sidebar: rgba(22, 36, 50, 0.34);
+
+  /* Content surfaces: more opaque than shell so text stays legible on glass. */
+  --wl-surface-1: rgba(26, 40, 55, 0.72);
+  --wl-surface-2: rgba(32, 48, 65, 0.68);
+  --wl-surface-3: rgba(40, 58, 78, 0.66);
+  --wl-surface-hover: rgba(48, 68, 90, 0.7);
+
+  --wl-border-subtle: rgba(202, 224, 244, 0.16);
+  --wl-border-strong: rgba(202, 224, 244, 0.28);
+  --wl-text-primary: #f4f8fc;
+  --wl-text-secondary: #b8c4d0;
+  --wl-text-muted: #8391a0;
+  --wl-track: rgba(211, 227, 241, 0.14);
+  --wl-focus: rgba(10, 132, 255, 0.85);
+
+  /* Glass shadow: soft drop + top inner highlight (Apple vibrancy). */
+  --wl-shadow-shell: 0 24px 70px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  --wl-shadow-card: 0 8px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --wl-canvas: transparent;
+  --wl-canvas-gradient-a: transparent;
+  --wl-canvas-gradient-b: transparent;
+  /* Brighter, more opaque light surfaces so text stays readable on glass. */
+  --wl-shell: rgba(250, 252, 255, 0.82);
+  --wl-shell-highlight: rgba(255, 255, 255, 0.95);
+  --wl-sidebar: rgba(247, 250, 255, 0.78);
+  --wl-surface-1: rgba(255, 255, 255, 0.92);
+  --wl-surface-2: rgba(250, 253, 255, 0.94);
+  --wl-surface-3: rgba(243, 248, 253, 0.94);
+  --wl-surface-hover: rgba(236, 245, 253, 0.96);
+  --wl-border-subtle: rgba(38, 73, 108, 0.22);
+  --wl-border-strong: rgba(38, 73, 108, 0.34);
+  --wl-text-primary: #101820;
+  --wl-text-secondary: #2e3f50;
+  --wl-text-muted: #5a6b7b;
+  --wl-track: rgba(39, 76, 111, 0.16);
+  --wl-focus: rgba(0, 122, 255, 0.82);
+  --wl-shadow-shell: 0 24px 64px rgba(40, 66, 92, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --wl-shadow-card: 0 8px 22px rgba(40, 66, 92, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html,
+body {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+  /* Fully transparent — the desktop (Tauri window has its own transparent bg) shows through. */
+  background: transparent;
+  color: var(--wl-text-primary);
+}
+
+/* Liquid-glass shell: vibrancy blur + saturate, with graceful fallback. */
+.wl-shell {
+  background: var(--wl-shell);
+  border: var(--wl-border-width) solid var(--wl-border-strong);
+  border-radius: var(--wl-radius-shell);
+  box-shadow: var(--wl-shadow-shell);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+
+.wl-card {
+  background: var(--wl-surface-1);
+  border: var(--wl-border-width) solid var(--wl-border-subtle);
+  border-radius: var(--wl-radius-lg);
+  box-shadow: var(--wl-shadow-card);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+}
+
+.wl-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.wl-mono {
+  font-family: var(--wl-font-mono);
+}
+
+:focus-visible {
+  outline: 2px solid var(--wl-focus);
+  outline-offset: 2px;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .wl-shell {
+    background: var(--wl-surface-2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* ===== Customizable appearance (memory-only, never sent to server) =====
+   Driven by inline CSS vars set by the settings panel. Defaults match the
+   Liquid Glass base above. Override via: --wl-opacity (0.25..1), --wl-bg-mode
+   (transparent | solid-dark | solid-light | blur). */
+
+:root {
+  /* Opacity applied to the glass shell and surfaces (1 = base, lower = more see-through). */
+  --wl-opacity: 1;
+}
+
+/* When the user lowers opacity, scale every translucent surface alpha down.
+   Implemented via a luminance/alpha wrapper on the key surfaces. */
+[data-appearance] body,
+body {
+  background: var(--wl-canvas);
+}
+
+[data-bg="transparent"] { --wl-canvas: transparent; --wl-shell: rgba(20,32,45,calc(0.42*var(--wl-opacity))); --wl-sidebar: rgba(22,36,50,calc(0.34*var(--wl-opacity))); --wl-surface-1: rgba(26,40,55,calc(0.72*var(--wl-opacity))); }
+[data-bg="solid-dark"] { --wl-canvas: #0a1420; --wl-shell: rgba(14,24,34,calc(0.9*var(--wl-opacity))); --wl-surface-1: rgba(20,32,46,calc(0.92*var(--wl-opacity))); }
+[data-bg="solid-light"] { --wl-canvas: #eef3f8; --wl-shell: rgba(250,253,255,calc(0.9*var(--wl-opacity))); --wl-surface-1: rgba(255,255,255,calc(0.95*var(--wl-opacity))); }
+[data-bg="blur"] { --wl-canvas: transparent; --wl-shell: rgba(20,32,45,calc(0.3*var(--wl-opacity))); }
+
+/* Settings panel (read-only control; only touches browser memory / CSS vars). */
+.wl-settings {
+  position: fixed;
+  right: 16px;
+  top: 56px;
+  z-index: 100;
+  width: 240px;
+  padding: 14px 16px;
+  background: var(--wl-surface-2);
+  border: 1px solid var(--wl-border-strong);
+  border-radius: var(--wl-radius-md);
+  box-shadow: var(--wl-shadow-card);
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+.wl-settings.open { display: flex; }
+.wl-settings h4 { margin: 0 0 4px; font-size: 13px; }
+.wl-settings label { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--wl-text-secondary); }
+.wl-settings input[type="range"] { width: 110px; }
+.wl-settings select { width: 100%; padding: 5px; border-radius: 6px; background: var(--wl-surface-3); color: var(--wl-text-primary); border: 1px solid var(--wl-border-subtle); }
