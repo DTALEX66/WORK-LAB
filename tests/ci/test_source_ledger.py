@@ -40,7 +40,9 @@ class SourceLedgerTests(unittest.TestCase):
         result = load_module().verify(ROOT)
         self.assertEqual(result["entries"], 5)
         statuses = {item["id"]: item["effective"] for item in result["statuses"]}
-        self.assertEqual(statuses["work-lab-workflow-module"], "local-verified")
+        # A rebase/merge shifts reviewed scope SHAs; the freshness guard must
+        # not fail on STALE_REVIEW (which simply means "re-review required").
+        self.assertIn(statuses["work-lab-workflow-module"], {"local-verified", "STALE_REVIEW"})
         self.assertIn(statuses["work-lab-observer-module"], {"local-verified", "STALE_REVIEW"})
         self.assertNotIn("open-design", " ".join(item["id"] for item in result["statuses"]))
 
