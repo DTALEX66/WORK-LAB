@@ -70,9 +70,30 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--config", type=Path, default=Path("config/config.yaml"))
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--live", action="store_true", help="Run real marker requests; consumes provider quota.")
+    parser.add_argument("--provider", default=None, help="Explicit provider lane to live-check (overrides config; requires --live).")
+    parser.add_argument("--model", default=None, help="Explicit model to live-check with --provider (requires --live).")
     args = parser.parse_args(argv)
-    config = yaml.safe_load(args.config.read_text(encoding="utf-8")) or {}
-    report = build_report(config, live=args.live)
+
+    config: dict = {}
+    if args.config.exists():
+        config = yaml.safe_load(args.config.read_text(encoding="utf-8")) or {}
+
+    explicit = args.provider and args.model
+    if explicit and not args.live:
+        parser.error("--provider/--model require --live")
+    if explicit:
+        # Only live-check the explicitly named lane; do not read config credentials.
+        status = live_check(args.provider, args.model) if args.live else "UNVERIFIED"
+        report = {
+            "schema_version": 1,
+            "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+            "secret_free": True,
+            "overall_status": status,
+            "models": {f"{args.provider}/{args.model}": {"provider": args.provider, "model": args.model, "status": status}},
+            "explicit": True,
+        }
+    else:
+        report = build_report(config, live=args.live)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"PROVIDER_HEALTH_REPORT status={report['overall_status']} models={len(report['models'])} output={args.output}")
