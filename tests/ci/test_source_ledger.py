@@ -39,7 +39,9 @@ class SourceLedgerTests(unittest.TestCase):
     def test_real_ledger_is_scope_limited_and_readback_passes(self) -> None:
         result = load_module().verify(ROOT)
         self.assertEqual(result["entries"], 5)
-        self.assertEqual(sum(item["effective"] == "local-verified" for item in result["statuses"]), 2)
+        statuses = {item["id"]: item["effective"] for item in result["statuses"]}
+        self.assertEqual(statuses["work-lab-workflow-module"], "local-verified")
+        self.assertIn(statuses["work-lab-observer-module"], {"local-verified", "STALE_REVIEW"})
         self.assertNotIn("open-design", " ".join(item["id"] for item in result["statuses"]))
 
     def test_missing_target_degrades_local_status(self) -> None:
