@@ -36,38 +36,52 @@ def _render_dashboard(projection: dict[str, Any]) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WORK-LAB Observer</title>
 <style>
-:root {{ color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background:#0b1020; color:#e7ecff; }}
-body {{ margin:0; background:radial-gradient(circle at 15% 0%,#182653 0,#0b1020 48%); min-height:100vh; }}
-main {{ max-width:1180px; margin:0 auto; padding:32px 20px 56px; }}
-header {{ display:flex; justify-content:space-between; align-items:flex-end; gap:20px; margin-bottom:24px; }}
-h1 {{ margin:0; font-size:30px; letter-spacing:.02em; }}
-.subtitle {{ color:#9ba9d8; margin-top:8px; }}
-.badge {{ border:1px solid #3f6f65; color:#9bf0c5; padding:7px 11px; border-radius:999px; font-size:12px; }}
-.grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }}
-.card {{ background:#121a31; border:1px solid #27345d; border-radius:14px; padding:18px; box-shadow:0 10px 32px #05091466; }}
-.label {{ color:#91a0ce; font-size:12px; text-transform:uppercase; letter-spacing:.08em; }}
-.value {{ font-size:26px; font-weight:700; margin-top:8px; }}
-section {{ margin-top:22px; }}
-h2 {{ font-size:18px; margin:0 0 12px; }}
+:root {{ color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background:#08090a; color:#f7f8f8; font-feature-settings:"cv01","ss03"; }}
+* {{ box-sizing:border-box; }}
+body {{ margin:0; background:#08090a; min-height:100vh; }}
+.nav {{ height:52px; display:flex; align-items:center; justify-content:space-between; padding:0 28px; position:sticky; top:0; z-index:2; background:rgba(0,0,0,.78); backdrop-filter:saturate(180%) blur(20px); box-shadow:0 1px 0 rgba(255,255,255,.08); }}
+.brand {{ display:flex; align-items:center; gap:10px; font-size:13px; font-weight:590; letter-spacing:-.13px; }}
+.brand-mark {{ width:20px; height:20px; border-radius:6px; display:grid; place-items:center; background:#5e6ad2; color:#fff; font-size:11px; font-weight:700; }}
+.nav-meta {{ color:#8a8f98; font:12px ui-monospace,SFMono-Regular,Menlo,monospace; }}
+main {{ max-width:1200px; margin:0 auto; padding:72px 28px 96px; }}
+.hero {{ display:flex; justify-content:space-between; align-items:flex-end; gap:28px; margin-bottom:48px; }}
+.eyebrow {{ color:#7170ff; font:500 11px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.08em; text-transform:uppercase; }}
+h1 {{ margin:12px 0 0; font-size:52px; line-height:1; letter-spacing:-1.5px; font-weight:590; }}
+.subtitle {{ color:#8a8f98; margin-top:16px; max-width:580px; font-size:17px; line-height:1.6; letter-spacing:-.16px; }}
+.badge {{ display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(255,255,255,.08); color:#d0d6e0; background:rgba(255,255,255,.03); padding:8px 12px; border-radius:9999px; font:510 12px/1.4 system-ui,sans-serif; white-space:nowrap; }}
+.badge::before {{ content:""; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.12); }}
+.grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }}
+.card {{ background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:20px; box-shadow:0 0 0 1px rgba(0,0,0,.2); }}
+.metric {{ min-height:132px; display:flex; flex-direction:column; justify-content:space-between; }}
+.label {{ color:#8a8f98; font:510 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.06em; text-transform:uppercase; }}
+.value {{ font-size:30px; line-height:1; letter-spacing:-.7px; font-weight:590; }}
+section {{ margin-top:20px; }}
+h2 {{ font-size:20px; line-height:1.33; letter-spacing:-.24px; font-weight:590; margin:0 0 18px; }}
 table {{ width:100%; border-collapse:collapse; }}
-th,td {{ text-align:left; padding:12px 10px; border-bottom:1px solid #27345d; }}
-th {{ color:#91a0ce; font-size:12px; }}
-.note {{ color:#aeb9dd; line-height:1.6; }}
-.empty {{ color:#91a0ce; padding:16px 0; }}
-@media(max-width:760px) {{ .grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} header {{ display:block; }} .badge {{ display:inline-block; margin-top:14px; }} }}
+th,td {{ text-align:left; padding:14px 10px; border-bottom:1px solid rgba(255,255,255,.06); }}
+th {{ color:#62666d; font:510 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.05em; text-transform:uppercase; }}
+td {{ color:#d0d6e0; font-size:14px; }}
+tbody tr:hover {{ background:rgba(255,255,255,.025); }}
+.note {{ color:#8a8f98; line-height:1.6; font-size:15px; }}
+.empty {{ color:#62666d; padding:24px 10px; }}
+.quality-panel {{ background:#f5f5f7; color:#1d1d1f; border:0; box-shadow:rgba(0,0,0,.22) 3px 5px 30px 0; }}
+.quality-panel h2 {{ color:#1d1d1f; }}
+.quality-panel .note {{ color:rgba(0,0,0,.62); }}
+@media(max-width:760px) {{ main {{ padding:48px 16px 64px; }} .nav {{ padding:0 16px; }} .hero {{ display:block; }} h1 {{ font-size:40px; }} .badge {{ margin-top:24px; }} .grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} table {{ min-width:680px; }} section.card {{ overflow:auto; }} }}
 </style>
 </head>
 <body>
+<nav class="nav"><div class="brand"><span class="brand-mark">W</span><span>WORK-LAB Observer</span></div><span class="nav-meta">READ-ONLY / LOCAL PROJECTION</span></nav>
 <main>
-<header><div><h1>WORK-LAB Observer</h1><div class="subtitle">只读任务、证据、质量与 usage projection</div></div><div class="badge">EXTERNAL MUTATION: FALSE</div></header>
+<header class="hero"><div><div class="eyebrow">WORK-LAB / OBSERVABILITY</div><h1>See the work.<br>Keep the boundary.</h1><div class="subtitle">只读任务、证据、质量与 usage projection。页面从 Observer-owned event store 重建，不执行、不批准、不写回。</div></div><div class="badge">EXTERNAL MUTATION: FALSE</div></header>
 <div class="grid">
-<div class="card"><div class="label">Tasks</div><div class="value">{html.escape(str(overview.get("taskCount", 0)))}</div></div>
-<div class="card"><div class="label">Events</div><div class="value">{html.escape(str(overview.get("eventCount", 0)))}</div></div>
-<div class="card"><div class="label">Quality</div><div class="value">{html.escape(str(quality.get("quality", "unknown")))}</div></div>
-<div class="card"><div class="label">Coverage</div><div class="value">{html.escape(str(overview.get("coverage", "unknown")))}</div></div>
+<div class="card metric"><div class="label">Tasks</div><div class="value">{html.escape(str(overview.get("taskCount", 0)))}</div></div>
+<div class="card metric"><div class="label">Events</div><div class="value">{html.escape(str(overview.get("eventCount", 0)))}</div></div>
+<div class="card metric"><div class="label">Quality</div><div class="value">{html.escape(str(quality.get("quality", "unknown")))}</div></div>
+<div class="card metric"><div class="label">Coverage</div><div class="value">{html.escape(str(overview.get("coverage", "unknown")))}</div></div>
 </div>
 <section class="card"><h2>Task projection</h2><table><thead><tr><th>Task</th><th>Events</th><th>Last event</th><th>Quality</th><th>Observed</th></tr></thead><tbody id="tasks"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody></table></section>
-<section class="card"><h2>Data quality</h2><p class="note">Partial events: {html.escape(str(data_quality.get("partialEvents", 0)))} · Unknown events: {html.escape(str(data_quality.get("unknownEvents", 0)))} · Last source-exact: {html.escape(str(data_quality.get("lastGood", "unknown")))}</p><p class="note">该入口只提供 GET 页面和 GET JSON projection；不执行任务、不批准动作、不写回 Ledger。</p></section>
+<section class="card quality-panel"><h2>Data quality</h2><p class="note">Partial events: {html.escape(str(data_quality.get("partialEvents", 0)))} · Unknown events: {html.escape(str(data_quality.get("unknownEvents", 0)))} · Last source-exact: {html.escape(str(data_quality.get("lastGood", "unknown")))}</p><p class="note">该入口只提供 GET 页面和 GET JSON projection；不执行任务、不批准动作、不写回 Ledger。</p></section>
 <script id="dashboard-data" type="application/json">{payload}</script>
 <script>
 const projection = JSON.parse(document.getElementById('dashboard-data').textContent);
