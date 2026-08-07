@@ -54,7 +54,7 @@ class CurrentStateTests(unittest.TestCase):
         )
         self.assertEqual(state["workflow_identity"]["workflow_name"], "work-lab-gate")
         self.assertEqual(state["workflow_identity"]["aggregate_job"], "aggregate")
-        self.assertEqual(state["contracts"]["count"], 26)
+        self.assertEqual(state["contracts"]["count"], 27)
         self.assertEqual(len(state["skills"]["items"]), 13)
 
     def test_content_digest_is_stable_when_generated_at_changes(self) -> None:

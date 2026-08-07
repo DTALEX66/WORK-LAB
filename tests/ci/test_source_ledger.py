@@ -19,6 +19,17 @@ def load_module():
 
 
 class SourceLedgerTests(unittest.TestCase):
+    def test_reviewed_commit_accepts_unchanged_scoped_tree(self) -> None:
+        module = load_module()
+        head = module._git_head(ROOT)
+        self.assertTrue(
+            module._reviewed_scope_is_unchanged(
+                ROOT,
+                head,
+                ["10-workflow/workflow-assistance", "10-workflow/workflow-assistance/tests"],
+            )
+        )
+
     def test_real_ledger_is_scope_limited_and_readback_passes(self) -> None:
         result = load_module().verify(ROOT)
         self.assertEqual(result["entries"], 5)
