@@ -96,6 +96,10 @@ jobs:
         run: |
           python scripts/verify_observer_skeleton.py
           python tests/test_observer_skeleton.py
+          python tests/test_observer_runtime.py
+          python tests/test_observer_evidence.py
+          python tests/test_observer_store.py
+          python tests/test_observer_dashboard.py
 
   integration:
     name: integration
