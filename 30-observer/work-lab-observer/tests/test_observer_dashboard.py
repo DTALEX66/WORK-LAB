@@ -6,7 +6,8 @@ import sys
 import tempfile
 import threading
 import unittest
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
+from urllib.error import HTTPError
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -181,6 +182,71 @@ class ObserverDashboardTests(unittest.TestCase):
                 self.assertEqual(by_id["work-lab"]["taskCount"], 2)
                 self.assertEqual(by_id["open-design"]["taskCount"], 1)
                 self.assertEqual(by_id["open-design"]["eventCount"], 1)
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+                server.server_close()
+
+    def test_write_verbs_return_405(self) -> None:
+        import http.client
+        with tempfile.TemporaryDirectory() as raw:
+            project = Path(raw)
+            (project / ".git").mkdir()
+            runtime = project / ".hermes" / "task-runtime" / "observer"
+            runtime.mkdir(parents=True)
+            server = create_server(project, runtime, port=0)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                port = server.server_port
+                for method in ("POST", "PUT", "PATCH", "DELETE"):
+                    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+                    try:
+                        conn.request(method, "/", body=b"{}")
+                        resp = conn.getresponse()
+                        self.assertEqual(resp.status, 405, f"{method} should be 405, got {resp.status}")
+                        resp.read()
+                    finally:
+                        conn.close()
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+                server.server_close()
+
+    def test_api_endpoints_are_read_only_json(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            project = Path(raw)
+            (project / ".git").mkdir()
+            runtime = project / ".hermes" / "task-runtime" / "observer"
+            runtime.mkdir(parents=True)
+            event = {
+                "eventId": "e1",
+                "schemaVersion": "work-lab/observer-event/v1",
+                "eventType": "task.status",
+                "sourceModule": "workflow-assistance",
+                "sourceId": "ledger",
+                "taskId": "WA-001",
+                "observedAt": "2026-08-07T00:00:00Z",
+                "contentDigest": "0" * 64,
+                "coverage": "full",
+                "quality": "source-exact",
+            }
+            ObserverStore(runtime, project_root=project).append([event])
+            server = create_server(project, runtime, port=0)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                base = f"http://127.0.0.1:{server.server_port}"
+                endpoints = ["/api/dashboard", "/api/projects", "/api/tasks", "/api/usage", "/api/quality", "/api/ci", "/api/governance", "/healthz"]
+                for ep in endpoints:
+                    with urlopen(base + ep, timeout=10) as r:
+                        self.assertEqual(r.status, 200, ep)
+                        json.load(r)  # must be valid JSON
+                # tasks reflects the event
+                with urlopen(base + "/api/tasks") as r:
+                    tasks = json.load(r)
+                self.assertEqual(tasks["count"], 1)
+                self.assertIn("WA-001", tasks["tasks"])
             finally:
                 server.shutdown()
                 thread.join(timeout=2)
