@@ -12,8 +12,10 @@ REQUIRED = (
     "schemas/observer-event.schema.json",
     "schemas/data-quality.schema.json",
     "src/observer_runtime.py",
+    "scripts/observer_dashboard.py",
     "tests/test_observer_skeleton.py",
     "tests/test_observer_runtime.py",
+    "tests/test_observer_dashboard.py",
 )
 FORBIDDEN_MARKERS = ("subprocess", "os.system", "shell=True", "POST /", "PUT /", "PATCH /", "DELETE /")
 
@@ -33,7 +35,7 @@ def main() -> int:
         if any(marker.lower() in text for marker in FORBIDDEN_MARKERS):
             print(f"OBSERVER_SKELETON_FAIL forbidden_marker={relative}")
             return 1
-    print("OBSERVER_SKELETON_PASS files=8 external_mutation_default=false")
+    print("OBSERVER_SKELETON_PASS files=10 external_mutation_default=false dashboard=read-only")
     return 0
 
 

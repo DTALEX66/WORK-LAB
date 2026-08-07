@@ -17,4 +17,20 @@ Run from the repository root:
 python 30-observer/work-lab-observer/tests/test_observer_runtime.py
 python 30-observer/work-lab-observer/tests/test_observer_evidence.py
 python 30-observer/work-lab-observer/tests/test_observer_store.py
+python 30-observer/work-lab-observer/tests/test_observer_dashboard.py
 ```
+
+## User-visible read-only entry
+
+From the repository root, start the local Observer dashboard:
+
+```text
+python 30-observer/work-lab-observer/scripts/observer_dashboard.py
+```
+
+Open `http://127.0.0.1:8765/` in a browser. The documented GET-only entries
+are `/`, `/api/dashboard`, and `/healthz`. The page rebuilds its projection from
+the Observer-owned event store and exposes task count, event count, quality,
+coverage, data-quality warnings, usage/cost status, and the explicit
+`externalMutation=false` boundary. It does not provide task controls, approval,
+retry, execution, or Ledger write-back.
