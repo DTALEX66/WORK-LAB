@@ -107,6 +107,12 @@ contracts:
     - rule-asset.schema.json
     - skill-package.schema.json
     - growth-candidate.schema.json
+    - project-profile.schema.json
+    - gate-registry.schema.json
+    - gate-plan.schema.json
+    - blocker.schema.json
+    - ci-observation.schema.json
+    - evidence-manifest.schema.json
   instance_controls:
     positive: schemas/workflow/examples/valid-action-plan.json
     negative: schemas/workflow/examples/invalid-action-plan.json

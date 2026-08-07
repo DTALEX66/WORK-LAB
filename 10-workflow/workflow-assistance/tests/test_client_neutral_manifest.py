@@ -50,7 +50,7 @@ class ClientNeutralManifestTests(unittest.TestCase):
         manifest = yaml.safe_load((ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8"))
         contracts = manifest["contracts"]
         self.assertEqual(contracts["schema_directory"], "schemas/workflow")
-        self.assertEqual(len(contracts["schemas"]), 13)
+        self.assertEqual(len(contracts["schemas"]), 19)
         self.assertTrue(contracts["instance_controls"]["positive"].endswith("valid-action-plan.json"))
         self.assertTrue(contracts["instance_controls"]["negative"].endswith("invalid-action-plan.json"))
 

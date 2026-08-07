@@ -24,6 +24,12 @@ EXPECTED = {
     "rule-asset.schema.json": ("workflow/rule-asset/v1", {"schema_version", "id", "version", "origin", "scope", "risk", "status"}),
     "skill-package.schema.json": ("workflow/skill-package/v1", {"schema_version", "id", "version", "source", "packageDigest", "status"}),
     "growth-candidate.schema.json": ("workflow/growth-candidate/v1", {"schema_version", "candidateId", "origin", "classification", "status", "risk"}),
+    "project-profile.schema.json": ("workflow/project-profile/v1", {"schema_version", "project", "configuration", "modules", "risk_zones", "gates", "ci"}),
+    "gate-registry.schema.json": ("workflow/gate-registry/v1", {"schema_version", "gate"}),
+    "gate-plan.schema.json": ("workflow/gate-plan/v1", {"schema_version", "plan_id", "source_identity", "changed_paths", "required_gates", "skipped_gates", "risk", "delivery_effect", "platform_scope", "plan_digest", "generated_at"}),
+    "blocker.schema.json": ("workflow/blocker/v1", {"schema_version", "blocker_id", "class", "scope", "retry_policy", "fingerprint", "message", "created_at"}),
+    "ci-observation.schema.json": ("workflow/ci-observation/v1", {"schema_version", "observation_id", "repository", "commit", "state", "observed_at", "retry_budget"}),
+    "evidence-manifest.schema.json": ("workflow/evidence-manifest/v1", {"schema_version", "manifest_id", "source_identity", "plan", "evidence", "redaction"}),
 }
 FORBIDDEN_KEYS = {"api_key", "apikey", "authorization", "password", "secret", "token", "provider", "model"}
 

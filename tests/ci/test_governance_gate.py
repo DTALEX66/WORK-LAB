@@ -53,7 +53,7 @@ class GovernanceGateTests(unittest.TestCase):
             capture_output=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("CONTRACT_CATALOG_PASS contracts=20 schemas=20", result.stdout)
+        self.assertIn("CONTRACT_CATALOG_PASS contracts=26 schemas=26", result.stdout)
 
 if __name__ == "__main__":
     unittest.main()
