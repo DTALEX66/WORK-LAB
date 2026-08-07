@@ -218,6 +218,37 @@ def project_cost(events: Iterable[dict[str, Any]], pricing_catalog: dict[str, di
     }
 
 
+def project_projection(events: Iterable[dict[str, Any]]) -> dict[str, Any]:
+    """Derive a cross-project read-only view: group tasks by projectId (default WORK-LAB).
+
+    projectId is optional in the event schema; events without it belong to the
+    default WORK-LAB project. Observer never mutates; this is a pure projection.
+    """
+    history = [deepcopy(event) for event in events]
+    projects: dict[str, dict[str, Any]] = {}
+    default_project = "work-lab"
+    for event in history:
+        pid = event.get("projectId") or default_project
+        current = projects.setdefault(pid, {"projectId": pid, "tasks": set(), "eventCount": 0, "sources": set()})
+        current["eventCount"] += 1
+        task_id = event.get("taskId")
+        if isinstance(task_id, str) and task_id:
+            current["tasks"].add(task_id)
+        src = event.get("sourceModule")
+        if isinstance(src, str):
+            current["sources"].add(src)
+    result: dict[str, Any] = {"count": len(projects), "projects": []}
+    for pid in sorted(projects):
+        p = projects[pid]
+        result["projects"].append({
+            "projectId": pid,
+            "taskCount": len(p["tasks"]),
+            "eventCount": p["eventCount"],
+            "sources": sorted(p["sources"]),
+        })
+    return result
+
+
 def project_read_only_dashboard(events: Iterable[dict[str, Any]], pricing_catalog: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
     """Build a deterministic, data-only dashboard projection from event history."""
     history = [deepcopy(event) for event in events]
