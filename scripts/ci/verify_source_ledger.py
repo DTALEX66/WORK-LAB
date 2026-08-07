@@ -21,9 +21,28 @@ FORBIDDEN_DESIGN_TOKENS = ("20-" + "design/open-design", "opendesign-assistance"
 
 def _git_head(root: Path = ROOT) -> str:
     try:
-        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
     except (OSError, subprocess.CalledProcessError):
         return "UNKNOWN"
+
+
+def _reviewed_scope_is_unchanged(root: Path, reviewed_commit: str | None, paths: list[str]) -> bool:
+    if not reviewed_commit or reviewed_commit == "UNKNOWN" or not paths:
+        return False
+    result = subprocess.run(
+        ["git", "diff", "--quiet", f"{reviewed_commit}..HEAD", "--", *paths],
+        cwd=root,
+        text=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.returncode == 0
 
 
 def _validate_shape(ledger: dict[str, Any], schema: dict[str, Any]) -> None:
@@ -50,9 +69,10 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
             errors.append(f"{entry['id']}: Open Design source must not be in active Source Ledger")
         effective = entry["implementationStatus"]
         if entry["implementationStatus"] == "local-verified":
-            if entry.get("reviewedCommit") != head:
+            scoped_paths = list(dict.fromkeys(entry["targetPaths"] + entry["tests"]))
+            if not _reviewed_scope_is_unchanged(root, entry.get("reviewedCommit"), scoped_paths):
                 effective = "STALE_REVIEW"
-            for target in entry["targetPaths"] + entry["tests"]:
+            for target in scoped_paths:
                 if not (root / target).exists():
                     effective = "BLOCKED_MISSING_TARGET_OR_TEST"
                     errors.append(f"{entry['id']}: missing readback path {target}")

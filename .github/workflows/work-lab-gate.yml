@@ -116,6 +116,12 @@ jobs:
         run: python scripts/ci/verify_supply_chain.py
       - name: Verify sanitized error ledger
         run: python scripts/ci/verify_error_ledger.py
+      - name: Verify source ledger readback
+        run: python scripts/ci/verify_source_ledger.py --root .
+      - name: Run source ledger tests
+        run: python tests/ci/test_source_ledger.py
+      - name: Run current state tests
+        run: python tests/ci/test_current_state.py
       - name: Run root governance contract tests
         run: python tests/ci/test_root_governance_contracts.py
 
