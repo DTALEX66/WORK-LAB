@@ -7,5 +7,9 @@
   "releasePrefix": "observer",
   "dependsOn": ["workflow-assistance"],
   "evidencePath": "80-evidence/observer",
-  "externalMutationDefault": false
+  "externalMutationDefault": false,
+  "telemetryRole": "consumer",
+  "telemetryProducer": "workflow-assistance",
+  "telemetryLedgerOwner": "workflow-assistance",
+  "observerWriteSurface": "derived-cache-projection-report-only"
 }
