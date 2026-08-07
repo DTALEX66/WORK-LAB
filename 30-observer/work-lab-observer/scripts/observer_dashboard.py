@@ -14,6 +14,7 @@ from urllib.parse import urlsplit, parse_qs
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from observer_store import ObserverStore
+from observer_runtime import ObserverInputError
 
 
 MODULE_ROOT = Path(__file__).resolve().parents[1]
@@ -410,10 +411,32 @@ def make_handler(store: ObserverStore):
     return ObserverDashboardHandler
 
 
+class ReadOnlyObserverStore:
+    """Runtime-enforced read-only observer view (R2 M-300.4).
+
+    The Observer's run surface may only read events / rebuild projections.
+    Any append attempt raises: the Observer is a consumer, never a producer.
+    Production writes belong to the Workflow Assistance Producer.
+    """
+
+    def __init__(self, store: ObserverStore) -> None:
+        self._store = store
+        self.path = store.path
+
+    def read_events(self) -> list[dict[str, Any]]:
+        return self._store.read_events()
+
+    def rebuild_projection(self) -> dict[str, Any]:
+        return self._store.rebuild_projection()
+
+    def append(self, incoming: Iterable[dict[str, Any]]) -> int:
+        raise ObserverInputError("Observer is read-only: append is owned by the Workflow Assistance Producer")
+
+
 def create_server(project_root: Path, runtime_root: Path, host: str = "127.0.0.1", port: int = 8765) -> ThreadingHTTPServer:
     runtime_root.mkdir(parents=True, exist_ok=True)
     store = ObserverStore(runtime_root, project_root=project_root)
-    return ThreadingHTTPServer((host, port), make_handler(store))
+    return ThreadingHTTPServer((host, port), make_handler(ReadOnlyObserverStore(store)))
 
 
 def main() -> int:
