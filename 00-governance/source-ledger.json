@@ -2,7 +2,10 @@
   "$schema": "work-lab/source-ledger/v3",
   "schemaVersion": "work-lab/source-ledger/v3",
   "ledgerVersion": 3,
-  "scope": ["workflow-assistance", "work-lab-observer"],
+  "scope": [
+    "workflow-assistance",
+    "work-lab-observer"
+  ],
   "entries": [
     {
       "id": "work-lab-workflow-module",
@@ -13,9 +16,19 @@
       "license": "UNKNOWN",
       "spdx": "UNKNOWN",
       "owner": "workflow-assistance",
-      "targetPaths": ["10-workflow/workflow-assistance"],
-      "tests": ["10-workflow/workflow-assistance/tests"],
-      "controls": {"network": false, "telemetry": false, "credentials": false, "scripts": true, "sizeBytes": null},
+      "targetPaths": [
+        "10-workflow/workflow-assistance"
+      ],
+      "tests": [
+        "10-workflow/workflow-assistance/tests"
+      ],
+      "controls": {
+        "network": false,
+        "telemetry": false,
+        "credentials": false,
+        "scripts": true,
+        "sizeBytes": null
+      },
       "freshness": "current-head",
       "rollback": "revert the source-ledger entry; source code remains governed by Git history"
     },
@@ -24,13 +37,23 @@
       "decisionStatus": "derive",
       "implementationStatus": "local-verified",
       "canonicalUrl": "https://github.com/DTALEX66/WORK-LAB",
-      "reviewedCommit": "17117460e75ab5c0468de0e64a37702fc8e788c7",
+      "reviewedCommit": "00761e455dce04f1f2cd784d7408836dfab2b8c5",
       "license": "UNKNOWN",
       "spdx": "UNKNOWN",
       "owner": "work-lab-observer",
-      "targetPaths": ["30-observer/work-lab-observer"],
-      "tests": ["30-observer/work-lab-observer/tests"],
-      "controls": {"network": false, "telemetry": false, "credentials": false, "scripts": true, "sizeBytes": null},
+      "targetPaths": [
+        "30-observer/work-lab-observer"
+      ],
+      "tests": [
+        "30-observer/work-lab-observer/tests"
+      ],
+      "controls": {
+        "network": false,
+        "telemetry": false,
+        "credentials": false,
+        "scripts": true,
+        "sizeBytes": null
+      },
       "freshness": "current-head",
       "rollback": "revert the source-ledger entry; Observer event history remains under the ignored runtime boundary"
     },
@@ -45,7 +68,13 @@
       "owner": "workflow-assistance",
       "targetPaths": [],
       "tests": [],
-      "controls": {"network": false, "telemetry": false, "credentials": false, "scripts": false, "sizeBytes": null},
+      "controls": {
+        "network": false,
+        "telemetry": false,
+        "credentials": false,
+        "scripts": false,
+        "sizeBytes": null
+      },
       "freshness": "unknown",
       "rollback": "remove the reference entry; no vendored source or runtime dependency exists"
     },
@@ -60,7 +89,13 @@
       "owner": "work-lab-observer",
       "targetPaths": [],
       "tests": [],
-      "controls": {"network": false, "telemetry": false, "credentials": false, "scripts": false, "sizeBytes": null},
+      "controls": {
+        "network": false,
+        "telemetry": false,
+        "credentials": false,
+        "scripts": false,
+        "sizeBytes": null
+      },
       "freshness": "unknown",
       "rollback": "remove the reference entry; no vendored source or runtime dependency exists"
     },
@@ -75,7 +110,13 @@
       "owner": "work-lab-observer",
       "targetPaths": [],
       "tests": [],
-      "controls": {"network": false, "telemetry": false, "credentials": false, "scripts": false, "sizeBytes": null},
+      "controls": {
+        "network": false,
+        "telemetry": false,
+        "credentials": false,
+        "scripts": false,
+        "sizeBytes": null
+      },
       "freshness": "review-required",
       "rollback": "do not install or invoke; delete the optional reference entry"
     }
