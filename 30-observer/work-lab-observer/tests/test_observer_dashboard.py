@@ -13,8 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from observer_dashboard import create_server  # noqa: E402
+from observer_dashboard import create_server, ReadOnlyObserverStore  # noqa: E402
 from observer_store import ObserverStore  # noqa: E402
+from observer_runtime import ObserverInputError  # noqa: E402
 
 
 class ObserverDashboardTests(unittest.TestCase):
@@ -212,6 +213,33 @@ class ObserverDashboardTests(unittest.TestCase):
                 server.shutdown()
                 thread.join(timeout=2)
                 server.server_close()
+
+    def test_readonly_observer_store_rejects_append(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            project = Path(raw)
+            (project / ".git").mkdir()
+            runtime = project / ".hermes" / "task-runtime" / "observer"
+            runtime.mkdir(parents=True)
+            store = ObserverStore(runtime, project_root=project)
+            ro = ReadOnlyObserverStore(store)
+            # read surface works
+            self.assertEqual(ro.read_events(), [])
+            self.assertIn("eventCount", ro.rebuild_projection()["overview"])
+            # append is refused at runtime
+            event = {
+                "eventId": "e1",
+                "schemaVersion": "work-lab/observer-event/v1",
+                "eventType": "task.status",
+                "sourceModule": "workflow-assistance",
+                "sourceId": "ledger",
+                "taskId": "WA-001",
+                "observedAt": "2026-08-07T00:00:00Z",
+                "contentDigest": "0" * 64,
+                "coverage": "full",
+                "quality": "source-exact",
+            }
+            with self.assertRaises(ObserverInputError):
+                ro.append([event])
 
     def test_api_endpoints_are_read_only_json(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
