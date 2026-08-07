@@ -1,0 +1,34 @@
+/* WORK-LAB Observer — themes.css
+   Theme-mode specific adjustments on top of tokens.css (which owns the actual
+   token values for [data-theme="dark"] / [data-theme="light"]).
+   Dark/light only swap tokens — components.css is shared. */
+
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color var(--wl-motion-normal), color var(--wl-motion-normal),
+    border-color var(--wl-motion-normal), fill var(--wl-motion-normal), stroke var(--wl-motion-normal) !important;
+}
+
+/* Shell subtle difference between themes handled entirely by tokens.
+   These overrides are only for legibility polish and must reference tokens,
+   never hard-coded colors. */
+
+/* Dark: keep text crisp on glass */
+[data-theme="dark"] .wl-brand { color: var(--wl-text-primary); }
+[data-theme="dark"] .wl-card h3 { color: var(--wl-text-primary); }
+
+/* Light: slightly stronger surface for cards so text stays legible on glass */
+[data-theme="light"] .wl-card {
+  background: var(--wl-surface-1);
+}
+[data-theme="light"] .wl-metric-value { color: var(--wl-text-primary); }
+
+/* Focus ring legibility in both themes comes from --wl-focus token already. */
+
+/* Chart gridlines / axis use tokens */
+.wl-chart .wl-axis text,
+.wl-chart .wl-gridline { fill: none; stroke: var(--wl-border-subtle); stroke-width: 1; }
+
+/* Respect reduced motion is handled globally in tokens.css */
