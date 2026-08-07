@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "work-lab/source-ledger/v3",
+  "$id": "https://github.com/DTALEX66/WORK-LAB/schema/source-ledger/v3",
   "title": "WORK-LAB Source Ledger V3",
   "type": "object",
   "additionalProperties": false,

@@ -30,6 +30,12 @@ class SourceLedgerTests(unittest.TestCase):
             )
         )
 
+    def test_schema_id_is_absolute_for_offline_validation(self) -> None:
+        schema = json.loads(
+            (ROOT / "00-governance/contracts/source-ledger.schema.json").read_text(encoding="utf-8")
+        )
+        self.assertTrue(schema["$id"].startswith("https://"))
+
     def test_real_ledger_is_scope_limited_and_readback_passes(self) -> None:
         result = load_module().verify(ROOT)
         self.assertEqual(result["entries"], 5)
