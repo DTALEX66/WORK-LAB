@@ -38,7 +38,7 @@ Stage 2 remains queued until all Gate A conditions are satisfied:
   writer lease have been reconciled;
 - predecessor WL-000 through WL-820 has a machine-readable state export that
   distinguishes complete, partial, not-started, blocked, and deferred;
-- CURRENT_STATE, the three module contracts, Adapter Registry, event schemas,
+- CURRENT_STATE, the two active module contracts, Adapter Registry, event schemas,
   and Observer read-only state are readable;
 - predecessor P0 ownership is explicit for security, single-writer,
   Task Ledger, CI watcher, event contracts, and Observer read-only boundaries;
@@ -75,7 +75,6 @@ predecessor worktree is dirty, so Stage 2 stays in the waiting state.
 
 - The only active canonical modules remain:
   - `10-workflow/workflow-assistance`
-  - `20-design/open-design`
   - `30-observer/work-lab-observer`
 - `30-products/minigame` remains historical/fixture/archive material and is
   not a fourth active module. MINIGAME UI may only be an Open Design fixture.
