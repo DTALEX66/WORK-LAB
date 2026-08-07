@@ -34,3 +34,11 @@ the Observer-owned event store and exposes task count, event count, quality,
 coverage, data-quality warnings, usage/cost status, and the explicit
 `externalMutation=false` boundary. It does not provide task controls, approval,
 retry, execution, or Ledger write-back.
+
+### Visual direction
+
+The dashboard intentionally combines the project-approved visual vocabulary:
+Apple's restrained black/light-gray rhythm and translucent navigation glass,
+Linear's near-black precision surfaces, indigo interaction accent and technical
+mono labels, plus Vercel's shadow-as-boundary restraint. It does not use a
+decorative purple gradient or generic admin-template chrome.
