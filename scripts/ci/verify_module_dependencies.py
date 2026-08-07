@@ -7,7 +7,6 @@ from pathlib import Path
 
 EXPECTED_MODULES = {
     "workflow-assistance": "10-workflow/workflow-assistance",
-    "open-design": "20-design/open-design",
     "work-lab-observer": "30-observer/work-lab-observer",
 }
 TYPES = {"governance", "runtime", "build", "handoff", "observed-by", "fixture", "archive-of"}
@@ -22,7 +21,7 @@ def verify(root: Path) -> list[str]:
         return [f"unreadable: {exc}"]
     modules = data.get("modules")
     if not isinstance(modules, dict) or set(modules) != set(EXPECTED_MODULES):
-        return ["modules must exactly match the three canonical modules"]
+        return ["modules must exactly match the two canonical active modules"]
     if set(data.get("dependencyTypes", [])) != TYPES:
         errors.append("dependencyTypes must include v2 governance/runtime/build/handoff/observed-by/fixture/archive-of")
     for module_id, expected_path in EXPECTED_MODULES.items():
@@ -32,7 +31,7 @@ def verify(root: Path) -> list[str]:
         observed_by = entry.get("observedBy")
         if not isinstance(observed_by, list):
             errors.append(f"{module_id}: observer relation missing")
-        elif module_id != "work-lab-observer" and "work-lab-observer" not in observed_by:
+        elif module_id == "workflow-assistance" and "work-lab-observer" not in observed_by:
             errors.append(f"{module_id}: observer relation missing")
         elif module_id == "work-lab-observer" and observed_by:
             errors.append("work-lab-observer: observer cannot observe itself")
@@ -58,7 +57,7 @@ def main() -> int:
         for error in errors:
             print(f"MODULE_DEPENDENCIES_FAIL {error}")
         return 1
-    print("MODULE_DEPENDENCIES_PASS modules=3 runtime_edges=0")
+    print("MODULE_DEPENDENCIES_PASS modules=2 runtime_edges=0")
     return 0
 
 

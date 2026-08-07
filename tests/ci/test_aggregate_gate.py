@@ -21,14 +21,52 @@ def load_gate():
 
 
 class AggregateGateTests(unittest.TestCase):
-    def test_v2_observer_job_is_required(self):
+    def test_observer_job_is_required(self):
         payload = json.dumps({"jobs": {name: "success" for name in load_gate().REQUIRED}})
         self.assertEqual(load_gate().main(payload), 0)
 
-    def test_retired_minigame_job_does_not_satisfy_v2_gate(self):
+    def test_retired_open_design_job_does_not_satisfy_gate(self):
         gate = load_gate()
-        payload = json.dumps({"jobs": {"workflow": "success", "open-design": "success", "minigame": "success", "integration": "success"}})
+        payload = json.dumps({"jobs": {"workflow": "success", "open-design": "success", "integration": "success"}})
         self.assertEqual(gate.main(payload), 1)
+
+    def test_plan_digest_and_head_sha_are_verified(self):
+        gate = load_gate()
+        plan = {
+            "schema_version": "workflow/gate-plan/v1",
+            "plan_id": "work-lab-gate",
+            "source_identity": {
+                "repository": "DTALEX66/WORK-LAB",
+                "commit": {"algorithm": "repository-default", "object_type": "commit", "oid": "sha"},
+                "tree": {"algorithm": "repository-default", "object_type": "tree", "oid": "tree"},
+            },
+            "changed_paths": ["README.md"],
+            "required_gates": ["workflow"],
+            "skipped_gates": [{"gate_id": "workflow", "reason": "not selected"}],
+            "risk": "medium",
+            "delivery_effect": "none",
+            "platform_scope": ["discovered"],
+            "generated_at": "2026-08-07T00:00:00Z",
+        }
+        plan["plan_digest"] = {"algorithm": "sha256", "value": gate._plan_digest(plan)}
+        payload = json.dumps({
+            "gate_plan": plan,
+            "expected_plan_digest": plan["plan_digest"]["value"],
+            "expected_head_sha": "sha",
+            "jobs": {"workflow": "success", "observer": "skipped", "integration": "skipped"},
+        })
+        self.assertEqual(gate.main(payload), 0)
+
+    def test_plan_digest_mismatch_fails_closed(self):
+        gate = load_gate()
+        plan = {
+            "schema_version": "workflow/gate-plan/v1",
+            "plan_id": "work-lab-gate",
+            "source_identity": {"commit": {"oid": "sha"}},
+            "required_gates": ["workflow"],
+            "plan_digest": {"algorithm": "sha256", "value": "wrong"},
+        }
+        self.assertEqual(gate.main(json.dumps({"gate_plan": plan, "expected_plan_digest": "wrong", "expected_head_sha": "sha", "jobs": {"workflow": "success"}})), 1)
 
 
 if __name__ == "__main__":

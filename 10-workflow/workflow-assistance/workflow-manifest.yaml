@@ -16,7 +16,7 @@ product:
     - codex
     - cc-switch
     - github
-    - open-design
+
 capabilities:
   - portable_config
   - managed_config_ownership
@@ -75,10 +75,7 @@ adapters:
       support: deep
       detection: optional_gh_read_only_check
       writes: approval_required
-    - id: open-design
-      support: deep
-      detection: official_cli_only
-      writes: approval_required
+
     - id: cursor
       support: manifest-only
       detection: manifest_only
@@ -123,5 +120,5 @@ security:
 delivery:
   remote_ref: origin/main
   required_workflows:
-    - workflow-governance
+    - work-lab-gate
   exact_sha_ci: true

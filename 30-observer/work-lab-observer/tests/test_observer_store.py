@@ -39,13 +39,14 @@ class ObserverStoreTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             root = self.make_root(raw)
             first = ObserverStore(root, project_root=Path(raw))
-            self.assertEqual(first.append([event("e1"), event("e2", task_id="OD-004", quality="partial")]), 2)
+            self.assertEqual(first.append([event("e1"), event("e2", task_id="WA-002", quality="partial")]), 2)
 
             restarted = ObserverStore(root, project_root=Path(raw))
-            self.assertEqual(restarted.read_events(), [event("e1"), event("e2", task_id="OD-004", quality="partial")])
+            self.assertEqual(restarted.read_events(), [event("e1"), event("e2", task_id="WA-002", quality="partial")])
             projection = restarted.rebuild_projection()
-            self.assertEqual(projection["tasks"]["OD-004"]["events"], 1)
+            self.assertEqual(projection["tasks"]["WA-002"]["events"], 1)
             self.assertEqual(projection["quality"]["quality"], "partial")
+            self.assertEqual(projection["usage"]["records"], 0)
 
     def test_duplicate_events_are_not_written_twice(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

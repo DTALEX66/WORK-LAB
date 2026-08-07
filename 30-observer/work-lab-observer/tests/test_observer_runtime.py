@@ -11,7 +11,10 @@ from observer_runtime import (  # noqa: E402
     ObserverInputError,
     append_events,
     mutation_surface,
+    project_read_only_dashboard,
+    project_cost,
     project_tasks,
+    project_usage,
     quality_summary,
 )
 
@@ -49,11 +52,11 @@ class ObserverRuntimeTests(unittest.TestCase):
             IncrementalCursor().ingest([unsafe], next_cursor="a")
 
     def test_projection_is_rebuildable_and_does_not_change_input(self):
-        history = [event("e1"), event("e2", task_id="OD-004", quality="partial")]
+        history = [event("e1"), event("e2", task_id="WA-002", quality="partial")]
         before = [dict(item) for item in history]
         projection = project_tasks(history)
         self.assertEqual(projection["WA-001"]["events"], 1)
-        self.assertEqual(projection["OD-004"]["quality"], "partial")
+        self.assertEqual(projection["WA-002"]["quality"], "partial")
         self.assertEqual(history, before)
 
     def test_append_is_observer_owned_and_deduplicated(self):
@@ -68,6 +71,58 @@ class ObserverRuntimeTests(unittest.TestCase):
         self.assertFalse(surface["externalMutation"])
         self.assertFalse(surface["ledgerMutation"])
         self.assertNotIn("approve", " ".join(surface["allowedWrites"]))
+
+    def test_usage_projection_aggregates_only_explicit_metrics(self):
+        history = [
+            {"usage": {"input_tokens": 2, "output_tokens": 3, "total_tokens": 5, "records": 1}},
+            {"usage": {"input_tokens": 4, "output_tokens": 1, "total_tokens": 5, "records": 1}},
+        ]
+        before = [dict(item) for item in history]
+        self.assertEqual(project_usage(history), {"input_tokens": 6, "output_tokens": 4, "total_tokens": 10, "records": 2})
+        self.assertEqual(history, before)
+
+    def test_read_only_dashboard_projection_is_rebuildable_and_has_no_controls(self):
+        history = [event("e1"), event("e2", task_id="WA-002", quality="partial")]
+        projection = project_read_only_dashboard(history)
+        self.assertEqual(projection["overview"]["taskCount"], 2)
+        self.assertEqual(projection["overview"]["eventCount"], 2)
+        self.assertIn("tasks", projection)
+        self.assertIn("usage", projection)
+        self.assertIn("quality", projection)
+        self.assertIn("dataQuality", projection)
+        self.assertFalse(projection["mutationSurface"]["externalMutation"])
+        serialized = str(projection).lower()
+        self.assertNotIn("open design", serialized)
+        self.assertNotIn("approve", serialized)
+        self.assertNotIn("retry", serialized)
+
+    def test_cost_projection_is_idempotent_and_uses_explicit_pricing(self):
+        events = [
+            {"eventId": "u1", "sourceId": "fixture", "usage": {"input_tokens": 1000, "output_tokens": 500, "total_tokens": 1500, "records": 1}},
+            {"eventId": "u1", "sourceId": "fixture", "usage": {"input_tokens": 1000, "output_tokens": 500, "total_tokens": 1500, "records": 1}},
+        ]
+        pricing = {"fixture": {"alias": "fixture", "billing": "metered", "source": "fixture", "effective_at": "2026-08-07", "currency": "USD", "stale": False, "input_per_million": 1, "output_per_million": 2}}
+        result = project_cost(events, pricing)
+        self.assertEqual(result["records"], 1)
+        self.assertEqual(result["estimated_cost"], "0.00200000")
+        self.assertEqual(result["cost_status"], "estimated")
+        self.assertEqual(result, project_cost(events, pricing))
+
+    def test_cost_projection_marks_subscription_and_stale_pricing_without_fake_dollars(self):
+        subscription = [{"eventId": "s1", "sourceId": "codex", "usage": {"input_tokens": 1, "output_tokens": 1, "total_tokens": 2, "records": 1}}]
+        subscription_pricing = {"codex": {"alias": "codex", "billing": "subscription", "source": "fixture", "effective_at": "2026-08-07", "currency": "USD", "stale": False}}
+        self.assertEqual(project_cost(subscription, subscription_pricing)["cost_status"], "subscription/not-metered")
+        stale_pricing = {"codex": {"alias": "codex", "billing": "metered", "source": "fixture", "effective_at": "2025-01-01", "currency": "USD", "stale": True, "input_per_million": 1, "output_per_million": 1}}
+        stale = project_cost(subscription, stale_pricing)
+        self.assertEqual(stale["cost_status"], "stale")
+        self.assertIsNone(stale["estimated_cost"])
+
+    def test_cost_projection_rejects_corrupt_usage_and_unknown_pricing_explicitly(self):
+        with self.assertRaises(ObserverInputError):
+            project_cost([{"eventId": "bad", "sourceId": "fixture", "usage": {"input_tokens": -1}}], {})
+        unknown = project_cost([{"eventId": "unknown", "sourceId": "missing", "usage": {"input_tokens": 1, "output_tokens": 1, "total_tokens": 2, "records": 1}}], {})
+        self.assertEqual(unknown["cost_status"], "unknown")
+        self.assertIsNone(unknown["estimated_cost"])
 
 
 if __name__ == "__main__":

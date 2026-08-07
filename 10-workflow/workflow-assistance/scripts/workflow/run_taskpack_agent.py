@@ -8,16 +8,38 @@ for findings, and released only after an exact-tree GO.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
+import threading
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
+
+import yaml
+
+try:
+    from .task_ledger import TaskLedger
+except ImportError:  # pragma: no cover - direct script execution
+    try:
+        from task_ledger import TaskLedger
+    except ImportError:  # pragma: no cover - importlib test harness
+        _ledger_spec = __import__("importlib.util", fromlist=["spec_from_file_location"]).spec_from_file_location(
+            "task_ledger", Path(__file__).with_name("task_ledger.py")
+        )
+        if _ledger_spec is None or _ledger_spec.loader is None:
+            raise ImportError("unable to load sibling task_ledger.py")
+        _ledger_module = __import__("importlib.util", fromlist=["module_from_spec"]).module_from_spec(_ledger_spec)
+        sys.modules[_ledger_spec.name] = _ledger_module
+        _ledger_spec.loader.exec_module(_ledger_module)
+        TaskLedger = _ledger_module.TaskLedger
 
 DEFAULT_SKILLS = (
     "project-data-boundary,agent-workflow-fortress,test-driven-development,"
@@ -78,6 +100,79 @@ CODEX_REVIEW_SCHEMA = {
 
 class RunnerError(RuntimeError):
     """Raised when an orchestration or release invariant fails."""
+
+
+class LedgerSession:
+    """Own one fenced writer lease and keep it alive during agent calls."""
+
+    def __init__(self, ledger: TaskLedger, mission: str, baseline_head: str, risk: str) -> None:
+        self.ledger = ledger
+        self.task_id = "taskpack-" + hashlib.sha256(f"{mission}|{baseline_head}".encode("utf-8")).hexdigest()[:24]
+        self.idempotency_key = hashlib.sha256(f"{self.task_id}|{risk}".encode("utf-8")).hexdigest()
+        self.holder = f"runner:{os.getpid()}:{uuid.uuid4().hex[:12]}"
+        self.fence: int | None = None
+        self._stop = threading.Event()
+        self._lock = threading.RLock()
+        self._thread: threading.Thread | None = None
+        self.heartbeat_error: Exception | None = None
+
+    def start(self, baseline_tree: str) -> None:
+        self.ledger.create(self.task_id, self.idempotency_key, time_budget_seconds=7200, tool_budget=1000)
+        lease = self.ledger.acquire_lease(self.task_id, self.holder, ttl_seconds=120)
+        self.fence = int(lease["fence"])
+        self.ledger.transition(self.task_id, "PLANNING", holder=self.holder, fence=self.fence)
+        self.ledger.checkpoint(self.task_id, {"phase": "baseline", "head": baseline_tree}, holder=self.holder, fence=self.fence)
+        self.ledger.transition(self.task_id, "RUNNING", holder=self.holder, fence=self.fence)
+        self._thread = threading.Thread(target=self._heartbeat_loop, name="task-ledger-heartbeat", daemon=True)
+        self._thread.start()
+
+    def _heartbeat_loop(self) -> None:
+        while not self._stop.wait(30):
+            with self._lock:
+                if self.fence is None:
+                    return
+                try:
+                    self.ledger.renew_lease(self.task_id, self.holder, self.fence, ttl_seconds=120)
+                except Exception as exc:  # fail closed; the writer will observe this at phase boundary
+                    self.heartbeat_error = exc
+                    return
+
+    def checkpoint(self, phase: str, **details: object) -> None:
+        with self._lock:
+            if self.fence is None:
+                raise RunnerError("task ledger lease is not active")
+            if self.heartbeat_error is not None:
+                raise RunnerError(f"task ledger heartbeat failed: {self.heartbeat_error}")
+            self.ledger.renew_lease(self.task_id, self.holder, self.fence, ttl_seconds=120)
+            self.ledger.checkpoint(self.task_id, {"phase": phase, **details}, holder=self.holder, fence=self.fence)
+
+    def complete(self) -> None:
+        with self._lock:
+            if self.fence is not None:
+                task = self.ledger.get(self.task_id)
+                if task["status"] not in {"COMPLETED", "FAILED", "CANCELLED", "BLOCKED"}:
+                    self.ledger.transition(self.task_id, "COMPLETED", holder=self.holder, fence=self.fence)
+
+    def fail(self, exc: Exception) -> None:
+        with self._lock:
+            if self.fence is None:
+                return
+            task = self.ledger.get(self.task_id)
+            if task["status"] not in {"COMPLETED", "FAILED", "CANCELLED", "BLOCKED"}:
+                self.ledger.record_error(self.task_id, type(exc).__name__, retryable=False, external_write=False, holder=self.holder, fence=self.fence)
+
+    def close(self) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=2)
+        with self._lock:
+            if self.fence is not None:
+                try:
+                    task = self.ledger.get(self.task_id)
+                    if task.get("lease"):
+                        self.ledger.release_lease(self.task_id, self.holder, self.fence)
+                except Exception:
+                    pass
 
 
 def detect_task_risk(mission: str) -> str:
@@ -144,6 +239,60 @@ def project_runtime_environment(root: Path) -> dict[str, str]:
     return env
 
 
+def _load_ci_profile(path: Path) -> dict[str, object]:
+    value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise RunnerError(f"project profile is not a mapping: {path}")
+    ci = value.get("ci")
+    if not isinstance(ci, dict):
+        raise RunnerError(f"project profile has no ci mapping: {path}")
+    return ci
+
+
+def discover_ci_identity(root: Path) -> tuple[tuple[str, ...], str | None]:
+    """Discover a workflow name and aggregate job without assuming a product name."""
+
+    candidates = sorted((root / ".github" / "workflows").glob("*.y*ml"))
+    for path in candidates:
+        try:
+            workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except (OSError, yaml.YAMLError):
+            continue
+        if not isinstance(workflow, dict) or not isinstance(workflow.get("name"), str):
+            continue
+        jobs = workflow.get("jobs")
+        aggregate = "aggregate" if isinstance(jobs, dict) and "aggregate" in jobs else None
+        return (workflow["name"],), aggregate
+    return (), None
+
+
+def resolve_ci_identity(
+    root: Path,
+    *,
+    explicit_workflows: tuple[str, ...] = (),
+    profile_path: Path | None = None,
+) -> tuple[tuple[str, ...], str | None]:
+    """Resolve CLI → project profile → repository workflow discovery."""
+
+    profile = profile_path or (root / "00-governance" / "work-lab.project-profile.yaml")
+    profile_ci: dict[str, object] | None = None
+    if profile.is_file():
+        profile_ci = _load_ci_profile(profile)
+    if explicit_workflows:
+        aggregate = None
+        if profile_ci:
+            aggregate_value = profile_ci.get("stable_aggregate_job", profile_ci.get("stable_aggregate_check"))
+            aggregate = str(aggregate_value) if aggregate_value else None
+        return explicit_workflows, aggregate
+    if profile_ci:
+        workflow_name = profile_ci.get("workflow_name")
+        if isinstance(workflow_name, str) and workflow_name:
+            aggregate_value = profile_ci.get("stable_aggregate_job", profile_ci.get("stable_aggregate_check"))
+            aggregate = str(aggregate_value) if aggregate_value else None
+            return (workflow_name,), aggregate
+    return discover_ci_identity(root)
+
+
 @dataclass(frozen=True)
 class AgentResult:
     stdout: str
@@ -179,7 +328,8 @@ class GitRepository:
         root: Path,
         *,
         remote_ref: str = "origin/main",
-        required_workflows: tuple[str, ...] = ("workflow-governance",),
+        required_workflows: tuple[str, ...] = (),
+        stable_aggregate_job: str | None = None,
         ci_timeout_seconds: int = 1200,
         ci_poll_seconds: int = 6,
     ) -> None:
@@ -187,6 +337,7 @@ class GitRepository:
         self.env = project_runtime_environment(self.root)
         self.remote_ref = remote_ref
         self.required_workflows = required_workflows
+        self.stable_aggregate_job = stable_aggregate_job
         self.ci_timeout_seconds = ci_timeout_seconds
         self.ci_poll_seconds = ci_poll_seconds
 
@@ -266,6 +417,41 @@ class GitRepository:
             )
         self._wait_for_ci(head)
 
+    def _aggregate_status(self, repository: str, run: dict[str, object], head: str) -> str:
+        """Read the stable aggregate job for the already-selected exact-SHA run."""
+
+        if not self.stable_aggregate_job:
+            return "success"
+        run_id = run.get("databaseId")
+        if run_id is None:
+            return "missing"
+        result = subprocess.run(
+            ["gh", "run", "view", str(run_id), "--repo", repository, "--json", "headSha,jobs"],
+            cwd=self.root,
+            check=False,
+            text=True,
+            capture_output=True,
+            env=self.env,
+        )
+        if result.returncode:
+            raise RunnerError(f"gh run view failed: {result.stderr.strip()}")
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            raise RunnerError("gh run view returned invalid JSON") from exc
+        if payload.get("headSha") != head:
+            raise RunnerError("aggregate evidence head SHA does not match selected exact-SHA run")
+        jobs = payload.get("jobs", [])
+        if not isinstance(jobs, list):
+            raise RunnerError("gh run view returned invalid jobs")
+        matches = [job for job in jobs if isinstance(job, dict) and job.get("name") == self.stable_aggregate_job]
+        if not matches:
+            return "missing"
+        job = matches[0]
+        if job.get("status") != "completed":
+            return "pending"
+        return "success" if job.get("conclusion") == "success" else "failed"
+
     def _wait_for_ci(self, head: str) -> None:
         if not shutil.which("gh"):
             raise RunnerError("gh executable not found; cannot verify exact-SHA CI")
@@ -338,6 +524,24 @@ class GitRepository:
                     "required workflow missing for exact-SHA CI: " + ", ".join(sorted(missing))
                 )
             if not missing and not pending:
+                aggregate_pending = False
+                for workflow_runs in required_runs.values():
+                    for run in workflow_runs:
+                        aggregate_status = self._aggregate_status(repository, run, head)
+                        if aggregate_status == "failed":
+                            raise RunnerError(
+                                f"stable aggregate job failed: {self.stable_aggregate_job}"
+                            )
+                        if aggregate_status == "pending":
+                            aggregate_pending = True
+                        if aggregate_status == "missing":
+                            raise RunnerError(
+                                "stable aggregate job missing for exact-SHA CI: "
+                                f"{self.stable_aggregate_job}"
+                            )
+                if aggregate_pending:
+                    time.sleep(self.ci_poll_seconds)
+                    continue
                 incomplete = [
                     workflow
                     for workflow, workflow_runs in required_runs.items()
@@ -359,7 +563,12 @@ class GitRepository:
                     for workflow, workflow_runs in required_runs.items()
                     for run in workflow_runs
                 ]
-                print("EXACT_SHA_CI_PASS " + " | ".join(evidence))
+                aggregate_evidence = (
+                    f" aggregate_job={self.stable_aggregate_job}"
+                    if self.stable_aggregate_job
+                    else ""
+                )
+                print("EXACT_SHA_CI_PASS " + " | ".join(evidence) + aggregate_evidence)
                 return
             time.sleep(self.ci_poll_seconds)
         raise RunnerError(f"timed out waiting for exact-SHA CI for {head}")
@@ -585,6 +794,7 @@ class TaskPackRunner:
         max_review_rounds: int = 3,
         release_ref: str = "origin/main",
         publish: bool = False,
+        ledger: TaskLedger | None = None,
     ) -> None:
         if max_review_rounds < 1:
             raise ValueError("max_review_rounds must be positive")
@@ -594,8 +804,31 @@ class TaskPackRunner:
         self.max_review_rounds = max_review_rounds
         self.release_ref = release_ref
         self.publish = publish
+        self.ledger = ledger
+        self.last_task_id: str | None = None
 
     def run(self, mission: str, *, risk: str) -> None:
+        if self.ledger is None:
+            return self._run_core(mission, risk=risk)
+        baseline_head = self.repo.head()
+        _, baseline_status = self.repo.snapshot()
+        if baseline_status:
+            raise RunnerError(f"TaskPack must start from a clean worktree:\n{baseline_status}")
+        session = LedgerSession(self.ledger, mission, baseline_head, risk)
+        self.last_task_id = session.task_id
+        try:
+            session.start(self.repo.head_tree())
+            result = self._run_core(mission, risk=risk)
+            session.checkpoint("runner_complete", head=self.repo.head())
+            session.complete()
+            return result
+        except Exception as exc:
+            session.fail(exc)
+            raise
+        finally:
+            session.close()
+
+    def _run_core(self, mission: str, *, risk: str) -> None:
         if risk not in {"low", "high"}:
             raise ValueError("risk must be 'low' or 'high'")
         risk = effective_task_risk(risk, mission)
@@ -789,8 +1022,13 @@ def _parse_args() -> argparse.Namespace:
         default=[],
         help=(
             "Repeatable exact-SHA GitHub workflow name required before release; "
-            "defaults to workflow-governance."
+            "overrides project profile and repository discovery."
         ),
+    )
+    parser.add_argument(
+        "--project-profile",
+        type=Path,
+        help="Optional project profile; defaults to 00-governance/work-lab.project-profile.yaml.",
     )
     parser.add_argument(
         "--publish",
@@ -822,15 +1060,22 @@ def main() -> int:
         if args.mission_file is not None
         else args.mission
     )
+    required_workflows, aggregate_job = resolve_ci_identity(
+        args.repo.resolve(),
+        explicit_workflows=tuple(args.required_workflow),
+        profile_path=args.project_profile,
+    )
     repo = GitRepository(
         args.repo,
         remote_ref=args.remote_ref,
-        required_workflows=tuple(args.required_workflow) or ("workflow-governance",),
+        required_workflows=required_workflows,
+        stable_aggregate_job=aggregate_job,
     )
     agent = HermesAgentBackend(args.repo, hermes=args.hermes, skills=args.skills)
     reviewer: ReviewerBackend | None = None
     if args.reviewer == "codex":
         reviewer = CodexReviewBackend(args.repo, codex=args.codex)
+    ledger = TaskLedger(args.repo.resolve() / ".hermes" / "task-runtime" / "task-ledger")
     TaskPackRunner(
         repo=repo,
         agent=agent,
@@ -838,6 +1083,7 @@ def main() -> int:
         max_review_rounds=args.max_review_rounds,
         release_ref=args.remote_ref,
         publish=args.publish,
+        ledger=ledger,
     ).run(mission, risk=args.risk)
     return 0
 

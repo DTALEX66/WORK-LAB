@@ -5,7 +5,7 @@
   "owner": "observer",
   "role": "strictly read-only derived observation and evidence projections",
   "releasePrefix": "observer",
-  "dependsOn": ["workflow-assistance", "open-design"],
+  "dependsOn": ["workflow-assistance"],
   "evidencePath": "80-evidence/observer",
   "externalMutationDefault": false
 }

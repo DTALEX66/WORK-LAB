@@ -3,7 +3,7 @@
   "singleWriter": true,
   "modules": {
     "workflow-assistance": {"path": "10-workflow/workflow-assistance", "owner": "workflow", "releasePrefix": "workflow"},
-    "open-design": {"path": "20-design/open-design", "owner": "open-design", "releasePrefix": "open-design"},
+
     "work-lab-observer": {"path": "30-observer/work-lab-observer", "owner": "observer", "releasePrefix": "observer"}
   },
   "rootOwnedPaths": ["00-governance", "40-knowledge", "50-taskpacks", "90-archive-manifests", ".github", "scripts", "tests"],

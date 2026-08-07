@@ -23,7 +23,7 @@ TRANSITIONS = {
     "QUEUED": {"PLANNING", "CANCELLED", "BLOCKED"},
     "PLANNING": {"WAITING_APPROVAL", "RUNNING", "PAUSED", "BLOCKED"},
     "WAITING_APPROVAL": {"RUNNING", "CANCELLED", "BLOCKED"},
-    "RUNNING": {"RETRYING", "PAUSED", "REVIEWING", "COMPLETED", "FAILED", "BLOCKED"},
+    "RUNNING": {"RETRYING", "PAUSED", "WAITING_APPROVAL", "REVIEWING", "COMPLETED", "FAILED", "BLOCKED"},
     "RETRYING": {"RUNNING", "BLOCKED", "FAILED"},
     "PAUSED": {"RUNNING", "CANCELLED", "BLOCKED"},
     "REVIEWING": {"COMPLETED", "FAILED", "PAUSED"},
@@ -107,6 +107,8 @@ class TaskLedger:
             "idempotency_key": idempotency_key,
             "status": "QUEUED",
             "checkpoint": None,
+            "cursor_version": 0,
+            "waitpoint": None,
             "retry_count": 0,
             "budget": {
                 "tokens": token_budget,
@@ -278,6 +280,7 @@ class TaskLedger:
             "holder": holder,
             "fence": fence,
             "acquired_at": current,
+            "heartbeat_at": current,
             "expires_at": expires.isoformat().replace("+00:00", "Z"),
         }
         task["lease"] = lease
@@ -297,10 +300,40 @@ class TaskLedger:
         self._assert_lease(task, holder, fence, now)
         current = now or _now()
         expires = self._parse_time(current) + dt.timedelta(seconds=ttl_seconds)
+        task["lease"]["heartbeat_at"] = current
         task["lease"]["expires_at"] = expires.isoformat().replace("+00:00", "Z")
         task["updated_at"] = _now()
         self._write(data)
         return task["lease"]
+
+    def heartbeat(self, task_id: str, holder: str, fence: int, *, now: str | None = None) -> dict[str, Any]:
+        data = self._read()
+        task = data["tasks"].get(task_id)
+        if not task:
+            raise KeyError(f"task not found: {task_id}")
+        self._assert_lease(task, holder, fence, now)
+        task["lease"]["heartbeat_at"] = now or _now()
+        task["updated_at"] = _now()
+        self._write(data)
+        return task["lease"]
+
+    def detect_zombie(self, task_id: str, *, now: str | None = None) -> bool:
+        task = self.get(task_id)
+        lease = task.get("lease")
+        return bool(lease and self._parse_time(now or _now()) >= self._parse_time(lease["expires_at"]))
+
+    def release_lease(
+        self, task_id: str, holder: str, fence: int, *, now: str | None = None
+    ) -> dict[str, Any]:
+        data = self._read()
+        task = data["tasks"].get(task_id)
+        if not task:
+            raise KeyError(f"task not found: {task_id}")
+        self._assert_lease(task, holder, fence, now)
+        task["lease"] = None
+        task["updated_at"] = _now()
+        self._write(data)
+        return task
 
     def transition(
         self,
@@ -343,6 +376,58 @@ class TaskLedger:
             raise KeyError(f"task not found: {task_id}")
         self._assert_lease(task, holder, fence, now)
         task["checkpoint"] = checkpoint
+        task["cursor_version"] = int(task.get("cursor_version", 0)) + 1
+        task["updated_at"] = _now()
+        self._write(data)
+        return task
+
+    def set_waitpoint(
+        self,
+        task_id: str,
+        kind: str,
+        cursor: dict[str, Any],
+        *,
+        holder: str,
+        fence: int,
+        now: str | None = None,
+    ) -> dict[str, Any]:
+        if not kind or not isinstance(cursor, dict):
+            raise ValueError("waitpoint kind and cursor are required")
+        data = self._read()
+        task = data["tasks"].get(task_id)
+        if not task:
+            raise KeyError(f"task not found: {task_id}")
+        self._assert_lease(task, holder, fence, now)
+        if task["status"] != "RUNNING":
+            raise ValueError("waitpoint requires a running task")
+        task["cursor_version"] = int(task.get("cursor_version", 0)) + 1
+        task["waitpoint"] = {
+            "kind": kind,
+            "cursor": dict(cursor),
+            "holder": holder,
+            "fence": fence,
+            "created_at": now or _now(),
+        }
+        task["status"] = "WAITING_APPROVAL"
+        task["lease"] = None
+        task["updated_at"] = _now()
+        self._write(data)
+        return task
+
+    def clear_waitpoint(
+        self, task_id: str, holder: str, fence: int, *, now: str | None = None
+    ) -> dict[str, Any]:
+        data = self._read()
+        task = data["tasks"].get(task_id)
+        if not task:
+            raise KeyError(f"task not found: {task_id}")
+        waitpoint = task.get("waitpoint")
+        if task["status"] != "WAITING_APPROVAL" or not waitpoint:
+            raise ValueError("task has no active waitpoint")
+        if waitpoint["holder"] != holder or waitpoint["fence"] != fence:
+            raise ValueError("waitpoint fence mismatch")
+        task["waitpoint"] = None
+        task["status"] = "RUNNING"
         task["updated_at"] = _now()
         self._write(data)
         return task

@@ -1,0 +1,215 @@
+{
+  "schema_version": "work-lab-current-state/v1",
+  "generated_at": "2026-08-07T07:51:18.971540Z",
+  "source_digest": "9e1fd2f3ab54ac8ccedb41607335b2d407e6c93d1365c4e640446ba6d3f5b9f1",
+  "git": {
+    "head": "471e90a99b4234e4f5c031c4280c2eba8b065439",
+    "branch": "main"
+  },
+  "modules": [
+    {
+      "id": "workflow-assistance",
+      "path": "10-workflow/workflow-assistance",
+      "role": "client-neutral workflow governance, execution control and observability"
+    },
+    {
+      "id": "work-lab-observer",
+      "path": "30-observer/work-lab-observer",
+      "role": "strictly read-only derived observation and evidence projections"
+    }
+  ],
+  "module_ownership": {
+    "single_writer": true,
+    "cross_module_writes": "explicit-cross-task-only"
+  },
+  "support_areas": [
+    {
+      "id": "governance",
+      "path": "00-governance",
+      "present": true
+    },
+    {
+      "id": "knowledge",
+      "path": "40-knowledge",
+      "present": true
+    },
+    {
+      "id": "taskpacks",
+      "path": "50-taskpacks",
+      "present": true
+    },
+    {
+      "id": "archive_manifests",
+      "path": "90-archive-manifests",
+      "present": true
+    },
+    {
+      "id": "root_delivery",
+      "path": ".github",
+      "present": true
+    }
+  ],
+  "contracts": {
+    "count": 26,
+    "schema_version": "work-lab-contract-catalog/v2"
+  },
+  "skills": {
+    "count": 13,
+    "items": [
+      {
+        "name": "agent-workflow-fortress",
+        "source": "skills/software-development/agent-workflow-fortress/SKILL.md",
+        "version": "1.4.7",
+        "source_sha256": "a67d7e5412728aeed230a07c50b3adee48c1efedcf7a29bf3bff9bdd0c7e574b",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "codex",
+        "source": "skills/autonomous-ai-agents/codex/SKILL.md",
+        "version": "2.0.3",
+        "source_sha256": "5dda48acc2075b89d7d458b4feda01a185b58601a9f05fc02890f920841daa02",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "github-auth",
+        "source": "skills/github/github-auth/SKILL.md",
+        "version": "1.1.0",
+        "source_sha256": "5a4463dc0f70b3a8a6acc6b82119cf99832f82f14106efc012925cfd2cc5cc08",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "github-code-review",
+        "source": "skills/github/github-code-review/SKILL.md",
+        "version": "1.1.0",
+        "source_sha256": "9c45fad547ebd9a779656c0fb85a1f671b779d18ff51b89786a1957aa9d7d1e5",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "github-issues",
+        "source": "skills/github/github-issues/SKILL.md",
+        "version": "1.1.0",
+        "source_sha256": "4a50f1606618e4b09d57394530e31e41ab77346e398627306919cbaab8f51f44",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "github-pr-workflow",
+        "source": "skills/github/github-pr-workflow/SKILL.md",
+        "version": "1.1.0",
+        "source_sha256": "a359651470c607f7074c589ced336607fefe7f9db802c28dd34d995b8fd15eca",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "github-repo-management",
+        "source": "skills/github/github-repo-management/SKILL.md",
+        "version": "1.1.0",
+        "source_sha256": "af0da4c8b9d6293540d494495db7d0bf4881a3d0e69c8c5c93309979ae25af43",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "model-switch",
+        "source": "skills/model-switch/SKILL.md",
+        "version": "1.3.1",
+        "source_sha256": "63ef07d6e3e28120c675837465b57d53ae6d04e831f0559678979ac3831bda27",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "project-data-boundary",
+        "source": "skills/software-development/project-data-boundary/SKILL.md",
+        "version": "1.2.0",
+        "source_sha256": "3754efd059b860348ddc8ca75daa99bd9d81ff0e2c86dafe01c22f846553a926",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "python-testing",
+        "source": "skills/software-development/python-testing/SKILL.md",
+        "version": "1.0.0",
+        "source_sha256": "e49208f3aa25e295a68e850eb23490056aff13b7d62b67390d715206e4341eb3",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "requesting-code-review",
+        "source": "skills/software-development/requesting-code-review/SKILL.md",
+        "version": "3.0.0",
+        "source_sha256": "d506d7eddd42931dc3122440e64f2e2f6d5757b54e6f5984c6dd5eb43e5f377a",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "sleep-mode",
+        "source": "skills/software-development/sleep-mode/SKILL.md",
+        "version": "1.1.0",
+        "source_sha256": "68e7926bddcc563ff5743fc8094e71972c26822452956916bd614824f5b06ab6",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      },
+      {
+        "name": "windows-development-environment",
+        "source": "skills/software-development/windows-development-environment/SKILL.md",
+        "version": "1.2.0",
+        "source_sha256": "4e30b55caa59d7b908fc8cadabedb536331c5731844fc244c71952a97dcc5258",
+        "trust": "repository-controlled",
+        "enabled": true,
+        "live_readback": "not-run"
+      }
+    ],
+    "isolated_portable_readback": {
+      "status": "not-provided"
+    }
+  },
+  "workflow_identity": {
+    "workflow_file": ".github/workflows/work-lab-gate.yml",
+    "workflow_name": "work-lab-gate",
+    "job_names": [
+      "aggregate",
+      "integration",
+      "observer",
+      "plan",
+      "workflow"
+    ],
+    "job_display_names": {
+      "plan": "gate-plan",
+      "workflow": "workflow-assistance",
+      "observer": "observer",
+      "integration": "integration",
+      "aggregate": "aggregate"
+    },
+    "aggregate_job": "aggregate",
+    "manifest_declared_required_workflows": [
+      "work-lab-gate"
+    ]
+  },
+  "ci": {
+    "status": "unknown",
+    "evidence": "not-provided"
+  },
+  "unverified_capabilities": [
+    "hermes_live_apply",
+    "paid_provider_smoke",
+    "human_design_calibration",
+    "real_device_validation",
+    "commercial_release"
+  ],
+  "content_digest": "c744c1fc50757db66c4c4b7854cace66b03eb00ddc29824bfddadc554922a128"
+}

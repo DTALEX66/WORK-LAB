@@ -6,8 +6,9 @@ platform or fourth product. The root controls task packs, governance, evidence,
 ownership, data boundaries, recovery and cross-module delivery; module roots
 contain the actual implementations.
 
-> **Current positioning:** the only active v2 modules are Workflow-assistance,
-> Open Design and the strictly read-only WORK-LAB Observer. `30-products/minigame`
+> **Current positioning:** the only active modules are Workflow-assistance and
+> the strictly read-only WORK-LAB Observer. Open Design was transferred to
+> `DTALEX66/OPEN-DESIGN-Assistance`; `30-products/minigame`
 > is retained as product history/fixture/archive material, not as a canonical
 > active module. See [`00-governance/PROJECT_POSITIONING.md`](00-governance/PROJECT_POSITIONING.md).
 
@@ -31,15 +32,14 @@ metadata, provider routes and live caches remain **global platform state**; they
 are never absorbed into this repository. Project task data and generated
 evidence stay under the current Git root's ignored `.hermes/` boundary.
 
-## Canonical v2 modules
+## Canonical active modules
 
 - `10-workflow/workflow-assistance` — global, client-neutral workflow governance,
   task execution control, observability and portable workflow assets
-- `20-design/open-design` — design knowledge, visual quality and production handoff
 - `30-observer/work-lab-observer` — strictly read-only derived observation,
   projections and evidence reports
 
-`30-products/minigame` remains outside the active three-module registry as
+`30-products/minigame` remains outside the active two-module registry as
 product history, fixture/reference material and migration/archive evidence. It
 does not imply a current platform release, commercial experiment or automatic
 merge/deletion decision.

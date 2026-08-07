@@ -1,6 +1,8 @@
 # WORK-LAB knowledge boundary
 
 This root directory holds only stable, provenance-aware knowledge indexes and
-cross-module references. Design research remains owned by Open Design; product
-implementation remains owned by MINIGAME; Workflow owns task and evidence
-orchestration. Do not copy source implementations across module boundaries.
+cross-module references. Open Design research is owned by the independent
+`DTALEX66/OPEN-DESIGN-Assistance` repository; Workflow owns task and evidence
+orchestration; `30-products/minigame` remains historical, migration evidence and
+fixture material outside the active canonical modules.
+Do not copy source implementations across module boundaries.

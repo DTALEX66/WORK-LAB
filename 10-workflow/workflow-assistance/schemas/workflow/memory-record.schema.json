@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "work-lab/memory-record/v1",
+  "title": "WORK-LAB Memory Record Metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "memory_id", "layer", "kind", "status", "source_digest", "content_digest", "confidence", "promotion", "redaction"],
+  "properties": {
+    "schema_version": {"const": "workflow/memory-record/v1"},
+    "memory_id": {"type": "string", "minLength": 1},
+    "layer": {"enum": ["ephemeral", "session", "project", "domain", "global"]},
+    "kind": {"enum": ["fact", "preference", "procedure", "candidate", "event"]},
+    "status": {"enum": ["observed", "proposed", "approved", "blocked", "retired"]},
+    "source_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "content_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "confidence": {"enum": ["low", "medium", "high"]},
+    "promotion": {"enum": ["never", "manual-approval"]},
+    "redaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prompt_response_bodies", "credentials"],
+      "properties": {
+        "prompt_response_bodies": {"const": "excluded"},
+        "credentials": {"const": "excluded"}
+      }
+    }
+  }
+}

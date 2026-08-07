@@ -7,18 +7,10 @@
       "dependencies": [],
       "observedBy": ["work-lab-observer"]
     },
-    "open-design": {
-      "path": "20-design/open-design",
-      "dependencies": [
-        {"module": "workflow-assistance", "types": ["governance"]}
-      ],
-      "observedBy": ["work-lab-observer"]
-    },
     "work-lab-observer": {
       "path": "30-observer/work-lab-observer",
       "dependencies": [
-        {"module": "workflow-assistance", "types": ["governance"]},
-        {"module": "open-design", "types": ["observed-by"]}
+        {"module": "workflow-assistance", "types": ["governance"]}
       ],
       "observedBy": []
     }

@@ -8,8 +8,53 @@ permissions:
   contents: read
 
 jobs:
+  plan:
+    name: gate-plan
+    runs-on: ubuntu-latest
+    outputs:
+      required_gates: ${{ steps.plan.outputs.required_gates }}
+      plan_digest: ${{ steps.plan.outputs.plan_digest }}
+      plan_json: ${{ steps.plan.outputs.plan_json }}
+      run_workflow: ${{ steps.plan.outputs.run_workflow }}
+
+      run_observer: ${{ steps.plan.outputs.run_observer }}
+      run_integration: ${{ steps.plan.outputs.run_integration }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install gate-plan dependencies
+        run: python -m pip install --disable-pip-version-check --no-input "PyYAML>=6,<7" "jsonschema>=4,<5"
+      - name: Discover changed paths
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          mkdir -p .hermes/task-runtime/ci
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            git diff --name-only "$PR_BASE_SHA" "$HEAD_SHA" > .hermes/task-runtime/ci/changed-paths.txt
+          elif [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            git ls-files > .hermes/task-runtime/ci/changed-paths.txt
+          else
+            git diff --name-only "$BEFORE_SHA" "$HEAD_SHA" > .hermes/task-runtime/ci/changed-paths.txt
+          fi
+      - name: Compute canonical gate plan
+        id: plan
+        env:
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          python scripts/ci/emit_gate_plan.py \
+            --root . \
+            --profile 00-governance/work-lab.project-profile.yaml \
+            --repository "${{ github.repository }}" \
+            --commit "$HEAD_SHA" \
+            --changed-path-file .hermes/task-runtime/ci/changed-paths.txt \
+            --github-output "$GITHUB_OUTPUT"
+
   workflow:
     name: workflow-assistance
+    needs: plan
+    if: needs.plan.outputs.run_workflow == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -34,16 +79,11 @@ jobs:
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py shell
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py powershell
 
-  open-design:
-    name: open-design
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Verify Open Design assistance assets
-        run: python 20-design/open-design/opendesign-assistance/scripts/verify_open_design_assistance.py
 
   observer:
     name: observer
+    needs: plan
+    if: needs.plan.outputs.run_observer == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -57,6 +97,8 @@ jobs:
 
   integration:
     name: integration
+    needs: plan
+    if: needs.plan.outputs.run_integration == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -79,8 +121,8 @@ jobs:
     name: aggregate
     if: always()
     needs:
+      - plan
       - workflow
-      - open-design
       - observer
       - integration
     runs-on: ubuntu-latest
@@ -88,9 +130,14 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Aggregate actual job results
         env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+          GATE_PLAN_JSON: ${{ needs.plan.outputs.plan_json }}
+          EXPECTED_PLAN_DIGEST: ${{ needs.plan.outputs.plan_digest }}
+          EXPECTED_HEAD_SHA: ${{ github.sha }}
           WORKFLOW_RESULT: ${{ needs.workflow.result }}
-          OPEN_DESIGN_RESULT: ${{ needs.open-design.result }}
+
           OBSERVER_RESULT: ${{ needs.observer.result }}
           INTEGRATION_RESULT: ${{ needs.integration.result }}
         run: |
-          python -c 'import json, os, subprocess, sys; payload=json.dumps({"jobs": {"workflow": os.environ["WORKFLOW_RESULT"], "open-design": os.environ["OPEN_DESIGN_RESULT"], "observer": os.environ["OBSERVER_RESULT"], "integration": os.environ["INTEGRATION_RESULT"]}}); result=subprocess.run([sys.executable, "scripts/ci/aggregate_gate.py"], input=payload, text=True); raise SystemExit(result.returncode)'
+          test "$PLAN_RESULT" = success
+          python -c 'import json, os, subprocess, sys; payload=json.dumps({"gate_plan": json.loads(os.environ["GATE_PLAN_JSON"]), "expected_plan_digest": os.environ["EXPECTED_PLAN_DIGEST"], "expected_head_sha": os.environ["EXPECTED_HEAD_SHA"], "jobs": {"workflow": os.environ["WORKFLOW_RESULT"], "observer": os.environ["OBSERVER_RESULT"], "integration": os.environ["INTEGRATION_RESULT"]}}); result=subprocess.run([sys.executable, "scripts/ci/aggregate_gate.py"], input=payload, text=True); raise SystemExit(result.returncode)'

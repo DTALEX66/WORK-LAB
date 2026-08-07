@@ -21,13 +21,11 @@ PROFILE = {
     "project": {"id": "work-lab", "root_policy": "discover_git_root", "windows_native_first": True},
     "modules": {
         "workflow": {"roots": ["10-workflow/workflow-assistance"]},
-        "open_design": {"roots": ["20-design/open-design"], "depends_on": ["workflow"]},
         "observer": {"roots": ["30-observer/work-lab-observer"], "depends_on": ["workflow"]},
     },
     "risk_zones": {"critical": [".github/workflows/**", "00-governance/**"]},
     "gates": {
         "workflow": {"command": "python workflow.py", "tiers": ["module"], "platform": "any"},
-        "open_design": {"command": "python design.py", "tiers": ["module"], "platform": "any"},
         "observer": {"command": "python observer.py", "tiers": ["module"], "platform": "any"},
         "integration": {"command": "python integration.py", "tiers": ["full"], "platform": "any"},
     },
@@ -36,6 +34,13 @@ PROFILE = {
 
 
 class ImpactPlannerTests(unittest.TestCase):
+    def test_canonical_project_profile_loads_with_contract_schema_version(self) -> None:
+        module = load_module()
+        profile = module.load_profile(Path(__file__).resolve().parents[3] / "00-governance" / "work-lab.project-profile.yaml")
+        self.assertEqual(profile["schema_version"], "workflow/project-profile/v1")
+        self.assertEqual(profile["ci"]["workflow_name"], "work-lab-gate")
+        self.assertEqual(profile["ci"]["stable_aggregate_job"], "aggregate")
+
     def test_workflow_change_expands_to_transitive_dependents(self) -> None:
         module = load_module()
         plan = module.build_plan(
@@ -45,23 +50,21 @@ class ImpactPlannerTests(unittest.TestCase):
             tree="tree",
             changed_paths=["10-workflow/workflow-assistance/scripts/workflow/task_ledger.py"],
         )
-        self.assertEqual(plan["required_gates"], ["observer", "open_design", "workflow"])
+        self.assertEqual(plan["required_gates"], ["observer", "workflow"])
         self.assertEqual(plan["risk"], "medium")
         self.assertEqual(plan["delivery_effect"], "none")
         self.assertEqual(len(plan["plan_digest"]["value"]), 64)
 
-    def test_unrelated_design_change_does_not_select_workflow_or_observer(self) -> None:
+    def test_external_design_path_fails_closed_to_all_active_gates(self) -> None:
         module = load_module()
         plan = module.build_plan(
             PROFILE,
             repository="DTALEX66/WORK-LAB",
             commit="commit",
             tree="tree",
-            changed_paths=["20-design/open-design/README.md"],
+            changed_paths=["external/open-design-handoff.txt"],
         )
-        self.assertEqual(plan["required_gates"], ["open_design"])
-        skipped = {item["gate_id"] for item in plan["skipped_gates"]}
-        self.assertEqual(skipped, {"integration", "observer", "workflow"})
+        self.assertEqual(plan["required_gates"], ["integration", "observer", "workflow"])
 
     def test_governance_change_is_critical_and_requires_integration(self) -> None:
         module = load_module()
@@ -77,6 +80,40 @@ class ImpactPlannerTests(unittest.TestCase):
         self.assertEqual(plan["risk"], "critical")
         self.assertIn("integration", plan["required_gates"])
         self.assertEqual(plan["platform_scope"], ["linux", "windows"])
+
+    def test_unknown_path_fails_closed_to_all_configured_gates(self) -> None:
+        module = load_module()
+        plan = module.build_plan(
+            PROFILE,
+            repository="DTALEX66/WORK-LAB",
+            commit="commit",
+            tree="tree",
+            changed_paths=["unclassified/new-boundary.txt"],
+        )
+        self.assertEqual(plan["risk"], "critical")
+        self.assertEqual(plan["required_gates"], ["integration", "observer", "workflow"])
+
+    def test_plan_digest_ignores_timestamp_and_display_id(self) -> None:
+        module = load_module()
+        first = module.build_plan(
+            PROFILE,
+            repository="DTALEX66/WORK-LAB",
+            commit="commit",
+            tree="tree",
+            changed_paths=["external/open-design-handoff.txt"],
+            plan_id="local",
+            generated_at="2026-08-07T00:00:00Z",
+        )
+        second = module.build_plan(
+            PROFILE,
+            repository="DTALEX66/WORK-LAB",
+            commit="commit",
+            tree="tree",
+            changed_paths=["external/open-design-handoff.txt"],
+            plan_id="cloud",
+            generated_at="2026-08-07T01:00:00Z",
+        )
+        self.assertEqual(first["plan_digest"], second["plan_digest"])
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 # WORK-LAB Execution-Efficiency Repair Handoff
 
-**Status:** `READY_FOR_USER_APPROVAL`
+**Status:** `REMOTE_SYNCED_CI_VERIFIED`
 
-**Scope:** LAB-local repair batch only. No commit, push, PR, merge, release, Hermes live apply, global skill/config write, or Cognitive-Loop-OS write was performed.
+**Scope:** LAB-local repair batch only. This batch was committed as `471e90a99b4234e4f5c031c4280c2eba8b065439`, pushed to `origin/main`, and verified by exact-SHA CI run `31139441168`. No PR, merge, release, Hermes live apply, global skill/config write, or Cognitive-Loop-OS write was performed.
 
 ## Authority and boundary
 
@@ -69,6 +69,7 @@ Runner safety changes:
 - `CLIENT_NEUTRAL_MANIFEST_PASS adapters=8 first_class=5`
 - `MODULE_DEPENDENCIES_PASS modules=3 runtime_edges=0`
 - `git diff --check`: pass
+- exact-SHA root workflow: `work-lab-gate`, aggregate job `aggregate`, run `31139441168`: success
 
 ### Workflow module
 
@@ -116,10 +117,10 @@ Still partial or not run:
 
 ## Approval boundary
 
-The working tree contains only the LAB-local source and test changes listed above. It is intentionally **not committed or pushed**. Next actions requiring explicit approval are:
+The repair batch described by this handoff is committed and remotely verified. Subsequent FINAL task-pack changes are a new local batch and must not be inferred from this historical repair handoff. Next actions requiring explicit approval are:
 
 1. continue another local repair slice;
-2. stage and review the current tree;
+2. stage and review any subsequent local tree;
 3. commit/push or create a PR;
 4. apply any Hermes live/global configuration;
 5. touch Cognitive-Loop-OS or any other repository.

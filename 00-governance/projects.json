@@ -13,15 +13,7 @@
       "owner": "DTALEX66",
       "dependsOn": []
     },
-    {
-      "id": "open-design",
-      "path": "20-design/open-design",
-      "legacyRepository": "DTALEX66/OPEN-DESIGN-Assistance",
-      "role": "professional design knowledge, visual quality and production handoff",
-      "releasePrefix": "open-design",
-      "owner": "DTALEX66",
-      "dependsOn": ["workflow-assistance"]
-    },
+
     {
       "id": "work-lab-observer",
       "path": "30-observer/work-lab-observer",
@@ -29,7 +21,7 @@
       "role": "strictly read-only derived observation and evidence projections",
       "releasePrefix": "observer",
       "owner": "DTALEX66",
-      "dependsOn": ["workflow-assistance", "open-design"]
+      "dependsOn": ["workflow-assistance"]
     }
   ],
   "singleWriter": true,

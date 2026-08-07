@@ -66,22 +66,7 @@
         "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "GitHub CLI/API runtime package is external and not vendored", "files": []}
       }
     },
-    {
-      "id": "open-design",
-      "display_name": "Open Design",
-      "support_level": "deep",
-      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
-      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
-      "provenance": {
-        "source_kind": "repository",
-        "source_ref": "workflow-manifest.yaml#adapters.entries[4]",
-        "version": "WORK-LAB-local",
-        "scope": "open-design-assistance-contract",
-        "risk": "high",
-        "status": "quarantined",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "Open Design runtime source is a separate module and not hashed by this registry", "files": []}
-      }
-    },
+
     {
       "id": "cursor",
       "display_name": "Cursor",
