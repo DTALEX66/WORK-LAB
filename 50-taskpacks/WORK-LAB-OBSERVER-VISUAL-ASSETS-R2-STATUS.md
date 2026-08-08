@@ -124,9 +124,10 @@ configuration, or claiming a production release.
 - Required tests and focused verification: passed.
 - External provider/live mutation: not executed.
 - Human visual/release approval: still pending.
-- Commit, PR, aggregate CI, merge, and local/remote SHA readback: this change
-  must pass the protected-branch delivery workflow before it is considered
-  cloud-synchronized.
+- Commit, PR, aggregate CI, merge, and local/remote SHA readback: completed
+  through PR `#30`, exact-head PR run `31251264323`, and final main push run
+  `31251306631` for merged main SHA `f141946bfa55fd77120443bacd45aee0049c16e2`.
+- The local and remote repositories are synchronized at that merged SHA.
 
 ## Source and scope
 

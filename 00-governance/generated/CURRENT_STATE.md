@@ -1,12 +1,12 @@
 # WORK-LAB current state
 
-Generated at: `2026-08-08T08:54:15.308632Z`  \
-Source digest: `b3dfd01f071e2f2f4fc4a7693535659c352fc1938e8b581fd3db515b52a51558`  \
-Content digest: `1182d4dbcf739cab3719f09c71f90ad42f4d2978e8545a3dcb458222d25895e6`
+Generated at: `2026-08-08T09:47:40.035977Z`  \
+Source digest: `67b71d05dd1215d9ee128721fe319ae6e28e053dd45d292ab164dcf386ff41df`  \
+Content digest: `89a1ae999a112e80a04474ac1941938ea43c4f436825ba477450f6fa94524c91`
 
 ## Git
 
-- HEAD: `18d708e00eb009ae04be02b9fbc0ca6ed38b367d`
+- HEAD: `f141946bfa55fd77120443bacd45aee0049c16e2`
 - Branch: `main`
 
 ## Active modules
@@ -30,8 +30,8 @@ Content digest: `1182d4dbcf739cab3719f09c71f90ad42f4d2978e8545a3dcb458222d25895e
 
 ## CI evidence
 
-- Run: `31249331995`
-- Head SHA: `18d708e00eb009ae04be02b9fbc0ca6ed38b367d`
+- Run: `31251306631`
+- Head SHA: `f141946bfa55fd77120443bacd45aee0049c16e2`
 - Conclusion: `success`
 - `aggregate`: success (completed)
 - `gate-plan`: success (completed)

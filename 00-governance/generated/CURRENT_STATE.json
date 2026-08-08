@@ -1,9 +1,9 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-08T08:54:15.308632Z",
-  "source_digest": "b3dfd01f071e2f2f4fc4a7693535659c352fc1938e8b581fd3db515b52a51558",
+  "generated_at": "2026-08-08T09:47:40.035977Z",
+  "source_digest": "67b71d05dd1215d9ee128721fe319ae6e28e053dd45d292ab164dcf386ff41df",
   "git": {
-    "head": "18d708e00eb009ae04be02b9fbc0ca6ed38b367d",
+    "head": "f141946bfa55fd77120443bacd45aee0049c16e2",
     "branch": "main"
   },
   "modules": [
@@ -201,13 +201,13 @@
     ]
   },
   "ci": {
-    "run_id": 31249331995,
-    "workflow_name": null,
-    "status": "unknown",
+    "run_id": 31251306631,
+    "workflow_name": "work-lab-gate",
+    "status": "completed",
     "conclusion": "success",
-    "head_sha": "18d708e00eb009ae04be02b9fbc0ca6ed38b367d",
-    "url": null,
-    "attempt": null,
+    "head_sha": "f141946bfa55fd77120443bacd45aee0049c16e2",
+    "url": "https://github.com/DTALEX66/WORK-LAB/actions/runs/31251306631",
+    "attempt": 1,
     "jobs": [
       {
         "name": "aggregate",
@@ -243,5 +243,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "1182d4dbcf739cab3719f09c71f90ad42f4d2978e8545a3dcb458222d25895e6"
+  "content_digest": "89a1ae999a112e80a04474ac1941938ea43c4f436825ba477450f6fa94524c91"
 }
