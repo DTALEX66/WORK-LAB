@@ -12,6 +12,7 @@
       {
         "label": "main",
         "title": "WORK-LAB Observer",
+        "url": "index.html?view=full&mode=LIVE&theme=dark",
         "width": 1180,
         "height": 760,
         "minWidth": 320,
@@ -26,16 +27,19 @@
       {
         "label": "panel",
         "title": "WORK-LAB Observer · 悬浮面板",
-        "width": 380,
-        "height": 640,
-        "minWidth": 340,
-        "minHeight": 420,
-        "resizable": true,
+        "url": "index.html?view=compact&mode=LIVE&theme=dark",
+        "width": 440,
+        "height": 780,
+        "minWidth": 440,
+        "minHeight": 780,
+        "resizable": false,
         "fullscreen": false,
         "visible": false,
         "transparent": true,
         "decorations": false,
-        "shadow": true
+        "shadow": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true
       }
     ],
     "security": {

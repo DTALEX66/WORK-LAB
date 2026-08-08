@@ -25,20 +25,23 @@
   --wl-space-6: 24px;
   --wl-space-8: 32px;
 
-  --wl-radius-sm: 10px;
+  --wl-radius-sm: 11px;
   --wl-radius-md: 14px;
-  --wl-radius-lg: 18px;
-  --wl-radius-shell: 28px;
+  --wl-radius-lg: 20px;
+  --wl-radius-shell: 30px;
+  --wl-radius-control: 11px;
+  --wl-glass-blur: 34px;
+  --wl-glass-saturation: 150%;
   --wl-border-width: 1px;
   --wl-motion-fast: 140ms;
   --wl-motion-normal: 180ms;
 
   /* Apple semantic palette */
-  --wl-blue: #0a84ff;
-  --wl-green: #30d158;
-  --wl-amber: #ff9f0a;
-  --wl-red: #ff453a;
-  --wl-purple: #bf5af2;
+  --wl-blue: #6f95ff;
+  --wl-green: #4de1ae;
+  --wl-amber: #ffc35c;
+  --wl-red: #ff6b78;
+  --wl-purple: #b087ff;
   --wl-cyan: #64d2ff;
 }
 
@@ -46,20 +49,20 @@
 [data-theme="dark"] {
   color-scheme: dark;
   /* Transparent canvas — desktop wallpaper shows through (component, not a page). */
-  --wl-canvas: transparent;
-  --wl-canvas-gradient-a: transparent;
-  --wl-canvas-gradient-b: transparent;
+  --wl-canvas: #09111d;
+  --wl-canvas-gradient-a: rgba(111, 149, 255, 0.08);
+  --wl-canvas-gradient-b: rgba(176, 135, 255, 0.05);
 
-  /* Liquid-glass shell: translucent + vibrancy blur, layered over desktop. */
-  --wl-shell: rgba(20, 32, 45, 0.42);
+  /* R2 glass shell: translucent but readable on a dark blue-black canvas. */
+  --wl-shell: rgba(18, 27, 42, 0.78);
   --wl-shell-highlight: rgba(255, 255, 255, 0.14);
-  --wl-sidebar: rgba(22, 36, 50, 0.34);
+  --wl-sidebar: rgba(20, 31, 48, 0.62);
 
   /* Content surfaces: more opaque than shell so text stays legible on glass. */
-  --wl-surface-1: rgba(26, 40, 55, 0.72);
-  --wl-surface-2: rgba(32, 48, 65, 0.68);
-  --wl-surface-3: rgba(40, 58, 78, 0.66);
-  --wl-surface-hover: rgba(48, 68, 90, 0.7);
+  --wl-surface-1: rgba(27, 35, 53, 0.82);
+  --wl-surface-2: rgba(31, 41, 61, 0.78);
+  --wl-surface-3: rgba(39, 49, 72, 0.74);
+  --wl-surface-hover: rgba(53, 67, 96, 0.78);
 
   --wl-border-subtle: rgba(202, 224, 244, 0.16);
   --wl-border-strong: rgba(202, 224, 244, 0.28);
@@ -76,9 +79,9 @@
 
 [data-theme="light"] {
   color-scheme: light;
-  --wl-canvas: transparent;
-  --wl-canvas-gradient-a: transparent;
-  --wl-canvas-gradient-b: transparent;
+  --wl-canvas: #eef3f8;
+  --wl-canvas-gradient-a: rgba(111, 149, 255, 0.07);
+  --wl-canvas-gradient-b: rgba(176, 135, 255, 0.05);
   /* Brighter, more opaque light surfaces so text stays readable on glass. */
   --wl-shell: rgba(250, 252, 255, 0.82);
   --wl-shell-highlight: rgba(255, 255, 255, 0.95);
@@ -114,8 +117,8 @@ body {
   border: var(--wl-border-width) solid var(--wl-border-strong);
   border-radius: var(--wl-radius-shell);
   box-shadow: var(--wl-shadow-shell);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(var(--wl-glass-blur)) saturate(var(--wl-glass-saturation));
+  -webkit-backdrop-filter: blur(var(--wl-glass-blur)) saturate(var(--wl-glass-saturation));
 }
 
 .wl-card {
@@ -174,7 +177,7 @@ body {
   background: var(--wl-canvas);
 }
 
-[data-bg="transparent"] { --wl-canvas: transparent; --wl-shell: rgba(20,32,45,calc(0.42*var(--wl-opacity))); --wl-sidebar: rgba(22,36,50,calc(0.34*var(--wl-opacity))); --wl-surface-1: rgba(26,40,55,calc(0.72*var(--wl-opacity))); }
+[data-bg="transparent"] { --wl-canvas: #09111d; --wl-shell: rgba(18,27,42,calc(0.78*var(--wl-opacity))); --wl-sidebar: rgba(20,31,48,calc(0.62*var(--wl-opacity))); --wl-surface-1: rgba(27,35,53,calc(0.82*var(--wl-opacity))); }
 [data-bg="solid-dark"] { --wl-canvas: #0a1420; --wl-shell: rgba(14,24,34,calc(0.9*var(--wl-opacity))); --wl-surface-1: rgba(20,32,46,calc(0.92*var(--wl-opacity))); }
 [data-bg="solid-light"] { --wl-canvas: #eef3f8; --wl-shell: rgba(250,253,255,calc(0.9*var(--wl-opacity))); --wl-surface-1: rgba(255,255,255,calc(0.95*var(--wl-opacity))); }
 [data-bg="blur"] { --wl-canvas: transparent; --wl-shell: rgba(20,32,45,calc(0.3*var(--wl-opacity))); }
