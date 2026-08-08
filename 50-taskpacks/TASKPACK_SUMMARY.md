@@ -87,27 +87,25 @@ The proposal recorded five scopes and 23 duplicate content groups; every group
 is manual-review-only, and the archive proposal retains both the fixture source
 and its manifest. Evidence is `.hermes/task-artifacts/wl720-audit-proposal.json`.
 
-## Queued successor: Stage 2 absorption and interoperability
+## Current successor and Observer component status
 
 The successor attachment
 `.hermes/desktop-attachments/WORK-LAB-STAGE-2-ABSORPTION-INTEROPERABILITY-HERMES-TASKPACK.md`
-is registered as:
+has been reconciled and completed through `NX-720`.
 
-```text
-WORK-LAB-STAGE-2-ABSORPTION-INTEROP
-status=QUEUED_WAITING_FOR_PREDECESSOR_EVIDENCE
-predecessor=WORK-LAB-FINAL-CONSOLIDATED
-first_task=NX-000
-```
-
-The tracked registration and handoff is
+The tracked reconciliation is
 `50-taskpacks/WORK-LAB-STAGE-2-ABSORPTION-INTEROPERABILITY-HANDOFF.md`.
-It preserves the attachment's single-writer, strictly read-only Observer,
-explicit publication/live/paid-provider approval and forbidden-destructive
-defaults. Stage 2 must not start implementation until predecessor Gate A and
-NX-000 produce an inheritance/overlap matrix.
+It records the two-module boundary, the strictly read-only Observer, explicit
+publication/live/paid-provider approval gates, and the remaining
+`PENDING_HUMAN_APPROVAL` release state.
 
-The queued order is:
+The current Observer visual/desktop component implementation is documented in
+`50-taskpacks/WORK-LAB-OBSERVER-VISUAL-ASSETS-R2-STATUS.md`. It records the R2
+brand asset intake, fixed Tauri Full/Compact windows, GET-only projection
+boundary, test evidence, corrected implementation errors, and the explicit
+Rust/Tauri portable-build limitation.
+
+The completed ordered successor queue is:
 
 ```text
 NX-000 → NX-100/NX-110 → NX-200/NX-210 → NX-300/NX-310/NX-320
@@ -115,8 +113,9 @@ NX-000 → NX-100/NX-110 → NX-200/NX-210 → NX-300/NX-310/NX-320
 → NX-700/NX-710/NX-720
 ```
 
-The Stage 2 queue does not add a fourth active module, a second Observer UI,
-another Task Ledger/runtime, a memory service, an Agent/chat product, or a
-default cloud/paid provider. Current local predecessor work remains separate
-from this queued successor and must not be treated as published or cloud-CI
-verified until independently delivered and read back.
+The queue does not add a fourth active module, a second Observer UI, another
+Task Ledger/runtime, a memory service, an Agent/chat product, or a default
+cloud/paid provider. Commit, push, PR, merge, release, live/global apply,
+paid-provider smoke, real-device validation, human visual calibration, and the
+portable Windows artifact remain separately evidenced gates; none is inferred
+from a task-pack summary alone.

@@ -322,8 +322,8 @@ const WlRender = (function () {
     const fresh = d.freshness || {};
     const freshText = fresh.state === "fresh" ? "新鲜" : (fresh.state === "delayed" ? "延迟" : (fresh.state === "stale" ? "陈旧" : "未知"));
     return `<div class="wl-compact-header wl-shell" data-tauri-drag-region>
-      <span class="wl-mark">${icon("grid")}</span>
-      <span class="wl-compact-title" data-tauri-drag-region>WORK-LAB</span>
+      <img class="wl-brand-symbol" src="assets/brand/work-lab-observer-symbol.svg" alt="" width="24" height="24" data-tauri-drag-region>
+      <span class="wl-compact-title" data-tauri-drag-region>WORK-LAB <small>Observer</small></span>
       <span class="wl-badge wl-badge-ro">${icon("eye")}只读</span>
       <span class="wl-badge wl-badge-cross">${icon("projects")}跨项目</span>
       <span class="wl-badge wl-badge-fixture">${icon("info")}FIXTURE</span>
@@ -334,33 +334,35 @@ const WlRender = (function () {
   function compactGlobal(d) {
     const s = d.summary || {};
     const t = s.tasks || {};
+    const u = d.usage || {};
+    const cost = u.cost || {};
     const cells = [
-      { label: "登记项目", v: s.registeredProjects, ic: "projects" },
       { label: "运行", v: t.running, ic: "running" },
-      { label: "等待", v: t.waiting, ic: "waiting" },
       { label: "阻塞", v: t.blocked, ic: "blocked" },
-      { label: "完成", v: t.completed, ic: "completed" },
+      { label: "输入 Token", v: u.inputTokens, ic: "token", formatter: F.tokensCompact },
+      { label: cost.status === "estimated" ? "API 估算 / " + (cost.currency || "USD") : "未知计费", v: cost, ic: "coin", formatter: F.costAmount },
     ];
     let out = '<div class="wl-usage-grid">';
     cells.forEach((c) => {
-      out += `<div class="wl-usage-cell"><div class="wl-u-label">${icon(c.ic)}${c.label}</div><div class="wl-u-value">${F.intOrDash(c.v)}</div></div>`;
+      const value = c.formatter ? c.formatter(c.v) : F.intOrDash(c.v);
+      out += `<div class="wl-usage-cell"><div class="wl-u-label">${icon(c.ic)}${c.label}</div><div class="wl-u-value">${F.escapeHtml(value)}</div></div>`;
     });
     out += "</div>";
     return out;
   }
 
   function compactActive(d) {
-    const projects = (d.projects || []).slice().filter((p) => ["running", "blocked", "waiting_external", "queued"].includes(p.state));
+    const projects = (d.projects || []).slice();
     const sortIdx = (p) => SORT_ORDER[p.state] !== undefined ? SORT_ORDER[p.state] : 5;
     projects.sort((a, b) => sortIdx(a) - sortIdx(b));
-    const shown = projects.slice(0, 2);
+    const shown = projects.slice(0, 3);
     const others = Math.max(0, projects.length - shown.length);
-    let out = '<div class="wl-usage-grid">';
+    let out = '<div class="wl-compact-project-list">';
     shown.forEach((p) => {
-      const m = statusMeta(p.state);
-      out += `<div class="wl-usage-cell"><div class="wl-u-label">${icon(m.ic)}${m.text}</div>` +
-        `<div class="wl-u-value" style="font-size:15px">${F.escapeHtml(p.displayName || p.projectId)}</div>` +
-        `<div class="wl-u-sub">${F.escapeHtml(p.task || p.stage || "—")}</div></div>`;
+      out += `<div class="wl-compact-project-row"><div class="wl-compact-project-main">` +
+        `<div class="wl-compact-project-name">${F.escapeHtml(p.displayName || p.projectId)}</div>` +
+        `<div class="wl-compact-project-sub">${F.escapeHtml(p.task || p.stage || p.projectId || "—")}</div></div>` +
+        chipFor(p.state) + `</div>`;
     });
     out += "</div>";
     if (others > 0) {
@@ -403,7 +405,7 @@ const WlRender = (function () {
     ];
     let out = '<div class="wl-ci-grid">';
     items.forEach((it) => {
-      out += `<div class="wl-ci-item"><div class="wl-ci-k">${it.label}</div><div class="wl-ci-v">${icon(it.ic)}${it.v}</div></div>`;
+      out += `<div class="wl-ci-item"><div class="wl-ci-k">${it.label}</div><div class="wl-ci-v">${icon(it.ic)}${F.escapeHtml(String(it.value))}</div></div>`;
     });
     out += "</div>";
     return out;
@@ -453,7 +455,7 @@ const WlRender = (function () {
     const mode = WlState.get().mode;
     const badgeCls = mode === "LIVE" ? "wl-badge-live" : (mode === "REPLAY" ? "wl-badge-replay" : "wl-badge-fixture");
     return `<div class="wl-topbar" data-tauri-drag-region>
-      <div class="wl-brand" data-tauri-drag-region><span class="wl-drag-handle" data-tauri-drag-region><span></span><span></span><span></span></span><span class="wl-mark">${icon("grid")}</span>WORK-LAB Observer</div>
+      <div class="wl-brand" data-tauri-drag-region><span class="wl-drag-handle" data-tauri-drag-region><span></span><span></span><span></span></span><img class="wl-brand-symbol" src="assets/brand/work-lab-observer-symbol.svg" alt="" width="22" height="22" data-tauri-drag-region><span>WORK-LAB <small>Observer</small></span></div>
       <div class="wl-topbar-tools">
         <span class="wl-badge wl-badge-ro">${icon("eye")}只读</span>
         <span class="wl-badge wl-badge-cross">${icon("projects")}跨项目</span>
