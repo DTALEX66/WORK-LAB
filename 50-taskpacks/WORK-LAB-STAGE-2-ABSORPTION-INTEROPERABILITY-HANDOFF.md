@@ -1,6 +1,6 @@
-# WORK-LAB Stage 2 Absorption and Interoperability - Queued Handoff
+# WORK-LAB Stage 2 Absorption and Interoperability - Final Handoff
 
-> STATUS: `QUEUED_WAITING_FOR_PREDECESSOR_EVIDENCE`
+> STATUS: `LOCAL_VERIFIED_READY_FOR_USER_APPROVAL`
 >
 > This file registers the successor task pack only. It does not start Stage 2
 > implementation and does not replace or rerun WORK-LAB-FINAL-CONSOLIDATED
@@ -25,10 +25,24 @@ destructive_policy: FORBIDDEN_WITHOUT_EXPLICIT_APPROVAL
 source_attachment: .hermes/desktop-attachments/WORK-LAB-STAGE-2-ABSORPTION-INTEROPERABILITY-HERMES-TASKPACK.md
 ```
 
-The attachment is the authoritative source. This tracked file is the
-repository-local successor handoff and is not a substitute for the attachment.
-The attachment's observed_remote_head is comparison evidence only; never reset,
-overwrite, delete, or abandon local work to match it.
+The attachment is the authoritative task-pack source. This tracked file is the
+repository-local final handoff and is not a substitute for the attachment. The
+attachment's historical `observed_remote_head` is comparison evidence only;
+never reset, overwrite, delete, or abandon local work to match it.
+
+## Final reconciliation
+
+The ordered successor queue below was reconciled on 2026-08-08. Completion is
+proved by the local Task Ledger, per-task verifier/tests/handoffs, merged PR
+aggregate evidence, and the NX-720 exact-tree review. The local ignored Ledger
+remains the machine-readable task-state authority; this document is the human
+handoff projection.
+
+Final reviewed tree: `4268c1dcbeec412e33748a7ffbef4d6e34fe8bd4`
+
+Final boundaries: exactly two active modules, no tracked transferred scope,
+no tracked forbidden artifacts, and no live/provider/paid/human calibration
+claim. Release approval remains `PENDING_HUMAN_APPROVAL`.
 
 ## Start gate
 
@@ -54,22 +68,22 @@ predecessor worktree is dirty, so Stage 2 stays in the waiting state.
 | Order | ID | Batch / priority | Goal | Dependency | State |
 |---:|---|---|---|---|---|
 | 1 | NX-000 | NX-0 / P0 | predecessor coverage, inheritance matrix, overlap dedupe | Gate A | COMPLETED (2026-08-08; Gate A satisfied) |
-| 2 | NX-100 | NX-1 / P0 | cross-module Source Ledger V3 and honest implementation states | NX-000 | QUEUED |
-| 3 | NX-110 | NX-1 / P0 | license, security, install, telemetry, credential and size audit | NX-000 | QUEUED |
-| 4 | NX-200 | NX-2 / P0 | ACP protocol/capability mapping and read-only observe bridge | NX-100, NX-110 | QUEUED |
-| 5 | NX-210 | NX-2 / P0 | Agent Skills structure, namespace and MCP conformance/malicious fixtures | NX-100, NX-110 | QUEUED |
-| 6 | NX-300 | NX-3 / P0 | OpenTelemetry/OpenInference mapping without message bodies | event/Observer contracts, NX-100, NX-110 | QUEUED |
-| 7 | NX-310 | NX-3 / P1 | multi-agent usage adapters, read-only incremental ingestion and coverage | NX-300 | QUEUED |
-| 8 | NX-320 | NX-3 / P1 | cost, retention, rollup, freshness and quality semantics | NX-310 | QUEUED |
-| 9 | NX-400 | NX-4 / P1 | memory pollution, cross-project leakage, stale facts and malicious-skill negatives | predecessor WL-400/410/420 | QUEUED |
-| 10 | NX-410 | NX-4 / P1 | Task Ledger replay, crash, old-writer and side-effect idempotency fixtures | predecessor WL-200/Task Ledger | QUEUED |
-| 11 | NX-500 | NX-5 / P1 | DTCG, DESIGN.md and Open Design input/output round-trip contracts | predecessor WL-500/600, NX-100/110 | QUEUED |
-| 12 | NX-510 | NX-5 / P1 | minimal production evidence for Playwright/axe, SVGO, PPTX and charts | NX-500 | QUEUED |
-| 13 | NX-520 | NX-5 / P1 | WCAG/ARIA/CJK/print/exhibition standards linked to evidence cards | NX-500 | QUEUED |
-| 14 | NX-600 | NX-6 / P1 | OSV/Scorecard/SPDX/REUSE source health and upstream-change monitoring | NX-100, NX-110 | QUEUED |
-| 15 | NX-700 | NX-7 / P0/P1 | three offline pilots: Workflow, Observer, Open Design | selected scope complete | QUEUED |
-| 16 | NX-710 | NX-7 / P1 | dependency/source/asset size, performance and boundary regression | NX-700 | QUEUED |
-| 17 | NX-720 | NX-7 / P0 | exact-tree review, evidence, license and rollback approval package | NX-710 | QUEUED |
+| 2 | NX-100 | NX-1 / P0 | cross-module Source Ledger V3 and honest implementation states | NX-000 | COMPLETED (2026-08-08) |
+| 3 | NX-110 | NX-1 / P0 | license, security, install, telemetry, credential and size audit | NX-000 | COMPLETED (2026-08-08) |
+| 4 | NX-200 | NX-2 / P0 | ACP protocol/capability mapping and read-only observe bridge | NX-100, NX-110 | COMPLETED (2026-08-08) |
+| 5 | NX-210 | NX-2 / P0 | Agent Skills structure, namespace and MCP conformance/malicious fixtures | NX-100, NX-110 | COMPLETED (2026-08-08) |
+| 6 | NX-300 | NX-3 / P0 | OpenTelemetry/OpenInference mapping without message bodies | event/Observer contracts, NX-100, NX-110 | COMPLETED (2026-08-08) |
+| 7 | NX-310 | NX-3 / P1 | multi-agent usage adapters, read-only incremental ingestion and coverage | NX-300 | COMPLETED (2026-08-08) |
+| 8 | NX-320 | NX-3 / P1 | cost, retention, rollup, freshness and quality semantics | NX-310 | COMPLETED (2026-08-08) |
+| 9 | NX-400 | NX-4 / P1 | memory pollution, cross-project leakage, stale facts and malicious-skill negatives | predecessor WL-400/410/420 | COMPLETED (2026-08-08) |
+| 10 | NX-410 | NX-4 / P1 | Task Ledger replay, crash, old-writer and side-effect idempotency fixtures | predecessor WL-200/Task Ledger | COMPLETED (2026-08-08) |
+| 11 | NX-500 | NX-5 / P1 | DTCG, DESIGN.md and Open Design input/output round-trip contracts | predecessor WL-500/600, NX-100/110 | COMPLETED (2026-08-08) |
+| 12 | NX-510 | NX-5 / P1 | minimal production evidence for Playwright/axe, SVGO, PPTX and charts | NX-500 | COMPLETED (2026-08-08) |
+| 13 | NX-520 | NX-5 / P1 | WCAG/ARIA/CJK/print/exhibition standards linked to evidence cards | NX-500 | COMPLETED (2026-08-08) |
+| 14 | NX-600 | NX-6 / P1 | OSV/Scorecard/SPDX/REUSE source health and upstream-change monitoring | NX-100, NX-110 | COMPLETED (2026-08-08) |
+| 15 | NX-700 | NX-7 / P0/P1 | three offline pilots: Workflow, Observer, Open Design | selected scope complete | COMPLETED (2026-08-08) |
+| 16 | NX-710 | NX-7 / P1 | dependency/source/asset size, performance and boundary regression | NX-700 | COMPLETED (2026-08-08) |
+| 17 | NX-720 | NX-7 / P0 | exact-tree review, evidence, license and rollback approval package | NX-710 | COMPLETED (2026-08-08; release approval pending) |
 
 ## Scope and exclusions
 
@@ -106,10 +120,9 @@ license evidence qualify. Links, README entries, directories, registry rows,
 download counts, or research notes do not prove adapter, conformance, privacy,
 round-trip, production-output, rollback, or human-calibration completion.
 
-## Next action
+## Final next action
 
-After the predecessor reaches a stable handoff, the only first action is NX-000:
-read the predecessor Task Ledger and current tree, generate the inheritance/
-partial/blocked/deferred matrix, and confirm that Stage 2 does not duplicate
-predecessor work. Before NX-000, do not modify Stage 2 implementation files,
-create a second writer, or perform external platform writes.
+No further Stage 2 implementation task is queued. A user-approved release,
+live/global apply, paid-provider smoke, real-device validation, and human
+visual calibration remain separate approval-gated actions and are not implied
+by this handoff.
