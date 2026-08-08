@@ -138,6 +138,10 @@ jobs:
         run: python scripts/ci/verify_offline_pilot.py
       - name: Run three-branch offline pilot tests (NX-700)
         run: python tests/ci/test_offline_pilot.py
+      - name: Verify size/performance/boundary regression (NX-710)
+        run: python scripts/ci/verify_regression_report.py
+      - name: Run size/performance/boundary regression tests (NX-710)
+        run: python tests/ci/test_regression_report.py
       - name: Verify sanitized error ledger
         run: python scripts/ci/verify_error_ledger.py
       - name: Verify source ledger readback
