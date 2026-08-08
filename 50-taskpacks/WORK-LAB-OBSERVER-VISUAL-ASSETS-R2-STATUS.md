@@ -124,10 +124,15 @@ configuration, or claiming a production release.
 - Required tests and focused verification: passed.
 - External provider/live mutation: not executed.
 - Human visual/release approval: still pending.
-- Commit, PR, aggregate CI, merge, and local/remote SHA readback: completed
-  through PR `#30`, exact-head PR run `31251264323`, and final main push run
-  `31251306631` for merged main SHA `f141946bfa55fd77120443bacd45aee0049c16e2`.
-- The local and remote repositories are synchronized at that merged SHA.
+- R2 implementation commit/PR/CI/merge: PR `#30`, exact-head PR run
+  `31251264323`, final main push run `31251306631`, merged implementation SHA
+  `f141946bfa55fd77120443bacd45aee0049c16e2`.
+- Final generated-state reconciliation: PR `#31`, exact-head PR run
+  `31251503373`, final main push run `31251545134`, merged reconciliation SHA
+  `5d2ceb264edf54c42e347acd1246202a0add31ac`.
+- Local and remote `main` were read back equal after each merge. The two SHA
+  values above are intentionally retained as implementation and reconciliation
+  lineage, not conflated into one release SHA.
 
 ## Source and scope
 
