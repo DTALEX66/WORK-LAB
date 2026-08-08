@@ -53,7 +53,7 @@ predecessor worktree is dirty, so Stage 2 stays in the waiting state.
 
 | Order | ID | Batch / priority | Goal | Dependency | State |
 |---:|---|---|---|---|---|
-| 1 | NX-000 | NX-0 / P0 | predecessor coverage, inheritance matrix, overlap dedupe | Gate A | QUEUED_WAITING_FOR_PREDECESSOR_EVIDENCE |
+| 1 | NX-000 | NX-0 / P0 | predecessor coverage, inheritance matrix, overlap dedupe | Gate A | COMPLETED (2026-08-08; Gate A satisfied) |
 | 2 | NX-100 | NX-1 / P0 | cross-module Source Ledger V3 and honest implementation states | NX-000 | QUEUED |
 | 3 | NX-110 | NX-1 / P0 | license, security, install, telemetry, credential and size audit | NX-000 | QUEUED |
 | 4 | NX-200 | NX-2 / P0 | ACP protocol/capability mapping and read-only observe bridge | NX-100, NX-110 | QUEUED |
