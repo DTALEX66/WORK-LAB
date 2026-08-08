@@ -184,6 +184,14 @@ def gate_adapter_conformance() -> int:
     return run_python(["tests/test_adapter_conformance.py"])
 
 
+def gate_acp_conformance() -> int:
+    """NX-200: ACP protocol/capability conformance + Qwen Code pilot probe."""
+    code = run_python(["scripts/workflow/verify_acp_conformance.py"])
+    if code != 0:
+        return code
+    return run_python(["tests/test_acp_adapter.py"])
+
+
 def gate_portable_install_runtime() -> int:
     if not command_exists("hermes"):
         print("\n=== FAIL portable-install-runtime: hermes CLI not found; runtime compatibility is required ===")
@@ -257,8 +265,13 @@ GATES: dict[str, Gate] = {
     ),
     "adapter-conformance": Gate(
         "adapter-conformance",
-        "Verify the seven-interface fake adapter contract and approval boundary.",
+        "Run adapter conformance checks.",
         gate_adapter_conformance,
+    ),
+    "acp-conformance": Gate(
+        "acp-conformance",
+        "NX-200: ACP protocol/capability conformance + Qwen Code pilot.",
+        gate_acp_conformance,
     ),
     "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
     "portable-install-runtime": Gate(

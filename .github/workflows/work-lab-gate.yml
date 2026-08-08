@@ -75,6 +75,7 @@ jobs:
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py core-schemas
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py adapter-registry
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py adapter-conformance
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py acp-conformance
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py portable-install
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py provider-inventory
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py mcp-audit
