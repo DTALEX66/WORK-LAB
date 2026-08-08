@@ -224,6 +224,14 @@ def gate_task_ledger_replay() -> int:
     return run_python(["tests/test_task_ledger_replay.py"])
 
 
+def gate_design_contract() -> int:
+    """NX-500: DTCG/DESIGN.md design contract round-trip adaptation."""
+    code = run_python(["scripts/workflow/verify_design_contract.py"])
+    if code != 0:
+        return code
+    return run_python(["tests/test_design_contract.py"])
+
+
 def gate_portable_install_runtime() -> int:
     if not command_exists("hermes"):
         print("\n=== FAIL portable-install-runtime: hermes CLI not found; runtime compatibility is required ===")
@@ -325,6 +333,11 @@ GATES: dict[str, Gate] = {
         "NX-410: Task Ledger replay + side-effect consistency harness.",
         gate_task_ledger_replay,
     ),
+    "design-contract": Gate(
+        "design-contract",
+        "NX-500: DTCG/DESIGN.md design contract round-trip adaptation.",
+        gate_design_contract,
+    ),
     "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
     "portable-install-runtime": Gate(
         "portable-install-runtime",
@@ -352,6 +365,7 @@ VERIFY_ORDER = (
     "usage-ingestion",
     "memory-contamination",
     "task-ledger-replay",
+    "design-contract",
     "portable-install",
     "portable-install-runtime",
     "provider-inventory",
