@@ -208,6 +208,14 @@ def gate_usage_ingestion() -> int:
     return run_python(["tests/test_usage_ingestion.py"])
 
 
+def gate_memory_contamination() -> int:
+    """NX-400: memory contamination adversarial negative controls."""
+    code = run_python(["scripts/workflow/verify_memory_contamination.py"])
+    if code != 0:
+        return code
+    return run_python(["tests/test_memory_contamination.py"])
+
+
 def gate_portable_install_runtime() -> int:
     if not command_exists("hermes"):
         print("\n=== FAIL portable-install-runtime: hermes CLI not found; runtime compatibility is required ===")
@@ -299,6 +307,11 @@ GATES: dict[str, Gate] = {
         "NX-310: cross-agent usage ingestion + coverage matrix.",
         gate_usage_ingestion,
     ),
+    "memory-contamination": Gate(
+        "memory-contamination",
+        "NX-400: memory contamination adversarial negative controls.",
+        gate_memory_contamination,
+    ),
     "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
     "portable-install-runtime": Gate(
         "portable-install-runtime",
@@ -324,6 +337,7 @@ VERIFY_ORDER = (
     "acp-conformance",
     "otel-mapping",
     "usage-ingestion",
+    "memory-contamination",
     "portable-install",
     "portable-install-runtime",
     "provider-inventory",
