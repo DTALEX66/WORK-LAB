@@ -134,6 +134,10 @@ jobs:
         run: python scripts/ci/verify_source_health.py
       - name: Run offline source health tests (NX-600)
         run: python tests/ci/test_source_health.py
+      - name: Verify three-branch offline pilot (NX-700)
+        run: python scripts/ci/verify_offline_pilot.py
+      - name: Run three-branch offline pilot tests (NX-700)
+        run: python tests/ci/test_offline_pilot.py
       - name: Verify sanitized error ledger
         run: python scripts/ci/verify_error_ledger.py
       - name: Verify source ledger readback
