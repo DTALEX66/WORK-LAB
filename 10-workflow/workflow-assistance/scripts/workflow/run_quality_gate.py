@@ -232,6 +232,14 @@ def gate_design_contract() -> int:
     return run_python(["tests/test_design_contract.py"])
 
 
+def gate_production_evidence() -> int:
+    """NX-510: design production & quality evidence adaptation."""
+    code = run_python(["scripts/workflow/verify_production_evidence.py"])
+    if code != 0:
+        return code
+    return run_python(["tests/test_production_evidence.py"])
+
+
 def gate_portable_install_runtime() -> int:
     if not command_exists("hermes"):
         print("\n=== FAIL portable-install-runtime: hermes CLI not found; runtime compatibility is required ===")
@@ -338,6 +346,11 @@ GATES: dict[str, Gate] = {
         "NX-500: DTCG/DESIGN.md design contract round-trip adaptation.",
         gate_design_contract,
     ),
+    "production-evidence": Gate(
+        "production-evidence",
+        "NX-510: design production & quality evidence adaptation.",
+        gate_production_evidence,
+    ),
     "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
     "portable-install-runtime": Gate(
         "portable-install-runtime",
@@ -366,6 +379,7 @@ VERIFY_ORDER = (
     "memory-contamination",
     "task-ledger-replay",
     "design-contract",
+    "production-evidence",
     "portable-install",
     "portable-install-runtime",
     "provider-inventory",

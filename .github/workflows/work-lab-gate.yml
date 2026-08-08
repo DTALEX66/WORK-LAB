@@ -81,6 +81,7 @@ jobs:
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py memory-contamination
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py task-ledger-replay
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py design-contract
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py production-evidence
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py portable-install
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py provider-inventory
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py mcp-audit
