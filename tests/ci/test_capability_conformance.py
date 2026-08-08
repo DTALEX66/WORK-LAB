@@ -22,7 +22,7 @@ def load_module():
 class CapabilityConformanceTests(unittest.TestCase):
     def test_static_manifest_passes_without_live_probe(self) -> None:
         result = load_module().verify_document(json.loads(MANIFEST.read_text(encoding="utf-8")), ROOT)
-        self.assertEqual(result, {"protocols": 3, "entries": 4, "mcp_unverified": 1})
+        self.assertEqual(result, {"protocols": 3, "entries": 5, "mcp_unverified": 1})
 
     def test_malicious_write_execute_network_fixture_fails_closed(self) -> None:
         module = load_module()
