@@ -192,6 +192,14 @@ def gate_acp_conformance() -> int:
     return run_python(["tests/test_acp_adapter.py"])
 
 
+def gate_otel_mapping() -> int:
+    """NX-300: OTel/OpenInference semantic mapping + privacy negative control."""
+    code = run_python(["scripts/workflow/verify_otel_mapping.py"])
+    if code != 0:
+        return code
+    return run_python(["tests/test_otel_mapping.py"])
+
+
 def gate_portable_install_runtime() -> int:
     if not command_exists("hermes"):
         print("\n=== FAIL portable-install-runtime: hermes CLI not found; runtime compatibility is required ===")
@@ -273,6 +281,11 @@ GATES: dict[str, Gate] = {
         "NX-200: ACP protocol/capability conformance + Qwen Code pilot.",
         gate_acp_conformance,
     ),
+    "otel-mapping": Gate(
+        "otel-mapping",
+        "NX-300: OTel/OpenInference semantic mapping + privacy negative control.",
+        gate_otel_mapping,
+    ),
     "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
     "portable-install-runtime": Gate(
         "portable-install-runtime",
@@ -296,6 +309,7 @@ VERIFY_ORDER = (
     "adapter-registry",
     "adapter-conformance",
     "acp-conformance",
+    "otel-mapping",
     "portable-install",
     "portable-install-runtime",
     "provider-inventory",
