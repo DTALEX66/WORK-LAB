@@ -135,6 +135,10 @@ jobs:
         run: python scripts/ci/verify_source_governance.py
       - name: Run source governance tests (NX-110)
         run: python tests/ci/test_source_governance.py
+      - name: Verify skill + MCP consistency (NX-210)
+        run: python scripts/ci/verify_skill_mcp_consistency.py
+      - name: Run skill + MCP consistency tests (NX-210)
+        run: python tests/ci/test_skill_mcp_consistency.py
       - name: Verify WL inheritance matrix
         run: python scripts/ci/verify_wl_inheritance_matrix.py
       - name: Run current state tests
