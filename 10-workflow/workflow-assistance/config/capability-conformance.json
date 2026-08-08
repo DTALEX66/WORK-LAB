@@ -5,7 +5,8 @@
   "acp": {
     "status": "STATIC_PASS",
     "entries": [
-      {"id": "adapter-interface", "capabilities": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"], "transport": "manifest-only", "permissions": ["read-only"], "source": "10-workflow/workflow-assistance/config/adapter-registry.json"}
+      {"id": "adapter-interface", "capabilities": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"], "transport": "manifest-only", "permissions": ["read-only"], "source": "10-workflow/workflow-assistance/config/adapter-registry.json"},
+      {"id": "acp-compat-layer", "capabilities": ["detect", "capabilities", "observe", "negotiate", "init"], "transport": "external", "permissions": ["read-only"], "source": "10-workflow/workflow-assistance/scripts/workflow/acp_adapter.py"}
     ]
   },
   "skills": {
