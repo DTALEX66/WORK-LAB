@@ -126,6 +126,10 @@ jobs:
         run: python scripts/ci/verify_source_ledger.py --root .
       - name: Run source ledger tests
         run: python tests/ci/test_source_ledger.py
+      - name: Verify cross-module source index (NX-100)
+        run: python scripts/ci/verify_cross_module_source_index.py
+      - name: Run cross-module source index tests (NX-100)
+        run: python tests/ci/test_cross_module_source_index.py
       - name: Verify WL inheritance matrix
         run: python scripts/ci/verify_wl_inheritance_matrix.py
       - name: Run current state tests
