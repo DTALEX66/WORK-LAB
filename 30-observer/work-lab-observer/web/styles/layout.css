@@ -20,7 +20,7 @@ body.wl-body {
 .wl-shell {
   width: 100%;
   max-width: var(--wl-content-max);
-  border-radius: 26px; /* contract: 26-30px */
+  border-radius: var(--wl-radius-shell); /* R2 window radius: 30px */
   overflow: hidden;
   position: relative;
   display: flex;
@@ -89,6 +89,20 @@ body.wl-body {
   color: var(--wl-blue);
 }
 .wl-brand .wl-mark svg { width: 18px; height: 18px; }
+.wl-brand-symbol {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border-radius: 7px;
+  filter: drop-shadow(0 4px 10px rgba(111, 149, 255, 0.24));
+}
+.wl-brand small {
+  color: var(--wl-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 4px;
+}
 
 .wl-topbar-tools {
   display: flex;
@@ -213,18 +227,28 @@ body.wl-body {
   flex-direction: column;
   gap: 14px;
 }
+#wl-app.wl-compact {
+  max-width: 440px;
+  align-self: center;
+}
 .wl-compact-header {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
 }
+.wl-compact-header .wl-badge-cross,
+.wl-compact-header .wl-badge-ro { display: none; }
 .wl-compact-title {
   font-weight: 700;
   font-size: 17px;
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .wl-compact-title .wl-mark svg { width: 22px; height: 22px; }
 
@@ -234,7 +258,36 @@ body.wl-body {
   gap: 14px;
 }
 
-/* === Responsive === */
+/* Compact project list: dense, readable rows instead of tiny dashboard cards. */
+.wl-compact-project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wl-compact-project-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--wl-border-subtle);
+}
+.wl-compact-project-row:last-child { border-bottom: 0; }
+.wl-compact-project-main { min-width: 0; }
+.wl-compact-project-name {
+  color: var(--wl-text-primary);
+  font-size: 13px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.wl-compact-project-sub {
+  color: var(--wl-text-muted);
+  font-size: 11px;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.wl-compact-project-row .wl-chip { font-size: 11px; padding: 3px 7px; }
+
 
 /* 1024: narrow sidebar a bit, allow table to reveal via horizontal-scroll-safe table
    but we keep tables non-scrolling by wrapping overflow-x:auto on table containers. */

@@ -7,6 +7,8 @@ const suites = [
   "./test_projection_contract.js",
   "./test_read_only_surface.js",
   "./test_responsive_contract.js",
+  "./test_visual_assets_r2.js",
+  "./test_desktop_component_contract.js",
 ];
 
 let totalPass = 0, totalFail = 0;
