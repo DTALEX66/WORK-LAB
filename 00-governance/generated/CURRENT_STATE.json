@@ -1,9 +1,9 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-08T06:14:34.853806Z",
-  "source_digest": "178b2dc1548c5ede23b0f5f30fc7338c249b31bfb9d387f91d27b5147843e8a5",
+  "generated_at": "2026-08-08T08:54:15.308632Z",
+  "source_digest": "b3dfd01f071e2f2f4fc4a7693535659c352fc1938e8b581fd3db515b52a51558",
   "git": {
-    "head": "ce66e7c123852d38e54a9d27b3b8be5b2951ab90",
+    "head": "18d708e00eb009ae04be02b9fbc0ca6ed38b367d",
     "branch": "main"
   },
   "modules": [
@@ -201,8 +201,40 @@
     ]
   },
   "ci": {
+    "run_id": 31249331995,
+    "workflow_name": null,
     "status": "unknown",
-    "evidence": "not-provided"
+    "conclusion": "success",
+    "head_sha": "18d708e00eb009ae04be02b9fbc0ca6ed38b367d",
+    "url": null,
+    "attempt": null,
+    "jobs": [
+      {
+        "name": "aggregate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "gate-plan",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "integration",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "observer",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "workflow-assistance",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
   },
   "unverified_capabilities": [
     "hermes_live_apply",
@@ -211,5 +243,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "8d115750e2d420f31531882efdc8f019a61aa9276c9cf10c18de38e9be2a5143"
+  "content_digest": "1182d4dbcf739cab3719f09c71f90ad42f4d2978e8545a3dcb458222d25895e6"
 }
