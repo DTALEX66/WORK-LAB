@@ -200,6 +200,14 @@ def gate_otel_mapping() -> int:
     return run_python(["tests/test_otel_mapping.py"])
 
 
+def gate_usage_ingestion() -> int:
+    """NX-310: cross-agent usage ingestion + coverage matrix."""
+    code = run_python(["scripts/workflow/verify_usage_ingestion.py"])
+    if code != 0:
+        return code
+    return run_python(["tests/test_usage_ingestion.py"])
+
+
 def gate_portable_install_runtime() -> int:
     if not command_exists("hermes"):
         print("\n=== FAIL portable-install-runtime: hermes CLI not found; runtime compatibility is required ===")
@@ -286,6 +294,11 @@ GATES: dict[str, Gate] = {
         "NX-300: OTel/OpenInference semantic mapping + privacy negative control.",
         gate_otel_mapping,
     ),
+    "usage-ingestion": Gate(
+        "usage-ingestion",
+        "NX-310: cross-agent usage ingestion + coverage matrix.",
+        gate_usage_ingestion,
+    ),
     "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
     "portable-install-runtime": Gate(
         "portable-install-runtime",
@@ -310,6 +323,7 @@ VERIFY_ORDER = (
     "adapter-conformance",
     "acp-conformance",
     "otel-mapping",
+    "usage-ingestion",
     "portable-install",
     "portable-install-runtime",
     "provider-inventory",
