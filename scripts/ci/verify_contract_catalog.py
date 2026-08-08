@@ -27,6 +27,7 @@ EXPECTED = {
     "observer-event": "observer",
     "observer-pricing": "observer",
     "data-quality": "observer",
+    "dashboard-projection": "observer",
 
     "archive-manifest": "root-governance",
     "project-profile": "workflow",
@@ -58,6 +59,7 @@ CANONICAL_SCHEMA_PREFIXES = {
     "observer-event": ("30-observer/",),
     "observer-pricing": ("30-observer/",),
     "data-quality": ("30-observer/",),
+    "dashboard-projection": ("30-observer/",),
 
     "archive-manifest": ("00-governance/",),
     "project-profile": ("10-workflow/",),

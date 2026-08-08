@@ -35,10 +35,7 @@ function loadFixture(name) {
 }
 
 function readProjectionSchema() {
-  const p = path.resolve(__dirname, "..", "..", "..", ".hermes",
-    "task-artifacts", "observer-ui-deepseek-r1",
-    "WORK-LAB-OBSERVER-UI-DEEPSEEK-PACK-R1-2026-08-07",
-    "contracts", "dashboard-projection.schema.json");
+  const p = path.resolve(__dirname, "..", "schemas", "dashboard-projection.schema.json");
   return JSON.parse(fs.readFileSync(p, "utf-8"));
 }
 

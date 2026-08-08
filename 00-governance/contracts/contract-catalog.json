@@ -27,6 +27,7 @@
     {"id": "observer-event", "owner": "observer", "schemaPath": "30-observer/work-lab-observer/schemas/observer-event.schema.json", "consumers": ["observer"]},
     {"id": "observer-pricing", "owner": "observer", "schemaPath": "30-observer/work-lab-observer/schemas/observer-pricing.schema.json", "consumers": ["observer"]},
     {"id": "data-quality", "owner": "observer", "schemaPath": "30-observer/work-lab-observer/schemas/data-quality.schema.json", "consumers": ["observer"]},
+    {"id": "dashboard-projection", "owner": "observer", "schemaPath": "30-observer/work-lab-observer/schemas/dashboard-projection.schema.json", "consumers": ["observer", "ui"]},
 
     {"id": "archive-manifest", "owner": "root-governance", "schemaPath": "00-governance/contracts/archive-manifest.schema.json", "consumers": ["open-design", "audit"]}
   ],
