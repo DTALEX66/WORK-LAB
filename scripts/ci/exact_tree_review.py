@@ -61,7 +61,10 @@ def review_tree() -> dict[str, Any]:
     forbidden = []
     for path in paths:
         lower = path.replace("\\", "/").lower()
-        if any(marker in lower for marker in FORBIDDEN_PATH_MARKERS):
+        # A tracked .env.template is a configuration template, not a credential
+        # store; real .env/auth/key material remains forbidden.
+        is_safe_template = lower.endswith("/.env.template")
+        if any(marker in lower for marker in FORBIDDEN_PATH_MARKERS) and not is_safe_template:
             forbidden.append(path)
         if Path(path).suffix.lower() in FORBIDDEN_EXTENSIONS:
             forbidden.append(path)
