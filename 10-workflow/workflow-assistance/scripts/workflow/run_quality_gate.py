@@ -295,6 +295,7 @@ VERIFY_ORDER = (
     "core-schemas",
     "adapter-registry",
     "adapter-conformance",
+    "acp-conformance",
     "portable-install",
     "portable-install-runtime",
     "provider-inventory",
