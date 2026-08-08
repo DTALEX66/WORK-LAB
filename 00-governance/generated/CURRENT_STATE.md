@@ -1,12 +1,12 @@
 # WORK-LAB current state
 
-Generated at: `2026-08-07T12:11:16.538187Z`  \
-Source digest: `d9ec4ba238c5975e75498eeeb4574ffa2086e2b7bd8df4673d06754808f99589`  \
-Content digest: `d620096fb46e47705e14e597f706e3eb764585233af1427c0be32bec4620c339`
+Generated at: `2026-08-08T03:52:44.270945Z`  \
+Source digest: `178b2dc1548c5ede23b0f5f30fc7338c249b31bfb9d387f91d27b5147843e8a5`  \
+Content digest: `fe8db66c7422cc585089e2bc864bceba2068a561f272f295f5d19faecffabd1e`
 
 ## Git
 
-- HEAD: `fbfacfb9c2b72a09fd13b76f2d80c202ea22529f`
+- HEAD: `64d6501122d25ecb3d9ea7a49d6764b1f2f8709b`
 - Branch: `main`
 
 ## Active modules
@@ -16,7 +16,7 @@ Content digest: `d620096fb46e47705e14e597f706e3eb764585233af1427c0be32bec4620c33
 
 ## Governance
 
-- Contracts: `27`
+- Contracts: `28`
 - Repository skills: `13`
 - Single writer: `True`
 - Cross-module writes: `explicit-cross-task-only`
