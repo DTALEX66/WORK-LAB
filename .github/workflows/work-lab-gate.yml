@@ -103,6 +103,8 @@ jobs:
           python tests/test_observer_evidence.py
           python tests/test_observer_store.py
           python tests/test_observer_dashboard.py
+          python scripts/verify_usage_rollup.py
+          python tests/test_usage_rollup.py
 
   integration:
     name: integration
