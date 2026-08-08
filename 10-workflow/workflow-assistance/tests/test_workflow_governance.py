@@ -2457,6 +2457,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "acp-conformance",
                 "otel-mapping",
                 "usage-ingestion",
+                "memory-contamination",
                 "portable-install",
                 "portable-install-runtime",
                 "provider-inventory",
@@ -2538,7 +2539,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertIn(
             "verify: Run governance, compile, skill-provenance, security, context-pack, "
-            "client-neutral-manifest, core-schemas, adapter-registry, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, portable-install, portable-install-runtime, provider-inventory, mcp-audit",
+            "client-neutral-manifest, core-schemas, adapter-registry, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, memory-contamination, portable-install, portable-install-runtime, provider-inventory, mcp-audit",
             list_result.stdout,
         )
 
