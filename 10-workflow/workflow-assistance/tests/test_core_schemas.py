@@ -33,6 +33,8 @@ EXPECTED = {
     "model-policy.schema.json",
     "memory-record.schema.json",
     "rule-drift.schema.json",
+    "platform-identity.schema.json",
+    "config-ownership.schema.json",
 }
 
 
@@ -65,7 +67,7 @@ class CoreSchemaTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("CORE_SCHEMA_CONTRACT_PASS", result.stdout)
-        self.assertIn("schemas=22", result.stdout)
+        self.assertIn("schemas=24", result.stdout)
 
     def test_verifier_rejects_schema_missing_required_contract(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

@@ -133,6 +133,7 @@ def gate_security() -> int:
             "scripts/security/scan_agent_rules.py",
             "templates",
             "skills",
+            "codex-assets",
             "docs",
             "scripts",
             "README.md",
@@ -222,30 +223,6 @@ def gate_task_ledger_replay() -> int:
     if code != 0:
         return code
     return run_python(["tests/test_task_ledger_replay.py"])
-
-
-def gate_design_contract() -> int:
-    """NX-500: DTCG/DESIGN.md design contract round-trip adaptation."""
-    code = run_python(["scripts/workflow/verify_design_contract.py"])
-    if code != 0:
-        return code
-    return run_python(["tests/test_design_contract.py"])
-
-
-def gate_production_evidence() -> int:
-    """NX-510: design production & quality evidence adaptation."""
-    code = run_python(["scripts/workflow/verify_production_evidence.py"])
-    if code != 0:
-        return code
-    return run_python(["tests/test_production_evidence.py"])
-
-
-def gate_standard_validators() -> int:
-    """NX-520: sourced/searchable/testable standards + evidence association."""
-    code = run_python(["scripts/workflow/verify_standard_validators.py"])
-    if code != 0:
-        return code
-    return run_python(["tests/test_standard_validators.py"])
 
 
 def gate_portable_install_runtime() -> int:
@@ -349,21 +326,6 @@ GATES: dict[str, Gate] = {
         "NX-410: Task Ledger replay + side-effect consistency harness.",
         gate_task_ledger_replay,
     ),
-    "design-contract": Gate(
-        "design-contract",
-        "NX-500: DTCG/DESIGN.md design contract round-trip adaptation.",
-        gate_design_contract,
-    ),
-    "production-evidence": Gate(
-        "production-evidence",
-        "NX-510: design production & quality evidence adaptation.",
-        gate_production_evidence,
-    ),
-    "standard-validators": Gate(
-        "standard-validators",
-        "NX-520: sourced/searchable/testable standards + evidence association.",
-        gate_standard_validators,
-    ),
     "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
     "portable-install-runtime": Gate(
         "portable-install-runtime",
@@ -391,9 +353,6 @@ VERIFY_ORDER = (
     "usage-ingestion",
     "memory-contamination",
     "task-ledger-replay",
-    "design-contract",
-    "production-evidence",
-    "standard-validators",
     "portable-install",
     "portable-install-runtime",
     "provider-inventory",

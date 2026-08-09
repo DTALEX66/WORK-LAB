@@ -8,7 +8,6 @@ REQUIRED = {"workflow", "observer", "integration"}
 PLAN_GATES = {"workflow", "observer", "integration"}
 JOB_NAMES = {
     "workflow": "workflow",
-
     "observer": "observer",
     "integration": "integration",
 }
@@ -31,7 +30,7 @@ def _resolve_plan(data: dict[str, object]) -> tuple[set[str], str | None, str | 
     source_identity = raw_plan.get("source_identity")
     if not isinstance(required, list) or not all(isinstance(item, str) for item in required):
         raise ValueError("gate_plan.required_gates must be a string list")
-    normalized_required = {"open_design" if item == "open-design" else item for item in required}
+    normalized_required = set(required)
     unknown = normalized_required - PLAN_GATES
     if unknown:
         raise ValueError(f"gate_plan contains unknown gates: {sorted(unknown)}")

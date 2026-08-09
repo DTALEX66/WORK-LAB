@@ -5,7 +5,8 @@
 
 "use strict";
 
-const { loadScripts, loadFixture, readProjectionSchema, assert, test } = require("./helpers");
+const { WEB, loadScripts, loadFixture, readProjectionSchema, assert, test } = require("./helpers");
+const path = require("path");
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
 
@@ -115,6 +116,25 @@ function run() {
     const required = schema.required;
     ["schemaVersion", "mode", "generatedAt", "freshness", "summary", "projects", "usage", "ci", "governance", "quality"]
       .forEach((k) => assert(required.includes(k), "schema requires " + k));
+  });
+
+  t("bundled snapshot has an explicit non-live mode", () => {
+    const snapshot = require(path.join(WEB, "assets", "live-snapshot.json"));
+    assert(snapshot.mode === "SNAPSHOT", "bundled fallback must not claim LIVE");
+  });
+
+  t("compact header reflects the active data mode", () => {
+    const live = require(path.join(WEB, "assets", "live-snapshot.json"));
+    live.mode = "LIVE";
+    const snapshot = require(path.join(WEB, "assets", "live-snapshot.json"));
+    snapshot.mode = "SNAPSHOT";
+    WlState.accept(live, "LIVE");
+    const liveHtml = WlRender.renderCompact(live);
+    WlState.accept(snapshot, "SNAPSHOT");
+    const snapshotHtml = WlRender.renderCompact(snapshot);
+    assert(/LIVE/.test(liveHtml), "compact LIVE badge");
+    assert(!/FIXTURE/.test(liveHtml), "compact LIVE must not show FIXTURE");
+    assert(/SNAPSHOT/.test(snapshotHtml), "compact SNAPSHOT badge");
   });
 
   return { pass, fail };

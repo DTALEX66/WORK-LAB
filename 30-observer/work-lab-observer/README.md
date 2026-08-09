@@ -29,11 +29,20 @@ python 30-observer/work-lab-observer/scripts/observer_dashboard.py
 ```
 
 Open `http://127.0.0.1:8765/` in a browser. The documented GET-only entries
-are `/`, `/api/dashboard`, and `/healthz`. The page rebuilds its projection from
-the Observer-owned event store and exposes task count, event count, quality,
+are `/`, `/api/dashboard`, and `/healthz`. The page rebuilds its Schema v2
+authority projection from the Observer-owned event store and exposes task count,
+project/governance state, quality,
 coverage, data-quality warnings, usage/cost status, and the explicit
 `externalMutation=false` boundary. It does not provide task controls, approval,
 retry, execution, or Ledger write-back.
+
+When the embedded desktop frontend cannot reach a live `/api/dashboard` endpoint,
+it falls back to `web/assets/live-snapshot.json` with explicit `SNAPSHOT` mode;
+that fallback is not labelled as live data.
+
+To provide live data to the portable frontend, run the documented Observer
+dashboard service on `127.0.0.1:8765`; the frontend tries its same-origin API
+first, then this local read-only endpoint, and only then uses the snapshot.
 
 ### Four views (Full/Compact × Dark/Light)
 

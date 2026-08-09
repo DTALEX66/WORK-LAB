@@ -22,7 +22,7 @@ SCRIPT = ROOT / "scripts" / "ci" / "generate_current_state.py"
 
 
 class CurrentStateTests(unittest.TestCase):
-    def test_build_state_records_canonical_modules_skills_design_and_ci(self) -> None:
+    def test_build_state_records_canonical_modules_stage3_skills_and_ci(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             evidence = Path(raw) / "ci.json"
             evidence.write_text(
@@ -56,6 +56,9 @@ class CurrentStateTests(unittest.TestCase):
         self.assertEqual(state["workflow_identity"]["aggregate_job"], "aggregate")
         self.assertEqual(state["contracts"]["count"], 28)
         self.assertEqual(len(state["skills"]["items"]), 13)
+        self.assertEqual(state["stage3"]["task_count"], 28)
+        self.assertEqual(state["stage3"]["incoming_dirty_count"], 13)
+        self.assertEqual(state["stage3"]["writer_state"], "UNIQUE")
 
     def test_content_digest_is_stable_when_generated_at_changes(self) -> None:
         first = build_state(ROOT)

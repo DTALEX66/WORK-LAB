@@ -28,16 +28,14 @@ completion state):
   this active summary because the attached task-pack reuses some IDs with
   different acceptance criteria.
 
-Current active task-pack baseline:
+Current forward authority:
 
-- Source: `WORK-LAB-HERMES-TASKPACK-v2.0.0.zip`.
-- Canonical reconciliation: `WORK-LAB-HERMES-TASKPACK-RECONCILIATION.md` and
-  `.json` in this directory.
-- Full current per-ID evidence remains under the ignored
-  `.hermes/task-artifacts/taskpack-assessment-20260806.json`.
-- The v2 attachment is the final priority source; compatible historical work is
-  retained, divergent historical work cannot override it, and unresolved
-  destructive/live/Git actions remain separately approval-gated.
+- Stage 3 TaskPack: `WORK-LAB-STAGE-3-CANONICAL-CONTROL-PLANE` v1.0.
+- Tracked graph: `WORK-LAB-STAGE-3-TASK-GRAPH.json` in this directory.
+- Baseline: `00-governance/generated/STAGE3_BASELINE.json`.
+- Stage 2 and the v2 attachment/reconciliation are historical predecessor
+  evidence. They are `SUPERSEDED` for forward execution and cannot restore the
+  old three-module architecture or active design gates.
 
 Evidence generated under the ignored local `.hermes/task-artifacts` path is not
 published as source content. The committed handoff records reproducible source
@@ -45,7 +43,7 @@ tips, module paths, recovery locations and remaining approval gates. Hermes
 Hermes global config, auth, sessions, cron, skills, plugins and caches remain platform
 state and are never absorbed by a task pack.
 
-## Current local predecessor slice
+## Historical local predecessor slice (`SUPERSEDED`)
 
 `WL-300` is locally implemented as an offline model/context/cost policy
 contract. It uses capability classes instead of permanent model or provider
@@ -74,16 +72,14 @@ rebuildable Observer projection. Evidence is
 `.hermes/task-artifacts/wl500-observer-usage.json`; no live log was read and no
 external or authoritative state was mutated.
 
-`WL-600` now tracks one non-authoritative evidence card per visual benchmark.
-All 12 cards remain `not-run`/E0 and bind only local brief, rubric, and report
-schema fixtures. The evidence-card verifier rejects accepted cards without
-completed human calibration and passing hard gates; the Open Design aggregate
-verifier runs this check as a secondary gate. No visual score or human review
-was fabricated.
+`WL-600` is retained only as historical predecessor evidence. Its visual
+benchmark cards, human-calibration language and design verifier are not Stage 3
+WORK-LAB Gates and do not represent an active module or current capability.
+No visual score or human review was fabricated.
 
-`WL-720` completed a non-destructive local size/duplicate audit across the
-three canonical scopes, the preserved MiniGame fixture, and archive manifests.
-The proposal recorded five scopes and 23 duplicate content groups; every group
+`WL-720` is retained only as a historical non-destructive size/duplicate audit
+across predecessor scopes, the preserved MiniGame fixture, and archive
+manifests. The proposal recorded five scopes and 23 duplicate content groups; every group
 is manual-review-only, and the archive proposal retains both the fixture source
 and its manifest. Evidence is `.hermes/task-artifacts/wl720-audit-proposal.json`.
 

@@ -2,9 +2,9 @@
 """Generate and verify WORK-LAB's current canonical state.
 
 The generator is repository-local and secret-free. It reads canonical registries,
-repository-managed skill metadata, Open Design registries, the root CI workflow,
-and optional explicit CI evidence. It never reads Hermes Home, auth stores,
-provider configuration, sessions, or prompt/response bodies.
+repository-managed skill metadata, the Stage 3 graph/baseline, the root CI
+workflow, and optional explicit CI evidence. It never reads Hermes Home, auth
+stores, provider configuration, sessions, or prompt/response bodies.
 """
 from __future__ import annotations
 
@@ -30,9 +30,11 @@ CANONICAL_FILES = (
     "00-governance/contracts/capability-conformance.schema.json",
     "00-governance/source-ledger.json",
     "00-governance/work-lab.project-profile.yaml",
+    "00-governance/generated/STAGE3_BASELINE.json",
     "README.md",
     "40-knowledge/README.md",
     "50-taskpacks/TASKPACK_SUMMARY.md",
+    "50-taskpacks/WORK-LAB-STAGE-3-TASK-GRAPH.json",
     "10-workflow/workflow-assistance/workflow-manifest.yaml",
     "10-workflow/workflow-assistance/config/capability-conformance.json",
     "10-workflow/workflow-assistance/schemas/workflow/ci-observation.schema.json",
@@ -219,6 +221,8 @@ def build_state(
     catalog = _read_json(root, "00-governance/contracts/contract-catalog.json")
     manifest = _read_yaml(root, "10-workflow/workflow-assistance/workflow-manifest.yaml")
     provenance = _read_yaml(root, "10-workflow/workflow-assistance/config/skill-provenance.yaml")
+    stage3_graph = _read_json(root, "50-taskpacks/WORK-LAB-STAGE-3-TASK-GRAPH.json")
+    stage3_baseline = _read_json(root, "00-governance/generated/STAGE3_BASELINE.json")
     modules = projects.get("modules", [])
     if not isinstance(modules, list):
         raise ValueError("projects.modules must be a list")
@@ -278,11 +282,23 @@ def build_state(
         },
 
         "workflow_identity": _workflow_identity(root, manifest),
+        "stage3": {
+            "taskpack_id": stage3_graph.get("taskpackId", "unknown"),
+            "task_count": len(stage3_graph.get("tasks", [])),
+            "initial_state": stage3_graph.get("initialState", "unknown"),
+            "baseline_candidate_tree": stage3_baseline.get("git", {}).get("incomingCandidateTree", "unknown"),
+            "incoming_dirty_count": sum(
+                len(items)
+                for items in stage3_baseline.get("dirtyClassification", {}).values()
+                if isinstance(items, list)
+            ),
+            "writer_state": stage3_baseline.get("writer", {}).get("state", "unknown"),
+        },
         "ci": _compact_ci(ci_evidence),
         "unverified_capabilities": [
             "hermes_live_apply",
             "paid_provider_smoke",
-            "human_design_calibration",
+            "transferred_visual_calibration",
             "real_device_validation",
             "commercial_release",
         ],
@@ -359,6 +375,15 @@ Content digest: `{state['content_digest']}`
 - Workflow name: `{state['workflow_identity']['workflow_name']}`
 - Aggregate job: `{state['workflow_identity']['aggregate_job']}`
 - Manifest-declared required workflows: `{', '.join(state['workflow_identity']['manifest_declared_required_workflows']) or 'none'}`
+
+## Stage 3 baseline
+
+- TaskPack: `{state['stage3']['taskpack_id']}`
+- Tasks: `{state['stage3']['task_count']}`
+- Initial state: `{state['stage3']['initial_state']}`
+- Incoming candidate tree: `{state['stage3']['baseline_candidate_tree']}`
+- Incoming dirty paths: `{state['stage3']['incoming_dirty_count']}`
+- Writer state: `{state['stage3']['writer_state']}`
 
 ## CI evidence
 

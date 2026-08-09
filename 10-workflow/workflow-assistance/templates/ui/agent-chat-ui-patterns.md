@@ -5,7 +5,7 @@ This template captures UI patterns for a Hermes Agent + CC Switch + Codex workfl
 ## Runtime boundary
 
 - Do not install React, Next.js, shadcn/ui, assistant-ui, Open WebUI, NextChat, Vercel AI Chatbot, database adapters, auth providers or telemetry from this template.
-- Use it to guide future UI work in Hermes Desktop, dashboard, Open Design or project-specific panels.
+- Use it to guide future UI work in Hermes Desktop, the read-only Observer dashboard, or project-specific panels.
 - Any real UI implementation must be visually inspected in a browser/desktop renderer before claiming it is polished.
 
 ## Layout

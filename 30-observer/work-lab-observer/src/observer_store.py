@@ -9,7 +9,7 @@ from typing import Any, Iterable
 from observer_runtime import (
     ObserverInputError,
     append_events,
-    project_read_only_dashboard,
+    project_authority_dashboard,
 )
 
 
@@ -68,7 +68,7 @@ class ObserverStore:
 
     def rebuild_projection(self) -> dict[str, Any]:
         events = self.read_events()
-        return project_read_only_dashboard(events)
+        return project_authority_dashboard(events)
 
     def _write(self, events: list[dict[str, Any]]) -> None:
         payload = "".join(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n" for event in events)

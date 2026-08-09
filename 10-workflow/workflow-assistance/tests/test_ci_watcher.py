@@ -62,11 +62,13 @@ class CIWatcherTests(unittest.TestCase):
             runs = Path(temp) / "runs.json"
             runs.write_text(json.dumps([{"workflowName": "work-lab-gate", "headSha": "sha", "status": "completed", "conclusion": "success", "runAttempt": 1}]), encoding="utf-8")
             output = Path(temp) / "github-output.txt"
-            code = watcher.main(["--repository", "repo", "--commit", "sha", "--workflow", "work-lab-gate", "--runs-json", str(runs), "--github-output", str(output)])
+            observation_path = Path(temp) / "runtime" / "ci-observation.json"
+            code = watcher.main(["--repository", "repo", "--commit", "sha", "--workflow", "work-lab-gate", "--runs-json", str(runs), "--github-output", str(output), "--observation-path", str(observation_path)])
             self.assertEqual(code, 0)
             payload = json.loads(output.read_text(encoding="utf-8").split("observation_json<<WORK_LAB_CI_OBSERVATION\n", 1)[1].split("\nWORK_LAB_CI_OBSERVATION", 1)[0])
             self.assertEqual(payload["state"], "SUCCEEDED")
             self.assertEqual(payload["schema_version"], "workflow/ci-observation/v1")
+            self.assertEqual(json.loads(observation_path.read_text(encoding="utf-8"))["state"], "SUCCEEDED")
 
 
 if __name__ == "__main__":

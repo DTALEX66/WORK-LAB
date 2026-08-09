@@ -129,7 +129,7 @@ const WlApp = (function () {
         const snapRes = await fetch("assets/live-snapshot.json", { cache: "no-store" });
         if (snapRes.ok) {
           const snap = await snapRes.json();
-          WlState.accept(snap, "LIVE");
+          WlState.accept(snap, "SNAPSHOT");
           WlA11y.announce("已加载最近真实投影快照（live-snapshot）");
           return;
         }

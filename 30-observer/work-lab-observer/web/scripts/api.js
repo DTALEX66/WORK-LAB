@@ -1,9 +1,11 @@
 /* WORK-LAB Observer — api.js
-   Data acquisition. Two modes:
-     - FIXTURE (default, static/open): uses the inline copy of
+   Data acquisition. Modes:
+     - SNAPSHOT (bundled fallback): uses assets/live-snapshot.json only after
+       the live GET endpoint is unavailable.
+     - FIXTURE (explicit static/open): uses the inline copy of
        fixtures/cross-project-active-mixed.json. High-visibility amber tag,
        never disguised as LIVE.
-     - LIVE: GET-only fetch from /api/dashboard. The frontend NEVER writes.
+     - LIVE (default): GET-only fetch from /api/dashboard. The frontend NEVER writes.
    Non-GET methods are rejected client-side as a negative control.
    Unknown fields are ignored (forward compatible) — we only read known keys. */
 
@@ -142,27 +144,31 @@ const WlApi = (function () {
   /* Request wrapper: GET only. Non-GET is a hard client-side reject (405 negative control). */
   async function fetchDashboard(timeoutMs) {
     const timeout = timeoutMs || 5000;
-    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-    const timer = ctrl ? setTimeout(() => ctrl.abort(), timeout) : null;
-    try {
-      const res = await fetch("/api/dashboard", {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        signal: ctrl ? ctrl.signal : undefined,
-      });
-      if (!res.ok) {
-        throw new Error("GET /api/dashboard -> " + res.status);
+    const endpoints = ["/api/dashboard", "http://127.0.0.1:8765/api/dashboard"];
+    let lastError = null;
+    for (const endpoint of endpoints) {
+      const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), timeout) : null;
+      try {
+        const res = await fetch(endpoint, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          signal: ctrl ? ctrl.signal : undefined,
+        });
+        if (!res.ok) {
+          throw new Error("GET " + endpoint + " -> " + res.status);
+        }
+        const data = await res.json();
+        return { ok: true, mode: "LIVE", data };
+      } catch (err) {
+        lastError = err && err.name === "AbortError"
+          ? new Error("GET " + endpoint + " timed out")
+          : err;
+      } finally {
+        if (timer) clearTimeout(timer);
       }
-      const data = await res.json();
-      return { ok: true, mode: "LIVE", data };
-    } catch (err) {
-      if (err && err.name === "AbortError") {
-        throw new Error("GET /api/dashboard timed out");
-      }
-      throw err;
-    } finally {
-      if (timer) clearTimeout(timer);
     }
+    throw lastError || new Error("No Observer dashboard endpoint available");
   }
 
   /* Client-side non-GET negative control. Returns a rejected promise for any

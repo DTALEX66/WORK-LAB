@@ -2,7 +2,7 @@
 
 ## 一句话定位
 
-`Workflow-assistance` 是一个**客户端中立的工作流控制、治理、任务、交付与可观测层**：用 manifest、Adapter、Domain Pack、ActionPlan、Run Ledger、事件和 evidence envelope 连接不同执行入口。Hermes、Codex、CC Switch、GitHub、Open Design 是可替换 Adapter；Hermes 当前一级支持，但不是核心运行前提。
+`Workflow-assistance` 是一个**客户端中立的工作流控制、治理、任务、交付与可观测层**：用 manifest、Adapter、Domain Pack、ActionPlan、Run Ledger、事件和 evidence envelope 连接不同执行入口。Hermes、Codex、CC Switch、GitHub 是当前一级可替换 Adapter；Hermes 不是核心运行前提。Open Design 已迁出到独立仓库，不再是 WORK-LAB Adapter。
 
 核心不是 Agent、聊天软件或模型网关，不负责 Prompt 输入、模型推理、Provider 路由、凭据管理或自动批准外部写入。核心在没有 Hermes 安装的隔离环境中也必须能够解析 manifest、验证合同并列出 Adapter 状态。
 
@@ -33,7 +33,6 @@
 | Codex | deep | launcher、TaskPack、review 和 worktree 通过 Adapter 合同接入 |
 | CC Switch | deep | 仅做明确的本地路由/网络前置检查，不读取认证数据库 |
 | GitHub | deep | 复用只读状态、exact-SHA CI、分支和交付证据 |
-| Open Design | deep | 仅调用官方 CLI 的明确只读检查，写入必须消费 ActionPlan |
 | Cursor | manifest-only | 只登记能力，缺少真实证据时不可宣称可用 |
 | Claude Code | manifest-only | 只登记能力，缺少真实证据时不可宣称可用 |
 | WorkBuddy | manifest-only | 只登记能力，缺少真实证据时不可宣称可用 |
@@ -73,7 +72,7 @@
 |---|---|---|
 | Core control plane | manifest、合同、任务、计划、审批、恢复、观测、证据和项目边界 | `workflow-manifest.yaml`、`scripts/workflow/`、`docs/`、治理测试 |
 | Hermes Adapter | Hermes 配置基线、skills、MCP 默认策略、Gateway/cron/sleep-mode 和显式 runtime 检查 | `config/`、`skills/`、`bin/hermes-npx*`、Hermes 专用脚本 |
-| Codex / CC Switch / Open Design Adapters | launcher、路由/网络前置检查、官方 CLI 只读验证、任务与复审边界 | adapter 声明、任务票据、只读审计和证据模板 |
+| Codex / CC Switch Adapters | launcher、路由/网络前置检查、官方 CLI 只读验证、任务与复审边界 | adapter 声明、任务票据、只读审计和证据模板 |
 | GitHub Adapter | 跨设备源代码事实源、分支、提交、CI 与发布证据 | `.github/` CI、exact-SHA 门禁、交接与恢复规范 |
 
 ## 当前同步状态

@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "work-lab/stage3-baseline/v1",
+  "taskpackId": "WORK-LAB-STAGE-3-CANONICAL-CONTROL-PLANE",
+  "generatedAt": "2026-08-08T14:03:00Z",
+  "repository": "DTALEX66/WORK-LAB",
+  "git": {
+    "branch": "main",
+    "head": "a3a6fa63b9548dfc4e4b2390bb9c6257dfacdfa3",
+    "headTree": "3f2fa6fdc312eb7b1c556f6a3ff84770f9cceba3",
+    "remoteMain": "a3a6fa63b9548dfc4e4b2390bb9c6257dfacdfa3",
+    "realIndexTree": "3f2fa6fdc312eb7b1c556f6a3ff84770f9cceba3",
+    "incomingCandidateTree": "7516b2c88a32ba7bb67fd025a1fd5e8aa4f1eea2",
+    "incomingBinaryDiffSha256": "8939e63206ae0a0a035cdaafd1e1d31e6077739a76d13ddf0124d6ffa9d04ce7",
+    "incomingPathSetSha256": "df550fe046a07d23a000536aabc2bcf4f43973c2d56b3b4e73e95aea084e8ac2",
+    "conflicts": [],
+    "worktreeCount": 1
+  },
+  "dirtyClassification": {
+    "USER_OWNED": [],
+    "PREDECESSOR_OUTPUT": [
+      ".github/workflows/work-lab-gate.yml",
+      "30-observer/work-lab-observer/README.md",
+      "30-observer/work-lab-observer/schemas/dashboard-projection.schema.json",
+      "30-observer/work-lab-observer/scripts/observer_dashboard.py",
+      "30-observer/work-lab-observer/src/observer_runtime.py",
+      "30-observer/work-lab-observer/src/observer_store.py",
+      "30-observer/work-lab-observer/tests/test_observer_dashboard.py",
+      "30-observer/work-lab-observer/tests/test_projection_contract.js",
+      "30-observer/work-lab-observer/web/assets/live-snapshot.json",
+      "30-observer/work-lab-observer/web/scripts/api.js",
+      "30-observer/work-lab-observer/web/scripts/app.js",
+      "30-observer/work-lab-observer/web/scripts/render.js",
+      "30-observer/work-lab-observer/web/scripts/state.js"
+    ],
+    "RUNTIME_EVIDENCE": [],
+    "UNKNOWN": [],
+    "FORBIDDEN_OR_SENSITIVE": []
+  },
+  "writer": {
+    "policy": "SINGLE_WRITER",
+    "activeWorkLabProcessDetected": false,
+    "activeWorkLabCronWriterDetected": false,
+    "activeLeaseDetected": false,
+    "holder": "current-hermes-session",
+    "state": "UNIQUE"
+  },
+  "predecessors": {
+    "WL-000..WL-820": "CLOSED_PREDECESSOR_RECONCILED_OR_TRANSFERRED_OUT_OF_SCOPE",
+    "NX-000..NX-720": "COMPLETED_PREDECESSOR",
+    "historicalLedger": "HISTORICAL_LEDGER_UNAVAILABLE_ALLOWED"
+  },
+  "currentStateBeforeRegeneration": {
+    "head": "f141946bfa55fd77120443bacd45aee0049c16e2",
+    "state": "STALE"
+  },
+  "ci": {
+    "runId": 31251658880,
+    "workflow": "work-lab-gate",
+    "headSha": "a3a6fa63b9548dfc4e4b2390bb9c6257dfacdfa3",
+    "status": "completed",
+    "conclusion": "success",
+    "attempt": 1,
+    "requiredJobs": ["aggregate", "gate-plan", "integration", "observer", "workflow-assistance"]
+  },
+  "boundaries": {
+    "liveGlobalApply": "NOT_AUTHORIZED_BY_TASKPACK",
+    "publication": "NOT_AUTHORIZED_BY_TASKPACK",
+    "externalProjectWrite": "NOT_AUTHORIZED_BY_TASKPACK",
+    "destructiveAction": "NOT_AUTHORIZED_BY_TASKPACK"
+  }
+}

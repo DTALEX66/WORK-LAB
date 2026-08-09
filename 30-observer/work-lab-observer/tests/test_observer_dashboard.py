@@ -40,7 +40,8 @@ class ObserverDashboardTests(unittest.TestCase):
                 self.assertIn("看见工作", page)
                 with urlopen(base + "/api/dashboard") as response:
                     projection = json.load(response)
-                self.assertEqual(projection["overview"]["eventCount"], 0)
+                self.assertEqual(projection["schemaVersion"], "work-lab/observer-projection/v2")
+                self.assertEqual(projection["summary"]["registeredProjects"], 0)
                 self.assertFalse(projection["mutationSurface"]["externalMutation"])
             finally:
                 server.shutdown()
@@ -138,8 +139,53 @@ class ObserverDashboardTests(unittest.TestCase):
             try:
                 with urlopen(f"http://127.0.0.1:{server.server_port}/api/dashboard") as response:
                     projection = json.load(response)
-                self.assertEqual(projection["overview"]["taskCount"], 1)
-                self.assertEqual(projection["tasks"]["WA-001"]["events"], 1)
+                self.assertEqual(projection["schemaVersion"], "work-lab/observer-projection/v2")
+                self.assertEqual(projection["summary"]["registeredProjects"], 1)
+                self.assertEqual({p["projectId"] for p in projection["projects"]}, {"work-lab"})
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+                server.server_close()
+
+    def test_authority_projection_uses_observed_runtime_projects_not_repo_modules(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            project = Path(raw)
+            (project / ".git").mkdir()
+            runtime = project / ".hermes" / "task-runtime" / "observer"
+            runtime.mkdir(parents=True)
+
+            def ev(eid: str, project_id: str, event_type: str = "task.status") -> dict:
+                return {
+                    "eventId": eid,
+                    "schemaVersion": "work-lab/observer-event/v1",
+                    "eventType": event_type,
+                    "sourceModule": "hermes-runtime",
+                    "sourceId": "task-ledger",
+                    "projectId": project_id,
+                    "taskId": eid,
+                    "observedAt": "2026-08-07T00:00:00Z",
+                    "contentDigest": "0" * 64,
+                    "coverage": "full",
+                    "quality": "source-exact",
+                }
+
+            ObserverStore(runtime, project_root=project).append([
+                ev("p1", "cognitive-loop-os", "task.progress"),
+                ev("p2", "work-lab", "task.progress"),
+                ev("p3", "obsidian-assistance", "task.progress"),
+            ])
+            server = create_server(project, runtime, port=0)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                with urlopen(f"http://127.0.0.1:{server.server_port}/api/dashboard") as response:
+                    projection = json.load(response)
+                self.assertEqual(projection["summary"]["registeredProjects"], 3)
+                self.assertEqual(
+                    {p["projectId"] for p in projection["projects"]},
+                    {"cognitive-loop-os", "work-lab", "obsidian-assistance"},
+                )
+                self.assertNotIn("workflow-assistance", {p["projectId"] for p in projection["projects"]})
             finally:
                 server.shutdown()
                 thread.join(timeout=2)
@@ -171,7 +217,12 @@ class ObserverDashboardTests(unittest.TestCase):
                 return event
 
             store = ObserverStore(runtime, project_root=project)
-            store.append([ev("w1", "WA-001", None), ev("w2", "WA-002", None), ev("p1", "OD-100", "open-design")])
+            store.append([
+                ev("w1", "WA-001", None),
+                ev("w2", "WA-002", None),
+                ev("p1", "FX-100", "fixture-external"),
+                ev("retired", "OD-100", "open-design"),
+            ])
             server = create_server(project, runtime, port=0)
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
@@ -181,8 +232,9 @@ class ObserverDashboardTests(unittest.TestCase):
                 self.assertEqual(result["count"], 2)
                 by_id = {p["projectId"]: p for p in result["projects"]}
                 self.assertEqual(by_id["work-lab"]["taskCount"], 2)
-                self.assertEqual(by_id["open-design"]["taskCount"], 1)
-                self.assertEqual(by_id["open-design"]["eventCount"], 1)
+                self.assertEqual(by_id["fixture-external"]["taskCount"], 1)
+                self.assertEqual(by_id["fixture-external"]["eventCount"], 1)
+                self.assertNotIn("open-design", by_id)
             finally:
                 server.shutdown()
                 thread.join(timeout=2)

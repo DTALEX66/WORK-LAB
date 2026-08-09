@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads((ROOT / "schemas/observer-event.schema.json").read_text(encoding="utf-8"))
 VALIDATOR = Draft202012Validator(SCHEMA)
 SENSITIVE_KEYS = {"api_key", "apikey", "authorization", "password", "secret", "token", "cookie", "prompt", "response"}
+TRANSFERRED_PROJECT_IDS = {"open-design", "minigame"}
 
 
 class ObserverInputError(ValueError):
@@ -229,6 +230,8 @@ def project_projection(events: Iterable[dict[str, Any]]) -> dict[str, Any]:
     default_project = "work-lab"
     for event in history:
         pid = event.get("projectId") or default_project
+        if pid in TRANSFERRED_PROJECT_IDS:
+            continue
         current = projects.setdefault(pid, {"projectId": pid, "tasks": set(), "eventCount": 0, "sources": set()})
         current["eventCount"] += 1
         task_id = event.get("taskId")
@@ -339,47 +342,43 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
     """Build the authoritative dashboard projection (Schema v2) from REAL governance +
     real observed events.
 
-    - `projects`: the real registered main projects (projects.json modules), each with
-      an observed state derived from its events — NOT stage-level WA/WL tasks.
+    - `projects`: projects observed in Hermes runtime events, grouped by `projectId`.
+      Repository modules are deliberately not used as a fallback: they are source
+      code ownership entries, not proof that a project is currently running.
     - `governance`: real Rules / Skills / Adapters / Memory·Context inventory counts.
     - usage/quality from real event aggregates.
     Output follows contracts/dashboard-projection.schema.json (LIVE mode).
     """
-    import datetime as _dt
     history = [deepcopy(e) for e in events]
-    now = _dt.datetime.now(_dt.timezone.utc).isoformat()
+    observed_times = sorted(e["observedAt"] for e in history if isinstance(e.get("observedAt"), str))
+    generated_at = observed_times[-1] if observed_times else "1970-01-01T00:00:00+00:00"
     project_root = Path(__file__).resolve().parents[3]  # repo root
 
-    # --- Real registered main projects (projects.json modules), not stage tasks.
+    # --- Hermes runtime projects only. An event without projectId is assigned to
+    # the explicit default WORK-LAB project by project_projection(); this keeps
+    # legacy events usable without turning source modules into fake projects.
+    observed: dict[str, list[dict[str, Any]]] = {}
+    for event in history:
+        project_id = event.get("projectId")
+        if not isinstance(project_id, str) or not project_id.strip():
+            project_id = "work-lab"
+        observed.setdefault(project_id, []).append(event)
+
     main_projects: list[dict[str, Any]] = []
-    pj = project_root / "00-governance" / "projects.json"
-    module_ids: list[str] = []
-    if pj.exists():
-        try:
-            pjdata = json.loads(pj.read_text(encoding="utf-8"))
-            module_ids = [m.get("id") for m in pjdata.get("modules", []) if m.get("id")]
-        except Exception:
-            pass
-    if not module_ids:
-        module_ids = ["workflow-assistance", "work-lab-observer"]
-
-    # Observed state per module: map real taskIds to their owning module by sourceModule,
-    # or fall back to a running/observed status when events reference the module.
-    status_by_module: dict[str, str] = {}
-    for e in history:
-        src = e.get("sourceModule") or ""
-        for mid in module_ids:
-            if mid in src or src in mid:
-                status_by_module[mid] = _task_state(e.get("eventType", ""))
-
-    for mid in module_ids:
-        state = status_by_module.get(mid, "running" if history else "idle")
-        main_projects.append({
-            "projectId": mid,
-            "displayName": mid.replace("-", " ").title(),
-            "repository": "DTALEX66/WORK-LAB",
+    for project_id in sorted(observed):
+        project_events = observed[project_id]
+        latest = max(project_events, key=lambda e: str(e.get("observedAt", "")))
+        state = _task_state(latest.get("eventType", ""))
+        if state == "unknown":
+            state = "running"
+        task_ids = [e.get("taskId") for e in project_events if isinstance(e.get("taskId"), str) and e.get("taskId")]
+        last_event_at = latest.get("observedAt")
+        quality_state = "exact" if all(e.get("quality") == "source-exact" for e in project_events) else "partial"
+        project = {
+            "projectId": project_id,
+            "displayName": "WORK-LAB" if project_id == "work-lab" else project_id.replace("-", " ").title(),
             "agentPlatform": "hermes",
-            "task": None,
+            "task": task_ids[-1] if task_ids else None,
             "state": state,
             "stage": None,
             "durationSeconds": None,
@@ -387,9 +386,17 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
             "branch": "main",
             "headSha": None,
             "ciState": None,
-            "lastEventAt": None,
-            "quality": {"evidenceCompleteness": "complete" if history else "missing", "dataQuality": "exact" if history else "unknown", "freshness": "fresh" if history else "unknown", "sourceRef": "task-ledger"},
-        })
+            "lastEventAt": last_event_at,
+            "quality": {
+                "evidenceCompleteness": "complete",
+                "dataQuality": quality_state,
+                "freshness": "fresh" if last_event_at else "unknown",
+                "sourceRef": "hermes-runtime-events",
+            },
+        }
+        if project_id == "work-lab":
+            project["repository"] = "DTALEX66/WORK-LAB"
+        main_projects.append(project)
 
     counts = {"running": 0, "waiting": 0, "blocked": 0, "failed": 0, "completed": 0, "unknown": 0}
     for p in main_projects:
@@ -434,10 +441,20 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
         "projectionLagMs": None, "lastGoodAt": None,
     }
 
+    # Backward-compatible aliases keep the legacy Python dashboard readable
+    # while Schema v2 remains the single authoritative projection payload.
+    legacy = project_read_only_dashboard(history, pricing_catalog)
+    usage["input_tokens"] = legacy["usage"]["input_tokens"]
+    usage["output_tokens"] = legacy["usage"]["output_tokens"]
+    usage["total_tokens"] = legacy["usage"]["total_tokens"]
+    usage["records"] = legacy["usage"]["records"]
+    quality["quality"] = "source-exact" if history and exact == len(history) else "partial" if history else "unknown"
+    quality["coverage"] = "full" if history else "unknown"
+
     return {
         "schemaVersion": "work-lab/observer-projection/v2",
         "mode": "LIVE",
-        "generatedAt": now,
+        "generatedAt": generated_at,
         "freshness": {"state": "fresh" if history else "unknown", "ageSeconds": None, "lastGoodAt": None},
         "summary": {"registeredProjects": len(main_projects), "activeProjects": counts["running"] + counts["waiting"], "tasks": counts},
         "projects": main_projects,
@@ -448,4 +465,8 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
         "quality": quality,
         "sourceRefs": [],
         "mutationSurface": mutation_surface(),
+        "overview": legacy["overview"],
+        "tasks": legacy["tasks"],
+        "cost": legacy["cost"],
+        "dataQuality": legacy["dataQuality"],
     }

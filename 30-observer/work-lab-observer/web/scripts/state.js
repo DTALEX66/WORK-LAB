@@ -1,5 +1,5 @@
 /* WORK-LAB Observer — state.js
-   Holds the current projection, data mode (FIXTURE/LIVE/REPLAY), view
+   Holds the current projection, data mode (LIVE/SNAPSHOT/FIXTURE/REPLAY), view
    (full/compact), theme (dark/light), and last-good snapshot.
    Last-good survives failed refreshes: we never clear to zero on error. */
 
@@ -7,7 +7,7 @@ const WlState = (function () {
   "use strict";
 
   const state = {
-    mode: "LIVE",             // FIXTURE | LIVE | REPLAY — default LIVE (real data first)
+    mode: "LIVE",             // LIVE | SNAPSHOT | FIXTURE | REPLAY
     view: "full",             // full | compact
     theme: "dark",            // dark | light
     data: null,               // current projection
@@ -18,10 +18,10 @@ const WlState = (function () {
     generatedAt: null,
   };
 
-  /* Mode must be one of the three valid values. Empty/unspecified → LIVE (real data first). */
+  /* Empty/unspecified → LIVE (real data first). Bundled fallback is SNAPSHOT. */
   function normalizeMode(m) {
     const v = String(m || "").toUpperCase();
-    if (v === "LIVE" || v === "REPLAY") return v;
+    if (v === "LIVE" || v === "SNAPSHOT" || v === "REPLAY") return v;
     if (v === "FIXTURE") return "FIXTURE";
     return "LIVE"; // default: real data
   }

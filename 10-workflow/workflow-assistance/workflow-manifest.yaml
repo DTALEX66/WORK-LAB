@@ -29,6 +29,10 @@ capabilities:
   - isolated_portable_install_verification
   - manifest_compatibility_preflight
   - hermes_runtime_layout_and_upgrade_safety
+  - codex_global_guidance_overlay
+  - codex_native_user_skills
+  - codex_command_policy_rules
+  - codex_field_level_config_preservation
 requirements:
   python: '>=3.11'
   pyyaml: required
@@ -48,6 +52,12 @@ compatibility:
       - sessions.auto_prune=false
       - memory.enabled
       - hermes_config_check
+    codex:
+      - user_AGENTS_overlay
+      - user_skills_discovery
+      - command_rules
+      - workspace_write_sandbox
+      - on_request_approval
 adapters:
   interface:
     - detect
