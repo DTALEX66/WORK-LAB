@@ -6,7 +6,7 @@
   "responsibility": {
     "owns": [
       "repository-controlled, secret-free Codex guidance overlay",
-      "eight explicitly named user skill roots under $HOME/.agents/skills",
+      "nine explicitly named user skill roots under $HOME/.agents/skills",
       "one repository-controlled command rules file under $CODEX_HOME/rules",
       "three field-level config defaults when the user has not already set them",
       "plan/apply/verify/rollback evidence for its own managed assets"
@@ -71,7 +71,8 @@
       "skills/workflow-assistance-safe-project-execution",
       "skills/workflow-assistance-single-writer-delivery",
       "skills/workflow-assistance-systematic-debugging",
-      "skills/workflow-assistance-windows-development"
+      "skills/workflow-assistance-windows-development",
+      "skills/workflow-assistance-openhuman-integration"
     ]
   },
   "approval_policy": {

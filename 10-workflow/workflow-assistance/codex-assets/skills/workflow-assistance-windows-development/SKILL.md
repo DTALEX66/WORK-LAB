@@ -81,6 +81,14 @@ argument arrays for anything complex.
 - Reparse points: treat symlinks, junctions, and reparse points as
   untrusted boundaries in scripts; do not follow them during cleanup or
   recovery.
+- Junction verification (native truth over scanner labels): `fsutil
+  reparsepoint query "<path>"` returns a tag for junctions/symlinks and error
+  4390 for real directories; `Get-Item -LiteralPath "<path>" | Select
+  Attributes, LinkType, Target` shows the reparse bit. Never delete or "fix" a
+  path because an external scanner called it a junction or duplicate —
+  verify the exact path with these native reads first (2026-08-10: OpenHuman
+  reported two non-existent junctions; the paths were the real WORK-LAB repo
+  and the OS configuration toolchain project).
 
 ## Failure classification
 

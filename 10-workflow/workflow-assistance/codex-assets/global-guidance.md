@@ -14,7 +14,15 @@ These agreements apply to every Codex project unless a closer project `AGENTS.md
 
 - One writer owns a checkout. Parallel writers require separate Git worktrees. Read-only reviewers may inspect a frozen tree but must not edit it.
 - Preserve existing user changes. Do not reset, restore, clean, overwrite, or silently adopt unknown dirty paths.
-- Never read, print, copy, commit, or upload credentials, `.env` files, auth stores, private keys, browser data, cookies, tokens, prompt/response bodies, or private session databases.
+- Never read, print, copy, commit, or upload credentials, `.env` files, auth
+  stores, private keys, browser data, cookies, tokens, prompt/response bodies,
+  or private session databases.
+- Treat other local agent runtimes (e.g. OpenHuman's `.openhuman` keychain,
+  users, logs, memory, workspace) as private state in the same class as
+  credentials and sessions: never read, print, copy, or commit them. Their
+  scan reports are candidate claims, not facts — verify a reported junction or
+  duplicate with native tools on the exact path (`fsutil reparsepoint query`,
+  `Get-Item` LinkType/Target, content comparison) before any action.
 - Do not commit, push, create or merge a pull request, publish, release, rewrite history, or modify global Codex/Hermes configuration unless the user explicitly authorizes that exact side effect.
 - Use the narrowest practical sandbox. Never bypass approvals or sandbox protections merely because a command failed.
 
