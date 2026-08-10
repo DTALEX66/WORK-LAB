@@ -110,6 +110,8 @@ jobs:
     defaults:
       run:
         working-directory: 30-observer/work-lab-observer
+        env:
+          PYTHONPATH: "src:scripts:../../10-workflow/workflow-assistance/scripts/workflow"
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Verify Observer read-only skeleton
