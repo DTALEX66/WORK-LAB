@@ -167,6 +167,74 @@ def collect_source_quality(store: CanonicalStore, project_id: str, project_root:
     return CollectorResult(kind="quality", ok=True, records=[record])
 
 
+def collect_growth_watcher(store: CanonicalStore, project_id: str, search_root: Path) -> CollectorResult:
+    """Collector 5 (WL3-300): discovery watcher over allowed project-adjacent dirs.
+
+    Looks for candidate growth assets (skills/plugins/context packs) in the
+    project's own runtime boundaries and classifies them with the existing
+    growth pipeline state machine. Pure metadata (names, digests, statuses);
+    never copies content bodies and never promotes anything automatically.
+    """
+    from growth_candidates import intake, source_digest
+
+    candidates: list[dict[str, Any]] = []
+    probe_dirs = [
+        search_root / ".hermes" / "growth-candidates",
+        search_root / ".agents" / "skills",
+        search_root / ".hermes" / "desktop-attachments",
+    ]
+    for probe_dir in probe_dirs:
+        if not probe_dir.is_dir():
+            continue
+        try:
+            entries = sorted(probe_dir.iterdir())
+        except OSError:
+            continue
+        for entry in entries:
+            if not entry.is_file():
+                continue
+            name = entry.name.lower()
+            if not (name.endswith((".md", ".json", ".yaml", ".yml")) or name.endswith(".zip")):
+                continue
+            candidates.append(
+                {
+                    "candidate_id": f"{project_id}-{entry.name}",
+                    "origin": "local-discovery",
+                    "classification": "learn",
+                    "risk": "low",
+                    "source": {"name": entry.name, "size": entry.stat().st_size},
+                }
+            )
+    records: list[dict[str, Any]] = []
+    for candidate in candidates:
+        try:
+            item = intake(
+                candidate["candidate_id"],
+                candidate["origin"],
+                candidate["classification"],
+                candidate["risk"],
+                candidate["source"],
+            )
+        except ValueError:
+            continue  # un-discoverable candidate; quarantine implicitly by omission
+        records.append(
+            {
+                "event_id": f"growth-{item['candidateId']}-{uuid.uuid4().hex}",
+                "project_id": project_id,
+                "producer": "growth-watcher-collector",
+                "occurred_at": _now(),
+                "freshness": "EXACT_SOURCE",
+                "coverage": "PARTIAL",
+                "quality": "EXACT_SOURCE",
+                "candidate_id": item["candidateId"],
+                "candidate_status": item["status"],
+                "candidate_risk": item["risk"],
+                "source_digest": source_digest(candidate["source"]),
+            }
+        )
+    return CollectorResult(kind="telemetry", ok=True, records=records)
+
+
 def build_standard_collectors(project_root: Path) -> list[Any]:
     """Standard collector set bound to a project root."""
     from durable_worker import CollectorFn
@@ -187,7 +255,10 @@ def build_standard_collectors(project_root: Path) -> list[Any]:
     def quality_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
         return collect_source_quality(store, project_id, project_root)
 
-    return [task_collector, git_collector, usage_collector, quality_collector]
+    def growth_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+        return collect_growth_watcher(store, project_id, project_root)
+
+    return [task_collector, git_collector, usage_collector, quality_collector, growth_collector]
 
 
 if __name__ == "__main__":
