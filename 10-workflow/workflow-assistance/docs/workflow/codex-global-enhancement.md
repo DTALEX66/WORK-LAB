@@ -53,6 +53,10 @@ project_doc_max_bytes  = 65536
 
 `workflow-assistance-self-improvement` 以中立形态吸收个人 agent 的技能自动成长模式（usage sidecar + active/stale/archived + pin 豁免 + 只归档不删除 + 转变前备份 + provenance 过滤），配套 `scripts/workflow/skill_lifecycle.py`（stdlib-only，可对任意 skills 根运行）；自动生长的知识通过 PR 提升进模块 codex-assets，仓库即跨机器持久存储。
 
+## 用户环境画像（跨机器留存）
+
+`scripts/workflow/user_profile_export.py` 以只读、无密方式导出 Hermes/Codex 用户配置与技能清单到 tracked `config/user-environment-profile.json`（hermes config 键值脱敏、`.env` 仅键名、143 个 Hermes skills + 10 个 Codex skills 清单；凭据一律 `[REDACTED]`，发现未脱敏值即拒绝写入）。恢复流程见 `docs/workflow/user-environment-profile.md`：新机器 `sync apply` 部署模块 skills 后，按画像键名重建配置、重填凭据。
+
 ## 命令策略
 
 `workflow-assistance.rules` 提供以下边界：
