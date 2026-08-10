@@ -1,40 +1,42 @@
 {
   "schemaVersion": "work-lab/stage3-baseline/v1",
-  "taskpackId": "WORK-LAB-STAGE-3-CANONICAL-CONTROL-PLANE",
-  "generatedAt": "2026-08-08T14:03:00Z",
+  "taskpackId": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE",
+  "taskpackVersion": "2.0",
+  "generatedAt": "2026-08-10T00:00:00Z",
   "repository": "DTALEX66/WORK-LAB",
   "git": {
     "branch": "main",
-    "head": "a3a6fa63b9548dfc4e4b2390bb9c6257dfacdfa3",
-    "headTree": "3f2fa6fdc312eb7b1c556f6a3ff84770f9cceba3",
-    "remoteMain": "a3a6fa63b9548dfc4e4b2390bb9c6257dfacdfa3",
-    "realIndexTree": "3f2fa6fdc312eb7b1c556f6a3ff84770f9cceba3",
-    "incomingCandidateTree": "7516b2c88a32ba7bb67fd025a1fd5e8aa4f1eea2",
-    "incomingBinaryDiffSha256": "8939e63206ae0a0a035cdaafd1e1d31e6077739a76d13ddf0124d6ffa9d04ce7",
-    "incomingPathSetSha256": "df550fe046a07d23a000536aabc2bcf4f43973c2d56b3b4e73e95aea084e8ac2",
+    "head": "699ab50f47da5dcf3e92c81bea72504b6425f475",
+    "headTree": "2f6b478dc59fc8c2af9569220ee5c7997d2d1f60",
+    "remoteMain": "699ab50f47da5dcf3e92c81bea72504b6425f475",
+    "realIndexTree": "2f6b478dc59fc8c2af9569220ee5c7997d2d1f60",
+    "incomingCandidateTree": "f1578cbd40b8edba329547efa56c74ec98a23b6d",
+    "incomingCandidateSourceDigest": "ec8edd90cf635bfef1795fb008fa30a3654ee1947db4643c556baa631daffac9",
+    "incomingCandidateFiles": 475,
     "conflicts": [],
     "worktreeCount": 1
   },
   "dirtyClassification": {
     "USER_OWNED": [],
     "PREDECESSOR_OUTPUT": [
-      ".github/workflows/work-lab-gate.yml",
-      "30-observer/work-lab-observer/README.md",
-      "30-observer/work-lab-observer/schemas/dashboard-projection.schema.json",
-      "30-observer/work-lab-observer/scripts/observer_dashboard.py",
-      "30-observer/work-lab-observer/src/observer_runtime.py",
-      "30-observer/work-lab-observer/src/observer_store.py",
-      "30-observer/work-lab-observer/tests/test_observer_dashboard.py",
-      "30-observer/work-lab-observer/tests/test_projection_contract.js",
-      "30-observer/work-lab-observer/web/assets/live-snapshot.json",
-      "30-observer/work-lab-observer/web/scripts/api.js",
-      "30-observer/work-lab-observer/web/scripts/app.js",
-      "30-observer/work-lab-observer/web/scripts/render.js",
-      "30-observer/work-lab-observer/web/scripts/state.js"
+      "10-workflow/workflow-assistance/README.md",
+      "10-workflow/workflow-assistance/docs/workflow/codex-global-enhancement.md",
+      "10-workflow/workflow-assistance/config/codex-enhancement-boundary.json",
+      "10-workflow/workflow-assistance/docs/workflow/codex-enhancement-boundary.md",
+      "10-workflow/workflow-assistance/tests/test_codex_enhancement_boundary.py"
     ],
     "RUNTIME_EVIDENCE": [],
     "UNKNOWN": [],
     "FORBIDDEN_OR_SENSITIVE": []
+  },
+  "currentSessionLocalEdits": {
+    "note": "WL3-000 truth reset: freshness fix and canonical state regeneration (allowed reversible local edits; no commit/push yet)",
+    "paths": [
+      "scripts/ci/generate_current_state.py",
+      "00-governance/generated/CURRENT_STATE.json",
+      "00-governance/generated/CURRENT_STATE.md",
+      "50-taskpacks/WORK-LAB-STAGE-3-TASK-GRAPH.json"
+    ]
   },
   "writer": {
     "policy": "SINGLE_WRITER",
@@ -47,16 +49,27 @@
   "predecessors": {
     "WL-000..WL-820": "CLOSED_PREDECESSOR_RECONCILED_OR_TRANSFERRED_OUT_OF_SCOPE",
     "NX-000..NX-720": "COMPLETED_PREDECESSOR",
-    "historicalLedger": "HISTORICAL_LEDGER_UNAVAILABLE_ALLOWED"
+    "historicalLedger": "HISTORICAL_LEDGER_UNAVAILABLE_ALLOWED",
+    "stage3_old_graph": "SUPERSEDED_BY_MASTER_2.0"
   },
   "currentStateBeforeRegeneration": {
-    "head": "f141946bfa55fd77120443bacd45aee0049c16e2",
-    "state": "STALE"
+    "head": "699ab50f47da5dcf3e92c81bea72504b6425f475",
+    "state": "STALE_BEFORE_WL3-000_REFRESH"
+  },
+  "pr33": {
+    "classification": "STAGE3_FOUNDATION_SLICE",
+    "number": 33,
+    "head": "b020c71af298766e0ec2f809027fa3eab218d531",
+    "mergeCommit": "699ab50f47da5dcf3e92c81bea72504b6425f475",
+    "prHeadCiRun": 31344164328,
+    "mainCiRun": 31344245919,
+    "conclusion": "success",
+    "note": "Merged foundation slice; not a claim that WL3-000..820 are complete"
   },
   "ci": {
-    "runId": 31251658880,
+    "runId": 31344245919,
     "workflow": "work-lab-gate",
-    "headSha": "a3a6fa63b9548dfc4e4b2390bb9c6257dfacdfa3",
+    "headSha": "699ab50f47da5dcf3e92c81bea72504b6425f475",
     "status": "completed",
     "conclusion": "success",
     "attempt": 1,
@@ -66,6 +79,8 @@
     "liveGlobalApply": "NOT_AUTHORIZED_BY_TASKPACK",
     "publication": "NOT_AUTHORIZED_BY_TASKPACK",
     "externalProjectWrite": "NOT_AUTHORIZED_BY_TASKPACK",
-    "destructiveAction": "NOT_AUTHORIZED_BY_TASKPACK"
+    "destructiveAction": "NOT_AUTHORIZED_BY_TASKPACK",
+    "commitPushPrMerge": "EXPLICIT_APPROVAL",
+    "release": "PENDING_HUMAN_APPROVAL"
   }
 }

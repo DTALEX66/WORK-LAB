@@ -14,6 +14,10 @@
 
 全局增强范围包括：跨客户端任务生命周期、配置/权限边界、项目数据隔离、ActionPlan 与回滚、交付和 evidence envelope、token/网络/GitHub/artifact 观测，以及各 Adapter 的安全接入。任何新增能力都必须先判断它增强的是这条通用工作流，还是只对本仓库有用；只对本仓库有用的临时脚本不得被包装成默认全局能力。
 
+Codex 增强模块的责任和能力已单独冻结为合同：
+[`docs/workflow/codex-enhancement-boundary.md`](docs/workflow/codex-enhancement-boundary.md)，机器可读权威为
+[`config/codex-enhancement-boundary.json`](config/codex-enhancement-boundary.json)。该模块只管理官方 Codex 配置面上的明确用户 overlay，不拥有 Codex runtime、provider/model、认证、MCP/plugin、会话、Desktop 状态、项目 Task Ledger 或外部写入能力；新增全局能力必须先更新该合同和测试。
+
 ```text
 Client-neutral workflow control plane
 ├─ Core contracts     manifest, adapters, domain packs, plans, runs, events, evidence

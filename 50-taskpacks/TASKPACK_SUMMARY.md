@@ -30,16 +30,57 @@ completion state):
 
 Current forward authority:
 
-- Stage 3 TaskPack: `WORK-LAB-STAGE-3-CANONICAL-CONTROL-PLANE` v1.0.
-- Tracked graph: `WORK-LAB-STAGE-3-TASK-GRAPH.json` in this directory.
+- **Master TaskPack v2.0**: `WORK-LAB-FINAL-MASTER-CONTROL-PLANE`
+  (`.hermes/desktop-attachments/WORK-LAB-FINAL-MASTER-HERMES-TASKPACK-2026-08-10.md`).
+- Tracked graph: `50-taskpacks/WORK-LAB-STAGE-3-TASK-GRAPH.json` (28 tasks,
+  5 waves, `initialState=RECONCILE_REQUIRED`).
 - Baseline: `00-governance/generated/STAGE3_BASELINE.json`.
-- Current implementation summary and resume boundary:
-  `WORK-LAB-STAGE-3-CONTROL-PLANE-CODEX-HANDOFF.md`.
+- The former Stage 3 handoff and delivery manifest are
+  `SUPERSEDED / HISTORICAL` evidence; PR #33 is a `STAGE3_FOUNDATION_SLICE`,
+  not a claim that WL3-000..WL3-820 are complete.
 - Machine-readable delivery manifest:
-  `WORK-LAB-STAGE-3-CONTROL-PLANE-CODEX-DELIVERY.json`.
+  `50-taskpacks/WORK-LAB-STAGE-3-CONTROL-PLANE-CODEX-DELIVERY.json`.
 - Stage 2 and the v2 attachment/reconciliation are historical predecessor
   evidence. They are `SUPERSEDED` for forward execution and cannot restore the
   old three-module architecture or active design gates.
+
+## Master TaskPack v2.0 local execution status (2026-08-10)
+
+All 28 WL3 tasks have been closed at the local level:
+
+```text
+VERIFIED_LOCAL:                      26 (WL3-000..710, 800/810)
+BLOCKED (toolchain):                  1 (WL3-620 Windows portable: cargo/rustc absent)
+LOCAL_VERIFIED_READY_FOR_APPROVAL:    1 (WL3-820 approval package)
+RECONCILE_REQUIRED:                   0
+```
+
+Local evidence (fresh, this batch):
+
+```text
+Full quality-gate verify sequence: 21 gates PASS
+  governance 443 tests OK (skipped=4) · runtime-convergence 91 tests OK
+  compile/security/schemas/adapters/ACL/OTel/usage/memory/ledger/portable/shell/pwsh PASS
+Observer: Python 57 tests OK (incl. canonical projection + events retirement)
+          JS 43 passed, 0 failed
+Browser visual acceptance: console_messages=0 js_errors=0 (dark dashboard)
+Real dual-project canary: WORK-LAB + MINIGAME (collector + SSE LIVE frame)
+Swap drills: 6/6 core-not-forked
+Repo size audit: tracked=438 files, 2.65 MiB, duplicate groups=1
+WL3-800 integration gate: 6/6 checks passed
+CURRENT_STATE freshness: PASS (head 699ab50, branch main, CI run 31344245919)
+```
+
+Remaining external gates are explicit and unclaimed:
+
+```text
+exact-SHA CI of this batch        PENDING (not pushed)
+Windows portable EXE build        BLOCKED (Rust/Tauri toolchain approval)
+release / live apply / paid smoke PENDING_HUMAN_APPROVAL
+commit / push / PR                PENDING_HUMAN_APPROVAL
+```
+
+The single approval package is `50-taskpacks/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md`.
 
 Evidence generated under the ignored local `.hermes/task-artifacts` path is not
 published as source content. The committed handoff records reproducible source
