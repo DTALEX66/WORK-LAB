@@ -1,10 +1,12 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-10T00:18:52.267653Z",
-  "source_digest": "093691697384ae1a3825f95b30fa531bb00ded031630534fcf95245a79b3f234",
+  "generated_at": "2026-08-10T08:45:42.813476Z",
+  "source_digest": "b39bbbc0c9bf95378dff7b7069b29a56b41fb04e4ffd00138a76e10db1656381",
   "git": {
-    "head": "54eeb7f8134aa865a0642657da9251964e879447",
-    "branch": "stage3/control-plane-20260808"
+    "head": "3b1ab6e347fca3583e77f19d03981a37a0c90bf8",
+    "branch": "feat/wl3-master-2.0-local-implementation",
+    "head_tree": "fcae11e30245565f2b1a21846172c9ac5d9c4647",
+    "remote_main": "699ab50f47da5dcf3e92c81bea72504b6425f475"
   },
   "modules": [
     {
@@ -201,16 +203,48 @@
     ]
   },
   "stage3": {
-    "taskpack_id": "WORK-LAB-STAGE-3-CANONICAL-CONTROL-PLANE",
+    "taskpack_id": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE",
     "task_count": 28,
-    "initial_state": "PENDING",
-    "baseline_candidate_tree": "7516b2c88a32ba7bb67fd025a1fd5e8aa4f1eea2",
-    "incoming_dirty_count": 13,
+    "initial_state": "RECONCILE_REQUIRED",
+    "baseline_candidate_tree": "f1578cbd40b8edba329547efa56c74ec98a23b6d",
+    "incoming_dirty_count": 5,
     "writer_state": "UNIQUE"
   },
   "ci": {
-    "status": "unknown",
-    "evidence": "not-provided"
+    "run_id": 31344245919,
+    "workflow_name": "work-lab-gate",
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "699ab50f47da5dcf3e92c81bea72504b6425f475",
+    "url": "https://github.com/DTALEX66/WORK-LAB/actions/runs/31344245919",
+    "attempt": 1,
+    "jobs": [
+      {
+        "name": "aggregate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "gate-plan",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "integration",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "observer",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "workflow-assistance",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
   },
   "unverified_capabilities": [
     "hermes_live_apply",
@@ -219,5 +253,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "c428c5a0fbed53ed9f108148b1d4ebe82f10acb50a9c7cd3bd60f97565ba63f9"
+  "content_digest": "fb0a6665fbfb95fe82b0f9f13cf4c0deae9f730721679d10e81f154853e058fa"
 }

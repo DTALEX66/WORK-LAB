@@ -11,6 +11,11 @@ import sys
 from typing import Any
 from urllib.parse import urlsplit, parse_qs
 
+# DEPRECATED / DEBUG-COMPAT ONLY (WL3-605)
+# The single official Observer UI is web/ + Tauri. This Python server-rendered
+# dashboard is retained as a debugging compatibility entry point only; it is
+# not a second rendering implementation and must not be developed further.
+
 # The documented root-level command executes this file directly, so bind the
 # module's src directory explicitly instead of relying on test-only sys.path setup.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))

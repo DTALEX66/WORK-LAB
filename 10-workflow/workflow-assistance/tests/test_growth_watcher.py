@@ -25,6 +25,7 @@ def memory_record(**overrides: object) -> dict:
         "layer": "session",
         "kind": "preference",
         "status": "observed",
+        "project_id": "work-lab",
         "source_digest": "a" * 64,
         "content_digest": "b" * 64,
         "confidence": "medium",
