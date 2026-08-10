@@ -1,6 +1,24 @@
 # Workflow Assistance user-layer command policy.
 # These rules govern requests to run commands outside the sandbox.
 
+# Shell-portable Git revision syntax (PowerShell hazard):
+# PowerShell parses an unquoted @-brace token as a hashtable literal, so git
+# revision shorthand must never be passed unquoted. Prefer explicit refs
+# (git rev-parse origin/main, git rev-parse HEAD) or single-quote the
+# shorthand form (e.g. git rev-parse '@{upstream}'). After a fetch,
+# re-resolve the refs you depend on instead of reusing a pre-fetch expansion.
+#
+# Windows shell dialect portability:
+# The same command text parses differently in cmd.exe, PowerShell, Git Bash
+# (MSYS) and WSL. PowerShell double quotes expand $var/$(); single quotes are
+# verbatim; --% stops parsing. MSYS auto-converts /... arguments to Windows
+# paths (MSYS2_ARG_CONV_EXCL=* / MSYS_NO_PATHCONV=1 disable it). Keep shell
+# scripts LF (CRLF causes 'bad interpreter'); use UTF-8 output on Chinese
+# Windows (chcp 65001, core.quotepath false); enable core.longpaths for deep
+# trees; treat open-file locks as BLOCKED_PROCESS_LOCK and retry after the
+# owning process exits. Never retry an identical failed command string;
+# re-issue the dialect-correct form.
+
 prefix_rule(
     pattern = ["git", "reset", "--hard"],
     decision = "forbidden",

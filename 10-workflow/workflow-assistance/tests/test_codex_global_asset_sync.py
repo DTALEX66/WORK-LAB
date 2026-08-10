@@ -157,7 +157,6 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             self.assertEqual(migrated["phase"], "applied")
             self.assertEqual(len(migrated["managed_skill_names"]), 8)
             self.assertEqual(module.verify_overlay(codex_home, agent_home, ROOT / "codex-assets")["status"], "PASS")
-
             self.assertEqual(
                 module.rollback_overlay(codex_home, agent_home, ROOT / "codex-assets")["status"],
                 "ROLLED_BACK",
@@ -167,6 +166,90 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
                 "APPLIED",
             )
             self.assertEqual(module.verify_overlay(codex_home, agent_home, ROOT / "codex-assets")["status"], "PASS")
+
+    def test_legacy_migration_survives_advanced_source_and_dissolved_config_block(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
+            codex_home, agent_home = self.make_homes(Path(td))
+            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+
+            # Simulate the source advancing after the legacy apply.
+            tmp_src = Path(td) / "codex-assets-advanced"
+            shutil.copytree(ROOT / "codex-assets", tmp_src)
+            marker = "\n- advanced source marker for migration regression\n"
+            with tmp_src.joinpath("global-guidance.md").open("a", encoding="utf-8") as handle:
+                handle.write(marker)
+
+            # Simulate a Codex Desktop rewrite dissolving the managed config block.
+            (codex_home / "config.toml").write_text(
+                'model_provider = "user-provider"\n'
+                'model = "user-model"\n'
+                'base_url = "https://user-owned.invalid/v1"\n',
+                encoding="utf-8",
+            )
+
+            state_path = codex_home / module.STATE_FILE
+            legacy = json.loads(state_path.read_text("utf-8"))
+            legacy["version"] = 2
+            for key in ("phase", "managed_block_hashes", "previous_block_hashes", "previous_target_hashes"):
+                legacy.pop(key, None)
+            state_path.write_text(json.dumps(legacy), encoding="utf-8")
+
+            plan = module.build_plan(codex_home, agent_home, tmp_src)
+            result = module.apply_overlay(codex_home, agent_home, tmp_src)
+
+            self.assertIn("MIGRATE_OWNERSHIP_STATE", [action["action"] for action in plan["actions"]])
+            self.assertEqual(result["status"], "APPLIED")
+            parsed = tomllib.loads((codex_home / "config.toml").read_text("utf-8"))
+            self.assertEqual(parsed["approval_policy"], "on-request")
+            self.assertEqual(parsed["sandbox_mode"], "workspace-write")
+            self.assertEqual(parsed["project_doc_max_bytes"], 65536)
+            guidance = (codex_home / "AGENTS.md").read_text("utf-8")
+            self.assertIn("advanced source marker", guidance)
+            migrated = json.loads(state_path.read_text("utf-8"))
+            self.assertEqual(migrated["version"], module.VERSION)
+            self.assertEqual(sorted(migrated["managed_config_fields"]), sorted(module.MANAGED_CONFIG))
+            self.assertEqual(module.verify_overlay(codex_home, agent_home, tmp_src)["status"], "PASS")
+
+    def test_legacy_migration_still_blocks_on_edited_managed_block(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
+            codex_home, agent_home = self.make_homes(Path(td))
+            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+
+            # Keep the managed config block but edit a value inside it.
+            config_text = (codex_home / "config.toml").read_text("utf-8")
+            config_text = config_text.replace('approval_policy = "on-request"', 'approval_policy = "never"')
+            (codex_home / "config.toml").write_text(config_text, encoding="utf-8")
+
+            state_path = codex_home / module.STATE_FILE
+            legacy = json.loads(state_path.read_text("utf-8"))
+            legacy["version"] = 2
+            for key in ("phase", "managed_block_hashes", "previous_block_hashes", "previous_target_hashes"):
+                legacy.pop(key, None)
+            state_path.write_text(json.dumps(legacy), encoding="utf-8")
+
+            with self.assertRaisesRegex(module.ManagedConflict, "managed config block changed after apply"):
+                module.build_plan(codex_home, agent_home, ROOT / "codex-assets")
+
+    def test_legacy_migration_blocks_on_unmarked_guidance_block(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
+            codex_home, agent_home = self.make_homes(Path(td))
+            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+
+            # Replace the marked guidance block with unmarked user content.
+            (codex_home / "AGENTS.md").write_text(
+                "# User guidance\n\nUser-owned paragraph without managed markers.\n",
+                encoding="utf-8",
+            )
+
+            state_path = codex_home / module.STATE_FILE
+            legacy = json.loads(state_path.read_text("utf-8"))
+            legacy["version"] = 2
+            for key in ("phase", "managed_block_hashes", "previous_block_hashes", "previous_target_hashes"):
+                legacy.pop(key, None)
+            state_path.write_text(json.dumps(legacy), encoding="utf-8")
+
+            with self.assertRaisesRegex(module.ManagedConflict, "managed guidance block changed after apply"):
+                module.build_plan(codex_home, agent_home, ROOT / "codex-assets")
 
     def test_verify_rejects_modified_guidance_block(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:

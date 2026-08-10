@@ -27,6 +27,11 @@ INJECTION = re.compile(
 )
 SECRET_HINT = re.compile(r"(api[_-]?key|secret|password|passwd|token)\s*[:=]\s*['\"]?[A-Za-z0-9_\-]{12,}", re.I)
 
+# PowerShell parses an unquoted "@{" as a hashtable literal, so git revision
+# shorthand (@{upstream}, @{u}, @{push}, @{1}, @{-1}) dies before git runs
+# ("hashtable not terminated"). Require quoted shorthand or explicit refs.
+PS_REVISION_HAZARD = re.compile(r"(?<!['\"])@\{[A-Za-z0-9_.-]+\}")
+
 EXTS = {
     '.md', '.txt', '.yaml', '.yml', '.json', '.toml',
     '.py', '.sh', '.bash', '.ps1', '.psm1', '.cmd', '.bat',
@@ -60,6 +65,21 @@ def scan_file(path: Path) -> list[str]:
         issues.append(f'{path}: prompt-injection-like phrase')
     if SECRET_HINT.search(text):
         issues.append(f'{path}: possible hardcoded secret')
+    if path.suffix.lower() in ('.sh', '.bash'):
+        raw = path.read_bytes()
+        if b'\r\n' in raw:
+            issues.append(
+                f'{path}: CRLF line endings in a shell script cause "bad '
+                f'interpreter" on Windows/Unix; keep LF and declare the tree '
+                f'in .gitattributes (git add --renormalize)'
+            )
+    for match in PS_REVISION_HAZARD.finditer(text):
+        line = text.count('\n', 0, match.start()) + 1
+        issues.append(
+            f'{path}:{line}: unquoted @-brace git revision shorthand '
+            f'({match.group(0)}) breaks PowerShell (hashtable parse); '
+            f"single-quote it or use an explicit ref like 'origin/<branch>'"
+        )
     return issues
 
 

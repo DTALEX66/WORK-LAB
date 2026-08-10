@@ -16,3 +16,7 @@ Classify evidence before claiming completion:
 Run required checks from the owning module. A failed, cancelled, missing, or required-but-skipped check is not a pass. Fixtures, screenshots of source, documentation, version strings, and local tests cannot substitute for higher evidence levels.
 
 Finish with explicit `PASS`, `PARTIAL`, `NOT EXECUTED`, and `BLOCKED` states plus the command, path, SHA, URL, or runtime handle that grounds each claim.
+
+For Git identity evidence, use explicit refs (`git rev-parse HEAD`, `git rev-parse origin/<branch>`) instead of upstream shorthand; if a command dies with a shell parse error (e.g. PowerShell "hashtable not terminated"), re-issue with explicit refs and record the quoting failure separately from repository state.
+
+When a Windows command fails, classify the failure class before retrying: quoting/parsing (hashtable or subexpression mangling), MSYS path conversion (a `/...` argument became `C:/Program Files/Git/...`), encoding (UTF-16 artifacts, mojibake), line endings ("bad interpreter" on a CRLF script), or file lock ("file in use"). Re-issue the dialect-correct form (single quotes, `MSYS_NO_PATHCONV=1`, UTF-8, LF + `.gitattributes`, wait for the lock) and record the class — never retry the identical string.

@@ -32,6 +32,70 @@ These agreements apply to every Codex project unless a closer project `AGENTS.md
 - Report structural checks, local runtime checks, exact-SHA CI, publication, and live readback separately. Never use documentation, a fixture, a local test, or a version number as proof of a live delivery.
 - Before finishing, inspect the final diff and Git status. State `PASS`, `PARTIAL`, `NOT EXECUTED`, or `BLOCKED` honestly.
 
+### Shell-portable Git revision syntax
+
+- Never pass unquoted @-brace revision shorthand to git. PowerShell parses an
+  unquoted `@` `{...}` token as a hashtable literal and kills the command
+  before git runs ("hashtable not terminated", "Missing '=' after key"); the
+  same text is literal in POSIX shells, so a command that works in Git Bash
+  can break in PowerShell.
+- Prefer explicit refs: `git rev-parse origin/main`, `git rev-parse HEAD`,
+  `git rev-parse <explicit-branch>`.
+- To resolve the current branch's upstream, derive the plain ref name first,
+  e.g. `git for-each-ref --format='%(upstream:short)' "$(git symbolic-ref -q --short HEAD)"`,
+  then pass that name — no shorthand needed.
+- If the shorthand is unavoidable, single-quote it in every shell, e.g.
+  `git rev-parse '@{upstream}'`; in PowerShell also single-quote any argument
+  that may contain `$` (an unquoted `$(` subexpression concatenates into the
+  argument, e.g. `HEAD` + `<sha>`).
+- The shorthand family is wider than upstream: `'@{u}'`, `'@{push}'`,
+  `'@{<n>}'`, `'@{-<n>}'` and dated forms like `'HEAD@{5 minutes ago}'` are
+  all the same hazard class — quote them or use explicit refs.
+- After `git fetch`, re-resolve the refs you depend on; never reuse a
+  pre-fetch expansion inside a later command string.
+- When a command dies with a shell parse error, re-issue it with explicit
+  refs or quoting instead of retrying the same string; record the quoting
+  failure separately from repository state.
+
+### Windows shell dialect portability
+
+The same command text parses differently in cmd.exe, PowerShell, Git Bash
+(MSYS), and WSL. Identify the active shell before running git or build
+commands; a command verified in one dialect is not portable.
+
+- Quoting: PowerShell double quotes expand variables and subexpressions
+  (`$var`, `$()`), single quotes are verbatim — use single quotes for any
+  argument containing `$`, `@`, backticks, or git revision shorthand. In
+  cmd.exe the escape character is `^` and `%var%` expands; in bash single
+  quotes are also verbatim.
+- Stop parsing: PowerShell `--%` passes every remaining argument verbatim to
+  the native program; use it when a complex argument string cannot be quoted
+  safely.
+- MSYS/Git Bash path conversion: arguments that look like Unix paths are
+  auto-converted to Windows paths (e.g. `/foo` becomes
+  `C:/Program Files/Git/foo`), and environment-variable paths are converted
+  too. Use `MSYS2_ARG_CONV_EXCL=*` (MSYS2) or `MSYS_NO_PATHCONV=1` (Git Bash)
+  for literal arguments, a leading `//`, or native `C:\...` paths for Windows
+  programs; `/c/...` is a Git Bash convention, not a Windows path.
+- Line endings: `core.autocrlf` and `.gitattributes` decide LF vs CRLF. A
+  `.sh` file checked out with CRLF fails with "bad interpreter". Keep shell
+  scripts LF, declare the tree in `.gitattributes`, and normalize with
+  `git add --renormalize`.
+- Encoding: PowerShell 5.1 redirects (`>`) write UTF-16 by default — use
+  `Out-File -Encoding utf8` or `Set-Content -Encoding utf8`. On Chinese
+  Windows, prefer UTF-8 (`chcp 65001`) and `git config core.quotepath false`
+  so Unicode paths render readably.
+- Long paths: Windows MAX_PATH is 260 by default; enable
+  `git config core.longpaths true` for deep trees, or use `\\?\` prefixes
+  only where proven safe (never to bypass ACLs or follow reparse points).
+- Case: Windows filesystems are case-insensitive; `core.ignorecase` matters
+  when a rename changes only the case of a file.
+- File locks: Windows locks open files — `git gc`, renames and installs fail
+  with "file in use". Retry after the owning process exits; do not kill
+  shared proxy, browser, desktop, or authentication processes for a shortcut.
+- Never build a git command by interpolating `$()` or `$var` into a
+  PowerShell argument; pass argument lists, single-quote, or use `--%`.
+
 ### Skill use
 
 - Use installed Workflow Assistance skills when their descriptions match the task. Load only the relevant skill body, follow its boundaries, and prefer project-local skills over global generalizations.
