@@ -36,8 +36,8 @@ class CapabilityConformanceTests(unittest.TestCase):
         module = load_module()
         document = json.loads(MANIFEST.read_text(encoding="utf-8"))
         retired = copy.deepcopy(document)
-        retired["mcp"]["entries"].append({"id": "open-design", "capabilities": ["read"], "transport": "external", "permissions": ["read-only"], "source": "open-design"})
-        with self.assertRaisesRegex(ValueError, "retired Open Design"):
+        retired["mcp"]["entries"].append({"id": "retired-capability", "capabilities": ["read"], "transport": "external", "permissions": ["read-only"], "source": "retired-source"})
+        with self.assertRaisesRegex(ValueError, "retired capability"):
             module.verify_document(retired, ROOT)
 
 

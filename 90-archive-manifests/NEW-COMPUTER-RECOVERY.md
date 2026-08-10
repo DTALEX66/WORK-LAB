@@ -12,15 +12,9 @@ git rev-parse HEAD
 当前 `main` 包含三个模块的保留历史、实体工作树、根治理、契约、CI 和交接文档：
 
 - `10-workflow/workflow-assistance`
-- `20-design/open-design`
-- `30-products/minigame`
 
-MINIGAME 的 `main` 使用此前冻结的远端版本 `d4bf0b3d…`。旧电脑本地提交 `ddd1ee18…` 另存为云端迁移分支和 tag：
 
 ```bash
-git fetch origin migration/minigame-local-head
-git show origin/migration/minigame-local-head
-git fetch origin tag minigame/local-head-20260805T091816Z
 ```
 
 ## 下载迁移执行包
@@ -37,10 +31,8 @@ gh release download migration-handoff-20260805T091816Z-v4 \
 
 - `task-pack/`：完整 WORK-LAB v6.0 任务包；
 - `evidence/`：DISC/MIG/GOV 交接证据；
-- `working-state/`：已保留的 Workflow/Open Design 本地变化；
 - `recovery/`：bundle 清单、SHA-256 和恢复说明。
 
-原始 Git bundle 没有放入公开 Release；GitHub `WORK-LAB` 已包含三个选定源 tip 的完整可达历史，MINIGAME 本地 committed tip 也已通过独立 migration branch/tag 上传。原始 bundles 仍在旧机器 archive 作为额外离线恢复点。
 
 ## 新机验证
 
@@ -51,7 +43,6 @@ python scripts/security/check_paths.py .
 python tests/ci/test_governance_gate.py
 python tests/contracts/test_contract_shapes.py
 python scripts/ci/aggregate_gate.py <<'JSON'
-{"jobs":{"workflow":"success","open-design":"success","minigame":"success","integration":"success"}}
 JSON
 ```
 

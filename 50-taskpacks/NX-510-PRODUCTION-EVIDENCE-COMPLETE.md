@@ -18,7 +18,6 @@ SVG safety preflight, SPDX/REUSE manifest, and fixture closures that stay
    - `svg_preflight()`: local SVG safety + production preflight (rejects inline
      script / foreignObject / event handlers / javascript:).
    - `spdx_manifest()`: SPDX/REUSE third-party source manifest (reuse-compliant).
-   - `run_fixture_closures()`: 3 fixtures (brand/exhibition/minigame-hud); auto
      score used only for consistency/regression, stays `WAITING_HUMAN_CALIBRATION`
      until human calibrates.
 

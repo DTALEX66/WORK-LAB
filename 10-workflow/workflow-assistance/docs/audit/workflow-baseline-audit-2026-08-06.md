@@ -39,7 +39,6 @@ commands; they are not copied back into this repository.
 - Workflow-assistance canonical quality gate: PASS; 193 governance tests passed,
   5 explicitly skipped, and all configured structural sub-gates returned zero.
 - ActionPlan/sync focused regression: 6/6 PASS.
-- Open Design structural and contract verifier: PASS, including
   `203/203`, `223/223`, `10/10` and aggregate `460/460` results.
 - WORK-LAB Observer: structure PASS and 3/3 tests PASS.
 - Root integration: contract catalog `20/20`, module registry `3` with

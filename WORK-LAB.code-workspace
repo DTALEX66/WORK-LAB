@@ -1,12 +1,18 @@
 {
   "folders": [
-    { "name": "WORK-LAB Root", "path": "." },
-    { "name": "Workflow Assistance", "path": "10-workflow/workflow-assistance" },
-
-    { "name": "MINIGAME", "path": "30-products/minigame" }
+    {
+      "name": "WORK-LAB Root",
+      "path": "."
+    },
+    {
+      "name": "Workflow Assistance",
+      "path": "10-workflow/workflow-assistance"
+    }
   ],
   "settings": {
-    "files.exclude": { "80-evidence": true },
+    "files.exclude": {
+      "80-evidence": true
+    },
     "search.exclude": {
       "80-evidence": true,
       "**/node_modules": true,

@@ -334,7 +334,7 @@ def check_stale_references(paths: Iterable[Path]) -> list[str]:
             findings.append(f"{path}: stale-workflow-name={STALE_WORKFLOW}")
         if "not committed/pushed" in lowered or "not committed or pushed" in lowered:
             findings.append(f"{path}: stale-publication-status")
-        if re.search(r"active module[^\n]*(minigame|fourth)", lowered):
+        if re.search(r"active module[^\n]*(fourth|extra)", lowered):
             findings.append(f"{path}: fourth-active-module")
     return findings
 

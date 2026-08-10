@@ -20,7 +20,7 @@ def verify() -> dict[str, object]:
     assert report["credentialsAccessed"] is False
     assert report["liveClaims"] == "NONE"
     pilots = {pilot["branch"]: pilot for pilot in report["pilots"]}
-    assert set(pilots) == {"workflow-agent", "observer", "open-design"}
+    assert set(pilots) == {"workflow-agent", "observer"}
 
     workflow = pilots["workflow-agent"]
     assert workflow["credentialsRead"] is False
@@ -33,16 +33,7 @@ def verify() -> dict[str, object]:
     assert observer["duplicateIngestIdempotent"] is True
     assert observer["corruptEventsIsolated"] == 1
     assert observer["mutationSurface"] == []
-
-    design = pilots["open-design"]
-    assert design["briefContractPassed"] is True
-    assert design["readbackLossless"] is True
-    assert design["svgPreflightIssues"] == []
-    assert design["humanCalibration"] == [
-        "WAITING_HUMAN_CALIBRATION", "WAITING_HUMAN_CALIBRATION"
-    ]
-    assert design["visualQualityClaim"] == "HUMAN_PENDING"
-    return {"pilots": 3, "offline": True}
+    return {"pilots": 2, "offline": True}
 
 
 def main() -> int:

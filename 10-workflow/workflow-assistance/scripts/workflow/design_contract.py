@@ -5,7 +5,6 @@
 - A structured brief passes contract checks, produces token/method/quality-gate
   selection, and completes a readback after delivery (never just a doc directory).
 
-This is a local WORK-LAB contract layer; it does not vendor Open Design app code.
 """
 from __future__ import annotations
 

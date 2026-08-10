@@ -7,8 +7,6 @@ ownership, data boundaries, recovery and cross-module delivery; module roots
 contain the actual implementations.
 
 > **Current positioning:** the only active modules are Workflow-assistance and
-> the strictly read-only WORK-LAB Observer. Open Design was transferred to
-> `DTALEX66/OPEN-DESIGN-Assistance`; `30-products/minigame`
 > is retained as product history/fixture/archive material, not as a canonical
 > active module. See [`00-governance/PROJECT_POSITIONING.md`](00-governance/PROJECT_POSITIONING.md).
 
@@ -39,7 +37,6 @@ evidence stay under the current Git root's ignored `.hermes/` boundary.
 - `30-observer/work-lab-observer` — strictly read-only derived observation,
   projections and evidence reports
 
-`30-products/minigame` remains outside the active two-module registry as
 product history, fixture/reference material and migration/archive evidence. It
 does not imply a current platform release, commercial experiment or automatic
 merge/deletion decision.

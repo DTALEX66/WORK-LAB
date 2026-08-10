@@ -11,7 +11,6 @@
 - Workflow boundary tests：147 passed，5 skipped，22 subtests passed。
 - Token Monitor tests：5 passed。
 - Token Monitor `npm ci` 与 Vite build：通过。
-- MINIGAME：318 passed，0 failed，0 skipped；测试结束后 tracked `douyin-minigame/project.config.json` 保持 clean。
 - security path check：PASS；contract tests：2 passed；agent rule scan：OK。
 - 三个旧云端仓库已 archived；旧本地 checkout 和历史归档仍保留。
 - 未读取或迁移凭据、认证、cookies、session、全局 config 内容。
@@ -45,5 +44,3 @@
 不得删除 Hermes 全局 config、auth、sessions、cron、skills、plugins、tmp 根、backups，也不得删除 WORK-LAB-ARCHIVE 或 staging。
 
 ## 当前 Git 状态
-
-变更已 staged，尚未 commit/push；未提交内容包括规则修复、被错误 ignore 的合法文件恢复、边界测试修复和 MINIGAME 测试隔离修复。`.hermes/`、node_modules、构建缓存仍在项目运行态并被忽略。

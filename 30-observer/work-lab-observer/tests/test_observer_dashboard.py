@@ -265,7 +265,7 @@ class ObserverDashboardTests(unittest.TestCase):
                 ev("w1", "WA-001", None),
                 ev("w2", "WA-002", None),
                 ev("p1", "FX-100", "fixture-external"),
-                ev("retired", "OD-100", "open-design"),
+                ev("retired", "OD-100", "retired-source"),
             ])
             server = create_server(project, runtime, port=0)
             thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -278,7 +278,7 @@ class ObserverDashboardTests(unittest.TestCase):
                 self.assertEqual(by_id["work-lab"]["taskCount"], 2)
                 self.assertEqual(by_id["fixture-external"]["taskCount"], 1)
                 self.assertEqual(by_id["fixture-external"]["eventCount"], 1)
-                self.assertNotIn("open-design", by_id)
+                self.assertNotIn("retired", by_id)
             finally:
                 server.shutdown()
                 thread.join(timeout=2)

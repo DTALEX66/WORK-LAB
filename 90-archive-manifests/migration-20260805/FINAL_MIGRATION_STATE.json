@@ -27,24 +27,23 @@
     "git_directories_preserved_in_source_checkouts": false
   },
   "cloud_archives": {
-    "DTALEX66/Workflow-assistance": true,
-    "DTALEX66/OPEN-DESIGN-Assistance": true,
-    "DTALEX66/MINIGAME": true
+    "DTALEX66/Workflow-assistance": true
   },
   "candidate": {
     "manifest": "D:/All projects/WORK-LAB-ARCHIVE/migration-20260805T120000Z/migration-candidate-manifest-v2.json",
-    "Workflow-assistance": {"tracked": 119, "absorbed_or_same": 99, "conflicts": 19, "skipped_private_filename": 1},
-    "OPEN-DESIGN-Assistance": {"tracked": 445, "absorbed_or_same": 442, "conflicts": 2, "skipped_private_filename": 1},
-    "MINIGAME": {"tracked": 421, "absorbed_or_same": 421, "conflicts": 0, "skipped_private_filename": 0},
+    "Workflow-assistance": {
+      "tracked": 119,
+      "absorbed_or_same": 99,
+      "conflicts": 19,
+      "skipped_private_filename": 1
+    },
     "new_files_copied_to_staging": 0,
     "conflicts_are_not_overwritten": true
   },
   "local_active_path_cleanup": {
     "status": "BLOCKED_PROCESS_LOCK",
     "paths_still_present": [
-      "D:/All projects/Workflow-assistance",
-      "D:/All projects/OPEN-DESIGN-Assistance",
-      "D:/All projects/MINIGAME"
+      "D:/All projects/Workflow-assistance"
     ],
     "attempted_operation": "move original checkouts into archive/source-checkouts",
     "result": "Windows returned Device or resource busy before moving any directory",

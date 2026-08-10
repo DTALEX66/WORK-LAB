@@ -18,7 +18,6 @@ Exactly two active modules remain:
 - `10-workflow/workflow-assistance`
 - `30-observer/work-lab-observer`
 
-Open Design and MiniGame are transferred scopes. Their old WORK-LAB roots are
 not active and are not reintroduced.
 
 ## Completed evidence chain
@@ -90,7 +89,6 @@ license source is intentionally vendored by these tasks.
 ## Rollback
 
 Rollback is per merged PR. The final package itself can be reverted without
-altering the transferred Open Design/MiniGame repository. Preserve the last
 approved main commit and Task Ledger evidence before any release cleanup.
 
 ## Approval action boundary

@@ -20,12 +20,10 @@ Workflow Evidence Envelope only
 ## Allowed source contracts
 
 - `10-workflow/workflow-assistance/schemas/workflow/evidence-envelope.schema.json`
-- Open Design benchmark events are no longer a WORK-LAB input after the module transfer.
 
 ## Forbidden actions
 
 - no Workflow Ledger mutation;
-- no Open Design Registry mutation;
 - no approval or promotion;
 - no Git/GitHub mutation;
 - no Hermes live configuration or provider/session access;

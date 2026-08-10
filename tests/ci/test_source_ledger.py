@@ -44,7 +44,7 @@ class SourceLedgerTests(unittest.TestCase):
         # not fail on STALE_REVIEW (which simply means "re-review required").
         self.assertIn(statuses["work-lab-workflow-module"], {"local-verified", "STALE_REVIEW"})
         self.assertIn(statuses["work-lab-observer-module"], {"local-verified", "STALE_REVIEW"})
-        self.assertNotIn("open-design", " ".join(item["id"] for item in result["statuses"]))
+        self.assertNotIn("retired-module", " ".join(item["id"] for item in result["statuses"]))
 
     def test_missing_target_degrades_local_status(self) -> None:
         module = load_module()

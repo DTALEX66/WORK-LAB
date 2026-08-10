@@ -22,7 +22,6 @@
 | 任务 | 状态 | 证据 |
 |---|---|---|
 | WL3-000 | VERIFIED_LOCAL | freshness 修复 + CURRENT_STATE 真实回读 |
-| WL3-010 | VERIFIED_LOCAL | 两模块收口 + CI 无 design/minigame Gate |
 | WL3-100 | VERIFIED_LOCAL | 真实平台发现（codex/hermes UNIQUE） |
 | WL3-110 | VERIFIED_LOCAL | reconciler fail-closed |
 | WL3-120 | VERIFIED_LOCAL | 受控复现 metadata 指纹 |
@@ -34,7 +33,6 @@
 | WL3-320 | VERIFIED_LOCAL | Skill/Plugin/MCP 供应链扫描 |
 | WL3-330 | VERIFIED_LOCAL | 模型 lane/billing（subscription not-metered） |
 | WL3-400/410 | VERIFIED_LOCAL | durable worker + 事务 lease |
-| WL3-420 | VERIFIED_LOCAL | 跨项目注册（真实 MINIGAME canary） |
 | WL3-500 | VERIFIED_LOCAL | Canonical SQLite WAL |
 | WL3-510 | VERIFIED_LOCAL | 四类真实 collector |
 | WL3-520 | VERIFIED_LOCAL | CI concurrency/timeout |
@@ -58,7 +56,6 @@ Observer: Python 57 tests OK (incl. canonical projection + events retirement)
           JS 43 passed, 0 failed
 Root CI suite: 14/14 files pass (test_exact_tree_review precommit-clean precondition expected-fail by design)
 Browser visual acceptance: console_messages=0 js_errors=0 (dark dashboard)
-Real dual-project canary: WORK-LAB + MINIGAME (collector + SSE LIVE frame)
 Swap drills: 6/6 core-not-forked
 Repo size audit: tracked=438 files, 2.65 MiB, duplicate groups=1
 WL3-800 integration gate: 6/6 checks passed
@@ -76,7 +73,6 @@ GATE-RUNTIME-CONVERGENCE: claimable=True — 9/10 passed; #9 Tauri real Sidecar
 3. **双入口/双安装卸载或配置迁移** — ✅ 已对账：入口矩阵与职责边界见 `docs/workflow/dual-entry-install.md`（Hermes setup.* → sync_hermes_workflow_assets；Codex legacy bootstrap 仅目标不存在时最小引导，canonical sync 管理全部受管表面；无并行安装面）；
 4. **Windows toolchain/portable/sign/release** — ⏸ 工具链已核验就位（cargo/rustc 1.88 @ `D:\All projects\OS configuration\toolchains\rust`），但 WORK-LAB 无 Tauri/Cargo 工程（桌面壳归其产品线所有）→ WL3-620 转 DEFERRED；
 5. **paid provider smoke** — ✅ 已执行（2026-08-10）：deepseek `WA_SMOKE_221826_ds` 与 openai-codex `WA_SMOKE_221837_gpt` 精确 marker 回读，EXIT=0；kimi 未登录跳过；凭据未读取；
-6. **真实外部项目 tracked profile** — ❌ 未执行（MINIGAME 仅只读 canary，未写）；
 7. **归档删除或 Git 历史减重** — ✅ 已完成：WORK-LAB-ARCHIVE 退休删除（含敏感 Chrome 测试痕迹），证据并入 `90-archive-manifests/migration-20260805/`（PR #40）。
 
 ## 5. 明确未宣称

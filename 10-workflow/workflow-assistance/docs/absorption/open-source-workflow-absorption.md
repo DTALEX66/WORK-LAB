@@ -14,7 +14,6 @@
 | DESIGN.md / design-token 思路 | 新增 `templates/agent-rules/DESIGN.md` | ✅ 已吸收 | 用于 UI/UX 项目，避免“只实现功能、不打磨体验”。 |
 | CC Switch 执行票据 | 新增 `templates/task-tickets/cc-switch-agent-task.md` | ✅ 已吸收 | 把 Hermes 规划转成 Claude/Codex/OpenClaw 可执行任务单。 |
 | Aether-Radar 项目方法 | 写入 workflow skill | ✅ 已吸收 | 吸收“选型/发现/对比/导出/验证”的雷达式工作法，不复制项目数据。 |
-| MINIGAME 自循环经验 | 写入 workflow skill | ✅ 已吸收 | 吸收“技能先加载 → 真实缺口 → 实现 → npm verify → git 同步”的循环。 |
 | Star-Trails-Log 开源对标经验 | 写入 workflow skill | ✅ 已吸收 | 吸收 RSSHub/FreshRSS/Karakeep 等“借鉴设计，不盲目引入依赖”的原则。 |
 | `promptfoo/promptfoo` | 新增 `docs/workflow/agent-evaluation.md` 与 `templates/evals/agent-behavior-smoke.yaml` | ✅ 已吸收方法 | 吸收声明式 eval cases、assertions 和 CI-friendly 布局；不安装 runner、不配置 provider、不保存真实 trace。 |
 | `yamadashy/repomix` / `coderamp-labs/gitingest` | 新增 `scripts/workflow/build_context_pack.py` 与 `docs/workflow/context-pack.md` | ✅ 已吸收方法 | 吸收 repo → LLM-friendly context pack 思路；输出锁定项目 `.hermes/task-artifacts/`，不读取密钥、会话、日志或缓存。 |

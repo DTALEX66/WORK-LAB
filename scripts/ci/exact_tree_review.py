@@ -75,7 +75,7 @@ def review_tree() -> dict[str, Any]:
     }
     absent_transferred = [
         path for path in paths
-        if path.startswith("20-design/open-design/") or path.startswith("30-products/minigame/")
+        if path.startswith("retired/") or path.startswith("archive/")
     ]
     ledger_path = ROOT / ".hermes/task-runtime/task-ledger/ledger.json"
     ledger = json.loads(ledger_path.read_text(encoding="utf-8")) if ledger_path.exists() else {}

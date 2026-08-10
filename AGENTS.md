@@ -4,9 +4,6 @@
 
 This is a single-root monorepo. Allowed active module roots are exactly:
 `10-workflow/workflow-assistance` and `30-observer/work-lab-observer`. The
-Open Design module and the MiniGame product tree were transferred to
-`DTALEX66/OPEN-DESIGN-Assistance` on the authorized migration branch; neither
-`20-design/open-design` nor `30-products/minigame` remains here. Only the
 handoff pointer and Git history remain for the transferred scope.
 
 ## Ownership
