@@ -1,0 +1,55 @@
+{
+  "run_id": "migration-20260805T120000Z",
+  "canonical_remote": {
+    "repository": "DTALEX66/WORK-LAB",
+    "branch": "main",
+    "commit": "3998c9d61efa3d72e0f26e2de832361699b836bc",
+    "tree": "1b3cad619addc86161ac14dbefdf35f7566f6183",
+    "archived": false
+  },
+  "staging": {
+    "path": "D:/All projects/WORK-LAB-STAGING-20260805T120000Z/repository",
+    "commit": "a8f96c3aaa514088222024419adae3e8a9235f1e",
+    "tree": "1b3cad619addc86161ac14dbefdf35f7566f6183",
+    "files": 1040,
+    "tree_matches_cloud_main": true,
+    "worktree_clean": true,
+    "checks": {
+      "security_path_check": "PASS",
+      "contract_tests": "2 passed",
+      "git_diff_check": "PASS"
+    }
+  },
+  "local_archives": {
+    "path": "D:/All projects/WORK-LAB-ARCHIVE/migration-20260805T120000Z/local-sources",
+    "manifest": "D:/All projects/WORK-LAB-ARCHIVE/migration-20260805T120000Z/local-archive-manifest.json",
+    "readback_sha_verified": true,
+    "git_directories_preserved_in_source_checkouts": false
+  },
+  "cloud_archives": {
+    "DTALEX66/Workflow-assistance": true,
+    "DTALEX66/OPEN-DESIGN-Assistance": true,
+    "DTALEX66/MINIGAME": true
+  },
+  "candidate": {
+    "manifest": "D:/All projects/WORK-LAB-ARCHIVE/migration-20260805T120000Z/migration-candidate-manifest-v2.json",
+    "Workflow-assistance": {"tracked": 119, "absorbed_or_same": 99, "conflicts": 19, "skipped_private_filename": 1},
+    "OPEN-DESIGN-Assistance": {"tracked": 445, "absorbed_or_same": 442, "conflicts": 2, "skipped_private_filename": 1},
+    "MINIGAME": {"tracked": 421, "absorbed_or_same": 421, "conflicts": 0, "skipped_private_filename": 0},
+    "new_files_copied_to_staging": 0,
+    "conflicts_are_not_overwritten": true
+  },
+  "local_active_path_cleanup": {
+    "status": "BLOCKED_PROCESS_LOCK",
+    "paths_still_present": [
+      "D:/All projects/Workflow-assistance",
+      "D:/All projects/OPEN-DESIGN-Assistance",
+      "D:/All projects/MINIGAME"
+    ],
+    "attempted_operation": "move original checkouts into archive/source-checkouts",
+    "result": "Windows returned Device or resource busy before moving any directory",
+    "force_kill_or_delete": false,
+    "next_safe_action": "retry only after the owning Hermes/Node/Python processes are closed by the user or naturally exit"
+  },
+  "destructive_delete": "NOT_EXECUTED"
+}
