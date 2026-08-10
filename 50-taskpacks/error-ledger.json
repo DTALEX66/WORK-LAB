@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 23,
+    "total": 18,
     "by_classification": {
       "entrypoint": 4,
       "contract_drift": 8,
