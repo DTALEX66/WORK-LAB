@@ -1,13 +1,13 @@
 # WORK-LAB current state
 
-Generated at: `2026-08-10T13:09:11.479240Z`  \
+Generated at: `2026-08-10T13:11:55.366947Z`  \
 Source digest: `465806699d12770ddf5979e5cb7862b148362ad723c3dc1293ce985e3c67bafa`  \
-Content digest: `62012946a15d64b97bbd926e57b08fc0cf0256b4ea4ba430d946f85a583a6f95`
+Content digest: `08b7acd2b2c6fbb8ad98ed4f1dc996289ec447b0aa5bb4c79b0e225e8dab8784`
 
 ## Git
 
-- HEAD: `d28cd15e5d8724377c358621046471865b3c7acb`
-- Branch: `docs/taskpack-reconciliation-20260810`
+- HEAD: `b9a7e1a29b8a82204a99c654b2397919a34033e7`
+- Branch: `main`
 
 ## Active modules
 
