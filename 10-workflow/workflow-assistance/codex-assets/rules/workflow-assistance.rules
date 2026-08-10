@@ -18,6 +18,14 @@
 # trees; treat open-file locks as BLOCKED_PROCESS_LOCK and retry after the
 # owning process exits. Never retry an identical failed command string;
 # re-issue the dialect-correct form.
+#
+# OpenHuman coordination:
+# OpenHuman is a separate local desktop agent. Its .openhuman private runtime
+# (keychain/users/logs/memory/workspace) is never to be read, copied, or
+# committed, same as .codex/.hermes. Its scan output is candidate evidence:
+# verify junction/duplicate/path claims with fsutil reparsepoint query and
+# Get-Item LinkType/Target on the exact path before any action; never act on
+# an unverified scanner label.
 
 prefix_rule(
     pattern = ["git", "reset", "--hard"],
