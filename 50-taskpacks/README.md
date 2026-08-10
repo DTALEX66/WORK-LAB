@@ -1,7 +1,7 @@
 # Task packs
 
-`50-taskpacks/` is the root control surface for WORK-LAB's v2 global project-task
-workflow. It coordinates work across the three canonical active modules without
+`50-taskpacks/` is the root control surface for WORK-LAB's Stage 3 global
+project-task workflow. It coordinates the two canonical active modules without
 turning the root into a fourth product. The authoritative public positioning is
 `00-governance/PROJECT_POSITIONING.md`.
 

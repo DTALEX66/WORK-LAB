@@ -7,6 +7,8 @@ const WlApp = (function () {
   "use strict";
 
   const APP_ROOT = "wl-app";
+  let eventSource = null;
+  let eventSourceUrl = null;
 
   function readParams() {
     const q = new URLSearchParams(window.location.search);
@@ -109,10 +111,51 @@ const WlApp = (function () {
     }
   }
 
+  function stopLiveSubscription() {
+    if (eventSource && typeof eventSource.close === "function") eventSource.close();
+    eventSource = null;
+    eventSourceUrl = null;
+  }
+
+  function startLiveSubscription(projection) {
+    const url = projection && projection.transport && projection.transport.eventsUrl;
+    if (!url) {
+      stopLiveSubscription();
+      return false;
+    }
+    if (eventSource && eventSourceUrl === url) return true;
+    stopLiveSubscription();
+    eventSourceUrl = url;
+    try {
+      eventSource = WlApi.subscribeEvents(url, {
+        onEvent: async () => {
+          try {
+            const result = await WlApi.fetchDashboard();
+            WlState.accept(result.data, "LIVE");
+          } catch (err) {
+            WlState.markRefreshError(err && err.message ? err.message : "实时投影刷新失败");
+          }
+          render();
+        },
+        onError: () => {
+          WlState.markRefreshError("Workflow Sidecar 事件流离线，正在自动重连");
+          render();
+        },
+      });
+      return true;
+    } catch (err) {
+      eventSource = null;
+      eventSourceUrl = null;
+      WlState.markRefreshError(err && err.message ? err.message : "事件流不可用");
+      return false;
+    }
+  }
+
   /* Read the projection source. FIXTURE first; attempt LIVE via GET only. */
   async function loadData() {
     const st = WlState.get();
     if (st.mode === "FIXTURE" || st.mode === "REPLAY") {
+      stopLiveSubscription();
       // FIXTURE: use inline authoritative copy (no network). REPLAY unsupported -> fixture fallback.
       WlState.accept(WlApi.FIXTURE, "FIXTURE");
       return;
@@ -122,6 +165,7 @@ const WlApp = (function () {
     try {
       const result = await WlApi.fetchDashboard();
       WlState.accept(result.data, "LIVE");
+      startLiveSubscription(result.data);
       WlA11y.announce("已加载实时投影数据");
     } catch (err) {
       // Bundled real snapshot (no fabricated agents/projects) — better than FIXTURE.
@@ -129,7 +173,8 @@ const WlApp = (function () {
         const snapRes = await fetch("assets/live-snapshot.json", { cache: "no-store" });
         if (snapRes.ok) {
           const snap = await snapRes.json();
-          WlState.accept(snap, "LIVE");
+          stopLiveSubscription();
+          WlState.accept(snap, "SNAPSHOT");
           WlA11y.announce("已加载最近真实投影快照（live-snapshot）");
           return;
         }
@@ -152,7 +197,7 @@ const WlApp = (function () {
   }
 
   /* Exposed for tests / debugging. */
-  return { init, readParams, applyTheme, render, loadData };
+  return { init, readParams, applyTheme, render, loadData, startLiveSubscription, stopLiveSubscription };
 })();
 
 if (typeof window !== "undefined") {

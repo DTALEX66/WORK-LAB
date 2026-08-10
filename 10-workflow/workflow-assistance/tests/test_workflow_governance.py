@@ -2137,7 +2137,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         for marker in (
             "客户端中立的工作流控制、治理、任务、交付与可观测层",
             "本仓库是可审计的 portable source",
-            "Hermes、Codex、CC Switch、GitHub、Open Design 是可替换 Adapter",
+            "Hermes、Codex、CC Switch、GitHub 是当前一级可替换 Adapter",
             "## 全局增强边界",
             "任意业务项目",
             "不得进入默认 portable config、全局 skill、默认 MCP 或同步脚本",
@@ -2459,9 +2459,6 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "usage-ingestion",
                 "memory-contamination",
                 "task-ledger-replay",
-                "design-contract",
-                "production-evidence",
-                "standard-validators",
                 "portable-install",
                 "portable-install-runtime",
                 "provider-inventory",
@@ -2543,9 +2540,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertIn(
             "verify: Run governance, compile, skill-provenance, security, context-pack, "
-            "client-neutral-manifest, core-schemas, adapter-registry, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, memory-contamination, task-ledger-replay, design-contract, production-evidence, standard-validators, portable-install, portable-install-runtime, provider-inventory, mcp-audit",
+            "client-neutral-manifest, core-schemas, adapter-registry, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, memory-contamination, task-ledger-replay, portable-install, portable-install-runtime, provider-inventory, mcp-audit",
             list_result.stdout,
         )
+        self.assertTrue({"design-contract", "production-evidence", "standard-validators"}.isdisjoint(module.GATES))
 
     def test_mcp_candidate_audit_is_fail_closed_and_does_not_enable_defaults(self) -> None:
         script = ROOT / "scripts/workflow/mcp_candidate_audit.py"

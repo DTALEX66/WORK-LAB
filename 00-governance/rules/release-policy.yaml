@@ -3,7 +3,6 @@ rootShaRequired: true
 moduleTreeDigestRequired: true
 releasePrefixes:
   workflow: workflow/
-  open-design: open-design/
   observer: observer/
 versioning: independent-module-versioning
 forcePush: forbidden

@@ -2,9 +2,9 @@
 """Generate and verify WORK-LAB's current canonical state.
 
 The generator is repository-local and secret-free. It reads canonical registries,
-repository-managed skill metadata, Open Design registries, the root CI workflow,
-and optional explicit CI evidence. It never reads Hermes Home, auth stores,
-provider configuration, sessions, or prompt/response bodies.
+repository-managed skill metadata, the Stage 3 graph/baseline, the root CI
+workflow, and optional explicit CI evidence. It never reads Hermes Home, auth
+stores, provider configuration, sessions, or prompt/response bodies.
 """
 from __future__ import annotations
 
@@ -30,9 +30,11 @@ CANONICAL_FILES = (
     "00-governance/contracts/capability-conformance.schema.json",
     "00-governance/source-ledger.json",
     "00-governance/work-lab.project-profile.yaml",
+    "00-governance/generated/STAGE3_BASELINE.json",
     "README.md",
     "40-knowledge/README.md",
     "50-taskpacks/TASKPACK_SUMMARY.md",
+    "50-taskpacks/WORK-LAB-STAGE-3-TASK-GRAPH.json",
     "10-workflow/workflow-assistance/workflow-manifest.yaml",
     "10-workflow/workflow-assistance/config/capability-conformance.json",
     "10-workflow/workflow-assistance/schemas/workflow/ci-observation.schema.json",
@@ -120,6 +122,19 @@ def source_digest(root: Path) -> str:
 
 def content_digest(state: dict[str, Any]) -> str:
     payload = {key: value for key, value in state.items() if key != "generated_at"}
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return sha256_bytes(encoded)
+
+
+def projection_digest(state: dict[str, Any]) -> str:
+    """Digest deterministic tracked projection fields, excluding commit/time/CI evidence.
+
+    A tracked file cannot contain the SHA of the commit that contains itself. This
+    digest therefore proves canonical-source freshness without a recursive HEAD
+    dependency, while the publication gate proves the final exact commit separately.
+    """
+    volatile = {"generated_at", "git", "ci", "content_digest"}
+    payload = {key: value for key, value in state.items() if key not in volatile}
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return sha256_bytes(encoded)
 
@@ -219,6 +234,8 @@ def build_state(
     catalog = _read_json(root, "00-governance/contracts/contract-catalog.json")
     manifest = _read_yaml(root, "10-workflow/workflow-assistance/workflow-manifest.yaml")
     provenance = _read_yaml(root, "10-workflow/workflow-assistance/config/skill-provenance.yaml")
+    stage3_graph = _read_json(root, "50-taskpacks/WORK-LAB-STAGE-3-TASK-GRAPH.json")
+    stage3_baseline = _read_json(root, "00-governance/generated/STAGE3_BASELINE.json")
     modules = projects.get("modules", [])
     if not isinstance(modules, list):
         raise ValueError("projects.modules must be a list")
@@ -278,11 +295,23 @@ def build_state(
         },
 
         "workflow_identity": _workflow_identity(root, manifest),
+        "stage3": {
+            "taskpack_id": stage3_graph.get("taskpackId", "unknown"),
+            "task_count": len(stage3_graph.get("tasks", [])),
+            "initial_state": stage3_graph.get("initialState", "unknown"),
+            "baseline_candidate_tree": stage3_baseline.get("git", {}).get("incomingCandidateTree", "unknown"),
+            "incoming_dirty_count": sum(
+                len(items)
+                for items in stage3_baseline.get("dirtyClassification", {}).values()
+                if isinstance(items, list)
+            ),
+            "writer_state": stage3_baseline.get("writer", {}).get("state", "unknown"),
+        },
         "ci": _compact_ci(ci_evidence),
         "unverified_capabilities": [
             "hermes_live_apply",
             "paid_provider_smoke",
-            "human_design_calibration",
+            "transferred_visual_calibration",
             "real_device_validation",
             "commercial_release",
         ],
@@ -360,6 +389,15 @@ Content digest: `{state['content_digest']}`
 - Aggregate job: `{state['workflow_identity']['aggregate_job']}`
 - Manifest-declared required workflows: `{', '.join(state['workflow_identity']['manifest_declared_required_workflows']) or 'none'}`
 
+## Stage 3 baseline
+
+- TaskPack: `{state['stage3']['taskpack_id']}`
+- Tasks: `{state['stage3']['task_count']}`
+- Initial state: `{state['stage3']['initial_state']}`
+- Incoming candidate tree: `{state['stage3']['baseline_candidate_tree']}`
+- Incoming dirty paths: `{state['stage3']['incoming_dirty_count']}`
+- Writer state: `{state['stage3']['writer_state']}`
+
 ## CI evidence
 
 - Run: `{state['ci'].get('run_id', 'unknown')}`
@@ -381,6 +419,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ci-evidence", type=Path)
     parser.add_argument("--portable-readback", type=Path)
     parser.add_argument("--check-stale", action="store_true")
+    parser.add_argument("--check-current", action="store_true")
     args = parser.parse_args(argv)
     root = args.root.resolve()
     if args.check_stale:
@@ -395,6 +434,34 @@ def main(argv: list[str] | None = None) -> int:
             print("CURRENT_STATE_STALE_DOC_FAIL fourth-active-module")
             return 1
         print("CURRENT_STATE_STALE_DOC_PASS")
+        return 0
+    if args.check_current:
+        json_path = args.json_out if args.json_out.is_absolute() else root / args.json_out
+        markdown_path = args.markdown_out if args.markdown_out.is_absolute() else root / args.markdown_out
+        if not json_path.is_file() or not markdown_path.is_file():
+            print("CURRENT_STATE_FRESHNESS_FAIL projection-missing")
+            return 1
+        try:
+            tracked = json.loads(json_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            print("CURRENT_STATE_FRESHNESS_FAIL projection-invalid")
+            return 1
+        expected = build_state(root)
+        if tracked.get("source_digest") != expected["source_digest"]:
+            print("CURRENT_STATE_FRESHNESS_FAIL source-digest-mismatch")
+            return 1
+        if projection_digest(tracked) != projection_digest(expected):
+            print("CURRENT_STATE_FRESHNESS_FAIL projection-digest-mismatch")
+            return 1
+        try:
+            markdown = markdown_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            print("CURRENT_STATE_FRESHNESS_FAIL markdown-invalid")
+            return 1
+        if markdown != render_markdown(tracked):
+            print("CURRENT_STATE_FRESHNESS_FAIL markdown-json-mismatch")
+            return 1
+        print(f"CURRENT_STATE_FRESHNESS_PASS source_digest={expected['source_digest']}")
         return 0
     ci_evidence = args.ci_evidence.resolve() if args.ci_evidence else None
     portable_readback = args.portable_readback.resolve() if args.portable_readback else None

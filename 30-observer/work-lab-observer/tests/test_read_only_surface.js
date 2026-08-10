@@ -115,8 +115,46 @@ function run() {
     WlState.accept(WlApi.FIXTURE, "FIXTURE");
     WlState.markRefreshError("network down");
     assert(WlState.get().lastGood !== null, "lastGood retained after error");
+    assert(WlState.get().freshnessState === "stale", "refresh error marks stale");
+    assert(WlState.get().data.freshness.state === "stale", "rendered projection is stale, not merely internal state");
+    assert(WlState.get().lastGood.freshness.state === "fresh", "unmodified last-good source retained");
     WlState.markRefreshError("timeout");
     assert(WlState.get().lastGood !== null, "lastGood retained on second error");
+  });
+
+  t("bundled snapshot is always rendered stale rather than live", () => {
+    const snapshot = loadFixture("empty-new-install.json");
+    WlState.accept(snapshot, "SNAPSHOT");
+    assert(WlState.get().mode === "SNAPSHOT", "snapshot mode explicit");
+    assert(WlState.get().freshnessState === "stale", "snapshot freshness recomputed as stale");
+    assert(WlState.get().data.freshness.state === "stale", "snapshot payload cannot retain a fresh badge");
+  });
+
+  t("SSE client accepts only loopback event endpoint and forwards reconnect events", () => {
+    let created = null;
+    class FakeEventSource {
+      constructor(url) { this.url = url; created = this; }
+      close() { this.closed = true; }
+    }
+    global.EventSource = FakeEventSource;
+    const events = [];
+    let errors = 0;
+    try {
+      const source = WlApi.subscribeEvents("http://127.0.0.1:8766/api/v1/events", {
+        onEvent: (event, id) => events.push({ event, id }),
+        onError: () => { errors += 1; },
+      });
+      assert(source === created, "EventSource returned");
+      source.onmessage({ data: '{"event_id":"e1"}', lastEventId: "e1" });
+      source.onerror();
+      assert(events.length === 1 && events[0].id === "e1", "event and Last-Event-ID forwarded");
+      assert(errors === 1, "reconnect error surfaced as stale signal");
+      let rejected = false;
+      try { WlApi.subscribeEvents("http://127.0.0.1.evil.invalid/api/v1/events", {}); } catch (_) { rejected = true; }
+      assert(rejected, "evil loopback-prefix host rejected");
+    } finally {
+      delete global.EventSource;
+    }
   });
 
   t("web tree has no server/backoffice entry points", () => {

@@ -92,6 +92,8 @@ class ObserverRuntimeTests(unittest.TestCase):
         self.assertIn("dataQuality", projection)
         self.assertFalse(projection["mutationSurface"]["externalMutation"])
         serialized = str(projection).lower()
+        self.assertNotIn("wa-001", serialized)
+        self.assertNotIn("wa-002", serialized)
         self.assertNotIn("open design", serialized)
         self.assertNotIn("approve", serialized)
         self.assertNotIn("retry", serialized)

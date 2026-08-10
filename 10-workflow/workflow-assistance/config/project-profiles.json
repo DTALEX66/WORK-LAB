@@ -1,0 +1,26 @@
+{
+  "schema_version": "workflow/project-profile-registry/v1",
+  "profiles": [
+    {
+      "schema_version": "workflow/project-profile/v1",
+      "project": {"id": "work-lab", "root_policy": "explicit_git_root", "windows_native_first": true},
+      "configuration": {"precedence": ["global_defaults", "project_profile", "local_runtime", "environment", "cli"]},
+      "modules": {
+        "workflow-assistance": {"roots": ["10-workflow/workflow-assistance"], "active": true},
+        "work-lab-observer": {"roots": ["30-observer/work-lab-observer"], "depends_on": ["workflow-assistance"], "observation_only": true, "active": true}
+      },
+      "risk_zones": {"security": [".github", "00-governance"], "runtime": [".hermes/task-runtime"], "release": [".github/workflows"]},
+      "gates": {"verify": {"command": "python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py verify", "tiers": ["targeted", "module", "full", "release"], "platform": "windows-native"}},
+      "ci": {"stable_aggregate_check": "aggregate", "stable_aggregate_job": "aggregate", "workflow_file": ".github/workflows/work-lab-gate.yml", "workflow_name": "work-lab-gate", "exact_sha_required_for": ["main", "release"], "outage_blocks": ["release"]}
+    },
+    {
+      "schema_version": "workflow/project-profile/v1",
+      "project": {"id": "fixture-external", "root_policy": "discover_git_root", "windows_native_first": true},
+      "configuration": {"precedence": ["global_defaults", "project_profile", "local_runtime", "environment", "cli"]},
+      "modules": {"external": {"roots": ["."], "active": true}},
+      "risk_zones": {"security": [".github"], "runtime": [".hermes/task-runtime"]},
+      "gates": {"standalone": {"command": "python -m unittest discover", "tiers": ["targeted", "module", "full"], "platform": "windows-native"}},
+      "ci": {"stable_aggregate_check": "standalone", "exact_sha_required_for": ["release"], "outage_blocks": ["release"]}
+    }
+  ]
+}

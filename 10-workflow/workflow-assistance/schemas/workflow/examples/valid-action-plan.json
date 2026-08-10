@@ -4,7 +4,7 @@
   "task_id": "example-task",
   "status": "WAITING_APPROVAL",
   "target": {
-    "adapter": "open-design",
+    "adapter": "codex",
     "operation": "validate",
     "project_root": "."
   },

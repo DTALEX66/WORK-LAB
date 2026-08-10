@@ -180,6 +180,13 @@ def _write_github_output(path: Path, observation: dict[str, Any]) -> None:
         handle.write(json.dumps(observation, ensure_ascii=False, sort_keys=True) + "\nWORK_LAB_CI_OBSERVATION\n")
 
 
+def _write_observation(path: Path, observation: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp = path.with_suffix(path.suffix + ".tmp")
+    temp.write_text(json.dumps(observation, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temp, path)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repository", required=True)
@@ -191,6 +198,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--retry-budget", type=int, default=1)
     parser.add_argument("--retry-after", type=int)
     parser.add_argument("--github-output", type=Path)
+    parser.add_argument("--observation-path", type=Path)
     args = parser.parse_args(argv)
     policy = WatcherPolicy(retry_budget=args.retry_budget)
     if args.error:
@@ -208,6 +216,8 @@ def main(argv: list[str] | None = None) -> int:
             observation = make_observation(args.repository, args.commit, state, message="watcher read failed", retry_budget=args.retry_budget, observation_index=args.observation_index, retry_after=args.retry_after or retry_after, policy=policy)
     if args.github_output:
         _write_github_output(args.github_output, observation)
+    if args.observation_path:
+        _write_observation(args.observation_path, observation)
     print(json.dumps(observation, ensure_ascii=False, sort_keys=True))
     if observation["state"] == "SUCCEEDED":
         return 0

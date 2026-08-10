@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from copy import deepcopy
+from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Iterable
@@ -14,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads((ROOT / "schemas/observer-event.schema.json").read_text(encoding="utf-8"))
 VALIDATOR = Draft202012Validator(SCHEMA)
 SENSITIVE_KEYS = {"api_key", "apikey", "authorization", "password", "secret", "token", "cookie", "prompt", "response"}
+TRANSFERRED_PROJECT_IDS = {"open-design", "minigame"}
 
 
 class ObserverInputError(ValueError):
@@ -97,6 +99,7 @@ def project_tasks(events: Iterable[dict[str, Any]]) -> dict[str, dict[str, Any]]
         current["quality"] = event["quality"]
         current["coverage"] = event.get("coverage", "unknown")
         current["observedAt"] = event["observedAt"]
+        current["taskTitle"] = event.get("taskTitle") or "工作项"
     return deepcopy(tasks)
 
 
@@ -229,6 +232,8 @@ def project_projection(events: Iterable[dict[str, Any]]) -> dict[str, Any]:
     default_project = "work-lab"
     for event in history:
         pid = event.get("projectId") or default_project
+        if pid in TRANSFERRED_PROJECT_IDS:
+            continue
         current = projects.setdefault(pid, {"projectId": pid, "tasks": set(), "eventCount": 0, "sources": set()})
         current["eventCount"] += 1
         task_id = event.get("taskId")
@@ -253,6 +258,10 @@ def project_read_only_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
     """Build a deterministic, data-only dashboard projection from event history."""
     history = [deepcopy(event) for event in events]
     tasks = project_tasks(history)
+    public_tasks = [
+        {key: value for key, value in task.items() if key != "taskId"}
+        for task in sorted(tasks.values(), key=lambda item: (str(item.get("observedAt", "")), str(item.get("taskTitle", ""))))
+    ]
     quality = quality_summary(history)
     observed = [event.get("observedAt") for event in history if isinstance(event.get("observedAt"), str)]
     partial = sum(event.get("coverage") == "partial" for event in history)
@@ -266,7 +275,7 @@ def project_read_only_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
             "coverage": quality["coverage"],
             "lastObservedAt": max(observed, default="unknown"),
         },
-        "tasks": tasks,
+        "tasks": public_tasks,
         "usage": project_usage(history),
         "cost": project_cost(history, pricing_catalog or {}),
         "quality": quality,
@@ -294,6 +303,23 @@ def _task_state(event_type: str) -> str:
     if "run" in et or "start" in et or "heartbeat" in et or "progress" in et or "checkpoint" in et or "usage" in et or "telemetry" in et:
         return "running"
     return "unknown"
+
+
+def _freshness(observed_at: str | None) -> tuple[str, int | None]:
+    if not observed_at:
+        return "unknown", None
+    try:
+        parsed = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        age = max(0, int((datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds()))
+    except ValueError:
+        return "unknown", None
+    if age <= 60:
+        return "fresh", age
+    if age <= 300:
+        return "delayed", age
+    return "stale", age
 
 
 def _load_governance(project_root: Path) -> tuple[dict[str, Any], dict[str, Any], int]:
@@ -339,47 +365,45 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
     """Build the authoritative dashboard projection (Schema v2) from REAL governance +
     real observed events.
 
-    - `projects`: the real registered main projects (projects.json modules), each with
-      an observed state derived from its events — NOT stage-level WA/WL tasks.
+    - `projects`: projects observed in Hermes runtime events, grouped by `projectId`.
+      Repository modules are deliberately not used as a fallback: they are source
+      code ownership entries, not proof that a project is currently running.
     - `governance`: real Rules / Skills / Adapters / Memory·Context inventory counts.
     - usage/quality from real event aggregates.
     Output follows contracts/dashboard-projection.schema.json (LIVE mode).
     """
-    import datetime as _dt
     history = [deepcopy(e) for e in events]
-    now = _dt.datetime.now(_dt.timezone.utc).isoformat()
+    observed_times = sorted(e["observedAt"] for e in history if isinstance(e.get("observedAt"), str))
+    generated_at = observed_times[-1] if observed_times else "1970-01-01T00:00:00+00:00"
+    freshness_state, age_seconds = _freshness(generated_at if observed_times else None)
     project_root = Path(__file__).resolve().parents[3]  # repo root
 
-    # --- Real registered main projects (projects.json modules), not stage tasks.
+    # --- Hermes runtime projects only. An event without projectId is assigned to
+    # the explicit default WORK-LAB project by project_projection(); this keeps
+    # legacy events usable without turning source modules into fake projects.
+    observed: dict[str, list[dict[str, Any]]] = {}
+    for event in history:
+        project_id = event.get("projectId")
+        if not isinstance(project_id, str) or not project_id.strip():
+            project_id = "work-lab"
+        observed.setdefault(project_id, []).append(event)
+
     main_projects: list[dict[str, Any]] = []
-    pj = project_root / "00-governance" / "projects.json"
-    module_ids: list[str] = []
-    if pj.exists():
-        try:
-            pjdata = json.loads(pj.read_text(encoding="utf-8"))
-            module_ids = [m.get("id") for m in pjdata.get("modules", []) if m.get("id")]
-        except Exception:
-            pass
-    if not module_ids:
-        module_ids = ["workflow-assistance", "work-lab-observer"]
-
-    # Observed state per module: map real taskIds to their owning module by sourceModule,
-    # or fall back to a running/observed status when events reference the module.
-    status_by_module: dict[str, str] = {}
-    for e in history:
-        src = e.get("sourceModule") or ""
-        for mid in module_ids:
-            if mid in src or src in mid:
-                status_by_module[mid] = _task_state(e.get("eventType", ""))
-
-    for mid in module_ids:
-        state = status_by_module.get(mid, "running" if history else "idle")
-        main_projects.append({
-            "projectId": mid,
-            "displayName": mid.replace("-", " ").title(),
-            "repository": "DTALEX66/WORK-LAB",
+    for project_id in sorted(observed):
+        project_events = observed[project_id]
+        latest = max(project_events, key=lambda e: str(e.get("observedAt", "")))
+        state = _task_state(latest.get("eventType", ""))
+        if state == "unknown":
+            state = "running"
+        task_titles = [e.get("taskTitle") or "工作项" for e in project_events if isinstance(e.get("taskId"), str) and e.get("taskId")]
+        last_event_at = latest.get("observedAt")
+        project_freshness, _ = _freshness(last_event_at)
+        quality_state = "exact" if all(e.get("quality") == "source-exact" for e in project_events) else "partial"
+        project = {
+            "projectId": project_id,
+            "displayName": "WORK-LAB" if project_id == "work-lab" else project_id.replace("-", " ").title(),
             "agentPlatform": "hermes",
-            "task": None,
+            "task": task_titles[-1] if task_titles else None,
             "state": state,
             "stage": None,
             "durationSeconds": None,
@@ -387,9 +411,17 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
             "branch": "main",
             "headSha": None,
             "ciState": None,
-            "lastEventAt": None,
-            "quality": {"evidenceCompleteness": "complete" if history else "missing", "dataQuality": "exact" if history else "unknown", "freshness": "fresh" if history else "unknown", "sourceRef": "task-ledger"},
-        })
+            "lastEventAt": last_event_at,
+            "quality": {
+                "evidenceCompleteness": "complete",
+                "dataQuality": quality_state,
+                "freshness": project_freshness,
+                "sourceRef": "hermes-runtime-events",
+            },
+        }
+        if project_id == "work-lab":
+            project["repository"] = "DTALEX66/WORK-LAB"
+        main_projects.append(project)
 
     counts = {"running": 0, "waiting": 0, "blocked": 0, "failed": 0, "completed": 0, "unknown": 0}
     for p in main_projects:
@@ -420,32 +452,46 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
         "cost": {"amount": cost.get("estimated_cost") if cost_status == "estimated" else None, "currency": cost.get("currency"), "status": cost_status, "billingType": "mixed" if cost.get("pricing") else "unknown", "sourceRef": None, "effectiveAt": None},
         "subscriptionUsage": None,
         "series": [],
-        "quality": {"evidenceCompleteness": "complete", "dataQuality": "exact" if input_tokens else "unknown", "freshness": "fresh"},
+        "quality": {"evidenceCompleteness": "complete", "dataQuality": "exact" if input_tokens else "unknown", "freshness": freshness_state},
     }
 
     exact = sum(1 for e in history if e.get("quality") == "source-exact")
     quality = {
         "sourceCoverage": {"numerator": exact, "denominator": len(history), "scope": "observed-events"},
         "evidenceCompleteness": "complete" if history and exact == len(history) else "partial" if history else "missing",
-        "freshness": "fresh" if exact else "unknown",
+        "freshness": freshness_state if exact else "unknown",
         "unknown": sum(1 for e in history if e.get("quality") == "unknown" or e.get("coverage") == "unknown"),
         "malformed": 0, "dropped": 0,
         "duplicate": len(history) - len({e.get("eventId") for e in history}),
-        "projectionLagMs": None, "lastGoodAt": None,
+        "projectionLagMs": age_seconds * 1000 if age_seconds is not None else None, "lastGoodAt": generated_at if observed_times else None,
     }
+
+    # Backward-compatible aliases keep the legacy Python dashboard readable
+    # while Schema v2 remains the single authoritative projection payload.
+    legacy = project_read_only_dashboard(history, pricing_catalog)
+    usage["input_tokens"] = legacy["usage"]["input_tokens"]
+    usage["output_tokens"] = legacy["usage"]["output_tokens"]
+    usage["total_tokens"] = legacy["usage"]["total_tokens"]
+    usage["records"] = legacy["usage"]["records"]
+    quality["quality"] = "source-exact" if history and exact == len(history) else "partial" if history else "unknown"
+    quality["coverage"] = "full" if history else "unknown"
 
     return {
         "schemaVersion": "work-lab/observer-projection/v2",
         "mode": "LIVE",
-        "generatedAt": now,
-        "freshness": {"state": "fresh" if history else "unknown", "ageSeconds": None, "lastGoodAt": None},
+        "generatedAt": generated_at,
+        "freshness": {"state": freshness_state, "ageSeconds": age_seconds, "lastGoodAt": generated_at if observed_times else None},
         "summary": {"registeredProjects": len(main_projects), "activeProjects": counts["running"] + counts["waiting"], "tasks": counts},
         "projects": main_projects,
         "primaryBlocker": next(({"projectId": p["projectId"], "title": p["state"], "state": "BLOCKED", "durationSeconds": 0, "lastObservedAt": None, "impact": None, "nextCondition": None, "quality": p["quality"]} for p in main_projects if p["state"] == "blocked"), None),
         "usage": usage,
-        "ci": {"exactShaBound": 0, "exactShaRequired": 0, "queuedNoJob": 0, "running": 0, "passed": 0, "failed": 0, "unknown": 0, "quality": {"evidenceCompleteness": "partial", "dataQuality": "exact", "freshness": "fresh"}},
+        "ci": {"exactShaBound": 0, "exactShaRequired": 0, "queuedNoJob": 0, "running": 0, "passed": 0, "failed": 0, "unknown": 0, "quality": {"evidenceCompleteness": "partial", "dataQuality": "exact", "freshness": freshness_state}},
         "governance": governance,
         "quality": quality,
         "sourceRefs": [],
         "mutationSurface": mutation_surface(),
+        "overview": legacy["overview"],
+        "tasks": legacy["tasks"],
+        "cost": legacy["cost"],
+        "dataQuality": legacy["dataQuality"],
     }

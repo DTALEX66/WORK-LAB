@@ -1,0 +1,18 @@
+{
+  "schema_version": "workflow/config-ownership/v1",
+  "official_baseline": {"mode": "OBSERVE", "sources": ["hermes-official", "codex-official", "cc-switch-official", "github-official"]},
+  "user_overlay": {"mode": "MANAGE", "preserve_unknown": true},
+  "project_overlay": {"mode": "MANAGE", "root": "project-repository"},
+  "excluded_layers": ["PLATFORM_INTERNAL", "RUNTIME_EPHEMERAL", "SECRET"],
+  "fields": [
+    {"path": "display.language", "owner": "USER_OVERLAY", "mode": "MANAGE", "adapter": "hermes"},
+    {"path": "display.busy_input_mode", "owner": "USER_OVERLAY", "mode": "MANAGE", "adapter": "hermes"},
+    {"path": "project.AGENTS", "owner": "PROJECT_OVERLAY", "mode": "MANAGE", "adapter": "codex"},
+    {"path": "project.rules", "owner": "PROJECT_OVERLAY", "mode": "MANAGE", "adapter": "codex"},
+    {"path": "model.routing", "owner": "USER_OVERLAY", "mode": "OBSERVE", "adapter": "codex"},
+    {"path": "desktop.internal_state", "owner": "PLATFORM_INTERNAL", "mode": "IGNORE", "adapter": "codex"},
+    {"path": "sessions", "owner": "RUNTIME_EPHEMERAL", "mode": "IGNORE"},
+    {"path": "credentials", "owner": "SECRET", "mode": "FORBIDDEN"},
+    {"path": "mcp_servers.user_defined", "owner": "USER_OVERLAY", "mode": "OBSERVE", "adapter": "hermes"}
+  ]
+}
