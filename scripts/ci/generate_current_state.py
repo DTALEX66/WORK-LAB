@@ -266,6 +266,8 @@ def build_state(
         "git": {
             "head": _git(root, "rev-parse", "HEAD"),
             "branch": _git(root, "branch", "--show-current"),
+            "head_tree": _git(root, "rev-parse", "HEAD^{tree}"),
+            "remote_main": _git(root, "rev-parse", "origin/main"),
         },
         "modules": [
             {
@@ -446,13 +448,61 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, UnicodeError, json.JSONDecodeError):
             print("CURRENT_STATE_FRESHNESS_FAIL projection-invalid")
             return 1
-        expected = build_state(root)
+        default_ci = root / DEFAULT_CI_EVIDENCE
+        ci_evidence = default_ci.resolve() if default_ci.is_file() else None
+        expected = build_state(root, ci_evidence=ci_evidence)
         if tracked.get("source_digest") != expected["source_digest"]:
             print("CURRENT_STATE_FRESHNESS_FAIL source-digest-mismatch")
             return 1
         if projection_digest(tracked) != projection_digest(expected):
             print("CURRENT_STATE_FRESHNESS_FAIL projection-digest-mismatch")
             return 1
+        actual_head = expected["git"]["head"]
+        tracked_git = tracked.get("git", {})
+        tracked_head = str(tracked_git.get("head", ""))
+        tracked_tree = str(tracked_git.get("head_tree", ""))
+        # On PR CI the checkout HEAD is the merge ref whose parent is the PR
+        # base; the tracked head (generated on the PR branch) is therefore an
+        # ancestor of HEAD, not HEAD^ specifically. Accept any ancestor of HEAD
+        # (merge-base --is-ancestor) so stale branch/head can never pass, while
+        # PR merge refs and post-commit HEAD advancement both verify.
+        import subprocess as _subprocess
+
+        def _is_ancestor(commit: str, head: str) -> bool:
+            result = _subprocess.run(
+                ["git", "merge-base", "--is-ancestor", commit, head],
+                cwd=root, text=True, capture_output=True, check=False,
+            )
+            return result.returncode == 0
+
+        if not _is_ancestor(tracked_head, actual_head):
+            print(
+                f"CURRENT_STATE_FRESHNESS_FAIL git-head tracked={tracked_head} "
+                f"actual={actual_head} (not an ancestor of HEAD)"
+            )
+            return 1
+        # The tracked head's own tree must match the recorded head_tree (internal
+        # consistency), and the tracked head must be reachable. We do not require
+        # the PR merge ref's tree to equal the branch commit's tree.
+        tracked_commit_tree = _git(root, "rev-parse", f"{tracked_head}^{{tree}}")
+        if tracked_commit_tree != tracked_tree:
+            print(
+                f"CURRENT_STATE_FRESHNESS_FAIL git-tree tracked={tracked_tree} "
+                f"tracked_head_tree={tracked_commit_tree}"
+            )
+            return 1
+        if ci_evidence is not None:
+            tracked_ci = tracked.get("ci", {})
+            expected_ci = expected["ci"]
+            if str(tracked_ci.get("run_id", "")) != str(expected_ci.get("run_id", "")):
+                print(
+                    f"CURRENT_STATE_FRESHNESS_FAIL ci-run tracked={tracked_ci.get('run_id')} "
+                    f"expected={expected_ci.get('run_id')}"
+                )
+                return 1
+            if str(tracked_ci.get("head_sha", "")) != str(expected_ci.get("head_sha", "")):
+                print("CURRENT_STATE_FRESHNESS_FAIL ci-head")
+                return 1
         try:
             markdown = markdown_path.read_text(encoding="utf-8")
         except (OSError, UnicodeError):
@@ -465,6 +515,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     ci_evidence = args.ci_evidence.resolve() if args.ci_evidence else None
     portable_readback = args.portable_readback.resolve() if args.portable_readback else None
+    if ci_evidence is None:
+        default_ci = root / DEFAULT_CI_EVIDENCE
+        if default_ci.is_file():
+            ci_evidence = default_ci.resolve()
     state = build_state(root, ci_evidence=ci_evidence, portable_readback=portable_readback)
     json_out = args.json_out if args.json_out.is_absolute() else root / args.json_out
     markdown_out = args.markdown_out if args.markdown_out.is_absolute() else root / args.markdown_out

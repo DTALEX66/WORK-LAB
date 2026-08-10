@@ -1,5 +1,14 @@
 # WORK-LAB Stage 3 control-plane and Codex enhancement handoff
 
+> **STATUS: SUPERSEDED / HISTORICAL (2026-08-10)**
+>
+> 本文件已被 `WORK-LAB-FINAL-MASTER-CONTROL-PLANE` v2.0 取代（权威交接：
+> `.hermes/desktop-attachments/WORK-LAB-FINAL-MASTER-HERMES-TASKPACK-2026-08-10.md`，
+> tracked 图：`50-taskpacks/WORK-LAB-STAGE-3-TASK-GRAPH.json`，taskpackId=
+> `WORK-LAB-FINAL-MASTER-CONTROL-PLANE`）。本文件仅作为历史证据保留，不再作为
+> 前向执行权威；其中 PR #33 应标记为 `STAGE3_FOUNDATION_SLICE`，不代表
+> WL3-000..WL3-820 全部完成。
+
 ## 摘要
 
 本交接描述 WORK-LAB 在 2026-08-10 的 Stage 3 发布候选：项目继续以 Workflow Assistance 为唯一主动工作流控制、治理、任务、交付和可观测层，Observer 保持严格只读；同时交付一套基于 Codex 官方配置面的用户层增强包，使 Codex 能在非 WORK-LAB 项目中复用通用执行、数据、验证和 Git 交付边界，而不覆盖用户 provider、model、MCP、plugin、认证、会话或 Desktop 私有状态。

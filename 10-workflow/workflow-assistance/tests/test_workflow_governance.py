@@ -2464,6 +2464,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "provider-inventory",
                 "mcp-audit",
                 "shell",
+                "runtime-convergence",
                 "powershell",
             ),
         )

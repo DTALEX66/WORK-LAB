@@ -12,18 +12,22 @@ from typing import Any
 SCHEMA_VERSION = "workflow/growth-candidate/v1"
 CLASSIFICATIONS = {"curator", "learn", "manual", "hub", "upstream", "deployment"}
 RISKS = {"low", "medium", "high", "critical"}
-STATES = {"discovered", "isolated", "scanned", "evaluated", "candidate", "approved", "blocked", "retired"}
+STATES = {"discovered", "isolated", "scanned", "evaluated", "candidate", "approved", "approved_project", "approved_global", "blocked", "retired", "expired", "conflict"}
 REQUIRED = {"schema_version", "candidateId", "origin", "classification", "status", "risk"}
-ALLOWED = REQUIRED | {"sourceDigest"}
+ALLOWED = REQUIRED | {"sourceDigest", "scope", "ttl_days", "supersedes", "conflictsWith"}
 TRANSITIONS = {
-    "discovered": {"isolated", "blocked"},
-    "isolated": {"scanned", "blocked"},
-    "scanned": {"evaluated", "blocked"},
-    "evaluated": {"candidate", "blocked"},
-    "candidate": {"approved", "blocked"},
+    "discovered": {"isolated", "blocked", "conflict", "expired"},
+    "isolated": {"scanned", "blocked", "conflict", "expired"},
+    "scanned": {"evaluated", "blocked", "conflict", "expired"},
+    "evaluated": {"candidate", "blocked", "conflict", "expired"},
+    "candidate": {"approved", "approved_project", "approved_global", "blocked", "conflict", "expired"},
     "approved": {"retired"},
+    "approved_project": {"approved_global", "retired"},
+    "approved_global": {"retired"},
     "blocked": set(),
     "retired": set(),
+    "expired": set(),
+    "conflict": set(),
 }
 DIGEST = re.compile(r"^[a-f0-9]{64}$")
 
@@ -111,14 +115,32 @@ def transition(candidate: dict[str, Any], target: str, *, source_digest: str | N
     return validate_candidate(updated)
 
 
-def promote(candidate: dict[str, Any], *, approval: bool = False) -> dict[str, Any]:
+def promote(candidate: dict[str, Any], *, approval: bool = False, scope: str = "project") -> dict[str, Any]:
+    """Project approval promotes to approved_project; global always requires a
+    separate explicit approval."""
     if approval is not True:
         raise ValueError("explicit approval is required before promotion")
-    return transition(candidate, "approved")
+    target = "approved_global" if scope == "global" else "approved_project"
+    return transition(candidate, target)
+
+
+def approve_global(candidate: dict[str, Any], *, approval: bool = False) -> dict[str, Any]:
+    """Separate, explicit gate before a project-approved candidate may go global."""
+    if approval is not True:
+        raise ValueError("separate explicit approval is required before global promotion")
+    return transition(candidate, "approved_global")
 
 
 def quarantine(candidate: dict[str, Any]) -> dict[str, Any]:
     return transition(candidate, "blocked")
+
+
+def expire(candidate: dict[str, Any]) -> dict[str, Any]:
+    return transition(candidate, "expired")
+
+
+def mark_conflict(candidate: dict[str, Any]) -> dict[str, Any]:
+    return transition(candidate, "conflict")
 
 
 def rollback(candidate: dict[str, Any]) -> dict[str, Any]:

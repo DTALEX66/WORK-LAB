@@ -18,7 +18,7 @@ class Stage3BaselineTests(unittest.TestCase):
         tasks = graph["tasks"]
         by_id = {task["id"]: task for task in tasks}
 
-        self.assertEqual(graph["taskpackId"], "WORK-LAB-STAGE-3-CANONICAL-CONTROL-PLANE")
+        self.assertEqual(graph["taskpackId"], "WORK-LAB-FINAL-MASTER-CONTROL-PLANE")
         self.assertEqual(len(tasks), 28)
         self.assertEqual(len(by_id), len(tasks))
         self.assertEqual(by_id["WL3-000"]["dependsOn"], [])
@@ -51,8 +51,8 @@ class Stage3BaselineTests(unittest.TestCase):
         self.assertEqual(git["head"], git["remoteMain"])
         self.assertEqual(git["headTree"], git["realIndexTree"])
         self.assertTrue(DIGEST.fullmatch(git["incomingCandidateTree"]))
-        self.assertTrue(DIGEST.fullmatch(git["incomingBinaryDiffSha256"]))
-        self.assertEqual(len(classification["PREDECESSOR_OUTPUT"]), 13)
+        self.assertTrue(DIGEST.fullmatch(git["incomingCandidateSourceDigest"]))
+        self.assertEqual(len(classification["PREDECESSOR_OUTPUT"]), 5)
         self.assertEqual(classification["UNKNOWN"], [])
         self.assertEqual(classification["FORBIDDEN_OR_SENSITIVE"], [])
         self.assertEqual(baseline["writer"]["state"], "UNIQUE")

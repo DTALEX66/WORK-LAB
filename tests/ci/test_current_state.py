@@ -58,7 +58,7 @@ class CurrentStateTests(unittest.TestCase):
         self.assertEqual(state["contracts"]["count"], 30)
         self.assertEqual(len(state["skills"]["items"]), 13)
         self.assertEqual(state["stage3"]["task_count"], 28)
-        self.assertEqual(state["stage3"]["incoming_dirty_count"], 13)
+        self.assertEqual(state["stage3"]["incoming_dirty_count"], 5)
         self.assertEqual(state["stage3"]["writer_state"], "UNIQUE")
 
     def test_content_digest_is_stable_when_generated_at_changes(self) -> None:

@@ -11,6 +11,7 @@ jobs:
   plan:
     name: gate-plan
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       required_gates: ${{ steps.plan.outputs.required_gates }}
       plan_digest: ${{ steps.plan.outputs.plan_digest }}
@@ -58,8 +59,11 @@ jobs:
     needs: plan
     if: needs.plan.outputs.run_workflow == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
       - name: Install workflow validator dependencies
         run: python -m pip install --disable-pip-version-check --no-input "PyYAML>=6,<7" "jsonschema>=4,<5"
       - name: Run workflow structural and contract gates
@@ -68,6 +72,7 @@ jobs:
           # it remains a separate runtime/readback gate, not a fabricated CI success.
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py governance
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py compile
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py runtime-convergence
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py skill-provenance
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py security
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py context-pack
@@ -103,6 +108,9 @@ jobs:
     needs: plan
     if: needs.plan.outputs.run_observer == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: src:scripts:../../10-workflow/workflow-assistance/scripts/workflow
     defaults:
       run:
         working-directory: 30-observer/work-lab-observer
@@ -118,6 +126,8 @@ jobs:
           python tests/test_observer_dashboard.py
           python scripts/verify_usage_rollup.py
           python tests/test_usage_rollup.py
+          python tests/test_observer_canonical.py
+          python tests/test_observer_events_migration.py
       - name: Verify Observer Web and desktop contracts
         run: |
           node tests/run_all_tests.js
@@ -128,6 +138,7 @@ jobs:
     needs: plan
     if: needs.plan.outputs.run_integration == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -188,6 +199,7 @@ jobs:
       - observer
       - integration
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Aggregate actual job results
