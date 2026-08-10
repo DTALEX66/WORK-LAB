@@ -1,11 +1,11 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-10T13:08:49.568758Z",
+  "generated_at": "2026-08-10T13:09:11.479240Z",
   "source_digest": "465806699d12770ddf5979e5cb7862b148362ad723c3dc1293ce985e3c67bafa",
   "git": {
-    "head": "cc098402b0e42ae30a967d33060157091ce21f42",
+    "head": "d28cd15e5d8724377c358621046471865b3c7acb",
     "branch": "docs/taskpack-reconciliation-20260810",
-    "head_tree": "619c05fbcf8f408ce385f22367c57274e5253bbb",
+    "head_tree": "8898840379ba3515b367ae12a19aa309b2299694",
     "remote_main": "cd4a27f769865fc40f6e02372a25db3d58f62537"
   },
   "modules": [
@@ -221,5 +221,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "c47f727896179636ced279e298ca29670903a283234c5322c2da3d9be0b7795d"
+  "content_digest": "62012946a15d64b97bbd926e57b08fc0cf0256b4ea4ba430d946f85a583a6f95"
 }
