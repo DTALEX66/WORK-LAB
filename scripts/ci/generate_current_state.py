@@ -266,6 +266,8 @@ def build_state(
         "git": {
             "head": _git(root, "rev-parse", "HEAD"),
             "branch": _git(root, "branch", "--show-current"),
+            "head_tree": _git(root, "rev-parse", "HEAD^{tree}"),
+            "remote_main": _git(root, "rev-parse", "origin/main"),
         },
         "modules": [
             {
@@ -446,13 +448,46 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, UnicodeError, json.JSONDecodeError):
             print("CURRENT_STATE_FRESHNESS_FAIL projection-invalid")
             return 1
-        expected = build_state(root)
+        default_ci = root / DEFAULT_CI_EVIDENCE
+        ci_evidence = default_ci.resolve() if default_ci.is_file() else None
+        expected = build_state(root, ci_evidence=ci_evidence)
         if tracked.get("source_digest") != expected["source_digest"]:
             print("CURRENT_STATE_FRESHNESS_FAIL source-digest-mismatch")
             return 1
         if projection_digest(tracked) != projection_digest(expected):
             print("CURRENT_STATE_FRESHNESS_FAIL projection-digest-mismatch")
             return 1
+        actual_head = expected["git"]["head"]
+        actual_tree = expected["git"]["head_tree"]
+        tracked_git = tracked.get("git", {})
+        tracked_head = str(tracked_git.get("head", ""))
+        tracked_tree = str(tracked_git.get("head_tree", ""))
+        parent_head = _git(root, "rev-parse", "HEAD^")
+        parent_tree = _git(root, "rev-parse", "HEAD^^{tree}")
+        if tracked_head not in (actual_head, parent_head):
+            print(
+                f"CURRENT_STATE_FRESHNESS_FAIL git-head tracked={tracked_head} "
+                f"actual={actual_head} parent={parent_head}"
+            )
+            return 1
+        if tracked_tree not in (actual_tree, parent_tree):
+            print(
+                f"CURRENT_STATE_FRESHNESS_FAIL git-tree tracked={tracked_tree} "
+                f"actual={actual_tree} parent={parent_tree}"
+            )
+            return 1
+        if ci_evidence is not None:
+            tracked_ci = tracked.get("ci", {})
+            expected_ci = expected["ci"]
+            if str(tracked_ci.get("run_id", "")) != str(expected_ci.get("run_id", "")):
+                print(
+                    f"CURRENT_STATE_FRESHNESS_FAIL ci-run tracked={tracked_ci.get('run_id')} "
+                    f"expected={expected_ci.get('run_id')}"
+                )
+                return 1
+            if str(tracked_ci.get("head_sha", "")) != str(expected_ci.get("head_sha", "")):
+                print("CURRENT_STATE_FRESHNESS_FAIL ci-head")
+                return 1
         try:
             markdown = markdown_path.read_text(encoding="utf-8")
         except (OSError, UnicodeError):
@@ -465,6 +500,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     ci_evidence = args.ci_evidence.resolve() if args.ci_evidence else None
     portable_readback = args.portable_readback.resolve() if args.portable_readback else None
+    if ci_evidence is None:
+        default_ci = root / DEFAULT_CI_EVIDENCE
+        if default_ci.is_file():
+            ci_evidence = default_ci.resolve()
     state = build_state(root, ci_evidence=ci_evidence, portable_readback=portable_readback)
     json_out = args.json_out if args.json_out.is_absolute() else root / args.json_out
     markdown_out = args.markdown_out if args.markdown_out.is_absolute() else root / args.markdown_out

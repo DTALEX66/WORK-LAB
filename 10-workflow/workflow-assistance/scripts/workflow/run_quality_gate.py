@@ -287,6 +287,48 @@ def gate_shell() -> int:
     return run([bash, "-n", "setup.sh"])
 
 
+def gate_runtime_convergence() -> int:
+    """WL3-400/410/500/510/600: canonical store, durable worker, collectors, SSE."""
+    tests = (
+        "tests/test_canonical_store.py",
+        "tests/test_durable_worker.py",
+        "tests/test_project_registry.py",
+        "tests/test_collectors.py",
+        "tests/test_sse_hub.py",
+        "tests/test_platform_discovery.py",
+        "tests/test_skill_package_digest.py",
+        "tests/test_config_ownership.py",
+        "tests/test_config_coordinator.py",
+        "tests/test_memory_governance.py",
+        "tests/test_skill_plugin_scan.py",
+        "tests/test_controlled_repro.py",
+        "tests/test_model_lane_billing.py",
+        "tests/test_real_adapters.py",
+        "tests/test_tiered_adapters.py",
+        "tests/test_swap_and_size.py",
+    )
+    pythonpath = os.pathsep.join(
+        [
+            str(ROOT / "tests"),
+            str(ROOT / "scripts" / "workflow"),
+        ]
+    )
+    existing = os.environ.get("PYTHONPATH")
+    if existing:
+        pythonpath += os.pathsep + existing
+    code = run_python(
+        ["-m", "unittest", "-v", *(Path(test).stem for test in tests)],
+        env_updates={"PYTHONPATH": pythonpath},
+    )
+    if code != 0:
+        return code
+    # GATE-RUNTIME-CONVERGENCE acceptance (9/10 locally; #9 Tauri PENDING by toolchain).
+    return run_python(
+        ["scripts/workflow/verify_gate_runtime_convergence.py"],
+        env_updates={"PYTHONPATH": pythonpath},
+    )
+
+
 def gate_powershell() -> int:
     pwsh = shutil.which("pwsh") or shutil.which("powershell.exe")
     if not pwsh:
@@ -360,6 +402,11 @@ GATES: dict[str, Gate] = {
     "provider-inventory": Gate("provider-inventory", "Generate the secret-free configured provider/model inventory.", gate_provider_inventory),
     "mcp-audit": Gate("mcp-audit", "Smoke the MCP candidate audit template generator.", gate_mcp_audit),
     "shell": Gate("shell", "Parse setup.sh with bash -n when bash is available.", gate_shell),
+    "runtime-convergence": Gate(
+        "runtime-convergence",
+        "WL3 Wave 1: canonical store, durable worker, registry, collectors, SSE.",
+        gate_runtime_convergence,
+    ),
     "powershell": Gate("powershell", "Parse setup.ps1 with PowerShell AST when pwsh/powershell.exe is available.", gate_powershell),
 }
 
@@ -383,6 +430,7 @@ VERIFY_ORDER = (
     "provider-inventory",
     "mcp-audit",
     "shell",
+    "runtime-convergence",
     "powershell",
 )
 

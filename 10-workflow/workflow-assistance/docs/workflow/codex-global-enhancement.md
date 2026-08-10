@@ -127,3 +127,18 @@ Windows Git Bash 也可显式使用：
 - Codex 与 Hermes 的私有会话、memory、provider、认证和 Desktop 状态保持分离。
 
 因此当前结论是：**Codex 全局规则、原生 Skills、sandbox 默认值、命令策略、回读和回滚均已建立；项目专属 Ledger/Telemetry 仍采用显式 profile 接入，而不是全局强制。**
+
+## Responsibility and capability boundary
+
+本增强模块的责任与能力不得从本段自由扩张。冻结合同见：
+
+- 人类交接：`docs/workflow/codex-enhancement-boundary.md`
+- 机器可读权威：`config/codex-enhancement-boundary.json`
+- 回归合同：`tests/test_codex_enhancement_boundary.py`
+
+合同固定以下结论：该模块只提供官方 Codex 配置面上的 secret-free 用户 overlay，具备
+`detect/plan/apply/verify/rollback` 的受限能力；`apply` 必须由用户明确授权，`rollback`
+必须通过 owned-hash fence，`invoke` 明确为 `NOT_PROVIDED`。它不拥有 Codex runtime、
+provider/model、认证、MCP/plugin、会话、memory、Desktop 私有状态、项目 Task Ledger、
+Telemetry Ledger、Sidecar、Git 发布或外部项目写入能力。任何新增全局能力必须先修改
+机器合同、文档和测试，不能仅通过增加脚本或 Skill 实现。

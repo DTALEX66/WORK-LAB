@@ -1,6 +1,8 @@
 {
   "schemaVersion": "work-lab/delivery-handoff/v1",
   "handoffId": "WORK-LAB-STAGE-3-CONTROL-PLANE-CODEX-2026-08-10",
+  "status": "SUPERSEDED_HISTORICAL_BY_MASTER_2.0",
+  "supersededBy": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE v2.0 (2026-08-10)",
   "preparedAt": "2026-08-10T00:41:44+08:00",
   "repository": "DTALEX66/WORK-LAB",
   "defaultBranch": "main",

@@ -47,7 +47,12 @@ class GrowthCandidateLifecycleTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "approval"):
             module.promote(value, approval="false")
         approved = module.promote(value, approval=True)
-        self.assertEqual(approved["status"], "approved")
+        self.assertEqual(approved["status"], "approved_project")
+        # Global promotion needs a separate explicit gate.
+        with self.assertRaisesRegex(ValueError, "approval"):
+            module.approve_global(approved)
+        global_approved = module.approve_global(approved, approval=True)
+        self.assertEqual(global_approved["status"], "approved_global")
 
     def test_invalid_skip_and_terminal_transitions_fail_closed(self) -> None:
         module = load_module()
