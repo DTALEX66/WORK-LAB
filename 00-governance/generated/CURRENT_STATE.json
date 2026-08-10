@@ -1,11 +1,11 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-10T09:14:50.980152Z",
+  "generated_at": "2026-08-10T09:17:37.330586Z",
   "source_digest": "269af31ea7f5c96b83b16d2598345385ac2f5455a8b792e1c51856de5ec1d3a3",
   "git": {
-    "head": "a4c67e9c836d7b8e1a794aa16316575b3d2e91d1",
-    "branch": "main",
-    "head_tree": "17ae946a6bf95d7d8fa04304fb10dde87fd8247f",
+    "head": "f9cabf1fe18b50d45fd943642fae921eba99bb15",
+    "branch": "docs/wl3-delivery-summary-and-errors",
+    "head_tree": "be8020bde41435e8f7bdcc0606dd25eca2e4fd9b",
     "remote_main": "a4c67e9c836d7b8e1a794aa16316575b3d2e91d1"
   },
   "modules": [
@@ -253,5 +253,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "04303543690189268dfa1ab084a7ebfe293de671d8b1df24c56a7b07612230b1"
+  "content_digest": "a00a63921a18c321850bfd55ea0b399118aead6671ee880e02dd2f7ea547ae3e"
 }
