@@ -32,6 +32,11 @@ class GovernanceGateTests(unittest.TestCase):
         self.assertNotIn('"workflow":"success"', normalized)
         self.assertIn("needs:", workflow)
 
+    def test_required_workflow_checks_current_state_freshness_and_stage3_baseline(self):
+        workflow = (ROOT / ".github/workflows/work-lab-gate.yml").read_text(encoding="utf-8")
+        self.assertIn("python scripts/ci/generate_current_state.py --check-current", workflow)
+        self.assertIn("python tests/ci/test_stage3_baseline.py", workflow)
+
 
     def test_contract_catalog_references_real_schemas(self):
         script = ROOT / "scripts/ci/verify_contract_catalog.py"
@@ -42,7 +47,7 @@ class GovernanceGateTests(unittest.TestCase):
             capture_output=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("CONTRACT_CATALOG_PASS contracts=28 schemas=28", result.stdout)
+        self.assertIn("CONTRACT_CATALOG_PASS contracts=30 schemas=30", result.stdout)
 
 if __name__ == "__main__":
     unittest.main()

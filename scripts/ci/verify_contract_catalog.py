@@ -39,6 +39,8 @@ EXPECTED = {
     "model-policy": "workflow",
     "memory-record": "workflow",
     "rule-drift": "workflow",
+    "config-ownership": "workflow",
+    "platform-identity": "workflow",
 }
 CANONICAL_SCHEMA_PREFIXES = {
     "module-profile": ("00-governance/",),
@@ -71,6 +73,8 @@ CANONICAL_SCHEMA_PREFIXES = {
     "model-policy": ("10-workflow/",),
     "memory-record": ("10-workflow/",),
     "rule-drift": ("10-workflow/",),
+    "config-ownership": ("10-workflow/",),
+    "platform-identity": ("10-workflow/",),
 }
 
 
