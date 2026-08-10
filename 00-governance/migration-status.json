@@ -25,9 +25,14 @@
   },
   "localRecoveryRef": "recovery/pre-cutover-3df92cbba39e",
   "legacyLocalCheckoutArchive": "PHYSICAL_RENAME_COMPLETED_SOURCE_COPY_PRESERVED",
-  "legacyLocalArchiveManifest": "D:/All projects/WORK-LAB-ARCHIVE/migration-20260805T120000Z/source-checkouts-archive-manifest.json",
-  "legacyLocalPhysicalArchiveRoot": "D:/All projects/WORK-LAB-ARCHIVE/migration-20260805T120000Z/physical-checkouts",
+  "legacyLocalArchiveManifest": "90-archive-manifests/migration-20260805/source-checkouts-archive-manifest.json",
+  "legacyLocalPhysicalArchiveRoot": "90-archive-manifests/migration-20260805 (evidence root; full histories preserved in cloud DTALEX66/MINIGAME + DTALEX66/OPEN-DESIGN-Assistance and canonical main for Workflow-assistance)",
   "legacyLocalPhysicalArchiveVerification": "PYTHON_OS_RENAME_PASS_ORIGINAL_PATHS_ABSENT_ARCHIVE_PATHS_PRESENT",
+  "archiveRetirement": {
+    "date": "2026-08-10",
+    "externalArchive": "D:/All projects/WORK-LAB-ARCHIVE",
+    "reason": "Migration evidence merged into 90-archive-manifests/migration-20260805/ (secret-scanned, hash-verified); all three absorbed git histories verified preserved in cloud (MINIGAME d4bf0b3, OPEN-DESIGN-Assistance 6e27512) and canonical main (Workflow-assistance 4929142); module content is a strict subset of canonical; MINIGAME test Chrome profiles (sensitive) removed with the archive."
+  },
   "legacyLocalPaths": ["D:/All projects/Workflow-assistance", "D:/All projects/OPEN-DESIGN-Assistance", "D:/All projects/MINIGAME"],
   "legacyCloudArchive": "COMPLETED_ARCHIVED_READBACK",
   "globalWorkflowRole": "WORK-LAB root task-pack control plane plus portable global workflow source in 10-workflow/workflow-assistance; Hermes Home remains external platform state",
