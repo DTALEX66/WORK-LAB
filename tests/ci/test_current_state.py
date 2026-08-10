@@ -14,6 +14,7 @@ from scripts.ci.generate_current_state import (
     build_state,
     check_stale_references,
     content_digest,
+    projection_digest,
 )
 
 
@@ -54,7 +55,7 @@ class CurrentStateTests(unittest.TestCase):
         )
         self.assertEqual(state["workflow_identity"]["workflow_name"], "work-lab-gate")
         self.assertEqual(state["workflow_identity"]["aggregate_job"], "aggregate")
-        self.assertEqual(state["contracts"]["count"], 28)
+        self.assertEqual(state["contracts"]["count"], 30)
         self.assertEqual(len(state["skills"]["items"]), 13)
         self.assertEqual(state["stage3"]["task_count"], 28)
         self.assertEqual(state["stage3"]["incoming_dirty_count"], 13)
@@ -66,6 +67,15 @@ class CurrentStateTests(unittest.TestCase):
         first["generated_at"] = "2026-01-01T00:00:00Z"
         second["generated_at"] = "2029-01-01T00:00:00Z"
         self.assertEqual(content_digest(first), content_digest(second))
+
+    def test_projection_digest_excludes_recursive_commit_identity(self) -> None:
+        first = build_state(ROOT)
+        second = build_state(ROOT)
+        first["git"]["head"] = "a" * 40
+        second["git"]["head"] = "b" * 40
+        first["generated_at"] = "2026-01-01T00:00:00Z"
+        second["generated_at"] = "2029-01-01T00:00:00Z"
+        self.assertEqual(projection_digest(first), projection_digest(second))
 
     def test_stale_reference_check_detects_old_workflow_and_fourth_module(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -104,6 +114,25 @@ class CurrentStateTests(unittest.TestCase):
             self.assertTrue(md_out.is_file())
             self.assertIn("CURRENT_STATE_PASS", result.stdout)
             self.assertEqual(json.loads(json_out.read_text(encoding="utf-8"))["skills"]["count"], 13)
+            check = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--root",
+                    str(ROOT),
+                    "--json-out",
+                    str(json_out),
+                    "--markdown-out",
+                    str(md_out),
+                    "--check-current",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
+            self.assertIn("CURRENT_STATE_FRESHNESS_PASS", check.stdout)
 
 
 if __name__ == "__main__":

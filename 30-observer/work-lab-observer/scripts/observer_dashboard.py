@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import argparse
 import html
+import ipaddress
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import os
 from pathlib import Path
 import sys
 from typing import Any
@@ -22,6 +24,71 @@ REPO_ROOT = MODULE_ROOT.parents[1]
 
 VIEWS = ("full", "compact")
 THEMES = ("dark", "light")
+
+
+def _is_loopback_host(host: str | None) -> bool:
+    if not host:
+        return False
+    candidate = host.strip().strip("[]").lower()
+    if candidate == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(candidate).is_loopback
+    except ValueError:
+        return False
+
+
+def _allowed_origin(origin: str) -> bool:
+    try:
+        parsed = urlsplit(origin)
+        _ = parsed.port
+    except ValueError:
+        return False
+    return (
+        parsed.scheme in {"http", "https"}
+        and _is_loopback_host(parsed.hostname)
+        and parsed.username is None
+        and parsed.password is None
+        and parsed.path in {"", "/"}
+        and not parsed.query
+        and not parsed.fragment
+    )
+
+
+def _pid_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
+
+
+def _transport_projection(endpoint_path: Path | None) -> dict[str, Any]:
+    offline = {"state": "offline", "source": "workflow-sidecar", "eventsUrl": None, "reconnectMs": 2000}
+    if endpoint_path is None or not endpoint_path.is_file():
+        return offline
+    try:
+        endpoint = json.loads(endpoint_path.read_text(encoding="utf-8"))
+        events_url = endpoint.get("eventsUrl")
+        parsed = urlsplit(events_url)
+        if (
+            endpoint.get("schemaVersion") != "workflow/sidecar-endpoint/v1"
+            or not isinstance(endpoint.get("pid"), int)
+            or not _pid_alive(endpoint["pid"])
+            or parsed.scheme != "http"
+            or not _is_loopback_host(parsed.hostname)
+            or parsed.path != "/api/v1/events"
+        ):
+            return offline
+    except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError):
+        return offline
+    return {"state": "discovered", "source": "workflow-sidecar", "eventsUrl": events_url, "reconnectMs": 2000}
 
 
 def _json_for_script(value: Any) -> str:
@@ -173,7 +240,7 @@ def _render_full(projection: dict[str, Any]) -> str:
     data_quality = projection.get("dataQuality", {})
     usage = projection.get("usage", {})
     cost = projection.get("cost", {})
-    tasks = projection.get("tasks", {})
+    tasks = projection.get("tasks", [])
     task_count = overview.get("taskCount", 0)
     event_count = overview.get("eventCount", 0)
     q = str(quality.get("quality", "unknown"))
@@ -185,11 +252,10 @@ def _render_full(projection: dict[str, Any]) -> str:
 
     task_rows = ""
     if tasks:
-        for tid in sorted(tasks):
-            t = tasks[tid]
+        for t in tasks:
             task_rows += (
                 "<tr>"
-                f'<td class="mono">{html.escape(str(t.get("taskId", tid)))}</td>'
+                f'<td>{html.escape(str(t.get("taskTitle", "工作项")))}</td>'
                 f'<td class="num">{html.escape(str(t.get("events", 0)))}</td>'
                 f'<td>{html.escape(str(t.get("lastEventType", "unknown")))}</td>'
                 f'<td><span style="color:{_quality_tone(str(t.get("quality", "unknown")))}">●</span> {html.escape(_quality_cn(str(t.get("quality", "unknown"))))}</td>'
@@ -257,7 +323,7 @@ def _render_compact(projection: dict[str, Any]) -> str:
     quality = projection.get("quality", {})
     usage = projection.get("usage", {})
     cost = projection.get("cost", {})
-    tasks = projection.get("tasks", {})
+    tasks = projection.get("tasks", [])
     task_count = overview.get("taskCount", 0)
     event_count = overview.get("eventCount", 0)
     q = str(quality.get("quality", "unknown"))
@@ -267,11 +333,10 @@ def _render_compact(projection: dict[str, Any]) -> str:
 
     task_rows = ""
     if tasks:
-        for tid in sorted(tasks)[:6]:
-            t = tasks[tid]
+        for t in tasks[:6]:
             task_rows += (
                 "<tr>"
-                f'<td class="mono">{html.escape(str(t.get("taskId", tid)))}</td>'
+                f'<td>{html.escape(str(t.get("taskTitle", "工作项")))}</td>'
                 f'<td class="num">{html.escape(str(t.get("events", 0)))}</td>'
                 f'<td><span style="color:{_quality_tone(str(t.get("quality", "unknown")))}">●</span> {html.escape(_quality_cn(str(t.get("quality", "unknown"))))}</td>'
                 "</tr>"
@@ -343,7 +408,7 @@ def _render_dashboard(projection: dict[str, Any], *, view: str = "full", theme: 
 </html>"""
 
 
-def make_handler(store: ObserverStore):
+def make_handler(store: ObserverStore, endpoint_path: Path | None = None):
     class ObserverDashboardHandler(BaseHTTPRequestHandler):
         server_version = "WORK-LAB-Observer/1"
 
@@ -352,7 +417,10 @@ def make_handler(store: ObserverStore):
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            origin = self.headers.get("Origin")
+            if origin and _allowed_origin(origin):
+                self.send_header("Access-Control-Allow-Origin", origin)
+                self.send_header("Vary", "Origin")
             self.end_headers()
             self.wfile.write(body)
 
@@ -360,6 +428,10 @@ def make_handler(store: ObserverStore):
             self._send(405, "application/json; charset=utf-8", b'{"status":"method_not_allowed"}')
 
         def do_GET(self) -> None:  # noqa: N802
+            origin = self.headers.get("Origin")
+            if origin and not _allowed_origin(origin):
+                self._send(403, "application/json; charset=utf-8", b'{"status":"origin_not_allowed"}')
+                return
             parsed = urlsplit(self.path)
             path = parsed.path
             query = parse_qs(parsed.query)
@@ -367,6 +439,7 @@ def make_handler(store: ObserverStore):
             theme = (query.get("theme") or ["dark"])[0]
             try:
                 projection = store.rebuild_projection()
+                projection = {**projection, "transport": _transport_projection(endpoint_path)}
             except Exception as exc:  # fail closed without exposing event contents
                 self._send(500, "application/json; charset=utf-8", json.dumps({"status": "observer_error", "error": type(exc).__name__}).encode())
                 return
@@ -435,9 +508,12 @@ class ReadOnlyObserverStore:
 
 
 def create_server(project_root: Path, runtime_root: Path, host: str = "127.0.0.1", port: int = 8765) -> ThreadingHTTPServer:
+    if not _is_loopback_host(host):
+        raise ValueError("observer host must be loopback-only")
     runtime_root.mkdir(parents=True, exist_ok=True)
     store = ObserverStore(runtime_root, project_root=project_root)
-    return ThreadingHTTPServer((host, port), make_handler(ReadOnlyObserverStore(store)))
+    endpoint_path = runtime_root.parent / "workflow" / "sidecar-endpoint.json"
+    return ThreadingHTTPServer((host, port), make_handler(ReadOnlyObserverStore(store), endpoint_path))
 
 
 def main() -> int:

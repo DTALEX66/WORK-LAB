@@ -33,6 +33,10 @@ Current forward authority:
 - Stage 3 TaskPack: `WORK-LAB-STAGE-3-CANONICAL-CONTROL-PLANE` v1.0.
 - Tracked graph: `WORK-LAB-STAGE-3-TASK-GRAPH.json` in this directory.
 - Baseline: `00-governance/generated/STAGE3_BASELINE.json`.
+- Current implementation summary and resume boundary:
+  `WORK-LAB-STAGE-3-CONTROL-PLANE-CODEX-HANDOFF.md`.
+- Machine-readable delivery manifest:
+  `WORK-LAB-STAGE-3-CONTROL-PLANE-CODEX-DELIVERY.json`.
 - Stage 2 and the v2 attachment/reconciliation are historical predecessor
   evidence. They are `SUPERSEDED` for forward execution and cannot restore the
   old three-module architecture or active design gates.
@@ -40,7 +44,7 @@ Current forward authority:
 Evidence generated under the ignored local `.hermes/task-artifacts` path is not
 published as source content. The committed handoff records reproducible source
 tips, module paths, recovery locations and remaining approval gates. Hermes
-Hermes global config, auth, sessions, cron, skills, plugins and caches remain platform
+global config, auth, sessions, cron, skills, plugins and caches remain platform
 state and are never absorbed by a task pack.
 
 ## Historical local predecessor slice (`SUPERSEDED`)

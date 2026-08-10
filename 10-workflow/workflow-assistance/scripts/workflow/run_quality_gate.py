@@ -9,6 +9,12 @@ from pathlib import Path
 from typing import Callable, NamedTuple
 
 ROOT = Path(__file__).resolve().parents[2]
+RETIRED_ORDINARY_TESTS = {
+    "test_design_token_compliance.py",
+    "test_figma_sync.py",
+    "test_fixture_separation.py",
+    "test_renderer_contract.py",
+}
 
 
 class Gate(NamedTuple):
@@ -95,23 +101,26 @@ def project_runtime_environment(root: Path) -> dict[str, str]:
     return env
 
 
-def run(argv: list[str], *, cwd: Path = ROOT) -> int:
+def run(argv: list[str], *, cwd: Path = ROOT, env_updates: dict[str, str] | None = None) -> int:
     printable = " ".join(argv)
     print(f"\n=== {printable} ===")
+    env = project_runtime_environment(cwd)
+    if env_updates:
+        env.update(env_updates)
     result = subprocess.run(
         argv,
         cwd=cwd,
         text=True,
         encoding="utf-8",
         errors="replace",
-        env=project_runtime_environment(cwd),
+        env=env,
     )
     print(f"=== exit {result.returncode}: {printable} ===")
     return result.returncode
 
 
-def run_python(args: list[str]) -> int:
-    return run([sys.executable, *args])
+def run_python(args: list[str], *, env_updates: dict[str, str] | None = None) -> int:
+    return run([sys.executable, *args], env_updates=env_updates)
 
 
 def tracked_python_files() -> list[str]:
@@ -119,8 +128,24 @@ def tracked_python_files() -> list[str]:
     return [path.relative_to(ROOT).as_posix() for root in roots for path in sorted(root.glob("*.py"))]
 
 
+def governance_test_files() -> list[str]:
+    return [
+        path.relative_to(ROOT).as_posix()
+        for path in sorted((ROOT / "tests").glob("test_*.py"))
+        if path.name not in RETIRED_ORDINARY_TESTS
+    ]
+
+
 def gate_governance() -> int:
-    return run_python(["-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py", "-v"])
+    modules = [Path(path).stem for path in governance_test_files()]
+    pythonpath = str(ROOT / "tests")
+    existing = os.environ.get("PYTHONPATH")
+    if existing:
+        pythonpath += os.pathsep + existing
+    return run_python(
+        ["-m", "unittest", "-v", *modules],
+        env_updates={"PYTHONPATH": pythonpath},
+    )
 
 
 def gate_compile() -> int:

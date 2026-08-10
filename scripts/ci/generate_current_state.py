@@ -126,6 +126,19 @@ def content_digest(state: dict[str, Any]) -> str:
     return sha256_bytes(encoded)
 
 
+def projection_digest(state: dict[str, Any]) -> str:
+    """Digest deterministic tracked projection fields, excluding commit/time/CI evidence.
+
+    A tracked file cannot contain the SHA of the commit that contains itself. This
+    digest therefore proves canonical-source freshness without a recursive HEAD
+    dependency, while the publication gate proves the final exact commit separately.
+    """
+    volatile = {"generated_at", "git", "ci", "content_digest"}
+    payload = {key: value for key, value in state.items() if key not in volatile}
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return sha256_bytes(encoded)
+
+
 def _git(root: Path, *args: str) -> str:
     result = subprocess.run(
         ["git", *args], cwd=root, text=True, capture_output=True, check=False
@@ -406,6 +419,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ci-evidence", type=Path)
     parser.add_argument("--portable-readback", type=Path)
     parser.add_argument("--check-stale", action="store_true")
+    parser.add_argument("--check-current", action="store_true")
     args = parser.parse_args(argv)
     root = args.root.resolve()
     if args.check_stale:
@@ -420,6 +434,34 @@ def main(argv: list[str] | None = None) -> int:
             print("CURRENT_STATE_STALE_DOC_FAIL fourth-active-module")
             return 1
         print("CURRENT_STATE_STALE_DOC_PASS")
+        return 0
+    if args.check_current:
+        json_path = args.json_out if args.json_out.is_absolute() else root / args.json_out
+        markdown_path = args.markdown_out if args.markdown_out.is_absolute() else root / args.markdown_out
+        if not json_path.is_file() or not markdown_path.is_file():
+            print("CURRENT_STATE_FRESHNESS_FAIL projection-missing")
+            return 1
+        try:
+            tracked = json.loads(json_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            print("CURRENT_STATE_FRESHNESS_FAIL projection-invalid")
+            return 1
+        expected = build_state(root)
+        if tracked.get("source_digest") != expected["source_digest"]:
+            print("CURRENT_STATE_FRESHNESS_FAIL source-digest-mismatch")
+            return 1
+        if projection_digest(tracked) != projection_digest(expected):
+            print("CURRENT_STATE_FRESHNESS_FAIL projection-digest-mismatch")
+            return 1
+        try:
+            markdown = markdown_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            print("CURRENT_STATE_FRESHNESS_FAIL markdown-invalid")
+            return 1
+        if markdown != render_markdown(tracked):
+            print("CURRENT_STATE_FRESHNESS_FAIL markdown-json-mismatch")
+            return 1
+        print(f"CURRENT_STATE_FRESHNESS_PASS source_digest={expected['source_digest']}")
         return 0
     ci_evidence = args.ci_evidence.resolve() if args.ci_evidence else None
     portable_readback = args.portable_readback.resolve() if args.portable_readback else None

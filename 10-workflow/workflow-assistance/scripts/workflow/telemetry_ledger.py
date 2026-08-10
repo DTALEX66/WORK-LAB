@@ -9,15 +9,31 @@ import json
 from pathlib import Path
 from typing import Any
 
-SENSITIVE = {"token", "password", "secret", "cookie", "authorization", "prompt", "response", "api_key", "apikey"}
+SENSITIVE_FRAGMENTS = {
+    "apikey", "authorization", "body", "cookie", "credential", "password",
+    "prompt", "response", "secret", "token",
+}
+RESERVED_KEYS = {"schemaversion", "sequence", "producer", "dedupekey", "payloaddigest", "redactionstate"}
+
+
+def _normalize_key(value: object) -> str:
+    return "".join(character for character in str(value).lower() if character.isalnum())
 
 
 def _keys(value: Any) -> set[str]:
     if isinstance(value, dict):
-        return {str(k).lower() for k in value} | set().union(*(_keys(v) for v in value.values()))
+        return {_normalize_key(k) for k in value} | set().union(*(_keys(v) for v in value.values()))
     if isinstance(value, list):
         return set().union(*(_keys(v) for v in value)) if value else set()
     return set()
+
+
+def _validate_keys(value: Any, *, reject_reserved: bool) -> None:
+    keys = _keys(value)
+    if any(fragment in key for key in keys for fragment in SENSITIVE_FRAGMENTS):
+        raise ValueError("sensitive telemetry key")
+    if reject_reserved and keys & RESERVED_KEYS:
+        raise ValueError("reserved telemetry key")
 
 
 class TelemetryLedger:
@@ -34,20 +50,19 @@ class TelemetryLedger:
             row = json.loads(line)
             if row.get("schema_version") != "workflow/telemetry-ledger/v1":
                 raise ValueError("unsupported telemetry schema")
-            if _keys(row) & SENSITIVE:
-                raise ValueError("sensitive telemetry key")
+            _validate_keys(row, reject_reserved=False)
             rows.append(row)
         return rows
 
     def append(self, event: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(event, dict) or not event.get("event_id"):
             raise ValueError("event_id is required")
-        if _keys(event) & SENSITIVE:
-            raise ValueError("sensitive telemetry key")
+        _validate_keys(event, reject_reserved=True)
         existing = self.read()
         if any(row["event_id"] == event["event_id"] for row in existing):
             raise ValueError("duplicate event_id")
         record = {
+            **event,
             "schema_version": "workflow/telemetry-ledger/v1",
             "sequence": len(existing) + 1,
             "project_id": "unknown",
@@ -61,7 +76,6 @@ class TelemetryLedger:
             "dedupe_key": event["event_id"],
             "payload_digest": "REDACTED",
             "redaction_state": "REDACTED",
-            **event,
         }
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8", newline="\n") as handle:

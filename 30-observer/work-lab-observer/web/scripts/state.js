@@ -38,17 +38,37 @@ const WlState = (function () {
     Object.assign(state, partial);
   }
 
+  function staleCopy(data, freshnessState) {
+    if (!data || typeof data !== "object") return data;
+    const copy = JSON.parse(JSON.stringify(data));
+    const timestamp = Date.parse(copy.generatedAt || (copy.freshness && copy.freshness.lastGoodAt) || "");
+    const ageSeconds = Number.isFinite(timestamp) ? Math.max(0, Math.floor((Date.now() - timestamp) / 1000)) : null;
+    copy.mode = state.mode;
+    copy.freshness = Object.assign({}, copy.freshness || {}, {
+      state: freshnessState,
+      ageSeconds,
+      lastGoodAt: (copy.freshness && copy.freshness.lastGoodAt) || copy.generatedAt || null,
+    });
+    if (copy.quality) copy.quality.freshness = freshnessState;
+    if (Array.isArray(copy.projects)) {
+      copy.projects.forEach((project) => {
+        if (project.quality) project.quality.freshness = freshnessState;
+      });
+    }
+    return copy;
+  }
+
   /* Accept a new projection (FIXTURE or LIVE). Never store a partial/empty as
      last-good if we already have something better. */
   function accept(data, mode) {
     const m = normalizeMode(mode);
     state.mode = m;
-    state.data = data;
+    state.data = m === "SNAPSHOT" ? staleCopy(data, "stale") : data;
     state.generatedAt = data && data.generatedAt ? data.generatedAt : null;
-    state.freshnessState = data && data.freshness ? data.freshness.state : "unknown";
+    state.freshnessState = state.data && state.data.freshness ? state.data.freshness.state : "unknown";
     state.sourceCount = data && Array.isArray(data.sourceRefs) ? data.sourceRefs.length : 0;
     if (data && data.summary && typeof data.summary.registeredProjects === "number") {
-      state.lastGood = data; // a real projection is a valid last-good
+      state.lastGood = data; // retain the unmodified last-good source projection
     }
     state.refreshError = null;
     return state;
@@ -57,9 +77,9 @@ const WlState = (function () {
   /* On refresh failure: keep lastGood, mark stale/offline. Do not zero out. */
   function markRefreshError(message) {
     state.refreshError = message;
-    if (state.mode === "LIVE" && state.lastGood) {
-      state.freshnessState = "stale";
-    }
+    const nextFreshness = state.lastGood ? "stale" : "offline";
+    state.freshnessState = nextFreshness;
+    state.data = state.lastGood ? staleCopy(state.lastGood, nextFreshness) : null;
     return state;
   }
 

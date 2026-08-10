@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from copy import deepcopy
+from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Iterable
@@ -98,6 +99,7 @@ def project_tasks(events: Iterable[dict[str, Any]]) -> dict[str, dict[str, Any]]
         current["quality"] = event["quality"]
         current["coverage"] = event.get("coverage", "unknown")
         current["observedAt"] = event["observedAt"]
+        current["taskTitle"] = event.get("taskTitle") or "工作项"
     return deepcopy(tasks)
 
 
@@ -256,6 +258,10 @@ def project_read_only_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
     """Build a deterministic, data-only dashboard projection from event history."""
     history = [deepcopy(event) for event in events]
     tasks = project_tasks(history)
+    public_tasks = [
+        {key: value for key, value in task.items() if key != "taskId"}
+        for task in sorted(tasks.values(), key=lambda item: (str(item.get("observedAt", "")), str(item.get("taskTitle", ""))))
+    ]
     quality = quality_summary(history)
     observed = [event.get("observedAt") for event in history if isinstance(event.get("observedAt"), str)]
     partial = sum(event.get("coverage") == "partial" for event in history)
@@ -269,7 +275,7 @@ def project_read_only_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
             "coverage": quality["coverage"],
             "lastObservedAt": max(observed, default="unknown"),
         },
-        "tasks": tasks,
+        "tasks": public_tasks,
         "usage": project_usage(history),
         "cost": project_cost(history, pricing_catalog or {}),
         "quality": quality,
@@ -297,6 +303,23 @@ def _task_state(event_type: str) -> str:
     if "run" in et or "start" in et or "heartbeat" in et or "progress" in et or "checkpoint" in et or "usage" in et or "telemetry" in et:
         return "running"
     return "unknown"
+
+
+def _freshness(observed_at: str | None) -> tuple[str, int | None]:
+    if not observed_at:
+        return "unknown", None
+    try:
+        parsed = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        age = max(0, int((datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds()))
+    except ValueError:
+        return "unknown", None
+    if age <= 60:
+        return "fresh", age
+    if age <= 300:
+        return "delayed", age
+    return "stale", age
 
 
 def _load_governance(project_root: Path) -> tuple[dict[str, Any], dict[str, Any], int]:
@@ -352,6 +375,7 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
     history = [deepcopy(e) for e in events]
     observed_times = sorted(e["observedAt"] for e in history if isinstance(e.get("observedAt"), str))
     generated_at = observed_times[-1] if observed_times else "1970-01-01T00:00:00+00:00"
+    freshness_state, age_seconds = _freshness(generated_at if observed_times else None)
     project_root = Path(__file__).resolve().parents[3]  # repo root
 
     # --- Hermes runtime projects only. An event without projectId is assigned to
@@ -371,14 +395,15 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
         state = _task_state(latest.get("eventType", ""))
         if state == "unknown":
             state = "running"
-        task_ids = [e.get("taskId") for e in project_events if isinstance(e.get("taskId"), str) and e.get("taskId")]
+        task_titles = [e.get("taskTitle") or "工作项" for e in project_events if isinstance(e.get("taskId"), str) and e.get("taskId")]
         last_event_at = latest.get("observedAt")
+        project_freshness, _ = _freshness(last_event_at)
         quality_state = "exact" if all(e.get("quality") == "source-exact" for e in project_events) else "partial"
         project = {
             "projectId": project_id,
             "displayName": "WORK-LAB" if project_id == "work-lab" else project_id.replace("-", " ").title(),
             "agentPlatform": "hermes",
-            "task": task_ids[-1] if task_ids else None,
+            "task": task_titles[-1] if task_titles else None,
             "state": state,
             "stage": None,
             "durationSeconds": None,
@@ -390,7 +415,7 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
             "quality": {
                 "evidenceCompleteness": "complete",
                 "dataQuality": quality_state,
-                "freshness": "fresh" if last_event_at else "unknown",
+                "freshness": project_freshness,
                 "sourceRef": "hermes-runtime-events",
             },
         }
@@ -427,18 +452,18 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
         "cost": {"amount": cost.get("estimated_cost") if cost_status == "estimated" else None, "currency": cost.get("currency"), "status": cost_status, "billingType": "mixed" if cost.get("pricing") else "unknown", "sourceRef": None, "effectiveAt": None},
         "subscriptionUsage": None,
         "series": [],
-        "quality": {"evidenceCompleteness": "complete", "dataQuality": "exact" if input_tokens else "unknown", "freshness": "fresh"},
+        "quality": {"evidenceCompleteness": "complete", "dataQuality": "exact" if input_tokens else "unknown", "freshness": freshness_state},
     }
 
     exact = sum(1 for e in history if e.get("quality") == "source-exact")
     quality = {
         "sourceCoverage": {"numerator": exact, "denominator": len(history), "scope": "observed-events"},
         "evidenceCompleteness": "complete" if history and exact == len(history) else "partial" if history else "missing",
-        "freshness": "fresh" if exact else "unknown",
+        "freshness": freshness_state if exact else "unknown",
         "unknown": sum(1 for e in history if e.get("quality") == "unknown" or e.get("coverage") == "unknown"),
         "malformed": 0, "dropped": 0,
         "duplicate": len(history) - len({e.get("eventId") for e in history}),
-        "projectionLagMs": None, "lastGoodAt": None,
+        "projectionLagMs": age_seconds * 1000 if age_seconds is not None else None, "lastGoodAt": generated_at if observed_times else None,
     }
 
     # Backward-compatible aliases keep the legacy Python dashboard readable
@@ -455,12 +480,12 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
         "schemaVersion": "work-lab/observer-projection/v2",
         "mode": "LIVE",
         "generatedAt": generated_at,
-        "freshness": {"state": "fresh" if history else "unknown", "ageSeconds": None, "lastGoodAt": None},
+        "freshness": {"state": freshness_state, "ageSeconds": age_seconds, "lastGoodAt": generated_at if observed_times else None},
         "summary": {"registeredProjects": len(main_projects), "activeProjects": counts["running"] + counts["waiting"], "tasks": counts},
         "projects": main_projects,
         "primaryBlocker": next(({"projectId": p["projectId"], "title": p["state"], "state": "BLOCKED", "durationSeconds": 0, "lastObservedAt": None, "impact": None, "nextCondition": None, "quality": p["quality"]} for p in main_projects if p["state"] == "blocked"), None),
         "usage": usage,
-        "ci": {"exactShaBound": 0, "exactShaRequired": 0, "queuedNoJob": 0, "running": 0, "passed": 0, "failed": 0, "unknown": 0, "quality": {"evidenceCompleteness": "partial", "dataQuality": "exact", "freshness": "fresh"}},
+        "ci": {"exactShaBound": 0, "exactShaRequired": 0, "queuedNoJob": 0, "running": 0, "passed": 0, "failed": 0, "unknown": 0, "quality": {"evidenceCompleteness": "partial", "dataQuality": "exact", "freshness": freshness_state}},
         "governance": governance,
         "quality": quality,
         "sourceRefs": [],

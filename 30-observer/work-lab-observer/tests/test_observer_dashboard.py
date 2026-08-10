@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -43,6 +44,48 @@ class ObserverDashboardTests(unittest.TestCase):
                 self.assertEqual(projection["schemaVersion"], "work-lab/observer-projection/v2")
                 self.assertEqual(projection["summary"]["registeredProjects"], 0)
                 self.assertFalse(projection["mutationSurface"]["externalMutation"])
+                self.assertEqual(projection["transport"]["state"], "offline")
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+                server.server_close()
+
+    def test_loopback_origin_and_sidecar_endpoint_discovery(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            project = Path(raw)
+            (project / ".git").mkdir()
+            runtime = project / ".hermes" / "task-runtime" / "observer"
+            workflow_runtime = runtime.parent / "workflow"
+            workflow_runtime.mkdir(parents=True)
+            (workflow_runtime / "sidecar-endpoint.json").write_text(
+                json.dumps(
+                    {
+                        "schemaVersion": "workflow/sidecar-endpoint/v1",
+                        "pid": os.getpid(),
+                        "eventsUrl": "http://127.0.0.1:8766/api/v1/events",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                create_server(project, runtime, host="0.0.0.0", port=0)
+
+            server = create_server(project, runtime, port=0)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                base = f"http://127.0.0.1:{server.server_port}"
+                allowed = Request(base + "/api/dashboard", headers={"Origin": "http://localhost:3000"})
+                with urlopen(allowed) as response:
+                    self.assertEqual(response.headers["Access-Control-Allow-Origin"], "http://localhost:3000")
+                    projection = json.load(response)
+                self.assertEqual(projection["transport"]["state"], "discovered")
+                self.assertEqual(projection["transport"]["eventsUrl"], "http://127.0.0.1:8766/api/v1/events")
+
+                blocked = Request(base + "/api/dashboard", headers={"Origin": "http://127.0.0.1.evil.invalid"})
+                with self.assertRaises(HTTPError) as error:
+                    urlopen(blocked)
+                self.assertEqual(error.exception.code, 403)
             finally:
                 server.shutdown()
                 thread.join(timeout=2)
@@ -90,6 +133,7 @@ class ObserverDashboardTests(unittest.TestCase):
                 with urlopen(base + "/api/dashboard?view=compact&theme=light") as r:
                     p2 = json.load(r)
                 self.assertEqual(p1, p2)
+                self.assertNotIn("WA-001", json.dumps(p1))
             finally:
                 server.shutdown()
                 thread.join(timeout=2)
@@ -326,7 +370,8 @@ class ObserverDashboardTests(unittest.TestCase):
                 with urlopen(base + "/api/tasks") as r:
                     tasks = json.load(r)
                 self.assertEqual(tasks["count"], 1)
-                self.assertIn("WA-001", tasks["tasks"])
+                self.assertEqual(tasks["tasks"][0]["taskTitle"], "工作项")
+                self.assertNotIn("taskId", tasks["tasks"][0])
             finally:
                 server.shutdown()
                 thread.join(timeout=2)

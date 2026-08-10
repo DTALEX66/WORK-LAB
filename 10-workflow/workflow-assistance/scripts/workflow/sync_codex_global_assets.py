@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -16,13 +17,15 @@ GUIDANCE_END = "<!-- END WORKFLOW-ASSISTANCE MANAGED CODEX OVERLAY -->"
 CONFIG_BEGIN = "# BEGIN WORKFLOW-ASSISTANCE MANAGED CODEX OVERLAY"
 CONFIG_END = "# END WORKFLOW-ASSISTANCE MANAGED CODEX OVERLAY"
 STATE_FILE = ".workflow-assistance-state.json"
+LOCK_FILE = ".workflow-assistance-sync.lock"
 RULE_RELATIVE = Path("rules/workflow-assistance.rules")
 MANAGED_CONFIG: dict[str, Any] = {
     "approval_policy": "on-request",
     "sandbox_mode": "workspace-write",
     "project_doc_max_bytes": 65536,
 }
-VERSION = 2
+VERSION = 3
+NO_EXPECTATION = object()
 
 
 class ManagedConflict(RuntimeError):
@@ -45,7 +48,16 @@ def _tree_hash(root: Path) -> str:
     return digest.hexdigest()
 
 
-def _atomic_write(path: Path, data: bytes) -> None:
+def _read_optional_bytes(path: Path) -> bytes | None:
+    return path.read_bytes() if path.exists() else None
+
+
+def _atomic_write(
+    path: Path,
+    data: bytes,
+    *,
+    expected_current: bytes | None | object = NO_EXPECTATION,
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:
@@ -53,6 +65,8 @@ def _atomic_write(path: Path, data: bytes) -> None:
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
+        if expected_current is not NO_EXPECTATION and _read_optional_bytes(path) != expected_current:
+            raise ManagedConflict(f"concurrent modification detected: {path}")
         os.replace(temporary, path)
     except BaseException:
         try:
@@ -60,6 +74,70 @@ def _atomic_write(path: Path, data: bytes) -> None:
         except FileNotFoundError:
             pass
         raise
+
+
+@contextmanager
+def _operation_lock(codex_home: Path):
+    """Serialize cooperating synchronizers without reading Codex private state."""
+
+    codex_home.mkdir(parents=True, exist_ok=True)
+    path = codex_home / LOCK_FILE
+    _assert_safe_managed_path(codex_home, path)
+    try:
+        descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError as exc:
+        raise ManagedConflict(f"another overlay operation is active: {path}") from exc
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(b"workflow-assistance overlay operation\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        yield
+    finally:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _managed_block(text: str, begin: str, end: str) -> str | None:
+    start = text.find(begin)
+    finish = text.find(end)
+    if start == -1 and finish == -1:
+        return None
+    if start == -1 or finish == -1 or finish < start:
+        raise ManagedConflict(f"malformed managed block: {begin}")
+    if text.find(begin, start + len(begin)) != -1 or text.find(end, finish + len(end)) != -1:
+        raise ManagedConflict(f"duplicate managed block: {begin}")
+    return text[start : finish + len(end)]
+
+
+def _block_hash(block: str) -> str:
+    return _sha256_bytes(block.encode("utf-8"))
+
+
+def _is_link_or_reparse(path: Path) -> bool:
+    try:
+        stat_result = path.lstat()
+    except FileNotFoundError:
+        return False
+    return path.is_symlink() or bool(getattr(stat_result, "st_file_attributes", 0) & 0x400)
+
+
+def _assert_safe_managed_path(root: Path, target: Path) -> None:
+    """Reject descendant symlinks/junctions that escape a declared managed root."""
+
+    declared_root = Path(os.path.abspath(root))
+    declared_target = Path(os.path.abspath(target))
+    try:
+        declared_target.relative_to(declared_root)
+    except ValueError as exc:
+        raise ManagedConflict(f"managed target escapes declared root: {target}") from exc
+    current = declared_target
+    while current != declared_root:
+        if _is_link_or_reparse(current):
+            raise ManagedConflict(f"managed target crosses a symlink or junction: {current}")
+        current = current.parent
 
 
 def _remove_managed_block(text: str, begin: str, end: str) -> tuple[str, bool]:
@@ -92,6 +170,17 @@ def _toml_value(value: Any) -> str:
     if isinstance(value, int):
         return str(value)
     raise TypeError(f"unsupported managed TOML value: {type(value).__name__}")
+
+
+def _expected_config_block(fields: list[str]) -> str:
+    lines = [CONFIG_BEGIN]
+    lines.extend(f"{key} = {_toml_value(MANAGED_CONFIG[key])}" for key in MANAGED_CONFIG if key in fields)
+    lines.append(CONFIG_END)
+    return "\n".join(lines)
+
+
+def _expected_guidance_block(overlay: str) -> str:
+    return f"{GUIDANCE_BEGIN}\n{overlay.strip()}\n{GUIDANCE_END}"
 
 
 def _render_config(existing: str) -> tuple[str, list[str], dict[str, Any]]:
@@ -134,7 +223,7 @@ def _load_state(codex_home: Path) -> dict[str, Any]:
         state = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ManagedConflict(f"invalid managed state: {path}") from exc
-    if not isinstance(state, dict) or state.get("version") not in {1, VERSION}:
+    if not isinstance(state, dict) or state.get("version") not in {1, 2, VERSION}:
         raise ManagedConflict(f"unsupported managed state: {path}")
     if not isinstance(state.get("target_hashes"), dict):
         raise ManagedConflict(f"incomplete managed state: {path}")
@@ -149,6 +238,45 @@ def _load_state(codex_home: Path) -> dict[str, Any]:
     for name in state["managed_skill_names"]:
         if not isinstance(name, str) or not re.fullmatch(r"workflow-assistance-[a-z0-9-]+", name):
             raise ManagedConflict(f"invalid managed skill name in state: {path}")
+    managed_fields = state.get("managed_config_fields", [])
+    if (
+        not isinstance(managed_fields, list)
+        or len(managed_fields) != len(set(managed_fields))
+        or any(field not in MANAGED_CONFIG for field in managed_fields)
+    ):
+        raise ManagedConflict(f"invalid managed config fields in state: {path}")
+    expected_hash_keys = {RULE_RELATIVE.as_posix()} | {
+        f"skills/{name}" for name in state["managed_skill_names"]
+    }
+    if set(state["target_hashes"]) != expected_hash_keys:
+        raise ManagedConflict(f"incomplete target hashes in state: {path}")
+    if any(
+        not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None
+        for value in state["target_hashes"].values()
+    ):
+        raise ManagedConflict(f"invalid target hash in state: {path}")
+    if state.get("version") == VERSION:
+        if state.get("phase") not in {"applied", "applying", "rolling_back"}:
+            raise ManagedConflict(f"invalid managed state phase: {path}")
+        block_hashes = state.get("managed_block_hashes")
+        if not isinstance(block_hashes, dict) or "AGENTS.md" not in block_hashes:
+            raise ManagedConflict(f"incomplete managed block hashes: {path}")
+        if managed_fields and "config.toml" not in block_hashes:
+            raise ManagedConflict(f"incomplete managed config hash: {path}")
+        if any(
+            not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None
+            for value in block_hashes.values()
+        ):
+            raise ManagedConflict(f"invalid managed block hash: {path}")
+        for key in ("previous_block_hashes", "previous_target_hashes"):
+            previous = state.get(key, {})
+            if not isinstance(previous, dict) or any(
+                not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None
+                for value in previous.values()
+            ):
+                raise ManagedConflict(f"invalid {key} in state: {path}")
+    else:
+        state.setdefault("phase", "applied")
     return state
 
 
@@ -160,19 +288,82 @@ def _skill_sources(source_root: Path) -> list[Path]:
     return skills
 
 
+def _current_block_hashes(config_text: str, guidance_text: str) -> dict[str, str]:
+    hashes: dict[str, str] = {}
+    config_block = _managed_block(config_text, CONFIG_BEGIN, CONFIG_END)
+    guidance_block = _managed_block(guidance_text, GUIDANCE_BEGIN, GUIDANCE_END)
+    if config_block is not None:
+        hashes["config.toml"] = _block_hash(config_block)
+    if guidance_block is not None:
+        hashes["AGENTS.md"] = _block_hash(guidance_block)
+    return hashes
+
+
+def _validate_existing_ownership(
+    state: dict[str, Any],
+    config_text: str,
+    guidance_text: str,
+    guidance_overlay: str,
+) -> dict[str, str]:
+    """Prove managed mixed-ownership blocks have not been edited in place."""
+
+    if state.get("phase") != "applied":
+        raise ManagedConflict("incomplete overlay operation requires rollback before another plan/apply")
+    try:
+        tomllib.loads(config_text) if config_text.strip() else None
+    except tomllib.TOMLDecodeError as exc:
+        raise ManagedConflict("Codex config is invalid or contains duplicate top-level fields") from exc
+
+    current = _current_block_hashes(config_text, guidance_text)
+    managed_fields = state.get("managed_config_fields", [])
+    if managed_fields:
+        actual = current.get("config.toml")
+        if state.get("version") == VERSION:
+            expected = state["managed_block_hashes"].get("config.toml")
+        else:
+            expected = _block_hash(_expected_config_block(managed_fields))
+        if actual != expected:
+            raise ManagedConflict("managed config block changed after apply")
+    elif "config.toml" in current:
+        raise ManagedConflict("unexpected managed config block for preserved user fields")
+
+    actual_guidance = current.get("AGENTS.md")
+    if state.get("version") == VERSION:
+        expected_guidance = state["managed_block_hashes"].get("AGENTS.md")
+    else:
+        expected_guidance = _block_hash(_expected_guidance_block(guidance_overlay))
+    if actual_guidance != expected_guidance:
+        raise ManagedConflict("managed guidance block changed after apply")
+    return current
+
+
 def _preflight(codex_home: Path, agent_home: Path, source_root: Path) -> dict[str, Any]:
     guidance_source = source_root / "global-guidance.md"
     rules_source = source_root / RULE_RELATIVE
     if not guidance_source.is_file() or not rules_source.is_file():
         raise ManagedConflict("Codex asset source is incomplete")
+    guidance_overlay = guidance_source.read_text(encoding="utf-8")
+    _assert_safe_managed_path(codex_home, codex_home / STATE_FILE)
     state = _load_state(codex_home)
     previous = state.get("target_hashes", {}) if isinstance(state.get("target_hashes", {}), dict) else {}
 
     config_path = codex_home / "config.toml"
-    config_text = config_path.read_text(encoding="utf-8") if config_path.exists() else ""
+    _assert_safe_managed_path(codex_home, config_path)
+    config_original_bytes = _read_optional_bytes(config_path)
+    config_text = config_original_bytes.decode("utf-8") if config_original_bytes is not None else ""
     guidance_path = codex_home / "AGENTS.md"
-    guidance_text = guidance_path.read_text(encoding="utf-8") if guidance_path.exists() else ""
-    if not state and (
+    _assert_safe_managed_path(codex_home, guidance_path)
+    guidance_original_bytes = _read_optional_bytes(guidance_path)
+    guidance_text = guidance_original_bytes.decode("utf-8") if guidance_original_bytes is not None else ""
+    previous_block_hashes: dict[str, str] = {}
+    if state:
+        previous_block_hashes = _validate_existing_ownership(
+            state,
+            config_text,
+            guidance_text,
+            guidance_overlay,
+        )
+    elif (
         CONFIG_BEGIN in config_text
         or CONFIG_END in config_text
         or GUIDANCE_BEGIN in guidance_text
@@ -181,20 +372,26 @@ def _preflight(codex_home: Path, agent_home: Path, source_root: Path) -> dict[st
         raise ManagedConflict("managed markers exist without an ownership state file")
 
     rules_target = codex_home / RULE_RELATIVE
+    _assert_safe_managed_path(codex_home, rules_target)
+    rules_current_bytes = _read_optional_bytes(rules_target)
     if rules_target.exists():
         if not state:
             raise ManagedConflict(f"unowned rule target already exists: {rules_target}")
-        current = _sha256_bytes(rules_target.read_bytes())
+        current = _sha256_bytes(rules_current_bytes or b"")
         source = _sha256_bytes(rules_source.read_bytes())
         old = previous.get(RULE_RELATIVE.as_posix())
         if current != source and current != old:
             raise ManagedConflict(f"user-owned rule conflict: {rules_target}")
 
     skills: list[dict[str, Any]] = []
+    current_skill_names: set[str] = set()
     for source in _skill_sources(source_root):
+        current_skill_names.add(source.name)
         target = agent_home / "skills" / source.name
+        _assert_safe_managed_path(agent_home, target)
         source_hash = _tree_hash(source)
         relative = f"skills/{source.name}"
+        current_hash: str | None = None
         if target.exists():
             if not state:
                 raise ManagedConflict(f"unowned skill target already exists: {target}")
@@ -202,23 +399,49 @@ def _preflight(codex_home: Path, agent_home: Path, source_root: Path) -> dict[st
             old_hash = previous.get(relative)
             if current_hash != source_hash and current_hash != old_hash:
                 raise ManagedConflict(f"user-owned skill conflict: {target}")
-        skills.append({"name": source.name, "source": source, "target": target, "hash": source_hash})
+        skills.append(
+            {
+                "name": source.name,
+                "source": source,
+                "target": target,
+                "hash": source_hash,
+                "current_hash": current_hash,
+            }
+        )
+
+    retired_skills: list[dict[str, Any]] = []
+    for name in sorted(set(state.get("managed_skill_names", [])) - current_skill_names):
+        target = agent_home / "skills" / name
+        _assert_safe_managed_path(agent_home, target)
+        expected = previous.get(f"skills/{name}")
+        current_hash = _tree_hash(target) if target.exists() else None
+        if not expected or (current_hash is not None and current_hash != expected):
+            raise ManagedConflict(f"retired managed skill changed after apply: {target}")
+        retired_skills.append(
+            {"name": name, "target": target, "hash": expected, "current_hash": current_hash}
+        )
 
     rendered_config, appended_fields, preserved_fields = _render_config(config_text)
-    rendered_guidance = _render_guidance(guidance_text, guidance_source.read_text(encoding="utf-8"))
+    rendered_guidance = _render_guidance(guidance_text, guidance_overlay)
     return {
         "state": state,
         "rules_source": rules_source,
         "rules_target": rules_target,
+        "rules_current_bytes": rules_current_bytes,
         "skills": skills,
+        "retired_skills": retired_skills,
         "config_path": config_path,
         "config_original": config_text,
+        "config_original_bytes": config_original_bytes,
         "config_rendered": rendered_config,
         "appended_fields": appended_fields,
         "preserved_fields": preserved_fields,
         "guidance_path": guidance_path,
         "guidance_original": guidance_text,
+        "guidance_original_bytes": guidance_original_bytes,
         "guidance_rendered": rendered_guidance,
+        "previous_block_hashes": previous_block_hashes,
+        "state_original_bytes": _read_optional_bytes(codex_home / STATE_FILE),
     }
 
 
@@ -239,6 +462,9 @@ def build_plan(codex_home: Path, agent_home: Path, source_root: Path) -> dict[st
         target: Path = skill["target"]
         if not target.exists() or _tree_hash(target) != skill["hash"]:
             actions.append({"action": "REPLACE_OWNED_SKILL", "target": f"skills/{skill['name']}"})
+    for skill in data["retired_skills"]:
+        if skill["target"].exists():
+            actions.append({"action": "REMOVE_RETIRED_OWNED_SKILL", "target": f"skills/{skill['name']}"})
     return {
         "status": "DRY_RUN",
         "managed_config_fields": sorted(MANAGED_CONFIG),
@@ -249,69 +475,159 @@ def build_plan(codex_home: Path, agent_home: Path, source_root: Path) -> dict[st
 
 
 def apply_overlay(codex_home: Path, agent_home: Path, source_root: Path) -> dict[str, Any]:
-    data = _preflight(codex_home, agent_home, source_root)
-    changed = False
-    target_hashes: dict[str, str] = {}
+    with _operation_lock(codex_home):
+        data = _preflight(codex_home, agent_home, source_root)
+        config_path: Path = data["config_path"]
+        guidance_path: Path = data["guidance_path"]
+        rules_source: Path = data["rules_source"]
+        rules_target: Path = data["rules_target"]
+        state_path = codex_home / STATE_FILE
 
-    config_path: Path = data["config_path"]
-    if data["config_original"] != data["config_rendered"]:
-        _atomic_write(config_path, data["config_rendered"].encode("utf-8"))
-        changed = True
+        config_bytes = data["config_rendered"].encode("utf-8")
+        guidance_bytes = data["guidance_rendered"].encode("utf-8")
+        rules_bytes = rules_source.read_bytes()
+        target_hashes: dict[str, str] = {
+            RULE_RELATIVE.as_posix(): _sha256_bytes(rules_bytes),
+            **{f"skills/{skill['name']}": skill["hash"] for skill in data["skills"]},
+        }
+        config_block = _managed_block(data["config_rendered"], CONFIG_BEGIN, CONFIG_END)
+        guidance_block = _managed_block(data["guidance_rendered"], GUIDANCE_BEGIN, GUIDANCE_END)
+        if guidance_block is None:
+            raise ManagedConflict("rendered guidance is missing its managed block")
+        managed_block_hashes = {"AGENTS.md": _block_hash(guidance_block)}
+        if data["appended_fields"]:
+            if config_block is None:
+                raise ManagedConflict("rendered config is missing its managed block")
+            managed_block_hashes["config.toml"] = _block_hash(config_block)
 
-    guidance_path: Path = data["guidance_path"]
-    if data["guidance_original"] != data["guidance_rendered"]:
-        _atomic_write(guidance_path, data["guidance_rendered"].encode("utf-8"))
-        changed = True
+        final_state = {
+            "version": VERSION,
+            "phase": "applied",
+            "managed_config_fields": list(data["appended_fields"]),
+            "preserved_user_config_fields": sorted(data["preserved_fields"]),
+            "managed_skill_names": [skill["name"] for skill in data["skills"]],
+            "managed_block_hashes": managed_block_hashes,
+            "target_hashes": target_hashes,
+        }
+        final_state_bytes = (
+            json.dumps(final_state, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+        ).encode("utf-8")
 
-    rules_source: Path = data["rules_source"]
-    rules_target: Path = data["rules_target"]
-    rules_bytes = rules_source.read_bytes()
-    if not rules_target.exists() or rules_target.read_bytes() != rules_bytes:
-        _atomic_write(rules_target, rules_bytes)
-        changed = True
-    target_hashes[RULE_RELATIVE.as_posix()] = _sha256_bytes(rules_bytes)
+        changed = any(
+            (
+                data["config_original_bytes"] != config_bytes,
+                data["guidance_original_bytes"] != guidance_bytes,
+                data["rules_current_bytes"] != rules_bytes,
+                data["state_original_bytes"] != final_state_bytes,
+                bool(data["retired_skills"]),
+                any(skill["current_hash"] != skill["hash"] for skill in data["skills"]),
+            )
+        )
+        if not changed:
+            verification = verify_overlay(codex_home, agent_home, source_root)
+            if verification["status"] != "PASS":
+                raise ManagedConflict(f"post-apply verification failed: {verification['issues']}")
+            return {
+                "status": "NO_CHANGE",
+                "managed_config_fields": sorted(MANAGED_CONFIG),
+                "installed_skills": len(data["skills"]),
+                "preserved_user_config_fields": sorted(data["preserved_fields"]),
+            }
 
-    for skill in data["skills"]:
-        source: Path = skill["source"]
-        target: Path = skill["target"]
-        if not target.exists() or _tree_hash(target) != skill["hash"]:
-            temporary = target.parent / f".{target.name}.staging"
-            if temporary.exists():
-                shutil.rmtree(temporary)
-            shutil.copytree(source, temporary)
-            if target.exists():
-                shutil.rmtree(target)
-            os.replace(temporary, target)
-            changed = True
-        target_hashes[f"skills/{skill['name']}"] = skill["hash"]
+        pending_names = sorted(
+            {skill["name"] for skill in data["skills"]}
+            | {skill["name"] for skill in data["retired_skills"]}
+        )
+        pending_hashes = dict(target_hashes)
+        pending_hashes.update(
+            {f"skills/{skill['name']}": skill["hash"] for skill in data["retired_skills"]}
+        )
+        pending_state = {
+            **final_state,
+            "phase": "applying",
+            "managed_skill_names": pending_names,
+            "target_hashes": pending_hashes,
+            "previous_block_hashes": data["previous_block_hashes"],
+            "previous_target_hashes": dict(data["state"].get("target_hashes", {})),
+        }
+        pending_state_bytes = (
+            json.dumps(pending_state, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+        ).encode("utf-8")
+        _atomic_write(
+            state_path,
+            pending_state_bytes,
+            expected_current=data["state_original_bytes"],
+        )
 
-    state = {
-        "version": VERSION,
-        "managed_config_fields": list(data["appended_fields"]),
-        "preserved_user_config_fields": sorted(data["preserved_fields"]),
-        "managed_skill_names": [skill["name"] for skill in data["skills"]],
-        "target_hashes": target_hashes,
-    }
-    state_bytes = (json.dumps(state, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
-    state_path = codex_home / STATE_FILE
-    if not state_path.exists() or state_path.read_bytes() != state_bytes:
-        _atomic_write(state_path, state_bytes)
-        changed = True
+        if data["config_original_bytes"] != config_bytes:
+            _atomic_write(
+                config_path,
+                config_bytes,
+                expected_current=data["config_original_bytes"],
+            )
+        if data["guidance_original_bytes"] != guidance_bytes:
+            _atomic_write(
+                guidance_path,
+                guidance_bytes,
+                expected_current=data["guidance_original_bytes"],
+            )
+        if data["rules_current_bytes"] != rules_bytes:
+            _atomic_write(
+                rules_target,
+                rules_bytes,
+                expected_current=data["rules_current_bytes"],
+            )
 
-    verification = verify_overlay(codex_home, agent_home, source_root)
-    if verification["status"] != "PASS":
-        raise ManagedConflict(f"post-apply verification failed: {verification['issues']}")
-    return {
-        "status": "APPLIED" if changed else "NO_CHANGE",
-        "managed_config_fields": sorted(MANAGED_CONFIG),
-        "installed_skills": len(data["skills"]),
-        "preserved_user_config_fields": sorted(data["preserved_fields"]),
-    }
+        for skill in data["skills"]:
+            source: Path = skill["source"]
+            target: Path = skill["target"]
+            if skill["current_hash"] == skill["hash"]:
+                continue
+            current_hash = _tree_hash(target) if target.exists() else None
+            if current_hash != skill["current_hash"]:
+                raise ManagedConflict(f"concurrent skill modification detected: {target}")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            temporary = Path(tempfile.mkdtemp(prefix=f".{target.name}.staging-", dir=target.parent))
+            try:
+                shutil.copytree(source, temporary, dirs_exist_ok=True)
+                if _tree_hash(temporary) != skill["hash"]:
+                    raise ManagedConflict(f"staged skill hash mismatch: {source}")
+                if target.exists():
+                    shutil.rmtree(target)
+                os.replace(temporary, target)
+            finally:
+                if temporary.exists():
+                    shutil.rmtree(temporary)
+
+        for skill in data["retired_skills"]:
+            target: Path = skill["target"]
+            if not target.exists():
+                continue
+            if _tree_hash(target) != skill["current_hash"]:
+                raise ManagedConflict(f"concurrent retired-skill modification detected: {target}")
+            shutil.rmtree(target)
+
+        _atomic_write(
+            state_path,
+            final_state_bytes,
+            expected_current=pending_state_bytes,
+        )
+        verification = verify_overlay(codex_home, agent_home, source_root)
+        if verification["status"] != "PASS":
+            raise ManagedConflict(f"post-apply verification failed: {verification['issues']}")
+        return {
+            "status": "APPLIED",
+            "managed_config_fields": sorted(MANAGED_CONFIG),
+            "installed_skills": len(data["skills"]),
+            "preserved_user_config_fields": sorted(data["preserved_fields"]),
+        }
 
 
 def verify_overlay(codex_home: Path, agent_home: Path, source_root: Path) -> dict[str, Any]:
     issues: list[str] = []
     config_path = codex_home / "config.toml"
+    _assert_safe_managed_path(codex_home, codex_home / STATE_FILE)
+    _assert_safe_managed_path(codex_home, config_path)
     config_text = ""
     try:
         config_text = config_path.read_text(encoding="utf-8")
@@ -322,31 +638,73 @@ def verify_overlay(codex_home: Path, agent_home: Path, source_root: Path) -> dic
     state = _load_state(codex_home)
     if not state:
         issues.append("state_missing")
+    elif state.get("phase") != "applied":
+        issues.append(f"state_incomplete:{state.get('phase')}")
     managed_fields = state.get("managed_config_fields", []) if isinstance(state, dict) else []
     for key in managed_fields:
         if config.get(key) != MANAGED_CONFIG.get(key):
             issues.append(f"config_drift:{key}")
-    if managed_fields and (config_text.count(CONFIG_BEGIN) != 1 or config_text.count(CONFIG_END) != 1):
+    try:
+        config_block = _managed_block(config_text, CONFIG_BEGIN, CONFIG_END)
+    except ManagedConflict:
+        config_block = None
         issues.append("config_managed_block_missing_or_duplicate")
+    if managed_fields:
+        if config_block is None:
+            issues.append("config_managed_block_missing_or_duplicate")
+        else:
+            expected_config_hash = (
+                state.get("managed_block_hashes", {}).get("config.toml")
+                if state.get("version") == VERSION
+                else _block_hash(_expected_config_block(managed_fields))
+            )
+            if _block_hash(config_block) != expected_config_hash:
+                issues.append("config_managed_block_drift")
+    elif config_block is not None:
+        issues.append("config_unexpected_managed_block")
 
     guidance_path = codex_home / "AGENTS.md"
+    _assert_safe_managed_path(codex_home, guidance_path)
     guidance = guidance_path.read_text(encoding="utf-8") if guidance_path.exists() else ""
-    if guidance.count(GUIDANCE_BEGIN) != 1 or guidance.count(GUIDANCE_END) != 1:
+    try:
+        guidance_block = _managed_block(guidance, GUIDANCE_BEGIN, GUIDANCE_END)
+    except ManagedConflict:
+        guidance_block = None
+    if guidance_block is None:
         issues.append("guidance_missing_or_duplicate")
     else:
         guidance_source = (source_root / "global-guidance.md").read_text(encoding="utf-8")
-        if guidance != _render_guidance(guidance, guidance_source):
+        expected_guidance_hash = (
+            state.get("managed_block_hashes", {}).get("AGENTS.md")
+            if state.get("version") == VERSION
+            else _block_hash(_expected_guidance_block(guidance_source))
+        )
+        if _block_hash(guidance_block) != expected_guidance_hash:
+            issues.append("guidance_owned_block_drift")
+        if guidance_block != _expected_guidance_block(guidance_source):
             issues.append("guidance_drift")
 
     rules_source = source_root / RULE_RELATIVE
     rules_target = codex_home / RULE_RELATIVE
-    if not rules_target.exists() or rules_target.read_bytes() != rules_source.read_bytes():
+    _assert_safe_managed_path(codex_home, rules_target)
+    rule_hash = _sha256_bytes(rules_source.read_bytes())
+    if state and state.get("target_hashes", {}).get(RULE_RELATIVE.as_posix()) != rule_hash:
+        issues.append("rules_state_drift")
+    if not rules_target.exists() or _sha256_bytes(rules_target.read_bytes()) != rule_hash:
         issues.append("rules_drift")
 
     skills = _skill_sources(source_root)
+    source_names = {source.name for source in skills}
+    state_names = set(state.get("managed_skill_names", [])) if state else set()
+    if state and source_names != state_names:
+        issues.append("managed_skill_set_drift")
     for source in skills:
         target = agent_home / "skills" / source.name
-        if not target.exists() or _tree_hash(target) != _tree_hash(source):
+        _assert_safe_managed_path(agent_home, target)
+        source_hash = _tree_hash(source)
+        if state and state.get("target_hashes", {}).get(f"skills/{source.name}") != source_hash:
+            issues.append(f"skill_state_drift:{source.name}")
+        if not target.exists() or _tree_hash(target) != source_hash:
             issues.append(f"skill_drift:{source.name}")
     return {
         "status": "PASS" if not issues else "FAIL",
@@ -357,88 +715,187 @@ def verify_overlay(codex_home: Path, agent_home: Path, source_root: Path) -> dic
 
 
 def rollback_overlay(codex_home: Path, agent_home: Path, source_root: Path) -> dict[str, Any]:
-    state = _load_state(codex_home)
-    config_path = codex_home / "config.toml"
-    guidance_path = codex_home / "AGENTS.md"
-    rules_target = codex_home / RULE_RELATIVE
-    if not state:
-        config_text = config_path.read_text(encoding="utf-8") if config_path.exists() else ""
-        guidance_text = guidance_path.read_text(encoding="utf-8") if guidance_path.exists() else ""
-        managed_looking_skills = [
-            agent_home / "skills" / source.name
-            for source in _skill_sources(source_root)
-            if (agent_home / "skills" / source.name).exists()
-        ]
-        if (
-            CONFIG_BEGIN in config_text
-            or CONFIG_END in config_text
-            or GUIDANCE_BEGIN in guidance_text
-            or GUIDANCE_END in guidance_text
-            or rules_target.exists()
-            or managed_looking_skills
-        ):
-            raise ManagedConflict("managed-looking assets exist without an ownership state file")
-        return {"status": "NO_CHANGE"}
+    with _operation_lock(codex_home):
+        _assert_safe_managed_path(codex_home, codex_home / STATE_FILE)
+        state = _load_state(codex_home)
+        state_path = codex_home / STATE_FILE
+        state_original_bytes = _read_optional_bytes(state_path)
+        config_path = codex_home / "config.toml"
+        guidance_path = codex_home / "AGENTS.md"
+        rules_target = codex_home / RULE_RELATIVE
+        _assert_safe_managed_path(codex_home, config_path)
+        _assert_safe_managed_path(codex_home, guidance_path)
+        _assert_safe_managed_path(codex_home, rules_target)
+        config_original_bytes = _read_optional_bytes(config_path)
+        guidance_original_bytes = _read_optional_bytes(guidance_path)
+        config_text = config_original_bytes.decode("utf-8") if config_original_bytes is not None else ""
+        guidance_text = (
+            guidance_original_bytes.decode("utf-8") if guidance_original_bytes is not None else ""
+        )
+        if not state:
+            managed_looking_skills = [
+                agent_home / "skills" / source.name
+                for source in _skill_sources(source_root)
+                if (agent_home / "skills" / source.name).exists()
+            ]
+            if (
+                CONFIG_BEGIN in config_text
+                or CONFIG_END in config_text
+                or GUIDANCE_BEGIN in guidance_text
+                or GUIDANCE_END in guidance_text
+                or rules_target.exists()
+                or managed_looking_skills
+            ):
+                raise ManagedConflict("managed-looking assets exist without an ownership state file")
+            return {"status": "NO_CHANGE"}
 
-    target_hashes = state.get("target_hashes", {}) if isinstance(state.get("target_hashes", {}), dict) else {}
-    managed_skill_names = state["managed_skill_names"]
+        recovering = state.get("phase") in {"applying", "rolling_back"}
+        target_hashes = state["target_hashes"]
+        previous_target_hashes = state.get("previous_target_hashes", {}) if recovering else {}
+        block_hashes = state.get("managed_block_hashes", {})
+        previous_block_hashes = state.get("previous_block_hashes", {}) if recovering else {}
+        managed_skill_names = state["managed_skill_names"]
+        managed_fields = state.get("managed_config_fields", [])
 
-    expected_rule = target_hashes.get(RULE_RELATIVE.as_posix())
-    if not expected_rule or not rules_target.exists() or _sha256_bytes(rules_target.read_bytes()) != expected_rule:
-        raise ManagedConflict(f"managed rule changed after apply: {rules_target}")
+        try:
+            config_block = _managed_block(config_text, CONFIG_BEGIN, CONFIG_END)
+            guidance_block = _managed_block(guidance_text, GUIDANCE_BEGIN, GUIDANCE_END)
+        except ManagedConflict as exc:
+            raise ManagedConflict("managed mixed-ownership block is malformed") from exc
 
-    for name in managed_skill_names:
-        target = agent_home / "skills" / name
-        expected = target_hashes.get(f"skills/{name}")
-        if not expected or not target.exists() or _tree_hash(target) != expected:
-            raise ManagedConflict(f"managed skill changed after apply: {target}")
+        if managed_fields:
+            accepted_config_hashes = {
+                value
+                for value in (
+                    block_hashes.get("config.toml")
+                    if state.get("version") == VERSION
+                    else _block_hash(_expected_config_block(managed_fields)),
+                    previous_block_hashes.get("config.toml"),
+                )
+                if value
+            }
+            if config_block is None:
+                if not recovering:
+                    raise ManagedConflict(f"managed config block changed after apply: {config_path}")
+            elif _block_hash(config_block) not in accepted_config_hashes:
+                raise ManagedConflict(f"managed config block changed after apply: {config_path}")
+        elif config_block is not None:
+            raise ManagedConflict(f"unexpected managed config block: {config_path}")
 
-    config_text = config_path.read_text(encoding="utf-8") if config_path.exists() else ""
-    managed_fields = state.get("managed_config_fields", [])
-    if managed_fields:
-        if config_text.count(CONFIG_BEGIN) != 1 or config_text.count(CONFIG_END) != 1:
-            raise ManagedConflict(f"managed config block changed after apply: {config_path}")
-        parsed_config = tomllib.loads(config_text)
-        if any(parsed_config.get(key) != MANAGED_CONFIG.get(key) for key in managed_fields):
-            raise ManagedConflict(f"managed config field changed after apply: {config_path}")
+        guidance_source = (source_root / "global-guidance.md").read_text(encoding="utf-8")
+        accepted_guidance_hashes = {
+            value
+            for value in (
+                block_hashes.get("AGENTS.md")
+                if state.get("version") == VERSION
+                else _block_hash(_expected_guidance_block(guidance_source)),
+                previous_block_hashes.get("AGENTS.md"),
+            )
+            if value
+        }
+        if guidance_block is None:
+            if not recovering:
+                raise ManagedConflict(f"managed guidance block changed after apply: {guidance_path}")
+        elif _block_hash(guidance_block) not in accepted_guidance_hashes:
+            raise ManagedConflict(f"managed guidance content changed after apply: {guidance_path}")
 
-    guidance_text = guidance_path.read_text(encoding="utf-8") if guidance_path.exists() else ""
-    if guidance_text.count(GUIDANCE_BEGIN) != 1 or guidance_text.count(GUIDANCE_END) != 1:
-        raise ManagedConflict(f"managed guidance block changed after apply: {guidance_path}")
-    guidance_source = (source_root / "global-guidance.md").read_text(encoding="utf-8")
-    if guidance_text != _render_guidance(guidance_text, guidance_source):
-        raise ManagedConflict(f"managed guidance content changed after apply: {guidance_path}")
+        accepted_rule_hashes = {
+            value
+            for value in (
+                target_hashes.get(RULE_RELATIVE.as_posix()),
+                previous_target_hashes.get(RULE_RELATIVE.as_posix()),
+            )
+            if value
+        }
+        if rules_target.exists():
+            if _sha256_bytes(rules_target.read_bytes()) not in accepted_rule_hashes:
+                raise ManagedConflict(f"managed rule changed after apply: {rules_target}")
+        elif not recovering:
+            raise ManagedConflict(f"managed rule changed after apply: {rules_target}")
 
-    changed = False
-    if config_path.exists():
-        original = config_path.read_text(encoding="utf-8")
-        rendered, removed = _remove_managed_block(original, CONFIG_BEGIN, CONFIG_END)
-        if removed:
-            tomllib.loads(rendered) if rendered.strip() else None
-            _atomic_write(config_path, rendered.encode("utf-8"))
+        skill_targets: list[tuple[Path, set[str]]] = []
+        for name in managed_skill_names:
+            target = agent_home / "skills" / name
+            _assert_safe_managed_path(agent_home, target)
+            accepted = {
+                value
+                for value in (
+                    target_hashes.get(f"skills/{name}"),
+                    previous_target_hashes.get(f"skills/{name}"),
+                )
+                if value
+            }
+            if target.exists():
+                if _tree_hash(target) not in accepted:
+                    raise ManagedConflict(f"managed skill changed after apply: {target}")
+            elif not recovering:
+                raise ManagedConflict(f"managed skill changed after apply: {target}")
+            skill_targets.append((target, accepted))
+
+        changed = False
+        if state.get("phase") != "rolling_back":
+            journal_block_hashes = dict(block_hashes)
+            if state.get("version") != VERSION:
+                journal_block_hashes = {}
+                if config_block is not None:
+                    journal_block_hashes["config.toml"] = _block_hash(config_block)
+                if guidance_block is None:
+                    raise ManagedConflict(f"managed guidance block changed after apply: {guidance_path}")
+                journal_block_hashes["AGENTS.md"] = _block_hash(guidance_block)
+            rollback_state = {
+                **state,
+                "version": VERSION,
+                "phase": "rolling_back",
+                "managed_block_hashes": journal_block_hashes,
+            }
+            rollback_state_bytes = (
+                json.dumps(rollback_state, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+            ).encode("utf-8")
+            _atomic_write(
+                state_path,
+                rollback_state_bytes,
+                expected_current=state_original_bytes,
+            )
+            state_original_bytes = rollback_state_bytes
             changed = True
+        if config_block is not None:
+            rendered, removed = _remove_managed_block(config_text, CONFIG_BEGIN, CONFIG_END)
+            if removed:
+                tomllib.loads(rendered) if rendered.strip() else None
+                _atomic_write(
+                    config_path,
+                    rendered.encode("utf-8"),
+                    expected_current=config_original_bytes,
+                )
+                changed = True
+        if guidance_block is not None:
+            rendered, removed = _remove_managed_block(guidance_text, GUIDANCE_BEGIN, GUIDANCE_END)
+            if removed:
+                _atomic_write(
+                    guidance_path,
+                    rendered.encode("utf-8"),
+                    expected_current=guidance_original_bytes,
+                )
+                changed = True
 
-    if guidance_path.exists():
-        original = guidance_path.read_text(encoding="utf-8")
-        rendered, removed = _remove_managed_block(original, GUIDANCE_BEGIN, GUIDANCE_END)
-        if removed:
-            _atomic_write(guidance_path, rendered.encode("utf-8"))
+        if rules_target.exists():
+            if _sha256_bytes(rules_target.read_bytes()) not in accepted_rule_hashes:
+                raise ManagedConflict(f"concurrent rule modification detected: {rules_target}")
+            rules_target.unlink()
             changed = True
+        for target, accepted in skill_targets:
+            if target.exists():
+                if _tree_hash(target) not in accepted:
+                    raise ManagedConflict(f"concurrent skill modification detected: {target}")
+                shutil.rmtree(target)
+                changed = True
 
-    if rules_target.exists():
-        rules_target.unlink()
-        changed = True
-    for name in managed_skill_names:
-        target = agent_home / "skills" / name
-        if target.exists():
-            shutil.rmtree(target)
+        if _read_optional_bytes(state_path) != state_original_bytes:
+            raise ManagedConflict(f"concurrent state modification detected: {state_path}")
+        if state_path.exists():
+            state_path.unlink()
             changed = True
-
-    state_path = codex_home / STATE_FILE
-    if state_path.exists():
-        state_path.unlink()
-        changed = True
-    return {"status": "ROLLED_BACK" if changed else "NO_CHANGE"}
+        return {"status": "ROLLED_BACK" if changed else "NO_CHANGE"}
 
 
 def _default_source_root() -> Path:

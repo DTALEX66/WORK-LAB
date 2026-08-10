@@ -26,8 +26,20 @@ class TelemetryLedgerTests(unittest.TestCase):
     def test_sensitive_fields_are_rejected(self):
         with tempfile.TemporaryDirectory() as raw:
             ledger = module.TelemetryLedger(Path(raw) / "telemetry.jsonl")
-            with self.assertRaises(ValueError):
-                ledger.append({"event_id": "e2", "prompt": "redacted"})
+            for key in ("prompt", "prompt_body", "responseBody", "api-key", "credential_value"):
+                with self.subTest(key=key), self.assertRaisesRegex(ValueError, "sensitive telemetry key"):
+                    ledger.append({"event_id": f"e2-{key}", "nested": {key: "redacted"}})
+
+    def test_reserved_producer_and_sequence_cannot_be_spoofed(self):
+        with tempfile.TemporaryDirectory() as raw:
+            ledger = module.TelemetryLedger(Path(raw) / "telemetry.jsonl")
+            for field, value in (("producer", "observer"), ("sequence", 999), ("schemaVersion", "fake")):
+                with self.subTest(field=field), self.assertRaisesRegex(ValueError, "reserved telemetry key"):
+                    ledger.append({"event_id": f"e-{field}", field: value})
+
+            row = ledger.append({"event_id": "good", "source": "workflow"})
+            self.assertEqual(row["producer"], "workflow-assistance")
+            self.assertEqual(row["sequence"], 1)
 
 if __name__ == "__main__":
     unittest.main()

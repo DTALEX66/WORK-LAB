@@ -34,6 +34,14 @@ prefix_rule(
 )
 
 prefix_rule(
+    pattern = ["git", "push", ["--force-with-lease", "--force-if-includes"]],
+    decision = "forbidden",
+    justification = "Conditional force-push still rewrites remote history and is forbidden by the overlay contract.",
+    match = ["git push --force-with-lease", "git push --force-if-includes"],
+    not_match = ["git push", "git push origin feature"],
+)
+
+prefix_rule(
     pattern = ["git", "push"],
     decision = "prompt",
     justification = "Publishing changes requires explicit user approval and final diff/readback evidence.",

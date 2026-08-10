@@ -181,10 +181,38 @@ const WlApi = (function () {
     return Promise.resolve();
   }
 
+  /* Subscribe to the Workflow-owned loopback SSE endpoint advertised by the
+     read-only dashboard projection. EventSource owns reconnect and forwards
+     Last-Event-ID automatically; Observer only reacts by re-reading projection. */
+  function subscribeEvents(url, handlers) {
+    if (typeof EventSource === "undefined") {
+      throw new Error("EventSource is unavailable");
+    }
+    const parsed = new URL(String(url), typeof window !== "undefined" ? window.location.href : "http://127.0.0.1/");
+    const loopback = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "[::1]" || parsed.hostname === "::1";
+    if ((parsed.protocol !== "http:" && parsed.protocol !== "https:") || !loopback || parsed.pathname !== "/api/v1/events") {
+      throw new Error("SSE endpoint is outside the declared loopback read-only boundary");
+    }
+    const source = new EventSource(parsed.toString());
+    source.onmessage = (event) => {
+      let payload = null;
+      try { payload = JSON.parse(event.data); } catch (_) { return; }
+      if (handlers && typeof handlers.onEvent === "function") handlers.onEvent(payload, event.lastEventId || null);
+    };
+    source.onerror = () => {
+      if (handlers && typeof handlers.onError === "function") handlers.onError();
+    };
+    source.onopen = () => {
+      if (handlers && typeof handlers.onOpen === "function") handlers.onOpen();
+    };
+    return source;
+  }
+
   return {
     FIXTURE,
     fetchDashboard,
     rejectNonGet,
+    subscribeEvents,
   };
 })();
 

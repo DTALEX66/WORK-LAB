@@ -1,10 +1,10 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-08T14:53:16.474069Z",
-  "source_digest": "48f635f9f90af5075d3b7e74a94a23fa47107b388159847905e9dc27fa43c053",
+  "generated_at": "2026-08-10T00:18:52.267653Z",
+  "source_digest": "093691697384ae1a3825f95b30fa531bb00ded031630534fcf95245a79b3f234",
   "git": {
-    "head": "a3a6fa63b9548dfc4e4b2390bb9c6257dfacdfa3",
-    "branch": "main"
+    "head": "54eeb7f8134aa865a0642657da9251964e879447",
+    "branch": "stage3/control-plane-20260808"
   },
   "modules": [
     {
@@ -209,40 +209,8 @@
     "writer_state": "UNIQUE"
   },
   "ci": {
-    "run_id": 31251658880,
-    "workflow_name": "work-lab-gate",
-    "status": "completed",
-    "conclusion": "success",
-    "head_sha": "a3a6fa63b9548dfc4e4b2390bb9c6257dfacdfa3",
-    "url": "https://github.com/DTALEX66/WORK-LAB/actions/runs/31251658880",
-    "attempt": 1,
-    "jobs": [
-      {
-        "name": "aggregate",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "gate-plan",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "integration",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "observer",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "workflow-assistance",
-        "status": "completed",
-        "conclusion": "success"
-      }
-    ]
+    "status": "unknown",
+    "evidence": "not-provided"
   },
   "unverified_capabilities": [
     "hermes_live_apply",
@@ -251,5 +219,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "ceb0a597ac5e173b330e1a5d75deb24288a64b0c6fbed343e8d3fc86beb86f5d"
+  "content_digest": "c428c5a0fbed53ed9f108148b1d4ebe82f10acb50a9c7cd3bd60f97565ba63f9"
 }

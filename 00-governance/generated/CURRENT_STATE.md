@@ -1,13 +1,13 @@
 # WORK-LAB current state
 
-Generated at: `2026-08-08T14:53:16.474069Z`  \
-Source digest: `48f635f9f90af5075d3b7e74a94a23fa47107b388159847905e9dc27fa43c053`  \
-Content digest: `ceb0a597ac5e173b330e1a5d75deb24288a64b0c6fbed343e8d3fc86beb86f5d`
+Generated at: `2026-08-10T00:18:52.267653Z`  \
+Source digest: `093691697384ae1a3825f95b30fa531bb00ded031630534fcf95245a79b3f234`  \
+Content digest: `c428c5a0fbed53ed9f108148b1d4ebe82f10acb50a9c7cd3bd60f97565ba63f9`
 
 ## Git
 
-- HEAD: `a3a6fa63b9548dfc4e4b2390bb9c6257dfacdfa3`
-- Branch: `main`
+- HEAD: `54eeb7f8134aa865a0642657da9251964e879447`
+- Branch: `stage3/control-plane-20260808`
 
 ## Active modules
 
@@ -39,14 +39,10 @@ Content digest: `ceb0a597ac5e173b330e1a5d75deb24288a64b0c6fbed343e8d3fc86beb86f5
 
 ## CI evidence
 
-- Run: `31251658880`
-- Head SHA: `a3a6fa63b9548dfc4e4b2390bb9c6257dfacdfa3`
-- Conclusion: `success`
-- `aggregate`: success (completed)
-- `gate-plan`: success (completed)
-- `integration`: success (completed)
-- `observer`: success (completed)
-- `workflow-assistance`: success (completed)
+- Run: `unknown`
+- Head SHA: `unknown`
+- Conclusion: `unknown`
+- unavailable
 
 ## Explicitly unverified
 
