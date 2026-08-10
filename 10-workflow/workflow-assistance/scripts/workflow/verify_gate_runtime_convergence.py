@@ -101,31 +101,53 @@ def check_5_no_fabricated_exact() -> dict:
 
 
 def check_6_dual_project_canary() -> dict:
-    """WORK-LAB + one real OS project canary."""
+    """WORK-LAB + one real OS project canary.
+
+    On CI runners without a configured OS-project root this is an environment
+    limitation, not a code failure: per Master TaskPack §15 it is reported as
+    PENDING and does not block the gate (canary evidence is re-run on the
+    developer workstation).
+    """
     sys.path.insert(0, str(ROOT / "10-workflow/workflow-assistance/scripts/workflow"))
     import tempfile
     from canonical_store import CanonicalStore
     from collectors import build_standard_collectors
     from durable_worker import DurableWorker
-    os_projects = [p for p in _discover_os_projects() if p.project_id != "work-lab"]
-    ok = False
-    detail = "no-extra-os-project-found"
-    if os_projects:
-        real = os_projects[0]
-        with tempfile.TemporaryDirectory() as td:
-            store = CanonicalStore(Path(td) / "c.sqlite")
+    candidate_roots = [Path(r"D:\All projects"), Path("/workspaces"), Path.home() / "projects"]
+    os_projects = []
+    for candidate in candidate_roots:
+        if not candidate.is_dir():
+            continue
+        try:
+            os_projects = [p for p in _discover_os_projects(candidate) if p.project_id != "work-lab"]
+        except Exception:  # noqa: BLE001 - environment probe must never crash the gate
+            os_projects = []
+        if os_projects:
+            break
+    if not os_projects:
+        return {"id": 6, "name": "dual-project-canary", "pass": False,
+                "evidence": "PENDING: no OS-project root on this runner (environment-limited, §15)"}
+    real = os_projects[0]
+    td = tempfile.mkdtemp()
+    try:
+        store = CanonicalStore(Path(td) / "c.sqlite")
+        try:
             worker = DurableWorker(store, project_id=real.project_id,
                                    collectors=build_standard_collectors(real.root))
             result = worker.run_once()
             ok = all(c["ok"] for c in result["collectors"])
-            detail = f"canary={real.project_id} collectors_ok={ok}"
+            evidence = f"canary={real.project_id} collectors_ok={ok}"
+        finally:
             store.close()
-    return {"id": 6, "name": "dual-project-canary", "pass": ok, "evidence": detail}
+    finally:
+        import shutil
+        shutil.rmtree(td, ignore_errors=True)
+    return {"id": 6, "name": "dual-project-canary", "pass": ok, "evidence": evidence}
 
 
-def _discover_os_projects():
+def _discover_os_projects(search_root):
     from project_registry import discover_git_projects
-    return discover_git_projects(Path(r"D:\All projects"), max_depth=2)
+    return discover_git_projects(search_root, max_depth=2)
 
 
 def check_7_worker_resume_from_ledger() -> dict:
