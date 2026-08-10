@@ -1,13 +1,13 @@
 # WORK-LAB current state
 
-Generated at: `2026-08-10T08:49:13.552660Z`  \
-Source digest: `b39bbbc0c9bf95378dff7b7069b29a56b41fb04e4ffd00138a76e10db1656381`  \
-Content digest: `527489d730dabd41d3f5a3403413d709498d344a16b82b437502d8d549bd22e4`
+Generated at: `2026-08-10T09:17:37.330586Z`  \
+Source digest: `269af31ea7f5c96b83b16d2598345385ac2f5455a8b792e1c51856de5ec1d3a3`  \
+Content digest: `a00a63921a18c321850bfd55ea0b399118aead6671ee880e02dd2f7ea547ae3e`
 
 ## Git
 
-- HEAD: `1160acc0b2605982f3561e206eb3140bfcbc88b3`
-- Branch: `main`
+- HEAD: `f9cabf1fe18b50d45fd943642fae921eba99bb15`
+- Branch: `docs/wl3-delivery-summary-and-errors`
 
 ## Active modules
 
