@@ -24,7 +24,7 @@ The module owns only:
 1. The managed Workflow Assistance block in the Codex user `AGENTS.md`.
 2. One managed command policy file:
    `$CODEX_HOME/rules/workflow-assistance.rules`.
-3. Eight explicitly named user Skills under `$HOME/.agents/skills`.
+3. Ten explicitly named user Skills under `$HOME/.agents/skills`.
 4. Three field-level defaults, only when absent:
    `approval_policy`, `sandbox_mode`, and `project_doc_max_bytes`.
 5. Plan/apply/verify/rollback readback for those owned assets.
@@ -36,7 +36,7 @@ runtime state. If ownership is unclear, it stops rather than guessing.
 
 | Operation | Status | Exact responsibility |
 |---|---|---|
-| Detect | `READ_ONLY` | Check executable availability, target paths, owned hashes, and declared state; never inspect credentials or session bodies. |
+| Detect | `READ_ONLY` | Check executable availability, target paths, owned hashes, declared state, and redacted Git/Python/Markdown/performance evidence; never inspect credentials, private memory, prompts, responses, or session bodies. |
 | Plan | `READ_ONLY` | Produce a redacted action plan, classify preserved fields, and fail closed on conflict or unsafe paths. |
 | Apply | `USER_APPROVAL_REQUIRED` | Atomically update only the owned overlay, rules, Skills, and missing field-level defaults. |
 | Verify | `READ_ONLY` | Parse entry points, verify markers/hashes/owned Skills, and prove idempotence. |
@@ -49,7 +49,8 @@ The module does **not** own or modify:
 
 - provider, model, base URL, routing, quota, or billing;
 - authentication, tokens, cookies, private keys, or credential stores;
-- MCP servers, plugins, sessions, memory, Desktop state, or sandbox internals;
+- MCP servers, plugins, sessions, private memory including
+  `$CODEX_HOME/memories`, Desktop state, or sandbox internals;
 - project source files, project `AGENTS.md`, Task Ledger, Telemetry Ledger, or
   project Sidecar;
 - Git commit, push, PR, merge, release, or external project writes;

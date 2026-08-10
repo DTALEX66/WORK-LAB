@@ -18,6 +18,30 @@
 # trees; treat open-file locks as BLOCKED_PROCESS_LOCK and retry after the
 # owning process exits. Never retry an identical failed command string;
 # re-issue the dialect-correct form.
+# PowerShell Remove-Item is successful only when it uses -LiteralPath and
+# -ErrorAction Stop and a following Test-Path proves the exact target absent.
+# A zero process exit alone is not cleanup evidence. On access denial, inspect
+# lock/ACL/attribute/reparse state; do not elevate, change ACLs, or kill shared
+# processes merely to remove ignored project data.
+# Strip ANSI terminal control sequences before parsing command evidence.
+#
+# Private and project evidence boundaries:
+# Never read $CODEX_HOME/memories, auth, session, keychain, cookie, prompt, or
+# response bodies for project context. A denied read is a correct boundary
+# signal; use tracked repository truth or user-provided redacted evidence.
+# Before tests, report the exact Python interpreter and optional modules. Before
+# Git conclusions, distinguish current/upstream, current/origin-main, PR merge
+# state, merge SHA, and exact-SHA CI. Squash merge creates a new merge SHA.
+# Resolve Markdown relative links from the containing document's directory.
+# Keep PLANNED, BRANCH_PUBLISHED, IMPLEMENTED_LOCAL, TESTED_LOCAL,
+# CI_VERIFIED_EXACT_SHA, MERGED_MAIN, and INSTALLED_RUNTIME_VERIFIED distinct.
+#
+# Codex performance evidence:
+# Do not infer latency from sandbox, approval, trust, WebSocket capability, MCP
+# timeout, or other field names. Use matched timed samples, preserve the official
+# Windows sandbox by default, keep one persistent writer, batch independent
+# reads, run targeted development checks, and run the full gate once on the
+# final aggregate tree.
 #
 # OpenHuman coordination:
 # OpenHuman is a separate local desktop agent. Its .openhuman private runtime

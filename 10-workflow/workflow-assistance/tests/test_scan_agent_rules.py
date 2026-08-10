@@ -65,6 +65,22 @@ class ScanAgentRulesTests(unittest.TestCase):
         result = run_scanner_bytes(b"#!/bin/sh\necho hi\n", "sample.sh")
         self.assertEqual(result.returncode, 0, result.stdout)
 
+    def test_powershell_remove_item_without_literal_path_and_stop_is_flagged(self) -> None:
+        result = run_scanner_bytes(
+            b"Remove-Item $target -Recurse -Force\n",
+            "cleanup.ps1",
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unsafe PowerShell cleanup", result.stdout)
+
+    def test_powershell_remove_item_with_literal_path_and_stop_is_clean(self) -> None:
+        result = run_scanner_bytes(
+            b"Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction Stop\n"
+            b"if (Test-Path -LiteralPath $target) { throw 'cleanup postcondition failed' }\n",
+            "cleanup.ps1",
+        )
+        self.assertEqual(result.returncode, 0, result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

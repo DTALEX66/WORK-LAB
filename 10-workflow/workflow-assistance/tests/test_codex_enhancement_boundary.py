@@ -43,6 +43,16 @@ def test_codex_boundary_preserves_private_and_project_surfaces() -> None:
     assert contract["capabilities"]["invoke"]["mode"] == "NOT_PROVIDED"
     assert contract["capabilities"]["apply"]["mode"] == "USER_APPROVAL_REQUIRED"
     assert contract["approval_policy"]["live_provider_or_external_project_write"] == "forbidden_by_this_module"
+    assert "$codex_home/memories" in excluded
+
+
+def test_codex_boundary_owns_only_read_only_execution_preflight() -> None:
+    contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+    detected = " ".join(contract["capabilities"]["detect"]["allowed"])
+
+    assert "execution_preflight.py" in detected
+    assert "Git/Python/Markdown" in detected
+    assert contract["capabilities"]["invoke"]["mode"] == "NOT_PROVIDED"
 
 
 def test_codex_boundary_requires_redacted_idempotent_evidence() -> None:

@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -154,6 +155,60 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         self.assertEqual(removed["pip-cache"], len(b"wheel"))
         self.assertFalse(cache.exists())
         self.assertFalse(pip_cache.exists())
+
+    def test_cleanup_exact_runtime_path_removes_only_named_target(self) -> None:
+        module = load_module()
+        repo = self.make_repo(ignored=True)
+        layout = module.prepare_layout(repo)
+        target = layout.paths["root"] / "audit-main-pdf-20260810"
+        sibling = layout.paths["root"] / "keep-me"
+        target.mkdir()
+        sibling.mkdir()
+        (target / "report.json").write_text("{}", encoding="utf-8")
+
+        result = module.cleanup_runtime_path(layout, "audit-main-pdf-20260810")
+
+        self.assertEqual(result["status"], "REMOVED")
+        self.assertEqual(result["bytes"], 2)
+        self.assertFalse(target.exists())
+        self.assertTrue(sibling.exists())
+
+    def test_cleanup_exact_runtime_path_rejects_escape_and_absolute_path(self) -> None:
+        module = load_module()
+        repo = self.make_repo(ignored=True)
+        layout = module.prepare_layout(repo)
+
+        for candidate in ("../outside", str(repo / "absolute")):
+            with self.subTest(candidate=candidate):
+                with self.assertRaisesRegex(module.ProjectDataBoundaryError, "relative runtime path"):
+                    module.cleanup_runtime_path(layout, candidate)
+
+    def test_cleanup_exact_runtime_path_reports_permission_blocker_without_elevation(self) -> None:
+        module = load_module()
+        repo = self.make_repo(ignored=True)
+        layout = module.prepare_layout(repo)
+        target = layout.paths["root"] / "locked"
+        target.mkdir()
+
+        with mock.patch.object(module.shutil, "rmtree", side_effect=PermissionError("denied")):
+            with self.assertRaisesRegex(
+                module.ProjectDataBoundaryError,
+                "BLOCKED_RUNTIME_CLEANUP.*lock, ACL, or process ownership",
+            ):
+                module.cleanup_runtime_path(layout, "locked")
+
+        self.assertTrue(target.exists())
+
+    def test_cleanup_exact_runtime_path_verifies_postcondition(self) -> None:
+        module = load_module()
+        repo = self.make_repo(ignored=True)
+        layout = module.prepare_layout(repo)
+        target = layout.paths["root"] / "still-present"
+        target.mkdir()
+
+        with mock.patch.object(module.shutil, "rmtree", return_value=None):
+            with self.assertRaisesRegex(module.ProjectDataBoundaryError, "postcondition failed"):
+                module.cleanup_runtime_path(layout, "still-present")
 
     def test_rejects_any_explicit_output_path_outside_the_project(self) -> None:
         module = load_module()
