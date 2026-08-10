@@ -148,8 +148,8 @@ WORK-LAB 自身门禁已通过。外部 Hermes 全量 CLI/Electron 测试仍存�
 
 - 不要把 Hermes Home、认证、session、provider、cron、skills、plugins 或缓存复制进 WORK-LAB；
 - 不要向 `NousResearch/hermes-agent` 官方仓库推送或重写历史；
-- 不要删除 `D:\All projects\WORK-LAB-ARCHIVE`；
-- 不要删除 archive 内的 source/physical checkout、manifest 或恢复证据；
+- 外部归档 `D:\All projects\WORK-LAB-ARCHIVE` 已于 2026-08-10 退休并删除：迁移证据已并入 `90-archive-manifests/migration-20260805/`（secret-scan 通过、逐文件 SHA-256 校验）；三个被吸收仓库的完整 git 历史已核验保留在云端（`DTALEX66/MINIGAME`、`DTALEX66/OPEN-DESIGN-Assistance`）与 canonical main（Workflow-assistance，HEAD `4929142` 含于 main）；归档内 MINIGAME 测试 Chrome profiles（敏感浏览痕迹）已随归档清除；
+- 不要删除 `90-archive-manifests/migration-20260805/` 内的证据文件（manifest、FINAL_MIGRATION_STATE、AUDIT_CLEANUP_GATE）；
 - 不要使用 force-push、destructive reset、广泛 `git clean` 或强杀进程；
 - 不要把 `productionRelease=NOT_CLAIMED` 改成已发布，除非有真实 installer、checksum、发布资产和公开回读证据。
 
@@ -157,9 +157,9 @@ WORK-LAB 自身门禁已通过。外部 Hermes 全量 CLI/Electron 测试仍存�
 
 1. 先读取本文件和 `00-governance/migration-status.json`。
 2. 确认 `git status --short --branch`、`HEAD`、`origin/main` 和 exact-SHA CI。
-3. 需要恢复旧 checkout 时，使用：
-   - `D:\All projects\WORK-LAB-ARCHIVE\migration-20260805T120000Z\source-checkouts\`
-   - `D:\All projects\WORK-LAB-ARCHIVE\migration-20260805T120000Z\physical-checkouts\`
+3. 需要恢复旧 checkout 或历史时：
+   - 完整 git 历史：`DTALEX66/MINIGAME`、`DTALEX66/OPEN-DESIGN-Assistance`（云端）、`10-workflow/workflow-assistance`（canonical main 内，含吸收前历史，HEAD `4929142`）；
+   - 迁移证据：`90-archive-manifests/migration-20260805/`（manifest、FINAL_MIGRATION_STATE、AUDIT_CLEANUP_GATE）。
 4. 以 `source-checkouts-archive-manifest.json` 和 `FINAL_MIGRATION_STATE.json` 作为恢复证据入口。
 5. 任何跨模块修改都必须有明确 task pack、单一 writer、允许路径、回滚句柄和完整门禁。
 
