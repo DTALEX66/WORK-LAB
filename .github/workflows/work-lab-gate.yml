@@ -4,10 +4,6 @@ on:
   push:
   pull_request:
 
-concurrency:
-  group: work-lab-gate-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
