@@ -265,7 +265,7 @@ class ObserverDashboardTests(unittest.TestCase):
                 ev("w1", "WA-001", None),
                 ev("w2", "WA-002", None),
                 ev("p1", "FX-100", "fixture-external"),
-                ev("retired", "OD-100", "retired-source"),
+                ev("retired", "OD-100", "retired"),
             ])
             server = create_server(project, runtime, port=0)
             thread = threading.Thread(target=server.serve_forever, daemon=True)
