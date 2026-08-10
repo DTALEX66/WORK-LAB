@@ -10,7 +10,7 @@ UI/Skin 增强覆盖的是全局工作流体验，不是只美化本仓库：
 
 - Hermes CLI/TUI 的 `display.skin` 与 `/skin` 使用边界；
 - Windows Terminal / VS Code / Codex 终端视觉一致性；
-- Hermes Desktop / dashboard / Open Design 相关界面的设计 token 和组件规范；
+- Hermes Desktop / dashboard / Observer 相关界面的设计 token 和组件规范；
 - Agent 任务状态、tool call、verification evidence、Gateway、cron、sleep-mode 和 repo/live/session 分层的可视化表达。
 
 ## 已吸收的开源方法
@@ -33,7 +33,6 @@ UI/Skin 增强覆盖的是全局工作流体验，不是只美化本仓库：
 | Windows Terminal | 提供可复制 color scheme JSON | 不自动改用户 settings.json |
 | VS Code / Codex 终端 | 提供主题建议和 token 对齐 | 不安装扩展、不改全局编辑器配置 |
 | Hermes Desktop / dashboard | 提供 UI pattern、状态卡片和 Agent thread 信息架构 | 不 vendor React/Next.js/shadcn runtime |
-| Open Design | 复用 token 与视觉验收 checklist | 不把 Open Design 项目依赖写入 Workflow-assistance |
 
 ## 推荐默认预设
 

@@ -321,12 +321,14 @@ const WlRender = (function () {
   function compactHeader(d) {
     const fresh = d.freshness || {};
     const freshText = fresh.state === "fresh" ? "新鲜" : (fresh.state === "delayed" ? "延迟" : (fresh.state === "stale" ? "陈旧" : "未知"));
+    const mode = WlState.get().mode || d.mode || "UNKNOWN";
+    const modeClass = mode === "LIVE" ? "wl-badge-live" : (mode === "SNAPSHOT" ? "wl-badge-replay" : "wl-badge-fixture");
     return `<div class="wl-compact-header wl-shell" data-tauri-drag-region>
       <img class="wl-brand-symbol" src="assets/brand/work-lab-observer-symbol.svg" alt="" width="24" height="24" data-tauri-drag-region>
       <span class="wl-compact-title" data-tauri-drag-region>WORK-LAB <small>Observer</small></span>
       <span class="wl-badge wl-badge-ro">${icon("eye")}只读</span>
       <span class="wl-badge wl-badge-cross">${icon("projects")}跨项目</span>
-      <span class="wl-badge wl-badge-fixture">${icon("info")}FIXTURE</span>
+      <span class="wl-badge ${modeClass}">${icon("info")}${F.escapeHtml(mode)}</span>
       <span class="wl-badge ${fresh.state === 'fresh' ? 'wl-badge-fresh' : 'wl-badge-delayed'}">${icon("fresh")}${F.escapeHtml(freshText)}</span>
     </div>`;
   }
@@ -453,7 +455,7 @@ const WlRender = (function () {
     const freshText = fresh.state === "fresh" ? "新鲜" : (fresh.state === "delayed" ? "延迟" : (fresh.state === "stale" ? "陈旧" : "未知"));
     const registered = d.summary ? d.summary.registeredProjects : 0;
     const mode = WlState.get().mode;
-    const badgeCls = mode === "LIVE" ? "wl-badge-live" : (mode === "REPLAY" ? "wl-badge-replay" : "wl-badge-fixture");
+    const badgeCls = mode === "LIVE" ? "wl-badge-live" : ((mode === "SNAPSHOT" || mode === "REPLAY") ? "wl-badge-replay" : "wl-badge-fixture");
     return `<div class="wl-topbar" data-tauri-drag-region>
       <div class="wl-brand" data-tauri-drag-region><span class="wl-drag-handle" data-tauri-drag-region><span></span><span></span><span></span></span><img class="wl-brand-symbol" src="assets/brand/work-lab-observer-symbol.svg" alt="" width="22" height="22" data-tauri-drag-region><span>WORK-LAB <small>Observer</small></span></div>
       <div class="wl-topbar-tools">

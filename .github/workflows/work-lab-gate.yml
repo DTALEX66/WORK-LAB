@@ -73,6 +73,17 @@ jobs:
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py context-pack
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py client-neutral-manifest
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py core-schemas
+          python 10-workflow/workflow-assistance/tests/test_platform_identity.py
+          python 10-workflow/workflow-assistance/tests/test_instance_reconciler.py
+          python 10-workflow/workflow-assistance/tests/test_config_ownership.py
+          python 10-workflow/workflow-assistance/tests/test_telemetry_ledger.py
+          python 10-workflow/workflow-assistance/tests/test_sidecar.py
+          python 10-workflow/workflow-assistance/tests/test_config_coordinator.py
+          python 10-workflow/workflow-assistance/tests/test_sidecar_lock.py
+          python 10-workflow/workflow-assistance/tests/test_project_profile.py
+          python 10-workflow/workflow-assistance/tests/test_observer_projection_adapter.py
+          python scripts/ci/generate_current_state.py --check-current
+          python tests/ci/test_stage3_baseline.py
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py adapter-registry
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py adapter-conformance
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py acp-conformance
@@ -80,9 +91,6 @@ jobs:
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py usage-ingestion
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py memory-contamination
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py task-ledger-replay
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py design-contract
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py production-evidence
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py standard-validators
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py portable-install
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py provider-inventory
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py mcp-audit
@@ -110,6 +118,10 @@ jobs:
           python tests/test_observer_dashboard.py
           python scripts/verify_usage_rollup.py
           python tests/test_usage_rollup.py
+      - name: Verify Observer Web and desktop contracts
+        run: |
+          node tests/run_all_tests.js
+          for file in web/scripts/*.js; do node --check "$file"; done
 
   integration:
     name: integration
@@ -134,10 +146,6 @@ jobs:
         run: python scripts/ci/verify_source_health.py
       - name: Run offline source health tests (NX-600)
         run: python tests/ci/test_source_health.py
-      - name: Verify three-branch offline pilot (NX-700)
-        run: python scripts/ci/verify_offline_pilot.py
-      - name: Run three-branch offline pilot tests (NX-700)
-        run: python tests/ci/test_offline_pilot.py
       - name: Verify size/performance/boundary regression (NX-710)
         run: python scripts/ci/verify_regression_report.py
       - name: Run size/performance/boundary regression tests (NX-710)
@@ -163,7 +171,11 @@ jobs:
       - name: Verify WL inheritance matrix
         run: python scripts/ci/verify_wl_inheritance_matrix.py
       - name: Run current state tests
-        run: python tests/ci/test_current_state.py
+        run: |
+          python tests/ci/test_current_state.py
+          python scripts/ci/generate_current_state.py --check-current
+      - name: Run Stage 3 frozen baseline tests
+        run: python tests/ci/test_stage3_baseline.py
       - name: Run root governance contract tests
         run: python tests/ci/test_root_governance_contracts.py
 

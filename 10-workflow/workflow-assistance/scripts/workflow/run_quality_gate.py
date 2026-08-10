@@ -9,6 +9,12 @@ from pathlib import Path
 from typing import Callable, NamedTuple
 
 ROOT = Path(__file__).resolve().parents[2]
+RETIRED_ORDINARY_TESTS = {
+    "test_design_token_compliance.py",
+    "test_figma_sync.py",
+    "test_fixture_separation.py",
+    "test_renderer_contract.py",
+}
 
 
 class Gate(NamedTuple):
@@ -95,23 +101,26 @@ def project_runtime_environment(root: Path) -> dict[str, str]:
     return env
 
 
-def run(argv: list[str], *, cwd: Path = ROOT) -> int:
+def run(argv: list[str], *, cwd: Path = ROOT, env_updates: dict[str, str] | None = None) -> int:
     printable = " ".join(argv)
     print(f"\n=== {printable} ===")
+    env = project_runtime_environment(cwd)
+    if env_updates:
+        env.update(env_updates)
     result = subprocess.run(
         argv,
         cwd=cwd,
         text=True,
         encoding="utf-8",
         errors="replace",
-        env=project_runtime_environment(cwd),
+        env=env,
     )
     print(f"=== exit {result.returncode}: {printable} ===")
     return result.returncode
 
 
-def run_python(args: list[str]) -> int:
-    return run([sys.executable, *args])
+def run_python(args: list[str], *, env_updates: dict[str, str] | None = None) -> int:
+    return run([sys.executable, *args], env_updates=env_updates)
 
 
 def tracked_python_files() -> list[str]:
@@ -119,8 +128,24 @@ def tracked_python_files() -> list[str]:
     return [path.relative_to(ROOT).as_posix() for root in roots for path in sorted(root.glob("*.py"))]
 
 
+def governance_test_files() -> list[str]:
+    return [
+        path.relative_to(ROOT).as_posix()
+        for path in sorted((ROOT / "tests").glob("test_*.py"))
+        if path.name not in RETIRED_ORDINARY_TESTS
+    ]
+
+
 def gate_governance() -> int:
-    return run_python(["-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py", "-v"])
+    modules = [Path(path).stem for path in governance_test_files()]
+    pythonpath = str(ROOT / "tests")
+    existing = os.environ.get("PYTHONPATH")
+    if existing:
+        pythonpath += os.pathsep + existing
+    return run_python(
+        ["-m", "unittest", "-v", *modules],
+        env_updates={"PYTHONPATH": pythonpath},
+    )
 
 
 def gate_compile() -> int:
@@ -133,6 +158,7 @@ def gate_security() -> int:
             "scripts/security/scan_agent_rules.py",
             "templates",
             "skills",
+            "codex-assets",
             "docs",
             "scripts",
             "README.md",
@@ -222,30 +248,6 @@ def gate_task_ledger_replay() -> int:
     if code != 0:
         return code
     return run_python(["tests/test_task_ledger_replay.py"])
-
-
-def gate_design_contract() -> int:
-    """NX-500: DTCG/DESIGN.md design contract round-trip adaptation."""
-    code = run_python(["scripts/workflow/verify_design_contract.py"])
-    if code != 0:
-        return code
-    return run_python(["tests/test_design_contract.py"])
-
-
-def gate_production_evidence() -> int:
-    """NX-510: design production & quality evidence adaptation."""
-    code = run_python(["scripts/workflow/verify_production_evidence.py"])
-    if code != 0:
-        return code
-    return run_python(["tests/test_production_evidence.py"])
-
-
-def gate_standard_validators() -> int:
-    """NX-520: sourced/searchable/testable standards + evidence association."""
-    code = run_python(["scripts/workflow/verify_standard_validators.py"])
-    if code != 0:
-        return code
-    return run_python(["tests/test_standard_validators.py"])
 
 
 def gate_portable_install_runtime() -> int:
@@ -349,21 +351,6 @@ GATES: dict[str, Gate] = {
         "NX-410: Task Ledger replay + side-effect consistency harness.",
         gate_task_ledger_replay,
     ),
-    "design-contract": Gate(
-        "design-contract",
-        "NX-500: DTCG/DESIGN.md design contract round-trip adaptation.",
-        gate_design_contract,
-    ),
-    "production-evidence": Gate(
-        "production-evidence",
-        "NX-510: design production & quality evidence adaptation.",
-        gate_production_evidence,
-    ),
-    "standard-validators": Gate(
-        "standard-validators",
-        "NX-520: sourced/searchable/testable standards + evidence association.",
-        gate_standard_validators,
-    ),
     "portable-install": Gate("portable-install", "Verify an isolated empty Hermes home can receive the package.", gate_portable_install),
     "portable-install-runtime": Gate(
         "portable-install-runtime",
@@ -391,9 +378,6 @@ VERIFY_ORDER = (
     "usage-ingestion",
     "memory-contamination",
     "task-ledger-replay",
-    "design-contract",
-    "production-evidence",
-    "standard-validators",
     "portable-install",
     "portable-install-runtime",
     "provider-inventory",

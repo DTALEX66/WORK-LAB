@@ -1,0 +1,129 @@
+# Codex 全局工作流增强
+
+## 目标
+
+以 Workflow Assistance 的定位为标准，让 Codex 在任意 Git 项目中获得可迁移的执行、数据、验证和交付边界，同时保留 Codex 官方运行时与用户私有配置的所有权。
+
+该增强层不是 Codex Runtime、模型网关、认证管理器或 Desktop 状态管理器。它只写明确声明的用户 overlay，并允许项目内 `AGENTS.md` 与 `.agents/skills` 继续缩小规则范围。
+
+## 官方配置面与所有权
+
+| 配置面 | 官方位置 | 本包行为 | 所有权 |
+|---|---|---|---|
+| 用户规则 | `$CODEX_HOME/AGENTS.md` | 合并带标记的 managed block | 字段级 overlay |
+| 项目规则 | `<project>/AGENTS.md` | 只读发现，不全局复制 | 项目 |
+| 用户 Skills | `$HOME/.agents/skills` | 管理八个 `workflow-assistance-*` 根 | 精确目录 |
+| 项目 Skills | `<project>/.agents/skills` | 只读发现 | 项目 |
+| 命令规则 | `$CODEX_HOME/rules/*.rules` | 管理 `workflow-assistance.rules` | 精确文件 |
+| 用户配置 | `$CODEX_HOME/config.toml` | 只管理三个顶层默认字段 | 字段级 overlay |
+| Provider / model | `$CODEX_HOME/config.toml` | 保留，不选择、不统一 | 用户 |
+| MCP / plugins | `$CODEX_HOME/config.toml` | 保留，不增删 | 用户 |
+| 认证、会话、Desktop、sandbox 内部状态 | Codex 私有目录 | 禁止读取、复制或写入 | Codex/用户私有 |
+
+> 当前 Codex 官方 skill 发现根是 `.agents/skills`；`.codex/skills` 不是本增强包的目标。
+
+## 管理字段
+
+同步器只在字段不存在时写入：
+
+```text
+approval_policy        = on-request
+sandbox_mode           = workspace-write
+project_doc_max_bytes  = 65536
+```
+
+如果用户已设置不同值，计划会列为 `preserved_user_config_fields`，应用不会覆盖。非交互 `codex exec` 可按该命令自身语义显示 `approval: never`；这不表示交互式 Codex 的 `on-request` 默认值丢失。
+
+## 安装的用户 Skills
+
+- `workflow-assistance-safe-project-execution`
+- `workflow-assistance-project-data-boundary`
+- `workflow-assistance-single-writer-delivery`
+- `workflow-assistance-evidence-verification`
+- `workflow-assistance-systematic-debugging`
+- `workflow-assistance-python-testing`
+- `workflow-assistance-github-delivery`
+- `workflow-assistance-windows-development`
+
+这些是 Codex 原生、客户端中立的 skill，不包含 Hermes 工具调用，也不会把 WORK-LAB 的模块规则提升到普通项目。WORK-LAB 自己的项目 skill 位于仓库根 `.agents/skills/work-lab-workflow/`。
+
+## 命令策略
+
+`workflow-assistance.rules` 提供以下边界：
+
+- 禁止 `git reset --hard`、`git clean` 和 force-push；
+- 普通 `git push`、PR 创建/合并、release 创建要求提示批准；
+- GitHub 只读查询不被规则阻断；
+- 规则不代替 sandbox、项目 `AGENTS.md`、代码审查或用户批准。
+
+## 同步、验证与回滚
+
+从 `10-workflow/workflow-assistance` 运行：
+
+```bash
+python scripts/workflow/sync_codex_global_assets.py plan \
+  --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
+
+python scripts/workflow/sync_codex_global_assets.py apply \
+  --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
+
+python scripts/workflow/sync_codex_global_assets.py verify \
+  --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
+
+python scripts/workflow/sync_codex_global_assets.py rollback \
+  --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
+```
+
+Windows Git Bash 也可显式使用：
+
+```bash
+--codex-home 'C:/Users/ALEX/.codex' --agent-home 'C:/Users/ALEX/.agents'
+```
+
+安全特性：
+
+1. `plan` 不写文件，也不输出 config 正文、连接地址或凭据；
+2. 应用前预检所有同名目标，未知冲突 fail-closed；
+3. config 使用 TOML 解析回读，混合所有权内容不复制到备份；
+4. 状态文件只保存管理字段名和文件 hash；
+5. 再次应用幂等；
+6. rollback 只删除仍与状态 hash 一致的本包文件和标记 block；
+7. 人工修改后的受管文件不会被静默覆盖或删除。
+
+## 日常使用
+
+1. 配置变更后关闭旧 Codex 任务并新开任务，使规则和 skill 列表重新发现；
+2. 在任意项目 Git 根启动 Codex；
+3. 项目有特殊要求时，在项目根维护 `AGENTS.md`；
+4. 可复用项目流程放入 `<project>/.agents/skills/<name>/SKILL.md`；
+5. 让 Codex 实际运行测试、构建和 readback，不接受仅凭代码或说明宣称完成；
+6. commit、push、PR、merge、release 仍需用户明确授权。
+
+## 2026-08-09 本机真实回读
+
+| 验证项 | 结果 |
+|---|---|
+| Codex CLI runtime | `codex-cli 0.147.0-alpha.6.5` |
+| Codex 用户 provider/model | 原值 `cc-switch-official / gpt-5.6-luna` 被保留 |
+| 当前 Hermes 聊天 runtime | 独立层：`openai-codex / gpt-5.6-sol` |
+| Config TOML 严格入口解析 | PASS |
+| 全局 managed config 回读 | PASS，3 个字段 |
+| 用户 MCP / plugin 名称 | 保留，未增删 |
+| 用户 Skills 发现 | PASS，8/8 |
+| Command rule 负控 | PASS：hard reset forbidden，push prompt |
+| Live rollback → readback → reapply | PASS |
+| 非 WORK-LAB 独立 Git canary | PASS |
+| Canary 默认 sandbox | `workspace-write` |
+| Canary 规则回读 | 中文、单 writer、全局配置需精确授权、四类证据状态均被正确回读 |
+
+## 能力边界
+
+全局增强完成后，可以把 Codex 作为任意项目的日常编码和任务执行入口，但不能把以下事项虚构为自动完成：
+
+- 普通项目没有 Workflow Task Ledger 时，不会凭空获得 durable Ledger；
+- Telemetry Ledger 和 Sidecar 仍由接入 Workflow Assistance profile 的项目显式提供；
+- Observer 始终是只读投影，不能执行、审批、重试、回滚或写 Ledger；
+- 本地测试不等于 exact-SHA CI、merge、release 或公开 URL 回读；
+- Codex 与 Hermes 的私有会话、memory、provider、认证和 Desktop 状态保持分离。
+
+因此当前结论是：**Codex 全局规则、原生 Skills、sandbox 默认值、命令策略、回读和回滚均已建立；项目专属 Ledger/Telemetry 仍采用显式 profile 接入，而不是全局强制。**

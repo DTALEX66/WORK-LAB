@@ -23,7 +23,7 @@
     },
     "mode": {
       "type": "string",
-      "enum": ["LIVE", "FIXTURE"]
+      "enum": ["LIVE", "SNAPSHOT", "FIXTURE"]
     },
     "generatedAt": {
       "type": "string",

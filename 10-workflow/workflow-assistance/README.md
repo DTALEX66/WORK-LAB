@@ -2,7 +2,7 @@
 
 [![work-lab-gate](https://github.com/DTALEX66/WORK-LAB/actions/workflows/work-lab-gate.yml/badge.svg)](https://github.com/DTALEX66/WORK-LAB/actions/workflows/work-lab-gate.yml)
 
-面向 Windows、Linux 与 macOS 的 **客户端中立工作流控制、治理、任务、交付与可观测层**：以可迁移合同和 Adapter 连接 Hermes、Codex、CC Switch、GitHub、Open Design 等入口；集中维护无密钥配置、ActionPlan、项目边界、任务证据、链路诊断、Context7 MCP、Agent Skills、治理测试和跨平台 CI。
+面向 Windows、Linux 与 macOS 的 **客户端中立工作流控制、治理、任务、交付与可观测层**：以可迁移合同和 Adapter 连接 Hermes、Codex、CC Switch、GitHub 与未来客户端入口；集中维护无密钥配置、ActionPlan、项目边界、任务证据、链路诊断、Context7 MCP、Agent Skills、治理测试和跨平台 CI。
 
 ## 项目定位
 
@@ -17,7 +17,7 @@
 ```text
 Client-neutral workflow control plane
 ├─ Core contracts     manifest, adapters, domain packs, plans, runs, events, evidence
-├─ Adapter boundary   Hermes / Codex / CC Switch / GitHub / Open Design / other clients
+├─ Adapter boundary   Hermes / Codex / CC Switch / GitHub / future clients
 ├─ Governance         approval, project containment, rollback, redaction, exact-SHA CI
 └─ Replaceable entry  client-specific runtime remains optional and independently verified
 ```
@@ -257,7 +257,46 @@ python scripts/workflow/provider_health.py \
 ## Codex 编码执行器
 
 Codex 会在新任务启动时读取用户目录 `.codex/AGENTS.md`，再由项目内更具体的
-`AGENTS.md` 继续约束。仓库提供的是一个短小的全局基线安装器：它先把完整内容写入 Windows
+`AGENTS.md` 继续约束；Codex 原生用户 skill 目录是 `$HOME/.agents/skills`，项目 skill
+目录是 `<project>/.agents/skills`，命令规则位于 `$CODEX_HOME/rules/*.rules`。不要把
+`.codex/skills` 当成当前官方 skill 发现根。
+
+完整的配置矩阵、所有权、验证证据和日常使用说明见
+[`docs/workflow/codex-global-enhancement.md`](docs/workflow/codex-global-enhancement.md)。
+
+本仓库现在提供可回读、可回滚的 Codex 用户层增强包：
+
+```bash
+# 只生成不含秘密的写入计划
+python scripts/workflow/sync_codex_global_assets.py plan \
+  --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
+
+# 用户明确批准后应用
+python scripts/workflow/sync_codex_global_assets.py apply \
+  --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
+
+# 精确回读或撤销本包拥有的部分
+python scripts/workflow/sync_codex_global_assets.py verify \
+  --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
+python scripts/workflow/sync_codex_global_assets.py rollback \
+  --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
+```
+
+同步器只拥有：
+
+- `.codex/AGENTS.md` 中带开始/结束标记的 Workflow Assistance block；
+- `.codex/config.toml` 中带标记的三个默认字段：`approval_policy=on-request`、
+  `sandbox_mode=workspace-write`、`project_doc_max_bytes=65536`；
+- `.codex/rules/workflow-assistance.rules`；
+- `.agents/skills/workflow-assistance-*` 的八个 Codex 原生 skill 根。
+
+若这些 config 字段已有不同的用户值，同步器保留用户值而不是覆盖。Provider、model、base URL、
+认证、MCP、plugin、Desktop 状态、session、sandbox 内部状态和其它用户 skill 均不在写入集；
+状态文件只保存所管理文件的 hash 与字段名，不复制混合所有权 config 或凭据。冲突、目标漂移、
+格式错误和非本包拥有的同名 skill 都会 fail-closed。`rollback` 只删除仍与最后一次应用 hash
+一致的本包资产，避免覆盖后续人工修改。
+
+`install_codex_global_guidance.py` 仍保留为“目标完全不存在时”的最小原子 bootstrap：它先把完整内容写入 Windows
 私有或 POSIX 匿名 staging 对象，再以不替换已有名称的原子操作发布缺失的 `AGENTS.md`；公开名称存在期间
 不会继续写入内容。已有的零字节文件、hardlink、symlink/reparse point 或并发创建文件都不会
 被填充或替换。安装器要求 Codex Home 已由官方 Codex 应用初始化，绝不自行创建缺失目录；
@@ -289,8 +328,10 @@ inode，并通过 `linkat(AT_EMPTY_PATH)` 无覆盖发布；不支持匿名 inod
 在 `--apply` 中，`CODEX_GUIDANCE_OVERRIDE_BEFORE_PUBLICATION` 和
 `CODEX_GUIDANCE_DIRECTORY_PIN_FAILED` 也都返回 `1`：它们表示请求的安装没有完成，而不是成功的 no-op。
 
-安装后新开一个 Codex 任务即可重建规则链。全局基线只负责通用的数据边界；项目根的
-`AGENTS.md` 才负责 Hermes 的项目内运行器和该项目的具体规则。
+安装或同步后必须新开一个 Codex 任务，才能重建规则和 skill 发现链。全局增强只负责通用
+执行、数据、验证和交付边界；项目根的 `AGENTS.md` 与 `.agents/skills` 继续负责该项目的
+具体规则。WORK-LAB 的项目 skill 位于仓库根 `.agents/skills/work-lab-workflow/`，不会被
+错误提升成所有项目的全局合同。
 
 仓库不捆绑 Codex，可通过 launcher 定位本机已安装版本：
 

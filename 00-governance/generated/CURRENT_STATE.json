@@ -1,10 +1,10 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-08T09:47:40.035977Z",
-  "source_digest": "67b71d05dd1215d9ee128721fe319ae6e28e053dd45d292ab164dcf386ff41df",
+  "generated_at": "2026-08-10T00:18:52.267653Z",
+  "source_digest": "093691697384ae1a3825f95b30fa531bb00ded031630534fcf95245a79b3f234",
   "git": {
-    "head": "f141946bfa55fd77120443bacd45aee0049c16e2",
-    "branch": "main"
+    "head": "54eeb7f8134aa865a0642657da9251964e879447",
+    "branch": "stage3/control-plane-20260808"
   },
   "modules": [
     {
@@ -50,7 +50,7 @@
     }
   ],
   "contracts": {
-    "count": 28,
+    "count": 30,
     "schema_version": "work-lab-contract-catalog/v2"
   },
   "skills": {
@@ -200,48 +200,24 @@
       "work-lab-gate"
     ]
   },
+  "stage3": {
+    "taskpack_id": "WORK-LAB-STAGE-3-CANONICAL-CONTROL-PLANE",
+    "task_count": 28,
+    "initial_state": "PENDING",
+    "baseline_candidate_tree": "7516b2c88a32ba7bb67fd025a1fd5e8aa4f1eea2",
+    "incoming_dirty_count": 13,
+    "writer_state": "UNIQUE"
+  },
   "ci": {
-    "run_id": 31251306631,
-    "workflow_name": "work-lab-gate",
-    "status": "completed",
-    "conclusion": "success",
-    "head_sha": "f141946bfa55fd77120443bacd45aee0049c16e2",
-    "url": "https://github.com/DTALEX66/WORK-LAB/actions/runs/31251306631",
-    "attempt": 1,
-    "jobs": [
-      {
-        "name": "aggregate",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "gate-plan",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "integration",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "observer",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "workflow-assistance",
-        "status": "completed",
-        "conclusion": "success"
-      }
-    ]
+    "status": "unknown",
+    "evidence": "not-provided"
   },
   "unverified_capabilities": [
     "hermes_live_apply",
     "paid_provider_smoke",
-    "human_design_calibration",
+    "transferred_visual_calibration",
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "89a1ae999a112e80a04474ac1941938ea43c4f436825ba477450f6fa94524c91"
+  "content_digest": "c428c5a0fbed53ed9f108148b1d4ebe82f10acb50a9c7cd3bd60f97565ba63f9"
 }

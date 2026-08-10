@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "work-lab/stage3-task-graph/v1",
+  "taskpackId": "WORK-LAB-STAGE-3-CANONICAL-CONTROL-PLANE",
+  "taskpackVersion": "1.0",
+  "snapshotDate": "2026-08-08",
+  "repository": "DTALEX66/WORK-LAB",
+  "defaultBranch": "main",
+  "initialState": "PENDING",
+  "authority": [
+    "00-governance/PROJECT_POSITIONING.md",
+    "00-governance/projects.json",
+    "50-taskpacks/WORK-LAB-STAGE-3-TASK-GRAPH.json"
+  ],
+  "supersedesForwardExecutionFrom": [
+    "WORK-LAB-FINAL-CONSOLIDATED",
+    "WORK-LAB-STAGE-2-ABSORPTION-INTEROP"
+  ],
+  "tasks": [
+    {"id": "WL3-000", "priority": "P0", "dependsOn": []},
+    {"id": "WL3-010", "priority": "P0", "dependsOn": ["WL3-000"]},
+    {"id": "WL3-100", "priority": "P0", "dependsOn": ["WL3-000"]},
+    {"id": "WL3-110", "priority": "P0", "dependsOn": ["WL3-100"]},
+    {"id": "WL3-120", "priority": "P0", "dependsOn": ["WL3-100"]},
+    {"id": "WL3-200", "priority": "P0", "dependsOn": ["WL3-100", "WL3-010"]},
+    {"id": "WL3-210", "priority": "P0", "dependsOn": ["WL3-110", "WL3-200"]},
+    {"id": "WL3-220", "priority": "P0", "dependsOn": ["WL3-200"]},
+    {"id": "WL3-300", "priority": "P0", "dependsOn": ["WL3-220", "WL3-210"]},
+    {"id": "WL3-310", "priority": "P0", "dependsOn": ["WL3-300"]},
+    {"id": "WL3-320", "priority": "P1", "dependsOn": ["WL3-220", "WL3-300"]},
+    {"id": "WL3-330", "priority": "P1", "dependsOn": ["WL3-200", "WL3-310"]},
+    {"id": "WL3-400", "priority": "P0", "dependsOn": ["WL3-210"]},
+    {"id": "WL3-410", "priority": "P0", "dependsOn": ["WL3-400"]},
+    {"id": "WL3-420", "priority": "P1", "dependsOn": ["WL3-400", "WL3-410"]},
+    {"id": "WL3-500", "priority": "P0", "dependsOn": ["WL3-400", "WL3-410", "WL3-420"]},
+    {"id": "WL3-510", "priority": "P0", "dependsOn": ["WL3-500", "WL3-330"]},
+    {"id": "WL3-520", "priority": "P0", "dependsOn": ["WL3-410", "WL3-500"]},
+    {"id": "WL3-600", "priority": "P0", "dependsOn": ["WL3-500", "WL3-510", "WL3-520"]},
+    {"id": "WL3-605", "priority": "P1", "dependsOn": ["WL3-010"]},
+    {"id": "WL3-610", "priority": "P1", "dependsOn": ["WL3-600", "WL3-605"]},
+    {"id": "WL3-620", "priority": "P1", "dependsOn": ["WL3-610"]},
+    {"id": "WL3-700", "priority": "P1", "dependsOn": ["WL3-110", "WL3-200", "WL3-500"]},
+    {"id": "WL3-710", "priority": "P1", "dependsOn": ["WL3-700"]},
+    {"id": "WL3-720", "priority": "P1", "dependsOn": ["WL3-710", "WL3-600"]},
+    {"id": "WL3-800", "priority": "P0", "dependsOn": ["WL3-010", "WL3-520", "WL3-610", "WL3-720"]},
+    {"id": "WL3-810", "priority": "P1", "dependsOn": ["WL3-800"]},
+    {"id": "WL3-820", "priority": "P0", "dependsOn": ["WL3-800", "WL3-810"]}
+  ]
+}

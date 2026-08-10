@@ -1,5 +1,5 @@
 /* WORK-LAB Observer — state.js
-   Holds the current projection, data mode (FIXTURE/LIVE/REPLAY), view
+   Holds the current projection, data mode (LIVE/SNAPSHOT/FIXTURE/REPLAY), view
    (full/compact), theme (dark/light), and last-good snapshot.
    Last-good survives failed refreshes: we never clear to zero on error. */
 
@@ -7,7 +7,7 @@ const WlState = (function () {
   "use strict";
 
   const state = {
-    mode: "LIVE",             // FIXTURE | LIVE | REPLAY — default LIVE (real data first)
+    mode: "LIVE",             // LIVE | SNAPSHOT | FIXTURE | REPLAY
     view: "full",             // full | compact
     theme: "dark",            // dark | light
     data: null,               // current projection
@@ -18,10 +18,10 @@ const WlState = (function () {
     generatedAt: null,
   };
 
-  /* Mode must be one of the three valid values. Empty/unspecified → LIVE (real data first). */
+  /* Empty/unspecified → LIVE (real data first). Bundled fallback is SNAPSHOT. */
   function normalizeMode(m) {
     const v = String(m || "").toUpperCase();
-    if (v === "LIVE" || v === "REPLAY") return v;
+    if (v === "LIVE" || v === "SNAPSHOT" || v === "REPLAY") return v;
     if (v === "FIXTURE") return "FIXTURE";
     return "LIVE"; // default: real data
   }
@@ -38,17 +38,37 @@ const WlState = (function () {
     Object.assign(state, partial);
   }
 
+  function staleCopy(data, freshnessState) {
+    if (!data || typeof data !== "object") return data;
+    const copy = JSON.parse(JSON.stringify(data));
+    const timestamp = Date.parse(copy.generatedAt || (copy.freshness && copy.freshness.lastGoodAt) || "");
+    const ageSeconds = Number.isFinite(timestamp) ? Math.max(0, Math.floor((Date.now() - timestamp) / 1000)) : null;
+    copy.mode = state.mode;
+    copy.freshness = Object.assign({}, copy.freshness || {}, {
+      state: freshnessState,
+      ageSeconds,
+      lastGoodAt: (copy.freshness && copy.freshness.lastGoodAt) || copy.generatedAt || null,
+    });
+    if (copy.quality) copy.quality.freshness = freshnessState;
+    if (Array.isArray(copy.projects)) {
+      copy.projects.forEach((project) => {
+        if (project.quality) project.quality.freshness = freshnessState;
+      });
+    }
+    return copy;
+  }
+
   /* Accept a new projection (FIXTURE or LIVE). Never store a partial/empty as
      last-good if we already have something better. */
   function accept(data, mode) {
     const m = normalizeMode(mode);
     state.mode = m;
-    state.data = data;
+    state.data = m === "SNAPSHOT" ? staleCopy(data, "stale") : data;
     state.generatedAt = data && data.generatedAt ? data.generatedAt : null;
-    state.freshnessState = data && data.freshness ? data.freshness.state : "unknown";
+    state.freshnessState = state.data && state.data.freshness ? state.data.freshness.state : "unknown";
     state.sourceCount = data && Array.isArray(data.sourceRefs) ? data.sourceRefs.length : 0;
     if (data && data.summary && typeof data.summary.registeredProjects === "number") {
-      state.lastGood = data; // a real projection is a valid last-good
+      state.lastGood = data; // retain the unmodified last-good source projection
     }
     state.refreshError = null;
     return state;
@@ -57,9 +77,9 @@ const WlState = (function () {
   /* On refresh failure: keep lastGood, mark stale/offline. Do not zero out. */
   function markRefreshError(message) {
     state.refreshError = message;
-    if (state.mode === "LIVE" && state.lastGood) {
-      state.freshnessState = "stale";
-    }
+    const nextFreshness = state.lastGood ? "stale" : "offline";
+    state.freshnessState = nextFreshness;
+    state.data = state.lastGood ? staleCopy(state.lastGood, nextFreshness) : null;
     return state;
   }
 

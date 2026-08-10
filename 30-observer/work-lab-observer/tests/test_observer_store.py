@@ -44,7 +44,8 @@ class ObserverStoreTests(unittest.TestCase):
             restarted = ObserverStore(root, project_root=Path(raw))
             self.assertEqual(restarted.read_events(), [event("e1"), event("e2", task_id="WA-002", quality="partial")])
             projection = restarted.rebuild_projection()
-            self.assertEqual(projection["tasks"]["WA-002"]["events"], 1)
+            self.assertEqual(len(projection["tasks"]), 2)
+            self.assertTrue(all("taskId" not in task for task in projection["tasks"]))
             self.assertEqual(projection["quality"]["quality"], "partial")
             self.assertEqual(projection["usage"]["records"], 0)
 

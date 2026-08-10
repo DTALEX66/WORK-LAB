@@ -44,7 +44,8 @@ class ObserverEvidenceTests(unittest.TestCase):
             self.assertEqual(store.append(workflow_evidence_events([self.envelope()])), 1)
             restarted = ObserverStore(root, project_root=project)
             projection = restarted.rebuild_projection()
-            self.assertEqual(projection["tasks"]["WA-001"]["events"], 1)
+            self.assertEqual(projection["tasks"][0]["events"], 1)
+            self.assertNotIn("taskId", projection["tasks"][0])
 
     def test_token_usage_adapter_emits_sanitized_observer_event(self) -> None:
         events = token_usage_events([{"input_tokens": 12, "output_tokens": 8, "total_tokens": 20, "records": 1}])

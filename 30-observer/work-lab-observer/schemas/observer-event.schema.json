@@ -12,6 +12,7 @@
     "sourceId": {"type": "string", "minLength": 1},
     "projectId": {"type": "string", "minLength": 1},
     "taskId": {"type": "string", "minLength": 1},
+    "taskTitle": {"type": "string", "minLength": 1},
     "runId": {"type": "string", "minLength": 1},
     "observedAt": {"type": "string", "minLength": 1},
     "occurredAt": {"type": "string", "minLength": 1},

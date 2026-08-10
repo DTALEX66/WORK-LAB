@@ -1,0 +1,66 @@
+# Workflow Assistance user-layer command policy.
+# These rules govern requests to run commands outside the sandbox.
+
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "forbidden",
+    justification = "Destructive reset is forbidden; preserve the checkout and reconcile ownership instead.",
+    match = ["git reset --hard", "git reset --hard HEAD~1"],
+    not_match = ["git reset --soft HEAD~1", "git status"],
+)
+
+prefix_rule(
+    pattern = ["git", "clean"],
+    decision = "forbidden",
+    justification = "Broad Git clean can destroy untracked work; inspect and remove only explicitly authorized paths.",
+    match = ["git clean -fd", "git clean -fdX"],
+    not_match = ["git status", "git diff --check"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "--force"],
+    decision = "forbidden",
+    justification = "Force-push rewrites remote history; use a normal push or obtain a separately reviewed recovery plan.",
+    match = ["git push --force", "git push --force origin main"],
+    not_match = ["git push", "git push origin feature"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "-f"],
+    decision = "forbidden",
+    justification = "Force-push rewrites remote history; use a normal push or obtain a separately reviewed recovery plan.",
+    match = ["git push -f", "git push -f origin main"],
+    not_match = ["git push", "git fetch --force"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", ["--force-with-lease", "--force-if-includes"]],
+    decision = "forbidden",
+    justification = "Conditional force-push still rewrites remote history and is forbidden by the overlay contract.",
+    match = ["git push --force-with-lease", "git push --force-if-includes"],
+    not_match = ["git push", "git push origin feature"],
+)
+
+prefix_rule(
+    pattern = ["git", "push"],
+    decision = "prompt",
+    justification = "Publishing changes requires explicit user approval and final diff/readback evidence.",
+    match = ["git push", "git push origin feature"],
+    not_match = ["git status", "git fetch origin"],
+)
+
+prefix_rule(
+    pattern = ["gh", "pr", ["create", "merge", "close"]],
+    decision = "prompt",
+    justification = "Creating, merging, or closing a pull request is an external side effect requiring explicit approval.",
+    match = ["gh pr create", "gh pr merge 42", "gh pr close 42"],
+    not_match = ["gh pr view 42", "gh pr checks 42"],
+)
+
+prefix_rule(
+    pattern = ["gh", "release", ["create", "delete"]],
+    decision = "prompt",
+    justification = "Publishing or deleting a release requires explicit approval and exact-SHA evidence.",
+    match = ["gh release create v1.0.0", "gh release delete v1.0.0"],
+    not_match = ["gh release view v1.0.0", "gh release list"],
+)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/observer-projection/v2",
-  "mode": "LIVE",
+  "mode": "SNAPSHOT",
   "generatedAt": "2026-08-07T17:38:39.008975+00:00",
   "freshness": {
     "state": "fresh",
