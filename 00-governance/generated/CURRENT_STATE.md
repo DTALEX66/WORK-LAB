@@ -1,13 +1,13 @@
 # WORK-LAB current state
 
-Generated at: `2026-08-10T09:20:48.496138Z`  \
-Source digest: `269af31ea7f5c96b83b16d2598345385ac2f5455a8b792e1c51856de5ec1d3a3`  \
-Content digest: `dedc4d523984e613f64746604c46acdf70bc1a16d64c8e32472eca84ccd54d94`
+Generated at: `2026-08-10T13:09:11.479240Z`  \
+Source digest: `465806699d12770ddf5979e5cb7862b148362ad723c3dc1293ce985e3c67bafa`  \
+Content digest: `62012946a15d64b97bbd926e57b08fc0cf0256b4ea4ba430d946f85a583a6f95`
 
 ## Git
 
-- HEAD: `cc7a6670cccfa18bd9dd4308e4873a7d97083c95`
-- Branch: `main`
+- HEAD: `d28cd15e5d8724377c358621046471865b3c7acb`
+- Branch: `docs/taskpack-reconciliation-20260810`
 
 ## Active modules
 
@@ -32,21 +32,17 @@ Content digest: `dedc4d523984e613f64746604c46acdf70bc1a16d64c8e32472eca84ccd54d9
 
 - TaskPack: `WORK-LAB-FINAL-MASTER-CONTROL-PLANE`
 - Tasks: `28`
-- Initial state: `RECONCILE_REQUIRED`
+- Initial state: `RECONCILED_20260810`
 - Incoming candidate tree: `f1578cbd40b8edba329547efa56c74ec98a23b6d`
 - Incoming dirty paths: `5`
 - Writer state: `UNIQUE`
 
 ## CI evidence
 
-- Run: `31344245919`
-- Head SHA: `699ab50f47da5dcf3e92c81bea72504b6425f475`
-- Conclusion: `success`
-- `aggregate`: success (completed)
-- `gate-plan`: success (completed)
-- `integration`: success (completed)
-- `observer`: success (completed)
-- `workflow-assistance`: success (completed)
+- Run: `unknown`
+- Head SHA: `unknown`
+- Conclusion: `unknown`
+- unavailable
 
 ## Explicitly unverified
 
