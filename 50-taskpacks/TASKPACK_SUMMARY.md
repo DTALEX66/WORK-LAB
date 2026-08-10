@@ -82,6 +82,10 @@ commit / push / PR                PENDING_HUMAN_APPROVAL
 
 The single approval package is `50-taskpacks/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md`.
 
+The full delivery summary, error record (ERR-018..ERR-023) and verification
+evidence for this batch is `50-taskpacks/WORK-LAB-MASTER-2.0-DELIVERY-SUMMARY-2026-08-10.md`;
+the machine-readable error ledger is `50-taskpacks/error-ledger.json` (23 entries).
+
 Evidence generated under the ignored local `.hermes/task-artifacts` path is not
 published as source content. The committed handoff records reproducible source
 tips, module paths, recovery locations and remaining approval gates. Hermes
