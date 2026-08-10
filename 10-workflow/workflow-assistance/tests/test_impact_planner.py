@@ -62,7 +62,7 @@ class ImpactPlannerTests(unittest.TestCase):
             repository="DTALEX66/WORK-LAB",
             commit="commit",
             tree="tree",
-            changed_paths=["external/open-design-handoff.txt"],
+            changed_paths=["external/retired-handoff.txt"],
         )
         self.assertEqual(plan["required_gates"], ["integration", "observer", "workflow"])
 
@@ -100,7 +100,7 @@ class ImpactPlannerTests(unittest.TestCase):
             repository="DTALEX66/WORK-LAB",
             commit="commit",
             tree="tree",
-            changed_paths=["external/open-design-handoff.txt"],
+            changed_paths=["external/retired-handoff.txt"],
             plan_id="local",
             generated_at="2026-08-07T00:00:00Z",
         )
@@ -109,7 +109,7 @@ class ImpactPlannerTests(unittest.TestCase):
             repository="DTALEX66/WORK-LAB",
             commit="commit",
             tree="tree",
-            changed_paths=["external/open-design-handoff.txt"],
+            changed_paths=["external/retired-handoff.txt"],
             plan_id="cloud",
             generated_at="2026-08-07T01:00:00Z",
         )

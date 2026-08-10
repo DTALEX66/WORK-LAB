@@ -35,7 +35,6 @@
 1. `10-workflow/workflow-assistance`：主动控制面，拥有配置合同、Task Ledger、唯一 Telemetry Ledger、Sidecar、Adapter、交付和验证门禁；
 2. `30-observer/work-lab-observer`：严格只读投影，可读 Workflow 公开投影，但不能执行、批准、重试、应用、回滚、改变任务状态或写 Telemetry Ledger。
 
-Open Design 已迁至 `DTALEX66/OPEN-DESIGN-Assistance`；MiniGame 仅保留历史 fixture/archive。两者不得由本切片恢复为 active module 或普通 CI Gate。
 
 ## 实现总结
 
@@ -43,7 +42,6 @@ Open Design 已迁至 `DTALEX66/OPEN-DESIGN-Assistance`；MiniGame 仅保留历�
 
 - 新增 Stage 3 machine-readable task graph 和 baseline；
 - 固定 active-module registry、CURRENT_STATE generator 和测试为 Workflow + Observer；required CI 重新计算 canonical source digest 和 deterministic projection digest，避免 tracked CURRENT_STATE 失鲜；
-- 退役普通 CI 中已迁出的 Design/MiniGame 主动 Gate，同时保留明确标注的历史与 archive 证据；
 - 修正 CURRENT_STATE、context pack 和 schema 验证的一致性；
 - 更新 aggregate gate、release policy、TaskPack summary 和 archive pointer。
 

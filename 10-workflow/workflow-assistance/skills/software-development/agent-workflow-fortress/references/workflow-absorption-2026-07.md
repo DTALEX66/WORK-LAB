@@ -4,7 +4,6 @@
 
 - User may redirect from a domain-specific plan to a meta-workflow plan. In this session the user said Obsidian was “后期的事” and wanted Hermes workflow strengthening instead. Respect that boundary while still extracting reusable, domain-neutral workflow assets.
 - For “还有没有吸收的吗？” questions, do not answer from memory. Search both prior sessions and the current deployment repo, then classify findings as absorbed / missing / deferred / candidate.
-- Prefer absorbing open-source projects by pattern unless the runtime package is small, safe, licensed, and smoke-tested. Product references such as RSSHub, FreshRSS, Karakeep, linkding, Linkwarden, Memos, NewsBlur, Tube Archivist, Aether-Radar, MINIGAME, and Star-Trails-Log often contribute architecture, UX, validation, and loop patterns rather than vendored code.
 - Default-enable MCPs only after a real smoke test. If a package fails because of Node/runtime compatibility, document the enable condition instead of hard-coding a broken default.
 - Avoid duplicate capability: do not add Memory/FileSystem/browser MCPs by default when Hermes native memory/file/browser/computer tools already cover the need.
 - When adding prompt/rule templates, add a safety scanner if possible; ensure the templates themselves pass the scanner by avoiding literal dangerous command/injection examples.

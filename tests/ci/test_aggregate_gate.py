@@ -25,9 +25,9 @@ class AggregateGateTests(unittest.TestCase):
         payload = json.dumps({"jobs": {name: "success" for name in load_gate().REQUIRED}})
         self.assertEqual(load_gate().main(payload), 0)
 
-    def test_retired_open_design_job_does_not_satisfy_gate(self):
+    def test_retired_module_job_does_not_satisfy_gate(self):
         gate = load_gate()
-        payload = json.dumps({"jobs": {"workflow": "success", "open-design": "success", "integration": "success"}})
+        payload = json.dumps({"jobs": {"workflow": "success", "retired-module": "success", "integration": "success"}})
         self.assertEqual(gate.main(payload), 1)
 
     def test_plan_digest_and_head_sha_are_verified(self):

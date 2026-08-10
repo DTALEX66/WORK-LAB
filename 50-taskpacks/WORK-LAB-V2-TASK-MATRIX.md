@@ -16,15 +16,12 @@ current tree; no taskpack identity is inferred from the older ZIP.
 | WA core/schema/adapter conformance | `LOCAL_PASS` | Current Workflow `QUALITY_GATE_PASS`; adapter focused tests and core schema checks pass | Growth input discovery and Git/GitHub delivery reconciliation remain open |
 | WA-003 / WA-004 | `LOCAL_PARTIAL` / task identity unresolved | `growth_candidates.py`; 5 lifecycle tests; compile/governance gate pass | Authoritative v2 task mapping, real discovery/scanning input, and delivery reconciliation |
 | WA-007 / WA-008 | `PARTIAL` / incomplete | Delivery boundary and existing workflow assets | Git/GitHub evidence reconciliation and responsibility split |
-| OD domain pack/benchmark registry | `LOCAL_PASS` / `E2 isolated-runtime` | Domain boundary verifier PASS; Open Design verifier `460/460`; benchmark registry `12`, human calibration required | E3 live runtime and human calibration not complete |
 | OD-002 / OD-007 | `BLOCKED_USER_DECISION` | Dual-source and license boundaries documented | Select source-of-truth and license policy |
 | OD-004 / OD-006 / OD-008 | `PARTIAL` / incomplete | Design contracts and verifier exist | Master method cards, human QA, product receipt and device regression |
 | Observer skeleton/runtime | `LOCAL_PASS` / `LOCAL_PARTIAL` | Skeleton/runtime, persistent store and cross-module evidence projection tests pass | Tauri UI, continuously supervised projections, budgets, quality persistence and isolation |
 | OBS-001 / OBS-005..009 | `PARTIAL` / incomplete | Structural/runtime evidence only | Full runtime integrations and UI are not implemented |
-| MINIGAME local analytics | `LOCAL_PASS` | `321/321 PASS`; generated files restored | Product is archive/fixture only in v2 root |
 | MG-003 / MG-004 / MG-005 / MG-007 / MG-008 | `BLOCKED` / `BLOCKED_USER_DECISION` | Boundaries and duplicate-source counts recorded | Fact-source decision, platform/device/commercial/product acceptance |
 | INT-001 | `BLOCKED_USER_DECISION` | No second client selected | User selects reference client |
-| INT-002..006 | `LOCAL_PASS` / E2 isolated-runtime | `INT-002-006-READONLY-EVIDENCE-PROJECTION.md`; Workflow/Open Design summaries persist and rebuild in Observer | Real continuously supervised runtime, UI/readback and final acceptance |
 | Hermes live plan | `WAITING_APPROVAL` | No live mutation performed | Explicit independent approval required |
 | Token Monitor release | `BLOCKED` | Self-test only; real npm/Tauri path unavailable | Dependency/build/signing/release evidence |
 

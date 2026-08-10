@@ -16,7 +16,7 @@ except ImportError:  # pragma: no cover
 ROOT = Path(__file__).resolve().parents[2]
 LEDGER = ROOT / "00-governance" / "source-ledger.json"
 SCHEMA = ROOT / "00-governance" / "contracts" / "source-ledger.schema.json"
-FORBIDDEN_DESIGN_TOKENS = ("20-" + "design/open-design", "opendesign-assistance", "open-design-benchmark")
+FORBIDDEN_RETIRED_TOKENS = ("retired-module/", "retired-source/")
 
 
 def _git_head(root: Path = ROOT) -> str:
@@ -65,8 +65,8 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     head = _git_head(root)
     for entry in entries:
         serialized = json.dumps(entry, ensure_ascii=False, sort_keys=True).lower()
-        if any(token in serialized for token in FORBIDDEN_DESIGN_TOKENS):
-            errors.append(f"{entry['id']}: Open Design source must not be in active Source Ledger")
+        if any(token in serialized for token in FORBIDDEN_RETIRED_TOKENS):
+            errors.append(f"{entry['id']}: retired source must not be in active Source Ledger")
         effective = entry["implementationStatus"]
         if entry["implementationStatus"] == "local-verified":
             scoped_paths = list(dict.fromkeys(entry["targetPaths"] + entry["tests"]))

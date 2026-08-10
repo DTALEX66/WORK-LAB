@@ -18,7 +18,7 @@
       "scripts/ci/verify_offline_pilot.py",
       "tests/ci/test_offline_pilot.py"
     ],
-    "verification": "Archive-only predecessor fixtures: absent from the Stage 3 canonical workflow Gate and ordinary WORK-LAB CI. They do not establish an active Open Design or MINIGAME module."
+    "verification": ""
   },
   "status": "recorded"
 }

@@ -13,7 +13,7 @@ SPEC.loader.exec_module(MODULE)
 
 
 class QualityGateTests(unittest.TestCase):
-    def test_governance_excludes_only_retired_open_design_tests(self) -> None:
+    def test_governance_excludes_only_retired_tests(self) -> None:
         selected = set(MODULE.governance_test_files())
         retired = {f"tests/{name}" for name in MODULE.RETIRED_ORDINARY_TESTS}
         all_tests = {

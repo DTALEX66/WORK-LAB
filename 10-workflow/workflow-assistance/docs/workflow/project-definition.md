@@ -2,7 +2,8 @@
 
 ## 一句话定位
 
-`Workflow-assistance` 是一个**客户端中立的工作流控制、治理、任务、交付与可观测层**：用 manifest、Adapter、Domain Pack、ActionPlan、Run Ledger、事件和 evidence envelope 连接不同执行入口。Hermes、Codex、CC Switch、GitHub 是当前一级可替换 Adapter；Hermes 不是核心运行前提。Open Design 已迁出到独立仓库，不再是 WORK-LAB Adapter。
+客户端中立的工作流控制、治理、任务、交付与可观测层。
+
 
 核心不是 Agent、聊天软件或模型网关，不负责 Prompt 输入、模型推理、Provider 路由、凭据管理或自动批准外部写入。核心在没有 Hermes 安装的隔离环境中也必须能够解析 manifest、验证合同并列出 Adapter 状态。
 
@@ -26,6 +27,8 @@
 - 没有证据的“可用”声明，或未经批准的 live apply。
 
 ## Adapter 支持级别
+
+Hermes、Codex、CC Switch、GitHub 是当前一级可替换 Adapter。
 
 | Adapter | 当前级别 | 检测/能力原则 |
 |---|---|---|

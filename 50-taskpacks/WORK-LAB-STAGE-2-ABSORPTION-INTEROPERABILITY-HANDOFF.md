@@ -77,11 +77,9 @@ predecessor worktree is dirty, so Stage 2 stays in the waiting state.
 | 8 | NX-320 | NX-3 / P1 | cost, retention, rollup, freshness and quality semantics | NX-310 | COMPLETED (2026-08-08) |
 | 9 | NX-400 | NX-4 / P1 | memory pollution, cross-project leakage, stale facts and malicious-skill negatives | predecessor WL-400/410/420 | COMPLETED (2026-08-08) |
 | 10 | NX-410 | NX-4 / P1 | Task Ledger replay, crash, old-writer and side-effect idempotency fixtures | predecessor WL-200/Task Ledger | COMPLETED (2026-08-08) |
-| 11 | NX-500 | NX-5 / P1 | DTCG, DESIGN.md and Open Design input/output round-trip contracts | predecessor WL-500/600, NX-100/110 | COMPLETED (2026-08-08) |
 | 12 | NX-510 | NX-5 / P1 | minimal production evidence for Playwright/axe, SVGO, PPTX and charts | NX-500 | COMPLETED (2026-08-08) |
 | 13 | NX-520 | NX-5 / P1 | WCAG/ARIA/CJK/print/exhibition standards linked to evidence cards | NX-500 | COMPLETED (2026-08-08) |
 | 14 | NX-600 | NX-6 / P1 | OSV/Scorecard/SPDX/REUSE source health and upstream-change monitoring | NX-100, NX-110 | COMPLETED (2026-08-08) |
-| 15 | NX-700 | NX-7 / P0/P1 | three offline pilots: Workflow, Observer, Open Design | selected scope complete | COMPLETED (2026-08-08) |
 | 16 | NX-710 | NX-7 / P1 | dependency/source/asset size, performance and boundary regression | NX-700 | COMPLETED (2026-08-08) |
 | 17 | NX-720 | NX-7 / P0 | exact-tree review, evidence, license and rollback approval package | NX-710 | COMPLETED (2026-08-08; release approval pending) |
 
@@ -90,8 +88,6 @@ predecessor worktree is dirty, so Stage 2 stays in the waiting state.
 - The only active canonical modules remain:
   - `10-workflow/workflow-assistance`
   - `30-observer/work-lab-observer`
-- `30-products/minigame` remains historical/fixture/archive material and is
-  not a fourth active module. MINIGAME UI may only be an Open Design fixture.
 - Do not add an Agent, chat UI, model gateway, LLMOps platform, task platform,
   database platform, second task runtime, second memory service, second
   Observer UI, or fourth product.

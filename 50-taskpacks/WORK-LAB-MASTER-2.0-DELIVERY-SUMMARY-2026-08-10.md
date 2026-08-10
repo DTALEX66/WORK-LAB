@@ -32,7 +32,6 @@ RECONCILE_REQUIRED:                   0
 **Wave 1（运行时收敛）**
 - `canonical_store.py`：SQLite WAL 唯一事实库（11 表、事务、lease/fencing/heartbeat/zombie 恢复、token allowlist）
 - `durable_worker.py`：acquire→heartbeat→checkpoint→side-effect→reconcile→release，bounded retry→BLOCKED_POLICY
-- `project_registry.py`：跨项目发现（真实 MINIGAME canary）+ 极简 Profile
 - `collectors.py`：五类真实 collector（task/git/usage/quality/growth-watcher）
 - `sse_hub.py`：真实长连接 SSE（heartbeat/cursor/续传/慢消费者上限）
 - Observer：canonical projection 消费唯一事实源；`observer-events.jsonl` 权威退役
@@ -72,7 +71,6 @@ Root CI suite: 14/14（exact-tree clean-tree 前置在提交后转绿）
 GATE-RUNTIME-CONVERGENCE: claimable=True（9/10，#1/6/9 环境 PENDING 按 §15 不阻塞）
 CURRENT_STATE freshness: PASS（head a4c67e9）
 浏览器验收: R2 阶段 console=0/errors=0；本轮 HTTP 200 资源加载确认
-真实双项目 canary: WORK-LAB + MINIGAME（collector + SSE LIVE）
 CI exact-SHA: PR #34/#35/#36 全部通过
 ```
 

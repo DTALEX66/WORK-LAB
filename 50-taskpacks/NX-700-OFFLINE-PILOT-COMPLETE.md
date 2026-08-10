@@ -26,10 +26,8 @@ or external mutation.
 - corrupt fixture is isolated instead of entering rollup;
 - offline viewing is represented and mutation surface is empty.
 
-## Pilot C — Open Design
 
 - structured brief → method/token contract → safe SVG preflight → readback;
-- brand-layout and MINIGAME-HUD fixture IDs are included;
 - automatic score remains regression-only;
 - visual quality remains `HUMAN_PENDING` and both fixtures remain
   `WAITING_HUMAN_CALIBRATION`.

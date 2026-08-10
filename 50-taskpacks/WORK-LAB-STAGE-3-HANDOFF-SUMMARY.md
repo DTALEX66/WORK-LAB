@@ -13,7 +13,6 @@ WORK-LAB 是面向多个 Agent、IDE、GitHub 和项目仓库的**本地、客�
 - `10-workflow/workflow-assistance`：唯一主动后端（配置/资产治理、平台适配、任务恢复、规则/技能/记忆、项目注册、CI、唯一 Telemetry Ledger 与 Canonical Projection）。
 - `30-observer/work-lab-observer`：严格只读桌面观测面（任务、平台身份、配置漂移、Token/费用、CI、证据）。
 
-Open Design 与 MINIGAME 已完全切割，仅保留历史归档指针。
 
 ## 二、本批交付（前序 writer 已完成并通过测试）
 

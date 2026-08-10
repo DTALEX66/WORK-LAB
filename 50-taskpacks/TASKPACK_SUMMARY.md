@@ -10,11 +10,9 @@ The active module registry is authoritative:
 - `10-workflow/workflow-assistance` — client-neutral workflow governance;
 - `30-observer/work-lab-observer` — strictly read-only observation and evidence.
 
-Open Design was transferred to `DTALEX66/OPEN-DESIGN-Assistance`; the one-time
 pointer and migration evidence are retained under `90-archive-manifests/` and
 ignored `.hermes/` artifacts.
 
-`30-products/minigame` is product history/fixture/archive material, not an
 active v2 canonical module. See `00-governance/PROJECT_POSITIONING.md`.
 
 Historical migration/governance snapshot (not the current attachment task-pack
@@ -64,7 +62,6 @@ Full quality-gate verify sequence: 21 gates PASS
 Observer: Python 57 tests OK (incl. canonical projection + events retirement)
           JS 43 passed, 0 failed
 Browser visual acceptance: console_messages=0 js_errors=0 (dark dashboard)
-Real dual-project canary: WORK-LAB + MINIGAME (collector + SSE LIVE frame)
 Swap drills: 6/6 core-not-forked
 Repo size audit: tracked=438 files, 2.65 MiB, duplicate groups=1
 WL3-800 integration gate: 6/6 checks passed
@@ -127,7 +124,6 @@ WORK-LAB Gates and do not represent an active module or current capability.
 No visual score or human review was fabricated.
 
 `WL-720` is retained only as a historical non-destructive size/duplicate audit
-across predecessor scopes, the preserved MiniGame fixture, and archive
 manifests. The proposal recorded five scopes and 23 duplicate content groups; every group
 is manual-review-only, and the archive proposal retains both the fixture source
 and its manifest. Evidence is `.hermes/task-artifacts/wl720-audit-proposal.json`.

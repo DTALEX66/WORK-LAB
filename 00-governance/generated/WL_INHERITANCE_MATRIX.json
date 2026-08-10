@@ -149,34 +149,6 @@
       "inheritanceStatus": "IMPLEMENTED_UNVERIFIED"
     },
     {
-      "wlId": "WL-600",
-      "task": "Open Design 大师资料证据卡",
-      "processing": "移交 Open Design，不在 WORK-LAB 执行",
-      "parentTask": "SUPERSEDED_MOVED",
-      "inheritanceStatus": "SUPERSEDED_MOVED"
-    },
-    {
-      "wlId": "WL-610",
-      "task": "Open Design 失败案例回归集",
-      "processing": "移交 Open Design，不在 WORK-LAB 执行",
-      "parentTask": "SUPERSEDED_MOVED",
-      "inheritanceStatus": "SUPERSEDED_MOVED"
-    },
-    {
-      "wlId": "WL-620",
-      "task": "Open Design runtime/交付",
-      "processing": "移交 Open Design，不在 WORK-LAB 执行",
-      "parentTask": "SUPERSEDED_MOVED",
-      "inheritanceStatus": "SUPERSEDED_MOVED"
-    },
-    {
-      "wlId": "WL-630",
-      "task": "MINIGAME 设计能力",
-      "processing": "移交/独立，不在 WORK-LAB 执行",
-      "parentTask": "SUPERSEDED_MOVED",
-      "inheritanceStatus": "SUPERSEDED_MOVED"
-    },
-    {
       "wlId": "WL-700",
       "task": "Adapter SDK/能力协商",
       "processing": "保留",

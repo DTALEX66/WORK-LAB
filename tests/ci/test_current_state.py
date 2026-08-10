@@ -81,7 +81,7 @@ class CurrentStateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             path = Path(raw) / "README.md"
             path.write_text(
-                "required workflow-governance; active module minigame",
+                "required workflow-governance; active module fourth",
                 encoding="utf-8",
             )
             findings = check_stale_references([path])

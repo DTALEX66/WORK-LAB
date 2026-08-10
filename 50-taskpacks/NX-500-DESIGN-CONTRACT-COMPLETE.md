@@ -8,7 +8,6 @@
 
 A structured brief passes contract checks, produces token/method/quality-gate
 selection, and completes a lossless readback after delivery. Local WORK-LAB
-contract layer — does not vendor Open Design app code.
 
 ## Deliverables
 
@@ -39,7 +38,6 @@ QUALITY_GATE_PASS gates=design-contract
 
 - Never just a doc directory: a brief produces real tokens/methods/gates and a
   lossless readback.
-- Local contract only; Open Design app code not copied.
 
 ## Rollback
 

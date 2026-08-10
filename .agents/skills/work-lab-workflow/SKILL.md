@@ -12,7 +12,6 @@ Use this skill only inside the WORK-LAB Git repository.
 
 - `10-workflow/workflow-assistance` owns workflow configuration, Task Ledger, Telemetry Ledger, sidecar, adapters, and delivery gates.
 - `30-observer/work-lab-observer` is read-only. It may read Workflow-owned projections but must not execute, approve, retry, apply, rollback, change task state, or write the Telemetry Ledger.
-- Open Design and MINIGAME are archive/transferred scope and must not be restored as active modules.
 
 ## Writer boundary
 

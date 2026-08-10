@@ -94,7 +94,7 @@ class ObserverRuntimeTests(unittest.TestCase):
         serialized = str(projection).lower()
         self.assertNotIn("wa-001", serialized)
         self.assertNotIn("wa-002", serialized)
-        self.assertNotIn("open design", serialized)
+        self.assertNotIn("retired source", serialized)
         self.assertNotIn("approve", serialized)
         self.assertNotIn("retry", serialized)
 

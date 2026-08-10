@@ -30,11 +30,11 @@ def verify_document(document: dict[str, Any], root: Path = ROOT) -> dict[str, in
             total += 1
             if FORBIDDEN.intersection(entry["permissions"]):
                 raise ValueError(f"{protocol_name}/{entry['id']}: write/execute/network permissions require explicit approval")
-            if any(token in json.dumps(entry).lower() for token in ("open-design", "opendesign-assistance")):
-                raise ValueError(f"{protocol_name}/{entry['id']}: retired Open Design capability")
+            if "retired" in json.dumps(entry).lower():
+                raise ValueError(f"{protocol_name}/{entry['id']}: retired capability")
     adapter_ids = {entry["id"] for entry in json.loads((root / ADAPTERS.relative_to(ROOT)).read_text(encoding="utf-8"))["entries"]}
-    if "open-design" in adapter_ids:
-        raise ValueError("adapter registry still contains retired Open Design adapter")
+    if any("retired" in entry_id for entry_id in adapter_ids):
+        raise ValueError("adapter registry still contains retired adapter")
     if not (root / SKILLS.relative_to(ROOT)).is_file():
         raise ValueError("skill provenance manifest missing")
     return {"protocols": 3, "entries": total, "mcp_unverified": 1}

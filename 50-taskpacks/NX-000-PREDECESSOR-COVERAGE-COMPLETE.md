@@ -22,7 +22,6 @@ All six Gate A conditions are now satisfied:
 - Authority: `WORK-LAB-AUTHORITATIVE-MASTER-CONTINUATION-2026-08-07`, **Appendix A** (full 30-task WL graph), SHA `244a26f9...`.
 - Export: `.hermes/task-artifacts/gate-a/WL-000-WL-820-STATUS.json` (v2).
 - Coverage: **30/30 WL tasks mapped**; `coverage_complete=true`.
-- 4 WL tasks `SUPERSEDED_MOVED`: WL-600/610/620/630 → transferred to Open Design (not re-run in WORK-LAB).
 
 ## 3. Inheritance matrix for Stage 2
 
@@ -38,7 +37,6 @@ Artifact: `.hermes/task-artifacts/gate-a/NX-000-PREDECESSOR-COVERAGE.json`.
 ## 4. Overlap dedupe
 
 - No two Observer UI / event schema / Skill Registry / Task Ledger instances.
-- WL-600/610/620/630 (Open Design / MINIGAME) → owned by `DTALEX66/OPEN-DESIGN-Assistance`, out of WORK-LAB scope.
 - Single owner per feature: Workflow governs contracts/ledger/CI; Observer is read-only projection.
 
 ## 5. Next

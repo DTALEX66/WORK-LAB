@@ -8,7 +8,6 @@
 
 - `00-governance/PROJECT_POSITIONING.md` and `WORK-LAB-HERMES-TASKPACK-v2.0.0` remain the authoritative project/architecture baseline.
 - `WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-PACK-v1.0.0-READY.zip` is treated as a subordinate execution-efficiency overlay, not a replacement project definition.
-- Active canonical modules remain Workflow, Open Design, and Observer.
 - Observer remains read-only.
 - Cognitive-Loop-OS is not part of this batch. The pack's OS adapter tasks remain blocked by scope/approval and were not inspected or modified.
 
@@ -77,7 +76,6 @@ Runner safety changes:
 - Task-pack runner focused tests: `Ran 22 tests — OK`
 - Execution-efficiency contract tests: `Ran 3 tests — OK`
 - Impact planner tests: `Ran 3 tests — OK`
-- CLI smoke: `GATE_PLAN_PASS`, required gates were `observer`, `open_design`, `workflow`; risk `medium`; digest generated.
 
 ### Root checks
 
@@ -88,7 +86,6 @@ Runner safety changes:
 ### Duration baseline
 
 - Workflow full unittest: `13.642s`
-- Open Design verifier: `1.047s`
 - Observer skeleton verifier: `0.283s`
 - Root CI tests: `1.608s`
 - All four exited `0`.

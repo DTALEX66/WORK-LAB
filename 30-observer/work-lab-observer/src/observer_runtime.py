@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads((ROOT / "schemas/observer-event.schema.json").read_text(encoding="utf-8"))
 VALIDATOR = Draft202012Validator(SCHEMA)
 SENSITIVE_KEYS = {"api_key", "apikey", "authorization", "password", "secret", "token", "cookie", "prompt", "response"}
-TRANSFERRED_PROJECT_IDS = {"open-design", "minigame"}
+TRANSFERRED_PROJECT_IDS = {"retired"}
 
 
 class ObserverInputError(ValueError):

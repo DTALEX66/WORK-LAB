@@ -30,8 +30,6 @@ module dependencies: PASS; runtime_edges=0
 project data boundary: PASS
 supply chain: PASS
 Workflow: 193 PASS, 4 skipped
-Open Design: 203/203 + 223/223 + 10/10 + 460/460 PASS
-MINIGAME local product gate: 321/321 PASS (historical/fixture evidence only; not an active canonical module)
 ```
 
 旧 Workflow-assistance 与 WORK-LAB 目标模块（排除 `.git`、`.hermes`、`node_modules`、构建物、缓存和 Python bytecode）：
@@ -45,17 +43,13 @@ same-path divergent: 19
 
 因此旧仓库没有未被吸收的独有路径；剩余工作是 19 个同路径差异的最终取舍，而不是整树复制。
 
-## 3. 双 MINIGAME 当前差异
 
 附件中的历史 `47 相同 / 55 分叉` 只保留为旧基线。当前重新读取结果为：
 
 ```text
-Open Design minigame-runtime: 108 files
-独立 D:\All projects\MINIGAME: 293 files
 common paths: 102
 same content: 4
 divergent common paths: 98
-Open Design-only: 6
 standalone-only: 191
 ```
 
@@ -126,7 +120,6 @@ ROOT-003「补齐契约 Schema」以及 `WA-001`、`WA-006`、`CONT-001`、`CONT
 
 1. Hermes `LIVE_APPLY_AND_READBACK`。
 2. WORK-LAB Git commit/push/PR/merge/release。
-3. 双 MINIGAME 副本退役、删除、去重或迁回。
 4. 首发平台选择：微信或抖音。
 5. 根许可证与第三方资产许可处理。
 6. 第二参考客户端选择及第二适配器实现。
