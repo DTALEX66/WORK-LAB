@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 用户规则 | `$CODEX_HOME/AGENTS.md` | 合并带标记的 managed block | 字段级 overlay |
 | 项目规则 | `<project>/AGENTS.md` | 只读发现，不全局复制 | 项目 |
-| 用户 Skills | `$HOME/.agents/skills` | 管理八个 `workflow-assistance-*` 根 | 精确目录 |
+| 用户 Skills | `$HOME/.agents/skills` | 管理九个 `workflow-assistance-*` 根 | 精确目录 |
 | 项目 Skills | `<project>/.agents/skills` | 只读发现 | 项目 |
 | 命令规则 | `$CODEX_HOME/rules/*.rules` | 管理 `workflow-assistance.rules` | 精确文件 |
 | 用户配置 | `$CODEX_HOME/config.toml` | 只管理三个顶层默认字段 | 字段级 overlay |
@@ -44,8 +44,11 @@ project_doc_max_bytes  = 65536
 - `workflow-assistance-python-testing`
 - `workflow-assistance-github-delivery`
 - `workflow-assistance-windows-development`
+- `workflow-assistance-openhuman-integration`
 
 这些是 Codex 原生、客户端中立的 skill，不包含 Hermes 工具调用，也不会把 WORK-LAB 的模块规则提升到普通项目。WORK-LAB 自己的项目 skill 位于仓库根 `.agents/skills/work-lab-workflow/`。
+
+`workflow-assistance-openhuman-integration` 定义与本地 OpenHuman 桌面 agent 的协作边界：`.openhuman/` 私密运行时（keychain/users/logs/memory/workspace）与 `.codex`/`.hermes` 同级不可读取；OpenHuman 的扫描输出只是候选证据，junction/重复/路径类结论必须用 `fsutil reparsepoint query`、`Get-Item` LinkType/Target 与内容对比原生核验后才可行动（2026-08-10 OpenHuman 误报两个不存在 junction 的回归案例已写入）。
 
 ## 命令策略
 

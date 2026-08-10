@@ -17,6 +17,7 @@ EXPECTED_SKILLS = {
     "skills/workflow-assistance-single-writer-delivery",
     "skills/workflow-assistance-systematic-debugging",
     "skills/workflow-assistance-windows-development",
+    "skills/workflow-assistance-openhuman-integration",
 }
 EXPECTED_FIELDS = {
     "config.toml:approval_policy when absent",
