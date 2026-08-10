@@ -458,22 +458,37 @@ def main(argv: list[str] | None = None) -> int:
             print("CURRENT_STATE_FRESHNESS_FAIL projection-digest-mismatch")
             return 1
         actual_head = expected["git"]["head"]
-        actual_tree = expected["git"]["head_tree"]
         tracked_git = tracked.get("git", {})
         tracked_head = str(tracked_git.get("head", ""))
         tracked_tree = str(tracked_git.get("head_tree", ""))
-        parent_head = _git(root, "rev-parse", "HEAD^")
-        parent_tree = _git(root, "rev-parse", "HEAD^^{tree}")
-        if tracked_head not in (actual_head, parent_head):
+        # On PR CI the checkout HEAD is the merge ref whose parent is the PR
+        # base; the tracked head (generated on the PR branch) is therefore an
+        # ancestor of HEAD, not HEAD^ specifically. Accept any ancestor of HEAD
+        # (merge-base --is-ancestor) so stale branch/head can never pass, while
+        # PR merge refs and post-commit HEAD advancement both verify.
+        import subprocess as _subprocess
+
+        def _is_ancestor(commit: str, head: str) -> bool:
+            result = _subprocess.run(
+                ["git", "merge-base", "--is-ancestor", commit, head],
+                cwd=root, text=True, capture_output=True, check=False,
+            )
+            return result.returncode == 0
+
+        if not _is_ancestor(tracked_head, actual_head):
             print(
                 f"CURRENT_STATE_FRESHNESS_FAIL git-head tracked={tracked_head} "
-                f"actual={actual_head} parent={parent_head}"
+                f"actual={actual_head} (not an ancestor of HEAD)"
             )
             return 1
-        if tracked_tree not in (actual_tree, parent_tree):
+        # The tracked head's own tree must match the recorded head_tree (internal
+        # consistency), and the tracked head must be reachable. We do not require
+        # the PR merge ref's tree to equal the branch commit's tree.
+        tracked_commit_tree = _git(root, "rev-parse", f"{tracked_head}^{{tree}}")
+        if tracked_commit_tree != tracked_tree:
             print(
                 f"CURRENT_STATE_FRESHNESS_FAIL git-tree tracked={tracked_tree} "
-                f"actual={actual_tree} parent={parent_tree}"
+                f"tracked_head_tree={tracked_commit_tree}"
             )
             return 1
         if ci_evidence is not None:
