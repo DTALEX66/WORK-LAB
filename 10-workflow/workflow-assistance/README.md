@@ -564,6 +564,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/workflow/token-monitor.md`：本地 Token Monitor 的真实 usage 口径、启动方式和 Codex OAuth 限制；
 - `docs/workflow/hermes-runtime-layout.md`：Hermes 全局运行目录分层、可恢复迁移、升级验证与清理边界；
 - `docs/workflow/gateway-cron-delivery.md`：Gateway、cron、sleep-mode、TUI 与外部消息平台的投递边界；
+- `docs/workflow/user-environment-profile.md`：Hermes/Codex 用户配置与技能清单的无密画像、导出器与跨机器恢复流程；
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
 - `docs/workflow/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录；
 - `docs/mcp/workflow-mcp-stack.md`：MCP 默认策略；

@@ -23,7 +23,7 @@
   "capabilities": {
     "detect": {
       "mode": "READ_ONLY",
-      "allowed": ["Codex executable version when available", "declared target paths", "managed asset hashes", "owned-state metadata"],
+      "allowed": ["Codex executable version when available", "declared target paths", "managed asset hashes", "owned-state metadata", "secret-free user environment inventory (Hermes/Codex config keys + skill lists via user_profile_export.py)"],
       "forbidden": ["private config body disclosure", "credential or session inspection"]
     },
     "plan": {

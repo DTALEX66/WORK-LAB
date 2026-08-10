@@ -65,6 +65,23 @@ python scripts/workflow/skill_lifecycle.py --root <root> backup <name>
 - Auto-grown knowledge persists by promoting it into the module's
   `codex-assets` skills (via PR) — never only in a machine-local sidecar.
 
+## User environment preservation
+
+Beyond skills, preserve the user's Hermes/Codex configuration and skill lists
+in neutral, secret-free form so a machine change does not start from zero:
+
+- Export: `python scripts/workflow/user_profile_export.py` — read-only against
+  user homes; writes `config/user-environment-profile.json` (tracked) with
+  non-secret config values, `.env` key names only, and skill inventories
+  (Hermes skills, Codex `~/.agents/skills`).
+- Redaction is fail-closed: any value matching a secret pattern is
+  `[REDACTED]`; an unredacted value makes the export refuse to write.
+- Restore: see `docs/workflow/user-environment-profile.md` — `sync` deploys
+  the module skills; the profile tells you which config keys exist and which
+  secrets must be re-entered on the new machine.
+- The profile is a snapshot: re-run the exporter after meaningful config or
+  skill changes and commit the refresh.
+
 ## Pitfalls
 
 - Archiving a repository-owned skill (the provenance filter blocks it —
