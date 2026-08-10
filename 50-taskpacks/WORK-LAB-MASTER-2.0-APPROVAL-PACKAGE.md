@@ -1,9 +1,9 @@
 # WORK-LAB Master TaskPack v2.0 — WL3-820 Approval Package
 
-> Status: `LOCAL_VERIFIED_READY_FOR_APPROVAL`
+> Status: `DELIVERED_PENDING_REMAINING_APPROVALS` (2026-08-10 updated; was LOCAL_VERIFIED_READY_FOR_APPROVAL)
 > Generated: 2026-08-10 (local execution batch)
 > Repository: `DTALEX66/WORK-LAB` · Branch: `main`
-> Head: `699ab50f47da5dcf3e92c81bea72504b6425f475`
+> Head: `cd4a27f769865fc40f6e02372a25db3d58f62537`
 > Candidate tree (frozen, temp-index): `f1578cbd40b8edba329547efa56c74ec98a23b6d` (475 files)
 
 ## 1. 执行摘要
@@ -69,22 +69,22 @@ GATE-RUNTIME-CONVERGENCE: claimable=True — 9/10 passed; #9 Tauri real Sidecar
   is toolchain-only pending (cargo absent) and does not block per Master TaskPack §15
 ```
 
-## 4. 唯一批准清单（全部 PENDING_HUMAN_APPROVAL）
+## 4. 唯一批准清单（状态截至 2026-08-10 更新）
 
-1. **commit/push/PR** — 本批约 30 个新/改文件待授权上传；
-2. **Hermes/Codex global config live apply** — 本机 Codex overlay 已 apply，Hermes live 未动；
-3. **双入口/双安装卸载或配置迁移** — 未执行；
-4. **Windows toolchain/portable/sign/release** — cargo/rustc 缺失（WL3-620 BLOCKED）；
-5. **paid provider smoke** — 未执行；
-6. **真实外部项目 tracked profile** — MINIGAME 仅只读 canary，未写；
-7. **归档删除或 Git 历史减重** — 仅只读审计（WL3-810），未执行。
+1. **commit/push/PR** — ✅ 已完成：#33/#34/#35/#36/#37/#38/#39/#40/#41 全部 squash merge 到 main（head `cd4a27f`）；
+2. **Hermes/Codex global config live apply** — ✅ Codex overlay v3 已 apply+verify（9 skills，含 `workflow-assistance-openhuman-integration`，PR #41）；Hermes live 未动（按边界合同）；
+3. **双入口/双安装卸载或配置迁移** — ❌ 未执行（需用户决策）；
+4. **Windows toolchain/portable/sign/release** — ⏸ 工具链已核验就位（cargo/rustc 1.88 @ `D:\All projects\OS configuration\toolchains\rust`），但 WORK-LAB 无 Tauri/Cargo 工程（桌面壳归其产品线所有）→ WL3-620 转 DEFERRED；
+5. **paid provider smoke** — ❌ 未执行（需凭据/授权）；
+6. **真实外部项目 tracked profile** — ❌ 未执行（MINIGAME 仅只读 canary，未写）；
+7. **归档删除或 Git 历史减重** — ✅ 已完成：WORK-LAB-ARCHIVE 退休删除（含敏感 Chrome 测试痕迹），证据并入 `90-archive-manifests/migration-20260805/`（PR #40）。
 
 ## 5. 明确未宣称
 
-- `GATE-RUNTIME-CONVERGENCE` 正式通过（依赖 Windows canary + Tauri 真 SSE 连接）；
-- exact-SHA CI（本批未 push）；
-- 便携 EXE 已构建；
-- 正式 production release；
-- `PENDING_HUMAN_APPROVAL` 已人工批准。
+- `GATE-RUNTIME-CONVERGENCE` 正式通过（依赖 Windows canary + Tauri 真 SSE 连接；#9 为占位检查，WORK-LAB 无 Tauri 工程）；
+- exact-SHA CI — 已达成：#33-#41 合并后 main CI 均绿（含 freshness gate）；
+- 便携 EXE 已构建 — 否（WORK-LAB 无 Tauri 工程，WL3-620 DEFERRED）；
+- 正式 production release — 否；
+- 双入口迁移、paid provider smoke、外部项目 profile 写入 — 否（待人工授权）。
 
-最终状态：**`LOCAL_VERIFIED_READY_FOR_APPROVAL`** — 待用户按批准清单逐项授权。
+最终状态：**`DELIVERED_PENDING_REMAINING_APPROVALS`** — 28 个 WL3 任务实现并合并（#33-#41）；剩余 WL3-620（DEFERRED，无 Tauri 工程）、双入口迁移、paid smoke、外部项目 profile 写入、正式 release，均需用户逐项授权。
