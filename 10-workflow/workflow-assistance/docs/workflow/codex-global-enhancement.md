@@ -56,6 +56,25 @@ project_doc_max_bytes  = 65536
 - GitHub 只读查询不被规则阻断；
 - 规则不代替 sandbox、项目 `AGENTS.md`、代码审查或用户批准。
 
+## Shell 可移植性加固（2026-08-10）
+
+增强模块对 Windows 下的 Git/命令行陷阱做了系统化吸收，并纳入安全门禁：
+
+- **Git 修订简写**：upstream、push、reflog、上一检出分支及带日期等 `@`-brace
+  形式在 PowerShell 下未加引号会被解析为哈希表字面量，命令在 git 执行前就失败；
+  规则要求显式 ref（`git rev-parse origin/main`）或单引号简写（`'@{upstream}'`）。
+- **方言对照**：cmd.exe / PowerShell / Git Bash(MSYS) / WSL 的引号、转义、插值与
+  停止解析（`--%`）差异已写入全局指导与 Windows 开发 Skill。
+- **MSYS 路径转换**：`/foo` 会被自动转成 Windows 路径；使用
+  `MSYS2_ARG_CONV_EXCL=*` / `MSYS_NO_PATHCONV=1` / 原生 `C:\...` 路径。
+- **行尾与编码**：shell 脚本 CRLF 导致 "bad interpreter"（保持 LF +
+  `.gitattributes`）；PowerShell 5.1 重定向默认 UTF-16；中文 Windows 用 UTF-8
+  （`chcp 65001`）与 `core.quotepath false`。
+- **文件系统**：长路径（`core.longpaths`）、大小写（`core.ignorecase`）、
+  文件锁（`BLOCKED_PROCESS_LOCK`，不杀共享进程）。
+- **门禁**：`scan_agent_rules.py` 新增两项可执行检查 —— 裸 `@`-brace 修订简写
+  与 shell 脚本 CRLF，全量 quality gate 的 security gate 自动执行。
+
 ## 同步、验证与回滚
 
 从 `10-workflow/workflow-assistance` 运行：
