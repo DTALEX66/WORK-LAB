@@ -1,11 +1,11 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-10T08:35:42.326797Z",
-  "source_digest": "720eef53fb7071515cb2332b400e47e3c6b842bbf4643e97087172ddad10a255",
+  "generated_at": "2026-08-10T08:45:42.813476Z",
+  "source_digest": "b39bbbc0c9bf95378dff7b7069b29a56b41fb04e4ffd00138a76e10db1656381",
   "git": {
-    "head": "415a1fa25c2d1df1ffcae501ef5a5166aa74bbc1",
+    "head": "3b1ab6e347fca3583e77f19d03981a37a0c90bf8",
     "branch": "feat/wl3-master-2.0-local-implementation",
-    "head_tree": "22bcdd326aba8113763f7add0e6c071ea7214230",
+    "head_tree": "fcae11e30245565f2b1a21846172c9ac5d9c4647",
     "remote_main": "699ab50f47da5dcf3e92c81bea72504b6425f475"
   },
   "modules": [
@@ -253,5 +253,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "7b466c29fc494e7afbda5aab9918cd0f7e1f8dd0dd21e36fe17f0addd567a060"
+  "content_digest": "fb0a6665fbfb95fe82b0f9f13cf4c0deae9f730721679d10e81f154853e058fa"
 }
