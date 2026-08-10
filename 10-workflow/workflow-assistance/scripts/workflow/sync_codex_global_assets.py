@@ -316,6 +316,7 @@ def _validate_existing_ownership(
 
     current = _current_block_hashes(config_text, guidance_text)
     managed_fields = state.get("managed_config_fields", [])
+    legacy = state.get("version") != VERSION
     if managed_fields:
         actual = current.get("config.toml")
         if state.get("version") == VERSION:
@@ -323,7 +324,14 @@ def _validate_existing_ownership(
         else:
             expected = _block_hash(_expected_config_block(managed_fields))
         if actual != expected:
-            raise ManagedConflict("managed config block changed after apply")
+            # Legacy v1/v2 states predate the managed config block hash. A
+            # config rewrite (e.g. Codex Desktop regenerating config.toml) can
+            # dissolve the block without user intent; _render_config only ever
+            # appends fields the user has not set, so re-insertion cannot
+            # overwrite user values. A present-but-mismatched block still
+            # fails closed below.
+            if not (legacy and actual is None):
+                raise ManagedConflict("managed config block changed after apply")
     elif "config.toml" in current:
         raise ManagedConflict("unexpected managed config block for preserved user fields")
 
@@ -331,9 +339,15 @@ def _validate_existing_ownership(
     if state.get("version") == VERSION:
         expected_guidance = state["managed_block_hashes"].get("AGENTS.md")
     else:
+        # Legacy v1/v2 states never recorded guidance hashes. Ownership is
+        # proven by the managed markers, not by byte-equality with the
+        # current source; requiring equality wedges migration whenever the
+        # source advanced after the legacy apply. An unmarked block is user
+        # content and still fails closed.
         expected_guidance = _block_hash(_expected_guidance_block(guidance_overlay))
     if actual_guidance != expected_guidance:
-        raise ManagedConflict("managed guidance block changed after apply")
+        if not (legacy and GUIDANCE_BEGIN in guidance_text and GUIDANCE_END in guidance_text):
+            raise ManagedConflict("managed guidance block changed after apply")
     return current
 
 
