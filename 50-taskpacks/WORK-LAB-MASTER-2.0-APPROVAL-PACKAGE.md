@@ -71,11 +71,11 @@ GATE-RUNTIME-CONVERGENCE: claimable=True — 9/10 passed; #9 Tauri real Sidecar
 
 ## 4. 唯一批准清单（状态截至 2026-08-10 更新）
 
-1. **commit/push/PR** — ✅ 已完成：#33/#34/#35/#36/#37/#38/#39/#40/#41 全部 squash merge 到 main（head `cd4a27f`）；
-2. **Hermes/Codex global config live apply** — ✅ Codex overlay v3 已 apply+verify（9 skills，含 `workflow-assistance-openhuman-integration`，PR #41）；Hermes live 未动（按边界合同）；
-3. **双入口/双安装卸载或配置迁移** — ❌ 未执行（需用户决策）；
+1. **commit/push/PR** — ✅ 已完成：#33/#34/#35/#36/#37/#38/#39/#40/#41/#43/#44/#45 全部 squash merge 到 main（head `ee909fd`）；
+2. **Hermes/Codex global config live apply** — ✅ Codex overlay v3 已 apply+verify（10 skills，含 openhuman-integration 与 self-improvement，PR #41/#43）；Hermes live 未动（按边界合同）；
+3. **双入口/双安装卸载或配置迁移** — ✅ 已对账：入口矩阵与职责边界见 `docs/workflow/dual-entry-install.md`（Hermes setup.* → sync_hermes_workflow_assets；Codex legacy bootstrap 仅目标不存在时最小引导，canonical sync 管理全部受管表面；无并行安装面）；
 4. **Windows toolchain/portable/sign/release** — ⏸ 工具链已核验就位（cargo/rustc 1.88 @ `D:\All projects\OS configuration\toolchains\rust`），但 WORK-LAB 无 Tauri/Cargo 工程（桌面壳归其产品线所有）→ WL3-620 转 DEFERRED；
-5. **paid provider smoke** — ❌ 未执行（需凭据/授权）；
+5. **paid provider smoke** — ✅ 已执行（2026-08-10）：deepseek `WA_SMOKE_221826_ds` 与 openai-codex `WA_SMOKE_221837_gpt` 精确 marker 回读，EXIT=0；kimi 未登录跳过；凭据未读取；
 6. **真实外部项目 tracked profile** — ❌ 未执行（MINIGAME 仅只读 canary，未写）；
 7. **归档删除或 Git 历史减重** — ✅ 已完成：WORK-LAB-ARCHIVE 退休删除（含敏感 Chrome 测试痕迹），证据并入 `90-archive-manifests/migration-20260805/`（PR #40）。
 
