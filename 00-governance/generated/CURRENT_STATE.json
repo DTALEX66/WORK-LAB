@@ -1,12 +1,12 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-10T09:20:48.496138Z",
-  "source_digest": "269af31ea7f5c96b83b16d2598345385ac2f5455a8b792e1c51856de5ec1d3a3",
+  "generated_at": "2026-08-10T13:08:49.568758Z",
+  "source_digest": "465806699d12770ddf5979e5cb7862b148362ad723c3dc1293ce985e3c67bafa",
   "git": {
-    "head": "cc7a6670cccfa18bd9dd4308e4873a7d97083c95",
-    "branch": "main",
-    "head_tree": "339a9864fc374661ff2d2b388a72940af70b8151",
-    "remote_main": "cc7a6670cccfa18bd9dd4308e4873a7d97083c95"
+    "head": "cc098402b0e42ae30a967d33060157091ce21f42",
+    "branch": "docs/taskpack-reconciliation-20260810",
+    "head_tree": "619c05fbcf8f408ce385f22367c57274e5253bbb",
+    "remote_main": "cd4a27f769865fc40f6e02372a25db3d58f62537"
   },
   "modules": [
     {
@@ -205,46 +205,14 @@
   "stage3": {
     "taskpack_id": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE",
     "task_count": 28,
-    "initial_state": "RECONCILE_REQUIRED",
+    "initial_state": "RECONCILED_20260810",
     "baseline_candidate_tree": "f1578cbd40b8edba329547efa56c74ec98a23b6d",
     "incoming_dirty_count": 5,
     "writer_state": "UNIQUE"
   },
   "ci": {
-    "run_id": 31344245919,
-    "workflow_name": "work-lab-gate",
-    "status": "completed",
-    "conclusion": "success",
-    "head_sha": "699ab50f47da5dcf3e92c81bea72504b6425f475",
-    "url": "https://github.com/DTALEX66/WORK-LAB/actions/runs/31344245919",
-    "attempt": 1,
-    "jobs": [
-      {
-        "name": "aggregate",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "gate-plan",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "integration",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "observer",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "workflow-assistance",
-        "status": "completed",
-        "conclusion": "success"
-      }
-    ]
+    "status": "unknown",
+    "evidence": "not-provided"
   },
   "unverified_capabilities": [
     "hermes_live_apply",
@@ -253,5 +221,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "dedc4d523984e613f64746604c46acdf70bc1a16d64c8e32472eca84ccd54d94"
+  "content_digest": "c47f727896179636ced279e298ca29670903a283234c5322c2da3d9be0b7795d"
 }
