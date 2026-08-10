@@ -31,6 +31,10 @@ SECRET_HINT = re.compile(r"(api[_-]?key|secret|password|passwd|token)\s*[:=]\s*[
 # shorthand (@{upstream}, @{u}, @{push}, @{1}, @{-1}) dies before git runs
 # ("hashtable not terminated"). Require quoted shorthand or explicit refs.
 PS_REVISION_HAZARD = re.compile(r"(?<!['\"])@\{[A-Za-z0-9_.-]+\}")
+POWERSHELL_REMOVE_ITEM = re.compile(r"^\s*(?!#).*\bRemove-Item\b", re.I | re.M)
+POWERSHELL_LITERAL_PATH = re.compile(r"(?<!\w)-LiteralPath\b", re.I)
+POWERSHELL_STOP = re.compile(r"(?<!\w)-ErrorAction\s+Stop\b", re.I)
+POWERSHELL_POSTCONDITION = re.compile(r"\bTest-Path\s+-LiteralPath\b", re.I)
 
 EXTS = {
     '.md', '.txt', '.yaml', '.yml', '.json', '.toml',
@@ -72,6 +76,22 @@ def scan_file(path: Path) -> list[str]:
                 f'{path}: CRLF line endings in a shell script cause "bad '
                 f'interpreter" on Windows/Unix; keep LF and declare the tree '
                 f'in .gitattributes (git add --renormalize)'
+            )
+    if path.suffix.lower() in ('.ps1', '.psm1'):
+        cleanup_matches = list(POWERSHELL_REMOVE_ITEM.finditer(text))
+        for match in cleanup_matches:
+            line_end = text.find('\n', match.start())
+            command = text[match.start() : line_end if line_end >= 0 else len(text)]
+            if not POWERSHELL_LITERAL_PATH.search(command) or not POWERSHELL_STOP.search(command):
+                line = text.count('\n', 0, match.start()) + 1
+                issues.append(
+                    f'{path}:{line}: unsafe PowerShell cleanup; Remove-Item must use '
+                    f'-LiteralPath and -ErrorAction Stop'
+                )
+        if cleanup_matches and not POWERSHELL_POSTCONDITION.search(text):
+            issues.append(
+                f'{path}: unsafe PowerShell cleanup; verify deletion with '
+                f'Test-Path -LiteralPath and fail when the target remains'
             )
     for match in PS_REVISION_HAZARD.finditer(text):
         line = text.count('\n', 0, match.start()) + 1
