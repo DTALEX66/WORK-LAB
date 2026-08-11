@@ -330,7 +330,9 @@ class CanonicalStore:
                     sample.get("reasoning_tokens"),
                     sample.get("tool_tokens"),
                     sample.get("subagent_tokens"),
-                    sample.get("total_tokens"),
+                    sample.get("total_tokens")
+                    if sample.get("total_tokens") is not None
+                    else (sample.get("input_tokens") or 0) + (sample.get("output_tokens") or 0),
                     sample.get("billing_type"),
                     sample.get("cost_estimate"),
                     sample.get("cost_reconciled"),
