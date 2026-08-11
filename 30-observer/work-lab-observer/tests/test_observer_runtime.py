@@ -9,8 +9,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from observer_runtime import (  # noqa: E402
     IncrementalCursor,
     ObserverInputError,
+    TRANSFERRED_PROJECT_IDS,
     append_events,
     mutation_surface,
+    project_projection,
     project_read_only_dashboard,
     project_authority_dashboard,
     project_cost,
@@ -140,6 +142,21 @@ class ObserverRuntimeTests(unittest.TestCase):
         self.assertEqual(project_authority_dashboard([unknown_event], mode="LIVE")["mode"], "LIVE")
         with self.assertRaises(ObserverInputError):
             project_authority_dashboard([unknown_event], mode="BOGUS")
+
+    def test_transferred_project_ids_exclude_legacy_minigame(self):
+        # Only open-design remains a transferred project id; the retired
+        # minigame tree must not be referenced by the Observer anymore.
+        self.assertEqual(TRANSFERRED_PROJECT_IDS, {"open-design"})
+        open_design_event = event("run")
+        open_design_event["projectId"] = "open-design"
+        projection = project_projection([open_design_event])
+        self.assertEqual(projection["count"], 0)
+
+        work_lab_event = event("run")
+        work_lab_event["projectId"] = "work-lab"
+        projection = project_projection([open_design_event, work_lab_event])
+        self.assertEqual(projection["count"], 1)
+        self.assertEqual(projection["projects"][0]["projectId"], "work-lab")
 
 
 if __name__ == "__main__":
