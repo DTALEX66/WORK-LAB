@@ -16,6 +16,51 @@ struct AppState {
     panel_visible: std::sync::Mutex<bool>,
 }
 
+fn validated_observer_api(raw: &str) -> Option<tauri::Url> {
+    let url = tauri::Url::parse(raw).ok()?;
+    let loopback = match url.host() {
+        // url.host() returns the typed host (Host::Ipv4 / Host::Ipv6) without
+        // brackets; host_str() keeps "[::1]" brackets for IPv6, which would
+        // fail IpAddr::parse and wrongly reject a valid loopback endpoint.
+        Some(url::Host::Ipv4(ip)) => ip.is_loopback(),
+        Some(url::Host::Ipv6(ip)) => ip.is_loopback(),
+        Some(url::Host::Domain(domain)) => domain.eq_ignore_ascii_case("localhost"),
+        None => false,
+    };
+    if url.scheme() == "http"
+        && loopback
+        && url.username().is_empty()
+        && url.password().is_none()
+        && url.path() == "/api/dashboard"
+        && url.query().is_none()
+        && url.fragment().is_none()
+    {
+        Some(url)
+    } else {
+        None
+    }
+}
+
+fn inject_observer_api(app: &AppHandle) {
+    let Ok(raw) = std::env::var("WORK_LAB_OBSERVER_API_URL") else {
+        return;
+    };
+    let Some(endpoint) = validated_observer_api(&raw) else {
+        log::warn!("ignored invalid WORK_LAB_OBSERVER_API_URL");
+        return;
+    };
+    for label in ["main", "panel"] {
+        if let Some(window) = app.get_webview_window(label) {
+            if let Ok(mut url) = window.url() {
+                url.query_pairs_mut().append_pair("api", endpoint.as_str());
+                if let Err(error) = window.navigate(url) {
+                    log::warn!("failed to inject Observer endpoint into {label}: {error}");
+                }
+            }
+        }
+    }
+}
+
 fn show_main(app: &AppHandle) {
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.show();
@@ -64,6 +109,7 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle().clone();
             let _state = app.state::<AppState>();
+            inject_observer_api(&handle);
 
             // --- System tray (B: tray + floating panel) ---
             let show = MenuItem::with_id(app, "show", "打开观测台", true, None::<&str>)?;
@@ -115,4 +161,17 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running WORK-LAB Observer");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validated_observer_api;
+
+    #[test]
+    fn observer_api_is_loopback_get_only() {
+        assert!(validated_observer_api("http://127.0.0.1:43123/api/dashboard").is_some());
+        assert!(validated_observer_api("http://[::1]:43123/api/dashboard").is_some());
+        assert!(validated_observer_api("https://external.invalid/api/dashboard").is_none());
+        assert!(validated_observer_api("http://127.0.0.1:43123/api/dashboard?write=1").is_none());
+    }
 }

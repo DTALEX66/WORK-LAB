@@ -18,7 +18,9 @@
     "hermes": {"layer": "USER_OVERLAY", "mode": "MANAGE", "preserve_unknown": true},
     "codex": {"layer": "USER_OVERLAY", "mode": "MANAGE", "preserve_unknown": true},
     "cc-switch": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
-    "github": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true}
+    "github": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
+    "openhuman": {"layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "preserve_unknown": true},
+    "open-design": {"layer": "PROJECT_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true}
   },
   "fields": [
     {"path": "display.language", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "hermes"},
@@ -27,9 +29,11 @@
     {"path": "project.AGENTS", "layer": "PROJECT_OVERLAY", "mode": "MANAGE", "adapter": "codex"},
     {"path": "project.rules", "layer": "PROJECT_OVERLAY", "mode": "MANAGE", "adapter": "codex"},
     {"path": "project.skills", "layer": "PROJECT_OVERLAY", "mode": "MANAGE", "adapter": "codex"},
-    {"path": "model.routing", "layer": "USER_OVERLAY", "mode": "OBSERVE", "adapter": "codex"},
-    {"path": "model.provider", "layer": "USER_OVERLAY", "mode": "OBSERVE", "adapter": "codex"},
-    {"path": "model.base_url", "layer": "USER_OVERLAY", "mode": "OBSERVE", "adapter": "codex"},
+    {"path": "user.AGENTS", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "codex"},
+    {"path": "user.skills", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "codex"},
+    {"path": "codex.model.routing", "layer": "USER_OVERLAY", "mode": "OBSERVE", "adapter": "codex"},
+    {"path": "codex.model.provider", "layer": "USER_OVERLAY", "mode": "OBSERVE", "adapter": "codex"},
+    {"path": "codex.model.base_url", "layer": "USER_OVERLAY", "mode": "OBSERVE", "adapter": "codex"},
     {"path": "approval_policy", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "codex"},
     {"path": "sandbox_mode", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "codex"},
     {"path": "project_doc_max_bytes", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "codex"},
@@ -39,6 +43,21 @@
     {"path": "hooks.pre_tool_call", "layer": "USER_OVERLAY", "mode": "OBSERVE", "adapter": "hermes"},
     {"path": "memory", "layer": "USER_OVERLAY", "mode": "OBSERVE", "adapter": "hermes"},
     {"path": "sessions.auto_prune", "layer": "USER_OVERLAY", "mode": "OBSERVE", "adapter": "hermes"},
+    {"path": "hermes.model.provider", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "hermes"},
+    {"path": "hermes.model.default", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "hermes"},
+    {"path": "hermes.model.base_url", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "hermes"},
+    {"path": "cc_switch.provider.catalog", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "cc-switch"},
+    {"path": "cc_switch.provider.routing", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "cc-switch"},
+    {"path": "codex.prompt_sync", "layer": "PLATFORM_INTERNAL", "mode": "IGNORE", "adapter": "cc-switch"},
+    {"path": "codex.skill_sync", "layer": "PLATFORM_INTERNAL", "mode": "IGNORE", "adapter": "cc-switch"},
+    {"path": "codex.session_sync", "layer": "RUNTIME_EPHEMERAL", "mode": "IGNORE", "adapter": "cc-switch"},
+    {"path": "hermes.memory_sync", "layer": "RUNTIME_EPHEMERAL", "mode": "IGNORE", "adapter": "cc-switch"},
+    {"path": "chatgpt.memory", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "codex"},
+    {"path": "codex.local_memories", "layer": "RUNTIME_EPHEMERAL", "mode": "IGNORE", "adapter": "codex"},
+    {"path": "memory.growth_policy", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "workflow"},
+    {"path": "openhuman.workspace_metadata", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "openhuman"},
+    {"path": "openhuman.runtime_memory", "layer": "RUNTIME_EPHEMERAL", "mode": "IGNORE", "adapter": "openhuman"},
+    {"path": "open-design.read_only_mcp", "layer": "PROJECT_OVERLAY", "mode": "OBSERVE", "adapter": "open-design"},
     {"path": "desktop.internal_state", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "codex"},
     {"path": "desktop.global_state_digest", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "codex"},
     {"path": "task.lease", "layer": "TASK_EPHEMERAL", "mode": "OBSERVE", "adapter": "workflow"},
@@ -59,6 +78,9 @@
     "official_deprecated_fields_preserve_user_intent": true,
     "identity_must_be_unique_before_apply": true,
     "apply_requires_stable_official_interface": true,
-    "cosmetic_managed_only_on_opt_in": true
+    "cosmetic_managed_only_on_opt_in": true,
+    "cc_switch_owns_supported_client_provider_routing_only": true,
+    "cross_client_prompt_skill_session_sync_forbidden": true,
+    "raw_memory_never_crosses_client_boundary": true
   }
 }

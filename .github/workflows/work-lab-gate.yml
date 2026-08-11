@@ -25,7 +25,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install gate-plan dependencies
-        run: python -m pip install --disable-pip-version-check --no-input "PyYAML>=6,<7" "jsonschema>=4,<5"
+        run: python -m pip install --disable-pip-version-check --no-input -r 10-workflow/workflow-assistance/requirements.txt
       - name: Discover changed paths
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -65,7 +65,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install workflow validator dependencies
-        run: python -m pip install --disable-pip-version-check --no-input "PyYAML>=6,<7" "jsonschema>=4,<5"
+        run: python -m pip install --disable-pip-version-check --no-input -r 10-workflow/workflow-assistance/requirements.txt
       - name: Run workflow structural and contract gates
         run: |
           # portable-install-runtime requires an explicitly provisioned Hermes binary;

@@ -565,7 +565,8 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/workflow/token-monitor.md`：本地 Token Monitor 的真实 usage 口径、启动方式和 Codex OAuth 限制；
 - `docs/workflow/hermes-runtime-layout.md`：Hermes 全局运行目录分层、可恢复迁移、升级验证与清理边界；
 - `docs/workflow/gateway-cron-delivery.md`：Gateway、cron、sleep-mode、TUI 与外部消息平台的投递边界；
-- `docs/workflow/user-environment-profile.md`：Hermes/Codex 用户配置与技能清单的无密画像、导出器与跨机器恢复流程；
+- `docs/workflow/user-environment-profile.md`：字段级 allowlist 的用户覆盖层、plan-only 导出器与机器私有状态排除边界；
+- `docs/workflow/official-plus-user-configuration-standard-2026-08-11.md`：官方基线、用户覆盖层、项目覆盖层和任务临时态的 Stage 3 配置标准；
 - `docs/workflow/dual-entry-install.md`：setup/sync/bootstrap 入口矩阵与职责边界对账；
 - `docs/workflow/codex-performance-diagnosis.md`：Codex 性能分层诊断（项目/全局/客户端配置）、审计状态与解决方案；
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
@@ -599,7 +600,7 @@ python scripts/workflow/run_quality_gate.py verify
 just verify
 ```
 
-`just` 不是默认依赖；缺少时直接使用 Python runner。`verify` 依次运行 governance、compile、skill-provenance、security、context-pack、client-neutral-manifest、core-schemas、portable-install、portable-install-runtime、provider-inventory、mcp-audit、shell 和 powershell gate。PowerShell gate 优先 `pwsh`，仅在缺少时回退 `powershell.exe`，并且只用 AST parser 解析 `setup.ps1`，不执行安装动作。Shell/PowerShell 工具不可用时对应 gate 会显式 skip。
+`just` 不是默认依赖；缺少时直接使用 Python runner。`verify` 在依赖预检后运行客户端中立的结构、治理、Adapter、遥测、账本、可移植安装和运行时收敛门；`portable-install-runtime` 只作为显式的可选 Hermes Adapter 兼容性门，不进入默认验证，也不会促使核心 CI 安装或固定 Hermes 版本。PowerShell gate 优先 `pwsh`，仅在缺少时回退 `powershell.exe`，并且只用 AST parser 解析 `setup.ps1`，不执行安装动作。Shell/PowerShell 工具不可用时对应 gate 会显式 skip。
 
 治理测试覆盖：
 

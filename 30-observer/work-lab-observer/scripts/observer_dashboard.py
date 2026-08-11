@@ -21,7 +21,6 @@ from urllib.parse import urlsplit, parse_qs
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from observer_store import ObserverStore
-from observer_runtime import ObserverInputError
 
 
 MODULE_ROOT = Path(__file__).resolve().parents[1]
@@ -49,9 +48,16 @@ def _allowed_origin(origin: str) -> bool:
         _ = parsed.port
     except ValueError:
         return False
-    return (
+    browser_loopback = (
         parsed.scheme in {"http", "https"}
         and _is_loopback_host(parsed.hostname)
+    )
+    tauri_local = (
+        (parsed.scheme == "tauri" and parsed.hostname == "localhost")
+        or (parsed.scheme == "http" and parsed.hostname == "tauri.localhost")
+    )
+    return (
+        (browser_loopback or tauri_local)
         and parsed.username is None
         and parsed.password is None
         and parsed.path in {"", "/"}
@@ -63,6 +69,31 @@ def _allowed_origin(origin: str) -> bool:
 def _pid_alive(pid: int) -> bool:
     if pid <= 0:
         return False
+    if pid == os.getpid():
+        return True
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+
+        process_query_limited_information = 0x1000
+        still_active = 259
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+        kernel32.OpenProcess.restype = wintypes.HANDLE
+        kernel32.GetExitCodeProcess.argtypes = (wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD))
+        kernel32.GetExitCodeProcess.restype = wintypes.BOOL
+        kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+        kernel32.CloseHandle.restype = wintypes.BOOL
+        handle = kernel32.OpenProcess(process_query_limited_information, False, pid)
+        if not handle:
+            return ctypes.get_last_error() == 5
+        try:
+            exit_code = wintypes.DWORD()
+            if not kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code)):
+                return True
+            return exit_code.value == still_active
+        finally:
+            kernel32.CloseHandle(handle)
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -444,20 +475,25 @@ def make_handler(store: ObserverStore, endpoint_path: Path | None = None):
             theme = (query.get("theme") or ["dark"])[0]
             try:
                 projection = store.rebuild_projection()
-                projection = {**projection, "transport": _transport_projection(endpoint_path)}
+                transport = _transport_projection(endpoint_path)
+                projection = {
+                    **projection,
+                    "mode": "LIVE" if transport["state"] == "discovered" else projection.get("mode", "SNAPSHOT"),
+                    "transport": transport,
+                }
             except Exception as exc:  # fail closed without exposing event contents
                 self._send(500, "application/json; charset=utf-8", json.dumps({"status": "observer_error", "error": type(exc).__name__}).encode())
                 return
-            from observer_runtime import project_projection
             if path == "/":
                 self._send(200, "text/html; charset=utf-8", _render_dashboard(projection, view=view, theme=theme).encode("utf-8"))
             elif path == "/api/dashboard":
                 self._send(200, "application/json; charset=utf-8", json.dumps(projection, ensure_ascii=False, sort_keys=True).encode("utf-8"))
             elif path == "/api/projects":
-                self._send(200, "application/json; charset=utf-8", json.dumps(project_projection(store.read_events()), ensure_ascii=False, sort_keys=True).encode("utf-8"))
+                projects = projection.get("projects", [])
+                self._send(200, "application/json; charset=utf-8", json.dumps({"count": len(projects), "projects": projects}, ensure_ascii=False, sort_keys=True).encode("utf-8"))
             elif path == "/api/tasks":
-                tasks = projection.get("tasks", {})
-                self._send(200, "application/json; charset=utf-8", json.dumps({"count": len(tasks), "tasks": tasks}, ensure_ascii=False, sort_keys=True).encode("utf-8"))
+                tasks = projection.get("summary", {}).get("tasks", {})
+                self._send(200, "application/json; charset=utf-8", json.dumps({"tasks": tasks}, ensure_ascii=False, sort_keys=True).encode("utf-8"))
             elif path == "/api/usage":
                 self._send(200, "application/json; charset=utf-8", json.dumps({"usage": projection.get("usage", {}), "cost": projection.get("cost", {})}, ensure_ascii=False, sort_keys=True).encode("utf-8"))
             elif path == "/api/quality":
@@ -490,47 +526,42 @@ def make_handler(store: ObserverStore, endpoint_path: Path | None = None):
     return ObserverDashboardHandler
 
 
-class ReadOnlyObserverStore:
-    """Runtime-enforced read-only observer view (R2 M-300.4).
+class _ObserverHTTPServer(ThreadingHTTPServer):
+    daemon_threads = True
 
-    The Observer's run surface may only read events / rebuild projections.
-    Any append attempt raises: the Observer is a consumer, never a producer.
-    Production writes belong to the Workflow Assistance Producer.
-    """
+    def __init__(self, address, handler, store: ObserverStore) -> None:
+        self.store = store
+        super().__init__(address, handler)
 
-    def __init__(self, store: ObserverStore) -> None:
-        self._store = store
-        self.path = store.path
-
-    def read_events(self) -> list[dict[str, Any]]:
-        return self._store.read_events()
-
-    def rebuild_projection(self) -> dict[str, Any]:
-        return self._store.rebuild_projection()
-
-    def append(self, incoming: Iterable[dict[str, Any]]) -> int:
-        raise ObserverInputError("Observer is read-only: append is owned by the Workflow Assistance Producer")
+    def server_close(self) -> None:
+        try:
+            super().server_close()
+        finally:
+            self.store.close()
 
 
-def create_server(project_root: Path, runtime_root: Path, host: str = "127.0.0.1", port: int = 8765) -> ThreadingHTTPServer:
+def create_server(project_root: Path, canonical_path: Path, host: str = "127.0.0.1", port: int = 0) -> ThreadingHTTPServer:
     if not _is_loopback_host(host):
         raise ValueError("observer host must be loopback-only")
-    runtime_root.mkdir(parents=True, exist_ok=True)
-    store = ObserverStore(runtime_root, project_root=project_root)
-    endpoint_path = runtime_root.parent / "workflow" / "sidecar-endpoint.json"
-    return ThreadingHTTPServer((host, port), make_handler(ReadOnlyObserverStore(store), endpoint_path))
+    store = ObserverStore(canonical_path, project_root=project_root)
+    endpoint_path = canonical_path.parent / "sidecar-endpoint.json"
+    return _ObserverHTTPServer((host, port), make_handler(store, endpoint_path), store)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Serve the read-only WORK-LAB Observer dashboard (4 views)")
     parser.add_argument("--project-root", type=Path, default=REPO_ROOT)
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--port", type=int, default=0)
+    parser.add_argument("--canonical-store", type=Path)
     args = parser.parse_args()
     project_root = args.project_root.resolve()
-    runtime_root = project_root / ".hermes" / "task-runtime" / "observer"
-    server = create_server(project_root, runtime_root, args.host, args.port)
-    print(f"OBSERVER_DASHBOARD_READY url=http://{args.host}:{args.port}/ read_only=true views=full,compact themes=dark,light")
+    canonical_path = (args.canonical_store or project_root / ".hermes" / "task-runtime" / "workflow" / "canonical.sqlite").resolve()
+    server = create_server(project_root, canonical_path, args.host, args.port)
+    print(
+        f"OBSERVER_DASHBOARD_READY url=http://{args.host}:{server.server_port}/ read_only=true views=full,compact themes=dark,light",
+        flush=True,
+    )
     try:
         server.serve_forever()
     except KeyboardInterrupt:

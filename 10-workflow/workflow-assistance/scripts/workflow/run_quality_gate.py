@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import os
 import shutil
 import subprocess
@@ -15,6 +16,10 @@ RETIRED_ORDINARY_TESTS = {
     "test_fixture_separation.py",
     "test_renderer_contract.py",
 }
+REQUIRED_PYTHON_MODULES = {
+    "yaml": "PyYAML>=6,<7",
+    "jsonschema": "jsonschema>=4,<5",
+}
 
 
 class Gate(NamedTuple):
@@ -25,6 +30,23 @@ class Gate(NamedTuple):
 
 def command_exists(name: str) -> bool:
     return shutil.which(name) is not None
+
+
+def dependency_preflight() -> int:
+    missing = [
+        requirement
+        for module, requirement in REQUIRED_PYTHON_MODULES.items()
+        if importlib.util.find_spec(module) is None
+    ]
+    if missing:
+        print(
+            "QUALITY_GATE_DEPENDENCY_FAIL missing="
+            + ",".join(missing)
+            + " install=python -m pip install -r requirements.txt"
+        )
+        return 2
+    print("QUALITY_GATE_DEPENDENCY_PASS modules=" + ",".join(REQUIRED_PYTHON_MODULES))
+    return 0
 
 
 def usable_bash() -> str | None:
@@ -427,7 +449,6 @@ VERIFY_ORDER = (
     "memory-contamination",
     "task-ledger-replay",
     "portable-install",
-    "portable-install-runtime",
     "provider-inventory",
     "mcp-audit",
     "shell",
@@ -468,6 +489,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{name}: {gate.description}")
         print("verify: Run " + ", ".join(VERIFY_ORDER))
         return 0
+    preflight = dependency_preflight()
+    if preflight != 0:
+        return preflight
     if args.gate == "verify":
         return run_gate_sequence(VERIFY_ORDER)
     return run_gate_sequence((args.gate,))

@@ -5,7 +5,8 @@
      - FIXTURE (explicit static/open): uses the inline copy of
        fixtures/cross-project-active-mixed.json. High-visibility amber tag,
        never disguised as LIVE.
-     - LIVE (default): GET-only fetch from /api/dashboard. The frontend NEVER writes.
+     - LIVE (discovered): GET-only fetch from a validated loopback
+       /api/dashboard endpoint. The frontend NEVER writes.
    Non-GET methods are rejected client-side as a negative control.
    Unknown fields are ignored (forward compatible) — we only read known keys. */
 
@@ -142,9 +143,24 @@ const WlApi = (function () {
   };
 
   /* Request wrapper: GET only. Non-GET is a hard client-side reject (405 negative control). */
+  function dashboardEndpoint() {
+    if (typeof window === "undefined") return "/api/dashboard";
+    const raw = new URLSearchParams(window.location.search).get("api");
+    if (!raw) return "/api/dashboard";
+    const parsed = new URL(raw);
+    const authorityStart = raw.indexOf("//") + 2;
+    const authorityEnd = raw.indexOf("/", authorityStart);
+    const hasUserInfo = authorityStart > 1 && raw.slice(authorityStart, authorityEnd < 0 ? raw.length : authorityEnd).includes("@");
+    const loopback = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "::1" || parsed.hostname === "[::1]";
+    if (parsed.protocol !== "http:" || !loopback || hasUserInfo || parsed.pathname !== "/api/dashboard" || parsed.search || parsed.hash) {
+      throw new Error("Observer dashboard endpoint is outside the declared loopback read-only boundary");
+    }
+    return parsed.toString();
+  }
+
   async function fetchDashboard(timeoutMs) {
     const timeout = timeoutMs || 5000;
-    const endpoints = ["/api/dashboard", "http://127.0.0.1:8765/api/dashboard"];
+    const endpoints = [dashboardEndpoint()];
     let lastError = null;
     for (const endpoint of endpoints) {
       const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
@@ -159,7 +175,11 @@ const WlApi = (function () {
           throw new Error("GET " + endpoint + " -> " + res.status);
         }
         const data = await res.json();
-        return { ok: true, mode: "LIVE", data };
+        const declared = String(data && data.mode || "UNKNOWN").toUpperCase();
+        const mode = ["LIVE", "SNAPSHOT", "OFFLINE", "UNKNOWN"].includes(declared)
+          ? declared
+          : "UNKNOWN";
+        return { ok: true, mode, data };
       } catch (err) {
         lastError = err && err.name === "AbortError"
           ? new Error("GET " + endpoint + " timed out")
@@ -210,6 +230,7 @@ const WlApi = (function () {
 
   return {
     FIXTURE,
+    dashboardEndpoint,
     fetchDashboard,
     rejectNonGet,
     subscribeEvents,

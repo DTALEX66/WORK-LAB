@@ -19,6 +19,11 @@ const WlApp = (function () {
     return { view, theme, mode };
   }
 
+  function retainedApiParam() {
+    const api = new URLSearchParams(window.location.search).get("api");
+    return api ? "&api=" + encodeURIComponent(api) : "";
+  }
+
   function applyTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
     WlState.set({ theme });
@@ -49,7 +54,7 @@ const WlApp = (function () {
       bar.className = "wl-robar";
       bar.style.padding = "8px 16px";
       bar.innerHTML =
-        `<a class="wl-view-link" href="?view=full&theme=${st.theme}&mode=${st.mode}">${WlRender.icon("grid")}完整视图</a>` +
+        `<a class="wl-view-link" href="?view=full&theme=${st.theme}&mode=${st.mode}${retainedApiParam()}">${WlRender.icon("grid")}完整视图</a>` +
         `<button class="wl-theme-toggle" id="themeToggle" type="button">${WlRender.icon(st.theme === "dark" ? "sun" : "moon")}</button>`;
       root.prepend(bar);
       applyTheme(st.theme);
@@ -131,7 +136,7 @@ const WlApp = (function () {
         onEvent: async () => {
           try {
             const result = await WlApi.fetchDashboard();
-            WlState.accept(result.data, "LIVE");
+            WlState.accept(result.data, result.mode);
           } catch (err) {
             WlState.markRefreshError(err && err.message ? err.message : "实时投影刷新失败");
           }
@@ -164,9 +169,9 @@ const WlApp = (function () {
     // (assets/live-snapshot.json, generated from real observed events), then FIXTURE.
     try {
       const result = await WlApi.fetchDashboard();
-      WlState.accept(result.data, "LIVE");
+      WlState.accept(result.data, result.mode);
       startLiveSubscription(result.data);
-      WlA11y.announce("已加载实时投影数据");
+      WlA11y.announce(result.mode === "LIVE" ? "已加载实时投影数据" : "已加载只读投影数据");
     } catch (err) {
       // Bundled real snapshot (no fabricated agents/projects) — better than FIXTURE.
       try {
@@ -181,7 +186,7 @@ const WlApp = (function () {
       } catch (_) { /* fall through */ }
       WlState.markRefreshError(err.message);
       if (WlState.get().lastGood) {
-        WlState.set({ mode: "LIVE" });
+        WlState.set({ mode: "OFFLINE" });
         WlA11y.announce("实时数据不可用，已保留上次良好投影（last-good）");
       } else {
         WlState.accept(WlApi.FIXTURE, "FIXTURE");

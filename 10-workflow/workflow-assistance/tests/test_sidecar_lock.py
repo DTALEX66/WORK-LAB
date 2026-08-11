@@ -32,7 +32,7 @@ class SidecarLockTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as raw:
    path=Path(raw)/'sidecar.lock'
    script=(
-    "import sys; from pathlib import Path; "
+   "import sys; from pathlib import Path; "
     f"sys.path.insert(0, {str(ROOT / 'scripts/workflow')!r}); "
     "from sidecar_lock import SingleInstanceLock; "
     "lock=SingleInstanceLock(Path(sys.argv[1])); lock.acquire(); "

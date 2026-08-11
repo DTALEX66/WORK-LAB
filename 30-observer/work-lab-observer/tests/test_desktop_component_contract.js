@@ -33,14 +33,14 @@ function run() {
     assert.strictEqual(config.build.frontendDist, "../web");
   });
 
-  test("main window is a fixed full LIVE entry", () => {
-    assert.strictEqual(windows.main.url, "index.html?view=full&mode=LIVE&theme=dark");
+  test("main window starts UNKNOWN until a live endpoint is discovered", () => {
+    assert.strictEqual(windows.main.url, "index.html?view=full&mode=UNKNOWN&theme=dark");
     assert.strictEqual(windows.main.decorations, false);
     assert.strictEqual(windows.main.transparent, true);
   });
 
   test("panel window is a fixed compact component entry", () => {
-    assert.strictEqual(windows.panel.url, "index.html?view=compact&mode=LIVE&theme=dark");
+    assert.strictEqual(windows.panel.url, "index.html?view=compact&mode=UNKNOWN&theme=dark");
     assert.strictEqual(windows.panel.width, 440);
     assert.strictEqual(windows.panel.height, 780);
     assert.strictEqual(windows.panel.minWidth, 440);

@@ -1,87 +1,59 @@
 from __future__ import annotations
 
-import json
-import hashlib
-from pathlib import Path
+import sys
 import tempfile
 import unittest
+from pathlib import Path
 
-import sys
+MODULE_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = MODULE_ROOT.parents[1]
+sys.path.insert(0, str(MODULE_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "10-workflow" / "workflow-assistance" / "scripts" / "workflow"))
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from canonical_store import CanonicalStore  # noqa: E402
 from observer_runtime import ObserverInputError  # noqa: E402
 from observer_store import ObserverStore  # noqa: E402
 
 
-def event(event_id: str, *, task_id: str = "WA-001", quality: str = "source-exact") -> dict:
-    return {
-        "eventId": event_id,
-        "schemaVersion": "work-lab/observer-event/v1",
-        "eventType": "task.status",
-        "sourceModule": "workflow-assistance",
-        "sourceId": "ledger",
-        "taskId": task_id,
-        "observedAt": "2026-08-06T00:00:00Z",
-        "contentDigest": hashlib.sha256(event_id.encode()).hexdigest(),
-        "coverage": "full",
-        "quality": quality,
-    }
-
-
 class ObserverStoreTests(unittest.TestCase):
-    def make_root(self, raw: str) -> Path:
-        (Path(raw) / ".git").mkdir()
-        root = Path(raw) / ".hermes" / "task-runtime" / "observer"
-        root.mkdir(parents=True)
-        return root
+    def make_root(self, raw: str) -> tuple[Path, Path]:
+        project = Path(raw)
+        (project / ".git").mkdir()
+        path = project / ".hermes" / "task-runtime" / "workflow" / "canonical.sqlite"
+        writer = CanonicalStore(path)
+        writer.register_project("work-lab", "<redacted>")
+        writer.upsert_task({"task_id": "t1", "project_id": "work-lab", "status": "RUNNING"})
+        writer.close()
+        return project, path
 
-    def test_restart_preserves_events_and_rebuilds_projection(self) -> None:
+    def test_reads_canonical_projection_without_mutating_database(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            root = self.make_root(raw)
-            first = ObserverStore(root, project_root=Path(raw))
-            self.assertEqual(first.append([event("e1"), event("e2", task_id="WA-002", quality="partial")]), 2)
+            project, path = self.make_root(raw)
+            before = (path.stat().st_mtime_ns, path.stat().st_size)
+            store = ObserverStore(path, project_root=project)
+            projection = store.rebuild_projection()
+            store.close()
+            after = (path.stat().st_mtime_ns, path.stat().st_size)
+            self.assertEqual(projection["summary"]["tasks"]["running"], 1)
+            self.assertEqual(before, after)
+            self.assertFalse((path.parent.parent / "observer").exists())
 
-            restarted = ObserverStore(root, project_root=Path(raw))
-            self.assertEqual(restarted.read_events(), [event("e1"), event("e2", task_id="WA-002", quality="partial")])
-            projection = restarted.rebuild_projection()
-            self.assertEqual(len(projection["tasks"]), 2)
-            self.assertTrue(all("taskId" not in task for task in projection["tasks"]))
-            self.assertEqual(projection["quality"]["quality"], "partial")
-            self.assertEqual(projection["usage"]["records"], 0)
-
-    def test_duplicate_events_are_not_written_twice(self) -> None:
+    def test_append_is_always_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            store = ObserverStore(self.make_root(raw), project_root=Path(raw))
-            self.assertEqual(store.append([event("e1"), event("e1")]), 1)
-            self.assertEqual(store.append([event("e1")]), 0)
-            self.assertEqual(len(store.read_events()), 1)
-            self.assertEqual(store.path.read_text(encoding="utf-8").count("\n"), 1)
-
-    def test_sensitive_or_malformed_existing_records_fail_closed(self) -> None:
-        with tempfile.TemporaryDirectory() as raw:
-            root = self.make_root(raw)
-            path = root / "observer-events.jsonl"
-            unsafe = event("e1")
-            unsafe["payload"] = {"prompt": "must not persist"}
-            path.write_text(json.dumps(unsafe) + "\n", encoding="utf-8")
+            project, path = self.make_root(raw)
+            store = ObserverStore(path, project_root=project)
             with self.assertRaises(ObserverInputError):
-                ObserverStore(root, project_root=Path(raw)).read_events()
+                store.append([{"eventId": "forbidden"}])
+            store.close()
 
-    def test_store_rejects_non_project_runtime_root(self) -> None:
+    def test_rejects_noncanonical_or_missing_path(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            (Path(raw) / ".git").mkdir()
-            outside = Path(raw) / ".hermes" / "task-runtime" / "outside"
-            outside.mkdir(parents=True)
+            project, path = self.make_root(raw)
             with self.assertRaises(ValueError):
-                ObserverStore(outside, project_root=Path(raw))
-
-    def test_store_rejects_runtime_root_outside_project_even_with_matching_names(self) -> None:
-        with tempfile.TemporaryDirectory() as project_raw, tempfile.TemporaryDirectory() as other_raw:
-            (Path(project_raw) / ".git").mkdir()
-            outside = Path(other_raw) / ".hermes" / "task-runtime" / "observer"
-            outside.mkdir(parents=True)
-            with self.assertRaises(ValueError):
-                ObserverStore(outside, project_root=Path(project_raw))
+                ObserverStore(path.parent / "observer-events.jsonl", project_root=project)
+            path.unlink()
+            with self.assertRaises(FileNotFoundError):
+                ObserverStore(path, project_root=project)
 
 
 if __name__ == "__main__":

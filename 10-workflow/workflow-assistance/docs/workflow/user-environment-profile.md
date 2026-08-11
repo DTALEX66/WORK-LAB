@@ -1,44 +1,42 @@
-# 用户环境画像（User Environment Profile）
+# 用户覆盖层画像（User Environment Profile v2）
 
 ## 目的
 
-跨机器保留 Hermes 与 Codex 的用户级配置与技能清单，避免换电脑后从零积攒。本画像以**中立、无密**形态随增强模块仓库留存：只记录非密配置值与技能清单，所有凭据值统一为 `[REDACTED]`。
+`config/user-environment-profile.json` 是可移植、字段级 allowlist 的用户覆盖层，
+不是机器快照。它只记录 `config/config-ownership.json` 明确标记为 `MANAGE` 的
+非密偏好和项目治理边界。
 
-## 内容
+## 允许内容
 
-机器可读画像：`config/user-environment-profile.json`（tracked，由导出器生成）：
+- 语言、主题、默认 Agent 等明确的用户偏好；
+- 用户规则、Skills、插件声明的“来源/策略”，不包含本机清单；
+- 项目与安全边界；
+- 能力发现要求，不记录发现出的绝对路径。
 
-```text
-hermes:
-  config_yaml      Hermes config.yaml 的非密键值（秘密键值脱敏为 [REDACTED]）
-  env_key_names    ~/.env 的键名清单（绝不含值）
-  skills           用户级 skills 清单（143 个：名称 + description + 路径）
-codex:
-  config_toml      Codex config.toml 的非密键值（provider/model 名保留，base_url/凭据脱敏）
-  rules            $CODEX_HOME/rules/*.rules 清单
-  agents_skills    ~/.agents/skills 技能清单（10 个 workflow-assistance-*）
-paths              hermes_home / codex_home / agents_skills_root
-```
+以下内容禁止进入 tracked profile：完整原生客户端配置、provider/model 路由、
+环境变量键名、Skills/Rules 文件清单、Home/安装目录、会话、记忆正文、日志、
+缓存、认证状态和任何凭据。
 
-技能内容本身不入画像 —— 技能文件随各自运行时存在；增强模块的 10 个 skill 已随本模块仓库携带。
+## 导出与应用
 
-## 刷新
+默认命令只生成 plan，不写文件：
 
 ```bash
-python 10-workflow/workflow-assistance/scripts/workflow/user_profile_export.py
+python scripts/workflow/user_profile_export.py
 ```
 
-导出器读取真实用户 Home，重写 `config/user-environment-profile.json`（脱敏 fail-closed：发现未脱敏秘密值则拒绝写入）。生成后 `git diff --check` + 提交。
+只有在审阅计划后才可显式写入项目画像：
 
-## 新机器恢复
+```bash
+python scripts/workflow/user_profile_export.py --write
+```
 
-1. 克隆 WORK-LAB → `python 10-workflow/workflow-assistance/scripts/workflow/sync_codex_global_assets.py apply`（部署 10 个 skill + 规则 + guidance + 3 个 config 缺省字段）；
-2. 读取画像：`config/user-environment-profile.json` 对照各运行时配置（键名 + 脱敏值，提示哪些位置需要重新填写凭据）；
-3. Hermes：按画像重建非密配置项（display/terminal 等），凭据按 `env_key_names` 键名重新填入；
-4. Codex：provider/model 名照画像；base_url/密钥等 [REDACTED] 项重新配置。
+画像不直接应用到 Codex/Hermes/CC Switch。任何 live apply 都必须另行授权，并
+通过客户端官方接口执行备份、差异、读回和回滚；不受 WORK-LAB 管理的字段保持
+原样。
 
 ## 安全边界
 
-- 导出器只读用户 Home，绝不读取会话库、记忆库、keychain、auth 存储；
-- 任何键名含 api_key/token/secret/password/credential/auth/connection/base_url 等 → 值 `[REDACTED]`；值匹配 sk-/gh_/AKIA/私钥/Bearer/URL 内嵌凭据 → `[REDACTED]`；
-- 画像可安全提交（无凭据值）；发现未脱敏值导出器直接失败。
+- 导出器不遍历用户 Home，不读取原生配置、`.env`、认证库、会话库或记忆库；
+- 输出不得包含绝对路径、provider/model、环境键名或本机 inventory；
+- 不确定字段按 `OBSERVE + QUARANTINE` 处理，不能自动升级为 `MANAGE`。

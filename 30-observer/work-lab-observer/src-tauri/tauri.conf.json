@@ -12,7 +12,7 @@
       {
         "label": "main",
         "title": "WORK-LAB Observer",
-        "url": "index.html?view=full&mode=LIVE&theme=dark",
+        "url": "index.html?view=full&mode=UNKNOWN&theme=dark",
         "width": 1180,
         "height": 760,
         "minWidth": 320,
@@ -27,7 +27,7 @@
       {
         "label": "panel",
         "title": "WORK-LAB Observer · 悬浮面板",
-        "url": "index.html?view=compact&mode=LIVE&theme=dark",
+        "url": "index.html?view=compact&mode=UNKNOWN&theme=dark",
         "width": 440,
         "height": 780,
         "minWidth": 440,
