@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-08-11T10:06:26.225641Z",
+  "generated_at": "2026-08-11T11:52:31Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 42,
+    "total": 44,
     "by_classification": {
-      "entrypoint": 4,
-      "contract_drift": 20,
+      "entrypoint": 5,
+      "contract_drift": 21,
       "test_behavior_alignment": 4,
       "working_directory_recovery": 2,
       "evidence_state": 5,
@@ -776,6 +776,42 @@
       "evidence_level": "historical",
       "repeat_prevention": "Any PR touching tracked code must regenerate CURRENT_STATE before pushing; freshness check is part of integration gate.",
       "remaining_boundary": "None.",
+      "status_before": "FAIL",
+      "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-043",
+      "task_id": "GLOBAL-GOV",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "entrypoint",
+      "entrypoint": "10-workflow/workflow-assistance/bin/codex",
+      "command": "python scripts/workflow/sync_hermes_workflow_assets.py --apply --approved",
+      "exit_code": 126,
+      "observed_error": "Codex CLI launcher exited 126 (Permission denied) executing the WindowsApps OpenAI.Codex copy at app/resources/codex.exe after the Store package updated; the plugin copy hash no longer matched the Store copy, and the pinned non-versioned OpenAI/Codex/bin/codex.exe candidate did not exist.",
+      "root_cause": "bin/codex pinned a non-versioned OpenAI/Codex/bin/codex.exe candidate that does not exist (official CLI installs live under versioned subdirectories), and on Store/plugin hash mismatch it still queued the WindowsApps copy whose ACLs block Git Bash exec, aborting the whole wrapper.",
+      "fix": "bin/codex now globs OpenAI/Codex/bin/*/codex.exe (user-writable, bypasses WindowsApps ACLs) ahead of the Store/plugin pair, uses the plugin copy only on exact hash match, and exec failures (126) fall through to the next candidate instead of aborting.",
+      "regression_test": "bash -n bin/codex && ./bin/codex --version && ./bin/codex exec --ephemeral 'Reply exactly: WRAPPER_FIX_SMOKE'",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "The launcher must keep multiple resolvable candidate paths and must never abort on a single exec ACL failure; every wrapper change must re-run the regression_test.",
+      "remaining_boundary": "Store package updates can still change the plugin hash; the versioned install covers the real CLI.",
+      "status_before": "FAIL",
+      "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-044",
+      "task_id": "WL3-420",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "contract_drift",
+      "entrypoint": "30-observer/work-lab-observer/scripts/observer_dashboard.py",
+      "command": "PYTHONPATH='src;scripts;../../10-workflow/workflow-assistance/scripts/workflow' python tests/test_observer_dashboard_render.py",
+      "exit_code": 1,
+      "observed_error": "Observer dashboard rendered canonical freshness mode vocabulary (LIVE/STALE/SNAPSHOT) as raw text with the default gray tone because _quality_tone/_quality_cn only knew legacy dataQuality words (source-exact/partial/deduplicated); LIVE mode did not surface as fresh/green.",
+      "root_cause": "The canonical projection emits mode vocabulary while the dashboard renderer expects the frontend freshness vocabulary (fresh/stale/offline); the two vocabularies drifted apart after the canonical-schema dashboard rewrite.",
+      "fix": "Added _freshness_state() mapping LIVE->fresh, STALE/SNAPSHOT->stale, OFFLINE->offline, UNKNOWN->unknown; extended _quality_tone/_quality_cn with fresh/stale/offline labels and colors; _render_full/_render_compact now render through the mapping.",
+      "regression_test": "PYTHONPATH='src;scripts;../../10-workflow/workflow-assistance/scripts/workflow' python tests/test_observer_dashboard_render.py",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Every dashboard vocabulary mapping must be covered by a render regression test, and canonical mode words must never leak into the dashboard HTML.",
+      "remaining_boundary": "Observer is read-only; projection vocabulary is a rendering concern, the canonical mode enum is unchanged.",
       "status_before": "FAIL",
       "status_after": "PASS"
     }

@@ -131,12 +131,41 @@ def _json_for_script(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True).replace("<", "\\u003c")
 
 
+def _freshness_state(freshness: str) -> str:
+    """Map canonical mode vocabulary (LIVE/STALE/SNAPSHOT/...) onto the
+    dashboard freshness vocabulary (fresh/stale/offline/unknown) so the
+    server-rendered views and the SSE fixture agree."""
+    return {
+        "LIVE": "fresh",
+        "STALE": "stale",
+        "SNAPSHOT": "stale",
+        "FIXTURE": "stale",
+        "OFFLINE": "offline",
+        "UNKNOWN": "unknown",
+    }.get(str(freshness).upper(), str(freshness).lower())
+
+
 def _quality_tone(quality: str) -> str:
-    return {"source-exact": "#10b981", "partial": "#f5b544", "unknown": "#8a8f98"}.get(quality, "#8a8f98")
+    return {
+        "source-exact": "#10b981",
+        "fresh": "#10b981",
+        "partial": "#f5b544",
+        "stale": "#f5b544",
+        "offline": "#8a8f98",
+        "unknown": "#8a8f98",
+    }.get(quality, "#8a8f98")
 
 
 def _quality_cn(quality: str) -> str:
-    return {"source-exact": "来源精确", "partial": "部分", "deduplicated": "去重", "unknown": "未知"}.get(quality, quality)
+    return {
+        "source-exact": "来源精确",
+        "fresh": "实时",
+        "partial": "部分",
+        "stale": "滞后",
+        "deduplicated": "去重",
+        "offline": "离线",
+        "unknown": "未知",
+    }.get(quality, quality)
 
 
 def _coverage_pill(coverage: str) -> str:
@@ -279,10 +308,10 @@ def _render_full(projection: dict[str, Any]) -> str:
     tasks = summary.get("tasks", {})
     task_count = sum(tasks.values()) if isinstance(tasks, dict) else 0
     event_count = int(quality.get("telemetryEvents") or 0)
-    q = str(quality.get("freshness", "unknown"))
+    q = _freshness_state(str(quality.get("freshness", "unknown")))
     coverage = "full" if quality.get("integrity") == "ok" else "partial"
     quality_tone = _quality_tone(q)
-    last_good = str(quality.get("freshness", "unknown"))
+    last_good = q
 
     project_rows = ""
     if projects:
@@ -380,10 +409,10 @@ def _render_compact(projection: dict[str, Any]) -> str:
     projects = projection.get("projects", [])
     task_count = len(projects)
     event_count = int(quality.get("telemetryEvents") or 0)
-    q = str(quality.get("freshness", "unknown"))
+    q = _freshness_state(str(quality.get("freshness", "unknown")))
     q_cn = _quality_cn(q)
     quality_tone = _quality_tone(q)
-    last_good = str(quality.get("freshness", "unknown"))
+    last_good = q
     total_tokens = usage.get("totalTokens")
 
     project_rows = ""
