@@ -86,6 +86,46 @@ class DashboardCanonicalRenderTests(unittest.TestCase):
         self.assertEqual(_dashboard_project_state("BLOCKED"), "blocked")
         self.assertEqual(_dashboard_project_state("bogus"), "unknown")
 
+    def test_freshness_mode_vocabulary_maps_to_dashboard_vocabulary(self) -> None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "observer_dashboard", OBS / "scripts" / "observer_dashboard.py"
+        )
+        mod = importlib.util.module_from_spec(spec)
+        with patch("sys.argv", ["observer_dashboard.py"]):
+            spec.loader.exec_module(mod)
+        self.assertEqual(mod._freshness_state("LIVE"), "fresh")
+        self.assertEqual(mod._freshness_state("STALE"), "stale")
+        self.assertEqual(mod._freshness_state("SNAPSHOT"), "stale")
+        self.assertEqual(mod._freshness_state("OFFLINE"), "offline")
+        self.assertEqual(mod._freshness_state("UNKNOWN"), "unknown")
+        self.assertEqual(mod._quality_cn("fresh"), "实时")
+        self.assertEqual(mod._quality_cn("stale"), "滞后")
+        self.assertEqual(mod._quality_cn("offline"), "离线")
+        self.assertEqual(mod._quality_tone("fresh"), "#10b981")
+        self.assertEqual(mod._quality_tone("stale"), "#f5b544")
+
+    def test_full_render_maps_live_freshness_to_fresh(self) -> None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "observer_dashboard", OBS / "scripts" / "observer_dashboard.py"
+        )
+        mod = importlib.util.module_from_spec(spec)
+        with patch("sys.argv", ["observer_dashboard.py"]):
+            spec.loader.exec_module(mod)
+        projection = {
+            "summary": {"tasks": {}},
+            "quality": {"freshness": "LIVE", "integrity": "ok", "telemetryEvents": 0},
+            "usage": {},
+            "ci": {},
+            "projects": [],
+        }
+        html = mod._render_full(projection)
+        self.assertIn("实时", html)
+        self.assertNotIn("STALE", html)
+
 
 if __name__ == "__main__":
     unittest.main()
