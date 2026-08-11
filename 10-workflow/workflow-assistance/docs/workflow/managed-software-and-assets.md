@@ -11,8 +11,8 @@
 | **Codex** | 主动客户端（执行面） | deep | 全局 guidance overlay、rules、11 个 user skills、3 个受管 config 字段 | USER_OVERLAY / MANAGE |
 | **CC Switch** | provider 路由客户端 | deep | 只读观察 provider catalog/routing；codex.skill_sync 等平台内部同步 IGNORE | USER_OVERLAY / OBSERVE |
 | **GitHub** | 交付通道 | deep | 6 个 Hermes github skills、Codex github-delivery skill、CI（work-lab-gate）、gh 认证 | USER_OVERLAY / OBSERVE |
-| **OpenHuman** | 本地 AI 桌面代理（观察源） | experimental | openhuman-integration skill（私有边界 + junction 验证阶梯）；workspace_metadata OBSERVE、runtime_memory IGNORE | PLATFORM_INTERNAL / OBSERVE |
-| **Open Design** | 已迁出独立库（只读观察） | experimental | open-design-integration skill（迁移边界 + 主张验证）；read_only_mcp OBSERVE | PROJECT_OVERLAY / OBSERVE |
+| **OpenHuman** | 本地 AI 桌面代理（观察源） | experimental | 全局配置/注册归 WORK-LAB MANAGE；openhuman-integration skill（私有边界 + junction 验证阶梯）；workspace_metadata OBSERVE、runtime_memory IGNORE | PLATFORM_INTERNAL / OBSERVE |
+| **Open Design** | 已迁出独立库（只读观察） | experimental | 全局配置/迁移指针/注册归 WORK-LAB MANAGE；open-design-integration skill（迁移边界 + 主张验证）；内部设计资料不动；read_only_mcp OBSERVE | PROJECT_OVERLAY / OBSERVE |
 | **Cursor** | 未来客户端（未接入） | manifest-only | 仅清单登记，无写入 | USER_OVERLAY / OBSERVE |
 | **Claude Code** | 未来客户端（未接入） | manifest-only | 仅清单登记，无写入 | USER_OVERLAY / OBSERVE |
 | **WorkBuddy** | 未来客户端（未接入） | manifest-only | 仅清单登记，无写入 | USER_OVERLAY / OBSERVE |
@@ -80,7 +80,8 @@ PLATFORM_INTERNAL（desktop 状态/openhuman 元数据/cc-switch 平台同步）
 - 不读取、复制、哈希或归档任何凭据/密钥/正文；
 - 不跨客户端同步 prompt/skill/session/memory（`cross_client_prompt_skill_session_sync_forbidden`）；
 - `E:\` 全盘保护；`~/.codex/memories/**`、`~/.openhuman/**` 私有运行时禁读；
-- 用户 provider/model/认证/Desktop 状态属于用户，增强模块只观察不接管。
+- 用户 provider/model/认证/Desktop 状态属于用户，增强模块只观察不接管；
+- **Open Design / OpenHuman 分层**：两者的全局配置（注册、迁移指针、目录映射、MCP 声明）归 WORK-LAB 增强模块 MANAGE；被切割的 Open Design 内部设计资料与两个平台的私有运行时（`~/.openhuman/**`、Open Design 远端库内容）一律不读不动。
 
 ## 4. 变更与同步流程
 
