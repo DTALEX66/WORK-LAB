@@ -128,6 +128,7 @@ jobs:
           python tests/test_usage_rollup.py
           python tests/test_observer_canonical.py
           python tests/test_observer_events_migration.py
+          python tests/test_observer_dashboard_render.py
       - name: Verify Observer Web and desktop contracts
         run: |
           node tests/run_all_tests.js

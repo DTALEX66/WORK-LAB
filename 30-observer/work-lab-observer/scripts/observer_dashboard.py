@@ -271,35 +271,38 @@ def _nav(theme: str, view: str) -> str:
 
 
 def _render_full(projection: dict[str, Any]) -> str:
-    overview = projection.get("overview", {})
+    summary = projection.get("summary", {})
     quality = projection.get("quality", {})
-    data_quality = projection.get("dataQuality", {})
     usage = projection.get("usage", {})
-    cost = projection.get("cost", {})
-    tasks = projection.get("tasks", [])
-    task_count = overview.get("taskCount", 0)
-    event_count = overview.get("eventCount", 0)
-    q = str(quality.get("quality", "unknown"))
-    coverage = str(overview.get("coverage", "unknown"))
+    ci = projection.get("ci", {})
+    projects = projection.get("projects", [])
+    tasks = summary.get("tasks", {})
+    task_count = sum(tasks.values()) if isinstance(tasks, dict) else 0
+    event_count = int(quality.get("telemetryEvents") or 0)
+    q = str(quality.get("freshness", "unknown"))
+    coverage = "full" if quality.get("integrity") == "ok" else "partial"
     quality_tone = _quality_tone(q)
-    last_good = str(data_quality.get("lastGood", "unknown"))
-    cost_status = str(cost.get("cost_status", "unknown"))
-    estimated_cost = cost.get("estimated_cost")
+    last_good = str(quality.get("freshness", "unknown"))
 
-    task_rows = ""
-    if tasks:
-        for t in tasks:
-            task_rows += (
+    project_rows = ""
+    if projects:
+        for p in projects:
+            state = str(p.get("state") or p.get("status") or "unknown")
+            project_rows += (
                 "<tr>"
-                f'<td>{html.escape(str(t.get("taskTitle", "工作项")))}</td>'
-                f'<td class="num">{html.escape(str(t.get("events", 0)))}</td>'
-                f'<td>{html.escape(str(t.get("lastEventType", "unknown")))}</td>'
-                f'<td><span style="color:{_quality_tone(str(t.get("quality", "unknown")))}">●</span> {html.escape(_quality_cn(str(t.get("quality", "unknown"))))}</td>'
-                f'<td class="mono muted">{html.escape(str(t.get("observedAt", "unknown")))}</td>'
+                f'<td>{html.escape(str(p.get("displayName") or p.get("projectId")))}</td>'
+                f'<td><span class="pill {_state_pill(state)}">{html.escape(state)}</span></td>'
+                f'<td class="mono muted">{html.escape(str(p.get("projectId")))}</td>'
                 "</tr>"
             )
     else:
-        task_rows = '<tr><td colspan="5" class="empty">暂无观测事件 · 等待 Workflow Assistance evidence envelope</td></tr>'
+        project_rows = '<tr><td colspan="3" class="empty">暂无已注册项目 · 等待 workspace discovery</td></tr>'
+
+    usage_rows = ""
+    input_tokens = usage.get("inputTokens")
+    output_tokens = usage.get("outputTokens")
+    total_tokens = usage.get("totalTokens")
+    series_count = len(usage.get("series") or [])
 
     return f"""
 <header class="hero">
@@ -321,64 +324,80 @@ def _render_full(projection: dict[str, Any]) -> str:
 
 <div class="panels">
   <section class="panel">
-    <div class="panel-head"><span class="panel-title">任务投影<span class="mono">由事件重建</span></span></div>
+    <div class="panel-head"><span class="panel-title">项目投影<span class="mono">canonical</span></span></div>
     <div class="panel-body">
-      <table><thead><tr><th>任务</th><th>事件</th><th>最近事件</th><th>质量</th><th>观测时间</th></tr></thead>
-      <tbody>{task_rows}</tbody></table>
+      <table><thead><tr><th>项目</th><th>状态</th><th>ID</th></tr></thead>
+      <tbody>{project_rows}</tbody></table>
     </div>
   </section>
   <section class="panel">
     <div class="panel-head"><span class="panel-title">用量与成本<span class="mono">离线估算</span></span></div>
     <div class="panel-body">
-      <div class="stat-row"><span class="stat-k">输入 Token</span><span class="stat-v">{html.escape(str(usage.get("input_tokens", 0)))}</span></div>
-      <div class="stat-row"><span class="stat-k">输出 Token</span><span class="stat-v">{html.escape(str(usage.get("output_tokens", 0)))}</span></div>
-      <div class="stat-row"><span class="stat-k">总 Token</span><span class="stat-v">{html.escape(str(usage.get("total_tokens", 0)))}</span></div>
-      <div class="stat-row"><span class="stat-k">记录数</span><span class="stat-v">{html.escape(str(usage.get("records", 0)))}</span></div>
-      <div class="stat-row"><span class="stat-k">成本状态</span><span class="stat-v">{html.escape(cost_status)}</span></div>
-      <div class="stat-row"><span class="stat-k">估算成本</span><span class="stat-v">{html.escape(str(estimated_cost if estimated_cost is not None else "—"))}</span></div>
+      <table><thead><tr><th>指标</th><th>值</th></tr></thead>
+      <tbody>
+        <tr><td>输入 Token</td><td class="num">{html.escape(str(input_tokens if input_tokens is not None else 0))}</td></tr>
+        <tr><td>输出 Token</td><td class="num">{html.escape(str(output_tokens if output_tokens is not None else 0))}</td></tr>
+        <tr><td>总 Token</td><td class="num">{html.escape(str(total_tokens if total_tokens is not None else 0))}</td></tr>
+        <tr><td>趋势点</td><td class="num">{html.escape(str(series_count))}</td></tr>
+      </tbody></table>
     </div>
   </section>
 </div>
 
-<div class="band">
-  <div class="band-inner">
-    <h3>数据质量</h3>
-    <div class="band-grid">
-      <div class="band-item"><div class="band-k">部分事件</div><div class="band-v">{html.escape(str(data_quality.get("partialEvents", 0)))}</div></div>
-      <div class="band-item"><div class="band-k">未知事件</div><div class="band-v">{html.escape(str(data_quality.get("unknownEvents", 0)))}</div></div>
-      <div class="band-item"><div class="band-k">最近来源精确</div><div class="band-v" style="font-size:17px;line-height:1.6;margin-top:4px">{html.escape(last_good)}</div></div>
+<div class="band-grid">
+  <section class="band">
+    <div class="band-head"><span class="band-title">数据质量</span></div>
+    <div class="band-body">
+      <span class="pill {_quality_pill(quality.get('integrity', 'unknown'))}">完整性 {html.escape(str(quality.get("integrity", "unknown")))}</span>
+      <span class="pill">事件 {html.escape(str(event_count))}</span>
     </div>
-    <p class="band-note">该入口仅提供 GET 页面与 GET JSON 投影；不执行任务、不批准动作、不写回 Ledger。外部系统与权威状态一律只读。</p>
-  </div>
+  </section>
+  <section class="band">
+    <div class="band-head"><span class="band-title">CI</span></div>
+    <div class="band-body">
+      {''.join(
+        f'<span class="pill pill-ok">{html.escape(str(r.get("status")))} · {html.escape(str(r.get("conclusion")))} · {html.escape(str(r.get("runs")))} 次</span>'
+        for r in (ci.get("runs") or [])
+      ) or '<span class="pill pill-muted">暂无 CI 记录</span>'}
+    </div>
+  </section>
 </div>
 """
 
 
+def _state_pill(state: str) -> str:
+    return {"running": "pill-ok", "blocked": "pill-warn", "failed": "pill-warn", "waiting": "pill-warn"}.get(state, "pill-muted")
+
+
+def _quality_pill(value: str) -> str:
+    return "pill-ok" if value == "ok" else "pill-warn"
+
+
 def _render_compact(projection: dict[str, Any]) -> str:
-    overview = projection.get("overview", {})
+    summary = projection.get("summary", {})
     quality = projection.get("quality", {})
     usage = projection.get("usage", {})
-    cost = projection.get("cost", {})
-    tasks = projection.get("tasks", [])
-    task_count = overview.get("taskCount", 0)
-    event_count = overview.get("eventCount", 0)
-    q = str(quality.get("quality", "unknown"))
+    projects = projection.get("projects", [])
+    task_count = len(projects)
+    event_count = int(quality.get("telemetryEvents") or 0)
+    q = str(quality.get("freshness", "unknown"))
     q_cn = _quality_cn(q)
     quality_tone = _quality_tone(q)
-    last_good = str(overview.get("lastObservedAt", "unknown"))
+    last_good = str(quality.get("freshness", "unknown"))
+    total_tokens = usage.get("totalTokens")
 
-    task_rows = ""
-    if tasks:
-        for t in tasks[:6]:
-            task_rows += (
+    project_rows = ""
+    if projects:
+        for p in projects[:6]:
+            state = str(p.get("state") or p.get("status") or "unknown")
+            project_rows += (
                 "<tr>"
-                f'<td>{html.escape(str(t.get("taskTitle", "工作项")))}</td>'
-                f'<td class="num">{html.escape(str(t.get("events", 0)))}</td>'
-                f'<td><span style="color:{_quality_tone(str(t.get("quality", "unknown")))}">●</span> {html.escape(_quality_cn(str(t.get("quality", "unknown"))))}</td>'
+                f'<td>{html.escape(str(p.get("displayName") or p.get("projectId")))}</td>'
+                f'<td><span class="pill {_state_pill(state)}">{html.escape(state)}</span></td>'
                 "</tr>"
             )
     else:
-        task_rows = '<tr><td colspan="3" class="empty">暂无观测事件</td></tr>'
+        project_rows = '<tr><td colspan="2" class="empty">暂无已注册项目</td></tr>'
 
     return f"""
 <header class="hero">
@@ -391,23 +410,23 @@ def _render_compact(projection: dict[str, Any]) -> str:
   <div class="metric"><div class="m-label">项目</div><div class="m-value">{html.escape(str(task_count))}</div><div class="m-sub">已登记投影</div></div>
   <div class="metric"><div class="m-label">事件</div><div class="m-value">{html.escape(str(event_count))}</div><div class="m-sub">已接收</div></div>
   <div class="metric"><div class="m-label">质量</div><div class="m-value" style="color:{quality_tone}">{html.escape(q_cn)}</div><div class="m-sub">整体质量</div></div>
-  <div class="metric"><div class="m-label">Token</div><div class="m-value">{html.escape(str(usage.get("total_tokens", 0)))}</div><div class="m-sub">总用量</div></div>
+  <div class="metric"><div class="m-label">Token</div><div class="m-value">{html.escape(str(total_tokens if total_tokens is not None else 0))}</div><div class="m-sub">总用量</div></div>
 </div>
 
 <div class="panels">
   <section class="panel">
-    <div class="panel-head"><span class="panel-title">任务投影<span class="mono">Top</span></span></div>
+    <div class="panel-head"><span class="panel-title">项目投影<span class="mono">canonical</span></span></div>
     <div class="panel-body">
-      <table><thead><tr><th>任务</th><th>事件</th><th>质量</th></tr></thead>
-      <tbody>{task_rows}</tbody></table>
+      <table><thead><tr><th>项目</th><th>状态</th></tr></thead>
+      <tbody>{project_rows}</tbody></table>
     </div>
   </section>
   <section class="panel">
     <div class="panel-head"><span class="panel-title">用量<span class="mono">离线</span></span></div>
     <div class="panel-body">
-      <div class="stat-row"><span class="stat-k">输入</span><span class="stat-v">{html.escape(str(usage.get("input_tokens", 0)))}</span></div>
-      <div class="stat-row"><span class="stat-k">输出</span><span class="stat-v">{html.escape(str(usage.get("output_tokens", 0)))}</span></div>
-      <div class="stat-row"><span class="stat-k">成本状态</span><span class="stat-v">{html.escape(str(cost.get("cost_status", "unknown")))}</span></div>
+      <div class="stat-row"><span class="stat-k">输入</span><span class="stat-v">{html.escape(str(usage.get("inputTokens") or 0))}</span></div>
+      <div class="stat-row"><span class="stat-k">输出</span><span class="stat-v">{html.escape(str(usage.get("outputTokens") or 0))}</span></div>
+      <div class="stat-row"><span class="stat-k">总 Token</span><span class="stat-v">{html.escape(str(total_tokens if total_tokens is not None else 0))}</span></div>
       <div class="stat-row"><span class="stat-k">最近观测</span><span class="stat-v mono muted">{html.escape(last_good)}</span></div>
     </div>
   </section>
