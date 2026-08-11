@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-08-11T11:52:31Z",
+  "generated_at": "2026-08-11T12:41:06Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,15 +9,17 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 44,
+    "total": 46,
     "by_classification": {
-      "entrypoint": 5,
-      "contract_drift": 21,
-      "test_behavior_alignment": 4,
-      "working_directory_recovery": 2,
-      "evidence_state": 5,
       "ci_configuration": 4,
-      "feature_gap": 3
+      "config_downgrade": 1,
+      "contract_drift": 21,
+      "dead_entry": 1,
+      "entrypoint": 5,
+      "evidence_state": 5,
+      "feature_gap": 3,
+      "test_behavior_alignment": 4,
+      "working_directory_recovery": 2
     },
     "repeat_prevention_required": true,
     "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036 local repairs; ERR-037..ERR-042 workspace discovery, dashboard contract drift, tauri toolchain, CI freshness"
@@ -812,6 +814,42 @@
       "evidence_level": "local-focused",
       "repeat_prevention": "Every dashboard vocabulary mapping must be covered by a render regression test, and canonical mode words must never leak into the dashboard HTML.",
       "remaining_boundary": "Observer is read-only; projection vocabulary is a rendering concern, the canonical mode enum is unchanged.",
+      "status_before": "FAIL",
+      "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-045",
+      "task_id": "GLOBAL-AUDIT-20260811",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "config_downgrade",
+      "entrypoint": "C:/Users/ALEX/AppData/Local/hermes/config.yaml",
+      "command": "hermes config set agent.reasoning_effort medium && grep -n reasoning_effort config.yaml; verify live value equals official default medium",
+      "exit_code": 1,
+      "observed_error": "Hermes agent.reasoning_effort was 'low', below the official default (empty = medium), degrading reasoning quality across all main-agent turns.",
+      "root_cause": "Session-level /model switches did not restore the global reasoning effort; low remained configured.",
+      "fix": "Set agent.reasoning_effort=medium (official default); verified live config now reads medium.",
+      "regression_test": "grep -n reasoning_effort C:/Users/ALEX/AppData/Local/hermes/config.yaml",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Five-dimension runtime baseline (AGENTS.md) requires reasoning_effort at official default or higher; every audit must grep it.",
+      "remaining_boundary": "User may intentionally choose a lower effort per session via /reasoning; global default stays official.",
+      "status_before": "FAIL",
+      "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-046",
+      "task_id": "GLOBAL-AUDIT-20260811",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "dead_entry",
+      "entrypoint": "10-workflow/workflow-assistance/bin/codex.cmd",
+      "command": "powershell -Command \"& 'C:/Users/ALEX/AppData/Local/hermes/bin/codex.cmd' --version\"; verify codex-cli version output and wrapper resolution",
+      "exit_code": 1,
+      "observed_error": "codex.cmd kept a fixed candidate path (OpenAI/Codex/bin/codex.exe) that no longer exists after Codex moved to versioned directories (bin/<commit>/codex.exe); the cmd entry could silently miss and fall through.",
+      "root_cause": "cmd wrapper was not updated alongside the bash wrapper's versioned-glob fix.",
+      "fix": "codex.cmd now globs OpenAI/Codex/bin/*/codex.exe (newest first), matching the bash wrapper; verified --version returns codex-cli 0.147.0-alpha.6.5.",
+      "regression_test": "powershell -Command \"& '.../codex.cmd' --version\"",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Five-dimension baseline requires bash and cmd wrappers resolve identically; both must glob versioned bin directories.",
+      "remaining_boundary": "Store-package ownership unchanged; wrapper never pins or reads credentials.",
       "status_before": "FAIL",
       "status_after": "PASS"
     }
