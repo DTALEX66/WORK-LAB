@@ -20,7 +20,12 @@
     "cc-switch": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
     "github": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
     "openhuman": {"layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "preserve_unknown": true},
-    "open-design": {"layer": "PROJECT_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true}
+    "open-design": {
+      "layer": "PROJECT_OVERLAY",
+      "mode": "OBSERVE",
+      "preserve_unknown": true,
+      "scope_note": "WORK-LAB does NOT manage Open Design global configuration. It manages only design-relevant configuration and any capability that improves design output (design systems, visual packs, methods, quality gates, handoff). Everything else under Open Design is OBSERVE-only; its global app/config state stays untouched."
+    }
   },
   "fields": [
     {"path": "display.language", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "hermes"},
@@ -58,6 +63,8 @@
     {"path": "openhuman.workspace_metadata", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "openhuman"},
     {"path": "openhuman.runtime_memory", "layer": "RUNTIME_EPHEMERAL", "mode": "IGNORE", "adapter": "openhuman"},
     {"path": "open-design.read_only_mcp", "layer": "PROJECT_OVERLAY", "mode": "OBSERVE", "adapter": "open-design"},
+    {"path": "open-design.design_config", "layer": "PROJECT_OVERLAY", "mode": "MANAGE", "adapter": "open-design", "scope": "design-relevant config only: design systems, visual packs, methods, quality gates, handoff contracts. NOT Open Design global app/config state."},
+    {"path": "open-design.global_config", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "open-design", "scope": "NEVER managed. Open Design global app/config state is observed read-only (version, digest) and never written."},
     {"path": "desktop.internal_state", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "codex"},
     {"path": "desktop.global_state_digest", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "codex"},
     {"path": "task.lease", "layer": "TASK_EPHEMERAL", "mode": "OBSERVE", "adapter": "workflow"},

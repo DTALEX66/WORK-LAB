@@ -19,6 +19,17 @@ Open Design was transferred to `DTALEX66/OPEN-DESIGN-Assistance` on the
 authorized migration branch. WORK-LAB retains only the one-time pointer under
 `90-archive-manifests/`; it no longer owns or executes that module.
 
+### Open Design configuration boundary
+
+WORK-LAB **does not manage Open Design global configuration**. It manages only
+**design-relevant configuration and any capability that improves design output**
+— design systems, visual packs, professional design methods, quality gates,
+visual-quality scoring and editable handoff contracts. Everything else under
+Open Design (its global app/config state, versions, install, daemon, model
+routing) is `OBSERVE`-only and never written. See
+`10-workflow/workflow-assistance/config/config-ownership.json` (adapter
+`open-design`, scope fields) for the field-level ownership contract.
+
 The root owns governance and integration. It does not duplicate module implementations.
 
 ## Explicit non-positioning
