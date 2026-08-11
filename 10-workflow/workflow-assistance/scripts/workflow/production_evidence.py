@@ -10,8 +10,8 @@ Local, dependency-free implementations:
 - Consistency/regression scoring that stays `WAITING_HUMAN_CALIBRATION` until a
   human calibrates (automatic score is never treated as authoritative quality).
 
-At least two fixtures close the loop: a brand/exhibition layout and a MINIGAME
-HUD/visual (the latter validates Open Design visual only, not game runtime).
+At least two fixtures close the loop: a brand layout and an exhibition
+layout (both WORK-LAB owned assets; no transferred module fixtures).
 """
 from __future__ import annotations
 
@@ -100,10 +100,10 @@ def spdx_manifest(entries: list[SpdxEntry]) -> dict[str, Any]:
 
 @dataclass
 class VisualFixture:
-    """A design fixture (brand/exhibition layout or MINIGAME HUD)."""
+    """A design fixture (WORK-LAB owned brand/exhibition layout)."""
 
     id: str
-    category: str  # brand | exhibition | minigame-hud
+    category: str  # brand | exhibition
     checks_passed: int = 0
     checks_total: int = 0
     human_calibrated: bool = False
@@ -134,11 +134,10 @@ def evaluate_fixture(fixture: VisualFixture, *, auto_score: float | None = None)
 
 
 def run_fixture_closures() -> list[FixtureResult]:
-    """Close the two required fixture loops."""
+    """Close the two WORK-LAB owned fixture loops."""
     fixtures = [
         VisualFixture("brand-layout", "brand", checks_passed=8, checks_total=8, human_calibrated=False),
         VisualFixture("exhibition-layout", "exhibition", checks_passed=10, checks_total=10, human_calibrated=False),
-        VisualFixture("minigame-hud", "minigame-hud", checks_passed=6, checks_total=6, human_calibrated=False),
     ]
     results = []
     for fx in fixtures:
