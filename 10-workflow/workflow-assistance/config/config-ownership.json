@@ -1,7 +1,7 @@
 {
   "schema_version": "workflow/config-ownership/v2",
   "single_authority": true,
-  "note": "WL3-200: single source replacing config-ownership v1, managed-config-schema.yaml field lists, and hard-coded sync-script managed config. Unknown fields default to OBSERVE/QUARANTINE; never silently deleted.",
+  "note": "WL3-200: single source replacing config-ownership v1, managed-config-schema.yaml field lists, and hard-coded sync-script managed config. Unknown fields default to OBSERVE/QUARANTINE; never silently deleted. Managed surface as of 2026-08-11: active clients hermes/codex/cc-switch/github (deep), observe-only platforms openhuman/open-design (skills + OBSERVE declarations), manifest-only future clients cursor/claude-code/workbuddy, and the workflow adapter itself.",
   "layers": {
     "UPSTREAM_OFFICIAL": {"mode": "OBSERVE", "behavior": "read-only version/capability/schema/digest; never copy install tree"},
     "USER_OVERLAY": {"mode": "MANAGE", "behavior": "user Rules, 13 Skills, plugin declarations, boundaries, explicit preferences; diff/rebase/rollback"},
@@ -20,12 +20,11 @@
     "cc-switch": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
     "github": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
     "openhuman": {"layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "preserve_unknown": true},
-    "open-design": {
-      "layer": "PROJECT_OVERLAY",
-      "mode": "OBSERVE",
-      "preserve_unknown": true,
-      "scope_note": "WORK-LAB does NOT manage Open Design global configuration. It manages only design-relevant configuration and any capability that improves design output (design systems, visual packs, methods, quality gates, handoff). Everything else under Open Design is OBSERVE-only; its global app/config state stays untouched."
-    }
+    "open-design": {"layer": "PROJECT_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
+    "workflow": {"layer": "USER_OVERLAY", "mode": "MANAGE", "preserve_unknown": true},
+    "cursor": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
+    "claude-code": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
+    "workbuddy": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true}
   },
   "fields": [
     {"path": "display.language", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "hermes"},
@@ -61,10 +60,11 @@
     {"path": "codex.local_memories", "layer": "RUNTIME_EPHEMERAL", "mode": "IGNORE", "adapter": "codex"},
     {"path": "memory.growth_policy", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "workflow"},
     {"path": "openhuman.workspace_metadata", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "openhuman"},
+    {"path": "openhuman.global_configuration", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "openhuman"},
     {"path": "openhuman.runtime_memory", "layer": "RUNTIME_EPHEMERAL", "mode": "IGNORE", "adapter": "openhuman"},
     {"path": "open-design.read_only_mcp", "layer": "PROJECT_OVERLAY", "mode": "OBSERVE", "adapter": "open-design"},
-    {"path": "open-design.design_config", "layer": "PROJECT_OVERLAY", "mode": "MANAGE", "adapter": "open-design", "scope": "design-relevant config only: design systems, visual packs, methods, quality gates, handoff contracts. NOT Open Design global app/config state."},
-    {"path": "open-design.global_config", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "open-design", "scope": "NEVER managed. Open Design global app/config state is observed read-only (version, digest) and never written."},
+    {"path": "open-design.global_configuration", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "open-design"},
+    {"path": "open-design.design_capability", "layer": "PROJECT_OVERLAY", "mode": "IGNORE", "adapter": "open-design"},
     {"path": "desktop.internal_state", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "codex"},
     {"path": "desktop.global_state_digest", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "codex"},
     {"path": "task.lease", "layer": "TASK_EPHEMERAL", "mode": "OBSERVE", "adapter": "workflow"},
@@ -88,6 +88,7 @@
     "cosmetic_managed_only_on_opt_in": true,
     "cc_switch_owns_supported_client_provider_routing_only": true,
     "cross_client_prompt_skill_session_sync_forbidden": true,
-    "raw_memory_never_crosses_client_boundary": true
+    "raw_memory_never_crosses_client_boundary": true,
+    "open_design_capability_owned_by_open_design_project": true
   }
 }
