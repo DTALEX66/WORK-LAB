@@ -39,7 +39,8 @@
         "properties": {
           "layer": {"type": "string", "minLength": 1},
           "mode": {"enum": ["MANAGE", "OBSERVE", "IGNORE", "FORBIDDEN"]},
-          "preserve_unknown": {"const": true}
+          "preserve_unknown": {"const": true},
+          "scope_note": {"type": "string", "minLength": 1}
         }
       }
     },
@@ -54,7 +55,8 @@
           "path": {"type": "string", "minLength": 1},
           "layer": {"type": "string", "minLength": 1},
           "mode": {"enum": ["MANAGE", "OBSERVE", "IGNORE", "FORBIDDEN"]},
-          "adapter": {"type": "string", "minLength": 1}
+          "adapter": {"type": "string", "minLength": 1},
+          "scope": {"type": "string", "minLength": 1}
         }
       }
     },
