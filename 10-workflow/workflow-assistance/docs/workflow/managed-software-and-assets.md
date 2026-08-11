@@ -100,5 +100,19 @@ Hermes live:     source==live hash 一致（bin + skills）
 CC Switch:       127.0.0.1:15721 运行中 · Codex 经 cc-switch-official 端到端 PASS
 GitHub:          gh 已登录 DTALEX66 · CI 5 jobs 全绿（main 精确 SHA）
 OpenHuman:       skill 已载入 · 跨项目实测可引用
-Open Design:     skill 已载入（PR #55）· 跨项目实测可引用
+Open Design:     skill 已载入 · 跨项目实测可引用
 ```
+
+## 6. 五维运行时基线（审计标准，2026-08-11 起强制）
+
+见 `AGENTS.md`「Five-dimension runtime baseline」。本清单登记各软件快照：
+
+| 维度 | Hermes | Codex | CC Switch | OpenHuman | Open Design |
+|---|---|---|---|---|---|
+| 入口唯一 | 桌面 .lnk→vbs（GUI）+ hermes CLI | bash+cmd 单一 wrapper（版本目录 glob 一致） | 桌面 .lnk→cc-switch.exe | 桌面 .lnk→OpenHuman.exe | 桌面 .lnk→Open Design.exe |
+| 桌面可达 | ✓ wscript 链完整 | CLI 无 GUI（官方形态，入口唯一） | ✓ | ✓ | ✓ |
+| 官方标准+用户配置 | config-ownership MANAGE 受管字段 | overlay 3 字段，用户字段 preserve | OBSERVE，catalog/routing MANAGE | 全局配置 MANAGE/私有 IGNORE | 非设计配置 MANAGE/设计能力 IGNORE |
+| 无阻塞 | 13 skills 按需加载 | skills 68KB 总 · guidance 10.6KB · on-demand | 代理超时宽松（90s/600s） | — | — |
+| 模型满血 | reasoning_effort=medium（官方默认）· max_tokens 8192 | cc-switch-official → 官方 provider · cost_multiplier=1.0 · 无限额 | 官方路由无限速 | — | — |
+
+审计命令：桌面快捷方式 `Test-Path` 全链；wrapper `--version`；`config-ownership.json` 字段层校验；skills 体积 `du -sh`；模型 `reasoning_effort` grep + CC Switch proxy_config 检查。
