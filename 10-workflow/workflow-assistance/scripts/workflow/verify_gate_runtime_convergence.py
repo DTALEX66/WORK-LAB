@@ -8,6 +8,7 @@ evidence (Windows canary, Tauri real SSE, toolchain build) is PENDING.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -128,7 +129,11 @@ def check_6_dual_project_canary() -> dict:
     from canonical_store import CanonicalStore
     from collectors import build_standard_collectors
     from durable_worker import DurableWorker
-    candidate_roots = [Path(r"D:\All projects"), Path("/workspaces"), Path.home() / "projects"]
+    declared_roots = os.environ.get("WORKLAB_CANARY_PROJECT_ROOTS", "")
+    candidate_roots = [Path(item) for item in declared_roots.split(os.pathsep) if item.strip()]
+    if not candidate_roots:
+        return {"id": 6, "name": "dual-project-canary", "pass": False,
+                "evidence": "PENDING: WORKLAB_CANARY_PROJECT_ROOTS capability not declared (§15)"}
     os_projects = []
     for candidate in candidate_roots:
         if not candidate.is_dir():
@@ -141,7 +146,7 @@ def check_6_dual_project_canary() -> dict:
             break
     if not os_projects:
         return {"id": 6, "name": "dual-project-canary", "pass": False,
-                "evidence": "PENDING: no OS-project root on this runner (environment-limited, §15)"}
+                "evidence": "PENDING: declared canary roots contain no eligible OS project (§15)"}
     real = os_projects[0]
     td = tempfile.mkdtemp()
     try:

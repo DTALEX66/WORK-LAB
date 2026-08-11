@@ -42,9 +42,10 @@ class RealAdapter:
         return {
             "status": "CAPABILITIES_READ",
             "adapter_id": self.adapter_id,
-            "operations": list(conformance.OPERATIONS),
-            "apply": "APPROVAL_GATED",
-            "invoke": "NOT_PROVIDED_BY_CONFIGURATION",
+            "operations": ["detect", "capabilities", "plan", "observe"],
+            "unsupported_operations": ["apply", "invoke", "rollback"],
+            "apply": "UNSUPPORTED",
+            "invoke": "UNSUPPORTED",
         }
 
     def config_ownership(self) -> dict[str, Any]:
@@ -79,16 +80,13 @@ class RealAdapter:
         }
 
     def apply(self, plan: dict[str, Any]) -> dict[str, Any]:
-        approval = plan.get("approval", {})
-        if approval.get("required") is not True or approval.get("status") != "APPROVED":
-            raise PermissionError("approval required before apply")
-        return {"status": "APPLIED", "plan_id": plan["plan_id"], "adapter_id": self.adapter_id}
+        return {"status": "UNSUPPORTED", "plan_id": plan["plan_id"], "adapter_id": self.adapter_id, "reason": "apply is not implemented"}
 
     def invoke(self, request: dict[str, Any]) -> dict[str, Any]:
         return {"status": "UNSUPPORTED", "adapter_id": self.adapter_id, "reason": "invoke is not a configuration-layer operation"}
 
     def rollback(self, plan: dict[str, Any]) -> dict[str, Any]:
-        return {"status": "ROLLED_BACK", "plan_id": plan["plan_id"], "adapter_id": self.adapter_id}
+        return {"status": "UNSUPPORTED", "plan_id": plan["plan_id"], "adapter_id": self.adapter_id, "reason": "rollback is not implemented"}
 
     def readback(self, expected: dict[str, Any]) -> dict[str, Any]:
         actual = self.detect({})

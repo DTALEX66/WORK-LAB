@@ -1,16 +1,72 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workflow-assistance.invalid/schemas/config-ownership.schema.json",
-  "title": "Platform-neutral configuration ownership contract",
+  "title": "Platform-neutral configuration ownership contract v2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "official_baseline", "user_overlay", "project_overlay", "excluded_layers", "fields"],
+  "required": ["schema_version", "single_authority", "note", "layers", "operation_modes", "default_unknown", "adapter_defaults", "fields", "rules"],
   "properties": {
-    "schema_version": {"const": "workflow/config-ownership/v1"},
-    "official_baseline": {"type": "object", "required": ["mode", "sources"], "properties": {"mode": {"const": "OBSERVE"}, "sources": {"type": "array", "minItems": 1, "items": {"type": "string"}}}, "additionalProperties": false},
-    "user_overlay": {"type": "object", "required": ["mode", "preserve_unknown"], "properties": {"mode": {"const": "MANAGE"}, "preserve_unknown": {"const": true}}, "additionalProperties": false},
-    "project_overlay": {"type": "object", "required": ["mode", "root"], "properties": {"mode": {"const": "MANAGE"}, "root": {"type": "string"}}, "additionalProperties": false},
-    "excluded_layers": {"type": "array", "minItems": 1, "items": {"enum": ["PLATFORM_INTERNAL", "RUNTIME_EPHEMERAL", "SECRET"]}, "uniqueItems": true},
-    "fields": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["path", "owner", "mode"], "properties": {"path": {"type": "string", "minLength": 1}, "owner": {"enum": ["UPSTREAM_OFFICIAL", "USER_OVERLAY", "PROJECT_OVERLAY", "PLATFORM_INTERNAL", "RUNTIME_EPHEMERAL", "SECRET"]}, "mode": {"enum": ["MANAGE", "OBSERVE", "IGNORE", "FORBIDDEN"]}, "adapter": {"type": "string"}}}}
+    "schema_version": {"const": "workflow/config-ownership/v2"},
+    "single_authority": {"const": true},
+    "note": {"type": "string", "minLength": 1},
+    "layers": {
+      "type": "object",
+      "minProperties": 8,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["mode", "behavior"],
+        "properties": {
+          "mode": {"enum": ["MANAGE", "OBSERVE", "IGNORE", "FORBIDDEN"]},
+          "behavior": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "operation_modes": {"type": "array", "items": {"enum": ["MANAGE", "OBSERVE", "IGNORE", "FORBIDDEN"]}, "uniqueItems": true, "minItems": 4},
+    "default_unknown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "quarantine"],
+      "properties": {"mode": {"const": "OBSERVE"}, "quarantine": {"const": true}}
+    },
+    "adapter_defaults": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["layer", "mode", "preserve_unknown"],
+        "properties": {
+          "layer": {"type": "string", "minLength": 1},
+          "mode": {"enum": ["MANAGE", "OBSERVE", "IGNORE", "FORBIDDEN"]},
+          "preserve_unknown": {"const": true}
+        }
+      }
+    },
+    "fields": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "layer", "mode", "adapter"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "layer": {"type": "string", "minLength": 1},
+          "mode": {"enum": ["MANAGE", "OBSERVE", "IGNORE", "FORBIDDEN"]},
+          "adapter": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "oneOf": [
+          {"type": "boolean"},
+          {"type": "string", "minLength": 1}
+        ]
+      }
+    }
   }
 }

@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Safe Hermes model switcher for the DTALEX66 Hermes workflow.
-
-No secrets are printed. The script only writes Hermes config via official
-`hermes config set` commands and performs prerequisite diagnostics.
-"""
+"""Plan-first Hermes model switcher using only official config operations."""
 from __future__ import annotations
 
 import argparse
@@ -11,7 +7,6 @@ import json
 import os
 import re
 import shutil
-import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -19,6 +14,7 @@ from pathlib import Path
 # Model IDs are intentionally never defaulted here.  The user chooses them
 # explicitly with --model or the matching HERMES_*_MODEL environment variable.
 KIMI_BASE_URL = os.environ.get("HERMES_KIMI_BASE_URL", "https://api.moonshot.cn/v1")
+MISSING = object()
 
 
 def selected_model(override: str | None, env_name: str, target: str) -> str:
@@ -72,14 +68,6 @@ def redact(text: str) -> str:
         text = pat.sub(repl, text)
     return text
 
-def port_open(host: str, port: int, timeout: float = 1.0) -> bool:
-    try:
-        with socket.create_connection((host, port), timeout=timeout):
-            return True
-    except OSError:
-        return False
-
-
 def env_has(name: str) -> bool:
     """Check only the current process environment; never inspect Hermes .env."""
 
@@ -100,17 +88,21 @@ def _get_config_value(key: str) -> object:
 
     cp = run(['hermes', 'config', 'get', '--json', key], timeout=30)
     if cp.returncode != 0:
-        return None
+        return MISSING
     try:
         return json.loads(cp.stdout.strip())
     except json.JSONDecodeError:
-        return None
+        return MISSING
 
 
 def _restore_config(applied: list[tuple[str, object]]) -> list[str]:
     failures: list[str] = []
     for key, previous in reversed(applied):
-        if isinstance(previous, (str, int, float, bool)) or previous is None:
+        if previous is MISSING:
+            restored = run(['hermes', 'config', 'unset', key], timeout=30)
+            if restored.returncode != 0:
+                failures.append(key)
+        elif isinstance(previous, (str, int, float, bool)) or previous is None:
             restored = run(
                 ['hermes', 'config', 'set', key, '' if previous is None else str(previous)],
                 timeout=30,
@@ -146,6 +138,63 @@ def set_config(pairs: list[tuple[str, str]]) -> None:
         )
 
 
+def build_action_plan(target: str, pairs: list[tuple[str, str]], *, approved: bool) -> dict:
+    return {
+        "schema_version": "workflow/action-plan/v1",
+        "plan_id": f"hermes-model-switch-{target}",
+        "task_id": "WL3-200",
+        "status": "APPROVED" if approved else "WAITING_APPROVAL",
+        "target": {
+            "adapter": "hermes",
+            "operation": "switch-model-route",
+            "project_root": ".",
+        },
+        "steps": [
+            {
+                "id": f"set-{index}",
+                "action": f"hermes config set {key}",
+                "mode": "write",
+                "side_effects": ["global Hermes user configuration"],
+            }
+            for index, (key, _value) in enumerate(pairs, start=1)
+        ],
+        "approval": {
+            "approval_required": True,
+            "status": "APPROVED" if approved else "PENDING",
+            **({"approved_by": "explicit-cli-flag"} if approved else {}),
+        },
+        "rollback": {
+            "available": True,
+            "strategy": "read-before-write; restore previous value or official config unset when absent",
+        },
+        "constraints": {
+            "allowed_paths": [],
+            "forbidden_paths": ["credentials", "auth stores", "sessions", "memory"],
+            "network": "explicit",
+        },
+    }
+
+
+def plan_or_apply(
+    target: str,
+    pairs: list[tuple[str, str]],
+    *,
+    apply: bool,
+    approved: bool,
+) -> int:
+    plan = build_action_plan(target, pairs, approved=approved)
+    print(json.dumps(plan, ensure_ascii=False, indent=2))
+    if not apply:
+        print("ACTION_PLAN_ONLY no configuration changed; use --apply --approved after review")
+        return 0
+    if not approved:
+        print("ACTION_PLAN_BLOCKED approval_required=true use --approved after reviewing the plan")
+        return 2
+    set_config(pairs)
+    print("ACTION_PLAN_READBACK_PASS")
+    return 0
+
+
 def codex_auth_present() -> bool:
     cp = run(['hermes', 'auth', 'list', 'openai-codex'], timeout=30)
     return cp.returncode == 0 and 'credentials' in cp.stdout.lower()
@@ -170,8 +219,8 @@ def status() -> None:
     print(f'HERMES_HOME={hermes_home()}')
     print(f'KIMI_API_KEY={"present" if env_has("KIMI_API_KEY") or env_has("KIMI_CN_API_KEY") else "missing"}')
     print(f'DEEPSEEK_API_KEY={"present" if env_has("DEEPSEEK_API_KEY") else "missing"}')
-    print(f'Local network proxy 127.0.0.1:7890={"open" if port_open("127.0.0.1", 7890) else "closed"}')
-    print(f'Codex proxy 127.0.0.1:15721={"open" if port_open("127.0.0.1", 15721) else "closed"}')
+    for name in ('HTTPS_PROXY', 'HTTP_PROXY', 'ALL_PROXY'):
+        print(f'{name}={"declared" if env_has(name) else "not-declared"}')
     cp = run(['hermes', 'auth', 'list'], timeout=30)
     print('\n=== Auth providers (redacted) ===')
     print(redact(cp.stdout))
@@ -183,6 +232,8 @@ def main() -> int:
     ap.add_argument('--model', help='explicit model ID; required for every switch target')
     ap.add_argument('--no-verify', action='store_true', help='skip prerequisite checks')
     ap.add_argument('--live', action='store_true', help='run a real marker after writing config (uses provider quota)')
+    ap.add_argument('--apply', action='store_true', help='apply the reviewed ActionPlan')
+    ap.add_argument('--approved', action='store_true', help='confirm explicit approval for the global config write')
     args = ap.parse_args()
 
     if args.target == 'status':
@@ -190,7 +241,7 @@ def main() -> int:
         return 0
 
     if args.target in {'kimi', 'k3', 'kimi-fast', 'kimi-turbo'}:
-        if not args.no_verify and not (env_has('KIMI_API_KEY') or env_has('KIMI_CN_API_KEY')):
+        if args.apply and not args.no_verify and not (env_has('KIMI_API_KEY') or env_has('KIMI_CN_API_KEY')):
             raise SystemExit('KIMI_API_KEY/KIMI_CN_API_KEY missing in the current environment')
         if args.target == 'kimi-turbo':
             model = selected_model(args.model, 'HERMES_KIMI_TURBO_MODEL', args.target)
@@ -201,39 +252,48 @@ def main() -> int:
         else:
             model = selected_model(args.model, 'HERMES_KIMI_MODEL', args.target)
             label = 'Kimi selected model'
-        set_config([
+        pairs = [
             ('model.provider', 'kimi-coding'),
             ('model.base_url', KIMI_BASE_URL),
             ('model.default', model),
-        ])
+        ]
+        result = plan_or_apply(args.target, pairs, apply=args.apply, approved=args.approved)
+        if result != 0 or not args.apply:
+            return result
         if args.live:
             live_marker('kimi-coding', model, 'OK_KIMI_SWITCH_LIVE')
         print(f'Switched to {label}. Start a new session or /reset for it to take effect.')
         return 0
 
     if args.target in {'deepseek', 'dp'}:
-        if not args.no_verify and not env_has('DEEPSEEK_API_KEY'):
+        if args.apply and not args.no_verify and not env_has('DEEPSEEK_API_KEY'):
             raise SystemExit('DEEPSEEK_API_KEY missing in environment or Hermes .env')
         model = selected_model(args.model, 'HERMES_DEEPSEEK_MODEL', args.target)
-        set_config([
+        pairs = [
             ('model.provider', 'deepseek'),
             ('model.base_url', 'https://api.deepseek.com/v1'),
             ('model.default', model),
-        ])
+        ]
+        result = plan_or_apply(args.target, pairs, apply=args.apply, approved=args.approved)
+        if result != 0 or not args.apply:
+            return result
         if args.live:
             live_marker('deepseek', model, 'OK_DEEPSEEK_SWITCH_LIVE')
         print('Switched to DeepSeek. Start a new session or /reset for it to take effect.')
         return 0
 
     if args.target in {'gpt', 'chatgpt'}:
-        if not args.no_verify and not codex_auth_present():
+        if args.apply and not args.no_verify and not codex_auth_present():
             raise SystemExit('No openai-codex OAuth credential found; run: hermes auth add openai-codex')
         model = selected_model(args.model, 'HERMES_GPT_MODEL', args.target)
-        set_config([
+        pairs = [
             ('model.provider', 'openai-codex'),
             ('model.default', model),
             ('model.base_url', ''),
-        ])
+        ]
+        result = plan_or_apply(args.target, pairs, apply=args.apply, approved=args.approved)
+        if result != 0 or not args.apply:
+            return result
         if args.live:
             live_marker('openai-codex', model, 'OK_GPT_SWITCH_LIVE')
         print('Switched to GPT via openai-codex OAuth. Start a new session or /reset for it to take effect.')

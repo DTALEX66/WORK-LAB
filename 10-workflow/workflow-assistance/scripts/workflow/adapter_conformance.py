@@ -64,24 +64,39 @@ def run_conformance(adapter: AdapterProtocol) -> dict[str, Any]:
             "evidence_state": "ISOLATED_FAIL",
         }
     request = {"task_id": "conformance-task", "run_id": "conformance-run", "action": "write"}
+    capabilities = adapter.capabilities()
+    advertised = set(capabilities.get("operations", []))
     plan = adapter.plan(request)
     if plan.get("approval", {}).get("required") is not True or plan.get("status") != "WAITING_APPROVAL":
         return {"passed": False, "operations": list(OPERATIONS), "missing_operations": [], "evidence_state": "ISOLATED_FAIL"}
-    try:
-        adapter.apply(plan)
-    except PermissionError:
-        pass
-    else:
-        return {"passed": False, "operations": list(OPERATIONS), "missing_operations": [], "evidence_state": "ISOLATED_FAIL"}
     approved = {**plan, "approval": {**plan["approval"], "status": "APPROVED"}}
+    if "apply" in advertised:
+        try:
+            adapter.apply(plan)
+        except PermissionError:
+            pass
+        else:
+            return {"passed": False, "operations": list(OPERATIONS), "missing_operations": [], "evidence_state": "ISOLATED_FAIL"}
+        apply_result = adapter.apply(approved)
+        if apply_result.get("status") == "UNSUPPORTED":
+            return {"passed": False, "operations": list(OPERATIONS), "missing_operations": [], "evidence_state": "ISOLATED_FAIL"}
+    else:
+        apply_result = adapter.apply(approved)
+        if apply_result.get("status") != "UNSUPPORTED":
+            return {"passed": False, "operations": list(OPERATIONS), "missing_operations": [], "evidence_state": "ISOLATED_FAIL"}
+    invoke_result = adapter.invoke(request)
+    rollback_result = adapter.rollback(approved)
+    for operation, result in (("invoke", invoke_result), ("rollback", rollback_result)):
+        if operation not in advertised and result.get("status") != "UNSUPPORTED":
+            return {"passed": False, "operations": list(OPERATIONS), "missing_operations": [], "evidence_state": "ISOLATED_FAIL"}
     results = {
         "detect": adapter.detect(request),
-        "capabilities": adapter.capabilities(),
+        "capabilities": capabilities,
         "plan": plan,
-        "apply": adapter.apply(approved),
-        "invoke": adapter.invoke(request),
+        "apply": apply_result,
+        "invoke": invoke_result,
         "observe": adapter.observe(request),
-        "rollback": adapter.rollback(approved),
+        "rollback": rollback_result,
     }
     if any(not isinstance(result, dict) or not result.get("status") for result in results.values()):
         return {"passed": False, "operations": list(OPERATIONS), "missing_operations": [], "evidence_state": "ISOLATED_FAIL"}

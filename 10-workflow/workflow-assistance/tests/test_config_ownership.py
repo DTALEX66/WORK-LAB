@@ -6,8 +6,13 @@ import json
 import unittest
 from pathlib import Path
 
+import jsonschema
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "config/config-ownership.json"
+SCHEMA = ROOT / "schemas/workflow/config-ownership.schema.json"
+COMPATIBILITY_RECIPE = ROOT / "config/managed-config-schema.yaml"
 EXPECTED_LAYERS = {
     "UPSTREAM_OFFICIAL", "USER_OVERLAY", "PROJECT_OVERLAY", "TASK_EPHEMERAL",
     "PLATFORM_INTERNAL", "RUNTIME_EPHEMERAL", "SECRET", "COSMETIC",
@@ -21,6 +26,10 @@ class ConfigOwnershipTests(unittest.TestCase):
     def test_single_authority_v2(self) -> None:
         self.assertEqual(self.registry["schema_version"], "workflow/config-ownership/v2")
         self.assertTrue(self.registry["single_authority"])
+
+    def test_registry_validates_against_v2_schema(self) -> None:
+        schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(schema).validate(self.registry)
 
     def test_all_layers_and_modes_present(self) -> None:
         self.assertEqual(set(self.registry["layers"]), EXPECTED_LAYERS)
@@ -44,6 +53,22 @@ class ConfigOwnershipTests(unittest.TestCase):
         self.assertIn("USER_OVERLAY", used_layers)
         self.assertIn("SECRET", used_layers)
         self.assertIn("PLATFORM_INTERNAL", used_layers)
+
+    def test_cross_client_and_external_actor_boundaries_are_explicit(self) -> None:
+        rules = self.registry["rules"]
+        self.assertTrue(rules["cc_switch_owns_supported_client_provider_routing_only"])
+        self.assertTrue(rules["cross_client_prompt_skill_session_sync_forbidden"])
+        self.assertTrue(rules["raw_memory_never_crosses_client_boundary"])
+        fields = {field["path"]: field for field in self.registry["fields"]}
+        self.assertEqual(fields["openhuman.runtime_memory"]["mode"], "IGNORE")
+        self.assertEqual(fields["open-design.read_only_mcp"]["mode"], "OBSERVE")
+
+    def test_legacy_recipe_is_isolated_empty_home_only(self) -> None:
+        recipe = yaml.safe_load(COMPATIBILITY_RECIPE.read_text(encoding="utf-8"))
+        self.assertEqual(recipe["authority"], "config/config-ownership.json")
+        self.assertEqual(recipe["compatibility_scope"], "isolated-empty-home")
+        self.assertEqual(recipe["global_workflow"]["deployment"], "isolated-empty-home-only")
+        self.assertNotIn("repo-to-live", COMPATIBILITY_RECIPE.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

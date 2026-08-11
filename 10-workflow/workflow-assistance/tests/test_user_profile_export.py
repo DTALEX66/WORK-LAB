@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -17,85 +18,61 @@ spec.loader.exec_module(module)
 
 
 class UserProfileExportTests(unittest.TestCase):
-    def test_redact_walk_redacts_secret_keys_and_values(self) -> None:
-        data = {
-            "display": {"theme": "dark", "skin": "default"},
-            "model": {"provider": "deepseek", "model": "deepseek-v4-flash"},
-            "api_key": "sk-real-value-1234567890",
-            "providers": {"p": {"token": "abcdefghijklmnop"}},
-            "description": "contains sk-abcdefghijklmnop literal",
-        }
-        out = module._redact_walk(data)
-        self.assertEqual(out["display"]["theme"], "dark")
-        self.assertEqual(out["model"]["provider"], "deepseek")
-        self.assertEqual(out["api_key"], module.REDACTED)
-        self.assertEqual(out["providers"]["p"]["token"], module.REDACTED)
-        self.assertEqual(out["description"], module.REDACTED)
+    def test_profile_contains_only_portable_manage_allowlist(self) -> None:
+        profile = module.build_profile(
+            hermes_preferences={
+                "display": {"busy_input_mode": "queue", "language": "zh", "theme": "dark"},
+                "model": {"provider": "private-provider"},
+                "sessions": {"raw": "forbidden"},
+            },
+            codex_preferences={
+                "approval_policy": "on-request",
+                "sandbox_mode": "workspace-write",
+                "project_doc_max_bytes": 65536,
+                "model": "private-model",
+            },
+        )
+        payload = json.dumps(profile, ensure_ascii=False)
+        self.assertEqual(profile["schema_version"], "worklab/user-environment-profile/v2")
+        self.assertEqual(profile["profile_mode"], "USER_OVERLAY_ONLY")
+        self.assertFalse(profile["discovery"]["absolute_paths_persisted"])
+        self.assertEqual(profile["discovery"]["runtime_roots"], "CAPABILITY_DISCOVERY")
+        self.assertEqual(profile["hermes"]["preferences"]["display.language"], "zh")
+        self.assertNotIn("private-provider", payload)
+        self.assertNotIn("private-model", payload)
+        self.assertNotIn("sessions", profile)
+        self.assertNotIn("generated_at", profile)
 
-    def test_env_key_names_only(self) -> None:
-        with tempfile.TemporaryDirectory() as raw:
-            p = Path(raw) / ".env"
-            p.write_text("OPENAI_API_KEY=sk-secret-value-abcdefghij\nDEEPSEEK_API_KEY=sk-other-value\n# comment\nEMPTY=\n", encoding="utf-8")
-            names = module._env_key_names(p)
-            self.assertEqual(names, ["DEEPSEEK_API_KEY", "EMPTY", "OPENAI_API_KEY"])
-            self.assertTrue(all("=" not in n for n in names))
-
-    def test_toml_redaction_keeps_provider_model_redacts_credentials(self) -> None:
-        data = {
-            "model_provider": "cc-switch-official",
-            "model": "gpt-5.6-luna",
-            "base_url": "https://user:pass@example.invalid/v1",
-            "mcp_servers": {"custom": {"command": "safe-placeholder", "api_key": "xyz123"}},
-        }
-        out = module._redact_toml_keys(data)
-        self.assertEqual(out["model_provider"], "cc-switch-official")
-        self.assertEqual(out["model"], "gpt-5.6-luna")
-        self.assertEqual(out["base_url"], module.REDACTED)
-        self.assertEqual(out["mcp_servers"]["custom"]["api_key"], module.REDACTED)
-        self.assertEqual(out["mcp_servers"]["custom"]["command"], "safe-placeholder")
-
-    def test_skills_inventory_reads_description(self) -> None:
-        with tempfile.TemporaryDirectory() as raw:
-            root = Path(raw)
-            d = root / "my-skill"
-            d.mkdir()
-            (d / "SKILL.md").write_text(
-                "---\nname: my-skill\ndescription: 'Use for testing only.'\n---\n\n# body\n", encoding="utf-8"
+    def test_cli_is_plan_only_without_write(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".hermes" / "task-runtime") as raw:
+            output = Path(raw) / "profile.json"
+            output.write_text("sentinel\n", encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--output", str(output)],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
             )
-            inv = module._inventory_skills(root)
-            self.assertEqual(len(inv), 1)
-            self.assertEqual(inv[0]["name"], "my-skill")
-            self.assertEqual(inv[0]["description"], "Use for testing only.")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(output.read_text(encoding="utf-8"), "sentinel\n")
+            self.assertIn("PLAN_ONLY", result.stdout)
 
-    def test_profile_output_is_secret_free(self) -> None:
-        with tempfile.TemporaryDirectory() as raw:
-            base = Path(raw)
-            home = base / "hermes"
-            codex = base / "codex"
-            agents = base / "agents"
-            (home / "skills").mkdir(parents=True)
-            (codex / "rules").mkdir(parents=True)
-            (agents / "skills").mkdir(parents=True)
-            (home / "config.yaml").write_text(
-                "display:\n  theme: dark\nmodel:\n  provider: deepseek\napi_key: sk-literal-abcdefghijklmnop\n",
-                encoding="utf-8",
+    def test_cli_writes_only_with_explicit_flag(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".hermes" / "task-runtime") as raw:
+            output = Path(raw) / "profile.json"
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--output", str(output), "--write"],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
             )
-            (home / ".env").write_text("OPENAI_API_KEY=sk-abcdefghijklmnop\n", encoding="utf-8")
-            (codex / "config.toml").write_text(
-                'model_provider = "cc-switch-official"\nbase_url = "https://u:p@example.invalid"\n', encoding="utf-8"
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(
+                json.loads(output.read_text(encoding="utf-8"))["schema_version"],
+                "worklab/user-environment-profile/v2",
             )
-            (codex / "rules" / "a.rules").write_text("# rule\n", encoding="utf-8")
-            (home / "skills" / "s1").mkdir(parents=True)
-            (home / "skills" / "s1" / "SKILL.md").write_text("---\nname: s1\ndescription: 'D.'\n---\n", encoding="utf-8")
-
-            profile = module._profile(home, codex, agents)
-            payload = json.dumps(profile, ensure_ascii=False)
-            self.assertNotIn("sk-literal", payload)
-            self.assertNotIn("sk-abcdefghijklmnop", payload)
-            self.assertNotIn("user:pass", payload)
-            self.assertIn("deepseek", payload)  # provider name kept
-            self.assertIn("cc-switch-official", payload)
-            self.assertEqual(len(profile["hermes"]["skills"]), 1)
 
 
 if __name__ == "__main__":
