@@ -81,6 +81,16 @@ argument arrays for anything complex.
 - Reparse points: treat symlinks, junctions, and reparse points as
   untrusted boundaries in scripts; do not follow them during cleanup or
   recovery.
+- A PowerShell non-terminating error can leave exit code 0. For exact project
+  runtime cleanup, prefer `hermes-project-data.py --project . cleanup-path
+  <relative-name>`. If PowerShell is required, set
+  `$ErrorActionPreference = 'Stop'`, use `Remove-Item -LiteralPath $target
+  -Recurse -Force -ErrorAction Stop`, and fail when `Test-Path -LiteralPath
+  $target` remains true. A zero exit code alone is not cleanup proof.
+- On `Access denied`, do not immediately elevate or recurse again. Inspect the
+  exact path's reparse state, read-only attributes and ACL, then identify the
+  owning process when tooling is available. Use a bounded timeout and report
+  `BLOCKED_RUNTIME_CLEANUP`; never kill a shared process or bypass an ACL.
 - Junction verification (native truth over scanner labels): `fsutil
   reparsepoint query "<path>"` returns a tag for junctions/symlinks and error
   4390 for real directories; `Get-Item -LiteralPath "<path>" | Select
@@ -105,6 +115,10 @@ When a command fails on Windows, classify before retrying:
    renormalize.
 5. Lock: "file in use" / "device or resource busy" → wait for the owning
    process, record `BLOCKED_PROCESS_LOCK`, never force-kill shared processes.
+6. PowerShell non-terminating error: stderr reports failure but the process
+   returns 0 → add `-ErrorAction Stop` and verify the filesystem postcondition.
+7. ANSI output: escape bytes such as colour prefixes → strip control sequences
+   before parsing; do not diagnose repository text as corrupt.
 
 Never retry the identical string; re-issue the dialect-correct form and
 record the failure class.

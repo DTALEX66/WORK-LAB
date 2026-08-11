@@ -259,12 +259,52 @@ def cleanup_runtime(layout: RuntimeLayout, *, include_caches: bool = False) -> d
         names.extend(["cache", "pip-cache"])
     removed: dict[str, int] = {}
     for name in names:
+        result = cleanup_runtime_path(layout, name)
+        removed[name] = int(result["bytes"])
         path = layout.paths[name]
-        require_contained(layout.project_root, path)
-        removed[name] = sum(item.stat().st_size for item in path.rglob("*") if item.is_file())
-        shutil.rmtree(path)
         path.mkdir(parents=True, exist_ok=True)
     return removed
+
+
+def cleanup_runtime_path(layout: RuntimeLayout, relative_path: str) -> dict[str, object]:
+    """Remove one exact path below ``.hermes/task-runtime`` and verify absence.
+
+    The path is relative by contract so a caller cannot turn an audit cleanup
+    into an arbitrary filesystem delete. Permission/lock failures remain
+    blockers; this function never elevates, changes ACLs, kills processes, or
+    retries a destructive operation blindly.
+    """
+    raw = Path(relative_path)
+    if not relative_path or raw.is_absolute() or raw.anchor:
+        raise ProjectDataBoundaryError(
+            f"cleanup-path requires a relative runtime path: {relative_path!r}"
+        )
+    runtime_root = layout.paths["root"].resolve()
+    target = require_contained(layout.project_root, runtime_root / raw)
+    if target == runtime_root or not target.is_relative_to(runtime_root):
+        raise ProjectDataBoundaryError(
+            f"cleanup-path requires a relative runtime path below task-runtime: {relative_path!r}"
+        )
+    if not target.exists():
+        return {"target": relative_path, "bytes": 0, "status": "ABSENT"}
+    try:
+        size = sum(item.stat().st_size for item in target.rglob("*") if item.is_file())
+        if target.is_dir():
+            shutil.rmtree(target)
+        else:
+            size = target.stat().st_size
+            target.unlink()
+    except OSError as exc:
+        raise ProjectDataBoundaryError(
+            "BLOCKED_RUNTIME_CLEANUP "
+            f"target={relative_path!r}; inspect lock, ACL, or process ownership; "
+            "do not elevate or retry recursively without a new diagnosis"
+        ) from exc
+    if target.exists():
+        raise ProjectDataBoundaryError(
+            f"cleanup postcondition failed; target still exists: {relative_path!r}"
+        )
+    return {"target": relative_path, "bytes": size, "status": "REMOVED"}
 
 
 def layout_payload(layout: RuntimeLayout) -> Mapping[str, object]:
@@ -288,6 +328,14 @@ def main() -> int:
         action="store_true",
         help="also remove dependency/tool caches under task-runtime",
     )
+    cleanup_path_parser = subparsers.add_parser(
+        "cleanup-path",
+        help="remove one exact relative path below .hermes/task-runtime",
+    )
+    cleanup_path_parser.add_argument(
+        "target",
+        help="relative path below task-runtime; absolute and parent paths are rejected",
+    )
     run_parser = subparsers.add_parser("run", help="run a command with local temporary/cache paths")
     run_parser.add_argument("args", nargs=argparse.REMAINDER, help="command to run; prefix with --")
     kanban_parser = subparsers.add_parser("kanban", help="run Hermes Kanban with project-local board storage")
@@ -306,6 +354,9 @@ def main() -> int:
             return 0
         if args.command == "cleanup":
             print(json.dumps(cleanup_runtime(layout, include_caches=args.all_regenerable), ensure_ascii=False))
+            return 0
+        if args.command == "cleanup-path":
+            print(json.dumps(cleanup_runtime_path(layout, args.target), ensure_ascii=False))
             return 0
         command = args.args[1:] if args.args[:1] == ["--"] else args.args
         result = run_kanban_command(layout, command) if args.command == "kanban" else run_command(layout, command)
