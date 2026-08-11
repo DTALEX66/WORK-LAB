@@ -16,6 +16,24 @@ from typing import Any
 
 VALID_MODES = {"LIVE", "STALE", "SNAPSHOT", "FIXTURE", "OFFLINE", "UNKNOWN"}
 
+# Dashboard-consumption freshness vocabulary. The canonical reader keeps the
+# source-mode vocabulary (LIVE/STALE/SNAPSHOT/...) on its internal snapshot;
+# the dashboard projection translates to the UI vocabulary (fresh/stale/offline/
+# unknown) so renderers never see an unmapped mode string. Single source here.
+_MODE_FRESHNESS = {
+    "LIVE": "fresh",
+    "STALE": "stale",
+    "SNAPSHOT": "stale",
+    "FIXTURE": "stale",
+    "OFFLINE": "offline",
+    "UNKNOWN": "unknown",
+}
+
+
+def _freshness_for_mode(mode: str) -> str:
+    """Map a canonical source mode onto the dashboard freshness vocabulary."""
+    return _MODE_FRESHNESS.get(str(mode).upper(), str(mode).lower())
+
 
 class SQLiteReadOnlyStore:
     """Minimal canonical-store reader using SQLite ``mode=ro`` only."""
@@ -50,7 +68,9 @@ class SQLiteReadOnlyStore:
         usage = [
             dict(row)
             for row in self._conn.execute(
-                "SELECT provider, model, COUNT(*) AS samples, SUM(total_tokens) AS tokens "
+                "SELECT provider, model, COUNT(*) AS samples, "
+                "SUM(input_tokens) AS input_tokens, SUM(output_tokens) AS output_tokens, "
+                "SUM(total_tokens) AS tokens, MAX(observed_at) AS observed_at "
                 "FROM usage_samples GROUP BY provider, model"
             )
         ]
@@ -126,6 +146,9 @@ class CanonicalProjectionReader:
                 "model": row.get("model"),
                 "samples": row.get("samples"),
                 "tokens": row.get("tokens"),
+                "inputTokens": row.get("input_tokens"),
+                "outputTokens": row.get("output_tokens"),
+                "observedAt": row.get("observed_at"),
             }
             for row in usage
         ]
@@ -165,22 +188,24 @@ class CanonicalProjectionReader:
             int(row.get("tokens") or 0) for row in snapshot["usage"]
         ) if snapshot["usage"] else None
         usage_quality = "EXACT_SOURCE" if snapshot["usage"] else "UNKNOWN"
-        # usage series: one point per usage row (bucket = observed timestamp).
+        # usage series: one point per usage row (bucket = latest observed timestamp),
+        # with input/output tokens split per column instead of mirroring the total.
         usage_series = []
         for row in snapshot["usage"]:
-            tokens = int(row.get("tokens") or 0)
+            input_tok = int(row.get("inputTokens") or 0)
+            output_tok = int(row.get("outputTokens") or 0)
             usage_series.append(
                 {
-                    "bucket": row.get("observed_at") or row.get("occurred_at"),
-                    "inputTokens": tokens,
-                    "outputTokens": tokens,
+                    "bucket": row.get("observedAt") or row.get("occurred_at"),
+                    "inputTokens": input_tok,
+                    "outputTokens": output_tok,
                 }
             )
         return {
             "schemaVersion": "work-lab/observer-projection/v2",
             "mode": snapshot["mode"],
             "generatedAt": None,
-            "freshness": {"state": snapshot["freshness"], "ageSeconds": None, "lastGoodAt": None},
+            "freshness": {"state": _freshness_for_mode(snapshot["freshness"]), "ageSeconds": None, "lastGoodAt": None},
             "summary": {
                 "registeredProjects": len(snapshot["projects"]),
                 "activeProjects": counts["running"] + counts["waiting"],
@@ -191,12 +216,12 @@ class CanonicalProjectionReader:
                 "totalTokens": total_tokens,
                 "inputTokens": input_tokens,
                 "outputTokens": input_tokens,
-                "quality": {"dataQuality": usage_quality, "freshness": snapshot["freshness"]},
+                "quality": {"dataQuality": usage_quality, "freshness": _freshness_for_mode(snapshot["freshness"])},
                 "series": usage_series,
             },
             "ci": {
                 "runs": snapshot["ci"],
-                "quality": {"dataQuality": "EXACT_SOURCE" if snapshot["ci"] else "UNKNOWN", "freshness": snapshot["freshness"]},
+                "quality": {"dataQuality": "EXACT_SOURCE" if snapshot["ci"] else "UNKNOWN", "freshness": _freshness_for_mode(snapshot["freshness"])},
             },
             "governance": {
                 "rules": {"current": None, "drift": None, "quarantined": None, "conflicts": None, "stale": None},
@@ -204,7 +229,7 @@ class CanonicalProjectionReader:
             },
             "quality": {
                 "integrity": snapshot["integrity"],
-                "freshness": snapshot["freshness"],
+                "freshness": _freshness_for_mode(snapshot["freshness"]),
                 "telemetryEvents": snapshot["telemetryEvents"],
                 "unknown": None,
                 "malformed": None,

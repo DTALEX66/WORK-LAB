@@ -538,7 +538,9 @@ class CanonicalStore:
             for row in self._conn.execute("SELECT status, COUNT(*) AS n FROM tasks GROUP BY status"):
                 task_counts[row["status"]] = row["n"]
             usage = self._conn.execute(
-                "SELECT provider, model, COUNT(*) AS samples, SUM(total_tokens) AS tokens "
+                "SELECT provider, model, COUNT(*) AS samples, "
+                "SUM(input_tokens) AS input_tokens, SUM(output_tokens) AS output_tokens, "
+                "SUM(total_tokens) AS tokens, MAX(observed_at) AS observed_at "
                 "FROM usage_samples GROUP BY provider, model"
             ).fetchall()
             ci = self._conn.execute(

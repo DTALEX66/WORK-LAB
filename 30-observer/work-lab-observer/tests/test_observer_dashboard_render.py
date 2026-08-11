@@ -103,6 +103,8 @@ class DashboardCanonicalRenderTests(unittest.TestCase):
         self.assertEqual(mod._quality_cn("fresh"), "实时")
         self.assertEqual(mod._quality_cn("stale"), "滞后")
         self.assertEqual(mod._quality_cn("offline"), "离线")
+        self.assertEqual(mod._quality_cn("delayed"), "延迟")
+        self.assertEqual(mod._quality_tone("delayed"), "#f5b544")
         self.assertEqual(mod._quality_tone("fresh"), "#10b981")
         self.assertEqual(mod._quality_tone("stale"), "#f5b544")
 
@@ -125,6 +127,26 @@ class DashboardCanonicalRenderTests(unittest.TestCase):
         html = mod._render_full(projection)
         self.assertIn("实时", html)
         self.assertNotIn("STALE", html)
+
+    def test_compact_render_uses_task_count_not_project_list_length(self) -> None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "observer_dashboard", OBS / "scripts" / "observer_dashboard.py"
+        )
+        mod = importlib.util.module_from_spec(spec)
+        with patch("sys.argv", ["observer_dashboard.py"]):
+            spec.loader.exec_module(mod)
+        # 1 project but 3 tracked tasks: the compact metric must show 3.
+        projection = {
+            "summary": {"tasks": {"running": 2, "waiting": 1}},
+            "quality": {"freshness": "stale", "telemetryEvents": 0},
+            "usage": {"totalTokens": None},
+            "projects": [{"projectId": "work-lab", "displayName": "WORK-LAB", "state": "running"}],
+        }
+        html = mod._render_compact(projection)
+        self.assertIn(">3<", html)
+        self.assertNotIn(">1<", html)
 
 
 if __name__ == "__main__":
