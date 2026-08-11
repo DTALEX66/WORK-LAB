@@ -64,6 +64,7 @@
     {"path": "openhuman.runtime_memory", "layer": "RUNTIME_EPHEMERAL", "mode": "IGNORE", "adapter": "openhuman"},
     {"path": "open-design.read_only_mcp", "layer": "PROJECT_OVERLAY", "mode": "OBSERVE", "adapter": "open-design"},
     {"path": "open-design.global_configuration", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "open-design"},
+    {"path": "open-design.design_capability", "layer": "PROJECT_OVERLAY", "mode": "IGNORE", "adapter": "open-design"},
     {"path": "desktop.internal_state", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "codex"},
     {"path": "desktop.global_state_digest", "layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "adapter": "codex"},
     {"path": "task.lease", "layer": "TASK_EPHEMERAL", "mode": "OBSERVE", "adapter": "workflow"},
@@ -87,6 +88,7 @@
     "cosmetic_managed_only_on_opt_in": true,
     "cc_switch_owns_supported_client_provider_routing_only": true,
     "cross_client_prompt_skill_session_sync_forbidden": true,
-    "raw_memory_never_crosses_client_boundary": true
+    "raw_memory_never_crosses_client_boundary": true,
+    "open_design_capability_owned_by_open_design_project": true
   }
 }
