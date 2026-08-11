@@ -16,6 +16,8 @@ product:
     - codex
     - cc-switch
     - github
+    - openhuman
+    - open-design
 
 capabilities:
   - portable_config
@@ -33,6 +35,8 @@ capabilities:
   - codex_native_user_skills
   - codex_command_policy_rules
   - codex_field_level_config_preservation
+  - openhuman_scan_verification
+  - open_design_read_only_observe
 requirements:
   python: '>=3.11'
   pyyaml: required
@@ -85,6 +89,16 @@ adapters:
       support: deep
       detection: optional_gh_read_only_check
       writes: approval_required
+
+    - id: openhuman
+      support: experimental
+      detection: optional_local_app_check
+      writes: unavailable
+
+    - id: open-design
+      support: experimental
+      detection: optional_remote_repo_check
+      writes: unavailable
 
     - id: cursor
       support: manifest-only
