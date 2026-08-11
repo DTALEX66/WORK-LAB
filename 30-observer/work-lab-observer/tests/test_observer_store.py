@@ -55,6 +55,19 @@ class ObserverStoreTests(unittest.TestCase):
             with self.assertRaises(FileNotFoundError):
                 ObserverStore(path, project_root=project)
 
+    def test_rebuild_enriches_governance_from_real_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            project, path = self.make_root(raw)
+            store = ObserverStore(path, project_root=project)
+            projection = store.rebuild_projection()
+            store.close()
+            gov = projection.get("governance", {})
+            # Governance must carry real repo inventory dimensions, never all-None
+            # placeholders once the repo exists.
+            self.assertIsInstance(gov.get("rules", {}).get("current"), (int, type(None)))
+            self.assertIsInstance(gov.get("skills", {}).get("current"), (int, type(None)))
+            self.assertIsInstance(gov.get("adapters", {}).get("current"), (int, type(None)))
+
 
 if __name__ == "__main__":
     unittest.main()
