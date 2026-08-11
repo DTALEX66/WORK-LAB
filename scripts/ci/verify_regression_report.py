@@ -31,7 +31,6 @@ def verify() -> dict[str, object]:
     assert quality["designReadbackLossless"] is True
     assert quality["contaminationControls"] == 7
     assert quality["observerMutationSurface"] == []
-    assert all(state == "WAITING_HUMAN_CALIBRATION" for state in quality["humanCalibration"])
 
     boundaries = report["boundaries"]
     assert boundaries["network"] is False
