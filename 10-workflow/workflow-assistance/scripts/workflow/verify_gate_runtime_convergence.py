@@ -109,7 +109,7 @@ def check_5_no_fabricated_exact() -> dict:
         store = CanonicalStore(Path(td) / "c.sqlite")
         reader = CanonicalProjectionReader(store)
         dashboard = reader.to_dashboard()
-        ok = dashboard["mode"] == "SNAPSHOT" and dashboard["freshness"]["state"] == "STALE"
+        ok = dashboard["mode"] == "SNAPSHOT" and dashboard["freshness"]["state"] == "stale"
         ok = ok and dashboard["usage"]["quality"]["dataQuality"] == "UNKNOWN"
         store.close()
     return {"id": 5, "name": "no-fabricated-exact", "pass": ok,

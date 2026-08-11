@@ -23,7 +23,20 @@ class ObserverStore:
         self.reader: CanonicalProjectionReader = open_canonical_reader(self.path)
 
     def rebuild_projection(self) -> dict[str, Any]:
-        return self.reader.to_dashboard()
+        projection = self.reader.to_dashboard()
+        # Enrich governance with REAL repo inventory (skills/adapters/rules from
+        # CURRENT_STATE.json / adapter-registry.json / 00-governance/rules) so the
+        # dashboard never shows an empty governance pane when the repo is present.
+        from observer_runtime import load_governance
+
+        skills_dim, adapters_dim, rules_count = load_governance(self.project_root)
+        projection["governance"] = {
+            "rules": {"current": rules_count, "drift": None, "quarantined": None, "conflicts": None, "stale": None},
+            "skills": skills_dim,
+            "adapters": adapters_dim,
+            "memoryContext": {"current": None, "drift": None, "quarantined": None, "conflicts": None, "stale": None},
+        }
+        return projection
 
     def read_events(self) -> list[dict[str, Any]]:
         """Legacy event access is retired; canonical projections replace it."""

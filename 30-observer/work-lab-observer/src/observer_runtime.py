@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads((ROOT / "schemas/observer-event.schema.json").read_text(encoding="utf-8"))
 VALIDATOR = Draft202012Validator(SCHEMA)
 SENSITIVE_KEYS = {"api_key", "apikey", "authorization", "password", "secret", "token", "cookie", "prompt", "response"}
-TRANSFERRED_PROJECT_IDS = {"open-design", "minigame"}
+TRANSFERRED_PROJECT_IDS = {"open-design"}
 
 
 class ObserverInputError(ValueError):
@@ -326,7 +326,7 @@ def _unknown_dimension() -> dict[str, int | None]:
     return {"current": None, "drift": None, "quarantined": None, "conflicts": None, "stale": None}
 
 
-def _load_governance(project_root: Path) -> tuple[dict[str, Any], dict[str, Any], int | None]:
+def load_governance(project_root: Path) -> tuple[dict[str, Any], dict[str, Any], int | None]:
     """Load REAL governance inventory: skills / adapters / rules / memory from repo files.
 
     Returns (skills_dim, adapters_dim, rule_count). Never invents values — reads the
@@ -441,7 +441,7 @@ def project_authority_dashboard(
         counts[key] += 1
 
     # --- Real governance inventory
-    skills_dim, adapters_dim, rules_count = _load_governance(project_root)
+    skills_dim, adapters_dim, rules_count = load_governance(project_root)
     governance = {
         "rules": {"current": rules_count, "drift": None, "quarantined": None, "conflicts": None, "stale": None},
         "skills": skills_dim,

@@ -150,6 +150,7 @@ def _quality_tone(quality: str) -> str:
         "source-exact": "#10b981",
         "fresh": "#10b981",
         "partial": "#f5b544",
+        "delayed": "#f5b544",
         "stale": "#f5b544",
         "offline": "#8a8f98",
         "unknown": "#8a8f98",
@@ -161,6 +162,7 @@ def _quality_cn(quality: str) -> str:
         "source-exact": "来源精确",
         "fresh": "实时",
         "partial": "部分",
+        "delayed": "延迟",
         "stale": "滞后",
         "deduplicated": "去重",
         "offline": "离线",
@@ -407,7 +409,6 @@ def _render_compact(projection: dict[str, Any]) -> str:
     quality = projection.get("quality", {})
     usage = projection.get("usage", {})
     projects = projection.get("projects", [])
-    task_count = len(projects)
     event_count = int(quality.get("telemetryEvents") or 0)
     q = _freshness_state(str(quality.get("freshness", "unknown")))
     q_cn = _quality_cn(q)
@@ -427,6 +428,11 @@ def _render_compact(projection: dict[str, Any]) -> str:
             )
     else:
         project_rows = '<tr><td colspan="2" class="empty">暂无已注册项目</td></tr>'
+
+    # Task count must come from summary.tasks (canonical counts), never from the
+    # project list length — projects and tasks are different facts.
+    summary_tasks = projection.get("summary", {}).get("tasks", {})
+    task_count = sum(summary_tasks.values()) if isinstance(summary_tasks, dict) else len(projects)
 
     return f"""
 <header class="hero">
