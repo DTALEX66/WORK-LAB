@@ -15,7 +15,7 @@
       "Codex runtime or CLI installation",
       "provider, model, base URL, routing, quota, or billing",
       "authentication, tokens, cookies, credentials, or private keys",
-      "MCP servers, plugins, sessions, memory, Desktop state, or sandbox internals",
+      "MCP servers, plugins, sessions, private memory including $CODEX_HOME/memories, Desktop state, or sandbox internals",
       "project source trees, project task ledgers, project telemetry, or project sidecars",
       "Git commits, pushes, pull requests, releases, or external project writes"
     ]
@@ -23,7 +23,7 @@
   "capabilities": {
     "detect": {
       "mode": "READ_ONLY",
-      "allowed": ["Codex executable version when available", "declared target paths", "managed asset hashes", "owned-state metadata", "secret-free user environment inventory (Hermes/Codex config keys + skill lists via user_profile_export.py)"],
+      "allowed": ["Codex executable version when available", "declared target paths", "managed asset hashes", "owned-state metadata", "secret-free user environment inventory (Hermes/Codex config keys + skill lists via user_profile_export.py)", "read-only Git/Python/Markdown execution preflight via execution_preflight.py", "redacted Codex performance timelines without prompt, response, auth, or memory bodies"],
       "forbidden": ["private config body disclosure", "credential or session inspection"]
     },
     "plan": {
@@ -33,7 +33,7 @@
     },
     "apply": {
       "mode": "USER_APPROVAL_REQUIRED",
-      "allowed": ["atomic update of owned guidance block", "replace owned rules file", "replace the eight owned skill roots", "write missing managed config fields only"],
+      "allowed": ["atomic update of owned guidance block", "replace owned rules file", "replace the ten owned skill roots", "write missing managed config fields only"],
       "writes": true,
       "preserves": ["all existing user config fields", "provider/model/routing", "MCP/plugins", "auth/session/memory/Desktop state"],
       "fails_closed_on": ["unknown ownership", "duplicate or malformed markers", "symlink/junction/reparse traversal", "concurrent modification", "unsafe target path"]

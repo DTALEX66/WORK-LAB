@@ -16,7 +16,10 @@ These agreements apply to every Codex project unless a closer project `AGENTS.md
 - Preserve existing user changes. Do not reset, restore, clean, overwrite, or silently adopt unknown dirty paths.
 - Never read, print, copy, commit, or upload credentials, `.env` files, auth
   stores, private keys, browser data, cookies, tokens, prompt/response bodies,
-  or private session databases.
+  private session databases, or private agent memory such as
+  `$CODEX_HOME/memories/**`. A permission denial on a private memory path is a
+  correct boundary signal: stop and use repository evidence or a user-provided
+  redacted summary; never solve it with elevation.
 - Treat other local agent runtimes (e.g. OpenHuman's `.openhuman` keychain,
   users, logs, memory, workspace) as private state in the same class as
   credentials and sessions: never read, print, copy, or commit them. Their
@@ -31,6 +34,38 @@ These agreements apply to every Codex project unless a closer project `AGENTS.md
 - Keep generated evidence, temporary state, caches, logs, local environments, and agent runtime data inside the current Git project, preferably under ignored `.hermes/task-runtime/` or `.hermes/task-artifacts/` paths.
 - Do not write project runtime state into the user profile, another project, or an external drive unless the user explicitly authorizes the exact path and operation.
 - Repository source, user configuration, platform-internal state, runtime-ephemeral state, and secrets are different ownership classes. Change only the class the task authorizes.
+- For one known runtime residue, use the project helper with a relative path:
+  `python <workflow-assistance>/bin/hermes-project-data.py --project . cleanup-path <name>`.
+  It rejects absolute/parent paths and reparse traversal, reports permission or
+  lock failures as blockers, and verifies that the exact target is absent.
+- If PowerShell cleanup is unavoidable, use `-LiteralPath` and
+  `-ErrorAction Stop`, then make `Test-Path -LiteralPath` a hard postcondition.
+  A process exit code without the postcondition is not deletion evidence.
+  Diagnose locks, ACLs, attributes, and reparse state before retrying; never
+  elevate, change ACLs, or kill shared processes merely to remove ignored data.
+
+### Execution preflight and evidence semantics
+
+- Before tests, run the exact project interpreter and verify optional module
+  imports. A missing dependency in the wrong environment is `ENVIRONMENT_FAIL`,
+  not a product regression. Use `scripts/workflow/execution_preflight.py` to
+  report the interpreter, requested modules, Git identities, and relative
+  Markdown link targets without reading private state.
+- Git reporting must separate current branch/upstream, current branch versus
+  explicit `origin/main`, feature-branch merge state, and exact-SHA CI. The
+  phrase "local equals cloud" is invalid unless it names both refs and SHAs.
+- A squash merge produces a new main commit. Do not require the PR head SHA to
+  be an ancestor of main; read the PR's merged state and `mergeCommit` and bind
+  post-merge CI to that merge SHA.
+- Resolve every relative Markdown link from the directory containing the
+  document, not from the repository root or current shell directory.
+- Strip ANSI terminal control sequences before machine parsing or storing
+  evidence. ANSI colour bytes are terminal metadata, not repository encoding
+  corruption.
+- Report delivery layers independently: `PLANNED`, `BRANCH_PUBLISHED`,
+  `IMPLEMENTED_LOCAL`, `TESTED_LOCAL`, `CI_VERIFIED_EXACT_SHA`, `MERGED_MAIN`,
+  and `INSTALLED_RUNTIME_VERIFIED`. Never promote a blueprint/task pack or
+  pushed branch into an implementation/runtime claim.
 
 ### Engineering and verification
 
@@ -39,6 +74,13 @@ These agreements apply to every Codex project unless a closer project `AGENTS.md
 - Run checks from the exact owning module or repository path. Treat failed, cancelled, missing, or required-but-skipped checks as not passed.
 - Report structural checks, local runtime checks, exact-SHA CI, publication, and live readback separately. Never use documentation, a fixture, a local test, or a version number as proof of a live delivery.
 - Before finishing, inspect the final diff and Git status. State `PASS`, `PARTIAL`, `NOT EXECUTED`, or `BLOCKED` honestly.
+- Diagnose Codex performance with timed JSON events and matched samples, not
+  configuration field names. Separate process/context startup, model turns,
+  approvals, tool execution, test runtime, and CI wait. Preserve the official
+  Windows sandbox unless a controlled benchmark and security review justify a
+  change; `supports_websockets=false` is not proof of non-streaming, and an MCP
+  timeout is a ceiling rather than observed latency. Prefer a persistent writer,
+  batched independent reads, targeted development tests, and one final full gate.
 
 ### Shell-portable Git revision syntax
 
