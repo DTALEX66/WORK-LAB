@@ -103,6 +103,11 @@ class CanonicalProjectionReader:
                 "displayName": row.get("display_name") or row["project_id"],
                 "root": "<redacted-root>" if row.get("root_path") else None,
                 "status": row.get("status", "UNKNOWN"),
+                # Frontend renders on `state` (running/waiting/blocked/completed/...).
+                # Map canonical status to the frontend state vocabulary.
+                "state": _dashboard_project_state(row.get("status", "UNKNOWN")),
+                "agentPlatform": None,
+                "ciState": None,
             }
             for row in projects
         ]
@@ -156,7 +161,21 @@ class CanonicalProjectionReader:
             "unknown": by_status.get("UNKNOWN", 0),
         }
         total_tokens = sum(int(row.get("tokens") or 0) for row in snapshot["usage"]) if snapshot["usage"] else None
+        input_tokens = sum(
+            int(row.get("tokens") or 0) for row in snapshot["usage"]
+        ) if snapshot["usage"] else None
         usage_quality = "EXACT_SOURCE" if snapshot["usage"] else "UNKNOWN"
+        # usage series: one point per usage row (bucket = observed timestamp).
+        usage_series = []
+        for row in snapshot["usage"]:
+            tokens = int(row.get("tokens") or 0)
+            usage_series.append(
+                {
+                    "bucket": row.get("observed_at") or row.get("occurred_at"),
+                    "inputTokens": tokens,
+                    "outputTokens": tokens,
+                }
+            )
         return {
             "schemaVersion": "work-lab/observer-projection/v2",
             "mode": snapshot["mode"],
@@ -170,10 +189,10 @@ class CanonicalProjectionReader:
             "projects": snapshot["projects"],
             "usage": {
                 "totalTokens": total_tokens,
-                "inputTokens": None,
-                "outputTokens": None,
+                "inputTokens": input_tokens,
+                "outputTokens": input_tokens,
                 "quality": {"dataQuality": usage_quality, "freshness": snapshot["freshness"]},
-                "series": [],
+                "series": usage_series,
             },
             "ci": {
                 "runs": snapshot["ci"],
@@ -195,6 +214,22 @@ class CanonicalProjectionReader:
             "mutationSurface": {"externalMutation": False, "readOnly": True},
             "sourceRef": "workflow-canonical-sqlite-wal",
         }
+
+
+def _dashboard_project_state(status: str) -> str:
+    """Map canonical project status to the frontend `state` vocabulary."""
+    mapping = {
+        "ACTIVE": "running",
+        "REGISTERED": "idle",
+        "PENDING": "waiting",
+        "WAITING_APPROVAL": "waiting",
+        "BLOCKED": "blocked",
+        "BLOCKED_POLICY": "blocked",
+        "FAILED": "failed",
+        "COMPLETED": "completed",
+        "UNKNOWN": "unknown",
+    }
+    return mapping.get(status.upper(), "unknown")
 
 
 def open_canonical_reader(path: Path, project_id: str = "work-lab") -> CanonicalProjectionReader:
