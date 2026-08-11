@@ -322,15 +322,19 @@ def _freshness(observed_at: str | None) -> tuple[str, int | None]:
     return "stale", age
 
 
-def _load_governance(project_root: Path) -> tuple[dict[str, Any], dict[str, Any], int]:
+def _unknown_dimension() -> dict[str, int | None]:
+    return {"current": None, "drift": None, "quarantined": None, "conflicts": None, "stale": None}
+
+
+def _load_governance(project_root: Path) -> tuple[dict[str, Any], dict[str, Any], int | None]:
     """Load REAL governance inventory: skills / adapters / rules / memory from repo files.
 
     Returns (skills_dim, adapters_dim, rule_count). Never invents values — reads the
     actual governance artifacts (CURRENT_STATE skills, adapter-registry, 00-governance/rules).
     """
-    skills = {"current": 0, "drift": 0, "quarantined": 0, "conflicts": 0, "stale": 0}
-    adapters = {"current": 0, "drift": 0, "quarantined": 0, "conflicts": 0, "stale": 0}
-    rules_count = 0
+    skills = _unknown_dimension()
+    adapters = _unknown_dimension()
+    rules_count: int | None = None
     # Skills from CURRENT_STATE
     cs = project_root / "00-governance" / "generated" / "CURRENT_STATE.json"
     if cs.exists():
@@ -361,7 +365,12 @@ def _load_governance(project_root: Path) -> tuple[dict[str, Any], dict[str, Any]
     return skills, adapters, rules_count
 
 
-def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalog: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
+def project_authority_dashboard(
+    events: Iterable[dict[str, Any]],
+    pricing_catalog: dict[str, dict[str, Any]] | None = None,
+    *,
+    mode: str | None = None,
+) -> dict[str, Any]:
     """Build the authoritative dashboard projection (Schema v2) from REAL governance +
     real observed events.
 
@@ -370,9 +379,14 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
       code ownership entries, not proof that a project is currently running.
     - `governance`: real Rules / Skills / Adapters / Memory·Context inventory counts.
     - usage/quality from real event aggregates.
-    Output follows contracts/dashboard-projection.schema.json (LIVE mode).
+    LIVE is only emitted after an explicit caller declaration. A finite event
+    collection is otherwise a SNAPSHOT; an empty collection is UNKNOWN.
     """
     history = [deepcopy(e) for e in events]
+    allowed_modes = {"LIVE", "SNAPSHOT", "FIXTURE", "STALE", "OFFLINE", "UNKNOWN"}
+    projection_mode = mode or ("SNAPSHOT" if history else "UNKNOWN")
+    if projection_mode not in allowed_modes:
+        raise ObserverInputError(f"unsupported projection mode: {projection_mode}")
     observed_times = sorted(e["observedAt"] for e in history if isinstance(e.get("observedAt"), str))
     generated_at = observed_times[-1] if observed_times else "1970-01-01T00:00:00+00:00"
     freshness_state, age_seconds = _freshness(generated_at if observed_times else None)
@@ -393,8 +407,6 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
         project_events = observed[project_id]
         latest = max(project_events, key=lambda e: str(e.get("observedAt", "")))
         state = _task_state(latest.get("eventType", ""))
-        if state == "unknown":
-            state = "running"
         task_titles = [e.get("taskTitle") or "工作项" for e in project_events if isinstance(e.get("taskId"), str) and e.get("taskId")]
         last_event_at = latest.get("observedAt")
         project_freshness, _ = _freshness(last_event_at)
@@ -431,10 +443,10 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
     # --- Real governance inventory
     skills_dim, adapters_dim, rules_count = _load_governance(project_root)
     governance = {
-        "rules": {"current": rules_count, "drift": 0, "quarantined": 0, "conflicts": 0, "stale": 0},
+        "rules": {"current": rules_count, "drift": None, "quarantined": None, "conflicts": None, "stale": None},
         "skills": skills_dim,
         "adapters": adapters_dim,
-        "memoryContext": {"current": 0, "drift": 0, "quarantined": 0, "conflicts": 0, "stale": 0},
+        "memoryContext": _unknown_dimension(),
     }
 
     # --- Usage / quality from real events
@@ -478,14 +490,14 @@ def project_authority_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
 
     return {
         "schemaVersion": "work-lab/observer-projection/v2",
-        "mode": "LIVE",
+        "mode": projection_mode,
         "generatedAt": generated_at,
         "freshness": {"state": freshness_state, "ageSeconds": age_seconds, "lastGoodAt": generated_at if observed_times else None},
         "summary": {"registeredProjects": len(main_projects), "activeProjects": counts["running"] + counts["waiting"], "tasks": counts},
         "projects": main_projects,
         "primaryBlocker": next(({"projectId": p["projectId"], "title": p["state"], "state": "BLOCKED", "durationSeconds": 0, "lastObservedAt": None, "impact": None, "nextCondition": None, "quality": p["quality"]} for p in main_projects if p["state"] == "blocked"), None),
         "usage": usage,
-        "ci": {"exactShaBound": 0, "exactShaRequired": 0, "queuedNoJob": 0, "running": 0, "passed": 0, "failed": 0, "unknown": 0, "quality": {"evidenceCompleteness": "partial", "dataQuality": "exact", "freshness": freshness_state}},
+        "ci": {"exactShaBound": None, "exactShaRequired": None, "queuedNoJob": None, "running": None, "passed": None, "failed": None, "unknown": None, "quality": {"evidenceCompleteness": "missing", "dataQuality": "unknown", "freshness": "unknown"}},
         "governance": governance,
         "quality": quality,
         "sourceRefs": [],

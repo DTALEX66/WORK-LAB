@@ -103,6 +103,23 @@ function run() {
     assert(/method:\s*["']GET["']/i.test(apiSrc), "GET method explicit");
   });
 
+  t("dashboard endpoint accepts only explicit loopback read-only URL", () => {
+    global.window = { location: { search: "?api=" + encodeURIComponent("http://127.0.0.1:43123/api/dashboard") } };
+    try {
+      assert(WlApi.dashboardEndpoint() === "http://127.0.0.1:43123/api/dashboard", "loopback endpoint accepted");
+      global.window.location.search = "?api=" + encodeURIComponent("https://external.invalid/api/dashboard");
+      let rejected = false;
+      try { WlApi.dashboardEndpoint(); } catch (_) { rejected = true; }
+      assert(rejected, "external endpoint rejected");
+      global.window.location.search = "?api=" + encodeURIComponent("http://127.0.0.1:43123/api/dashboard?write=1");
+      rejected = false;
+      try { WlApi.dashboardEndpoint(); } catch (_) { rejected = true; }
+      assert(rejected, "query-bearing endpoint rejected");
+    } finally {
+      delete global.window;
+    }
+  });
+
   t("theme toggle is memory-only (no server persistence, no storage)", () => {
     const appSrc = fs.readFileSync(path.join(WEB, "scripts", "app.js"), "utf-8");
     assert(!/localStorage|sessionStorage|document\.cookie/.test(appSrc), "no persistent storage");

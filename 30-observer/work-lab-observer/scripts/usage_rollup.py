@@ -1,168 +1,168 @@
-"""Usage rollup / retention / freshness semantics (NX-320).
-
-- Idempotent rollup: re-ingesting the same fixture produces identical aggregates.
-- Rebuildable projection: totals are recomputed from events, never stored-as-fact.
-- Pricing expiry: if a model's pricing is stale/unknown, cost auto-downgrades to
-  stale/unknown (never fabricates USD for a subscription or stale quote).
-- Layered retention; raw sensitive bodies never enter the retention chain.
-- Observer shows source / coverage / freshness / quality / last-good /
-  estimated-vs-reconciled.
-"""
+"""Rebuildable usage rollup with caller-supplied, expiring pricing facts."""
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+import json
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
-# Pricing catalog: model -> pricing. Subscriptions are not-metered (no USD).
-PRICING_CATALOG: dict[str, dict[str, Any]] = {
-    "deepseek-v4-flash": {
-        "alias": "deepseek-v4-flash", "billing": "metered",
-        "source": "vendor-pricing-snapshot", "effective_at": "2026-08-01",
-        "currency": "USD", "stale": False,
-        "input_per_million": 0.27, "output_per_million": 1.10,
-    },
-    "gpt-5.6-terra": {
-        "alias": "gpt-5.6-terra", "billing": "subscription",
-        "source": "subscription-not-metered", "effective_at": "2026-01-01",
-        "currency": "USD", "stale": False,
-    },
-    "claude-3-5-sonnet": {
-        "alias": "claude-3-5-sonnet", "billing": "metered",
-        "source": "vendor-pricing-snapshot", "effective_at": "2026-05-01",
-        "currency": "USD", "stale": True,  # expired -> cost downgrades to stale
-        "input_per_million": 3.0, "output_per_million": 15.0,
-    },
-}
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
-def _price_for(model: str) -> dict[str, Any] | None:
-    return PRICING_CATALOG.get(model)
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+def _iso(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 def _event_fingerprint(event: dict[str, Any]) -> str:
-    """Deterministic fingerprint of the observable usage fields (idempotency key)."""
     usage = event.get("usage") or {}
-    payload = json_dumps({k: usage.get(k) for k in (
-        "provider", "model", "operation", "inputTokens", "outputTokens",
-        "cacheReadTokens", "cacheWriteTokens", "taskDigest", "observedAt",
-    )})
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    payload = {
+        key: usage.get(key)
+        for key in (
+            "provider", "model", "operation", "inputTokens", "outputTokens",
+            "cacheReadTokens", "cacheWriteTokens", "taskDigest", "observedAt",
+        )
+    }
+    return hashlib.sha256(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    ).hexdigest()
 
 
-def json_dumps(value: Any) -> str:
-    import json
-    return json.dumps(value, ensure_ascii=False, sort_keys=True)
+def price_status_for(
+    model: str,
+    pricing_catalog: dict[str, dict[str, Any]] | None = None,
+    *,
+    as_of: datetime | None = None,
+) -> dict[str, Any]:
+    fact = (pricing_catalog or {}).get(model)
+    if not isinstance(fact, dict):
+        return {"status": "unknown", "coverage": "unknown", "freshness": "unknown"}
+    required = ("billing", "source", "observed_at", "valid_until")
+    if any(not fact.get(key) for key in required):
+        return {"status": "invalid", "coverage": "partial", "freshness": "unknown"}
+    try:
+        observed_at = _iso(str(fact["observed_at"]))
+        valid_until = _iso(str(fact["valid_until"]))
+    except (TypeError, ValueError):
+        return {"status": "invalid", "coverage": "partial", "freshness": "unknown"}
+    current = (as_of or _now()).astimezone(timezone.utc)
+    common = {
+        "coverage": "full",
+        "source": str(fact["source"]),
+        "observed_at": observed_at.isoformat(),
+        "valid_until": valid_until.isoformat(),
+    }
+    if current > valid_until:
+        return {"status": "stale", "freshness": "stale", **common}
+    if fact["billing"] == "subscription":
+        return {"status": "not-metered", "freshness": "fresh", **common}
+    rates = (fact.get("input_per_million"), fact.get("output_per_million"))
+    if fact["billing"] != "metered" or any(
+        isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0
+        for value in rates
+    ):
+        return {"status": "invalid", "freshness": "unknown", "coverage": "partial", **{k: v for k, v in common.items() if k != "coverage"}}
+    return {
+        "status": "estimated",
+        "freshness": "fresh",
+        "input_per_million": float(rates[0]),
+        "output_per_million": float(rates[1]),
+        "currency": str(fact.get("currency") or "UNKNOWN"),
+        **common,
+    }
 
 
-def rollup(events: Iterable[dict[str, Any]]) -> dict[str, Any]:
-    """Idempotent, rebuildable aggregate of usage events.
-
-    Same fixture -> same output (dedup by fingerprint). Tokens/cache/reasoning/
-    tool/outcome kept separate; never infer subscription quota from token count.
-    """
-    events = list(events)
-    # Idempotency: dedup by fingerprint.
+def rollup(
+    events: Iterable[dict[str, Any]],
+    pricing_catalog: dict[str, dict[str, Any]] | None = None,
+    *,
+    as_of: datetime | None = None,
+) -> dict[str, Any]:
     seen: set[str] = set()
     unique: list[dict[str, Any]] = []
     for event in events:
-        fp = _event_fingerprint(event)
-        if fp in seen:
-            continue
-        seen.add(fp)
-        unique.append(event)
+        fingerprint = _event_fingerprint(event)
+        if fingerprint not in seen:
+            seen.add(fingerprint)
+            unique.append(event)
 
-    totals = {
-        "inputTokens": 0, "outputTokens": 0, "cacheReadTokens": 0,
-        "cacheWriteTokens": 0, "latencyMs": 0, "count": 0,
-        "estimatedCostUsd": None, "costStatus": "unknown",
+    totals: dict[str, Any] = {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "latencyMs": 0,
+        "count": 0,
+        "estimatedCostUsd": None,
+        "costStatus": "unknown",
     }
-    model_usage: dict[str, dict[str, Any]] = {}
-    subscription_models: list[str] = []
-
+    by_model: dict[str, dict[str, Any]] = {}
     for event in unique:
         usage = event.get("usage") or {}
-        model = usage.get("model") or "unknown"
-        for k in ("inputTokens", "outputTokens", "cacheReadTokens", "cacheWriteTokens"):
-            v = usage.get(k)
-            if isinstance(v, (int, float)):
-                totals[k] += v
+        model = str(usage.get("model") or "unknown")
+        item = by_model.setdefault(
+            model,
+            {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cacheReadTokens": 0,
+                "cacheWriteTokens": 0,
+                "count": 0,
+                "costStatus": "unknown",
+                "estimatedCostUsd": None,
+            },
+        )
+        for key in ("inputTokens", "outputTokens", "cacheReadTokens", "cacheWriteTokens"):
+            value = usage.get(key)
+            if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0:
+                totals[key] += value
+                item[key] += value
         latency = usage.get("latencyMs")
-        if isinstance(latency, (int, float)):
+        if isinstance(latency, (int, float)) and not isinstance(latency, bool) and latency >= 0:
             totals["latencyMs"] += latency
         totals["count"] += 1
-        # Separate per-model aggregates.
-        m = model_usage.setdefault(model, {
-            "inputTokens": 0, "outputTokens": 0, "cacheReadTokens": 0,
-            "cacheWriteTokens": 0, "count": 0, "costStatus": "unknown",
-            "estimatedCostUsd": None,
-        })
-        for k in ("inputTokens", "outputTokens", "cacheReadTokens", "cacheWriteTokens"):
-            v = usage.get(k)
-            if isinstance(v, (int, float)):
-                m[k] += v
-        m["count"] += 1
+        item["count"] += 1
 
-    # Cost estimation with pricing freshness downgrade.
-    total_cost = 0.0
-    has_metered = False
-    cost_status = "estimated"
-    for model, m in model_usage.items():
-        price = _price_for(model)
-        if price is None:
-            m["costStatus"] = "unknown"
-            cost_status = "unknown" if cost_status == "estimated" else cost_status
-            continue
-        if price["billing"] == "subscription":
-            m["costStatus"] = "not-metered"
+    aggregate_cost = 0.0
+    statuses: list[str] = []
+    subscription_models: list[str] = []
+    for model, item in by_model.items():
+        status = price_status_for(model, pricing_catalog, as_of=as_of)
+        item["pricing"] = status
+        item["costStatus"] = status["status"]
+        statuses.append(status["status"])
+        if status["status"] == "not-metered":
             subscription_models.append(model)
-            continue
-        if price.get("stale"):
-            # Expired quote -> downgrade, do not fabricate current USD.
-            m["costStatus"] = "stale"
-            cost_status = "stale"
-            continue
-        # metered, fresh
-        cost = (m["inputTokens"] / 1_000_000) * price["input_per_million"] + \
-               (m["outputTokens"] / 1_000_000) * price["output_per_million"]
-        m["estimatedCostUsd"] = round(cost, 4)
-        m["costStatus"] = "estimated"
-        total_cost += cost
-        has_metered = True
+        elif status["status"] == "estimated":
+            cost = (
+                item["inputTokens"] / 1_000_000 * status["input_per_million"]
+                + item["outputTokens"] / 1_000_000 * status["output_per_million"]
+            )
+            item["estimatedCostUsd"] = round(cost, 8)
+            aggregate_cost += cost
 
-    if has_metered and cost_status != "stale":
-        totals["estimatedCostUsd"] = round(total_cost, 4)
-        totals["costStatus"] = "estimated"
-    elif cost_status == "stale":
+    if statuses and all(status in {"estimated", "not-metered"} for status in statuses):
+        if any(status == "estimated" for status in statuses):
+            totals["estimatedCostUsd"] = round(aggregate_cost, 8)
+            totals["costStatus"] = "estimated"
+        else:
+            totals["costStatus"] = "not-metered"
+    elif "stale" in statuses:
         totals["costStatus"] = "stale"
-    elif not has_metered:
-        totals["costStatus"] = "not-metered" if subscription_models else "unknown"
+    elif statuses:
+        totals["costStatus"] = "partial"
 
     return {
-        "schemaVersion": "work-lab/usage-rollup/v1",
-        "generatedAt": _now(),
+        "schemaVersion": "work-lab/usage-rollup/v2",
+        "generatedAt": (as_of or _now()).astimezone(timezone.utc).isoformat(),
         "totals": totals,
-        "byModel": model_usage,
+        "byModel": by_model,
         "subscriptionModels": subscription_models,
-        "idempotent": True, "rebuildable": True,
+        "idempotent": True,
+        "rebuildable": True,
         "privacy": {"rawBodies": False, "sensitiveBodies": False},
-    }
-
-
-def price_status_for(model: str) -> dict[str, str]:
-    """Expose pricing freshness for Observer (source/coverage/freshness/last-good)."""
-    price = _price_for(model)
-    if price is None:
-        return {"status": "unknown", "coverage": "unknown", "freshness": "unknown"}
-    return {
-        "status": "stale" if price.get("stale") else ("not-metered" if price["billing"] == "subscription" else "estimated"),
-        "coverage": "full",
-        "freshness": "stale" if price.get("stale") else "fresh",
-        "source": price["source"],
-        "effective_at": price["effective_at"],
     }

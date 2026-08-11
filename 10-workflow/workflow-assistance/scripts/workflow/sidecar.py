@@ -7,43 +7,100 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import os
 from pathlib import Path
+import queue
+import threading
 from typing import Any
 from urllib.parse import urlsplit
 import uuid
 
 from sidecar_lock import SingleInstanceLock
-from telemetry_ledger import TelemetryLedger
-from task_ledger import TaskLedger
+from canonical_store import CanonicalStore
+from sse_hub import HEARTBEAT_SECONDS, LIVE, LiveProjection, SNAPSHOT, STALE, render_sse_frames
 
 
 class WorkflowSidecar:
     def __init__(self, project_root: Path, runtime_root: Path) -> None:
         self.project_root = project_root.resolve()
         self.runtime_root = runtime_root.resolve()
-        self.ledger = TelemetryLedger(self.runtime_root / "telemetry.jsonl")
-        self.tasks = TaskLedger(self.runtime_root / "task-ledger")
+        self.store = CanonicalStore(self.runtime_root / "canonical.sqlite")
+        self.live = LiveProjection(self.store)
+        self._watch_stop = threading.Event()
+        self._watch_thread: threading.Thread | None = None
+
+    def _canonical_fingerprint(self) -> str:
+        canonical = self.store.projection()
+        stable = {
+            "integrity": canonical["integrity"],
+            "tables": canonical["tables"],
+            "tasks_by_status": canonical["tasks_by_status"],
+            "telemetry_events": canonical["telemetry_events"],
+            "usage_summary": canonical["usage_summary"],
+            "ci_summary": canonical["ci_summary"],
+        }
+        return json.dumps(stable, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+    def start_live_updates(self, interval_seconds: float = 0.25) -> None:
+        """Publish canonical deltas written by the separate Workflow worker."""
+        if interval_seconds <= 0:
+            raise ValueError("live update interval must be positive")
+        if self._watch_thread and self._watch_thread.is_alive():
+            return
+        self._watch_stop.clear()
+        last_fingerprint = self._canonical_fingerprint()
+        self.live.set_mode(LIVE)
+
+        def _watch() -> None:
+            nonlocal last_fingerprint
+            while not self._watch_stop.wait(interval_seconds):
+                try:
+                    current = self._canonical_fingerprint()
+                except Exception:  # fail closed if canonical readback is unavailable
+                    if self.live.mode() != STALE:
+                        self.live.set_mode(STALE)
+                    continue
+                if self.live.mode() != LIVE:
+                    self.live.set_mode(LIVE)
+                if current != last_fingerprint:
+                    last_fingerprint = current
+                    self.publish_observed()
+
+        self._watch_thread = threading.Thread(
+            target=_watch,
+            daemon=True,
+            name="workflow-sidecar-canonical-watch",
+        )
+        self._watch_thread.start()
+
+    def stop_live_updates(self) -> None:
+        self._watch_stop.set()
+        if self._watch_thread and self._watch_thread is not threading.current_thread():
+            self._watch_thread.join(timeout=2.0)
+        self._watch_thread = None
 
     def health(self) -> dict[str, Any]:
         return {"status": "ok", "readOnlyControl": True, "ledgerOwner": "workflow-assistance", "observerMutation": False}
 
     def projection(self) -> dict[str, Any]:
-        # A GET must never initialize or mutate the Task Ledger.
-        if self.tasks.path.exists():
-            data = json.loads(self.tasks.path.read_text(encoding="utf-8"))
-            if data.get("schema_version") != "workflow/task-ledger/v1" or not isinstance(data.get("tasks"), dict):
-                raise ValueError("invalid task ledger schema")
-        else:
-            data = {"schema_version": "workflow/task-ledger/v1", "tasks": {}}
-        statuses: dict[str, int] = {}
-        for task in data.get("tasks", {}).values():
-            status = str(task.get("status", "UNKNOWN"))
-            statuses[status] = statuses.get(status, 0) + 1
-        ci_path = self.runtime_root / "ci-observation.json"
-        try:
-            ci = json.loads(ci_path.read_text(encoding="utf-8")) if ci_path.exists() else {"state": "UNKNOWN"}
-        except (OSError, UnicodeError, json.JSONDecodeError):
-            ci = {"state": "UNKNOWN", "quality": "unreadable"}
-        return {"schema_version": "workflow/sidecar-projection/v1", "health": self.health(), "telemetry": self.ledger.projection(), "tasks": {"count": sum(statuses.values()), "by_status": statuses}, "ci": {"state": ci.get("state", "UNKNOWN"), "observed_at": ci.get("observed_at"), "next_observation_at": ci.get("next_observation_at")}}
+        canonical = self.store.projection()
+        statuses = canonical["tasks_by_status"]
+        return {
+            "schema_version": "workflow/sidecar-projection/v1",
+            "mode": self.live.mode(),
+            "health": self.health(),
+            "integrity": canonical["integrity"],
+            "telemetry": {"count": canonical["telemetry_events"]},
+            "tasks": {"count": sum(statuses.values()), "by_status": statuses},
+            "usage": canonical["usage_summary"],
+            "ci": canonical["ci_summary"],
+            "observed_at": canonical["observed_at"],
+        }
+
+    def publish_observed(self) -> str:
+        return self.live.hub.publish("observed", self.projection())
+
+    def close(self) -> None:
+        self.stop_live_updates()
+        self.store.close()
 
 
 def _is_loopback_host(host: str | None) -> bool:
@@ -91,6 +148,7 @@ class _WorkflowHTTPServer(ThreadingHTTPServer):
 
     def __init__(self, address: tuple[str, int], handler: type[BaseHTTPRequestHandler], sidecar: WorkflowSidecar) -> None:
         self._sidecar_lock = SingleInstanceLock(sidecar.runtime_root / "sidecar.lock")
+        self.sidecar = sidecar
         self._sidecar_lock.acquire()
         self._endpoint_path = sidecar.runtime_root / "sidecar-endpoint.json"
         self._closed = False
@@ -129,14 +187,24 @@ class _WorkflowHTTPServer(ThreadingHTTPServer):
             try:
                 super().server_close()
             finally:
-                self._sidecar_lock.release()
+                try:
+                    self.sidecar.close()
+                finally:
+                    self._sidecar_lock.release()
 
 
-def create_server(sidecar: WorkflowSidecar, host: str = "127.0.0.1", port: int = 0) -> ThreadingHTTPServer:
+def create_server(
+    sidecar: WorkflowSidecar,
+    host: str = "127.0.0.1",
+    port: int = 0,
+    *,
+    live_updates: bool = False,
+) -> ThreadingHTTPServer:
     if not _is_loopback_host(host):
         raise ValueError("sidecar host must be loopback-only")
 
     class Handler(BaseHTTPRequestHandler):
+        protocol_version = "HTTP/1.1"
         def _cors_origin(self) -> str | None:
             origin = self.headers.get("Origin")
             return origin if origin and _allowed_origin(origin) else None
@@ -165,30 +233,34 @@ def create_server(sidecar: WorkflowSidecar, host: str = "127.0.0.1", port: int =
             elif path in {"/api/projection", "/api/v1/snapshot"}:
                 self.send_json(200, sidecar.projection())
             elif path == "/api/v1/events":
-                events = sidecar.ledger.projection()["events"]
                 last_id = self.headers.get("Last-Event-ID")
-                if last_id:
-                    for index, event in enumerate(events):
-                        if event.get("event_id") == last_id:
-                            events = events[index + 1 :]
-                            break
-                frames = ["retry: 2000\n\n"]
-                frames.extend(
-                    f"id: {event['event_id']}\ndata: {json.dumps(event, ensure_ascii=False)}\n\n"
-                    for event in events
-                )
-                body = "".join(frames).encode("utf-8")
+                subscriber = sidecar.live.subscribe()
                 self.send_response(200)
                 self.send_header("Content-Type", "text/event-stream; charset=utf-8")
                 self.send_header("Cache-Control", "no-store")
                 self.send_header("X-Accel-Buffering", "no")
-                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Connection", "keep-alive")
                 cors_origin = self._cors_origin()
                 if cors_origin:
                     self.send_header("Access-Control-Allow-Origin", cors_origin)
                     self.send_header("Vary", "Origin")
                 self.end_headers()
-                self.wfile.write(body)
+                try:
+                    replay = sidecar.live.hub.messages_since(last_id)
+                    self.wfile.write(render_sse_frames(replay, include_retry=True).encode("utf-8"))
+                    self.wfile.flush()
+                    while True:
+                        try:
+                            message = subscriber.get(timeout=HEARTBEAT_SECONDS)
+                            frame = render_sse_frames([message])
+                        except queue.Empty:
+                            frame = render_sse_frames([], include_heartbeat=True)
+                        self.wfile.write(frame.encode("utf-8"))
+                        self.wfile.flush()
+                except (BrokenPipeError, ConnectionResetError, OSError):
+                    return
+                finally:
+                    sidecar.live.unsubscribe(subscriber)
             else:
                 self.send_json(404, {"status": "not_found"})
 
@@ -207,7 +279,18 @@ def create_server(sidecar: WorkflowSidecar, host: str = "127.0.0.1", port: int =
         def log_message(self, format: str, *args: Any) -> None:
             return
 
-    return _WorkflowHTTPServer((host, port), Handler, sidecar)
+    server: _WorkflowHTTPServer | None = None
+    try:
+        server = _WorkflowHTTPServer((host, port), Handler, sidecar)
+        if live_updates:
+            sidecar.start_live_updates()
+        return server
+    except Exception:
+        if server is not None:
+            server.server_close()
+        else:
+            sidecar.close()
+        raise
 
 
 def main() -> int:
@@ -215,12 +298,20 @@ def main() -> int:
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--runtime-root", type=Path)
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8766)
+    parser.add_argument("--port", type=int, default=0)
     args = parser.parse_args()
     project_root = args.project_root.resolve()
     runtime_root = (args.runtime_root or project_root / ".hermes" / "task-runtime" / "workflow").resolve()
-    server = create_server(WorkflowSidecar(project_root, runtime_root), args.host, args.port)
-    print(f"WORKFLOW_SIDECAR_READY url=http://{args.host}:{server.server_port} ledger_owner=workflow-assistance")
+    server = create_server(
+        WorkflowSidecar(project_root, runtime_root),
+        args.host,
+        args.port,
+        live_updates=True,
+    )
+    print(
+        f"WORKFLOW_SIDECAR_READY url=http://{args.host}:{server.server_port} ledger_owner=workflow-assistance",
+        flush=True,
+    )
     try:
         server.serve_forever()
     except KeyboardInterrupt:

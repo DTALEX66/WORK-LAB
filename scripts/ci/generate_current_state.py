@@ -21,6 +21,7 @@ import yaml
 
 
 DEFAULT_CI_EVIDENCE = Path(".hermes/task-artifacts/current-state-ci.json")
+DEFAULT_RUNTIME_ATTESTATION = Path(".hermes/task-artifacts/current-state-runtime-attestation.json")
 CANONICAL_FILES = (
     "00-governance/PROJECT_POSITIONING.md",
     "00-governance/projects.json",
@@ -127,13 +128,8 @@ def content_digest(state: dict[str, Any]) -> str:
 
 
 def projection_digest(state: dict[str, Any]) -> str:
-    """Digest deterministic tracked projection fields, excluding commit/time/CI evidence.
-
-    A tracked file cannot contain the SHA of the commit that contains itself. This
-    digest therefore proves canonical-source freshness without a recursive HEAD
-    dependency, while the publication gate proves the final exact commit separately.
-    """
-    volatile = {"generated_at", "git", "ci", "content_digest"}
+    """Digest deterministic tracked projection fields without recursive identity."""
+    volatile = {"generated_at", "content_digest"}
     payload = {key: value for key, value in state.items() if key not in volatile}
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return sha256_bytes(encoded)
@@ -263,11 +259,10 @@ def build_state(
         "schema_version": "work-lab-current-state/v1",
         "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "source_digest": source_digest(root),
-        "git": {
-            "head": _git(root, "rev-parse", "HEAD"),
-            "branch": _git(root, "branch", "--show-current"),
-            "head_tree": _git(root, "rev-parse", "HEAD^{tree}"),
-            "remote_main": _git(root, "rev-parse", "origin/main"),
+        "checkout_attestation": {
+            "status": "RUNTIME_REQUIRED",
+            "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
+            "ci_without_exact_runtime_evidence": "UNVERIFIED_MAIN_CI",
         },
         "modules": [
             {
@@ -301,15 +296,9 @@ def build_state(
             "taskpack_id": stage3_graph.get("taskpackId", "unknown"),
             "task_count": len(stage3_graph.get("tasks", [])),
             "initial_state": stage3_graph.get("initialState", "unknown"),
-            "baseline_candidate_tree": stage3_baseline.get("git", {}).get("incomingCandidateTree", "unknown"),
-            "incoming_dirty_count": sum(
-                len(items)
-                for items in stage3_baseline.get("dirtyClassification", {}).values()
-                if isinstance(items, list)
-            ),
-            "writer_state": stage3_baseline.get("writer", {}).get("state", "unknown"),
+            "historical_baseline_source": "00-governance/generated/STAGE3_BASELINE.json",
+            "historical_baseline_status": "HISTORICAL_ONLY",
         },
-        "ci": _compact_ci(ci_evidence),
         "unverified_capabilities": [
             "hermes_live_apply",
             "paid_provider_smoke",
@@ -320,6 +309,31 @@ def build_state(
     }
     state["content_digest"] = content_digest(state)
     return state
+
+
+def build_runtime_attestation(
+    root: Path,
+    *,
+    ci_evidence: Path | None = None,
+) -> dict[str, Any]:
+    """Bind the live checkout and optional exact-SHA CI outside tracked source."""
+
+    root = root.resolve()
+    status = _git(root, "status", "--short")
+    dirty_lines = [line for line in status.splitlines() if line.strip() and line != "unknown"]
+    return {
+        "schema_version": "work-lab-runtime-attestation/v1",
+        "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "git": {
+            "head": _git(root, "rev-parse", "HEAD"),
+            "branch": _git(root, "branch", "--show-current"),
+            "head_tree": _git(root, "rev-parse", "HEAD^{tree}"),
+            "remote_main": _git(root, "rev-parse", "origin/main"),
+            "dirty_count": len(dirty_lines),
+        },
+        "writer": {"state": "UNIQUE"},
+        "ci": _compact_ci(ci_evidence),
+    }
 
 
 def check_stale_references(paths: Iterable[Path]) -> list[str]:
@@ -357,10 +371,6 @@ def _canonical_doc_paths(root: Path) -> list[Path]:
 
 def render_markdown(state: dict[str, Any]) -> str:
     modules = "\n".join(f"- `{item['id']}` — `{item['path']}`" for item in state["modules"])
-    jobs = state["ci"].get("jobs", [])
-    job_lines = "\n".join(
-        f"- `{job['name']}`: {job['conclusion']} ({job['status']})" for job in jobs
-    ) or "- unavailable"
     unverified = "\n".join(f"- `{item}`" for item in state["unverified_capabilities"])
     return f"""# WORK-LAB current state
 
@@ -368,10 +378,11 @@ Generated at: `{state['generated_at']}`  \\
 Source digest: `{state['source_digest']}`  \\
 Content digest: `{state['content_digest']}`
 
-## Git
+## Git and CI attestation
 
-- HEAD: `{state['git']['head']}`
-- Branch: `{state['git']['branch']}`
+- Checkout identity: `{state['checkout_attestation']['status']}`
+- Tracked projection: `{state['checkout_attestation']['tracked_projection']}`
+- CI without exact runtime evidence: `{state['checkout_attestation']['ci_without_exact_runtime_evidence']}`
 
 ## Active modules
 
@@ -391,21 +402,13 @@ Content digest: `{state['content_digest']}`
 - Aggregate job: `{state['workflow_identity']['aggregate_job']}`
 - Manifest-declared required workflows: `{', '.join(state['workflow_identity']['manifest_declared_required_workflows']) or 'none'}`
 
-## Stage 3 baseline
+## Stage 3 task graph
 
 - TaskPack: `{state['stage3']['taskpack_id']}`
 - Tasks: `{state['stage3']['task_count']}`
 - Initial state: `{state['stage3']['initial_state']}`
-- Incoming candidate tree: `{state['stage3']['baseline_candidate_tree']}`
-- Incoming dirty paths: `{state['stage3']['incoming_dirty_count']}`
-- Writer state: `{state['stage3']['writer_state']}`
-
-## CI evidence
-
-- Run: `{state['ci'].get('run_id', 'unknown')}`
-- Head SHA: `{state['ci'].get('head_sha', 'unknown')}`
-- Conclusion: `{state['ci'].get('conclusion', 'unknown')}`
-{job_lines}
+- Historical baseline source: `{state['stage3']['historical_baseline_source']}`
+- Historical baseline status: `{state['stage3']['historical_baseline_status']}`
 
 ## Explicitly unverified
 
@@ -420,6 +423,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--markdown-out", type=Path, default=Path("00-governance/generated/CURRENT_STATE.md"))
     parser.add_argument("--ci-evidence", type=Path)
     parser.add_argument("--portable-readback", type=Path)
+    parser.add_argument("--runtime-attestation-out", type=Path)
     parser.add_argument("--check-stale", action="store_true")
     parser.add_argument("--check-current", action="store_true")
     args = parser.parse_args(argv)
@@ -457,52 +461,6 @@ def main(argv: list[str] | None = None) -> int:
         if projection_digest(tracked) != projection_digest(expected):
             print("CURRENT_STATE_FRESHNESS_FAIL projection-digest-mismatch")
             return 1
-        actual_head = expected["git"]["head"]
-        tracked_git = tracked.get("git", {})
-        tracked_head = str(tracked_git.get("head", ""))
-        tracked_tree = str(tracked_git.get("head_tree", ""))
-        # On PR CI the checkout HEAD is the merge ref whose parent is the PR
-        # base; the tracked head (generated on the PR branch) is therefore an
-        # ancestor of HEAD, not HEAD^ specifically. Accept any ancestor of HEAD
-        # (merge-base --is-ancestor) so stale branch/head can never pass, while
-        # PR merge refs and post-commit HEAD advancement both verify.
-        import subprocess as _subprocess
-
-        def _is_ancestor(commit: str, head: str) -> bool:
-            result = _subprocess.run(
-                ["git", "merge-base", "--is-ancestor", commit, head],
-                cwd=root, text=True, capture_output=True, check=False,
-            )
-            return result.returncode == 0
-
-        if not _is_ancestor(tracked_head, actual_head):
-            print(
-                f"CURRENT_STATE_FRESHNESS_FAIL git-head tracked={tracked_head} "
-                f"actual={actual_head} (not an ancestor of HEAD)"
-            )
-            return 1
-        # The tracked head's own tree must match the recorded head_tree (internal
-        # consistency), and the tracked head must be reachable. We do not require
-        # the PR merge ref's tree to equal the branch commit's tree.
-        tracked_commit_tree = _git(root, "rev-parse", f"{tracked_head}^{{tree}}")
-        if tracked_commit_tree != tracked_tree:
-            print(
-                f"CURRENT_STATE_FRESHNESS_FAIL git-tree tracked={tracked_tree} "
-                f"tracked_head_tree={tracked_commit_tree}"
-            )
-            return 1
-        if ci_evidence is not None:
-            tracked_ci = tracked.get("ci", {})
-            expected_ci = expected["ci"]
-            if str(tracked_ci.get("run_id", "")) != str(expected_ci.get("run_id", "")):
-                print(
-                    f"CURRENT_STATE_FRESHNESS_FAIL ci-run tracked={tracked_ci.get('run_id')} "
-                    f"expected={expected_ci.get('run_id')}"
-                )
-                return 1
-            if str(tracked_ci.get("head_sha", "")) != str(expected_ci.get("head_sha", "")):
-                print("CURRENT_STATE_FRESHNESS_FAIL ci-head")
-                return 1
         try:
             markdown = markdown_path.read_text(encoding="utf-8")
         except (OSError, UnicodeError):
@@ -526,8 +484,21 @@ def main(argv: list[str] | None = None) -> int:
     markdown_out.parent.mkdir(parents=True, exist_ok=True)
     json_out.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     markdown_out.write_text(render_markdown(state), encoding="utf-8")
+    runtime_out = args.runtime_attestation_out
+    if runtime_out is not None:
+        runtime_out = runtime_out if runtime_out.is_absolute() else root / runtime_out
+        allowed_root = (root / ".hermes" / "task-artifacts").resolve()
+        runtime_out = runtime_out.resolve()
+        if not runtime_out.is_relative_to(allowed_root):
+            raise SystemExit("runtime attestation output must stay under .hermes/task-artifacts")
+        runtime_out.parent.mkdir(parents=True, exist_ok=True)
+        runtime_out.write_text(
+            json.dumps(build_runtime_attestation(root, ci_evidence=ci_evidence), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
     print(
-        f"CURRENT_STATE_PASS head={state['git']['head']} modules={len(state['modules'])} "
+        f"CURRENT_STATE_PASS projection={state['checkout_attestation']['tracked_projection']} "
+        f"modules={len(state['modules'])} "
         f"skills={state['skills']['count']} contracts={state['contracts']['count']} "
         f"source_digest={state['source_digest']}"
     )

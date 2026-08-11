@@ -38,10 +38,10 @@ requirements:
   pyyaml: required
   core_runtime: no Hermes installation required
   optional_adapters:
-    hermes: "hermes-agent>=0.19,<0.21"
+    hermes: capability-discovery
 compatibility:
-  config_version_range: ">=33,<35"
-  config_version_snapshot: 33
+  official_schema: capability-discovery
+  official_config_root: capability-discovery
   required_runtime_features:
     - portable_manifest
     - project_data_boundary

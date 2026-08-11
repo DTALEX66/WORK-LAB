@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import sys
 import unittest
+from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts/workflow"))
 from real_adapters import ADAPTERS, conformance_report
 
 
@@ -30,14 +34,14 @@ class RealAdaptersTests(unittest.TestCase):
             if detected["state"] == "UNAVAILABLE":
                 self.assertFalse(detected["installed"])
 
-    def test_apply_requires_approval(self) -> None:
+    def test_unimplemented_mutations_are_unsupported_even_after_approval(self) -> None:
         for adapter in ADAPTERS.values():
             plan = adapter.plan({"task_id": "t", "action": "write"})
-            with self.assertRaises(PermissionError):
-                adapter.apply(plan)
             approved = {**plan, "approval": {**plan["approval"], "status": "APPROVED"}}
-            result = adapter.apply(approved)
-            self.assertEqual(result["status"], "APPLIED")
+            self.assertEqual(adapter.apply(plan)["status"], "UNSUPPORTED")
+            self.assertEqual(adapter.apply(approved)["status"], "UNSUPPORTED")
+            self.assertEqual(adapter.rollback(approved)["status"], "UNSUPPORTED")
+            self.assertNotIn("apply", adapter.capabilities()["operations"])
 
     def test_invoke_is_unsupported_not_faked(self) -> None:
         for adapter in ADAPTERS.values():

@@ -42,7 +42,7 @@ FIRST_CLASS_ADAPTERS = [
     "github",
 
 ]
-HERMES_ADAPTER_REQUIREMENT = "hermes-agent>=0.19,<0.21"
+HERMES_ADAPTER_REQUIREMENT = "capability-discovery"
 
 
 def _mapping(value: Any, name: str) -> dict[str, Any]:
@@ -77,7 +77,7 @@ def load_and_validate(path: Path) -> dict[str, Any]:
         raise ValueError("requirements.core_runtime must be client-neutral")
     optional = _mapping(requirements.get("optional_adapters"), "requirements.optional_adapters")
     if optional.get("hermes") != HERMES_ADAPTER_REQUIREMENT:
-        raise ValueError("Hermes adapter requirement must remain an explicit optional compatibility range")
+        raise ValueError("Hermes adapter must use capability discovery instead of a pinned package range")
 
     adapters_section = _mapping(root.get("adapters"), "adapters")
     interface = adapters_section.get("interface")

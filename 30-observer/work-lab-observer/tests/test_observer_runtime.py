@@ -12,6 +12,7 @@ from observer_runtime import (  # noqa: E402
     append_events,
     mutation_surface,
     project_read_only_dashboard,
+    project_authority_dashboard,
     project_cost,
     project_tasks,
     project_usage,
@@ -125,6 +126,20 @@ class ObserverRuntimeTests(unittest.TestCase):
         unknown = project_cost([{"eventId": "unknown", "sourceId": "missing", "usage": {"input_tokens": 1, "output_tokens": 1, "total_tokens": 2, "records": 1}}], {})
         self.assertEqual(unknown["cost_status"], "unknown")
         self.assertIsNone(unknown["estimated_cost"])
+
+    def test_authority_projection_never_invents_live_running_or_zero_evidence(self):
+        empty = project_authority_dashboard([])
+        self.assertEqual(empty["mode"], "UNKNOWN")
+        self.assertIsNone(empty["ci"]["running"])
+        self.assertIsNone(empty["governance"]["memoryContext"]["current"])
+
+        unknown_event = event("unknown-state")
+        projection = project_authority_dashboard([unknown_event])
+        self.assertEqual(projection["mode"], "SNAPSHOT")
+        self.assertEqual(projection["projects"][0]["state"], "unknown")
+        self.assertEqual(project_authority_dashboard([unknown_event], mode="LIVE")["mode"], "LIVE")
+        with self.assertRaises(ObserverInputError):
+            project_authority_dashboard([unknown_event], mode="BOGUS")
 
 
 if __name__ == "__main__":

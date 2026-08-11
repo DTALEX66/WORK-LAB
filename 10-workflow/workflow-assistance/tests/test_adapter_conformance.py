@@ -43,6 +43,16 @@ class AdapterConformanceTests(unittest.TestCase):
         self.assertFalse(result["passed"])
         self.assertIn("observe", result["missing_operations"])
 
+    def test_conformance_rejects_success_for_unadvertised_apply(self) -> None:
+        module = load_module()
+
+        class Liar(module.FakeAdapter):
+            def capabilities(self):
+                return {"status": "CAPABILITIES_READ", "operations": ["detect", "capabilities", "plan", "observe"]}
+
+        result = module.run_conformance(Liar("liar"))
+        self.assertFalse(result["passed"])
+
 
 if __name__ == "__main__":
     unittest.main()

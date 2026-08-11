@@ -49,6 +49,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
         ownership = yaml.safe_load(ownership_path.read_text(encoding="utf-8"))
         manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(ownership["schema_version"], 1)
+        self.assertEqual(ownership["authority"], "config/config-ownership.json")
+        self.assertEqual(ownership["compatibility_scope"], "isolated-empty-home")
+        self.assertEqual(ownership["global_workflow"]["deployment"], "isolated-empty-home-only")
         for forbidden in (
             "model.max_tokens",
             "agent.reasoning_effort",
@@ -214,7 +217,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=runtime) as raw:
             checks = module.verify(ROOT, Path(raw) / "isolated-home")
 
-        self.assertIn("manifest.config_version", checks)
+        self.assertIn("manifest.capability_discovery", checks)
         self.assertIn("manifest.required_runtime_features", checks)
         self.assertIn("context7.wrapper", checks)
 
@@ -1426,12 +1429,13 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("actions/setup-python@v", workflow)
         self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", workflow)
         self.assertIn("actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38", workflow)
-        self.assertIn("PyYAML>=6,<7", workflow)
-        self.assertIn("hermes-agent>=0.19,<0.21", workflow)
+        self.assertIn("-r requirements.txt", workflow)
+        self.assertNotIn("hermes-agent", workflow)
         self.assertNotIn("hermes", manifest["requirements"])
         self.assertIn("hermes", manifest["requirements"]["optional_adapters"])
-        self.assertEqual(manifest["compatibility"]["config_version_range"], ">=33,<35")
-        self.assertEqual(manifest["compatibility"]["config_version_snapshot"], 33)
+        self.assertEqual(manifest["requirements"]["optional_adapters"]["hermes"], "capability-discovery")
+        self.assertEqual(manifest["compatibility"]["official_schema"], "capability-discovery")
+        self.assertEqual(manifest["compatibility"]["official_config_root"], "capability-discovery")
     def test_readme_documents_kimi_speed_lane_commands_without_auto_switching(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         for command in (
@@ -2460,7 +2464,6 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "memory-contamination",
                 "task-ledger-replay",
                 "portable-install",
-                "portable-install-runtime",
                 "provider-inventory",
                 "mcp-audit",
                 "shell",
@@ -2468,7 +2471,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "powershell",
             ),
         )
-        self.assertEqual(set(module.GATES), set(module.VERIFY_ORDER))
+        self.assertEqual(set(module.GATES), set(module.VERIFY_ORDER) | {"portable-install-runtime"})
         self.assertIn("scripts/workflow/run_quality_gate.py", module.tracked_python_files())
         self.assertIn("tests/test_workflow_governance.py", module.tracked_python_files())
         self.assertIn("bin/hermes-project-data.py", module.tracked_python_files())
@@ -2541,7 +2544,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertIn(
             "verify: Run governance, compile, skill-provenance, security, context-pack, "
-            "client-neutral-manifest, core-schemas, adapter-registry, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, memory-contamination, task-ledger-replay, portable-install, portable-install-runtime, provider-inventory, mcp-audit",
+            "client-neutral-manifest, core-schemas, adapter-registry, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, memory-contamination, task-ledger-replay, portable-install, provider-inventory, mcp-audit",
             list_result.stdout,
         )
         self.assertTrue({"design-contract", "production-evidence", "standard-validators"}.isdisjoint(module.GATES))

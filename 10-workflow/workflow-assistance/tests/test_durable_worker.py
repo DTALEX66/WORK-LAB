@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import json
+import subprocess
+import sys
 from pathlib import Path
 
 from canonical_store import CanonicalStore
@@ -127,6 +130,41 @@ class DurableWorkerTests(unittest.TestCase):
     def test_fingerprint_is_stable(self) -> None:
         self.assertEqual(fingerprint("a:boom"), fingerprint("a:boom"))
         self.assertNotEqual(fingerprint("a:boom"), fingerprint("b:boom"))
+
+    def test_cli_once_registers_project_and_runs_standard_collectors(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            project = root / "project"
+            runtime = root / "runtime"
+            project.mkdir()
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(Path(__file__).resolve().parents[1] / "scripts" / "workflow" / "durable_worker.py"),
+                    "--runtime-root",
+                    str(runtime),
+                    "--project-root",
+                    str(project),
+                    "--project-id",
+                    "cli-project",
+                    "--once",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            outcome = json.loads(result.stdout)
+            self.assertEqual(len(outcome["collectors"]), 5)
+            readback = CanonicalStore(runtime / "canonical.sqlite")
+            try:
+                self.assertEqual(readback.list_projects()[0]["project_id"], "cli-project")
+                projection = readback.projection()
+                self.assertGreaterEqual(projection["telemetry_events"], 1)
+                self.assertGreaterEqual(projection["tables"]["source_quality"], 1)
+            finally:
+                readback.close()
 
 
 if __name__ == "__main__":

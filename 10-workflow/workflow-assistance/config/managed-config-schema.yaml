@@ -1,6 +1,10 @@
-# Declarative ownership contract for repo-managed assets and isolated config baseline checks.
-# It never authorizes repo -> live config merge or lists secrets, OAuth credentials, or routing.
+# Compatibility recipe for constructing an isolated empty Hermes home.
+# Field ownership is authoritative only in config/config-ownership.json. This
+# file never authorizes repo -> live config merge or lists secrets, OAuth
+# credentials, or routing.
 schema_version: 1
+authority: config/config-ownership.json
+compatibility_scope: isolated-empty-home
 global_workflow:
   scope: hermes-codex-github-user-overlay
   source_of_truth: repository
@@ -28,7 +32,7 @@ global_workflow:
   owned_file_mappings:
     - source: config/SOUL.md
       target: SOUL.md
-  deployment: repo-to-live
+  deployment: isolated-empty-home-only
 managed:
   display.busy_input_mode: replace
   display.language: replace

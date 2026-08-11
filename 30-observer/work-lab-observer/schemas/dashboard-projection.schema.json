@@ -23,7 +23,7 @@
     },
     "mode": {
       "type": "string",
-      "enum": ["LIVE", "SNAPSHOT", "FIXTURE"]
+      "enum": ["LIVE", "SNAPSHOT", "FIXTURE", "STALE", "OFFLINE", "UNKNOWN"]
     },
     "generatedAt": {
       "type": "string",
@@ -159,11 +159,11 @@
         "rules": {
           "type": "object",
           "properties": {
-            "current": { "type": "integer" },
-            "drift": { "type": "integer" },
-            "quarantined": { "type": "integer" },
-            "conflicts": { "type": "integer" },
-            "stale": { "type": "integer" }
+            "current": { "type": ["integer", "null"] },
+            "drift": { "type": ["integer", "null"] },
+            "quarantined": { "type": ["integer", "null"] },
+            "conflicts": { "type": ["integer", "null"] },
+            "stale": { "type": ["integer", "null"] }
           },
           "additionalProperties": true
         },
@@ -172,11 +172,11 @@
         "memoryContext": {
           "type": "object",
           "properties": {
-            "current": { "type": "integer" },
-            "drift": { "type": "integer" },
-            "quarantined": { "type": "integer" },
-            "conflicts": { "type": "integer" },
-            "stale": { "type": "integer" }
+            "current": { "type": ["integer", "null"] },
+            "drift": { "type": ["integer", "null"] },
+            "quarantined": { "type": ["integer", "null"] },
+            "conflicts": { "type": ["integer", "null"] },
+            "stale": { "type": ["integer", "null"] }
           },
           "additionalProperties": true
         }

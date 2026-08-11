@@ -1,6 +1,7 @@
 # Local Quality Gates
 
-Workflow-assistance uses a small Python runner as the canonical local quality gate. The optional `Justfile` is only a convenience wrapper; just is not a required dependency for the portable pack.
+Workflow-assistance uses the Python runner as the canonical local quality gate.
+The optional `Justfile` is only a convenience wrapper; just is not a required dependency.
 
 ## Canonical command
 
@@ -8,81 +9,60 @@ Workflow-assistance uses a small Python runner as the canonical local quality ga
 python scripts/workflow/run_quality_gate.py verify
 ```
 
-`verify` runs, in order:
+The runner first performs a fail-fast dependency preflight from
+`requirements.txt`, then runs these client-neutral gates in order:
 
-1. `governance` — `python -m unittest discover -s tests -p "test_*.py" -v`
-2. `compile` — `python -m py_compile` for workflow scripts, security scripts and governance tests
-3. `skill-provenance` — validate source skill metadata, references, and provenance hashes
-4. `security` — `python scripts/security/scan_agent_rules.py templates skills docs scripts README.md`
-5. `context-pack` — `python scripts/workflow/build_context_pack.py --max-chars 30000`
-6. `client-neutral-manifest` — parse and validate the product/Adapter manifest without a Hermes runtime
-7. `core-schemas` — validate the client-neutral Domain Pack, ActionPlan, Adapter, and evidence contracts
-8. `portable-install` — verify an isolated empty Hermes Home can receive only portable assets
-9. `portable-install-runtime` — run the real Hermes config check against the isolated portable Home
-10. `provider-inventory` — generate a secret-free configured provider/model inventory without live requests
-11. `mcp-audit` — `python scripts/workflow/mcp_candidate_audit.py --write-template .hermes/task-artifacts/mcp-candidate-template.yaml`
-12. `shell` — `bash -n setup.sh` when Git Bash / GNU bash is available
-13. `powershell` — parse `setup.ps1` with PowerShell AST when `pwsh` or `powershell.exe` is available
+1. `governance`
+2. `compile`
+3. `skill-provenance`
+4. `security`
+5. `context-pack`
+6. `client-neutral-manifest`
+7. `core-schemas`
+8. `adapter-registry`
+9. `adapter-conformance`
+10. `acp-conformance`
+11. `otel-mapping`
+12. `usage-ingestion`
+13. `memory-contamination`
+14. `task-ledger-replay`
+15. `portable-install`
+16. `provider-inventory`
+17. `mcp-audit`
+18. `shell`
+19. `runtime-convergence`
+20. `powershell`
 
-The runner stops at the first failing gate and prints:
+`portable-install-runtime` remains registered as an explicit optional Adapter
+compatibility gate. It is not part of default `verify`, and core CI must not
+install or pin Hermes solely to make it run.
 
-```text
-QUALITY_GATE_FAIL gate=<name> exit_code=<code>
-```
-
-When every gate passes it prints:
-
-```text
-QUALITY_GATE_PASS gates=governance,compile,skill-provenance,security,context-pack,client-neutral-manifest,core-schemas,portable-install,portable-install-runtime,provider-inventory,mcp-audit,shell,powershell
-```
+The runner stops on the first failure with
+`QUALITY_GATE_FAIL gate=<name> exit_code=<code>` and prints the complete gate
+list only after every required gate passes as
+`QUALITY_GATE_PASS gates=<ordered-required-gates>`.
 
 ## Individual gates
 
+Use `python scripts/workflow/run_quality_gate.py list` to discover the current
+registry, then run a gate by name, for example:
+
 ```bash
-python scripts/workflow/run_quality_gate.py list
-python scripts/workflow/run_quality_gate.py governance
-python scripts/workflow/run_quality_gate.py compile
-python scripts/workflow/run_quality_gate.py skill-provenance
-python scripts/workflow/run_quality_gate.py security
-python scripts/workflow/run_quality_gate.py context-pack
-python scripts/workflow/run_quality_gate.py client-neutral-manifest
-python scripts/workflow/run_quality_gate.py core-schemas
-python scripts/workflow/run_quality_gate.py portable-install
+python scripts/workflow/run_quality_gate.py adapter-conformance
+python scripts/workflow/run_quality_gate.py runtime-convergence
 python scripts/workflow/run_quality_gate.py portable-install-runtime
-python scripts/workflow/run_quality_gate.py provider-inventory
-python scripts/workflow/run_quality_gate.py mcp-audit
-python scripts/workflow/run_quality_gate.py shell
-python scripts/workflow/run_quality_gate.py powershell
 ```
 
-## Optional Justfile shortcuts
+## Platform and data boundaries
 
-If `just` is installed:
+- `shell` and `powershell` perform syntax/AST checks and explicitly skip when
+  their supported tool is unavailable.
+- Generated reports stay under ignored `.hermes/task-artifacts/` or
+  `.hermes/task-runtime/` paths.
+- `portable-install` uses only an isolated empty Home.
+- `portable-install-runtime` requires an already capability-discovered runtime.
+- No gate reads `.env`, auth stores, session databases, prompts/responses,
+  private memory bodies, credentials, or live secrets.
 
-```bash
-just verify
-just governance
-just compile
-just security
-just context-pack
-just portable-install
-just provider-inventory
-just mcp-audit
-just shell
-just powershell
-```
-
-If `just` is missing, use the Python runner directly. Do not install `just` automatically from setup scripts or CI just to run this pack.
-
-## Platform behavior
-
-- `shell` skips cleanly when Git Bash / GNU bash is unavailable. On Windows it avoids the `C:\Windows\System32\bash.exe` WSL shim because that can fail on machines without a WSL distro.
-- `powershell` prefers `pwsh` when present and falls back to `powershell.exe`; it only parses `setup.ps1`, it does not execute setup.
-- `context-pack` writes to the Git-ignored project artifact path `.hermes/task-artifacts/context-pack.md`.
-- `portable-install` operates only on a temporary empty Hermes Home and does not invoke the Hermes binary or read an existing home.
-- `provider-inventory` writes a secret-free structural report to `.hermes/task-artifacts/provider-health.json`; live provider checks remain explicitly opt-in.
-- No gate reads `.env`, `auth.json`, session DBs, logs, caches or live Hermes secrets.
-
-## CI relationship
-
-GitHub Actions should call the same runner instead of duplicating local commands. This keeps the visible local command and CI gate aligned while still allowing platform-specific skips for unavailable shell tooling.
+GitHub Actions invokes the same runner after installing `requirements.txt` so
+local and CI contracts remain aligned. Local PASS is not exact-SHA CI evidence.

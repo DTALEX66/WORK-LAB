@@ -39,7 +39,11 @@ class ClientNeutralManifestTests(unittest.TestCase):
         self.assertIn("chat", manifest["product"]["non_goals"])
         self.assertIn("model_gateway", manifest["product"]["non_goals"])
         self.assertNotIn("hermes", manifest["requirements"])
-        self.assertEqual(manifest["requirements"]["optional_adapters"]["hermes"], "hermes-agent>=0.19,<0.21")
+        self.assertEqual(manifest["requirements"]["optional_adapters"]["hermes"], "capability-discovery")
+        self.assertEqual(manifest["compatibility"]["official_schema"], "capability-discovery")
+        self.assertEqual(manifest["compatibility"]["official_config_root"], "capability-discovery")
+        self.assertNotIn("config_version_range", manifest["compatibility"])
+        self.assertNotIn("config_version_snapshot", manifest["compatibility"])
         adapters = {item["id"]: item for item in manifest["adapters"]["entries"]}
         self.assertEqual(set(adapters), {"hermes", "codex", "cc-switch", "github", "cursor", "claude-code", "workbuddy"})
         self.assertEqual(adapters["hermes"]["support"], "deep")

@@ -20,8 +20,6 @@ import yaml
 
 
 MANIFEST_SCHEMA_VERSION = 1
-SUPPORTED_CONFIG_VERSION_RANGE = ">=33,<35"
-SUPPORTED_CONFIG_VERSION_SNAPSHOT = 33
 SUPPORTED_RUNTIME_FEATURES = {
     "portable_manifest",
     "project_data_boundary",
@@ -70,21 +68,10 @@ def load_manifest(repo: Path) -> dict:
     compatibility = manifest.get("compatibility")
     if not isinstance(compatibility, dict):
         raise RuntimeError("workflow manifest compatibility must be a mapping")
-    if compatibility.get("config_version_range") != SUPPORTED_CONFIG_VERSION_RANGE:
-        raise RuntimeError(
-            "workflow manifest config_version_range must be "
-            f"{SUPPORTED_CONFIG_VERSION_RANGE} for this portable verifier"
-        )
-    snapshot = compatibility.get("config_version_snapshot")
-    if (
-        isinstance(snapshot, bool)
-        or not isinstance(snapshot, int)
-        or not 33 <= snapshot < 35
-    ):
-        raise RuntimeError(
-            "workflow manifest config_version_snapshot must remain inside "
-            f"{SUPPORTED_CONFIG_VERSION_RANGE}"
-        )
+    if compatibility.get("official_schema") != "capability-discovery":
+        raise RuntimeError("workflow manifest official_schema must use capability-discovery")
+    if compatibility.get("official_config_root") != "capability-discovery":
+        raise RuntimeError("workflow manifest official_config_root must use capability-discovery")
     features = compatibility.get("required_runtime_features")
     if not isinstance(features, list) or not features or not all(isinstance(item, str) for item in features):
         raise RuntimeError("workflow manifest required_runtime_features must be a non-empty string list")
@@ -200,7 +187,10 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
         raise RuntimeError("isolated config context7 package must use a pinned version")
 
     required = {
-        "manifest.config_version": True,
+        "manifest.capability_discovery": (
+            compatibility.get("official_schema") == "capability-discovery"
+            and compatibility.get("official_config_root") == "capability-discovery"
+        ),
         "manifest.required_runtime_features": True,
         "model_provider_neutral": all(
             key not in config

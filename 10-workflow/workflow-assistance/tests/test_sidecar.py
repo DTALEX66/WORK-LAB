@@ -4,6 +4,7 @@ import json
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
 from urllib.request import Request, urlopen
@@ -11,14 +12,15 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts/workflow"))
 from sidecar import WorkflowSidecar, create_server  # noqa: E402
+from canonical_store import CanonicalStore  # noqa: E402
 
 class SidecarTests(unittest.TestCase):
     def test_health_and_projection_are_get_only(self):
         with tempfile.TemporaryDirectory() as raw:
             sidecar = WorkflowSidecar(ROOT, Path(raw))
-            sidecar.ledger.append({"event_id": "evt-1", "occurred_at": "2026-08-08T00:00:00Z", "source": "fixture", "outcome": "completed"})
-            sidecar.ledger.append({"event_id": "evt-2", "occurred_at": "2026-08-08T00:01:00Z", "source": "fixture", "outcome": "completed"})
-            sidecar.tasks.create("task-1", "idem-1")
+            sidecar.store.append_telemetry({"event_id": "evt-1", "project_id": "work-lab", "producer": "fixture", "outcome": "completed"})
+            sidecar.store.upsert_task({"task_id": "task-1", "project_id": "work-lab", "status": "QUEUED"})
+            first_event_id = sidecar.publish_observed()
             server = create_server(sidecar)
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
@@ -43,15 +45,18 @@ class SidecarTests(unittest.TestCase):
                     self.assertEqual(projection["tasks"], {"count": 1, "by_status": {"QUEUED": 1}})
                 with urlopen(base + "/api/v1/events") as response:
                     self.assertEqual(response.headers["Content-Type"].split(";")[0], "text/event-stream")
-                    body = response.read()
-                    self.assertIn(b"evt-1", body)
-                    self.assertIn(b"id: evt-1\ndata: ", body)
-                    self.assertNotIn(b"\\ndata:", body)
-                reconnect = Request(base + "/api/v1/events", headers={"Last-Event-ID": "evt-1"})
+                    self.assertIsNone(response.headers.get("Content-Length"))
+                    initial = b"".join(response.readline() for _ in range(5))
+                    self.assertIn(first_event_id.encode(), initial)
+                    sidecar.store.upsert_task({"task_id": "task-2", "project_id": "work-lab", "status": "RUNNING"})
+                    second_event_id = sidecar.publish_observed()
+                    delta = b"".join(response.readline() for _ in range(4))
+                    self.assertIn(second_event_id.encode(), delta)
+                reconnect = Request(base + "/api/v1/events", headers={"Last-Event-ID": first_event_id})
                 with urlopen(reconnect) as response:
-                    body = response.read()
-                    self.assertNotIn(b"evt-1", body)
-                    self.assertIn(b"evt-2", body)
+                    body = b"".join(response.readline() for _ in range(5))
+                    self.assertNotIn(first_event_id.encode(), body)
+                    self.assertIn(second_event_id.encode(), body)
                 request = Request(base + "/healthz", method="POST")
                 with self.assertRaises(Exception):
                     urlopen(request)
@@ -82,7 +87,7 @@ class SidecarTests(unittest.TestCase):
                 with urlopen(f"http://127.0.0.1:{server.server_port}/api/projection") as response:
                     projection = json.load(response)
                 self.assertEqual(projection["tasks"], {"count": 0, "by_status": {}})
-                self.assertFalse((runtime / "task-ledger").exists(), "GET projection must not create Task Ledger state")
+                self.assertTrue((runtime / "canonical.sqlite").exists())
             finally:
                 server.shutdown()
                 server.server_close()
@@ -91,6 +96,33 @@ class SidecarTests(unittest.TestCase):
 
             replacement = create_server(WorkflowSidecar(ROOT, runtime))
             replacement.server_close()
+
+    def test_live_watcher_publishes_an_external_writer_delta(self):
+        with tempfile.TemporaryDirectory() as raw:
+            runtime = Path(raw)
+            sidecar = WorkflowSidecar(ROOT, runtime)
+            sidecar.start_live_updates(interval_seconds=0.02)
+            subscriber = sidecar.live.subscribe()
+            writer = CanonicalStore(runtime / "canonical.sqlite")
+            try:
+                self.assertEqual(sidecar.projection()["mode"], "LIVE")
+                writer.upsert_task({"task_id": "external-1", "project_id": "work-lab", "status": "RUNNING"})
+                deadline = time.monotonic() + 2.0
+                message = None
+                while time.monotonic() < deadline:
+                    try:
+                        candidate = subscriber.get(timeout=0.1)
+                    except Exception:
+                        continue
+                    if candidate.data.get("tasks", {}).get("count") == 1:
+                        message = candidate
+                        break
+                self.assertIsNotNone(message, "external canonical write did not produce an SSE delta")
+                self.assertEqual(message.data["mode"], "LIVE")
+            finally:
+                writer.close()
+                sidecar.live.unsubscribe(subscriber)
+                sidecar.close()
 
 if __name__ == "__main__":
     unittest.main()

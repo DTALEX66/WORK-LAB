@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import sys
 from pathlib import Path
+
+MODULE_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = MODULE_ROOT.parents[1]
+sys.path.insert(0, str(MODULE_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "10-workflow" / "workflow-assistance" / "scripts" / "workflow"))
 
 from canonical_store import CanonicalStore
 from observer_canonical import CanonicalProjectionReader, VALID_MODES
@@ -59,7 +65,7 @@ class ObserverCanonicalTests(unittest.TestCase):
     def test_usage_unknown_when_no_source(self) -> None:
         reader = CanonicalProjectionReader(self.store)
         dashboard = reader.to_dashboard()
-        self.assertEqual(dashboard["usage"]["totalTokens"], 0)
+        self.assertIsNone(dashboard["usage"]["totalTokens"])
         self.assertEqual(dashboard["usage"]["quality"]["dataQuality"], "UNKNOWN")
 
 

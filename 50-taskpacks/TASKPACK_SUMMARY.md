@@ -44,9 +44,10 @@ Current forward authority:
   evidence. They are `SUPERSEDED` for forward execution and cannot restore the
   old three-module architecture or active design gates.
 
-## Master TaskPack v2.0 local execution status (2026-08-10)
+## Historical Master TaskPack v2.0 local snapshot (2026-08-10)
 
-All 28 WL3 tasks have been closed at the local level:
+The following was the 2026-08-10 local snapshot. It is historical evidence and
+does not prove the current checkout, exact-SHA CI, publication, or release:
 
 ```text
 VERIFIED_LOCAL:                      26 (WL3-000..710, 800/810)
@@ -55,7 +56,7 @@ LOCAL_VERIFIED_READY_FOR_APPROVAL:    1 (WL3-820 approval package)
 RECONCILE_REQUIRED:                   0
 ```
 
-Local evidence (fresh, this batch):
+Historical local evidence reported by that batch:
 
 ```text
 Full quality-gate verify sequence: 21 gates PASS
@@ -82,15 +83,70 @@ commit / push / PR                PENDING_HUMAN_APPROVAL
 
 The single approval package is `50-taskpacks/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md`.
 
-The full delivery summary, error record (ERR-018..ERR-023) and verification
-evidence for this batch is `50-taskpacks/WORK-LAB-MASTER-2.0-DELIVERY-SUMMARY-2026-08-10.md`;
-the machine-readable error ledger is `50-taskpacks/error-ledger.json` (23 entries).
+The historical delivery summary and error record (ERR-018..ERR-023) for this
+batch is `50-taskpacks/WORK-LAB-MASTER-2.0-DELIVERY-SUMMARY-2026-08-10.md`;
+the current machine-readable error ledger is `50-taskpacks/error-ledger.json`
+(36 entries through ERR-036).
 
 Evidence generated under the ignored local `.hermes/task-artifacts` path is not
 published as source content. The committed handoff records reproducible source
 tips, module paths, recovery locations and remaining approval gates. Hermes
 global config, auth, sessions, cron, skills, plugins and caches remain platform
 state and are never absorbed by a task pack.
+
+## Stage 3 contract reconciliation (2026-08-11)
+
+`WORK-LAB-STAGE3-CONTRACT-RECONCILIATION-2026-08-11` repairs ERR-024..ERR-036
+across the root control plane, Workflow-owned runtime/configuration contracts,
+and the strictly read-only Observer projection. The tracked CURRENT_STATE no
+longer embeds checkout/CI identity; exact checkout facts belong to ignored
+runtime attestation. Local verification is recorded separately from exact-SHA
+CI, publication, release, live/global apply and paid-provider evidence.
+
+Local implementation verification for this reconciliation: Workflow canonical
+quality gate 20/20 PASS (489 governance tests, 4 declared skips); Observer
+Python 45/45 PASS; Observer UI/component 43 + 4 PASS; CURRENT_STATE freshness
+PASS. The root publication suite is PARTIAL because its exact-tree test requires
+a committed clean checkout; commit/push and remote exact-SHA CI remain pending
+separate approval.
+
+## Local deployment smoothness (2026-08-11)
+
+`WORK-LAB-LOCAL-DEPLOYMENT-SMOOTHNESS-2026-08-11` closes the project-local
+runtime wiring gaps found during a real load: the worker CLI now registers the
+explicit project and runs the standard collectors, the Sidecar observes
+cross-process canonical writes and publishes real SSE deltas, and Observer uses
+a Windows read-only PID query with validated dynamic loopback endpoints. Static
+desktop entries start UNKNOWN and may become LIVE only through a discovered
+read-only endpoint.
+
+The local stack is deployed under ignored `.hermes/task-runtime/` state with
+dynamic loopback ports. Readback is `PASS`: Sidecar `ok/LIVE`, canonical
+integrity `ok`, Observer `ok/readOnly/LIVE`, one registered project, and no
+SQLite/WAL metadata change across ten Observer GETs. Current regression totals
+are Workflow focused 6 + 3 PASS, canonical Workflow quality gate PASS, Observer
+Python 47/47 PASS, and Observer UI/component 44/44 PASS. The root suite remains
+publication-partial at 71/72 because an uncommitted checkout is intentionally
+not an exact clean tree.
+
+Native Tauri compilation is `NOT EXECUTED`: this machine currently has neither
+Rust/Cargo nor MSVC Build Tools. Global Codex/Hermes apply, commit, push,
+exact-SHA CI, publication and release remain explicit external gates and are
+not inferred from the working local runtime.
+
+## Hermes / DeepSeek handoff (2026-08-11)
+
+The executable remaining-work packet is
+`50-taskpacks/WORK-LAB-HERMES-DEEPSEEK-HANDOFF-2026-08-11.md`. It freezes the
+current checkout identity, local verification, Hermes managed-asset deployment
+boundary, Codex user-overlay write set, native Tauri prerequisite/build gate,
+and Git/exact-SHA delivery contract. It explicitly excludes provider auth,
+sessions, credentials, tokens and prompt/response bodies. Hermes real-Home
+managed assets were deployed to `C:\Users\admin\AppData\Local\hermes` after
+exact authorization; atomic apply and ActionPlan readback passed, independent
+hashes matched, the rollback backup was preserved and `config.yaml` remained
+outside the deployment. Codex overlay, native Tauri build, Git delivery and
+exact-SHA publication remain pending gates.
 
 ## Historical local predecessor slice (`SUPERSEDED`)
 

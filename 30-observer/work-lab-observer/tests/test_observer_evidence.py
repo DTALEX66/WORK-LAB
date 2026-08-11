@@ -3,13 +3,11 @@ from __future__ import annotations
 import hashlib
 import sys
 from pathlib import Path
-import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from observer_evidence import telemetry_events, token_usage_events, workflow_evidence_events  # noqa: E402
-from observer_runtime import ObserverInputError  # noqa: E402
-from observer_store import ObserverStore  # noqa: E402
+from observer_runtime import ObserverInputError, project_read_only_dashboard  # noqa: E402
 
 
 class ObserverEvidenceTests(unittest.TestCase):
@@ -34,18 +32,13 @@ class ObserverEvidenceTests(unittest.TestCase):
         self.assertNotIn("artifacts", workflow)
         self.assertEqual(len(workflow["contentDigest"]), 64)
 
-    def test_persists_and_rebuilds_cross_module_projection(self) -> None:
-        with tempfile.TemporaryDirectory() as raw:
-            project = Path(raw)
-            (project / ".git").mkdir()
-            root = project / ".hermes" / "task-runtime" / "observer"
-            root.mkdir(parents=True)
-            store = ObserverStore(root, project_root=project)
-            self.assertEqual(store.append(workflow_evidence_events([self.envelope()])), 1)
-            restarted = ObserverStore(root, project_root=project)
-            projection = restarted.rebuild_projection()
-            self.assertEqual(projection["tasks"][0]["events"], 1)
-            self.assertNotIn("taskId", projection["tasks"][0])
+    def test_rebuilds_cross_module_projection_without_a_second_store(self) -> None:
+        events = workflow_evidence_events([self.envelope()])
+        projection = project_read_only_dashboard(events)
+        rebuilt = project_read_only_dashboard(events)
+        self.assertEqual(projection, rebuilt)
+        self.assertEqual(projection["tasks"][0]["events"], 1)
+        self.assertNotIn("taskId", projection["tasks"][0])
 
     def test_token_usage_adapter_emits_sanitized_observer_event(self) -> None:
         events = token_usage_events([{"input_tokens": 12, "output_tokens": 8, "total_tokens": 20, "records": 1}])
