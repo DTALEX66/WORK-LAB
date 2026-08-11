@@ -261,6 +261,15 @@ class CanonicalStore:
             ).fetchall()
             return [dict(row) for row in rows]
 
+    def update_project_status(self, project_id: str, status: str) -> None:
+        """Update a project's observation status (REGISTERED / ACTIVE / ...)."""
+        with self._lock:
+            self._conn.execute(
+                "UPDATE projects SET status = ? WHERE project_id = ?",
+                (status, project_id),
+            )
+            self._conn.commit()
+
     def append_telemetry(self, event: dict[str, Any]) -> str:
         validate_record(event, allow_usage_tokens=True)
         event_id = str(event.get("event_id") or uuid.uuid4().hex)
