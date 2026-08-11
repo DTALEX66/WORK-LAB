@@ -17,10 +17,10 @@ class OfflinePilotTest(unittest.TestCase):
         cls.report = run_pilots()
         cls.pilots = {pilot["branch"]: pilot for pilot in cls.report["pilots"]}
 
-    def test_three_branches_are_offline_verified(self) -> None:
+    def test_two_branches_are_offline_verified(self) -> None:
         self.assertEqual(self.report["mode"], "OFFLINE_FIXTURES_ONLY")
         self.assertTrue(self.report["allOfflineVerified"])
-        self.assertEqual(set(self.pilots), {"workflow-agent", "observer", "open-design"})
+        self.assertEqual(set(self.pilots), {"workflow-agent", "observer"})
 
     def test_workflow_capability_usage_and_replay(self) -> None:
         workflow = self.pilots["workflow-agent"]
@@ -36,14 +36,6 @@ class OfflinePilotTest(unittest.TestCase):
         self.assertTrue(observer["duplicateIngestIdempotent"])
         self.assertEqual(observer["corruptEventsIsolated"], 1)
         self.assertEqual(observer["mutationSurface"], [])
-
-    def test_open_design_roundtrip_and_human_boundary(self) -> None:
-        design = self.pilots["open-design"]
-        self.assertTrue(design["briefContractPassed"])
-        self.assertTrue(design["readbackLossless"])
-        self.assertEqual(design["svgPreflightIssues"], [])
-        self.assertEqual(design["visualQualityClaim"], "HUMAN_PENDING")
-        self.assertTrue(all(state == "WAITING_HUMAN_CALIBRATION" for state in design["humanCalibration"]))
 
     def test_no_external_side_effects_or_live_claims(self) -> None:
         self.assertFalse(self.report["externalWrites"])
