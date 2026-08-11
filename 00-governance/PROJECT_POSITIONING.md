@@ -19,6 +19,18 @@ Open Design was transferred to `DTALEX66/OPEN-DESIGN-Assistance` on the
 authorized migration branch. WORK-LAB retains only the one-time pointer under
 `90-archive-manifests/`; it no longer owns or executes that module.
 
+### Open Design configuration boundary (two-tier)
+
+WORK-LAB is responsible for the Open Design **non-design global configuration**
+— the migration pointer, registry, directory mapping, MCP declarations and
+audit boundary. These are owned and `MANAGE`d by WORK-LAB. Any configuration
+that would **enhance design capability** (models/tools, generation params,
+design assets, design specs, design systems, quality gates, editable handoff)
+belongs to the `OPEN-DESIGN-Assistance` project itself and is **neither
+collected nor managed here** (`IGNORE`). Field-level ownership lives in
+`10-workflow/workflow-assistance/config/config-ownership.json` (adapter
+`open-design`).
+
 The root owns governance and integration. It does not duplicate module implementations.
 
 ## Explicit non-positioning

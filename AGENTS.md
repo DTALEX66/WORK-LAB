@@ -9,6 +9,18 @@ Open Design module and the MiniGame product tree were transferred to
 `20-design/open-design` nor `30-products/minigame` remains here. Only the
 handoff pointer and Git history remain for the transferred scope.
 
+### Open Design configuration boundary (two-tier)
+
+WORK-LAB is responsible for the Open Design **non-design global configuration**:
+the migration pointer, registry, directory mapping, MCP declarations and audit
+boundary — these are owned and `MANAGE`d by WORK-LAB. Any configuration that
+would **enhance design capability** (models/tools, generation params, design
+assets, design specs, design systems, quality gates, editable handoff) belongs
+to the `OPEN-DESIGN-Assistance` project itself and is **neither collected nor
+managed here** (`IGNORE`). Field-level ownership lives in
+`10-workflow/workflow-assistance/config/config-ownership.json` (adapter
+`open-design`).
+
 ## Ownership
 
 One writer owns a task. Read-only reviewers may inspect exact trees but may not
