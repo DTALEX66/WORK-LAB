@@ -24,9 +24,14 @@ if not errorlevel 1 (
   )
 )
 
-set "CODEX_CANDIDATE=%LOCALAPPDATA%\OpenAI\Codex\bin\codex.exe"
-if exist "%CODEX_CANDIDATE%" (
-  "%CODEX_CANDIDATE%" %*
+rem Versioned per-user CLI installs live under OpenAI/Codex/bin/<commit>/codex.exe.
+rem Prefer them: user-writable and bypass WindowsApps ACLs. Newest first.
+set "CODEX_BEST="
+for /d %%d in ("%LOCALAPPDATA%\OpenAI\Codex\bin\*") do (
+  if exist "%%d\codex.exe" set "CODEX_BEST=%%d\codex.exe"
+)
+if defined CODEX_BEST (
+  "%CODEX_BEST%" %*
   exit /b %ERRORLEVEL%
 )
 

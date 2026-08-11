@@ -4,17 +4,19 @@
 
 This is a single-root monorepo. Allowed active module roots are exactly:
 `10-workflow/workflow-assistance` and `30-observer/work-lab-observer`. The
-Open Design module and the MiniGame product tree were transferred to
-`DTALEX66/OPEN-DESIGN-Assistance` on the authorized migration branch; neither
-`20-design/open-design` nor `30-products/minigame` remains here. Only the
-handoff pointer and Git history remain for the transferred scope.
+Open Design module was transferred to `DTALEX66/OPEN-DESIGN-Assistance` on the
+authorized migration branch; only the handoff pointer and Git history remain
+for the transferred scope.
 
-WORK-LAB **does not manage Open Design global configuration**. It manages only
-**design-relevant configuration and any capability that improves design
-output** (design systems, visual packs, professional methods, quality gates,
-visual-quality scoring, editable handoff). Everything else under Open Design —
-global app/config state, versions, install, daemon, model routing — is
-`OBSERVE`-only and never written. Field-level ownership lives in
+### Open Design configuration boundary (two-tier)
+
+WORK-LAB is responsible for the Open Design **non-design global configuration**:
+the migration pointer, registry, directory mapping, MCP declarations and audit
+boundary — these are owned and `MANAGE`d by WORK-LAB. Any configuration that
+would **enhance design capability** (models/tools, generation params, design
+assets, design specs, design systems, quality gates, editable handoff) belongs
+to the `OPEN-DESIGN-Assistance` project itself and is **neither collected nor
+managed here** (`IGNORE`). Field-level ownership lives in
 `10-workflow/workflow-assistance/config/config-ownership.json` (adapter
 `open-design`).
 
@@ -54,3 +56,33 @@ Keep Task Ledger and runtime evidence under `.hermes/task-runtime/` and
 evidence. Codex may prepare changes and readback evidence, but must not commit,
 push, publish, or modify global Codex/Hermes configuration without explicit
 approval for that side effect.
+
+## Five-dimension runtime baseline (mandatory, audited)
+
+Every managed software surface must satisfy — and every audit must verify — the
+following baseline, owned by the enhancement module:
+
+1. **Unique entry per software.** One canonical launch path per tool. Hermes:
+   desktop shortcut → `hermes\launchers\Hermes_Desktop.vbs` (GUI) + `hermes`
+   CLI; Codex: single wrapper (`bin/codex` bash + `bin/codex.cmd`, identical
+   versioned-glob resolution); CC Switch / OpenHuman / Open Design: single
+   desktop shortcut to their installed executables. No duplicate or conflicting
+   launchers; wrapper candidates resolve to exactly one runtime.
+2. **Desktop entry.** Every GUI tool opens from its desktop shortcut; shortcut
+   target chains must resolve (Test-Path true end-to-end).
+3. **Official standard + user configuration.** Official baselines win; the
+   enhancement module only manages declared overlay fields and never overrides
+   user provider/model/auth/desktop state (`config-ownership.json`,
+   `preserve_unknown: true`).
+4. **No blocking overhead.** Global rules/skills/guidance must stay lean
+   (skills ~<10KB each, guidance+rules <20KB total) and load on demand, never
+   blocking startup or execution. Wrappers must not stall on missing candidates.
+5. **Full-power model.** No rate limits, no cost caps, no degraded reasoning:
+   provider routing is official (cost_multiplier=1.0, no daily/monthly caps),
+   `agent.reasoning_effort` stays at official default (empty = medium) or
+   higher, no temperature/reasoning downgrades. Model quality must match the
+   official published baseline.
+
+When any dimension regresses (new entry point, config bloat, provider cap,
+reasoning downgrade), fix at the root and record in the error ledger before
+merging.

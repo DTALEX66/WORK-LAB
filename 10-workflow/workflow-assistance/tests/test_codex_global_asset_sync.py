@@ -155,7 +155,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             migrated = json.loads(state_path.read_text("utf-8"))
             self.assertEqual(migrated["version"], module.VERSION)
             self.assertEqual(migrated["phase"], "applied")
-            self.assertEqual(len(migrated["managed_skill_names"]), 10)
+            self.assertEqual(len(migrated["managed_skill_names"]), len(module._skill_sources(ROOT / "codex-assets")))
             self.assertEqual(module.verify_overlay(codex_home, agent_home, ROOT / "codex-assets")["status"], "PASS")
             self.assertEqual(
                 module.rollback_overlay(codex_home, agent_home, ROOT / "codex-assets")["status"],
