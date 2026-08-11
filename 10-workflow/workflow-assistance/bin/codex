@@ -14,6 +14,13 @@ fi
 # Git Bash on Windows has powershell.exe. Resolve the current official Store
 # package instead of silently selecting the separately-installed plugin runtime.
 if command -v powershell.exe >/dev/null 2>&1; then
+  # Official per-user CLI installs live under versioned directories
+  # (OpenAI/Codex/bin/<commit>/codex.exe). Prefer them: they are user-writable
+  # and bypass the WindowsApps ACLs that block Git Bash from executing the
+  # Store copy directly.
+  for versioned in "$HOME/AppData/Local/OpenAI/Codex/bin/"*/codex.exe; do
+    [ -f "$versioned" ] && candidates+=("$versioned")
+  done
   store_root="$(powershell.exe -NoProfile -Command '(Get-AppxPackage -Name OpenAI.Codex | Select-Object -First 1 -ExpandProperty InstallLocation)' 2>/dev/null | tr -d '\r' | tail -n 1)"
   store_bin="$store_root/app/resources/codex.exe"
   plugin_bin="$HOME/.codex/plugins/.plugin-appserver/codex.exe"
@@ -26,9 +33,11 @@ if command -v powershell.exe >/dev/null 2>&1; then
     plugin_hash="$(powershell.exe -NoProfile -Command "if (Test-Path -LiteralPath '$plugin_win') {(Get-FileHash -LiteralPath '$plugin_win' -Algorithm SHA256).Hash}" 2>/dev/null | tr -d '\r' | tail -n 1)"
     if [ -n "$store_hash" ] && [ "$store_hash" = "$plugin_hash" ]; then
       candidates+=("$plugin_bin")
-    else
-      candidates+=("$store_bin")
     fi
+    # When the Store copy and the plugin copy differ (Store package updated),
+    # the plugin is stale and the WindowsApps copy is usually ACL-blocked, so
+    # neither is added here; the versioned install above already covers the
+    # real CLI.
   fi
   candidates+=("$HOME/AppData/Local/OpenAI/Codex/bin/codex.exe")
 else
@@ -39,7 +48,9 @@ fi
 
 for codex_bin in "${candidates[@]}"; do
   if [ -x "$codex_bin" ]; then
-    exec "$codex_bin" "$@"
+    # exec can fail with 126 when WindowsApps ACLs block Git Bash; keep trying
+    # the next candidate instead of aborting the wrapper.
+    exec "$codex_bin" "$@" || continue
   fi
 done
 
