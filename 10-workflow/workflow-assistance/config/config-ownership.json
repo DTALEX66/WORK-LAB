@@ -1,7 +1,7 @@
 {
   "schema_version": "workflow/config-ownership/v2",
   "single_authority": true,
-  "note": "WL3-200: single source replacing config-ownership v1, managed-config-schema.yaml field lists, and hard-coded sync-script managed config. Unknown fields default to OBSERVE/QUARANTINE; never silently deleted.",
+  "note": "WL3-200: single source replacing config-ownership v1, managed-config-schema.yaml field lists, and hard-coded sync-script managed config. Unknown fields default to OBSERVE/QUARANTINE; never silently deleted. Managed surface as of 2026-08-11: active clients hermes/codex/cc-switch/github (deep), observe-only platforms openhuman/open-design (skills + OBSERVE declarations), manifest-only future clients cursor/claude-code/workbuddy, and the workflow adapter itself.",
   "layers": {
     "UPSTREAM_OFFICIAL": {"mode": "OBSERVE", "behavior": "read-only version/capability/schema/digest; never copy install tree"},
     "USER_OVERLAY": {"mode": "MANAGE", "behavior": "user Rules, 13 Skills, plugin declarations, boundaries, explicit preferences; diff/rebase/rollback"},
@@ -20,7 +20,11 @@
     "cc-switch": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
     "github": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
     "openhuman": {"layer": "PLATFORM_INTERNAL", "mode": "OBSERVE", "preserve_unknown": true},
-    "open-design": {"layer": "PROJECT_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true}
+    "open-design": {"layer": "PROJECT_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
+    "workflow": {"layer": "USER_OVERLAY", "mode": "MANAGE", "preserve_unknown": true},
+    "cursor": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
+    "claude-code": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true},
+    "workbuddy": {"layer": "USER_OVERLAY", "mode": "OBSERVE", "preserve_unknown": true}
   },
   "fields": [
     {"path": "display.language", "layer": "USER_OVERLAY", "mode": "MANAGE", "adapter": "hermes"},

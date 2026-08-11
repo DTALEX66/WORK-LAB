@@ -569,6 +569,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/workflow/official-plus-user-configuration-standard-2026-08-11.md`：官方基线、用户覆盖层、项目覆盖层和任务临时态的 Stage 3 配置标准；
 - `docs/workflow/dual-entry-install.md`：setup/sync/bootstrap 入口矩阵与职责边界对账；
 - `docs/workflow/codex-performance-diagnosis.md`：Codex 性能分层诊断（项目/全局/客户端配置）、审计状态与解决方案；
+- `docs/workflow/managed-software-and-assets.md`：受管软件与内容总清单（Hermes/Codex/CC Switch/GitHub/OpenHuman/Open Design 及未来客户端的管理面总账）；
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
 - `docs/workflow/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录；
 - `docs/mcp/workflow-mcp-stack.md`：MCP 默认策略；
