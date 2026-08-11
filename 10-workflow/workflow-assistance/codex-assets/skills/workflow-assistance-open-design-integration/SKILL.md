@@ -54,7 +54,7 @@ claim until verified with native evidence:
   state.
 - Copying Open Design deliverables into WORK-LAB task packs as if they were
   Workflow-owned assets.
-- Re-creating `20-design/open-design` or `30-products/minigame` trees in this
+- Re-creating `20-design/open-design` trees in this repo.
   repo.
 - Acting on an Open Design audit report without verifying its exact SHA/CI.
 
