@@ -329,6 +329,7 @@ def gate_runtime_convergence() -> int:
         "tests/test_tiered_adapters.py",
         "tests/test_swap_and_size.py",
         "tests/test_growth_watcher_collector.py",
+        "tests/test_active_projects.py",
     )
     pythonpath = os.pathsep.join(
         [
