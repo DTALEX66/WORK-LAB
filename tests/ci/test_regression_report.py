@@ -35,10 +35,9 @@ class RegressionReportTest(unittest.TestCase):
         self.assertEqual(quality["tokenDedupCount"], quality["tokenDedupExpected"])
         self.assertEqual(quality["unknownModelCostStatus"], "unknown")
 
-    def test_boundary_and_human_calibration_semantics(self) -> None:
+    def test_boundary_semantics(self) -> None:
         self.assertEqual(self.report["quality"]["contaminationControls"], 7)
         self.assertEqual(self.report["quality"]["observerMutationSurface"], [])
-        self.assertTrue(all(state == "WAITING_HUMAN_CALIBRATION" for state in self.report["quality"]["humanCalibration"]))
         self.assertFalse(self.report["boundaries"]["network"])
         self.assertFalse(self.report["boundaries"]["credentials"])
         self.assertFalse(self.report["boundaries"]["externalWrites"])

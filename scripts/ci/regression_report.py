@@ -113,7 +113,6 @@ def run_report() -> dict[str, Any]:
             "designReadbackLossless": contract["readback"]["lossless"],
             "contaminationControls": len(contamination),
             "observerMutationSurface": pilot["pilots"][1]["mutationSurface"],
-            "humanCalibration": pilot["pilots"][2]["humanCalibration"],
         },
         "boundaries": {
             "network": False, "credentials": False, "externalWrites": False,
