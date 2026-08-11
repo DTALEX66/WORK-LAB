@@ -215,12 +215,23 @@ def make_worker(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the durable Workflow Assistance worker")
     parser.add_argument("--runtime-root", type=Path, required=True)
+    parser.add_argument("--project-root", type=Path, required=True)
+    parser.add_argument("--project-id", default="work-lab")
     parser.add_argument("--tick", type=float, default=DEFAULT_TICK_SECONDS)
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args()
     runtime_root = args.runtime_root.resolve()
+    project_root = args.project_root.resolve()
     store = CanonicalStore(runtime_root / "canonical.sqlite")
-    worker = make_worker(store, tick_seconds=args.tick)
+    store.register_project(args.project_id, str(project_root), display_name=project_root.name)
+    from collectors import build_standard_collectors
+
+    worker = make_worker(
+        store,
+        project_id=args.project_id,
+        tick_seconds=args.tick,
+        collectors=build_standard_collectors(project_root),
+    )
     supervisor = WorkerSupervisor(runtime_root, worker)
     supervisor.start()
     try:

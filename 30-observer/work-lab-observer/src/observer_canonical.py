@@ -10,24 +10,73 @@ of fabricating LIVE values.
 from __future__ import annotations
 
 import json
+import sqlite3
 from pathlib import Path
 from typing import Any
 
-try:
-    from canonical_store import CanonicalStore  # type: ignore
-except ImportError:  # pragma: no cover - path fallback for CI layouts
-    import sys
-
-    sys.path.append(str(Path(__file__).resolve().parents[2] / "scripts" / "workflow"))
-    from canonical_store import CanonicalStore  # type: ignore
-
 VALID_MODES = {"LIVE", "STALE", "SNAPSHOT", "FIXTURE", "OFFLINE", "UNKNOWN"}
+
+
+class SQLiteReadOnlyStore:
+    """Minimal canonical-store reader using SQLite ``mode=ro`` only."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path.resolve()
+        if not self.path.is_file():
+            raise FileNotFoundError(f"canonical SQLite store not found: {self.path}")
+        uri = self.path.as_uri() + "?mode=ro"
+        self._conn = sqlite3.connect(uri, uri=True, check_same_thread=False)
+        self._conn.row_factory = sqlite3.Row
+
+    def integrity_check(self) -> str:
+        row = self._conn.execute("PRAGMA integrity_check").fetchone()
+        return str(row[0]) if row else "unknown"
+
+    def list_projects(self) -> list[dict[str, Any]]:
+        return [dict(row) for row in self._conn.execute("SELECT * FROM projects ORDER BY registered_at")]
+
+    def list_tasks(self) -> list[dict[str, Any]]:
+        return [dict(row) for row in self._conn.execute("SELECT * FROM tasks ORDER BY updated_at DESC")]
+
+    def projection(self) -> dict[str, Any]:
+        tables = {
+            str(row[0])
+            for row in self._conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+        task_counts = {
+            str(row["status"]): int(row["n"])
+            for row in self._conn.execute("SELECT status, COUNT(*) AS n FROM tasks GROUP BY status")
+        }
+        usage = [
+            dict(row)
+            for row in self._conn.execute(
+                "SELECT provider, model, COUNT(*) AS samples, SUM(total_tokens) AS tokens "
+                "FROM usage_samples GROUP BY provider, model"
+            )
+        ]
+        ci = [
+            dict(row)
+            for row in self._conn.execute(
+                "SELECT status, conclusion, COUNT(*) AS n FROM ci_runs GROUP BY status, conclusion"
+            )
+        ]
+        return {
+            "integrity": self.integrity_check(),
+            "tables": {name: self._conn.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0] for name in sorted(tables)},
+            "telemetry_events": self._conn.execute("SELECT COUNT(*) FROM telemetry_events").fetchone()[0],
+            "tasks_by_status": task_counts,
+            "usage_summary": usage,
+            "ci_summary": ci,
+        }
+
+    def close(self) -> None:
+        self._conn.close()
 
 
 class CanonicalProjectionReader:
     """Read-only facade over the canonical SQLite WAL for Observer rendering."""
 
-    def __init__(self, store: CanonicalStore, project_id: str = "work-lab") -> None:
+    def __init__(self, store: Any, project_id: str = "work-lab") -> None:
         self.store = store
         self.project_id = project_id
         self._mode = "SNAPSHOT"
@@ -106,7 +155,7 @@ class CanonicalProjectionReader:
             "completed": by_status.get("COMPLETED", 0) + by_status.get("COMPLETED_LOCAL", 0),
             "unknown": by_status.get("UNKNOWN", 0),
         }
-        total_tokens = sum(int(row.get("tokens") or 0) for row in snapshot["usage"])
+        total_tokens = sum(int(row.get("tokens") or 0) for row in snapshot["usage"]) if snapshot["usage"] else None
         usage_quality = "EXACT_SOURCE" if snapshot["usage"] else "UNKNOWN"
         return {
             "schemaVersion": "work-lab/observer-projection/v2",
@@ -131,17 +180,17 @@ class CanonicalProjectionReader:
                 "quality": {"dataQuality": "EXACT_SOURCE" if snapshot["ci"] else "UNKNOWN", "freshness": snapshot["freshness"]},
             },
             "governance": {
-                "rules": {"current": 0, "drift": 0, "quarantined": 0, "conflicts": 0, "stale": 0},
-                "skills": {"current": 0, "drift": 0, "quarantined": 0, "conflicts": 0, "stale": 0},
+                "rules": {"current": None, "drift": None, "quarantined": None, "conflicts": None, "stale": None},
+                "skills": {"current": None, "drift": None, "quarantined": None, "conflicts": None, "stale": None},
             },
             "quality": {
                 "integrity": snapshot["integrity"],
                 "freshness": snapshot["freshness"],
                 "telemetryEvents": snapshot["telemetryEvents"],
-                "unknown": 0,
-                "malformed": 0,
-                "dropped": 0,
-                "duplicate": 0,
+                "unknown": None,
+                "malformed": None,
+                "dropped": None,
+                "duplicate": None,
             },
             "mutationSurface": {"externalMutation": False, "readOnly": True},
             "sourceRef": "workflow-canonical-sqlite-wal",
@@ -149,7 +198,7 @@ class CanonicalProjectionReader:
 
 
 def open_canonical_reader(path: Path, project_id: str = "work-lab") -> CanonicalProjectionReader:
-    store = CanonicalStore(path)
+    store = SQLiteReadOnlyStore(path)
     return CanonicalProjectionReader(store, project_id=project_id)
 
 
