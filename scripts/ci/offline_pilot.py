@@ -17,8 +17,6 @@ sys.path.insert(0, str(WF))
 sys.path.insert(0, str(OBS))
 
 from acp_adapter import AcpAdapter  # noqa: E402
-from design_contract import DesignContractChecker  # noqa: E402
-from production_evidence import VisualFixture, evaluate_fixture, svg_preflight  # noqa: E402
 from task_ledger_replay import run_scenario  # noqa: E402
 from usage_ingestion import normalize_event  # noqa: E402
 from usage_rollup import rollup  # noqa: E402
@@ -83,39 +81,8 @@ def _observer_pilot() -> dict[str, Any]:
     }
 
 
-def _open_design_pilot() -> dict[str, Any]:
-    brief = (
-        "# colors\ncolors: #0f172a, #10b981\n"
-        "# methods\nmethod: anti-slop critique\n"
-        "# gates\ngate: accessibility\n"
-    )
-    contract = DesignContractChecker().evaluate(brief)
-    safe_svg = '<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>'
-    brand = evaluate_fixture(
-        VisualFixture("brand-layout", "brand", checks_passed=8, checks_total=8),
-        auto_score=1.0,
-    )
-    minigame = evaluate_fixture(
-        VisualFixture("minigame-hud", "minigame-hud", checks_passed=6, checks_total=6),
-        auto_score=1.0,
-    )
-    return {
-        "branch": "open-design",
-        "evidence": "OFFLINE_VERIFIED",
-        "briefContractPassed": contract["passed"],
-        "tokenCount": len(contract["tokens"]),
-        "methodCount": len(contract["methods"]),
-        "readbackLossless": contract["readback"]["lossless"],
-        "svgPreflightIssues": svg_preflight(safe_svg),
-        "fixtureIds": [brand.fixture_id, minigame.fixture_id],
-        "humanCalibration": [brand.calibration_status, minigame.calibration_status],
-        "visualQualityClaim": "HUMAN_PENDING",
-        "pptxLiveGeneration": "UNKNOWN_NOT_RUN",
-    }
-
-
 def run_pilots() -> dict[str, Any]:
-    pilots = [_workflow_pilot(), _observer_pilot(), _open_design_pilot()]
+    pilots = [_workflow_pilot(), _observer_pilot()]
     return {
         "schemaVersion": "work-lab/offline-pilot/v1",
         "mode": "OFFLINE_FIXTURES_ONLY",

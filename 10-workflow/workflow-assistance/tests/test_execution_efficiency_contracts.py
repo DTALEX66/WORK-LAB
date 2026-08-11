@@ -41,7 +41,7 @@ VALID = {
         "source_identity": {"repository": "DTALEX66/WORK-LAB", "commit": {"algorithm": "repository-default", "object_type": "commit", "oid": "abc"}, "tree": {"algorithm": "repository-default", "object_type": "tree", "oid": "def"}},
         "changed_paths": ["src/a.py"],
         "required_gates": ["workflow.unit"],
-        "skipped_gates": [{"gate_id": "open-design", "reason": "no affected paths"}],
+        "skipped_gates": [{"gate_id": "observer", "reason": "no affected paths"}],
         "risk": "low",
         "delivery_effect": "none",
         "platform_scope": ["linux"],
