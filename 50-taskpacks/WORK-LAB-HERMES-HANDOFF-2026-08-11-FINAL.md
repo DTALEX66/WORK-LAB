@@ -88,3 +88,30 @@ CC Switch:    127.0.0.1:15721 正常（codex-official 官方路由）
 - skills: 14（含 verification-hardening）
 - error-ledger: 48 条（9 分类）verify PASS
 - 服务: sidecar :3525 + dashboard :6522 LIVE
+
+## 2026-08-12 增补 2（数据外溢治理与 E 盘保护）
+
+### 数据外溢治理（C 盘/盘根）
+
+- C 盘 92% 根因：第三方软件数据（Photoshop Temp 13.2G、金山 7.7G、腾讯 4.1G、
+  字体 4.1G、Open Design 2.5G、Hermes 运行时 5.3G），非本项目外溢。
+- 盘根残留清理：C:	emp、C:\d、D:\d、D:\c、D:\cache、D:、D:\.appdata
+  共 7 个旧工作流/路径拼接残留已清。
+- 保留（软件活动）：C:\AITEMP + D:\AITEMP（Adobe Illustrator 2023 AIRobin.exe
+  暂存盘）、C:	mp + D:	mp（Open Design od-skill 标记）。
+- **关键经验：agent 边界规则约束代理行为，不约束第三方软件本体**。Adobe/Open
+  Design 写盘根是软件自身策略，需软件配置改（如 AI 暂存盘、Open Design 临时目录），
+  不是边界规则失效。
+
+### E 盘保护补全（Hermes 侧）
+
+- Hermes 全局规则机制研究结论：
+  - SOUL.md（HERMES_HOME）→ 所有会话始终加载 ✅
+  - .hermes.md / AGENTS.md → 仅从项目 cwd 向上加载（HERMES_HOME 的不生效）
+- 已落地：SOUL.md 追加全局安全规则（E 盘无明确授权禁止访问、项目数据边界、
+  凭据纪律、破坏性操作确认、副作用逐项授权），所有会话生效。
+- Codex 侧 E 盘规则（AGENTS.md + config.toml writable_roots 排除）验证完好。
+
+### 双端一致
+
+- HEAD = 1723efb（PR #68 日结）· 工作树干净 · error-ledger 48 条 · Ledger 19 条
