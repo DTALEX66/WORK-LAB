@@ -54,3 +54,9 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src;../../10-workflow/workflow-assistance/s
 - error-ledger 契约：枚举合法（7 分类/5 phase/4 evidence/6 status），raw_sensitive_data=false
 - CURRENT_STATE 每次代码改动后重新生成（否则 integration gate freshness 失败）
 - 工具链版本：tauri 2.11.x 需要 rustc ≥1.88（合同 1.77.2 仅为下限文档值）
+
+## 本机配置修复（2026-08-12 复查）
+
+- Codex overlay：本机 10 skills → apply 同步为 **12 skills**（补 github-delivery/open-design-integration/update-safety，云端 #61 新增），verify PASS issues=[]
+- 僵尸 sidecar 锁清理：旧 endpoint pid=23692 被 Codex 桌面 renderer 复用导致 sidecar_already_running 误判；删锁后重启 sidecar → http://127.0.0.1:3525，dashboard :6522 mode=LIVE 恢复
+- reasoning_effort 本机实际 = low（交接文档声称 medium 已修正为实测值；该字段不在 config-ownership 受管清单，preserve_unknown 保留用户值）
