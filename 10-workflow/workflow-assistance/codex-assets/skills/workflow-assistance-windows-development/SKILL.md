@@ -1,6 +1,6 @@
 ---
 name: workflow-assistance-windows-development
-description: "Use for Windows development failures involving PowerShell, Git Bash, paths, quoting, Node, Python, ports, processes, encoding, or desktop runtimes."
+description: "Use for Windows dev failures: PowerShell, Git Bash, paths, quoting, ports, processes, encoding."
 ---
 
 # Windows development
@@ -122,3 +122,56 @@ When a command fails on Windows, classify before retrying:
 
 Never retry the identical string; re-issue the dialect-correct form and
 record the failure class.
+
+## Git-Bash → Windows interpreter interop (MSYS path corruption)
+
+When the shell is Git-Bash/MSYS but the consumer is Windows-native Python or
+Node, shell paths do NOT mean what they look like. These pitfalls cost real
+rollbacks; each is from a live session.
+
+1. **`/c/...` paths corrupt inside Windows Python**: `$HOME` expands to
+   `/c/Users/<user>`; passing it to a Windows Python script silently resolves
+   to `<current-drive>:\c\Users\...` — a real wrong directory tree. A sync
+   tool can report `status: APPLIED` while the real user home was never
+   touched. Fix: hand native paths to Windows interpreters —
+   `CYG=$(cygpath -w "$HOME")` then `python script.py --agent-home "$CYG"`, or
+   pass literal `C:/Users/<user>/...`. Verify with a native readback
+   (`python -c "from pathlib import Path; print(Path('C:/...').exists())"`),
+   and check no accidental `<drive>:\c\...` tree exists. Cleanup of an
+   accidental tree: never `rm -rf` blindly — remove only confirmed-empty
+   files bottom-up.
+
+2. **`git rev-parse --is-inside-work-tree` is not "is repo root"**: it returns
+   true for ANY directory under a repo, including ignored runtime/temp paths
+   (e.g. `TMP` redirected into `.hermes/task-runtime/tmp`). Fix: compare
+   `--show-toplevel` against the candidate path itself
+   (`Path(top_level.strip()).resolve() == path.resolve()`); only the exact top
+   level matches.
+
+3. **Single-write-point for collectors/orchestrators**: if a module both
+   persists records AND returns them to an orchestrator that also persists,
+   the second write hits UNIQUE constraints (`sqlite3.IntegrityError`). Pick
+   one owner: collectors return records and the worker writes them, or the
+   module writes and returns nothing to persist. Test with two consecutive
+   runs of the same collector.
+
+4. **MSYS `/tmp` and process substitution fail inside Windows Python**:
+   `--changed-path-file <(printf 'a\n')` → `FileNotFoundError: '\dev\fd\63'`;
+   `/tmp/...` → `'\tmp\...'` (MSYS mount, unknown to Windows Python). Fix: use
+   a project-relative scratch path (`.hermes/task-runtime/tmp/...`) or
+   `cygpath -w` before passing; clean up after the run.
+
+5. **Windows CLI output is not UTF-8**: parsing `tasklist`/`ps`/`wmic` output
+   raises `UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd7...`. Fix:
+   always pass `encoding="utf-8", errors="replace"` to
+   `subprocess.run(..., text=True)` and guard `result.stdout or ""` (stdout
+   can be `None`).
+
+6. **Non-default-drive Rust/Cargo toolchain**: when Rust/MSVC is installed to
+   a user-chosen directory (e.g. `D:\All projects\OS Environment`) instead of
+   `%USERPROFILE%`, every build command must re-export the redirected homes
+   (per-session env vars, not persistent):
+   `export RUSTUP_HOME=...; export CARGO_HOME=...; export PATH="$CARGO_HOME/bin:$PATH"`.
+   MSVC `cl.exe` is NOT on PATH after a quiet VS Build Tools install into
+   `--installPath`; locate it under
+   `BuildTools\VC\Tools\MSVC\<ver>\bin\Hostx64\x64\`.
