@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# pre-commit hook — WORK-LAB 自动同步 CURRENT_STATE（免手动重生成）
+#
+# 背景: 手动重生成 CURRENT_STATE 是哈希噪音的来源（每次改 tracked 文件都要跑）。
+# 此 hook 在提交时自动检测 tracked 改动并重生成 digest + stage，开发者无感。
+#
+# 启用: git config core.hooksPath .githooks
+# 跳过: git commit --no-verify（不推荐，需显式理由）
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+
+# 空提交/无 staged 改动则跳过
+git diff --cached --quiet 2>/dev/null && exit 0
+
+# 收集 staged 的 tracked 改动（排除 CURRENT_STATE 自身，避免循环）
+CHANGED="$(git diff --cached --name-only 2>/dev/null | grep -vE '^00-governance/generated/CURRENT_STATE\.(json|md)$' | grep -vE '^\.hermes/')"
+
+if [ -n "$CHANGED" ]; then
+  # 重生成 CURRENT_STATE（失败不阻断提交，仅记录）
+  if python "$ROOT/scripts/ci/generate_current_state.py" --root "$ROOT" >/dev/null 2>&1; then
+    git add 00-governance/generated/CURRENT_STATE.json 00-governance/generated/CURRENT_STATE.md 2>/dev/null
+  fi
+fi
+exit 0
