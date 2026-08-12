@@ -8,7 +8,7 @@
 | 软件 | 角色 | 支持级 | 管理方式 | 所有权 |
 |---|---|---|---|---|
 | **Hermes** | 主动客户端（执行面） | deep | 受管 skills/bin/SOUL/.env.template 同步到 live Home | USER_OVERLAY / MANAGE |
-| **Codex** | 主动客户端（执行面） | deep | 全局 guidance overlay、rules、11 个 user skills、3 个受管 config 字段 | USER_OVERLAY / MANAGE |
+| **Codex** | 主动客户端（执行面） | deep | 全局 guidance overlay、rules、12 个 user skills、3 个受管 config 字段 | USER_OVERLAY / MANAGE |
 | **CC Switch** | provider 路由客户端 | deep | 只读观察 provider catalog/routing；codex.skill_sync 等平台内部同步 IGNORE | USER_OVERLAY / OBSERVE |
 | **GitHub** | 交付通道 | deep | 6 个 Hermes github skills、Codex github-delivery skill、CI（work-lab-gate）、gh 认证 | USER_OVERLAY / OBSERVE |
 | **OpenHuman** | 本地 AI 桌面代理（观察源） | experimental | 全局配置/注册归 WORK-LAB MANAGE；openhuman-integration skill（私有边界 + junction 验证阶梯）；workspace_metadata OBSERVE、runtime_memory IGNORE | PLATFORM_INTERNAL / OBSERVE |
@@ -26,11 +26,11 @@
 |---|---|---|
 | 全局 guidance | `~/.codex/AGENTS.md`（WORK-LAB managed block） | 1 |
 | 全局 rules | `~/.codex/rules/workflow-assistance.rules` | 1 |
-| 用户 skills | `~/.agents/skills/workflow-assistance-*` | 11 |
+| 用户 skills | `~/.agents/skills/workflow-assistance-*` | 12 |
 | 受管 config 字段 | `config.toml` managed block：`approval_policy` `sandbox_mode` `project_doc_max_bytes` | 3 |
 | overlay state | `~/.codex/.workflow-assistance-state.json` | 1 |
 
-11 个 skills：
+12 个 skills：
 
 ```text
 workflow-assistance-evidence-verification
@@ -95,7 +95,7 @@ PLATFORM_INTERNAL（desktop 状态/openhuman 元数据/cc-switch 平台同步）
 ## 5. 当前状态（2026-08-11）
 
 ```text
-Codex overlay:   11 skills · verify PASS · issues=[]
+Codex overlay:   12 skills · verify PASS · issues=[]
 Hermes live:     source==live hash 一致（bin + skills）
 CC Switch:       127.0.0.1:15721 运行中 · Codex 经 cc-switch-official 端到端 PASS
 GitHub:          gh 已登录 DTALEX66 · CI 5 jobs 全绿（main 精确 SHA）
@@ -112,7 +112,7 @@ Open Design:     skill 已载入 · 跨项目实测可引用
 | 入口唯一 | 桌面 .lnk→vbs（GUI）+ hermes CLI | bash+cmd 单一 wrapper（版本目录 glob 一致） | 桌面 .lnk→cc-switch.exe | 桌面 .lnk→OpenHuman.exe | 桌面 .lnk→Open Design.exe |
 | 桌面可达 | ✓ wscript 链完整 | CLI 无 GUI（官方形态，入口唯一） | ✓ | ✓ | ✓ |
 | 官方标准+用户配置 | config-ownership MANAGE 受管字段 | overlay 3 字段，用户字段 preserve | OBSERVE，catalog/routing MANAGE | 全局配置 MANAGE/私有 IGNORE | 非设计配置 MANAGE/设计能力 IGNORE |
-| 无阻塞 | 13 skills 按需加载 | skills 68KB 总 · guidance 10.6KB · on-demand | 代理超时宽松（90s/600s） | — | — |
-| 模型满血 | reasoning_effort=medium（官方默认）· max_tokens 8192 | cc-switch-official → 官方 provider · cost_multiplier=1.0 · 无限额 | 官方路由无限速 | — | — |
+| 无阻塞 | 13 skills 按需加载 | skills 总（12 个，8KB/个 <10KB 基线） · guidance 10.6KB · on-demand | 代理超时宽松（90s/600s） | — | — |
+| 模型满血 | reasoning_effort=low（本机实际，OBSERVE 字段 preserve_unknown）· max_tokens 8192 | cc-switch-official → 官方 provider · cost_multiplier=1.0 · 无限额 | 官方路由无限速 | — | — |
 
 审计命令：桌面快捷方式 `Test-Path` 全链；wrapper `--version`；`config-ownership.json` 字段层校验；skills 体积 `du -sh`；模型 `reasoning_effort` grep + CC Switch proxy_config 检查。
