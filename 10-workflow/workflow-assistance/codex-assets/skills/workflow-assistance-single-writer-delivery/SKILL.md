@@ -13,3 +13,18 @@ description: "Use for Git changes, parallel agents, code review, commits, pull r
 - Before a requested push, fetch, verify the target branch and remote, push without force, then read back the remote SHA.
 - CI evidence must match the exact delivered SHA. A green run for another SHA is not evidence.
 - Merge, tag, release, remote deletion, and history rewrite require explicit approval for that exact action.
+
+## Orchestration extension (absorbed from 2026-08-12 research: langgraph / myclaude / openai-agents patterns)
+
+Single-writer is the *ownership* rule, not a ban on parallel work. When a task
+set has explicit dependencies, schedule as a DAG instead of a serial queue:
+
+1. Task cards carry `depends_on` (explicit task ids). No implicit ordering.
+2. Topological order for execution; branches with no dependencies run in
+   parallel, each in its own worktree (existing isolated-writer mechanism).
+3. A task's verdict is recorded only when its dependencies are recorded;
+   a DAG edge is not satisfied by "looks related".
+4. Handoffs between parallel writers are merge-committed sequentially on main
+   (squash per PR), never concurrent pushes.
+5. Session lifecycle: register owner/pid/heartbeat per active writer; a
+   timed-out session is reclaimed, never assumed dead by a stale lock.
