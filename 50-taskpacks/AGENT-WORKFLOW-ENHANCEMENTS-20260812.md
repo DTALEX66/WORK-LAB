@@ -4,6 +4,18 @@
 > 已按用户要求**排除门禁验证类**（quality gate / exact-SHA CI / 评估基准）。
 > 本文为 tracked 增强规划（roadmap），落地时按单 writer 纪律逐项立项。
 
+## 全局范围声明（2026-08-12 补充）
+
+增强落地于**全局全工作流**，三面生效，不限于本项目：
+
+1. **实现层**：`10-workflow/workflow-assistance` 模块（TaskLedger / TelemetryLedger /
+   sidecar_lock / 新脚本）——全局工作流基础设施，任何项目/会话可调用
+2. **Hermes 侧**：Hermes 全局 skills（sleep-mode 已吸收 DAG 编排）
+3. **Codex 侧**：受管 skills sync 到 live（14 skills，全局生效）
+
+新增能力按"workflow-assistance 模块 = 全局工作流实现层"的定位暴露，
+各项目消费方（CLO/Observer/任务包）经模块 API 使用，不各自复制。
+
 ## 调研来源
 
 ### GitHub（框架/工具，真实可落地）
@@ -76,8 +88,11 @@
 
 ## 状态
 
-- [ ] #1 多 Agent 编排层（DAG）——待立项
-- [ ] #2 会话生命周期治理——待立项
-- [ ] #3 Trace 级可观测——待立项
-- [ ] #4 结构化长期记忆——待立项
-- [ ] #5 Spec→任务链——待立项
+- [x] #1 多 Agent 编排层（DAG）——`TaskLedger.ready_tasks()` 拓扑就绪选择器（PR #75）
+- [x] #2 会话生命周期治理——`SingleInstanceLock.acquired_at` + `status()`（锁时间戳/状态查询）
+- [x] #3 Trace 级可观测——`TelemetryLedger.trace()` / `trace_tree()`（trace_id/parent_id 树）
+- [x] #4 结构化长期记忆——`error_ledger_summary.py`（error-ledger → lessons 知识文件）
+- [x] #5 Spec→任务链——`spec_to_tasks.py`（任务包 md → 任务卡声明 JSON）
+
+全部落地于 workflow-assistance 模块（全局工作流实现层），配套测试
+（task_ledger 20 / sidecar_lock 4 / telemetry 6 / enhancements 2）。
