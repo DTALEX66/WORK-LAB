@@ -82,6 +82,46 @@ class TelemetryLedger:
             handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
         return record
 
+    def trace(self, trace_id: str) -> list[dict[str, Any]]:
+        """Events belonging to one trace, ordered by sequence.
+
+        Trace-level observability (absorbed 2026-08-12): a trace_id links a
+        task's events across sub-operations; parent_id links a child span to
+        its parent within the same trace.
+        """
+        return [row for row in self.read() if row.get("trace_id") == trace_id]
+
+    def trace_tree(self, trace_id: str) -> list[dict[str, Any]]:
+        """Nested trace tree: events with parent_id are children of their parent.
+
+        Returns a flat list ordered parent-first; children carry their resolved
+        depth and path. A parent_id that points at a missing event is surfaced
+        as a broken edge (never silently dropped).
+        """
+        rows = self.trace(trace_id)
+        by_id = {row["event_id"]: row for row in rows}
+        roots: list[dict[str, Any]] = []
+        children: dict[str, list[dict[str, Any]]] = {}
+        for row in rows:
+            parent = row.get("parent_id")
+            if parent and parent in by_id:
+                children.setdefault(parent, []).append(row)
+            else:
+                roots.append(row)
+        ordered: list[dict[str, Any]] = []
+
+        def visit(row: dict[str, Any], depth: int, path: str) -> None:
+            decorated = dict(row)
+            decorated["trace_depth"] = depth
+            decorated["trace_path"] = path
+            ordered.append(decorated)
+            for child in children.get(row["event_id"], []):
+                visit(child, depth + 1, f"{path}.{child['event_id']}")
+
+        for root in roots:
+            visit(root, 0, root["event_id"])
+        return ordered
+
     def projection(self) -> dict[str, Any]:
         rows = self.read()
         return {"schema_version": "workflow/telemetry-projection/v1", "event_count": len(rows), "last_sequence": len(rows), "events": [{"event_id": r["event_id"], "occurred_at": r.get("occurred_at"), "source": r.get("source"), "outcome": r.get("outcome")} for r in rows]}
