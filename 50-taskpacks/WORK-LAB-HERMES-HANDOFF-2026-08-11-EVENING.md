@@ -59,4 +59,4 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src;../../10-workflow/workflow-assistance/s
 
 - Codex overlay：本机 10 skills → apply 同步为 **12 skills**（补 github-delivery/open-design-integration/update-safety，云端 #61 新增），verify PASS issues=[]
 - 僵尸 sidecar 锁清理：旧 endpoint pid=23692 被 Codex 桌面 renderer 复用导致 sidecar_already_running 误判；删锁后重启 sidecar → http://127.0.0.1:3525，dashboard :6522 mode=LIVE 恢复
-- reasoning_effort 本机实际 = low（交接文档声称 medium 已修正为实测值；该字段不在 config-ownership 受管清单，preserve_unknown 保留用户值）
+- reasoning_effort = medium（live 实测，官方默认；不在 config-ownership 受管清单，preserve_unknown 保留用户值）
