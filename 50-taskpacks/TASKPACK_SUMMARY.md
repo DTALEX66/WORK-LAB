@@ -220,3 +220,27 @@ cloud/paid provider. Commit, push, PR, merge, release, live/global apply,
 paid-provider smoke, real-device validation, human visual calibration, and the
 portable Windows artifact remain separately evidenced gates; none is inferred
 from a task-pack summary alone.
+
+## 2026-08-12 status update
+
+- **PR chain (all merged to main, local==remote)**: #51 stage3 continuation +
+  Codex overlay + native Tauri; #52 workspace active-project discovery +
+  Observer canonical render fix; #53 delivery summary/error ledger/handoff;
+  #63 local-config claim corrections; #64 managed-assets doc drift fix; #65
+  skill absorption (12->13 skills).
+- **WL3-620 native Tauri closed**: rustc 1.88 toolchain (contract floor),
+  EXE + MSI + NSIS bundles, install/uninstall cycle verified, Release
+  v0.1.0-native-observer.
+- **Workspace discovery (user requirement)**: active_projects.py scans the
+  user-specified total workspace (D:\All projects), registers every Git
+  project, marks ACTIVE when a workflow agent is running with fresh evidence.
+- **Observer live chain verified**: canonical store -> sidecar SSE -> dashboard
+  (mode=LIVE), browser-verified full/compact views.
+- **Skill absorption**: observer-delivery (new), windows-development += MSYS
+  interop, self-improvement += config comparison, safe-project-execution +=
+  risk-tiered model. Local apply/verify PASS (13 skills).
+- **Active handoff**: 50-taskpacks/WORK-LAB-HERMES-HANDOFF-2026-08-11-FINAL.md
+  (supersedes DEEPSEEK + EVENING variants).
+- **Standing gates**: commit/push/PR/release/live-apply remain per-action
+  authorized; WL3-820 formal release PENDING_HUMAN_APPROVAL; error-ledger 42
+  entries contract-verified.
