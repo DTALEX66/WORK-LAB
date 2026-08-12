@@ -225,6 +225,34 @@ class TaskLedgerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "cycle"):
                 ledger.set_dependencies("task-a", ["task-b"])
 
+    def test_ready_tasks_returns_topologically_ready_queued_tasks(self) -> None:
+        module = load_module()
+        with tempfile.TemporaryDirectory() as raw:
+            ledger = module.TaskLedger(Path(raw) / "ledger.json")
+            ledger.create("leaf-1", "idem-l1")
+            ledger.create("leaf-2", "idem-l2")
+            ledger.create("mid", "idem-mid")
+            ledger.create("root", "idem-root")
+            ledger.set_dependencies("mid", ["leaf-1"])
+            ledger.set_dependencies("root", ["mid"])
+            # 无依赖的任务立即就绪
+            self.assertEqual(sorted(ledger.ready_tasks()), ["leaf-1", "leaf-2"])
+            # 完成 leaf-1 后 mid 就绪，但 root 仍阻塞（依赖 mid）
+            for state in ("PLANNING", "RUNNING"):
+                ledger.transition("leaf-1", state)
+            ledger.transition("leaf-1", "COMPLETED")
+            self.assertEqual(sorted(ledger.ready_tasks()), ["leaf-2", "mid"])
+            # 完成全部依赖后 root 就绪
+            for tid in ("leaf-2", "mid"):
+                for state in ("PLANNING", "RUNNING"):
+                    ledger.transition(tid, state)
+                ledger.transition(tid, "COMPLETED")
+            self.assertEqual(ledger.ready_tasks(), ["root"])
+            # 非 QUEUED 任务不进入就绪集
+            ledger.transition("root", "PLANNING")
+            ledger.transition("root", "RUNNING")
+            self.assertEqual(ledger.ready_tasks(), [])
+
     def test_child_fanout_is_bounded(self) -> None:
         module = load_module()
         with tempfile.TemporaryDirectory() as raw:

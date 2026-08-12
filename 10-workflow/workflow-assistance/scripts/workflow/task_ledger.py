@@ -250,6 +250,23 @@ class TaskLedger:
             raise KeyError(f"task not found: {task_id}")
         return task
 
+    def ready_tasks(self) -> list[str]:
+        """Topologically ready tasks: QUEUED tasks whose dependencies are all COMPLETED.
+
+        DAG scheduling entry point (absorbed 2026-08-12): a task starts only
+        when every `dependencies` edge is satisfied by a recorded COMPLETED
+        verdict; "looks related" is never a dependency edge.
+        """
+        data = self._read()
+        completed = {tid for tid, task in data["tasks"].items() if task.get("status") == "COMPLETED"}
+        ready: list[str] = []
+        for tid, task in data["tasks"].items():
+            if task.get("status") != "QUEUED":
+                continue
+            if all(dep in completed for dep in task.get("dependencies", [])):
+                ready.append(tid)
+        return ready
+
     def _assert_lease(self, task: dict[str, Any], holder: str | None, fence: int | None, now: str | None) -> None:
         lease = task.get("lease")
         if not lease:
