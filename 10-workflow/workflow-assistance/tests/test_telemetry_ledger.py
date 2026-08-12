@@ -14,6 +14,22 @@ sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 
 class TelemetryLedgerTests(unittest.TestCase):
+    def test_trace_and_trace_tree_link_parent_child_events(self):
+        with tempfile.TemporaryDirectory() as raw:
+            ledger = module.TelemetryLedger(Path(raw) / "telemetry.jsonl")
+            ledger.append({"event_id": "e-root", "trace_id": "t1", "source": "test", "outcome": "ok"})
+            ledger.append({"event_id": "e-child", "trace_id": "t1", "parent_id": "e-root", "source": "test", "outcome": "ok"})
+            ledger.append({"event_id": "e-other", "trace_id": "t2", "source": "test", "outcome": "ok"})
+            trace = ledger.trace("t1")
+            self.assertEqual([r["event_id"] for r in trace], ["e-root", "e-child"])
+            tree = ledger.trace_tree("t1")
+            self.assertEqual(tree[0]["event_id"], "e-root")
+            self.assertEqual(tree[0]["trace_depth"], 0)
+            self.assertEqual(tree[1]["event_id"], "e-child")
+            self.assertEqual(tree[1]["trace_depth"], 1)
+            self.assertEqual(tree[1]["trace_path"], "e-root.e-child")
+            self.assertEqual(ledger.trace("t2"), [r for r in ledger.read() if r["event_id"] == "e-other"])
+
     def test_append_is_idempotence_guarded_and_projection_is_redacted(self):
         with tempfile.TemporaryDirectory() as raw:
             ledger = module.TelemetryLedger(Path(raw) / "telemetry.jsonl")

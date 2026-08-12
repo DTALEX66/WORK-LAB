@@ -17,6 +17,21 @@ class SidecarLockTests(unittest.TestCase):
    first.release()
    second=SingleInstanceLock(path); second.acquire(); second.release()
 
+ def test_status_reports_owner_and_acquired_at_without_touching_lock(self):
+  with tempfile.TemporaryDirectory() as raw:
+   path=Path(raw)/'sidecar.lock'
+   self.assertIsNone(SingleInstanceLock(path).status())
+   lock=SingleInstanceLock(path); lock.acquire()
+   status=SingleInstanceLock(path).status()
+   self.assertIsNotNone(status)
+   assert status is not None
+   self.assertEqual(status['pid'], __import__('os').getpid())
+   self.assertIs(status['alive'], True)
+   self.assertIn('acquired_at', status)
+   self.assertIn('token', status)
+   lock.release()
+   self.assertIsNone(SingleInstanceLock(path).status())
+
  def test_stale_pid_is_recovered_but_malformed_owner_fails_closed(self):
   with tempfile.TemporaryDirectory() as raw:
    path=Path(raw)/'sidecar.lock'
