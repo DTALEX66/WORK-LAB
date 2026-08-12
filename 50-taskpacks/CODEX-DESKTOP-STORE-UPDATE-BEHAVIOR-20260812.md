@@ -46,3 +46,16 @@
   登录/外观/受管字段属应用状态层，与基线配置无关。
 - 排查时不要将"登录/重置"误判为配置漂移（参考 hermes-codex-config-drift：
   所有权分层，先判定层再行动）。
+
+## 6. 社区证据（GitHub openai/codex，2026-08-12 查证）
+
+| Issue | 内容 | 状态 |
+|---|---|---|
+| [#37927](https://github.com/openai/codex/issues/37927) | **商店更新覆盖 local-projects 空状态并镜像 .bak**——与本机现象完全一致（同版本线 26.803.10989.0，ChatGPT Pro，恢复后两次干净重启保持） | OPEN 未修复 |
+| [#38008](https://github.com/openai/codex/issues/38008) | 桌面应用强制 SMS/WhatsApp 验证 | OPEN |
+| [#32417](https://github.com/openai/codex/issues/32417) | UI 设置不持久（custom model provider） | OPEN |
+| [#36490](https://github.com/openai/codex/issues/36490) | Windows 登录 token_exchange_failed | OPEN |
+
+**判定**：本问题为官方已知 bug（商店更新触发状态覆盖），非个例、非配置漂移。
+Windows 无规避渠道（仅商店）；macOS 独立包手动更新基本不涉及。
+跟踪：关注 #37927 官方修复。
