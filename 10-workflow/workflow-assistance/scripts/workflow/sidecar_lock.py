@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import datetime as _dt
 import json
 import os
 from pathlib import Path
 import uuid
+
+
+def _utc_now() -> str:
+    return _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
 
 
 def _windows_pid_alive(pid: int) -> bool:
@@ -77,7 +82,13 @@ class SingleInstanceLock:
     def acquire(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         token = uuid.uuid4().hex
-        payload = (json.dumps({"pid": os.getpid(), "token": token}, sort_keys=True) + "\n").encode("utf-8")
+        payload = (
+            json.dumps(
+                {"pid": os.getpid(), "token": token, "acquired_at": _utc_now()},
+                sort_keys=True,
+            )
+            + "\n"
+        ).encode("utf-8")
         for _ in range(2):
             try:
                 fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -111,6 +122,20 @@ class SingleInstanceLock:
                 pass
             self._owned = False
             self._token = None
+
+    def status(self) -> dict[str, object] | None:
+        """Read-only lock status: owner pid, token, acquired_at, and staleness.
+
+        Session-governance view (absorbed 2026-08-12): consumers can observe
+        who holds the lock and for how long without touching it. Returns None
+        when the lock is free; raises only for unreadable/invalid lock files.
+        """
+        if not self.path.exists():
+            return None
+        _, owner = self._read_owner()
+        owner = dict(owner)
+        owner["alive"] = self._pid_alive(int(owner["pid"]))
+        return owner
 
     def __enter__(self) -> "SingleInstanceLock":
         self.acquire()
