@@ -64,3 +64,27 @@ CC Switch:    127.0.0.1:15721 正常（codex-official 官方路由）
 - 只读观测模块：Observer 零写入，Telemetry Ledger 唯一
 - Open Design：非设计全局配置 MANAGE / 设计能力配置 IGNORE
 - 并行会话竞态：写前复验分支+HEAD，写后 re-grep 标志
+
+## 2026-08-12 增补（本日续接成果）
+
+### 已合并 PR（main 均含，本地=远端）
+
+| PR | 内容 | SHA |
+|---|---|---|
+| #63 | 本机配置声称修正（reasoning_effort=low、Codex 12 skills） | 6777928 |
+| #64 | managed-software-and-assets 漂移修正 | ad9e20c |
+| #65 | SKILL 吸收（observer-delivery 新建 + 3 技能合并，12→13） | 3e66b1f |
+| #66 | 文档整理 + TASKPACK_SUMMARY 更新 + CURRENT_STATE | 6eaf6b3 |
+| #67 | verification-hardening skill（幻觉核验/升级安全网/审批自适应） | 400d82d |
+
+### 本机部署（不入库）
+
+- hermes-upgrade-watch.py → Hermes post_api_request hook（版本变化自动备份 config.yaml+SOUL.md，实测触发成功；首次使用需批准）
+- Codex network_access=true（Open Design 上传 git push；备份 config.toml.bak-network-fix-20260812105059；端到端验证待 Codex 重启后）
+- Open Design 桌面双入口已修（单入口）；.bat CODEX_BIN 更新至 8e8bf206
+
+### 状态
+
+- skills: 14（含 verification-hardening）
+- error-ledger: 48 条（9 分类）verify PASS
+- 服务: sidecar :3525 + dashboard :6522 LIVE
