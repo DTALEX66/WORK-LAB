@@ -20,7 +20,7 @@
 2. 桌面可达 — 全部快捷方式目标链 Test-Path 通过
 3. 官方标准+用户配置 — config-ownership 合同字段层 preserve_unknown
 4. 无阻塞 — skills 8KB/个（<10KB 基线）· guidance 10.6KB · wrapper 无死候选
-5. 模型满血 — reasoning_effort=low（本机实际值，OBSERVE 字段 preserve_unknown，用户可自行调整；交接文档此前声称 medium 与实测不符）· CC Switch 官方 provider 无限额（cost_multiplier=1.0）· Codex gpt-5.6-sol 端到端
+5. 模型满血 — reasoning_effort=medium（官方默认，live 实测）· CC Switch 官方 provider 无限额（cost_multiplier=1.0）· Codex gpt-5.6-sol 端到端
 
 ## 3. Observer 修复明细（#60）
 
@@ -35,15 +35,15 @@
 
 - 新建 `workflow-assistance-update-safety`：四层证据/所有权分层/并行会话竞态/managed-block 恢复（吸收 agent-update-safety + hermes-codex-config-drift）
 - 增强 `workflow-assistance-github-delivery`：CURRENT_STATE squash 陷阱、merge API 405、语义 gate ID、SKIP 信任（吸收 exact-sha-ci-delivery）
-- Codex live：12 个受管 skills（apply 已同步本机，verify PASS issues=[]）
+- Codex live：14 个受管 skills（apply 已同步本机，verify PASS issues=[]）
 
 ## 5. 当前状态
 
 ```text
 main:        23baa6f（本地 == 远端 == origin/main，工作树 clean）
 CI:          #59/#60/#61 全绿 · main 精确 SHA success
-Codex overlay: 12 skills · verify PASS · issues=[]
-Hermes live:   reasoning_effort=low（本机实际）· bin 同步 · Hermes 受管 skills 在其自有命名空间（software-development 等），与 Codex 侧 12 个 workflow-assistance-* 分开
+Codex overlay: 14 skills · verify PASS · issues=[]
+Hermes live:   reasoning_effort=medium（live 实测）· bin 同步 · Hermes 受管 skills 在其自有命名空间（software-development 等），与 Codex 侧 12 个 workflow-assistance-* 分开
 运行时:        sidecar 动态端口 + dashboard :6522（需重启时重新拉起）
 error-ledger:  46 条（9 分类）verify PASS
 CC Switch:    127.0.0.1:15721 正常（codex-official 官方路由）
