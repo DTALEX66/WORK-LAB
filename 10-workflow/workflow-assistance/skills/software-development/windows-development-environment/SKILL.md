@@ -1,7 +1,7 @@
 ---
 name: windows-development-environment
 description: "Use when debugging Windows Node, Python, Git-Bash, PowerShell, path, encoding, or local-server failures."
-version: 1.2.0
+version: 1.2.1
 author: Hermes Agent
 license: MIT
 platforms: [windows]
@@ -40,6 +40,34 @@ When PowerShell is required, prefer **PowerShell 7** via `pwsh`:
 ```bash
 pwsh -NoProfile -Command '...'
 ```
+
+### Git-Bash → PowerShell variable expansion
+
+Git-Bash parses an inline command **before** it starts `pwsh`. Therefore a
+PowerShell script wrapped in Bash double quotes lets Bash expand `$name` first;
+an unset Bash variable becomes an empty string and PowerShell receives damaged
+source. This is a shell-boundary issue, not a PowerShell variable issue.
+
+For a short command, use Bash single quotes around the whole PowerShell source
+and PowerShell double quotes inside it:
+
+```bash
+pwsh -NoProfile -Command '$value="safe"; Write-Output "value=$value"'
+```
+
+For a multi-line command or any command that creates, deletes, replaces, edits
+registry state, controls a service, or changes a desktop shortcut, write a
+reviewable ASCII/UTF-8 `.ps1` under the active project's ignored
+`.hermes/task-runtime/`, then run:
+
+```bash
+pwsh -NoProfile -File .hermes/task-runtime/operation.ps1
+```
+
+Do not rely on PowerShell `--%` to fix this: it is processed only after Bash has
+already expanded the command. Do not paper over the problem with scattered
+`\$` escapes; they are easy to miss in a complex script. Verify preconditions,
+perform the smallest approved change, then read back the exact target.
 
 Use `powershell.exe -NoProfile` only for a legacy module or Desktop-only compatibility case.
 
@@ -170,7 +198,7 @@ ownership decisions, and drift results, an explicitly authorized deployment may 
 
 ```bash
 python scripts/workflow/sync_hermes_workflow_assets.py \
-  --repo "$REPO_ROOT" --home "$HERMES_HOME" --apply
+  --repo "$REPO_ROOT" --home "$HERMES_HOME" --apply --approved
 hermes config check
 ```
 
