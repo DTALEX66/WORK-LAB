@@ -188,6 +188,19 @@ python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject --agent-
 `config/SOUL.md → $HERMES_HOME/SOUL.md` 的明确单文件映射进入同一套
 backup → staging → atomic promotion 流程；`config/.env.template` 只列环境变量名称，不含真实值。
 
+### 软件更新与升级后恢复
+
+本项目不是 Hermes、Codex、CC Switch、Open Design 或 OpenHuman 的日常软件更新器。
+软件升级由用户决定，或由官方稳定版渠道推送；版本提示只能作为只读兼容性事实，不能自动
+转化为项目的 apply 任务。
+
+若用户升级后报告工作流损坏，可在其明确授权下，按“只读发现 → 无密 ActionPlan → 最小
+受管 apply/rollback → verify 与幂等 plan 回读”的顺序恢复本项目明确拥有的 Rules、Skills、
+字段级配置和已声明的 Hermes 受管文件映射。恢复绝不替代官方安装/更新，也不接管
+Provider、模型、认证、Token、会话、私有记忆、Desktop 内部状态、CC Switch 路由或 Open
+Design 的设计能力配置。今日基线结论、已处理事项和恢复流程见
+[`docs/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md`](docs/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md)。
+
 ## 模型切换与路由诊断
 
 ### 安全切换
