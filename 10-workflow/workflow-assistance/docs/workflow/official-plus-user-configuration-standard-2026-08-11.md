@@ -15,10 +15,11 @@ The target layering is:
 1. `UPSTREAM_OFFICIAL`: discover the installed client's current schema,
    capabilities, defaults and config roots read-only. Do not copy an installation
    tree or freeze an old official config as a private fork.
-2. `USER_OVERLAY`: version only the user's portable Rules, Skills, plugin
-   declarations, boundaries and explicit preferences.
+2. `USER_OVERLAY`: version only the user's portable Rules, Skills, observed
+   plugin declarations, boundaries and explicit preferences.
 3. `PROJECT_OVERLAY`: keep project `AGENTS.md`, rules, skills, profiles and gates
-   in the project that owns them.
+   in the project that owns them. WORK-LAB may observe this layer for an explicit
+   project task, but no global synchronizer may apply or replace it.
 4. `TASK_EPHEMERAL`: keep leases, checkpoints and temporary task context in the
    Workflow-owned canonical SQLite database; expire them instead of promoting
    them silently.
@@ -31,7 +32,7 @@ recipe, not a live deployment policy.
 
 | Product | Official/native owner | WORK-LAB owns | Must not cross the boundary |
 |---|---|---|---|
-| Codex | `~/.codex/config.toml`, native auth, sandbox and runtime; trusted project `.codex/config.toml` | global/project `AGENTS.md`, project rules, user/project Skills desired state and safety boundaries | auth files, private sessions, generated local memories, caches, Desktop internal state |
+| Codex | `~/.codex/config.toml`, native auth, sandbox and runtime; each project owns its trusted project config, `AGENTS.md`, rules and Skills | global user `AGENTS.md` managed block, one user rules file, fourteen user Skills, and missing field-level defaults only | auth files, private sessions, generated local memories, caches, Desktop internal state, or any project-local rules/Skills |
 | Hermes | `~/.hermes/config.yaml`, `.env`, `auth.json`, native `SOUL.md`, `MEMORY.md`, `USER.md`, session search and runtime | portable Rules/Skills package, explicit non-secret preferences and project execution boundaries; an explicitly approved model switch uses only `hermes config get/set/unset` | credentials, raw conversations, memory bodies, logs, cache, automatic cross-client memory import |
 | CC Switch | its `~/.cc-switch` provider catalog, supported-client routing and local proxy state | desired routing policy for the clients it officially controls and secret-free observations | owning Hermes' independent native model selection; Codex/Hermes prompt, Skill, session or memory synchronization; credentials/database copies |
 | GitHub | repository, branch protection, Actions and native `GITHUB_TOKEN` | desired workflows, gates and exact-SHA evidence contracts | broad write tokens, unpinned third-party Actions, fabricated check conclusions |

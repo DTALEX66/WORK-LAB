@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
@@ -97,6 +99,23 @@ class ActionPlanSyncTests(unittest.TestCase):
             self.assertEqual(live_config.read_text(encoding="utf-8"), original)
             self.assertFalse((home / ".workflow-assistance-state.yaml").exists())
 
+    def test_config_merge_preserves_user_plugins_unchanged(self) -> None:
+        module = load_module()
+        with tempfile.TemporaryDirectory() as raw:
+            repo, home = make_isolated_roots(raw)
+            live_config = home / "config.yaml"
+            live_config.write_text(
+                "plugins:\n  enabled: [user-plugin]\n  disabled: [other-plugin]\n",
+                encoding="utf-8",
+            )
+            module.merge_live_config(repo, home, apply=True)
+            merged = module.yaml.safe_load(live_config.read_text(encoding="utf-8"))
+            self.assertEqual(
+                merged["plugins"],
+                {"enabled": ["user-plugin"], "disabled": ["other-plugin"]},
+            )
+            self.assertFalse((home / ".workflow-assistance-state.yaml").exists())
+
 
     def test_readback_rejects_source_mutation_after_plan(self) -> None:
         module = load_module()
@@ -129,6 +148,56 @@ class ActionPlanSyncTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("must stay inside", result.stdout + result.stderr)
             self.assertFalse(output.exists())
+
+    def test_plan_fails_closed_when_a_managed_target_crosses_a_reparse_path(self) -> None:
+        module = load_module()
+        with tempfile.TemporaryDirectory() as raw:
+            repo, home = make_isolated_roots(raw)
+            managed_target = home / "skills/github/github-auth"
+
+            real_check = module._is_link_or_reparse
+
+            def marks_managed_target(path: Path) -> bool:
+                return path == managed_target or real_check(path)
+
+            with patch.object(module, "_is_link_or_reparse", side_effect=marks_managed_target):
+                with self.assertRaisesRegex(ValueError, "symlink or junction"):
+                    module.build_action_plan(repo, home)
+
+    def test_plan_rejects_real_symlinked_managed_parent_when_supported(self) -> None:
+        module = load_module()
+        with tempfile.TemporaryDirectory() as raw:
+            repo, home = make_isolated_roots(raw)
+            external = Path(raw) / "external-skills"
+            external.mkdir()
+            skills = home / "skills"
+            try:
+                os.symlink(external, skills, target_is_directory=True)
+            except OSError as exc:
+                self.skipTest(f"symlink creation unavailable on this Windows host: {exc}")
+
+            with self.assertRaisesRegex(ValueError, "symlink or junction"):
+                module.build_action_plan(repo, home)
+
+    def test_unfenced_retired_asset_blocks_without_deleting_user_content(self) -> None:
+        module = load_module()
+        with tempfile.TemporaryDirectory() as raw:
+            repo, home = make_isolated_roots(raw)
+            retired = home / "skills/model-switch/references/oauth-credential-sync.md"
+            retired.parent.mkdir(parents=True)
+            retired.write_text("user-content", encoding="utf-8")
+
+            with self.assertRaisesRegex(RuntimeError, "retired_asset_ownership_unproven"):
+                module.deploy_portable(
+                    repo,
+                    home,
+                    apply=True,
+                    include_backup=False,
+                    allow_project_runtime_home=True,
+                )
+
+            self.assertEqual(retired.read_text(encoding="utf-8"), "user-content")
+            self.assertFalse((home / "SOUL.md").exists())
 
 
 if __name__ == "__main__":

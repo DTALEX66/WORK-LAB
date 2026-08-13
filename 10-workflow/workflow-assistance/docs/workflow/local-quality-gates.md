@@ -10,7 +10,10 @@ python scripts/workflow/run_quality_gate.py verify
 ```
 
 The runner first performs a fail-fast dependency preflight from
-`requirements.txt`, then runs these client-neutral gates in order:
+`requirements.txt`, then runs these client-neutral gates in order. CI resolves
+the same direct constraints through hash-locked `requirements.lock` with
+`--require-hashes`; regenerate the lock deliberately when direct constraints
+change.
 
 1. `governance`
 2. `compile`

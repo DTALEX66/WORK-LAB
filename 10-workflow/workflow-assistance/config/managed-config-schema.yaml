@@ -50,9 +50,7 @@ managed:
     # Isolated baseline construction only; never a live Home deployment instruction.
     strategy: replace_owned_matcher
     owned_matcher: terminal
-  plugins.enabled:
-    # Isolated baseline construction only; never a live Home deployment instruction.
-    strategy: merge_additive
+
 preserved:
   - model.provider
   - model.default
@@ -64,7 +62,7 @@ preserved:
   - mcp_servers.user_defined
   - quick_commands.user_defined
   - model_picker.user_defined
-  - plugins.user_enabled
+  - plugins
   - sessions
   - memories
 forbidden:

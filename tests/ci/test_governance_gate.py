@@ -27,10 +27,20 @@ class GovernanceGateTests(unittest.TestCase):
     def test_root_workflow_uses_real_needs_results(self):
         workflow = (ROOT / ".github/workflows/work-lab-gate.yml").read_text(encoding="utf-8")
         normalized = "".join(workflow.split())
-        for job in ("workflow", "observer", "integration"):
+        for job in ("workflow", "observer", "token-monitor", "integration"):
             self.assertIn(f"needs.{job}.result", normalized)
         self.assertNotIn('"workflow":"success"', normalized)
         self.assertIn("needs:", workflow)
+
+    def test_token_monitor_has_a_windows_locked_build_and_test_gate(self):
+        workflow = (ROOT / ".github/workflows/work-lab-gate.yml").read_text(encoding="utf-8")
+        self.assertIn("token-monitor:", workflow)
+        self.assertIn("runs-on: windows-latest", workflow)
+        self.assertIn("npm ci", workflow)
+        self.assertIn("npm run build", workflow)
+        self.assertIn("cargo test --locked", workflow)
+        self.assertIn("cargo check --locked", workflow)
+        self.assertIn("needs.plan.outputs.run_token_monitor == 'true'", workflow)
 
     def test_required_workflow_checks_current_state_freshness_and_stage3_baseline(self):
         workflow = (ROOT / ".github/workflows/work-lab-gate.yml").read_text(encoding="utf-8")

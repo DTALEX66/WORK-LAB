@@ -23,8 +23,6 @@ except Exception as exc:  # pragma: no cover - environment guard
     raise SystemExit(f"PyYAML is required: {exc}")
 
 
-RETIRED_MANAGED_PLUGINS = {"disk-cleanup", "google_meet", "spotify"}
-PLUGIN_RETIREMENT_MIGRATION = 1
 WORKFLOW_SYNC_BACKUP_KEEP = 2
 RETIRED_MANAGED_SKILL_ASSETS = {
     "model-switch/references/cc-switch-codex-hermes.md",
@@ -71,6 +69,68 @@ class PreservedConfigPromotionGuard:
         self.repo_data = repo_data
         self.contract = contract
         self.retiring_legacy_plugins = retiring_legacy_plugins
+
+
+def _is_link_or_reparse(path: Path) -> bool:
+    """Return whether an existing path is a symlink or Windows reparse point."""
+
+    try:
+        stat_result = path.lstat()
+    except FileNotFoundError:
+        return False
+    return path.is_symlink() or bool(getattr(stat_result, "st_file_attributes", 0) & 0x400)
+
+
+def _assert_safe_managed_path(home: Path, target: Path) -> None:
+    """Reject a managed target that crosses a link, junction, or reparse point.
+
+    Managed promotion works on narrow paths below a user-owned Home.  Resolving
+    before this check would hide a junction, so containment is intentionally
+    lexical and every existing component is inspected with ``lstat``.
+    """
+
+    declared_home = Path(os.path.abspath(home))
+    declared_target = Path(os.path.abspath(target))
+    try:
+        relative = declared_target.relative_to(declared_home)
+    except ValueError as exc:
+        raise ValueError(f"managed target escapes Hermes home: {target}") from exc
+    current = declared_home
+    if _is_link_or_reparse(current):
+        raise ValueError(f"managed target crosses a symlink or junction: {current}")
+    for part in relative.parts:
+        current = current / part
+        if _is_link_or_reparse(current):
+            raise ValueError(f"managed target crosses a symlink or junction: {current}")
+
+
+def _assert_safe_managed_paths(home: Path, rels: Iterable[str]) -> None:
+    for relative in rels:
+        _assert_safe_managed_path(home, home / relative)
+
+
+def _block_unfenced_retired_assets(home: Path) -> None:
+    """Block ordinary sync if a retired path could contain user-owned content.
+
+    Earlier versions deleted this static inventory during every normal sync.
+    Some entries are nested under a managed skill root, so merely omitting an
+    explicit delete would still remove them during root replacement.  There is
+    no recorded ownership digest for pre-existing live content; do not read,
+    copy, hash, or delete it.  A future explicit migration must establish a
+    reviewed ownership record and per-path approval before it can act.
+    """
+
+    blocked: list[str] = []
+    for relative in sorted(RETIRED_MANAGED_SKILL_ASSETS):
+        target = home / "skills" / relative
+        _assert_safe_managed_path(home, target)
+        if target.exists() or target.is_symlink():
+            blocked.append(f"skills/{relative}")
+    if blocked:
+        raise RuntimeError(
+            "ACTION_PLAN_BLOCKED retired_asset_ownership_unproven=true targets="
+            + ",".join(blocked)
+        )
 
 
 def default_repo_root() -> Path:
@@ -125,7 +185,7 @@ def load_config_contract(repo: Path) -> dict:
                 "platform_toolsets.cli": "replace",
                 "mcp_servers": {"strategy": "merge_owned", "owned_names": ["context7"]},
                 "hooks.pre_tool_call": "replace_owned_matcher",
-                "plugins.enabled": "merge_additive",
+
             },
             "preserved": [
                 "model.provider",
@@ -137,7 +197,7 @@ def load_config_contract(repo: Path) -> dict:
                 "mcp_servers.user_defined",
                 "quick_commands.user_defined",
                 "model_picker.user_defined",
-                "plugins.user_enabled",
+                "plugins",
             ],
         }
     )
@@ -238,23 +298,6 @@ def snapshot_preserved_live_config(
             ]
             if user_pre_tool:
                 snapshot["hooks.pre_tool_call.user_defined"] = user_pre_tool
-
-    live_plugins = live_data.get("plugins")
-    repo_plugins = repo_data.get("plugins")
-    if isinstance(live_plugins, dict) and isinstance(repo_plugins, dict):
-        current_enabled = live_plugins.get("enabled")
-        repo_enabled = repo_plugins.get("enabled")
-        if isinstance(current_enabled, list) and isinstance(repo_enabled, list):
-            managed_plugin_names = set(repo_enabled)
-            if retiring_legacy_plugins:
-                managed_plugin_names.update(RETIRED_MANAGED_PLUGINS)
-            user_enabled = [
-                name
-                for name in current_enabled
-                if name not in managed_plugin_names
-            ]
-            if user_enabled:
-                snapshot["plugins.user_enabled"] = user_enabled
 
     return snapshot
 
@@ -492,31 +535,35 @@ def build_action_plan(repo: Path, home: Path) -> dict[str, object]:
     """Return the exact reviewed deployment plan without writing either root."""
 
     repo = repo.resolve()
-    home = home.resolve()
+    # Do not resolve Home before link/reparse checks: resolving would conceal a
+    # junction supplied as the deployment root.
+    home = Path(os.path.abspath(home))
     if not repo.is_dir() or not home.is_dir():
         raise ValueError("action plan requires existing repo and home directories")
     validate_deployment_paths(repo, home)
+    _block_unfenced_retired_assets(home)
     managed_roots = load_managed_skill_roots(repo)
     managed_binaries = load_managed_binary_paths(repo)
     managed_file_mappings = load_managed_file_mappings(repo)
-    retired_roots = tuple(f"skills/{relative}" for relative in RETIRED_MANAGED_SKILL_ASSETS)
     live_config = home / "config.yaml"
     mapped_paths = [(relative, relative) for relative in (*managed_roots, *managed_binaries)]
     mapped_paths.extend(managed_file_mappings)
     mapped_paths.append(("config/.env.template", ".env.template"))
-    mapped_paths.extend((None, relative) for relative in retired_roots)
+    _assert_safe_managed_paths(
+        home,
+        tuple(relative for _, relative in mapped_paths) + ("config.yaml",),
+    )
     steps = []
     for source_relative, target_relative in mapped_paths:
-        is_retired = source_relative is None
         steps.append(
             {
                 "id": f"replace-{target_relative.replace('/', '-')}",
                 "target": target_relative,
-                "operation": "remove_retired_asset" if is_retired else "replace_managed_asset",
+                "operation": "replace_managed_asset",
                 "before": _path_state(home / target_relative),
-                "after": _path_state(repo / source_relative) if not is_retired else {"exists": False, "kind": "missing", "sha256": None, "entries": 0, "permission": None},
+                "after": _path_state(repo / source_relative),
                 "rollback": {"available": True, "strategy": "backup-before-publish"},
-                "permissions": {"source": _path_state(repo / source_relative).get("permission") if not is_retired else None, "target": _path_state(home / target_relative).get("permission")},
+                "permissions": {"source": _path_state(repo / source_relative).get("permission"), "target": _path_state(home / target_relative).get("permission")},
             }
         )
     return {
@@ -558,6 +605,7 @@ def verify_action_plan_readback(plan: dict[str, object], repo: Path, home: Path)
         expected = step.get("after")
         if not isinstance(target, str) or not isinstance(expected, dict):
             raise ValueError("action plan step is missing target/after state")
+        _assert_safe_managed_path(home, home / target)
         actual = _path_state(home / target)
         if actual != expected:
             raise RuntimeError(f"ACTION_PLAN_READBACK_FAIL target={target} expected={expected} actual={actual}")
@@ -583,27 +631,12 @@ def copyfile(src: Path, dst: Path, *, apply: bool) -> None:
         shutil.copy2(src, dst)
 
 
-def remove_retired_managed_assets(home: Path, *, apply: bool) -> None:
-    """Remove only package-owned paths that have an explicit retirement record."""
-
-    skills = home / "skills"
-    for relative in sorted(RETIRED_MANAGED_SKILL_ASSETS):
-        target = skills / Path(relative)
-        if not target.exists():
-            continue
-        print(f"remove retired managed skill asset: {target}")
-        if not apply:
-            continue
-        if target.is_dir():
-            shutil.rmtree(target)
-        else:
-            target.unlink()
-
-
 def backup_paths(home: Path, rels: Iterable[str], *, apply: bool) -> Path:
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     backup = home / "backups" / f"workflow-assistance-sync-{stamp}"
     print(f"backup root: {backup}")
+    _assert_safe_managed_path(home, home / "backups")
+    _assert_safe_managed_paths(home, rels)
     if not apply:
         return backup
     backup.mkdir(parents=True, exist_ok=True)
@@ -627,6 +660,7 @@ def prune_workflow_sync_backups(
     if keep < 1:
         raise ValueError("workflow sync backup retention must keep at least one backup")
     root = home / "backups"
+    _assert_safe_managed_path(home, root)
     if not root.exists():
         return 0
     candidates = sorted(
@@ -640,6 +674,7 @@ def prune_workflow_sync_backups(
     )
     stale = candidates[keep:]
     for item in stale:
+        _assert_safe_managed_path(home, item)
         print(f"prune stale workflow sync backup: {item}")
         if apply:
             shutil.rmtree(item)
@@ -708,6 +743,11 @@ def atomic_replace_paths(
     rollback_failed = False
     operation_failed = False
     removal_set = set(remove_rels)
+    rels = tuple(rels)
+    _assert_safe_managed_path(home, home)
+    _assert_safe_managed_paths(home, rels)
+    if not removal_set.issubset(set(rels)):
+        raise ValueError("remove paths must be declared replacement paths")
     rollback.mkdir(parents=True, exist_ok=False)
     try:
         for relative in rels:
@@ -718,6 +758,7 @@ def atomic_replace_paths(
             if before_replace is not None:
                 before_replace(relative)
             target = home / relative
+            _assert_safe_managed_path(home, target)
             target.parent.mkdir(parents=True, exist_ok=True)
             previous = rollback / relative
             had_target = target.exists() or target.is_symlink()
@@ -768,6 +809,7 @@ def prepare_staging(
     include_config: bool = False,
 ) -> tuple[Path, PreservedConfigPromotionGuard | None]:
     """Build a complete managed view without mutating the live Hermes home."""
+    _assert_safe_managed_path(home, home)
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     # Keep nested managed skill paths below legacy Windows MAX_PATH limits.
     staging = home / f".wa-stg-{stamp}"
@@ -821,15 +863,9 @@ def merge_live_config(
     )
     if not isinstance(live_data, dict) or not isinstance(repo_data, dict):
         raise ValueError("config roots must be mappings")
-    state_file = home / ".workflow-assistance-state.yaml"
-    state = (
-        yaml.safe_load(state_file.read_text(encoding="utf-8")) or {}
-        if state_file.exists()
-        else {}
-    )
-    if not isinstance(state, dict):
-        raise ValueError("workflow assistance state must be a mapping")
-    retire_legacy_plugins = state.get("plugin_retirement_migration", 0) < PLUGIN_RETIREMENT_MIGRATION
+    # Plugins are user-owned OBSERVE state: this synchronizer never reads,
+    # enables, disables, or retires them.
+    retire_legacy_plugins = False
     preserved_snapshot = snapshot_preserved_live_config(
         live_data,
         repo_data,
@@ -891,16 +927,6 @@ def merge_live_config(
         ]
         live_hooks["pre_tool_call"] = custom_pre_tool + managed_pre_tool
 
-    plugins = live_data.setdefault("plugins", {})
-    repo_enabled = (repo_data.get("plugins") or {}).get("enabled") or []
-    if isinstance(plugins, dict):
-        current_enabled = plugins.get("enabled") or []
-        retained = (
-            [name for name in current_enabled if name not in RETIRED_MANAGED_PLUGINS]
-            if retire_legacy_plugins
-            else list(current_enabled)
-        )
-        plugins["enabled"] = list(dict.fromkeys(retained + repo_enabled))
 
     repo_display = repo_data.get("display") or {}
     live_display = live_data.setdefault("display", {})
@@ -956,12 +982,7 @@ def merge_live_config(
             yaml.safe_dump(live_data, allow_unicode=True, sort_keys=False),
             encoding="utf-8",
         )
-        if retire_legacy_plugins:
-            state["plugin_retirement_migration"] = PLUGIN_RETIREMENT_MIGRATION
-            state_file.write_text(
-                yaml.safe_dump(state, allow_unicode=True, sort_keys=False),
-                encoding="utf-8",
-            )
+
     return PreservedConfigPromotionGuard(
         snapshot=preserved_snapshot,
         repo_data=repo_data,
@@ -982,31 +1003,34 @@ def deploy_portable(
     """Run the single deployment orchestration used by CLI and verifier."""
 
     repo = repo.resolve()
-    home = home.resolve()
+    # Preserve the supplied lexical root until reparse safety checks complete.
+    home = Path(os.path.abspath(home))
     if not repo.is_dir() or not home.is_dir():
         raise ValueError("portable deployment requires existing repo and home directories")
     validate_deployment_paths(repo, home, allow_project_runtime_home=allow_project_runtime_home)
+    _block_unfenced_retired_assets(home)
     managed_roots = load_managed_skill_roots(repo)
     managed_binaries = load_managed_binary_paths(repo)
     managed_file_mappings = load_managed_file_mappings(repo)
     managed_files = tuple(target for _, target in managed_file_mappings)
-    retired_roots = tuple(f"skills/{relative}" for relative in RETIRED_MANAGED_SKILL_ASSETS)
     managed_config_files = ("config.yaml", ".workflow-assistance-state.yaml") if include_config else ()
+    managed_targets = tuple(
+        dict.fromkeys(
+            (
+                ".env.template",
+                *managed_roots,
+                *managed_binaries,
+                *managed_files,
+                *managed_config_files,
+            )
+        )
+    )
+    _assert_safe_managed_path(home, home)
+    _assert_safe_managed_paths(home, managed_targets)
     if include_backup:
         backup_paths(
             home,
-            tuple(
-                dict.fromkeys(
-                    (
-                        ".env.template",
-                        *managed_roots,
-                        *managed_binaries,
-                        *managed_files,
-                        *managed_config_files,
-                        *retired_roots,
-                    )
-                )
-            ),
+            managed_targets,
             apply=apply,
         )
     if apply:
@@ -1024,26 +1048,13 @@ def deploy_portable(
         atomic_replace_paths(
             staging,
             home,
-            tuple(
-                dict.fromkeys(
-                    (
-                        *managed_roots,
-                        *managed_binaries,
-                        *managed_files,
-                        *managed_config_files,
-                        ".env.template",
-                        *retired_roots,
-                    )
-                )
-            ),
-            remove_rels=retired_roots,
+            managed_targets,
         )
         if config_guard is not None:
             verify_managed_config_readback(repo, home, config_guard)
     else:
         for relative in managed_roots:
             copytree(repo / relative, home / relative, apply=False)
-        remove_retired_managed_assets(home, apply=False)
         for relative in managed_binaries:
             copyfile(repo / relative, home / relative, apply=False)
         for source_relative, target_relative in managed_file_mappings:

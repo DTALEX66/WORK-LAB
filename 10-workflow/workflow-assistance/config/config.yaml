@@ -42,13 +42,6 @@ memory:
   memory_char_limit: 2200
   user_char_limit: 1375
 
-# Lowest-risk portable plugins. Media, Spotify, X, and meeting plugins remain
-# opt-in and are never enabled by this overlay.
-plugins:
-  enabled:
-    - security-guidance
-    - web/ddgs
-  disabled: []
 
 # Reviewed user workflow surface. This replaces only the CLI platform list;
 # the official core defaults and Desktop-managed capabilities remain intact.

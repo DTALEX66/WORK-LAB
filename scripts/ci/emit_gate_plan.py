@@ -74,7 +74,7 @@ def main() -> int:
     write_output(args.github_output, "plan_digest", plan["plan_digest"]["value"])
     write_output(args.github_output, "risk", plan["risk"])
     write_output(args.github_output, "plan_json", plan_json)
-    for gate in ("workflow", "observer", "integration"):
+    for gate in ("workflow", "observer", "token-monitor", "integration"):
         write_output(args.github_output, f"run_{gate.replace('-', '_')}", str(gate in plan["required_gates"]).lower())
     return 0
 

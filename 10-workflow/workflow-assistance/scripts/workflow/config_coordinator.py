@@ -14,7 +14,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-UNKNOWN_DEFAULT = {"mode": "OBSERVE", "layer": "USER_OVERLAY", "adapter": None, "quarantine": True}
+UNKNOWN_DEFAULT = {
+    "mode": "OBSERVE",
+    "layer": "USER_OVERLAY",
+    "adapter": None,
+    "apply_supported": False,
+    "quarantine": True,
+}
 NON_PATCH_MODES = {"OBSERVE", "IGNORE", "FORBIDDEN"}
 
 
@@ -29,7 +35,12 @@ def classify_field(rule: dict[str, Any] | None) -> dict[str, Any]:
         "mode": str(rule.get("mode", "OBSERVE")),
         "layer": str(rule.get("layer", rule.get("owner", "USER_OVERLAY"))),
         "adapter": rule.get("adapter"),
-        "quarantine": rule.get("layer") == "SECRET" or rule.get("mode") in NON_PATCH_MODES,
+        "apply_supported": bool(rule.get("apply_supported", True)),
+        "quarantine": (
+            rule.get("layer") == "SECRET"
+            or rule.get("mode") in NON_PATCH_MODES
+            or not bool(rule.get("apply_supported", True))
+        ),
     }
 
 
@@ -40,57 +51,84 @@ def three_way_compare(
     new_upstream: dict[str, Any],
     user_overlay: dict[str, Any],
     identity_apply_allowed: bool,
+    machine_identity: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Compare three config layers and emit a field-level ActionPlan."""
+    """Emit a discovery-first, machine-scoped, minimum-write ActionPlan.
+
+    Existing machine values are evidence of user intent, including values for
+    otherwise managed fields.  They are preserved rather than silently reset
+    to a repository default.  The coordinator therefore only exposes a write
+    set for a declared MANAGE field that is absent from the machine overlay and
+    differs between the old and new official baselines.
+    """
     declared = {item["path"]: item for item in ownership_registry.get("fields", [])}
     paths = sorted(set(previous_upstream) | set(new_upstream) | set(user_overlay))
     fields: list[dict[str, Any]] = []
     for path in paths:
         old = previous_upstream.get(path)
         new = new_upstream.get(path)
-        user = user_overlay.get(path)
-        if old == new and user is None:
+        has_user_value = path in user_overlay
+        if old == new and not has_user_value:
             continue  # no drift, no overlay
         rule = declared.get(path)
         classification = classify_field(rule)
-        if user is not None and old != new:
-            # Upstream changed under a user overlay -> rebase candidate, keep intent.
+        if has_user_value and old != new:
+            # Keep the machine's intent. Reconciliation needs explicit human
+            # review, but it is not an authorization to overwrite it.
             change = "UPSTREAM_CHANGED_WITH_OVERLAY"
-            action = "REBASE_OR_QUARANTINE" if classification["quarantine"] else "REBASE"
-        elif user is not None:
+            action = "QUARANTINE" if classification["quarantine"] else "PRESERVE"
+        elif has_user_value:
             change = "USER_OVERLAY"
-            action = "QUARANTINE" if classification["quarantine"] else "KEEP"
+            action = "QUARANTINE" if classification["quarantine"] else "PRESERVE"
         elif old != new:
             change = "UPSTREAM_CHANGED"
-            action = "QUARANTINE" if classification["quarantine"] else "REBASE"
+            action = (
+                "PATCH"
+                if classification["mode"] == "MANAGE" and classification["apply_supported"]
+                else "QUARANTINE"
+            )
         else:
             change = "UNCHANGED"
             action = "NONE"
-        fields.append(
-            {
-                "path": path,
-                "layer": classification["layer"],
-                "mode": classification["mode"],
-                "change": change,
-                "action": action,
-                "previous_upstream": old,
-                "new_upstream": new,
-                "user_overlay": user,
-                "adapter": classification["adapter"],
-            }
-        )
-    patchable = [f for f in fields if f["action"] not in {"QUARANTINE", "NONE"}]
+        field = {
+            "path": path,
+            "layer": classification["layer"],
+            "mode": classification["mode"],
+            "change": change,
+            "action": action,
+            "adapter": classification["adapter"],
+            "apply_supported": classification["apply_supported"],
+        }
+        # Never put user-, unknown-, or secret-owned values into an ActionPlan.
+        # The path/classification is enough to review an exclusion safely.
+        if action == "PATCH":
+            field["previous_upstream"] = old
+            field["new_upstream"] = new
+        fields.append(field)
+    patchable = [f for f in fields if f["action"] == "PATCH"]
     quarantined = [f for f in fields if f["action"] == "QUARANTINE"]
-    apply_allowed = identity_apply_allowed and bool(patchable) and not quarantined
+    preserved = [f for f in fields if f["action"] == "PRESERVE"]
+    write_set = [f["path"] for f in patchable]
+    machine_discovered = bool(machine_identity and machine_identity.get("machine_id") and machine_identity.get("config_scope"))
+    if not write_set:
+        status = "NOOP"
+    elif not machine_discovered:
+        status = "WAITING_MACHINE_DISCOVERY"
+    else:
+        status = "WAITING_APPROVAL"
+    apply_allowed = identity_apply_allowed and machine_discovered and bool(write_set) and not quarantined
     return {
         "schema_version": "workflow/config-action-plan/v1",
-        "status": "DRY_RUN",
+        "status": status,
+        "machine_identity": machine_identity if machine_discovered else None,
         "identity_apply_allowed": identity_apply_allowed,
-        "approval_required": bool(fields),
+        "approval_required": bool(write_set),
         "apply_allowed": apply_allowed,
-        "patchable_fields": [f["path"] for f in patchable],
+        "write_set": write_set,
+        "patchable_fields": write_set,
+        "preserved_fields": [f["path"] for f in preserved],
         "quarantined_fields": [f["path"] for f in quarantined],
-        "rollback": {"required": bool(patchable), "strategy": "backup-cas-readback-rollback"},
+        "rollback": {"required": bool(write_set), "strategy": "backup-cas-readback-rollback"},
         "fields": fields,
     }
 
@@ -116,14 +154,14 @@ def readback_overlay(path: Path, expected_digest: str) -> dict[str, Any]:
 
 
 def rollback_plan(plan: dict[str, Any], backup: dict[str, Any] | None) -> dict[str, Any]:
-    """Fenced rollback plan: only fields recorded in the plan, from the backup."""
+    """Fenced rollback plan: only actually planned writes, from the backup."""
     if not backup:
         return {"status": "NO_BACKUP", "apply": False}
-    paths = {f["path"] for f in plan.get("fields", [])}
+    paths = set(plan.get("write_set", []))
     restore = [p for p in sorted(paths) if p in backup]
     return {
         "schema_version": "workflow/config-rollback-plan/v1",
-        "status": "READY",
+        "status": "READY" if restore else "NOOP",
         "apply": bool(restore),
         "restore_fields": restore,
         "strategy": "recorded-ownership-hash-fenced",

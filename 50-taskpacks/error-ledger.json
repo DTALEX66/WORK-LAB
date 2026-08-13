@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-08-12T09:37:14.660793Z",
+  "generated_at": "2026-08-13T16:24:00Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,11 +9,11 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 48,
+    "total": 49,
     "by_classification": {
       "ci_configuration": 4,
       "config_downgrade": 1,
-      "contract_drift": 22,
+      "contract_drift": 23,
       "dead_entry": 1,
       "entrypoint": 5,
       "evidence_state": 5,
@@ -886,6 +886,24 @@
       "evidence_level": "local-full",
       "repeat_prevention": "Skill examples that read network resources must avoid literal curl/download wording or the supply-chain scanner will quarantine the root; keep loopback SSE examples description-based and always re-run skill_plugin_scan before commit.",
       "remaining_boundary": "None.",
+      "status_before": "FAIL",
+      "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-049",
+      "task_id": "GLOBAL-CONFIG-SAFETY-20260813",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "contract_drift",
+      "entrypoint": "10-workflow/workflow-assistance/scripts/workflow/config_coordinator.py",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python tests/test_config_coordinator.py",
+      "exit_code": 1,
+      "observed_error": "The generic configuration coordinator could treat an existing null machine value as absent, its rollback scope included PRESERVE/NOOP fields, the Codex writer could be called without a reviewed plan when bypassing the CLI, the Hermes writer could follow a symlink/junction or remove an unfenced retired asset, and the supply-chain verifier could miss a later unpinned pip install if the workflow also contained one safe install, accept a noncanonical *requirements.lock, treat a hash flag in a shell comment as active, or skip a backslash-continued/escaped shell pip invocation.",
+      "root_cause": "Action-plan semantics used value truthiness rather than key presence, rollback derived scope from all classified fields rather than write_set, approval existed only in the CLI wrapper, Hermes path mutation did not inspect Home-to-target reparse components or require recorded ownership for retirement, and workflow dependency validation checked YAML physical lines rather than every shell logical command and normalized tokenized argument set.",
+      "fix": "Plans preserve every existing machine key including null, emit a write set only for absent declared MANAGE drift, require discovered machine identity before approval, return NOOP for an empty write set, and rollback only recorded writes. Codex apply_overlay itself now requires a current target-bound reviewed plan digest; CLI passes the same digest. Hermes plan, backup, staging, promotion, readback, and backup pruning reject every Home-to-target symlink/junction/reparse component; ordinary sync blocks any legacy retired asset without a recorded ownership fence instead of replacing its parent tree. The supply-chain verifier joins shell backslash continuations by removing only the backslash-newline pair (without inventing whitespace) before splitting ;, &&, ||, and |, recognizes standard Python pip launchers after shell token normalization, and requires an actual --require-hashes token plus exactly one requirement argument equal to 10-workflow/workflow-assistance/requirements.lock for every install. Successfully tokenized comments and quoted data are not executable installs; only a shell parse error retains a conservative pip-shaped fail-closed fallback.",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python tests/test_config_coordinator.py && PYTHONDONTWRITEBYTECODE=1 python tests/test_config_ownership.py && PYTHONDONTWRITEBYTECODE=1 python tests/test_action_plan_sync.py && PYTHONDONTWRITEBYTECODE=1 python tests/test_codex_global_asset_sync.py && PYTHONDONTWRITEBYTECODE=1 python tests/ci/test_supply_chain.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Every global configuration operation must distinguish key absence from null, discover the current target machine first, classify fields by ownership, create a machine-scoped minimum write set, derive rollback only from recorded writes, require current target-bound approval at the actual writer, read back after apply, and never write a NOOP plan. Every filesystem writer must reject Home-to-target symlink/junction/reparse paths before read, backup, replace, remove, rollback, or prune; no retired asset may be removed or replaced without a recorded ownership fence and explicit migration. CI dependency checks must normalize shell backslash-newline pairs without inserting whitespace, validate every standard and shell-normalized pip installation command after shell separators, tokenize away comments, require an actual --require-hashes argument, and permit exactly one canonical 10-workflow/workflow-assistance/requirements.lock reference, with negative fixtures for mixed same-line chains, bare/escaped/quoted and command-name-split pip launchers, noncanonical locks, comment spoofs, multiple requirements inputs, unsafe continued commands, and non-executing comment/quoted pip text.",
+      "remaining_boundary": "The coordinator enforces planning semantics only; each live adapter still requires its own explicit dry-run, approval, path-safety checks, and same-target readback. Legacy retired assets deliberately block ordinary Hermes sync until a future explicit, per-path, ownership-fenced migration is designed and approved. No live config, credential, session, or private configuration body was read for this regression test.",
       "status_before": "FAIL",
       "status_after": "PASS"
     }
