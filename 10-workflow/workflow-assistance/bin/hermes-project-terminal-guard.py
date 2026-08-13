@@ -23,11 +23,11 @@ from typing import Any
 
 BLOCK_PREFIX = "PROJECT DATA BOUNDARY BLOCKED:"
 ABSOLUTE_PATH = re.compile(
-    r"(?:(?:[A-Za-z]:[\\/])|(?:\\\\[^\s\"']+)|(?:^|(?<=[\s\"'=<>:([{]))/)[^\s\"']+"
+    r"(?:(?:[A-Za-z]:[\\/](?!/))|(?:\\\\[^\s\"']+)|(?:^|(?<=[\s\"'=<>:([{]))/(?!/))[^\s\"']+"
 )
 RAW_UNC_PATH = re.compile(r"(?:^|(?<=[\s\"'=]))(\\\\[^\s\"']+)")
 RAW_WINDOWS_ABSOLUTE_PATH = re.compile(
-    r"(?:^|(?<=[\s\"'=<>:([{]))([A-Za-z]:[\\/][^\s\"']+)"
+    r"(?:^|(?<=[\s\"'=<>:([{]))([A-Za-z]:[\\/](?!/)[^\s\"']+)"
 )
 RAW_POSIX_ABSOLUTE_PATH = re.compile(
     r"(?:^|(?<=[\s\"'=<>:([{]))(/(?!/)[^\s\"']+)"
