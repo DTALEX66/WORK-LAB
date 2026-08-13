@@ -309,7 +309,7 @@ class Repository(Protocol):
 
     def snapshot(self) -> tuple[str, str]: ...
 
-    def verify_released(self, baseline_head: str, expected_tree: str | None = None) -> None: ...
+    def verify_released(self, baseline_head: str, expected_tree: str | None = None, *, require_ci: bool = True) -> None: ...
 
 
 class AgentBackend(Protocol):
@@ -385,7 +385,7 @@ class GitRepository:
             )
         return f"{match.group(1)}/{match.group(2)}"
 
-    def verify_released(self, baseline_head: str, expected_tree: str | None = None) -> None:
+    def verify_released(self, baseline_head: str, expected_tree: str | None = None, *, require_ci: bool = True) -> None:
         tree, status = self.snapshot()
         del tree
         if status:
@@ -401,7 +401,14 @@ class GitRepository:
                     f"expected={expected_tree} actual={actual_tree}"
                 )
         self.verify_remote_sync(head)
-        self.observe_ci(head)
+        if require_ci:
+            self.observe_ci(head)
+        else:
+            print(
+                "LOW_RISK_PUBLISH_NO_CI head=" + head +
+                " (TARGETED/STAGE publish verifies remote sync only; exact-SHA CI is "
+                "required only for RC/RELEASE or high-risk delivery)"
+            )
 
     def verify_remote_sync(self, head: str) -> None:
         self._git("fetch", "--prune", self._remote_name())
@@ -848,7 +855,9 @@ class TaskPackRunner:
             if not result.session_id:
                 raise RunnerError("writer session ID is empty")
             if self.publish:
-                self.repo.verify_released(baseline_head)
+                # Low-risk (TARGETED/STAGE) publish: verify remote sync only.
+                # exact-SHA CI is reserved for RC/RELEASE and high-risk delivery (WLG-040).
+                self.repo.verify_released(baseline_head, require_ci=False)
             else:
                 self._assert_frozen(baseline_head, baseline_tree)
             return

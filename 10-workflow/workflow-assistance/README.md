@@ -645,7 +645,7 @@ just verify
 
 ### GitHub Actions
 
-WORK-LAB 根目录的 `../../.github/workflows/work-lab-gate.yml` 在每次 push 和 pull request 上运行；模块内的 `.github/workflows/governance.yml` 仅作为历史/模块级治理入口保留：
+WORK-LAB 根目录的 `../../.github/workflows/work-lab-gate.yml` 在每次 push 和 pull request 上运行，是唯一活跃的 GitHub workflow 权威；模块级的治理工作流已移入 `docs/workflow/examples/governance.yml.example`，仅作 documented example / reusable source（WLG-080），不是活跃的第二 CI：
 
 - Ubuntu / Windows：调用同一个 `python scripts/workflow/run_quality_gate.py verify`；
 - 平台工具缺失时 shell / powershell 子 gate 显式 skip，而不是伪装通过；
