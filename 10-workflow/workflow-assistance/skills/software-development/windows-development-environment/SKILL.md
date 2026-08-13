@@ -221,6 +221,73 @@ For a portable verification, use an empty Home under the project's ignored runti
 
 ## 7. Git changes and upload hygiene
 
+### Provenance / digest hashes on Windows use CRLF-normalized bytes (validated 2026-08-13)
+
+A repo that records file hashes (skill provenance, checksum manifests, state
+files) must compute them from **CRLF→LF normalized bytes**, or Windows CRLF
+checkouts will never match Linux LF hashes. `check_skill_provenance.py`
+style validators do:
+
+```python
+data = path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+hashlib.sha256(data).hexdigest()
+```
+
+After editing any tracked file covered by a hash manifest, regenerate the
+hash with the SAME normalization (plain `sha256(file_bytes)` gives a
+different value on CRLF files) and run the provenance gate. Symptom:
+`source SHA drift: <name>` with no content change visible in diff.
+
+### gh CLI uninstalled: git credential helper points at a dead path (validated 2026-08-13)
+
+After `gh` is uninstalled (or its scoop install moved), a leftover global git
+config `credential.https://github.com.helper = !'C:\...\gh.exe' auth
+git-credential` breaks every push with `could not read Username`. The Windows
+Credential Manager still holds valid credentials; the dead helper shadows it.
+
+Fix at the repo level (do not edit global config without asking):
+
+```bash
+git config credential.https://github.com.helper 'manager'
+git config credential.https://gist.github.com.helper 'manager'
+git push   # now authenticates via the Credential Manager
+```
+
+For REST API calls, the Credential Manager does NOT return a plaintext token
+via `git credential fill` (interactive), so use `git credential fill` piped
+to curl only when it returns a `password=` line (do not print it):
+
+```bash
+TOKEN=$(printf 'protocol=https\nhost=github.com\n\n' | git credential fill 2>/dev/null | grep '^password=' | cut -d= -f2-)
+curl -s -H "Authorization: Bearer $TOKEN" "https://api.github.com/repos/OWNER/REPO"
+unset TOKEN
+```
+
+Note: `host=github.com` works for api.github.com too; `host=api.github.com`
+has no stored credential.
+
+### Anonymous GitHub API rate limit (60/hr) vs authenticated (5000/hr)
+
+Bulk check-run / PR-status polling with anonymous `curl` exhausts the 60/hr
+core limit fast; responses then come back as `403 rate limit exceeded` with
+empty JSON. Authenticate every repeated API call (see token snippet above);
+check remaining quota with the authenticated request:
+`curl -s https://api.github.com/rate_limit -H "Authorization: Bearer $TOKEN"`.
+
+### Rebase + force-push: CI push-event run fails on `before` sha (validated 2026-08-13)
+
+After `git rebase` + `--force-with-lease`, the GitHub **push** workflow run
+can fail in a `git diff "$BEFORE_SHA" "$HEAD_SHA"` step (e.g. gate-plan's
+"Discover changed paths") because `github.event.before` is the pre-rebase sha
+that no longer exists in the branch history. The **pull_request** run for the
+same head stays green. Do NOT treat the push-run failure as a code bug:
+
+- Read PR mergeState from the pull_request run's check-runs only.
+- If branch protection requires `aggregate` and the stale push run blocks it,
+  push an empty commit (`git commit --allow-empty -m "ci: retrigger"`) to
+  supersede the failed push run, or merge via REST with the pull_request
+  check green.
+
 Before editing:
 
 ```bash
