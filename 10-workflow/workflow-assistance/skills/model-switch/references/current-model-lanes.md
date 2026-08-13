@@ -39,15 +39,15 @@ own `/model` handler so session state, confirmation, and UI behavior stay consis
 
 ## Explicit switch commands
 
-Run from `D:/All projects/Workflow-assistance`:
+Run from the WORK-LAB repository root:
 
 ```bash
-python scripts/workflow/switch_model.py status
-python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
-python scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
-python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
-python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
-python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py status
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 ```
 
 `--live` is opt-in and may consume provider quota. Switching does not mutate an
