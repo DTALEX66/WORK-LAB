@@ -43,7 +43,7 @@ class FakeRepo:
     def snapshot(self) -> tuple[str, str]:
         return self.staged_tree_value, self.status_value
 
-    def verify_released(self, *args: str) -> None:
+    def verify_released(self, *args: str, require_ci: bool = True) -> None:
         self.release_args = args
         if not args or args[0] != "base":
             raise AssertionError(f"unexpected baseline: {args}")
@@ -162,6 +162,28 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
         self.assertIn("origin/feat/sleep", prompt)
         self.assertNotIn("HEAD equal to origin/main", prompt)
         self.assertTrue(repo.released)
+
+    def test_low_risk_publish_skips_exact_sha_ci_wait(self) -> None:
+        # WLG-040: low-risk (TARGETED/STAGE) publish must verify remote sync
+        # only, not block on exact-SHA CI; CI is reserved for RC/RELEASE.
+        repo = FakeRepo()
+        agent = FakeAgent(repo, [])
+        runner = TaskPackRunner(repo=repo, agent=agent, publish=True)
+        with patch.object(repo, "verify_released", wraps=repo.verify_released) as verify:
+            runner.run("add a pure adapter", risk="low")
+            verify.assert_called_once()
+            kwargs = verify.call_args.kwargs
+            self.assertEqual(kwargs.get("require_ci"), False)
+
+    def test_high_risk_release_requires_exact_sha_ci(self) -> None:
+        # WLG-040: high-risk / RC-RELEASE delivery keeps exact-SHA CI.
+        repo = FakeRepo()
+        agent = FakeAgent(repo, ["GO"])
+        runner = TaskPackRunner(repo=repo, agent=agent, publish=True)
+        with patch.object(repo, "verify_released", wraps=repo.verify_released) as verify:
+            runner.run("repair a governed boundary", risk="high")
+            verify.assert_called_once()
+            self.assertTrue(verify.call_args.kwargs.get("require_ci", True))
 
     def test_runner_uses_task_ledger_lease_checkpoint_and_release(self) -> None:
         repo = FakeRepo()

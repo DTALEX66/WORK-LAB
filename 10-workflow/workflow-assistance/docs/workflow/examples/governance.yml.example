@@ -1,4 +1,14 @@
+# NON-ACTIVE REFERENCE — not a live GitHub workflow.
+#
+# This file is an example/reusable source of the module-level governance gate.
+# WORK-LAB has exactly ONE active CI authority: the repository-root
+# `.github/workflows/work-lab-gate.yml` (see 00-governance/config-authority-index.json,
+# authority "workflow_root_gate"; this file is "nested_governance_workflow",
+# status SUPERSEDED_REFERENCE, WLG-080).
+# It does not run in the monorepo and must not be treated as a second CI gate.
+#
 name: workflow-governance
+
 
 on:
   push:

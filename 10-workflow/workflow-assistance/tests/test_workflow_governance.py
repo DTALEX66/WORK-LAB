@@ -1420,7 +1420,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertEqual(manifest["delivery"]["required_workflows"], ["work-lab-gate"])
 
     def test_governance_actions_are_commit_pinned_and_dependency_versioned(self) -> None:
-        workflow = (ROOT / ".github/workflows/governance.yml").read_text(encoding="utf-8")
+        workflow = (ROOT / "docs/workflow/examples/governance.yml.example").read_text(encoding="utf-8")
         manifest = yaml.safe_load((ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8"))
         self.assertNotIn("actions/checkout@v", workflow)
         self.assertNotIn("actions/setup-python@v", workflow)
@@ -2426,7 +2426,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         runner = ROOT / "scripts/workflow/run_quality_gate.py"
         justfile = ROOT / "Justfile"
         doc = ROOT / "docs/workflow/local-quality-gates.md"
-        workflow = ROOT / ".github/workflows/governance.yml"
+        workflow = ROOT / "docs/workflow/examples/governance.yml.example"
         self.assertTrue(runner.exists())
         self.assertTrue(justfile.exists())
         self.assertTrue(doc.exists())
