@@ -94,7 +94,7 @@ entries:
 - name: python-testing
   source: skills/software-development/python-testing/SKILL.md
   live: skills/software-development/python-testing/SKILL.md
-  source_sha256: e49208f3aa25e295a68e850eb23490056aff13b7d62b67390d715206e4341eb3
+  source_sha256: 3d8c16cfa2d01d5ef958350a6289d908837ec7c2c7d0e8753aae6cc7a00a42b7
   version: 1.0.0
   trust: repository-controlled
   enabled: true
@@ -114,7 +114,7 @@ entries:
 - name: sleep-mode
   source: skills/software-development/sleep-mode/SKILL.md
   live: skills/software-development/sleep-mode/SKILL.md
-  source_sha256: 68e7926bddcc563ff5743fc8094e71972c26822452956916bd614824f5b06ab6
+  source_sha256: bc42141d57ccd8b4d22c5fa040a4d6abd0e9fb3feae11afbb4f3135b3688594e
   version: 1.1.0
   trust: repository-controlled
   enabled: true
@@ -124,7 +124,7 @@ entries:
 - name: windows-development-environment
   source: skills/software-development/windows-development-environment/SKILL.md
   live: skills/software-development/windows-development-environment/SKILL.md
-  source_sha256: dd2ba3b225afb66688579ba52b6304765c672bb454ed1b4e4fd3f5ce5caaf481
+  source_sha256: d8e5c8911a4580eb2ebfe72a62946c190536582899a316d3f216aa35da2a34cd
   version: 1.2.1
   trust: repository-controlled
   enabled: true

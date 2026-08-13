@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-13T13:39:02.904140Z",
-  "source_digest": "74dd521d3fe3f4afb9d78c26de702b99cd36da50667827f77afbc8626c0a24a1",
+  "generated_at": "2026-08-13T13:53:32.060007Z",
+  "source_digest": "d1eb460fe5272c2a423db99e287d896142dd604ab5bfa03aaedbc808368e4b8a",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -142,7 +142,7 @@
         "name": "python-testing",
         "source": "skills/software-development/python-testing/SKILL.md",
         "version": "1.0.0",
-        "source_sha256": "e49208f3aa25e295a68e850eb23490056aff13b7d62b67390d715206e4341eb3",
+        "source_sha256": "3d8c16cfa2d01d5ef958350a6289d908837ec7c2c7d0e8753aae6cc7a00a42b7",
         "trust": "repository-controlled",
         "enabled": true,
         "live_readback": "not-run"
@@ -160,7 +160,7 @@
         "name": "sleep-mode",
         "source": "skills/software-development/sleep-mode/SKILL.md",
         "version": "1.1.0",
-        "source_sha256": "68e7926bddcc563ff5743fc8094e71972c26822452956916bd614824f5b06ab6",
+        "source_sha256": "bc42141d57ccd8b4d22c5fa040a4d6abd0e9fb3feae11afbb4f3135b3688594e",
         "trust": "repository-controlled",
         "enabled": true,
         "live_readback": "not-run"
@@ -169,7 +169,7 @@
         "name": "windows-development-environment",
         "source": "skills/software-development/windows-development-environment/SKILL.md",
         "version": "1.2.1",
-        "source_sha256": "dd2ba3b225afb66688579ba52b6304765c672bb454ed1b4e4fd3f5ce5caaf481",
+        "source_sha256": "d8e5c8911a4580eb2ebfe72a62946c190536582899a316d3f216aa35da2a34cd",
         "trust": "repository-controlled",
         "enabled": true,
         "live_readback": "not-run"
@@ -217,5 +217,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "38e9f82a24f319452defc60399e9c446d2e4f1f14d71fcd209852c28db183a8c"
+  "content_digest": "25be6766c009bd56b5d3ece70e1955dd6b59901747027b88e4d58107876426b3"
 }
