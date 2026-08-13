@@ -10,6 +10,10 @@
 
 当前一级 Adapter：`Hermes`、`Codex`、`CC Switch`、`GitHub`。Cursor、Claude Code、WorkBuddy 先以 manifest-only/只读检测方式登记，必须有真实证据后才升级支持级别。Open Design 已迁出并由独立仓库维护，不再是本模块 Adapter。
 
+跨电脑配置审查采用项目级随机 opaque `machine_id`，只用于识别当前项目副本并触发只读 `plan/verify`；它不是认证、授权或硬件指纹。状态模型、只读计划命令和配置升级边界见
+[`docs/workflow/machine-identity-and-config-review.md`](docs/workflow/machine-identity-and-config-review.md)，实现入口为
+`scripts/workflow/machine_identity.py`。设备切换不会自动 apply、覆盖 OBSERVE/SECRET 字段、清认证或执行 Windows Reset。
+
 核心不负责：Agent 人格、聊天/Prompt 输入、模型推理、Provider 路由、凭据管理、自动批准外部写入。每个写操作都必须从用户批准的 ActionPlan 进入对应 Adapter。
 
 全局增强范围包括：跨客户端任务生命周期、配置/权限边界、项目数据隔离、ActionPlan 与回滚、交付和 evidence envelope、token/网络/GitHub/artifact 观测，以及各 Adapter 的安全接入。任何新增能力都必须先判断它增强的是这条通用工作流，还是只对本仓库有用；只对本仓库有用的临时脚本不得被包装成默认全局能力。

@@ -61,6 +61,8 @@ project_doc_max_bytes  = 65536
 
 `scripts/workflow/user_profile_export.py` 以只读、无密方式导出 Hermes/Codex 用户配置与技能清单到 tracked `config/user-environment-profile.json`；具体数量以当次导出和同步器读回为准，不在文档中冻结。配置键值会脱敏，凭据一律 `[REDACTED]`，发现未脱敏值即拒绝写入。恢复流程见 `docs/workflow/user-environment-profile.md`：新机器 `sync apply` 部署模块 skills 后，按画像键名重建配置、重填凭据。
 
+跨电脑识别不依赖用户画像或凭据：`scripts/workflow/machine_identity.py` 只在项目本地维护随机 opaque `machine_id`，并以非敏感画像摘要判断是否需要复核。它只能输出 `KNOWN_MACHINE`、`NEW_MACHINE` 或 `CONFIGURATION_REVIEW_REQUIRED` 等只读状态，不能证明账户身份，也不会因换机自动 apply、重登、清理或覆盖用户配置。完整边界和显式命令见 `docs/workflow/machine-identity-and-config-review.md`。
+
 ## 命令策略
 
 `workflow-assistance.rules` 提供以下边界：

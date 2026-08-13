@@ -39,10 +39,10 @@
 | 项目文档上限 | 未知 | `project_doc_max_bytes=65536` |
 | workspace 网络 | 未知 | `sandbox_workspace_write.network_access=false`；属于保留字段，不由 overlay 覆盖 |
 | 模型/路由 | 未知 | Codex 配置模型为 `gpt-5.5`；API origin 为本地 `127.0.0.1:15721`；监听进程为 `cc-switch` |
-| Overlay | 未知 | 调查开始时 `plan` 零写集、`verify` PASS；实际 14 个仓库托管 Codex Skills。本报告吸收新经验后，提交前 live 预期会仅对 `workflow-assistance-self-improvement` 报 1 项仓库→live 漂移；未经单独 live-apply 授权不自动部署 |
+| Overlay | 未知 | 调查开始时 `plan` 零写集、`verify` PASS；实际 14 个仓库托管 Codex Skills。提交摘要不把未来 live 漂移预测当作事实；任何新机器或画像变更都必须先重新执行 `plan/verify`，未经单独 live-apply 授权不自动部署 |
 | 精确根因 | 未证实 | 未证实；现有证据只支持“认证层发生过重登，配置层仍正常” |
 
-> 当前聊天运行时是 `openai-codex / gpt-5.6-sol`；Hermes live 默认配置是 `openai-codex / gpt-5.6-terra`；Codex Desktop/CLI 用户配置模型是 `gpt-5.5`。三者是不同执行面，不能混写。
+> 当前聊天运行时是 `gpt-5.6-luna / openai-codex`；Codex Desktop/CLI 用户配置模型是 `gpt-5.5`。二者是不同执行面，不能混写；本报告不把 Hermes live 默认配置作为另一台电脑的事实。
 
 ## 官方文档能证明什么
 
@@ -133,7 +133,7 @@ python scripts/workflow/sync_codex_global_assets.py verify \
 
 不要先修改配置。记录：
 
-- 是否要求重新登录；完整错误文本和发生时间；
+- 是否要求重新登录；错误类别/错误码（脱敏）和发生时间；不要复制完整错误正文；
 - 主题/外观是否变化；
 - 项目侧栏和历史线程是否可见；
 - 当前线程显示的权限模式；
@@ -156,8 +156,19 @@ Get-CimInstance Win32_Process |
 ### 2. CLI 和入口
 
 ```powershell
-where.exe codex
-codex --version
+# 不扫描 PATH，也不执行未知候选。只检查两个已知 Windows 用户入口。
+$cliCandidates = @(
+  "$env:LOCALAPPDATA\Microsoft\WindowsApps\codex.cmd",
+  "$env:LOCALAPPDATA\OpenAI\Codex\bin\codex.exe"
+)
+$safeCli = $cliCandidates |
+  Where-Object { Test-Path -LiteralPath $_ -PathType Leaf -and $_ -notlike 'E:\*' } |
+  Select-Object -First 1
+if ($null -ne $safeCli) {
+  & $safeCli --version 2>&1 | Select-Object -First 1
+} else {
+  'CLI_VERSION_SKIPPED=NO_SAFE_NON_E_DRIVE_CANDIDATE'
+}
 
 Get-ChildItem "$env:USERPROFILE\Desktop" -Filter '*Codex*.lnk' -ErrorAction SilentlyContinue |
   Select-Object FullName
@@ -176,10 +187,15 @@ Get-Item "$env:USERPROFILE\.codex\auth.json" -ErrorAction SilentlyContinue |
 
 ### 4. 配置和 overlay
 
-从已拉取的 WORK-LAB 仓库进入：
+从实际拉取的 WORK-LAB 仓库根定位模块后进入（不要假设盘符或目录）：
 
 ```powershell
-Set-Location 'D:\All projects\WORK-LAB\10-workflow\workflow-assistance'
+$repo = Get-Location
+while ($repo.Path -and -not (Test-Path (Join-Path $repo.Path '.git'))) {
+  $repo = $repo.Parent
+}
+if (-not $repo.Path) { throw 'WORK-LAB Git root not found; stop without running overlay commands.' }
+Set-Location (Join-Path $repo.Path '10-workflow\workflow-assistance')
 
 python scripts/workflow/sync_codex_global_assets.py plan `
   --codex-home "$env:USERPROFILE\.codex" `
@@ -214,12 +230,21 @@ Get-Item "$env:USERPROFILE\.codex\.codex-global-state.json", `
 ### 6. 更新证据
 
 ```powershell
-Get-WinEvent -FilterHashtable @{
+# Message 仅用于本地匹配，不打印、不保存、不复制其正文。
+$events = Get-WinEvent -FilterHashtable @{
   LogName='Microsoft-Windows-AppXDeploymentServer/Operational'
   StartTime=(Get-Date).AddDays(-7)
 } -ErrorAction SilentlyContinue |
   Where-Object { $_.Message -match 'OpenAI\.Codex' } |
-  Select-Object TimeCreated, Id, LevelDisplayName, Message
+  Select-Object TimeCreated, Id, LevelDisplayName
+$events | ForEach-Object {
+  [pscustomobject]@{
+    TimeCreated = $_.TimeCreated
+    Id = $_.Id
+    Level = $_.LevelDisplayName
+    MessageSummary = 'MATCH_OPENAI_CODEX'
+  }
+}
 ```
 
 空结果只表示该日志中没有命中，不能证明没有发生 Store 或应用内更新。
@@ -247,8 +272,8 @@ Get-WinEvent -FilterHashtable @{
 采样时间：
 Desktop Version / Status：
 Desktop 实际进程路径：
-where codex：
-codex --version：
+安全 CLI 候选（未扫描 PATH）：
+CLI 版本（仅安全候选；无候选则 SKIPPED）：
 是否重登 + 错误/时间：
 外观是否变化：
 项目索引是否变化：
