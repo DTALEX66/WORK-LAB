@@ -18,7 +18,19 @@ assert spec and spec.loader
 module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)
+RAW_APPLY_OVERLAY = module.apply_overlay
 
+
+def approved_apply_overlay(codex_home: Path, agent_home: Path, source_root: Path) -> dict[str, object]:
+    """Test-only helper that models explicit review of an isolated dry-run."""
+
+    plan = module.build_plan(codex_home, agent_home, source_root)
+    return RAW_APPLY_OVERLAY(
+        codex_home,
+        agent_home,
+        source_root,
+        approved_plan_digest=plan["plan_digest"],
+    )
 
 class CodexGlobalAssetSyncTests(unittest.TestCase):
     def make_homes(self, base: Path) -> tuple[Path, Path]:
@@ -46,7 +58,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
 
-            result = module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            result = approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
             self.assertEqual(result["status"], "APPLIED")
             parsed = tomllib.loads((codex_home / "config.toml").read_text("utf-8"))
@@ -67,20 +79,132 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             self.assertGreaterEqual(len(installed), 6)
             self.assertEqual(module.verify_overlay(codex_home, agent_home, ROOT / "codex-assets")["status"], "PASS")
 
+    def test_writer_rejects_direct_apply_without_reviewed_plan_digest(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
+            codex_home, agent_home = self.make_homes(Path(td))
+            with self.assertRaisesRegex(module.ManagedConflict, "ACTION_PLAN_DIGEST_REQUIRED"):
+                RAW_APPLY_OVERLAY(
+                    codex_home,
+                    agent_home,
+                    ROOT / "codex-assets",
+                    approved_plan_digest=None,
+                )
+            with self.assertRaisesRegex(module.ManagedConflict, "ACTION_PLAN_DIGEST_MISMATCH"):
+                RAW_APPLY_OVERLAY(
+                    codex_home,
+                    agent_home,
+                    ROOT / "codex-assets",
+                    approved_plan_digest="0" * 64,
+                )
+            self.assertFalse((codex_home / module.STATE_FILE).exists())
+
     def test_apply_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
             first = {
                 "config": (codex_home / "config.toml").read_bytes(),
                 "guidance": (codex_home / "AGENTS.md").read_bytes(),
             }
 
-            result = module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            result = approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
             self.assertEqual(result["status"], "NO_CHANGE")
             self.assertEqual((codex_home / "config.toml").read_bytes(), first["config"])
             self.assertEqual((codex_home / "AGENTS.md").read_bytes(), first["guidance"])
+
+    def test_cli_apply_requires_explicit_reviewed_approval_before_any_write(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
+            codex_home, agent_home = self.make_homes(Path(td))
+            config_before = (codex_home / "config.toml").read_bytes()
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "apply",
+                    "--codex-home",
+                    str(codex_home),
+                    "--agent-home",
+                    str(agent_home),
+                    "--source-root",
+                    str(ROOT / "codex-assets"),
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertIn("ACTION_PLAN_BLOCKED", result.stdout)
+            self.assertEqual((codex_home / "config.toml").read_bytes(), config_before)
+            self.assertFalse((codex_home / module.STATE_FILE).exists())
+            self.assertFalse(agent_home.exists())
+
+    def test_cli_apply_requires_current_plan_digest_and_accepts_matching_review(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
+            codex_home, agent_home = self.make_homes(Path(td))
+            plan = module.build_plan(codex_home, agent_home, ROOT / "codex-assets")
+            digest = plan["plan_digest"]
+
+            blocked = subprocess.run(
+                [
+                    sys.executable, str(SCRIPT), "apply", "--approved",
+                    "--codex-home", str(codex_home), "--agent-home", str(agent_home),
+                    "--source-root", str(ROOT / "codex-assets"),
+                ],
+                cwd=ROOT, text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(blocked.returncode, 2, blocked.stdout + blocked.stderr)
+            self.assertIn("ACTION_PLAN_DIGEST_REQUIRED", blocked.stdout)
+            self.assertFalse((codex_home / module.STATE_FILE).exists())
+
+            applied = subprocess.run(
+                [
+                    sys.executable, str(SCRIPT), "apply", "--approved",
+                    "--approved-plan-digest", digest,
+                    "--codex-home", str(codex_home), "--agent-home", str(agent_home),
+                    "--source-root", str(ROOT / "codex-assets"),
+                ],
+                cwd=ROOT, text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
+            self.assertIn('"status": "APPLIED"', applied.stdout)
+
+    def test_cli_apply_rejects_stale_or_other_machine_plan_digest_before_any_write(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
+            root = Path(td)
+            codex_home, agent_home = self.make_homes(root / "first")
+            _, other_agent_home = self.make_homes(root / "second")
+            plan = module.build_plan(codex_home, agent_home, ROOT / "codex-assets")
+            config_before = (codex_home / "config.toml").read_bytes()
+
+            stale = subprocess.run(
+                [
+                    sys.executable, str(SCRIPT), "apply", "--approved",
+                    "--approved-plan-digest", "0" * 64,
+                    "--codex-home", str(codex_home), "--agent-home", str(agent_home),
+                    "--source-root", str(ROOT / "codex-assets"),
+                ],
+                cwd=ROOT, text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(stale.returncode, 2, stale.stdout + stale.stderr)
+            self.assertIn("ACTION_PLAN_DIGEST_MISMATCH", stale.stdout)
+
+            other_scope = subprocess.run(
+                [
+                    sys.executable, str(SCRIPT), "apply", "--approved",
+                    "--approved-plan-digest", plan["plan_digest"],
+                    "--codex-home", str(codex_home), "--agent-home", str(other_agent_home),
+                    "--source-root", str(ROOT / "codex-assets"),
+                ],
+                cwd=ROOT, text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(other_scope.returncode, 2, other_scope.stdout + other_scope.stderr)
+            self.assertIn("ACTION_PLAN_DIGEST_MISMATCH", other_scope.stdout)
+            self.assertEqual((codex_home / "config.toml").read_bytes(), config_before)
+            self.assertFalse((codex_home / module.STATE_FILE).exists())
 
     def test_conflicting_skill_fails_before_writes(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
@@ -92,7 +216,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             original_guidance = (codex_home / "AGENTS.md").read_bytes()
 
             with self.assertRaises(module.ManagedConflict):
-                module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+                approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
             self.assertEqual((codex_home / "config.toml").read_bytes(), original_config)
             self.assertEqual((codex_home / "AGENTS.md").read_bytes(), original_guidance)
@@ -101,7 +225,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
     def test_rollback_removes_only_managed_overlay(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
             result = module.rollback_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
@@ -140,7 +264,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
     def test_legacy_state_is_migrated_without_replacing_owned_assets(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
             state_path = codex_home / module.STATE_FILE
             legacy = json.loads(state_path.read_text("utf-8"))
             legacy["version"] = 1
@@ -148,7 +272,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             state_path.write_text(json.dumps(legacy), encoding="utf-8")
 
             plan = module.build_plan(codex_home, agent_home, ROOT / "codex-assets")
-            result = module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            result = approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
             self.assertIn("MIGRATE_OWNERSHIP_STATE", [action["action"] for action in plan["actions"]])
             self.assertEqual(result["status"], "APPLIED")
@@ -162,7 +286,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
                 "ROLLED_BACK",
             )
             self.assertEqual(
-                module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")["status"],
+                approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")["status"],
                 "APPLIED",
             )
             self.assertEqual(module.verify_overlay(codex_home, agent_home, ROOT / "codex-assets")["status"], "PASS")
@@ -170,7 +294,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
     def test_legacy_migration_survives_advanced_source_and_dissolved_config_block(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
             # Simulate the source advancing after the legacy apply.
             tmp_src = Path(td) / "codex-assets-advanced"
@@ -195,7 +319,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             state_path.write_text(json.dumps(legacy), encoding="utf-8")
 
             plan = module.build_plan(codex_home, agent_home, tmp_src)
-            result = module.apply_overlay(codex_home, agent_home, tmp_src)
+            result = approved_apply_overlay(codex_home, agent_home, tmp_src)
 
             self.assertIn("MIGRATE_OWNERSHIP_STATE", [action["action"] for action in plan["actions"]])
             self.assertEqual(result["status"], "APPLIED")
@@ -213,7 +337,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
     def test_legacy_migration_still_blocks_on_edited_managed_block(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
             # Keep the managed config block but edit a value inside it.
             config_text = (codex_home / "config.toml").read_text("utf-8")
@@ -233,7 +357,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
     def test_legacy_migration_blocks_on_unmarked_guidance_block(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
             # Replace the marked guidance block with unmarked user content.
             (codex_home / "AGENTS.md").write_text(
@@ -254,7 +378,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
     def test_verify_rejects_modified_guidance_block(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
             guidance_path = codex_home / "AGENTS.md"
             guidance_path.write_text(
                 guidance_path.read_text("utf-8").replace(
@@ -272,7 +396,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
     def test_rollback_without_state_never_deletes_managed_looking_assets(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
             state_path = codex_home / module.STATE_FILE
             state_path.unlink()
             rule_path = codex_home / module.RULE_RELATIVE
@@ -294,14 +418,14 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             shutil.copytree(source, target)
 
             with self.assertRaises(module.ManagedConflict):
-                module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+                approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
             self.assertEqual((target / "SKILL.md").read_bytes(), (source / "SKILL.md").read_bytes())
 
     def test_apply_rejects_managed_config_drift_instead_of_repairing_it(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
             config_path = codex_home / "config.toml"
             config_path.write_text(
                 config_path.read_text("utf-8").replace(
@@ -312,14 +436,14 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             )
 
             with self.assertRaises(module.ManagedConflict):
-                module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+                approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
             self.assertEqual(tomllib.loads(config_path.read_text("utf-8"))["sandbox_mode"], "read-only")
 
     def test_apply_rejects_managed_guidance_drift_instead_of_repairing_it(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
             guidance_path = codex_home / "AGENTS.md"
             guidance_path.write_text(
                 guidance_path.read_text("utf-8").replace(
@@ -330,14 +454,14 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             )
 
             with self.assertRaises(module.ManagedConflict):
-                module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+                approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
             self.assertIn("another language", guidance_path.read_text("utf-8"))
 
     def test_rollback_rejects_extra_user_field_inside_managed_config_block(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
             config_path = codex_home / "config.toml"
             config_path.write_text(
                 config_path.read_text("utf-8").replace(
@@ -375,7 +499,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             module._atomic_write = racing_atomic_write
             try:
                 with self.assertRaises(module.ManagedConflict):
-                    module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+                    approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
             finally:
                 module._atomic_write = original_atomic_write
 
@@ -398,7 +522,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             module._atomic_write = failing_atomic_write
             try:
                 with self.assertRaises(OSError):
-                    module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+                    approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
             finally:
                 module._atomic_write = original_atomic_write
 
@@ -421,11 +545,11 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             codex_home, agent_home = self.make_homes(base / "homes")
             source_root = base / "codex-assets"
             shutil.copytree(ROOT / "codex-assets", source_root)
-            module.apply_overlay(codex_home, agent_home, source_root)
+            approved_apply_overlay(codex_home, agent_home, source_root)
             retired = "workflow-assistance-windows-development"
             shutil.rmtree(source_root / "skills" / retired)
 
-            result = module.apply_overlay(codex_home, agent_home, source_root)
+            result = approved_apply_overlay(codex_home, agent_home, source_root)
 
             self.assertEqual(result["status"], "APPLIED")
             self.assertFalse((agent_home / "skills" / retired).exists())
@@ -435,7 +559,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
     def test_interrupted_rollback_is_retryable_from_rolling_back_state(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
-            module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+            approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
             original_rmtree = module.shutil.rmtree
             removed_skills = 0
 
@@ -492,7 +616,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
                     os.symlink(outside, skills_link, target_is_directory=True)
 
                 with self.assertRaises(module.ManagedConflict):
-                    module.apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
+                    approved_apply_overlay(codex_home, agent_home, ROOT / "codex-assets")
 
                 self.assertFalse(list(outside.iterdir()))
                 self.assertFalse((codex_home / module.STATE_FILE).exists())

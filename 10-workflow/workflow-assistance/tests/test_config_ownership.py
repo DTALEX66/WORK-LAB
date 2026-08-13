@@ -62,6 +62,26 @@ class ConfigOwnershipTests(unittest.TestCase):
         fields = {field["path"]: field for field in self.registry["fields"]}
         self.assertEqual(fields["openhuman.runtime_memory"]["mode"], "IGNORE")
         self.assertEqual(fields["open-design.read_only_mcp"]["mode"], "OBSERVE")
+        self.assertEqual(fields["cc_switch.provider.catalog"]["mode"], "OBSERVE")
+        self.assertEqual(fields["cc_switch.provider.routing"]["mode"], "OBSERVE")
+        self.assertEqual(fields["openhuman.global_configuration"]["mode"], "OBSERVE")
+        self.assertFalse(fields["open-design.global_configuration"]["apply_supported"])
+
+    def test_project_local_rules_are_observed_not_globally_applied(self) -> None:
+        fields = {field["path"]: field for field in self.registry["fields"]}
+        for path in ("project.AGENTS", "project.rules", "project.skills"):
+            self.assertEqual(fields[path]["layer"], "PROJECT_OVERLAY")
+            self.assertEqual(fields[path]["mode"], "OBSERVE")
+            self.assertIn("no global synchronizer may apply", fields[path]["scope"])
+
+    def test_live_configuration_reconciliation_is_discovery_first_and_minimal(self) -> None:
+        rules = self.registry["rules"]
+        self.assertTrue(rules["live_config_discovery_required_before_apply"])
+        self.assertTrue(rules["machine_scoped_action_plan_required"])
+        self.assertTrue(rules["apply_only_actual_managed_drift"])
+        self.assertTrue(rules["no_op_plan_never_writes"])
+        self.assertTrue(rules["explicit_approval_after_plan_review"])
+        self.assertTrue(rules["apply_readback_required"])
 
     def test_legacy_recipe_is_isolated_empty_home_only(self) -> None:
         recipe = yaml.safe_load(COMPATIBILITY_RECIPE.read_text(encoding="utf-8"))

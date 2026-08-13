@@ -17,15 +17,15 @@ jobs:
       plan_digest: ${{ steps.plan.outputs.plan_digest }}
       plan_json: ${{ steps.plan.outputs.plan_json }}
       run_workflow: ${{ steps.plan.outputs.run_workflow }}
-
       run_observer: ${{ steps.plan.outputs.run_observer }}
+      run_token_monitor: ${{ steps.plan.outputs.run_token_monitor }}
       run_integration: ${{ steps.plan.outputs.run_integration }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Install gate-plan dependencies
-        run: python -m pip install --disable-pip-version-check --no-input -r 10-workflow/workflow-assistance/requirements.txt
+        run: python -m pip install --disable-pip-version-check --no-input --require-hashes -r 10-workflow/workflow-assistance/requirements.lock
       - name: Discover changed paths
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -65,7 +65,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install workflow validator dependencies
-        run: python -m pip install --disable-pip-version-check --no-input -r 10-workflow/workflow-assistance/requirements.txt
+        run: python -m pip install --disable-pip-version-check --no-input --require-hashes -r 10-workflow/workflow-assistance/requirements.lock
       - name: Run workflow structural and contract gates
         run: |
           # portable-install-runtime requires an explicitly provisioned Hermes binary;
@@ -101,6 +101,28 @@ jobs:
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py mcp-audit
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py shell
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py powershell
+
+  token-monitor:
+    name: token-monitor
+    needs: plan
+    if: needs.plan.outputs.run_token_monitor == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: 10-workflow/workflow-assistance/apps/token-monitor-desktop
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install locked frontend dependencies
+        run: npm ci
+      - name: Build frontend
+        run: npm run build
+      - name: Test locked Rust desktop crate
+        working-directory: 10-workflow/workflow-assistance/apps/token-monitor-desktop/src-tauri
+        run: cargo test --locked
+      - name: Check locked Rust desktop crate
+        working-directory: 10-workflow/workflow-assistance/apps/token-monitor-desktop/src-tauri
+        run: cargo check --locked
 
 
   observer:
@@ -198,6 +220,7 @@ jobs:
       - plan
       - workflow
       - observer
+      - token-monitor
       - integration
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -210,9 +233,9 @@ jobs:
           EXPECTED_PLAN_DIGEST: ${{ needs.plan.outputs.plan_digest }}
           EXPECTED_HEAD_SHA: ${{ github.sha }}
           WORKFLOW_RESULT: ${{ needs.workflow.result }}
-
           OBSERVER_RESULT: ${{ needs.observer.result }}
+          TOKEN_MONITOR_RESULT: ${{ needs.token-monitor.result }}
           INTEGRATION_RESULT: ${{ needs.integration.result }}
         run: |
           test "$PLAN_RESULT" = success
-          python -c 'import json, os, subprocess, sys; payload=json.dumps({"gate_plan": json.loads(os.environ["GATE_PLAN_JSON"]), "expected_plan_digest": os.environ["EXPECTED_PLAN_DIGEST"], "expected_head_sha": os.environ["EXPECTED_HEAD_SHA"], "jobs": {"workflow": os.environ["WORKFLOW_RESULT"], "observer": os.environ["OBSERVER_RESULT"], "integration": os.environ["INTEGRATION_RESULT"]}}); result=subprocess.run([sys.executable, "scripts/ci/aggregate_gate.py"], input=payload, text=True); raise SystemExit(result.returncode)'
+          python -c 'import json, os, subprocess, sys; payload=json.dumps({"gate_plan": json.loads(os.environ["GATE_PLAN_JSON"]), "expected_plan_digest": os.environ["EXPECTED_PLAN_DIGEST"], "expected_head_sha": os.environ["EXPECTED_HEAD_SHA"], "jobs": {"workflow": os.environ["WORKFLOW_RESULT"], "observer": os.environ["OBSERVER_RESULT"], "token-monitor": os.environ["TOKEN_MONITOR_RESULT"], "integration": os.environ["INTEGRATION_RESULT"]}}); result=subprocess.run([sys.executable, "scripts/ci/aggregate_gate.py"], input=payload, text=True); raise SystemExit(result.returncode)'

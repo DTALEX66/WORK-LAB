@@ -1229,15 +1229,12 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertGreater(policy["session"]["hard_tokens"], policy["session"]["warning_tokens"])
         self.assertGreater(policy["tool_output"]["failure_chars"], policy["tool_output"]["default_chars"])
 
-    def test_portable_config_defaults_to_context7_only(self) -> None:
+    def test_portable_config_defaults_to_context7_and_preserves_plugins(self) -> None:
         config = yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))
         for forbidden in ("model", "fallback_providers", "model_picker", "quick_commands", "agent"):
             self.assertNotIn(forbidden, config)
         self.assertEqual(set(config["mcp_servers"]), {"context7"})
-        self.assertEqual(
-            set(config["plugins"]["enabled"]),
-            {"security-guidance", "web/ddgs"},
-        )
+        self.assertNotIn("plugins", config)
         self.assertEqual(config["display"]["busy_input_mode"], "queue")
         self.assertNotIn("skin", config["display"])
         self.assertEqual(config["display"]["language"], "zh")
@@ -1429,7 +1426,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("actions/setup-python@v", workflow)
         self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", workflow)
         self.assertIn("actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38", workflow)
-        self.assertIn("-r requirements.txt", workflow)
+        self.assertIn(
+            "--require-hashes -r 10-workflow/workflow-assistance/requirements.lock",
+            workflow,
+        )
         self.assertNotIn("hermes-agent", workflow)
         self.assertNotIn("hermes", manifest["requirements"])
         self.assertIn("hermes", manifest["requirements"]["optional_adapters"])
@@ -1717,7 +1717,6 @@ class WorkflowGovernanceTests(unittest.TestCase):
             home.mkdir()
             (repo / "config/config.yaml").write_text(
                 "mcp_servers:\n  context7:\n    command: hermes-npx\n    args: [-y, context7]\n"
-                "plugins:\n  enabled: [security-guidance, web/ddgs]\n"
                 "display:\n  busy_input_mode: queue\n",
                 encoding="utf-8",
             )
@@ -1740,7 +1739,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             )
             self.assertEqual(
                 set(result["plugins"]["enabled"]),
-                {"security-guidance", "web/ddgs", "custom-plugin"},
+                {"disk-cleanup", "google_meet", "spotify", "custom-plugin"},
             )
             self.assertEqual(result["display"]["busy_input_mode"], "queue")
             self.assertEqual(result["display"]["skin"], "live")
@@ -1756,7 +1755,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             rerun = yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8"))
             self.assertIn("spotify", rerun["plugins"]["enabled"])
             self.assertEqual(rerun["display"]["busy_input_mode"], "queue")
-            self.assertTrue((home / ".workflow-assistance-state.yaml").exists())
+            self.assertFalse((home / ".workflow-assistance-state.yaml").exists())
 
     def test_sync_installs_terminal_hook_and_preserves_custom_hooks(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
@@ -1792,7 +1791,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             terminal = next(hook for hook in hooks if hook["matcher"] == "terminal")
             self.assertIn(str(home / "bin/hermes-project-terminal-guard.py").replace("\\", "/"), terminal["command"])
 
-    def test_sync_removes_only_explicitly_retired_managed_skill_assets(self) -> None:
+    def test_sync_blocks_unfenced_retired_skill_assets_without_deleting_them(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_retired", script)
         self.assertIsNotNone(spec)
@@ -1817,14 +1816,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 target = home / "skills" / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text("stale", encoding="utf-8")
-            keep = home / "skills/custom-skill/SKILL.md"
-            keep.parent.mkdir(parents=True)
-            keep.write_text("keep", encoding="utf-8")
-
-            module.remove_retired_managed_assets(home, apply=True)
-            self.assertTrue(keep.exists())
+            with self.assertRaisesRegex(RuntimeError, "retired_asset_ownership_unproven"):
+                module._block_unfenced_retired_assets(home)
             for relative in retired:
-                self.assertFalse((home / "skills" / relative).exists(), relative)
+                self.assertEqual((home / "skills" / relative).read_text(encoding="utf-8"), "stale", relative)
 
     def test_sync_initializes_missing_live_config_without_injecting_a_model_route(self) -> None:
         script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
@@ -1912,7 +1907,6 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
                 "mcp_servers": {"strategy": "merge_owned", "owned_names": ["context7"]},
                 "hooks.pre_tool_call": "replace_owned_matcher",
-                "plugins.enabled": "merge_additive",
             },
             "preserved": [
                 "model.provider",
@@ -1924,7 +1918,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "model_picker.user_defined",
                 "quick_commands.user_defined",
                 "mcp_servers.user_defined",
-                "plugins.user_enabled",
+                "plugins",
             ],
         }
         live = {
@@ -1950,10 +1944,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "display": {"skin": "managed", "custom_display_setting": "keep"},
             "unknown_future_section": {"user_value": "keep"},
         }
-        repo_data = {
-            "mcp_servers": {"context7": {"command": "managed"}},
-            "plugins": {"enabled": ["security-guidance"]},
-        }
+        repo_data = {"mcp_servers": {"context7": {"command": "managed"}}}
 
         snapshot = module.snapshot_preserved_live_config(live, repo_data, contract)
 

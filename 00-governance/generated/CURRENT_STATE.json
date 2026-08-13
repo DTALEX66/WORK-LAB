@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-13T07:10:42.232533Z",
-  "source_digest": "1f61f2f5ced27369609f3220b4783452f4adffeb0e0977abb1babbeff61a29fc",
+  "generated_at": "2026-08-13T10:36:09.124709Z",
+  "source_digest": "509a3928b7a0d389346d21d406246fe9a0e9e5f93b4ab46ded38a4588be9bc52",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -187,11 +187,13 @@
       "integration",
       "observer",
       "plan",
+      "token-monitor",
       "workflow"
     ],
     "job_display_names": {
       "plan": "gate-plan",
       "workflow": "workflow-assistance",
+      "token-monitor": "token-monitor",
       "observer": "observer",
       "integration": "integration",
       "aggregate": "aggregate"
@@ -215,5 +217,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "0aa8916d79ec446a5492797914a84bab04419f244f457d12528e12b3a7c2fc6d"
+  "content_digest": "54b93e4586b8335f90be1396854f8345c2d915c046084ed1717dc1fd70e27667"
 }

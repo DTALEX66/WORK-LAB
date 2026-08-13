@@ -56,7 +56,8 @@
           "layer": {"type": "string", "minLength": 1},
           "mode": {"enum": ["MANAGE", "OBSERVE", "IGNORE", "FORBIDDEN"]},
           "adapter": {"type": "string", "minLength": 1},
-          "scope": {"type": "string", "minLength": 1}
+          "scope": {"type": "string", "minLength": 1},
+          "apply_supported": {"type": "boolean"}
         }
       }
     },

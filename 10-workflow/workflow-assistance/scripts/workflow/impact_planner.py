@@ -69,6 +69,10 @@ def build_plan(
         normalized_path = path.replace("\\", "/")
         if _matches(normalized_path, profile.get("risk_zones", {}).get("critical", [])):
             critical = True
+        for gate_id, gate in gates.items():
+            gate_paths = gate.get("paths", []) if isinstance(gate, dict) else []
+            if _matches(normalized_path, gate_paths):
+                direct.add(gate_id)
         matched = False
         for module_id, module in modules.items():
             roots = module.get("roots", []) if isinstance(module, dict) else []

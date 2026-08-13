@@ -30,6 +30,33 @@ class AggregateGateTests(unittest.TestCase):
         payload = json.dumps({"jobs": {"workflow": "success", "open-design": "success", "integration": "success"}})
         self.assertEqual(gate.main(payload), 1)
 
+    def test_selected_token_monitor_job_is_required(self):
+        gate = load_gate()
+        plan = {
+            "schema_version": "workflow/gate-plan/v1",
+            "plan_id": "work-lab-gate",
+            "source_identity": {
+                "repository": "DTALEX66/WORK-LAB",
+                "commit": {"algorithm": "repository-default", "object_type": "commit", "oid": "sha"},
+                "tree": {"algorithm": "repository-default", "object_type": "tree", "oid": "tree"},
+            },
+            "changed_paths": ["10-workflow/workflow-assistance/apps/token-monitor-desktop/src/main.js"],
+            "required_gates": ["token-monitor"],
+            "skipped_gates": [{"gate_id": "workflow", "reason": "not selected"}],
+            "risk": "medium",
+            "delivery_effect": "none",
+            "platform_scope": ["windows"],
+            "generated_at": "2026-08-13T00:00:00Z",
+        }
+        plan["plan_digest"] = {"algorithm": "sha256", "value": gate._plan_digest(plan)}
+        payload = json.dumps({
+            "gate_plan": plan,
+            "expected_plan_digest": plan["plan_digest"]["value"],
+            "expected_head_sha": "sha",
+            "jobs": {"token-monitor": "skipped"},
+        })
+        self.assertEqual(gate.main(payload), 1)
+
     def test_plan_digest_and_head_sha_are_verified(self):
         gate = load_gate()
         plan = {

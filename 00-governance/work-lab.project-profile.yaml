@@ -51,6 +51,15 @@ gates:
       - full
       - release
     platform: discovered
+  token-monitor:
+    command: npm ci && npm run build && cargo test --locked && cargo check --locked
+    paths:
+      - 10-workflow/workflow-assistance/apps/token-monitor-desktop/**
+    tiers:
+      - module
+      - full
+      - release
+    platform: windows
 ci:
   workflow_file: .github/workflows/work-lab-gate.yml
   workflow_name: work-lab-gate

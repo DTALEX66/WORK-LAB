@@ -40,6 +40,22 @@ class ImpactPlannerTests(unittest.TestCase):
         self.assertEqual(profile["schema_version"], "workflow/project-profile/v1")
         self.assertEqual(profile["ci"]["workflow_name"], "work-lab-gate")
         self.assertEqual(profile["ci"]["stable_aggregate_job"], "aggregate")
+        self.assertEqual(
+            profile["gates"]["token-monitor"]["paths"],
+            ["10-workflow/workflow-assistance/apps/token-monitor-desktop/**"],
+        )
+
+    def test_token_monitor_path_selects_its_dedicated_gate(self) -> None:
+        module = load_module()
+        profile = module.load_profile(Path(__file__).resolve().parents[3] / "00-governance" / "work-lab.project-profile.yaml")
+        plan = module.build_plan(
+            profile,
+            repository="DTALEX66/WORK-LAB",
+            commit="commit",
+            tree="tree",
+            changed_paths=["10-workflow/workflow-assistance/apps/token-monitor-desktop/src-tauri/src/lib.rs"],
+        )
+        self.assertIn("token-monitor", plan["required_gates"])
 
     def test_workflow_change_expands_to_transitive_dependents(self) -> None:
         module = load_module()

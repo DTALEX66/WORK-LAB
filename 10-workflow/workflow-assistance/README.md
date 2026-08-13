@@ -603,6 +603,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/audit/workflow-baseline-audit-2026-08-06.md`：官方 Hermes 基线、全局规则、技能/插件部署、同步边界与 Windows 目录锁的脱敏综合审计；
 - `docs/handoffs/workflow-assistance-2026-07-23.md`：无密阶段交接、恢复顺序、已发布基线与会话卫生边界；
 - `docs/handoffs/hermes-desktop-source-root-repair-2026-07-24.md`：Desktop source-root/canonical runtime 修复的无密 Codex 交接、验证与回滚边界。
+- `docs/handoffs/audit-prevention-controls-handoff-2026-08-13.md`：供应链、配置最小写入、Hermes 路径围栏和全局/项目所有权边界的交接；明确本地候选验证与 PR/CI/跨机器验证的证据分级。
 
 - `TROUBLESHOOTING.md`：常见部署、代理、认证和工具链问题。
 

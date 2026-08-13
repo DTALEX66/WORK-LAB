@@ -36,6 +36,32 @@ def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _plan_digest(plan: dict[str, Any]) -> str:
+    """Return a stable, redacted approval binding for a dry-run write set."""
+
+    reviewed = {
+        key: plan[key]
+        for key in (
+            "target_scope_digest",
+            "managed_config_fields",
+            "preserved_user_config_fields",
+            "actions",
+            "write_set_count",
+        )
+    }
+    encoded = json.dumps(reviewed, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return _sha256_bytes(encoded)
+
+
+def _target_scope_digest(codex_home: Path, agent_home: Path, source_root: Path) -> str:
+    """Bind approval to a target/source triple without disclosing local paths."""
+
+    payload = "\0".join(
+        str(Path(path).resolve()) for path in (codex_home, agent_home, source_root)
+    ).encode("utf-8")
+    return _sha256_bytes(payload)
+
+
 def _tree_hash(root: Path) -> str:
     digest = hashlib.sha256()
     if not root.is_dir():
@@ -479,17 +505,33 @@ def build_plan(codex_home: Path, agent_home: Path, source_root: Path) -> dict[st
     for skill in data["retired_skills"]:
         if skill["target"].exists():
             actions.append({"action": "REMOVE_RETIRED_OWNED_SKILL", "target": f"skills/{skill['name']}"})
-    return {
+    plan = {
         "status": "DRY_RUN",
+        "target_scope_digest": _target_scope_digest(codex_home, agent_home, source_root),
         "managed_config_fields": sorted(MANAGED_CONFIG),
         "preserved_user_config_fields": sorted(data["preserved_fields"]),
         "actions": actions,
         "write_set_count": len(actions),
     }
+    plan["plan_digest"] = _plan_digest(plan)
+    return plan
 
 
-def apply_overlay(codex_home: Path, agent_home: Path, source_root: Path) -> dict[str, Any]:
+def apply_overlay(
+    codex_home: Path,
+    agent_home: Path,
+    source_root: Path,
+    *,
+    approved_plan_digest: str | None,
+) -> dict[str, Any]:
+    """Apply only an explicitly reviewed, current, target-bound ActionPlan."""
+
+    if not approved_plan_digest:
+        raise ManagedConflict("ACTION_PLAN_DIGEST_REQUIRED build and explicitly approve a current plan first")
     with _operation_lock(codex_home):
+        current_plan = build_plan(codex_home, agent_home, source_root)
+        if approved_plan_digest != current_plan["plan_digest"]:
+            raise ManagedConflict("ACTION_PLAN_DIGEST_MISMATCH rerun plan and review the current target write set")
         data = _preflight(codex_home, agent_home, source_root)
         config_path: Path = data["config_path"]
         guidance_path: Path = data["guidance_path"]
@@ -922,12 +964,38 @@ def main() -> int:
     parser.add_argument("--codex-home", type=Path, default=Path.home() / ".codex")
     parser.add_argument("--agent-home", type=Path, default=Path.home() / ".agents")
     parser.add_argument("--source-root", type=Path, default=_default_source_root())
+    parser.add_argument("--approved", action="store_true", help="explicitly approve the reviewed dry-run plan")
+    parser.add_argument("--approved-plan-digest", help="SHA-256 digest printed by the reviewed plan")
     args = parser.parse_args()
+    if args.operation == "apply" and not args.approved:
+        print(json.dumps({
+            "status": "BLOCKED",
+            "reason": "ACTION_PLAN_BLOCKED approval_required=true run plan, review the target and write set, then use --approved",
+        }, ensure_ascii=False))
+        return 2
     try:
         if args.operation == "plan":
             result = build_plan(args.codex_home, args.agent_home, args.source_root)
         elif args.operation == "apply":
-            result = apply_overlay(args.codex_home, args.agent_home, args.source_root)
+            if not args.approved_plan_digest:
+                print(json.dumps({
+                    "status": "BLOCKED",
+                    "reason": "ACTION_PLAN_DIGEST_REQUIRED run plan, review its plan_digest, then provide --approved-plan-digest",
+                }, ensure_ascii=False))
+                return 2
+            current_plan = build_plan(args.codex_home, args.agent_home, args.source_root)
+            if args.approved_plan_digest != current_plan["plan_digest"]:
+                print(json.dumps({
+                    "status": "BLOCKED",
+                    "reason": "ACTION_PLAN_DIGEST_MISMATCH rerun plan and review the current target write set",
+                }, ensure_ascii=False))
+                return 2
+            result = apply_overlay(
+                args.codex_home,
+                args.agent_home,
+                args.source_root,
+                approved_plan_digest=args.approved_plan_digest,
+            )
         elif args.operation == "verify":
             result = verify_overlay(args.codex_home, args.agent_home, args.source_root)
         else:

@@ -71,7 +71,7 @@ invent evidence.
 | Side effect | Required gate |
 |---|---|
 | Repository read / local plan | Allowed read-only operation |
-| User-home apply | Explicit user request for this exact configuration |
+| User-home apply | Explicit user request for this exact configuration, reviewed current target-bound `plan_digest`, then CLI `apply --approved --approved-plan-digest <digest>`; the writer rechecks the digest before any write |
 | Rollback | Explicit target scope plus ownership/hash fence |
 | Git publish | Separate explicit approval; not implied by local apply |
 | Live provider or external project write | Forbidden by this module |

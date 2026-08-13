@@ -1,2 +1,3 @@
-PyYAML>=6,<7
-jsonschema>=4,<5
+# Direct constraints for maintainers. CI installs requirements.lock with --require-hashes.
+PyYAML==6.0.3
+jsonschema==4.26.0
