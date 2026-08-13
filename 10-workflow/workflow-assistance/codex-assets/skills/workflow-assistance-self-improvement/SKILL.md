@@ -117,6 +117,28 @@ do a FIELD-LEVEL comparison, never a whole-file diff or a "looks fine" judgement
    managed fields match and preserve_unknown is respected, and separate
    "documentation claim is wrong" (fix doc) from "config drift" (fix config).
 
+### Desktop update / re-login triage
+
+When a Codex Desktop update is followed by re-login, appearance changes,
+missing projects, permission fallback, or config drift, do not call it one
+"reset". Separate authentication cache, Desktop UI/global state, project
+index, per-thread permissions, user `config.toml`, AppX package state, and
+provider routing. Compare machines in separate columns and collect the same
+read-only evidence before repair.
+
+- A GitHub issue in `openai/codex` is a public report, not maintainer
+  confirmation. Check author association, maintainer comments, assignee,
+  milestone, linked fix, and release note.
+- Never read credential bodies or private session/state contents. Metadata and
+  allowlisted non-secret fields are enough for first-pass triage.
+- Run overlay `plan` and `verify` while Desktop is fully closed, then repeat
+  `verify` after restart. Apply only when owned fields or roots drift.
+- Repair and Reset are different risk levels. Reset, uninstall, deleting
+  `.codex`, whole-file restore, and permanent route changes require explicit
+  scope and loss acknowledgement.
+- Store/MSIX delivery and the app's later state write are separate causal
+  events. Timing alone does not establish which writer changed a file.
+
 ### Multi-software baseline audit ("官方标准+用户配置 你检查下所有软件")
 
 When the user says to check whether a tool (or ALL workflow tools: Hermes /

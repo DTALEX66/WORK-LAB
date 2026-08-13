@@ -24,7 +24,7 @@ The module owns only:
 1. The managed Workflow Assistance block in the Codex user `AGENTS.md`.
 2. One managed command policy file:
    `$CODEX_HOME/rules/workflow-assistance.rules`.
-3. Ten explicitly named user Skills under `$HOME/.agents/skills`.
+3. Fourteen explicitly named user Skills under `$HOME/.agents/skills`.
 4. Three field-level defaults, only when absent:
    `approval_policy`, `sandbox_mode`, and `project_doc_max_bytes`.
 5. Plan/apply/verify/rollback readback for those owned assets.
