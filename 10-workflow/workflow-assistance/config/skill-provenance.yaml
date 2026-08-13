@@ -124,7 +124,7 @@ entries:
 - name: windows-development-environment
   source: skills/software-development/windows-development-environment/SKILL.md
   live: skills/software-development/windows-development-environment/SKILL.md
-  source_sha256: 7212d4b16169be19c27d358eac39a13af67e79dcd71b4b1b5c29ef683c03b939
+  source_sha256: dd2ba3b225afb66688579ba52b6304765c672bb454ed1b4e4fd3f5ce5caaf481
   version: 1.2.1
   trust: repository-controlled
   enabled: true

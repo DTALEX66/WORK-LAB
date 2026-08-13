@@ -593,6 +593,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/workflow/managed-software-and-assets.md`：受管软件与内容总清单（Hermes/Codex/CC Switch/GitHub/OpenHuman/Open Design 及未来客户端的管理面总账）；
 - `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
 - `docs/workflow/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录；
+- `docs/workflow/error-fixes-2026-08-13-wlg.md`：WLG 治理 TaskPack 执行错误总结（CRLF provenance、force-push CI 陷阱、gh 卸载、多分支串扰等）；
 - `docs/mcp/workflow-mcp-stack.md`：MCP 默认策略；
 - `docs/mcp/mcp-catalog-governance.md`：MCP 候选审计 schema、阻断规则和默认启用边界；
 - `docs/absorption/open-source-workflow-absorption.md`：开源工作流吸收清单；
