@@ -18,6 +18,21 @@ REQUIRED = (
     "tests/test_observer_dashboard.py",
 )
 FORBIDDEN_MARKERS = ("subprocess", "os.system", "shell=True", "POST /", "PUT /", "PATCH /", "DELETE /")
+# WLG-090: Observer must not mutate external systems or canonical module
+# state. Unknown observations must never be presented as 0/PASS/LIVE.
+FORBIDDEN_RUNTIME_MARKERS = (
+    "insert(",
+    "update(",
+    "delete(",
+    "execute(",
+    "write_text",
+    "write_bytes",
+    "open(",
+    "requests.post",
+    "requests.put",
+    "requests.delete",
+)
+UNKNOWN_LITERALS = ("unknown", "UNKNOWN")
 
 
 def main() -> int:
@@ -35,7 +50,19 @@ def main() -> int:
         if any(marker.lower() in text for marker in FORBIDDEN_MARKERS):
             print(f"OBSERVER_SKELETON_FAIL forbidden_marker={relative}")
             return 1
-    print("OBSERVER_SKELETON_PASS files=10 external_mutation_default=false dashboard=read-only")
+    runtime = (ROOT / "src/observer_runtime.py").read_text(encoding="utf-8")
+    for marker in FORBIDDEN_RUNTIME_MARKERS:
+        if marker in runtime:
+            # open( is used for reading events; only flag write-mode opens.
+            if marker == "open(" and '"w"' not in runtime and "'w'" not in runtime:
+                continue
+            print(f"OBSERVER_SKELETON_FAIL runtime_write_marker={marker}")
+            return 1
+    # WLG-090: unknown observations must be surfaced as unknown, never as 0/PASS/LIVE.
+    if "unknown" not in runtime.lower():
+        print("OBSERVER_SKELETON_FAIL unknown_not_surfaced")
+        return 1
+    print("OBSERVER_SKELETON_PASS files=10 external_mutation_default=false dashboard=read-only unknown=surfaced")
     return 0
 
 
