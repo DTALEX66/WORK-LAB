@@ -268,6 +268,8 @@ Codex 会在新任务启动时读取用户目录 `.codex/AGENTS.md`，再由项�
 
 完整的配置矩阵、所有权、验证证据和日常使用说明见
 [`docs/workflow/codex-global-enhancement.md`](docs/workflow/codex-global-enhancement.md)。
+Windows Desktop 更新后的登录、外观、项目索引、线程权限与用户配置必须分层判断；当前调查摘要和跨机器只读采样清单见
+[`docs/workflow/codex-desktop-update-state-investigation-2026-08-13.md`](docs/workflow/codex-desktop-update-state-investigation-2026-08-13.md)。
 
 本仓库现在提供可回读、可回滚的 Codex 用户层增强包：
 
@@ -293,7 +295,7 @@ python scripts/workflow/sync_codex_global_assets.py rollback \
 - `.codex/config.toml` 中带标记的三个默认字段：`approval_policy=on-request`、
   `sandbox_mode=workspace-write`、`project_doc_max_bytes=65536`；
 - `.codex/rules/workflow-assistance.rules`；
-- `.agents/skills/workflow-assistance-*` 的八个 Codex 原生 skill 根。
+- `.agents/skills/workflow-assistance-*` 的十四个 Codex 原生 skill 根（具体集合由机器合同和源目录共同校验）。
 
 若这些 config 字段已有不同的用户值，同步器保留用户值而不是覆盖。Provider、model、base URL、
 认证、MCP、plugin、Desktop 状态、session、sandbox 内部状态和其它用户 skill 均不在写入集；

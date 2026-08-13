@@ -6,7 +6,7 @@
   "responsibility": {
     "owns": [
       "repository-controlled, secret-free Codex guidance overlay",
-      "ten explicitly named user skill roots under $HOME/.agents/skills",
+      "fourteen explicitly named user skill roots under $HOME/.agents/skills",
       "one repository-controlled command rules file under $CODEX_HOME/rules",
       "three field-level config defaults when the user has not already set them",
       "plan/apply/verify/rollback evidence for its own managed assets"
@@ -33,7 +33,7 @@
     },
     "apply": {
       "mode": "USER_APPROVAL_REQUIRED",
-      "allowed": ["atomic update of owned guidance block", "replace owned rules file", "replace the ten owned skill roots", "write missing managed config fields only"],
+      "allowed": ["atomic update of owned guidance block", "replace owned rules file", "replace the fourteen owned skill roots", "write missing managed config fields only"],
       "writes": true,
       "preserves": ["all existing user config fields", "provider/model/routing", "MCP/plugins", "auth/session/memory/Desktop state"],
       "fails_closed_on": ["unknown ownership", "duplicate or malformed markers", "symlink/junction/reparse traversal", "concurrent modification", "unsafe target path"]
@@ -66,11 +66,15 @@
     "agent_home": [
       "skills/workflow-assistance-evidence-verification",
       "skills/workflow-assistance-github-delivery",
+      "skills/workflow-assistance-observer-delivery",
+      "skills/workflow-assistance-open-design-integration",
       "skills/workflow-assistance-project-data-boundary",
       "skills/workflow-assistance-python-testing",
       "skills/workflow-assistance-safe-project-execution",
       "skills/workflow-assistance-single-writer-delivery",
       "skills/workflow-assistance-systematic-debugging",
+      "skills/workflow-assistance-update-safety",
+      "skills/workflow-assistance-verification-hardening",
       "skills/workflow-assistance-windows-development",
       "skills/workflow-assistance-openhuman-integration",
       "skills/workflow-assistance-self-improvement"

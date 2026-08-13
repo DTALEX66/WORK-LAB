@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 用户规则 | `$CODEX_HOME/AGENTS.md` | 合并带标记的 managed block | 字段级 overlay |
 | 项目规则 | `<project>/AGENTS.md` | 只读发现，不全局复制 | 项目 |
-| 用户 Skills | `$HOME/.agents/skills` | 管理十个 `workflow-assistance-*` 根 | 精确目录 |
+| 用户 Skills | `$HOME/.agents/skills` | 管理十四个 `workflow-assistance-*` 根 | 精确目录 |
 | 项目 Skills | `<project>/.agents/skills` | 只读发现 | 项目 |
 | 命令规则 | `$CODEX_HOME/rules/*.rules` | 管理 `workflow-assistance.rules` | 精确文件 |
 | 用户配置 | `$CODEX_HOME/config.toml` | 只管理三个顶层默认字段 | 字段级 overlay |
@@ -40,12 +40,16 @@ project_doc_max_bytes  = 65536
 - `workflow-assistance-project-data-boundary`
 - `workflow-assistance-single-writer-delivery`
 - `workflow-assistance-evidence-verification`
+- `workflow-assistance-observer-delivery`
+- `workflow-assistance-open-design-integration`
 - `workflow-assistance-systematic-debugging`
 - `workflow-assistance-python-testing`
 - `workflow-assistance-github-delivery`
 - `workflow-assistance-windows-development`
 - `workflow-assistance-openhuman-integration`
 - `workflow-assistance-self-improvement`
+- `workflow-assistance-update-safety`
+- `workflow-assistance-verification-hardening`
 
 这些是 Codex 原生、客户端中立的 skill，不包含 Hermes 工具调用，也不会把 WORK-LAB 的模块规则提升到普通项目。WORK-LAB 自己的项目 skill 位于仓库根 `.agents/skills/work-lab-workflow/`。
 
@@ -55,7 +59,7 @@ project_doc_max_bytes  = 65536
 
 ## 用户环境画像（跨机器留存）
 
-`scripts/workflow/user_profile_export.py` 以只读、无密方式导出 Hermes/Codex 用户配置与技能清单到 tracked `config/user-environment-profile.json`（hermes config 键值脱敏、`.env` 仅键名、143 个 Hermes skills + 10 个 Codex skills 清单；凭据一律 `[REDACTED]`，发现未脱敏值即拒绝写入）。恢复流程见 `docs/workflow/user-environment-profile.md`：新机器 `sync apply` 部署模块 skills 后，按画像键名重建配置、重填凭据。
+`scripts/workflow/user_profile_export.py` 以只读、无密方式导出 Hermes/Codex 用户配置与技能清单到 tracked `config/user-environment-profile.json`；具体数量以当次导出和同步器读回为准，不在文档中冻结。配置键值会脱敏，凭据一律 `[REDACTED]`，发现未脱敏值即拒绝写入。恢复流程见 `docs/workflow/user-environment-profile.md`：新机器 `sync apply` 部署模块 skills 后，按画像键名重建配置、重填凭据。
 
 ## 命令策略
 
@@ -127,6 +131,8 @@ Windows Git Bash 也可显式使用：
 4. 可复用项目流程放入 `<project>/.agents/skills/<name>/SKILL.md`；
 5. 让 Codex 实际运行测试、构建和 readback，不接受仅凭代码或说明宣称完成；
 6. commit、push、PR、merge、release 仍需用户明确授权。
+
+更新后若出现重新登录、外观、项目索引、线程权限或 `config.toml` 变化，必须先按存储层分诊，不得把一次重登解释为整体配置重置。当前调查结论和另一台电脑只读采样清单见 `codex-desktop-update-state-investigation-2026-08-13.md`。
 
 ## 2026-08-09 本机真实回读
 
