@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-13T12:31:46.870698Z",
-  "source_digest": "09b8a0cbd2f01aee766c10838211bba4a93355783ad5ee1408427882098d4c43",
+  "generated_at": "2026-08-13T12:41:38.056088Z",
+  "source_digest": "32f381da2d9c185217b24f911d93ad791f643f041765b28c7bdf125aabaeecec",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -217,5 +217,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "f91b329b9f8cc5863feeae62db18a6a648793188ddc550673513f2e0acb8ece9"
+  "content_digest": "4160b7e092eb153da15dbc9a0ad1bc553be4c58e859ff253d93dd94a0b8be33f"
 }
