@@ -67,6 +67,13 @@ argument arrays for anything complex.
   Unicode paths are readable.
 - When `read_file`/tools report a text file as "binary", decode
   `utf-8-sig`/`utf-16` explicitly instead of concluding it is unreadable.
+- Hash manifests / provenance on Windows must hash **CRLF-normalized bytes**
+  (`data = path.read_bytes().replace(b"
+", b"
+")`) or a CRLF checkout
+  never matches the Linux LF hash. Symptom: `source SHA drift` with no
+  visible diff. Plain `sha256(file_bytes)` on a CRLF file differs from the
+  canonical value.
 
 ## Windows filesystem hazards
 
