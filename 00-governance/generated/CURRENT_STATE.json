@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-13T16:52:58.176198Z",
-  "source_digest": "907d79dee66feb3a637057c7604650a443debe027a4dd8c68607abb2ec797793",
+  "generated_at": "2026-08-13T17:34:48.683464Z",
+  "source_digest": "c0d54b74ce7cefe7ca5fc4997798119909a0862112400d38c5d452779d0d14d3",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -132,8 +132,8 @@
       {
         "name": "project-data-boundary",
         "source": "skills/software-development/project-data-boundary/SKILL.md",
-        "version": "1.2.0",
-        "source_sha256": "3754efd059b860348ddc8ca75daa99bd9d81ff0e2c86dafe01c22f846553a926",
+        "version": "1.3.0",
+        "source_sha256": "43524b0125a13e666bce44014ff7694b40253459650d989fb286bf1889f043a8",
         "trust": "repository-controlled",
         "enabled": true,
         "live_readback": "not-run"
@@ -217,5 +217,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "0032b4209c10985ed4ca7232634d4cf55eb92c3fe9fd995751c89b1a5d3fe19c"
+  "content_digest": "ae8b992a191cfdf662d8758d76dbfc899f3167b6f4ff1adc440688ff4c50c9f7"
 }

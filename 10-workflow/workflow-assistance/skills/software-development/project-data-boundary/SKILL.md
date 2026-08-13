@@ -45,6 +45,18 @@ metadata:
 
 配置/脚本变更后执行 `hermes hooks doctor`。若提示 hook 脚本在授权后变化，先 `hermes hooks revoke <command>`，再用 `hermes --accept-hooks` 启动一次新会话重新授权。Desktop/Gateway 已运行进程需 `/reset` 或重启才能注册新 hook。
 
+### guard.py 正则防护三坑（2026-08-14 已修，PR #89/#90）
+
+`hermes-project-terminal-guard.py` 的正则防护有系统性缺陷，多维度测试时暴露：
+
+1. **路径穿越绕过（严重）**：`RAW_PARENT_TRAVERSAL` 用 lookbehind `(?<=[\s"'=<>:([{])` 要求 `..` 前面是空白，导致路径**中间**的 `../`（`scripts/../../secret.txt`、`./../x`、`ls ..`、`cat ..`）漏检。修复：去掉 lookbehind，改 `\.\.(?:[\\/]|(?=[\s"']|$))`。
+2. **含空格路径误拦**：`[^\s"']+` 遇空格截断，把项目内 `"D:/All projects/WORK-LAB/x.py"` 截成 `D:/All`、`/All` 误判越界。修复：`external_raw_*` 对"candidate 是项目字符前缀"跳过，`external_child_path` 优先用 shlex 完整 token 精确判断（注意 `Path.is_relative_to` 是路径段判断，含空格前缀要用字符串 `startswith`）。
+3. **scheme:// URL 误拦**：盘符正则 `[A-Za-z]:[\\/]` 把 `https://` 的 `s://` 误当 `s:\` 盘符；`ABSOLUTE_PATH` 分支3 缺 `(?!/)` 且 lookbehind 含 `:`，把 `https:` 后的 `/` 当 POSIX 路径。修复：盘符正则后加 `(?!/)`，分支3 对齐 `RAW_POSIX` 补 `(?!/)`。
+
+**机制**：guard.py 是每次 terminal 调用时 spawn 的独立进程（从磁盘重读），改脚本**即时生效、无需重启**；与 `web_server.py start_server()` 里注册 hook 的补丁（需重启进程）不同。
+
+**测试铁律**：改 guard 正则后必须跑"应拦 + 应放"双向矩阵（E盘/外溢/穿越/串联/裸命令应拦；git/pytest/项目内脚本/含空格路径/scheme URL 应放），单方向测试会漏掉"误拦正常操作"。
+
 ## 标准执行器
 
 部署包会把 `bin/hermes-project-data.py` 同步到 `$HERMES_HOME/bin/`。对会产生数据的命令，先检查再经 wrapper 启动：
