@@ -9,7 +9,8 @@
       "fourteen explicitly named user skill roots under $HOME/.agents/skills",
       "one repository-controlled command rules file under $CODEX_HOME/rules",
       "three field-level config defaults when the user has not already set them",
-      "plan/apply/verify/rollback evidence for its own managed assets"
+      "plan/apply/verify/rollback evidence for its own managed assets",
+      "read-only project-local opaque machine identity status and configuration review plan"
     ],
     "does_not_own": [
       "Codex runtime or CLI installation",
@@ -17,13 +18,14 @@
       "authentication, tokens, cookies, credentials, or private keys",
       "MCP servers, plugins, sessions, private memory including $CODEX_HOME/memories, Desktop state, or sandbox internals",
       "project source trees, project task ledgers, project telemetry, or project sidecars",
+      "user identity, account identity, authentication state, hardware fingerprints, or device authorization",
       "Git commits, pushes, pull requests, releases, or external project writes"
     ]
   },
   "capabilities": {
     "detect": {
       "mode": "READ_ONLY",
-      "allowed": ["Codex executable version when available", "declared target paths", "managed asset hashes", "owned-state metadata", "secret-free user environment inventory (Hermes/Codex config keys + skill lists via user_profile_export.py)", "read-only Git/Python/Markdown execution preflight via execution_preflight.py", "redacted Codex performance timelines without prompt, response, auth, or memory bodies"],
+      "allowed": ["Codex executable version when available", "declared target paths", "managed asset hashes", "owned-state metadata", "secret-free user environment inventory (Hermes/Codex config keys + skill lists via user_profile_export.py)", "read-only project-local opaque machine identity status and profile-digest comparison via machine_identity.py", "read-only Git/Python/Markdown execution preflight via execution_preflight.py", "redacted Codex performance timelines without prompt, response, auth, or memory bodies"],
       "forbidden": ["private config body disclosure", "credential or session inspection"]
     },
     "plan": {
