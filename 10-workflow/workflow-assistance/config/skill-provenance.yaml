@@ -84,8 +84,8 @@ entries:
 - name: project-data-boundary
   source: skills/software-development/project-data-boundary/SKILL.md
   live: skills/software-development/project-data-boundary/SKILL.md
-  source_sha256: 3754efd059b860348ddc8ca75daa99bd9d81ff0e2c86dafe01c22f846553a926
-  version: 1.2.0
+  source_sha256: 43524b0125a13e666bce44014ff7694b40253459650d989fb286bf1889f043a8
+  version: 1.3.0
   trust: repository-controlled
   enabled: true
   permission: read-write-via-explicit-wrapper
