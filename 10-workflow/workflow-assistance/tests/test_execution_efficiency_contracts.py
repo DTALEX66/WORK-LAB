@@ -18,7 +18,7 @@ VALID = {
         "configuration": {"precedence": ["global_defaults", "project_profile", "local_runtime", "environment", "cli"]},
         "modules": {"workflow": {"roots": ["10-workflow/workflow-assistance"]}},
         "risk_zones": {"critical": [".github/workflows/**"]},
-        "gates": {"workflow": {"command": "python gate.py", "tiers": ["module", "full"], "platform": "discovered"}},
+        "gates": {"workflow": {"command": "python gate.py", "tiers": ["TARGETED", "STAGE"], "platform": "discovered"}},
         "ci": {"stable_aggregate_check": "aggregate", "exact_sha_required_for": ["critical"], "outage_blocks": ["release"]},
     },
     "gate-registry.schema.json": {
@@ -28,7 +28,7 @@ VALID = {
             "description": "Run the affected gate.",
             "inputs": {"paths": ["src/**"], "invalidators": ["pyproject.toml"]},
             "depends_on": [],
-            "tiers": ["targeted", "module"],
+            "tiers": ["TARGETED", "STAGE"],
             "platform": {"capabilities": ["python"], "operating_system": "any"},
             "execution": {"command": "python -m unittest", "timeout": "configurable", "cacheable": True, "resource_class": "cpu"},
             "evidence": {"release_blocking": False, "history_sensitive": False, "cache_trust": "same_project"},
