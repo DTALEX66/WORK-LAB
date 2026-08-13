@@ -494,6 +494,36 @@ uv run --frozen --group ci python -c "import importlib.util; print(importlib.uti
 `uv run --frozen python -c "import sys; print(sys.prefix)"` before assuming the
 install landed where the run looks.
 
+### 混用裸 `pip install` 会绕过 `uv.lock` 导致 pydantic-core 漂移崩溃 (validated 2026-08-14)
+
+uv 管理的项目（hermes-agent 等）用 `uv.lock` 精确锁定依赖。**裸 `pip install`
+不读 `uv.lock`，会装 PyPI 最新版并静默覆盖锁定版本**。2026-08-14 Hermes desktop
+后端启动崩溃的根因正是这个：某操作混用 pip，把 `pydantic-core` 从锁定的 2.46.4
+升级到 2.48.0，而 `pydantic 2.13.4` 对 pydantic-core 是**精确绑定**
+（`Requires-Dist: pydantic-core==2.46.4`，`==` 不是 `>=`，二者编译期紧耦合），
+版本不匹配 → FastAPI 导入即崩 → 后端起不来（报错表面像"依赖缺失"，实为版本漂移）。
+
+诊断看证据、不猜（查 dist-info 的安装器 + 锁文件对比）：
+
+```bash
+# 1. 谁装的（uv 还是 pip）—— INSTALLER 文件写明了安装器
+cat venv/Lib/site-packages/pydantic_core-*/dist-info/INSTALLER
+# 2. 锁文件版本 vs 实际版本
+grep -A2 'name = "pydantic-core"' uv.lock | grep version
+python -c "import pydantic_core; print(pydantic_core.__version__)"
+# 3. pydantic 声明要哪个 core（精确绑定 ==）
+grep 'pydantic-core' venv/Lib/site-packages/pydantic-*/dist-info/METADATA
+```
+
+修复用 uv 恢复锁定版本，不要再用 pip 覆盖：
+
+```bash
+uv sync                        # 或 uv pip install pydantic-core==2.46.4
+```
+
+教训：uv 管理的项目里，任何依赖安装/升级都走 `uv sync` / `uv pip install`，
+**禁止裸 `pip install`**（它绕过锁文件，漂移是静默的，直到运行时崩溃才暴露）。
+
 ### pytesseract OCR skips: TESSDATA_PREFIX must point at the versioned dir (validated 2026-08-12)
 
 On this machine, scoop installs language data under a **versioned** directory and there is NO `tesseract-languages/current` symlink. The stale default `TESSDATA_PREFIX=/c/Users/ALEX/scoop/apps/tesseract-languages/current` makes pytesseract fail with `Error opening data file .../tessdata/eng.traineddata` and OCR tests **skip silently** (they do not fail). Fix: set the env var to the actual data dir and export it for the pytest run:
