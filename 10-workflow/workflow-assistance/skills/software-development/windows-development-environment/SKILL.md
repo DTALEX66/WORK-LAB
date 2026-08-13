@@ -177,6 +177,11 @@ by process tree + a window snapshot rather than by the exit of the launch comman
 
 ## 3. Paths, workdirs, and Git-Bash
 
+- **Git-Bash `$HOME`/`$PWD`（MSYS 形式 `/c/Users/...`）传给 Windows 原生 Python 会解析成错误路径。**
+  `python script.py --home "$HOME"` 在 Windows Python 里变成 `C:\c\Users\ALEX\...`（Path 不转换 MSYS 前缀），
+  导致脚本找不到文件并**误报配置漂移/FAIL**（例如 sync/verify 脚本报 `config_invalid`、`state_missing`，
+  而手工用 `C:/Users/ALEX/...` 跑全部通过）。向 Windows 程序传路径参数时一律用 Windows 原生形式
+  `C:/Users/...`（正斜杠），不要用 `$HOME`、`$(pwd)`、`/c/...`；MSYS 路径只用于 bash 自身 `cd`。
 - **`PYTHONPATH` on Windows is `;`-separated, even from Git-Bash.** Python
   splits the env var on `os.pathsep` (Windows = `;`), not `:` — a CI-style
   `PYTHONPATH=src:scripts:...` silently becomes one bogus path and imports fail
@@ -435,6 +440,15 @@ Stage explicit paths only. Never stage `.env`, `auth.json`, databases, logs, cac
 ### Stale exported env vars redirect project DB/runtime paths
 
 The Hermes terminal session persists exported environment variables across calls. A variable exported by an earlier run (e.g. `export COGNITIVE_DATA_DIR=/tmp/mfx-browser-smoke` from a previous smoke run) silently redirects the project's runtime path resolution — the app then opens/validates a different SQLite database, and `migrate` or server startup fails with confusing downstream errors (`phase4 research schema migration is pending`, `no such module: vec0`, or writes landing in the temp dir). The DB path looks wrong only if you check `python -c "from shared import storage; print(storage.DB_PATH)"`.
+
+### Convention gate `--source head` checks git HEAD, not the working tree (validated 2026-08-13)
+
+A repo convention checker invoked as `check_repository_conventions.py --source head` validates the **committed HEAD objects**, not the dirty working tree. Editing a file on disk does not change what the gate sees until the change is committed — so a gate that "failed locally" can pass immediately after commit+push of the identical fix, and vice versa. When a CI convention gate fails while your local `--source head` run passes, suspect a BOM/encoding difference introduced at write time (see below) rather than assuming CI parity.
+
+### utf-8-sig / encoding='utf-8-sig' writes inject a UTF-8 BOM that convention gates reject (validated 2026-08-13)
+
+`Path.write_text(..., encoding='utf-8-sig')` writes a leading `EF BB BF` BOM even when the original file had none. A repo convention gate that forbids BOMs (`unexpected-bom: UTF-8 BOM is prohibited`) then fails on files you merely touched. Symptom: your edit is correct, but CI/lint reports `unexpected-bom` on files whose content diff looks clean. Fix: read with `utf-8-sig` (tolerant) but **write with plain `utf-8`** (or `write_bytes` after stripping a leading `\xef\xbb\xbf`). Verify with `head -c 3 file | xxd` — must NOT be `ef bb bf`.
+
 
 Diagnose and fix:
 
