@@ -19,7 +19,7 @@ metadata:
 这是当前 profile 中 provider、CC Switch 与 Codex 路由诊断的唯一技能。
 
 - Hermes 官方命令/字段：以官方文档和 `hermes-agent` skill 为准。
-- 模型值和切换写入：仅由 `Workflow-assistance/scripts/workflow/switch_model.py` 定义。
+- 模型值和切换写入：仅由 `10-workflow/workflow-assistance/scripts/workflow/switch_model.py` 定义。
 - 结构与真实执行诊断：仅由 `hermes_workflow_doctor.py` 定义。
 - `agent-workflow-fortress` 只负责单写者、冻结审查、提交/推送/CI。
 - `codex` skill 只负责调用 Codex CLI。
@@ -30,7 +30,7 @@ metadata:
 
 | 请求 | 动作 |
 |---|---|
-| 整理/切换用户当前三条模型线 | Provider 路线只作为入口，具体模型必须由用户通过 `--model` 或 `HERMES_*_MODEL` 选择；脚本入口是 `python scripts/workflow/switch_model.py kimi|kimi-fast|kimi-turbo|deepseek|gpt --model <用户选择的模型>`；每次切换后用 `hermes chat -q` marker 验证，并提示 `/reset` 或新会话 |
+| 整理/切换用户当前三条模型线 | Provider 路线只作为入口，具体模型必须由用户通过 `--model` 或 `HERMES_*_MODEL` 选择；脚本入口是 `python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi|kimi-fast|kimi-turbo|deepseek|gpt --model <用户选择的模型>`；每次切换后用 `hermes chat -q` marker 验证，并提示 `/reset` 或新会话 |
 | 接入 CC Switch 中已有的 Kimi/Moonshot provider | 不读取 CC Switch 数据库、密钥或 provider 原始配置。由用户通过受控环境变量/官方 Hermes 配置完成凭据设置；之后仅用 `switch_model.py status`、端口 preflight 与 `hermes chat -q` marker 验证路由。细节见 `references/kimi-ccswitch-hermes.md` |
 | 选定 Kimi 模型的列表/响应是否一致 | 不以 picker 为准；Hermes picker 是用户配置，不自动同步 CC Switch models。用直接 Moonshot API 验证用户指定的 `request_model/response_model`；任何模型专属参数也必须以该模型的当前官方文档为准。见 `references/kimi-ccswitch-hermes.md` |
 | 检查模型/CC Switch/Codex | 结构 doctor；需要证明可执行时加 `--live` |
@@ -40,20 +40,19 @@ metadata:
 ## 唯一操作入口
 
 ```bash
-cd "D:/All projects/Workflow-assistance"
-
-python scripts/workflow/switch_model.py status
-python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
-python scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
-python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
-python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
-python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
+# 从 WORK-LAB 仓库根目录运行（scripts/workflow 位于仓库内）
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py status
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 
 # 配置、监听、版本、MCP；不证明 provider 执行
-python scripts/workflow/hermes_workflow_doctor.py
+python 10-workflow/workflow-assistance/scripts/workflow/hermes_workflow_doctor.py
 
 # GPT、DeepSeek、Codex 各自必须返回独立 marker
-python scripts/workflow/hermes_workflow_doctor.py --live
+python 10-workflow/workflow-assistance/scripts/workflow/hermes_workflow_doctor.py --live
 ```
 
 模型/provider/toolset 在会话启动时冻结。切换后必须 `/reset` 或新会话；代理环境变量变化需完整重启 Hermes。

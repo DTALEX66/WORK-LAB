@@ -57,6 +57,8 @@
         "stable_aggregate_job": {"type": "string", "minLength": 1},
         "workflow_file": {"type": "string", "minLength": 1},
         "workflow_name": {"type": "string", "minLength": 1},
+        "release_workflow": {"type": "string", "minLength": 1},
+        "observation_privacy_policy": {"type": "string", "minLength": 1},
         "watcher_policy": {
           "type": "object",
           "additionalProperties": false,
@@ -91,7 +93,7 @@
       "required": ["command", "tiers", "platform"],
       "properties": {
         "command": {"type": "string", "minLength": 1},
-        "tiers": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["targeted", "module", "full", "release"]}},
+        "tiers": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["TARGETED", "STAGE", "NIGHTLY", "RC", "RELEASE"]}},
         "platform": {"type": "string", "minLength": 1}
       }
     }

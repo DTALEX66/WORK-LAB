@@ -10,7 +10,7 @@
         "work-lab-observer": {"roots": ["30-observer/work-lab-observer"], "depends_on": ["workflow-assistance"], "observation_only": true, "active": true}
       },
       "risk_zones": {"security": [".github", "00-governance"], "runtime": [".hermes/task-runtime"], "release": [".github/workflows"]},
-      "gates": {"verify": {"command": "python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py verify", "tiers": ["targeted", "module", "full", "release"], "platform": "windows-native"}},
+      "gates": {"verify": {"command": "python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py verify", "tiers": ["TARGETED", "STAGE", "RC", "RELEASE"], "platform": "windows-native"}},
       "ci": {"stable_aggregate_check": "aggregate", "stable_aggregate_job": "aggregate", "workflow_file": ".github/workflows/work-lab-gate.yml", "workflow_name": "work-lab-gate", "exact_sha_required_for": ["main", "release"], "outage_blocks": ["release"]}
     },
     {
@@ -19,8 +19,28 @@
       "configuration": {"precedence": ["global_defaults", "project_profile", "local_runtime", "environment", "cli"]},
       "modules": {"external": {"roots": ["."], "active": true}},
       "risk_zones": {"security": [".github"], "runtime": [".hermes/task-runtime"]},
-      "gates": {"standalone": {"command": "python -m unittest discover", "tiers": ["targeted", "module", "full"], "platform": "windows-native"}},
+      "gates": {"standalone": {"command": "python -m unittest discover", "tiers": ["TARGETED", "STAGE"], "platform": "windows-native"}},
       "ci": {"stable_aggregate_check": "standalone", "exact_sha_required_for": ["release"], "outage_blocks": ["release"]}
+    },
+    {
+      "schema_version": "workflow/project-profile/v1",
+      "project": {"id": "archeaxis-knowledge-os", "root_policy": "explicit_git_root", "windows_native_first": true},
+      "configuration": {"precedence": ["global_defaults", "project_profile", "local_runtime", "environment", "cli"]},
+      "modules": {
+        "archeaxis-core": {"roots": [".worklab"], "active": true, "observation_only": true}
+      },
+      "risk_zones": {"security": [".github"], "runtime": [".worklab/.hermes-task-runtime"]},
+      "gates": {},
+      "ci": {
+        "stable_aggregate_check": "a0-gates",
+        "stable_aggregate_job": "a0-gates",
+        "workflow_file": ".github/workflows/ci.yml",
+        "workflow_name": "CI",
+        "release_workflow": "Release",
+        "observation_privacy_policy": "read-only GitHub state observation; no auth/session/memory body, no project config mirror, no cross-repo writes",
+        "exact_sha_required_for": ["release"],
+        "outage_blocks": ["release"]
+      }
     }
   ]
 }
