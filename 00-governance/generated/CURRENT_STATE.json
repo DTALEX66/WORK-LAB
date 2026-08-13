@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-13T14:05:09.574023Z",
-  "source_digest": "d1eb460fe5272c2a423db99e287d896142dd604ab5bfa03aaedbc808368e4b8a",
+  "generated_at": "2026-08-13T15:36:58.448178Z",
+  "source_digest": "7c09ecc6726fdc1e824eaf8aed929718d8b3f8b5c8ba2c264bdd35b4596bad5e",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -169,7 +169,7 @@
         "name": "windows-development-environment",
         "source": "skills/software-development/windows-development-environment/SKILL.md",
         "version": "1.2.1",
-        "source_sha256": "d8e5c8911a4580eb2ebfe72a62946c190536582899a316d3f216aa35da2a34cd",
+        "source_sha256": "947398739250485ee870e098215c5ecd7ec1de827c12d36f49458e35a3f94ec0",
         "trust": "repository-controlled",
         "enabled": true,
         "live_readback": "not-run"
@@ -217,5 +217,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "25be6766c009bd56b5d3ece70e1955dd6b59901747027b88e4d58107876426b3"
+  "content_digest": "4593b1ff723b51265bed820f578a6db99b64c302e51a7b03b5250a42d396063e"
 }
