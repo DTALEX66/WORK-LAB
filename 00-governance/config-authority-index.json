@@ -58,7 +58,7 @@
       "role": "the only active GitHub workflow authority for WORK-LAB"
     },
     "nested_governance_workflow": {
-      "canonical_source": "10-workflow/workflow-assistance/.github/workflows/governance.yml",
+      "canonical_source": "10-workflow/workflow-assistance/docs/workflow/examples/governance.yml.example",
       "status": "SUPERSEDED_REFERENCE",
       "role": "documented example / reusable source only; not an active second CI authority (WLG-080)"
     },
