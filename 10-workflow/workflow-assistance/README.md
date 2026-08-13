@@ -579,6 +579,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/workflow/agent-evaluation.md`：Agent 行为评估边界、promptfoo 方法吸收和默认不安装策略；
 - `docs/workflow/context-pack.md`：安全 Context Pack 生成器、输出边界和 handoff 使用方式；
 - `docs/workflow/local-quality-gates.md`：本地 canonical quality gate runner、Justfile 快捷入口和 CI 对齐方式；
+- `docs/workflow/active-authority-index.md`：活跃权威/兼容/历史分类索引（WLG-110），README 只链接权威文件；
 - `docs/workflow/ui-skin-system.md`：UI/Skin 分层、主题 token、Agent UI 状态表达与 runtime-neutral 边界；
 - `docs/workflow/project-data-boundary.md`：项目任务数据归属、迁移、保留与 fail-closed 执行器；
 - `docs/workflow/token-monitor.md`：本地 Token Monitor 的真实 usage 口径、启动方式和 Codex OAuth 限制；
