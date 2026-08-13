@@ -32,7 +32,7 @@ RAW_WINDOWS_ABSOLUTE_PATH = re.compile(
 RAW_POSIX_ABSOLUTE_PATH = re.compile(
     r"(?:^|(?<=[\s\"'=<>:([{]))(/(?!/)[^\s\"']+)"
 )
-RAW_PARENT_TRAVERSAL = re.compile(r"(?:^|(?<=[\s\"'=<>:([{]))\.\.[\\/]")
+RAW_PARENT_TRAVERSAL = re.compile(r"\.\.(?:[\\/]|(?=[\s\"']|$))")
 RAW_RUN_SEPARATOR = re.compile(r"(?:^|\s)run\s+--\s+")
 
 WRAPPER_NAME = "hermes-project-data.py"
@@ -61,8 +61,18 @@ def external_child_path(argv: list[str], separator_index: int, root: Path) -> st
     """Reject explicit child paths outside the declared Git project."""
     child = argv[separator_index + 1 :]
     for token in child:
-        candidates = [token, *ABSOLUTE_PATH.findall(token)]
-        for candidate in candidates:
+        raw_token = token.strip('"\'')
+        path_token = Path(raw_token)
+        if path_token.is_absolute() or ntpath.isabs(raw_token):
+            if os.name != "nt" and ntpath.isabs(raw_token) and not path_token.is_absolute():
+                return raw_token
+            try:
+                if not path_token.resolve(strict=False).is_relative_to(root):
+                    return raw_token
+            except (OSError, RuntimeError):
+                return raw_token
+            continue
+        for candidate in ABSOLUTE_PATH.findall(token):
             raw = candidate.strip('"\'')
             path = Path(raw)
             windows_absolute = ntpath.isabs(raw)
@@ -91,6 +101,10 @@ def external_raw_unc(command: str, root: Path) -> str | None:
             return candidate
         raw = ntpath.normcase(ntpath.normpath(candidate))
         project = ntpath.normcase(ntpath.normpath(str(root)))
+        # 含空格路径会被正则截断（如 D:/All projects/... 截成 D:/All）；
+        # 若 candidate 是项目前缀，说明是截断，交给 external_child_path 精确判断。
+        if project.startswith(raw):
+            continue
         if raw != project and not raw.startswith(project.rstrip("\\") + "\\"):
             return candidate
     return None
@@ -104,6 +118,10 @@ def external_raw_windows_path(command: str, root: Path) -> str | None:
             return candidate
         raw = ntpath.normcase(ntpath.normpath(candidate))
         project = ntpath.normcase(ntpath.normpath(str(root)))
+        # 含空格路径会被正则截断（如 D:/All projects/... 截成 D:/All）；
+        # 若 candidate 是项目前缀，说明是截断，交给 external_child_path 精确判断。
+        if project.startswith(raw):
+            continue
         if raw != project and not raw.startswith(project.rstrip("\\") + "\\"):
             return candidate
     return None
@@ -119,7 +137,13 @@ def external_raw_posix_path(command: str, root: Path) -> str | None:
         else:
             path = Path(candidate)
         try:
-            if not path.resolve(strict=False).is_relative_to(root):
+            resolved = path.resolve(strict=False)
+            # candidate 是项目字符前缀（含空格路径被正则截断）→ 交给 external_child_path 精确判断
+            root_str = ntpath.normcase(ntpath.normpath(str(root)))
+            res_str = ntpath.normcase(ntpath.normpath(str(resolved)))
+            if root_str.startswith(res_str):
+                continue
+            if not resolved.is_relative_to(root):
                 return candidate
         except (OSError, RuntimeError):
             return candidate
