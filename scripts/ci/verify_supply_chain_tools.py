@@ -19,9 +19,11 @@ from pathlib import Path
 
 REQUIRED_TOOLS = {
     "rhysd/actionlint": "actionlint",
-    "woodruffw/zizmor": "zizmor",
     "aquasecurity/trivy-action": "trivy",
 }
+# zizmor runs as a pinned uv tool (uv tool run zizmor@<ver>); the upstream
+# Docker action's version input mapping was unreliable in CI.
+ZIZMOR_PIN_RE = re.compile(r"uv tool run zizmor@([^\s#]+)")
 FORBIDDEN_OVERLAP = ("syft", "grype", "gitleaks", "osv-scanner", "semgrep")
 WORKFLOW_REL = Path(".github/workflows/work-lab-gate.yml")
 
@@ -59,6 +61,16 @@ def verify() -> dict[str, object]:
             found[tool] = ref
             if ref == "latest" or re.fullmatch(r"@?latest", ref):
                 errors.append(f"{tool}: version must be pinned, got @latest")
+
+    # zizmor: pinned uv tool invocation.
+    zizmor_match = ZIZMOR_PIN_RE.search(text)
+    if not zizmor_match:
+        errors.append("zizmor: pinned uv tool run (uv tool run zizmor@<ver>) not wired")
+    else:
+        zizmor_ref = zizmor_match.group(1)
+        found["zizmor"] = zizmor_ref
+        if zizmor_ref == "latest" or not zizmor_ref:
+            errors.append("zizmor: version must be pinned, got @latest")
 
     for tool in FORBIDDEN_OVERLAP:
         if re.search(rf"(?i)\b{re.escape(tool)}\b", text):
