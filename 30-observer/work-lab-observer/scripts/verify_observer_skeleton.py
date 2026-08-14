@@ -12,10 +12,8 @@ REQUIRED = (
     "schemas/observer-event.schema.json",
     "schemas/data-quality.schema.json",
     "src/observer_runtime.py",
-    "scripts/observer_dashboard.py",
     "tests/test_observer_skeleton.py",
     "tests/test_observer_runtime.py",
-    "tests/test_observer_dashboard.py",
 )
 FORBIDDEN_MARKERS = ("subprocess", "os.system", "shell=True", "POST /", "PUT /", "PATCH /", "DELETE /")
 # WLG-090: Observer must not mutate external systems or canonical module

@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Iterable
 
-from observer_canonical import CanonicalProjectionReader, open_canonical_reader
 from observer_runtime import ObserverInputError
 
 
@@ -20,7 +19,8 @@ class ObserverStore:
         ).resolve()
         if self.path != expected:
             raise ValueError("Observer must read the Workflow-owned canonical SQLite path")
-        self.reader: CanonicalProjectionReader = open_canonical_reader(self.path)
+        if not self.path.is_file():
+            raise FileNotFoundError(f"canonical store missing: {self.path}")
 
     def rebuild_projection(self) -> dict[str, Any]:
         # R2 third batch: rebuild the v3 snapshot projection; the legacy v2
@@ -61,4 +61,5 @@ class ObserverStore:
         )
 
     def close(self) -> None:
-        self.reader.store.close()
+        """No persistent reader is held; nothing to close (canonical store is
+        opened transiently by rebuild_projection)."""
