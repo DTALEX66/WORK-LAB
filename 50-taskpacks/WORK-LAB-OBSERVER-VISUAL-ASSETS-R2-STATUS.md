@@ -1,6 +1,6 @@
 # WORK-LAB Observer Visual Assets R2 — Desktop Component Status
 
-> Status: `PRODUCTION_ARTIFACT_VERIFIED_LOCAL_PENDING_DELIVERY`
+> Status: `PRODUCTION_ARTIFACT_AND_GIT_DELIVERY_VERIFIED`
 >
 > This document records the repository implementation of
 > `WORK-LAB-OBSERVER-VISUAL-ASSETS-R2.zip`. It is a current implementation
@@ -91,17 +91,32 @@ The frontend consumes the canonical projection through `GET /api/v1/snapshot` an
 9. Transport now projects the actual SSE connection state and timestamps.
    Sidecar startup no longer invents heartbeat or writer freshness; both remain
    null until the corresponding real event is observed.
+10. The normal sidecar lifecycle now supervises the Workflow-owned durable
+    producer. An unhandled tick failure is recorded and retried rather than
+    silently killing the worker thread.
+11. Collector event identities are deterministic. Re-polling unchanged Task,
+    Git, source-quality, growth, or usage inputs updates freshness without
+    duplicating additive usage or canonical facts.
+12. Collector health is persisted and drives one 6/6 coverage contract (five
+    collectors plus worker loop); freshness is independently projected as
+    `FRESH`, `STALE`, or `UNKNOWN`.
+13. EventSource failure previously retained last-good content while still
+    rendering `Sidecar 已连接`. Local transport failure now overrides the stale
+    copy to `OFFLINE`; one production WebView2 PID was verified through
+    `OFFLINE → LIVE/FRESH → OFFLINE(last-good) → LIVE/FRESH`.
 
 ## Evidence and verification
 
 Fresh local verification after the implementation:
 
 ```text
-JS UI + desktop component tests: 53 passed, 0 failed
+JS UI + desktop component tests: 54 passed, 0 failed
 Sidecar v3 focused tests: 12 passed
+Runtime-continuity focused tests: 28 passed
 Production build command: cargo tauri build --no-bundle
-Production artifact: src-tauri/target/release/app.exe
-Real WebView2: Snapshot 200, named SSE snapshot + heartbeat, no horizontal overflow
+Production artifact: src-tauri/target/release/app.exe (9,538,560 bytes; SHA-256 fc3dbd6ddfdbdbb619fc46d27bef3216beb5927e818c1a1b7e692dc3b8b797cf)
+Production build: cargo tauri build --no-bundle, 18.28s final incremental build; temporary Cargo patches removed and lockfile restored byte-for-byte
+Real WebView2: Snapshot 200, named SSE snapshot + heartbeat, 28/28 TaskPack, 6/6 coverage, truthful offline/recovery labels, no horizontal overflow
 Final runtime target: one sidecar, one app.exe, no temporary static server, no CDP listener
 ```
 
@@ -109,21 +124,22 @@ The plain browser was used only for early frontend QA. Final acceptance used the
 actual production Tauri/WebView2 process; browser-only evidence is not being
 substituted for the desktop runtime.
 
-## Remaining delivery boundaries
+## Remaining publication boundaries
 
 The host still has no complete system Visual Studio/MSVC toolchain. The verified
 build uses project-local xwin SDK/CRT plus Rust `rust-lld` and temporary
 runtime-local build-dependency patches; those Cargo patches are removed after
-the build. This is sufficient for the verified local EXE but does not claim a
-signed installer, ZIP bundle, exact-SHA CI, commercial release, or a globally
-installed toolchain.
+the build. This is sufficient for the verified production EXE and does not
+claim a signed installer, ZIP bundle, commercial release, or a globally
+installed toolchain. Exact-SHA source CI is independently complete.
 
 ## Delivery state
 
 - R2 implementation and production EXE: complete and verified in the local working tree.
 - Required tests and focused verification: passed.
 - External provider/live mutation: not executed.
-- Current-tree Git delivery, human release approval, signing and publication: still pending.
+- Source Git delivery and exact-SHA CI: complete through PR #104 and merge-SHA main CI.
+- Human release approval, signing and publication: not executed and not implied by source delivery.
 - R2 implementation commit/PR/CI/merge: PR `#30`, exact-head PR run
   `31251264323`, final main push run `31251306631`, merged implementation SHA
   `f141946bfa55fd77120443bacd45aee0049c16e2`.
@@ -131,9 +147,10 @@ installed toolchain.
   `31251503373`, final main push run `31251545134`, merged reconciliation SHA
   `5d2ceb264edf54c42e347acd1246202a0add31ac`.
 - Local and remote `main` were read back equal after each merge. The two SHA
-  values above are intentionally retained as implementation and reconciliation
-  lineage, not conflated into one release SHA. They are historical ancestry and
-  do not prove the current dirty Observer/Tauri tree.
+  values above remain historical implementation/reconciliation ancestry. The
+  current truthful evidence/recovery baseline was later delivered by PR #104,
+  candidate `992e62b...`, merge SHA `259fc210...`, with exact-head and
+  merge-SHA CI success; no local dirty-tree claim is substituted for GitHub CI.
 
 ## Source and scope
 

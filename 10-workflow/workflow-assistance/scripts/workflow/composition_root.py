@@ -173,6 +173,7 @@ def build_v3_snapshot(
     revision: int,
     events_url: str | None = None,
     transport_state: str = "UNKNOWN",
+    freshness_state: str = "UNKNOWN",
     generated_at: str | None = None,
     workspace_evidence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -189,6 +190,7 @@ def build_v3_snapshot(
         ci_runs=_ci_rows(store),
         transport={
             "transportState": transport_state,
+            "freshnessState": freshness_state,
             "eventsUrl": events_url,
             "coverageNumerator": coverage["numerator"],
             "coverageDenominator": coverage["denominator"],

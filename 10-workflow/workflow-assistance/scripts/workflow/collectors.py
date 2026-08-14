@@ -7,10 +7,10 @@ and last-good ages instead of fabricated EXACT/LIVE/0 values.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import subprocess
-import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -24,6 +24,11 @@ SENSITIVE_PATH_FRAGMENTS = ("appdata", "users", "documents", "desktop", "downloa
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _stable_id(prefix: str, *parts: object) -> str:
+    encoded = json.dumps(parts, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return f"{prefix}-{hashlib.sha256(encoded).hexdigest()[:32]}"
 
 
 def _git(root: Path, *args: str) -> str | None:
@@ -54,7 +59,7 @@ def collect_task_ledger(store: CanonicalStore, project_id: str) -> CollectorResu
         by_status[status] = by_status.get(status, 0) + 1
     records = [
         {
-            "event_id": f"task-ledger-{project_id}-{uuid.uuid4().hex}",
+            "event_id": _stable_id("task-ledger", project_id, by_status),
             "project_id": project_id,
             "producer": "task-ledger-collector",
             "occurred_at": _now(),
@@ -78,7 +83,7 @@ def collect_git_ci(store: CanonicalStore, project_id: str, project_root: Path) -
     if head:
         records.append(
             {
-                "row_id": f"git-{project_id}-{uuid.uuid4().hex}",
+                "row_id": f"git-{project_id}",
                 "project_id": project_id,
                 "scope": "git",
                 "quality": "EXACT_SOURCE" if head else "UNKNOWN",
@@ -113,7 +118,11 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
                 text = candidate.read_text(encoding="utf-8", errors="replace")
             except OSError:
                 continue
-            for line in text.splitlines():
+            try:
+                source_ref = candidate.relative_to(search_root).as_posix()
+            except ValueError:
+                source_ref = candidate.name
+            for line_number, line in enumerate(text.splitlines(), start=1):
                 if not line.strip():
                     continue
                 try:
@@ -140,12 +149,11 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
                         "model": str(item.get("model", "unknown")),
                         "observed_at": _now(),
                         "quality": "EXACT_SOURCE",
-                        "source_ref": _sanitize_path(str(candidate)),
+                        "source_ref": _sanitize_path(source_ref),
+                        "sample_id": _stable_id("usage", project_id, source_ref, line_number),
                         **tokens,
                     }
                 )
-    for record in records:
-        record["sample_id"] = f"usage-{project_id}-{uuid.uuid4().hex}"
     return CollectorResult(kind="usage", ok=True, records=records)
 
 
@@ -154,7 +162,7 @@ def collect_source_quality(store: CanonicalStore, project_id: str, project_root:
     head = _git(project_root, "rev-parse", "HEAD")
     quality = "EXACT_SOURCE" if head else "UNKNOWN"
     record = {
-        "row_id": f"quality-{project_id}-{uuid.uuid4().hex}",
+        "row_id": f"quality-{project_id}-source",
         "project_id": project_id,
         "scope": "source",
         "quality": quality,
@@ -219,7 +227,7 @@ def collect_growth_watcher(store: CanonicalStore, project_id: str, search_root: 
             continue  # un-discoverable candidate; quarantine implicitly by omission
         records.append(
             {
-                "event_id": f"growth-{item['candidateId']}-{uuid.uuid4().hex}",
+                "event_id": _stable_id("growth", item["candidateId"], source_digest(candidate["source"])),
                 "project_id": project_id,
                 "producer": "growth-watcher-collector",
                 "occurred_at": _now(),
