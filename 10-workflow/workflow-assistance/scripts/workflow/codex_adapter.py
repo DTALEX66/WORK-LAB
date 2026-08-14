@@ -58,6 +58,37 @@ class CodexAdapter(AgentAdapter):
             return None
         return (result.stdout or result.stderr).strip()[:64] if result.returncode == 0 else None
 
+    def probe_official_surfaces(self) -> dict[str, bool]:
+        """WLOSS-400: probe Codex OFFICIAL run surfaces (app-server / hooks / ACP).
+
+        Read-only presence checks only — never starts the app-server, never
+        reads sessions, never reads prompt/response content. A surface is
+        reported as available only when the CLI advertises it.
+        """
+        surfaces = {"app_server": False, "hooks": False, "acp": False}
+        if not self.codex_bin:
+            return surfaces
+        help_output = self._read_help()
+        if help_output:
+            if "app-server" in help_output:
+                surfaces["app_server"] = True
+            if "hook" in help_output.lower():
+                surfaces["hooks"] = True
+            if "acp" in help_output.lower():
+                surfaces["acp"] = True
+        return surfaces
+
+    def _read_help(self) -> str | None:
+        try:
+            result = subprocess.run(
+                [self.codex_bin, "--help"],
+                text=True, capture_output=True, timeout=15, check=False,
+                encoding="utf-8", errors="replace",
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        return (result.stdout or result.stderr) if result.returncode == 0 else None
+
     def session_list(self) -> list[dict[str, Any]]:
         raise CapabilityUnsupported("codex official session list is not available without a private store; process/worktree fallback only")
 

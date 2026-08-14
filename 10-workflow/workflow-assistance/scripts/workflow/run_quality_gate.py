@@ -643,6 +643,75 @@ def run_gate_sequence(names: tuple[str, ...]) -> int:
     return 0
 
 
+# WLOSS-700: changed-files -> relevant gates. Small edits run only the gates
+# whose path scope they touch; the full suite stays one command away.
+GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
+    "governance": ("tests/", "10-workflow/workflow-assistance/scripts/", "10-workflow/workflow-assistance/config/"),
+    "compile": ("scripts/", "10-workflow/workflow-assistance/scripts/", "30-observer/work-lab-observer/src/"),
+    "skill-provenance": ("skills/", "codex-assets/skills/", "config/skill-provenance.yaml"),
+    "security": ("config/", "codex-assets/", "README.md", "docs/"),
+    "context-pack": ("scripts/workflow/build_context_pack.py",),
+    "client-neutral-manifest": ("config/client-neutral-manifest.json",),
+    "core-schemas": ("schemas/", "config/"),
+    "adapter-registry": ("config/adapters.json", "scripts/workflow/adapter_registry.py"),
+    "adapter-conformance": ("scripts/workflow/adapter_conformance.py", "tests/test_adapter_conformance.py"),
+    "acp-conformance": ("scripts/workflow/acp_adapter.py", "tests/test_acp_adapter.py"),
+    "otel-mapping": ("scripts/workflow/otel_mapper.py", "tests/test_otel_mapping.py"),
+    "usage-ingestion": ("scripts/workflow/usage_ingestion.py", "tests/test_usage_ingestion.py"),
+    "memory-contamination": ("scripts/workflow/memory_contamination.py",),
+    "task-ledger-replay": ("scripts/workflow/task_ledger_replay.py",),
+    "portable-install": ("scripts/workflow/verify_portable_install.py",),
+    "provider-inventory": ("config/config.yaml",),
+    "mcp-audit": ("scripts/workflow/mcp_candidate_audit.py",),
+    "shell": ("setup.sh",),
+    "runtime-convergence": ("scripts/workflow/canonical_store.py", "scripts/workflow/durable_worker.py", "scripts/workflow/collectors.py", "scripts/workflow/sse_hub.py", "10-workflow/workflow-assistance/tests/"),
+    "powershell": ("setup.ps1",),
+    "project-identity-contract": ("scripts/workflow/product_project.py", "scripts/workflow/project_identity_resolver.py", "10-workflow/workflow-assistance/tests/test_product_project.py", "10-workflow/workflow-assistance/tests/test_project_identity_resolver.py"),
+    "agent-adapter-readonly-contract": ("scripts/workflow/adapter_sdk.py", "scripts/workflow/hermes_adapter.py", "scripts/workflow/codex_adapter.py"),
+    "execution-state-machine": ("scripts/workflow/evidence_aggregator.py",),
+    "collector-noninterference": ("scripts/workflow/collector_scheduler.py", "scripts/workflow/process_collector.py", "scripts/workflow/git_collector.py"),
+    "canonical-single-writer": ("scripts/workflow/canonical_store.py", "tests/test_canonical_store_v2.py"),
+    "observer-no-business-write": ("scripts/workflow/execution_evidence.py", "30-observer/work-lab-observer/web/", "tests/test_wlgm_privacy.py"),
+    "snapshot-schema-v3": ("scripts/workflow/snapshot_api.py", "scripts/workflow/snapshot_validator.py", "tests/test_snapshot_validator.py", "tests/test_snapshot_sse_live.py"),
+    "sse-browser-reconnect": ("scripts/workflow/sse_revision.py", "scripts/workflow/live_gate.py", "tests/test_snapshot_sse_live.py"),
+    "field-quality-no-fabrication": ("scripts/workflow/live_gate.py", "scripts/workflow/evidence_aggregator.py", "tests/test_evidence_aggregator.py"),
+    "privacy-redaction": ("scripts/workflow/execution_evidence.py", "scripts/workflow/canonical_store.py", "tests/test_execution_evidence.py", "tests/test_wlgm_privacy.py"),
+    "windows-project-resolution": ("scripts/workflow/project_identity_resolver.py", "bin/hermes-project-terminal-guard.py", "tests/test_project_identity_resolver.py", "tests/test_project_terminal_guard.py"),
+    "tauri-readonly-shell": ("30-observer/work-lab-observer/src-tauri/", "scripts/workflow/sidecar_endpoint.py", "tests/test_sidecar_endpoint.py"),
+    "work-lab-os-canary": ("scripts/workflow/canary_runner.py",),
+    "exact-sha-ci": (),
+}
+
+
+def select_gates_for_changed(changed_paths: list[str]) -> tuple[str, ...]:
+    """Return the gates relevant to the changed paths (WLOSS-700).
+
+    Paths may be monorepo-relative (10-workflow/workflow-assistance/...) or
+    module-relative (scripts/...); both forms are matched.
+    """
+    variants: list[str] = []
+    for raw in changed_paths:
+        path = raw.replace("\\", "/")
+        variants.append(path)
+        # Module-relative variant (strip the monorepo module prefix).
+        for prefix in ("10-workflow/workflow-assistance/", "30-observer/work-lab-observer/"):
+            if path.startswith(prefix):
+                variants.append(path[len(prefix):])
+    selected: set[str] = set()
+    for gate, scopes in GATE_PATH_SCOPES.items():
+        if gate not in GATES:
+            continue
+        for scope in scopes:
+            scope_n = scope.replace("\\", "/")
+            if any(v == scope_n or v.startswith(scope_n.rstrip("/") + "/") for v in variants):
+                selected.add(gate)
+                break
+    # Always include the fast sanity gates for any change.
+    selected |= {"compile"}
+    order = [name for name in VERIFY_ORDER if name in selected]
+    return tuple(order)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Workflow-assistance local quality gate runner.")
     parser.add_argument(
@@ -651,6 +720,12 @@ def build_parser() -> argparse.ArgumentParser:
         default="verify",
         choices=("verify", *GATES.keys(), "list"),
         help="Gate to run. 'verify' runs the canonical local suite.",
+    )
+    parser.add_argument(
+        "--changed",
+        default=None,
+        metavar="PATHS",
+        help="Comma-separated changed file paths; runs only the relevant gates (WLOSS-700).",
     )
     return parser
 
@@ -666,6 +741,13 @@ def main(argv: list[str] | None = None) -> int:
     preflight = dependency_preflight()
     if preflight != 0:
         return preflight
+    if args.changed:
+        changed = [p.strip() for p in args.changed.split(",") if p.strip()]
+        selected = select_gates_for_changed(changed)
+        print(f"WLOSS_700 changed={len(changed)} files -> gates={','.join(selected) or 'none'}")
+        if not selected:
+            return 0
+        return run_gate_sequence(selected)
     if args.gate == "verify":
         return run_gate_sequence(VERIFY_ORDER)
     return run_gate_sequence((args.gate,))

@@ -52,17 +52,47 @@ class ResolutionResult:
     resolution_state: ResolutionState = ResolutionState.UNRESOLVED
     quality: IdentityQuality = IdentityQuality.UNKNOWN
     evidence_refs: list[str] = field(default_factory=list)
+    # WLOSS-410: V2 output fields (never fabricated; filled by callers where known).
+    display_name: str | None = None
+    runtime_instances: list[str] = field(default_factory=list)
+    active_tasks: list[str] = field(default_factory=list)
+    nested_projects: list[str] = field(default_factory=list)
+    confidence: str = "UNKNOWN"
 
     def as_json(self) -> dict[str, Any]:
         return {
             "projectId": self.project_id,
+            "displayName": self.display_name,
             "repositoryId": self.repository_id,
             "worktreeId": self.worktree_id,
             "workingArea": self.working_area,
             "resolutionState": self.resolution_state.value,
             "quality": self.quality.value,
+            "confidence": self.confidence,
+            "runtimeInstances": list(self.runtime_instances),
+            "activeTasks": list(self.active_tasks),
+            "nestedProjects": list(self.nested_projects),
             "evidenceRefs": self.evidence_refs,
         }
+
+    def mark_resolved(
+        self,
+        project: ProductProject,
+        *,
+        top: str,
+        quality: IdentityQuality,
+        evidence: str,
+    ) -> None:
+        """Centralized RESOLVED state fill (WLOSS-410 V2 fields)."""
+        self.project_id = project.project_id
+        self.display_name = project.display_name or project.project_id
+        self.repository_id = _first_repo_id(project)
+        self.worktree_id = _match_worktree(project, top)
+        self.working_area = _working_area(project, top)
+        self.resolution_state = ResolutionState.RESOLVED
+        self.quality = quality
+        self.confidence = quality.value
+        self.evidence_refs.append(evidence)
 
 
 class GitProbe:
@@ -199,13 +229,12 @@ def resolve_execution_path(
     if superproject:
         for project in index.projects.values():
             if project.has_root(superproject) and project.submodule_policy.value == "attach_to_parent":
-                result.project_id = project.project_id
-                result.repository_id = _first_repo_id(project)
-                result.worktree_id = _match_worktree(project, superproject)
-                result.working_area = _relative(superproject, normalized) or _relative(superproject, top or normalized)
-                result.resolution_state = ResolutionState.RESOLVED
-                result.quality = IdentityQuality.CORRELATED
-                result.evidence_refs.append("submodule-attach")
+                result.nested_projects.append(normalized)
+                result.mark_resolved(
+                    project, top=superproject,
+                    quality=IdentityQuality.CORRELATED,
+                    evidence="submodule-attach",
+                )
                 return result
 
     # Step 5: remote identity match.
@@ -214,38 +243,24 @@ def resolve_execution_path(
         for remote in remotes:
             project = index.by_remote(remote)
             if project is not None:
-                result.project_id = project.project_id
-                result.repository_id = _first_repo_id(project)
-                result.worktree_id = _match_worktree(project, top)
-                result.working_area = _working_area(project, top)
-                result.resolution_state = ResolutionState.RESOLVED
-                result.quality = IdentityQuality.EXACT if remote in project.remote_identities else IdentityQuality.SOURCE_REPORTED
-                result.evidence_refs.append(f"remote:{remote}")
+                result.mark_resolved(
+                    project, top=top,
+                    quality=IdentityQuality.EXACT if remote in project.remote_identities else IdentityQuality.SOURCE_REPORTED,
+                    evidence=f"remote:{remote}",
+                )
                 return result
 
     # Step 6: exact worktree root match.
     for project in index.projects.values():
         worktree = _match_worktree(project, top)
         if worktree is not None:
-            result.project_id = project.project_id
-            result.repository_id = _first_repo_id(project)
-            result.worktree_id = worktree
-            result.working_area = _working_area(project, top)
-            result.resolution_state = ResolutionState.RESOLVED
-            result.quality = IdentityQuality.EXACT
-            result.evidence_refs.append("worktree-root")
+            result.mark_resolved(project, top=top, quality=IdentityQuality.EXACT, evidence="worktree-root")
             return result
 
     # Step 7: approved-root containment, only within the SAME repository.
     for project in index.projects.values():
         if project.has_root(top):
-            result.project_id = project.project_id
-            result.repository_id = _first_repo_id(project)
-            result.worktree_id = _match_worktree(project, top)
-            result.working_area = _working_area(project, top)
-            result.resolution_state = ResolutionState.RESOLVED
-            result.quality = IdentityQuality.EXACT
-            result.evidence_refs.append("approved-root")
+            result.mark_resolved(project, top=top, quality=IdentityQuality.EXACT, evidence="approved-root")
             return result
         for binding in project.root_bindings:
             if not _is_within(binding.root, top):
@@ -256,13 +271,12 @@ def resolve_execution_path(
                 continue
             if common and not root_common:
                 continue
-            result.project_id = project.project_id
-            result.repository_id = _first_repo_id(project)
-            result.worktree_id = binding.worktree_id
-            result.working_area = _relative(binding.root, top)
-            result.resolution_state = ResolutionState.RESOLVED
-            result.quality = IdentityQuality.CORRELATED
-            result.evidence_refs.append("approved-root-containment")
+            result.nested_projects.append(top)
+            result.mark_resolved(
+                project, top=top,
+                quality=IdentityQuality.CORRELATED,
+                evidence="approved-root-containment",
+            )
             return result
 
     # Step 8/9: machine roots from the user overlay.
@@ -270,13 +284,11 @@ def resolve_execution_path(
         if _same_path(root, top) or _is_within(root, top):
             project = index.by_remote(remote)
             if project is not None:
-                result.project_id = project.project_id
-                result.repository_id = _first_repo_id(project)
-                result.worktree_id = _match_worktree(project, top)
-                result.working_area = _working_area(project, top)
-                result.resolution_state = ResolutionState.RESOLVED
-                result.quality = IdentityQuality.CORRELATED
-                result.evidence_refs.append(f"machine-root:{remote}")
+                result.mark_resolved(
+                    project, top=top,
+                    quality=IdentityQuality.CORRELATED,
+                    evidence=f"machine-root:{remote}",
+                )
                 return result
 
     # No match: unresolved candidate.

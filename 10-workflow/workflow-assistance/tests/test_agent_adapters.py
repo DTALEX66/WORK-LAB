@@ -76,6 +76,20 @@ class CodexAdapterTests(unittest.TestCase):
         with self.assertRaises(CapabilityUnsupported):
             adapter.run_status()
 
+    def test_probe_official_surfaces_read_only(self) -> None:
+        """WLOSS-400: app-server/hooks/ACP presence probe never starts anything."""
+        adapter = CodexAdapter(codex_bin="C:/bin/codex.exe")
+        with mock.patch.object(adapter, "_read_help", return_value="Usage: codex [OPTIONS]\n  app-server    Run the local app server\n  hook          Manage hooks\n  acp           Agent Client Protocol\n"):
+            surfaces = adapter.probe_official_surfaces()
+        self.assertTrue(surfaces["app_server"])
+        self.assertTrue(surfaces["hooks"])
+        self.assertTrue(surfaces["acp"])
+
+    @mock.patch("codex_adapter.shutil.which", return_value=None)
+    def test_probe_official_surfaces_not_installed(self, _which) -> None:
+        adapter = CodexAdapter(codex_bin=None)
+        self.assertEqual(adapter.probe_official_surfaces(), {"app_server": False, "hooks": False, "acp": False})
+
 
 if __name__ == "__main__":
     unittest.main()
