@@ -98,8 +98,10 @@ def verify(root: Path = ROOT, index_path: Path | None = None) -> dict[str, Any]:
     # Integrity: adopt-now totals must reconcile.
     # Every entry whose sourceId came from the Open Design SOURCE_REGISTRY adopt-now set
     # is flagged as an Open Design-owned source (external-optional). Count all entries
-    # carrying ownerModule = OPEN-DESIGN-Assistance.
-    adopt = [e for e in entries if str(e.get("ownerModule", "")).lower() == "open-design-assistance"]
+    # carrying ownerModule = OPEN-DESIGN-Assistance (legacy) or DESIGN-LAB (current name,
+    # after the 2026-08-14 rename; P1-4 — pointer-only, never re-absorbs design capability).
+    OWNER_MODULES = {"open-design-assistance", "design-lab"}
+    adopt = [e for e in entries if str(e.get("ownerModule", "")).lower() in OWNER_MODULES]
     complete = index.get("adopt_now_complete_in_worklab", -1)
     partial = index.get("adopt_now_partial_in_worklab", -1)
     none = index.get("adopt_now_no_worklab_targets", -1)
