@@ -3,12 +3,17 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import sys
 import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
+import sidecar_endpoint
 from sidecar_endpoint import (
+    _pid_alive,
     capability_probe,
     read_descriptor,
     validate_descriptor,
@@ -52,6 +57,54 @@ class SidecarEndpointTests(unittest.TestCase):
         result = validate_descriptor(make_descriptor(pid=99999999))
         self.assertFalse(result.valid)
         self.assertTrue(any("not alive" in e for e in result.errors))
+
+    def test_live_child_pid_accepted(self) -> None:
+        child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(5)"])
+        try:
+            self.assertTrue(_pid_alive(child.pid))
+        finally:
+            child.terminate()
+            child.wait(timeout=5)
+
+    def test_windows_pid_requires_still_active_exit_code(self) -> None:
+        class FakeFunction:
+            def __init__(self, callback) -> None:
+                self.callback = callback
+                self.argtypes = None
+                self.restype = None
+
+            def __call__(self, *args):
+                return self.callback(*args)
+
+        class FakeKernel32:
+            def __init__(self, exit_code: int) -> None:
+                self.exit_code = exit_code
+                self.closed = False
+                self.OpenProcess = FakeFunction(lambda *_args: 1234)
+                self.GetExitCodeProcess = FakeFunction(self._get_exit_code)
+                self.CloseHandle = FakeFunction(self._close_handle)
+
+            def _get_exit_code(self, _handle, output) -> int:
+                output._obj.value = self.exit_code
+                return 1
+
+            def _close_handle(self, _handle) -> int:
+                self.closed = True
+                return 1
+
+        running_kernel = FakeKernel32(259)
+        with mock.patch.object(sidecar_endpoint.os, "name", "nt"), mock.patch(
+            "ctypes.WinDLL", return_value=running_kernel, create=True
+        ):
+            self.assertTrue(_pid_alive(4242))
+        self.assertTrue(running_kernel.closed)
+
+        exited_kernel = FakeKernel32(0)
+        with mock.patch.object(sidecar_endpoint.os, "name", "nt"), mock.patch(
+            "ctypes.WinDLL", return_value=exited_kernel, create=True
+        ):
+            self.assertFalse(_pid_alive(4242))
+        self.assertTrue(exited_kernel.closed)
 
     def test_future_started_at_rejected(self) -> None:
         result = validate_descriptor(make_descriptor(startedAt=time.time() + 3600))
