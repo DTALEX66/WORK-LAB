@@ -31,7 +31,8 @@ fn validated_observer_api(raw: &str) -> Option<tauri::Url> {
         && loopback
         && url.username().is_empty()
         && url.password().is_none()
-        && (url.path() == "/api/v1/snapshot" || url.path() == "/api/dashboard")
+        // R2 third batch: /api/dashboard retired — only the v3 snapshot endpoint.
+        && url.path() == "/api/v1/snapshot"
         && url.query().is_none()
         && url.fragment().is_none()
     {
@@ -172,8 +173,8 @@ mod tests {
         // Canonical v3 snapshot endpoint (WLGM-150/210).
         assert!(validated_observer_api("http://127.0.0.1:43123/api/v1/snapshot").is_some());
         assert!(validated_observer_api("http://[::1]:43123/api/v1/snapshot").is_some());
-        // Legacy dashboard tolerated for migration only.
-        assert!(validated_observer_api("http://127.0.0.1:43123/api/dashboard").is_some());
+        // R2 third batch: legacy /api/dashboard is retired and must be rejected.
+        assert!(validated_observer_api("http://127.0.0.1:43123/api/dashboard").is_none());
         assert!(validated_observer_api("https://external.invalid/api/v1/snapshot").is_none());
         assert!(validated_observer_api("http://127.0.0.1:43123/api/v1/snapshot?write=1").is_none());
         assert!(validated_observer_api("http://127.0.0.1:43123/api/v1/events").is_none());

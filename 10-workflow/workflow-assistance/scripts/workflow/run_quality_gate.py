@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -469,6 +470,10 @@ def gate_tauri_readonly_shell() -> int:
             errors.append("lib.rs lacks loopback-only validation")
         if "url.query().is_none()" not in source or "url.fragment().is_none()" not in source:
             errors.append("lib.rs does not reject query/fragment endpoints")
+        # R2 third batch: the retired /api/dashboard entry must be rejected
+        # (production allow-list pattern; test assertions on .is_none() are fine).
+        if re.search(r'url\.path\(\)\s*==\s*"/api/dashboard"', source):
+            errors.append("lib.rs still tolerates the retired /api/dashboard entry")
     else:
         errors.append("Tauri lib.rs missing")
     conf = tauri_root / "tauri.conf.json"
