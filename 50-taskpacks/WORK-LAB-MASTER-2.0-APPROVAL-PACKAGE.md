@@ -1,10 +1,10 @@
 # WORK-LAB Master TaskPack v2.0 — WL3-820 Approval Package
 
-> Status: `DELIVERED_PENDING_REMAINING_APPROVALS` (2026-08-15 local supplement; current WIP is not Git-delivered)
-> Generated: 2026-08-10; Observer/Tauri evidence reconciled 2026-08-15
+> Status: `DELIVERED` (2026-08-15 post-merge exact-SHA closure)
+> Generated: 2026-08-10; Observer/Tauri and cloud-delivery evidence reconciled 2026-08-15
 > Repository: `DTALEX66/WORK-LAB` · Branch: `main`
-> Head: `cd4a27f769865fc40f6e02372a25db3d58f62537`
-> Candidate tree (frozen, temp-index): `f1578cbd40b8edba329547efa56c74ec98a23b6d` (475 files)
+> Delivered baseline head: `259fc210289573b61300625c20b8766049f94964`
+> Delivered baseline tree: `868ab7ae67b749741de30e219f70e934410aedb8`
 
 ## 1. 执行摘要
 
@@ -12,9 +12,9 @@
 
 ```text
 28 个 WL3 任务:
-  VERIFIED_LOCAL: 27
+  VERIFIED_LOCAL: 28
   BLOCKED(工具链):  0
-  LOCAL_VERIFIED_READY_FOR_APPROVAL: 1  (WL3-820 当前树交付批准)
+  POST_MERGE_EXACT_SHA_CI: PASS  (WL3-820 delivery closed by PR #104)
 ```
 
 ## 2. 各任务最终状态（evidence grade: LOCAL_VERIFIED）
@@ -46,7 +46,7 @@
 | WL3-720 | VERIFIED_LOCAL | 6 换平台演练 core 不分叉 |
 | WL3-800 | VERIFIED_LOCAL | 集成门禁 6 项检查通过 |
 | WL3-810 | VERIFIED_LOCAL | 体积审计 438 文件/2.65 MiB |
-| WL3-820 | LOCAL_VERIFIED_READY_FOR_APPROVAL | 本包 |
+| WL3-820 | VERIFIED_LOCAL | PR #104 squash merge + merge-SHA main CI 全绿 |
 
 ## 3. 本地验证证据
 
@@ -64,30 +64,29 @@ Repo size audit: tracked=438 files, 2.65 MiB, duplicate groups=1
 WL3-800 integration gate: 6/6 checks passed
 CURRENT_STATE freshness: PASS (head 699ab50, branch main, CI run 31344245919)
 CI routing: GATE_PLAN_PASS required_gates=[observer] for observer-path changes
-Frozen candidate tree: f1578cbd40b8edba329547efa56c74ec98a23b6d (475 files, temp-index, no real index mutation)
-GATE-RUNTIME-CONVERGENCE: claimable=True — 9/10 passed; #9 Tauri real Sidecar
-  is toolchain-only pending (cargo absent) and does not block per Master TaskPack §15
+Delivered baseline tree: 868ab7ae67b749741de30e219f70e934410aedb8
+GATE-RUNTIME-CONVERGENCE: Tauri real Sidecar, production WebView2 and restart recovery verified
 ```
 
-2026-08-15 当前本地树补充证据：Observer JS `53 passed, 0 failed`；Sidecar v3 focused `12 tests OK`；正确 production Tauri 命令已生成并启动 `src-tauri/target/release/app.exe`；真实 WebView2 已读回 Snapshot/SSE、TaskPack、审批、治理、历史与来源。该证据仍是本地 dirty-tree evidence，不冒充 exact-SHA CI、签名安装包或 release。
+2026-08-15 delivery evidence：Observer JS `54 passed, 0 failed`；runtime-continuity focused `28 passed`；最终 production Tauri 命令在 `18.28s` 内生成 `src-tauri/target/release/app.exe`（SHA-256 `fc3dbd6ddfdbdbb619fc46d27bef3216beb5927e818c1a1b7e692dc3b8b797cf`）；真实 WebView2 同一 PID 完成 `OFFLINE → LIVE/FRESH → OFFLINE(last-good) → LIVE/FRESH`，并读回 TaskPack `28/28`、collector coverage `6/6`。候选 `992e62b17020fb05f593650be0c5ee2002edbe2a` 经 PR #104 squash merge 为 `259fc210289573b61300625c20b8766049f94964`；exact-head push/PR CI 与 merge-SHA main CI 均为 success。
 
-本轮还修复了初始 snapshot 失败后的产品内重试、SSE 重连退避被重置、多客户端连接状态误判、响应头阶段断开导致的连接计数泄漏，以及 sidecar 启动时间冒充 heartbeat/writer freshness；不依赖启动器 workaround，也不把连接可达性提升成持续 writer `LIVE`。
+本轮还修复了初始 snapshot 失败后的产品内重试、SSE 重连退避被重置、多客户端连接状态误判、响应头阶段断开导致的连接计数泄漏，以及 sidecar 启动时间冒充 heartbeat/writer freshness。runtime-continuity hardening 已将 Workflow-owned worker 纳入 sidecar 生命周期、持久化 collector health、投影独立 freshness，并以稳定事件 ID 防止轮询重复累计；EventSource 中断会把 last-good 明确标成 Sidecar/事件流离线。只有真实 writer、heartbeat、cursor、SSE 与 coverage 同时满足才显示 `LIVE/FRESH`。
 
-## 4. 唯一批准清单（状态截至 2026-08-10 更新）
+## 4. 唯一批准清单（状态截至 2026-08-15）
 
-1. **commit/push/PR** — ✅ 已完成：#33/#34/#35/#36/#37/#38/#39/#40/#41/#43/#44/#45 全部 squash merge 到 main（head `ee909fd`）；
+1. **commit/push/PR** — ✅ 已完成：历史批次与 Observer truth/recovery PR #104 全部 squash merge 到 main；#104 merge SHA `259fc210289573b61300625c20b8766049f94964`；
 2. **Hermes/Codex global config live apply** — ✅ Codex overlay v3 已 apply+verify（10 skills，含 openhuman-integration 与 self-improvement，PR #41/#43）；Hermes live 未动（按边界合同）；
 3. **双入口/双安装卸载或配置迁移** — ✅ 已对账：入口矩阵与职责边界见 `docs/workflow/dual-entry-install.md`（Hermes setup.* → sync_hermes_workflow_assets；Codex legacy bootstrap 仅目标不存在时最小引导，canonical sync 管理全部受管表面；无并行安装面）；
-4. **Windows toolchain/portable/sign/release** — ◐ WORK-LAB Observer Tauri 工程与 portable production EXE 已在项目内 xwin/rust-lld 路径构建并运行；代码签名、installer/ZIP、release 仍未执行；
+4. **Windows toolchain/portable/sign/release** — ✅ portable production EXE 已在项目内 xwin/rust-lld 路径构建并运行；代码签名、installer/ZIP、release 不属于本 TaskPack 的完成声明，未执行；
 5. **paid provider smoke** — ✅ 已执行（2026-08-10）：deepseek `WA_SMOKE_221826_ds` 与 openai-codex `WA_SMOKE_221837_gpt` 精确 marker 回读，EXIT=0；kimi 未登录跳过；凭据未读取；
 6. **真实外部项目 tracked profile** — ❌ 未执行（MINIGAME 仅只读 canary，未写）；
 7. **归档删除或 Git 历史减重** — ✅ 已完成：WORK-LAB-ARCHIVE 退休删除（含敏感 Chrome 测试痕迹），证据并入 `90-archive-manifests/migration-20260805/`（PR #40）。
 
 ## 5. 明确未宣称
 
-- 当前 dirty tree 的 exact-SHA CI — 未执行；历史 #33-#41 main CI 不能证明当前 Observer WIP；
+- Observer delivery 的 exact-SHA CI — 已执行：candidate push/PR CI 与 merge SHA `259fc210...` main CI 均成功；
 - 便携 production EXE — 已本地构建并运行；未签名、未打 installer/ZIP、未发布；
 - 正式 production release — 否；
 - Hermes live apply、真实外部项目 profile 写入 — 否（待逐项授权）；paid provider smoke 仅保留 2026-08-10 历史证据，不冒充当前树验证。
 
-最终状态：**`DELIVERED_PENDING_REMAINING_APPROVALS`** — WL3-620 本地技术阻塞已解除；当前 Observer/Tauri WIP 已本地实现、测试、构建并运行。当前树的 commit/push/CI、签名/installer/ZIP、Hermes live apply、外部项目 profile 与正式 release 仍是独立授权/发布边界。
+最终状态：**`DELIVERED`** — WL3-000..820 全部具备本地验证证据，Observer/Tauri 已实现、测试、构建、真实运行，并经 PR #104 与 merge-SHA main CI 完成交付。签名/installer/ZIP、Hermes live apply、外部项目 profile 和正式 release 是独立授权或发布边界，不再被错误计入 TaskPack 未完成项。

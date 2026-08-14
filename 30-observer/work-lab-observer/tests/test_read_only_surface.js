@@ -138,6 +138,7 @@ function run() {
     assert(/onOpen:\s*async\s*\(\)\s*=>/.test(appSrc), "live subscription binds an async onOpen refresh");
     assert(/onOpen:[\s\S]{0,400}WlApi\.fetchSnapshot\(\)/.test(appSrc), "onOpen re-reads the canonical snapshot");
     assert(/scheduleLiveReconnect\(\)/.test(appSrc), "SSE errors schedule a fresh EventSource instance");
+    assert(/onError:[\s\S]{0,300}markRefreshError\([^\n]+true\)[\s\S]{0,150}scheduleSnapshotRetry\(\)[\s\S]{0,150}scheduleLiveReconnect\(\)/.test(appSrc), "SSE failure overrides stale transport and retries both snapshot and stream");
     assert(/Math\.min\([^\n]+30000\)/.test(appSrc), "SSE reconnect backoff is capped at 30 seconds");
     assert(/function\s+scheduleSnapshotRetry\s*\(/.test(appSrc), "initial snapshot failures schedule a fresh GET");
     assert(/catch\s*\(err\)[\s\S]{0,500}scheduleSnapshotRetry\(\)/.test(appSrc), "initial GET failure enters the retry loop");
