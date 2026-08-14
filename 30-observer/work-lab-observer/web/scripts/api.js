@@ -195,6 +195,7 @@ const WlApi = (function () {
         attentionState: p.attentionState || "NONE",
         identityState: p.identityState || "UNRESOLVED",
         activeExecutionCount: p.activeExecutionCount == null ? null : p.activeExecutionCount,
+        workingAreas: Array.isArray(p.workingAreas) ? p.workingAreas : [],
         visibility: p.visibility || "UNKNOWN",
         quality: p.quality || "UNKNOWN",
         lastStrongEvidenceAt: p.lastStrongEvidenceAt || null,
@@ -222,6 +223,7 @@ const WlApi = (function () {
       sourceWatermark: snapshot.sourceWatermark,
       transport: snapshot.transport || { transportState: "UNKNOWN", freshnessState: "UNKNOWN" },
       coverage: snapshot.coverage || null,
+      governance: snapshot.governance || null,
       summary: {
         registeredProjects: projects.length,
         activeProjects,

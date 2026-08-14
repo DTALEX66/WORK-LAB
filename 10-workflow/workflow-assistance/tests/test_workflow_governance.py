@@ -2460,6 +2460,21 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "shell",
                 "runtime-convergence",
                 "powershell",
+                # WLGM §7 named gates.
+                "project-identity-contract",
+                "agent-adapter-readonly-contract",
+                "execution-state-machine",
+                "collector-noninterference",
+                "canonical-single-writer",
+                "observer-no-business-write",
+                "snapshot-schema-v3",
+                "sse-browser-reconnect",
+                "field-quality-no-fabrication",
+                "privacy-redaction",
+                "windows-project-resolution",
+                "tauri-readonly-shell",
+                "work-lab-os-canary",
+                "exact-sha-ci",
             ),
         )
         self.assertEqual(set(module.GATES), set(module.VERIFY_ORDER) | {"portable-install-runtime"})

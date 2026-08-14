@@ -149,12 +149,16 @@ const WlRenderV3 = (function () {
         : (p.agentPlatform ? esc(p.agentPlatform) : "—");
       const gm = gitMatchMeta(p.git && p.git.matchState);
       const evidence = p.lastStrongEvidenceAt ? `<span class="wl-mono">${esc(p.lastStrongEvidenceAt)}</span>` : "—";
+      const areas = Array.isArray(p.workingAreas) && p.workingAreas.length
+        ? p.workingAreas.map((a) => `<span class="wl-chip wl-area">${esc(a)}</span>`).join(" ")
+        : "—";
       return `
         <tr data-project="${esc(p.projectId)}" class="wl-proj-row" tabindex="0" aria-label="项目 ${esc(p.displayName || p.projectId)}">
           <td><div class="wl-proj-name">${esc(p.displayName || p.projectId)}<span class="wl-proj-id">${esc(p.projectId)}</span></div></td>
           <td><span class="wl-chip ${am.cls}">${icon(am.ic)}${am.text}</span></td>
           <td>${esc(p.activeExecutionCount)}</td>
           <td>${agentText}</td>
+          <td>${areas}</td>
           <td><span class="wl-chip ${attn.cls}">${icon(attn.ic)}${attn.text}</span></td>
           <td>${evidence}</td>
           <td><span class="wl-quality"><span class="wl-qdot ${String(p.visibility || "UNKNOWN").toLowerCase()}"></span>${esc(p.visibility)}</span> <span class="wl-quality">${esc(p.quality)}</span></td>
@@ -165,11 +169,39 @@ const WlRenderV3 = (function () {
       <div class="wl-card">
         <h3 class="wl-section-title">${icon("projects")}主体项目（${projects.length}）</h3>
         <div class="wl-table-wrap"><table class="wl-table">
-          <thead><tr><th>项目</th><th>活动状态</th><th>执行数</th><th>Agent 分布</th><th>关注</th><th>最近强证据</th><th>可见性/质量</th><th>Git</th></tr></thead>
+          <thead><tr><th>项目</th><th>活动状态</th><th>执行数</th><th>Agent 分布</th><th>Working areas</th><th>关注</th><th>最近强证据</th><th>可见性/质量</th><th>Git</th></tr></thead>
           <tbody>${rows.join("")}</tbody>
         </table></div>
         <div id="wl-v3-detail"></div>
       </div>`;
+  }
+
+  /* ---------- WLGM-180 §7: Rules/Skills/Memory/Adapter drift ---------- */
+  function governanceDrift(d) {
+    const g = d.governance;
+    if (!g || g.state === "UNKNOWN" || !g.families) {
+      return `
+        <div class="wl-card"><h3 class="wl-section-title">${icon("governance")}Rules / Skills / Memory / Adapter 漂移</h3>
+          <div class="wl-state-note">${icon("info")}漂移数据源未声明（UNKNOWN，不编造计数）。</div></div>`;
+    }
+    const familyChip = (name, meta) => {
+      const state = String(meta.state || "UNKNOWN").toUpperCase();
+      const cls = state === "DRIFT" ? { cls: "blocked", ic: "alert", text: "漂移" }
+        : state === "CLEAN" ? { cls: "completed", ic: "check", text: "一致" }
+        : { cls: "unknown", ic: "unknown", text: "未知" };
+      const counts = (meta.current == null && meta.drift == null)
+        ? "—"
+        : `当前 ${esc(meta.current == null ? "未知" : meta.current)} / 漂移 ${esc(meta.drift == null ? "未知" : meta.drift)}`;
+      return `<div class="wl-drift-family"><span class="wl-chip ${cls.cls}">${icon(cls.ic)}${name} ${cls.text}</span><span class="wl-drift-counts">${counts}</span></div>`;
+    };
+    return `
+      <div class="wl-card"><h3 class="wl-section-title">${icon("governance")}Rules / Skills / Memory / Adapter 漂移</h3>
+        <div class="wl-drift-grid">
+          ${familyChip("Rules", g.families.rules)}
+          ${familyChip("Skills", g.families.skills)}
+          ${familyChip("Memory", g.families.memory)}
+          ${familyChip("Adapters", g.families.adapters)}
+        </div></div>`;
   }
 
   /* ---------- WLGM-180: executions list ---------- */
@@ -232,11 +264,27 @@ const WlRenderV3 = (function () {
     const execs = (d.executions || []).filter((e) => e.anchorProjectId === projectId);
     const execRows = execs.map((e) => {
       const em = execMeta(e.state);
-      return `<li><span class="wl-chip ${em.cls}">${em.text}</span> <span class="wl-mono">${esc(e.executionId)}</span> · ${esc(e.agent)} · ${esc(e.sessionId || "无 session")} · L${esc(e.evidenceLevel || "?")}${e.sourceRef ? ` · src ${esc(e.sourceRef)}` : ""}</li>`;
+      const visited = Array.isArray(e.visitedRepositories) && e.visitedRepositories.length
+        ? ` · visited ${e.visitedRepositories.map((v) => esc(v.repositoryId || v)).join(", ")}`
+        : "";
+      const timeline = Array.isArray(e.timeline) && e.timeline.length
+        ? `<div class="wl-timeline">${e.timeline.map((t) => `<span class="wl-chip">${esc(t.state)}</span><span class="wl-mono">${esc(t.at)}</span>`).join(" → ")}</div>`
+        : "";
+      const lostReason = e.lostReason ? `<div class="wl-kv"><span class="wl-kv-label">LOST 原因</span>${esc(e.lostReason)}</div>` : "";
+      const conflicts = Array.isArray(e.conflicts) && e.conflicts.length
+        ? `<div class="wl-kv"><span class="wl-kv-label">证据冲突</span><span class="wl-chip blocked">${icon("alert")}${e.conflicts.length} 项冲突</span></div>`
+        : "";
+      return `<li class="wl-detail-exec">
+        <span class="wl-chip ${em.cls}">${em.text}</span> <span class="wl-mono">${esc(e.executionId)}</span> · ${esc(e.agent)} · ${esc(e.sessionId || "无 session")} · L${esc(e.evidenceLevel || "?")}${e.sourceRef ? ` · src ${esc(e.sourceRef)}` : ""}
+        ${visited}${timeline}${lostReason}${conflicts}
+      </li>`;
     }).join("") || `<li>无 execution 证据</li>`;
     const git = p.git || {};
     const gm = gitMatchMeta(git.matchState);
     const tok = p.token || {};
+    const areas = Array.isArray(p.workingAreas) && p.workingAreas.length
+      ? `<div class="wl-kv"><span class="wl-kv-label">Working areas</span>${p.workingAreas.map((a) => `<span class="wl-chip wl-area">${esc(a)}</span>`).join(" ")}</div>`
+      : "";
     return `
       <div class="wl-card wl-detail" data-project-detail="${esc(projectId)}">
         <h3 class="wl-section-title">${icon("info")}项目详情 · ${esc(p.displayName || p.projectId)}</h3>
@@ -245,6 +293,7 @@ const WlRenderV3 = (function () {
         <div class="wl-kv"><span class="wl-kv-label">Git</span>${gm.text} · <span class="wl-mono">${esc(git.localSha)}</span></div>
         <div class="wl-kv"><span class="wl-kv-label">Token</span>in ${esc(tok.inputTokens == null ? "未知" : tok.inputTokens)} / out ${esc(tok.outputTokens == null ? "未知" : tok.outputTokens)} (${esc(tok.costQuality || "UNKNOWN")})</div>
         <div class="wl-kv"><span class="wl-kv-label">最近强证据</span><span class="wl-mono">${esc(p.lastStrongEvidenceAt || "—")}</span></div>
+        ${areas}
         <h4>Executions</h4><ul class="wl-detail-list">${execRows}</ul>
         ${p.sourceRefs && p.sourceRefs.length ? `<h4>Source refs</h4><ul class="wl-detail-list">${p.sourceRefs.map((s) => `<li><span class="wl-mono">${esc(s)}</span></li>`).join("")}</ul>` : ""}
       </div>`;
@@ -277,6 +326,7 @@ const WlRenderV3 = (function () {
     globalBar,
     kpi,
     projectTable,
+    governanceDrift,
     executionsTable,
     tokenCi,
     projectDetail,

@@ -80,6 +80,39 @@ t("project table shows activity/agent/attention/evidence/git (WLGM-180)", () => 
   assert(html.includes("wl-proj-row"), "clickable rows");
 });
 
+t("project table shows working areas (WLGM-180)", () => {
+  // workingAreas is aggregated by the backend snapshot projection (single
+  // projection, WLGM-150); normalizeV3 passes it through.
+  const snap = { schemaVersion: "workflow/snapshot/v3", revision: 1,
+    projects: [{ projectId: "p", displayName: "P", activityState: "ACTIVE", workingAreas: ["10-workflow/workflow-assistance"] }],
+    executions: [{ executionId: "e1", agent: "hermes", anchorProjectId: "p", state: "RUNNING", workingArea: "10-workflow/workflow-assistance" }],
+    tokenSummary: {} };
+  const s = WlApi.normalizeV3(snap);
+  const html = WlRenderV3.projectTable(s);
+  assert(html.includes("10-workflow/workflow-assistance"), "working area chip");
+  assert(html.includes("Working areas"), "working areas column header");
+});
+
+t("governance drift view: known data renders, unknown never fabricates (WLGM-180 §7)", () => {
+  const snap = { schemaVersion: "workflow/snapshot/v3", revision: 1, projects: [], executions: [],
+    governance: { state: "DRIFT", families: {
+      rules: { state: "DRIFT", current: 12, drift: 1 },
+      skills: { state: "CLEAN", current: 13, drift: 0 },
+      memory: { state: "UNKNOWN", current: null, drift: null },
+      adapters: { state: "CLEAN", current: 4, drift: 0 },
+    } },
+    tokenSummary: {} };
+  const s = WlApi.normalizeV3(snap);
+  const html = WlRenderV3.governanceDrift(s);
+  assert(html.includes("Rules"), "rules family");
+  assert(html.includes("漂移"), "DRIFT chip");
+  assert(html.includes("当前 12 / 漂移 1"), "rules counts");
+  assert(html.includes("一致"), "CLEAN chip");
+  const unknown = WlRenderV3.governanceDrift(WlApi.normalizeV3({ schemaVersion: "workflow/snapshot/v3", revision: 1, projects: [], executions: [], tokenSummary: {} }));
+  assert(unknown.includes("UNKNOWN"), "unknown governance");
+  assert(!unknown.includes("当前 0"), "no fabricated zero counts");
+});
+
 t("executions table shows state/quality/transport/evidence level (WLGM-180)", () => {
   const html = WlRenderV3.executionsTable(d);
   assert(html.includes("exec-1"), "execution id");
@@ -109,6 +142,26 @@ t("per-project detail (WLGM-190)", () => {
   assert(html.includes("RESOLVED"), "identity state");
 });
 
+t("per-project detail shows visited/timeline/lost/conflict (WLGM-190)", () => {
+  const snap = { schemaVersion: "workflow/snapshot/v3", revision: 1,
+    projects: [{ projectId: "p", displayName: "P", activityState: "ACTIVE" }],
+    executions: [{
+      executionId: "e1", agent: "codex", anchorProjectId: "p", state: "LOST", evidenceLevel: "D",
+      visitedRepositories: [{ repositoryId: "other-repo" }],
+      timeline: [{ state: "RUNNING", at: "t0" }, { state: "LOST", at: "t1" }],
+      lostReason: "heartbeat expired 60s",
+      conflicts: ["weak-evidence-running:src-x"],
+    }],
+    tokenSummary: {} };
+  const s = WlApi.normalizeV3(snap);
+  const html = WlRenderV3.projectDetail(s, "p");
+  assert(html.includes("other-repo"), "visited repository");
+  assert(html.includes("RUNNING"), "timeline state");
+  assert(html.includes("heartbeat expired 60s"), "LOST reason");
+  assert(html.includes("证据冲突"), "conflict marker");
+  assert(html.includes("失联"), "LOST chip");
+});
+
 t("compact view (WLGM-200)", () => {
   const html = WlRenderV3.compact(d);
   assert(html.includes("传输"), "transport in compact");
@@ -127,13 +180,17 @@ t("unknown surface never claims LIVE", () => {
 });
 
 /* run() contract for tests/run_all_tests.js */
+let ran = 0;
+const _t = t;
+t = function (name, fn) { ran += 1; _t(name, fn); };
+
 function run() {
-  return { pass: 12 - failures, fail: failures };
+  return { pass: ran - failures, fail: failures };
 }
 
 if (require.main === module) {
   console.log("\n==== WORK-LAB Observer v3 render contract tests ====");
-  console.log("TOTAL: " + (12 - failures) + " passed, " + failures + " failed");
+  console.log("TOTAL: " + (ran - failures) + " passed, " + failures + " failed");
   process.exit(failures ? 1 : 0);
 }
 

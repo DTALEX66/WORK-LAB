@@ -74,6 +74,7 @@ const WlApp = (function () {
       content =
         WlRenderV3.globalBar(d) +
         WlRenderV3.kpi(d) +
+        WlRenderV3.governanceDrift(d) +
         WlRenderV3.projectTable(d) +
         WlRenderV3.executionsTable(d) +
         WlRenderV3.tokenCi(d);

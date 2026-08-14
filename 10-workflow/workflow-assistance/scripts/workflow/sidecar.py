@@ -164,6 +164,7 @@ class _WorkflowHTTPServer(ThreadingHTTPServer):
                     "pid": os.getpid(),
                     "host": host,
                     "port": port,
+                    "startedAt": __import__("time").time(),
                     "projectionUrl": f"http://{url_host}:{port}/api/v1/snapshot",
                     "eventsUrl": f"http://{url_host}:{port}/api/v1/events",
                 },

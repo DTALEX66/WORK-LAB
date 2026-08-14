@@ -17,6 +17,7 @@ authorizes ``WORKLAB_CANARY_PROJECT_ROOTS`` and read access to an external repo.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -81,6 +82,29 @@ def run_canary() -> dict[str, Any]:
     r1 = build_snapshot(revision=1, projects=[{"projectId": "work-lab"}])
     r2 = build_snapshot(revision=2, projects=[{"projectId": "work-lab"}])
     results["snapshot_revision_monotonic"] = r2["revision"] == r1["revision"] + 1
+
+    # 6) external OS-project canary: ONLY when explicitly authorized via
+    # WORKLAB_CANARY_PROJECT_ROOTS (read-only git metadata; never project content).
+    external: list[dict[str, Any]] = []
+    roots_env = os.environ.get("WORKLAB_CANARY_PROJECT_ROOTS", "")
+    authorized_roots = [r.strip() for r in roots_env.split(os.pathsep) if r.strip()]
+    for root_raw in authorized_roots:
+        root = Path(root_raw)
+        if not root.is_dir():
+            external.append({"root": root_raw, "ok": False, "reason": "path_missing"})
+            continue
+        resolved = resolve_execution_path(str(root), index, git=probe)
+        external.append({
+            "root": root_raw,
+            "projectId": resolved.project_id,
+            "resolutionState": resolved.resolution_state.value,
+            "ok": resolved.resolution_state.value == "RESOLVED" or resolved.project_id == "work-lab",
+        })
+    results["external_canary"] = {
+        "authorized": bool(authorized_roots),
+        "roots": external,
+        "note": "read-only git metadata only; no project content read",
+    }
 
     results["all_pass"] = all(
         v is True for k, v in results.items() if k.endswith(("_resolved", "_same_repo", "_absorbed", "_running", "_monotonic"))

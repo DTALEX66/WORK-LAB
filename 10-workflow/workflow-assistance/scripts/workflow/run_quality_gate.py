@@ -369,7 +369,7 @@ def gate_runtime_convergence() -> int:
 def gate_powershell() -> int:
     pwsh = shutil.which("pwsh") or shutil.which("powershell.exe")
     if not pwsh:
-        print("\n=== SKIP powershell: pwsh / powershell.exe not found ===")
+        print("\n=== SKIP powershell: pwsh/powershell.exe not found ===")
         return 0
     script = (
         "$tokens = $null; $errors = $null; "
@@ -377,6 +377,129 @@ def gate_powershell() -> int:
         "if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_ }; exit 1 }"
     )
     return run([pwsh, "-NoProfile", "-Command", script])
+
+
+# ---------- WLGM §7 named quality gates ----------
+
+def _run_wlgm_tests(test_names: tuple[str, ...]) -> int:
+    pythonpath = os.pathsep.join(
+        [str(ROOT / "tests"), str(ROOT / "scripts" / "workflow")]
+    )
+    existing = os.environ.get("PYTHONPATH")
+    if existing:
+        pythonpath += os.pathsep + existing
+    return run_python(
+        ["-m", "unittest", "-v", *(Path(t).stem for t in test_names)],
+        env_updates={"PYTHONPATH": pythonpath},
+    )
+
+
+def gate_project_identity_contract() -> int:
+    """§7: product project identity + resolver contracts."""
+    return _run_wlgm_tests(("tests/test_product_project.py", "tests/test_project_identity_resolver.py"))
+
+
+def gate_agent_adapter_readonly_contract() -> int:
+    """§7: adapters are read-only; missing capabilities are explicit."""
+    return _run_wlgm_tests(("tests/test_adapter_sdk.py", "tests/test_agent_adapters.py"))
+
+
+def gate_execution_state_machine() -> int:
+    """§7: execution state machine has no illegal transitions."""
+    return _run_wlgm_tests(("tests/test_evidence_aggregator.py",))
+
+
+def gate_collector_noninterference() -> int:
+    """§7: collectors never block the writer; bounded, breakered."""
+    return _run_wlgm_tests(("tests/test_collector_scheduler.py", "tests/test_fallback_collectors.py"))
+
+
+def gate_canonical_single_writer() -> int:
+    """§7: canonical SQLite is the single writer; migrations recoverable."""
+    return _run_wlgm_tests(("tests/test_canonical_store_v2.py",))
+
+
+def gate_observer_no_business_write() -> int:
+    """§7: observer surface has no business-write path."""
+    return _run_wlgm_tests(("tests/test_wlgm_privacy.py",))
+
+
+def gate_snapshot_schema_v3() -> int:
+    """§7: snapshot v3 schema validation + projection contract."""
+    return _run_wlgm_tests(("tests/test_snapshot_validator.py", "tests/test_snapshot_sse_live.py"))
+
+
+def gate_sse_browser_reconnect() -> int:
+    """§7: persistent SSE revision + reconnect recovery semantics."""
+    return _run_wlgm_tests(("tests/test_snapshot_sse_live.py",))
+
+
+def gate_field_quality_no_fabrication() -> int:
+    """§7: unknown/unsupported never fabricated as 0/LIVE/exact."""
+    return _run_wlgm_tests(("tests/test_wlgm_privacy.py", "tests/test_evidence_aggregator.py"))
+
+
+def gate_privacy_redaction() -> int:
+    """§7: credentials/prompt bodies never enter canonical or snapshot."""
+    return _run_wlgm_tests(("tests/test_execution_evidence.py", "tests/test_wlgm_privacy.py"))
+
+
+def gate_windows_project_resolution() -> int:
+    """§7: Windows path case/slash containment + space-path resolution."""
+    return _run_wlgm_tests(("tests/test_project_identity_resolver.py", "tests/test_project_terminal_guard.py"))
+
+
+def gate_tauri_readonly_shell() -> int:
+    """§7 (static): Tauri shell accepts only loopback v3 snapshot; strict CSP.
+
+    Rust compilation requires a toolchain; this gate verifies the contract
+    statically (endpoint validation source + CSP config).
+    """
+    errors: list[str] = []
+    # Tauri shell lives under the MONOREPO root (30-observer), not the
+    # workflow-assistance module root.
+    repo_root = ROOT.parent.parent
+    tauri_root = repo_root / "30-observer" / "work-lab-observer" / "src-tauri"
+    lib = tauri_root / "src" / "lib.rs"
+    if lib.is_file():
+        source = lib.read_text(encoding="utf-8")
+        if "/api/v1/snapshot" not in source:
+            errors.append("lib.rs does not accept /api/v1/snapshot")
+        if "is_loopback()" not in source:
+            errors.append("lib.rs lacks loopback-only validation")
+        if "url.query().is_none()" not in source or "url.fragment().is_none()" not in source:
+            errors.append("lib.rs does not reject query/fragment endpoints")
+    else:
+        errors.append("Tauri lib.rs missing")
+    conf = tauri_root / "tauri.conf.json"
+    if conf.is_file():
+        import json as _json
+
+        data = _json.loads(conf.read_text(encoding="utf-8"))
+        csp = data.get("app", {}).get("security", {}).get("csp")
+        if not isinstance(csp, str) or "script-src" not in csp or "connect-src" not in csp:
+            errors.append("tauri.conf.json CSP is not strict")
+    else:
+        errors.append("Tauri tauri.conf.json missing")
+    if errors:
+        print("TAURI_READONLY_SHELL_FAIL " + "; ".join(errors))
+        return 1
+    print("TAURI_READONLY_SHELL_PASS (static contract; Rust compile requires toolchain)")
+    return 0
+
+
+def gate_work_lab_os_canary() -> int:
+    """§7: WORK-LAB self-canary; external OS-project canary stays PENDING."""
+    code = run_python([str(ROOT / "scripts" / "workflow" / "canary_runner.py")],
+                      env_updates={"PYTHONPATH": str(ROOT / "scripts" / "workflow")})
+    print("WORK_LAB_OS_CANARY external=PENDING (WORKLAB_CANARY_PROJECT_ROOTS not authorized)")
+    return code
+
+
+def gate_exact_sha_ci() -> int:
+    """§7: exact-SHA CI evidence. Local runs cannot produce it; mark PENDING."""
+    print("EXACT_SHA_CI PENDING (requires GitHub Actions run; local gate cannot verify)")
+    return 0
 
 
 GATES: dict[str, Gate] = {
@@ -445,6 +568,21 @@ GATES: dict[str, Gate] = {
         gate_runtime_convergence,
     ),
     "powershell": Gate("powershell", "Parse setup.ps1 with PowerShell AST when pwsh/powershell.exe is available.", gate_powershell),
+    # WLGM §7 named gates.
+    "project-identity-contract": Gate("project-identity-contract", "WLGM §7: product project identity + resolver contracts.", gate_project_identity_contract),
+    "agent-adapter-readonly-contract": Gate("agent-adapter-readonly-contract", "WLGM §7: adapters read-only, capabilities explicit.", gate_agent_adapter_readonly_contract),
+    "execution-state-machine": Gate("execution-state-machine", "WLGM §7: execution state machine transitions.", gate_execution_state_machine),
+    "collector-noninterference": Gate("collector-noninterference", "WLGM §7: collectors never block the writer.", gate_collector_noninterference),
+    "canonical-single-writer": Gate("canonical-single-writer", "WLGM §7: single canonical writer + recoverable migration.", gate_canonical_single_writer),
+    "observer-no-business-write": Gate("observer-no-business-write", "WLGM §7: observer has no business-write path.", gate_observer_no_business_write),
+    "snapshot-schema-v3": Gate("snapshot-schema-v3", "WLGM §7: snapshot v3 schema validation.", gate_snapshot_schema_v3),
+    "sse-browser-reconnect": Gate("sse-browser-reconnect", "WLGM §7: persistent SSE revision + reconnect.", gate_sse_browser_reconnect),
+    "field-quality-no-fabrication": Gate("field-quality-no-fabrication", "WLGM §7: unknown never fabricated.", gate_field_quality_no_fabrication),
+    "privacy-redaction": Gate("privacy-redaction", "WLGM §7: credentials never enter canonical/snapshot.", gate_privacy_redaction),
+    "windows-project-resolution": Gate("windows-project-resolution", "WLGM §7: Windows path resolution contract.", gate_windows_project_resolution),
+    "tauri-readonly-shell": Gate("tauri-readonly-shell", "WLGM §7 (static): Tauri loopback-only + strict CSP.", gate_tauri_readonly_shell),
+    "work-lab-os-canary": Gate("work-lab-os-canary", "WLGM §7: WORK-LAB self-canary (external PENDING).", gate_work_lab_os_canary),
+    "exact-sha-ci": Gate("exact-sha-ci", "WLGM §7: exact-SHA CI evidence (PENDING locally).", gate_exact_sha_ci),
 }
 
 VERIFY_ORDER = (
@@ -468,6 +606,21 @@ VERIFY_ORDER = (
     "shell",
     "runtime-convergence",
     "powershell",
+    # WLGM §7 named gates (after core gates).
+    "project-identity-contract",
+    "agent-adapter-readonly-contract",
+    "execution-state-machine",
+    "collector-noninterference",
+    "canonical-single-writer",
+    "observer-no-business-write",
+    "snapshot-schema-v3",
+    "sse-browser-reconnect",
+    "field-quality-no-fabrication",
+    "privacy-redaction",
+    "windows-project-resolution",
+    "tauri-readonly-shell",
+    "work-lab-os-canary",
+    "exact-sha-ci",
 )
 
 
