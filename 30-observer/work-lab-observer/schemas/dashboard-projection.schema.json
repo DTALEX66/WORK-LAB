@@ -215,8 +215,7 @@
         "externalMutation": { "type": "boolean" },
         "ledgerMutation": { "type": "boolean" },
         "approvalMutation": { "type": "boolean" },
-        "gitControl": { "type": "boolean" },
-        "allowedWrites": { "type": "array", "items": { "type": "string" } }
+        "gitControl": { "type": "boolean" }
       },
       "additionalProperties": true
     }
