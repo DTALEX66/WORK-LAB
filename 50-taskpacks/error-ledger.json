@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 70,
+    "total": 71,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 29,
       "test_behavior_alignment": 6,
       "working_directory_recovery": 2,
-      "evidence_state": 9,
+      "evidence_state": 10,
       "ci_configuration": 4,
       "feature_gap": 5,
       "config_downgrade": 1,
@@ -1368,6 +1368,29 @@
       "regression_test": "last-good becomes visibly OFFLINE when the EventSource transport fails; production WebView2 OFFLINE to LIVE to OFFLINE to LIVE smoke",
       "remaining_boundary": "The retained content remains visible by design and is labeled through the offline connection strip rather than deleted.",
       "repeat_prevention": "Production recovery evidence MUST prove both the failure label and the recovered live label on the same owned app PID."
+    },
+    {
+      "error_id": "ERR-071",
+      "date": "2026-08-15",
+      "taskpack": "R2",
+      "title": "审批文档硬编码最新 PR 导致每次 merge 后立即事实漂移",
+      "root_cause": "交付文档把 PR #104 写成当前最终基线；后续 runtime-continuity PR 合并后，该声明立即过期，而再写入新 PR 号会形成无限自指更新。",
+      "fix": "保留 #104 为命名清楚的历史锚点，把后续交付身份改为从 GitHub PR、branch 和 exact-SHA run history 权威读回的非自指合同。",
+      "prevention": "tracked 文档只保存稳定历史锚点和查询规则；当前 merge SHA、run URL 与最终状态必须在交付读回中获取。",
+      "verified": true,
+      "classification": "evidence_state",
+      "command": "assessment verify non-self-referential delivery lineage",
+      "entrypoint": "50-taskpacks/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "exit_code": 1,
+      "evidence_level": "local-full",
+      "observed_error": "A document that claimed PR #104 was the final delivery became stale immediately after the next exact-SHA delivery merged.",
+      "status_before": "UNVERIFIED",
+      "status_after": "PASS",
+      "task_id": "WL3-820",
+      "regression_test": "error ledger verifier plus stale-claim scan for hard-coded latest-delivery wording",
+      "remaining_boundary": "Historical PR and SHA anchors remain intentionally preserved and explicitly labeled as historical.",
+      "repeat_prevention": "Delivery documents MUST never hard-code their own or the next PR as the timeless latest identity."
     }
   ]
 }
