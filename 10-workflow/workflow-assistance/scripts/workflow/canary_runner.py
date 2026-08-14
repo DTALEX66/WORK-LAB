@@ -121,4 +121,9 @@ if __name__ == "__main__":
     report = run_canary()
     print(json.dumps(report, ensure_ascii=False, indent=2))
     print("\nCANARY_SELF", "PASS" if report.get("all_pass") else "FAIL")
-    print("CANARY_EXTERNAL_PROJECT PENDING (WORKLAB_CANARY_PROJECT_ROOTS not authorized)")
+    ext = report.get("external_canary", {})
+    if ext.get("authorized"):
+        roots_ok = all(r.get("ok", False) for r in ext.get("roots", [])) if ext.get("roots") else False
+        print(f"CANARY_EXTERNAL_PROJECT {'PASS' if roots_ok else 'FAIL'} (roots={len(ext.get('roots', []))}, all_ok={roots_ok})")
+    else:
+        print("CANARY_EXTERNAL_PROJECT PENDING (WORKLAB_CANARY_PROJECT_ROOTS not authorized)")
