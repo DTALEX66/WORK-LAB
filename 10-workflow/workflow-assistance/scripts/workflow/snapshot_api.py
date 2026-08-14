@@ -36,6 +36,7 @@ def build_snapshot(
     projects: list[dict[str, Any]] | None = None,
     git_state: dict[str, Any] | None = None,
     transport: dict[str, Any] | None = None,
+    governance: dict[str, Any] | None = None,
     source_watermark: str | None = None,
     generated_at: str | None = None,
 ) -> dict[str, Any]:
@@ -63,6 +64,7 @@ def build_snapshot(
             "denominator": (transport or {}).get("coverageDenominator"),
             "scope": (transport or {}).get("coverageScope"),
         },
+        "governance": _governance_projection(governance),
         "projects": [_project_projection(p, executions, usage_by_project, git_state, ci_runs) for p in projects],
         "executions": [executions],
         "tasks": (store_projection or {}).get("tasks_by_status", {}),
@@ -109,6 +111,12 @@ def _project_projection(
     )
     usage = usage_by_project.get(project_id, {})
     project_ci = [r for r in ci_runs if r.get("projectId") == project_id]
+    # WLGM-180: aggregate working areas from executions (never duplicated).
+    working_areas: list[str] = []
+    for e in project_executions:
+        area = e.get("workingArea")
+        if area and area not in working_areas:
+            working_areas.append(area)
     return {
         "projectId": project_id,
         "displayName": project.get("displayName"),
@@ -116,6 +124,7 @@ def _project_projection(
         "activityState": project.get("activityState") or "UNKNOWN",
         "attentionState": project.get("attentionState") or "NONE",
         "activeExecutionCount": active,
+        "workingAreas": working_areas,
         "visibility": project.get("visibility") or "UNKNOWN",
         "quality": project.get("quality") or "UNKNOWN",
         "lastStrongEvidenceAt": project.get("lastStrongEvidenceAt"),
@@ -135,6 +144,37 @@ def _project_projection(
         "executionIds": [e.get("executionId") for e in project_executions],
         "sourceRefs": [e.get("sourceRef") for e in project_executions if e.get("sourceRef")],
     }
+
+
+def _governance_projection(governance: dict[str, Any] | None) -> dict[str, Any]:
+    """WLGM-180 §7: Rules/Skills/Memory/Adapter drift surface.
+
+    Unknown when no data source declares it; never fabricates counts. Each
+    family carries current/drift and a quality label.
+    """
+    if not governance:
+        return {
+            "state": "UNKNOWN",
+            "families": {
+                "rules": {"state": "UNKNOWN", "current": None, "drift": None},
+                "skills": {"state": "UNKNOWN", "current": None, "drift": None},
+                "memory": {"state": "UNKNOWN", "current": None, "drift": None},
+                "adapters": {"state": "UNKNOWN", "current": None, "drift": None},
+            },
+        }
+    families = {}
+    for name in ("rules", "skills", "memory", "adapters"):
+        family = governance.get(name) or {}
+        current = family.get("current")
+        drift = family.get("drift")
+        if current is None and drift is None:
+            state = "UNKNOWN"
+        elif (drift or 0) > 0:
+            state = "DRIFT"
+        else:
+            state = "CLEAN"
+        families[name] = {"state": state, "current": current, "drift": drift}
+    return {"state": governance.get("state") or "UNKNOWN", "families": families}
 
 
 def _rollup_usage(usage: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:

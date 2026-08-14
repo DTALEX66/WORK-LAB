@@ -1,11 +1,12 @@
 """WLGM-140 tests: canonical SQLite schema v2 + WLGM store methods."""
 from __future__ import annotations
 
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
 
-from canonical_store import CanonicalStore, WAL_TABLES
+from canonical_store import CanonicalStore, WAL_TABLES, rollback_v2_backup
 
 V2_TABLES = {
     "project_definitions",
@@ -141,6 +142,72 @@ class CanonicalStoreV2Tests(unittest.TestCase):
             self.assertEqual(store.integrity_check(), "ok")
         finally:
             store.close()
+
+    def test_v2_migration_creates_backup_once(self) -> None:
+        raw = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: None)
+        db = raw / "canonical.sqlite"
+        # Pre-create a v1-only database (no v2 tables, no version-2 row).
+        conn = sqlite3.connect(str(db))
+        conn.executescript(
+            """
+            CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
+            CREATE TABLE projects (project_id TEXT PRIMARY KEY, root_path TEXT NOT NULL, display_name TEXT, registered_at TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'REGISTERED');
+            INSERT INTO schema_migrations (version, applied_at) VALUES (1, '2026-08-14T00:00:00Z');
+            INSERT INTO projects (project_id, root_path, registered_at) VALUES ('legacy', 'C:/legacy', '2026-08-14T00:00:00Z');
+            """
+        )
+        conn.commit()
+        conn.close()
+
+        store = CanonicalStore(db)
+        try:
+            versions = {row["version"] for row in store._conn.execute("SELECT version FROM schema_migrations")}
+            self.assertIn(2, versions)
+            self.assertIn("project_definitions", {r["name"] for r in store._conn.execute("SELECT name FROM sqlite_master WHERE type='table'")})
+            # Legacy data survived the migration.
+            self.assertEqual(store.list_projects()[0]["project_id"], "legacy")
+            # Backup created exactly once.
+            backups = list(db.parent.glob(db.name + ".bak-v2-*"))
+            self.assertEqual(len(backups), 1)
+        finally:
+            store.close()
+            db.unlink(missing_ok=True)
+
+    def test_v2_migration_is_idempotent_no_extra_backup(self) -> None:
+        raw = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: None)
+        db = raw / "canonical.sqlite"
+        store1 = CanonicalStore(db)
+        store1.close()
+        store2 = CanonicalStore(db)
+        store2.close()
+        backups = list(db.parent.glob(db.name + ".bak-v2-*"))
+        self.assertEqual(len(backups), 1, "second open must not create another backup")
+
+    def test_rollback_v2_backup_restores_v1(self) -> None:
+        raw = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: None)
+        db = raw / "canonical.sqlite"
+        store = CanonicalStore(db)
+        store.register_project("p1", "C:/p1")
+        store.close()
+        backup_count = len(list(db.parent.glob(db.name + ".bak-v2-*")))
+        self.assertEqual(backup_count, 1)
+
+        restored = rollback_v2_backup(db)
+        self.assertIsNotNone(restored)
+        # The restored (pre-v2 backup) database no longer has v2 tables.
+        conn = sqlite3.connect(str(db))
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        conn.close()
+        self.assertNotIn("project_definitions", tables)
+        self.assertIn("projects", tables)
+
+    def test_rollback_v2_no_backup_returns_none(self) -> None:
+        raw = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: None)
+        self.assertIsNone(rollback_v2_backup(raw / "missing.sqlite"))
 
 
 if __name__ == "__main__":
