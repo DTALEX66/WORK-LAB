@@ -49,10 +49,10 @@ const WlState = (function () {
       ageSeconds,
       lastGoodAt: (copy.freshness && copy.freshness.lastGoodAt) || copy.generatedAt || null,
     });
-    if (copy.quality) copy.quality.freshness = freshnessState;
+    if (copy.quality && typeof copy.quality === "object") copy.quality.freshness = freshnessState;
     if (Array.isArray(copy.projects)) {
       copy.projects.forEach((project) => {
-        if (project.quality) project.quality.freshness = freshnessState;
+        if (project.quality && typeof project.quality === "object") project.quality.freshness = freshnessState;
       });
     }
     return copy;

@@ -436,10 +436,8 @@ const WlRender = (function () {
     const items = [
       { id: "overview", label: "总览", ic: "grid" },
       { id: "projects", label: "项目与任务", ic: "projects" },
-      { id: "usage", label: "用量", ic: "usage" },
-      { id: "ci", label: "CI / GitHub", ic: "ci" },
       { id: "governance", label: "治理健康", ic: "governance" },
-      { id: "quality", label: "数据质量", ic: "quality" },
+      { id: "usage", label: "用量 / CI", ic: "usage" },
     ];
     let out = '<nav class="wl-sidebar wl-card" aria-label="主导航">';
     items.forEach((it) => {
@@ -451,28 +449,21 @@ const WlRender = (function () {
   }
 
   function topbar(d, now) {
-    const fresh = d.freshness || {};
-    const freshText = fresh.state === "fresh" ? "新鲜" : (fresh.state === "delayed" ? "延迟" : (fresh.state === "stale" ? "陈旧" : "未知"));
     const registered = d.summary ? d.summary.registeredProjects : 0;
-    const mode = WlState.get().mode;
-    const badgeCls = mode === "LIVE" ? "wl-badge-live" : ((mode === "SNAPSHOT" || mode === "REPLAY") ? "wl-badge-replay" : "wl-badge-fixture");
     return `<div class="wl-topbar" data-tauri-drag-region>
       <div class="wl-brand" data-tauri-drag-region><span class="wl-drag-handle" data-tauri-drag-region><span></span><span></span><span></span></span><img class="wl-brand-symbol" src="assets/brand/work-lab-observer-symbol.svg" alt="" width="22" height="22" data-tauri-drag-region><span>WORK-LAB <small>Observer</small></span></div>
       <div class="wl-topbar-tools">
         <span class="wl-badge wl-badge-ro">${icon("eye")}只读</span>
-        <span class="wl-badge wl-badge-cross">${icon("projects")}跨项目</span>
-        <span class="wl-badge ${badgeCls}">${icon("info")}${F.escapeHtml(mode)}</span>
-        <span class="wl-badge">${icon("projects")}登记 ${F.intOrDash(registered)}</span>
-        <span class="wl-badge ${fresh.state === 'fresh' ? 'wl-badge-fresh' : 'wl-badge-stale'}">${icon("fresh")}${F.escapeHtml(freshText)} · ${F.freshnessAge(fresh.ageSeconds)}</span>
-        <button type="button" class="wl-theme-toggle" id="settingsToggle" aria-label="外观设置" title="外观设置">${icon("layer")}</button>
+        <span class="wl-badge">${icon("projects")}项目 ${F.intOrDash(registered)}</span>
+        <button type="button" class="wl-theme-toggle" id="themeToggle" aria-label="切换主题" title="切换主题">${icon("sun")}</button>
       </div>
     </div>`;
   }
 
   function footer(d) {
     return `<footer class="wl-footer">
-      <span>多源权威采集 · 统一只读投影 · Observer 零写入 · 无模型参与</span>
-      <span class="mono">schema ${F.escapeHtml(d.schemaVersion || "—")} · ${F.escapeHtml(d.generatedAt || "")}</span>
+      <span>项目登记 · 本地 Git · 可选任务与用量样本 · Observer 零写入</span>
+      <span class="mono">只读本地观测 · ${F.escapeHtml(d.generatedAt || "")}</span>
     </footer>`;
   }
 
