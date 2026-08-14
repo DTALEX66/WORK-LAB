@@ -47,16 +47,20 @@ class SidecarTests(unittest.TestCase):
                     self.assertEqual(response.headers["Content-Type"].split(";")[0], "text/event-stream")
                     self.assertIsNone(response.headers.get("Content-Length"))
                     initial = b"".join(response.readline() for _ in range(5))
-                    self.assertIn(first_event_id.encode(), initial)
+                    # P0-4: first frame is the v3 snapshot event (named event),
+                    # not the legacy anonymous observed message.
+                    self.assertIn(b"event: snapshot", initial)
                     sidecar.store.upsert_task({"task_id": "task-2", "project_id": "work-lab", "status": "RUNNING"})
-                    second_event_id = sidecar.publish_observed()
+                    sidecar.publish_observed()
                     delta = b"".join(response.readline() for _ in range(4))
-                    self.assertIn(second_event_id.encode(), delta)
-                reconnect = Request(base + "/api/v1/events", headers={"Last-Event-ID": first_event_id})
+                    # P0-4: revision hub publishes a named observed frame after a write.
+                    self.assertIn(b"event: observed", delta)
+                reconnect = Request(base + "/api/v1/events", headers={"Last-Event-ID": "0"})
                 with urlopen(reconnect) as response:
-                    body = b"".join(response.readline() for _ in range(5))
-                    self.assertNotIn(first_event_id.encode(), body)
-                    self.assertIn(second_event_id.encode(), body)
+                    body = b"".join(response.readline() for _ in range(3))
+                    # P0-4: reconnect replays persisted frames past the cursor
+                    # (observed, revision 1) — never the empty legacy array.
+                    self.assertIn(b"event: observed", body)
                 request = Request(base + "/healthz", method="POST")
                 with self.assertRaises(Exception):
                     urlopen(request)
@@ -105,7 +109,10 @@ class SidecarTests(unittest.TestCase):
             subscriber = sidecar.live.subscribe()
             writer = CanonicalStore(runtime / "canonical.sqlite")
             try:
-                self.assertEqual(sidecar.projection()["mode"], "LIVE")
+                # P0-4: watcher no longer declares LIVE; the v3 transport
+                # verdict comes only from the live gate.
+                self.assertEqual(sidecar.projection()["mode"], "SNAPSHOT")
+                self.assertEqual(sidecar.v3_snapshot()["transport"]["transportState"], "OFFLINE")
                 writer.upsert_task({"task_id": "external-1", "project_id": "work-lab", "status": "RUNNING"})
                 deadline = time.monotonic() + 2.0
                 message = None
@@ -118,7 +125,8 @@ class SidecarTests(unittest.TestCase):
                         message = candidate
                         break
                 self.assertIsNotNone(message, "external canonical write did not produce an SSE delta")
-                self.assertEqual(message.data["mode"], "LIVE")
+                # P0-4: watcher no longer flips to LIVE; legacy projection stays SNAPSHOT.
+                self.assertEqual(message.data["mode"], "SNAPSHOT")
             finally:
                 writer.close()
                 sidecar.live.unsubscribe(subscriber)
