@@ -139,7 +139,11 @@ def _managed_block(text: str, begin: str, end: str) -> str | None:
 
 
 def _block_hash(block: str) -> str:
-    return _sha256_bytes(block.encode("utf-8"))
+    # Codex Desktop 重写 config.toml 时会写 CRLF 行尾；归一化后 hash 与 LF 一致，
+    # 避免 "block changed after apply" 误判（2026-08-14 DESIGN-LAB 交接复核：
+    # CRLF 块 hash 50d589cb vs LF state c2e56fdf → fail-closed BLOCK）。
+    normalized = block.replace("\r\n", "\n").replace("\r", "\n")
+    return _sha256_bytes(normalized.encode("utf-8"))
 
 
 def _is_link_or_reparse(path: Path) -> bool:
