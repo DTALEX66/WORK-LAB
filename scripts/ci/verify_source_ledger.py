@@ -49,7 +49,7 @@ def _validate_shape(ledger: dict[str, Any], schema: dict[str, Any]) -> None:
     if jsonschema is not None:
         jsonschema.Draft202012Validator(schema).validate(ledger)
         return
-    if ledger.get("schemaVersion") != "work-lab/source-ledger/v3" or ledger.get("ledgerVersion") != 3:
+    if ledger.get("schemaVersion") != "work-lab/source-ledger/v4" or ledger.get("ledgerVersion") != 4:
         raise ValueError("source ledger schema identity mismatch")
     if ledger.get("scope") != ["workflow-assistance", "work-lab-observer"]:
         raise ValueError("source ledger scope must contain only Workflow and Observer")

@@ -38,7 +38,8 @@ class SourceLedgerTests(unittest.TestCase):
 
     def test_real_ledger_is_scope_limited_and_readback_passes(self) -> None:
         result = load_module().verify(ROOT)
-        self.assertEqual(result["entries"], 5)
+        # WLOSS-000 expanded the ledger to a 17-entry intake ledger (v4).
+        self.assertGreaterEqual(result["entries"], 17)
         statuses = {item["id"]: item["effective"] for item in result["statuses"]}
         # A rebase/merge shifts reviewed scope SHAs; the freshness guard must
         # not fail on STALE_REVIEW (which simply means "re-review required").

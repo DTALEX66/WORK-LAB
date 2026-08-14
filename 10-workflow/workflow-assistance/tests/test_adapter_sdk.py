@@ -7,6 +7,7 @@ from adapter_sdk import (
     CapabilityUnsupported,
     GenericHeartbeatAdapter,
     MockAdapter,
+    RuntimeProviderV1,
     negotiate,
 )
 
@@ -56,6 +57,34 @@ class AdapterSdkTests(unittest.TestCase):
         runs = adapter.run_status("s1")
         self.assertEqual(sessions[0]["sessionId"], "mock-session-1")
         self.assertEqual(runs[0]["executionId"], "mock-exec-1")
+
+
+class RuntimeProviderV1Tests(unittest.TestCase):
+    """WLOSS-400: Runtime Provider V1 contract facade."""
+
+    def test_identity_and_health(self) -> None:
+        provider = RuntimeProviderV1(MockAdapter())
+        identity = provider.identity()
+        self.assertEqual(identity.provider_id, "mock")
+        self.assertEqual(identity.to_record()["schemaVersion"], "work-lab/runtime-provider/v1")
+        health = provider.health()
+        self.assertEqual(health.state, "ALIVE")
+
+    def test_tasks_from_run_status(self) -> None:
+        provider = RuntimeProviderV1(MockAdapter())
+        tasks = provider.tasks()
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0].state, "RUNNING")
+        self.assertEqual(tasks[0].to_record()["kind"], "task")
+
+    def test_unsupported_capability_returns_empty(self) -> None:
+        provider = RuntimeProviderV1(MockAdapter(capabilities={"heartbeat"}))
+        self.assertEqual(provider.tasks(), [])
+        self.assertIsNone(provider.usage())
+
+    def test_health_unavailable(self) -> None:
+        provider = RuntimeProviderV1(MockAdapter(installed=False))
+        self.assertEqual(provider.health().state, "UNAVAILABLE")
 
 
 if __name__ == "__main__":

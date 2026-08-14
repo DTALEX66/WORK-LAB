@@ -207,3 +207,106 @@ def negotiate(adapter: AgentAdapter, requested: set[str]) -> dict[str, bool]:
     """Negotiate capabilities: requested -> supported? Unsupported is explicit."""
     probe = adapter.probe()
     return {capability: probe.has(capability) for capability in requested}
+
+
+# ------------------------- WLOSS-400: Runtime Provider V1 contract -------------------------
+
+RUNTIME_PROVIDER_SCHEMA = "work-lab/runtime-provider/v1"
+
+
+@dataclass
+class RuntimeIdentityV1:
+    provider_id: str
+    version: str | None = None
+    source: str = "probe"
+    observed_at: str = ""
+
+    def to_record(self) -> dict[str, Any]:
+        return {"schemaVersion": RUNTIME_PROVIDER_SCHEMA, "kind": "identity",
+                "providerId": self.provider_id, "version": self.version, "source": self.source,
+                "observedAt": self.observed_at}
+
+
+@dataclass
+class RuntimeTaskV1:
+    task_id: str
+    provider_id: str
+    state: str
+    session_id: str | None = None
+    source_ref: str | None = None
+
+    def to_record(self) -> dict[str, Any]:
+        return {"schemaVersion": RUNTIME_PROVIDER_SCHEMA, "kind": "task", "taskId": self.task_id,
+                "providerId": self.provider_id, "state": self.state, "sessionId": self.session_id,
+                "sourceRef": self.source_ref}
+
+
+@dataclass
+class RuntimeUsageV1:
+    provider_id: str
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    total_tokens: int | None = None
+    quality: str = "UNKNOWN"
+
+    def to_record(self) -> dict[str, Any]:
+        return {"schemaVersion": RUNTIME_PROVIDER_SCHEMA, "kind": "usage", "providerId": self.provider_id,
+                "inputTokens": self.input_tokens, "outputTokens": self.output_tokens,
+                "totalTokens": self.total_tokens, "quality": self.quality}
+
+
+@dataclass
+class RuntimeHealthV1:
+    provider_id: str
+    state: str  # ALIVE | UNAVAILABLE | DENIED
+    detail: str = ""
+
+    def to_record(self) -> dict[str, Any]:
+        return {"schemaVersion": RUNTIME_PROVIDER_SCHEMA, "kind": "health",
+                "providerId": self.provider_id, "state": self.state, "detail": self.detail}
+
+
+class RuntimeProviderV1:
+    """Normative contract: maps an AgentAdapter to the V1 runtime surface.
+
+    The adapter remains the only implementation; this class is the contract
+    facade so consumers depend on the V1 schema, not on adapter internals.
+    """
+
+    def __init__(self, adapter: AgentAdapter) -> None:
+        self.adapter = adapter
+
+    @property
+    def provider_id(self) -> str:
+        return self.adapter.adapter_id
+
+    def identity(self) -> RuntimeIdentityV1:
+        probe = self.adapter.probe()
+        return RuntimeIdentityV1(provider_id=self.adapter.adapter_id, version=None,
+                                 source="probe", observed_at=_now())
+
+    def health(self) -> RuntimeHealthV1:
+        probe = self.adapter.probe()
+        return RuntimeHealthV1(provider_id=self.adapter.adapter_id,
+                               state="ALIVE" if probe.installed else "UNAVAILABLE")
+
+    def tasks(self) -> list[RuntimeTaskV1]:
+        """Read-only task snapshot; unsupported capability stays empty."""
+        try:
+            runs = self.adapter.run_status()
+        except CapabilityUnsupported:
+            return []
+        return [
+            RuntimeTaskV1(task_id=str(r.get("executionId", "unknown")), provider_id=self.adapter.adapter_id,
+                          state=str(r.get("state", "UNKNOWN")), session_id=r.get("sessionId"))
+            for r in runs
+        ]
+
+    def usage(self) -> RuntimeUsageV1 | None:
+        try:
+            usage = self.adapter.token_usage()
+        except CapabilityUnsupported:
+            return None
+        return RuntimeUsageV1(provider_id=self.adapter.adapter_id, input_tokens=usage.get("inputTokens"),
+                              output_tokens=usage.get("outputTokens"), total_tokens=usage.get("totalTokens"),
+                              quality=usage.get("quality") or "UNKNOWN")
