@@ -8,7 +8,7 @@ description: "Use when a task references Open Design, its migration pointer, or 
 ## What Open Design is now
 
 Open Design (`20-design/open-design`) was transferred out of WORK-LAB to
-`DTALEX66/OPEN-DESIGN-Assistance` on the authorized migration branch. WORK-LAB
+`DTALEX66/DESIGN-LAB` on the authorized migration branch. WORK-LAB
 retains only:
 
 - the one-time handoff pointer and migration evidence under
@@ -26,7 +26,7 @@ monorepo.
 
 - Open Design is an observation/input surface only. Workflow Assistance never
   executes, approves, retries, applies, or rolls back changes inside
-  `DTALEX66/OPEN-DESIGN-Assistance`.
+  `DTALEX66/DESIGN-LAB`.
 - Read-only collaboration is allowed: reviewing its public tree, reading its
   canonical docs, and using its read-only MCP surface for evidence.
 - Do not copy Open Design assets, fixtures, or runtime state into WORK-LAB
@@ -39,7 +39,7 @@ monorepo.
 Open Design output (reports, audits, design deliverables) is a candidate
 claim until verified with native evidence:
 
-1. Prefer the canonical repository (`DTALEX66/OPEN-DESIGN-Assistance`) as the
+1. Prefer the canonical repository (`DTALEX66/DESIGN-LAB`) as the
    source of truth for its own state; never rely on WORK-LAB's stale copies or
    migration pointers for current facts.
 2. Verify any path, artifact, or checksum claim against the live remote

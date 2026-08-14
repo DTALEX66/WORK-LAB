@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-08-13T16:24:00Z",
+  "generated_at": "2026-08-14T11:00:00Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,20 +9,20 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 49,
+    "total": 52,
     "by_classification": {
-      "ci_configuration": 4,
-      "config_downgrade": 1,
-      "contract_drift": 23,
-      "dead_entry": 1,
       "entrypoint": 5,
+      "contract_drift": 25,
+      "test_behavior_alignment": 5,
+      "working_directory_recovery": 2,
       "evidence_state": 5,
+      "ci_configuration": 4,
       "feature_gap": 4,
-      "test_behavior_alignment": 4,
-      "working_directory_recovery": 2
+      "config_downgrade": 1,
+      "dead_entry": 1
     },
     "repeat_prevention_required": true,
-    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording)"
+    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap)"
   },
   "errors": [
     {
@@ -904,6 +904,60 @@
       "evidence_level": "local-full",
       "repeat_prevention": "Every global configuration operation must distinguish key absence from null, discover the current target machine first, classify fields by ownership, create a machine-scoped minimum write set, derive rollback only from recorded writes, require current target-bound approval at the actual writer, read back after apply, and never write a NOOP plan. Every filesystem writer must reject Home-to-target symlink/junction/reparse paths before read, backup, replace, remove, rollback, or prune; no retired asset may be removed or replaced without a recorded ownership fence and explicit migration. CI dependency checks must normalize shell backslash-newline pairs without inserting whitespace, validate every standard and shell-normalized pip installation command after shell separators, tokenize away comments, require an actual --require-hashes argument, and permit exactly one canonical 10-workflow/workflow-assistance/requirements.lock reference, with negative fixtures for mixed same-line chains, bare/escaped/quoted and command-name-split pip launchers, noncanonical locks, comment spoofs, multiple requirements inputs, unsafe continued commands, and non-executing comment/quoted pip text.",
       "remaining_boundary": "The coordinator enforces planning semantics only; each live adapter still requires its own explicit dry-run, approval, path-safety checks, and same-target readback. Legacy retired assets deliberately block ordinary Hermes sync until a future explicit, per-path, ownership-fenced migration is designed and approved. No live config, credential, session, or private configuration body was read for this regression test.",
+      "status_before": "FAIL",
+      "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-050",
+      "task_id": "CLOUD-REAUDIT-20260814",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "10-workflow/workflow-assistance/bin/hermes-project-terminal-guard.py",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python 10-workflow/workflow-assistance/tests/test_project_terminal_guard.py",
+      "exit_code": 1,
+      "observed_error": "Guard regression (P1-1): an embedded absolute path inside a project whose root contains spaces was truncated by the [^\\s\"']+ regex (e.g. D:/All projects/... -> D:/All) and misjudged as external; plain ellipsis text '...' was misclassified as parent-directory traversal (RAW_PARENT_TRAVERSAL matched the trailing '..' followed by end-of-string).",
+      "root_cause": "ABSOLUTE_PATH regex truncates at whitespace and external_child_path had no project-prefix truncation guard; RAW_PARENT_TRAVERSAL lacked a path-boundary lookbehind so '...' and other non-path text ending in '..' matched.",
+      "fix": "RAW_PARENT_TRAVERSAL now requires a path/command boundary before '..' (space/quote/=<>:([{/\\ or start) and a following separator, space/quote, slash, backslash or EOL. external_child_path now mirrors external_raw_windows_path: when the truncated candidate is a character prefix of the project root (root_str.startswith(res_str)), it defers to exact full-token judgement instead of blocking. Added 4 tracked two-way tests (22 total): ellipsis/HEAD.. range allowed, real ../..\\ and 'ls ..' still blocked, project-internal space path allowed, external space path blocked.",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python 10-workflow/workflow-assistance/tests/test_project_terminal_guard.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Guard regex changes require a two-way block/allow matrix (E-drive/external/traversal/chaining/raw must block; git/pytest/in-project scripts/space paths/scheme URLs/ellipsis/range-refs must allow) as tracked tests, plus live hook re-approval (hermes hooks revoke + --accept-hooks) after deploying the script.",
+      "remaining_boundary": "Local tracked tests only; exact-SHA cloud CI not yet run. Live guard re-approved and hook doctor healthy.",
+      "status_before": "FAIL",
+      "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-051",
+      "task_id": "CLOUD-REAUDIT-20260814",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "contract_drift",
+      "entrypoint": "10-workflow/workflow-assistance/tests/test_project_terminal_guard.py",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python 10-workflow/workflow-assistance/tests/test_project_terminal_guard.py",
+      "exit_code": 1,
+      "observed_error": "PR #89/#90 declared 26/41 tests but the tracked suite had only 18 tests, leaving embedded space-path, ellipsis, git-range-ref and real quoted-argument combinations uncovered (P1-2).",
+      "root_cause": "Local temporary verification was not converted into sustainable tracked regression tests after the guard fixes.",
+      "fix": "Added 4 tracked two-way tests covering: ellipsis + git range refs allowed, real parent-traversal forms blocked, project-internal absolute path with spaces allowed, external absolute path with spaces blocked. Suite now 22 tests, all passing.",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python 10-workflow/workflow-assistance/tests/test_project_terminal_guard.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Every guard fix must land with tracked two-way tests in the same change; ad-hoc scripts are not a substitute for the canonical suite.",
+      "remaining_boundary": "Exact-SHA CI not yet run for the new tests.",
+      "status_before": "FAIL",
+      "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-052",
+      "task_id": "WLGM-230",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "10-workflow/workflow-assistance/scripts/workflow/product_project.py",
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/workflow python scripts/workflow/canary_runner.py",
+      "exit_code": 1,
+      "observed_error": "WLGM-230 self-canary failed: the WORK-LAB root resolved to UNRESOLVED because ProductProject.add_repository appended the repository identity to repositories[] but never synchronized remote_identities, so ApprovedProjectIndex.by_remote could never match.",
+      "root_cause": "remote_identities (the match list used by the identity resolver) and repositories[].remote_identity were written independently; add_repository did not keep them in sync.",
+      "fix": "ProductProject.add_repository now also appends repo.remote_identity to remote_identities when present. Canary then resolves WORK-LAB root via remote identity (RESOLVED).",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/workflow python scripts/workflow/canary_runner.py && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/workflow python tests/test_product_project.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Any model with parallel identity lists (repositories[] vs remote_identities) must keep them synchronized in a single mutator and be covered by a canary that resolves a real repository root.",
+      "remaining_boundary": "External OS-project canary still PENDING (WORKLAB_CANARY_PROJECT_ROOTS not authorized).",
       "status_before": "FAIL",
       "status_after": "PASS"
     }

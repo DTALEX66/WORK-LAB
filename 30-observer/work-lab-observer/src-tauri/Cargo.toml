@@ -6,7 +6,7 @@ authors = ["DTALEX66"]
 license = "MIT"
 repository = "https://github.com/DTALEX66/WORK-LAB"
 edition = "2021"
-rust-version = "1.77.2"
+rust-version = "1.88"
 
 [lib]
 name = "app_lib"
