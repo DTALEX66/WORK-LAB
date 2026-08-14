@@ -133,6 +133,18 @@ function run() {
     assert(!/method:\s*["'](post|put|patch|delete)/i.test(appSrc), "app.js does not write via fetch");
   });
 
+  t("EventSource open refreshes the read-only snapshot after sidecar reconnect", () => {
+    const appSrc = fs.readFileSync(path.join(WEB, "scripts", "app.js"), "utf-8");
+    assert(/onOpen:\s*async\s*\(\)\s*=>/.test(appSrc), "live subscription binds an async onOpen refresh");
+    assert(/onOpen:[\s\S]{0,400}WlApi\.fetchSnapshot\(\)/.test(appSrc), "onOpen re-reads the canonical snapshot");
+    assert(/scheduleLiveReconnect\(\)/.test(appSrc), "SSE errors schedule a fresh EventSource instance");
+    assert(/Math\.min\([^\n]+30000\)/.test(appSrc), "SSE reconnect backoff is capped at 30 seconds");
+    assert(/function\s+scheduleSnapshotRetry\s*\(/.test(appSrc), "initial snapshot failures schedule a fresh GET");
+    assert(/catch\s*\(err\)[\s\S]{0,500}scheduleSnapshotRetry\(\)/.test(appSrc), "initial GET failure enters the retry loop");
+    assert(/function\s+closeEventSource\s*\(/.test(appSrc), "SSE reconnect closes only the current source without resetting backoff");
+    assert(/if\s*\(eventSource\s*&&\s*eventSourceUrl\s*===\s*url\)\s*return true;[\s\S]{0,250}closeEventSource\(\);[\s\S]{0,100}eventSourceUrl\s*=\s*url/.test(appSrc), "starting a replacement EventSource closes the old source without resetting exponential backoff");
+  });
+
   t("state last-good survives refresh error (never clears to zero)", () => {
     WlState.accept(WlApi.FIXTURE, "FIXTURE");
     WlState.markRefreshError("network down");
@@ -142,6 +154,21 @@ function run() {
     assert(WlState.get().lastGood.freshness.state === "fresh", "unmodified last-good source retained");
     WlState.markRefreshError("timeout");
     assert(WlState.get().lastGood !== null, "lastGood retained on second error");
+  });
+
+  t("refresh errors preserve string-valued v3 quality fields without throwing", () => {
+    const v3 = {
+      mode: "UNKNOWN",
+      generatedAt: "2026-08-14T00:00:00Z",
+      summary: { registeredProjects: 1 },
+      quality: "UNKNOWN",
+      projects: [{ projectId: "work-lab", quality: "UNKNOWN" }],
+    };
+    WlState.accept(v3, "UNKNOWN");
+    WlState.markRefreshError("temporary SSE reconnect");
+    assert(WlState.get().data.quality === "UNKNOWN", "top-level string quality preserved");
+    assert(WlState.get().data.projects[0].quality === "UNKNOWN", "project string quality preserved");
+    assert(WlState.get().freshnessState === "stale", "refresh error still marks retained data stale");
   });
 
   t("bundled snapshot is always rendered stale rather than live", () => {
@@ -168,14 +195,16 @@ function run() {
         onError: () => { errors += 1; },
       });
       assert(source === created, "EventSource returned");
-      // P0-4: named SSE events (observed/heartbeat/resync_required) must be
+      // P0-4: named SSE events (snapshot/observed/heartbeat/resync_required) must be
       // dispatched through addEventListener bindings.
+      assert(source.listeners.snapshot && source.listeners.snapshot.length === 1, "initial snapshot listener bound");
       assert(source.listeners.observed && source.listeners.observed.length === 1, "observed listener bound");
       assert(source.listeners.heartbeat && source.listeners.heartbeat.length === 1, "heartbeat listener bound");
       assert(source.listeners.resync_required && source.listeners.resync_required.length === 1, "resync_required listener bound");
+      source.listeners.snapshot[0]({ data: '{"event_id":"s1"}', lastEventId: "s1" });
       source.listeners.observed[0]({ data: '{"event_id":"e1"}', lastEventId: "e1" });
       source.listeners.message[0]({ data: '{"event_id":"anon"}', lastEventId: "a1" });
-      assert(events.length === 2 && events[0].id === "e1" && events[1].id === "a1", "named + anonymous events forwarded with Last-Event-ID");
+      assert(events.length === 3 && events[0].id === "s1" && events[1].id === "e1" && events[2].id === "a1", "initial snapshot + named + anonymous events forwarded with Last-Event-ID");
       source.onerror();
       assert(errors === 1, "reconnect error surfaced as stale signal");
       let rejected = false;

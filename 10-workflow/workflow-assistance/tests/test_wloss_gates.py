@@ -68,7 +68,11 @@ class CanaryExitCodeContractTests(unittest.TestCase):
         cls.gate = cls.root / "scripts" / "workflow" / "run_quality_gate.py"
 
     def _run(self, script: Path, args: list[str], env_extra: dict[str, str] | None = None) -> subprocess.CompletedProcess:
-        env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONPATH": str(self.root / "scripts" / "workflow")}
+        pythonpath = str(self.root / "scripts" / "workflow")
+        inherited_pythonpath = os.environ.get("PYTHONPATH")
+        if inherited_pythonpath:
+            pythonpath += os.pathsep + inherited_pythonpath
+        env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONPATH": pythonpath}
         if env_extra:
             env.update(env_extra)
         return subprocess.run(

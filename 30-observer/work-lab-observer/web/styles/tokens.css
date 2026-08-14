@@ -1,6 +1,5 @@
 /* WORK-LAB Observer — Design Tokens
-   Apple Liquid Glass component style: transparent canvas (desktop shows through),
-   vibrancy glass shell, layered translucent surfaces. Theme via data-theme. */
+   Opaque Linear/Vercel-inspired desktop canvas. Theme via data-theme. */
 
 :root {
   color-scheme: light dark;
@@ -25,11 +24,11 @@
   --wl-space-6: 24px;
   --wl-space-8: 32px;
 
-  --wl-radius-sm: 11px;
-  --wl-radius-md: 14px;
-  --wl-radius-lg: 20px;
-  --wl-radius-shell: 30px;
-  --wl-radius-control: 11px;
+  --wl-radius-sm: 6px;
+  --wl-radius-md: 8px;
+  --wl-radius-lg: 8px;
+  --wl-radius-shell: 12px;
+  --wl-radius-control: 6px;
   --wl-glass-blur: 34px;
   --wl-glass-saturation: 150%;
   --wl-border-width: 1px;
@@ -37,68 +36,68 @@
   --wl-motion-normal: 180ms;
 
   /* Apple semantic palette */
-  --wl-blue: #6f95ff;
-  --wl-green: #4de1ae;
-  --wl-amber: #ffc35c;
-  --wl-red: #ff6b78;
-  --wl-purple: #b087ff;
+  --wl-blue: #5e6ad2;
+  --wl-green: #10b981;
+  --wl-amber: #f5a623;
+  --wl-red: #eb5757;
+  --wl-purple: #7170ff;
   --wl-cyan: #64d2ff;
 }
 
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
-  /* Transparent canvas — desktop wallpaper shows through (component, not a page). */
-  --wl-canvas: #09111d;
-  --wl-canvas-gradient-a: rgba(111, 149, 255, 0.08);
-  --wl-canvas-gradient-b: rgba(176, 135, 255, 0.05);
+  /* Opaque canvas — desktop content never shows through the Observer. */
+  --wl-canvas: #08090a;
+  --wl-canvas-gradient-a: rgba(94, 106, 210, 0.05);
+  --wl-canvas-gradient-b: rgba(113, 112, 255, 0.04);
 
   /* R2 glass shell: translucent but readable on a dark blue-black canvas. */
-  --wl-shell: rgba(18, 27, 42, 0.78);
-  --wl-shell-highlight: rgba(255, 255, 255, 0.14);
-  --wl-sidebar: rgba(20, 31, 48, 0.62);
+  --wl-shell: #0f1011;
+  --wl-shell-highlight: rgba(255, 255, 255, 0.06);
+  --wl-sidebar: #0f1011;
 
   /* Content surfaces: more opaque than shell so text stays legible on glass. */
-  --wl-surface-1: rgba(27, 35, 53, 0.82);
-  --wl-surface-2: rgba(31, 41, 61, 0.78);
-  --wl-surface-3: rgba(39, 49, 72, 0.74);
-  --wl-surface-hover: rgba(53, 67, 96, 0.78);
+  --wl-surface-1: #191a1b;
+  --wl-surface-2: #23252a;
+  --wl-surface-3: #28282c;
+  --wl-surface-hover: #2a2a2e;
 
-  --wl-border-subtle: rgba(202, 224, 244, 0.16);
-  --wl-border-strong: rgba(202, 224, 244, 0.28);
-  --wl-text-primary: #f4f8fc;
-  --wl-text-secondary: #b8c4d0;
-  --wl-text-muted: #8391a0;
-  --wl-track: rgba(211, 227, 241, 0.14);
-  --wl-focus: rgba(10, 132, 255, 0.85);
+  --wl-border-subtle: rgba(255, 255, 255, 0.05);
+  --wl-border-strong: rgba(255, 255, 255, 0.08);
+  --wl-text-primary: #f7f8f8;
+  --wl-text-secondary: #d0d6e0;
+  --wl-text-muted: #8a8f98;
+  --wl-track: rgba(255, 255, 255, 0.05);
+  --wl-focus: #7170ff;
 
   /* Glass shadow: soft drop + top inner highlight (Apple vibrancy). */
-  --wl-shadow-shell: 0 24px 70px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-  --wl-shadow-card: 0 8px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --wl-shadow-shell: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --wl-shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 [data-theme="light"] {
   color-scheme: light;
-  --wl-canvas: #eef3f8;
-  --wl-canvas-gradient-a: rgba(111, 149, 255, 0.07);
-  --wl-canvas-gradient-b: rgba(176, 135, 255, 0.05);
+  --wl-canvas: #ffffff;
+  --wl-canvas-gradient-a: rgba(10, 114, 239, 0.04);
+  --wl-canvas-gradient-b: rgba(0, 0, 0, 0);
   /* Brighter, more opaque light surfaces so text stays readable on glass. */
-  --wl-shell: rgba(250, 252, 255, 0.82);
-  --wl-shell-highlight: rgba(255, 255, 255, 0.95);
-  --wl-sidebar: rgba(247, 250, 255, 0.78);
-  --wl-surface-1: rgba(255, 255, 255, 0.92);
-  --wl-surface-2: rgba(250, 253, 255, 0.94);
-  --wl-surface-3: rgba(243, 248, 253, 0.94);
-  --wl-surface-hover: rgba(236, 245, 253, 0.96);
-  --wl-border-subtle: rgba(38, 73, 108, 0.22);
-  --wl-border-strong: rgba(38, 73, 108, 0.34);
-  --wl-text-primary: #101820;
-  --wl-text-secondary: #2e3f50;
-  --wl-text-muted: #5a6b7b;
-  --wl-track: rgba(39, 76, 111, 0.16);
-  --wl-focus: rgba(0, 122, 255, 0.82);
-  --wl-shadow-shell: 0 24px 64px rgba(40, 66, 92, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  --wl-shadow-card: 0 8px 22px rgba(40, 66, 92, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --wl-shell: #fafafa;
+  --wl-shell-highlight: #ffffff;
+  --wl-sidebar: #fafafa;
+  --wl-surface-1: #ffffff;
+  --wl-surface-2: #fafafa;
+  --wl-surface-3: #f5f5f5;
+  --wl-surface-hover: #f0f0f0;
+  --wl-border-subtle: rgba(0, 0, 0, 0.08);
+  --wl-border-strong: rgba(0, 0, 0, 0.12);
+  --wl-text-primary: #171717;
+  --wl-text-secondary: #4d4d4d;
+  --wl-text-muted: #666666;
+  --wl-track: rgba(0, 0, 0, 0.06);
+  --wl-focus: #0072f5;
+  --wl-shadow-shell: rgba(0, 0, 0, 0.08) 0 0 0 1px;
+  --wl-shadow-card: rgba(0, 0, 0, 0.08) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 2px;
 }
 
 html,
@@ -106,19 +105,16 @@ body {
   min-width: 320px;
   min-height: 100%;
   margin: 0;
-  /* Fully transparent — the desktop (Tauri window has its own transparent bg) shows through. */
-  background: transparent;
+  background: var(--wl-canvas);
   color: var(--wl-text-primary);
 }
 
-/* Liquid-glass shell: vibrancy blur + saturate, with graceful fallback. */
+/* Edge-to-edge opaque shell; no faux window inside the native window. */
 .wl-shell {
   background: var(--wl-shell);
-  border: var(--wl-border-width) solid var(--wl-border-strong);
-  border-radius: var(--wl-radius-shell);
-  box-shadow: var(--wl-shadow-shell);
-  backdrop-filter: blur(var(--wl-glass-blur)) saturate(var(--wl-glass-saturation));
-  -webkit-backdrop-filter: blur(var(--wl-glass-blur)) saturate(var(--wl-glass-saturation));
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .wl-card {
@@ -126,8 +122,6 @@ body {
   border: var(--wl-border-width) solid var(--wl-border-subtle);
   border-radius: var(--wl-radius-lg);
   box-shadow: var(--wl-shadow-card);
-  backdrop-filter: blur(10px) saturate(140%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
 }
 
 .wl-tabular {
@@ -177,8 +171,8 @@ body {
   background: var(--wl-canvas);
 }
 
-[data-bg="transparent"] { --wl-canvas: #09111d; --wl-shell: rgba(18,27,42,calc(0.78*var(--wl-opacity))); --wl-sidebar: rgba(20,31,48,calc(0.62*var(--wl-opacity))); --wl-surface-1: rgba(27,35,53,calc(0.82*var(--wl-opacity))); }
-[data-bg="solid-dark"] { --wl-canvas: #0a1420; --wl-shell: rgba(14,24,34,calc(0.9*var(--wl-opacity))); --wl-surface-1: rgba(20,32,46,calc(0.92*var(--wl-opacity))); }
+[data-bg="transparent"] { --wl-canvas: #000000; --wl-shell: rgba(18,27,42,calc(0.78*var(--wl-opacity))); --wl-sidebar: rgba(20,31,48,calc(0.62*var(--wl-opacity))); --wl-surface-1: rgba(27,35,53,calc(0.82*var(--wl-opacity))); }
+[data-bg="solid-dark"] { --wl-canvas: #000000; --wl-shell: rgba(22,22,24,calc(0.9*var(--wl-opacity))); --wl-surface-1: rgba(28,28,30,calc(0.92*var(--wl-opacity))); }
 [data-bg="solid-light"] { --wl-canvas: #eef3f8; --wl-shell: rgba(250,253,255,calc(0.9*var(--wl-opacity))); --wl-surface-1: rgba(255,255,255,calc(0.95*var(--wl-opacity))); }
 [data-bg="blur"] { --wl-canvas: transparent; --wl-shell: rgba(20,32,45,calc(0.3*var(--wl-opacity))); }
 

@@ -879,6 +879,20 @@ class CanonicalStore:
             rows = self._conn.execute("SELECT * FROM collector_health ORDER BY updated_at DESC").fetchall()
             return [dict(row) for row in rows]
 
+    def list_source_quality(self) -> list[dict[str, Any]]:
+        """All source_quality rows with payload JSON parsed (git/source scope)."""
+        with self._lock:
+            rows = self._conn.execute("SELECT * FROM source_quality ORDER BY observed_at DESC").fetchall()
+            result = []
+            for row in rows:
+                item = dict(row)
+                try:
+                    item["payload"] = json.loads(item.get("payload") or "{}")
+                except (json.JSONDecodeError, TypeError):
+                    item["payload"] = {}
+                result.append(item)
+            return result
+
     def seed_revision(self) -> int:
         """Persisted SSE revision seed: MAX(revision) over projection_revisions."""
         with self._lock:
@@ -886,7 +900,7 @@ class CanonicalStore:
             return int(row[0] or 0)
 
     def max_watermark(self) -> str | None:
-        """Writer watermark: newest observed_at across telemetry/usage/ci tables."""
+        """Newest canonical observation across every surfaced collector table."""
         with self._lock:
             rows = self._conn.execute(
                 """
@@ -894,6 +908,7 @@ class CanonicalStore:
                     SELECT observed_at FROM telemetry_events
                     UNION ALL SELECT observed_at FROM usage_samples
                     UNION ALL SELECT observed_at FROM ci_runs
+                    UNION ALL SELECT observed_at FROM source_quality
                 )
                 """
             ).fetchone()

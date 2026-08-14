@@ -33,10 +33,10 @@ function run() {
     assert.strictEqual(config.build.frontendDist, "../web");
   });
 
-  test("main window starts UNKNOWN until a live endpoint is discovered", () => {
+  test("main window starts UNKNOWN and uses an opaque desktop canvas", () => {
     assert.strictEqual(windows.main.url, "index.html?view=full&mode=UNKNOWN&theme=dark");
     assert.strictEqual(windows.main.decorations, false);
-    assert.strictEqual(windows.main.transparent, true);
+    assert.strictEqual(windows.main.transparent, false);
   });
 
   test("panel window is a fixed compact component entry", () => {

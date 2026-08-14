@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
+from datetime import datetime, timezone
 import ipaddress
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -21,6 +23,7 @@ from composition_root import build_v3_snapshot, load_approved_index
 from live_gate import evaluate_live
 from sse_revision import SseRevisionHub
 from snapshot_validator import validate_snapshot
+from workspace_evidence import load_workspace_evidence
 
 
 class WorkflowSidecar:
@@ -31,11 +34,17 @@ class WorkflowSidecar:
         self.live = LiveProjection(self.store)
         # WLGM composition root: approved index + persistent SSE revision hub.
         self.index = load_approved_index(self.store)  # 失败时降级空索引，不 raise
+        # Bounded, tracked repository evidence is loaded once per sidecar
+        # lifetime. It is typed as PLAN/STATIC_BASELINE/HISTORY and never
+        # promoted to LIVE telemetry.
+        self.workspace_evidence = load_workspace_evidence(self.project_root)
         self.revision_hub = SseRevisionHub()
         self._revision = self.store.seed_revision()
-        self._last_heartbeat_at = __import__("time").time()
-        self._last_write_at = __import__("time").time()
-        self._sse_connected = False
+        self._last_heartbeat_at: float | None = None
+        self._last_write_at: float | None = None
+        self._sse_connection_count = 0
+        self._sse_connected_since: float | None = None
+        self._sse_connection_lock = threading.Lock()
         self._events_url: str | None = None
         self._watch_stop = threading.Event()
         self._watch_thread: threading.Thread | None = None
@@ -126,23 +135,35 @@ class WorkflowSidecar:
         """P0-2: /api/v1/snapshot returns the v3 snapshot; transport verdict
         comes exclusively from the live gate (never fabricated LIVE)."""
         fresh, total = self._collector_coverage()
+        now = time.time()
+        connected, connected_since = self.sse_connection_state()
         verdict = evaluate_live(
             snapshot_valid=bool(validate_snapshot(self.live_projection_skeleton())["valid"]),
-            sse_connected=self._sse_connected,
-            heartbeat_age_seconds=__import__("time").time() - self._last_heartbeat_at,
+            sse_connected=connected,
+            heartbeat_age_seconds=(now - self._last_heartbeat_at) if self._last_heartbeat_at is not None else float("inf"),
             heartbeat_threshold_seconds=HEARTBEAT_SECONDS,
             cursor_valid=self._revision > 0,
-            writer_watermark_age_seconds=__import__("time").time() - self._last_write_at,
+            writer_watermark_age_seconds=(now - self._last_write_at) if self._last_write_at is not None else float("inf"),
             writer_watermark_threshold_seconds=60.0,
             coverage=fresh if total else None,
         )
-        return build_v3_snapshot(
+        snapshot = build_v3_snapshot(
             self.store,
             self.index,
             revision=self._revision,
             events_url=self._events_url,
             transport_state=verdict.state,
+            workspace_evidence=self.workspace_evidence,
         )
+        snapshot["transport"].update(
+            {
+                "eventStreamConnected": connected,
+                "connectedSince": self._timestamp(connected_since),
+                "lastHeartbeatAt": self._timestamp(self._last_heartbeat_at),
+                "writerWatermarkAt": self._timestamp(self._last_write_at),
+            }
+        )
+        return snapshot
 
     def live_projection_skeleton(self) -> dict:
         """Minimal valid snapshot skeleton for live-gate schema validation."""
@@ -152,18 +173,55 @@ class WorkflowSidecar:
             revision=self._revision,
             events_url=self._events_url,
             transport_state="UNKNOWN",
+            workspace_evidence=self.workspace_evidence,
         )
 
     def close(self) -> None:
         self.stop_live_updates()
         self.store.close()
 
+    def mark_sse_connected(self) -> None:
+        with self._sse_connection_lock:
+            if self._sse_connection_count == 0:
+                self._sse_connected_since = time.time()
+            self._sse_connection_count += 1
+
+    def mark_sse_disconnected(self) -> None:
+        with self._sse_connection_lock:
+            self._sse_connection_count = max(0, self._sse_connection_count - 1)
+            if self._sse_connection_count == 0:
+                self._sse_connected_since = None
+
+    def has_sse_connections(self) -> bool:
+        connected, _ = self.sse_connection_state()
+        return connected
+
+    def sse_connection_state(self) -> tuple[bool, float | None]:
+        with self._sse_connection_lock:
+            return self._sse_connection_count > 0, self._sse_connected_since
+
+    @staticmethod
+    def _timestamp(value: float | None) -> str | None:
+        if value is None:
+            return None
+        return datetime.fromtimestamp(value, timezone.utc).isoformat().replace("+00:00", "Z")
+
+    @contextmanager
+    def sse_connection(self):
+        self.mark_sse_connected()
+        try:
+            yield
+        finally:
+            self.mark_sse_disconnected()
+
 
 def _is_loopback_host(host: str | None) -> bool:
     if not host:
         return False
     candidate = host.strip().strip("[]").lower()
-    if candidate == "localhost":
+    if candidate == "localhost" or candidate.endswith(".localhost"):
+        # .localhost 是 RFC 6761 保留 TLD：Tauri 2 (Windows WebView2) 前端
+        # Origin 为 http://tauri.localhost —— 必须放行否则 fetch 403 → 前端 OFFLINE。
         return True
     try:
         return ipaddress.ip_address(candidate).is_loopback
@@ -297,36 +355,35 @@ def create_server(
                 if client is None:
                     self.send_json(503, {"status": "too_many_connections"})
                     return
-                sidecar._sse_connected = True
-                self.send_response(200)
-                self.send_header("Content-Type", "text/event-stream; charset=utf-8")
-                self.send_header("Cache-Control", "no-store")
-                self.send_header("X-Accel-Buffering", "no")
-                self.send_header("Connection", "keep-alive")
-                cors_origin = self._cors_origin()
-                if cors_origin:
-                    self.send_header("Access-Control-Allow-Origin", cors_origin)
-                    self.send_header("Vary", "Origin")
-                self.end_headers()
-                try:
-                    frames = sidecar.revision_hub.frames_for(client)
-                    if not frames:  # 新连接：先推一帧 snapshot 事件
-                        frames = [SseRevisionHub._frame("snapshot", sidecar.v3_snapshot(), sidecar._revision)]
-                    self.wfile.write("".join(frames).encode("utf-8"))
-                    self.wfile.flush()
-                    while True:
-                        time.sleep(HEARTBEAT_SECONDS / 2)
-                        sidecar._last_heartbeat_at = time.time()
+                with sidecar.sse_connection():
+                    try:
+                        self.send_response(200)
+                        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+                        self.send_header("Cache-Control", "no-store")
+                        self.send_header("X-Accel-Buffering", "no")
+                        self.send_header("Connection", "keep-alive")
+                        cors_origin = self._cors_origin()
+                        if cors_origin:
+                            self.send_header("Access-Control-Allow-Origin", cors_origin)
+                            self.send_header("Vary", "Origin")
+                        self.end_headers()
                         frames = sidecar.revision_hub.frames_for(client)
-                        if not frames:
-                            frames = [sidecar.revision_hub.heartbeat_frame()]
+                        if not frames:  # 新连接：先推一帧 snapshot 事件
+                            frames = [SseRevisionHub._frame("snapshot", sidecar.v3_snapshot(), sidecar._revision)]
                         self.wfile.write("".join(frames).encode("utf-8"))
                         self.wfile.flush()
-                except (BrokenPipeError, ConnectionResetError, OSError):
-                    return
-                finally:
-                    sidecar.revision_hub.disconnect(client.client_id)
-                    sidecar._sse_connected = False
+                        while True:
+                            time.sleep(HEARTBEAT_SECONDS / 2)
+                            sidecar._last_heartbeat_at = time.time()
+                            frames = sidecar.revision_hub.frames_for(client)
+                            if not frames:
+                                frames = [sidecar.revision_hub.heartbeat_frame()]
+                            self.wfile.write("".join(frames).encode("utf-8"))
+                            self.wfile.flush()
+                    except (BrokenPipeError, ConnectionResetError, OSError):
+                        return
+                    finally:
+                        sidecar.revision_hub.disconnect(client.client_id)
             else:
                 self.send_json(404, {"status": "not_found"})
 

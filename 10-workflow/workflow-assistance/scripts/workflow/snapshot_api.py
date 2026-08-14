@@ -37,6 +37,7 @@ def build_snapshot(
     git_state: dict[str, Any] | None = None,
     transport: dict[str, Any] | None = None,
     governance: dict[str, Any] | None = None,
+    workspace: dict[str, Any] | None = None,
     source_watermark: str | None = None,
     generated_at: str | None = None,
 ) -> dict[str, Any]:
@@ -66,6 +67,7 @@ def build_snapshot(
             "scope": (transport or {}).get("coverageScope"),
         },
         "governance": _governance_projection(governance),
+        "workspace": workspace or {},
         "projects": [_project_projection(p, executions, usage_by_project, git_state, ci_runs) for p in projects],
         "executions": executions,
         "tasks": (store_projection or {}).get("tasks_by_status", {}),
@@ -127,6 +129,12 @@ def _project_projection(
             "localSha": (git_state or {}).get("localSha"),
             "remoteSha": (git_state or {}).get("remoteSha"),
             "matchState": _git_match_state(git_state or {}),
+            "branch": (git_state or {}).get("branch"),
+            "dirtyCount": (git_state or {}).get("dirtyCount"),
+            "observedAt": (git_state or {}).get("observedAt"),
+            "quality": (git_state or {}).get("quality"),
+            "freshness": (git_state or {}).get("freshness"),
+            "sourceRef": (git_state or {}).get("sourceRef"),
         },
         "token": {
             "inputTokens": usage.get("inputTokens"),
@@ -229,4 +237,6 @@ def _git_match_state(git_state: dict[str, Any]) -> str:
         return "LOCAL_CI_MATCH"
     if not local:
         return "NO_LOCAL_CLAIM"
+    if remote is None and ci is None:
+        return "UNVERIFIED"
     return "MISMATCH"

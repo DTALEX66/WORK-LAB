@@ -53,22 +53,6 @@
   <!-- Application mount point. All rendering is done by scripts/render.js. -->
   <main id="wl-app" class="wl-shell" tabindex="-1"></main>
 
-  <!-- Appearance settings (read-only: only touches browser memory / CSS vars). -->
-  <div id="wl-settings" class="wl-settings" role="dialog" aria-label="外观设置">
-    <h4>外观设置</h4>
-    <label for="wl-bg-mode">背景模式
-      <select id="wl-bg-mode" name="bg-mode">
-        <option value="transparent">透明（液态玻璃）</option>
-        <option value="blur">模糊玻璃</option>
-        <option value="solid-dark">纯色深色</option>
-        <option value="solid-light">纯色浅色</option>
-      </select>
-    </label>
-    <label for="wl-opacity">玻璃透明度
-      <span><span id="wl-opacity-val">100</span>%</span>
-    </label>
-    <input type="range" id="wl-opacity" min="25" max="100" value="100" aria-label="玻璃透明度">
-  </div>
 
   <!-- Scripts: order matters (formatters/api/state first). Loaded deferred. -->
   <script src="scripts/formatters.js"></script>

@@ -1,340 +1,289 @@
-/* WORK-LAB Observer — render-v3.js (WLGM-180/190/200)
-   Renders the canonical v3 snapshot surface (normalized by api.js normalizeV3):
-     - global transport/freshness/coverage/revision bar
-     - KPI: active projects / executions / waiting / blocked
-     - product project table with activityState, agent distribution, attention,
-       activeExecutionCount, last strong evidence, visibility/quality, git match
-     - executions list with evidence level + transport state
-     - token/cost + CI summaries
-     - per-project detail (WLGM-190): identity, bindings, executions, git/CI
-     - compact view (WLGM-200): transport/freshness + active + waiting/blocked +
-       primary blocker + token coverage + last strong evidence
-   Read-only: pure render, no fetch, no writes. Status is icon + text + color. */
+/* WORK-LAB Observer — truthful workflow/snapshot/v3 renderer.
+
+   Production policy:
+   - canonical registry and local Git facts are the primary surface;
+   - task/usage sections render only when canonical samples exist;
+   - execution, CI/GitHub, governance drift and collector coverage are omitted
+     until a production writer/collector supplies real observations;
+   - null/UNKNOWN values never become decorative KPI cards. */
+
+"use strict";
 
 const WlRenderV3 = (function () {
-  "use strict";
-
   const F = WlFormat;
 
-  function icon(name) {
-    return `<svg class="wl-icon" aria-hidden="true" focusable="false"><use href="#i-${name}"/></svg>`;
+  function esc(value) {
+    return F.escapeHtml(value == null ? "" : String(value));
   }
 
-  function esc(v) {
-    return F.escapeHtml(v == null ? "—" : String(v));
+  function integer(value) {
+    return Number.isInteger(value) && value >= 0 ? value : null;
   }
 
-  /* Map v3 transport/freshness to chip. */
-  function transportMeta(transport) {
-    const st = String((transport && transport.transportState) || "UNKNOWN").toUpperCase();
-    const fs = String((transport && transport.freshnessState) || "UNKNOWN").toUpperCase();
-    const tmap = { LIVE: { cls: "running", ic: "running", text: "LIVE" }, DELAYED: { cls: "waiting", ic: "waiting", text: "DELAYED" }, OFFLINE: { cls: "blocked", ic: "blocked", text: "OFFLINE" }, CONNECTING: { cls: "waiting", ic: "waiting", text: "CONNECTING" } };
-    const fmap = { FRESH: { cls: "fresh", ic: "fresh", text: "FRESH" }, STALE: { cls: "stale", ic: "clock", text: "STALE" }, EXPIRED: { cls: "blocked", ic: "alert", text: "EXPIRED" } };
-    const t = tmap[st] || { cls: "unknown", ic: "unknown", text: st };
-    const f = fmap[fs] || { cls: "unknown", ic: "unknown", text: fs };
-    return `<span class="wl-chip ${t.cls}">${icon(t.ic)}传输 ${t.text}</span> <span class="wl-chip ${f.cls}">${icon(f.ic)}新鲜度 ${f.text}</span>`;
-  }
-
-  function attentionMeta(attention) {
-    switch (attention) {
-      case "WAITING_APPROVAL_PRESENT": return { cls: "waiting", ic: "waiting", text: "等待批准" };
-      case "WAITING_USER_PRESENT": return { cls: "waiting", ic: "waiting", text: "等待用户" };
-      case "BLOCKED_PRESENT": return { cls: "blocked", ic: "blocked", text: "阻塞" };
-      default: return { cls: "idle", ic: "clock", text: "无" };
-    }
-  }
-
-  function activityMeta(state) {
-    switch (String(state || "UNKNOWN").toUpperCase()) {
-      case "ACTIVE": return { cls: "running", ic: "running", text: "活跃" };
-      case "IDLE": return { cls: "idle", ic: "clock", text: "空闲" };
-      case "NO_ACTIVE_EXECUTION": return { cls: "idle", ic: "clock", text: "无执行" };
-      case "PARTIAL_VISIBILITY": return { cls: "waiting", ic: "waiting", text: "部分可见" };
-      case "UNRESOLVED": return { cls: "unknown", ic: "unknown", text: "未解析" };
-      default: return { cls: "unknown", ic: "unknown", text: "未知" };
-    }
-  }
-
-  function execMeta(state) {
-    switch (String(state || "UNKNOWN").toUpperCase()) {
-      case "RUNNING": case "STARTING": return { cls: "running", ic: "running", text: "运行" };
-      case "WAITING_USER": return { cls: "waiting", ic: "waiting", text: "等待用户" };
-      case "WAITING_APPROVAL": return { cls: "waiting", ic: "waiting", text: "等待批准" };
-      case "BLOCKED": return { cls: "blocked", ic: "blocked", text: "阻塞" };
-      case "COMPLETED": return { cls: "completed", ic: "completed", text: "完成" };
-      case "FAILED": return { cls: "failed", ic: "failed", text: "失败" };
-      case "CANCELLED": return { cls: "idle", ic: "clock", text: "取消" };
-      case "LOST": return { cls: "blocked", ic: "alert", text: "失联" };
-      case "DISCOVERED": return { cls: "waiting", ic: "waiting", text: "发现" };
-      default: return { cls: "unknown", ic: "unknown", text: "未知" };
-    }
-  }
-
-  function gitMatchMeta(match) {
-    switch (String(match || "NO_LOCAL_CLAIM")) {
-      case "MATCH": return { cls: "completed", text: "三端一致" };
-      case "LOCAL_REMOTE_MATCH": return { cls: "running", text: "本地=远端" };
-      case "LOCAL_CI_MATCH": return { cls: "waiting", text: "本地=CI" };
-      case "MISMATCH": return { cls: "blocked", text: "不一致" };
-      default: return { cls: "unknown", text: String(match || "无本地声明") };
-    }
-  }
-
-  /* Agent distribution across executions per project. */
-  function agentCounts(d, projectId) {
-    const counts = {};
-    (d.executions || []).forEach((e) => {
-      if (e.anchorProjectId === projectId && e.agent) {
-        counts[e.agent] = (counts[e.agent] || 0) + 1;
-      }
-    });
-    return counts;
-  }
-
-  /* ---------- WLGM-180: global transport/freshness/coverage bar ---------- */
-  function globalBar(d) {
-    const cov = d.coverage || {};
-    const covText = (cov.numerator == null || cov.denominator == null)
-      ? "未知"
-      : `${cov.numerator}/${cov.denominator}${cov.scope ? " · " + esc(cov.scope) : ""}`;
-    const covCls = (cov.numerator != null && cov.denominator != null && cov.numerator >= cov.denominator) ? "fresh" : "stale";
-    return `
-      <div class="wl-card wl-global-bar">
-        <div class="wl-global-bar-row">
-          <span class="wl-kv"><span class="wl-kv-label">${icon("fresh")}传输/新鲜度</span>${transportMeta(d.transport)}</span>
-          <span class="wl-kv"><span class="wl-kv-label">${icon("quality")}Collector 覆盖</span><span class="wl-chip ${covCls}">${covText}</span></span>
-          <span class="wl-kv"><span class="wl-kv-label">${icon("sha")}投影 revision</span><span class="wl-chip">#${esc(d.revision)}</span></span>
-          <span class="wl-kv"><span class="wl-kv-label">${icon("clock")}水印</span><span class="wl-mono">${esc(d.sourceWatermark)}</span></span>
-        </div>
-      </div>`;
-  }
-
-  /* ---------- WLGM-180: KPI ---------- */
-  function kpi(d) {
-    const projects = d.projects || [];
-    const executions = d.executions || [];
-    const activeProjects = projects.filter((p) => String(p.state || "").toLowerCase() === "active").length;
-    const activeExecs = executions.filter((e) => ["RUNNING", "STARTING", "WAITING_USER", "WAITING_APPROVAL", "BLOCKED"].includes(String(e.state || "").toUpperCase())).length;
-    const waiting = executions.filter((e) => ["WAITING_USER", "WAITING_APPROVAL"].includes(String(e.state || "").toUpperCase())).length;
-    const blocked = executions.filter((e) => String(e.state || "").toUpperCase() === "BLOCKED").length;
-    const cards = [
-      { label: "活跃项目", value: activeProjects, note: "activityState=ACTIVE", ic: "projects" },
-      { label: "执行中", value: activeExecs, note: "running/starting", ic: "running" },
-      { label: "等待", value: waiting, note: "用户/批准", ic: "waiting" },
-      { label: "阻塞", value: blocked, note: "需关注", ic: "blocked" },
-    ];
-    let out = '<div class="wl-grid wl-kpi">';
-    cards.forEach((c) => {
-      out += `<div class="wl-card wl-metric"><div class="wl-metric-label">${icon(c.ic)}${c.label}</div>` +
-        `<div class="wl-metric-value">${c.value}</div><div class="wl-metric-note">${c.note}</div></div>`;
-    });
-    out += "</div>";
-    return out;
-  }
-
-  /* ---------- WLGM-180: project table ---------- */
-  function projectTable(d) {
-    const projects = (d.projects || []).slice();
-    const sortRank = { blocked: 0, waiting: 1, active: 2, idle: 3, unknown: 4 };
-    projects.sort((a, b) => (sortRank[a.state] != null ? sortRank[a.state] : 9) - (sortRank[b.state] != null ? sortRank[b.state] : 9));
-    if (!projects.length) {
-      return `<div class="wl-state-note">${icon("info")}暂无已批准项目（候选需先批准）。</div>`;
-    }
-    const rows = projects.map((p) => {
-      const am = activityMeta(p.state);
-      const attn = attentionMeta(p.attentionState);
-      const agents = agentCounts(d, p.projectId);
-      const agentText = Object.keys(agents).length
-        ? Object.entries(agents).map(([k, v]) => `${esc(k)}×${v}`).join(" ")
-        : (p.agentPlatform ? esc(p.agentPlatform) : "—");
-      const gm = gitMatchMeta(p.git && p.git.matchState);
-      const evidence = p.lastStrongEvidenceAt ? `<span class="wl-mono">${esc(p.lastStrongEvidenceAt)}</span>` : "—";
-      const areas = Array.isArray(p.workingAreas) && p.workingAreas.length
-        ? p.workingAreas.map((a) => `<span class="wl-chip wl-area">${esc(a)}</span>`).join(" ")
-        : "—";
-      return `
-        <tr data-project="${esc(p.projectId)}" class="wl-proj-row" tabindex="0" aria-label="项目 ${esc(p.displayName || p.projectId)}">
-          <td><div class="wl-proj-name">${esc(p.displayName || p.projectId)}<span class="wl-proj-id">${esc(p.projectId)}</span></div></td>
-          <td><span class="wl-chip ${am.cls}">${icon(am.ic)}${am.text}</span></td>
-          <td>${esc(p.activeExecutionCount)}</td>
-          <td>${agentText}</td>
-          <td>${areas}</td>
-          <td><span class="wl-chip ${attn.cls}">${icon(attn.ic)}${attn.text}</span></td>
-          <td>${evidence}</td>
-          <td><span class="wl-quality"><span class="wl-qdot ${String(p.visibility || "UNKNOWN").toLowerCase()}"></span>${esc(p.visibility)}</span> <span class="wl-quality">${esc(p.quality)}</span></td>
-          <td><span class="wl-chip ${gm.cls}">${gm.text}</span></td>
-        </tr>`;
-    });
-    return `
-      <div class="wl-card">
-        <h3 class="wl-section-title">${icon("projects")}主体项目（${projects.length}）</h3>
-        <div class="wl-table-wrap"><table class="wl-table">
-          <thead><tr><th>项目</th><th>活动状态</th><th>执行数</th><th>Agent 分布</th><th>Working areas</th><th>关注</th><th>最近强证据</th><th>可见性/质量</th><th>Git</th></tr></thead>
-          <tbody>${rows.join("")}</tbody>
-        </table></div>
-        <div id="wl-v3-detail"></div>
-      </div>`;
-  }
-
-  /* ---------- WLGM-180 §7: Rules/Skills/Memory/Adapter drift ---------- */
-  function governanceDrift(d) {
-    const g = d.governance;
-    if (!g || g.state === "UNKNOWN" || !g.families) {
-      return `
-        <div class="wl-card"><h3 class="wl-section-title">${icon("governance")}Rules / Skills / Memory / Adapter 漂移</h3>
-          <div class="wl-state-note">${icon("info")}漂移数据源未声明（UNKNOWN，不编造计数）。</div></div>`;
-    }
-    const familyChip = (name, meta) => {
-      const state = String(meta.state || "UNKNOWN").toUpperCase();
-      const cls = state === "DRIFT" ? { cls: "blocked", ic: "alert", text: "漂移" }
-        : state === "CLEAN" ? { cls: "completed", ic: "check", text: "一致" }
-        : { cls: "unknown", ic: "unknown", text: "未知" };
-      const counts = (meta.current == null && meta.drift == null)
-        ? "—"
-        : `当前 ${esc(meta.current == null ? "未知" : meta.current)} / 漂移 ${esc(meta.drift == null ? "未知" : meta.drift)}`;
-      return `<div class="wl-drift-family"><span class="wl-chip ${cls.cls}">${icon(cls.ic)}${name} ${cls.text}</span><span class="wl-drift-counts">${counts}</span></div>`;
+  function transportMeta(state) {
+    const key = String(state || "UNKNOWN").toUpperCase();
+    const map = {
+      LIVE: { label: "事件流实时", cls: "truth-ok" },
+      CONNECTING: { label: "事件流连接中", cls: "truth-warn" },
+      DELAYED: { label: "事件流延迟", cls: "truth-warn" },
+      OFFLINE: { label: "事件流离线", cls: "truth-bad" },
+      UNKNOWN: { label: "事件流未确认", cls: "truth-muted" },
     };
-    return `
-      <div class="wl-card"><h3 class="wl-section-title">${icon("governance")}Rules / Skills / Memory / Adapter 漂移</h3>
-        <div class="wl-drift-grid">
-          ${familyChip("Rules", g.families.rules)}
-          ${familyChip("Skills", g.families.skills)}
-          ${familyChip("Memory", g.families.memory)}
-          ${familyChip("Adapters", g.families.adapters)}
-        </div></div>`;
+    return map[key] || { label: "事件流 " + key, cls: "truth-muted" };
   }
 
-  /* ---------- WLGM-180: executions list ---------- */
-  function executionsTable(d) {
-    const executions = d.executions || [];
-    if (!executions.length) {
-      return `<div class="wl-card"><h3 class="wl-section-title">${icon("running")}Executions</h3><div class="wl-state-note">${icon("info")}无 execution 证据（未接入 Agent 时显示 unsupported/unknown，不显示 0 个任务）。</div></div>`;
+  function projectStatus(state) {
+    const key = String(state || "UNKNOWN").toUpperCase();
+    const map = {
+      REGISTERED: { label: "已登记", cls: "truth-ok" },
+      ACTIVE: { label: "活跃", cls: "truth-ok" },
+      IDLE: { label: "空闲", cls: "truth-muted" },
+      UNAVAILABLE: { label: "不可用", cls: "truth-bad" },
+    };
+    return map[key] || { label: "已接入", cls: "truth-muted" };
+  }
+
+  function sourceTime(d, git) {
+    return (git && git.observedAt) || d.sourceWatermark || null;
+  }
+
+  function connectionStrip(d) {
+    const transport = transportMeta(d.transport && d.transport.transportState);
+    const watermark = d.sourceWatermark;
+    const revision = integer(d.revision);
+    let meta = "";
+    if (watermark) {
+      meta += `<span class="wl-truth-meta"><span>最近采集</span><time class="mono">${esc(watermark)}</time></span>`;
     }
-    const rows = executions.map((e) => {
-      const em = execMeta(e.state);
-      const tm = transportMeta({ transportState: e.transportState || "UNKNOWN" });
-      const lvl = e.evidenceLevel ? `<span class="wl-chip">L${esc(e.evidenceLevel)}</span>` : "";
-      return `<tr>
-        <td><span class="wl-mono">${esc(e.executionId)}</span></td>
-        <td>${esc(e.agent)}</td>
-        <td>${esc(e.anchorProjectId)}</td>
-        <td><span class="wl-chip ${em.cls}">${icon(em.ic)}${em.text}</span></td>
-        <td>${esc(e.stateQuality)}</td>
-        <td>${tm}</td>
-        <td>${lvl}${e.sourceRef ? `<span class="wl-mono wl-src">${esc(e.sourceRef)}</span>` : ""}</td>
-      </tr>`;
-    });
-    return `
-      <div class="wl-card"><h3 class="wl-section-title">${icon("running")}当前 Executions（${executions.length}）</h3>
-      <div class="wl-table-wrap"><table class="wl-table">
-        <thead><tr><th>execution</th><th>Agent</th><th>项目</th><th>状态</th><th>状态质量</th><th>传输</th><th>证据</th></tr></thead>
-        <tbody>${rows.join("")}</tbody>
-      </table></div></div>`;
+    if (revision && revision > 0) {
+      meta += `<span class="wl-truth-meta"><span>事件版本</span><b class="mono">#${revision}</b></span>`;
+    }
+    return `<section class="wl-truth-strip wl-card" aria-label="只读数据链状态">
+      <div class="wl-truth-source"><span class="wl-truth-dot truth-ok"></span><b>Sidecar 已连接</b><span>只读 Snapshot API</span></div>
+      <div class="wl-truth-source"><span class="wl-truth-dot ${transport.cls}"></span><b>${esc(transport.label)}</b></div>
+      ${meta}
+    </section>`;
   }
 
-  /* ---------- WLGM-180: token + CI ---------- */
-  function tokenCi(d) {
-    const u = d.usage || {};
-    const tokenText = (u.inputTokens == null && u.outputTokens == null)
-      ? "未知（未补零）"
-      : `in ${esc(u.inputTokens)} / out ${esc(u.outputTokens)} / 总 ${esc(u.totalTokens)}`;
-    const cost = u.costQuality ? `（${esc(u.costQuality)}）` : "";
-    const ciRows = (d.ci || []).map((r) => {
-      const c = String(r.conclusion || "").toLowerCase() === "success" ? { cls: "completed", text: "通过" }
-        : String(r.conclusion || "").toLowerCase() === "failure" ? { cls: "failed", text: "失败" }
-        : { cls: "waiting", text: String(r.status || "进行中") };
-      return `<tr><td><span class="wl-mono">${esc(r.workflow)}</span></td><td><span class="wl-mono">${esc(r.headSha)}</span></td><td><span class="wl-chip ${c.cls}">${c.text}</span></td></tr>`;
+  function gitFacts(d, project) {
+    const git = project.git || {};
+    if (!git.localSha) {
+      return `<div class="wl-truth-empty-inline">尚无本地 Git 采集样本</div>`;
+    }
+    const dirty = integer(git.dirtyCount);
+    const dirtyText = dirty === 0 ? "工作区干净" : (dirty == null ? null : `${dirty} 项变更`);
+    const observed = sourceTime(d, git);
+    return `<div class="wl-git-facts">
+      <div class="wl-fact"><span>分支</span><b class="mono">${esc(git.branch || "detached")}</b></div>
+      <div class="wl-fact"><span>本地 HEAD</span><b class="mono">${esc(String(git.localSha).slice(0, 8))}</b></div>
+      ${dirtyText ? `<div class="wl-fact"><span>工作树</span><b>${esc(dirtyText)}</b></div>` : ""}
+      ${observed ? `<div class="wl-fact wl-fact-wide"><span>采集时间</span><time class="mono">${esc(observed)}</time></div>` : ""}
+    </div>`;
+  }
+
+  function projectOverview(d) {
+    const projects = Array.isArray(d.projects) ? d.projects : [];
+    if (!projects.length) {
+      return `<section class="wl-truth-panel wl-card"><div class="wl-truth-empty"><b>尚无已批准项目</b><span>Observer 不会自动扫描或展示未批准目录。</span></div></section>`;
+    }
+    const cards = projects.map((project) => {
+      const status = projectStatus(project.activityState);
+      return `<article class="wl-project-truth-card">
+        <header class="wl-project-truth-head">
+          <div>
+            <span class="wl-eyebrow">本地项目</span>
+            <h2>${esc(project.displayName || project.projectId)}</h2>
+          </div>
+          <span class="wl-truth-chip ${status.cls}">${esc(status.label)}</span>
+        </header>
+        <div class="wl-source-labels" aria-label="真实数据来源">
+          <span>项目登记</span>
+          ${project.git && project.git.localSha ? "<span>本地 Git</span>" : ""}
+        </div>
+        ${gitFacts(d, project)}
+      </article>`;
     }).join("");
-    return `
-      <div class="wl-grid wl-cols-2">
-        <div class="wl-card"><h3 class="wl-section-title">${icon("token")}Token / 费用</h3>
-          <div class="wl-kv"><span class="wl-kv-label">用量</span><span class="wl-mono">${tokenText}</span></div>
-          <div class="wl-kv"><span class="wl-kv-label">费用质量</span><span class="wl-chip">${esc(cost || "UNKNOWN")}</span></div>
-        </div>
-        <div class="wl-card"><h3 class="wl-section-title">${icon("ci")}CI（exact-SHA）</h3>
-          ${d.ci && d.ci.length ? `<div class="wl-table-wrap"><table class="wl-table"><thead><tr><th>workflow</th><th>head SHA</th><th>结论</th></tr></thead><tbody>${ciRows}</tbody></table></div>` : `<div class="wl-state-note">${icon("info")}${esc(d.git && d.git.ciSha ? "无 CI run" : "exact-SHA CI UNVERIFIED")}</div>`}
-        </div>
-      </div>`;
+    return `<section class="wl-truth-panel" id="projects">
+      <div class="wl-truth-heading">
+        <div><span class="wl-eyebrow">已接入工作区</span><h1>当前可观测项目</h1></div>
+        <p>仅显示通过批准边界并已进入本地观测库的项目与 Git 事实。</p>
+      </div>
+      <div class="wl-project-truth-grid">${cards}</div>
+    </section>`;
   }
 
-  /* ---------- WLGM-190: per-project detail ---------- */
-  function projectDetail(d, projectId) {
-    const p = (d.projects || []).find((x) => x.projectId === projectId);
-    if (!p) return "";
-    const execs = (d.executions || []).filter((e) => e.anchorProjectId === projectId);
-    const execRows = execs.map((e) => {
-      const em = execMeta(e.state);
-      const visited = Array.isArray(e.visitedRepositories) && e.visitedRepositories.length
-        ? ` · visited ${e.visitedRepositories.map((v) => esc(v.repositoryId || v)).join(", ")}`
-        : "";
-      const timeline = Array.isArray(e.timeline) && e.timeline.length
-        ? `<div class="wl-timeline">${e.timeline.map((t) => `<span class="wl-chip">${esc(t.state)}</span><span class="wl-mono">${esc(t.at)}</span>`).join(" → ")}</div>`
-        : "";
-      const lostReason = e.lostReason ? `<div class="wl-kv"><span class="wl-kv-label">LOST 原因</span>${esc(e.lostReason)}</div>` : "";
-      const conflicts = Array.isArray(e.conflicts) && e.conflicts.length
-        ? `<div class="wl-kv"><span class="wl-kv-label">证据冲突</span><span class="wl-chip blocked">${icon("alert")}${e.conflicts.length} 项冲突</span></div>`
-        : "";
-      return `<li class="wl-detail-exec">
-        <span class="wl-chip ${em.cls}">${em.text}</span> <span class="wl-mono">${esc(e.executionId)}</span> · ${esc(e.agent)} · ${esc(e.sessionId || "无 session")} · L${esc(e.evidenceLevel || "?")}${e.sourceRef ? ` · src ${esc(e.sourceRef)}` : ""}
-        ${visited}${timeline}${lostReason}${conflicts}
-      </li>`;
-    }).join("") || `<li>无 execution 证据</li>`;
-    const git = p.git || {};
-    const gm = gitMatchMeta(git.matchState);
-    const tok = p.token || {};
-    const areas = Array.isArray(p.workingAreas) && p.workingAreas.length
-      ? `<div class="wl-kv"><span class="wl-kv-label">Working areas</span>${p.workingAreas.map((a) => `<span class="wl-chip wl-area">${esc(a)}</span>`).join(" ")}</div>`
-      : "";
-    return `
-      <div class="wl-card wl-detail" data-project-detail="${esc(projectId)}">
-        <h3 class="wl-section-title">${icon("info")}项目详情 · ${esc(p.displayName || p.projectId)}</h3>
-        <div class="wl-kv"><span class="wl-kv-label">活动状态</span>${activityMeta(p.state).text} / 关注 ${attentionMeta(p.attentionState).text}</div>
-        <div class="wl-kv"><span class="wl-kv-label">身份</span>${esc(p.identityState || "UNRESOLVED")} · 可见性 ${esc(p.visibility)} · 质量 ${esc(p.quality)}</div>
-        <div class="wl-kv"><span class="wl-kv-label">Git</span>${gm.text} · <span class="wl-mono">${esc(git.localSha)}</span></div>
-        <div class="wl-kv"><span class="wl-kv-label">Token</span>in ${esc(tok.inputTokens == null ? "未知" : tok.inputTokens)} / out ${esc(tok.outputTokens == null ? "未知" : tok.outputTokens)} (${esc(tok.costQuality || "UNKNOWN")})</div>
-        <div class="wl-kv"><span class="wl-kv-label">最近强证据</span><span class="wl-mono">${esc(p.lastStrongEvidenceAt || "—")}</span></div>
-        ${areas}
-        <h4>Executions</h4><ul class="wl-detail-list">${execRows}</ul>
-        ${p.sourceRefs && p.sourceRefs.length ? `<h4>Source refs</h4><ul class="wl-detail-list">${p.sourceRefs.map((s) => `<li><span class="wl-mono">${esc(s)}</span></li>`).join("")}</ul>` : ""}
-      </div>`;
+  function taskFacts(d) {
+    const entries = Object.entries(d.tasks || {}).filter(([, count]) => integer(count) !== null);
+    if (!entries.length) return "";
+    return `<section class="wl-optional-card wl-card">
+      <div class="wl-optional-head"><div><span class="wl-eyebrow">Canonical store</span><h2>任务账本</h2></div><span>仅计已落库任务</span></div>
+      <div class="wl-stat-list">${entries.map(([state, count]) => `<div><span class="mono">${esc(state)}</span><b>${count}</b></div>`).join("")}</div>
+    </section>`;
   }
 
-  /* ---------- WLGM-200: compact ---------- */
+  function usageFacts(d) {
+    const usageSample = d.tokenSummary || d.usage || {};
+    const total = integer(usageSample.totalTokens);
+    const input = integer(usageSample.inputTokens);
+    const output = integer(usageSample.outputTokens);
+    if (total === null && input === null && output === null) return "";
+    return `<section class="wl-optional-card wl-card">
+      <div class="wl-optional-head"><div><span class="wl-eyebrow">Explicit usage ledger</span><h2>用量样本</h2></div><span>${esc(usageSample.costQuality || "SOURCE_REPORTED")}</span></div>
+      <div class="wl-stat-list">
+        ${input !== null ? `<div><span>输入</span><b>${input}</b></div>` : ""}
+        ${output !== null ? `<div><span>输出</span><b>${output}</b></div>` : ""}
+        ${total !== null ? `<div><span>总量</span><b>${total}</b></div>` : ""}
+      </div>
+    </section>`;
+  }
+
+  function optionalFacts(d) {
+    const cards = taskFacts(d) + usageFacts(d);
+    return cards ? `<section class="wl-optional-grid" aria-label="有样本时显示的可选数据">${cards}</section>` : "";
+  }
+
+  function planState(status) {
+    const value = String(status || "");
+    if (value.includes("PENDING") || value.includes("APPROVAL")) return { label: "待完成剩余批准", cls: "truth-warn" };
+    if (value.includes("BLOCKED")) return { label: "存在阻塞", cls: "truth-bad" };
+    if (value.includes("VERIFIED") || value.includes("DELIVERED")) return { label: "已有本地交付证据", cls: "truth-ok" };
+    return { label: "规划基线", cls: "truth-muted" };
+  }
+
+  function taskState(status) {
+    const value = String(status || "").toUpperCase();
+    if (value.includes("COMPLETED")) return { label: "已完成", cls: "truth-ok" };
+    if (value.includes("PARTIAL")) return { label: "部分完成 / 需核对", cls: "truth-warn" };
+    if (value.includes("BLOCKED")) return { label: "阻塞", cls: "truth-bad" };
+    if (value.includes("NOT_EXECUTED")) return { label: "未执行", cls: "truth-bad" };
+    if (value.includes("DEFERRED")) return { label: "延期", cls: "truth-warn" };
+    if (value.includes("VERIFIED")) return { label: "本地已验证", cls: "truth-ok" };
+    if (value.includes("READY")) return { label: "待批准", cls: "truth-warn" };
+    return { label: value || "未分类", cls: "truth-muted" };
+  }
+
+  function workspaceHero(d) {
+    const workspace = d.workspace || {};
+    const plan = workspace.plan || {};
+    const governance = workspace.governance || {};
+    if (!plan.status && !governance.stage) return "";
+    const state = planState(plan.status);
+    const counts = plan.counts || {};
+    const total = integer(counts.total);
+    const verified = integer(counts.verifiedLocal);
+    const blocked = integer(counts.blocked);
+    const modules = Array.isArray(governance.modules) ? governance.modules.length : null;
+    return `<section class="wl-workspace-hero wl-card" aria-label="项目蓝图与交付状态">
+      <div class="wl-workspace-hero-main">
+        <span class="wl-eyebrow">版本化规划与交付基线</span>
+        <h1>WORK-LAB 项目蓝图</h1>
+        <p>TaskPack、治理基线与历史账本是权威仓库事实；它们不是实时遥测，也不会被伪装成实时完成率。</p>
+      </div>
+      <span class="wl-truth-chip ${state.cls}">${esc(state.label)}</span>
+      <div class="wl-baseline-stats">
+        ${total !== null ? `<div><span>TaskPack 任务</span><b>${total}</b><small>规划口径</small></div>` : ""}
+        ${verified !== null ? `<div><span>本地验证声明</span><b>${verified}</b><small>批准包记录</small></div>` : ""}
+        ${blocked !== null ? `<div><span>记录阻塞</span><b>${blocked}</b><small>批准包记录</small></div>` : ""}
+        ${modules !== null ? `<div><span>活跃模块</span><b>${modules}</b><small>静态治理基线</small></div>` : ""}
+      </div>
+    </section>`;
+  }
+
+  function taskpackSection(d) {
+    const plan = (d.workspace || {}).plan || {};
+    const tasks = Array.isArray(plan.tasks) ? plan.tasks : [];
+    const approvals = Array.isArray(plan.approvals) ? plan.approvals : [];
+    if (!tasks.length && !approvals.length) return "";
+    const taskRows = tasks.map((task) => {
+      const state = taskState(task.status);
+      return `<div class="wl-taskpack-row">
+        <b class="mono">${esc(task.taskId)}</b>
+        <span class="wl-truth-chip ${state.cls}">${esc(state.label)}</span>
+        <span>${esc(task.evidence || "无证据摘要")}</span>
+      </div>`;
+    }).join("");
+    const approvalRows = approvals.map((item) => {
+      const state = taskState(item.state);
+      return `<div class="wl-approval-row"><span><b>${esc(item.label)}</b><small>${esc(item.detail)}</small></span><span class="wl-truth-chip ${state.cls}">${esc(state.label)}</span></div>`;
+    }).join("");
+    return `<section class="wl-plan-grid" id="taskpack">
+      <article class="wl-card wl-plan-card">
+        <header class="wl-section-head"><div><span class="wl-eyebrow">TaskPack 工作包</span><h2>阶段、任务与证据</h2></div><span>规划 / 本地验证</span></header>
+        <div class="wl-taskpack-list">${taskRows}</div>
+      </article>
+      ${approvalRows ? `<article class="wl-card wl-approval-card"><header class="wl-section-head"><div><span class="wl-eyebrow">交付边界</span><h2>批准与未执行项</h2></div><span>批准包记录</span></header><div class="wl-approval-list">${approvalRows}</div></article>` : ""}
+    </section>`;
+  }
+
+  function governanceAndGaps(d) {
+    const governance = (d.workspace || {}).governance || {};
+    if (!Object.keys(governance).length) return "";
+    const modules = Array.isArray(governance.modules) ? governance.modules : [];
+    const gaps = Array.isArray(governance.unverifiedCapabilities) ? governance.unverifiedCapabilities : [];
+    const gapLabels = {
+      hermes_live_apply: "Hermes 全局配置实际应用",
+      paid_provider_smoke: "付费 Provider 真实冒烟",
+      transferred_visual_calibration: "转移范围视觉校准",
+      real_device_validation: "真实设备验证",
+      commercial_release: "正式生产发布",
+    };
+    return `<section class="wl-governance-grid">
+      <article class="wl-card wl-governance-card">
+        <header class="wl-section-head"><div><span class="wl-eyebrow">CURRENT_STATE 静态基线</span><h2>治理与模块边界</h2></div><span>${esc(governance.generatedAt || "未标时间")}</span></header>
+        <div class="wl-governance-facts">
+          <div><span>合同</span><b>${esc(governance.contracts == null ? "—" : governance.contracts)}</b></div>
+          <div><span>仓库技能</span><b>${esc(governance.skills == null ? "—" : governance.skills)}</b></div>
+          <div><span>单写者</span><b>${governance.singleWriter === true ? "是" : "未确认"}</b></div>
+        </div>
+        <div class="wl-module-list">${modules.map((item) => `<div><b>${esc(item.id)}</b><span>${esc(item.role || item.path || "活跃模块")}</span></div>`).join("")}</div>
+      </article>
+      <article class="wl-card wl-gap-card">
+        <header class="wl-section-head"><div><span class="wl-eyebrow">真实性边界</span><h2>明确未验证</h2></div><span>不冒充已完成</span></header>
+        <div class="wl-gap-list">${gaps.map((gap) => `<div><span class="wl-truth-dot truth-warn"></span><b>${esc(gapLabels[gap] || String(gap).replaceAll("_", " "))}</b></div>`).join("") || '<div class="wl-truth-empty-inline">当前基线未列出未验证能力</div>'}</div>
+      </article>
+    </section>`;
+  }
+
+  function historySection(d) {
+    const history = (d.workspace || {}).history || {};
+    const recent = Array.isArray(history.recentErrors) ? history.recentErrors : [];
+    if (history.totalErrors == null && !recent.length) return "";
+    const classes = Object.entries(history.byClassification || {}).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    return `<section class="wl-history-grid" id="history">
+      <article class="wl-card wl-history-card">
+        <header class="wl-section-head"><div><span class="wl-eyebrow">错误账本 · 历史事实</span><h2>历史与恢复</h2></div><span>${esc(history.generatedAt || "版本化记录")}</span></header>
+        <div class="wl-history-total"><b>${esc(history.totalErrors)}</b><span>条已记录错误与修复经验</span></div>
+        <div class="wl-history-classes">${classes.map(([name, count]) => `<div><span>${esc(name.replaceAll("_", " "))}</span><b>${esc(count)}</b></div>`).join("")}</div>
+      </article>
+      <article class="wl-card wl-recent-card">
+        <header class="wl-section-head"><div><span class="wl-eyebrow">最近记录</span><h2>根因与剩余边界</h2></div><span>历史，不是实时告警</span></header>
+        <div class="wl-recent-list">${recent.map((item) => `<div><span class="mono">${esc(item.errorId)}</span><p><b>${esc(item.title || item.classification || "已记录问题")}</b>${item.remainingBoundary ? `<small>${esc(item.remainingBoundary)}</small>` : ""}</p><span class="wl-truth-chip ${item.statusAfter === "PASS" ? "truth-ok" : "truth-warn"}">${esc(item.statusAfter || "RECORDED")}</span></div>`).join("")}</div>
+      </article>
+    </section>`;
+  }
+
+  function sourceEvidence(d) {
+    const sources = Array.isArray((d.workspace || {}).sources) ? d.workspace.sources : [];
+    if (!sources.length) return "";
+    return `<section class="wl-card wl-evidence-card"><header class="wl-section-head"><div><span class="wl-eyebrow">来源可追踪</span><h2>证据来源</h2></div><span>Sidecar 启动时只读加载</span></header><div class="wl-evidence-list">${sources.map((source) => `<div><span class="wl-truth-chip truth-muted">${esc(source.evidenceKind)}</span><code>${esc(source.path)}</code><time>${esc(source.generatedAt || source.loadedAt || "")}</time></div>`).join("")}</div></section>`;
+  }
+
+  function full(d) {
+    return connectionStrip(d) + workspaceHero(d) + taskpackSection(d) + governanceAndGaps(d) + projectOverview(d) + optionalFacts(d) + historySection(d) + sourceEvidence(d);
+  }
+
   function compact(d) {
-    const projects = d.projects || [];
-    const executions = d.executions || [];
-    const activeExecs = executions.filter((e) => ["RUNNING", "STARTING", "WAITING_USER", "WAITING_APPROVAL", "BLOCKED"].includes(String(e.state || "").toUpperCase()));
-    const waiting = executions.filter((e) => ["WAITING_USER", "WAITING_APPROVAL"].includes(String(e.state || "").toUpperCase()));
-    const blocked = executions.filter((e) => String(e.state || "").toUpperCase() === "BLOCKED");
-    const primaryBlocker = blocked[0] || waiting[0] || null;
-    const cov = d.coverage || {};
-    const lastStrong = projects.map((p) => p.lastStrongEvidenceAt).filter(Boolean).sort().slice(-1)[0] || "—";
-    const rows = projects.map((p) => {
-      const am = activityMeta(p.state);
-      const attn = attentionMeta(p.attentionState);
-      return `<li class="wl-compact-row"><span class="wl-chip ${am.cls}">${am.text}</span> ${esc(p.displayName || p.projectId)} ${p.activeExecutionCount > 0 ? `<b>${p.activeExecutionCount}</b>` : ""} <span class="wl-chip ${attn.cls}">${attn.text}</span></li>`;
-    }).join("") || `<li>无已批准项目</li>`;
-    return `
-      <div class="wl-card wl-compact-bar">${transportMeta(d.transport)} <span class="wl-chip">覆盖 ${esc(cov.numerator == null ? "未知" : cov.numerator + "/" + cov.denominator)}</span></div>
-      <ul class="wl-compact-list">${rows}</ul>
-      <div class="wl-kv"><span class="wl-kv-label">执行中</span><b>${activeExecs.length}</b> · 等待 <b>${waiting.length}</b> · 阻塞 <b>${blocked.length}</b></div>
-      <div class="wl-kv"><span class="wl-kv-label">主关注</span>${primaryBlocker ? esc(primaryBlocker.agent + " · " + primaryBlocker.anchorProjectId + " · " + primaryBlocker.state) : "无"}</div>
-      <div class="wl-kv"><span class="wl-kv-label">最近强证据</span><span class="wl-mono">${esc(lastStrong)}</span></div>`;
+    const projects = Array.isArray(d.projects) ? d.projects : [];
+    const transport = transportMeta(d.transport && d.transport.transportState);
+    const rows = projects.map((project) => {
+      const git = project.git || {};
+      const status = projectStatus(project.activityState);
+      return `<div class="wl-compact-truth-row"><div><b>${esc(project.displayName || project.projectId)}</b><span class="mono">${esc(git.branch || "—")} · ${esc(git.localSha ? String(git.localSha).slice(0, 8) : "无 Git 样本")}</span></div><span class="wl-truth-chip ${status.cls}">${esc(status.label)}</span></div>`;
+    }).join("");
+    return `<section class="wl-compact-truth wl-card"><header><div><span class="wl-eyebrow">WORK-LAB Observer</span><h1>只读项目事实</h1></div><span class="wl-truth-chip ${transport.cls}">${esc(transport.label)}</span></header>${rows || '<div class="wl-truth-empty-inline">尚无已批准项目</div>'}</section>`;
   }
 
-  return {
-    globalBar,
-    kpi,
-    projectTable,
-    governanceDrift,
-    executionsTable,
-    tokenCi,
-    projectDetail,
-    compact,
-    activityMeta,
-    attentionMeta,
-    execMeta,
-  };
+  return { connectionStrip, projectOverview, optionalFacts, workspaceHero, taskpackSection, governanceAndGaps, historySection, sourceEvidence, full, compact };
 })();
 
 if (typeof module !== "undefined" && module.exports) {

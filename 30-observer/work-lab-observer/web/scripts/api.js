@@ -175,6 +175,7 @@ const WlApi = (function () {
       perProject.set(p.projectId, {
         projectId: p.projectId,
         displayName: p.displayName || p.projectId,
+        activityState: p.activityState || "UNKNOWN",
         state: String(p.activityState || "UNKNOWN").toLowerCase(),
         attentionState: p.attentionState || "NONE",
         identityState: p.identityState || "UNRESOLVED",
@@ -232,6 +233,7 @@ const WlApi = (function () {
       git: snapshot.git || { localSha: null, remoteSha: null, ciSha: null, matchState: "NO_LOCAL_CLAIM" },
       ci: snapshot.ci || [],
       tasks: snapshot.tasks || {},
+      workspace: snapshot.workspace || {},
       sourceRefs: snapshot.sourceRefs || [],
     };
   }
@@ -339,7 +341,7 @@ const WlApi = (function () {
       try { payload = JSON.parse(event.data); } catch (_) { return; }
       if (handlers && typeof handlers.onEvent === "function") handlers.onEvent(payload, event.lastEventId || null);
     };
-    ["observed", "heartbeat", "resync_required"].forEach((name) => source.addEventListener(name, dispatch));
+    ["snapshot", "observed", "heartbeat", "resync_required"].forEach((name) => source.addEventListener(name, dispatch));
     source.addEventListener("message", dispatch);
     source.onerror = () => {
       if (handlers && typeof handlers.onError === "function") handlers.onError();

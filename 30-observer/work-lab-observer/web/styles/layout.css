@@ -1,9 +1,9 @@
 /* WORK-LAB Observer — layout.css
    Shell / topbar / sidebar / content grid / responsive reflows.
-   Liquid-glass outer shell comes from tokens.css (.wl-shell). */
+   Opaque edge-to-edge desktop canvas; no decorative outer frame. */
 
 :root {
-  --wl-viewport-pad: 12px;
+  --wl-viewport-pad: 0px;
   --wl-content-max: 1600px;
   --wl-gap: 16px;
 }
@@ -13,14 +13,15 @@ body.wl-body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
 }
 
 /* === Outer shell === */
 .wl-shell {
   width: 100%;
-  max-width: var(--wl-content-max);
-  border-radius: var(--wl-radius-shell); /* R2 window radius: 30px */
+  max-width: none;
+  min-height: 100vh;
+  border-radius: 0;
   overflow: hidden;
   position: relative;
   display: flex;
@@ -28,15 +29,7 @@ body.wl-body {
 }
 
 /* 1px top inner highlight */
-.wl-shell::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--wl-shell-highlight), transparent);
-  pointer-events: none;
-  animation: wl-glass-sheen 6s ease-in-out infinite;
-}
+.wl-shell::before { display: none; }
 
 /* Subtle liquid-glass refraction sweep across the shell top edge (140-180ms eased,
    long period so it reads as glass breathing, not flashing; reduced-motion users get
@@ -115,11 +108,9 @@ body.wl-body {
 
 /* === Sidebar (full view) === */
 .wl-body-full {
-  display: grid;
-  grid-template-columns: 200px minmax(0, 1fr); /* contract sidebar 188-220 */
-  gap: var(--wl-gap);
-  padding: var(--wl-gap);
-  align-items: start;
+  display: block;
+  flex: 1;
+  padding: clamp(18px, 2.2vw, 32px);
 }
 
 .wl-sidebar {
@@ -166,7 +157,9 @@ body.wl-body {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--wl-gap);
+  gap: clamp(18px, 2vw, 28px);
+  max-width: 1180px;
+  margin: 0 auto;
 }
 
 /* 12-column content grid */
@@ -175,6 +168,7 @@ body.wl-body {
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: var(--wl-gap);
 }
+
 .wl-col-3 { grid-column: span 3; }
 .wl-col-4 { grid-column: span 4; }
 .wl-col-5 { grid-column: span 5; }
@@ -292,12 +286,11 @@ body.wl-body {
 /* 1024: narrow sidebar a bit, allow table to reveal via horizontal-scroll-safe table
    but we keep tables non-scrolling by wrapping overflow-x:auto on table containers. */
 @media (max-width: 1180px) {
-  .wl-body-full { grid-template-columns: 180px minmax(0, 1fr); }
   .wl-kpi { grid-template-columns: repeat(3, minmax(0,1fr)); }
 }
 
-@media (max-width: 960px) {
-  /* <960: top navigation, panels 2/1 col mix */
+@media (max-width: 800px) {
+  /* <800: top navigation, panels 2/1 col mix */
   .wl-body-full {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -351,7 +344,7 @@ body.wl-body {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-@media (max-width: 960px) {
+@media (max-width: 800px) {
   .wl-health-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) {

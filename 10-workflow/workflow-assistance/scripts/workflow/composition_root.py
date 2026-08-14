@@ -9,7 +9,6 @@ collectors/EventHub/v1 投影保留兼容。本模块不修改任何既有模块
 """
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 from canonical_store import CanonicalStore
@@ -23,7 +22,7 @@ EXPLICIT_APPROVED: set[str] = {"work-lab"}
 
 
 def load_approved_index(store: CanonicalStore) -> ApprovedProjectIndex:
-    """从 canonical 构造 ApprovedProjectIndex（定义缺失时降级为占位，approved=False）。"""
+    """从 canonical 构造 ApprovedProjectIndex；未批准 registry 行不得进入投影。"""
     projects: list[ProductProject] = []
     machine_roots: dict[str, str] = {}
     for row in store.list_projects():
@@ -34,12 +33,14 @@ def load_approved_index(store: CanonicalStore) -> ApprovedProjectIndex:
         if definition:
             project = ProductProject.from_definition(definition)
         else:
-            # 占位：display_name 来自 projects 表；approved 由白名单决定，
-            # 未批准项目绝不自动收集（resolve 保持 UNRESOLVED/候选）。
             project = ProductProject(
                 project_id=project_id,
                 display_name=str(row.get("display_name") or project_id),
+                approved=project_id in EXPLICIT_APPROVED,
             )
+        approved = project_id in EXPLICIT_APPROVED or project.approved
+        if not approved or project.deny_listed or project.never_scan:
+            continue
         root = str(row.get("root_path") or "")
         if root:
             project.add_root_binding(
@@ -59,7 +60,7 @@ def _project_rows(store: CanonicalStore, index: ApprovedProjectIndex) -> list[di
     projections: list[dict[str, Any]] = []
     for row in store.list_projects():
         project_id = str(row.get("project_id") or "")
-        if not project_id:
+        if not project_id or project_id not in index.projects:
             continue
         root = str(row.get("root_path") or "")
         project = index.by_root(root) if root else None
@@ -129,11 +130,40 @@ def _ci_rows(store: CanonicalStore) -> list[dict[str, Any]]:
 
 
 def _collector_coverage(store: CanonicalStore) -> dict[str, Any]:
-    """collector_health 行 → coverage（新鲜 collector 数/总数）。"""
+    """collector_health 行 → coverage；无运行记录时保持空覆盖。"""
     rows = store.list_collector_health()
-    total = len(rows)
-    fresh = sum(1 for row in rows if str(row.get("state") or "") == "healthy")
-    return {"numerator": fresh, "denominator": total, "scope": "collector_health"}
+    if not rows:
+        return {"numerator": None, "denominator": None, "scope": None}
+    fresh = sum(
+        1
+        for row in rows
+        if row.get("last_success_at")
+        and int(row.get("consecutive_failures") or 0) == 0
+        and not row.get("circuit_open_until")
+    )
+    return {"numerator": fresh, "denominator": len(rows), "scope": "collector_health"}
+
+
+def _git_state(store: CanonicalStore) -> dict[str, Any] | None:
+    """从 source_quality 读取最新、可核验的本地 Git 事实。"""
+    for row in store.list_source_quality():
+        if str(row.get("scope") or "") != "git":
+            continue
+        payload = row.get("payload") or {}
+        head = payload.get("head_sha")
+        if not head:
+            continue
+        return {
+            "localSha": head,
+            "remoteSha": None,
+            "branch": payload.get("branch"),
+            "dirtyCount": payload.get("dirty_count"),
+            "observedAt": row.get("observed_at"),
+            "quality": row.get("quality"),
+            "freshness": row.get("freshness"),
+            "sourceRef": payload.get("sourceRef"),
+        }
+    return None
 
 
 def build_v3_snapshot(
@@ -141,15 +171,18 @@ def build_v3_snapshot(
     index: ApprovedProjectIndex,
     *,
     revision: int,
-    events_url: str | None,
-    transport_state: str,
+    events_url: str | None = None,
+    transport_state: str = "UNKNOWN",
     generated_at: str | None = None,
+    workspace_evidence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """组装 v3 snapshot（transport 由 live-gate verdict 决定，绝不伪造 LIVE）。"""
+    coverage = _collector_coverage(store)
     return build_snapshot(
         revision=revision,
         generated_at=generated_at,
-        store_projection={},
+        source_watermark=store.max_watermark(),
+        store_projection=store.projection(),
         projects=_project_rows(store, index),
         executions=_execution_rows(store),
         usage=_usage_rows(store),
@@ -157,8 +190,10 @@ def build_v3_snapshot(
         transport={
             "transportState": transport_state,
             "eventsUrl": events_url,
-            "coverageNumerator": _collector_coverage(store)["numerator"],
-            "coverageDenominator": _collector_coverage(store)["denominator"],
-            "coverageScope": _collector_coverage(store)["scope"],
+            "coverageNumerator": coverage["numerator"],
+            "coverageDenominator": coverage["denominator"],
+            "coverageScope": coverage["scope"],
         },
+        git_state=_git_state(store),
+        workspace=workspace_evidence,
     )
