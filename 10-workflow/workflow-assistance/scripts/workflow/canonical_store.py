@@ -891,7 +891,7 @@ class CanonicalStore:
             rows = self._conn.execute(
                 """
                 SELECT MAX(observed_at) FROM (
-                    SELECT observed_at FROM telemetry_samples
+                    SELECT observed_at FROM telemetry_events
                     UNION ALL SELECT observed_at FROM usage_samples
                     UNION ALL SELECT observed_at FROM ci_runs
                 )
