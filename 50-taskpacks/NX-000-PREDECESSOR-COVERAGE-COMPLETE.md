@@ -38,7 +38,7 @@ Artifact: `.hermes/task-artifacts/gate-a/NX-000-PREDECESSOR-COVERAGE.json`.
 ## 4. Overlap dedupe
 
 - No two Observer UI / event schema / Skill Registry / Task Ledger instances.
-- WL-600/610/620/630 (Open Design / MINIGAME) → owned by `DTALEX66/OPEN-DESIGN-Assistance`, out of WORK-LAB scope.
+- WL-600/610/620/630 (Open Design / MINIGAME) → owned by `DTALEX66/DESIGN-LAB`, out of WORK-LAB scope.
 - Single owner per feature: Workflow governs contracts/ledger/CI; Observer is read-only projection.
 
 ## 5. Next

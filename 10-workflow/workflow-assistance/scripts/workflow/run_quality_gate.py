@@ -313,10 +313,12 @@ def gate_runtime_convergence() -> int:
     """WL3-400/410/500/510/600: canonical store, durable worker, collectors, SSE."""
     tests = (
         "tests/test_canonical_store.py",
+        "tests/test_canonical_store_v2.py",
         "tests/test_durable_worker.py",
         "tests/test_project_registry.py",
         "tests/test_collectors.py",
         "tests/test_sse_hub.py",
+        "tests/test_snapshot_sse_live.py",
         "tests/test_platform_discovery.py",
         "tests/test_skill_package_digest.py",
         "tests/test_config_ownership.py",
@@ -330,6 +332,17 @@ def gate_runtime_convergence() -> int:
         "tests/test_swap_and_size.py",
         "tests/test_growth_watcher_collector.py",
         "tests/test_active_projects.py",
+        "tests/test_product_project.py",
+        "tests/test_project_identity_resolver.py",
+        "tests/test_execution_anchor.py",
+        "tests/test_project_candidate_discovery.py",
+        "tests/test_execution_evidence.py",
+        "tests/test_collector_scheduler.py",
+        "tests/test_adapter_sdk.py",
+        "tests/test_agent_adapters.py",
+        "tests/test_fallback_collectors.py",
+        "tests/test_evidence_aggregator.py",
+        "tests/test_wlgm_privacy.py",
     )
     pythonpath = os.pathsep.join(
         [
@@ -467,6 +480,13 @@ def run_gate_sequence(names: tuple[str, ...]) -> int:
             print(f"\nQUALITY_GATE_FAIL gate={gate.name} exit_code={exit_code}")
             return exit_code
     print("\nQUALITY_GATE_PASS gates=" + ",".join(names))
+    # P1-3: never present an environment-limited local pass as full completion.
+    print(
+        "GATE_SEMANTICS STRUCTURAL_LOCAL_PASS=yes "
+        "RUNTIME_CANARY_PENDING=yes(without WORKLAB_CANARY_PROJECT_ROOTS) "
+        "TAURI_WINDOWS_PENDING=yes(without Rust toolchain) "
+        "EXACT_SHA_CI_UNVERIFIED=yes(local only, no exact-SHA Actions run)"
+    )
     return 0
 
 

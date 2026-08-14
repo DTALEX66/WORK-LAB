@@ -132,6 +132,79 @@ class ProjectTerminalGuardTests(unittest.TestCase):
                 )
                 self.assertIn("project", reason)
 
+    def test_permits_ellipsis_and_git_range_text(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        for child in (
+            r"echo ...",
+            r"git log HEAD..origin/main",
+            r"python -c 'print(\"...\")'",
+            r"echo a..b",
+        ):
+            with self.subTest(child=child):
+                reason = module.validate(
+                    self.payload(
+                        repo,
+                        'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- ' + child,
+                    )
+                )
+                self.assertIsNone(reason)
+
+    def test_blocks_real_parent_traversal_forms(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        for child in (
+            r"python -c 'open(\"../outside.txt\")'",
+            r"python -c 'open(\"scripts/../../secret.txt\")'",
+            r"python -c 'open(\"..\\outside.txt\")'",
+            r"ls ..",
+            r"cat ../../etc/passwd",
+        ):
+            with self.subTest(child=child):
+                reason = module.validate(
+                    self.payload(
+                        repo,
+                        'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- ' + child,
+                    )
+                )
+                self.assertIsNotNone(reason)
+
+    def test_permits_inner_project_absolute_path_with_spaces(self) -> None:
+        module = load_module()
+        raw = tempfile.TemporaryDirectory()
+        self.addCleanup(raw.cleanup)
+        repo = Path(raw.name) / "repo with space"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        inside = repo / "inner file.txt"
+        inside.write_text("x", encoding="utf-8")
+
+        reason = module.validate(
+            self.payload(
+                repo,
+                'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- '
+                f'python -c "open(\'{inside.as_posix()}\')"',
+            )
+        )
+
+        self.assertIsNone(reason)
+
+    def test_blocks_external_absolute_path_with_spaces(self) -> None:
+        module = load_module()
+        repo = self.make_repo()
+
+        reason = module.validate(
+            self.payload(
+                repo,
+                'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- '
+                r'python -c "open(\'C:/outside dir/file.txt\')"',
+            )
+        )
+
+        self.assertIn("project", reason)
+
     def test_blocks_known_windows_external_spill_roots(self) -> None:
         module = load_module()
         repo = self.make_repo()

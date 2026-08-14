@@ -35,7 +35,7 @@
 1. `10-workflow/workflow-assistance`：主动控制面，拥有配置合同、Task Ledger、唯一 Telemetry Ledger、Sidecar、Adapter、交付和验证门禁；
 2. `30-observer/work-lab-observer`：严格只读投影，可读 Workflow 公开投影，但不能执行、批准、重试、应用、回滚、改变任务状态或写 Telemetry Ledger。
 
-Open Design 已迁至 `DTALEX66/OPEN-DESIGN-Assistance`；MiniGame 仅保留历史 fixture/archive。两者不得由本切片恢复为 active module 或普通 CI Gate。
+Open Design 已迁至 `DTALEX66/DESIGN-LAB`；MiniGame 仅保留历史 fixture/archive。两者不得由本切片恢复为 active module 或普通 CI Gate。
 
 ## 实现总结
 

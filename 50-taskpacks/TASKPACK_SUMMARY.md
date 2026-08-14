@@ -10,7 +10,7 @@ The active module registry is authoritative:
 - `10-workflow/workflow-assistance` — client-neutral workflow governance;
 - `30-observer/work-lab-observer` — strictly read-only observation and evidence.
 
-Open Design was transferred to `DTALEX66/OPEN-DESIGN-Assistance`; the one-time
+Open Design was transferred to `DTALEX66/DESIGN-LAB`; the one-time
 pointer and migration evidence are retained under `90-archive-manifests/` and
 ignored `.hermes/` artifacts.
 

@@ -15,7 +15,7 @@ These are the only active module roots:
 1. `10-workflow/workflow-assistance` — client-neutral workflow governance, execution control, portable contracts and delivery boundaries.
 2. `30-observer/work-lab-observer` — strictly read-only derived observation, projections and evidence reports.
 
-Open Design was transferred to `DTALEX66/OPEN-DESIGN-Assistance` on the
+Open Design was transferred to `DTALEX66/DESIGN-LAB` on the
 authorized migration branch. WORK-LAB retains only the one-time pointer under
 `90-archive-manifests/`; it no longer owns or executes that module.
 
@@ -26,7 +26,7 @@ WORK-LAB is responsible for the Open Design **non-design global configuration**
 audit boundary. These are owned and `MANAGE`d by WORK-LAB. Any configuration
 that would **enhance design capability** (models/tools, generation params,
 design assets, design specs, design systems, quality gates, editable handoff)
-belongs to the `OPEN-DESIGN-Assistance` project itself and is **neither
+belongs to the `DESIGN-LAB` project itself and is **neither
 collected nor managed here** (`IGNORE`). Field-level ownership lives in
 `10-workflow/workflow-assistance/config/config-ownership.json` (adapter
 `open-design`).

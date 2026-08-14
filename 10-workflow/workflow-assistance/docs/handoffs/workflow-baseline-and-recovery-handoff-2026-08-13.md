@@ -38,7 +38,7 @@ WORK-LAB 是官方软件之上的工作流配置、治理与恢复层，不是�
 - 本机平台发现将 Hermes 和 Codex CLI 识别为 `UNIQUE`，未发现重复 runtime。
 - 经用户直接明确授权，Open Design 桌面代理快捷方式曾被替换为唯一官方入口：`Open Design.lnk` 直达官方 `Open Design.exe`；创建后先验证目标存在，再删除旧代理快捷方式。此为一次性用户桌面修复，不是 WORK-LAB 当前声明的受管恢复能力或同步器写入面。
 - Hermes、CC Switch、Open Design 的当前桌面入口均经目标存在性回读。OpenHuman 本机未安装；记为不适用，不得虚构为已验收。
-- Open Design 的设计能力、模型/工具选择、生成参数、设计资产和设计规范仍属于 `OPEN-DESIGN-Assistance`，WORK-LAB 不管理或恢复。
+- Open Design 的设计能力、模型/工具选择、生成参数、设计资产和设计规范仍属于 `DESIGN-LAB`，WORK-LAB 不管理或恢复。
 
 ## 尚未构成项目缺陷的事项
 
