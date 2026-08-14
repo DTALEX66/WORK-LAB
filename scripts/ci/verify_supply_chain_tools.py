@@ -21,9 +21,10 @@ REQUIRED_TOOLS = {
     "rhysd/actionlint": "actionlint",
     "aquasecurity/trivy-action": "trivy",
 }
-# zizmor runs as a pinned uv tool (uv tool run zizmor@<ver>); the upstream
-# Docker action's version input mapping was unreliable in CI.
-ZIZMOR_PIN_RE = re.compile(r"uv tool run zizmor@([^\s#]+)")
+# zizmor runs as a pinned pipx tool (pipx run zizmor==<ver>); the upstream
+# Docker action's version input mapping was unreliable in CI and the runner
+# lacks uv.
+ZIZMOR_PIN_RE = re.compile(r"pipx run zizmor==([^\s#]+)")
 FORBIDDEN_OVERLAP = ("syft", "grype", "gitleaks", "osv-scanner", "semgrep")
 WORKFLOW_REL = Path(".github/workflows/work-lab-gate.yml")
 
