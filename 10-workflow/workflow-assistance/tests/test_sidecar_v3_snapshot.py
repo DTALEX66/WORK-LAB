@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import threading
 import time
 import unittest
 from pathlib import Path
 from unittest import mock
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts" / "workflow"))
 
 from canonical_store import CanonicalStore
 from composition_root import build_v3_snapshot, load_approved_index
@@ -274,6 +278,7 @@ class SidecarV3SnapshotTests(unittest.TestCase):
             def healthy_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
                 return CollectorResult(kind="quality", ok=True, records=[])
             try:
+                sidecar.start_live_updates(interval_seconds=0.01)
                 sidecar.start_worker(tick_seconds=30, collectors=[healthy_collector])
                 deadline = time.time() + 2
                 while len(sidecar.store.list_collector_health()) < 2 and time.time() < deadline:
@@ -287,6 +292,102 @@ class SidecarV3SnapshotTests(unittest.TestCase):
                 self.assertEqual(transport["transportState"], "LIVE")
                 self.assertEqual(transport["freshnessState"], "FRESH")
                 sidecar.stop_worker()
+                self.assertNotEqual(sidecar.v3_snapshot()["transport"]["transportState"], "LIVE")
+            finally:
+                sidecar.close()
+
+    def test_watcher_publish_failure_rolls_back_watermark_and_retries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sidecar = make_sidecar(Path(tmp))
+            original_publish = sidecar.publish_observed
+            calls = 0
+
+            def flaky_publish() -> int:
+                nonlocal calls
+                calls += 1
+                if calls == 1:
+                    raise RuntimeError("synthetic publish failure")
+                return original_publish()
+
+            try:
+                sidecar.publish_observed = flaky_publish  # type: ignore[method-assign]
+                sidecar.start_live_updates(interval_seconds=0.01)
+                sidecar.store.upsert_collector_health(
+                    {
+                        "name": "probe",
+                        "totalRuns": 1,
+                        "lastRunAt": "2026-08-15T00:00:00Z",
+                        "lastSuccessAt": "2026-08-15T00:00:00Z",
+                        "consecutiveFailures": 0,
+                        "circuitOpenUntil": None,
+                        "droppedCount": 0,
+                    }
+                )
+                deadline = time.time() + 2
+                while calls < 2 and time.time() < deadline:
+                    time.sleep(0.02)
+                self.assertGreaterEqual(calls, 2)
+                self.assertTrue(sidecar.live_updates_running())
+                self.assertGreater(sidecar._revision, 0)
+                self.assertIsNotNone(sidecar._last_write_at)
+            finally:
+                sidecar.close()
+
+    def test_stale_historical_collector_success_cannot_reach_live(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sidecar = make_sidecar(Path(tmp))
+
+            def healthy_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+                return CollectorResult(kind="quality", ok=True, records=[])
+
+            try:
+                sidecar.start_worker(tick_seconds=30, collectors=[healthy_collector])
+                deadline = time.time() + 2
+                while len(sidecar.store.list_collector_health()) < 2 and time.time() < deadline:
+                    time.sleep(0.02)
+                stale = "2020-01-01T00:00:00Z"
+                for name in ("healthy_collector", "worker_loop"):
+                    sidecar.store.upsert_collector_health(
+                        {
+                            "name": name,
+                            "totalRuns": 1,
+                            "lastRunAt": stale,
+                            "lastSuccessAt": stale,
+                            "consecutiveFailures": 0,
+                            "circuitOpenUntil": None,
+                            "droppedCount": 0,
+                        }
+                    )
+                now = time.time()
+                sidecar._revision = 1
+                sidecar._last_heartbeat_at = now
+                sidecar._last_write_at = now
+                sidecar.mark_sse_connected()
+                snapshot = sidecar.v3_snapshot()
+                self.assertEqual(snapshot["coverage"]["numerator"], 0)
+                self.assertEqual(snapshot["coverage"]["denominator"], 2)
+                self.assertNotEqual(snapshot["transport"]["transportState"], "LIVE")
+            finally:
+                sidecar.close()
+
+    def test_dead_watcher_cannot_reach_live_with_historical_revision(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sidecar = make_sidecar(Path(tmp))
+
+            def healthy_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+                return CollectorResult(kind="quality", ok=True, records=[])
+
+            try:
+                sidecar.start_worker(tick_seconds=30, collectors=[healthy_collector])
+                deadline = time.time() + 2
+                while len(sidecar.store.list_collector_health()) < 2 and time.time() < deadline:
+                    time.sleep(0.02)
+                now = time.time()
+                sidecar._revision = 7
+                sidecar._last_heartbeat_at = now
+                sidecar._last_write_at = now
+                sidecar.mark_sse_connected()
+                self.assertFalse(sidecar.live_updates_running())
                 self.assertNotEqual(sidecar.v3_snapshot()["transport"]["transportState"], "LIVE")
             finally:
                 sidecar.close()

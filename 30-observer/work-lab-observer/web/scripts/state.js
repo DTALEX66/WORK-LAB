@@ -68,6 +68,13 @@ const WlState = (function () {
   /* Accept a new projection (FIXTURE or LIVE). Never store a partial/empty as
      last-good if we already have something better. */
   function accept(data, mode) {
+    const incomingRevision = data && Number.isInteger(data.revision) ? data.revision : null;
+    const currentRevision = state.lastGood && Number.isInteger(state.lastGood.revision)
+      ? state.lastGood.revision
+      : null;
+    if (incomingRevision !== null && currentRevision !== null && incomingRevision < currentRevision) {
+      return state;
+    }
     const m = normalizeMode(mode);
     state.mode = m;
     state.data = m === "SNAPSHOT" ? staleCopy(data, "stale") : data;

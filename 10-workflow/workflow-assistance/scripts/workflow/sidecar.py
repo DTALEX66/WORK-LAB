@@ -25,6 +25,8 @@ from sse_revision import SseRevisionHub
 from snapshot_validator import validate_snapshot
 from workspace_evidence import load_workspace_evidence
 
+COLLECTOR_FRESHNESS_SECONDS = 60.0
+
 
 class WorkflowSidecar:
     def __init__(self, project_root: Path, runtime_root: Path) -> None:
@@ -99,9 +101,16 @@ class WorkflowSidecar:
                         self.live.set_mode(STALE)
                     continue
                 if current != last_fingerprint:
+                    previous_write_at = self._last_write_at
+                    self._last_write_at = time.time()
+                    try:
+                        self.publish_observed()
+                    except Exception:  # fail closed and retry the same fingerprint
+                        self._last_write_at = previous_write_at
+                        if self.live.mode() != STALE:
+                            self.live.set_mode(STALE)
+                        continue
                     last_fingerprint = current
-                    self._last_write_at = __import__("time").time()
-                    self.publish_observed()
 
         thread = threading.Thread(
             target=_watch,
@@ -186,6 +195,9 @@ class WorkflowSidecar:
     def worker_running(self) -> bool:
         return bool(self._worker_thread and self._worker_thread.is_alive())
 
+    def live_updates_running(self) -> bool:
+        return bool(self._watch_thread and self._watch_thread.is_alive())
+
     def health(self) -> dict[str, Any]:
         return {"status": "ok", "readOnlyControl": True, "ledgerOwner": "workflow-assistance", "observerMutation": False}
 
@@ -217,13 +229,30 @@ class WorkflowSidecar:
             return None
         rows = self.store.list_collector_health()
         rows_by_name = {str(row.get("name")): row for row in rows}
+        now = time.time()
+
+        def fresh_success(row: dict[str, Any]) -> bool:
+            raw = row.get("last_success_at")
+            if not isinstance(raw, str) or not raw:
+                return False
+            try:
+                observed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                if observed.tzinfo is None:
+                    return False
+                age = now - observed.timestamp()
+            except (TypeError, ValueError, OverflowError):
+                return False
+            return (
+                0.0 <= age <= COLLECTOR_FRESHNESS_SECONDS
+                and int(row.get("consecutive_failures") or 0) == 0
+                and not row.get("circuit_open_until")
+            )
+
         fresh = sum(
             1
             for name in self._expected_collector_names
             if (row := rows_by_name.get(name)) is not None
-            if row.get("last_success_at")
-            and int(row.get("consecutive_failures") or 0) == 0
-            and not row.get("circuit_open_until")
+            if fresh_success(row)
         )
         return {
             "numerator": fresh,
@@ -242,7 +271,7 @@ class WorkflowSidecar:
             sse_connected=connected,
             heartbeat_age_seconds=(now - self._last_heartbeat_at) if self._last_heartbeat_at is not None else float("inf"),
             heartbeat_threshold_seconds=HEARTBEAT_SECONDS,
-            cursor_valid=self._revision > 0,
+            cursor_valid=self._revision > 0 and self.live_updates_running(),
             writer_watermark_age_seconds=(now - self._last_write_at) if self._last_write_at is not None else float("inf"),
             writer_watermark_threshold_seconds=60.0,
             coverage=coverage,

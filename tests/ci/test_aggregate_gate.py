@@ -124,6 +124,60 @@ class AggregateGateTests(unittest.TestCase):
         }
         self.assertEqual(gate.main(json.dumps({"gate_plan": plan, "expected_plan_digest": "wrong", "expected_head_sha": "sha", "jobs": {"workflow": "success"}})), 1)
 
+    def test_plan_without_exact_commit_identity_fails_closed(self):
+        gate = load_gate()
+        plan = {
+            "schema_version": "workflow/gate-plan/v1",
+            "plan_id": "work-lab-gate",
+            "source_identity": {"tree": {"oid": "tree"}},
+            "changed_paths": ["README.md"],
+            "required_gates": ["workflow"],
+            "skipped_gates": [],
+            "risk": "medium",
+            "delivery_effect": "none",
+            "platform_scope": ["discovered"],
+            "generated_at": "2026-08-15T00:00:00Z",
+        }
+        plan["plan_digest"] = {"algorithm": "sha256", "value": gate._plan_digest(plan)}
+        payload = {"gate_plan": plan, "expected_plan_digest": plan["plan_digest"]["value"], "expected_head_sha": "sha", "jobs": {"workflow": "success"}}
+        self.assertEqual(gate.main(json.dumps(payload)), 1)
+
+    def test_nonempty_change_set_cannot_select_zero_gates(self):
+        gate = load_gate()
+        plan = {
+            "schema_version": "workflow/gate-plan/v1",
+            "plan_id": "work-lab-gate",
+            "source_identity": {"commit": {"oid": "sha"}, "tree": {"oid": "tree"}},
+            "changed_paths": ["README.md"],
+            "required_gates": [],
+            "skipped_gates": [],
+            "risk": "low",
+            "delivery_effect": "none",
+            "platform_scope": ["discovered"],
+            "generated_at": "2026-08-15T00:00:00Z",
+        }
+        plan["plan_digest"] = {"algorithm": "sha256", "value": gate._plan_digest(plan)}
+        payload = {"gate_plan": plan, "expected_plan_digest": plan["plan_digest"]["value"], "expected_head_sha": "sha", "jobs": {}}
+        self.assertEqual(gate.main(json.dumps(payload)), 1)
+
+    def test_non_sha256_plan_digest_algorithm_fails_closed(self):
+        gate = load_gate()
+        plan = {
+            "schema_version": "workflow/gate-plan/v1",
+            "plan_id": "work-lab-gate",
+            "source_identity": {"commit": {"oid": "sha"}, "tree": {"oid": "tree"}},
+            "changed_paths": ["README.md"],
+            "required_gates": ["workflow"],
+            "skipped_gates": [],
+            "risk": "medium",
+            "delivery_effect": "none",
+            "platform_scope": ["discovered"],
+            "generated_at": "2026-08-15T00:00:00Z",
+        }
+        plan["plan_digest"] = {"algorithm": "md5", "value": gate._plan_digest(plan)}
+        payload = {"gate_plan": plan, "expected_plan_digest": plan["plan_digest"]["value"], "expected_head_sha": "sha", "jobs": {"workflow": "success"}}
+        self.assertEqual(gate.main(json.dumps(payload)), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
