@@ -2,7 +2,7 @@
    Read-only contract: no execution/retry/approve/submit/push/merge/publish/
    switch buttons in the rendered DOM, no POST/PUT/PATCH/DELETE success path in
    the API layer, no credentials/session/prompt access, theme switch is
-   memory-only, and GET /api/dashboard is the only network read. */
+   memory-only, and GET /api/v1/snapshot is the only network read. */
 
 "use strict";
 
@@ -101,6 +101,16 @@ function run() {
     assert(fetchCalls.length >= 1, "has fetch call(s)");
     assert(!/method:\s*["'](post|put|patch|delete)/i.test(apiSrc), "no non-GET fetch method");
     assert(/method:\s*["']GET["']/i.test(apiSrc), "GET method explicit");
+  });
+
+  t("retired dashboard helper fails closed without a network request", () => {
+    let rejected = false;
+    try {
+      WlApi.fetchDashboard();
+    } catch (err) {
+      rejected = /endpoint retired|fetchSnapshot/.test(String(err && err.message));
+    }
+    assert(rejected, "legacy fetchDashboard must reject synchronously");
   });
 
   t("snapshot endpoint accepts only explicit loopback read-only URL (v3)", () => {

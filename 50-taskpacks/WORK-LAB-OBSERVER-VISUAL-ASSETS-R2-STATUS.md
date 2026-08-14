@@ -110,12 +110,14 @@ The frontend consumes the canonical projection through `GET /api/v1/snapshot` an
 Fresh local verification after the implementation:
 
 ```text
-JS UI + desktop component tests: 54 passed, 0 failed
+JS UI + desktop component tests: 55 passed, 0 failed
 Sidecar v3 focused tests: 12 passed
 Runtime-continuity focused tests: 28 passed
+Sidecar endpoint focused tests: 14 passed
+Error Ledger: 73 entries, 13 classifications, raw_sensitive_data=false, counts_consistent=true
 Production build command: cargo tauri build --no-bundle
-Production artifact: src-tauri/target/release/app.exe (9,538,560 bytes; SHA-256 fc3dbd6ddfdbdbb619fc46d27bef3216beb5927e818c1a1b7e692dc3b8b797cf)
-Production build: cargo tauri build --no-bundle, 18.28s final incremental build; temporary Cargo patches removed and lockfile restored byte-for-byte
+Production artifact: src-tauri/target/release/app.exe (9,538,560 bytes; SHA-256 a339f65e85b7e1c7c74954b6c5b2ec1b223802a3498e76eed216d14ace1fd882)
+Production build: cargo tauri build --no-bundle, 18.68s final incremental build; temporary Cargo patches removed and lockfile restored to the branch HEAD
 Real WebView2: Snapshot 200, named SSE snapshot + heartbeat, 28/28 TaskPack, 6/6 coverage, truthful offline/recovery labels, no horizontal overflow
 Final runtime target: one sidecar, one app.exe, no temporary static server, no CDP listener
 ```
