@@ -138,7 +138,7 @@ installed toolchain. Exact-SHA source CI is independently complete.
 - R2 implementation and production EXE: complete and verified in the local working tree.
 - Required tests and focused verification: passed.
 - External provider/live mutation: not executed.
-- Source Git delivery and exact-SHA CI: complete through PR #104 and merge-SHA main CI.
+- Source Git delivery and exact-SHA CI: complete through controlled PRs and independent candidate/merge-SHA runs; the latest identity is read from GitHub history rather than self-declared here.
 - Human release approval, signing and publication: not executed and not implied by source delivery.
 - R2 implementation commit/PR/CI/merge: PR `#30`, exact-head PR run
   `31251264323`, final main push run `31251306631`, merged implementation SHA
@@ -147,10 +147,11 @@ installed toolchain. Exact-SHA source CI is independently complete.
   `31251503373`, final main push run `31251545134`, merged reconciliation SHA
   `5d2ceb264edf54c42e347acd1246202a0add31ac`.
 - Local and remote `main` were read back equal after each merge. The two SHA
-  values above remain historical implementation/reconciliation ancestry. The
-  current truthful evidence/recovery baseline was later delivered by PR #104,
-  candidate `992e62b...`, merge SHA `259fc210...`, with exact-head and
-  merge-SHA CI success; no local dirty-tree claim is substituted for GitHub CI.
+  values above remain historical implementation/reconciliation ancestry; PR
+  #104 (`992e62b...` → `259fc210...`) is the later truth/recovery anchor. Any
+  runtime-continuity delivery after that anchor is identified by GitHub PR,
+  branch, and exact-SHA run history, not by a self-referential “latest PR” field
+  in this file; no local dirty-tree claim is substituted for GitHub CI.
 
 ## Source and scope
 
