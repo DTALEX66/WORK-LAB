@@ -68,13 +68,13 @@ Delivered baseline tree: 868ab7ae67b749741de30e219f70e934410aedb8
 GATE-RUNTIME-CONVERGENCE: Tauri real Sidecar, production WebView2 and restart recovery verified
 ```
 
-2026-08-15 delivery evidence：Observer JS `54 passed, 0 failed`；runtime-continuity focused `28 passed`；最终 production Tauri 命令在 `18.28s` 内生成 `src-tauri/target/release/app.exe`（SHA-256 `fc3dbd6ddfdbdbb619fc46d27bef3216beb5927e818c1a1b7e692dc3b8b797cf`）；真实 WebView2 同一 PID 完成 `OFFLINE → LIVE/FRESH → OFFLINE(last-good) → LIVE/FRESH`，并读回 TaskPack `28/28`、collector coverage `6/6`。候选 `992e62b17020fb05f593650be0c5ee2002edbe2a` 经 PR #104 squash merge 为 `259fc210289573b61300625c20b8766049f94964`；exact-head push/PR CI 与 merge-SHA main CI 均为 success。
+2026-08-15 delivery evidence：Observer JS `54 passed, 0 failed`；runtime-continuity focused `28 passed`；最终 production Tauri 命令在 `18.28s` 内生成 `src-tauri/target/release/app.exe`（SHA-256 `fc3dbd6ddfdbdbb619fc46d27bef3216beb5927e818c1a1b7e692dc3b8b797cf`）；真实 WebView2 同一 PID 完成 `OFFLINE → LIVE/FRESH → OFFLINE(last-good) → LIVE/FRESH`，并读回 TaskPack `28/28`、collector coverage `6/6`。PR #104 与 merge SHA `259fc210...` 保留为 truth/recovery 历史锚点；其后的 runtime-continuity 交付不在本文件硬编码“当前 PR”，最终 head/merge SHA 与 CI 结论一律以 GitHub PR、branch 和 exact-SHA run 历史为准。
 
 本轮还修复了初始 snapshot 失败后的产品内重试、SSE 重连退避被重置、多客户端连接状态误判、响应头阶段断开导致的连接计数泄漏，以及 sidecar 启动时间冒充 heartbeat/writer freshness。runtime-continuity hardening 已将 Workflow-owned worker 纳入 sidecar 生命周期、持久化 collector health、投影独立 freshness，并以稳定事件 ID 防止轮询重复累计；EventSource 中断会把 last-good 明确标成 Sidecar/事件流离线。只有真实 writer、heartbeat、cursor、SSE 与 coverage 同时满足才显示 `LIVE/FRESH`。
 
 ## 4. 唯一批准清单（状态截至 2026-08-15）
 
-1. **commit/push/PR** — ✅ 已完成：历史批次与 Observer truth/recovery PR #104 全部 squash merge 到 main；#104 merge SHA `259fc210289573b61300625c20b8766049f94964`；
+1. **commit/push/PR** — ✅ 已完成：PR #104/merge SHA `259fc210...` 是历史 truth/recovery 锚点；后续交付由 GitHub PR、main branch 与 exact-SHA CI 历史给出，不在审批包内写入会因自身 merge 立即过期的“最新 PR”字段；
 2. **Hermes/Codex global config live apply** — ✅ Codex overlay v3 已 apply+verify（10 skills，含 openhuman-integration 与 self-improvement，PR #41/#43）；Hermes live 未动（按边界合同）；
 3. **双入口/双安装卸载或配置迁移** — ✅ 已对账：入口矩阵与职责边界见 `docs/workflow/dual-entry-install.md`（Hermes setup.* → sync_hermes_workflow_assets；Codex legacy bootstrap 仅目标不存在时最小引导，canonical sync 管理全部受管表面；无并行安装面）；
 4. **Windows toolchain/portable/sign/release** — ✅ portable production EXE 已在项目内 xwin/rust-lld 路径构建并运行；代码签名、installer/ZIP、release 不属于本 TaskPack 的完成声明，未执行；
@@ -84,9 +84,9 @@ GATE-RUNTIME-CONVERGENCE: Tauri real Sidecar, production WebView2 and restart re
 
 ## 5. 明确未宣称
 
-- Observer delivery 的 exact-SHA CI — 已执行：candidate push/PR CI 与 merge SHA `259fc210...` main CI 均成功；
+- Observer delivery 的 exact-SHA CI — 已执行：PR #104 历史锚点及后续交付均按各自 candidate/merge SHA 独立验证；最新结论必须从 GitHub run history 读回，不由本文件自称；
 - 便携 production EXE — 已本地构建并运行；未签名、未打 installer/ZIP、未发布；
 - 正式 production release — 否；
 - Hermes live apply、真实外部项目 profile 写入 — 否（待逐项授权）；paid provider smoke 仅保留 2026-08-10 历史证据，不冒充当前树验证。
 
-最终状态：**`DELIVERED`** — WL3-000..820 全部具备本地验证证据，Observer/Tauri 已实现、测试、构建、真实运行，并经 PR #104 与 merge-SHA main CI 完成交付。签名/installer/ZIP、Hermes live apply、外部项目 profile 和正式 release 是独立授权或发布边界，不再被错误计入 TaskPack 未完成项。
+最终状态：**`DELIVERED`** — WL3-000..820 全部具备本地验证证据，Observer/Tauri 已实现、测试、构建、真实运行，并经受控 PR 与 candidate/merge exact-SHA CI 完成交付；具体最新 SHA/URL 从 GitHub 权威历史读回。签名/installer/ZIP、Hermes live apply、外部项目 profile 和正式 release 是独立授权或发布边界，不再被错误计入 TaskPack 未完成项。
