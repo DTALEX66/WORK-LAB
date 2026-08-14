@@ -284,30 +284,10 @@ const WlApi = (function () {
     throw lastError || new Error("No Observer snapshot endpoint available");
   }
 
-  async function fetchDashboard(timeoutMs) {
-    // Retired (R2 third batch): the legacy dashboard entry is retired;
-    // this stub fails closed against the v3 endpoint.
-    // Kept as a fail-closed stub so any legacy caller cannot silently pass.
-    const timeout = timeoutMs || 5000;
-    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-    const timer = ctrl ? setTimeout(() => ctrl.abort(), timeout) : null;
-    try {
-      const res = await fetch("/api/v1/snapshot", {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        signal: ctrl ? ctrl.signal : undefined,
-      });
-      if (!res.ok) {
-        throw new Error("GET /api/v1/snapshot -> " + res.status);
-      }
-      const data = await res.json();
-      return { ok: true, mode: "UNKNOWN", data };
-    } catch (err) {
-      if (timer) clearTimeout(timer);
-      throw err;
-    } finally {
-      if (timer) clearTimeout(timer);
-    }
+  function fetchDashboard() {
+    // Retired (R2 third batch): legacy callers must fail closed instead of
+    // silently receiving a v3 response through an unvalidated path.
+    throw new Error("Legacy dashboard endpoint retired; use fetchSnapshot");
   }
 
   /* Client-side non-GET negative control. Returns a rejected promise for any

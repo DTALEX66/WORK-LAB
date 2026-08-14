@@ -68,7 +68,7 @@ Delivered baseline tree: 868ab7ae67b749741de30e219f70e934410aedb8
 GATE-RUNTIME-CONVERGENCE: Tauri real Sidecar, production WebView2 and restart recovery verified
 ```
 
-2026-08-15 delivery evidence：Observer JS `54 passed, 0 failed`；runtime-continuity focused `28 passed`；最终 production Tauri 命令在 `18.28s` 内生成 `src-tauri/target/release/app.exe`（SHA-256 `fc3dbd6ddfdbdbb619fc46d27bef3216beb5927e818c1a1b7e692dc3b8b797cf`）；真实 WebView2 同一 PID 完成 `OFFLINE → LIVE/FRESH → OFFLINE(last-good) → LIVE/FRESH`，并读回 TaskPack `28/28`、collector coverage `6/6`。PR #104 与 merge SHA `259fc210...` 保留为 truth/recovery 历史锚点；其后的 runtime-continuity 交付不在本文件硬编码“当前 PR”，最终 head/merge SHA 与 CI 结论一律以 GitHub PR、branch 和 exact-SHA run 历史为准。
+2026-08-15 delivery evidence：Observer JS `55 passed, 0 failed`；runtime-continuity focused `28 passed`；sidecar endpoint focused `14 passed`；Error Ledger `73 entries / 13 classifications / raw_sensitive_data=false / counts_consistent=true`；最终 production Tauri 命令在 `18.68s` 内生成 `src-tauri/target/release/app.exe`（`9,538,560 bytes`；SHA-256 `a339f65e85b7e1c7c74954b6c5b2ec1b223802a3498e76eed216d14ace1fd882`）；真实 WebView2 同一 PID 完成 `OFFLINE → LIVE/FRESH → OFFLINE(last-good) → LIVE/FRESH`，并读回 TaskPack `28/28`、collector coverage `6/6`。PR #104 与 merge SHA `259fc210...` 保留为 truth/recovery 历史锚点；其后的 runtime-continuity 交付不在本文件硬编码“当前 PR”，最终 head/merge SHA 与 CI 结论一律以 GitHub PR、branch 和 exact-SHA run 历史为准。
 
 本轮还修复了初始 snapshot 失败后的产品内重试、SSE 重连退避被重置、多客户端连接状态误判、响应头阶段断开导致的连接计数泄漏，以及 sidecar 启动时间冒充 heartbeat/writer freshness。runtime-continuity hardening 已将 Workflow-owned worker 纳入 sidecar 生命周期、持久化 collector health、投影独立 freshness，并以稳定事件 ID 防止轮询重复累计；EventSource 中断会把 last-good 明确标成 Sidecar/事件流离线。只有真实 writer、heartbeat、cursor、SSE 与 coverage 同时满足才显示 `LIVE/FRESH`。
 
