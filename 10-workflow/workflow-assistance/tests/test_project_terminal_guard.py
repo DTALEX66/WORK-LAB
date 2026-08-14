@@ -37,6 +37,76 @@ class ProjectTerminalGuardTests(unittest.TestCase):
             "session_id": "test-session",
         }
 
+    def test_blocks_sibling_prefix_path_when_project_name_contains_space(self) -> None:
+        """P0-8 regression: root \"repo with space\", external sibling \"repo\"
+        is its character prefix -> must BLOCK (was silently allowed)."""
+        module = load_module()
+        raw = tempfile.TemporaryDirectory()
+        self.addCleanup(raw.cleanup)
+        repo = Path(raw.name) / "repo with space"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        sibling = Path(raw.name) / "repo"  # character-prefix sibling
+        sibling.mkdir()
+        outside = sibling / "outside file.txt"  # space triggers regex truncation
+        outside.write_text("x", encoding="utf-8")
+
+        for child in (
+            f"python -c \"open('{outside.as_posix()}')\"",  # quoted full external path (space)
+            f"python -c \"open('{sibling.as_posix()}')\"",  # bare sibling (no space)
+        ):
+            with self.subTest(child=child):
+                reason = module.validate(
+                    self.payload(
+                        repo,
+                        'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- ' + child,
+                    )
+                )
+                self.assertIn("project", reason)
+
+    def test_blocks_ancestor_prefix_path_when_ancestor_contains_space(self) -> None:
+        """P0-8 regression: ancestor \"parent with space\" truncated fragment is
+        the root's character prefix -> must BLOCK."""
+        module = load_module()
+        raw = tempfile.TemporaryDirectory()
+        self.addCleanup(raw.cleanup)
+        parent = Path(raw.name) / "parent with space"
+        parent.mkdir()
+        repo = parent / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        outside = parent / "outside file.txt"
+        outside.write_text("x", encoding="utf-8")
+
+        child = f"python -c \"open('{outside.as_posix()}')\""
+        reason = module.validate(
+            self.payload(
+                repo,
+                'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- ' + child,
+            )
+        )
+        self.assertIn("project", reason)
+
+    def test_permits_quoted_inner_path_with_spaces(self) -> None:
+        """P0-8 guard: a quoted INNER path (root contains a space) still passes."""
+        module = load_module()
+        raw = tempfile.TemporaryDirectory()
+        self.addCleanup(raw.cleanup)
+        repo = Path(raw.name) / "repo with space"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        inner = repo / "inner file.txt"
+        inner.write_text("x", encoding="utf-8")
+
+        child = f"python -c \"open('{inner.as_posix()}')\""
+        reason = module.validate(
+            self.payload(
+                repo,
+                'python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- ' + child,
+            )
+        )
+        self.assertIsNone(reason)
+
     def test_permits_single_project_wrapper_run(self) -> None:
         module = load_module()
         repo = self.make_repo()

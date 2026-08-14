@@ -143,7 +143,8 @@ class PrivacyAdversarialTests(unittest.TestCase):
         from snapshot_api import build_snapshot
 
         built = build_snapshot(revision=1, projects=snapshot["projects"], executions=[])
-        self.assertEqual(built["tokenSummary"]["inputTokens"], 0)  # rollup of empty
+        self.assertIsNone(built["tokenSummary"]["inputTokens"])  # rollup of empty is null, not 0
+        self.assertEqual(built["tokenSummary"]["costQuality"], "UNKNOWN")
         # A single execution with unknown state is not LIVE.
         verdict = evaluate_live(
             snapshot_valid=True, sse_connected=True,

@@ -54,6 +54,16 @@ t("v3 surface is recognized by renderer", () => {
   assert.strictEqual(d.revision, 42);
 });
 
+t("mode follows backend transport evidence (P0-4)", () => {
+  // transportState=LIVE -> LIVE; never hardcoded.
+  assert.strictEqual(d.mode, "LIVE", "v3Surface transport LIVE -> mode LIVE");
+  const unknown = WlApi.normalizeV3({ schemaVersion: "workflow/snapshot/v3", revision: 1, projects: [], executions: [], tokenSummary: {} });
+  assert.notStrictEqual(unknown.mode, "LIVE", "no transport -> never LIVE");
+  assert.strictEqual(unknown.mode, "UNKNOWN");
+  const delayed = WlApi.normalizeV3({ schemaVersion: "workflow/snapshot/v3", revision: 1, transport: { transportState: "DELAYED" }, projects: [], executions: [] });
+  assert.notStrictEqual(delayed.mode, "LIVE", "DELAYED must not render as LIVE");
+});
+
 t("global bar renders transport/coverage/revision/watermark (WLGM-180)", () => {
   const html = WlRenderV3.globalBar(d);
   assert(html.includes("LIVE"), "transport LIVE chip");
