@@ -489,15 +489,29 @@ def gate_tauri_readonly_shell() -> int:
 
 
 def gate_work_lab_os_canary() -> int:
-    """§7: WORK-LAB self-canary; external OS-project canary stays PENDING."""
-    code = run_python([str(ROOT / "scripts" / "workflow" / "canary_runner.py")],
+    """§7: WORK-LAB self-canary; external OS-project canary stays PENDING.
+
+    P0-7: the canary runner's exit code IS the gate verdict — a failing
+    self-canary must fail the gate (no more print-FAIL-but-exit-0).
+    """
+    return run_python([str(ROOT / "scripts" / "workflow" / "canary_runner.py")],
                       env_updates={"PYTHONPATH": str(ROOT / "scripts" / "workflow")})
-    print("WORK_LAB_OS_CANARY external=PENDING (WORKLAB_CANARY_PROJECT_ROOTS not authorized)")
-    return code
 
 
 def gate_exact_sha_ci() -> int:
-    """§7: exact-SHA CI evidence. Local runs cannot produce it; mark PENDING."""
+    """§7: exact-SHA CI evidence. required=true 时缺证据必须失败；本地默认非 required。
+
+    P0-7: only a required context (WLGM_EXACT_SHA_CI_REQUIRED=1) fails on
+    missing evidence; the ordinary local structural check stays PENDING=0.
+    """
+    required = os.environ.get("WLGM_EXACT_SHA_CI_REQUIRED", "").strip().lower() in ("1", "true", "yes")
+    evidence = ROOT / ".hermes" / "task-artifacts" / "exact-sha-ci.json"
+    if required:
+        if not evidence.is_file():
+            print(f"EXACT_SHA_CI_FAIL required=true evidence_missing={evidence}")
+            return 1
+        print(f"EXACT_SHA_CI_PASS required=true evidence={evidence}")
+        return 0
     print("EXACT_SHA_CI PENDING (requires GitHub Actions run; local gate cannot verify)")
     return 0
 

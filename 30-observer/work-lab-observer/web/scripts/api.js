@@ -215,13 +215,21 @@ const WlApi = (function () {
       }
     });
     const usageSummary = snapshot.tokenSummary || {};
+    // P0-4: LIVE only when the backend evidence declares transportState=LIVE
+    // (live_gate.py full-condition verdict). STALE/DELAYED/unknown must never
+    // render as LIVE.
+    const transport = snapshot.transport || { transportState: "UNKNOWN", freshnessState: "UNKNOWN" };
+    const declared = String(snapshot.mode || transport.transportState || "UNKNOWN").toUpperCase();
+    const mode = declared === "LIVE" ? "LIVE"
+      : ["SNAPSHOT", "FIXTURE", "OFFLINE", "UNKNOWN"].includes(declared) ? declared
+      : "UNKNOWN";
     return {
       schemaVersion: "work-lab/observer-projection/v2-rendered",
-      mode: "LIVE",
+      mode,
       generatedAt: snapshot.generatedAt,
       revision: snapshot.revision,
       sourceWatermark: snapshot.sourceWatermark,
-      transport: snapshot.transport || { transportState: "UNKNOWN", freshnessState: "UNKNOWN" },
+      transport,
       coverage: snapshot.coverage || null,
       governance: snapshot.governance || null,
       summary: {
@@ -264,7 +272,14 @@ const WlApi = (function () {
         }
         const data = await res.json();
         if (data && data.schemaVersion === "workflow/snapshot/v3") {
-          return { ok: true, mode: "LIVE", data: normalizeV3(data), source: endpoint };
+          const normalized = normalizeV3(data);
+          // P0-4: eventsUrl fallback — derive from the endpoint origin when the
+          // backend transport does not advertise it.
+          if (normalized.transport && !normalized.transport.eventsUrl) {
+            const base = new URL(endpoint, typeof window !== "undefined" ? window.location.href : "http://127.0.0.1/");
+            normalized.transport.eventsUrl = base.origin + "/api/v1/events";
+          }
+          return { ok: true, mode: normalized.mode, data: normalized, source: endpoint };
         }
         if (data && data.schemaVersion === "work-lab/observer-projection/v2") {
           const declared = String(data.mode || "UNKNOWN").toUpperCase();
@@ -339,11 +354,16 @@ const WlApi = (function () {
       throw new Error("SSE endpoint is outside the declared loopback read-only boundary");
     }
     const source = new EventSource(parsed.toString());
-    source.onmessage = (event) => {
+    // P0-4: the backend sends NAMED events (event: observed / heartbeat /
+    // resync_required); named events must be bound with addEventListener.
+    // onmessage only receives anonymous frames — keep it as a fallback.
+    const dispatch = (event) => {
       let payload = null;
       try { payload = JSON.parse(event.data); } catch (_) { return; }
       if (handlers && typeof handlers.onEvent === "function") handlers.onEvent(payload, event.lastEventId || null);
     };
+    ["observed", "heartbeat", "resync_required"].forEach((name) => source.addEventListener(name, dispatch));
+    source.addEventListener("message", dispatch);
     source.onerror = () => {
       if (handlers && typeof handlers.onError === "function") handlers.onError();
     };

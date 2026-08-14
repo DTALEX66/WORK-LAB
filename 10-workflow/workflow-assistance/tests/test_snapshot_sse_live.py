@@ -21,12 +21,50 @@ class SnapshotApiTests(unittest.TestCase):
 
     def test_null_vs_zero_distinct(self) -> None:
         snapshot = build_snapshot(revision=1)
-        # No usage -> null, not 0.
-        self.assertEqual(snapshot["tokenSummary"]["inputTokens"], 0)  # rolled sum of empty = 0? see below
+        # No usage -> null, not 0; costQuality UNKNOWN, never EXACT.
+        self.assertIsNone(snapshot["tokenSummary"]["inputTokens"])
+        self.assertIsNone(snapshot["tokenSummary"]["outputTokens"])
+        self.assertIsNone(snapshot["tokenSummary"]["totalTokens"])
+        self.assertEqual(snapshot["tokenSummary"]["costQuality"], "UNKNOWN")
+        self.assertEqual(snapshot["executions"], [])
         project = snapshot["projects"][0] if snapshot["projects"] else {
             "projectId": "p", "token": {"inputTokens": None, "outputTokens": None, "totalTokens": None, "costQuality": "UNKNOWN"}
         }
         self.assertIsNone(project["token"]["inputTokens"])
+
+    def test_partial_usage_missing_field_is_null(self) -> None:
+        """P0-3: a field missing from every sample stays null, not 0."""
+        snapshot = build_snapshot(
+            revision=1,
+            usage=[{"projectId": "p", "inputTokens": 10, "costQuality": "EXACT"}],
+            projects=[{"projectId": "p", "displayName": "P"}],
+        )
+        self.assertEqual(snapshot["tokenSummary"]["inputTokens"], 10)
+        self.assertIsNone(snapshot["tokenSummary"]["outputTokens"])
+        self.assertIsNone(snapshot["tokenSummary"]["totalTokens"])
+        self.assertIsNone(snapshot["projects"][0]["token"]["outputTokens"])
+        self.assertEqual(snapshot["projects"][0]["token"]["inputTokens"], 10)
+
+    def test_executions_is_flat_list(self) -> None:
+        """P0-3: executions must be a 1-D list, never [[...]]."""
+        snapshot = build_snapshot(
+            revision=1,
+            executions=[{"executionId": "e1", "state": "RUNNING", "anchorProjectId": "p"}],
+        )
+        self.assertIsInstance(snapshot["executions"], list)
+        self.assertEqual(len(snapshot["executions"]), 1)
+        self.assertEqual(snapshot["executions"][0]["executionId"], "e1")
+        self.assertIsInstance(snapshot["executions"][0], dict)
+
+    def test_transport_events_url_passthrough(self) -> None:
+        """P0-4: eventsUrl flows through transport when provided; null otherwise."""
+        with_events = build_snapshot(
+            revision=1,
+            transport={"transportState": "LIVE", "eventsUrl": "http://127.0.0.1:9/api/v1/events"},
+        )
+        self.assertEqual(with_events["transport"]["eventsUrl"], "http://127.0.0.1:9/api/v1/events")
+        without = build_snapshot(revision=1)
+        self.assertIsNone(without["transport"]["eventsUrl"])
 
     def test_token_rollup_exact_estimated(self) -> None:
         snapshot = build_snapshot(

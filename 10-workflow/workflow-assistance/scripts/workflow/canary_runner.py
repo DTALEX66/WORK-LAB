@@ -23,7 +23,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-WORK = Path(r"D:\All projects\WORK-LAB")
+WORK = Path(__file__).resolve().parents[4]  # .../10-workflow/workflow-assistance/scripts/workflow -> WORK-LAB root
 SCRIPTS = WORK / "10-workflow" / "workflow-assistance" / "scripts" / "workflow"
 
 import sys
@@ -127,3 +127,6 @@ if __name__ == "__main__":
         print(f"CANARY_EXTERNAL_PROJECT {'PASS' if roots_ok else 'FAIL'} (roots={len(ext.get('roots', []))}, all_ok={roots_ok})")
     else:
         print("CANARY_EXTERNAL_PROJECT PENDING (WORKLAB_CANARY_PROJECT_ROOTS not authorized)")
+    # P0-7: FAIL must propagate to the exit code; gate_work_lab_os_canary
+    # depends on the real returncode.
+    raise SystemExit(0 if report.get("all_pass") else 1)

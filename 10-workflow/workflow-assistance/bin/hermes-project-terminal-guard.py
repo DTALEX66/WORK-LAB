@@ -59,6 +59,32 @@ def canonical_wrapper(raw: str) -> bool:
     return False
 
 
+def _quoted_full_path(text: str, start: int, end: int) -> str | None:
+    """Recover a full quoted absolute path truncated by the regex.
+
+    When text[start:end) is preceded by a quote, find the matching closing
+    quote and return the complete path (spaces preserved). A path may also be
+    matched twice by the regex (Windows drive branch + POSIX branch of the
+    same C:/... path), so when the fragment does not directly follow a quote
+    we scan backward for the enclosing opening quote. Returns None when no
+    enclosing quote exists — unrecoverable, callers fail closed (BLOCK).
+    """
+    if start > 0 and text[start - 1] in ("'", '"'):
+        quote = text[start - 1]
+        close = text.find(quote, end)
+        if close == -1:
+            return None
+        return text[start:close]
+    for index in range(start - 1, -1, -1):
+        if text[index] in ("'", '"'):
+            quote = text[index]
+            close = text.find(quote, end)
+            if close == -1:
+                return None
+            return text[index + 1 : close]
+    return None
+
+
 def external_child_path(argv: list[str], separator_index: int, root: Path) -> str | None:
     """Reject explicit child paths outside the declared Git project."""
     child = argv[separator_index + 1 :]
@@ -74,7 +100,8 @@ def external_child_path(argv: list[str], separator_index: int, root: Path) -> st
             except (OSError, RuntimeError):
                 return raw_token
             continue
-        for candidate in ABSOLUTE_PATH.findall(token):
+        for match in ABSOLUTE_PATH.finditer(token):
+            candidate = match.group(0)
             raw = candidate.strip('"\'')
             path = Path(raw)
             windows_absolute = ntpath.isabs(raw)
@@ -86,9 +113,22 @@ def external_child_path(argv: list[str], separator_index: int, root: Path) -> st
                 resolved = path.resolve(strict=False)
                 root_str = ntpath.normcase(ntpath.normpath(str(root)))
                 res_str = ntpath.normcase(ntpath.normpath(str(resolved)))
-                # 含空格路径会被正则截断（如 D:/All projects/... 截成 D:/All）；
-                # 若 candidate 是项目字符前缀，说明是截断，交给完整 token 精确判断。
                 if root_str.startswith(res_str):
+                    # P0-8: a character prefix is BOTH a truncated space-path
+                    # and an external sibling/ancestor path — indistinguishable
+                    # at fragment level. Recover the full quoted path and
+                    # decide precisely; unrecoverable -> fail closed.
+                    full = _quoted_full_path(token, match.start(), match.end())
+                    if full is None:
+                        if not resolved.is_relative_to(root):
+                            return candidate
+                        continue
+                    try:
+                        full_resolved = Path(full).resolve(strict=False)
+                    except (OSError, RuntimeError):
+                        return candidate
+                    if not full_resolved.is_relative_to(root):
+                        return full
                     continue
                 if not resolved.is_relative_to(root):
                     return candidate
@@ -110,9 +150,15 @@ def external_raw_unc(command: str, root: Path) -> str | None:
             return candidate
         raw = ntpath.normcase(ntpath.normpath(candidate))
         project = ntpath.normcase(ntpath.normpath(str(root)))
-        # 含空格路径会被正则截断（如 D:/All projects/... 截成 D:/All）；
-        # 若 candidate 是项目前缀，说明是截断，交给 external_child_path 精确判断。
         if project.startswith(raw):
+            # P0-8: character prefix is ambiguous (truncated space-path vs
+            # external sibling). Recover the full quoted path; else fail closed.
+            full = _quoted_full_path(command, index, end)
+            if full is None:
+                return candidate
+            full_raw = ntpath.normcase(ntpath.normpath(full))
+            if full_raw != project and not full_raw.startswith(project.rstrip("\\") + "\\"):
+                return full
             continue
         if raw != project and not raw.startswith(project.rstrip("\\") + "\\"):
             return candidate
@@ -127,9 +173,14 @@ def external_raw_windows_path(command: str, root: Path) -> str | None:
             return candidate
         raw = ntpath.normcase(ntpath.normpath(candidate))
         project = ntpath.normcase(ntpath.normpath(str(root)))
-        # 含空格路径会被正则截断（如 D:/All projects/... 截成 D:/All）；
-        # 若 candidate 是项目前缀，说明是截断，交给 external_child_path 精确判断。
         if project.startswith(raw):
+            # P0-8: recover the full quoted path; unrecoverable -> fail closed.
+            full = _quoted_full_path(command, match.start(), match.end())
+            if full is None:
+                return candidate
+            full_raw = ntpath.normcase(ntpath.normpath(full))
+            if full_raw != project and not full_raw.startswith(project.rstrip("\\") + "\\"):
+                return full
             continue
         if raw != project and not raw.startswith(project.rstrip("\\") + "\\"):
             return candidate
@@ -147,10 +198,30 @@ def external_raw_posix_path(command: str, root: Path) -> str | None:
             path = Path(candidate)
         try:
             resolved = path.resolve(strict=False)
-            # candidate 是项目字符前缀（含空格路径被正则截断）→ 交给 external_child_path 精确判断
             root_str = ntpath.normcase(ntpath.normpath(str(root)))
             res_str = ntpath.normcase(ntpath.normpath(str(resolved)))
             if root_str.startswith(res_str):
+                # P0-8: recover the full quoted POSIX path; unrecoverable ->
+                # fail closed. On Windows, POSIX paths (e.g. MSYS /tmp/...)
+                # cannot be reliably drive-mapped, so compare normalized text
+                # with a separator boundary instead of resolving.
+                full = _quoted_full_path(command, match.start(), match.end())
+                if full is None:
+                    if not resolved.is_relative_to(root):
+                        return candidate
+                    continue
+                if os.name == "nt":
+                    full_norm = ntpath.normcase(ntpath.normpath(full.replace("/", "\\")))
+                    root_norm = ntpath.normcase(ntpath.normpath(str(root).replace("/", "\\")))
+                    if full_norm != root_norm and not full_norm.startswith(root_norm.rstrip("\\") + "\\"):
+                        return full
+                    continue
+                try:
+                    full_resolved = Path(full).resolve(strict=False)
+                except (OSError, RuntimeError):
+                    return candidate
+                if not full_resolved.is_relative_to(root):
+                    return full
                 continue
             if not resolved.is_relative_to(root):
                 return candidate
