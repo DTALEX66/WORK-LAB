@@ -73,7 +73,9 @@ class ObserverRuntimeTests(unittest.TestCase):
         surface = mutation_surface()
         self.assertFalse(surface["externalMutation"])
         self.assertFalse(surface["ledgerMutation"])
-        self.assertNotIn("approve", " ".join(surface["allowedWrites"]))
+        # R2 third batch: allowedWrites removed entirely — Observer owns no
+        # write surface.
+        self.assertNotIn("allowedWrites", surface)
 
     def test_usage_projection_aggregates_only_explicit_metrics(self):
         history = [

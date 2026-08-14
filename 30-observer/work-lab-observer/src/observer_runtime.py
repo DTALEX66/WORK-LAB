@@ -289,7 +289,9 @@ def project_read_only_dashboard(events: Iterable[dict[str, Any]], pricing_catalo
 
 
 def mutation_surface() -> dict[str, Any]:
-    return {"externalMutation": False, "ledgerMutation": False, "approvalMutation": False, "gitControl": False, "allowedWrites": ["observer-owned-events", "observer-owned-projections", "observer-owned-reports"]}
+    # R2 third batch: allowedWrites removed — Observer owns no write surface
+    # at all; the only enforcement is ObserverStore.append raising.
+    return {"externalMutation": False, "ledgerMutation": False, "approvalMutation": False, "gitControl": False}
 
 
 def _task_state(event_type: str) -> str:

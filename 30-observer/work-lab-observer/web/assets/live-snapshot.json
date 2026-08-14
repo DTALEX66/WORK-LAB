@@ -150,11 +150,6 @@
     "externalMutation": false,
     "ledgerMutation": false,
     "approvalMutation": false,
-    "gitControl": false,
-    "allowedWrites": [
-      "observer-owned-events",
-      "observer-owned-projections",
-      "observer-owned-reports"
-    ]
+    "gitControl": false
   }
 }
