@@ -57,6 +57,35 @@ class AggregateGateTests(unittest.TestCase):
         })
         self.assertEqual(gate.main(payload), 1)
 
+    def test_selected_supply_chain_security_job_is_required(self):
+        gate = load_gate()
+        plan = {
+            "schema_version": "workflow/gate-plan/v1",
+            "plan_id": "work-lab-gate",
+            "source_identity": {
+                "repository": "DTALEX66/WORK-LAB",
+                "commit": {"algorithm": "repository-default", "object_type": "commit", "oid": "sha"},
+                "tree": {"algorithm": "repository-default", "object_type": "tree", "oid": "tree"},
+            },
+            "changed_paths": [".github/workflows/work-lab-gate.yml"],
+            "required_gates": ["supply-chain-security"],
+            "skipped_gates": [{"gate_id": "workflow", "reason": "not selected"}],
+            "risk": "critical",
+            "delivery_effect": "none",
+            "platform_scope": ["discovered"],
+            "generated_at": "2026-08-15T00:00:00Z",
+        }
+        plan["plan_digest"] = {"algorithm": "sha256", "value": gate._plan_digest(plan)}
+        payload = {
+            "gate_plan": plan,
+            "expected_plan_digest": plan["plan_digest"]["value"],
+            "expected_head_sha": "sha",
+            "jobs": {"supply-chain-security": "failure"},
+        }
+        self.assertEqual(gate.main(json.dumps(payload)), 1)
+        payload["jobs"]["supply-chain-security"] = "success"
+        self.assertEqual(gate.main(json.dumps(payload)), 0)
+
     def test_plan_digest_and_head_sha_are_verified(self):
         gate = load_gate()
         plan = {

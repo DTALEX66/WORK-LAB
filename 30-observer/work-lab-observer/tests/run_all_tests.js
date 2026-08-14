@@ -12,15 +12,25 @@ const suites = [
   "./test_render_v3.js",
 ];
 
-let totalPass = 0, totalFail = 0;
+async function main() {
+  let totalPass = 0, totalFail = 0;
 
-for (const s of suites) {
-  const mod = require(s);
-  const result = mod.run();
-  totalPass += result.pass;
-  totalFail += result.fail;
+  for (const s of suites) {
+    const mod = require(s);
+    const result = await mod.run();
+    totalPass += result.pass;
+    totalFail += result.fail;
+  }
+
+  console.log(`\n==== WORK-LAB Observer UI contract tests ====`);
+  console.log(`TOTAL: ${totalPass} passed, ${totalFail} failed`);
+  return totalFail ? 1 : 0;
 }
 
-console.log(`\n==== WORK-LAB Observer UI contract tests ====`);
-console.log(`TOTAL: ${totalPass} passed, ${totalFail} failed`);
-process.exit(totalFail ? 1 : 0);
+main().then(
+  (code) => { process.exitCode = code; },
+  (err) => {
+    console.error(err);
+    process.exitCode = 1;
+  }
+);

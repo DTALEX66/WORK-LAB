@@ -8,7 +8,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { loadScripts, loadFixture, WEB, assert, test } = require("./helpers");
+const { loadScripts, loadFixture, WEB, assert, test, asyncTest } = require("./helpers");
 
 // Words that would imply a mutating control. Blocker/evidence card must NOT offer retry.
 const FORBIDDEN_BUTTON_WORDS = [
@@ -20,12 +20,12 @@ const FORBIDDEN_BUTTON_EN = [
 ];
 const FORBIDDEN_WRITE_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
 
-function run() {
+async function run() {
   const { WlApi, WlRender, WlState } = loadScripts();
   let pass = 0, fail = 0;
   const t = (n, f) => { if (test(n, f)) pass++; else fail++; };
 
-  t("api layer exposes no success path for POST/PUT/PATCH/DELETE", async () => {
+  if (await asyncTest("api layer exposes no success path for POST/PUT/PATCH/DELETE", async () => {
     // rejectNonGet is the negative control; every non-GET must reject.
     const results = await Promise.all(
       FORBIDDEN_WRITE_METHODS.map((m) =>
@@ -39,6 +39,74 @@ function run() {
     // GET is allowed.
     const getOk = await WlApi.rejectNonGet("GET").then(() => true, () => false);
     assert(getOk === true, "GET allowed");
+  })) pass++; else fail++;
+
+  if (await asyncTest("snapshot fetch rejects legacy and partial LIVE success payloads", async () => {
+    const originalFetch = global.fetch;
+    const payloads = [
+      { schemaVersion: "work-lab/observer-projection/v2", mode: "LIVE" },
+      {
+        schemaVersion: "workflow/snapshot/v3",
+        revision: 1,
+        generatedAt: "2026-08-15T00:00:00Z",
+        projects: [], executions: [], ci: [], tasks: {}, tokenSummary: {},
+        coverage: { numerator: 1, denominator: 1, scope: "collector_health" },
+        transport: { transportState: "LIVE", eventStreamConnected: false },
+      },
+    ];
+    try {
+      for (const payload of payloads) {
+        global.fetch = async () => ({ ok: true, json: async () => payload });
+        let rejected = false;
+        try { await WlApi.fetchSnapshot(); } catch (_) { rejected = true; }
+        assert(rejected, "invalid/retired 200 payload must fail closed");
+      }
+    } finally {
+      if (originalFetch === undefined) delete global.fetch;
+      else global.fetch = originalFetch;
+    }
+  })) pass++; else fail++;
+
+  t("v3 display mode cannot override the backend transport verdict", () => {
+    const normalized = WlApi.normalizeV3({
+      schemaVersion: "workflow/snapshot/v3",
+      mode: "LIVE",
+      transport: { transportState: "OFFLINE", freshnessState: "STALE" },
+      projects: [], executions: [], tokenSummary: {}, tasks: {}, ci: [],
+    });
+    assert(normalized.mode === "OFFLINE", "top-level mode must not override OFFLINE transport");
+  });
+
+  t("LIVE v3 requires exact coverage, timestamps, and loopback events URL", () => {
+    const valid = {
+      schemaVersion: "workflow/snapshot/v3",
+      revision: 1,
+      generatedAt: "2026-08-15T00:00:00Z",
+      projects: [], executions: [], ci: [], tasks: {}, tokenSummary: {},
+      coverage: { numerator: 2, denominator: 2, scope: "collector_health" },
+      transport: {
+        transportState: "LIVE",
+        freshnessState: "FRESH",
+        eventStreamConnected: true,
+        connectedSince: "2026-08-15T00:00:00Z",
+        lastHeartbeatAt: "2026-08-15T00:00:01Z",
+        writerWatermarkAt: "2026-08-15T00:00:01Z",
+        eventsUrl: "http://127.0.0.1:57889/api/v1/events",
+      },
+    };
+    assert(WlApi.validateSnapshotV3(valid) === true, "complete LIVE snapshot validates");
+
+    const badTimestamp = JSON.parse(JSON.stringify(valid));
+    badTimestamp.transport.writerWatermarkAt = "";
+    assert(WlApi.validateSnapshotV3(badTimestamp) === false, "LIVE requires a valid writer timestamp");
+
+    const overCompleteCoverage = JSON.parse(JSON.stringify(valid));
+    overCompleteCoverage.coverage.numerator = 3;
+    assert(WlApi.validateSnapshotV3(overCompleteCoverage) === false, "LIVE coverage must equal the expected denominator exactly");
+
+    const remoteEvents = JSON.parse(JSON.stringify(valid));
+    remoteEvents.transport.eventsUrl = "https://example.com/api/v1/events";
+    assert(WlApi.validateSnapshotV3(remoteEvents) === false, "LIVE events URL must stay on the exact loopback endpoint");
   });
 
   t("rendered full+compact surfaces have no mutating controls", () => {
@@ -221,6 +289,12 @@ function run() {
       let rejected = false;
       try { WlApi.subscribeEvents("http://127.0.0.1.evil.invalid/api/v1/events", {}); } catch (_) { rejected = true; }
       assert(rejected, "evil loopback-prefix host rejected");
+      rejected = false;
+      try { WlApi.subscribeEvents("http://user@127.0.0.1:8766/api/v1/events", {}); } catch (_) { rejected = true; }
+      assert(rejected, "SSE userinfo rejected");
+      rejected = false;
+      try { WlApi.subscribeEvents("http://127.0.0.1:8766/api/v1/events?write=1", {}); } catch (_) { rejected = true; }
+      assert(rejected, "query-bearing SSE endpoint rejected");
     } finally {
       delete global.EventSource;
     }
@@ -244,7 +318,8 @@ function run() {
 
 module.exports = { run };
 if (require.main === module) {
-  const { pass, fail } = run();
-  console.log(`\ntest_read_only_surface: ${pass} passed, ${fail} failed`);
-  process.exit(fail ? 1 : 0);
+  run().then(({ pass, fail }) => {
+    console.log(`\ntest_read_only_surface: ${pass} passed, ${fail} failed`);
+    process.exitCode = fail ? 1 : 0;
+  });
 }

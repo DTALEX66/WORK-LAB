@@ -60,6 +60,12 @@ gates:
       - full
       - release
     platform: windows
+  supply-chain-security:
+    command: python scripts/ci/verify_supply_chain_tools.py
+    tiers:
+      - full
+      - release
+    platform: discovered
 ci:
   workflow_file: .github/workflows/work-lab-gate.yml
   workflow_name: work-lab-gate

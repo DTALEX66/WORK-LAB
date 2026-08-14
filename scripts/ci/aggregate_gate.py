@@ -4,12 +4,13 @@ import hashlib
 import json
 import sys
 
-REQUIRED = {"workflow", "observer", "token-monitor", "integration"}
-PLAN_GATES = {"workflow", "observer", "token-monitor", "integration"}
+REQUIRED = {"workflow", "observer", "token-monitor", "supply-chain-security", "integration"}
+PLAN_GATES = {"workflow", "observer", "token-monitor", "supply-chain-security", "integration"}
 JOB_NAMES = {
     "workflow": "workflow",
     "observer": "observer",
     "token-monitor": "token-monitor",
+    "supply-chain-security": "supply-chain-security",
     "integration": "integration",
 }
 

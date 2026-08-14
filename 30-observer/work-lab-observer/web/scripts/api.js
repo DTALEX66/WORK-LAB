@@ -204,7 +204,10 @@ const WlApi = (function () {
     // (live_gate.py full-condition verdict). STALE/DELAYED/unknown must never
     // render as LIVE.
     const transport = snapshot.transport || { transportState: "UNKNOWN", freshnessState: "UNKNOWN" };
-    const declared = String(snapshot.mode || transport.transportState || "UNKNOWN").toUpperCase();
+    // v3 has one authority for online state: the backend live-gate transport
+    // verdict. Ignore any extra top-level mode field so it cannot override an
+    // OFFLINE/DELAYED transport with a fabricated LIVE claim.
+    const declared = String(transport.transportState || "UNKNOWN").toUpperCase();
     const mode = declared === "LIVE" ? "LIVE"
       : ["SNAPSHOT", "FIXTURE", "OFFLINE", "UNKNOWN"].includes(declared) ? declared
       : "UNKNOWN";
@@ -238,6 +241,54 @@ const WlApi = (function () {
     };
   }
 
+  function isRecord(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function isValidTimestamp(value) {
+    return typeof value === "string" && value.length > 0 && Number.isFinite(Date.parse(value));
+  }
+
+  function isLoopbackEventsUrl(url) {
+    try {
+      const raw = String(url || "");
+      const parsed = new URL(raw, typeof window !== "undefined" ? window.location.href : "http://127.0.0.1/");
+      const authorityStart = raw.indexOf("//") + 2;
+      const authorityEnd = raw.indexOf("/", authorityStart);
+      const hasUserInfo = authorityStart > 1 && raw.slice(authorityStart, authorityEnd < 0 ? raw.length : authorityEnd).includes("@");
+      const loopback = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "[::1]" || parsed.hostname === "::1";
+      return (parsed.protocol === "http:" || parsed.protocol === "https:")
+        && loopback
+        && !hasUserInfo
+        && parsed.pathname === "/api/v1/events"
+        && !parsed.search
+        && !parsed.hash;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function validateSnapshotV3(snapshot) {
+    if (!isRecord(snapshot) || snapshot.schemaVersion !== "workflow/snapshot/v3") return false;
+    if (!Number.isInteger(snapshot.revision) || snapshot.revision < 0) return false;
+    if (!isValidTimestamp(snapshot.generatedAt)) return false;
+    if (!Array.isArray(snapshot.projects) || !Array.isArray(snapshot.executions) || !Array.isArray(snapshot.ci)) return false;
+    if (!isRecord(snapshot.tasks) || !isRecord(snapshot.tokenSummary) || !isRecord(snapshot.transport) || !isRecord(snapshot.coverage)) return false;
+    const transportState = String(snapshot.transport.transportState || "").toUpperCase();
+    if (!["LIVE", "DELAYED", "OFFLINE", "UNKNOWN", "CONNECTING"].includes(transportState)) return false;
+    if (transportState === "LIVE") {
+      const numerator = snapshot.coverage.numerator;
+      const denominator = snapshot.coverage.denominator;
+      if (snapshot.transport.eventStreamConnected !== true) return false;
+      if (!Number.isInteger(numerator) || !Number.isInteger(denominator) || denominator <= 0 || numerator !== denominator) return false;
+      if (!isValidTimestamp(snapshot.transport.connectedSince)) return false;
+      if (!isValidTimestamp(snapshot.transport.lastHeartbeatAt)) return false;
+      if (!isValidTimestamp(snapshot.transport.writerWatermarkAt)) return false;
+      if (!isLoopbackEventsUrl(snapshot.transport.eventsUrl)) return false;
+    }
+    return true;
+  }
+
   /* GET /api/v1/snapshot (canonical v3); anything else -> throw -> OFFLINE
      (no fixture fallback). */
   async function fetchSnapshot(timeoutMs) {
@@ -257,7 +308,7 @@ const WlApi = (function () {
           throw new Error("GET " + endpoint + " -> " + res.status);
         }
         const data = await res.json();
-        if (data && data.schemaVersion === "workflow/snapshot/v3") {
+        if (validateSnapshotV3(data)) {
           const normalized = normalizeV3(data);
           // P0-4: eventsUrl fallback — derive from the endpoint origin when the
           // backend transport does not advertise it.
@@ -267,12 +318,7 @@ const WlApi = (function () {
           }
           return { ok: true, mode: normalized.mode, data: normalized, source: endpoint };
         }
-        if (data && data.schemaVersion === "work-lab/observer-projection/v2") {
-          const declared = String(data.mode || "UNKNOWN").toUpperCase();
-          const mode = ["LIVE", "SNAPSHOT", "OFFLINE", "UNKNOWN"].includes(declared) ? declared : "UNKNOWN";
-          return { ok: true, mode, data };
-        }
-        return { ok: true, mode: "UNKNOWN", data };
+        throw new Error("GET " + endpoint + " returned an invalid or retired snapshot contract");
       } catch (err) {
         lastError = err && err.name === "AbortError"
           ? new Error("GET " + endpoint + " timed out")
@@ -307,11 +353,11 @@ const WlApi = (function () {
     if (typeof EventSource === "undefined") {
       throw new Error("EventSource is unavailable");
     }
-    const parsed = new URL(String(url), typeof window !== "undefined" ? window.location.href : "http://127.0.0.1/");
-    const loopback = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "[::1]" || parsed.hostname === "::1";
-    if ((parsed.protocol !== "http:" && parsed.protocol !== "https:") || !loopback || parsed.pathname !== "/api/v1/events") {
+    const raw = String(url);
+    if (!isLoopbackEventsUrl(raw)) {
       throw new Error("SSE endpoint is outside the declared loopback read-only boundary");
     }
+    const parsed = new URL(raw, typeof window !== "undefined" ? window.location.href : "http://127.0.0.1/");
     const source = new EventSource(parsed.toString());
     // P0-4: the backend sends NAMED events (event: observed / heartbeat /
     // resync_required); named events must be bound with addEventListener.
@@ -338,6 +384,7 @@ const WlApi = (function () {
     fetchDashboard,
     fetchSnapshot,
     normalizeV3,
+    validateSnapshotV3,
     rejectNonGet,
     subscribeEvents,
   };
