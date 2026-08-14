@@ -102,23 +102,21 @@ The frontend consumes the canonical projection through `GET /api/v1/snapshot` an
     `FRESH`, `STALE`, or `UNKNOWN`.
 13. EventSource failure previously retained last-good content while still
     rendering `Sidecar 已连接`. Local transport failure now overrides the stale
-    copy to `OFFLINE`; one production WebView2 PID was verified through
-    `OFFLINE → LIVE/FRESH → OFFLINE(last-good) → LIVE/FRESH`.
+    copy to `OFFLINE`; the final production WebView2 was verified through
+    DOM readback, reload console, real scrolling, and normal-mode `LIVE/FRESH`.
 
 ## Evidence and verification
 
 Fresh local verification after the implementation:
 
 ```text
-JS UI + desktop component tests: 55 passed, 0 failed
-Sidecar v3 focused tests: 12 passed
-Runtime-continuity focused tests: 28 passed
-Sidecar endpoint focused tests: 14 passed
-Error Ledger: 73 entries, 13 classifications, raw_sensitive_data=false, counts_consistent=true
+JS UI + desktop component tests: 58 passed, 0 failed
+Collector/durable/snapshot/endpoint focused tests: 49 passed
+Error Ledger: 77 entries, 13 classifications, raw_sensitive_data=false, counts_consistent=true
 Production build command: cargo tauri build --no-bundle
-Production artifact: src-tauri/target/release/app.exe (9,538,560 bytes; SHA-256 a339f65e85b7e1c7c74954b6c5b2ec1b223802a3498e76eed216d14ace1fd882)
-Production build: cargo tauri build --no-bundle, 18.68s final incremental build; temporary Cargo patches removed and lockfile restored to the branch HEAD
-Real WebView2: Snapshot 200, named SSE snapshot + heartbeat, 28/28 TaskPack, 6/6 coverage, truthful offline/recovery labels, no horizontal overflow
+Production artifact: src-tauri/target/release/app.exe (9,539,072 bytes; SHA-256 a20fc3de9a0ff9111bc210f9854c373f330818b083aacf3a49335aeeb167b420)
+Production build: cargo tauri build --no-bundle, 18.58s final incremental build; temporary Cargo patches removed and lockfile restored to the branch HEAD
+Real WebView2: Snapshot 200, named SSE snapshot + heartbeat, 28/28 TaskPack, 6/6 coverage, reload console 0 errors, real scrolling, no horizontal overflow
 Final runtime target: one sidecar, one app.exe, no temporary static server, no CDP listener
 ```
 

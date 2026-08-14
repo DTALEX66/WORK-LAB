@@ -52,6 +52,7 @@ class WorkflowSidecar:
         self._worker: Any | None = None
         self._worker_supervisor: Any | None = None
         self._worker_thread: threading.Thread | None = None
+        self._expected_collector_names: frozenset[str] = frozenset()
 
     def _canonical_fingerprint(self) -> str:
         canonical = self.store.projection()
@@ -102,17 +103,28 @@ class WorkflowSidecar:
                     self._last_write_at = __import__("time").time()
                     self.publish_observed()
 
-        self._watch_thread = threading.Thread(
+        thread = threading.Thread(
             target=_watch,
             daemon=True,
             name="workflow-sidecar-canonical-watch",
         )
-        self._watch_thread.start()
+        self._watch_thread = thread
+        try:
+            thread.start()
+        except Exception:
+            self._watch_stop.set()
+            self._watch_thread = None
+            raise
 
     def stop_live_updates(self) -> None:
         self._watch_stop.set()
-        if self._watch_thread and self._watch_thread is not threading.current_thread():
-            self._watch_thread.join(timeout=2.0)
+        thread = self._watch_thread
+        if thread and thread is not threading.current_thread():
+            thread.join(timeout=2.0)
+        if thread is not None and thread.is_alive():
+            # Keep the store open while an in-flight projection read still owns
+            # it. A later close retry can finish once the watcher returns.
+            raise RuntimeError("live_update_shutdown_timeout")
         self._watch_thread = None
 
     def start_worker(self, tick_seconds: float = 30.0, collectors: list[Any] | None = None) -> None:
@@ -123,6 +135,11 @@ class WorkflowSidecar:
         from durable_worker import WorkerSupervisor, make_worker
 
         selected_collectors = build_standard_collectors(self.project_root) if collectors is None else collectors
+        expected_names = frozenset(
+            [*(getattr(collector, "__name__", collector.__class__.__name__) for collector in selected_collectors), "worker_loop"]
+        )
+        if len(expected_names) != len(selected_collectors) + 1:
+            raise ValueError("collector names must be unique")
         worker = make_worker(
             self.store,
             project_id="work-lab",
@@ -135,12 +152,14 @@ class WorkflowSidecar:
         self._worker = worker
         self._worker_supervisor = supervisor
         self._worker_thread = thread
+        self._expected_collector_names = expected_names
         try:
             thread.start()
         except Exception:
             self._worker = None
             self._worker_supervisor = None
             self._worker_thread = None
+            self._expected_collector_names = frozenset()
             supervisor.stop()
             raise
 
@@ -152,11 +171,17 @@ class WorkflowSidecar:
             worker.stop()
         if thread is not None and thread is not threading.current_thread():
             thread.join(timeout=2.0)
+        if thread is not None and thread.is_alive():
+            # The collector may still be using SQLite. Retain the worker
+            # references and single-writer lock; releasing either would allow
+            # a duplicate writer or close the database underneath this thread.
+            raise RuntimeError("worker_shutdown_timeout")
         if supervisor is not None:
             supervisor.stop()
         self._worker = None
         self._worker_thread = None
         self._worker_supervisor = None
+        self._expected_collector_names = frozenset()
 
     def worker_running(self) -> bool:
         return bool(self._worker_thread and self._worker_thread.is_alive())
@@ -188,17 +213,23 @@ class WorkflowSidecar:
         return legacy_id
 
     def _collector_coverage(self) -> dict[str, Any] | None:
-        rows = self.store.list_collector_health()
-        if not rows:
+        if not self.worker_running() or not self._expected_collector_names:
             return None
+        rows = self.store.list_collector_health()
+        rows_by_name = {str(row.get("name")): row for row in rows}
         fresh = sum(
             1
-            for row in rows
+            for name in self._expected_collector_names
+            if (row := rows_by_name.get(name)) is not None
             if row.get("last_success_at")
             and int(row.get("consecutive_failures") or 0) == 0
             and not row.get("circuit_open_until")
         )
-        return {"numerator": fresh, "denominator": len(rows), "scope": "collector_health"}
+        return {
+            "numerator": fresh,
+            "denominator": len(self._expected_collector_names),
+            "scope": "collector_health",
+        }
 
     def v3_snapshot(self) -> dict:
         """P0-2: /api/v1/snapshot returns the v3 snapshot; transport verdict
@@ -232,6 +263,15 @@ class WorkflowSidecar:
             freshness_state=freshness_state,
             workspace_evidence=self.workspace_evidence,
         )
+        # The generic composition root can only project persisted health rows.
+        # The supervising sidecar additionally knows the complete expected set
+        # and whether its worker is still alive; expose that authoritative
+        # coverage instead of a misleading partial-row N/N.
+        snapshot["coverage"] = coverage or {
+            "numerator": None,
+            "denominator": None,
+            "scope": "collector_health",
+        }
         snapshot["transport"].update(
             {
                 "eventStreamConnected": connected,

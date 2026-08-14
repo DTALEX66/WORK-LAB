@@ -47,7 +47,10 @@ function assert(cond, msg) {
 
 function test(name, fn) {
   try {
-    fn();
+    const result = fn();
+    if (result && typeof result.then === "function") {
+      throw new Error("async test passed to synchronous harness; use asyncTest");
+    }
     console.log("  PASS  " + name);
     return true;
   } catch (e) {
@@ -57,4 +60,16 @@ function test(name, fn) {
   }
 }
 
-module.exports = { WEB, FIXTURES, loadScripts, loadFixture, readProjectionSchema, assert, test };
+async function asyncTest(name, fn) {
+  try {
+    await fn();
+    console.log("  PASS  " + name);
+    return true;
+  } catch (e) {
+    console.error("  FAIL  " + name);
+    console.error("        " + e.message);
+    return false;
+  }
+}
+
+module.exports = { WEB, FIXTURES, loadScripts, loadFixture, readProjectionSchema, assert, test, asyncTest };
