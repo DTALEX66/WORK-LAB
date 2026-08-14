@@ -48,7 +48,9 @@ const WlRenderV3 = (function () {
   }
 
   function connectionStrip(d) {
-    const transport = transportMeta(d.transport && d.transport.transportState);
+    const transportState = d.transport && d.transport.transportState;
+    const transport = transportMeta(transportState);
+    const sidecarOffline = String(transportState || "").toUpperCase() === "OFFLINE";
     const watermark = d.sourceWatermark;
     const revision = integer(d.revision);
     let meta = "";
@@ -59,7 +61,7 @@ const WlRenderV3 = (function () {
       meta += `<span class="wl-truth-meta"><span>事件版本</span><b class="mono">#${revision}</b></span>`;
     }
     return `<section class="wl-truth-strip wl-card" aria-label="只读数据链状态">
-      <div class="wl-truth-source"><span class="wl-truth-dot truth-ok"></span><b>Sidecar 已连接</b><span>只读 Snapshot API</span></div>
+      <div class="wl-truth-source"><span class="wl-truth-dot ${sidecarOffline ? "truth-bad" : "truth-ok"}"></span><b>${sidecarOffline ? "Sidecar 离线" : "Sidecar 已连接"}</b><span>只读 Snapshot API</span></div>
       <div class="wl-truth-source"><span class="wl-truth-dot ${transport.cls}"></span><b>${esc(transport.label)}</b></div>
       ${meta}
     </section>`;

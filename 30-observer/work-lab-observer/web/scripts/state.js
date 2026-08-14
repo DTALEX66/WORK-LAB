@@ -38,7 +38,7 @@ const WlState = (function () {
     Object.assign(state, partial);
   }
 
-  function staleCopy(data, freshnessState) {
+  function staleCopy(data, freshnessState, transportOffline) {
     if (!data || typeof data !== "object") return data;
     const copy = JSON.parse(JSON.stringify(data));
     const timestamp = Date.parse(copy.generatedAt || (copy.freshness && copy.freshness.lastGoodAt) || "");
@@ -50,6 +50,13 @@ const WlState = (function () {
       lastGoodAt: (copy.freshness && copy.freshness.lastGoodAt) || copy.generatedAt || null,
     });
     if (copy.quality && typeof copy.quality === "object") copy.quality.freshness = freshnessState;
+    if (transportOffline) {
+      copy.transport = Object.assign({}, copy.transport || {}, {
+        transportState: "OFFLINE",
+        freshnessState: String(freshnessState || "offline").toUpperCase(),
+        eventStreamConnected: false,
+      });
+    }
     if (Array.isArray(copy.projects)) {
       copy.projects.forEach((project) => {
         if (project.quality && typeof project.quality === "object") project.quality.freshness = freshnessState;
@@ -75,11 +82,12 @@ const WlState = (function () {
   }
 
   /* On refresh failure: keep lastGood, mark stale/offline. Do not zero out. */
-  function markRefreshError(message) {
+  function markRefreshError(message, transportOffline) {
     state.refreshError = message;
+    if (transportOffline) state.mode = "OFFLINE";
     const nextFreshness = state.lastGood ? "stale" : "offline";
     state.freshnessState = nextFreshness;
-    state.data = state.lastGood ? staleCopy(state.lastGood, nextFreshness) : null;
+    state.data = state.lastGood ? staleCopy(state.lastGood, nextFreshness, Boolean(transportOffline)) : null;
     return state;
   }
 

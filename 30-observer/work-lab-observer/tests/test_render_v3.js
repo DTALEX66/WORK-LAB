@@ -10,7 +10,7 @@ const fs = require("fs");
 const path = require("path");
 const { loadScripts, WEB } = require("./helpers.js");
 
-const { WlApi, WlRenderV3 } = loadScripts();
+const { WlApi, WlState, WlRenderV3 } = loadScripts();
 
 function snapshot(overrides) {
   return WlApi.normalizeV3(Object.assign({
@@ -99,6 +99,19 @@ t("connection strip reports the real sidecar/event state without 0/0 coverage", 
   assert(!html.includes("0/0"), "missing collector_health is not rendered as coverage");
   assert(!html.includes("collector_health"), "internal table name is not exposed");
   assert(!html.includes("#0"), "meaningless zero revision is hidden");
+});
+
+t("last-good becomes visibly OFFLINE when the EventSource transport fails", () => {
+  WlState.accept(snapshot(), "LIVE");
+  WlState.markRefreshError("event stream offline", true);
+  const state = WlState.get();
+  assert.strictEqual(state.mode, "OFFLINE");
+  assert.strictEqual(state.data.transport.transportState, "OFFLINE");
+  assert.strictEqual(state.data.transport.eventStreamConnected, false);
+  const html = WlRenderV3.connectionStrip(state.data);
+  assert(html.includes("Sidecar 离线"), "stale last-good must not claim sidecar connectivity");
+  assert(html.includes("事件流离线"), "EventSource failure is visible");
+  assert(!html.includes("Sidecar 已连接"), "old transport evidence cannot override local failure");
 });
 
 t("project surface keeps canonical registry and local Git facts", () => {

@@ -7,6 +7,8 @@ import unittest
 import json
 import subprocess
 import sys
+import threading
+import time
 from pathlib import Path
 
 from canonical_store import CanonicalStore
@@ -53,6 +55,10 @@ def _failing_collector(store: CanonicalStore, project_id: str) -> CollectorResul
     raise CollectorError("source unavailable")
 
 
+def _unexpected_failing_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+    raise RuntimeError("unexpected source failure")
+
+
 def _ok_handler(store: CanonicalStore, task: dict[str, Any]) -> None:
     store.append_telemetry(
         {
@@ -97,6 +103,52 @@ class DurableWorkerTests(unittest.TestCase):
         result = worker.run_once()
         self.assertEqual(result["collectors"][0]["ok"], False)
         self.assertIn("source unavailable", result["collectors"][0]["error"])
+
+    def test_worker_persists_collector_health_for_success_and_failure(self) -> None:
+        worker = DurableWorker(
+            self.store,
+            collectors=[_quality_collector, _unexpected_failing_collector],
+        )
+        first = worker.run_once()
+        self.assertEqual(len(first["collectors"]), 2)
+        health = {row["name"]: row for row in self.store.list_collector_health()}
+        self.assertEqual(health["_quality_collector"]["total_runs"], 1)
+        self.assertIsNotNone(health["_quality_collector"]["last_success_at"])
+        self.assertEqual(health["_quality_collector"]["consecutive_failures"], 0)
+        self.assertEqual(health["_unexpected_failing_collector"]["total_runs"], 1)
+        self.assertEqual(health["_unexpected_failing_collector"]["consecutive_failures"], 1)
+
+        worker.run_once()
+        health = {row["name"]: row for row in self.store.list_collector_health()}
+        self.assertEqual(health["_quality_collector"]["total_runs"], 2)
+        self.assertEqual(health["_unexpected_failing_collector"]["total_runs"], 2)
+        self.assertEqual(health["_unexpected_failing_collector"]["consecutive_failures"], 2)
+
+    def test_supervisor_loop_recovers_after_unhandled_tick_failure_and_stops(self) -> None:
+        worker = DurableWorker(self.store, tick_seconds=0.01)
+        calls = 0
+
+        def flaky_tick() -> dict[str, object]:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise RuntimeError("transient store failure")
+            return {"ok": True}
+
+        worker.run_once = flaky_tick  # type: ignore[method-assign]
+        thread = threading.Thread(target=worker.run_forever)
+        thread.start()
+        deadline = time.time() + 2.0
+        while calls < 2 and time.time() < deadline:
+            time.sleep(0.01)
+        worker.stop()
+        thread.join(timeout=1.0)
+
+        self.assertGreaterEqual(calls, 2)
+        self.assertFalse(thread.is_alive())
+        health = {row["name"]: row for row in self.store.list_collector_health()}
+        self.assertGreaterEqual(health["worker_loop"]["total_runs"], 2)
+        self.assertEqual(health["worker_loop"]["consecutive_failures"], 0)
 
     def test_task_loop_completes_healthy_task(self) -> None:
         self.store.upsert_task(

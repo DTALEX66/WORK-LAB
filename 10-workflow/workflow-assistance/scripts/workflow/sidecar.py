@@ -31,6 +31,7 @@ class WorkflowSidecar:
         self.project_root = project_root.resolve()
         self.runtime_root = runtime_root.resolve()
         self.store = CanonicalStore(self.runtime_root / "canonical.sqlite")
+        self.store.register_project("work-lab", str(self.project_root), display_name=self.project_root.name)
         self.live = LiveProjection(self.store)
         # WLGM composition root: approved index + persistent SSE revision hub.
         self.index = load_approved_index(self.store)  # 失败时降级空索引，不 raise
@@ -48,6 +49,9 @@ class WorkflowSidecar:
         self._events_url: str | None = None
         self._watch_stop = threading.Event()
         self._watch_thread: threading.Thread | None = None
+        self._worker: Any | None = None
+        self._worker_supervisor: Any | None = None
+        self._worker_thread: threading.Thread | None = None
 
     def _canonical_fingerprint(self) -> str:
         canonical = self.store.projection()
@@ -58,6 +62,17 @@ class WorkflowSidecar:
             "telemetry_events": canonical["telemetry_events"],
             "usage_summary": canonical["usage_summary"],
             "ci_summary": canonical["ci_summary"],
+            "collector_health": [
+                {
+                    "name": row.get("name"),
+                    "total_runs": row.get("total_runs"),
+                    "last_run_at": row.get("last_run_at"),
+                    "last_success_at": row.get("last_success_at"),
+                    "consecutive_failures": row.get("consecutive_failures"),
+                    "circuit_open_until": row.get("circuit_open_until"),
+                }
+                for row in self.store.list_collector_health()
+            ],
         }
         return json.dumps(stable, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
@@ -100,6 +115,52 @@ class WorkflowSidecar:
             self._watch_thread.join(timeout=2.0)
         self._watch_thread = None
 
+    def start_worker(self, tick_seconds: float = 30.0, collectors: list[Any] | None = None) -> None:
+        """Run the Workflow-owned producer under the sidecar lifecycle."""
+        if self.worker_running():
+            return
+        from collectors import build_standard_collectors
+        from durable_worker import WorkerSupervisor, make_worker
+
+        selected_collectors = build_standard_collectors(self.project_root) if collectors is None else collectors
+        worker = make_worker(
+            self.store,
+            project_id="work-lab",
+            tick_seconds=tick_seconds,
+            collectors=selected_collectors,
+        )
+        supervisor = WorkerSupervisor(self.runtime_root, worker)
+        supervisor.start()
+        thread = threading.Thread(target=worker.run_forever, daemon=True, name="workflow-sidecar-worker")
+        self._worker = worker
+        self._worker_supervisor = supervisor
+        self._worker_thread = thread
+        try:
+            thread.start()
+        except Exception:
+            self._worker = None
+            self._worker_supervisor = None
+            self._worker_thread = None
+            supervisor.stop()
+            raise
+
+    def stop_worker(self) -> None:
+        worker = self._worker
+        thread = self._worker_thread
+        supervisor = self._worker_supervisor
+        if worker is not None:
+            worker.stop()
+        if thread is not None and thread is not threading.current_thread():
+            thread.join(timeout=2.0)
+        if supervisor is not None:
+            supervisor.stop()
+        self._worker = None
+        self._worker_thread = None
+        self._worker_supervisor = None
+
+    def worker_running(self) -> bool:
+        return bool(self._worker_thread and self._worker_thread.is_alive())
+
     def health(self) -> dict[str, Any]:
         return {"status": "ok", "readOnlyControl": True, "ledgerOwner": "workflow-assistance", "observerMutation": False}
 
@@ -126,15 +187,23 @@ class WorkflowSidecar:
         self._revision = self.revision_hub.publish("observed", snapshot)
         return legacy_id
 
-    def _collector_coverage(self) -> tuple[int, int]:
+    def _collector_coverage(self) -> dict[str, Any] | None:
         rows = self.store.list_collector_health()
-        fresh = sum(1 for row in rows if str(row.get("state") or "") == "healthy")
-        return fresh, len(rows)
+        if not rows:
+            return None
+        fresh = sum(
+            1
+            for row in rows
+            if row.get("last_success_at")
+            and int(row.get("consecutive_failures") or 0) == 0
+            and not row.get("circuit_open_until")
+        )
+        return {"numerator": fresh, "denominator": len(rows), "scope": "collector_health"}
 
     def v3_snapshot(self) -> dict:
         """P0-2: /api/v1/snapshot returns the v3 snapshot; transport verdict
         comes exclusively from the live gate (never fabricated LIVE)."""
-        fresh, total = self._collector_coverage()
+        coverage = self._collector_coverage()
         now = time.time()
         connected, connected_since = self.sse_connection_state()
         verdict = evaluate_live(
@@ -145,7 +214,14 @@ class WorkflowSidecar:
             cursor_valid=self._revision > 0,
             writer_watermark_age_seconds=(now - self._last_write_at) if self._last_write_at is not None else float("inf"),
             writer_watermark_threshold_seconds=60.0,
-            coverage=fresh if total else None,
+            coverage=coverage,
+        )
+        freshness_state = (
+            "UNKNOWN"
+            if self._last_write_at is None
+            else "FRESH"
+            if now - self._last_write_at <= 60.0
+            else "STALE"
         )
         snapshot = build_v3_snapshot(
             self.store,
@@ -153,6 +229,7 @@ class WorkflowSidecar:
             revision=self._revision,
             events_url=self._events_url,
             transport_state=verdict.state,
+            freshness_state=freshness_state,
             workspace_evidence=self.workspace_evidence,
         )
         snapshot["transport"].update(
@@ -177,6 +254,7 @@ class WorkflowSidecar:
         )
 
     def close(self) -> None:
+        self.stop_worker()
         self.stop_live_updates()
         self.store.close()
 
@@ -426,17 +504,27 @@ def main() -> int:
     parser.add_argument("--runtime-root", type=Path)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=0)
+    parser.add_argument("--worker-tick", type=float, default=30.0)
+    parser.add_argument("--no-worker", action="store_true")
     args = parser.parse_args()
     project_root = args.project_root.resolve()
     runtime_root = (args.runtime_root or project_root / ".hermes" / "task-runtime" / "workflow").resolve()
+    sidecar = WorkflowSidecar(project_root, runtime_root)
     server = create_server(
-        WorkflowSidecar(project_root, runtime_root),
+        sidecar,
         args.host,
         args.port,
         live_updates=True,
     )
+    try:
+        if not args.no_worker:
+            sidecar.start_worker(tick_seconds=args.worker_tick)
+    except Exception:
+        server.server_close()
+        raise
     print(
-        f"WORKFLOW_SIDECAR_READY url=http://{args.host}:{server.server_port} ledger_owner=workflow-assistance",
+        f"WORKFLOW_SIDECAR_READY url=http://{args.host}:{server.server_port} "
+        f"ledger_owner=workflow-assistance worker={'disabled' if args.no_worker else 'supervised'}",
         flush=True,
     )
     try:

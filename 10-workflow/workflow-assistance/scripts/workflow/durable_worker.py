@@ -13,6 +13,7 @@ UNAVAILABLE/OFFLINE/STALE when a collector's source is missing.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import time
 import uuid
@@ -84,10 +85,12 @@ class DurableWorker:
 
         collector_outcomes: list[dict[str, Any]] = []
         for collector in self.collectors:
+            name = str(getattr(collector, "collector_name", getattr(collector, "__name__", "unknown")))
             try:
                 outcome = collector(self.store, self.project_id)
                 for record in outcome.records:
                     self._write_record(outcome.kind, record)
+                self._record_collector_health(name, ok=outcome.ok)
                 collector_outcomes.append(
                     {
                         "kind": outcome.kind,
@@ -96,8 +99,9 @@ class DurableWorker:
                         "degraded": outcome.degraded,
                     }
                 )
-            except CollectorError as exc:
-                collector_outcomes.append({"kind": getattr(exc, "kind", "unknown"), "ok": False, "error": str(exc)})
+            except Exception as exc:  # noqa: BLE001 - one source must not kill the durable loop
+                self._record_collector_health(name, ok=False)
+                collector_outcomes.append({"kind": name, "ok": False, "error": str(exc)[:500]})
         results["collectors"] = collector_outcomes
 
         if self.task_handler is not None:
@@ -113,6 +117,22 @@ class DurableWorker:
             self.store.record_ci_run(record)
         elif kind == "quality":
             self.store.append_quality(record)
+
+    def _record_collector_health(self, name: str, *, ok: bool) -> None:
+        previous = {row["name"]: row for row in self.store.list_collector_health()}.get(name, {})
+        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        failures = 0 if ok else int(previous.get("consecutive_failures") or 0) + 1
+        self.store.upsert_collector_health(
+            {
+                "name": name,
+                "totalRuns": int(previous.get("total_runs") or 0) + 1,
+                "lastRunAt": now,
+                "lastSuccessAt": now if ok else previous.get("last_success_at"),
+                "consecutiveFailures": failures,
+                "circuitOpenUntil": previous.get("circuit_open_until"),
+                "droppedCount": int(previous.get("dropped_count") or 0),
+            }
+        )
 
     def _drive_task(self) -> dict[str, Any]:
         """Pick one ready task, lease it transactionally, run, reconcile."""
@@ -174,7 +194,14 @@ class DurableWorker:
 
     def run_forever(self) -> None:
         while not self._stopped:
-            self.run_once()
+            try:
+                self.run_once()
+                self._record_collector_health("worker_loop", ok=True)
+            except Exception:  # noqa: BLE001 - supervisor loop must recover on the next tick
+                try:
+                    self._record_collector_health("worker_loop", ok=False)
+                except Exception:
+                    pass
             deadline = time.time() + self.tick_seconds
             while time.time() < deadline and not self._stopped:
                 time.sleep(0.25)

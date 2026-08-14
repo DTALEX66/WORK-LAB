@@ -10,6 +10,7 @@ from pathlib import Path
 
 from canonical_store import CanonicalStore
 from composition_root import build_v3_snapshot, load_approved_index
+from durable_worker import CollectorResult
 from sidecar import WorkflowSidecar, create_server
 from snapshot_validator import validate_snapshot
 from workspace_evidence import load_workspace_evidence
@@ -115,7 +116,9 @@ class CompositionRootTests(unittest.TestCase):
                 index = load_approved_index(store)
                 snap = build_v3_snapshot(
                     store, index, revision=1,
-                    events_url="http://127.0.0.1:9/api/v1/events", transport_state="OFFLINE",
+                    events_url="http://127.0.0.1:9/api/v1/events",
+                    transport_state="OFFLINE",
+                    freshness_state="STALE",
                 )
                 self.assertEqual(snap["schemaVersion"], "workflow/snapshot/v3")
                 self.assertIsInstance(snap["executions"], list)
@@ -123,6 +126,7 @@ class CompositionRootTests(unittest.TestCase):
                 self.assertIsNone(snap["tokenSummary"]["inputTokens"])
                 self.assertEqual(snap["transport"]["eventsUrl"], "http://127.0.0.1:9/api/v1/events")
                 self.assertEqual(snap["transport"]["transportState"], "OFFLINE")
+                self.assertEqual(snap["transport"]["freshnessState"], "STALE")
                 self.assertTrue(validate_snapshot(snap)["valid"])
             finally:
                 store.close()
@@ -262,6 +266,50 @@ class SidecarV3SnapshotTests(unittest.TestCase):
                 self.assertIsNone(transport["writerWatermarkAt"])
             finally:
                 sidecar.close()
+
+    def test_fresh_writer_and_complete_collector_health_can_reach_live(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sidecar = make_sidecar(Path(tmp))
+            try:
+                now = time.time()
+                for name in ("task", "git", "usage", "quality", "growth"):
+                    sidecar.store.upsert_collector_health(
+                        {
+                            "name": name,
+                            "totalRuns": 1,
+                            "lastRunAt": "2026-08-15T00:00:00Z",
+                            "lastSuccessAt": "2026-08-15T00:00:00Z",
+                            "consecutiveFailures": 0,
+                        }
+                    )
+                sidecar._revision = 1
+                sidecar._last_heartbeat_at = now
+                sidecar._last_write_at = now
+                sidecar.mark_sse_connected()
+                transport = sidecar.v3_snapshot()["transport"]
+                self.assertEqual(transport["transportState"], "LIVE")
+                self.assertEqual(transport["freshnessState"], "FRESH")
+            finally:
+                sidecar.close()
+
+    def test_embedded_worker_lifecycle_writes_health_and_stops_cleanly(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sidecar = make_sidecar(Path(tmp))
+            def healthy_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+                return CollectorResult(kind="quality", ok=True, records=[])
+            try:
+                sidecar.start_worker(tick_seconds=0.05, collectors=[healthy_collector])
+                deadline = time.time() + 2.0
+                while not sidecar.store.list_collector_health() and time.time() < deadline:
+                    time.sleep(0.02)
+                self.assertTrue(sidecar.worker_running())
+                health_names = {row["name"] for row in sidecar.store.list_collector_health()}
+                self.assertIn("healthy_collector", health_names)
+                self.assertIn("worker_loop", health_names)
+                self.assertEqual(sidecar.store.list_projects()[0]["project_id"], "work-lab")
+            finally:
+                sidecar.close()
+            self.assertFalse(sidecar.worker_running())
 
     def test_sse_connection_scope_releases_count_after_handshake_error(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
