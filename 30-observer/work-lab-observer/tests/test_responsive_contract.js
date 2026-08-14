@@ -32,8 +32,8 @@ function run() {
     assert(/\.wl-table-wrap\s*\{[^}]*overflow-x:\s*auto/.test(components), "table wrap scrolls internally");
   });
 
-  t("grid columns reflow at the contract breakpoints (<960 top nav, <640 compact-ish)", () => {
-    assert(/@media\s*\(max-width:\s*960px\)/.test(layout), "960px breakpoint");
+  t("truth cards reflow at the DPI-safe breakpoints (<800 and <640)", () => {
+    assert(/@media\s*\(max-width:\s*800px\)/.test(layout), "800px breakpoint");
     assert(/@media\s*\(max-width:\s*640px\)/.test(layout), "640px breakpoint");
     assert(/@media\s*\(max-width:\s*1024px\)|@media\s*\(max-width:\s*1180px\)/.test(layout), "narrow-full breakpoint");
     assert(/@media\s*\(max-width:\s*420px\)/.test(components), "420px breakpoint");
@@ -74,9 +74,9 @@ function run() {
     const renderV3 = fs.readFileSync(path.join(WEB, "scripts", "render-v3.js"), "utf-8");
     assert(!/width:\s*\d{3,}px/.test(renderV3), "no fixed wide widths in v3 compact markup");
     assert(!/min-width:\s*\d{3,}px/.test(renderV3), "no fixed min-widths in v3 renderer");
-    assert(/overflow-wrap|wl-mono/.test(renderV3), "long values use wrap utilities");
-    // chips carry icon + text (never color alone) in v3 too.
-    assert(/icon\(.*\)/.test(renderV3) && /wl-chip/.test(renderV3), "v3 chips icon+text");
+    assert(/String\(git\.localSha\)\.slice\(0, 8\)/.test(renderV3), "long Git SHA is bounded");
+    // Truth chips always carry explicit text; status is never color-only.
+    assert(/wl-truth-chip/.test(renderV3) && /已登记|事件流实时/.test(renderV3), "v3 truth chips carry text");
   });
 
   t("status never relies on color alone (chip carries icon + text)", () => {

@@ -42,24 +42,10 @@ fn validated_observer_api(raw: &str) -> Option<tauri::Url> {
     }
 }
 
-fn inject_observer_api(app: &AppHandle) {
-    let Ok(raw) = std::env::var("WORK_LAB_OBSERVER_API_URL") else {
-        return;
-    };
-    let Some(endpoint) = validated_observer_api(&raw) else {
-        log::warn!("ignored invalid WORK_LAB_OBSERVER_API_URL");
-        return;
-    };
-    for label in ["main", "panel"] {
-        if let Some(window) = app.get_webview_window(label) {
-            if let Ok(mut url) = window.url() {
-                url.query_pairs_mut().append_pair("api", endpoint.as_str());
-                if let Err(error) = window.navigate(url) {
-                    log::warn!("failed to inject Observer endpoint into {label}: {error}");
-                }
-            }
-        }
-    }
+fn observer_endpoint() -> Option<tauri::Url> {
+    let raw = std::env::var("WORK_LAB_OBSERVER_API_URL").ok()?;
+    let endpoint = validated_observer_api(&raw)?;
+    Some(endpoint)
 }
 
 fn show_main(app: &AppHandle) {
@@ -104,13 +90,37 @@ fn hide_to_tray(app: &AppHandle, state: &State<AppState>) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let endpoint = observer_endpoint();
     tauri::Builder::default()
         .manage(AppState::default())
         .plugin(tauri_plugin_log::Builder::default().level(log::LevelFilter::Info).build())
+        // 注入 Observer 后端地址：必须在页面加载完成后（Finished）做 ——
+        // setup 时 window.url() 还是 about:blank，立即 navigate 会把页面
+        // 永久带到空白页（透明框/无内容）。用 Builder 全局页面加载 hook，
+        // 并跳过 about: 与已注入 api 参数的页面，避免 navigate 循环。
+        .on_page_load(move |webview, payload| {
+            if payload.event() != tauri::webview::PageLoadEvent::Finished {
+                return;
+            }
+            let Some(endpoint) = endpoint.as_ref() else {
+                return;
+            };
+            if let Ok(mut url) = webview.url() {
+                if url.as_str().starts_with("about:") {
+                    return;
+                }
+                if url.query_pairs().any(|(k, _)| k == "api") {
+                    return; // 已注入过
+                }
+                url.query_pairs_mut().append_pair("api", endpoint.as_str());
+                if let Err(error) = webview.navigate(url) {
+                    log::warn!("failed to inject Observer endpoint: {error}");
+                }
+            }
+        })
         .setup(|app| {
             let handle = app.handle().clone();
             let _state = app.state::<AppState>();
-            inject_observer_api(&handle);
 
             // --- System tray (B: tray + floating panel) ---
             let show = MenuItem::with_id(app, "show", "打开观测台", true, None::<&str>)?;

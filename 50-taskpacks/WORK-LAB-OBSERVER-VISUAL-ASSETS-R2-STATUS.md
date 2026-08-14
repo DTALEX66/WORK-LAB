@@ -1,6 +1,6 @@
 # WORK-LAB Observer Visual Assets R2 — Desktop Component Status
 
-> Status: `IMPLEMENTED_LOCAL_PENDING_CI`
+> Status: `PRODUCTION_ARTIFACT_VERIFIED_LOCAL_PENDING_DELIVERY`
 >
 > This document records the repository implementation of
 > `WORK-LAB-OBSERVER-VISUAL-ASSETS-R2.zip`. It is a current implementation
@@ -24,8 +24,8 @@ website:
 
 | Surface | Entry | Window contract |
 |---|---|---|
-| Main | `index.html?view=full&mode=LIVE&theme=dark` | 1180x760, borderless, transparent |
-| Panel | `index.html?view=compact&mode=LIVE&theme=dark` | 440x780, fixed size, borderless, transparent, always-on-top, skip-taskbar |
+| Main | `index.html?view=full&mode=UNKNOWN&theme=dark` | 1280x820, borderless, opaque, resizable |
+| Panel | `index.html?view=compact&mode=UNKNOWN&theme=dark` | 440x780, fixed size, borderless, opaque, always-on-top, skip-taskbar |
 
 The panel remains hidden until opened from the tray. Closing either surface
 hides the application to the tray rather than executing an external action.
@@ -49,21 +49,22 @@ Checked-in brand assets:
 The Compact component now has:
 
 - fixed 440px component width;
-- four core KPIs: running, blocked, input tokens, API estimate/unknown cost;
-- dense read-only project list capped at three visible projects;
-- blocker, usage, and evidence/health sections;
+- truthful transport verdict and approved-project facts;
+- dense read-only project list without unsupported KPI placeholders;
+- no `0/0`, fake LIVE, fake CI, or unknown-cost decoration;
 - dark/light theme tokens and R2 status colors;
 - no mutation controls or external runtime assets.
 
 ## Data boundary
 
-The frontend consumes the projection through `GET /api/dashboard` only.
+The frontend consumes the canonical projection through `GET /api/v1/snapshot` and subscribes to the loopback-only `GET /api/v1/events` SSE stream.
 
 - POST/PUT/PATCH/DELETE are rejected by the client boundary.
 - Unknown projection fields are ignored for forward compatibility.
 - Unknown cost remains unknown; subscription usage remains `not-metered`.
-- A bundled last-good/live snapshot is only a read-only fallback for offline
-  rendering; it is not a new authoritative source.
+- Last-good retains only a previously successful sidecar snapshot. Initial GET
+  and SSE recovery use bounded retry; production never silently falls back to
+  the bundled fixture.
 - No credentials, prompt/response bodies, private session data, or provider
   auth state are read.
 
@@ -81,49 +82,48 @@ The frontend consumes the projection through `GET /api/dashboard` only.
 5. The desktop component contract test initially lacked the repository runner's
    `run()` export and overmatched the descriptive word `shell`. Both test-only
    false positives are corrected.
+6. Initial Snapshot failure previously stayed offline forever. The product now
+   retries GET with capped exponential backoff while retaining last-good.
+7. SSE replacement previously reset the reconnect delay before every attempt.
+   Resource close and retry-state reset are now separate operations.
+8. Concurrent SSE clients previously shared one boolean connection flag. The
+   sidecar now derives connection truth from a thread-safe client count.
+9. Transport now projects the actual SSE connection state and timestamps.
+   Sidecar startup no longer invents heartbeat or writer freshness; both remain
+   null until the corresponding real event is observed.
 
 ## Evidence and verification
 
 Fresh local verification after the implementation:
 
 ```text
-JS UI + desktop component tests: 39 passed, 0 failed
-Python Observer tests: 8 + 10 + 5 passed
-AD_HOC_R2_VERIFY_PASS
-AD_HOC_DESKTOP_COMPONENT_VERIFY_PASS
-node syntax: ok
-SHA readback for copied brand assets: 5/5 match
-runtime dirs: clean
-browser QA console errors: 0
+JS UI + desktop component tests: 53 passed, 0 failed
+Sidecar v3 focused tests: 12 passed
+Production build command: cargo tauri build --no-bundle
+Production artifact: src-tauri/target/release/app.exe
+Real WebView2: Snapshot 200, named SSE snapshot + heartbeat, no horizontal overflow
+Final runtime target: one sidecar, one app.exe, no temporary static server, no CDP listener
 ```
 
-The browser was used only as a visual QA harness for the embedded frontend
-layer. Full and Compact dark/light views were inspected; it is not evidence that
-the packaged Tauri executable was built.
+The plain browser was used only for early frontend QA. Final acceptance used the
+actual production Tauri/WebView2 process; browser-only evidence is not being
+substituted for the desktop runtime.
 
-## Known limitation / explicit blocker
+## Remaining delivery boundaries
 
-The current Windows environment does not have the Rust/Tauri build toolchain:
-
-```text
-cargo: unavailable
-rustc: unavailable
-cargo tauri: unavailable
-```
-
-Therefore the Tauri configuration and desktop contract are structurally
-verified, but a real Windows portable EXE/ZIP has not been built or run here.
-The portable artifact remains `PENDING_TOOLCHAIN_BUILD`.
-
-This does not authorize installing an unknown toolchain, changing system-wide
-configuration, or claiming a production release.
+The host still has no complete system Visual Studio/MSVC toolchain. The verified
+build uses project-local xwin SDK/CRT plus Rust `rust-lld` and temporary
+runtime-local build-dependency patches; those Cargo patches are removed after
+the build. This is sufficient for the verified local EXE but does not claim a
+signed installer, ZIP bundle, exact-SHA CI, commercial release, or a globally
+installed toolchain.
 
 ## Delivery state
 
-- R2 implementation: complete in the local working tree.
+- R2 implementation and production EXE: complete and verified in the local working tree.
 - Required tests and focused verification: passed.
 - External provider/live mutation: not executed.
-- Human visual/release approval: still pending.
+- Current-tree Git delivery, human release approval, signing and publication: still pending.
 - R2 implementation commit/PR/CI/merge: PR `#30`, exact-head PR run
   `31251264323`, final main push run `31251306631`, merged implementation SHA
   `f141946bfa55fd77120443bacd45aee0049c16e2`.
@@ -132,7 +132,8 @@ configuration, or claiming a production release.
   `5d2ceb264edf54c42e347acd1246202a0add31ac`.
 - Local and remote `main` were read back equal after each merge. The two SHA
   values above are intentionally retained as implementation and reconciliation
-  lineage, not conflated into one release SHA.
+  lineage, not conflated into one release SHA. They are historical ancestry and
+  do not prove the current dirty Observer/Tauri tree.
 
 ## Source and scope
 
