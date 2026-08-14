@@ -859,6 +859,46 @@ class CanonicalStore:
             rows = self._conn.execute("SELECT * FROM execution_instances ORDER BY updated_at DESC").fetchall()
             return [dict(row) for row in rows]
 
+    # ---- WLGM composition root read helpers (pure SELECT, additive) ----
+
+    def list_usage_samples(self) -> list[dict[str, Any]]:
+        """All usage_samples rows for the v3 snapshot usage projection."""
+        with self._lock:
+            rows = self._conn.execute("SELECT * FROM usage_samples ORDER BY observed_at DESC").fetchall()
+            return [dict(row) for row in rows]
+
+    def list_ci_runs(self) -> list[dict[str, Any]]:
+        """All ci_runs rows for the v3 snapshot ci projection."""
+        with self._lock:
+            rows = self._conn.execute("SELECT * FROM ci_runs ORDER BY observed_at DESC").fetchall()
+            return [dict(row) for row in rows]
+
+    def list_collector_health(self) -> list[dict[str, Any]]:
+        """All collector_health rows (coverage numerator/denominator source)."""
+        with self._lock:
+            rows = self._conn.execute("SELECT * FROM collector_health ORDER BY updated_at DESC").fetchall()
+            return [dict(row) for row in rows]
+
+    def seed_revision(self) -> int:
+        """Persisted SSE revision seed: MAX(revision) over projection_revisions."""
+        with self._lock:
+            row = self._conn.execute("SELECT COALESCE(MAX(revision), 0) FROM projection_revisions").fetchone()
+            return int(row[0] or 0)
+
+    def max_watermark(self) -> str | None:
+        """Writer watermark: newest observed_at across telemetry/usage/ci tables."""
+        with self._lock:
+            rows = self._conn.execute(
+                """
+                SELECT MAX(observed_at) FROM (
+                    SELECT observed_at FROM telemetry_samples
+                    UNION ALL SELECT observed_at FROM usage_samples
+                    UNION ALL SELECT observed_at FROM ci_runs
+                )
+                """
+            ).fetchone()
+            return rows[0] if rows and rows[0] else None
+
     def close(self) -> None:
         with self._lock:
             self._conn.close()

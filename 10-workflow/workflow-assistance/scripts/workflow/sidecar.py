@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import queue
 import threading
+import time
 from typing import Any
 from urllib.parse import urlsplit
 import uuid
@@ -16,6 +17,10 @@ import uuid
 from sidecar_lock import SingleInstanceLock
 from canonical_store import CanonicalStore
 from sse_hub import HEARTBEAT_SECONDS, LIVE, LiveProjection, SNAPSHOT, STALE, render_sse_frames
+from composition_root import build_v3_snapshot, load_approved_index
+from live_gate import evaluate_live
+from sse_revision import SseRevisionHub
+from snapshot_validator import validate_snapshot
 
 
 class WorkflowSidecar:
@@ -24,6 +29,14 @@ class WorkflowSidecar:
         self.runtime_root = runtime_root.resolve()
         self.store = CanonicalStore(self.runtime_root / "canonical.sqlite")
         self.live = LiveProjection(self.store)
+        # WLGM composition root: approved index + persistent SSE revision hub.
+        self.index = load_approved_index(self.store)  # 失败时降级空索引，不 raise
+        self.revision_hub = SseRevisionHub()
+        self._revision = self.store.seed_revision()
+        self._last_heartbeat_at = __import__("time").time()
+        self._last_write_at = __import__("time").time()
+        self._sse_connected = False
+        self._events_url: str | None = None
         self._watch_stop = threading.Event()
         self._watch_thread: threading.Thread | None = None
 
@@ -47,7 +60,9 @@ class WorkflowSidecar:
             return
         self._watch_stop.clear()
         last_fingerprint = self._canonical_fingerprint()
-        self.live.set_mode(LIVE)
+        # P0-4: LIVE only comes from the live gate; the watcher must not
+        # declare LIVE by itself.
+        self.live.set_mode(SNAPSHOT)
 
         def _watch() -> None:
             nonlocal last_fingerprint
@@ -58,10 +73,9 @@ class WorkflowSidecar:
                     if self.live.mode() != STALE:
                         self.live.set_mode(STALE)
                     continue
-                if self.live.mode() != LIVE:
-                    self.live.set_mode(LIVE)
                 if current != last_fingerprint:
                     last_fingerprint = current
+                    self._last_write_at = __import__("time").time()
                     self.publish_observed()
 
         self._watch_thread = threading.Thread(
@@ -96,7 +110,49 @@ class WorkflowSidecar:
         }
 
     def publish_observed(self) -> str:
-        return self.live.hub.publish("observed", self.projection())
+        legacy_id = self.live.hub.publish("observed", self.projection())
+        # 新链路双写：persistent revision hub（sidecar.v3_snapshot 由 live gate
+        # 提供 transport verdict；watch 触发时数据已变化）。
+        snapshot = self.v3_snapshot()
+        self._revision = self.revision_hub.publish("observed", snapshot)
+        return legacy_id
+
+    def _collector_coverage(self) -> tuple[int, int]:
+        rows = self.store.list_collector_health()
+        fresh = sum(1 for row in rows if str(row.get("state") or "") == "healthy")
+        return fresh, len(rows)
+
+    def v3_snapshot(self) -> dict:
+        """P0-2: /api/v1/snapshot returns the v3 snapshot; transport verdict
+        comes exclusively from the live gate (never fabricated LIVE)."""
+        fresh, total = self._collector_coverage()
+        verdict = evaluate_live(
+            snapshot_valid=bool(validate_snapshot(self.live_projection_skeleton())["valid"]),
+            sse_connected=self._sse_connected,
+            heartbeat_age_seconds=__import__("time").time() - self._last_heartbeat_at,
+            heartbeat_threshold_seconds=HEARTBEAT_SECONDS,
+            cursor_valid=self._revision > 0,
+            writer_watermark_age_seconds=__import__("time").time() - self._last_write_at,
+            writer_watermark_threshold_seconds=60.0,
+            coverage=fresh if total else None,
+        )
+        return build_v3_snapshot(
+            self.store,
+            self.index,
+            revision=self._revision,
+            events_url=self._events_url,
+            transport_state=verdict.state,
+        )
+
+    def live_projection_skeleton(self) -> dict:
+        """Minimal valid snapshot skeleton for live-gate schema validation."""
+        return build_v3_snapshot(
+            self.store,
+            self.index,
+            revision=self._revision,
+            events_url=self._events_url,
+            transport_state="UNKNOWN",
+        )
 
     def close(self) -> None:
         self.stop_live_updates()
@@ -231,11 +287,17 @@ def create_server(
             path = urlsplit(self.path).path
             if path == "/healthz":
                 self.send_json(200, sidecar.health())
-            elif path in {"/api/projection", "/api/v1/snapshot"}:
-                self.send_json(200, sidecar.projection())
+            elif path == "/api/projection":
+                self.send_json(200, sidecar.projection())  # 旧 v1 兼容，保留
+            elif path == "/api/v1/snapshot":
+                self.send_json(200, sidecar.v3_snapshot())  # P0-2: 真 v3
             elif path == "/api/v1/events":
                 last_id = self.headers.get("Last-Event-ID")
-                subscriber = sidecar.live.subscribe()
+                client = sidecar.revision_hub.connect(uuid.uuid4().hex, last_event_id=last_id)
+                if client is None:
+                    self.send_json(503, {"status": "too_many_connections"})
+                    return
+                sidecar._sse_connected = True
                 self.send_response(200)
                 self.send_header("Content-Type", "text/event-stream; charset=utf-8")
                 self.send_header("Cache-Control", "no-store")
@@ -247,21 +309,24 @@ def create_server(
                     self.send_header("Vary", "Origin")
                 self.end_headers()
                 try:
-                    replay = sidecar.live.hub.messages_since(last_id)
-                    self.wfile.write(render_sse_frames(replay, include_retry=True).encode("utf-8"))
+                    frames = sidecar.revision_hub.frames_for(client)
+                    if not frames:  # 新连接：先推一帧 snapshot 事件
+                        frames = [SseRevisionHub._frame("snapshot", sidecar.v3_snapshot(), sidecar._revision)]
+                    self.wfile.write("".join(frames).encode("utf-8"))
                     self.wfile.flush()
                     while True:
-                        try:
-                            message = subscriber.get(timeout=HEARTBEAT_SECONDS)
-                            frame = render_sse_frames([message])
-                        except queue.Empty:
-                            frame = render_sse_frames([], include_heartbeat=True)
-                        self.wfile.write(frame.encode("utf-8"))
+                        time.sleep(HEARTBEAT_SECONDS / 2)
+                        sidecar._last_heartbeat_at = time.time()
+                        frames = sidecar.revision_hub.frames_for(client)
+                        if not frames:
+                            frames = [sidecar.revision_hub.heartbeat_frame()]
+                        self.wfile.write("".join(frames).encode("utf-8"))
                         self.wfile.flush()
                 except (BrokenPipeError, ConnectionResetError, OSError):
                     return
                 finally:
-                    sidecar.live.unsubscribe(subscriber)
+                    sidecar.revision_hub.disconnect(client.client_id)
+                    sidecar._sse_connected = False
             else:
                 self.send_json(404, {"status": "not_found"})
 
@@ -283,6 +348,10 @@ def create_server(
     server: _WorkflowHTTPServer | None = None
     try:
         server = _WorkflowHTTPServer((host, port), Handler, sidecar)
+        # P0-4: backfill eventsUrl once the real port is known (frontend reads
+        # transport.eventsUrl to subscribe).
+        url_host = _url_host(str(server.server_address[0]))
+        sidecar._events_url = f"http://{url_host}:{int(server.server_address[1])}/api/v1/events"
         if live_updates:
             sidecar.start_live_updates()
         return server
