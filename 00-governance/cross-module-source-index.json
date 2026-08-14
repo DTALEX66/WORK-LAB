@@ -6,7 +6,7 @@
   ],
   "generated_at": "2026-08-08",
   "policy": "decision status is NOT implementation status; adopt-now items with no WORK-LAB target paths are external-optional + not-implemented",
-  "source_of_truth": "D:/All projects/OPEN-DESIGN-Assistance/opendesign-assistance/research/global-absorption/SOURCE_REGISTRY.json",
+  "source_of_truth": "D:/All projects/DESIGN-LAB/opendesign-assistance/research/global-absorption/SOURCE_REGISTRY.json",
   "adopt_now_total": 33,
   "adopt_now_complete_in_worklab": 0,
   "adopt_now_partial_in_worklab": 0,
@@ -22,7 +22,7 @@
       "integrationMode": "adapter",
       "license": "Apache-2.0",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "scenarios/",
         "plugins/",
@@ -36,7 +36,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-google-design-md",
@@ -48,7 +48,7 @@
       "integrationMode": "vendor-adapt",
       "license": "Apache-2.0",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "schemas/",
         "knowledge/standards/design-contract/"
@@ -61,7 +61,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-dtcg",
@@ -73,7 +73,7 @@
       "integrationMode": "vendor-adapt",
       "license": "W3C Community Final Specification Agreement",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "schemas/design-tokens/",
         "adapters/tokens/"
@@ -86,7 +86,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-hallmark",
@@ -98,7 +98,7 @@
       "integrationMode": "derive",
       "license": "MIT",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/anti-slop/",
         "evals/rubrics/"
@@ -111,7 +111,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-styleseed",
@@ -123,7 +123,7 @@
       "integrationMode": "derive",
       "license": "MIT",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/design-method/",
         "evals/"
@@ -136,7 +136,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-openskill-eval",
@@ -148,7 +148,7 @@
       "integrationMode": "derive",
       "license": "Apache-2.0 code; CC-BY-NC-4.0 data",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "evals/harness/"
       ],
@@ -160,7 +160,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-semantic-skill-attacks",
@@ -172,7 +172,7 @@
       "integrationMode": "derive",
       "license": "Research paper terms",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/governance/skill-security/"
       ],
@@ -184,7 +184,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-wcag22",
@@ -196,7 +196,7 @@
       "integrationMode": "reference",
       "license": "W3C Document License",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/standards/accessibility/"
       ],
@@ -208,7 +208,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-aria-apg",
@@ -220,7 +220,7 @@
       "integrationMode": "derive",
       "license": "W3C Document License",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/standards/accessibility/patterns/"
       ],
@@ -232,7 +232,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-govuk-principles",
@@ -244,7 +244,7 @@
       "integrationMode": "derive",
       "license": "Open Government Licence v3.0",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/service-design/"
       ],
@@ -256,7 +256,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-18f-methods",
@@ -268,7 +268,7 @@
       "integrationMode": "vendor-adapt",
       "license": "US-Public-Domain / CC0",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/methods/"
       ],
@@ -280,7 +280,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-18f-ux-guide",
@@ -292,7 +292,7 @@
       "integrationMode": "vendor-adapt",
       "license": "CC0-1.0",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/ux-research/"
       ],
@@ -304,7 +304,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-plain-language",
@@ -316,7 +316,7 @@
       "integrationMode": "derive",
       "license": "Open Government Licence v3.0",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/content-design/"
       ],
@@ -328,7 +328,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-smithsonian-exhibition",
@@ -340,7 +340,7 @@
       "integrationMode": "derive",
       "license": "REFERENCE-ONLY",
       "licenseVerified": false,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/standards/spatial/"
       ],
@@ -352,7 +352,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-nps-exhibit-access",
@@ -364,7 +364,7 @@
       "integrationMode": "derive",
       "license": "US-Public-Domain",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/standards/spatial/"
       ],
@@ -376,7 +376,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-radix-ui",
@@ -388,7 +388,7 @@
       "integrationMode": "adapter",
       "license": "MIT",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "adapters/components/radix/"
       ],
@@ -400,7 +400,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-react-aria",
@@ -412,7 +412,7 @@
       "integrationMode": "adapter",
       "license": "Apache-2.0",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "adapters/components/react-aria/"
       ],
@@ -424,7 +424,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-axe-core",
@@ -436,7 +436,7 @@
       "integrationMode": "adapter",
       "license": "MPL-2.0",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "adapters/testing/axe/"
       ],
@@ -448,7 +448,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-playwright",
@@ -460,7 +460,7 @@
       "integrationMode": "adapter",
       "license": "Apache-2.0",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "adapters/testing/playwright/"
       ],
@@ -472,7 +472,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-w3c-clreq",
@@ -484,7 +484,7 @@
       "integrationMode": "derive",
       "license": "W3C Document License",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/typography/cjk/"
       ],
@@ -496,7 +496,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-w3c-jlreq",
@@ -508,7 +508,7 @@
       "integrationMode": "derive",
       "license": "W3C Document License",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/typography/cjk/"
       ],
@@ -520,7 +520,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-d3",
@@ -532,7 +532,7 @@
       "integrationMode": "adapter",
       "license": "ISC",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "adapters/visualization/d3/"
       ],
@@ -544,7 +544,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-vega-lite",
@@ -556,7 +556,7 @@
       "integrationMode": "adapter",
       "license": "BSD-3-Clause",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "adapters/visualization/vega-lite/"
       ],
@@ -568,7 +568,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-mermaid",
@@ -580,7 +580,7 @@
       "integrationMode": "adapter",
       "license": "MIT",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "adapters/diagrams/mermaid/"
       ],
@@ -592,7 +592,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-svgo",
@@ -604,7 +604,7 @@
       "integrationMode": "adapter",
       "license": "MIT",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "adapters/preflight/svg/"
       ],
@@ -616,7 +616,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-ghent-workgroup",
@@ -628,7 +628,7 @@
       "integrationMode": "derive",
       "license": "REFERENCE-ONLY",
       "licenseVerified": false,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/standards/print/"
       ],
@@ -640,7 +640,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-pptxgenjs",
@@ -652,7 +652,7 @@
       "integrationMode": "adapter",
       "license": "MIT",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "adapters/documents/pptx/"
       ],
@@ -664,7 +664,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-lottie-spec",
@@ -676,7 +676,7 @@
       "integrationMode": "vendor-adapt",
       "license": "Community Specification License",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "schemas/motion/lottie/"
       ],
@@ -688,7 +688,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-prefers-reduced-motion",
@@ -700,7 +700,7 @@
       "integrationMode": "derive",
       "license": "W3C Document License",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/standards/motion/"
       ],
@@ -712,7 +712,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-gltf",
@@ -724,7 +724,7 @@
       "integrationMode": "vendor-adapt",
       "license": "Khronos Specification License",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "schemas/3d/gltf/"
       ],
@@ -736,7 +736,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-openpbr",
@@ -748,7 +748,7 @@
       "integrationMode": "vendor-adapt",
       "license": "Apache-2.0",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/3d/materials/"
       ],
@@ -760,7 +760,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-spdx",
@@ -772,7 +772,7 @@
       "integrationMode": "vendor-adapt",
       "license": "Community Specification License",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "schemas/provenance/spdx/"
       ],
@@ -784,7 +784,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     },
     {
       "id": "od-reuse",
@@ -796,7 +796,7 @@
       "integrationMode": "derive",
       "license": "CC-BY-SA-4.0",
       "licenseVerified": true,
-      "ownerModule": "OPEN-DESIGN-Assistance",
+      "ownerModule": "DESIGN-LAB",
       "targetPaths": [
         "knowledge/governance/licensing/"
       ],
@@ -808,7 +808,7 @@
       },
       "upstreamFreshness": "review-required",
       "reviewedAt": "2026-08-04",
-      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/OPEN-DESIGN-Assistance"
+      "rollback": "not implemented in WORK-LAB; owned by DTALEX66/DESIGN-LAB"
     }
   ]
 }

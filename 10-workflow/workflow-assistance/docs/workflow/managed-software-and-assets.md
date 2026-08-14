@@ -87,7 +87,7 @@ PLATFORM_INTERNAL（desktop 状态/openhuman 元数据/cc-switch 平台同步）
 - `E:\` 全盘保护；`~/.codex/memories/**`、`~/.openhuman/**` 私有运行时禁读；
 - 用户 provider/model/认证/Desktop 状态属于用户，增强模块只观察不接管；
 - **Open Design / OpenHuman 分层**：WORK-LAB 对 Open Design 的非设计治理资产（注册、迁移指针、目录映射、MCP 声明、审计边界）保持合同责任，但未有受审查 adapter 时 `apply_supported=false`；OpenHuman global configuration 没有 adapter，保持 OBSERVE。被切割的 Open Design 内部设计资料与两个平台的私有运行时（`~/.openhuman/**`、Open Design 远端库内容）一律不读不动。
-- **Open Design 能力边界**（`open_design_capability_owned_by_open_design_project`）：任何能提升设计能力的配置——模型/工具选择、生成参数、设计资产、设计规范——属于 Open Design 项目本身（`DTALEX66/OPEN-DESIGN-Assistance`），本项目不采集、不管理、不 sync；WORK-LAB 只管理非设计性质的全局配置（指针/注册/映射/MCP 声明/审计边界）。
+- **Open Design 能力边界**（`open_design_capability_owned_by_open_design_project`）：任何能提升设计能力的配置——模型/工具选择、生成参数、设计资产、设计规范——属于 Open Design 项目本身（`DTALEX66/DESIGN-LAB`），本项目不采集、不管理、不 sync；WORK-LAB 只管理非设计性质的全局配置（指针/注册/映射/MCP 声明/审计边界）。
 
 ## 4. 变更、同步与升级后恢复流程
 

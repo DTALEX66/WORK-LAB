@@ -43,7 +43,7 @@ Store had real data → the UI was NOT lying about data absence; it was reading 
 
 ## Verification that actually convinced
 - `browser_navigate http://127.0.0.1:6522/?view=full` → snapshot showed:
-  WORK-LAB | running | work-lab ; OPEN-DESIGN-Assistance | idle | open-design-assistance ;
+  WORK-LAB | running | work-lab ; DESIGN-LAB | idle | open-design-assistance ;
   输入/输出/总 Token 2050 ; 趋势点 1
 - `?view=compact` → same data
 - Observer Python 48/48 OK; Node UI 44+4 OK; `test_observer_dashboard_render.py` 4/4

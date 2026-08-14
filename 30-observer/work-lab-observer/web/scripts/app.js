@@ -135,7 +135,7 @@ const WlApp = (function () {
       eventSource = WlApi.subscribeEvents(url, {
         onEvent: async () => {
           try {
-            const result = await WlApi.fetchDashboard();
+            const result = await WlApi.fetchSnapshot();
             WlState.accept(result.data, result.mode);
           } catch (err) {
             WlState.markRefreshError(err && err.message ? err.message : "实时投影刷新失败");
@@ -165,32 +165,23 @@ const WlApp = (function () {
       WlState.accept(WlApi.FIXTURE, "FIXTURE");
       return;
     }
-    // LIVE: try GET /api/dashboard; on failure fall back to a bundled REAL snapshot
-    // (assets/live-snapshot.json, generated from real observed events), then FIXTURE.
+    // LIVE: GET /api/v1/snapshot (canonical v3), legacy /api/dashboard tolerated.
+    // P0-7: on failure the UI shows OFFLINE/UNKNOWN — never auto-fallback to a
+    // bundled snapshot or FIXTURE. Fixture only loads via an explicit dev entry.
     try {
-      const result = await WlApi.fetchDashboard();
+      const result = await WlApi.fetchSnapshot();
       WlState.accept(result.data, result.mode);
       startLiveSubscription(result.data);
       WlA11y.announce(result.mode === "LIVE" ? "已加载实时投影数据" : "已加载只读投影数据");
     } catch (err) {
-      // Bundled real snapshot (no fabricated agents/projects) — better than FIXTURE.
-      try {
-        const snapRes = await fetch("assets/live-snapshot.json", { cache: "no-store" });
-        if (snapRes.ok) {
-          const snap = await snapRes.json();
-          stopLiveSubscription();
-          WlState.accept(snap, "SNAPSHOT");
-          WlA11y.announce("已加载最近真实投影快照（live-snapshot）");
-          return;
-        }
-      } catch (_) { /* fall through */ }
+      stopLiveSubscription();
       WlState.markRefreshError(err.message);
       if (WlState.get().lastGood) {
         WlState.set({ mode: "OFFLINE" });
-        WlA11y.announce("实时数据不可用，已保留上次良好投影（last-good）");
+        WlA11y.announce("实时数据不可用，已保留上次良好投影（last-good，标记为 STALE）");
       } else {
-        WlState.accept(WlApi.FIXTURE, "FIXTURE");
-        WlA11y.announce("实时数据不可用，回退到 FIXTURE 数据");
+        WlState.accept(null, "OFFLINE");
+        WlA11y.announce("实时数据不可用，界面显示 OFFLINE（不加载假数据）");
       }
     }
   }

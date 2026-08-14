@@ -158,6 +158,125 @@ const WlApi = (function () {
     return parsed.toString();
   }
 
+  /* WLGM-150: the ONLY canonical projection endpoint is GET /api/v1/snapshot
+     (schema workflow/snapshot/v3). Loopback, GET, no-store, strict origin. */
+  function snapshotV3Endpoint() {
+    if (typeof window === "undefined") return "/api/v1/snapshot";
+    const raw = new URLSearchParams(window.location.search).get("api");
+    if (raw) {
+      const parsed = new URL(raw);
+      const authorityStart = raw.indexOf("//") + 2;
+      const authorityEnd = raw.indexOf("/", authorityStart);
+      const hasUserInfo = authorityStart > 1 && raw.slice(authorityStart, authorityEnd < 0 ? raw.length : authorityEnd).includes("@");
+      const loopback = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "::1" || parsed.hostname === "[::1]";
+      if (parsed.protocol !== "http:" || !loopback || hasUserInfo || parsed.pathname !== "/api/v1/snapshot" || parsed.search || parsed.hash) {
+        throw new Error("Snapshot endpoint is outside the declared loopback read-only boundary");
+      }
+      return parsed.toString();
+    }
+    return "/api/v1/snapshot";
+  }
+
+  /* WLGM-150: single projection mapping (v3 snapshot -> render surface).
+     Implemented once, here, in the client. Strict null-vs-zero: unknown token
+     values stay null; observed counters stay 0/positive. */
+  function normalizeV3(snapshot) {
+    const projects = Array.isArray(snapshot.projects) ? snapshot.projects : [];
+    const executions = Array.isArray(snapshot.executions && snapshot.executions[0])
+      ? snapshot.executions[0]
+      : (Array.isArray(snapshot.executions) ? snapshot.executions : []);
+    const activeProjects = projects.filter((p) => p.activityState === "ACTIVE").length;
+    const perProject = new Map();
+    projects.forEach((p) => {
+      perProject.set(p.projectId, {
+        projectId: p.projectId,
+        displayName: p.displayName || p.projectId,
+        state: String(p.activityState || "UNKNOWN").toLowerCase(),
+        activeExecutionCount: p.activeExecutionCount == null ? null : p.activeExecutionCount,
+        visibility: p.visibility || "UNKNOWN",
+        quality: p.quality || "UNKNOWN",
+        lastStrongEvidenceAt: p.lastStrongEvidenceAt || null,
+        git: p.git || null,
+        token: p.token || null,
+        executionIds: p.executionIds || [],
+        sourceRefs: p.sourceRefs || [],
+      });
+    });
+    executions.forEach((e) => {
+      const entry = perProject.get(e.anchorProjectId);
+      if (entry && !entry.agentPlatform) {
+        entry.agentPlatform = String(e.agent || "UNKNOWN").toUpperCase();
+        entry.state = String(e.state || entry.state || "UNKNOWN").toLowerCase();
+      }
+    });
+    const usageSummary = snapshot.tokenSummary || {};
+    return {
+      schemaVersion: "work-lab/observer-projection/v2-rendered",
+      mode: "LIVE",
+      generatedAt: snapshot.generatedAt,
+      revision: snapshot.revision,
+      sourceWatermark: snapshot.sourceWatermark,
+      transport: snapshot.transport || { transportState: "UNKNOWN", freshnessState: "UNKNOWN" },
+      coverage: snapshot.coverage || null,
+      summary: {
+        registeredProjects: projects.length,
+        activeProjects,
+        executions: executions.length,
+      },
+      projects: Array.from(perProject.values()),
+      executions,
+      usage: {
+        inputTokens: usageSummary.inputTokens == null ? null : usageSummary.inputTokens,
+        outputTokens: usageSummary.outputTokens == null ? null : usageSummary.outputTokens,
+        totalTokens: usageSummary.totalTokens == null ? null : usageSummary.totalTokens,
+        costQuality: usageSummary.costQuality || "UNKNOWN",
+      },
+      git: snapshot.git || { localSha: null, remoteSha: null, ciSha: null, matchState: "NO_LOCAL_CLAIM" },
+      ci: snapshot.ci || [],
+      tasks: snapshot.tasks || {},
+      sourceRefs: snapshot.sourceRefs || [],
+    };
+  }
+
+  /* GET /api/v1/snapshot first (canonical), fall back to /api/dashboard only
+     for legacy compatibility, otherwise throw -> OFFLINE (no fixture fallback). */
+  async function fetchSnapshot(timeoutMs) {
+    const timeout = timeoutMs || 5000;
+    const endpoints = [snapshotV3Endpoint()];
+    let lastError = null;
+    for (const endpoint of endpoints) {
+      const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), timeout) : null;
+      try {
+        const res = await fetch(endpoint, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          signal: ctrl ? ctrl.signal : undefined,
+        });
+        if (!res.ok) {
+          throw new Error("GET " + endpoint + " -> " + res.status);
+        }
+        const data = await res.json();
+        if (data && data.schemaVersion === "workflow/snapshot/v3") {
+          return { ok: true, mode: "LIVE", data: normalizeV3(data), source: endpoint };
+        }
+        if (data && data.schemaVersion === "work-lab/observer-projection/v2") {
+          const declared = String(data.mode || "UNKNOWN").toUpperCase();
+          const mode = ["LIVE", "SNAPSHOT", "OFFLINE", "UNKNOWN"].includes(declared) ? declared : "UNKNOWN";
+          return { ok: true, mode, data };
+        }
+        return { ok: true, mode: "UNKNOWN", data };
+      } catch (err) {
+        lastError = err && err.name === "AbortError"
+          ? new Error("GET " + endpoint + " timed out")
+          : err;
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    }
+    throw lastError || new Error("No Observer snapshot endpoint available");
+  }
+
   async function fetchDashboard(timeoutMs) {
     const timeout = timeoutMs || 5000;
     const endpoints = [dashboardEndpoint()];
@@ -231,7 +350,10 @@ const WlApi = (function () {
   return {
     FIXTURE,
     dashboardEndpoint,
+    snapshotV3Endpoint,
     fetchDashboard,
+    fetchSnapshot,
+    normalizeV3,
     rejectNonGet,
     subscribeEvents,
   };

@@ -54,7 +54,7 @@ CC Switch:    127.0.0.1:15721 正常（codex-official 官方路由）
 - [ ] WL3-820 正式 release 批准（批准包已就绪）
 - [ ] `v0.1.0-alpha.1` 标签指向清理前提交（已有 `v0.1.0-native-observer` 新基线）
 - [ ] CLO TaskPack（CLO-CODEX-EXECUTION-RELIABILITY-20260810）执行回读
-- [ ] 并行会话「设计增强8.7」建议专注 OPEN-DESIGN-Assistance，避免双写 WORK-LAB 工作树
+- [ ] 并行会话「设计增强8.7」建议专注 DESIGN-LAB，避免双写 WORK-LAB 工作树
 - [ ] 机器重启后：sidecar + dashboard 需重新拉起（命令见 Observer AGENTS.md）
 
 ## 7. 边界与安全（始终有效）

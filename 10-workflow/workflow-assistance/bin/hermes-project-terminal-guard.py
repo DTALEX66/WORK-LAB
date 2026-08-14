@@ -32,7 +32,9 @@ RAW_WINDOWS_ABSOLUTE_PATH = re.compile(
 RAW_POSIX_ABSOLUTE_PATH = re.compile(
     r"(?:^|(?<=[\s\"'=<>:([{]))(/(?!/)[^\s\"']+)"
 )
-RAW_PARENT_TRAVERSAL = re.compile(r"\.\.(?:[\\/]|(?=[\s\"']|$))")
+RAW_PARENT_TRAVERSAL = re.compile(
+    r"(?:^|(?<=[\s\"'=<>:([{/\\]))\.\.(?:[\\/]|(?=[\s\"'/\\]|$))"
+)
 RAW_RUN_SEPARATOR = re.compile(r"(?:^|\s)run\s+--\s+")
 
 WRAPPER_NAME = "hermes-project-data.py"
@@ -81,7 +83,14 @@ def external_child_path(argv: list[str], separator_index: int, root: Path) -> st
             if os.name != "nt" and windows_absolute and not path.is_absolute():
                 return candidate
             try:
-                if not path.resolve(strict=False).is_relative_to(root):
+                resolved = path.resolve(strict=False)
+                root_str = ntpath.normcase(ntpath.normpath(str(root)))
+                res_str = ntpath.normcase(ntpath.normpath(str(resolved)))
+                # 含空格路径会被正则截断（如 D:/All projects/... 截成 D:/All）；
+                # 若 candidate 是项目字符前缀，说明是截断，交给完整 token 精确判断。
+                if root_str.startswith(res_str):
+                    continue
+                if not resolved.is_relative_to(root):
                     return candidate
             except (OSError, RuntimeError):
                 return candidate

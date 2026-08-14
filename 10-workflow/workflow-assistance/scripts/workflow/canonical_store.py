@@ -228,6 +228,116 @@ class CanonicalStore:
                 """
             )
             existing = {row[0] for row in self._conn.execute("SELECT version FROM schema_migrations")}
+            # WLGM-140 incremental tables (idempotent).
+            self._conn.executescript(
+                """
+                CREATE TABLE IF NOT EXISTS project_definitions (
+                    project_id TEXT PRIMARY KEY,
+                    definition_json TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS project_root_bindings (
+                    binding_id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL,
+                    root TEXT NOT NULL,
+                    repository_id TEXT,
+                    worktree_id TEXT,
+                    kind TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS repository_identities (
+                    repository_id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL,
+                    remote_identity TEXT,
+                    role TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS worktree_identities (
+                    worktree_id TEXT PRIMARY KEY,
+                    repository_id TEXT NOT NULL,
+                    root TEXT NOT NULL,
+                    kind TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS agent_instances (
+                    agent_instance_id TEXT PRIMARY KEY,
+                    agent TEXT NOT NULL,
+                    observed_at TEXT NOT NULL,
+                    payload TEXT
+                );
+                CREATE TABLE IF NOT EXISTS agent_capabilities (
+                    adapter_id TEXT PRIMARY KEY,
+                    installed INTEGER NOT NULL,
+                    capabilities_json TEXT NOT NULL,
+                    evidence_level TEXT NOT NULL,
+                    observed_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS sessions (
+                    session_id TEXT PRIMARY KEY,
+                    agent TEXT NOT NULL,
+                    anchor_project_id TEXT,
+                    status TEXT NOT NULL,
+                    started_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS execution_instances (
+                    execution_id TEXT PRIMARY KEY,
+                    agent TEXT NOT NULL,
+                    session_id TEXT,
+                    anchor_project_id TEXT,
+                    repository_id TEXT,
+                    worktree_id TEXT,
+                    working_area TEXT,
+                    state TEXT NOT NULL,
+                    state_quality TEXT NOT NULL,
+                    started_at TEXT,
+                    last_heartbeat_at TEXT,
+                    transport_state TEXT,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS execution_evidence (
+                    event_id TEXT PRIMARY KEY,
+                    execution_id TEXT NOT NULL,
+                    event_type TEXT NOT NULL,
+                    evidence_level TEXT NOT NULL,
+                    quality TEXT NOT NULL,
+                    occurred_at TEXT NOT NULL,
+                    observed_at TEXT NOT NULL,
+                    dedupe_key TEXT NOT NULL UNIQUE,
+                    source_ref TEXT,
+                    payload TEXT
+                );
+                CREATE TABLE IF NOT EXISTS execution_heartbeats (
+                    event_id TEXT PRIMARY KEY,
+                    execution_id TEXT NOT NULL,
+                    observed_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS collector_health (
+                    name TEXT PRIMARY KEY,
+                    total_runs INTEGER NOT NULL DEFAULT 0,
+                    last_run_at TEXT,
+                    last_success_at TEXT,
+                    consecutive_failures INTEGER NOT NULL DEFAULT 0,
+                    circuit_open_until REAL,
+                    dropped_count INTEGER NOT NULL DEFAULT 0,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS project_activity_projection (
+                    project_id TEXT PRIMARY KEY,
+                    projection_json TEXT NOT NULL,
+                    revision INTEGER NOT NULL,
+                    generated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS projection_revisions (
+                    revision INTEGER PRIMARY KEY AUTOINCREMENT,
+                    project_id TEXT NOT NULL,
+                    generated_at TEXT NOT NULL,
+                    projection_json TEXT NOT NULL
+                );
+                """
+            )
+            if 2 not in existing:
+                self._conn.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (2, ?)",
+                    (_now(),),
+                )
             if not existing:
                 self._conn.execute(
                     "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
@@ -556,6 +666,175 @@ class CanonicalStore:
                 "ci_summary": [dict(row) for row in ci],
                 "observed_at": _now(),
             }
+
+    def upsert_project_definition(self, project_id: str, definition: dict[str, Any]) -> None:
+        validate_record(definition, allow_usage_tokens=False)
+        with self._lock:
+            self._conn.execute(
+                """
+                INSERT INTO project_definitions (project_id, definition_json, updated_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(project_id) DO UPDATE SET
+                    definition_json=excluded.definition_json,
+                    updated_at=excluded.updated_at
+                """,
+                (project_id, json.dumps(definition, ensure_ascii=False, sort_keys=True), _now()),
+            )
+            self._conn.commit()
+
+    def get_project_definition(self, project_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT definition_json FROM project_definitions WHERE project_id=?", (project_id,)
+            ).fetchone()
+        if not row:
+            return None
+        try:
+            return json.loads(row["definition_json"])
+        except json.JSONDecodeError:
+            return None
+
+    def upsert_execution_instance(self, status: dict[str, Any]) -> None:
+        validate_record(status, allow_usage_tokens=False)
+        execution_id = str(status["executionId"])
+        with self._lock:
+            self._conn.execute(
+                """
+                INSERT INTO execution_instances
+                (execution_id, agent, session_id, anchor_project_id, repository_id,
+                 worktree_id, working_area, state, state_quality, started_at,
+                 last_heartbeat_at, transport_state, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(execution_id) DO UPDATE SET
+                    agent=excluded.agent,
+                    session_id=excluded.session_id,
+                    anchor_project_id=excluded.anchor_project_id,
+                    repository_id=excluded.repository_id,
+                    worktree_id=excluded.worktree_id,
+                    working_area=excluded.working_area,
+                    state=excluded.state,
+                    state_quality=excluded.state_quality,
+                    last_heartbeat_at=excluded.last_heartbeat_at,
+                    transport_state=excluded.transport_state,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    execution_id,
+                    str(status.get("agent", "unknown")),
+                    status.get("sessionId"),
+                    status.get("anchorProjectId"),
+                    status.get("repositoryId"),
+                    status.get("worktreeId"),
+                    status.get("workingArea"),
+                    str(status.get("state", "UNKNOWN")),
+                    str(status.get("stateQuality", "UNKNOWN")),
+                    status.get("startedAt"),
+                    status.get("lastHeartbeatAt"),
+                    status.get("transportState"),
+                    _now(),
+                ),
+            )
+            self._conn.commit()
+
+    def append_execution_evidence(self, record: dict[str, Any]) -> str:
+        """Append one validated execution evidence record; dedupe key enforced."""
+        validate_record(record, allow_usage_tokens=False)
+        event_id = str(record.get("eventId") or uuid.uuid4().hex)
+        dedupe_key = str(record.get("dedupeKey") or event_id)
+        with self._lock:
+            try:
+                self._conn.execute(
+                    """
+                    INSERT INTO execution_evidence
+                    (event_id, execution_id, event_type, evidence_level, quality,
+                     occurred_at, observed_at, dedupe_key, source_ref, payload)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        event_id,
+                        str(record.get("executionId", "unknown")),
+                        str(record.get("eventType", "unknown")),
+                        str(record.get("evidenceLevel", "C")),
+                        str(record.get("quality", "UNKNOWN")),
+                        str(record.get("occurredAt", _now())),
+                        str(record.get("observedAt", _now())),
+                        dedupe_key,
+                        record.get("sourceRef"),
+                        json.dumps(record, ensure_ascii=False, sort_keys=True),
+                    ),
+                )
+                self._conn.commit()
+                return event_id
+            except sqlite3.IntegrityError:
+                # Duplicate dedupe key: replayed event is a no-op (never double-counts).
+                existing = self._conn.execute(
+                    "SELECT event_id FROM execution_evidence WHERE dedupe_key=?", (dedupe_key,)
+                ).fetchone()
+                return existing["event_id"] if existing else event_id
+
+    def upsert_collector_health(self, record: dict[str, Any]) -> None:
+        name = str(record.get("name", "unknown"))
+        with self._lock:
+            self._conn.execute(
+                """
+                INSERT INTO collector_health
+                (name, total_runs, last_run_at, last_success_at, consecutive_failures,
+                 circuit_open_until, dropped_count, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(name) DO UPDATE SET
+                    total_runs=excluded.total_runs,
+                    last_run_at=excluded.last_run_at,
+                    last_success_at=excluded.last_success_at,
+                    consecutive_failures=excluded.consecutive_failures,
+                    circuit_open_until=excluded.circuit_open_until,
+                    dropped_count=excluded.dropped_count,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    name,
+                    int(record.get("totalRuns", 0)),
+                    record.get("lastRunAt"),
+                    record.get("lastSuccessAt"),
+                    int(record.get("consecutiveFailures", 0)),
+                    record.get("circuitOpenUntil"),
+                    int(record.get("droppedCount", 0)),
+                    _now(),
+                ),
+            )
+            self._conn.commit()
+
+    def save_projection(self, project_id: str, projection: dict[str, Any]) -> int:
+        """Persist the latest projection and append a revision (WLGM-150 base)."""
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT revision FROM project_activity_projection WHERE project_id=?", (project_id,)
+            ).fetchone()
+            revision = (row["revision"] if row else 0) + 1
+            self._conn.execute(
+                """
+                INSERT INTO project_activity_projection (project_id, projection_json, revision, generated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(project_id) DO UPDATE SET
+                    projection_json=excluded.projection_json,
+                    revision=excluded.revision,
+                    generated_at=excluded.generated_at
+                """,
+                (project_id, json.dumps(projection, ensure_ascii=False, sort_keys=True), revision, _now()),
+            )
+            self._conn.execute(
+                """
+                INSERT INTO projection_revisions (project_id, generated_at, projection_json)
+                VALUES (?, ?, ?)
+                """,
+                (project_id, _now(), json.dumps(projection, ensure_ascii=False, sort_keys=True)),
+            )
+            self._conn.commit()
+            return revision
+
+    def list_executions(self) -> list[dict[str, Any]]:
+        with self._lock:
+            rows = self._conn.execute("SELECT * FROM execution_instances ORDER BY updated_at DESC").fetchall()
+            return [dict(row) for row in rows]
 
     def close(self) -> None:
         with self._lock:
