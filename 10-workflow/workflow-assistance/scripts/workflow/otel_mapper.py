@@ -1,4 +1,10 @@
-"""OpenTelemetry / OpenInference semantic mapping (NX-300).
+"""OpenTelemetry / OpenInference semantic mapping (NX-300 / WLOSS-600).
+
+WLOSS-600 Observer Semantic Convention: the WORK-LAB Observer Semantic
+Contract (work-lab/observer-projection/*) is the ONLY internal projection
+schema. External telemetry schemas (OTel GenAI SemConv, OpenInference) are
+mapped TO and FROM the canonical contract exclusively through this module —
+the Observer and snapshot pipeline never depend on any single vendor schema.
 
 Maps WORK-LAB canonical events to versioned OTel/OpenInference semantic fields
 and back losslessly (for the allowed fields).
@@ -22,6 +28,7 @@ from typing import Any
 OTEL_VERSION = "1.27.0"
 OPENINFERENCE_VERSION = "0.1.0"
 CANONICAL_VERSION = "work-lab/observer-projection/v2"
+OBSERVER_SEMANTIC_CONTRACT = "work-lab/observer-projection"  # sole internal semantic family
 
 # Fields permanently excluded from any mapped/exported view.
 PRIVACY_BLOCKED = (

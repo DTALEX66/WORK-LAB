@@ -119,6 +119,22 @@ class IdentityResolverTests(unittest.TestCase):
         self.assertEqual(data["projectId"], None)
         self.assertEqual(data["quality"], "UNKNOWN")
 
+    def test_v2_output_fields_on_resolve(self) -> None:
+        """WLOSS-410: resolved output carries displayName/confidence; runtime
+        instances/tasks stay empty (never fabricated)."""
+        project = make_project("work-lab", remote="github:DTALEX66/WORK-LAB")
+        project.display_name = "WORK-LAB"
+        index = ApprovedProjectIndex(projects=[project])
+        probe = FakeGitProbe(top="/work/WORK-LAB", common="/work/WORK-LAB/.git", remotes=["github:DTALEX66/WORK-LAB"])
+        result = resolve_execution_path("/work/WORK-LAB", index, git=probe)
+        data = result.as_json()
+        self.assertEqual(data["displayName"], "WORK-LAB")
+        self.assertEqual(data["confidence"], "EXACT")
+        self.assertEqual(data["runtimeInstances"], [])
+        self.assertEqual(data["activeTasks"], [])
+        self.assertEqual(data["nestedProjects"], [])
+        self.assertIn("remote:github:DTALEX66/WORK-LAB", data["evidenceRefs"])
+
     def test_worktree_belongs_to_project(self) -> None:
         project = make_project("core", remote="github:DTALEX66/core", worktrees=[("wt2", "/work/core-wt2")])
         index = ApprovedProjectIndex(projects=[project])

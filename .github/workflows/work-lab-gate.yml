@@ -156,6 +156,36 @@ jobs:
           node tests/run_all_tests.js
           for file in web/scripts/*.js; do node --check "$file"; done
 
+  supply-chain-security:
+    name: supply-chain-security
+    needs: plan
+    if: needs.plan.outputs.run_integration == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      # WLOSS-200: unified supply-chain baseline — actionlint (GHA syntax),
+      # zizmor (GHA security), Trivy (vuln/SBOM/secret/license/misconfig).
+      # One primary scanner + focused supplements; no overlapping tool stack.
+      - name: actionlint (GitHub Actions syntax)
+        uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
+      - name: zizmor (GitHub Actions security)
+        uses: woodruffw/zizmor@3c116961091b50bd1a08ffefe916469d4d90093c # v1.29.0
+      - name: Trivy fs scan (vuln/secret/license/misconfig)
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,license,misconfig
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+          skip-dirs: .git,.hermes,node_modules,src-tauri/target,10-workflow/workflow-assistance/.hermes
+          format: table
+      - name: Verify supply-chain tool wiring
+        run: python scripts/ci/verify_supply_chain_tools.py
+
   integration:
     name: integration
     needs: plan

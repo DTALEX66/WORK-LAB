@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-14T04:40:04.994035Z",
-  "source_digest": "25d140e7311df82f9b8f81a31fa1d66caeffb62f7daae50012022e71c91284f5",
+  "generated_at": "2026-08-14T06:51:06.896250Z",
+  "source_digest": "869801b352bfd1d8d6476eadfd0ebdbcd9940cca9f925e859a017f83a7175543",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -187,6 +187,7 @@
       "integration",
       "observer",
       "plan",
+      "supply-chain-security",
       "token-monitor",
       "workflow"
     ],
@@ -195,6 +196,7 @@
       "workflow": "workflow-assistance",
       "token-monitor": "token-monitor",
       "observer": "observer",
+      "supply-chain-security": "supply-chain-security",
       "integration": "integration",
       "aggregate": "aggregate"
     },
@@ -217,5 +219,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "95e4b62c894902525965e24b22292846c679446228c3b2377037b5cd046ba79d"
+  "content_digest": "76d401c80bfa167accc25259b44505c8d90021253c32eda679e5726eed8b73f4"
 }
