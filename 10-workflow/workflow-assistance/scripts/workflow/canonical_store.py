@@ -228,9 +228,31 @@ class CanonicalStore:
                 """
             )
             existing = {row[0] for row in self._conn.execute("SELECT version FROM schema_migrations")}
-            # WLGM-140 incremental tables (idempotent).
+            # WLGM-140: back up the pre-v2 database ONCE, before the v2 migration
+            # runs, so an interrupted migration is recoverable. Idempotent: only
+            # when version 2 is not yet recorded.
+            if 2 not in existing:
+                try:
+                    backup = self.path.with_name(self.path.name + f".bak-v2-{_now_slug()}")
+                    import shutil
+
+                    # WAL mode: checkpoint into the main db file so the backup
+                    # copy actually contains the tables/data.
+                    self._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+                    shutil.copy2(self.path, backup)
+                except (OSError, shutil.Error):
+                    # Backup is best-effort; the atomic transaction below is the
+                    # real interruption guard. Never fail open without backup.
+                    backup = None
+                if backup is None:
+                    raise RuntimeError("cannot create pre-v2 backup; migration refused")
+            # WLGM-140 incremental tables (idempotent). BEGIN/COMMIT live INSIDE
+            # the script because executescript implicitly commits any pending
+            # transaction first; an interruption rolls the whole v2 migration
+            # back atomically.
             self._conn.executescript(
                 """
+                BEGIN;
                 CREATE TABLE IF NOT EXISTS project_definitions (
                     project_id TEXT PRIMARY KEY,
                     definition_json TEXT NOT NULL,
@@ -331,6 +353,7 @@ class CanonicalStore:
                     generated_at TEXT NOT NULL,
                     projection_json TEXT NOT NULL
                 );
+                COMMIT;
                 """
             )
             if 2 not in existing:
@@ -843,6 +866,28 @@ class CanonicalStore:
 
 def _now_for_expiry(epoch_seconds: float) -> str:
     return datetime.fromtimestamp(epoch_seconds, tz=timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _now_slug() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-%f")
+
+
+def rollback_v2_backup(path: Path) -> Path | None:
+    """WLGM-140: restore the pre-v2 backup (created on first v2 migration).
+
+    Returns the restored backup path, or None when no backup exists. The caller
+    must close any open connection to ``path`` before calling. Never follows
+    symlinks: the backup is a plain sibling file of ``path``.
+    """
+    resolved = path.resolve()
+    candidates = sorted(resolved.parent.glob(resolved.name + ".bak-v2-*"))
+    if not candidates:
+        return None
+    backup = candidates[-1]
+    import shutil
+
+    shutil.copy2(backup, resolved)
+    return backup
 
 
 @contextmanager

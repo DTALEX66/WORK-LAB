@@ -192,7 +192,10 @@ const WlApi = (function () {
         projectId: p.projectId,
         displayName: p.displayName || p.projectId,
         state: String(p.activityState || "UNKNOWN").toLowerCase(),
+        attentionState: p.attentionState || "NONE",
+        identityState: p.identityState || "UNRESOLVED",
         activeExecutionCount: p.activeExecutionCount == null ? null : p.activeExecutionCount,
+        workingAreas: Array.isArray(p.workingAreas) ? p.workingAreas : [],
         visibility: p.visibility || "UNKNOWN",
         quality: p.quality || "UNKNOWN",
         lastStrongEvidenceAt: p.lastStrongEvidenceAt || null,
@@ -204,9 +207,11 @@ const WlApi = (function () {
     });
     executions.forEach((e) => {
       const entry = perProject.get(e.anchorProjectId);
+      // Project state is the PROJECT activityState; execution state is separate.
+      // Only backfill the agent platform (agent distribution is aggregated from
+      // executions by the v3 renderer).
       if (entry && !entry.agentPlatform) {
         entry.agentPlatform = String(e.agent || "UNKNOWN").toUpperCase();
-        entry.state = String(e.state || entry.state || "UNKNOWN").toLowerCase();
       }
     });
     const usageSummary = snapshot.tokenSummary || {};
@@ -218,6 +223,7 @@ const WlApi = (function () {
       sourceWatermark: snapshot.sourceWatermark,
       transport: snapshot.transport || { transportState: "UNKNOWN", freshnessState: "UNKNOWN" },
       coverage: snapshot.coverage || null,
+      governance: snapshot.governance || null,
       summary: {
         registeredProjects: projects.length,
         activeProjects,

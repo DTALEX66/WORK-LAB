@@ -35,20 +35,24 @@ const WlApp = (function () {
     }
   }
 
+  function isV3Surface(d) {
+    return d && d.schemaVersion === "work-lab/observer-projection/v2-rendered";
+  }
+
   function render() {
     const st = WlState.get();
     const root = document.getElementById(APP_ROOT);
     const d = st.data || st.lastGood;
 
     if (!d) {
-      root.innerHTML = `<div class="wl-state-note" style="max-width:600px;margin:40px auto">${WlRender.icon("info")}尚无可用投影数据。</div>`;
+      root.innerHTML = `<div class="wl-state-note" style="max-width:600px;margin:40px auto">${WlRender.icon("info")}${st.mode === "OFFLINE" ? "数据源离线（OFFLINE，不加载假数据）" : "尚无可用投影数据。"}</div>`;
       return;
     }
 
     if (st.view === "compact") {
-      const inner = WlRender.renderCompact(d);
+      const inner = isV3Surface(d) ? WlRenderV3.compact(d) : WlRender.renderCompact(d);
       root.className = "wl-shell wl-compact";
-      root.innerHTML = `<div class="wl-compact">${inner}</div>` + WlRender.footer(d);
+      root.innerHTML = `<div class="wl-compact">${inner}</div>` + (isV3Surface(d) ? "" : WlRender.footer(d));
       // move tools into a small top row
       const bar = document.createElement("div");
       bar.className = "wl-robar";
@@ -65,12 +69,44 @@ const WlApp = (function () {
     // full view
     const active = "overview";
     root.className = "wl-shell";
+    let content;
+    if (isV3Surface(d)) {
+      content =
+        WlRenderV3.globalBar(d) +
+        WlRenderV3.kpi(d) +
+        WlRenderV3.governanceDrift(d) +
+        WlRenderV3.projectTable(d) +
+        WlRenderV3.executionsTable(d) +
+        WlRenderV3.tokenCi(d);
+    } else {
+      content = `<div class="wl-grid">${WlRender.renderFull(d)}</div>`;
+    }
     root.innerHTML =
       WlRender.topbar(d) +
-      `<div class="wl-body-full">${WlRender.sidebar(active)}<main class="wl-content"><div class="wl-grid">${WlRender.renderFull(d)}</div></main></div>` +
+      `<div class="wl-body-full">${WlRender.sidebar(active)}<main class="wl-content"><div class="wl-grid">${content}</div></main></div>` +
       WlRender.footer(d);
     applyTheme(st.theme);
     wireToggles(root);
+    // v3: project row click -> detail (WLGM-190)
+    if (isV3Surface(d)) {
+      const rows = root.querySelectorAll(".wl-proj-row");
+      rows.forEach((row) => {
+        row.addEventListener("click", () => {
+          const pid = row.getAttribute("data-project");
+          const detailBox = document.getElementById("wl-v3-detail");
+          if (detailBox) {
+            const already = detailBox.querySelector(`[data-project-detail="${pid}"]`);
+            if (already) { already.remove(); return; }
+            detailBox.innerHTML = WlRenderV3.projectDetail(d, pid);
+            const box = detailBox.querySelector(`[data-project-detail="${pid}"]`);
+            if (box) box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        });
+        row.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); row.click(); }
+        });
+      });
+    }
     // sidebar nav
     const side = root.querySelector("nav.wl-sidebar");
     if (side) {

@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-08-14T11:00:00Z",
+  "generated_at": "2026-08-14T12:00:00Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,11 +9,11 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 52,
+    "total": 54,
     "by_classification": {
       "entrypoint": 5,
-      "contract_drift": 25,
-      "test_behavior_alignment": 5,
+      "contract_drift": 26,
+      "test_behavior_alignment": 6,
       "working_directory_recovery": 2,
       "evidence_state": 5,
       "ci_configuration": 4,
@@ -22,7 +22,7 @@
       "dead_entry": 1
     },
     "repeat_prevention_required": true,
-    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap)"
+    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); 2026-08-14: ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint)"
   },
   "errors": [
     {
@@ -958,6 +958,42 @@
       "evidence_level": "local-full",
       "repeat_prevention": "Any model with parallel identity lists (repositories[] vs remote_identities) must keep them synchronized in a single mutator and be covered by a canary that resolves a real repository root.",
       "remaining_boundary": "External OS-project canary still PENDING (WORKLAB_CANARY_PROJECT_ROOTS not authorized).",
+      "status_before": "FAIL",
+      "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-053",
+      "task_id": "WLGM-180",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "30-observer/work-lab-observer/web/scripts/api.js",
+      "command": "node tests/test_render_v3.js",
+      "exit_code": 1,
+      "observed_error": "normalizeV3 backfilled project.state from the first execution's state, so an ACTIVE project with a RUNNING execution rendered as 'running' instead of 'active' (project activityState and execution state were conflated).",
+      "root_cause": "The v3 projection maps project activityState and execution state as distinct fields (WLGM-030 §3.2/3.3) but the client normalizer copied execution state over the project state.",
+      "fix": "normalizeV3 no longer overwrites project.state; it only backfills agentPlatform. Project rows now show activityState (active/idle/...) while executions keep their own states.",
+      "regression_test": "node tests/test_render_v3.js",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Project activity and execution state are separate domain objects; any normalizer must never copy one into the other. render-v3 tests assert project rows show activityState.",
+      "remaining_boundary": "None.",
+      "status_before": "FAIL",
+      "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-054",
+      "task_id": "WLGM-140",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "contract_drift",
+      "entrypoint": "10-workflow/workflow-assistance/scripts/workflow/canonical_store.py",
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/workflow python tests/test_canonical_store_v2.py",
+      "exit_code": 1,
+      "observed_error": "v2 migration backup copied the SQLite main file while the store was in WAL mode, so the backup contained no tables/data (uncheckpointed WAL); rollback restored an empty database.",
+      "root_cause": "WAL writes live in the -wal file until checkpoint; file copy alone misses them.",
+      "fix": "Backup now runs PRAGMA wal_checkpoint(TRUNCATE) before copying the main db file; rollback_v2_backup restores a complete pre-v2 database.",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/workflow python tests/test_canonical_store_v2.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Any SQLite file backup must checkpoint WAL first; migration-recovery tests assert the restored db contains v1 tables and legacy rows.",
+      "remaining_boundary": "None.",
       "status_before": "FAIL",
       "status_after": "PASS"
     }

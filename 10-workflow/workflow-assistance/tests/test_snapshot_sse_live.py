@@ -50,11 +50,30 @@ class SnapshotApiTests(unittest.TestCase):
         snapshot = build_snapshot(
             revision=1,
             store_projection={"tasks_by_status": {"PENDING": 2}},
-            executions=[{"executionId": "e1", "anchorProjectId": "p", "state": "RUNNING", "sourceRef": "src-1"}],
+            executions=[{"executionId": "e1", "anchorProjectId": "p", "state": "RUNNING", "sourceRef": "src-1", "workingArea": "10-workflow/x"}],
             projects=[{"projectId": "p", "displayName": "P"}],
         )
         self.assertEqual(snapshot["tasks"], {"PENDING": 2})
         self.assertEqual(snapshot["projects"][0]["activeExecutionCount"], 1)
+        self.assertEqual(snapshot["projects"][0]["workingAreas"], ["10-workflow/x"])
+
+    def test_governance_drift_projection(self) -> None:
+        snapshot = build_snapshot(revision=1, governance={
+            "state": "DRIFT",
+            "rules": {"current": 12, "drift": 1},
+            "skills": {"current": 13, "drift": 0},
+            "adapters": {"current": 4, "drift": 0},
+        })
+        families = snapshot["governance"]["families"]
+        self.assertEqual(families["rules"]["state"], "DRIFT")
+        self.assertEqual(families["skills"]["state"], "CLEAN")
+        self.assertEqual(families["memory"]["state"], "UNKNOWN")
+        self.assertEqual(snapshot["governance"]["state"], "DRIFT")
+
+    def test_governance_unknown_when_absent(self) -> None:
+        snapshot = build_snapshot(revision=1)
+        self.assertEqual(snapshot["governance"]["state"], "UNKNOWN")
+        self.assertIsNone(snapshot["governance"]["families"]["rules"]["current"])
 
 
 class SseRevisionHubTests(unittest.TestCase):

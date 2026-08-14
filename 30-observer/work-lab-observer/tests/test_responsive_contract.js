@@ -68,6 +68,17 @@ function run() {
     assert(/min-width:\s*320px/.test(base), "min-width 320 for shell");
   });
 
+  t("v3 compact view is 320px-safe (WLGM-200)", () => {
+    // v3 compact renders no fixed-width layout and relies on the same
+    // overflow-wrap/min-width protections as the v2 surface.
+    const renderV3 = fs.readFileSync(path.join(WEB, "scripts", "render-v3.js"), "utf-8");
+    assert(!/width:\s*\d{3,}px/.test(renderV3), "no fixed wide widths in v3 compact markup");
+    assert(!/min-width:\s*\d{3,}px/.test(renderV3), "no fixed min-widths in v3 renderer");
+    assert(/overflow-wrap|wl-mono/.test(renderV3), "long values use wrap utilities");
+    // chips carry icon + text (never color alone) in v3 too.
+    assert(/icon\(.*\)/.test(renderV3) && /wl-chip/.test(renderV3), "v3 chips icon+text");
+  });
+
   t("status never relies on color alone (chip carries icon + text)", () => {
     assert(/\.wl-chip\s*\{/.test(components), "chip component exists");
     // render.js chipFor always emits icon + text inside a .wl-chip span.
