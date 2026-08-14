@@ -34,7 +34,9 @@ class ObserverStoreTests(unittest.TestCase):
             projection = store.rebuild_projection()
             store.close()
             after = (path.stat().st_mtime_ns, path.stat().st_size)
-            self.assertEqual(projection["summary"]["tasks"]["running"], 1)
+            self.assertEqual(projection["schemaVersion"], "workflow/snapshot/v3")
+            self.assertIn("executions", projection)
+            self.assertIn("tokenSummary", projection)
             self.assertEqual(before, after)
             self.assertFalse((path.parent.parent / "observer").exists())
 

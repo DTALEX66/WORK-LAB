@@ -6,7 +6,7 @@
        fixtures/cross-project-active-mixed.json. High-visibility amber tag,
        never disguised as LIVE.
      - LIVE (discovered): GET-only fetch from a validated loopback
-       /api/dashboard endpoint. The frontend NEVER writes.
+       /api/v1/snapshot endpoint (v3). The frontend NEVER writes.
    Non-GET methods are rejected client-side as a negative control.
    Unknown fields are ignored (forward compatible) — we only read known keys. */
 
@@ -142,22 +142,6 @@ const WlApi = (function () {
     ],
   };
 
-  /* Request wrapper: GET only. Non-GET is a hard client-side reject (405 negative control). */
-  function dashboardEndpoint() {
-    if (typeof window === "undefined") return "/api/dashboard";
-    const raw = new URLSearchParams(window.location.search).get("api");
-    if (!raw) return "/api/dashboard";
-    const parsed = new URL(raw);
-    const authorityStart = raw.indexOf("//") + 2;
-    const authorityEnd = raw.indexOf("/", authorityStart);
-    const hasUserInfo = authorityStart > 1 && raw.slice(authorityStart, authorityEnd < 0 ? raw.length : authorityEnd).includes("@");
-    const loopback = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "::1" || parsed.hostname === "[::1]";
-    if (parsed.protocol !== "http:" || !loopback || hasUserInfo || parsed.pathname !== "/api/dashboard" || parsed.search || parsed.hash) {
-      throw new Error("Observer dashboard endpoint is outside the declared loopback read-only boundary");
-    }
-    return parsed.toString();
-  }
-
   /* WLGM-150: the ONLY canonical projection endpoint is GET /api/v1/snapshot
      (schema workflow/snapshot/v3). Loopback, GET, no-store, strict origin. */
   function snapshotV3Endpoint() {
@@ -252,8 +236,8 @@ const WlApi = (function () {
     };
   }
 
-  /* GET /api/v1/snapshot first (canonical), fall back to /api/dashboard only
-     for legacy compatibility, otherwise throw -> OFFLINE (no fixture fallback). */
+  /* GET /api/v1/snapshot (canonical v3); anything else -> throw -> OFFLINE
+     (no fixture fallback). */
   async function fetchSnapshot(timeoutMs) {
     const timeout = timeoutMs || 5000;
     const endpoints = [snapshotV3Endpoint()];
@@ -299,36 +283,29 @@ const WlApi = (function () {
   }
 
   async function fetchDashboard(timeoutMs) {
+    // Retired (R2 third batch): the legacy dashboard entry is retired;
+    // this stub fails closed against the v3 endpoint.
+    // Kept as a fail-closed stub so any legacy caller cannot silently pass.
     const timeout = timeoutMs || 5000;
-    const endpoints = [dashboardEndpoint()];
-    let lastError = null;
-    for (const endpoint of endpoints) {
-      const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-      const timer = ctrl ? setTimeout(() => ctrl.abort(), timeout) : null;
-      try {
-        const res = await fetch(endpoint, {
-          method: "GET",
-          headers: { Accept: "application/json" },
-          signal: ctrl ? ctrl.signal : undefined,
-        });
-        if (!res.ok) {
-          throw new Error("GET " + endpoint + " -> " + res.status);
-        }
-        const data = await res.json();
-        const declared = String(data && data.mode || "UNKNOWN").toUpperCase();
-        const mode = ["LIVE", "SNAPSHOT", "OFFLINE", "UNKNOWN"].includes(declared)
-          ? declared
-          : "UNKNOWN";
-        return { ok: true, mode, data };
-      } catch (err) {
-        lastError = err && err.name === "AbortError"
-          ? new Error("GET " + endpoint + " timed out")
-          : err;
-      } finally {
-        if (timer) clearTimeout(timer);
+    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), timeout) : null;
+    try {
+      const res = await fetch("/api/v1/snapshot", {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: ctrl ? ctrl.signal : undefined,
+      });
+      if (!res.ok) {
+        throw new Error("GET /api/v1/snapshot -> " + res.status);
       }
+      const data = await res.json();
+      return { ok: true, mode: "UNKNOWN", data };
+    } catch (err) {
+      if (timer) clearTimeout(timer);
+      throw err;
+    } finally {
+      if (timer) clearTimeout(timer);
     }
-    throw lastError || new Error("No Observer dashboard endpoint available");
   }
 
   /* Client-side non-GET negative control. Returns a rejected promise for any
@@ -342,7 +319,7 @@ const WlApi = (function () {
   }
 
   /* Subscribe to the Workflow-owned loopback SSE endpoint advertised by the
-     read-only dashboard projection. EventSource owns reconnect and forwards
+     read-only v3 snapshot projection. EventSource owns reconnect and forwards
      Last-Event-ID automatically; Observer only reacts by re-reading projection. */
   function subscribeEvents(url, handlers) {
     if (typeof EventSource === "undefined") {
@@ -375,7 +352,6 @@ const WlApi = (function () {
 
   return {
     FIXTURE,
-    dashboardEndpoint,
     snapshotV3Endpoint,
     fetchDashboard,
     fetchSnapshot,

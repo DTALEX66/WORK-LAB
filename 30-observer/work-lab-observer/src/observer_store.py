@@ -23,20 +23,33 @@ class ObserverStore:
         self.reader: CanonicalProjectionReader = open_canonical_reader(self.path)
 
     def rebuild_projection(self) -> dict[str, Any]:
-        projection = self.reader.to_dashboard()
-        # Enrich governance with REAL repo inventory (skills/adapters/rules from
-        # CURRENT_STATE.json / adapter-registry.json / 00-governance/rules) so the
-        # dashboard never shows an empty governance pane when the repo is present.
+        # R2 third batch: rebuild the v3 snapshot projection; the legacy v2
+        # to_dashboard path is retired. Governance is enriched from the REAL
+        # repo inventory so the projection never shows an empty pane.
+        from canonical_store import CanonicalStore
+        from composition_root import build_v3_snapshot, load_approved_index
         from observer_runtime import load_governance
 
-        skills_dim, adapters_dim, rules_count = load_governance(self.project_root)
-        projection["governance"] = {
-            "rules": {"current": rules_count, "drift": None, "quarantined": None, "conflicts": None, "stale": None},
-            "skills": skills_dim,
-            "adapters": adapters_dim,
-            "memoryContext": {"current": None, "drift": None, "quarantined": None, "conflicts": None, "stale": None},
-        }
-        return projection
+        store = CanonicalStore(self.path)
+        try:
+            index = load_approved_index(store)
+            projection = build_v3_snapshot(
+                store,
+                index,
+                revision=store.seed_revision(),
+                events_url=None,
+                transport_state="UNKNOWN",
+            )
+            skills_dim, adapters_dim, rules_count = load_governance(self.project_root)
+            projection["governance"] = {
+                "rules": {"current": rules_count, "drift": None, "quarantined": None, "conflicts": None, "stale": None},
+                "skills": skills_dim,
+                "adapters": adapters_dim,
+                "memoryContext": {"current": None, "drift": None, "quarantined": None, "conflicts": None, "stale": None},
+            }
+            return projection
+        finally:
+            store.close()
 
     def read_events(self) -> list[dict[str, Any]]:
         """Legacy event access is retired; canonical projections replace it."""
