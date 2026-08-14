@@ -148,6 +148,64 @@ class CollectorsTests(unittest.TestCase):
         self.assertEqual(projection["usage_summary"][0]["samples"], 2)
         self.assertEqual(projection["usage_summary"][0]["tokens"], 30)
 
+    def test_usage_jsonl_prepend_keeps_existing_sample_identities(self) -> None:
+        artifacts = self.root / ".hermes" / "task-artifacts"
+        artifacts.mkdir(parents=True)
+        usage_path = artifacts / "usage.jsonl"
+        existing = [
+            {
+                "provider": "deepseek",
+                "model": "deepseek-v4-flash",
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "total_tokens": 15,
+            },
+            {
+                "provider": "openai",
+                "model": "gpt-5",
+                "input_tokens": 20,
+                "output_tokens": 10,
+                "total_tokens": 30,
+            },
+        ]
+        usage_path.write_text(
+            "".join(json.dumps(item) + "\n" for item in existing),
+            encoding="utf-8",
+        )
+        first = collect_usage_files(self.store, "p", self.root)
+        for record in first.records:
+            self.store.record_usage_sample(record)
+
+        prepended = {
+            "provider": "anthropic",
+            "model": "claude",
+            "input_tokens": 3,
+            "output_tokens": 2,
+            "total_tokens": 5,
+        }
+        usage_path.write_text(
+            "".join(json.dumps(item) + "\n" for item in [prepended, *existing]),
+            encoding="utf-8",
+        )
+        second = collect_usage_files(self.store, "p", self.root)
+        for record in second.records:
+            self.store.record_usage_sample(record)
+
+        first_ids = {record["sample_id"] for record in first.records}
+        existing_ids_after_prepend = {
+            record["sample_id"]
+            for record in second.records
+            if record["provider"] != "anthropic"
+        }
+        self.assertEqual(
+            first_ids,
+            existing_ids_after_prepend,
+            "prepending a JSONL event must not change identities of prior usage facts",
+        )
+        projection = self.store.projection()["usage_summary"]
+        self.assertEqual(sum(row["samples"] for row in projection), 3)
+        self.assertEqual(sum(row["tokens"] for row in projection), 50)
+
     def test_source_quality_collector(self) -> None:
         project = _make_git_project(self.root, "quality-demo")
         result = collect_source_quality(self.store, "quality-demo", project)

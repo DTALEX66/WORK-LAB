@@ -122,6 +122,7 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
                 source_ref = candidate.relative_to(search_root).as_posix()
             except ValueError:
                 source_ref = candidate.name
+            content_occurrences: dict[str, int] = {}
             for line_number, line in enumerate(text.splitlines(), start=1):
                 if not line.strip():
                     continue
@@ -142,15 +143,35 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
                 }
                 if not tokens:
                     continue
+                provider = str(item.get("provider", "unknown"))
+                model = str(item.get("model", "unknown"))
+                content_identity = json.dumps(
+                    {"provider": provider, "model": model, **tokens},
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                content_occurrences[content_identity] = content_occurrences.get(content_identity, 0) + 1
+                if candidate.suffix.lower() == ".jsonl":
+                    # JSONL is an event log. Keep identities stable across
+                    # prepend/reorder while preserving identical real events.
+                    sample_identity: object = (
+                        content_identity,
+                        content_occurrences[content_identity],
+                    )
+                else:
+                    # A .json rollup is a mutable snapshot; its row updates in
+                    # place instead of accumulating every observed value.
+                    sample_identity = line_number
                 records.append(
                     {
                         "project_id": project_id,
-                        "provider": str(item.get("provider", "unknown")),
-                        "model": str(item.get("model", "unknown")),
+                        "provider": provider,
+                        "model": model,
                         "observed_at": _now(),
                         "quality": "EXACT_SOURCE",
                         "source_ref": _sanitize_path(source_ref),
-                        "sample_id": _stable_id("usage", project_id, source_ref, line_number),
+                        "sample_id": _stable_id("usage", project_id, source_ref, sample_identity),
                         **tokens,
                     }
                 )

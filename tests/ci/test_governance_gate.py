@@ -27,7 +27,7 @@ class GovernanceGateTests(unittest.TestCase):
     def test_root_workflow_uses_real_needs_results(self):
         workflow = (ROOT / ".github/workflows/work-lab-gate.yml").read_text(encoding="utf-8")
         normalized = "".join(workflow.split())
-        for job in ("workflow", "observer", "token-monitor", "integration"):
+        for job in ("workflow", "observer", "token-monitor", "supply-chain-security", "integration"):
             self.assertIn(f"needs.{job}.result", normalized)
         self.assertNotIn('"workflow":"success"', normalized)
         self.assertIn("needs:", workflow)
@@ -41,6 +41,12 @@ class GovernanceGateTests(unittest.TestCase):
         self.assertIn("cargo test --locked", workflow)
         self.assertIn("cargo check --locked", workflow)
         self.assertIn("needs.plan.outputs.run_token_monitor == 'true'", workflow)
+
+    def test_supply_chain_security_is_selected_and_aggregated_by_gate_plan(self):
+        workflow = (ROOT / ".github/workflows/work-lab-gate.yml").read_text(encoding="utf-8")
+        self.assertIn("run_supply_chain_security:", workflow)
+        self.assertIn("needs.plan.outputs.run_supply_chain_security == 'true'", workflow)
+        self.assertIn("SUPPLY_CHAIN_SECURITY_RESULT: ${{ needs.supply-chain-security.result }}", workflow)
 
     def test_required_workflow_checks_current_state_freshness_and_stage3_baseline(self):
         workflow = (ROOT / ".github/workflows/work-lab-gate.yml").read_text(encoding="utf-8")

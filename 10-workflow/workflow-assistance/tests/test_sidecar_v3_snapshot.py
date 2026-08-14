@@ -7,6 +7,7 @@ import threading
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from canonical_store import CanonicalStore
 from composition_root import build_v3_snapshot, load_approved_index
@@ -270,18 +271,14 @@ class SidecarV3SnapshotTests(unittest.TestCase):
     def test_fresh_writer_and_complete_collector_health_can_reach_live(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             sidecar = make_sidecar(Path(tmp))
+            def healthy_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+                return CollectorResult(kind="quality", ok=True, records=[])
             try:
+                sidecar.start_worker(tick_seconds=30, collectors=[healthy_collector])
+                deadline = time.time() + 2
+                while len(sidecar.store.list_collector_health()) < 2 and time.time() < deadline:
+                    time.sleep(0.02)
                 now = time.time()
-                for name in ("task", "git", "usage", "quality", "growth"):
-                    sidecar.store.upsert_collector_health(
-                        {
-                            "name": name,
-                            "totalRuns": 1,
-                            "lastRunAt": "2026-08-15T00:00:00Z",
-                            "lastSuccessAt": "2026-08-15T00:00:00Z",
-                            "consecutiveFailures": 0,
-                        }
-                    )
                 sidecar._revision = 1
                 sidecar._last_heartbeat_at = now
                 sidecar._last_write_at = now
@@ -289,6 +286,55 @@ class SidecarV3SnapshotTests(unittest.TestCase):
                 transport = sidecar.v3_snapshot()["transport"]
                 self.assertEqual(transport["transportState"], "LIVE")
                 self.assertEqual(transport["freshnessState"], "FRESH")
+                sidecar.stop_worker()
+                self.assertNotEqual(sidecar.v3_snapshot()["transport"]["transportState"], "LIVE")
+            finally:
+                sidecar.close()
+
+    def test_partial_expected_collector_set_cannot_reach_live(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sidecar = make_sidecar(Path(tmp))
+            entered = threading.Event()
+            release = threading.Event()
+
+            def first_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+                return CollectorResult(kind="quality", ok=True, records=[])
+
+            def second_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+                entered.set()
+                release.wait(timeout=10)
+                return CollectorResult(kind="quality", ok=True, records=[])
+
+            try:
+                sidecar.start_worker(
+                    tick_seconds=30,
+                    collectors=[first_collector, second_collector],
+                )
+                self.assertTrue(entered.wait(timeout=2))
+                now = time.time()
+                sidecar._revision = 1
+                sidecar._last_heartbeat_at = now
+                sidecar._last_write_at = now
+                sidecar.mark_sse_connected()
+                snapshot = sidecar.v3_snapshot()
+                self.assertEqual(snapshot["coverage"]["numerator"], 1)
+                self.assertEqual(snapshot["coverage"]["denominator"], 3)
+                self.assertNotEqual(snapshot["transport"]["transportState"], "LIVE")
+            finally:
+                release.set()
+                sidecar.close()
+
+    def test_duplicate_collector_names_are_rejected_before_worker_start(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sidecar = make_sidecar(Path(tmp))
+
+            def duplicated(store: CanonicalStore, project_id: str) -> CollectorResult:
+                return CollectorResult(kind="quality", ok=True, records=[])
+
+            try:
+                with self.assertRaisesRegex(ValueError, "collector names must be unique"):
+                    sidecar.start_worker(collectors=[duplicated, duplicated])
+                self.assertFalse(sidecar.worker_running())
             finally:
                 sidecar.close()
 
@@ -310,6 +356,88 @@ class SidecarV3SnapshotTests(unittest.TestCase):
             finally:
                 sidecar.close()
             self.assertFalse(sidecar.worker_running())
+
+    def test_blocked_worker_shutdown_retains_writer_lock_and_open_store(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime = Path(tmp)
+            entered = threading.Event()
+            release = threading.Event()
+
+            def blocked_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+                entered.set()
+                release.wait(timeout=10)
+                return CollectorResult(kind="quality", ok=True, records=[])
+
+            sidecar = make_sidecar(runtime)
+            contender = make_sidecar(runtime)
+            try:
+                sidecar.start_worker(tick_seconds=30, collectors=[blocked_collector])
+                self.assertTrue(entered.wait(timeout=2), "collector did not enter its blocking section")
+                with self.assertRaisesRegex(RuntimeError, "worker_shutdown_timeout"):
+                    sidecar.close()
+                self.assertTrue(sidecar.worker_running())
+                self.assertEqual(sidecar.store.integrity_check(), "ok")
+                with self.assertRaisesRegex(RuntimeError, "already_running"):
+                    contender.start_worker(tick_seconds=30, collectors=[])
+            finally:
+                release.set()
+                deadline = time.time() + 2
+                while sidecar.worker_running() and time.time() < deadline:
+                    time.sleep(0.02)
+                sidecar.close()
+                contender.close()
+
+    def test_blocked_watcher_shutdown_retains_open_store(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sidecar = make_sidecar(Path(tmp))
+            entered = threading.Event()
+            release = threading.Event()
+            original_fingerprint = sidecar._canonical_fingerprint
+            sidecar.start_live_updates(interval_seconds=0.01)
+
+            def blocked_fingerprint() -> str:
+                entered.set()
+                release.wait(timeout=5)
+                return original_fingerprint()
+
+            sidecar._canonical_fingerprint = blocked_fingerprint
+            self.assertTrue(entered.wait(timeout=1), "watcher did not enter its blocking read")
+            with self.assertRaisesRegex(RuntimeError, "live_update_shutdown_timeout"):
+                sidecar.close()
+            self.assertEqual(sidecar.store.integrity_check(), "ok")
+
+            release.set()
+            sidecar.close()
+
+    def test_worker_thread_start_failure_releases_supervisor_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime = Path(tmp)
+            sidecar = make_sidecar(runtime)
+
+            def collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+                return CollectorResult(kind="quality", ok=True, records=[])
+
+            with mock.patch("sidecar.threading.Thread.start", side_effect=RuntimeError("thread start failed")):
+                with self.assertRaisesRegex(RuntimeError, "thread start failed"):
+                    sidecar.start_worker(tick_seconds=30, collectors=[collector])
+            self.assertFalse(sidecar.worker_running())
+            self.assertEqual(sidecar._expected_collector_names, frozenset())
+
+            sidecar.start_worker(tick_seconds=30, collectors=[collector])
+            self.assertTrue(sidecar.worker_running())
+            sidecar.close()
+
+    def test_watch_thread_start_failure_clears_thread_reference(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sidecar = make_sidecar(Path(tmp))
+            with mock.patch("sidecar.threading.Thread.start", side_effect=RuntimeError("thread start failed")):
+                with self.assertRaisesRegex(RuntimeError, "thread start failed"):
+                    sidecar.start_live_updates(interval_seconds=0.01)
+            self.assertIsNone(sidecar._watch_thread)
+
+            sidecar.start_live_updates(interval_seconds=0.01)
+            self.assertIsNotNone(sidecar._watch_thread)
+            sidecar.close()
 
     def test_sse_connection_scope_releases_count_after_handshake_error(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
