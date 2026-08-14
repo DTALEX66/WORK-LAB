@@ -77,6 +77,15 @@ def verify() -> dict[str, object]:
         if re.search(rf"(?i)\b{re.escape(tool)}\b", text):
             warnings.append(f"overlapping scanner {tool!r} appears in workflow (default baseline should avoid stacking)")
 
+    # zizmor findings exemptions must be justified in .zizmor.yml (never blind).
+    zizmor_config = root / ".zizmor.yml"
+    if zizmor_config.is_file():
+        zizmor_text = zizmor_config.read_text(encoding="utf-8")
+        if "artipacked" in zizmor_text and not any(kw in zizmor_text for kw in ("justification", "never", "false positive", "does not")):
+            warnings.append("zizmor artipacked exemption lacks a justification comment")
+    else:
+        errors.append("zizmor exemptions config (.zizmor.yml) missing")
+
     return {"valid": not errors, "errors": errors, "warnings": warnings, "tools": found}
 
 
