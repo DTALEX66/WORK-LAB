@@ -57,6 +57,21 @@ class ImpactPlannerTests(unittest.TestCase):
         )
         self.assertIn("token-monitor", plan["required_gates"])
 
+    def test_critical_ci_path_selects_supply_chain_security_gate(self) -> None:
+        module = load_module()
+        profile = module.load_profile(Path(__file__).resolve().parents[3] / "00-governance" / "work-lab.project-profile.yaml")
+        plan = module.build_plan(
+            profile,
+            repository="DTALEX66/WORK-LAB",
+            commit="commit",
+            tree="tree",
+            changed_paths=[".github/workflows/work-lab-gate.yml"],
+        )
+        self.assertEqual(
+            plan["required_gates"],
+            ["integration", "observer", "supply-chain-security", "token-monitor", "workflow"],
+        )
+
     def test_workflow_change_expands_to_transitive_dependents(self) -> None:
         module = load_module()
         plan = module.build_plan(

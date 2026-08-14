@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 77,
+    "total": 78,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 33,
       "test_behavior_alignment": 7,
       "working_directory_recovery": 2,
       "evidence_state": 10,
-      "ci_configuration": 4,
+      "ci_configuration": 5,
       "feature_gap": 5,
       "config_downgrade": 1,
       "dead_entry": 1,
@@ -26,7 +26,7 @@
       "regression_contract": 4
     },
     "repeat_prevention_required": true,
-    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend)"
+    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check)"
   },
   "errors": [
     {
@@ -1529,6 +1529,29 @@
       "regression_test": "snapshot fetch rejects legacy and partial LIVE success payloads; v3 display mode cannot override the backend transport verdict; LIVE v3 requires exact coverage timestamps and loopback events URL; SSE client accepts only loopback event endpoint",
       "remaining_boundary": "Native WebView remains a separate evidence layer and is verified by final-binary CDP DOM, reload console, real scroll, and normal-mode port readback.",
       "repeat_prevention": "Only the canonical v3 schema and backend transport live gate may authorize LIVE; compatibility payloads must fail closed."
+    },
+    {
+      "error_id": "ERR-078",
+      "date": "2026-08-15",
+      "taskpack": "R2",
+      "title": "supply-chain-security 未纳入唯一 required aggregate 导致安全扫描可红而合并门仍绿",
+      "root_cause": "GitHub workflow 会运行 supply-chain-security，但项目 GatePlan、aggregate.needs、真实 result env 和 aggregate_gate.py 都没有该 gate；云端 branch protection 又只要求 aggregate。",
+      "fix": "把 supply-chain-security 声明为 canonical project gate，输出独立 run_supply_chain_security 选择信号，并把真实 needs result 纳入 aggregate payload 与 Python fail-closed 判定。",
+      "prevention": "所有会阻断交付的 CI job 必须由同一 GatePlan 选择并被唯一 required aggregate 读取；不得存在只运行但不参与 aggregate 的旁路安全门。",
+      "verified": true,
+      "classification": "ci_configuration",
+      "command": "python -m pytest tests/ci/test_aggregate_gate.py tests/ci/test_governance_gate.py -q",
+      "entrypoint": ".github/workflows/work-lab-gate.yml",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "exit_code": 1,
+      "evidence_level": "local-focused",
+      "observed_error": "Branch protection required only aggregate while supply-chain-security was absent from aggregate needs and result payload; three focused RED assertions failed before the fix.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "task_id": "WLOSS-200",
+      "regression_test": "test_critical_ci_path_selects_supply_chain_security_gate; test_selected_supply_chain_security_job_is_required; test_root_workflow_uses_real_needs_results; test_supply_chain_security_is_selected_and_aggregated_by_gate_plan",
+      "remaining_boundary": "The updated workflow still requires a new exact-head GitHub run and a post-merge main run before cloud closure.",
+      "repeat_prevention": "A security job MUST be represented in project-profile gates, plan outputs, workflow needs, aggregate payload, and aggregate fail-closed tests before it can be treated as a delivery gate."
     }
   ]
 }
