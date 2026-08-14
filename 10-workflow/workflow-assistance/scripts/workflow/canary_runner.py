@@ -94,11 +94,16 @@ def run_canary() -> dict[str, Any]:
             external.append({"root": root_raw, "ok": False, "reason": "path_missing"})
             continue
         resolved = resolve_execution_path(str(root), index, git=probe)
+        # WLGM-230 scenario: an external OS project is NOT in the approved
+        # index, so the correct outcome is UNRESOLVED (never absorbed into a
+        # WORK-LAB project). Resolving into work-lab would be a false merge.
+        ok = resolved.resolution_state.value == "UNRESOLVED" and resolved.project_id is None
         external.append({
             "root": root_raw,
             "projectId": resolved.project_id,
             "resolutionState": resolved.resolution_state.value,
-            "ok": resolved.resolution_state.value == "RESOLVED" or resolved.project_id == "work-lab",
+            "ok": ok,
+            "note": "expected UNRESOLVED for non-approved external project",
         })
     results["external_canary"] = {
         "authorized": bool(authorized_roots),
