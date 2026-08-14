@@ -9,6 +9,10 @@ const WlApp = (function () {
   const APP_ROOT = "wl-app";
   let eventSource = null;
   let eventSourceUrl = null;
+  let reconnectTimer = null;
+  let reconnectDelayMs = 1000;
+  let snapshotRetryTimer = null;
+  let snapshotRetryDelayMs = 1000;
 
   function readParams() {
     const q = new URLSearchParams(window.location.search);
@@ -66,52 +70,20 @@ const WlApp = (function () {
       return;
     }
 
-    // full view
-    const active = "overview";
+    // full view — one truthful reading flow; no dead navigation.
     root.className = "wl-shell";
     let content;
     if (isV3Surface(d)) {
-      content =
-        WlRenderV3.globalBar(d) +
-        WlRenderV3.kpi(d) +
-        WlRenderV3.governanceDrift(d) +
-        WlRenderV3.projectTable(d) +
-        WlRenderV3.executionsTable(d) +
-        WlRenderV3.tokenCi(d);
+      content = WlRenderV3.full(d);
     } else {
       content = `<div class="wl-grid">${WlRender.renderFull(d)}</div>`;
     }
     root.innerHTML =
       WlRender.topbar(d) +
-      `<div class="wl-body-full">${WlRender.sidebar(active)}<main class="wl-content"><div class="wl-grid">${content}</div></main></div>` +
+      `<div class="wl-body-full"><main class="wl-content">${content}</main></div>` +
       WlRender.footer(d);
     applyTheme(st.theme);
     wireToggles(root);
-    // v3: project row click -> detail (WLGM-190)
-    if (isV3Surface(d)) {
-      const rows = root.querySelectorAll(".wl-proj-row");
-      rows.forEach((row) => {
-        row.addEventListener("click", () => {
-          const pid = row.getAttribute("data-project");
-          const detailBox = document.getElementById("wl-v3-detail");
-          if (detailBox) {
-            const already = detailBox.querySelector(`[data-project-detail="${pid}"]`);
-            if (already) { already.remove(); return; }
-            detailBox.innerHTML = WlRenderV3.projectDetail(d, pid);
-            const box = detailBox.querySelector(`[data-project-detail="${pid}"]`);
-            if (box) box.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          }
-        });
-        row.addEventListener("keydown", (ev) => {
-          if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); row.click(); }
-        });
-      });
-    }
-    // sidebar nav
-    const side = root.querySelector("nav.wl-sidebar");
-    if (side) {
-      WlA11y.bindSectionNav(side, active);
-    }
   }
 
   function wireToggles(root) {
@@ -128,34 +100,51 @@ const WlApp = (function () {
         render();
       });
     }
-    // Appearance settings: background mode + glass opacity (memory-only CSS vars).
-    const settingsBtn = document.getElementById("settingsToggle");
-    const panel = document.getElementById("wl-settings");
-    if (settingsBtn && panel) {
-      settingsBtn.addEventListener("click", () => {
-        panel.classList.toggle("open");
-        if (panel.classList.contains("open")) {
-          panel.querySelector("#wl-bg-mode").focus();
-        }
-      });
-      const bg = panel.querySelector("#wl-bg-mode");
-      const opacity = panel.querySelector("#wl-opacity");
-      const opacityVal = panel.querySelector("#wl-opacity-val");
-      const apply = () => {
-        document.documentElement.setAttribute("data-bg", bg.value);
-        const o = Number(opacity.value) / 100;
-        document.documentElement.style.setProperty("--wl-opacity", String(o));
-        if (opacityVal) opacityVal.textContent = opacity.value;
-      };
-      bg.addEventListener("change", apply);
-      opacity.addEventListener("input", apply);
-    }
+
   }
 
-  function stopLiveSubscription() {
+  function clearSnapshotRetry() {
+    if (snapshotRetryTimer !== null) clearTimeout(snapshotRetryTimer);
+    snapshotRetryTimer = null;
+    snapshotRetryDelayMs = 1000;
+  }
+
+  function scheduleSnapshotRetry() {
+    if (snapshotRetryTimer !== null) return;
+    const delay = snapshotRetryDelayMs;
+    snapshotRetryDelayMs = Math.min(snapshotRetryDelayMs * 2, 30000);
+    snapshotRetryTimer = setTimeout(async () => {
+      snapshotRetryTimer = null;
+      await loadData();
+      render();
+    }, delay);
+  }
+
+  function closeEventSource() {
     if (eventSource && typeof eventSource.close === "function") eventSource.close();
     eventSource = null;
     eventSourceUrl = null;
+  }
+
+  function stopLiveSubscription() {
+    if (reconnectTimer !== null) clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+    reconnectDelayMs = 1000;
+    closeEventSource();
+  }
+
+  function scheduleLiveReconnect() {
+    if (reconnectTimer !== null) return;
+    const delay = reconnectDelayMs;
+    reconnectDelayMs = Math.min(reconnectDelayMs * 2, 30000);
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      const st = WlState.get();
+      const projection = st.data || st.lastGood;
+      if (!projection) return;
+      closeEventSource();
+      startLiveSubscription(projection);
+    }, delay);
   }
 
   function startLiveSubscription(projection) {
@@ -165,7 +154,9 @@ const WlApp = (function () {
       return false;
     }
     if (eventSource && eventSourceUrl === url) return true;
-    stopLiveSubscription();
+    if (reconnectTimer !== null) clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+    closeEventSource();
     eventSourceUrl = url;
     try {
       eventSource = WlApi.subscribeEvents(url, {
@@ -178,9 +169,24 @@ const WlApp = (function () {
           }
           render();
         },
+        onOpen: async () => {
+          if (reconnectTimer !== null) clearTimeout(reconnectTimer);
+          reconnectTimer = null;
+          reconnectDelayMs = 1000;
+          try {
+            const result = await WlApi.fetchSnapshot();
+            clearSnapshotRetry();
+            WlState.accept(result.data, result.mode);
+          } catch (err) {
+            WlState.markRefreshError(err && err.message ? err.message : "事件流重连后投影刷新失败");
+            scheduleSnapshotRetry();
+          }
+          render();
+        },
         onError: () => {
           WlState.markRefreshError("Workflow Sidecar 事件流离线，正在自动重连");
           render();
+          scheduleLiveReconnect();
         },
       });
       return true;
@@ -188,6 +194,7 @@ const WlApp = (function () {
       eventSource = null;
       eventSourceUrl = null;
       WlState.markRefreshError(err && err.message ? err.message : "事件流不可用");
+      scheduleLiveReconnect();
       return false;
     }
   }
@@ -196,6 +203,7 @@ const WlApp = (function () {
   async function loadData() {
     const st = WlState.get();
     if (st.mode === "FIXTURE" || st.mode === "REPLAY") {
+      clearSnapshotRetry();
       stopLiveSubscription();
       // FIXTURE: use inline authoritative copy (no network). REPLAY unsupported -> fixture fallback.
       WlState.accept(WlApi.FIXTURE, "FIXTURE");
@@ -206,6 +214,7 @@ const WlApp = (function () {
     // bundled snapshot or FIXTURE. Fixture only loads via an explicit dev entry.
     try {
       const result = await WlApi.fetchSnapshot();
+      clearSnapshotRetry();
       WlState.accept(result.data, result.mode);
       startLiveSubscription(result.data);
       WlA11y.announce(result.mode === "LIVE" ? "已加载实时投影数据" : "已加载只读投影数据");
@@ -219,6 +228,7 @@ const WlApp = (function () {
         WlState.accept(null, "OFFLINE");
         WlA11y.announce("实时数据不可用，界面显示 OFFLINE（不加载假数据）");
       }
+      scheduleSnapshotRetry();
     }
   }
 
