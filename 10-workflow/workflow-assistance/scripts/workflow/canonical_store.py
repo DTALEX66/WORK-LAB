@@ -412,7 +412,7 @@ class CanonicalStore:
             ).fetchone()[0] + 1
             self._conn.execute(
                 """
-                INSERT INTO telemetry_events
+                INSERT OR IGNORE INTO telemetry_events
                 (event_id, project_id, sequence, producer, occurred_at, observed_at,
                  freshness, coverage, quality, payload)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -446,6 +446,27 @@ class CanonicalStore:
                  tool_tokens, subagent_tokens, total_tokens, billing_type,
                  cost_estimate, cost_reconciled, quality, source_ref)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(sample_id) DO UPDATE SET
+                    project_id=excluded.project_id,
+                    provider=excluded.provider,
+                    model=excluded.model,
+                    lane=excluded.lane,
+                    observed_at=excluded.observed_at,
+                    window_start=excluded.window_start,
+                    window_end=excluded.window_end,
+                    input_tokens=excluded.input_tokens,
+                    output_tokens=excluded.output_tokens,
+                    cache_read_tokens=excluded.cache_read_tokens,
+                    cache_write_tokens=excluded.cache_write_tokens,
+                    reasoning_tokens=excluded.reasoning_tokens,
+                    tool_tokens=excluded.tool_tokens,
+                    subagent_tokens=excluded.subagent_tokens,
+                    total_tokens=excluded.total_tokens,
+                    billing_type=excluded.billing_type,
+                    cost_estimate=excluded.cost_estimate,
+                    cost_reconciled=excluded.cost_reconciled,
+                    quality=excluded.quality,
+                    source_ref=excluded.source_ref
                 """,
                 (
                     sample_id,
@@ -630,6 +651,15 @@ class CanonicalStore:
                 (row_id, project_id, scope, quality, coverage, freshness,
                  observed_at, last_good_at, payload)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(row_id) DO UPDATE SET
+                    project_id=excluded.project_id,
+                    scope=excluded.scope,
+                    quality=excluded.quality,
+                    coverage=excluded.coverage,
+                    freshness=excluded.freshness,
+                    observed_at=excluded.observed_at,
+                    last_good_at=excluded.last_good_at,
+                    payload=excluded.payload
                 """,
                 (
                     row_id,
@@ -909,6 +939,7 @@ class CanonicalStore:
                     UNION ALL SELECT observed_at FROM usage_samples
                     UNION ALL SELECT observed_at FROM ci_runs
                     UNION ALL SELECT observed_at FROM source_quality
+                    UNION ALL SELECT last_run_at AS observed_at FROM collector_health
                 )
                 """
             ).fetchone()

@@ -49,6 +49,11 @@ class CollectorsTests(unittest.TestCase):
         self.assertEqual(len(result.records), 1)
         self.assertEqual(result.records[0]["total"], 2)
         self.assertEqual(result.records[0]["task_counts"]["PENDING"], 1)
+        repeated = collect_task_ledger(self.store, "p")
+        self.assertEqual(result.records[0]["event_id"], repeated.records[0]["event_id"])
+        self.store.append_telemetry(result.records[0])
+        self.store.append_telemetry(repeated.records[0])
+        self.assertEqual(self.store.projection()["telemetry_events"], 1)
 
     def test_git_ci_collector_reads_real_head_without_estimates(self) -> None:
         project = _make_git_project(self.root, "collector-demo")
@@ -59,6 +64,11 @@ class CollectorsTests(unittest.TestCase):
         self.assertEqual(record["quality"], "EXACT_SOURCE")
         self.assertRegex(record["head_sha"], r"^[0-9a-f]{40}$")
         self.assertEqual(record["dirty_count"], 0)
+        repeated = collect_git_ci(self.store, "collector-demo", project).records[0]
+        self.assertEqual(record["row_id"], repeated["row_id"])
+        self.store.append_quality(record)
+        self.store.append_quality(repeated)
+        self.assertEqual(len(self.store.list_source_quality()), 1)
 
     def test_usage_collector_accepts_only_explicit_counters(self) -> None:
         artifacts = self.root / ".hermes" / "task-artifacts"
@@ -109,11 +119,45 @@ class CollectorsTests(unittest.TestCase):
         self.assertEqual(len(result.records), 1)
         self.assertEqual(result.records[0]["total_tokens"], 0)
 
+    def test_usage_polling_is_idempotent_and_preserves_identical_lines(self) -> None:
+        artifacts = self.root / ".hermes" / "task-artifacts"
+        artifacts.mkdir(parents=True)
+        line = json.dumps(
+            {
+                "provider": "deepseek",
+                "model": "deepseek-v4-flash",
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "total_tokens": 15,
+            }
+        )
+        (artifacts / "usage.jsonl").write_text(line + "\n" + line + "\n", encoding="utf-8")
+
+        first = collect_usage_files(self.store, "p", self.root)
+        second = collect_usage_files(self.store, "p", self.root)
+        self.assertEqual(len(first.records), 2)
+        self.assertEqual(
+            [record["sample_id"] for record in first.records],
+            [record["sample_id"] for record in second.records],
+            "polling the same source must keep stable event identities",
+        )
+        self.assertEqual(len({record["sample_id"] for record in first.records}), 2)
+        for record in first.records + second.records:
+            self.store.record_usage_sample(record)
+        projection = self.store.projection()
+        self.assertEqual(projection["usage_summary"][0]["samples"], 2)
+        self.assertEqual(projection["usage_summary"][0]["tokens"], 30)
+
     def test_source_quality_collector(self) -> None:
         project = _make_git_project(self.root, "quality-demo")
         result = collect_source_quality(self.store, "quality-demo", project)
         self.assertTrue(result.ok)
         self.assertEqual(result.records[0]["quality"], "EXACT_SOURCE")
+        repeated = collect_source_quality(self.store, "quality-demo", project)
+        self.assertEqual(result.records[0]["row_id"], repeated.records[0]["row_id"])
+        self.store.append_quality(result.records[0])
+        self.store.append_quality(repeated.records[0])
+        self.assertEqual(len(self.store.list_source_quality()), 1)
 
 
 if __name__ == "__main__":

@@ -184,8 +184,9 @@ const WlApp = (function () {
           render();
         },
         onError: () => {
-          WlState.markRefreshError("Workflow Sidecar 事件流离线，正在自动重连");
+          WlState.markRefreshError("Workflow Sidecar 事件流离线，正在自动重连", true);
           render();
+          scheduleSnapshotRetry();
           scheduleLiveReconnect();
         },
       });
@@ -193,7 +194,8 @@ const WlApp = (function () {
     } catch (err) {
       eventSource = null;
       eventSourceUrl = null;
-      WlState.markRefreshError(err && err.message ? err.message : "事件流不可用");
+      WlState.markRefreshError(err && err.message ? err.message : "事件流不可用", true);
+      scheduleSnapshotRetry();
       scheduleLiveReconnect();
       return false;
     }
@@ -220,9 +222,8 @@ const WlApp = (function () {
       WlA11y.announce(result.mode === "LIVE" ? "已加载实时投影数据" : "已加载只读投影数据");
     } catch (err) {
       stopLiveSubscription();
-      WlState.markRefreshError(err.message);
+      WlState.markRefreshError(err.message, true);
       if (WlState.get().lastGood) {
-        WlState.set({ mode: "OFFLINE" });
         WlA11y.announce("实时数据不可用，已保留上次良好投影（last-good，标记为 STALE）");
       } else {
         WlState.accept(null, "OFFLINE");
