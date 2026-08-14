@@ -596,6 +596,8 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/workflow/error-fixes-2026-08-13-wlg.md`：WLG 治理 TaskPack 执行错误总结（CRLF provenance、force-push CI 陷阱、gh 卸载、多分支串扰等）；
 - `docs/workflow/memory-compaction-2026-08-13.md`：Hermes 记忆压缩与优化归档（合并策略、精简记录、记忆治理规则）；
 - `docs/workflow/error-fixes-2026-08-14-guard.md`：pre_tool_call 终端守卫正则防护三缺陷（路径穿越绕过、含空格路径误拦、scheme:// URL 误判）修复归档；
+- `docs/workflow/error-fixes-2026-08-14-r2.md`：R2 重审计修复批次错误归档（Guard 前缀两连坑、zizmor Docker action、schema 四方同步、SQL 表名、fail-closed 契约、验证脚本 bug、graphql 瞬断、cargo 检测）；
+- `docs/handoffs/audit-r2-fixes-handoff-2026-08-14.md`：R2 修复批次交接（PR #97~#101、验证证据、剩余事项与恢复顺序）；
 - `docs/workflow/wloss-reference-decisions.md`：WLOSS-100/300/510 开源能力处理决定（OPA/Conftest=REFERENCE、in-toto=DERIVE、Cosign/Promptfoo=REFERENCE、Superpowers=方法吸收）；
 - `docs/mcp/workflow-mcp-stack.md`：MCP 默认策略；
 - `docs/mcp/mcp-catalog-governance.md`：MCP 候选审计 schema、阻断规则和默认启用边界；
