@@ -9,6 +9,7 @@ const suites = [
   "./test_responsive_contract.js",
   "./test_visual_assets_r2.js",
   "./test_desktop_component_contract.js",
+  "./test_render_v3.js",
 ];
 
 let totalPass = 0, totalFail = 0;

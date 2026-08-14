@@ -24,9 +24,11 @@ function loadScripts() {
   global.WlCharts = WlCharts;
   const WlRender = require(path.join(WEB, "scripts", "render.js")).WlRender;
   global.WlRender = WlRender;
+  const WlRenderV3 = require(path.join(WEB, "scripts", "render-v3.js")).WlRenderV3;
+  global.WlRenderV3 = WlRenderV3;
   const WlA11y = require(path.join(WEB, "scripts", "accessibility.js")).WlA11y;
   global.WlA11y = WlA11y;
-  return { WlFormat, WlApi, WlState, WlCharts, WlRender, WlA11y };
+  return { WlFormat, WlApi, WlState, WlCharts, WlRender, WlRenderV3, WlA11y };
 }
 
 function loadFixture(name) {
