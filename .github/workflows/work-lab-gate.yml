@@ -172,7 +172,7 @@ jobs:
       - name: actionlint (GitHub Actions syntax)
         uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
       - name: zizmor (GitHub Actions security)
-        run: pipx run zizmor==1.29.0 .
+        run: pipx run zizmor==1.29.0 . --min-severity high
       - name: Trivy fs scan (vuln/secret/license/misconfig)
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:

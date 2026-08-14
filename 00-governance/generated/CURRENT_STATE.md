@@ -1,8 +1,8 @@
 # WORK-LAB current state
 
-Generated at: `2026-08-14T07:20:37.969851Z`  \
-Source digest: `069481ec122e8c1fcd59a21f3a52dafcac7517fb33971b2754d1c0202a180308`  \
-Content digest: `6ccdf038ab8ee2f8da2a6083deee8bf8f9be0f8719aeb536b41bc522b4fa130d`
+Generated at: `2026-08-14T07:30:05.582091Z`  \
+Source digest: `be4bf878ef8bb36bfb9a22bee23795168f866b84b155646ba4af726858b231f8`  \
+Content digest: `4ebf54e306da36e6009f1f9832dd0edfa084ddfb10a9370dd4a74b3754c047e4`
 
 ## Git and CI attestation
 
