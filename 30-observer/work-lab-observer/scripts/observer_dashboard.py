@@ -302,10 +302,15 @@ def _nav(theme: str, view: str) -> str:
 
 
 def _render_full(projection: dict[str, Any]) -> str:
+    # R2 third batch: tolerate the v3 projection shape (ci as list, usage in
+    # tokenSummary) while the legacy dashboard service is being retired.
     summary = projection.get("summary", {})
     quality = projection.get("quality", {})
-    usage = projection.get("usage", {})
-    ci = projection.get("ci", {})
+    usage = projection.get("usage", {}) or {"inputTokens": None, "outputTokens": None, "totalTokens": None}
+    if not usage.get("totalTokens") and projection.get("tokenSummary"):
+        usage = projection["tokenSummary"]
+    ci_raw = projection.get("ci", {})
+    ci = ci_raw if isinstance(ci_raw, dict) else {"runs": ci_raw if isinstance(ci_raw, list) else []}
     projects = projection.get("projects", [])
     tasks = summary.get("tasks", {})
     task_count = sum(tasks.values()) if isinstance(tasks, dict) else 0

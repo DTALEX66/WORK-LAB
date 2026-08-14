@@ -103,18 +103,23 @@ function run() {
     assert(/method:\s*["']GET["']/i.test(apiSrc), "GET method explicit");
   });
 
-  t("dashboard endpoint accepts only explicit loopback read-only URL", () => {
-    global.window = { location: { search: "?api=" + encodeURIComponent("http://127.0.0.1:43123/api/dashboard") } };
+  t("snapshot endpoint accepts only explicit loopback read-only URL (v3)", () => {
+    global.window = { location: { search: "?api=" + encodeURIComponent("http://127.0.0.1:43123/api/v1/snapshot") } };
     try {
-      assert(WlApi.dashboardEndpoint() === "http://127.0.0.1:43123/api/dashboard", "loopback endpoint accepted");
-      global.window.location.search = "?api=" + encodeURIComponent("https://external.invalid/api/dashboard");
+      assert(WlApi.snapshotV3Endpoint() === "http://127.0.0.1:43123/api/v1/snapshot", "loopback v3 endpoint accepted");
+      global.window.location.search = "?api=" + encodeURIComponent("https://external.invalid/api/v1/snapshot");
       let rejected = false;
-      try { WlApi.dashboardEndpoint(); } catch (_) { rejected = true; }
+      try { WlApi.snapshotV3Endpoint(); } catch (_) { rejected = true; }
       assert(rejected, "external endpoint rejected");
-      global.window.location.search = "?api=" + encodeURIComponent("http://127.0.0.1:43123/api/dashboard?write=1");
+      global.window.location.search = "?api=" + encodeURIComponent("http://127.0.0.1:43123/api/v1/snapshot?write=1");
       rejected = false;
-      try { WlApi.dashboardEndpoint(); } catch (_) { rejected = true; }
+      try { WlApi.snapshotV3Endpoint(); } catch (_) { rejected = true; }
       assert(rejected, "query-bearing endpoint rejected");
+      // R2 third batch: legacy /api/dashboard must be rejected as well.
+      global.window.location.search = "?api=" + encodeURIComponent("http://127.0.0.1:43123/api/dashboard");
+      rejected = false;
+      try { WlApi.snapshotV3Endpoint(); } catch (_) { rejected = true; }
+      assert(rejected, "legacy /api/dashboard rejected (retired)");
     } finally {
       delete global.window;
     }
@@ -183,13 +188,15 @@ function run() {
 
   t("web tree has no server/backoffice entry points", () => {
     const idx = fs.readFileSync(path.join(WEB, "index.html"), "utf-8");
-    // Strip comments; only flag real fetch/script/src references to non-dashboard
-    // API endpoints. "/api/dashboard" is the only documented read endpoint.
+    // Strip comments; only flag real fetch/script/src references. The only
+    // documented read endpoint is /api/v1/snapshot (R2 third batch: legacy
+    // /api/dashboard is retired).
     const stripped = idx.replace(/<!--[\s\S]*?-->/g, "");
-    assert(!/\/api\/(?!dashboard)/.test(stripped), "index does not hit other API endpoints");
-    // api.js uses exactly GET /api/dashboard (already covered, explicit here too).
+    assert(!/\/api\/(?!v1\/snapshot)/.test(stripped), "index does not hit non-v3 API endpoints");
+    // api.js targets GET /api/v1/snapshot and never /api/dashboard.
     const apiSrc = fs.readFileSync(path.join(WEB, "scripts", "api.js"), "utf-8");
-    assert(/\/api\/dashboard/.test(apiSrc), "api.js targets /api/dashboard");
+    assert(/\/api\/v1\/snapshot/.test(apiSrc), "api.js targets /api/v1/snapshot");
+    assert(!/\/api\/dashboard/.test(apiSrc), "api.js no longer targets /api/dashboard");
   });
 
   return { pass, fail };

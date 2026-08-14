@@ -100,20 +100,30 @@ def check_4_usage_token_allowlist() -> dict:
 
 
 def check_5_no_fabricated_exact() -> dict:
-    """No sourceRef must not display exact/complete/running/LIVE/0."""
-    sys.path.insert(0, str(ROOT / "30-observer/work-lab-observer/src"))
+    """No sourceRef must not display exact/complete/running/LIVE/0.
+
+    R2 third batch: migrated from the retired v2 CanonicalProjectionReader to
+    the v3 snapshot semantic (empty store -> OFFLINE/UNKNOWN/null tokens).
+    """
+    sys.path.insert(0, str(ROOT / "10-workflow/workflow-assistance/scripts/workflow"))
     import tempfile
     from canonical_store import CanonicalStore
-    from observer_canonical import CanonicalProjectionReader
+    from composition_root import build_v3_snapshot, load_approved_index
     with tempfile.TemporaryDirectory() as td:
         store = CanonicalStore(Path(td) / "c.sqlite")
-        reader = CanonicalProjectionReader(store)
-        dashboard = reader.to_dashboard()
-        ok = dashboard["mode"] == "SNAPSHOT" and dashboard["freshness"]["state"] == "stale"
-        ok = ok and dashboard["usage"]["quality"]["dataQuality"] == "UNKNOWN"
+        index = load_approved_index(store)
+        snapshot = build_v3_snapshot(
+            store, index, revision=store.seed_revision(),
+            events_url=None, transport_state="OFFLINE",
+        )
+        tokens = snapshot["tokenSummary"]
+        ok = snapshot["transport"]["transportState"] == "OFFLINE"
+        ok = ok and tokens["costQuality"] == "UNKNOWN"
+        ok = ok and tokens["inputTokens"] is None and tokens["totalTokens"] is None
+        ok = ok and snapshot["executions"] == []
         store.close()
     return {"id": 5, "name": "no-fabricated-exact", "pass": ok,
-            "evidence": "empty canonical store -> SNAPSHOT/STALE/UNKNOWN (not LIVE/0)"}
+            "evidence": "empty canonical store -> OFFLINE/UNKNOWN/null tokens (never LIVE/0/EXACT)"}
 
 
 def check_6_dual_project_canary() -> dict:
@@ -224,9 +234,12 @@ def check_8_ci_queued_no_job_releases_writer() -> dict:
 def check_9_tauri_real_sidecar() -> dict:
     """Tauri must connect real Sidecar, not silent fixture LIVE."""
     import shutil
-    cargo = shutil.which("cargo")
+    # Rust toolchain was installed (2026-08-14); locate cargo including the
+    # per-user .cargo/bin which is not on the git-bash PATH by default.
+    cargo = shutil.which("cargo") or Path(os.path.expanduser("~/.cargo/bin/cargo.exe")).resolve()
+    present = cargo is not None and Path(str(cargo)).is_file()
     return {"id": 9, "name": "tauri-real-sidecar", "pass": False,
-            "evidence": f"PENDING: cargo={'present' if cargo else 'absent'} (Windows toolchain not installed)"}
+            "evidence": f"PENDING: cargo={'present' if present else 'absent'} (Windows toolchain not installed)"}
 
 
 def check_10_no_credentials_in_store() -> dict:

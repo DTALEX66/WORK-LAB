@@ -22,27 +22,25 @@ python 30-observer/work-lab-observer/tests/test_observer_dashboard.py
 
 ## User-visible read-only entry
 
-From the repository root, start the local Observer dashboard:
+The Observer consumes the Workflow-owned loopback sidecar: GET
+`/api/v1/snapshot` (schema `workflow/snapshot/v3`) + `/api/v1/events` (SSE).
+The frontend is served statically; it never writes, never falls back to a
+fixture as live data, and the legacy `/api/dashboard` entry is retired
+(R2 third batch). The Tauri shell only accepts the loopback v3 snapshot URL.
+
+Start the sidecar (Workflow module):
 
 ```text
-python 30-observer/work-lab-observer/scripts/observer_dashboard.py
+python 10-workflow/workflow-assistance/scripts/workflow/sidecar.py --project-root . --runtime-root <project>/.hermes/task-runtime/workflow
 ```
 
-Open `http://127.0.0.1:8765/` in a browser. The documented GET-only entries
-are `/`, `/api/dashboard`, and `/healthz`. The page rebuilds its Schema v2
-authority projection from the Observer-owned event store and exposes task count,
-project/governance state, quality,
-coverage, data-quality warnings, usage/cost status, and the explicit
-`externalMutation=false` boundary. It does not provide task controls, approval,
-retry, execution, or Ledger write-back.
+The sidecar endpoint descriptor (`sidecar-endpoint.json`) advertises the
+projection/events URLs; the frontend reads `transport.eventsUrl` to subscribe.
+It does not provide task controls, approval, retry, execution, or Ledger
+write-back.
 
-When the embedded desktop frontend cannot reach a live `/api/dashboard` endpoint,
-it falls back to `web/assets/live-snapshot.json` with explicit `SNAPSHOT` mode;
-that fallback is not labelled as live data.
-
-To provide live data to the portable frontend, run the documented Observer
-dashboard service on `127.0.0.1:8765`; the frontend tries its same-origin API
-first, then this local read-only endpoint, and only then uses the snapshot.
+When the embedded desktop frontend cannot reach a live endpoint, it shows
+`OFFLINE` explicitly — a bundled snapshot is never labelled live data.
 
 ### Four views (Full/Compact × Dark/Light)
 

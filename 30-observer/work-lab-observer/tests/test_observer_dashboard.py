@@ -47,9 +47,9 @@ class ObserverDashboardTests(unittest.TestCase):
                 with urlopen(base + "/api/dashboard") as response:
                     projection = json.load(response)
                 self.assertEqual(projection["mode"], "SNAPSHOT")
-                self.assertEqual(projection["summary"]["registeredProjects"], 1)
-                self.assertEqual(projection["summary"]["tasks"]["running"], 1)
-                self.assertIsNone(projection["usage"]["totalTokens"])
+                self.assertEqual(projection["schemaVersion"], "workflow/snapshot/v3")
+                self.assertEqual(len(projection["projects"]), 1)
+                self.assertIsNone(projection["tokenSummary"]["totalTokens"])
                 for endpoint in ("/api/projects", "/api/tasks", "/api/usage", "/api/quality", "/api/ci", "/api/governance", "/healthz"):
                     with urlopen(base + endpoint) as response:
                         self.assertEqual(response.status, 200)
