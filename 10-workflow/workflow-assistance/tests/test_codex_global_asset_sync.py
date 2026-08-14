@@ -54,6 +54,19 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
         )
         return codex_home, agent_home
 
+    def test_block_hash_normalizes_crlf_line_endings(self) -> None:
+        # Codex Desktop 重写 config.toml 会写 CRLF 行尾；_block_hash 必须归一化行尾，
+        # 否则 CRLF 块 hash 与 LF state hash 不匹配 → fail-closed BLOCK
+        # （2026-08-14 DESIGN-LAB 交接复核：CRLF 50d589cb vs LF c2e56fdf）。
+        lf_block = (
+            "# BEGIN WORKFLOW-ASSISTANCE MANAGED CODEX OVERLAY\n"
+            'model_provider = "cc-switch-official"\n'
+            'sandbox_mode = "workspace-write"\n'
+            "# END WORKFLOW-ASSISTANCE MANAGED CODEX OVERLAY\n"
+        )
+        crlf_block = lf_block.replace("\n", "\r\n")
+        self.assertEqual(module._block_hash(lf_block), module._block_hash(crlf_block))
+
     def test_apply_preserves_user_config_and_installs_owned_assets(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".hermes/task-runtime/tmp") as td:
             codex_home, agent_home = self.make_homes(Path(td))
