@@ -1,6 +1,6 @@
 /* WORK-LAB Observer — app.js
    Entry point. Bootstraps state from URL params, reads FIXTURE inline,
-   optionally fetches GET /api/dashboard for LIVE, renders the active view,
+   fetches GET /api/v1/snapshot (v3) for live data, renders the active view,
    wires theme/view toggles and keyboard nav. Never writes to the server. */
 
 const WlApp = (function () {
@@ -201,7 +201,7 @@ const WlApp = (function () {
       WlState.accept(WlApi.FIXTURE, "FIXTURE");
       return;
     }
-    // LIVE: GET /api/v1/snapshot (canonical v3), legacy /api/dashboard tolerated.
+    // LIVE: GET /api/v1/snapshot (canonical v3); legacy dashboard retired.
     // P0-7: on failure the UI shows OFFLINE/UNKNOWN — never auto-fallback to a
     // bundled snapshot or FIXTURE. Fixture only loads via an explicit dev entry.
     try {

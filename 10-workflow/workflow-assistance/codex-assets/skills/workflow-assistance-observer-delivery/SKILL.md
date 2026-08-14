@@ -6,7 +6,7 @@ description: "Use for WORK-LAB Observer UI / read-only projection work and deliv
 # Observer UI Delivery & Verification (WORK-LAB)
 
 ## When to use
-- Changing the Observer dashboard (web/ frontend, `scripts/observer_dashboard.py`, `src/observer_canonical.py`, `src/observer_store.py`)
+- Changing the Observer dashboard (web/ frontend, `src/observer_store.py`, sidecar v3 snapshot/SSE)
 - Adding workspace discovery / active-project detection (`active_projects.py`, `project_registry.py`)
 - User reports "Observer 没显示 X" / "全景是假的吗" — trace the real data path before answering
 - Publishing any Observer change (PR / merge / release)
@@ -38,7 +38,7 @@ description: "Use for WORK-LAB Observer UI / read-only projection work and deliv
 
 ## Pitfalls
 - **Schema drift between renderer and projection (the big one)**: dashboards may still read the retired event-rebuild schema (`overview` / `tasks` / `dataQuality`) while the canonical v3 snapshot (`workflow/snapshot/v3`) returns `projects` / `executions` / `tokenSummary` / `git` / `ci`. Symptom: empty tables ("暂无观测事件") while `/api/v1/snapshot` has data. The only canonical projection is `snapshot_api.build_snapshot` (WLGM-150); the web client normalizes it once in `api.js normalizeV3` — never build a second projection server-side. See `references/dashboard-schema-drift-2026-08.md`.
-- **Legacy `/api/dashboard` must be retired**: the v3 snapshot endpoint is the only production surface; the frontend tolerates the legacy endpoint only during migration (WLGM-150/240). Do not extend the old server-rendered dashboard path (`scripts/observer_dashboard.py`); new work targets `web/index.html` + `/api/v1/snapshot` + `/api/v1/events`.
+- **Legacy `/api/dashboard` is RETIRED (R2 third batch, 2026-08-14)**: `scripts/observer_dashboard.py`, `src/observer_canonical.py` and their tests are deleted; `allowedWrites` is removed (Observer owns no write surface). The only production surface is `/api/v1/snapshot` (v3) + `/api/v1/events` (SSE) served by the Workflow sidecar. Tauri rejects `/api/dashboard`. Do not reintroduce a server-rendered dashboard path; new work targets `web/index.html` + the v3 snapshot + SSE.
 - **usage tokens null**: the canonical projection does `SUM(total_tokens)`; if callers of `record_usage_sample` omit `total_tokens`, the projection shows null/0. Auto-derive `total = input + output` when absent.
 - **Workspace discovery ≠ active detection**: git-scan registration is separate from marking ACTIVE. Windows tasklist/wmic do NOT expose a process working directory — detect activity via: agent process running (tasklist) + fresh evidence files inside the project's `.hermes` / `.codex` / `.agents` (mtime within ~120 min). Never fabricate "active".
 - **LF/CRLF noise on Windows**: the patch tool can rewrite files to CRLF; `.gitattributes * text=auto` + `core.autocrlf=true` then show phantom modifications. `git diff --ignore-all-space` empty ⇒ content identical; clear the noise with `git add <file> && git reset -- <file>`.
