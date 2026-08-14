@@ -147,11 +147,12 @@ function run() {
     assert(WlState.get().data.freshness.state === "stale", "snapshot payload cannot retain a fresh badge");
   });
 
-  t("SSE client accepts only loopback event endpoint and forwards reconnect events", () => {
+  t("SSE client accepts only loopback event endpoint and forwards named events", () => {
     let created = null;
     class FakeEventSource {
-      constructor(url) { this.url = url; created = this; }
+      constructor(url) { this.url = url; this.listeners = {}; created = this; }
       close() { this.closed = true; }
+      addEventListener(name, cb) { (this.listeners[name] = this.listeners[name] || []).push(cb); }
     }
     global.EventSource = FakeEventSource;
     const events = [];
@@ -162,9 +163,15 @@ function run() {
         onError: () => { errors += 1; },
       });
       assert(source === created, "EventSource returned");
-      source.onmessage({ data: '{"event_id":"e1"}', lastEventId: "e1" });
+      // P0-4: named SSE events (observed/heartbeat/resync_required) must be
+      // dispatched through addEventListener bindings.
+      assert(source.listeners.observed && source.listeners.observed.length === 1, "observed listener bound");
+      assert(source.listeners.heartbeat && source.listeners.heartbeat.length === 1, "heartbeat listener bound");
+      assert(source.listeners.resync_required && source.listeners.resync_required.length === 1, "resync_required listener bound");
+      source.listeners.observed[0]({ data: '{"event_id":"e1"}', lastEventId: "e1" });
+      source.listeners.message[0]({ data: '{"event_id":"anon"}', lastEventId: "a1" });
+      assert(events.length === 2 && events[0].id === "e1" && events[1].id === "a1", "named + anonymous events forwarded with Last-Event-ID");
       source.onerror();
-      assert(events.length === 1 && events[0].id === "e1", "event and Last-Event-ID forwarded");
       assert(errors === 1, "reconnect error surfaced as stale signal");
       let rejected = false;
       try { WlApi.subscribeEvents("http://127.0.0.1.evil.invalid/api/v1/events", {}); } catch (_) { rejected = true; }

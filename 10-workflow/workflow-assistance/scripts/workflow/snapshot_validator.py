@@ -70,8 +70,23 @@ def validate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
                 errors.append(f"projects[{index}].activeExecutionCount must be int|null, got {count!r}")
 
     executions = snapshot.get("executions")
-    if executions is not None and not isinstance(executions, list):
-        errors.append("executions must be a list")
+    if executions is not None:
+        if not isinstance(executions, list):
+            errors.append("executions must be a list")
+        else:
+            for index, execution in enumerate(executions):
+                if not isinstance(execution, dict):
+                    errors.append(f"executions[{index}] must be an object")
+                    continue
+                eid = execution.get("executionId")
+                if not isinstance(eid, str) or not eid:
+                    errors.append(f"executions[{index}].executionId required")
+                state = execution.get("state")
+                if not isinstance(state, str) or not state:
+                    errors.append(f"executions[{index}].state required")
+                anchor = execution.get("anchorProjectId")
+                if anchor is not None and not isinstance(anchor, str):
+                    errors.append(f"executions[{index}].anchorProjectId must be str|null, got {anchor!r}")
 
     token_summary = snapshot.get("tokenSummary")
     if token_summary is not None:
@@ -82,6 +97,9 @@ def validate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
                 value = token_summary.get(field)
                 if value is not None and (not isinstance(value, int) or isinstance(value, bool)):
                     errors.append(f"tokenSummary.{field} must be int|null, got {value!r}")
+            quality = token_summary.get("costQuality")
+            if quality is not None and quality not in ("EXACT", "ESTIMATED", "UNKNOWN"):
+                errors.append(f"tokenSummary.costQuality must be EXACT|ESTIMATED|UNKNOWN|null, got {quality!r}")
 
     transport = snapshot.get("transport")
     if transport is not None and not isinstance(transport, dict):

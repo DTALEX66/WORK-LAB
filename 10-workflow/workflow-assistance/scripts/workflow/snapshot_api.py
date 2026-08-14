@@ -58,6 +58,7 @@ def build_snapshot(
             "transportState": (transport or {}).get("transportState") or "UNKNOWN",
             "freshnessState": (transport or {}).get("freshnessState") or "UNKNOWN",
             "connectedSince": (transport or {}).get("connectedSince"),
+            "eventsUrl": (transport or {}).get("eventsUrl"),
         },
         "coverage": {
             "numerator": (transport or {}).get("coverageNumerator"),
@@ -66,16 +67,9 @@ def build_snapshot(
         },
         "governance": _governance_projection(governance),
         "projects": [_project_projection(p, executions, usage_by_project, git_state, ci_runs) for p in projects],
-        "executions": [executions],
+        "executions": executions,
         "tasks": (store_projection or {}).get("tasks_by_status", {}),
-        "tokenSummary": {
-            "inputTokens": sum(u.get("inputTokens") or 0 for u in usage),
-            "outputTokens": sum(u.get("outputTokens") or 0 for u in usage),
-            "totalTokens": sum(u.get("totalTokens") or 0 for u in usage),
-            "costQuality": "EXACT" if all(u.get("costQuality") == "EXACT" for u in usage) else (
-                "ESTIMATED" if any(u.get("costQuality") == "ESTIMATED" for u in usage) else "UNKNOWN"
-            ),
-        },
+        "tokenSummary": _token_summary(usage),
         "git": {
             "localSha": (git_state or {}).get("localSha"),
             "remoteSha": (git_state or {}).get("remoteSha"),
@@ -181,16 +175,46 @@ def _rollup_usage(usage: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     rolled: dict[str, dict[str, Any]] = {}
     for sample in usage:
         project_id = sample.get("projectId") or "unknown"
-        entry = rolled.setdefault(project_id, {"inputTokens": 0, "outputTokens": 0, "totalTokens": 0, "costQuality": "UNKNOWN"})
-        entry["inputTokens"] = (entry["inputTokens"] or 0) + (sample.get("inputTokens") or 0)
-        entry["outputTokens"] = (entry["outputTokens"] or 0) + (sample.get("outputTokens") or 0)
-        entry["totalTokens"] = (entry["totalTokens"] or 0) + (sample.get("totalTokens") or 0)
+        entry = rolled.setdefault(project_id, {"inputTokens": None, "outputTokens": None, "totalTokens": None, "costQuality": "UNKNOWN"})
+        for field in ("inputTokens", "outputTokens", "totalTokens"):
+            value = sample.get(field)
+            if isinstance(value, int) and not isinstance(value, bool):
+                entry[field] = (entry[field] or 0) + value
         quality = sample.get("costQuality")
         if quality == "EXACT":
             entry["costQuality"] = "EXACT"
         elif quality == "ESTIMATED" and entry["costQuality"] != "EXACT":
             entry["costQuality"] = "ESTIMATED"
     return rolled
+
+
+def _token_summary(usage: list[dict[str, Any]]) -> dict[str, Any]:
+    """Aggregate usage into tokenSummary with null-vs-zero discipline (P0-3).
+
+    No usage -> every field null, costQuality UNKNOWN; a field missing from
+    every sample stays null (never padded to 0); EXACT only when every sample
+    declares EXACT, ESTIMATED when any does, else UNKNOWN.
+    """
+    if not usage:
+        return {"inputTokens": None, "outputTokens": None, "totalTokens": None, "costQuality": "UNKNOWN"}
+
+    def _sum(field: str) -> int | None:
+        values = [u.get(field) for u in usage if isinstance(u.get(field), int) and not isinstance(u.get(field), bool)]
+        return sum(values) if values else None
+
+    qualities = [u.get("costQuality") for u in usage]
+    if all(q == "EXACT" for q in qualities):
+        cost_quality = "EXACT"
+    elif any(q == "ESTIMATED" for q in qualities):
+        cost_quality = "ESTIMATED"
+    else:
+        cost_quality = "UNKNOWN"
+    return {
+        "inputTokens": _sum("inputTokens"),
+        "outputTokens": _sum("outputTokens"),
+        "totalTokens": _sum("totalTokens"),
+        "costQuality": cost_quality,
+    }
 
 
 def _git_match_state(git_state: dict[str, Any]) -> str:

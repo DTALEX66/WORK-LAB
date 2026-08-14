@@ -92,5 +92,41 @@ class SnapshotValidatorTests(unittest.TestCase):
         self.assertTrue(result["valid"], result["errors"])
 
 
+    def test_2d_executions_fail(self) -> None:
+        snapshot = valid_snapshot()
+        snapshot["executions"] = [[snapshot["executions"][0]]] if snapshot["executions"] else [[{"executionId": "e1", "state": "RUNNING"}]]
+        report = validate_snapshot(snapshot)
+        self.assertFalse(report["valid"])
+        self.assertTrue(any("must be an object" in e for e in report["errors"]))
+
+    def test_execution_missing_state_fails(self) -> None:
+        snapshot = valid_snapshot()
+        snapshot["executions"] = [{"executionId": "e1"}]
+        report = validate_snapshot(snapshot)
+        self.assertFalse(report["valid"])
+        self.assertTrue(any("state required" in e for e in report["errors"]))
+
+    def test_execution_missing_id_fails(self) -> None:
+        snapshot = valid_snapshot()
+        snapshot["executions"] = [{"state": "RUNNING"}]
+        report = validate_snapshot(snapshot)
+        self.assertFalse(report["valid"])
+        self.assertTrue(any("executionId required" in e for e in report["errors"]))
+
+    def test_execution_bad_anchor_type_fails(self) -> None:
+        snapshot = valid_snapshot()
+        snapshot["executions"] = [{"executionId": "e1", "state": "RUNNING", "anchorProjectId": 123}]
+        report = validate_snapshot(snapshot)
+        self.assertFalse(report["valid"])
+        self.assertTrue(any("anchorProjectId" in e for e in report["errors"]))
+
+    def test_token_summary_bad_cost_quality_fails(self) -> None:
+        snapshot = valid_snapshot()
+        snapshot["tokenSummary"] = {"inputTokens": 1, "outputTokens": 1, "totalTokens": 2, "costQuality": "PRECISE"}
+        report = validate_snapshot(snapshot)
+        self.assertFalse(report["valid"])
+        self.assertTrue(any("costQuality" in e for e in report["errors"]))
+
+
 if __name__ == "__main__":
     unittest.main()
