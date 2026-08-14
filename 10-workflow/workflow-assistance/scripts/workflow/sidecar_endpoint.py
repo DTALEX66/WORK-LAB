@@ -118,16 +118,34 @@ def _pid_alive(pid: int) -> bool:
     if os.name == "nt":
         try:
             import ctypes
+            from ctypes import wintypes
 
             PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
-            kernel32 = ctypes.windll.kernel32
-            handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+            STILL_ACTIVE = 259
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            open_process = kernel32.OpenProcess
+            open_process.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+            open_process.restype = wintypes.HANDLE
+            get_exit_code = kernel32.GetExitCodeProcess
+            get_exit_code.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+            get_exit_code.restype = wintypes.BOOL
+            close_handle = kernel32.CloseHandle
+            close_handle.argtypes = [wintypes.HANDLE]
+            close_handle.restype = wintypes.BOOL
+            handle = open_process(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
             if not handle:
                 return False
             try:
-                return bool(kernel32.GetExitCodeProcess(handle, ctypes.byref(ctypes.c_ulong())) and False or True)
+                exit_code = wintypes.DWORD()
+                if not get_exit_code(handle, ctypes.byref(exit_code)):
+                    return False
+                # Windows reports STILL_ACTIVE (259) only while the process
+                # has not terminated.  A valid handle alone is insufficient:
+                # exited processes can still be opened briefly and would make
+                # a stale sidecar descriptor appear live.
+                return exit_code.value == STILL_ACTIVE
             finally:
-                kernel32.CloseHandle(handle)
+                close_handle(handle)
         except Exception:  # noqa: BLE001 - best-effort liveness check
             return False
     try:

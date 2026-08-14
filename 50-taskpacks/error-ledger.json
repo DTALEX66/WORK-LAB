@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 71,
+    "total": 73,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 29,
+      "contract_drift": 31,
       "test_behavior_alignment": 6,
       "working_directory_recovery": 2,
       "evidence_state": 10,
@@ -26,7 +26,7 @@
       "regression_contract": 3
     },
     "repeat_prevention_required": true,
-    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); 2026-08-14: ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth)"
+    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract)"
   },
   "errors": [
     {
@@ -1391,6 +1391,52 @@
       "regression_test": "error ledger verifier plus stale-claim scan for hard-coded latest-delivery wording",
       "remaining_boundary": "Historical PR and SHA anchors remain intentionally preserved and explicitly labeled as historical.",
       "repeat_prevention": "Delivery documents MUST never hard-code their own or the next PR as the timeless latest identity."
+    },
+    {
+      "error_id": "ERR-072",
+      "date": "2026-08-15",
+      "taskpack": "R2",
+      "title": "Windows sidecar PID 校验把已退出进程误判为存活",
+      "root_cause": "Windows 分支只要 OpenProcess 返回句柄就返回 true，GetExitCodeProcess 的结果未被读取；已退出进程的 stale descriptor 因此可能继续通过 sidecar endpoint 校验。",
+      "fix": "读取 GetExitCodeProcess 的退出码，只有 STILL_ACTIVE (259) 才视为存活；API 失败或其它退出码均 fail-closed。",
+      "prevention": "Windows PID liveness 必须同时覆盖句柄可打开、STILL_ACTIVE 和已退出码三种分支，不能把句柄存在等同于进程存活。",
+      "verified": true,
+      "classification": "contract_drift",
+      "command": "python 10-workflow/workflow-assistance/tests/test_sidecar_endpoint.py",
+      "entrypoint": "10-workflow/workflow-assistance/scripts/workflow/sidecar_endpoint.py",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "exit_code": 1,
+      "evidence_level": "local-focused",
+      "observed_error": "A valid Windows process handle was treated as a live owner without checking the process exit code.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "task_id": "WLGM-210",
+      "regression_test": "test_windows_pid_requires_still_active_exit_code; test_dead_pid_rejected",
+      "remaining_boundary": "Rust/Tauri production and real sidecar recovery were verified separately; descriptor consumption by the Rust shell remains an independent integration contract.",
+      "repeat_prevention": "Endpoint validation MUST reject stale descriptors after process termination and MUST not infer live ownership from an open handle alone."
+    },
+    {
+      "error_id": "ERR-073",
+      "date": "2026-08-15",
+      "taskpack": "R2",
+      "title": "退休 dashboard helper 仍把 v3 响应当作旧 API 成功",
+      "root_cause": "fetchDashboard() 虽已标记退休，仍向 /api/v1/snapshot 发起请求并返回 ok=true，绕过了经过校验的 endpoint 参数；旧调用者因此可能误判退休路径仍受支持。",
+      "fix": "将退休 helper 改为同步 fail-closed 拒绝，并禁止任何网络请求；新回归验证旧 helper 直接抛出明确错误。",
+      "prevention": "退休入口必须拒绝而不是代理到新入口；任何兼容 stub 都必须有明确的负向测试，不能用成功响应掩盖迁移遗漏。",
+      "verified": true,
+      "classification": "contract_drift",
+      "command": "node 30-observer/work-lab-observer/tests/run_all_tests.js",
+      "entrypoint": "30-observer/work-lab-observer/web/scripts/api.js",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "exit_code": 1,
+      "evidence_level": "local-focused",
+      "observed_error": "A retired fetchDashboard compatibility path returned a successful v3 response instead of rejecting the retired contract.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "task_id": "WLGM-211",
+      "regression_test": "retired dashboard helper fails closed without a network request",
+      "remaining_boundary": "A real bundled WebView runtime still requires the platform desktop evidence layer; the JavaScript contract is verified locally.",
+      "repeat_prevention": "Retired API helpers MUST fail closed and MUST NOT proxy to a replacement endpoint without an explicit migration contract."
     }
   ]
 }
