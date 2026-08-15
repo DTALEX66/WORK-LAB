@@ -30,11 +30,19 @@ def verify_document(document: dict[str, Any], root: Path = ROOT) -> dict[str, in
             total += 1
             if FORBIDDEN.intersection(entry["permissions"]):
                 raise ValueError(f"{protocol_name}/{entry['id']}: write/execute/network permissions require explicit approval")
-            if any(token in json.dumps(entry).lower() for token in ("open-design", "opendesign-assistance")):
-                raise ValueError(f"{protocol_name}/{entry['id']}: retired Open Design capability")
-    adapter_ids = {entry["id"] for entry in json.loads((root / ADAPTERS.relative_to(ROOT)).read_text(encoding="utf-8"))["entries"]}
-    if "open-design" in adapter_ids:
-        raise ValueError("adapter registry still contains retired Open Design adapter")
+            if any(token in json.dumps(entry).lower() for token in ("opendesign-assistance", "open-design-assistance")):
+                raise ValueError(f"{protocol_name}/{entry['id']}: retired Open Design migration alias capability")
+    adapter_entries = json.loads((root / ADAPTERS.relative_to(ROOT)).read_text(encoding="utf-8"))["entries"]
+    adapter_by_id = {entry["id"]: entry for entry in adapter_entries}
+    for client_id in ("open-design", "openhuman"):
+        entry = adapter_by_id.get(client_id)
+        if entry is None:
+            raise ValueError(f"adapter registry missing client adapter: {client_id}")
+        if entry.get("support_level") != "experimental":
+            raise ValueError(f"{client_id} adapter must be experimental until a reviewed official interface exists")
+        operations = set(entry.get("operations", []))
+        if not operations.issubset({"detect", "capabilities", "observe"}):
+            raise ValueError(f"{client_id} adapter must be read-only (detect/capabilities/observe)")
     if not (root / SKILLS.relative_to(ROOT)).is_file():
         raise ValueError("skill provenance manifest missing")
     return {"protocols": 3, "entries": total, "mcp_unverified": 1}
