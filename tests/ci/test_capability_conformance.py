@@ -36,9 +36,18 @@ class CapabilityConformanceTests(unittest.TestCase):
         module = load_module()
         document = json.loads(MANIFEST.read_text(encoding="utf-8"))
         retired = copy.deepcopy(document)
-        retired["mcp"]["entries"].append({"id": "open-design", "capabilities": ["read"], "transport": "external", "permissions": ["read-only"], "source": "open-design"})
-        with self.assertRaisesRegex(ValueError, "retired Open Design"):
+        retired["mcp"]["entries"].append(
+            {"id": "opendesign-assistance", "capabilities": ["read"], "transport": "external", "permissions": ["read-only"], "source": "opendesign-assistance"}
+        )
+        with self.assertRaisesRegex(ValueError, "retired Open Design migration alias"):
             module.verify_document(retired, ROOT)
+
+    def test_open_design_client_adapter_is_allowed_read_only(self) -> None:
+        """The Open Design client adapter (experimental, read-only) is a current
+        managed client, not a retired capability."""
+        module = load_module()
+        result = module.verify_document(json.loads(MANIFEST.read_text(encoding="utf-8")), ROOT)
+        self.assertEqual(result["protocols"], 3)
 
 
 if __name__ == "__main__":
