@@ -32,14 +32,16 @@ This skill is **not** a provider, VPN, proxy, plugin, Desktop-layout, or credent
 
 ## 1. Shell and encoding
 
-- Hermes `terminal` uses **Git-Bash/MSYS** by default; use POSIX syntax there. When PowerShell is required, prefer **PowerShell 7** via `pwsh` (`powershell.exe` only for legacy/Desktop-only cases).
+### PowerShell selection policy
+
+Hermes `terminal` uses **Git-Bash/MSYS** by default; use POSIX syntax there. When PowerShell is required, prefer **PowerShell 7** via `pwsh` (`powershell.exe` only for legacy/Desktop-only cases).
 - **Git-Bash expands `$name` before `pwsh` sees it.** Wrap PowerShell source in Bash single quotes (short commands) or write an ASCII/UTF-8 `.ps1` under `.hermes/task-runtime/` and run `pwsh -NoProfile -File ...` (multi-line / state-changing). Do not rely on `--%` or scattered `\$` escapes.
 - Prefer ASCII-only `.ps1`; PowerShell 5.1 misparses CJK in UTF-8 from Git-Bash. CJK *text* → code-point escapes; full recipe in `references/validated-cases.md`.
 - Check touched text files before upload: `git diff --check` + a UTF-8/CRLF probe.
 
 ## 2. Executable and subprocess resolution
 
-- **PATH shadowing:** Hermes may bundle a Node while another appears earlier in `PATH`. Verify before changing code: `command -v node`, `node --version`, `python -c "import sys; print(sys.executable)"`. Use the project interpreter; `python` and `python3` are not the same.
+- **PATH shadowing:** Hermes may bundle a Node while another appears earlier in `PATH`. Verify before changing code: `command -v node`, `node --version`, `python -c "import sys; print(sys.executable)"`. Use the project interpreter. Do not assume `python` and `python3` resolve to the same interpreter. Hermes workflow scripts use `python`.
 - **`.cmd` launchers** can't be spawned directly by `CreateProcess` (Node `spawn` / Python `subprocess`). Prefer a real `.exe`, else `cmd.exe /d /s /c "tool --version"`. From Git-Bash, `cmd //c ...` can print the banner and NOT run — use `cmd.exe /d /s /c` or PowerShell `& 'C:\path\tool.cmd'`.
 - **GUI exe with spaces:** use PowerShell `Start-Process -FilePath '...' -WorkingDirectory '...'`, never `cmd start` (Git-Bash mangles the nested quotes into a spurious "找不到文件" dialog). Full recipe in `references/validated-cases.md`.
 
