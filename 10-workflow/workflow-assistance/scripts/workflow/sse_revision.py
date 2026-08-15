@@ -79,17 +79,38 @@ class SseRevisionHub:
             try:
                 last_seq = int(client.last_event_id)
             except ValueError:
-                return [self._frame("resync_required", {"reason": "invalid_cursor", "revision": self._sequence})]
+                client.last_event_id = str(self._sequence)
+                return [
+                    self._frame(
+                        "resync_required",
+                        {"reason": "invalid_cursor", "revision": self._sequence},
+                        self._sequence,
+                    )
+                ]
             if not self._history:
                 client.last_event_id = str(self._sequence)
                 return []
             available = {seq for seq, _, _ in self._history}
             if last_seq > self._sequence:
                 # Future cursor (client clock ahead / service restarted with gap).
-                return [self._frame("resync_required", {"reason": "cursor_ahead_of_watermark", "revision": self._sequence})]
+                client.last_event_id = str(self._sequence)
+                return [
+                    self._frame(
+                        "resync_required",
+                        {"reason": "cursor_ahead_of_watermark", "revision": self._sequence},
+                        self._sequence,
+                    )
+                ]
             if last_seq < self._sequence and last_seq not in available and last_seq != 0:
                 # Gap: history was pruned or service restarted.
-                return [self._frame("resync_required", {"reason": "history_gap", "revision": self._sequence})]
+                client.last_event_id = str(self._sequence)
+                return [
+                    self._frame(
+                        "resync_required",
+                        {"reason": "history_gap", "revision": self._sequence},
+                        self._sequence,
+                    )
+                ]
             frames = [
                 self._frame(event, data, seq)
                 for seq, event, data in self._history
@@ -116,4 +137,4 @@ class SseRevisionHub:
 
 
 def resync_frame(reason: str, revision: int) -> str:
-    return SseRevisionHub._frame("resync_required", {"reason": reason, "revision": revision})
+    return SseRevisionHub._frame("resync_required", {"reason": reason, "revision": revision}, revision)

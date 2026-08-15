@@ -1,11 +1,16 @@
 """WLGM-150/160/170 tests: snapshot API, persistent SSE, evidence-driven LIVE."""
 from __future__ import annotations
 
+import sys
 import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts" / "workflow"))
 
 from live_gate import evaluate_live
 from snapshot_api import build_snapshot
-from sse_revision import SseRevisionHub
+from sse_revision import SseRevisionHub, resync_frame
 
 
 class SnapshotApiTests(unittest.TestCase):
@@ -115,6 +120,11 @@ class SnapshotApiTests(unittest.TestCase):
 
 
 class SseRevisionHubTests(unittest.TestCase):
+    def test_resync_helper_binds_the_revision_as_event_id(self) -> None:
+        frame = resync_frame("manual_recovery", 42)
+        self.assertIn("event: resync_required", frame)
+        self.assertIn("id: 42", frame)
+
     def test_publish_increments_persistent_revision(self) -> None:
         hub = SseRevisionHub()
         r1 = hub.publish("observed", {"executionId": "e1"})
@@ -145,6 +155,9 @@ class SseRevisionHubTests(unittest.TestCase):
         client = hub.connect("c1", last_event_id="1")
         frames = hub.frames_for(client)
         self.assertTrue(any("resync_required" in f for f in frames))
+        self.assertTrue(any("id: 2" in f for f in frames))
+        self.assertEqual(client.last_event_id, "2")
+        self.assertEqual(hub.frames_for(client), [], "resync must converge instead of repeating forever")
 
     def test_cursor_ahead_triggers_resync(self) -> None:
         hub = SseRevisionHub()
@@ -152,6 +165,9 @@ class SseRevisionHubTests(unittest.TestCase):
         client = hub.connect("c1", last_event_id="99")
         frames = hub.frames_for(client)
         self.assertTrue(any("resync_required" in f for f in frames))
+        self.assertTrue(any("id: 1" in f for f in frames))
+        self.assertEqual(client.last_event_id, "1")
+        self.assertEqual(hub.frames_for(client), [], "future cursor resync must converge")
 
     def test_named_event_in_frame(self) -> None:
         hub = SseRevisionHub()

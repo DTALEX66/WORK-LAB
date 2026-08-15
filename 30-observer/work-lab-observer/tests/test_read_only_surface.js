@@ -67,6 +67,30 @@ async function run() {
     }
   })) pass++; else fail++;
 
+  if (await asyncTest("snapshot fetch is explicitly cache-bypassed", async () => {
+    const originalFetch = global.fetch;
+    let observedOptions = null;
+    const payload = {
+      schemaVersion: "workflow/snapshot/v3",
+      revision: 3,
+      generatedAt: "2026-08-15T00:00:00Z",
+      projects: [], executions: [], ci: [], tasks: {}, tokenSummary: {},
+      coverage: { numerator: null, denominator: null, scope: "collector_health" },
+      transport: { transportState: "OFFLINE", freshnessState: "STALE" },
+    };
+    try {
+      global.fetch = async (_url, options) => {
+        observedOptions = options;
+        return { ok: true, json: async () => payload };
+      };
+      await WlApi.fetchSnapshot();
+      assert(observedOptions && observedOptions.cache === "no-store", "snapshot GET must bypass browser caches explicitly");
+    } finally {
+      if (originalFetch === undefined) delete global.fetch;
+      else global.fetch = originalFetch;
+    }
+  })) pass++; else fail++;
+
   t("v3 display mode cannot override the backend transport verdict", () => {
     const normalized = WlApi.normalizeV3({
       schemaVersion: "workflow/snapshot/v3",
@@ -107,6 +131,10 @@ async function run() {
     const remoteEvents = JSON.parse(JSON.stringify(valid));
     remoteEvents.transport.eventsUrl = "https://example.com/api/v1/events";
     assert(WlApi.validateSnapshotV3(remoteEvents) === false, "LIVE events URL must stay on the exact loopback endpoint");
+
+    const tlsLoopback = JSON.parse(JSON.stringify(valid));
+    tlsLoopback.transport.eventsUrl = "https://127.0.0.1:57889/api/v1/events";
+    assert(WlApi.validateSnapshotV3(tlsLoopback) === false, "LIVE rejects TLS URLs that the HTTP-only sidecar cannot serve");
   });
 
   t("rendered full+compact surfaces have no mutating controls", () => {
@@ -214,9 +242,10 @@ async function run() {
   t("EventSource open refreshes the read-only snapshot after sidecar reconnect", () => {
     const appSrc = fs.readFileSync(path.join(WEB, "scripts", "app.js"), "utf-8");
     assert(/onOpen:\s*async\s*\(\)\s*=>/.test(appSrc), "live subscription binds an async onOpen refresh");
-    assert(/onOpen:[\s\S]{0,400}WlApi\.fetchSnapshot\(\)/.test(appSrc), "onOpen re-reads the canonical snapshot");
-    assert(/scheduleLiveReconnect\(\)/.test(appSrc), "SSE errors schedule a fresh EventSource instance");
-    assert(/onError:[\s\S]{0,300}markRefreshError\([^\n]+true\)[\s\S]{0,150}scheduleSnapshotRetry\(\)[\s\S]{0,150}scheduleLiveReconnect\(\)/.test(appSrc), "SSE failure overrides stale transport and retries both snapshot and stream");
+    assert(/onOpen:[\s\S]{0,500}refreshFromStream\(transportEpoch\)/.test(appSrc), "onOpen re-reads the canonical snapshot through the epoch-fenced coalesced drain");
+    assert(/onError:[\s\S]{0,300}markRefreshError\([^\n]+true\)[\s\S]{0,150}scheduleSnapshotRetry\(\)/.test(appSrc), "SSE failure overrides stale transport and retries the snapshot");
+    assert(!/onError:[\s\S]{0,400}scheduleLiveReconnect\(\)/.test(appSrc), "an established EventSource keeps native Last-Event-ID reconnect continuity");
+    assert(/catch\s*\(err\)[\s\S]{0,300}scheduleLiveReconnect\(\)/.test(appSrc), "constructor failure still retries creating an EventSource");
     assert(/Math\.min\([^\n]+30000\)/.test(appSrc), "SSE reconnect backoff is capped at 30 seconds");
     assert(/function\s+scheduleSnapshotRetry\s*\(/.test(appSrc), "initial snapshot failures schedule a fresh GET");
     assert(/catch\s*\(err\)[\s\S]{0,500}scheduleSnapshotRetry\(\)/.test(appSrc), "initial GET failure enters the retry loop");
@@ -234,6 +263,271 @@ async function run() {
     WlState.markRefreshError("timeout");
     assert(WlState.get().lastGood !== null, "lastGood retained on second error");
   });
+
+  t("state rejects an out-of-order lower-revision projection", () => {
+    const newer = {
+      schemaVersion: "work-lab/observer-projection/v2-rendered",
+      mode: "LIVE",
+      revision: 9,
+      generatedAt: "2026-08-15T00:00:09Z",
+      summary: { registeredProjects: 1 },
+      projects: [{ projectId: "newer" }],
+      sourceRefs: [],
+    };
+    const delayedOlder = {
+      schemaVersion: "work-lab/observer-projection/v2-rendered",
+      mode: "LIVE",
+      revision: 8,
+      generatedAt: "2026-08-15T00:00:08Z",
+      summary: { registeredProjects: 1 },
+      projects: [{ projectId: "older" }],
+      sourceRefs: [],
+    };
+    WlState.accept(newer, "LIVE");
+    WlState.accept(delayedOlder, "LIVE");
+    assert(WlState.get().lastGood.revision === 9, "lower revision must not replace last-good");
+    assert(WlState.get().data.projects[0].projectId === "newer", "lower revision must not roll back rendered facts");
+  });
+
+  if (await asyncTest("heartbeat avoids snapshot GET and refresh bursts are coalesced", async () => {
+    const { WlApp } = require(path.join(WEB, "scripts", "app.js"));
+    const originalSubscribe = WlApi.subscribeEvents;
+    const originalFetchSnapshot = WlApi.fetchSnapshot;
+    const originalDocument = global.document;
+    let handlers = null;
+    let fetchCalls = 0;
+    let releaseFirst = null;
+    const projection = {
+      schemaVersion: "work-lab/observer-projection/v2-rendered",
+      mode: "LIVE",
+      revision: 10,
+      generatedAt: "2026-08-15T00:00:10Z",
+      summary: { registeredProjects: 1 },
+      projects: [{ projectId: "work-lab" }],
+      sourceRefs: [],
+      transport: { transportState: "LIVE", eventsUrl: "http://127.0.0.1:57889/api/v1/events" },
+    };
+    try {
+      const root = { innerHTML: "", className: "", prepend() {} };
+      global.document = {
+        documentElement: { setAttribute() {} },
+        getElementById(id) { return id === "wl-app" ? root : null; },
+      };
+      WlApp.stopLiveSubscription();
+      WlApi.subscribeEvents = (_url, nextHandlers) => {
+        handlers = nextHandlers;
+        return { close() {} };
+      };
+      WlApi.fetchSnapshot = async () => {
+        fetchCalls += 1;
+        return { ok: true, mode: "LIVE", data: projection };
+      };
+      WlApp.startLiveSubscription(projection);
+      await handlers.onOpen();
+      fetchCalls = 0;
+      await handlers.onEvent({ at: "2026-08-15T00:00:11Z" }, "10", "heartbeat");
+      const heartbeatFetchCalls = fetchCalls;
+      fetchCalls = 0;
+
+      WlApi.fetchSnapshot = () => {
+        fetchCalls += 1;
+        if (fetchCalls === 1) {
+          return new Promise((resolve) => { releaseFirst = () => resolve({ ok: true, mode: "LIVE", data: projection }); });
+        }
+        return Promise.resolve({ ok: true, mode: "LIVE", data: projection });
+      };
+      const refreshes = [
+        handlers.onEvent({ revision: 10 }, "10", "observed"),
+        handlers.onEvent({ revision: 10 }, "10", "observed"),
+        handlers.onEvent({ revision: 10 }, "10", "resync_required"),
+      ];
+      await Promise.resolve();
+      const callsWhileBlocked = fetchCalls;
+      releaseFirst();
+      await Promise.all(refreshes);
+      assert(heartbeatFetchCalls === 0, "heartbeat must update liveness without forcing a full snapshot GET");
+      assert(callsWhileBlocked === 1, "only one snapshot GET may be in flight");
+      assert(fetchCalls === 2, "a burst may schedule at most one follow-up GET");
+    } finally {
+      WlApp.stopLiveSubscription();
+      WlApi.subscribeEvents = originalSubscribe;
+      WlApi.fetchSnapshot = originalFetchSnapshot;
+      if (originalDocument === undefined) delete global.document;
+      else global.document = originalDocument;
+    }
+  })) pass++; else fail++;
+
+  if (await asyncTest("SSE failure fences an older GET and preserves native reconnect", async () => {
+    const { WlApp } = require(path.join(WEB, "scripts", "app.js"));
+    const originalSubscribe = WlApi.subscribeEvents;
+    const originalFetchSnapshot = WlApi.fetchSnapshot;
+    const originalDocument = global.document;
+    const originalSetTimeout = global.setTimeout;
+    const originalClearTimeout = global.clearTimeout;
+    const timers = [];
+    let handlers = null;
+    let closeCalls = 0;
+    let releaseFetch = null;
+    const projection = {
+      schemaVersion: "work-lab/observer-projection/v2-rendered",
+      mode: "LIVE",
+      revision: 11,
+      generatedAt: "2026-08-15T00:00:11Z",
+      summary: { registeredProjects: 1 },
+      projects: [{ projectId: "work-lab" }],
+      sourceRefs: [],
+      transport: { transportState: "LIVE", eventsUrl: "http://127.0.0.1:57889/api/v1/events" },
+    };
+    try {
+      const root = { innerHTML: "", className: "", prepend() {} };
+      global.document = {
+        documentElement: { setAttribute() {} },
+        body: { appendChild() {} },
+        getElementById(id) { return id === "wl-app" ? root : null; },
+        createElement() {
+          return { className: "", style: {}, innerHTML: "", textContent: "", setAttribute() {} };
+        },
+      };
+      global.setTimeout = (fn) => { timers.push(fn); return timers.length; };
+      global.clearTimeout = () => {};
+      WlApp.stopLiveSubscription();
+      WlApi.subscribeEvents = (_url, nextHandlers) => {
+        handlers = nextHandlers;
+        return { close() { closeCalls += 1; } };
+      };
+      WlApi.fetchSnapshot = async () => ({ ok: true, mode: "LIVE", data: projection });
+      WlApp.startLiveSubscription(projection);
+      await handlers.onOpen();
+      WlApi.fetchSnapshot = () => new Promise((resolve) => {
+        releaseFetch = () => resolve({ ok: true, mode: "LIVE", data: projection });
+      });
+      const pendingRefresh = handlers.onEvent({ revision: 11 }, "11", "observed");
+      await Promise.resolve();
+      handlers.onError();
+      releaseFetch();
+      await pendingRefresh;
+      const modeAfterLateFetch = WlState.get().mode;
+
+      assert(timers.length >= 1, "SSE error schedules a snapshot retry");
+      WlApi.fetchSnapshot = async () => ({ ok: true, mode: "LIVE", data: projection });
+      await timers.shift()();
+      const modeAfterDisconnectedPoll = WlState.get().mode;
+
+      WlApi.fetchSnapshot = async () => { throw new Error("still offline"); };
+      handlers.onError();
+      assert(timers.length >= 1, "disconnected LIVE poll schedules another bounded retry");
+      await timers.shift()();
+      const closesBeforeCleanup = closeCalls;
+
+      assert(modeAfterLateFetch === "OFFLINE", "pre-error GET must not restore LIVE after transport failure");
+      assert(modeAfterDisconnectedPoll === "OFFLINE", "snapshot polling must not restore LIVE before this EventSource reopens");
+      assert(closesBeforeCleanup === 0, "failed snapshot retry must not close the browser-native reconnecting EventSource");
+    } finally {
+      WlApp.stopLiveSubscription();
+      WlApi.subscribeEvents = originalSubscribe;
+      WlApi.fetchSnapshot = originalFetchSnapshot;
+      global.setTimeout = originalSetTimeout;
+      global.clearTimeout = originalClearTimeout;
+      if (originalDocument === undefined) delete global.document;
+      else global.document = originalDocument;
+    }
+  })) pass++; else fail++;
+
+  if (await asyncTest("rejected lower revision cannot rotate the EventSource endpoint", async () => {
+    const { WlApp } = require(path.join(WEB, "scripts", "app.js"));
+    const originalSubscribe = WlApi.subscribeEvents;
+    const originalFetchSnapshot = WlApi.fetchSnapshot;
+    let subscribeCalls = 0;
+    const newer = {
+      schemaVersion: "work-lab/observer-projection/v2-rendered",
+      mode: "LIVE",
+      revision: 50,
+      generatedAt: "2026-08-15T00:00:50Z",
+      summary: { registeredProjects: 1 },
+      projects: [{ projectId: "work-lab" }],
+      sourceRefs: [],
+      transport: { transportState: "LIVE", eventsUrl: "http://127.0.0.1:57889/api/v1/events" },
+    };
+    const older = {
+      ...newer,
+      revision: 49,
+      generatedAt: "2026-08-15T00:00:49Z",
+      transport: { transportState: "LIVE", eventsUrl: "http://127.0.0.1:57900/api/v1/events" },
+    };
+    try {
+      WlApp.stopLiveSubscription();
+      WlState.accept(newer, "LIVE");
+      WlApi.subscribeEvents = () => {
+        subscribeCalls += 1;
+        return { close() {} };
+      };
+      WlApi.fetchSnapshot = async () => ({ ok: true, mode: "LIVE", data: older });
+      await WlApp.loadData();
+      assert(WlState.get().lastGood.revision === 50, "lower revision remains rejected");
+      assert(subscribeCalls === 0, "rejected payload must not rotate to its events endpoint");
+    } finally {
+      WlApp.stopLiveSubscription();
+      WlApi.subscribeEvents = originalSubscribe;
+      WlApi.fetchSnapshot = originalFetchSnapshot;
+    }
+  })) pass++; else fail++;
+
+  if (await asyncTest("malformed SSE payload degrades without waiting for a transport reopen", async () => {
+    const { WlApp } = require(path.join(WEB, "scripts", "app.js"));
+    const originalSubscribe = WlApi.subscribeEvents;
+    const originalFetchSnapshot = WlApi.fetchSnapshot;
+    const originalDocument = global.document;
+    const originalSetTimeout = global.setTimeout;
+    const originalClearTimeout = global.clearTimeout;
+    const timers = [];
+    let handlers = null;
+    let closeCalls = 0;
+    const projection = {
+      schemaVersion: "work-lab/observer-projection/v2-rendered",
+      mode: "LIVE",
+      revision: 60,
+      generatedAt: "2026-08-15T00:01:00Z",
+      summary: { registeredProjects: 1 },
+      projects: [{ projectId: "work-lab" }],
+      sourceRefs: [],
+      transport: { transportState: "LIVE", eventsUrl: "http://127.0.0.1:57889/api/v1/events" },
+    };
+    try {
+      const root = { innerHTML: "", className: "", prepend() {} };
+      global.document = {
+        documentElement: { setAttribute() {} },
+        body: { appendChild() {} },
+        getElementById(id) { return id === "wl-app" ? root : null; },
+        createElement() { return { className: "", style: {}, innerHTML: "", textContent: "", setAttribute() {} }; },
+      };
+      global.setTimeout = (fn) => { timers.push(fn); return timers.length; };
+      global.clearTimeout = () => {};
+      WlApp.stopLiveSubscription();
+      WlApi.subscribeEvents = (_url, nextHandlers) => {
+        handlers = nextHandlers;
+        return { close() { closeCalls += 1; } };
+      };
+      WlApi.fetchSnapshot = async () => ({ ok: true, mode: "LIVE", data: projection });
+      WlApp.startLiveSubscription(projection);
+      await handlers.onOpen();
+      assert(typeof handlers.onProtocolError === "function", "app separates protocol corruption from transport failure");
+      handlers.onProtocolError(new Error("malformed SSE JSON"));
+      const degradedMode = WlState.get().mode;
+      assert(timers.length >= 1, "protocol error schedules strict snapshot recovery");
+      await timers.shift()();
+      assert(degradedMode === "OFFLINE", "malformed payload immediately degrades retained truth");
+      assert(WlState.get().mode === "LIVE", "strict snapshot recovery restores LIVE without a synthetic EventSource reopen");
+      assert(closeCalls === 0, "protocol corruption does not discard browser Last-Event-ID state");
+    } finally {
+      WlApp.stopLiveSubscription();
+      WlApi.subscribeEvents = originalSubscribe;
+      WlApi.fetchSnapshot = originalFetchSnapshot;
+      global.setTimeout = originalSetTimeout;
+      global.clearTimeout = originalClearTimeout;
+      if (originalDocument === undefined) delete global.document;
+      else global.document = originalDocument;
+    }
+  })) pass++; else fail++;
 
   t("refresh errors preserve string-valued v3 quality fields without throwing", () => {
     const v3 = {
@@ -268,10 +562,12 @@ async function run() {
     global.EventSource = FakeEventSource;
     const events = [];
     let errors = 0;
+    let protocolErrors = 0;
     try {
       const source = WlApi.subscribeEvents("http://127.0.0.1:8766/api/v1/events", {
-        onEvent: (event, id) => events.push({ event, id }),
+        onEvent: (event, id, name) => events.push({ event, id, name }),
         onError: () => { errors += 1; },
+        onProtocolError: () => { protocolErrors += 1; },
       });
       assert(source === created, "EventSource returned");
       // P0-4: named SSE events (snapshot/observed/heartbeat/resync_required) must be
@@ -284,6 +580,9 @@ async function run() {
       source.listeners.observed[0]({ data: '{"event_id":"e1"}', lastEventId: "e1" });
       source.listeners.message[0]({ data: '{"event_id":"anon"}', lastEventId: "a1" });
       assert(events.length === 3 && events[0].id === "s1" && events[1].id === "e1" && events[2].id === "a1", "initial snapshot + named + anonymous events forwarded with Last-Event-ID");
+      assert(events[0].name === "snapshot" && events[1].name === "observed" && events[2].name === "message", "event name must reach the state machine");
+      source.listeners.snapshot[0]({ data: "{malformed", lastEventId: "bad" });
+      assert(protocolErrors === 1 && errors === 0, "malformed event is a protocol error, not a false transport disconnect");
       source.onerror();
       assert(errors === 1, "reconnect error surfaced as stale signal");
       let rejected = false;
@@ -295,6 +594,9 @@ async function run() {
       rejected = false;
       try { WlApi.subscribeEvents("http://127.0.0.1:8766/api/v1/events?write=1", {}); } catch (_) { rejected = true; }
       assert(rejected, "query-bearing SSE endpoint rejected");
+      rejected = false;
+      try { WlApi.subscribeEvents("https://127.0.0.1:8766/api/v1/events", {}); } catch (_) { rejected = true; }
+      assert(rejected, "HTTPS loopback rejected because the sidecar contract is exact HTTP");
     } finally {
       delete global.EventSource;
     }

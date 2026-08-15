@@ -27,25 +27,42 @@ def _resolve_plan(data: dict[str, object]) -> tuple[set[str], str | None, str | 
         return set(REQUIRED), None, None
     if not isinstance(raw_plan, dict):
         raise ValueError("gate_plan must be an object")
+    if raw_plan.get("schema_version") != "workflow/gate-plan/v1":
+        raise ValueError("gate_plan schema_version must be workflow/gate-plan/v1")
     required = raw_plan.get("required_gates")
+    changed_paths = raw_plan.get("changed_paths")
     digest = raw_plan.get("plan_digest")
     source_identity = raw_plan.get("source_identity")
     if not isinstance(required, list) or not all(isinstance(item, str) for item in required):
         raise ValueError("gate_plan.required_gates must be a string list")
+    if len(required) != len(set(required)):
+        raise ValueError("gate_plan.required_gates must be unique")
+    if not isinstance(changed_paths, list) or not all(isinstance(item, str) and item for item in changed_paths):
+        raise ValueError("gate_plan.changed_paths must be a non-empty-string list")
     normalized_required = set(required)
     unknown = normalized_required - PLAN_GATES
     if unknown:
         raise ValueError(f"gate_plan contains unknown gates: {sorted(unknown)}")
-    if not isinstance(digest, dict) or not isinstance(digest.get("value"), str):
-        raise ValueError("gate_plan.plan_digest.value is required")
+    if changed_paths and not normalized_required:
+        raise ValueError("gate_plan with changed paths must require at least one gate")
+    if (
+        not isinstance(digest, dict)
+        or digest.get("algorithm") != "sha256"
+        or not isinstance(digest.get("value"), str)
+    ):
+        raise ValueError("gate_plan.plan_digest must be sha256")
     computed = _plan_digest(raw_plan)
     if digest["value"] != computed:
         raise ValueError("gate_plan digest mismatch")
-    commit = None
-    if isinstance(source_identity, dict):
-        commit_identity = source_identity.get("commit")
-        if isinstance(commit_identity, dict) and isinstance(commit_identity.get("oid"), str):
-            commit = commit_identity["oid"]
+    if not isinstance(source_identity, dict):
+        raise ValueError("gate_plan.source_identity must be an object")
+    commit_identity = source_identity.get("commit")
+    tree_identity = source_identity.get("tree")
+    if not isinstance(commit_identity, dict) or not isinstance(commit_identity.get("oid"), str) or not commit_identity["oid"]:
+        raise ValueError("gate_plan source commit oid is required")
+    if not isinstance(tree_identity, dict) or not isinstance(tree_identity.get("oid"), str) or not tree_identity["oid"]:
+        raise ValueError("gate_plan source tree oid is required")
+    commit = commit_identity["oid"]
     return normalized_required, digest["value"], commit
 
 
@@ -56,11 +73,17 @@ def main(payload: str) -> int:
             raise ValueError("aggregate payload must be an object")
         required, digest, plan_commit = _resolve_plan(data)
         expected_digest = data.get("expected_plan_digest")
-        if digest is not None and expected_digest != digest:
-            raise ValueError("aggregate expected plan digest does not match plan")
+        if digest is not None:
+            if not isinstance(expected_digest, str) or not expected_digest:
+                raise ValueError("aggregate expected plan digest is required")
+            if expected_digest != digest:
+                raise ValueError("aggregate expected plan digest does not match plan")
         expected_commit = data.get("expected_head_sha")
-        if plan_commit is not None and expected_commit != plan_commit:
-            raise ValueError("aggregate plan commit does not match head SHA")
+        if plan_commit is not None:
+            if not isinstance(expected_commit, str) or not expected_commit:
+                raise ValueError("aggregate expected head SHA is required")
+            if expected_commit != plan_commit:
+                raise ValueError("aggregate plan commit does not match head SHA")
         jobs = data.get("jobs", {})
         if not isinstance(jobs, dict):
             raise ValueError("aggregate jobs must be an object")

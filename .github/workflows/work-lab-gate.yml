@@ -196,7 +196,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run root governance tests
-        run: python tests/ci/test_governance_gate.py
+        run: |
+          python tests/ci/test_governance_gate.py
+          python tests/ci/test_aggregate_gate.py
       - name: Verify contract catalog references
         run: python scripts/ci/verify_contract_catalog.py
       - name: Verify typed module dependencies

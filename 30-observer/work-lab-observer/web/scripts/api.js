@@ -257,7 +257,7 @@ const WlApi = (function () {
       const authorityEnd = raw.indexOf("/", authorityStart);
       const hasUserInfo = authorityStart > 1 && raw.slice(authorityStart, authorityEnd < 0 ? raw.length : authorityEnd).includes("@");
       const loopback = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "[::1]" || parsed.hostname === "::1";
-      return (parsed.protocol === "http:" || parsed.protocol === "https:")
+      return parsed.protocol === "http:"
         && loopback
         && !hasUserInfo
         && parsed.pathname === "/api/v1/events"
@@ -301,6 +301,7 @@ const WlApi = (function () {
       try {
         const res = await fetch(endpoint, {
           method: "GET",
+          cache: "no-store",
           headers: { Accept: "application/json" },
           signal: ctrl ? ctrl.signal : undefined,
         });
@@ -362,13 +363,24 @@ const WlApi = (function () {
     // P0-4: the backend sends NAMED events (event: observed / heartbeat /
     // resync_required); named events must be bound with addEventListener.
     // onmessage only receives anonymous frames — keep it as a fallback.
-    const dispatch = (event) => {
+    const dispatch = (event, eventName) => {
       let payload = null;
-      try { payload = JSON.parse(event.data); } catch (_) { return; }
-      if (handlers && typeof handlers.onEvent === "function") handlers.onEvent(payload, event.lastEventId || null);
+      try {
+        payload = JSON.parse(event.data);
+      } catch (error) {
+        if (handlers && typeof handlers.onProtocolError === "function") {
+          handlers.onProtocolError(error, eventName, event.lastEventId || null);
+        }
+        return;
+      }
+      if (handlers && typeof handlers.onEvent === "function") {
+        handlers.onEvent(payload, event.lastEventId || null, eventName);
+      }
     };
-    ["snapshot", "observed", "heartbeat", "resync_required"].forEach((name) => source.addEventListener(name, dispatch));
-    source.addEventListener("message", dispatch);
+    ["snapshot", "observed", "heartbeat", "resync_required"].forEach((name) => {
+      source.addEventListener(name, (event) => dispatch(event, name));
+    });
+    source.addEventListener("message", (event) => dispatch(event, "message"));
     source.onerror = () => {
       if (handlers && typeof handlers.onError === "function") handlers.onError();
     };
