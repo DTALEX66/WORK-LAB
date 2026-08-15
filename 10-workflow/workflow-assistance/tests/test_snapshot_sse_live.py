@@ -132,6 +132,19 @@ class SseRevisionHubTests(unittest.TestCase):
         self.assertEqual(r2, r1 + 1)
         self.assertEqual(hub.current_revision, 2)
 
+    def test_hub_seed_keeps_restart_revision_monotonic(self) -> None:
+        """P0: a restarted hub must continue from the persisted seed so a
+        client's Last-Event-ID never sees a rolled-back cursor."""
+        hub = SseRevisionHub()
+        for _ in range(5):
+            hub.publish("observed", {"executionId": "e1"})
+        self.assertEqual(hub.current_revision, 5)
+        restarted = SseRevisionHub(seed_revision=hub.current_revision)
+        self.assertEqual(restarted.current_revision, 5)
+        next_revision = restarted.publish("observed", {"executionId": "e2"})
+        self.assertEqual(next_revision, 6)
+        self.assertEqual(restarted.current_revision, 6)
+
     def test_unknown_event_rejected(self) -> None:
         hub = SseRevisionHub()
         with self.assertRaises(ValueError):

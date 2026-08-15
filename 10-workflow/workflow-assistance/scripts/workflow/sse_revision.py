@@ -34,10 +34,12 @@ class SseClient:
 class SseRevisionHub:
     """Persistent-revision SSE hub with named events and reconnect recovery."""
 
-    def __init__(self, *, max_connections: int = MAX_CONNECTIONS) -> None:
+    def __init__(self, *, max_connections: int = MAX_CONNECTIONS, seed_revision: int = 0) -> None:
         self.max_connections = max_connections
         self._clients: dict[str, SseClient] = {}
-        self._sequence = 0
+        # A restarted sidecar must continue from the persisted seed so
+        # Last-Event-ID cursors never observe a rolled-back sequence.
+        self._sequence = max(0, int(seed_revision))
         self._lock = threading.RLock()
         self._history: list[tuple[int, str, dict[str, Any]]] = []  # (seq, event, data)
 

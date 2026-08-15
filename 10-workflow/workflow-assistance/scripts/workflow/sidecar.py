@@ -26,6 +26,7 @@ from snapshot_validator import validate_snapshot
 from workspace_evidence import load_workspace_evidence
 
 COLLECTOR_FRESHNESS_SECONDS = 60.0
+CANONICAL_READBACK_FRESHNESS_SECONDS = 60.0
 
 
 class WorkflowSidecar:
@@ -41,10 +42,16 @@ class WorkflowSidecar:
         # lifetime. It is typed as PLAN/STATIC_BASELINE/HISTORY and never
         # promoted to LIVE telemetry.
         self.workspace_evidence = load_workspace_evidence(self.project_root)
-        self.revision_hub = SseRevisionHub()
         self._revision = self.store.seed_revision()
+        # Seed the hub from the persisted revision so a restart never rolls
+        # Last-Event-ID cursors back; publishes stay monotonic across the
+        # worker's own projection revisions and this sidecar's delta stream.
+        self.revision_hub = SseRevisionHub(seed_revision=self._revision)
         self._last_heartbeat_at: float | None = None
         self._last_write_at: float | None = None
+        # Last successful canonical readback (watcher). LIVE requires a fresh
+        # readback, not merely a live watcher thread.
+        self._last_canonical_ok_at: float | None = None
         self._sse_connection_count = 0
         self._sse_connected_since: float | None = None
         self._sse_connection_lock = threading.Lock()
@@ -87,6 +94,7 @@ class WorkflowSidecar:
             return
         self._watch_stop.clear()
         last_fingerprint = self._canonical_fingerprint()
+        self._last_canonical_ok_at = time.time()
         # P0-4: LIVE only comes from the live gate; the watcher must not
         # declare LIVE by itself.
         self.live.set_mode(SNAPSHOT)
@@ -97,9 +105,11 @@ class WorkflowSidecar:
                 try:
                     current = self._canonical_fingerprint()
                 except Exception:  # fail closed if canonical readback is unavailable
+                    self._last_canonical_ok_at = None
                     if self.live.mode() != STALE:
                         self.live.set_mode(STALE)
                     continue
+                self._last_canonical_ok_at = time.time()
                 if current != last_fingerprint:
                     previous_write_at = self._last_write_at
                     self._last_write_at = time.time()
@@ -222,6 +232,9 @@ class WorkflowSidecar:
         # 提供 transport verdict；watch 触发时数据已变化）。
         snapshot = self.v3_snapshot()
         self._revision = self.revision_hub.publish("observed", snapshot)
+        # Persist the new revision so a restarted sidecar seeds its hub from
+        # here, keeping Last-Event-ID cursors monotonic across restarts.
+        self.store.record_revision(self._revision)
         return legacy_id
 
     def _collector_coverage(self) -> dict[str, Any] | None:
@@ -271,7 +284,12 @@ class WorkflowSidecar:
             sse_connected=connected,
             heartbeat_age_seconds=(now - self._last_heartbeat_at) if self._last_heartbeat_at is not None else float("inf"),
             heartbeat_threshold_seconds=HEARTBEAT_SECONDS,
-            cursor_valid=self._revision > 0 and self.live_updates_running(),
+            cursor_valid=(
+                self._revision > 0
+                and self.live_updates_running()
+                and self._last_canonical_ok_at is not None
+                and (now - self._last_canonical_ok_at) <= CANONICAL_READBACK_FRESHNESS_SECONDS
+            ),
             writer_watermark_age_seconds=(now - self._last_write_at) if self._last_write_at is not None else float("inf"),
             writer_watermark_threshold_seconds=60.0,
             coverage=coverage,
@@ -497,6 +515,9 @@ def create_server(
             elif path == "/api/v1/snapshot":
                 self.send_json(200, sidecar.v3_snapshot())  # P0-2: 真 v3
             elif path == "/api/v1/events":
+                if server._closed:
+                    self.send_json(503, {"status": "server_closed"})
+                    return
                 last_id = self.headers.get("Last-Event-ID")
                 client = sidecar.revision_hub.connect(uuid.uuid4().hex, last_event_id=last_id)
                 if client is None:
@@ -521,6 +542,8 @@ def create_server(
                         self.wfile.flush()
                         while True:
                             time.sleep(HEARTBEAT_SECONDS / 2)
+                            if server._closed:
+                                break
                             sidecar._last_heartbeat_at = time.time()
                             frames = sidecar.revision_hub.frames_for(client)
                             if not frames:
