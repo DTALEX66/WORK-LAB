@@ -84,7 +84,7 @@ adapters:
     - id: cc-switch
       support: deep
       detection: optional_local_router_check
-      writes: approval_required
+      writes: unavailable
     - id: github
       support: deep
       detection: optional_gh_read_only_check

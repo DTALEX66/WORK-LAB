@@ -10,7 +10,7 @@
       "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
       "provenance": {
         "source_kind": "repository",
-        "source_ref": "workflow-manifest.yaml#adapters.entries[0]",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=hermes]",
         "version": ">=0.19,<0.21",
         "scope": "portable-workflow-adapter",
         "risk": "high",
@@ -26,7 +26,7 @@
       "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
       "provenance": {
         "source_kind": "external-manifest",
-        "source_ref": "workflow-manifest.yaml#adapters.entries[1]",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=codex]",
         "version": "UNVERIFIED",
         "scope": "portable-workflow-adapter",
         "risk": "high",
@@ -38,11 +38,11 @@
       "id": "cc-switch",
       "display_name": "CC Switch",
       "support_level": "deep",
-      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+      "operations": ["detect", "capabilities", "observe"],
       "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
       "provenance": {
         "source_kind": "external-manifest",
-        "source_ref": "workflow-manifest.yaml#adapters.entries[2]",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=cc-switch]",
         "version": "UNVERIFIED",
         "scope": "portable-workflow-adapter",
         "risk": "high",
@@ -58,7 +58,7 @@
       "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
       "provenance": {
         "source_kind": "external-manifest",
-        "source_ref": "workflow-manifest.yaml#adapters.entries[3]",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=github]",
         "version": "UNVERIFIED",
         "scope": "portable-workflow-adapter",
         "risk": "high",
