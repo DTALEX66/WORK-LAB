@@ -96,12 +96,10 @@ def build_plan(
                 affected.add(dependent)
                 queue.append(dependent)
 
-    if unknown_paths or any(
-        path.startswith("00-governance/")
-        or path.startswith(".github/")
-        or path.startswith("scripts/ci/")
-        for path in changed_paths
-    ):
+    # critical prefixes (00-governance/**, .github/**, scripts/ci/**) are
+    # already covered by risk_zones.critical above; only unknown paths add a
+    # fail-closed critical here.
+    if unknown_paths:
         critical = True
     if critical:
         affected.update(gates)
