@@ -140,6 +140,30 @@ def _windows_start_menu_shortcuts() -> list[Path]:
     return shortcuts
 
 
+def _find_existing(candidates: list[Path]) -> Path | None:
+    for candidate in candidates:
+        try:
+            if candidate.is_file():
+                return candidate
+        except OSError:
+            continue
+    return None
+
+
+def _hermes_gui_launcher() -> Path | None:
+    """Locate the managed Hermes desktop launcher (vbs) without parsing it."""
+    if os.name != "nt":
+        return None
+    home = Path(os.environ.get("HERMES_HOME", "")).expanduser() if os.environ.get("HERMES_HOME") else Path.home() / ".hermes"
+    appdata = Path(os.environ.get("APPDATA", "")).expanduser() / "hermes"
+    return _find_existing(
+        [
+            home / "launchers" / "Hermes_Desktop.vbs",
+            appdata / "launchers" / "Hermes_Desktop.vbs",
+        ]
+    )
+
+
 def discover_codex() -> list[DiscoveredEntry]:
     entries: list[DiscoveredEntry] = []
     codex = _which("codex")
@@ -189,24 +213,23 @@ def discover_hermes() -> list[DiscoveredEntry]:
     hermes = _which("hermes")
     config_root = _config_root_home(os.environ.get("HERMES_HOME") or "~/.hermes")
     running = _running_processes()
-    if hermes:
-        real = _realpath(hermes)
-        if real:
-            entries.append(
-                DiscoveredEntry(
-                    package_identity="hermes-agent",
-                    executable_realpath=real,
-                    launcher_id="hermes-path",
-                    launcher_target=hermes,
-                    binary_digest=_sha256_file(Path(real)),
-                    effective_config_root=config_root,
-                    profile_id="hermes-default",
-                    discovered_version=_version_from_executable(real),
-                    active_process=Path(real).name.lower() in running,
-                    source="path",
-                    logical_instance_id="hermes",
-                )
+    real = _realpath(hermes) if hermes else None
+    if real:
+        entries.append(
+            DiscoveredEntry(
+                package_identity="hermes-agent",
+                executable_realpath=real,
+                launcher_id="hermes-path",
+                launcher_target=hermes,
+                binary_digest=_sha256_file(Path(real)),
+                effective_config_root=config_root,
+                profile_id="hermes-default",
+                discovered_version=_version_from_executable(real),
+                active_process=Path(real).name.lower() in running,
+                source="path",
+                logical_instance_id="hermes",
             )
+        )
     else:
         entries.append(
             DiscoveredEntry(
@@ -223,12 +246,60 @@ def discover_hermes() -> list[DiscoveredEntry]:
                 logical_instance_id="hermes",
             )
         )
+    gui = _hermes_gui_launcher()
+    if gui:
+        # GUI launcher observation: same logical install; when the CLI exists
+        # we share its realpath so identity resolves to ALIAS_DUPLICATE (two
+        # launchers, one install) instead of a false DUAL_INSTALLATION. The
+        # .vbs body is never parsed.
+        target = real if real else str(gui)
+        digest = _sha256_file(Path(real)) if real else _sha256_file(gui)
+        entries.append(
+            DiscoveredEntry(
+                package_identity="hermes-agent",
+                executable_realpath=target,
+                launcher_id="hermes-gui-vbs",
+                launcher_target=str(gui),
+                binary_digest=digest,
+                effective_config_root=config_root,
+                profile_id="hermes-default",
+                discovered_version=None,
+                active_process="hermes" in running,
+                source="desktop-launcher",
+                logical_instance_id="hermes",
+            )
+        )
+    return entries
+
+
+def discover_cc_switch() -> list[DiscoveredEntry]:
+    entries: list[DiscoveredEntry] = []
+    config_root = _config_root_home(os.environ.get("CC_SWITCH_HOME") or "~/.cc-switch")
+    running = _running_processes()
+    executable = shutil.which("cc-switch")
+    real = _realpath(executable) if executable else None
+    active = any("cc-switch" in name or "ccswitch" in name for name in running)
+    entries.append(
+        DiscoveredEntry(
+            package_identity="cc-switch",
+            executable_realpath=real or "",
+            launcher_id="cc-switch-config",
+            launcher_target=executable,
+            binary_digest=_sha256_file(Path(real)) if real else None,
+            effective_config_root=config_root,
+            profile_id="cc-switch-default",
+            discovered_version=_version_from_executable(real) if real else None,
+            active_process=active,
+            source="config-root" if config_root else "missing",
+            logical_instance_id="cc-switch",
+        )
+    )
     return entries
 
 
 def discover_all() -> list[dict[str, Any]]:
     observations: list[dict[str, Any]] = []
-    for entry in discover_codex() + discover_hermes():
+    for entry in discover_codex() + discover_hermes() + discover_cc_switch():
         observations.append(
             {
                 "logical_instance_id": entry.logical_instance_id,
@@ -256,6 +327,8 @@ def resolve_current_platform() -> dict[str, Any]:
     resolved["probed"] = {
         "codex_cli": _which("codex") is not None,
         "hermes_cli": _which("hermes") is not None,
+        "hermes_gui_launcher": _hermes_gui_launcher() is not None,
+        "cc_switch_config_root": _config_root_home(os.environ.get("CC_SWITCH_HOME") or "~/.cc-switch") is not None,
         "os": os.name,
         "start_menu_links": len(_windows_start_menu_shortcuts()),
     }
