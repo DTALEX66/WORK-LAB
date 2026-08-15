@@ -17,8 +17,11 @@ from canonical_store import CanonicalStore
 from composition_root import build_v3_snapshot, load_approved_index
 from durable_worker import CollectorResult
 from sidecar import WorkflowSidecar, create_server
+from sse_hub import HEARTBEAT_SECONDS, STALE
 from snapshot_validator import validate_snapshot
 from workspace_evidence import load_workspace_evidence
+import socket
+import urllib.request
 
 PROJECT_ROOT = Path(r"D:\All projects\WORK-LAB")
 
@@ -551,6 +554,72 @@ class SidecarV3SnapshotTests(unittest.TestCase):
                 self.assertFalse(sidecar.has_sse_connections())
             finally:
                 sidecar.close()
+
+    def test_failing_canonical_readback_removes_live(self) -> None:
+        """P0: an alive watcher whose canonical readback keeps failing must
+        fail closed to DELAYED/OFFLINE instead of staying LIVE on thread
+        liveness alone."""
+        with tempfile.TemporaryDirectory() as tmp:
+            sidecar = make_sidecar(Path(tmp))
+
+            def healthy_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+                return CollectorResult(kind="quality", ok=True, records=[])
+
+            try:
+                sidecar.start_worker(tick_seconds=30, collectors=[healthy_collector])
+                deadline = time.time() + 2
+                while len(sidecar.store.list_collector_health()) < 2 and time.time() < deadline:
+                    time.sleep(0.02)
+                sidecar.start_live_updates(interval_seconds=0.01)
+                now = time.time()
+                sidecar._revision = 1
+                sidecar._last_heartbeat_at = now
+                sidecar._last_write_at = now
+                sidecar.mark_sse_connected()
+                self.assertEqual(sidecar.v3_snapshot()["transport"]["transportState"], "LIVE")
+
+                def broken_fingerprint() -> str:
+                    raise RuntimeError("canonical readback failed")
+
+                sidecar._canonical_fingerprint = broken_fingerprint
+                deadline = time.time() + 2
+                while sidecar.live.mode() != STALE and time.time() < deadline:
+                    time.sleep(0.02)
+                self.assertEqual(sidecar.live.mode(), STALE)
+                self.assertNotEqual(sidecar.v3_snapshot()["transport"]["transportState"], "LIVE")
+            finally:
+                sidecar.close()
+
+    def test_sse_handler_loop_stops_after_server_close(self) -> None:
+        """P0: a serving SSE connection must stop writing heartbeats once the
+        server (and its store) is closed, so an old handler never refreshes a
+        replaced sidecar's heartbeat timestamp."""
+        with tempfile.TemporaryDirectory() as tmp:
+            sidecar = make_sidecar(Path(tmp))
+            server = create_server(sidecar, "127.0.0.1", 0, live_updates=True)
+            serve_thread = threading.Thread(target=server.serve_forever, daemon=True)
+            serve_thread.start()
+            port = int(server.server_address[1])
+            connection = urllib.request.urlopen(f"http://127.0.0.1:{port}/api/v1/events", timeout=5)
+            try:
+                self.assertTrue(sidecar.has_sse_connections())
+                last_heartbeat_before_close = sidecar._last_heartbeat_at
+                server.shutdown()  # stop the accept loop cleanly (avoids
+                # Windows select-on-closed-socket noise from serve_forever)
+                server.server_close()
+                # The serving handler must observe the closed server and stop
+                # refreshing the heartbeat; a short grace period proves it.
+                time.sleep(HEARTBEAT_SECONDS / 2 + 0.2)
+                self.assertEqual(sidecar._last_heartbeat_at, last_heartbeat_before_close)
+            finally:
+                try:
+                    connection.close()
+                except OSError:
+                    pass
+                try:
+                    server.server_close()
+                except Exception:
+                    pass
 
 
 if __name__ == "__main__":
