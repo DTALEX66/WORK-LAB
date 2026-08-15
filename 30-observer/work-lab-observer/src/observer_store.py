@@ -30,7 +30,7 @@ class ObserverStore:
         from composition_root import build_v3_snapshot, load_approved_index
         from observer_runtime import load_governance
 
-        store = CanonicalStore(self.path)
+        store = CanonicalStore(self.path, readonly=True)
         try:
             index = load_approved_index(store)
             projection = build_v3_snapshot(
