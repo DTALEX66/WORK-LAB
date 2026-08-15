@@ -13,5 +13,17 @@
     "legacyWorkLabRoot": "input-only historical reference; not a write target"
   },
   "legacyAliases": [".work-lab", ".work-lab/evidence"],
-  "forbiddenExternalRoots": ["E:/", "E:\\"]
+  "forbiddenExternalRoots": ["E:/", "E:\\"],
+  "spillGovernance": {
+    "rule": "Every project artifact stays inside the project Git root; any write outside it is a spill and must be traceable, locatable, cleanable and migratable.",
+    "protectedDataVolume": {
+      "roots": ["E:/", "E:\\"],
+      "policy": "forbidden without explicit per-path, per-operation user authorization",
+      "accessDefault": "deny"
+    },
+    "trace": "every spill records source, timestamp, and exact target path",
+    "locate": "the exact spilled path is machine-resolvable for cleanup or migration",
+    "clean": "spilled artifacts are removable or revertible without touching project source",
+    "migrate": "spilled artifacts are relocatable back inside the project boundary"
+  }
 }
