@@ -13,6 +13,11 @@ const WlApp = (function () {
   let reconnectDelayMs = 1000;
   let snapshotRetryTimer = null;
   let snapshotRetryDelayMs = 1000;
+  let streamRefreshPromise = null;
+  let streamRefreshQueuedEpoch = null;
+  let eventSourceGeneration = 0;
+  let transportEpoch = 0;
+  let eventStreamConnected = false;
 
   function readParams() {
     const q = new URLSearchParams(window.location.search);
@@ -121,6 +126,10 @@ const WlApp = (function () {
   }
 
   function closeEventSource() {
+    eventSourceGeneration += 1;
+    transportEpoch += 1;
+    eventStreamConnected = false;
+    streamRefreshQueuedEpoch = null;
     if (eventSource && typeof eventSource.close === "function") eventSource.close();
     eventSource = null;
     eventSourceUrl = null;
@@ -147,6 +156,45 @@ const WlApp = (function () {
     }, delay);
   }
 
+  function refreshFromStream(expectedEpoch) {
+    if (!eventStreamConnected || expectedEpoch !== transportEpoch) return Promise.resolve();
+    if (streamRefreshPromise) {
+      streamRefreshQueuedEpoch = expectedEpoch;
+      return streamRefreshPromise;
+    }
+    streamRefreshPromise = (async () => {
+      let refreshEpoch = expectedEpoch;
+      while (eventStreamConnected && refreshEpoch === transportEpoch) {
+        streamRefreshQueuedEpoch = null;
+        let shouldRender = false;
+        try {
+          const result = await WlApi.fetchSnapshot();
+          if (eventStreamConnected && refreshEpoch === transportEpoch) {
+            WlState.accept(result.data, result.mode);
+            if (WlState.get().lastGood === result.data) {
+              clearSnapshotRetry();
+              startLiveSubscription(result.data);
+            }
+            shouldRender = true;
+          }
+        } catch (err) {
+          if (eventStreamConnected && refreshEpoch === transportEpoch) {
+            WlState.markRefreshError(err && err.message ? err.message : "实时投影刷新失败");
+            scheduleSnapshotRetry();
+            shouldRender = true;
+          }
+        }
+        if (shouldRender) render();
+        const queuedEpoch = streamRefreshQueuedEpoch;
+        if (!eventStreamConnected || queuedEpoch === null || queuedEpoch !== transportEpoch) break;
+        refreshEpoch = queuedEpoch;
+      }
+    })().finally(() => {
+      streamRefreshPromise = null;
+    });
+    return streamRefreshPromise;
+  }
+
   function startLiveSubscription(projection) {
     const url = projection && projection.transport && projection.transport.eventsUrl;
     if (!url) {
@@ -158,36 +206,41 @@ const WlApp = (function () {
     reconnectTimer = null;
     closeEventSource();
     eventSourceUrl = url;
+    const sourceGeneration = eventSourceGeneration;
     try {
       eventSource = WlApi.subscribeEvents(url, {
-        onEvent: async () => {
-          try {
-            const result = await WlApi.fetchSnapshot();
-            WlState.accept(result.data, result.mode);
-          } catch (err) {
-            WlState.markRefreshError(err && err.message ? err.message : "实时投影刷新失败");
-          }
-          render();
+        onEvent: async (_payload, _lastEventId, eventName) => {
+          if (sourceGeneration !== eventSourceGeneration || !eventStreamConnected) return;
+          if (eventName === "heartbeat") return;
+          await refreshFromStream(transportEpoch);
         },
         onOpen: async () => {
+          if (sourceGeneration !== eventSourceGeneration) return;
           if (reconnectTimer !== null) clearTimeout(reconnectTimer);
           reconnectTimer = null;
           reconnectDelayMs = 1000;
-          try {
-            const result = await WlApi.fetchSnapshot();
-            clearSnapshotRetry();
-            WlState.accept(result.data, result.mode);
-          } catch (err) {
-            WlState.markRefreshError(err && err.message ? err.message : "事件流重连后投影刷新失败");
-            scheduleSnapshotRetry();
-          }
-          render();
+          eventStreamConnected = true;
+          transportEpoch += 1;
+          await refreshFromStream(transportEpoch);
         },
         onError: () => {
+          if (sourceGeneration !== eventSourceGeneration) return;
+          eventStreamConnected = false;
+          transportEpoch += 1;
           WlState.markRefreshError("Workflow Sidecar 事件流离线，正在自动重连", true);
           render();
           scheduleSnapshotRetry();
-          scheduleLiveReconnect();
+          // Keep the EventSource instance alive. Browser-native reconnect
+          // preserves Last-Event-ID; manual close/recreate would discard it.
+        },
+        onProtocolError: () => {
+          if (sourceGeneration !== eventSourceGeneration) return;
+          // Framing is still connected. Fence older GETs but preserve the
+          // browser-owned EventSource and Last-Event-ID cursor.
+          transportEpoch += 1;
+          WlState.markRefreshError("Workflow Sidecar 事件格式无效，正在重新读取快照", true);
+          render();
+          scheduleSnapshotRetry();
         },
       });
       return true;
@@ -216,12 +269,20 @@ const WlApp = (function () {
     // bundled snapshot or FIXTURE. Fixture only loads via an explicit dev entry.
     try {
       const result = await WlApi.fetchSnapshot();
-      clearSnapshotRetry();
       WlState.accept(result.data, result.mode);
+      if (WlState.get().lastGood !== result.data) {
+        return; // a delayed lower revision cannot rotate transport identity
+      }
+      if (result.mode === "LIVE" && eventSource && !eventStreamConnected) {
+        startLiveSubscription(result.data);
+        WlState.markRefreshError("Workflow Sidecar 事件流尚未重连", true);
+        scheduleSnapshotRetry();
+        return;
+      }
+      clearSnapshotRetry();
       startLiveSubscription(result.data);
       WlA11y.announce(result.mode === "LIVE" ? "已加载实时投影数据" : "已加载只读投影数据");
     } catch (err) {
-      stopLiveSubscription();
       WlState.markRefreshError(err.message, true);
       if (WlState.get().lastGood) {
         WlA11y.announce("实时数据不可用，已保留上次良好投影（last-good，标记为 STALE）");

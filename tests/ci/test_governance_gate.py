@@ -53,6 +53,10 @@ class GovernanceGateTests(unittest.TestCase):
         self.assertIn("python scripts/ci/generate_current_state.py --check-current", workflow)
         self.assertIn("python tests/ci/test_stage3_baseline.py", workflow)
 
+    def test_required_integration_runs_aggregate_negative_controls(self):
+        workflow = (ROOT / ".github/workflows/work-lab-gate.yml").read_text(encoding="utf-8")
+        self.assertIn("python tests/ci/test_aggregate_gate.py", workflow)
+
 
     def test_contract_catalog_references_real_schemas(self):
         script = ROOT / "scripts/ci/verify_contract_catalog.py"
