@@ -53,8 +53,9 @@ def main() -> int:
     commit = args.commit or git(root, "rev-parse", "HEAD")
     tree = args.tree or git(root, "rev-parse", "HEAD^{tree}")
     generated_at = args.generated_at or datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    profile = load_profile(args.profile.resolve())
     plan = build_plan(
-        load_profile(args.profile.resolve()),
+        profile,
         repository=args.repository,
         commit=commit,
         tree=tree,
@@ -74,7 +75,7 @@ def main() -> int:
     write_output(args.github_output, "plan_digest", plan["plan_digest"]["value"])
     write_output(args.github_output, "risk", plan["risk"])
     write_output(args.github_output, "plan_json", plan_json)
-    for gate in ("workflow", "observer", "token-monitor", "supply-chain-security", "integration"):
+    for gate in sorted(profile["gates"]):
         write_output(args.github_output, f"run_{gate.replace('-', '_')}", str(gate in plan["required_gates"]).lower())
     return 0
 

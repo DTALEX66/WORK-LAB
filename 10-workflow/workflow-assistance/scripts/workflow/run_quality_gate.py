@@ -662,8 +662,11 @@ def run_gate_sequence(names: tuple[str, ...]) -> int:
     return 0
 
 
-# WLOSS-700: changed-files -> relevant gates. Small edits run only the gates
-# whose path scope they touch; the full suite stays one command away.
+# WLOSS-700: changed-files -> relevant gates (LOCAL convenience mapping only;
+# the canonical gate-selection authority is 00-governance/work-lab.project-profile.yaml
+# `gates:` consumed by impact_planner.py + scripts/ci/emit_gate_plan.py; CI never
+# consumes this table). Small edits run only the gates whose path scope they
+# touch; the full suite stays one command away.
 GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "governance": ("tests/", "10-workflow/workflow-assistance/scripts/", "10-workflow/workflow-assistance/config/"),
     "compile": ("scripts/", "10-workflow/workflow-assistance/scripts/", "30-observer/work-lab-observer/src/"),
