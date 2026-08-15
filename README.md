@@ -1,16 +1,28 @@
 # WORK-LAB
 
-`DTALEX66/WORK-LAB` is the canonical v2 monorepo control plane for the user's
-**client-neutral AI project workflow**. It is not an agent runtime, product
-platform or fourth product. The root controls task packs, governance, evidence,
-ownership, data boundaries, recovery and cross-module delivery; module roots
-contain the actual implementations.
+`DTALEX66/WORK-LAB` is the canonical monorepo control plane for the user's
+**client-neutral AI workflow global-configuration layer**. It manages the
+highest user-level capability layer — Rules, Skills, plugins/MCP declarations,
+portable Memory, Capabilities and workflow policy — as one canonical source,
+then adapts it into native projections for each current client. It is not an
+agent runtime, a product platform, or a fourth product.
 
 > **Current positioning:** the only active modules are Workflow-assistance and
-> the strictly read-only WORK-LAB Observer. Open Design was transferred to
-> `DTALEX66/OPEN-DESIGN-Assistance`; `30-products/minigame`
-> is retained as product history/fixture/archive material, not as a canonical
-> active module. See [`00-governance/PROJECT_POSITIONING.md`](00-governance/PROJECT_POSITIONING.md).
+> the strictly read-only WORK-LAB Observer. The managed client workflow is
+> **Hermes · Codex · CC Switch · GitHub · Open Design · OpenHuman**, plus any
+> future AI software through the same Adapter contract.
+> `30-products/minigame` is retained as product history/fixture/archive
+> material, not as a canonical active module. See
+> [`00-governance/PROJECT_POSITIONING.md`](00-governance/PROJECT_POSITIONING.md).
+
+## Neutrality (unbound, unlocked)
+
+- **Client-neutral**: one canonical source → per-client native projection, not
+  six byte-identical copies.
+- **Unbound**: the six clients are the *current* adapters, not permanent
+  dependencies; future AI software plugs into the same contract.
+- **Unlocked**: core schemas use stable IDs and capability discovery — never
+  hard-coded programs, model IDs, versions, ports, or install paths.
 
 ## Workspace mission
 
@@ -63,10 +75,15 @@ dirty ownership, boundary violations or incomplete required jobs fail closed.
 - `80-evidence/` and `.hermes/` are generated/ignored project data; durable
   handoffs may be retained only when explicitly covered by a recovery contract.
 - Secrets, credentials, prompt/response bodies and private browser data never enter evidence.
+- Project artifacts never spill outside the project Git root; any spill is
+  traceable, locatable, cleanable and migratable (see
+  `00-governance/project-data-boundary.json`).
+- The `E:` data volume is protected: any access requires explicit per-path,
+  per-operation user authorization.
 - External mutation, active-path switching and release actions require explicit approval.
 - Windows paths are checked case-insensitively before release.
 
 See `00-governance/PROJECT_POSITIONING.md`, `00-governance/projects.json`,
 module `AGENTS.md` files, and
-`50-taskpacks/WORK-LAB-HERMES-TASKPACK-RECONCILIATION.md` for the current
-positioning and migration record.
+`50-taskpacks/TASKPACK_SUMMARY.md` for the current positioning and migration
+record.

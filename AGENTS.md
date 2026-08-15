@@ -4,21 +4,23 @@
 
 This is a single-root monorepo. Allowed active module roots are exactly:
 `10-workflow/workflow-assistance` and `30-observer/work-lab-observer`. The
-Open Design module was transferred to `DTALEX66/OPEN-DESIGN-Assistance` on the
-authorized migration branch; only the handoff pointer and Git history remain
-for the transferred scope.
+managed client workflow is Hermes · Codex · CC Switch · GitHub · Open Design ·
+OpenHuman, plus any future AI software through the same Adapter contract.
+Open Design is an external *client* (`nexu-io/open-design`); the separate
+`DTALEX66/DESIGN-LAB` project owns its own design domain (historical migration
+alias: `DTALEX66/OPEN-DESIGN-Assistance`).
 
-### Open Design configuration boundary (two-tier)
+### Open Design client vs DESIGN-LAB project (two distinct identities)
 
-WORK-LAB is responsible for the Open Design **non-design global configuration**:
-the migration pointer, registry, directory mapping, MCP declarations and audit
-boundary — these are owned and `MANAGE`d by WORK-LAB. Any configuration that
-would **enhance design capability** (models/tools, generation params, design
-assets, design specs, design systems, quality gates, editable handoff) belongs
-to the `OPEN-DESIGN-Assistance` project itself and is **neither collected nor
-managed here** (`IGNORE`). Field-level ownership lives in
+WORK-LAB manages the Open Design **client** USER_GLOBAL desired state (rules,
+skills, plugins, workflow policy, capability mapping) as `MANAGE` with
+`apply_supported=false` until a reviewed adapter and stable official interface
+exist. Design **capability** (models/tools, generation params, design assets,
+specs, design systems, quality gates, editable handoff) belongs to the
+`DTALEX66/DESIGN-LAB` project and is **neither collected nor managed here**
+(`IGNORE`). Field-level ownership lives in
 `10-workflow/workflow-assistance/config/config-ownership.json` (adapter
-`open-design`).
+`open-design`, external project `design-lab-project`).
 
 ## Ownership
 
@@ -30,8 +32,12 @@ Module instructions can narrow these rules, never weaken them.
 
 Do not read, print, copy, commit, or upload credentials, `.env` files, auth
 stores, private keys, browser data, tokens, prompt bodies, or response bodies.
-Do not access `E:\`. Never use destructive reset/clean/force-push operations.
-Generated evidence belongs under ignored `80-evidence/` or `.hermes/task-runtime/`.
+Do not access `E:\` without explicit per-path, per-operation user
+authorization. Project artifacts never spill outside the project Git root; any
+spill is traceable, locatable, cleanable and migratable
+(`00-governance/project-data-boundary.json`). Never use destructive
+reset/clean/force-push operations. Generated evidence belongs under ignored
+`80-evidence/` or `.hermes/task-runtime/`.
 
 ## Verification
 
