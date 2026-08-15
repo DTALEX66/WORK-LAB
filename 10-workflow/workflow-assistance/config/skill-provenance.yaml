@@ -94,8 +94,8 @@ entries:
 - name: python-testing
   source: skills/software-development/python-testing/SKILL.md
   live: skills/software-development/python-testing/SKILL.md
-  source_sha256: 3d8c16cfa2d01d5ef958350a6289d908837ec7c2c7d0e8753aae6cc7a00a42b7
-  version: 1.0.0
+  source_sha256: ebf37e7091537be66e483db888020e7ad3896dc1073e31d6424109cef5df0cf7
+  version: 1.1.0
   trust: repository-controlled
   enabled: true
   permission: skill-guidance

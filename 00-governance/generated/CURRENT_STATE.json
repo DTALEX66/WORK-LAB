@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-08-15T13:05:25.967966Z",
-  "source_digest": "62b331c21127d4b828ca6172e5d67f9756b2ef221cdff22e07247a060799e06f",
+  "generated_at": "2026-08-15T14:30:22.562915Z",
+  "source_digest": "67dbde3d4e25cbbe9d71e4a41b9ea554fee3801064b40024138da52bbce4b636",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -141,8 +141,8 @@
       {
         "name": "python-testing",
         "source": "skills/software-development/python-testing/SKILL.md",
-        "version": "1.0.0",
-        "source_sha256": "3d8c16cfa2d01d5ef958350a6289d908837ec7c2c7d0e8753aae6cc7a00a42b7",
+        "version": "1.1.0",
+        "source_sha256": "ebf37e7091537be66e483db888020e7ad3896dc1073e31d6424109cef5df0cf7",
         "trust": "repository-controlled",
         "enabled": true,
         "live_readback": "not-run"
@@ -219,5 +219,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "4f4ff1b61bd028872ac14c2852f6e2ef4a9357b26f5bf22a38317ceb511453f0"
+  "content_digest": "ae1c6926b836abd1987a13fa432fad6beadccee482fb71b57865f1a6d36a6685"
 }
