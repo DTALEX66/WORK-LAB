@@ -64,8 +64,12 @@ class ConfigOwnershipTests(unittest.TestCase):
         self.assertEqual(fields["open-design.read_only_mcp"]["mode"], "OBSERVE")
         self.assertEqual(fields["cc_switch.provider.catalog"]["mode"], "OBSERVE")
         self.assertEqual(fields["cc_switch.provider.routing"]["mode"], "OBSERVE")
-        self.assertEqual(fields["openhuman.global_configuration"]["mode"], "OBSERVE")
+        self.assertEqual(fields["openhuman.global_configuration"]["mode"], "MANAGE")
+        self.assertFalse(fields["openhuman.global_configuration"]["apply_supported"])
+        self.assertEqual(fields["open-design.global_configuration"]["mode"], "MANAGE")
         self.assertFalse(fields["open-design.global_configuration"]["apply_supported"])
+        self.assertEqual(fields["external_projects.design_lab.project_configuration"]["mode"], "OBSERVE")
+        self.assertFalse(fields["external_projects.design_lab.project_configuration"]["apply_supported"])
 
     def test_project_local_rules_are_observed_not_globally_applied(self) -> None:
         fields = {field["path"]: field for field in self.registry["fields"]}
