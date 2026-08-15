@@ -30,8 +30,14 @@ completion state):
 
 Current forward authority:
 
-- **Master TaskPack v2.0**: `WORK-LAB-FINAL-MASTER-CONTROL-PLANE`
-  (`.hermes/desktop-attachments/WORK-LAB-FINAL-MASTER-HERMES-TASKPACK-2026-08-10.md`).
+- **Tracked forward authority**: `00-governance/PROJECT_POSITIONING.md` plus the
+  machine-readable `00-governance/config-authority-index.json` (single-source
+  inventory). Both resolve from a clean clone.
+- **Candidate execution blueprint (LOCAL_CANDIDATE, not yet tracked)**:
+  `WORK-LAB-FINAL-MASTER-EXECUTION-TASKPACK-R6-2026-08-15.md` lives under the
+  ignored `.hermes/desktop-attachments/` path; it becomes the tracked forward
+  authority only after user approval writes it under `50-taskpacks/` and this
+  summary records its blob SHA, base SHA and approval record.
 - Tracked graph: `50-taskpacks/WORK-LAB-STAGE-3-TASK-GRAPH.json` (28 tasks,
   5 waves, `initialState=RECONCILE_REQUIRED`).
 - Baseline: `00-governance/generated/STAGE3_BASELINE.json`.

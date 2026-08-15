@@ -68,6 +68,40 @@
     },
 
     {
+      "id": "openhuman",
+      "display_name": "OpenHuman",
+      "support_level": "experimental",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=openhuman]",
+        "version": "UNVERIFIED",
+        "scope": "portable-workflow-adapter",
+        "risk": "medium",
+        "status": "quarantined",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "OpenHuman runtime package is external and not vendored", "files": []}
+      }
+    },
+
+    {
+      "id": "open-design",
+      "display_name": "Open Design",
+      "support_level": "experimental",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "external", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=open-design]",
+        "version": "UNVERIFIED",
+        "scope": "portable-workflow-adapter",
+        "risk": "medium",
+        "status": "quarantined",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "Open Design client (nexu-io/open-design) is external and not vendored", "files": []}
+      }
+    },
+
+    {
       "id": "cursor",
       "display_name": "Cursor",
       "support_level": "manifest-only",
@@ -75,7 +109,7 @@
       "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
       "provenance": {
         "source_kind": "external-manifest",
-        "source_ref": "workflow-manifest.yaml#adapters.entries[5]",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=cursor]",
         "version": "UNVERIFIED",
         "scope": "manifest-only",
         "risk": "medium",
@@ -91,7 +125,7 @@
       "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
       "provenance": {
         "source_kind": "external-manifest",
-        "source_ref": "workflow-manifest.yaml#adapters.entries[6]",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=claude-code]",
         "version": "UNVERIFIED",
         "scope": "manifest-only",
         "risk": "medium",
@@ -107,7 +141,7 @@
       "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
       "provenance": {
         "source_kind": "external-manifest",
-        "source_ref": "workflow-manifest.yaml#adapters.entries[7]",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=workbuddy]",
         "version": "UNVERIFIED",
         "scope": "manifest-only",
         "risk": "medium",
