@@ -272,5 +272,6 @@ jobs:
           INTEGRATION_RESULT: ${{ needs.integration.result }}
         run: |
           test "$PLAN_RESULT" = success
-          EXPECTED_HEAD_TREE="$(git rev-parse HEAD^{tree})"
+          EXPECTED_HEAD_TREE="$(git rev-parse 'HEAD^{tree}')"
+          export EXPECTED_HEAD_TREE
           python -c 'import json, os, subprocess, sys; payload=json.dumps({"gate_plan": json.loads(os.environ["GATE_PLAN_JSON"]), "expected_plan_digest": os.environ["EXPECTED_PLAN_DIGEST"], "expected_head_sha": os.environ["EXPECTED_HEAD_SHA"], "expected_head_tree": os.environ["EXPECTED_HEAD_TREE"], "expected_repository": os.environ["EXPECTED_REPOSITORY"], "jobs": {"workflow": os.environ["WORKFLOW_RESULT"], "observer": os.environ["OBSERVER_RESULT"], "token-monitor": os.environ["TOKEN_MONITOR_RESULT"], "supply-chain-security": os.environ["SUPPLY_CHAIN_SECURITY_RESULT"], "integration": os.environ["INTEGRATION_RESULT"]}}); result=subprocess.run([sys.executable, "scripts/ci/aggregate_gate.py"], input=payload, text=True); raise SystemExit(result.returncode)'
