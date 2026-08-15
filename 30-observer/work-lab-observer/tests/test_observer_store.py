@@ -70,6 +70,21 @@ class ObserverStoreTests(unittest.TestCase):
             self.assertIsInstance(gov.get("skills", {}).get("current"), (int, type(None)))
             self.assertIsInstance(gov.get("adapters", {}).get("current"), (int, type(None)))
 
+    def test_readonly_store_rejects_writes(self) -> None:
+        """WL3-605: a capability-level read-only CanonicalStore must fail
+        closed on any write statement (no migration, no WAL, URI mode=ro)."""
+        with tempfile.TemporaryDirectory() as raw:
+            project, path = self.make_root(raw)
+            store = CanonicalStore(path, readonly=True)
+            try:
+                # Reads keep working on the readonly connection.
+                self.assertIsInstance(store.seed_revision(), int)
+                with self.assertRaises(Exception) as ctx:
+                    store.register_project("nope", "<redacted>")
+                self.assertIn("readonly", str(ctx.exception).lower())
+            finally:
+                store.close()
+
 
 if __name__ == "__main__":
     unittest.main()

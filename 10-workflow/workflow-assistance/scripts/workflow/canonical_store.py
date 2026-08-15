@@ -103,8 +103,23 @@ def validate_record(record: dict[str, Any], *, allow_usage_tokens: bool) -> None
 class CanonicalStore:
     """Thread-safe canonical SQLite WAL store with migrations and readback."""
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, *, readonly: bool = False) -> None:
+        self.readonly = readonly
         self.path = path.resolve()
+        if readonly:
+            # Observer capability-level read-only: no directory creation, no
+            # schema migration, no WAL pragma write, SQLite URI mode=ro. Any
+            # write statement on this connection fails closed with
+            # OperationalError (attempt to write a readonly database).
+            if not self.path.is_file():
+                raise FileNotFoundError(f"canonical store missing: {self.path}")
+            self._conn = sqlite3.connect(
+                f"file:{self.path}?mode=ro", uri=True, check_same_thread=False
+            )
+            self._conn.row_factory = sqlite3.Row
+            self._conn.execute("PRAGMA foreign_keys=ON")
+            self._lock = __import__("threading").RLock()
+            return
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(self.path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
