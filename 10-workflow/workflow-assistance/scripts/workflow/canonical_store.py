@@ -353,12 +353,21 @@ class CanonicalStore:
                     generated_at TEXT NOT NULL,
                     projection_json TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS sse_state (
+                    key TEXT PRIMARY KEY,
+                    value INTEGER NOT NULL
+                );
                 COMMIT;
                 """
             )
             if 2 not in existing:
                 self._conn.execute(
                     "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (2, ?)",
+                    (_now(),),
+                )
+            if 3 not in existing:
+                self._conn.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (3, ?)",
                     (_now(),),
                 )
             if not existing:
@@ -924,10 +933,27 @@ class CanonicalStore:
             return result
 
     def seed_revision(self) -> int:
-        """Persisted SSE revision seed: MAX(revision) over projection_revisions."""
+        """Persisted SSE revision seed: sse_state.last_revision (fallback:
+        MAX(revision) over projection_revisions for pre-v3 databases)."""
         with self._lock:
+            row = self._conn.execute(
+                "SELECT value FROM sse_state WHERE key = 'last_revision'"
+            ).fetchone()
+            if row is not None:
+                return int(row[0] or 0)
             row = self._conn.execute("SELECT COALESCE(MAX(revision), 0) FROM projection_revisions").fetchone()
             return int(row[0] or 0)
+
+    def record_revision(self, revision: int) -> None:
+        """Persist the latest SSE revision so a restarted sidecar seeds its hub
+        from here, keeping Last-Event-ID cursors monotonic across restarts."""
+        with self._lock:
+            self._conn.execute(
+                "INSERT INTO sse_state (key, value) VALUES ('last_revision', ?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (revision,),
+            )
+            self._conn.commit()
 
     def max_watermark(self) -> str | None:
         """Newest canonical observation across every surfaced collector table."""
