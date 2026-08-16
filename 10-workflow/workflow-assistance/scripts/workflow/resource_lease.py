@@ -165,8 +165,9 @@ class RuntimeSupervisor:
     process matched by name, never a user-external runtime like ComfyUI.
     """
 
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, platform_name: str | None = None) -> None:
         self.root = root.resolve()
+        self.platform_name = platform_name or os.name
         (self.root / "runtime-state").mkdir(parents=True, exist_ok=True)
 
     def _state_path(self, runtime_id: str) -> Path:
@@ -225,7 +226,7 @@ class RuntimeSupervisor:
                     "reason": "user-external runtime; supervisor never stops it"}
         pid = int(data["pid"])
         try:
-            if os.name == "nt":
+            if self.platform_name == "nt":
                 import subprocess
                 subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
                                capture_output=True, timeout=15, check=False)
