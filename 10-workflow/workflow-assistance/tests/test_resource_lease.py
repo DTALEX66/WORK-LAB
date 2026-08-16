@@ -108,7 +108,9 @@ class RuntimeSupervisorTests(unittest.TestCase):
     @mock.patch("resource_lease.subprocess.run", return_value=mock.Mock())
     def test_owned_sidecar_stopped_exact_pid(self, _run, _st, _alive) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            sup = RuntimeSupervisor(Path(tmp))
+            # platform_name="nt" forces the Windows taskkill branch on any OS,
+            # so the subprocess mock is exercised deterministically (CI/Ubuntu safe).
+            sup = RuntimeSupervisor(Path(tmp), platform_name="nt")
             sup.record("llama-cpp", 4242, ["llama-server", "--port", "8080"], port=8080)
             result = sup.stop("llama-cpp")
             self.assertEqual(result["status"], "STOPPED")
