@@ -10,7 +10,6 @@ default model, a default picker, or a preferred model for the user.
 
 | Entry point | Hermes provider | Model selection | Ownership |
 |---|---|---|---|
-| `kimi`, `kimi-fast`, `kimi-turbo` | `kimi-coding` or the user-configured Kimi provider | `--model MODEL` or `HERMES_KIMI_MODEL`, `HERMES_KIMI_FAST_MODEL`, `HERMES_KIMI_TURBO_MODEL` | User |
 | `deepseek` / `dp` | `deepseek` | `--model MODEL` or `HERMES_DEEPSEEK_MODEL` | User |
 | `gpt` / `chatgpt` | `openai-codex` | `--model MODEL` or `HERMES_GPT_MODEL` | User |
 
@@ -28,10 +27,10 @@ A user-owned alias may target a selected model, for example:
 
 ```yaml
 quick_commands:
-  切换kimi:
+  切换deepseek:
     type: alias
-    target: /model <user-selected-model> --provider kimi-coding
-    description: User-selected Kimi model
+    target: /model <user-selected-model> --provider deepseek
+    description: User-selected DeepSeek model
 ```
 
 Do not convert these aliases into shell `exec` commands. Keep them inside Hermes'
@@ -43,9 +42,6 @@ Run from the WORK-LAB repository root:
 
 ```bash
 python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py status
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
 python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
 python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 ```
