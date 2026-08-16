@@ -1436,14 +1436,16 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertEqual(manifest["requirements"]["optional_adapters"]["hermes"], "capability-discovery")
         self.assertEqual(manifest["compatibility"]["official_schema"], "capability-discovery")
         self.assertEqual(manifest["compatibility"]["official_config_root"], "capability-discovery")
-    def test_readme_documents_kimi_speed_lane_commands_without_auto_switching(self) -> None:
+    def test_readme_removed_kimi_speed_lanes_and_keeps_deepseek_gpt(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         for command in (
-            'python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"',
-            'python scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"',
-            'python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"',
+            'switch_model.py kimi --model',
+            'switch_model.py kimi-fast --model',
+            'switch_model.py kimi-turbo --model',
         ):
-            self.assertIn(command, readme)
+            self.assertNotIn(command, readme)
+        self.assertIn('switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"', readme)
+        self.assertIn('switch_model.py gpt --model "$HERMES_GPT_MODEL"', readme)
         self.assertIn("不会自动更改当前会话", readme)
         self.assertIn("`/reset`", readme)
 
@@ -2448,6 +2450,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "client-neutral-manifest",
                 "core-schemas",
                 "adapter-registry",
+                "capability-matrix",
                 "adapter-conformance",
                 "acp-conformance",
                 "otel-mapping",
@@ -2550,7 +2553,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertIn(
             "verify: Run governance, compile, skill-provenance, security, context-pack, "
-            "client-neutral-manifest, core-schemas, adapter-registry, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, memory-contamination, task-ledger-replay, portable-install, provider-inventory, mcp-audit",
+            "client-neutral-manifest, core-schemas, adapter-registry, capability-matrix, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, memory-contamination, task-ledger-replay, portable-install, provider-inventory, mcp-audit",
             list_result.stdout,
         )
         self.assertTrue({"design-contract", "production-evidence", "standard-validators"}.isdisjoint(module.GATES))
@@ -2734,13 +2737,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("CC Switch", legacy_deployment)
         self.assertNotIn("复制 config.yaml / SOUL.md", legacy_deployment)
 
-    def test_kimi_speed_lane_contract_is_consistent(self) -> None:
+    def test_kimi_retired_and_model_switch_contract_kept(self) -> None:
         switcher = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")
         skill = (ROOT / "skills/model-switch/SKILL.md").read_text(encoding="utf-8")
         lanes = (ROOT / "skills/model-switch/references/current-model-lanes.md").read_text(
-            encoding="utf-8"
-        )
-        integration = (ROOT / "skills/model-switch/references/kimi-ccswitch-hermes.md").read_text(
             encoding="utf-8"
         )
         latency = (ROOT / "skills/model-switch/references/latency-tuning.md").read_text(
@@ -2748,7 +2748,6 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
 
         for marker in (
-            "def selected_model(override: str | None, env_name: str, target: str)",
             "HERMES_KIMI_MODEL",
             "HERMES_KIMI_FAST_MODEL",
             "HERMES_KIMI_TURBO_MODEL",
@@ -2756,21 +2755,28 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "'kimi-turbo'",
             "if args.target == 'kimi-turbo':",
             "elif args.target == 'kimi-fast':",
+            "KIMI_BASE_URL",
         ):
-            self.assertIn(marker, switcher)
+            self.assertNotIn(marker, switcher)
+        for command in (
+            'switch_model.py kimi --model',
+            'switch_model.py kimi-fast --model',
+            'switch_model.py kimi-turbo --model',
+        ):
+            self.assertNotIn(command, skill)
+            self.assertNotIn(command, lanes)
 
+        self.assertIn("def selected_model(override: str | None, env_name: str, target: str)", switcher)
+        self.assertIn("HERMES_DEEPSEEK_MODEL", switcher)
+        self.assertIn("HERMES_GPT_MODEL", switcher)
         self.assertIn("Provider 路线只作为入口", skill)
         self.assertIn("具体模型必须由用户", skill)
-        for document in (latency,):
-            self.assertIn("kimi-k2.7-code", document)
-            self.assertIn("kimi-k2.7-code-highspeed", document)
-        self.assertIn("HERMES_KIMI_MODEL", lanes)
         self.assertIn("HERMES_DEEPSEEK_MODEL", lanes)
         self.assertIn("HERMES_GPT_MODEL", lanes)
         self.assertIn("default model", lanes)
         self.assertIn("--model", lanes)
-        self.assertIn("不会自动切换当前", integration)
-        self.assertIn("--model", integration)
+        self.assertIn("kimi-k2.7-code", latency)
+        self.assertIn("kimi-k2.7-code-highspeed", latency)
         self.assertIn("explicitly selected", latency)
 
     def test_external_harness_absorption_is_model_and_paid_api_neutral(self) -> None:
