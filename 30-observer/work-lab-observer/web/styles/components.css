@@ -840,3 +840,130 @@
   .wl-taskpack-row { grid-template-columns: 82px 92px minmax(0, 1fr); }
   .wl-evidence-list > div { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Redesign: real-data metric row (metricCards in render-v3.js). */
+.wl-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.wl-metric-card {
+  background: var(--wl-card-bg, rgba(255, 255, 255, 0.03));
+  border: var(--wl-border-width) solid var(--wl-border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: var(--wl-radius-md, 8px);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wl-metric-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--wl-text-muted);
+}
+.wl-metric-value {
+  font-family: var(--wl-font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+}
+.wl-metric-value.truth-ok { color: var(--wl-green); }
+.wl-metric-value.truth-warn { color: var(--wl-amber); }
+.wl-metric-value.truth-muted { color: var(--wl-text-secondary); }
+@media (max-width: 620px) {
+  .wl-metrics-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Redesign: cross-project runtime status matrix + token dashboard. */
+.wl-status-panel { margin-bottom: 14px; }
+.wl-status-matrix { display: flex; flex-direction: column; gap: 6px; }
+.wl-status-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) minmax(120px, 1fr) minmax(80px, 0.7fr) minmax(90px, 0.7fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--wl-border-subtle, rgba(255,255,255,0.08));
+  border-radius: var(--wl-radius-md, 8px);
+  background: var(--wl-card-bg, rgba(255,255,255,0.02));
+}
+.wl-status-project { display: flex; flex-direction: column; gap: 3px; }
+.wl-status-project b { font-size: 13px; }
+.wl-platform-tag {
+  font-size: 9.5px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--wl-blue, #5e6ad2); font-weight: 600;
+}
+.wl-platform-unset { font-size: 9.5px; color: var(--wl-text-muted); font-style: italic; }
+.wl-status-git, .wl-status-sha { display: flex; flex-direction: column; gap: 2px; }
+.wl-status-label { font-size: 9px; text-transform: uppercase; color: var(--wl-text-muted); letter-spacing: .08em; }
+.wl-status-git code, .wl-status-sha code {
+  font-family: var(--wl-font-mono); font-size: 11px; color: var(--wl-text-secondary);
+}
+.wl-dirty-clean { font-size: 10px; color: var(--wl-green); }
+.wl-dirty-dirty { font-size: 10px; color: var(--wl-amber); }
+.wl-token-mini { font-size: 11px; color: var(--wl-cyan, #64d2ff); }
+.wl-no-sample { color: var(--wl-text-muted); font-size: 11px; }
+.wl-status-legend {
+  margin-top: 8px; display: flex; gap: 14px; flex-wrap: wrap;
+  font-size: 9.5px; color: var(--wl-text-muted);
+}
+.wl-token-dash { margin-bottom: 14px; }
+.wl-token-total { font-size: 20px; font-weight: 700; color: var(--wl-blue, #5e6ad2); }
+.wl-token-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px; margin-top: 10px;
+}
+.wl-token-cell {
+  display: flex; flex-direction: column; gap: 4px; padding: 10px;
+  border: 1px solid var(--wl-border-subtle, rgba(255,255,255,0.08));
+  border-radius: var(--wl-radius-sm, 6px); background: var(--wl-card-bg, rgba(255,255,255,0.02));
+}
+.wl-token-cell span { font-size: 9.5px; text-transform: uppercase; color: var(--wl-text-muted); letter-spacing: .06em; }
+.wl-token-cell b { font-family: var(--wl-font-mono); font-size: 15px; }
+.wl-token-hitrate b { color: var(--wl-green); }
+.wl-token-empty { color: var(--wl-text-muted); font-size: 12px; padding: 12px 0; }
+@media (max-width: 760px) {
+  .wl-status-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .wl-status-git, .wl-status-sha, .wl-status-token { grid-column: 1 / -1; }
+}
+/* Fusion: Grafana status row + LangSmith project strip. */
+.wl-grafana-row {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 14px; padding: 10px 12px;
+  background: var(--wl-card-bg, rgba(255,255,255,0.02));
+  border: 1px solid var(--wl-border-subtle, rgba(255,255,255,0.08));
+  border-radius: var(--wl-radius-md, 8px);
+}
+.wl-grafana-cell {
+  display: flex; flex-direction: column; gap: 3px; padding-right: 16px;
+  border-right: 1px solid var(--wl-border-subtle, rgba(255,255,255,0.06));
+  min-width: 90px;
+}
+.wl-grafana-cell:last-child { border-right: 0; }
+.wl-grafana-label { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--wl-text-muted); }
+.wl-grafana-cell b { font-size: 13px; font-weight: 600; }
+.wl-grafana-cell b.mono { font-family: var(--wl-font-mono); font-size: 11px; }
+
+.wl-langsmith-strip {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px; margin-bottom: 14px;
+}
+.wl-ls-cell {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 12px;
+  background: var(--wl-card-bg, rgba(255,255,255,0.02));
+  border: 1px solid var(--wl-border-subtle, rgba(255,255,255,0.08));
+  border-radius: var(--wl-radius-md, 8px);
+}
+.wl-ls-cell b { font-size: 12.5px; }
+.wl-ls-meta { font-size: 10.5px; color: var(--wl-text-secondary); }
+.wl-ls-platform {
+  font-size: 9.5px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--wl-blue, #5e6ad2); font-weight: 600;
+}
+@media (max-width: 760px) {
+  .wl-grafana-row { flex-direction: column; gap: 6px; }
+  .wl-grafana-cell { border-right: 0; border-bottom: 1px solid var(--wl-border-subtle, rgba(255,255,255,0.06)); padding-bottom: 6px; }
+}

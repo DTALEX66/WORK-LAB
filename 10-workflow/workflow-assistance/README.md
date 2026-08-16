@@ -84,6 +84,9 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 | MCP | 默认固定 Context7 包版本；候选 MCP 另行执行 pinned provenance 审计 | `docs/mcp/workflow-mcp-stack.md`、`docs/mcp/mcp-catalog-governance.md`、`scripts/workflow/mcp_candidate_audit.py` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
 | Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.hermes/task-artifacts/`，用于新会话与 Codex handoff | `scripts/workflow/build_context_pack.py`、`docs/workflow/context-pack.md` |
+| Context Control Plane | 跨客户端稳定前缀 + 缓存命中真值 + 防漂移压缩（§12）；客户端配置建议 | `scripts/workflow/context_control_plane.py`、`context_bundle.py`、`context_drift_guard.py`、`docs/workflow/context-control-plane-design.md`、`context-control-plane-client-config.md` |
+| External Libraries Index | 共用/私用库链接与资产列表（内容不上传）；JSON 校验 gate | `00-governance/external-libraries-index.json`、`scripts/workflow/verify_external_libraries_index.py` |
+| GitHub Delivery | 上传加速（状态→提交→推送→PR）+ 审核加速（checks+mergeable+本地 gate 聚合判定） | `scripts/workflow/github_upload_accelerator.py`、`github_review_accelerator.py`、`github_common.py` |
 | Agent 行为评估 | promptfoo 风格声明式 smoke cases，评估工作流边界回答；不默认安装 runner/provider | `docs/workflow/agent-evaluation.md`、`templates/evals/agent-behavior-smoke.yaml` |
 | UI/Skin 系统 | Catppuccin、shadcn/ui、assistant-ui 风格吸收，提供主题 token、Agent UI patterns 和 Windows Terminal scheme；不默认安装 UI runtime | `docs/workflow/ui-skin-system.md`、`templates/ui/`、`templates/windows-terminal/` |
 | 本地质量门禁 | 跨平台 canonical gate runner，统一治理测试、语法、安全扫描、Context Pack、MCP 候选审计、Shell/PowerShell 解析 | `scripts/workflow/run_quality_gate.py`、`Justfile`、`docs/workflow/local-quality-gates.md` |
@@ -576,6 +579,11 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 - `docs/workflow/error-governance.md`：错误入口、根因、回归验证、证据等级和防复发规则；
 - `docs/workflow/agent-evaluation.md`：Agent 行为评估边界、promptfoo 方法吸收和默认不安装策略；
 - `docs/workflow/context-pack.md`：安全 Context Pack 生成器、输出边界和 handoff 使用方式；
+- `docs/workflow/context-control-plane-design.md`：跨客户端上下文控制面设计方案（稳定前缀/缓存真值/防漂移压缩）；
+- `docs/workflow/context-control-plane-client-config.md`：上下文控制面客户端配置建议（DSH/Hermes/Codex 参数）；
+- `00-governance/external-libraries-index.json`：共用/私用库链接与资产列表（内容不上传，JSON 校验 gate）；
+- `scripts/workflow/github_upload_accelerator.py` / `github_review_accelerator.py` / `github_common.py`：GitHub 上传与审核加速器（凭据走 git credential，不硬编码）；
+- `docs/workflow/github-delivery-accelerator.md`：GitHub 交付加速器使用说明；
 - `docs/workflow/local-quality-gates.md`：本地 canonical quality gate runner、Justfile 快捷入口和 CI 对齐方式；
 - `docs/workflow/active-authority-index.md`：活跃权威/兼容/历史分类索引（WLG-110），README 只链接权威文件；
 - `docs/workflow/wlg130-delivery-verdict.md`：WLG-130 交付裁决（Authority Matrix、批次状态、GO/NO-GO）；

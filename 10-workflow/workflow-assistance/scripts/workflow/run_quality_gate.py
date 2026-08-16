@@ -234,6 +234,21 @@ def gate_capability_matrix() -> int:
     return run_python(["scripts/workflow/verify_capability_matrix.py"])
 
 
+def gate_context_control_plane() -> int:
+    """Context Control Plane: stable prefix, cache truth, drift guard tests."""
+    return run_python(["tests/test_context_control_plane.py"])
+
+
+def gate_external_libraries_index() -> int:
+    """External libraries index: JSON valid + sharedRoots resolve + assets present."""
+    return run_python(["scripts/workflow/verify_external_libraries_index.py"])
+
+
+def gate_github_delivery() -> int:
+    """GitHub delivery accelerator: upload/review contracts (offline tests)."""
+    return run_python(["tests/test_github_delivery.py"])
+
+
 def gate_adapter_conformance() -> int:
     return run_python(["tests/test_adapter_conformance.py"])
 
@@ -552,6 +567,21 @@ GATES: dict[str, Gate] = {
         "WL3-100: verify capability-matrix.json stays consistent with the adapter registry.",
         gate_capability_matrix,
     ),
+    "context-control-plane": Gate(
+        "context-control-plane",
+        "Context Control Plane: stable prefix + cache truth + drift guard.",
+        gate_context_control_plane,
+    ),
+    "external-libraries-index": Gate(
+        "external-libraries-index",
+        "External libraries index: JSON valid + roots resolve + assets listed (content stays local).",
+        gate_external_libraries_index,
+    ),
+    "github-delivery": Gate(
+        "github-delivery",
+        "GitHub delivery accelerator: upload/review contracts (offline tests).",
+        gate_github_delivery,
+    ),
     "adapter-conformance": Gate(
         "adapter-conformance",
         "Run adapter conformance checks.",
@@ -624,6 +654,9 @@ VERIFY_ORDER = (
     "core-schemas",
     "adapter-registry",
     "capability-matrix",
+    "context-control-plane",
+    "external-libraries-index",
+    "github-delivery",
     "adapter-conformance",
     "acp-conformance",
     "otel-mapping",
@@ -688,6 +721,9 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "core-schemas": ("schemas/", "config/"),
     "adapter-registry": ("config/adapters.json", "scripts/workflow/adapter_registry.py"),
     "capability-matrix": ("config/capability-matrix.json", "scripts/workflow/verify_capability_matrix.py"),
+    "context-control-plane": ("scripts/workflow/context_control_plane.py", "scripts/workflow/context_bundle.py", "scripts/workflow/context_drift_guard.py"),
+    "external-libraries-index": ("00-governance/external-libraries-index.json", "scripts/workflow/verify_external_libraries_index.py"),
+    "github-delivery": ("scripts/workflow/github_common.py", "scripts/workflow/github_upload_accelerator.py", "scripts/workflow/github_review_accelerator.py"),
     "adapter-conformance": ("scripts/workflow/adapter_conformance.py", "tests/test_adapter_conformance.py"),
     "acp-conformance": ("scripts/workflow/acp_adapter.py", "tests/test_acp_adapter.py"),
     "otel-mapping": ("scripts/workflow/otel_mapper.py", "tests/test_otel_mapping.py"),

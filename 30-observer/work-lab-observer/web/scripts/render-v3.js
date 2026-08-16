@@ -88,7 +88,12 @@ const WlRenderV3 = (function () {
     if (!projects.length) {
       return `<section class="wl-truth-panel wl-card"><div class="wl-truth-empty"><b>尚无已批准项目</b><span>Observer 不会自动扫描或展示未批准目录。</span></div></section>`;
     }
-    const cards = projects.map((project) => {
+    // Redesign: sort by most-recent activity (sourceWatermark/git), stable.
+    const ranked = projects.slice().sort((a, b) => {
+      const at = (x) => Date.parse((x.git && x.git.observedAt) || x.lastEventAt || "") || 0;
+      return at(b) - at(a);
+    });
+    const cards = ranked.map((project) => {
       const status = projectStatus(project.activityState);
       return `<article class="wl-project-truth-card">
         <header class="wl-project-truth-head">
@@ -105,9 +110,10 @@ const WlRenderV3 = (function () {
         ${gitFacts(d, project)}
       </article>`;
     }).join("");
+    const countBadge = `<span class="wl-truth-chip truth-ok">${projects.length} 个</span>`;
     return `<section class="wl-truth-panel" id="projects">
       <div class="wl-truth-heading">
-        <div><span class="wl-eyebrow">已接入工作区</span><h1>当前可观测项目</h1></div>
+        <div><span class="wl-eyebrow">已接入工作区</span><h1>当前可观测项目</h1>${countBadge}</div>
         <p>仅显示通过批准边界并已进入本地观测库的项目与 Git 事实。</p>
       </div>
       <div class="wl-project-truth-grid">${cards}</div>
@@ -270,8 +276,126 @@ const WlRenderV3 = (function () {
     return `<section class="wl-card wl-evidence-card"><header class="wl-section-head"><div><span class="wl-eyebrow">来源可追踪</span><h2>证据来源</h2></div><span>Sidecar 启动时只读加载</span></header><div class="wl-evidence-list">${sources.map((source) => `<div><span class="wl-truth-chip truth-muted">${esc(source.evidenceKind)}</span><code>${esc(source.path)}</code><time>${esc(source.generatedAt || source.loadedAt || "")}</time></div>`).join("")}</div></section>`;
   }
 
+
+
+  /* Cross-project runtime status vocabulary. */
+  const PLATFORM_LABELS = {
+    hermes: "HERMES", codex: "CODEX", dsh: "DSH", "cc-switch": "CC Switch",
+    github: "GitHub", openhuman: "OpenHuman", "open-design": "Open Design",
+  };
+  function activityStatus(state) {
+    const s = String(state || "UNKNOWN").toUpperCase();
+    if (s.includes("RUNNING") || s.includes("ACTIVE") || s === "EXECUTING") return { label: "运行中", cls: "truth-ok" };
+    if (s.includes("BLOCK") || s.includes("WAIT") || s.includes("FAIL")) return { label: "阻塞", cls: "truth-warn" };
+    if (s.includes("REGISTERED") || s.includes("IDLE") || s.includes("STOPPED") || s.includes("PAUSED")) return { label: "已注册/空闲", cls: "truth-muted" };
+    return { label: esc(s.toLowerCase()), cls: "truth-muted" };
+  }
+  function tokenMini(t) {
+    if (!t || integer(t.totalTokens) == null) return "";
+    const total = integer(t.totalTokens);
+    const fmt = total >= 1000000 ? (total / 1000000).toFixed(1) + "M" : total >= 1000 ? (total / 1000).toFixed(0) + "K" : String(total);
+    const inp = integer(t.inputTokens);
+    const out = integer(t.outputTokens);
+    const parts = [];
+    if (inp != null) parts.push("入 " + fmtShort(inp));
+    if (out != null) parts.push("出 " + fmtShort(out));
+    return `<span class="wl-token-mini mono" title="${parts.join(" · ") || "token"}">${fmt}</span>`;
+  }
+  function fmtShort(n) {
+    return n >= 1000000 ? (n / 1000000).toFixed(1) + "M" : n >= 1000 ? (n / 1000).toFixed(0) + "K" : String(n);
+  }
+
+
+  /* Redesign: cross-project runtime status matrix. One row per project:
+     platform label + activity badge + branch/SHA + token. No per-project task
+     matrix — this is the "which platform runs which project, is it active" view. */
+  function platformStatusMatrix(d) {
+    const projects = Array.isArray(d.projects) ? d.projects : [];
+    if (!projects.length) {
+      return `<section class="wl-truth-panel wl-card"><div class="wl-truth-empty"><b>尚无已登记项目</b><span>Observer 只展示已批准的项目运行状态。</span></div></section>`;
+    }
+    const ranked = projects.slice().sort((a, b) => {
+      const at = (x) => Date.parse((x.git && x.git.observedAt) || x.lastEventAt || "") || 0;
+      return at(b) - at(a);
+    });
+    const rows = ranked.map((project) => {
+      const git = project.git || {};
+      const status = activityStatus(project.activityState);
+      const platform = project.agentPlatform || project.platform || project.runtime;
+      const platformLabel = platform ? (PLATFORM_LABELS[String(platform).toLowerCase()] || esc(platform)) : `<span class="wl-platform-unset">平台未登记</span>`;
+      const branch = git.branch ? `<code class="mono">${esc(git.branch)}</code>` : "—";
+      const sha = git.localSha ? `<code class="mono">${esc(String(git.localSha).slice(0, 8))}</code>` : "—";
+      const dirty = integer(git.dirtyCount);
+      const dirtyText = dirty === 0 ? `<span class="wl-dirty-clean">干净</span>` : (dirty != null ? `<span class="wl-dirty-dirty">${dirty} 变更</span>` : "");
+      const tok = tokenMini(project.token || project.usage);
+      return `<div class="wl-status-row">
+        <div class="wl-status-project"><b>${esc(project.displayName || project.projectId)}</b><span class="wl-platform-tag">${platformLabel}</span></div>
+        <div class="wl-status-git"><span class="wl-status-label">分支</span>${branch}${dirtyText}</div>
+        <div class="wl-status-sha"><span class="wl-status-label">HEAD</span>${sha}</div>
+        <div class="wl-status-token">${tok || `<span class="wl-no-sample">—</span>`}</div>
+        <span class="wl-truth-chip ${status.cls}">${status.label}</span>
+      </div>`;
+    }).join("");
+    return `<section class="wl-status-panel wl-card" id="projects">
+      <header class="wl-section-head"><div><span class="wl-eyebrow">跨项目运行状态</span><h2>项目 × 平台 × 活跃度</h2></div><span class="wl-truth-chip truth-ok">${projects.length} 个</span></header>
+      <div class="wl-status-matrix" aria-label="跨项目运行状态矩阵">${rows}</div>
+      <div class="wl-status-legend"><span>平台：HERMES / CODEX / DSH / CC Switch / GitHub / OpenHuman / Open Design</span><span>状态：运行中 · 阻塞 · 已注册/空闲</span></div>
+    </section>`;
+  }
+
+
+  /* Redesign: attractive global token dashboard (top of view). */
+  function tokenDashboard(d) {
+    const t = d.tokenSummary || {};
+    const total = integer(t.totalTokens);
+    if (total == null) {
+      return `<section class="wl-token-dash wl-card"><header class="wl-section-head"><div><span class="wl-eyebrow">TOKEN 仪表盘</span><h2>Token 用量</h2></div></header><div class="wl-token-empty">尚无真实 token 样本（collector 未上报）</div></section>`;
+    }
+    const inp = integer(t.inputTokens);
+    const out = integer(t.outputTokens);
+    const hit = integer(t.cacheHitTokens);
+    const miss = integer(t.cacheMissTokens);
+    const row = (label, val) => val == null ? "" : `<div class="wl-token-cell"><span>${esc(label)}</span><b class="mono">${fmtShort(val)}</b></div>`;
+    const hitRate = hit != null && miss != null && (hit + miss) > 0 ? Math.round((hit / (hit + miss)) * 100) : null;
+    return `<section class="wl-token-dash wl-card" id="tokens">
+      <header class="wl-section-head"><div><span class="wl-eyebrow">TOKEN 仪表盘</span><h2>Token 用量</h2></div><span class="wl-token-total mono">${total >= 1000000 ? (total / 1000000).toFixed(1) + "M" : fmtShort(total)}</span></header>
+      <div class="wl-token-grid">
+        ${row("输入", inp)}${row("输出", out)}${row("缓存命中", hit)}${row("缓存未命中", miss)}
+        ${hitRate != null ? `<div class="wl-token-cell wl-token-hitrate"><span>缓存命中率</span><b class="mono">${hitRate}%</b></div>` : ""}
+      </div>
+    </section>`;
+  }
+
+  /* Redesign: real-data metric cards. Render only when canonical samples exist;
+     never fabricate a KPI from UNKNOWN/0. */
+  function metricCards(d) {
+    const cards = [];
+    const projects = Array.isArray(d.projects) ? d.projects : [];
+    if (projects.length) {
+      cards.push({ label: "已接入项目", value: String(projects.length), tone: "ok" });
+    }
+    const tasks = d.tasks && typeof d.tasks === "object" ? d.tasks : null;
+    if (tasks && Object.keys(tasks).length) {
+      const total = Object.values(tasks).reduce((a, b) => a + (integer(b) || 0), 0);
+      cards.push({ label: "任务", value: String(total), tone: "ok" });
+    }
+    const usage = d.tokenSummary || (d.usage || {});
+    if (usage && integer(usage.totalTokens) != null) {
+      const total = integer(usage.totalTokens);
+      cards.push({ label: "Token 用量", value: total >= 1000000 ? (total / 1000000).toFixed(1) + "M" : String(total), tone: "muted" });
+    }
+    const coverage = d.coverage;
+    if (coverage && integer(coverage.denominator) > 0 && integer(coverage.numerator) != null) {
+      const pct = Math.round((coverage.numerator / coverage.denominator) * 100);
+      cards.push({ label: "采集覆盖", value: pct + "%", tone: pct >= 80 ? "ok" : "warn" });
+    }
+    if (!cards.length) return "";
+    const grid = cards.map((c) => `<div class="wl-metric-card"><span class="wl-metric-label">${esc(c.label)}</span><b class="wl-metric-value ${c.tone === "warn" ? "truth-warn" : c.tone === "muted" ? "truth-muted" : "truth-ok"}">${esc(c.value)}</b></div>`).join("");
+    return `<section class="wl-metrics-row" aria-label="真实数据指标">${grid}</section>`;
+  }
+
   function full(d) {
-    return connectionStrip(d) + workspaceHero(d) + taskpackSection(d) + governanceAndGaps(d) + projectOverview(d) + optionalFacts(d) + historySection(d) + sourceEvidence(d);
+    return connectionStrip(d) + tokenDashboard(d) + metricCards(d) + platformStatusMatrix(d) + governanceAndGaps(d);
   }
 
   function compact(d) {
@@ -285,7 +409,7 @@ const WlRenderV3 = (function () {
     return `<section class="wl-compact-truth wl-card"><header><div><span class="wl-eyebrow">WORK-LAB Observer</span><h1>只读项目事实</h1></div><span class="wl-truth-chip ${transport.cls}">${esc(transport.label)}</span></header>${rows || '<div class="wl-truth-empty-inline">尚无已批准项目</div>'}</section>`;
   }
 
-  return { connectionStrip, projectOverview, optionalFacts, workspaceHero, taskpackSection, governanceAndGaps, historySection, sourceEvidence, full, compact };
+  return { connectionStrip, projectOverview, optionalFacts, workspaceHero, taskpackSection, governanceAndGaps, historySection, sourceEvidence, metricCards, platformStatusMatrix, tokenDashboard, full, compact };
 })();
 
 if (typeof module !== "undefined" && module.exports) {
