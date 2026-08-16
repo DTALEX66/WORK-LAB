@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "work-lab/external-libraries-index/v1",
+  "generatedAt": "2026-08-16",
+  "policy": "共用/私用库实际内容不上传 GitHub；本项目只登记库的链接与资产列表（链接+列表）。清单内路径为本地绝对路径引用，任何内容都不提交。",
+  "sharedRoots": {
+    "model-library": "D:\\All projects\\Model library",
+    "design-assets": "D:\\All projects\\Design assets",
+    "os-external": "D:\\All projects\\OS External Configuration",
+    "design-external": "D:\\All projects\\Design External Configuration"
+  },
+  "libraries": [
+    {
+      "id": "ollama-models",
+      "sharedRoot": "model-library",
+      "relativePath": "ollama",
+      "kind": "model-weights",
+      "ownedBy": "WORK-LAB",
+      "managedBy": "WORK-LAB model control plane",
+      "totalSizeGb": 29.2,
+      "assets": [
+        {"name": "qwen3:8b", "sizeGb": 5.2, "role": "local.general.fast"},
+        {"name": "qwen3-coder:30b-a3b-q4_K_M", "sizeGb": 18.0, "role": "local.code.readonly"},
+        {"name": "qwen2.5vl:7b", "sizeGb": 6.0, "role": "local.vision.ocr"},
+        {"name": "qwen3-embedding:0.6b", "sizeGb": 0.6, "role": "local.embedding"},
+        {"name": "qwen3-reranker:latest", "sizeGb": 0.5, "role": "local.reranker"}
+      ],
+      "note": "Ollama OLLAMA_MODELS 指向此处；blobs/manifests 为 Ollama 管理形态"
+    },
+    {
+      "id": "whisper-models",
+      "sharedRoot": "model-library",
+      "relativePath": "whisper",
+      "kind": "model-weights",
+      "ownedBy": "WORK-LAB",
+      "managedBy": "WORK-LAB model control plane",
+      "totalSizeGb": 1.5,
+      "assets": [
+        {"name": "faster-whisper-large-v3-turbo", "sizeGb": 1.5, "role": "local.asr"}
+      ]
+    },
+    {
+      "id": "comfyui-h3",
+      "sharedRoot": "model-library",
+      "relativePath": "ComfyUI",
+      "kind": "model-weights",
+      "ownedBy": "DESIGN-LAB",
+      "managedBy": "DESIGN-LAB (WORK-LAB read-only reference)",
+      "totalSizeGb": 39.6,
+      "assets": [
+        {"name": "diffusion_models/minimax_h3_fl2va (1 file)", "sizeGb": 19.5, "role": "video-generation-diT"},
+        {"name": "text_encoders/qwen3vl_32b (1 file)", "sizeGb": 14.6, "role": "text-encoder"},
+        {"name": "vae (2 files)", "sizeGb": 5.4, "role": "video-vae"}
+      ],
+      "note": "DESIGN-LAB 视觉链资产，WORK-LAB 只读 inventory，不管理内容"
+    },
+    {
+      "id": "os-external-toolchains",
+      "sharedRoot": "os-external",
+      "relativePath": "10-toolchains",
+      "kind": "toolchains",
+      "ownedBy": "OS External Configuration (cross-project)",
+      "managedBy": "OS External Configuration",
+      "totalSizeGb": null,
+      "assets": [],
+      "note": "跨项目共用工具链（msvc/python 等），详见 OS External Configuration/EXTERNAL_DEPENDENCIES.md"
+    },
+    {
+      "id": "os-external-hf-models",
+      "sharedRoot": "os-external",
+      "relativePath": "40-models",
+      "kind": "model-weights",
+      "ownedBy": "OS External Configuration (cross-project)",
+      "managedBy": "OS External Configuration",
+      "totalSizeGb": null,
+      "assets": [
+        {"name": "PaddlePaddle PP-OCR 系列", "role": "ocr"},
+        {"name": "Systran faster-whisper-base", "role": "asr"}
+      ],
+      "note": "HuggingFace hub 缓存形态（models--*），跨项目共用"
+    }
+  ],
+  "verification": "清单由 run_quality_gate.py external-libraries-index gate 校验（JSON 合法 + sharedRoot 可解析 + 资产列表非空）"
+}
