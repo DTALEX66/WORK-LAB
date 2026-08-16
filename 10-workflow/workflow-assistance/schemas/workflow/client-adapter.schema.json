@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://workflow-assistance.invalid/schemas/adapter-registry.schema.json",
+  "$id": "https://workflow-assistance.invalid/schemas/client-adapter.schema.json",
   "title": "Workflow Client Adapter Contract",
   "type": "object",
   "additionalProperties": false,
