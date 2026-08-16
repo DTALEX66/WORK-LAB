@@ -8,8 +8,7 @@ then adapts it into native projections for each current client. It is not an
 agent runtime, a product platform, or a fourth product.
 
 > **Current positioning:** the only active modules are Workflow-assistance and
-> the strictly read-only WORK-LAB Observer. The managed client workflow is
-> **Hermes · Codex · CC Switch · GitHub · Open Design · OpenHuman**, plus any
+> **Hermes · Codex · CC Switch · GitHub · Open Design · OpenHuman · DeepSeek Harness (DSH)**, plus any
 > future AI software through the same Adapter contract.
 > `30-products/minigame` is retained as product history/fixture/archive
 > material, not as a canonical active module. See
@@ -18,8 +17,12 @@ agent runtime, a product platform, or a fourth product.
 ## Neutrality (unbound, unlocked)
 
 - **Client-neutral**: one canonical source → per-client native projection, not
-  six byte-identical copies.
-- **Unbound**: the six clients are the *current* adapters, not permanent
+  byte-identical copies.
+- **Unbound**: the current clients (Hermes · Codex · CC Switch · GitHub · Open Design · OpenHuman ·
+  DeepSeek Harness) are the *current* adapters, not permanent dependencies; future AI software plugs
+  into the same contract. DSH is a replaceable Agent Runtime (temporary executor in the model
+  control-plane taskpack), not a Hermes replacement; see
+  [`00-governance/PROJECT_POSITIONING.md`](00-governance/PROJECT_POSITIONING.md).
   dependencies; future AI software plugs into the same contract.
 - **Unlocked**: core schemas use stable IDs and capability discovery — never
   hard-coded programs, model IDs, versions, ports, or install paths.
