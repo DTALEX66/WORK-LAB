@@ -29,7 +29,7 @@ def verify() -> dict:
     if len(cov) != 7:
         errors.append(f"expected 7 agents in coverage matrix, got {len(cov)}")
     for agent, info in cov.items():
-        if info["status"] not in ("supported", "unknown"):
+        if info["status"] not in ("supported", "unknown", "retired"):
             errors.append(f"{agent}: invalid status")
 
     # 2. Read-only incremental ingestion on a synthetic fixture.

@@ -20,9 +20,12 @@ dependency of the core contract.
 
 - **Client-neutral**: one canonical source → per-client native projection;
   never six byte-identical copies.
-- **Unbound**: Hermes, Codex, CC Switch, GitHub, Open Design and OpenHuman are
-  the *current* adapters, not permanent dependencies; future AI software plugs
-  into the same Adapter contract.
+- **Unbound**: Hermes, Codex, CC Switch, GitHub, Open Design, OpenHuman and
+  DeepSeek Harness (DSH) are the *current* adapters, not permanent
+  dependencies; future AI software plugs into the same Adapter contract.
+  DSH is a replaceable Agent Runtime (temporary executor in the model
+  control-plane taskpack), not a Hermes replacement and not a third active
+  module.
 - **Unlocked**: core schemas use stable IDs, capability discovery and Adapter
   contracts — never hard-coded programs, model IDs, versions, ports or paths.
 - **Global configuration scope**: the current workflow software plus any future
@@ -35,8 +38,17 @@ dependency of the core contract.
 The current managed clients are:
 
 ```text
-Hermes · Codex · CC Switch · GitHub · Open Design · OpenHuman
+Hermes · Codex · CC Switch · GitHub · Open Design · OpenHuman · DeepSeek Harness (DSH)
 ```
+
+
+DeepSeek Harness is an **Agent Runtime** executed in an isolated, task-scoped
+Git worktree (pinned upstream, loopback-only, workspace-scoped). It consumes
+the project's AGENTS.md rules (auto-injected) and the DSH skill catalog
+(`.agents/skills` project-level + `~/.agents` user-level); it never applies
+client config, completes a Task Ledger task, or lets credentials enter the
+repository. Its configuration guide for other clients lives at
+`10-workflow/workflow-assistance/docs/runtime-adapters/deepseek-harness-config-guide.md`.
 
 Open Design is an external **client** (`nexu-io/open-design`, adapter id
 `open-design`); `DTALEX66/DESIGN-LAB` is a separate, independent **project**.

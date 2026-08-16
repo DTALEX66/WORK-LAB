@@ -25,7 +25,7 @@
   },
   "localRecoveryRef": "recovery/pre-cutover-3df92cbba39e",
   "legacyLocalCheckoutArchive": "PHYSICAL_RENAME_COMPLETED_SOURCE_COPY_PRESERVED",
-  "legacyLocalArchiveManifest": "90-archive-manifests/migration-20260805/source-checkouts-archive-manifest.json",
+  "legacyLocalArchiveManifest": ".hermes/task-artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json",
   "legacyLocalPhysicalArchiveRoot": "90-archive-manifests/migration-20260805 (evidence root; full histories preserved in cloud DTALEX66/MINIGAME + DTALEX66/DESIGN-LAB and canonical main for Workflow-assistance)",
   "legacyLocalPhysicalArchiveVerification": "PYTHON_OS_RENAME_PASS_ORIGINAL_PATHS_ABSENT_ARCHIVE_PATHS_PRESENT",
   "archiveRetirement": {
