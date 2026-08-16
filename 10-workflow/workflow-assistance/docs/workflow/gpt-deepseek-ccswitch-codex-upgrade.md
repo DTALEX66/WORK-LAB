@@ -1,4 +1,4 @@
-# Hermes + KIMI / DeepSeek / ChatGPT + CC Switch + Codex 工作流
+# Hermes + DeepSeek / ChatGPT + CC Switch + Codex 工作流
 
 > **状态：current（2026-07）**。运行时可用性必须由当前机器上的
 > `hermes_workflow_doctor.py --live` 或独立 marker 证明；本文件不保存历史
@@ -8,7 +8,7 @@
 
 ```text
 Hermes      编排、skills、工具、会话与审计
-KIMI        K3 复杂推理；K2.7 / HighSpeed 日常快速路线
+DeepSeek    V4 深度推理；Codex 负责代码写入
 DeepSeek    官方直连的备用/低延迟路线
 ChatGPT     openai-codex OAuth 路线
 CC Switch   网络代理和 Codex/ChatGPT 生态连通，不持有 Hermes OAuth 真相
@@ -17,12 +17,12 @@ Codex       独立编码/复审执行面
 
 ## Provider / 模型选择
 
-仓库不设置默认模型，也不替用户决定 Kimi、DeepSeek 或 ChatGPT/Codex 的具体
+仓库不设置默认模型，也不替用户决定 DeepSeek 或 ChatGPT/Codex 的具体
 model ID。三条 Provider 路线只是可选入口；用户必须通过官方 Hermes 配置、
 `switch_model.py --model` 或当前进程的 `HERMES_*_MODEL` 环境变量显式选择。
 
 ```bash
-python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
+python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
 python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
 python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 ```
@@ -39,7 +39,7 @@ python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
    ```bash
    python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL" --live
    python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL" --live
-   python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL" --live
+   python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL" --live
    ```
 
 配置写入、端口监听和 HTTP 200/401 只证明部分链路，不能替代 marker。

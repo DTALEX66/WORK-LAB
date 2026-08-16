@@ -30,9 +30,7 @@ metadata:
 
 | 请求 | 动作 |
 |---|---|
-| 整理/切换用户当前三条模型线 | Provider 路线只作为入口，具体模型必须由用户通过 `--model` 或 `HERMES_*_MODEL` 选择；脚本入口是 `python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi|kimi-fast|kimi-turbo|deepseek|gpt --model <用户选择的模型>`；每次切换后用 `hermes chat -q` marker 验证，并提示 `/reset` 或新会话 |
-| 接入 CC Switch 中已有的 Kimi/Moonshot provider | 不读取 CC Switch 数据库、密钥或 provider 原始配置。由用户通过受控环境变量/官方 Hermes 配置完成凭据设置；之后仅用 `switch_model.py status`、端口 preflight 与 `hermes chat -q` marker 验证路由。细节见 `references/kimi-ccswitch-hermes.md` |
-| 选定 Kimi 模型的列表/响应是否一致 | 不以 picker 为准；Hermes picker 是用户配置，不自动同步 CC Switch models。用直接 Moonshot API 验证用户指定的 `request_model/response_model`；任何模型专属参数也必须以该模型的当前官方文档为准。见 `references/kimi-ccswitch-hermes.md` |
+| 整理/切换用户当前模型线 | Provider 路线只作为入口，具体模型必须由用户通过 `--model` 或 `HERMES_*_MODEL` 选择；脚本入口是 `python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py deepseek|gpt --model <用户选择的模型>`；每次切换后用 `hermes chat -q` marker 验证，并提示 `/reset` 或新会话 |
 | 检查模型/CC Switch/Codex | 结构 doctor；需要证明可执行时加 `--live` |
 | 图片/截图分析 | 确认当前 provider 有视觉能力；必要时切 GPT 后新会话 |
 | GPT 慢 | 先做同提示、同工具集、串行真实基准，不自动改配置 |
@@ -42,9 +40,6 @@ metadata:
 ```bash
 # 从 WORK-LAB 仓库根目录运行（scripts/workflow 位于仓库内）
 python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py status
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
 python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
 python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 
@@ -68,7 +63,7 @@ python 10-workflow/workflow-assistance/scripts/workflow/hermes_workflow_doctor.p
 ## 速度与视觉
 
 - 图片能力先做真实视觉 smoke，不能仅凭模型标签断言。
-- 速度诊断顺序：压缩/新会话 → `agent.reasoning_effort=low`/fast 模式 → 精简 toolset → 在用户选定的同 provider 模型之间做同提示基准 → 最后切 provider。Kimi 延迟细节见 `references/latency-tuning.md`。
+- 速度诊断顺序：压缩/新会话 → `agent.reasoning_effort=low`/fast 模式 → 精简 toolset → 在用户选定的同 provider 模型之间做同提示基准 → 最后切 provider。历史延迟基准见 `references/latency-tuning.md`。
 - `model_picker` 不由 portable overlay 写入；如果用户在官方 Hermes 配置中启用自定义 lanes，列表只能反映用户自己的模型选择，不构成仓库默认。
 - 系统代理细节见 `references/proxy-system-config.md`。
 

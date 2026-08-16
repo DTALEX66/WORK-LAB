@@ -39,7 +39,7 @@ AGENT_COVERAGE: dict[str, dict[str, Any]] = {
     "claude-code": {"source": "local-usage-json", "status": "supported", "coverage": "partial"},
     "cursor": {"source": "unsupported-no-official-source", "status": "unknown", "coverage": "unknown"},
     "workbuddy": {"source": "unsupported-no-official-source", "status": "unknown", "coverage": "unknown"},
-    "kimi": {"source": "local-usage-json", "status": "supported", "coverage": "partial"},
+    "kimi": {"source": "historical-usage-only", "status": "retired", "coverage": "none", "lifecycle": "RETIRED", "note": "Kimi retired from active routing (2026-08-15); historical usage remains identifiable but no new task resolves to it."},
     "qwen": {"source": "unsupported-no-official-source", "status": "unknown", "coverage": "unknown"},
 }
 

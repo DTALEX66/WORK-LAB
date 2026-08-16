@@ -80,7 +80,7 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 || Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/workflow/gateway-cron-delivery.md` |
 | 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `bin/hermes-project-data.py`、`skills/software-development/project-data-boundary/` |
 | 执行预检 | 只读分离当前分支/upstream/main、解释器与可选依赖、Markdown 相对链接；输出无密 JSON，不读取 auth/session/memory | `scripts/workflow/execution_preflight.py`、`docs/workflow/codex-execution-reliability.md`、`docs/workflow/codex-performance-diagnosis.md` |
-| Token 监视器 | Windows Tauri 2 Dashboard，实时扫描本地 JSON/JSONL usage，按 GPT/Codex、DeepSeek、Kimi 和模型显示输入/输出/缓存/reasoning/总 token；无 usage 时不估算 | `apps/token-monitor-desktop/`、`scripts/workflow/token_monitor.py`、`docs/workflow/token-monitor.md` |
+| Token 监视器 | Windows Tauri 2 Dashboard，实时扫描本地 JSON/JSONL usage，按 GPT/Codex、DeepSeek 和模型显示输入/输出/缓存/reasoning/总 token；无 usage 时不估算 | `apps/token-monitor-desktop/`、`scripts/workflow/token_monitor.py`、`docs/workflow/token-monitor.md` |
 | MCP | 默认固定 Context7 包版本；候选 MCP 另行执行 pinned provenance 审计 | `docs/mcp/workflow-mcp-stack.md`、`docs/mcp/mcp-catalog-governance.md`、`scripts/workflow/mcp_candidate_audit.py` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
 | Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.hermes/task-artifacts/`，用于新会话与 Codex handoff | `scripts/workflow/build_context_pack.py`、`docs/workflow/context-pack.md` |
@@ -207,13 +207,10 @@ Design 的设计能力配置。今日基线结论、已处理事项和恢复流�
 
 `skills/model-switch/SKILL.md` 与切换脚本共同定义这条路线的操作边界。
 
-模型切换完全由用户决定：仓库不设置默认模型，也不会替用户选择 Kimi、DeepSeek 或 GPT 的具体模型。`kimi`、`kimi-fast`、`kimi-turbo`、`gpt` 和 `deepseek` 只是 Provider 路线别名；每次切换必须通过 `--model` 或对应的 `HERMES_*_MODEL` 显式提供模型 ID。脚本只在用户明确执行时工作，不会自动更改当前会话；切换后必须新建会话或执行 `/reset`。
+模型切换完全由用户决定：仓库不设置默认模型，也不会替用户选择 DeepSeek 或 GPT 的具体模型。`gpt` 和 `deepseek` 只是 Provider 路线别名；每次切换必须通过 `--model` 或对应的 `HERMES_*_MODEL` 显式提供模型 ID。脚本只在用户明确执行时工作，不会自动更改当前会话；切换后必须新建会话或执行 `/reset`。
 
 ```bash
 python scripts/workflow/switch_model.py status
-python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
-python scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
-python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
 python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
 ```
@@ -221,7 +218,6 @@ python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL
 也可以先在当前进程环境中设置用户自己的模型 ID：
 
 ```bash
-export HERMES_KIMI_MODEL='<user-selected-kimi-model>'
 export HERMES_DEEPSEEK_MODEL='<user-selected-deepseek-model>'
 export HERMES_GPT_MODEL='<user-selected-openai-codex-model>'
 ```
@@ -574,6 +570,8 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 
 ### 文档和审计
 
+- `docs/runtime-adapters/deepseek-harness.md`：DeepSeek Harness agent-runtime adapter 的安装/启动/停止/健康、权限边界、证据与回滚（WL-DSH）；
+- `docs/runtime-adapters/deepseek-harness-config-guide.md`：DeepSeek Harness 配置指南——规则、技能、边界与模型下载（供 Hermes/Codex/CC Switch 等其他软件接入）；
 - `docs/workflow/project-definition.md`：项目定义与职责边界；
 - `docs/workflow/error-governance.md`：错误入口、根因、回归验证、证据等级和防复发规则；
 - `docs/workflow/agent-evaluation.md`：Agent 行为评估边界、promptfoo 方法吸收和默认不安装策略；
@@ -682,9 +680,6 @@ TROUBLESHOOTING.md   故障排查
 python scripts/workflow/switch_model.py status
 
 # 切换 Provider（仅在用户明确决定后；必须显式提供自己的模型；切换后新建会话或执行 /reset）
-python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
-python scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
-python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
 python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
 

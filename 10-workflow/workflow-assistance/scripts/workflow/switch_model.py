@@ -13,7 +13,6 @@ from pathlib import Path
 
 # Model IDs are intentionally never defaulted here.  The user chooses them
 # explicitly with --model or the matching HERMES_*_MODEL environment variable.
-KIMI_BASE_URL = os.environ.get("HERMES_KIMI_BASE_URL", "https://api.moonshot.cn/v1")
 MISSING = object()
 
 
@@ -217,7 +216,6 @@ def status() -> None:
         print(f'{key}={redact(cp.stdout.strip()) if cp.returncode == 0 else "unavailable"}')
     print('\n=== Prerequisites ===')
     print(f'HERMES_HOME={hermes_home()}')
-    print(f'KIMI_API_KEY={"present" if env_has("KIMI_API_KEY") or env_has("KIMI_CN_API_KEY") else "missing"}')
     print(f'DEEPSEEK_API_KEY={"present" if env_has("DEEPSEEK_API_KEY") else "missing"}')
     for name in ('HTTPS_PROXY', 'HTTP_PROXY', 'ALL_PROXY'):
         print(f'{name}={"declared" if env_has(name) else "not-declared"}')
@@ -228,7 +226,7 @@ def status() -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description='Switch Hermes between user-selected provider lanes')
-    ap.add_argument('target', choices=['gpt', 'chatgpt', 'deepseek', 'dp', 'kimi', 'k3', 'kimi-fast', 'kimi-turbo', 'status'])
+    ap.add_argument('target', choices=['gpt', 'chatgpt', 'deepseek', 'dp', 'status'])
     ap.add_argument('--model', help='explicit model ID; required for every switch target')
     ap.add_argument('--no-verify', action='store_true', help='skip prerequisite checks')
     ap.add_argument('--live', action='store_true', help='run a real marker after writing config (uses provider quota)')
@@ -238,31 +236,6 @@ def main() -> int:
 
     if args.target == 'status':
         status()
-        return 0
-
-    if args.target in {'kimi', 'k3', 'kimi-fast', 'kimi-turbo'}:
-        if args.apply and not args.no_verify and not (env_has('KIMI_API_KEY') or env_has('KIMI_CN_API_KEY')):
-            raise SystemExit('KIMI_API_KEY/KIMI_CN_API_KEY missing in the current environment')
-        if args.target == 'kimi-turbo':
-            model = selected_model(args.model, 'HERMES_KIMI_TURBO_MODEL', args.target)
-            label = 'Kimi selected model'
-        elif args.target == 'kimi-fast':
-            model = selected_model(args.model, 'HERMES_KIMI_FAST_MODEL', args.target)
-            label = 'Kimi selected model'
-        else:
-            model = selected_model(args.model, 'HERMES_KIMI_MODEL', args.target)
-            label = 'Kimi selected model'
-        pairs = [
-            ('model.provider', 'kimi-coding'),
-            ('model.base_url', KIMI_BASE_URL),
-            ('model.default', model),
-        ]
-        result = plan_or_apply(args.target, pairs, apply=args.apply, approved=args.approved)
-        if result != 0 or not args.apply:
-            return result
-        if args.live:
-            live_marker('kimi-coding', model, 'OK_KIMI_SWITCH_LIVE')
-        print(f'Switched to {label}. Start a new session or /reset for it to take effect.')
         return 0
 
     if args.target in {'deepseek', 'dp'}:

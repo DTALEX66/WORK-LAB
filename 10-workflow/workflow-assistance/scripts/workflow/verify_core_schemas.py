@@ -48,6 +48,55 @@ EXPECTED = {
             "rules",
         },
     ),
+    "agent-runtime-adapter.schema.json": (
+        "workflow/agent-runtime-adapter/v1",
+        {
+            "schema_version",
+            "adapter_id",
+            "kind",
+            "upstream",
+            "maturity",
+            "install_mode",
+            "entrypoints",
+            "network",
+            "workspace_scope",
+            "secrets",
+            "execution_authority",
+            "external_mutation",
+            "plugin_policy",
+            "upgrade_policy",
+            "rollback",
+        },
+    ),
+    "model-asset.schema.json": (
+        "workflow/model-asset/v1",
+        {
+            "schema_version", "asset_id", "display_name", "family",
+            "architecture_status", "modality", "format", "library_relative_path",
+            "storage_mode", "owner", "lifecycle", "quality_state",
+        },
+    ),
+    "runtime-registry.schema.json": (
+        "workflow/runtime-registry/v1",
+        {
+            "schema_version", "runtime_id", "kind", "discovery_method",
+            "bind_scope", "resource_class", "evidence_state",
+        },
+    ),
+    "model-invocation-plan.schema.json": (
+        "workflow/model-invocation-plan/v1",
+        {
+            "schema_version", "plan_id", "task_id", "project_id",
+            "required_capabilities", "data_class", "status",
+        },
+    ),
+    "usage-observation.schema.json": (
+        "workflow/usage-observation/v1",
+        {
+            "schema_version", "observation_id", "plan_id", "task_id", "project_id",
+            "provider_lifecycle", "measurement_source", "completeness",
+        },
+    ),
 }
 FORBIDDEN_KEYS = {"api_key", "apikey", "authorization", "password", "secret", "token", "provider", "model"}
 
