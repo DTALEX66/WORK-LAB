@@ -208,7 +208,7 @@ class DurableWorkerTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             outcome = json.loads(result.stdout)
-            self.assertEqual(len(outcome["collectors"]), 5)
+            self.assertEqual(len(outcome["collectors"]), 6)
             readback = CanonicalStore(runtime / "canonical.sqlite")
             try:
                 self.assertEqual(readback.list_projects()[0]["project_id"], "cli-project")

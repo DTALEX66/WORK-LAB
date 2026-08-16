@@ -521,6 +521,51 @@ class CanonicalStore:
             self._conn.commit()
         return sample_id
 
+
+    def record_platform_observations(self, records: list[dict[str, Any]]) -> None:
+        """Record project->platform observations (Observer cross-project view)."""
+        with self._lock:
+            for rec in records:
+                self._conn.execute(
+                    """
+                    INSERT INTO platform_observations
+                    (observation_id, project_id, platform, observed_at, payload)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON CONFLICT(observation_id) DO UPDATE SET
+                        platform=excluded.platform,
+                        observed_at=excluded.observed_at,
+                        payload=excluded.payload
+                    """,
+                    (
+                        str(uuid.uuid4().hex),
+                        rec.get("project_id"),
+                        rec.get("platform"),
+                        datetime.now(timezone.utc).isoformat(),
+                        rec.get("payload", "{}"),
+                    ),
+                )
+            self._conn.commit()
+
+    def query_platform_observations(self, project_id: str | None = None) -> list[dict[str, Any]]:
+        """Latest platform observation per project (or filtered by project_id)."""
+        sql = "SELECT project_id, platform, observed_at, payload FROM platform_observations"
+        params: tuple = ()
+        if project_id:
+            sql += " WHERE project_id = ?"
+            params = (project_id,)
+        sql += " ORDER BY observed_at DESC"
+        with self._lock:
+            rows = self._conn.execute(sql, params).fetchall()
+        return [
+            {
+                "project_id": r[0],
+                "platform": r[1],
+                "observed_at": r[2],
+                "payload": r[3],
+            }
+            for r in rows
+        ]
+
     def record_ci_run(self, run: dict[str, Any]) -> str:
         validate_record(run, allow_usage_tokens=False)
         run_id = str(run.get("run_id") or uuid.uuid4().hex)

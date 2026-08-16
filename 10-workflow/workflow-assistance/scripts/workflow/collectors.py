@@ -272,7 +272,32 @@ def build_standard_collectors(project_root: Path) -> list[Any]:
         return collect_task_ledger(store, project_id)
 
     def git_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
-        return collect_git_ci(store, project_id, project_root)
+        # Multi-project: collect git truth for every approved project root.
+        # Unapproved roots are never scanned; missing roots are skipped.
+        rows = store.list_projects()
+        records: list[dict[str, Any]] = []
+        ok_any = False
+        err: str | None = None
+        for row in rows:
+            pid = str(row.get("project_id") or row.get("projectId") or "")
+            if not pid:
+                continue
+            definition = store.get_project_definition(pid)
+            if definition and not definition.get("approved", False):
+                continue
+            root = (definition or {}).get("root_path") or row.get("root_path")
+            if not root:
+                continue
+            rp = Path(root)
+            if not (rp / ".git").exists():
+                continue
+            result = collect_git_ci(store, pid, rp)
+            records.extend(result.records)
+            ok_any = ok_any or result.ok
+            if result.error:
+                err = result.error
+        return CollectorResult(kind="quality", ok=ok_any or bool(records), records=records,
+                               error=err)
 
     def usage_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
         return collect_usage_files(
@@ -287,7 +312,12 @@ def build_standard_collectors(project_root: Path) -> list[Any]:
     def growth_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
         return collect_growth_watcher(store, project_id, project_root)
 
-    return [task_collector, git_collector, usage_collector, quality_collector, growth_collector]
+    def platform_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
+        from platform_collector import collect_platform_observations
+        return collect_platform_observations(store, project_id)
+
+    return [task_collector, git_collector, usage_collector, quality_collector,
+            growth_collector, platform_collector]
 
 
 if __name__ == "__main__":
