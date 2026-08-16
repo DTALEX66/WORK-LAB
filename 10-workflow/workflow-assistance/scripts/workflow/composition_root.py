@@ -179,6 +179,15 @@ def build_v3_snapshot(
 ) -> dict[str, Any]:
     """组装 v3 snapshot（transport 由 live-gate verdict 决定，绝不伪造 LIVE）。"""
     coverage = _collector_coverage(store)
+    # Observer cross-project view: map project_id -> primary platform from
+    # platform_observations (recorded by the platform collector). Null when
+    # no observation exists; never fabricated.
+    platform_map = {}
+    try:
+        for row in store.query_platform_observations():
+            platform_map.setdefault(row["project_id"], row["platform"])
+    except Exception:
+        platform_map = {}
     return build_snapshot(
         revision=revision,
         generated_at=generated_at,
@@ -198,4 +207,5 @@ def build_v3_snapshot(
         },
         git_state=_git_state(store),
         workspace=workspace_evidence,
+        platform_map=platform_map,
     )

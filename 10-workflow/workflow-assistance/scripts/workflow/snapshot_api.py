@@ -40,6 +40,8 @@ def build_snapshot(
     workspace: dict[str, Any] | None = None,
     source_watermark: str | None = None,
     generated_at: str | None = None,
+    platform_map: dict[str, str] | None = None,
+    git_map: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build the v3 snapshot from canonical facts (all fields optional for tests)."""
     generated_at = generated_at or _now()
@@ -68,7 +70,7 @@ def build_snapshot(
         },
         "governance": _governance_projection(governance),
         "workspace": workspace or {},
-        "projects": [_project_projection(p, executions, usage_by_project, git_state, ci_runs) for p in projects],
+        "projects": [_project_projection(p, executions, usage_by_project, git_state, ci_runs, platform_map, git_map) for p in projects],
         "executions": executions,
         "tasks": (store_projection or {}).get("tasks_by_status", {}),
         "tokenSummary": _token_summary(usage),
@@ -99,8 +101,11 @@ def _project_projection(
     usage_by_project: dict[str, dict[str, Any]],
     git_state: dict[str, Any] | None,
     ci_runs: list[dict[str, Any]],
+    platform_map: dict[str, str] | None = None,
+    git_map: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     project_id = project.get("projectId")
+    effective_git = (git_map or {}).get(project_id) or git_state
     project_executions = [e for e in executions if e.get("anchorProjectId") == project_id]
     active = sum(
         1 for e in project_executions if e.get("state") in {"RUNNING", "STARTING", "WAITING_USER", "WAITING_APPROVAL", "BLOCKED"}
@@ -115,6 +120,7 @@ def _project_projection(
             working_areas.append(area)
     return {
         "projectId": project_id,
+        "agentPlatform": (platform_map or {}).get(project_id) or project.get("agentPlatform"),
         "displayName": project.get("displayName"),
         "identityState": project.get("identityState") or "UNRESOLVED",
         "activityState": project.get("activityState") or "UNKNOWN",
@@ -126,15 +132,15 @@ def _project_projection(
         "lastStrongEvidenceAt": project.get("lastStrongEvidenceAt"),
         "repositories": project.get("repositories", []),
         "git": {
-            "localSha": (git_state or {}).get("localSha"),
-            "remoteSha": (git_state or {}).get("remoteSha"),
-            "matchState": _git_match_state(git_state or {}),
-            "branch": (git_state or {}).get("branch"),
-            "dirtyCount": (git_state or {}).get("dirtyCount"),
-            "observedAt": (git_state or {}).get("observedAt"),
-            "quality": (git_state or {}).get("quality"),
-            "freshness": (git_state or {}).get("freshness"),
-            "sourceRef": (git_state or {}).get("sourceRef"),
+            "localSha": (effective_git or {}).get("localSha"),
+            "remoteSha": (effective_git or {}).get("remoteSha"),
+            "matchState": _git_match_state(effective_git or {}),
+            "branch": (effective_git or {}).get("branch"),
+            "dirtyCount": (effective_git or {}).get("dirtyCount"),
+            "observedAt": (effective_git or {}).get("observedAt"),
+            "quality": (effective_git or {}).get("quality"),
+            "freshness": (effective_git or {}).get("freshness"),
+            "sourceRef": (effective_git or {}).get("sourceRef"),
         },
         "token": {
             "inputTokens": usage.get("inputTokens"),

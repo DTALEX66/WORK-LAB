@@ -126,7 +126,7 @@ t("project surface keeps canonical registry and local Git facts", () => {
 
 t("unsupported execution/CI/governance fields never become cards", () => {
   const html = WlRenderV3.full(snapshot());
-  ["执行实例", "CI / GitHub", "治理漂移", "Collector 覆盖", "Token 用量"].forEach((label) => {
+  ["执行实例", "CI / GitHub", "治理漂移", "Collector 覆盖"].forEach((label) => {
     assert(!html.includes(label), "unsupported or empty module hidden: " + label);
   });
   assert(!html.includes("UNKNOWN"), "no permanent UNKNOWN filler");
@@ -152,25 +152,148 @@ t("task and usage sections appear only when canonical samples exist", () => {
   assert(html.includes("1500"), "real total tokens shown");
 });
 
-t("full view keeps blueprint taskpack governance history and explicit gaps", () => {
+t("full view: connection + token dash + status matrix + governance only", () => {
   const html = WlRenderV3.full(snapshot());
-  assert(html.includes("项目蓝图"), "plan is a first-class product section");
-  assert(html.includes("28"), "TaskPack total is visible");
-  assert(html.includes("WL3-620"), "task rows are visible");
-  assert(html.includes("历史与恢复"), "historical ledger is visible");
-  assert(html.includes("ERR-060"), "recent error evidence is visible");
-  assert(html.includes("明确未验证"), "gaps are visible instead of hidden or fabricated");
-  assert(html.includes("50-taskpacks/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md"), "source path is traceable");
-  assert(!html.includes("<span>实时完成率</span>"), "static plan counts are not labeled as realtime telemetry");
+  assert(html.includes("跨项目运行状态"), "cross-project runtime matrix present");
+  assert(html.includes("TOKEN 仪表盘"), "token dashboard present");
+  assert(html.includes("Sidecar"), "connection strip present");
+  assert(html.includes("治理"), "governance present");
+  // Per-project internal task matrices are NOT rendered.
+  assert(!html.includes("项目蓝图"), "no workspace hero/taskpack");
+  assert(!html.includes("TaskPack 任务"), "no internal taskpack matrix");
+  assert(!html.includes("历史与恢复"), "no history ledger");
+  assert(!html.includes("证据来源"), "no evidence sources");
 });
 
-t("production v3 entry calls only the truthful full/compact surfaces", () => {
+t("production v3 entry calls fusion + truthful surfaces", () => {
   const app = fs.readFileSync(path.join(WEB, "scripts", "app.js"), "utf-8");
-  assert(/WlRenderV3\.full\(/.test(app), "full surface entry is wired");
+  assert(/WlFusionV3\.render\(/.test(app), "fusion render is wired for full view");
   assert(/WlRenderV3\.compact\(/.test(app), "compact surface entry is wired");
   ["governanceDrift", "executionsTable", "tokenCi", "kpi"].forEach((name) => {
     assert(!new RegExp("WlRenderV3\\." + name + "\\(").test(app), "retired module not called: " + name);
   });
+});
+
+
+t("metric cards render real data only", () => {
+  const d = snapshot();
+  d.projects = [d.projects[0]];
+  d.tasks = { completed: 3, running: 1 };
+  d.tokenSummary = { totalTokens: 1500000, inputTokens: 500000, outputTokens: 1000000 };
+  d.coverage = { numerator: 6, denominator: 6 };
+  const html = WlRenderV3.metricCards(d);
+  assert(html.includes("已接入项目"), "projects metric present");
+  assert(html.includes("1"), "projects count rendered");
+  assert(html.includes("任务"), "tasks metric present");
+  assert(html.includes("4"), "task total rendered");
+  assert(html.includes("Token 用量"), "usage metric present");
+  assert(html.includes("1.5M"), "usage formatted as M");
+  assert(html.includes("采集覆盖"), "coverage metric present");
+  assert(html.includes("100%"), "coverage pct rendered");
+});
+
+t("metric cards never fabricate from UNKNOWN/zero", () => {
+  const d = snapshot();
+  d.projects = [];
+  d.tasks = {};
+  d.tokenSummary = { totalTokens: null, inputTokens: null, outputTokens: null };
+  d.coverage = null;
+  const html = WlRenderV3.metricCards(d);
+  assert(html === "", "no metrics when no canonical data");
+});
+
+t("full view has no per-project task matrix", () => {
+  const d = snapshot();
+  d.tasks = { completed: 3 };
+  const html = WlRenderV3.full(d);
+  assert(!html.includes("wl-taskpack"), "no taskpack section in full view");
+  assert(!html.includes("wl-project-truth-card"), "no per-project task cards");
+});
+
+
+t("platform status matrix shows project/platform/activity", () => {
+  const d = snapshot();
+  d.projects = [Object.assign({}, d.projects[0], {
+    agentPlatform: "dsh", activityState: "RUNNING",
+  })];
+  d.tokenSummary = { totalTokens: 2500000, inputTokens: 1000000, outputTokens: 1500000, cacheHitTokens: 800000, cacheMissTokens: 200000 };
+  const html = WlRenderV3.platformStatusMatrix(d);
+  assert(html.includes("跨项目运行状态"), "matrix heading present");
+  assert(html.includes("DSH"), "platform label shown");
+  assert(html.includes("运行中"), "activity badge shown");
+  assert(html.includes("main"), "branch shown");
+  assert(!html.includes("wl-project-truth-card"), "no per-project task card");
+});
+
+t("token dashboard renders real tokens only", () => {
+  const d = snapshot();
+  d.tokenSummary = { totalTokens: 2500000, inputTokens: 1000000, outputTokens: 1500000, cacheHitTokens: 800000, cacheMissTokens: 200000 };
+  const html = WlRenderV3.tokenDashboard(d);
+  assert(html.includes("TOKEN 仪表盘"), "token dash heading");
+  assert(html.includes("2.5M"), "total formatted");
+  assert(html.includes("80%"), "hit rate computed");
+  assert(html.includes("缓存命中"), "hit cell");
+});
+
+t("token dashboard empty when no sample", () => {
+  const d = snapshot();
+  d.tokenSummary = { totalTokens: null, inputTokens: null, outputTokens: null };
+  const html = WlRenderV3.tokenDashboard(d);
+  assert(html.includes("尚无真实 token 样本"), "empty state, no fabricated KPI");
+});
+
+t("full view prefers runtime matrix over task matrix", () => {
+  const d = snapshot();
+  const html = WlRenderV3.full(d);
+  const statusIdx = html.indexOf("wl-status-panel");
+  const taskIdx = html.indexOf("wl-taskpack");
+  assert(statusIdx !== -1, "runtime status matrix in full view");
+  assert(!html.includes("项目运行全景"), "legacy project table gone");
+});
+
+t("CC2: single unified project grid (no duplicated surfaces)", () => {
+  const d = snapshot();
+  const html = WlFusionV3.render(d);
+  // Global Command + one Projects grid
+  assert(html.includes("wl-cmd-global"), "global command present");
+  assert(html.includes("wl-proj-grid"), "single project grid");
+  // No duplicated project surfaces
+  assert(!html.includes("wl-signal-strip"), "no old signal strip");
+  assert(!html.includes("wl-matrix-row"), "no old runtime matrix");
+  assert(!html.includes("wl-hp-card"), "no old homepage card");
+});
+
+t("CC2: truth - token telemetry empty state when no sample", () => {
+  const d = snapshot();
+  d.tokenSummary = { totalTokens: null, inputTokens: null, outputTokens: null };
+  const html = WlFusionV3.render(d);
+  assert(html.includes("No token samples yet"), "empty state, no fake zero");
+  assert(!html.includes("0 Token"), "no fabricated zero KPI");
+});
+
+t("CC2: telemetry renders real tokens", () => {
+  const d = snapshot();
+  d.tokenSummary = { totalTokens: 2500000, inputTokens: 1000000, outputTokens: 1500000, cacheHitTokens: 800000, cacheMissTokens: 200000 };
+  const html = WlFusionV3.render(d);
+  assert(html.includes("AI Telemetry"), "telemetry section");
+  assert(html.includes("2.5M"), "total");
+  assert(html.includes("80%"), "hit rate");
+});
+
+t("CC2: project card shows platform/git/status", () => {
+  const d = snapshot();
+  d.projects = [Object.assign({}, d.projects[0], { agentPlatform: "DSH" })];
+  const html = WlFusionV3.render(d);
+  assert(html.includes("WORK-LAB"), "project name");
+  assert(html.includes("DSH"), "platform");
+  assert(html.includes("wl-proj-card"), "project card");
+  assert(html.includes("main"), "branch");
+  assert(html.includes("wl-proj-dot"), "status dot");
+});
+
+t("app.js wires fusion render", () => {
+  const app = fs.readFileSync(path.join(WEB, "scripts", "app.js"), "utf-8");
+  assert(app.includes("WlFusionV3.render"), "fusion render wired");
 });
 
 function run() {

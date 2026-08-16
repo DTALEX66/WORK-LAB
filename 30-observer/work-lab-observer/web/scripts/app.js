@@ -44,8 +44,12 @@ const WlApp = (function () {
     }
   }
 
+  /* Redesign: unified v3 surface. The canonical sidecar snapshot is
+     workflow/snapshot/v3; legacy v2-rendered projections also render via v3. */
   function isV3Surface(d) {
-    return d && d.schemaVersion === "work-lab/observer-projection/v2-rendered";
+    if (!d) return false;
+    return d.schemaVersion === "workflow/snapshot/v3"
+      || d.schemaVersion === "work-lab/observer-projection/v2-rendered";
   }
 
   function render() {
@@ -59,7 +63,7 @@ const WlApp = (function () {
     }
 
     if (st.view === "compact") {
-      const inner = isV3Surface(d) ? WlRenderV3.compact(d) : WlRender.renderCompact(d);
+      const inner = isV3Surface(d) ? (typeof WlFusionV3 !== "undefined" && WlFusionV3.renderCompact ? WlFusionV3.renderCompact(d) : WlRenderV3.compact(d)) : WlRender.renderCompact(d);
       root.className = "wl-shell wl-compact";
       root.innerHTML = `<div class="wl-compact">${inner}</div>` + (isV3Surface(d) ? "" : WlRender.footer(d));
       // move tools into a small top row
@@ -79,14 +83,24 @@ const WlApp = (function () {
     root.className = "wl-shell";
     let content;
     if (isV3Surface(d)) {
-      content = WlRenderV3.full(d);
+      // Fusion Command Center: signal strip + cross-project matrix + token dash.
+      // Single render source — no duplicated matrices (platformStatusMatrix /
+      // governanceAndGaps are already inside WlFusionV3.render when relevant).
+      content = typeof WlFusionV3 !== "undefined"
+        ? WlFusionV3.render(d)
+        : WlRenderV3.full(d);
     } else {
       content = `<div class="wl-grid">${WlRender.renderFull(d)}</div>`;
     }
-    root.innerHTML =
-      WlRender.topbar(d) +
-      `<div class="wl-body-full"><main class="wl-content">${content}</main></div>` +
-      WlRender.footer(d);
+    if (typeof WlFusionV3 !== "undefined" && isV3Surface(d)) {
+      root.className = "wl-shell wl-cc";
+      root.innerHTML = content;
+    } else {
+      root.innerHTML =
+        WlRender.topbar(d) +
+        `<div class="wl-body-full"><main class="wl-content">${content}</main></div>` +
+        WlRender.footer(d);
+    }
     applyTheme(st.theme);
     wireToggles(root);
   }

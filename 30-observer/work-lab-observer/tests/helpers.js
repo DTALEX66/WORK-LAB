@@ -28,7 +28,9 @@ function loadScripts() {
   global.WlRenderV3 = WlRenderV3;
   const WlA11y = require(path.join(WEB, "scripts", "accessibility.js")).WlA11y;
   global.WlA11y = WlA11y;
-  return { WlFormat, WlApi, WlState, WlCharts, WlRender, WlRenderV3, WlA11y };
+  const WlFusionV3 = require(path.join(WEB, "scripts", "fusion-v3.js")).WlFusionV3;
+  global.WlFusionV3 = WlFusionV3;
+  return { WlFormat, WlApi, WlState, WlCharts, WlRender, WlRenderV3, WlA11y, WlFusionV3 };
 }
 
 function loadFixture(name) {

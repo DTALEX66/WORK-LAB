@@ -9,6 +9,10 @@ WORK-LAB Observer 是严格只读的观测与证据层，仅从 Workflow Assista
 - 不读取 Prompt/Response 正文、凭据、Cookie、auth store、私钥或 provider state；
 - Open Design 已迁移至 `DTALEX66/DESIGN-LAB`，本模块不再读取、投影或维护其事件。
 
+## Source & Architecture
+
+- `docs/observer-source-architecture.md`：Command Center 融合布局源码位置、数据流、运行方式、测试（2026-08-16）。
+
 ## Verification
 
 Run from the repository root:
@@ -42,17 +46,20 @@ write-back.
 When the embedded desktop frontend cannot reach a live endpoint, it shows
 `OFFLINE` explicitly — a bundled snapshot is never labelled live data.
 
-### Four views (Full/Compact × Dark/Light)
+### Views (Full/Compact × Dark/Light, v3 renderer)
 
-All four views render the same Projection and share one set of Design Tokens.
+All views render the same Projection and share one set of Design Tokens.
+The v3 renderer (render-v3.js) is the single production surface; legacy
+render.js is retained for v2-rendered projections only.
 
 | View | Query | Content |
 |---|---|---|
-| Full Dark | `/?view=full&theme=dark` | hero + 4 metrics + tasks + usage/cost + data quality |
+| Full Dark | `/?view=full&theme=dark` | data chain + metric cards (projects/tasks/usage/coverage, real-data only) + workspace hero + taskpack + governance + project matrix (sorted) + optional tasks/usage + history + evidence |
 | Full Light | `/?view=full&theme=light` | same layout, light surface |
-| Compact Dark | `/?view=compact&theme=dark` | 360–420px wide, essentials only |
+| Compact Dark | `/?view=compact&theme=dark` | 360–420px wide, essentials only (projects + status) |
 | Compact Light | `/?view=compact&theme=light` | essentials only, light surface |
 
+Metric cards render only when canonical samples exist — never from UNKNOWN/0.
 In-page nav links toggle view/theme without reloading the Projection.
 
 ### Visual direction
