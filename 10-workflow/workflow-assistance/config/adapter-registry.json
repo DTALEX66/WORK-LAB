@@ -102,6 +102,23 @@
     },
 
     {
+      "id": "deepseek-harness",
+      "display_name": "DeepSeek Harness",
+      "support_level": "experimental",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "repository",
+        "source_ref": "https://github.com/deepseek-ai/deepseek-harness",
+        "version": "0.1.0-rc.5@47f943859bef60e4160492346772ded9b24f765a",
+        "scope": "portable-agent-runtime-adapter",
+        "risk": "medium",
+        "status": "quarantined",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "DSH source is not vendored in WORK-LAB", "files": []}
+      }
+    },
+
+    {
       "id": "cursor",
       "display_name": "Cursor",
       "support_level": "manifest-only",
