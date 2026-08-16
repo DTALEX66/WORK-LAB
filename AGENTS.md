@@ -32,12 +32,31 @@ Module instructions can narrow these rules, never weaken them.
 
 Do not read, print, copy, commit, or upload credentials, `.env` files, auth
 stores, private keys, browser data, tokens, prompt bodies, or response bodies.
-Do not access `E:\` without explicit per-path, per-operation user
-authorization. Project artifacts never spill outside the project Git root; any
-spill is traceable, locatable, cleanable and migratable
+Never access `E:\` — read or write — without explicit per-path,
+per-operation user authorization. All content this project produces — builds,
+caches, temp files, evidence, downloads, generated artifacts — stays locked
+inside the project Git root: build/cache/temp roots live under
+`.hermes/task-runtime/` (TMP, npm/uv/pip caches, node_modules), evidence under
+`.hermes/task-artifacts/` or ignored `80-evidence/`; nothing spills to user
+directories, other projects, or the shared library unless explicitly
+authorized. Any spill is traceable, locatable, cleanable and migratable
 (`00-governance/project-data-boundary.json`). Never use destructive
-reset/clean/force-push operations. Generated evidence belongs under ignored
-`80-evidence/` or `.hermes/task-runtime/`.
+reset/clean/force-push operations.
+
+## Managed global configuration (Hermes)
+
+WORK-LAB manages a declared Hermes user overlay on top of the official
+baseline: the managed fields of `config/config.yaml` (`display.language`,
+`display.busy_input_mode`, `sessions.auto_prune`, `memory.*`,
+`hooks.pre_tool_call`, `mcp_servers.*`, `platform_toolsets.cli`), the 13
+skills under `skills/`, `config/SOUL.md`, and `bin/` launchers. Field
+authority and per-field modes live in
+`10-workflow/workflow-assistance/config/config-ownership.json` and
+`managed-config-schema.yaml`; `preserve_unknown: true` — never override
+user provider/model/auth/desktop state. Deploy to Hermes Home only through
+the portable sync plan (`.hermes/sync-plan.json`): backup-before-publish,
+update `config/skill-provenance.yaml` live hashes in the same change, and
+never promote the mixed-ownership live `config.yaml` wholesale.
 
 ## Verification
 
