@@ -91,6 +91,7 @@ jobs:
           python scripts/ci/generate_current_state.py --check-current
           python tests/ci/test_stage3_baseline.py
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py adapter-registry
+          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py capability-matrix
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py adapter-conformance
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py acp-conformance
           python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py otel-mapping

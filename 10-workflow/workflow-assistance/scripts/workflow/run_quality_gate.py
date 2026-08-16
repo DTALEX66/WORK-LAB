@@ -229,6 +229,11 @@ def gate_adapter_registry() -> int:
     )
 
 
+def gate_capability_matrix() -> int:
+    """WL3-100: capability-matrix.json stays consistent with adapter-registry.json."""
+    return run_python(["scripts/workflow/verify_capability_matrix.py"])
+
+
 def gate_adapter_conformance() -> int:
     return run_python(["tests/test_adapter_conformance.py"])
 
@@ -542,6 +547,11 @@ GATES: dict[str, Gate] = {
         "Verify adapter provenance, risk, status, and package hash evidence.",
         gate_adapter_registry,
     ),
+    "capability-matrix": Gate(
+        "capability-matrix",
+        "WL3-100: verify capability-matrix.json stays consistent with the adapter registry.",
+        gate_capability_matrix,
+    ),
     "adapter-conformance": Gate(
         "adapter-conformance",
         "Run adapter conformance checks.",
@@ -613,6 +623,7 @@ VERIFY_ORDER = (
     "client-neutral-manifest",
     "core-schemas",
     "adapter-registry",
+    "capability-matrix",
     "adapter-conformance",
     "acp-conformance",
     "otel-mapping",
@@ -676,6 +687,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "client-neutral-manifest": ("config/client-neutral-manifest.json",),
     "core-schemas": ("schemas/", "config/"),
     "adapter-registry": ("config/adapters.json", "scripts/workflow/adapter_registry.py"),
+    "capability-matrix": ("config/capability-matrix.json", "scripts/workflow/verify_capability_matrix.py"),
     "adapter-conformance": ("scripts/workflow/adapter_conformance.py", "tests/test_adapter_conformance.py"),
     "acp-conformance": ("scripts/workflow/acp_adapter.py", "tests/test_acp_adapter.py"),
     "otel-mapping": ("scripts/workflow/otel_mapper.py", "tests/test_otel_mapping.py"),
