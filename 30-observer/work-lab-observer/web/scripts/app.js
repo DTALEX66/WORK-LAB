@@ -103,6 +103,41 @@ const WlApp = (function () {
     }
     applyTheme(st.theme);
     wireToggles(root);
+    wireObservabilityData(root);
+  }
+
+  /* Observability: render WORK-LAB metrics natively from the local Prometheus
+     API (no iframe nesting). Deep tools (Grafana/Phoenix/Loki) stay as links. */
+  function wireObservabilityData(root) {
+    const kpis = root.querySelector("#wl-obskpis");
+    if (!kpis) return;
+    const defs = [
+      { expr: "wlobs_projects", label: "项目", fmt: "int" },
+      { expr: "wlobs_executions", label: "执行实例", fmt: "int" },
+      { expr: "wlobs_usage_tokens{kind=\"total\"}", label: "Token 总量", fmt: "short" },
+      { expr: "wlobs_cost_estimate", label: "成本 (USD)", fmt: "cost" },
+      { expr: "wlobs_platform_observations", label: "平台观测", fmt: "int" }
+    ];
+    function fmt(v, kind) {
+      if (kind === "short") return v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? (v / 1e3).toFixed(1) + "K" : v.toFixed(0);
+      if (kind === "cost") return "$" + v.toFixed(2);
+      return v.toFixed(0);
+    }
+    Promise.all(defs.map(function (def) {
+      return fetch("http://127.0.0.1:9090/api/v1/query?query=" + encodeURIComponent(def.expr))
+        .then(function (res) { return res.json(); })
+        .then(function (j) {
+          const list = (j.data && j.data.result) || [];
+          const total = list.reduce(function (a, item) { return a + (parseFloat(item.value[1]) || 0); }, 0);
+          return { def: def, total: total, series: list.length };
+        })
+        .catch(function () { return null; });
+    })).then(function (results) {
+      const cards = results.filter(Boolean).map(function (r) {
+        return '<div class="wl-obskpi"><span>' + r.def.label + '</span><b>' + fmt(r.total, r.def.fmt) + '</b></div>';
+      }).join("");
+      kpis.innerHTML = cards || '<span class="wl-empty">指标不可用</span>';
+    });
   }
 
   function wireToggles(root) {

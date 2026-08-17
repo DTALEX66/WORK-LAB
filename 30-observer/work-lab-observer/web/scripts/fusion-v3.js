@@ -101,6 +101,52 @@ const WlFusionV3 = (function () {
     return '<section class="wl-act-section" id="activity"><header class="wl-sec-head"><h2>Agent 活动</h2><span>' + executions.length + ' 个执行</span></header><div class="wl-act-list">' + rows + '</div></section>';
   }
 
+  /* Agent Fleet (报告 Module09): 按 Agent 聚合的执行实例（runtime/status/项目）。 */
+  function renderAgentFleet(d) {
+    const execs = Array.isArray(d.executions) ? d.executions : [];
+    if (!execs.length) return "";
+    const byAgent = {};
+    execs.forEach(function (e) {
+      const agent = e.agent || "unknown";
+      if (!byAgent[agent]) byAgent[agent] = { agent: agent, runs: 0, active: 0, projects: {} };
+      byAgent[agent].runs += 1;
+      const st = String(e.state || "").toUpperCase();
+      if (st === "RUNNING" || st === "ACTIVE" || st === "EXECUTING") byAgent[agent].active += 1;
+      const proj = e.anchorProjectId || e.projectId || "—";
+      byAgent[agent].projects[proj] = (byAgent[agent].projects[proj] || 0) + 1;
+    });
+    const rows = Object.keys(byAgent).map(function (k) {
+      const a = byAgent[k];
+      const active = a.active > 0;
+      const projects = Object.keys(a.projects).map(function (p) { return p + "×" + a.projects[p]; }).join(" · ");
+      return '<div class="wl-act-row"><span class="wl-proj-dot ' + (active ? "ok" : "muted") + '"></span>' +
+        '<b>' + esc(a.agent) + '</b>' +
+        '<span class="wl-act-task">' + esc(projects || "—") + '</span>' +
+        '<span class="wl-act-state ' + (active ? "ok" : "muted") + '">' + (active ? "活跃 " + a.active : a.runs + " 次") + '</span></div>';
+    }).join("");
+    return '<section class="wl-act-section" id="fleet"><header class="wl-sec-head"><h2>Agent Fleet</h2><span>' + Object.keys(byAgent).length + ' 个 Agent（Runtime Control）</span></header><div class="wl-act-list">' + rows + '</div></section>';
+  }
+
+  /* Execution Timeline (报告 Module09): 时间线视图（执行实例生命周期 + 项目注册）。 */
+  function renderTimeline(d) {
+    const execs = Array.isArray(d.executions) ? d.executions : [];
+    const projects = Array.isArray(d.projects) ? d.projects : [];
+    const events = [];
+    projects.forEach(function (p) {
+      events.push({ at: p.registeredAt || null, cls: "muted", text: esc(p.displayName || p.projectId) + " 注册" });
+    });
+    execs.forEach(function (e) {
+      const st = statusMeta(e.state);
+      events.push({ at: e.startedAt || e.lastHeartbeatAt || null, cls: st.cls, text: esc(e.agent || "agent") + " · " + esc(e.anchorProjectId || "—") + " → " + st.label });
+    });
+    events.sort(function (a, b) { return (a.at || "").localeCompare(b.at || ""); });
+    const items = events.slice(-10).reverse().map(function (e) {
+      const time = e.at ? String(e.at).slice(5, 19).replace("T", " ") : "—";
+      return '<div class="wl-tl-row"><span class="wl-tl-time mono">' + esc(time) + '</span><span class="wl-tl-dot ' + e.cls + '"></span><span class="wl-tl-text">' + e.text + '</span></div>';
+    }).join("");
+    return '<section class="wl-act-section" id="timeline"><header class="wl-sec-head"><h2>Execution Timeline</h2><span>最近事件</span></header><div class="wl-tl-list">' + (items || '<span class="wl-empty-inline">无事件</span>') + '</div></section>';
+  }
+
   function renderTelemetry(d) {
     const t = d.tokenSummary || {};
     const total = integer(t.totalTokens);
@@ -184,11 +230,25 @@ const WlFusionV3 = (function () {
     return '<header class="wl-topbar"><div class="wl-topbar-title"><b>WORK-LAB</b><span>Observer</span><em>Command Center</em></div><div class="wl-topbar-right"><span class="wl-topbar-state ' + st.cls + '">' + st.label + '</span><span class="wl-topbar-ro">READ ONLY</span></div></header>';
   }
 
+  function renderObservability() {
+    // Native metrics panel (filled by app.js from Prometheus API) + tool links.
+    // No iframe nesting: deep tools (Grafana/Phoenix/Loki) open in their own
+    // window; the OB surface renders Prometheus facts natively.
+    const links = [
+      { label: "Grafana 总台", url: "http://127.0.0.1:3000" },
+      { label: "Phoenix Trace", url: "http://127.0.0.1:6006" },
+      { label: "Loki 日志", url: "http://127.0.0.1:3000/explore?schemaVersion=1&panes=%7B%22default%22%3A%7B%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22P8E80F9AEF21F6940%22%7D%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22%7B%7D%22%2C%22queryType%22%3A%22range%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D" }
+    ];
+    const chips = links.map((l) => '<a class="wl-gov-chip" href="' + l.url + '" target="_blank" rel="noopener">' + esc(l.label) + '</a>').join("");
+    return '<section class="wl-gov-section" id="observability"><header class="wl-sec-head"><h2>Observability</h2><span>实时指标（Prometheus 原生渲染）</span></header><div id="wl-obskpis" class="wl-obskpis"><span class="wl-empty">加载中…</span></div><div class="wl-gov-chips" style="margin-top:10px">' + chips + '</div></section>';
+  }
+
   function renderShell(d) {
     return '<div class="wl-cc-shell">' + renderSidebar(d) + '<main class="wl-cc-main">' +
       renderTopbar(d) + renderGlobalCommand(d) + renderProjectGrid(d) + renderActivity(d) +
+      '<div class="wl-cc-cols">' + renderAgentFleet(d) + renderTimeline(d) + '</div>' +
       '<div class="wl-cc-cols">' + renderTelemetry(d) + renderDataTrust(d) + '</div>' +
-      renderDelivery(d) + renderGovernance(d) +
+      renderDelivery(d) + renderGovernance(d) + renderObservability() +
       '</main></div>';
   }
 
@@ -223,7 +283,7 @@ const WlFusionV3 = (function () {
 
   function render(d) { return renderShell(d); }
 
-  return { render, renderCompact, esc, fmtShort, statusMeta, renderShell, renderSidebar, renderTopbar, renderGlobalCommand, renderProjectGrid, renderActivity, renderTelemetry, renderDelivery, renderGovernance, renderDataTrust };
+  return { render, renderCompact, esc, fmtShort, statusMeta, renderShell, renderSidebar, renderTopbar, renderGlobalCommand, renderProjectGrid, renderActivity, renderAgentFleet, renderTimeline, renderTelemetry, renderDelivery, renderGovernance, renderDataTrust, renderObservability };
 })();
 
 if (typeof module !== "undefined" && module.exports) {

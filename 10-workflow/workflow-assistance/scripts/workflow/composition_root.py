@@ -18,7 +18,7 @@ from snapshot_api import build_snapshot
 
 # 显式批准白名单：默认仅 WORK-LAB 自身；其余项目需经 upsert_project_definition
 # 持久化 approved=True 后才收集（未批准 → 绝不自动收集）。
-EXPLICIT_APPROVED: set[str] = {"work-lab"}
+EXPLICIT_APPROVED: set[str] = {"work-lab", "design-lab", "archeaxis-knowledge-os", "obsidian-assistance"}
 
 
 def load_approved_index(store: CanonicalStore) -> ApprovedProjectIndex:

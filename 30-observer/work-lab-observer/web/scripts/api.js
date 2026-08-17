@@ -158,7 +158,9 @@ const WlApi = (function () {
       }
       return parsed.toString();
     }
-    return "/api/v1/snapshot";
+    // Control Tower default: the local WORK-LAB sidecar projection API
+    // (loopback, GET-only). Same boundary as an explicit ?api= loopback URL.
+    return "http://127.0.0.1:61867/api/v1/snapshot";
   }
 
   /* WLGM-150: single projection mapping (v3 snapshot -> render surface).
