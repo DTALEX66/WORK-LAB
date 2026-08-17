@@ -526,6 +526,16 @@ class CanonicalStore:
         """Record project->platform observations (Observer cross-project view)."""
         with self._lock:
             for rec in records:
+                project_id = str(rec.get("project_id") or "")
+                platform = str(rec.get("platform") or "")
+                if not project_id or not platform:
+                    continue
+                # A fresh UUID made every collector tick an append-only row,
+                # causing platform_observations to grow forever and making
+                # query order the accidental source of truth.  The current
+                # platform observation is a keyed fact; history belongs in
+                # the canonical event/quality ledger, not this projection.
+                observation_id = f"platform-{project_id}"
                 self._conn.execute(
                     """
                     INSERT INTO platform_observations
@@ -537,9 +547,9 @@ class CanonicalStore:
                         payload=excluded.payload
                     """,
                     (
-                        str(uuid.uuid4().hex),
-                        rec.get("project_id"),
-                        rec.get("platform"),
+                        observation_id,
+                        project_id,
+                        platform,
                         datetime.now(timezone.utc).isoformat(),
                         rec.get("payload", "{}"),
                     ),
@@ -556,15 +566,17 @@ class CanonicalStore:
         sql += " ORDER BY observed_at DESC"
         with self._lock:
             rows = self._conn.execute(sql, params).fetchall()
-        return [
-            {
-                "project_id": r[0],
-                "platform": r[1],
-                "observed_at": r[2],
-                "payload": r[3],
-            }
-            for r in rows
-        ]
+        latest: dict[str, dict[str, Any]] = {}
+        for r in rows:
+            pid = str(r[0] or "")
+            if pid and pid not in latest:
+                latest[pid] = {
+                    "project_id": pid,
+                    "platform": r[1],
+                    "observed_at": r[2],
+                    "payload": r[3],
+                }
+        return list(latest.values())
 
     def record_ci_run(self, run: dict[str, Any]) -> str:
         validate_record(run, allow_usage_tokens=False)

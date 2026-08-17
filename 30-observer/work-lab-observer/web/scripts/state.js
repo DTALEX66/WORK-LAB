@@ -81,7 +81,15 @@ const WlState = (function () {
     state.generatedAt = data && data.generatedAt ? data.generatedAt : null;
     state.freshnessState = state.data && state.data.freshness ? state.data.freshness.state : "unknown";
     state.sourceCount = data && Array.isArray(data.sourceRefs) ? data.sourceRefs.length : 0;
-    if (data && data.summary && typeof data.summary.registeredProjects === "number") {
+    // v3 is authoritative even when it has zero approved projects.  The old
+    // check required a rendered v2 summary and silently discarded valid v3
+    // snapshots, which made the UI appear frozen or permanently offline.
+    const validProjection = data && typeof data === "object"
+      && Array.isArray(data.projects)
+      && (data.schemaVersion === "workflow/snapshot/v3"
+        || data.schemaVersion === "work-lab/observer-projection/v2-rendered"
+        || (data.summary && typeof data.summary.registeredProjects === "number"));
+    if (validProjection) {
       state.lastGood = data; // retain the unmodified last-good source projection
     }
     state.refreshError = null;

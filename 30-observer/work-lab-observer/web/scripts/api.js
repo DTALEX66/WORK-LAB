@@ -175,6 +175,7 @@ const WlApi = (function () {
       perProject.set(p.projectId, {
         projectId: p.projectId,
         displayName: p.displayName || p.projectId,
+        agentPlatform: p.agentPlatform || null,
         activityState: p.activityState || "UNKNOWN",
         state: String(p.activityState || "UNKNOWN").toLowerCase(),
         attentionState: p.attentionState || "NONE",
@@ -211,6 +212,12 @@ const WlApi = (function () {
     const mode = declared === "LIVE" ? "LIVE"
       : ["SNAPSHOT", "FIXTURE", "OFFLINE", "UNKNOWN"].includes(declared) ? declared
       : "UNKNOWN";
+    const tokenSummary = {
+      inputTokens: usageSummary.inputTokens == null ? null : usageSummary.inputTokens,
+      outputTokens: usageSummary.outputTokens == null ? null : usageSummary.outputTokens,
+      totalTokens: usageSummary.totalTokens == null ? null : usageSummary.totalTokens,
+      costQuality: usageSummary.costQuality || "UNKNOWN",
+    };
     return {
       schemaVersion: "work-lab/observer-projection/v2-rendered",
       mode,
@@ -227,12 +234,12 @@ const WlApi = (function () {
       },
       projects: Array.from(perProject.values()),
       executions,
-      usage: {
-        inputTokens: usageSummary.inputTokens == null ? null : usageSummary.inputTokens,
-        outputTokens: usageSummary.outputTokens == null ? null : usageSummary.outputTokens,
-        totalTokens: usageSummary.totalTokens == null ? null : usageSummary.totalTokens,
-        costQuality: usageSummary.costQuality || "UNKNOWN",
-      },
+      // Keep both names during the v2-rendered compatibility window.  The
+      // canonical v3 field is tokenSummary; the renderer must not lose real
+      // usage merely because the adapter renamed it to usage.
+      tokenSummary,
+      usage: tokenSummary,
+      quality: snapshot.quality || null,
       git: snapshot.git || { localSha: null, remoteSha: null, ciSha: null, matchState: "NO_LOCAL_CLAIM" },
       ci: snapshot.ci || [],
       tasks: snapshot.tasks || {},

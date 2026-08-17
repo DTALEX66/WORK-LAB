@@ -46,9 +46,9 @@ const WlFusionV3 = (function () {
     const coverage = d.coverage || {};
     const covPct = integer(coverage.denominator) > 0 && integer(coverage.numerator) != null ? Math.round((coverage.numerator / coverage.denominator) * 100) : null;
     const kpis = [
-      { label: "项目", value: String(projects.length || "-") },
-      { label: "运行中", value: active ? String(active) : "-", cls: active ? "ok" : "muted" },
-      { label: "阻塞", value: blocked ? String(blocked) : "-", cls: blocked ? "bad" : "muted" },
+      { label: "项目", value: String(projects.length) },
+      { label: "运行中", value: String(active), cls: active ? "ok" : "muted" },
+      { label: "阻塞", value: String(blocked), cls: blocked ? "bad" : "muted" },
       { label: "覆盖", value: covPct === null ? "-" : covPct + "%", cls: covPct !== null && covPct >= 80 ? "ok" : "muted" },
     ];
     const tokUsage = (d.tokenSummary || {}).totalTokens;
@@ -131,7 +131,7 @@ const WlFusionV3 = (function () {
         '<code class="mono">' + esc(git.branch || "—") + '</code>' +
         '<code class="mono">' + (git.localSha ? esc(String(git.localSha).slice(0, 7)) : "—") + '</code>' +
         '<span class="wl-del-ci ' + (ci ? ci.cls : "muted") + '">' + (ci ? ci.label : "—") + '</span>' +
-        '<span class="wl-del-dirty ' + (dirty === 0 ? "ok" : "warn") + '">' + (dirty === 0 ? "Clean" : dirty + " 变更") + '</span>' +
+        '<span class="wl-del-dirty ' + (dirty === 0 ? "ok" : dirty == null ? "muted" : "warn") + '">' + (dirty === 0 ? "Clean" : dirty == null ? "—" : dirty + " 变更") + '</span>' +
       '</div>';
     }).join("");
     return '<section class="wl-del-section" id="delivery"><header class="wl-sec-head"><h2>Delivery / CI</h2></header><div class="wl-del-table">' + rows + '</div></section>';
@@ -151,14 +151,17 @@ const WlFusionV3 = (function () {
     const transport = d.transport || {};
     const st = statusMeta(transport.transportState || "UNKNOWN");
     const coverage = d.coverage || {};
-    const cov = integer(coverage.denominator) > 0 ? ((integer(coverage.numerator) || 0) + " / " + integer(coverage.denominator)) : "—";
+    const numerator = integer(coverage.numerator);
+    const denominator = integer(coverage.denominator);
+    const cov = denominator > 0 && numerator != null ? (numerator + " / " + denominator) : "—";
+    const quality = d.quality || {};
     const facts = [
       { label: "Transport", value: st.label, cls: st.cls },
       { label: "Source coverage", value: cov },
       { label: "Freshness", value: d.sourceWatermark ? String(d.sourceWatermark).slice(0, 19) : "—" },
-      { label: "Revision", value: integer(d.revision) ? "#" + integer(d.revision) : "—" },
-      { label: "Malformed", value: "0" },
-      { label: "Dropped", value: "0" },
+      { label: "Revision", value: integer(d.revision) != null ? "#" + integer(d.revision) : "—" },
+      { label: "Malformed", value: quality.malformed == null ? "—" : String(quality.malformed) },
+      { label: "Dropped", value: quality.dropped == null ? "—" : String(quality.dropped) },
     ];
     return '<section class="wl-trust-section" id="trust"><header class="wl-sec-head"><h2>Data Trust</h2><span>这些状态有多可信</span></header><div class="wl-trust-grid">' + facts.map((f) => '<div><span>' + esc(f.label) + '</span><b class="' + (f.cls || "") + '">' + esc(f.value) + '</b></div>').join("") + '</div></section>';
   }
@@ -172,7 +175,7 @@ const WlFusionV3 = (function () {
       { id: "governance", label: "治理", icon: "i-layer" },
       { id: "trust", label: "信任", icon: "i-sha" },
     ];
-    const links = nav.map((n) => '<a href="#' + n.id + '" class="wl-nav-link" title="' + n.label + '"><svg class="wl-nav-svg" aria-hidden="true"><use href="#' + n.icon + '"></use></svg></a>').join("");
+    const links = nav.map((n) => '<a href="#' + n.id + '" class="wl-nav-link" title="' + n.label + '"><svg class="wl-nav-svg" aria-hidden="true"><use href="#' + n.icon + '"></use></svg><span>' + esc(n.label) + '</span></a>').join("");
     return '<nav class="wl-sidebar" aria-label="主导航"><div class="wl-sidebar-brand"><svg class="wl-brand-svg" aria-hidden="true"><use href="#i-sha"></use></svg></div><div class="wl-nav-list">' + links + '</div><div class="wl-sidebar-foot"><span class="wl-ro-badge">RO</span></div></nav>';
   }
 
@@ -194,7 +197,10 @@ const WlFusionV3 = (function () {
   function renderCompact(d) {
     const st = statusMeta((d.transport || {}).transportState || "UNKNOWN");
     const projects = Array.isArray(d.projects) ? d.projects : [];
-    const active = projects.filter((p) => String(p.activityState || "").toUpperCase().includes("RUN")).length;
+    const active = projects.filter((p) => {
+      const state = String(p.activityState || "").toUpperCase();
+      return state.includes("RUN") || state.includes("ACT") || state === "EXECUTING";
+    }).length;
     const blocked = projects.filter((p) => String(p.activityState || "").toUpperCase().includes("BLOCK")).length;
     const tokVal = (d.tokenSummary || {}).totalTokens;
     const coverage = d.coverage || {};
@@ -206,7 +212,7 @@ const WlFusionV3 = (function () {
     }).join("");
     return '<div class="wl-cp" role="status" aria-live="polite">' +
       '<div class="wl-cp-head"><b>WORK-LAB</b><span class="wl-cp-live ' + st.cls + '">' + st.label + '</span></div>' +
-      '<div class="wl-cp-sum"><span>' + projects.length + ' 项目</span><span>' + active + ' 活跃</span><span class="' + (blocked ? "bad" : "muted") + '">' + (blocked ? blocked + " 阻塞" : "无阻塞") + '</span></div>' +
+      '<div class="wl-cp-sum"><span>' + projects.length + ' 项目</span><span>' + active + ' 活跃</span><span class="' + (blocked ? "bad" : "muted") + '">' + blocked + " 阻塞" + '</span></div>' +
       '<div class="wl-cp-list">' + (rows || '<span class="wl-empty">无项目</span>') + '</div>' +
       '<div class="wl-cp-foot">' +
         (integer(tokVal) != null ? '<span class="mono">' + fmtShort(integer(tokVal)) + ' tok</span>' : '') +

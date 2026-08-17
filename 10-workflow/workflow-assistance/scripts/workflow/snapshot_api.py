@@ -110,6 +110,16 @@ def _project_projection(
     active = sum(
         1 for e in project_executions if e.get("state") in {"RUNNING", "STARTING", "WAITING_USER", "WAITING_APPROVAL", "BLOCKED"}
     )
+    raw_activity = str(project.get("activityState") or "UNKNOWN").upper()
+    # A registry row is not evidence that a project is running.  Conversely,
+    # once an execution instance is present, the project-level surface must
+    # expose that activity instead of leaving every project REGISTERED.
+    if active > 0 and raw_activity in {"REGISTERED", "UNKNOWN", "IDLE"}:
+        activity_state = "ACTIVE"
+    elif active == 0 and raw_activity == "UNKNOWN":
+        activity_state = "UNKNOWN"
+    else:
+        activity_state = raw_activity
     usage = usage_by_project.get(project_id, {})
     project_ci = [r for r in ci_runs if r.get("projectId") == project_id]
     # WLGM-180: aggregate working areas from executions (never duplicated).
@@ -123,7 +133,7 @@ def _project_projection(
         "agentPlatform": (platform_map or {}).get(project_id) or project.get("agentPlatform"),
         "displayName": project.get("displayName"),
         "identityState": project.get("identityState") or "UNRESOLVED",
-        "activityState": project.get("activityState") or "UNKNOWN",
+        "activityState": activity_state,
         "attentionState": project.get("attentionState") or "NONE",
         "activeExecutionCount": active,
         "workingAreas": working_areas,

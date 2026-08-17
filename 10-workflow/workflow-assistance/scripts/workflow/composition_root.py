@@ -144,18 +144,33 @@ def _collector_coverage(store: CanonicalStore) -> dict[str, Any]:
     return {"numerator": fresh, "denominator": len(rows), "scope": "collector_health"}
 
 
-def _git_state(store: CanonicalStore) -> dict[str, Any] | None:
-    """从 source_quality 读取最新、可核验的本地 Git 事实。"""
+def _git_states(store: CanonicalStore) -> dict[str, dict[str, Any]]:
+    """Return the newest Git observation per approved project.
+
+    The previous implementation returned the first ``scope=git`` row and
+    passed it to every project.  That made a cross-project dashboard display
+    WORK-LAB's branch/SHA on unrelated projects.  Keep the projection
+    project-scoped and choose by observed timestamp (the collector writes one
+    row per project).
+    """
+    latest: dict[str, dict[str, Any]] = {}
     for row in store.list_source_quality():
         if str(row.get("scope") or "") != "git":
             continue
+        project_id = str(row.get("project_id") or "")
         payload = row.get("payload") or {}
-        head = payload.get("head_sha")
-        if not head:
+        if isinstance(payload, str):
+            try:
+                import json
+                payload = json.loads(payload)
+            except (TypeError, ValueError):
+                payload = {}
+        if not project_id or not isinstance(payload, dict) or not payload.get("head_sha"):
             continue
-        return {
-            "localSha": head,
-            "remoteSha": None,
+        candidate = {
+            "localSha": payload.get("head_sha"),
+            "remoteSha": payload.get("remote_sha"),
+            "ciSha": payload.get("ci_sha"),
             "branch": payload.get("branch"),
             "dirtyCount": payload.get("dirty_count"),
             "observedAt": row.get("observed_at"),
@@ -163,7 +178,15 @@ def _git_state(store: CanonicalStore) -> dict[str, Any] | None:
             "freshness": row.get("freshness"),
             "sourceRef": payload.get("sourceRef"),
         }
-    return None
+        current = latest.get(project_id)
+        if current is None or str(candidate.get("observedAt") or "") >= str(current.get("observedAt") or ""):
+            latest[project_id] = candidate
+    return latest
+
+
+def _git_state(store: CanonicalStore) -> dict[str, Any] | None:
+    """Backward-compatible single-project helper (WORK-LAB only)."""
+    return _git_states(store).get("work-lab") or next(iter(_git_states(store).values()), None)
 
 
 def build_v3_snapshot(
@@ -188,6 +211,7 @@ def build_v3_snapshot(
             platform_map.setdefault(row["project_id"], row["platform"])
     except Exception:
         platform_map = {}
+    git_states = _git_states(store)
     return build_snapshot(
         revision=revision,
         generated_at=generated_at,
@@ -205,7 +229,10 @@ def build_v3_snapshot(
             "coverageDenominator": coverage["denominator"],
             "coverageScope": coverage["scope"],
         },
-        git_state=_git_state(store),
+        # Keep the top-level Git summary for legacy consumers, but pass the
+        # project map so each card is sourced from its own repository.
+        git_state=git_states.get("work-lab") or next(iter(git_states.values()), None),
+        git_map=git_states,
         workspace=workspace_evidence,
         platform_map=platform_map,
     )

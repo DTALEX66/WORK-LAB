@@ -247,6 +247,104 @@
   * { animation: none !important; transition: none !important; }
   .wl-proj-card:hover { border-color: var(--wl-border); }
 }
+
+/* Observer command surface v2 — quiet monochrome hierarchy.
+   This override intentionally removes the previous blue/purple glass wash:
+   status is carried by text + restrained accents, while the canvas, dividers
+   and type scale do the layout work.  It also gives Light mode its own
+   contrast tokens; previously the command-center layer stayed dark in Light.
+*/
+:root,
+[data-theme="dark"] {
+  --wl-bg-0: #090909;
+  --wl-bg-1: #111111;
+  --wl-bg-2: #171717;
+  --wl-surface: rgba(255,255,255,.035);
+  --wl-surface-hover: rgba(255,255,255,.075);
+  --wl-border: rgba(255,255,255,.10);
+  --wl-border-strong: rgba(255,255,255,.20);
+  --wl-text: #f5f5f2;
+  --wl-text-secondary: #b5b5ad;
+  --wl-text-muted: #777770;
+  --wl-primary: #d8d8d0;
+  --wl-info: #c9c9c0;
+}
+
+[data-theme="light"] {
+  --wl-bg-0: #f5f5f2;
+  --wl-bg-1: #ffffff;
+  --wl-bg-2: #ededE8;
+  --wl-surface: rgba(0,0,0,.035);
+  --wl-surface-hover: rgba(0,0,0,.065);
+  --wl-border: rgba(0,0,0,.11);
+  --wl-border-strong: rgba(0,0,0,.22);
+  --wl-text: #171715;
+  --wl-text-secondary: #555550;
+  --wl-text-muted: #7b7b73;
+  --wl-primary: #171715;
+  --wl-info: #4d4d47;
+  --status-success: #2f6b45;
+  --status-running: #4d6570;
+  --status-warning: #8a641d;
+  --status-critical: #9d3f3f;
+  --status-muted: #777770;
+  --status-unknown: #777770;
+}
+
+.wl-cc-shell { background: var(--wl-bg-0); color: var(--wl-text); }
+.wl-cc-main { max-width: 1480px; margin: 0 auto; padding: 0 32px 56px; width: 100%; box-sizing: border-box; }
+.wl-sidebar { width: 184px; box-sizing: border-box; padding: 20px 12px; align-items: stretch; gap: 18px; background: var(--wl-bg-1); border-right: 1px solid var(--wl-border); }
+.wl-sidebar-brand { padding: 0 10px 14px; border-bottom: 1px solid var(--wl-border); }
+.wl-brand-svg { width: 20px; height: 20px; color: var(--wl-text); }
+.wl-nav-list { display: flex; flex-direction: column; gap: 3px; }
+.wl-nav-link { justify-content: flex-start; gap: 10px; padding: 9px 10px; color: var(--wl-text-secondary); border-radius: 7px; }
+.wl-nav-link span { display: inline; font-size: 12px; }
+.wl-nav-link:hover { background: var(--wl-surface-hover); color: var(--wl-text); }
+.wl-nav-svg { width: 16px; height: 16px; flex: 0 0 auto; stroke: currentColor; fill: none; }
+.wl-ro-badge { align-self: flex-start; color: var(--wl-text-muted); border-color: var(--wl-border-strong); }
+.wl-topbar { padding: 24px 0 18px; margin-bottom: 14px; border-bottom: 1px solid var(--wl-border); }
+.wl-topbar-title b { font-size: 15px; }
+.wl-topbar-title em { border-radius: 5px; }
+.wl-cmd-global { padding: 16px 18px; background: var(--wl-bg-1); border-color: var(--wl-border); border-radius: 9px; }
+.wl-cmd-dot { width: 8px; height: 8px; }
+.wl-cmd-kpis { gap: 30px; }
+.wl-cmd-kpi b { font-size: 18px; }
+.wl-proj-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+.wl-proj-card, .wl-act-row, .wl-del-row, .wl-tel-section, .wl-trust-section { background: var(--wl-bg-1); border-color: var(--wl-border); box-shadow: none; }
+.wl-proj-card { padding: 17px; border-radius: 9px; }
+.wl-proj-card:hover { border-color: var(--wl-border-strong); transform: translateY(-1px); }
+.wl-sec-head { margin-bottom: 10px; }
+.wl-sec-head h2 { letter-spacing: -.01em; }
+.wl-proj-sub, .wl-proj-evidence, .wl-sec-head span { color: var(--wl-text-muted); }
+.wl-proj-facts { border-top-color: var(--wl-border); }
+.wl-cc-cols { gap: 10px; }
+.wl-tel-section, .wl-trust-section { padding: 17px; border-radius: 9px; }
+.wl-tel-cell, .wl-trust-grid div { background: var(--wl-surface); border-color: var(--wl-border); }
+.wl-tel-big { border-color: var(--wl-border-strong); }
+.wl-del-row { border-radius: 7px; }
+.wl-gov-chip { border-radius: 5px; }
+.wl-empty { color: var(--wl-text-muted); }
+
+@media (max-width: 900px) {
+  .wl-sidebar { width: 64px; padding: 16px 8px; align-items: center; }
+  .wl-sidebar-brand { padding-left: 2px; padding-right: 2px; }
+  .wl-nav-link { justify-content: center; padding: 9px; }
+  .wl-nav-link span { display: none; }
+  .wl-cc-main { padding-left: 20px; padding-right: 20px; }
+}
+
+@media (max-width: 640px) {
+  .wl-cc-shell { display: block; }
+  .wl-sidebar { width: 100%; flex-direction: row; justify-content: space-between; border-right: 0; border-bottom: 1px solid var(--wl-border); }
+  .wl-sidebar-brand { border-bottom: 0; padding-bottom: 0; }
+  .wl-nav-list { flex-direction: row; gap: 2px; }
+  .wl-sidebar-foot { margin-top: 0; }
+  .wl-cc-main { padding: 0 14px 32px; }
+  .wl-cmd-kpis { width: 100%; margin-left: 0; justify-content: space-between; gap: 12px; }
+  .wl-cmd-kpi { align-items: flex-start; }
+  .wl-del-row { grid-template-columns: 1fr 80px 70px; }
+  .wl-del-row > :nth-child(4), .wl-del-row > :nth-child(5) { grid-column: span 1; }
+}
 /* Visible focus */
 .wl-nav-link:focus-visible, .wl-proj-card:focus-visible, a:focus-visible {
   outline: 2px solid var(--wl-primary);
