@@ -252,6 +252,66 @@ class DeepSeekHarnessAdapter:
             "reason": "invoke is agent-runtime execution, gated by workspace scope + approval",
         }
 
+    # --- Harness Adapter 统一接口（调研报告 Module04） ---
+    def start(self, *, workspace: str | None = None, task: str | None = None) -> dict[str, Any]:
+        return {
+            "status": "WAITING_APPROVAL",
+            "adapter_id": self.adapter_id,
+            "reason": "DSH runtime start is approval-gated (external mutation)",
+            "workspace": workspace,
+            "task": task,
+        }
+
+    def stop(self, session_id: str | None = None) -> dict[str, Any]:
+        return {
+            "status": "WAITING_APPROVAL",
+            "adapter_id": self.adapter_id,
+            "reason": "DSH runtime stop is approval-gated",
+            "session_id": session_id,
+        }
+
+    def send(self, session_id: str | None, message: str) -> dict[str, Any]:
+        return {
+            "status": "UNSUPPORTED",
+            "adapter_id": self.adapter_id,
+            "reason": "send into DSH runtime requires an approved interaction contract",
+            "session_id": session_id,
+        }
+
+    def get_logs(self, session_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        """读取 DSH 会话日志（dsh-home/sessions 下，只读元数据）。"""
+        sessions_dir = home_dir(self.project) / "sessions"
+        if not sessions_dir.is_dir():
+            return []
+        entries: list[dict[str, Any]] = []
+        try:
+            for sub in sorted(sessions_dir.iterdir())[:20]:
+                for sfile in sub.glob("*/session.jsonl.zstd") if sub.is_dir() else []:
+                    entries.append({
+                        "session": sfile.parent.name,
+                        "log": str(sfile),
+                        "size_bytes": sfile.stat().st_size,
+                        "readable": sfile.is_file(),
+                    })
+                    if len(entries) >= limit:
+                        break
+                if len(entries) >= limit:
+                    break
+        except OSError:
+            pass
+        return entries
+
+    def export_trace(self, session_id: str | None = None) -> dict[str, Any]:
+        """导出会话活动元数据 Trace（供 Observer 消费；不含 prompt/response body）。"""
+        logs = self.get_logs(session_id, limit=20)
+        return {
+            "adapter_id": self.adapter_id,
+            "kind": self.kind,
+            "trace": [{"session": e["session"], "log": e["log"]} for e in logs],
+            "schema": "dsh/adapter-trace/v1",
+            "privacy": "metadata-only",
+        }
+
     def rollback(self, plan: dict[str, Any]) -> dict[str, Any]:
         return {
             "status": "READY",

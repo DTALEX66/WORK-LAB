@@ -102,6 +102,27 @@ class AgentAdapter(ABC):
     def heartbeat(self) -> dict[str, Any] | None:
         raise CapabilityUnsupported(f"{self.adapter_id} does not support heartbeat")
 
+    # --- Harness Adapter 统一接口（调研报告 Module04 Runtime Layer） ---
+    def start(self, *, workspace: str | None = None, task: str | None = None) -> dict[str, Any]:
+        """启动一个 Agent 运行时（接管启停）。"""
+        raise CapabilityUnsupported(f"{self.adapter_id} does not support start")
+
+    def stop(self, session_id: str | None = None) -> dict[str, Any]:
+        """停止一个 Agent 运行时。"""
+        raise CapabilityUnsupported(f"{self.adapter_id} does not support stop")
+
+    def send(self, session_id: str | None, message: str) -> dict[str, Any]:
+        """向 Agent 发送消息/指令。"""
+        raise CapabilityUnsupported(f"{self.adapter_id} does not support send")
+
+    def get_logs(self, session_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        """读取 Agent 运行日志。"""
+        raise CapabilityUnsupported(f"{self.adapter_id} does not support get_logs")
+
+    def export_trace(self, session_id: str | None = None) -> dict[str, Any]:
+        """导出完整调用链 Trace（供 Observer 消费）。"""
+        raise CapabilityUnsupported(f"{self.adapter_id} does not support export_trace")
+
 
 class MockAdapter(AgentAdapter):
     """Deterministic mock for tests and offline development."""

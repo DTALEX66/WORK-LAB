@@ -44,14 +44,14 @@
 ### P2（Phase2 已验证，补全）
 | 任务 | 内容 | 成本 |
 |---|---|---|
-| **Runtime Adapter 统一接口** | 按报告 Harness Adapter 抽象：start/stop/send/get_status/get_logs/get_usage/export_trace；现有 `adapter_sdk.py` 对齐 | 低-中 |
+| **Runtime Adapter 统一接口** | 按报告 Harness Adapter 抽象：start/stop/send/get_status/get_logs/get_usage/export_trace；`adapter_sdk.py` 已对齐 | ✅ 已实现（adapter_sdk + DSH adapter）|
 | **DeepSeek Harness Adapter 完善** | 独立 Adapter 接管启停/状态/日志/Token/证据（报告：不修改上游） | 中 |
 
 ### P3（Phase3 Governance 起步）
 | 任务 | 内容 | 成本 |
 |---|---|---|
 | **Policy Engine** | `policy_engine.py`：路径保护/危险命令/能力门；确定性评估 | ✅ 已实现（2026-08-17，测试通过）|
-| **Action Receipt** | 执行回执（Nucleus 吸收）：Agent 每次执行 → 回执（身份/策略/执行/结果）| 中 |
+| **Action Receipt** | `action_receipt.py`（Nucleus 吸收）：回执账本（身份/策略/执行/结果/证据）| ✅ 已实现（2026-08-17，测试通过）|
 
 ### 暂缓（非当前重点，控制成本）
 - Sandbox Manager（Level0-3）、MCP Gateway、Memory 三层、Harness Benchmark、Agent Provenance —— 报告后期 Phase4-5，当前不做。
