@@ -88,10 +88,47 @@ fn hide_to_tray(app: &AppHandle, state: &State<AppState>) {
     }
 }
 
+/// Spawns the project collector worker (durable_worker.py) bound to this app.
+/// The worker feeds git/usage/execution data into canonical.sqlite, which the
+/// Observer UI projects. It lives exactly as long as the desktop app.
+fn spawn_collector_worker() -> Option<std::process::Child> {
+    let python = r"C:\Users\ALEX\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe";
+    let script = r"D:\All projects\WORK-LAB\10-workflow\workflow-assistance\scripts\workflow\durable_worker.py";
+    let wf = r"D:\All projects\WORK-LAB\10-workflow\workflow-assistance\scripts\workflow";
+    std::process::Command::new(python)
+        .args([
+            "-u", script,
+            "--runtime-root", r"D:\All projects\WORK-LAB\.hermes\task-runtime",
+            "--project-root", r"D:\All projects\WORK-LAB",
+            "--tick", "30",
+        ])
+        .env("PYTHONPATH", wf)
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .ok()
+}
+
+/// Kills any stale durable_worker process so this app owns the single worker.
+fn kill_stale_worker() {
+    let _ = std::process::Command::new("powershell")
+        .args([
+            "-NoProfile", "-Command",
+            "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'durable_worker' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }",
+        ])
+        .spawn();
+    std::thread::sleep(std::time::Duration::from_millis(1500));
+    let _ = std::fs::remove_file(r"D:\All projects\WORK-LAB\.hermes\task-runtime\worker.lock");
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Collector lifecycle: opening the observer frontend starts the collector,
+    // closing it (app exit) stops the collector.
+    kill_stale_worker();
+    let mut worker = spawn_collector_worker();
     let endpoint = observer_endpoint();
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .manage(AppState::default())
         .plugin(tauri_plugin_log::Builder::default().level(log::LevelFilter::Info).build())
         // 注入 Observer 后端地址：必须在页面加载完成后（Finished）做 ——
@@ -170,8 +207,18 @@ pub fn run() {
                 }
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running WORK-LAB Observer");
+        .build(tauri::generate_context!())
+        .expect("error while building WORK-LAB Observer");
+
+    app.run(move |_app, event| {
+        // Collector lifecycle: on app exit, stop the collector worker.
+        if let tauri::RunEvent::Exit = event {
+            if let Some(mut child) = worker.take() {
+                let _ = child.kill();
+                let _ = child.wait();
+            }
+        }
+    });
 }
 
 #[cfg(test)]
