@@ -97,3 +97,26 @@ class CodexAdapter(AgentAdapter):
 
     def heartbeat(self) -> dict[str, Any]:
         return {"adapterId": self.adapter_id, "ts": __import__("adapter_sdk")._now(), "state": "ALIVE" if self.codex_bin else "UNAVAILABLE"}
+
+    # --- Harness Adapter 统一接口（调研报告 Module04） ---
+    def start(self, *, workspace: str | None = None, task: str | None = None) -> dict[str, Any]:
+        return {"status": "WAITING_APPROVAL", "adapter_id": self.adapter_id,
+                "reason": "codex runtime start is approval-gated (external mutation)", "workspace": workspace, "task": task}
+
+    def stop(self, session_id: str | None = None) -> dict[str, Any]:
+        return {"status": "WAITING_APPROVAL", "adapter_id": self.adapter_id,
+                "reason": "codex runtime stop is approval-gated", "session_id": session_id}
+
+    def send(self, session_id: str | None, message: str) -> dict[str, Any]:
+        return {"status": "UNSUPPORTED", "adapter_id": self.adapter_id,
+                "reason": "send into codex requires an approved interaction contract", "session_id": session_id}
+
+    def get_logs(self, session_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        return []  # codex session logs live in a private store; metadata-only via export_trace
+
+    def export_trace(self, session_id: str | None = None) -> dict[str, Any]:
+        probe = self.probe()
+        return {"adapter_id": self.adapter_id, "kind": "codex",
+                "trace": [{"session": session_id, "log": None}],
+                "schema": "dsh/adapter-trace/v1", "privacy": "metadata-only",
+                "probe": probe.to_record() if probe else None}

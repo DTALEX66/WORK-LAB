@@ -77,5 +77,26 @@ class HermesAdapter(AgentAdapter):
         # presence fact only and never fabricate RUNNING from it.
         return []
 
+    # --- Harness Adapter 统一接口（调研报告 Module04） ---
+    def start(self, *, workspace: str | None = None, task: str | None = None) -> dict[str, Any]:
+        return {"status": "WAITING_APPROVAL", "adapter_id": self.adapter_id,
+                "reason": "hermes runtime start is approval-gated (external mutation)", "workspace": workspace, "task": task}
+
+    def stop(self, session_id: str | None = None) -> dict[str, Any]:
+        return {"status": "WAITING_APPROVAL", "adapter_id": self.adapter_id,
+                "reason": "hermes runtime stop is approval-gated", "session_id": session_id}
+
+    def send(self, session_id: str | None, message: str) -> dict[str, Any]:
+        return {"status": "UNSUPPORTED", "adapter_id": self.adapter_id,
+                "reason": "send into hermes requires an approved interaction contract", "session_id": session_id}
+
+    def get_logs(self, session_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        return []  # hermes session logs via export_trace metadata only
+
+    def export_trace(self, session_id: str | None = None) -> dict[str, Any]:
+        return {"adapter_id": self.adapter_id, "kind": "hermes",
+                "trace": [{"session": session_id, "log": None}],
+                "schema": "dsh/adapter-trace/v1", "privacy": "metadata-only"}
+
     def heartbeat(self) -> dict[str, Any]:
         return {"adapterId": self.adapter_id, "ts": __import__("adapter_sdk")._now(), "state": "ALIVE" if self.hermes_bin else "UNAVAILABLE"}

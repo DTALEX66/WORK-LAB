@@ -167,6 +167,28 @@ class AcpAdapter:
     def rollback(self, plan: dict[str, Any]) -> dict[str, Any]:
         return {"status": "ROLLED_BACK", "plan_id": plan.get("plan_id"), "external_mutation": plan.get("external_mutation", False)}
 
+    # --- Harness Adapter 统一接口（对齐调研报告 Module04；ACP 协议层映射） ---
+    def start(self, *, workspace: str | None = None, task: str | None = None) -> dict[str, Any]:
+        return {"status": "WAITING_APPROVAL", "adapter_id": self.adapter_id,
+                "reason": "ACP runtime start is approval-gated (external mutation)", "workspace": workspace, "task": task}
+
+    def stop(self, session_id: str | None = None) -> dict[str, Any]:
+        return {"status": "WAITING_APPROVAL", "adapter_id": self.adapter_id,
+                "reason": "ACP runtime stop is approval-gated", "session_id": session_id}
+
+    def send(self, session_id: str | None, message: str) -> dict[str, Any]:
+        return {"status": "UNSUPPORTED", "adapter_id": self.adapter_id,
+                "reason": "ACP send requires an approved interaction contract", "session_id": session_id}
+
+    def get_logs(self, session_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        return []  # ACP session logs via export_trace metadata only
+
+    def export_trace(self, session_id: str | None = None) -> dict[str, Any]:
+        return {"adapter_id": self.adapter_id, "kind": "acp",
+                "trace": [{"session": session_id, "log": None}],
+                "schema": "dsh/adapter-trace/v1", "privacy": "metadata-only",
+                "protocol": self.protocol_version}
+
 
 def make_qwen_code_pilot() -> AcpAdapter:
     """Qwen Code ACP pilot. Returns unavailable if the CLI is not installed."""
