@@ -2,6 +2,8 @@
 
 > 依据：用户提供的《WORK-LAB 全球生态深度研究档案（完整版）》。目标：符合项目定位（Local AI Engineering Control Plane）、收敛成本、明确项目能做的任务。
 
+> **2026-08-18 更新（v5 三项目分层）**：WORK-LAB 定位 = 控制平面 + 转化器（ArcheAxis 的知识调用者与归档回写者）。知识最终归 ArcheAxis（唯一真源），但**分阶段演进**：现有规则/技能/插件（已转化沉淀完成）阶段 1 归 WORK-LAB 自有；阶段 2 待 ArcheAxis 完整后逆向归档。WORK-LAB 不存知识、不建运行时。详见 `00-governance/THREE_PROJECT_LAYERING_DECISION.md`。
+
 ## 1. 定位校准
 
 报告定义 WORK-LAB = **本地 AI 工程控制平面**（不拥有 Agent，只管理 Agent；Model 与 Agent 分离）。
