@@ -59,6 +59,9 @@ WORK-LAB 与 DESIGN-LAB 是知识的调用者与转化器，不各自持有知�
 3. 唯一知识真源 = 唯一治理权：candidate 治理由 ArcheAxis 独占，人和 AI 产出都不能自动升级为事实
 4. NOT an Agent OS：不做通用 Agent Runtime、多 Agent 调度、自治工作流；保留受限受治理执行 tracer
 5. 未来蓝图锁定：重型学习系统级项目（FROZEN_EXECUTION_BASELINE H0-H10 + SYSTEM_MASTER_BLUEPRINT_V2），不随分层漂移
+6. 受控调用边界：ArcheAxis P3 的受控调用 = 知识/学习资产的调用复用组合评估，不是 Agent/工具调用（后者归 WORK-LAB）
+7. 受限探索边界：ArcheAxis P10 的受限探索 = 知识治理辅助的受限 tracer，不是通用 Agent 执行（守住 NOT Agent OS）
+8. 设计研究边界：DESIGN-LAB 的 Research & Evidence = 设计领域研究（案例/合规/材料），通用知识研究归 ArcheAxis，设计研究的事实性知识归档 ArcheAxis 真源
 
 ## 7. 落地顺序
 
