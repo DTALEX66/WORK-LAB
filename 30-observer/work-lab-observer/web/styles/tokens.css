@@ -3,7 +3,7 @@
 
 :root {
   color-scheme: light dark;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 
@@ -24,80 +24,80 @@
   --wl-space-6: 24px;
   --wl-space-8: 32px;
 
-  --wl-radius-sm: 6px;
-  --wl-radius-md: 8px;
-  --wl-radius-lg: 8px;
-  --wl-radius-shell: 12px;
-  --wl-radius-control: 6px;
-  --wl-glass-blur: 34px;
-  --wl-glass-saturation: 150%;
+  /* Windows-native component radii (small, flat) */
+  --wl-radius-sm: 2px;
+  --wl-radius-md: 3px;
+  --wl-radius-lg: 4px;
+  --wl-radius-shell: 0px;
+  --wl-radius-control: 2px;
+  --wl-glass-blur: 0px;
+  --wl-glass-saturation: 100%;
   --wl-border-width: 1px;
-  --wl-motion-fast: 140ms;
-  --wl-motion-normal: 180ms;
+  --wl-motion-fast: 120ms;
+  --wl-motion-normal: 160ms;
 
-  /* Apple semantic palette */
-  --wl-blue: #5e6ad2;
-  --wl-green: #10b981;
+  /* Windows semantic palette */
+  --wl-blue: #0067c0;
+  --wl-green: #107c10;
   --wl-amber: #f5a623;
-  --wl-red: #eb5757;
-  --wl-purple: #7170ff;
-  --wl-cyan: #64d2ff;
+  --wl-red: #c42b1c;
+  --wl-purple: #5c2d91;
+  --wl-cyan: #0099bc;
 }
 
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
-  /* Opaque canvas — desktop content never shows through the Observer. */
-  --wl-canvas: #08090a;
-  --wl-canvas-gradient-a: rgba(94, 106, 210, 0.05);
-  --wl-canvas-gradient-b: rgba(113, 112, 255, 0.04);
+  /* Windows 11 dark canvas (flat, no glass). */
+  --wl-canvas: #202020;
+  --wl-canvas-gradient-a: rgba(0, 103, 192, 0.05);
+  --wl-canvas-gradient-b: rgba(0, 0, 0, 0);
 
-  /* R2 glass shell: translucent but readable on a dark blue-black canvas. */
-  --wl-shell: #0f1011;
-  --wl-shell-highlight: rgba(255, 255, 255, 0.06);
-  --wl-sidebar: #0f1011;
+  /* Windows shell surfaces. */
+  --wl-shell: #2b2b2b;
+  --wl-shell-highlight: rgba(255, 255, 255, 0.04);
+  --wl-sidebar: #2b2b2b;
 
-  /* Content surfaces: more opaque than shell so text stays legible on glass. */
-  --wl-surface-1: #191a1b;
-  --wl-surface-2: #23252a;
-  --wl-surface-3: #28282c;
-  --wl-surface-hover: #2a2a2e;
+  --wl-surface-1: #2b2b2b;
+  --wl-surface-2: #333333;
+  --wl-surface-3: #3c3c3c;
+  --wl-surface-hover: #3a3a3a;
 
-  --wl-border-subtle: rgba(255, 255, 255, 0.05);
-  --wl-border-strong: rgba(255, 255, 255, 0.08);
-  --wl-text-primary: #f7f8f8;
-  --wl-text-secondary: #d0d6e0;
-  --wl-text-muted: #8a8f98;
-  --wl-track: rgba(255, 255, 255, 0.05);
-  --wl-focus: #7170ff;
+  --wl-border-subtle: rgba(255, 255, 255, 0.08);
+  --wl-border-strong: rgba(255, 255, 255, 0.14);
+  --wl-text-primary: #f3f3f3;
+  --wl-text-secondary: #c8c8c8;
+  --wl-text-muted: #9d9d9d;
+  --wl-track: rgba(255, 255, 255, 0.06);
+  --wl-focus: #4cc2ff;
 
-  /* Glass shadow: soft drop + top inner highlight (Apple vibrancy). */
-  --wl-shadow-shell: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 8px 24px rgba(0, 0, 0, 0.3);
-  --wl-shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.2);
+  /* Flat Windows shadows (no glass glow). */
+  --wl-shadow-shell: none;
+  --wl-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="light"] {
   color-scheme: light;
-  --wl-canvas: #ffffff;
-  --wl-canvas-gradient-a: rgba(10, 114, 239, 0.04);
+  /* Windows 11 light canvas (flat). */
+  --wl-canvas: #f3f3f3;
+  --wl-canvas-gradient-a: rgba(0, 103, 192, 0.04);
   --wl-canvas-gradient-b: rgba(0, 0, 0, 0);
-  /* Brighter, more opaque light surfaces so text stays readable on glass. */
-  --wl-shell: #fafafa;
+  --wl-shell: #f9f9f9;
   --wl-shell-highlight: #ffffff;
-  --wl-sidebar: #fafafa;
+  --wl-sidebar: #f3f3f3;
   --wl-surface-1: #ffffff;
-  --wl-surface-2: #fafafa;
-  --wl-surface-3: #f5f5f5;
-  --wl-surface-hover: #f0f0f0;
+  --wl-surface-2: #f5f5f5;
+  --wl-surface-3: #eeeeee;
+  --wl-surface-hover: #eaeaea;
   --wl-border-subtle: rgba(0, 0, 0, 0.08);
-  --wl-border-strong: rgba(0, 0, 0, 0.12);
-  --wl-text-primary: #171717;
-  --wl-text-secondary: #4d4d4d;
-  --wl-text-muted: #666666;
-  --wl-track: rgba(0, 0, 0, 0.06);
-  --wl-focus: #0072f5;
-  --wl-shadow-shell: rgba(0, 0, 0, 0.08) 0 0 0 1px;
-  --wl-shadow-card: rgba(0, 0, 0, 0.08) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 2px;
+  --wl-border-strong: rgba(0, 0, 0, 0.14);
+  --wl-text-primary: #1a1a1a;
+  --wl-text-secondary: #4a4a4a;
+  --wl-text-muted: #6e6e6e;
+  --wl-track: rgba(0, 0, 0, 0.05);
+  --wl-focus: #0067c0;
+  --wl-shadow-shell: none;
+  --wl-shadow-card: 0 1px 1px rgba(0, 0, 0, 0.08);
 }
 
 html,

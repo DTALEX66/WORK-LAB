@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WORK-LAB Observer — Windows 原生风格预览</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<style>
+  /* Preview harness — Windows-native component demo */
+  body { font-family: var(--wl-font-family, "Segoe UI", "Microsoft YaHei", sans-serif); margin: 0; background: var(--wl-canvas); color: var(--wl-text-primary); }
+  .app { display: grid; grid-template-columns: 200px 1fr; min-height: 100vh; }
+  /* Sidebar (Windows style) */
+  .sidebar { background: var(--wl-sidebar); border-right: 1px solid var(--wl-border-strong); padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+  .sidebar .brand { font-size: 14px; font-weight: 600; padding: 8px 10px 12px; }
+  .nav-item { padding: 6px 10px; font-size: 13px; border-radius: var(--wl-radius-sm); cursor: default; }
+  .nav-item:hover { background: var(--wl-surface-hover); }
+  .nav-item.active { background: var(--wl-surface-3); }
+  .nav-item .glyph { margin-right: 8px; opacity: 0.7; }
+  /* Main */
+  .main { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+  /* Toolbar (Windows style) */
+  .toolbar { display: flex; gap: 8px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--wl-border-subtle); }
+  .btn { padding: 5px 14px; font-size: 12px; font-family: inherit; background: var(--wl-surface-2); color: var(--wl-text-primary); border: 1px solid var(--wl-border-strong); border-radius: var(--wl-radius-control); cursor: default; }
+  .btn:hover { background: var(--wl-surface-hover); }
+  .btn.primary { background: var(--wl-blue); border-color: var(--wl-blue); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn:active { filter: brightness(0.92); }
+  .toolbar .spacer { flex: 1; }
+  .search { padding: 5px 10px; font-size: 12px; font-family: inherit; background: var(--wl-surface-2); color: var(--wl-text-primary); border: 1px solid var(--wl-border-strong); border-radius: var(--wl-radius-control); width: 180px; }
+  /* KPI cards */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .kpi { background: var(--wl-surface-1); border: 1px solid var(--wl-border-subtle); border-radius: var(--wl-radius-md); padding: 12px 14px; }
+  .kpi .label { font-size: 12px; color: var(--wl-text-muted); }
+  .kpi .value { font-size: 24px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .kpi .delta { font-size: 11px; margin-top: 2px; }
+  .delta.up { color: var(--wl-green); }
+  .delta.down { color: var(--wl-red); }
+  /* Table (Windows listview style) */
+  .card { background: var(--wl-surface-1); border: 1px solid var(--wl-border-subtle); border-radius: var(--wl-radius-md); overflow: hidden; }
+  .card h3 { margin: 0; padding: 10px 14px; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--wl-border-subtle); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; padding: 7px 14px; color: var(--wl-text-secondary); font-weight: 500; border-bottom: 1px solid var(--wl-border-strong); background: var(--wl-surface-2); }
+  td { padding: 7px 14px; border-bottom: 1px solid var(--wl-border-subtle); }
+  tr:hover td { background: var(--wl-surface-hover); }
+  .badge { display: inline-block; padding: 1px 8px; font-size: 11px; border-radius: 8px; }
+  .badge.ok { background: rgba(16,124,16,0.15); color: var(--wl-green); }
+  .badge.warn { background: rgba(245,166,35,0.15); color: var(--wl-amber); }
+  .badge.err { background: rgba(196,43,28,0.15); color: var(--wl-red); }
+  .mono { font-family: var(--wl-font-mono); font-size: 11px; }
+  /* Tabs */
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--wl-border-strong); }
+  .tab { padding: 6px 14px; font-size: 12px; cursor: default; border-bottom: 2px solid transparent; }
+  .tab.active { border-bottom-color: var(--wl-blue); font-weight: 600; }
+  /* Footer status bar */
+  .statusbar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--wl-sidebar); border-top: 1px solid var(--wl-border-strong); padding: 3px 14px; font-size: 11px; color: var(--wl-text-muted); display: flex; gap: 16px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="brand">WORK-LAB Observer</div>
+    <div class="nav-item active"><span class="glyph">▣</span>总览</div>
+    <div class="nav-item"><span class="glyph">◈</span>Agent Fleet</div>
+    <div class="nav-item"><span class="glyph">▤</span>执行时间线</div>
+    <div class="nav-item"><span class="glyph">☰</span>Work Units</div>
+    <div class="nav-item"><span class="glyph">⚙</span>设置</div>
+  </div>
+  <div class="main">
+    <div class="toolbar">
+      <span style="font-size:14px;font-weight:600">总览</span>
+      <span class="spacer"></span>
+      <input class="search" placeholder="搜索会话 / Agent...">
+      <button class="btn">刷新</button>
+      <button class="btn primary">新建任务</button>
+    </div>
+    <div class="tabs">
+      <div class="tab active">概览</div>
+      <div class="tab">Agent</div>
+      <div class="tab">任务</div>
+      <div class="tab">成本</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">活跃 Agent</div><div class="value">7</div><div class="delta up">▲ 2 较昨日</div></div>
+      <div class="kpi"><div class="label">运行中任务</div><div class="value">3</div><div class="delta">2 待验证</div></div>
+      <div class="kpi"><div class="label">今日 Token</div><div class="value">1.2M</div><div class="delta up">▲ 8%</div></div>
+      <div class="kpi"><div class="label">估算成本</div><div class="value">$1.83</div><div class="delta down">▼ 12%</div></div>
+    </div>
+    <div class="card">
+      <h3>Agent Fleet</h3>
+      <table>
+        <thead><tr><th>Agent</th><th>运行时</th><th>状态</th><th>会话</th><th>成本</th></tr></thead>
+        <tbody>
+          <tr><td>codex-dev</td><td class="mono">Codex</td><td><span class="badge ok">运行中</span></td><td class="mono">sess-3f2a</td><td>$0.42</td></tr>
+          <tr><td>hermes-main</td><td class="mono">Hermes</td><td><span class="badge ok">空闲</span></td><td class="mono">sess-9c1b</td><td>$0.18</td></tr>
+          <tr><td>dsh-worker</td><td class="mono">DSH</td><td><span class="badge warn">需审批</span></td><td class="mono">sess-77d0</td><td>$0.61</td></tr>
+          <tr><td>design-agent</td><td class="mono">Open Design</td><td><span class="badge err">失败</span></td><td class="mono">sess-1e55</td><td>$0.09</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="statusbar"><span>● 运行中</span><span>sidecar :61867</span><span>观察栈 8/8</span><span style="flex:1"></span><span id="theme-switch" style="cursor:default">切换主题</span></div>
+<script>
+  const root = document.documentElement;
+  document.getElementById('theme-switch').addEventListener('click', () => {
+    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  });
+</script>
+</body>
+</html>

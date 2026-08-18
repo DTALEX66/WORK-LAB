@@ -11,6 +11,15 @@ use tauri::{
 use tauri::tray::{TrayIconBuilder, TrayIconEvent, MouseButton, MouseButtonState};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+
+/// CREATE_NO_WINDOW: spawn console children (python/powershell) without popping a CMD window.
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+#[cfg(not(windows))]
+const CREATE_NO_WINDOW: u32 = 0;
+
 #[derive(Default)]
 struct AppState {
     panel_visible: std::sync::Mutex<bool>,
@@ -105,6 +114,7 @@ fn spawn_collector_worker() -> Option<std::process::Child> {
         .env("PYTHONPATH", wf)
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
+        .creation_flags(CREATE_NO_WINDOW)
         .spawn()
         .ok()
 }
@@ -116,6 +126,9 @@ fn kill_stale_worker() {
             "-NoProfile", "-Command",
             "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'durable_worker' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }",
         ])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .creation_flags(CREATE_NO_WINDOW)
         .spawn();
     std::thread::sleep(std::time::Duration::from_millis(1500));
     let _ = std::fs::remove_file(r"D:\All projects\WORK-LAB\.hermes\task-runtime\worker.lock");

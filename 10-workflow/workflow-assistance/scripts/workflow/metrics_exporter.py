@@ -11,6 +11,7 @@ import os
 import sqlite3
 import time
 
+import psutil
 from prometheus_client import Gauge, start_http_server
 
 CANONICAL_DB = os.environ.get(
@@ -32,6 +33,11 @@ def main() -> None:
     g_usage_tokens = Gauge("wlobs_usage_tokens", "Token usage summary", ["kind"])
     g_cost = Gauge("wlobs_cost_estimate", "Cost estimate (USD)", [])
     g_platform = Gauge("wlobs_platform_observations", "Platform observations", ["project_id"])
+    # System resource gauges (psutil, loopback-only host view)
+    g_sys_cpu = Gauge("wlobs_sys_cpu_percent", "Host CPU usage percent", [])
+    g_sys_mem = Gauge("wlobs_sys_memory_percent", "Host memory usage percent", [])
+    g_sys_disk = Gauge("wlobs_sys_disk_percent", "Host disk usage percent", [])
+    g_sys_net = Gauge("wlobs_sys_net_bytes", "Host network cumulative bytes", ["direction"])
 
     start_http_server(9100, addr="127.0.0.1")
     print("worklab-observer metrics on http://127.0.0.1:9100/metrics")
@@ -67,6 +73,17 @@ def main() -> None:
                     "SELECT COALESCE(SUM(cost_estimate),0) FROM usage_samples"
                 ).fetchone()
                 g_cost.set(cost[0] or 0)
+
+                # System resource gauges (best effort)
+                try:
+                    g_sys_cpu.set(psutil.cpu_percent(interval=None))
+                    g_sys_mem.set(psutil.virtual_memory().percent)
+                    g_sys_disk.set(psutil.disk_usage(os.path.splitdrive(os.getcwd())[0] + os.sep).percent)
+                    net = psutil.net_io_counters()
+                    g_sys_net.labels("sent").set(net.bytes_sent)
+                    g_sys_net.labels("recv").set(net.bytes_recv)
+                except Exception as exc:  # pragma: no cover - defensive
+                    print(f"sys metrics error: {exc}")
 
                 rows = cur.execute(
                     "SELECT project_id, COUNT(*) FROM platform_observations GROUP BY project_id"
