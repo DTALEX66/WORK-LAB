@@ -4,6 +4,11 @@ Applies scope, TTL, supersedes, conflict, project isolation and pinned-context
 rules to memory metadata. Never persists content bodies. User's most recent
 explicit instruction wins over old memories; safety/approval/completion
 contracts are pinned and cannot be dropped by compaction.
+
+v5 分层定位（2026-08-18）：本模块治理的是「客户端适配记忆」的元数据规则
+（WORK-LAB 控制平面的 portable Memory 投影）。长期知识记忆属于
+ArcheAxis（唯一知识真源）；阶段 2（ArcheAxis 完整后）经 Knowledge/Memory
+API 对接，本模块不存知识内容、不替代 ArcheAxis 记忆治理。
 """
 from __future__ import annotations
 
