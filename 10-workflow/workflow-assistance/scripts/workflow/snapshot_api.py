@@ -111,25 +111,34 @@ AGENT_TO_PLATFORM: dict[str, str] = {
 ACTIVE_EXECUTION_STATES = {"RUNNING", "STARTING", "WAITING_USER", "WAITING_APPROVAL", "BLOCKED"}
 
 
+def _platform_for_agent(agent: Any, merged: dict[str, str]) -> str:
+    """Map an agent to its platform display; unknown agents show their name as-is."""
+    key = str(agent).lower()
+    return merged.get(key, str(agent))
+
+
 def _live_agent_platform(
     project_executions: list[dict[str, Any]],
     agent_map: dict[str, str] | None = None,
 ) -> str | None:
-    """Derive the platform from the project's active executions' agent.
+    """Real platform = the agent actually driving this project's executions.
 
-    Whoever is actually driving the project's executions right now is the
-    platform shown — never locked to a static config. Falls back to None when
-    no active execution names an agent.
+    Any project run by any agent software is shown truthfully: active
+    execution preferred, otherwise the most recent execution's agent. Unknown
+    agents are displayed by their own name — never fabricated and never locked
+    to a static config. None only when the project has no execution at all.
     """
     merged = dict(AGENT_TO_PLATFORM)
     if agent_map:
         merged.update(agent_map)
+    # 1. active execution agent (whoever is running right now)
     for e in project_executions:
         if e.get("state") in ACTIVE_EXECUTION_STATES and e.get("agent"):
-            agent = str(e.get("agent")).lower()
-            platform = merged.get(agent)
-            if platform:
-                return platform
+            return _platform_for_agent(e.get("agent"), merged)
+    # 2. most recent execution's agent (last in list order)
+    for e in reversed(project_executions):
+        if e.get("agent"):
+            return _platform_for_agent(e.get("agent"), merged)
     return None
 
 
