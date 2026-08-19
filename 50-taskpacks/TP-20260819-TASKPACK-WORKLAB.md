@@ -41,7 +41,7 @@ PASS / PARTIAL / FAIL / NOT_EXECUTED / BLOCKED。禁止用 DONE 代替证据状�
 
 ## 知识迁移试点（§12）
 
-- [x] 3 对象试点：已定义（FEDERATION_MIGRATION_REPORT.md），状态 BLOCKED（等 ArcheAxis API）
+- [ ] 3 对象试点：**DEFERRED（用户指示：OS 未完善，等指示再做）**
 - [ ] 通过条件：可回读/引用可用/原始不丢/权威明确/回滚成功
 
 ## 交付文件（reports/current/）
