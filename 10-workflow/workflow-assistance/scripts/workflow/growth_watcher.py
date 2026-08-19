@@ -14,10 +14,13 @@ from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parents[2]
 MEMORY_SCHEMA = ROOT / "schemas/workflow/memory-record.schema.json"
 DRIFT_SCHEMA = ROOT / "schemas/workflow/rule-drift.schema.json"
-MEMORY_VERSION = "workflow/memory-record/v1"
+# WL-P0-003 (2026-08-19): memory-record is runtime-context only (TTL, non-authoritative).
+# Long-term experience must be submitted to ArcheAxis Candidate; WORK-LAB never holds long-term knowledge.
+MEMORY_VERSION = "workflow/runtime-context-record/v1"
 DRIFT_VERSION = "workflow/rule-drift/v1"
 LAYERS = {"ephemeral", "session", "project", "domain", "global"}
 PROMOTABLE_LAYERS = LAYERS - {"global", "ephemeral"}
+RUNTIME_CONTEXT_TTL_DEFAULT_SECONDS = 86400  # 24h runtime context; not long-term knowledge
 
 
 def _validate(value: dict[str, Any], schema_path: Path, label: str) -> dict[str, Any]:
@@ -31,6 +34,12 @@ def _validate(value: dict[str, Any], schema_path: Path, label: str) -> dict[str,
 def validate_memory(record: dict[str, Any]) -> dict[str, Any]:
     if "content" in record or "body" in record:
         raise ValueError("invalid memory: content bodies are not persisted")
+    # WL-P0-003: runtime-context record requires TTL and is non-authoritative.
+    if record.get("ttlSeconds") is None:
+        record["ttlSeconds"] = RUNTIME_CONTEXT_TTL_DEFAULT_SECONDS
+    record.setdefault("authoritative", False)
+    if record.get("authoritative") is True:
+        raise ValueError("WORK-LAB memory is non-authoritative runtime context; long-term knowledge goes to ArcheAxis Candidate")
     return _validate(record, MEMORY_SCHEMA, "memory")
 
 

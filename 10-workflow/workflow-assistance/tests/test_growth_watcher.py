@@ -20,7 +20,7 @@ def load_module():
 
 def memory_record(**overrides: object) -> dict:
     value = {
-        "schema_version": "workflow/memory-record/v1",
+        "schema_version": "workflow/runtime-context-record/v1",
         "memory_id": "memory-1",
         "layer": "session",
         "kind": "preference",

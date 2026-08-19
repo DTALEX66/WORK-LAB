@@ -18,7 +18,7 @@ from memory_governance import (
 
 def _record(memory_id: str, **overrides) -> dict:
     record = {
-        "schema_version": "workflow/memory-record/v1",
+        "schema_version": "workflow/runtime-context-record/v1",
         "memory_id": memory_id,
         "layer": "project",
         "kind": "fact",

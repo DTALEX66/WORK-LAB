@@ -6,7 +6,7 @@
     {"id": "capability-conformance", "owner": "root-governance", "schemaPath": "00-governance/contracts/capability-conformance.schema.json", "consumers": ["workflow", "observer", "ci"]},
     {"id": "task-card", "owner": "workflow", "schemaPath": "10-workflow/workflow-assistance/schemas/workflow/task-card.schema.json", "consumers": ["writer", "reviewer"]},
     {"id": "runtime-lock", "owner": "workflow", "schemaPath": "00-governance/contracts/runtime-lock.schema.json", "consumers": ["evidence", "reviewer"]},
-    {"id": "domain-pack", "owner": "workflow", "schemaPath": "10-workflow/workflow-assistance/schemas/workflow/domain-pack.schema.json", "consumers": ["workflow", "observer"]},
+    {"id": "domain-pack", "owner": "external-design-lab", "schemaPath": "10-workflow/workflow-assistance/schemas/workflow/domain-pack.schema.json", "consumers": ["workflow", "observer"], "ownership": "CapabilityPackageReference (DESIGN-LAB owns authoritative domain packs; WORK-LAB references by URI/version/SHA/digest)"},
     {"id": "evidence-envelope", "owner": "root-governance", "schemaPath": "00-governance/contracts/evidence-envelope.schema.json", "consumers": ["reviewer", "observer"]},
     {"id": "release-manifest", "owner": "root-governance", "schemaPath": "00-governance/contracts/release-manifest.schema.json", "consumers": ["github", "audit"]},
     {"id": "adapter-capability", "owner": "workflow", "schemaPath": "10-workflow/workflow-assistance/schemas/workflow/client-adapter.schema.json", "consumers": ["workflow", "integration"]},

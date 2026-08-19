@@ -6,7 +6,9 @@
   "additionalProperties": false,
   "required": ["schema_version", "memory_id", "layer", "kind", "status", "source_digest", "content_digest", "confidence", "promotion", "redaction", "project_id"],
   "properties": {
-    "schema_version": {"const": "workflow/memory-record/v1"},
+    "schema_version": {"const": "workflow/runtime-context-record/v1"},
+    "ttlSeconds": {"type": "integer", "minimum": 1},
+    "authoritative": {"type": "boolean", "const": false},
     "memory_id": {"type": "string", "minLength": 1},
     "layer": {"enum": ["ephemeral", "session", "project", "domain", "global"]},
     "kind": {"enum": ["fact", "preference", "procedure", "candidate", "event"]},
