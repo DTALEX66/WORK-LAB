@@ -129,6 +129,28 @@ def _ci_rows(store: CanonicalStore) -> list[dict[str, Any]]:
     return runs
 
 
+def _agent_platform_map() -> dict[str, str]:
+    """Map agent id -> platform display name from the adapter registry.
+
+    Kept dynamic (reads registry, never hard-locks). Unknown agents fall back
+    to snapshot_api.AGENT_TO_PLATFORM defaults.
+    """
+    import json
+    from pathlib import Path
+    registry_path = Path(__file__).resolve().parents[1] / "config" / "adapter-registry.json"
+    mapping: dict[str, str] = {}
+    try:
+        data = json.loads(registry_path.read_text(encoding="utf-8"))
+        for entry in data.get("entries", []):
+            aid = entry.get("id")
+            display = entry.get("display_name") or entry.get("displayName")
+            if aid and display:
+                mapping[aid.lower()] = str(display).upper()
+    except Exception:
+        pass
+    return mapping
+
+
 def _collector_coverage(store: CanonicalStore) -> dict[str, Any]:
     """collector_health 行 → coverage；无运行记录时保持空覆盖。"""
     rows = store.list_collector_health()
@@ -235,4 +257,5 @@ def build_v3_snapshot(
         git_map=git_states,
         workspace=workspace_evidence,
         platform_map=platform_map,
+        agent_map=_agent_platform_map(),
     )

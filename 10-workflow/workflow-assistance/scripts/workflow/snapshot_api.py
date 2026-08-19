@@ -42,6 +42,7 @@ def build_snapshot(
     generated_at: str | None = None,
     platform_map: dict[str, str] | None = None,
     git_map: dict[str, dict[str, Any]] | None = None,
+    agent_map: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build the v3 snapshot from canonical facts (all fields optional for tests)."""
     generated_at = generated_at or _now()
@@ -70,7 +71,7 @@ def build_snapshot(
         },
         "governance": _governance_projection(governance),
         "workspace": workspace or {},
-        "projects": [_project_projection(p, executions, usage_by_project, git_state, ci_runs, platform_map, git_map) for p in projects],
+        "projects": [_project_projection(p, executions, usage_by_project, git_state, ci_runs, platform_map, git_map, agent_map) for p in projects],
         "executions": executions,
         "tasks": (store_projection or {}).get("tasks_by_status", {}),
         "tokenSummary": _token_summary(usage),
@@ -95,6 +96,43 @@ def build_snapshot(
     }
 
 
+# Live platform: agent name -> platform display (execution evidence driven, not locked).
+# Unknown agents keep their agent name; config map is only a fallback.
+AGENT_TO_PLATFORM: dict[str, str] = {
+    "deepseek-harness": "DSH",
+    "hermes": "HERMES",
+    "codex": "CODEX",
+    "cc-switch": "CC_SWITCH",
+    "github": "GITHUB",
+    "openhuman": "OPENHUMAN",
+    "open-design": "OPEN_DESIGN",
+}
+
+ACTIVE_EXECUTION_STATES = {"RUNNING", "STARTING", "WAITING_USER", "WAITING_APPROVAL", "BLOCKED"}
+
+
+def _live_agent_platform(
+    project_executions: list[dict[str, Any]],
+    agent_map: dict[str, str] | None = None,
+) -> str | None:
+    """Derive the platform from the project's active executions' agent.
+
+    Whoever is actually driving the project's executions right now is the
+    platform shown — never locked to a static config. Falls back to None when
+    no active execution names an agent.
+    """
+    merged = dict(AGENT_TO_PLATFORM)
+    if agent_map:
+        merged.update(agent_map)
+    for e in project_executions:
+        if e.get("state") in ACTIVE_EXECUTION_STATES and e.get("agent"):
+            agent = str(e.get("agent")).lower()
+            platform = merged.get(agent)
+            if platform:
+                return platform
+    return None
+
+
 def _project_projection(
     project: dict[str, Any],
     executions: list[dict[str, Any]],
@@ -103,6 +141,7 @@ def _project_projection(
     ci_runs: list[dict[str, Any]],
     platform_map: dict[str, str] | None = None,
     git_map: dict[str, dict[str, Any]] | None = None,
+    agent_map: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     project_id = project.get("projectId")
     effective_git = (git_map or {}).get(project_id) or git_state
@@ -128,9 +167,10 @@ def _project_projection(
         area = e.get("workingArea")
         if area and area not in working_areas:
             working_areas.append(area)
+    live_platform = _live_agent_platform(project_executions, agent_map)
     return {
         "projectId": project_id,
-        "agentPlatform": (platform_map or {}).get(project_id) or project.get("agentPlatform"),
+        "agentPlatform": live_platform or (platform_map or {}).get(project_id) or project.get("agentPlatform"),
         "displayName": project.get("displayName"),
         "identityState": project.get("identityState") or "UNRESOLVED",
         "activityState": activity_state,
