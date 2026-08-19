@@ -1,0 +1,188 @@
+# WORK-LAB → DSH 更新 SOP（2026-08-19）
+
+> DSH（DeepSeek Harness）**三层更新机制**：插件 / 主体 / 外壳。本文件是持续
+> 更新 DSH 的唯一权威操作流程，覆盖备份、更新、验证、回滚与补丁维护。
+> 归入 WORK-LAB `50-taskpacks/`，与 `WORK-LAB-DSH-HANDOFF-2026-08-18.md` 配套。
+
+---
+
+## 0. 三层结构与各自的更新方式（TL;DR）
+
+| 层 | 位置 | 更新方式 | 维护方 |
+|---|---|---|---|
+| **插件** | `dsh-home/profiles/web/node_modules/`（第三方 @linxin666/@a9i5k4/@anionex 等 + 官方核心走 source workspace） | **DSH UI 内建**（dsh-update-checker：备份 → 更新 → 校验 → 重启看门狗 → 回滚） | DSH 官方机制，**零维护** |
+| **主体** | `D:\All projects\DSH\deepseek-harness\source`（git pin + pnpm workspace）+ `dsh-home`（数据） | **手动脚本**（官方 update-checker 的 npm 检测对 source 克隆部署无效，`installed=null`）→ 见 §2 | Hermes/DSH 维护 SOP |
+| **外壳** | `D:\All projects\DSH\dsh-desktop`（Tauri 壳） | 本地代码修改 + `build-x.ps1` 增量重建 | Hermes 维护 SOP |
+
+> **结论**：插件层"完美方案"= 官方 UI 一键（已内置备份/回滚）；主体层"完美方案"
+> = 脚本化更新（带备份/回滚/验证，见 §2）；外壳层 = 增量重建（24s）。
+
+---
+
+## 1. 插件更新（官方机制，UI 一键）
+
+### 1.1 机制（dsh-update-checker，实测 1.4.3 已内置）
+
+- 前端横幅：主程序更新（`/dsh-update-checker/status.json`）+ 插件更新（`/dsh-update-checker/plugins.json`），每 6 小时自动复查。
+- 后端路由：`GET plugins.json`（扫描多位置插件，pnpm hoisted 兼容）、`POST install`（备份 → 布局自适应安装 → 回读校验 → 生态同步）、`POST rollback`（按 `.dsh-plugin-backups` 备份回滚）、`POST restart`（两级 spawn 脱钩 + 看门狗重启 web）。
+- 备份目录：`DSH_HOME/.dsh-plugin-backups/`。
+
+### 1.2 操作（2026-08-19 快照：28 插件，22 个可更新）
+
+- 浏览器/桌面壳打开 DSH → 顶部横幅"发现新版本，检查更新" → **插件横幅：单个更新 / 全部更新**。
+- 可更新（patch/minor）：`@a9i5k4/dsh-auto-memory`(0.1.26→0.1.28)、`@anionex/dsh-vision-toolkit`(0.1.32→0.1.34)、`@linxin666/*` 13 个(0.2.0→0.2.3)、`dsh-better-sidebar`、`dsh-effort-slider`、`dsh-find-plugin`、`dsh-update-checker`(1.4.3→1.4.8)、`dshmarket`、`@liustack/modlens` 等。
+- 已最新：`dsh-computer-use`、`dsh-mermaid`、`dsh-monitor`、`dsh-tier-router`、`dsh-vision-tools`、`dsh-voice-input-web` 等。
+
+### 1.3 API 批量更新（实测 2026-08-19，官方机制封装）
+
+```text
+接口：POST http://127.0.0.1:3080/dsh-update-checker/plugin-update
+Body：{"name":"<插件名>", "confirm": true}     # confirm 必须为 true（writeGate 强制）
+约束：loopback 来源（127.0.0.1）方可调用；单飞锁 600s（同一时刻只允许一个更新任务）
+脚本：.hermes/task-runtime/update-dsh-plugins.py（读 plugins.json 可更新清单 → 逐个更新，
+      dsh-update-checker 自身排最后 → 完成后重打颜色补丁）
+实测：每插件约 2-3 分钟（npm 下载 + 临时目录安装 + 拷贝 + 依赖核对），22 个约 40-60 分钟
+注意：不要用 plugins.json?fresh=1（强制重扫 npm 慢，脚本 40s 超时曾误报 0 可更新）
+```
+
+### 1.4 ⚠️ 更新后的必做项（颜色补丁重打）
+
+**dsh-update-checker 1.4.8 实测仍未修复白字问题**（`.dsh-update-btn-primary` / `.dsh-plugin-btn-primary` 仍硬编码 `color:#fff`）→ **每次更新 dsh-update-checker 后必须重打颜色补丁**：
+
+- **pnpm 还原陷阱**（2026-08-19 实证）：dshmarket 装/卸插件会跑 `pnpm install` → 从 lockfile **还原所有插件到旧版本**（update-checker 1.4.8→1.4.3、颜色补丁消失）。**根治**：批量更新后必须**同步 package.json 依赖声明**到最新版本（`update-dsh-plugins.py` 已内置；`^1.4.3 → ^1.4.8`），pnpm 下次解析到同一版本，不再还原。
+
+```
+文件：D:\All projects\DSH\deepseek-harness\dsh-home\profiles\web\node_modules\dsh-update-checker\lib\client.js
+两处：color:#fff → color:var(--dsw-alias-label-primary-foreground,#0f1115)
+（.dsh-update-btn-primary{...} 与 .dsh-plugin-btn-primary{...} 各一处）
+```
+
+（可选更持久方案：利用 dsh-skins 皮肤中心做用户 CSS 覆盖，不碰 node_modules——见 §4。）
+
+---
+
+## 2. 主体更新（脚本化 SOP）
+
+> 官方 update-checker 主程序更新走 npm（`@deepseek-ai/dsh`），对**source 克隆部署**
+> 无效（status.json 实测 `installed:null`、`hasUpdate:false`）。主体更新 = 本 SOP。
+
+### 2.1 当前版本基线
+
+- **pin**：`47f94385`（`0.1.0-rc.5`，2026-08-18 迁移时锁定）
+- **上游**：`origin/master` = `99f6f02f`（`0.1.0-rc.7`，2026-08-17 发布；master 主线在 pin 后仅 1 个 merge commit 打包 rc.7 变更）
+- fetch 需走代理：`git -c http.proxy=http://127.0.0.1:7890 -c https.proxy=http://127.0.0.1:7890 fetch origin`
+
+### 2.2 更新步骤（每步在 Hermes 会话中执行，涉及外部动作先报备）
+
+```text
+① 备份（必须）：
+   robocopy 复制 D:\All projects\DSH\deepseek-harness\dsh-home
+             → .hermes/task-runtime/dsh-backup-<date>/（排除 node_modules）
+   （sessions/storages/profiles 配置为关键数据；node_modules 由 install 重建）
+
+② 停 web：kill 3080 进程树（netstat -ano | grep :3080 → 父进程链）
+
+③ git 更新（source，cwd = source）：
+   git fetch origin（代理 7890）
+   git checkout 99f6f02f（或 0.1.0-rc.7 目标 commit；保持 detached pin 风格）
+   git -c http.proxy=... fetch origin 后再 checkout 新 commit
+
+④ 重建依赖（source 根）：
+   pnpm install --frozen-lockfile（node 经 Hermes node 目录 + corepack pnpm@11.7.0）
+
+⑤ ⚠️ profiles/web/node_modules：禁止手动 pnpm install（防空壳红线，见 §5）。
+   若新版确实要求 web 依赖变更，备份后整体 rename 再 pnpm install，并立即验证。
+
+⑥ 启动 + 验证：
+   python .hermes/task-runtime/start-dsh-dest.py   # HTTP 200 检查
+   浏览器 http://127.0.0.1:3080 → 插件全激活（无 pending）+ 会话树完整
+   curl http://127.0.0.1:3080/dsh-update-checker/plugins.json → 插件清单正常
+
+⑦ 颜色补丁重打（如 dsh-update-checker 随更新变化）：§1.3
+```
+
+### 2.3 回滚（更新失败/插件 pending）
+
+```text
+① 停 web
+② git checkout 47f94385（旧 pin）→ pnpm install --frozen-lockfile
+③ 恢复备份：robocopy 回拷 dsh-home（数据文件覆盖，node_modules 由 install 重建）
+④ 启动 web → 验证
+```
+
+---
+
+## 3. 外壳更新（dsh-desktop）
+
+### 3.1 当前壳
+
+- Tauri 2（tauri 2.11.5）壳：加载 `http://127.0.0.1:3080` + 内置 `ensure_dsh_service`（3080 未起则 `node run-dsh.js ... web` 自动拉起）。
+- 图标（exe/窗口/任务栏/快捷方式/setup）= 品牌蓝 + 白鲸鱼（`src-tauri/icons/` 全套 + `lib.rs` `setup` 里 `WebviewWindow::set_icon`）。
+- 构建环境：SUBST `X:` → `D:\All projects\DSH\dsh-desktop`（重启后需重建）+ rust GNU toolchain（`stable-x86_64-pc-windows-gnu`，rsproxy）+ `~/.cargo/config.toml`（已修转义，勿再写未转义反斜杠）。
+
+### 3.2 更新流程
+
+```text
+① 改代码：src-tauri/src/lib.rs（壳逻辑/窗口图标）、src-tauri/tauri.conf.json（窗口/打包）
+② 增量重建：powershell -File "D:\All projects\DSH\dsh-desktop\build-x.ps1"（~24s 增量）
+   （build-x.ps1 已设 CARGO_TARGET_DIR=X:\src-tauri\target 无空格路径）
+③ 产物自动落位：X:\src-tauri\target\release\dsh-desktop.exe + bundle\nsis\setup.exe
+④ 重启桌面壳验证（窗口图标 = WM_GETICON 512×512/7 色鲸鱼）
+```
+
+### 3.3 主体更新对外壳的影响
+
+- URL/端口不变（127.0.0.1:3080）→ **主体更新后外壳一般无需变动**。
+- 若新版 DSH 改变 web 端口/启动参数 → 同步改 `lib.rs` 的 `ensure_dsh_service` 参数 + 重建。
+
+---
+
+## 4. 颜色补丁的持久方案（可选升级）
+
+- **现状**：node_modules 补丁（§1.3），插件更新会覆盖，需重打。
+- **更持久**：dsh-skins 皮肤中心（`profiles/web/node_modules/@linxin666/dsh-skins/`）——皮肤 = CSS 注入。若皮肤支持用户自定义 CSS，可做**自定义皮肤**覆盖按钮文字色（`--dsw-alias-label-primary-foreground`），**不碰 node_modules**，插件/主体更新永不丢失。
+- **待办**：验证 dsh-skins 自定义皮肤入口（skin.json 格式）后实施。
+
+---
+
+## 5. 防空壳红线（不可违反）
+
+1. **`profiles/web/node_modules` 禁止手动 pnpm install / npm install**——hoisted 重装会把 workspace 插件链接打成空壳（2026-08-19 事故根因：149 空目录 → 45 插件 pending）。
+2. 插件安装/更新一律走 **DSH UI 插件中心/更新横幅**（官方机制，自动备份回滚）。
+3. 任何依赖重装后**必须**验证：浏览器插件全激活（无 pending）+ `plugins.json` 扫描正常。
+4. 空壳事故处置（已实测有效）：停 web → `rename profiles/web/node_modules → .mig-bak<N>` → `pnpm install`（web 目录，用 `.hermes/task-runtime/install-dsh-dest.py`）→ 重启 web → 验证。
+
+### 5.1 ⚠️ 插件更新后依赖二进制缺失（2026-08-19 实测事故）
+
+**症状**：批量插件更新后重启 web 失败，日志：`Cannot find module '../lightningcss.win32-x64-msvc.node'`（或同类原生模块）。
+
+**根因**：update-checker 更新插件时升级了共享依赖（如 lightningcss 1.32.0→1.33.0），但**可选依赖二进制包**（`lightningcss-win32-x64-msvc`）未随装 → `.node` 缺失 → web boot 崩溃。
+
+**处置（不动布局/lockfile）**：
+```text
+① 确认缺失模块：读 <包>/node/index.js 的 require 路径
+② 从 npm registry 下载对应版本二进制 tarball：
+   curl https://registry.npmjs.org/<binary-pkg>/<version> → dist.tarball
+③ 解压 .node → 放置到 profiles/web/node_modules/<pkg>/<要求的文件名>
+   （Python tarfile 解包，绕过 install；不碰 lockfile/布局）
+④ 重启 web（start-dsh-dest.py）→ 验证 HTTP 200 + plugins.json
+```
+
+**同类风险包**：cpu-features、lightningcss 等原生模块（安装时常见 optional dep 失败）。
+
+---
+
+## 6. 相关脚本与文件（.hermes/task-runtime/）
+
+| 文件 | 用途 |
+|---|---|
+| `start-dsh-dest.py` | 启动新位置 web（HTTP 200 验证） |
+| `install-dsh-dest.py` | 重建 source + profiles/web 依赖（pnpm） |
+| `run-pnpm.js` / `run-dsh.js` | pnpm 逐次 pin / dsh CLI 包装 |
+| `gen-dsh-icons.py` | 品牌图标生成（favicon.svg → 全套） |
+| `run-build-x.py` / `build-x.ps1` | dsh-desktop 构建（SUBST X:） |
+| `verify-dsh-dest.py` / `fix-dsh-dest.py` | 迁移验证 / 循环 junction 绕行 |
+
+---
+
+*更新 SOP 生效。任何更新动作前先备份，更新后先验证插件加载，失败即回滚。*

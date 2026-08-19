@@ -1,7 +1,7 @@
-# WORK-LAB 交接摘要 · 给 DeepSeek Harness（2026-08-18）
+# WORK-LAB 交接摘要 · 给 DeepSeek Harness（2026-08-19）
 
-> 完整交接见 `50-taskpacks/WORK-LAB-DSH-HANDOFF-2026-08-18.md`（**最新权威**，含 DSH 迁移 + 桌面版修复）。
-> 历史基线：`WORK-LAB-DSH-HANDOFF-2026-08-15.md`。本文件是快速上手摘要。
+> 完整交接见 `50-taskpacks/WORK-LAB-DSH-HANDOFF-2026-08-19.md`（**最新权威**，含自动维护系统 + 颜色彻底修复 + 插件治理 + 鲸吟皮肤）。
+> 历史：`WORK-LAB-DSH-HANDOFF-2026-08-18.md`（迁移 + 桌面版修复）、`WORK-LAB-DSH-HANDOFF-2026-08-15.md`（基线）。本文件是快速上手摘要。
 
 ## 接手什么
 
@@ -9,17 +9,18 @@
 
 ## 当前状态（3 行）
 
-1. `main` = `de29e583`（PR #117 已 merge：skill 精简 + 全局配置 14→13 Skills + 模型满血字段）。
-2. **DSH 已完整迁移至 `D:\All projects\DSH`**（2026-08-18）：`deepseek-harness\`（source `47f94385` + dsh-home 全量：29 sessions、28 插件、junction 195/195）+ `dsh-desktop\`（Tauri 壳 + NSIS setup）；桌面入口 = **dsh-desktop.exe 唯一方案**（VBS 废弃），内置后端自启动，桌面快捷方式已指向新 exe。
-3. **桌面版两个问题已修复**：① 插件弹窗颜色冲突（dsh-update-checker 硬编码白字 vs 深色主题品牌色反转 → node_modules 两处 CSS 补丁，插件更新会覆盖）；② 图标全套对应（根因=原图标纯白空壳 → 官方 favicon.svg 重新生成品牌图标 + 重构建 exe，exe/窗口/任务栏/快捷方式/setup 全部验证通过）。
+1. `main` HEAD = `ad10333`（control-plane 系列；5 件 DSH adapter 交付物已 #118 merge）。
+2. **DSH 已迁移 `D:\All projects\DSH`** + 桌面版图标/颜色修复（08-18，见旧摘要）+ **自动维护系统上线**（08-19）：`dsh-maintain.js` + 桌面壳启动钩子——**打开桌面 DSH 自动执行**颜色补丁/obsidian 修复/二进制检查/插件增量更新/重启/健康验证，日志 `dsh-maintain.log`。
+3. **颜色彻底修复**（08-19）：根因 = update-checker 按钮用 `brand-primary` 做背景 + 硬编码 `#fff`；修复 = 官方语义变量 `button-primary-fill` + `label-primary-foreground`（任何皮肤可读，鲸吟下实测深蓝底白字）；maintain 自动重打。**鲸吟皮肤已生效**；31 插件全最新（除 remote-web-ui）；obsidian-memory 0.3.2 已装（vault 用户自填）。
 
 ## 下一步（按优先级）
 
-1. **提交本次交接文档**：08-18 交接文档（新）+ SUMMARY 更新（共 2 个文件）→ 申请 commit/push（每动作需批准）。注：5 件 DSH adapter 交付物 + 08-15 交接已通过 **#118（6d675ca）** merge 进 main（含 model control plane + WL3-810 归档）。
-2. **核对 main 现状**（HEAD `ad10333` control-plane 系列）与交接文档一致性。
-3. **WL3-100/110 收编**（能力矩阵 + 身份模型子代理产出）。
-4. **DSH-040 付费 smoke**：默认 `LOCAL_SMOKE_ONLY`，用户填 key + 批准后切真实调用。
-5. **其余 WL3 任务**（120/210/220/300-330/400-420/500/510-520/610/620/720/820）。
+1. **提交交接文档**：08-18 + 08-19 + SUMMARY 更新（共 3 文件）→ 申请 commit/push（每动作需批准）。
+2. **主体升级 rc.5 → rc.7**（SOP §2；先 dry-run；消除新插件 peer soft-incompatible——credentials 需 rc.6+）。
+3. **obsidian-memory vault 配置**（用户自填：侧边栏 Obsidian Memory 面板 / cordis.patch.yml / OBSIDIAN_VAULT_PATH）。
+4. **remote-web-ui 更新**（cloudflared 下载网络通后重试）。
+5. 历史挂起：WL3-100/110 收编、WL-DSH-040 付费 smoke（用户填 key）、SQLite 执行核心、frontend F2/F3、WL3-820。
+6. 可选插件：`dsh-free-search`（搜索）、`dsh-vision-fallback`（视觉增强）。
 
 ## 不可违反的边界
 
