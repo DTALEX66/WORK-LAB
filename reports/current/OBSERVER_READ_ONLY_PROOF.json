@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "workflow/observer-readonly-proof/2026-08-19",
+  "proofType": "test-evidence",
+  "tests": "10-workflow/workflow-assistance/tests/test_observer_readonly.py (7 write paths rejected + read allowed)",
+  "writeActionsRejected": ["modify_work_unit", "approve", "retry", "rollback", "modify_config", "invoke_executor", "write_secret"],
+  "result": "PASS",
+  "evidencePath": "tests/test_observer_readonly.py"
+}

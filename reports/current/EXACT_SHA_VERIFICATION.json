@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "workflow/exact-sha-verification/2026-08-19",
+  "verifiedAt": "2026-08-19",
+  "repos": {
+    "work-lab": { "head": "86a53c7", "remote": "86a53c7", "match": true, "dirty": false },
+    "archeaxis-knowledge-os": { "head": "13c339a", "match": true, "note": "verified via remote readback" },
+    "design-lab": { "head": "70a857f", "match": true, "note": "verified via remote readback" }
+  },
+  "method": "git rev-parse HEAD + ls-remote origin main"
+}

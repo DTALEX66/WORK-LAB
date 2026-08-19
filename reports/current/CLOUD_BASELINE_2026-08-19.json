@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "workflow/cloud-baseline/2026-08-19",
+  "checkedAt": "2026-08-19",
+  "repositories": {
+    "DTALEX66/ArcheAxis-Knowledge-OS": { "main": "13c339a", "verified": true },
+    "DTALEX66/WORK-LAB": { "main": "86a53c7", "verified": true },
+    "DTALEX66/DESIGN-LAB": { "main": "70a857f", "verified": true }
+  },
+  "note": "Baseline re-verified 2026-08-19; WORK-LAB drifted +1 (HERMES handoff) then taskpack pushes"
+}

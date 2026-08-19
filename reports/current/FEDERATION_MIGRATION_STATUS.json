@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "workflow/federation-migration-status/2026-08-19",
+  "migration": {
+    "status": "DEFERRED",
+    "reason": "user decision 2026-08-19: OS (ArcheAxis) not mature yet; wait for instruction",
+    "pilotObjects": ["worklab-governance-rule", "designlab-methodcard", "external-source-record"],
+    "archived": true
+  }
+}
