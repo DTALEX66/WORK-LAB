@@ -220,8 +220,8 @@ export function SettingsView({ live, snap }: { live: boolean; snap: any }) {
   return (
     <div className="flex flex-col gap-4 max-w-2xl">
       <Card><CardHeader><span>数据源</span></CardHeader><CardContent>
-        <Row k="Sidecar 快照 API" v="http://127.0.0.1:61867/api/v1/snapshot" />
-        <Row k="Prometheus" v="http://127.0.0.1:9090" />
+        <Row k="Sidecar 快照 API" v={(window as any).__OBSERVER_CONFIG__?.apiBase || "动态注入"} />
+        <Row k="Prometheus" v={(window as any).__OBSERVER_CONFIG__?.promBase || "动态注入"} />
         <Row k="连接状态" v={live ? '已连接' : '离线'} /><Row k="刷新间隔" v="10 秒（快照）+ 15 秒（指标）" />
       </CardContent></Card>
       <Card><CardHeader><span>版本信息</span></CardHeader><CardContent>

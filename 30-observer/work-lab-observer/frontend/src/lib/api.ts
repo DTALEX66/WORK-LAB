@@ -1,7 +1,24 @@
 // WORK-LAB Observer — real data source (sidecar snapshot API)
 import type { Agent, ServiceHealth, TimelineEvent, CostPoint } from '@/types'
 
-const SNAPSHOT_URL = 'http://127.0.0.1:61867/api/v1/snapshot'
+// WLR-140 (2026-08-20): endpoints are runtime-injected, never hardcoded.
+// Tauri injects ?api=<validated loopback descriptor>; browser fallback reads
+// window config; last-resort defaults are only for static preview.
+function observerApiBase(): string {
+  try {
+    const api = new URLSearchParams(window.location.search).get('api')
+    if (api) return api
+  } catch { /* non-browser */ }
+  const cfg = (window as any).__OBSERVER_CONFIG__
+  if (cfg?.apiBase) return cfg.apiBase
+  return 'http://127.0.0.1:61867'
+}
+function promBase(): string {
+  const cfg = (window as any).__OBSERVER_CONFIG__
+  if (cfg?.promBase) return cfg.promBase
+  return 'http://127.0.0.1:9090'
+}
+const SNAPSHOT_URL = observerApiBase() + '/api/v1/snapshot'
 
 export interface LiveSnapshot {
   generatedAt: string
@@ -113,7 +130,7 @@ export function snapshotToCosts(snap: LiveSnapshot | null): CostPoint[] {
   })
 }
 // --- Prometheus real time-series (KPI trends, cost line, resources) ---
-const PROM_URL = 'http://127.0.0.1:9090'
+const PROM_URL = promBase()
 
 export async function promQuery(query: string): Promise<number | null> {
   try {
