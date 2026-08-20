@@ -1,3 +1,4 @@
+<!-- freshness: sourceCommit=0da75536f9e0c329fd4881af33b5fa2c091fdcc4 sourceTree=36947bdf1b0e110bd301224d37927fedea6e82e5 generatedAt=2026-08-20T23:59:00Z evidenceLevel=E0 expiry=2026-08-27T16:19:43Z status=STALE -->
 # WORK-LAB 仓库减重体积报告（WL-P1-002 · 2026-08-19）
 
 ## Git 对象体积

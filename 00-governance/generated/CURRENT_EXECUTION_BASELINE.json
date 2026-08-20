@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "workflow/current-execution-baseline/v1",
+  "generatedAt": "2026-08-20T23:59:00Z",
+  "repository": "DTALEX66/WORK-LAB",
+  "branch": "main",
+  "head": {
+    "sha": "0da75536f9e0c329fd4881af33b5fa2c091fdcc4",
+    "tree": "36947bdf1b0e110bd301224d37927fedea6e82e5"
+  },
+  "remoteMain": "0da75536f9e0c329fd4881af33b5fa2c091fdcc4",
+  "remoteMatch": true,
+  "dirty": 0,
+  "worktrees": [
+    "D:/All projects/WORK-LAB [main]"
+  ],
+  "taskpackAuditedSha": "eafccadb1d7b9eea45a1df4d51369530bdbcc766",
+  "driftSinceAudit": {
+    "commits": 7,
+    "note": "session-history archive + handoffs + codex work pushed after audit"
+  },
+  "ci": {
+    "status": "FAILED",
+    "note": "recent runs 0da7553/da4d3f6/7730738 all failure - aggregate gate not green",
+    "verifiedExactSha": false
+  },
+  "runtime": {
+    "workersObserved": 4,
+    "observerWritesForbidden": true
+  },
+  "status": "IN_PROGRESS_WLR_000"
+}

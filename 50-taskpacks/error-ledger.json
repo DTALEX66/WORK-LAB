@@ -45,7 +45,15 @@
       "repeat_prevention": "Root tests must check referenced file existence before behavior assertions; the root gate must run after artifact creation.",
       "remaining_boundary": "Cloud CI was not run.",
       "status_before": "NOT_RUN",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-002",
@@ -63,7 +71,15 @@
       "repeat_prevention": "When an aggregate test fails, the workflow must preserve the original output and automatically split by test file before changing code.",
       "remaining_boundary": "The aggregate result is local evidence, not cloud CI evidence.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-003",
@@ -81,7 +97,15 @@
       "repeat_prevention": "Scan new schema keys against the global denylist before implementation and require positive/negative schema controls.",
       "remaining_boundary": "No live provider or runtime state was inspected.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-004",
@@ -99,7 +123,15 @@
       "repeat_prevention": "Before adding a test, the author must resolve the production symbol and call path; assertions must use observed behavior rather than guessed spelling.",
       "remaining_boundary": "Real platform analytics was not exercised.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-005",
@@ -117,7 +149,15 @@
       "repeat_prevention": "Every command must pass an entrypoint preflight: exact file exists, current working directory, help/arguments and module owner.",
       "remaining_boundary": "Live Open Design E3 registration remains pending.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-006",
@@ -135,7 +175,15 @@
       "repeat_prevention": "Recovery commands must independently check their exit code and run from an explicitly verified repository root; never use a final exit-code variable that hides cleanup failure.",
       "remaining_boundary": "No generated-file recovery is evidence of a release build.",
       "status_before": "UNVERIFIED",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-007",
@@ -153,7 +201,15 @@
       "repeat_prevention": "The workflow must recompute counts from task_status, must run a narrow regression after every post-suite edit, and must rerun the affected full gate before updating the baseline.",
       "remaining_boundary": "The fingerprint focused test and affected full Workflow suite now pass; cloud CI and Git delivery remain separate boundaries.",
       "status_before": "UNVERIFIED",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-008",
@@ -171,7 +227,15 @@
       "repeat_prevention": "Focused Python tests in non-package directories must use file-based discovery or direct file execution; module-name loading must not be used without package markers.",
       "remaining_boundary": "This validates the local test entrypoint only; it does not prove cloud CI.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-009",
@@ -189,7 +253,15 @@
       "repeat_prevention": "Dynamic import tests must register the module in sys.modules before executing code that introspects __module__.",
       "remaining_boundary": "The conformance adapter is an isolated fake and does not prove a real client adapter.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-010",
@@ -207,7 +279,15 @@
       "repeat_prevention": "Every new quality gate must update the runner, VERIFY_ORDER, root workflow wiring and order assertions together.",
       "remaining_boundary": "The local full suite does not prove a remote GitHub Actions run.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-011",
@@ -225,7 +305,15 @@
       "repeat_prevention": "Gate additions require updating both machine order assertions and rendered list assertions.",
       "remaining_boundary": "The rendered list is local contract evidence, not CI execution evidence.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-012",
@@ -243,7 +331,15 @@
       "repeat_prevention": "Root-level CI verifiers must run from an explicitly verified repository root or use an absolute path.",
       "remaining_boundary": "This verifies the local error ledger only; it does not prove the root GitHub job executed.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-013",
@@ -261,7 +357,15 @@
       "repeat_prevention": "Active module registries must derive from the current task-pack architecture and reject retired product trees as active modules.",
       "remaining_boundary": "No live Observer or Tauri runtime was executed.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-014",
@@ -279,7 +383,15 @@
       "repeat_prevention": "Every schema added to the catalog must be checked for JSON Schema validity and a non-empty canonical $id.",
       "remaining_boundary": "Schema validation does not prove live cross-module producer/consumer traffic.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-015",
@@ -297,7 +409,15 @@
       "repeat_prevention": "Schema additions must update production manifest, verifier expectations, tests, and root catalog in one change set.",
       "remaining_boundary": "The full result is local evidence; remote CI remains unrun.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-016",
@@ -315,7 +435,15 @@
       "repeat_prevention": "Canonical CI inputs must be tracked or explicitly provisioned; never require an ignored runtime artifact in a fresh checkout.",
       "remaining_boundary": "The next exact-SHA CI run must verify the repaired integration and aggregate jobs.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-017",
@@ -333,7 +461,15 @@
       "repeat_prevention": "Any module job rename must update the aggregate required set, workflow payload, root tests and exact-SHA CI readback together.",
       "remaining_boundary": "A new exact-SHA CI run must confirm aggregate success after this fix.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-018",
@@ -351,7 +487,15 @@
       "repeat_prevention": "Freshness gate must reject stale git/CI unconditionally; CI requires fetch-depth 0",
       "remaining_boundary": "PR merge-ref ancestor semantics requires fetch-depth 0 in CI",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-019",
@@ -369,7 +513,15 @@
       "repeat_prevention": "Job-level env must be used; defaults.run.env must never carry unquoted path values",
       "remaining_boundary": "None",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-020",
@@ -387,7 +539,15 @@
       "repeat_prevention": "All freshness-checking CI jobs must use fetch-depth 0",
       "remaining_boundary": "None",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-021",
@@ -405,7 +565,15 @@
       "repeat_prevention": "Watcher must stay wired in build_standard_collectors; gate must register its test",
       "remaining_boundary": "Live promotion still requires explicit approval",
       "status_before": "PARTIAL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-022",
@@ -423,7 +591,15 @@
       "repeat_prevention": "Baseline regeneration must require test-assertion sync",
       "remaining_boundary": "None",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-023",
@@ -441,7 +617,15 @@
       "repeat_prevention": "Single-writer contract must be enforced; event IDs must use UUID suffix",
       "remaining_boundary": "None",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-024",
@@ -459,7 +643,15 @@
       "repeat_prevention": "Tracked projections must never embed their containing commit identity; every exact checkout claim requires fresh runtime attestation.",
       "remaining_boundary": "Remote main exact-SHA CI evidence is not available for this local tree.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-025",
@@ -477,7 +669,15 @@
       "repeat_prevention": "Every ownership change must update registry, schema, verifier and legacy-authority negative control together.",
       "remaining_boundary": "No global live configuration was applied.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-026",
@@ -495,7 +695,15 @@
       "repeat_prevention": "The sidecar must use canonical SQLite only and every SSE regression must prove a new event arrives on the same open connection.",
       "remaining_boundary": "Long-duration real desktop soak testing remains pending.",
       "status_before": "PARTIAL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-027",
@@ -513,7 +721,15 @@
       "repeat_prevention": "Observer tests must assert database timestamps and runtime paths remain unchanged after every GET.",
       "remaining_boundary": "Tauri desktop packaging was not launched in this environment.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-028",
@@ -531,7 +747,15 @@
       "repeat_prevention": "Conformance must reject success for every operation absent from advertised capabilities; approval must never substitute for implementation.",
       "remaining_boundary": "Live adapter apply remains unsupported and requires separate implementation and approval.",
       "status_before": "UNVERIFIED",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-029",
@@ -549,7 +773,15 @@
       "repeat_prevention": "Every quality-gate entrypoint must run dependency preflight before collecting or executing tests.",
       "remaining_boundary": "This sandbox intentionally did not install missing global dependencies.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-030",
@@ -567,7 +799,15 @@
       "repeat_prevention": "Unknown values must never be normalized to zero, running, exact, complete or LIVE without source evidence.",
       "remaining_boundary": "Real multi-project canary data is still required before LIVE product claims.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-031",
@@ -585,7 +825,15 @@
       "repeat_prevention": "Every global config writer must default to a schema-valid ActionPlan and must prove stable read, write, readback and inverse operations before the first mutation.",
       "remaining_boundary": "No global Hermes configuration or paid live smoke was applied in this audit.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-032",
@@ -603,7 +851,15 @@
       "repeat_prevention": "Core manifests and CI must never pin or install a replaceable Agent solely to make an optional Adapter gate pass.",
       "remaining_boundary": "A real Hermes runtime compatibility check remains optional and requires an already-discovered installation.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-033",
@@ -621,7 +877,15 @@
       "repeat_prevention": "Runtime clients must discover an advertised endpoint and must never infer service availability from a repository-fixed port.",
       "remaining_boundary": "Tauri dynamic dashboard endpoint injection remains pending; until then it degrades to a labelled non-live snapshot.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-034",
@@ -639,7 +903,15 @@
       "repeat_prevention": "Portable gates must never guess a user's drive, home, installation, project root or executable path.",
       "remaining_boundary": "This runner has no declared real OS project root, so the canary remains environment-limited PENDING.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-035",
@@ -657,7 +929,15 @@
       "repeat_prevention": "Tracked user overlays must contain only fields marked MANAGE by the ownership authority and must never persist absolute paths or full native client configuration.",
       "remaining_boundary": "No live user profile was changed; approved field application still requires client-native backup, diff, readback and rollback.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-036",
@@ -675,7 +955,15 @@
       "repeat_prevention": "Observer must never own provider pricing or hardcode a replaceable model/version; every estimate must require fresh Workflow canonical evidence.",
       "remaining_boundary": "No live vendor pricing collector was run, so real prices remain unknown until Workflow records approved observations.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-037",
@@ -693,7 +981,15 @@
       "repeat_prevention": "Active-project detection must combine running-agent check with per-project evidence freshness; never fabricate activity from executable path alone.",
       "remaining_boundary": "Freshness window is a heuristic; a project open in an editor without agent writes is not marked active.",
       "status_before": "BLOCKED",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-038",
@@ -711,7 +1007,15 @@
       "repeat_prevention": "Any dashboard/API schema change must be verified end-to-end in a live browser against real canonical data before delivery.",
       "remaining_boundary": "Freshness label semantics (STALE in LIVE mode) still snapshot-oriented.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-039",
@@ -729,7 +1033,15 @@
       "repeat_prevention": "Server-rendered debug dashboard must be contract-tested against the canonical projection shape, not legacy event store.",
       "remaining_boundary": "Python dashboard is a debug-compat entry; official UI remains web/ + Tauri.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-040",
@@ -747,7 +1059,15 @@
       "repeat_prevention": "Native toolchain contract must track the dependency graph's minimum rustc; document rustc >= 1.88 for tauri 2.11.x on the contract.",
       "remaining_boundary": "Contract doc still says 1.77.2 (lower bound only); actual build requires 1.88.",
       "status_before": "BLOCKED",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-041",
@@ -765,7 +1085,15 @@
       "repeat_prevention": "IPv6 loopback validation must use typed host() not host_str(); keep an IPv6 test case.",
       "remaining_boundary": "None (fixed and verified).",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-042",
@@ -783,7 +1111,15 @@
       "repeat_prevention": "Any PR touching tracked code must regenerate CURRENT_STATE before pushing; freshness check is part of integration gate.",
       "remaining_boundary": "None.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-043",
@@ -801,7 +1137,15 @@
       "repeat_prevention": "The launcher must keep multiple resolvable candidate paths and must never abort on a single exec ACL failure; every wrapper change must re-run the regression_test.",
       "remaining_boundary": "Store package updates can still change the plugin hash; the versioned install covers the real CLI.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-044",
@@ -819,7 +1163,15 @@
       "repeat_prevention": "Every dashboard vocabulary mapping must be covered by a render regression test, and canonical mode words must never leak into the dashboard HTML.",
       "remaining_boundary": "Observer is read-only; projection vocabulary is a rendering concern, the canonical mode enum is unchanged.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-045",
@@ -837,7 +1189,15 @@
       "repeat_prevention": "Five-dimension runtime baseline (AGENTS.md) requires reasoning_effort at official default or higher; every audit must grep it.",
       "remaining_boundary": "User may intentionally choose a lower effort per session via /reasoning; global default stays official.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-046",
@@ -855,7 +1215,15 @@
       "repeat_prevention": "Five-dimension baseline requires bash and cmd wrappers resolve identically; both must glob versioned bin directories.",
       "remaining_boundary": "Store-package ownership unchanged; wrapper never pins or reads credentials.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-047",
@@ -873,7 +1241,15 @@
       "repeat_prevention": "Diagnosing workflow-software git push failures must check the Codex sandbox network_access first (workspace-write denies network by default) before blaming git credentials; every headless Codex invocation requires either network_access=true or an explicit approval path.",
       "remaining_boundary": "Not end-to-end verified (Codex restart + actual Open Design push pending).",
       "status_before": "BLOCKED",
-      "status_after": "PARTIAL"
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "HISTORICAL"
+      }
     },
     {
       "error_id": "ERR-048",
@@ -891,7 +1267,15 @@
       "repeat_prevention": "Skill examples that read network resources must avoid literal curl/download wording or the supply-chain scanner will quarantine the root; keep loopback SSE examples description-based and always re-run skill_plugin_scan before commit.",
       "remaining_boundary": "None.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-049",
@@ -909,7 +1293,15 @@
       "repeat_prevention": "Every global configuration operation must distinguish key absence from null, discover the current target machine first, classify fields by ownership, create a machine-scoped minimum write set, derive rollback only from recorded writes, require current target-bound approval at the actual writer, read back after apply, and never write a NOOP plan. Every filesystem writer must reject Home-to-target symlink/junction/reparse paths before read, backup, replace, remove, rollback, or prune; no retired asset may be removed or replaced without a recorded ownership fence and explicit migration. CI dependency checks must normalize shell backslash-newline pairs without inserting whitespace, validate every standard and shell-normalized pip installation command after shell separators, tokenize away comments, require an actual --require-hashes argument, and permit exactly one canonical 10-workflow/workflow-assistance/requirements.lock reference, with negative fixtures for mixed same-line chains, bare/escaped/quoted and command-name-split pip launchers, noncanonical locks, comment spoofs, multiple requirements inputs, unsafe continued commands, and non-executing comment/quoted pip text.",
       "remaining_boundary": "The coordinator enforces planning semantics only; each live adapter still requires its own explicit dry-run, approval, path-safety checks, and same-target readback. Legacy retired assets deliberately block ordinary Hermes sync until a future explicit, per-path, ownership-fenced migration is designed and approved. No live config, credential, session, or private configuration body was read for this regression test.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-050",
@@ -927,7 +1319,15 @@
       "repeat_prevention": "Guard regex changes require a two-way block/allow matrix (E-drive/external/traversal/chaining/raw must block; git/pytest/in-project scripts/space paths/scheme URLs/ellipsis/range-refs must allow) as tracked tests, plus live hook re-approval (hermes hooks revoke + --accept-hooks) after deploying the script.",
       "remaining_boundary": "Local tracked tests only; exact-SHA cloud CI not yet run. Live guard re-approved and hook doctor healthy.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-051",
@@ -945,7 +1345,15 @@
       "repeat_prevention": "Every guard fix must land with tracked two-way tests in the same change; ad-hoc scripts are not a substitute for the canonical suite.",
       "remaining_boundary": "Exact-SHA CI not yet run for the new tests.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-052",
@@ -963,7 +1371,15 @@
       "repeat_prevention": "Any model with parallel identity lists (repositories[] vs remote_identities) must keep them synchronized in a single mutator and be covered by a canary that resolves a real repository root.",
       "remaining_boundary": "External OS-project canary still PENDING (WORKLAB_CANARY_PROJECT_ROOTS not authorized).",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-053",
@@ -981,7 +1397,15 @@
       "repeat_prevention": "Project activity and execution state are separate domain objects; any normalizer must never copy one into the other. render-v3 tests assert project rows show activityState.",
       "remaining_boundary": "None.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-054",
@@ -999,7 +1423,15 @@
       "repeat_prevention": "Any SQLite file backup must checkpoint WAL first; migration-recovery tests assert the restored db contains v1 tables and legacy rows.",
       "remaining_boundary": "None.",
       "status_before": "FAIL",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-055",
@@ -1022,7 +1454,15 @@
       "task_id": "P0-8",
       "regression_test": "test_project_terminal_guard.test_permits_quoted_inner_path_with_spaces",
       "remaining_boundary": "unquoted space-path fragments stay fail-closed BLOCK",
-      "repeat_prevention": "Windows path handling MUST use text boundary compare (never resolve) for POSIX-style paths"
+      "repeat_prevention": "Windows path handling MUST use text boundary compare (never resolve) for POSIX-style paths",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-056",
@@ -1045,7 +1485,15 @@
       "task_id": "P0-8",
       "regression_test": "test_project_terminal_guard.test_blocks_sibling_prefix_path_when_project_name_contains_space",
       "remaining_boundary": "regex multi-branch double match on same text",
-      "repeat_prevention": "quote recovery MUST scan backward for the enclosing quote when the fragment does not directly follow one"
+      "repeat_prevention": "quote recovery MUST scan backward for the enclosing quote when the fragment does not directly follow one",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-057",
@@ -1068,7 +1516,15 @@
       "task_id": "WLOSS-200",
       "regression_test": "test_supply_chain_tools",
       "remaining_boundary": "pipx must exist on runner (ubuntu-latest has it)",
-      "repeat_prevention": "MUST prefer shell installs (pipx/uvx) over unverified Docker actions and pin the version"
+      "repeat_prevention": "MUST prefer shell installs (pipx/uvx) over unverified Docker actions and pin the version",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-058",
@@ -1091,7 +1547,15 @@
       "task_id": "WLOSS-000",
       "regression_test": "tests/ci/test_source_ledger.py + test_source_ledger_v4.py",
       "remaining_boundary": "older schema consumers must migrate",
-      "repeat_prevention": "schema upgrade MUST update JSON + schema file + verifier + tests in one change"
+      "repeat_prevention": "schema upgrade MUST update JSON + schema file + verifier + tests in one change",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-059",
@@ -1114,7 +1578,15 @@
       "task_id": "P0-1",
       "regression_test": "test_sidecar_v3_snapshot.CompositionRootTests",
       "remaining_boundary": "v1 tables unchanged",
-      "repeat_prevention": "MUST verify table columns via PRAGMA table_info before writing new SQL"
+      "repeat_prevention": "MUST verify table columns via PRAGMA table_info before writing new SQL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-060",
@@ -1137,7 +1609,15 @@
       "task_id": "R2-batch3",
       "regression_test": "test_observer_store.test_rejects_noncanonical_or_missing_path",
       "remaining_boundary": "store must exist at the canonical path",
-      "repeat_prevention": "MUST keep the fail-closed contract when deleting a dependency; existing tests prove it"
+      "repeat_prevention": "MUST keep the fail-closed contract when deleting a dependency; existing tests prove it",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-061",
@@ -1160,7 +1640,15 @@
       "task_id": "R2-recovery",
       "regression_test": "test_read_only_surface: initial snapshot failures schedule a fresh GET",
       "remaining_boundary": "Exact-SHA CI and long-duration desktop soak remain separate evidence boundaries.",
-      "repeat_prevention": "Every initial transport failure must have a bounded retry path independent of launcher timing."
+      "repeat_prevention": "Every initial transport failure must have a bounded retry path independent of launcher timing.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-062",
@@ -1183,7 +1671,15 @@
       "task_id": "R2-recovery",
       "regression_test": "test_read_only_surface: replacement EventSource closes without resetting exponential backoff",
       "remaining_boundary": "Browser/WebView2 soak duration is not inferred from the focused contract test.",
-      "repeat_prevention": "Reconnect tests must prove both delay growth and the absence of an implicit reset in the replacement path."
+      "repeat_prevention": "Reconnect tests must prove both delay growth and the absence of an implicit reset in the replacement path.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-063",
@@ -1206,7 +1702,15 @@
       "task_id": "WLGM-160",
       "regression_test": "test_sse_connection_state_counts_concurrent_clients",
       "remaining_boundary": "Transport LIVE still additionally requires valid cursor, heartbeat, writer freshness and collector evidence.",
-      "repeat_prevention": "Concurrent connection truth must be tested with at least two clients and repeated disconnect protection."
+      "repeat_prevention": "Concurrent connection truth must be tested with at least two clients and repeated disconnect protection.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-064",
@@ -1229,7 +1733,15 @@
       "task_id": "WLGM-160",
       "regression_test": "test_sidecar_startup_does_not_invent_heartbeat_or_writer_freshness; test_sse_connection_state_counts_concurrent_clients",
       "remaining_boundary": "A continuously running Workflow writer is still required before freshness can become LIVE.",
-      "repeat_prevention": "Transport snapshots must expose connection truth and preserve null freshness until the corresponding event is observed."
+      "repeat_prevention": "Transport snapshots must expose connection truth and preserve null freshness until the corresponding event is observed.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-065",
@@ -1252,7 +1764,15 @@
       "task_id": "WL3-400/410",
       "regression_test": "test_embedded_worker_lifecycle_writes_health_and_stops_cleanly; test_supervisor_loop_recovers_after_unhandled_tick_failure_and_stops",
       "remaining_boundary": "The observer HTTP mutation surface remains disabled; the embedded producer is Workflow-owned.",
-      "repeat_prevention": "Lifecycle tests must prove startup, recovery, single-instance ownership and shutdown, not just --once execution."
+      "repeat_prevention": "Lifecycle tests must prove startup, recovery, single-instance ownership and shutdown, not just --once execution.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-066",
@@ -1275,7 +1795,15 @@
       "task_id": "WL3-510",
       "regression_test": "test_worker_persists_collector_health_for_success_and_failure; test_fresh_writer_and_complete_collector_health_can_reach_live",
       "remaining_boundary": "Coverage reports only registered collectors and the worker loop; absent sources remain absent rather than fabricated.",
-      "repeat_prevention": "Health persistence and live-gate consumption must be exercised in one integration test."
+      "repeat_prevention": "Health persistence and live-gate consumption must be exercised in one integration test.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-067",
@@ -1298,7 +1826,15 @@
       "task_id": "WLGM-160",
       "regression_test": "test_build_v3_snapshot_flat_and_null; test_fresh_writer_and_complete_collector_health_can_reach_live",
       "remaining_boundary": "Freshness becomes STALE after 60 seconds without a writer tick; reachability alone cannot refresh it.",
-      "repeat_prevention": "MUST not treat a constructor default as a projection implementation; assert the serialized field value."
+      "repeat_prevention": "MUST not treat a constructor default as a projection implementation; assert the serialized field value.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-068",
@@ -1321,7 +1857,15 @@
       "task_id": "WL3-510",
       "regression_test": "test_usage_polling_is_idempotent_and_preserves_identical_lines; repeated Task/Git/source-quality assertions",
       "remaining_boundary": "Legacy telemetry observations are retained as append-only history; no destructive ledger rewrite is performed.",
-      "repeat_prevention": "Collector tests must run the same source twice and assert stable identities plus unchanged additive totals."
+      "repeat_prevention": "Collector tests must run the same source twice and assert stable identities plus unchanged additive totals.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-069",
@@ -1344,7 +1888,15 @@
       "task_id": "WL3-820",
       "regression_test": "test_workspace_evidence_loads_plan_governance_and_history_as_typed_sources; error ledger verifier",
       "remaining_boundary": "Signing, installer, ZIP and release publication remain independent explicit-approval boundaries.",
-      "repeat_prevention": "MUST compare approval claims against PR state, merge SHA and exact-SHA CI after every delivery merge before final reporting."
+      "repeat_prevention": "MUST compare approval claims against PR state, merge SHA and exact-SHA CI after every delivery merge before final reporting.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-070",
@@ -1367,7 +1919,15 @@
       "task_id": "WL3-600",
       "regression_test": "last-good becomes visibly OFFLINE when the EventSource transport fails; production WebView2 OFFLINE to LIVE to OFFLINE to LIVE smoke",
       "remaining_boundary": "The retained content remains visible by design and is labeled through the offline connection strip rather than deleted.",
-      "repeat_prevention": "Production recovery evidence MUST prove both the failure label and the recovered live label on the same owned app PID."
+      "repeat_prevention": "Production recovery evidence MUST prove both the failure label and the recovered live label on the same owned app PID.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-071",
@@ -1390,7 +1950,15 @@
       "task_id": "WL3-820",
       "regression_test": "error ledger verifier plus stale-claim scan for hard-coded latest-delivery wording",
       "remaining_boundary": "Historical PR and SHA anchors remain intentionally preserved and explicitly labeled as historical.",
-      "repeat_prevention": "Delivery documents MUST never hard-code their own or the next PR as the timeless latest identity."
+      "repeat_prevention": "Delivery documents MUST never hard-code their own or the next PR as the timeless latest identity.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-072",
@@ -1413,7 +1981,15 @@
       "task_id": "WLGM-210",
       "regression_test": "test_windows_pid_requires_still_active_exit_code; test_dead_pid_rejected",
       "remaining_boundary": "Rust/Tauri production and real sidecar recovery were verified separately; descriptor consumption by the Rust shell remains an independent integration contract.",
-      "repeat_prevention": "Endpoint validation MUST reject stale descriptors after process termination and MUST not infer live ownership from an open handle alone."
+      "repeat_prevention": "Endpoint validation MUST reject stale descriptors after process termination and MUST not infer live ownership from an open handle alone.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-073",
@@ -1436,7 +2012,15 @@
       "task_id": "WLGM-211",
       "regression_test": "retired dashboard helper fails closed without a network request",
       "remaining_boundary": "A real bundled WebView runtime still requires the platform desktop evidence layer; the JavaScript contract is verified locally.",
-      "repeat_prevention": "Retired API helpers MUST fail closed and MUST NOT proxy to a replacement endpoint without an explicit migration contract."
+      "repeat_prevention": "Retired API helpers MUST fail closed and MUST NOT proxy to a replacement endpoint without an explicit migration contract.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-074",
@@ -1459,7 +2043,15 @@
       "task_id": "WL3-730",
       "regression_test": "test_usage_jsonl_prepend_does_not_recount_existing_samples; test_usage_polling_is_idempotent_and_preserves_identical_lines",
       "remaining_boundary": "External providers that expose mutable cumulative JSON remain snapshot sources and are intentionally not assigned JSONL additive semantics.",
-      "repeat_prevention": "Usage event identity MUST be invariant under JSONL reordering while preserving distinct identical events through occurrence ordinals."
+      "repeat_prevention": "Usage event identity MUST be invariant under JSONL reordering while preserving distinct identical events through occurrence ordinals.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-075",
@@ -1482,7 +2074,15 @@
       "task_id": "WL3-600",
       "regression_test": "test_partial_health_rows_cannot_claim_complete_coverage; test_live_requires_current_worker_and_complete_expected_coverage; test_blocked_worker_shutdown_retains_writer_lock_and_open_store; test_blocked_watcher_shutdown_retains_open_store; test_duplicate_collector_names_are_rejected_before_worker_start; test_worker_thread_start_failure_releases_supervisor_lock; test_watch_thread_start_failure_clears_thread_reference",
       "remaining_boundary": "Abrupt OS process termination remains recovered by OS lock release and startup reconciliation rather than in-process graceful shutdown.",
-      "repeat_prevention": "Coverage MUST use the configured expected set and require a currently alive supervising worker; the store MUST never close under a live thread."
+      "repeat_prevention": "Coverage MUST use the configured expected set and require a currently alive supervising worker; the store MUST never close under a live thread.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-076",
@@ -1505,7 +2105,15 @@
       "task_id": "WLGM-211",
       "regression_test": "run_all_tests.js awaits test_read_only_surface.run and asyncTest awaits non-GET plus invalid-snapshot controls",
       "remaining_boundary": "The suite remains a local Node contract layer; native WebView execution is verified separately.",
-      "repeat_prevention": "A synchronous test helper MUST reject Promise-returning callbacks instead of optimistically recording PASS."
+      "repeat_prevention": "A synchronous test helper MUST reject Promise-returning callbacks instead of optimistically recording PASS.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-077",
@@ -1528,7 +2136,15 @@
       "task_id": "WLGM-211",
       "regression_test": "snapshot fetch rejects legacy and partial LIVE success payloads; v3 display mode cannot override the backend transport verdict; LIVE v3 requires exact coverage timestamps and loopback events URL; SSE client accepts only loopback event endpoint",
       "remaining_boundary": "Native WebView remains a separate evidence layer and is verified by final-binary CDP DOM, reload console, real scroll, and normal-mode port readback.",
-      "repeat_prevention": "Only the canonical v3 schema and backend transport live gate may authorize LIVE; compatibility payloads must fail closed."
+      "repeat_prevention": "Only the canonical v3 schema and backend transport live gate may authorize LIVE; compatibility payloads must fail closed.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-078",
@@ -1551,7 +2167,15 @@
       "task_id": "WLOSS-200",
       "regression_test": "test_critical_ci_path_selects_supply_chain_security_gate; test_selected_supply_chain_security_job_is_required; test_root_workflow_uses_real_needs_results; test_supply_chain_security_is_selected_and_aggregated_by_gate_plan",
       "remaining_boundary": "The updated workflow still requires a new exact-head GitHub run and a post-merge main run before cloud closure.",
-      "repeat_prevention": "A security job MUST be represented in project-profile gates, plan outputs, workflow needs, aggregate payload, and aggregate fail-closed tests before it can be treated as a delivery gate."
+      "repeat_prevention": "A security job MUST be represented in project-profile gates, plan outputs, workflow needs, aggregate payload, and aggregate fail-closed tests before it can be treated as a delivery gate.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-079",
@@ -1574,7 +2198,15 @@
       "task_id": "WLGM-160",
       "regression_test": "test_invalid_cursor_resync_advances_client_to_current_revision; test_future_cursor_resync_advances_client_to_current_revision",
       "remaining_boundary": "Long-duration browser reconnect remains a production runtime evidence layer after exact-head delivery.",
-      "repeat_prevention": "SSE recovery MUST advance both server and browser cursor identity before the next heartbeat cycle."
+      "repeat_prevention": "SSE recovery MUST advance both server and browser cursor identity before the next heartbeat cycle.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-080",
@@ -1597,7 +2229,15 @@
       "task_id": "WLGM-211",
       "regression_test": "snapshot fetch is explicitly cache-bypassed; state rejects an out-of-order lower-revision projection; heartbeat avoids snapshot GET and refresh bursts are coalesced; SSE failure fences an older GET and preserves native reconnect; rejected lower revision cannot rotate the EventSource endpoint; malformed SSE payload degrades without waiting for a transport reopen",
       "remaining_boundary": "Native WebView2 restart and reconnect must be rerun from the final production binary after merge.",
-      "repeat_prevention": "A frontend MUST NOT authorize LIVE from a response issued under an older transport epoch or lower revision."
+      "repeat_prevention": "A frontend MUST NOT authorize LIVE from a response issued under an older transport epoch or lower revision.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-081",
@@ -1620,7 +2260,15 @@
       "task_id": "WL3-600",
       "regression_test": "test_stale_historical_collector_success_cannot_reach_live; test_dead_watcher_cannot_reach_live_with_historical_revision; test_watcher_publish_failure_rolls_back_watermark_and_retries",
       "remaining_boundary": "Production soak must still prove multiple real 30-second ticks with all six collectors and an advancing SSE revision.",
-      "repeat_prevention": "Historical health rows MUST never count as current coverage without a bounded freshness window and live watcher."
+      "repeat_prevention": "Historical health rows MUST never count as current coverage without a bounded freshness window and live watcher.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-082",
@@ -1643,7 +2291,15 @@
       "task_id": "WLOSS-200",
       "regression_test": "test_plan_without_exact_commit_identity_fails_closed; test_nonempty_change_set_cannot_select_zero_gates; test_non_sha256_plan_digest_algorithm_fails_closed; test_required_integration_runs_aggregate_negative_controls",
       "remaining_boundary": "The modified critical workflow requires exact-head GitHub CI and an independent post-merge main run.",
-      "repeat_prevention": "A GatePlan MUST bind sha256 digest and exact source commit and MUST NOT authorize zero gates for a nonempty change set."
+      "repeat_prevention": "A GatePlan MUST bind sha256 digest and exact source commit and MUST NOT authorize zero gates for a nonempty change set.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     },
     {
       "error_id": "ERR-083",
@@ -1666,7 +2322,17 @@
       "task_id": "WL3-600",
       "regression_test": "repo-root direct execution of both focused Python files",
       "remaining_boundary": "The full governance discovery remains required in addition to standalone execution.",
-      "repeat_prevention": "Focused backend suites MUST establish their own import root and MUST pass when executed alone from the repository root."
+      "repeat_prevention": "Focused backend suites MUST establish their own import root and MUST pass when executed alone from the repository root.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": null,
+        "regressionCommand": null,
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+      }
     }
-  ]
+  ],
+  "wlrReconciled": true,
+  "note": "WLR-030: lifecycle added; historical status_after=PASS does not imply current tree passes."
 }

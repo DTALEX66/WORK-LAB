@@ -1,3 +1,4 @@
+<!-- freshness: sourceCommit=0da75536f9e0c329fd4881af33b5fa2c091fdcc4 sourceTree=36947bdf1b0e110bd301224d37927fedea6e82e5 generatedAt=2026-08-20T23:59:00Z evidenceLevel=E0 expiry=2026-08-27T16:19:43Z status=CURRENT -->
 # WORK-LAB 开源组件评估报告（WL-OSS-001~008 · TP-20260819 §10）
 
 > 状态：评估 + 适配判定（PoC 待人工批准后执行）。所有项目先 PoC 再进入正式依赖；GPL/AGPL 特殊许可证需 Rights Review。
