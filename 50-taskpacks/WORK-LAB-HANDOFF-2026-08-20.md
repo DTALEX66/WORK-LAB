@@ -64,6 +64,15 @@
 - dsh-maintain.js 新增 subst-drives 清理：启动时检查残留 SUBST 虚拟盘（如 X:），自动删除（幂等，不阻塞启动）
 - 已验证：模拟 X: → --fix 自动移除；--check 显示 none
 
+## 7c. Codex 迁移 Git CLI（2026-08-20）
+
+- 原因：商店版自动更新重写 config.toml（皮肤/沙盒重置）、多版本并存、多实例并发
+- 已安装：npm @openai/codex 0.148.0（官方 Git CLI，node v22.23.1）
+- wrapper 已切换：hermes\bin\codex.cmd + workflow bin/codex.cmd + bin/codex → Git CLI（商店版降为 fallback）
+- ~/.codex 共享：会话（190 文件/222 线程）+ config + auth 全部保留，无丢失
+- 已恢复：appearanceTheme=dark / sandbox=elevated / conversationDetailMode=STEPS_COMMANDS / provider=custom 直连 OpenAI
+- 配置兜底：codex_config_sync.py --fix（官方基线+用户配置 sync）
+
 ## 8. 待办
 
 - DSH main 标签（等用户确认方向）
