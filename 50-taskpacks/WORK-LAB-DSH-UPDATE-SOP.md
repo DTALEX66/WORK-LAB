@@ -68,8 +68,8 @@ Body：{"name":"<插件名>", "confirm": true}     # confirm 必须为 true（wr
 
 ### 2.1 当前版本基线
 
-- **pin**：`47f94385`（`0.1.0-rc.5`，2026-08-18 迁移时锁定）
-- **上游**：`origin/master` = `99f6f02f`（`0.1.0-rc.7`，2026-08-17 发布；master 主线在 pin 后仅 1 个 merge commit 打包 rc.7 变更）
+- **pin（当前）**：`99f6f02f`（`0.1.0-rc.7`，2026-08-20 升级完成；source 为 partial clone [blob:none]，origin 已改 SSH `git@github.com:deepseek-ai/deepseek-harness.git`——fetch/checkout 直连可用，无需代理）
+- **回滚 pin**：`47f94385`（`0.1.0-rc.5`，旧基线，备份 `dsh-backup-2026-08-20/`）
 - fetch 需走代理：`git -c http.proxy=http://127.0.0.1:7890 -c https.proxy=http://127.0.0.1:7890 fetch origin`
 
 ### 2.2 更新步骤（每步在 Hermes 会话中执行，涉及外部动作先报备）
@@ -172,7 +172,56 @@ Body：{"name":"<插件名>", "confirm": true}     # confirm 必须为 true（wr
 
 ---
 
-## 6. 相关脚本与文件（.hermes/task-runtime/）
+---
+
+## 6. 网络提速与安全（2026-08-20 实测）
+
+### 6.1 为什么插件更新慢（根因 + 修复）
+
+- **根因**：npm registry 直连被限速 **~133KB/s**（每包 4s+ → 31 插件数分钟）。
+- **修复**：`profiles/web/.npmrc` 切 **npmmirror**（`registry=https://registry.npmmirror.com`）→ **快 11 倍**（1.5MB/s）——批量更新从 10+ 分钟降到 ~50s。
+- **注意**：.npmrc 不要配 `proxy=7890`（会拖慢 npmmirror；代理只给 github 走 env `HTTPS_PROXY`，见下）。
+
+### 6.2 github 连接（SSH 优先，代理兜底）
+
+- **SSH 直连**（最快最稳）：用户已有 `id_ed25519` 挂在 github（实测 `Hi DTALEX66!`）；22/443 端口通；已配
+  `git config --global url."git@github.com:".insteadOf "https://github.com/"`（pnpm 的 github 依赖也走 SSH）。
+- **代理下载**（7890）：curl `-x http://127.0.0.1:7890` 对 codeload/github 有效（2.4s）；用户另有 VPN（FlClash）可兜底。
+- **market install 的 fetch 走 7890 会失败**（undici CONNECT 被 CC Switch 拒）→ **新插件用 SSH clone 手动装**（见 §6.4）。
+- **cloudflared 下载**（remote-web-ui/web-ui-all 的依赖）卡 github releases → web 启动 env 设 `HTTPS_PROXY=7890`（start-dsh-dest.py 已加）。
+
+### 6.3 装前审计（用户要求，强制）
+
+新插件（尤其 github 源）装前必须：
+1. `package.json`：依赖/peerDeps/scripts（postinstall 等恶意命令检查）
+2. 源码扫描：`child_process` / `process.env.KEY` / `fetch(` 外连 / `writeFileSync` / `eval(`——命中看上下文（three.js 等 vendor 库正常）
+3. peerDependencies vs 主体 rc 版本（**rc 不匹配 = 软不兼容风险**：obsidian-memory 崩（config undefined）、genui rc.8 缓装）
+4. apply 的 `config` 访问防护（`config = {}`——防 cordis rc.5 传 undefined 崩）
+
+### 6.4 手动安装新插件（绕 market fetch 失败）
+
+```sh
+# 1. SSH clone
+git clone --depth 1 git@github.com:<owner>/<repo>.git  # 到 .hermes/task-runtime/
+# 2. 审计（§6.3）
+# 3. 放置（scoped 包 → node_modules/@scope/name；bundle 名必须带 scope 匹配包名！）
+# 4. package.json：dependencies[name]=version + dsh.profile.bundles 加 name
+# 5. 重启 web（start-dsh-dest.py）→ 验证 plugins.json 加载 + 无崩溃 + 页面功能
+```
+
+**bundle 名坑**：scoped 包（`@dsh-external/xxx`）的 bundle 注册必须带 scope，否则 `resolveBundleDir` 报
+`cannot resolve profile bundle`。
+
+### 6.5 新增 UI 插件清单（2026-08-20）
+
+- `@dsh-external/dsh-client-ui-skin-maid-atelier` 0.0.1：深海女仆工坊皮肤（已装，生效，标题"深海女仆工坊"）
+- `open-sea-skin` 1.2.1：WebGPU 海洋皮肤（已装，`/open-sea-skin` 路由 + iframe + "海洋皮肤设置"按钮）
+- `@dsh-external/dsh-visualize` 0.1.2：对话内生成式 UI（已装，rc.6 peers + config 防护补丁；**genui 替代**——genui peer 全 rc.8 缓装）
+- 未装：dsh-TUI（终端 UI 独立客户端，可另议）、deepseek-design（rc.5 未测）、modlens 3.22（cloudflared 卡，3.21.1 可用）
+
+---
+
+## 7. 相关脚本与文件（.hermes/task-runtime/）
 
 | 文件 | 用途 |
 |---|---|
@@ -186,3 +235,22 @@ Body：{"name":"<插件名>", "confirm": true}     # confirm 必须为 true（wr
 ---
 
 *更新 SOP 生效。任何更新动作前先备份，更新后先验证插件加载，失败即回滚。*
+
+---
+
+## 8. 调研结论落地（2026-08-20 三路调研）
+
+### 8.1 node-pty 崩溃（根治：PR #886 补丁 + maintain 自动兜底）
+- **根因**（microsoft/node-pty#952）：1.1.0 kill() 竞态——agent fork 完成时 shell 已退出 → `AttachConsole(死pid)` 失败 → agent 无 try/catch 直接崩（无控制台进程实测 14/15 崩溃）。
+- **修复**（PR #886 已合入 v1.2.0-beta.11+）：agent try/catch 返回空列表 + `windowsPtyAgent._innerPid<=0` 直接 resolve。**本机已打补丁**（lib/ 两个文件）+ **maintain `nodePtyFix()` 自动重打**（防 pnpm 还原）。
+- **升级替代**：node-pty 升 1.2.0-beta.11+（官方修复内置）——下次 better-sidebar 更新时可试。
+
+### 8.2 补丁被还原的真正机制（pnpm 硬链接）
+- **根因**（pnpm/pnpm#753，zkochan 本人）：node_modules 与内容寻址 store 是**硬链接**——直接改 node_modules = 改 store → pnpm 校验 hash 不符 → 从 registry 重新下载还原。
+- **官方方案**：`pnpm patch <pkg>` + `pnpm patch-commit` → `patchedDependencies`（v11 写 `pnpm-workspace.yaml`，package.json 的 `pnpm` 字段已弃用）；patch-package 在 pnpm 上冗余。
+- **当前策略**：maintain 启动自动重打（颜色/obsidian/node-pty 三个补丁）——已够用；**后续可迁移到 pnpm patch 机制根治**（待主体 rc.7 升级后一并做）。
+
+### 8.3 更新机制官方最佳实践（update-checker README = 事实标准）
+- 更新后**必须把新版本写回 profile package.json + 同步 lockfile**（`pnpm install --lockfile-only`）——否则 pnpm install 还原旧版 → 反复提示更新死循环。**本机 update-dsh-plugins.py 的声明同步 = 该实践**（补 lockfile-only 为可选增强）。
+- 串行队列批量更新；备份在 `$DSH_HOME/dsh-update-checker-backups/`；写路由强制 `{confirm:true}`。
+- DSH 官方（deepseek-ai/deepseek-harness）issues 禁用、无插件更新文档——社区插件（Airmetro/dsh-update-checker、dsh-market/dsh-market）是权威。

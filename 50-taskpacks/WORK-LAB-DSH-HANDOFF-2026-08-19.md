@@ -147,3 +147,18 @@
 - **obsidian-memory 装回**（用户自填 vault；E 盘不代配不访问）
 - **自研融合判定：不需要**（市场 1520 插件全覆盖）
 - **声明同步** = pnpm 还原陷阱根治（每次批量更新后必须）
+
+---
+
+## 8. 增补（2026-08-20 晚：速度/SSH/新 UI/自动恢复）
+
+- **插件更新提速**：npm 直连限速 133KB/s → `profiles/web/.npmrc` 切 **npmmirror**（1.5MB/s，快 11 倍）；批量更新 10+ 分钟 → ~50s。.npmrc 勿配 proxy（拖慢 npmmirror）。
+- **github 连接**：SSH 优先（用户 id_ed25519 已挂 github，`Hi DTALEX66!` 实测；22/443 通；`git config --global url."git@github.com:".insteadOf "https://github.com/"` 已配——pnpm github 依赖也走 SSH）；7890 代理兜底（curl -x 对 codeload 有效；market install 的 undici fetch 走 7890 会失败→新插件 SSH clone 手动装）。
+- **新增 UI 插件（均源码审计过）**：`@dsh-external/dsh-client-ui-skin-maid-atelier` 0.0.1 + `open-sea-skin` 1.2.1（WebGPU 海洋）**均已安装并验证，但用户 8/20 选择 UI 精简 → 已移除 bundle 不再加载**（包保留 node_modules 备用，标题回官方）；`@dsh-external/dsh-visualize` 0.1.2（对话内生成式 UI，rc.6 peers + config 防护补丁，genui 替代——genui peer 全 rc.8 缓装）。
+- **web 崩溃自动恢复（根治桌面挂）**：maintain 增强——web down 时 kill :3080 残留 → 清 task-board stale ledger 锁（PID 复用误判）→ detached spawn 重启 → 复验（实测 20.6s RECOVERED；restartWeb 已改非阻塞 spawn——spawnSync 会因 run-dsh.js 常驻卡死）。
+- **残留已清理**：`$dest/`、`node_modules.mig-bak(.del)`、`web/node_modules.mig-bak2(.del)`、`om-tmp`、`newui-tmp`。
+- **modlens 3.22 已更新**（rc.7 升级后 maintain --fix 自动更新成功 3.22.0——cloudflared 不再卡；全插件最新）；genui 缓装（rc.8，visualize 替代）。
+
+- **主体升级 rc.7 完成（2026-08-20）**：source checkout `99f6f02f`（dsh-v0.1.0-rc.7）+ pnpm install --frozen-lockfile（npmmirror，5.6s；lockfile 1203 项过官方供应链策略）；node-pty 随 rc.7 升 **1.2.0-beta.15**（PR #886 官方修复内置）；36 插件全加载、soft-incompatible 消失（codex-meter rc.6+ 满足）、颜色补丁/皮肤/会话无损；origin 改 SSH；备份 `dsh-backup-2026-08-20/`（385MB，回滚 pin 47f94385）。
+
+- **UI 精简（2026-08-20 用户决策）**：从三层叠加（whale-song 鲸吟 + maid-atelier 女仆 + open-sea-skin 海洋 iframe）精简为**只要 whale-song 鲸吟**——`data-dsh-skin-center` active、深海蓝 #081a40、女仆/海洋 bundle 移除不加载（包保留备用）；鲸鱼娘 pet 保留；按钮颜色补丁仍正确（深蓝底白字）。
