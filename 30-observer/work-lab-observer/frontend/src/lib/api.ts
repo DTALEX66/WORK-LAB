@@ -34,14 +34,17 @@ export function estimateCost(input: number, output: number): number {
   return (input / 1e6) * RATE_INPUT + (output / 1e6) * RATE_OUTPUT
 }
 
-export function fmtTokens(n: number): string {
+export function fmtTokens(n: number | null): string {
+  // WLR-130: unknown stays UNKNOWN, never 0
+  if (n == null) return 'UNKNOWN'
   return n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : (n / 1e3).toFixed(0) + 'k'
 }
 
-// USD -> CNY reference rate for cost display
+// USD -> CNY reference rate for cost display (rate itself is a reference, kept here)
 const CNY_RATE = 7.2
 
-export function fmtCost(usd: number): string {
+export function fmtCost(usd: number | null): string {
+  if (usd == null) return 'UNKNOWN'
   return '¥' + (usd * CNY_RATE).toFixed(2)
 }
 
@@ -50,9 +53,12 @@ export function executionsToAgents(snap: LiveSnapshot): Agent[] {
   if (!snap || !snap.executions) return []
   return snap.executions.map((ex: any, i: number) => {
     const proj = (snap.projects || []).find((p: any) => p.projectId === ex.anchorProjectId)
-    const tok = proj?.token || { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+    // WLR-130: truth-first — unknown stays unknown (null), never fabricated 0.
+    const tok = proj?.token
     const state = String(ex.state || 'UNKNOWN').toLowerCase()
     const status: Agent['status'] = state.includes('run') ? 'running' : state.includes('fail') ? 'failed' : state.includes('pend') ? 'pending' : 'idle'
+    const total = tok?.totalTokens ?? null
+    const cost = (tok?.inputTokens == null || tok?.outputTokens == null) ? null : estimateCost(tok.inputTokens, tok.outputTokens)
     return {
       id: ex.executionId || ('exec-' + i),
       name: ex.agent || 'agent',
@@ -60,10 +66,10 @@ export function executionsToAgents(snap: LiveSnapshot): Agent[] {
       runtime: proj?.agentPlatform || '—',
       task: ex.anchorProjectId || '—',
       model: '—',
-      tokens: tok.totalTokens || 0,
-      cost: estimateCost(tok.inputTokens || 0, tok.outputTokens || 0),
+      tokens: total,
+      cost,
       durationSec: 0,
-      usagePct: Math.min(100, Math.round((tok.totalTokens || 0) / 3e7 * 100)),
+      usagePct: total == null ? null : Math.min(100, Math.round(total / 3e7 * 100)),
       trend: [],
     }
   })
@@ -99,9 +105,11 @@ export function snapshotToCosts(snap: LiveSnapshot | null): CostPoint[] {
   if (!snap) return []
   return (snap.projects || []).map((p: any, i: number) => {
     const t = p.token || {}
-    const input = Number(t.inputTokens) || 0
-    const output = Number(t.outputTokens) || 0
-    return { date: p.displayName || p.projectId || String(i), cost: estimateCost(input, output) }
+    // WLR-130: missing usage -> null cost (never fabricated 0)
+    const input = t.inputTokens == null ? null : Number(t.inputTokens)
+    const output = t.outputTokens == null ? null : Number(t.outputTokens)
+    const cost = (input == null || output == null) ? null : estimateCost(input, output)
+    return { date: p.displayName || p.projectId || String(i), cost }
   })
 }
 // --- Prometheus real time-series (KPI trends, cost line, resources) ---

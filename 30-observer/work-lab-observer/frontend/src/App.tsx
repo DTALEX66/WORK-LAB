@@ -16,9 +16,10 @@ export default function App() {
   const [services, setServices] = useState<ServiceHealth[]>([])
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
   const [costs, setCosts] = useState<CostPoint[]>([])
-  const [tokenTotal, setTokenTotal] = useState(0)
-  const [tokenIn, setTokenIn] = useState(0)
-  const [tokenOut, setTokenOut] = useState(0)
+  // WLR-130: truth-first — unknown stays null, never fabricated 0
+  const [tokenTotal, setTokenTotal] = useState<number | null>(null)
+  const [tokenIn, setTokenIn] = useState<number | null>(null)
+  const [tokenOut, setTokenOut] = useState<number | null>(null)
   const [live, setLive] = useState(false)
   const [resources, setResources] = useState<SysResources | null>(null)
   const [tokenTrend, setTokenTrend] = useState<number[]>([])
@@ -55,9 +56,9 @@ export default function App() {
         setServices(snapshotToServices(s))
         setTimeline(snapshotToTimeline(s))
         setCosts(snapshotToCosts(s))
-        setTokenTotal(s.tokenSummary?.totalTokens || 0)
-        setTokenIn(s.tokenSummary?.inputTokens || 0)
-        setTokenOut(s.tokenSummary?.outputTokens || 0)
+        setTokenTotal(s.tokenSummary?.totalTokens ?? null)
+        setTokenIn(s.tokenSummary?.inputTokens ?? null)
+        setTokenOut(s.tokenSummary?.outputTokens ?? null)
       } else setLive(false)
     }
     load()
@@ -66,7 +67,7 @@ export default function App() {
   }, [])
 
   const running = agents.filter((a) => a.status === 'running').length
-  const cost = estimateCost(tokenIn, tokenOut)
+  const cost = (tokenIn == null || tokenOut == null) ? null : estimateCost(tokenIn, tokenOut)
   const sparkTok = tokenTrend.length > 1 ? tokenTrend : []
   const sparkCost = costTrend.length > 1 ? costTrend : []
   // real trend % from prom series (first -> last)

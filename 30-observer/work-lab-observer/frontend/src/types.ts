@@ -7,10 +7,11 @@ export interface Agent {
   runtime: string
   task: string
   model: string
-  tokens: number
-  cost: number
+  // WLR-130: unknown stays null (truth-first), never fabricated 0
+  tokens: number | null
+  cost: number | null
   durationSec: number
-  usagePct: number
+  usagePct: number | null
   trend: number[]
 }
 
@@ -33,5 +34,5 @@ export interface ResourceMetric {
 
 export interface CostPoint {
   date: string
-  cost: number
+  cost: number | null  // WLR-130: unknown stays null
 }

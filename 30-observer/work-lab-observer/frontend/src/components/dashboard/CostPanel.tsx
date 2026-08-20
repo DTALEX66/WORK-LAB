@@ -3,11 +3,11 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import type { CostPoint } from '@/types'
 import { fmtCost, fmtTokens } from '@/lib/api'
 
-export function CostPanel({ costs, tokenTotal, tokenIn, tokenOut, costTrend }: { costs: CostPoint[]; tokenTotal: number; tokenIn: number; tokenOut: number; costTrend: number[] }) {
-  const total = tokenTotal > 0 ? tokenTotal : 1
+export function CostPanel({ costs, tokenTotal, tokenIn, tokenOut, costTrend }: { costs: CostPoint[]; tokenTotal: number | null; tokenIn: number | null; tokenOut: number | null; costTrend: number[] }) {
+  const total = tokenTotal != null && tokenTotal > 0 ? tokenTotal : 1
   const tokenDist = [
-    { name: '输入', value: Math.round((tokenIn / total) * 100), color: '#00d4ff' },
-    { name: '输出', value: Math.round((tokenOut / total) * 100), color: '#7c6cf0' },
+    { name: '输入', value: tokenIn == null ? null : Math.round((tokenIn / total) * 100), color: '#00d4ff' },
+    { name: '输出', value: tokenOut == null ? null : Math.round((tokenOut / total) * 100), color: '#7c6cf0' },
   ]
   const trendData = costTrend.length ? costTrend.map((v, i) => ({ i, v })) : []
   return (
@@ -31,15 +31,16 @@ export function CostPanel({ costs, tokenTotal, tokenIn, tokenOut, costTrend }: {
         <CardHeader><span>项目成本分布</span><span className="text-[11px] text-zinc-500">估算 · 人民币</span></CardHeader>
         <CardContent className="flex flex-col gap-2">
           {costs.length > 0 ? costs.map((c) => {
-            const maxCost = Math.max(...costs.map((x) => x.cost), 0.01)
-            const pct = (c.cost / maxCost) * 100
+            const validCosts = costs.map((x) => x.cost).filter((v): v is number => v != null)
+            const maxCost = validCosts.length ? Math.max(...validCosts, 0.01) : 0.01
+            const pct = c.cost == null ? 0 : (c.cost / maxCost) * 100
             return (
               <div key={c.date} className="flex items-center gap-2">
                 <span className="w-24 shrink-0 text-[10px] text-zinc-500 truncate text-right">{c.date}</span>
                 <div className="flex-1 h-3 rounded-sm bg-zinc-700/40 overflow-hidden">
-                  {c.cost > 0 && <div className="h-full rounded-sm" style={{ width: Math.max(pct, 2) + '%', background: '#00d4ff' }} />}
+                  {c.cost != null && c.cost > 0 && <div className="h-full rounded-sm" style={{ width: Math.max(pct, 2) + '%', background: '#00d4ff' }} />}
                 </div>
-                <span className="w-16 shrink-0 text-[10px] tabular-nums text-right" style={{ color: c.cost > 0 ? '#00d4ff' : '#71717a' }}>{c.cost > 0 ? fmtCost(c.cost) : '无数据'}</span>
+                <span className="w-16 shrink-0 text-[10px] tabular-nums text-right" style={{ color: c.cost != null && c.cost > 0 ? '#00d4ff' : '#71717a' }}>{c.cost != null && c.cost > 0 ? fmtCost(c.cost) : 'UNKNOWN'}</span>
               </div>
             )
           }) : <div className="text-center text-[11px] text-zinc-600 py-4">暂无项目成本数据</div>}

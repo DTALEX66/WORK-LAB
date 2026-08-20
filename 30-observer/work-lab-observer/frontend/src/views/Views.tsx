@@ -90,12 +90,13 @@ export function ExecutionsView({ timeline, snap }: { timeline: TimelineEvent[]; 
 }
 
 // ---------- 模型 ----------
-export function ModelsView({ tokenIn, tokenOut, tokenTotal, snap }: { tokenIn: number; tokenOut: number; tokenTotal: number; snap: any }) {
+export function ModelsView({ tokenIn, tokenOut, tokenTotal, snap }: { tokenIn: number | null; tokenOut: number | null; tokenTotal: number | null; snap: any }) {
+  // WLR-130: unknown values render as UNKNOWN, never 0
   const dist = [
     { name: '输入 Token', value: tokenIn, color: '#00d4ff' },
     { name: '输出 Token', value: tokenOut, color: '#7c6cf0' },
   ]
-  const max = Math.max(tokenIn, tokenOut, 1)
+  const max = Math.max(tokenIn ?? 0, tokenOut ?? 0, 1)
   const projects = snap?.projects || []
   return (
     <div className="flex flex-col gap-4">
@@ -105,7 +106,7 @@ export function ModelsView({ tokenIn, tokenOut, tokenTotal, snap }: { tokenIn: n
           {dist.map((d) => (
             <div key={d.name}>
               <div className="flex justify-between text-xs mb-1"><span className="flex items-center gap-1.5 text-zinc-300"><span className="w-2 h-2 rounded-full" style={{ background: d.color }} />{d.name}</span><span className="tabular-nums">{fmtTokens(d.value)}</span></div>
-              <div className="h-2 rounded-full bg-zinc-700/50 overflow-hidden"><div className="h-full rounded-full" style={{ width: (d.value / max) * 100 + '%', background: d.color }} /></div>
+              <div className="h-2 rounded-full bg-zinc-700/50 overflow-hidden"><div className="h-full rounded-full" style={{ width: ((d.value ?? 0) / max) * 100 + '%', background: d.color }} /></div>
             </div>
           ))}
           <div className="flex justify-between text-xs text-zinc-400"><span>总计</span><span className="tabular-nums text-zinc-200">{fmtTokens(tokenTotal)}</span></div>

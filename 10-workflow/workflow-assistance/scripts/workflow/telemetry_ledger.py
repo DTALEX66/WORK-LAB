@@ -11,7 +11,18 @@ from typing import Any
 
 SENSITIVE_FRAGMENTS = {
     "apikey", "authorization", "body", "cookie", "credential", "password",
-    "prompt", "response", "secret", "token",
+    "prompt", "response", "secret",
+}
+# WLR-120 (2026-08-20): typed token handling. Usage token COUNTS are legal;
+# credential-style token VALUES are sensitive. A bare "token" substring no
+# longer rejects legal input_tokens/output_tokens/cached_tokens fields.
+ALLOWED_USAGE_TOKEN_FIELDS = {
+    "inputtokens", "outputtokens", "totaltokens", "cachedtokens",
+    "reasoningtokens", "cachecreationtokens", "cachereadtokens",
+}
+SENSITIVE_TOKEN_FIELDS = {
+    "accesstoken", "bearertoken", "refreshtoken", "authtoken", "apitoken",
+    "tokensecret", "tokenvalue", "oauthtoken", "idtoken", "sessiontoken",
 }
 RESERVED_KEYS = {"schemaversion", "sequence", "producer", "dedupekey", "payloaddigest", "redactionstate"}
 
@@ -32,6 +43,13 @@ def _validate_keys(value: Any, *, reject_reserved: bool) -> None:
     keys = _keys(value)
     if any(fragment in key for key in keys for fragment in SENSITIVE_FRAGMENTS):
         raise ValueError("sensitive telemetry key")
+    # WLR-120: token fields are typed — usage counts allowed, credential values rejected.
+    for key in keys:
+        if "token" in key:
+            if key in ALLOWED_USAGE_TOKEN_FIELDS:
+                continue
+            if key in SENSITIVE_TOKEN_FIELDS or key.endswith("token"):
+                raise ValueError(f"sensitive token field: {key}")
     if reject_reserved and keys & RESERVED_KEYS:
         raise ValueError("reserved telemetry key")
 

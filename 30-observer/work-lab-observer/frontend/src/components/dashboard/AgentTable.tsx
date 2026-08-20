@@ -56,9 +56,9 @@ export function AgentTable({ agents }: { agents: Agent[] }) {
                 <td className="px-3 py-2.5">
                   <div className="flex items-center gap-2">
                     <div className="w-14 h-1 rounded-full bg-zinc-700/60 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: a.usagePct + '%', background: a.usagePct > 85 ? '#ff4d4f' : '#00d084' }} />
+                      <div className="h-full rounded-full" style={{ width: (a.usagePct ?? 0) + '%', background: (a.usagePct ?? 0) > 85 ? '#ff4d4f' : '#00d084' }} />
                     </div>
-                    <span className="text-[10px] text-zinc-500 tabular-nums">{a.usagePct}%</span>
+                    <span className="text-[10px] text-zinc-500 tabular-nums">{a.usagePct == null ? 'UNKNOWN' : a.usagePct + '%'}</span>
                   </div>
                 </td>
               </tr>
