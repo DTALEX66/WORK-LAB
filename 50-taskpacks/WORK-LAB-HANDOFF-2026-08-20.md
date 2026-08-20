@@ -64,14 +64,12 @@
 - dsh-maintain.js 新增 subst-drives 清理：启动时检查残留 SUBST 虚拟盘（如 X:），自动删除（幂等，不阻塞启动）
 - 已验证：模拟 X: → --fix 自动移除；--check 显示 none
 
-## 7c. Codex 迁移 Git CLI（2026-08-20）
+## 7c. Codex 变更记录（2026-08-20）
 
-- 原因：商店版自动更新重写 config.toml（皮肤/沙盒重置）、多版本并存、多实例并发
-- 已安装：npm @openai/codex 0.148.0（官方 Git CLI，node v22.23.1）
-- wrapper 已切换：hermes\bin\codex.cmd + workflow bin/codex.cmd + bin/codex → Git CLI（商店版降为 fallback）
-- ~/.codex 共享：会话（190 文件/222 线程）+ config + auth 全部保留，无丢失
-- 已恢复：appearanceTheme=dark / sandbox=elevated / conversationDetailMode=STEPS_COMMANDS / provider=custom 直连 OpenAI
-- 配置兜底：codex_config_sync.py --fix（官方基线+用户配置 sync）
+- 曾迁移 Git CLI（npm @openai/codex 0.148.0）+ wrapper 切换 → 发现桌面版任务仍走商店捆绑 runtime（GUI 自带执行核心，不通过 wrapper）→ 迁移对桌面版无意义 → **已恢复商店版 wrapper**（hermes/bin + workflow bin 原版）
+- config.toml：保持直连（model_provider=custom → OpenAI 原生，provider 定义 cc-switch-official 已恢复供旧会话解析，不走 15721 代理）
+- ~/.codex 共享：会话（190+/222 线程）+ config + auth 无丢失
+- 配置兜底：codex_config_sync.py --fix（官方基线+用户配置 sync，商店版更新重置后一键恢复皮肤/沙盒/provider）
 
 ## 8. 待办
 
