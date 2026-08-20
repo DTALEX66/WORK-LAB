@@ -59,6 +59,11 @@
 - 桌面版 app.exe 已重建（内嵌 React 控制塔）
 - DSH 双端一致（5363166 = 远程 main）
 
+## 7b. DSH 维护增强（2026-08-20）
+
+- dsh-maintain.js 新增 subst-drives 清理：启动时检查残留 SUBST 虚拟盘（如 X:），自动删除（幂等，不阻塞启动）
+- 已验证：模拟 X: → --fix 自动移除；--check 显示 none
+
 ## 8. 待办
 
 - DSH main 标签（等用户确认方向）
