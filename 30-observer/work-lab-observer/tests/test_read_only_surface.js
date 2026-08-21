@@ -308,7 +308,7 @@ async function run() {
       transport: { transportState: "LIVE", eventsUrl: "http://127.0.0.1:57889/api/v1/events" },
     };
     try {
-      const root = { innerHTML: "", className: "", prepend() {} };
+      const root = { innerHTML: "", className: "", prepend() {}, querySelector: () => null };
       global.document = {
         documentElement: { setAttribute() {} },
         getElementById(id) { return id === "wl-app" ? root : null; },
@@ -379,7 +379,7 @@ async function run() {
       transport: { transportState: "LIVE", eventsUrl: "http://127.0.0.1:57889/api/v1/events" },
     };
     try {
-      const root = { innerHTML: "", className: "", prepend() {} };
+      const root = { innerHTML: "", className: "", prepend() {}, querySelector: () => null };
       global.document = {
         documentElement: { setAttribute() {} },
         body: { appendChild() {} },
@@ -493,7 +493,7 @@ async function run() {
       transport: { transportState: "LIVE", eventsUrl: "http://127.0.0.1:57889/api/v1/events" },
     };
     try {
-      const root = { innerHTML: "", className: "", prepend() {} };
+      const root = { innerHTML: "", className: "", prepend() {}, querySelector: () => null };
       global.document = {
         documentElement: { setAttribute() {} },
         body: { appendChild() {} },
