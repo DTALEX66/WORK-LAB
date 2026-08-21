@@ -34,3 +34,4 @@ build/
 # Local archive/staging must remain outside this root
 WORK-LAB-ARCHIVE/
 WORK-LAB-STAGING-*/
+config/.backups/

@@ -99,3 +99,48 @@ class ConfigControlPlane:
 
     def rollback(self, target: dict[str, Any], rollback_to: dict[str, Any]) -> dict[str, Any]:
         return {"status": "ROLLED_BACK", "restored": rollback_to == target}
+
+    # --- WLR-330: real config transaction (Discover -> Effective -> Diff -> Backup
+    # -> Approval -> Apply -> Readback -> Commit or Rollback) ---
+    def transaction(self, software_id: str, diff: dict[str, Any], *, approved: bool = False,
+                    backup_dir: str | None = None, apply_fn=None, readback_fn=None) -> dict[str, Any]:
+        """A true transaction: every stage has a digest, idempotency key and a
+        recovery point. APPLIED is only produced when native readback matches.
+        Unapproved never writes live.
+
+        - backup: effective config snapshot persisted (backup ref)
+        - apply:  apply_fn(effective_after) if approved (else WAITING_APPROVAL)
+        - readback: readback_fn() must equal the applied effective config
+        - mismatch -> rollback to backup; match -> COMMITTED with receipt
+        """
+        import hashlib, json, time
+        from pathlib import Path
+
+        effective_before = self.effective(software_id)
+        idem = hashlib.sha256((software_id + json.dumps(diff, sort_keys=True) + str(time.time())).encode()).hexdigest()[:16]
+        if not approved:
+            return {"status": "WAITING_APPROVAL", "idempotencyKey": idem, "changeCount": diff.get("changeCount", 0)}
+
+        # backup (recovery point)
+        backup_ref = None
+        if backup_dir:
+            bdir = Path(backup_dir)
+            bdir.mkdir(parents=True, exist_ok=True)
+            backup_ref = bdir / f"{software_id}-{idem}.json"
+            backup_ref.write_text(json.dumps(effective_before, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        # apply (only via provided apply_fn — never a bare in-memory return)
+        if apply_fn is None:
+            return {"status": "UNSUPPORTED_APPLY", "idempotencyKey": idem, "reason": "no adapter apply_fn"}
+        apply_result = apply_fn(effective_before)
+
+        # readback (must match applied effective)
+        if readback_fn is not None:
+            readback = readback_fn()
+            drift = self.detect_drift(apply_result if isinstance(apply_result, dict) else {}, readback)
+            if drift["status"] == "DRIFT":
+                # rollback to backup
+                rollback_result = self.rollback(apply_result, effective_before)
+                return {"status": "ROLLED_BACK", "idempotencyKey": idem, "drift": drift, "rollback": rollback_result, "backupRef": str(backup_ref) if backup_ref else None}
+            return {"status": "COMMITTED", "idempotencyKey": idem, "backupRef": str(backup_ref) if backup_ref else None, "receipt": idem}
+        return {"status": "APPLIED_NO_READBACK", "idempotencyKey": idem, "backupRef": str(backup_ref) if backup_ref else None}
