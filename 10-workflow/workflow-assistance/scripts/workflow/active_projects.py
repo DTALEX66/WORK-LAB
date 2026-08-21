@@ -37,6 +37,19 @@ ACTIVE_AGENT_PATTERNS = (
     "opencode",
 )
 
+# WLR-260: shared libraries are NEVER scanned as projects (candidates only
+# appear after explicit user approval). Model weights and design assets live
+# outside project roots; they must never be treated as active projects.
+NEVER_SCAN_PATH_FRAGMENTS = (
+    "Model library",
+    "Design assets",
+    "OS External Configuration",
+    "pnpm-store",
+    "node_modules",
+    "venv",
+    ".venv",
+)
+
 
 @dataclass
 class ActiveProject:

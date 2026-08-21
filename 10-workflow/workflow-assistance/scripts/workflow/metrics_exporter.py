@@ -31,7 +31,9 @@ def main() -> None:
     g_projects = Gauge("wlobs_projects", "Approved projects count", ["state"])
     g_executions = Gauge("wlobs_executions", "Execution instances", ["state"])
     g_usage_tokens = Gauge("wlobs_usage_tokens", "Token usage summary", ["kind"])
-    g_cost = Gauge("wlobs_cost_estimate", "Cost estimate (USD)", [])
+    # WLR-430: cost truth — estimate is ESTIMATED by definition (never EXACT without
+    # provider billing receipts); UNKNOWN when no usage samples exist.
+    g_cost = Gauge("wlobs_cost_estimate", "Cost estimate (USD, ESTIMATED)", ["truth"])
     g_platform = Gauge("wlobs_platform_observations", "Platform observations", ["project_id"])
     # System resource gauges (psutil, loopback-only host view)
     g_sys_cpu = Gauge("wlobs_sys_cpu_percent", "Host CPU usage percent", [])
@@ -72,7 +74,11 @@ def main() -> None:
                 cost = cur.execute(
                     "SELECT COALESCE(SUM(cost_estimate),0) FROM usage_samples"
                 ).fetchone()
-                g_cost.set(cost[0] or 0)
+                total_cost = cost[0] or 0
+                if total_cost > 0:
+                    g_cost.labels(truth="ESTIMATED").set(total_cost)
+                else:
+                    g_cost.labels(truth="UNKNOWN").set(0)  # unknown stays unknown
 
                 # System resource gauges (best effort)
                 try:
