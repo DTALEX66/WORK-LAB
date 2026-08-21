@@ -5,7 +5,8 @@ rejected — Observer cannot modify work units, approve, retry, rollback, change
 config, invoke executor, or write secrets.
 """
 import sys
-sys.path.insert(0, r'D:\All projects\WORK-LAB\10-workflow\workflow-assistance\scripts\workflow')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts' / 'workflow'))
 import pytest
 
 WRITE_ACTIONS = [

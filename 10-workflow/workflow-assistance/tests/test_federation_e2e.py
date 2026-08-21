@@ -3,7 +3,8 @@
 These are fixture-based, no real external software required.
 """
 import sys
-sys.path.insert(0, r'D:\All projects\WORK-LAB\10-workflow\workflow-assistance\scripts\workflow')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts' / 'workflow'))
 import pytest
 from config_control_plane import ConfigControlPlane, SoftwareRegistration
 import hashlib
