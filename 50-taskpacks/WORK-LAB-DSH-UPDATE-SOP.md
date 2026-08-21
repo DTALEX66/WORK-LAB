@@ -254,3 +254,30 @@ git clone --depth 1 git@github.com:<owner>/<repo>.git  # 到 .hermes/task-runtim
 - 更新后**必须把新版本写回 profile package.json + 同步 lockfile**（`pnpm install --lockfile-only`）——否则 pnpm install 还原旧版 → 反复提示更新死循环。**本机 update-dsh-plugins.py 的声明同步 = 该实践**（补 lockfile-only 为可选增强）。
 - 串行队列批量更新；备份在 `$DSH_HOME/dsh-update-checker-backups/`；写路由强制 `{confirm:true}`。
 - DSH 官方（deepseek-ai/deepseek-harness）issues 禁用、无插件更新文档——社区插件（Airmetro/dsh-update-checker、dsh-market/dsh-market）是权威。
+
+---
+
+## 9. 0.1.1-rc.2 升级失败结论 + rc.7 恢复（2026-08-21）
+
+### 0.1.1-rc.2 不可用（2 天前新 minor）
+- 现象：单插件也死锁（0 输出 CPU 0.8）；duplicate loader entry（dsh-market/modlens）逐层清后仍卡
+- 根因：dshmarket 生态插件（cordis.patch.yml 每插件 insert dsh-market + bundle 声明）与 0.1.1 的 cordis 4.0.1 不兼容；0.1.1 需要 pnpm build（源码链接无 lib）+ 官方插件生态未适配
+- 结论：0.1.1 等 rc.3+/稳定版 + 插件生态适配后再迁（预计 1-2 周）
+
+### rc.7 恢复路径（已验证）
+- source: rc2-tarball/worktree-rc7-bak → update-ref HEAD 99f6f02f → pnpm install
+- web profile: web-profile-bak → 删 pnpm-lock.yaml → github: 引用改 npm 版本（npm view 逐个）→ pnpm install
+- obsidian-memory: vaultPath 默认值补丁（config = { vaultPath: "E:\\BaiduSyncdisk\\Obsidian知识库" }）
+- 插件 cordis.patch.yml 统一置空（0.1.1 留下）——rc.7 无碍
+- 凭据文件被 0.1.1 迁移（version+refs）→ 从 rc7 备份恢复（8/20 后新填凭据需重填）
+
+### 网络通道（本轮强化）
+- gh CLI（scoop，已认证 DTALEX66）→ GitHub release 资产下载（Obsidian 315MB/codex rust 283MB）——认证 5000/h 不限速
+- git SSH（origin 直设 git@github.com:）——fetch/checkout；全局 insteadOf 的坏引号 section 已删
+- npm → npmmirror（web .npmrc + pnpm 源）
+- 7890 代理：curl/git https 大文件
+
+### 其他软件更新（2026-08-21）
+- Codex 0.149.0（npm 包装 + gh 下载 rust 283MB 替换 vendor codex.exe——npmmirror 无 win32-x64 0.149）
+- Obsidian 1.13.7（gh 下载 315MB 静默装 D:\Programs\Obsidian；1.13.8 只是安卓包）
+- Open Design 0.20.1（launcher 自更待确认）；Hermes 0.20.5 待升（remote 引号修）

@@ -162,3 +162,14 @@
 - **主体升级 rc.7 完成（2026-08-20）**：source checkout `99f6f02f`（dsh-v0.1.0-rc.7）+ pnpm install --frozen-lockfile（npmmirror，5.6s；lockfile 1203 项过官方供应链策略）；node-pty 随 rc.7 升 **1.2.0-beta.15**（PR #886 官方修复内置）；36 插件全加载、soft-incompatible 消失（codex-meter rc.6+ 满足）、颜色补丁/皮肤/会话无损；origin 改 SSH；备份 `dsh-backup-2026-08-20/`（385MB，回滚 pin 47f94385）。
 
 - **UI 精简（2026-08-20 用户决策）**：从三层叠加（whale-song 鲸吟 + maid-atelier 女仆 + open-sea-skin 海洋 iframe）精简为**只要 whale-song 鲸吟**——`data-dsh-skin-center` active、深海蓝 #081a40、女仆/海洋 bundle 移除不加载（包保留备用）；鲸鱼娘 pet 保留；按钮颜色补丁仍正确（深蓝底白字）。
+
+---
+
+## 9. 增补（2026-08-21 终版）
+
+- **0.1.1-rc.2 升级失败回滚 rc.7**（结论见 SOP §9）：0.1.1 与 dshmarket 插件生态不兼容（cordis 4.0.1）——等稳定版
+- **rc.7 恢复完成**：核心 14 bundles（base/web-app + update-checker/auto-memory/codex-meter/vision-tools/monitor/computer-use/effort-slider/vision-toolkit/modlens/obsidian-memory/skin-center/pet）+ 颜色补丁 + obsidian vaultPath 补丁 + maintain 超时 15s
+- **插件清单精简**：GitHub 源 8 个未装回（find-plugin/mermaid/visualize/tier/voice-input/maid/web-ui-all/market——npm 无或非 bundle 格式；voice-input npm 0.1.2 非 bundle 已弃）
+- **皮肤**：skin-center 已装但未激活（UI 选鲸吟）
+- **其他软件**：Codex 0.149.0 ✓ / Obsidian 1.13.7 ✓ / Open Design 0.20.1 待更 / Hermes 0.20.5 待升
+- **待办**：① UI 激活鲸吟皮肤 ② Open Design 更新 ③ GitHub 源插件按需装回（tarball 代理）④ 凭据 8/20 后新填的重填
