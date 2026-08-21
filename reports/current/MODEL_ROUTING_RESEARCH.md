@@ -64,3 +64,21 @@ WLR-400 Model Reference（注册 DeepSeek API / Codex 订阅 / 本地 H3）
 - 不承载模型请求正文（WLR 边界）
 - 订阅 vs API 成本分开（Codex 订阅 token 不伪算 API 费）
 - 路由误判 -> Eval 样本（WLR-440）校准
+## 6. 成熟方案清单（2026 可用）
+
+| 方案 | 类型 | 模式 | 特点 |
+|---|---|---|---|
+| LiteLLM | 网关 | 开源(MIT) | 最流行；统一 API + 100+ provider；路由/负载均衡/成本追踪/缓存 |
+| OpenRouter | 托管网关 | 商业服务 | 统一 API 聚合模型；无需自托管 |
+| Portkey | 网关 | 开源+商业 | 路由/可观测/缓存/守卫 |
+| RouteLLM | 路由策略 | 开源 | 成本感知阈值路由；成本降 30-85% |
+| Nvidia NeMo Switchyard | 网关 | 开源(2026-08) | Nvidia 官方；软件路由器；成本降 74% |
+| route-switch | 网关 | 开源 | 轻量路由切换 |
+| NotDiamond/Martian | 路由策略 | 商业 | 数据驱动路由选择 |
+
+### 对 WORK-LAB 适用性（借鉴不照搬）
+
+- WORK-LAB 边界 = 不代理请求正文/凭据（WLR 明确）——不是网关型
+- 可借鉴：RouteLLM 成本阈值思路（进 WLR-410 规则）、LiteLLM provider 抽象（与 adapter 对齐）
+- 可选接入：LiteLLM/NeMo Switchyard 可作执行后端（客户端经网关调模型）——需单独评估边界
+- 结论：WLR-410 规则路由为主 + 成熟网关作可选执行后端（待用户决定）
