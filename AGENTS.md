@@ -15,7 +15,10 @@ alias: `DTALEX66/OPEN-DESIGN-Assistance`).
 WORK-LAB manages the Open Design **client** USER_GLOBAL desired state (rules,
 skills, plugins, workflow policy, capability mapping) as `MANAGE` with
 `apply_supported=false` until a reviewed adapter and stable official interface
-exist. Design **capability** (models/tools, generation params, design assets,
+exist. Since 2026-08-21 the user authorized WORK-LAB to manage Open Design
+**plugins** (install/update/inventory of the client plugin layer); design
+**capability** (models/tools/generation params/assets/specs/quality gates) stays
+with `DTALEX66/DESIGN-LAB` and is not managed here. Design **capability** (models/tools, generation params, design assets,
 specs, design systems, quality gates, editable handoff) belongs to the
 `DTALEX66/DESIGN-LAB` project and is **neither collected nor managed here**
 (`IGNORE`). Field-level ownership lives in
