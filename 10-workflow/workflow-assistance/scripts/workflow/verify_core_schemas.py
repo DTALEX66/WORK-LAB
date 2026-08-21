@@ -31,7 +31,7 @@ EXPECTED = {
     "ci-observation.schema.json": ("workflow/ci-observation/v1", {"schema_version", "observation_id", "repository", "commit", "state", "observed_at", "retry_budget"}),
     "evidence-manifest.schema.json": ("workflow/evidence-manifest/v1", {"schema_version", "manifest_id", "source_identity", "plan", "evidence", "redaction"}),
     "model-policy.schema.json": ("workflow/model-policy/v1", {"schema_version", "policy_id", "task_class", "model_class", "selection", "context_budget", "cost", "redaction", "degradation"}),
-    "memory-record.schema.json": ("workflow/memory-record/v1", {"schema_version", "memory_id", "layer", "kind", "status", "source_digest", "content_digest", "confidence", "promotion", "redaction"}),
+    "memory-record.schema.json": ("workflow/runtime-context-record/v1", {"schema_version", "memory_id", "layer", "kind", "status", "source_digest", "content_digest", "confidence", "promotion", "redaction", "ttlSeconds", "authoritative"}),
     "rule-drift.schema.json": ("workflow/rule-drift/v1", {"schema_version", "drift_id", "rule_id", "baseline_digest", "observed_digest", "state", "severity", "action"}),
     "platform-identity.schema.json": ("workflow/platform-identity/v1", {"schema_version", "platform_id", "logical_instance_id", "package_identity", "publisher", "install_channel", "executable_realpath", "binary_digest", "discovered_version", "launcher_id", "launcher_target", "arguments", "working_directory", "effective_config_root", "profile_id", "user_context", "capabilities", "evidence_source", "observed_at", "freshness", "state"}),
     "config-ownership.schema.json": (

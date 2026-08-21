@@ -1,23 +1,63 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Codex CLI launcher for Workflow-assistance.
-# 2026-08-20: switched from Windows Store OpenAI.Codex to official Git CLI
-# (npm @openai/codex). Same ~/.codex CODEX_HOME: sessions, config, auth shared.
-# Override with CODEX_CLI env var when needed.
+# Portable Codex CLI launcher for Workflow-assistance.
+# On Windows, the Store package is the single runtime owner for both GUI and CLI.
+# The launcher resolves its current version dynamically; it does not pin or bundle
+# Codex, and it never reads credentials.
 
-if [[ -n "${CODEX_CLI:-}" && -x "$CODEX_CLI" ]]; then
-  exec "$CODEX_CLI" "$@"
+candidates=()
+if [ -n "${CODEX_CLI:-}" ]; then
+  candidates+=("$CODEX_CLI")
 fi
 
-NPM_ROOT="/c/Users/ALEX/AppData/Local/hermes/node"
-if [[ -f "$NPM_ROOT/node_modules/@openai/codex/bin/codex.js" ]]; then
-  exec "$NPM_ROOT/node.exe" "$NPM_ROOT/node_modules/@openai/codex/bin/codex.js" "$@"
+# Git Bash on Windows has powershell.exe. Resolve the current official Store
+# package instead of silently selecting the separately-installed plugin runtime.
+if command -v powershell.exe >/dev/null 2>&1; then
+  # Official per-user CLI installs live under versioned directories
+  # (OpenAI/Codex/bin/<commit>/codex.exe). Prefer them: they are user-writable
+  # and bypass the WindowsApps ACLs that block Git Bash from executing the
+  # Store copy directly.
+  for versioned in "$HOME/AppData/Local/OpenAI/Codex/bin/"*/codex.exe; do
+    [ -f "$versioned" ] && candidates+=("$versioned")
+  done
+  store_root="$(powershell.exe -NoProfile -Command '(Get-AppxPackage -Name OpenAI.Codex | Select-Object -First 1 -ExpandProperty InstallLocation)' 2>/dev/null | tr -d '\r' | tail -n 1)"
+  store_bin="$store_root/app/resources/codex.exe"
+  plugin_bin="$HOME/.codex/plugins/.plugin-appserver/codex.exe"
+  if [ -f "$store_bin" ]; then
+    # WindowsApps ACLs can block Git Bash from executing the Store copy. The
+    # plugin copy is allowed only when its bytes exactly match the Store owner.
+    store_win="$(cygpath -w "$store_bin" 2>/dev/null || printf '%s' "$store_bin")"
+    plugin_win="$(cygpath -w "$plugin_bin" 2>/dev/null || printf '%s' "$plugin_bin")"
+    store_hash="$(powershell.exe -NoProfile -Command "(Get-FileHash -LiteralPath '$store_win' -Algorithm SHA256).Hash" 2>/dev/null | tr -d '\r' | tail -n 1)"
+    plugin_hash="$(powershell.exe -NoProfile -Command "if (Test-Path -LiteralPath '$plugin_win') {(Get-FileHash -LiteralPath '$plugin_win' -Algorithm SHA256).Hash}" 2>/dev/null | tr -d '\r' | tail -n 1)"
+    if [ -n "$store_hash" ] && [ "$store_hash" = "$plugin_hash" ]; then
+      candidates+=("$plugin_bin")
+    fi
+    # When the Store copy and the plugin copy differ (Store package updated),
+    # the plugin is stale and the WindowsApps copy is usually ACL-blocked, so
+    # neither is added here; the versioned install above already covers the
+    # real CLI.
+  fi
+  candidates+=("$HOME/AppData/Local/OpenAI/Codex/bin/codex.exe")
+else
+  # Non-Windows portable environments may use the plugin runtime or PATH.
+  candidates+=("$HOME/.codex/plugins/.plugin-appserver/codex.exe")
+  candidates+=("$HOME/AppData/Local/OpenAI/Codex/bin/codex.exe")
 fi
 
-# fallback: legacy store runtime
-STORE_EXE="$(powershell.exe -NoProfile -Command "(Get-AppxPackage -Name OpenAI.Codex)[0].InstallLocation + '\\app\\resources\\codex.exe'" 2>/dev/null || true)"
-if [[ -n "$STORE_EXE" && -x "$STORE_EXE" ]]; then
-  exec "$STORE_EXE" "$@"
+for codex_bin in "${candidates[@]}"; do
+  if [ -x "$codex_bin" ]; then
+    # exec can fail with 126 when WindowsApps ACLs block Git Bash; keep trying
+    # the next candidate instead of aborting the wrapper.
+    exec "$codex_bin" "$@" || continue
+  fi
+done
+
+if command -v codex.exe >/dev/null 2>&1; then
+  exec codex.exe "$@"
 fi
+
+echo "codex wrapper: Codex CLI not found." >&2
+echo "Install/login Codex first, or set CODEX_CLI to the Codex executable path." >&2
 exit 127
