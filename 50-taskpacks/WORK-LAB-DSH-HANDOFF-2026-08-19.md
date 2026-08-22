@@ -188,3 +188,7 @@
 **网络通道（可复用）**：gh CLI（认证 DTALEX66，5000/h，GitHub release 大文件首选）+ SSH（origin 直连，坏引号 rule 已删）+ npmmirror（11 倍）+ 7890 代理。
 
 **待用户**：① Obsidian 社区插件（vault E 盘需授权）② Hermes optional-skills/MCP 启用与否 ③ Hermes 本体 0.20.5（任务清单已列，可发 DSH 执行）。
+
+
+## 版本更正（2026-08-22 21:08）
+DSH **官方 runtime 自更新到 0.1.1-rc.2**（commit 4446888，DSH Official Runtime）——与 17 插件全 latest 匹配、无死锁。**0.1.1 现已正式启用**（此前收官摘要写的"保持 rc.7"作废）。

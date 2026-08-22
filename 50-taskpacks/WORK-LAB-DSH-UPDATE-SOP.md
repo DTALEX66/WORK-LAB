@@ -281,3 +281,9 @@ git clone --depth 1 git@github.com:<owner>/<repo>.git  # 到 .hermes/task-runtim
 - Codex 0.149.0（npm 包装 + gh 下载 rust 283MB 替换 vendor codex.exe——npmmirror 无 win32-x64 0.149）
 - Obsidian 1.13.7（gh 下载 315MB 静默装 D:\Programs\Obsidian；1.13.8 只是安卓包）
 - Open Design 0.20.1（launcher 自更待确认）；Hermes 0.20.5 待升（remote 引号修）
+
+
+## 10. 0.1.1-rc.2 正确升级路径（2026-08-22 验证）
+- ❌ **tarball 源码手动装 = 死锁**：源码缺 lib（需 build），build 后 cordis 与 dshmarket 生态插件不匹配 → 单插件 init 死锁（CPU 0.8 挂起、0 输出）。
+- ✅ **DSH 官方 runtime 自更新**（commit 4446888 "DSH Official Runtime"）：预构建 lib/dist，cordis 打包正确 → **17 插件全 latest 匹配、无死锁、web healthy**。
+- 结论：0.1.1 升级**只走官方 runtime 自更新**，绝不用 tarball/codeload 源码覆盖。
