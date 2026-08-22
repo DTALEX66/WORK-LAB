@@ -69,6 +69,9 @@ class WorkUnit:
     verification: dict[str, Any] = field(default_factory=dict)
     evidence: list[str] = field(default_factory=list)
     cost: dict[str, Any] = field(default_factory=dict)
+    # WLR-410: routing result (lane/modelRef from model_router; best-effort, may be None)
+    model_lane: str | None = None
+    model_ref: str | None = None
     events: list[dict[str, Any]] = field(default_factory=list)
     created_at: str = field(default_factory=_now)
     updated_at: str = field(default_factory=_now)
@@ -147,12 +150,24 @@ class WorkUnitStore:
 
     def create(self, *, project: str, goal: str, agents: list[str] | None = None,
                workspace: str | None = None, work_unit_id: str | None = None) -> WorkUnit:
+        # WLR-410: route goal -> capability lane (zero model calls; deterministic rules).
+        model_lane = None
+        model_ref = None
+        try:
+            from model_router import TaskSignal, route
+            plan = route(TaskSignal(task=goal, risk="low"))
+            model_lane = plan.lane
+            model_ref = plan.model_ref
+        except Exception:
+            model_lane, model_ref = None, None  # routing is best-effort, never blocks
         wu = WorkUnit(
             id=work_unit_id or uuid.uuid4().hex[:12],
             project=project,
             goal=goal,
             agents=list(agents or []),
             workspace=workspace,
+            model_lane=model_lane,
+            model_ref=model_ref,
         )
         data = self._read()
         data["workUnits"][wu.id] = wu.to_dict()
