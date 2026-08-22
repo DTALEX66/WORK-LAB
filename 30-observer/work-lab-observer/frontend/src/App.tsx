@@ -5,7 +5,7 @@ import { TopStatusBar } from '@/components/layout/TopStatusBar'
 import { KPICard } from '@/components/dashboard/KPICard'
 import { CostPanel } from '@/components/dashboard/CostPanel'
 import { ResourceMonitor } from '@/components/dashboard/ResourceMonitor'
-import { AgentsView, ExecutionsView, ModelsView, MemoryView, ToolsView, MonitoringView, SettingsView } from '@/views/Views'
+import { AgentsView, ExecutionsView, ModelsView, MemoryView, ToolsView, MonitoringView, SettingsView, DeliveryView, TrustView } from '@/views/Views'
 import { fetchSnapshot, executionsToAgents, snapshotToServices, snapshotToTimeline, snapshotToCosts, estimateCost, fmtTokens, fmtCost, promRange, fetchResources, type LiveSnapshot, type SysResources } from '@/lib/api'
 import type { Agent, TimelineEvent, ServiceHealth, CostPoint } from '@/types'
 
@@ -102,6 +102,8 @@ export default function App() {
     <MemoryView key="me" snap={snap} />,
     <ToolsView key="t" snap={snap} />,
     <MonitoringView key="mo" services={services} snap={snap} />,
+    <DeliveryView key="d" snap={snap} />,
+    <TrustView key="t2" snap={snap} />,
     <SettingsView key="s" live={live} snap={snap} />,
   ]
 

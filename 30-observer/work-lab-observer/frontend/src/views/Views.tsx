@@ -232,3 +232,44 @@ export function SettingsView({ live, snap }: { live: boolean; snap: any }) {
     </div>
   )
 }
+
+export function DeliveryView({ snap }: { snap: any }) {
+  const git = snap?.git || {}
+  const ci = snap?.ci || []
+  return (
+    <div className="flex flex-col gap-4 overflow-auto p-4">
+      <div className="grid grid-cols-2 gap-4">
+        <Card><CardHeader><span>Git 状态</span></CardHeader><CardContent className="text-xs text-zinc-300">
+          <div className="flex justify-between py-1"><span className="text-zinc-500">当前分支</span><span>{git.branch || 'UNKNOWN'}</span></div>
+          <div className="flex justify-between py-1"><span className="text-zinc-500">HEAD</span><span className="font-mono">{git.head?.slice(0, 7) || 'UNKNOWN'}</span></div>
+          <div className="flex justify-between py-1"><span className="text-zinc-500">远程一致</span><span>{git.remoteMatch === undefined ? 'UNKNOWN' : (git.remoteMatch ? '一致' : '不一致')}</span></div>
+        </CardContent></Card>
+        <Card><CardHeader><span>CI 状态</span></CardHeader><CardContent className="text-xs text-zinc-300">
+          {ci.length ? ci.slice(0, 5).map((r: any, i: number) => (
+            <div key={i} className="flex justify-between py-1"><span className="font-mono">{r.headSha?.slice(0, 7) || 'UNKNOWN'}</span><span>{r.conclusion || r.status || 'UNKNOWN'}</span></div>
+          )) : <div className="text-zinc-600 py-2">无 CI 记录（UNKNOWN）</div>}
+        </CardContent></Card>
+      </div>
+    </div>
+  )
+}
+
+export function TrustView({ snap }: { snap: any }) {
+  const ts = snap?.tokenSummary
+  const quality = ts?.costQuality || 'UNKNOWN'
+  const transport = snap?.transport || {}
+  return (
+    <div className="flex flex-col gap-4 overflow-auto p-4">
+      <Card><CardHeader><span>数据可信度</span></CardHeader><CardContent className="text-xs text-zinc-300">
+        <div className="flex justify-between py-1"><span className="text-zinc-500">成本质量</span><span>{quality}</span></div>
+        <div className="flex justify-between py-1"><span className="text-zinc-500">传输状态</span><span>{transport.transportState || 'UNKNOWN'}</span></div>
+        <div className="flex justify-between py-1"><span className="text-zinc-500">新鲜度</span><span>{transport.freshnessState || 'UNKNOWN'}</span></div>
+        <div className="flex justify-between py-1"><span className="text-zinc-500">覆盖度</span><span>{transport.coverageNumerator != null ? (transport.coverageNumerator + '/' + (transport.coverageDenominator ?? '?') + ' · ' + (transport.coverageScope || 'UNKNOWN')) : 'UNKNOWN'}</span></div>
+        <div className="flex justify-between py-1"><span className="text-zinc-500">快照生成</span><span>{snap?.generatedAt ? new Date(snap.generatedAt).toLocaleString() : 'UNKNOWN'}</span></div>
+      </CardContent></Card>
+      <Card><CardHeader><span>原则</span></CardHeader><CardContent className="text-xs text-zinc-500">
+        未知值保持 UNKNOWN，不伪造 0；所有指标带来源/新鲜度/质量；Observer 严格只读。
+      </CardContent></Card>
+    </div>
+  )
+}
