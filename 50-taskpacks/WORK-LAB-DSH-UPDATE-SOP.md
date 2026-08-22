@@ -287,3 +287,10 @@ git clone --depth 1 git@github.com:<owner>/<repo>.git  # 到 .hermes/task-runtim
 - ❌ **tarball 源码手动装 = 死锁**：源码缺 lib（需 build），build 后 cordis 与 dshmarket 生态插件不匹配 → 单插件 init 死锁（CPU 0.8 挂起、0 输出）。
 - ✅ **DSH 官方 runtime 自更新**（commit 4446888 "DSH Official Runtime"）：预构建 lib/dist，cordis 打包正确 → **17 插件全 latest 匹配、无死锁、web healthy**。
 - 结论：0.1.1 升级**只走官方 runtime 自更新**，绝不用 tarball/codeload 源码覆盖。
+
+## §11 GH_TOKEN 与更新检查（2026-08-22）
+
+- 403 根因链：`setx GH_TOKEN` 只写用户环境 → **已在运行的 web 进程（孤儿/dsh-desktop 旧快照）读不到** → update-checker 空 token → rate limited。
+- 修复：杀 3080 旧进程 → 用 `start-dsh-dest.py` 重启（内置 winreg 读 GH_TOKEN 注入 env）。
+- update-checker 多副本（web/node_modules + profiles/node_modules + backups/）为自更新正常机制，勿删；判断加载副本看 ghError/status 而非目录。
+- 插件审计方法：实际有用性 + 与既有工具重复（如 dsh-computer-use↔Hermes）+ 市场质量（星/下载）；审计后 17 插件保留全绿。
