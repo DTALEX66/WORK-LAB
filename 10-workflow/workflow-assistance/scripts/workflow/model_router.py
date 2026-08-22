@@ -82,8 +82,8 @@ def route(signal: TaskSignal, lanes: dict[str, Any] | None = None) -> Invocation
     if signal.task_type == "visual" or _contains(text, _VISION_HINTS):
         return _plan("C", lanes, "visual task -> local vision lane")
 
-    # 3. complexity / risk
-    if signal.risk in ("high", "medium") or signal.task_type == "code" and _contains(text, _COMPLEX_HINTS):
+    # 3. complexity / risk (strong signal words trigger reasoning lane directly)
+    if signal.risk in ("high", "medium") or _contains(text, _COMPLEX_HINTS):
         return _plan("B", lanes, "high complexity/reasoning -> strong reasoning lane")
 
     # 4. simple / daily
