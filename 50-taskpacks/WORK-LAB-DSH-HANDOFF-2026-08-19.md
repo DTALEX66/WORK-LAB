@@ -187,8 +187,29 @@
 
 **网络通道（可复用）**：gh CLI（认证 DTALEX66，5000/h，GitHub release 大文件首选）+ SSH（origin 直连，坏引号 rule 已删）+ npmmirror（11 倍）+ 7890 代理。
 
-**待用户**：① Obsidian 社区插件（vault E 盘需授权）② Hermes optional-skills/MCP 启用与否 ③ Hermes 本体 0.20.5（任务清单已列，可发 DSH 执行）。
 
 
 ## 版本更正（2026-08-22 21:08）
 DSH **官方 runtime 自更新到 0.1.1-rc.2**（commit 4446888，DSH Official Runtime）——与 17 插件全 latest 匹配、无死锁。**0.1.1 现已正式启用**（此前收官摘要写的"保持 rc.7"作废）。
+
+---
+
+## 终版追加（2026-08-22 交接闭环）
+
+### 当前状态（全部验证）
+- **DSH 0.1.1-rc.2 官方 runtime**（自更新 4446888）运行中（3080）· 会话保留
+- **插件审计完成（19→17）**：移除 dsh-computer-use（与 Hermes 重复）+ dsh-monitor（2★低用）；保留 17 个均验证有用（市场 1837 对照无更优）
+- **update-checker 全绿**：403 根因=孤儿 web 进程（dsh-desktop 启动、setx 前快照）读不到 GH_TOKEN → 杀孤儿 + start-dsh-dest.py 注入重启 → GitHub 认证查询正常（mermaid ghLatest 0.5.0 验证）；多副本（1.4.15/1.17.1/5 备份）为自更新正常机制
+- **鲸吟皮肤**激活 · maintain --fix 全绿
+- **桌面版结论**：官方无独立桌面版（apps 仅 cli+web；release 无安装包；npm 无 dsh-desktop）——本地 Tauri 壳 dsh-desktop.exe（rc.7 构建）连官方 web 完全可用 = 桌面体验
+
+### 关键经验（可复用）
+1. GH_TOKEN 设 setx 后必须**重启实际 web 进程**（孤儿进程环境不含新变量）——start-dsh-dest.py 已内置 winreg 注入
+2. update-checker 副本多≠问题（备份机制）；403 看进程环境不看副本
+3. 插件审计标准：功能实际有用性 + 与既有工具重复性 + 市场质量（星/下载）
+4. tarball 手动装 0.1.1 会 cordis 死锁——官方 runtime 自更新是唯一正解
+
+### 待办（全部非阻塞）
+- mermaid error 字段（npm 通道信息性——github 已验证——UI 以 status 为准）
+- 官方桌面版（等官方 apps/desktop——有则跟进）
+- 交接 PR（本分支 merge 到 main）
