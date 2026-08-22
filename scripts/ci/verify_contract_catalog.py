@@ -15,7 +15,7 @@ EXPECTED = {
     "task-card": "workflow",
     "runtime-lock": "workflow",
 
-    "domain-pack": "workflow",
+    "domain-pack": "external-design-lab",
     "evidence-envelope": "root-governance",
     "release-manifest": "root-governance",
     "adapter-capability": "workflow",
