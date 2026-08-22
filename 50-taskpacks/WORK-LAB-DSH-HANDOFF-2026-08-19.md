@@ -173,3 +173,22 @@
 - **皮肤**：skin-center 已装但未激活（UI 选鲸吟）
 - **其他软件**：Codex 0.149.0 ✓ / Obsidian 1.13.7 ✓ / Open Design 0.20.1 待更 / Hermes 0.20.5 待升
 - **待办**：① UI 激活鲸吟皮肤 ② Open Design 更新 ③ GitHub 源插件按需装回（tarball 代理）④ 凭据 8/20 后新填的重填
+
+
+---
+
+## 收官摘要（2026-08-21 全天执行，一句话交接）
+
+**DSH**：0.1.1-rc.2 升级尝试 → 确诊与 dshmarket 生态不兼容（cordis 4.0.1 单插件死锁）→ **回滚 rc.7**（source+profile+凭据恢复）→ **19 bundles 全绿**（新增 dshmarket/dsh-review/dsh-doublecheck/find-plugin/mermaid；皮肤=鲸吟已激活）。**根因**：0.1.1 新 minor 刚发布 2 天，第三方插件未适配；等生态成熟再迁（SOP §9）。
+
+**Codex**：入口收敛完成——runtime drift（Store 26.818.5229 vs bridge）→ 同步 bridge → 卸载 npm 包装 → **唯一入口 bin/codex.cmd**（0.149.0-alpha.4.1）→ 三 shell 验收 PASS。同步器 BLOCKED（managed 块被外部移除）→ 备份清理 + plan/apply/verify 恢复 14 skills。状态 → INSTALLED_RUNTIME_VERIFIED。
+
+**软件更新**：Codex 0.149.0（gh 下载 rust 替换，npmmirror 无 win32 包）；Obsidian 1.13.7（gh 下载静默装）；Open Design 0.20.1（gh 下载 399MB 静默装，插件层归 WORK-LAB 管——AGENTS.md 已更新）。Hermes 未动（排除）。
+
+**网络通道（可复用）**：gh CLI（认证 DTALEX66，5000/h，GitHub release 大文件首选）+ SSH（origin 直连，坏引号 rule 已删）+ npmmirror（11 倍）+ 7890 代理。
+
+**待用户**：① Obsidian 社区插件（vault E 盘需授权）② Hermes optional-skills/MCP 启用与否 ③ Hermes 本体 0.20.5（任务清单已列，可发 DSH 执行）。
+
+
+## 版本更正（2026-08-22 21:08）
+DSH **官方 runtime 自更新到 0.1.1-rc.2**（commit 4446888，DSH Official Runtime）——与 17 插件全 latest 匹配、无死锁。**0.1.1 现已正式启用**（此前收官摘要写的"保持 rc.7"作废）。

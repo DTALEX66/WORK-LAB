@@ -30,7 +30,7 @@ function run() {
   }
 
   test("frontendDist points to the embedded local web frontend", () => {
-    assert.strictEqual(config.build.frontendDist, "../web");
+    assert.strictEqual(config.build.frontendDist, "../frontend/dist");
   });
 
   test("main window starts UNKNOWN and uses an opaque desktop canvas", () => {
