@@ -74,6 +74,36 @@ Desktop rewrote `~/.codex/config.toml`): do not hand-edit the file and do
 not expect `rollback` to rescue it — re-establish through the sync script's
 own legacy-migration path, then re-run `verify` until PASS.
 
+When the sync script instead reports **BLOCKED** (`managed config block
+changed after apply` / `incomplete managed block hashes` / `managed markers
+exist without an ownership state file` / `unowned rule target already
+exists`), it is fail-closed because the managed block or its state was
+externally removed. Verified recovery (2026-08-21): back up then remove the
+orphaned managed markers/rules/skills and the stale
+`.workflow-assistance-state.json`, then `plan` → review the write set →
+`apply --approved --approved-plan-digest <digest>` → `verify` PASS. Never
+"hand-fill" the state file — its hash fields are derived, not guessable.
+
+## Runtime entry convergence & drift recovery (Codex, 2026-08-21)
+
+The five-dimension baseline (unique entry per software) can fail as
+**runtime drift**: the managed `bin/codex` wrapper resolves the official
+Store package (`C:\Program Files\WindowsApps\OpenAI.Codex_<ver>\app\
+resources\codex.exe`) and refuses to run when the Store binary and the
+per-user bridge(s) hash-differ (`codex wrapper: Store and executable bridge
+differ; refusing runtime drift`). The wrapper compares the Store `codex.exe`
+SHA256 against **both** `~/.codex/plugins/.plugin-appserver/codex.exe`
+(plugin bridge, exit 78 on mismatch) and the per-user `~/AppData/Local/
+OpenAI/Codex/bin/<commit>/codex.exe` fallback. After a Store auto-update
+the bridges lag → drift. Fix: copy the Store `codex.exe` into both bridge
+paths (hash-verified), then `codex --version` passes and resolves to the
+Store channel (`codex-cli 0.149.0-alpha.4.1`). To make the managed wrapper
+the *sole* entry: uninstall the npm shim (`@openai/codex` global → removes
+`node/codex.ps1`/`.cmd`/`codex` from PATH) so `Get-Command codex` returns
+only `bin/codex.cmd` + `bin/codex`; verify all three shells (PowerShell,
+CMD, git-bash) resolve to the same runtime. WSL `bash` emits UTF-16 noise —
+the user's shell is git-bash, not WSL.
+
 ## Integration with skill lifecycle
 
 After any update, run `skill_lifecycle.py status` to confirm the managed set
