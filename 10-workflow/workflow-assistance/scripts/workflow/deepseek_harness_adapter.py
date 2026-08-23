@@ -19,11 +19,19 @@ from typing import Any
 
 # ---------------------------------------------------------------------------
 # Immutable upstream pin (WL-DSH-010 discovery, 2026-08-15). Never float master.
+# This pin is a GOVERNANCE TARGET for the isolated runtime checkout, NOT a
+# claim about what is currently installed. Detected local installs are reported
+# separately (WL-DLC-060: rc.5 was misreported as the running version).
 # ---------------------------------------------------------------------------
 UPSTREAM_REPO = "deepseek-ai/deepseek-harness"
 UPSTREAM_COMMIT = "47f943859bef60e4160492346772ded9b24f765a"
-UPSTREAM_VERSION = "0.1.0-rc.5"
+UPSTREAM_VERSION = "0.1.0-rc.5"  # governance target pin (historical)
 UPSTREAM_LICENSE = "MIT"
+# Detected on this machine (2026-08-23): local package 0.1.1-rc.2 == npm public;
+# local git 4446888d (master, no origin) - source-equivalence + eligibility UNVERIFIED.
+DETECTED_LOCAL_VERSION = "0.1.1-rc.2"
+DETECTED_LOCAL_COMMIT = "4446888d222d8a3eb052f949e1025e5e9e69e203"
+DETECTED_LOCAL_STATE = "DETECTED_LOCAL"
 REQUIRED_PACKAGE_MANAGER = "pnpm@11.7.0"
 REQUIRED_NODE_RANGE = "^22.19.0 || >=24.0.0"
 
@@ -153,7 +161,15 @@ class DeepSeekHarnessAdapter:
             "adapter_id": ADAPTER_ID,
             "kind": ADAPTER_KIND,
             "upstream": UPSTREAM_REPO + "@" + UPSTREAM_COMMIT,
-            "upstream_version": UPSTREAM_VERSION,
+            "upstream_version": UPSTREAM_VERSION,  # governance target pin (historical)
+            "detected_local": {
+                "version": DETECTED_LOCAL_VERSION,
+                "commit": DETECTED_LOCAL_COMMIT,
+                "state": DETECTED_LOCAL_STATE,
+                "source_equivalence": "UNVERIFIED",
+                "eligibility": "UNVERIFIED",
+                "behavioral_verification": "NOT_EXECUTED",
+            },
             "license": UPSTREAM_LICENSE,
             "maturity": "developer_preview",
             "install_mode": INSTALL_MODE,
