@@ -48,6 +48,24 @@ def build(root, skills_dir):
     return idx
 
 
+def ensure_fresh(root, skills_dir, max_age=None):
+    """Rebuild the index if stale: skills changed (mtime) or index missing.
+    max_age (seconds) forces rebuild after N seconds regardless of mtime."""
+    idx = _load(root)
+    sp = Path(skills_dir)
+    if not idx.get("keywords") or not idx.get("lastBuilt"):
+        return build(root, sp)
+    latest_skill_mtime = 0.0
+    if sp.exists():
+        for skill in sp.rglob("SKILL.md"):
+            latest_skill_mtime = max(latest_skill_mtime, skill.stat().st_mtime)
+    stale_by_mtime = latest_skill_mtime > idx["lastBuilt"]
+    stale_by_age = max_age is not None and (time.time() - idx["lastBuilt"]) > max_age
+    if stale_by_mtime or stale_by_age:
+        return build(root, sp)
+    return idx
+
+
 def lookup(root, task):
     idx = _load(root)
     if not idx.get("keywords"):
