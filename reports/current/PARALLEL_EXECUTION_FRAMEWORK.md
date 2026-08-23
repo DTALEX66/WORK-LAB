@@ -102,3 +102,30 @@ Codex 项目 X（一个仓库）
 - DSH 一个项目内：多实例并行 ✅
 - 任意软件组合：多软件同项目分任务并行 ✅
 - 规则同一套（R1-R5），能力人人有——不是某个软件的特权
+## 9. 行业方案调研（2026-08-23 补充）
+
+| 方案 | 特点 | 对应 R1-R5 |
+|---|---|---|
+| **pact**（zekariasasaminew）| 多 agent 编排 CLI：隔离（Claude/Codex/Copilot）worktree + 依赖准备 + **文件认领协调** + 自动合并 | R2+R3+R5 一站式 |
+| **cas**（codingagentsystem）| agent 协调：持久记忆/任务/规则/skills——让 agents 真正配合 | R1+R4 |
+| **multi-agent-orchestrator-skill**（hyw007726）| 并行 agent：worktree 隔离 + scoped prompts + validation + 重启 + 多 CLI 支持 | R3+R4 |
+| **agent-teamflow**（lkim0402）| Claude skills：并行 agents + 共享仓库 + 无碰撞 | R2+R3 |
+| **mainline**（recallnet）| worktree 落地串行化队列（防 clobber main）| R5 |
+| **claim-plane**（SkeinRank）| 可验证 AI 工程控制面 | R2 强化 |
+| **OpenAI codex #13554** | 实体级合并（entity-level merge）——并行编辑的合并方案 | R5 深化 |
+| gwtree / dmux / Neon / Baton 指南 | worktree + tmux 并行 agents 模式 | R3 实践 |
+
+## 10. 结论（工具化路径）
+
+- **worktree 隔离 + 文件认领 + 自动合并** = 行业共识（pact/cas/orchestrator 都验证）
+- WORK-LAB 框架 R1-R5 与行业一致；落地可借鉴/集成 pact（多软件）+ cas（协调层）
+- 单软件多实例：worktree 每实例一个 + 实体级合并（codex #13554 思路）
+- 一套规则部署所有软件 = pact 的 CLI 编排 + 各软件 skill/引用
+
+## 11. 落地建议（更新）
+
+1. 评估集成 **pact**（多软件 worktree+认领+合并 现成 CLI）或自建同等能力
+2. 协调层参考 **cas**（任务分片/状态/记忆）
+3. 单软件多实例：实例级 worktree + 实体级合并（借鉴 codex #13554）
+4. 审计 = 现有质量门 + CI（R4 已有基础）
+5. 试点：Codex 项目内多实例 → 多软件（pact 编排）→ 全量部署
