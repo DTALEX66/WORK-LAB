@@ -1,5 +1,7 @@
 # WORK-LAB execution rules
 
+> 全局执行标准（跨软件跨项目）：见 `00-governance/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
+
 ## Scope
 
 This is a single-root monorepo. Allowed active module roots are exactly:
