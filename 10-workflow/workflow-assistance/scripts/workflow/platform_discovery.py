@@ -156,10 +156,12 @@ def _hermes_gui_launcher() -> Path | None:
         return None
     home = Path(os.environ.get("HERMES_HOME", "")).expanduser() if os.environ.get("HERMES_HOME") else Path.home() / ".hermes"
     appdata = Path(os.environ.get("APPDATA", "")).expanduser() / "hermes"
+    # Baseline 2026-08-23: entry = OFFICIAL standard format (Electron Hermes.exe),
+    # never a custom .vbs launcher invented by WORK-LAB.
     return _find_existing(
         [
-            home / "launchers" / "Hermes_Desktop.vbs",
-            appdata / "launchers" / "Hermes_Desktop.vbs",
+            appdata / "hermes-agent" / "apps" / "desktop" / "release" / "win-unpacked" / "Hermes.exe",
+            home / "hermes-agent" / "apps" / "desktop" / "release" / "win-unpacked" / "Hermes.exe",
         ]
     )
 
@@ -258,7 +260,7 @@ def discover_hermes() -> list[DiscoveredEntry]:
             DiscoveredEntry(
                 package_identity="hermes-agent",
                 executable_realpath=target,
-                launcher_id="hermes-gui-vbs",
+                launcher_id="hermes-gui-exe",
                 launcher_target=str(gui),
                 binary_digest=digest,
                 effective_config_root=config_root,

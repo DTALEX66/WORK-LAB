@@ -90,12 +90,15 @@ approval for that side effect.
 Every managed software surface must satisfy — and every audit must verify — the
 following baseline, owned by the enhancement module:
 
-1. **Unique entry per software.** One canonical launch path per tool. Hermes:
-   desktop shortcut → `hermes\launchers\Hermes_Desktop.vbs` (GUI) + `hermes`
-   CLI; Codex: single wrapper (`bin/codex` bash + `bin/codex.cmd`, identical
-   versioned-glob resolution); CC Switch / OpenHuman / Open Design: single
-   desktop shortcut to their installed executables. No duplicate or conflicting
-   launchers; wrapper candidates resolve to exactly one runtime.
+1. **Unique entry per software.** One canonical launch path per tool — the
+   OFFICIAL standard release format (whatever the vendor ships is the entry).
+   Hermes: official desktop app (`apps/desktop/release/win-unpacked/Hermes.exe`,
+   Electron) + `hermes` CLI; Codex: single wrapper (`bin/codex` bash +
+   `bin/codex.cmd`, identical versioned-glob resolution to the official
+   runtime); CC Switch / OpenHuman / Open Design: single desktop shortcut to
+   their installed official executables. No duplicate or conflicting launchers;
+   entries are the official standard formats — WORK-LAB never invents custom
+   launcher formats (e.g. .vbs) that replace the vendor-shipped binary.
 2. **Desktop entry.** Every GUI tool opens from its desktop shortcut; shortcut
    target chains must resolve (Test-Path true end-to-end).
 3. **Official standard + user configuration.** Official baselines win; the

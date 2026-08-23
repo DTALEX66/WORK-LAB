@@ -49,13 +49,13 @@ class PlatformDiscoveryTests(unittest.TestCase):
         module = load_discovery()
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
-            launcher = root / "Hermes_Desktop.vbs"
-            launcher.write_text("' launcher stub\n", encoding="utf-8")
+            launcher = root / "Hermes.exe"
+            launcher.write_bytes(b"stub-binary")
             with mock.patch.dict("os.environ", {"HERMES_HOME": str(root)}), mock.patch.object(module, "_running_processes", return_value=set()), mock.patch.object(module.shutil, "which", return_value=None), mock.patch.object(module, "_hermes_gui_launcher", return_value=launcher):
                 entries = module.discover_hermes()
         ids = {entry.launcher_id for entry in entries}
-        self.assertIn("hermes-gui-vbs", ids)
-        gui = next(entry for entry in entries if entry.launcher_id == "hermes-gui-vbs")
+        self.assertIn("hermes-gui-exe", ids)
+        gui = next(entry for entry in entries if entry.launcher_id == "hermes-gui-exe")
         self.assertEqual(gui.source, "desktop-launcher")
         self.assertEqual(gui.launcher_target, str(launcher))
 
@@ -65,8 +65,8 @@ class PlatformDiscoveryTests(unittest.TestCase):
             root = Path(raw)
             exe = root / "hermes.exe"
             exe.write_bytes(b"stub-binary")
-            launcher = root / "Hermes_Desktop.vbs"
-            launcher.write_text("' launcher stub\n", encoding="utf-8")
+            launcher = root / "Hermes.exe"
+            launcher.write_bytes(b"stub-binary")
             with mock.patch.dict("os.environ", {"HERMES_HOME": str(root)}), mock.patch.object(module, "_running_processes", return_value=set()), mock.patch.object(module.shutil, "which", return_value=str(exe)), mock.patch.object(module, "_hermes_gui_launcher", return_value=launcher):
                 observations = module.discover_all()
         hermes_obs = [obs for obs in observations if obs["logical_instance_id"] == "hermes"]
