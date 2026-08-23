@@ -36,6 +36,20 @@
     "external_mutation": {"const": "approval_required"},
     "plugin_policy": {"const": "builtins_only"},
     "upgrade_policy": {"const": "pinned_commit + explicit_upgrade_task + compatibility_evidence"},
-    "rollback": {"const": "stop_preserve_quarantine"}
+    "rollback": {"const": "stop_preserve_quarantine"},
+    "detected_local": {
+      "type": "object",
+      "description": "Factual detected install on this machine (separate from governance target pin).",
+      "required": ["version", "state"],
+      "properties": {
+        "version": {"type": "string", "minLength": 1},
+        "commit": {"type": "string"},
+        "state": {"enum": ["DETECTED_LOCAL", "UNVERIFIED"]},
+        "source_equivalence": {"enum": ["VERIFIED", "UNVERIFIED"]},
+        "eligibility": {"enum": ["VERIFIED", "UNVERIFIED"]},
+        "behavioral_verification": {"enum": ["PASS", "FAIL", "NOT_EXECUTED"]}
+      },
+      "additionalProperties": false
+    }
   }
 }
