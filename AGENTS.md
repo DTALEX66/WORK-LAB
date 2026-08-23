@@ -1,6 +1,7 @@
 # WORK-LAB execution rules
 
 > 全局执行标准（跨软件跨项目）：见 `00-governance/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
+> 经验教训铁律（核实优先/治理最小化/官方优先）：见 `00-governance/LESSONS_LEARNED.md`。
 
 ## Scope
 
