@@ -30,10 +30,18 @@
 
 ```
 各软件执行任务前，强制执行步骤②：
-  扫描技能清单（SKILL.md description）
-  → 匹配当前任务
-  → 命中 → 加载技能指令再执行
-  → 未命中 → 直接执行（不阻塞）
+  1. 先查项目技能调用索引（.hermes/skill-call-index.json）
+     → 命中 → 直接调用技能（不重复扫描）
+  2. 索引未命中 → 扫描技能清单（SKILL.md description）
+     → 匹配 → 加载技能执行 + 记录到索引（下次直接命中）
+  3. 仍未命中 → 直接执行（不阻塞）
+
+技能调用索引（优化，避免每次扫描）：
+  工具：10-workflow/workflow-assistance/scripts/workflow/skill_call_index.py
+  - build(root, skills_dir)：首次扫描建索引（keyword → skills）
+  - lookup(root, task)：任务关键词查索引（直接返回匹配技能）
+  - record(root, task, skill)：学习新映射（任务→技能）
+  每项目一个索引文件，后续相同任务直接调用，无需每次扫描
 
 触发机制（借鉴 Claude Code skills）：
   model-invocable：description 语义匹配，模型自动调用
