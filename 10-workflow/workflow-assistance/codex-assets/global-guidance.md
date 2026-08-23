@@ -148,5 +148,8 @@ commands; a command verified in one dialect is not portable.
 
 ### Skill use
 
+- Before executing a task, first check the project skill-call index (`.hermes/skill-call-index.json`); on a hit, invoke the skill directly without rescanning.
+- On a miss, scan the available skills (SKILL.md descriptions), load the matching one, and record the task->skill mapping into the index for next time.
+- If still no match, proceed directly — do not block. A skill is a manual, not decoration; invoke the relevant skill instead of "just starting".
 - Use installed Workflow Assistance skills when their descriptions match the task. Load only the relevant skill body, follow its boundaries, and prefer project-local skills over global generalizations.
 - A skill is guidance, not authorization for external side effects.

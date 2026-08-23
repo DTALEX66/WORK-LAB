@@ -85,3 +85,28 @@ def record(root, task, skill):
             idx["keywords"][w].append(skill)
     _save(root, idx)
     return {"recorded": True, "skill": skill}
+# --- CLI (WL-DLC-050: no manual python -c needed) ---
+if __name__ == "__main__":
+    import argparse
+    import sys
+    p = argparse.ArgumentParser(description="Skill-call index (per-project)")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("build", help="Build index from skills dir").add_argument("--skills-dir", required=True)
+    lp = sub.add_parser("lookup", help="Look up skills for a task")
+    lp.add_argument("--task", required=True)
+    lp.add_argument("--skills-dir")
+    lp.add_argument("--rebuild", action="store_true", help="Rebuild before lookup (stale detection)")
+    rp = sub.add_parser("record", help="Record task->skill mapping")
+    rp.add_argument("--task", required=True)
+    rp.add_argument("--skill", required=True)
+    a = p.parse_args()
+    root = Path.cwd()
+    if a.cmd == "build":
+        r = build(root, Path(a.skills_dir))
+        print(json.dumps({"built": len(r["keywords"])}, ensure_ascii=False))
+    elif a.cmd == "lookup":
+        if a.rebuild and a.skills_dir:
+            ensure_fresh(root, Path(a.skills_dir))
+        print(json.dumps(lookup(root, a.task), ensure_ascii=False))
+    elif a.cmd == "record":
+        print(json.dumps(record(root, a.task, a.skill), ensure_ascii=False))

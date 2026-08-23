@@ -50,8 +50,10 @@ def sync_file(path: Path, zh: bool) -> bool:
 
 
 TARGETS = [
+    # Hermes only: Codex is governed by sync_codex_global_assets.py
+    # (WORKFLOW-ASSISTANCE MANAGED CODEX OVERLAY block), not this tool —
+    # dual managed blocks on the same file caused guidance_owned_block_drift.
     (Path(r"C:\Users\ALEX\AppData\Local\hermes\SOUL.md"), True),   # Hermes (zh)
-    (Path(r"C:\Users\ALEX\.codex\AGENTS.md"), False),               # Codex (en)
 ]
 
 
