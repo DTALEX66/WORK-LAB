@@ -45,6 +45,7 @@
               "source_kind": {"enum": ["repository", "external-manifest", "official-cli", "user-selected"]},
               "source_ref": {"type": "string", "minLength": 1},
               "version": {"type": "string", "minLength": 1},
+              "version_historical": {"type": "array", "items": {"type": "string"}},
               "scope": {"type": "string", "minLength": 1},
               "risk": {"enum": ["low", "medium", "high", "critical"]},
               "status": {"enum": ["active", "quarantined", "blocked", "retired"]},
