@@ -51,18 +51,19 @@ reset/clean/force-push operations.
 
 ## Managed global configuration (Hermes)
 
-WORK-LAB manages a declared Hermes user overlay on top of the official
-baseline: the managed fields of `config/config.yaml` (`display.language`,
-`display.busy_input_mode`, `sessions.auto_prune`, `memory.*`,
-`hooks.pre_tool_call`, `mcp_servers.*`, `platform_toolsets.cli`), the 13
-skills under `skills/`, `config/SOUL.md`, and `bin/` launchers. Field
-authority and per-field modes live in
-`10-workflow/workflow-assistance/config/config-ownership.json` and
-`managed-config-schema.yaml`; `preserve_unknown: true` — never override
-user provider/model/auth/desktop state. Deploy to Hermes Home only through
-the portable sync plan (`.hermes/sync-plan.json`): backup-before-publish,
-update `config/skill-provenance.yaml` live hashes in the same change, and
-never promote the mixed-ownership live `config.yaml` wholesale.
+WORK-LAB manages a declared Hermes user overlay on the official baseline:
+the managed **assets** — 13 skills under `skills/`, `config/SOUL.md`, and
+`bin/` launchers (`codex`, `codex.cmd`, `hermes-npx`, `hermes-npx.cmd`,
+`hermes-project-data.py`, `hermes-project-terminal-guard.py`). The managed
+**config fields** are only `display.language` and `display.busy_input_mode`;
+every other Hermes field (`sessions.auto_prune`, `memory.*`,
+`hooks.pre_tool_call`, `mcp_servers.*`, `hermes.model.*`, `plugins`) is
+OBSERVE — never overwritten. `config-ownership.json` (WL3-200) is the single
+authority for field layers and modes; `preserve_unknown: true` — never
+override user provider/model/auth/desktop state. Deploy to Hermes Home only
+through `sync_hermes_workflow_assets.py` (backup-before-publish staging,
+updates `skill-provenance.yaml` live hashes in the same change); never
+promote the mixed-ownership live `config.yaml` wholesale.
 
 ## Verification
 
