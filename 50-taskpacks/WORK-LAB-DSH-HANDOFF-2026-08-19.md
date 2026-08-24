@@ -213,3 +213,33 @@ DSH **官方 runtime 自更新到 0.1.1-rc.2**（commit 4446888，DSH Official R
 - mermaid error 字段（npm 通道信息性——github 已验证——UI 以 status 为准）
 - 官方桌面版（等官方 apps/desktop——有则跟进）
 - 交接 PR（本分支 merge 到 main）
+
+
+---
+
+## DSH 2.0.2 社区桌面版覆盖安装（2026-08-24 晚间）
+
+### 判定：带本体（非纯壳）
+`app.asar.unpacked` 含完整 harness（cordis + @deepseek-ai + desktop-cli + build/lib），自带完整 web（43120 独立运行）——Electron 壳 + 完整 DSH 本体。
+
+### 覆盖安装（D:\All projects\DSH 根 = 2.0.2 + 本体）
+- 2.0.2 提升到 `D:\All projects\DSH` 根（exe + resources 直接在根）
+- **0.1.1 本体**（deepseek-harness）移出 → `.hermes/task-runtime/dsh-011-removed-20260824/`（备份完整，可回滚）
+- **无双本体、无双入口**：桌面唯一 `DSH Desktop.lnk` → `D:\All projects\DSH\DSH Desktop.exe`
+- 其他位置重复清理：`%LOCALAPPDATA%\Programs\DSH Desktop` 已卸载
+
+### 用户配置/会话迁移（→ 2.0.2 数据根 `~/.dsh`）
+- **94 会话**（WORK-LAB 42 / ArcheAxis 38 / DESIGN-LAB 13 / 根 1）→ `~/.dsh/sessions/`
+- settings.yaml（zh + deepseek-v4-flash/high + 深色 + 鲸鱼娘预设）→ `~/.dsh/settings.yaml`
+- `.credentials.yaml`（API key）→ `~/.dsh/.credentials.yaml`（格式兼容，自动读取）
+- 皮肤（鲸吟）/ pet / task-board / agent-presets / vision.env / update-checker-state 全迁移
+- 2.0.2 重启后读取（web 43120 = 200）
+
+### 关键教训
+1. 2.0.2 数据根是 `~/.dsh`（独立于老 `dsh-home`）——覆盖安装**不自动继承**，需迁移（备份文件复制）
+2. `D:\All projects\DSH` 保持程序干净（数据在 ~/.dsh）
+3. 会话"丢失"= 新实例全新数据根——迁移 sessions/ 即恢复
+
+### 备份（可回滚）
+- `.hermes/task-runtime/dsh-cover-backup-20260824/`（配置/凭据/皮肤/设置）
+- `.hermes/task-runtime/dsh-011-removed-20260824/`（0.1.1 完整本体）

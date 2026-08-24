@@ -35,3 +35,5 @@ build/
 WORK-LAB-ARCHIVE/
 WORK-LAB-STAGING-*/
 config/.backups/
+
+**/.backups/
