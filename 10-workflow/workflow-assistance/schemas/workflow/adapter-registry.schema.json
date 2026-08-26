@@ -46,9 +46,10 @@
               "source_ref": {"type": "string", "minLength": 1},
               "version": {"type": "string", "minLength": 1},
               "version_historical": {"type": "array", "items": {"type": "string"}},
+              "note": {"type": "string", "minLength": 1},
               "scope": {"type": "string", "minLength": 1},
               "risk": {"enum": ["low", "medium", "high", "critical"]},
-              "status": {"enum": ["active", "quarantined", "blocked", "retired"]},
+              "status": {"enum": ["active", "quarantined", "blocked", "retired", "legacy_observe"]},
               "hash": {
                 "type": "object",
                 "additionalProperties": false,

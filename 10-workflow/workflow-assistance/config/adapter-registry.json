@@ -46,7 +46,8 @@
         "version": "UNVERIFIED",
         "scope": "portable-workflow-adapter",
         "risk": "high",
-        "status": "quarantined",
+        "status": "legacy_observe",
+        "note": "CC Switch is LEGACY_OBSERVE per WLR-010 (2026-08-26). Observe-only; no active writes unless evidence restores to active.",
         "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "CC Switch runtime package is external and not vendored", "files": []}
       }
     },
@@ -114,8 +115,9 @@
         "version_historical": ["0.1.0-rc.5 (governance pin, 2026-08-15)", "0.1.0-rc.7 (superseded)", "0.1.1-rc.2 (detected local 2026-08-23, eligibility UNVERIFIED)"],
         "scope": "portable-agent-runtime-adapter",
         "risk": "medium",
-        "status": "quarantined",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "DSH source is not vendored in WORK-LAB", "files": []}
+        "status": "active",
+        "note": "DSH promoted to active per WLR-010 (2026-08-26). Community DSH Desktop 2.0.2 installed at D:\\All projects\\DSH. Local build (Tauri shell) removed.",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "DSH source is external (community build); local install verified 2026-08-26", "files": []}
       }
     },
 

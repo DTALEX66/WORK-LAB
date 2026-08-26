@@ -9,6 +9,9 @@ This is a single-root monorepo. Allowed active module roots are exactly:
 `10-workflow/workflow-assistance` and `30-observer/work-lab-observer`. The
 managed client workflow is Hermes · Codex · CC Switch · GitHub · Open Design ·
 OpenHuman, plus any future AI software through the same Adapter contract.
+DSH (DeepSeek Harness / DSH Desktop 2.0.2) is a managed agent runtime client
+through the same Adapter contract. CC Switch is LEGACY_OBSERVE (observe-only;
+no active writes) unless evidence restores it to active status.
 Open Design is an external *client* (`nexu-io/open-design`); the separate
 `DTALEX66/DESIGN-LAB` project owns its own design domain (historical migration
 alias: `DTALEX66/OPEN-DESIGN-Assistance`).
@@ -99,7 +102,8 @@ following baseline, owned by the enhancement module:
    Hermes: official desktop app (`apps/desktop/release/win-unpacked/Hermes.exe`,
    Electron) + `hermes` CLI; Codex: single wrapper (`bin/codex` bash +
    `bin/codex.cmd`, identical versioned-glob resolution to the official
-   runtime); CC Switch / OpenHuman / Open Design: single desktop shortcut to
+   runtime); DSH: DSH Desktop 2.0.2 (Electron, `D:\All projects\DSH\DSH Desktop.exe`);
+   CC Switch / OpenHuman / Open Design: single desktop shortcut to
    their installed official executables. No duplicate or conflicting launchers;
    entries are the official standard formats — WORK-LAB never invents custom
    launcher formats (e.g. .vbs) that replace the vendor-shipped binary.
@@ -112,11 +116,14 @@ following baseline, owned by the enhancement module:
 4. **No blocking overhead.** Global rules/skills/guidance must stay lean
    (skills ~<10KB each, guidance+rules <20KB total) and load on demand, never
    blocking startup or execution. Wrappers must not stall on missing candidates.
-5. **Full-power model.** No rate limits, no cost caps, no degraded reasoning:
-   provider routing is official (cost_multiplier=1.0, no daily/monthly caps),
-   `agent.reasoning_effort` stays at official default (empty = medium) or
-   higher, no temperature/reasoning downgrades. Model quality must match the
-   official published baseline.
+5. **Task-level model policy.** Each task declares its own quality/cost/privacy/
+   latency constraints (four-dimensional strategy). Provider routing is official
+   (cost_multiplier=1.0, no daily/monthly caps by default); reasoning_effort
+   defaults to official baseline (empty = medium) or higher unless the task
+   explicitly downgrades with justification. Pricing must include
+   provider/model/currency/effective_at/source/version; missing fields display
+   UNKNOWN. No global rate limits or cost caps — constraints are per-task and
+   auditable.
 
 When any dimension regresses (new entry point, config bloat, provider cap,
 reasoning downgrade), fix at the root and record in the error ledger before
