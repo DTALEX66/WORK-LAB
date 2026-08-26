@@ -1,6 +1,6 @@
 {
   "schemaVersion": "workflow/taskpack-authority-index/v1",
-  "generatedAt": "2026-08-25",
+  "generatedAt": "2026-08-26",
   "currentTaskpack": "WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25 (R1, main@2941412)",
   "authority": {
     "owner": "DTALEX66",
@@ -77,5 +77,31 @@
     "noSupersedesCycle": true,
     "baselineFresh": true,
     "sha256Match": true
+  },
+  "release": {
+    "version": "WORK-LAB-0.1-usable",
+    "frozen_at": "2026-08-26",
+    "frozen_commit": "511fa467691c0bf1b4c2e3e77f694e7db7ba6dde",
+    "frozen_by": "WLR-130",
+    "taskpack": "WLR-FINAL-20260825-R2-OSS-FAST-TRACK",
+    "tasks_completed": [
+      "WLR-000",
+      "WLR-010",
+      "WLR-020",
+      "WLR-030",
+      "WLR-040",
+      "WLR-050",
+      "WLR-070",
+      "WLR-080",
+      "WLR-090",
+      "WLR-100",
+      "WLR-110",
+      "WLR-120",
+      "WLR-130"
+    ],
+    "tasks_deferred": [
+      "WLR-060"
+    ],
+    "status": "FROZEN"
   }
 }
