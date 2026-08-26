@@ -4,189 +4,200 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WORK-LAB Observatory</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-:root {
-  --bg: #0d1117; --surface: #161b22; --border: #30363d;
-  --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
-  --green: #3fb950; --red: #f85149; --yellow: #d29922; --purple: #bc8cff;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background:var(--bg); color:var(--text); }
+:root{--bg:#0a0e14;--surface:#131720;--card:#1a1f2e;--border:#252b3b;--text:#e2e8f0;--muted:#64748b;--accent:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;--cyan:#06b6d4}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+.container{max-width:1400px;margin:0 auto;padding:16px 20px}
 
-/* ── Header ── */
-.header { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 20px; display:flex; align-items:center; gap:16px; }
-.header h1 { font-size:16px; color:var(--accent); }
-.header .status { font-size:11px; color:var(--muted); margin-left:auto; }
-.header .live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); display:inline-block; animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+/* Header */
+.header{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.header h1{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .live{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-left:auto}
+.header .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ── Agent Bar ── */
-.agents { display:flex; gap:8px; padding:10px 20px; background:var(--surface); border-bottom:1px solid var(--border); overflow-x:auto; }
-.agent-card { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:8px 14px; min-width:120px; text-align:center; }
-.agent-card.active { border-color:var(--green); }
-.agent-card.inactive { border-color:var(--red); opacity:.6; }
-.agent-card .name { font-size:12px; font-weight:600; }
-.agent-card .type { font-size:10px; color:var(--muted); }
-.agent-card .dot { width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:4px; }
-.agent-card.active .dot { background:var(--green); }
-.agent-card.inactive .dot { background:var(--red); }
+/* Stats Row */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.stat .value{font-size:24px;font-weight:700;color:var(--accent)}
+.stat .label{font-size:11px;color:var(--muted);margin-top:4px}
+.stat.green .value{color:var(--green)} .stat.purple .value{color:var(--purple)} .stat.cyan .value{color:var(--cyan)}
 
-/* ── Main Grid ── */
-.main { display:grid; grid-template-columns:1fr 1fr; gap:0; height:calc(100vh - 100px); }
-@media(max-width:900px){.main{grid-template-columns:1fr;}}
+/* Grid */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
 
-/* ── Panel ── */
-.panel { border-right:1px solid var(--border); padding:16px; overflow-y:auto; }
-.panel:last-child { border-right:none; }
-.panel h2 { font-size:13px; color:var(--accent); margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:6px; }
+/* Panel */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.panel h2{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
 
-/* ── Table ── */
-table { width:100%; border-collapse:collapse; font-size:12px; }
-th,td { padding:6px 8px; text-align:left; border-bottom:1px solid var(--border); }
-th { color:var(--muted); font-weight:600; font-size:11px; }
-.badge { display:inline-block; padding:1px 6px; border-radius:10px; font-size:10px; font-weight:600; }
-.badge.ok { background:rgba(63,185,80,.15); color:var(--green); }
-.badge.fail { background:rgba(248,81,73,.15); color:var(--red); }
-.badge.running { background:rgba(88,166,255,.15); color:var(--accent); }
-.badge.pending { background:rgba(210,153,34,.15); color:var(--yellow); }
+/* Chart container */
+.chart-wrap{position:relative;height:200px}
 
-/* ── Token Stats ── */
-.token-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
-.token-card { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px; text-align:center; }
-.token-card .value { font-size:20px; font-weight:700; color:var(--accent); }
-.token-card .label { font-size:10px; color:var(--muted); margin-top:2px; }
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600}
+.badge.ok{background:rgba(34,197,94,.12);color:var(--green)}
+.badge.fail{background:rgba(239,68,68,.12);color:var(--red)}
+.badge.running{background:rgba(59,130,246,.12);color:var(--accent)}
+.badge.pending{background:rgba(234,179,8,.12);color:var(--yellow)}
 
-/* ── Empty ── */
-.empty { text-align:center; padding:24px; color:var(--muted); font-size:12px; }
+/* Agent cards */
+.agents{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.agent{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;align-items:center;gap:10px}
+.agent.active{border-color:var(--green)}
+.agent .icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--card)}
+.agent .info .name{font-size:13px;font-weight:600}
+.agent .info .role{font-size:11px;color:var(--muted)}
+.agent .status{margin-left:auto;width:8px;height:8px;border-radius:50%}
+.agent.active .status{background:var(--green)} .agent.inactive .status{background:var(--red)}
+
+/* DAG Flow */
+.dag-flow{display:flex;align-items:center;gap:8px;padding:8px 0;overflow-x:auto}
+.dag-node{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:11px;white-space:nowrap}
+.dag-node.succeeded{border-color:var(--green)} .dag-node.running{border-color:var(--accent)} .dag-node.failed{border-color:var(--red)}
+.dag-arrow{color:var(--muted);font-size:16px}
+
+/* Model bars */
+.model-bar{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.model-bar .name{width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.model-bar .bar{flex:1;height:6px;background:var(--card);border-radius:3px;overflow:hidden}
+.model-bar .bar .fill{height:100%;border-radius:3px;transition:width .5s}
+.model-bar .tokens{width:80px;text-align:right;color:var(--muted);font-size:11px}
 </style>
 </head>
 <body>
-
-<div class="header">
-  <h1>🔬 WORK-LAB Observatory</h1>
-  <span class="status"><span class="live-dot"></span> LIVE · <span id="agent-count">-</span> agents · <span id="last-update">-</span></span>
-</div>
-
-<div class="agents" id="agent-bar"></div>
-
-<div class="main">
-  <!-- Left: Dagu Task Board -->
-  <div class="panel">
-    <h2>📋 Dagu DAGs</h2>
-    <table>
-      <thead><tr><th>Name</th><th>Type</th><th>Steps</th><th>Status</th></tr></thead>
-      <tbody id="dagu-dags"></tbody>
-    </table>
-
-    <h2 style="margin-top:16px">▶️ Recent Runs</h2>
-    <table>
-      <thead><tr><th>DAG</th><th>Status</th><th>Steps</th><th>Duration</th></tr></thead>
-      <tbody id="dagu-runs"></tbody>
-    </table>
+<div class="container">
+  <div class="header">
+    <h1>🔬 WORK-LAB Observatory</h1>
+    <span class="live"><span class="dot"></span> LIVE · <span id="ts">-</span></span>
   </div>
 
-  <!-- Right: Token Usage + Agent Status -->
-  <div class="panel">
-    <h2>📊 Token Usage</h2>
-    <div class="token-grid" id="token-stats"></div>
+  <div class="agents" id="agents"></div>
 
-    <h2>🤖 Agent Details</h2>
-    <table>
-      <thead><tr><th>Agent</th><th>Type</th><th>Status</th><th>Sessions</th></tr></thead>
-      <tbody id="agent-details"></tbody>
-    </table>
+  <div class="stats" id="stats"></div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>📊 Token Usage (14 days)</h2>
+      <div class="chart-wrap"><canvas id="tokenChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>🤖 Model Breakdown</h2>
+      <div id="models"></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>📋 Dagu DAGs</h2>
+      <div id="dags"></div>
+      <h2 style="margin-top:12px">▶️ Recent Runs</h2>
+      <div id="runs"></div>
+    </div>
+    <div class="panel">
+      <h2>📈 Cost by Model</h2>
+      <div class="chart-wrap"><canvas id="costChart"></canvas></div>
+    </div>
   </div>
 </div>
 
 <script>
-const API = window.location.origin;
+const API = location.origin;
+let tokenChartInst = null, costChartInst = null;
 
-async function fetchJSON(path) {
-  try { const r = await fetch(API + path, {cache:'no-store'}); return r.ok ? await r.json() : null; }
-  catch(e) { return null; }
-}
+async function fetchJSON(p){try{const r=await fetch(API+p,{cache:'no-store'});return r.ok?await r.json():null}catch(e){return null}}
+function fmt(n){return n==null?'-':n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':n.toLocaleString()}
 
-function fmt(n) { return n == null ? '-' : n.toLocaleString(); }
-function duration(start, end) {
-  if (!start || !end) return '-';
-  try {
-    const ms = new Date(end) - new Date(start);
-    return ms < 1000 ? ms+'ms' : (ms/1000).toFixed(1)+'s';
-  } catch(e) { return '-'; }
-}
+const COLORS = ['#3b82f6','#22c55e','#a855f7','#eab308','#ef4444','#06b6d4','#f97316','#ec4899'];
 
-async function refresh() {
-  const [snapshot, daguDags, daguRuns, tokens, agents] = await Promise.all([
-    fetchJSON('/api/v1/snapshot'),
-    fetchJSON('/api/v1/dagu/dags'),
-    fetchJSON('/api/v1/dagu/runs'),
-    fetchJSON('/api/v1/tokens'),
-    fetchJSON('/api/v1/agents'),
+async function refresh(){
+  const [snap,tokens,daguDags,daguRuns,agents] = await Promise.all([
+    fetchJSON('/api/v1/snapshot'),fetchJSON('/api/v1/tokens'),
+    fetchJSON('/api/v1/dagu/dags'),fetchJSON('/api/v1/dagu/runs'),fetchJSON('/api/v1/agents')
   ]);
 
-  // Header
-  document.getElementById('agent-count').textContent = agents ? agents.length : '-';
-  document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+  document.getElementById('ts').textContent = new Date().toLocaleTimeString();
 
-  // Agent bar
-  const bar = document.getElementById('agent-bar');
-  if (agents) {
-    bar.innerHTML = agents.map(a => `
-      <div class="agent-card ${a.status}">
-        <div class="name"><span class="dot"></span>${a.name}</div>
-        <div class="type">${a.type}</div>
-      </div>
-    `).join('');
+  // Agents
+  if(agents){
+    const icons = {hermes:'🤖',codex:'⚡',dsh:'🔧',dagu:'⚙️'};
+    document.getElementById('agents').innerHTML = agents.map(a=>`
+      <div class="agent ${a.status}">
+        <div class="icon">${icons[a.id]||'📦'}</div>
+        <div class="info"><div class="name">${a.name}</div><div class="role">${a.id}</div></div>
+        <div class="status"></div>
+      </div>`).join('');
+  }
+
+  // Stats
+  const t = tokens?.totals||{};
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="value">${fmt(t.inputTokens)}</div><div class="label">Input Tokens</div></div>
+    <div class="stat green"><div class="value">${fmt(t.outputTokens)}</div><div class="label">Output Tokens</div></div>
+    <div class="stat purple"><div class="value">${t.sessions||0}</div><div class="label">Sessions</div></div>
+    <div class="stat cyan"><div class="value">${t.costUsd!=null?'$'+t.costUsd.toFixed(2):'-'}</div><div class="label">Est. Cost</div></div>`;
+
+  // Token Chart (line)
+  if(tokens?.daily){
+    const days = tokens.daily.reverse();
+    const ctx = document.getElementById('tokenChart').getContext('2d');
+    if(tokenChartInst) tokenChartInst.destroy();
+    tokenChartInst = new Chart(ctx,{type:'line',data:{
+      labels:days.map(d=>d.day?.slice(5)||''),
+      datasets:[
+        {label:'Input',data:days.map(d=>d.inputTokens),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',fill:true,tension:.3},
+        {label:'Output',data:days.map(d=>d.outputTokens),borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.1)',fill:true,tension:.3},
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#64748b',font:{size:10}}}},
+        scales:{x:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'#1a1f2e'}},
+                y:{ticks:{color:'#64748b',font:{size:9},callback:v=>fmt(v)},grid:{color:'#1a1f2e'}}}}});
+  }
+
+  // Model breakdown (horizontal bars)
+  if(tokens?.models){
+    const maxTok = Math.max(...tokens.models.map(m=>m.inputTokens+m.outputTokens));
+    document.getElementById('models').innerHTML = tokens.models.slice(0,6).map((m,i)=>`
+      <div class="model-bar">
+        <span class="name">${m.model}</span>
+        <div class="bar"><div class="fill" style="width:${((m.inputTokens+m.outputTokens)/maxTok*100).toFixed(0)}%;background:${COLORS[i%COLORS.length]}"></div></div>
+        <span class="tokens">${fmt(m.inputTokens+m.outputTokens)}</span>
+      </div>`).join('');
+  }
+
+  // Cost Chart (doughnut)
+  if(tokens?.models){
+    const paid = tokens.models.filter(m=>m.costUsd!=null);
+    const ctx2 = document.getElementById('costChart').getContext('2d');
+    if(costChartInst) costChartInst.destroy();
+    costChartInst = new Chart(ctx2,{type:'doughnut',data:{
+      labels:paid.map(m=>m.model),datasets:[{data:paid.map(m=>m.costUsd),backgroundColor:COLORS.slice(0,paid.length)}]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#64748b',font:{size:10}}}}}});
   }
 
   // Dagu DAGs
-  const dagsTb = document.getElementById('dagu-dags');
-  if (daguDags && daguDags.length) {
-    dagsTb.innerHTML = daguDags.map(d => `
-      <tr><td>${d.name}</td><td>${d.type}</td><td>${d.steps}</td>
-      <td><span class="badge ok">defined</span></td></tr>
-    `).join('');
-  } else {
-    dagsTb.innerHTML = '<tr><td colspan="4" class="empty">No DAGs found</td></tr>';
+  if(daguDags){
+    document.getElementById('dags').innerHTML = daguDags.length ? `<table><thead><tr><th>Name</th><th>Type</th><th>Steps</th></tr></thead><tbody>${
+      daguDags.map(d=>`<tr><td>${d.name}</td><td>${d.type}</td><td>${d.steps}</td></tr>`).join('')
+    }</tbody></table>` : '<div style="color:var(--muted);font-size:12px">No DAGs</div>';
   }
 
-  // Dagu Runs
-  const runsTb = document.getElementById('dagu-runs');
-  if (daguRuns && daguRuns.length) {
-    runsTb.innerHTML = daguRuns.map(r => {
-      const cls = r.outcome === 'succeeded' ? 'ok' : r.outcome === 'failed' ? 'fail' : 'pending';
-      return `<tr><td>${r.metadata?.dag_name || '?'}</td>
-        <td><span class="badge ${cls}">${r.outcome}</span></td>
-        <td>${r.toolCalls || 0}</td>
-        <td>${duration(r.startedAt, r.finishedAt)}</td></tr>`;
+  // Dagu Runs (with DAG flow visualization)
+  if(daguRuns&&daguRuns.length){
+    document.getElementById('runs').innerHTML = daguRuns.map(r=>{
+      const steps = (r.metadata?.steps||[]).map(s=>`<span class="dag-node ${s.status}">${s.step_name} (${s.duration_ms}ms)</span>`).join('<span class="dag-arrow">→</span>');
+      return `<div style="margin-bottom:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">${r.metadata?.dag_name||'?'} · <span class="badge ${r.outcome==='succeeded'?'ok':'fail'}">${r.outcome}</span></div><div class="dag-flow">${steps||'(no steps)'}</div></div>`;
     }).join('');
   } else {
-    runsTb.innerHTML = '<tr><td colspan="4" class="empty">No runs yet</td></tr>';
-  }
-
-  // Token Stats
-  const tg = document.getElementById('token-stats');
-  const h = tokens?.hermes || {};
-  tg.innerHTML = `
-    <div class="token-card"><div class="value">${fmt(h.input_tokens)}</div><div class="label">Input Tokens</div></div>
-    <div class="token-card"><div class="value">${fmt(h.output_tokens)}</div><div class="label">Output Tokens</div></div>
-    <div class="token-card"><div class="value">${fmt(h.sessions)}</div><div class="label">Sessions</div></div>
-  `;
-
-  // Agent Details
-  const ad = document.getElementById('agent-details');
-  if (agents) {
-    ad.innerHTML = agents.map(a => {
-      const cls = a.status === 'active' ? 'ok' : 'fail';
-      return `<tr><td>${a.name}</td><td>${a.type}</td>
-        <td><span class="badge ${cls}">${a.status}</span></td>
-        <td>${a.runs ?? '-'}</td></tr>`;
-    }).join('');
+    document.getElementById('runs').innerHTML = '<div style="color:var(--muted);font-size:12px">No runs</div>';
   }
 }
 
 refresh();
-setInterval(refresh, 10000);
+setInterval(refresh,10000);
 </script>
 </body>
 </html>
