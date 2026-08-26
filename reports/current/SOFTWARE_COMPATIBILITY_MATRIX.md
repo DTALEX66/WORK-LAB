@@ -10,6 +10,8 @@
 | Open Design | design-client | desktop-shortcut | open-design | registered | client adapter (design domain owned by DESIGN-LAB) |
 | OpenHuman | agent-harness | desktop-shortcut | — | registered | registration only |
 | GitHub | platform | api | github | registered | delivery platform |
+| Dagu (2.15.3) | workflow-engine | npm-global | — | active | upstream baseline (Web UI :8080, DAG execution) |
+| TokenTelemetry (1.0.0) | observability | local-install | — | active | upstream baseline (Token/Cost dashboard :3001) |
 
 ## 原则
 
