@@ -1,0 +1,73 @@
+{
+  "schema_version": "workflow/plugin-inventory/v1",
+  "generated_at": "2026-08-26",
+  "generated_by": "WLR-080",
+  "purpose": "Managed plugin inventory. Each item binds upstream, commit/tag, SPDX, hash, consumer, permissions, lifecycle state.",
+  "lifecycle_states": ["discovered", "installed", "enabled", "active", "disabled", "quarantined", "removed"],
+  "entries": [
+    {
+      "id": "chrome-profiles",
+      "display_name": "Hermes Plugin Chrome Profiles",
+      "type": "agent-plugin",
+      "upstream": "anpicasso/hermes-plugin-chrome-profiles",
+      "commit": null,
+      "spdx": "MIT",
+      "hash": null,
+      "consumer": "hermes",
+      "permissions": ["browser"],
+      "lifecycle": "enabled",
+      "security_scan": "PASSED",
+      "installed_at": "2026-08-26"
+    },
+    {
+      "id": "security-guidance",
+      "display_name": "Security Guidance",
+      "type": "desktop-plugin",
+      "upstream": "bundled",
+      "commit": null,
+      "spdx": "bundled",
+      "hash": null,
+      "consumer": "hermes",
+      "permissions": [],
+      "lifecycle": "enabled",
+      "security_scan": "bundled",
+      "installed_at": "2026-08-26"
+    },
+    {
+      "id": "web-ddgs",
+      "display_name": "Web DuckDuckGo Search",
+      "type": "desktop-plugin",
+      "upstream": "bundled",
+      "commit": null,
+      "spdx": "bundled",
+      "hash": null,
+      "consumer": "hermes",
+      "permissions": ["web"],
+      "lifecycle": "enabled",
+      "security_scan": "bundled",
+      "installed_at": "2026-08-26"
+    }
+  ],
+  "quarantined": [
+    {
+      "id": "hermes-media-studio",
+      "display_name": "Hermes Media Studio",
+      "type": "agent-plugin",
+      "upstream": "yimisunrise/hermes-media-studio",
+      "lifecycle": "quarantined",
+      "security_scan": "DANGEROUS (89 findings, CRITICAL persistence)",
+      "quarantined_at": "2026-08-26",
+      "reason": "Security scan blocked: plugin modifies project AGENTS.md/design docs (CRITICAL persistence)"
+    },
+    {
+      "id": "hermes-telegram-business",
+      "display_name": "Hermes Telegram Business",
+      "type": "agent-plugin",
+      "upstream": "NousResearch/hermes-telegram-business",
+      "lifecycle": "quarantined",
+      "security_scan": "DANGEROUS (2 findings, CRITICAL persistence + supply_chain)",
+      "quarantined_at": "2026-08-26",
+      "reason": "Security scan blocked: induces config writes + supply chain warning"
+    }
+  ]
+}
