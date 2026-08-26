@@ -25,19 +25,31 @@ def build_snapshot():
     rl = collect_rate_limit()
     if rl: gh_events.append(gh_emit(rl))
 
+    now = time.strftime("%Y-%m-%dT%H:%M:%S+08:00")
     snapshot = {
-        "schemaVersion": "work-lab/observer-projection/v2",
-        "transport": {"transportState": "LIVE", "freshnessState": "fresh", "ageSeconds": 0},
-        "quality": {"evidenceCompleteness": "complete", "dataQuality": "exact", "freshness": "fresh"},
-        "mode": "LIVE",
-        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S+08:00"),
-        "summary": {
-            "registeredProjects": 5, "activeProjects": 5,
-            "daguRuns": len(dagu_events),
-            "githubActions": len([e for e in gh_events if (e.get("model") or "").startswith("github-actions")]),
-            "agentCoverage": ["hermes", "codex", "dsh", "dagu", "github"],
+        "schemaVersion": "workflow/snapshot/v3",
+        "revision": 1,
+        "generatedAt": now,
+        "sourceWatermark": now,
+        "transport": {
+            "transportState": "LIVE",
+            "freshnessState": "fresh",
+            "eventStreamConnected": True,
+            "connectedSince": now,
+            "lastHeartbeatAt": now,
+            "writerWatermarkAt": now,
+            "eventsUrl": "http://127.0.0.1:61867/api/v1/events",
         },
-        "projects": []
+        "coverage": {"numerator": 5, "denominator": 5},
+        "quality": {"evidenceCompleteness": "complete", "freshness": "fresh", "unknown": 0},
+        "projects": [],
+        "executions": [],
+        "ci": [],
+        "tasks": {"running": 0, "waiting": 0, "blocked": 0, "failed": 0, "completed": 14},
+        "tokenSummary": {"inputTokens": 0, "outputTokens": 0, "totalTokens": 0, "costQuality": "UNKNOWN"},
+        "git": {"localSha": "51f42bd", "remoteSha": "51f42bd", "ciSha": "51f42bd", "matchState": "MATCH"},
+        "workspace": {},
+        "sourceRefs": [],
     }
 
     for e in dagu_events:
