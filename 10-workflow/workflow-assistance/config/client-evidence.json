@@ -85,11 +85,12 @@
       "client": "tokentelemetry",
       "evidence_level": "E1",
       "install_method": "git clone + npm",
-      "version": "PENDING_INSTALL",
+      "version": "1.0.0",
       "source": "VasiHemanth/tokentelemetry",
       "install_path": "D:\\All projects\\tokentelemetry",
-      "status": "cloning",
-      "note": "GitHub repo large; clone in progress"
+      "status": "installed",
+      "note": "Cloned + npm installed (0 vulnerabilities); start script available",
+      "health": "npm-start-verified"
     }
   }
 }

@@ -91,6 +91,7 @@
       "WLR-030",
       "WLR-040",
       "WLR-050",
+      "WLR-060",
       "WLR-070",
       "WLR-080",
       "WLR-090",
@@ -99,9 +100,7 @@
       "WLR-120",
       "WLR-130"
     ],
-    "tasks_deferred": [
-      "WLR-060"
-    ],
+    "tasks_deferred": [],
     "status": "FROZEN"
   }
 }
