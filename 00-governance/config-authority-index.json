@@ -66,6 +66,51 @@
       "canonical_source": "90-archive-manifests/",
       "status": "ARCHIVE",
       "role": "historical migration/audit/handoff evidence; superseded docs live here, Git history is never rewritten"
+    },
+    "execution_rules": {
+      "canonical_source": "AGENTS.md",
+      "status": "ACTIVE",
+      "role": "root execution rules for all managed clients and modules"
+    },
+    "skills_inventory": {
+      "canonical_source": "10-workflow/workflow-assistance/config/skill-provenance.yaml",
+      "status": "ACTIVE",
+      "role": "managed skills SHA256 inventory; deployed via sync_hermes_workflow_assets.py"
+    },
+    "plugins_inventory": {
+      "canonical_source": "10-workflow/workflow-assistance/config/plugin-inventory.json",
+      "status": "PENDING",
+      "role": "managed plugin inventory (Hermes plugins + Agent Plugins v1); to be created by WLR-080"
+    },
+    "models_registry": {
+      "canonical_source": "10-workflow/workflow-assistance/config/models-registry.json",
+      "status": "PENDING",
+      "role": "provider/model pricing and capability registry; to be created by WLR-050"
+    },
+    "taskpacks": {
+      "canonical_source": "00-governance/taskpack-authority-index.json",
+      "status": "ACTIVE",
+      "role": "taskpack authority: current/superseded/deferred/archive classification"
+    },
+    "context_capsules": {
+      "canonical_source": "10-workflow/workflow-assistance/config/capsule-registry.json",
+      "status": "PENDING",
+      "role": "Context Continuity Protocol capsule inventory; to be created by WLR-030"
+    },
+    "telemetry": {
+      "canonical_source": "30-observer/work-lab-observer/config/telemetry-authority.json",
+      "status": "PENDING",
+      "role": "TokenTelemetry / observer telemetry authority; to be created by WLR-110"
+    },
+    "observer": {
+      "canonical_source": "30-observer/work-lab-observer/",
+      "status": "ACTIVE",
+      "role": "read-only projection of workflow state; strict observer — no write/approve/retry/rollback"
+    },
+    "federation": {
+      "canonical_source": "10-workflow/workflow-assistance/config/federation-protocol.json",
+      "status": "PENDING",
+      "role": "cross-project federation protocol (WORK-LAB ↔ ArcheAxis ↔ DESIGN-LAB); to be defined"
     }
   },
   "active_list": [
@@ -75,7 +120,11 @@
     "project_profile_registry",
     "gate_plan_schema",
     "task_ledger_schema",
-    "workflow_root_gate"
+    "workflow_root_gate",
+    "execution_rules",
+    "skills_inventory",
+    "taskpacks",
+    "observer"
   ],
   "superseded_list": [
     "managed_config_schema",
