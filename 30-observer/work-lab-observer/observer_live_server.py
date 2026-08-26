@@ -9,7 +9,7 @@ import json, os, sys, time, threading
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 
-PORT = 9900
+PORT = 61867
 WEB_DIR = Path(__file__).parent / "web"
 SNAPSHOT_PATH = WEB_DIR / "assets" / "live-snapshot.json"
 
