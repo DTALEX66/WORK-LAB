@@ -11,11 +11,21 @@
       "version": "0.20.5",
       "install_path": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\hermes-agent",
       "desktop_path": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\Hermes\\Hermes.exe",
-      "shortcuts": ["%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\HermesUpdateGuard.lnk"],
+      "shortcuts": [
+        "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\HermesUpdateGuard.lnk"
+      ],
       "config_path": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\config.yaml",
       "verified_at": "2026-08-26T16:00:00Z",
       "health": "doctor-all-green",
-      "features_verified": ["delegation-6", "checkpoints", "auto-prune", "fallback-chain", "chrome-profiles-plugin", "bots-mode", "kanban"]
+      "features_verified": [
+        "delegation-6",
+        "checkpoints",
+        "auto-prune",
+        "fallback-chain",
+        "chrome-profiles-plugin",
+        "bots-mode",
+        "kanban"
+      ]
     },
     "codex": {
       "client": "codex",
@@ -58,6 +68,28 @@
       "evidence_level": "E0",
       "status": "manifest-only",
       "note": "Registered in adapter-registry; no local installation evidence"
+    },
+    "dagu": {
+      "client": "dagu",
+      "evidence_level": "E2",
+      "install_method": "npm global (@dagucloud/dagu)",
+      "version": "2.15.3",
+      "install_path": "D:\\All projects\\OS External Configuration\\toolchains\\scoop\\persist\\nodejs-lts\\bin\\node_modules\\@dagucloud\\dagu\\dagu.exe",
+      "web_ui": "http://127.0.0.1:8080",
+      "config_path": "C:\\Users\\ALEX\\.dagu\\",
+      "verified_at": "2026-08-26T20:48:00Z",
+      "health": "smoke-test-passed (hello-world DAG succeeded)",
+      "note": "Dagu v2.15.3 installed via npm; Web UI server running; DAG execution verified"
+    },
+    "tokentelemetry": {
+      "client": "tokentelemetry",
+      "evidence_level": "E1",
+      "install_method": "git clone + npm",
+      "version": "PENDING_INSTALL",
+      "source": "VasiHemanth/tokentelemetry",
+      "install_path": "D:\\All projects\\tokentelemetry",
+      "status": "cloning",
+      "note": "GitHub repo large; clone in progress"
     }
   }
 }
