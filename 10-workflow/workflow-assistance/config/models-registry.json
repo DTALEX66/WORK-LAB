@@ -1,0 +1,66 @@
+{
+  "schema_version": "workflow/models-registry/v1",
+  "generated_at": "2026-08-26",
+  "generated_by": "WLR-050",
+  "purpose": "Provider/model pricing and capability registry. Single source of truth for model pricing; observer pricing catalog references this.",
+  "providers": {
+    "deepseek": {
+      "display_name": "DeepSeek",
+      "models": {
+        "deepseek-chat": {
+          "display_name": "DeepSeek Chat",
+          "context_window": 64000,
+          "pricing": {
+            "currency": "USD",
+            "input_per_million": 0.27,
+            "output_per_million": 1.10,
+            "effective_at": "2026-08-26",
+            "source": "deepseek.com/pricing",
+            "version": "2026-08-26"
+          }
+        },
+        "deepseek-v4-flash": {
+          "display_name": "DeepSeek V4 Flash",
+          "context_window": 128000,
+          "pricing": {
+            "currency": "USD",
+            "input_per_million": 0.27,
+            "output_per_million": 1.10,
+            "effective_at": "2026-08-26",
+            "source": "deepseek.com/pricing",
+            "version": "2026-08-26"
+          }
+        }
+      }
+    },
+    "opencode-go": {
+      "display_name": "OpenCode Go (via Nous Research)",
+      "models": {
+        "mimo-v2.5": {
+          "display_name": "Mimo V2.5",
+          "context_window": 128000,
+          "pricing": {
+            "currency": "USD",
+            "input_per_million": 0,
+            "output_per_million": 0,
+            "effective_at": "2026-08-26",
+            "source": "opencode-go free tier",
+            "version": "2026-08-26"
+          }
+        },
+        "deepseek-v4-flash": {
+          "display_name": "DeepSeek V4 Flash (via opencode-go)",
+          "context_window": 128000,
+          "pricing": {
+            "currency": "USD",
+            "input_per_million": 0,
+            "output_per_million": 0,
+            "effective_at": "2026-08-26",
+            "source": "opencode-go free tier",
+            "version": "2026-08-26"
+          }
+        }
+      }
+    }
+  }
+}
