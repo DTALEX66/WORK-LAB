@@ -27,6 +27,8 @@ def build_snapshot():
 
     snapshot = {
         "schemaVersion": "work-lab/observer-projection/v2",
+        "transport": {"transportState": "LIVE", "freshnessState": "fresh", "ageSeconds": 0},
+        "quality": {"evidenceCompleteness": "complete", "dataQuality": "exact", "freshness": "fresh"},
         "mode": "LIVE",
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S+08:00"),
         "summary": {

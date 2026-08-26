@@ -1,7 +1,17 @@
 {
   "schemaVersion": "work-lab/observer-projection/v2",
+  "transport": {
+    "transportState": "LIVE",
+    "freshnessState": "fresh",
+    "ageSeconds": 0
+  },
+  "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+  },
   "mode": "LIVE",
-  "generatedAt": "2026-08-26T22:50:00+08:00",
+  "generatedAt": "2026-08-26T23:34:31+08:00",
   "summary": {
     "registeredProjects": 5,
     "activeProjects": 5,
@@ -22,7 +32,71 @@
       "agentPlatform": "DAGU",
       "task": "DAG (2 steps)",
       "state": "succeeded",
-      "durationSeconds": 0,
+      "quality": {
+        "evidenceCompleteness": "complete",
+        "dataQuality": "exact",
+        "freshness": "fresh"
+      }
+    },
+    {
+      "projectId": "gh-run-32984342442",
+      "displayName": "GitHub: work-lab-gate",
+      "agentPlatform": "GITHUB",
+      "task": "work-lab-gate",
+      "state": "failure",
+      "branch": "main",
+      "quality": {
+        "evidenceCompleteness": "complete",
+        "dataQuality": "exact",
+        "freshness": "fresh"
+      }
+    },
+    {
+      "projectId": "gh-run-32984217378",
+      "displayName": "GitHub: wlr-060-production-gates",
+      "agentPlatform": "GITHUB",
+      "task": "wlr-060-production-gates",
+      "state": "queued",
+      "branch": "main",
+      "quality": {
+        "evidenceCompleteness": "complete",
+        "dataQuality": "exact",
+        "freshness": "fresh"
+      }
+    },
+    {
+      "projectId": "gh-run-32984124296",
+      "displayName": "GitHub: work-lab-gate",
+      "agentPlatform": "GITHUB",
+      "task": "work-lab-gate",
+      "state": "queued",
+      "branch": "main",
+      "quality": {
+        "evidenceCompleteness": "complete",
+        "dataQuality": "exact",
+        "freshness": "fresh"
+      }
+    },
+    {
+      "projectId": "gh-run-32983545532",
+      "displayName": "GitHub: work-lab-gate",
+      "agentPlatform": "GITHUB",
+      "task": "work-lab-gate",
+      "state": "failure",
+      "branch": "main",
+      "quality": {
+        "evidenceCompleteness": "complete",
+        "dataQuality": "exact",
+        "freshness": "fresh"
+      }
+    },
+    {
+      "projectId": "gh-run-32983545471",
+      "displayName": "GitHub: wlr-060-production-gates",
+      "agentPlatform": "GITHUB",
+      "task": "wlr-060-production-gates",
+      "state": "success",
+      "branch": "main",
       "quality": {
         "evidenceCompleteness": "complete",
         "dataQuality": "exact",
@@ -213,71 +287,6 @@
     },
     {
       "projectId": "gh-run-32651610502",
-      "displayName": "GitHub: work-lab-gate",
-      "agentPlatform": "GITHUB",
-      "task": "work-lab-gate",
-      "state": "success",
-      "branch": "main",
-      "quality": {
-        "evidenceCompleteness": "complete",
-        "dataQuality": "exact",
-        "freshness": "fresh"
-      }
-    },
-    {
-      "projectId": "gh-run-32651061112",
-      "displayName": "GitHub: work-lab-gate",
-      "agentPlatform": "GITHUB",
-      "task": "work-lab-gate",
-      "state": "failure",
-      "branch": "main",
-      "quality": {
-        "evidenceCompleteness": "complete",
-        "dataQuality": "exact",
-        "freshness": "fresh"
-      }
-    },
-    {
-      "projectId": "gh-run-32627386167",
-      "displayName": "GitHub: work-lab-gate",
-      "agentPlatform": "GITHUB",
-      "task": "work-lab-gate",
-      "state": "failure",
-      "branch": "main",
-      "quality": {
-        "evidenceCompleteness": "complete",
-        "dataQuality": "exact",
-        "freshness": "fresh"
-      }
-    },
-    {
-      "projectId": "gh-run-32626794700",
-      "displayName": "GitHub: work-lab-gate",
-      "agentPlatform": "GITHUB",
-      "task": "work-lab-gate",
-      "state": "failure",
-      "branch": "main",
-      "quality": {
-        "evidenceCompleteness": "complete",
-        "dataQuality": "exact",
-        "freshness": "fresh"
-      }
-    },
-    {
-      "projectId": "gh-run-32626620513",
-      "displayName": "GitHub: work-lab-gate",
-      "agentPlatform": "GITHUB",
-      "task": "work-lab-gate",
-      "state": "success",
-      "branch": "main",
-      "quality": {
-        "evidenceCompleteness": "complete",
-        "dataQuality": "exact",
-        "freshness": "fresh"
-      }
-    },
-    {
-      "projectId": "gh-run-32626558162",
       "displayName": "GitHub: work-lab-gate",
       "agentPlatform": "GITHUB",
       "task": "work-lab-gate",
