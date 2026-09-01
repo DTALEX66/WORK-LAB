@@ -1,0 +1,24 @@
+schema_version: work-lab/data-ownership/v1
+platform_neutral: true
+runtime_root: .project-local/runs
+artifacts_root: .project-local/artifacts
+logs_root: .project-local/runs/logs
+cache_root: .project-local/cache
+evidence_root: .project-local/artifacts
+responsibilities:
+  runtime_root: temporary task state, caches, logs and reproducible local runtime artifacts
+  artifacts_root: sanitized task evidence and machine-readable assessment records
+  evidence_root: stable ignored evidence packages intended for project handoff
+legacy_aliases:
+  - .hermes/task-runtime
+  - .hermes/task-artifacts
+  - 80-evidence
+forbidden_external_roots:
+  - "E:/"
+  - "E:\\"
+spill_governance:
+  rule: Every project artifact stays inside the project Git root; any write outside it is a spill and must be traceable, locatable, cleanable and migratable.
+  protected_data_volume:
+    roots: ["E:/", "E:\\"]
+    policy: forbidden without explicit per-path, per-operation user authorization
+    access_default: deny
