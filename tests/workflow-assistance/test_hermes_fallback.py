@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def load(name: str, path: Path):
@@ -23,8 +23,8 @@ class HermesFallbackTests(unittest.TestCase):
         try:
             manifest = (ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8")
             self.assertIn("client_neutral", manifest)
-            ledger_module = load("task_ledger_fallback", ROOT / "scripts/workflow/task_ledger.py")
-            observer_module = load("observer_event_fallback", ROOT / "scripts/workflow/observer_event.py")
+            ledger_module = load("task_ledger_fallback", ROOT / "packages/client-neutral-core/scripts/task_ledger.py")
+            observer_module = load("observer_event_fallback", ROOT / "packages/client-neutral-core/scripts/observer_event.py")
             with tempfile.TemporaryDirectory() as raw:
                 ledger = ledger_module.TaskLedger(Path(raw) / "ledger.json")
                 task = ledger.create("fallback-task", "fallback-key", token_budget=10)

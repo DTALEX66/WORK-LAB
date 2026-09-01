@@ -7,8 +7,8 @@ import sys
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("model_policy", ROOT / "scripts/workflow/model_policy.py")
+ROOT = Path(__file__).resolve().parents[2]
+SPEC = importlib.util.spec_from_file_location("model_policy", ROOT / "services/policy/model_policy.py")
 assert SPEC and SPEC.loader
 MOD = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MOD

@@ -5,8 +5,8 @@ import sys
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts/workflow/adapter_conformance.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "packages/client-neutral-core/scripts/adapter_conformance.py"
 
 
 def load_module():

@@ -4,8 +4,8 @@ import importlib.util
 from pathlib import Path
 import unittest
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts/workflow/growth_candidates.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "packages/client-neutral-core/scripts/growth_candidates.py"
 
 
 def load_module():

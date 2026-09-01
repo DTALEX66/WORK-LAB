@@ -8,8 +8,8 @@ import sys
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("config_coordinator", ROOT / "scripts/workflow/config_coordinator.py")
+ROOT = Path(__file__).resolve().parents[2]
+SPEC = importlib.util.spec_from_file_location("config_coordinator", ROOT / "services/policy/config_coordinator.py")
 assert SPEC and SPEC.loader
 MOD = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MOD

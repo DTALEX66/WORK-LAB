@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.workflow.run_taskpack_agent import (
+from run_taskpack_agent import (
     DEFAULT_SKILLS,
     AgentResult,
     CodexReviewBackend,
@@ -20,7 +20,7 @@ from scripts.workflow.run_taskpack_agent import (
     resolve_ci_identity,
     _parse_args,
 )
-from scripts.workflow.task_ledger import TaskLedger
+from task_ledger import TaskLedger
 
 
 @dataclass
@@ -111,8 +111,8 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
             )
 
         with tempfile.TemporaryDirectory() as raw:
-            with patch("scripts.workflow.run_taskpack_agent.shutil.which", return_value="hermes"), patch(
-                "scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run
+            with patch("run_taskpack_agent.shutil.which", return_value="hermes"), patch(
+                "run_taskpack_agent.subprocess.run", side_effect=fake_run
             ):
                 result = HermesAgentBackend(Path(raw), hermes="hermes").run_writer(
                     "continue work", resume="initial-session"
@@ -252,10 +252,10 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
             stdout='[{"status":"completed","conclusion":"success","name":"unrelated"}]',
             stderr="",
         )
-        with patch("scripts.workflow.run_taskpack_agent.shutil.which", return_value="gh"), patch(
-            "scripts.workflow.run_taskpack_agent.subprocess.run", return_value=result
+        with patch("run_taskpack_agent.shutil.which", return_value="gh"), patch(
+            "run_taskpack_agent.subprocess.run", return_value=result
         ), patch.object(repo, "_github_repository", return_value="owner/repository"), patch(
-            "scripts.workflow.run_taskpack_agent.time.monotonic", side_effect=[0, 0, 2]
+            "run_taskpack_agent.time.monotonic", side_effect=[0, 0, 2]
         ), self.assertRaisesRegex(RunnerError, "required workflow"):
             repo._wait_for_ci("release")
 
@@ -283,10 +283,10 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
             calls.append(command)
             return result
 
-        with patch("scripts.workflow.run_taskpack_agent.shutil.which", return_value="gh"), patch(
-            "scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run
+        with patch("run_taskpack_agent.shutil.which", return_value="gh"), patch(
+            "run_taskpack_agent.subprocess.run", side_effect=fake_run
         ), patch.object(repo, "_github_repository", return_value="owner/repository"), patch(
-            "scripts.workflow.run_taskpack_agent.time.monotonic", side_effect=[0, 0]
+            "run_taskpack_agent.time.monotonic", side_effect=[0, 0]
         ):
             repo._wait_for_ci("release")
 
@@ -322,10 +322,10 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
             calls.append(command)
             return run_list if command[1:3] == ["run", "list"] else aggregate
 
-        with patch("scripts.workflow.run_taskpack_agent.shutil.which", return_value="gh"), patch(
-            "scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run
+        with patch("run_taskpack_agent.shutil.which", return_value="gh"), patch(
+            "run_taskpack_agent.subprocess.run", side_effect=fake_run
         ), patch.object(repo, "_github_repository", return_value="owner/repository"), patch(
-            "scripts.workflow.run_taskpack_agent.time.monotonic", side_effect=[0, 0]
+            "run_taskpack_agent.time.monotonic", side_effect=[0, 0]
         ):
             repo._wait_for_ci("release")
 
@@ -381,7 +381,7 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
             root = Path(raw)
             codex = root / "codex.exe"
             codex.write_text("placeholder", encoding="utf-8")
-            with patch("scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run):
+            with patch("run_taskpack_agent.subprocess.run", side_effect=fake_run):
                 review = CodexReviewBackend(root, codex=str(codex)).run_reviewer("review tree")
 
         self.assertEqual(review, "GO\nCodex structured exact-tree review found no findings")
@@ -421,7 +421,7 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
             root = Path(raw)
             codex = root / "codex.exe"
             codex.write_text("placeholder", encoding="utf-8")
-            with patch("scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run):
+            with patch("run_taskpack_agent.subprocess.run", side_effect=fake_run):
                 review = CodexReviewBackend(root, codex=str(codex)).run_reviewer("ignored")
 
         self.assertIn("NO-GO\nCodex native pre-review:\n", review)
@@ -440,7 +440,7 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
             root = Path(raw)
             codex = root / "codex.exe"
             codex.write_text("placeholder", encoding="utf-8")
-            with patch("scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run):
+            with patch("run_taskpack_agent.subprocess.run", side_effect=fake_run):
                 with self.assertRaisesRegex(RunnerError, "missing required flags"):
                     CodexReviewBackend(root, codex=str(codex)).run_reviewer("ignored")
 
@@ -461,7 +461,7 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
                     root = Path(raw)
                     codex = root / "codex.exe"
                     codex.write_text("placeholder", encoding="utf-8")
-                    with patch("scripts.workflow.run_taskpack_agent.subprocess.run", side_effect=fake_run):
+                    with patch("run_taskpack_agent.subprocess.run", side_effect=fake_run):
                         with self.assertRaisesRegex(RunnerError, "version discovery"):
                             CodexReviewBackend(root, codex=str(codex)).run_reviewer("ignored")
 

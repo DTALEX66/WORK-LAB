@@ -6,7 +6,7 @@ import sys
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts/workflow"))
 
 from hash_budget import (
@@ -49,7 +49,7 @@ class HashBudgetTests(unittest.TestCase):
         self.assertEqual(budget["forbidden_inputs"], 5)
 
     def test_ledger_uses_real_time_digests(self):
-        ledger_source = (ROOT / "scripts/workflow/task_ledger.py").read_text(encoding="utf-8")
+        ledger_source = (ROOT / "packages/client-neutral-core/scripts/task_ledger.py").read_text(encoding="utf-8")
         self.assertIn("idempotency_key", ledger_source)
         self.assertIn("intent_digest", ledger_source)
 

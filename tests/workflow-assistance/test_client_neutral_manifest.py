@@ -10,8 +10,8 @@ from pathlib import Path
 
 import yaml
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts/workflow/verify_client_neutral_manifest.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "packages/client-neutral-core/scripts/verify_client_neutral_manifest.py"
 
 
 def load_module():

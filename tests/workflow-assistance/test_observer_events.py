@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts/workflow/observer_event.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "packages/client-neutral-core/scripts/observer_event.py"
 
 
 def load_module():

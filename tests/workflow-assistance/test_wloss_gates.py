@@ -9,8 +9,8 @@ import sys
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "workflow" / "run_quality_gate.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "services/orchestration" / "run_quality_gate.py"
 
 
 def load_runner():
@@ -47,7 +47,7 @@ class ChangedFilesSelectionTests(unittest.TestCase):
         self.assertIn("work-lab-os-canary", selected)
 
     def test_module_relative_path_matches(self) -> None:
-        selected = self.m.select_gates_for_changed(["scripts/workflow/evidence_aggregator.py"])
+        selected = self.m.select_gates_for_changed(["services/receipts/evidence_aggregator.py"])
         self.assertIn("execution-state-machine", selected)
 
     def test_order_follows_verify_order(self) -> None:
@@ -64,8 +64,8 @@ class CanaryExitCodeContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.root = Path(__file__).resolve().parents[1]
-        cls.canary = cls.root / "scripts" / "workflow" / "canary_runner.py"
-        cls.gate = cls.root / "scripts" / "workflow" / "run_quality_gate.py"
+        cls.canary = cls.root / "services/orchestration" / "canary_runner.py"
+        cls.gate = cls.root / "services/orchestration" / "run_quality_gate.py"
 
     def _run(self, script: Path, args: list[str], env_extra: dict[str, str] | None = None) -> subprocess.CompletedProcess:
         pythonpath = str(self.root / "scripts" / "workflow")

@@ -6,16 +6,12 @@ import sys
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 def load(name: str):
-    path = ROOT / "scripts" / "workflow" / f"{name}.py"
-    spec = importlib.util.spec_from_file_location(name, path)
-    assert spec and spec.loader
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
+    # Modules migrated to services/*, packages/client-neutral-core/scripts, integrations/*;
+    # tests/conftest.py already adds those roots to sys.path.
+    return importlib.import_module(name)
 
 identity = load("platform_identity")
 reconciler = load("instance_reconciler")

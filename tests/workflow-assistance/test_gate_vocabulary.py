@@ -7,7 +7,7 @@ import sys
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts/workflow"))
 
 from gate_vocabulary import GLOBAL_TIERS, OBSERVATION_EVENTS, validate_tiers

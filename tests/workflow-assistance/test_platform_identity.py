@@ -8,8 +8,8 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "workflow" / "platform_identity.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "packages/client-neutral-core/scripts" / "platform_identity.py"
 SCHEMA = ROOT / "schemas" / "workflow" / "platform-identity.schema.json"
 spec = importlib.util.spec_from_file_location("platform_identity", SCRIPT)
 assert spec and spec.loader

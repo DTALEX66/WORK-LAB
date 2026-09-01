@@ -8,8 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts/workflow/user_profile_export.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "packages/client-neutral-core/scripts/user_profile_export.py"
 spec = importlib.util.spec_from_file_location("user_profile_export", SCRIPT)
 assert spec and spec.loader
 module = importlib.util.module_from_spec(spec)

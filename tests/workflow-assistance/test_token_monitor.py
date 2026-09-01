@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-MODULE_PATH = ROOT / "scripts" / "workflow" / "token_monitor.py"
+ROOT = Path(__file__).resolve().parents[2]
+MODULE_PATH = ROOT / "packages/client-neutral-core/scripts" / "token_monitor.py"
 
 
 def load_module():

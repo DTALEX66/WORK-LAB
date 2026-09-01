@@ -9,8 +9,8 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts/workflow/switch_model.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "integrations/executors/hermes/switch_model.py"
 spec = importlib.util.spec_from_file_location("switch_model", SCRIPT)
 assert spec and spec.loader
 module = importlib.util.module_from_spec(spec)

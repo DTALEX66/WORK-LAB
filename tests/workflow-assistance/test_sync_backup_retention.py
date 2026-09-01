@@ -6,8 +6,8 @@ import unittest
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "workflow" / "sync_hermes_workflow_assets.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "integrations/executors/hermes" / "sync_hermes_workflow_assets.py"
 
 
 def load_module():

@@ -6,7 +6,7 @@ import sys
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts/workflow"))
 
 from apply_safety import APPLY_SEQUENCE, SAFETY_INVARIANTS, validate_apply_sequence
@@ -35,8 +35,8 @@ class ApplySafetyTests(unittest.TestCase):
             self.assertIn(invariant, SAFETY_INVARIANTS)
 
     def test_sync_scripts_implement_the_sequence(self):
-        codex_sync = (ROOT / "scripts/workflow/sync_codex_global_assets.py").read_text(encoding="utf-8")
-        hermes_sync = (ROOT / "scripts/workflow/sync_hermes_workflow_assets.py").read_text(encoding="utf-8")
+        codex_sync = (ROOT / "integrations/executors/codex/sync_codex_global_assets.py").read_text(encoding="utf-8")
+        hermes_sync = (ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py").read_text(encoding="utf-8")
         for source in (codex_sync, hermes_sync):
             self.assertIn("plan", source)
             # Backup is implemented as a journaled previous-state mechanism

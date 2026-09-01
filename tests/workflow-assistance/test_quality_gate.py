@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "workflow" / "run_quality_gate.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "services/orchestration" / "run_quality_gate.py"
 SPEC = importlib.util.spec_from_file_location("run_quality_gate", SCRIPT)
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)

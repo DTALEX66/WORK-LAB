@@ -15,7 +15,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-ROOT = Path(__file__).resolve().parents[3]  # WORK-LAB root
+ROOT = Path(__file__).resolve().parents[2]  # WORK-LAB root
 WF_SCRIPTS = ROOT / "packages" / "client-neutral-core" / "scripts"
 sys.path.insert(0, str(WF_SCRIPTS))
 

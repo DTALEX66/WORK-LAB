@@ -7,9 +7,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_DIR = ROOT / "schemas" / "workflow"
-VERIFY = ROOT / "scripts" / "workflow" / "verify_core_schemas.py"
+VERIFY = ROOT / "packages/client-neutral-core/scripts" / "verify_core_schemas.py"
 EXPECTED = {
     "client-adapter.schema.json",
     "adapter-registry.schema.json",

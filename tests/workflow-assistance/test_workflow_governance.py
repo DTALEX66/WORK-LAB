@@ -18,7 +18,7 @@ from unittest.mock import patch
 import yaml
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 class WorkflowGovernanceTests(unittest.TestCase):
@@ -84,7 +84,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("quick_model_commands", manifest["capabilities"])
 
     def test_portable_install_verifier_accepts_isolated_empty_home(self) -> None:
-        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        script = ROOT / "packages/client-neutral-core/scripts/verify_portable_install.py"
         self.assertTrue(script.exists())
         runtime = ROOT / ".hermes" / "task-runtime" / "portable-install"
         runtime.mkdir(parents=True, exist_ok=True)
@@ -102,7 +102,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_windows_codex_launchers_share_the_store_runtime_owner(self) -> None:
         bash_launcher = (ROOT / "bin/codex").read_text(encoding="utf-8")
         cmd_launcher = (ROOT / "bin/codex.cmd").read_text(encoding="utf-8")
-        runner = (ROOT / "scripts/workflow/run_taskpack_agent.py").read_text(encoding="utf-8")
+        runner = (ROOT / "services/orchestration/run_taskpack_agent.py").read_text(encoding="utf-8")
         self.assertIn("Get-AppxPackage -Name OpenAI.Codex", bash_launcher)
         self.assertIn("Get-AppxPackage -Name OpenAI.Codex", cmd_launcher)
         self.assertIn("app/resources/codex.exe", bash_launcher)
@@ -113,7 +113,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
 
     def test_codex_runner_discovers_current_exec_flags_without_user_layer_bypass(self) -> None:
-        script = ROOT / "scripts/workflow/run_taskpack_agent.py"
+        script = ROOT / "services/orchestration/run_taskpack_agent.py"
         spec = importlib.util.spec_from_file_location("workflow_taskpack_runner", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -139,7 +139,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn(["codex", "exec", "--help"], [call.args[0] for call in run.call_args_list])
 
     def test_portable_deployment_copies_exact_owned_root_file_mappings(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_root_files", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -168,7 +168,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             )
 
     def test_sync_rejects_managed_file_mapping_outside_the_soul_allowlist(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_mapping_allowlist", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -189,7 +189,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 module.load_managed_file_mappings(repo)
 
     def test_portable_install_verifier_marks_runtime_compatibility_unverified_by_default(self) -> None:
-        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        script = ROOT / "packages/client-neutral-core/scripts/verify_portable_install.py"
         runtime = ROOT / ".hermes" / "task-runtime" / "portable-install"
         runtime.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=runtime) as raw:
@@ -205,7 +205,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("RUNTIME_COMPATIBILITY_UNVERIFIED", result.stdout)
 
     def test_portable_install_verifier_enforces_manifest_and_context7_wrapper_contract(self) -> None:
-        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        script = ROOT / "packages/client-neutral-core/scripts/verify_portable_install.py"
         spec = importlib.util.spec_from_file_location("portable_install_verify", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -227,7 +227,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertFalse(module.has_pinned_context7_package(["-y", "@other/context7-mcp@1.0.0"]))
 
     def test_portable_runtime_verifier_uses_only_isolated_home_and_fails_closed(self) -> None:
-        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        script = ROOT / "packages/client-neutral-core/scripts/verify_portable_install.py"
         spec = importlib.util.spec_from_file_location("portable_install_runtime", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -262,7 +262,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                         module.run_isolated_hermes_config_check(home)
 
     def test_portable_install_verifier_rejects_nonempty_home_without_writing(self) -> None:
-        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        script = ROOT / "packages/client-neutral-core/scripts/verify_portable_install.py"
         spec = importlib.util.spec_from_file_location("portable_install_nonempty", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -281,7 +281,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
 
     def test_portable_install_verifier_rejects_uncontrolled_empty_home_without_writing(self) -> None:
-        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        script = ROOT / "packages/client-neutral-core/scripts/verify_portable_install.py"
         spec = importlib.util.spec_from_file_location("portable_install_outside_runtime", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -295,7 +295,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertFalse(home.exists())
 
     def test_sync_rejects_repo_and_hermes_home_path_overlap_before_writing(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_overlap", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -311,7 +311,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 module.deploy_portable(repo, home, apply=False, include_backup=False)
 
     def test_project_bootstrap_dry_run_is_non_destructive_and_lists_outputs(self) -> None:
-        script = ROOT / "scripts/workflow/bootstrap_project.py"
+        script = ROOT / "services/orchestration/bootstrap_project.py"
         self.assertTrue(script.exists())
         with tempfile.TemporaryDirectory() as raw:
             target = Path(raw) / "new-project"
@@ -329,7 +329,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertFalse((target / ".hermes").exists())
 
     def test_project_bootstrap_can_add_agent_rules_without_overwriting_existing_rules(self) -> None:
-        script = ROOT / "scripts/workflow/bootstrap_project.py"
+        script = ROOT / "services/orchestration/bootstrap_project.py"
         with tempfile.TemporaryDirectory() as raw:
             target = Path(raw) / "new-project"
             target.mkdir()
@@ -357,7 +357,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual((target / "AGENTS.md").read_text(encoding="utf-8"), "# existing rules\n")
 
     def test_project_bootstrap_preserves_existing_project_runtime_metadata(self) -> None:
-        script = ROOT / "scripts/workflow/bootstrap_project.py"
+        script = ROOT / "services/orchestration/bootstrap_project.py"
         with tempfile.TemporaryDirectory() as raw:
             target = Path(raw) / "existing-project"
             runtime = target / ".hermes"
@@ -381,7 +381,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(manifest.read_text(encoding="utf-8"), "source: project-specific\n")
 
     def test_codex_global_guidance_install_is_non_destructive_and_respects_override(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         self.assertTrue(script.exists())
         with tempfile.TemporaryDirectory() as raw:
             home = Path(raw) / ".codex"
@@ -427,7 +427,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertIn("CODEX_GUIDANCE_BLOCKED_OVERRIDE", override.stdout)
 
     def test_codex_global_guidance_returns_nonzero_for_override_after_publication(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_late_override", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -454,7 +454,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 self.assertFalse((home / "AGENTS.md").exists())
 
     def test_codex_global_guidance_apply_does_not_overwrite_a_concurrent_user_file(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_atomic", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -483,7 +483,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(target.read_text(encoding="utf-8"), "# user rules\n")
 
     def test_codex_global_guidance_refuses_an_empty_existing_file(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         with tempfile.TemporaryDirectory() as raw:
             home = Path(raw) / ".codex"
             home.mkdir()
@@ -512,7 +512,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(target.read_text(encoding="utf-8"), "# user rules\n")
 
     def test_codex_global_guidance_reports_missing_or_invalid_home_by_mode(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             missing_home = root / "missing-home"
@@ -543,7 +543,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "POSIX anonymous staging semantics")
     def test_codex_global_guidance_refuses_publish_without_anonymous_staging(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_no_otmpfile", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -572,7 +572,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(list(home.iterdir()), [])
 
     def test_codex_global_guidance_rechecks_a_concurrent_override(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_override_race", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -598,7 +598,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             )
 
     def test_codex_global_guidance_rechecks_override_after_exclusive_create(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_late_override", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -648,7 +648,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(override.read_text(encoding="utf-8"), "# late user override\n")
 
     def test_codex_global_guidance_returns_nonzero_when_pinning_home_fails(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_pin_failure", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -668,7 +668,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertFalse((home / "AGENTS.md").exists())
 
     def test_codex_global_guidance_handles_partial_target_after_write_failure(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_partial_write", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -714,7 +714,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "POSIX dirfd cleanup semantics")
     def test_codex_global_guidance_never_unlinks_a_posix_race_target(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_posix_no_unlink", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -757,7 +757,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_codex_global_guidance_does_not_create_a_missing_home_through_a_swapped_parent(
         self,
     ) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_missing_home_race", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -815,7 +815,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_codex_global_guidance_reports_finalize_failure_without_claiming_a_race_block(
         self,
     ) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_finalize_failure", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -846,7 +846,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_codex_global_guidance_cleans_staging_if_open_osfhandle_fails(self) -> None:
         import msvcrt
 
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_osfhandle_failure", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -874,7 +874,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         import msvcrt
         from ctypes import wintypes
 
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_private_write", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -946,7 +946,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "Windows hardlink semantics")
     def test_codex_global_guidance_does_not_write_through_a_post_create_hardlink(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_late_hardlink", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -990,7 +990,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "POSIX public-path identity semantics")
     def test_codex_global_guidance_does_not_publish_into_a_moved_home(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_posix_home_swap", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1027,7 +1027,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "POSIX public-target identity semantics")
     def test_codex_global_guidance_reports_a_public_target_replacement(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_posix_target_swap", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1064,7 +1064,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(moved_target.read_bytes(), module.TEMPLATE.read_bytes())
 
     def test_codex_global_guidance_reports_directory_finalize_failure_nonzero(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_directory_close", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1102,7 +1102,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "Windows junction semantics")
     def test_codex_global_guidance_pins_home_against_late_junction_swap(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         spec = importlib.util.spec_from_file_location("codex_guidance_junction_race", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1154,7 +1154,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertTrue(target.is_file())
 
     def test_codex_global_guidance_refuses_a_hardlinked_empty_file(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             home = root / ".codex"
@@ -1180,7 +1180,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(outside.read_bytes(), b"")
 
     def test_codex_global_guidance_rejects_a_linked_ancestor_directory(self) -> None:
-        script = ROOT / "scripts/workflow/install_codex_global_guidance.py"
+        script = ROOT / "integrations/executors/codex/install_codex_global_guidance.py"
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             physical_parent = root / "physical-parent"
@@ -1204,7 +1204,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertFalse((physical_parent / ".codex" / "AGENTS.md").exists())
 
     def test_provider_health_generates_secret_free_unverified_inventory(self) -> None:
-        script = ROOT / "scripts/workflow/provider_health.py"
+        script = ROOT / "packages/client-neutral-core/scripts/provider_health.py"
         self.assertTrue(script.exists())
         with tempfile.TemporaryDirectory() as raw:
             output = Path(raw) / "provider-health.json"
@@ -1266,12 +1266,12 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("gpt-fast", source)
 
     def test_workflow_doctor_never_reads_private_codex_config(self) -> None:
-        source = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(encoding="utf-8")
+        source = (ROOT / "integrations/executors/hermes/hermes_workflow_doctor.py").read_text(encoding="utf-8")
         self.assertNotIn('Path.home() / ".codex/config.toml"', source)
         self.assertIn("private config is intentionally not inspected", source)
 
     def test_model_switcher_uses_environment_and_official_single_field_reads_only(self) -> None:
-        source = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")
+        source = (ROOT / "integrations/executors/hermes/switch_model.py").read_text(encoding="utf-8")
         self.assertIn("never inspect Hermes .env", source)
         self.assertIn("hermes', 'config', 'get', '--json'", source)
         self.assertNotIn("read_text(encoding='utf-8', errors='ignore').splitlines()", source)
@@ -1279,7 +1279,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("model.api_key", source)
 
     def test_doctor_network_checks_are_explicit(self) -> None:
-        source = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(encoding="utf-8")
+        source = (ROOT / "integrations/executors/hermes/hermes_workflow_doctor.py").read_text(encoding="utf-8")
         self.assertIn('"--network"', source)
         self.assertIn("network_checks = args.network or args.live", source)
         self.assertIn("Context7 MCP connectivity (use --network or --live)", source)
@@ -1301,7 +1301,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_skill_provenance_manifest_and_gate_are_present(self) -> None:
         manifest = ROOT / "config/skill-provenance.yaml"
         checker = ROOT / "scripts/security/check_skill_provenance.py"
-        gate = (ROOT / "scripts/workflow/run_quality_gate.py").read_text(encoding="utf-8")
+        gate = (ROOT / "services/orchestration/run_quality_gate.py").read_text(encoding="utf-8")
         self.assertTrue(manifest.exists())
         self.assertTrue(checker.exists())
         self.assertIn("skill-provenance", gate)
@@ -1327,7 +1327,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertNotEqual(entry["source_sha256"], "profile-live-only")
 
     def test_sync_backup_covers_global_github_skills(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_backup_inventory", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1367,7 +1367,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("bin", backup_rels)
 
     def test_isolated_portable_install_contains_global_github_skills(self) -> None:
-        script = ROOT / "scripts/workflow/verify_portable_install.py"
+        script = ROOT / "packages/client-neutral-core/scripts/verify_portable_install.py"
         runtime = ROOT / ".hermes" / "task-runtime" / "portable-install"
         runtime.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=runtime) as raw:
@@ -1389,7 +1389,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 self.assertTrue((home / "skills/github" / name / "SKILL.md").is_file(), name)
 
     def test_bootstrap_and_project_wrapper_work_for_multiple_projects(self) -> None:
-        bootstrap = ROOT / "scripts/workflow/bootstrap_project.py"
+        bootstrap = ROOT / "services/orchestration/bootstrap_project.py"
         wrapper = ROOT / "bin/hermes-project-data.py"
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -1450,14 +1450,14 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("`/reset`", readme)
 
     def test_sync_uses_repo_skills_as_single_source(self) -> None:
-        source = (ROOT / "scripts/workflow/sync_hermes_workflow_assets.py").read_text(
+        source = (ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py").read_text(
             encoding="utf-8"
         )
         self.assertNotIn("MERGED_MODEL_SWITCH", source)
         self.assertNotIn("write_text(MERGED_MODEL_SWITCH", source)
 
     def test_sync_replaces_repo_owned_skill_trees_without_stale_live_assets(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_skills", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1498,7 +1498,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(custom_live.joinpath("SKILL.md").read_text(), "keep")
 
     def test_sync_promotion_preserves_a_concurrent_nonmanaged_skill(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_concurrent_skill", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1527,7 +1527,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(concurrent.read_text(encoding="utf-8"), "keep")
 
     def test_sync_promotion_preserves_nonmanaged_live_bin_entries(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_live_bin", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1552,7 +1552,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(official.read_text(encoding="utf-8"), "preserve")
 
     def test_sync_prepare_failure_removes_partial_staging(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_prepare_cleanup", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1575,7 +1575,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertFalse(any(home.glob(".wa-stg-*")))
 
     def test_sync_atomic_replace_rolls_back_when_install_fails(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_atomic", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1607,7 +1607,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertFalse(any(home.glob(".workflow-assistance-rollback-*")))
 
     def test_sync_atomic_replace_rolls_back_earlier_roots_when_a_later_root_fails(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_multi_root", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1639,7 +1639,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertFalse(any(home.glob(".workflow-assistance-rollback-*")))
 
     def test_sync_atomic_remove_is_restored_when_a_later_install_fails(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_remove_rollback", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1676,7 +1676,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual((home / "config.yaml").read_text(encoding="utf-8"), "old-config")
 
     def test_sync_preserves_rollback_when_cleanup_fails(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_cleanup", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1704,7 +1704,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertTrue(any(home.glob(".workflow-assistance-rollback-*")))
 
     def test_sync_preserves_unowned_historical_mcps_and_model(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1760,7 +1760,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertFalse((home / ".workflow-assistance-state.yaml").exists())
 
     def test_sync_installs_terminal_hook_and_preserves_custom_hooks(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_hooks", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1794,7 +1794,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertIn(str(home / "bin/hermes-project-terminal-guard.py").replace("\\", "/"), terminal["command"])
 
     def test_sync_blocks_unfenced_retired_skill_assets_without_deleting_them(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_retired", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1824,7 +1824,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 self.assertEqual((home / "skills" / relative).read_text(encoding="utf-8"), "stale", relative)
 
     def test_sync_initializes_missing_live_config_without_injecting_a_model_route(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_new", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1851,7 +1851,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(set(result["mcp_servers"]), {"context7"})
 
     def test_sync_is_model_neutral_and_manages_only_user_workflow_overlay(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_model_ux", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1897,7 +1897,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertTrue(result["memory"]["memory_enabled"])
 
     def test_sync_rejects_changes_to_user_owned_config_snapshot(self) -> None:
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_preservation", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -1976,7 +1976,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_isolated_baseline_can_merge_managed_config_and_preserve_user_config(self) -> None:
         """The isolated verifier path can construct the portable config baseline."""
 
-        script = ROOT / "scripts/workflow/sync_hermes_workflow_assets.py"
+        script = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
         spec = importlib.util.spec_from_file_location("workflow_sync_config_promotion", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -2065,12 +2065,12 @@ class WorkflowGovernanceTests(unittest.TestCase):
         ):
             self.assertIn(heading, readme)
         for command_or_path in (
-            "scripts/workflow/sync_hermes_workflow_assets.py",
-            "scripts/workflow/build_context_pack.py",
-            "scripts/workflow/mcp_candidate_audit.py",
-            "scripts/workflow/run_quality_gate.py",
-            "scripts/workflow/switch_model.py",
-            "scripts/workflow/hermes_workflow_doctor.py",
+            "integrations/executors/hermes/sync_hermes_workflow_assets.py",
+            "packages/client-neutral-core/scripts/build_context_pack.py",
+            "packages/client-neutral-core/scripts/mcp_candidate_audit.py",
+            "services/orchestration/run_quality_gate.py",
+            "integrations/executors/hermes/switch_model.py",
+            "integrations/executors/hermes/hermes_workflow_doctor.py",
             "scripts/security/scan_agent_rules.py",
             "Justfile",
             "templates/task-tickets/model-neutral-agent-task.md",
@@ -2117,7 +2117,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "UI/Skin 系统",
             "不默认安装 UI runtime",
             "本地 quality gate runner 命令顺序",
-            "python scripts/workflow/run_quality_gate.py verify",
+            "python services/orchestration/run_quality_gate.py verify",
             "每次 push 和 pull request",
             "CI verdict 绑定提交 SHA",
         ):
@@ -2144,7 +2144,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("只对本仓库生效的局部工具集：\n\n## 四层职责", definition)
 
     def test_doctor_distinguishes_structural_and_live_checks(self) -> None:
-        doctor = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(
+        doctor = (ROOT / "integrations/executors/hermes/hermes_workflow_doctor.py").read_text(
             encoding="utf-8"
         )
         self.assertNotIn("server-sequential-thinking", doctor)
@@ -2156,7 +2156,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         sys.path.insert(0, str(ROOT / "scripts/workflow"))
         try:
             spec = importlib.util.spec_from_file_location(
-                "workflow_doctor", ROOT / "scripts/workflow/hermes_workflow_doctor.py"
+                "workflow_doctor", ROOT / "integrations/executors/hermes/hermes_workflow_doctor.py"
             )
             self.assertIsNotNone(spec)
             self.assertIsNotNone(spec.loader)
@@ -2211,7 +2211,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("local_loopback=yes", loopback_summary)
 
     def test_doctor_live_codex_workspace_is_confined_to_project_runtime(self) -> None:
-        script = ROOT / "scripts/workflow/hermes_workflow_doctor.py"
+        script = ROOT / "integrations/executors/hermes/hermes_workflow_doctor.py"
         sys.path.insert(0, str(ROOT / "scripts/workflow"))
         try:
             spec = importlib.util.spec_from_file_location("workflow_doctor_workspace", script)
@@ -2291,7 +2291,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         ):
             self.assertIn(marker, body)
 
-        sync = (ROOT / "scripts/workflow/sync_hermes_workflow_assets.py").read_text(
+        sync = (ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py").read_text(
             encoding="utf-8"
         )
         self.assertIn("def deploy_portable", sync)
@@ -2319,7 +2319,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("hermes-project-data.py", (ROOT / "README.md").read_text(encoding="utf-8"))
 
     def test_context_pack_generator_is_project_local_and_secret_redacting(self) -> None:
-        script = ROOT / "scripts/workflow/build_context_pack.py"
+        script = ROOT / "packages/client-neutral-core/scripts/build_context_pack.py"
         doc = ROOT / "docs/workflow/context-pack.md"
         self.assertTrue(script.exists())
         self.assertTrue(doc.exists())
@@ -2381,7 +2381,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 module.write_context_pack(repo, Path("../context-pack.md"), max_chars=20000)
 
     def test_context_pack_uses_canonical_paths_for_windows_short_name_aliases(self) -> None:
-        script = ROOT / "scripts/workflow/build_context_pack.py"
+        script = ROOT / "packages/client-neutral-core/scripts/build_context_pack.py"
         spec = importlib.util.spec_from_file_location("context_pack_alias", script)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
@@ -2425,7 +2425,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             )
 
     def test_quality_gate_runner_is_canonical_and_just_is_optional(self) -> None:
-        runner = ROOT / "scripts/workflow/run_quality_gate.py"
+        runner = ROOT / "services/orchestration/run_quality_gate.py"
         justfile = ROOT / "Justfile"
         doc = ROOT / "docs/workflow/local-quality-gates.md"
         workflow = ROOT / "docs/workflow/examples/governance.yml.example"
@@ -2484,7 +2484,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             ),
         )
         self.assertEqual(set(module.GATES), set(module.VERIFY_ORDER) | {"portable-install-runtime"})
-        self.assertIn("scripts/workflow/run_quality_gate.py", module.tracked_python_files())
+        self.assertIn("services/orchestration/run_quality_gate.py", module.tracked_python_files())
         self.assertIn("tests/test_workflow_governance.py", module.tracked_python_files())
         self.assertIn("bin/hermes-project-data.py", module.tracked_python_files())
         self.assertIn("bin/hermes-project-terminal-guard.py", module.tracked_python_files())
@@ -2515,8 +2515,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("choco install just", body)
 
         just = justfile.read_text(encoding="utf-8")
-        self.assertIn("python scripts/workflow/run_quality_gate.py verify", just)
-        self.assertIn("python scripts/workflow/run_quality_gate.py mcp-audit", just)
+        self.assertIn("python services/orchestration/run_quality_gate.py verify", just)
+        self.assertIn("python services/orchestration/run_quality_gate.py mcp-audit", just)
         self.assertIn("just is not a required dependency", just)
 
         combined = "\n".join(
@@ -2527,7 +2527,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             )
         )
         for marker in (
-            "python scripts/workflow/run_quality_gate.py verify",
+            "python services/orchestration/run_quality_gate.py verify",
             "just is not a required dependency",
             "QUALITY_GATE_PASS",
             "QUALITY_GATE_FAIL",
@@ -2540,7 +2540,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertIn(marker, combined)
         self.assertEqual(
             workflow.read_text(encoding="utf-8").count(
-                "python scripts/workflow/run_quality_gate.py verify"
+                "python services/orchestration/run_quality_gate.py verify"
             ),
             2,
         )
@@ -2562,7 +2562,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertTrue({"design-contract", "production-evidence", "standard-validators"}.isdisjoint(module.GATES))
 
     def test_mcp_candidate_audit_is_fail_closed_and_does_not_enable_defaults(self) -> None:
-        script = ROOT / "scripts/workflow/mcp_candidate_audit.py"
+        script = ROOT / "packages/client-neutral-core/scripts/mcp_candidate_audit.py"
         doc = ROOT / "docs/mcp/mcp-catalog-governance.md"
         stack = ROOT / "docs/mcp/workflow-mcp-stack.md"
         self.assertTrue(script.exists())
@@ -2697,13 +2697,13 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_model_routing_has_one_executable_source_of_truth(self) -> None:
         active = [
             ROOT / "config/config.yaml",
-            ROOT / "scripts/workflow/switch_model.py",
-            ROOT / "scripts/workflow/hermes_workflow_doctor.py",
+            ROOT / "integrations/executors/hermes/switch_model.py",
+            ROOT / "integrations/executors/hermes/hermes_workflow_doctor.py",
             ROOT / "skills/model-switch/SKILL.md",
         ]
         config = yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))
-        switcher = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")
-        doctor = (ROOT / "scripts/workflow/hermes_workflow_doctor.py").read_text(encoding="utf-8")
+        switcher = (ROOT / "integrations/executors/hermes/switch_model.py").read_text(encoding="utf-8")
+        doctor = (ROOT / "integrations/executors/hermes/hermes_workflow_doctor.py").read_text(encoding="utf-8")
         self.assertNotIn("model", config)
         self.assertIn("selected_model", switcher)
         self.assertIn("--model", switcher)
@@ -2719,7 +2719,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertFalse(fortress_ref.exists())
 
     def test_gpt_oauth_switch_does_not_require_cc_switch_proxy(self) -> None:
-        switcher = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")
+        switcher = (ROOT / "integrations/executors/hermes/switch_model.py").read_text(encoding="utf-8")
         skill = (ROOT / "skills/model-switch/SKILL.md").read_text(encoding="utf-8")
         self.assertIn("codex_auth_present", switcher)
         self.assertNotIn("CC Switch proxy 127.0.0.1:7890 is not open", switcher)
@@ -2741,7 +2741,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("复制 config.yaml / SOUL.md", legacy_deployment)
 
     def test_kimi_retired_and_model_switch_contract_kept(self) -> None:
-        switcher = (ROOT / "scripts/workflow/switch_model.py").read_text(encoding="utf-8")
+        switcher = (ROOT / "integrations/executors/hermes/switch_model.py").read_text(encoding="utf-8")
         skill = (ROOT / "skills/model-switch/SKILL.md").read_text(encoding="utf-8")
         lanes = (ROOT / "skills/model-switch/references/current-model-lanes.md").read_text(
             encoding="utf-8"

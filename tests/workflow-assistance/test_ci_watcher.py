@@ -8,8 +8,8 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "workflow" / "ci_watcher.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "packages/client-neutral-core/scripts" / "ci_watcher.py"
 spec = importlib.util.spec_from_file_location("ci_watcher", SCRIPT)
 assert spec and spec.loader
 watcher = importlib.util.module_from_spec(spec)

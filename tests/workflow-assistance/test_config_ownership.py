@@ -9,7 +9,7 @@ from pathlib import Path
 import jsonschema
 import yaml
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 REGISTRY = ROOT / "config/config-ownership.json"
 SCHEMA = ROOT / "schemas/workflow/config-ownership.schema.json"
 COMPATIBILITY_RECIPE = ROOT / "config/managed-config-schema.yaml"

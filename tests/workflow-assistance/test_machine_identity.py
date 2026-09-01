@@ -8,8 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts/workflow/machine_identity.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "services/authority/machine_identity.py"
 spec = importlib.util.spec_from_file_location("machine_identity", SCRIPT)
 assert spec and spec.loader
 module = importlib.util.module_from_spec(spec)
