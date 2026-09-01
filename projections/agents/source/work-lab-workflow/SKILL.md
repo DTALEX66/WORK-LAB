@@ -1,7 +1,3 @@
-<!-- GENERATED — DO NOT EDIT -->
-<!-- source: projections/agents/source/work-lab-workflow/SKILL.md -->
-<!-- generator: projections/agents/generate.py v1.0.0 -->
-<!-- content_hash: sha256:6b3e785cb184cba5212a7ee69e5ac3d65753bdf3214a171fe0e3610a796be9bb -->
 ---
 name: work-lab-workflow
 description: "Use for WORK-LAB workflow tasks; follow the project ledger, module, and verification boundaries."
