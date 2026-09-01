@@ -21,7 +21,7 @@
       "role": "single field-level authority; schema_version=workflow/config-ownership/v2; single_authority=true; unknown fields default OBSERVE/quarantine"
     },
     "layering_and_boundary_standard": {
-      "canonical_source": "packages/client-neutral-core/docs/workflow/official-plus-user-configuration-standard-2026-08-11.md",
+      "canonical_source": "docs/current/workflow-assistance/workflow/official-plus-user-configuration-standard-2026-08-11.md",
       "status": "ACTIVE",
       "role": "interprets the layering model and per-product boundaries; MUST NOT duplicate the field table owned by config-ownership.json"
     },
@@ -58,7 +58,7 @@
       "role": "the only active GitHub workflow authority for WORK-LAB"
     },
     "nested_governance_workflow": {
-      "canonical_source": "packages/client-neutral-core/docs/workflow/examples/governance.yml.example",
+      "canonical_source": "docs/current/workflow-assistance/workflow/examples/governance.yml.example",
       "status": "SUPERSEDED_REFERENCE",
       "role": "documented example / reusable source only; not an active second CI authority (WLG-080)"
     },
@@ -79,12 +79,12 @@
     },
     "plugins_inventory": {
       "canonical_source": "config/plugin-inventory.json",
-      "status": "PENDING",
+      "status": "active",
       "role": "managed plugin inventory (Hermes plugins + Agent Plugins v1); to be created by WLR-080"
     },
     "models_registry": {
       "canonical_source": "config/models-registry.json",
-      "status": "PENDING",
+      "status": "active",
       "role": "provider/model pricing and capability registry; to be created by WLR-050"
     },
     "taskpacks": {
@@ -124,7 +124,12 @@
     "execution_rules",
     "skills_inventory",
     "taskpacks",
-    "observer"
+    "observer",
+    "context_capsules",
+    "telemetry",
+    "plugins_inventory",
+    "federation",
+    "models_registry"
   ],
   "superseded_list": [
     "managed_config_schema",

@@ -40,7 +40,7 @@ class AuthorityIndexTests(unittest.TestCase):
         self.assertEqual(cfg["status"], "ACTIVE")
         self.assertIn("single field-level authority", cfg["role"])
         # No duplicate field tables: the standard doc must not re-list fields.
-        standard = ROOT / "packages/client-neutral-core/docs/workflow/official-plus-user-configuration-standard-2026-08-11.md"
+        standard = ROOT / "docs/current/workflow-assistance/workflow/official-plus-user-configuration-standard-2026-08-11.md"
         text = standard.read_text(encoding="utf-8")
         self.assertIn("config/config-ownership.json", text)
         self.assertIn("only field-level authority", text)

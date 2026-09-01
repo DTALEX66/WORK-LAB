@@ -52,7 +52,7 @@ class SupplyChainTests(unittest.TestCase):
             root = Path(raw)
             workflow_dir = root / "module" / ".github" / "workflows"
             workflow_dir.mkdir(parents=True)
-            lock = root / "requirements.lock"
+            lock = root / "packages" / "client-neutral-core" / "requirements.lock"
             lock.parent.mkdir(parents=True)
             lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
             (workflow_dir / "nested.yml").write_text(
@@ -69,7 +69,7 @@ class SupplyChainTests(unittest.TestCase):
             root = Path(raw)
             workflow_dir = root / ".github" / "workflows"
             workflow_dir.mkdir(parents=True)
-            lock = root / "requirements.lock"
+            lock = root / "packages" / "client-neutral-core" / "requirements.lock"
             lock.parent.mkdir(parents=True)
             lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
             (workflow_dir / "gate.yml").write_text(
@@ -88,7 +88,7 @@ class SupplyChainTests(unittest.TestCase):
             root = Path(raw)
             workflow_dir = root / ".github" / "workflows"
             workflow_dir.mkdir(parents=True)
-            lock = root / "requirements.lock"
+            lock = root / "packages" / "client-neutral-core" / "requirements.lock"
             lock.parent.mkdir(parents=True)
             lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
             (workflow_dir / "gate.yml").write_text(
@@ -106,7 +106,7 @@ class SupplyChainTests(unittest.TestCase):
             root = Path(raw)
             workflow_dir = root / ".github" / "workflows"
             workflow_dir.mkdir(parents=True)
-            lock = root / "requirements.lock"
+            lock = root / "packages" / "client-neutral-core" / "requirements.lock"
             lock.parent.mkdir(parents=True)
             lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
             (workflow_dir / "gate.yml").write_text(
@@ -135,7 +135,7 @@ class SupplyChainTests(unittest.TestCase):
                 root = Path(raw)
                 workflow_dir = root / ".github" / "workflows"
                 workflow_dir.mkdir(parents=True)
-                lock = root / "requirements.lock"
+                lock = root / "packages" / "client-neutral-core" / "requirements.lock"
                 lock.parent.mkdir(parents=True)
                 lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
                 (workflow_dir / "gate.yml").write_text(
@@ -176,7 +176,7 @@ class SupplyChainTests(unittest.TestCase):
                 root = Path(raw)
                 workflow_dir = root / ".github" / "workflows"
                 workflow_dir.mkdir(parents=True)
-                lock = root / "requirements.lock"
+                lock = root / "packages" / "client-neutral-core" / "requirements.lock"
                 lock.parent.mkdir(parents=True)
                 lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
                 (workflow_dir / "gate.yml").write_text(
@@ -200,7 +200,7 @@ class SupplyChainTests(unittest.TestCase):
                 root = Path(raw)
                 workflow_dir = root / ".github" / "workflows"
                 workflow_dir.mkdir(parents=True)
-                lock = root / "requirements.lock"
+                lock = root / "packages" / "client-neutral-core" / "requirements.lock"
                 lock.parent.mkdir(parents=True)
                 lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
                 (workflow_dir / "gate.yml").write_text(
@@ -223,7 +223,7 @@ class SupplyChainTests(unittest.TestCase):
                 root = Path(raw)
                 workflow_dir = root / ".github" / "workflows"
                 workflow_dir.mkdir(parents=True)
-                lock = root / "requirements.lock"
+                lock = root / "packages" / "client-neutral-core" / "requirements.lock"
                 lock.parent.mkdir(parents=True)
                 lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
                 (workflow_dir / "gate.yml").write_text(

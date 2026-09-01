@@ -23,7 +23,7 @@ except ImportError:  # pragma: no cover
     yaml = None
 
 ROOT = Path(__file__).resolve().parents[2]
-SKILLS = ROOT / "packages" / "client-neutral-core" / "skills-workflow"
+SKILLS = ROOT / "packages" / "client-neutral-core" / "skills"
 CAPABILITY = ROOT / "config" / "capability-conformance.json"
 
 REQUIRED_FIELDS = ("name", "description", "version")

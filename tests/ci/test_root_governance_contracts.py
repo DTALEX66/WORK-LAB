@@ -50,9 +50,9 @@ class RootGovernanceContractTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertEqual(data["runtimeRoot"], ".hermes/task-runtime")
-        self.assertEqual(data["taskArtifactsRoot"], ".hermes/task-artifacts")
-        self.assertEqual(data["canonicalEvidenceRoot"], "80-evidence")
+        self.assertEqual(data["runtimeRoot"], ".project-local/runs")
+        self.assertEqual(data["taskArtifactsRoot"], ".project-local/artifacts")
+        self.assertEqual(data["canonicalEvidenceRoot"], ".project-local/artifacts")
 
     def test_dependency_verifier_rejects_runtime_edge(self):
         module = self.load_verifier(

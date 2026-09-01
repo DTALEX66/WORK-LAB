@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-09-01T17:53:15.604751Z",
-  "source_digest": "68d5a9c564706ca2958149d9dbaff57946b500e98ef766067fe9da510a0d3086",
+  "generated_at": "2026-09-01T18:48:53.335801Z",
+  "source_digest": "2951c0f3acd4a132ef346c4f8e2eadaceb9d25c6a002befd9b266c5baa1e125b",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -124,7 +124,7 @@
         "name": "model-switch",
         "source": "skills/model-switch/SKILL.md",
         "version": "1.3.1",
-        "source_sha256": "0a02c1fc8b6520ad5e7000d80b83597a66f7a65c3a52a56ca7ebda3e84ca15b9",
+        "source_sha256": "37aed9558bc16be5c4da9aa2133d63e03cabbcf353d6bbf248d156aceaf4c5d9",
         "trust": "repository-controlled",
         "enabled": true,
         "live_readback": "not-run"
@@ -219,5 +219,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "bc83349cc68c564a6a153862741b675d999387fa4c9268cf6bb417734152dece"
+  "content_digest": "36a59c129a38047f04030aaab6aef45a5a18cc7b6e187a1636f49930f3c0cfb1"
 }

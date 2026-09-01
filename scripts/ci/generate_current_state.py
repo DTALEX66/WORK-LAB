@@ -23,7 +23,7 @@ import yaml
 DEFAULT_CI_EVIDENCE = Path(".hermes/task-artifacts/current-state-ci.json")
 DEFAULT_RUNTIME_ATTESTATION = Path(".hermes/task-artifacts/current-state-runtime-attestation.json")
 CANONICAL_FILES = (
-    ".project/governance/PROJECT_POSITIONING.md",
+    "docs/decisions/PROJECT_POSITIONING.md",
     ".project/governance/projects.json",
     ".project/governance/module-ownership.json",
     ".project/governance/contracts/contract-catalog.json",
@@ -355,7 +355,7 @@ def check_stale_references(paths: Iterable[Path]) -> list[str]:
 
 def _canonical_doc_paths(root: Path) -> list[Path]:
     relative = [
-        ".project/governance/PROJECT_POSITIONING.md",
+        "docs/decisions/PROJECT_POSITIONING.md",
         ".project/governance/projects.json",
         ".project/governance/module-ownership.json",
         ".project/governance/contracts/contract-catalog.json",
