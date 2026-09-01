@@ -1,37 +1,280 @@
 {
   "schemaVersion": "work-lab-contract-catalog/v2",
   "contracts": [
-    {"id": "module-profile", "owner": "root-governance", "schemaPath": ".project/governance/contracts/module-profile.schema.json", "consumers": ["workflow", "observer", "ci"]},
-    {"id": "source-ledger", "owner": "root-governance", "schemaPath": ".project/governance/contracts/source-ledger.schema.json", "consumers": ["workflow", "observer", "ci"]},
-    {"id": "capability-conformance", "owner": "root-governance", "schemaPath": ".project/governance/contracts/capability-conformance.schema.json", "consumers": ["workflow", "observer", "ci"]},
-    {"id": "task-card", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/task-card.schema.json", "consumers": ["writer", "reviewer"]},
-    {"id": "runtime-lock", "owner": "workflow", "schemaPath": ".project/governance/contracts/runtime-lock.schema.json", "consumers": ["evidence", "reviewer"]},
-    {"id": "domain-pack", "owner": "external-design-lab", "schemaPath": "packages/contracts/schemas/workflow/domain-pack.schema.json", "consumers": ["workflow", "observer"], "ownership": "CapabilityPackageReference (DESIGN-LAB owns authoritative domain packs; WORK-LAB references by URI/version/SHA/digest)"},
-    {"id": "evidence-envelope", "owner": "root-governance", "schemaPath": ".project/governance/contracts/evidence-envelope.schema.json", "consumers": ["reviewer", "observer"]},
-    {"id": "release-manifest", "owner": "root-governance", "schemaPath": ".project/governance/contracts/release-manifest.schema.json", "consumers": ["github", "audit"]},
-    {"id": "adapter-capability", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/client-adapter.schema.json", "consumers": ["workflow", "integration"]},
-    {"id": "action-plan", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/action-plan.schema.json", "consumers": ["workflow", "evidence"]},
-    {"id": "task-ledger-event", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/run-event.schema.json", "consumers": ["workflow", "observer"]},
-    {"id": "rule-asset", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/rule-asset.schema.json", "consumers": ["workflow", "observer"]},
-    {"id": "skill-package", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/skill-package.schema.json", "consumers": ["workflow", "observer"]},
-    {"id": "growth-candidate", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/growth-candidate.schema.json", "consumers": ["workflow", "observer"]},
-    {"id": "project-profile", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/project-profile.schema.json", "consumers": ["workflow", "ci"]},
-    {"id": "gate-registry", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/gate-registry.schema.json", "consumers": ["workflow", "ci"]},
-    {"id": "gate-plan", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/gate-plan.schema.json", "consumers": ["workflow", "ci", "observer"]},
-    {"id": "blocker", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/blocker.schema.json", "consumers": ["workflow", "observer"]},
-    {"id": "ci-observation", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/ci-observation.schema.json", "consumers": ["workflow", "observer"]},
-    {"id": "evidence-manifest", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/evidence-manifest.schema.json", "consumers": ["workflow", "observer", "ci"]},
-    {"id": "model-policy", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/model-policy.schema.json", "consumers": ["workflow", "observer", "ci"]},
-    {"id": "memory-record", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/memory-record.schema.json", "consumers": ["workflow", "observer"]},
-    {"id": "rule-drift", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/rule-drift.schema.json", "consumers": ["workflow", "observer"]},
-    {"id": "platform-identity", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/platform-identity.schema.json", "consumers": ["workflow", "observer", "ci"]},
-    {"id": "config-ownership", "owner": "workflow", "schemaPath": "packages/contracts/schemas/workflow/config-ownership.schema.json", "consumers": ["workflow", "ci"]},
-    {"id": "observer-event", "owner": "observer", "schemaPath": "apps/observer/schemas/observer-event.schema.json", "consumers": ["observer"]},
-    {"id": "observer-pricing", "owner": "observer", "schemaPath": "apps/observer/schemas/observer-pricing.schema.json", "consumers": ["observer"]},
-    {"id": "data-quality", "owner": "observer", "schemaPath": "apps/observer/schemas/data-quality.schema.json", "consumers": ["observer"]},
-    {"id": "dashboard-projection", "owner": "observer", "schemaPath": "apps/observer/schemas/dashboard-projection.schema.json", "consumers": ["observer", "ui"]},
-
-    {"id": "archive-manifest", "owner": "root-governance", "schemaPath": ".project/governance/contracts/archive-manifest.schema.json", "consumers": ["archive-audit"]}
+    {
+      "id": "module-profile",
+      "owner": "root-governance",
+      "schemaPath": ".project/governance/contracts/module-profile.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
+    },
+    {
+      "id": "source-ledger",
+      "owner": "root-governance",
+      "schemaPath": ".project/governance/contracts/source-ledger.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
+    },
+    {
+      "id": "capability-conformance",
+      "owner": "root-governance",
+      "schemaPath": ".project/governance/contracts/capability-conformance.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
+    },
+    {
+      "id": "task-card",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/task-card.schema.json",
+      "consumers": [
+        "writer",
+        "reviewer"
+      ]
+    },
+    {
+      "id": "runtime-lock",
+      "owner": "workflow",
+      "schemaPath": ".project/governance/contracts/runtime-lock.schema.json",
+      "consumers": [
+        "evidence",
+        "reviewer"
+      ]
+    },
+    {
+      "id": "domain-pack",
+      "owner": "external-design-lab",
+      "schemaPath": "packages/contracts/schemas/workflow/domain-pack.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ],
+      "ownership": "CapabilityPackageReference (DESIGN-LAB owns authoritative domain packs; WORK-LAB references by URI/version/SHA/digest)"
+    },
+    {
+      "id": "evidence-envelope",
+      "owner": "root-governance",
+      "schemaPath": ".project/governance/contracts/evidence-envelope.schema.json",
+      "consumers": [
+        "reviewer",
+        "observer"
+      ]
+    },
+    {
+      "id": "release-manifest",
+      "owner": "root-governance",
+      "schemaPath": ".project/governance/contracts/release-manifest.schema.json",
+      "consumers": [
+        "github",
+        "audit"
+      ]
+    },
+    {
+      "id": "adapter-capability",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/client-adapter.schema.json",
+      "consumers": [
+        "workflow",
+        "integration"
+      ]
+    },
+    {
+      "id": "action-plan",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/action-plan.schema.json",
+      "consumers": [
+        "workflow",
+        "evidence"
+      ]
+    },
+    {
+      "id": "task-ledger-event",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/run-event.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "rule-asset",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/rule-asset.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "skill-package",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/skill-package.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "growth-candidate",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/growth-candidate.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "project-profile",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/project-profile.schema.json",
+      "consumers": [
+        "workflow",
+        "ci"
+      ]
+    },
+    {
+      "id": "gate-registry",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/gate-registry.schema.json",
+      "consumers": [
+        "workflow",
+        "ci"
+      ]
+    },
+    {
+      "id": "gate-plan",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/gate-plan.schema.json",
+      "consumers": [
+        "workflow",
+        "ci",
+        "observer"
+      ]
+    },
+    {
+      "id": "blocker",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/blocker.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "ci-observation",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/ci-observation.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "evidence-manifest",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/evidence-manifest.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
+    },
+    {
+      "id": "model-policy",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/model-policy.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
+    },
+    {
+      "id": "memory-record",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/memory-record.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "rule-drift",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/rule-drift.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "platform-identity",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/platform-identity.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
+    },
+    {
+      "id": "config-ownership",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/config-ownership.schema.json",
+      "consumers": [
+        "workflow",
+        "ci"
+      ]
+    },
+    {
+      "id": "observer-event",
+      "owner": "observer",
+      "schemaPath": "apps/observer/schemas/observer-event.schema.json",
+      "consumers": [
+        "observer"
+      ]
+    },
+    {
+      "id": "observer-pricing",
+      "owner": "observer",
+      "schemaPath": "apps/observer/schemas/observer-pricing.schema.json",
+      "consumers": [
+        "observer"
+      ]
+    },
+    {
+      "id": "data-quality",
+      "owner": "observer",
+      "schemaPath": "apps/observer/schemas/data-quality.schema.json",
+      "consumers": [
+        "observer"
+      ]
+    },
+    {
+      "id": "dashboard-projection",
+      "owner": "observer",
+      "schemaPath": "apps/observer/schemas/dashboard-projection.schema.json",
+      "consumers": [
+        "observer",
+        "ui"
+      ]
+    },
+    {
+      "id": "archive-manifest",
+      "owner": "root-governance",
+      "schemaPath": ".project/governance/contracts/archive-manifest.schema.json",
+      "consumers": [
+        "archive-audit"
+      ]
+    }
   ],
   "breakingChange": "version-plus-migration-fixture",
   "implementationDuplication": "forbidden"

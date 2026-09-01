@@ -20,7 +20,7 @@
         "packages/client-neutral-core"
       ],
       "tests": [
-        "packages/client-neutral-core/tests"
+        "tests/workflow-assistance"
       ],
       "controls": {
         "network": false,

@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 
 EXPECTED = {
-    "runtimeRoot": ".hermes/task-runtime",
-    "taskArtifactsRoot": ".hermes/task-artifacts",
-    "canonicalEvidenceRoot": "80-evidence",
+    "runtimeRoot": ".project-local/runs",
+    "taskArtifactsRoot": ".project-local/artifacts",
+    "canonicalEvidenceRoot": ".project-local/artifacts",
 }
 
 
@@ -28,16 +28,14 @@ def verify(root: Path) -> list[str]:
         errors.append("platformNeutral must be true")
     if ".work-lab" not in contract.get("legacyAliases", []):
         errors.append("legacy .work-lab alias must be explicitly input-only")
-    if not any(line.strip() == ".hermes/" for line in (root / ".gitignore").read_text(encoding="utf-8").splitlines()):
-        errors.append(".hermes/ must be ignored")
-    if not any(line.strip() == "80-evidence/" for line in (root / ".gitignore").read_text(encoding="utf-8").splitlines()):
-        errors.append("80-evidence/ must be ignored")
-    if projects.get("generatedData", {}).get("evidencePath") != "80-evidence":
-        errors.append("projects generatedData.evidencePath must use 80-evidence")
+    if not any(line.strip() == ".project-local/" for line in (root / ".gitignore").read_text(encoding="utf-8").splitlines()):
+        errors.append(".project-local/ must be ignored")
+    if projects.get("generatedData", {}).get("evidencePath") != ".project-local/artifacts":
+        errors.append("projects generatedData.evidencePath must use .project-local/artifacts")
     if projects.get("generatedData", {}).get("runtimeRoot") != EXPECTED["runtimeRoot"]:
-        errors.append("projects generatedData.runtimeRoot must use .hermes/task-runtime")
+        errors.append("projects generatedData.runtimeRoot must use .project-local/runs")
     if projects.get("generatedData", {}).get("taskArtifactsPath") != EXPECTED["taskArtifactsRoot"]:
-        errors.append("projects generatedData.taskArtifactsPath must use .hermes/task-artifacts")
+        errors.append("projects generatedData.taskArtifactsPath must use .project-local/artifacts")
     if projects.get("forbiddenRoots") != ["E:\\"]:
         errors.append("projects forbiddenRoots must preserve E: protection")
     return errors
@@ -49,7 +47,7 @@ def main() -> int:
         for error in errors:
             print(f"PROJECT_DATA_BOUNDARY_FAIL {error}")
         return 1
-    print("PROJECT_DATA_BOUNDARY_PASS runtime=.hermes/task-runtime evidence=80-evidence")
+    print("PROJECT_DATA_BOUNDARY_PASS runtime=.project-local/runs evidence=.project-local/artifacts")
     return 0
 
 

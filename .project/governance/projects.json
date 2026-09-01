@@ -2,7 +2,12 @@
   "schemaVersion": "work-lab-monorepo/v1",
   "workspaceId": "work-lab",
   "repository": "DTALEX66/WORK-LAB",
-  "rootResolution": ["explicit-argument", "manifest-relative-path", "environment-variable", "current-git-root"],
+  "rootResolution": [
+    "explicit-argument",
+    "manifest-relative-path",
+    "environment-variable",
+    "current-git-root"
+  ],
   "modules": [
     {
       "id": "workflow-assistance",
@@ -13,7 +18,6 @@
       "owner": "DTALEX66",
       "dependsOn": []
     },
-
     {
       "id": "work-lab-observer",
       "path": "apps/observer",
@@ -21,15 +25,19 @@
       "role": "strictly read-only derived observation and evidence projections",
       "releasePrefix": "observer",
       "owner": "DTALEX66",
-      "dependsOn": ["workflow-assistance"]
+      "dependsOn": [
+        "workflow-assistance"
+      ]
     }
   ],
   "singleWriter": true,
-  "forbiddenRoots": ["E:\\"],
+  "forbiddenRoots": [
+    "E:\\"
+  ],
   "generatedData": {
     "runtimeRoot": ".project-local/runs",
     "taskArtifactsPath": ".project-local/artifacts",
-    "evidencePath": "80-evidence",
+    "evidencePath": ".project-local/artifacts",
     "tracked": false
   },
   "externalMutationDefault": false
