@@ -1,7 +1,7 @@
 """Pytest bootstrap: expose the converged module layout to all tests.
 
 After the WL-DIR migration the workflow modules moved out of
-``10-workflow/workflow-assistance/scripts/workflow`` into domain directories
+the legacy numbered layout into domain directories
 (services/*, packages/client-neutral-core/scripts, integrations/executors/*).
 Legacy test files still insert ``ROOT / "scripts/workflow"``; this conftest
 adds the real module roots so their imports resolve without editing 100+ files.

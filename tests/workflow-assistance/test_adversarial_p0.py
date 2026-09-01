@@ -1,6 +1,6 @@
 """WLR-910: adversarial P0 regression tests (behavioral, not string-search)."""
 import sys, inspect
-sys.path.insert(0, r'D:\All projects\WORK-LAB\packages\client-neutral-core\scripts\workflow')
+# modules migrated to services/*, packages/client-neutral-core/scripts; tests/conftest.py adds them
 from model_router import TaskSignal, route
 
 
@@ -13,7 +13,7 @@ def test_adversarial_null_not_zero():
 def test_adversarial_observer_write_rejected():
     """observer_store.append must raise (read-only contract) — source-level check."""
     from pathlib import Path
-    src_file = Path(r'D:\All projects\WORK-LAB\30-observer\work-lab-observer\src\observer_store.py')
+    src_file = Path(r'D:\All projects\WORK-LAB\apps\observer\src\observer_store.py')
     src = src_file.read_text(encoding='utf-8')
     assert 'ObserverInputError' in src and 'raise' in src
     # must contain no INSERT/UPDATE/DELETE business writes

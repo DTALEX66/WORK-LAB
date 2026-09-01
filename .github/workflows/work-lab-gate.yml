@@ -34,13 +34,13 @@ jobs:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.sha }}
         run: |
-          mkdir -p .hermes/task-runtime/ci
+          mkdir -p .project-local/runs/ci
           if [ "$EVENT_NAME" = "pull_request" ]; then
-            git diff --name-only "$PR_BASE_SHA" "$HEAD_SHA" > .hermes/task-runtime/ci/changed-paths.txt
+            git diff --name-only "$PR_BASE_SHA" "$HEAD_SHA" > .project-local/runs/ci/changed-paths.txt
           elif [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
-            git ls-files > .hermes/task-runtime/ci/changed-paths.txt
+            git ls-files > .project-local/runs/ci/changed-paths.txt
           else
-            git diff --name-only "$BEFORE_SHA" "$HEAD_SHA" > .hermes/task-runtime/ci/changed-paths.txt
+            git diff --name-only "$BEFORE_SHA" "$HEAD_SHA" > .project-local/runs/ci/changed-paths.txt
           fi
       - name: Compute canonical gate plan
         id: plan
@@ -52,7 +52,7 @@ jobs:
             --profile .project/governance/work-lab.project-profile.yaml \
             --repository "${{ github.repository }}" \
             --commit "$HEAD_SHA" \
-            --changed-path-file .hermes/task-runtime/ci/changed-paths.txt \
+            --changed-path-file .project-local/runs/ci/changed-paths.txt \
             --github-output "$GITHUB_OUTPUT"
 
   workflow:
