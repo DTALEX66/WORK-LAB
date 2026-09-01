@@ -41,9 +41,9 @@ own `/model` handler so session state, confirmation, and UI behavior stay consis
 Run from the WORK-LAB repository root:
 
 ```bash
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py status
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
+python integrations/executors/hermes/switch_model.py status
+python integrations/executors/hermes/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python integrations/executors/hermes/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 ```
 
 `--live` is opt-in and may consume provider quota. Switching does not mutate an

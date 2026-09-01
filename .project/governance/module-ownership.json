@@ -2,10 +2,10 @@
   "schemaVersion": "work-lab-module-ownership/v1",
   "singleWriter": true,
   "modules": {
-    "workflow-assistance": {"path": "10-workflow/workflow-assistance", "owner": "workflow", "releasePrefix": "workflow"},
+    "workflow-assistance": {"path": "packages/client-neutral-core", "owner": "workflow", "releasePrefix": "workflow"},
 
-    "work-lab-observer": {"path": "30-observer/work-lab-observer", "owner": "observer", "releasePrefix": "observer"}
+    "work-lab-observer": {"path": "apps/observer", "owner": "observer", "releasePrefix": "observer"}
   },
-  "rootOwnedPaths": ["00-governance", "40-knowledge", "50-taskpacks", "90-archive-manifests", ".github", "scripts", "tests"],
+  "rootOwnedPaths": [".project/governance", "knowledge-staging", "taskpacks/current", "docs/history/archive-manifests", ".github", "scripts", "tests"],
   "crossModuleWrites": "explicit-cross-task-only"
 }

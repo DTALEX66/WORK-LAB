@@ -5,13 +5,13 @@
   "generated_by": "WL3-100 subagent research, reconciled by DeepSeek Harness on current tree",
   "purpose": "Machine-readable capability matrix for WORK-LAB adapters, reconciled against current tracked sources (adapter-registry.json + workflow-manifest.yaml + config-ownership.json).",
   "sources": [
-    "10-workflow/workflow-assistance/workflow-manifest.yaml",
-    "10-workflow/workflow-assistance/config/adapter-registry.json",
-    "10-workflow/workflow-assistance/config/config-ownership.json",
-    "10-workflow/workflow-assistance/config/capability-conformance.json",
-    "10-workflow/workflow-assistance/schemas/workflow/adapter-registry.schema.json",
-    "10-workflow/workflow-assistance/schemas/workflow/client-adapter.schema.json",
-    "10-workflow/workflow-assistance/scripts/workflow/real_adapters.py"
+    "packages/client-neutral-core/workflow-manifest.yaml",
+    "config/adapter-registry.json",
+    "config/config-ownership.json",
+    "config/capability-conformance.json",
+    "packages/contracts/schemas/workflow/adapter-registry.schema.json",
+    "packages/contracts/schemas/workflow/client-adapter.schema.json",
+    "packages/client-neutral-core/scripts/real_adapters.py"
   ],
   "interface_contract": [
     "detect",

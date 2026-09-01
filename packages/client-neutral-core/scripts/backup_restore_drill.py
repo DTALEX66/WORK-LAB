@@ -10,9 +10,9 @@ from pathlib import Path
 BASE = Path.cwd()
 if not (BASE / "AGENTS.md").exists():
     BASE = Path(__file__).parent.parent.parent.parent
-GOV = BASE / "00-governance"
-CONFIG = BASE / "10-workflow" / "workflow-assistance" / "config"
-SCHEMAS = BASE / "10-workflow" / "workflow-assistance" / "schemas" / "workflow"
+GOV = BASE / ".project/governance"
+CONFIG = BASE / "config"
+SCHEMAS = BASE / "packages" / "contracts" / "schemas" / "workflow"
 DRILL_DIR = BASE / ".hermes" / "task-runtime" / "backup-drill"
 
 CRITICAL_FILES = [

@@ -70,9 +70,9 @@ function snapshot(overrides) {
         recentErrors: [{ errorId: "ERR-060", title: "Observer fail-closed contract", statusAfter: "PASS" }],
       },
       sources: [
-        { path: "50-taskpacks/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md", evidenceKind: "PLAN" },
-        { path: "00-governance/generated/CURRENT_STATE.json", evidenceKind: "STATIC_BASELINE" },
-        { path: "50-taskpacks/error-ledger.json", evidenceKind: "HISTORY" },
+        { path: "taskpacks/current/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md", evidenceKind: "PLAN" },
+        { path: ".project/governance/generated/CURRENT_STATE.json", evidenceKind: "STATIC_BASELINE" },
+        { path: "taskpacks/current/error-ledger.json", evidenceKind: "HISTORY" },
       ],
     },
   }, overrides || {}));

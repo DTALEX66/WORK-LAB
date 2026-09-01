@@ -3,7 +3,7 @@
 import json, sys, pathlib
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-INDEX = pathlib.Path(r"D:\All projects\WORK-LAB\00-governance\external-libraries-index.json")
+INDEX = pathlib.Path(r"D:\All projects\WORK-LAB\.project/governance\external-libraries-index.json")
 errors = []
 
 if not INDEX.exists():

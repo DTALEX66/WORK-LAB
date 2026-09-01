@@ -14,41 +14,41 @@
   },
   "authorities": {
     "config_fields": {
-      "canonical_source": "10-workflow/workflow-assistance/config/config-ownership.json",
-      "schema": "10-workflow/workflow-assistance/schemas/workflow/config-ownership.schema.json",
-      "verifier": "10-workflow/workflow-assistance/scripts/workflow/verify_config_ownership.py",
+      "canonical_source": "config/config-ownership.json",
+      "schema": "packages/contracts/schemas/workflow/config-ownership.schema.json",
+      "verifier": "packages/client-neutral-core/scripts/verify_config_ownership.py",
       "status": "ACTIVE",
       "role": "single field-level authority; schema_version=workflow/config-ownership/v2; single_authority=true; unknown fields default OBSERVE/quarantine"
     },
     "layering_and_boundary_standard": {
-      "canonical_source": "10-workflow/workflow-assistance/docs/workflow/official-plus-user-configuration-standard-2026-08-11.md",
+      "canonical_source": "packages/client-neutral-core/docs/workflow/official-plus-user-configuration-standard-2026-08-11.md",
       "status": "ACTIVE",
       "role": "interprets the layering model and per-product boundaries; MUST NOT duplicate the field table owned by config-ownership.json"
     },
     "adapter_registry": {
-      "canonical_source": "10-workflow/workflow-assistance/config/adapter-registry.json",
-      "schema": "10-workflow/workflow-assistance/schemas/workflow/adapter-registry.schema.json",
+      "canonical_source": "config/adapter-registry.json",
+      "schema": "packages/contracts/schemas/workflow/adapter-registry.schema.json",
       "status": "ACTIVE",
       "role": "client adapter inventory for the global runner"
     },
     "project_profile_registry": {
-      "canonical_source": "10-workflow/workflow-assistance/config/project-profiles.json",
-      "schema": "10-workflow/workflow-assistance/schemas/workflow/project-profile.schema.json",
+      "canonical_source": "config/project-profiles.json",
+      "schema": "packages/contracts/schemas/workflow/project-profile.schema.json",
       "status": "ACTIVE",
       "role": "external project cooperation endpoints: address + protocol metadata only; never project content"
     },
     "gate_plan_schema": {
-      "canonical_source": "10-workflow/workflow-assistance/schemas/workflow/gate-plan.schema.json",
+      "canonical_source": "packages/contracts/schemas/workflow/gate-plan.schema.json",
       "status": "ACTIVE",
       "role": "gate plan contract; tier vocabulary is global (TARGETED/STAGE/NIGHTLY/RC/RELEASE), semantic mapping is project-owned"
     },
     "task_ledger_schema": {
-      "canonical_source": "10-workflow/workflow-assistance/schemas/workflow/task-ledger.schema.json",
+      "canonical_source": "packages/contracts/schemas/workflow/task-ledger.schema.json",
       "status": "ACTIVE",
       "role": "WORK-LAB task truth; task ids, idempotency keys, ledger event digests"
     },
     "managed_config_schema": {
-      "canonical_source": "10-workflow/workflow-assistance/config/managed-config-schema.yaml",
+      "canonical_source": "config/managed-config-schema.yaml",
       "status": "SUPERSEDED",
       "role": "isolated-empty-home compatibility recipe only; field lists superseded by config-ownership.json (see note in official-plus-user standard)"
     },
@@ -58,12 +58,12 @@
       "role": "the only active GitHub workflow authority for WORK-LAB"
     },
     "nested_governance_workflow": {
-      "canonical_source": "10-workflow/workflow-assistance/docs/workflow/examples/governance.yml.example",
+      "canonical_source": "packages/client-neutral-core/docs/workflow/examples/governance.yml.example",
       "status": "SUPERSEDED_REFERENCE",
       "role": "documented example / reusable source only; not an active second CI authority (WLG-080)"
     },
     "archive_manifests": {
-      "canonical_source": "90-archive-manifests/",
+      "canonical_source": "docs/history/archive-manifests/",
       "status": "ARCHIVE",
       "role": "historical migration/audit/handoff evidence; superseded docs live here, Git history is never rewritten"
     },
@@ -73,42 +73,42 @@
       "role": "root execution rules for all managed clients and modules"
     },
     "skills_inventory": {
-      "canonical_source": "10-workflow/workflow-assistance/config/skill-provenance.yaml",
+      "canonical_source": "config/skill-provenance.yaml",
       "status": "ACTIVE",
       "role": "managed skills SHA256 inventory; deployed via sync_hermes_workflow_assets.py"
     },
     "plugins_inventory": {
-      "canonical_source": "10-workflow/workflow-assistance/config/plugin-inventory.json",
+      "canonical_source": "config/plugin-inventory.json",
       "status": "PENDING",
       "role": "managed plugin inventory (Hermes plugins + Agent Plugins v1); to be created by WLR-080"
     },
     "models_registry": {
-      "canonical_source": "10-workflow/workflow-assistance/config/models-registry.json",
+      "canonical_source": "config/models-registry.json",
       "status": "PENDING",
       "role": "provider/model pricing and capability registry; to be created by WLR-050"
     },
     "taskpacks": {
-      "canonical_source": "00-governance/taskpack-authority-index.json",
+      "canonical_source": ".project/governance/taskpack-authority-index.json",
       "status": "ACTIVE",
       "role": "taskpack authority: current/superseded/deferred/archive classification"
     },
     "context_capsules": {
-      "canonical_source": "10-workflow/workflow-assistance/config/capsule-registry.json",
+      "canonical_source": "config/capsule-registry.json",
       "status": "PENDING",
       "role": "Context Continuity Protocol capsule inventory; to be created by WLR-030"
     },
     "telemetry": {
-      "canonical_source": "30-observer/work-lab-observer/config/telemetry-authority.json",
+      "canonical_source": "apps/observer/config/telemetry-authority.json",
       "status": "PENDING",
       "role": "TokenTelemetry / observer telemetry authority; to be created by WLR-110"
     },
     "observer": {
-      "canonical_source": "30-observer/work-lab-observer/",
+      "canonical_source": "apps/observer/",
       "status": "ACTIVE",
       "role": "read-only projection of workflow state; strict observer — no write/approve/retry/rollback"
     },
     "federation": {
-      "canonical_source": "10-workflow/workflow-assistance/config/federation-protocol.json",
+      "canonical_source": "config/federation-protocol.json",
       "status": "PENDING",
       "role": "cross-project federation protocol (WORK-LAB ↔ ArcheAxis ↔ DESIGN-LAB); to be defined"
     }

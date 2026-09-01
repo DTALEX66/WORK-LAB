@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
-WF_SCRIPTS = ROOT / "10-workflow" / "workflow-assistance" / "scripts" / "workflow"
+WF_SCRIPTS = ROOT / "packages" / "client-neutral-core" / "scripts"
 sys.path.insert(0, str(WF_SCRIPTS))
 
 from memory_contamination import run_all_negative_controls  # noqa: E402

@@ -3,12 +3,12 @@
   "dependencyTypes": ["governance", "runtime", "build", "handoff", "observed-by", "fixture", "archive-of"],
   "modules": {
     "workflow-assistance": {
-      "path": "10-workflow/workflow-assistance",
+      "path": "packages/client-neutral-core",
       "dependencies": [],
       "observedBy": ["work-lab-observer"]
     },
     "work-lab-observer": {
-      "path": "30-observer/work-lab-observer",
+      "path": "apps/observer",
       "dependencies": [
         {"module": "workflow-assistance", "types": ["governance"]}
       ],

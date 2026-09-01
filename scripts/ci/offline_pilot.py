@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-WF = ROOT / "10-workflow" / "workflow-assistance" / "scripts" / "workflow"
-OBS = ROOT / "30-observer" / "work-lab-observer" / "scripts"
+WF = ROOT / "packages" / "client-neutral-core" / "scripts"
+OBS = ROOT / "apps" / "observer" / "scripts"
 sys.path.insert(0, str(WF))
 sys.path.insert(0, str(OBS))
 

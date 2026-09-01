@@ -14,7 +14,7 @@ PIP_INSTALL_RE = re.compile(
 )
 PIP_LAUNCHER_RE = re.compile(r"^(?:python(?:3(?:\.\d+)?)?|pip(?:3(?:\.\d+)?)?)$")
 SHELL_COMMAND_SEPARATOR_RE = re.compile(r"(?:&&|\|\||[;|])")
-REQUIREMENTS_LOCK_REL = Path("10-workflow/workflow-assistance/requirements.lock")
+REQUIREMENTS_LOCK_REL = Path("packages/client-neutral-core/requirements.lock")
 
 
 def verify(root: Path) -> list[str]:

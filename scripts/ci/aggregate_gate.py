@@ -20,7 +20,7 @@ JOB_NAMES = {
 }
 EXPECTED_PLAN_ID = "work-lab-gate"
 ROOT = Path(__file__).resolve().parents[2]
-PROFILE = ROOT / "00-governance" / "work-lab.project-profile.yaml"
+PROFILE = ROOT / ".project/governance" / "work-lab.project-profile.yaml"
 RISK_VALUES = {"low", "medium", "high", "critical"}
 DELIVERY_VALUES = {"none", "commit", "push", "pull_request", "merge", "release"}
 

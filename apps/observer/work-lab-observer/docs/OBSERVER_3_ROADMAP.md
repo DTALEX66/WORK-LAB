@@ -44,7 +44,7 @@ CC2: 消除重复项目视图     后端: snapshot 加 Span/         五入口 I
        docs/observer/CSS_CURRENT_INVENTORY.md
 任务: 枚举全部 remote 分支 ahead/behind
        枚举 open PR + main check-runs
-       inventory 00-governance/10-workflow/30-observer
+       inventory .project/governance/10-workflow/30-observer
        提取 CSS token + 硬编码色
        对比上传前端 blob 与 main SHA
 ```

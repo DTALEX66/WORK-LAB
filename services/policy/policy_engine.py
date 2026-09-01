@@ -112,7 +112,7 @@ class PolicyEngine:
 def default_worklab_engine() -> PolicyEngine:
     """WORK-LAB 默认策略引擎（本地开发语义，路径用正斜杠归一化）。"""
     return PolicyEngine([
-        PathRule([r"D:/All projects/WORK-LAB/.git", r"D:/All projects/WORK-LAB/00-governance"],
+        PathRule([r"D:/All projects/WORK-LAB/.git", r"D:/All projects/WORK-LAB/.project/governance"],
                  forbidden_actions={"delete", "remove", "rm", "truncate"}),
         CommandRule([
             r"git[ 	]+push[ 	]+(-f|--force)",

@@ -5,12 +5,12 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MATRIX = ROOT / "00-governance" / "generated" / "WL_INHERITANCE_MATRIX.json"
+MATRIX = ROOT / ".project/governance" / "generated" / "WL_INHERITANCE_MATRIX.json"
 
 
 def main() -> int:
     if not MATRIX.exists():
-        print("WL_MATRIX_FAIL missing=00-governance/generated/WL_INHERITANCE_MATRIX.json")
+        print("WL_MATRIX_FAIL missing=.project/governance/generated/WL_INHERITANCE_MATRIX.json")
         return 1
     doc = json.loads(MATRIX.read_text(encoding="utf-8"))
     entries = doc.get("entries", [])

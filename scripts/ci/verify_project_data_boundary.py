@@ -14,8 +14,8 @@ EXPECTED = {
 
 def verify(root: Path) -> list[str]:
     errors: list[str] = []
-    contract_path = root / "00-governance" / "project-data-boundary.json"
-    projects_path = root / "00-governance" / "projects.json"
+    contract_path = root / ".project/governance" / "project-data-boundary.json"
+    projects_path = root / ".project/governance" / "projects.json"
     try:
         contract = json.loads(contract_path.read_text(encoding="utf-8"))
         projects = json.loads(projects_path.read_text(encoding="utf-8"))

@@ -23,8 +23,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-WORK = Path(__file__).resolve().parents[4]  # .../10-workflow/workflow-assistance/scripts/workflow -> WORK-LAB root
-SCRIPTS = WORK / "10-workflow" / "workflow-assistance" / "scripts" / "workflow"
+WORK = Path(__file__).resolve().parents[4]  # .../packages/client-neutral-core/scripts/workflow -> WORK-LAB root
+SCRIPTS = WORK / "packages" / "client-neutral-core" / "scripts"
 
 import sys
 
@@ -49,7 +49,7 @@ def run_canary() -> dict[str, Any]:
     results["self_resolution_detail"] = resolved.as_json()
 
     # 2) module subdir of the same repo belongs to the project (containment).
-    module_path = str(WORK / "10-workflow" / "workflow-assistance")
+    module_path = str(WORK / "services")
     resolved_module = resolve_execution_path(module_path, index, git=probe)
     results["module_inside_same_repo"] = (
         resolved_module.project_id == "work-lab"

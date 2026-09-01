@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install gate-plan dependencies
-        run: python -m pip install --disable-pip-version-check --no-input --require-hashes -r 10-workflow/workflow-assistance/requirements.lock
+        run: python -m pip install --disable-pip-version-check --no-input --require-hashes -r packages/client-neutral-core/requirements.lock
       - name: Discover changed paths
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -49,7 +49,7 @@ jobs:
         run: |
           python scripts/ci/emit_gate_plan.py \
             --root . \
-            --profile 00-governance/work-lab.project-profile.yaml \
+            --profile .project/governance/work-lab.project-profile.yaml \
             --repository "${{ github.repository }}" \
             --commit "$HEAD_SHA" \
             --changed-path-file .hermes/task-runtime/ci/changed-paths.txt \
@@ -66,43 +66,43 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install workflow validator dependencies
-        run: python -m pip install --disable-pip-version-check --no-input --require-hashes -r 10-workflow/workflow-assistance/requirements.lock
+        run: python -m pip install --disable-pip-version-check --no-input --require-hashes -r packages/client-neutral-core/requirements.lock
       - name: Run workflow structural and contract gates
         run: |
           # portable-install-runtime requires an explicitly provisioned Hermes binary;
           # it remains a separate runtime/readback gate, not a fabricated CI success.
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py governance
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py compile
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py runtime-convergence
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py skill-provenance
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py security
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py context-pack
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py client-neutral-manifest
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py core-schemas
-          python 10-workflow/workflow-assistance/tests/test_platform_identity.py
-          python 10-workflow/workflow-assistance/tests/test_instance_reconciler.py
-          python 10-workflow/workflow-assistance/tests/test_config_ownership.py
-          python 10-workflow/workflow-assistance/tests/test_telemetry_ledger.py
-          python 10-workflow/workflow-assistance/tests/test_sidecar.py
-          python 10-workflow/workflow-assistance/tests/test_config_coordinator.py
-          python 10-workflow/workflow-assistance/tests/test_sidecar_lock.py
-          python 10-workflow/workflow-assistance/tests/test_project_profile.py
-          python 10-workflow/workflow-assistance/tests/test_observer_projection_adapter.py
+          python services/orchestration/run_quality_gate.py governance
+          python services/orchestration/run_quality_gate.py compile
+          python services/orchestration/run_quality_gate.py runtime-convergence
+          python services/orchestration/run_quality_gate.py skill-provenance
+          python services/orchestration/run_quality_gate.py security
+          python services/orchestration/run_quality_gate.py context-pack
+          python services/orchestration/run_quality_gate.py client-neutral-manifest
+          python services/orchestration/run_quality_gate.py core-schemas
+          python tests/workflow-assistance/test_platform_identity.py
+          python tests/workflow-assistance/test_instance_reconciler.py
+          python tests/workflow-assistance/test_config_ownership.py
+          python tests/workflow-assistance/test_telemetry_ledger.py
+          python tests/workflow-assistance/test_sidecar.py
+          python tests/workflow-assistance/test_config_coordinator.py
+          python tests/workflow-assistance/test_sidecar_lock.py
+          python tests/workflow-assistance/test_project_profile.py
+          python tests/workflow-assistance/test_observer_projection_adapter.py
           python scripts/ci/generate_current_state.py --check-current
           python tests/ci/test_stage3_baseline.py
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py adapter-registry
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py capability-matrix
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py adapter-conformance
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py acp-conformance
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py otel-mapping
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py usage-ingestion
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py memory-contamination
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py task-ledger-replay
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py portable-install
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py provider-inventory
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py mcp-audit
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py shell
-          python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py powershell
+          python services/orchestration/run_quality_gate.py adapter-registry
+          python services/orchestration/run_quality_gate.py capability-matrix
+          python services/orchestration/run_quality_gate.py adapter-conformance
+          python services/orchestration/run_quality_gate.py acp-conformance
+          python services/orchestration/run_quality_gate.py otel-mapping
+          python services/orchestration/run_quality_gate.py usage-ingestion
+          python services/orchestration/run_quality_gate.py memory-contamination
+          python services/orchestration/run_quality_gate.py task-ledger-replay
+          python services/orchestration/run_quality_gate.py portable-install
+          python services/orchestration/run_quality_gate.py provider-inventory
+          python services/orchestration/run_quality_gate.py mcp-audit
+          python services/orchestration/run_quality_gate.py shell
+          python services/orchestration/run_quality_gate.py powershell
 
   token-monitor:
     name: token-monitor
@@ -112,7 +112,7 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: 10-workflow/workflow-assistance/apps/token-monitor-desktop
+        working-directory: packages/client-neutral-core/apps/token-monitor-desktop
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install locked frontend dependencies
@@ -120,10 +120,10 @@ jobs:
       - name: Build frontend
         run: npm run build
       - name: Test locked Rust desktop crate
-        working-directory: 10-workflow/workflow-assistance/apps/token-monitor-desktop/src-tauri
+        working-directory: packages/client-neutral-core/apps/token-monitor-desktop/src-tauri
         run: cargo test --locked
       - name: Check locked Rust desktop crate
-        working-directory: 10-workflow/workflow-assistance/apps/token-monitor-desktop/src-tauri
+        working-directory: packages/client-neutral-core/apps/token-monitor-desktop/src-tauri
         run: cargo check --locked
 
 
@@ -134,10 +134,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      PYTHONPATH: src:scripts:../../10-workflow/workflow-assistance/scripts/workflow
+      PYTHONPATH: src:scripts:../../packages/client-neutral-core/scripts/workflow
     defaults:
       run:
-        working-directory: 30-observer/work-lab-observer
+        working-directory: apps/observer
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Verify Observer read-only skeleton
@@ -181,7 +181,7 @@ jobs:
           scanners: vuln,secret,license,misconfig
           exit-code: '1'
           severity: HIGH,CRITICAL
-          skip-dirs: .git,.hermes,node_modules,src-tauri/target,10-workflow/workflow-assistance/.hermes
+          skip-dirs: .git,.hermes,node_modules,src-tauri/target,packages/client-neutral-core/.hermes
           format: table
       - name: Verify supply-chain tool wiring
         run: python scripts/ci/verify_supply_chain_tools.py

@@ -17,7 +17,7 @@
 
 1. 先在 WORK-LAB 本地工作树建立独立分支或 worktree；
 2. 按 `taskpack/WORK-LAB-OBSERVER-AUDIT-REDESIGN-2026-08-16.md` 审查边界；
-3. 将 `observer-web/` 对应内容映射到 `30-observer/work-lab-observer/web/`；
-4. 将 `workflow-hotfix/` 对应内容映射到 `10-workflow/workflow-assistance/scripts/workflow/`；
+3. 将 `observer-web/` 对应内容映射到 `apps/observer/web/`；
+4. 将 `workflow-hotfix/` 对应内容映射到 `packages/client-neutral-core/scripts/`；
 5. 运行 Windows 完整依赖环境下的 UI、Python、Tauri、exact-SHA 和 canary 验证；
 6. 未经明确批准，不执行 commit、push、PR、merge 或 release。

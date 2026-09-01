@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 def load_discovery():
-    scripts = ROOT / "10-workflow" / "workflow-assistance" / "scripts" / "workflow"
+    scripts = ROOT / "packages" / "client-neutral-core" / "scripts"
     sys.path.insert(0, str(scripts))
     path = scripts / "platform_discovery.py"
     spec = importlib.util.spec_from_file_location("platform_discovery", path)

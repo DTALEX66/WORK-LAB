@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from github_common import MANAGED_REPOS, request
 
-WORKFLOW_MODULE = Path(r"D:\All projects\WORK-LAB\10-workflow\workflow-assistance")
+WORKFLOW_MODULE = Path(r"D:\All projects\WORK-LAB\packages\client-neutral-core")
 
 
 def _run_local_gate(repo: str) -> dict:

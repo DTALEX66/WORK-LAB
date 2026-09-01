@@ -8,7 +8,7 @@ from pathlib import Path
 MODULE_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = MODULE_ROOT.parents[1]
 sys.path.insert(0, str(MODULE_ROOT / "src"))
-sys.path.insert(0, str(REPO_ROOT / "10-workflow" / "workflow-assistance" / "scripts" / "workflow"))
+sys.path.insert(0, str(REPO_ROOT / "packages" / "client-neutral-core" / "scripts"))
 
 from canonical_store import CanonicalStore  # noqa: E402
 from observer_runtime import ObserverInputError  # noqa: E402

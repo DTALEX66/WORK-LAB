@@ -10,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]  # repo root (script: .../10-workflow/<module>/scripts/workflow/)
+ROOT = Path(__file__).resolve().parents[4]  # repo root (script: .../packages/client-neutral-core/scripts/)
 
 
 def _read_json(relative: str) -> dict:
@@ -18,21 +18,21 @@ def _read_json(relative: str) -> dict:
 
 
 def check_modules() -> tuple[bool, str]:
-    projects = _read_json("00-governance/projects.json")
+    projects = _read_json(".project/governance/projects.json")
     modules = {item["id"] for item in projects.get("modules", []) if isinstance(item, dict)}
     ok = modules == {"workflow-assistance", "work-lab-observer"}
     return ok, f"modules={sorted(modules)}" if ok else f"modules={sorted(modules)} EXPECTED 2-active"
 
 
 def check_current_state() -> tuple[bool, str]:
-    state = _read_json("00-governance/generated/CURRENT_STATE.json")
+    state = _read_json(".project/governance/generated/CURRENT_STATE.json")
     git = state.get("git", {})
     ok = git.get("branch") == "main" and git.get("head") == git.get("remote_main")
     return ok, f"branch={git.get('branch')} head={str(git.get('head'))[:12]}"
 
 
 def check_ownership() -> tuple[bool, str]:
-    registry = _read_json("10-workflow/workflow-assistance/config/config-ownership.json")
+    registry = _read_json("config/config-ownership.json")
     ok = registry.get("schema_version") == "workflow/config-ownership/v2" and registry.get("single_authority")
     return ok, f"layers={len(registry.get('layers', {}))} fields={len(registry.get('fields', []))}"
 
@@ -41,21 +41,21 @@ def check_skills() -> tuple[bool, str]:
     import yaml
 
     provenance = yaml.safe_load(
-        (ROOT / "10-workflow/workflow-assistance/config/skill-provenance.yaml").read_text(encoding="utf-8")
+        (ROOT / "config/skill-provenance.yaml").read_text(encoding="utf-8")
     ).get("entries", [])
     ok = len(provenance) == 13
     return ok, f"skills={len(provenance)}"
 
 
 def check_observer_readonly() -> tuple[bool, str]:
-    projects = _read_json("00-governance/projects.json")
+    projects = _read_json(".project/governance/projects.json")
     modules = {item["id"] for item in projects.get("modules", []) if isinstance(item, dict)}
     ok = "work-lab-observer" in modules
     return ok, "observer-active" if ok else f"modules={sorted(modules)}"
 
 
 def check_pr33_foundation() -> tuple[bool, str]:
-    baseline = _read_json("00-governance/generated/STAGE3_BASELINE.json")
+    baseline = _read_json(".project/governance/generated/STAGE3_BASELINE.json")
     classification = baseline.get("pr33", {}).get("classification", "")
     ok = classification == "STAGE3_FOUNDATION_SLICE"
     return ok, f"pr33={classification}"

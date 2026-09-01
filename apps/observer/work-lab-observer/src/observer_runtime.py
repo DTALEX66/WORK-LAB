@@ -332,13 +332,13 @@ def load_governance(project_root: Path) -> tuple[dict[str, Any], dict[str, Any],
     """Load REAL governance inventory: skills / adapters / rules / memory from repo files.
 
     Returns (skills_dim, adapters_dim, rule_count). Never invents values — reads the
-    actual governance artifacts (CURRENT_STATE skills, adapter-registry, 00-governance/rules).
+    actual governance artifacts (CURRENT_STATE skills, adapter-registry, .project/governance/rules).
     """
     skills = _unknown_dimension()
     adapters = _unknown_dimension()
     rules_count: int | None = None
     # Skills from CURRENT_STATE
-    cs = project_root / "00-governance" / "generated" / "CURRENT_STATE.json"
+    cs = project_root / ".project/governance" / "generated" / "CURRENT_STATE.json"
     if cs.exists():
         try:
             d = json.loads(cs.read_text(encoding="utf-8"))
@@ -348,7 +348,7 @@ def load_governance(project_root: Path) -> tuple[dict[str, Any], dict[str, Any],
         except Exception:
             pass
     # Adapters from adapter-registry entries
-    ar = project_root / "10-workflow" / "workflow-assistance" / "config" / "adapter-registry.json"
+    ar = project_root / "config" / "adapter-registry.json"
     if ar.exists():
         try:
             d = json.loads(ar.read_text(encoding="utf-8"))
@@ -357,8 +357,8 @@ def load_governance(project_root: Path) -> tuple[dict[str, Any], dict[str, Any],
             adapters["drift"] = 0
         except Exception:
             pass
-    # Rules from 00-governance/rules (yaml/md rule files)
-    rules_dir = project_root / "00-governance" / "rules"
+    # Rules from .project/governance/rules (yaml/md rule files)
+    rules_dir = project_root / ".project/governance" / "rules"
     if rules_dir.exists():
         try:
             rules_count = len([p for p in rules_dir.iterdir() if p.is_file() and p.suffix in (".yaml", ".yml", ".md")])

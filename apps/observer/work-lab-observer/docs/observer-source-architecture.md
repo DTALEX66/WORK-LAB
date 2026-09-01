@@ -5,7 +5,7 @@
 
 ## 1. 源码位置
 
-### 1.1 前端（30-observer/work-lab-observer/web/）
+### 1.1 前端（apps/observer/web/）
 
 | 文件 | 职责 |
 |---|---|
@@ -21,7 +21,7 @@
 | `scripts/accessibility.js` | 无障碍 |
 | `index.html` | 页面壳：引入全部脚本 + 样式（含 command-center.css） |
 
-### 1.2 数据侧（10-workflow/workflow-assistance/scripts/workflow/）
+### 1.2 数据侧（packages/client-neutral-core/scripts/）
 
 | 文件 | 职责 |
 |---|---|
@@ -78,10 +78,10 @@ fusion-v3.js render() → Command Center
 
 ```bash
 # sidecar（数据源）
-python 10-workflow/workflow-assistance/scripts/workflow/sidecar.py --project-root . --runtime-root .hermes/task-runtime/workflow
+python services/orchestration/sidecar.py --project-root . --runtime-root .hermes/task-runtime/workflow
 
 # 静态服务器（前端）
-python -m http.server 8089 --directory 30-observer/work-lab-observer/web
+python -m http.server 8089 --directory apps/observer/web
 
 # 浏览器（api 参数指向 sidecar projectionUrl）
 http://127.0.0.1:8089/index.html?view=full&theme=dark&api=<sidecar投影URL>
@@ -91,13 +91,13 @@ http://127.0.0.1:8089/index.html?view=full&theme=dark&api=<sidecar投影URL>
 
 ```bash
 # 前端渲染契约（18 tests）
-node 30-observer/work-lab-observer/tests/test_render_v3.js
+node apps/observer/tests/test_render_v3.js
 
 # 全量 JS（75 tests）
-node 30-observer/work-lab-observer/tests/run_all_tests.js
+node apps/observer/tests/run_all_tests.js
 
 # Observer Python（34 tests）
-cd 30-observer/work-lab-observer && PYTHONPATH=scripts python -m unittest discover -s tests -p test_observer_*.py
+cd apps/observer && PYTHONPATH=scripts python -m unittest discover -s tests -p test_observer_*.py
 ```
 
 ## 7. 注意事项

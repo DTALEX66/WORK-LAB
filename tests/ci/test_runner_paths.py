@@ -12,13 +12,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 ACTIVE_HINTS = (
-    "10-workflow/workflow-assistance/skills/model-switch/SKILL.md",
-    "10-workflow/workflow-assistance/skills/model-switch/references/current-model-lanes.md",
+    "packages/client-neutral-core/skills/model-switch/SKILL.md",
+    "packages/client-neutral-core/skills/model-switch/references/current-model-lanes.md",
 )
 ARCHIVE_HINTS = (
-    "90-archive-manifests/",
-    "00-governance/migration-status.json",
-    "50-taskpacks/WORK-LAB-HERMES-TASKPACK-RECONCILIATION.json",
+    "docs/history/archive-manifests/",
+    ".project/governance/migration-status.json",
+    "taskpacks/current/WORK-LAB-HERMES-TASKPACK-RECONCILIATION.json",
 )
 
 
@@ -31,22 +31,22 @@ class RunnerPathHardcodingTests(unittest.TestCase):
             self.assertNotIn("C:\\Users", text, f"{rel} must not hardcode a user path")
 
     def test_active_skill_docs_use_repository_relative_runner_path(self):
-        skill = (ROOT / "10-workflow/workflow-assistance/skills/model-switch/SKILL.md").read_text(encoding="utf-8")
+        skill = (ROOT / "packages/client-neutral-core/skills/model-switch/SKILL.md").read_text(encoding="utf-8")
         self.assertIn(
-            "10-workflow/workflow-assistance/scripts/workflow/switch_model.py",
+            "integrations/executors/hermes/switch_model.py",
             skill,
             "SKILL.md must invoke the runner via repository-relative path",
         )
         self.assertNotIn("python scripts/workflow/", skill)
 
     def test_runner_entrypoint_is_discoverable_from_repo_root(self):
-        runner = ROOT / "10-workflow/workflow-assistance/scripts/workflow/switch_model.py"
+        runner = ROOT / "integrations/executors/hermes/switch_model.py"
         self.assertTrue(runner.exists(), "runner must exist at documented relative path")
 
     def test_archive_records_may_keep_legacy_paths(self):
         # migration-status.json documents legacy local paths for migration
         # traceability; that is historical record, not active usage.
-        migration = (ROOT / "00-governance/migration-status.json").read_text(encoding="utf-8")
+        migration = (ROOT / ".project/governance/migration-status.json").read_text(encoding="utf-8")
         self.assertIn("legacyLocalPaths", migration)
 
 

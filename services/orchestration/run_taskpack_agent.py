@@ -274,7 +274,7 @@ def resolve_ci_identity(
 ) -> tuple[tuple[str, ...], str | None]:
     """Resolve CLI → project profile → repository workflow discovery."""
 
-    profile = profile_path or (root / "00-governance" / "work-lab.project-profile.yaml")
+    profile = profile_path or (root / ".project/governance" / "work-lab.project-profile.yaml")
     profile_ci: dict[str, object] | None = None
     if profile.is_file():
         profile_ci = _load_ci_profile(profile)
@@ -1037,7 +1037,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--project-profile",
         type=Path,
-        help="Optional project profile; defaults to 00-governance/work-lab.project-profile.yaml.",
+        help="Optional project profile; defaults to .project/governance/work-lab.project-profile.yaml.",
     )
     parser.add_argument(
         "--publish",

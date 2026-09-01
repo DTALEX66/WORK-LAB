@@ -1,6 +1,6 @@
 """Deploy global rules — sync the single source of truth to every software.
 
-Single source: 00-governance/global-execution-standard.md (global boundaries).
+Single source: .project/governance/global-execution-standard.md (global boundaries).
 This tool syncs those boundaries into each software's rule file via a managed
 block (marker-delimited), so a change to the source propagates to all software
 and never drifts. Idempotent.

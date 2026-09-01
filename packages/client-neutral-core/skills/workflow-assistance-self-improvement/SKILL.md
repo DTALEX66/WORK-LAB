@@ -91,7 +91,7 @@ do a FIELD-LEVEL comparison, never a whole-file diff or a "looks fine" judgement
 1. Load the ownership contract (`config/config-ownership.json` — layers + 50
    fields with MANAGE/OBSERVE/IGNORE/FORBIDDEN + `preserve_unknown` rules) and
    the enhancement boundary (`config/codex-enhancement-boundary.json`), plus
-   `00-governance/PROJECT_POSITIONING.md` for two-tier module claims.
+   `.project/governance/PROJECT_POSITIONING.md` for two-tier module claims.
 2. Walk the LIVE configs field-by-field (tomllib for `config.toml`, PyYAML for
    `config.yaml`) and **redact every value whose path contains
    key/token/secret/password/auth/credential/api** — print field names and

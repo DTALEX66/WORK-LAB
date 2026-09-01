@@ -15,9 +15,9 @@ BASELINE_FILE = ".workflow/drift-baseline.json"
 # Drift-sensitive files (project rules + governance state)
 SENSITIVE_GLOBS = [
     "AGENTS.md",
-    "00-governance/**/*.json",
-    "10-workflow/workflow-assistance/config/**/*.json",
-    "10-workflow/workflow-assistance/config/SOUL.md",
+    ".project/governance/**/*.json",
+    "config/**/*.json",
+    "config/SOUL.md",
 ]
 
 

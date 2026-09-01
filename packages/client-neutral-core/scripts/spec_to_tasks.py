@@ -6,7 +6,7 @@
 消费的任务声明列表（人工确认后入 ledger）。
 
 用法:
-  python scripts/workflow/spec_to_tasks.py --spec 50-taskpacks/TASKPACK.md
+  python scripts/workflow/spec_to_tasks.py --spec taskpacks/current/TASKPACK.md
   python scripts/workflow/spec_to_tasks.py --spec FILE --out tasks.json
 """
 

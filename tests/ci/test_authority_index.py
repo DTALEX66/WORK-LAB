@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-INDEX = ROOT / "00-governance/config-authority-index.json"
+INDEX = ROOT / ".project/governance/config-authority-index.json"
 
 
 class AuthorityIndexTests(unittest.TestCase):
@@ -40,7 +40,7 @@ class AuthorityIndexTests(unittest.TestCase):
         self.assertEqual(cfg["status"], "ACTIVE")
         self.assertIn("single field-level authority", cfg["role"])
         # No duplicate field tables: the standard doc must not re-list fields.
-        standard = ROOT / "10-workflow/workflow-assistance/docs/workflow/official-plus-user-configuration-standard-2026-08-11.md"
+        standard = ROOT / "packages/client-neutral-core/docs/workflow/official-plus-user-configuration-standard-2026-08-11.md"
         text = standard.read_text(encoding="utf-8")
         self.assertIn("config/config-ownership.json", text)
         self.assertIn("only field-level authority", text)

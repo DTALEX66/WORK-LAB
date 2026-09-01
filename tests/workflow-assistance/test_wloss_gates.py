@@ -25,7 +25,7 @@ class ChangedFilesSelectionTests(unittest.TestCase):
         self.m = load_runner()
 
     def test_snapshot_change_selects_snapshot_gate(self) -> None:
-        selected = self.m.select_gates_for_changed(["10-workflow/workflow-assistance/scripts/workflow/snapshot_api.py"])
+        selected = self.m.select_gates_for_changed(["packages/client-neutral-core/scripts/snapshot_api.py"])
         self.assertIn("snapshot-schema-v3", selected)
         self.assertIn("compile", selected)
 
@@ -34,16 +34,16 @@ class ChangedFilesSelectionTests(unittest.TestCase):
         self.assertEqual(set(selected), {"compile"})
 
     def test_store_test_selects_writer_and_convergence(self) -> None:
-        selected = self.m.select_gates_for_changed(["10-workflow/workflow-assistance/tests/test_canonical_store_v2.py"])
+        selected = self.m.select_gates_for_changed(["tests/workflow-assistance/test_canonical_store_v2.py"])
         for gate in ("canonical-single-writer", "runtime-convergence", "governance", "compile"):
             self.assertIn(gate, selected)
 
     def test_tauri_change_selects_tauri_gate(self) -> None:
-        selected = self.m.select_gates_for_changed(["30-observer/work-lab-observer/src-tauri/tauri.conf.json"])
+        selected = self.m.select_gates_for_changed(["apps/observer/src-tauri/tauri.conf.json"])
         self.assertIn("tauri-readonly-shell", selected)
 
     def test_canary_change_selects_canary_gate(self) -> None:
-        selected = self.m.select_gates_for_changed(["10-workflow/workflow-assistance/scripts/workflow/canary_runner.py"])
+        selected = self.m.select_gates_for_changed(["services/orchestration/canary_runner.py"])
         self.assertIn("work-lab-os-canary", selected)
 
     def test_module_relative_path_matches(self) -> None:
@@ -51,7 +51,7 @@ class ChangedFilesSelectionTests(unittest.TestCase):
         self.assertIn("execution-state-machine", selected)
 
     def test_order_follows_verify_order(self) -> None:
-        selected = self.m.select_gates_for_changed(["10-workflow/workflow-assistance/tests/test_snapshot_sse_live.py"])
+        selected = self.m.select_gates_for_changed(["tests/workflow-assistance/test_snapshot_sse_live.py"])
         order = self.m.VERIFY_ORDER
         positions = [order.index(g) for g in selected]
         self.assertEqual(positions, sorted(positions))

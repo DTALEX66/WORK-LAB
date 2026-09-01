@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-WORKFLOW_SCRIPTS = ROOT / "10-workflow" / "workflow-assistance" / "scripts" / "workflow"
+WORKFLOW_SCRIPTS = ROOT / "packages" / "client-neutral-core" / "scripts"
 sys.path.insert(0, str(WORKFLOW_SCRIPTS))
 from impact_planner import build_plan, load_profile  # noqa: E402
 
@@ -38,7 +38,7 @@ def write_output(path: Path | None, key: str, value: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
-    parser.add_argument("--profile", type=Path, default=ROOT / "00-governance" / "work-lab.project-profile.yaml")
+    parser.add_argument("--profile", type=Path, default=ROOT / ".project/governance" / "work-lab.project-profile.yaml")
     parser.add_argument("--changed-path-file", type=Path)
     parser.add_argument("--repository", required=True)
     parser.add_argument("--commit")

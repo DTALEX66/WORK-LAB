@@ -96,7 +96,7 @@ def build_plan(
                 affected.add(dependent)
                 queue.append(dependent)
 
-    # critical prefixes (00-governance/**, .github/**, scripts/ci/**) are
+    # critical prefixes (.project/governance/**, .github/**, scripts/ci/**) are
     # already covered by risk_zones.critical above; only unknown paths add a
     # fail-closed critical here.
     if unknown_paths:

@@ -93,12 +93,12 @@ class SnapshotApiTests(unittest.TestCase):
         snapshot = build_snapshot(
             revision=1,
             store_projection={"tasks_by_status": {"PENDING": 2}},
-            executions=[{"executionId": "e1", "anchorProjectId": "p", "state": "RUNNING", "sourceRef": "src-1", "workingArea": "10-workflow/x"}],
+            executions=[{"executionId": "e1", "anchorProjectId": "p", "state": "RUNNING", "sourceRef": "src-1", "workingArea": "services/x"}],
             projects=[{"projectId": "p", "displayName": "P"}],
         )
         self.assertEqual(snapshot["tasks"], {"PENDING": 2})
         self.assertEqual(snapshot["projects"][0]["activeExecutionCount"], 1)
-        self.assertEqual(snapshot["projects"][0]["workingAreas"], ["10-workflow/x"])
+        self.assertEqual(snapshot["projects"][0]["workingAreas"], ["services/x"])
 
     def test_governance_drift_projection(self) -> None:
         snapshot = build_snapshot(revision=1, governance={

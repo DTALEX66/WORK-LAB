@@ -18,10 +18,10 @@ from pathlib import Path
 import re
 from typing import Any
 
-PLAN_PATH = Path("50-taskpacks/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md")
-R2_STATUS_PATH = Path("50-taskpacks/WORK-LAB-OBSERVER-VISUAL-ASSETS-R2-STATUS.md")
-CURRENT_STATE_PATH = Path("00-governance/generated/CURRENT_STATE.json")
-ERROR_LEDGER_PATH = Path("50-taskpacks/error-ledger.json")
+PLAN_PATH = Path("taskpacks/current/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md")
+R2_STATUS_PATH = Path("taskpacks/current/WORK-LAB-OBSERVER-VISUAL-ASSETS-R2-STATUS.md")
+CURRENT_STATE_PATH = Path(".project/governance/generated/CURRENT_STATE.json")
+ERROR_LEDGER_PATH = Path("taskpacks/current/error-ledger.json")
 
 
 def _now() -> str:

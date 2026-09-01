@@ -17,10 +17,10 @@
       "spdx": "UNKNOWN",
       "owner": "workflow-assistance",
       "targetPaths": [
-        "10-workflow/workflow-assistance"
+        "packages/client-neutral-core"
       ],
       "tests": [
-        "10-workflow/workflow-assistance/tests"
+        "packages/client-neutral-core/tests"
       ],
       "controls": {
         "network": false,
@@ -50,10 +50,10 @@
       "spdx": "UNKNOWN",
       "owner": "work-lab-observer",
       "targetPaths": [
-        "30-observer/work-lab-observer"
+        "apps/observer"
       ],
       "tests": [
-        "30-observer/work-lab-observer/tests"
+        "apps/observer/tests"
       ],
       "controls": {
         "network": false,

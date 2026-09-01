@@ -13,12 +13,12 @@ configuration:
 modules:
   workflow:
     roots:
-      - 10-workflow/workflow-assistance
+      - packages/client-neutral-core
     depends_on: []
     active: true
   observer:
     roots:
-      - 30-observer/work-lab-observer
+      - apps/observer
     depends_on:
       - workflow
     observation_only: true
@@ -26,20 +26,20 @@ modules:
 risk_zones:
   critical:
     - .github/**
-    - 00-governance/**
+    - .project/governance/**
     - scripts/ci/**
-    - 10-workflow/workflow-assistance/config/**
-    - 10-workflow/workflow-assistance/schemas/**
+    - config/**
+    - packages/contracts/schemas/**
 gates:
   workflow:
-    command: python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py governance
+    command: python services/orchestration/run_quality_gate.py governance
     tiers:
       - module
       - full
       - release
     platform: discovered
   observer:
-    command: python 30-observer/work-lab-observer/scripts/verify_observer_skeleton.py
+    command: python apps/observer/scripts/verify_observer_skeleton.py
     tiers:
       - module
       - full
@@ -54,7 +54,7 @@ gates:
   token-monitor:
     command: npm ci && npm run build && cargo test --locked && cargo check --locked
     paths:
-      - 10-workflow/workflow-assistance/apps/token-monitor-desktop/**
+      - packages/client-neutral-core/apps/token-monitor-desktop/**
     tiers:
       - module
       - full

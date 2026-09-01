@@ -6,7 +6,7 @@
   "modules": [
     {
       "id": "workflow-assistance",
-      "path": "10-workflow/workflow-assistance",
+      "path": "packages/client-neutral-core",
       "legacyRepository": "DTALEX66/Workflow-assistance",
       "role": "client-neutral workflow governance, execution control and observability",
       "releasePrefix": "workflow",
@@ -16,7 +16,7 @@
 
     {
       "id": "work-lab-observer",
-      "path": "30-observer/work-lab-observer",
+      "path": "apps/observer",
       "legacyRepository": null,
       "role": "strictly read-only derived observation and evidence projections",
       "releasePrefix": "observer",

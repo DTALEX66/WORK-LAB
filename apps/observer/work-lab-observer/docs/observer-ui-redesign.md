@@ -1,6 +1,6 @@
 # WORK-LAB Observer 前端重设计方案（UI 冻结解除）
 
-> 2026-08-16 · 状态：DESIGN_PROPOSAL · 归属：30-observer/work-lab-observer
+> 2026-08-16 · 状态：DESIGN_PROPOSAL · 归属：apps/observer
 > 依据：任务包 UI 冻结已解除；历史审计 observer-truth-audit-20260814；同类项目调研（Langfuse/Grafana/agent observability）
 
 ## 1. 现状问题（审计 + 用户反馈）

@@ -4,7 +4,7 @@
 
 审计基线：`DTALEX66/WORK-LAB@fadcded4c4db8d6e1543e078b67cb746f0159a1f`
 
-范围：`10-workflow/workflow-assistance`、`30-observer/work-lab-observer`、
+范围：`packages/client-neutral-core`、`apps/observer`、
 `config/project-platform-map.json`、v3 Snapshot、SSE、Web/Tauri 只读壳。
 
 ## 1. 结论

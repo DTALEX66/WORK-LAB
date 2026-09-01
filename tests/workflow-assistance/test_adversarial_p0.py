@@ -1,6 +1,6 @@
 """WLR-910: adversarial P0 regression tests (behavioral, not string-search)."""
 import sys, inspect
-sys.path.insert(0, r'D:\All projects\WORK-LAB\10-workflow\workflow-assistance\scripts\workflow')
+sys.path.insert(0, r'D:\All projects\WORK-LAB\packages\client-neutral-core\scripts\workflow')
 from model_router import TaskSignal, route
 
 

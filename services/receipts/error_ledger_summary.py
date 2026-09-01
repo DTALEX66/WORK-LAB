@@ -5,7 +5,7 @@
 无需重读全量 ledger。
 
 用法:
-  python scripts/workflow/error_ledger_summary.py --ledger 50-taskpacks/error-ledger.json --out 50-taskpacks/error-ledger-lessons.md
+  python scripts/workflow/error_ledger_summary.py --ledger taskpacks/current/error-ledger.json --out taskpacks/current/error-ledger-lessons.md
 
 输出: tracked 知识文件（与 error-ledger.json 同目录），CI 可校验 freshness。
 """

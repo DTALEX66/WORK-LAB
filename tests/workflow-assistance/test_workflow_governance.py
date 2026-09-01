@@ -1427,7 +1427,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", workflow)
         self.assertIn("actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38", workflow)
         self.assertIn(
-            "--require-hashes -r 10-workflow/workflow-assistance/requirements.lock",
+            "--require-hashes -r packages/client-neutral-core/requirements.lock",
             workflow,
         )
         self.assertNotIn("hermes-agent", workflow)

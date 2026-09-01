@@ -18,10 +18,10 @@ WORK-LAB Observer 是严格只读的观测与证据层，仅从 Workflow Assista
 Run from the repository root:
 
 ```text
-python 30-observer/work-lab-observer/tests/test_observer_runtime.py
-python 30-observer/work-lab-observer/tests/test_observer_evidence.py
-python 30-observer/work-lab-observer/tests/test_observer_store.py
-python 30-observer/work-lab-observer/tests/test_observer_dashboard.py
+python apps/observer/tests/test_observer_runtime.py
+python apps/observer/tests/test_observer_evidence.py
+python apps/observer/tests/test_observer_store.py
+python apps/observer/tests/test_observer_dashboard.py
 ```
 
 ## User-visible read-only entry
@@ -35,7 +35,7 @@ fixture as live data, and the legacy `/api/dashboard` entry is retired
 Start the sidecar (Workflow module):
 
 ```text
-python 10-workflow/workflow-assistance/scripts/workflow/sidecar.py --project-root . --runtime-root <project>/.hermes/task-runtime/workflow
+python services/orchestration/sidecar.py --project-root . --runtime-root <project>/.hermes/task-runtime/workflow
 ```
 
 The sidecar endpoint descriptor (`sidecar-endpoint.json`) advertises the

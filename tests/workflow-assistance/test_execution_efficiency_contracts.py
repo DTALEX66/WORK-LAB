@@ -16,7 +16,7 @@ VALID = {
         "schema_version": "workflow/project-profile/v1",
         "project": {"id": "work-lab", "root_policy": "discover_git_root", "windows_native_first": True},
         "configuration": {"precedence": ["global_defaults", "project_profile", "local_runtime", "environment", "cli"]},
-        "modules": {"workflow": {"roots": ["10-workflow/workflow-assistance"]}},
+        "modules": {"workflow": {"roots": ["packages/client-neutral-core"]}},
         "risk_zones": {"critical": [".github/workflows/**"]},
         "gates": {"workflow": {"command": "python gate.py", "tiers": ["TARGETED", "STAGE"], "platform": "discovered"}},
         "ci": {"stable_aggregate_check": "aggregate", "exact_sha_required_for": ["critical"], "outage_blocks": ["release"]},

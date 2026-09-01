@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 
 WORK = Path(r"D:\All projects\WORK-LAB")
-SCRIPTS = WORK / "10-workflow" / "workflow-assistance" / "scripts" / "workflow"
+SCRIPTS = WORK / "packages" / "client-neutral-core" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from git_collector import collect_git_observation  # noqa: E402

@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
-OBSERVER = ROOT / "30-observer/work-lab-observer"
+OBSERVER = ROOT / "apps/observer"
 
 
 def _git(root: Path, *args: str) -> str:
@@ -57,7 +57,7 @@ def check_2_single_fact_source() -> dict:
     src = legacy.read_text(encoding="utf-8")
     # The legacy store still exists as code but authority is retired via migration.
     migration = OBSERVER / "scripts/migrate_observer_events.py"
-    canonical = ROOT / "10-workflow/workflow-assistance/scripts/workflow/canonical_store.py"
+    canonical = ROOT / "packages/client-neutral-core/scripts/canonical_store.py"
     ok = canonical.is_file() and migration.is_file() and "RETIRED_FROM_AUTHORITY" in migration.read_text(encoding="utf-8")
     return {"id": 2, "name": "single-fact-source", "pass": ok,
             "evidence": "canonical_store.py + migrate_observer_events.py RETIRED_FROM_AUTHORITY"}
@@ -65,7 +65,7 @@ def check_2_single_fact_source() -> dict:
 
 def check_3_sse_append_during_connection() -> dict:
     """SSE must deliver events appended while connected, not only on reconnect."""
-    sys.path.insert(0, str(ROOT / "10-workflow/workflow-assistance/scripts/workflow"))
+    sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
     from sse_hub import EventHub
     hub = EventHub()
     subscriber = hub.subscribe()
@@ -79,7 +79,7 @@ def check_3_sse_append_during_connection() -> dict:
 
 def check_4_usage_token_allowlist() -> dict:
     """Legal input_tokens must enter canonical ledger; auth tokens rejected."""
-    sys.path.insert(0, str(ROOT / "10-workflow/workflow-assistance/scripts/workflow"))
+    sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
     import tempfile
     from canonical_store import CanonicalStore, validate_record
     with tempfile.TemporaryDirectory() as td:
@@ -105,7 +105,7 @@ def check_5_no_fabricated_exact() -> dict:
     R2 third batch: migrated from the retired v2 CanonicalProjectionReader to
     the v3 snapshot semantic (empty store -> OFFLINE/UNKNOWN/null tokens).
     """
-    sys.path.insert(0, str(ROOT / "10-workflow/workflow-assistance/scripts/workflow"))
+    sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
     import tempfile
     from canonical_store import CanonicalStore
     from composition_root import build_v3_snapshot, load_approved_index
@@ -134,7 +134,7 @@ def check_6_dual_project_canary() -> dict:
     PENDING and does not block the gate (canary evidence is re-run on the
     developer workstation).
     """
-    sys.path.insert(0, str(ROOT / "10-workflow/workflow-assistance/scripts/workflow"))
+    sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
     import tempfile
     from canonical_store import CanonicalStore
     from collectors import build_standard_collectors
@@ -182,7 +182,7 @@ def _discover_os_projects(search_root):
 
 def check_7_worker_resume_from_ledger() -> dict:
     """Worker must resume from Task Ledger after restart."""
-    sys.path.insert(0, str(ROOT / "10-workflow/workflow-assistance/scripts/workflow"))
+    sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
     import tempfile
     from canonical_store import CanonicalStore
     from durable_worker import DurableWorker
@@ -210,7 +210,7 @@ def check_8_ci_queued_no_job_releases_writer() -> dict:
     """CI queued-no-job must not hold the writer or rerun infinitely."""
     # The durable worker never acquires a lease for CI waiting; watcher
     # semantics are covered by ci_watcher tests. Verify bounded retry blocks.
-    sys.path.insert(0, str(ROOT / "10-workflow/workflow-assistance/scripts/workflow"))
+    sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
     import tempfile
     from canonical_store import CanonicalStore
     from durable_worker import DurableWorker
@@ -244,7 +244,7 @@ def check_9_tauri_real_sidecar() -> dict:
 
 def check_10_no_credentials_in_store() -> dict:
     """No credentials/prompt-response/desktop private state in DB or UI."""
-    sys.path.insert(0, str(ROOT / "10-workflow/workflow-assistance/scripts/workflow"))
+    sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
     import tempfile
     from canonical_store import CanonicalStore, validate_record
     rejected = False

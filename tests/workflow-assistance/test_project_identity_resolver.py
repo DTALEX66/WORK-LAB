@@ -64,7 +64,7 @@ class IdentityResolverTests(unittest.TestCase):
     def test_resolves_by_remote_identity(self) -> None:
         index = ApprovedProjectIndex(projects=[make_project("work-lab", remote="github:DTALEX66/WORK-LAB")])
         probe = FakeGitProbe(top="/work/WORK-LAB", common="/work/WORK-LAB/.git", remotes=["github:DTALEX66/WORK-LAB"])
-        result = resolve_execution_path("/work/WORK-LAB/10-workflow", index, git=probe)
+        result = resolve_execution_path("/work/WORK-LAB/services", index, git=probe)
         self.assertEqual(result.project_id, "work-lab")
         self.assertEqual(result.resolution_state, ResolutionState.RESOLVED)
 

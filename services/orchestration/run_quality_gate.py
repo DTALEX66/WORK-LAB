@@ -477,10 +477,10 @@ def gate_tauri_readonly_shell() -> int:
     statically (endpoint validation source + CSP config).
     """
     errors: list[str] = []
-    # Tauri shell lives under the MONOREPO root (30-observer), not the
+    # Tauri shell lives under the MONOREPO root (apps/observer), not the
     # workflow-assistance module root.
     repo_root = ROOT.parent.parent
-    tauri_root = repo_root / "30-observer" / "work-lab-observer" / "src-tauri"
+    tauri_root = repo_root / "apps" / "observer" / "src-tauri"
     lib = tauri_root / "src" / "lib.rs"
     if lib.is_file():
         source = lib.read_text(encoding="utf-8")
@@ -707,13 +707,13 @@ def run_gate_sequence(names: tuple[str, ...]) -> int:
 
 
 # WLOSS-700: changed-files -> relevant gates (LOCAL convenience mapping only;
-# the canonical gate-selection authority is 00-governance/work-lab.project-profile.yaml
+# the canonical gate-selection authority is .project/governance/work-lab.project-profile.yaml
 # `gates:` consumed by impact_planner.py + scripts/ci/emit_gate_plan.py; CI never
 # consumes this table). Small edits run only the gates whose path scope they
 # touch; the full suite stays one command away.
 GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
-    "governance": ("tests/", "10-workflow/workflow-assistance/scripts/", "10-workflow/workflow-assistance/config/"),
-    "compile": ("scripts/", "10-workflow/workflow-assistance/scripts/", "30-observer/work-lab-observer/src/"),
+    "governance": ("tests/", "packages/client-neutral-core/scripts/", "config/"),
+    "compile": ("scripts/", "packages/client-neutral-core/scripts/", "apps/observer/src/"),
     "skill-provenance": ("skills/", "codex-assets/skills/", "config/skill-provenance.yaml"),
     "security": ("config/", "codex-assets/", "README.md", "docs/"),
     "context-pack": ("scripts/workflow/build_context_pack.py",),
@@ -722,7 +722,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "adapter-registry": ("config/adapters.json", "scripts/workflow/adapter_registry.py"),
     "capability-matrix": ("config/capability-matrix.json", "scripts/workflow/verify_capability_matrix.py"),
     "context-control-plane": ("scripts/workflow/context_control_plane.py", "scripts/workflow/context_bundle.py", "scripts/workflow/context_drift_guard.py"),
-    "external-libraries-index": ("00-governance/external-libraries-index.json", "scripts/workflow/verify_external_libraries_index.py"),
+    "external-libraries-index": (".project/governance/external-libraries-index.json", "scripts/workflow/verify_external_libraries_index.py"),
     "github-delivery": ("scripts/workflow/github_common.py", "scripts/workflow/github_upload_accelerator.py", "scripts/workflow/github_review_accelerator.py"),
     "adapter-conformance": ("scripts/workflow/adapter_conformance.py", "tests/test_adapter_conformance.py"),
     "acp-conformance": ("scripts/workflow/acp_adapter.py", "tests/test_acp_adapter.py"),
@@ -734,20 +734,20 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "provider-inventory": ("config/config.yaml",),
     "mcp-audit": ("scripts/workflow/mcp_candidate_audit.py",),
     "shell": ("setup.sh",),
-    "runtime-convergence": ("scripts/workflow/canonical_store.py", "scripts/workflow/durable_worker.py", "scripts/workflow/collectors.py", "scripts/workflow/sse_hub.py", "10-workflow/workflow-assistance/tests/"),
+    "runtime-convergence": ("scripts/workflow/canonical_store.py", "scripts/workflow/durable_worker.py", "scripts/workflow/collectors.py", "scripts/workflow/sse_hub.py", "tests/workflow-assistance/"),
     "powershell": ("setup.ps1",),
-    "project-identity-contract": ("scripts/workflow/product_project.py", "scripts/workflow/project_identity_resolver.py", "10-workflow/workflow-assistance/tests/test_product_project.py", "10-workflow/workflow-assistance/tests/test_project_identity_resolver.py"),
+    "project-identity-contract": ("scripts/workflow/product_project.py", "scripts/workflow/project_identity_resolver.py", "tests/workflow-assistance/test_product_project.py", "tests/workflow-assistance/test_project_identity_resolver.py"),
     "agent-adapter-readonly-contract": ("scripts/workflow/adapter_sdk.py", "scripts/workflow/hermes_adapter.py", "scripts/workflow/codex_adapter.py"),
     "execution-state-machine": ("scripts/workflow/evidence_aggregator.py",),
     "collector-noninterference": ("scripts/workflow/collector_scheduler.py", "scripts/workflow/process_collector.py", "scripts/workflow/git_collector.py"),
     "canonical-single-writer": ("scripts/workflow/canonical_store.py", "tests/test_canonical_store_v2.py"),
-    "observer-no-business-write": ("scripts/workflow/execution_evidence.py", "30-observer/work-lab-observer/web/", "tests/test_wlgm_privacy.py"),
+    "observer-no-business-write": ("scripts/workflow/execution_evidence.py", "apps/observer/web/", "tests/test_wlgm_privacy.py"),
     "snapshot-schema-v3": ("scripts/workflow/snapshot_api.py", "scripts/workflow/snapshot_validator.py", "tests/test_snapshot_validator.py", "tests/test_snapshot_sse_live.py"),
     "sse-browser-reconnect": ("scripts/workflow/sse_revision.py", "scripts/workflow/live_gate.py", "tests/test_snapshot_sse_live.py"),
     "field-quality-no-fabrication": ("scripts/workflow/live_gate.py", "scripts/workflow/evidence_aggregator.py", "tests/test_evidence_aggregator.py"),
     "privacy-redaction": ("scripts/workflow/execution_evidence.py", "scripts/workflow/canonical_store.py", "tests/test_execution_evidence.py", "tests/test_wlgm_privacy.py"),
     "windows-project-resolution": ("scripts/workflow/project_identity_resolver.py", "bin/hermes-project-terminal-guard.py", "tests/test_project_identity_resolver.py", "tests/test_project_terminal_guard.py"),
-    "tauri-readonly-shell": ("30-observer/work-lab-observer/src-tauri/", "scripts/workflow/sidecar_endpoint.py", "tests/test_sidecar_endpoint.py"),
+    "tauri-readonly-shell": ("apps/observer/src-tauri/", "scripts/workflow/sidecar_endpoint.py", "tests/test_sidecar_endpoint.py"),
     "work-lab-os-canary": ("scripts/workflow/canary_runner.py",),
     "exact-sha-ci": (),
 }
@@ -756,7 +756,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
 def select_gates_for_changed(changed_paths: list[str]) -> tuple[str, ...]:
     """Return the gates relevant to the changed paths (WLOSS-700).
 
-    Paths may be monorepo-relative (10-workflow/workflow-assistance/...) or
+    Paths may be monorepo-relative (packages/client-neutral-core/...) or
     module-relative (scripts/...); both forms are matched.
     """
     variants: list[str] = []
@@ -764,7 +764,7 @@ def select_gates_for_changed(changed_paths: list[str]) -> tuple[str, ...]:
         path = raw.replace("\\", "/")
         variants.append(path)
         # Module-relative variant (strip the monorepo module prefix).
-        for prefix in ("10-workflow/workflow-assistance/", "30-observer/work-lab-observer/"):
+        for prefix in ("packages/client-neutral-core/", "apps/observer/"):
             if path.startswith(prefix):
                 variants.append(path[len(prefix):])
     selected: set[str] = set()

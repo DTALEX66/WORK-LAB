@@ -12,7 +12,7 @@ Open Design (`20-design/open-design`) was transferred out of WORK-LAB to
 retains only:
 
 - the one-time handoff pointer and migration evidence under
-  `90-archive-manifests/` and ignored `.hermes/` artifacts;
+  `docs/history/archive-manifests/` and ignored `.hermes/` artifacts;
 - a read-only observation declaration in
   `config/config-ownership.json`:
   `open-design` -> `PROJECT_OVERLAY / OBSERVE`,

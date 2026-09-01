@@ -23,8 +23,8 @@ except ImportError:  # pragma: no cover
     yaml = None
 
 ROOT = Path(__file__).resolve().parents[2]
-SKILLS = ROOT / "10-workflow" / "workflow-assistance" / "skills"
-CAPABILITY = ROOT / "10-workflow" / "workflow-assistance" / "config" / "capability-conformance.json"
+SKILLS = ROOT / "packages" / "client-neutral-core" / "skills-workflow"
+CAPABILITY = ROOT / "config" / "capability-conformance.json"
 
 REQUIRED_FIELDS = ("name", "description", "version")
 HIDDEN_SHELL_RE = re.compile(r"(?:subprocess|os\.system|shell=True|\bexec\s*\(|\beval\s*\()", re.IGNORECASE)

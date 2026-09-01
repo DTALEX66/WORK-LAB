@@ -24,10 +24,10 @@ class SupplyChainTests(unittest.TestCase):
     def test_all_supported_pip_launchers_accept_only_canonical_lock(self) -> None:
         module = load_module()
         commands = (
-            "python -m pip install --require-hashes -r 10-workflow/workflow-assistance/requirements.lock",
-            "python3 -m pip install --require-hashes --requirement=10-workflow/workflow-assistance/requirements.lock",
-            "pip install --require-hashes -r10-workflow/workflow-assistance/requirements.lock",
-            "pip3 install --require-hashes --requirement 10-workflow/workflow-assistance/requirements.lock",
+            "python -m pip install --require-hashes -r packages/client-neutral-core/requirements.lock",
+            "python3 -m pip install --require-hashes --requirement=packages/client-neutral-core/requirements.lock",
+            "pip install --require-hashes -rpackages/client-neutral-core/requirements.lock",
+            "pip3 install --require-hashes --requirement packages/client-neutral-core/requirements.lock",
         )
         for command in commands:
             with self.subTest(command=command):
@@ -52,7 +52,7 @@ class SupplyChainTests(unittest.TestCase):
             root = Path(raw)
             workflow_dir = root / "module" / ".github" / "workflows"
             workflow_dir.mkdir(parents=True)
-            lock = root / "10-workflow" / "workflow-assistance" / "requirements.lock"
+            lock = root / "requirements.lock"
             lock.parent.mkdir(parents=True)
             lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
             (workflow_dir / "nested.yml").write_text(
@@ -69,12 +69,12 @@ class SupplyChainTests(unittest.TestCase):
             root = Path(raw)
             workflow_dir = root / ".github" / "workflows"
             workflow_dir.mkdir(parents=True)
-            lock = root / "10-workflow" / "workflow-assistance" / "requirements.lock"
+            lock = root / "requirements.lock"
             lock.parent.mkdir(parents=True)
             lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
             (workflow_dir / "gate.yml").write_text(
                 "run: |\n"
-                "  python -m pip install --require-hashes -r 10-workflow/workflow-assistance/requirements.lock\n"
+                "  python -m pip install --require-hashes -r packages/client-neutral-core/requirements.lock\n"
                 "  python -m pip install -r unpinned.txt\n"
                 "- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n",
                 encoding="utf-8",
@@ -88,11 +88,11 @@ class SupplyChainTests(unittest.TestCase):
             root = Path(raw)
             workflow_dir = root / ".github" / "workflows"
             workflow_dir.mkdir(parents=True)
-            lock = root / "10-workflow" / "workflow-assistance" / "requirements.lock"
+            lock = root / "requirements.lock"
             lock.parent.mkdir(parents=True)
             lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
             (workflow_dir / "gate.yml").write_text(
-                "run: python -m pip install --require-hashes -r 10-workflow/workflow-assistance/requirements.lock; "
+                "run: python -m pip install --require-hashes -r packages/client-neutral-core/requirements.lock; "
                 "python -m pip install -r unpinned.txt\n"
                 "- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n",
                 encoding="utf-8",
@@ -106,7 +106,7 @@ class SupplyChainTests(unittest.TestCase):
             root = Path(raw)
             workflow_dir = root / ".github" / "workflows"
             workflow_dir.mkdir(parents=True)
-            lock = root / "10-workflow" / "workflow-assistance" / "requirements.lock"
+            lock = root / "requirements.lock"
             lock.parent.mkdir(parents=True)
             lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
             (workflow_dir / "gate.yml").write_text(
@@ -121,8 +121,8 @@ class SupplyChainTests(unittest.TestCase):
         module = load_module()
         cases = (
             "pip install --require-hashes -r attacker-requirements.lock",
-            "pip install -r 10-workflow/workflow-assistance/requirements.lock # --require-hashes",
-            "pip install --require-hashes -r 10-workflow/workflow-assistance/requirements.lock -r attacker-requirements.lock",
+            "pip install -r packages/client-neutral-core/requirements.lock # --require-hashes",
+            "pip install --require-hashes -r packages/client-neutral-core/requirements.lock -r attacker-requirements.lock",
             "pi\\p install -r attacker-requirements.lock",
             "'p'ip install -r attacker-requirements.lock",
             "installer=pip; $installer install -r attacker-requirements.lock",
@@ -135,7 +135,7 @@ class SupplyChainTests(unittest.TestCase):
                 root = Path(raw)
                 workflow_dir = root / ".github" / "workflows"
                 workflow_dir.mkdir(parents=True)
-                lock = root / "10-workflow" / "workflow-assistance" / "requirements.lock"
+                lock = root / "requirements.lock"
                 lock.parent.mkdir(parents=True)
                 lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
                 (workflow_dir / "gate.yml").write_text(
@@ -153,7 +153,7 @@ class SupplyChainTests(unittest.TestCase):
                 "safe",
                 "run: |\n"
                 "  pip \\\n"
-                "    install --require-hashes -r 10-workflow/workflow-assistance/requirements.lock\n",
+                "    install --require-hashes -r packages/client-neutral-core/requirements.lock\n",
                 False,
             ),
             (
@@ -176,7 +176,7 @@ class SupplyChainTests(unittest.TestCase):
                 root = Path(raw)
                 workflow_dir = root / ".github" / "workflows"
                 workflow_dir.mkdir(parents=True)
-                lock = root / "10-workflow" / "workflow-assistance" / "requirements.lock"
+                lock = root / "requirements.lock"
                 lock.parent.mkdir(parents=True)
                 lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
                 (workflow_dir / "gate.yml").write_text(
@@ -200,7 +200,7 @@ class SupplyChainTests(unittest.TestCase):
                 root = Path(raw)
                 workflow_dir = root / ".github" / "workflows"
                 workflow_dir.mkdir(parents=True)
-                lock = root / "10-workflow" / "workflow-assistance" / "requirements.lock"
+                lock = root / "requirements.lock"
                 lock.parent.mkdir(parents=True)
                 lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
                 (workflow_dir / "gate.yml").write_text(
@@ -223,12 +223,12 @@ class SupplyChainTests(unittest.TestCase):
                 root = Path(raw)
                 workflow_dir = root / ".github" / "workflows"
                 workflow_dir.mkdir(parents=True)
-                lock = root / "10-workflow" / "workflow-assistance" / "requirements.lock"
+                lock = root / "requirements.lock"
                 lock.parent.mkdir(parents=True)
                 lock.write_text("example==1 --hash=sha256:" + "0" * 64 + "\n", encoding="utf-8")
                 (workflow_dir / "gate.yml").write_text(
                     "run: python -m pip install --require-hashes -r "
-                    f"10-workflow/workflow-assistance/requirements.lock {separator} "
+                    f"packages/client-neutral-core/requirements.lock {separator} "
                     f"{launcher} install -r unpinned.txt\n"
                     "- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n",
                     encoding="utf-8",

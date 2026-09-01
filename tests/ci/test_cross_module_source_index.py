@@ -78,12 +78,12 @@ class CrossModuleSourceIndexTest(unittest.TestCase):
     def test_removing_target_auto_downgrades(self) -> None:
         """Removing an implementation target makes the honest claim fail."""
         data = _base_index()
-        existing = ROOT / "00-governance" / "contracts" / "contract-catalog.json"
+        existing = ROOT / ".project/governance" / "contracts" / "contract-catalog.json"
         data["entries"] = [{
             "id": "wl-x", "ownerModule": "workflow-assistance",
             "decisionStatus": "derive",
             "implementationStatus": "local-verified",
-            "targetPaths": ["00-governance/contracts/contract-catalog.json"], "tests": [],
+            "targetPaths": [".project/governance/contracts/contract-catalog.json"], "tests": [],
         }]
         tmp = _write_tmp(data)
         backup = existing.with_suffix(".json.bak")
@@ -107,7 +107,7 @@ class CrossModuleSourceIndexTest(unittest.TestCase):
             "id": "wl-x", "ownerModule": "workflow-assistance",
             "decisionStatus": "derive",
             "implementationStatus": "local-verified",
-            "targetPaths": ["00-governance/contracts/contract-catalog.json"], "tests": [],
+            "targetPaths": [".project/governance/contracts/contract-catalog.json"], "tests": [],
         }]
         tmp = _write_tmp(data)
         try:

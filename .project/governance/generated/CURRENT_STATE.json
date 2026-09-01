@@ -10,12 +10,12 @@
   "modules": [
     {
       "id": "workflow-assistance",
-      "path": "10-workflow/workflow-assistance",
+      "path": "packages/client-neutral-core",
       "role": "client-neutral workflow governance, execution control and observability"
     },
     {
       "id": "work-lab-observer",
-      "path": "30-observer/work-lab-observer",
+      "path": "apps/observer",
       "role": "strictly read-only derived observation and evidence projections"
     }
   ],
@@ -26,22 +26,22 @@
   "support_areas": [
     {
       "id": "governance",
-      "path": "00-governance",
+      "path": ".project/governance",
       "present": true
     },
     {
       "id": "knowledge",
-      "path": "40-knowledge",
+      "path": "knowledge-staging",
       "present": true
     },
     {
       "id": "taskpacks",
-      "path": "50-taskpacks",
+      "path": "taskpacks/current",
       "present": true
     },
     {
       "id": "archive_manifests",
-      "path": "90-archive-manifests",
+      "path": "docs/history/archive-manifests",
       "present": true
     },
     {
@@ -209,7 +209,7 @@
     "taskpack_id": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE",
     "task_count": 28,
     "initial_state": "RECONCILED_20260810",
-    "historical_baseline_source": "00-governance/generated/STAGE3_BASELINE.json",
+    "historical_baseline_source": ".project/governance/generated/STAGE3_BASELINE.json",
     "historical_baseline_status": "HISTORICAL_ONLY"
   },
   "unverified_capabilities": [

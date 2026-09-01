@@ -22,8 +22,8 @@ from typing import Any
 SCHEMA_VERSION = "worklab/project-machine-identity/v1"
 REGISTRY_SCHEMA_VERSION = "worklab/project-machine-registry/v1"
 LOCAL_STATE_RELATIVE = Path(".hermes/task-runtime/machine-identity.json")
-REGISTRY_RELATIVE = Path("10-workflow/workflow-assistance/config/machine-registry.json")
-PROFILE_RELATIVE = Path("10-workflow/workflow-assistance/config/user-environment-profile.json")
+REGISTRY_RELATIVE = Path("config/machine-registry.json")
+PROFILE_RELATIVE = Path("config/user-environment-profile.json")
 UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 SENSITIVE_PATH_PARTS = {
     ".env", "auth", "auth.json", "credential", "credentials", "cookie",

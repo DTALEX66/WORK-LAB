@@ -34,16 +34,16 @@ class CompositionRootTests(unittest.TestCase):
     def test_workspace_evidence_loads_plan_governance_and_history_as_typed_sources(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "50-taskpacks").mkdir()
-            (root / "00-governance" / "generated").mkdir(parents=True)
-            (root / "50-taskpacks" / "WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md").write_text(
+            (root / "taskpacks/current").mkdir()
+            (root / ".project/governance" / "generated").mkdir(parents=True)
+            (root / "taskpacks/current" / "WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md").write_text(
                 "# Master\n> Status: `DELIVERED_PENDING_REMAINING_APPROVALS`\n"
                 "28 个 WL3 任务:\n  VERIFIED_LOCAL: 24\n  BLOCKED(工具链):  1\n  RECONCILE_REQUIRED: 3\n"
                 "| WL3-000 | VERIFIED_LOCAL | freshness |\n| WL3-620 | BLOCKED | portable |\n"
                 "1. **Hermes/Codex global config live apply** — ✅ Codex 已完成；Hermes live 未动；\n",
                 encoding="utf-8",
             )
-            (root / "00-governance" / "generated" / "CURRENT_STATE.json").write_text(
+            (root / ".project/governance" / "generated" / "CURRENT_STATE.json").write_text(
                 json.dumps({
                     "schema_version": "work-lab-current-state/v1",
                     "generated_at": "2026-08-14T12:58:47Z",
@@ -56,7 +56,7 @@ class CompositionRootTests(unittest.TestCase):
                 }),
                 encoding="utf-8",
             )
-            (root / "50-taskpacks" / "error-ledger.json").write_text(
+            (root / "taskpacks/current" / "error-ledger.json").write_text(
                 json.dumps({
                     "schema_version": "work-lab/error-ledger/v1",
                     "generated_at": "2026-08-14T12:00:00Z",

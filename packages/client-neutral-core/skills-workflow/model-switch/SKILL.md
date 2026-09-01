@@ -19,7 +19,7 @@ metadata:
 这是当前 profile 中 provider、CC Switch 与 Codex 路由诊断的唯一技能。
 
 - Hermes 官方命令/字段：以官方文档和 `hermes-agent` skill 为准。
-- 模型值和切换写入：仅由 `10-workflow/workflow-assistance/scripts/workflow/switch_model.py` 定义。
+- 模型值和切换写入：仅由 `integrations/executors/hermes/switch_model.py` 定义。
 - 结构与真实执行诊断：仅由 `hermes_workflow_doctor.py` 定义。
 - `agent-workflow-fortress` 只负责单写者、冻结审查、提交/推送/CI。
 - `codex` skill 只负责调用 Codex CLI。
@@ -30,7 +30,7 @@ metadata:
 
 | 请求 | 动作 |
 |---|---|
-| 整理/切换用户当前模型线 | Provider 路线只作为入口，具体模型必须由用户通过 `--model` 或 `HERMES_*_MODEL` 选择；脚本入口是 `python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py deepseek|gpt --model <用户选择的模型>`；每次切换后用 `hermes chat -q` marker 验证，并提示 `/reset` 或新会话 |
+| 整理/切换用户当前模型线 | Provider 路线只作为入口，具体模型必须由用户通过 `--model` 或 `HERMES_*_MODEL` 选择；脚本入口是 `python integrations/executors/hermes/switch_model.py deepseek|gpt --model <用户选择的模型>`；每次切换后用 `hermes chat -q` marker 验证，并提示 `/reset` 或新会话 |
 | 检查模型/CC Switch/Codex | 结构 doctor；需要证明可执行时加 `--live` |
 | 图片/截图分析 | 确认当前 provider 有视觉能力；必要时切 GPT 后新会话 |
 | GPT 慢 | 先做同提示、同工具集、串行真实基准，不自动改配置 |
@@ -39,15 +39,15 @@ metadata:
 
 ```bash
 # 从 WORK-LAB 仓库根目录运行（scripts/workflow 位于仓库内）
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py status
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
-python 10-workflow/workflow-assistance/scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
+python integrations/executors/hermes/switch_model.py status
+python integrations/executors/hermes/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python integrations/executors/hermes/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 
 # 配置、监听、版本、MCP；不证明 provider 执行
-python 10-workflow/workflow-assistance/scripts/workflow/hermes_workflow_doctor.py
+python integrations/executors/hermes/hermes_workflow_doctor.py
 
 # GPT、DeepSeek、Codex 各自必须返回独立 marker
-python 10-workflow/workflow-assistance/scripts/workflow/hermes_workflow_doctor.py --live
+python integrations/executors/hermes/hermes_workflow_doctor.py --live
 ```
 
 模型/provider/toolset 在会话启动时冻结。切换后必须 `/reset` 或新会话；代理环境变量变化需完整重启 Hermes。
