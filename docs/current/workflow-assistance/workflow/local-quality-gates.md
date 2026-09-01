@@ -60,8 +60,8 @@ python scripts/workflow/run_quality_gate.py portable-install-runtime
 
 - `shell` and `powershell` perform syntax/AST checks and explicitly skip when
   their supported tool is unavailable.
-- Generated reports stay under ignored `.hermes/task-artifacts/` or
-  `.hermes/task-runtime/` paths.
+- Generated reports stay under ignored `.project-local/artifacts/` or
+  `.project-local/runs/` paths.
 - `portable-install` uses only an isolated empty Home.
 - `portable-install-runtime` requires an already capability-discovered runtime.
 - No gate reads `.env`, auth stores, session databases, prompts/responses,

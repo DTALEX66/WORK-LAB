@@ -61,7 +61,7 @@ WORK-LAB 是官方软件之上的工作流配置、治理与恢复层，不是�
 本机 `terminal` 经 Git-Bash/MSYS 调用。把 PowerShell 脚本置于 Bash 双引号时，Bash 会先展开 `$variable`，导致 PowerShell 接收到损坏脚本。
 
 - 简短 PowerShell：使用 Bash 单引号包裹 `pwsh -NoProfile -Command '...'`，PowerShell 内用双引号。
-- 多行或有副作用的 PowerShell：在项目 `.hermes/task-runtime/` 生成可审查 `.ps1`，再以 `pwsh -NoProfile -File` 运行。
+- 多行或有副作用的 PowerShell：在项目 `.project-local/runs/` 生成可审查 `.ps1`，再以 `pwsh -NoProfile -File` 运行。
 - 不将 PowerShell 的 `--%` 当作解决方案：它发生在 PowerShell 启动后，无法阻止 Bash 预先展开。
 
 ## 下一次任务起点

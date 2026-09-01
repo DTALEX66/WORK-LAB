@@ -27,8 +27,8 @@
   "singleWriter": true,
   "forbiddenRoots": ["E:\\"],
   "generatedData": {
-    "runtimeRoot": ".hermes/task-runtime",
-    "taskArtifactsPath": ".hermes/task-artifacts",
+    "runtimeRoot": ".project-local/runs",
+    "taskArtifactsPath": ".project-local/artifacts",
     "evidencePath": "80-evidence",
     "tracked": false
   },

@@ -21,8 +21,8 @@
     "action": "preserved-in-place"
   },
   "runtime_policy": {
-    "root": ".hermes/task-runtime",
-    "artifacts": ".hermes/task-artifacts",
+    "root": ".project-local/runs",
+    "artifacts": ".project-local/artifacts",
     "strategy": "inject-project-local-paths-before-child-process; fail-closed-only-for-explicit-legacy-spill-bypass"
   },
   "verification": {

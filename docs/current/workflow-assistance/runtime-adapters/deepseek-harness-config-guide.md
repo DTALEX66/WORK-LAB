@@ -40,8 +40,8 @@ DSH 会话会自动加载项目根与模块的 AGENTS.md。WORK-LAB 根 AGENTS.m
   - 凭据/`.env`/auth store/私钥/浏览器数据/token/prompt/response 正文禁读禁传；
   - **`E:\` 读或写一律禁止**，除非逐路径逐操作显式授权；
   - **本项目产生的构建/缓存/临时文件/证据/下载全部锁定在项目 Git 根内**
-    （TMP、npm/uv/pip 缓存、node_modules → `.hermes/task-runtime/`；证据 →
-    `.hermes/task-artifacts/` 或 `80-evidence/`），不外溢到用户目录/其他项目/共用库；
+    （TMP、npm/uv/pip 缓存、node_modules → `.project-local/runs/`；证据 →
+    `.project-local/artifacts/` 或 `80-evidence/`），不外溢到用户目录/其他项目/共用库；
   - 任何外溢必须可追溯、可定位、可清理、可迁移（project-data-boundary.json）；
   - 禁止破坏性 reset/clean/force-push。
 - **Managed global configuration (Hermes)**：WORK-LAB 管理的 Hermes overlay 字段、

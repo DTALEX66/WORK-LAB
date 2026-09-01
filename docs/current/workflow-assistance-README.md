@@ -83,7 +83,7 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 | Token 监视器 | Windows Tauri 2 Dashboard，实时扫描本地 JSON/JSONL usage，按 GPT/Codex、DeepSeek 和模型显示输入/输出/缓存/reasoning/总 token；无 usage 时不估算 | `apps/token-monitor-desktop/`、`scripts/workflow/token_monitor.py`、`docs/workflow/token-monitor.md` |
 | MCP | 默认固定 Context7 包版本；候选 MCP 另行执行 pinned provenance 审计 | `docs/mcp/workflow-mcp-stack.md`、`docs/mcp/mcp-catalog-governance.md`、`scripts/workflow/mcp_candidate_audit.py` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
-| Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.hermes/task-artifacts/`，用于新会话与 Codex handoff | `scripts/workflow/build_context_pack.py`、`docs/workflow/context-pack.md` |
+| Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.project-local/artifacts/`，用于新会话与 Codex handoff | `scripts/workflow/build_context_pack.py`、`docs/workflow/context-pack.md` |
 | Context Control Plane | 跨客户端稳定前缀 + 缓存命中真值 + 防漂移压缩（§12）；客户端配置建议 | `scripts/workflow/context_control_plane.py`、`context_bundle.py`、`context_drift_guard.py`、`docs/workflow/context-control-plane-design.md`、`context-control-plane-client-config.md` |
 | External Libraries Index | 共用/私用库链接与资产列表（内容不上传）；JSON 校验 gate | `00-governance/external-libraries-index.json`、`scripts/workflow/verify_external_libraries_index.py` |
 | GitHub Delivery | 上传加速（状态→提交→推送→PR）+ 审核加速（checks+mergeable+本地 gate 聚合判定） | `scripts/workflow/github_upload_accelerator.py`、`github_review_accelerator.py`、`github_common.py` |
@@ -162,14 +162,14 @@ portable config、13 个 managed skill 根、6 个 managed binary、Context7 的
 结构检查伪装成 MCP spawn 或 `hermes config check`；后二者只能在明确启用的隔离 integration
 gate 中执行。兼容性承诺和功能清单位于 `workflow-manifest.yaml`。
 
-新项目应先忽略 `.hermes/`，再使用最小项目初始化器：
+新项目应先忽略 `.project-local/`，再使用最小项目初始化器：
 
 ```bash
 python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject --dry-run
 python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject --agent-rules
 ```
 
-该入口只写目标项目的 Git-ignored `.hermes/` 运行时说明和 bootstrap manifest，绝不复制 OAuth、API key、provider route、会话或用户数据。
+该入口只写目标项目的 Git-ignored `.project-local/` 运行时说明和 bootstrap manifest，绝不复制 OAuth、API key、provider route、会话或用户数据。
 
 ### Portable Hermes 基线
 
@@ -261,7 +261,7 @@ python scripts/workflow/hermes_workflow_doctor.py
 python scripts/workflow/hermes_workflow_doctor.py --live
 ```
 
-`--live` 会实际调用 GPT、DeepSeek 和 Codex，并要求输出独立 marker。普通端口、HTTP 状态和结构检查不等于真实模型执行；只有 live marker 通过才能证明当前执行链路可用。`--live` 可能产生网络请求或模型用量，因此不会默认运行。必须从 Git 项目根目录运行：Codex smoke 的临时 Git 仓库默认只会创建在当前项目 `.hermes/task-runtime/`，运行后自动清除；如需指定其父目录，传入同一项目范围内的 `--codex-workdir .hermes/task-runtime/<name>`，项目外路径会被拒绝。
+`--live` 会实际调用 GPT、DeepSeek 和 Codex，并要求输出独立 marker。普通端口、HTTP 状态和结构检查不等于真实模型执行；只有 live marker 通过才能证明当前执行链路可用。`--live` 可能产生网络请求或模型用量，因此不会默认运行。必须从 Git 项目根目录运行：Codex smoke 的临时 Git 仓库默认只会创建在当前项目 `.project-local/runs/`，运行后自动清除；如需指定其父目录，传入同一项目范围内的 `--codex-workdir .project-local/runs/<name>`，项目外路径会被拒绝。
 
 ### Provider / 模型健康库存
 
@@ -270,7 +270,7 @@ python scripts/workflow/hermes_workflow_doctor.py --live
 ```bash
 python scripts/workflow/provider_health.py \
   --config config/config.yaml \
-  --output .hermes/task-artifacts/provider-health.json
+  --output .project-local/artifacts/provider-health.json
 ```
 
 默认状态为 `UNVERIFIED`，只表示显式提供或从当前运行时发现的模型尚未做真实调用；model/provider-neutral overlay 自身允许库存为空。只有明确传入 `--live` 才逐一执行 marker 请求并消耗额度。报告不包含 token、OAuth 内容、cookie、API key、base URL 或凭据文件内容。
@@ -432,8 +432,8 @@ hermes mcp test context7
 新增候选先走审计器，不直接写默认配置：
 
 ```bash
-python scripts/workflow/mcp_candidate_audit.py --write-template .hermes/task-artifacts/mcp-candidate.yaml
-python scripts/workflow/mcp_candidate_audit.py .hermes/task-artifacts/mcp-candidate.yaml
+python scripts/workflow/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml
+python scripts/workflow/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml
 ```
 
 `MCP_CANDIDATE_AUDIT_PASS` 只表示候选元数据完整，不等于 server 已配置、已运行、已安全或已默认启用。候选治理细则见 `docs/mcp/mcp-catalog-governance.md`。
@@ -472,7 +472,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- python -m py
 python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards list
 ```
 
-该执行器以 Git 根为边界，要求 `.hermes/` 已被 Git 忽略，并在子进程启动前把 `TMP`、`TEMP`、`TMPDIR`、XDG/pip/uv/npm/yarn/Playwright/Cargo home+target/Rust/Ruff/mypy/pre-commit cache 与 Python bytecode 指向 `<project>/.hermes/task-runtime/`。它同时将原生 Kanban 的 `HERMES_KANBAN_HOME` 固定在 `<project>/.hermes/kanban/`；禁止直接创建全局项目 board。只有显式硬编码项目外输出路径、绕过项目环境绑定时才拒绝并提示改用项目目录；它不是 OS sandbox，不能替代路径审查。项目证据归档到同项目 `.hermes/task-artifacts/`；认证、会话库、全局 config/skills 和 cron scheduler 元数据仍属于 Hermes 全局运行时，禁止误迁移。同步器仅保留最近两份自身生成的 workflow backup，避免每次部署重复膨胀全局 backup 目录。
+该执行器以 Git 根为边界，要求 `.project-local/` 已被 Git 忽略，并在子进程启动前把 `TMP`、`TEMP`、`TMPDIR`、XDG/pip/uv/npm/yarn/Playwright/Cargo home+target/Rust/Ruff/mypy/pre-commit cache 与 Python bytecode 指向 `<project>/.project-local/runs/`。它同时将原生 Kanban 的 `HERMES_KANBAN_HOME` 固定在 `<project>/.project-local/kanban/`；禁止直接创建全局项目 board。只有显式硬编码项目外输出路径、绕过项目环境绑定时才拒绝并提示改用项目目录；它不是 OS sandbox，不能替代路径审查。项目证据归档到同项目 `.project-local/artifacts/`；认证、会话库、全局 config/skills 和 cron scheduler 元数据仍属于 Hermes 全局运行时，禁止误迁移。同步器仅保留最近两份自身生成的 workflow backup，避免每次部署重复膨胀全局 backup 目录。
 
 ### 模型/API 中立任务契约
 
@@ -704,12 +704,12 @@ hermes mcp test context7
 python scripts/workflow/sync_hermes_workflow_assets.py
 python scripts/workflow/sync_hermes_workflow_assets.py --apply --approved
 
-# 生成新会话 / Codex handoff 上下文包；输出到 .hermes/task-artifacts/context-pack.md
+# 生成新会话 / Codex handoff 上下文包；输出到 .project-local/artifacts/context-pack.md
 python scripts/workflow/build_context_pack.py
 
 # 生成 / 审计 MCP 候选；只写项目内忽略产物，不默认启用
-python scripts/workflow/mcp_candidate_audit.py --write-template .hermes/task-artifacts/mcp-candidate.yaml
-python scripts/workflow/mcp_candidate_audit.py .hermes/task-artifacts/mcp-candidate.yaml
+python scripts/workflow/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml
+python scripts/workflow/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml
 
 # 仓库完整门禁
 python scripts/workflow/run_quality_gate.py verify

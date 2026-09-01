@@ -129,7 +129,7 @@ Windows：通过
 - 不调用 Provider 云端 quota / balance API；
 - 不上传本地日志；
 - 不把 quota、余额或上下文限制当作请求级 token usage；
-- 所有测试 fixture 使用项目内 `.hermes/task-runtime/`；
+- 所有测试 fixture 使用项目内 `.project-local/runs/`；
 - 未访问或修改 `E:\`；
 - 未修改 `D:\info@latest`；
 - 不跟随 symlink / junction / reparse point；

@@ -33,7 +33,7 @@ COLLECTOR_THREAD_LEAK:  P1-1——CollectorScheduler daemon thread join(timeout)
                         超时线程累积（5 次超时 1→6 线程）
 PERF_HARDCODED_PATH:    P1-2/3——perf_baseline.py 仍硬编码 D:\All projects\WORK-LAB
                         （canary_runner 已修自引用根）
-WLGM_TASKPACK_IN_GIT:   P1-6——WLGM-000~240 权威任务包仍在 .hermes/desktop-attachments/
+WLGM_TASKPACK_IN_GIT:   P1-6——WLGM-000~240 权威任务包仍在 .project-local/desktop-attachments/
                         未纳入 Git tracked（50-taskpacks/ 无对应文件）
 OBSERVER_EVENT_ADAPTER: observer_event.py / observer_projection_adapter.py 仅测试引用，
                         退役清单列为可删（未删，保留）

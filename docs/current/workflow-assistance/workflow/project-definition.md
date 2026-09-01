@@ -56,7 +56,7 @@
 | CC Switch | 代理端口/网络路径排错、Provider 前置检查、环境变量模板 | CC Switch 主程序安装包、用户真实代理凭据 |
 | Codex | launcher、任务票据、单写者/worktree 规范、只读复审与 exact-tree 证据规则 | Codex CLI 主体、OpenAI OAuth token、模型服务凭据 |
 | GitHub | `main` 跨设备 SSOT、提交/分支治理、exact-SHA CI、发布与恢复证据 | GitHub Actions secrets、业务项目 release artifact、业务仓库私有数据 |
-| 任意业务项目 | `.hermes/` 项目数据边界、任务 artifact/ledger 规范、可复制 Agent rules | 业务项目源码本身、项目私有数据、临时一次性修复 |
+| 任意业务项目 | `.project-local/` 项目数据边界、任务 artifact/ledger 规范、可复制 Agent rules | 业务项目源码本身、项目私有数据、临时一次性修复 |
 | Workflow-assistance 仓库 | 全局增强资产源、文档、治理测试、同步/doctor 脚本 | 把本仓库当成唯一使用场景或运行时 sandbox |
 
 新增内容必须回答两个问题：
@@ -64,7 +64,7 @@
 1. 它是否增强 **Hermes Agent + CC Switch + Codex + GitHub 的全局工作流**，而不是只方便当前仓库一次操作？
 2. 它是否可以安全迁移到其他机器/项目，而不携带密钥、会话、日志、缓存或用户私有数据？
 
-如果答案是否定的，只能放在项目本地 `.hermes/` 或一次性任务 artifact 中，不得进入默认 portable config、全局 skill、默认 MCP 或同步脚本。
+如果答案是否定的，只能放在项目本地 `.project-local/` 或一次性任务 artifact 中，不得进入默认 portable config、全局 skill、默认 MCP 或同步脚本。
 
 ## Core 与 Adapter 职责
 
@@ -94,8 +94,8 @@
 | Hermes 配置模板 | `config/config.yaml` | `config.yaml` | 新机器基线；同步脚本合并时保留 live provider/model，并管理 `display.busy_input_mode=queue` |
 | 环境变量模板 | `config/.env.template` | `.env.template` | 只放占位说明，不放真实密钥 |
 | MCP wrapper | `bin/hermes-npx*` | `bin/hermes-npx*` | Windows live config 指向 `.cmd`；优先 bundled Node，缺失时可在用户信任且兼容的 PATH Node 环境中回退 |
-| 技能 | `skills/` | `skills/` | 包含 codex、五个 GitHub workflow skills、model-switch、sleep-mode、project-data-boundary、python-testing、windows-development-environment、agent-workflow-fortress；当前共 13 个 repository-controlled skill，其中 sleep-mode 通过项目 `.hermes/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
-| 项目数据执行器 | `bin/hermes-project-data.py` | `bin/hermes-project-data.py` | fail-closed 验证 Git ignore，并把任务临时文件、缓存、日志、测试环境与产物锁到 `<project>/.hermes/task-runtime/` |
+| 技能 | `skills/` | `skills/` | 包含 codex、五个 GitHub workflow skills、model-switch、sleep-mode、project-data-boundary、python-testing、windows-development-environment、agent-workflow-fortress；当前共 13 个 repository-controlled skill，其中 sleep-mode 通过项目 `.project-local/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
+| 项目数据执行器 | `bin/hermes-project-data.py` | `bin/hermes-project-data.py` | fail-closed 验证 Git ignore，并把任务临时文件、缓存、日志、测试环境与产物锁到 `<project>/.project-local/runs/` |
 | 同步脚本 | `scripts/workflow/sync_hermes_workflow_assets.py` | 手动运行 | repo ↔ live 定向同步；每次 apply 前备份可迁移资产 |
 | 排错记录 | `TROUBLESHOOTING.md`、`docs/workflow/error-fixes-2026-07-04.md`、`docs/workflow/error-fixes-2026-07-28.md`、`docs/workflow/gateway-cron-delivery.md` | 仓库文档 | 记录 Windows MCP、路径、GitHub CLI、GitHub skill ownership、凭据安全、PowerShell、Gateway/cron delivery、验证等已踩坑 |
 
@@ -124,7 +124,7 @@ python scripts/security/scan_agent_rules.py .
 hermes mcp test context7
 ```
 
-隔离 ad-hoc 验证也必须通过 `bin/hermes-project-data.py --project . run -- ...`，使临时脚本和所有运行数据保留在当前项目的 `.hermes/task-runtime/`，不得写入用户 Temp。
+隔离 ad-hoc 验证也必须通过 `bin/hermes-project-data.py --project . run -- ...`，使临时脚本和所有运行数据保留在当前项目的 `.project-local/runs/`，不得写入用户 Temp。
 
 ## 标准闭环
 

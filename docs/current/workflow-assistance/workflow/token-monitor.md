@@ -127,4 +127,4 @@ python tests/test_token_monitor.py -v
 
 ### 隐私
 
-监视器不会上传日志，也不会写入 Hermes Home。日志路径由用户在本机选择；请不要把包含真实凭据或敏感 prompt 的日志复制到仓库。运行时临时文件遵循项目 `.hermes/task-runtime/` 边界。
+监视器不会上传日志，也不会写入 Hermes Home。日志路径由用户在本机选择；请不要把包含真实凭据或敏感 prompt 的日志复制到仓库。运行时临时文件遵循项目 `.project-local/runs/` 边界。

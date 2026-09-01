@@ -11,13 +11,13 @@
 
 1. **Codex Windows launcher**：动态解析当前 Microsoft Store owner，不把 Store 版本、路径或 hash 永久写死；Bash/CMD launcher 保持同一运行时身份边界。
 2. **Context7 portable baseline**：默认固定审阅过的包版本；候选 MCP 仍需单独执行 pinned provenance 审计。
-3. **项目数据边界**：任务启动前将临时文件、构建输出、依赖缓存、Python bytecode、Cargo/Rust、npm/yarn、Playwright、Ruff/mypy/pre-commit 等路径绑定到所属项目的 `.hermes/task-runtime/`；历史 `D:\a`、`D:\d`、`D:\dev`、`D:\tmp` 只作为外部恢复审计来源，不作为新任务目标。
+3. **项目数据边界**：任务启动前将临时文件、构建输出、依赖缓存、Python bytecode、Cargo/Rust、npm/yarn、Playwright、Ruff/mypy/pre-commit 等路径绑定到所属项目的 `.project-local/runs/`；历史 `D:\a`、`D:\d`、`D:\dev`、`D:\tmp` 只作为外部恢复审计来源，不作为新任务目标。
 
 项目运行数据与恢复证据不进入 Git：
 
 ```text
-<project>/.hermes/task-runtime/
-<project>/.hermes/task-artifacts/
+<project>/.project-local/runs/
+<project>/.project-local/artifacts/
 ```
 
 已审计的历史外溢根在清理后均不存在；`D:\info@latest` 是独立 UniApp/Vue/Vite 项目，未修改、未移动、未删除。
@@ -33,7 +33,7 @@
 - `scripts/workflow/run_quality_gate.py`
   - 质量门禁自身也使用同一项目本地 runtime，避免门禁制造外溢缓存。
 - `bin/hermes-project-terminal-guard.py`
-  - 正常策略是先完成项目路径注入；仅对硬编码旧外溢路径、绕过项目环境绑定的命令提供 fail-closed 兜底，并提示使用 `.hermes/task-runtime`。
+  - 正常策略是先完成项目路径注入；仅对硬编码旧外溢路径、绕过项目环境绑定的命令提供 fail-closed 兜底，并提示使用 `.project-local/runs`。
 - `config/skill-provenance.yaml`
   - 已更新 `project-data-boundary` 当前源文件 hash。
 
@@ -72,7 +72,7 @@ QUALITY_GATE_PASS
 SKILL_PROVENANCE_PASS
 PORTABLE_INSTALL_VERIFY_PASS
 hermes hooks doctor：All shell hooks look healthy
-项目内环境回读：全部标准缓存/构建/临时路径位于项目 .hermes/task-runtime
+项目内环境回读：全部标准缓存/构建/临时路径位于项目 .project-local/runs
 D:\a/D:\d/D:\dev/D:\tmp：最终不存在
 git diff --check：通过
 ```
@@ -82,7 +82,7 @@ git diff --check：通过
 ## 5. 回滚与维护
 
 - 回滚到本次父提交：`f8901c3f1cf7ad4fe1447fcfee573b19d8cd67cb`。
-- 不删除 `.hermes/task-runtime` 中仍被活动任务使用的目录；失败任务现场需先交接再清理。
+- 不删除 `.project-local/runs` 中仍被活动任务使用的目录；失败任务现场需先交接再清理。
 - 不访问或迁移 `E:\` 数据；不读取 credential/auth/session/browser 文件。
 - 新任务必须经项目 wrapper 启动，不得直接把 `TMP/TEMP/CARGO_TARGET_DIR/npm cache` 指到盘符根、用户目录或另一个项目。
 

@@ -10,8 +10,8 @@ responsibilities:
   artifacts_root: sanitized task evidence and machine-readable assessment records
   evidence_root: stable ignored evidence packages intended for project handoff
 legacy_aliases:
-  - .hermes/task-runtime
-  - .hermes/task-artifacts
+  - .project-local/runs
+  - .project-local/artifacts
   - 80-evidence
 forbidden_external_roots:
   - "E:/"

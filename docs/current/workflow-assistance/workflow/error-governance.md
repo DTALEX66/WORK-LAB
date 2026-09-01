@@ -10,7 +10,7 @@ responses, or private configuration values.
 
 Canonical files:
 
-- `.hermes/task-artifacts/error-ledger-20260806.json`
+- `.project-local/artifacts/error-ledger-20260806.json`
 - `scripts/ci/verify_error_ledger.py`
 - `tests/ci/test_error_ledger.py`
 

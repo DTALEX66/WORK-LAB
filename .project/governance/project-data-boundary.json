@@ -1,10 +1,10 @@
 {
   "schemaVersion": "work-lab-project-data-boundary/v1",
   "platformNeutral": true,
-  "runtimeRoot": ".hermes/task-runtime",
-  "taskArtifactsRoot": ".hermes/task-artifacts",
-  "logsRoot": ".hermes/task-runtime/logs",
-  "cacheRoot": ".hermes/task-runtime/cache",
+  "runtimeRoot": ".project-local/runs",
+  "taskArtifactsRoot": ".project-local/artifacts",
+  "logsRoot": ".project-local/runs/logs",
+  "cacheRoot": ".project-local/runs/cache",
   "canonicalEvidenceRoot": "80-evidence",
   "responsibilities": {
     "runtimeRoot": "temporary task state, caches, logs and reproducible local runtime artifacts",

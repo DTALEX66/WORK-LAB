@@ -73,7 +73,7 @@ push 恢复。REST API 操作用 `git credential fill`（github.com）取 token 
 
 **根因：** pre-commit hook 在 commit 前自动 `git add` 全部 tracked 改动并重新生成 CURRENT_STATE，导致与显式 stage 的文件集冲突；跨分支未提交文件在 checkout 时阻断。
 
-**修复：** 改用 `git commit --no-verify` 绕过 hook 全量 stage；跨分支前 `git stash -u` 或备份到 `.hermes/task-runtime/`；冲突用 `git checkout <branch> -- <file>` 定向恢复。
+**修复：** 改用 `git commit --no-verify` 绕过 hook 全量 stage；跨分支前 `git stash -u` 或备份到 `.project-local/runs/`；冲突用 `git checkout <branch> -- <file>` 定向恢复。
 
 **回归验证：** 3 个 PR 各自文件集干净，无串扰。
 

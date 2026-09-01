@@ -45,8 +45,8 @@ Never access `E:\` — read or write — without explicit per-path,
 per-operation user authorization. All content this project produces — builds,
 caches, temp files, evidence, downloads, generated artifacts — stays locked
 inside the project Git root: build/cache/temp roots live under
-`.hermes/task-runtime/` (TMP, npm/uv/pip caches, node_modules), evidence under
-`.hermes/task-artifacts/` or ignored `80-evidence/`; nothing spills to user
+`.project-local/runs/` (TMP, npm/uv/pip caches, node_modules), evidence under
+`.project-local/artifacts/` or ignored `80-evidence/`; nothing spills to user
 directories, other projects, or the shared library unless explicitly
 authorized. Any spill is traceable, locatable, cleanable and migratable
 (`00-governance/project-data-boundary.json`). Never use destructive
@@ -86,8 +86,8 @@ When working through Codex, use the project-local workflow contract and exact
 module paths. Bounded writers own one checkout; parallel writers require separate
 worktrees. Prefer the canonical quality gate:
 `python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py verify`.
-Keep Task Ledger and runtime evidence under `.hermes/task-runtime/` and
-`.hermes/task-artifacts/`; do not treat local tests as exact-SHA CI or release
+Keep Task Ledger and runtime evidence under `.project-local/runs/` and
+`.project-local/artifacts/`; do not treat local tests as exact-SHA CI or release
 evidence. Codex may prepare changes and readback evidence, but must not commit,
 push, publish, or modify global Codex/Hermes configuration without explicit
 approval for that side effect.

@@ -11,9 +11,9 @@
 - `skills/`：已安装技能；可由本仓库同步的部分有版本来源，其余用户技能必须保留。
 - `state-snapshots/`、显式 `pre-update-*` 备份：恢复证据，除非已完成新的可验证备份。
 
-项目任务数据必须留在 `<project>/.hermes/`，并通过
+项目任务数据必须留在 `<project>/.project-local/`，并通过
 `hermes-project-data.py --project . run -- <command>` 产生。收尾只清理
-`<project>/.hermes/task-runtime/`，绝不清理 Hermes Home 的会话或认证目录。
+`<project>/.project-local/runs/`，绝不清理 Hermes Home 的会话或认证目录。
 
 ## 目录角色
 

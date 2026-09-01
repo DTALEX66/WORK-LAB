@@ -43,8 +43,8 @@ hermes mcp test context7
 候选阶段可以通过：
 
 ```bash
-python scripts/workflow/mcp_candidate_audit.py --write-template .hermes/task-artifacts/mcp-candidate.yaml
-python scripts/workflow/mcp_candidate_audit.py .hermes/task-artifacts/mcp-candidate.yaml
+python scripts/workflow/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml
+python scripts/workflow/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml
 ```
 
 审计通过只表示候选元数据完整；不等于 server 已配置、已运行、已安全或已默认启用。

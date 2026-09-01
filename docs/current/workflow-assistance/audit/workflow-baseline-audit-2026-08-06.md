@@ -32,7 +32,7 @@ commands; they are not copied back into this repository.
 | Installer dependency | Setup required PyYAML but checked only that Python executed, producing a late and opaque failure on a clean interpreter. | PowerShell and Bash setup now fail before Home writes unless `PyYAML>=6,<7` is present; setup remains plan-first and never auto-installs into a global interpreter. |
 | Hermes Git baseline | An inactive local `main` belonged to an obsolete shallow-history lineage and had no merge base with official `main`. | Preserved the old tip under a local recovery ref, then aligned inactive `main` to official upstream. The runtime branch remains official upstream plus the single reviewed carried patch. |
 | Windows lock diagnosis | Running `diagnose-lock` from the target made the diagnostic process itself participate in the lock and could recommend Hermes cleanup when only a shell/Codex process owned the CWD. | Upstream PR now probes from an existing safe CWD without creating directories, restores CWD in `finally`, excludes its own PID and distinguishes Hermes holders from non-Hermes callers. |
-| Project data hygiene | One old ignored log had a flattened root filename and a root `.pytest_cache` predated the current boundary. | Moved the unread log into project-local `.hermes/task-runtime/logs/`; removed only the confirmed non-link regenerable pytest cache. |
+| Project data hygiene | One old ignored log had a flattened root filename and a root `.pytest_cache` predated the current boundary. | Moved the unread log into project-local `.project-local/runs/logs/`; removed only the confirmed non-link regenerable pytest cache. |
 
 ## Verification
 

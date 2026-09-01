@@ -82,7 +82,7 @@ python bin/hermes-project-data.py --project D:/All-projects/Target \
 
 约束：
 
-1. target 必须是 `.hermes/task-runtime/` 下的相对路径；
+1. target 必须是 `.project-local/runs/` 下的相对路径；
 2. 绝对路径、`..` 逃逸、symlink/junction/reparse traversal 一律拒绝；
 3. 只删除一个精确 target，不执行 broad clean；
 4. PermissionError/文件锁转为 `BLOCKED_RUNTIME_CLEANUP`；

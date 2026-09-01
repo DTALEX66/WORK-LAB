@@ -9,7 +9,7 @@
 - 职责：Hermes Agent、CC Switch、Codex、GitHub 的可迁移工作流增强资产 source-of-truth；GitHub 同时是跨设备 SSOT、发布与 exact-SHA CI 证据面。
 - 不承担：Hermes/CC Switch/Codex 安装主体、业务项目 runtime、业务数据、凭据、会话或日志。
 - E 盘：默认禁止访问、读取、移动、修改或删除；必须由用户在当前请求精确授权路径与操作。
-- 项目执行数据：必须留在 `<project>/.hermes/` 下的受忽略目录；禁止把 cache、测试输出、日志、artifact、任务状态写到项目根外或用户 Temp。
+- 项目执行数据：必须留在 `<project>/.project-local/` 下的受忽略目录；禁止把 cache、测试输出、日志、artifact、任务状态写到项目根外或用户 Temp。
 
 ## 当前已发布基线
 
@@ -28,7 +28,7 @@ git rev-parse origin/main
 
 ### 安全与项目数据边界
 
-- `project-data-boundary` 规则要求项目任务 runtime、cache、logs、artifacts、测试输出均锁在项目内 `.hermes/`。
+- `project-data-boundary` 规则要求项目任务 runtime、cache、logs、artifacts、测试输出均锁在项目内 `.project-local/`。
 - 显式项目根外 output/cache/log 参数 fail-closed。
 - E 盘保护已写入 skill、模板、测试与同步资产。
 - 清理遵循：验证 → 发布 → exact-SHA CI → 目标分支确认 → 摘要 → 清理；不按目录名、体积或日期盲删。
@@ -82,4 +82,4 @@ git rev-parse origin/main
 - 长上下文先生成这类无密、项目内的交接文档；不要把 `state.db`、完整日志或原始会话转存进仓库。
 - 当前会话的上下文压缩只能由当前 Hermes UI/会话触发；使用 `/compress`，或新开会话并以本交接文档为恢复入口。
 - 不要把磁盘清理误认为能缩小当前模型上下文；它们是不同问题。
-- `.hermes/task-artifacts/` 是受忽略的项目内运行区。仅在证据不再被测试、发布、CI、恢复或活跃任务引用后，才可清理其中可再生产物。
+- `.project-local/artifacts/` 是受忽略的项目内运行区。仅在证据不再被测试、发布、CI、恢复或活跃任务引用后，才可清理其中可再生产物。

@@ -29,7 +29,7 @@ task.
 ## Runtime directory (git-ignored, never committed)
 
 ```
-.hermes/task-runtime/deepseek-harness/
+.project-local/runs/deepseek-harness/
 ├─ source/    # pinned checkout @ 47f94385 (never committed)
 ├─ dsh-home/  # DSH_HOME: profiles, credentials, settings, sessions (never committed)
 ├─ launch/    # local start/stop scripts + pid/port state
@@ -44,7 +44,7 @@ These are **not** performed by the adapter by default; each is an approval item.
 - **Install**: clone + checkout the pinned SHA, then
   `corepack pnpm@11.7.0 install --frozen-lockfile` (per-invocation, no global
   toolchain mutation), `corepack pnpm@11.7.0 run typecheck`, `… run build`.
-- **Start web**: bind `127.0.0.1` only, with `DSH_HOME=<project>/.hermes/task-runtime/deepseek-harness/dsh-home`.
+- **Start web**: bind `127.0.0.1` only, with `DSH_HOME=<project>/.project-local/runs/deepseek-harness/dsh-home`.
   On port conflict, fail closed — do not kill an unknown PID; record an idle
   loopback port or stop and report.
 - **Health**: `--dump-config` redacted + a loopback socket readback; never a

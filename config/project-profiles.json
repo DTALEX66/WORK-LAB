@@ -9,7 +9,7 @@
         "workflow-assistance": {"roots": ["packages/client-neutral-core"], "active": true},
         "work-lab-observer": {"roots": ["apps/observer"], "depends_on": ["workflow-assistance"], "observation_only": true, "active": true}
       },
-      "risk_zones": {"security": [".github", ".project/governance"], "runtime": [".hermes/task-runtime"], "release": [".github/workflows"]},
+      "risk_zones": {"security": [".github", ".project/governance"], "runtime": [".project-local/runs"], "release": [".github/workflows"]},
       "gates": {"verify": {"command": "python services/orchestration/run_quality_gate.py verify", "tiers": ["TARGETED", "STAGE", "RC", "RELEASE"], "platform": "windows-native"}},
       "ci": {"stable_aggregate_check": "aggregate", "stable_aggregate_job": "aggregate", "workflow_file": ".github/workflows/work-lab-gate.yml", "workflow_name": "work-lab-gate", "exact_sha_required_for": ["main", "release"], "outage_blocks": ["release"]}
     },
@@ -18,7 +18,7 @@
       "project": {"id": "fixture-external", "root_policy": "discover_git_root", "windows_native_first": true},
       "configuration": {"precedence": ["global_defaults", "project_profile", "local_runtime", "environment", "cli"]},
       "modules": {"external": {"roots": ["."], "active": true}},
-      "risk_zones": {"security": [".github"], "runtime": [".hermes/task-runtime"]},
+      "risk_zones": {"security": [".github"], "runtime": [".project-local/runs"]},
       "gates": {"standalone": {"command": "python -m unittest discover", "tiers": ["TARGETED", "STAGE"], "platform": "windows-native"}},
       "ci": {"stable_aggregate_check": "standalone", "exact_sha_required_for": ["release"], "outage_blocks": ["release"]}
     },

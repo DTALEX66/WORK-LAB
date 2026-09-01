@@ -200,7 +200,7 @@ GitHub Actions 曾报告 checkout/setup-python action 的 Node.js 20 runtime 弃
 - 三个 bundled plugins 最终均为 `installed, enabled`；marketplace resolve/write failure 为 0。
 - `codex --strict-config doctor --json` 最终 `overallStatus=ok`，无 fail/warn；Windows sandbox smoke 返回 `FINAL_CODEX_SANDBOX_OK`。
 - 当时审计中 Store 包与 AppX 状态正常；CLI 通过 `codex --version` 发现，并由 Bash/CMD/PowerShell 解析到 Hermes managed wrapper。具体 runtime/package 版本只作该次审计的历史证据，不作为 workflow compatibility requirement；后续更新必须重新执行版本、帮助和能力发现。
-- 仓库未提交任何认证、profile、日志、session、数据库或恢复材料；任务证据位于 Git 忽略的 `.hermes/task-artifacts/`。
+- 仓库未提交任何认证、profile、日志、session、数据库或恢复材料；任务证据位于 Git 忽略的 `.project-local/artifacts/`。
 
 ### 已知上游边界
 

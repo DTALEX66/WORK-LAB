@@ -43,12 +43,12 @@ templates/evals/agent-behavior-smoke.yaml
 当前阶段不把 promptfoo 加入默认安装或 CI。需要运行时，必须由用户明确选择执行器和 Provider，然后把输出写到项目内：
 
 ```text
-.hermes/task-artifacts/evals/
+.project-local/artifacts/evals/
 ```
 
 建议的执行边界：
 
-1. 先复制模板到当前项目 `.hermes/task-artifacts/evals/` 或项目自己的 `tests/evals/`；
+1. 先复制模板到当前项目 `.project-local/artifacts/evals/` 或项目自己的 `tests/evals/`；
 2. 替换占位 provider/prompt，不写入密钥；
 3. 使用明确的外部 runner 执行；
 4. 保存 summary、exit code、runner version、config hash；

@@ -115,7 +115,7 @@ Desktop fresh-install E2E 测试成功后留下一个测试实例，使进程列
 ### 项目清理器出现一次 `uv trampoline` 启动失败
 
 同一命令随后分别用 Hermes Python 和系统 Python 复测均成功，项目
-`.hermes/task-runtime` 清理结果为 0 字节，说明没有隐藏临时垃圾。该瞬时失败未触发
+`.project-local/runs` 清理结果为 0 字节，说明没有隐藏临时垃圾。该瞬时失败未触发
 外部目录写入或删除。
 
 ### 删除旧 `.git` 时遇到后台 fetch 文件锁
@@ -157,7 +157,7 @@ Desktop fresh-install E2E 测试成功后留下一个测试实例，使进程列
 - 模型切换脚本、快速命令、自定义 lane 和文档统一到一份配置事实源；
 - 同步器只管理仓库拥有的配置/技能资产，保留活动 provider、模型、凭据和自定义 MCP；
 - 同步备份只轮转自身创建的最近两份目录，不触碰人工升级备份；
-- 项目临时数据被限制到 `<project>/.hermes/task-runtime/`；
+- 项目临时数据被限制到 `<project>/.project-local/runs/`；
 - Hermes 重建源码修复保存为本地恢复提交和冷备份补丁；
 - Workflow-assistance 修复分支已推送到 GitHub 草稿 PR。
 
