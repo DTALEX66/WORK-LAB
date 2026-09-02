@@ -42,7 +42,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_portable_package_declares_config_ownership_and_compatibility(self) -> None:
         ownership_path = ROOT / "config/managed-config-schema.yaml"
-        manifest_path = ROOT / "workflow-manifest.yaml"
+        manifest_path = ROOT / "packages/client-neutral-core/workflow-manifest.yaml"
         self.assertTrue(ownership_path.exists())
         self.assertTrue(manifest_path.exists())
 
@@ -64,9 +64,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertEqual(ownership["global_workflow"]["source_of_truth"], "repository")
         owned_roots = ownership["global_workflow"]["owned_asset_roots"]
         self.assertEqual(len(owned_roots), 13)
-        self.assertIn("skills/github/github-auth", owned_roots)
-        self.assertNotIn("skills/github", owned_roots)
-        self.assertNotIn("skills/software-development", owned_roots)
+        self.assertIn("packages/client-neutral-core/skills/github/github-auth", owned_roots)
+        self.assertNotIn("packages/client-neutral-core/skills/github", owned_roots)
+        self.assertNotIn("packages/client-neutral-core/skills/software-development", owned_roots)
         owned_binaries = ownership["global_workflow"]["owned_binary_paths"]
         self.assertEqual(len(owned_binaries), 6)
         self.assertIn("bin/codex", owned_binaries)
@@ -1258,7 +1258,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_model_switch_docs_never_instruct_credential_or_cc_switch_db_access(self) -> None:
         source = "\n".join(
             path.read_text(encoding="utf-8")
-            for path in (ROOT / "skills/model-switch").rglob("*.md")
+            for path in (ROOT / "packages/client-neutral-core/skills/model-switch").rglob("*.md")
         )
         self.assertNotIn("cc-switch.db", source)
         self.assertNotIn("sqlite3.connect", source)
@@ -1319,10 +1319,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         entries = {entry["name"]: entry for entry in manifest["entries"]}
         for name in sorted(expected):
-            source = ROOT / "skills/github" / name / "SKILL.md"
+            source = ROOT / "packages/client-neutral-core/skills/github" / name / "SKILL.md"
             self.assertTrue(source.is_file(), name)
             entry = entries[name]
-            self.assertEqual(entry["source"], f"skills/github/{name}/SKILL.md")
+            self.assertEqual(entry["source"], f"packages/client-neutral-core/skills/github/{name}/SKILL.md")
             self.assertEqual(entry["trust"], "repository-controlled")
             self.assertNotEqual(entry["source_sha256"], "profile-live-only")
 
@@ -1353,8 +1353,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "github-pr-workflow",
             "github-repo-management",
         ):
-            self.assertIn(f"skills/github/{name}", backup_rels)
-        self.assertNotIn("skills/github", backup_rels)
+            self.assertIn(f"packages/client-neutral-core/skills/github/{name}", backup_rels)
+        self.assertNotIn("packages/client-neutral-core/skills/github", backup_rels)
         for relative in (
             "bin/codex",
             "bin/codex.cmd",
@@ -1386,7 +1386,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "github-pr-workflow",
                 "github-repo-management",
             ):
-                self.assertTrue((home / "skills/github" / name / "SKILL.md").is_file(), name)
+                self.assertTrue((home / "packages/client-neutral-core/skills/github" / name / "SKILL.md").is_file(), name)
 
     def test_bootstrap_and_project_wrapper_work_for_multiple_projects(self) -> None:
         bootstrap = ROOT / "services/orchestration/bootstrap_project.py"
@@ -1415,13 +1415,13 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 self.assertIn("task-runtime", check.stdout)
 
     def test_manifest_requires_nonempty_exact_sha_workflow_contract(self) -> None:
-        manifest = yaml.safe_load((ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8"))
+        manifest = yaml.safe_load((ROOT / "packages/client-neutral-core/workflow-manifest.yaml").read_text(encoding="utf-8"))
         self.assertTrue(manifest["delivery"]["exact_sha_ci"])
         self.assertEqual(manifest["delivery"]["required_workflows"], ["work-lab-gate"])
 
     def test_governance_actions_are_commit_pinned_and_dependency_versioned(self) -> None:
-        workflow = (ROOT / "docs/workflow/examples/governance.yml.example").read_text(encoding="utf-8")
-        manifest = yaml.safe_load((ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8"))
+        workflow = (ROOT / "docs/current/workflow-assistance/workflow/examples/governance.yml.example").read_text(encoding="utf-8")
+        manifest = yaml.safe_load((ROOT / "packages/client-neutral-core/workflow-manifest.yaml").read_text(encoding="utf-8"))
         self.assertNotIn("actions/checkout@v", workflow)
         self.assertNotIn("actions/setup-python@v", workflow)
         self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", workflow)
@@ -1468,10 +1468,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
             temp = Path(raw)
             repo = temp / "repo"
             staging = temp / "staging"
-            managed_root = "skills/software-development/managed"
+            managed_root = "packages/client-neutral-core/skills/software-development/managed"
             managed_repo = repo / managed_root
             managed_live = staging / managed_root
-            custom_live = staging / "skills/custom/keep-me"
+            custom_live = staging / "packages/client-neutral-core/skills/custom/keep-me"
 
             (managed_repo / "references").mkdir(parents=True)
             managed_repo.joinpath("SKILL.md").write_text("repo", encoding="utf-8")
@@ -1509,10 +1509,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
             temp = Path(raw)
             home = temp / "home"
             staging = temp / "staging"
-            managed_root = "skills/software-development/managed"
+            managed_root = "packages/client-neutral-core/skills/software-development/managed"
             managed_live = home / managed_root
             managed_staged = staging / managed_root
-            concurrent = home / "skills/custom/concurrent/SKILL.md"
+            concurrent = home / "packages/client-neutral-core/skills/custom/concurrent/SKILL.md"
             managed_live.mkdir(parents=True)
             managed_live.joinpath("SKILL.md").write_text("old", encoding="utf-8")
             managed_staged.mkdir(parents=True)
@@ -1563,7 +1563,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             temp = Path(raw)
             repo = temp / "repo"
             home = temp / "home"
-            managed_root = "skills/software-development/managed"
+            managed_root = "packages/client-neutral-core/skills/software-development/managed"
             (repo / managed_root).mkdir(parents=True)
             (repo / managed_root / "SKILL.md").write_text("repo", encoding="utf-8")
             home.mkdir()
@@ -1650,7 +1650,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             temp = Path(raw)
             home = temp / "home"
             staging = temp / "staging"
-            retired = "skills/retired/SKILL.md"
+            retired = "packages/client-neutral-core/skills/retired/SKILL.md"
             (home / retired).parent.mkdir(parents=True)
             (home / retired).write_text("retired-user-visible", encoding="utf-8")
             (staging / "config.yaml").parent.mkdir(parents=True)
@@ -2045,7 +2045,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_readme_never_extracts_credentials_from_auth_files(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertNotIn("json.load(open(r'~/.codex/auth.json'))", readme)
-        self.assertIn("skills/model-switch/SKILL.md", readme)
+        self.assertIn("packages/client-neutral-core/skills/model-switch/SKILL.md", readme)
 
     def test_readme_documents_the_complete_current_feature_surface(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -2128,7 +2128,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("结构检查不等于真实模型执行", readme)
 
     def test_project_definition_scope_is_global_workflow_enhancement(self) -> None:
-        definition = (ROOT / "docs/workflow/project-definition.md").read_text(
+        definition = (ROOT / "docs/current/workflow-assistance/workflow/project-definition.md").read_text(
             encoding="utf-8"
         )
         for marker in (
@@ -2253,7 +2253,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 module.resolve_live_codex_workspace(non_project, None)
 
     def test_windows_skill_does_not_bypass_provider_or_credential_boundaries(self) -> None:
-        skill = ROOT / "skills/software-development/windows-development-environment"
+        skill = ROOT / "packages/client-neutral-core/skills/software-development/windows-development-environment"
         body = (skill / "SKILL.md").read_text(encoding="utf-8")
         self.assertNotIn("hermes config set model.provider", body)
         self.assertNotIn('cp config/config.yaml "$HERMES_HOME/config.yaml"', body)
@@ -2276,7 +2276,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertFalse((skill / "references" / name).exists(), name)
 
     def test_sleep_mode_is_portable_and_enforces_durable_queue_boundaries(self) -> None:
-        skill = ROOT / "skills/software-development/sleep-mode/SKILL.md"
+        skill = ROOT / "packages/client-neutral-core/skills/software-development/sleep-mode/SKILL.md"
         self.assertTrue(skill.exists())
         body = skill.read_text(encoding="utf-8")
         for marker in (
@@ -2301,8 +2301,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_project_data_boundary_is_deployable_and_fail_closed(self) -> None:
         helper = ROOT / "bin/hermes-project-data.py"
-        skill = ROOT / "skills/software-development/project-data-boundary/SKILL.md"
-        doc = ROOT / "docs/workflow/project-data-boundary.md"
+        skill = ROOT / "packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md"
+        doc = ROOT / "docs/current/workflow-assistance/workflow/project-data-boundary.md"
         self.assertTrue(helper.exists())
         self.assertTrue(skill.exists())
         self.assertTrue(doc.exists())
@@ -2320,7 +2320,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_context_pack_generator_is_project_local_and_secret_redacting(self) -> None:
         script = ROOT / "packages/client-neutral-core/scripts/build_context_pack.py"
-        doc = ROOT / "docs/workflow/context-pack.md"
+        doc = ROOT / "docs/current/workflow-assistance/workflow/context-pack.md"
         self.assertTrue(script.exists())
         self.assertTrue(doc.exists())
 
@@ -2427,8 +2427,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_quality_gate_runner_is_canonical_and_just_is_optional(self) -> None:
         runner = ROOT / "services/orchestration/run_quality_gate.py"
         justfile = ROOT / "Justfile"
-        doc = ROOT / "docs/workflow/local-quality-gates.md"
-        workflow = ROOT / "docs/workflow/examples/governance.yml.example"
+        doc = ROOT / "docs/current/workflow-assistance/workflow/local-quality-gates.md"
+        workflow = ROOT / "docs/current/workflow-assistance/workflow/examples/governance.yml.example"
         self.assertTrue(runner.exists())
         self.assertTrue(justfile.exists())
         self.assertTrue(doc.exists())
@@ -2673,7 +2673,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertEqual(missing, [], skill.relative_to(ROOT).as_posix())
 
     def test_codex_skill_matches_current_noninteractive_boundary(self) -> None:
-        body = (ROOT / "skills/autonomous-ai-agents/codex/SKILL.md").read_text(
+        body = (ROOT / "packages/client-neutral-core/skills/autonomous-ai-agents/codex/SKILL.md").read_text(
             encoding="utf-8"
         )
         self.assertIn("`codex exec`, `codex review`", body)
@@ -2685,7 +2685,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("C:/Users/", body)
 
     def test_review_alias_has_no_second_commit_or_autofix_pipeline(self) -> None:
-        body = (ROOT / "skills/software-development/requesting-code-review/SKILL.md").read_text(
+        body = (ROOT / "packages/client-neutral-core/skills/software-development/requesting-code-review/SKILL.md").read_text(
             encoding="utf-8"
         )
         self.assertIn("agent-workflow-fortress", body)
@@ -2699,7 +2699,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             ROOT / "config/config.yaml",
             ROOT / "integrations/executors/hermes/switch_model.py",
             ROOT / "integrations/executors/hermes/hermes_workflow_doctor.py",
-            ROOT / "skills/model-switch/SKILL.md",
+            ROOT / "packages/client-neutral-core/skills/model-switch/SKILL.md",
         ]
         config = yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))
         switcher = (ROOT / "integrations/executors/hermes/switch_model.py").read_text(encoding="utf-8")
@@ -2712,28 +2712,28 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("from switch_model import DEEPSEEK_MODEL, GPT_MODEL", doctor)
         self.assertNotIn('os.environ.get("HERMES_GPT_MODEL", "gpt-5.6-sol")', switcher)
         self.assertIn("--live", switcher)
-        refs = ROOT / "skills/model-switch/references"
+        refs = ROOT / "packages/client-neutral-core/skills/model-switch/references"
         self.assertFalse((refs / "cc-switch-codex-hermes.md").exists())
         self.assertFalse((refs / "oauth-credential-sync.md").exists())
-        fortress_ref = ROOT / "skills/software-development/agent-workflow-fortress/references/hermes-provider-mcp-workflow.md"
+        fortress_ref = ROOT / "packages/client-neutral-core/skills/software-development/agent-workflow-fortress/references/hermes-provider-mcp-workflow.md"
         self.assertFalse(fortress_ref.exists())
 
     def test_gpt_oauth_switch_does_not_require_cc_switch_proxy(self) -> None:
         switcher = (ROOT / "integrations/executors/hermes/switch_model.py").read_text(encoding="utf-8")
-        skill = (ROOT / "skills/model-switch/SKILL.md").read_text(encoding="utf-8")
+        skill = (ROOT / "packages/client-neutral-core/skills/model-switch/SKILL.md").read_text(encoding="utf-8")
         self.assertIn("codex_auth_present", switcher)
         self.assertNotIn("CC Switch proxy 127.0.0.1:7890 is not open", switcher)
         self.assertIn("不能因该端口关闭而阻断", skill)
 
     def test_windows_skill_requires_explicit_interpreter_selection(self) -> None:
-        skill = (ROOT / "skills/software-development/windows-development-environment/SKILL.md").read_text(
+        skill = (ROOT / "packages/client-neutral-core/skills/software-development/windows-development-environment/SKILL.md").read_text(
             encoding="utf-8"
         )
         self.assertIn("Do not assume `python` and `python3` resolve to the same interpreter.", skill)
         self.assertIn("Hermes workflow scripts use `python`", skill)
         legacy_deployment = (
             ROOT
-            / "skills/software-development/windows-development-environment/references"
+            / "packages/client-neutral-core/skills/software-development/windows-development-environment/references"
             / "hermes-deployment-pack-structure.md"
         ).read_text(encoding="utf-8")
         self.assertIn("routing-neutral", legacy_deployment)
@@ -2742,11 +2742,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_kimi_retired_and_model_switch_contract_kept(self) -> None:
         switcher = (ROOT / "integrations/executors/hermes/switch_model.py").read_text(encoding="utf-8")
-        skill = (ROOT / "skills/model-switch/SKILL.md").read_text(encoding="utf-8")
-        lanes = (ROOT / "skills/model-switch/references/current-model-lanes.md").read_text(
+        skill = (ROOT / "packages/client-neutral-core/skills/model-switch/SKILL.md").read_text(encoding="utf-8")
+        lanes = (ROOT / "packages/client-neutral-core/skills/model-switch/references/current-model-lanes.md").read_text(
             encoding="utf-8"
         )
-        latency = (ROOT / "skills/model-switch/references/latency-tuning.md").read_text(
+        latency = (ROOT / "packages/client-neutral-core/skills/model-switch/references/latency-tuning.md").read_text(
             encoding="utf-8"
         )
 
@@ -2783,7 +2783,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("explicitly selected", latency)
 
     def test_external_harness_absorption_is_model_and_paid_api_neutral(self) -> None:
-        fortress = ROOT / "skills/software-development/agent-workflow-fortress"
+        fortress = ROOT / "packages/client-neutral-core/skills/software-development/agent-workflow-fortress"
         reference = fortress / "references/free-local-agent-harness-absorption.md"
         template = ROOT / "templates/task-tickets/model-neutral-agent-task.md"
         self.assertTrue(reference.exists())
@@ -2890,7 +2890,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_agent_behavior_eval_template_is_safe_and_model_neutral(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        doc_path = ROOT / "docs/workflow/agent-evaluation.md"
+        doc_path = ROOT / "docs/current/workflow-assistance/workflow/agent-evaluation.md"
         template_path = ROOT / "templates/evals/agent-behavior-smoke.yaml"
         absorption = (ROOT / "docs/absorption/open-source-workflow-absorption.md").read_text(
             encoding="utf-8"
@@ -2946,7 +2946,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_ui_skin_absorption_pack_is_lightweight_and_runtime_neutral(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        doc_path = ROOT / "docs/workflow/ui-skin-system.md"
+        doc_path = ROOT / "docs/current/workflow-assistance/workflow/ui-skin-system.md"
         presets_path = ROOT / "templates/ui/skin-presets.yaml"
         patterns_path = ROOT / "templates/ui/agent-chat-ui-patterns.md"
         checklist_path = ROOT / "templates/ui/terminal-theme-checklist.md"
@@ -2955,11 +2955,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
             encoding="utf-8"
         )
         skill = (
-            ROOT / "skills/software-development/agent-workflow-fortress/SKILL.md"
+            ROOT / "packages/client-neutral-core/skills/software-development/agent-workflow-fortress/SKILL.md"
         ).read_text(encoding="utf-8")
         reference = (
             ROOT
-            / "skills/software-development/agent-workflow-fortress/references/ui-skin-absorption.md"
+            / "packages/client-neutral-core/skills/software-development/agent-workflow-fortress/references/ui-skin-absorption.md"
         ).read_text(encoding="utf-8")
 
         for path in (doc_path, presets_path, patterns_path, checklist_path, terminal_path):

@@ -421,7 +421,10 @@ def load_managed_skill_roots(repo: Path) -> tuple[str, ...]:
         if not isinstance(raw, str):
             raise ValueError("owned_asset_roots entries must be strings")
         relative = Path(raw)
-        if relative.is_absolute() or ".." in relative.parts or relative.parts[:1] != ("skills",):
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ValueError(f"invalid managed skill root: {raw}")
+        # Skills relocated to packages/client-neutral-core/skills (WL-DIR migration).
+        if relative.parts[:4] != ("packages", "client-neutral-core", "skills"):
             raise ValueError(f"invalid managed skill root: {raw}")
         value = relative.as_posix()
         if value in normalized:

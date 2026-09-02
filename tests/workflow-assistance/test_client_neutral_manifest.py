@@ -33,7 +33,7 @@ class ClientNeutralManifestTests(unittest.TestCase):
             self.assertIn("模型网关", document)
 
     def test_manifest_declares_client_neutral_product_and_first_class_adapters(self) -> None:
-        manifest = yaml.safe_load((ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8"))
+        manifest = yaml.safe_load((ROOT / "packages/client-neutral-core/workflow-manifest.yaml").read_text(encoding="utf-8"))
         self.assertEqual(manifest["product"]["architecture"], "client-neutral")
         self.assertIn("agent", manifest["product"]["non_goals"])
         self.assertIn("chat", manifest["product"]["non_goals"])
@@ -54,7 +54,7 @@ class ClientNeutralManifestTests(unittest.TestCase):
         self.assertEqual(manifest["adapters"]["interface"], ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"])
 
     def test_manifest_registers_the_six_core_schemas_and_instance_controls(self) -> None:
-        manifest = yaml.safe_load((ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8"))
+        manifest = yaml.safe_load((ROOT / "packages/client-neutral-core/workflow-manifest.yaml").read_text(encoding="utf-8"))
         contracts = manifest["contracts"]
         self.assertEqual(contracts["schema_directory"], "schemas/workflow")
         self.assertEqual(len(contracts["schemas"]), 19)
@@ -66,7 +66,7 @@ class ClientNeutralManifestTests(unittest.TestCase):
         env.pop("HERMES_HOME", None)
         env["PYTHONIOENCODING"] = "utf-8"
         result = subprocess.run(
-            [sys.executable, str(SCRIPT), "--manifest", str(ROOT / "workflow-manifest.yaml")],
+            [sys.executable, str(SCRIPT), "--manifest", str(ROOT / "packages/client-neutral-core/workflow-manifest.yaml")],
             cwd=ROOT,
             env=env,
             text=True,
@@ -82,7 +82,7 @@ class ClientNeutralManifestTests(unittest.TestCase):
         module = load_module()
         with tempfile.TemporaryDirectory() as raw:
             path = Path(raw) / "manifest.yaml"
-            data = yaml.safe_load((ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8"))
+            data = yaml.safe_load((ROOT / "packages/client-neutral-core/workflow-manifest.yaml").read_text(encoding="utf-8"))
             data["adapters"]["interface"] = ["detect"]
             path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "interface"):

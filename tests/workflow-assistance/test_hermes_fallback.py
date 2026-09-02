@@ -21,7 +21,7 @@ class HermesFallbackTests(unittest.TestCase):
     def test_registry_ledger_and_observer_are_readable_without_hermes_home(self):
         previous = os.environ.pop("HERMES_HOME", None)
         try:
-            manifest = (ROOT / "workflow-manifest.yaml").read_text(encoding="utf-8")
+            manifest = (ROOT / "packages/client-neutral-core/workflow-manifest.yaml").read_text(encoding="utf-8")
             self.assertIn("client_neutral", manifest)
             ledger_module = load("task_ledger_fallback", ROOT / "packages/client-neutral-core/scripts/task_ledger.py")
             observer_module = load("observer_event_fallback", ROOT / "packages/client-neutral-core/scripts/observer_event.py")
