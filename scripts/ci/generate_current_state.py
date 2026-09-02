@@ -96,7 +96,6 @@ def _source_files(root: Path) -> list[tuple[str, Path]]:
         if not path.is_file():
             raise ValueError(f"canonical source missing: {relative}")
         paths[relative] = path
-    workflow_root = root / "packages/client-neutral-core"
     provenance = _read_yaml(root, "config/skill-provenance.yaml")
     for entry in provenance.get("entries", []):
         if not isinstance(entry, dict):
@@ -104,10 +103,10 @@ def _source_files(root: Path) -> list[tuple[str, Path]]:
         relative = entry.get("source")
         if not isinstance(relative, str):
             raise ValueError("skill provenance source must be a string")
-        path = workflow_root / relative
+        path = root / relative
         if not path.is_file():
             raise ValueError(f"skill source missing: {relative}")
-        paths[f"packages/client-neutral-core/{relative}"] = path
+        paths[relative] = path
     return sorted(paths.items())
 
 
@@ -239,7 +238,6 @@ def build_state(
     if not isinstance(skills, list):
         raise ValueError("skill provenance entries must be a list")
     skill_items = []
-    workflow_root = root / "packages/client-neutral-core"
     for entry in skills:
         if not isinstance(entry, dict):
             raise ValueError("skill provenance entry must be a mapping")
@@ -249,7 +247,7 @@ def build_state(
                 "name": str(entry["name"]),
                 "source": source,
                 "version": str(entry.get("version", "unknown")),
-                "source_sha256": sha256_bytes(_canonical_bytes(workflow_root / source)),
+                "source_sha256": sha256_bytes(_canonical_bytes(root / source)),
                 "trust": str(entry.get("trust", "unknown")),
                 "enabled": bool(entry.get("enabled", False)),
                 "live_readback": "not-run",
