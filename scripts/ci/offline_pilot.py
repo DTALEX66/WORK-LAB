@@ -15,6 +15,8 @@ WF = ROOT / "packages" / "client-neutral-core" / "scripts"
 OBS = ROOT / "apps" / "observer" / "scripts"
 sys.path.insert(0, str(WF))
 sys.path.insert(0, str(OBS))
+sys.path.insert(0, str(ROOT / "integrations" / "executors" / "codex"))
+sys.path.insert(0, str(ROOT / "services" / "receipts"))
 
 from acp_adapter import AcpAdapter  # noqa: E402
 from task_ledger_replay import run_scenario  # noqa: E402

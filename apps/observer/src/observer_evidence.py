@@ -85,7 +85,7 @@ def token_usage_events(summaries: Iterable[dict[str, Any]]) -> list[dict[str, An
             "contentDigest": digest,
             "coverage": "full",
             "quality": "source-exact",
-            "usage": dict(summary),
+            "usage": {**dict(summary), "observation_state": "observed"},
         }
         events.append(validate_event(event))
     return events

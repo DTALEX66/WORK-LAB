@@ -9,6 +9,8 @@ MODULE_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = MODULE_ROOT.parents[1]
 sys.path.insert(0, str(MODULE_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "packages" / "client-neutral-core" / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "services" / "orchestration"))
+sys.path.insert(0, str(REPO_ROOT / "apps" / "observer" / "scripts"))
 
 from canonical_store import CanonicalStore  # noqa: E402
 from observer_runtime import ObserverInputError  # noqa: E402
