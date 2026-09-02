@@ -147,21 +147,21 @@ def run_python(args: list[str], *, env_updates: dict[str, str] | None = None) ->
 
 
 def tracked_python_files() -> list[str]:
-    roots = [ROOT / "bin", ROOT / "scripts" / "workflow", ROOT / "scripts" / "security", ROOT / "tests"]
+    roots = [ROOT / "bin", ROOT / "packages" / "client-neutral-core" / "scripts", ROOT / "scripts" / "security", ROOT / "tests" / "workflow-assistance"]
     return [path.relative_to(ROOT).as_posix() for root in roots for path in sorted(root.glob("*.py"))]
 
 
 def governance_test_files() -> list[str]:
     return [
         path.relative_to(ROOT).as_posix()
-        for path in sorted((ROOT / "tests").glob("test_*.py"))
+        for path in sorted((ROOT / "tests" / "workflow-assistance").glob("test_*.py"))
         if path.name not in RETIRED_ORDINARY_TESTS
     ]
 
 
 def gate_governance() -> int:
     modules = [Path(path).stem for path in governance_test_files()]
-    pythonpath = str(ROOT / "tests")
+    pythonpath = str(ROOT / "tests" / "workflow-assistance")
     existing = os.environ.get("PYTHONPATH")
     if existing:
         pythonpath += os.pathsep + existing
@@ -178,10 +178,10 @@ def gate_compile() -> int:
 def gate_security() -> int:
     return run_python(
         [
-            "scripts/security/scan_agent_rules.py",
-            "templates",
-            "skills",
-            "codex-assets",
+            "packages/client-neutral-core/scripts/security/scan_agent_rules.py",
+            "packages/client-neutral-core/templates",
+            "packages/client-neutral-core/skills",
+            "integrations/executors/codex",
             "docs",
             "scripts",
             "README.md",
@@ -192,7 +192,7 @@ def gate_security() -> int:
 def gate_skill_provenance() -> int:
     return run_python(
         [
-            "scripts/security/check_skill_provenance.py",
+            "packages/client-neutral-core/scripts/security/check_skill_provenance.py",
             "--manifest",
             "config/skill-provenance.yaml",
         ]
@@ -200,29 +200,29 @@ def gate_skill_provenance() -> int:
 
 
 def gate_context_pack() -> int:
-    return run_python(["scripts/workflow/build_context_pack.py", "--max-chars", "30000"])
+    return run_python(["packages/client-neutral-core/scripts/build_context_pack.py", "--max-chars", "30000"])
 
 
 def gate_portable_install() -> int:
-    return run_python(["scripts/workflow/verify_portable_install.py"])
+    return run_python(["packages/client-neutral-core/scripts/verify_portable_install.py"])
 
 
 def gate_client_neutral_manifest() -> int:
-    return run_python(["scripts/workflow/verify_client_neutral_manifest.py"])
+    return run_python(["packages/client-neutral-core/scripts/verify_client_neutral_manifest.py"])
 
 
 def gate_core_schemas() -> int:
-    return run_python(["scripts/workflow/verify_core_schemas.py", "--schema-dir", "schemas/workflow"])
+    return run_python(["packages/client-neutral-core/scripts/verify_core_schemas.py", "--schema-dir", "packages/contracts/schemas/workflow"])
 
 
 def gate_adapter_registry() -> int:
     return run_python(
         [
-            "scripts/workflow/verify_adapter_registry.py",
+            "packages/client-neutral-core/scripts/verify_adapter_registry.py",
             "--registry",
             "config/adapter-registry.json",
             "--schema",
-            "schemas/workflow/adapter-registry.schema.json",
+            "packages/contracts/schemas/workflow/adapter-registry.schema.json",
             "--root",
             ".",
         ]
@@ -231,79 +231,79 @@ def gate_adapter_registry() -> int:
 
 def gate_capability_matrix() -> int:
     """WL3-100: capability-matrix.json stays consistent with adapter-registry.json."""
-    return run_python(["scripts/workflow/verify_capability_matrix.py"])
+    return run_python(["packages/client-neutral-core/scripts/verify_capability_matrix.py"])
 
 
 def gate_context_control_plane() -> int:
     """Context Control Plane: stable prefix, cache truth, drift guard tests."""
-    return run_python(["tests/test_context_control_plane.py"])
+    return run_python(["tests/workflow-assistance/test_context_control_plane.py"])
 
 
 def gate_external_libraries_index() -> int:
     """External libraries index: JSON valid + sharedRoots resolve + assets present."""
-    return run_python(["scripts/workflow/verify_external_libraries_index.py"])
+    return run_python(["packages/client-neutral-core/scripts/verify_external_libraries_index.py"])
 
 
 def gate_github_delivery() -> int:
     """GitHub delivery accelerator: upload/review contracts (offline tests)."""
-    return run_python(["tests/test_github_delivery.py"])
+    return run_python(["tests/workflow-assistance/test_github_delivery.py"])
 
 
 def gate_adapter_conformance() -> int:
-    return run_python(["tests/test_adapter_conformance.py"])
+    return run_python(["tests/workflow-assistance/test_adapter_conformance.py"])
 
 
 def gate_acp_conformance() -> int:
     """NX-200: ACP protocol/capability conformance + Qwen Code pilot probe."""
-    code = run_python(["scripts/workflow/verify_acp_conformance.py"])
+    code = run_python(["packages/client-neutral-core/scripts/verify_acp_conformance.py"])
     if code != 0:
         return code
-    return run_python(["tests/test_acp_adapter.py"])
+    return run_python(["tests/workflow-assistance/test_acp_adapter.py"])
 
 
 def gate_otel_mapping() -> int:
     """NX-300: OTel/OpenInference semantic mapping + privacy negative control."""
-    code = run_python(["scripts/workflow/verify_otel_mapping.py"])
+    code = run_python(["packages/client-neutral-core/scripts/verify_otel_mapping.py"])
     if code != 0:
         return code
-    return run_python(["tests/test_otel_mapping.py"])
+    return run_python(["tests/workflow-assistance/test_otel_mapping.py"])
 
 
 def gate_usage_ingestion() -> int:
     """NX-310: cross-agent usage ingestion + coverage matrix."""
-    code = run_python(["scripts/workflow/verify_usage_ingestion.py"])
+    code = run_python(["packages/client-neutral-core/scripts/verify_usage_ingestion.py"])
     if code != 0:
         return code
-    return run_python(["tests/test_usage_ingestion.py"])
+    return run_python(["tests/workflow-assistance/test_usage_ingestion.py"])
 
 
 def gate_memory_contamination() -> int:
     """NX-400: memory contamination adversarial negative controls."""
-    code = run_python(["scripts/workflow/verify_memory_contamination.py"])
+    code = run_python(["packages/client-neutral-core/scripts/verify_memory_contamination.py"])
     if code != 0:
         return code
-    return run_python(["tests/test_memory_contamination.py"])
+    return run_python(["tests/workflow-assistance/test_memory_contamination.py"])
 
 
 def gate_task_ledger_replay() -> int:
     """NX-410: Task Ledger replay + side-effect consistency harness."""
-    code = run_python(["scripts/workflow/verify_task_ledger_replay.py"])
+    code = run_python(["packages/client-neutral-core/scripts/verify_task_ledger_replay.py"])
     if code != 0:
         return code
-    return run_python(["tests/test_task_ledger_replay.py"])
+    return run_python(["tests/workflow-assistance/test_task_ledger_replay.py"])
 
 
 def gate_portable_install_runtime() -> int:
     if not command_exists("hermes"):
         print("\n=== FAIL portable-install-runtime: hermes CLI not found; runtime compatibility is required ===")
         return 1
-    return run_python(["scripts/workflow/verify_portable_install.py", "--runtime"])
+    return run_python(["packages/client-neutral-core/scripts/verify_portable_install.py", "--runtime"])
 
 
 def gate_provider_inventory() -> int:
     return run_python(
         [
-            "scripts/workflow/provider_health.py",
+            "packages/client-neutral-core/scripts/provider_health.py",
             "--config",
             "config/config.yaml",
             "--output",
@@ -315,7 +315,7 @@ def gate_provider_inventory() -> int:
 def gate_mcp_audit() -> int:
     return run_python(
         [
-            "scripts/workflow/mcp_candidate_audit.py",
+            "packages/client-neutral-core/scripts/mcp_candidate_audit.py",
             "--write-template",
             ".hermes/task-artifacts/mcp-candidate-template.yaml",
         ]
@@ -333,42 +333,42 @@ def gate_shell() -> int:
 def gate_runtime_convergence() -> int:
     """WL3-400/410/500/510/600: canonical store, durable worker, collectors, SSE."""
     tests = (
-        "tests/test_canonical_store.py",
-        "tests/test_canonical_store_v2.py",
-        "tests/test_durable_worker.py",
-        "tests/test_project_registry.py",
-        "tests/test_collectors.py",
-        "tests/test_sse_hub.py",
-        "tests/test_snapshot_sse_live.py",
-        "tests/test_platform_discovery.py",
-        "tests/test_skill_package_digest.py",
-        "tests/test_config_ownership.py",
-        "tests/test_config_coordinator.py",
-        "tests/test_memory_governance.py",
-        "tests/test_skill_plugin_scan.py",
-        "tests/test_controlled_repro.py",
-        "tests/test_model_lane_billing.py",
-        "tests/test_real_adapters.py",
-        "tests/test_tiered_adapters.py",
-        "tests/test_swap_and_size.py",
-        "tests/test_growth_watcher_collector.py",
-        "tests/test_active_projects.py",
-        "tests/test_product_project.py",
-        "tests/test_project_identity_resolver.py",
-        "tests/test_execution_anchor.py",
-        "tests/test_project_candidate_discovery.py",
-        "tests/test_execution_evidence.py",
-        "tests/test_collector_scheduler.py",
-        "tests/test_adapter_sdk.py",
-        "tests/test_agent_adapters.py",
-        "tests/test_fallback_collectors.py",
-        "tests/test_evidence_aggregator.py",
-        "tests/test_wlgm_privacy.py",
+        "tests/workflow-assistance/test_canonical_store.py",
+        "tests/workflow-assistance/test_canonical_store_v2.py",
+        "tests/workflow-assistance/test_durable_worker.py",
+        "tests/workflow-assistance/test_project_registry.py",
+        "tests/workflow-assistance/test_collectors.py",
+        "tests/workflow-assistance/test_sse_hub.py",
+        "tests/workflow-assistance/test_snapshot_sse_live.py",
+        "tests/workflow-assistance/test_platform_discovery.py",
+        "tests/workflow-assistance/test_skill_package_digest.py",
+        "tests/workflow-assistance/test_config_ownership.py",
+        "tests/workflow-assistance/test_config_coordinator.py",
+        "tests/workflow-assistance/test_memory_governance.py",
+        "tests/workflow-assistance/test_skill_plugin_scan.py",
+        "tests/workflow-assistance/test_controlled_repro.py",
+        "tests/workflow-assistance/test_model_lane_billing.py",
+        "tests/workflow-assistance/test_real_adapters.py",
+        "tests/workflow-assistance/test_tiered_adapters.py",
+        "tests/workflow-assistance/test_swap_and_size.py",
+        "tests/workflow-assistance/test_growth_watcher_collector.py",
+        "tests/workflow-assistance/test_active_projects.py",
+        "tests/workflow-assistance/test_product_project.py",
+        "tests/workflow-assistance/test_project_identity_resolver.py",
+        "tests/workflow-assistance/test_execution_anchor.py",
+        "tests/workflow-assistance/test_project_candidate_discovery.py",
+        "tests/workflow-assistance/test_execution_evidence.py",
+        "tests/workflow-assistance/test_collector_scheduler.py",
+        "tests/workflow-assistance/test_adapter_sdk.py",
+        "tests/workflow-assistance/test_agent_adapters.py",
+        "tests/workflow-assistance/test_fallback_collectors.py",
+        "tests/workflow-assistance/test_evidence_aggregator.py",
+        "tests/workflow-assistance/test_wlgm_privacy.py",
     )
     pythonpath = os.pathsep.join(
         [
-            str(ROOT / "tests"),
-            str(ROOT / "scripts" / "workflow"),
+            str(ROOT / "tests" / "workflow-assistance"),
+            str(ROOT / "packages" / "client-neutral-core" / "scripts"),
         ]
     )
     existing = os.environ.get("PYTHONPATH")
@@ -382,7 +382,7 @@ def gate_runtime_convergence() -> int:
         return code
     # GATE-RUNTIME-CONVERGENCE acceptance (9/10 locally; #9 Tauri PENDING by toolchain).
     return run_python(
-        ["scripts/workflow/verify_gate_runtime_convergence.py"],
+        ["packages/client-neutral-core/scripts/verify_gate_runtime_convergence.py"],
         env_updates={"PYTHONPATH": pythonpath},
     )
 
@@ -404,7 +404,7 @@ def gate_powershell() -> int:
 
 def _run_wlgm_tests(test_names: tuple[str, ...]) -> int:
     pythonpath = os.pathsep.join(
-        [str(ROOT / "tests"), str(ROOT / "scripts" / "workflow")]
+        [str(ROOT / "tests" / "workflow-assistance"), str(ROOT / "packages" / "client-neutral-core" / "scripts")]
     )
     existing = os.environ.get("PYTHONPATH")
     if existing:
@@ -417,57 +417,57 @@ def _run_wlgm_tests(test_names: tuple[str, ...]) -> int:
 
 def gate_project_identity_contract() -> int:
     """§7: product project identity + resolver contracts."""
-    return _run_wlgm_tests(("tests/test_product_project.py", "tests/test_project_identity_resolver.py"))
+    return _run_wlgm_tests(("tests/workflow-assistance/test_product_project.py", "tests/workflow-assistance/test_project_identity_resolver.py"))
 
 
 def gate_agent_adapter_readonly_contract() -> int:
     """§7: adapters are read-only; missing capabilities are explicit."""
-    return _run_wlgm_tests(("tests/test_adapter_sdk.py", "tests/test_agent_adapters.py"))
+    return _run_wlgm_tests(("tests/workflow-assistance/test_adapter_sdk.py", "tests/workflow-assistance/test_agent_adapters.py"))
 
 
 def gate_execution_state_machine() -> int:
     """§7: execution state machine has no illegal transitions."""
-    return _run_wlgm_tests(("tests/test_evidence_aggregator.py",))
+    return _run_wlgm_tests(("tests/workflow-assistance/test_evidence_aggregator.py",))
 
 
 def gate_collector_noninterference() -> int:
     """§7: collectors never block the writer; bounded, breakered."""
-    return _run_wlgm_tests(("tests/test_collector_scheduler.py", "tests/test_fallback_collectors.py"))
+    return _run_wlgm_tests(("tests/workflow-assistance/test_collector_scheduler.py", "tests/workflow-assistance/test_fallback_collectors.py"))
 
 
 def gate_canonical_single_writer() -> int:
     """§7: canonical SQLite is the single writer; migrations recoverable."""
-    return _run_wlgm_tests(("tests/test_canonical_store_v2.py",))
+    return _run_wlgm_tests(("tests/workflow-assistance/test_canonical_store_v2.py",))
 
 
 def gate_observer_no_business_write() -> int:
     """§7: observer surface has no business-write path."""
-    return _run_wlgm_tests(("tests/test_wlgm_privacy.py",))
+    return _run_wlgm_tests(("tests/workflow-assistance/test_wlgm_privacy.py",))
 
 
 def gate_snapshot_schema_v3() -> int:
     """§7: snapshot v3 schema validation + projection contract."""
-    return _run_wlgm_tests(("tests/test_snapshot_validator.py", "tests/test_snapshot_sse_live.py"))
+    return _run_wlgm_tests(("tests/workflow-assistance/test_snapshot_validator.py", "tests/workflow-assistance/test_snapshot_sse_live.py"))
 
 
 def gate_sse_browser_reconnect() -> int:
     """§7: persistent SSE revision + reconnect recovery semantics."""
-    return _run_wlgm_tests(("tests/test_snapshot_sse_live.py",))
+    return _run_wlgm_tests(("tests/workflow-assistance/test_snapshot_sse_live.py",))
 
 
 def gate_field_quality_no_fabrication() -> int:
     """§7: unknown/unsupported never fabricated as 0/LIVE/exact."""
-    return _run_wlgm_tests(("tests/test_wlgm_privacy.py", "tests/test_evidence_aggregator.py"))
+    return _run_wlgm_tests(("tests/workflow-assistance/test_wlgm_privacy.py", "tests/workflow-assistance/test_evidence_aggregator.py"))
 
 
 def gate_privacy_redaction() -> int:
     """§7: credentials/prompt bodies never enter canonical or snapshot."""
-    return _run_wlgm_tests(("tests/test_execution_evidence.py", "tests/test_wlgm_privacy.py"))
+    return _run_wlgm_tests(("tests/workflow-assistance/test_execution_evidence.py", "tests/workflow-assistance/test_wlgm_privacy.py"))
 
 
 def gate_windows_project_resolution() -> int:
     """§7: Windows path case/slash containment + space-path resolution."""
-    return _run_wlgm_tests(("tests/test_project_identity_resolver.py", "tests/test_project_terminal_guard.py"))
+    return _run_wlgm_tests(("tests/workflow-assistance/test_project_identity_resolver.py", "tests/workflow-assistance/test_project_terminal_guard.py"))
 
 
 def gate_tauri_readonly_shell() -> int:
@@ -519,8 +519,8 @@ def gate_work_lab_os_canary() -> int:
     P0-7: the canary runner's exit code IS the gate verdict — a failing
     self-canary must fail the gate (no more print-FAIL-but-exit-0).
     """
-    return run_python([str(ROOT / "scripts" / "workflow" / "canary_runner.py")],
-                      env_updates={"PYTHONPATH": str(ROOT / "scripts" / "workflow")})
+    return run_python([str(ROOT / "packages" / "client-neutral-core" / "scripts" / "canary_runner.py")],
+                      env_updates={"PYTHONPATH": str(ROOT / "packages" / "client-neutral-core" / "scripts")})
 
 
 def gate_exact_sha_ci() -> int:
@@ -712,43 +712,43 @@ def run_gate_sequence(names: tuple[str, ...]) -> int:
 # consumes this table). Small edits run only the gates whose path scope they
 # touch; the full suite stays one command away.
 GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
-    "governance": ("tests/", "packages/client-neutral-core/scripts/", "config/"),
+    "governance": ("tests/workflow-assistance/", "packages/client-neutral-core/scripts/", "config/"),
     "compile": ("scripts/", "packages/client-neutral-core/scripts/", "apps/observer/src/"),
-    "skill-provenance": ("skills/", "codex-assets/skills/", "config/skill-provenance.yaml"),
-    "security": ("config/", "codex-assets/", "README.md", "docs/"),
-    "context-pack": ("scripts/workflow/build_context_pack.py",),
+    "skill-provenance": ("packages/client-neutral-core/skills/", "integrations/executors/codex/skills/", "config/skill-provenance.yaml"),
+    "security": ("config/", "integrations/executors/codex/", "README.md", "docs/"),
+    "context-pack": ("packages/client-neutral-core/scripts/build_context_pack.py",),
     "client-neutral-manifest": ("config/client-neutral-manifest.json",),
-    "core-schemas": ("schemas/", "config/"),
-    "adapter-registry": ("config/adapters.json", "scripts/workflow/adapter_registry.py"),
-    "capability-matrix": ("config/capability-matrix.json", "scripts/workflow/verify_capability_matrix.py"),
-    "context-control-plane": ("scripts/workflow/context_control_plane.py", "scripts/workflow/context_bundle.py", "scripts/workflow/context_drift_guard.py"),
-    "external-libraries-index": (".project/governance/external-libraries-index.json", "scripts/workflow/verify_external_libraries_index.py"),
-    "github-delivery": ("scripts/workflow/github_common.py", "scripts/workflow/github_upload_accelerator.py", "scripts/workflow/github_review_accelerator.py"),
-    "adapter-conformance": ("scripts/workflow/adapter_conformance.py", "tests/test_adapter_conformance.py"),
-    "acp-conformance": ("scripts/workflow/acp_adapter.py", "tests/test_acp_adapter.py"),
-    "otel-mapping": ("scripts/workflow/otel_mapper.py", "tests/test_otel_mapping.py"),
-    "usage-ingestion": ("scripts/workflow/usage_ingestion.py", "tests/test_usage_ingestion.py"),
-    "memory-contamination": ("scripts/workflow/memory_contamination.py",),
-    "task-ledger-replay": ("scripts/workflow/task_ledger_replay.py",),
-    "portable-install": ("scripts/workflow/verify_portable_install.py",),
+    "core-schemas": ("packages/contracts/schemas/", "config/"),
+    "adapter-registry": ("config/adapters.json", "packages/client-neutral-core/scripts/verify_adapter_registry.py"),
+    "capability-matrix": ("config/capability-matrix.json", "packages/client-neutral-core/scripts/verify_capability_matrix.py"),
+    "context-control-plane": ("packages/client-neutral-core/scripts/context_control_plane.py", "packages/client-neutral-core/scripts/context_bundle.py", "packages/client-neutral-core/scripts/context_drift_guard.py"),
+    "external-libraries-index": (".project/governance/external-libraries-index.json", "packages/client-neutral-core/scripts/verify_external_libraries_index.py"),
+    "github-delivery": ("packages/client-neutral-core/scripts/github_common.py", "packages/client-neutral-core/scripts/github_upload_accelerator.py", "packages/client-neutral-core/scripts/github_review_accelerator.py"),
+    "adapter-conformance": ("packages/client-neutral-core/scripts/adapter_conformance.py", "tests/workflow-assistance/test_adapter_conformance.py"),
+    "acp-conformance": ("integrations/executors/codex/acp_adapter.py", "tests/workflow-assistance/test_acp_adapter.py"),
+    "otel-mapping": ("services/receipts/otel_mapper.py", "tests/workflow-assistance/test_otel_mapping.py"),
+    "usage-ingestion": ("services/receipts/usage_ingestion.py", "tests/workflow-assistance/test_usage_ingestion.py"),
+    "memory-contamination": ("packages/client-neutral-core/scripts/memory_contamination.py",),
+    "task-ledger-replay": ("packages/client-neutral-core/scripts/task_ledger_replay.py",),
+    "portable-install": ("packages/client-neutral-core/scripts/verify_portable_install.py",),
     "provider-inventory": ("config/config.yaml",),
-    "mcp-audit": ("scripts/workflow/mcp_candidate_audit.py",),
+    "mcp-audit": ("packages/client-neutral-core/scripts/mcp_candidate_audit.py",),
     "shell": ("setup.sh",),
-    "runtime-convergence": ("scripts/workflow/canonical_store.py", "scripts/workflow/durable_worker.py", "scripts/workflow/collectors.py", "scripts/workflow/sse_hub.py", "tests/workflow-assistance/"),
+    "runtime-convergence": ("packages/client-neutral-core/scripts/canonical_store.py", "services/orchestration/durable_worker.py", "packages/client-neutral-core/scripts/collectors.py", "services/orchestration/sse_hub.py", "tests/workflow-assistance/"),
     "powershell": ("setup.ps1",),
-    "project-identity-contract": ("scripts/workflow/product_project.py", "scripts/workflow/project_identity_resolver.py", "tests/workflow-assistance/test_product_project.py", "tests/workflow-assistance/test_project_identity_resolver.py"),
-    "agent-adapter-readonly-contract": ("scripts/workflow/adapter_sdk.py", "scripts/workflow/hermes_adapter.py", "scripts/workflow/codex_adapter.py"),
-    "execution-state-machine": ("scripts/workflow/evidence_aggregator.py",),
-    "collector-noninterference": ("scripts/workflow/collector_scheduler.py", "scripts/workflow/process_collector.py", "scripts/workflow/git_collector.py"),
-    "canonical-single-writer": ("scripts/workflow/canonical_store.py", "tests/test_canonical_store_v2.py"),
-    "observer-no-business-write": ("scripts/workflow/execution_evidence.py", "apps/observer/web/", "tests/test_wlgm_privacy.py"),
-    "snapshot-schema-v3": ("scripts/workflow/snapshot_api.py", "scripts/workflow/snapshot_validator.py", "tests/test_snapshot_validator.py", "tests/test_snapshot_sse_live.py"),
-    "sse-browser-reconnect": ("scripts/workflow/sse_revision.py", "scripts/workflow/live_gate.py", "tests/test_snapshot_sse_live.py"),
-    "field-quality-no-fabrication": ("scripts/workflow/live_gate.py", "scripts/workflow/evidence_aggregator.py", "tests/test_evidence_aggregator.py"),
-    "privacy-redaction": ("scripts/workflow/execution_evidence.py", "scripts/workflow/canonical_store.py", "tests/test_execution_evidence.py", "tests/test_wlgm_privacy.py"),
-    "windows-project-resolution": ("scripts/workflow/project_identity_resolver.py", "bin/hermes-project-terminal-guard.py", "tests/test_project_identity_resolver.py", "tests/test_project_terminal_guard.py"),
-    "tauri-readonly-shell": ("apps/observer/src-tauri/", "scripts/workflow/sidecar_endpoint.py", "tests/test_sidecar_endpoint.py"),
-    "work-lab-os-canary": ("scripts/workflow/canary_runner.py",),
+    "project-identity-contract": ("packages/client-neutral-core/scripts/product_project.py", "packages/client-neutral-core/scripts/project_identity_resolver.py", "tests/workflow-assistance/test_product_project.py", "tests/workflow-assistance/test_project_identity_resolver.py"),
+    "agent-adapter-readonly-contract": ("packages/client-neutral-core/scripts/adapter_sdk.py", "integrations/executors/hermes/hermes_adapter.py", "integrations/executors/codex/codex_adapter.py"),
+    "execution-state-machine": ("services/receipts/evidence_aggregator.py",),
+    "collector-noninterference": ("services/orchestration/collector_scheduler.py", "packages/client-neutral-core/scripts/process_collector.py", "packages/client-neutral-core/scripts/git_collector.py"),
+    "canonical-single-writer": ("packages/client-neutral-core/scripts/canonical_store.py", "tests/workflow-assistance/test_canonical_store_v2.py"),
+    "observer-no-business-write": ("services/receipts/execution_evidence.py", "apps/observer/web/", "tests/workflow-assistance/test_wlgm_privacy.py"),
+    "snapshot-schema-v3": ("packages/client-neutral-core/scripts/snapshot_api.py", "packages/client-neutral-core/scripts/snapshot_validator.py", "tests/workflow-assistance/test_snapshot_validator.py", "tests/workflow-assistance/test_snapshot_sse_live.py"),
+    "sse-browser-reconnect": ("services/orchestration/sse_revision.py", "services/orchestration/live_gate.py", "tests/workflow-assistance/test_snapshot_sse_live.py"),
+    "field-quality-no-fabrication": ("services/orchestration/live_gate.py", "services/receipts/evidence_aggregator.py", "tests/workflow-assistance/test_evidence_aggregator.py"),
+    "privacy-redaction": ("services/receipts/execution_evidence.py", "packages/client-neutral-core/scripts/canonical_store.py", "tests/workflow-assistance/test_execution_evidence.py", "tests/workflow-assistance/test_wlgm_privacy.py"),
+    "windows-project-resolution": ("packages/client-neutral-core/scripts/project_identity_resolver.py", "bin/hermes-project-terminal-guard.py", "tests/workflow-assistance/test_project_identity_resolver.py", "tests/workflow-assistance/test_project_terminal_guard.py"),
+    "tauri-readonly-shell": ("apps/observer/src-tauri/", "services/orchestration/sidecar_endpoint.py", "tests/workflow-assistance/test_sidecar_endpoint.py"),
+    "work-lab-os-canary": ("services/orchestration/canary_runner.py",),
     "exact-sha-ci": (),
 }
 
