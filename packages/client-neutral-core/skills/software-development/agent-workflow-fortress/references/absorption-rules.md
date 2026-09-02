@@ -35,7 +35,7 @@ For Hermes Agent + CC Switch + Codex visual workflow polish, absorb Catppuccin/s
 
 ## Local quality gate absorption
 
-For Workflow-assistance-style portable packs, expose one canonical local gate command: `python scripts/workflow/run_quality_gate.py verify`. Optional wrappers like `Justfile` may call that runner, but do not make `just` a default dependency or install it from setup/CI. The runner should be cross-platform, use argument lists rather than `shell=True`, stop on first failing gate, and print `QUALITY_GATE_PASS` / `QUALITY_GATE_FAIL` markers. Shell and PowerShell parsing gates may skip when their tool is unavailable; on Windows, avoid the `C:\Windows\System32\bash.exe` WSL shim and prefer Git Bash / GNU bash. PowerShell should prefer `pwsh` and only fall back to `powershell.exe`.
+For Workflow-assistance-style portable packs, expose one canonical local gate command: `python services/orchestration/run_quality_gate.py verify`. Optional wrappers like `Justfile` may call that runner, but do not make `just` a default dependency or install it from setup/CI. The runner should be cross-platform, use argument lists rather than `shell=True`, stop on first failing gate, and print `QUALITY_GATE_PASS` / `QUALITY_GATE_FAIL` markers. Shell and PowerShell parsing gates may skip when their tool is unavailable; on Windows, avoid the `C:\Windows\System32\bash.exe` WSL shim and prefer Git Bash / GNU bash. PowerShell should prefer `pwsh` and only fall back to `powershell.exe`.
 
 ## Default-enable only if smoke-tested
 

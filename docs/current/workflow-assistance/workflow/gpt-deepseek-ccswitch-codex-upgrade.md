@@ -80,5 +80,5 @@ hermes mcp test context7
 2. 通过 `hermes-project-data.py --project . check/run` 锁定任务产物。
 3. 用 doctor 检查结构；需要证明执行时再用 `--live`。
 4. 编码写入在独立 worktree/单 writer 中完成；复审绑定 frozen tree。
-5. 运行 `python scripts/workflow/run_quality_gate.py verify`、相关测试和 `git diff --check`。
+5. 运行 `python services/orchestration/run_quality_gate.py verify`、相关测试和 `git diff --check`。
 6. 提交、推送，并以 exact SHA CI 作为最终门禁。

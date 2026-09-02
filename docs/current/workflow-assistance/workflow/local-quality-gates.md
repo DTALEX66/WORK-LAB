@@ -6,7 +6,7 @@ The optional `Justfile` is only a convenience wrapper; just is not a required de
 ## Canonical command
 
 ```bash
-python scripts/workflow/run_quality_gate.py verify
+python services/orchestration/run_quality_gate.py verify
 ```
 
 The runner first performs a fail-fast dependency preflight from
@@ -47,13 +47,13 @@ list only after every required gate passes as
 
 ## Individual gates
 
-Use `python scripts/workflow/run_quality_gate.py list` to discover the current
+Use `python services/orchestration/run_quality_gate.py list` to discover the current
 registry, then run a gate by name, for example:
 
 ```bash
-python scripts/workflow/run_quality_gate.py adapter-conformance
-python scripts/workflow/run_quality_gate.py runtime-convergence
-python scripts/workflow/run_quality_gate.py portable-install-runtime
+python services/orchestration/run_quality_gate.py adapter-conformance
+python services/orchestration/run_quality_gate.py runtime-convergence
+python services/orchestration/run_quality_gate.py portable-install-runtime
 ```
 
 ## Platform and data boundaries

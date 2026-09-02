@@ -26,7 +26,7 @@ def _run_local_gate(repo: str) -> dict:
         return {"applicable": False, "note": "local gate is WORK-LAB-specific"}
     try:
         r = subprocess.run(
-            ["python", str(WORKFLOW_MODULE / "scripts/workflow/run_quality_gate.py"), "verify"],
+            ["python", str(WORKFLOW_MODULE / "services/orchestration/run_quality_gate.py"), "verify"],
             capture_output=True, text=True, timeout=600,
         )
         out = r.stdout + r.stderr

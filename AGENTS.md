@@ -85,7 +85,7 @@ change task state, or write the Telemetry Ledger.
 When working through Codex, use the project-local workflow contract and exact
 module paths. Bounded writers own one checkout; parallel writers require separate
 worktrees. Prefer the canonical quality gate:
-`python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py verify`.
+`python 10-workflow/workflow-assistance/services/orchestration/run_quality_gate.py verify`.
 Keep Task Ledger and runtime evidence under `.project-local/runs/` and
 `.project-local/artifacts/`; do not treat local tests as exact-SHA CI or release
 evidence. Codex may prepare changes and readback evidence, but must not commit,

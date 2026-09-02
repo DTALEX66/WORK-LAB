@@ -165,7 +165,13 @@ def run_python(args: list[str], *, env_updates: dict[str, str] | None = None) ->
 
 
 def tracked_python_files() -> list[str]:
-    roots = [ROOT / "bin", ROOT / "packages" / "client-neutral-core" / "scripts", ROOT / "scripts" / "security", ROOT / "tests" / "workflow-assistance"]
+    roots = [
+        ROOT / "packages" / "client-neutral-core" / "bin",
+        ROOT / "packages" / "client-neutral-core" / "scripts",
+        ROOT / "services" / "orchestration",
+        ROOT / "scripts" / "security",
+        ROOT / "tests" / "workflow-assistance",
+    ]
     return [path.relative_to(ROOT).as_posix() for root in roots for path in sorted(root.glob("*.py"))]
 
 

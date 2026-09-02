@@ -58,6 +58,6 @@ python scripts/workflow/github_review_accelerator.py --repo DTALEX66/WORK-LAB --
 ## 5. 验证
 
 ```bash
-python scripts/workflow/run_quality_gate.py github-delivery   # 12 测试（离线）
-python scripts/workflow/run_quality_gate.py verify            # 37 gates
+python services/orchestration/run_quality_gate.py github-delivery   # 12 测试（离线）
+python services/orchestration/run_quality_gate.py verify            # 37 gates
 ```

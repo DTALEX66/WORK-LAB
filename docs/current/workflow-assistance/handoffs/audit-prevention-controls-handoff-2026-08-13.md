@@ -47,7 +47,7 @@ PYTHONDONTWRITEBYTECODE=1 python scripts/ci/verify_supply_chain.py
 PYTHONDONTWRITEBYTECODE=1 python scripts/ci/verify_error_ledger.py
 PYTHONDONTWRITEBYTECODE=1 python tests/ci/test_error_ledger.py
 PYTHONDONTWRITEBYTECODE=1 python scripts/ci/generate_current_state.py --check-current --root .
-PYTHONDONTWRITEBYTECODE=1 python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py verify
+PYTHONDONTWRITEBYTECODE=1 python 10-workflow/workflow-assistance/services/orchestration/run_quality_gate.py verify
 git diff --cached --check
 ```
 

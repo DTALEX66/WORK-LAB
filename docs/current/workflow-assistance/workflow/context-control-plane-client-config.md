@@ -53,4 +53,4 @@
 - L1 stable prefix：各客户端共享同一组装顺序（系统边界→工具schema→全局规则→项目规则→证据→tree/SHA→临时态）；
 - L2 缓存真值：DeepSeek hit/miss 仅 OBSERVED 时算率；Codex null 不伪 0；
 - L3 防漂移：压缩必保留 9 项（目标/非目标/paths/边界/SHA/失败/验收/回滚），缺一拒绝；
-- 验证：python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py context-control-plane
+- 验证：python 10-workflow/workflow-assistance/services/orchestration/run_quality_gate.py context-control-plane

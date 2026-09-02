@@ -2485,9 +2485,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertEqual(set(module.GATES), set(module.VERIFY_ORDER) | {"portable-install-runtime"})
         self.assertIn("services/orchestration/run_quality_gate.py", module.tracked_python_files())
-        self.assertIn("tests/test_workflow_governance.py", module.tracked_python_files())
-        self.assertIn("bin/hermes-project-data.py", module.tracked_python_files())
-        self.assertIn("bin/hermes-project-terminal-guard.py", module.tracked_python_files())
+        self.assertIn("tests/workflow-assistance/test_workflow_governance.py", module.tracked_python_files())
+        self.assertIn("packages/client-neutral-core/bin/hermes-project-data.py", module.tracked_python_files())
+        self.assertIn("packages/client-neutral-core/bin/hermes-project-terminal-guard.py", module.tracked_python_files())
 
         body = runner.read_text(encoding="utf-8")
         for marker in (
@@ -2544,7 +2544,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             ),
             2,
         )
-        for setup in ("setup.sh", "setup.ps1"):
+        for setup in ("scripts/setup-workflow.sh", "scripts/setup-workflow.ps1"):
             self.assertNotIn("just", (ROOT / setup).read_text(encoding="utf-8").lower())
 
         list_result = subprocess.run(
