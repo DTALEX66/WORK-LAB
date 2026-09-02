@@ -16,7 +16,7 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from context_lines import normalize_context_lines, render_context_lines
 
-DEFAULT_OUTPUT = Path(".hermes/task-artifacts/context-pack.md")
+DEFAULT_OUTPUT = Path(".project-local/artifacts/context-pack.md")
 MAX_SECTION_CHARS = 8000
 # Keep a new-session handoff inside the portable token policy default. Callers may
 # explicitly raise this up to the documented 30k hard ceiling for audits.

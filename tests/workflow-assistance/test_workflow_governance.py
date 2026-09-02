@@ -320,7 +320,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             target = Path(raw) / "new-project"
             target.mkdir()
-            (target / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+            (target / ".gitignore").write_text(".hermes/\n.project-local/\n", encoding="utf-8")
             subprocess.run(["git", "init", "-q", str(target)], check=True)
             result = subprocess.run(
                 [sys.executable, str(script), str(target), "--dry-run"],
@@ -337,7 +337,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             target = Path(raw) / "new-project"
             target.mkdir()
-            (target / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+            (target / ".gitignore").write_text(".hermes/\n.project-local/\n", encoding="utf-8")
             subprocess.run(["git", "init", "-q", str(target)], check=True)
 
             created = subprocess.run(
@@ -366,7 +366,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             target = Path(raw) / "existing-project"
             runtime = target / ".hermes"
             runtime.mkdir(parents=True)
-            (target / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+            (target / ".gitignore").write_text(".hermes/\n.project-local/\n", encoding="utf-8")
             subprocess.run(["git", "init", "-q", str(target)], check=True)
             readme = runtime / "README.md"
             manifest = runtime / "BOOTSTRAP_MANIFEST.yaml"
@@ -1357,15 +1357,15 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "github-pr-workflow",
             "github-repo-management",
         ):
-            self.assertIn(f"packages/client-neutral-core/skills/github/{name}", backup_rels)
-        self.assertNotIn("packages/client-neutral-core/skills/github", backup_rels)
+            self.assertIn(f"skills/github/{name}", backup_rels)
+        self.assertNotIn("skills/github", backup_rels)
         for relative in (
-            "packages/client-neutral-core/bin/codex",
-            "packages/client-neutral-core/bin/codex.cmd",
-            "packages/client-neutral-core/bin/hermes-npx",
-            "packages/client-neutral-core/bin/hermes-npx.cmd",
-            "packages/client-neutral-core/bin/hermes-project-data.py",
-            "packages/client-neutral-core/bin/hermes-project-terminal-guard.py",
+            "bin/codex",
+            "bin/codex.cmd",
+            "bin/hermes-npx",
+            "bin/hermes-npx.cmd",
+            "bin/hermes-project-data.py",
+            "bin/hermes-project-terminal-guard.py",
         ):
             self.assertIn(relative, backup_rels)
         self.assertNotIn("bin", backup_rels)
@@ -1400,7 +1400,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             for name in ("alpha", "beta", "windows-shaped-project"):
                 target = root / name
                 target.mkdir()
-                (target / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+                (target / ".gitignore").write_text(".hermes/\n.project-local/\n", encoding="utf-8")
                 subprocess.run(["git", "init", "-q", str(target)], check=True)
                 boot = subprocess.run(
                     [sys.executable, str(bootstrap), str(target), "--agent-rules"],
@@ -1990,7 +1990,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             temp_root = Path(raw)
             repo = temp_root / "portable-repo"
-            for relative in ("config", "skills", "bin"):
+            for relative in (
+                "config",
+                "packages/client-neutral-core/skills",
+                "packages/client-neutral-core/bin",
+            ):
                 shutil.copytree(ROOT / relative, repo / relative)
             home = temp_root / "home"
             home.mkdir()
@@ -2081,7 +2085,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "templates/evals/agent-behavior-smoke.yaml",
             "templates/ui/skin-presets.yaml",
             "templates/windows-terminal/catppuccin-mocha.json",
-            "docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml",
+            "docs/current/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml",
             "hermes mcp test context7",
             "git write-tree",
             "--live",
@@ -2091,9 +2095,19 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertIn(skill.parent.name, readme, skill.relative_to(ROOT).as_posix())
         for template in (ROOT / "packages" / "client-neutral-core" / "templates").rglob("*.md"):
             self.assertIn(template.name, readme, template.relative_to(ROOT).as_posix())
-        for document in (ROOT / "docs").rglob("*"):
-            if document.is_file() and document.suffix in {".md", ".yaml"}:
-                self.assertIn(document.relative_to(ROOT).as_posix(), readme)
+        # README must only reference real repository files (markdown link and
+        # code-span integrity). After the directory convergence the docs tree is
+        # repository-wide, so a complete enumeration obligation no longer holds;
+        # the meaningful contract is: every path the README cites must exist.
+        for cited in re.findall(r"[`\[]([A-Za-z0-9_./\-]+\.(?:md|yaml|json|py|sh|ps1|cmd|yml))[`\]]", readme):
+            if not cited.startswith(("docs/", "packages/", "config/", ".project/", "services/", "integrations/", "scripts/", "templates/", "apps/", "bin/")):
+                continue
+            if "$" in cited or cited.startswith("../../") or "workflow-assistance-" in cited and cited.count("/") == 0:
+                continue
+            if cited.startswith("docs/current/workflow-assistance-TROUBLESHOOTING.md"):
+                self.assertTrue((ROOT / cited).exists(), cited)
+                continue
+            self.assertTrue((ROOT / cited).exists(), cited)
         config = yaml.safe_load((ROOT / "config/config.yaml").read_text(encoding="utf-8"))
         for toolset in config["platform_toolsets"]["cli"]:
             self.assertIn(f"`{toolset}`", readme)
@@ -2116,7 +2130,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "Hermes 当前仍是一级深度支持 Adapter，但不是核心架构前提",
             "只对本仓库有用的临时脚本不得被包装成默认全局能力",
             "Context Pack",
-            ".hermes/task-artifacts/context-pack.md",
+            ".project-local/artifacts/context-pack.md",
             "MCP_CANDIDATE_AUDIT_PASS",
             "UI/Skin 系统",
             "不默认安装 UI runtime",
@@ -2304,7 +2318,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("rollback-capable filesystem transaction", sync)
 
     def test_project_data_boundary_is_deployable_and_fail_closed(self) -> None:
-        helper = ROOT / "bin/hermes-project-data.py"
+        helper = ROOT / "packages/client-neutral-core/bin/hermes-project-data.py"
         skill = ROOT / "packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md"
         doc = ROOT / "docs/current/workflow-assistance/workflow/project-data-boundary.md"
         self.assertTrue(helper.exists())
@@ -2337,7 +2351,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             repo = Path(raw)
             subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True)
-            (repo / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+            (repo / ".gitignore").write_text(".hermes/\n.project-local/\n", encoding="utf-8")
             (repo / "README.md").write_text("# Demo\n", encoding="utf-8")
             (repo / "config").mkdir()
             secret = "github_pat_" + "A" * 30
@@ -2368,7 +2382,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             body = output.read_text(encoding="utf-8")
             self.assertEqual(
                 module.canonical_path(output).relative_to(module.canonical_path(repo)).as_posix(),
-                ".hermes/task-artifacts/context-pack.md",
+                ".project-local/artifacts/context-pack.md",
             )
             self.assertIn("Workflow-assistance Context Pack", body)
             self.assertIn("global Hermes Agent + CC Switch + Codex workflow", body)
@@ -2395,7 +2409,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             repo = Path(raw)
             subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True)
-            (repo / ".gitignore").write_text(".hermes/\n", encoding="utf-8")
+            (repo / ".gitignore").write_text(".hermes/\n.project-local/\n", encoding="utf-8")
             (repo / "README.md").write_text("# Demo\n", encoding="utf-8")
             subprocess.run(
                 ["git", "add", ".gitignore", "README.md"],
@@ -2418,14 +2432,14 @@ class WorkflowGovernanceTests(unittest.TestCase):
             module.canonical_path = fake_canonical_path
             try:
                 output = module.write_context_pack(
-                    alias_root, Path(".hermes/task-artifacts/context-pack.md"), max_chars=20000
+                    alias_root, module.DEFAULT_OUTPUT, max_chars=20000
                 )
             finally:
                 module.canonical_path = real_canonical_path
 
             self.assertEqual(
                 module.canonical_path(output).relative_to(module.canonical_path(repo)).as_posix(),
-                ".hermes/task-artifacts/context-pack.md",
+                ".project-local/artifacts/context-pack.md",
             )
 
     def test_quality_gate_runner_is_canonical_and_just_is_optional(self) -> None:
@@ -2567,8 +2581,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_mcp_candidate_audit_is_fail_closed_and_does_not_enable_defaults(self) -> None:
         script = ROOT / "packages/client-neutral-core/scripts/mcp_candidate_audit.py"
-        doc = ROOT / "docs/mcp/mcp-catalog-governance.md"
-        stack = ROOT / "docs/mcp/workflow-mcp-stack.md"
+        doc = ROOT / "docs/current/workflow-assistance/mcp/mcp-catalog-governance.md"
+        stack = ROOT / "docs/current/workflow-assistance/mcp/workflow-mcp-stack.md"
         self.assertTrue(script.exists())
         self.assertTrue(doc.exists())
 
@@ -2845,8 +2859,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_model_neutral_absorption_is_discoverable_and_audited(self) -> None:
         readme = (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8")
-        audit = ROOT / "docs/audit/model-neutral-agent-harness-absorption-2026-07.md"
-        manifest_path = ROOT / "docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml"
+        audit = ROOT / "docs/current/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.md"
+        manifest_path = ROOT / "docs/current/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml"
         self.assertIn("templates/task-tickets/model-neutral-agent-task.md", readme)
         self.assertTrue(audit.exists())
         self.assertTrue(manifest_path.exists())

@@ -11,15 +11,15 @@
 当前一级 Adapter：`Hermes`、`Codex`、`CC Switch`、`GitHub`。Cursor、Claude Code、WorkBuddy 先以 manifest-only/只读检测方式登记，必须有真实证据后才升级支持级别。Open Design 已迁出并由独立仓库维护，不再是本模块 Adapter。
 
 跨电脑配置审查采用项目级随机 opaque `machine_id`，只用于识别当前项目副本并触发只读 `plan/verify`；它不是认证、授权或硬件指纹。状态模型、只读计划命令和配置升级边界见
-[`docs/workflow/machine-identity-and-config-review.md`](docs/workflow/machine-identity-and-config-review.md)，实现入口为
-`scripts/workflow/machine_identity.py`。设备切换不会自动 apply、覆盖 OBSERVE/SECRET 字段、清认证或执行 Windows Reset。
+[`docs/current/workflow-assistance/workflow/machine-identity-and-config-review.md`](docs/current/workflow-assistance/workflow/machine-identity-and-config-review.md)，实现入口为
+`services/authority/machine_identity.py`。设备切换不会自动 apply、覆盖 OBSERVE/SECRET 字段、清认证或执行 Windows Reset。
 
 核心不负责：Agent 人格、聊天/Prompt 输入、模型推理、Provider 路由、凭据管理、自动批准外部写入。每个写操作都必须从用户批准的 ActionPlan 进入对应 Adapter。
 
 全局增强范围包括：跨客户端任务生命周期、配置/权限边界、项目数据隔离、ActionPlan 与回滚、交付和 evidence envelope、token/网络/GitHub/artifact 观测，以及各 Adapter 的安全接入。任何新增能力都必须先判断它增强的是这条通用工作流，还是只对本仓库有用；只对本仓库有用的临时脚本不得被包装成默认全局能力。
 
 Codex 增强模块的责任和能力已单独冻结为合同：
-[`docs/workflow/codex-enhancement-boundary.md`](docs/workflow/codex-enhancement-boundary.md)，机器可读权威为
+[`docs/current/workflow-assistance/workflow/codex-enhancement-boundary.md`](docs/current/workflow-assistance/workflow/codex-enhancement-boundary.md)，机器可读权威为
 [`config/codex-enhancement-boundary.json`](config/codex-enhancement-boundary.json)。该模块只管理官方 Codex 配置面上的明确用户 overlay，不拥有 Codex runtime、provider/model、认证、MCP/plugin、会话、Desktop 状态、项目 Task Ledger 或外部写入能力；新增全局能力必须先更新该合同和测试。
 
 ```text
@@ -56,10 +56,10 @@ portable install、Linux/Windows CI 和 live runtime 回归。
 本轮复审修正了 GitHub skill 的 source ownership 缺口、未认证 curl/凭据持久化误导、PR
 changed-files 分页缺失、SSH 私钥无授权写入、PowerShell/POSIX 命令不兼容和文档定位不一致。
 完整的错误、根因、修复和证据记录见
-[`docs/workflow/error-fixes-2026-07-28.md`](docs/workflow/error-fixes-2026-07-28.md)。
+[`docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md`](docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md)。
 
 Token Monitor 本轮的交接、验证证据、错误根因、剩余事项和恢复顺序见
-[`docs/workflow/token-monitor-handoff.md`](docs/workflow/token-monitor-handoff.md)。
+[`docs/current/workflow-assistance/workflow/token-monitor-handoff.md`](docs/current/workflow-assistance/workflow/token-monitor-handoff.md)。
 
 GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它是非阻断上游维护提示。
 本项目不在 workflow 中硬编码 Node 版本，也不为了消除提示随意替换 action；若后续处理，必须
@@ -71,28 +71,28 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 |---|---|---|
 | Portable 配置 | 无密钥 Hermes 基线、中文 CLI、原生工具集、Context7、低风险插件默认值 | `config/config.yaml` |
 | 安全部署 | Windows / Bash 安装入口、自动备份、单向同步、保留 live Provider 与自定义能力 | `setup.ps1`、`setup.sh` |
-| 模型切换 | GPT OAuth 与 DeepSeek 官方 Provider 状态检查和安全切换 | `scripts/workflow/switch_model.py` |
-| 全链路诊断 | Hermes、认证、MCP、代理端口、Node、Codex 版本和可选真实执行 smoke | `scripts/workflow/hermes_workflow_doctor.py` |
-| Codex 执行 | 跨平台 launcher、非交互执行规则、只读审查、隔离 worktree、TaskPack exact-tree runner；默认只冻结，需显式 `--publish` 才可发布 | `bin/codex*`、`scripts/workflow/run_taskpack_agent.py`、`skills/autonomous-ai-agents/codex/` |
+| 模型切换 | GPT OAuth 与 DeepSeek 官方 Provider 状态检查和安全切换 | `integrations/executors/hermes/switch_model.py` |
+| 全链路诊断 | Hermes、认证、MCP、代理端口、Node、Codex 版本和可选真实执行 smoke | `integrations/executors/hermes/hermes_workflow_doctor.py` |
+| Codex 执行 | 跨平台 launcher、非交互执行规则、只读审查、隔离 worktree、TaskPack exact-tree runner；默认只冻结，需显式 `--publish` 才可发布 | `packages/client-neutral-core/bin/codex*`、`services/orchestration/run_taskpack_agent.py`、`packages/client-neutral-core/skills/autonomous-ai-agents/codex/` |
 | GitHub 交付 | `main` 作为跨设备 SSOT；仅以 exact-SHA CI 与目标分支包含关系确认发布闭环 | `../../.github/workflows/work-lab-gate.yml`、`agent-workflow-fortress` |
-|| 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `skills/software-development/sleep-mode/` |
-||| Growth candidates | 候选发现、来源摘要 intake、隔离、扫描、评估、显式审批晋级、隔离阻断、精确 readback 与退役回滚；默认不自动批准 | `schemas/workflow/growth-candidate.schema.json`、`scripts/workflow/growth_candidates.py` |
-|| Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/workflow/gateway-cron-delivery.md` |
-| 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `bin/hermes-project-data.py`、`skills/software-development/project-data-boundary/` |
-| 执行预检 | 只读分离当前分支/upstream/main、解释器与可选依赖、Markdown 相对链接；输出无密 JSON，不读取 auth/session/memory | `scripts/workflow/execution_preflight.py`、`docs/workflow/codex-execution-reliability.md`、`docs/workflow/codex-performance-diagnosis.md` |
-| Token 监视器 | Windows Tauri 2 Dashboard，实时扫描本地 JSON/JSONL usage，按 GPT/Codex、DeepSeek 和模型显示输入/输出/缓存/reasoning/总 token；无 usage 时不估算 | `apps/token-monitor-desktop/`、`scripts/workflow/token_monitor.py`、`docs/workflow/token-monitor.md` |
-| MCP | 默认固定 Context7 包版本；候选 MCP 另行执行 pinned provenance 审计 | `docs/mcp/workflow-mcp-stack.md`、`docs/mcp/mcp-catalog-governance.md`、`scripts/workflow/mcp_candidate_audit.py` |
+|| 睡眠模式 | 项目级持久 cron 队列、单 writer、依赖顺序、账本恢复与高风险阻断 | `packages/client-neutral-core/skills/software-development/sleep-mode/` |
+||| Growth candidates | 候选发现、来源摘要 intake、隔离、扫描、评估、显式审批晋级、隔离阻断、精确 readback 与退役回滚；默认不自动批准 | `packages/contracts/schemas/workflow/growth-candidate.schema.json`、`packages/client-neutral-core/scripts/growth_candidates.py` |
+|| Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/current/workflow-assistance/workflow/gateway-cron-delivery.md` |
+| 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `packages/client-neutral-core/bin/hermes-project-data.py`、`packages/client-neutral-core/skills/software-development/project-data-boundary/` |
+| 执行预检 | 只读分离当前分支/upstream/main、解释器与可选依赖、Markdown 相对链接；输出无密 JSON，不读取 auth/session/memory | `packages/client-neutral-core/scripts/execution_preflight.py`、`docs/current/workflow-assistance/workflow/codex-execution-reliability.md`、`docs/current/workflow-assistance/workflow/codex-performance-diagnosis.md` |
+| Token 监视器 | Windows Tauri 2 Dashboard，实时扫描本地 JSON/JSONL usage，按 GPT/Codex、DeepSeek 和模型显示输入/输出/缓存/reasoning/总 token；无 usage 时不估算 | `apps/token-monitor-desktop/`、`packages/client-neutral-core/scripts/token_monitor.py`、`docs/current/workflow-assistance/workflow/token-monitor.md` |
+| MCP | 默认固定 Context7 包版本；候选 MCP 另行执行 pinned provenance 审计 | `docs/current/workflow-assistance/mcp/workflow-mcp-stack.md`、`docs/current/workflow-assistance/mcp/mcp-catalog-governance.md`、`packages/client-neutral-core/scripts/mcp_candidate_audit.py` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
-| Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.project-local/artifacts/`，用于新会话与 Codex handoff | `scripts/workflow/build_context_pack.py`、`docs/workflow/context-pack.md` |
-| Context Control Plane | 跨客户端稳定前缀 + 缓存命中真值 + 防漂移压缩（§12）；客户端配置建议 | `scripts/workflow/context_control_plane.py`、`context_bundle.py`、`context_drift_guard.py`、`docs/workflow/context-control-plane-design.md`、`context-control-plane-client-config.md` |
-| External Libraries Index | 共用/私用库链接与资产列表（内容不上传）；JSON 校验 gate | `00-governance/external-libraries-index.json`、`scripts/workflow/verify_external_libraries_index.py` |
-| GitHub Delivery | 上传加速（状态→提交→推送→PR）+ 审核加速（checks+mergeable+本地 gate 聚合判定） | `scripts/workflow/github_upload_accelerator.py`、`github_review_accelerator.py`、`github_common.py` |
-| Agent 行为评估 | promptfoo 风格声明式 smoke cases，评估工作流边界回答；不默认安装 runner/provider | `docs/workflow/agent-evaluation.md`、`templates/evals/agent-behavior-smoke.yaml` |
-| UI/Skin 系统 | Catppuccin、shadcn/ui、assistant-ui 风格吸收，提供主题 token、Agent UI patterns 和 Windows Terminal scheme；不默认安装 UI runtime | `docs/workflow/ui-skin-system.md`、`templates/ui/`、`templates/windows-terminal/` |
-| 本地质量门禁 | 跨平台 canonical gate runner，统一治理测试、语法、安全扫描、Context Pack、MCP 候选审计、Shell/PowerShell 解析 | `scripts/workflow/run_quality_gate.py`、`Justfile`、`docs/workflow/local-quality-gates.md` |
-| 安全扫描 | Prompt/规则隐藏字符、注入特征和疑似硬编码秘密扫描 | `scripts/security/scan_agent_rules.py` |
-| 模板库 | AGENTS/CODEX/DESIGN/SECURITY 规则模板及多类任务票据 | `templates/` |
-| 审计与证据 | 开源能力吸收记录、固定上游 SHA、机器可读清单、明确排除项 | `docs/audit/` |
+| Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.project-local/artifacts/`，用于新会话与 Codex handoff | `packages/client-neutral-core/scripts/build_context_pack.py`、`docs/current/workflow-assistance/workflow/context-pack.md` |
+| Context Control Plane | 跨客户端稳定前缀 + 缓存命中真值 + 防漂移压缩（§12）；客户端配置建议 | `packages/client-neutral-core/scripts/context_control_plane.py`、`context_bundle.py`、`context_drift_guard.py`、`docs/current/workflow-assistance/workflow/context-control-plane-design.md`、`context-control-plane-client-config.md` |
+| External Libraries Index | 共用/私用库链接与资产列表（内容不上传）；JSON 校验 gate | `.project/governance/external-libraries-index.json`、`packages/client-neutral-core/scripts/verify_external_libraries_index.py` |
+| GitHub Delivery | 上传加速（状态→提交→推送→PR）+ 审核加速（checks+mergeable+本地 gate 聚合判定） | `packages/client-neutral-core/scripts/github_upload_accelerator.py`、`github_review_accelerator.py`、`github_common.py` |
+| Agent 行为评估 | promptfoo 风格声明式 smoke cases，评估工作流边界回答；不默认安装 runner/provider | `docs/current/workflow-assistance/workflow/agent-evaluation.md`、`packages/client-neutral-core/templates/evals/agent-behavior-smoke.yaml` |
+| UI/Skin 系统 | Catppuccin、shadcn/ui、assistant-ui 风格吸收，提供主题 token、Agent UI patterns 和 Windows Terminal scheme；不默认安装 UI runtime | `docs/current/workflow-assistance/workflow/ui-skin-system.md`、`packages/client-neutral-core/templates/ui/`、`packages/client-neutral-core/templates/windows-terminal/` |
+| 本地质量门禁 | 跨平台 canonical gate runner，统一治理测试、语法、安全扫描、Context Pack、MCP 候选审计、Shell/PowerShell 解析 | `services/orchestration/run_quality_gate.py`、`Justfile`、`docs/current/workflow-assistance/workflow/local-quality-gates.md` |
+| 安全扫描 | Prompt/规则隐藏字符、注入特征和疑似硬编码秘密扫描 | `packages/client-neutral-core/scripts/security/scan_agent_rules.py` |
+| 模板库 | AGENTS/CODEX/DESIGN/SECURITY 规则模板及多类任务票据 | `packages/client-neutral-core/templates/` |
+| 审计与证据 | 开源能力吸收记录、固定上游 SHA、机器可读清单、明确排除项 | `docs/current/workflow-assistance/audit/` |
 | 跨平台验证 | Python 治理测试、语法检查、Shell/PowerShell 解析、Linux/Windows Actions | `../../.github/workflows/work-lab-gate.yml` |
 
 ## Portable 部署与安全同步
@@ -106,7 +106,7 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 
 ```bash
 git clone git@github.com:DTALEX66/WORK-LAB.git
-cd WORK-LAB/10-workflow/workflow-assistance
+cd WORK-LAB
 
 # Linux / macOS / Git Bash
 ./setup.sh
@@ -119,7 +119,7 @@ cd WORK-LAB/10-workflow/workflow-assistance
 `setup.sh --apply` 或 `setup.ps1 -Apply` 后才会调用：
 
 ```bash
-python scripts/workflow/sync_hermes_workflow_assets.py --apply --approved
+python integrations/executors/hermes/sync_hermes_workflow_assets.py --apply --approved
 ```
 
 ### 单向同步模型
@@ -128,10 +128,10 @@ python scripts/workflow/sync_hermes_workflow_assets.py --apply --approved
 
 ```bash
 # 预览，不写入
-python scripts/workflow/sync_hermes_workflow_assets.py
+python integrations/executors/hermes/sync_hermes_workflow_assets.py
 
 # 备份后应用
-python scripts/workflow/sync_hermes_workflow_assets.py --apply --approved
+python integrations/executors/hermes/sync_hermes_workflow_assets.py --apply --approved
 ```
 
 实际行为：
@@ -153,7 +153,7 @@ python scripts/workflow/sync_hermes_workflow_assets.py --apply --approved
 每次发布前，质量门禁都会在一个空的、隔离 Hermes Home 中执行 portable sync：
 
 ```bash
-python scripts/workflow/verify_portable_install.py
+python packages/client-neutral-core/scripts/verify_portable_install.py
 ```
 
 它不调用模型、不读取现有 Hermes Home、不读取认证文件；它会 fail-closed 验证
@@ -165,8 +165,8 @@ gate 中执行。兼容性承诺和功能清单位于 `workflow-manifest.yaml`�
 新项目应先忽略 `.project-local/`，再使用最小项目初始化器：
 
 ```bash
-python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject --dry-run
-python scripts/workflow/bootstrap_project.py D:/All-projects/NewProject --agent-rules
+python services/orchestration/bootstrap_project.py D:/All-projects/NewProject --dry-run
+python services/orchestration/bootstrap_project.py D:/All-projects/NewProject --agent-rules
 ```
 
 该入口只写目标项目的 Git-ignored `.project-local/` 运行时说明和 bootstrap manifest，绝不复制 OAuth、API key、provider route、会话或用户数据。
@@ -202,20 +202,20 @@ backup → staging → atomic promotion 流程；`config/.env.template` 只列�
 字段级配置和已声明的 Hermes 受管文件映射。恢复绝不替代官方安装/更新，也不接管
 Provider、模型、认证、Token、会话、私有记忆、Desktop 内部状态、CC Switch 路由或 Open
 Design 的设计能力配置。今日基线结论、已处理事项和恢复流程见
-[`docs/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md`](docs/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md)。
+[`docs/current/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md`](docs/current/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md)。
 
 ## 模型切换与路由诊断
 
 ### 安全切换
 
-`skills/model-switch/SKILL.md` 与切换脚本共同定义这条路线的操作边界。
+`packages/client-neutral-core/skills/model-switch/SKILL.md` 与切换脚本共同定义这条路线的操作边界。
 
 模型切换完全由用户决定：仓库不设置默认模型，也不会替用户选择 DeepSeek 或 GPT 的具体模型。`gpt` 和 `deepseek` 只是 Provider 路线别名；每次切换必须通过 `--model` 或对应的 `HERMES_*_MODEL` 显式提供模型 ID。脚本只在用户明确执行时工作，不会自动更改当前会话；切换后必须新建会话或执行 `/reset`。
 
 ```bash
-python scripts/workflow/switch_model.py status
-python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
-python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python integrations/executors/hermes/switch_model.py status
+python integrations/executors/hermes/switch_model.py gpt --model "$HERMES_GPT_MODEL"
+python integrations/executors/hermes/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
 ```
 
 也可以先在当前进程环境中设置用户自己的模型 ID：
@@ -243,7 +243,7 @@ export HERMES_GPT_MODEL='<user-selected-openai-codex-model>'
 结构诊断：
 
 ```bash
-python scripts/workflow/hermes_workflow_doctor.py
+python integrations/executors/hermes/hermes_workflow_doctor.py
 ```
 
 它会检查：
@@ -258,7 +258,7 @@ python scripts/workflow/hermes_workflow_doctor.py
 真实执行 smoke：
 
 ```bash
-python scripts/workflow/hermes_workflow_doctor.py --live
+python integrations/executors/hermes/hermes_workflow_doctor.py --live
 ```
 
 `--live` 会实际调用 GPT、DeepSeek 和 Codex，并要求输出独立 marker。普通端口、HTTP 状态和结构检查不等于真实模型执行；只有 live marker 通过才能证明当前执行链路可用。`--live` 可能产生网络请求或模型用量，因此不会默认运行。必须从 Git 项目根目录运行：Codex smoke 的临时 Git 仓库默认只会创建在当前项目 `.project-local/runs/`，运行后自动清除；如需指定其父目录，传入同一项目范围内的 `--codex-workdir .project-local/runs/<name>`，项目外路径会被拒绝。
@@ -268,7 +268,7 @@ python scripts/workflow/hermes_workflow_doctor.py --live
 默认只生成不含秘密、不会发起请求的模型库存：
 
 ```bash
-python scripts/workflow/provider_health.py \
+python packages/client-neutral-core/scripts/provider_health.py \
   --config config/config.yaml \
   --output .project-local/artifacts/provider-health.json
 ```
@@ -283,25 +283,25 @@ Codex 会在新任务启动时读取用户目录 `.codex/AGENTS.md`，再由项�
 `.codex/skills` 当成当前官方 skill 发现根。
 
 完整的配置矩阵、所有权、验证证据和日常使用说明见
-[`docs/workflow/codex-global-enhancement.md`](docs/workflow/codex-global-enhancement.md)。
+[`docs/current/workflow-assistance/workflow/codex-global-enhancement.md`](docs/current/workflow-assistance/workflow/codex-global-enhancement.md)。
 Windows Desktop 更新后的登录、外观、项目索引、线程权限与用户配置必须分层判断；当前调查摘要和跨机器只读采样清单见
-[`docs/workflow/codex-desktop-update-state-investigation-2026-08-13.md`](docs/workflow/codex-desktop-update-state-investigation-2026-08-13.md)。
+[`docs/current/workflow-assistance/workflow/codex-desktop-update-state-investigation-2026-08-13.md`](docs/current/workflow-assistance/workflow/codex-desktop-update-state-investigation-2026-08-13.md)。
 
 本仓库现在提供可回读、可回滚的 Codex 用户层增强包：
 
 ```bash
 # 只生成不含秘密的写入计划
-python scripts/workflow/sync_codex_global_assets.py plan \
+python integrations/executors/codex/sync_codex_global_assets.py plan \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 
 # 用户明确批准后应用
-python scripts/workflow/sync_codex_global_assets.py apply \
+python integrations/executors/codex/sync_codex_global_assets.py apply \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 
 # 精确回读或撤销本包拥有的部分
-python scripts/workflow/sync_codex_global_assets.py verify \
+python integrations/executors/codex/sync_codex_global_assets.py verify \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
-python scripts/workflow/sync_codex_global_assets.py rollback \
+python integrations/executors/codex/sync_codex_global_assets.py rollback \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 ```
 
@@ -328,8 +328,8 @@ python scripts/workflow/sync_codex_global_assets.py rollback \
 override，则 fail-closed，不伪造“已生效”。先预览，再显式应用：
 
 ```powershell
-python scripts/workflow/install_codex_global_guidance.py --codex-home "$env:USERPROFILE\.codex"
-python scripts/workflow/install_codex_global_guidance.py --codex-home "$env:USERPROFILE\.codex" --apply
+python integrations/executors/codex/install_codex_global_guidance.py --codex-home "$env:USERPROFILE\.codex"
+python integrations/executors/codex/install_codex_global_guidance.py --codex-home "$env:USERPROFILE\.codex" --apply
 ```
 
 Windows staging HANDLE 不共享写入或删除，且在创建后立即标为 delete-pending，阻断新的打开和
@@ -358,15 +358,15 @@ inode，并通过 `linkat(AT_EMPTY_PATH)` 无覆盖发布；不支持匿名 inod
 
 仓库不捆绑 Codex，可通过 launcher 定位本机已安装版本：
 
-- `bin/codex`：Bash/Git Bash launcher；
-- `bin/codex.cmd`：Windows launcher；
+- `packages/client-neutral-core/bin/codex`：Bash/Git Bash launcher；
+- `packages/client-neutral-core/bin/codex.cmd`：Windows launcher；
 - Windows 优先动态解析唯一的 `OpenAI.Codex` Store package，使 CLI 与桌面 GUI 使用同一 runtime 层；不锁定具体版本，也不静默切换到 plugin app-server。
 
 TaskPack 的高风险冻结复审默认由 Hermes 完成；需要独立第二执行体时可显式
 选择 Codex 原生 review（不改变默认行为）：
 
 ```bash
-python scripts/workflow/run_taskpack_agent.py \
+python services/orchestration/run_taskpack_agent.py \
   --repo . --remote-ref origin/main --risk high --reviewer codex \
   --required-workflow work-lab-gate \
   --mission "<明确任务>"
@@ -392,7 +392,7 @@ run；可重复传入 `--required-workflow <name>` 增加额外门禁。缺失�
 声明的 `work-lab-gate` exact-SHA aggregate 证据。ruleset
 状态必须通过 GitHub API 读取核验，不能用本地配置或旧 run 摘要替代。
 
-`skills/autonomous-ai-agents/codex/SKILL.md` 定义：
+`packages/client-neutral-core/skills/autonomous-ai-agents/codex/SKILL.md` 定义：
 
 - `codex exec` / `codex review` 使用非交互模式；
 - 交互 TUI 才使用 PTY；
@@ -413,7 +413,7 @@ Context7 用于查询公开软件库的当前文档，降低使用过期 API 的
 hermes mcp test context7
 ```
 
-通过 `bin/hermes-npx*` 优先调用 Hermes bundled Node，减少系统 Node/PATH 漂移。
+通过 `packages/client-neutral-core/bin/hermes-npx*` 优先调用 Hermes bundled Node，减少系统 Node/PATH 漂移。
 
 > Context7 查询会外发数据。不得发送私有代码、密钥、客户资料或内部项目名称。
 
@@ -432,15 +432,15 @@ hermes mcp test context7
 新增候选先走审计器，不直接写默认配置：
 
 ```bash
-python scripts/workflow/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml
-python scripts/workflow/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml
+python packages/client-neutral-core/scripts/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml
+python packages/client-neutral-core/scripts/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml
 ```
 
-`MCP_CANDIDATE_AUDIT_PASS` 只表示候选元数据完整，不等于 server 已配置、已运行、已安全或已默认启用。候选治理细则见 `docs/mcp/mcp-catalog-governance.md`。
+`MCP_CANDIDATE_AUDIT_PASS` 只表示候选元数据完整，不等于 server 已配置、已运行、已安全或已默认启用。候选治理细则见 `docs/current/workflow-assistance/mcp/mcp-catalog-governance.md`。
 
 ## Agent 工作流治理
 
-`skills/software-development/agent-workflow-fortress/` 是本仓库的统一工作流治理入口，覆盖：
+`packages/client-neutral-core/skills/software-development/agent-workflow-fortress/` 是本仓库的统一工作流治理入口，覆盖：
 
 - 证据优先的缺口扫描；
 - TDD 的 RED → GREEN → REFACTOR；
@@ -476,7 +476,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards li
 
 ### 模型/API 中立任务契约
 
-`templates/task-tickets/model-neutral-agent-task.md` 提供不绑定特定模型或收费 API 的任务票据：
+`packages/client-neutral-core/templates/task-tickets/model-neutral-agent-task.md` 提供不绑定特定模型或收费 API 的任务票据：
 
 - Completion Contract；
 - Run State Contract；
@@ -488,7 +488,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards li
 - 缺少执行证据时必须 `blocked`；
 - 测试、产物、tree identity、回滚与日志输出契约。
 
-它是治理契约，不是运行时 sandbox。相关 Grok Build 方法吸收已固定上游 SHA，并登记在 `docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml`；本轮没有引入模型、Provider、付费 API、外部二进制或运行时资产。
+它是治理契约，不是运行时 sandbox。相关 Grok Build 方法吸收已固定上游 SHA，并登记在 `docs/current/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml`；本轮没有引入模型、Provider、付费 API、外部二进制或运行时资产。
 
 ## Skills 能力库
 
@@ -524,7 +524,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards li
 ### Agent 规则扫描
 
 ```bash
-python scripts/security/scan_agent_rules.py templates skills docs scripts
+python packages/client-neutral-core/scripts/security/scan_agent_rules.py templates skills docs scripts
 ```
 
 扫描内容包括：
@@ -540,7 +540,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 
 ### Agent 规则模板
 
-`templates/agent-rules/`：
+`packages/client-neutral-core/templates/agent-rules/`：
 
 - `AGENTS.md`：跨 Agent 项目规则；
 - `CODEX_GLOBAL_AGENTS.md`：仅在 Codex Home 没有用户规则时安全新建的全局基线；
@@ -550,7 +550,7 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 
 ### Task Ticket 模板
 
-`templates/task-tickets/`：
+`packages/client-neutral-core/templates/task-tickets/`：
 
 - `cc-switch-agent-task.md`：通用编码 Agent 任务；
 - `model-neutral-agent-task.md`：模型/API 中立、证据驱动的执行契约；
@@ -558,75 +558,75 @@ python scripts/security/scan_agent_rules.py templates skills docs scripts
 
 ### Agent 行为评估模板
 
-`templates/evals/`：
+`packages/client-neutral-core/templates/evals/`：
 
 - `agent-behavior-smoke.yaml`：promptfoo 风格、模型/provider 中立的 Agent 行为 smoke cases，用于检查 repo/live/session、Gateway delivery、持久任务、interrupted delegation、PowerShell 选择和验证诚实等全局工作流边界；模板不包含真实 provider、密钥、trace 或运行时依赖。
 
 ### UI / Skin 模板
 
-`templates/ui/` 与 `templates/windows-terminal/`：
+`packages/client-neutral-core/templates/ui/` 与 `packages/client-neutral-core/templates/windows-terminal/`：
 
-- `templates/ui/skin-presets.yaml`：Catppuccin Mocha/Frappe、Nord、Dracula 的 portable 主题 token 和状态语义；
-- `templates/ui/agent-chat-ui-patterns.md`：assistant-ui / shadcn-ui 风格的 Agent thread、tool call timeline、status rail 和 command palette 信息架构；
-- `templates/ui/terminal-theme-checklist.md`：终端/Hermes skin 应用边界、证据要求和可访问性检查；
-- `templates/windows-terminal/catppuccin-mocha.json`：Windows Terminal scheme 示例；模板可复制，但不会自动改用户 settings。
+- `packages/client-neutral-core/templates/ui/skin-presets.yaml`：Catppuccin Mocha/Frappe、Nord、Dracula 的 portable 主题 token 和状态语义；
+- `packages/client-neutral-core/templates/ui/agent-chat-ui-patterns.md`：assistant-ui / shadcn-ui 风格的 Agent thread、tool call timeline、status rail 和 command palette 信息架构；
+- `packages/client-neutral-core/templates/ui/terminal-theme-checklist.md`：终端/Hermes skin 应用边界、证据要求和可访问性检查；
+- `packages/client-neutral-core/templates/windows-terminal/catppuccin-mocha.json`：Windows Terminal scheme 示例；模板可复制，但不会自动改用户 settings。
 
 ### 文档和审计
 
-- `docs/runtime-adapters/deepseek-harness.md`：DeepSeek Harness agent-runtime adapter 的安装/启动/停止/健康、权限边界、证据与回滚（WL-DSH）；
-- `docs/runtime-adapters/deepseek-harness-config-guide.md`：DeepSeek Harness 配置指南——规则、技能、边界与模型下载（供 Hermes/Codex/CC Switch 等其他软件接入）；
-- `docs/workflow/project-definition.md`：项目定义与职责边界；
-- `docs/workflow/error-governance.md`：错误入口、根因、回归验证、证据等级和防复发规则；
-- `docs/workflow/agent-evaluation.md`：Agent 行为评估边界、promptfoo 方法吸收和默认不安装策略；
-- `docs/workflow/context-pack.md`：安全 Context Pack 生成器、输出边界和 handoff 使用方式；
-- `docs/workflow/context-control-plane-design.md`：跨客户端上下文控制面设计方案（稳定前缀/缓存真值/防漂移压缩）；
-- `docs/workflow/context-control-plane-client-config.md`：上下文控制面客户端配置建议（DSH/Hermes/Codex 参数）；
-- `00-governance/external-libraries-index.json`：共用/私用库链接与资产列表（内容不上传，JSON 校验 gate）；
-- `scripts/workflow/github_upload_accelerator.py` / `github_review_accelerator.py` / `github_common.py`：GitHub 上传与审核加速器（凭据走 git credential，不硬编码）；
-- `docs/workflow/github-delivery-accelerator.md`：GitHub 交付加速器使用说明；
-- `docs/workflow/local-quality-gates.md`：本地 canonical quality gate runner、Justfile 快捷入口和 CI 对齐方式；
-- `docs/workflow/active-authority-index.md`：活跃权威/兼容/历史分类索引（WLG-110），README 只链接权威文件；
-- `docs/workflow/wlg130-delivery-verdict.md`：WLG-130 交付裁决（Authority Matrix、批次状态、GO/NO-GO）；
-- `docs/workflow/ui-skin-system.md`：UI/Skin 分层、主题 token、Agent UI 状态表达与 runtime-neutral 边界；
-- `docs/workflow/project-data-boundary.md`：项目任务数据归属、迁移、保留与 fail-closed 执行器；
-- `docs/workflow/token-monitor.md`：本地 Token Monitor 的真实 usage 口径、启动方式和 Codex OAuth 限制；
-- `docs/workflow/hermes-runtime-layout.md`：Hermes 全局运行目录分层、可恢复迁移、升级验证与清理边界；
-- `docs/workflow/gateway-cron-delivery.md`：Gateway、cron、sleep-mode、TUI 与外部消息平台的投递边界；
-- `docs/workflow/user-environment-profile.md`：字段级 allowlist 的用户覆盖层、plan-only 导出器与机器私有状态排除边界；
-- `docs/workflow/official-plus-user-configuration-standard-2026-08-11.md`：官方基线、用户覆盖层、项目覆盖层和任务临时态的 Stage 3 配置标准；
-- `docs/workflow/dual-entry-install.md`：setup/sync/bootstrap 入口矩阵与职责边界对账；
-- `docs/workflow/codex-performance-diagnosis.md`：Codex 性能分层诊断（项目/全局/客户端配置）、审计状态与解决方案；
-- `docs/workflow/managed-software-and-assets.md`：受管软件与内容总清单（Hermes/Codex/CC Switch/GitHub/OpenHuman/Open Design 及未来客户端的管理面总账）；
-- `docs/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
-- `docs/workflow/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录；
-- `docs/workflow/error-fixes-2026-08-13-wlg.md`：WLG 治理 TaskPack 执行错误总结（CRLF provenance、force-push CI 陷阱、gh 卸载、多分支串扰等）；
-- `docs/workflow/memory-compaction-2026-08-13.md`：Hermes 记忆压缩与优化归档（合并策略、精简记录、记忆治理规则）；
-- `docs/workflow/error-fixes-2026-08-14-guard.md`：pre_tool_call 终端守卫正则防护三缺陷（路径穿越绕过、含空格路径误拦、scheme:// URL 误判）修复归档；
-- `docs/workflow/error-fixes-2026-08-14-r2.md`：R2 重审计修复批次错误归档（Guard 前缀两连坑、zizmor Docker action、schema 四方同步、SQL 表名、fail-closed 契约、验证脚本 bug、graphql 瞬断、cargo 检测）；
-- `docs/handoffs/audit-r2-fixes-handoff-2026-08-14.md`：R2 修复批次交接（PR #97~#101、验证证据、剩余事项与恢复顺序）；
-- `docs/workflow/wloss-reference-decisions.md`：WLOSS-100/300/510 开源能力处理决定（OPA/Conftest=REFERENCE、in-toto=DERIVE、Cosign/Promptfoo=REFERENCE、Superpowers=方法吸收）；
-- `docs/mcp/workflow-mcp-stack.md`：MCP 默认策略；
-- `docs/mcp/mcp-catalog-governance.md`：MCP 候选审计 schema、阻断规则和默认启用边界；
-- `docs/absorption/open-source-workflow-absorption.md`：开源工作流吸收清单；
-- `docs/audit/workflow-absorption-audit-2026-07.md`：总体吸收审计；
-- `docs/audit/hermes-workflow-recovery-2026-07-22.md`：Hermes Desktop、CC Switch、Codex、GitHub 全链路故障、执行错误、恢复过程和数据保护证据；
-- `docs/audit/model-neutral-agent-harness-absorption-2026-07.md`：模型/API 中立 Agent Harness 审计；
-- `docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml`：固定来源和本地落点的机器可读证据；
-- `docs/audit/project-data-boundary-handoff-2026-08-02.md`：本次项目数据边界审计、交接、错误总结和上传前验证；
-- `docs/audit/project-data-boundary-handoff-2026-08-02.json`：本次审计的机器可读 manifest；
-- `docs/audit/workflow-baseline-audit-2026-08-06.md`：官方 Hermes 基线、全局规则、技能/插件部署、同步边界与 Windows 目录锁的脱敏综合审计；
-- `docs/handoffs/workflow-assistance-2026-07-23.md`：无密阶段交接、恢复顺序、已发布基线与会话卫生边界；
-- `docs/handoffs/hermes-desktop-source-root-repair-2026-07-24.md`：Desktop source-root/canonical runtime 修复的无密 Codex 交接、验证与回滚边界。
-- `docs/handoffs/audit-prevention-controls-handoff-2026-08-13.md`：供应链、配置最小写入、Hermes 路径围栏和全局/项目所有权边界的交接；明确本地候选验证与 PR/CI/跨机器验证的证据分级。
+- `docs/current/workflow-assistance/runtime-adapters/deepseek-harness.md`：DeepSeek Harness agent-runtime adapter 的安装/启动/停止/健康、权限边界、证据与回滚（WL-DSH）；
+- `docs/current/workflow-assistance/runtime-adapters/deepseek-harness-config-guide.md`：DeepSeek Harness 配置指南——规则、技能、边界与模型下载（供 Hermes/Codex/CC Switch 等其他软件接入）；
+- `docs/current/workflow-assistance/workflow/project-definition.md`：项目定义与职责边界；
+- `docs/current/workflow-assistance/workflow/error-governance.md`：错误入口、根因、回归验证、证据等级和防复发规则；
+- `docs/current/workflow-assistance/workflow/agent-evaluation.md`：Agent 行为评估边界、promptfoo 方法吸收和默认不安装策略；
+- `docs/current/workflow-assistance/workflow/context-pack.md`：安全 Context Pack 生成器、输出边界和 handoff 使用方式；
+- `docs/current/workflow-assistance/workflow/context-control-plane-design.md`：跨客户端上下文控制面设计方案（稳定前缀/缓存真值/防漂移压缩）；
+- `docs/current/workflow-assistance/workflow/context-control-plane-client-config.md`：上下文控制面客户端配置建议（DSH/Hermes/Codex 参数）；
+- `.project/governance/external-libraries-index.json`：共用/私用库链接与资产列表（内容不上传，JSON 校验 gate）；
+- `packages/client-neutral-core/scripts/github_upload_accelerator.py` / `github_review_accelerator.py` / `github_common.py`：GitHub 上传与审核加速器（凭据走 git credential，不硬编码）；
+- `docs/current/workflow-assistance/workflow/github-delivery-accelerator.md`：GitHub 交付加速器使用说明；
+- `docs/current/workflow-assistance/workflow/local-quality-gates.md`：本地 canonical quality gate runner、Justfile 快捷入口和 CI 对齐方式；
+- `docs/current/workflow-assistance/workflow/active-authority-index.md`：活跃权威/兼容/历史分类索引（WLG-110），README 只链接权威文件；
+- `docs/current/workflow-assistance/workflow/wlg130-delivery-verdict.md`：WLG-130 交付裁决（Authority Matrix、批次状态、GO/NO-GO）；
+- `docs/current/workflow-assistance/workflow/ui-skin-system.md`：UI/Skin 分层、主题 token、Agent UI 状态表达与 runtime-neutral 边界；
+- `docs/current/workflow-assistance/workflow/project-data-boundary.md`：项目任务数据归属、迁移、保留与 fail-closed 执行器；
+- `docs/current/workflow-assistance/workflow/token-monitor.md`：本地 Token Monitor 的真实 usage 口径、启动方式和 Codex OAuth 限制；
+- `docs/current/workflow-assistance/workflow/hermes-runtime-layout.md`：Hermes 全局运行目录分层、可恢复迁移、升级验证与清理边界；
+- `docs/current/workflow-assistance/workflow/gateway-cron-delivery.md`：Gateway、cron、sleep-mode、TUI 与外部消息平台的投递边界；
+- `docs/current/workflow-assistance/workflow/user-environment-profile.md`：字段级 allowlist 的用户覆盖层、plan-only 导出器与机器私有状态排除边界；
+- `docs/current/workflow-assistance/workflow/official-plus-user-configuration-standard-2026-08-11.md`：官方基线、用户覆盖层、项目覆盖层和任务临时态的 Stage 3 配置标准；
+- `docs/current/workflow-assistance/workflow/dual-entry-install.md`：setup/sync/bootstrap 入口矩阵与职责边界对账；
+- `docs/current/workflow-assistance/workflow/codex-performance-diagnosis.md`：Codex 性能分层诊断（项目/全局/客户端配置）、审计状态与解决方案；
+- `docs/current/workflow-assistance/workflow/managed-software-and-assets.md`：受管软件与内容总清单（Hermes/Codex/CC Switch/GitHub/OpenHuman/Open Design 及未来客户端的管理面总账）；
+- `docs/current/workflow-assistance/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
+- `docs/current/workflow-assistance/workflow/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录；
+- `docs/current/workflow-assistance/workflow/error-fixes-2026-08-13-wlg.md`：WLG 治理 TaskPack 执行错误总结（CRLF provenance、force-push CI 陷阱、gh 卸载、多分支串扰等）；
+- `docs/current/workflow-assistance/workflow/memory-compaction-2026-08-13.md`：Hermes 记忆压缩与优化归档（合并策略、精简记录、记忆治理规则）；
+- `docs/current/workflow-assistance/workflow/error-fixes-2026-08-14-guard.md`：pre_tool_call 终端守卫正则防护三缺陷（路径穿越绕过、含空格路径误拦、scheme:// URL 误判）修复归档；
+- `docs/current/workflow-assistance/workflow/error-fixes-2026-08-14-r2.md`：R2 重审计修复批次错误归档（Guard 前缀两连坑、zizmor Docker action、schema 四方同步、SQL 表名、fail-closed 契约、验证脚本 bug、graphql 瞬断、cargo 检测）；
+- `docs/current/workflow-assistance/handoffs/audit-r2-fixes-handoff-2026-08-14.md`：R2 修复批次交接（PR #97~#101、验证证据、剩余事项与恢复顺序）；
+- `docs/current/workflow-assistance/workflow/wloss-reference-decisions.md`：WLOSS-100/300/510 开源能力处理决定（OPA/Conftest=REFERENCE、in-toto=DERIVE、Cosign/Promptfoo=REFERENCE、Superpowers=方法吸收）；
+- `docs/current/workflow-assistance/mcp/workflow-mcp-stack.md`：MCP 默认策略；
+- `docs/current/workflow-assistance/mcp/mcp-catalog-governance.md`：MCP 候选审计 schema、阻断规则和默认启用边界；
+- `docs/current/workflow-assistance/absorption/open-source-workflow-absorption.md`：开源工作流吸收清单；
+- `docs/current/workflow-assistance/audit/workflow-absorption-audit-2026-07.md`：总体吸收审计；
+- `docs/current/workflow-assistance/audit/hermes-workflow-recovery-2026-07-22.md`：Hermes Desktop、CC Switch、Codex、GitHub 全链路故障、执行错误、恢复过程和数据保护证据；
+- `docs/current/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.md`：模型/API 中立 Agent Harness 审计；
+- `docs/current/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml`：固定来源和本地落点的机器可读证据；
+- `docs/current/workflow-assistance/audit/project-data-boundary-handoff-2026-08-02.md`：本次项目数据边界审计、交接、错误总结和上传前验证；
+- `docs/current/workflow-assistance/audit/project-data-boundary-handoff-2026-08-02.json`：本次审计的机器可读 manifest；
+- `docs/current/workflow-assistance/audit/workflow-baseline-audit-2026-08-06.md`：官方 Hermes 基线、全局规则、技能/插件部署、同步边界与 Windows 目录锁的脱敏综合审计；
+- `docs/current/workflow-assistance/handoffs/workflow-assistance-2026-07-23.md`：无密阶段交接、恢复顺序、已发布基线与会话卫生边界；
+- `docs/current/workflow-assistance/handoffs/hermes-desktop-source-root-repair-2026-07-24.md`：Desktop source-root/canonical runtime 修复的无密 Codex 交接、验证与回滚边界。
+- `docs/current/workflow-assistance/handoffs/audit-prevention-controls-handoff-2026-08-13.md`：供应链、配置最小写入、Hermes 路径围栏和全局/项目所有权边界的交接；明确本地候选验证与 PR/CI/跨机器验证的证据分级。
 
-- `TROUBLESHOOTING.md`：常见部署、代理、认证和工具链问题。
+- `docs/current/workflow-assistance-TROUBLESHOOTING.md`：常见部署、代理、认证和工具链问题。
 
 ## 测试与持续集成
 
 ### 本地门禁
 
 ```bash
-python scripts/workflow/run_quality_gate.py verify
+python services/orchestration/run_quality_gate.py verify
 ```
 
 可选快捷方式（如果本机已安装 `just`）：
@@ -659,9 +659,9 @@ just verify
 
 ### GitHub Actions
 
-WORK-LAB 根目录的 `../../.github/workflows/work-lab-gate.yml` 在每次 push 和 pull request 上运行，是唯一活跃的 GitHub workflow 权威；模块级的治理工作流已移入 `docs/workflow/examples/governance.yml.example`，仅作 documented example / reusable source（WLG-080），不是活跃的第二 CI：
+WORK-LAB 根目录的 `../../.github/workflows/work-lab-gate.yml` 在每次 push 和 pull request 上运行，是唯一活跃的 GitHub workflow 权威；模块级的治理工作流已移入 `docs/current/workflow-assistance/workflow/examples/governance.yml.example`，仅作 documented example / reusable source（WLG-080），不是活跃的第二 CI：
 
-- Ubuntu / Windows：调用同一个 `python scripts/workflow/run_quality_gate.py verify`；
+- Ubuntu / Windows：调用同一个 `python services/orchestration/run_quality_gate.py verify`；
 - 平台工具缺失时 shell / powershell 子 gate 显式 skip，而不是伪装通过；
 - CI verdict 绑定提交 SHA，不能用旧 run 证明新提交。
 
@@ -674,45 +674,45 @@ config/              无密钥 Hermes 基线、环境变量模板、SOUL
 scripts/workflow/    安全同步、模型切换、全链路 doctor
 scripts/security/    Agent 规则与秘密扫描
 skills/              Portable Hermes Skills 单一仓库源
-templates/           Agent 规则和 Task Ticket 模板
+packages/client-neutral-core/templates/           Agent 规则和 Task Ticket 模板
 docs/                工作流、MCP、吸收记录和审计证据
 tests/               仓库治理回归测试
 setup.sh / setup.ps1 跨平台部署入口
-TROUBLESHOOTING.md   故障排查
+docs/current/workflow-assistance-TROUBLESHOOTING.md   故障排查
 ```
 
 ## 常用操作
 
 ```bash
 # 查看当前 Provider、认证和代理前置条件
-python scripts/workflow/switch_model.py status
+python integrations/executors/hermes/switch_model.py status
 
 # 切换 Provider（仅在用户明确决定后；必须显式提供自己的模型；切换后新建会话或执行 /reset）
-python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
-python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python integrations/executors/hermes/switch_model.py gpt --model "$HERMES_GPT_MODEL"
+python integrations/executors/hermes/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
 
 # 结构诊断；不产生模型调用
-python scripts/workflow/hermes_workflow_doctor.py
+python integrations/executors/hermes/hermes_workflow_doctor.py
 
 # 真实执行诊断；可能产生网络/模型用量
-python scripts/workflow/hermes_workflow_doctor.py --live
+python integrations/executors/hermes/hermes_workflow_doctor.py --live
 
 # 检查默认 MCP
 hermes mcp test context7
 
 # 预览 / 应用 portable 同步
-python scripts/workflow/sync_hermes_workflow_assets.py
-python scripts/workflow/sync_hermes_workflow_assets.py --apply --approved
+python integrations/executors/hermes/sync_hermes_workflow_assets.py
+python integrations/executors/hermes/sync_hermes_workflow_assets.py --apply --approved
 
 # 生成新会话 / Codex handoff 上下文包；输出到 .project-local/artifacts/context-pack.md
-python scripts/workflow/build_context_pack.py
+python packages/client-neutral-core/scripts/build_context_pack.py
 
 # 生成 / 审计 MCP 候选；只写项目内忽略产物，不默认启用
-python scripts/workflow/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml
-python scripts/workflow/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml
+python packages/client-neutral-core/scripts/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml
+python packages/client-neutral-core/scripts/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml
 
 # 仓库完整门禁
-python scripts/workflow/run_quality_gate.py verify
+python services/orchestration/run_quality_gate.py verify
 just verify  # optional; only if just is installed
 ```
 
