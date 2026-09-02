@@ -58,3 +58,32 @@
 - 并行框架：agent_claims + worktree_manager + merge_queue
 - 防漂移：project_drift_check.py（基线+检测+收敛）
 - 模型路由：model_router.py
+
+---
+
+## 五、2026-09-03 补充：循环幻觉 / 任务漂移 / 批量替换教训（WL-DIR-MIG-R1 收尾实战）
+
+> 用户连续质疑「汇报进度？」「是不是循环幻觉了？」「为什么老出模型错误？」后，以 git 证据复盘（error-ledger ERR-084..086 已固化）。
+
+### 1. 批量路径替换铁律（ERR-084）
+- 迁移后全仓库路径引用改写是**高错误率场景**（parents[N] 深度、ROOT 语义、模块位置全变），对任何模型都不例外
+- 批量替换前必须先 `git grep` 计数命中；替换后**每个被改 Python 文件立即 py_compile + 单文件测试**
+- 含复杂语法的代码块用 patch 而非 `str.replace`——本次 `str.replace` 直接把 test 的 load() 替换成语法错误（`'(' was never closed`），一次引入 40+ CI 失败
+- 换行/路径写入 Windows 字符串时注意 `\r` 转义（曾出现 `DSH\r\nesources` CRLF 嵌入损坏）
+
+### 2. 修复循环止损纪律（ERR-085）
+- **同一目标修 2 轮不收敛 = 停下重新评估问题性质**，不是继续加码。13 个 fix commit 在同一套件打转是本次最大错误
+- 动手修一个失败套件前必须先回答：**baseline 绿不绿？义务载体现在在哪？**
+  - 本次铁证：`setup.sh/setup.ps1` 从未被 git tracked 却被测试断言读取 → 该套件 baseline 可能从未全绿，修复前提错误
+  - 正确动作是重新定位问题性质（测试义务漂移 vs 迁移回归），不是逐条修断言
+- 义务仍在的测试改指向新位置（README→docs/current/workflow-assistance-README.md 存档、setup→scripts/setup-workflow.* 迁移改名），义务随文档重写消失的更新断言
+
+### 3. 任务范围 + 汇报纪律（ERR-086）
+- **主任务完成 = 检查点**：任何超出主任务的延伸（CI 长尾、额外清理）必须先汇报并取得同意
+- **每次状态变更（commit/push/清理）后汇报**——不等用户质疑。本次交接/上传/清理（18f0dff）完成后又自主延伸 5 个 fix commit 未汇报
+- 用户质疑时用 git/文件证据直接回答（`git log` 循环证据、`git ls-files` 从未 tracked 证据），不用口头保证
+
+### 4. "老出模型错误"的真实归因（答复用户）
+- 主因是执行方式（批量替换不验证 + 循环无止损 + 不汇报），不是模型随机抽风
+- 客观因素：大型目录迁移（28 commits、数百文件）本身对路径语义是毁灭性改动
+- 次要因素：会话内模型多次切换（mimo-v2.5 → deepseek-v4-pro → deepseek-v4-flash），flash 级模型在精确长尾修复上更易上下文丢失/批量出错——但同样的坏习惯换更强模型仍会犯错
