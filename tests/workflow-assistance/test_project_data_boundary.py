@@ -11,8 +11,8 @@ from pathlib import Path
 from unittest import mock
 
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "bin" / "hermes-project-data.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "packages" / "client-neutral-core" / "bin" / "hermes-project-data.py"
 
 
 def load_module():
@@ -62,7 +62,7 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         self.assertEqual(layout.env["HERMES_KANBAN_HOME"], str(project_root / ".hermes"))
 
     def test_global_skill_requires_explicit_current_request_for_e_drive_access(self) -> None:
-        skill = (ROOT / "skills/software-development/project-data-boundary/SKILL.md").read_text(
+        skill = (ROOT / "packages" / "client-neutral-core" / "skills/software-development/project-data-boundary/SKILL.md").read_text(
             encoding="utf-8"
         )
 
