@@ -36,7 +36,7 @@ PROFILE = {
 class ImpactPlannerTests(unittest.TestCase):
     def test_canonical_project_profile_loads_with_contract_schema_version(self) -> None:
         module = load_module()
-        profile = module.load_profile(Path(__file__).resolve().parents[3] / ".project/governance" / "work-lab.project-profile.yaml")
+        profile = module.load_profile(Path(__file__).resolve().parents[2] / ".project/governance" / "work-lab.project-profile.yaml")
         self.assertEqual(profile["schema_version"], "workflow/project-profile/v1")
         self.assertEqual(profile["ci"]["workflow_name"], "work-lab-gate")
         self.assertEqual(profile["ci"]["stable_aggregate_job"], "aggregate")
@@ -47,7 +47,7 @@ class ImpactPlannerTests(unittest.TestCase):
 
     def test_token_monitor_path_selects_its_dedicated_gate(self) -> None:
         module = load_module()
-        profile = module.load_profile(Path(__file__).resolve().parents[3] / ".project/governance" / "work-lab.project-profile.yaml")
+        profile = module.load_profile(Path(__file__).resolve().parents[2] / ".project/governance" / "work-lab.project-profile.yaml")
         plan = module.build_plan(
             profile,
             repository="DTALEX66/WORK-LAB",
@@ -59,7 +59,7 @@ class ImpactPlannerTests(unittest.TestCase):
 
     def test_critical_ci_path_selects_supply_chain_security_gate(self) -> None:
         module = load_module()
-        profile = module.load_profile(Path(__file__).resolve().parents[3] / ".project/governance" / "work-lab.project-profile.yaml")
+        profile = module.load_profile(Path(__file__).resolve().parents[2] / ".project/governance" / "work-lab.project-profile.yaml")
         plan = module.build_plan(
             profile,
             repository="DTALEX66/WORK-LAB",

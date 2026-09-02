@@ -40,6 +40,9 @@ EXPECTED = {
     "runtime-registry.schema.json",
     "model-invocation-plan.schema.json",
     "usage-observation.schema.json",
+    "canonical-config-intent.schema.json",
+    "cloud-event-envelope.schema.json",
+    "context-capsule.schema.json",
 }
 
 

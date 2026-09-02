@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SCANNER = ROOT / "scripts/security/scan_agent_rules.py"
+ROOT = Path(__file__).resolve().parents[2]
+SCANNER = ROOT / "packages/client-neutral-core/scripts/security/scan_agent_rules.py"
 
 
 def run_scanner(text: str) -> subprocess.CompletedProcess[str]:

@@ -58,7 +58,7 @@ class ContextLineTests(unittest.TestCase):
 
     def test_context_lines_are_rendered_into_the_existing_pack_api(self) -> None:
         line = self.line(line_id="pack-line", decision="pack-decision")
-        rendered = build_context_pack(Path(__file__).resolve().parents[3], max_chars=30000, context_lines=[line], context_project_id="work-lab")
+        rendered = build_context_pack(Path(__file__).resolve().parents[2], max_chars=30000, context_lines=[line], context_project_id="work-lab")
         self.assertIn("## Context Lines", rendered)
         self.assertIn("pack-decision", rendered)
 

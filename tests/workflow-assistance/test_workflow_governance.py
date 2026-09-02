@@ -1285,7 +1285,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("Context7 MCP connectivity (use --network or --live)", source)
 
     def test_security_scanner_covers_executable_rule_files(self) -> None:
-        scanner = ROOT / "scripts/security/scan_agent_rules.py"
+        scanner = ROOT / "packages/client-neutral-core/scripts/security/scan_agent_rules.py"
         with tempfile.TemporaryDirectory() as raw:
             sample = Path(raw) / "agent.py"
             sample.write_text('api_key = "' + "A" * 32 + '"\n', encoding="utf-8")
@@ -1300,7 +1300,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_skill_provenance_manifest_and_gate_are_present(self) -> None:
         manifest = ROOT / "config/skill-provenance.yaml"
-        checker = ROOT / "scripts/security/check_skill_provenance.py"
+        checker = ROOT / "packages/client-neutral-core/scripts/security/check_skill_provenance.py"
         gate = (ROOT / "services/orchestration/run_quality_gate.py").read_text(encoding="utf-8")
         self.assertTrue(manifest.exists())
         self.assertTrue(checker.exists())
@@ -2071,7 +2071,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "services/orchestration/run_quality_gate.py",
             "integrations/executors/hermes/switch_model.py",
             "integrations/executors/hermes/hermes_workflow_doctor.py",
-            "scripts/security/scan_agent_rules.py",
+            "packages/client-neutral-core/scripts/security/scan_agent_rules.py",
             "Justfile",
             "templates/task-tickets/model-neutral-agent-task.md",
             "templates/evals/agent-behavior-smoke.yaml",
@@ -2083,9 +2083,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "--live",
         ):
             self.assertIn(command_or_path, readme)
-        for skill in (ROOT / "skills").rglob("SKILL.md"):
+        for skill in (ROOT / "packages" / "client-neutral-core" / "skills").rglob("SKILL.md"):
             self.assertIn(skill.parent.name, readme, skill.relative_to(ROOT).as_posix())
-        for template in (ROOT / "templates").rglob("*.md"):
+        for template in (ROOT / "packages" / "client-neutral-core" / "templates").rglob("*.md"):
             self.assertIn(template.name, readme, template.relative_to(ROOT).as_posix())
         for document in (ROOT / "docs").rglob("*"):
             if document.is_file() and document.suffix in {".md", ".yaml"}:
@@ -2666,7 +2666,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
 
     def test_portable_skills_do_not_link_to_missing_references(self) -> None:
-        for skill in (ROOT / "skills").rglob("SKILL.md"):
+        for skill in (ROOT / "packages" / "client-neutral-core" / "skills").rglob("SKILL.md"):
             body = skill.read_text(encoding="utf-8")
             references = re.findall(r"references/[A-Za-z0-9._+/-]+\.md", body)
             missing = [ref for ref in references if not (skill.parent / ref).exists()]
@@ -2785,7 +2785,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_external_harness_absorption_is_model_and_paid_api_neutral(self) -> None:
         fortress = ROOT / "packages/client-neutral-core/skills/software-development/agent-workflow-fortress"
         reference = fortress / "references/free-local-agent-harness-absorption.md"
-        template = ROOT / "templates/task-tickets/model-neutral-agent-task.md"
+        template = ROOT / "packages" / "client-neutral-core" / "templates/task-tickets/model-neutral-agent-task.md"
         self.assertTrue(reference.exists())
         self.assertTrue(template.exists())
 
@@ -2891,7 +2891,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_agent_behavior_eval_template_is_safe_and_model_neutral(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         doc_path = ROOT / "docs/current/workflow-assistance/workflow/agent-evaluation.md"
-        template_path = ROOT / "templates/evals/agent-behavior-smoke.yaml"
+        template_path = ROOT / "packages" / "client-neutral-core" / "templates/evals/agent-behavior-smoke.yaml"
         absorption = (ROOT / "docs/absorption/open-source-workflow-absorption.md").read_text(
             encoding="utf-8"
         )
@@ -2947,10 +2947,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
     def test_ui_skin_absorption_pack_is_lightweight_and_runtime_neutral(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         doc_path = ROOT / "docs/current/workflow-assistance/workflow/ui-skin-system.md"
-        presets_path = ROOT / "templates/ui/skin-presets.yaml"
-        patterns_path = ROOT / "templates/ui/agent-chat-ui-patterns.md"
-        checklist_path = ROOT / "templates/ui/terminal-theme-checklist.md"
-        terminal_path = ROOT / "templates/windows-terminal/catppuccin-mocha.json"
+        presets_path = ROOT / "packages" / "client-neutral-core" / "templates/ui/skin-presets.yaml"
+        patterns_path = ROOT / "packages" / "client-neutral-core" / "templates/ui/agent-chat-ui-patterns.md"
+        checklist_path = ROOT / "packages" / "client-neutral-core" / "templates/ui/terminal-theme-checklist.md"
+        terminal_path = ROOT / "packages" / "client-neutral-core" / "templates/windows-terminal/catppuccin-mocha.json"
         absorption = (ROOT / "docs/absorption/open-source-workflow-absorption.md").read_text(
             encoding="utf-8"
         )

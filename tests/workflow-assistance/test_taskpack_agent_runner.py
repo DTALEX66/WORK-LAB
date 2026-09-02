@@ -91,11 +91,11 @@ class TaskPackAgentRunnerTests(unittest.TestCase):
             repo.observe_ci("commit")
 
     def test_ci_identity_uses_work_lab_profile_and_aggregate_job(self) -> None:
-        root = Path(__file__).resolve().parents[3]
+        root = Path(__file__).resolve().parents[2]
         self.assertEqual(resolve_ci_identity(root), (("work-lab-gate",), "aggregate"))
 
     def test_ci_identity_discovers_workflow_without_profile(self) -> None:
-        root = Path(__file__).resolve().parents[3]
+        root = Path(__file__).resolve().parents[2]
         self.assertEqual(discover_ci_identity(root), (("work-lab-gate",), "aggregate"))
 
     def test_hermes_backend_resumes_without_agent_timeout(self) -> None:
