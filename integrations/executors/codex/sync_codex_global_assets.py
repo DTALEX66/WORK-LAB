@@ -959,7 +959,7 @@ def rollback_overlay(codex_home: Path, agent_home: Path, source_root: Path) -> d
 
 
 def _default_source_root() -> Path:
-    return Path(__file__).resolve().parents[2] / "codex-assets"
+    return Path(__file__).resolve().parents[3] / "integrations" / "executors" / "codex"
 
 
 def main() -> int:

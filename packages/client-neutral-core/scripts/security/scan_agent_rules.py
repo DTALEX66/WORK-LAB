@@ -40,7 +40,7 @@ EXTS = {
     '.md', '.txt', '.yaml', '.yml', '.json', '.toml',
     '.py', '.sh', '.bash', '.ps1', '.psm1', '.cmd', '.bat',
 }
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_ROOTS = (
     REPO_ROOT / "templates",
     REPO_ROOT / "skills",

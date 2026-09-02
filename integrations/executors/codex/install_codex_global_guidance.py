@@ -11,7 +11,7 @@ import secrets
 from typing import Iterator
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 TEMPLATE = ROOT / "templates" / "agent-rules" / "CODEX_GLOBAL_AGENTS.md"
 
 

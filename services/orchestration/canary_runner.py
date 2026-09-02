@@ -23,7 +23,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-WORK = Path(__file__).resolve().parents[4]  # .../packages/client-neutral-core/scripts/workflow -> WORK-LAB root
+WORK = Path(__file__).resolve().parents[2]  # .../packages/client-neutral-core/scripts/workflow -> WORK-LAB root
 SCRIPTS = WORK / "packages" / "client-neutral-core" / "scripts"
 
 import sys

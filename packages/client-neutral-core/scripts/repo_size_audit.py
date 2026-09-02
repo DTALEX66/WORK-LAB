@@ -13,7 +13,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(__file__).resolve().parents[3]
 
 IGNORED_SUFFIXES = {".pyc", ".log", ".tmp", ".cache"}
 SUSPECT_DIRS = {"node_modules", "__pycache__", ".git", ".hermes", "dist", "build"}

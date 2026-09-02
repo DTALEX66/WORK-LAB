@@ -134,7 +134,7 @@ def _block_unfenced_retired_assets(home: Path) -> None:
 
 
 def default_repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def default_hermes_home() -> Path:

@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def load(name: str) -> object:
-    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts/workflow" / f"{name}.py")
+    spec = importlib.util.spec_from_file_location(name, None  # import_module via conftest sys.path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module

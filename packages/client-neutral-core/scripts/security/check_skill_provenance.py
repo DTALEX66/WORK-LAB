@@ -163,7 +163,7 @@ def build_manifest(repo_root: Path, live_root: Path | None = None) -> dict[str, 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[2])
+    parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[4])
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--live-root", type=Path)
     parser.add_argument("--write", action="store_true")

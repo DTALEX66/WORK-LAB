@@ -10,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]  # repo root (script: .../packages/client-neutral-core/scripts/)
+ROOT = Path(__file__).resolve().parents[3]  # repo root (script: .../packages/client-neutral-core/scripts/)
 
 
 def _read_json(relative: str) -> dict:

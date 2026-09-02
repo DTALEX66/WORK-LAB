@@ -137,7 +137,7 @@ def _agent_platform_map() -> dict[str, str]:
     """
     import json
     from pathlib import Path
-    registry_path = Path(__file__).resolve().parents[1] / "config" / "adapter-registry.json"
+    registry_path = Path(__file__).resolve().parents[2] / "config" / "adapter-registry.json"
     mapping: dict[str, str] = {}
     try:
         data = json.loads(registry_path.read_text(encoding="utf-8"))

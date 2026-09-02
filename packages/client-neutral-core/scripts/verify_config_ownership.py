@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 REGISTRY = ROOT / "config/config-ownership.json"
 EXPECTED_LAYERS = {
     "UPSTREAM_OFFICIAL", "USER_OVERLAY", "PROJECT_OVERLAY", "TASK_EPHEMERAL",

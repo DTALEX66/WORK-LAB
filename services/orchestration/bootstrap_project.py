@@ -11,7 +11,7 @@ FILES = {
     ".hermes/README.md": """# Project-local Hermes runtime\n\nThis ignored directory contains only regenerable task runtime data, caches, logs and verification artifacts. Run project-writing commands through `hermes-project-data.py --project . run -- <command>`.\n""",
     ".hermes/BOOTSTRAP_MANIFEST.yaml": """schema_version: 1\nsource: Workflow-assistance\nfeatures:\n  - project_data_boundary\n  - context_pack\n  - local_quality_gate\ncredentials: not_copied\n""",
 }
-AGENT_RULES_TEMPLATE = Path(__file__).resolve().parents[2] / "templates" / "agent-rules" / "AGENTS.md"
+AGENT_RULES_TEMPLATE = Path(__file__).resolve().parents[2] / "packages" / "client-neutral-core" / "templates" / "agent-rules" / "AGENTS.md"
 
 
 def git_root(target: Path) -> Path:

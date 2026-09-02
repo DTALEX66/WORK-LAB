@@ -50,7 +50,7 @@ class RealAdapter:
 
     def config_ownership(self) -> dict[str, Any]:
         registry = json.loads(
-            (Path(__file__).resolve().parents[2] / "config/config-ownership.json").read_text(encoding="utf-8")
+            (Path(__file__).resolve().parents[3] / "config/config-ownership.json").read_text(encoding="utf-8")
         )
         fields = [f for f in registry["fields"] if f.get("adapter") in {self.adapter_id, "all", "workflow"}]
         return {

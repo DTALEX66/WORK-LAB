@@ -89,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(__file__).resolve().parents[2] / "config/user-environment-profile.json",
+        default=Path(__file__).resolve().parents[3] / "config/user-environment-profile.json",
     )
     parser.add_argument("--write", action="store_true", help="write the reviewed portable overlay")
     args = parser.parse_args(argv)
