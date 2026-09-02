@@ -69,7 +69,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("packages/client-neutral-core/skills/software-development", owned_roots)
         owned_binaries = ownership["global_workflow"]["owned_binary_paths"]
         self.assertEqual(len(owned_binaries), 6)
-        self.assertIn("bin/codex", owned_binaries)
+        self.assertIn("packages/client-neutral-core/bin/codex", owned_binaries)
         self.assertNotIn("bin", owned_binaries)
         owned_file_mappings = ownership["global_workflow"]["owned_file_mappings"]
         self.assertEqual(
@@ -100,8 +100,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertIn("STRUCTURAL_PORTABLE_PASS", result.stdout)
 
     def test_windows_codex_launchers_share_the_store_runtime_owner(self) -> None:
-        bash_launcher = (ROOT / "bin/codex").read_text(encoding="utf-8")
-        cmd_launcher = (ROOT / "bin/codex.cmd").read_text(encoding="utf-8")
+        bash_launcher = (ROOT / "packages/client-neutral-core/bin/codex").read_text(encoding="utf-8")
+        cmd_launcher = (ROOT / "packages/client-neutral-core/bin/codex.cmd").read_text(encoding="utf-8")
         runner = (ROOT / "services/orchestration/run_taskpack_agent.py").read_text(encoding="utf-8")
         self.assertIn("Get-AppxPackage -Name OpenAI.Codex", bash_launcher)
         self.assertIn("Get-AppxPackage -Name OpenAI.Codex", cmd_launcher)
@@ -1356,12 +1356,12 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertIn(f"packages/client-neutral-core/skills/github/{name}", backup_rels)
         self.assertNotIn("packages/client-neutral-core/skills/github", backup_rels)
         for relative in (
-            "bin/codex",
-            "bin/codex.cmd",
-            "bin/hermes-npx",
-            "bin/hermes-npx.cmd",
-            "bin/hermes-project-data.py",
-            "bin/hermes-project-terminal-guard.py",
+            "packages/client-neutral-core/bin/codex",
+            "packages/client-neutral-core/bin/codex.cmd",
+            "packages/client-neutral-core/bin/hermes-npx",
+            "packages/client-neutral-core/bin/hermes-npx.cmd",
+            "packages/client-neutral-core/bin/hermes-project-data.py",
+            "packages/client-neutral-core/bin/hermes-project-terminal-guard.py",
         ):
             self.assertIn(relative, backup_rels)
         self.assertNotIn("bin", backup_rels)
@@ -1390,7 +1390,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_bootstrap_and_project_wrapper_work_for_multiple_projects(self) -> None:
         bootstrap = ROOT / "services/orchestration/bootstrap_project.py"
-        wrapper = ROOT / "bin/hermes-project-data.py"
+        wrapper = ROOT / "packages/client-neutral-core/bin/hermes-project-data.py"
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             for name in ("alpha", "beta", "windows-shaped-project"):
@@ -1437,7 +1437,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertEqual(manifest["compatibility"]["official_schema"], "capability-discovery")
         self.assertEqual(manifest["compatibility"]["official_config_root"], "capability-discovery")
     def test_readme_removed_kimi_speed_lanes_and_keeps_deepseek_gpt(self) -> None:
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        readme = (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8")
         for command in (
             'switch_model.py kimi --model',
             'switch_model.py kimi-fast --model',
@@ -2017,7 +2017,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
     def test_setup_does_not_default_enable_optional_capabilities(self) -> None:
         scripts = "\n".join(
-            (ROOT / name).read_text(encoding="utf-8") for name in ("setup.sh", "setup.ps1")
+            (ROOT / name).read_text(encoding="utf-8") for name in ("scripts/setup-workflow.sh", "scripts/setup-workflow.ps1")
         )
         self.assertIn("PyYAML >=6,<7 is required", scripts)
         self.assertIn("import yaml", scripts)
@@ -2030,9 +2030,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "plugins enable spotify",
         ):
             self.assertNotIn(command, scripts)
-        self.assertNotIn("[switch]$DryRun", (ROOT / "setup.ps1").read_text(encoding="utf-8"))
-        ps_setup = (ROOT / "setup.ps1").read_text(encoding="utf-8")
-        sh_setup = (ROOT / "setup.sh").read_text(encoding="utf-8")
+        self.assertNotIn("[switch]$DryRun", (ROOT / "scripts/setup-workflow.ps1").read_text(encoding="utf-8"))
+        ps_setup = (ROOT / "scripts/setup-workflow.ps1").read_text(encoding="utf-8")
+        sh_setup = (ROOT / "scripts/setup-workflow.sh").read_text(encoding="utf-8")
         self.assertIn("[switch]$Apply", ps_setup)
         self.assertIn("APPLY=0", sh_setup)
         for setup in (ps_setup, sh_setup):
@@ -2043,12 +2043,12 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertNotIn("--apply --approved \\\n", sh_setup)
 
     def test_readme_never_extracts_credentials_from_auth_files(self) -> None:
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        readme = (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8")
         self.assertNotIn("json.load(open(r'~/.codex/auth.json'))", readme)
         self.assertIn("packages/client-neutral-core/skills/model-switch/SKILL.md", readme)
 
     def test_readme_documents_the_complete_current_feature_surface(self) -> None:
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        readme = (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8")
         for heading in (
             "## 项目定位",
             "## 功能总览",
@@ -2316,7 +2316,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "path escapes project root",
         ):
             self.assertIn(marker, body)
-        self.assertIn("hermes-project-data.py", (ROOT / "README.md").read_text(encoding="utf-8"))
+        self.assertIn("hermes-project-data.py", (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8"))
 
     def test_context_pack_generator_is_project_local_and_secret_redacting(self) -> None:
         script = ROOT / "packages/client-neutral-core/scripts/build_context_pack.py"
@@ -2523,7 +2523,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             (
                 doc.read_text(encoding="utf-8"),
                 workflow.read_text(encoding="utf-8"),
-                (ROOT / "README.md").read_text(encoding="utf-8"),
+                (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8"),
             )
         )
         for marker in (
@@ -2647,7 +2647,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 script.read_text(encoding="utf-8"),
                 doc.read_text(encoding="utf-8"),
                 stack.read_text(encoding="utf-8"),
-                (ROOT / "README.md").read_text(encoding="utf-8"),
+                (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8"),
             )
         )
         for marker in (
@@ -2840,7 +2840,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertNotIn(marker, combined)
 
     def test_model_neutral_absorption_is_discoverable_and_audited(self) -> None:
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        readme = (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8")
         audit = ROOT / "docs/audit/model-neutral-agent-harness-absorption-2026-07.md"
         manifest_path = ROOT / "docs/audit/model-neutral-agent-harness-absorption-2026-07.yaml"
         self.assertIn("templates/task-tickets/model-neutral-agent-task.md", readme)
@@ -2889,10 +2889,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertNotIn(marker, body)
 
     def test_agent_behavior_eval_template_is_safe_and_model_neutral(self) -> None:
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        readme = (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8")
         doc_path = ROOT / "docs/current/workflow-assistance/workflow/agent-evaluation.md"
         template_path = ROOT / "packages" / "client-neutral-core" / "templates/evals/agent-behavior-smoke.yaml"
-        absorption = (ROOT / "docs/absorption/open-source-workflow-absorption.md").read_text(
+        absorption = (ROOT / "docs/current/workflow-assistance/absorption/open-source-workflow-absorption.md").read_text(
             encoding="utf-8"
         )
 
@@ -2945,13 +2945,13 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.assertNotIn(marker, combined)
 
     def test_ui_skin_absorption_pack_is_lightweight_and_runtime_neutral(self) -> None:
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        readme = (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8")
         doc_path = ROOT / "docs/current/workflow-assistance/workflow/ui-skin-system.md"
         presets_path = ROOT / "packages" / "client-neutral-core" / "templates/ui/skin-presets.yaml"
         patterns_path = ROOT / "packages" / "client-neutral-core" / "templates/ui/agent-chat-ui-patterns.md"
         checklist_path = ROOT / "packages" / "client-neutral-core" / "templates/ui/terminal-theme-checklist.md"
         terminal_path = ROOT / "packages" / "client-neutral-core" / "templates/windows-terminal/catppuccin-mocha.json"
-        absorption = (ROOT / "docs/absorption/open-source-workflow-absorption.md").read_text(
+        absorption = (ROOT / "docs/current/workflow-assistance/absorption/open-source-workflow-absorption.md").read_text(
             encoding="utf-8"
         )
         skill = (

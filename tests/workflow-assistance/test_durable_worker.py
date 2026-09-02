@@ -192,7 +192,7 @@ class DurableWorkerTests(unittest.TestCase):
             result = subprocess.run(
                 [
                     sys.executable,
-                    str(Path(__file__).resolve().parents[1] / "services/orchestration" / "durable_worker.py"),
+                    str(Path(__file__).resolve().parents[2] / "services/orchestration" / "durable_worker.py"),
                     "--runtime-root",
                     str(runtime),
                     "--project-root",

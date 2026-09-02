@@ -49,7 +49,7 @@ def validate_isolated_home(repo: Path, home: Path) -> None:
 
 
 def load_sync(repo: Path):
-    path = repo / "scripts/workflow/sync_hermes_workflow_assets.py"
+    path = repo / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
     spec = importlib.util.spec_from_file_location("workflow_sync_verify", path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load sync script: {path}")
@@ -59,7 +59,7 @@ def load_sync(repo: Path):
 
 
 def load_manifest(repo: Path) -> dict:
-    path = repo / "workflow-manifest.yaml"
+    path = repo / "packages/client-neutral-core/workflow-manifest.yaml"
     if not path.exists():
         raise RuntimeError("workflow-manifest.yaml is required")
     manifest = yaml.safe_load(path.read_text(encoding="utf-8")) or {}

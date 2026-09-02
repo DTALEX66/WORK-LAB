@@ -250,19 +250,35 @@ def _load_ci_profile(path: Path) -> dict[str, object]:
 
 
 def discover_ci_identity(root: Path) -> tuple[tuple[str, ...], str | None]:
-    """Discover a workflow name and aggregate job without assuming a product name."""
+    """Discover a workflow name and aggregate job without assuming a product name.
+
+    Prefers the workflow that carries the stable ``aggregate`` job (the main
+    gate workflow); falls back to the first named workflow otherwise.
+    """
+
+    def _load(path: Path) -> dict | None:
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except (OSError, yaml.YAMLError):
+            return None
+        if not isinstance(data, dict) or not isinstance(data.get("name"), str):
+            return None
+        return data
 
     candidates = sorted((root / ".github" / "workflows").glob("*.y*ml"))
+    # First pass: a workflow with the stable aggregate job wins (main gate).
     for path in candidates:
-        try:
-            workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
-        except (OSError, yaml.YAMLError):
-            continue
-        if not isinstance(workflow, dict) or not isinstance(workflow.get("name"), str):
+        workflow = _load(path)
+        if not workflow:
             continue
         jobs = workflow.get("jobs")
-        aggregate = "aggregate" if isinstance(jobs, dict) and "aggregate" in jobs else None
-        return (workflow["name"],), aggregate
+        if isinstance(jobs, dict) and "aggregate" in jobs:
+            return (workflow["name"],), "aggregate"
+    # Second pass: any named workflow.
+    for path in candidates:
+        workflow = _load(path)
+        if workflow:
+            return (workflow["name"],), None
     return (), None
 
 

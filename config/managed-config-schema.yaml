@@ -23,12 +23,12 @@ global_workflow:
     - packages/client-neutral-core/skills/software-development/sleep-mode
     - packages/client-neutral-core/skills/software-development/windows-development-environment
   owned_binary_paths:
-    - bin/codex
-    - bin/codex.cmd
-    - bin/hermes-npx
-    - bin/hermes-npx.cmd
-    - bin/hermes-project-data.py
-    - bin/hermes-project-terminal-guard.py
+    - packages/client-neutral-core/bin/codex
+    - packages/client-neutral-core/bin/codex.cmd
+    - packages/client-neutral-core/bin/hermes-npx
+    - packages/client-neutral-core/bin/hermes-npx.cmd
+    - packages/client-neutral-core/bin/hermes-project-data.py
+    - packages/client-neutral-core/bin/hermes-project-terminal-guard.py
   owned_file_mappings:
     - source: config/SOUL.md
       target: SOUL.md

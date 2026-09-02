@@ -15,11 +15,20 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import json
+import sys
 import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
+
+# CLI may run this file directly (python durable_worker.py ...); resolve the
+# shared module roots (canonical_store / sidecar_lock live under
+# packages/client-neutral-core/scripts after the directory convergence).
+_ROOT = Path(__file__).resolve().parents[2]
+_CNC = _ROOT / "packages" / "client-neutral-core" / "scripts"
+if str(_CNC) not in sys.path:
+    sys.path.insert(0, str(_CNC))
 
 from canonical_store import CanonicalStore
 from sidecar_lock import SingleInstanceLock

@@ -450,7 +450,7 @@ def load_managed_binary_paths(repo: Path) -> tuple[str, ...]:
         if not isinstance(raw, str):
             raise ValueError("owned_binary_paths entries must be strings")
         relative = Path(raw)
-        if relative.is_absolute() or ".." in relative.parts or relative.parts[:1] != ("bin",):
+        if relative.is_absolute() or ".." in relative.parts or relative.parts[:3] != ("packages", "client-neutral-core", "bin"):
             raise ValueError(f"invalid managed binary path: {raw}")
         value = relative.as_posix()
         if value in normalized:
