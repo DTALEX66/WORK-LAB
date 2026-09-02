@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "packages/client-neutral-core/scripts" / "platform_identity.py"
-SCHEMA = ROOT / "schemas" / "workflow" / "platform-identity.schema.json"
+SCHEMA = ROOT / "packages" / "contracts" / "schemas" / "workflow" / "platform-identity.schema.json"
 spec = importlib.util.spec_from_file_location("platform_identity", SCRIPT)
 assert spec and spec.loader
 module = importlib.util.module_from_spec(spec)

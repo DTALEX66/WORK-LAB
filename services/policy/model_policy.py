@@ -12,7 +12,7 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schemas" / "workflow" / "model-policy.schema.json"
+SCHEMA_PATH = Path(__file__).resolve().parents[2] / "packages" / "contracts" / "schemas" / "workflow" / "model-policy.schema.json"
 _USAGE_FIELDS = {"input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens", "latency_ms", "tool_calls"}
 
 

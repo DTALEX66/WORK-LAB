@@ -7,8 +7,8 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_DIR = ROOT / "schemas" / "workflow"
+ROOT = Path(__file__).resolve().parents[2]
+SCHEMA_DIR = ROOT / "packages" / "contracts" / "schemas" / "workflow"
 
 
 VALID = {

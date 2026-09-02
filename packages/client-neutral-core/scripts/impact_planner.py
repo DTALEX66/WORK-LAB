@@ -14,7 +14,7 @@ from typing import Any
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
-SCHEMA = Path(__file__).resolve().parents[2] / "schemas" / "workflow" / "gate-plan.schema.json"
+SCHEMA = Path(__file__).resolve().parents[2] / "contracts" / "schemas" / "workflow" / "gate-plan.schema.json"
 
 
 def _git(root: Path, *args: str) -> str:

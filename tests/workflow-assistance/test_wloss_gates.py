@@ -63,7 +63,7 @@ class CanaryExitCodeContractTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.root = Path(__file__).resolve().parents[1]
+        cls.root = Path(__file__).resolve().parents[2]
         cls.canary = cls.root / "services/orchestration" / "canary_runner.py"
         cls.gate = cls.root / "services/orchestration" / "run_quality_gate.py"
 

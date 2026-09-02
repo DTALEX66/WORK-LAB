@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 VERIFY = ROOT / "packages/client-neutral-core/scripts" / "verify_adapter_registry.py"
 REGISTRY = ROOT / "config" / "adapter-registry.json"
-SCHEMA = ROOT / "schemas" / "workflow" / "adapter-registry.schema.json"
+SCHEMA = ROOT / "packages" / "contracts" / "schemas" / "workflow" / "adapter-registry.schema.json"
 
 
 class AdapterRegistryTests(unittest.TestCase):

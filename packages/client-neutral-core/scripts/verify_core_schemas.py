@@ -154,7 +154,7 @@ def verify_schema_dir(schema_dir: Path) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--schema-dir", type=Path, default=Path(__file__).resolve().parents[2] / "schemas" / "workflow")
+    parser.add_argument("--schema-dir", type=Path, default=Path(__file__).resolve().parents[2] / "contracts" / "schemas" / "workflow")
     args = parser.parse_args()
     errors = verify_schema_dir(args.schema_dir.resolve())
     if errors:
