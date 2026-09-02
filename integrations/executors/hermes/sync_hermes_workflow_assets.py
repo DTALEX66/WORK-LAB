@@ -545,19 +545,24 @@ def build_action_plan(repo: Path, home: Path) -> dict[str, object]:
         raise ValueError("action plan requires existing repo and home directories")
     validate_deployment_paths(repo, home)
     _block_unfenced_retired_assets(home)
-    managed_roots = tuple(_repo_rel_to_home_rel(r) for r in load_managed_skill_roots(repo))
-    managed_binaries = tuple(_repo_rel_to_home_rel(r) for r in load_managed_binary_paths(repo))
+    managed_roots_repo = load_managed_skill_roots(repo)
+    managed_binaries_repo = load_managed_binary_paths(repo)
+    managed_roots = tuple(_repo_rel_to_home_rel(r) for r in managed_roots_repo)
+    managed_binaries = tuple(_repo_rel_to_home_rel(r) for r in managed_binaries_repo)
     managed_file_mappings = load_managed_file_mappings(repo)
     live_config = home / "config.yaml"
-    mapped_paths = [(relative, relative) for relative in (*managed_roots, *managed_binaries)]
-    mapped_paths.extend(managed_file_mappings)
-    mapped_paths.append(("config/.env.template", ".env.template"))
+    # (source repo-relative, target home-relative) — the repository keeps skills
+    # and launchers under packages/client-neutral-core while the live Hermes
+    # home consumes a flat skills//bin/ layout.
+    source_targets = list(zip((*managed_roots_repo, *managed_binaries_repo), (*managed_roots, *managed_binaries)))
+    source_targets.extend(managed_file_mappings)
+    source_targets.append(("config/.env.template", ".env.template"))
     _assert_safe_managed_paths(
         home,
-        tuple(relative for _, relative in mapped_paths) + ("config.yaml",),
+        tuple(target for _, target in source_targets) + ("config.yaml",),
     )
     steps = []
-    for source_relative, target_relative in mapped_paths:
+    for source_relative, target_relative in source_targets:
         steps.append(
             {
                 "id": f"replace-{target_relative.replace('/', '-')}",
