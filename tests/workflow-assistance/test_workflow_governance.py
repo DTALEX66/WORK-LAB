@@ -2341,8 +2341,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 f"display:\n  busy_input_mode: queue\napi_key: {secret}\n",
                 encoding="utf-8",
             )
-            (repo / "docs/workflow").mkdir(parents=True)
-            (repo / "docs/workflow/project-definition.md").write_text(
+            (repo / "docs/current/workflow-assistance/workflow").mkdir(parents=True)
+            (repo / "docs/current/workflow-assistance/workflow/project-definition.md").write_text(
                 "# Definition\nHermes Agent + CC Switch + Codex\n",
                 encoding="utf-8",
             )
@@ -2353,7 +2353,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                     ".gitignore",
                     "README.md",
                     "config/config.yaml",
-                    "docs/workflow/project-definition.md",
+                    "docs/current/workflow-assistance/workflow/project-definition.md",
                 ],
                 cwd=repo,
                 check=True,
@@ -2898,7 +2898,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
         self.assertTrue(doc_path.exists())
         self.assertTrue(template_path.exists())
-        self.assertIn("docs/workflow/agent-evaluation.md", readme)
+        self.assertIn("docs/current/workflow-assistance/workflow/agent-evaluation.md", readme)
         self.assertIn("templates/evals/agent-behavior-smoke.yaml", readme)
         self.assertIn("promptfoo/promptfoo", absorption)
 

@@ -25,7 +25,7 @@ def load_module():
 class ClientNeutralManifestTests(unittest.TestCase):
     def test_product_definition_documents_the_core_boundary(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        definition = (ROOT / "docs/workflow/project-definition.md").read_text(encoding="utf-8")
+        definition = (ROOT / "docs/current/workflow-assistance/workflow/project-definition.md").read_text(encoding="utf-8")
         for document in (readme, definition):
             self.assertIn("客户端中立", document)
             self.assertIn("Adapter", document)
