@@ -112,7 +112,7 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: packages/client-neutral-core/apps/token-monitor-desktop
+        working-directory: apps/token-monitor
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install locked frontend dependencies
@@ -120,10 +120,10 @@ jobs:
       - name: Build frontend
         run: npm run build
       - name: Test locked Rust desktop crate
-        working-directory: packages/client-neutral-core/apps/token-monitor-desktop/src-tauri
+        working-directory: apps/token-monitor/src-tauri
         run: cargo test --locked
       - name: Check locked Rust desktop crate
-        working-directory: packages/client-neutral-core/apps/token-monitor-desktop/src-tauri
+        working-directory: apps/token-monitor/src-tauri
         run: cargo check --locked
 
 
@@ -134,7 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      PYTHONPATH: src:scripts:../../packages/client-neutral-core/scripts/workflow
+      PYTHONPATH: src:scripts
     defaults:
       run:
         working-directory: apps/observer
