@@ -150,7 +150,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
             raw_path = Path(raw)
             repo = raw_path / "repo"
             home = raw_path / "home"
-            for directory in ("config", "skills", "bin"):
+            for directory in (
+                "config",
+                "packages/client-neutral-core/skills",
+                "packages/client-neutral-core/bin",
+            ):
                 shutil.copytree(ROOT / directory, repo / directory)
             home.mkdir()
 
@@ -1386,7 +1390,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "github-pr-workflow",
                 "github-repo-management",
             ):
-                self.assertTrue((home / "packages/client-neutral-core/skills/github" / name / "SKILL.md").is_file(), name)
+                self.assertTrue((home / "skills/github" / name / "SKILL.md").is_file(), name)
 
     def test_bootstrap_and_project_wrapper_work_for_multiple_projects(self) -> None:
         bootstrap = ROOT / "services/orchestration/bootstrap_project.py"

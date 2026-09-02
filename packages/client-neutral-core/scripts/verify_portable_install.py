@@ -132,6 +132,10 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
     sync = load_sync(repo)
     managed_roots = sync.load_managed_skill_roots(repo)
     managed_binaries = sync.load_managed_binary_paths(repo)
+    # Home consumes repo-owned assets at the flat layout (skills/, bin/);
+    # keep repo-relative lists for provenance checks and home-relative for inventory.
+    home_roots = tuple(sync._repo_rel_to_home_rel(r) for r in managed_roots)
+    home_binaries = tuple(sync._repo_rel_to_home_rel(r) for r in managed_binaries)
     managed_file_mappings = sync.load_managed_file_mappings(repo)
     provenance_path = repo / "config/skill-provenance.yaml"
     provenance = yaml.safe_load(provenance_path.read_text(encoding="utf-8")) or {}
@@ -204,10 +208,10 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
         "platform_toolsets.cli": runtime_feature_checks["platform_toolsets.cli"],
         "context7": "context7" in (config.get("mcp_servers") or {}),
         "context7.wrapper": True,
-        "managed_skills.exact_inventory": len(managed_roots) == 13
-        and all((home / relative / "SKILL.md").is_file() for relative in managed_roots),
-        "managed_binaries.exact_inventory": len(managed_binaries) == 6
-        and all((home / relative).is_file() for relative in managed_binaries),
+        "managed_skills.exact_inventory": len(home_roots) == 13
+        and all((home / relative / "SKILL.md").is_file() for relative in home_roots),
+        "managed_binaries.exact_inventory": len(home_binaries) == 6
+        and all((home / relative).is_file() for relative in home_binaries),
         "managed_root_files.exact_inventory": all(
             (home / target).is_file()
             and (home / target).read_bytes() == (repo / source).read_bytes()

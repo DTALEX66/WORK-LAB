@@ -545,8 +545,8 @@ def build_action_plan(repo: Path, home: Path) -> dict[str, object]:
         raise ValueError("action plan requires existing repo and home directories")
     validate_deployment_paths(repo, home)
     _block_unfenced_retired_assets(home)
-    managed_roots = load_managed_skill_roots(repo)
-    managed_binaries = load_managed_binary_paths(repo)
+    managed_roots = tuple(_repo_rel_to_home_rel(r) for r in load_managed_skill_roots(repo))
+    managed_binaries = tuple(_repo_rel_to_home_rel(r) for r in load_managed_binary_paths(repo))
     managed_file_mappings = load_managed_file_mappings(repo)
     live_config = home / "config.yaml"
     mapped_paths = [(relative, relative) for relative in (*managed_roots, *managed_binaries)]
@@ -705,6 +705,27 @@ def _fsync_path(path: Path) -> None:
             os.close(fd)
 
 
+def _repo_rel_to_home_rel(repo_rel: str) -> str:
+    """Map a repository-relative managed path to the Hermes home layout.
+
+    After the directory convergence, repo-owned assets live under
+    packages/client-neutral-core/{skills,bin}/... while the Hermes home
+    consumes them at the flat {skills,bin}/... layout.
+    """
+    parts = Path(repo_rel).parts
+    if parts[:2] == ("packages", "client-neutral-core") and len(parts) >= 3 and parts[2] in ("skills", "bin"):
+        return str(Path(*parts[2:])).replace("\\", "/")
+    return repo_rel
+
+
+def _home_rel_to_repo_source(repo: Path, home_rel: str) -> Path:
+    """Repository source path for a home-relative managed asset path."""
+    parts = Path(home_rel).parts
+    if parts[:1] in (("skills",), ("bin",)):
+        return repo / "packages" / "client-neutral-core" / home_rel
+    return repo / home_rel
+
+
 def replace_managed_skill_trees(
     repo: Path,
     staging: Path,
@@ -722,7 +743,7 @@ def replace_managed_skill_trees(
 
     for relative_text in managed_roots:
         relative = Path(relative_text)
-        source = repo / relative
+        source = _home_rel_to_repo_source(repo, relative_text)
         target = staging / relative
         print(f"replace managed skill tree: {source} -> {target}")
         if target.exists() or target.is_symlink():
@@ -826,7 +847,7 @@ def prepare_staging(
                     shutil.copy2(live, staging / relative)
         replace_managed_skill_trees(repo, staging, managed_roots)
         for relative in managed_binaries:
-            copyfile(repo / relative, staging / relative, apply=True)
+            copyfile(_home_rel_to_repo_source(repo, relative), staging / relative, apply=True)
         for source_relative, target_relative in managed_file_mappings:
             copyfile(repo / source_relative, staging / target_relative, apply=True)
         copyfile(repo / "config/.env.template", staging / ".env.template", apply=True)
@@ -1012,8 +1033,8 @@ def deploy_portable(
         raise ValueError("portable deployment requires existing repo and home directories")
     validate_deployment_paths(repo, home, allow_project_runtime_home=allow_project_runtime_home)
     _block_unfenced_retired_assets(home)
-    managed_roots = load_managed_skill_roots(repo)
-    managed_binaries = load_managed_binary_paths(repo)
+    managed_roots = tuple(_repo_rel_to_home_rel(r) for r in load_managed_skill_roots(repo))
+    managed_binaries = tuple(_repo_rel_to_home_rel(r) for r in load_managed_binary_paths(repo))
     managed_file_mappings = load_managed_file_mappings(repo)
     managed_files = tuple(target for _, target in managed_file_mappings)
     managed_config_files = ("config.yaml", ".workflow-assistance-state.yaml") if include_config else ()
@@ -1057,9 +1078,9 @@ def deploy_portable(
             verify_managed_config_readback(repo, home, config_guard)
     else:
         for relative in managed_roots:
-            copytree(repo / relative, home / relative, apply=False)
+            copytree(_home_rel_to_repo_source(repo, relative), home / relative, apply=False)
         for relative in managed_binaries:
-            copyfile(repo / relative, home / relative, apply=False)
+            copyfile(_home_rel_to_repo_source(repo, relative), home / relative, apply=False)
         for source_relative, target_relative in managed_file_mappings:
             copyfile(repo / source_relative, home / target_relative, apply=False)
         copyfile(repo / "config/.env.template", home / ".env.template", apply=False)
@@ -1110,9 +1131,9 @@ def main() -> int:
 
     print("\nsummary hashes:")
     for label, path in (
-        ("repo skills", repo / "skills"),
+        ("repo skills", repo / "packages" / "client-neutral-core" / "skills"),
         ("live skills", home / "skills"),
-        ("repo bin", repo / "bin"),
+        ("repo bin", repo / "packages" / "client-neutral-core" / "bin"),
         ("live bin", home / "bin"),
     ):
         print(label, sha_tree(path))
