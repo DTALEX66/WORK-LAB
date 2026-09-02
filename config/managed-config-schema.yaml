@@ -9,19 +9,19 @@ global_workflow:
   scope: hermes-codex-github-user-overlay
   source_of_truth: repository
   owned_asset_roots:
-    - skills/autonomous-ai-agents/codex
-    - skills/github/github-auth
-    - skills/github/github-code-review
-    - skills/github/github-issues
-    - skills/github/github-pr-workflow
-    - skills/github/github-repo-management
-    - skills/model-switch
-    - skills/software-development/agent-workflow-fortress
-    - skills/software-development/project-data-boundary
-    - skills/software-development/python-testing
-    - skills/software-development/requesting-code-review
-    - skills/software-development/sleep-mode
-    - skills/software-development/windows-development-environment
+    - packages/client-neutral-core/skills/autonomous-ai-agents/codex
+    - packages/client-neutral-core/skills/github/github-auth
+    - packages/client-neutral-core/skills/github/github-code-review
+    - packages/client-neutral-core/skills/github/github-issues
+    - packages/client-neutral-core/skills/github/github-pr-workflow
+    - packages/client-neutral-core/skills/github/github-repo-management
+    - packages/client-neutral-core/skills/model-switch
+    - packages/client-neutral-core/skills/software-development/agent-workflow-fortress
+    - packages/client-neutral-core/skills/software-development/project-data-boundary
+    - packages/client-neutral-core/skills/software-development/python-testing
+    - packages/client-neutral-core/skills/software-development/requesting-code-review
+    - packages/client-neutral-core/skills/software-development/sleep-mode
+    - packages/client-neutral-core/skills/software-development/windows-development-environment
   owned_binary_paths:
     - bin/codex
     - bin/codex.cmd

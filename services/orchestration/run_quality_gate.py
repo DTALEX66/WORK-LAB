@@ -17,6 +17,24 @@ RETIRED_ORDINARY_TESTS = {
     "test_fixture_separation.py",
     "test_renderer_contract.py",
 }
+
+# Converged module roots exposed on PYTHONPATH for unittest imports (WL-DIR migration).
+MODULE_PYTHONPATH = os.pathsep.join(
+    [
+        str(ROOT / "services" / "authority"),
+        str(ROOT / "services" / "orchestration"),
+        str(ROOT / "services" / "policy"),
+        str(ROOT / "services" / "receipts"),
+        str(ROOT / "packages" / "client-neutral-core" / "scripts"),
+        str(ROOT / "packages" / "client-neutral-core" / "bin"),
+        str(ROOT / "integrations" / "executors" / "codex"),
+        str(ROOT / "integrations" / "executors" / "hermes"),
+        str(ROOT / "integrations" / "executors" / "dsh"),
+        str(ROOT / "tests" / "workflow-assistance"),
+        str(ROOT / "tests" / "ci"),
+        str(ROOT / "tests" / "contracts"),
+    ]
+)
 REQUIRED_PYTHON_MODULES = {
     "yaml": "PyYAML>=6,<7",
     "jsonschema": "jsonschema>=4,<5",
@@ -161,7 +179,7 @@ def governance_test_files() -> list[str]:
 
 def gate_governance() -> int:
     modules = [Path(path).stem for path in governance_test_files()]
-    pythonpath = str(ROOT / "tests" / "workflow-assistance")
+    pythonpath = MODULE_PYTHONPATH
     existing = os.environ.get("PYTHONPATH")
     if existing:
         pythonpath += os.pathsep + existing
@@ -365,12 +383,7 @@ def gate_runtime_convergence() -> int:
         "tests/workflow-assistance/test_evidence_aggregator.py",
         "tests/workflow-assistance/test_wlgm_privacy.py",
     )
-    pythonpath = os.pathsep.join(
-        [
-            str(ROOT / "tests" / "workflow-assistance"),
-            str(ROOT / "packages" / "client-neutral-core" / "scripts"),
-        ]
-    )
+    pythonpath = MODULE_PYTHONPATH
     existing = os.environ.get("PYTHONPATH")
     if existing:
         pythonpath += os.pathsep + existing
@@ -403,9 +416,7 @@ def gate_powershell() -> int:
 # ---------- WLGM §7 named quality gates ----------
 
 def _run_wlgm_tests(test_names: tuple[str, ...]) -> int:
-    pythonpath = os.pathsep.join(
-        [str(ROOT / "tests" / "workflow-assistance"), str(ROOT / "packages" / "client-neutral-core" / "scripts")]
-    )
+    pythonpath = MODULE_PYTHONPATH
     existing = os.environ.get("PYTHONPATH")
     if existing:
         pythonpath += os.pathsep + existing
