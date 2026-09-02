@@ -1,203 +1,69 @@
 <!DOCTYPE html>
 <html lang="zh-CN" data-theme="dark">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WORK-LAB Observatory</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<style>
-:root{--bg:#0a0e14;--surface:#131720;--card:#1a1f2e;--border:#252b3b;--text:#e2e8f0;--muted:#64748b;--accent:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;--cyan:#06b6d4}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
-.container{max-width:1400px;margin:0 auto;padding:16px 20px}
-
-/* Header */
-.header{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:16px}
-.header h1{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header .live{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-left:auto}
-.header .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* Stats Row */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
-.stat .value{font-size:24px;font-weight:700;color:var(--accent)}
-.stat .label{font-size:11px;color:var(--muted);margin-top:4px}
-.stat.green .value{color:var(--green)} .stat.purple .value{color:var(--purple)} .stat.cyan .value{color:var(--cyan)}
-
-/* Grid */
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
-
-/* Panel */
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
-.panel h2{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
-
-/* Chart container */
-.chart-wrap{position:relative;height:200px}
-
-/* Table */
-table{width:100%;border-collapse:collapse;font-size:12px}
-th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
-th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
-.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600}
-.badge.ok{background:rgba(34,197,94,.12);color:var(--green)}
-.badge.fail{background:rgba(239,68,68,.12);color:var(--red)}
-.badge.running{background:rgba(59,130,246,.12);color:var(--accent)}
-.badge.pending{background:rgba(234,179,8,.12);color:var(--yellow)}
-
-/* Agent cards */
-.agents{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.agent{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;align-items:center;gap:10px}
-.agent.active{border-color:var(--green)}
-.agent .icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--card)}
-.agent .info .name{font-size:13px;font-weight:600}
-.agent .info .role{font-size:11px;color:var(--muted)}
-.agent .status{margin-left:auto;width:8px;height:8px;border-radius:50%}
-.agent.active .status{background:var(--green)} .agent.inactive .status{background:var(--red)}
-
-/* DAG Flow */
-.dag-flow{display:flex;align-items:center;gap:8px;padding:8px 0;overflow-x:auto}
-.dag-node{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:11px;white-space:nowrap}
-.dag-node.succeeded{border-color:var(--green)} .dag-node.running{border-color:var(--accent)} .dag-node.failed{border-color:var(--red)}
-.dag-arrow{color:var(--muted);font-size:16px}
-
-/* Model bars */
-.model-bar{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
-.model-bar .name{width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.model-bar .bar{flex:1;height:6px;background:var(--card);border-radius:3px;overflow:hidden}
-.model-bar .bar .fill{height:100%;border-radius:3px;transition:width .5s}
-.model-bar .tokens{width:80px;text-align:right;color:var(--muted);font-size:11px}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="WORK-LAB Observer — 跨项目只读观测仪表盘（Apple Liquid Glass 风格，严格只读，无模型参与）">
+  <title>WORK-LAB Observatory · 跨项目只读观测</title>
+  <link rel="icon" type="image/png" href="assets/brand/app-icon-512.png">
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/themes.css">
+<link rel="stylesheet" href="styles/command-center.css">
 </head>
-<body>
-<div class="container">
-  <div class="header">
-    <h1>🔬 WORK-LAB Observatory</h1>
-    <span class="live"><span class="dot"></span> LIVE · <span id="ts">-</span></span>
-  </div>
+<body class="wl-body">
+  <a class="skip-link" href="#wl-app">跳到主要内容</a>
 
-  <div class="agents" id="agents"></div>
+  <!-- Inline icon sprite (same-document <use>, works over file:// and http://).
+       Canonical copy kept in assets/icons.svg for the repo structure contract. -->
+  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></symbol>
+      <symbol id="i-projects" viewBox="0 0 24 24"><path d="M3.5 7.5h17M3.5 7.5a2 2 0 0 1 2-2h3l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></symbol>
+      <symbol id="i-usage" viewBox="0 0 24 24"><path d="M4 19.5v-6M9.5 19.5v-9M15 19.5V6.5M20 19.5v-3"/><path d="M3 19.5h18"/></symbol>
+      <symbol id="i-ci" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><path d="M8.2 6H15.8M6 8.2V15.8M8 18h8a2 2 0 0 0 2-2"/></symbol>
+      <symbol id="i-governance" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.2c0 4.4-3 8-7.5 9.8-4.5-1.8-7.5-5.4-7.5-9.8V6z"/><path d="M9 12l2.2 2.2L15.4 10"/></symbol>
+      <symbol id="i-quality" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="2.8"/><path d="M4 6v6c0 1.55 3.58 2.8 8 2.8s8-1.25 8-2.8V6"/><path d="M4 12v6c0 1.55 3.58 2.8 8 2.8 1.6 0 3.1-.17 4.4-.48"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5z"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4"/><path d="M12 17.2v.01"/></symbol>
+      <symbol id="i-blocked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8 12h8"/></symbol>
+      <symbol id="i-waiting" viewBox="0 0 24 24"><path d="M9 12h6M12 9v6"/><path d="M4 12a8 8 0 0 1 14.5-4.8M20 12a8 8 0 0 1-14.5 4.8"/><path d="M20 3v4h-4M4 21v-4h4"/></symbol>
+      <symbol id="i-running" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M10 8.5v7l5-3.5z"/></symbol>
+      <symbol id="i-failed" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></symbol>
+      <symbol id="i-completed" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.3l2.5 2.5 4.5-5"/></symbol>
+      <symbol id="i-unknown" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.8 9.3a2.4 2.4 0 1 1 3.5 2.1c-.9.5-1.3 1-1.3 2"/><path d="M12 16.6v.01"/></symbol>
+      <symbol id="i-branch" viewBox="0 0 24 24"><circle cx="6.5" cy="5.5" r="2"/><circle cx="6.5" cy="18.5" r="2"/><circle cx="18" cy="6" r="2"/><path d="M6.5 7.5v9M8.5 6H18"/></symbol>
+      <symbol id="i-sha" viewBox="0 0 24 24"><path d="M6 19.5V6M18 19.5V6M4 6h16M4 19.5h16"/><path d="M8 10h8M8 14h8"/></symbol>
+      <symbol id="i-token" viewBox="0 0 24 24"><path d="M12 3.5l6.5 3.5v6c0 4.2-2.6 6.8-6.5 7.5-3.9-.7-6.5-3.3-6.5-7.5V7z"/><path d="M8.5 12.5l2.3 2.3 4.7-5"/></symbol>
+      <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M14.8 9.2c-.6-.7-1.6-1-2.8-1-1.6 0-2.7.8-2.7 2 0 2.6 5.4 1.4 5.4 3.6 0 1.2-1 2-2.7 2-1.2 0-2.3-.4-2.9-1.1"/></symbol>
+      <symbol id="i-cache" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="5.5" rx="1.6"/><rect x="4" y="13.5" width="16" height="5.5" rx="1.6"/><path d="M8 8.8h.01M8 16.3h.01"/></symbol>
+      <symbol id="i-sub" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12l9 5 9-5M3 16l9 5 9-5"/></symbol>
+      <symbol id="i-fresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 3.5V8h-4.5"/></symbol>
+      <symbol id="i-caret" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5"/><path d="M12 8v.01"/></symbol>
+      <symbol id="i-layer" viewBox="0 0 24 24"><path d="M12 3l9 4.5-9 4.5-9-4.5z"/><path d="M3 12.5l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/></symbol>
+    </defs>
+  </svg>
 
-  <div class="stats" id="stats"></div>
+  <!-- Application mount point. All rendering is done by scripts/render.js. -->
+  <main id="wl-app" class="wl-shell" tabindex="-1"></main>
 
-  <div class="grid">
-    <div class="panel">
-      <h2>📊 Token Usage (14 days)</h2>
-      <div class="chart-wrap"><canvas id="tokenChart"></canvas></div>
-    </div>
-    <div class="panel">
-      <h2>🤖 Model Breakdown</h2>
-      <div id="models"></div>
-    </div>
-  </div>
 
-  <div class="grid">
-    <div class="panel">
-      <h2>📋 Dagu DAGs</h2>
-      <div id="dags"></div>
-      <h2 style="margin-top:12px">▶️ Recent Runs</h2>
-      <div id="runs"></div>
-    </div>
-    <div class="panel">
-      <h2>📈 Cost by Model</h2>
-      <div class="chart-wrap"><canvas id="costChart"></canvas></div>
-    </div>
-  </div>
-</div>
-
-<script>
-const API = location.origin;
-let tokenChartInst = null, costChartInst = null;
-
-async function fetchJSON(p){try{const r=await fetch(API+p,{cache:'no-store'});return r.ok?await r.json():null}catch(e){return null}}
-function fmt(n){return n==null?'-':n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':n.toLocaleString()}
-
-const COLORS = ['#3b82f6','#22c55e','#a855f7','#eab308','#ef4444','#06b6d4','#f97316','#ec4899'];
-
-async function refresh(){
-  const [snap,tokens,daguDags,daguRuns,agents] = await Promise.all([
-    fetchJSON('/api/v1/snapshot'),fetchJSON('/api/v1/tokens'),
-    fetchJSON('/api/v1/dagu/dags'),fetchJSON('/api/v1/dagu/runs'),fetchJSON('/api/v1/agents')
-  ]);
-
-  document.getElementById('ts').textContent = new Date().toLocaleTimeString();
-
-  // Agents
-  if(agents){
-    const icons = {hermes:'🤖',codex:'⚡',dsh:'🔧',dagu:'⚙️'};
-    document.getElementById('agents').innerHTML = agents.map(a=>`
-      <div class="agent ${a.status}">
-        <div class="icon">${icons[a.id]||'📦'}</div>
-        <div class="info"><div class="name">${a.name}</div><div class="role">${a.id}</div></div>
-        <div class="status"></div>
-      </div>`).join('');
-  }
-
-  // Stats
-  const t = tokens?.totals||{};
-  document.getElementById('stats').innerHTML = `
-    <div class="stat"><div class="value">${fmt(t.inputTokens)}</div><div class="label">Input Tokens</div></div>
-    <div class="stat green"><div class="value">${fmt(t.outputTokens)}</div><div class="label">Output Tokens</div></div>
-    <div class="stat purple"><div class="value">${t.sessions||0}</div><div class="label">Sessions</div></div>
-    <div class="stat cyan"><div class="value">${t.costUsd!=null?'$'+t.costUsd.toFixed(2):'-'}</div><div class="label">Est. Cost</div></div>`;
-
-  // Token Chart (line)
-  if(tokens?.daily){
-    const days = tokens.daily.reverse();
-    const ctx = document.getElementById('tokenChart').getContext('2d');
-    if(tokenChartInst) tokenChartInst.destroy();
-    tokenChartInst = new Chart(ctx,{type:'line',data:{
-      labels:days.map(d=>d.day?.slice(5)||''),
-      datasets:[
-        {label:'Input',data:days.map(d=>d.inputTokens),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',fill:true,tension:.3},
-        {label:'Output',data:days.map(d=>d.outputTokens),borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.1)',fill:true,tension:.3},
-      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#64748b',font:{size:10}}}},
-        scales:{x:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'#1a1f2e'}},
-                y:{ticks:{color:'#64748b',font:{size:9},callback:v=>fmt(v)},grid:{color:'#1a1f2e'}}}}});
-  }
-
-  // Model breakdown (horizontal bars)
-  if(tokens?.models){
-    const maxTok = Math.max(...tokens.models.map(m=>m.inputTokens+m.outputTokens));
-    document.getElementById('models').innerHTML = tokens.models.slice(0,6).map((m,i)=>`
-      <div class="model-bar">
-        <span class="name">${m.model}</span>
-        <div class="bar"><div class="fill" style="width:${((m.inputTokens+m.outputTokens)/maxTok*100).toFixed(0)}%;background:${COLORS[i%COLORS.length]}"></div></div>
-        <span class="tokens">${fmt(m.inputTokens+m.outputTokens)}</span>
-      </div>`).join('');
-  }
-
-  // Cost Chart (doughnut)
-  if(tokens?.models){
-    const paid = tokens.models.filter(m=>m.costUsd!=null);
-    const ctx2 = document.getElementById('costChart').getContext('2d');
-    if(costChartInst) costChartInst.destroy();
-    costChartInst = new Chart(ctx2,{type:'doughnut',data:{
-      labels:paid.map(m=>m.model),datasets:[{data:paid.map(m=>m.costUsd),backgroundColor:COLORS.slice(0,paid.length)}]
-    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#64748b',font:{size:10}}}}}});
-  }
-
-  // Dagu DAGs
-  if(daguDags){
-    document.getElementById('dags').innerHTML = daguDags.length ? `<table><thead><tr><th>Name</th><th>Type</th><th>Steps</th></tr></thead><tbody>${
-      daguDags.map(d=>`<tr><td>${d.name}</td><td>${d.type}</td><td>${d.steps}</td></tr>`).join('')
-    }</tbody></table>` : '<div style="color:var(--muted);font-size:12px">No DAGs</div>';
-  }
-
-  // Dagu Runs (with DAG flow visualization)
-  if(daguRuns&&daguRuns.length){
-    document.getElementById('runs').innerHTML = daguRuns.map(r=>{
-      const steps = (r.metadata?.steps||[]).map(s=>`<span class="dag-node ${s.status}">${s.step_name} (${s.duration_ms}ms)</span>`).join('<span class="dag-arrow">→</span>');
-      return `<div style="margin-bottom:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">${r.metadata?.dag_name||'?'} · <span class="badge ${r.outcome==='succeeded'?'ok':'fail'}">${r.outcome}</span></div><div class="dag-flow">${steps||'(no steps)'}</div></div>`;
-    }).join('');
-  } else {
-    document.getElementById('runs').innerHTML = '<div style="color:var(--muted);font-size:12px">No runs</div>';
-  }
-}
-
-refresh();
-setInterval(refresh,10000);
-</script>
+  <!-- Scripts: order matters (formatters/api/state first). Loaded deferred. -->
+  <script src="scripts/formatters.js"></script>
+  <script src="scripts/api.js"></script>
+  <script src="scripts/state.js"></script>
+  <script src="scripts/charts.js"></script>
+  <script src="scripts/render.js"></script>
+  <script src="scripts/render-v3.js"></script>
+<script src="scripts/fusion-v3.js"></script>
+  <script src="scripts/accessibility.js"></script>
+  <script src="scripts/app.js"></script>
 </body>
 </html>
