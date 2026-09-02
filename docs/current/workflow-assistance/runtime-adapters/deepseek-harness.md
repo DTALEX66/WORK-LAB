@@ -6,55 +6,67 @@ Git worktree. It is **not** a WORK-LAB core module, not a model gateway, not a
 Hermes replacement, and it never writes client config or completes a Task Ledger
 task.
 
-- Adapter id: `deepseek-harness` · kind: `agent_runtime`
-- Upstream: `deepseek-ai/deepseek-harness` pinned at `47f943859bef60e4160492346772ded9b24f765a`
-- Upstream version `0.1.0-rc.5` (developer preview), license `MIT`
-- `packageManager: pnpm@11.7.0`, `engines.node: ^22.19.0 || >=24.0.0`
+## Deployed identity (2026-09-02 verified)
+
+The machine DSH switched from the 0.1.x source-checkout lineage to the **2.0.x
+community desktop build** (see upgrade records in the DSH handoff + skill
+`dsh-administration` references/dsh-2.0.4-upgrade.md):
+
+| Field | Value |
+|---|---|
+| Product | `anywhere-labs/dsh-desktop` community desktop (Electron shell + bundled full harness, `dsh-plugin-desktop`) |
+| Version | **2.0.4** (verified 2026-08-30; 2.0.2 → 2.0.4 NSIS upgrade) |
+| Single entry | `D:\All projects\DSH\DSH Desktop.exe` (D-drive; LOCALAPPDATA copy removed) |
+| Config root | `C:\Users\<user>\.dsh\` (settings/profiles/sessions/memory/skin-center/task-board/storages) |
+| Web | loopback `http://127.0.0.1:43120` (community build port; legacy 0.1.x used 3080) |
+| Sessions | 94 UUID dirs preserved under `~/.dsh/sessions/<project>/<uuid>/` (4 project dirs) |
+| Legacy 0.1.x | `deepseek-ai/deepseek-harness` pinned `47f94385` — retired; full body backed up under `.hermes/task-runtime/dsh-011-removed-20260824/` (rollback baseline, do not touch) |
+
+The adapter module (`integrations/executors/dsh/deepseek_harness_adapter.py`)
+reports `detect()`/`observe()` against this community-desktop identity; the
+legacy `UPSTREAM_*` pin remains as the historical governance record of the
+retired isolated-checkout contract.
 
 ## Contract invariants (taskpack §4.1)
 
 | Field | Value |
 |---|---|
-| `install_mode` | `isolated_source_checkout` |
-| `entrypoints` | `web`, `headless` (single launcher, no dual entry) |
-| `network` | `loopback_only` — `127.0.0.1` (localhost / ::1), port `3080` default, dynamic conflict detection |
+| `install_mode` | `community-desktop` (legacy contract: `isolated_source_checkout`) |
+| `entrypoints` | `web` via desktop shell (single launcher: `DSH Desktop.exe`) |
+| `network` | `loopback_only` — `127.0.0.1` (localhost / ::1), port `43120` default (community web); legacy 0.1.x `3080` |
 | `workspace_scope` | `task_scoped_git_worktree_only` |
-| `secrets` | `runtime_secret_only` — never in repo/receipt/Observer |
+| `secrets` | `runtime_secret_only` — never in repo/receipt/Observer; `~/.dsh/.credentials.yaml` read by the app only |
 | `execution_authority` | `execute_only_no_task_completion_authority` |
 | `external_mutation` | `approval_required` |
 | `plugin_policy` | `builtins_only` |
-| `upgrade_policy` | `pinned_commit + explicit_upgrade_task + compatibility_evidence` |
-| `rollback` | stop recorded PID → preserve read-only evidence → quarantine runtime → restore previous verified commit |
+| `upgrade_policy` | `official_installer_upgrade + explicit_upgrade_task + compatibility_evidence` (community releases via NSIS installer; never manual pnpm in app-managed dirs) |
+| `rollback` | stop app → preserve `~/.dsh` config → quarantine old version; restore = reinstall prior release + config preserved |
 
-## Runtime directory (git-ignored, never committed)
+## Runtime data (git-ignored, never committed)
 
-```
-.project-local/runs/deepseek-harness/
-├─ source/    # pinned checkout @ 47f94385 (never committed)
-├─ dsh-home/  # DSH_HOME: profiles, credentials, settings, sessions (never committed)
-├─ launch/    # local start/stop scripts + pid/port state
-├─ logs/      # local, redacted logs
-└─ receipts/  # minimal execution receipts
-```
+Community desktop keeps its own data under `~/.dsh` (outside the repo). The
+legacy isolated-checkout layout `.project-local/runs/deepseek-harness/`
+(`source/` + `dsh-home/`) is retained only as the historical/rollback surface of
+the retired 0.1.x contract and must not be treated as live state.
 
-## Start / stop / health (WL-DSH-030/040 — approval-gated)
+## Start / stop / health (approval-gated)
 
 These are **not** performed by the adapter by default; each is an approval item.
 
-- **Install**: clone + checkout the pinned SHA, then
-  `corepack pnpm@11.7.0 install --frozen-lockfile` (per-invocation, no global
-  toolchain mutation), `corepack pnpm@11.7.0 run typecheck`, `… run build`.
-- **Start web**: bind `127.0.0.1` only, with `DSH_HOME=<project>/.project-local/runs/deepseek-harness/dsh-home`.
-  On port conflict, fail closed — do not kill an unknown PID; record an idle
-  loopback port or stop and report.
-- **Health**: `--dump-config` redacted + a loopback socket readback; never a
-  screenshot as proof of binding.
+- **Launch**: start `D:\All projects\DSH\DSH Desktop.exe` (Electron loads
+  `http://127.0.0.1:43120`; ~20-40 s boot). HTTP 403 on `/` is the app's route
+  control — service is up, not a fault.
+- **Stop**: quit the app process tree (no `taskkill /F` on unknown PIDs).
+- **Health**: loopback readback on `127.0.0.1:43120` + process presence;
+  version read from `resources/app.asar.unpacked/package.json` (no side
+  effects). Never a screenshot as proof of binding.
 
 ## Configuration location (no values)
 
-DSH config and credentials live under `DSH_HOME` (the `dsh-home/` dir above).
-The model key is entered by the user in the DSH Web UI; Hermes never reads,
-displays, or writes it, and only verifies a redacted credential descriptor.
+DSH config and credentials live under `~/.dsh` (settings.yaml, profiles,
+`.credentials.yaml`, memory, skin-center, task-board). The model key is entered
+by the user in the DSH UI; Hermes never reads, displays, or writes it, and only
+verifies a redacted credential descriptor.
 
 ## Permissions
 
@@ -74,17 +86,21 @@ raw session ids, private paths, provider-private headers, unredacted logs.
 
 ## Failure classes and rollback
 
-- **Commit drift** → re-pin to `47f94385`, re-review before any run.
+- **Version/install drift** (expected version vs installed) → verify
+  `app.asar.unpacked/package.json`; reinstall the official release on mismatch.
 - **Non-loopback listener** → stop and report immediately.
-- **Unknown PID** → never kill; quarantine the runtime and stop for manual handling.
+- **Web won't boot after app launch** → app is alive but `:43120` not listening:
+  check `~/.dsh` integrity (task-board ledger lock etc. — see skill
+  `dsh-administration` pitfalls) before any reinstall.
 - **Secret in dump/receipt** → fail closed, redact, do not serialize.
 
-Rollback: stop only the recorded PID, close the loopback listener, mark the
-runtime `QUARANTINED`, keep source commit + lockfile fingerprint; handle the
-versioned adapter change via non-destructive Git revert (never reset/clean).
+Rollback: stop the app, keep `~/.dsh` config untouched, reinstall the previous
+official release; never destructive reset/clean.
 
 ## Upgrade
 
-Any upstream upgrade is a separate `WL-DSH-UPGRADE-*`: change audit → new commit
-pin → clean runtime canary → schema/adapter compatibility → rollback rehearsal →
-approval. Never `git pull` to follow master.
+Any upstream upgrade is a separate `WL-DSH-UPGRADE-*`: release notes review →
+config-backup (`~/.dsh` excluded node_modules) → stop app → official installer
+→ verify version + sessions preserved → schema/adapter compatibility. Follow
+the skill `dsh-administration` reference `dsh-2.0.4-upgrade.md` for the
+validated NSIS path.

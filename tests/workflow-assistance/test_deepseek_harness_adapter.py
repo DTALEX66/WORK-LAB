@@ -25,8 +25,8 @@ class DeepSeekHarnessContractTests(unittest.TestCase):
         adapter = dsh.DeepSeekHarnessAdapter(Path.cwd())
         contract = adapter.contract()
         schema_path = (
-            Path(__file__).resolve().parents[1]
-            / "schemas/workflow/agent-runtime-adapter.schema.json"
+            Path(__file__).resolve().parents[2]
+            / "packages/contracts/schemas/workflow/agent-runtime-adapter.schema.json"
         )
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         jsonschema.Draft202012Validator(schema).validate(contract)

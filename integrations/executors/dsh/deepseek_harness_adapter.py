@@ -8,6 +8,15 @@ This module is the project-local contract + validation surface. It does NOT
 install DSH, start a server, or touch any Hermes/Codex Home — apply is
 UNSUPPORTED unless an explicit `--approved-runtime-install` task contract is
 supplied (WL-DSH-030), and even then it only performs the isolated checkout.
+
+Deployment-identity note (2026-09-02): the machine DSH switched from the
+0.1.x source-checkout lineage (`deepseek-ai/deepseek-harness`, pinned commit,
+`.hermes/task-runtime/deepseek-harness`) to the 2.0.x community desktop build
+(`anywhere-labs/dsh-desktop`, Electron + bundled harness, `~/.dsh` config root,
+web port 43120, D-drive single entry). The legacy UPSTREAM_* pin below remains
+as the HISTORICAL governance target of the retired 0.1.x isolated-checkout
+contract; COMMUNITY_DESKTOP_* constants below describe the currently deployed
+identity and are what detect()/observe() report against.
 """
 from __future__ import annotations
 
@@ -19,9 +28,11 @@ from typing import Any
 
 # ---------------------------------------------------------------------------
 # Immutable upstream pin (WL-DSH-010 discovery, 2026-08-15). Never float master.
-# This pin is a GOVERNANCE TARGET for the isolated runtime checkout, NOT a
-# claim about what is currently installed. Detected local installs are reported
-# separately (WL-DLC-060: rc.5 was misreported as the running version).
+# This pin is a GOVERNANCE TARGET for the retired 0.1.x isolated runtime
+# checkout, NOT a claim about what is currently installed. Detected local
+# installs are reported separately (WL-DLC-060: rc.5 was misreported as the
+# running version). Superseded on this machine by the 2.0.x community desktop
+# build (see COMMUNITY_DESKTOP_* below); kept as the historical audit record.
 # ---------------------------------------------------------------------------
 UPSTREAM_REPO = "deepseek-ai/deepseek-harness"
 UPSTREAM_COMMIT = "47f943859bef60e4160492346772ded9b24f765a"
@@ -36,6 +47,23 @@ REQUIRED_PACKAGE_MANAGER = "pnpm@11.7.0"
 REQUIRED_NODE_RANGE = "^22.19.0 || >=24.0.0"
 
 # ---------------------------------------------------------------------------
+# Community desktop build (2.0.x, deployed 2026-08-24 → 2026-08-30 verified).
+# anywhere-labs/dsh-desktop = Electron shell + bundled full harness
+# (dsh-plugin-desktop). This is what runs on the machine today; detect() reports
+# against this identity when the legacy isolated source checkout is absent.
+# ---------------------------------------------------------------------------
+COMMUNITY_REPO = "anywhere-labs/dsh-desktop"
+COMMUNITY_PACKAGE = "dsh-plugin-desktop"
+COMMUNITY_VERSION = "2.0.4"
+COMMUNITY_INSTALL_DIR = Path("D:/All projects/DSH")
+COMMUNITY_EXE = COMMUNITY_INSTALL_DIR / "DSH Desktop.exe"
+COMMUNITY_VERSION_FILE = COMMUNITY_INSTALL_DIR / "resources" / "app.asar.unpacked" / "package.json"
+COMMUNITY_CONFIG_ROOT = Path.home() / ".dsh"
+COMMUNITY_WEB_PORT = 43120
+COMMUNITY_SESSIONS_MIGRATED = 94
+COMMUNITY_UPGRADE_EVIDENCE = "2026-08-30 upgrade (2.0.2 → 2.0.4), NSIS re-located to D-drive; 94 sessions preserved"
+
+# ---------------------------------------------------------------------------
 # Agent-runtime contract (taskpack §4.1). These are the auditable invariants.
 # ---------------------------------------------------------------------------
 ADAPTER_ID = "deepseek-harness"
@@ -44,7 +72,7 @@ INSTALL_MODE = "isolated_source_checkout"
 ENTRYPOINTS = ("web", "headless")
 NETWORK_POLICY = "loopback_only"
 DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 3080
+DEFAULT_PORT = 43120  # community desktop web port (2.0.x); legacy 0.1.x used 3080
 WORKSPACE_SCOPE = "task_scoped_git_worktree_only"
 SECRETS_POLICY = "runtime_secret_only"
 EXECUTION_AUTHORITY = "execute_only_no_task_completion_authority"
@@ -67,6 +95,44 @@ def source_dir(project: Path) -> Path:
 
 def home_dir(project: Path) -> Path:
     return runtime_root(project) / "dsh-home"
+
+
+def community_version() -> str | None:
+    """Read the installed community desktop version (no side effects).
+
+    Returns e.g. \"2.0.4\" from resources/app.asar.unpacked/package.json, or
+    None when the community desktop build is not present.
+    """
+    try:
+        data = json.loads(COMMUNITY_VERSION_FILE.read_text(encoding="utf-8"))
+        version = data.get("version")
+        return str(version) if version else None
+    except (OSError, ValueError):
+        return None
+
+
+def community_detected() -> dict[str, Any]:
+    """Read-only presence/version probe of the community desktop build."""
+    exe_present = COMMUNITY_EXE.is_file()
+    version = community_version()
+    config_present = COMMUNITY_CONFIG_ROOT.is_dir()
+    sessions_dir = COMMUNITY_CONFIG_ROOT / "sessions"
+    session_count = -1  # unknown without enumeration
+    if sessions_dir.is_dir():
+        try:
+            session_count = sum(1 for sub in sessions_dir.iterdir() if sub.is_dir())
+        except OSError:
+            session_count = -1
+    return {
+        "present": exe_present and version is not None,
+        "install": str(COMMUNITY_EXE) if exe_present else None,
+        "package": COMMUNITY_PACKAGE if version else None,
+        "version": version,
+        "config_root": str(COMMUNITY_CONFIG_ROOT) if config_present else None,
+        "web_port": COMMUNITY_WEB_PORT,
+        "session_project_dirs": session_count,
+        "sessions_migrated_evidence": COMMUNITY_SESSIONS_MIGRATED,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -161,14 +227,25 @@ class DeepSeekHarnessAdapter:
             "adapter_id": ADAPTER_ID,
             "kind": ADAPTER_KIND,
             "upstream": UPSTREAM_REPO + "@" + UPSTREAM_COMMIT,
-            "upstream_version": UPSTREAM_VERSION,  # governance target pin (historical)
+            "upstream_version": UPSTREAM_VERSION,  # governance target pin (historical, 0.1.x retired)
             "detected_local": {
-                "version": DETECTED_LOCAL_VERSION,
-                "commit": DETECTED_LOCAL_COMMIT,
-                "state": DETECTED_LOCAL_STATE,
-                "source_equivalence": "UNVERIFIED",
-                "eligibility": "UNVERIFIED",
-                "behavioral_verification": "NOT_EXECUTED",
+                "deployment": "community-desktop",
+                "package": COMMUNITY_PACKAGE,
+                "version": COMMUNITY_VERSION,
+                "install": str(COMMUNITY_EXE),
+                "config_root": str(COMMUNITY_CONFIG_ROOT),
+                "web_port": COMMUNITY_WEB_PORT,
+                "state": "COMMUNITY_DESKTOP_VERIFIED",
+                "sessions_migrated": COMMUNITY_SESSIONS_MIGRATED,
+                "upgrade_evidence": COMMUNITY_UPGRADE_EVIDENCE,
+                "legacy_0_1_x": {
+                    "version": DETECTED_LOCAL_VERSION,
+                    "commit": DETECTED_LOCAL_COMMIT,
+                    "state": DETECTED_LOCAL_STATE,
+                    "source_equivalence": "UNVERIFIED",
+                    "eligibility": "UNVERIFIED",
+                    "behavioral_verification": "NOT_EXECUTED",
+                },
             },
             "license": UPSTREAM_LICENSE,
             "maturity": "developer_preview",
@@ -187,13 +264,25 @@ class DeepSeekHarnessAdapter:
         }
 
     def detect(self) -> dict[str, Any]:
-        """Report whether the pinned source checkout is present (no side effects)."""
+        """Report which DSH deployment is present (no side effects).
+
+        Legacy 0.1.x isolated source checkout (project-local) is detected
+        first; the community desktop build (2.0.x, D-drive + ~/.dsh) is the
+        current deployment and is always probed alongside.
+        """
         src = source_dir(self.project)
         installed = src.is_dir() and (src / ".git").exists()
         commit = None
         if installed:
             commit = self._git_rev_parse(src)
         ok, detail = validate_commit_pin(commit)
+        community = community_detected()
+        if community["present"]:
+            deployment, detected_version = "community-desktop", community["version"]
+        elif installed:
+            deployment, detected_version = "isolated-source-checkout", UPSTREAM_VERSION
+        else:
+            deployment, detected_version = "none", None
         return {
             "status": "DETECTED",
             "adapter_id": self.adapter_id,
@@ -204,6 +293,9 @@ class DeepSeekHarnessAdapter:
             "actual_commit": commit,
             "pin_ok": ok,
             "pin_detail": detail,
+            "deployment": deployment,
+            "detected_version": detected_version,
+            "community_desktop": community,
         }
 
     def capabilities(self) -> dict[str, Any]:
@@ -222,15 +314,18 @@ class DeepSeekHarnessAdapter:
         """Read-only health/version/port readback; never reads credentials."""
         src = source_dir(self.project)
         commit = self._git_rev_parse(src) if src.is_dir() else None
+        community = community_detected()
+        deployment = "community-desktop" if community["present"] else "isolated-source-checkout"
         return {
             "status": "OBSERVED",
             "adapter_id": self.adapter_id,
             "kind": self.kind,
             "observed_at": None,
-            "source": "isolated-source-checkout",
+            "source": deployment,
             "upstream_commit": commit,
+            "detected_version": community["version"],
             "health": "NOT_RUNNING",
-            "port": None,
+            "port": COMMUNITY_WEB_PORT if community["present"] else None,
             "events": [],
         }
 

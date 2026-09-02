@@ -1,6 +1,6 @@
 {
   "schema_version": "workflow/client-evidence/v1",
-  "generated_at": "2026-08-26",
+  "generated_at": "2026-09-02T14:30:00Z",
   "generated_by": "WLR-090",
   "purpose": "Per-client real installation/behavior evidence. Each client must have at least one evidence entry with exact-SHA, screenshots, and behavioral proof.",
   "evidence": {
@@ -39,13 +39,13 @@
       "client": "dsh",
       "evidence_level": "E2",
       "install_method": "community-desktop (Electron)",
-      "version": "2.0.2",
+      "version": "2.0.4",
       "install_path": "D:\\All projects\\DSH\\DSH Desktop.exe",
       "config_path": "C:\\Users\\ALEX\\.dsh\\",
       "sessions_migrated": 94,
-      "verified_at": "2026-08-24T22:00:00Z",
-      "health": "web-43120-ok",
-      "note": "Community build (anywhere-labs/deepseek-harness-desktop); local build removed"
+      "verified_at": "2026-08-30T21:00:00Z",
+      "health": "web-43120-ok (not running at probe; version read from app.asar.unpacked)",
+      "note": "Community desktop (anywhere-labs/dsh-desktop v2.0.4, dsh-plugin-desktop); D-drive single entry; config root ~/.dsh; 94 sessions preserved"
     },
     "github": {
       "client": "github",

@@ -243,3 +243,24 @@ DSH **官方 runtime 自更新到 0.1.1-rc.2**（commit 4446888，DSH Official R
 ### 备份（可回滚）
 - `.hermes/task-runtime/dsh-cover-backup-20260824/`（配置/凭据/皮肤/设置）
 - `.hermes/task-runtime/dsh-011-removed-20260824/`（0.1.1 完整本体）
+
+---
+
+## DSH 2.0.4 升级 + WORK-LAB 侧同步（2026-09-02 更新）
+
+### 主体升级 2.0.2 → 2.0.4（2026-08-30 实测，流程详见 skill `dsh-administration` references/dsh-2.0.4-upgrade.md）
+- **社区版更新源**：`anywhere-labs/dsh-desktop` tags（v2.0.x）；下载用 `gh release download`（认证账号，不受限速）。
+- **关键坑**：NSIS per-user 安装器（/S）默认装到 `%LOCALAPPDATA%\Programs\DSH Desktop`，完全忽略 D 盘——不要以为安装失败；用 `robocopy`（Windows 原生路径，MSYS 路径会被转成 `D:\c\...`）从 LOCALAPPDATA 全量覆盖回 `D:\All projects\DSH`，然后清理 LOCALAPPDATA 副本（防双入口）。
+- **版本验证**：`D:\All projects\DSH\resources\app.asar.unpacked\package.json` → `version: 2.0.4`（package `dsh-plugin-desktop`）。
+- **升级前置**：DSH 必须无进程运行（否则 robocopy 覆盖 DLL 失败）。
+- 用户配置在 `~/.dsh/`（安装器不碰）：API key/`profiles`/`settings.yaml`/皮肤/记忆/**94 会话**全部保留。`~/.dsh/sessions/` 顶层 = 项目目录（4 个），会话 = UUID 计数（94），别把顶层目录数当会话数。
+
+### 当前运行态（2026-09-02 核验）
+- DSH Desktop 2.0.4 @ `D:\All projects\DSH\DSH Desktop.exe`（唯一入口，LOCALAPPDATA 副本已清）；web `127.0.0.1:43120`（403 = 路由控制，服务正常）；数据根 `~/.dsh`（94 会话/4 项目）。
+- 0.1.x 时代（deepseek-ai source checkout / dsh-home / 3080）已整体退役，备份可回滚。
+
+### WORK-LAB 侧同步（本次）
+- `config/client-evidence.json`：dsh evidence `2.0.2 → 2.0.4`（verified_at 2026-08-30，install/config/sessions 更新）。
+- `integrations/executors/dsh/deepseek_harness_adapter.py`：加 `COMMUNITY_*` 部署常量（repo `anywhere-labs/dsh-desktop`、package `dsh-plugin-desktop`、2.0.4、`~/.dsh`、端口 43120、94 会话）；`detect()`/`observe()` 报告 community-desktop 身份；legacy `UPSTREAM_*` pin 保留为历史治理记录；`agent-runtime-adapter.schema.json` 的 `detected_local` 扩展社区版字段。
+- `AGENTS.md` / runtime-adapters 文档 / config-guide：DSH 2.0.2 → 2.0.4、数据根 `dsh-home` → `~/.dsh`、旧路径引用修正。
+- 适配器测试 10 passed；conformance 实测 `deployment: community-desktop / 2.0.4 / 43120`。

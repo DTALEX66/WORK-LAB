@@ -6,7 +6,7 @@
 >
 > 依据：`WORK-LAB-LOCAL-MODEL-CONTROL-PLANE-DEEPSEEK-HARNESS-TASKPACK-2026-08-15.md`
 > （SHA-256 `8981e59b...`）、DSH 官方 skills/settings 子系统文档、AGENTS.md。
-> 状态：2026-08-16 实测核对。
+> 状态：2026-08-16 实测核对；2026-09-02 数据根/部署形态更新（DSH 2.0.x 社区版，`~/.dsh`）。
 
 ---
 
@@ -22,8 +22,8 @@ DSH（DeepSeek Harness）是一个 **Agent 运行时（agent runtime）**，不�
 |---|---|---|
 | 规则/站立命令 | 项目根 `AGENTS.md`（及模块 AGENTS.md） | 自动注入会话（`dsh-agent-instructions`，maxBytes 65536） |
 | 技能 | 官方发现路径（见 §3） | 会话技能目录（`<system-reminder>` 注入） |
-| 用户设置 | `dsh-home/settings.yaml`（`DSH_HOME` 指向） | 命名空间解析（locale 等） |
-| 项目注册 | `dsh-home/storages/workspace.json` | 工作区注册 |
+| 用户设置 | `~/.dsh/settings.yaml`（2.0.x 社区版固定数据根） | 命名空间解析（locale 等） |
+| 项目注册 | `~/.dsh/storages/workspace.json` | 工作区注册 |
 
 ---
 
@@ -57,7 +57,7 @@ DSH 会话会自动加载项目根与模块的 AGENTS.md。WORK-LAB 根 AGENTS.m
 - **模块级规则**：`<模块>/AGENTS.md`，DSH 在对应模块工作区自动注入。
 - **不要做**：不要试图把 Hermes 的 `config.yaml` / `SOUL.md` / `bin/` 复制成
   DSH 的配置——DSH 不消费它们。Hermes 的 SOUL.md 是 Hermes 专属机制。
-- **DSH 自身**：`dsh-home/settings.yaml` 只应含 DSH 自己的用户设置（当前：
+- **DSH 自身**：`~/.dsh/settings.yaml` 只应含 DSH 自己的用户设置（当前：
   `ui-onboarding` + `locale.preference: zh`）。其他软件不得改写它。
 
 ---
@@ -90,12 +90,12 @@ DSH 的本地技能提供者按以下 rank 扫描（`packages/skill/skill-filesy
 | `workflow-assistance-*`（14 个：evidence-verification / github-delivery / observer-delivery / open-design-integration / openhuman-integration / project-data-boundary / python-testing / safe-project-execution / self-improvement / single-writer-delivery / systematic-debugging / update-safety / verification-hardening / windows-development） | 14 | `C:\Users\ALEX\.agents\skills\` | 500 (user-agents) |
 
 这两处已就位，DSH 会话技能目录（15 个）即来自它们。**部署源是仓库**
-`10-workflow/workflow-assistance/codex-assets/skills/`（14 个）与根
+`integrations/executors/codex/skills/`（14 个）与根
 `.agents/skills/`（1 个）；哈希已与 live 核对一致。
 
 ### 3.3 其他软件如何维护 DSH 技能
 
-- 新增/更新 DSH 技能 = 更新仓库 `codex-assets/skills/<name>/SKILL.md`，然后
+- 新增/更新 DSH 技能 = 更新仓库 `integrations/executors/codex/skills/<name>/SKILL.md`，然后
   **部署到 `~/.agents/skills/<name>/`**（user-agents rank 500）或项目
   `.agents/skills/`（rank 200）。DSH 无需重启即可发现（目录 watcher）。
 - 不要往 `<dshHome>/skills` 或 `<projectRoot>/.dsh/skills` 放 Hermes 的 13 个
@@ -113,7 +113,7 @@ DSH 的本地技能提供者按以下 rank 扫描（`packages/skill/skill-filesy
 | E 盘 | 禁止访问（读或写），除非逐路径逐操作显式授权 |
 | 内容外溢 | 本项目产生的所有产物锁在项目 Git 根内；不外溢到用户目录/其他项目/共用库 |
 | 其他项目/共用库 | 不写（`Model library`、`OS External Configuration` 等只读或经授权） |
-| 客户端配置 | DSH 不写 Hermes/Codex/CC Switch 配置；反之其他软件也不写 DSH 的 dsh-home |
+| 客户端配置 | DSH 不写 Hermes/Codex/CC Switch 配置；反之其他软件也不写 DSH 的 `~/.dsh` |
 | 模型下载 | 走直连，**绕过 VPN/代理**（当前系统代理 127.0.0.1:7890 = FlClash，下载时必须清 HTTP(S)_PROXY） |
 | 模型存储 | Ollama 模型存 `D:\All projects\Model library\runtimes\ollama`（OLLAMA_MODELS） |
 | 审批 | DSH 会话 approval policy 可 `ask` 或 `never`；写操作按任务包逐动作批准 |
@@ -125,7 +125,7 @@ DSH 的本地技能提供者按以下 rank 扫描（`packages/skill/skill-filesy
 
 ### 5.1 Hermes 便携同步（已有官方脚本）
 
-`10-workflow/workflow-assistance/scripts/workflow/sync_hermes_workflow_assets.py`：
+`integrations/executors/hermes/sync_hermes_workflow_assets.py`：
 - dry-run：`python ... sync_hermes_workflow_assets.py --plan-json <path>`
 - apply：`python ... sync_hermes_workflow_assets.py --apply --approved`
 - 部署 21 步：13 skills + 6 bin + SOUL.md + .env.template → Hermes Home；
@@ -134,7 +134,7 @@ DSH 的本地技能提供者按以下 rank 扫描（`packages/skill/skill-filesy
 
 ### 5.2 Codex 全局 overlay（官方脚本）
 
-`10-workflow/workflow-assistance/scripts/workflow/sync_codex_global_assets.py`：
+`integrations/executors/codex/sync_codex_global_assets.py`：
 - `plan` → 审查 plan_digest → `apply --approved --approved-plan-digest <digest>` → `verify`。
 - 管理 14 个 `workflow-assistance-*` 技能（→ `~/.agents/skills`）、
   `rules/workflow-assistance.rules`、`AGENTS.md` managed block、
@@ -145,7 +145,7 @@ DSH 的本地技能提供者按以下 rank 扫描（`packages/skill/skill-filesy
 
 DSH 无独立同步脚本；部署 = 复制技能目录到 rank 路径（§3.1）。建议其他软件
 （Hermes/Codex）接入 DSH 时：把 DSH 技能源统一放
-`10-workflow/workflow-assistance/codex-assets/skills/`，部署目标
+`integrations/executors/codex/skills/`，部署目标
 `~/.agents/skills/`（与 Codex 共用 user-agents 层，避免重复维护）。
 
 ---
@@ -164,7 +164,7 @@ DSH 无独立同步脚本；部署 = 复制技能目录到 rank 路径（§3.1�
 ## 7. 一句话总结
 
 **DSH 不需要 Hermes 那套配置**（config.yaml/SOUL/bin/projects.db 均不消费）；
-它只消费 **AGENTS.md 规则（自动注入）+ 技能目录（rank 发现）+ dsh-home/settings.yaml +
+它只消费 **AGENTS.md 规则（自动注入）+ 技能目录（rank 发现）+ `~/.dsh/settings.yaml` +
 workspace 注册**。其他软件接入 DSH 的要点：**规则写进项目 AGENTS.md，技能放进
 `.agents/skills`（项目级）或 `~/.agents`（用户级），模型下载走直连绕过 VPN，
 内容与凭据边界遵守项目规则**。WORK-LAB 已就位：根 AGENTS.md 规则强化、
