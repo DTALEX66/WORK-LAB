@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/ci/verify_capability_conformance.py"
-MANIFEST = ROOT / "10-workflow/workflow-assistance/config/capability-conformance.json"
+MANIFEST = ROOT / "config/capability-conformance.json"
 
 
 def load_module():

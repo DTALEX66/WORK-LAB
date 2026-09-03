@@ -26,13 +26,13 @@ class SourceLedgerTests(unittest.TestCase):
             module._reviewed_scope_is_unchanged(
                 ROOT,
                 head,
-                ["10-workflow/workflow-assistance", "10-workflow/workflow-assistance/tests"],
+                ["packages/client-neutral-core", "packages/client-neutral-core/tests"],
             )
         )
 
     def test_schema_id_is_absolute_for_offline_validation(self) -> None:
         schema = json.loads(
-            (ROOT / "00-governance/contracts/source-ledger.schema.json").read_text(encoding="utf-8")
+            (ROOT / ".project/governance/contracts/source-ledger.schema.json").read_text(encoding="utf-8")
         )
         self.assertTrue(schema["$id"].startswith("https://"))
 
@@ -51,12 +51,12 @@ class SourceLedgerTests(unittest.TestCase):
         module = load_module()
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
-            (root / "00-governance/contracts").mkdir(parents=True)
+            (root / ".project/governance/contracts").mkdir(parents=True)
             (root / "scripts/ci").mkdir(parents=True)
-            ledger = json.loads((ROOT / "00-governance/source-ledger.json").read_text(encoding="utf-8"))
-            schema = json.loads((ROOT / "00-governance/contracts/source-ledger.schema.json").read_text(encoding="utf-8"))
-            (root / "00-governance/source-ledger.json").write_text(json.dumps(ledger), encoding="utf-8")
-            (root / "00-governance/contracts/source-ledger.schema.json").write_text(json.dumps(schema), encoding="utf-8")
+            ledger = json.loads((ROOT / ".project/governance/source-ledger.json").read_text(encoding="utf-8"))
+            schema = json.loads((ROOT / ".project/governance/contracts/source-ledger.schema.json").read_text(encoding="utf-8"))
+            (root / ".project/governance/source-ledger.json").write_text(json.dumps(ledger), encoding="utf-8")
+            (root / ".project/governance/contracts/source-ledger.schema.json").write_text(json.dumps(schema), encoding="utf-8")
             with self.assertRaises(ValueError):
                 module.verify(root)
 

@@ -1,0 +1,96 @@
+{
+  "schema_version": "workflow/client-evidence/v1",
+  "generated_at": "2026-09-02T14:30:00Z",
+  "generated_by": "WLR-090",
+  "purpose": "Per-client real installation/behavior evidence. Each client must have at least one evidence entry with exact-SHA, screenshots, and behavioral proof.",
+  "evidence": {
+    "hermes": {
+      "client": "hermes",
+      "evidence_level": "E2",
+      "install_method": "git (SSH remote)",
+      "version": "0.20.5",
+      "install_path": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\hermes-agent",
+      "desktop_path": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\Hermes\\Hermes.exe",
+      "shortcuts": [
+        "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\HermesUpdateGuard.lnk"
+      ],
+      "config_path": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\config.yaml",
+      "verified_at": "2026-08-26T16:00:00Z",
+      "health": "doctor-all-green",
+      "features_verified": [
+        "delegation-6",
+        "checkpoints",
+        "auto-prune",
+        "fallback-chain",
+        "chrome-profiles-plugin",
+        "bots-mode",
+        "kanban"
+      ]
+    },
+    "codex": {
+      "client": "codex",
+      "evidence_level": "E1",
+      "install_method": "wrapper (bin/codex)",
+      "version": "UNVERIFIED",
+      "status": "quarantined",
+      "note": "Codex adapter quarantined; wrapper exists but runtime unverified"
+    },
+    "dsh": {
+      "client": "dsh",
+      "evidence_level": "E2",
+      "install_method": "community-desktop (Electron)",
+      "version": "2.0.4",
+      "install_path": "D:\\All projects\\DSH\\DSH Desktop.exe",
+      "config_path": "C:\\Users\\ALEX\\.dsh\\",
+      "sessions_migrated": 94,
+      "verified_at": "2026-08-30T21:00:00Z",
+      "health": "web-43120-ok (not running at probe; version read from app.asar.unpacked)",
+      "note": "Community desktop (anywhere-labs/dsh-desktop v2.0.4, dsh-plugin-desktop); D-drive single entry; config root ~/.dsh; 94 sessions preserved"
+    },
+    "github": {
+      "client": "github",
+      "evidence_level": "E1",
+      "install_method": "gh CLI (scoop)",
+      "version": "2.95.0",
+      "install_path": "D:\\All projects\\OS External Configuration\\10-toolchains\\scoop\\apps\\gh\\2.95.0\\bin\\gh.exe",
+      "authenticated_as": "DTALEX66",
+      "protocol": "SSH",
+      "verified_at": "2026-08-26T16:00:00Z"
+    },
+    "opendesign": {
+      "client": "opendesign",
+      "evidence_level": "E0",
+      "status": "external-client",
+      "note": "Open Design is external client (nexu-io/open-design); WORK-LAB manages plugins only; design capability owned by DESIGN-LAB"
+    },
+    "openhuman": {
+      "client": "openhuman",
+      "evidence_level": "E0",
+      "status": "manifest-only",
+      "note": "Registered in adapter-registry; no local installation evidence"
+    },
+    "dagu": {
+      "client": "dagu",
+      "evidence_level": "E2",
+      "install_method": "npm global (@dagucloud/dagu)",
+      "version": "2.15.3",
+      "install_path": "D:\\All projects\\OS External Configuration\\toolchains\\scoop\\persist\\nodejs-lts\\bin\\node_modules\\@dagucloud\\dagu\\dagu.exe",
+      "web_ui": "http://127.0.0.1:8080",
+      "config_path": "C:\\Users\\ALEX\\.dagu\\",
+      "verified_at": "2026-08-26T20:48:00Z",
+      "health": "smoke-test-passed (hello-world DAG succeeded)",
+      "note": "Dagu v2.15.3 installed via npm; Web UI server running; DAG execution verified"
+    },
+    "tokentelemetry": {
+      "client": "tokentelemetry",
+      "evidence_level": "E1",
+      "install_method": "git clone + npm",
+      "version": "1.0.0",
+      "source": "VasiHemanth/tokentelemetry",
+      "install_path": "D:\\All projects\\tokentelemetry",
+      "status": "installed",
+      "note": "Cloned + npm installed (0 vulnerabilities); start script available",
+      "health": "npm-start-verified"
+    }
+  }
+}

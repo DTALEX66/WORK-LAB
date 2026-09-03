@@ -26,20 +26,20 @@ class SourceLedgerV4Tests(unittest.TestCase):
         self.assertGreaterEqual(report["entries"], 17)
 
     def test_all_p0_items_recorded(self) -> None:
-        ledger = json.loads((ROOT / "00-governance" / "source-ledger.json").read_text(encoding="utf-8"))
+        ledger = json.loads((ROOT / ".project/governance" / "source-ledger.json").read_text(encoding="utf-8"))
         ids = {e["id"] for e in ledger["entries"]}
         expected = {"opa", "conftest", "trivy", "actionlint", "zizmor", "cosign", "in-toto",
                     "agent-skills", "mcp-inspector", "superpowers", "promptfoo", "otel-semconv"}
         self.assertTrue(expected <= ids, f"missing={sorted(expected - ids)}")
 
     def test_integration_mode_enum(self) -> None:
-        ledger = json.loads((ROOT / "00-governance" / "source-ledger.json").read_text(encoding="utf-8"))
+        ledger = json.loads((ROOT / ".project/governance" / "source-ledger.json").read_text(encoding="utf-8"))
         allowed = {"VENDOR", "DEPENDENCY", "EXTERNAL_TOOL", "ADAPTER", "DERIVE", "REFERENCE", "QUARANTINE", "REJECT"}
         for entry in ledger["entries"]:
             self.assertIn(entry["integrationMode"], allowed, entry["id"])
 
     def test_review_required_not_integrated(self) -> None:
-        ledger = json.loads((ROOT / "00-governance" / "source-ledger.json").read_text(encoding="utf-8"))
+        ledger = json.loads((ROOT / ".project/governance" / "source-ledger.json").read_text(encoding="utf-8"))
         for entry in ledger["entries"]:
             if entry.get("freshness") in ("review-required", "unknown"):
                 self.assertEqual(entry["implementationStatus"], "not-implemented", entry["id"])

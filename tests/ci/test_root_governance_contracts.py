@@ -46,26 +46,26 @@ class RootGovernanceContractTests(unittest.TestCase):
 
     def test_boundary_contract_is_machine_readable(self):
         data = json.loads(
-            (ROOT / "00-governance/project-data-boundary.json").read_text(
+            (ROOT / ".project/governance/project-data-boundary.json").read_text(
                 encoding="utf-8"
             )
         )
-        self.assertEqual(data["runtimeRoot"], ".hermes/task-runtime")
-        self.assertEqual(data["taskArtifactsRoot"], ".hermes/task-artifacts")
-        self.assertEqual(data["canonicalEvidenceRoot"], "80-evidence")
+        self.assertEqual(data["runtimeRoot"], ".project-local/runs")
+        self.assertEqual(data["taskArtifactsRoot"], ".project-local/artifacts")
+        self.assertEqual(data["canonicalEvidenceRoot"], ".project-local/artifacts")
 
     def test_dependency_verifier_rejects_runtime_edge(self):
         module = self.load_verifier(
             "scripts/ci/verify_module_dependencies.py", "module_dependencies"
         )
         data = json.loads(
-            (ROOT / "00-governance/module-dependencies.json").read_text(encoding="utf-8")
+            (ROOT / ".project/governance/module-dependencies.json").read_text(encoding="utf-8")
         )
         data["modules"]["work-lab-observer"]["dependencies"][0]["types"] = ["runtime"]
         with tempfile.TemporaryDirectory() as temp:
             temp_root = Path(temp) / "repo"
-            (temp_root / "00-governance").mkdir(parents=True)
-            (temp_root / "00-governance/module-dependencies.json").write_text(
+            (temp_root / ".project/governance").mkdir(parents=True)
+            (temp_root / ".project/governance/module-dependencies.json").write_text(
                 json.dumps(data), encoding="utf-8"
             )
             errors = module.verify(temp_root)

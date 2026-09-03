@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "work-lab-module-dependencies/v1",
+  "dependencyTypes": ["governance", "runtime", "build", "handoff", "observed-by", "fixture", "archive-of"],
+  "modules": {
+    "workflow-assistance": {
+      "path": "packages/client-neutral-core",
+      "dependencies": [],
+      "observedBy": ["work-lab-observer"]
+    },
+    "work-lab-observer": {
+      "path": "apps/observer",
+      "dependencies": [
+        {"module": "workflow-assistance", "types": ["governance"]}
+      ],
+      "observedBy": []
+    }
+  },
+  "runtimeEdges": [],
+  "policy": {
+    "crossModuleRuntimeCoupling": "forbidden-unless-explicitly-approved",
+    "buildAndHandoffAreNotRuntimeDependencies": true,
+    "observedByIsReadOnly": true
+  }
+}

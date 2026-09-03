@@ -1,6 +1,6 @@
 """WLOSS-000: OSS intake ledger verification.
 
-Validates 00-governance/source-ledger.json against the intake contract:
+Validates .project/governance/source-ledger.json against the intake contract:
 - schemaVersion is the current v4;
 - integrationMode ∈ {VENDOR, DEPENDENCY, EXTERNAL_TOOL, ADAPTER, DERIVE,
   REFERENCE, QUARANTINE, REJECT};
@@ -16,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 
-LEDGER_REL = Path("00-governance/source-ledger.json")
+LEDGER_REL = Path(".project/governance/source-ledger.json")
 INTEGRATION_MODES = {"VENDOR", "DEPENDENCY", "EXTERNAL_TOOL", "ADAPTER", "DERIVE", "REFERENCE", "QUARANTINE", "REJECT"}
 REQUIRED_FIELDS = (
     "id", "canonicalUrl", "license", "spdx", "codeLicense", "modelDataLicense",

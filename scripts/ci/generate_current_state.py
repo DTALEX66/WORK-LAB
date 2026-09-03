@@ -23,45 +23,45 @@ import yaml
 DEFAULT_CI_EVIDENCE = Path(".hermes/task-artifacts/current-state-ci.json")
 DEFAULT_RUNTIME_ATTESTATION = Path(".hermes/task-artifacts/current-state-runtime-attestation.json")
 CANONICAL_FILES = (
-    "00-governance/PROJECT_POSITIONING.md",
-    "00-governance/projects.json",
-    "00-governance/module-ownership.json",
-    "00-governance/contracts/contract-catalog.json",
-    "00-governance/contracts/source-ledger.schema.json",
-    "00-governance/contracts/capability-conformance.schema.json",
-    "00-governance/source-ledger.json",
-    "00-governance/work-lab.project-profile.yaml",
-    "00-governance/generated/STAGE3_BASELINE.json",
+    "docs/decisions/PROJECT_POSITIONING.md",
+    ".project/governance/projects.json",
+    ".project/governance/module-ownership.json",
+    ".project/governance/contracts/contract-catalog.json",
+    ".project/governance/contracts/source-ledger.schema.json",
+    ".project/governance/contracts/capability-conformance.schema.json",
+    ".project/governance/source-ledger.json",
+    ".project/governance/work-lab.project-profile.yaml",
+    ".project/governance/generated/STAGE3_BASELINE.json",
     "README.md",
-    "40-knowledge/README.md",
-    "50-taskpacks/TASKPACK_SUMMARY.md",
-    "50-taskpacks/WORK-LAB-STAGE-3-TASK-GRAPH.json",
-    "10-workflow/workflow-assistance/workflow-manifest.yaml",
-    "10-workflow/workflow-assistance/config/capability-conformance.json",
-    "10-workflow/workflow-assistance/schemas/workflow/ci-observation.schema.json",
-    "10-workflow/workflow-assistance/schemas/workflow/model-policy.schema.json",
-    "10-workflow/workflow-assistance/schemas/workflow/memory-record.schema.json",
-    "10-workflow/workflow-assistance/schemas/workflow/rule-drift.schema.json",
-    "10-workflow/workflow-assistance/schemas/workflow/project-profile.schema.json",
-    "10-workflow/workflow-assistance/scripts/workflow/ci_watcher.py",
-    "10-workflow/workflow-assistance/scripts/workflow/model_policy.py",
-    "10-workflow/workflow-assistance/scripts/workflow/growth_candidates.py",
-    "10-workflow/workflow-assistance/scripts/workflow/growth_watcher.py",
-    "10-workflow/workflow-assistance/scripts/workflow/impact_planner.py",
-    "10-workflow/workflow-assistance/scripts/workflow/run_taskpack_agent.py",
-    "10-workflow/workflow-assistance/scripts/workflow/task_ledger.py",
-    "30-observer/work-lab-observer/schemas/observer-event.schema.json",
-    "30-observer/work-lab-observer/src/observer_runtime.py",
-    "30-observer/work-lab-observer/src/observer_evidence.py",
-    "30-observer/work-lab-observer/src/observer_store.py",
-    "10-workflow/workflow-assistance/config/skill-provenance.yaml",
+    "knowledge-staging/README.md",
+    "taskpacks/current/TASKPACK_SUMMARY.md",
+    "taskpacks/current/WORK-LAB-STAGE-3-TASK-GRAPH.json",
+    "packages/client-neutral-core/workflow-manifest.yaml",
+    "config/capability-conformance.json",
+    "packages/contracts/schemas/workflow/ci-observation.schema.json",
+    "packages/contracts/schemas/workflow/model-policy.schema.json",
+    "packages/contracts/schemas/workflow/memory-record.schema.json",
+    "packages/contracts/schemas/workflow/rule-drift.schema.json",
+    "packages/contracts/schemas/workflow/project-profile.schema.json",
+    "packages/client-neutral-core/scripts/ci_watcher.py",
+    "services/policy/model_policy.py",
+    "packages/client-neutral-core/scripts/growth_candidates.py",
+    "packages/client-neutral-core/scripts/growth_watcher.py",
+    "packages/client-neutral-core/scripts/impact_planner.py",
+    "services/orchestration/run_taskpack_agent.py",
+    "packages/client-neutral-core/scripts/task_ledger.py",
+    "apps/observer/schemas/observer-event.schema.json",
+    "apps/observer/src/observer_runtime.py",
+    "apps/observer/src/observer_evidence.py",
+    "apps/observer/src/observer_store.py",
+    "config/skill-provenance.yaml",
     ".github/workflows/work-lab-gate.yml",
 )
 SUPPORT_AREAS = (
-    ("governance", "00-governance"),
-    ("knowledge", "40-knowledge"),
-    ("taskpacks", "50-taskpacks"),
-    ("archive_manifests", "90-archive-manifests"),
+    ("governance", ".project/governance"),
+    ("knowledge", "knowledge-staging"),
+    ("taskpacks", "taskpacks/current"),
+    ("archive_manifests", "docs/history/archive-manifests"),
     ("root_delivery", ".github"),
 )
 STALE_WORKFLOW = "workflow-governance"
@@ -96,18 +96,17 @@ def _source_files(root: Path) -> list[tuple[str, Path]]:
         if not path.is_file():
             raise ValueError(f"canonical source missing: {relative}")
         paths[relative] = path
-    workflow_root = root / "10-workflow/workflow-assistance"
-    provenance = _read_yaml(root, "10-workflow/workflow-assistance/config/skill-provenance.yaml")
+    provenance = _read_yaml(root, "config/skill-provenance.yaml")
     for entry in provenance.get("entries", []):
         if not isinstance(entry, dict):
             raise ValueError("skill provenance entry must be a mapping")
         relative = entry.get("source")
         if not isinstance(relative, str):
             raise ValueError("skill provenance source must be a string")
-        path = workflow_root / relative
+        path = root / relative
         if not path.is_file():
             raise ValueError(f"skill source missing: {relative}")
-        paths[f"10-workflow/workflow-assistance/{relative}"] = path
+        paths[relative] = path
     return sorted(paths.items())
 
 
@@ -225,13 +224,13 @@ def build_state(
     portable_readback: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
-    projects = _read_json(root, "00-governance/projects.json")
-    ownership = _read_json(root, "00-governance/module-ownership.json")
-    catalog = _read_json(root, "00-governance/contracts/contract-catalog.json")
-    manifest = _read_yaml(root, "10-workflow/workflow-assistance/workflow-manifest.yaml")
-    provenance = _read_yaml(root, "10-workflow/workflow-assistance/config/skill-provenance.yaml")
-    stage3_graph = _read_json(root, "50-taskpacks/WORK-LAB-STAGE-3-TASK-GRAPH.json")
-    stage3_baseline = _read_json(root, "00-governance/generated/STAGE3_BASELINE.json")
+    projects = _read_json(root, ".project/governance/projects.json")
+    ownership = _read_json(root, ".project/governance/module-ownership.json")
+    catalog = _read_json(root, ".project/governance/contracts/contract-catalog.json")
+    manifest = _read_yaml(root, "packages/client-neutral-core/workflow-manifest.yaml")
+    provenance = _read_yaml(root, "config/skill-provenance.yaml")
+    stage3_graph = _read_json(root, "taskpacks/current/WORK-LAB-STAGE-3-TASK-GRAPH.json")
+    stage3_baseline = _read_json(root, ".project/governance/generated/STAGE3_BASELINE.json")
     modules = projects.get("modules", [])
     if not isinstance(modules, list):
         raise ValueError("projects.modules must be a list")
@@ -239,7 +238,6 @@ def build_state(
     if not isinstance(skills, list):
         raise ValueError("skill provenance entries must be a list")
     skill_items = []
-    workflow_root = root / "10-workflow/workflow-assistance"
     for entry in skills:
         if not isinstance(entry, dict):
             raise ValueError("skill provenance entry must be a mapping")
@@ -249,7 +247,7 @@ def build_state(
                 "name": str(entry["name"]),
                 "source": source,
                 "version": str(entry.get("version", "unknown")),
-                "source_sha256": sha256_bytes(_canonical_bytes(workflow_root / source)),
+                "source_sha256": sha256_bytes(_canonical_bytes(root / source)),
                 "trust": str(entry.get("trust", "unknown")),
                 "enabled": bool(entry.get("enabled", False)),
                 "live_readback": "not-run",
@@ -296,7 +294,7 @@ def build_state(
             "taskpack_id": stage3_graph.get("taskpackId", "unknown"),
             "task_count": len(stage3_graph.get("tasks", [])),
             "initial_state": stage3_graph.get("initialState", "unknown"),
-            "historical_baseline_source": "00-governance/generated/STAGE3_BASELINE.json",
+            "historical_baseline_source": ".project/governance/generated/STAGE3_BASELINE.json",
             "historical_baseline_status": "HISTORICAL_ONLY",
         },
         "unverified_capabilities": [
@@ -355,16 +353,16 @@ def check_stale_references(paths: Iterable[Path]) -> list[str]:
 
 def _canonical_doc_paths(root: Path) -> list[Path]:
     relative = [
-        "00-governance/PROJECT_POSITIONING.md",
-        "00-governance/projects.json",
-        "00-governance/module-ownership.json",
-        "00-governance/contracts/contract-catalog.json",
+        "docs/decisions/PROJECT_POSITIONING.md",
+        ".project/governance/projects.json",
+        ".project/governance/module-ownership.json",
+        ".project/governance/contracts/contract-catalog.json",
         "README.md",
-        "40-knowledge/README.md",
-        "50-taskpacks/TASKPACK_SUMMARY.md",
-        "50-taskpacks/WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF.md",
-        "10-workflow/workflow-assistance/workflow-manifest.yaml",
-        "10-workflow/workflow-assistance/README.md",
+        "knowledge-staging/README.md",
+        "taskpacks/current/TASKPACK_SUMMARY.md",
+        "taskpacks/current/WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF.md",
+        "packages/client-neutral-core/workflow-manifest.yaml",
+        "packages/client-neutral-core/README.md",
     ]
     return [root / item for item in relative if (root / item).is_file()]
 
@@ -419,8 +417,8 @@ Content digest: `{state['content_digest']}`
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2])
-    parser.add_argument("--json-out", type=Path, default=Path("00-governance/generated/CURRENT_STATE.json"))
-    parser.add_argument("--markdown-out", type=Path, default=Path("00-governance/generated/CURRENT_STATE.md"))
+    parser.add_argument("--json-out", type=Path, default=Path(".project/governance/generated/CURRENT_STATE.json"))
+    parser.add_argument("--markdown-out", type=Path, default=Path(".project/governance/generated/CURRENT_STATE.md"))
     parser.add_argument("--ci-evidence", type=Path)
     parser.add_argument("--portable-readback", type=Path)
     parser.add_argument("--runtime-attestation-out", type=Path)
@@ -434,7 +432,7 @@ def main(argv: list[str] | None = None) -> int:
             print("CURRENT_STATE_STALE_DOC_FAIL")
             print("\n".join(findings))
             return 1
-        projects = _read_json(root, "00-governance/projects.json")
+        projects = _read_json(root, ".project/governance/projects.json")
         modules = {str(item.get("id")) for item in projects.get("modules", []) if isinstance(item, dict)}
         if modules != {"workflow-assistance", "work-lab-observer"}:
             print("CURRENT_STATE_STALE_DOC_FAIL fourth-active-module")

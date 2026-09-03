@@ -3,14 +3,20 @@ name: wlr-060-production-gates
 on:
   push:
     paths:
-      - '10-workflow/**'
-      - '30-observer/**'
-      - '00-governance/**'
+      - 'services/**'
+      - 'packages/**'
+      - 'apps/**'
+      - 'integrations/**'
+      - 'apps/observer/**'
+      - '.project/governance/**'
   pull_request:
     paths:
-      - '10-workflow/**'
-      - '30-observer/**'
-      - '00-governance/**'
+      - 'services/**'
+      - 'packages/**'
+      - 'apps/**'
+      - 'integrations/**'
+      - 'apps/observer/**'
+      - '.project/governance/**'
 
 permissions:
   contents: read
@@ -21,16 +27,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Validate all JSON schemas
-        run: python -c "import json,glob; [json.load(open(f)) for f in glob.glob('10-workflow/workflow-assistance/schemas/**/*.json',recursive=True)]; print('ALL SCHEMAS VALID')"
+        run: python -c "import json,glob; [json.load(open(f)) for f in glob.glob('packages/contracts/schemas/**/*.json',recursive=True)]; print('ALL SCHEMAS VALID')"
 
   observer-readonly:
     name: observer-readonly
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Verify observer is read-only
         run: "python scripts/ci/verify_observer_readonly.py || echo 'STUB pending'"
 
@@ -39,18 +45,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Verify capsule CLI works
-        run: "python 10-workflow/workflow-assistance/scripts/workflow/capsule.py verify --capsule 10-workflow/workflow-assistance/schemas/workflow/context-capsule.schema.json || true"
+        run: "python packages/client-neutral-core/scripts/capsule.py verify --capsule packages/contracts/schemas/workflow/context-capsule.schema.json || true"
 
   config-compiler:
     name: config-compiler
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Verify config compiler syntax
-        run: "python -c 'import py_compile; py_compile.compile(\"10-workflow/workflow-assistance/scripts/workflow/config_compiler.py\", doraise=True); print(\"SYNTAX OK\")'"
+        run: "python -c 'import py_compile; py_compile.compile(\"services/policy/config_compiler.py\", doraise=True); print(\"SYNTAX OK\")'"
 
   wlr060-aggregate:
     name: wlr060-aggregate

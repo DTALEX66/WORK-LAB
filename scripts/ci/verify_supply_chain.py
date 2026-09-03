@@ -2,6 +2,7 @@
 """Verify source-pinned GitHub Actions and safe dependency-source metadata."""
 from __future__ import annotations
 
+import os
 import re
 import shlex
 from pathlib import Path
@@ -14,7 +15,7 @@ PIP_INSTALL_RE = re.compile(
 )
 PIP_LAUNCHER_RE = re.compile(r"^(?:python(?:3(?:\.\d+)?)?|pip(?:3(?:\.\d+)?)?)$")
 SHELL_COMMAND_SEPARATOR_RE = re.compile(r"(?:&&|\|\||[;|])")
-REQUIREMENTS_LOCK_REL = Path("10-workflow/workflow-assistance/requirements.lock")
+REQUIREMENTS_LOCK_REL = Path("packages/client-neutral-core/requirements.lock")
 
 
 def verify(root: Path) -> list[str]:
@@ -180,13 +181,19 @@ def main() -> int:
 
 def _workflow_files(root: Path) -> list[Path]:
     """Discover every project workflow while excluding Git and ignored runtime trees."""
-    return sorted(
-        path
-        for path in root.rglob("*.y*ml")
-        if path.parent.name == "workflows"
-        and path.parent.parent.name == ".github"
-        and not {".git", ".hermes"}.intersection(path.relative_to(root).parts)
-    )
+    excluded = {".git", ".hermes", ".project-local", "node_modules"}
+    found: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        # Prune excluded trees before descending (avoids long-path scandir errors).
+        dirnames[:] = [d for d in dirnames if d not in excluded]
+        if dirpath == str(root):
+            continue
+        rel = Path(dirpath).relative_to(root)
+        if rel.name == "workflows" and rel.parent.name == ".github":
+            for fn in filenames:
+                if fn.endswith((".yml", ".yaml")):
+                    found.append(Path(dirpath) / fn)
+    return sorted(found)
 
 
 if __name__ == "__main__":

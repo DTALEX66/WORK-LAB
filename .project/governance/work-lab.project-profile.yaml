@@ -1,0 +1,86 @@
+schema_version: workflow/project-profile/v1
+project:
+  id: work-lab
+  root_policy: discover_git_root
+  windows_native_first: true
+configuration:
+  precedence:
+    - global_defaults
+    - project_profile
+    - local_runtime
+    - environment
+    - cli
+modules:
+  workflow:
+    roots:
+      - packages/client-neutral-core
+    depends_on: []
+    active: true
+  observer:
+    roots:
+      - apps/observer
+    depends_on:
+      - workflow
+    observation_only: true
+    active: true
+risk_zones:
+  critical:
+    - .github/**
+    - .project/governance/**
+    - scripts/ci/**
+    - config/**
+    - packages/contracts/schemas/**
+gates:
+  workflow:
+    command: python services/orchestration/run_quality_gate.py governance
+    tiers:
+      - module
+      - full
+      - release
+    platform: discovered
+  observer:
+    command: python apps/observer/scripts/verify_observer_skeleton.py
+    tiers:
+      - module
+      - full
+      - release
+    platform: discovered
+  integration:
+    command: python tests/ci/test_governance_gate.py
+    tiers:
+      - full
+      - release
+    platform: discovered
+  token-monitor:
+    command: npm ci && npm run build && cargo test --locked && cargo check --locked
+    paths:
+      - packages/client-neutral-core/apps/token-monitor-desktop/**
+    tiers:
+      - module
+      - full
+      - release
+    platform: windows
+  supply-chain-security:
+    command: python scripts/ci/verify_supply_chain_tools.py
+    tiers:
+      - full
+      - release
+    platform: discovered
+ci:
+  workflow_file: .github/workflows/work-lab-gate.yml
+  workflow_name: work-lab-gate
+  stable_aggregate_check: aggregate
+  stable_aggregate_job: aggregate
+  exact_sha_required_for:
+    - critical
+    - release
+  outage_blocks:
+    - schema-migration
+    - external-write
+    - release
+  watcher_policy:
+    base_delay_seconds: 6
+    max_delay_seconds: 120
+    observation_window_seconds: 1200
+    queue_stall_seconds: 600
+    retry_budget: 1

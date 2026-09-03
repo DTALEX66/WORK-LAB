@@ -14,8 +14,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 ACTIVE_MODULES = {
-    "10-workflow/workflow-assistance",
-    "30-observer/work-lab-observer",
+    "packages/client-neutral-core",
+    "apps/observer",
 }
 FORBIDDEN_PATH_MARKERS = (
     ".env", ".pem", ".key", "node_modules", "__pycache__", ".sqlite", ".db",
@@ -28,17 +28,17 @@ REQUIRED_TASKS = (
     "NX-700", "NX-710",
 )
 REQUIRED_HANDOFFS = tuple(
-    f"50-taskpacks/{task}-" for task in REQUIRED_TASKS if task != "NX-000"
+    f"taskpacks/current/{task}-" for task in REQUIRED_TASKS if task != "NX-000"
 )
 REQUIRED_VERIFIERS = (
     "scripts/ci/verify_source_health.py",
     "scripts/ci/verify_offline_pilot.py",
     "scripts/ci/verify_regression_report.py",
-    "10-workflow/workflow-assistance/scripts/workflow/verify_standard_validators.py",
-    "10-workflow/workflow-assistance/scripts/workflow/verify_production_evidence.py",
-    "10-workflow/workflow-assistance/scripts/workflow/verify_design_contract.py",
-    "10-workflow/workflow-assistance/scripts/workflow/verify_task_ledger_replay.py",
-    "10-workflow/workflow-assistance/scripts/workflow/verify_usage_ingestion.py",
+    "packages/client-neutral-core/scripts/verify_standard_validators.py",
+    "packages/client-neutral-core/scripts/verify_production_evidence.py",
+    "packages/client-neutral-core/scripts/verify_design_contract.py",
+    "packages/client-neutral-core/scripts/verify_task_ledger_replay.py",
+    "packages/client-neutral-core/scripts/verify_usage_ingestion.py",
 )
 
 
