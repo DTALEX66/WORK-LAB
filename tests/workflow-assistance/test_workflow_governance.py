@@ -2525,7 +2525,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "usable_bash()",
             "Git Bash / GNU bash not found",
             "shutil.which(\"pwsh\") or shutil.which(\"powershell.exe\")",
-            "ParseFile((Resolve-Path ./setup.ps1)",
+            "ParseFile((Resolve-Path ./scripts/setup-workflow.ps1)",
         ):
             self.assertIn(marker, body)
         self.assertNotIn("shell=True", body)
