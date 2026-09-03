@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 WF_SCRIPTS = ROOT / "packages" / "client-neutral-core" / "scripts"
 sys.path.insert(0, str(WF_SCRIPTS))
+sys.path.insert(0, str(ROOT / "services/receipts"))
 
 from usage_ingestion import (  # noqa: E402
     UsageReader, coverage_matrix, normalize_event, ALLOWLIST_FIELDS,

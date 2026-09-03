@@ -5,8 +5,8 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'scripts/workflow'))
+ROOT=Path(__file__).resolve().parents[2]
+sys.path.insert(0,str(ROOT/'services/orchestration'))
 from sidecar_lock import SingleInstanceLock
 class SidecarLockTests(unittest.TestCase):
  def test_second_instance_is_rejected_and_release_recovers(self):
@@ -48,7 +48,7 @@ class SidecarLockTests(unittest.TestCase):
    path=Path(raw)/'sidecar.lock'
    script=(
    "import sys; from pathlib import Path; "
-    f"sys.path.insert(0, {str(ROOT / 'scripts/workflow')!r}); "
+    f"sys.path.insert(0, {str(ROOT / 'services/orchestration')!r}); "
     "from sidecar_lock import SingleInstanceLock; "
     "lock=SingleInstanceLock(Path(sys.argv[1])); lock.acquire(); "
     "print('READY', flush=True); sys.stdin.readline(); lock.release()"

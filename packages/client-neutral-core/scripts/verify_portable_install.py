@@ -230,7 +230,7 @@ def verify(repo: Path, home: Path, *, run_runtime: bool = False) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Verify portable workflow installation into an isolated Hermes home.")
-    parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[2])
+    parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[3])
     parser.add_argument("--home", type=Path, help="Empty isolated Hermes home; omitted uses a temporary directory.")
     parser.add_argument(
         "--runtime",

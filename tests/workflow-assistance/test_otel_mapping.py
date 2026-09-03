@@ -13,6 +13,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'services/receipts'))
 WF_SCRIPTS = ROOT / "packages" / "client-neutral-core" / "scripts"
 sys.path.insert(0, str(WF_SCRIPTS))
 

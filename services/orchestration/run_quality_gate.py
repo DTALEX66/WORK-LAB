@@ -351,7 +351,7 @@ def gate_shell() -> int:
     if not bash:
         print("\n=== SKIP shell: Git Bash / GNU bash not found ===")
         return 0
-    return run([bash, "-n", "setup.sh"])
+    return run([bash, "-n", "scripts/setup-workflow.sh"])
 
 
 def gate_runtime_convergence() -> int:
@@ -413,7 +413,7 @@ def gate_powershell() -> int:
         return 0
     script = (
         "$tokens = $null; $errors = $null; "
-        "[System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path ./setup.ps1), [ref]$tokens, [ref]$errors) | Out-Null; "
+        "[System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path ./scripts/setup-workflow.ps1), [ref]$tokens, [ref]$errors) | Out-Null; "
         "if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_ }; exit 1 }"
     )
     return run([pwsh, "-NoProfile", "-Command", script])

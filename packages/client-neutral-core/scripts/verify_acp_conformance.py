@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]  # WORK-LAB root
 WF_SCRIPTS = ROOT / "packages" / "client-neutral-core" / "scripts"
 sys.path.insert(0, str(WF_SCRIPTS))
+sys.path.insert(0, str(ROOT / "integrations/executors/codex"))
 
 from acp_adapter import (  # noqa: E402
     CLIENT_CAPABILITIES, READ_ONLY_OPERATIONS, SUPPORTED_PROTOCOL_VERSIONS,

@@ -89,7 +89,7 @@
         "evidence_state": "UNVERIFIED"
       },
       "writes": "unavailable",
-      "registry_status": "quarantined",
+      "registry_status": "legacy_observe",
       "risk": "high",
       "runtime_adapter": "CCSwitchAdapter",
       "config_ownership_default": {
@@ -184,7 +184,7 @@
         "evidence_state": "UNVERIFIED"
       },
       "writes": "approval_required",
-      "registry_status": "quarantined",
+      "registry_status": "active",
       "risk": "medium",
       "runtime_adapter": "DeepSeekHarnessAdapter",
       "config_ownership_default": null,

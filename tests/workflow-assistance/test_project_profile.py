@@ -4,7 +4,7 @@ import sys
 import unittest
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0,str(ROOT/'scripts/workflow'))
+sys.path.insert(0,str(ROOT/'packages/client-neutral-core/scripts'))
 from project_profile import load_registry, resolve_profile
 class ProjectProfileTests(unittest.TestCase):
  def test_work_lab_and_fixture_are_isolated_profiles(self):

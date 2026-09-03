@@ -3,8 +3,9 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'scripts/workflow'))
+ROOT=Path(__file__).resolve().parents[2]
+sys.path.insert(0,str(ROOT/'packages/client-neutral-core/scripts'))
+sys.path.insert(0,str(ROOT/'services/receipts'))
 from observer_projection_adapter import WorkflowProjectionAdapter
 from telemetry_ledger import TelemetryLedger
 class ObserverProjectionAdapterTests(unittest.TestCase):
