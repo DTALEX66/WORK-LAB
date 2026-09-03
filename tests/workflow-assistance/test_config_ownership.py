@@ -11,7 +11,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 REGISTRY = ROOT / "config/config-ownership.json"
-SCHEMA = ROOT / "schemas/workflow/config-ownership.schema.json"
+SCHEMA = ROOT / "packages/contracts/schemas/workflow/config-ownership.schema.json"
 COMPATIBILITY_RECIPE = ROOT / "config/managed-config-schema.yaml"
 EXPECTED_LAYERS = {
     "UPSTREAM_OFFICIAL", "USER_OVERLAY", "PROJECT_OVERLAY", "TASK_EPHEMERAL",

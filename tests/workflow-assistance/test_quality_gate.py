@@ -27,12 +27,12 @@ class QualityGateTests(unittest.TestCase):
         retired = {f"tests/{name}" for name in MODULE.RETIRED_ORDINARY_TESTS}
         all_tests = {
             path.relative_to(ROOT).as_posix()
-            for path in (ROOT / "tests").glob("test_*.py")
+            for path in (ROOT / "tests" / "workflow-assistance").glob("test_*.py")
         }
 
         self.assertTrue(retired.isdisjoint(selected))
         self.assertEqual(selected, all_tests - retired)
-        self.assertIn("tests/test_codex_global_asset_sync.py", selected)
+        self.assertIn("tests/workflow-assistance/test_codex_global_asset_sync.py", selected)
 
     def test_governance_modules_are_importable_from_tests_pythonpath(self) -> None:
         modules = [Path(path).stem for path in MODULE.governance_test_files()]

@@ -282,7 +282,7 @@ class TaskLedgerTests(unittest.TestCase):
 
     def test_runtime_ledger_matches_task_ledger_schema(self) -> None:
         module = load_module()
-        schema = json.loads((ROOT / "schemas/workflow/task-ledger.schema.json").read_text(encoding="utf-8"))
+        schema = json.loads((ROOT / "packages/contracts/schemas/workflow/task-ledger.schema.json").read_text(encoding="utf-8"))
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             ledger = module.TaskLedger(root)

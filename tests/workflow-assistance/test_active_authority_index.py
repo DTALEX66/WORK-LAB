@@ -42,7 +42,7 @@ class ActiveAuthorityIndexTests(unittest.TestCase):
         self.assertIn("仅作归档", text)
 
     def test_readme_links_authority_files(self):
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        readme = (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8")
         self.assertIn("active-authority-index.md", readme)
 
     def test_historical_handoffs_are_listed_as_archive(self):

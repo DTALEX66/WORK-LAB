@@ -24,7 +24,7 @@ def load_module():
 
 class ClientNeutralManifestTests(unittest.TestCase):
     def test_product_definition_documents_the_core_boundary(self) -> None:
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        readme = (ROOT / "docs/current/workflow-assistance-README.md").read_text(encoding="utf-8")
         definition = (ROOT / "docs/current/workflow-assistance/workflow/project-definition.md").read_text(encoding="utf-8")
         for document in (readme, definition):
             self.assertIn("客户端中立", document)
@@ -56,7 +56,7 @@ class ClientNeutralManifestTests(unittest.TestCase):
     def test_manifest_registers_the_six_core_schemas_and_instance_controls(self) -> None:
         manifest = yaml.safe_load((ROOT / "packages/client-neutral-core/workflow-manifest.yaml").read_text(encoding="utf-8"))
         contracts = manifest["contracts"]
-        self.assertEqual(contracts["schema_directory"], "schemas/workflow")
+        self.assertEqual(contracts["schema_directory"], "packages/contracts/schemas/workflow")
         self.assertEqual(len(contracts["schemas"]), 19)
         self.assertTrue(contracts["instance_controls"]["positive"].endswith("valid-action-plan.json"))
         self.assertTrue(contracts["instance_controls"]["negative"].endswith("invalid-action-plan.json"))

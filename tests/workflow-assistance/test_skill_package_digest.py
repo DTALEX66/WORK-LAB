@@ -66,13 +66,17 @@ class SkillPackageDigestTests(unittest.TestCase):
             self.assertEqual(result["status"], "QUARANTINED")
 
     def test_verify_managed_set_with_real_repo(self) -> None:
-        module_root = Path(__file__).resolve().parents[1]
+        module_root = Path(__file__).resolve().parents[2]
         import yaml
 
         provenance = yaml.safe_load(
             (module_root / "config/skill-provenance.yaml").read_text(encoding="utf-8")
         ).get("entries", [])
-        result = verify_managed_set(module_root / "skills", provenance)
+        # verify_managed_set derives the repo root from skill_root.parent (the
+        # module-level "skills" dir itself is virtual after the directory
+        # convergence; provenance sources are full repo-relative paths).
+        skills_root = module_root / "skills"
+        result = verify_managed_set(skills_root, provenance)
         self.assertEqual(result["managed_count"], 13)
         self.assertEqual(result["present_count"], 13)
         self.assertEqual(result["quarantined"], [])

@@ -113,7 +113,7 @@ adapters:
       detection: manifest_only
       writes: unavailable
 contracts:
-  schema_directory: schemas/workflow
+  schema_directory: packages/contracts/schemas/workflow
   schemas:
     - client-adapter.schema.json
     - adapter-registry.schema.json

@@ -36,10 +36,10 @@ class GateVocabularyTests(unittest.TestCase):
 
     def test_schemas_use_the_global_tier_vocabulary(self):
         gate_registry = json.loads(
-            (ROOT / "schemas/workflow/gate-registry.schema.json").read_text(encoding="utf-8")
+            (ROOT / "packages/contracts/schemas/workflow/gate-registry.schema.json").read_text(encoding="utf-8")
         )
         profile = json.loads(
-            (ROOT / "schemas/workflow/project-profile.schema.json").read_text(encoding="utf-8")
+            (ROOT / "packages/contracts/schemas/workflow/project-profile.schema.json").read_text(encoding="utf-8")
         )
         for schema, path in ((gate_registry, "gate-registry"), (profile, "project-profile")):
             text = json.dumps(schema)

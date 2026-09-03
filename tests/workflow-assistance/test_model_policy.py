@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "services/policy/model_policy.py"
-SCHEMA = ROOT / "schemas/workflow/model-policy.schema.json"
+SCHEMA = ROOT / "packages/contracts/schemas/workflow/model-policy.schema.json"
 
 
 def load_module():
