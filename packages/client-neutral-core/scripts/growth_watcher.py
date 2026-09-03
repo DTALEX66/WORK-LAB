@@ -12,8 +12,8 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[3]
-MEMORY_SCHEMA = ROOT / "schemas/workflow/memory-record.schema.json"
-DRIFT_SCHEMA = ROOT / "schemas/workflow/rule-drift.schema.json"
+MEMORY_SCHEMA = ROOT / "packages/contracts/schemas/workflow/memory-record.schema.json"
+DRIFT_SCHEMA = ROOT / "packages/contracts/schemas/workflow/rule-drift.schema.json"
 # WL-P0-003 (2026-08-19): memory-record is runtime-context only (TTL, non-authoritative).
 # Long-term experience must be submitted to ArcheAxis Candidate; WORK-LAB never holds long-term knowledge.
 MEMORY_VERSION = "workflow/runtime-context-record/v1"

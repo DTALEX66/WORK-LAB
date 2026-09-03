@@ -10,8 +10,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts" / "workflow"))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+sys.path.insert(0, str(ROOT / "services" / "orchestration"))
 
 from canonical_store import CanonicalStore
 from composition_root import build_v3_snapshot, load_approved_index
@@ -23,7 +24,7 @@ from workspace_evidence import load_workspace_evidence
 import socket
 import urllib.request
 
-PROJECT_ROOT = Path(r"D:\All projects\WORK-LAB")
+PROJECT_ROOT = ROOT
 
 
 def make_sidecar(runtime_root: Path) -> WorkflowSidecar:
@@ -34,7 +35,7 @@ class CompositionRootTests(unittest.TestCase):
     def test_workspace_evidence_loads_plan_governance_and_history_as_typed_sources(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "taskpacks/current").mkdir()
+            (root / "taskpacks/current").mkdir(parents=True)
             (root / ".project/governance" / "generated").mkdir(parents=True)
             (root / "taskpacks/current" / "WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md").write_text(
                 "# Master\n> Status: `DELIVERED_PENDING_REMAINING_APPROVALS`\n"
