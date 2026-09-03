@@ -74,7 +74,7 @@ entries:
 - name: model-switch
   source: packages/client-neutral-core/skills/model-switch/SKILL.md
   live: packages/client-neutral-core/skills/model-switch/SKILL.md
-  source_sha256: 0a02c1fc8b6520ad5e7000d80b83597a66f7a65c3a52a56ca7ebda3e84ca15b9
+  source_sha256: 37aed9558bc16be5c4da9aa2133d63e03cabbcf353d6bbf248d156aceaf4c5d9
   version: 1.3.1
   trust: repository-controlled
   enabled: true

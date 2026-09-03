@@ -31,11 +31,18 @@ except ImportError:  # pragma: no cover - direct script execution
     try:
         from task_ledger import TaskLedger
     except ImportError:  # pragma: no cover - importlib test harness
+        _candidates = [
+            Path(__file__).with_name("task_ledger.py"),
+            Path(__file__).resolve().parents[2] / "packages" / "client-neutral-core" / "scripts" / "task_ledger.py",
+        ]
+        _ledger_path = next((c for c in _candidates if c.is_file()), None)
+        if _ledger_path is None:
+            raise ImportError("unable to locate task_ledger.py (sibling or packages/client-neutral-core/scripts)")
         _ledger_spec = __import__("importlib.util", fromlist=["spec_from_file_location"]).spec_from_file_location(
-            "task_ledger", Path(__file__).with_name("task_ledger.py")
+            "task_ledger", _ledger_path
         )
         if _ledger_spec is None or _ledger_spec.loader is None:
-            raise ImportError("unable to load sibling task_ledger.py")
+            raise ImportError("unable to load task_ledger.py")
         _ledger_module = __import__("importlib.util", fromlist=["module_from_spec"]).module_from_spec(_ledger_spec)
         sys.modules[_ledger_spec.name] = _ledger_module
         _ledger_spec.loader.exec_module(_ledger_module)
