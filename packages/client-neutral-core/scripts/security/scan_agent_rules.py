@@ -56,6 +56,16 @@ DEFAULT_ROOTS = (
 )
 SKIP_PARTS = {".git", ".hermes", "__pycache__", "node_modules", ".venv", "venv"}
 
+# Declarative exceptions for files whose *purpose* is to define the exact
+# phrases this scanner looks for (injection detectors / vocabulary tables).
+# Keeping them out of the allowlist would flag the detector itself; each entry
+# must name the file and the reason in the comment above it.
+INJECTION_ALLOWLIST = {
+    # scripts/ci/verify_skill_mcp_consistency.py: defines the injection-regex
+    # and trigger-vocabulary used to verify MCP consistency tooling.
+    "scripts/ci/verify_skill_mcp_consistency.py",
+}
+
 
 def scan_file(path: Path) -> list[str]:
     try:
@@ -66,7 +76,9 @@ def scan_file(path: Path) -> list[str]:
     if ZERO_WIDTH.search(text):
         issues.append(f'{path}: hidden zero-width/BOM character')
     if INJECTION.search(text):
-        issues.append(f'{path}: prompt-injection-like phrase')
+        rel = path.relative_to(REPO_ROOT).as_posix() if path.is_absolute() else path.as_posix()
+        if rel not in INJECTION_ALLOWLIST:
+            issues.append(f'{path}: prompt-injection-like phrase')
     if SECRET_HINT.search(text):
         issues.append(f'{path}: possible hardcoded secret')
     if path.suffix.lower() in ('.sh', '.bash'):
