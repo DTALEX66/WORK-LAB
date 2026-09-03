@@ -122,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--manifest",
         type=Path,
-        default=Path(__file__).resolve().parents[3] / "workflow-manifest.yaml",
+        default=Path(__file__).resolve().parents[1] / "workflow-manifest.yaml",
     )
     parser.add_argument("--json", action="store_true", help="emit the redacted adapter inventory as JSON")
     args = parser.parse_args(argv)
