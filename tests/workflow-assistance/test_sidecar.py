@@ -9,8 +9,9 @@ import unittest
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts/workflow"))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+sys.path.insert(0, str(ROOT / "services" / "orchestration"))
 from sidecar import WorkflowSidecar, create_server  # noqa: E402
 from canonical_store import CanonicalStore  # noqa: E402
 
