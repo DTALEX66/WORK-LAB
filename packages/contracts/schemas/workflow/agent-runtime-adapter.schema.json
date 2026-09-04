@@ -49,7 +49,10 @@
       "const": "developer_preview"
     },
     "install_mode": {
-      "const": "isolated_source_checkout"
+      "enum": [
+        "isolated_source_checkout",
+        "community_desktop_release"
+      ]
     },
     "entrypoints": {
       "type": "array",
@@ -57,6 +60,7 @@
       "uniqueItems": true,
       "items": {
         "enum": [
+          "desktop",
           "web",
           "headless"
         ]
@@ -89,7 +93,10 @@
       "const": "builtins_only"
     },
     "upgrade_policy": {
-      "const": "pinned_commit + explicit_upgrade_task + compatibility_evidence"
+      "enum": [
+        "pinned_commit + explicit_upgrade_task + compatibility_evidence",
+        "verified_release_digest + explicit_upgrade_task + compatibility_evidence"
+      ]
     },
     "rollback": {
       "const": "stop_preserve_quarantine"
@@ -146,6 +153,28 @@
         },
         "package": {
           "type": "string"
+        },
+        "release_tag": {
+          "type": "string"
+        },
+        "release_track": {
+          "const": "stable"
+        },
+        "upstream_authority": {
+          "const": "deepseek-ai/deepseek-harness"
+        },
+        "upstream_version": {
+          "type": "string"
+        },
+        "binary_signature": {
+          "enum": [
+            "SIGNED",
+            "UNSIGNED",
+            "UNKNOWN"
+          ]
+        },
+        "user_config_access": {
+          "const": "NOT_ACCESSED"
         },
         "install": {
           "type": "string"

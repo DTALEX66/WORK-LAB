@@ -43,7 +43,8 @@ class DeepSeekHarnessContractTests(unittest.TestCase):
         self.assertTrue(required.issubset(set(contract)))
         self.assertEqual(contract["adapter_id"], "deepseek-harness")
         self.assertEqual(contract["kind"], "agent_runtime")
-        self.assertEqual(contract["install_mode"], "isolated_source_checkout")
+        self.assertEqual(contract["install_mode"], "community_desktop_release")
+        self.assertEqual(contract["entrypoints"], ["desktop", "web", "headless"])
         self.assertEqual(contract["network"], "loopback_only")
         self.assertEqual(contract["workspace_scope"], "task_scoped_git_worktree_only")
         self.assertEqual(contract["secrets"], "runtime_secret_only")
@@ -51,6 +52,16 @@ class DeepSeekHarnessContractTests(unittest.TestCase):
         self.assertEqual(contract["external_mutation"], "approval_required")
         self.assertEqual(contract["plugin_policy"], "builtins_only")
         self.assertEqual(contract["maturity"], "developer_preview")
+
+    def test_contract_describes_the_community_shell_without_user_config_access(self) -> None:
+        contract = dsh.DeepSeekHarnessAdapter(Path.cwd()).contract()
+        deployed = contract["detected_local"]
+        self.assertEqual(deployed["deployment"], "community-desktop")
+        self.assertEqual(deployed["release_track"], "stable")
+        self.assertEqual(deployed["upstream_authority"], "deepseek-ai/deepseek-harness")
+        self.assertEqual(deployed["binary_signature"], "UNSIGNED")
+        self.assertEqual(deployed["user_config_access"], "NOT_ACCESSED")
+        self.assertNotIn("config_root", deployed)
 
     def test_commit_pin_rejects_drift_and_missing(self) -> None:
         ok, _ = dsh.validate_commit_pin(dsh.UPSTREAM_COMMIT)

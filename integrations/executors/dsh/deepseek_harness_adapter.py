@@ -12,8 +12,8 @@ supplied (WL-DSH-030), and even then it only performs the isolated checkout.
 Deployment-identity note (2026-09-02): the machine DSH switched from the
 0.1.x source-checkout lineage (`deepseek-ai/deepseek-harness`, pinned commit,
 `.hermes/task-runtime/deepseek-harness`) to the 2.0.x community desktop build
-(`anywhere-labs/dsh-desktop`, Electron + bundled harness, `~/.dsh` config root,
-web port 43120, D-drive single entry). The legacy UPSTREAM_* pin below remains
+(`anywhere-labs/dsh-desktop`, Electron + bundled harness, web port 43120,
+D-drive single entry). The legacy UPSTREAM_* pin below remains
 as the HISTORICAL governance target of the retired 0.1.x isolated-checkout
 contract; COMMUNITY_DESKTOP_* constants below describe the currently deployed
 identity and are what detect()/observe() report against.
@@ -54,22 +54,24 @@ REQUIRED_NODE_RANGE = "^22.19.0 || >=24.0.0"
 # ---------------------------------------------------------------------------
 COMMUNITY_REPO = "anywhere-labs/dsh-desktop"
 COMMUNITY_PACKAGE = "dsh-plugin-desktop"
-COMMUNITY_VERSION = "2.0.4"
+COMMUNITY_VERSION = "2.0.5"
+COMMUNITY_RELEASE_TAG = "v2.0.5"
+COMMUNITY_RELEASE_TRACK = "stable"
+COMMUNITY_UPSTREAM_VERSION = "0.1.2-rc.1"
+COMMUNITY_BINARY_SIGNATURE = "UNSIGNED"
+COMMUNITY_SOURCE_EQUIVALENCE = "UNVERIFIED"
 COMMUNITY_INSTALL_DIR = Path("D:/All projects/DSH")
 COMMUNITY_EXE = COMMUNITY_INSTALL_DIR / "DSH Desktop.exe"
 COMMUNITY_VERSION_FILE = COMMUNITY_INSTALL_DIR / "resources" / "app.asar.unpacked" / "package.json"
-COMMUNITY_CONFIG_ROOT = Path.home() / ".dsh"
 COMMUNITY_WEB_PORT = 43120
-COMMUNITY_SESSIONS_MIGRATED = 94
-COMMUNITY_UPGRADE_EVIDENCE = "2026-08-30 upgrade (2.0.2 → 2.0.4), NSIS re-located to D-drive; 94 sessions preserved"
 
 # ---------------------------------------------------------------------------
 # Agent-runtime contract (taskpack §4.1). These are the auditable invariants.
 # ---------------------------------------------------------------------------
 ADAPTER_ID = "deepseek-harness"
 ADAPTER_KIND = "agent_runtime"
-INSTALL_MODE = "isolated_source_checkout"
-ENTRYPOINTS = ("web", "headless")
+INSTALL_MODE = "community_desktop_release"
+ENTRYPOINTS = ("desktop", "web", "headless")
 NETWORK_POLICY = "loopback_only"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 43120  # community desktop web port (2.0.x); legacy 0.1.x used 3080
@@ -78,7 +80,7 @@ SECRETS_POLICY = "runtime_secret_only"
 EXECUTION_AUTHORITY = "execute_only_no_task_completion_authority"
 EXTERNAL_MUTATION = "approval_required"
 PLUGIN_POLICY = "builtins_only"
-UPGRADE_POLICY = "pinned_commit + explicit_upgrade_task + compatibility_evidence"
+UPGRADE_POLICY = "verified_release_digest + explicit_upgrade_task + compatibility_evidence"
 
 # Forbidden host patterns: anything but loopback is rejected fail-closed.
 _LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
@@ -112,26 +114,21 @@ def community_version() -> str | None:
 
 
 def community_detected() -> dict[str, Any]:
-    """Read-only presence/version probe of the community desktop build."""
+    """Probe public application metadata without touching user DSH state."""
     exe_present = COMMUNITY_EXE.is_file()
     version = community_version()
-    config_present = COMMUNITY_CONFIG_ROOT.is_dir()
-    sessions_dir = COMMUNITY_CONFIG_ROOT / "sessions"
-    session_count = -1  # unknown without enumeration
-    if sessions_dir.is_dir():
-        try:
-            session_count = sum(1 for sub in sessions_dir.iterdir() if sub.is_dir())
-        except OSError:
-            session_count = -1
     return {
         "present": exe_present and version is not None,
         "install": str(COMMUNITY_EXE) if exe_present else None,
         "package": COMMUNITY_PACKAGE if version else None,
         "version": version,
-        "config_root": str(COMMUNITY_CONFIG_ROOT) if config_present else None,
+        "release_track": COMMUNITY_RELEASE_TRACK,
+        "upstream_authority": UPSTREAM_REPO,
+        "upstream_version": COMMUNITY_UPSTREAM_VERSION,
+        "binary_signature": COMMUNITY_BINARY_SIGNATURE,
+        "source_equivalence": COMMUNITY_SOURCE_EQUIVALENCE,
+        "user_config_access": "NOT_ACCESSED",
         "web_port": COMMUNITY_WEB_PORT,
-        "session_project_dirs": session_count,
-        "sessions_migrated_evidence": COMMUNITY_SESSIONS_MIGRATED,
     }
 
 
@@ -232,12 +229,16 @@ class DeepSeekHarnessAdapter:
                 "deployment": "community-desktop",
                 "package": COMMUNITY_PACKAGE,
                 "version": COMMUNITY_VERSION,
+                "release_tag": COMMUNITY_RELEASE_TAG,
+                "release_track": COMMUNITY_RELEASE_TRACK,
+                "upstream_authority": UPSTREAM_REPO,
+                "upstream_version": COMMUNITY_UPSTREAM_VERSION,
+                "binary_signature": COMMUNITY_BINARY_SIGNATURE,
+                "source_equivalence": COMMUNITY_SOURCE_EQUIVALENCE,
+                "user_config_access": "NOT_ACCESSED",
                 "install": str(COMMUNITY_EXE),
-                "config_root": str(COMMUNITY_CONFIG_ROOT),
                 "web_port": COMMUNITY_WEB_PORT,
                 "state": "COMMUNITY_DESKTOP_VERIFIED",
-                "sessions_migrated": COMMUNITY_SESSIONS_MIGRATED,
-                "upgrade_evidence": COMMUNITY_UPGRADE_EVIDENCE,
                 "legacy_0_1_x": {
                     "version": DETECTED_LOCAL_VERSION,
                     "commit": DETECTED_LOCAL_COMMIT,
@@ -267,8 +268,9 @@ class DeepSeekHarnessAdapter:
         """Report which DSH deployment is present (no side effects).
 
         Legacy 0.1.x isolated source checkout (project-local) is detected
-        first; the community desktop build (2.0.x, D-drive + ~/.dsh) is the
-        current deployment and is always probed alongside.
+        first; the community desktop build (2.0.x, D-drive) is the current
+        deployment and is always probed alongside. User `.dsh` state is never
+        read.
         """
         src = source_dir(self.project)
         installed = src.is_dir() and (src / ".git").exists()
@@ -390,7 +392,7 @@ class DeepSeekHarnessAdapter:
         }
 
     def get_logs(self, session_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
-        """读取 DSH 会话日志（dsh-home/sessions 下，只读元数据）。"""
+        """读取项目隔离 runtime 的元数据；绝不访问用户 `.dsh` 会话。"""
         sessions_dir = home_dir(self.project) / "sessions"
         if not sessions_dir.is_dir():
             return []

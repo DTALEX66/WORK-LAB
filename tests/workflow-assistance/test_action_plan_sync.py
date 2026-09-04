@@ -12,6 +12,9 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "integrations/executors/hermes/sync_hermes_workflow_assets.py"
+PROJECT_COPY_IGNORE = shutil.ignore_patterns(
+    ".git", ".hermes", ".project-local", "node_modules", "__pycache__"
+)
 
 
 def load_module():
@@ -26,12 +29,22 @@ def make_isolated_roots(raw: str) -> tuple[Path, Path]:
     base = Path(raw)
     repo = base / "repo"
     home = base / "hermes-home"
-    shutil.copytree(ROOT, repo, ignore=shutil.ignore_patterns(".hermes", "__pycache__"))
+    shutil.copytree(ROOT, repo, ignore=PROJECT_COPY_IGNORE)
     home.mkdir()
     return repo, home
 
 
 class ActionPlanSyncTests(unittest.TestCase):
+    def test_isolated_copy_excludes_ephemeral_project_data(self) -> None:
+        ignored = PROJECT_COPY_IGNORE(
+            str(ROOT), [".git", ".hermes", ".project-local", "node_modules", "source.py"]
+        )
+        self.assertIn(".git", ignored)
+        self.assertIn(".hermes", ignored)
+        self.assertIn(".project-local", ignored)
+        self.assertIn("node_modules", ignored)
+        self.assertNotIn("source.py", ignored)
+
     def test_sync_builds_exact_plan_without_writing_home(self) -> None:
         module = load_module()
         with tempfile.TemporaryDirectory() as raw:
