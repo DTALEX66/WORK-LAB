@@ -13,7 +13,9 @@ def test_adversarial_null_not_zero():
 def test_adversarial_observer_write_rejected():
     """observer_store.append must raise (read-only contract) — source-level check."""
     from pathlib import Path
-    src_file = Path(r'D:\All projects\WORK-LAB\apps\observer\src\observer_store.py')
+    # T11: derive path relative to repo root, never a machine-fixed absolute path
+    repo_root = Path(__file__).resolve().parents[2]
+    src_file = repo_root / "apps" / "observer" / "src" / "observer_store.py"
     src = src_file.read_text(encoding='utf-8')
     assert 'ObserverInputError' in src and 'raise' in src
     # must contain no INSERT/UPDATE/DELETE business writes

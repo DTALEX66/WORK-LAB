@@ -29,7 +29,9 @@ class CanonicalStoreTests(unittest.TestCase):
             self.assertIn(table, projection["tables"])
 
     def test_project_registration_and_readback(self) -> None:
-        self.store.register_project("work-lab", r"D:\All projects\WORK-LAB")
+        # T11: use a tmp workspace root, never a machine-fixed path
+        with tempfile.TemporaryDirectory() as tmp:
+            self.store.register_project("work-lab", tmp)
         projects = self.store.list_projects()
         self.assertEqual(len(projects), 1)
         self.assertEqual(projects[0]["project_id"], "work-lab")

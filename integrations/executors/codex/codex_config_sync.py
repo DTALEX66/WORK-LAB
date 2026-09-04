@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 CODEX_CONFIG = Path.home() / ".codex" / "config.toml"
-PROFILE = Path(__file__).resolve().parents[3] / "integrations" / "executors" / "codex".json"
+PROFILE = Path(__file__).resolve().parents[3] / "config" / "user-environment-profile.json"
 
 
 def load_profile() -> dict:
