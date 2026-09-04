@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Verify observer is read-only
-        run: "python scripts/ci/verify_observer_readonly.py || echo 'STUB pending'"
+        run: "python scripts/ci/verify_observer_readonly.py"
 
   capsule-verify:
     name: capsule-cli
@@ -47,7 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Verify capsule CLI works
-        run: "python packages/client-neutral-core/scripts/capsule.py verify --capsule packages/contracts/schemas/workflow/context-capsule.schema.json || true"
+        run: "python packages/client-neutral-core/scripts/capsule.py verify --capsule packages/contracts/schemas/workflow/context-capsule.schema.json"
 
   config-compiler:
     name: config-compiler
