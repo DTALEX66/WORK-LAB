@@ -52,8 +52,9 @@ def get_token_usage():
         "models": [{"model": m[0], "inputTokens": m[1], "outputTokens": m[2], "calls": m[3],
                      "costUsd": round(m[4], 2) if m[4] else None} for m in models],
         "totals": {
-            "inputTokens": totals[0] or 0, "outputTokens": totals[1] or 0,
-            "sessions": totals[2] or 0, "costUsd": round(totals[3], 2) if totals[3] else None,
+            # R4/T30: no SUM row -> None stays None (UNKNOWN), never fabricated 0
+            "inputTokens": totals[0], "outputTokens": totals[1],
+            "sessions": totals[2], "costUsd": round(totals[3], 2) if totals[3] else None,
         },
     }
 
@@ -81,11 +82,14 @@ def get_dagu_runs():
 
 # ── Agents ────────────────────────────────────────────────────────
 def get_agents():
+    # R4/T30: no Home scan, no fabricated versions or LIVE state. Observer must
+    # not read user Home; agent runtime liveness is UNKNOWN until a real
+    # projection source exists (truth-first: unknown stays UNKNOWN).
     return [
-        {"id": "hermes", "name": "Hermes", "status": "active" if (Path.home() / ".hermes").exists() else "inactive"},
-        {"id": "codex", "name": "Codex", "status": "active" if (Path.home() / ".codex").exists() else "inactive"},
-        {"id": "dsh", "name": "DSH Desktop 2.0.2", "status": "active" if (Path.home() / ".dsh").exists() else "inactive"},
-        {"id": "dagu", "name": "Dagu 2.15.3", "status": "active" if DAGU_HOME.exists() else "inactive"},
+        {"id": "hermes", "name": "Hermes", "status": "UNKNOWN", "version": None},
+        {"id": "codex", "name": "Codex", "status": "UNKNOWN", "version": None},
+        {"id": "dsh", "name": "DSH Desktop", "status": "UNKNOWN", "version": None},
+        {"id": "dagu", "name": "Dagu", "status": "UNKNOWN", "version": None},
     ]
 
 
