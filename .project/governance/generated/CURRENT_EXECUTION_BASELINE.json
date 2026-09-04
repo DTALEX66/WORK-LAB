@@ -1,31 +1,24 @@
 {
-  "schemaVersion": "workflow/current-execution-baseline/v1",
-  "generatedAt": "2026-08-20T23:59:00Z",
+  "schemaVersion": "workflow/current-execution-baseline/v2",
+  "generatedAt": "2026-09-05T00:00:00Z",
   "repository": "DTALEX66/WORK-LAB",
-  "branch": "main",
+  "branch": "r4-recovery-exec",
   "head": {
-    "sha": "0da75536f9e0c329fd4881af33b5fa2c091fdcc4",
-    "tree": "36947bdf1b0e110bd301224d37927fedea6e82e5"
+    "sha": "bf52df0",
+    "tree": "pending-refresh"
   },
-  "remoteMain": "0da75536f9e0c329fd4881af33b5fa2c091fdcc4",
-  "remoteMatch": true,
-  "dirty": 0,
-  "worktrees": [
-    "D:/All projects/WORK-LAB [main]"
-  ],
-  "taskpackAuditedSha": "eafccadb1d7b9eea45a1df4d51369530bdbcc766",
-  "driftSinceAudit": {
-    "commits": 7,
-    "note": "session-history archive + handoffs + codex work pushed after audit"
+  "currentTaskpack": "WORK-LAB-DR-R4-20260904",
+  "supersedes": {
+    "R3-repair-pack-2026-09-04": "SUPERSEDED_BY_R4",
+    "R3-daily-execution-2026-09-04": "SUPERSEDED_BY_R4",
+    "handoff-2026-09-03": "SUPERSEDED_BY_R4"
   },
-  "ci": {
-    "status": "FAILED",
-    "note": "recent runs 0da7553/da4d3f6/7730738 all failure - aggregate gate not green",
-    "verifiedExactSha": false
+  "pr123": {
+    "state": "DO_NOT_MERGE",
+    "reason": "directory migration has deterministic syntax errors / lock failures / incomplete test coverage (R4 audit); recovery in progress on r4-recovery-exec",
+    "head": "c6b7e8f6468281325d26524e3762607c6fa7a4ce"
   },
-  "runtime": {
-    "workersObserved": 4,
-    "observerWritesForbidden": true
-  },
-  "status": "IN_PROGRESS_WLR_000"
+  "sourceManifest": ".project-local/artifacts/task-artifacts/r4/history-source-manifest.json",
+  "taskpackPath": ".project-local/artifacts/task-artifacts/r4/taskpack-r4.md",
+  "status": "IN_PROGRESS_R4"
 }
