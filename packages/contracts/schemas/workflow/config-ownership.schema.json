@@ -57,7 +57,11 @@
           "mode": {"enum": ["MANAGE", "OBSERVE", "IGNORE", "FORBIDDEN"]},
           "adapter": {"type": "string", "minLength": 1},
           "scope": {"type": "string", "minLength": 1},
-          "apply_supported": {"type": "boolean"}
+          "apply_supported": {"type": "boolean"},
+          "merge": {"enum": ["overlay", "replace", "append", "map-merge"]},
+          "safety": {"enum": ["normal", "high", "critical"]},
+          "secret": {"type": "boolean"},
+          "compatibility": {"enum": ["compatible", "degraded", "breaking"]}
         }
       }
     },
