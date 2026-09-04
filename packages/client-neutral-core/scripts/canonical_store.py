@@ -1045,6 +1045,13 @@ class CanonicalStore:
 
     def close(self) -> None:
         with self._lock:
+            # R4/T11: WAL mode must checkpoint(TRUNCATE) before close so -wal/-shm
+            # files merge and release; otherwise tmp db dir cannot be removed
+            # (WinError 5 on Windows) and hermetic tests leak tmp dirs.
+            try:
+                self._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            except Exception:
+                pass
             self._conn.close()
 
 
