@@ -1,0 +1,81 @@
+{
+ "schema_version": "workflow/skills-inventory/v1",
+ "generatedAt": "2026-09-04T16:49:43Z",
+ "count": 14,
+ "sourceDigest": "54cfe81c9012c4c977b5b939eda1fbd5d2216132697de0ce5e220cddaf334bdb",
+ "sources": [
+  "integrations\\executors\\codex\\skills"
+ ],
+ "skills": [
+  {
+   "name": "workflow-assistance-evidence-verification",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-evidence-verification\\SKILL.md",
+   "sha256": "6ad71bf12d36f472a3e539551568e34c6dc77b592523c3f092871b1eccd05636"
+  },
+  {
+   "name": "workflow-assistance-github-delivery",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-github-delivery\\SKILL.md",
+   "sha256": "98842751c9a045bd79e088b6073cdb2a905ee490d05182f5d25631c8413b806d"
+  },
+  {
+   "name": "workflow-assistance-observer-delivery",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-observer-delivery\\SKILL.md",
+   "sha256": "dff7674c358ec2ab0e0d97baff2556c3cb21ecf2ab724a20d354fb839a5772fb"
+  },
+  {
+   "name": "workflow-assistance-open-design-integration",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-open-design-integration\\SKILL.md",
+   "sha256": "e4dc8d495b53e298a497430eb198729203e8ba74de1ecdfe377ebd78ed12df20"
+  },
+  {
+   "name": "workflow-assistance-openhuman-integration",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-openhuman-integration\\SKILL.md",
+   "sha256": "c2b4ebfebc736b1a89a4443f6a39e8786c7c1946536a17bea4827deeec5bfc40"
+  },
+  {
+   "name": "workflow-assistance-project-data-boundary",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-project-data-boundary\\SKILL.md",
+   "sha256": "12221c2b4c66dff77fc965858e26cd344a926a378455af3677029ba66f2ce658"
+  },
+  {
+   "name": "workflow-assistance-python-testing",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-python-testing\\SKILL.md",
+   "sha256": "7c47fb10b95c26e3f9fbecbabdcc1db9f3d80142bc246b6929bec116b4e4daec"
+  },
+  {
+   "name": "workflow-assistance-safe-project-execution",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-safe-project-execution\\SKILL.md",
+   "sha256": "5faae15df19eabac8149b7892a7dfa3cdb105ea6d234f5436eace702d58f19fd"
+  },
+  {
+   "name": "workflow-assistance-self-improvement",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-self-improvement\\SKILL.md",
+   "sha256": "140da74588895f4e48bf1efa1b5f44bda313f47349af97e096f68a15a24f29ba"
+  },
+  {
+   "name": "workflow-assistance-single-writer-delivery",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-single-writer-delivery\\SKILL.md",
+   "sha256": "08de65f6031a21e44302a40bce536cbc9a3fff77b97fa5368e88ae5632fdbf01"
+  },
+  {
+   "name": "workflow-assistance-systematic-debugging",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-systematic-debugging\\SKILL.md",
+   "sha256": "3f12eda62833713a52a11eff9c1e69896882e1eb0374f008b2d56841ef171255"
+  },
+  {
+   "name": "workflow-assistance-update-safety",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-update-safety\\SKILL.md",
+   "sha256": "1c35407178ff7f0bfc2b649fa6cb646e20ec25f027e4d7d19a1451937f37dbab"
+  },
+  {
+   "name": "workflow-assistance-verification-hardening",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-verification-hardening\\SKILL.md",
+   "sha256": "44830285f80ee9b772868e8df3a7c7a933514b2fdd77ecee2d7281c655a1b641"
+  },
+  {
+   "name": "workflow-assistance-windows-development",
+   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-windows-development\\SKILL.md",
+   "sha256": "20bebff6aa7e3fd674ad7b73826c76cd68791a8100100d3c2cb0a9be721eb5e2"
+  }
+ ]
+}
