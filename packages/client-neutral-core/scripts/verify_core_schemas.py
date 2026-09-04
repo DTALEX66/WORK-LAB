@@ -98,7 +98,11 @@ EXPECTED = {
         },
     ),
 }
-FORBIDDEN_KEYS = {"api_key", "apikey", "authorization", "password", "secret", "token", "provider", "model"}
+# Forbidden keys = keys that would STORE credential values. `secret` is exempt:
+# in FieldRule schemas it is a boolean declaration ("is this field secret"),
+# not a credential value. provider/model are kept to flag real provider keys;
+# schemas describe provider/model via *_class/*_lifecycle names, not bare keys.
+FORBIDDEN_KEYS = {"api_key", "apikey", "authorization", "password", "token", "provider", "model"}
 
 
 def _walk_keys(value: object) -> set[str]:
