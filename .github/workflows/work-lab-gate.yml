@@ -119,6 +119,8 @@ jobs:
         run: npm ci
       - name: Build frontend
         run: npm run build
+      - name: Typecheck frontend
+        run: npm run typecheck
       - name: Test locked Rust desktop crate
         working-directory: apps/token-monitor/src-tauri
         run: cargo test --locked
