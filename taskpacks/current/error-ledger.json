@@ -2427,5 +2427,43 @@
   }
  ],
  "wlrReconciled": true,
- "note": "WLR-030: lifecycle added; historical status_after=PASS does not imply current tree passes."
+ "note": "WLR-030: lifecycle added; historical status_after=PASS does not imply current tree passes.",
+ "entries": [
+  {
+   "id": "EL-20260905-01",
+   "date": "2026-09-05",
+   "domain": "r4-execution",
+   "category": "migration-path",
+   "error": "R4 fixes on migration structure cannot cherry-pick to main (old layout) - repo/home & file paths diverge; recovery branch is the correct base",
+   "resolution": "kept R4 fixes on r4-recovery-exec as PR#123 recovery base; documented in R4-HANDOFF",
+   "prevention": "verify target tree layout before cherry-picking across migration boundary"
+  },
+  {
+   "id": "EL-20260905-02",
+   "date": "2026-09-05",
+   "domain": "test-env",
+   "category": "environment",
+   "error": "workspace-write sandbox intercepts sqlite3 file ops (unable to open db) + TMP override to repo caused home/repo overlap failures",
+   "resolution": "run tests under danger-full-access with default TEMP; removed TMP override",
+   "prevention": "do not set TMP inside repo for sqlite tests; full-access needed"
+  },
+  {
+   "id": "EL-20260905-03",
+   "date": "2026-09-05",
+   "domain": "schema",
+   "category": "false-positive",
+   "error": "FieldRule secret boolean metadata flagged as forbidden credential key by verify_core_schemas",
+   "resolution": "exempted boolean secret declaration from FORBIDDEN_KEYS",
+   "prevention": "metadata booleans are declarations, not values"
+  },
+  {
+   "id": "EL-20260905-04",
+   "date": "2026-09-05",
+   "domain": "git",
+   "category": "tracked-artifact",
+   "error": "tsbuildinfo tracked in git; canonical_store WAL leak locked tmp dirs (WinError 5)",
+   "resolution": "untracked tsbuildinfo + gitignore; WAL checkpoint(TRUNCATE) in close()",
+   "prevention": "build caches stay untracked; WAL mode closes with checkpoint"
+  }
+ ]
 }
