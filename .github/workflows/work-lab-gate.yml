@@ -119,8 +119,6 @@ jobs:
         run: npm ci
       - name: Build frontend
         run: npm run build
-      - name: Typecheck frontend
-        run: npm run typecheck
       - name: Test locked Rust desktop crate
         working-directory: apps/token-monitor/src-tauri
         run: cargo test --locked
@@ -156,6 +154,12 @@ jobs:
         run: |
           node tests/run_all_tests.js
           for file in web/scripts/*.js; do node --check "$file"; done
+      - name: Typecheck observer frontend (React/TS production chain)
+        working-directory: apps/observer/frontend
+        run: |
+          npm ci
+          npm run typecheck
+          npm run build
 
   supply-chain-security:
     name: supply-chain-security
