@@ -18,9 +18,20 @@ spec.loader.exec_module(module)
 
 
 class MachineIdentityTests(unittest.TestCase):
+    def setUp(self) -> None:
+        # track every temp project so tearDown removes it (mkdtemp never
+        # self-cleans; 50+ leaked dirs were found under .hermes/task-runtime)
+        self._tmp_projects: list[Path] = []
+
+    def tearDown(self) -> None:
+        import shutil
+        for p in self._tmp_projects:
+            shutil.rmtree(p, ignore_errors=True)
+
     def make_project(self) -> Path:
         raw = tempfile.mkdtemp(dir=ROOT / ".hermes" / "task-runtime")
         project = Path(raw)
+        self._tmp_projects.append(project)
         (project / ".git").mkdir()
         (project / ".hermes" / "task-runtime").mkdir(parents=True)
         profile = project / module.PROFILE_RELATIVE
@@ -79,6 +90,7 @@ class MachineIdentityTests(unittest.TestCase):
 
     def test_non_project_directory_is_rejected_before_status_or_write(self) -> None:
         outside = Path(tempfile.mkdtemp(dir=ROOT / ".hermes" / "task-runtime"))
+        self._tmp_projects.append(outside)
         with self.assertRaises(ValueError):
             module.status(outside)
         with self.assertRaises(ValueError):
