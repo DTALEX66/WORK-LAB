@@ -62,22 +62,50 @@ def approve_intent(args):
     print(f"OK: intent {cap['intentId']} approved")
 
 def apply_intent(args):
-    """Apply an approved intent (stub — real apply needs adapter)."""
+    """Apply an approved intent.
+
+    NF-04: without a reviewed adapter apply_fn there is no native write
+    surface, so apply must NOT report success. The old stub set
+    status=applied unconditionally — a fabricated success (audit A02).
+    The real transaction path is services/policy/config_control_plane.py
+    `transaction(approved=True, apply_fn=..., readback_fn=...)`, which
+    requires an adapter-supplied apply function.
+    """
     cap = json.loads(Path(args.intent).read_text(encoding="utf-8"))
     if cap["status"] != "approved":
         print(f"FAIL: status is {cap['status']}, expected approved"); sys.exit(1)
-    cap["status"] = "applied"
-    cap["applied_at"] = datetime.utcnow().isoformat() + "Z"
-    Path(args.intent).write_text(json.dumps(cap, indent=2), encoding="utf-8")
-    print(f"OK: intent {cap['intentId']} applied at {cap['applied_at']}")
+    print(
+        f"UNSUPPORTED_APPLY: intent {cap['intentId']} has no adapter apply_fn. "
+        "Use services/policy/config_control_plane.py transaction() with a "
+        "reviewed adapter apply_fn + readback_fn; this CLI cannot fabricate "
+        "an applied state."
+    )
+    sys.exit(3)
 
 def readback_intent(args):
-    """Readback current state after apply."""
+    """Readback current state after apply.
+
+    NF-04: reports the intent file's own status honestly. This is NOT a
+    native config readback — it cannot verify the target software; use the
+    control-plane transaction readback_fn for that.
+    """
     cap = json.loads(Path(args.intent).read_text(encoding="utf-8"))
+    status = cap["status"]
+    if status == "applied":
+        # legacy intents written by the retired stub apply carry a fabricated
+        # status; surface that instead of echoing success
+        print(json.dumps({
+            "intentId": cap["intentId"],
+            "client": cap["client"],
+            "status": "APPLIED_UNVERIFIED_LEGACY",
+            "note": "status=applied was written by the retired stub apply without any native readback; treat as unverified",
+            "diff_count": len(cap.get("plan", {}).get("diff", [])),
+        }, indent=2))
+        return
     print(json.dumps({
         "intentId": cap["intentId"],
         "client": cap["client"],
-        "status": cap["status"],
+        "status": status,
         "applied_at": cap.get("applied_at"),
         "diff_count": len(cap.get("plan", {}).get("diff", [])),
     }, indent=2))

@@ -103,21 +103,32 @@ class ConfigControlPlane:
     # --- WLR-330: real config transaction (Discover -> Effective -> Diff -> Backup
     # -> Approval -> Apply -> Readback -> Commit or Rollback) ---
     def transaction(self, software_id: str, diff: dict[str, Any], *, approved: bool = False,
-                    backup_dir: str | None = None, apply_fn=None, readback_fn=None) -> dict[str, Any]:
+                    backup_dir: str | None = None, apply_fn=None, readback_fn=None,
+                    idempotency_key: str | None = None) -> dict[str, Any]:
         """A true transaction: every stage has a digest, idempotency key and a
         recovery point. APPLIED is only produced when native readback matches.
         Unapproved never writes live.
 
+        - idempotency_key: caller-supplied stable operation identity
+          (NF-04/A03: the key must NOT embed wall-clock time — replaying the
+          same operation must yield the same key). When omitted, a stable
+          digest of (software_id, diff) is derived; callers add their own
+          nonce only when they intentionally need a fresh operation.
         - backup: effective config snapshot persisted (backup ref)
         - apply:  apply_fn(effective_after) if approved (else WAITING_APPROVAL)
         - readback: readback_fn() must equal the applied effective config
         - mismatch -> rollback to backup; match -> COMMITTED with receipt
         """
-        import hashlib, json, time
+        import hashlib, json
         from pathlib import Path
 
         effective_before = self.effective(software_id)
-        idem = hashlib.sha256((software_id + json.dumps(diff, sort_keys=True) + str(time.time())).encode()).hexdigest()[:16]
+        if idempotency_key is not None:
+            idem = hashlib.sha256(idempotency_key.encode()).hexdigest()[:16]
+        else:
+            idem = hashlib.sha256(
+                (software_id + json.dumps(diff, sort_keys=True)).encode()
+            ).hexdigest()[:16]
         if not approved:
             return {"status": "WAITING_APPROVAL", "idempotencyKey": idem, "changeCount": diff.get("changeCount", 0)}
 
