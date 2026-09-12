@@ -14,6 +14,16 @@ from pathlib import Path
 SCHEMA_VERSION = "work-lab/context-capsule/v1"
 REDACTED_PATTERNS = ["api_key", "token", "password", "secret", "cookie", "private_key", "prompt_body", "response_body"]
 
+def capsule_field(cap, name):
+    """Read a capsule field accepting the canonical snake_case name, with
+    legacy camelCase fallback (WL-DIR-110 schema_version unification)."""
+    if name in cap:
+        return cap[name]
+    legacy = "".join(word.capitalize() if i else word for i, word in enumerate(name.split("_")))
+    if legacy in cap:
+        return cap[legacy]
+    return None
+
 def sha256_of(obj):
     return hashlib.sha256(json.dumps(obj, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
@@ -24,7 +34,7 @@ def cmd_export(args):
         print(f"ERROR: {src} not found", file=sys.stderr); sys.exit(1)
     body = src.read_text(encoding="utf-8")
     capsule = {
-        "schemaVersion": SCHEMA_VERSION,
+        "schema_version": SCHEMA_VERSION,
         "capsuleId": f"capsule-{src.stem}",
         "source": {
             "client": args.client,
@@ -42,8 +52,9 @@ def cmd_export(args):
 def cmd_verify(args):
     """Verify capsule integrity."""
     cap = json.loads(Path(args.capsule).read_text(encoding="utf-8"))
-    if cap.get("schemaVersion") != SCHEMA_VERSION:
-        print("FAIL: schema version mismatch"); sys.exit(1)
+    version = capsule_field(cap, "schema_version")
+    if version != SCHEMA_VERSION:
+        print(f"FAIL: schema version mismatch: {version!r} != {SCHEMA_VERSION!r}"); sys.exit(1)
     body = cap["content"]["body"]
     actual = sha256_of(body if isinstance(body, str) else json.dumps(body, sort_keys=True))
     expected = cap["integrity"]["contentHash"]
@@ -55,10 +66,22 @@ def cmd_redact(args):
     """Redact sensitive fields from capsule content."""
     cap = json.loads(Path(args.capsule).read_text(encoding="utf-8"))
     body = cap["content"]["body"]
-    if isinstance(body, dict):
+    if isinstance(body, str):
+        # string bodies carry inline key=value pairs or bearer tokens; mask them
+        import re as _re
+        for pattern in REDACTED_PATTERNS:
+            body = _re.sub(
+                _re.compile(rf"(?i)([\"']?{pattern}[\"']?\s*[:=]\s*)([^,;\s\"'\}}]+)"),
+                lambda m: m.group(1) + "[REDACTED]",
+                body,
+            )
+        cap["content"]["body"] = body
+    elif isinstance(body, dict):
         for k in list(body.keys()):
             if any(p in k.lower() for p in REDACTED_PATTERNS):
                 body[k] = "[REDACTED]"
+    else:
+        print("FAIL: capsule content.body has unsupported type for redaction"); sys.exit(1)
     cap["integrity"]["contentHash"] = sha256_of(body if isinstance(body, str) else json.dumps(body, sort_keys=True))
     cap["metadata"]["redacted"] = True
     Path(args.output).write_text(json.dumps(cap, indent=2), encoding="utf-8")

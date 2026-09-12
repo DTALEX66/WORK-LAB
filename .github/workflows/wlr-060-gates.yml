@@ -46,8 +46,40 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Verify capsule CLI works
-        run: "python packages/client-neutral-core/scripts/capsule.py verify --capsule packages/contracts/schemas/workflow/context-capsule.schema.json"
+      - name: Verify capsule CLI behavior (export/verify/redact + negative controls)
+        env:
+          CAPSULE_TMP: ${{ runner.temp }}/capsule-cli
+        run: |
+          mkdir -p "$CAPSULE_TMP"
+          echo 'sample handoff content with api_key=SYNTHETIC_NOT_REAL' > "$CAPSULE_TMP/source.txt"
+          # positive: export -> verify -> redact round-trip on a synthetic fixture
+          python packages/client-neutral-core/scripts/capsule.py export \
+            --client hermes --input "$CAPSULE_TMP/source.txt" --output "$CAPSULE_TMP/capsule.json"
+          python packages/client-neutral-core/scripts/capsule.py verify --capsule "$CAPSULE_TMP/capsule.json"
+          python packages/client-neutral-core/scripts/capsule.py redact \
+            --capsule "$CAPSULE_TMP/capsule.json" --output "$CAPSULE_TMP/redacted.json"
+          # negative control 1: corrupted body hash must fail closed
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path(pathlib.os.environ["CAPSULE_TMP"]) / "capsule.json"
+          cap = json.loads(p.read_text())
+          cap["content"]["body"] += "tampered"
+          (pathlib.Path(pathlib.os.environ["CAPSULE_TMP"]) / "bad-hash.json").write_text(json.dumps(cap))
+          PY
+          if python packages/client-neutral-core/scripts/capsule.py verify --capsule "$CAPSULE_TMP/bad-hash.json"; then
+            echo "NEGATIVE CONTROL FAILED: tampered capsule must not verify"; exit 1
+          fi
+          # negative control 2: wrong schema_version must fail closed
+          python - <<'PY'
+          import json, pathlib, os
+          cap = json.loads((pathlib.Path(os.environ["CAPSULE_TMP"]) / "capsule.json").read_text())
+          cap["schema_version"] = "work-lab/context-capsule/v999"
+          (pathlib.Path(os.environ["CAPSULE_TMP"]) / "bad-version.json").write_text(json.dumps(cap))
+          PY
+          if python packages/client-neutral-core/scripts/capsule.py verify --capsule "$CAPSULE_TMP/bad-version.json"; then
+            echo "NEGATIVE CONTROL FAILED: wrong schema_version must not verify"; exit 1
+          fi
+          echo "CAPSULE_CLI_BEHAVIOR_PASS"
 
   config-compiler:
     name: config-compiler
