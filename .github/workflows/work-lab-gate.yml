@@ -99,6 +99,8 @@ jobs:
           python tests/workflow-assistance/test_beads_poc.py
           # WL-190/200/210 memory plane: 9-op provider contract + bakeoff + session/memory/knowledge boundary
           python tests/workflow-assistance/test_memory_provider.py
+          # WL-300/310/320 security plane: extension registry + 7-stage skillspector gate + snyk 2nd opinion
+          python tests/workflow-assistance/test_security.py
           python scripts/ci/generate_current_state.py --check-current
           python tests/ci/test_stage3_baseline.py
           python services/orchestration/run_quality_gate.py adapter-registry
