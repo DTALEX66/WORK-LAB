@@ -226,5 +226,109 @@ class HermesProviderTests(unittest.TestCase):
             self.assertFalse(p.health()["ok"])
 
 
+class SessionIndexTests(unittest.TestCase):
+    """WL-P0-050 unified session history index."""
+
+    def _index(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "test_session_federation.index", SERVICES / "index.py"
+        )
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def test_index_and_search_roundtrip(self) -> None:
+        canonical = _load("canonical.py", "test_session_federation.canonical")
+        index_mod = self._index()
+        with tempfile.TemporaryDirectory() as td:
+            idx = index_mod.SessionIndex(Path(td) / "index.sqlite")
+            s1 = canonical.CanonicalSession(
+                universal_session_id="us-1",
+                workspace_id="w",
+                project_id="work-lab",
+                source_agent="hermes",
+                source_session_id="h-1",
+                source_format="hermes-jsonl",
+                messages=({"role": "user", "text": "build the pipeline"},),
+                decisions=({"decision": "use SQLite", "why": "portable"},),
+                todos=({"text": "add tests", "state": "open"},),
+                changed_files=("pipeline.py",),
+                metadata={"model": "agnes"},
+                started_at="2026-09-01T00:00:00Z",
+                portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            )
+            s2 = canonical.CanonicalSession(
+                universal_session_id="us-2",
+                workspace_id="w",
+                project_id="work-lab",
+                source_agent="codex",
+                source_session_id="c-1",
+                source_format="codex-json",
+                changed_files=("pipeline.py", "tests.py"),
+                metadata={"model": "gpt"},
+                started_at="2026-09-02T00:00:00Z",
+                portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            )
+            self.assertEqual(idx.index_session(s1)["status"], "INDEXED")
+            self.assertEqual(idx.index_session(s2)["status"], "INDEXED")
+
+            # FTS search
+            results = idx.search("pipeline")
+            self.assertGreaterEqual(len(results), 2)
+            self.assertTrue(all("pipeline" in r["changed_files"] or "pipeline" in r["semantic_summary"] for r in results))
+
+            # structured filter by agent
+            hermes_only = idx.list_sessions(agent="hermes")
+            self.assertEqual(len(hermes_only), 1)
+            self.assertEqual(hermes_only[0]["universal_session_id"], "us-1")
+
+            # date + model filter
+            model_hit = idx.list_sessions(model="agnes")
+            self.assertEqual(len(model_hit), 1)
+            self.assertEqual(model_hit[0]["source_agent"], "hermes")
+            ranged = idx.list_sessions(since="2026-09-02T00:00:00Z", until="2026-09-02T23:59:59Z")
+            self.assertEqual(len(ranged), 1)
+            self.assertEqual(ranged[0]["universal_session_id"], "us-2")
+
+            # idempotent re-index
+            before = idx.health()["sessions"]
+            idx.index_session(s1)
+            self.assertEqual(idx.health()["sessions"], before)
+
+            # health
+            health = idx.health()
+            self.assertTrue(health["ok"])
+            self.assertEqual(health["sessions"], 2)
+            self.assertEqual(health["schema_version"], index_mod.INDEX_SCHEMA_VERSION)
+            idx.close()
+
+    def test_decision_and_error_keyword_search(self) -> None:
+        canonical = _load("canonical.py", "test_session_federation.canonical")
+        index_mod = self._index()
+        with tempfile.TemporaryDirectory() as td:
+            idx = index_mod.SessionIndex(Path(td) / "index.sqlite")
+            s = canonical.CanonicalSession(
+                universal_session_id="us-3",
+                workspace_id="w",
+                project_id="work-lab",
+                source_agent="dsh",
+                source_session_id="d-1",
+                source_format="dsh-jsonl",
+                decisions=({"decision": "rollback migration", "why": "CI failed"},),
+                events=({"type": "error", "text": "schema drift"},),
+                portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            )
+            idx.index_session(s)
+            hits = idx.search("rollback")
+            self.assertEqual(len(hits), 1)
+            self.assertEqual(hits[0]["source_agent"], "dsh")
+            # decision keyword shows up in semantic summary
+            self.assertIn("rollback migration", hits[0]["semantic_summary"])
+            idx.close()
+
+
 if __name__ == "__main__":
     unittest.main()
