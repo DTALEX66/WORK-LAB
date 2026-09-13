@@ -13,7 +13,7 @@ Record schema (one JSON line):
     universal_session_id      — source session
     target_universal_session_id — target session (if created)
     source_agent / target_agent
-    portability_level         — L1_HANDOFF | L2_PARTIAL
+    portability_level         — L1_HANDOFF | L2_EVENT_REPLAY
     loss_report               — per-channel retention (LossReport dict)
     dropped_channels          — explicit list of channels with reduced retention
     capsule_sha256            — integrity hash of the handoff capsule written

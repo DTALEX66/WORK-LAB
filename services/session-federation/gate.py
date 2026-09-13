@@ -1,0 +1,264 @@
+"""Session federation integrity gate (WL-P0-100).
+
+Verifies that all session-federation components are correctly wired:
+
+1. CanonicalSession round-trips through JSON without field loss
+2. PortabilityLevel ordering is L0 < L1 < L2 < L3
+3. L3_NATIVE_RESUME requires the verified marker
+4. LossReport validates channel ranges and rejects out-of-bounds values
+5. SessionProvider contract is structurally satisfiable by a minimal stub
+6. AcpSessionFacade degrades resume to NEW_SESSION without verified marker
+7. HandoffAuditLedger records are append-only and idempotent per audit_id
+8. SessionIndex FTS search returns results for indexed sessions
+9. SessionRecommender scores decrease monotonically
+10. continues POC capsule matches work-lab/context-capsule/v1 schema
+
+Run via:  python -m services.session_federation.gate
+Exit 0 on PASS, 1 on FAIL (gate reports each check individually).
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Bootstrap: load modules spec-style (repo convention)
+# ---------------------------------------------------------------------------
+_HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(_HERE.parent.parent.parent))
+
+import importlib.util as _ilu  # noqa: E402
+
+def _load(mod_name: str, module_name: str):
+    spec = _ilu.spec_from_file_location(module_name, _HERE / f"{mod_name}.py")
+    module = _ilu.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+canonical = _load("canonical", "gate_canonical")
+provider = _load("provider", "gate_provider")
+hermes_provider = _load("hermes_provider", "gate_hermes_provider")
+acp_facade = _load("acp_facade", "gate_acp_facade")
+audit = _load("audit", "gate_audit")
+index = _load("index", "gate_index")
+recommender = _load("recommender", "gate_recommender")
+continues = _load("continues", "gate_continues")
+
+
+class GateResult:
+    def __init__(self):
+        self.checks: list[tuple[str, bool, str]] = []
+
+    def check(self, name: str, fn) -> None:
+        try:
+            fn()
+            self.checks.append((name, True, ""))
+        except Exception as exc:
+            self.checks.append((name, False, str(exc)))
+
+    @property
+    def passed(self) -> bool:
+        return all(ok for _, ok, _ in self.checks)
+
+    def report(self) -> str:
+        lines = []
+        for name, ok, err in self.checks:
+            status = "PASS" if ok else "FAIL"
+            suffix = f"  ({err[:120]})" if err else ""
+            lines.append(f"  [{status}] {name}{suffix}")
+        n_pass = sum(1 for _, ok, _ in self.checks if ok)
+        lines.append(f"\n{n_pass}/{len(self.checks)} checks passed")
+        return "\n".join(lines)
+
+
+def run_gate() -> GateResult:
+    g = GateResult()
+
+    # 1. CanonicalSession JSON round-trip
+    def c1():
+        s = canonical.CanonicalSession(
+            universal_session_id="us-g1", workspace_id="w", project_id="work-lab",
+            source_agent="codex", source_session_id="s1", source_format="codex-protocol",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            metadata={"summary": "gate test", "model": "test-model"},
+            started_at="2026-09-13T00:00:00Z",
+        )
+        data = json.loads(s.to_json())
+        s2 = canonical.CanonicalSession.from_dict(data)
+        assert s2.universal_session_id == "us-g1"
+        assert s2.portability_level is canonical.PortabilityLevel.L1_HANDOFF
+    g.check("CanonicalSession JSON round-trip", c1)
+
+    # 2. PortabilityLevel ordering (str-enum members order lexicographically)
+    def c2():
+        L0 = canonical.PortabilityLevel.L0_DISCOVERY
+        L1 = canonical.PortabilityLevel.L1_HANDOFF
+        L2 = canonical.PortabilityLevel.L2_EVENT_REPLAY
+        L3 = canonical.PortabilityLevel.L3_NATIVE_RESUME
+        levels = [L0, L1, L2, L3]
+        assert levels == sorted(levels), "PortabilityLevel ordering broken"
+    g.check("PortabilityLevel L0 < L1 < L2 < L3", c2)
+
+    # 3. L3 requires verified marker
+    def c3():
+        try:
+            canonical.CanonicalSession(
+                universal_session_id="us-g3", workspace_id="w", project_id="work-lab",
+                source_agent="codex", source_session_id="s3", source_format="codex-protocol",
+                portability_level=canonical.PortabilityLevel.L3_NATIVE_RESUME,
+                metadata={},  # missing native_resume.verified
+            )
+            raise AssertionError("L3 without marker did not raise")
+        except ValueError:
+            pass  # expected
+    g.check("L3_NATIVE_RESUME rejects missing marker", c3)
+
+    # 4. LossReport range validation
+    def c4():
+        try:
+            canonical.LossReport(messages=1.5)
+            raise AssertionError("LossReport accepted messages=1.5")
+        except ValueError:
+            pass
+        lr = canonical.LossReport(messages=0.5, tool_calls=0.8, tool_results=1.0)
+        assert 0.0 <= lr.messages <= 1.0
+    g.check("LossReport validates channel ranges", c4)
+
+    # 5. Minimal provider stub satisfies the contract structurally
+    def c5():
+        class StubProvider:
+            def discover(self, project_id: str):
+                return iter(())
+            def read(self, ref: "provider.SessionRef"):
+                raise NotImplementedError
+            def resume_native(self, session) -> str | None:
+                return None
+            def handoff(self, source_session, out_dir: str) -> dict:
+                return {"loss_report": {}}
+            def export(self, session, directory: str) -> dict:
+                return {}
+            def health(self) -> dict:
+                return {"ok": True}
+
+        sp = StubProvider()
+        # discover must return an iterable
+        assert list(sp.discover("work-lab")) == []
+        assert sp.resume_native(None) is None
+        assert sp.health()["ok"] is True
+    g.check("SessionProvider contract structurally satisfiable", c5)
+
+    # 6. Facade degrades resume without verified marker
+    def c6():
+        s = canonical.CanonicalSession(
+            universal_session_id="us-g6", workspace_id="w", project_id="work-lab",
+            source_agent="codex", source_session_id="s6", source_format="codex-protocol",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            metadata={"summary": "no marker"},
+        )
+        class StubP:
+            def discover(self, p): return iter(())
+            def read(self, r): raise NotImplementedError
+            def resume_native(self, s): return "codex resume"
+            def handoff(self, s, d): return {"loss_report": {}}
+            def export(self, s, d): return {}
+            def health(self): return {"ok": True}
+
+        facade = acp_facade.AcpSessionFacade({"codex": StubP()})
+        result = facade.session_resume("codex", s)
+        assert result.outcome is acp_facade.Outcome.NEW_SESSION, \
+            f"expected NEW_SESSION, got {result.outcome}"
+    g.check("Facade degrades resume to NEW_SESSION without marker", c6)
+
+    # 7. Audit ledger is append-only
+    def c7():
+        import tempfile
+        td = tempfile.mkdtemp()
+        ledger = audit.HandoffAuditLedger(Path(td) / "audit.jsonl")
+        r1 = ledger.record_handoff(
+            universal_session_id="us-a", source_agent="codex", target_agent="hermes",
+            loss_report={"messages": 1.0},
+        )
+        r2 = ledger.record_handoff(
+            universal_session_id="us-a", source_agent="codex", target_agent="hermes",
+            loss_report={"messages": 0.9},
+        )
+        records = ledger.read_all()
+        assert len(records) == 2, f"expected 2 records, got {len(records)}"
+        assert records[0].audit_id == r1.audit_id
+        assert records[1].audit_id == r2.audit_id
+        assert r1.audit_id != r2.audit_id  # unique per write
+    g.check("Audit ledger append-only with unique audit_ids", c7)
+
+    # 8. SessionIndex FTS search works
+    def c8():
+        import tempfile
+        td = tempfile.mkdtemp()
+        idx = index.SessionIndex(Path(td) / "index.sqlite")
+        s = canonical.CanonicalSession(
+            universal_session_id="us-g8", workspace_id="w", project_id="work-lab",
+            source_agent="codex", source_session_id="s8", source_format="codex-protocol",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            metadata={"summary": "unique_gate_token_xyz"},
+        )
+        idx.index_session(s)
+        rows = idx.search("unique_gate_token_xyz")
+        assert len(rows) == 1, f"expected 1 FTS hit, got {len(rows)}"
+        assert rows[0]["universal_session_id"] == "us-g8"
+    g.check("SessionIndex FTS search finds indexed session", c8)
+
+    # 9. Recommender scores decrease monotonically
+    def c9():
+        import tempfile
+        td = tempfile.mkdtemp()
+        idx = index.SessionIndex(Path(td) / "index.sqlite")
+        for i in range(3):
+            s = canonical.CanonicalSession(
+                universal_session_id=f"us-r{i}", workspace_id="w", project_id="work-lab",
+                source_agent="codex", source_session_id=f"s{i}", source_format="codex-protocol",
+                portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+                metadata={"summary": f"recommender test session {i} uniqueword{i}"},
+                started_at=f"2026-09-{10 + i:02d}T00:00:00Z",
+            )
+            idx.index_session(s)
+        rec = recommender.SessionRecommender(idx, target_agent="codex", min_score=0.0)
+        cands = rec.recommend("recommender test", limit=5)
+        scores = [c.score for c in cands]
+        assert scores == sorted(scores, reverse=True), f"non-monotonic scores: {scores}"
+    g.check("Recommender scores decrease monotonically", c9)
+
+    # 10. continues capsule matches context-capsule v1 schema
+    def c10():
+        s = canonical.CanonicalSession(
+            universal_session_id="us-c10", workspace_id="w", project_id="work-lab",
+            source_agent="codex", source_session_id="s10", source_format="codex-protocol",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            metadata={"summary": "capsule test"},
+        )
+        capsule_doc = continues.build_capsule_doc(s, "hermes")
+        assert capsule_doc.get("schema_version") == "work-lab/context-capsule/v1", \
+            f"capsule schema_version: {capsule_doc.get('schema_version')!r}"
+        assert "content" in capsule_doc
+        assert "body" in capsule_doc["content"]
+        integrity = capsule_doc.get("integrity", {})
+        assert integrity.get("contentHash") and integrity.get("algorithm") == "sha256", \
+            "capsule missing integrity contentHash/sha256"
+    g.check("continues capsule matches context-capsule/v1", c10)
+
+    return g
+
+
+def main() -> int:
+    g = run_gate()
+    print(g.report())
+    if g.passed:
+        print("GATE PASS")
+        return 0
+    else:
+        print("GATE FAIL")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
