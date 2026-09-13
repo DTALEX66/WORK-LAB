@@ -17,6 +17,13 @@ sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 
 
+def _runtime_root() -> Path:
+    """WL-010: project-local runtime root (git-ignored), auto-created."""
+    p = ROOT / ".project-local" / "runs"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
 class MachineIdentityTests(unittest.TestCase):
     def setUp(self) -> None:
         # track every temp project so tearDown removes it (mkdtemp never
@@ -29,7 +36,7 @@ class MachineIdentityTests(unittest.TestCase):
             shutil.rmtree(p, ignore_errors=True)
 
     def make_project(self) -> Path:
-        raw = tempfile.mkdtemp(dir=ROOT / ".hermes" / "task-runtime")
+        raw = tempfile.mkdtemp(dir=_runtime_root())
         project = Path(raw)
         self._tmp_projects.append(project)
         (project / ".git").mkdir()
@@ -89,7 +96,7 @@ class MachineIdentityTests(unittest.TestCase):
             module.status(project, Path("..") / "outside.json")
 
     def test_non_project_directory_is_rejected_before_status_or_write(self) -> None:
-        outside = Path(tempfile.mkdtemp(dir=ROOT / ".hermes" / "task-runtime"))
+        outside = Path(tempfile.mkdtemp(dir=_runtime_root()))
         self._tmp_projects.append(outside)
         with self.assertRaises(ValueError):
             module.status(outside)
