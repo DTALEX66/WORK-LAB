@@ -101,6 +101,8 @@ jobs:
           python tests/workflow-assistance/test_memory_provider.py
           # WL-300/310/320 security plane: extension registry + 7-stage skillspector gate + snyk 2nd opinion
           python tests/workflow-assistance/test_security.py
+          # WL-330/340/350/360 evolution plane: penguin provider + ch29 independent gate + M1-M5 policy + exo sandbox
+          python tests/workflow-assistance/test_evolution.py
           python scripts/ci/generate_current_state.py --check-current
           python tests/ci/test_stage3_baseline.py
           python services/orchestration/run_quality_gate.py adapter-registry
