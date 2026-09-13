@@ -330,5 +330,88 @@ class SessionIndexTests(unittest.TestCase):
             idx.close()
 
 
+class ContinuesPocTests(unittest.TestCase):
+    """WL-P0-040 cross-agent continues POC."""
+
+    def _load_continues(self):
+        # canonical must be pre-loaded so the L3 enum identity check in
+        # _recommendation compares against the same enum class the test built
+        _load("canonical.py", "test_session_federation.canonical")
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "test_session_federation.continues", SERVICES / "continues.py"
+        )
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def _sample_session(self, canonical):
+        return canonical.CanonicalSession(
+            universal_session_id="us-c",
+            workspace_id="w",
+            project_id="work-lab",
+            source_agent="codex",
+            source_session_id="cx-1",
+            source_format="codex-json",
+            messages=({"role": "user", "text": "build"}, {"role": "assistant", "text": "ok"}),
+            decisions=({"decision": "x", "why": "y"},),
+            todos=({"text": "t", "state": "open"},),
+            changed_files=("a.py",),
+            events=({"type": "tool_call", "data": "run tests"},),
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            metadata={"model": "gpt"},
+        )
+
+    def test_capsule_matches_context_capsule_v1_schema(self) -> None:
+        canonical = _load("canonical.py", "test_session_federation.canonical")
+        k = self._load_continues()
+        doc = k.build_capsule_doc(self._sample_session(canonical), "hermes")
+        self.assertEqual(doc["schema_version"], "work-lab/context-capsule/v1")
+        self.assertEqual(doc["content"]["type"], "handoff")
+        self.assertEqual(doc["integrity"]["algorithm"], "sha256")
+        import re as _re
+        self.assertRegex(doc["integrity"]["contentHash"], r"^[a-f0-9]{64}$")
+
+    def test_continues_report_recommends_adopt_for_full_retention(self) -> None:
+        canonical = _load("canonical.py", "test_session_federation.canonical")
+        k = self._load_continues()
+        with tempfile.TemporaryDirectory() as td:
+            report = k.run_continues(self._sample_session(canonical), "hermes", td)
+            self.assertEqual(report["recommendation"], "ADOPT")
+            self.assertEqual(report["retention"]["message_retention"], 1.0)
+            self.assertTrue(Path(report["report_path"]).is_file())
+            self.assertTrue(Path(report["capsule_path"]).is_file())
+
+    def test_pairs_cover_the_six_mandatory_transitions(self) -> None:
+        k = self._load_continues()
+        self.assertEqual(k.CONTINUES_PAIRS, (
+            ("codex", "hermes"),
+            ("hermes", "codex"),
+            ("codex", "dsh"),
+            ("dsh", "codex"),
+            ("claude", "codex"),
+            ("opencode", "codex"),
+        ))
+
+    def test_l3_session_recommends_absorb(self) -> None:
+        canonical = _load("canonical.py", "test_session_federation.canonical")
+        k = self._load_continues()
+        s = canonical.CanonicalSession(
+            universal_session_id="us-l3",
+            workspace_id="w",
+            project_id="work-lab",
+            source_agent="hermes",
+            source_session_id="h-l3",
+            source_format="hermes-jsonl",
+            portability_level=canonical.PortabilityLevel.L3_NATIVE_RESUME,
+            metadata={"native_resume": {"verified": True}},
+        )
+        metric = k.retention_metric(s, target_agent="hermes")
+        self.assertEqual(metric.resume_usability, "native-resume")
+        self.assertEqual(k._recommendation(metric, s), "ABSORB")
+
+
 if __name__ == "__main__":
     unittest.main()
