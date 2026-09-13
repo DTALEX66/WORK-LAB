@@ -107,6 +107,8 @@ jobs:
           python tests/workflow-assistance/test_radar.py
           # WL-400/410/420/430 cleanup plane: repo-slimming audit + spill governance + ch40 archive + G01-G14 final audit
           python tests/workflow-assistance/test_cleanup.py
+          # WL-P1-290 knowledge promotion gate: ch 37 ArcheAxis allow/forbid whitelist
+          python tests/workflow-assistance/test_knowledge.py
           python scripts/ci/generate_current_state.py --check-current
           python tests/ci/test_stage3_baseline.py
           python services/orchestration/run_quality_gate.py adapter-registry
