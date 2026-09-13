@@ -25,10 +25,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import threading
-import time
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,11 +34,28 @@ from typing import Any, Mapping
 
 AUDIT_SCHEMA_VERSION = 1
 
+# Process-wide monotonic sequence. The audit ledger's replay contract
+# (build_provenance_chain picks the earliest hop by min(audit_id)) requires
+# audit_id to be strictly ordered by write time within a process. A random
+# uuid suffix would break that ordering on same-microsecond writes, so the
+# trailing segment is a zero-padded monotonic counter instead.
+_AUDIT_SEQ = 0
+_AUDIT_SEQ_LOCK = threading.Lock()
+
 
 def _audit_id() -> str:
-    """Monotonic, sortable audit id: 20-digit UTC timestamp + 8 hex chars."""
+    """Monotonic, sortable audit id: 20-digit UTC timestamp + 8-digit seq.
+
+    The timestamp gives wall-clock ordering across runs; the per-process
+    sequence guarantees write-order ordering within a run (including the
+    same-microsecond case a random suffix would scramble).
+    """
+    global _AUDIT_SEQ
+    with _AUDIT_SEQ_LOCK:
+        _AUDIT_SEQ += 1
+        seq = _AUDIT_SEQ
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
-    return f"{ts}-{uuid.uuid4().hex[:8]}"
+    return f"{ts}-{seq:08d}"
 
 
 @dataclass(frozen=True)
