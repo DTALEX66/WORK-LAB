@@ -634,6 +634,106 @@ class RecommenderTests(unittest.TestCase):
         self.assertEqual(cands, [])
 
 
+class CodexProviderTests(unittest.TestCase):
+    """WL-P0-070 (Codex session reader) — read-only discovery + L1 normalisation."""
+
+    def _load_codex(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "test_session_federation.codex", SERVICES / "codex_provider.py"
+        )
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def _make_rollout(self, root: Path, content: str) -> Path:
+        """Lay out a minimal ~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl tree."""
+        day = root / "sessions" / "2026" / "09" / "13"
+        day.mkdir(parents=True, exist_ok=True)
+        f = day / "rollout-2026-09-13T02-58-28-abcdef00-1111-2222-3333-444455556666.jsonl"
+        f.write_text(content, encoding="utf-8")
+        return f
+
+    def test_discover_and_read_roundtrip(self):
+        import json as _json
+        import tempfile
+        c = self._load_codex()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            rollout = "\n".join([
+                _json.dumps({"timestamp": "2026-09-13T02:58:28Z", "ordinal": 0, "type": "session_meta",
+                             "payload": {"session_id": "abcdef00", "cwd": "D:/All projects/WORK-LAB",
+                                        "model_provider": "test-prov",
+                                        "git": {"commit": "deadbeef"}}}),
+                _json.dumps({"timestamp": "2026-09-13T02:58:30Z", "ordinal": 1, "type": "turn_context",
+                             "payload": {"cwd": "D:/All projects/WORK-LAB", "model": "gpt-x"}}),
+                _json.dumps({"timestamp": "2026-09-13T02:58:31Z", "ordinal": 2, "type": "response_item",
+                             "payload": {"type": "message", "role": "user",
+                                         "content": [{"type": "input_text", "text": "fix the gate"}]}}),
+                _json.dumps({"timestamp": "2026-09-13T02:58:32Z", "ordinal": 3, "type": "response_item",
+                             "payload": {"type": "custom_tool_call", "name": "apply_patch",
+                                         "call_id": "c1", "input": {"path": "gate.py"}}}),
+                _json.dumps({"timestamp": "2026-09-13T02:58:33Z", "ordinal": 4, "type": "response_item",
+                             "payload": {"type": "custom_tool_call_output", "call_id": "c1", "output": "ok"}}),
+                _json.dumps({"timestamp": "2026-09-13T02:58:34Z", "ordinal": 5, "type": "token_usage_record",
+                             "payload": {"usage": {"total_tokens": 42}}}),
+            ])
+            self._make_rollout(root, rollout)
+
+            prov = c.CodexSessionProvider(home=str(root))
+            refs = list(prov.discover("work-lab"))
+            self.assertEqual(len(refs), 1)
+            self.assertEqual(refs[0].source_agent, "codex")
+            self.assertEqual(refs[0].source_session_id, "abcdef00")
+            self.assertEqual(refs[0].started_at, "2026-09-13T02:58:28")
+            # discover no longer infers a model name from the provider
+            self.assertIsNone(refs[0].model)
+
+            sess = prov.read(refs[0])
+            self.assertEqual(sess.universal_session_id, "codex:abcdef00")
+            self.assertEqual(sess.source_agent, "codex")
+            self.assertEqual(sess.source_format, "codex-rollout-jsonl")
+            self.assertEqual(len(sess.messages), 1)
+            self.assertEqual(sess.messages[0]["role"], "user")
+            self.assertEqual(sess.git_commit, "deadbeef")
+            self.assertEqual(sess.metadata.get("model"), "gpt-x")
+            self.assertEqual(sess.metadata.get("usage_total_tokens"), 42)
+            self.assertEqual(sess.changed_files, ("gate.py",))
+            # events: 1 tool_call + 1 tool_result + event_msg sub-types if any
+            self.assertGreaterEqual(len(sess.events), 2)
+            self.assertEqual(sess.portability_level.name, "L1_HANDOFF")
+
+    def test_missing_store_degrades_not_fails(self):
+        import tempfile
+        c = self._load_codex()
+        with tempfile.TemporaryDirectory() as td:
+            prov = c.CodexSessionProvider(home=str(Path(td) / "nowhere"))
+            self.assertEqual(list(prov.discover("x")), [])
+            health = prov.health()
+            self.assertFalse(health["ok"])
+            self.assertIn("sessions dir missing", health["notes"])
+
+    def test_read_only_source_never_mutated(self):
+        import json as _json
+        import tempfile
+        c = self._load_codex()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            content = _json.dumps({"timestamp": "2026-09-13T02:58:28Z", "ordinal": 0,
+                                   "type": "session_meta",
+                                   "payload": {"session_id": "s9", "cwd": "x"}}) + "\n"
+            self._make_rollout(root, content)
+            prov = c.CodexSessionProvider(home=str(root))
+            refs = list(prov.discover("x"))
+            self.assertEqual(len(refs), 1)
+            sess = prov.read(refs[0])
+            self.assertEqual(sess.source_session_id, "s9")
+            # source file must be byte-identical after read
+            self.assertEqual(refs[0].native_path and open(refs[0].native_path, encoding="utf-8").read(), content)
+
+
 class HandoffAuditTests(unittest.TestCase):
     """WL-P0-080 handoff audit ledger."""
 
