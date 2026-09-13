@@ -522,5 +522,117 @@ class AcpFacadeTests(unittest.TestCase):
         self.assertEqual(r2.outcome, facade_mod.Outcome.UNAVAILABLE)
 
 
+class RecommenderTests(unittest.TestCase):
+    """WL-P0-070 session recommendation engine."""
+
+    def _load_recommender(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "test_session_federation.recommender", SERVICES / "recommender.py"
+        )
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def _index_with_sessions(self):
+        import importlib.util
+        import tempfile
+        import os
+
+        spec = importlib.util.spec_from_file_location(
+            "test_session_federation.index", SERVICES / "index.py"
+        )
+        idx_mod = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = idx_mod
+        spec.loader.exec_module(idx_mod)
+
+        # Use a plain temp dir (not TemporaryDirectory) to avoid Windows
+        # file-lock issues with SQLite at context-manager exit.
+        td = tempfile.mkdtemp()
+        idx = idx_mod.SessionIndex(Path(td) / "index.sqlite")
+
+        spec2 = importlib.util.spec_from_file_location("test_session_federation.canonical2", SERVICES / "canonical.py")
+        canonical = importlib.util.module_from_spec(spec2)
+        sys.modules["test_session_federation.canonical2"] = canonical
+        spec2.loader.exec_module(canonical)
+
+        def session(sid, agent, summary, files, started, port, loss, extra_meta=None):
+            meta = {"summary": summary, "changed_files": list(files), "loss_report": loss}
+            if extra_meta:
+                meta.update(extra_meta)
+            return canonical.CanonicalSession(
+                universal_session_id=sid, workspace_id="w", project_id="work-lab",
+                source_agent=agent, source_session_id=sid, source_format=agent + "-protocol",
+                portability_level=port,
+                metadata=meta,
+                started_at=started,
+            )
+
+        loss_full = {}
+        loss_partial = {"dropped_channels": ["raw_context"]}
+        sessions = [
+            session("us-a", "codex", "pipeline refactor", ("pipeline.py",), "2026-09-01T00:00:00Z",
+                    canonical.PortabilityLevel.L1_HANDOFF, loss_full),
+            session("us-b", "hermes", "ci gate fix", ("ci.yml",), "2026-09-10T00:00:00Z",
+                    canonical.PortabilityLevel.L1_HANDOFF, loss_partial),
+            session("us-c", "codex", "pipeline test", ("pipeline.py", "tests.py"), "2026-09-11T00:00:00Z",
+                    canonical.PortabilityLevel.L3_NATIVE_RESUME, {},
+                    extra_meta={"native_resume": {"verified": True}}),
+        ]
+        for s in sessions:
+            idx.index_session(s)
+        return idx
+
+    def test_recommend_returns_scored_candidates(self):
+        import importlib.util
+        idx = self._index_with_sessions()
+        rec_mod = self._load_recommender()
+        rec = rec_mod.SessionRecommender(idx, target_agent="codex", half_life_hours=24.0, min_score=0.0)
+        cands = rec.recommend("pipeline", limit=5)
+        self.assertGreater(len(cands), 0)
+        top = cands[0]
+        self.assertEqual(top.source_agent, "codex")
+        self.assertIn("semantic_match", top.score_breakdown)
+        self.assertIn("agent_fit", top.score_breakdown)
+        # scores must be monotonically decreasing
+        scores = [c.score for c in cands]
+        self.assertEqual(scores, sorted(scores, reverse=True))
+
+    def test_same_agent_scores_higher(self):
+        import importlib.util
+        idx = self._index_with_sessions()
+        rec_mod = self._load_recommender()
+        rec_c = rec_mod.SessionRecommender(idx, target_agent="codex", min_score=0.0)
+        rec_h = rec_mod.SessionRecommender(idx, target_agent="hermes", min_score=0.0)
+        cands_c = {c.universal_session_id: c for c in rec_c.recommend("pipeline", limit=5)}
+        cands_h = {c.universal_session_id: c for c in rec_h.recommend("pipeline", limit=5)}
+        # codex candidate should rank at least as high under codex target
+        if "us-a" in cands_c and "us-a" in cands_h:
+            self.assertGreaterEqual(cands_c["us-a"].score, cands_h["us-a"].score)
+
+    def test_recommendation_report_schema(self):
+        idx = self._index_with_sessions()
+        rec_mod = self._load_recommender()
+        rec = rec_mod.SessionRecommender(idx, target_agent="codex", min_score=0.0)
+        cands = rec.recommend("pipeline", limit=3)
+        report = rec_mod.build_recommendation_report("pipeline", cands, target_agent="codex", project_id="work-lab")
+        self.assertEqual(report["schema"], "work-lab/session-recommendations/v1")
+        self.assertEqual(report["project_id"], "work-lab")
+        self.assertIn("recommended", report)
+        self.assertIsInstance(report["candidates"], list)
+        if cands:
+            self.assertEqual(report["recommended"], cands[0].universal_session_id)
+
+    def test_no_match_returns_empty(self):
+        idx = self._index_with_sessions()
+        rec_mod = self._load_recommender()
+        rec = rec_mod.SessionRecommender(idx, target_agent="codex", min_score=0.0)
+        # FTS query with no hits → empty list
+        cands = rec.recommend("zzz_nonexistent_token_xyz", limit=5)
+        self.assertEqual(cands, [])
+
+
 if __name__ == "__main__":
     unittest.main()

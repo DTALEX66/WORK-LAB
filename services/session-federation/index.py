@@ -116,6 +116,10 @@ class SessionIndex:
             digest = data.get("content_digest", "")
         # model is carried in metadata per canonical v1 (no dedicated column)
         data["model"] = data.get("model") or (data.get("metadata") or {}).get("model")
+        # semantic_summary: index.py expects a top-level key; canonical stores it in metadata
+        meta = data.get("metadata") or {}
+        if not data.get("semantic_summary"):
+            data["semantic_summary"] = meta.get("summary", "") or meta.get("semantic_summary", "")
         conn = self._conn()
         changed_files = json.dumps(data.get("changed_files", []), ensure_ascii=False)
         semantic = data.get("semantic_summary") or _default_summary(data)
