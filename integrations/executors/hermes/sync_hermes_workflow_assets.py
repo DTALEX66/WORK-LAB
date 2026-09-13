@@ -148,8 +148,13 @@ def default_hermes_home() -> Path:
 
 def validate_deployment_paths(repo: Path, home: Path, *, allow_project_runtime_home: bool = False) -> None:
     """Reject overlapping source and deployment roots before any backup or write."""
-    runtime_root = repo / ".hermes" / "task-runtime"
-    if allow_project_runtime_home and home.is_relative_to(runtime_root):
+    # WL-010/020/030: support both legacy (.hermes/task-runtime) and
+    # migrated (.project-local/runs) project-runtime home locations.
+    runtime_roots = [
+        repo / ".hermes" / "task-runtime",
+        repo / ".project-local" / "runs",
+    ]
+    if allow_project_runtime_home and any(home.is_relative_to(rr) for rr in runtime_roots):
         return
     try:
         overlaps = repo == home or repo.is_relative_to(home) or home.is_relative_to(repo)

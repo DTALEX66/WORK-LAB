@@ -1416,7 +1416,11 @@ class WorkflowGovernanceTests(unittest.TestCase):
                     check=False,
                 )
                 self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
-                self.assertIn("task-runtime", check.stdout)
+                # Guard picks .project-local when git-ignored, else .hermes (legacy)
+                self.assertTrue(
+                    "task-runtime" in check.stdout or "runs" in check.stdout,
+                    f"guard check output should name the selected runtime root: {check.stdout}",
+                )
 
     def test_manifest_requires_nonempty_exact_sha_workflow_contract(self) -> None:
         manifest = yaml.safe_load((ROOT / "packages/client-neutral-core/workflow-manifest.yaml").read_text(encoding="utf-8"))
