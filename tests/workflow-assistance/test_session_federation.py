@@ -734,6 +734,113 @@ class CodexProviderTests(unittest.TestCase):
             self.assertEqual(refs[0].native_path and open(refs[0].native_path, encoding="utf-8").read(), content)
 
 
+class DshProviderTests(unittest.TestCase):
+    """WL-P0-080 (DSH session reader) — read-only projcache discovery + L1 handoff."""
+
+    def _load_dsh(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "test_session_federation.dsh", SERVICES / "dsh_provider.py"
+        )
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def _cell(self, val):
+        """Wrap a value in the projcache row cell shape {ver, seq, val}."""
+        return {"ver": 1, "seq": 100, "val": val}
+
+    def _make_projcache(self, root: Path, cwd: str) -> Path:
+        """Lay out a minimal ~/.dsh/storages/session_projcache/sessions/<uuid>.json."""
+        d = root / "storages" / "session_projcache" / "sessions"
+        d.mkdir(parents=True, exist_ok=True)
+        doc = {
+            "version": 5,
+            "record": {
+                "identity": {"createdAt": 1789312345138, "cwd": cwd, "isSeeded": False},
+                "rows": {
+                    "turnOutline": self._cell({"turns": [
+                        {"turn": 1, "seq": 6, "prompt": "fix the gate",
+                         "response": "done, here is the report"}], "draft": ""}),
+                    "todos": self._cell([
+                        {"content": "step a", "status": "completed"},
+                        {"content": "step b", "status": "in_progress"}]),
+                    "modelSelection": self._cell({"lastUsed": {
+                        "provider": "deepseek-official", "model": "deepseek-v4-flash",
+                        "reasoningEffort": "high"}, "pending": None}),
+                    "sessionListMetadata": self._cell({"blank": False, "lastPromptAt": 1789312999000}),
+                    "tokenUsage": self._cell({"totals": {"outputTokens": 100, "cacheReadTokens": 5}}),
+                    "permissions": self._cell({"preset": "read-only", "approval": "ask"}),
+                },
+            },
+        }
+        f = d / "abc-0001.json"
+        f.write_text(json.dumps(doc), encoding="utf-8")
+        return f
+
+    def test_discover_filters_by_project(self):
+        import tempfile
+        d = self._load_dsh()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._make_projcache(root, "D:/All projects/DESIGN-LAB")
+            prov = d.DshSessionProvider(home=str(root))
+            self.assertEqual(len(list(prov.discover("design-lab"))), 1)
+            # a different project must NOT match this session's cwd
+            self.assertEqual(len(list(prov.discover("work-lab"))), 0)
+
+    def test_read_normalises_to_l1(self):
+        import tempfile
+        d = self._load_dsh()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._make_projcache(root, "D:/All projects/DESIGN-LAB")
+            prov = d.DshSessionProvider(home=str(root))
+            ref = list(prov.discover("design-lab"))[0]
+            sess = prov.read(ref)
+            self.assertEqual(sess.source_agent, "dsh")
+            self.assertEqual(sess.universal_session_id, "dsh:abc-0001")
+            self.assertEqual(sess.source_format, "dsh-projcache")
+            # two outline turns -> user + assistant messages
+            self.assertEqual(len(sess.messages), 2)
+            self.assertEqual(sess.messages[0]["role"], "user")
+            self.assertEqual(sess.messages[1]["role"], "assistant")
+            self.assertEqual(len(sess.todos), 2)
+            self.assertEqual(sess.metadata.get("model"), "deepseek-v4-flash")
+            self.assertEqual(sess.metadata.get("model_provider"), "deepseek-official")
+            self.assertEqual(sess.metadata.get("reasoning_effort"), "high")
+            self.assertEqual(sess.metadata.get("token_usage_totals"), {"outputTokens": 100, "cacheReadTokens": 5})
+            self.assertEqual(sess.portability_level.name, "L1_HANDOFF")
+            # honest loss accounting: tool channels unavailable in projection
+            self.assertEqual(sess.metadata["loss_report"]["tool_calls"], 0.0)
+            self.assertFalse(sess.metadata["loss_report"]["native_state_available"])
+            self.assertIn("zstd_transcript", sess.metadata["loss_report"]["notes"])
+
+    def test_missing_store_degrades(self):
+        import tempfile
+        d = self._load_dsh()
+        with tempfile.TemporaryDirectory() as td:
+            prov = d.DshSessionProvider(home=str(Path(td) / "nowhere"))
+            self.assertEqual(list(prov.discover("x")), [])
+            health = prov.health()
+            self.assertFalse(health["ok"])
+            self.assertEqual(health["session_count"], 0)
+
+    def test_read_only_source_never_mutated(self):
+        import tempfile
+        d = self._load_dsh()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            p = self._make_projcache(root, "D:/All projects/DESIGN-LAB")
+            before = p.read_text(encoding="utf-8")
+            prov = d.DshSessionProvider(home=str(root))
+            ref = list(prov.discover("design-lab"))[0]
+            prov.read(ref)
+            self.assertEqual(p.read_text(encoding="utf-8"), before)
+
+
 class HandoffAuditTests(unittest.TestCase):
     """WL-P0-080 handoff audit ledger."""
 
