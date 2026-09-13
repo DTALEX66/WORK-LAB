@@ -634,5 +634,94 @@ class RecommenderTests(unittest.TestCase):
         self.assertEqual(cands, [])
 
 
+class HandoffAuditTests(unittest.TestCase):
+    """WL-P0-080 handoff audit ledger."""
+
+    def _load_audit(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "test_session_federation.audit", SERVICES / "audit.py"
+        )
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def _ledger_with_records(self):
+        a = self._load_audit()
+        td = tempfile.mkdtemp()
+        ledger = a.HandoffAuditLedger(Path(td) / "handoff-audit.jsonl")
+        # Build a two-hop chain: us-a → us-b → us-c
+        r1 = ledger.record_handoff(
+            universal_session_id="us-a", source_agent="codex", target_agent="hermes",
+            portability_level="L1_HANDOFF",
+            loss_report={"messages": 1.0, "tool_calls": 0.8, "tool_results": 1.0},
+            dropped_channels=("tool_calls",),
+            capsule_bytes=b'{"content":"body"}',
+            capsule_path=str(Path(td) / "capsule1.json"),
+            target_universal_session_id="us-b",
+            notes=("first hop",),
+        )
+        # write a capsule file matching the recorded hash
+        (Path(td) / "capsule1.json").write_bytes(b'{"content":"body"}')
+        r2 = ledger.record_handoff(
+            universal_session_id="us-b", source_agent="hermes", target_agent="codex",
+            portability_level="L1_HANDOFF",
+            loss_report={"messages": 0.9, "tool_calls": 1.0, "tool_results": 1.0},
+            dropped_channels=(),
+            target_universal_session_id="us-c",
+        )
+        self.assertTrue(r1.audit_id)
+        self.assertTrue(r2.audit_id)
+        return a, ledger, r1, r2
+
+    def test_append_and_read(self):
+        a, ledger, r1, r2 = self._ledger_with_records()
+        records = ledger.read_all()
+        self.assertEqual(len(records), 2)
+        self.assertEqual(records[0].audit_id, r1.audit_id)
+        self.assertEqual(records[1].audit_id, r2.audit_id)
+        self.assertEqual(records[0].universal_session_id, "us-a")
+        self.assertEqual(records[0].target_universal_session_id, "us-b")
+
+    def test_capsule_integrity_verify(self):
+        a, ledger, r1, r2 = self._ledger_with_records()
+        result = ledger.verify_capsule_integrity(r1)
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["recorded_sha"], result["actual_sha"])
+        # r2 had no capsule → recorded_sha is None → integrity fail
+        result2 = ledger.verify_capsule_integrity(r2)
+        self.assertFalse(result2["ok"])
+
+    def test_provenance_chain(self):
+        a, ledger, r1, r2 = self._ledger_with_records()
+        chain = ledger.build_provenance_chain("us-a")
+        self.assertEqual(chain["chain_length"], 2)
+        self.assertTrue(chain["complete"])
+        self.assertEqual(chain["outgoing_hops"][0]["universal_session_id"], "us-a")
+        self.assertEqual(chain["outgoing_hops"][1]["universal_session_id"], "us-b")
+
+    def test_read_for_session_includes_incoming(self):
+        a, ledger, r1, r2 = self._ledger_with_records()
+        # us-b is the target of r1 and source of r2
+        records = ledger.read_for_session("us-b")
+        self.assertEqual(len(records), 2)
+        self.assertTrue(any(r.audit_id == r1.audit_id for r in records))
+        self.assertTrue(any(r.audit_id == r2.audit_id for r in records))
+
+    def test_health_clean(self):
+        a, ledger, r1, r2 = self._ledger_with_records()
+        h = ledger.health()
+        self.assertTrue(h["ok"])
+        self.assertEqual(h["total_records"], 2)
+        self.assertEqual(h["malformed_records"], 0)
+
+    def test_audit_id_is_sortable(self):
+        a, ledger, r1, r2 = self._ledger_with_records()
+        # audit_ids embed UTC timestamp — r1 < r2 lexicographically
+        self.assertLess(r1.audit_id, r2.audit_id)
+
+
 if __name__ == "__main__":
     unittest.main()
