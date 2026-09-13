@@ -20,8 +20,8 @@ from typing import Any, Iterable
 import yaml
 
 
-DEFAULT_CI_EVIDENCE = Path(".hermes/task-artifacts/current-state-ci.json")
-DEFAULT_RUNTIME_ATTESTATION = Path(".hermes/task-artifacts/current-state-runtime-attestation.json")
+DEFAULT_CI_EVIDENCE = Path(".project-local/artifacts/current-state-ci.json")
+DEFAULT_RUNTIME_ATTESTATION = Path(".project-local/artifacts/current-state-runtime-attestation.json")
 CANONICAL_FILES = (
     "docs/decisions/PROJECT_POSITIONING.md",
     ".project/governance/projects.json",
@@ -485,10 +485,10 @@ def main(argv: list[str] | None = None) -> int:
     runtime_out = args.runtime_attestation_out
     if runtime_out is not None:
         runtime_out = runtime_out if runtime_out.is_absolute() else root / runtime_out
-        allowed_root = (root / ".hermes" / "task-artifacts").resolve()
+        allowed_root = (root / ".project-local" / "artifacts").resolve()
         runtime_out = runtime_out.resolve()
         if not runtime_out.is_relative_to(allowed_root):
-            raise SystemExit("runtime attestation output must stay under .hermes/task-artifacts")
+            raise SystemExit("runtime attestation output must stay under .project-local/artifacts")
         runtime_out.parent.mkdir(parents=True, exist_ok=True)
         runtime_out.write_text(
             json.dumps(build_runtime_attestation(root, ci_evidence=ci_evidence), ensure_ascii=False, indent=2) + "\n",

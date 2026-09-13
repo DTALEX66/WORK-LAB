@@ -104,12 +104,13 @@ def usable_bash() -> str | None:
 
 
 def project_runtime_environment(root: Path) -> dict[str, str]:
-    runtime = (root / ".hermes" / "task-runtime").resolve()
+    # WL-010/020/030: Runtime Boundary V2 — .project-local/ is the single runtime root
+    runtime = (root / ".project-local" / "runs").resolve()
     paths = {
         "tmp": runtime / "tmp",
         "cache": runtime / "cache",
         "logs": runtime / "logs",
-        "artifacts": root / ".hermes" / "task-artifacts",
+        "artifacts": root / ".project-local" / "artifacts",
         "pip-cache": runtime / "pip-cache",
         "pycache": runtime / "pycache",
     }
@@ -136,7 +137,7 @@ def project_runtime_environment(root: Path) -> dict[str, str]:
             "HERMES_PROJECT_RUNTIME_ROOT": str(runtime),
             "HERMES_PROJECT_ARTIFACTS": str(paths["artifacts"]),
             "HERMES_PROJECT_LOGS": str(paths["logs"]),
-            "HERMES_KANBAN_HOME": str(root / ".hermes"),
+            "HERMES_KANBAN_HOME": str(root / ".project-local" / "kanban"),
         }
     )
     return env
@@ -331,7 +332,7 @@ def gate_provider_inventory() -> int:
             "--config",
             "config/config.yaml",
             "--output",
-            ".hermes/task-artifacts/provider-health.json",
+            ".project-local/artifacts/provider-health.json",
         ]
     )
 
@@ -341,7 +342,7 @@ def gate_mcp_audit() -> int:
         [
             "packages/client-neutral-core/scripts/mcp_candidate_audit.py",
             "--write-template",
-            ".hermes/task-artifacts/mcp-candidate-template.yaml",
+            ".project-local/artifacts/mcp-candidate-template.yaml",
         ]
     )
 
@@ -547,7 +548,7 @@ def gate_exact_sha_ci() -> int:
     missing evidence; the ordinary local structural check stays PENDING=0.
     """
     required = os.environ.get("WLGM_EXACT_SHA_CI_REQUIRED", "").strip().lower() in ("1", "true", "yes")
-    evidence = ROOT / ".hermes" / "task-artifacts" / "exact-sha-ci.json"
+    evidence = ROOT / ".project-local" / "artifacts" / "exact-sha-ci.json"
     if required:
         if not evidence.is_file():
             print(f"EXACT_SHA_CI_FAIL required=true evidence_missing={evidence}")

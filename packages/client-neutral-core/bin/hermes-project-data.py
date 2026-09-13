@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """Fail-closed project-local runtime-data boundary for agent task commands.
 
+WL-010/020/030: Runtime Boundary V2 — .project-local/ is the single runtime root.
+
 The wrapper scopes standard temporary, cache, log, artifact, pip, and Python
-bytecode paths to ``<git-root>/.hermes/task-runtime``. It intentionally cannot
+bytecode paths to ``<git-root>/.project-local/runs``. It intentionally cannot
 sandbox a command that explicitly writes an arbitrary absolute path; callers
 must use this wrapper and project rules must deny external output paths.
 """
@@ -91,15 +93,15 @@ def require_ignored(project_root: Path, relative_path: Path) -> None:
 
 def prepare_layout(start: Path | str = ".") -> RuntimeLayout:
     project_root = discover_project_root(start)
-    hermes_root = require_contained(project_root, project_root / ".hermes")
-    runtime_root = require_contained(project_root, hermes_root / "task-runtime")
+    project_local_root = require_contained(project_root, project_root / ".project-local")
+    runtime_root = require_contained(project_root, project_local_root / "runs")
     require_ignored(project_root, runtime_root.relative_to(project_root) / ".containment-probe")
     paths = {
         "root": runtime_root,
         "tmp": runtime_root / "tmp",
         "cache": runtime_root / "cache",
         "logs": runtime_root / "logs",
-        "artifacts": runtime_root / "artifacts",
+        "artifacts": project_local_root / "artifacts",
         "pip-cache": runtime_root / "pip-cache",
         "pycache": runtime_root / "pycache",
     }
@@ -124,7 +126,7 @@ def prepare_layout(start: Path | str = ".") -> RuntimeLayout:
         "MYPY_CACHE_DIR": str(paths["cache"] / "mypy"),
         "RUFF_CACHE_DIR": str(paths["cache"] / "ruff"),
         "PRE_COMMIT_HOME": str(paths["cache"] / "pre-commit"),
-        "HERMES_KANBAN_HOME": str(hermes_root),
+        "HERMES_KANBAN_HOME": str(project_local_root / "kanban"),
         "HERMES_PROJECT_RUNTIME_ROOT": str(paths["root"]),
         "HERMES_PROJECT_ARTIFACTS": str(paths["artifacts"]),
         "HERMES_PROJECT_LOGS": str(paths["logs"]),
@@ -134,26 +136,26 @@ def prepare_layout(start: Path | str = ".") -> RuntimeLayout:
 
 def write_task_data_policy(layout: RuntimeLayout) -> Path:
     """Write an ignored, project-local policy without touching source files."""
-    policy_path = layout.project_root / ".hermes" / "TASK_DATA_POLICY.md"
+    policy_path = layout.project_root / ".project-local" / "TASK_DATA_POLICY.md"
     require_contained(layout.project_root, policy_path)
     policy_path.write_text(
-        """# Project-local task data policy
+        """# Project-local task data policy (WL-010/020/030)
 
-All task-scoped state belongs under this repository's `.hermes/` directory.
+All task-scoped state belongs under this repository's `.project-local/` directory.
 
 ## Required locations
 
-- queues and durable task state: `.hermes/tasks/` or `.hermes/sleep-mode/`
-- plans and handoffs: `.hermes/plans/` and `.hermes/handoffs/`
-- temporary command data: `.hermes/task-runtime/`
-- durable verification evidence: `.hermes/task-artifacts/` or `.hermes/evidence/`
-- Hermes project board: `.hermes/kanban/` (run through `hermes-project-data.py kanban`)
+- queues and durable task state: `.project-local/tasks/` or `.project-local/sleep-mode/`
+- plans and handoffs: `.project-local/plans/` and `.project-local/handoffs/`
+- temporary command data: `.project-local/runs/`
+- durable verification evidence: `.project-local/artifacts/` or `.project-local/evidence/`
+- Hermes project board: `.project-local/kanban/` (run through `hermes-project-data.py kanban`)
 
 ## Required launcher
 
 Use `hermes-project-data.py --project . run -- <command>` for commands that can
 write caches, logs, downloads, test output, or artifacts. It redirects temporary
-and common tool caches to `.hermes/task-runtime/` and pins `HERMES_KANBAN_HOME`
+and common tool caches to `.project-local/runs/` and pins `HERMES_KANBAN_HOME`
 to this project.
 
 ## Prohibited locations
@@ -165,7 +167,7 @@ global session database, and scheduler configuration remain global platform stat
 
 ## Cleanup
 
-Remove confirmed regenerable files from `.hermes/task-runtime/`; retain only
+Remove confirmed regenerable files from `.project-local/runs/`; retain only
 durable handoffs, task records, and evidence required for audit or recovery.
 """,
         encoding="utf-8",
@@ -202,7 +204,7 @@ def prepare_command(
         return [prepared[0], str(script), *prepared[3:]]
     raise ProjectDataBoundaryError(
         "Windows command line exceeds safe limit; use the tool's response file/input-file option "
-        "or place the payload under .hermes/task-runtime/"
+        "or place the payload under .project-local/runs/"
     )
 
 
@@ -250,7 +252,7 @@ def run_kanban_command(layout: RuntimeLayout, command: Sequence[str]) -> subproc
 def cleanup_runtime(layout: RuntimeLayout, *, include_caches: bool = False) -> dict[str, int]:
     """Remove only confirmed-regenerable project-local runtime data.
 
-    Durable handoffs and verification evidence belong in ``.hermes/task-artifacts``
+    Durable handoffs and verification evidence belong in ``.project-local/artifacts``
     and are intentionally outside this cleanup scope. By default dependency caches
     stay available for the next task; callers may explicitly include them.
     """
@@ -267,7 +269,7 @@ def cleanup_runtime(layout: RuntimeLayout, *, include_caches: bool = False) -> d
 
 
 def cleanup_runtime_path(layout: RuntimeLayout, relative_path: str) -> dict[str, object]:
-    """Remove one exact path below ``.hermes/task-runtime`` and verify absence.
+    """Remove one exact path below ``.project-local/runs`` and verify absence.
 
     The path is relative by contract so a caller cannot turn an audit cleanup
     into an arbitrary filesystem delete. Permission/lock failures remain
@@ -283,7 +285,7 @@ def cleanup_runtime_path(layout: RuntimeLayout, relative_path: str) -> dict[str,
     target = require_contained(layout.project_root, runtime_root / raw)
     if target == runtime_root or not target.is_relative_to(runtime_root):
         raise ProjectDataBoundaryError(
-            f"cleanup-path requires a relative runtime path below task-runtime: {relative_path!r}"
+            f"cleanup-path requires a relative runtime path below runs: {relative_path!r}"
         )
     if not target.exists():
         return {"target": relative_path, "bytes": 0, "status": "ABSENT"}
@@ -326,15 +328,15 @@ def main() -> int:
     subparsers.choices["cleanup"].add_argument(
         "--all-regenerable",
         action="store_true",
-        help="also remove dependency/tool caches under task-runtime",
+        help="also remove dependency/tool caches under runs",
     )
     cleanup_path_parser = subparsers.add_parser(
         "cleanup-path",
-        help="remove one exact relative path below .hermes/task-runtime",
+        help="remove one exact relative path below .project-local/runs",
     )
     cleanup_path_parser.add_argument(
         "target",
-        help="relative path below task-runtime; absolute and parent paths are rejected",
+        help="relative path below runs; absolute and parent paths are rejected",
     )
     run_parser = subparsers.add_parser("run", help="run a command with local temporary/cache paths")
     run_parser.add_argument("args", nargs=argparse.REMAINDER, help="command to run; prefix with --")
