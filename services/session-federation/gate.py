@@ -14,6 +14,7 @@ Verifies that all session-federation components are correctly wired:
 10. continues POC capsule matches work-lab/context-capsule/v1 schema
 11. AG-UI projection emits a well-formed run (framing + messages + state snapshot/delta)
 12. OTel correlation maps universal_session_id -> gen_ai.conversation.id deterministically
+13. Session Registry (WL-050) enforces single-writer lease and idempotent registration
 
 Run via:  python -m services.session_federation.gate
 Exit 0 on PASS, 1 on FAIL (gate reports each check individually).
@@ -49,6 +50,7 @@ recommender = _load("recommender", "gate_recommender")
 continues = _load("continues", "gate_continues")
 agui = _load("agui_projection", "gate_agui")
 otel = _load("otel_correlation", "gate_otel")
+registry = _load("registry", "gate_registry")
 
 
 class GateResult:
@@ -295,6 +297,41 @@ def run_gate() -> GateResult:
         assert corr.resolve("codex", "s12") == "us-g12"
         assert corr.resolve("pi", "never-seen") == "pi:never-seen"
     g.check("OTel correlation maps universal_session_id deterministically", c12)
+
+    # 13. Session Registry (WL-050): single-writer lease + idempotent registration
+    def c13():
+        import tempfile
+        td = tempfile.mkdtemp()
+        db = Path(td) / "gate-reg.sqlite"
+        ra = registry.Registry(db, writer_id="gate-A", lease_ttl_seconds=60)
+        rb = registry.Registry(db, writer_id="gate-B", lease_ttl_seconds=60)
+        s = canonical.CanonicalSession(
+            universal_session_id="us-g13", workspace_id="w", project_id="work-lab",
+            source_agent="codex", source_session_id="s13", source_format="codex-protocol",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            metadata={"summary": "registry gate"},
+        )
+        # no-lease write fails closed
+        fresh = registry.Registry(Path(td) / "gate-reg2.sqlite", writer_id="gate-X")
+        try:
+            fresh.register(s)
+            raise AssertionError("registry write without a lease did not raise")
+        except registry.LeaseHeldError:
+            pass
+        # A takes the lease; B is refused while A's lease is live
+        ra.acquire_lease()
+        try:
+            rb.acquire_lease()
+            raise AssertionError("second writer acquired a live-held lease")
+        except registry.LeaseHeldError:
+            pass
+        # idempotent registration by universal_session_id
+        assert ra.register(s)["status"] == "REGISTERED"
+        assert ra.register(s)["status"] == "ALREADY_REGISTERED"
+        assert ra.count() == 1
+        assert ra.get("us-g13")["source_agent"] == "codex"
+        assert "work-lab" in ra.known_projects()
+    g.check("Session Registry single-writer lease + idempotent registration", c13)
 
     return g
 

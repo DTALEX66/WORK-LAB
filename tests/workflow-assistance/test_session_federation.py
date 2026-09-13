@@ -1017,6 +1017,70 @@ class AguProjectionTests(unittest.TestCase):
         self.assertEqual(events[0]["type"], "RUN_STARTED")
 
 
+class RegistryTests(unittest.TestCase):
+    """WL-050 SESSION_REGISTRY — write-side authority with single-writer lease."""
+
+    def _load(self, name):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            f"test_session_federation.{name}", SERVICES / name
+        )
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def _session(self, canonical, uid="hermes:s1", digest_summary="demo"):
+        return canonical.CanonicalSession(
+            universal_session_id=uid, workspace_id="w", project_id="work-lab",
+            source_agent="hermes", source_session_id="s1", source_format="hermes-jsonl",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            metadata={"summary": digest_summary},
+        )
+
+    def test_register_requires_lease(self):
+        import tempfile
+        reg = self._load("registry.py")
+        td = tempfile.mkdtemp()
+        r = reg.Registry(Path(td) / "r.sqlite", writer_id="C")
+        canonical = self._load("canonical.py")
+        with self.assertRaises(reg.LeaseHeldError):
+            r.register(self._session(canonical))
+
+    def test_single_writer_and_idempotent(self):
+        import tempfile
+        reg = self._load("registry.py")
+        canonical = self._load("canonical.py")
+        td = tempfile.mkdtemp()
+        db = Path(td) / "reg.sqlite"
+        a = reg.Registry(db, writer_id="A", lease_ttl_seconds=60)
+        b = reg.Registry(db, writer_id="B", lease_ttl_seconds=60)
+        a.acquire_lease()
+        # B is refused while A holds a live lease
+        with self.assertRaises(reg.LeaseHeldError):
+            b.acquire_lease()
+        sess = self._session(canonical)
+        self.assertEqual(a.register(sess)["status"], "REGISTERED")
+        self.assertEqual(a.register(sess)["status"], "ALREADY_REGISTERED")
+        self.assertEqual(a.count(), 1)
+        self.assertEqual(a.known_projects(), ["work-lab"])
+        self.assertEqual(a.get("hermes:s1")["source_agent"], "hermes")
+
+    def test_expired_lease_takes_over(self):
+        import tempfile, time
+        reg = self._load("registry.py")
+        td = tempfile.mkdtemp()
+        db = Path(td) / "e.sqlite"
+        e = reg.Registry(db, writer_id="E", lease_ttl_seconds=0.05)
+        e.acquire_lease()
+        time.sleep(0.06)  # E's lease now expired
+        x = reg.Registry(db, writer_id="X", lease_ttl_seconds=60)
+        # a different writer can take over an expired foreign lease
+        x.acquire_lease()
+        self.assertEqual(x.lease_holder()["writer_id"], "X")
+
+
 class OtelCorrelationTests(unittest.TestCase):
     """WL-P0-080 OTEL_CORRELATION — universal_session_id -> gen_ai.conversation.id."""
 
