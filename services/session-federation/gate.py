@@ -12,6 +12,8 @@ Verifies that all session-federation components are correctly wired:
 8. SessionIndex FTS search returns results for indexed sessions
 9. SessionRecommender scores decrease monotonically
 10. continues POC capsule matches work-lab/context-capsule/v1 schema
+11. AG-UI projection emits a well-formed run (framing + messages + state snapshot/delta)
+12. OTel correlation maps universal_session_id -> gen_ai.conversation.id deterministically
 
 Run via:  python -m services.session_federation.gate
 Exit 0 on PASS, 1 on FAIL (gate reports each check individually).
@@ -45,6 +47,8 @@ audit = _load("audit", "gate_audit")
 index = _load("index", "gate_index")
 recommender = _load("recommender", "gate_recommender")
 continues = _load("continues", "gate_continues")
+agui = _load("agui_projection", "gate_agui")
+otel = _load("otel_correlation", "gate_otel")
 
 
 class GateResult:
@@ -245,6 +249,52 @@ def run_gate() -> GateResult:
         assert integrity.get("contentHash") and integrity.get("algorithm") == "sha256", \
             "capsule missing integrity contentHash/sha256"
     g.check("continues capsule matches context-capsule/v1", c10)
+
+    # 11. AG-UI projection is well-formed (framing + state, JSON-serialisable)
+    def c11():
+        s = canonical.CanonicalSession(
+            universal_session_id="us-g11", workspace_id="w", project_id="work-lab",
+            source_agent="codex", source_session_id="s11", source_format="codex-protocol",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            messages=({"role": "user", "text": "hi"}, {"role": "assistant", "text": "ok"}),
+            events=({"type": "tool_call", "call_id": "c1", "tool": "patch"},),
+            metadata={"loss_report": {"messages": 1.0, "tool_calls": 0.9,
+                                      "tool_results": 0.9, "reasoning": None,
+                                      "native_state_available": False}},
+        )
+        events = agui.project_agui_events(s)
+        types = [e["type"] for e in events]
+        assert types[0] == "RUN_STARTED" and types[-1] == "RUN_FINISHED"
+        assert "TEXT_MESSAGE_CONTENT" in types and "TOOL_CALL_START" in types
+        assert "STATE_SNAPSHOT" in types and "STATE_DELTA" in types
+        # honest delta: tool_calls retained 0.9 -> 90% surfaced
+        delta = next(e for e in events if e["type"] == "STATE_DELTA")["delta"]
+        assert delta["retention"]["tool_calls"] == 90  # 0.9 retained -> 90
+        json.dumps(events, sort_keys=True)  # everything serialisable
+    g.check("AG-UI projection emits well-formed run", c11)
+
+    # 12. OTel correlation: universal id -> gen_ai.conversation.id, deterministic trace
+    def c12():
+        s = canonical.CanonicalSession(
+            universal_session_id="us-g12", workspace_id="w", project_id="work-lab",
+            source_agent="codex", source_session_id="s12", source_format="codex-protocol",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            metadata={"model": "gpt-x"},
+        )
+        attrs = otel.otel_attributes(s)
+        assert attrs[otel.CONVERSATION_ID_ATTR] == "us-g12"
+        assert attrs[otel.AGENT_SYSTEM_ATTR] == "codex"
+        assert attrs[otel.NATIVE_SOURCE_ATTR] == "s12"
+        assert attrs[otel.MODEL_ATTR] == "gpt-x"
+        # deterministic W3C trace context
+        assert otel.traceparent_for("us-g12") == otel.traceparent_for("us-g12")
+        assert otel.trace_id_for("us-g12") != otel.trace_id_for("us-other")
+        # native reverse resolution falls back to <agent>:<source>
+        corr = otel.ConversationCorrelator()
+        corr.register(s)
+        assert corr.resolve("codex", "s12") == "us-g12"
+        assert corr.resolve("pi", "never-seen") == "pi:never-seen"
+    g.check("OTel correlation maps universal_session_id deterministically", c12)
 
     return g
 

@@ -930,5 +930,161 @@ class HandoffAuditTests(unittest.TestCase):
         self.assertLess(r1.audit_id, r2.audit_id)
 
 
+class AguProjectionTests(unittest.TestCase):
+    """WL-P0-070 AGUI_PROJECTION — canonical -> AG-UI event stream."""
+
+    def _load(self, name):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            f"test_session_federation.{name}", SERVICES / name
+        )
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def _session(self, canonical, *, messages, events=(), metadata=None):
+        return canonical.CanonicalSession(
+            universal_session_id="us-aggui",
+            workspace_id="w",
+            project_id="work-lab",
+            source_agent="hermes",
+            source_session_id="s-aggui",
+            source_format="hermes-jsonl",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            messages=tuple(messages),
+            events=tuple(events),
+            metadata=metadata or {},
+        )
+
+    def test_full_stream_shape(self):
+        ag = self._load("agui_projection.py")
+        canonical = self._load("canonical.py")
+        sess = self._session(
+            canonical,
+            messages=[{"role": "user", "text": "hi"}, {"role": "assistant", "text": "hello"}],
+            events=[{"type": "tool_call", "call_id": "c1", "tool": "apply_patch"},
+                    {"type": "tool_result", "call_id": "c1", "output": "ok"}],
+        )
+        events = ag.project_agui_events(sess)
+        types = [e["type"] for e in events]
+        # framing + messages + state, in order
+        self.assertEqual(types[0], "RUN_STARTED")
+        self.assertEqual(types[-1], "RUN_FINISHED")
+        self.assertIn("TEXT_MESSAGE_CONTENT", types)
+        self.assertIn("TOOL_CALL_START", types)
+        self.assertIn("STATE_SNAPSHOT", types)
+        self.assertIn("STATE_DELTA", types)
+        # snapshot carries semantic state
+        snap = next(e for e in events if e["type"] == "STATE_SNAPSHOT")["snapshot"]
+        self.assertEqual(snap["agent"], "hermes")
+        self.assertEqual(snap["universal_session_id"], "us-aggui")
+        # every event is a JSON-serialisable dict (no CanonicalSession objects)
+        json.dumps(events, sort_keys=True)
+
+    def test_honest_state_delta_from_loss_report(self):
+        ag = self._load("agui_projection.py")
+        canonical = self._load("canonical.py")
+        sess = self._session(
+            canonical,
+            messages=[{"role": "user", "text": "x"}],
+            metadata={"loss_report": {"messages": 0.5, "tool_calls": 0.0, "tool_results": 0.0,
+                                      "reasoning": None, "native_state_available": False,
+                                      "notes": {"zstd_transcript": "undecodable"}}},
+        )
+        events = ag.project_agui_events(sess)
+        delta = next(e for e in events if e["type"] == "STATE_DELTA")["delta"]
+        # ratios surfaced as percentages (LossReport = retention, not loss)
+        self.assertEqual(delta["retention"]["messages"], 50)
+        self.assertEqual(delta["retention"]["tool_calls"], 0)
+        self.assertIsNone(delta["retention"]["reasoning"])
+        self.assertFalse(delta["native_state_available"])
+        self.assertIn("zstd_transcript", delta["notes"])
+
+    def test_l0_discovery_refuses_messages(self):
+        ag = self._load("agui_projection.py")
+        canonical = self._load("canonical.py")
+        sess = canonical.CanonicalSession(
+            universal_session_id="us-l0", workspace_id="w", project_id="p",
+            source_agent="hermes", source_session_id="s", source_format="x",
+            portability_level=canonical.PortabilityLevel.L0_DISCOVERY,
+        )
+        events = ag.project_agui_events(sess)
+        # no message events for a discovery-only session
+        self.assertNotIn("TEXT_MESSAGE_START", [e["type"] for e in events])
+        # run framing still present
+        self.assertEqual(events[0]["type"], "RUN_STARTED")
+
+
+class OtelCorrelationTests(unittest.TestCase):
+    """WL-P0-080 OTEL_CORRELATION — universal_session_id -> gen_ai.conversation.id."""
+
+    def _load(self, name):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            f"test_session_federation.{name}", SERVICES / name
+        )
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def test_conversation_id_is_universal_id(self):
+        ot = self._load("otel_correlation.py")
+        canonical = self._load("canonical.py")
+        sess = canonical.CanonicalSession(
+            universal_session_id="us-otel", workspace_id="w", project_id="work-lab",
+            source_agent="codex", source_session_id="native-42", source_format="codex-rollout-jsonl",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+            metadata={"model": "gpt-x", "model_provider": "openai"},
+        )
+        attrs = ot.otel_attributes(sess)
+        self.assertEqual(attrs[ot.CONVERSATION_ID_ATTR], "us-otel")
+        self.assertEqual(attrs[ot.AGENT_SYSTEM_ATTR], "codex")
+        self.assertEqual(attrs[ot.NATIVE_SOURCE_ATTR], "native-42")
+        self.assertEqual(attrs[ot.MODEL_ATTR], "gpt-x")
+
+    def test_traceparent_deterministic_and_w3c(self):
+        ot = self._load("otel_correlation.py")
+        tp1 = ot.traceparent_for("us-otel")
+        tp2 = ot.traceparent_for("us-otel")
+        self.assertEqual(tp1, tp2)
+        parts = tp1.split("-")
+        self.assertEqual(len(parts), 4)
+        self.assertEqual(len(parts[1]), 32)   # trace-id
+        self.assertEqual(len(parts[2]), 16)   # span-id
+        self.assertEqual(parts[0], "00")
+        self.assertEqual(parts[3], "00")
+        # a different session -> a different trace
+        self.assertNotEqual(ot.trace_id_for("us-otel"), ot.trace_id_for("us-other"))
+
+    def test_native_reverse_resolution(self):
+        ot = self._load("otel_correlation.py")
+        canonical = self._load("canonical.py")
+        sess = canonical.CanonicalSession(
+            universal_session_id="dsh:native-7", workspace_id="w", project_id="p",
+            source_agent="dsh", source_session_id="native-7", source_format="dsh-projcache",
+        )
+        corr = ot.ConversationCorrelator()
+        corr.register(sess)
+        # registered pair resolves to the universal id
+        self.assertEqual(corr.resolve("dsh", "native-7"), "dsh:native-7")
+        # unregistered pair falls back to the canonical <agent>:<source> id
+        self.assertEqual(corr.resolve("pi", "never-seen"), "pi:never-seen")
+        self.assertIn("dsh:native-7", corr.known_conversations())
+
+    def test_accepts_serialised_dict(self):
+        ot = self._load("otel_correlation.py")
+        # callers holding a to_dict() payload must still correlate
+        d = {"universal_session_id": "us-d", "source_agent": "pi",
+             "source_session_id": "src-9", "project_id": "p",
+             "portability_level": "L1_HANDOFF", "metadata": {"model": "m1"}}
+        attrs = ot.otel_attributes(d)
+        self.assertEqual(attrs[ot.CONVERSATION_ID_ATTR], "us-d")
+        self.assertEqual(attrs[ot.MODEL_ATTR], "m1")
+
+
 if __name__ == "__main__":
     unittest.main()
