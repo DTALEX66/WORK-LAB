@@ -101,7 +101,7 @@ class CurrentStateTests(unittest.TestCase):
             output_dir = Path(raw)
             json_out = output_dir / "CURRENT_STATE.json"
             md_out = output_dir / "CURRENT_STATE.md"
-            runtime_out = ROOT / ".hermes" / "task-artifacts" / "test-current-state-runtime.json"
+            runtime_out = ROOT / ".project-local" / "artifacts" / "test-current-state-runtime.json"
             result = subprocess.run(
                 [
                     sys.executable,
