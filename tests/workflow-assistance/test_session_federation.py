@@ -413,5 +413,114 @@ class ContinuesPocTests(unittest.TestCase):
         self.assertEqual(k._recommendation(metric, s), "ABSORB")
 
 
+class AcpFacadeTests(unittest.TestCase):
+    """WL-P0-060 ACP session facade."""
+
+    def _load_facade(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "test_session_federation.acp_facade", SERVICES / "acp_facade.py"
+        )
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    class _StubProvider:
+        def __init__(self):
+            self._handoff_result = {"loss_report": {"dropped_channels": ["raw_context"]}}
+        def discover(self, project_id): return iter([])
+        def read(self, ref): raise NotImplementedError
+        def resume_native(self, session):
+            # simulate: native resume command available
+            return "codex resume <session>"
+        def handoff(self, source_session, out_dir):
+            import json
+            from pathlib import Path
+            d = Path(out_dir); d.mkdir(parents=True, exist_ok=True)
+            return {"loss_report": self._handoff_result["loss_report"], "written": str(d / "handoff.json")}
+        def export(self, session, directory): return {"exported": directory + "/out.json"}
+        def health(self): return {"ok": True, "notes": []}
+
+    def test_all_five_operations(self):
+        import importlib.util
+        facade_mod = self._load_facade()
+        stub = self._StubProvider()
+        facade = facade_mod.AcpSessionFacade({"codex": stub})
+        self.assertEqual(facade.registered_agents(), ["codex"])
+
+        r_new = facade.session_new("codex", "work-lab")
+        self.assertEqual(r_new.outcome, facade_mod.Outcome.NEW_SESSION)
+
+        r_list = facade.session_list("codex", "work-lab")
+        self.assertEqual(r_list.outcome, facade_mod.Outcome.LISTED)
+        self.assertEqual(r_list.session_id, "0")
+
+        r_close = facade.session_close("codex", "sess-1")
+        self.assertEqual(r_close.outcome, facade_mod.Outcome.CLOSED)
+
+        r_prompt = facade.session_prompt("codex", "sess-1", "do the thing")
+        self.assertEqual(r_prompt.outcome, facade_mod.Outcome.PROMPTED)
+
+        r_prompt_empty = facade.session_prompt("codex", "sess-1", "   ")
+        self.assertEqual(r_prompt_empty.outcome, facade_mod.Outcome.UNAVAILABLE)
+
+        r_missing = facade.session_new("dsh", "work-lab")
+        self.assertEqual(r_missing.outcome, facade_mod.Outcome.UNAVAILABLE)
+
+    def test_resume_downgrades_without_verified_marker(self):
+        import importlib.util
+        facade_mod = self._load_facade()
+        _load("canonical.py", "test_session_federation.canonical")
+        canonical = sys.modules["test_session_federation.canonical"]
+        s = canonical.CanonicalSession(
+            universal_session_id="us-x", workspace_id="w", project_id="work-lab",
+            source_agent="codex", source_session_id="s", source_format="codex-protocol",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+        )
+        facade = facade_mod.AcpSessionFacade({"codex": self._StubProvider()})
+        r = facade.session_resume("codex", s)
+        # No verified native-resume marker → must downgrade to NEW_SESSION
+        self.assertEqual(r.outcome, facade_mod.Outcome.NEW_SESSION)
+        self.assertTrue(any("opening new session" in n for n in r.notes))
+
+    def test_resume_with_verified_marker_reports_resumed(self):
+        import importlib.util
+        facade_mod = self._load_facade()
+        _load("canonical.py", "test_session_federation.canonical")
+        canonical = sys.modules["test_session_federation.canonical"]
+        s = canonical.CanonicalSession(
+            universal_session_id="us-y", workspace_id="w", project_id="work-lab",
+            source_agent="codex", source_session_id="s2", source_format="codex-protocol",
+            portability_level=canonical.PortabilityLevel.L3_NATIVE_RESUME,
+            metadata={"native_resume": {"verified": True}},
+        )
+        facade = facade_mod.AcpSessionFacade({"codex": self._StubProvider()})
+        r = facade.session_resume("codex", s)
+        self.assertEqual(r.outcome, facade_mod.Outcome.RESUMED)
+        self.assertEqual(r.session_id, "s2")
+
+    def test_new_with_source_writes_handoff(self):
+        import importlib.util
+        import tempfile
+        facade_mod = self._load_facade()
+        _load("canonical.py", "test_session_federation.canonical")
+        canonical = sys.modules["test_session_federation.canonical"]
+        s = canonical.CanonicalSession(
+            universal_session_id="us-z", workspace_id="w", project_id="work-lab",
+            source_agent="codex", source_session_id="s3", source_format="codex-protocol",
+            portability_level=canonical.PortabilityLevel.L1_HANDOFF,
+        )
+        facade = facade_mod.AcpSessionFacade({"codex": self._StubProvider()})
+        with tempfile.TemporaryDirectory() as td:
+            r = facade.session_new("codex", "work-lab", source_session=s, out_dir=td)
+            self.assertEqual(r.outcome, facade_mod.Outcome.NEW_SESSION)
+            self.assertEqual(r.loss_report["dropped_channels"], ["raw_context"])
+        # without out_dir must be UNAVAILABLE
+        r2 = facade.session_new("codex", "work-lab", source_session=s)
+        self.assertEqual(r2.outcome, facade_mod.Outcome.UNAVAILABLE)
+
+
 if __name__ == "__main__":
     unittest.main()
