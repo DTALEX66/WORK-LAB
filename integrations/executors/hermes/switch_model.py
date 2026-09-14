@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import re
@@ -16,6 +17,24 @@ from pathlib import Path
 MISSING = object()
 
 
+def _load_sibling(name: str):
+    """Load a sibling policy module by path so it resolves as script or import."""
+
+    path = Path(__file__).resolve().parent / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:  # pragma: no cover - environment guard
+        raise SystemExit(f"cannot load {name}: {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+managed_launch_policy = _load_sibling("managed_launch_policy")
+hermes_task_result = _load_sibling("hermes_task_result")
+
+_RUNTIME_VERSION: dict[str, str | None] = {}
+
+
 def selected_model(override: str | None, env_name: str, target: str) -> str:
     model = (override or os.environ.get(env_name, "")).strip()
     if not model:
@@ -27,6 +46,9 @@ def selected_model(override: str | None, env_name: str, target: str) -> str:
 
 
 def run(cmd: list[str], timeout: int = 30, check: bool = False) -> subprocess.CompletedProcess[str]:
+    # A-3: every managed Hermes launch passes the policy check BEFORE the process
+    # is created, so an unapproved route cannot be reached even transiently.
+    managed_launch_policy.assert_managed_argv(cmd, what="switch_model")
     cp = subprocess.run(
         cmd,
         text=True,
@@ -39,6 +61,21 @@ def run(cmd: list[str], timeout: int = 30, check: bool = False) -> subprocess.Co
     if check and cp.returncode != 0:
         raise SystemExit(f"command failed: {' '.join(cmd)}\n{cp.stdout or ''}")
     return cp
+
+
+def hermes_runtime_version() -> str | None:
+    """Read the installed Hermes version once, for the result classifier pin.
+
+    The text-based failure detector is only valid for the version it was
+    calibrated against, so the version is read from the runtime itself rather
+    than assumed.
+    """
+
+    if "value" in _RUNTIME_VERSION:
+        return _RUNTIME_VERSION["value"]
+    match = re.search(r"v(\d+\.\d+\.\d+)", run(['hermes', '--version'], timeout=30).stdout or "")
+    _RUNTIME_VERSION["value"] = match.group(1) if match else None
+    return _RUNTIME_VERSION["value"]
 
 
 def hermes_home() -> Path:
@@ -204,9 +241,23 @@ def live_marker(provider: str, model: str, marker: str) -> None:
         ['hermes', 'chat', '--provider', provider, '-m', model, '-q', f'Reply exactly: {marker}', '-Q', '--toolsets', 'safe'],
         timeout=180,
     )
-    if cp.returncode != 0 or marker not in cp.stdout.splitlines():
-        raise SystemExit(f'LIVE verification failed for {provider}/{model}: {redact(cp.stdout)}')
-    print(f'LIVE_OK provider={provider} model={model}')
+    # A-2: the exit code alone is not a verdict (this runtime returns 0 for
+    # failed and aborted tasks), and a marker in the output is not a verdict
+    # either - the model can print it and then fail. Task-specific acceptance is
+    # the marker being present, and the classifier decides.
+    verdict = hermes_task_result.classify(
+        exit_code=cp.returncode,
+        stdout=cp.stdout or "",
+        acceptance_passed=marker in (cp.stdout or "").splitlines(),
+        runtime_version=hermes_runtime_version(),
+    )
+    if not hermes_task_result.is_success(verdict):
+        raise SystemExit(
+            f'LIVE verification not successful for {provider}/{model}: '
+            f'outcome={verdict["outcome"]} reason={verdict["reason"]} '
+            f'evidence={verdict["evidence"]}\n{redact(cp.stdout)}'
+        )
+    print(f'LIVE_OK provider={provider} model={model} outcome={verdict["outcome"]} reason={verdict["reason"]}')
 
 
 def status() -> None:

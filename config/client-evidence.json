@@ -7,25 +7,60 @@
     "hermes": {
       "client": "hermes",
       "evidence_level": "E2",
-      "install_method": "git (SSH remote)",
-      "version": "0.20.5",
+      "install_method": "git",
+      "version": "0.21.2",
+      "release_label": "2026.9.11",
+      "upstream_commit": "53c57871d67ee7d2202861aacc4ea0ef6ef93112",
       "install_path": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\hermes-agent",
-      "desktop_path": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\Hermes\\Hermes.exe",
+      "cli_path": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\bin\\hermes.exe",
+      "desktop_path": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\hermes-agent\\apps\\desktop\\release\\win-unpacked\\Hermes.exe",
       "shortcuts": [
+        "%USERPROFILE%\\Desktop\\Hermes.lnk",
         "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\HermesUpdateGuard.lnk"
       ],
+      "shortcut_issues": [
+        "HermesUpdateGuard.lnk targets D:\\All projects\\WORK-LAB\\.hermes\\task-runtime\\hermes-update-guard.ps1, which no longer exists (Test-Path false); the script was relocated to .project-local/runs/legacy-task-runtime/. Startup target chain therefore does not resolve end-to-end."
+      ],
       "config_path": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\config.yaml",
-      "verified_at": "2026-08-26T16:00:00Z",
-      "health": "doctor-all-green",
+      "config_schema_version": "v44",
+      "verified_at": "2026-09-14T12:12:00Z",
+      "health": "doctor PASS (exit 0): version files consistent (0.21.2); Python 3.11.15 + venv active; SSL CA bundle valid; required packages present; .env + config.yaml present; config version up to date (v44); no deprecated config keys or env vars; no retired xAI models; no removed plugin import paths; SOUL.md present; state.db 1938 sessions; API reachable for OpenRouter + DeepSeek; warnings: state.db large (3.8 GB), ripgrep/docker/node not installed, Nous Portal / MiniMax / xAI OAuth not logged in",
       "features_verified": [
-        "delegation-6",
-        "checkpoints",
-        "auto-prune",
-        "fallback-chain",
-        "chrome-profiles-plugin",
-        "bots-mode",
-        "kanban"
-      ]
+        "cli-version-readback (hermes --version, exit 0)",
+        "cli-status-readback (hermes status, exit 0)",
+        "cli-doctor-readback (hermes doctor, exit 0)",
+        "path-resolution (registry-fresh shell resolves hermes to %LOCALAPPDATA%\\hermes\\bin\\hermes.exe)",
+        "native-skill-discovery (all 13 managed skills reported enabled; 12 local + 2 shadowed by same-name builtins)",
+        "native-completion (hermes chat -q <marker> --oneshot --max-turns 1, exit 0, 14.9s, exact token returned)"
+      ],
+      "observation_scope": "Only the read-only CLI surfaces and one non-tool completion above were exercised on 2026-09-14. Task cancellation, failure paths and the auxiliary-slot call routing were NOT exercised; auxiliary slots are config-layer evidence (provider=auto, model empty) only.",
+      "prior_record": {
+        "source": "git show HEAD:config/client-evidence.json (record as of 2026-08-26T16:00:00Z, Hermes 0.20.5)",
+        "preserved_verbatim": {
+          "client": "hermes",
+          "evidence_level": "E2",
+          "install_method": "git (SSH remote)",
+          "version": "0.20.5",
+          "install_path": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\hermes-agent",
+          "desktop_path": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\Hermes\\Hermes.exe",
+          "shortcuts": [
+            "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\HermesUpdateGuard.lnk"
+          ],
+          "config_path": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\config.yaml",
+          "verified_at": "2026-08-26T16:00:00Z",
+          "health": "doctor-all-green",
+          "features_verified": [
+            "delegation-6",
+            "checkpoints",
+            "auto-prune",
+            "fallback-chain",
+            "chrome-profiles-plugin",
+            "bots-mode",
+            "kanban"
+          ]
+        },
+        "note": "Kept intact so historical capability claims are not lost and are not re-read as current evidence."
+      }
     },
     "codex": {
       "client": "codex",

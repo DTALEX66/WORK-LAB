@@ -11,9 +11,11 @@ import argparse
 from copy import deepcopy
 import datetime as dt
 import hashlib
+import importlib.util
 import json
 import os
 import shutil
+import time
 from pathlib import Path
 from typing import Callable, Iterable
 
@@ -21,6 +23,15 @@ try:
     import yaml
 except Exception as exc:  # pragma: no cover - environment guard
     raise SystemExit(f"PyYAML is required: {exc}")
+
+# WL-LAYER Q3: load the three-way managed-asset guard by path so the module
+# resolves whether this file is executed as a script or imported by tests.
+_BASELINE_MODULE_PATH = Path(__file__).resolve().parent / "managed_asset_baseline.py"
+_baseline_spec = importlib.util.spec_from_file_location("managed_asset_baseline", _BASELINE_MODULE_PATH)
+if _baseline_spec is None or _baseline_spec.loader is None:  # pragma: no cover - environment guard
+    raise SystemExit(f"cannot load managed asset baseline guard: {_BASELINE_MODULE_PATH}")
+asset_baseline = importlib.util.module_from_spec(_baseline_spec)
+_baseline_spec.loader.exec_module(asset_baseline)
 
 
 WORKFLOW_SYNC_BACKUP_KEEP = 2
@@ -539,7 +550,147 @@ def _path_state(path: Path) -> dict[str, object]:
     }
 
 
-def build_action_plan(repo: Path, home: Path) -> dict[str, object]:
+def managed_guard_inputs(repo: Path, home: Path) -> dict[str, dict[str, object]]:
+    """Collect live/candidate digests for every managed target (Q3 guard input)."""
+
+    repo = repo.resolve()
+    home = Path(os.path.abspath(home))
+    managed_roots = tuple(_repo_rel_to_home_rel(r) for r in load_managed_skill_roots(repo))
+    managed_binaries = tuple(_repo_rel_to_home_rel(r) for r in load_managed_binary_paths(repo))
+    managed_file_mappings = load_managed_file_mappings(repo)
+    source_targets = list(
+        zip((*load_managed_skill_roots(repo), *load_managed_binary_paths(repo)), (*managed_roots, *managed_binaries))
+    )
+    source_targets.extend(managed_file_mappings)
+    source_targets.append(("config/.env.template", ".env.template"))
+    inputs: dict[str, dict[str, object]] = {}
+    for source_relative, target_relative in source_targets:
+        before = _path_state(home / target_relative)
+        after = _path_state(repo / source_relative)
+        inputs[target_relative] = {
+            "live_sha256": before.get("sha256"),
+            "live_exists": bool(before.get("exists")),
+            "candidate_sha256": after.get("sha256"),
+        }
+    return inputs
+
+
+def effective_guard_state(home: Path, suspended: Iterable[str] = ()) -> dict[str, object]:
+    state = asset_baseline.load_state(home)
+    extra = {str(item) for item in suspended}
+    if extra:
+        state = {
+            **state,
+            "suspended": sorted(asset_baseline.suspended_targets(state) | extra),
+        }
+    return state
+
+
+def guard_rows(repo: Path, home: Path, *, suspended: Iterable[str] = ()) -> list[dict[str, object]]:
+    return asset_baseline.evaluate(managed_guard_inputs(repo, home), effective_guard_state(home, suspended))
+
+
+def assert_guard_ready(repo: Path, home: Path, *, suspended: Iterable[str] = ()) -> None:
+    """Fail closed on any refusing verdict. There is no adoption bypass (R1)."""
+
+    asset_baseline.assert_ready(guard_rows(repo, home, suspended=suspended))
+
+
+def live_guard_inputs(home: Path, targets: Iterable[str]) -> dict[str, dict[str, object]]:
+    """Current live digests for a set of targets, keyed by target relative path."""
+
+    home = Path(os.path.abspath(home))
+    out: dict[str, dict[str, object]] = {}
+    for target in targets:
+        state = _path_state(home / str(target))
+        out[str(target)] = {"sha256": state.get("sha256"), "exists": bool(state.get("exists"))}
+    return out
+
+
+def assert_guard_publish_set_unchanged(
+    repo: Path,
+    home: Path,
+    planned_rows: Iterable[dict[str, object]],
+    *,
+    suspended: Iterable[str] = (),
+) -> None:
+    """Re-evaluate and re-digest every target about to be written (R2)."""
+
+    planned = list(planned_rows)
+    to_write = asset_baseline.written_targets(planned)
+    if not to_write:
+        return
+    fresh_rows = guard_rows(repo, home, suspended=suspended)
+    live_states = {t: v.get("sha256") for t, v in live_guard_inputs(home, to_write).items()}
+    asset_baseline.assert_publish_set_unchanged(planned, fresh_rows, live_states)
+
+
+def record_guard_baseline(
+    repo: Path,
+    home: Path,
+    planned_rows: Iterable[dict[str, object]],
+    *,
+    suspended: Iterable[str] = (),
+    run_id: str,
+) -> Path:
+    """Persist the baseline from the FROZEN planned rows, not from a re-read (R6).
+
+    Re-reading the candidate here would let the baseline record a state that the
+    published bytes never were. The planned rows already carry the candidate
+    digests that were actually staged, and the readback has been verified before
+    this is called.
+    """
+
+    state = effective_guard_state(home, suspended)
+    records = asset_baseline.baseline_records(planned_rows)
+    return asset_baseline.save_state(
+        home,
+        {
+            "targets": records,
+            "suspended": sorted(asset_baseline.suspended_targets(state)),
+            "adopted": list(state.get("adopted") or []),
+        },
+        run_id=run_id,
+    )
+
+
+def adopt_baselines(
+    repo: Path,
+    home: Path,
+    *,
+    reviewed: dict[str, str],
+    suspended: Iterable[str] = (),
+    operator: str | None = None,
+) -> list[str]:
+    """Record baselines for operator-reviewed targets. Writes NO asset bytes (R1).
+
+    This function is deliberately incapable of publishing: it never stages,
+    never copies and never calls the replacement path. It resolves the named
+    targets against the live digests, refuses anything that changed since review,
+    and saves the resulting state.
+    """
+
+    inputs = managed_guard_inputs(repo, home)
+    live_digests = {t: v.get("live_sha256") for t, v in inputs.items()}
+    known = set(live_digests)
+    unknown = sorted(set(reviewed) - known)
+    if unknown:
+        raise RuntimeError("ADOPTION_REFUSED unknown managed target(s): " + ", ".join(unknown))
+    state = effective_guard_state(home, suspended)
+    resolved = asset_baseline.adoption_candidates(
+        reviewed=reviewed, live_digests=live_digests, state=state
+    )
+    new_state = asset_baseline.apply_adoption(state, resolved, operator=operator)
+    asset_baseline.save_state(home, new_state)
+    return sorted(resolved)
+
+
+def build_action_plan(
+    repo: Path,
+    home: Path,
+    *,
+    suspended: Iterable[str] = (),
+) -> dict[str, object]:
     """Return the exact reviewed deployment plan without writing either root."""
 
     repo = repo.resolve()
@@ -566,6 +717,9 @@ def build_action_plan(repo: Path, home: Path) -> dict[str, object]:
         home,
         tuple(target for _, target in source_targets) + ("config.yaml",),
     )
+    guard_state = effective_guard_state(home, suspended)
+    rows = asset_baseline.evaluate(managed_guard_inputs(repo, home), guard_state)
+    verdict_by_target = {str(row["target"]): str(row["verdict"]) for row in rows}
     steps = []
     for source_relative, target_relative in source_targets:
         steps.append(
@@ -573,6 +727,7 @@ def build_action_plan(repo: Path, home: Path) -> dict[str, object]:
                 "id": f"replace-{target_relative.replace('/', '-')}",
                 "target": target_relative,
                 "operation": "replace_managed_asset",
+                "guard_verdict": verdict_by_target.get(target_relative, "NO_BASELINE"),
                 "before": _path_state(home / target_relative),
                 "after": _path_state(repo / source_relative),
                 "rollback": {"available": True, "strategy": "backup-before-publish"},
@@ -604,13 +759,26 @@ def build_action_plan(repo: Path, home: Path) -> dict[str, object]:
                 "promoted by portable sync"
             ),
         },
+        "guard": {
+            "schema_version": asset_baseline.SCHEMA_VERSION,
+            "baseline_file": str(asset_baseline.state_path(home)),
+            "pending_file": str(asset_baseline.pending_path(home)),
+            "pending_diagnosis": asset_baseline.pending_diagnosis(home),
+            "suspended": sorted(asset_baseline.suspended_targets(guard_state)),
+            "refusing": asset_baseline.refusing_rows(rows),
+            "will_write": asset_baseline.written_targets(rows),
+            "rows": rows,
+        },
         "rollback": {"available": True, "strategy": "backup-before-publish-and-atomic-replace"},
     }
 
 
-def verify_action_plan_readback(plan: dict[str, object], repo: Path, home: Path) -> None:
+def verify_action_plan_readback(
+    plan: dict[str, object], repo: Path, home: Path, *, skip: Iterable[str] = ()
+) -> None:
     """Fail closed when any managed target differs from the planned after state."""
 
+    skipped = {str(item) for item in skip}
     for step in plan.get("steps", []):
         if not isinstance(step, dict):
             raise ValueError("action plan steps must be mappings")
@@ -618,6 +786,8 @@ def verify_action_plan_readback(plan: dict[str, object], repo: Path, home: Path)
         expected = step.get("after")
         if not isinstance(target, str) or not isinstance(expected, dict):
             raise ValueError("action plan step is missing target/after state")
+        if target in skipped:
+            continue
         _assert_safe_managed_path(home, home / target)
         actual = _path_state(home / target)
         if actual != expected:
@@ -1033,9 +1203,17 @@ def deploy_portable(
     include_backup: bool = True,
     include_config: bool = False,
     allow_project_runtime_home: bool = False,
+    suspended: Iterable[str] = (),
+    run_id: str | None = None,
 ) -> None:
-    """Run the single deployment orchestration used by CLI and verifier."""
+    """Run the single deployment orchestration used by CLI and verifier.
 
+    There is no adoption parameter: recording a baseline for unproven live
+    content is a separate operation (``adopt_baselines``) that writes no asset
+    bytes, and it cannot be reached from this publish path (R1).
+    """
+
+    run_id = run_id or f"sync-{int(time.time())}"
     repo = repo.resolve()
     # Preserve the supplied lexical root until reparse safety checks complete.
     home = Path(os.path.abspath(home))
@@ -1061,10 +1239,56 @@ def deploy_portable(
     )
     _assert_safe_managed_path(home, home)
     _assert_safe_managed_paths(home, managed_targets)
+
+    # Q3 guard: last deployed baseline x current live x candidate. Any live state
+    # this tool did not itself publish stops the run before any write. There is
+    # deliberately no adoption bypass here (R1): adoption is a separate operation
+    # that records a baseline and writes no asset bytes.
+    guard_rows_all = guard_rows(repo, home, suspended=suspended)
+    suspended_set = asset_baseline.suspended_targets(effective_guard_state(home, suspended))
+    for row in guard_rows_all:
+        print(
+            "guard: %-58s %s baseline=%s live=%s candidate=%s"
+            % (row["target"], row["verdict"], row["baseline_sha256"], row["live_sha256"], row["candidate_sha256"])
+        )
+    asset_baseline.assert_ready(guard_rows_all)
+    if suspended_set:
+        print("guard: suspended targets (not published): " + ", ".join(sorted(suspended_set)))
+
+    incomplete = asset_baseline.pending_diagnosis(home)
+    if incomplete:
+        if apply:
+            raise RuntimeError(incomplete)
+        print("guard: WARNING " + incomplete)
+
+    # R2: only CLEAN_UPDATE asset targets are written. CONVERGED needs no rewrite,
+    # SUSPENDED is excluded by the operator, refusing verdicts never get here.
+    # Mixed-ownership config targets (only present with include_config) are not
+    # covered by the three-way asset guard and keep their previous handling.
+    guard_publish = set(asset_baseline.written_targets(guard_rows_all))
+    publish_targets = tuple(
+        target for target in managed_targets if target in guard_publish or target in managed_config_files
+    )
+    print(
+        "guard: will write %d target(s); skip %d converged/suspended/other"
+        % (len(publish_targets), len(managed_targets) - len(publish_targets))
+    )
+
+    # target -> repository source, kept for diagnostics only; the publish readback
+    # compares against the frozen plan digests, never against a re-read source.
+    after_source: dict[str, Path] = {}
+    for source_relative, target_relative in zip(
+        (*load_managed_skill_roots(repo), *load_managed_binary_paths(repo)), (*managed_roots, *managed_binaries)
+    ):
+        after_source[target_relative] = repo / source_relative
+    for source_relative, target_relative in managed_file_mappings:
+        after_source[target_relative] = repo / source_relative
+    after_source[".env.template"] = repo / "config" / ".env.template"
+
     if include_backup:
         backup_paths(
             home,
-            managed_targets,
+            publish_targets,
             apply=apply,
         )
     if apply:
@@ -1079,13 +1303,68 @@ def deploy_portable(
         if config_guard is not None:
             assert_preserved_live_config_before_promotion(config_guard, home)
 
+        # R2 + R6: re-evaluate and re-digest every target that is about to be
+        # written, then record the frozen candidate digests in a pending marker so
+        # an interruption can be classified instead of guessed at.
+        assert_guard_publish_set_unchanged(repo, home, guard_rows_all, suspended=suspended)
+        asset_baseline.write_pending(
+            home,
+            run_id=run_id,
+            phase="planned",
+            records={
+                str(row["target"]): {
+                    "candidate_sha256": row.get("candidate_sha256"),
+                    "live_sha256": row.get("live_sha256"),
+                }
+                for row in guard_rows_all
+                if str(row.get("target")) in publish_targets
+            },
+        )
+
         atomic_replace_paths(
             staging,
             home,
-            managed_targets,
+            publish_targets,
+        )
+        asset_baseline.write_pending(
+            home,
+            run_id=run_id,
+            phase="replaced",
+            records={
+                str(row["target"]): {"candidate_sha256": row.get("candidate_sha256")}
+                for row in guard_rows_all
+                if str(row.get("target")) in publish_targets
+            },
         )
         if config_guard is not None:
             verify_managed_config_readback(repo, home, config_guard)
+        # Completion evidence for the replacement phase: the published bytes must
+        # equal the digest FROZEN at plan time. Comparing against a re-read of the
+        # repository source would let a candidate that changed mid-run certify
+        # itself (H3): plan, staging, readback and baseline must all describe the
+        # same content. The digest comes from _path_state/sha_tree, i.e. the same
+        # algorithm used to build the plan rows.
+        frozen = {str(row["target"]): row.get("candidate_sha256") for row in guard_rows_all}
+        mismatched = []
+        for target in publish_targets:
+            if target in managed_config_files:
+                # Mixed-ownership config is verified by verify_managed_config_readback above.
+                continue
+            published = _path_state(home / target)
+            expected_digest = frozen.get(target)
+            if published.get("exists") is not True or published.get("sha256") != expected_digest:
+                mismatched.append(
+                    f"{target} frozen_candidate={expected_digest} published={published.get('sha256')}"
+                )
+        if mismatched:
+            raise RuntimeError(
+                "MANAGED_ASSET_READBACK_FAIL refusing to advance the baseline: " + "; ".join(mismatched)
+            )
+        baseline_path = record_guard_baseline(
+            repo, home, guard_rows_all, suspended=suspended, run_id=run_id
+        )
+        asset_baseline.clear_pending(home)
+        print(f"guard: readback verified, baseline advanced at {baseline_path} (run_id={run_id})")
     else:
         for relative in managed_roots:
             copytree(_home_rel_to_repo_source(repo, relative), home / relative, apply=False)
@@ -1108,7 +1387,32 @@ def main() -> int:
     parser.add_argument("--home", default=str(default_hermes_home()))
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--approved", action="store_true", help="explicitly approve the generated ActionPlan")
-    parser.add_argument("--plan-json", help="write the plan only inside <repo>/.hermes/task-artifacts/")
+    parser.add_argument("--plan-json", help="write the plan only inside <repo>/.project-local/artifacts/task-artifacts/")
+    parser.add_argument(
+        "--adopt-baseline",
+        action="store_true",
+        help="record a baseline for operator-reviewed targets; writes NO asset content (R1)",
+    )
+    parser.add_argument(
+        "--adopt-target",
+        action="append",
+        default=[],
+        metavar="TARGET@SHA256",
+        help="with --adopt-baseline: a target and the exact digest that was reviewed (repeatable)",
+    )
+    parser.add_argument(
+        "--adopt-operator",
+        default=None,
+        metavar="NAME",
+        help="with --adopt-baseline: who reviewed the content (recorded in the audit trail)",
+    )
+    parser.add_argument(
+        "--suspend",
+        action="append",
+        default=[],
+        metavar="TARGET",
+        help="skip a managed target (repeatable); the native curator may write there",
+    )
     args = parser.parse_args()
 
     repo = Path(args.repo)
@@ -1118,25 +1422,68 @@ def main() -> int:
     if not home.exists():
         raise SystemExit(f"Hermes home not found: {home}")
 
+    # ------------------------------------------------------------------ #
+    # R1: adoption is its own operation. It records a baseline for targets
+    # an operator named together with the digest they reviewed, and it never
+    # reaches the publish path. This branch returns before any staging.
+    # ------------------------------------------------------------------ #
+    if args.adopt_baseline:
+        reviewed: dict[str, str] = {}
+        for item in args.adopt_target:
+            if "@" not in item:
+                raise SystemExit(f"--adopt-target must be TARGET@SHA256, got: {item}")
+            target, digest = item.rsplit("@", 1)
+            if target in reviewed:
+                raise SystemExit(f"duplicate --adopt-target: {target}")
+            reviewed[target] = digest
+        adopted = adopt_baselines(
+            repo,
+            home,
+            reviewed=reviewed,
+            suspended=args.suspend,
+            operator=args.adopt_operator,
+        )
+        print("ADOPTION_RECORDED targets=" + ", ".join(adopted))
+        print("ADOPTION_NOTE no asset content was written; publish separately after review")
+        return 0
+
+    run_id = f"sync-{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+
     if args.apply and not args.approved:
         print("ACTION_PLAN_BLOCKED approval_required=true use --approved after reviewing the plan")
         return 2
 
-    plan = build_action_plan(repo, home)
+    plan = build_action_plan(repo, home, suspended=args.suspend)
     rendered_plan = json.dumps(plan, ensure_ascii=False, indent=2)
     print(rendered_plan)
     if args.plan_json:
         output = Path(args.plan_json).resolve()
-        artifact_root = (repo / ".hermes" / "task-artifacts").resolve()
+        # The plan is a project artifact, not software-owned state: it belongs under
+        # the project boundary (AGENTS.md: .project-local/runs or .project-local/artifacts),
+        # not under <repo>/.hermes, which mixes this tool's output with software-owned dirs.
+        artifact_root = (repo / ".project-local" / "artifacts" / "task-artifacts").resolve()
         if not output.is_relative_to(artifact_root):
-            raise SystemExit("plan output must stay inside <repo>/.hermes/task-artifacts/")
+            raise SystemExit("plan output must stay inside <repo>/.project-local/artifacts/task-artifacts/")
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(rendered_plan + "\n", encoding="utf-8")
         print(f"ACTION_PLAN_WRITTEN path={output}")
 
-    deploy_portable(repo, home, apply=args.apply, include_config=False)
+    deploy_portable(
+        repo,
+        home,
+        apply=args.apply,
+        include_config=False,
+        suspended=args.suspend,
+        run_id=run_id,
+    )
     if args.apply:
-        verify_action_plan_readback(plan, repo, home)
+        verify_action_plan_readback(
+            plan, repo, home,
+            skip=(
+                plan.get("guard", {}).get("suspended", [])
+                + [row["target"] for row in plan.get("guard", {}).get("rows", []) if row.get("verdict") != "CLEAN_UPDATE"]
+            ),
+        )
         print("ACTION_PLAN_READBACK_PASS")
 
     print("\nsummary hashes:")

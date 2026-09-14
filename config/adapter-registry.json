@@ -11,7 +11,12 @@
       "provenance": {
         "source_kind": "repository",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=hermes]",
-        "version": ">=0.19,<0.21",
+        "version": "0.21.2",
+        "version_historical": [
+          ">=0.19,<0.21 (previously declared support range; never natively verified on this machine)",
+          "0.21.2 (only natively verified version, observed 2026-09-14: CLI version/status/doctor readback exit 0, registry-fresh PATH resolution, native discovery of all 13 managed skills, one non-tool completion; package hash still UNAVAILABLE so detection.evidence_state stays UNVERIFIED)"
+        ],
+        "note": "The schema cannot express 'declared support range' separately from 'verified version', so `version` carries ONLY the natively verified value and production admission is limited to it. A wider range is deliberately not claimed: the earlier >=0.19,<0.21 declaration is retained in version_historical as history, not as current support.",
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "active",

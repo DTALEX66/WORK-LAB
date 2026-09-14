@@ -10,8 +10,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts/workflow"))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
 
 from github_upload_accelerator import _prefix, _sanitize, upload
 from github_review_accelerator import review

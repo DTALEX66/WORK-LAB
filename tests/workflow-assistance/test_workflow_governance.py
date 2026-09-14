@@ -1310,6 +1310,215 @@ class WorkflowGovernanceTests(unittest.TestCase):
         self.assertTrue(checker.exists())
         self.assertIn("skill-provenance", gate)
 
+    def test_skill_provenance_discovers_every_declared_source_skill(self) -> None:
+        """The checker must discover the declared source roots, not a guessed path.
+
+        Regression guard: the checker previously hard-coded ``repo_root/"skills"``,
+        so it discovered zero skills and reported a meaningless
+        ``SKILL_PROVENANCE_PASS skills=0``.
+        """
+        checker = ROOT / "packages/client-neutral-core/scripts/security/check_skill_provenance.py"
+        manifest_path = ROOT / "config/skill-provenance.yaml"
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(manifest.get("source_roots"), ["packages/client-neutral-core/skills"])
+        result = subprocess.run(
+            [sys.executable, str(checker), "--manifest", str(manifest_path)],
+            text=True,
+            capture_output=True,
+            check=False,
+            encoding="utf-8",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        match = re.search(r"SKILL_PROVENANCE_PASS skills=(\d+)", result.stdout)
+        self.assertIsNotNone(match, result.stdout)
+        discovered = int(match.group(1))
+        self.assertGreater(discovered, 0)
+        self.assertEqual(discovered, len(manifest["entries"]))
+
+    def test_skill_provenance_source_error_contracts(self) -> None:
+        """Negative controls for the provenance source-root contract."""
+        checker = ROOT / "packages/client-neutral-core/scripts/security/check_skill_provenance.py"
+        skill_body = (
+            "---\nname: sample\nversion: 1.0.0\nmetadata:\n  hermes:\n    related_skills: []\n---\n\nbody\n"
+        )
+        with tempfile.TemporaryDirectory() as temp:
+            repo = Path(temp)
+            skills_root = repo / "packages" / "demo" / "skills"
+            (skills_root / "sample").mkdir(parents=True)
+            (skills_root / "sample" / "SKILL.md").write_text(skill_body, encoding="utf-8")
+            manifest_path = repo / "manifest.yaml"
+
+            def invoke(manifest: dict, *extra: str) -> subprocess.CompletedProcess[str]:
+                manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+                return subprocess.run(
+                    [sys.executable, str(checker), "--repo", str(repo), "--manifest", str(manifest_path), *extra],
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                    encoding="utf-8",
+                )
+
+            # the legacy hard-coded guess must not be used silently
+            result = invoke({"schema_version": 1, "source_roots": ["skills"], "entries": []})
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("declared source root does not exist", result.stderr)
+
+            # no declaration at all is a hard error, never a silent empty discovery
+            result = invoke({"schema_version": 1, "entries": []})
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("source_roots", result.stderr)
+
+            # a declared root holding no SKILL.md must fail
+            (repo / "empty-root").mkdir()
+            result = invoke({"schema_version": 1, "source_roots": ["empty-root"], "entries": []})
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("zero source skills discovered", result.stderr)
+
+            # a discovered skill absent from the manifest must fail (coverage)
+            result = invoke({"schema_version": 1, "source_roots": ["packages/demo/skills"], "entries": []})
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("does not cover", result.stderr)
+
+            # the same skill name under two roots must fail
+            other_root = repo / "other-skills"
+            (other_root / "sample").mkdir(parents=True)
+            (other_root / "sample" / "SKILL.md").write_text(skill_body, encoding="utf-8")
+            result = invoke(
+                {"schema_version": 1, "source_roots": ["packages/demo/skills", "other-skills"], "entries": []}
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("duplicate skill name across source roots", result.stderr)
+
+            # a wrong recorded hash must fail
+            good_entry = {
+                "name": "sample",
+                "source": "packages/demo/skills/sample/SKILL.md",
+                "source_sha256": "0" * 64,
+                "version": "1.0.0",
+                "trust": "repository-controlled",
+                "enabled": True,
+                "permission": "skill-guidance",
+            }
+            result = invoke({"schema_version": 1, "source_roots": ["packages/demo/skills"], "entries": [good_entry]})
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("source SHA drift", result.stderr)
+
+            # write mode must refuse an empty discovery and leave the file byte-identical
+            populated = dict(good_entry)
+            populated["source_sha256"] = "irrelevant-because-write-must-refuse"
+            manifest_path.write_text(
+                yaml.safe_dump(
+                    {"schema_version": 1, "source_roots": ["empty-root"], "entries": [populated]}, sort_keys=False
+                ),
+                encoding="utf-8",
+            )
+            before = manifest_path.read_text(encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(checker), "--repo", str(repo), "--manifest", str(manifest_path), "--write"],
+                text=True,
+                capture_output=True,
+                check=False,
+                encoding="utf-8",
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("refusing to write a manifest with zero discovered skills", result.stderr)
+            self.assertEqual(manifest_path.read_text(encoding="utf-8"), before)
+
+    def test_skill_provenance_refresh_preserves_decisions_and_adds_pending(self) -> None:
+        """R3: a hash refresh must not promote trust/enable or rewrite the live mapping."""
+        checker = ROOT / "packages/client-neutral-core/scripts/security/check_skill_provenance.py"
+
+        def skill_body(name: str, related: list[str] | None = None) -> str:
+            related_yaml = "".join(f"\n      - {item}" for item in (related or []))
+            return (
+                f"---\nname: {name}\nversion: 1.0.0\nmetadata:\n  hermes:\n"
+                f"    related_skills:{related_yaml or ' []'}\n---\n\nbody\n"
+            )
+
+        with tempfile.TemporaryDirectory() as temp:
+            repo = Path(temp)
+            root = repo / "packages" / "demo" / "skills"
+            for name in ("kept", "fresh"):
+                (root / name).mkdir(parents=True)
+                (root / name / "SKILL.md").write_text(skill_body(name), encoding="utf-8")
+            manifest_path = repo / "manifest.yaml"
+            manifest_path.write_text(
+                yaml.safe_dump(
+                    {
+                        "schema_version": 1,
+                        "profile_scope": "default",
+                        "source_roots": ["packages/demo/skills"],
+                        "entries": [
+                            {
+                                "name": "kept",
+                                "source": "packages/demo/skills/kept/SKILL.md",
+                                "live": "native/demo/kept/SKILL.md",
+                                "source_sha256": "0" * 64,
+                                "version": "1.0.0",
+                                "trust": "quarantined",
+                                "enabled": False,
+                                "permission": "observe-only",
+                                "profile_scope": "default",
+                                "live_sha256": "1" * 64,
+                            }
+                        ],
+                    },
+                    sort_keys=False,
+                ),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(checker), "--repo", str(repo), "--manifest", str(manifest_path), "--write"],
+                text=True, capture_output=True, check=False, encoding="utf-8",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            written = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+            by_name = {entry["name"]: entry for entry in written["entries"]}
+
+            kept = by_name["kept"]
+            self.assertEqual(kept["trust"], "quarantined", "refresh must not re-trust an entry")
+            self.assertIs(kept["enabled"], False, "refresh must not enable a disabled entry")
+            self.assertEqual(kept["permission"], "observe-only", "refresh must not widen permission")
+            self.assertEqual(kept["live"], "native/demo/kept/SKILL.md", "refresh must not rewrite the live mapping")
+            self.assertEqual(kept["live_sha256"], "1" * 64, "refresh must carry a recorded live hash across")
+            self.assertNotEqual(kept["source_sha256"], "0" * 64, "the source hash is what a refresh recomputes")
+
+            fresh = by_name["fresh"]
+            self.assertEqual(fresh["trust"], "pending-review")
+            self.assertIs(fresh["enabled"], False, "a newly discovered skill must not be auto-enabled")
+            self.assertEqual(fresh["permission"], "observe-only")
+
+    def test_skill_provenance_write_validates_before_replacing(self) -> None:
+        """R3: a candidate that fails validation must not modify the manifest."""
+        checker = ROOT / "packages/client-neutral-core/scripts/security/check_skill_provenance.py"
+        with tempfile.TemporaryDirectory() as temp:
+            repo = Path(temp)
+            root = repo / "packages" / "demo" / "skills"
+            (root / "broken").mkdir(parents=True)
+            (root / "broken" / "SKILL.md").write_text(
+                "---\nname: broken\nversion: 1.0.0\nmetadata:\n  hermes:\n    related_skills:\n"
+                "      - does-not-exist\n---\n\nbody\n",
+                encoding="utf-8",
+            )
+            manifest_path = repo / "manifest.yaml"
+            original = yaml.safe_dump(
+                {"schema_version": 1, "source_roots": ["packages/demo/skills"], "entries": []},
+                sort_keys=False,
+            )
+            manifest_path.write_text(original, encoding="utf-8")
+
+            result = subprocess.run(
+                [sys.executable, str(checker), "--repo", str(repo), "--manifest", str(manifest_path), "--write"],
+                text=True, capture_output=True, check=False, encoding="utf-8",
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("unknown source skills", result.stderr)
+            self.assertEqual(manifest_path.read_text(encoding="utf-8"), original,
+                             "the manifest must be untouched when the candidate fails validation")
+            self.assertFalse((manifest_path.parent / (manifest_path.name + ".candidate")).exists(),
+                             "no staging artifact may be left behind")
+
     def test_global_github_skills_are_repository_owned(self) -> None:
         expected = {
             "github-auth",

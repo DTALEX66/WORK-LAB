@@ -67,7 +67,7 @@ Lockfile regeneration is destructive: identify exact paths → save a diff → g
 ## 5. Local Windows servers
 
 - After stopping a server, the port may stay in `TIME_WAIT`; verify the listener before restarting: `netstat -ano | grep ':PORT' | grep LISTEN`.
-- **Stale uvicorn/FastAPI child:** killing the wrapper often leaves a detached uvicorn child alive, still serving OLD code (new routes return 422) and possibly holding the runtime/DB lock. Diagnose by PID: `netstat -ano | grep ':8000' | grep LISTEN` then `taskkill /F /PID <pid>` (never `taskkill //PID`). PowerShell one-liner to kill by port + full symptoms in `references/validated-cases.md`.
+- **Stale uvicorn/FastAPI child:** killing the wrapper often leaves a detached uvicorn child alive, still serving OLD code (new routes return 422) and possibly holding the runtime/DB lock. Diagnose by PID: `netstat -ano | grep ':8000' | grep LISTEN`, then confirm the PID still belongs to the process you started and ask it to exit normally first. Forceful termination is a recovery step of last resort, limited to processes this task created, and requires explicit authorization; it must never be used as evidence that native task cancellation works. Full symptoms in `references/validated-cases.md`.
 - Re-verify readiness with a health check + a request against a *newly added* route, never an old screenshot or remembered port.
 
 ## 6. Workflow-assistance deployment boundary
@@ -102,6 +102,7 @@ CRLF-normalized hashes · gh CLI dead credential helper · GitHub API rate limit
 9. Treating managed-root drift as permission to overwrite user customization.
 10. Reading or printing credentials while diagnosing registry/OAuth/proxy/provider symptoms.
 11. Staging `NUL`, `.env`, runtime databases, or task artifacts.
+12. Assuming Python binary wheels behave identically cross-platform: Pillow's Windows and manylinux wheels bundle different lcms builds, so `ImageCms.createProfile("sRGB")` yields different bytes per platform — hard-code the deterministic profile bytes and platform-branch Windows-only paths (`D:\...`, `resvg.exe`) instead of relying on runtime generation or `Path.is_absolute()` (which rejects drive-letter paths on Linux).
 
 ## Verification checklist
 

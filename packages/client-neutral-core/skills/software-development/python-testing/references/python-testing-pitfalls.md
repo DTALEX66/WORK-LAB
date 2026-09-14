@@ -905,3 +905,34 @@ passes because it runs with `--source head` (checks the BLOB, not the tree).
 - When the local run of a gate disagrees with CI's verdict on the SAME
   commit, suspect working-tree vs blob divergence before suspecting the
   committed content.
+
+## §37 Class/enum identity breaks across `spec_from_file_location` module copies
+
+Services loaded with `importlib.util.spec_from_file_location` (no package
+`__init__.py`) re-execute on every load, so the SAME `.py` can hold TWO
+distinct class objects — the provider's copy and the caller's/test's copy.
+`isinstance`/`assertIs`/enum-identity checks compare object identity, so a
+record built from one copy is "not an instance" of the class in the other.
+2026-09 (WORK-LAB memory/security/knowledge gates): two cost test bugs.
+
+- **`isinstance(record, MemoryRecord)` fails on the right shape** because the
+  record came from a different module copy than the one `isinstance` names.
+  Fix: duck-type — check the required attribute/shape, reject only raw-session
+  payloads — instead of the class.
+- **Enum / `assertIs(kind, MemoryKind.KNOWLEDGE)` fails on the object, not the
+  value.** Across copies `K` is a different `Enum` member. Compare `.value`
+  (`assertEqual(kind.value, "knowledge")`), never `is`/`isinstance`.
+- **Reach for module-local constants, not cross-module class introspection.**
+  `ExtensionType._MEMBERS`-style reads from a re-loaded copy can miss or break;
+  mirror the data locally or read it duck-typed so a second load cannot defeat
+  the gate.
+- **Ordering interaction:** when a gate checks BOTH "is this a raw-session
+  payload" and "does this have the record shape", run the raw-session detection
+  FIRST — a `Mapping`/`list` has no `record_id`, so the shape check would hit
+  first and make the raw-session branch unreachable.
+
+Rule: at any spec-loaded service boundary, write cross-object checks as shape /
+value tests, not identity tests; if a gate does `isinstance` on a loaded module's
+class, prove the check still holds when the module is loaded twice. New service
+modules must be self-contained (no `from services.x.y import …` absolute imports,
+which NameError under spec loading) — use duck typing + local constants instead.

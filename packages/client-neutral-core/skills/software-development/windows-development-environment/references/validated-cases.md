@@ -96,7 +96,7 @@ When a FastAPI server is started via a wrapper process (e.g. `python -m app.runt
 - The port still answers, but the answer comes from **stale code**: a route added after the child started returns `422` (the `Literal[...]` path-param validation rejects the new value) while the same request via TestClient against current source returns `200`. The response `workspace=200` can be true while a new sub-route 422s — both are the zombie, not a real code bug.
 - `curl` to a *newly added* asset/route returns an error even though you just added it — this does NOT mean your edit is wrong; it means you are talking to an old process.
 
-Diagnose by PID, not by port memory — find who actually LISTENs and kill that pid (use `taskkill /F /PID`, NOT `taskkill //PID` which Git-Bash mangles into an invalid option):
+Diagnose by PID, not by port memory — find who actually LISTENs, then confirm that pid still belongs to a process this task started. Stop order: ask that process to exit normally first; forceful termination is a **recovery step of last resort**, is limited to processes this task created, and requires explicit authorization. A forceful kill is **never** evidence that native task cancellation works. Once forceful termination is the authorized step (use `taskkill /F /PID`, NOT `taskkill //PID` which Git-Bash mangles into an invalid option):
 
 ```bash
 netstat -ano | grep ':8000' | grep LISTEN          # last column = pid
@@ -105,7 +105,7 @@ sleep 2
 netstat -ano | grep ':8000' | grep LISTEN || echo PORT_FREE
 ```
 
-If `taskkill /F /PID` itself fails (or the pid is a detached child you want to clean without knowing it), kill by port with PowerShell in one line — validated 2026-08-13, and it survives Git-Bash quoting where `cmd //c "taskkill /PID ..."` silently runs the wrong thing:
+If that last-resort step itself fails (or the pid is a detached child you want to clean without knowing it), kill by port with PowerShell in one line — validated 2026-08-13, and it survives Git-Bash quoting where `cmd //c "taskkill /PID ..."` silently runs the wrong thing:
 
 ```bash
 powershell.exe -NoProfile -Command "Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id \$_.OwningProcess -Force }"

@@ -61,6 +61,38 @@
           }
         }
       }
+    },
+    "agnes-3-0-flash": {
+      "display_name": "Agnes AI (apihub.agnes-ai.com)",
+      "observed_as": "active Hermes main-model route on this machine",
+      "models": {
+        "agnes-3.0-flash": {
+          "display_name": "Agnes 3.0 Flash",
+          "requested_model": "agnes-3.0-flash",
+          "resolved_model": "UNKNOWN",
+          "endpoint": "https://apihub.agnes-ai.com/v1",
+          "observed_at": "2026-09-14",
+          "evidence_source": "native readback of %LOCALAPPDATA%\\hermes\\config.yaml (model.default / model.provider / model.base_url; key referenced by env var name only), corroborated by `hermes status` environment block",
+          "context_window": "UNKNOWN",
+          "billing_status": "UNKNOWN",
+          "remaining_quota": "UNKNOWN",
+          "pricing": {
+            "currency": "UNKNOWN",
+            "input_per_million": "UNKNOWN",
+            "output_per_million": "UNKNOWN",
+            "effective_at": "UNKNOWN",
+            "source": "UNKNOWN - no published price observed for this aggregator",
+            "version": "UNKNOWN"
+          },
+          "notes": "Third-party aggregator route selected by the user. Free/credit status is NOT asserted: billing_status and remaining_quota are UNKNOWN, so no FREE label and no 0 price are recorded. The resolved model behind the alias was not verifiable."
+        }
+      }
+    },
+    "tokenrouter": {
+      "display_name": "TokenRouter",
+      "observed_as": "configured but no route was observed pointing at it during this task",
+      "models": {},
+      "notes": "Declared in Hermes config.yaml under `providers` alongside the active route. Not observed carrying traffic for the 2026-09-14 package-1 work, so it is neither marked failed nor removed; quota and pricing are UNKNOWN."
     }
   }
 }

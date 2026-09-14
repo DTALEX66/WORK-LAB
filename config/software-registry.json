@@ -7,7 +7,7 @@
                          "softwareId":  "hermes",
                          "displayName":  "Hermes",
                          "category":  "agent-harness",
-                         "officialRepository":  "anthropics/hermes",
+                         "officialRepository":  "NousResearch/hermes-agent",
                          "officialSource":  "desktop-shortcut",
                          "managedAs":  "official-baseline + user-config overlay",
                          "adapterId":  "hermes",

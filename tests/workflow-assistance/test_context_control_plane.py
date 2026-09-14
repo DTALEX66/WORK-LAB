@@ -11,8 +11,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts/workflow"))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "services" / "receipts"))
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
 
 from context_control_plane import ContextControlPlane, CLIENT_ADAPTATION
 from context_bundle import ContextBundle, DRIFT_PRESERVE

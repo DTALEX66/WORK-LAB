@@ -76,12 +76,51 @@ def related_names(data: dict[str, Any]) -> list[str]:
     return values
 
 
+def load_source_roots(repo_root: Path, manifest: dict) -> list[Path]:
+    """Resolve the skill roots DECLARED by the manifest instead of guessing one.
+
+    The earlier implementation hard-coded ``repo_root / "skills"``, a path that
+    does not exist in this repository. Discovery therefore always found zero
+    skills ("skills=0") and the coverage check could never fail, which made a
+    passing gate meaningless for source-skill coverage.
+    """
+
+    declared = manifest.get("source_roots") if isinstance(manifest, dict) else None
+    if not isinstance(declared, list) or not declared:
+        raise ValueError("skill provenance manifest must declare a non-empty source_roots list")
+    if not all(isinstance(item, str) and item.strip() for item in declared):
+        raise ValueError("skill provenance manifest source_roots must be non-empty strings")
+    root = repo_root.resolve()
+    resolved: list[Path] = []
+    for relative in declared:
+        path = (repo_root / relative).resolve()
+        if path != root and root not in path.parents:
+            raise ValueError(f"declared source root escapes the repository: {relative}")
+        if not path.is_dir():
+            raise ValueError(f"declared source root does not exist: {relative}")
+        resolved.append(path)
+    return resolved
+
+
+def discover_roots(roots: list[Path]) -> dict[str, tuple[Path, dict[str, Any]]]:
+    """Discover SKILL.md across every declared root, rejecting cross-root duplicates."""
+
+    combined: dict[str, tuple[Path, dict[str, Any]]] = {}
+    for root in roots:
+        for name, item in discover(root).items():
+            if name in combined:
+                raise ValueError(f"duplicate skill name across source roots: {name} ({item[0]})")
+            combined[name] = item
+    return combined
+
+
 def validate(repo_root: Path, manifest_path: Path, live_root: Path | None = None) -> int:
-    source_root = repo_root / "skills"
-    source = discover(source_root)
     manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
     if not isinstance(manifest, dict) or manifest.get("schema_version") != 1:
         raise ValueError("skill provenance manifest schema_version must be 1")
+    source = discover_roots(load_source_roots(repo_root, manifest))
+    if not source:
+        raise ValueError("zero source skills discovered under the declared source_roots; expected a non-empty set")
     entries = manifest.get("entries")
     if not isinstance(entries, list):
         raise ValueError("skill provenance manifest entries must be a list")
@@ -133,32 +172,98 @@ def validate(repo_root: Path, manifest_path: Path, live_root: Path | None = None
     return 0
 
 
-def build_manifest(repo_root: Path, live_root: Path | None = None) -> dict[str, Any]:
-    source = discover(repo_root / "skills")
+def build_manifest(
+    repo_root: Path,
+    manifest_path: Path,
+    live_root: Path | None = None,
+    *,
+    allow_shrink: bool = False,
+) -> dict[str, Any]:
+    """Rebuild the manifest, refusing the destructive cases.
+
+    Refuses when the declared roots are missing/empty, when discovery yields zero
+    skills, or when the entry count would drop, so `--write` can never silently
+    empty the inventory.
+
+    A refresh recomputes HASHES ONLY. An earlier revision also reset
+    ``trust``/``enabled``/``permission``/``profile_scope`` to defaults and rewrote
+    ``live`` to the source path, which silently promoted a quarantined entry to
+    enabled and broke a genuine live mapping (independent-review R3). Existing
+    human decisions and real ``live`` targets are therefore carried across
+    verbatim, and a newly discovered skill enters as pending review instead of
+    being enabled.
+    """
+
+    existing: dict[str, Any] = {}
+    if manifest_path.is_file():
+        existing = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
+        if not isinstance(existing, dict) or existing.get("schema_version") != 1:
+            raise ValueError("refusing to rewrite a manifest whose schema_version is not 1")
+    roots = load_source_roots(repo_root, existing)
+    source = discover_roots(roots)
+    if not source:
+        raise ValueError("refusing to write a manifest with zero discovered skills")
+    previous_entries = [item for item in (existing.get("entries") or []) if isinstance(item, dict)]
+    previous = len(previous_entries)
+    if previous and len(source) < previous and not allow_shrink:
+        raise ValueError(
+            f"refusing to shrink the manifest: {previous} -> {len(source)} entries (pass --allow-shrink to override)"
+        )
+
+    # Carried across verbatim: everything that records a human decision or a real
+    # deployment target. Only hashes and the version string are refreshed.
+    carried_fields = ("trust", "enabled", "permission", "profile_scope", "live", "live_sha256")
+    carried: dict[str, dict[str, Any]] = {}
+    for item in previous_entries:
+        name = item.get("name")
+        if isinstance(name, str):
+            carried[name] = {key: item[key] for key in carried_fields if key in item}
+
+    root_rel = repo_root / "skills"
     entries: list[dict[str, Any]] = []
     for name, (path, data) in sorted(source.items()):
         rel = path.relative_to(repo_root).as_posix()
-        live_rel = f"skills/{path.relative_to(repo_root / 'skills').as_posix()}"
-        entry: dict[str, Any] = {
-            "name": name,
-            "source": rel,
-            "live": live_rel,
-            "source_sha256": sha256(path),
-            "version": str(data["version"]),
-            "trust": "repository-controlled",
-            "enabled": True,
-            "permission": "read-write-via-explicit-wrapper" if name == "project-data-boundary" else "skill-guidance",
-            "profile_scope": "default",
-        }
+        previous_entry = carried.get(name)
+        if previous_entry is None:
+            # Newly discovered: pending review, NOT enabled.
+            try:
+                home_relative = "skills/" + path.relative_to(roots[0]).as_posix()
+            except ValueError:  # pragma: no cover - defensive
+                home_relative = rel
+            entry: dict[str, Any] = {
+                "name": name,
+                "source": rel,
+                "live": home_relative,
+                "source_sha256": sha256(path),
+                "version": str(data["version"]),
+                "trust": "pending-review",
+                "enabled": False,
+                "permission": "observe-only",
+                "profile_scope": "default",
+            }
+        else:
+            entry = {
+                "name": name,
+                "source": rel,
+                "source_sha256": sha256(path),
+                "version": str(data["version"]),
+            }
+            for key, value in previous_entry.items():
+                entry[key] = value
         if live_root is not None:
+            live_rel = str(entry.get("live") or "")
             live_path = live_root / live_rel
             if not live_path.is_file():
                 raise ValueError(f"cannot build manifest: live skill missing: {live_path}")
             entry["live_sha256"] = sha256(live_path)
-        else:
-            entry["live_sha256"] = "pending-live-sync"
         entries.append(entry)
-    return {"schema_version": 1, "profile_scope": "default", "entries": entries}
+    declared_roots = [str(item) for item in existing.get("source_roots") or []]
+    return {
+        "schema_version": 1,
+        "profile_scope": str(existing.get("profile_scope") or "default"),
+        "source_roots": declared_roots,
+        "entries": entries,
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -167,12 +272,28 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--live-root", type=Path)
     parser.add_argument("--write", action="store_true")
+    parser.add_argument(
+        "--allow-shrink",
+        action="store_true",
+        help="permit a manifest rewrite that drops entries (refused by default)",
+    )
     args = parser.parse_args(argv)
     repo = args.repo.resolve()
     live = args.live_root.resolve() if args.live_root else None
     if args.write:
+        built = build_manifest(repo, args.manifest, live, allow_shrink=args.allow_shrink)
         args.manifest.parent.mkdir(parents=True, exist_ok=True)
-        args.manifest.write_text(yaml.safe_dump(build_manifest(repo, live), allow_unicode=True, sort_keys=False), encoding="utf-8")
+        # Validate the COMPLETE candidate before touching the real manifest: an
+        # earlier revision wrote first and validated afterwards, so a failing
+        # validation could leave a changed artifact behind (R3).
+        staging = args.manifest.with_name(args.manifest.name + ".candidate")
+        try:
+            staging.write_text(yaml.safe_dump(built, allow_unicode=True, sort_keys=False), encoding="utf-8")
+            validate(repo, staging, live)
+        except BaseException:
+            staging.unlink(missing_ok=True)
+            raise
+        os.replace(staging, args.manifest)
     return validate(repo, args.manifest, live)
 
 

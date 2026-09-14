@@ -58,7 +58,30 @@ def redact(text: str) -> str:
     return text
 
 
+_MANAGED_LAUNCH_POLICY: list = []
+
+
+def _managed_launch_policy():
+    """Load the A-3 launch policy once, by path, so it resolves in any context."""
+
+    if not _MANAGED_LAUNCH_POLICY:
+        import importlib.util
+
+        path = Path(__file__).resolve().parent / "managed_launch_policy.py"
+        spec = importlib.util.spec_from_file_location("managed_launch_policy", path)
+        if spec is None or spec.loader is None:  # pragma: no cover - environment guard
+            raise SystemExit(f"cannot load managed_launch_policy: {path}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _MANAGED_LAUNCH_POLICY.append(module)
+    return _MANAGED_LAUNCH_POLICY[0]
+
+
 def run(command: list[str], *, timeout: int = 30, cwd: Path | None = None) -> tuple[int, str]:
+    # A-3: managed launches are policy-checked before the process is created, so
+    # an unapproved route (e.g. --ignore-user-config reaching a built-in default
+    # provider) cannot be taken by any doctor probe.
+    _managed_launch_policy().assert_managed_argv(command, what="hermes_workflow_doctor")
     try:
         completed = subprocess.run(
             command,

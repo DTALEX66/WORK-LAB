@@ -403,7 +403,7 @@ def validate(payload: dict[str, Any]) -> str | None:
         if external_spill:
             return (
                 "child command bypasses project-local cache/temp redirection; "
-                f"move the output under .hermes/task-runtime instead of {external_spill}"
+                f"move the output under .project-local/runs instead of {external_spill}"
             )
         external_unc = external_raw_unc(child_source, root)
         if external_unc:

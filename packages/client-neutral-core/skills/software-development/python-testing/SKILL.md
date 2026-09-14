@@ -69,6 +69,17 @@ Symptom → one-line cause → full write-up in `references/python-testing-pitfa
 | ONNX output flattened to `unknown` | Double-softmax on already-probabilistic output | §34 |
 | WIP fixture re-dirties with CRLF/LF | Test opens it in default text mode | §35 |
 | Convention gate flags CRLF that's blob-clean | Working-tree vs blob divergence | §36 |
+| `isinstance`/`assertIs` on a class or enum loaded via `spec_from_file_location` passes locally, breaks in CI (or vice-versa) | Two copies of the same module hold two distinct class objects | §37 |
+
+## §37 — Class/enum identity breaks across `spec_from_file_location` module copies
+
+Services loaded with `importlib.util.spec_from_file_location` (no package `__init__`) get re-executed on every load, so the SAME `.py` can hold two distinct class objects — the provider copy and the caller/test copy. Consequences that cost test bugs:
+
+- **`isinstance(obj, MemoryRecord)` fails even when the shape is right** — the record was built from a different module copy than the one `isinstance` was checked against. Fix: duck-type — check the required attribute/shape, not the class.
+- **Enum / `assertIs` comparisons fail on the object identity, not the value.** `assertIs(kind, MemoryKind.KNOWLEDGE)` is a different `Enum` member across copies. Compare `.value` (`assertEqual(kind.value, "knowledge")`), never `is`/`isinstance`.
+- **Prefer local constants over cross-module class introspection** (e.g. `ExtensionType._MEMBERS`): reach for the same data via a module-local mirror or duck-typed read so a re-loaded copy can't break the gate.
+
+Rule: in any spec-loaded service boundary, write cross-object checks as shape/value tests, not identity tests; if a gate does `isinstance` on a loaded module's class, prove the check still holds when the module is loaded twice.
 
 ## Verification Checklist
 

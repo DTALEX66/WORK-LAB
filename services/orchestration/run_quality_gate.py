@@ -495,9 +495,11 @@ def gate_tauri_readonly_shell() -> int:
     statically (endpoint validation source + CSP config).
     """
     errors: list[str] = []
-    # Tauri shell lives under the MONOREPO root (apps/observer), not the
-    # workflow-assistance module root.
-    repo_root = ROOT.parent.parent
+    # The Tauri shell lives at apps/observer/src-tauri under the repository root.
+    # ROOT already IS that root; the previous ROOT.parent.parent was written when
+    # ROOT meant the workflow-assistance module root, and after the directory
+    # migration it resolved to the parent of the repository.
+    repo_root = ROOT
     tauri_root = repo_root / "apps" / "observer" / "src-tauri"
     lib = tauri_root / "src" / "lib.rs"
     if lib.is_file():
@@ -536,9 +538,13 @@ def gate_work_lab_os_canary() -> int:
 
     P0-7: the canary runner's exit code IS the gate verdict — a failing
     self-canary must fail the gate (no more print-FAIL-but-exit-0).
+
+    The runner lives under services/orchestration (it moved in the directory
+    migration) and imports from several module roots, so the gate supplies the
+    project's standard module PYTHONPATH rather than a single directory.
     """
-    return run_python([str(ROOT / "packages" / "client-neutral-core" / "scripts" / "canary_runner.py")],
-                      env_updates={"PYTHONPATH": str(ROOT / "packages" / "client-neutral-core" / "scripts")})
+    return run_python([str(ROOT / "services" / "orchestration" / "canary_runner.py")],
+                      env_updates={"PYTHONPATH": MODULE_PYTHONPATH})
 
 
 def gate_exact_sha_ci() -> int:

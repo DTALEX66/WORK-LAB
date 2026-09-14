@@ -118,6 +118,39 @@
    "adapter": "hermes"
   },
   {
+   "path": "hermes.managed_asset_units",
+   "layer": "USER_OVERLAY",
+   "mode": "MANAGE",
+   "adapter": "hermes",
+   "scope": "Q3: the exclusive managed units are exactly the entries declared in config/managed-config-schema.yaml#global_workflow (owned_asset_roots -> <HERMES_HOME>/skills/**, owned_binary_paths -> <HERMES_HOME>/bin/**, owned_file_mappings -> SOUL.md) plus .env.template. WORK-LAB owns these units and publishes them only through integrations/executors/hermes/sync_hermes_workflow_assets.py. Nothing else under the Hermes home is managed.",
+   "safety": "high",
+   "secret": false,
+   "merge": "replace",
+   "compatibility": "compatible"
+  },
+  {
+   "path": "hermes.managed_asset_units.native_curator_output",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "hermes",
+   "scope": "Q3: content that a NATIVE component (Hermes skill curator) writes into a managed unit is not owned by WORK-LAB and is OBSERVE. The portable sync must refuse to overwrite it: no automatic folding into the repository, no automatic deletion, no automatic promotion. A three-way comparison (last published baseline x current live x candidate) decides, and any live state the tool did not itself publish is refused.",
+   "safety": "critical",
+   "secret": false,
+   "merge": "replace",
+   "compatibility": "compatible"
+  },
+  {
+   "path": "hermes.managed_asset_units.conflict_resolution",
+   "layer": "USER_OVERLAY",
+   "mode": "MANAGE",
+   "adapter": "hermes",
+   "scope": "Q3: conflicts are resolved by an operator, never by the tool. On MANAGED_ASSET_LIVE_CHANGE_REFUSED the operator inspects the target and then either (a) re-runs with --adopt-live-baseline to accept the current live content as the new baseline, (b) re-runs with --suspend <target> to stop publishing that unit while the native writer is active, or (c) first promotes the reviewed content into the repository and publishes. Publishing any of these is recorded in HERMES_HOME/.workflow-assistance-baseline.json.",
+   "safety": "high",
+   "secret": false,
+   "merge": "replace",
+   "compatibility": "compatible"
+  },
+  {
    "path": "project.AGENTS",
    "layer": "PROJECT_OVERLAY",
    "mode": "OBSERVE",
