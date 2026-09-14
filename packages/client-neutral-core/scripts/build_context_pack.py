@@ -82,15 +82,22 @@ SECRET_PATTERNS = (
 
 
 def run_git(root: Path, *args: str, check: bool = False) -> str:
+    # git writes UTF-8, so the capture must say so. Relying on ``text=True`` alone
+    # uses the locale codec (GBK on this machine), and then any commit message,
+    # branch name or path containing a non-GBK character (an em dash is enough)
+    # kills the reader thread: the decode error leaves ``stdout`` as None and the
+    # failure surfaces far away as ``AttributeError: 'NoneType' ... strip``.
     result = subprocess.run(
         ["git", *args],
         cwd=root,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
     )
     if check and result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or result.stdout.strip())
-    return redact(result.stdout.strip())
+        raise RuntimeError((result.stderr or "").strip() or (result.stdout or "").strip())
+    return redact((result.stdout or "").strip())
 
 
 def git_root(start: Path) -> Path:
@@ -98,9 +105,11 @@ def git_root(start: Path) -> Path:
         ["git", "rev-parse", "--show-toplevel"],
         cwd=start,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
     )
-    if result.returncode != 0:
+    if result.returncode != 0 or not result.stdout:
         raise SystemExit("build_context_pack: not inside a Git repository")
     return Path(result.stdout.strip()).resolve()
 
@@ -162,6 +171,8 @@ def require_ignored_output(root: Path, output: Path) -> None:
         ["git", "check-ignore", "-q", relative],
         cwd=root,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
     )
     if probe.returncode != 0:
