@@ -1,12 +1,12 @@
 # WORK-LAB execution rules
 
-> 全局执行标准（跨软件跨项目）：见 `00-governance/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
-> 经验教训铁律（核实优先/治理最小化/官方优先）：见 `00-governance/LESSONS_LEARNED.md`。
+> 全局执行标准（跨软件跨项目）：见 `docs/decisions/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
+> 经验教训铁律（核实优先/治理最小化/官方优先）：见 `docs/decisions/LESSONS_LEARNED.md`。
 
 ## Scope
 
 This is a single-root monorepo. Allowed active module roots are exactly:
-`10-workflow/workflow-assistance` and `30-observer/work-lab-observer`. The
+`10-workflow/workflow-assistance` and `apps/observer` (work-lab-observer, read-only projection). The
 managed client workflow is Hermes · Codex · CC Switch · GitHub · Open Design ·
 OpenHuman, plus any future AI software through the same Adapter contract.
 DSH (DeepSeek Harness / DSH Desktop 2.0.4 community desktop) is a managed agent runtime client
@@ -28,7 +28,7 @@ with `DTALEX66/DESIGN-LAB` and is not managed here. Design **capability** (model
 specs, design systems, quality gates, editable handoff) belongs to the
 `DTALEX66/DESIGN-LAB` project and is **neither collected nor managed here**
 (`IGNORE`). Field-level ownership lives in
-`10-workflow/workflow-assistance/config/config-ownership.json` (adapter
+`config/config-ownership.json` (adapter
 `open-design`, external project `design-lab-project`).
 
 ## Ownership
@@ -46,10 +46,10 @@ per-operation user authorization. All content this project produces — builds,
 caches, temp files, evidence, downloads, generated artifacts — stays locked
 inside the project Git root: build/cache/temp roots live under
 `.project-local/runs/` (TMP, npm/uv/pip caches, node_modules), evidence under
-`.project-local/artifacts/` or ignored `80-evidence/`; nothing spills to user
+`.project-local/artifacts/` or `reports/`; nothing spills to user
 directories, other projects, or the shared library unless explicitly
 authorized. Any spill is traceable, locatable, cleanable and migratable
-(`00-governance/project-data-boundary.json`). Never use destructive
+(`.project/governance/project-data-boundary.json`). Never use destructive
 reset/clean/force-push operations.
 
 ## Managed global configuration (Hermes)
@@ -78,7 +78,7 @@ fails the aggregate gate.
 
 `10-workflow/workflow-assistance` is the active owner of workflow configuration,
 Task Ledger, Telemetry Ledger, sidecar, adapters, and delivery gates.
-`30-observer/work-lab-observer` is a strict read-only projection: it may read
+`apps/observer` (work-lab-observer) is a strict read-only projection: it may read
 Workflow-owned projections but must not execute, approve, retry, apply, rollback,
 change task state, or write the Telemetry Ledger.
 

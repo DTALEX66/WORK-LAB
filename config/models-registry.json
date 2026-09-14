@@ -13,7 +13,7 @@
           "pricing": {
             "currency": "USD",
             "input_per_million": 0.27,
-            "output_per_million": 1.10,
+            "output_per_million": 1.1,
             "effective_at": "2026-08-26",
             "source": "deepseek.com/pricing",
             "version": "2026-08-26"
@@ -25,7 +25,7 @@
           "pricing": {
             "currency": "USD",
             "input_per_million": 0.27,
-            "output_per_million": 1.10,
+            "output_per_million": 1.1,
             "effective_at": "2026-08-26",
             "source": "deepseek.com/pricing",
             "version": "2026-08-26"
@@ -93,6 +93,84 @@
       "observed_as": "configured but no route was observed pointing at it during this task",
       "models": {},
       "notes": "Declared in Hermes config.yaml under `providers` alongside the active route. Not observed carrying traffic for the 2026-09-14 package-1 work, so it is neither marked failed nor removed; quota and pricing are UNKNOWN."
+    },
+    "openai-codex": {
+      "display_name": "OpenAI (Codex CLI / Desktop)",
+      "observed_as": "native Codex model-provider route on this machine (model_provider=custom, requires_openai_auth=true, no base_url override = native OpenAI direct; CC-Switch proxy retired 2026-08-20)",
+      "observed_at": "2026-09-15",
+      "source": "LOCAL OBSERVATION - C:/Users/ALEX/.codex/models_cache.json (client_version 0.154.0, cache fetched_at 2026-09-14T13:08:07Z) + ~/.codex/config.toml live readback",
+      "fact_scope": "Point-in-time client cache observation, NOT a permanent official spec. Re-verify against the official model page and client cache before relying on it; fields not present in the cache are UNKNOWN, not zero.",
+      "note_live_change": "config.toml `model` switched gpt-5.3-codex-spark -> gpt-6-astra on 2026-09-15 (user-authorized, Q1 decision); model_reasoning_effort=high preserved; provider/billing/auth unchanged. Local change NOT committed/pushed (Q8: handoff bound to worktree diff fingerprint).",
+      "models": {
+        "gpt-6-astra": {
+          "display_name": "GPT-6-Astra",
+          "cache_description": "Our most capable model for complex, demanding work.",
+          "visibility": "list",
+          "supported_in_api": true,
+          "context_window": 272000,
+          "max_context_window": 872000,
+          "effective_context_window_percent": 95,
+          "report_default_reasoning_level": "medium (REPORT METADATA from cache; the writable Codex config key is model_reasoning_effort - do not copy default_reasoning_level into config.toml)",
+          "supported_reasoning_levels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+            "ultra"
+          ],
+          "tool_mode": "code_mode_only",
+          "shell_type": "unified_exec",
+          "input_modalities": [
+            "text",
+            "image"
+          ],
+          "service_tiers": [
+            {
+              "id": "priority",
+              "name": "Fast",
+              "description": "2x speed, increased usage"
+            }
+          ],
+          "supports_reasoning_summary_parameter": "absent in cache (not asserted false)",
+          "billing_status": "UNKNOWN (native OpenAI account billing; no per-task price observed)",
+          "pricing": {
+            "currency": "UNKNOWN",
+            "input_per_million": "UNKNOWN",
+            "output_per_million": "UNKNOWN",
+            "effective_at": "UNKNOWN",
+            "source": "UNKNOWN - not published in client cache",
+            "version": "UNKNOWN"
+          },
+          "notes": "Cache observation 2026-09-14/15. Official default reasoning is medium; user keeps effort=high (astra supports high - valid, no downgrade)."
+        },
+        "gpt-5.3-codex-spark": {
+          "display_name": "GPT-5.3-Codex-Spark",
+          "cache_description": "Ultra-fast coding model.",
+          "visibility": "list",
+          "supported_in_api": false,
+          "context_window": 128000,
+          "max_context_window": 128000,
+          "effective_context_window_percent": 95,
+          "report_default_reasoning_level": "high",
+          "tool_mode": null,
+          "shell_type": "unified_exec",
+          "input_modalities": [
+            "text"
+          ],
+          "service_tiers": [],
+          "billing_status": "UNKNOWN",
+          "pricing": {
+            "currency": "UNKNOWN",
+            "input_per_million": "UNKNOWN",
+            "output_per_million": "UNKNOWN",
+            "effective_at": "UNKNOWN",
+            "source": "UNKNOWN",
+            "version": "UNKNOWN"
+          },
+          "notes": "Former live model; retained for diff history. supported_in_api=false means it is a client-side model, not callable through the API."
+        }
+      }
     }
   }
 }
