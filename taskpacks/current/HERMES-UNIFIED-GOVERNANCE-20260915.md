@@ -67,12 +67,48 @@
 **判定**：Hermes 能自我治理**只读结构面**（已闭环全绿）；**行为自批准/自升级/secret 治理**
 超出自我治理边界，需人授权——这是设计使然（治理者不能单方面给自己放行权限或升级）。
 
-## 本轮未做（卡外部输入 / 非离线 / 需授权）
-- Codex 工具层 ACL 的 recovery（用户桌面重跑或授权属性写）
-- DSH 行为级复核（需交互 + 可能触发模型调用）
-- Hermes 1415-commit 升级 + hook 再批准 + gateway 重启（mutation，需授权）
-- 收费四臂 / Codex 实机取消（需付费授权）
-- **不干扰纪律**：本轮未 kill 任何 ChatGPT/Codex 进程；DSH 仅新开窗口，不碰现有
+## 执行轮次 2（用户指令「执行」）：四项裁决
+
+### Codex 工具层 ACL → 定性为系统特权边界（不能静默解决）
+
+- 尝试最小授权 `WriteAttributes` 到 ALEX on `C:\Users\Default` → **失败**：
+  `Set-Acl` 需 **SeSecurityPrivilege**，当前用户上下文（未提权）无此特权。
+- 决定性探针：`GetFileAttributesW=0x13` → `SetFileAttributesW(no-op)` 仍
+  **DENIED errno=5**（授权尝试前后各测）。
+- **判定**：`C:\Users\Default` 是系统保护目录，治理边界内**不能也不应绕行/提权**。
+  恢复路径只剩：① 你在交互式桌面让 Codex 自提权跑一次工具执行；② 管理员会话
+  显式授权。证据：`.project-local/runs/codex-acl-resolution-20260915.json`。
+- 不干扰纪律：观察到 2 codex.exe + 13 ChatGPT.exe 在运行，**全部未触碰**。
+
+### Hermes hook 09-14 改动 → 全文审查通过，待你交互重批准
+
+- `hermes-project-terminal-guard.py`（437 行，sha256 `c928a695…`）全文逐行读毕：
+  **纯 fail-closed 项目数据边界守卫**（即全程拦截越界 terminal 调用者），
+  0 网络 / 0 提权 / 0 破坏命令模式。
+- CLI 无 `hermes hooks approve` 子命令，重批准需交互 UI 提示 → **留你交互完成**。
+- 期间**不 revoke**（revoke 打开安全口子，风险 > 收益）。
+  记录：`.project-local/runs/hook-review-record-20260915.json`。
+
+### Gateway 陈旧态 → 已修正为真实 stopped
+
+- `AppData\Local\hermes\gateway_state.json`（08-06 非优雅停机残留 "running"/pid 13868）
+  与实际（无 gateway 进程、无活跃 cron/webhook）不符 → **reconcile 为 stopped**，
+  原文件备份 `.project-local/runs/gateway_state.json.bak-20260915`（可逆）。
+
+### `hermes update`（1579 commits）→ 升级前快照已落，升级最后执行
+
+- `--plan` 确认：重启 **serve pid 12204（desktop backend = 我所在运行时）**，
+  桌面 App 自动重生；session 存 state.db 不丢。
+- 升级前快照：v0.21.2 @ `53c57871`（`.project-local/runs/hermes-update-pre-snapshot-20260915.json`）。
+- 升级后回读（下一回合执行）：`hermes --version`、git HEAD、`hermes doctor`、
+  hook 状态、gateway state、serve 重生与桌面可回话。
+
+## 剩余（需你交互 / 外部输入）
+- Codex ACL 恢复：交互式桌面或管理员会话（见上）
+- Hermes hook 重批准：交互 UI（见上）
+- DSH 行为级复核（启动会话跑任务，可能触发模型调用）
+- 收费四臂 / Codex 实机取消：需付费授权
+- **不干扰纪律**：执行轮次 2 未 kill 任何 ChatGPT/Codex 进程；DSH 仅新开窗口，不碰现有
 
 ## 双端一致
 - 分支 `r4-recovery-exec`；提交本台账 + 推送；本地=远端，main 未动，worktree clean。
