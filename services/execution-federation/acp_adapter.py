@@ -172,7 +172,7 @@ class ExecutorAcpAdapter:
             return ExecResult(Op.NEW, self.executor, ok=False,
                               status="NOT_LAUNCHABLE",
                               notes=[f"{self.executor} is not launchable in this environment"])
-        return ExecResult(Op.NEW, self.executor, ok=True,
+        return ExecResult(Op.NEW, self.executor, ok=False, status="NOT_IMPLEMENTED",
                           payload={"project_id": project_id},
                           universal_session_id=None)
 
@@ -182,7 +182,7 @@ class ExecutorAcpAdapter:
                               status="NOT_SUPPORTED",
                               payload={"session_id": session_id},
                               notes=[f"{self.executor} does not support native resume"])
-        return ExecResult(Op.RESUME, self.executor, ok=True,
+        return ExecResult(Op.RESUME, self.executor, ok=False, status="NOT_IMPLEMENTED",
                           payload={"session_id": session_id})
 
     def prompt(self, session_id: str, text: str) -> ExecResult:
@@ -190,7 +190,7 @@ class ExecutorAcpAdapter:
             return ExecResult(Op.PROMPT, self.executor, ok=False,
                               status="NOT_SUPPORTED",
                               notes=[f"{self.executor} prompt not yet wired"])
-        return ExecResult(Op.PROMPT, self.executor, ok=True,
+        return ExecResult(Op.PROMPT, self.executor, ok=False, status="NOT_IMPLEMENTED",
                           payload={"session_id": session_id, "chars": len(text)})
 
     def cancel(self, session_id: str) -> ExecResult:
@@ -198,7 +198,7 @@ class ExecutorAcpAdapter:
             return ExecResult(Op.CANCEL, self.executor, ok=False,
                               status="NOT_SUPPORTED",
                               notes=[f"{self.executor} cancel not yet wired"])
-        return ExecResult(Op.CANCEL, self.executor, ok=True,
+        return ExecResult(Op.CANCEL, self.executor, ok=False, status="NOT_IMPLEMENTED",
                           payload={"session_id": session_id})
 
     def fork(self, session_id: str) -> ExecResult:
@@ -206,7 +206,7 @@ class ExecutorAcpAdapter:
             return ExecResult(Op.FORK, self.executor, ok=False,
                               status="NOT_SUPPORTED",
                               notes=[f"{self.executor} fork not yet wired"])
-        return ExecResult(Op.FORK, self.executor, ok=True,
+        return ExecResult(Op.FORK, self.executor, ok=False, status="NOT_IMPLEMENTED",
                           payload={"source": session_id})
 
     # -- lifecycle / helpers ---------------------------------------------

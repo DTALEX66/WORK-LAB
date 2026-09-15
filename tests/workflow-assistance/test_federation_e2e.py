@@ -42,10 +42,10 @@ def test_e2e004_config_loop():
     d = ccp.diff(before, after)
     assert d["changeCount"] == 1
     assert ccp.apply_plan(d, approved=False)["status"] == "WAITING_APPROVAL"
-    assert ccp.apply_plan(d, approved=True)["status"] == "APPLIED"
+    assert ccp.apply_plan(d, approved=True)["status"] == "UNSUPPORTED_APPLY"
     assert ccp.readback_matches({"x": 1}, {"x": 1})
     assert ccp.detect_drift({"x": 1}, {"x": 2})["status"] == "DRIFT"
-    assert ccp.rollback({"x": 2}, {"x": 1})["status"] == "ROLLED_BACK"
+    assert ccp.rollback({"x": 2}, {"x": 1})["status"] == "ROLLBACK_REQUIRED"
 
 
 # --- failure paths ---

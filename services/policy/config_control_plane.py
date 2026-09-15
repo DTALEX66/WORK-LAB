@@ -91,23 +91,25 @@ class ConfigControlPlane:
     def apply_plan(self, diff: dict[str, Any], *, approved: bool = False) -> dict[str, Any]:
         if not approved:
             return {"status": "WAITING_APPROVAL", "changeCount": diff["changeCount"]}
-        return {"status": "APPLIED", "changeCount": diff["changeCount"]}
+        return {"status": "UNSUPPORTED_APPLY", "changeCount": diff["changeCount"],
+                "reason": "a plan is not a native write; use an adapter transaction"}
 
     def detect_drift(self, effective: dict[str, Any], readback: dict[str, Any]) -> dict[str, Any]:
         drifted = {k: {"effective": effective.get(k), "readback": readback.get(k)} for k in set(effective) | set(readback) if effective.get(k) != readback.get(k)}
         return {"drift": drifted, "driftCount": len(drifted), "status": "DRIFT" if drifted else "CLEAN"}
 
     def rollback(self, target: dict[str, Any], rollback_to: dict[str, Any]) -> dict[str, Any]:
-        return {"status": "ROLLED_BACK", "restored": rollback_to == target}
+        return {"status": "ROLLBACK_REQUIRED", "restored": False,
+                "reason": "no native rollback operation was performed"}
 
     # --- WLR-330: real config transaction (Discover -> Effective -> Diff -> Backup
     # -> Approval -> Apply -> Readback -> Commit or Rollback) ---
     def transaction(self, software_id: str, diff: dict[str, Any], *, approved: bool = False,
                     backup_dir: str | None = None, apply_fn=None, readback_fn=None,
-                    idempotency_key: str | None = None) -> dict[str, Any]:
-        """A true transaction: every stage has a digest, idempotency key and a
-        recovery point. APPLIED is only produced when native readback matches.
-        Unapproved never writes live.
+                    idempotency_key: str | None = None, rollback_fn=None) -> dict[str, Any]:
+        """Adapter callback transaction; this is not durable transaction storage.
+        The idempotency key is a receipt identifier, not replay prevention.
+        Rollback requires a callback and a matching readback. Unapproved never writes live.
 
         - idempotency_key: caller-supplied stable operation identity
           (NF-04/A03: the key must NOT embed wall-clock time — replaying the
@@ -151,7 +153,20 @@ class ConfigControlPlane:
             drift = self.detect_drift(apply_result if isinstance(apply_result, dict) else {}, readback)
             if drift["status"] == "DRIFT":
                 # rollback to backup
-                rollback_result = self.rollback(apply_result, effective_before)
-                return {"status": "ROLLED_BACK", "idempotencyKey": idem, "drift": drift, "rollback": rollback_result, "backupRef": str(backup_ref) if backup_ref else None}
+                if rollback_fn is None:
+                    return {"status": "ROLLBACK_REQUIRED", "idempotencyKey": idem,
+                            "drift": drift, "restored": False,
+                            "backupRef": str(backup_ref) if backup_ref else None}
+                try:
+                    rollback_fn(dict(effective_before))
+                    restored = readback_fn() == effective_before
+                except Exception as exc:
+                    # Do not include exception messages: an adapter may embed
+                    # private config values in them.
+                    return {"status": "ROLLBACK_FAILED", "idempotencyKey": idem,
+                            "restored": False, "errorType": type(exc).__name__}
+                return {"status": "ROLLED_BACK" if restored else "ROLLBACK_FAILED",
+                        "idempotencyKey": idem, "drift": drift, "restored": restored,
+                        "backupRef": str(backup_ref) if backup_ref else None}
             return {"status": "COMMITTED", "idempotencyKey": idem, "backupRef": str(backup_ref) if backup_ref else None, "receipt": idem}
         return {"status": "APPLIED_NO_READBACK", "idempotencyKey": idem, "backupRef": str(backup_ref) if backup_ref else None}

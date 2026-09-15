@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts' / 'workflow'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'services' / 'policy'))
 from config_control_plane import ConfigControlPlane, SoftwareRegistration
 
 def test_unapproved_never_writes():
@@ -16,7 +16,7 @@ def test_apply_readback_commit():
     ccp.set_layer('official_baseline', {'model': 'm1'})
     d = ccp.diff({'model': 'm1'}, {'model': 'm2'})
     r = ccp.transaction('hermes', d, approved=True,
-        backup_dir=str(Path(__file__).resolve().parents[2] / 'config' / '.backups'),
+        backup_dir=str(Path(__file__).resolve().parents[2] / '.project-local' / 'runs' / 'config-transaction-tests'),
         apply_fn=lambda before: {'model': 'm2'},
         readback_fn=lambda: {'model': 'm2'})
     assert r['status'] == 'COMMITTED', r
@@ -27,10 +27,10 @@ def test_drift_rolls_back():
     ccp.set_layer('official_baseline', {'model': 'm1'})
     d = ccp.diff({'model': 'm1'}, {'model': 'm2'})
     r = ccp.transaction('hermes', d, approved=True,
-        backup_dir=str(Path(__file__).resolve().parents[2] / 'config' / '.backups'),
+        backup_dir=str(Path(__file__).resolve().parents[2] / '.project-local' / 'runs' / 'config-transaction-tests'),
         apply_fn=lambda before: {'model': 'm2'},
         readback_fn=lambda: {'model': 'm1'})  # mismatch -> drift
-    assert r['status'] == 'ROLLED_BACK', r
+    assert r['status'] == 'ROLLBACK_REQUIRED', r
 
 def test_no_apply_fn_unsupported():
     ccp = ConfigControlPlane()
