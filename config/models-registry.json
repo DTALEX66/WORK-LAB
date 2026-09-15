@@ -1,6 +1,6 @@
 {
   "schema_version": "workflow/models-registry/v1",
-  "generated_at": "2026-08-26",
+  "generated_at": "2026-09-15",
   "generated_by": "WLR-050",
   "purpose": "Provider/model pricing and capability registry. Single source of truth for model pricing; observer pricing catalog references this.",
   "providers": {
@@ -98,7 +98,7 @@
       "display_name": "OpenAI (Codex CLI / Desktop)",
       "observed_as": "native Codex model-provider route on this machine (model_provider=custom, requires_openai_auth=true, no base_url override = native OpenAI direct; CC-Switch proxy retired 2026-08-20)",
       "observed_at": "2026-09-15",
-      "source": "LOCAL OBSERVATION - C:/Users/ALEX/.codex/models_cache.json (client_version 0.154.0, cache fetched_at 2026-09-14T13:08:07Z) + ~/.codex/config.toml live readback",
+      "source": "LOCAL OBSERVATION - <CODEX_HOME>/models_cache.json (client_version 0.154.0, cache fetched_at 2026-09-14T13:08:07Z) + <CODEX_HOME>/config.toml live readback (absolute home path redacted for public registry)",
       "fact_scope": "Point-in-time client cache observation, NOT a permanent official spec. Re-verify against the official model page and client cache before relying on it; fields not present in the cache are UNKNOWN, not zero.",
       "note_live_change": "config.toml `model` switched gpt-5.3-codex-spark -> gpt-6-astra on 2026-09-15 (user-authorized, Q1 decision); model_reasoning_effort=high preserved; provider/billing/auth unchanged. Local change NOT committed/pushed (Q8: handoff bound to worktree diff fingerprint).",
       "models": {

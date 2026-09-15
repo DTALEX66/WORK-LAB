@@ -31,7 +31,7 @@ These agreements apply to every Codex project unless a closer project `AGENTS.md
 
 ### Project data boundary
 
-- Keep generated evidence, temporary state, caches, logs, local environments, and agent runtime data inside the current Git project, preferably under ignored `.hermes/task-runtime/` or `.hermes/task-artifacts/` paths.
+- Keep generated evidence, temporary state, caches, logs, local environments, and agent runtime data inside the current Git project, preferably under ignored `.project-local/runs/` or `.project-local/artifacts/task-artifacts/` paths.
 - Do not write project runtime state into the user profile, another project, or an external drive unless the user explicitly authorizes the exact path and operation.
 - Repository source, user configuration, platform-internal state, runtime-ephemeral state, and secrets are different ownership classes. Change only the class the task authorizes.
 - For one known runtime residue, use the project helper with a relative path:
@@ -148,7 +148,7 @@ commands; a command verified in one dialect is not portable.
 
 ### Skill use
 
-- Before executing a task, first check the project skill-call index (`.hermes/skill-call-index.json`); on a hit, invoke the skill directly without rescanning.
+- Before executing a task, first check the project skill-call index (`.project-local/runs/skill-call-index.json`); on a hit, invoke the skill directly without rescanning.
 - On a miss, scan the available skills (SKILL.md descriptions), load the matching one, and record the task->skill mapping into the index for next time.
 - If still no match, proceed directly — do not block. A skill is a manual, not decoration; invoke the relevant skill instead of "just starting".
 - Use installed Workflow Assistance skills when their descriptions match the task. Load only the relevant skill body, follow its boundaries, and prefer project-local skills over global generalizations.

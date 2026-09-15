@@ -25,7 +25,7 @@ Classify every action before running it:
    effects (still requires an explicit Git-project workdir).
 2. **Write-capable task execution** — tests, builds, downloads, installs, code
    generation, caches, logs, browser artifacts, reviews, temporary scripts:
-   scope temporary/cache/output into `<project>/.hermes/task-runtime/` via the
+   scope temporary/cache/output into `<project>/.project-local/runs/` via the
    project-local launcher.
 3. **High-risk global operations** — deploying to Hermes/Codex Home, modifying
    global configuration/rules, global installation, cross-project writes,
@@ -69,7 +69,7 @@ cross-repository execution package:
    from the attachment merely to read it.
 3. Convert the exact requirements into a short acceptance matrix: required
    artifacts, positive instance, negative instance, focused command, canonical
-   gate, live/runtime boundary. Keep it in `.hermes/task-artifacts/`.
+   gate, live/runtime boundary. Keep it in `.project-local/artifacts/task-artifacts/`.
 4. Use one canonical contract location. If an exploratory implementation lands
    in the wrong directory or uses the wrong names/count, migrate it to the
    authoritative layout and remove the duplicate.

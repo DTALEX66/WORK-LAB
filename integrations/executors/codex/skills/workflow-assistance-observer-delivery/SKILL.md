@@ -19,7 +19,7 @@ description: "Use for WORK-LAB Observer UI / read-only projection work and deliv
    - Read tables directly: `SELECT COUNT(*)` on projects / tasks / telemetry_events / usage_samples / ci_runs
    - If the store HAS data but the UI shows empty → schema drift, NOT missing data. Never call it "fake" without proof.
 2. **Find existing services before starting new ones**:
-   - `sidecar_already_running` error → read `.hermes/task-runtime/workflow/sidecar-process.json` and `.hermes/task-runtime/observer/dashboard-process.json` for PID / URL / port
+   - `sidecar_already_running` error → read `.project-local/runs/workflow/sidecar-process.json` and `.project-local/runs/observer/dashboard-process.json` for PID / URL / port
    - `wmic process get processid,commandline` finds actual listeners; `netstat -ano | grep <port>` maps port→PID
    - **Zombie lock via PID reuse (Windows)**: if `sidecar_already_running` fires but `netstat` shows the port is NOT listening, the lock's PID may have been recycled by an unrelated process (e.g. a Codex desktop renderer took over the old sidecar's PID). Prove it with `wmic process where "ProcessId=<lockpid>" get commandline` — if it's not `sidecar.py`, the lock is stale. Fix: confirm no real sidecar process exists, then `rm` the stale `sidecar.lock` + `sidecar-endpoint.json` and restart. Never kill the unrelated PID.
    - Restart after code changes: kill the PID on the port, relaunch with `--canonical-store`
@@ -29,7 +29,7 @@ description: "Use for WORK-LAB Observer UI / read-only projection work and deliv
    - Assert the DOM shows project names, states, token values (browser_snapshot / innerText)
    - If the page looks stale, `location.reload(true)` — old cached JS can mask fixes
 4. **Verify the LIVE push chain, not just the display** (when user asks "可以实时监控了吗"):
-   - Sidecar endpoint lives in `.hermes/task-runtime/workflow/sidecar-endpoint.json` (`eventsUrl`, `pid`); check the PID is alive before trusting it.
+   - Sidecar endpoint lives in `.project-local/runs/workflow/sidecar-endpoint.json` (`eventsUrl`, `pid`); check the PID is alive before trusting it.
    - Subscribe: open a background process on `http://127.0.0.1:<port>/api/v1/events` with a bounded read timeout (e.g. `--max-time 20`).
    - Write a probe record into the canonical store (`append_telemetry` with a distinct `event_id` like `live-test-001`), then re-check the SSE frames / `/api/v1/snapshot`: the `revision` must increment (13→14→15). No increment = real-time chain broken (sidecar not watching the WAL), do NOT claim live.
    - Sample `/api/v1/snapshot` several times and confirm `transport.transportState == "LIVE"` (LIVE requires schema valid + SSE connected + heartbeat fresh + cursor valid + writer watermark fresh + coverage met — see `live_gate.py`).

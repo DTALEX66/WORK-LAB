@@ -30,7 +30,10 @@ responses:
      (不确定/不知道/无法判断/i don't know/i'm not sure) → "疑似不确定"
    These catch the obvious failures for free. A clean pre-check does NOT mean
    no hallucination — the paid semantic check still runs for high tiers.
-4. **Paid cross-check (high tiers only)**: one independent auxiliary-model call
+4. **Paid cross-check (high tiers only)** — OPTIONAL, task-scoped: run only when the
+    task explicitly authorizes a paid independent review and states its cost boundary
+    (budget/model/ceiling). Never added by default for newer models; skip silently
+    when not authorized (degrade to free pre-check). One independent auxiliary-model call
    with a strict verifier prompt: "judge whether key claims are fabricated,
    unsupported, or overconfident; reply ISSUE: <one line> or OK". The verifier
    uses a DIFFERENT model/provider than the main one (independent channel).
@@ -63,7 +66,9 @@ silent breakage source. Add an upgrade-safety pattern:
 ## 3. Adaptive approval (optional)
 
 Reduce confirmation fatigue for SAFE repeated operations without weakening
-permanent-high-risk gates:
+permanent-high-risk gates. History of prior grants only tunes UX for the SAME
+already-authorized operation class; it is NOT a substitute for the current task's
+authorization scope, and repeated approvals are never treated as future authorization:
 
 1. Track approval history per operation class (success = granted, failure =
    denied).

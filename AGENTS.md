@@ -85,7 +85,7 @@ change task state, or write the Telemetry Ledger.
 When working through Codex, use the project-local workflow contract and exact
 module paths. Bounded writers own one checkout; parallel writers require separate
 worktrees. Prefer the canonical quality gate:
-`python 10-workflow/workflow-assistance/services/orchestration/run_quality_gate.py verify`.
+`python services/orchestration/run_quality_gate.py verify`.
 Keep Task Ledger and runtime evidence under `.project-local/runs/` and
 `.project-local/artifacts/`; do not treat local tests as exact-SHA CI or release
 evidence. Codex may prepare changes and readback evidence, but must not commit,
@@ -118,9 +118,10 @@ following baseline, owned by the enhancement module:
    blocking startup or execution. Wrappers must not stall on missing candidates.
 5. **Task-level model policy.** Each task declares its own quality/cost/privacy/
    latency constraints (four-dimensional strategy). Provider routing is official
-   (cost_multiplier=1.0, no daily/monthly caps by default); reasoning_effort
-   defaults to official baseline (empty = medium) or higher unless the task
-   explicitly downgrades with justification. Pricing must include
+   (cost_multiplier=1.0, no daily/monthly caps by default). Model and
+   reasoning_effort follow the user's native choice; this baseline only verifies
+   that native capabilities/params are supported and nothing overrides the user's
+   selection (low/medium/high are not, by themselves, failures). Pricing must include
    provider/model/currency/effective_at/source/version; missing fields display
    UNKNOWN. No global rate limits or cost caps — constraints are per-task and
    auditable.

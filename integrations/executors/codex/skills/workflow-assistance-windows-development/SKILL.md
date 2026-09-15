@@ -150,7 +150,7 @@ rollbacks; each is from a live session.
 
 2. **`git rev-parse --is-inside-work-tree` is not "is repo root"**: it returns
    true for ANY directory under a repo, including ignored runtime/temp paths
-   (e.g. `TMP` redirected into `.hermes/task-runtime/tmp`). Fix: compare
+   (e.g. `TMP` redirected into `.project-local/runs/tmp`). Fix: compare
    `--show-toplevel` against the candidate path itself
    (`Path(top_level.strip()).resolve() == path.resolve()`); only the exact top
    level matches.
@@ -165,7 +165,7 @@ rollbacks; each is from a live session.
 4. **MSYS `/tmp` and process substitution fail inside Windows Python**:
    `--changed-path-file <(printf 'a\n')` → `FileNotFoundError: '\dev\fd\63'`;
    `/tmp/...` → `'\tmp\...'` (MSYS mount, unknown to Windows Python). Fix: use
-   a project-relative scratch path (`.hermes/task-runtime/tmp/...`) or
+   a project-relative scratch path (`.project-local/runs/tmp/...`) or
    `cygpath -w` before passing; clean up after the run.
 
 5. **Windows CLI output is not UTF-8**: parsing `tasklist`/`ps`/`wmic` output

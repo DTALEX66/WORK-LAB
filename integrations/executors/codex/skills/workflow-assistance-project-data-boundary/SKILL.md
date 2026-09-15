@@ -7,8 +7,8 @@ description: "Use when a task creates caches, logs, evidence, temporary environm
 
 Keep task-generated state inside the current Git project. Prefer:
 
-- `.hermes/task-runtime/` for caches, logs, temporary files, virtual environments, and transient state.
-- `.hermes/task-artifacts/` for user-deliverable evidence and bounded handoff artifacts.
+- `.project-local/runs/` for caches, logs, temporary files, virtual environments, and transient state.
+- `.project-local/artifacts/task-artifacts/` for user-deliverable evidence and bounded handoff artifacts.
 
 Before writing, verify the destination is inside the intended repository and ignored by Git when it is runtime-only. Do not place project state in the user profile, another repository, a browser profile, an auth store, or an external drive without explicit path-level authorization.
 
@@ -18,7 +18,7 @@ Private Codex memory under `$CODEX_HOME/memories/**` belongs to the user runtime
 not the project. A denied read is a successful boundary check; stop and use
 tracked project truth or a user-provided redacted summary.
 
-For a named residue below `.hermes/task-runtime/`, use:
+For a named residue below `.project-local/runs/`, use:
 
 ```text
 python <workflow-assistance>/bin/hermes-project-data.py --project . cleanup-path <relative-name>
@@ -51,7 +51,7 @@ When the user reports stray folders on drive roots (`C:\d`, `C:\tmp`,
    These are safe to delete once confirmed as stale (old mtime, empty or
    archived content).
 4. **Answer honestly**: the agent boundary (Hermes/Codex lock state under
-   `.hermes/task-runtime`) works — the strays were software behavior or
+   `.project-local/runs`) works — the strays were software behavior or
    pre-boundary residue, not boundary violations. Distinguish "agent
    exfiltration" (rule failure, fix the rule) from "software root-write"
    (app config, out of agent scope).
