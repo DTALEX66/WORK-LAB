@@ -95,13 +95,18 @@
   与实际（无 gateway 进程、无活跃 cron/webhook）不符 → **reconcile 为 stopped**，
   原文件备份 `.project-local/runs/gateway_state.json.bak-20260915`（可逆）。
 
-### `hermes update`（1579 commits）→ 升级前快照已落，升级最后执行
+### `hermes update`（1579 commits）→ 被 Hermes 自身 fail-closed 守卫拦下（未完成）
 
-- `--plan` 确认：重启 **serve pid 12204（desktop backend = 我所在运行时）**，
-  桌面 App 自动重生；session 存 state.db 不丢。
 - 升级前快照：v0.21.2 @ `53c57871`（`.project-local/runs/hermes-update-pre-snapshot-20260915.json`）。
-- 升级后回读（下一回合执行）：`hermes --version`、git HEAD、`hermes doctor`、
-  hook 状态、gateway state、serve 重生与桌面可回话。
+- 实际执行 `hermes update --yes` → **被产品自身安全闸拦下**：venv 内有运行中的
+  Hermes kernel（PID 26144，`hermes_kernel_runner.py` = 本会话脚下这个运行时）锁着
+  native `.pyd` 扩展，此时强推会中途失败留损坏安装。
+- 两条出路（都需你，我不自行 `--force-venv`）：
+  ① 你关掉 Hermes 桌面 App 后跑 `hermes update`（产品正常自我替换路径）；
+  ② 显式授权 `--force-venv`（文档明写 at your own risk）。
+- **这正是自我治理边界的活体实证**：Hermes 能准备/审计/快照一次运行时自我升级，
+  但**不能在自身活着时安全替换脚下 venv**——必须你触发。
+  记录：`.project-local/runs/hermes-update-blocked-20260915.json`。
 
 ## 剩余（需你交互 / 外部输入）
 - Codex ACL 恢复：交互式桌面或管理员会话（见上）
