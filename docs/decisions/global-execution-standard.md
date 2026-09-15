@@ -22,7 +22,7 @@
 ## 二、执行生命周期（一个任务怎么跑）
 
 ```
-① 任务理解 → ② 技能扫描(强制) → ③ 任务分片 → ④ 执行 → ⑤ 验证 → ⑥ 落地
+① 任务理解 → ② 技能扫描(按需，fail-open) → ③ 任务分片 → ④ 执行 → ⑤ 验证 → ⑥ 落地
 ```
 
 | 步骤 | 动作 | 要点 |
@@ -37,30 +37,28 @@
 ### 多轮任务防漂移（落地前必查）
 
 ```
-多轮任务后项目可能漂移（基线 vs 实际偏离），落地前强制执行：
-  工具：10-workflow/workflow-assistance/scripts/workflow/project_drift_check.py
-  - record_baseline(root)：记录基线快照（干净验证后）
-  - check_drift(root)：对比当前 vs 基线，报告漂移文件
-  - converge(root)：确认漂移为新基线（或修复后重记）
+多轮任务后项目可能漂移（基线 vs 实际偏离），落地前检查一次：
+  流程：record_baseline（干净验证后记基线）→ check_drift（对比当前 vs 基线）→ converge（确认新基线或修复后重记）
   漂移 → 先报告/收敛，不直接落地；干净 → 才允许合并
+  注：历史上引用 10-workflow/workflow-assistance 的脚本路径已于 2026-09 目录收敛后失效
+  （10-workflow/ 不再被 Git 跟踪）；漂移判定以 CI 门禁 .github/workflows/work-lab-gate.yml
+  内的 services/orchestration/run_quality_gate.py 为准，不再手敲死路径。
 ```
 
-## 三、技能强制调用（解决"直接开干"）
+## 三、技能按需调用（fail-open）
 
 ```
-各软件执行任务前，强制执行步骤②：
+各软件执行任务前按需走步骤②（命中才加载，未命中直接执行，绝不阻塞）：
   1. 先查项目技能调用索引（.hermes/skill-call-index.json）
      → 命中 → 直接调用技能（不重复扫描）
   2. 索引未命中 → 扫描技能清单（SKILL.md description）
      → 匹配 → 加载技能执行 + 记录到索引（下次直接命中）
   3. 仍未命中 → 直接执行（不阻塞）
 
-技能调用索引（优化，避免每次扫描）：
-  工具：10-workflow/workflow-assistance/scripts/workflow/skill_call_index.py
-  - build(root, skills_dir)：首次扫描建索引（keyword → skills）
-  - lookup(root, task)：任务关键词查索引（直接返回匹配技能）
-  - record(root, task, skill)：学习新映射（任务→技能）
-  每项目一个索引文件，后续相同任务直接调用，无需每次扫描
+技能调用索引（优化，避免每次扫描；文件按需生成，fail-open）：
+  索引：.hermes/skill-call-index.json（首次扫描后落盘；不存在时直接扫描 SKILL 清单）
+  机制：build（扫描建关键词→技能映射）/ lookup（任务关键词查索引）/ record（学习新映射）
+  每项目一个索引文件，后续相同任务直接调用；索引缺失/损坏时降级为全量扫描，绝不阻塞
 
 触发机制（借鉴 Claude Code skills）：
   model-invocable：description 语义匹配，模型自动调用
@@ -83,7 +81,7 @@
 1. 安全：非明确授权禁止访问 E:\ 数据盘
 2. 数据边界：各项目构建缓存/产品资产留在自己项目内，禁止外溢/漂移
 3. 官方优先：软件更新以官方发布为准，禁私自本地打包
-4. 全功率：无限流/降级，模型官方默认
+4. 模型中性：provider/model/reasoning 跟随用户原生选择，low/medium/high 本身非故障；不设全局限速/限流/降级，不后台覆写用户选择
 5. 审计分层：按变更域跑（不全量一刀切），合并前全量
 ```
 

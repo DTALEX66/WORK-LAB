@@ -28,9 +28,14 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
-from services.radar.radar_core import Candidate, SourceAdapter
+# Repo convention: service files are loaded by file path in the gate runner
+# (services/ is not a resolvable package on sys.path there), so the only
+# sibling import must be annotation-only. Candidate/SourceAdapter appear in
+# type hints only; `from __future__ import annotations` keeps them unevaluated.
+if TYPE_CHECKING:
+    from services.radar.radar_core import Candidate, SourceAdapter
 
 
 class FetchStatus:

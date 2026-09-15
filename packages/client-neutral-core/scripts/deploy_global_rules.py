@@ -1,9 +1,16 @@
-"""Deploy global rules — sync the single source of truth to every software.
+"""Deploy global rules — sync the global boundaries to each software's rule file.
 
-Single source: .project/governance/global-execution-standard.md (global boundaries).
-This tool syncs those boundaries into each software's rule file via a managed
-block (marker-delimited), so a change to the source propagates to all software
-and never drifts. Idempotent.
+Authoritative reference: docs/decisions/global-execution-standard.md (global
+boundaries). This tool maintains a hardcoded mirror of the four global
+boundary rules (GLOBAL_BOUNDARIES below) and inserts/updates them into each
+software's rule file via a managed block (marker-delimited), so a change to
+the source is carried by hand into GLOBAL_BOUNDARIES and then propagated to
+all targets. Idempotent.
+
+Note: the path '.project/governance/global-execution-standard.md' no longer
+exists (2026-09 directory convergence moved the global standard to
+docs/decisions/); keep the authoritative text in docs/decisions/ and keep
+GLOBAL_BOUNDARIES in sync with it manually.
 """
 from __future__ import annotations
 

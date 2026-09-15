@@ -198,8 +198,8 @@ class RadarObservationLayerTests(unittest.TestCase):
 
     def test_f2_unknown_vs_confirmed_false(self):
         m = self._obs()
-        from services.radar.radar_core import Candidate, StaticSourceAdapter
-        led = m.build_ledger([StaticSourceAdapter("github", [Candidate(canonical_url="u9", stars=0)])], "")
+        rc = _load("radar_core.py", "rad_rc")
+        led = m.build_ledger([rc.StaticSourceAdapter("github", [rc.Candidate(canonical_url="u9", stars=0)])], "")
         obs = led.latest("u9")
         self.assertIsNone(obs.stars)          # Candidate(0) is unknown, not confirmed zero
         self.assertIsNone(obs.downloads)
@@ -246,16 +246,16 @@ class RadarObservationLayerTests(unittest.TestCase):
 
     def test_ledger_wraps_plain_adapters_without_observation_hook(self):
         m = self._obs()
-        from services.radar.radar_core import Candidate, StaticSourceAdapter
-        led = m.build_ledger([StaticSourceAdapter("github",
-                                 [Candidate(canonical_url="https://g/x", owner="g", repo="x", stars=77)])], "")
+        rc = _load("radar_core.py", "rad_rc")
+        led = m.build_ledger([rc.StaticSourceAdapter("github",
+                                 [rc.Candidate(canonical_url="https://g/x", owner="g", repo="x", stars=77)])], "")
         self.assertEqual(led.latest("https://g/x").stars, 77)
 
     def test_radar_core_contract_untouched(self):
         # the additive layer must not perturb the v1 hard contracts
-        from services.radar.radar_core import Candidate, RadarCore
-        self.assertEqual(len(Candidate("u").to_dict()), 17)
-        self.assertEqual(RadarCore().SCHEMA, "work-lab/radar-core/v1")
+        rc = _load("radar_core.py", "rad_rc")
+        self.assertEqual(len(rc.Candidate("u").to_dict()), 17)
+        self.assertEqual(rc.RadarCore().SCHEMA, "work-lab/radar-core/v1")
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

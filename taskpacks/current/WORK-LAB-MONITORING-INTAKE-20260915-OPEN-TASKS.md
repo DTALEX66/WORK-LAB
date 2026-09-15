@@ -39,6 +39,7 @@ CODEX / DSH / HERMES 三方治理任务**暂时告一段落**（用户 2026-09-1
 ## 3. 带病登记（与上述无关的既有项）
 
 - ~~5 项既有 Windows 环境测试失败~~ **2026-09-15 新定性：顺序相关 flaky，非真缺陷**——test_machine_identity + test_workflow_governance(portable-install) 4 项**单独跑全绿**，仅在全 suite 特定顺序下失败（前序测试污染全局状态）。同批 `test_sidecar_v3_snapshot`(watcher rollback) 亦为顺序相关 flaky。全量回归 1235 通过、唯一失败为该 flaky。根因待单独排查（疑似 cwd/sys.path 或临时 HOME 污染），暂登记不阻塞
+- **2026-09-16 纠正（NF-02 CI 原始日志）**：CI run `34993528858` job `workflow-assistance` 的 `Ran 22 tests FAILED (errors=9)` 全部是 `ModuleNotFoundError: No module named 'services'`——**并非**上行的顺序污染，而是 WLR-058 新增的 `services/radar/radar_observations.py` 顶层 `from services.radar.radar_core import …` + `test_radar.py` 3 个新方法的 `from services…` 直接导入，违反仓库"gate 直跑 test 文件、按文件路径 `_load()` service"的铁律（本地 pytest 从根跑故绿、gate 独立 runner 才炸）。**已修**（3 文件回到文件路径约定，零功能改动），隔离 venv 复现 gate 10/10 + 全量 1255 全绿。上行的 5 项本地顺序相关 flaky 仍单独保留（另一现象，不与 CI 9-error 合并）
 - 14 个技能 `.bak` 备份删除——仍无授权
 - 工具执行层合成验收 BLOCKED（沙箱 ACL，C:\Users\Default 权限 5）
 

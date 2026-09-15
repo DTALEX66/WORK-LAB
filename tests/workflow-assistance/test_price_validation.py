@@ -5,9 +5,24 @@ billing data, no provider, no network, no payment.  Covers the four boundary
 defects the 2026-09-15 workbook audit reproduced in-memory plus the
 unknown-cost-must-not-be-0 rule.
 """
+import importlib.util
+import sys
 import unittest
+from pathlib import Path
 
-from services.radar import price_validation as pv
+# Repo convention: gate runs this file directly, so services/ is not a
+# resolvable package on sys.path. Load the module by file path instead of
+# `from services.radar import price_validation` (root-cause of CI run
+# 34993528858 ModuleNotFoundError: No module named 'services').
+# NOTE: register in sys.modules BEFORE exec_module — price_validation.py
+# defines @dataclass objects and dataclasses._is_type resolves
+# sys.modules[cls.__module__]; an unregistered exec'd module raises
+# AttributeError there. (Same pre-registration test_radar.py._load uses.)
+_PV = Path(__file__).resolve().parents[2] / "services" / "radar" / "price_validation.py"
+_spec = importlib.util.spec_from_file_location("price_validation", _PV)
+pv = importlib.util.module_from_spec(_spec)
+sys.modules["price_validation"] = pv
+_spec.loader.exec_module(pv)
 
 
 class PriceValidationTests(unittest.TestCase):

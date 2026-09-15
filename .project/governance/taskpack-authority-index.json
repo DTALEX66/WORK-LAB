@@ -102,5 +102,29 @@
     ],
     "tasks_deferred": [],
     "status": "FROZEN"
+  },
+  "staticHandoffViews": [
+    {
+      "id": "WORK-LAB-INTEGRATED-TASKPACK-20260916",
+      "zip_sha256": "76e31e94f42db411d2a8e124ced8444dae0645155c9fafb73003728930a675cb",
+      "internal_manifest": "SHA256SUMS.txt (6 files, all verified OK on 2026-09-16)",
+      "mode": "plan_only",
+      "role": "static handoff view for user-selected task dispatch; NOT a runtime task store, NOT an auto-executor",
+      "supersedes": null,
+      "note": "currentTaskpack (R1) remains authoritative until its 2026-09-24 expiry; this pack is a planning/coverage layer, not a new authority (per START-HERMES §6)"
+    }
+  ],
+  "baselineRevalidation": {
+    "ts": "2026-09-15T17:40:49.542300+00:00",
+    "branch": "r4-recovery-exec",
+    "local_head": "693471c01f12956ec6e95567a164edde1a7f0879",
+    "remote_head": "693471c01f12956ec6e95567a164edde1a7f0879",
+    "local_eq_remote": true,
+    "worktree": "clean",
+    "main_ref": "e5231f0f605d1515ed12958267b394c9de1da20c",
+    "main_note": "historical main stays UNMERGED (no merge/push to main this pack); recovery branch is the only delivery lane",
+    "pack_observed_head": "693471c01f12956ec6e95567a164edde1a7f0879",
+    "pack_head_matches_current": true,
+    "r4_source_list_gap": "R4 local source manifest (.project-local/artifacts/task-artifacts/r4/history-source-manifest.json) NOT present in this checkout - recorded as gap, NOT filled from private session stores (NF-00 step 2)"
   }
 }
