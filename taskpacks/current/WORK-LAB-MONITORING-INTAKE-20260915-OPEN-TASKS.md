@@ -29,7 +29,7 @@ CODEX / DSH / HERMES 三方治理任务**暂时告一段落**（用户 2026-09-1
 | radar_core 静态缺陷 ①–⑤ | discover() 丢更新 / unknown 混同 / available() 混淆空与不可用 / 无价格时效 / min_stars 不通用 | 增量 sidecar，不推倒框架 | ✅ 已做：全部 5 项在 radar_observations.py 观察层实现，radar_core.py 与既有 13 契约测试零改动 |
 | WL-R02 / WL-R06 / W01 / W04 | 只查**实际在用**的 ACP/MCP/AG-UI 及模型别名；按提供方测 load/fork/cancel/perms；AG-UI 按子包破坏性变更核查锁文件与 imports；codex-acp 实现版本≠协议版本 | DeepSeek 静态；Codex 联调 | 未做 |
 | WL-R04 / WL-R05 / W03 | 假工具/假凭据/合成事件测越权拒绝、重复事件、恢复 | 离线 | ✅ 部分已做：`e_drive_guard.py`（LESSONS 登记的强制拦截钩子）此前 **0 测试** → 新增 `test_e_drive_guard.py` 11 项合成负载测试（越权拒绝/显式授权/大小写/嵌套/误报/恶意 JSON）；R05 重复事件/恢复由既有 `test_task_ledger_replay.py` 8 场景已覆盖（验证绿）。Codex 实机取消仍待授权 |
-| WL-R07 / W07 | 模型/API 表改为带时效/供应方/币种/地域/计费模式的价格记录；未知费用不填 0；工作簿 4 项边界加固（小数调用次数、计价除数 0、语音负时长、无数据验证/表保护）→ 加固前不得当执行预算引擎 | DeepSeek 离线；真实 usage 需授权 | 未做 |
+| WL-R07 / W07 | 模型/API 表改为带时效/供应方/币种/地域/计费模式的价格记录；未知费用不填 0；工作簿 4 项边界加固（小数调用次数、计价除数 0、语音负时长、无数据验证/表保护）→ 加固前不得当执行预算引擎 | DeepSeek 离线；真实 usage 需授权 | **已做（离线）**：`services/radar/price_validation.py` 落实审计 §7 的 4 项边界拒绝规则 + 未知费用保持 UNKNOWN 不填 0，`test_price_validation.py` 18 项全绿，接预算引擎前加固到位；**待授权**：真实 usage 填写 + xlsx 工作簿原件的数据验证/表保护 |
 | WL-R03 | 运行状态四组对照：先旁路观察/确定性重放（tracelab 模式），收费四臂实验仅在必要时且需批准；不重建 TaskStore/TelemetryStore | 付费需批准 | 未做 |
 | W05 / W06 / Bolt | Kimi 权益（订阅≠免费 API）、Agents API 可选执行器（本地任务状态/产物导出/费用边界保留）、Bolt 仅脱敏一次性原型 | 只读准备；真实接入需授权 | 未做 |
 | 恒定约束 | Observer 保持只读；候选"值得 POC"不自动触发安装/写 TaskPack/PR/生产替换；W02 与 WL-R03 不混为一个因果实验；每实验初始预算 0 不改全局模型政策 | — | 约束 |
