@@ -6,7 +6,11 @@
 ## Scope
 
 This is a single-root monorepo. Allowed active module roots are exactly:
-`10-workflow/workflow-assistance` and `apps/observer` (work-lab-observer, read-only projection). The
+`packages/client-neutral-core` (workflow-assistance: Task Ledger, Telemetry Ledger, sidecar,
+adapters, delivery gates), `services/` (orchestration/policy/receipts), and
+`apps/observer` (work-lab-observer, read-only projection). The legacy
+`10-workflow/workflow-assistance` path was split out at the 2026-09 directory
+convergence and is no longer tracked. The
 managed client workflow is Hermes · Codex · CC Switch · GitHub · Open Design ·
 OpenHuman, plus any future AI software through the same Adapter contract.
 DSH (DeepSeek Harness / DSH Desktop 2.0.4 community desktop) is a managed agent runtime client
@@ -76,8 +80,8 @@ fails the aggregate gate.
 
 ## Workflow Assistance execution contract
 
-`10-workflow/workflow-assistance` is the active owner of workflow configuration,
-Task Ledger, Telemetry Ledger, sidecar, adapters, and delivery gates.
+Workflow-assistance (now `packages/client-neutral-core` + `services/`) is the active owner of
+workflow configuration, Task Ledger, Telemetry Ledger, sidecar, adapters, and delivery gates.
 `apps/observer` (work-lab-observer) is a strict read-only projection: it may read
 Workflow-owned projections but must not execute, approve, retry, apply, rollback,
 change task state, or write the Telemetry Ledger.

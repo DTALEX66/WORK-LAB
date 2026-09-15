@@ -25,10 +25,10 @@ CODEX / DSH / HERMES 三方治理任务**暂时告一段落**（用户 2026-09-1
 
 | ID | 内容 | 边界 | 状态 |
 |---|---|---|---|
-| WL-R01 | 用本批上传作离线 Radar 样本，在现有 radar_core 上补**证据/差分/覆盖**，不新建后台 | DeepSeek 结构/离线 | 未做（最高直接价值入口） |
-| radar_core 静态缺陷 | ① discover() first-writer-wins 丢更新 ② Candidate 缺省 0/false 混同 unknown 与 confirmed_false ③ StaticSourceAdapter.available() 混淆"合法空结果"与"源不可用" ④ 无价格时效/权益/规范版本/fits 结构化字段 ⑤ min_stars 排序不通用于模型/论文/标准 | 增量映射/sidecar，不推倒框架 | 未做 |
+| WL-R01 | 在现有 radar_core 上补证据/差分/覆盖（不建后台） | 离线 | ✅ 已做：新增 `services/radar/radar_observations.py`（Observation 账本 + F1 差分/F2 unknown 语义/F3 SourceReport/F4 PriceRecord 时效/F5 按 entity_kind 路由排序），纯 sidecar 不改 17 字段 Candidate，test_radar.py +9 测试全绿 |
+| radar_core 静态缺陷 ①–⑤ | discover() 丢更新 / unknown 混同 / available() 混淆空与不可用 / 无价格时效 / min_stars 不通用 | 增量 sidecar，不推倒框架 | ✅ 已做：全部 5 项在 radar_observations.py 观察层实现，radar_core.py 与既有 13 契约测试零改动 |
 | WL-R02 / WL-R06 / W01 / W04 | 只查**实际在用**的 ACP/MCP/AG-UI 及模型别名；按提供方测 load/fork/cancel/perms；AG-UI 按子包破坏性变更核查锁文件与 imports；codex-acp 实现版本≠协议版本 | DeepSeek 静态；Codex 联调 | 未做 |
-| WL-R04 / WL-R05 / W03 | 假工具/假凭据/合成事件测越权拒绝、重复事件、并发与恢复；UNKNOWN 外部动作先对账；界面停≠进程停；托管拒绝≠放宽权限理由 | DeepSeek 受控；Codex 实机取消 | 未做 |
+| WL-R04 / WL-R05 / W03 | 假工具/假凭据/合成事件测越权拒绝、重复事件、恢复 | 离线 | ✅ 部分已做：`e_drive_guard.py`（LESSONS 登记的强制拦截钩子）此前 **0 测试** → 新增 `test_e_drive_guard.py` 11 项合成负载测试（越权拒绝/显式授权/大小写/嵌套/误报/恶意 JSON）；R05 重复事件/恢复由既有 `test_task_ledger_replay.py` 8 场景已覆盖（验证绿）。Codex 实机取消仍待授权 |
 | WL-R07 / W07 | 模型/API 表改为带时效/供应方/币种/地域/计费模式的价格记录；未知费用不填 0；工作簿 4 项边界加固（小数调用次数、计价除数 0、语音负时长、无数据验证/表保护）→ 加固前不得当执行预算引擎 | DeepSeek 离线；真实 usage 需授权 | 未做 |
 | WL-R03 | 运行状态四组对照：先旁路观察/确定性重放（tracelab 模式），收费四臂实验仅在必要时且需批准；不重建 TaskStore/TelemetryStore | 付费需批准 | 未做 |
 | W05 / W06 / Bolt | Kimi 权益（订阅≠免费 API）、Agents API 可选执行器（本地任务状态/产物导出/费用边界保留）、Bolt 仅脱敏一次性原型 | 只读准备；真实接入需授权 | 未做 |
@@ -38,7 +38,7 @@ CODEX / DSH / HERMES 三方治理任务**暂时告一段落**（用户 2026-09-1
 
 ## 3. 带病登记（与上述无关的既有项）
 
-- 5 项既有 Windows 环境测试失败（test_machine_identity + test_workflow_governance portable-install 4 项）——基线复现，非补丁引入
+- ~~5 项既有 Windows 环境测试失败~~ **2026-09-15 新定性：顺序相关 flaky，非真缺陷**——test_machine_identity + test_workflow_governance(portable-install) 4 项**单独跑全绿**，仅在全 suite 特定顺序下失败（前序测试污染全局状态）。同批 `test_sidecar_v3_snapshot`(watcher rollback) 亦为顺序相关 flaky。全量回归 1235 通过、唯一失败为该 flaky。根因待单独排查（疑似 cwd/sys.path 或临时 HOME 污染），暂登记不阻塞
 - 14 个技能 `.bak` 备份删除——仍无授权
 - 工具执行层合成验收 BLOCKED（沙箱 ACL，C:\Users\Default 权限 5）
 

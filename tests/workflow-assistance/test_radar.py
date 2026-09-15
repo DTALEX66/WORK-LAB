@@ -166,5 +166,96 @@ class AutoPocRoutingTests(unittest.TestCase):
                              f"drift at total={total}")
 
 
+class RadarObservationLayerTests(unittest.TestCase):
+    """2026-09-15 audit sidecar: observation ledger / unknown semantics /
+    source reports / price records / kind-routed ranking.  Pure additive —
+    the 17-field Candidate and discover() above stay untouched."""
+
+    def _obs(self):
+        m = _load("radar_observations.py", "rad_obs")
+        return m
+
+    def test_f1_later_update_is_supersede_not_dropped(self):
+        m = self._obs()
+        l1, l2 = m.ObservationLedger(), m.ObservationLedger()
+        l1.add(m.Observation(entity="u1", price=m.PriceRecord(amount=1.0, currency="USD"),
+                             license="MIT", observation_version=1))
+        l2.add(l1.latest("u1"))
+        l2.add(m.Observation(entity="u1", price=m.PriceRecord(amount=2.0, currency="USD"),
+                             license="MIT", observation_version=2))
+        d = l2.diff(l1, l2)
+        self.assertEqual(d["u1"]["relation"], "superseded")
+        self.assertEqual(d["u1"]["changed_fields"], ["price.amount"])
+        # the earlier original is retained, not deleted
+        self.assertEqual(len(l2.versions("u1")), 2)
+
+    def test_f1_same_version_disagreement_is_conflict(self):
+        m = self._obs()
+        a, b = m.ObservationLedger(), m.ObservationLedger()
+        a.add(m.Observation(entity="u1", license="MIT", observation_version=3))
+        b.add(m.Observation(entity="u1", license="Apache-2.0", observation_version=3))
+        self.assertEqual(a.diff(a, b)["u1"]["relation"], "conflict")
+
+    def test_f2_unknown_vs_confirmed_false(self):
+        m = self._obs()
+        from services.radar.radar_core import Candidate, StaticSourceAdapter
+        led = m.build_ledger([StaticSourceAdapter("github", [Candidate(canonical_url="u9", stars=0)])], "")
+        obs = led.latest("u9")
+        self.assertIsNone(obs.stars)          # Candidate(0) is unknown, not confirmed zero
+        self.assertIsNone(obs.downloads)
+        self.assertEqual(obs.surfaces, {"api": False, "cli": False, "mcp": False})  # confirmed absent
+
+    def test_f3_empty_answer_is_available_unavailable_is_not(self):
+        m = self._obs()
+        ok = m.SourceReport("s", m.FetchStatus.FETCH_OK, items_count=3)
+        empty = m.SourceReport("s", m.FetchStatus.FETCH_EMPTY, items_count=0)
+        unavail = m.SourceReport("s", m.FetchStatus.UNAVAILABLE, items_count=0)
+        self.assertTrue(ok.available())
+        self.assertTrue(empty.available())      # legit zero updates != broken source
+        self.assertFalse(unavail.available())
+        self.assertFalse(m.SourceReport("s", m.FetchStatus.ERROR).available())
+
+    def test_f4_price_unknown_never_rendered_as_zero(self):
+        m = self._obs()
+        p = m.PriceRecord()                      # no amount
+        self.assertTrue(p.is_unknown)
+        self.assertIsNone(p.amount)
+        obs = m.Observation(entity="u2", price=m.PriceRecord(amount=0.5, currency="USD",
+                              provider="openai", billing="per_million_tokens",
+                              valid_from="2026-09-01", as_of="2026-09-15"))
+        self.assertEqual(obs.get("price.amount"), 0.5)
+        self.assertEqual(obs.get("price.currency"), "USD")
+        self.assertEqual(obs.get("price.amount" ) and obs.to_dict()["price"]["billing"], "per_million_tokens")
+
+    def test_f4_entitlement_and_standard_version_sidecar(self):
+        m = self._obs()
+        obs = m.Observation(entity="kimi", entitlement="subscription", standard_version="K2.8",
+                            fits={"WORK-LAB": "agent executor candidate"})
+        self.assertEqual(obs.entitlement, "subscription")
+        self.assertEqual(obs.fits["WORK-LAB"], "agent executor candidate")
+
+    def test_f5_ranking_signal_routes_by_entity_kind(self):
+        m = self._obs()
+        self.assertEqual(m.rank_signal(m.EntityKind.PAPER), ("recency", "citation"))
+        self.assertEqual(m.rank_signal(m.EntityKind.MODEL), ("downloads", "quality"))
+        self.assertEqual(m.rank_signal(m.EntityKind.REPO), ("stars", "growth"))
+        rows = [m.Observation(entity="b", entity_kind=m.EntityKind.MODEL, downloads=50),
+                m.Observation(entity="a", entity_kind=m.EntityKind.MODEL, downloads=500)]
+        ranked = m.rank(rows, m.EntityKind.MODEL)
+        self.assertEqual([o.entity for o in ranked], ["a", "b"])   # unknown(0) never outranks real
+
+    def test_ledger_wraps_plain_adapters_without_observation_hook(self):
+        m = self._obs()
+        from services.radar.radar_core import Candidate, StaticSourceAdapter
+        led = m.build_ledger([StaticSourceAdapter("github",
+                                 [Candidate(canonical_url="https://g/x", owner="g", repo="x", stars=77)])], "")
+        self.assertEqual(led.latest("https://g/x").stars, 77)
+
+    def test_radar_core_contract_untouched(self):
+        # the additive layer must not perturb the v1 hard contracts
+        from services.radar.radar_core import Candidate, RadarCore
+        self.assertEqual(len(Candidate("u").to_dict()), 17)
+        self.assertEqual(RadarCore().SCHEMA, "work-lab/radar-core/v1")
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
