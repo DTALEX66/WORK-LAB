@@ -106,7 +106,8 @@ class ConfigControlPlane:
     # -> Approval -> Apply -> Readback -> Commit or Rollback) ---
     def transaction(self, software_id: str, diff: dict[str, Any], *, approved: bool = False,
                     backup_dir: str | None = None, apply_fn=None, readback_fn=None,
-                    idempotency_key: str | None = None, rollback_fn=None) -> dict[str, Any]:
+                    idempotency_key: str | None = None, rollback_fn=None,
+                    simulated: bool = False) -> dict[str, Any]:
         """Adapter callback transaction; this is not durable transaction storage.
         The idempotency key is a receipt identifier, not replay prevention.
         Rollback requires a callback and a matching readback. Unapproved never writes live.
@@ -120,6 +121,16 @@ class ConfigControlPlane:
         - apply:  apply_fn(effective_after) if approved (else WAITING_APPROVAL)
         - readback: readback_fn() must equal the applied effective config
         - mismatch -> rollback to backup; match -> COMMITTED with receipt
+
+        NF-04 honest-state additions (a plan is never a real write, so the
+        transaction surfaces real outcomes rather than faking success):
+        - NOOP: an approved empty diff (changeCount==0) never touches live
+          config and needs no backup/apply/readback cycle.
+        - APPLY_FAILED: apply_fn raised -> it is UNDETERMINED whether anything
+          was written; we report that state and do NOT fake a rollback/success.
+        - SIMULATED: when simulated=True the success outcomes are tagged
+          *SIMULATED so a simulated adapter can never be counted into real
+          applied-success statistics (NF-04 acceptance point 1).
         """
         import hashlib, json
         from pathlib import Path
@@ -134,6 +145,12 @@ class ConfigControlPlane:
         if not approved:
             return {"status": "WAITING_APPROVAL", "idempotencyKey": idem, "changeCount": diff.get("changeCount", 0)}
 
+        # NF-04: an approved empty diff is a genuine no-op — it must not enter
+        # the backup/apply/readback cycle and must not be reported as a write.
+        if diff.get("changeCount", 0) == 0:
+            return {"status": "NOOP", "idempotencyKey": idem, "changeCount": 0,
+                    "simulated": simulated, "reason": "no fields changed; nothing applied"}
+
         # backup (recovery point)
         backup_ref = None
         if backup_dir:
@@ -145,7 +162,16 @@ class ConfigControlPlane:
         # apply (only via provided apply_fn — never a bare in-memory return)
         if apply_fn is None:
             return {"status": "UNSUPPORTED_APPLY", "idempotencyKey": idem, "reason": "no adapter apply_fn"}
-        apply_result = apply_fn(effective_before)
+        try:
+            apply_result = apply_fn(effective_before)
+        except Exception as exc:
+            # NF-04 honest-state: a raised write leaves it UNDETERMINED whether
+            # anything landed. We report the failure type and never fabricate a
+            # ROLLED_BACK / COMMITTED / success outcome from it.
+            return {"status": "APPLY_FAILED", "idempotencyKey": idem, "written": "UNDETERMINED",
+                    "restored": False, "errorType": type(exc).__name__,
+                    "backupRef": str(backup_ref) if backup_ref else None,
+                    "simulated": simulated}
 
         # readback (must match applied effective)
         if readback_fn is not None:
@@ -155,7 +181,7 @@ class ConfigControlPlane:
                 # rollback to backup
                 if rollback_fn is None:
                     return {"status": "ROLLBACK_REQUIRED", "idempotencyKey": idem,
-                            "drift": drift, "restored": False,
+                            "drift": drift, "restored": False, "simulated": simulated,
                             "backupRef": str(backup_ref) if backup_ref else None}
                 try:
                     rollback_fn(dict(effective_before))
@@ -164,9 +190,17 @@ class ConfigControlPlane:
                     # Do not include exception messages: an adapter may embed
                     # private config values in them.
                     return {"status": "ROLLBACK_FAILED", "idempotencyKey": idem,
-                            "restored": False, "errorType": type(exc).__name__}
-                return {"status": "ROLLED_BACK" if restored else "ROLLBACK_FAILED",
+                            "restored": False, "errorType": type(exc).__name__,
+                            "simulated": simulated}
+                suf = "_SIMULATED" if simulated else ""
+                return {"status": ("ROLLED_BACK" + suf) if restored else "ROLLBACK_FAILED",
                         "idempotencyKey": idem, "drift": drift, "restored": restored,
+                        "simulated": simulated,
                         "backupRef": str(backup_ref) if backup_ref else None}
-            return {"status": "COMMITTED", "idempotencyKey": idem, "backupRef": str(backup_ref) if backup_ref else None, "receipt": idem}
-        return {"status": "APPLIED_NO_READBACK", "idempotencyKey": idem, "backupRef": str(backup_ref) if backup_ref else None}
+            suf = "_SIMULATED" if simulated else ""
+            return {"status": "COMMITTED" + suf, "idempotencyKey": idem,
+                    "backupRef": str(backup_ref) if backup_ref else None, "receipt": idem,
+                    "simulated": simulated}
+        suf = "_SIMULATED" if simulated else ""
+        return {"status": "APPLIED_NO_READBACK" + suf, "idempotencyKey": idem,
+                "backupRef": str(backup_ref) if backup_ref else None, "simulated": simulated}
