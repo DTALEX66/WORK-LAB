@@ -60,4 +60,8 @@
 - 随后 NF-04→NF-12（P1），WL-R01/WL-R07（P1）。
 
 ## CI 精确 SHA 回填（推送后）
-> 待补：推送 NF-02 修复后，取 `work-lab-gate` 在精确 SHA 上 `workflow-assistance` job 的原始结论（12/12 required job 目标）与 wlr-060 交叉，回填本段。
+
+- 推送 SHA：`0432b2d8cf2bd5e8b3ebac956f9d040af6ca16e5`（`693471c..0432b2d`，8 文件 +146/-33）。
+- `work-lab-gate` @ `0432b2d`（run 35006305898）：**success，7/7 jobs 全绿**（gate-plan / token-monitor / observer / integration / supply-chain-security / **workflow-assistance** / aggregate）。此前自 `5b50e8b` 起连续 6 个 SHA 的 `workflow-assistance` failure（含基线 `693471c`）在 `0432b2d` 转绿。
+- `wlr-060-production-gates` @ `0432b2d`（run 35006305953）：**success**。
+- 结论：该 SHA 上两个 workflow 的 required job 全部成功，无 failure/missing/cancelled/skipped；NF-02 的"精确 SHA 所有 required job 成功"验收点由 GitHub 真实 CI 运行证实（非本地统计冒充）。
