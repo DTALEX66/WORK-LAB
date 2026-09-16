@@ -166,3 +166,15 @@
     新增项目只加配置+本地状态（无新核心源码副本/守护进程/调度器/常驻LLM轮询，违反即拒）；不叠加 n8n/Linear/Vibe Kanban/Symphony 四套任务核心；接收/回传挂进既有运行生命周期；复用组件交出调用/测试/替代点（候选登记≠采用）；退出路径 暂停同步/撤销单项目/回退适配版本/移除受管资产 均不影响原生任务且不删历史（暂停≠删历史、未回传记录保留）；增强关闭后原生软件独立运行。
   * `tests/workflow-assistance/nf11_thin_deployment.py` 12/12 全绿（AT-29/30/40 合成片）。
 - 真实外部片（BLOCKED）：本机安装/启动项/全局资产调整需有效部署授权；不私自安装额外服务；不搬迁官方 HOME/活动库；不同项目不复制代码/venv。
+
+### NF-14-SYNC | PASS(可自执行片) | ACCEPTANCE | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/universal_signoff.py`：分层交付与通用目标真实签收。
+    先交付单一链路可用成果、中间成果独立命名不悄悄变最终目标；UNIVERSAL_WORKFLOW_VERIFIED 仅当 6 项检查全 REAL 证据 + 真实外部项目 + 第二执行器三前提达成；缺真实外部项目或缺第二执行器只报阶段完成非全完成；SIMULATED/NO_EVIDENCE 永不能顶替必需 REAL 检查；未安装软件不给假 LIVE PASS；条件研究/无关维护 gap 保留但不把交付拖入无限再审计循环。
+  * `tests/workflow-assistance/nf14_universal_signoff.py` 8/8 全绿（合成签收语义）。
+- 真实外部片（BLOCKED）：真实发布/合并是独立副作用，需逐次授权；不伪造 LIVE PASS、不无限循环"再审计一轮"、不把所有 gap 变成阻塞。
+
+## M3 里程碑状态
+NF-10-SYNC / NF-12-SYNC / NF-09-SYNC / NF-11-SYNC / NF-14-SYNC 五卡可自执行片全部闭环。
+M3（软件更新只做受影响适配/薄部署退出路径/多项目投影/通用目标真实签收）设计+代码+合成测试已达成；真实全局规则部署、真实外部第二执行器实测、真实发布/合并、真实 Observer UI 保持 BLOCKED 待授权。
+**任务包 20 卡可自执行片全部完成（批次 0–3 / M0–M3）；剩余均为需真实外部授权/部署授权的侧效应片，非可自执行范围。**
