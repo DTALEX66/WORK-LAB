@@ -125,3 +125,16 @@
     不同环境路径不同仍取同一 project/task/revision（identity 核心=路径/环境无关哈希，环境标签仅用于路由）；接管后旧节点返回在线不重派旧任务（另一节点持有派发则只 rejoin 不写、状态不可确认则 BLOCKED_UNCONFIRMED 显式阻塞非双写）；双设备接管声明需两真实环境 handle，模拟只算测试不算证明。
   * `tests/workflow-assistance/nf08_i_environment_takeover.py` 10/10 全绿（AT-15/16/35 合成片）。
 - 真实外部片（BLOCKED）：双设备接管声明需两真实环境证据（至少一个真实云端发布端+真实本地执行环境往返）；模拟只能算测试；新增设备绑定与受控接管需批准、不复制跨设备凭据。
+
+### NF-02-SYNC | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/acceptance_evidence.py`：验收证据分级 + 精确版本 CI（模拟与实测分别计数不伪通过；未授权/低于要求等级保留 PENDING-VERIFY 不伪过；外部项目不复制核心源码+角色切换不串线；required CI 绑定精确 SHA 不同 SHA 不替代/不连 everyday self-hosted runner/可选方案比较不阻塞 required gate）。
+  * `tests/workflow-assistance/nf02_acceptance_evidence.py` 14/14 全绿（AT-01/14/15/25/31/35/39 合成片）。
+- 真实外部片（BLOCKED）：真实跨进程/外部项目/CI 证据需对应授权与真实设备/客户端；未获授权只保留待验不伪通过；不用另一 SHA 的 CI 成功替代；不在公开仓连任意 PR 可调用的日常电脑 self-hosted runner。
+
+## M2 里程碑达成
+
+### M2 多项目、多软件、多环境和非 Git 扩展实证 | UNIVERSAL_TRANSPORT_EXECUTION_VERIFIED | 2026-09-16（可自执行片闭环，真实外部片 BLOCKED）
+- requirements: NF-08-E / NF-08-F / NF-08-G / NF-08-H / NF-08-I / NF-02-SYNC — 六卡全部 PASS(可自执行片) 已提交并推送（8a9fe66 → 8addf81 → 87782be → 9e52155 → 4340c63 → NF-02）。
+- 可自执行片=设计+代码+合成测试，已在已授权范围（当前批准根、合成项目、无网络/无付费/无凭据）内全绿。
+- BLOCKED 真实外部片（精确依赖）：真实跨软件取消/设备绑定/双设备接管/第二存储设备/外部项目验收 — 需对应授权与接口/真实设备就绪，仅暂停受影响分支。
