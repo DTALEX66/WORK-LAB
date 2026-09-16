@@ -17,10 +17,11 @@
   具体目标项目与发布空间的接入授权（本包 `grants_new_permissions=false`）。锁卡本身不授权。
 - 证据：`taskpack-authority-index.json` 新增 `universalWorkflowPack` 段 + 本记录。
 
-### NF-01-SYNC | IN_PROGRESS | INTEGRATION | pending | 2026-09-16
-- 目标：澄清"项目 Git 根内"与"禁止 prompt/response bodies"的宽泛表述——允许用户主动
-  发布的审计/任务工件合法传输，仍禁私人会话库镜像与遥测正文。
-- 可自执行片：`.project/governance/project-data-boundary.json` 增加"授权工件白名单"语义
-  + 对照测试（合法工件流转 / 秘密嵌套隔离 / 未授权正文拒绝）；`docs/decisions/
-  global-execution-standard.md` 追加一条 dated 澄清（不改既有 5 维原义）。
-- 真实外部片（BLOCKED）：跨两个真实软件的真实回读（AT-02）需对应软件写权限授权。
+### NF-01-SYNC | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * 纯函数模块 `packages/client-neutral-core/scripts/artifact_flow_policy.py`
+    （5 决策路径 ALLOW/PENDING_AUTHORIZATION/ISOLATE/REJECT + 嵌套秘密检测 + 项目偏好 scoping）。
+  * `tests/workflow-assistance/nf01_rule_semantics_artifact_flow.py` 18/18 全绿（gate-direct）。
+  * `docs/decisions/global-execution-standard.md` 追加 §七 dated 澄清（不改 5 维原义、不新增全局限速）。
+  * `.project/governance/project-data-boundary.json` append-only 增加 artifactFlowSemantics（既有键全部保留）。
+- 真实外部片（BLOCKED，精确依赖）：AT-02「同一全局规则部署到两种真实软件真实回读」需对应软件写权限授权；本卡不伪造 PASS。

@@ -91,3 +91,15 @@
 - 各项目 AGENTS.md 引用本文档（不重复写全局边界）
 - 各软件通过 hook/引用加载此标准
 - 待部署：三项目 + 所有软件
+
+## 七、NF-01 材料/遥测边界澄清（2026-09-16，追加不改原义）
+
+原"项目 Git 根内"与"禁止 prompt/response bodies"是宽泛表述，澄清如下（五维原义与第 1–5 条安全边界不变）：
+
+1. **可流转**：用户主动选定要发布的业务工件——审计/任务文档、不可变任务包引用、回执引用——可在授权目标材料空间合法流转。白名单语义见 `packages/client-neutral-core/scripts/artifact_flow_policy.py`（`ALLOW` 分支）。
+2. **永不自动镜像**：私人会话库、原生对话日志、Telemetry 正文、凭据、账号密钥、浏览器数据（`REJECT` 分支）——即使带 `authorized` 标志也拒绝；Telemetry 只留引用与最小元数据。
+3. **未知类别 fail-closed**：不在白名单的类别不自动传输（`PENDING_AUTHORIZATION`）。
+4. **嵌套秘密仍隔离**：白名单字段里埋藏的凭据/高熵 token 值仍被 `ISOLATE` 隔离，不泄漏到日志；只删顶层 key 不算合格。
+5. **项目偏好不串项目**：项目 A 的临时离线/模型偏好（`scope=project/task`）不成为 B 的全局强制（`effective_for_project` 返回空）；刻意 `global` 是独立授权，可报告但不自动应用。
+
+此澄清不新增任何全局费用/限速上限，不改用户模型/推理/认证原生选择。对照测试：`tests/workflow-assistance/nf01_rule_semantics_artifact_flow.py`（18 例）。

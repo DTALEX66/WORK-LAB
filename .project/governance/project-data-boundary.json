@@ -34,5 +34,27 @@
     "locate": "the exact spilled path is machine-resolvable for cleanup or migration",
     "clean": "spilled artifacts are removable or revertible without touching project source",
     "migrate": "spilled artifacts are relocatable back inside the project boundary"
+  },
+  "artifactFlowSemantics": {
+    "ref": "packages/client-neutral-core/scripts/artifact_flow_policy.py",
+    "added": "2026-09-16 NF-01-SYNC",
+    "note": "Clarifies the broad 'inside project Git root / no prompt-response bodies' phrasing. Business artifacts the user selected may flow to authorized material spaces; private session libs / telemetry bodies / credentials NEVER auto-mirror.",
+    "allowedKinds": [
+      "user_published_audit",
+      "user_published_task",
+      "immutable_task_package_ref",
+      "receipt_ref"
+    ],
+    "forbiddenKinds": [
+      "private_session",
+      "conversation_log",
+      "telemetry_body",
+      "credential",
+      "account_key",
+      "browser_data"
+    ],
+    "unknownFailClosed": true,
+    "nestedSecretsIsolated": true,
+    "projectPrefScoping": "project/task-scoped preferences do not leak to other projects; global is a separate explicit authorization"
   }
 }
