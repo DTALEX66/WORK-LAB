@@ -111,3 +111,10 @@
     相同业务交接经 GitHub 与文件双通道往返一致（核心分发 payload 不变，证明不锁定 GitHub）；第三个非 Git 示例项目完成工件往返（publish→execute_from_reference→receipt，baseline_kind=artifact 非 git commit）；半上传/过期或缺失附件/重复文件/同路径不同摘要冲突/路径穿越 全部不触发任务。
   * `tests/workflow-assistance/nf08_g_transport_channels.py` 12/12 全绿（AT-07/31/32 合成片）。
 - 真实外部片（BLOCKED）：真实第二存储/设备接入需已批准接入；无安装授权不装新文件同步软件；真实云端端点能力另行准确标注（模拟只算测试）。
+
+### NF-08-H | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/cross_project_isolation.py`：跨项目协作引用与隔离（复用 project_binding_registry 每项目独立根 + NF-08-0 授权引用语义，未造第二套协作模型）。
+    A 网络失败/改规则/取消任务都不影响独立 B（独立命名空间/根）；授权 A→B 交付完成并记入 B 自身命名空间（grant 精确绑定 from/to/artifact，revoke 即失效）；未授权引用拒绝且不越 B 读取边界（项目名本身不构成批准，不同 artifact 不被该 grant 覆盖）；共享 UI 只暴露粗粒度授权可见状态（COMPLETED 等），项目私有摘要正文绝不外泄。
+  * `tests/workflow-assistance/nf08_h_cross_project_isolation.py` 12/12 全绿（AT-05/17/33/34 合成片）。
+- 真实外部片（BLOCKED）：跨项目协作需双方作用域内有效授权；项目名称本身不构成批准；不把全项目资料提交到 WORK-LAB、不建跨项目共享记忆、不因模块目录相似自动合并项目。
