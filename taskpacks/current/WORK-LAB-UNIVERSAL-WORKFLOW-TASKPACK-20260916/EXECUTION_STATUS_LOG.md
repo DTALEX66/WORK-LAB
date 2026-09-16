@@ -25,3 +25,13 @@
   * `docs/decisions/global-execution-standard.md` 追加 §七 dated 澄清（不改 5 维原义、不新增全局限速）。
   * `.project/governance/project-data-boundary.json` append-only 增加 artifactFlowSemantics（既有键全部保留）。
 - 真实外部片（BLOCKED，精确依赖）：AT-02「同一全局规则部署到两种真实软件真实回读」需对应软件写权限授权；本卡不伪造 PASS。
+
+
+### NF-03-SYNC | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * 纯函数模块 `packages/client-neutral-core/scripts/project_binding_registry.py`
+    （稳定不透明 project_id + 可选 repo 关联 + git/artifact 基线 + 材料位置/能力白名单
+     + 本机 root binding overlay + 云端路径拒绝 + 同名不串 + 未知 ID fail-closed）。
+  * `tests/workflow-assistance/nf03_project_binding_registry.py` 15/15 全绿（gate-direct）。
+- 覆盖 AT-05（同名同任务号隔离）/ AT-06（换设备路径重绑定只信本机 binding）/ AT-07（第三非 Git 项目仅配置接入）的合成可自执行片。
+- 真实外部片（BLOCKED，精确依赖）：真实目标项目与路径需用户对该项目的接入授权；合成项目限定当前批准测试根。非 Git 项目的原生执行限制须对真实执行软件诚实标注。
