@@ -89,3 +89,11 @@
 - 可自执行片=设计+代码+合成测试，已在已授权范围（当前批准根、合成项目、无网络/无付费/无凭据）内全绿。
 - BLOCKED 真实外部片（精确依赖）：真实服务端发布/回读、真实原生执行器启动+模型费用、真实订阅/节点接入 — 需对应授权与接口就绪，仅暂停受影响分支，不影响合成片证据。
 - 回归：8/8 测试文件 123 用例全绿。
+
+
+### NF-08-E | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/revision_convergence.py`：修订/取消/乱序/未知效果收敛（复用 handoff_envelope.RevisionRegistry + task_ledger transition/external-effect 词汇，未造第二套收敛模型）。
+    旧修订晚到不结束/不冲掉新修订（active 指针=最高已发布）；取消/终态任务拒绝启动新效果，已发生/仍不确定效果可查询；UNKNOWN/CONFLICT 效果不盲重试（先对证据 reconcile），拒绝只限受影响任务；乱序交付以最新修订为权威、旧结果保留审计。
+  * `tests/workflow-assistance/nf08_e_revision_convergence.py` 12/12 全绿（AT-25/26/27/28 合成片）。
+- 真实外部片（BLOCKED）：真实跨软件取消需对受管任务的原生取消授权；没有用户进程终止权限就不 kill。
