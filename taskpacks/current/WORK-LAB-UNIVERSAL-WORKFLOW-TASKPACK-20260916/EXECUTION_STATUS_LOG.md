@@ -138,3 +138,11 @@
 - requirements: NF-08-E / NF-08-F / NF-08-G / NF-08-H / NF-08-I / NF-02-SYNC — 六卡全部 PASS(可自执行片) 已提交并推送（8a9fe66 → 8addf81 → 87782be → 9e52155 → 4340c63 → NF-02）。
 - 可自执行片=设计+代码+合成测试，已在已授权范围（当前批准根、合成项目、无网络/无付费/无凭据）内全绿。
 - BLOCKED 真实外部片（精确依赖）：真实跨软件取消/设备绑定/双设备接管/第二存储设备/外部项目验收 — 需对应授权与接口/真实设备就绪，仅暂停受影响分支。
+
+
+### NF-10-SYNC | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/shared_rule_adaptation.py`：共同规则/技能/用户差异真实适配（复用 config-ownership 词汇，未造第二套归属模型）。
+    字段分层 rule/adapter/preference/diff/task 分开；项目差分不污染全局且 user-native 字段(model/provider/reasoning/auth/user_plugin)保持原值；受管删除只删自有字段不碰未知/他资产字段；base/live/candidate 三方比较保留用户修改、上游变化=待适配非盲恢复、无变化=合法 NO_CHANGE；技能按需加载+停无收益+13是库存非永久+新模型不复制整套技能。
+  * `tests/workflow-assistance/nf10_shared_rule_adaptation.py` 11/11 全绿（AT-02/30/36 合成片）。
+- 真实外部片（BLOCKED）：真实全局规则/资产部署需用户对目标与字段的有效授权；现有 OBSERVE 字段不因本包变可写；不为同步任务改 provider/API Key；不修改上游内部文件；不每个新模型复制整套技能。
