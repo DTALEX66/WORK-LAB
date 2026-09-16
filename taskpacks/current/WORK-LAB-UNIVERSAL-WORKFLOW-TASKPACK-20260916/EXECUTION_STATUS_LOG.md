@@ -97,3 +97,10 @@
     旧修订晚到不结束/不冲掉新修订（active 指针=最高已发布）；取消/终态任务拒绝启动新效果，已发生/仍不确定效果可查询；UNKNOWN/CONFLICT 效果不盲重试（先对证据 reconcile），拒绝只限受影响任务；乱序交付以最新修订为权威、旧结果保留审计。
   * `tests/workflow-assistance/nf08_e_revision_convergence.py` 12/12 全绿（AT-25/26/27/28 合成片）。
 - 真实外部片（BLOCKED）：真实跨软件取消需对受管任务的原生取消授权；没有用户进程终止权限就不 kill。
+
+### NF-08-F | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/entry_semantics.py`：各软件一个按需入口，统一动词（publish/view/resume/adjust/return）路由到宿主原生入口，用户看动词不记目录；未原生支持的动词不发明。
+    两宿主无需复制正文且一个不依赖 Hermes（宿主选择按能力+Hermes依赖，非按名）；授权范围内不逐卡重复确认、只有新增外发/写入触发对应授权（已授权 scope 不 re-ask，不同 scope 仍触发）；标准接续只加载任务所需上下文（checkpoint/当前修订/未完成项），显式不拉全部项目历史与技能全文。
+  * `tests/workflow-assistance/nf08_f_entry_semantics.py` 10/10 全绿（AT-29/30 合成片）。
+- 真实外部片（BLOCKED）：发布到各软件全局配置是独立、可批量批准的部署动作；仓内技能可按开发授权编辑。
