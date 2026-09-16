@@ -56,3 +56,10 @@
     inbox/outbox/认领/命名空间可暂停/事件身份去重/条件请求+Retry-After/先持久化认领意图再调执行器/恢复对账不重起/内容不变不重写工件。
   * `tests/workflow-assistance/nf08_b_durable_inbox.py` 12/12 全绿（AT-14/15/16/17 合成片：跨进程不重起、并发单派发、A故障不阻B、同步检查不调用模型、工件不重复写）。
 - 真实外部片（BLOCKED）：真实订阅需项目/节点接入授权；持久化限当前批准根；多机不复制活动 ledger 做多主。
+
+### NF-05-SYNC | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/capability_roles.py`：客户端能力按角色登记 + 探针驱动（非固定七项 enum）。
+    角色语义分区 planner/executor/reviewer/storage/observer；能力=探针确认的动态集合；GitHub/CC Switch 按真实角色登记、无 execute 探针即不可当执行者；同一 adapter_id 被两项目复用（分发键=adapter 非项目名，无按名分派）；缺 Hermes 其它执行器仍可用（按能力选执行器）；缺接口=PARTIAL/UNSUPPORTED+补齐前提，不报"全功能完成"。
+  * `tests/workflow-assistance/nf05_capability_roles.py` 12/12 全绿（AT-18/19/20 合成片）。
+- 真实外部片（BLOCKED）：真实客户端探针/启动需原生会话许可与对应授权；元数据探针≠付费调用。
