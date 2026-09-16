@@ -70,3 +70,10 @@
     分派前冻结 task/revision/baseline/执行者/授权引用+解析本机工作区；脏工作树不自动 pull/reset；记录启动前意图+真实 run/session ID+实际指令源（非 --last）；低风险确定性先跑、Agent 任务需费用授权否则 HOLD、假执行器仅算契约证据；换执行者先确认旧运行体 COMPLETED/PAUSED 只交剩余工作；启动失败分层归因（transport/permission/runtime/model，不阻其它项目）；exit 0 或模型 DONE 不算验收全部通过。
   * `tests/workflow-assistance/nf08_c_dispatch_contract.py` 12/12 全绿（AT-11/18/21 合成片）。
 - 真实外部片（BLOCKED）：真实原生执行器启动+模型费用授权；不自动获得 commit/push/merge；不拼接远端 shell。
+
+### NF-08-D | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/result_return.py`：结果回传、读取与显式复核触发（复用既有 receipt/outbox 语义，未造第二套回执格式）。
+    回执绑定 project/task/revision/run/baseline/工件digest，区分 execution_completed 与 accepted；outbox 幂等（应答丢失不造重复、重试只重发回执不重跑任务）；规划端新读取按精确修订号回读不猜其它修订；正文/私有会话日志绝不进公开遥测；RECEIPT_PUBLISHED≠REVIEW_REQUESTED；反向编辑同权限+版本检查；无受支持通知通道则 REVIEW_PENDING，绝不断言唤醒了旧聊天。
+  * `tests/workflow-assistance/nf08_d_result_return.py` 15/15 全绿（AT-22/23/24 合成片）。
+- 真实外部片（BLOCKED）：真实回执写需原任务指定目标的回执写权限；主动触发新审查/模型调用需既有有效授权；不重发即不重跑、不回滚已发生的外部副作用。
