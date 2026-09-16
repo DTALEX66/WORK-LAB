@@ -112,6 +112,17 @@
       "role": "static handoff view for user-selected task dispatch; NOT a runtime task store, NOT an auto-executor",
       "supersedes": null,
       "note": "currentTaskpack (R1) remains authoritative until its 2026-09-24 expiry; this pack is a planning/coverage layer, not a new authority (per START-HERMES §6)"
+    },
+    {
+      "id": "WORK-LAB-UNIVERSAL-WORKFLOW-TASKPACK-20260916",
+      "mode": "plan_only",
+      "role": "通用协作差集专项增量包；不是全项目总包、不是新运行时、不是执行授权。执行前必读范围更正。",
+      "tasks_json_sha256": "d1664f1e997315814c3154dac60682e55ede4cd7464a0e3a3ab553973f777c9c",
+      "scope_correction_sha256": "483ae11f59e1dda1f6d0079521148923cbdf5c0f5129484629d9b9d40e13d6b8",
+      "supersedes": null,
+      "note": "20 张差集卡 / 40 AT；15 续 + 4 条件项 deferred（NF-13/W05/W06/W08）。专项完成≠全项目完成。",
+      "execution_authorized": false,
+      "grants_new_permissions": false
     }
   ],
   "baselineRevalidation": {
@@ -126,5 +137,17 @@
     "pack_observed_head": "693471c01f12956ec6e95567a164edde1a7f0879",
     "pack_head_matches_current": true,
     "r4_source_list_gap": "R4 local source manifest (.project-local/artifacts/task-artifacts/r4/history-source-manifest.json) NOT present in this checkout - recorded as gap, NOT filled from private session stores (NF-00 step 2)"
+  },
+  "universalScopeDistinction": {
+    "ts": "2026-09-16",
+    "card": "NF-00-SYNC",
+    "worklab_code_dev": "WORK-LAB 仓内契约/设计/合成+多进程测试/CI 接线/规则澄清（可自执行，checkpoint）",
+    "target_project_access": "目标项目/路径接入需用户对该项目的接入授权；合成项目限定批准测试根",
+    "remote_publish": "远端发布目标（GitHub/规划端）需写权限 + 用户对该批材料外发授权；未获权则停在待授权",
+    "local_deploy": "本机安装/启动项/全局资产需部署授权；未授权只暂停对应分支",
+    "carry_forward_anchor": "TASKS.json carry_forward（15 续 + 4 条件项）",
+    "default_path": "每项目一处材料权威 + 一个当前认领端；多设备按路由接入，之后受控转移",
+    "no_main_merge": true,
+    "baseline": "r4-recovery-exec@de2f3fd；main e5231f0 保持未合并"
   }
 }
