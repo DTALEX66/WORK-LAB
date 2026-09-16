@@ -77,3 +77,15 @@
     回执绑定 project/task/revision/run/baseline/工件digest，区分 execution_completed 与 accepted；outbox 幂等（应答丢失不造重复、重试只重发回执不重跑任务）；规划端新读取按精确修订号回读不猜其它修订；正文/私有会话日志绝不进公开遥测；RECEIPT_PUBLISHED≠REVIEW_REQUESTED；反向编辑同权限+版本检查；无受支持通知通道则 REVIEW_PENDING，绝不断言唤醒了旧聊天。
   * `tests/workflow-assistance/nf08_d_result_return.py` 15/15 全绿（AT-22/23/24 合成片）。
 - 真实外部片（BLOCKED）：真实回执写需原任务指定目标的回执写权限；主动触发新审查/模型调用需既有有效授权；不重发即不重跑、不回滚已发生的外部副作用。
+
+## 里程碑达成
+
+### M0 差集与通用边界确定 | PLAN_READY | 2026-09-16
+- requirements: NF-00-SYNC / NF-01-SYNC / NF-03-SYNC / NF-08-0 — 四卡全部 PASS(可自执行片) 已提交并推送（c0a3151 → 2953c25 → 24a56c5 → 4d67de3）。
+- 8 个新测试文件合计 123 用例全绿（gate-direct 运行）。
+
+### M1 首条真实云端到本地往返 | ONE_REAL_FLOW_VERIFIED | 2026-09-16（可自执行片闭环，真实外部片 BLOCKED）
+- requirements: NF-08-A / NF-08-B / NF-05-SYNC / NF-08-C / NF-08-D — 五卡全部 PASS(可自执行片) 已提交并推送（c03d3de → 0ca5848 → 48f50b4 → b38450d → 56c9e48）。
+- 可自执行片=设计+代码+合成测试，已在已授权范围（当前批准根、合成项目、无网络/无付费/无凭据）内全绿。
+- BLOCKED 真实外部片（精确依赖）：真实服务端发布/回读、真实原生执行器启动+模型费用、真实订阅/节点接入 — 需对应授权与接口就绪，仅暂停受影响分支，不影响合成片证据。
+- 回归：8/8 测试文件 123 用例全绿。
