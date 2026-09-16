@@ -104,3 +104,10 @@
     两宿主无需复制正文且一个不依赖 Hermes（宿主选择按能力+Hermes依赖，非按名）；授权范围内不逐卡重复确认、只有新增外发/写入触发对应授权（已授权 scope 不 re-ask，不同 scope 仍触发）；标准接续只加载任务所需上下文（checkpoint/当前修订/未完成项），显式不拉全部项目历史与技能全文。
   * `tests/workflow-assistance/nf08_f_entry_semantics.py` 10/10 全绿（AT-29/30 合成片）。
 - 真实外部片（BLOCKED）：发布到各软件全局配置是独立、可批量批准的部署动作；仓内技能可按开发授权编辑。
+
+### NF-08-G | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/transport_channels.py`：第二传输通道与非 Git 项目落地（复用 NF-03 非Git工件基线 + NF-08-0 v2 信封，通道为薄传输非新分发模型）。
+    相同业务交接经 GitHub 与文件双通道往返一致（核心分发 payload 不变，证明不锁定 GitHub）；第三个非 Git 示例项目完成工件往返（publish→execute_from_reference→receipt，baseline_kind=artifact 非 git commit）；半上传/过期或缺失附件/重复文件/同路径不同摘要冲突/路径穿越 全部不触发任务。
+  * `tests/workflow-assistance/nf08_g_transport_channels.py` 12/12 全绿（AT-07/31/32 合成片）。
+- 真实外部片（BLOCKED）：真实第二存储/设备接入需已批准接入；无安装授权不装新文件同步软件；真实云端端点能力另行准确标注（模拟只算测试）。
