@@ -159,3 +159,10 @@
     项目过滤 + 源/目标软件 + 材料版本 + delivery/execution/return/review 分阶段状态；A/B 并行独立查看（一项目问题不阻另一项目）；已执行未回传保持 PENDING_RETURN 不显示"全部失败/云端已收到"；权限不足/零/未知/陈旧/在线分别展示、未知不补 0、更新时间来自事实非界面刷新；客户端断线快照标 STALE 重连清除；成本按任务+调用来源分组、订阅用量不推算成 API 已收费；他项目标题/正文绝不外泄；Observer 无新写能力（append 仍只读）。
   * `tests/workflow-assistance/nf09_multi_project_projection.py` 10/10 全绿（AT-24/34/38 合成片）。
 - 真实外部片（BLOCKED）：仅授权项目脱敏元数据读取；不新增 Observer 写权限；发布/批准/取消入口留原生客户端或链接，不向 sidecar GET 加写按钮；不重开发工作台/看板、不把网络绿灯当任务成功、不泄露别项目正文。
+
+### NF-11-SYNC | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/thin_deployment.py`：薄部署、既有模块复用与退出路径。
+    新增项目只加配置+本地状态（无新核心源码副本/守护进程/调度器/常驻LLM轮询，违反即拒）；不叠加 n8n/Linear/Vibe Kanban/Symphony 四套任务核心；接收/回传挂进既有运行生命周期；复用组件交出调用/测试/替代点（候选登记≠采用）；退出路径 暂停同步/撤销单项目/回退适配版本/移除受管资产 均不影响原生任务且不删历史（暂停≠删历史、未回传记录保留）；增强关闭后原生软件独立运行。
+  * `tests/workflow-assistance/nf11_thin_deployment.py` 12/12 全绿（AT-29/30/40 合成片）。
+- 真实外部片（BLOCKED）：本机安装/启动项/全局资产调整需有效部署授权；不私自安装额外服务；不搬迁官方 HOME/活动库；不同项目不复制代码/venv。
