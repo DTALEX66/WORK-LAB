@@ -146,3 +146,9 @@
     字段分层 rule/adapter/preference/diff/task 分开；项目差分不污染全局且 user-native 字段(model/provider/reasoning/auth/user_plugin)保持原值；受管删除只删自有字段不碰未知/他资产字段；base/live/candidate 三方比较保留用户修改、上游变化=待适配非盲恢复、无变化=合法 NO_CHANGE；技能按需加载+停无收益+13是库存非永久+新模型不复制整套技能。
   * `tests/workflow-assistance/nf10_shared_rule_adaptation.py` 11/11 全绿（AT-02/30/36 合成片）。
 - 真实外部片（BLOCKED）：真实全局规则/资产部署需用户对目标与字段的有效授权；现有 OBSERVE 字段不因本包变可写；不为同步任务改 provider/API Key；不修改上游内部文件；不每个新模型复制整套技能。
+
+### NF-12-SYNC | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/update_adaptation.py`：软件/模型/协议更新只做受影响适配（记录真实运行体/协议/能力快照+仅检查所用字段/技能/插件/输入输出/取消恢复接口；无变化=合法 NO_CHANGE 非文件数增加；有不兼容才最小补丁+回退计划非整包重装；共享适配器升级后旧交接仍可读、未知成本保持 UNKNOWN；模型参数用户原生选择不强制高推理/新模型；一次维护未批准只隔离该组不级联整包失败）。
+  * `tests/workflow-assistance/nf12_update_adaptation.py` 10/10 全绿（AT-36/37 合成片）。
+- 真实外部片（BLOCKED）：软件更新/全局部署/新增插件分目标批量授权；纯文档和合成能力测试不须收费调用；不用 --force-venv 解真实占用；不向模型供应方未证实能力猜参数。
