@@ -63,3 +63,10 @@
     角色语义分区 planner/executor/reviewer/storage/observer；能力=探针确认的动态集合；GitHub/CC Switch 按真实角色登记、无 execute 探针即不可当执行者；同一 adapter_id 被两项目复用（分发键=adapter 非项目名，无按名分派）；缺 Hermes 其它执行器仍可用（按能力选执行器）；缺接口=PARTIAL/UNSUPPORTED+补齐前提，不报"全功能完成"。
   * `tests/workflow-assistance/nf05_capability_roles.py` 12/12 全绿（AT-18/19/20 合成片）。
 - 真实外部片（BLOCKED）：真实客户端探针/启动需原生会话许可与对应授权；元数据探针≠付费调用。
+
+### NF-08-C | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/dispatch_contract.py`：分派到执行的合同（不再停在交接模拟）。
+    分派前冻结 task/revision/baseline/执行者/授权引用+解析本机工作区；脏工作树不自动 pull/reset；记录启动前意图+真实 run/session ID+实际指令源（非 --last）；低风险确定性先跑、Agent 任务需费用授权否则 HOLD、假执行器仅算契约证据；换执行者先确认旧运行体 COMPLETED/PAUSED 只交剩余工作；启动失败分层归因（transport/permission/runtime/model，不阻其它项目）；exit 0 或模型 DONE 不算验收全部通过。
+  * `tests/workflow-assistance/nf08_c_dispatch_contract.py` 12/12 全绿（AT-11/18/21 合成片）。
+- 真实外部片（BLOCKED）：真实原生执行器启动+模型费用授权；不自动获得 commit/push/merge；不拼接远端 shell。
