@@ -152,3 +152,10 @@
   * `packages/client-neutral-core/scripts/update_adaptation.py`：软件/模型/协议更新只做受影响适配（记录真实运行体/协议/能力快照+仅检查所用字段/技能/插件/输入输出/取消恢复接口；无变化=合法 NO_CHANGE 非文件数增加；有不兼容才最小补丁+回退计划非整包重装；共享适配器升级后旧交接仍可读、未知成本保持 UNKNOWN；模型参数用户原生选择不强制高推理/新模型；一次维护未批准只隔离该组不级联整包失败）。
   * `tests/workflow-assistance/nf12_update_adaptation.py` 10/10 全绿（AT-36/37 合成片）。
 - 真实外部片（BLOCKED）：软件更新/全局部署/新增插件分目标批量授权；纯文档和合成能力测试不须收费调用；不用 --force-venv 解真实占用；不向模型供应方未证实能力猜参数。
+
+### NF-09-SYNC | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/multi_project_projection.py`：多项目任务投影与运行证据可见（增强既有只读 Observer 投影，未造第二套工作台/看板）。
+    项目过滤 + 源/目标软件 + 材料版本 + delivery/execution/return/review 分阶段状态；A/B 并行独立查看（一项目问题不阻另一项目）；已执行未回传保持 PENDING_RETURN 不显示"全部失败/云端已收到"；权限不足/零/未知/陈旧/在线分别展示、未知不补 0、更新时间来自事实非界面刷新；客户端断线快照标 STALE 重连清除；成本按任务+调用来源分组、订阅用量不推算成 API 已收费；他项目标题/正文绝不外泄；Observer 无新写能力（append 仍只读）。
+  * `tests/workflow-assistance/nf09_multi_project_projection.py` 10/10 全绿（AT-24/34/38 合成片）。
+- 真实外部片（BLOCKED）：仅授权项目脱敏元数据读取；不新增 Observer 写权限；发布/批准/取消入口留原生客户端或链接，不向 sidecar GET 加写按钮；不重开发工作台/看板、不把网络绿灯当任务成功、不泄露别项目正文。
