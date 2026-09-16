@@ -42,3 +42,10 @@
   * `.project/governance/federation/federation-envelope.v2.schema.json`：v2 schema，v1 schema 原样保留供旧读取方。
   * `tests/workflow-assistance/nf08_0_handoff_envelope_v2.py` 18/18 全绿：v1 可读、v2 显式拒绝 v1 不静默截断、项目ID≠客户端ID、同任务同修订不同摘要=冲突不覆盖、高修订走 supersede 链不合并、迟到低修订结果保留待审不推进、授权只信本地可信授权记录（payload 自声明忽略）、Ready 指针仅在不可变快照完整后发布、v1→v2 迁移未登记引用 fail-closed。
 - 真实外部片（BLOCKED）：真实项目间跨机交接需对目标项目授权 + 真实环境节点；本地授权记录/注册表需对真实软件配置面消费。
+
+### NF-08-A | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/publish_planner.py`：发布规划 + 逐动作权限审计（纯函数，无网络、不读凭据）。
+    材料分级路由存储目标 / 大正文先固定版本工件再摘要+引用 / 逐动作写权核对（push≠全动作）/ 回读校验 / 幂等 / 公开目标拒收私人 canary。
+  * `tests/workflow-assistance/nf08_a_publish_planner.py` 21/21 全绿（AT-11/12/13 合成片）。
+- 真实外部片（BLOCKED，精确依赖）：真实服务端写 + 回读需目标空间发布权限与用户对这批材料外发的授权；未获写权停在 PUBLISH_PENDING_AUTHORIZATION，不称同步成功。
