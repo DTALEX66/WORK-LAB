@@ -49,3 +49,10 @@
     材料分级路由存储目标 / 大正文先固定版本工件再摘要+引用 / 逐动作写权核对（push≠全动作）/ 回读校验 / 幂等 / 公开目标拒收私人 canary。
   * `tests/workflow-assistance/nf08_a_publish_planner.py` 21/21 全绿（AT-11/12/13 合成片）。
 - 真实外部片（BLOCKED，精确依赖）：真实服务端写 + 回读需目标空间发布权限与用户对这批材料外发的授权；未获写权停在 PUBLISH_PENDING_AUTHORIZATION，不称同步成功。
+
+### NF-08-B | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/durable_inbox.py`：复用既有 TaskLedger 持久化边界（ledger.json + 原子 os.replace + orphan 恢复 + 租约 fence），未新增独立队列库。
+    inbox/outbox/认领/命名空间可暂停/事件身份去重/条件请求+Retry-After/先持久化认领意图再调执行器/恢复对账不重起/内容不变不重写工件。
+  * `tests/workflow-assistance/nf08_b_durable_inbox.py` 12/12 全绿（AT-14/15/16/17 合成片：跨进程不重起、并发单派发、A故障不阻B、同步检查不调用模型、工件不重复写）。
+- 真实外部片（BLOCKED）：真实订阅需项目/节点接入授权；持久化限当前批准根；多机不复制活动 ledger 做多主。
