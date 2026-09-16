@@ -118,3 +118,10 @@
     A 网络失败/改规则/取消任务都不影响独立 B（独立命名空间/根）；授权 A→B 交付完成并记入 B 自身命名空间（grant 精确绑定 from/to/artifact，revoke 即失效）；未授权引用拒绝且不越 B 读取边界（项目名本身不构成批准，不同 artifact 不被该 grant 覆盖）；共享 UI 只暴露粗粒度授权可见状态（COMPLETED 等），项目私有摘要正文绝不外泄。
   * `tests/workflow-assistance/nf08_h_cross_project_isolation.py` 12/12 全绿（AT-05/17/33/34 合成片）。
 - 真实外部片（BLOCKED）：跨项目协作需双方作用域内有效授权；项目名称本身不构成批准；不把全项目资料提交到 WORK-LAB、不建跨项目共享记忆、不因模块目录相似自动合并项目。
+
+### NF-08-I | PASS(可自执行片) | INTEGRATION | pending | 2026-09-16
+- 可自执行片已闭环：
+  * `packages/client-neutral-core/scripts/environment_takeover.py`：多环境路由与受控接管（复用 NF-03 每项目根绑定 + task_ledger 租约 fence 单派发原语；不共享文件夹仲裁、不强上 Redis/Kafka/K8s、不自动关用户其它软件）。
+    不同环境路径不同仍取同一 project/task/revision（identity 核心=路径/环境无关哈希，环境标签仅用于路由）；接管后旧节点返回在线不重派旧任务（另一节点持有派发则只 rejoin 不写、状态不可确认则 BLOCKED_UNCONFIRMED 显式阻塞非双写）；双设备接管声明需两真实环境 handle，模拟只算测试不算证明。
+  * `tests/workflow-assistance/nf08_i_environment_takeover.py` 10/10 全绿（AT-15/16/35 合成片）。
+- 真实外部片（BLOCKED）：双设备接管声明需两真实环境证据（至少一个真实云端发布端+真实本地执行环境往返）；模拟只能算测试；新增设备绑定与受控接管需批准、不复制跨设备凭据。
