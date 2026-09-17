@@ -85,8 +85,8 @@ class SourceGovernanceTest(unittest.TestCase):
             self.assertTrue(FORBIDDEN_TRACKED.search(path), "should flag: " + path)
 
     def test_clean_path_not_flagged(self) -> None:
-        for path in ["10-workflow/workflow-assistance/src/x.py",
-                     "00-governance/contracts/c.json",
+        for path in ["packages/client-neutral-core/src/x.py",
+                     ".project/governance/contracts/c.json",
                      "scripts/ci/verify.py", "tests/ci/t.py"]:
             self.assertFalse(FORBIDDEN_TRACKED.search(path), "should NOT flag: " + path)
 

@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-LEDGER_REL = Path("50-taskpacks/error-ledger.json")
+LEDGER_REL = Path("taskpacks/current/error-ledger.json")
 ALLOWED_PHASES = {
     "AUDIT_ONLY",
     "PLAN",
@@ -34,7 +34,7 @@ SECRET_PATTERNS = (
 def repo_root() -> Path:
     current = Path(__file__).resolve()
     for parent in [current, *current.parents]:
-        if (parent / ".git").exists() and (parent / "10-workflow").is_dir():
+        if (parent / ".git").exists() and (parent / "services").is_dir():
             return parent
     raise SystemExit("ERROR_LEDGER_FAIL cannot locate WORK-LAB root")
 

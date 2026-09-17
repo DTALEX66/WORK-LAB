@@ -45,7 +45,7 @@ The global workflow surface is repository-controlled portable source under
 `10-workflow/workflow-assistance`. Hermes Home, credentials, sessions, cron
 metadata, provider routes and live caches remain **global platform state**; they
 are never absorbed into this repository. Project task data and generated
-evidence stay under the current Git root's ignored `.hermes/` boundary.
+evidence stay under the current Git root's ignored `.project-local/` boundary.
 
 ## Canonical active modules
 
@@ -75,7 +75,7 @@ dirty ownership, boundary violations or incomplete required jobs fail closed.
 ## Safety boundaries
 
 - One Git root; module rules may narrow root rules but never weaken them.
-- `80-evidence/` and `.hermes/` are generated/ignored project data; durable
+- `80-evidence/` and `.project-local/` are generated/ignored project data; durable
   handoffs may be retained only when explicitly covered by a recovery contract.
 - Secrets, credentials, prompt/response bodies and private browser data never enter evidence.
 - Project artifacts never spill outside the project Git root; any spill is

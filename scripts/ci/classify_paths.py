@@ -3,8 +3,8 @@ import sys
 from pathlib import Path
 
 ROOTS = {
-    "workflow": Path("10-workflow/workflow-assistance"),
-    "observer": Path("30-observer/work-lab-observer"),
+    "workflow": Path("packages/client-neutral-core"),
+    "observer": Path("apps/observer"),
 }
 
 def classify(paths: list[str]) -> dict[str, list[str]]:

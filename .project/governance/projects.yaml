@@ -1,0 +1,59 @@
+schema_version: work-lab/projects/v1
+workspace_id: work-lab
+repository: DTALEX66/WORK-LAB
+single_writer: true
+root_resolution:
+  - explicit-argument
+  - manifest-relative-path
+  - environment-variable
+  - current-git-root
+modules:
+  - id: authority
+    path: services/authority
+    role: single-writer/lease/checkpoint authority
+    owner: DTALEX66
+    depends_on: []
+  - id: orchestration
+    path: services/orchestration
+    role: workflow orchestration and state machine
+    owner: DTALEX66
+    depends_on: [authority]
+  - id: policy
+    path: services/policy
+    role: permissions/budget/risk/human-approval policy
+    owner: DTALEX66
+    depends_on: [authority]
+  - id: receipts
+    path: services/receipts
+    role: CloudEvent/OTel/in-toto receipts
+    owner: DTALEX66
+    depends_on: [orchestration]
+  - id: contracts
+    path: packages/contracts
+    role: stable schema contracts
+    owner: DTALEX66
+    depends_on: []
+  - id: client-neutral-core
+    path: packages/client-neutral-core
+    role: neutral core logic (no executor import)
+    owner: DTALEX66
+    depends_on: [contracts]
+  - id: observer
+    path: apps/observer
+    role: strictly read-only observation projection
+    owner: DTALEX66
+    depends_on: [contracts]
+  - id: control-surface
+    path: apps/control-surface
+    role: writable governance control surface
+    owner: DTALEX66
+    depends_on: [authority, policy]
+forbidden_roots:
+  - "E:\\"
+generated_data:
+  project_local_root: .project-local
+  run_root: .project-local/runs
+  artifacts: .project-local/artifacts
+  cache: .project-local/cache
+  tracked: false
+external_mutation_default: false

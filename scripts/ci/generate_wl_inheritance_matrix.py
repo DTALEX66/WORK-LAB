@@ -1,7 +1,7 @@
 """Generate the 30-entry WL inheritance matrix (M-010) from the R2 authority pack.
 
 Read-only derivation from repository facts; writes only a generated artifact under
-00-governance/generated/ (rebuildable, not authoritative source).
+.project/governance/generated/ (rebuildable, not authoritative source).
 """
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT_DIR = ROOT / "00-governance" / "generated"
+OUT_DIR = ROOT / ".project/governance" / "generated"
 
 # R2 §4 authoritative table: WL ID -> (task, R2 processing, parent M-task)
 WL_TABLE = [
@@ -49,19 +49,19 @@ WL_TABLE = [
 # Existence-based evidence of current implementation footprint (from live tree).
 # These are indicative reads; the authoritative status lives in the ledger/state.
 IMPLEMENTED_PATHS = {
-    "workflow": ROOT / "10-workflow/workflow-assistance",
-    "observer": ROOT / "30-observer/work-lab-observer",
-    "governance": ROOT / "00-governance",
-    "current_state": ROOT / "00-governance/generated/CURRENT_STATE.json",
-    "source_ledger": ROOT / "00-governance/source-ledger.json",
-    "task_ledger_schema": ROOT / "10-workflow/workflow-assistance/schemas/workflow/task-ledger.schema.json",
-    "ci_watcher": ROOT / "10-workflow/workflow-assistance/scripts/workflow/ci_watcher.py",
-    "impact_planner": ROOT / "10-workflow/workflow-assistance/scripts/workflow/impact_planner.py",
-    "model_policy": ROOT / "10-workflow/workflow-assistance/scripts/workflow/model_policy.py",
-    "token_monitor": ROOT / "10-workflow/workflow-assistance/scripts/workflow/token_monitor.py",
-    "growth_watcher": ROOT / "10-workflow/workflow-assistance/scripts/workflow/growth_watcher.py",
-    "provider_health": ROOT / "10-workflow/workflow-assistance/scripts/workflow/provider_health.py",
-    "observer_dashboard": ROOT / "30-observer/work-lab-observer/scripts/observer_dashboard.py",
+    "workflow": ROOT / "packages/client-neutral-core",
+    "observer": ROOT / "apps/observer",
+    "governance": ROOT / ".project/governance",
+    "current_state": ROOT / ".project/governance/generated/CURRENT_STATE.json",
+    "source_ledger": ROOT / ".project/governance/source-ledger.json",
+    "task_ledger_schema": ROOT / "packages/contracts/schemas/workflow/task-ledger.schema.json",
+    "ci_watcher": ROOT / "packages/client-neutral-core/scripts/ci_watcher.py",
+    "impact_planner": ROOT / "packages/client-neutral-core/scripts/impact_planner.py",
+    "model_policy": ROOT / "services/policy/model_policy.py",
+    "token_monitor": ROOT / "packages/client-neutral-core/scripts/token_monitor.py",
+    "growth_watcher": ROOT / "packages/client-neutral-core/scripts/growth_watcher.py",
+    "provider_health": ROOT / "packages/client-neutral-core/scripts/provider_health.py",
+    "observer_dashboard": ROOT / "apps/observer/scripts/observer_dashboard.py",
 }
 
 
@@ -77,7 +77,7 @@ def _derive_status(wl_id: str) -> str:
     # Capability footprints that have concrete implementation present.
     present = {
         "WL-000": _exists("current_state"),
-        "WL-010": _exists("governance") and len(list((ROOT / "10-workflow/workflow-assistance/skills").rglob("SKILL.md"))) >= 1,
+        "WL-010": _exists("governance") and len(list((ROOT / "packages/client-neutral-core/skills").rglob("SKILL.md"))) >= 1,
         "WL-100": _exists("governance"),
         "WL-110": _exists("impact_planner"),
         "WL-120": _exists("governance"),

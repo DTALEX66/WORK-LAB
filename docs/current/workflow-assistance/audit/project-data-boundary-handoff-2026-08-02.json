@@ -1,0 +1,43 @@
+{
+  "schema": "workflow-assistance.audit-handoff.v1",
+  "date": "2026-08-02",
+  "timezone": "Asia/Shanghai",
+  "repository": "DTALEX66/Workflow-assistance",
+  "branch": "main",
+  "base_head": "f8901c3f1cf7ad4fe1447fcfee573b19d8cd67cb",
+  "scope": [
+    "codex-store-dynamic-launchers",
+    "context7-runtime-resolver",
+    "project-local-runtime-containment"
+  ],
+  "external_spill_roots_audited": [
+    {"path": "D:/a", "final_state": "absent"},
+    {"path": "D:/d", "final_state": "absent"},
+    {"path": "D:/dev", "final_state": "absent"},
+    {"path": "D:/tmp", "final_state": "absent"}
+  ],
+  "protected_independent_project": {
+    "path": "D:/info@latest",
+    "action": "preserved-in-place"
+  },
+  "runtime_policy": {
+    "root": ".project-local/runs",
+    "artifacts": ".project-local/artifacts",
+    "strategy": "inject-project-local-paths-before-child-process; fail-closed-only-for-explicit-legacy-spill-bypass"
+  },
+  "verification": {
+    "project_boundary_tests": "30 passed",
+    "full_unittest": "147 passed, 5 skipped",
+    "quality_gate": "QUALITY_GATE_PASS",
+    "skill_provenance": "SKILL_PROVENANCE_PASS",
+    "portable_install": "PORTABLE_INSTALL_VERIFY_PASS",
+    "hermes_hooks_doctor": "pass",
+    "git_diff_check": "pass"
+  },
+  "unresolved_or_deferred": [
+    "live Hermes Home hook was not modified in this repository upload task",
+    "post-push exact-SHA CI must be verified after the remote commit exists",
+    "no merge, release, or live profile apply performed"
+  ],
+  "secrets": "not-read; no credentials/auth/session/browser data included"
+}

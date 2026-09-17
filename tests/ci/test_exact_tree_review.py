@@ -22,7 +22,7 @@ class ExactTreeReviewTest(unittest.TestCase):
 
     def test_only_two_active_modules_and_transferred_scope_absent(self) -> None:
         self.assertEqual(set(self.report["activeModulePresence"]), {
-            "10-workflow/workflow-assistance", "30-observer/work-lab-observer",
+            "packages/client-neutral-core", "apps/observer",
         })
         self.assertTrue(all(self.report["activeModulePresence"].values()))
         self.assertEqual(self.report["transferredScopeTracked"], [])

@@ -43,44 +43,44 @@ EXPECTED = {
     "platform-identity": "workflow",
 }
 CANONICAL_SCHEMA_PREFIXES = {
-    "module-profile": ("00-governance/",),
-    "source-ledger": ("00-governance/",),
-    "capability-conformance": ("00-governance/",),
-    "task-card": ("10-workflow/",),
-    "runtime-lock": ("00-governance/",),
+    "module-profile": (".project/governance/",),
+    "source-ledger": (".project/governance/",),
+    "capability-conformance": (".project/governance/",),
+    "task-card": ("packages/contracts/",),
+    "runtime-lock": (".project/governance/",),
 
-    "domain-pack": ("10-workflow/",),
-    "evidence-envelope": ("00-governance/",),
-    "release-manifest": ("00-governance/",),
-    "adapter-capability": ("10-workflow/",),
-    "action-plan": ("10-workflow/",),
-    "task-ledger-event": ("10-workflow/",),
-    "rule-asset": ("10-workflow/",),
-    "skill-package": ("10-workflow/",),
-    "growth-candidate": ("10-workflow/",),
-    "observer-event": ("30-observer/",),
-    "observer-pricing": ("30-observer/",),
-    "data-quality": ("30-observer/",),
-    "dashboard-projection": ("30-observer/",),
+    "domain-pack": ("packages/contracts/",),
+    "evidence-envelope": (".project/governance/",),
+    "release-manifest": (".project/governance/",),
+    "adapter-capability": ("packages/contracts/",),
+    "action-plan": ("packages/contracts/",),
+    "task-ledger-event": ("packages/contracts/",),
+    "rule-asset": ("packages/contracts/",),
+    "skill-package": ("packages/contracts/",),
+    "growth-candidate": ("packages/contracts/",),
+    "observer-event": ("apps/observer/",),
+    "observer-pricing": ("apps/observer/",),
+    "data-quality": ("apps/observer/",),
+    "dashboard-projection": ("apps/observer/",),
 
-    "archive-manifest": ("00-governance/",),
-    "project-profile": ("10-workflow/",),
-    "gate-registry": ("10-workflow/",),
-    "gate-plan": ("10-workflow/",),
-    "blocker": ("10-workflow/",),
-    "ci-observation": ("10-workflow/",),
-    "evidence-manifest": ("10-workflow/",),
-    "model-policy": ("10-workflow/",),
-    "memory-record": ("10-workflow/",),
-    "rule-drift": ("10-workflow/",),
-    "config-ownership": ("10-workflow/",),
-    "platform-identity": ("10-workflow/",),
+    "archive-manifest": (".project/governance/",),
+    "project-profile": ("packages/contracts/",),
+    "gate-registry": ("packages/contracts/",),
+    "gate-plan": ("packages/contracts/",),
+    "blocker": ("packages/contracts/",),
+    "ci-observation": ("packages/contracts/",),
+    "evidence-manifest": ("packages/contracts/",),
+    "model-policy": ("packages/contracts/",),
+    "memory-record": ("packages/contracts/",),
+    "rule-drift": ("packages/contracts/",),
+    "config-ownership": ("packages/contracts/",),
+    "platform-identity": ("packages/contracts/",),
 }
 
 
 def verify_catalog(root: Path) -> list[str]:
     errors: list[str] = []
-    catalog_path = root / "00-governance" / "contracts" / "contract-catalog.json"
+    catalog_path = root / ".project/governance" / "contracts" / "contract-catalog.json"
     try:
         catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:

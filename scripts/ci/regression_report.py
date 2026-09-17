@@ -14,8 +14,8 @@ from statistics import median
 from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parents[2]
-WF = ROOT / "10-workflow" / "workflow-assistance" / "scripts" / "workflow"
-OBS = ROOT / "30-observer" / "work-lab-observer" / "scripts"
+WF = ROOT / "packages" / "client-neutral-core" / "scripts"
+OBS = ROOT / "apps" / "observer" / "scripts"
 import sys
 sys.path.insert(0, str(WF))
 sys.path.insert(0, str(OBS))

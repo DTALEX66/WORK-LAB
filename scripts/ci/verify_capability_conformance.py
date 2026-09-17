@@ -9,10 +9,10 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[2]
-MANIFEST = ROOT / "10-workflow/workflow-assistance/config/capability-conformance.json"
-SCHEMA = ROOT / "00-governance/contracts/capability-conformance.schema.json"
-ADAPTERS = ROOT / "10-workflow/workflow-assistance/config/adapter-registry.json"
-SKILLS = ROOT / "10-workflow/workflow-assistance/config/skill-provenance.yaml"
+MANIFEST = ROOT / "config/capability-conformance.json"
+SCHEMA = ROOT / ".project/governance/contracts/capability-conformance.schema.json"
+ADAPTERS = ROOT / "config/adapter-registry.json"
+SKILLS = ROOT / "config/skill-provenance.yaml"
 FORBIDDEN = {"write", "execute", "network"}
 
 

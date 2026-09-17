@@ -1,0 +1,407 @@
+{
+ "schemaVersion": "work-lab/observer-projection/v2",
+ "mode": "SNAPSHOT",
+ "generatedAt": "2026-08-26T23:52:57+08:00",
+ "window": {
+  "start": "2026-08-26T23:52:57+08:00",
+  "end": "2026-08-26T23:52:57+08:00"
+ },
+ "freshness": {
+  "state": "stale",
+  "ageSeconds": null,
+  "lastGoodAt": "2026-08-26T23:52:57+08:00",
+  "note": "bundled fallback snapshot (non-live); backend unreachable"
+ },
+ "summary": {
+  "registeredProjects": 24,
+  "activeProjects": 2,
+  "tasks": {
+   "running": 0,
+   "waiting": 0,
+   "blocked": 0,
+   "failed": 0,
+   "completed": 14,
+   "unknown": 0
+  },
+  "byState": {
+   "succeeded": 1,
+   "queued": 2,
+   "failure": 9,
+   "success": 9,
+   "running": 3
+  }
+ },
+ "projects": [
+  {
+   "projectId": "dagu-hello-world",
+   "displayName": "Dagu: hello-world",
+   "agentPlatform": "DAGU",
+   "task": "DAG (2 steps)",
+   "state": "succeeded",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32985725671",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "queued",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32985647897",
+   "displayName": "GitHub: wlr-060-production-gates",
+   "agentPlatform": "GITHUB",
+   "task": "wlr-060-production-gates",
+   "state": "failure",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32984342442",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "failure",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32984217378",
+   "displayName": "GitHub: wlr-060-production-gates",
+   "agentPlatform": "GITHUB",
+   "task": "wlr-060-production-gates",
+   "state": "failure",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32984124296",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "queued",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32983545532",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "failure",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32983545471",
+   "displayName": "GitHub: wlr-060-production-gates",
+   "agentPlatform": "GITHUB",
+   "task": "wlr-060-production-gates",
+   "state": "success",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32975873795",
+   "displayName": "GitHub: wlr-060-production-gates",
+   "agentPlatform": "GITHUB",
+   "task": "wlr-060-production-gates",
+   "state": "success",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32975873784",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "failure",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32973331678",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "failure",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32973331568",
+   "displayName": "GitHub: wlr-060-production-gates",
+   "agentPlatform": "GITHUB",
+   "task": "wlr-060-production-gates",
+   "state": "success",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32972109634",
+   "displayName": "GitHub: wlr-060-production-gates",
+   "agentPlatform": "GITHUB",
+   "task": "wlr-060-production-gates",
+   "state": "success",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32972109604",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "failure",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32971390234",
+   "displayName": "GitHub: wlr-060-production-gates",
+   "agentPlatform": "GITHUB",
+   "task": "wlr-060-production-gates",
+   "state": "success",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32971390161",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "failure",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32967621944",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "failure",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32748444734",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "success",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32747713419",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "success",
+   "branch": "docs/dsh-2.0.2-handoff-0824",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32747701571",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "success",
+   "branch": "docs/dsh-2.0.2-handoff-0824",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "gh-run-32723992377",
+   "displayName": "GitHub: work-lab-gate",
+   "agentPlatform": "GITHUB",
+   "task": "work-lab-gate",
+   "state": "success",
+   "branch": "main",
+   "quality": {
+    "evidenceCompleteness": "complete",
+    "dataQuality": "exact",
+    "freshness": "fresh"
+   }
+  },
+  {
+   "projectId": "hermes",
+   "displayName": "Hermes",
+   "agentPlatform": "HERMES",
+   "activityState": "ACTIVE",
+   "state": "running"
+  },
+  {
+   "projectId": "codex",
+   "displayName": "Codex",
+   "agentPlatform": "CODEX",
+   "activityState": "ACTIVE",
+   "state": "running"
+  },
+  {
+   "projectId": "dsh",
+   "displayName": "DSH Desktop 2.0.2",
+   "agentPlatform": "DSH",
+   "activityState": "ACTIVE",
+   "state": "running"
+  }
+ ],
+ "usage": {
+  "inputTokens": null,
+  "outputTokens": null,
+  "reasoningTokens": null,
+  "cacheReadTokens": null,
+  "cacheWriteTokens": null,
+  "cost": {
+   "amount": null,
+   "currency": "UNKNOWN",
+   "status": "UNKNOWN",
+   "billingType": "UNKNOWN",
+   "sourceRef": "bundled-snapshot",
+   "effectiveAt": null
+  },
+  "subscriptionUsage": "not-metered",
+  "series": [],
+  "quality": {
+   "sourceCoverage": {
+    "numerator": 0,
+    "denominator": 0,
+    "scope": "bundled-snapshot"
+   },
+   "evidenceCompleteness": "partial",
+   "freshness": "stale",
+   "unknown": 1
+  }
+ },
+ "ci": {
+  "exactShaBound": 0,
+  "exactShaRequired": 1,
+  "queuedNoJob": 0,
+  "running": 0,
+  "passed": 0,
+  "failed": 0,
+  "unknown": 0,
+  "quality": {
+   "sourceCoverage": {
+    "numerator": 0,
+    "denominator": 0,
+    "scope": "bundled-snapshot"
+   },
+   "evidenceCompleteness": "partial",
+   "freshness": "stale",
+   "unknown": 0
+  }
+ },
+ "governance": {
+  "rules": {
+   "managed": 0,
+   "provenance": "UNKNOWN"
+  },
+  "skills": {
+   "managed": 0,
+   "provenance": "UNKNOWN"
+  },
+  "adapters": {
+   "managed": 0,
+   "provenance": "UNKNOWN"
+  },
+  "memoryContext": {
+   "unknown": true
+  }
+ },
+ "quality": {
+  "sourceCoverage": {
+   "numerator": 24,
+   "denominator": 24,
+   "scope": "bundled-snapshot-projects"
+  },
+  "evidenceCompleteness": "partial",
+  "freshness": "stale",
+  "unknown": 0,
+  "malformed": 0,
+  "dropped": 0,
+  "duplicate": 0,
+  "note": "bundled fallback; values are the last observed projection, explicitly non-live"
+ },
+ "sourceRefs": []
+}

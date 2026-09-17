@@ -1,15 +1,19 @@
 # WORK-LAB execution rules
 
-> 全局执行标准（跨软件跨项目）：见 `00-governance/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
-> 经验教训铁律（核实优先/治理最小化/官方优先）：见 `00-governance/LESSONS_LEARNED.md`。
+> 全局执行标准（跨软件跨项目）：见 `docs/decisions/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
+> 经验教训铁律（核实优先/治理最小化/官方优先）：见 `docs/decisions/LESSONS_LEARNED.md`。
 
 ## Scope
 
 This is a single-root monorepo. Allowed active module roots are exactly:
-`10-workflow/workflow-assistance` and `30-observer/work-lab-observer`. The
+`packages/client-neutral-core` (workflow-assistance: Task Ledger, Telemetry Ledger, sidecar,
+adapters, delivery gates), `services/` (orchestration/policy/receipts), and
+`apps/observer` (work-lab-observer, read-only projection). The legacy
+`10-workflow/workflow-assistance` path was split out at the 2026-09 directory
+convergence and is no longer tracked. The
 managed client workflow is Hermes · Codex · CC Switch · GitHub · Open Design ·
 OpenHuman, plus any future AI software through the same Adapter contract.
-DSH (DeepSeek Harness / DSH Desktop 2.0.2) is a managed agent runtime client
+DSH (DeepSeek Harness / DSH Desktop 2.0.4 community desktop) is a managed agent runtime client
 through the same Adapter contract. CC Switch is LEGACY_OBSERVE (observe-only;
 no active writes) unless evidence restores it to active status.
 Open Design is an external *client* (`nexu-io/open-design`); the separate
@@ -28,7 +32,7 @@ with `DTALEX66/DESIGN-LAB` and is not managed here. Design **capability** (model
 specs, design systems, quality gates, editable handoff) belongs to the
 `DTALEX66/DESIGN-LAB` project and is **neither collected nor managed here**
 (`IGNORE`). Field-level ownership lives in
-`10-workflow/workflow-assistance/config/config-ownership.json` (adapter
+`config/config-ownership.json` (adapter
 `open-design`, external project `design-lab-project`).
 
 ## Ownership
@@ -45,11 +49,11 @@ Never access `E:\` — read or write — without explicit per-path,
 per-operation user authorization. All content this project produces — builds,
 caches, temp files, evidence, downloads, generated artifacts — stays locked
 inside the project Git root: build/cache/temp roots live under
-`.hermes/task-runtime/` (TMP, npm/uv/pip caches, node_modules), evidence under
-`.hermes/task-artifacts/` or ignored `80-evidence/`; nothing spills to user
+`.project-local/runs/` (TMP, npm/uv/pip caches, node_modules), evidence under
+`.project-local/artifacts/` or `reports/`; nothing spills to user
 directories, other projects, or the shared library unless explicitly
 authorized. Any spill is traceable, locatable, cleanable and migratable
-(`00-governance/project-data-boundary.json`). Never use destructive
+(`.project/governance/project-data-boundary.json`). Never use destructive
 reset/clean/force-push operations.
 
 ## Managed global configuration (Hermes)
@@ -76,18 +80,18 @@ fails the aggregate gate.
 
 ## Workflow Assistance execution contract
 
-`10-workflow/workflow-assistance` is the active owner of workflow configuration,
-Task Ledger, Telemetry Ledger, sidecar, adapters, and delivery gates.
-`30-observer/work-lab-observer` is a strict read-only projection: it may read
+Workflow-assistance (now `packages/client-neutral-core` + `services/`) is the active owner of
+workflow configuration, Task Ledger, Telemetry Ledger, sidecar, adapters, and delivery gates.
+`apps/observer` (work-lab-observer) is a strict read-only projection: it may read
 Workflow-owned projections but must not execute, approve, retry, apply, rollback,
 change task state, or write the Telemetry Ledger.
 
 When working through Codex, use the project-local workflow contract and exact
 module paths. Bounded writers own one checkout; parallel writers require separate
 worktrees. Prefer the canonical quality gate:
-`python 10-workflow/workflow-assistance/scripts/workflow/run_quality_gate.py verify`.
-Keep Task Ledger and runtime evidence under `.hermes/task-runtime/` and
-`.hermes/task-artifacts/`; do not treat local tests as exact-SHA CI or release
+`python services/orchestration/run_quality_gate.py verify`.
+Keep Task Ledger and runtime evidence under `.project-local/runs/` and
+`.project-local/artifacts/`; do not treat local tests as exact-SHA CI or release
 evidence. Codex may prepare changes and readback evidence, but must not commit,
 push, publish, or modify global Codex/Hermes configuration without explicit
 approval for that side effect.
@@ -102,7 +106,7 @@ following baseline, owned by the enhancement module:
    Hermes: official desktop app (`apps/desktop/release/win-unpacked/Hermes.exe`,
    Electron) + `hermes` CLI; Codex: single wrapper (`bin/codex` bash +
    `bin/codex.cmd`, identical versioned-glob resolution to the official
-   runtime); DSH: DSH Desktop 2.0.2 (Electron, `D:\All projects\DSH\DSH Desktop.exe`);
+   runtime); DSH: DSH Desktop 2.0.4 (community desktop, Electron, `D:\All projects\DSH\DSH Desktop.exe`);
    CC Switch / OpenHuman / Open Design: single desktop shortcut to
    their installed official executables. No duplicate or conflicting launchers;
    entries are the official standard formats — WORK-LAB never invents custom
@@ -118,9 +122,10 @@ following baseline, owned by the enhancement module:
    blocking startup or execution. Wrappers must not stall on missing candidates.
 5. **Task-level model policy.** Each task declares its own quality/cost/privacy/
    latency constraints (four-dimensional strategy). Provider routing is official
-   (cost_multiplier=1.0, no daily/monthly caps by default); reasoning_effort
-   defaults to official baseline (empty = medium) or higher unless the task
-   explicitly downgrades with justification. Pricing must include
+   (cost_multiplier=1.0, no daily/monthly caps by default). Model and
+   reasoning_effort follow the user's native choice; this baseline only verifies
+   that native capabilities/params are supported and nothing overrides the user's
+   selection (low/medium/high are not, by themselves, failures). Pricing must include
    provider/model/currency/effective_at/source/version; missing fields display
    UNKNOWN. No global rate limits or cost caps — constraints are per-task and
    auditable.

@@ -6,15 +6,15 @@ import json
 from pathlib import Path
 
 EXPECTED_MODULES = {
-    "workflow-assistance": "10-workflow/workflow-assistance",
-    "work-lab-observer": "30-observer/work-lab-observer",
+    "workflow-assistance": "packages/client-neutral-core",
+    "work-lab-observer": "apps/observer",
 }
 TYPES = {"governance", "runtime", "build", "handoff", "observed-by", "fixture", "archive-of"}
 
 
 def verify(root: Path) -> list[str]:
     errors: list[str] = []
-    path = root / "00-governance" / "module-dependencies.json"
+    path = root / ".project/governance" / "module-dependencies.json"
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:

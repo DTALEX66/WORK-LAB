@@ -23,8 +23,8 @@ except ImportError:  # pragma: no cover
 
 
 ROOT = Path(__file__).resolve().parents[2]
-INDEX = ROOT / "00-governance" / "cross-module-source-index.json"
-SOURCE_LEDGER = ROOT / "00-governance" / "source-ledger.json"
+INDEX = ROOT / ".project/governance" / "cross-module-source-index.json"
+SOURCE_LEDGER = ROOT / ".project/governance" / "source-ledger.json"
 FORBIDDEN_DESIGN_PREFIXES = (
     "scenarios/", "adapters/", "schemas/design-tokens/",
     "knowledge/", "evals/", "opendesign-assistance/", "20-design/open-design/",

@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "work-lab-project-data-boundary/v1",
+  "platformNeutral": true,
+  "runtimeRoot": ".project-local/runs",
+  "taskArtifactsRoot": ".project-local/artifacts",
+  "logsRoot": ".project-local/runs/logs",
+  "cacheRoot": ".project-local/runs/cache",
+  "canonicalEvidenceRoot": ".project-local/artifacts",
+  "responsibilities": {
+    "runtimeRoot": "temporary task state, caches, logs and reproducible local runtime artifacts",
+    "taskArtifactsRoot": "sanitized task evidence and machine-readable assessment records",
+    "canonicalEvidenceRoot": "stable ignored evidence packages intended for project handoff",
+    "legacyWorkLabRoot": "input-only historical reference; not a write target"
+  },
+  "legacyAliases": [
+    ".work-lab",
+    ".work-lab/evidence"
+  ],
+  "forbiddenExternalRoots": [
+    "E:/",
+    "E:\\"
+  ],
+  "spillGovernance": {
+    "rule": "Every project artifact stays inside the project Git root; any write outside it is a spill and must be traceable, locatable, cleanable and migratable.",
+    "protectedDataVolume": {
+      "roots": [
+        "E:/",
+        "E:\\"
+      ],
+      "policy": "forbidden without explicit per-path, per-operation user authorization",
+      "accessDefault": "deny"
+    },
+    "trace": "every spill records source, timestamp, and exact target path",
+    "locate": "the exact spilled path is machine-resolvable for cleanup or migration",
+    "clean": "spilled artifacts are removable or revertible without touching project source",
+    "migrate": "spilled artifacts are relocatable back inside the project boundary"
+  },
+  "artifactFlowSemantics": {
+    "ref": "packages/client-neutral-core/scripts/artifact_flow_policy.py",
+    "added": "2026-09-16 NF-01-SYNC",
+    "note": "Clarifies the broad 'inside project Git root / no prompt-response bodies' phrasing. Business artifacts the user selected may flow to authorized material spaces; private session libs / telemetry bodies / credentials NEVER auto-mirror.",
+    "allowedKinds": [
+      "user_published_audit",
+      "user_published_task",
+      "immutable_task_package_ref",
+      "receipt_ref"
+    ],
+    "forbiddenKinds": [
+      "private_session",
+      "conversation_log",
+      "telemetry_body",
+      "credential",
+      "account_key",
+      "browser_data"
+    ],
+    "unknownFailClosed": true,
+    "nestedSecretsIsolated": true,
+    "projectPrefScoping": "project/task-scoped preferences do not leak to other projects; global is a separate explicit authorization"
+  }
+}

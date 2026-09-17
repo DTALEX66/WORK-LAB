@@ -121,7 +121,7 @@ class AggregateGateTests(unittest.TestCase):
         self.assertEqual(gate.main(payload), 0)
 
     def test_critical_under_selection_fails_closed(self):
-        """A6: critical changed paths (.github/**, 00-governance/**, ...) must
+        """A6: critical changed paths (.github/**, .project/governance/**, ...) must
         require ALL gates; an under-selecting plan fails even with green jobs."""
         gate = load_gate()
         plan = make_plan(

@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-INDEX = ROOT / "00-governance" / "cross-module-source-index.json"
+INDEX = ROOT / ".project/governance" / "cross-module-source-index.json"
 NOTICE = ROOT / "NOTICE.md"
 
 FORBIDDEN_TRACKED = re.compile(

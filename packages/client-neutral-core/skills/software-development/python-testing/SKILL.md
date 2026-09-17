@@ -1,0 +1,90 @@
+---
+name: python-testing
+description: "Python testing patterns, gotchas, and conventions for unittest/pytest."
+version: 1.1.0
+author: Hermes Agent
+license: MIT
+platforms: [linux, macos, windows]
+metadata:
+  hermes:
+    tags: [testing, python, unittest, pytest, gotchas]
+    related_skills: [test-driven-development]
+---
+
+# Python Testing Patterns & Gotchas
+
+## When to Use
+
+When writing Python tests with `unittest` or `pytest`.
+
+## Global disciplines
+
+- **Run tests with the CI-parity env and groups.** `env -u PYTHONPATH uv run --frozen --group ci --group ci-adapters pytest` — mirror the workflow's install matrix (see §23), and prefer `python -m pytest` over the bare `pytest` trampoline (see §24).
+- **`patch` `old_string` must be UNIQUE.** Test files repeat near-identical blocks; a short `old_string` lands on the FIRST match and silently corrupts a sibling test. Read the region, include the test-method name, re-read after patching (see §21). When an API-shape change touches many similar call sites (e.g. a helper signature refactor across a test file), REWRITE the whole file (write_file) instead of batched regex substitutions — regex rewrites leave partial `**`/stale-argument patterns on the call shapes you did not enumerate, each costing a red round.
+- **unittest results are on stderr, not stdout.** When automating a standalone unittest run via `subprocess.run(capture_output=True)` (no pytest involved), the `Ran N tests / OK / FAILED` lines and all failure detail go to `result.stderr` while `stdout` is empty — a green run looks like "no output" if you check the wrong stream. Gate on `returncode == 0 and "OK" in stderr` and read failure text from stderr.
+- **Assert behavior, not just "no exception" or hit count.** All-`None` fields and `len(hits)==1` pass silently; assert field values and observed state (see §29, §32).
+
+## Pitfall index
+
+Symptom → one-line cause → full write-up in `references/python-testing-pitfalls.md` (§N).
+
+| Symptom | Cause | Ref |
+|---|---|---|
+| Lock lists a name with no package stanza / new deps never locked | Phantom PyPI name or never re-ran `uv lock` | §1 |
+| Flagging an "unused" dep that's actually used — or "used" that's planned | Framework-internal use or frozen-baseline approval | §2 |
+| `assertIn` on a list "not found" | List membership, not substring | §3 |
+| Float equality flaky | Use `assertAlmostEqual` | §4 |
+| `assertRaises` not catching | Needs context-manager form | §5 |
+| Fixture isolation | `setUp`/`setUpClass`/`setUpModule` scoping | §6 |
+| Regex "look-behind requires fixed-width" | Variable-width lookbehind | §7 |
+| `\s` matching newlines inside `[...]` | Use a literal space | §8 |
+| S-V-O extractor swallows "was" into subject | Passive-voice be-verbs | §9 |
+| `WindowsPath.is_relative()` missing | Use `relative_to` + `except ValueError` | §10 |
+| Monorepo subdir imports / dedup | Hyphen dirs, SQL-free services | §11 |
+| Vector-search test ranks wrong doc | Weak anchors in query terms | §12 |
+| Green suite hides deprecation defects | Probe `-W error::DeprecationWarning` | §13 |
+| Compliance test missed a blocked engine | Hardcoded list vs registry-driven | §14 |
+| Lifecycle feature never actually schedules | Hard-coded schedule constants in INSERT | §15 |
+| CLI import fails at load | Helper name guessed, not grep'd | §16 |
+| Lint findings CI never sees | ruff scope excludes `tests/` | §17 |
+| Pipeline hits network on default run | Optional stage not opt-in gated | §18 |
+| SQLite test fails on stale rows | Persistent DB + positional assert | §19 |
+| `WinError 32` on `TemporaryDirectory` cleanup | Leaked SQLite connection | §20 |
+| Patch landed in the wrong test block | Non-unique `old_string` | §21 |
+| `NameError: name '_return' not defined` in CI | Blind global `sed -i` helper wrap | §22 |
+| "Pre-existing failures" that are actually env drift | Missing dependency group | §23 |
+| `uv pip install` says installed but import fails | Installed into the wrong venv | §23.1 |
+| `uv trampoline failed to canonicalize script path` | Use `python -m pytest` | §24 |
+| Merged on a pre-amend green run | Force-push invalidates old CI | §25 |
+| Test job fails at `setup-uv` step | Runner infra, rerun not code | §26 |
+| Stage silently skipped forever | `pytest.skip` masking a real bug | §27 |
+| `--run-network` silently skips / "unrecognized arguments" | Option not registered in `pytest_addoption` | §28 |
+| Aggregator parses providers to all-`None` | One fake per provider's real shape | §29 |
+| Zero-coverage modules hiding defects | Grep sweep before feature work | §29.1 |
+| Orchestrator with only indirect coverage | Function-level gap check | §29.2 |
+| Test package never collected | `testpaths` excludes it | §30 |
+| `monkeypatch` AttributeError | Function-local import → patch source | §31 |
+| Patch no-op, module still uses real dep | Module-top import → patch consumer | §32 |
+| Real DB init during test | Module-level singleton instances | §32.1 |
+| Path-scanning test finds 0 files | conftest TMPDIR hidden-root trap | §33 |
+| ONNX output flattened to `unknown` | Double-softmax on already-probabilistic output | §34 |
+| WIP fixture re-dirties with CRLF/LF | Test opens it in default text mode | §35 |
+| Convention gate flags CRLF that's blob-clean | Working-tree vs blob divergence | §36 |
+| `isinstance`/`assertIs` on a class or enum loaded via `spec_from_file_location` passes locally, breaks in CI (or vice-versa) | Two copies of the same module hold two distinct class objects | §37 |
+
+## §37 — Class/enum identity breaks across `spec_from_file_location` module copies
+
+Services loaded with `importlib.util.spec_from_file_location` (no package `__init__`) get re-executed on every load, so the SAME `.py` can hold two distinct class objects — the provider copy and the caller/test copy. Consequences that cost test bugs:
+
+- **`isinstance(obj, MemoryRecord)` fails even when the shape is right** — the record was built from a different module copy than the one `isinstance` was checked against. Fix: duck-type — check the required attribute/shape, not the class.
+- **Enum / `assertIs` comparisons fail on the object identity, not the value.** `assertIs(kind, MemoryKind.KNOWLEDGE)` is a different `Enum` member across copies. Compare `.value` (`assertEqual(kind.value, "knowledge")`), never `is`/`isinstance`.
+- **Prefer local constants over cross-module class introspection** (e.g. `ExtensionType._MEMBERS`): reach for the same data via a module-local mirror or duck-typed read so a re-loaded copy can't break the gate.
+
+Rule: in any spec-loaded service boundary, write cross-object checks as shape/value tests, not identity tests; if a gate does `isinstance` on a loaded module's class, prove the check still holds when the module is loaded twice.
+
+## Verification Checklist
+
+- [ ] Ran with `env -u PYTHONPATH uv run --frozen --group ci --group ci-adapters pytest` (or mirrored the workflow's full group set)
+- [ ] Assertions check field values / observed behavior, not just presence or "no exception"
+- [ ] Any `patch` to a test file used a unique `old_string` and was re-read after applying
+- [ ] New custom CLI options registered via `pytest_addoption` before `skipif`/`getoption` reference them

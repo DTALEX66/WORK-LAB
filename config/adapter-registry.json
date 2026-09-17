@@ -1,0 +1,178 @@
+{
+  "schema_version": "workflow/adapter-registry/v1",
+  "interface": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+  "entries": [
+    {
+      "id": "hermes",
+      "display_name": "Hermes",
+      "support_level": "deep",
+      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "repository",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=hermes]",
+        "version": "0.21.2",
+        "version_historical": [
+          ">=0.19,<0.21 (previously declared support range; never natively verified on this machine)",
+          "0.21.2 (only natively verified version, observed 2026-09-14: CLI version/status/doctor readback exit 0, registry-fresh PATH resolution, native discovery of all 13 managed skills, one non-tool completion; package hash still UNAVAILABLE so detection.evidence_state stays UNVERIFIED)"
+        ],
+        "note": "The schema cannot express 'declared support range' separately from 'verified version', so `version` carries ONLY the natively verified value and production admission is limited to it. A wider range is deliberately not claimed: the earlier >=0.19,<0.21 declaration is retained in version_historical as history, not as current support.",
+        "scope": "portable-workflow-adapter",
+        "risk": "high",
+        "status": "active",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "Hermes runtime package is not vendored in WORK-LAB", "files": []}
+      }
+    },
+    {
+      "id": "codex",
+      "display_name": "Codex",
+      "support_level": "deep",
+      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=codex]",
+        "version": "UNVERIFIED",
+        "scope": "portable-workflow-adapter",
+        "risk": "high",
+        "status": "quarantined",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "Codex runtime package is external and not vendored", "files": []}
+      }
+    },
+    {
+      "id": "cc-switch",
+      "display_name": "CC Switch",
+      "support_level": "deep",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=cc-switch]",
+        "version": "UNVERIFIED",
+        "scope": "portable-workflow-adapter",
+        "risk": "high",
+        "status": "legacy_observe",
+        "note": "CC Switch is LEGACY_OBSERVE per WLR-010 (2026-08-26). Observe-only; no active writes unless evidence restores to active.",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "CC Switch runtime package is external and not vendored", "files": []}
+      }
+    },
+    {
+      "id": "github",
+      "display_name": "GitHub",
+      "support_level": "deep",
+      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=github]",
+        "version": "UNVERIFIED",
+        "scope": "portable-workflow-adapter",
+        "risk": "high",
+        "status": "quarantined",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "GitHub CLI/API runtime package is external and not vendored", "files": []}
+      }
+    },
+
+    {
+      "id": "openhuman",
+      "display_name": "OpenHuman",
+      "support_level": "experimental",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=openhuman]",
+        "version": "UNVERIFIED",
+        "scope": "portable-workflow-adapter",
+        "risk": "medium",
+        "status": "quarantined",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "OpenHuman runtime package is external and not vendored", "files": []}
+      }
+    },
+
+    {
+      "id": "open-design",
+      "display_name": "Open Design",
+      "support_level": "experimental",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "external", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=open-design]",
+        "version": "UNVERIFIED",
+        "scope": "portable-workflow-adapter",
+        "risk": "medium",
+        "status": "quarantined",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "Open Design client (nexu-io/open-design) is external and not vendored", "files": []}
+      }
+    },
+
+    {
+      "id": "deepseek-harness",
+      "display_name": "DeepSeek Harness",
+      "support_level": "experimental",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "repository",
+        "source_ref": "https://github.com/deepseek-ai/deepseek-harness",
+        "version": "0.1.0-rc.5@47f943859bef60e4160492346772ded9b24f765a",
+        "version_historical": ["0.1.0-rc.5 (governance pin, 2026-08-15)", "0.1.0-rc.7 (superseded)", "0.1.1-rc.2 (detected local 2026-08-23, eligibility UNVERIFIED)"],
+        "scope": "portable-agent-runtime-adapter",
+        "risk": "medium",
+        "status": "active",
+        "note": "DSH promoted to active per WLR-010 (2026-08-26). Community DSH Desktop 2.0.2 installed at D:\\All projects\\DSH. Local build (Tauri shell) removed.",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "DSH source is external (community build); local install verified 2026-08-26", "files": []}
+      }
+    },
+
+    {
+      "id": "cursor",
+      "display_name": "Cursor",
+      "support_level": "manifest-only",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=cursor]",
+        "version": "UNVERIFIED",
+        "scope": "manifest-only",
+        "risk": "medium",
+        "status": "blocked",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "No Cursor adapter package is vendored", "files": []}
+      }
+    },
+    {
+      "id": "claude-code",
+      "display_name": "Claude Code",
+      "support_level": "manifest-only",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=claude-code]",
+        "version": "UNVERIFIED",
+        "scope": "manifest-only",
+        "risk": "medium",
+        "status": "blocked",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "No Claude Code adapter package is vendored", "files": []}
+      }
+    },
+    {
+      "id": "workbuddy",
+      "display_name": "WorkBuddy",
+      "support_level": "manifest-only",
+      "operations": ["detect", "capabilities", "observe"],
+      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "provenance": {
+        "source_kind": "external-manifest",
+        "source_ref": "workflow-manifest.yaml#adapters.entries[id=workbuddy]",
+        "version": "UNVERIFIED",
+        "scope": "manifest-only",
+        "risk": "medium",
+        "status": "blocked",
+        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "No WorkBuddy adapter package is vendored", "files": []}
+      }
+    }
+  ]
+}

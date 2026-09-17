@@ -37,3 +37,5 @@ WORK-LAB-STAGING-*/
 config/.backups/
 
 **/.backups/
+.project-local/
+*.tsbuildinfo

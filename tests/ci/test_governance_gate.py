@@ -13,8 +13,8 @@ class GovernanceGateTests(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         result = module.classify([
-            "10-workflow/workflow-assistance/x",
-            "30-observer/work-lab-observer/x",
+            "packages/client-neutral-core/x",
+            "apps/observer/x",
             "README.md",
         ])
         self.assertEqual([len(result[k]) for k in ["workflow", "observer", "root"]], [1, 1, 1])

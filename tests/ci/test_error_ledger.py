@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/ci/verify_error_ledger.py"
-LEDGER = ROOT / "50-taskpacks/error-ledger.json"
+LEDGER = ROOT / "taskpacks/current/error-ledger.json"
 
 
 def load_module():
@@ -29,7 +29,7 @@ class ErrorLedgerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             (root / ".git").mkdir()
-            (root / "10-workflow").mkdir()
+            (root / "services").mkdir()
             target = root / module.LEDGER_REL
             target.parent.mkdir(parents=True)
             data = json.loads(LEDGER.read_text(encoding="utf-8"))
