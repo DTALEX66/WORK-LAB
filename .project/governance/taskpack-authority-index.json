@@ -168,8 +168,15 @@
    "id": "BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917",
    "path": "taskpacks/current/BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917.md",
    "ledger": "taskpacks/current/BRANCH-RETIREMENT-LEDGER-20260917.json",
-   "status": "REGISTERED_PENDING_CUTOVER_AUTHORIZATION",
-   "note": "Branch convergence + anti-regression rules; BR-RESIDUAL-AUDIT done (0 live-code residuals); cutover execution pending user authorization"
+   "status": "EXECUTED_20260917",
+   "note": "Branch convergence + anti-regression rules fully executed: residual audit (0 live-code residuals), 52 legacy branches -> wl-retire-20260917/* tags + deleted, PR#124 squash-merged main to r4 (6bd0bd5), PR#125 recorded cutover_event, r4 retired. main is sole ACTIVE/AUTHORITATIVE branch (ac323a2).",
+   "evidence": [
+    "github PR#124 MERGED (main squash merge)",
+    "github PR#125 MERGED (ledger record)",
+    "52x wl-retire-20260917/* tags on origin",
+    "wl-cutover-evidence-20260917 tag",
+    "taskpacks/current/BRANCH-RETIREMENT-LEDGER-20260917.json cutover_event"
+   ]
   }
  ]
 }
