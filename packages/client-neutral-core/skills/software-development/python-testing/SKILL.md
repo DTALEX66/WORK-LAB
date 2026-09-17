@@ -20,7 +20,8 @@ When writing Python tests with `unittest` or `pytest`.
 ## Global disciplines
 
 - **Run tests with the CI-parity env and groups.** `env -u PYTHONPATH uv run --frozen --group ci --group ci-adapters pytest` — mirror the workflow's install matrix (see §23), and prefer `python -m pytest` over the bare `pytest` trampoline (see §24).
-- **`patch` `old_string` must be UNIQUE.** Test files repeat near-identical blocks; a short `old_string` lands on the FIRST match and silently corrupts a sibling test. Read the region, include the test-method name, re-read after patching (see §21).
+- **`patch` `old_string` must be UNIQUE.** Test files repeat near-identical blocks; a short `old_string` lands on the FIRST match and silently corrupts a sibling test. Read the region, include the test-method name, re-read after patching (see §21). When an API-shape change touches many similar call sites (e.g. a helper signature refactor across a test file), REWRITE the whole file (write_file) instead of batched regex substitutions — regex rewrites leave partial `**`/stale-argument patterns on the call shapes you did not enumerate, each costing a red round.
+- **unittest results are on stderr, not stdout.** When automating a standalone unittest run via `subprocess.run(capture_output=True)` (no pytest involved), the `Ran N tests / OK / FAILED` lines and all failure detail go to `result.stderr` while `stdout` is empty — a green run looks like "no output" if you check the wrong stream. Gate on `returncode == 0 and "OK" in stderr` and read failure text from stderr.
 - **Assert behavior, not just "no exception" or hit count.** All-`None` fields and `len(hits)==1` pass silently; assert field values and observed state (see §29, §32).
 
 ## Pitfall index

@@ -227,3 +227,85 @@
 2. 第 2 包须先读本文件 §7.1 与本地 `LIMITATIONS.md`（L-1…L-9）：尤其 **原生取消能力受限**、**计费 `UNKNOWN`**、**第二 profile 独立性**（其有独立 105 个技能与独立 `SOUL.md`，受管覆盖层**仅作用于根 profile**）；
 3. 第 3A 步独立审核须注意 `config-ownership.json` 的未提交差分（生效版本 ≠ 包内 blob）；
 4. `AGENTS.md` 与用户共享技能目录**仍未编辑**（`BLOCKED_ACTIVATION`：本会话加载它们，改它们等于会话激活自己加载的规则），须由不受候选控制的隔离环境执行。
+
+---
+
+## 12. 后续：按更新后的项目标准重新对齐（2026-09-17）
+
+### 12.1 触发
+
+项目标准 **`AGENTS.md` 在本包交付后被更新**（外部提交 `b4a18c4 docs(governance): correct stale AGENTS paths + register openai-codex model facts`），
+且仓库在我上次发布之后前进了 8 个提交（含 `fa9f312 docs(governance): apply cloud-audit F01-F04+F06+F07 source fixes`）。
+因此必须按**当前标准**重新核对 Hermes 覆盖层，而不是沿用交付时的结论。
+
+### 12.2 标准差异核对（逐项，非印象）
+
+| 新标准的要求 | 实测 | 结论 |
+|---|---|---|
+| 受管资产 = **13 个技能** | 目录级实测 **13 个** `SKILL.md` | ✅ 一致 |
+| `config/SOUL.md` | 已部署且与仓库字节一致 | ✅ |
+| `bin/` 启动器 = `codex`、`codex.cmd`、`hermes-npx`、`hermes-npx.cmd`、`hermes-project-data.py`、`hermes-project-terminal-guard.py` | `bin/` 恰好这 **6 个** | ✅ 一致 |
+| 受管配置字段仅 `display.language`、`display.busy_input_mode` | 未新增、未越权 | ✅ |
+| 部署只经 `sync_hermes_workflow_assets.py` | 全程仅经该路径 | ✅ |
+| 同一变更中更新 `skill-provenance.yaml` 的 live 哈希 | 本轮已同变更更新 | ✅（见 12.4） |
+| **五维第 5 维口径已变更** | 新文："Model and reasoning_effort **follow the user's native choice**；**low/medium/high are not, by themselves, failures**" | ⚠️ **本文件 §2 的表述需按新口径理解**：PASS 的判据是"未覆盖用户选择"，而**不是**"未降级"。第二 profile 的 `medium` **不是**缺陷 |
+| 模块路径口径 | 新文允许 `packages/client-neutral-core` / `services/` / `apps/observer`；`10-workflow/*` 已不再跟踪 | ✅ 与本包一致；同时**旧 `10-workflow/...` 陈旧路径问题（我登记的 D-9）已被外部修复**，`docs/decisions/*` 存在 |
+| 证据位置允许 `.project-local/artifacts/` **或 `reports/`** | 本包产物全部在 `.project-local/artifacts/` | ✅ |
+
+**受管资产集在 `725210d..HEAD` 之间零 diff**（skills / bin / SOUL.md / .env.template 均无变化）→ 覆盖层内容本身无需因标准更新而改动。
+
+### 12.3 发现的真实漂移（L-6 结构性冲突已实体化）
+
+守卫计划报 **1 个 `UNKNOWN_LIVE_CHANGE`**：
+
+```
+guard: skills/software-development/python-testing
+  baseline=1eb087639661a2e1  live=0fe462516819fd73  candidate=1eb087639661a2e1
+```
+
+**live 侧被我们之外的写入者改动**，证据指向原生 curator：
+`skills/.curator_ledger.jsonl` 820,923 B（mtime 2026-09-17 00:38，**仍在追加**）、`skills/.curator_state`、`skills/.curator_backups`（4 项）、`skills/.archive`（52 项）。
+
+**live 三角洲（已逐行复核）**：`python-testing/SKILL.md` **+2 / −1 行**，内容是**两条有价值的实测教训**：
+1. 新增：*unittest 结果在 stderr 不在 stdout* —— 用 `subprocess.run(capture_output=True)` 自动化独立 unittest 时 `Ran N tests / OK / FAILED` 与失败详情都在 `result.stderr`，`stdout` 为空；应 gate 在 `returncode == 0 and "OK" in stderr`；
+2. 扩展：`patch old_string 必须唯一` 一条追加"当 API 形状变更触及大量相似调用点时，应整文件重写（write_file），而非批量正则替换"。
+
+（这两条与我本轮 BH-E9 的发现属同一类，确认为**真知识而非垃圾**。）
+
+**同时发现行尾偏离**：live 文件是 **CRLF**（90 行），而 `.gitattributes` 规定 `*.md` 为 **`eol=lf`**。去掉行尾归一化后两侧内容**完全相同**，故差异**纯属行尾**。
+
+### 12.4 处置（全部经官方接口，未绕行）
+
+| 步骤 | 命令 | 结果 |
+|---|---|---|
+| ¹ 折回仓库 | 将 curator 的两处改动按原文逐字折回 `packages/.../python-testing/SKILL.md`（保持 LF） | 折回后与 live **内容逐字节相同**（归一化后同为 `2d1ffd75f2ae44ec`） |
+| ² 登记已复核的 live 摘要 | `--adopt-baseline --adopt-target skills/software-development/python-testing@0fe462516819fd73 --adopt-operator "DSH/DeepSeek WL-BASELINE-HERMES follow-up"` | `ADOPTION_RECORDED`；`ADOPTION_NOTE no asset content was written` |
+| ³ 发布 | `--apply --approved` | `CLEAN_UPDATE` `0fe462516819fd73 → 2f9ea7dde6d261ee`；`ACTION_PLAN_READBACK_PASS`；run_id **`sync-20260917T114333Z`** |
+| ⁴ 同变更更新清单 | `config/skill-provenance.yaml` 的 `source_sha256`/`live_sha256` → `2d1ffd75f2ae44ec…` | `skill-provenance` 门禁 **PASS**（`skills=13`） |
+| ⁵ 复验 | 全量守卫计划 | **21 / 21 CONVERGED，exit 0**（部署路径恢复） |
+
+**为什么用 adopt 而不是 `--suspend`**：`--suspend` 能让同步器跳过该单元（官方法释明"the native curator may write there"），
+但那等于把 13 个受管技能减为 12 个，**偏离标准声明的受管资产集**；标准未授权单方面缩减，故不擅自使用。
+同理**未使用** `skills opt-out`（全 profile 级开关）。
+
+**adopt 的审计留痕**（baseline 文件实证）：
+`{"source": "operator-reviewed-live", "operator": "DSH/DeepSeek WL-BASELINE-HERMES follow-up", "sha256": "0fe462516819fd73", "target": "skills/software-development/python-testing"}`，
+且 `python-testing` 的 baseline 已推进到 `2f9ea7dde6d261ee`。
+
+### 12.5 四层复验：全部 PASS
+
+| 层 | 结果 |
+|---|---|
+| 存在 | live / repo 目录均在位，4 / 4 文件 |
+| 源等价 | live-only / repo-only 均空；**0 字节差异**；树摘要 live = repo = `2f9ea7dde6d261ee`（== 发布候选） |
+| **行尾** | live `SKILL.md` **CRLF = 0**，LF = 90 → 符合 `.gitattributes` `*.md eol=lf`；**行尾偏离已消除** |
+| 运行时可达 | frontmatter 可解析，`name: python-testing` |
+| 行为应用 | curator 的两条新增**完整在位**；相邻两条原有条目**未被连带损伤** |
+
+### 12.6 遗留与建议（未擅自执行）
+
+1. **curator 仍在活跃写入**（ledger 仍在追加）→ 本类冲突**会复发**。当前处置（折回 + adopt + 发布）已把它变回收敛，
+   但**根治需要所有权裁决**：要么由治理把该技能声明为 curator 所有（相应更新 `AGENTS.md` 的受管资产集），
+   要么明确"curator 输出必须折回、否则同步器拒写"为长期流程。**本包不单方面改标准。**
+2. `1` 步为人工折回：折回质量依赖逐行复核。若该类写入频繁，值得把折回做成可复核流程而非手工比对。
+3. 本轮新提交后，**权威验证以干净提交树上的门禁结果为准**（承接 BH-E9/BH-E10 的教训：脏树结果不等于提交状态）。

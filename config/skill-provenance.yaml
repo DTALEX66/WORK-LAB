@@ -96,13 +96,13 @@ entries:
 - name: python-testing
   source: packages/client-neutral-core/skills/software-development/python-testing/SKILL.md
   live: packages/client-neutral-core/skills/software-development/python-testing/SKILL.md
-  source_sha256: b1de5c95355b3d7a16aec89413e066eb6d3968d44ec851e88dd11b8ac36714e2
+  source_sha256: 2d1ffd75f2ae44eccfa6fe151fd690d0e68784dad48e31ad9599fb9a9b7e7eea
   version: 1.1.0
   trust: repository-controlled
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: b1de5c95355b3d7a16aec89413e066eb6d3968d44ec851e88dd11b8ac36714e2
+  live_sha256: 2d1ffd75f2ae44eccfa6fe151fd690d0e68784dad48e31ad9599fb9a9b7e7eea
 - name: requesting-code-review
   source: packages/client-neutral-core/skills/software-development/requesting-code-review/SKILL.md
   live: packages/client-neutral-core/skills/software-development/requesting-code-review/SKILL.md
