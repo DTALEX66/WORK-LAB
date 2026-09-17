@@ -711,18 +711,19 @@
   }
  ],
  "cutover_event": {
-  "type": "MAIN_CUTOVER_FAST_FORWARD",
+  "type": "MAIN_CUTOVER_SQUASH_MERGE",
   "pr": "124",
-  "method": "merge(ff)",
-  "merged_when": "this ledger commit (final r4 tip becomes main tip)",
-  "main_tip_after_cutover": "== this commit (verify rev-parse main == this)",
+  "method": "squash + admin (repo forbids merge commits)",
+  "r4_tip_squashed_from": "8e54e15 (contains cutover evidence; preserved by tag wl-cutover-evidence-20260917)",
+  "main_tip_after_cutover": "6bd0bd5",
+  "verification": "gh pr view 124 state=MERGED; git rev-parse main == origin/main == 6bd0bd5; origin/main log shows squash commit '[Cutover] main = r4-recovery-exec (BRANCH-CONVERGENCE-20260917) (#124)'",
   "local_branches_after": [
    "main"
   ],
   "remote_branches_after": [
    "origin/main"
   ],
-  "retired_tags": "wl-retire-20260917/* (52, pushed to origin)",
-  "r4_status": "RETIRED_AFTER_CUTOVER"
+  "retired_tags": "wl-retire-20260917/* (52) + wl-cutover-evidence-20260917 (1) on origin",
+  "r4_status": "RETIRED (deleted local+remote; content fully in main)"
  }
 }
