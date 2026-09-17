@@ -95,21 +95,26 @@ class SyntheticQuotaTerminalFailureTests(unittest.TestCase):
         self.assertEqual(result["reason"], "structured_failure")
 
 
-class DocumentedEvidenceHierarchyTests(unittest.TestCase):
-    """Pins the exit code > structured > text ordering, including its residual risk.
+class TerminalEvidenceOutranksStructuredSuccessTests(unittest.TestCase):
+    """A literal terminal failure marker outranks a structured success claim.
 
-    A structured payload that claims success, together with a passed acceptance
-    check, is signed SUCCESS even when the output text carries a terminal billing
-    error. That follows the module's documented hierarchy (structured is the native
-    result; text is the weakest evidence and is gated behind a calibrated version).
-    The behaviour is pinned here so it stays a *known* property: SUCCESS still
-    requires `acceptance_passed=True`, which is what keeps the practical exposure low.
+    The documented hierarchy is exit code > structured > text, but before this was
+    fixed a structured payload claiming success, together with a passed acceptance
+    check, was signed SUCCESS even when the output carried "Billing or credits
+    exhausted" — and the terminal marker did not even appear in `evidence`. That is
+    the same mistake as trusting the exit code alone, one level up: an unambiguous
+    abort marker was overridden by a weaker, self-reported claim.
+
+    The fix consults the literal terminal patterns before signing a structured
+    success. It can only withdraw an unwarranted SUCCESS, never create one, and the
+    normal structured success path is covered below so the hierarchy still holds
+    where no terminal marker is present.
     """
 
     def setUp(self) -> None:
         self.m = load("hermes_task_result_hierarchy", RESULT_MODULE)
 
-    def test_structured_success_with_acceptance_outranks_a_text_terminal_error(self) -> None:
+    def test_terminal_text_overrides_a_structured_success_claim(self) -> None:
         result = self.m.classify(
             exit_code=0,
             stdout=QUOTA_TEXT,
@@ -117,13 +122,34 @@ class DocumentedEvidenceHierarchyTests(unittest.TestCase):
             acceptance_passed=True,
             runtime_version=CALIBRATED,
         )
-        self.assertEqual(result["outcome"], self.m.SUCCESS)
-        self.assertNotIn("terminal_error:billing_or_credits_exhausted", result["evidence"])
+        self.assertEqual(result["outcome"], self.m.FAILURE)
+        self.assertFalse(self.m.is_success(result))
+        self.assertIn("terminal_error:billing_or_credits_exhausted", result["evidence"])
 
-    def test_structured_success_without_acceptance_is_only_unknown(self) -> None:
+    def test_terminal_text_also_blocks_structured_success_without_acceptance(self) -> None:
         result = self.m.classify(
             exit_code=0,
             stdout=QUOTA_TEXT,
+            structured={"status": "completed", "success": True},
+            runtime_version=CALIBRATED,
+        )
+        self.assertEqual(result["outcome"], self.m.FAILURE)
+
+    def test_structured_success_still_wins_when_no_terminal_marker_is_present(self) -> None:
+        result = self.m.classify(
+            exit_code=0,
+            stdout="all good",
+            structured={"status": "completed", "success": True},
+            acceptance_passed=True,
+            runtime_version=CALIBRATED,
+        )
+        self.assertEqual(result["outcome"], self.m.SUCCESS)
+        self.assertEqual(result["reason"], "structured_success_and_acceptance_passed")
+
+    def test_structured_success_without_acceptance_is_still_only_unknown(self) -> None:
+        result = self.m.classify(
+            exit_code=0,
+            stdout="all good",
             structured={"status": "completed", "success": True},
             runtime_version=CALIBRATED,
         )

@@ -137,6 +137,25 @@ def classify(
                 ],
             }
         if claims_success:
+            # A literal terminal failure marker in the output outranks a structured
+            # success claim. The payload is the native result, but "Billing or credits
+            # exhausted", "Final error:" or an exhausted retry chain is evidence that
+            # the run aborted; signing that as success would be the same mistake as
+            # trusting the exit code alone, one level up. These patterns are literal
+            # runtime strings rather than calibrated prose detectors, so they are not
+            # gated behind runtime_version, and the check can only ever withdraw an
+            # unwarranted SUCCESS - it never manufactures one.
+            terminal_in_text = _matches(text, TERMINAL_FAILURE_PATTERNS)
+            if terminal_in_text:
+                return {
+                    "outcome": FAILURE,
+                    "reason": "native_task_error",
+                    "source": "text",
+                    "evidence": [
+                        f"structured status={status} claimed success but the output carries a terminal error",
+                        *(f"terminal_error:{name}" for name in terminal_in_text),
+                    ],
+                }
             if acceptance_passed is True:
                 return {
                     "outcome": SUCCESS,

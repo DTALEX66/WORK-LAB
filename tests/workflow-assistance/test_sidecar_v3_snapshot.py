@@ -328,7 +328,15 @@ class SidecarV3SnapshotTests(unittest.TestCase):
                     }
                 )
                 deadline = time.time() + 2
-                while calls < 2 and time.time() < deadline:
+                # Wait on the condition this test actually asserts, not on a proxy
+                # that advances at function entry. `calls` is incremented before the
+                # publish body runs, so waiting only for `calls >= 2` let the main
+                # thread assert while the worker was still inside the second publish:
+                # `_revision` is assigned inside publish_observed, so it could still
+                # read 0 and fail roughly one run in five. Waiting for both the retry
+                # and its visible effect keeps the original intent (first call fails,
+                # retry succeeds) without the race.
+                while (calls < 2 or sidecar._revision <= 0) and time.time() < deadline:
                     time.sleep(0.02)
                 self.assertGreaterEqual(calls, 2)
                 self.assertTrue(sidecar.live_updates_running())
