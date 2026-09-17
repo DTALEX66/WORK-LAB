@@ -123,6 +123,19 @@
       "note": "20 张差集卡 / 40 AT；15 续 + 4 条件项 deferred（NF-13/W05/W06/W08）。专项完成≠全项目完成。",
       "execution_authorized": false,
       "grants_new_permissions": false
+    },
+    {
+      "id": "HERMES-UPDATE-20260917",
+      "zip_sha256": "71cd76b461f1bc6acd9624685cb3489e7733e2c42aa65ee3b68b5f62f1093c39",
+      "internal_manifest": "SHA256SUMS.txt (21 files, all verified OK on 2026-09-17)",
+      "archive_location": ".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/HERMES-UPDATE-20260917.zip",
+      "entry_record": "taskpacks/current/HERMES-UPDATE-AND-FIXES-20260917.md",
+      "mode": "plan_only",
+      "role": "maintenance record and static handoff view for the Hermes v0.21.2 -> v0.21.3 update and the 2026-09-17 defect fixes; NOT a runtime task store, NOT an auto-executor, NOT a new authority",
+      "supersedes": null,
+      "note": "currentTaskpack (R1) remains authoritative until its 2026-09-24 expiry; this view reports a completed maintenance round (update to v0.21.3 (2026.9.14), 21/21 managed assets CONVERGED, 38/38 gates, hooks healthy) plus the decided curator fold-back policy. Deliverables: taskpacks/current/HERMES-UPDATE-AND-FIXES-20260917.md and .project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/. Evidence stays inside the ignored per-project boundary per AGENTS.md.",
+      "execution_authorized": false,
+      "grants_new_permissions": false
     }
   ],
   "baselineRevalidation": {
