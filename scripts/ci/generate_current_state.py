@@ -480,8 +480,14 @@ def main(argv: list[str] | None = None) -> int:
     markdown_out = args.markdown_out if args.markdown_out.is_absolute() else root / args.markdown_out
     json_out.parent.mkdir(parents=True, exist_ok=True)
     markdown_out.parent.mkdir(parents=True, exist_ok=True)
-    json_out.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    markdown_out.write_text(render_markdown(state), encoding="utf-8")
+    # newline="\n" is required, not cosmetic: these two artifacts are tracked and
+    # .gitattributes declares eol=lf for *.json and *.md. Path.write_text() opens in
+    # text mode, so on Windows every "\n" became "\r\n" and each regeneration put the
+    # worktree back in violation of the declared policy.
+    json_out.write_text(
+        json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
+    markdown_out.write_text(render_markdown(state), encoding="utf-8", newline="\n")
     runtime_out = args.runtime_attestation_out
     if runtime_out is not None:
         runtime_out = runtime_out if runtime_out.is_absolute() else root / runtime_out
@@ -493,6 +499,7 @@ def main(argv: list[str] | None = None) -> int:
         runtime_out.write_text(
             json.dumps(build_runtime_attestation(root, ci_evidence=ci_evidence), ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
+            newline="\n",
         )
     print(
         f"CURRENT_STATE_PASS projection={state['checkout_attestation']['tracked_projection']} "
