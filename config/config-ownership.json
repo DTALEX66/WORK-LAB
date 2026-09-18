@@ -525,6 +525,138 @@
    "layer": "SECRET",
    "mode": "FORBIDDEN",
    "adapter": "all"
+  },
+  {
+   "path": "workflow.global_agent_policy",
+   "layer": "USER_OVERLAY",
+   "mode": "MANAGE",
+   "adapter": "workflow",
+   "scope": "Global Agent Policy SSOT: config/global-agent-policy.yaml. Cross-software semantic only — no Codex/Hermes/DSH-specific syntax. Rendered per-client by adapters into their own native surfaces. Every renderer MUST emit a ProjectionLossReport; 'rendered successfully' is never 100% support.",
+   "safety": "critical",
+   "secret": false,
+   "merge": "replace",
+   "compatibility": "compatible"
+  },
+  {
+   "path": "workflow.global_agent_policy.model",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "workflow",
+   "scope": "User model choice. No renderer may hard-code or override.",
+   "safety": "critical"
+  },
+  {
+   "path": "workflow.global_agent_policy.provider",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "workflow",
+   "scope": "User provider choice. No renderer may hard-code or override.",
+   "safety": "critical"
+  },
+  {
+   "path": "workflow.global_agent_policy.reasoning",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "workflow",
+   "scope": "User reasoning_effort choice. No renderer may hard-code or override.",
+   "safety": "critical"
+  },
+  {
+   "path": "workflow.global_agent_policy.auth",
+   "layer": "SECRET",
+   "mode": "FORBIDDEN",
+   "adapter": "workflow",
+   "scope": "User auth / tokens / keys. Never rendered, copied, or managed.",
+   "safety": "critical",
+   "secret": true
+  },
+  {
+   "path": "workflow.global_agent_policy.credentials",
+   "layer": "SECRET",
+   "mode": "FORBIDDEN",
+   "adapter": "workflow",
+   "scope": "No real token/key/password may appear in any projection.",
+   "safety": "critical",
+   "secret": true
+  },
+  {
+   "path": "codex.user_global.agent_policy",
+   "layer": "USER_OVERLAY",
+   "mode": "MANAGE",
+   "adapter": "codex",
+   "scope": "Codex native projection of the global policy: managed block in CODEX_HOME/AGENTS.md + managed config fields in CODEX_HOME/config.toml + rules/workflow-assistance.rules. Projected only through sync_codex_global_assets.py. Provider/model/reasoning are OBSERVE, never overwritten.",
+   "safety": "high"
+  },
+  {
+   "path": "hermes.user_global.agent_policy",
+   "layer": "USER_OVERLAY",
+   "mode": "MANAGE",
+   "adapter": "hermes",
+   "scope": "Hermes native projection of the global policy: config/SOUL.md managed overlay + managed skills under skills/ + managed bin/ launchers. Projected only through sync_hermes_workflow_assets.py with three-way managed_asset_baseline guard. Curator additions fold back; deletions are NEEDS_REVIEW. Provider/model/reasoning/auth are OBSERVE, never overwritten.",
+   "safety": "high"
+  },
+  {
+   "path": "dsh.user_global.agent_policy",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "dsh",
+   "apply_supported": false,
+   "scope": "DSH global policy projection is OBSERVE/PLAN only until it has a stable official native interface + ownership definition + isolated fixture + readback + rollback + negative tests. Native model/provider/reasoning remain user-owned."
+  },
+  {
+   "path": "cc-switch.user_global.agent_policy",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "cc-switch",
+   "apply_supported": false,
+   "scope": "CC Switch global policy projection is OBSERVE_ONLY. It can detect, compare against the desired policy, and report drift. It never writes the policy back. No global-policy write without a re-validated stable native interface."
+  },
+  {
+   "path": "github.user_global.agent_policy",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "github",
+   "apply_supported": false,
+   "scope": "GitHub is not an agent persona. Only the Git/delivery-related parts of the policy project here: branch policy, PR policy, required checks, release policy, permission policy, evidence semantics. Language, session federation, and model reasoning do NOT project to GitHub."
+  },
+  {
+   "path": "openhuman.user_global.agent_policy",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "openhuman",
+   "apply_supported": false
+  },
+  {
+   "path": "open-design.user_global.agent_policy",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "open-design",
+   "apply_supported": false,
+   "scope": "Open Design client projection. WORK-LAB may manage the client's rules/skills/plugins/workflow-policy but NEVER the DESIGN-LAB design assets, generation params, design model policy, specs, or quality gates. No stable official apply interface yet."
+  },
+  {
+   "path": "cursor.user_global.agent_policy",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "cursor",
+   "apply_supported": false,
+   "scope": "Manifest-only client. detect/observe/plan only. No apply."
+  },
+  {
+   "path": "claude-code.user_global.agent_policy",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "claude-code",
+   "apply_supported": false,
+   "scope": "Manifest-only client. detect/observe/plan only. No apply."
+  },
+  {
+   "path": "workbuddy.user_global.agent_policy",
+   "layer": "USER_OVERLAY",
+   "mode": "OBSERVE",
+   "adapter": "workbuddy",
+   "apply_supported": false,
+   "scope": "Manifest-only client. detect/observe/plan only. No apply."
   }
  ],
  "rules": {
@@ -544,6 +676,11 @@
   "cc_switch_owns_supported_client_provider_routing_only": true,
   "cross_client_prompt_skill_session_sync_forbidden": true,
   "raw_memory_never_crosses_client_boundary": true,
-  "open_design_capability_owned_by_open_design_project": true
+  "open_design_capability_owned_by_open_design_project": true,
+  "global_policy_no_model_provider_auth_override": true,
+  "global_policy_e_drive_guard_not_weakenable": true,
+  "projection_loss_report_required_per_adapter": true,
+  "projection_render_success_not_equal_full_support": true,
+  "user_model_provider_auth_never_managed": true
  }
 }

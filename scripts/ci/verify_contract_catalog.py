@@ -41,6 +41,9 @@ EXPECTED = {
     "rule-drift": "workflow",
     "config-ownership": "workflow",
     "platform-identity": "workflow",
+    "global-agent-policy": "workflow",
+    "policy-projection-contract": "workflow",
+    "policy-projection-loss-report": "workflow",
 }
 CANONICAL_SCHEMA_PREFIXES = {
     "module-profile": (".project/governance/",),
@@ -75,6 +78,9 @@ CANONICAL_SCHEMA_PREFIXES = {
     "rule-drift": ("packages/contracts/",),
     "config-ownership": ("packages/contracts/",),
     "platform-identity": ("packages/contracts/",),
+    "global-agent-policy": ("packages/contracts/",),
+    "policy-projection-contract": ("packages/contracts/",),
+    "policy-projection-loss-report": ("packages/contracts/",),
 }
 
 

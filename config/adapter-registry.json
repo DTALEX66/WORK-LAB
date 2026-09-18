@@ -1,13 +1,32 @@
 {
   "schema_version": "workflow/adapter-registry/v1",
-  "interface": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
+  "interface": [
+    "detect",
+    "capabilities",
+    "plan",
+    "apply",
+    "invoke",
+    "observe",
+    "rollback"
+  ],
   "entries": [
     {
       "id": "hermes",
       "display_name": "Hermes",
       "support_level": "deep",
-      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
-      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "operations": [
+        "detect",
+        "capabilities",
+        "plan",
+        "apply",
+        "invoke",
+        "observe",
+        "rollback"
+      ],
+      "detection": {
+        "mode": "isolated",
+        "evidence_state": "UNVERIFIED"
+      },
       "provenance": {
         "source_kind": "repository",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=hermes]",
@@ -20,15 +39,58 @@
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "active",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "Hermes runtime package is not vendored in WORK-LAB", "files": []}
+        "hash": {
+          "algorithm": "sha256",
+          "value": null,
+          "state": "UNAVAILABLE",
+          "basis": "Hermes runtime package is not vendored in WORK-LAB",
+          "files": []
+        }
+      },
+      "policy_projection": {
+        "supported": true,
+        "projection_mode": "managed-overlay",
+        "detect_supported": true,
+        "plan_supported": true,
+        "apply_supported": true,
+        "readback_supported": true,
+        "rollback_supported": true,
+        "drift_supported": true,
+        "capability_states": {
+          "communication": "NATIVE_GUIDANCE",
+          "execution": "NATIVE_GUIDANCE",
+          "credentials": "WORKFLOW_GUARD",
+          "protected_storage": "WORKFLOW_GUARD",
+          "session_privacy": "NATIVE_GUIDANCE",
+          "network": "NATIVE_GUIDANCE",
+          "git_safety": "NATIVE_GUIDANCE",
+          "evidence_semantics": "NATIVE_GUIDANCE",
+          "model_neutrality": "OBSERVE_ONLY",
+          "parallelism": "WORKFLOW_GUARD"
+        },
+        "maturity": "READBACK_VERIFIED",
+        "renderer": "integrations/executors/hermes/sync_hermes_workflow_assets.py",
+        "extensions_path": "integrations/executors/hermes/hermes-policy-extension.yaml",
+        "note": "Three-way managed_asset_baseline + curator_foldback. E-drive & credential boundary machine-enforced via e_drive_guard + terminal guard hooks. model/provider/auth OBSERVE, never overwritten."
       }
     },
     {
       "id": "codex",
       "display_name": "Codex",
       "support_level": "deep",
-      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
-      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "operations": [
+        "detect",
+        "capabilities",
+        "plan",
+        "apply",
+        "invoke",
+        "observe",
+        "rollback"
+      ],
+      "detection": {
+        "mode": "isolated",
+        "evidence_state": "UNVERIFIED"
+      },
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=codex]",
@@ -36,15 +98,54 @@
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "quarantined",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "Codex runtime package is external and not vendored", "files": []}
+        "hash": {
+          "algorithm": "sha256",
+          "value": null,
+          "state": "UNAVAILABLE",
+          "basis": "Codex runtime package is external and not vendored",
+          "files": []
+        }
+      },
+      "policy_projection": {
+        "supported": true,
+        "projection_mode": "managed-block",
+        "detect_supported": true,
+        "plan_supported": true,
+        "apply_supported": true,
+        "readback_supported": true,
+        "rollback_supported": true,
+        "drift_supported": true,
+        "capability_states": {
+          "communication": "NATIVE_GUIDANCE",
+          "execution": "NATIVE_GUIDANCE",
+          "credentials": "NATIVE_GUIDANCE",
+          "protected_storage": "NATIVE_GUIDANCE",
+          "session_privacy": "NATIVE_GUIDANCE",
+          "network": "NATIVE_GUIDANCE",
+          "git_safety": "NATIVE_GUIDANCE",
+          "evidence_semantics": "NATIVE_GUIDANCE",
+          "model_neutrality": "OBSERVE_ONLY",
+          "parallelism": "NATIVE_GUIDANCE"
+        },
+        "maturity": "READBACK_VERIFIED",
+        "renderer": "integrations/executors/codex/sync_codex_global_assets.py",
+        "extensions_path": "integrations/executors/codex/codex-policy-extension.yaml",
+        "note": "Managed BEGIN/END block + hash fencing in CODEX_HOME/AGENTS.md + config.toml + rules + skills. Second-plan NOOP idempotency. provider/model/reasoning OBSERVE."
       }
     },
     {
       "id": "cc-switch",
       "display_name": "CC Switch",
       "support_level": "deep",
-      "operations": ["detect", "capabilities", "observe"],
-      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "operations": [
+        "detect",
+        "capabilities",
+        "observe"
+      ],
+      "detection": {
+        "mode": "isolated",
+        "evidence_state": "UNVERIFIED"
+      },
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=cc-switch]",
@@ -53,15 +154,56 @@
         "risk": "high",
         "status": "legacy_observe",
         "note": "CC Switch is LEGACY_OBSERVE per WLR-010 (2026-08-26). Observe-only; no active writes unless evidence restores to active.",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "CC Switch runtime package is external and not vendored", "files": []}
+        "hash": {
+          "algorithm": "sha256",
+          "value": null,
+          "state": "UNAVAILABLE",
+          "basis": "CC Switch runtime package is external and not vendored",
+          "files": []
+        }
+      },
+      "policy_projection": {
+        "supported": true,
+        "projection_mode": "observe-only",
+        "detect_supported": true,
+        "plan_supported": false,
+        "apply_supported": false,
+        "readback_supported": false,
+        "rollback_supported": false,
+        "drift_supported": false,
+        "capability_states": {
+          "communication": "OBSERVE_ONLY",
+          "execution": "OBSERVE_ONLY",
+          "credentials": "OBSERVE_ONLY",
+          "protected_storage": "OBSERVE_ONLY",
+          "session_privacy": "OBSERVE_ONLY",
+          "network": "OBSERVE_ONLY",
+          "git_safety": "OBSERVE_ONLY",
+          "evidence_semantics": "OBSERVE_ONLY",
+          "model_neutrality": "OBSERVE_ONLY",
+          "parallelism": "OBSERVE_ONLY"
+        },
+        "maturity": "OBSERVE_ONLY",
+        "note": "LEGACY_OBSERVE. detect + compare desired policy + report drift. Never writes global policy back."
       }
     },
     {
       "id": "github",
       "display_name": "GitHub",
       "support_level": "deep",
-      "operations": ["detect", "capabilities", "plan", "apply", "invoke", "observe", "rollback"],
-      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "operations": [
+        "detect",
+        "capabilities",
+        "plan",
+        "apply",
+        "invoke",
+        "observe",
+        "rollback"
+      ],
+      "detection": {
+        "mode": "static",
+        "evidence_state": "UNVERIFIED"
+      },
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=github]",
@@ -69,16 +211,52 @@
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "quarantined",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "GitHub CLI/API runtime package is external and not vendored", "files": []}
+        "hash": {
+          "algorithm": "sha256",
+          "value": null,
+          "state": "UNAVAILABLE",
+          "basis": "GitHub CLI/API runtime package is external and not vendored",
+          "files": []
+        }
+      },
+      "policy_projection": {
+        "supported": true,
+        "projection_mode": "git-delivery-projection",
+        "detect_supported": true,
+        "plan_supported": true,
+        "apply_supported": false,
+        "readback_supported": false,
+        "rollback_supported": false,
+        "drift_supported": false,
+        "capability_states": {
+          "communication": "UNSUPPORTED",
+          "execution": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
+          "protected_storage": "UNSUPPORTED",
+          "session_privacy": "UNSUPPORTED",
+          "network": "UNSUPPORTED",
+          "git_safety": "UNSUPPORTED",
+          "evidence_semantics": "UNSUPPORTED",
+          "model_neutrality": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED"
+        },
+        "maturity": "PLAN_SUPPORTED",
+        "note": "Not an agent persona. Projects only git/delivery semantics: branch/PR/required-check/release/permission/evidence. Other capabilities UNSUPPORTED here."
       }
     },
-
     {
       "id": "openhuman",
       "display_name": "OpenHuman",
       "support_level": "experimental",
-      "operations": ["detect", "capabilities", "observe"],
-      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "operations": [
+        "detect",
+        "capabilities",
+        "observe"
+      ],
+      "detection": {
+        "mode": "isolated",
+        "evidence_state": "UNVERIFIED"
+      },
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=openhuman]",
@@ -86,16 +264,51 @@
         "scope": "portable-workflow-adapter",
         "risk": "medium",
         "status": "quarantined",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "OpenHuman runtime package is external and not vendored", "files": []}
+        "hash": {
+          "algorithm": "sha256",
+          "value": null,
+          "state": "UNAVAILABLE",
+          "basis": "OpenHuman runtime package is external and not vendored",
+          "files": []
+        }
+      },
+      "policy_projection": {
+        "supported": false,
+        "projection_mode": "observe-only",
+        "detect_supported": true,
+        "plan_supported": false,
+        "apply_supported": false,
+        "readback_supported": false,
+        "rollback_supported": false,
+        "drift_supported": false,
+        "capability_states": {
+          "communication": "UNSUPPORTED",
+          "execution": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
+          "protected_storage": "UNSUPPORTED",
+          "session_privacy": "UNSUPPORTED",
+          "network": "UNSUPPORTED",
+          "git_safety": "UNSUPPORTED",
+          "evidence_semantics": "UNSUPPORTED",
+          "model_neutrality": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED"
+        },
+        "maturity": "OBSERVE_ONLY"
       }
     },
-
     {
       "id": "open-design",
       "display_name": "Open Design",
       "support_level": "experimental",
-      "operations": ["detect", "capabilities", "observe"],
-      "detection": {"mode": "external", "evidence_state": "UNVERIFIED"},
+      "operations": [
+        "detect",
+        "capabilities",
+        "observe"
+      ],
+      "detection": {
+        "mode": "external",
+        "evidence_state": "UNVERIFIED"
+      },
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=open-design]",
@@ -103,35 +316,112 @@
         "scope": "portable-workflow-adapter",
         "risk": "medium",
         "status": "quarantined",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "Open Design client (nexu-io/open-design) is external and not vendored", "files": []}
+        "hash": {
+          "algorithm": "sha256",
+          "value": null,
+          "state": "UNAVAILABLE",
+          "basis": "Open Design client (nexu-io/open-design) is external and not vendored",
+          "files": []
+        }
+      },
+      "policy_projection": {
+        "supported": false,
+        "projection_mode": "observe-only",
+        "detect_supported": true,
+        "plan_supported": false,
+        "apply_supported": false,
+        "readback_supported": false,
+        "rollback_supported": false,
+        "drift_supported": false,
+        "capability_states": {
+          "communication": "UNSUPPORTED",
+          "execution": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
+          "protected_storage": "UNSUPPORTED",
+          "session_privacy": "UNSUPPORTED",
+          "network": "UNSUPPORTED",
+          "git_safety": "UNSUPPORTED",
+          "evidence_semantics": "UNSUPPORTED",
+          "model_neutrality": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED"
+        },
+        "maturity": "OBSERVE_ONLY",
+        "note": "Client USER_GLOBAL desired state (rules/skills/plugins/workflow-policy) MANAGE with apply_supported=false. DESIGN-LAB design domain OUT OF SCOPE. No stable official apply interface."
       }
     },
-
     {
       "id": "deepseek-harness",
       "display_name": "DeepSeek Harness",
       "support_level": "experimental",
-      "operations": ["detect", "capabilities", "observe"],
-      "detection": {"mode": "isolated", "evidence_state": "UNVERIFIED"},
+      "operations": [
+        "detect",
+        "capabilities",
+        "observe"
+      ],
+      "detection": {
+        "mode": "isolated",
+        "evidence_state": "UNVERIFIED"
+      },
       "provenance": {
         "source_kind": "repository",
         "source_ref": "https://github.com/deepseek-ai/deepseek-harness",
         "version": "0.1.0-rc.5@47f943859bef60e4160492346772ded9b24f765a",
-        "version_historical": ["0.1.0-rc.5 (governance pin, 2026-08-15)", "0.1.0-rc.7 (superseded)", "0.1.1-rc.2 (detected local 2026-08-23, eligibility UNVERIFIED)"],
+        "version_historical": [
+          "0.1.0-rc.5 (governance pin, 2026-08-15)",
+          "0.1.0-rc.7 (superseded)",
+          "0.1.1-rc.2 (detected local 2026-08-23, eligibility UNVERIFIED)"
+        ],
         "scope": "portable-agent-runtime-adapter",
         "risk": "medium",
         "status": "active",
         "note": "DSH promoted to active per WLR-010 (2026-08-26). Community DSH Desktop 2.0.2 installed at D:\\All projects\\DSH. Local build (Tauri shell) removed.",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "DSH source is external (community build); local install verified 2026-08-26", "files": []}
+        "hash": {
+          "algorithm": "sha256",
+          "value": null,
+          "state": "UNAVAILABLE",
+          "basis": "DSH source is external (community build); local install verified 2026-08-26",
+          "files": []
+        }
+      },
+      "policy_projection": {
+        "supported": true,
+        "projection_mode": "observe-plan",
+        "detect_supported": true,
+        "plan_supported": true,
+        "apply_supported": false,
+        "readback_supported": false,
+        "rollback_supported": false,
+        "drift_supported": false,
+        "capability_states": {
+          "communication": "OBSERVE_ONLY",
+          "execution": "OBSERVE_ONLY",
+          "credentials": "OBSERVE_ONLY",
+          "protected_storage": "OBSERVE_ONLY",
+          "session_privacy": "OBSERVE_ONLY",
+          "network": "OBSERVE_ONLY",
+          "git_safety": "OBSERVE_ONLY",
+          "evidence_semantics": "OBSERVE_ONLY",
+          "model_neutrality": "OBSERVE_ONLY",
+          "parallelism": "OBSERVE_ONLY"
+        },
+        "maturity": "PLAN_SUPPORTED",
+        "renderer": "integrations/executors/dsh/dsh_adapter.py",
+        "note": "OBSERVE/PLAN only until stable official native interface + ownership def + isolated fixture + readback + rollback + negative tests all exist. native model/provider/reasoning user-owned."
       }
     },
-
     {
       "id": "cursor",
       "display_name": "Cursor",
       "support_level": "manifest-only",
-      "operations": ["detect", "capabilities", "observe"],
-      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "operations": [
+        "detect",
+        "capabilities",
+        "observe"
+      ],
+      "detection": {
+        "mode": "static",
+        "evidence_state": "UNVERIFIED"
+      },
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=cursor]",
@@ -139,15 +429,51 @@
         "scope": "manifest-only",
         "risk": "medium",
         "status": "blocked",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "No Cursor adapter package is vendored", "files": []}
+        "hash": {
+          "algorithm": "sha256",
+          "value": null,
+          "state": "UNAVAILABLE",
+          "basis": "No Cursor adapter package is vendored",
+          "files": []
+        }
+      },
+      "policy_projection": {
+        "supported": false,
+        "projection_mode": "manifest-only",
+        "detect_supported": true,
+        "plan_supported": false,
+        "apply_supported": false,
+        "readback_supported": false,
+        "rollback_supported": false,
+        "drift_supported": false,
+        "capability_states": {
+          "communication": "UNSUPPORTED",
+          "execution": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
+          "protected_storage": "UNSUPPORTED",
+          "session_privacy": "UNSUPPORTED",
+          "network": "UNSUPPORTED",
+          "git_safety": "UNSUPPORTED",
+          "evidence_semantics": "UNSUPPORTED",
+          "model_neutrality": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED"
+        },
+        "maturity": "OBSERVE_ONLY"
       }
     },
     {
       "id": "claude-code",
       "display_name": "Claude Code",
       "support_level": "manifest-only",
-      "operations": ["detect", "capabilities", "observe"],
-      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "operations": [
+        "detect",
+        "capabilities",
+        "observe"
+      ],
+      "detection": {
+        "mode": "static",
+        "evidence_state": "UNVERIFIED"
+      },
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=claude-code]",
@@ -155,15 +481,51 @@
         "scope": "manifest-only",
         "risk": "medium",
         "status": "blocked",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "No Claude Code adapter package is vendored", "files": []}
+        "hash": {
+          "algorithm": "sha256",
+          "value": null,
+          "state": "UNAVAILABLE",
+          "basis": "No Claude Code adapter package is vendored",
+          "files": []
+        }
+      },
+      "policy_projection": {
+        "supported": false,
+        "projection_mode": "manifest-only",
+        "detect_supported": true,
+        "plan_supported": false,
+        "apply_supported": false,
+        "readback_supported": false,
+        "rollback_supported": false,
+        "drift_supported": false,
+        "capability_states": {
+          "communication": "UNSUPPORTED",
+          "execution": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
+          "protected_storage": "UNSUPPORTED",
+          "session_privacy": "UNSUPPORTED",
+          "network": "UNSUPPORTED",
+          "git_safety": "UNSUPPORTED",
+          "evidence_semantics": "UNSUPPORTED",
+          "model_neutrality": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED"
+        },
+        "maturity": "OBSERVE_ONLY"
       }
     },
     {
       "id": "workbuddy",
       "display_name": "WorkBuddy",
       "support_level": "manifest-only",
-      "operations": ["detect", "capabilities", "observe"],
-      "detection": {"mode": "static", "evidence_state": "UNVERIFIED"},
+      "operations": [
+        "detect",
+        "capabilities",
+        "observe"
+      ],
+      "detection": {
+        "mode": "static",
+        "evidence_state": "UNVERIFIED"
+      },
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=workbuddy]",
@@ -171,7 +533,36 @@
         "scope": "manifest-only",
         "risk": "medium",
         "status": "blocked",
-        "hash": {"algorithm": "sha256", "value": null, "state": "UNAVAILABLE", "basis": "No WorkBuddy adapter package is vendored", "files": []}
+        "hash": {
+          "algorithm": "sha256",
+          "value": null,
+          "state": "UNAVAILABLE",
+          "basis": "No WorkBuddy adapter package is vendored",
+          "files": []
+        }
+      },
+      "policy_projection": {
+        "supported": false,
+        "projection_mode": "manifest-only",
+        "detect_supported": true,
+        "plan_supported": false,
+        "apply_supported": false,
+        "readback_supported": false,
+        "rollback_supported": false,
+        "drift_supported": false,
+        "capability_states": {
+          "communication": "UNSUPPORTED",
+          "execution": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
+          "protected_storage": "UNSUPPORTED",
+          "session_privacy": "UNSUPPORTED",
+          "network": "UNSUPPORTED",
+          "git_safety": "UNSUPPORTED",
+          "evidence_semantics": "UNSUPPORTED",
+          "model_neutrality": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED"
+        },
+        "maturity": "OBSERVE_ONLY"
       }
     }
   ]

@@ -235,6 +235,10 @@ jobs:
         run: python scripts/ci/verify_module_dependencies.py
       - name: Verify project data boundary
         run: python scripts/ci/verify_project_data_boundary.py
+      - name: Verify authority-reference integrity (A03)
+        run: python scripts/ci/verify_project_authority_reference.py
+      - name: Run authority-reference negative controls
+        run: python tests/ci/test_project_authority_reference.py
       - name: Verify supply-chain pins
         run: python scripts/ci/verify_supply_chain.py
       - name: Verify offline source health (NX-600)

@@ -268,6 +268,34 @@
       ]
     },
     {
+      "id": "global-agent-policy",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/global-agent-policy.schema.json",
+      "consumers": [
+        "workflow",
+        "ci"
+      ]
+    },
+    {
+      "id": "policy-projection-contract",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/policy-projection-contract.schema.json",
+      "consumers": [
+        "workflow",
+        "ci"
+      ]
+    },
+    {
+      "id": "policy-projection-loss-report",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/policy-projection-loss-report.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
+    },
+    {
       "id": "archive-manifest",
       "owner": "root-governance",
       "schemaPath": ".project/governance/contracts/archive-manifest.schema.json",

@@ -1,35 +1,20 @@
-# Task packs
+# taskpacks/current
 
-`taskpacks/` is the root control surface for WORK-LAB's global project-task
-workflow. It coordinates the canonical active modules without turning the root into
-a fourth product. The authoritative public positioning is
-`docs/decisions/PROJECT_POSITIONING.md`; the current authority is named by
-`.project/governance/taskpack-authority-index.json` (`currentTaskpack`), whose
-`staticHandoffViews` register static handoff archives by sha256.
+This directory is the **current execution surface**, not the history archive.
 
-Every non-trivial task pack records:
+Target normative current files:
+- `WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918.md`
+- `OPEN-TASK-REGISTER.md`
+- `TASKPACK_SUMMARY.md`
 
-- one writer and any read-only reviewers;
-- canonical module/root ownership and explicit cross-module permission;
-- allowed and forbidden paths, including the `.project-local/` per-project data boundary;
-- RED/GREEN, targeted, aggregate, exact-tree and recovery verification;
-- external mutation, commit, push, merge and release approval gates;
-- a completion contract and a durable recovery handle.
+Operational compatibility files may remain only when explicitly allowlisted by
+`.project/governance/project-authority-index.json`.
 
-Parallel inspection is allowed; source modification remains single-writer and
-fail-closed. Execution evidence belongs in the ignored per-project boundary —
-`.project-local/artifacts/` (or `reports/`) — never in source control and never in the
-global Hermes Home.
+IMPORTANT: do not physically delete the legacy files until A04 migrates
+`generate_current_state.py`, Stage3 CI/test dependencies, stale-reference inputs,
+and fixed historical skill-count assumptions.
 
-The task-pack directory stores reviewed manifests and stable summaries only; live
-queues, logs, caches, sessions, credentials and scheduler state remain runtime
-data outside the tracked tree.
+Historical retrieval is defined by:
+`taskpacks/history/FROZEN-LEGACY-INDEX-20260918.md`.
 
-The current v2 attachment reconciliation is recorded in
-`WORK-LAB-HERMES-TASKPACK-RECONCILIATION.md` and its machine-readable `.json`
-counterpart. Historical task IDs are namespaced as `HIST-*` there so they do not
-silently satisfy the final attachment task graph.
-
-Maintenance rounds are recorded here as well when they change a managed software
-surface; see `HERMES-UNIFIED-GOVERNANCE-20260915.md` and
-`HERMES-UPDATE-AND-FIXES-20260917.md`.
+Before executing anything, read `/WORK-LAB-AUTHORITY.md`.
