@@ -115,6 +115,7 @@ jobs:
           python tests/ci/test_stage3_baseline.py
           python services/orchestration/run_quality_gate.py adapter-registry
           python services/orchestration/run_quality_gate.py capability-matrix
+          python services/orchestration/run_quality_gate.py policy-coverage
           python services/orchestration/run_quality_gate.py adapter-conformance
           python services/orchestration/run_quality_gate.py acp-conformance
           python services/orchestration/run_quality_gate.py otel-mapping
