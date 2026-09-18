@@ -1,4 +1,4 @@
-﻿"""Regression tests for the A-2 result classifier and the A-3 launch policy.
+"""Regression tests for the A-2 result classifier and the A-3 launch policy.
 
 The three regression classes the ruling asked for are covered explicitly:
 normal completion, explicit failure with exit 0, and incomplete output. No real
