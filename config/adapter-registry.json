@@ -80,7 +80,7 @@
         "maturity": "READBACK_VERIFIED",
         "renderer": "integrations/executors/hermes/sync_hermes_workflow_assets.py",
         "extensions_path": "integrations/executors/hermes/hermes-policy-extension.yaml",
-        "note": "Three-way managed_asset_baseline + curator_foldback. E-drive & credential boundary machine-enforced via e_drive_guard + terminal guard hooks. model/provider/auth OBSERVE, never overwritten.",
+        "note": "Three-way managed_asset_baseline + curator_foldback. E/F-drive & credential boundary machine-enforced via e_drive_guard + terminal guard hooks. model/provider/auth OBSERVE, never overwritten.",
         "capability_coverage_complete": true
       }
     },

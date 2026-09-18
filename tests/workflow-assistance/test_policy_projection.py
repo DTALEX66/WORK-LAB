@@ -65,13 +65,22 @@ class GlobalAgentPolicySchemaTests(unittest.TestCase):
         self.assertEqual(result["policy_id"], "WORK-LAB-GLOBAL-AGENT-POLICY")
         self.assertGreaterEqual(result["invariants_checked"], 12)
 
-    def test_policy_weakens_e_drive_guard_fails(self) -> None:
+    def test_policy_weakens_protected_drive_guard_fails(self) -> None:
         # Negative control: weakening the protected-storage boundary is rejected.
         policy = _real_policy()
-        policy["protected_storage"]["e_drive_default"] = "allow"
+        policy["protected_storage"]["drive_default"] = "allow"
         with self.assertRaises(pp.PolicyProjectionError) as ctx:
             pp.validate_policy(ROOT, policy)
-        self.assertIn("e_drive_default", str(ctx.exception))
+        self.assertIn("drive_default", str(ctx.exception))
+
+    def test_policy_drops_a_machine_baseline_protected_drive_fails(self) -> None:
+        # Negative control: dropping the F: drive (user standing rule: E: and F:
+        # are both protected) is a fail-closed rejection.
+        policy = _real_policy()
+        policy["protected_storage"]["protected_drives"] = ["E"]
+        with self.assertRaises(pp.PolicyProjectionError) as ctx:
+            pp.validate_policy(ROOT, policy)
+        self.assertIn("F", str(ctx.exception))
 
     def test_policy_makes_unknown_a_success_fails(self) -> None:
         # Negative control: UNKNOWN==SUCCESS is an evidence-invariant violation.
@@ -143,6 +152,7 @@ class CodexProjectionTests(unittest.TestCase):
         golden = result["assets"]["global-guidance.md"]
         self.assertIn("Communicate with the user in Chinese", golden)
         self.assertIn("E:\\", golden)
+        self.assertIn("F:\\", golden)  # both user-protected drives are named
         # The loss report must honestly carry the coverage-state buckets.
         report = result["loss_report"]
         for bucket in ("native_enforced", "native_guidance", "workflow_guard", "observe_only", "unsupported"):
@@ -174,7 +184,7 @@ class HermesProjectionTests(unittest.TestCase):
         renderer = hermes_renderer.build_renderer(ROOT)
         result = renderer.project()
         soul = result["assets"]["config/SOUL.md"]
-        self.assertIn("E 盘边界", soul)
+        self.assertIn("E/F 盘边界", soul)
         self.assertIn("凭据", soul)
         self.assertIn("模型与 provider 中立", soul)
         self.assertEqual(result["loss_report"]["adapter"], "hermes")

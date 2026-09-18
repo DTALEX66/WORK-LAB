@@ -90,6 +90,11 @@ class MachineIdentityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             module._project_root("E:/protected")
 
+    def test_explicit_f_drive_path_is_rejected(self) -> None:
+        # Standing user rule: the F: data drive is protected alongside E:.
+        with self.assertRaises(ValueError):
+            module._project_root("F:/protected")
+
     def test_registry_path_cannot_escape_project_root(self) -> None:
         project = self.make_project()
         with self.assertRaises(ValueError):

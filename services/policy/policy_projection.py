@@ -19,7 +19,8 @@ Design rules (taskpack U17.4 / U17.7 / U17.21, taskpack sections 4, 7, 11, 22, 2
 
 - "Rendered successfully" is NEVER "100% supported". Every renderer MUST emit a
   loss report that classifies each capability as one of CAPABILITY_STATES.
-- The projection is fail-closed: a policy that weakens the E-drive guard,
+- The projection is fail-closed: a policy that weakens the protected-drive
+  guard (E:/F:),
   makes UNKNOWN a success, hard-codes a user model, or carries a real secret
   is rejected before any native asset is rendered.
 - This module creates no second authority, no second config-governance system,
@@ -92,6 +93,13 @@ EVIDENCE_INVARIANTS_MUST_BE_FALSE = (
     "apply_equals_verified",
 )
 
+# User's standing rule: BOTH the E: and F: data drives are protected on this
+# machine. The semantic policy must protect at least this machine baseline;
+# the native guards (services/policy/e_drive_guard.py, machine_identity,
+# project_registry) mirror the same boundary. Dropping any baseline drive is
+# a fail-closed rejection.
+PROTECTED_DRIVE_BASELINE = frozenset({"E", "F"})
+
 # A real credential is never expected in a policy or extension.
 _SECRET_RE = re.compile(
     r"(?i)(api[_-]?key|secret[_-]?key|access[_-]?token|private[_-]?key)"
@@ -161,11 +169,27 @@ def validate_policy(root: Path, policy: dict[str, Any] | None = None) -> dict[st
                 f"(got {evidence.get(key)!r})"
             )
 
-    # --- protected storage default-deny ---
+    # --- protected storage default-deny (E: and F: are user-protected) ---
     protected = policy.get("protected_storage") or {}
-    if protected.get("e_drive_default") != "deny":
+    if protected.get("drive_default") != "deny":
         raise PolicyProjectionError(
-            f"protected_storage.e_drive_default must be 'deny' (got {protected.get('e_drive_default')!r})"
+            f"protected_storage.drive_default must be 'deny' (got {protected.get('drive_default')!r})"
+        )
+    drives = protected.get("protected_drives")
+    if not isinstance(drives, list) or not drives:
+        raise PolicyProjectionError(
+            f"protected_storage.protected_drives must be a non-empty list of drive letters (got {drives!r})"
+        )
+    for drive in drives:
+        if not (isinstance(drive, str) and len(drive) == 1 and drive.isupper() and drive.isalpha()):
+            raise PolicyProjectionError(
+                f"protected_storage.protected_drives entries must be single uppercase drive letters (got {drive!r})"
+            )
+    missing_drives = PROTECTED_DRIVE_BASELINE - set(drives)
+    if missing_drives:
+        raise PolicyProjectionError(
+            f"protected_storage.protected_drives must keep the machine baseline protected "
+            f"({sorted(PROTECTED_DRIVE_BASELINE)}); missing: {sorted(missing_drives)}"
         )
 
     # --- credentials plaintext forbidden ---
@@ -198,7 +222,7 @@ def validate_policy(root: Path, policy: dict[str, Any] | None = None) -> dict[st
         "revision": policy.get("revision"),
         "schema_version": policy.get("schema_version"),
         "digest": _sha256(json.dumps(policy, ensure_ascii=False, sort_keys=True).encode("utf-8")),
-        "invariants_checked": len(EVIDENCE_INVARIANTS_MUST_BE_FALSE) + 4,
+        "invariants_checked": len(EVIDENCE_INVARIANTS_MUST_BE_FALSE) + 5,
     }
 
 

@@ -7,9 +7,10 @@
 # baseline deploys into the live Hermes home.
 #
 # Native enforcement model for Hermes:
-# - The E-drive guard + terminal guard (bin/hermes-project-terminal-guard.py,
+# - The protected-drive guard (services/policy/e_drive_guard.py, covering
+#   E:\ and F:\) + terminal guard (bin/hermes-project-terminal-guard.py,
 #   wired as a pre_tool_call hook) are NATIVE_ENFORCED / WORKFLOW_GUARD machine
-#   blocks: they hard-refuse an E:\ or project-escape path, not just advise.
+#   blocks: they hard-refuse an E:\ / F:\ or project-escape path, not just advise.
 # - config/SOUL.md is NATIVE_GUIDANCE: Hermes reads it as its persona/behavior
 #   source; it does not machine-enforce its prose.
 # - On-demand skills (Git/Windows/Testing/Debugging/Evidence/Deployment) carry
@@ -38,7 +39,7 @@ capability_states:
   authorization: NATIVE_GUIDANCE
   task_grant: WORKFLOW_GUARD
   workspace_boundary: WORKFLOW_GUARD
-  protected_storage: NATIVE_ENFORCED   # terminal guard hook hard-refuses E:\
+  protected_storage: NATIVE_ENFORCED   # terminal guard hook hard-refuses E:\\ / F:\\
   credentials: WORKFLOW_GUARD          # terminal guard + e_drive_guard
   session_privacy: OBSERVE_ONLY
   network: WORKFLOW_GUARD
@@ -68,8 +69,8 @@ soul_sections:
   no_fabrication:
     - "UNKNOWN 不等于 0 也不等于 SUCCESS；SIMULATED 不等于 REAL；本地测试不等于 CI；merge 不等于 installed。"
     - "独立读可并行，隔离写可并行，重叠写串行；证据分层独立报告，缺 readback 只能 UNVERIFIED。"
-  e_drive_boundary:
-    - "E:\\ 是受保护数据盘，默认拒绝。授权必须限定精确路径 + 精确操作；禁止枚举、dry-run、脚本/子进程/通配符/相对路径/reparse 绕过。"
+  protected_drive_boundary:
+    - "E:\\ 与 F:\\ 是用户声明的受保护数据盘，默认拒绝。授权必须限定精确路径 + 精确操作；禁止枚举、dry-run、脚本/子进程/通配符/相对路径/reparse 绕过。"
   credential_boundary:
     - "不读、不打印、不复制、不提交、不上传凭据、.env 正文、密钥、token、session/私有 memory 或私有代理状态；私有路径被拒是正确边界信号，停止并走仓库证据或脱敏摘要，不升级绕过。"
   minimum_privilege:

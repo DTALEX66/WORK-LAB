@@ -66,7 +66,7 @@ class HermesPolicyRenderer(pp.SoftwarePolicyRenderer):
             "proactive_completion": "主动完成",
             "project_rules_first": "项目规则优先",
             "no_fabrication": "不伪造、证据分层",
-            "e_drive_boundary": "E 盘边界",
+            "protected_drive_boundary": "E/F 盘边界",
             "credential_boundary": "凭据与私有状态边界",
             "minimum_privilege": "最小权限与项目数据边界",
             "model_neutral": "模型与 provider 中立",

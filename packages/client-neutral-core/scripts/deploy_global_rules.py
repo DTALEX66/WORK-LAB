@@ -19,7 +19,7 @@ from pathlib import Path
 
 # Single source of truth (key -> zh/en text)
 GLOBAL_BOUNDARIES = [
-    ("safety-e", "E盘禁访", "Never access E:\\ without explicit per-path, per-operation authorization in the current request."),
+    ("safety-ef", "E/F盘禁访", "Never access E:\\ or F:\\ without explicit per-path, per-operation authorization in the current request."),
     ("data-boundary", "数据边界", "All task data (temp, cache, logs, artifacts) stays inside the project .hermes/; no spill to user home, other projects, or shared libraries."),
     ("official-first", "官方优先", "Software updates follow official releases only; never privately build/package versions."),
     ("skill-discipline", "技能调用纪律", "Before executing a task, check the skill-call index / scan SKILL.md, load the matching skill, and record the mapping; never just start."),

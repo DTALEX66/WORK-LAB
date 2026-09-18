@@ -131,9 +131,15 @@
     "protected_storage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["e_drive_default", "authorization_granularity"],
+      "required": ["protected_drives", "drive_default", "authorization_granularity"],
       "properties": {
-        "e_drive_default": {"const": "deny"},
+        "protected_drives": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[A-Z]$"},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "drive_default": {"const": "deny"},
         "authorization_granularity": {"const": "exact_path_and_operation"},
         "forbid_before_authorization": {
           "type": "array",

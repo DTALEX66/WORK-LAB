@@ -18,7 +18,7 @@
     "session_privacy",
     "model_neutrality"
   ],
-  "policy_version": "WORK-LAB-GLOBAL-AGENT-POLICY@rev1",
+  "policy_version": "WORK-LAB-GLOBAL-AGENT-POLICY@rev2",
   "schema_version": "workflow/policy-projection-loss-report/v1",
   "unsupported": [],
   "workflow_guard": [

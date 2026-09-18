@@ -19,8 +19,8 @@ invariants live in on-demand skills, not in this global overlay.
 - No default force-push; no default history rewrite. Exact-SHA evidence binds CI to the real merge commit.
 
 ### Protected storage and project data boundary
-- E:\ (and any user-declared protected drive) is default-deny. No enumeration, dry-run probe, script/subprocess bypass, wildcard/glob, relative or reparse/junction traversal before an explicit exact-path + exact-operation authorization.
-- Keep task runtime under .project-local/ (runs/ and artifacts/), never the user profile or an external drive.
+- E:\ and F:\ (the user-declared protected data drives) are default-deny. No enumeration, dry-run probe, script/subprocess bypass, wildcard/glob, relative or reparse/junction traversal before an explicit exact-path + exact-operation authorization in the current request.
+- Keep task runtime under .project-local/ (runs/ and artifacts/), never the user profile or a protected drive.
 
 ### Credentials and private state
 - No plaintext credential, .env body, private key, cookie, token, session database, or private agent memory is read, printed, copied, committed, or uploaded. A permission denial on a private path is a correct boundary: stop, use repository evidence or a redacted user summary; never elevate.
