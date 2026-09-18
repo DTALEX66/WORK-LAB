@@ -259,6 +259,17 @@ def gate_capability_matrix() -> int:
     return run_python(["packages/client-neutral-core/scripts/verify_capability_matrix.py"])
 
 
+def gate_policy_coverage() -> int:
+    """U17.7/27: Global Agent Policy coverage + freshness.
+
+    Fail-closed check that the derived policy-coverage surfaces (loss reports,
+    the capability-matrix coverage block, the golden projections) are fresh with
+    respect to their sources (the policy SSOT + per-software extensions).
+    Hand-editing a generated artifact without moving the source policy is drift.
+    """
+    return run_python(["scripts/ci/verify_policy_coverage.py"])
+
+
 def gate_context_control_plane() -> int:
     """Context Control Plane: stable prefix, cache truth, drift guard tests."""
     return run_python(["tests/workflow-assistance/test_context_control_plane.py"])
@@ -591,6 +602,11 @@ GATES: dict[str, Gate] = {
         "WL3-100: verify capability-matrix.json stays consistent with the adapter registry.",
         gate_capability_matrix,
     ),
+    "policy-coverage": Gate(
+        "policy-coverage",
+        "U17.7/27: verify Global Agent Policy coverage + freshness (loss reports, matrix block, golden projections).",
+        gate_policy_coverage,
+    ),
     "context-control-plane": Gate(
         "context-control-plane",
         "Context Control Plane: stable prefix + cache truth + drift guard.",
@@ -678,6 +694,7 @@ VERIFY_ORDER = (
     "core-schemas",
     "adapter-registry",
     "capability-matrix",
+    "policy-coverage",
     "context-control-plane",
     "external-libraries-index",
     "github-delivery",
@@ -745,6 +762,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "core-schemas": ("packages/contracts/schemas/", "config/"),
     "adapter-registry": ("config/adapters.json", "packages/client-neutral-core/scripts/verify_adapter_registry.py"),
     "capability-matrix": ("config/capability-matrix.json", "packages/client-neutral-core/scripts/verify_capability_matrix.py"),
+    "policy-coverage": ("config/global-agent-policy.yaml", "config/loss-reports/", "config/capability-matrix.json", "config/adapter-registry.json", "services/policy/policy_projection.py", "integrations/executors/codex/codex_policy_renderer.py", "integrations/executors/hermes/hermes_policy_renderer.py", "integrations/executors/codex/codex-policy-extension.yaml", "integrations/executors/hermes/hermes-policy-extension.yaml", "integrations/executors/codex/global-guidance.md", "config/SOUL.md", "scripts/ci/verify_policy_coverage.py", "tests/workflow-assistance/test_policy_projection.py"),
     "context-control-plane": ("packages/client-neutral-core/scripts/context_control_plane.py", "packages/client-neutral-core/scripts/context_bundle.py", "packages/client-neutral-core/scripts/context_drift_guard.py"),
     "external-libraries-index": (".project/governance/external-libraries-index.json", "packages/client-neutral-core/scripts/verify_external_libraries_index.py"),
     "github-delivery": ("packages/client-neutral-core/scripts/github_common.py", "packages/client-neutral-core/scripts/github_upload_accelerator.py", "packages/client-neutral-core/scripts/github_review_accelerator.py"),

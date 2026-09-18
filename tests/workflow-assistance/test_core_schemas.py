@@ -43,6 +43,9 @@ EXPECTED = {
     "canonical-config-intent.schema.json",
     "cloud-event-envelope.schema.json",
     "context-capsule.schema.json",
+    "global-agent-policy.schema.json",
+    "policy-projection-contract.schema.json",
+    "policy-projection-loss-report.schema.json",
 }
 
 

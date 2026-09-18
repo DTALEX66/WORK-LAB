@@ -263,6 +263,10 @@
                   ]
                 }
               },
+              "capability_coverage_complete": {
+                "type": "boolean",
+                "description": "True when this adapter's capability_states classify the FULL Global Agent Policy capability set (all 19 capabilities). False (default) means only a coarse detect/plan/observe declaration was recorded and the adapter has not done a full policy projection yet. A verified adapter (codex/hermes) carries the full set plus a persisted loss report."
+              },
               "maturity": {
                 "type": "string",
                 "enum": [

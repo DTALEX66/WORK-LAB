@@ -59,19 +59,29 @@
         "capability_states": {
           "communication": "NATIVE_GUIDANCE",
           "execution": "NATIVE_GUIDANCE",
+          "authority_discovery": "NATIVE_GUIDANCE",
+          "authorization": "NATIVE_GUIDANCE",
+          "task_grant": "WORKFLOW_GUARD",
+          "workspace_boundary": "WORKFLOW_GUARD",
+          "protected_storage": "NATIVE_ENFORCED",
           "credentials": "WORKFLOW_GUARD",
-          "protected_storage": "WORKFLOW_GUARD",
-          "session_privacy": "NATIVE_GUIDANCE",
-          "network": "NATIVE_GUIDANCE",
-          "git_safety": "NATIVE_GUIDANCE",
-          "evidence_semantics": "NATIVE_GUIDANCE",
+          "session_privacy": "OBSERVE_ONLY",
+          "network": "WORKFLOW_GUARD",
+          "git_safety": "WORKFLOW_GUARD",
+          "dependency_policy": "NATIVE_GUIDANCE",
+          "evidence_semantics": "WORKFLOW_GUARD",
+          "verification": "NATIVE_GUIDANCE",
+          "parallelism": "WORKFLOW_GUARD",
+          "skills": "NATIVE_GUIDANCE",
           "model_neutrality": "OBSERVE_ONLY",
-          "parallelism": "WORKFLOW_GUARD"
+          "tool_truth": "NATIVE_GUIDANCE",
+          "historical_record_policy": "NATIVE_GUIDANCE"
         },
         "maturity": "READBACK_VERIFIED",
         "renderer": "integrations/executors/hermes/sync_hermes_workflow_assets.py",
         "extensions_path": "integrations/executors/hermes/hermes-policy-extension.yaml",
-        "note": "Three-way managed_asset_baseline + curator_foldback. E-drive & credential boundary machine-enforced via e_drive_guard + terminal guard hooks. model/provider/auth OBSERVE, never overwritten."
+        "note": "Three-way managed_asset_baseline + curator_foldback. E-drive & credential boundary machine-enforced via e_drive_guard + terminal guard hooks. model/provider/auth OBSERVE, never overwritten.",
+        "capability_coverage_complete": true
       }
     },
     {
@@ -118,19 +128,29 @@
         "capability_states": {
           "communication": "NATIVE_GUIDANCE",
           "execution": "NATIVE_GUIDANCE",
-          "credentials": "NATIVE_GUIDANCE",
-          "protected_storage": "NATIVE_GUIDANCE",
-          "session_privacy": "NATIVE_GUIDANCE",
-          "network": "NATIVE_GUIDANCE",
-          "git_safety": "NATIVE_GUIDANCE",
-          "evidence_semantics": "NATIVE_GUIDANCE",
+          "authority_discovery": "NATIVE_GUIDANCE",
+          "authorization": "NATIVE_GUIDANCE",
+          "task_grant": "WORKFLOW_GUARD",
+          "workspace_boundary": "NATIVE_ENFORCED",
+          "protected_storage": "WORKFLOW_GUARD",
+          "credentials": "WORKFLOW_GUARD",
+          "session_privacy": "OBSERVE_ONLY",
+          "network": "WORKFLOW_GUARD",
+          "git_safety": "WORKFLOW_GUARD",
+          "dependency_policy": "NATIVE_GUIDANCE",
+          "evidence_semantics": "WORKFLOW_GUARD",
+          "verification": "NATIVE_GUIDANCE",
+          "parallelism": "WORKFLOW_GUARD",
+          "skills": "NATIVE_GUIDANCE",
           "model_neutrality": "OBSERVE_ONLY",
-          "parallelism": "NATIVE_GUIDANCE"
+          "tool_truth": "NATIVE_GUIDANCE",
+          "historical_record_policy": "NATIVE_GUIDANCE"
         },
         "maturity": "READBACK_VERIFIED",
         "renderer": "integrations/executors/codex/sync_codex_global_assets.py",
         "extensions_path": "integrations/executors/codex/codex-policy-extension.yaml",
-        "note": "Managed BEGIN/END block + hash fencing in CODEX_HOME/AGENTS.md + config.toml + rules + skills. Second-plan NOOP idempotency. provider/model/reasoning OBSERVE."
+        "note": "Managed BEGIN/END block + hash fencing in CODEX_HOME/AGENTS.md + config.toml + rules + skills. Second-plan NOOP idempotency. provider/model/reasoning OBSERVE.",
+        "capability_coverage_complete": true
       }
     },
     {
@@ -172,19 +192,29 @@
         "rollback_supported": false,
         "drift_supported": false,
         "capability_states": {
-          "communication": "OBSERVE_ONLY",
-          "execution": "OBSERVE_ONLY",
-          "credentials": "OBSERVE_ONLY",
-          "protected_storage": "OBSERVE_ONLY",
-          "session_privacy": "OBSERVE_ONLY",
-          "network": "OBSERVE_ONLY",
-          "git_safety": "OBSERVE_ONLY",
-          "evidence_semantics": "OBSERVE_ONLY",
-          "model_neutrality": "OBSERVE_ONLY",
-          "parallelism": "OBSERVE_ONLY"
+          "communication": "UNSUPPORTED",
+          "execution": "UNSUPPORTED",
+          "authority_discovery": "UNSUPPORTED",
+          "authorization": "UNSUPPORTED",
+          "task_grant": "UNSUPPORTED",
+          "workspace_boundary": "UNSUPPORTED",
+          "protected_storage": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
+          "session_privacy": "UNSUPPORTED",
+          "network": "UNSUPPORTED",
+          "git_safety": "UNSUPPORTED",
+          "dependency_policy": "UNSUPPORTED",
+          "evidence_semantics": "UNSUPPORTED",
+          "verification": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED",
+          "skills": "UNSUPPORTED",
+          "model_neutrality": "UNSUPPORTED",
+          "tool_truth": "UNSUPPORTED",
+          "historical_record_policy": "UNSUPPORTED"
         },
         "maturity": "OBSERVE_ONLY",
-        "note": "LEGACY_OBSERVE. detect + compare desired policy + report drift. Never writes global policy back."
+        "note": "LEGACY_OBSERVE. detect + compare desired policy + report drift. Never writes global policy back.",
+        "capability_coverage_complete": true
       }
     },
     {
@@ -231,17 +261,27 @@
         "capability_states": {
           "communication": "UNSUPPORTED",
           "execution": "UNSUPPORTED",
-          "credentials": "UNSUPPORTED",
+          "authority_discovery": "UNSUPPORTED",
+          "authorization": "UNSUPPORTED",
+          "task_grant": "UNSUPPORTED",
+          "workspace_boundary": "UNSUPPORTED",
           "protected_storage": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
           "session_privacy": "UNSUPPORTED",
           "network": "UNSUPPORTED",
           "git_safety": "UNSUPPORTED",
+          "dependency_policy": "UNSUPPORTED",
           "evidence_semantics": "UNSUPPORTED",
+          "verification": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED",
+          "skills": "UNSUPPORTED",
           "model_neutrality": "UNSUPPORTED",
-          "parallelism": "UNSUPPORTED"
+          "tool_truth": "UNSUPPORTED",
+          "historical_record_policy": "UNSUPPORTED"
         },
         "maturity": "PLAN_SUPPORTED",
-        "note": "Not an agent persona. Projects only git/delivery semantics: branch/PR/required-check/release/permission/evidence. Other capabilities UNSUPPORTED here."
+        "note": "Not an agent persona. Projects only git/delivery semantics: branch/PR/required-check/release/permission/evidence. Other capabilities UNSUPPORTED here.",
+        "capability_coverage_complete": true
       }
     },
     {
@@ -284,16 +324,26 @@
         "capability_states": {
           "communication": "UNSUPPORTED",
           "execution": "UNSUPPORTED",
-          "credentials": "UNSUPPORTED",
+          "authority_discovery": "UNSUPPORTED",
+          "authorization": "UNSUPPORTED",
+          "task_grant": "UNSUPPORTED",
+          "workspace_boundary": "UNSUPPORTED",
           "protected_storage": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
           "session_privacy": "UNSUPPORTED",
           "network": "UNSUPPORTED",
           "git_safety": "UNSUPPORTED",
+          "dependency_policy": "UNSUPPORTED",
           "evidence_semantics": "UNSUPPORTED",
+          "verification": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED",
+          "skills": "UNSUPPORTED",
           "model_neutrality": "UNSUPPORTED",
-          "parallelism": "UNSUPPORTED"
+          "tool_truth": "UNSUPPORTED",
+          "historical_record_policy": "UNSUPPORTED"
         },
-        "maturity": "OBSERVE_ONLY"
+        "maturity": "OBSERVE_ONLY",
+        "capability_coverage_complete": true
       }
     },
     {
@@ -336,17 +386,27 @@
         "capability_states": {
           "communication": "UNSUPPORTED",
           "execution": "UNSUPPORTED",
-          "credentials": "UNSUPPORTED",
+          "authority_discovery": "UNSUPPORTED",
+          "authorization": "UNSUPPORTED",
+          "task_grant": "UNSUPPORTED",
+          "workspace_boundary": "UNSUPPORTED",
           "protected_storage": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
           "session_privacy": "UNSUPPORTED",
           "network": "UNSUPPORTED",
           "git_safety": "UNSUPPORTED",
+          "dependency_policy": "UNSUPPORTED",
           "evidence_semantics": "UNSUPPORTED",
+          "verification": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED",
+          "skills": "UNSUPPORTED",
           "model_neutrality": "UNSUPPORTED",
-          "parallelism": "UNSUPPORTED"
+          "tool_truth": "UNSUPPORTED",
+          "historical_record_policy": "UNSUPPORTED"
         },
         "maturity": "OBSERVE_ONLY",
-        "note": "Client USER_GLOBAL desired state (rules/skills/plugins/workflow-policy) MANAGE with apply_supported=false. DESIGN-LAB design domain OUT OF SCOPE. No stable official apply interface."
+        "note": "Client USER_GLOBAL desired state (rules/skills/plugins/workflow-policy) MANAGE with apply_supported=false. DESIGN-LAB design domain OUT OF SCOPE. No stable official apply interface.",
+        "capability_coverage_complete": true
       }
     },
     {
@@ -393,20 +453,30 @@
         "rollback_supported": false,
         "drift_supported": false,
         "capability_states": {
-          "communication": "OBSERVE_ONLY",
-          "execution": "OBSERVE_ONLY",
-          "credentials": "OBSERVE_ONLY",
-          "protected_storage": "OBSERVE_ONLY",
-          "session_privacy": "OBSERVE_ONLY",
-          "network": "OBSERVE_ONLY",
-          "git_safety": "OBSERVE_ONLY",
-          "evidence_semantics": "OBSERVE_ONLY",
-          "model_neutrality": "OBSERVE_ONLY",
-          "parallelism": "OBSERVE_ONLY"
+          "communication": "UNSUPPORTED",
+          "execution": "UNSUPPORTED",
+          "authority_discovery": "UNSUPPORTED",
+          "authorization": "UNSUPPORTED",
+          "task_grant": "UNSUPPORTED",
+          "workspace_boundary": "UNSUPPORTED",
+          "protected_storage": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
+          "session_privacy": "UNSUPPORTED",
+          "network": "UNSUPPORTED",
+          "git_safety": "UNSUPPORTED",
+          "dependency_policy": "UNSUPPORTED",
+          "evidence_semantics": "UNSUPPORTED",
+          "verification": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED",
+          "skills": "UNSUPPORTED",
+          "model_neutrality": "UNSUPPORTED",
+          "tool_truth": "UNSUPPORTED",
+          "historical_record_policy": "UNSUPPORTED"
         },
         "maturity": "PLAN_SUPPORTED",
         "renderer": "integrations/executors/dsh/dsh_adapter.py",
-        "note": "OBSERVE/PLAN only until stable official native interface + ownership def + isolated fixture + readback + rollback + negative tests all exist. native model/provider/reasoning user-owned."
+        "note": "OBSERVE/PLAN only until stable official native interface + ownership def + isolated fixture + readback + rollback + negative tests all exist. native model/provider/reasoning user-owned.",
+        "capability_coverage_complete": true
       }
     },
     {
@@ -449,16 +519,26 @@
         "capability_states": {
           "communication": "UNSUPPORTED",
           "execution": "UNSUPPORTED",
-          "credentials": "UNSUPPORTED",
+          "authority_discovery": "UNSUPPORTED",
+          "authorization": "UNSUPPORTED",
+          "task_grant": "UNSUPPORTED",
+          "workspace_boundary": "UNSUPPORTED",
           "protected_storage": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
           "session_privacy": "UNSUPPORTED",
           "network": "UNSUPPORTED",
           "git_safety": "UNSUPPORTED",
+          "dependency_policy": "UNSUPPORTED",
           "evidence_semantics": "UNSUPPORTED",
+          "verification": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED",
+          "skills": "UNSUPPORTED",
           "model_neutrality": "UNSUPPORTED",
-          "parallelism": "UNSUPPORTED"
+          "tool_truth": "UNSUPPORTED",
+          "historical_record_policy": "UNSUPPORTED"
         },
-        "maturity": "OBSERVE_ONLY"
+        "maturity": "OBSERVE_ONLY",
+        "capability_coverage_complete": true
       }
     },
     {
@@ -501,16 +581,26 @@
         "capability_states": {
           "communication": "UNSUPPORTED",
           "execution": "UNSUPPORTED",
-          "credentials": "UNSUPPORTED",
+          "authority_discovery": "UNSUPPORTED",
+          "authorization": "UNSUPPORTED",
+          "task_grant": "UNSUPPORTED",
+          "workspace_boundary": "UNSUPPORTED",
           "protected_storage": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
           "session_privacy": "UNSUPPORTED",
           "network": "UNSUPPORTED",
           "git_safety": "UNSUPPORTED",
+          "dependency_policy": "UNSUPPORTED",
           "evidence_semantics": "UNSUPPORTED",
+          "verification": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED",
+          "skills": "UNSUPPORTED",
           "model_neutrality": "UNSUPPORTED",
-          "parallelism": "UNSUPPORTED"
+          "tool_truth": "UNSUPPORTED",
+          "historical_record_policy": "UNSUPPORTED"
         },
-        "maturity": "OBSERVE_ONLY"
+        "maturity": "OBSERVE_ONLY",
+        "capability_coverage_complete": true
       }
     },
     {
@@ -553,16 +643,26 @@
         "capability_states": {
           "communication": "UNSUPPORTED",
           "execution": "UNSUPPORTED",
-          "credentials": "UNSUPPORTED",
+          "authority_discovery": "UNSUPPORTED",
+          "authorization": "UNSUPPORTED",
+          "task_grant": "UNSUPPORTED",
+          "workspace_boundary": "UNSUPPORTED",
           "protected_storage": "UNSUPPORTED",
+          "credentials": "UNSUPPORTED",
           "session_privacy": "UNSUPPORTED",
           "network": "UNSUPPORTED",
           "git_safety": "UNSUPPORTED",
+          "dependency_policy": "UNSUPPORTED",
           "evidence_semantics": "UNSUPPORTED",
+          "verification": "UNSUPPORTED",
+          "parallelism": "UNSUPPORTED",
+          "skills": "UNSUPPORTED",
           "model_neutrality": "UNSUPPORTED",
-          "parallelism": "UNSUPPORTED"
+          "tool_truth": "UNSUPPORTED",
+          "historical_record_policy": "UNSUPPORTED"
         },
-        "maturity": "OBSERVE_ONLY"
+        "maturity": "OBSERVE_ONLY",
+        "capability_coverage_complete": true
       }
     }
   ]
