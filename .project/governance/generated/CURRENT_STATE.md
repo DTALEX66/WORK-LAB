@@ -1,8 +1,8 @@
 # WORK-LAB current state
 
-Generated at: `2026-09-19T16:18:56.517450Z`  \
+Generated at: `2026-09-19T16:53:22.874740Z`  \
 Source digest: `7e2963635a15f88336d5fb75dd387355d83e88b4c065338608782be65930942c`  \
-Content digest: `8e92675318a3c6cf943a65a1627c0d7d994c3cdeba0d4f9bab47ee231d3db50a`
+Content digest: `c4566e0726300ddbe3c3816a16ea70c31c5e2c9b77b48f6cf61ce0d91f798553`
 
 ## Git and CI attestation
 
@@ -29,7 +29,7 @@ Content digest: `8e92675318a3c6cf943a65a1627c0d7d994c3cdeba0d4f9bab47ee231d3db50
 - Aggregate job: `aggregate`
 - Manifest-declared required workflows: `work-lab-gate`
 
-## Stage 3 task graph
+## Compatibility history (Stage 3, historical only — NOT current identity)
 
 - TaskPack: `WORK-LAB-FINAL-MASTER-CONTROL-PLANE`
 - Tasks: `28`

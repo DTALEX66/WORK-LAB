@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-09-19T16:18:56.517450Z",
+  "generated_at": "2026-09-19T16:53:22.874740Z",
   "source_digest": "7e2963635a15f88336d5fb75dd387355d83e88b4c065338608782be65930942c",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
@@ -205,12 +205,13 @@
       "work-lab-gate"
     ]
   },
-  "stage3": {
-    "taskpack_id": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE",
-    "task_count": 28,
-    "initial_state": "RECONCILED_20260810",
+  "compatibility_history": {
+    "stage3_taskpack_id": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE",
+    "stage3_task_count": 28,
+    "stage3_initial_state": "RECONCILED_20260810",
     "historical_baseline_source": ".project/governance/generated/STAGE3_BASELINE.json",
-    "historical_baseline_status": "HISTORICAL_ONLY"
+    "historical_baseline_status": "HISTORICAL_ONLY",
+    "role": "historical_only_not_current_identity"
   },
   "unverified_capabilities": [
     "hermes_live_apply",
@@ -219,5 +220,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "8e92675318a3c6cf943a65a1627c0d7d994c3cdeba0d4f9bab47ee231d3db50a"
+  "content_digest": "c4566e0726300ddbe3c3816a16ea70c31c5e2c9b77b48f6cf61ce0d91f798553"
 }
