@@ -176,24 +176,76 @@ def tracked_python_files() -> list[str]:
     return [path.relative_to(ROOT).as_posix() for root in roots for path in sorted(root.glob("*.py"))]
 
 
+MANDATORY_TEST_GLOBS = ("test_*.py", "nf*.py")
+
+
 def governance_test_files() -> list[str]:
-    return [
-        path.relative_to(ROOT).as_posix()
-        for path in sorted((ROOT / "tests" / "workflow-assistance").glob("test_*.py"))
-        if path.name not in RETIRED_ORDINARY_TESTS
-    ]
+    """P0-05: unified mandatory discovery — ordinary + negative-control tests.
+
+    Both the ordinary behavior tests (`test_*.py`) and the negative-control
+    tests (`nf*.py`) are mandatory and discovered dynamically from disk. There
+    is no hard-coded list and no hard-coded count, so adding a new negative
+    control can never silently drop out of the gate (the "compile PASS !=
+    behavior PASS" gap this closes).
+    """
+    selected: set[str] = set()
+    for glob in MANDATORY_TEST_GLOBS:
+        for path in (ROOT / "tests" / "workflow-assistance").glob(glob):
+            if path.name in RETIRED_ORDINARY_TESTS:
+                continue
+            selected.add(path.relative_to(ROOT).as_posix())
+    return sorted(selected)
 
 
-def gate_governance() -> int:
-    modules = [Path(path).stem for path in governance_test_files()]
+def mandatory_discovery_modules() -> list[str]:
+    """Importable module stems for the mandatory discovery set (P0-05)."""
+    return sorted(Path(path).stem for path in governance_test_files())
+
+
+def _run_governance_batch(members: list[str]) -> tuple[int, str]:
+    """Run the mandatory test modules as ONE unittest batch.
+
+    Returns (process exit code, combined stdout+stderr). A single batch —
+    rather than N separate `unittest module` invocations — is what makes
+    "not-run" and "nothing executed" detectable: a hollow or load-failing
+    batch cannot masquerade as a clean exit.
+    """
     pythonpath = MODULE_PYTHONPATH
     existing = os.environ.get("PYTHONPATH")
     if existing:
         pythonpath += os.pathsep + existing
-    return run_python(
-        ["-m", "unittest", "-v", *modules],
-        env_updates={"PYTHONPATH": pythonpath},
+    env = os.environ.copy()
+    env["PYTHONPATH"] = pythonpath
+    result = subprocess.run(
+        [sys.executable, "-m", "unittest", "-v", *members],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
     )
+    return result.returncode, result.stdout + result.stderr
+
+
+def gate_governance() -> int:
+    """P0-05: run the mandatory tests, fail-closed on any hollow outcome.
+
+    missing  != PASS  (empty mandatory set is a red flag, not a clean pass)
+    not-run  != PASS  (clean exit but zero tests executed)
+    cancelled/failed != PASS  (non-zero batch exit)
+    """
+    members = mandatory_discovery_modules()
+    if not members:
+        print("QUALITY_GATE_GOVERNANCE_FAIL empty-mandatory-set")
+        return 1
+    exit_code, output = _run_governance_batch(members)
+    if not re.search(r"^Ran \d+ tests?", output, flags=re.MULTILINE):
+        print("QUALITY_GATE_GOVERNANCE_FAIL not-run (no tests executed)")
+        return 1
+    if exit_code != 0:
+        print(f"QUALITY_GATE_GOVERNANCE_FAIL exit={exit_code}")
+        return exit_code
+    print(f"QUALITY_GATE_GOVERNANCE_PASS modules={len(members)}")
+    return 0
 
 
 def gate_compile() -> int:
@@ -577,7 +629,7 @@ def gate_exact_sha_ci() -> int:
 
 
 GATES: dict[str, Gate] = {
-    "governance": Gate("governance", "Run all portable workflow and project-boundary tests.", gate_governance),
+    "governance": Gate("governance", "Run all mandatory workflow + negative-control (nf*) tests in one fail-closed batch.", gate_governance),
     "compile": Gate("compile", "Compile repository Python workflow/security/test files.", gate_compile),
     "skill-provenance": Gate("skill-provenance", "Validate source skill metadata, references, and provenance hashes.", gate_skill_provenance),
     "security": Gate("security", "Scan templates, skills, docs, scripts and README for prompt/security hazards.", gate_security),
