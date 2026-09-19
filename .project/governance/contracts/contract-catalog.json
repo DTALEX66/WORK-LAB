@@ -302,6 +302,26 @@
       "consumers": [
         "archive-audit"
       ]
+    },
+    {
+      "id": "software-installation-identity",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/software-installation-identity.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
+    },
+    {
+      "id": "software-update-preflight",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/software-update-preflight.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
     }
   ],
   "breakingChange": "version-plus-migration-fixture",

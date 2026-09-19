@@ -44,6 +44,8 @@ EXPECTED = {
     "global-agent-policy": "workflow",
     "policy-projection-contract": "workflow",
     "policy-projection-loss-report": "workflow",
+    "software-installation-identity": "workflow",
+    "software-update-preflight": "workflow",
 }
 CANONICAL_SCHEMA_PREFIXES = {
     "module-profile": (".project/governance/",),
@@ -81,6 +83,8 @@ CANONICAL_SCHEMA_PREFIXES = {
     "global-agent-policy": ("packages/contracts/",),
     "policy-projection-contract": ("packages/contracts/",),
     "policy-projection-loss-report": ("packages/contracts/",),
+    "software-installation-identity": ("packages/contracts/",),
+    "software-update-preflight": ("packages/contracts/",),
 }
 
 

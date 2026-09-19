@@ -46,6 +46,8 @@ EXPECTED = {
     "global-agent-policy.schema.json",
     "policy-projection-contract.schema.json",
     "policy-projection-loss-report.schema.json",
+    "software-installation-identity.schema.json",
+    "software-update-preflight.schema.json",
 }
 
 
