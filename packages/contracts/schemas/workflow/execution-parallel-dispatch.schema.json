@@ -115,6 +115,46 @@
         }
       }
     },
+    "events_stream": {
+      "description": "Real-time event stream produced by ParallelDispatcher.fanout_stream() (P3/sub_F): same per-event shape and ordering as 'events' (STARTED per started route, then terminal DONE/FAILED/TIMEOUT per route), but consumed incrementally as routes start and settle — intended for SSE/live monitoring. For any given fanout run, the drained stream equals the final 'events' list.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "executor",
+          "phase",
+          "ts",
+          "ok",
+          "status"
+        ],
+        "properties": {
+          "executor": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phase": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ts": {
+            "type": "number",
+            "minimum": 0
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "streamed": {
+      "description": "Receipt flag (P3/sub_F): true when this receipt's events were captured through the real-time fanout_stream() generator; false/absent for the batch fanout() path where 'events' are collected during the run but delivered only with the final aggregate.",
+      "type": "boolean"
+    },
     "notes": {
       "type": "array",
       "items": {

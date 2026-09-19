@@ -32,11 +32,12 @@ from __future__ import annotations
 import concurrent.futures
 import importlib.util as _ilu
 import json
+import queue
 import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Iterator, Mapping
 
 _HERE = Path(__file__).resolve().parent
 _ACP_NAME = "services_execution_federation_acp_adapter"
@@ -46,7 +47,12 @@ _ACP_NAME = "services_execution_federation_acp_adapter"
 #: NOT_LAUNCHABLE / NOT_SUPPORTED / NOT_IMPLEMENTED are *not* hard.
 HARD_FAILURE_STATUSES = frozenset({"FAILED", "TIMEOUT", "UNKNOWN_EXECUTOR"})
 
-__all__ = ["ParallelDispatcher", "parallel_dispatch_of", "HARD_FAILURE_STATUSES"]
+__all__ = [
+    "ParallelDispatcher",
+    "parallel_dispatch_of",
+    "parallel_dispatch_stream",
+    "HARD_FAILURE_STATUSES",
+]
 
 
 def _acp():
@@ -80,12 +86,27 @@ class _RunState:
     progress instead of only the final aggregate.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, event_stream: "queue.Queue | None" = None) -> None:
         self.lock = threading.Lock()
         self.events: list[dict[str, Any]] = []
         self.results: dict[str, Any] = {}
         self.settled: set[str] = set()
         self.abort = threading.Event()
+        # P3/sub_F: when a real-time stream is attached (fanout_stream),
+        # every event appended below is also mirrored into this queue so
+        # the generator can yield it the instant it happens — batch
+        # (None) and stream runs share this exact same _RunState.
+        self.event_stream = event_stream
+
+    def append_event(self, event: dict[str, Any]) -> None:
+        """Append ``event`` to the ordered list, and — when a stream is
+        attached — mirror a copy into the queue immediately (P3/sub_F).
+
+        ``fanout()`` callers pass no queue, so batch behaviour is
+        byte-identical to the previous append-only semantics."""
+        self.events.append(event)
+        if self.event_stream is not None:
+            self.event_stream.put(dict(event))
 
 
 class ParallelDispatcher:
@@ -128,7 +149,7 @@ class ParallelDispatcher:
             return
 
         with state.lock:
-            state.events.append({
+            state.append_event({
                 "executor": name, "phase": "STARTED", "ts": time.time(),
                 "ok": None, "status": None,
             })
@@ -172,7 +193,7 @@ class ParallelDispatcher:
                 return
             state.results[name] = res
             state.settled.add(name)
-            state.events.append({
+            state.append_event({
                 "executor": name, "phase": phase, "ts": time.time(),
                 "ok": res.ok, "status": res.status,
             })
@@ -290,6 +311,25 @@ class ParallelDispatcher:
             self._dedup[key] = result
             return result
 
+        results, events = self._run_routes(
+            state, names, op, payload, adapter_kind, timeout, fail_fast)
+        result = self._aggregate(op, names, results, events, [])
+        self._dedup[key] = result
+        return result
+
+    # ------------------------------------------------------------------
+    # shared route execution / collection (used by fanout() and by the
+    # P3/sub_F streaming generator fanout_stream() — one _RunState, one
+    # collector, so batch and stream stay consistent by construction)
+    # ------------------------------------------------------------------
+    def _run_routes(self, state: "_RunState", names: list[str], op: Any,
+                    payload: Any, adapter_kind: str,
+                    timeout: float | None, fail_fast: bool) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+        """Submit every route, collect terminals, record per-route TIMEOUT
+        events for routes still pending at the deadline.  Shared by the
+        batch API and the streaming generator so both observe the same
+        ``_RunState`` events."""
+        acp = _acp()
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self._max_workers, thread_name_prefix="pd-route-"
         ) as pool:
@@ -331,17 +371,14 @@ class ParallelDispatcher:
                             notes=[f"{name} did not settle within {timeout}s"],
                         )
                         state.settled.add(name)
-                        state.events.append({
+                        state.append_event({
                             "executor": name, "phase": "TIMEOUT", "ts": time.time(),
                             "ok": False, "status": "TIMEOUT",
                         })
             with state.lock:
                 results = {n: state.results.get(n) for n in names}
                 events = [dict(e) for e in state.events]
-
-        result = self._aggregate(op, names, results, events, [])
-        self._dedup[key] = result
-        return result
+        return results, events
 
     def dispatch_events(self, op: Any, executors: list[str],
                         payload: Mapping[str, Any], *, adapter_kind: str = "new",
@@ -359,6 +396,105 @@ class ParallelDispatcher:
             per_executor_timeout=per_executor_timeout, fail_fast=fail_fast,
         )
         return list(result.payload.get("events", []))
+
+    def fanout_stream(self, op: Any, executors: list[str],
+                      payload: Mapping[str, Any], *,
+                      per_executor_timeout: float | None = None,
+                      fail_fast: bool = False, adapter_kind: str = "new") -> Iterator[dict[str, Any]]:
+        """Yield fanout events in real time as routes start and settle.
+
+        P3/sub_F streaming surface: yields one event dict
+        ``{executor, phase, ts, ok, status}`` per phase transition —
+        STARTED as each route begins, then that route's terminal
+        DONE / FAILED / TIMEOUT — in real time, so callers (SSE /
+        live monitors) can consume progress without waiting for the
+        final aggregate.  Built on the *same* ``_RunState`` / lock
+        machinery as :meth:`fanout`: the collector pushes each event
+        into a queue as it happens, and this generator drains that
+        queue until every route has settled.
+
+        Semantics mirror :meth:`fanout` exactly — per-route isolation,
+        per-route TIMEOUT on deadline miss, ``fail_fast`` (routes that
+        never start emit no STARTED and no terminal of their own),
+        degraded adapter statuses, unknown executors — the only
+        difference is *when* the events become visible.  This method
+        adds no new API of its own to :meth:`fanout` /
+        :meth:`dispatch_events` / ``parallel_dispatch_of``.
+
+        Yielded event list == the ``payload['events']`` of a batch
+        ``fanout()`` over the same inputs (consistency by construction,
+        verified by tests/workflow-assistance/
+        test_parallel_dispatch_stream.py).
+
+        Zero executors yields no events at all (same as the batch
+        DEGRADED aggregate carrying an empty ``events`` list).
+
+        Real-time: the shared collector (:meth:`_run_routes`) runs on
+        a worker thread; every event is pushed into the queue the
+        instant it happens, and this generator drains the queue in
+        parallel — a consumer sees STARTED while routes are still
+        running, not after the batch has finished.  When the collector
+        settles every route it signals the end-of-stream sentinel and
+        the generator terminates.
+        """
+        op = _coerce_op(op)
+        names = list(dict.fromkeys(list(executors or [])))
+        timeout = (per_executor_timeout if per_executor_timeout is not None
+                   else self._default_timeout)
+
+        if not names:
+            return  # batch aggregate would be DEGRADED with events == []
+
+        state = _RunState(event_stream=queue.Queue())
+        stream = state.event_stream
+        done_sentinel = object()
+
+        def _collector() -> None:
+            try:
+                self._run_routes(state, names, op, payload, adapter_kind,
+                                 timeout, fail_fast)
+            finally:
+                stream.put(done_sentinel)
+
+        worker = threading.Thread(
+            target=_collector, name="pd-stream-collector", daemon=True)
+        worker.start()
+        while True:
+            item = stream.get()
+            if item is done_sentinel:
+                break
+            yield item
+        worker.join()
+
+
+# ----------------------------------------------------------------------
+# P3/sub_F module-level streaming convenience (see fanout_stream)
+# ----------------------------------------------------------------------
+
+def parallel_dispatch_stream(federation: Any, op: Any,
+                            executors: list[str], payload: Mapping[str, Any],
+                            *, max_workers: int = 4,
+                            per_executor_timeout: float | None = None,
+                            fail_fast: bool = False,
+                            adapter_kind: str = "new") -> Iterator[dict[str, Any]]:
+    """Module-level convenience that yields the same real-time event
+    stream as :meth:`ParallelDispatcher.fanout_stream` for a
+    freshly-built dispatcher over ``federation``.
+
+    The yielded event dicts are identical in shape, order and content
+    to the batch ``payload['events']`` of :meth:`ParallelDispatcher.fanout`
+    for the same inputs — only *visibility timing* differs (real time
+    vs. after the batch settles).
+    """
+    dispatcher = ParallelDispatcher(
+        federation, max_workers=max_workers,
+        default_timeout=per_executor_timeout,
+    )
+    return dispatcher.fanout_stream(
+        op, executors, payload,
+        per_executor_timeout=per_executor_timeout,
+        fail_fast=fail_fast, adapter_kind=adapter_kind,
+    )
 
 
 def parallel_dispatch_of(federation: Any, specs: list, *, max_workers: int = 4,
