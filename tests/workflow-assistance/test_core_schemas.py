@@ -48,6 +48,7 @@ EXPECTED = {
     "policy-projection-loss-report.schema.json",
     "software-installation-identity.schema.json",
     "software-update-preflight.schema.json",
+    "execution-parallel-dispatch.schema.json",
 }
 
 

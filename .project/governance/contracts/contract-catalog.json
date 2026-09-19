@@ -322,6 +322,16 @@
         "observer",
         "ci"
       ]
+    },
+    {
+      "id": "execution-parallel-dispatch",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/execution-parallel-dispatch.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
     }
   ],
   "breakingChange": "version-plus-migration-fixture",
