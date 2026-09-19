@@ -58,10 +58,12 @@ UPDATE_MODES = (
 
 def _norm(path: str | None) -> str:
     """Normalise a Windows path for identity comparison (case-insensitive,
-    no trailing slash). Non-strings normalise to ''."""
+    separator-collapsed, no trailing slash). Non-strings normalise to ''."""
     if not path:
         return ""
-    return str(path).strip().rstrip("/\\").casefold()
+    # Collapse Windows separators so "D:\All\projects" and "D:/All/projects"
+    # are identity-equal (str(Path(...)) emits backslashes on Windows).
+    return str(path).strip().replace("\\", "/").rstrip("/").casefold()
 
 
 def _dedupe(paths: list[str]) -> list[str]:
@@ -206,8 +208,13 @@ def plan_update(
             return {"update_mode": "RELOCATION", "location_status": location_status,
                     "relocation": True, "blocked": False,
                     "reasons": ["RELOCATION_APPROVED"]}
+        if relocation_requested:
+            # §35 Test 6: relocation requested but NOT explicitly approved -> FAIL.
+            return {"update_mode": "BLOCKED", "location_status": location_status,
+                    "relocation": True, "blocked": True,
+                    "reasons": ["RELOCATION_NOT_APPROVED"]}
         return {"update_mode": "BLOCKED", "location_status": location_status,
-                "relocation": not relocation_approved, "blocked": True,
+                "relocation": False, "blocked": True,
                 "reasons": ["INSTALL_ROOT_CHANGE_REQUIRES_EXPLICIT_RELOCATION"]}
 
     if location_status == "SINGLE_VERIFIED" or (location_status == "SINGLE_UNVERIFIED" and verified):
@@ -267,3 +274,65 @@ def preflight_identity_record(*, software_id: str, **classify_kwargs: Any) -> di
         "observed_existing_location": c.get("canonical_candidate"),
         "location_basis": c.get("basis"),
     }
+
+
+def build_update_preflight(
+    *,
+    software_id: str,
+    location_status: str,
+    install_root: str | None = None,
+    proposed_install_root: str | None = None,
+    verified: bool = False,
+    os_managed: bool = False,
+    relocation_requested: bool = False,
+    relocation_approved: bool = False,
+    user_declared: str | None = None,
+    before: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """§34 Preflight step — build a software-update-preflight contract record.
+
+    Pure. Binds the intended write to an installation identity and returns the
+    fail-closed preflight verdict (``update_mode`` + ``reasons`` +
+    ``location_readback_required``). ``location_readback_passed`` stays None
+    here; the adapter fills it after the write via :func:`location_readback`
+    and sets ``overall`` via :func:`overall_result`. Conforms to
+    ``workflow/software-update-preflight/v1``.
+    """
+    plan = plan_update(
+        location_status=location_status,
+        install_root=install_root,
+        proposed_install_root=proposed_install_root,
+        verified=verified,
+        os_managed=os_managed,
+        relocation_requested=relocation_requested,
+        relocation_approved=relocation_approved,
+        user_declared=user_declared,
+    )
+    update_mode = plan["update_mode"]
+    # A plain UPDATE or approved RELOCATION requires an after-write location
+    # readback (§18). FRESH_INSTALL / BLOCKED get no readback (nothing to
+    # compare against). The preflight schema's `after` is a non-nullable object,
+    # so omit the key entirely when a readback is not required.
+    readback_required = update_mode in ("IN_PLACE_ONLY", "RELOCATION")
+    record: dict[str, Any] = {
+        "schema_version": "workflow/software-update-preflight/v1",
+        "software_id": software_id,
+        "update_mode": update_mode,
+        "location_status": location_status,
+        "approved_operation": (
+            "RELOCATION" if (relocation_requested and relocation_approved)
+            else ("UPDATE" if not plan["relocation"] else None)
+        ),
+        "relocation_approved": bool(relocation_approved),
+        "before": before or {
+            "install_root": install_root,
+            "executable_realpath": None,
+        },
+        "location_readback_required": readback_required,
+        "location_readback_passed": None,
+        "overall": "PENDING" if not plan["blocked"] else "FAIL",
+        "reasons": plan["reasons"],
+    }
+    if readback_required:
+        record["after"] = {"install_root": None, "executable_realpath": None}
+    return record

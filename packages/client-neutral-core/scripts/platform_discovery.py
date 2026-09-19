@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 import platform_identity as identity
+import software_installation_identity as sii
 
 
 @dataclass
@@ -297,6 +298,169 @@ def discover_cc_switch() -> list[DiscoveredEntry]:
         )
     )
     return entries
+
+
+# ---------------------------------------------------------------------------
+# P0-07 / TaskPack §22, §29: read-only software installation discovery.
+# ---------------------------------------------------------------------------
+# The software WORK-LAB manages. Real discovery probes ONLY the declared
+# install roots / executable of each entry — public install metadata. It never
+# reads user config / data / credentials and never writes. A fresh install is
+# located by the §11 resolution order (user-declared -> worklab-recommended ->
+# vendor default). ``expected_existing`` records where a *valid* install was
+# last confirmed so "expected D, observed C" resolves to LOCATION_DRIFT.
+SOFTWARE_CANDIDATE_INVENTORY: list[dict[str, Any]] = [
+    {
+        "software_id": "deepseek-harness",
+        "package_identity": "deepseek-harness",
+        "install_roots": ["D:/All projects/DSH"],
+        "executables": ["DSH Desktop.exe"],
+        "expected_existing": "D:/All projects/DSH",
+        "config_root_env": None,
+        "os_managed": False,
+        "install_type": "community_desktop_release",
+    },
+    {
+        "software_id": "hermes-agent",
+        "package_identity": "hermes-agent",
+        "install_roots": [],
+        "executables": ["Hermes.exe"],
+        "expected_existing": None,
+        "config_root_env": "HERMES_HOME",
+        "os_managed": False,
+        "install_type": "community_desktop_release",
+    },
+    {
+        "software_id": "openai-codex",
+        "package_identity": "openai-codex",
+        "install_roots": [],
+        "executables": ["codex"],
+        "expected_existing": None,
+        "config_root_env": "CODEX_HOME",
+        "os_managed": False,
+        "install_type": "native_package_manager",
+    },
+    {
+        "software_id": "cc-switch",
+        "package_identity": "cc-switch",
+        "install_roots": [],
+        "executables": ["cc-switch"],
+        "expected_existing": None,
+        "config_root_env": "CC_SWITCH_HOME",
+        "os_managed": False,
+        "install_type": "portable",
+    },
+    {
+        "software_id": "open-human",
+        "package_identity": "open-human",
+        "install_roots": [],
+        "executables": ["openhuman"],
+        "expected_existing": None,
+        "config_root_env": None,
+        "os_managed": False,
+        "install_type": "unknown",
+    },
+    {
+        "software_id": "open-design",
+        "package_identity": "open-design",
+        "install_roots": [],
+        "executables": ["open-design"],
+        "expected_existing": None,
+        "config_root_env": None,
+        "os_managed": False,
+        "install_type": "unknown",
+    },
+]
+
+
+def _probe_install(candidate: dict[str, Any]) -> dict[str, Any]:
+    """Read-only probe of one software's declared install roots. No writes,
+    no user config / data / credentials reads."""
+    install_root: str | None = None
+    executable: str | None = None
+    for root in candidate.get("install_roots", []):
+        probe = Path(root)
+        if probe.is_dir():
+            install_root = str(probe)
+            for exe_name in candidate.get("executables", []):
+                exe_path = probe / exe_name
+                if exe_path.is_file():
+                    executable = str(exe_path.resolve())
+                    break
+            break
+    return {
+        "install_root": install_root,
+        "executable_realpath": executable,
+        "os_managed": bool(candidate.get("os_managed")),
+        "install_type": candidate.get("install_type"),
+        "config_root_env": candidate.get("config_root_env"),
+    }
+
+
+def discover_software_installations(
+    inventory: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """§22 read-only software installation discovery.
+
+    Probes ONLY the declared install roots / executable of each managed
+    software and classifies each via the shared :mod:`software_installation_identity`
+    resolver (single source of truth — no second engine). Degrades to
+    ``install_root=None`` when nothing is found; a fresh install is located by
+    the §11 resolution order, never a silent C: vendor default. Pass a custom
+    ``inventory`` to make discovery fully deterministic (fixtures).
+    """
+    inv = inventory if inventory is not None else SOFTWARE_CANDIDATE_INVENTORY
+    observations: list[dict[str, Any]] = []
+    for candidate in inv:
+        probe = _probe_install(candidate)
+        software_id = candidate["software_id"]
+        observed_roots = [probe["install_root"]] if probe["install_root"] else []
+        cls = sii.classify_installation(
+            expected_existing=candidate.get("expected_existing"),
+            observed=observed_roots,
+            verified=bool(probe["executable_realpath"]),
+            os_managed=probe["os_managed"],
+        )
+        record = sii.preflight_identity_record(
+            software_id=software_id,
+            expected_existing=candidate.get("expected_existing"),
+            observed=observed_roots,
+            verified=bool(probe["executable_realpath"]),
+            os_managed=probe["os_managed"],
+        )
+        record.update(
+            package_identity=candidate.get("package_identity", software_id),
+            install_root=probe["install_root"],
+            executable_realpath=probe["executable_realpath"],
+            install_type=probe["install_type"],
+        )
+        record["location_status"] = cls["location_status"]
+        observations.append(record)
+    return observations
+
+
+def resolve_software_installation(
+    software_id: str,
+    *,
+    user_declared: str | None = None,
+    observed: list[str] | None = None,
+    expected_existing: str | None = None,
+    verified: bool = False,
+    os_managed: bool = False,
+    relocation_requested: bool = False,
+) -> dict[str, Any]:
+    """§23 single canonical resolver: classify one software's install location
+    and return a software-installation-identity contract record. Pure; all
+    inputs are already-discovered facts."""
+    return sii.preflight_identity_record(
+        software_id=software_id,
+        user_declared=user_declared,
+        observed=observed or [],
+        expected_existing=expected_existing,
+        verified=verified,
+        os_managed=os_managed,
+        relocation_requested=relocation_requested,
+    )
 
 
 def discover_all() -> list[dict[str, Any]]:
