@@ -60,6 +60,29 @@ def _make_fixture() -> Path:
     dest = tmp / "taskpacks" / "current" / f"{current[0]}.md"
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(live_current, dest)
+    # P0-01: referenced paths the index points at (decisions[].path/ledger and
+    # staticHandoffViews[].entry_record) must exist in the fixture so the clean
+    # copy passes check 6b. Copy each live target that exists.
+    referenced = []
+    for decision in tidx.get("decisions", []):
+        if not isinstance(decision, dict):
+            continue
+        for key in ("path", "ledger"):
+            value = decision.get(key)
+            if isinstance(value, str) and value:
+                referenced.append(value)
+    for view in tidx.get("staticHandoffViews", []):
+        if not isinstance(view, dict):
+            continue
+        entry_record = view.get("entry_record")
+        if isinstance(entry_record, str) and entry_record:
+            referenced.append(entry_record)
+    for rel in referenced:
+        src = ROOT / rel
+        dst = tmp / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if src.is_file():
+            shutil.copy2(src, dst)
     return tmp
 
 
@@ -139,6 +162,31 @@ class AuthorityReferenceNegativeTests(unittest.TestCase):
 
     def test_project_index_invalid_json_fails(self) -> None:
         (self.tmp / ".project/governance/project-authority-index.json").write_text("{not json", encoding="utf-8")
+        self.assertEqual(self.verifier.verify(self.tmp), 1)
+
+    # --- P0-01 negative controls -------------------------------------------------
+    def test_dangling_index_reference_fails(self) -> None:
+        # A decision points at a tracked path that does not exist on disk.
+        tidx = _read(self.tmp, ".project/governance/taskpack-authority-index.json")
+        tidx["decisions"].append(
+            {"id": "DANGLING", "path": "taskpacks/current/DOES-NOT-EXIST-P001.md", "status": "OPEN"}
+        )
+        _write(self.tmp, ".project/governance/taskpack-authority-index.json", tidx)
+        self.assertEqual(self.verifier.verify(self.tmp), 1)
+
+    def test_index_admits_missing_references_fails(self) -> None:
+        # The index itself declares indexReferencesExist=false -> fail closed.
+        tidx = _read(self.tmp, ".project/governance/taskpack-authority-index.json")
+        tidx.setdefault("acceptance", {})["indexReferencesExist"] = False
+        _write(self.tmp, ".project/governance/taskpack-authority-index.json", tidx)
+        self.assertEqual(self.verifier.verify(self.tmp), 1)
+
+    def test_supersedes_partition_conflict_fails(self) -> None:
+        # A taskpack sits in two classification buckets (CURRENT + SUPERSEDED).
+        tidx = _read(self.tmp, ".project/governance/taskpack-authority-index.json")
+        current_id = tidx["classification"]["CURRENT"][0]
+        tidx["classification"]["SUPERSEDED"].append(current_id)
+        _write(self.tmp, ".project/governance/taskpack-authority-index.json", tidx)
         self.assertEqual(self.verifier.verify(self.tmp), 1)
 
 

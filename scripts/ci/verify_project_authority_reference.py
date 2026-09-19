@@ -17,6 +17,13 @@ Checks (each failure aborts with a non-zero exit and a named reason):
 - exactly one taskpack is classified CURRENT in the taskpack index;
 - every `operationalCompatibilityAllowlist` path declared by the project
   authority index exists on disk;
+- P0-01: every tracked path the taskpack index references (the CURRENT
+  taskpack file, `decisions[].path`, `decisions[].ledger`, and the tracked
+  `staticHandoffViews[].entry_record`) exists on disk — `indexReferencesExist`
+  is verified against the tree, never trusted from the stored value;
+- P0-01: the taskpack supersedes graph is structurally valid — the
+  classification buckets form a partition (no taskpack in two buckets) and
+  the single CURRENT taskpack is not simultaneously marked retired/superseded;
 - no forbidden legacy active root has been re-activated as a live module root.
 
 Exit codes: 0 PASS, 1 FAIL (named reason printed), 2 environment error.
@@ -93,6 +100,59 @@ def verify(root: Path) -> int:
         allow_path = root / entry["path"]
         if not allow_path.is_file():
             return _fail("ALLOWLIST_PATH_MISSING", entry["path"])
+
+    # 6b. P0-01: `indexReferencesExist` is verified against the tree, never
+    # trusted from the stored value. Every tracked path the taskpack index
+    # references must exist on disk: the CURRENT taskpack file (already
+    # required in check 4), `decisions[].path`, `decisions[].ledger`, and the
+    # tracked `staticHandoffViews[].entry_record`. A dangling reference is a
+    # fail-closed regression even if the index JSON parses cleanly.
+    referenced: list[tuple[str, str]] = []
+    for decision in tidx.get("decisions", []):
+        if not isinstance(decision, dict):
+            continue
+        for key in ("path", "ledger"):
+            value = decision.get(key)
+            if isinstance(value, str) and value:
+                referenced.append((f"decisions[{decision.get('id', '?')}].{key}", value))
+    for view in tidx.get("staticHandoffViews", []):
+        if not isinstance(view, dict):
+            continue
+        entry_record = view.get("entry_record")
+        if isinstance(entry_record, str) and entry_record:
+            referenced.append((f"staticHandoffViews[{view.get('id', '?')}].entry_record", entry_record))
+    for label, rel in referenced:
+        if not (root / rel).is_file():
+            return _fail("INDEX_REFERENCE_MISSING", f"{label} -> {rel}")
+    if tidx.get("acceptance", {}).get("indexReferencesExist") is False:
+        # The index itself admits dangling references; fail closed on it.
+        return _fail("INDEX_REFERENCES_ADMISSION", "index declares indexReferencesExist=false")
+
+    # 6c. P0-01: the taskpack supersedes graph is structurally valid.
+    # - classification buckets form a partition: no taskpack ID sits in two
+    #   buckets (CURRENT vs SUPERSEDED/HISTORICAL/etc. is a real contradiction);
+    # - the single CURRENT taskpack is not simultaneously marked retired /
+    #   superseded by its own index.
+    classification = tidx.get("classification", {})
+    buckets: dict[str, list[str]] = {}
+    for bucket, ids in classification.items():
+        if not isinstance(ids, list):
+            continue
+        for task_id in ids:
+            if task_id in buckets:
+                return _fail(
+                    "SUPERSEDES_PARTITION_CONFLICT",
+                    f"{task_id} classified in both {buckets[task_id]} and {bucket}",
+                )
+            buckets.setdefault(str(task_id), []).append(bucket)
+    for task_id in current:
+        seen_buckets = buckets.get(task_id, [])
+        for retired in ("SUPERSEDED", "OUT_OF_SCOPE", "HISTORICAL"):
+            if retired in seen_buckets:
+                return _fail(
+                    "SUPERSEDES_CURRENT_CONFLICT",
+                    f"CURRENT {task_id} simultaneously marked {retired}",
+                )
 
     # 7. "Forbidden active root returned" = a legacy active root was
     # re-declared as a LIVE module root in module-ownership.json. Historical
