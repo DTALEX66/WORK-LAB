@@ -36,8 +36,8 @@ def verify(root: Path) -> list[str]:
         errors.append("projects generatedData.runtimeRoot must use .project-local/runs")
     if projects.get("generatedData", {}).get("taskArtifactsPath") != EXPECTED["taskArtifactsRoot"]:
         errors.append("projects generatedData.taskArtifactsPath must use .project-local/artifacts")
-    if projects.get("forbiddenRoots") != ["E:\\"]:
-        errors.append("projects forbiddenRoots must preserve E: protection")
+    if projects.get("forbiddenRoots") != ["E:\\", "F:\\"]:
+        errors.append("projects forbiddenRoots must preserve E:/F: protection")
     return errors
 
 

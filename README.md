@@ -12,7 +12,7 @@ agent runtime, a product platform, or a fourth product.
 > future AI software through the same Adapter contract.
 > `30-products/minigame` is retained as product history/fixture/archive
 > material, not as a canonical active module. See
-> [`00-governance/PROJECT_POSITIONING.md`](00-governance/PROJECT_POSITIONING.md).
+> [`docs/decisions/PROJECT_POSITIONING.md`](docs/decisions/PROJECT_POSITIONING.md).
 
 ## Neutrality (unbound, unlocked)
 
@@ -22,7 +22,7 @@ agent runtime, a product platform, or a fourth product.
   DeepSeek Harness) are the *current* adapters, not permanent dependencies; future AI software plugs
   into the same contract. DSH is a replaceable Agent Runtime (temporary executor in the model
   control-plane taskpack), not a Hermes replacement; see
-  [`00-governance/PROJECT_POSITIONING.md`](00-governance/PROJECT_POSITIONING.md).
+  [`docs/decisions/PROJECT_POSITIONING.md`](docs/decisions/PROJECT_POSITIONING.md).
   dependencies; future AI software plugs into the same contract.
 - **Unlocked**: core schemas use stable IDs and capability discovery — never
   hard-coded programs, model IDs, versions, ports, or install paths.
@@ -42,16 +42,16 @@ request / task pack
 ```
 
 The global workflow surface is repository-controlled portable source under
-`10-workflow/workflow-assistance`. Hermes Home, credentials, sessions, cron
+`packages/client-neutral-core`. Hermes Home, credentials, sessions, cron
 metadata, provider routes and live caches remain **global platform state**; they
 are never absorbed into this repository. Project task data and generated
 evidence stay under the current Git root's ignored `.project-local/` boundary.
 
 ## Canonical active modules
 
-- `10-workflow/workflow-assistance` — global, client-neutral workflow governance,
+- `packages/client-neutral-core` — global, client-neutral workflow governance,
   task execution control, observability and portable workflow assets
-- `30-observer/work-lab-observer` — strictly read-only derived observation,
+- `apps/observer` — strictly read-only derived observation,
   projections and evidence reports
 
 `30-products/minigame` remains outside the active two-module registry as
@@ -67,7 +67,7 @@ module implementations.
 ## Task-pack responsibility
 
 All substantial work is represented by a reviewed task pack under
-`50-taskpacks/`. A task pack must identify the writer, read-only reviewers,
+`taskpacks/current/`. A task pack must identify the writer, read-only reviewers,
 allowed/forbidden roots, input evidence, completion contract, verification
 commands, rollback handle and external-mutation approval. Missing evidence,
 dirty ownership, boundary violations or incomplete required jobs fail closed.
@@ -75,18 +75,19 @@ dirty ownership, boundary violations or incomplete required jobs fail closed.
 ## Safety boundaries
 
 - One Git root; module rules may narrow root rules but never weaken them.
-- `80-evidence/` and `.project-local/` are generated/ignored project data; durable
-  handoffs may be retained only when explicitly covered by a recovery contract.
+- `.project-local/` holds ignored runtime + evidence data; `90-archive/` holds
+  archived report history. Durable handoffs may be retained only when explicitly
+  covered by a recovery contract.
 - Secrets, credentials, prompt/response bodies and private browser data never enter evidence.
 - Project artifacts never spill outside the project Git root; any spill is
   traceable, locatable, cleanable and migratable (see
-  `00-governance/project-data-boundary.json`).
+  `.project/governance/project-data-boundary.json`).
 - The `E:` data volume is protected: any access requires explicit per-path,
   per-operation user authorization.
 - External mutation, active-path switching and release actions require explicit approval.
 - Windows paths are checked case-insensitively before release.
 
-See `00-governance/PROJECT_POSITIONING.md`, `00-governance/projects.json`,
+See `docs/decisions/PROJECT_POSITIONING.md`, `.project/governance/projects.json`,
 module `AGENTS.md` files, and
-`50-taskpacks/TASKPACK_SUMMARY.md` for the current positioning and migration
+`taskpacks/current/TASKPACK_SUMMARY.md` for the current positioning and migration
 record.

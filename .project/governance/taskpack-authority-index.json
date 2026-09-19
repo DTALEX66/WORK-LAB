@@ -1,15 +1,17 @@
 {
  "schemaVersion": "workflow/taskpack-authority-index/v1",
- "generatedAt": "2026-08-26",
- "currentTaskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918 (main@a55a0f3, tree 3890328)",
+ "generatedAt": "2026-09-18",
+ "currentTaskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
  "authority": {
   "owner": "DTALEX66",
   "created": "2026-09-18",
   "expires": "unbounded (main is sole authority; superseded only by a newer registered CURRENT)",
   "taskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
-  "supersedes": "WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25 (R1, main@2941412)",
-  "baseline_main": "a55a0f3ac4b04ede578fcc8a5db62902a7866cd6",
-  "baseline_tree": "3890328cf1abe5fbdb10ed16bea5886eee5c1794"
+  "topAuthority": "WORK-LAB-AUTHORITY.md",
+  "topMachineAuthority": ".project/governance/project-authority-index.json",
+  "supersedes": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918 (R1, main@a55a0f3) and WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25",
+  "baseline_main": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
+  "baseline_tree": "606db598abd3724baf6a45ffcfb319f9b0a4d550"
  },
  "classification": {
   "CURRENT": [

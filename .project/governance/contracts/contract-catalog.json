@@ -268,11 +268,59 @@
       ]
     },
     {
+      "id": "global-agent-policy",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/global-agent-policy.schema.json",
+      "consumers": [
+        "workflow",
+        "ci"
+      ]
+    },
+    {
+      "id": "policy-projection-contract",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/policy-projection-contract.schema.json",
+      "consumers": [
+        "workflow",
+        "ci"
+      ]
+    },
+    {
+      "id": "policy-projection-loss-report",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/policy-projection-loss-report.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
+    },
+    {
       "id": "archive-manifest",
       "owner": "root-governance",
       "schemaPath": ".project/governance/contracts/archive-manifest.schema.json",
       "consumers": [
         "archive-audit"
+      ]
+    },
+    {
+      "id": "software-installation-identity",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/software-installation-identity.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
+    },
+    {
+      "id": "software-update-preflight",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/software-update-preflight.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
       ]
     }
   ],

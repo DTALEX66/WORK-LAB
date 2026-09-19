@@ -290,12 +290,19 @@ def build_state(
         },
 
         "workflow_identity": _workflow_identity(root, manifest),
-        "stage3": {
-            "taskpack_id": stage3_graph.get("taskpackId", "unknown"),
-            "task_count": len(stage3_graph.get("tasks", [])),
-            "initial_state": stage3_graph.get("initialState", "unknown"),
+        # P0-03: historical Stage 3 data is NOT a current-identity source. It is
+        # emitted under an explicit `compatibility_history` key so CURRENT_STATE
+        # stops treating Stage 3 as who we are "now" — it only records what the
+        # Stage 3 baseline historically was. Current identity comes from the
+        # governance registries above (projects / module-ownership / contracts /
+        # skills / workflow identity), not from this block.
+        "compatibility_history": {
+            "stage3_taskpack_id": stage3_graph.get("taskpackId", "unknown"),
+            "stage3_task_count": len(stage3_graph.get("tasks", [])),
+            "stage3_initial_state": stage3_graph.get("initialState", "unknown"),
             "historical_baseline_source": ".project/governance/generated/STAGE3_BASELINE.json",
             "historical_baseline_status": "HISTORICAL_ONLY",
+            "role": "historical_only_not_current_identity",
         },
         "unverified_capabilities": [
             "hermes_live_apply",
@@ -400,13 +407,13 @@ Content digest: `{state['content_digest']}`
 - Aggregate job: `{state['workflow_identity']['aggregate_job']}`
 - Manifest-declared required workflows: `{', '.join(state['workflow_identity']['manifest_declared_required_workflows']) or 'none'}`
 
-## Stage 3 task graph
+## Compatibility history (Stage 3, historical only — NOT current identity)
 
-- TaskPack: `{state['stage3']['taskpack_id']}`
-- Tasks: `{state['stage3']['task_count']}`
-- Initial state: `{state['stage3']['initial_state']}`
-- Historical baseline source: `{state['stage3']['historical_baseline_source']}`
-- Historical baseline status: `{state['stage3']['historical_baseline_status']}`
+- TaskPack: `{state['compatibility_history']['stage3_taskpack_id']}`
+- Tasks: `{state['compatibility_history']['stage3_task_count']}`
+- Initial state: `{state['compatibility_history']['stage3_initial_state']}`
+- Historical baseline source: `{state['compatibility_history']['historical_baseline_source']}`
+- Historical baseline status: `{state['compatibility_history']['historical_baseline_status']}`
 
 ## Explicitly unverified
 

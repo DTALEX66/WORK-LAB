@@ -3,6 +3,26 @@
 > 全局执行标准（跨软件跨项目）：见 `docs/decisions/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
 > 经验教训铁律（核实优先/治理最小化/官方优先）：见 `docs/decisions/LESSONS_LEARNED.md`。
 
+## Mandatory audit bootstrap (normative)
+
+Every audit and every execution task MUST resolve current authority in this order,
+before touching any implementation:
+
+1. Resolve current `origin/main` exact commit and tree.
+2. Read `WORK-LAB-AUTHORITY.md` (top human authority).
+3. Read `.project/governance/project-authority-index.json` (top machine authority).
+4. Read this `AGENTS.md`.
+5. Read the CURRENT taskpack referenced by `.project/governance/taskpack-authority-index.json`.
+6. Read the single live open-task register `taskpacks/current/OPEN-TASK-REGISTER.md`.
+7. Read scope-relevant machine contracts.
+8. Consult a specifically named historical record only when needed.
+
+Precedence: latest explicit user decision > `WORK-LAB-AUTHORITY.md` >
+`project-authority-index.json` > current taskpack / open register >
+`AGENTS.md` + scoped machine authorities > current exact-SHA code + CI/runtime
+readback > historical records. Historical records are frozen, non-normative
+evidence. Machine verifier: `scripts/ci/verify_project_authority_reference.py`.
+
 ## Scope
 
 This is a single-root monorepo. Allowed active module roots are exactly:

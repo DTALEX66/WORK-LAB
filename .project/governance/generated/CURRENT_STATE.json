@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-09-17T12:49:25.949687Z",
-  "source_digest": "e86f6bc8879ffb7d4fc75169d795bbee8321533afc226060cc3f92e60865de56",
+  "generated_at": "2026-09-19T18:08:33.467305Z",
+  "source_digest": "3ea7b0a7c3da64323cd65ccc7948b3a557aa2660e394236a6a596631ba3babf3",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -51,7 +51,7 @@
     }
   ],
   "contracts": {
-    "count": 30,
+    "count": 35,
     "schema_version": "work-lab-contract-catalog/v2"
   },
   "skills": {
@@ -205,12 +205,13 @@
       "work-lab-gate"
     ]
   },
-  "stage3": {
-    "taskpack_id": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE",
-    "task_count": 28,
-    "initial_state": "RECONCILED_20260810",
+  "compatibility_history": {
+    "stage3_taskpack_id": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE",
+    "stage3_task_count": 28,
+    "stage3_initial_state": "RECONCILED_20260810",
     "historical_baseline_source": ".project/governance/generated/STAGE3_BASELINE.json",
-    "historical_baseline_status": "HISTORICAL_ONLY"
+    "historical_baseline_status": "HISTORICAL_ONLY",
+    "role": "historical_only_not_current_identity"
   },
   "unverified_capabilities": [
     "hermes_live_apply",
@@ -219,5 +220,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "211563dbbe070518b23744eb950be6320db9a27e3826b1fe974b07d70c90fbe2"
+  "content_digest": "5e1b8f4c9662b8646ce42d905ede8d920569e70ef399192808ebaaf22b8a07d7"
 }
