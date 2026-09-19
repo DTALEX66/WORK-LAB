@@ -23,6 +23,17 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "ci" / "generate_current_state.py"
 
 
+def authoritative_contract_count(root: Path) -> int:
+    """Expected contract count from the authoritative inventory (no hard-coded literal)."""
+    catalog = json.loads(
+        (root / ".project" / "governance" / "contracts" / "contract-catalog.json").read_text(encoding="utf-8")
+    )
+    contracts = catalog.get("contracts", [])
+    if not isinstance(contracts, list):
+        raise ValueError("contract-catalog.json#contracts must be a list")
+    return len(contracts)
+
+
 class CurrentStateTests(unittest.TestCase):
     def test_build_state_records_canonical_modules_without_recursive_identity(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -55,7 +66,11 @@ class CurrentStateTests(unittest.TestCase):
         self.assertEqual(state["checkout_attestation"]["tracked_projection"], "NO_HEAD_OR_BRANCH_CLAIM")
         self.assertEqual(state["workflow_identity"]["workflow_name"], "work-lab-gate")
         self.assertEqual(state["workflow_identity"]["aggregate_job"], "aggregate")
-        self.assertEqual(state["contracts"]["count"], 30)
+        # P0-02 4.1: expected contract count is dynamic from the authoritative
+        # catalog (never a hard-coded historical literal) — assert actual == expected.
+        expected_contracts = authoritative_contract_count(ROOT)
+        self.assertGreaterEqual(expected_contracts, 1)
+        self.assertEqual(state["contracts"]["count"], expected_contracts)
         self.assertEqual(len(state["skills"]["items"]), 13)
         self.assertEqual(state["stage3"]["task_count"], 28)
         self.assertEqual(state["stage3"]["historical_baseline_status"], "HISTORICAL_ONLY")
