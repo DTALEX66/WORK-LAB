@@ -31,11 +31,23 @@ REQUIRED_LEVELS = {"REAL", "INTEGRATED", "SYNTHETIC", "SIMULATED"}
 
 @dataclass
 class EvidenceRecord:
-    """One piece of evidence for an acceptance case, at a specific level."""
+    """One piece of evidence for an acceptance case, at a specific level.
+
+    U11 real-evidence binding fields are all optional (default None) and
+    additive, so the frozen positional constructions
+    (case_id, level, artifact, simulated=...) keep working unchanged.
+    """
     case_id: str
     level: str
     artifact: str            # a verifiable handle (path / URL / SHA / report id)
     simulated: bool
+    # --- U11 REAL-evidence binding (verifiable identity of the record) ---
+    evidence_type: str | None = None     # e.g. RUN_ARTIFACT / CI / EXTERNAL
+    receipt_digest: str | None = None    # identity/digest of the evidence
+    producer: str | None = None          # who produced it
+    verifier: str | None = None         # who read it back / verified it
+    observed_at: str | None = None      # ISO-8601 observation timestamp
+    source_sha: str | None = None       # source SHA / run identity (optional)
 
     def __post_init__(self) -> None:
         if self.level not in LEVELS:
@@ -43,6 +55,13 @@ class EvidenceRecord:
         # a SIMULATED / SYNTHETIC record is, by definition, simulated
         if self.level in ("SIMULATED", "SYNTHETIC"):
             self.simulated = True
+        # U11: a REAL-level record must carry a verifiable handle — an empty
+        # REAL handle is invalid and is rejected up front, never faked.
+        if self.level in ("REAL", "INTEGRATED") and not (self.artifact or "").strip():
+            raise ValueError(
+                f"empty REAL evidence handle for case {self.case_id!r}: "
+                "a real-level record must carry a verifiable handle"
+            )
 
 
 class EvidenceLedger:
@@ -198,3 +217,66 @@ class CiShaGate:
                     "required_sha": required_sha,
                     "note": "optional gate passed; it does not block the required gate"}
         return {"gate": gate, "verdict": "GATE_PASSED", "required_sha": required_sha}
+
+
+# ---------------------------------------------------------------------------
+# U11 — REAL evidence binding validation.
+# A REAL-level record is only as strong as the identity fields that let an
+# independent reader verify it: the evidence type, a verifiable handle, an
+# identity/digest, the producer, the verifier/readback, and the observation
+# timestamp.  source_sha is OPTIONAL (a run identity when applicable) but,
+# when present, must be well formed.  Simulated / synthetic records are not
+# subject to real binding (they are, by definition, not real evidence).
+# ---------------------------------------------------------------------------
+
+# fields every REAL-level record must carry to be verifiable
+REAL_BINDING_REQUIRED = ("evidence_type", "receipt_digest", "producer", "verifier", "observed_at")
+
+# a source SHA, when present, must be long enough to be a real identity —
+# mirror the CiShaGate "exact SHA" rule (>= 7 chars of hex) without pinning a
+# fixed length, so a 40-char git object id and a CI run sha both validate.
+_SOURCE_SHA_MIN = 7
+
+
+def _is_blank(value: Any) -> bool:
+    return value is None or (isinstance(value, str) and not value.strip())
+
+
+def validate_real_binding(record: EvidenceRecord) -> list[str]:
+    """Return the list of U11 binding issues on ``record`` ([] when valid).
+
+    Only real-level records are subject to real binding; a simulated /
+    synthetic record returns ``[]`` (it is not claiming real evidence).
+    """
+    if record.level in ("SIMULATED", "SYNTHETIC"):
+        return []
+    issues = [f for f in REAL_BINDING_REQUIRED if _is_blank(getattr(record, f, None))]
+    # empty handle is a binding issue even though __post_init__ already
+    # rejects it — keep the validator total / usable on reconstructed records.
+    if _is_blank(record.artifact):
+        issues.append("artifact")
+    # source_sha is optional but must be well-formed when present.
+    if not _is_blank(record.source_sha):
+        sha = record.source_sha.strip()
+        if len(sha) < _SOURCE_SHA_MIN or not all(c in "0123456789abcdefABCDEF" for c in sha):
+            issues.append("source_sha")
+    # dedupe + stable order
+    seen: set[str] = set()
+    out: list[str] = []
+    for name in ("artifact",) + REAL_BINDING_REQUIRED + ("source_sha",):
+        if name in issues and name not in seen:
+            seen.add(name)
+            out.append(name)
+    return out
+
+
+def real_binding_status(record: EvidenceRecord) -> str:
+    """U11 grade for a record's real-evidence binding.
+
+    NOT_APPLICABLE: simulated/synthetic (no real binding is expected).
+    VALID: real-level with a complete binding.
+    INCOMPLETE: real-level missing one or more binding fields.
+    """
+    if record.level in ("SIMULATED", "SYNTHETIC"):
+        return "NOT_APPLICABLE"
+    return "VALID" if not validate_real_binding(record) else "INCOMPLETE"
