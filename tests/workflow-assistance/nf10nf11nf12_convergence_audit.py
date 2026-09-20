@@ -19,9 +19,12 @@ CO = os.path.join(ROOT, "config", "config-ownership.json")
 AR = os.path.join(ROOT, "config", "adapter-registry.json")
 
 # git-tracked dependency manifests (NF-11 registered toolchains).
+# P0-06 tail (ff08787): observer frontend is an npm project — pnpm residue
+# (pnpm-lock.yaml / pnpm-workspace.yaml) was deleted; package-lock.json is
+# the authoritative npm lockfile and the one CI installs from (npm ci).
 MANIFESTS = [
     "apps/observer/frontend/package.json",
-    "apps/observer/frontend/pnpm-lock.yaml",
+    "apps/observer/frontend/package-lock.json",
     "apps/observer/src-tauri/Cargo.toml",
     "apps/observer/src-tauri/Cargo.lock",
     "apps/token-monitor/package.json",

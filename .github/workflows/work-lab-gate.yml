@@ -155,7 +155,7 @@ jobs:
     name: observer
     needs: plan
     if: needs.plan.outputs.run_observer == 'true'
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 20
     env:
       PYTHONPATH: src:scripts
@@ -175,6 +175,7 @@ jobs:
           python tests/test_usage_rollup.py
           python tests/test_observer_events_migration.py
       - name: Verify Observer Web and desktop contracts
+        shell: bash
         run: |
           node tests/run_all_tests.js
           for file in web/scripts/*.js; do node --check "$file"; done
@@ -185,8 +186,9 @@ jobs:
           npm run typecheck
           npm run build
       # U08: the observer desktop crate is a real Tauri 2 crate (src-tauri).
-      # Mirror the token-monitor job: test + check the locked Rust desktop crate.
-      # ubuntu-latest ships rust; --locked keeps the dependency tree exact.
+      # Mirror the token-monitor job (windows-latest): test + check the locked
+      # Rust desktop crate. Tauri is Windows-native-first and on Windows uses
+      # WebView2 (no system GTK/webkit2gtk needed); --locked keeps the dep tree exact.
       - name: Test locked observer Rust desktop crate
         working-directory: apps/observer/src-tauri
         run: |
