@@ -179,8 +179,11 @@ pub fn run() {
             // var is NOT consumed by wry — it always passes app-level args —
             // so the args must go through this builder hook.)
             if let Ok(cdpp) = std::env::var("WORK_LAB_U19_CDP_PORT") {
+                // --use-angle=swiftshader: force software rendering so GDI
+                // PrintWindow can actually capture the pixels on headless CI
+                // runners (GPU-composited surfaces print black). Opt-in only.
                 let args = format!(
-                    "--remote-debugging-port={cdpp} --remote-allow-origins=*"
+                    "--remote-debugging-port={cdpp} --remote-allow-origins=* --use-angle=swiftshader"
                 );
                 let url = tauri::WebviewUrl::App(
                     "index.html?view=full&mode=UNKNOWN&theme=dark".into(),

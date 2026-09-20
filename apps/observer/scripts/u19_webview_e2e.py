@@ -204,22 +204,49 @@ class CDP:
             pass
 
 
+def _cdp_http_get(path: str, port: int) -> str:
+    """Minimal raw-socket HTTP/1.1 GET against a CDP debug port.
+
+    urllib is deliberately NOT used here: any http_proxy/https_proxy
+    environment state would break the loopback /json endpoints with
+    confusing BadStatusLine errors.
+    """
+    s = socket.create_connection(("127.0.0.1", port), timeout=3)
+    try:
+        s.sendall(
+            (f"GET {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\n"
+             f"Connection: close\r\n\r\n").encode("latin-1")
+        )
+        chunks = []
+        while True:
+            c = s.recv(65536)
+            if not c:
+                break
+            chunks.append(c)
+        raw = b"".join(chunks)
+    finally:
+        s.close()
+    head, _, body = raw.partition(b"\r\n\r\n")
+    status = head.split(b"\r\n", 1)[0].decode("latin-1", "replace")
+    if not status.endswith("200"):
+        raise RuntimeError(f"CDP {path}: HTTP {status}")
+    return body.decode("utf-8", "replace")
+
+
 def discover_cdp_ws(cdp_port: int, tries: int = 60) -> str:
     """Find the WebView2 page's CDP websocket url. Retry — WebView2 opens the
     debug port lazily; the target appears once the first page loads."""
     last = ""
     for _ in range(tries):
         try:
-            with urllib.request.urlopen(
-                f"http://127.0.0.1:{cdp_port}/json/list", timeout=3
-            ) as r:
-                targets = json.loads(r.read())
+            body = _cdp_http_get("/json/list", cdp_port)
+            targets = json.loads(body)
             for t in targets:
                 url = t.get("webSocketDebuggerUrl", "")
                 if url and t.get("type") == "page":
                     last = url
                     return url
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+        except Exception:
             pass
         time.sleep(0.5)
     if last:
