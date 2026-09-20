@@ -2,16 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+U05 (taskpack 20260919): real Dark/Light theme.
+Root bug: a hardcoded `class="dark"` + hex surfaces meant Light could never
+render. Now every theme color is a CSS variable. Five accent colors are defined
+in the channel form `rgb(var(--X-rgb) / <alpha-value>)` so Tailwind's alpha
+modifiers (bg-success/10, border-error/20, …) work at runtime in BOTH themes;
+surfaces (bg/panel/panel2/border) are plain variables.
+Default (:root) = the Dark design language. html.light inverts all of it.
+*/
+
+:root {
+  color-scheme: dark;
+  --color-bg: #0d1117;
+  --color-panel: #161b22;
+  --color-panel2: #111820;
+  --color-border: rgba(255,255,255,0.08);
+  --color-ink: #f5f5f5;
+  --primary-rgb: 0 212 255;
+  --secondary-rgb: 124 108 240;
+  --success-rgb: 0 208 132;
+  --warning-rgb: 255 176 32;
+  --error-rgb: 255 77 79;
+}
+
+html.light {
+  color-scheme: light;
+  --color-bg: #f6f8fa;
+  --color-panel: #ffffff;
+  --color-panel2: #f3f4f6;
+  --color-border: rgba(0,0,0,0.10);
+  --color-ink: #1f2937;
+  --primary-rgb: 8 145 178;
+  --secondary-rgb: 109 94 240;
+  --success-rgb: 5 150 105;
+  --warning-rgb: 217 119 6;
+  --error-rgb: 220 38 38;
+}
+
 @layer base {
-  * { @apply border-border; }
-  body { @apply bg-bg text-zinc-100 antialiased; font-family: 'Inter', 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif; }
+  * { border-color: var(--color-border); }
+  html, body { background-color: var(--color-bg); }
+  body {
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    font-family: 'Inter', 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+  }
+  /* The fixed zinc-* text utilities used throughout the UI must flip in light
+     so they stay legible on light surfaces. Dark is the default (no override). */
+  html.light .text-zinc-100 { color: #111827; }
+  html.light .text-zinc-200 { color: #1f2937; }
+  html.light .text-zinc-300 { color: #374151; }
+  html.light .text-zinc-400 { color: #4b5563; }
+  html.light .text-zinc-500 { color: #6b7280; }
+  html.light .text-zinc-600 { color: #4b5563; }
 }
 
 @layer components {
-  .panel { @apply bg-panel border border-border rounded-md; }
-  .panel2 { @apply bg-panel2 border border-border rounded-md; }
-  .kpi-number { @apply text-3xl font-bold tabular-nums tracking-tight; }
-  .label { @apply text-xs text-zinc-500; }
+  .text-ink { color: var(--color-ink); }
+  .panel { background: var(--color-panel); border: 1px solid var(--color-border); border-radius: 6px; }
+  .panel2 { background: var(--color-panel2); border: 1px solid var(--color-border); border-radius: 6px; }
+  .kpi-number { font-size: 1.875rem; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.025em; color: var(--color-ink); }
+  .label { font-size: 0.75rem; color: var(--color-ink); opacity: 0.6; }
   .status-pulse { animation: statusPulse 2s ease-in-out infinite; }
   @keyframes statusPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   .count-up { transition: opacity 0.2s; }

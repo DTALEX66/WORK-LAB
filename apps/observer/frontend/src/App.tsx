@@ -1,125 +1,154 @@
 import { useState, useEffect } from 'react'
-import { Bot, ListTodo, Coins, DollarSign } from 'lucide-react'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopStatusBar } from '@/components/layout/TopStatusBar'
 import { KPICard } from '@/components/dashboard/KPICard'
-import { CostPanel } from '@/components/dashboard/CostPanel'
-import { ResourceMonitor } from '@/components/dashboard/ResourceMonitor'
-import { AgentsView, ExecutionsView, ModelsView, MemoryView, ToolsView, MonitoringView, SettingsView, DeliveryView, TrustView } from '@/views/Views'
-import { fetchSnapshot, executionsToAgents, snapshotToServices, snapshotToTimeline, snapshotToCosts, estimateCost, fmtTokens, fmtCost, promRange, fetchResources, type LiveSnapshot, type SysResources } from '@/lib/api'
-import type { Agent, TimelineEvent, ServiceHealth, CostPoint } from '@/types'
+import { ExecutionTable } from '@/components/dashboard/ExecutionTable'
+import { ProjectPanel } from '@/components/dashboard/ProjectPanel'
+import { TokenPanel } from '@/components/dashboard/TokenPanel'
+import {
+  MonitoringView, TrustView, SettingsView,
+} from '@/views/Views'
+import {
+  useLiveSnapshot, fmtCostQuality, tokenTruth, executionsToRows,
+  type ThemeMode, type LayoutMode,
+} from '@/lib/api'
+import { VIEW_REGISTRY, OVERVIEW_ID } from '@/lib/viewRegistry'
+
+type ViewId = string
+
+// U04/U05: the active view + theme are driven by URL params (?view=, ?theme=,
+// ?layout=) so the dashboard is deep-linkable and Full/Compact/Dark/Light is
+// real, not a hardcoded class. The default landing view is the Overview panel.
+function readInitialView(): ViewId {
+  try {
+    const v = new URLSearchParams(window.location.search).get('view')
+    if (v && (VIEW_REGISTRY.some((e) => e.id === v) || v === OVERVIEW_ID)) return v
+  } catch { /* no URL (SSR/test) -> default */ }
+  return OVERVIEW_ID
+}
+
+function readInitialTheme(): ThemeMode {
+  try {
+    const t = new URLSearchParams(window.location.search).get('theme')
+    if (t === 'light' || t === 'dark') return t
+  } catch { /* ignore */ }
+  return 'dark'
+}
+
+function readInitialLayout(): LayoutMode {
+  try {
+    const l = new URLSearchParams(window.location.search).get('layout')
+    if (l === 'full' || l === 'compact') return l
+  } catch { /* ignore */ }
+  return 'full'
+}
 
 export default function App() {
-  const [view, setView] = useState(0)
-  const [snap, setSnap] = useState<LiveSnapshot | null>(null)
-  const [agents, setAgents] = useState<Agent[]>([])
-  const [services, setServices] = useState<ServiceHealth[]>([])
-  const [timeline, setTimeline] = useState<TimelineEvent[]>([])
-  const [costs, setCosts] = useState<CostPoint[]>([])
-  // WLR-130: truth-first — unknown stays null, never fabricated 0
-  const [tokenTotal, setTokenTotal] = useState<number | null>(null)
-  const [tokenIn, setTokenIn] = useState<number | null>(null)
-  const [tokenOut, setTokenOut] = useState<number | null>(null)
-  const [live, setLive] = useState(false)
-  const [resources, setResources] = useState<SysResources | null>(null)
-  const [tokenTrend, setTokenTrend] = useState<number[]>([])
-  const [costTrend, setCostTrend] = useState<number[]>([])
+  const [view, setView] = useState<ViewId>(readInitialView)
+  const [theme, setTheme] = useState<ThemeMode>(readInitialTheme)
+  const [layout, setLayout] = useState<LayoutMode>(readInitialLayout)
+  // U06/SSE: live snapshot — first poll + server-sent events, no fixed ports.
+  const { snap, source, live, error } = useLiveSnapshot()
 
-  // real time-series from Prometheus (KPI sparklines + cost line + resources)
+  // U05: real theme (dark/light) applied to <html> — no hardcoded class.
   useEffect(() => {
-    let cancelled = false
-    const loadProm = async () => {
-      const [res, tt, ct] = await Promise.all([
-        fetchResources(),
-        promRange('wlobs_usage_tokens{kind="total"}', 360),
-        promRange('wlobs_cost_estimate', 360),
-      ])
-      if (cancelled) return
-      if (res) setResources(res)
-      if (tt.length) setTokenTrend(tt)
-      if (ct.length) setCostTrend(ct)
-    }
-    loadProm()
-    const t = setInterval(loadProm, 15000)
-    return () => { cancelled = true; clearInterval(t) }
-  }, [])
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
 
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      const s = await fetchSnapshot()
-      if (cancelled) return
-      if (s) {
-        setLive(true)
-        setSnap(s)
-        setAgents(executionsToAgents(s))
-        setServices(snapshotToServices(s))
-        setTimeline(snapshotToTimeline(s))
-        setCosts(snapshotToCosts(s))
-        setTokenTotal(s.tokenSummary?.totalTokens ?? null)
-        setTokenIn(s.tokenSummary?.inputTokens ?? null)
-        setTokenOut(s.tokenSummary?.outputTokens ?? null)
-      } else setLive(false)
-    }
-    load()
-    const t = setInterval(load, 10000)
-    return () => { cancelled = true; clearInterval(t) }
-  }, [])
-
-  const running = agents.filter((a) => a.status === 'running').length
-  const cost = (tokenIn == null || tokenOut == null) ? null : estimateCost(tokenIn, tokenOut)
-  const sparkTok = tokenTrend.length > 1 ? tokenTrend : []
-  const sparkCost = costTrend.length > 1 ? costTrend : []
-  // real trend % from prom series (first -> last)
-  const tokTrend = tokenTrend.length > 1 ? Math.round(((tokenTrend[tokenTrend.length - 1] - tokenTrend[0]) / (tokenTrend[0] || 1)) * 100) : undefined
-  const costTrendPct = costTrend.length > 1 ? Math.round(((costTrend[costTrend.length - 1] - costTrend[0]) / (costTrend[0] || 1)) * 100) : undefined
-
-  const overview = (
-    <div className="flex flex-col gap-4 min-h-0">
-      <div className="grid grid-cols-4 gap-4">
-        <KPICard icon={Bot} label="活跃 Agent" value={String(running)} color="#00d4ff" />
-        <KPICard icon={ListTodo} label="执行中" value={String(agents.length)} color="#7c6cf0" />
-        <KPICard icon={Coins} label="Token 用量" value={fmtTokens(tokenTotal)} trend={tokTrend} spark={sparkTok} color="#00d084" />
-        <KPICard icon={DollarSign} label="估算成本" value={fmtCost(cost)} trend={costTrendPct} spark={sparkCost} color="#ffb020" />
-      </div>
-      <div className="grid grid-cols-[1fr_320px] gap-4 min-h-0 flex-1">
-        <div className="flex flex-col gap-4 min-h-0">
-          <div className="flex-1 min-h-0 overflow-auto"><AgentsView agents={agents} snap={snap} /></div>
-        </div>
-        <div className="flex flex-col gap-4 overflow-auto">
-          <CostPanel costs={costs} tokenTotal={tokenTotal} tokenIn={tokenIn} tokenOut={tokenOut} costTrend={costTrend} />
-          <ResourceMonitor resources={resources} />
-        </div>
-      </div>
-    </div>
-  )
-
-  const views = [
-    overview,
-    <AgentsView key="a" agents={agents} snap={snap} />,
-    <ExecutionsView key="e" timeline={timeline} snap={snap} />,
-    <ModelsView key="m" tokenIn={tokenIn} tokenOut={tokenOut} tokenTotal={tokenTotal} snap={snap} />,
-    <MemoryView key="me" snap={snap} />,
-    <ToolsView key="t" snap={snap} />,
-    <MonitoringView key="mo" services={services} snap={snap} />,
-    <DeliveryView key="d" snap={snap} />,
-    <TrustView key="t2" snap={snap} />,
-    <SettingsView key="s" live={live} snap={snap} />,
-  ]
+  const isOverview = view === OVERVIEW_ID
+  const tt = tokenTruth(snap)
+  const rows = executionsToRows(snap)
+  // REAL v3 KPIs (no phantom agents/models/resources):
+  const activeExecs = rows.filter((r) => r.state === 'RUNNING' || r.state === 'STARTING').length
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar active={view} onSelect={setView} />
+    <div data-layout={layout} className="flex h-screen overflow-hidden text-zinc-100">
+      <Sidebar
+        activeView={view}
+        onSelect={(id) => setView(id)}
+        collapsed={layout === 'compact'}
+      />
       <div className="flex-1 flex flex-col min-w-0">
-        <TopStatusBar services={services} />
-        <div className="flex-1 p-4 overflow-auto min-h-0">
-          <div className="flex items-center gap-2 text-[11px] text-zinc-500 mb-4">
-            <span className={"w-1.5 h-1.5 rounded-full " + (live ? 'bg-success status-pulse' : 'bg-warning')} />
-            {live ? '已接入真实数据 · sidecar :61867 · 10s 刷新' : '数据源离线'}
-          </div>
-          {views[view]}
+        <TopStatusBar
+          snap={snap}
+          source={source}
+          live={live}
+          theme={theme}
+          layout={layout}
+          onCycleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+          onCycleLayout={() => setLayout((l) => (l === 'full' ? 'compact' : 'full'))}
+        />
+        <div className="flex-1 overflow-auto p-4">
+          {error && !snap ? (
+            <div className="max-w-xl mx-auto mt-10 panel2 rounded-md p-6 text-center">
+              <div className="text-lg text-error mb-2">数据源不可用</div>
+              <p className="text-xs text-zinc-500 whitespace-pre-wrap">{error}</p>
+              <p className="text-[11px] text-zinc-600 mt-3">
+                保持 UNKNOWN 真相 — 不伪造 Agent / 模型 / 成本 / 资源
+              </p>
+            </div>
+          ) : isOverview ? (
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-4 gap-4">
+                <KPICard
+                  title="项目"
+                  value={String(snap?.projects?.length ?? 0)}
+                  sub="registry"
+                />
+                <KPICard
+                  title="活跃执行"
+                  value={snap ? String(activeExecs) : 'UNKNOWN'}
+                  sub={'共 ' + (snap ? String(rows.length) : '—') + ' 条'}
+                />
+                <KPICard
+                  title="Token"
+                  value={snap ? fmtTokensSafe(tt) : 'UNKNOWN'}
+                  sub={'质量 ' + fmtCostQuality(tt?.costQuality)}
+                />
+                <KPICard
+                  title="数据源"
+                  value={live ? 'LIVE' : snap ? source.toUpperCase() : 'UNKNOWN'}
+                  sub={snap ? ('revision ' + String(snap.revision)) : '等待数据'}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2 panel2 rounded-md p-4 min-h-[300px]">
+                  <ExecutionTable rows={snap ? rows : []} hasData={!!snap} />
+                </div>
+                <div className="flex flex-col gap-4">
+                  <ProjectPanel snap={snap} />
+                  <TokenPanel snap={snap} />
+                </div>
+              </div>
+            </div>
+          ) : view === 'monitoring' ? (
+            <MonitoringView snap={snap} />
+          ) : view === 'trust' ? (
+            <TrustView snap={snap} />
+          ) : view === 'settings' ? (
+            <SettingsView snap={snap} />
+          ) : (
+            (() => {
+              const entry = VIEW_REGISTRY.find((e) => e.id === view)
+              if (!entry || !entry.component) {
+                // Unknown view id (bad URL) -> fall back to Overview; never a
+                // silent false view.
+                setView(OVERVIEW_ID)
+                return null
+              }
+              const C = entry.component
+              return <C snap={snap} />
+            })()
+          )}
         </div>
       </div>
     </div>
   )
+}
+
+// local helper — token formatting for KPI (null -> UNKNOWN)
+function fmtTokensSafe(tt: ReturnType<typeof tokenTruth>): string {
+  if (!tt || tt.totalTokens == null) return 'UNKNOWN'
+  const n = tt.totalTokens
+  return n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : (n / 1e3).toFixed(0) + 'k'
 }

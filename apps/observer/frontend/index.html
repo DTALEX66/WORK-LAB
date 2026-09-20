@@ -1,11 +1,26 @@
 <!doctype html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WORK-LAB Observer · AI Agent Control Tower</title>
+    <!-- U05: theme is URL-driven (?theme=dark|light), NOT a hardcoded class.
+         Pre-render script sets the class before React mounts so there is no
+         theme flash. Default = dark (the design language). Read from the query
+         so the same static build serves both themes. -->
+    <script>
+      (function () {
+        try {
+          var t = new URLSearchParams(location.search).get('theme');
+          var light = t === 'light';
+          var root = document.documentElement;
+          root.classList.toggle('light', light);
+          root.style.colorScheme = light ? 'light' : 'dark';
+        } catch (e) { document.documentElement.classList.add('dark'); }
+      })();
+    </script>
   </head>
-  <body class="bg-bg text-zinc-100">
+  <body class="bg-bg text-ink">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
