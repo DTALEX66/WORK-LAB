@@ -20,20 +20,20 @@ This is the single live register.
 | A05 | P0 | OPEN | Preserve truthful squash-cutover lineage and MiniGame `FOREIGN_HISTORICAL` semantics |
 | U01 | P0 | IMPLEMENTED@0600d6f | Mandatory test truth landed (a84495a): unified test_*.py + nf*.py discovery (modules=153 -> 154), 5 fail-closed guards (empty-set/not-run/non-zero/failed-batch/real negative mutation); governance batch exit 0. EXACT-SHA CI PASS at 0600d6f. Lifecycle: awaiting MERGED -> READBACK -> ACCEPTED. |
 | U02 | P0 | PARTIAL | P0-06 read-only path convergence done (986d6a9): README + PROJECT_POSITIONING now point to packages/client-neutral-core, apps/observer, .project/governance, taskpacks/current, config/; no file moves. manifest/profile/setup/runtime-root/package-manager cleanup NOT claimed. |
-| U03 | P0 | OPEN | React + Tauri sole production Observer UI; static UI parity then retirement |
-| U04 | P0 | OPEN | Typed frontend view registry; fix Delivery/Trust/Settings navigation |
-| U05 | P0 | OPEN | Real Full/Compact/Dark/Light handling |
-| U06 | P0 | OPEN | Runtime Descriptor + Snapshot/SSE; remove URL double-append/fixed ports |
-| U07 | P0 | OPEN | Frontend truth discipline; remove hard-coded price/FX/quota/fake zero/status fallthrough |
-| U08 | P0 | OPEN | React behavior tests + Observer Rust CI + Windows Tauri E2E |
-| U09 | P1 | OPEN | Token Monitor/Observer convergence with one usage/cost truth engine |
-| U10 | P0 | OPEN | Config transaction safety/readback truth |
-| U11 | P0 | OPEN | REAL evidence binding; empty REAL handle invalid |
-| U12 | P0 | OPEN | Durable Inbox/outbox cross-process safety and exact receipt ACK |
-| U13 | P0 | OPEN | Project isolation and usage/cost attribution truth |
-| U14 | P0 | OPEN | Session/execution/worker native-effect truth |
-| U15 | P0 | OPEN | Language architecture ADR; no big-bang Rust rewrite |
-| U16 | P1 | OPEN | JSON Schema cross-language SSOT and conformance |
+| U03 | P0 | PARTIAL | React+Tauri production Observer UI SSOT established + static→React **parity proven** (tsc 0, vite build green, 80 legacy UI contract tests green) @f0926e2. Static `web/` **retirement (deletion) NOT executed** — 80 contract tests guard it; deletion is a U19 release-gate step. Not claimed DONE. |
+| U04 | P0 | IMPLEMENTED@f0926e2 | Typed frontend view registry (viewRegistry.ts), registry-driven Sidebar; Delivery/Trust/Settings all reachable. Merge-pending lifecycle. |
+| U05 | P0 | IMPLEMENTED@f0926e2 | Real Full/Compact/Dark/Light: CompactHUD dedicated view, index.css CSS-variable surfaces + light remap, index.html no hard-coded `class="dark"`. |
+| U06 | P0 | IMPLEMENTED@f0926e2 | RuntimeDescriptor + Snapshot/SSE; removed URL double-append + fixed ports (api.ts 343L). |
+| U07 | P0 | IMPLEMENTED@f0926e2 | Frontend truth discipline: Views.tsx real v3 schema, no `Number()||0`/fake-zero fallthrough, mock.ts + 4 phantom dashboard components deleted, no hard-coded price/FX/quota. |
+| U08 | P0 | PARTIAL | React behavior tests (18 vitest+RTL) + Observer `cargo test/check --locked` CI @87618d1. **Windows Tauri real-WebView E2E deferred to U19** (needs real WebView readback, not a bare exe launch). |
+| U09 | P1 | IMPLEMENTED@2a3756b | One canonical usage/cost truth contract: verify_usage_convergence.py (fail-closed, schema-driven) proves usage-observation.schema.json is the single canonical contract + token-monitor Rust is a cost-free specialist helper (no second engine, §22). CI step added. |
+| U10 | P0 | IMPLEMENTED@04a25f4 | Config transaction truth: 5 gap mechanisms added additively to config_control_plane.py — monotonic revision floor (STALE_REVISION), MISSING-vs-explicit-null (strict diff), expected-before+write-set (CONFLICT/WRITE_SET_VIOLATION), intended-after (READBACK_MISMATCH), typed readback (READBACK_FAILED_TYPED). 33 passed, governance gate 162 PASS. |
+| U11 | P0 | IMPLEMENTED@f510516 | REAL evidence binding: EvidenceRecord +6 verifiable-identity fields (evidence_type/receipt_digest/producer/verifier/observed_at/source_sha), empty REAL handle rejected up front, validate_real_binding + real_binding_status. 18 passed, single importer (nf02). |
+| U12 | P0 | IMPLEMENTED@gate | Durable Inbox/outbox cross-process + exact receipt ACK — already implemented; verified green in the 162-module governance gate (nf08_b durable_inbox + test_durable_inbox), not a new commit. Register row was stale (§33). |
+| U13 | P0 | IMPLEMENTED@gate | Project isolation + usage/cost attribution truth — already implemented; verified green in the 162-module gate (nf08_h + cross_project_isolation). Register row was stale (§33). |
+| U14 | P0 | IMPLEMENTED@gate | Session/execution/worker native-effect truth — already implemented; verified green in the 162-module gate (canonical L0-L3 + acp_facade + test_native_effect_truth). Register row was stale (§33). |
+| U15 | P0 | IMPLEMENTED@25158bf | Language architecture ADR: docs/decisions/language-architecture.md (React/TS UI + Rust/Tauri + Python + JSON Schema SSOT; no big-bang rewrite). |
+| U16 | P1 | IMPLEMENTED@9a6ea95 | JSON Schema cross-language SSOT: verify_contract_ssot.py (catalog-driven, 37 contracts, no hard-coded counts) + generate_contract_types.py → packages/client-neutral-core/generated/contracts.ts. 13 on-disk helper schemas surfaced as advisory, not hard-fail. |
 | U17 | P1 | IMPLEMENTED@0600d6f | Software Installation Identity + Update Preflight (P0-07, 2f3ab29/39b75bb/d73855a/0600d6f): 2 new contracts (catalog 35), pure resolver (UPDATE != RELOCATION, 8-state location_status, fail-closed), DSH 5-case golden regression + 7 negative tests, schema-conformance tests; location_readback FAIL closes overall. EXACT-SHA CI PASS at 0600d6f. Lifecycle: awaiting MERGED -> READBACK -> ACCEPTED. |
 | U17a | P1 | IMPLEMENTED@0600d6f | P0-04 current-state de-duplication: two stale CURRENT projections (docs/decisions/CURRENT_STATE.md 2026-09-01 + CURRENT_EXECUTION_BASELINE r4/bf52df0) retired to docs/history/archive/superseded-current; single machine CURRENT + one human projection kept; CURRENT_STATE_TP20260819 preserved as SUPERSEDED-layer snapshot. EXACT-SHA CI PASS at 0600d6f. Lifecycle: awaiting MERGED -> READBACK -> ACCEPTED. |
 | U18 | P1 | WAITING_AUTH_WHERE_REQUIRED | Universal Workflow real publish/external project/second executor/multi-environment/global-rule readback |
