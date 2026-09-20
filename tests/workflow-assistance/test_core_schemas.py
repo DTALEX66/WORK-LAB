@@ -49,6 +49,7 @@ EXPECTED = {
     "software-installation-identity.schema.json",
     "software-update-preflight.schema.json",
     "execution-parallel-dispatch.schema.json",
+    "software-update-postflight.schema.json",
 }
 
 

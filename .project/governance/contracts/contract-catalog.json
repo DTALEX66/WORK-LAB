@@ -332,6 +332,16 @@
         "observer",
         "ci"
       ]
+    },
+    {
+      "id": "software-update-postflight",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/software-update-postflight.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
     }
   ],
   "breakingChange": "version-plus-migration-fixture",

@@ -47,6 +47,7 @@ EXPECTED = {
     "software-installation-identity": "workflow",
     "software-update-preflight": "workflow",
     "execution-parallel-dispatch": "workflow",
+    "software-update-postflight": "workflow",
 }
 CANONICAL_SCHEMA_PREFIXES = {
     "module-profile": (".project/governance/",),
@@ -87,6 +88,7 @@ CANONICAL_SCHEMA_PREFIXES = {
     "software-installation-identity": ("packages/contracts/",),
     "software-update-preflight": ("packages/contracts/",),
     "execution-parallel-dispatch": ("packages/contracts/",),
+    "software-update-postflight": ("packages/contracts/",),
 }
 
 
