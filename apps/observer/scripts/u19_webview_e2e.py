@@ -294,8 +294,13 @@ def main() -> int:
         # --- stage 2: launch the real Tauri shell against the real backend ---
         env = dict(os.environ)
         env["WORK_LAB_OBSERVER_API_URL"] = base + "/api/v1/snapshot"
-        # WebView2 remote debugging (CDP) — no app code change.
-        env["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = f"--remote-debugging-port={cdp_port}"
+        # WebView2 remote debugging (CDP) — no app code change. Modern WebView2
+        # (Chromium 111+) requires --remote-allow-origins=* for a non-browser
+        # CDP client to attach; without it /json/list refuses an empty target
+        # list and the readback sees "no CDP page target".
+        env["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = (
+            f"--remote-debugging-port={cdp_port} --remote-allow-origins=*"
+        )
         env["NO_AUTO_UPDATE"] = "1"
         app = subprocess.Popen(
             [str(exe)], cwd=str(OBS / "src-tauri"), env=env,
