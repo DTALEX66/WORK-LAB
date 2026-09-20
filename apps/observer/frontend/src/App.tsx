@@ -14,6 +14,7 @@ import {
   type ThemeMode, type LayoutMode,
 } from '@/lib/api'
 import { VIEW_REGISTRY, OVERVIEW_ID } from '@/lib/viewRegistry'
+import { announce } from '@/lib/a11y'
 
 type ViewId = string
 
@@ -65,6 +66,24 @@ export default function App() {
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
   const toggleLayout = () => setLayout((l) => (l === 'full' ? 'compact' : 'full'))
   const isCompact = layout === 'compact'
+
+  // U03/WlA11y parity: announce theme transitions to assistive tech (the static
+  // web/ surface did this via WlA11y.announce on theme switch).
+  useEffect(() => {
+    announce(theme === 'dark' ? '已切换为深色主题' : '已切换为浅色主题')
+  }, [theme])
+
+  // U03/WlA11y parity: announce data-source transitions (LIVE / STALE /
+  // OFFLINE) — the four state words the static surface announced verbatim.
+  useEffect(() => {
+    if (error && !snap) {
+      announce('实时数据不可用，界面显示 OFFLINE（不加载假数据）')
+    } else if (live) {
+      announce('已加载实时投影数据')
+    } else if (snap && source === 'stale') {
+      announce('实时数据不可用，已保留上次良好投影（last-good，标记为 STALE）')
+    }
+  }, [snap, source, live, error])
 
   const mainContent = (
     error && !snap ? (
