@@ -170,6 +170,30 @@ pub fn run() {
             // Close button hides to tray instead of quitting (portable, tray-friendly).
             let _ = handle;
 
+            // U19 (E2E): opt-in, default-OFF CDP probe window. In the shipped
+            // binary this block is inert unless WORK_LAB_U19_CDP_PORT is set
+            // (CI E2E + local harness). The probe window hosts the SAME
+            // frontend; only ITS WebView2 environment carries
+            // --remote-debugging-port, so the production main/panel webviews
+            // are untouched. (The WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS env
+            // var is NOT consumed by wry — it always passes app-level args —
+            // so the args must go through this builder hook.)
+            if let Ok(cdpp) = std::env::var("WORK_LAB_U19_CDP_PORT") {
+                let args = format!(
+                    "--remote-debugging-port={cdpp} --remote-allow-origins=*"
+                );
+                let url = tauri::WebviewUrl::App(
+                    "index.html?view=full&mode=UNKNOWN&theme=dark".into(),
+                );
+                if let Ok(w) = tauri::WebviewWindowBuilder::new(app, "u19cdp", url)
+                    .additional_browser_args(args.as_str())
+                    .build()
+                {
+                    let _ = w.show();
+                    log::info!(target: "u19", "cdp probe window ready");
+                }
+            }
+
             // If opened as the main window only, focus it.
             Ok(())
         })
