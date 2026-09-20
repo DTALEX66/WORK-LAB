@@ -279,6 +279,24 @@ def _gdi_render_proof(app_pid: int) -> dict:
     except Exception as e:  # pragma: no cover - only non-Windows
         return {"status": "unavailable", "reason": "no win32 ctypes: " + repr(e)}
 
+    # Strict argtypes (x64 ABI). Note the real export owners:
+    #   user32: GetDC / ReleaseDC / PrintWindow
+    #   gdi32 : CreateCompatibleDC / CreateCompatibleBitmap / SelectObject /
+    #           DeleteDC / DeleteObject / GetBitmapBits
+    u32.GetWindowThreadProcessId.argtypes = [wt.HWND, ctypes.POINTER(wt.DWORD)]
+    u32.GetClientRect.argtypes = [wt.HWND, ctypes.POINTER(wt.INT), ctypes.POINTER(wt.INT)]
+    u32.EnumWindows.argtypes = [ctypes.WINFUNCTYPE(ctypes.c_int, wt.HWND, wt.LPARAM), wt.LPARAM]
+    u32.IsWindowVisible.argtypes = [wt.HWND]
+    u32.GetDC.argtypes = [wt.HWND]
+    u32.ReleaseDC.argtypes = [wt.HWND, wt.HDC]
+    u32.PrintWindow.argtypes = [wt.HWND, wt.HDC, ctypes.c_uint]
+    g32.CreateCompatibleDC.argtypes = [wt.HDC]
+    g32.CreateCompatibleBitmap.argtypes = [wt.HDC, wt.INT, wt.INT]
+    g32.SelectObject.argtypes = [wt.HDC, wt.HANDLE]
+    g32.GetBitmapBits.argtypes = [wt.HANDLE, ctypes.c_ulong, ctypes.c_void_p]
+    g32.DeleteObject.argtypes = [wt.HANDLE]
+    g32.DeleteDC.argtypes = [wt.HDC]
+
     # 1) find the app's capturable top-level windows (sizeable, not the tray)
     found = {}
     def _enum(hwnd, _):
@@ -298,11 +316,11 @@ def _gdi_render_proof(app_pid: int) -> dict:
 
     analysis = []
     for hwnd, (w, h, visible) in found.items():
-        scr_dc = g32.GetDC(0)
+        scr_dc = u32.GetDC(0)
         mem_dc = g32.CreateCompatibleDC(scr_dc)
         hbm = g32.CreateCompatibleBitmap(scr_dc, w, h)
         old = g32.SelectObject(mem_dc, hbm)
-        ok = g32.PrintWindow(hwnd, mem_dc, 2)  # PW_RENDERFULLCONTENT
+        ok = u32.PrintWindow(hwnd, mem_dc, 2)  # PW_RENDERFULLCONTENT
         data_size = w * h * 4
         buf = ctypes.create_string_buffer(data_size)
         n = ctypes.c_size_t(data_size)
@@ -310,7 +328,7 @@ def _gdi_render_proof(app_pid: int) -> dict:
         g32.SelectObject(mem_dc, old)
         g32.DeleteObject(hbm)
         g32.DeleteDC(mem_dc)
-        g32.ReleaseDC(0, scr_dc)
+        u32.ReleaseDC(0, scr_dc)
         if not ok or not got:
             analysis.append({"hwnd": hwnd, "w": w, "h": h, "visible": visible,
                              "capture": "failed"})
