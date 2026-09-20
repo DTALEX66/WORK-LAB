@@ -8,6 +8,7 @@ import { TokenPanel } from '@/components/dashboard/TokenPanel'
 import {
   MonitoringView, TrustView, SettingsView,
 } from '@/views/Views'
+import { CompactHUD } from '@/views/CompactHUD'
 import {
   useLiveSnapshot, fmtCostQuality, tokenTruth, executionsToRows,
   type ThemeMode, type LayoutMode,
@@ -61,12 +62,103 @@ export default function App() {
   // REAL v3 KPIs (no phantom agents/models/resources):
   const activeExecs = rows.filter((r) => r.state === 'RUNNING' || r.state === 'STARTING').length
 
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
+  const toggleLayout = () => setLayout((l) => (l === 'full' ? 'compact' : 'full'))
+  const isCompact = layout === 'compact'
+
+  const mainContent = (
+    error && !snap ? (
+      <div className="max-w-xl mx-auto mt-10 panel2 rounded-md p-6 text-center">
+        <div className="text-lg text-error mb-2">数据源不可用</div>
+        <p className="text-xs text-zinc-500 whitespace-pre-wrap">{error}</p>
+        <p className="text-[11px] text-zinc-600 mt-3">
+          保持 UNKNOWN 真相 — 不伪造 Agent / 模型 / 成本 / 资源
+        </p>
+      </div>
+    ) : isOverview ? (
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-4 gap-4">
+          <KPICard
+            title="项目"
+            value={String(snap?.projects?.length ?? 0)}
+            sub="registry"
+          />
+          <KPICard
+            title="活跃执行"
+            value={snap ? String(activeExecs) : 'UNKNOWN'}
+            sub={'共 ' + (snap ? String(rows.length) : '—') + ' 条'}
+          />
+          <KPICard
+            title="Token"
+            value={snap ? fmtTokensSafe(tt) : 'UNKNOWN'}
+            sub={'质量 ' + fmtCostQuality(tt?.costQuality)}
+          />
+          <KPICard
+            title="数据源"
+            value={live ? 'LIVE' : snap ? source.toUpperCase() : 'UNKNOWN'}
+            sub={snap ? ('revision ' + String(snap.revision)) : '等待数据'}
+          />
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-2 panel2 rounded-md p-4 min-h-[300px]">
+            <ExecutionTable rows={snap ? rows : []} hasData={!!snap} />
+          </div>
+          <div className="flex flex-col gap-4">
+            <ProjectPanel snap={snap} />
+            <TokenPanel snap={snap} />
+          </div>
+        </div>
+      </div>
+    ) : view === 'monitoring' ? (
+      <MonitoringView snap={snap} />
+    ) : view === 'trust' ? (
+      <TrustView snap={snap} />
+    ) : view === 'settings' ? (
+      <SettingsView snap={snap} />
+    ) : (
+      (() => {
+        const entry = VIEW_REGISTRY.find((e) => e.id === view)
+        if (!entry || !entry.component) {
+          // Unknown view id (bad URL) -> fall back to Overview; never a
+          // silent false view.
+          setView(OVERVIEW_ID)
+          return null
+        }
+        const C = entry.component
+        return <C snap={snap} />
+      })()
+    )
+  )
+
+  // U05: compact is a DEDICATED HUD — no sidebar, single column, 320px-safe.
+  // full keeps the sidebar + multi-panel layout.
+  if (isCompact) {
+    return (
+      <div data-layout={layout} className="flex h-screen overflow-hidden text-ink">
+        <div className="flex-1 flex flex-col min-w-0">
+          <TopStatusBar
+            snap={snap}
+            source={source}
+            live={live}
+            theme={theme}
+            layout={layout}
+            onCycleTheme={toggleTheme}
+            onCycleLayout={toggleLayout}
+          />
+          <div className="flex-1">
+            <CompactHUD snap={snap} live={live} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div data-layout={layout} className="flex h-screen overflow-hidden text-zinc-100">
+    <div data-layout={layout} className="flex h-screen overflow-hidden text-ink">
       <Sidebar
         activeView={view}
         onSelect={(id) => setView(id)}
-        collapsed={layout === 'compact'}
+        collapsed={false}
       />
       <div className="flex-1 flex flex-col min-w-0">
         <TopStatusBar
@@ -75,72 +167,10 @@ export default function App() {
           live={live}
           theme={theme}
           layout={layout}
-          onCycleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-          onCycleLayout={() => setLayout((l) => (l === 'full' ? 'compact' : 'full'))}
+          onCycleTheme={toggleTheme}
+          onCycleLayout={toggleLayout}
         />
-        <div className="flex-1 overflow-auto p-4">
-          {error && !snap ? (
-            <div className="max-w-xl mx-auto mt-10 panel2 rounded-md p-6 text-center">
-              <div className="text-lg text-error mb-2">数据源不可用</div>
-              <p className="text-xs text-zinc-500 whitespace-pre-wrap">{error}</p>
-              <p className="text-[11px] text-zinc-600 mt-3">
-                保持 UNKNOWN 真相 — 不伪造 Agent / 模型 / 成本 / 资源
-              </p>
-            </div>
-          ) : isOverview ? (
-            <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-4 gap-4">
-                <KPICard
-                  title="项目"
-                  value={String(snap?.projects?.length ?? 0)}
-                  sub="registry"
-                />
-                <KPICard
-                  title="活跃执行"
-                  value={snap ? String(activeExecs) : 'UNKNOWN'}
-                  sub={'共 ' + (snap ? String(rows.length) : '—') + ' 条'}
-                />
-                <KPICard
-                  title="Token"
-                  value={snap ? fmtTokensSafe(tt) : 'UNKNOWN'}
-                  sub={'质量 ' + fmtCostQuality(tt?.costQuality)}
-                />
-                <KPICard
-                  title="数据源"
-                  value={live ? 'LIVE' : snap ? source.toUpperCase() : 'UNKNOWN'}
-                  sub={snap ? ('revision ' + String(snap.revision)) : '等待数据'}
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-2 panel2 rounded-md p-4 min-h-[300px]">
-                  <ExecutionTable rows={snap ? rows : []} hasData={!!snap} />
-                </div>
-                <div className="flex flex-col gap-4">
-                  <ProjectPanel snap={snap} />
-                  <TokenPanel snap={snap} />
-                </div>
-              </div>
-            </div>
-          ) : view === 'monitoring' ? (
-            <MonitoringView snap={snap} />
-          ) : view === 'trust' ? (
-            <TrustView snap={snap} />
-          ) : view === 'settings' ? (
-            <SettingsView snap={snap} />
-          ) : (
-            (() => {
-              const entry = VIEW_REGISTRY.find((e) => e.id === view)
-              if (!entry || !entry.component) {
-                // Unknown view id (bad URL) -> fall back to Overview; never a
-                // silent false view.
-                setView(OVERVIEW_ID)
-                return null
-              }
-              const C = entry.component
-              return <C snap={snap} />
-            })()
-          )}
-        </div>
+        <div className="flex-1 overflow-auto p-4">{mainContent}</div>
       </div>
     </div>
   )

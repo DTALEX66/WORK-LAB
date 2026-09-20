@@ -68,3 +68,19 @@ html.light {
   @keyframes statusPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   .count-up { transition: opacity 0.2s; }
 }
+
+/*
+U05/U19 (taskpack 20260919): Compact HUD is a dedicated single-column surface.
+320px-safe by construction: no min-width that would force horizontal scroll,
+numeric values use tabular-nums + truncate, and the 4-KPI strip reflows.
+*/
+@layer components {
+  .compact-hud { min-width: 0; }
+  .compact-hud * { min-width: 0; }
+  [data-layout="compact"] { min-width: 320px; }
+  [data-layout="compact"] .tabular-nums { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  @media (prefers-reduced-motion: reduce) {
+    .status-pulse { animation: none; }
+    .count-up { transition: none; }
+  }
+}

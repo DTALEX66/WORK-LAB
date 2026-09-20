@@ -184,6 +184,14 @@ jobs:
           npm ci
           npm run typecheck
           npm run build
+      # U08: the observer desktop crate is a real Tauri 2 crate (src-tauri).
+      # Mirror the token-monitor job: test + check the locked Rust desktop crate.
+      # ubuntu-latest ships rust; --locked keeps the dependency tree exact.
+      - name: Test locked observer Rust desktop crate
+        working-directory: apps/observer/src-tauri
+        run: |
+          cargo test --locked
+          cargo check --locked
 
   supply-chain-security:
     name: supply-chain-security
