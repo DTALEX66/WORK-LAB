@@ -156,7 +156,7 @@ jobs:
     needs: plan
     if: needs.plan.outputs.run_observer == 'true'
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     env:
       PYTHONPATH: src:scripts
     defaults:
@@ -194,6 +194,18 @@ jobs:
         run: |
           cargo test --locked
           cargo check --locked
+      # U19 — WINDOWS_TAURI_E2E: real native-shell readback. CI windows-latest
+      # has the complete MSVC toolchain (the local GNU chain lacks a link.exe,
+      # so only CI can build a runnable exe) + the WebView2 runtime. Build the
+      # real binary, then drive the full chain: real sidecar v3 backend ->
+      # real app.exe -> WebView2 CDP readback (non-about:blank). The harness
+      # is fail-closed: any stage it cannot prove is reported FAIL, never a
+      # fabricated PASS. Evidence lands in .project-local/runs/.
+      - name: Build the real Tauri desktop binary (MSVC, for U19 E2E)
+        working-directory: apps/observer/src-tauri
+        run: cargo build --release --locked
+      - name: U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)
+        run: python scripts/u19_webview_e2e.py
 
   supply-chain-security:
     name: supply-chain-security
