@@ -240,6 +240,10 @@ jobs:
           python tests/ci/test_aggregate_gate.py
       - name: Verify contract catalog references
         run: python scripts/ci/verify_contract_catalog.py
+      - name: Generate contract TS projection (U16 SSOT)
+        run: python scripts/ci/generate_contract_types.py
+      - name: Verify cross-language contract SSOT (U16)
+        run: python scripts/ci/verify_contract_ssot.py
       - name: Verify typed module dependencies
         run: python scripts/ci/verify_module_dependencies.py
       - name: Verify project data boundary
