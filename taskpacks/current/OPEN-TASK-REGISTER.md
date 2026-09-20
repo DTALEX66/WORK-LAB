@@ -8,6 +8,7 @@
 This is the single live register.
 
 > 2026-09-20 reconciliation: rows A03/A04/U01/U17/U17a are IMPLEMENTED and EXACT-SHA CI VERIFIED at head `0600d6f` (work-lab-gate 35460820372 / wlr-060 35460820357, both success). They are NOT DONE: lifecycle MERGED -> READBACK -> ACCEPTED not yet reached (merge_main=false; no main merge). U02 is PARTIAL (read-only path convergence only).
+> 2026-09-20 reconciliation (2nd pass, branch head `656e7d2` on u17/global-agent-policy-20260918, merge_main=false): new rows U20 (real-time parallel agent-invocation P1-P3: commits 69e1025/2d92c6d/c367e22/bc3fe85, CI dual gate @bc3fe85 work-lab-gate 35468657962 + wlr-060 35468657960, both success) and U21 (software-update-postflight anti-recurrence gate + DSH update/maintenance RUNBOOK: commits 99bb300/656e7d2, contract catalog 36->37, CI dual gate @656e7d2 work-lab-gate 35518131963/35518131413 + wlr-060 35518131297/35518131970, all success). Handoffs: docs/history/archive/session-history/WORK-LAB/WORK-LAB-PARALLEL-DISPATCH-HANDOFF-2026-09-20.md and WORK-LAB-DSH-UPDATE-MAINTENANCE-RUNBOOK-2026-09-20.md.
 
 | ID | Priority | Status | Work |
 |---|---|---|---|
@@ -37,6 +38,8 @@ This is the single live register.
 | U17a | P1 | IMPLEMENTED@0600d6f | P0-04 current-state de-duplication: two stale CURRENT projections (docs/decisions/CURRENT_STATE.md 2026-09-01 + CURRENT_EXECUTION_BASELINE r4/bf52df0) retired to docs/history/archive/superseded-current; single machine CURRENT + one human projection kept; CURRENT_STATE_TP20260819 preserved as SUPERSEDED-layer snapshot. EXACT-SHA CI PASS at 0600d6f. Lifecycle: awaiting MERGED -> READBACK -> ACCEPTED. |
 | U18 | P1 | WAITING_AUTH_WHERE_REQUIRED | Universal Workflow real publish/external project/second executor/multi-environment/global-rule readback |
 | U19 | P0 RELEASE | OPEN | Full Windows product E2E and exact-SHA release gate |
+| U20 | P1 | IMPLEMENTED@bc3fe85 | Real-time parallel agent-invocation (P1-P3): `ParallelDispatcher.fanout`/streaming events (services/execution-federation/parallel_dispatch.py), contract `execution-parallel-dispatch` (catalog 36), passive receipts evidence adapter (services/receipts/parallel_dispatch_evidence.py); tests 31 green; dual-gate CI @bc3fe85 success. Lifecycle: awaiting MERGED -> READBACK -> ACCEPTED (merge_main=false). |
+| U21 | P1 | IMPLEMENTED@656e7d2 | DSH update anti-recurrence hardening: `software-update-postflight` pure gate module + contract (catalog 37, closed 10-value reasons enum, 21 tests incl. 12 negative controls: NSIS .lnk reset / DSH_HOME session-freeze C-fallback / resources\app wipe each fail-closed) + WORK-LAB-DSH-UPDATE-MAINTENANCE-RUNBOOK-2026-09-20.md (7-step SOP + 3 traps + rollback). Dual-gate CI @656e7d2 success. Lifecycle: awaiting MERGED -> READBACK -> ACCEPTED (merge_main=false). |
 | B3 | P1 | MAPPED_U17 | Codex/DSH governance follow-up from legacy OPEN register |
 | C1 | P1 | MAPPED_U17 | ACP/MCP/AG-UI/model-alias adaptation |
 | C4 | P1 | MAPPED_U14_U18 | Real Codex cancellation |
