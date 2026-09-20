@@ -24,6 +24,18 @@ LAYER_ORDER = ["session_override", "project_override", "user_profile", "machine_
 # Safety policy cannot be overridden.
 SAFETY_KEYS = {"safety_boundary", "approval_required", "credential_redaction"}
 
+# U10: a key that is ABSENT from a config snapshot is not the same thing as a
+# key explicitly set to null.  A bare sentinel distinguishes the two; .get()
+# would conflate them (both -> None) and hide real config semantics.
+_MISSING = object()
+
+
+def _json_default(obj):
+    """JSON encoder for diff payloads that may carry the _MISSING sentinel."""
+    if obj is _MISSING:
+        return "WORKLAB_MISSING"
+    return str(obj)
+
 
 @dataclass
 class SoftwareRegistration:
@@ -55,6 +67,15 @@ class ConfigControlPlane:
     def __init__(self) -> None:
         self._software: dict[str, SoftwareRegistration] = {}
         self._layers: dict[str, dict[str, Any]] = {k: {} for k in LAYER_ORDER}
+        # U10: per-software monotonic revision floor.  A commit advances the
+        # floor to revision+1; a later transaction claiming a revision below
+        # the floor is rejected STALE_REVISION, so a concurrent writer can
+        # never silently overwrite a newer commit.
+        self._revision: dict[str, int] = {}
+
+    def current_revision(self, software_id: str) -> int:
+        """U10: the current monotonic revision floor for a software."""
+        return self._revision.get(software_id, 0)
 
     def register(self, reg: SoftwareRegistration) -> None:
         self._software[reg.software_id] = reg
@@ -81,8 +102,25 @@ class ConfigControlPlane:
             merged["softwareId"] = software_id
         return merged
 
-    def diff(self, before: dict[str, Any], after: dict[str, Any]) -> dict[str, Any]:
-        changed = {k: {"before": before.get(k), "after": after.get(k)} for k in set(before) | set(after) if before.get(k) != after.get(k)}
+    def diff(self, before: dict[str, Any], after: dict[str, Any], *,
+             strict_missing: bool = False) -> dict[str, Any]:
+        """Produce a field diff.
+
+        With ``strict_missing`` (U10: MISSING-vs-explicit-null), a key that is
+        ABSENT from ``before`` is reported with before=_MISSING, while a key
+        explicitly set to None is reported with before=None — the two are no
+        longer conflated.  Default keeps the frozen .get() semantics.
+        """
+        changed = {}
+        for k in set(before) | set(after):
+            if strict_missing:
+                bval = before.get(k, _MISSING)
+                aval = after.get(k, _MISSING)
+            else:
+                bval = before.get(k)
+                aval = after.get(k)
+            if bval != aval:
+                changed[k] = {"before": bval, "after": aval}
         return {"changedFields": changed, "changeCount": len(changed)}
 
     def readback_matches(self, applied: dict[str, Any], readback: dict[str, Any]) -> bool:
@@ -107,7 +145,10 @@ class ConfigControlPlane:
     def transaction(self, software_id: str, diff: dict[str, Any], *, approved: bool = False,
                     backup_dir: str | None = None, apply_fn=None, readback_fn=None,
                     idempotency_key: str | None = None, rollback_fn=None,
-                    simulated: bool = False) -> dict[str, Any]:
+                    simulated: bool = False, revision: int | None = None,
+                    expected_before: dict[str, Any] | None = None,
+                    write_set: list[str] | None = None,
+                    expected_after: dict[str, Any] | None = None) -> dict[str, Any]:
         """Adapter callback transaction; this is not durable transaction storage.
         The idempotency key is a receipt identifier, not replay prevention.
         Rollback requires a callback and a matching readback. Unapproved never writes live.
@@ -140,8 +181,25 @@ class ConfigControlPlane:
             idem = hashlib.sha256(idempotency_key.encode()).hexdigest()[:16]
         else:
             idem = hashlib.sha256(
-                (software_id + json.dumps(diff, sort_keys=True)).encode()
+                (software_id + json.dumps(diff, sort_keys=True, default=_json_default)).encode()
             ).hexdigest()[:16]
+        # --- U10 pre-flight truth gates (before anything writes live) ----
+        # 1. monotonic revision floor: a writer claiming a stale revision must
+        #    be rejected so a concurrent newer commit can't be clobbered.
+        if revision is not None:
+            floor = self._revision.get(software_id, 0)
+            if revision < floor:
+                return {"status": "STALE_REVISION", "idempotencyKey": idem,
+                        "requestedRevision": revision, "currentRevision": floor,
+                        "simulated": simulated}
+        # 2. optimistic expected_before: the caller declares the state it read.
+        #    If live before has drifted from it, refuse to write (CONFLICT).
+        if expected_before is not None and any(
+                effective_before.get(k, _MISSING) != v for k, v in expected_before.items()):
+            return {"status": "CONFLICT", "idempotencyKey": idem,
+                    "expectedBefore": expected_before, "liveBefore": effective_before,
+                    "simulated": simulated}
+
         if not approved:
             return {"status": "WAITING_APPROVAL", "idempotencyKey": idem, "changeCount": diff.get("changeCount", 0)}
 
@@ -173,9 +231,40 @@ class ConfigControlPlane:
                     "backupRef": str(backup_ref) if backup_ref else None,
                     "simulated": simulated}
 
+        # --- U10 write-set enforcement (after a successful apply) --------
+        # When the caller declared the keys it is allowed to touch, any key the
+        # apply introduced outside that set is a violation — the operation must
+        # not be counted as a commit even though apply_fn "succeeded".
+        if write_set is not None and isinstance(apply_result, dict):
+            allowed = set(write_set)
+            smuggled = sorted(k for k in apply_result if k not in allowed)
+            if smuggled:
+                return {"status": "WRITE_SET_VIOLATION", "idempotencyKey": idem,
+                        "writeSet": sorted(allowed), "smuggledKeys": smuggled,
+                        "committed": False, "simulated": simulated,
+                        "backupRef": str(backup_ref) if backup_ref else None}
+
         # readback (must match applied effective)
         if readback_fn is not None:
             readback = readback_fn()
+            # --- U10 typed readback gate: a non-dict readback is a distinct,
+            #     honest failure — never coerced into a commit / drift-clean.
+            if not isinstance(readback, dict):
+                return {"status": "READBACK_FAILED_TYPED", "idempotencyKey": idem,
+                        "committed": False, "restored": False,
+                        "readbackType": type(readback).__name__,
+                        "simulated": simulated,
+                        "backupRef": str(backup_ref) if backup_ref else None}
+            # --- U10 intended-after verification: if the caller declared the
+            #     state the live config must read back to, a mismatch is a
+            #     distinct failure (apply "succeeded" yet landed elsewhere).
+            if expected_after is not None and any(
+                    readback.get(k, _MISSING) != v for k, v in expected_after.items()):
+                return {"status": "READBACK_MISMATCH", "idempotencyKey": idem,
+                        "committed": False, "restored": False,
+                        "expectedAfter": expected_after, "observedAfter": readback,
+                        "simulated": simulated,
+                        "backupRef": str(backup_ref) if backup_ref else None}
             drift = self.detect_drift(apply_result if isinstance(apply_result, dict) else {}, readback)
             if drift["status"] == "DRIFT":
                 # rollback to backup
@@ -197,10 +286,17 @@ class ConfigControlPlane:
                         "idempotencyKey": idem, "drift": drift, "restored": restored,
                         "simulated": simulated,
                         "backupRef": str(backup_ref) if backup_ref else None}
+            # U10: a true, verified commit advances the monotonic revision floor.
+            if revision is not None:
+                self._revision[software_id] = revision + 1
+            else:
+                self._revision[software_id] = self._revision.get(software_id, 0) + 1
             suf = "_SIMULATED" if simulated else ""
             return {"status": "COMMITTED" + suf, "idempotencyKey": idem,
                     "backupRef": str(backup_ref) if backup_ref else None, "receipt": idem,
+                    "committed": True, "revision": self._revision[software_id],
                     "simulated": simulated}
         suf = "_SIMULATED" if simulated else ""
         return {"status": "APPLIED_NO_READBACK" + suf, "idempotencyKey": idem,
-                "backupRef": str(backup_ref) if backup_ref else None, "simulated": simulated}
+                "backupRef": str(backup_ref) if backup_ref else None, "committed": False,
+                "simulated": simulated}
