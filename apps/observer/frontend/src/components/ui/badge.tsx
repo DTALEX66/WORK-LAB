@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
-type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'muted'
+export type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'muted'
 
 const variants: Record<BadgeVariant, string> = {
   success: 'bg-success/10 text-success border-success/20',

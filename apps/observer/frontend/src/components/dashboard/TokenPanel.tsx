@@ -18,8 +18,8 @@ export function TokenPanel({ snap }: { snap: SnapshotV3 | null }) {
       </div>
       <div className="p-4 flex flex-col gap-3">
         {[
-          { label: '输入', value: inT, color: '#00d4ff' },
-          { label: '输出', value: outT, color: '#7c6cf0' },
+          { label: '输入', value: inT, color: 'rgb(var(--primary-rgb))' },
+          { label: '输出', value: outT, color: 'rgb(var(--secondary-rgb))' },
         ].map((d) => (
           <div key={d.label}>
             <div className="flex justify-between text-xs mb-1">

@@ -39,3 +39,6 @@ config/.backups/
 **/.backups/
 .project-local/
 *.tsbuildinfo
+
+# UI design-reference assets (extracted from the UI kit; design reference, not shipped source)
+.ui-reference/

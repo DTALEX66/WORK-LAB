@@ -152,8 +152,8 @@ export function ModelsView({ snap }: { snap: Snap }) {
   const max = Math.max(inT ?? 0, outT ?? 0, 1)
   const projects: Project[] = snap?.projects || []
   const dist = [
-    { name: '输入 Token', value: inT, color: '#00d4ff' },
-    { name: '输出 Token', value: outT, color: '#7c6cf0' },
+    { name: '输入 Token', value: inT, color: 'rgb(var(--primary-rgb))' },
+    { name: '输出 Token', value: outT, color: 'rgb(var(--secondary-rgb))' },
   ]
   return (
     <div className="flex flex-col gap-4">

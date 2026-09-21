@@ -10,12 +10,19 @@ import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, Bot, PlayCircle, Cpu, Brain, Wrench, Activity,
   Package, ShieldCheck, Settings,
+  ScrollText, History, CheckCircle2, Plug, PackageCheck,
 } from 'lucide-react'
 import {
   AgentsView, ExecutionsView, ModelsView, MemoryView, ToolsView,
   MonitoringView, DeliveryView, TrustView, SettingsView,
 } from '@/views/Views'
 import { SoftwareView } from '@/views/SoftwareView'
+// UI_VIEWS (20260921): five L7-aligned governance lanes (honest projections).
+import { RulesPolicyView } from '@/views/RulesPolicyView'
+import { AuditTrailView } from '@/views/AuditTrailView'
+import { ApprovalsView } from '@/views/ApprovalsView'
+import { IntegrationsView } from '@/views/IntegrationsView'
+import { TaskPacksView } from '@/views/TaskPacksView'
 
 export interface ViewEntry {
   id: string
@@ -23,7 +30,11 @@ export interface ViewEntry {
   icon: LucideIcon
   component: ComponentType<any>
   /** taskpack lane the view satisfies */
-  lane: 'overview' | 'agents' | 'executions' | 'models' | 'memory' | 'tools' | 'monitoring' | 'delivery' | 'trust' | 'settings' | 'software'
+  lane:
+    | 'overview' | 'agents' | 'executions' | 'models' | 'memory' | 'tools'
+    | 'monitoring' | 'delivery' | 'trust' | 'settings' | 'software'
+    // UI_VIEWS (20260921): L7 governance lanes
+    | 'rules-policy' | 'audit' | 'approvals' | 'integrations' | 'task-packs'
 }
 
 // TaskPack U04 lanes: Overview, Projects, Agents, Executions, Models/Usage,
@@ -43,6 +54,14 @@ export const VIEW_REGISTRY: ViewEntry[] = [
   // surfaced instead of a false "Healthy").
   { id: 'software',     label: '软件',   icon: LayoutDashboard, component: SoftwareView,     lane: 'software' },
   { id: 'settings',     label: '设置',   icon: Settings,        component: SettingsView,   lane: 'settings' },
+  // UI_VIEWS (20260921): L7-aligned governance lanes (honest projections,
+  // read-only; each view renders an EmptyState/UnknownState when its data
+  // source is absent from the snapshot).
+  { id: 'rules-policy', label: '规则策略', icon: ScrollText,    component: RulesPolicyView, lane: 'rules-policy' },
+  { id: 'audit',        label: '审计追踪', icon: History,       component: AuditTrailView,  lane: 'audit' },
+  { id: 'approvals',    label: '审批中心', icon: CheckCircle2,  component: ApprovalsView,   lane: 'approvals' },
+  { id: 'integrations', label: '集成/MCP', icon: Plug,          component: IntegrationsView, lane: 'integrations' },
+  { id: 'task-packs',   label: '任务包',   icon: PackageCheck,  component: TaskPacksView,   lane: 'task-packs' },
 ]
 
 export const VIEW_BY_ID: Record<string, ViewEntry> = Object.fromEntries(

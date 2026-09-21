@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopStatusBar } from '@/components/layout/TopStatusBar'
 import { KPICard } from '@/components/dashboard/KPICard'
 import { ExecutionTable } from '@/components/dashboard/ExecutionTable'
 import { ProjectPanel } from '@/components/dashboard/ProjectPanel'
 import { TokenPanel } from '@/components/dashboard/TokenPanel'
+import { CommandPalette, type PaletteItem } from '@/components/ui/command-palette'
 import {
   MonitoringView, TrustView, SettingsView,
 } from '@/views/Views'
@@ -52,10 +53,81 @@ export default function App() {
   // U06/SSE: live snapshot — first poll + server-sent events, no fixed ports.
   const { snap, source, live, error } = useLiveSnapshot()
 
+  // UI_SHELL (20260921): desktop rail collapse + mobile drawer + command palette.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  const openPalette = useCallback(() => setPaletteOpen(true), [])
+  const closePalette = useCallback(() => setPaletteOpen(false), [])
+
+  // L6 keyboard authority: global Ctrl/Cmd+K toggles the command palette.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen((o) => !o)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  // CommandPalette items = every reachable view (jump = setView) plus the
+  // theme/layout actions. Deep-link mechanism (?view=/theme=/layout=) is
+  // unchanged — selecting just calls setView, which the existing URL writer
+  // (useEffect below) persists.
+  const paletteItems = useMemo<PaletteItem[]>(() => {
+    const viewItems: PaletteItem[] = [
+      { id: 'nav-overview', label: '总览', group: '跳转', run: () => setView(OVERVIEW_ID) },
+      ...VIEW_REGISTRY.map((e): PaletteItem => ({
+        id: 'nav-' + e.id,
+        label: e.label,
+        group: '跳转',
+        run: () => setView(e.id),
+      })),
+    ]
+    const actions: PaletteItem[] = [
+      {
+        id: 'act-theme',
+        label: theme === 'dark' ? '切换到浅色主题' : '切换到深色主题',
+        group: '动作',
+        run: () => setTheme((t) => (t === 'dark' ? 'light' : 'dark')),
+      },
+      {
+        id: 'act-layout',
+        label: layout === 'full' ? '切换到紧凑布局' : '切换到完整布局',
+        group: '动作',
+        run: () => setLayout((l) => (l === 'full' ? 'compact' : 'full')),
+      },
+      {
+        id: 'act-rail',
+        label: sidebarCollapsed ? '展开侧边导航' : '折叠侧边导航',
+        group: '动作',
+        run: () => setSidebarCollapsed((c) => !c),
+      },
+    ]
+    return [...viewItems, ...actions]
+  }, [theme, layout, sidebarCollapsed])
+
   // U05: real theme (dark/light) applied to <html> — no hardcoded class.
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
   }, [theme])
+
+  // UI_SHELL (20260921): keep the deep-link (?view=/?theme=/?layout=) in sync
+  // so refreshing / sharing a URL preserves the active view + theme + layout.
+  // This extends (does not change) the existing read-only deep-link init.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const p = new URLSearchParams()
+    if (view !== OVERVIEW_ID) p.set('view', view)
+    if (theme !== 'dark') p.set('theme', theme)
+    if (layout !== 'full') p.set('layout', layout)
+    const qs = p.toString()
+    const url = window.location.pathname + (qs ? '?' + qs : '')
+    window.history.replaceState(null, '', url)
+  }, [view, theme, layout])
 
   const isOverview = view === OVERVIEW_ID
   const tt = tokenTruth(snap)
@@ -163,11 +235,18 @@ export default function App() {
             layout={layout}
             onCycleTheme={toggleTheme}
             onCycleLayout={toggleLayout}
+            onOpenSearch={openPalette}
           />
           <div className="flex-1">
             <CompactHUD snap={snap} live={live} />
           </div>
         </div>
+        <CommandPalette
+          open={paletteOpen}
+          onClose={closePalette}
+          items={paletteItems}
+          title="命令面板"
+        />
       </div>
     )
   }
@@ -176,8 +255,14 @@ export default function App() {
     <div data-layout={layout} className="flex h-screen overflow-hidden text-ink">
       <Sidebar
         activeView={view}
-        onSelect={(id) => setView(id)}
-        collapsed={false}
+        onSelect={(id) => {
+          setView(id)
+          setMobileNavOpen(false)
+        }}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+        mobileOpen={mobileNavOpen}
+        onCloseMobile={() => setMobileNavOpen(false)}
       />
       <div className="flex-1 flex flex-col min-w-0">
         <TopStatusBar
@@ -188,9 +273,17 @@ export default function App() {
           layout={layout}
           onCycleTheme={toggleTheme}
           onCycleLayout={toggleLayout}
+          onOpenSearch={openPalette}
+          onOpenMobileNav={() => setMobileNavOpen(true)}
         />
         <div className="flex-1 overflow-auto p-4">{mainContent}</div>
       </div>
+      <CommandPalette
+        open={paletteOpen}
+        onClose={closePalette}
+        items={paletteItems}
+        title="命令面板"
+      />
     </div>
   )
 }
