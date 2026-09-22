@@ -7,8 +7,8 @@ source:
 absorption_mode: model-and-paid-api-neutral-patterns-only
 local_artifacts:
   - README.md
-  - docs/current/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.md
-  - docs/current/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml
+  - docs/history/archive/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.md
+  - docs/history/archive/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml
   - packages/client-neutral-core/skills/software-development/agent-workflow-fortress/SKILL.md
   - packages/client-neutral-core/skills/software-development/agent-workflow-fortress/references/free-local-agent-harness-absorption.md
   - packages/client-neutral-core/templates/task-tickets/model-neutral-agent-task.md

@@ -6,7 +6,7 @@
   ],
   "generated_at": "2026-08-08",
   "policy": "decision status is NOT implementation status; adopt-now items with no WORK-LAB target paths are external-optional + not-implemented",
-  "source_of_truth": "D:/All projects/DESIGN-LAB/opendesign-assistance/research/global-absorption/SOURCE_REGISTRY.json",
+  "source_of_truth": "D:/All projects/DESIGN-LAB/design-lab/research/global-absorption/SOURCE_REGISTRY.json",
   "adopt_now_total": 33,
   "adopt_now_complete_in_worklab": 0,
   "adopt_now_partial_in_worklab": 0,
