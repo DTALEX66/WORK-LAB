@@ -201,15 +201,44 @@ pub fn run() {
                     Ok(w) => {
                         let _ = w.show();
                         let _ = w.set_focus();
+                        // U19 next-cycle: externalize the probe outcome so the
+                        // harness/CI log can discriminate "window built" from
+                        // "never reached the probe block" without depending on
+                        // tauri-plugin-log flushing. visible=false on a built
+                        // window => headless-session root cause (R1).
+                        if let Ok(status_path) = std::env::var("WORK_LAB_U19_PROBE_STATUS") {
+                            let vis = w.is_visible().unwrap_or(false);
+                            let _ = std::fs::write(
+                                &status_path,
+                                format!(
+                                    "probe=ok pid={} visible={} cdpPort={}",
+                                    std::process::id(),
+                                    vis, cdpp
+                                ),
+                            );
+                        }
                         log::info!(target: "u19", "cdp probe window ready");
                     }
                     // Was silently swallowed — the root cause of U19's CI
                     // "no CDP page target / windows=0": the build error (usually
                     // a WebView2 instance failure) never reached the log.
-                    Err(error) => log::error!(
-                        target: "u19",
-                        "cdp probe window build FAILED: {error}"
-                    ),
+                    Err(error) => {
+                        if let Ok(status_path) =
+                            std::env::var("WORK_LAB_U19_PROBE_STATUS")
+                        {
+                            let _ = std::fs::write(
+                                &status_path,
+                                format!(
+                                    "probe=build_failed error={}",
+                                    error.to_string().replace('\n', " ")
+                                ),
+                            );
+                        }
+                        log::error!(
+                            target: "u19",
+                            "cdp probe window build FAILED: {error}"
+                        );
+                    }
                 }
             }
 

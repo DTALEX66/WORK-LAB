@@ -452,6 +452,11 @@ def main() -> int:
         # wry — wry always passes app-level args — so the port must reach the
         # window through the Rust builder hook, which is what this var drives.)
         env["WORK_LAB_U19_CDP_PORT"] = str(cdp_port)
+        # U19 next-cycle discriminator: the app writes the probe-window build
+        # outcome to this exact path (lib.rs), so the CI log below can tell
+        # "window built (R1 headless-visible)" from "build failed" from
+        # "probe block never reached" — one grep after the next run.
+        env["WORK_LAB_U19_PROBE_STATUS"] = str(RUNS / "u19_probe_status.txt")
         env["NO_AUTO_UPDATE"] = "1"
         # Diagnostics: capture the app's stdout/stderr to disk (before it
         # exits) instead of DEVNULL. A GUI-subsystem binary that early-exits
@@ -536,6 +541,33 @@ def main() -> int:
         result["stages"]["gdi_render_proof"] = gdi
         print(f"[U19] GDI render proof: {gdi.get('status')} "
               f"(windows={len(gdi.get('windows', []))})")
+
+        # U19 next-cycle discriminator — print to the CI log so the next
+        # run's failure is a one-grep diagnosis instead of a rebuild:
+        #   probe=ok visible=False  -> headless session has no visible desktop (R1)
+        #   probe=ok visible=True    -> GDI filter/capture bug (R4); CDP still
+        #                                failing means the page target genuinely
+        #                                never attached (renderer not up)
+        #   probe=build_failed       -> WebView2 instance creation failed (R3)
+        #   (no probe file)          -> probe block never reached (env var not
+        #                                read / app built before the hook)
+        probe_path = RUNS / "u19_probe_status.txt"
+        try:
+            probe_status = probe_path.read_text().strip() or "(probe file empty)"
+        except OSError:
+            probe_status = "(no probe status file — probe block not reached)"
+        print(f"[U19] probe window status: {probe_status}")
+        allw = gdi.get("diagnostic_all_pid_windows")
+        if allw is not None:
+            if allw:
+                for hwnd, info in allw.items():
+                    print(
+                        f"[U19] pid window hwnd={hwnd} "
+                        f"w={info.get('w')} h={info.get('h')} "
+                        f"visible={info.get('visible')}"
+                    )
+            else:
+                print("[U19] pid window enumeration: NO top-level windows for pid")
 
         # verdict: the release gate keys on REAL rendered proof. CDP DOM
         # readback is the strongest (asserts the actual DOM tree + live
