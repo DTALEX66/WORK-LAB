@@ -188,12 +188,28 @@ pub fn run() {
                 let url = tauri::WebviewUrl::App(
                     "index.html?view=full&mode=UNKNOWN&theme=dark".into(),
                 );
-                if let Ok(w) = tauri::WebviewWindowBuilder::new(app, "u19cdp", url)
+                match tauri::WebviewWindowBuilder::new(app, "u19cdp", url)
                     .additional_browser_args(args.as_str())
+                    // U19: explicit geometry so the harness' GDI proof (>=200x150
+                    // filter) and the CDP page target both have a real surface.
+                    // A default-sized/hidden window on a headless runner is the
+                    // "windows=0 + no CDP target" failure mode seen in CI.
+                    .inner_size(800.0, 600.0)
+                    .visible(true)
                     .build()
                 {
-                    let _ = w.show();
-                    log::info!(target: "u19", "cdp probe window ready");
+                    Ok(w) => {
+                        let _ = w.show();
+                        let _ = w.set_focus();
+                        log::info!(target: "u19", "cdp probe window ready");
+                    }
+                    // Was silently swallowed — the root cause of U19's CI
+                    // "no CDP page target / windows=0": the build error (usually
+                    // a WebView2 instance failure) never reached the log.
+                    Err(error) => log::error!(
+                        target: "u19",
+                        "cdp probe window build FAILED: {error}"
+                    ),
                 }
             }
 

@@ -336,10 +336,26 @@ def _gdi_render_proof(app_pid: int) -> dict:
                 found[int(hwnd)] = (w.value, h.value, bool(u32.IsWindowVisible(hwnd)))
         return True
     cb = ctypes.WINFUNCTYPE(ctypes.c_int, wt.HWND, wt.LPARAM)(_enum)
+    # Diagnostic: also enumerate EVERY top-level window owned by the pid (no
+    # size/visibility filter) so the next CI run can distinguish
+    # "no window at all" from "window exists but too small / hidden / unrendered".
+    all_windows = {}
+    def _enum_all(hwnd, _):
+        pidout = wt.DWORD()
+        u32.GetWindowThreadProcessId(hwnd, ctypes.byref(pidout))
+        if pidout.value == app_pid:
+            w = wt.INT(); h = wt.INT()
+            u32.GetClientRect(hwnd, ctypes.byref(w), ctypes.byref(h))
+            all_windows[int(hwnd)] = {"w": w.value, "h": h.value,
+                                     "visible": bool(u32.IsWindowVisible(hwnd))}
+        return True
+    cb_all = ctypes.WINFUNCTYPE(ctypes.c_int, wt.HWND, wt.LPARAM)(_enum_all)
+    u32.EnumWindows(cb_all, 0)
     u32.EnumWindows(cb, 0)
     if not found:
         return {"status": "unavailable",
-                "reason": "no capturable top-level window for pid %d" % app_pid}
+                "reason": "no capturable top-level window for pid %d" % app_pid,
+                "diagnostic_all_pid_windows": all_windows}
 
     analysis = []
     for hwnd, (w, h, visible) in found.items():
