@@ -68,4 +68,14 @@ The 2 references stay as-is; rebind is only ever needed if that contract changes
 - current/ surfaces contain only LIVE authority-pinned files; frozen evidence lives in history/
 - boundary declaration matches runtime reality (secondaryRuntimeRoots added)
 - stale remote ref pruned; single-write model enforced
-- Future drift surfaces: docs/current/workflow-assistance/workflow/ dated files (P2, broad rebind — SA audit pending), quarantine node_modules slim (P3, on request). MASTER-2.0 rebind: RETIRED as P2 — file reclassified KEEP-LIVE (functional PLAN evidence contract, §3 above).
+- P2 surfaces CLOSED by mainline takeover (free pool 3x 503-dead):
+  * docs/current/workflow-assistance/workflow/ (37 files): 10 KEEP-LIVE
+    (code/authority-pinned), 2 NO-REF, 25 PROSE-ONLY; 9 dated-archive + 2 no-ref
+    = 11 P3 candidates ENUMERATED but NOT moved (README doc-index rebind surface
+    too broad — 治理最小化; see .project-local/runs/drift-scan-sa.md)
+  * taskpacks/current/ re-verify: 0 unclassified residuals (12 root files all
+    KEEP-classified; universal pack intact)
+  * knowledge-staging provenance: "mismatch" = by-design indexing difference
+    (yaml keys on name+sha256; files are content-addressed hash names) — recorded
+    to prevent a future false-positive alarm
+- MASTER-2.0 rebind: RETIRED as P2 — file reclassified KEEP-LIVE (functional PLAN evidence contract, §3 above). quarantine node_modules slim: P3, on request.
