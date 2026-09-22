@@ -79,3 +79,25 @@ The 2 references stay as-is; rebind is only ever needed if that contract changes
     (yaml keys on name+sha256; files are content-addressed hash names) — recorded
     to prevent a future false-positive alarm
 - MASTER-2.0 rebind: RETIRED as P2 — file reclassified KEEP-LIVE (functional PLAN evidence contract, §3 above). quarantine node_modules slim: P3, on request.
+
+## 9. SA-2 legacy 8-digit re-audit (mainline takeover, post-freeze)
+- HEAD tree: `10-workflow`/`30-observer`/`40-knowledge`/`50-taskpacks`/`80-evidence`
+  all ABSENT (directory convergence confirmed) ✅; `90-archive` = HISTORY_ONLY
+  (BOUNDARY.md + 15× reports-history/2026-09-05, no active owner)
+- 149 files mention legacy 8-digit strings; classified:
+  * 89 in frozen dirs (90-archive/docs-history/taskpacks-history) — historical, untouched
+  * ~60 narrative-only (AGENTS.md, error-ledger entrypoints, taskpack prose) — description
+    of the pre-convergence layout, not live pointers, untouched
+  * 4 needing decision:
+    - tests/ci/test_project_authority_reference.py L148 `50-taskpacks` = NEGATIVE CONTROL
+      (asserts verifier rejects forbidden-root reactivation) — CORRECT, kept
+    - WORK-LAB-AUTHORITY.md L114-125 + project-authority-index forbiddenActiveRoots
+      = forbidden-roots declaration — CORRECT, kept
+    - data-ownership.yaml legacy_aliases `80-evidence` = historical mapping doc — kept
+    - RECONCILIATION.json:26 `worklab_root` stale D:/.../10-workflow path = frozen 09-17
+      observation record (file is authority-pinned) — documented, not modified
+  * 2 LIVE DRIFT fixed in this pass:
+    - asset-routing.yaml route `generated-evidence: ignored-80-evidence` → now routes to
+      .project-local/artifacts (canonicalEvidenceRoot) + legacy-alias comment
+    - .gitignore dead rule `80-evidence/` removed (dir absent on disk, verified)
+  * authority verifier + 3-project-boundary verifier: PASS; 17 negative-control tests OK
