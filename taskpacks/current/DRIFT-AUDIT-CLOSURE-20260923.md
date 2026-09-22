@@ -35,7 +35,12 @@
 | taskpacks/current/ (kept LIVE) | 8 authority-pinned files (OPEN-TASK-REGISTER.md, UPC-20260918, BRANCH-RETIREMENT-LEDGER, error-ledger, HERMES-UPDATE-AND-FIXES, README, V2-REPORT, RECONCILIATION.json) | untouched |
 | docs/current/workflow-assistance/workflow/ | kept in current (build_context_pack.py + tests pin the LIVE subtree) | drift noted, not migrated (rebind surface too broad this pass) |
 
-MASTER-2.0-APPROVAL-PACKAGE.md (taskpacks/current) has 2 frozen-layer refs (test_render_v3.js, workspace_evidence.py) — REBIND PENDING, stays for now (minimal governance).
+MASTER-2.0-APPROVAL-PACKAGE.md (taskpacks/current) is FUNCTIONALLY CONSUMED, not drift:
+`workspace_evidence.py` reads it via the `PLAN_PATH` constant and `test_render_v3.js`
+registers it as `evidenceKind: "PLAN"` — both live code that require the file at
+`taskpacks/current/`. Classification: KEEP-LIVE. Do NOT migrate to history/
+(moving it would break the PLAN evidence contract the observer render gate asserts).
+The 2 references stay as-is; rebind is only ever needed if that contract changes.
 
 ## 4. Data spill tracking (re-verified)
 - forbidden E: / F: — 0 access, 0 footprint ✅
@@ -63,4 +68,4 @@ MASTER-2.0-APPROVAL-PACKAGE.md (taskpacks/current) has 2 frozen-layer refs (test
 - current/ surfaces contain only LIVE authority-pinned files; frozen evidence lives in history/
 - boundary declaration matches runtime reality (secondaryRuntimeRoots added)
 - stale remote ref pruned; single-write model enforced
-- Future drift surfaces: docs/current/workflow-assistance/workflow/ dated files (P2, broad rebind), MASTER-2.0 rebind (P2), quarantine node_modules slim (P3, on request)
+- Future drift surfaces: docs/current/workflow-assistance/workflow/ dated files (P2, broad rebind — SA audit pending), quarantine node_modules slim (P3, on request). MASTER-2.0 rebind: RETIRED as P2 — file reclassified KEEP-LIVE (functional PLAN evidence contract, §3 above).
