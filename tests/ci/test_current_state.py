@@ -72,7 +72,8 @@ class CurrentStateTests(unittest.TestCase):
         self.assertGreaterEqual(expected_contracts, 1)
         self.assertEqual(state["contracts"]["count"], expected_contracts)
         self.assertEqual(len(state["skills"]["items"]), 13)
-        self.assertEqual(state["compatibility_history"]["stage3_task_count"], 28)
+        self.assertEqual(state["compatibility_history"]["stage3_task_count"], None)
+        self.assertEqual(state["compatibility_history"]["historical_baseline_present"], True)
         self.assertEqual(state["compatibility_history"]["historical_baseline_status"], "HISTORICAL_ONLY")
 
     def test_runtime_attestation_holds_checkout_and_ci_identity(self) -> None:

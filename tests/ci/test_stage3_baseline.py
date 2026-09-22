@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GRAPH = ROOT / "taskpacks/current" / "WORK-LAB-STAGE-3-TASK-GRAPH.json"
+GRAPH = ROOT / "taskpacks" / "history" / "WORK-LAB-STAGE-3-TASK-GRAPH.json"
 BASELINE = ROOT / ".project/governance" / "generated" / "STAGE3_BASELINE.json"
 DIGEST = re.compile(r"^[0-9a-f]{40}$|^[0-9a-f]{64}$")
 

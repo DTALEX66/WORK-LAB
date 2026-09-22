@@ -383,6 +383,17 @@ def _gdi_render_proof(app_pid: int) -> dict:
             "windows": analysis}
 
 
+def _stderr_tail(path: Path, n: int = 2048) -> str:
+    """Read the tail of a captured app-stderr log (diagnostic evidence)."""
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return ""
+    if len(data) > n:
+        data = data[-n:]
+    return data.decode("utf-8", "replace")
+
+
 def main() -> int:
     result = {
         "gate": "WINDOWS_TAURI_E2E",
@@ -426,9 +437,19 @@ def main() -> int:
         # window through the Rust builder hook, which is what this var drives.)
         env["WORK_LAB_U19_CDP_PORT"] = str(cdp_port)
         env["NO_AUTO_UPDATE"] = "1"
+        # Diagnostics: capture the app's stdout/stderr to disk (before it
+        # exits) instead of DEVNULL. A GUI-subsystem binary that early-exits
+        # (rc 0xC00000163 class) prints its panic message nowhere — this is
+        # the only way to know WHY. The file is appended to the evidence JSON
+        # when the verdict is FAIL.
+        errlog = RUNS / "u19_app_stderr.log"
+        try:
+            errlog.write_bytes(b"")
+        except OSError:
+            pass
         app = subprocess.Popen(
             [str(exe)], cwd=str(OBS / "src-tauri"), env=env,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL, stderr=open(errlog, "wb"),
         )
         result["stages"]["tauri_launch"] = {"pid": app.pid, "status": "RUNNING"}
         print(f"[U19] launched real app.exe pid={app.pid} cdp=: {cdp_port}")
@@ -465,6 +486,30 @@ def main() -> int:
             if cdp_obj:
                 cdp_obj.close()
 
+        # --- stage 3a: process liveness — was the real app still alive? ---
+        # A Tauri/WebView2 early-exit (0xC00000163-class rc) leaves no window
+        # AND no CDP target, so both stage 3 and 3b fail for the SAME reason.
+        # Detect it explicitly so the evidence names the root cause, not the
+        # two downstream symptoms.
+        poll_rc = app.poll()
+        if poll_rc is None:
+            result["stages"]["process_liveness"] = {
+                "status": "ALIVE",
+                "note": "app.exe still running at readback time",
+            }
+        else:
+            errtail = _stderr_tail(RUNS / "u19_app_stderr.log")
+            result["stages"]["process_liveness"] = {
+                "status": "EXITED_EARLY",
+                "returncode": poll_rc,
+                "returncode_hex": "0x%08X" % (poll_rc & 0xFFFFFFFF),
+                "appStderrTail": errtail,
+            }
+            print(f"[U19] app.exe exited early rc={poll_rc} "
+                  f"(0x{poll_rc & 0xFFFFFFFF:08X}); stderr tail:")
+            print(errtail[-800:] or "(no stderr captured — GUI subsystem "
+                  "binary or crashed before first write)")
+
         # --- stage 3b: GDI real-render proof (architecture-agnostic) ---
         # Even when the CDP subsystem is absent, PrintWindow captures the
         # actual on-screen pixels of the app's real window. A real React
@@ -499,6 +544,13 @@ def main() -> int:
                 app.wait(timeout=8)
             except Exception:
                 app.kill()
+            # Flush the captured app stderr now that the process is gone, so
+            # the evidence JSON can read its final contents.
+            if app.stderr is not None:
+                try:
+                    app.stderr.close()
+                except Exception:
+                    pass
         if cdp_obj:
             cdp_obj.close()
         if sidecar is not None and server is not None:

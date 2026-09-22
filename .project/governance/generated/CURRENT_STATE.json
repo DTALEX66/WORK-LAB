@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-09-20T23:12:57.058465Z",
-  "source_digest": "bca7beb544a5068ecced93e58d17410ccd4bb7b9f7e673541dbc5002530d45d5",
+  "generated_at": "2026-09-22T00:08:43.885079Z",
+  "source_digest": "06951248e555277c4d7867fb68e4fd7cf69853ada0d8d449f4f406786a617d16",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -133,7 +133,7 @@
         "name": "project-data-boundary",
         "source": "packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md",
         "version": "1.3.0",
-        "source_sha256": "43524b0125a13e666bce44014ff7694b40253459650d989fb286bf1889f043a8",
+        "source_sha256": "405e16d3a8f6490ec31107b91cf3fb1f011ab02e4d37f50aaa0e0e9cded5399b",
         "trust": "repository-controlled",
         "enabled": true,
         "live_readback": "not-run"
@@ -206,10 +206,11 @@
     ]
   },
   "compatibility_history": {
-    "stage3_taskpack_id": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE",
-    "stage3_task_count": 28,
-    "stage3_initial_state": "RECONCILED_20260810",
+    "stage3_taskpack_id": null,
+    "stage3_task_count": null,
+    "stage3_initial_state": null,
     "historical_baseline_source": ".project/governance/generated/STAGE3_BASELINE.json",
+    "historical_baseline_present": true,
     "historical_baseline_status": "HISTORICAL_ONLY",
     "role": "historical_only_not_current_identity"
   },
@@ -220,5 +221,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "f49cba2c047a9d51019321dcd30f48eb9a18e47c4e81ef46bb61f3d9c8feeb4a"
+  "content_digest": "3ed19a3bb25ded0f4e2a1c0ff52bafa48cfaef183112c04f68c695d062b8fcb9"
 }

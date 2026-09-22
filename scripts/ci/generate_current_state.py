@@ -31,11 +31,8 @@ CANONICAL_FILES = (
     ".project/governance/contracts/capability-conformance.schema.json",
     ".project/governance/source-ledger.json",
     ".project/governance/work-lab.project-profile.yaml",
-    ".project/governance/generated/STAGE3_BASELINE.json",
     "README.md",
     "knowledge-staging/README.md",
-    "taskpacks/current/TASKPACK_SUMMARY.md",
-    "taskpacks/current/WORK-LAB-STAGE-3-TASK-GRAPH.json",
     "packages/client-neutral-core/workflow-manifest.yaml",
     "config/capability-conformance.json",
     "packages/contracts/schemas/workflow/ci-observation.schema.json",
@@ -217,6 +214,23 @@ def _compact_portable_readback(evidence: Path | None) -> dict[str, Any]:
     }
 
 
+def _optional_read_json(root: Path, relative: str) -> dict[str, Any] | None:
+    """Optional read for demoted historical inputs (Stage 3, P0-03).
+
+    A missing file is NOT an error: the historical block degrades to
+    role=historical_only with null values. When the file exists its content
+    is digested into compatibility_history so --check-current recomputes
+    deterministically (STALE/DRIFT semantics, never a hard error).
+    """
+    path = root / relative
+    if not path.is_file():
+        return None
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError(f"expected object: {relative}")
+    return value
+
+
 def build_state(
     root: Path,
     *,
@@ -229,8 +243,8 @@ def build_state(
     catalog = _read_json(root, ".project/governance/contracts/contract-catalog.json")
     manifest = _read_yaml(root, "packages/client-neutral-core/workflow-manifest.yaml")
     provenance = _read_yaml(root, "config/skill-provenance.yaml")
-    stage3_graph = _read_json(root, "taskpacks/current/WORK-LAB-STAGE-3-TASK-GRAPH.json")
-    stage3_baseline = _read_json(root, ".project/governance/generated/STAGE3_BASELINE.json")
+    stage3_graph = _optional_read_json(root, "taskpacks/current/WORK-LAB-STAGE-3-TASK-GRAPH.json")
+    stage3_baseline = _optional_read_json(root, ".project/governance/generated/STAGE3_BASELINE.json")
     modules = projects.get("modules", [])
     if not isinstance(modules, list):
         raise ValueError("projects.modules must be a list")
@@ -297,10 +311,11 @@ def build_state(
         # governance registries above (projects / module-ownership / contracts /
         # skills / workflow identity), not from this block.
         "compatibility_history": {
-            "stage3_taskpack_id": stage3_graph.get("taskpackId", "unknown"),
-            "stage3_task_count": len(stage3_graph.get("tasks", [])),
-            "stage3_initial_state": stage3_graph.get("initialState", "unknown"),
+            "stage3_taskpack_id": stage3_graph.get("taskpackId", None) if stage3_graph is not None else None,
+            "stage3_task_count": len(stage3_graph.get("tasks", [])) if stage3_graph is not None else None,
+            "stage3_initial_state": stage3_graph.get("initialState", None) if stage3_graph is not None else None,
             "historical_baseline_source": ".project/governance/generated/STAGE3_BASELINE.json",
+            "historical_baseline_present": stage3_baseline is not None,
             "historical_baseline_status": "HISTORICAL_ONLY",
             "role": "historical_only_not_current_identity",
         },
@@ -366,7 +381,6 @@ def _canonical_doc_paths(root: Path) -> list[Path]:
         ".project/governance/contracts/contract-catalog.json",
         "README.md",
         "knowledge-staging/README.md",
-        "taskpacks/current/TASKPACK_SUMMARY.md",
         "taskpacks/current/WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF.md",
         "packages/client-neutral-core/workflow-manifest.yaml",
         "packages/client-neutral-core/README.md",
@@ -412,6 +426,7 @@ Content digest: `{state['content_digest']}`
 - TaskPack: `{state['compatibility_history']['stage3_taskpack_id']}`
 - Tasks: `{state['compatibility_history']['stage3_task_count']}`
 - Initial state: `{state['compatibility_history']['stage3_initial_state']}`
+- Historical baseline present: `{state['compatibility_history']['historical_baseline_present']}`
 - Historical baseline source: `{state['compatibility_history']['historical_baseline_source']}`
 - Historical baseline status: `{state['compatibility_history']['historical_baseline_status']}`
 

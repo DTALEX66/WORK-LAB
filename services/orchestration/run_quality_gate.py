@@ -198,17 +198,35 @@ def governance_test_files() -> list[str]:
 
 
 def mandatory_discovery_modules() -> list[str]:
-    """Importable module stems for the mandatory discovery set (P0-05)."""
-    return sorted(Path(path).stem for path in governance_test_files())
+    """Importable module stems for the mandatory discovery set (P0-05).
+
+    `unittest discover` resolves `nf*` modules by name only; module-style
+    (plain assert, no unittest.TestCase) files are executed as a module and
+    are NOT importable as dotted test names. For those, run the file as a
+    script (it self-executes via `if __name__ == "__main__"`). The runner
+    therefore returns dotted stems for unittest modules and file paths for
+    module-style files; `_run_governance_batch` mixes both.
+    """
+    members: list[str] = []
+    for path in governance_test_files():
+        full = ROOT / path
+        stem = Path(path).stem
+        module_style = not full.read_text(encoding="utf-8").find("unittest") >= 0
+        if module_style:
+            members.append(path)  # script-style execution
+        else:
+            members.append(stem)
+    return members
 
 
 def _run_governance_batch(members: list[str]) -> tuple[int, str]:
-    """Run the mandatory test modules as ONE unittest batch.
+    """Run the mandatory test modules as one fail-closed batch.
 
-    Returns (process exit code, combined stdout+stderr). A single batch —
-    rather than N separate `unittest module` invocations — is what makes
-    "not-run" and "nothing executed" detectable: a hollow or load-failing
-    batch cannot masquerade as a clean exit.
+    Returns (process exit code, combined stdout+stderr). Members that are
+    dotted module names run through `python -m unittest`; members that are
+    repository-relative file paths (module-style `nf*` files without
+    unittest.TestCase) run as standalone scripts. A failing script fails the
+    whole batch: hollow or not-run outcomes are detectable and fail closed.
     """
     pythonpath = MODULE_PYTHONPATH
     existing = os.environ.get("PYTHONPATH")
@@ -216,14 +234,32 @@ def _run_governance_batch(members: list[str]) -> tuple[int, str]:
         pythonpath += os.pathsep + existing
     env = os.environ.copy()
     env["PYTHONPATH"] = pythonpath
-    result = subprocess.run(
-        [sys.executable, "-m", "unittest", "-v", *members],
-        cwd=ROOT,
-        env=env,
-        text=True,
-        capture_output=True,
-    )
-    return result.returncode, result.stdout + result.stderr
+    unittest_modules = [member for member in members if not (ROOT / member).is_file()]
+    script_files = [member for member in members if (ROOT / member).is_file()]
+    combined: list[str] = []
+    overall = 0
+    if unittest_modules:
+        result = subprocess.run(
+            [sys.executable, "-m", "unittest", "-v", *unittest_modules],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            capture_output=True,
+        )
+        overall = result.returncode
+        combined.append(result.stdout + result.stderr)
+    for script in script_files:
+        result = subprocess.run(
+            [sys.executable, script],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            capture_output=True,
+        )
+        if result.returncode != 0 and overall == 0:
+            overall = result.returncode
+        combined.append(result.stdout + result.stderr)
+    return overall, "\n".join(combined)
 
 
 def gate_governance() -> int:
@@ -330,6 +366,20 @@ def gate_context_control_plane() -> int:
 def gate_external_libraries_index() -> int:
     """External libraries index: JSON valid + sharedRoots resolve + assets present."""
     return run_python(["packages/client-neutral-core/scripts/verify_external_libraries_index.py"])
+
+
+def gate_protected_drives_consistency() -> int:
+    """WS-3: E/F protected-drive truth consistent across all three governed surfaces.
+
+    The user standing rule protects BOTH data drives (E: and F:). The gate reads the
+    SSOT (config/global-agent-policy.yaml protected_drives), projects.json forbiddenRoots,
+    and project-data-boundary.json (forbiddenExternalRoots + protectedDataVolume.roots)
+    and fails if any surface drops a drive. In-script runner (not a test file) mirrors
+    gate_external_libraries_index: deterministic, offline, stdlib-only.
+    """
+    return run_python(
+        ["packages/client-neutral-core/scripts/verify_protected_drives_consistency.py"]
+    )
 
 
 def gate_github_delivery() -> int:
@@ -669,6 +719,11 @@ GATES: dict[str, Gate] = {
         "External libraries index: JSON valid + roots resolve + assets listed (content stays local).",
         gate_external_libraries_index,
     ),
+    "protected-drives-consistency": Gate(
+        "protected-drives-consistency",
+        "WS-3: E/F protected-drive truth consistent across policy SSOT, projects.json, and project-data-boundary.json.",
+        gate_protected_drives_consistency,
+    ),
     "github-delivery": Gate(
         "github-delivery",
         "GitHub delivery accelerator: upload/review contracts (offline tests).",
@@ -749,6 +804,7 @@ VERIFY_ORDER = (
     "policy-coverage",
     "context-control-plane",
     "external-libraries-index",
+    "protected-drives-consistency",
     "github-delivery",
     "adapter-conformance",
     "acp-conformance",

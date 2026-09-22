@@ -48,14 +48,6 @@
     {
       "path": "taskpacks/current/error-ledger.json",
       "role": "operational error evidence; non-authority"
-    },
-    {
-      "path": "taskpacks/current/WORK-LAB-STAGE-3-TASK-GRAPH.json",
-      "role": "temporary compatibility dependency only; remove after A04 Current-State migration"
-    },
-    {
-      "path": "taskpacks/current/WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF.md",
-      "role": "temporary Current-State stale-reference input only; remove after A04"
     }
   ],
   "forbiddenActiveRoots": [

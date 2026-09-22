@@ -1,8 +1,8 @@
 # WORK-LAB current state
 
-Generated at: `2026-09-20T23:12:57.058465Z`  \
-Source digest: `bca7beb544a5068ecced93e58d17410ccd4bb7b9f7e673541dbc5002530d45d5`  \
-Content digest: `f49cba2c047a9d51019321dcd30f48eb9a18e47c4e81ef46bb61f3d9c8feeb4a`
+Generated at: `2026-09-22T00:08:43.885079Z`  \
+Source digest: `06951248e555277c4d7867fb68e4fd7cf69853ada0d8d449f4f406786a617d16`  \
+Content digest: `3ed19a3bb25ded0f4e2a1c0ff52bafa48cfaef183112c04f68c695d062b8fcb9`
 
 ## Git and CI attestation
 
@@ -31,9 +31,10 @@ Content digest: `f49cba2c047a9d51019321dcd30f48eb9a18e47c4e81ef46bb61f3d9c8feeb4
 
 ## Compatibility history (Stage 3, historical only — NOT current identity)
 
-- TaskPack: `WORK-LAB-FINAL-MASTER-CONTROL-PLANE`
-- Tasks: `28`
-- Initial state: `RECONCILED_20260810`
+- TaskPack: `None`
+- Tasks: `None`
+- Initial state: `None`
+- Historical baseline present: `True`
 - Historical baseline source: `.project/governance/generated/STAGE3_BASELINE.json`
 - Historical baseline status: `HISTORICAL_ONLY`
 

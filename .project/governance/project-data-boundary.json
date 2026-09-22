@@ -18,14 +18,18 @@
   ],
   "forbiddenExternalRoots": [
     "E:/",
-    "E:\\"
+    "E:\\",
+    "F:/",
+    "F:\\"
   ],
   "spillGovernance": {
     "rule": "Every project artifact stays inside the project Git root; any write outside it is a spill and must be traceable, locatable, cleanable and migratable.",
     "protectedDataVolume": {
       "roots": [
         "E:/",
-        "E:\\"
+        "E:\\",
+        "F:/",
+        "F:\\"
       ],
       "policy": "forbidden without explicit per-path, per-operation user authorization",
       "accessDefault": "deny"

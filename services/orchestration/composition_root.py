@@ -9,12 +9,164 @@ collectors/EventHub/v1 投影保留兼容。本模块不修改任何既有模块
 """
 from __future__ import annotations
 
+import json
+import sys
+import time
+from pathlib import Path
 from typing import Any
 
 from canonical_store import CanonicalStore
 from product_project import ProductProject, ProjectRootBinding
 from project_identity_resolver import ApprovedProjectIndex
 from snapshot_api import build_snapshot
+
+# ---------------------------------------------------------------------------
+# WS-2 / spec-3: software[] wiring into build_v3_snapshot
+#
+# The canonical software registry (config/software-registry.json) is the single
+# source of truth for managed software ids. Real discovery (platform_discovery.
+# discover_software_installations) probes the declared install roots and
+# classifies each software via the shared resolver (software_installation_identity).
+# Any probe failure degrades to software=[] + discoverySource="unavailable" —
+# the snapshot build NEVER crashes on discovery.
+#
+# Cross-package import convention (matches durable_worker.py / canary_runner.py):
+# the module roots live under packages/client-neutral-core/scripts after the
+# directory convergence. Inject the path once; guard so tests that already
+# include that path on sys.path are unaffected.
+# ---------------------------------------------------------------------------
+_ROOT = Path(__file__).resolve().parents[2]
+_CNC_SCRIPTS = _ROOT / "packages" / "client-neutral-core" / "scripts"
+if str(_CNC_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_CNC_SCRIPTS))
+
+try:
+    import platform_discovery as _platform_discovery
+    import software_installation_identity as _sii
+except Exception:  # pragma: no cover - import failure degrades to unavailable
+    _platform_discovery = None  # type: ignore[assignment]
+    _sii = None  # type: ignore[assignment]
+
+# Bounded in-memory cache for discovery results (spec: TTL-based, single entry).
+# The cache survives across /api/v1/snapshot calls within its TTL so repeated
+# discovery probes (subprocess execs of --version, etc.) are not run on every
+# SSE publish tick. The TTL is intentionally conservative (60 s) so a user who
+# installs software gets a fresh observation within one minute without waiting
+# for a full sidecar restart.
+_SOFTWARE_DISCOVERY_TTL_SECONDS = 60.0
+_software_discovery_cache: dict[str, Any] = {}
+
+
+def _load_software_registry() -> list[dict[str, Any]]:
+    """Read the canonical software registry. Returns [] on any failure."""
+    try:
+        path = _ROOT / "config" / "software-registry.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data.get("software", [])
+    except Exception:
+        return []
+
+
+def _build_software_projection() -> list[dict[str, Any]]:
+    """Build the software[] snapshot projection (registry × discovery × resolver).
+
+    Field alignment (frontend SoftwareIdentity, spec step 1/4):
+      softwareId, displayName, installRoot, executableRealpath,
+      discoveredVersion, releaseChannel, updateAvailable,
+      duplicateInstallation, expectedLocation, observedLocation,
+      locationStatus, lastVerified, discoverySource
+
+    Truth discipline: when discovery is unavailable, locationStatus stays
+    "UNKNOWN" and discoverySource becomes "unavailable" — we never fabricate
+    a value. Each entry reflects only the actual probed facts.
+    """
+    if _platform_discovery is None or _sii is None:
+        return []
+
+    # --- Bounded TTL cache (key: revision-independent; value: {at, items}) ---
+    now = time.time()
+    cached = _software_discovery_cache.get("items")
+    if cached is not None and (now - _software_discovery_cache.get("at", 0.0)) < _SOFTWARE_DISCOVERY_TTL_SECONDS:
+        return cached
+
+    try:
+        registry = _load_software_registry()
+        observations = _platform_discovery.discover_software_installations()
+        obs_by_id = {str(o.get("software_id") or ""): o for o in observations}
+
+        items: list[dict[str, Any]] = []
+        for entry in registry:
+            software_id = str(entry.get("softwareId") or "")
+            if not software_id:
+                continue
+            display_name = entry.get("displayName")
+            # Canonical registry -> discovery inventory matching.
+            # The SOFTWARE_CANDIDATE_INVENTORY in platform_discovery uses
+            # "package_identity" keys that mirror "softwareId" in the registry.
+            obs = obs_by_id.get(software_id)
+
+            if obs is None:
+                # Registry entry with no discovery observation: UNKNOWN.
+                items.append(
+                    {
+                        "softwareId": software_id,
+                        "displayName": display_name,
+                        "installRoot": None,
+                        "executableRealpath": None,
+                        "discoveredVersion": None,
+                        "releaseChannel": None,
+                        "updateAvailable": None,
+                        "duplicateInstallation": False,
+                        "expectedLocation": None,
+                        "observedLocation": None,
+                        "locationStatus": "UNKNOWN",
+                        "lastVerified": None,
+                        "discoverySource": "unavailable",
+                    }
+                )
+                continue
+
+            # Discovery observation present — extract real fields.
+            location_status = str(obs.get("location_status") or "UNKNOWN")
+            # DUAL_INSTALLATION from the resolver means more than one real root.
+            duplicate = location_status == "DUAL_INSTALLATION"
+            observed_location = obs.get("observed_existing_location") or obs.get("install_root")
+
+            items.append(
+                {
+                    "softwareId": software_id,
+                    "displayName": display_name,
+                    "installRoot": obs.get("install_root"),
+                    "executableRealpath": obs.get("executable_realpath") or None,
+                    "discoveredVersion": obs.get("discovered_version"),
+                    "releaseChannel": obs.get("release_channel"),  # usually None from resolver
+                    "updateAvailable": None,  # NOT in resolver; not probed -> never fabricate
+                    "duplicateInstallation": duplicate,
+                    "expectedLocation": obs.get("expected_existing_location") or obs.get("expected_existing"),
+                    "observedLocation": observed_location,
+                    "locationStatus": location_status,
+                    "lastVerified": obs.get("verified_at"),
+                    "discoverySource": obs.get("discovery_source") or "real-platform-probe",
+                }
+            )
+
+        _software_discovery_cache["items"] = items
+        _software_discovery_cache["at"] = now
+        return items
+    except Exception:
+        # Discovery failure → empty projection + unavailable flag (degrade, don't crash).
+        _software_discovery_cache.clear()
+        return []
+
+
+def clear_software_discovery_cache() -> None:
+    """Public reset for tests / callers that need to force a fresh probe."""
+    _software_discovery_cache.clear()
+
+
+# ---------------------------------------------------------------------------
+# End WS-2 / spec-3 software[] wiring
+# ---------------------------------------------------------------------------
 
 # 显式批准白名单：默认仅 WORK-LAB 自身；其余项目需经 upsert_project_definition
 # 持久化 approved=True 后才收集（未批准 → 绝不自动收集）。
@@ -258,4 +410,5 @@ def build_v3_snapshot(
         workspace=workspace_evidence,
         platform_map=platform_map,
         agent_map=_agent_platform_map(),
+        software=_build_software_projection(),
     )

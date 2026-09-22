@@ -82,12 +82,12 @@ dirty ownership, boundary violations or incomplete required jobs fail closed.
 - Project artifacts never spill outside the project Git root; any spill is
   traceable, locatable, cleanable and migratable (see
   `.project/governance/project-data-boundary.json`).
-- The `E:` data volume is protected: any access requires explicit per-path,
+- The `E:` and `F:` data volumes are protected: any access requires explicit per-path,
   per-operation user authorization.
 - External mutation, active-path switching and release actions require explicit approval.
 - Windows paths are checked case-insensitively before release.
 
 See `docs/decisions/PROJECT_POSITIONING.md`, `.project/governance/projects.json`,
 module `AGENTS.md` files, and
-`taskpacks/current/TASKPACK_SUMMARY.md` for the current positioning and migration
-record.
+`taskpacks/current/WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918.md` for the
+current positioning and migration record.
