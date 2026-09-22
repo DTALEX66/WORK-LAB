@@ -382,6 +382,16 @@ def gate_protected_drives_consistency() -> int:
     )
 
 
+def gate_three_project_boundary() -> int:
+    """V2: control-plane / knowledge / design ownership split — boundary marked + gated.
+
+    Fail-closed: proves every three-project boundary split is recorded in the SSOT,
+    has a dir marker (BOUNDARY.md), an ArcheAxis seam, and a migration-manifest entry.
+    In-script runner, deterministic, offline, stdlib-only.
+    """
+    return run_python(["scripts/ci/verify_three_project_boundary.py"])
+
+
 def gate_github_delivery() -> int:
     """GitHub delivery accelerator: upload/review contracts (offline tests)."""
     return run_python(["tests/workflow-assistance/test_github_delivery.py"])
@@ -724,6 +734,12 @@ GATES: dict[str, Gate] = {
         "WS-3: E/F protected-drive truth consistent across policy SSOT, projects.json, and project-data-boundary.json.",
         gate_protected_drives_consistency,
     ),
+    "three-project-boundary": Gate(
+        "three-project-boundary",
+        "V2: WORK-LAB control-plane vs ArcheAxis knowledge vs DESIGN-LAB design ownership split — "
+        "boundary SSOT + dir markers + ArcheAxis seams + migration manifest, fail-closed.",
+        gate_three_project_boundary,
+    ),
     "github-delivery": Gate(
         "github-delivery",
         "GitHub delivery accelerator: upload/review contracts (offline tests).",
@@ -805,6 +821,7 @@ VERIFY_ORDER = (
     "context-control-plane",
     "external-libraries-index",
     "protected-drives-consistency",
+    "three-project-boundary",
     "github-delivery",
     "adapter-conformance",
     "acp-conformance",
