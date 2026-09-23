@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-09-17T12:49:25.949687Z",
-  "source_digest": "e86f6bc8879ffb7d4fc75169d795bbee8321533afc226060cc3f92e60865de56",
+  "generated_at": "2026-09-22T15:14:09.538703Z",
+  "source_digest": "06951248e555277c4d7867fb68e4fd7cf69853ada0d8d449f4f406786a617d16",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -51,7 +51,7 @@
     }
   ],
   "contracts": {
-    "count": 30,
+    "count": 37,
     "schema_version": "work-lab-contract-catalog/v2"
   },
   "skills": {
@@ -133,7 +133,7 @@
         "name": "project-data-boundary",
         "source": "packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md",
         "version": "1.3.0",
-        "source_sha256": "43524b0125a13e666bce44014ff7694b40253459650d989fb286bf1889f043a8",
+        "source_sha256": "405e16d3a8f6490ec31107b91cf3fb1f011ab02e4d37f50aaa0e0e9cded5399b",
         "trust": "repository-controlled",
         "enabled": true,
         "live_readback": "not-run"
@@ -205,12 +205,14 @@
       "work-lab-gate"
     ]
   },
-  "stage3": {
-    "taskpack_id": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE",
-    "task_count": 28,
-    "initial_state": "RECONCILED_20260810",
+  "compatibility_history": {
+    "stage3_taskpack_id": null,
+    "stage3_task_count": null,
+    "stage3_initial_state": null,
     "historical_baseline_source": ".project/governance/generated/STAGE3_BASELINE.json",
-    "historical_baseline_status": "HISTORICAL_ONLY"
+    "historical_baseline_present": true,
+    "historical_baseline_status": "HISTORICAL_ONLY",
+    "role": "historical_only_not_current_identity"
   },
   "unverified_capabilities": [
     "hermes_live_apply",
@@ -219,5 +221,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "211563dbbe070518b23744eb950be6320db9a27e3826b1fe974b07d70c90fbe2"
+  "content_digest": "3ed19a3bb25ded0f4e2a1c0ff52bafa48cfaef183112c04f68c695d062b8fcb9"
 }

@@ -16,16 +16,35 @@
     ".work-lab",
     ".work-lab/evidence"
   ],
+  "secondaryRuntimeRoots": [
+    {
+      "path": ".hermes/task-runtime",
+      "status": "TRACKED",
+      "role": "hook-escape runtime landing: pycache/uv/node-compile caches that the hermes-project-data wrapper routes outside .project-local",
+      "kind": "regenerable-cache",
+      "note": "not a canonical write target; declared here so boundary declaration matches reality. Slimmable on demand; never a task artifact."
+    },
+    {
+      "path": ".hermes/task-artifacts",
+      "status": "TRACKED",
+      "role": "hook-escape task artifacts (3 files observed, <1MB); prefer .project-local/artifacts for new evidence",
+      "kind": "evidence"
+    }
+  ],
   "forbiddenExternalRoots": [
     "E:/",
-    "E:\\"
+    "E:\\",
+    "F:/",
+    "F:\\"
   ],
   "spillGovernance": {
     "rule": "Every project artifact stays inside the project Git root; any write outside it is a spill and must be traceable, locatable, cleanable and migratable.",
     "protectedDataVolume": {
       "roots": [
         "E:/",
-        "E:\\"
+        "E:\\",
+        "F:/",
+        "F:\\"
       ],
       "policy": "forbidden without explicit per-path, per-operation user authorization",
       "accessDefault": "deny"

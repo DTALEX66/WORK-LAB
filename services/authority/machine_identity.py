@@ -36,10 +36,10 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def _reject_e_drive(path: Path) -> None:
+def _reject_protected_drive(path: Path) -> None:
     value = str(path).replace("/", "\\")
-    if re.match(r"^E:\\", value, flags=re.IGNORECASE):
-        raise ValueError("E: is protected and cannot be accessed by machine identity diagnostics")
+    if re.match(r"^[EF]:\\", value, flags=re.IGNORECASE):
+        raise ValueError("E: and F: are protected drives and cannot be accessed by machine identity diagnostics")
 
 
 def _reject_sensitive_path(path: Path) -> None:
@@ -80,7 +80,7 @@ def _reject_reparse_ancestors(project_root: Path, path: Path) -> None:
 def _require_project_root(project_root: Path) -> Path:
     """Accept only a direct Git root with this module's declared profile."""
     root = Path(os.path.abspath(str(project_root)))
-    _reject_e_drive(root)
+    _reject_protected_drive(root)
     if not root.is_dir():
         raise ValueError("project root does not exist")
     if _is_reparse_point(root):
@@ -93,14 +93,14 @@ def _require_project_root(project_root: Path) -> Path:
 
 def _profile_digest(project_root: Path) -> str:
     profile = _project_path(project_root, PROFILE_RELATIVE)
-    _reject_e_drive(profile)
+    _reject_protected_drive(profile)
     if not profile.is_file():
         return "PROFILE_NOT_FOUND"
     return hashlib.sha256(profile.read_bytes()).hexdigest()
 
 
 def _read_json(path: Path, *, default: Any) -> Any:
-    _reject_e_drive(path)
+    _reject_protected_drive(path)
     _reject_sensitive_path(path)
     if not path.is_file():
         return default
@@ -115,9 +115,9 @@ def _validate_machine_id(value: Any) -> str:
 
 def _project_root(value: str | None) -> Path:
     raw_root = Path(value or Path.cwd())
-    _reject_e_drive(raw_root)
+    _reject_protected_drive(raw_root)
     root = raw_root.resolve()
-    _reject_e_drive(root)
+    _reject_protected_drive(root)
     if not root.is_dir():
         raise ValueError(f"project root does not exist: {root}")
     # The documented invocation runs from this module directory. Resolve the
@@ -136,7 +136,7 @@ def _project_path(project_root: Path, candidate: Path) -> Path:
     # the evidence before the ancestor check below; abspath normalizes ``..``
     # without following links.
     path = Path(os.path.abspath(str(candidate if candidate.is_absolute() else project_root / candidate)))
-    _reject_e_drive(path)
+    _reject_protected_drive(path)
     try:
         path.relative_to(project_root)
     except ValueError as exc:
@@ -156,7 +156,7 @@ def _identity_path(project_root: Path, identity_file: Path | None, scope: str) -
         path = _project_path(project_root, identity_file)
     else:
         raise ValueError("scope must be project or device")
-    _reject_e_drive(path)
+    _reject_protected_drive(path)
     return path
 
 

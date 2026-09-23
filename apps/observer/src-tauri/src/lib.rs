@@ -170,6 +170,78 @@ pub fn run() {
             // Close button hides to tray instead of quitting (portable, tray-friendly).
             let _ = handle;
 
+            // U19 (E2E): opt-in, default-OFF CDP probe window. In the shipped
+            // binary this block is inert unless WORK_LAB_U19_CDP_PORT is set
+            // (CI E2E + local harness). The probe window hosts the SAME
+            // frontend; only ITS WebView2 environment carries
+            // --remote-debugging-port, so the production main/panel webviews
+            // are untouched. (The WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS env
+            // var is NOT consumed by wry — it always passes app-level args —
+            // so the args must go through this builder hook.)
+            if let Ok(cdpp) = std::env::var("WORK_LAB_U19_CDP_PORT") {
+                // --use-angle=swiftshader: force software rendering so GDI
+                // PrintWindow can actually capture the pixels on headless CI
+                // runners (GPU-composited surfaces print black). Opt-in only.
+                let args = format!(
+                    "--remote-debugging-port={cdpp} --remote-allow-origins=* --use-angle=swiftshader"
+                );
+                let url = tauri::WebviewUrl::App(
+                    "index.html?view=full&mode=UNKNOWN&theme=dark".into(),
+                );
+                match tauri::WebviewWindowBuilder::new(app, "u19cdp", url)
+                    .additional_browser_args(args.as_str())
+                    // U19: explicit geometry so the harness' GDI proof (>=200x150
+                    // filter) and the CDP page target both have a real surface.
+                    // A default-sized/hidden window on a headless runner is the
+                    // "windows=0 + no CDP target" failure mode seen in CI.
+                    .inner_size(800.0, 600.0)
+                    .visible(true)
+                    .build()
+                {
+                    Ok(w) => {
+                        let _ = w.show();
+                        let _ = w.set_focus();
+                        // U19 next-cycle: externalize the probe outcome so the
+                        // harness/CI log can discriminate "window built" from
+                        // "never reached the probe block" without depending on
+                        // tauri-plugin-log flushing. visible=false on a built
+                        // window => headless-session root cause (R1).
+                        if let Ok(status_path) = std::env::var("WORK_LAB_U19_PROBE_STATUS") {
+                            let vis = w.is_visible().unwrap_or(false);
+                            let _ = std::fs::write(
+                                &status_path,
+                                format!(
+                                    "probe=ok pid={} visible={} cdpPort={}",
+                                    std::process::id(),
+                                    vis, cdpp
+                                ),
+                            );
+                        }
+                        log::info!(target: "u19", "cdp probe window ready");
+                    }
+                    // Was silently swallowed — the root cause of U19's CI
+                    // "no CDP page target / windows=0": the build error (usually
+                    // a WebView2 instance failure) never reached the log.
+                    Err(error) => {
+                        if let Ok(status_path) =
+                            std::env::var("WORK_LAB_U19_PROBE_STATUS")
+                        {
+                            let _ = std::fs::write(
+                                &status_path,
+                                format!(
+                                    "probe=build_failed error={}",
+                                    error.to_string().replace('\n', " ")
+                                ),
+                            );
+                        }
+                        log::error!(
+                            target: "u19",
+                            "cdp probe window build FAILED: {error}"
+                        );
+                    }
+                }
+            }
+
             // If opened as the main window only, focus it.
             Ok(())
         })

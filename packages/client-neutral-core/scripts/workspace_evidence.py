@@ -54,6 +54,31 @@ def _first_int(pattern: str, text: str) -> int | None:
     return int(match.group(1)) if match else None
 
 
+def _historical_stage3(current: dict[str, Any] | None) -> dict[str, Any]:
+    """Normalise the historical Stage 3 block regardless of projection vintage.
+
+    P0-03 demoted the top-level `stage3` key to `compatibility_history` so
+    CURRENT_STATE no longer treats Stage 3 as a current-identity source. This
+    reader accepts the new `compatibility_history` projection first and falls
+    back to the legacy `stage3` key, so both old and new projections keep
+    working. The returned dict always exposes `taskpack_id` / `task_count`.
+    """
+    if not current:
+        return {}
+    block = current.get("compatibility_history")
+    if isinstance(block, dict):
+        return {
+            "taskpack_id": block.get("stage3_taskpack_id", block.get("taskpack_id", "unknown")),
+            "task_count": block.get("stage3_task_count", block.get("task_count")),
+            "initial_state": block.get("stage3_initial_state", block.get("initial_state", "unknown")),
+            "raw": block,
+        }
+    legacy = current.get("stage3")
+    if isinstance(legacy, dict):
+        return dict(legacy)
+    return {}
+
+
 def _status(text: str) -> str | None:
     match = re.search(r"^>\s*Status:\s*`([^`]+)`", text, flags=re.MULTILINE)
     return match.group(1).strip() if match else None
@@ -97,7 +122,7 @@ def _approval_rows(text: str) -> list[dict[str, str]]:
 
 
 def _plan_projection(text: str, current: dict[str, Any] | None) -> dict[str, Any]:
-    stage3 = (current or {}).get("stage3") or {}
+    stage3 = _historical_stage3(current)
     total = _first_int(r"^(\d+)\s+个\s+WL3\s+任务", text)
     return {
         "taskpackId": stage3.get("taskpack_id") or "WORK-LAB-MASTER-2.0",
@@ -124,7 +149,9 @@ def _governance_projection(current: dict[str, Any]) -> dict[str, Any]:
         "skills": (current.get("skills") or {}).get("count"),
         "singleWriter": (current.get("module_ownership") or {}).get("single_writer"),
         "crossModuleWrites": (current.get("module_ownership") or {}).get("cross_module_writes"),
-        "stage": current.get("stage3") or {},
+        # P0-03: the historical Stage 3 block is surfaced as compatibility
+        # history (normalised across new/legacy projections), not as identity.
+        "historicalStage3": _historical_stage3(current),
         "unverifiedCapabilities": current.get("unverified_capabilities") if isinstance(current.get("unverified_capabilities"), list) else [],
         "checkoutAttestation": current.get("checkout_attestation") or {},
         "evidenceKind": "STATIC_BASELINE",

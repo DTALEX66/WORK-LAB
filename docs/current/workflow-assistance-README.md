@@ -92,7 +92,7 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 | 本地质量门禁 | 跨平台 canonical gate runner，统一治理测试、语法、安全扫描、Context Pack、MCP 候选审计、Shell/PowerShell 解析 | `services/orchestration/run_quality_gate.py`、`Justfile`、`docs/current/workflow-assistance/workflow/local-quality-gates.md` |
 | 安全扫描 | Prompt/规则隐藏字符、注入特征和疑似硬编码秘密扫描 | `packages/client-neutral-core/scripts/security/scan_agent_rules.py` |
 | 模板库 | AGENTS/CODEX/DESIGN/SECURITY 规则模板及多类任务票据 | `packages/client-neutral-core/templates/` |
-| 审计与证据 | 开源能力吸收记录、固定上游 SHA、机器可读清单、明确排除项 | `docs/current/workflow-assistance/audit/` |
+| 审计与证据 | 开源能力吸收记录、固定上游 SHA、机器可读清单、明确排除项 | `docs/history/archive/workflow-assistance/audit/` |
 | 跨平台验证 | Python 治理测试、语法检查、Shell/PowerShell 解析、Linux/Windows Actions | `../../.github/workflows/work-lab-gate.yml` |
 
 ## Portable 部署与安全同步
@@ -202,7 +202,7 @@ backup → staging → atomic promotion 流程；`config/.env.template` 只列�
 字段级配置和已声明的 Hermes 受管文件映射。恢复绝不替代官方安装/更新，也不接管
 Provider、模型、认证、Token、会话、私有记忆、Desktop 内部状态、CC Switch 路由或 Open
 Design 的设计能力配置。今日基线结论、已处理事项和恢复流程见
-[`docs/current/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md`](docs/current/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md)。
+[`docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md`](docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md)。
 
 ## 模型切换与路由诊断
 
@@ -488,7 +488,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . kanban -- boards li
 - 缺少执行证据时必须 `blocked`；
 - 测试、产物、tree identity、回滚与日志输出契约。
 
-它是治理契约，不是运行时 sandbox。相关 Grok Build 方法吸收已固定上游 SHA，并登记在 `docs/current/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml`；本轮没有引入模型、Provider、付费 API、外部二进制或运行时资产。
+它是治理契约，不是运行时 sandbox。相关 Grok Build 方法吸收已固定上游 SHA，并登记在 `docs/history/archive/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml`；本轮没有引入模型、Provider、付费 API、外部二进制或运行时资产。
 
 ## Skills 能力库
 
@@ -603,21 +603,21 @@ python packages/client-neutral-core/scripts/security/scan_agent_rules.py templat
 - `docs/current/workflow-assistance/workflow/memory-compaction-2026-08-13.md`：Hermes 记忆压缩与优化归档（合并策略、精简记录、记忆治理规则）；
 - `docs/current/workflow-assistance/workflow/error-fixes-2026-08-14-guard.md`：pre_tool_call 终端守卫正则防护三缺陷（路径穿越绕过、含空格路径误拦、scheme:// URL 误判）修复归档；
 - `docs/current/workflow-assistance/workflow/error-fixes-2026-08-14-r2.md`：R2 重审计修复批次错误归档（Guard 前缀两连坑、zizmor Docker action、schema 四方同步、SQL 表名、fail-closed 契约、验证脚本 bug、graphql 瞬断、cargo 检测）；
-- `docs/current/workflow-assistance/handoffs/audit-r2-fixes-handoff-2026-08-14.md`：R2 修复批次交接（PR #97~#101、验证证据、剩余事项与恢复顺序）；
+- `docs/history/archive/workflow-assistance/handoffs/audit-r2-fixes-handoff-2026-08-14.md`：R2 修复批次交接（PR #97~#101、验证证据、剩余事项与恢复顺序）；
 - `docs/current/workflow-assistance/workflow/wloss-reference-decisions.md`：WLOSS-100/300/510 开源能力处理决定（OPA/Conftest=REFERENCE、in-toto=DERIVE、Cosign/Promptfoo=REFERENCE、Superpowers=方法吸收）；
 - `docs/current/workflow-assistance/mcp/workflow-mcp-stack.md`：MCP 默认策略；
 - `docs/current/workflow-assistance/mcp/mcp-catalog-governance.md`：MCP 候选审计 schema、阻断规则和默认启用边界；
 - `docs/current/workflow-assistance/absorption/open-source-workflow-absorption.md`：开源工作流吸收清单；
-- `docs/current/workflow-assistance/audit/workflow-absorption-audit-2026-07.md`：总体吸收审计；
-- `docs/current/workflow-assistance/audit/hermes-workflow-recovery-2026-07-22.md`：Hermes Desktop、CC Switch、Codex、GitHub 全链路故障、执行错误、恢复过程和数据保护证据；
-- `docs/current/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.md`：模型/API 中立 Agent Harness 审计；
-- `docs/current/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml`：固定来源和本地落点的机器可读证据；
-- `docs/current/workflow-assistance/audit/project-data-boundary-handoff-2026-08-02.md`：本次项目数据边界审计、交接、错误总结和上传前验证；
-- `docs/current/workflow-assistance/audit/project-data-boundary-handoff-2026-08-02.json`：本次审计的机器可读 manifest；
-- `docs/current/workflow-assistance/audit/workflow-baseline-audit-2026-08-06.md`：官方 Hermes 基线、全局规则、技能/插件部署、同步边界与 Windows 目录锁的脱敏综合审计；
-- `docs/current/workflow-assistance/handoffs/workflow-assistance-2026-07-23.md`：无密阶段交接、恢复顺序、已发布基线与会话卫生边界；
-- `docs/current/workflow-assistance/handoffs/hermes-desktop-source-root-repair-2026-07-24.md`：Desktop source-root/canonical runtime 修复的无密 Codex 交接、验证与回滚边界。
-- `docs/current/workflow-assistance/handoffs/audit-prevention-controls-handoff-2026-08-13.md`：供应链、配置最小写入、Hermes 路径围栏和全局/项目所有权边界的交接；明确本地候选验证与 PR/CI/跨机器验证的证据分级。
+- `docs/history/archive/workflow-assistance/audit/workflow-absorption-audit-2026-07.md`：总体吸收审计；
+- `docs/history/archive/workflow-assistance/audit/hermes-workflow-recovery-2026-07-22.md`：Hermes Desktop、CC Switch、Codex、GitHub 全链路故障、执行错误、恢复过程和数据保护证据；
+- `docs/history/archive/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.md`：模型/API 中立 Agent Harness 审计；
+- `docs/history/archive/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml`：固定来源和本地落点的机器可读证据；
+- `docs/history/archive/workflow-assistance/audit/project-data-boundary-handoff-2026-08-02.md`：本次项目数据边界审计、交接、错误总结和上传前验证；
+- `docs/history/archive/workflow-assistance/audit/project-data-boundary-handoff-2026-08-02.json`：本次审计的机器可读 manifest；
+- `docs/history/archive/workflow-assistance/audit/workflow-baseline-audit-2026-08-06.md`：官方 Hermes 基线、全局规则、技能/插件部署、同步边界与 Windows 目录锁的脱敏综合审计；
+- `docs/history/archive/workflow-assistance/handoffs/workflow-assistance-2026-07-23.md`：无密阶段交接、恢复顺序、已发布基线与会话卫生边界；
+- `docs/history/archive/workflow-assistance/handoffs/hermes-desktop-source-root-repair-2026-07-24.md`：Desktop source-root/canonical runtime 修复的无密 Codex 交接、验证与回滚边界。
+- `docs/history/archive/workflow-assistance/handoffs/audit-prevention-controls-handoff-2026-08-13.md`：供应链、配置最小写入、Hermes 路径围栏和全局/项目所有权边界的交接；明确本地候选验证与 PR/CI/跨机器验证的证据分级。
 
 - `docs/current/workflow-assistance-TROUBLESHOOTING.md`：常见部署、代理、认证和工具链问题。
 

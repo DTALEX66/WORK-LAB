@@ -19,7 +19,7 @@ from typing import Any, Iterator
 from canonical_store import CanonicalStore
 
 PROFILE_SCHEMA_VERSION = "workflow/project-profile/v1"
-DEFAULT_FORBIDDEN = {"E:\\", "C:\\Windows", "C:\\Program Files"}
+DEFAULT_FORBIDDEN = {"E:\\", "F:\\", "C:\\Windows", "C:\\Program Files"}
 GIT_HEAD_RE = re.compile(r"^[0-9a-f]{40}$")
 GIT_ROOT_RE = re.compile(r"^([A-Za-z]:[\\/].*)$")
 

@@ -115,6 +115,7 @@ jobs:
           python tests/ci/test_stage3_baseline.py
           python services/orchestration/run_quality_gate.py adapter-registry
           python services/orchestration/run_quality_gate.py capability-matrix
+          python services/orchestration/run_quality_gate.py policy-coverage
           python services/orchestration/run_quality_gate.py adapter-conformance
           python services/orchestration/run_quality_gate.py acp-conformance
           python services/orchestration/run_quality_gate.py otel-mapping
@@ -154,8 +155,8 @@ jobs:
     name: observer
     needs: plan
     if: needs.plan.outputs.run_observer == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: windows-latest
+    timeout-minutes: 40
     env:
       PYTHONPATH: src:scripts
     defaults:
@@ -174,6 +175,7 @@ jobs:
           python tests/test_usage_rollup.py
           python tests/test_observer_events_migration.py
       - name: Verify Observer Web and desktop contracts
+        shell: bash
         run: |
           node tests/run_all_tests.js
           for file in web/scripts/*.js; do node --check "$file"; done
@@ -183,6 +185,27 @@ jobs:
           npm ci
           npm run typecheck
           npm run build
+      # U08: the observer desktop crate is a real Tauri 2 crate (src-tauri).
+      # Mirror the token-monitor job (windows-latest): test + check the locked
+      # Rust desktop crate. Tauri is Windows-native-first and on Windows uses
+      # WebView2 (no system GTK/webkit2gtk needed); --locked keeps the dep tree exact.
+      - name: Test locked observer Rust desktop crate
+        working-directory: apps/observer/src-tauri
+        run: |
+          cargo test --locked
+          cargo check --locked
+      # U19 — WINDOWS_TAURI_E2E: real native-shell readback. CI windows-latest
+      # has the complete MSVC toolchain (the local GNU chain lacks a link.exe,
+      # so only CI can build a runnable exe) + the WebView2 runtime. Build the
+      # real binary, then drive the full chain: real sidecar v3 backend ->
+      # real app.exe -> WebView2 CDP readback (non-about:blank). The harness
+      # is fail-closed: any stage it cannot prove is reported FAIL, never a
+      # fabricated PASS. Evidence lands in .project-local/runs/.
+      - name: Build the real Tauri desktop binary (MSVC, for U19 E2E)
+        working-directory: apps/observer/src-tauri
+        run: cargo build --release --locked
+      - name: U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)
+        run: python scripts/u19_webview_e2e.py
 
   supply-chain-security:
     name: supply-chain-security
@@ -231,10 +254,20 @@ jobs:
           python tests/ci/test_aggregate_gate.py
       - name: Verify contract catalog references
         run: python scripts/ci/verify_contract_catalog.py
+      - name: Generate contract TS projection (U16 SSOT)
+        run: python scripts/ci/generate_contract_types.py
+      - name: Verify cross-language contract SSOT (U16)
+        run: python scripts/ci/verify_contract_ssot.py
+      - name: Verify usage convergence — one canonical usage/cost contract (U09)
+        run: python scripts/ci/verify_usage_convergence.py
       - name: Verify typed module dependencies
         run: python scripts/ci/verify_module_dependencies.py
       - name: Verify project data boundary
         run: python scripts/ci/verify_project_data_boundary.py
+      - name: Verify authority-reference integrity (A03)
+        run: python scripts/ci/verify_project_authority_reference.py
+      - name: Run authority-reference negative controls
+        run: python tests/ci/test_project_authority_reference.py
       - name: Verify supply-chain pins
         run: python scripts/ci/verify_supply_chain.py
       - name: Verify offline source health (NX-600)

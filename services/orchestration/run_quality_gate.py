@@ -176,24 +176,112 @@ def tracked_python_files() -> list[str]:
     return [path.relative_to(ROOT).as_posix() for root in roots for path in sorted(root.glob("*.py"))]
 
 
+MANDATORY_TEST_GLOBS = ("test_*.py", "nf*.py")
+
+
 def governance_test_files() -> list[str]:
-    return [
-        path.relative_to(ROOT).as_posix()
-        for path in sorted((ROOT / "tests" / "workflow-assistance").glob("test_*.py"))
-        if path.name not in RETIRED_ORDINARY_TESTS
-    ]
+    """P0-05: unified mandatory discovery — ordinary + negative-control tests.
+
+    Both the ordinary behavior tests (`test_*.py`) and the negative-control
+    tests (`nf*.py`) are mandatory and discovered dynamically from disk. There
+    is no hard-coded list and no hard-coded count, so adding a new negative
+    control can never silently drop out of the gate (the "compile PASS !=
+    behavior PASS" gap this closes).
+    """
+    selected: set[str] = set()
+    for glob in MANDATORY_TEST_GLOBS:
+        for path in (ROOT / "tests" / "workflow-assistance").glob(glob):
+            if path.name in RETIRED_ORDINARY_TESTS:
+                continue
+            selected.add(path.relative_to(ROOT).as_posix())
+    return sorted(selected)
 
 
-def gate_governance() -> int:
-    modules = [Path(path).stem for path in governance_test_files()]
+def mandatory_discovery_modules() -> list[str]:
+    """Importable module stems for the mandatory discovery set (P0-05).
+
+    `unittest discover` resolves `nf*` modules by name only; module-style
+    (plain assert, no unittest.TestCase) files are executed as a module and
+    are NOT importable as dotted test names. For those, run the file as a
+    script (it self-executes via `if __name__ == "__main__"`). The runner
+    therefore returns dotted stems for unittest modules and file paths for
+    module-style files; `_run_governance_batch` mixes both.
+    """
+    members: list[str] = []
+    for path in governance_test_files():
+        full = ROOT / path
+        stem = Path(path).stem
+        module_style = not full.read_text(encoding="utf-8").find("unittest") >= 0
+        if module_style:
+            members.append(path)  # script-style execution
+        else:
+            members.append(stem)
+    return members
+
+
+def _run_governance_batch(members: list[str]) -> tuple[int, str]:
+    """Run the mandatory test modules as one fail-closed batch.
+
+    Returns (process exit code, combined stdout+stderr). Members that are
+    dotted module names run through `python -m unittest`; members that are
+    repository-relative file paths (module-style `nf*` files without
+    unittest.TestCase) run as standalone scripts. A failing script fails the
+    whole batch: hollow or not-run outcomes are detectable and fail closed.
+    """
     pythonpath = MODULE_PYTHONPATH
     existing = os.environ.get("PYTHONPATH")
     if existing:
         pythonpath += os.pathsep + existing
-    return run_python(
-        ["-m", "unittest", "-v", *modules],
-        env_updates={"PYTHONPATH": pythonpath},
-    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = pythonpath
+    unittest_modules = [member for member in members if not (ROOT / member).is_file()]
+    script_files = [member for member in members if (ROOT / member).is_file()]
+    combined: list[str] = []
+    overall = 0
+    if unittest_modules:
+        result = subprocess.run(
+            [sys.executable, "-m", "unittest", "-v", *unittest_modules],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            capture_output=True,
+        )
+        overall = result.returncode
+        combined.append(result.stdout + result.stderr)
+    for script in script_files:
+        result = subprocess.run(
+            [sys.executable, script],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            capture_output=True,
+        )
+        if result.returncode != 0 and overall == 0:
+            overall = result.returncode
+        combined.append(result.stdout + result.stderr)
+    return overall, "\n".join(combined)
+
+
+def gate_governance() -> int:
+    """P0-05: run the mandatory tests, fail-closed on any hollow outcome.
+
+    missing  != PASS  (empty mandatory set is a red flag, not a clean pass)
+    not-run  != PASS  (clean exit but zero tests executed)
+    cancelled/failed != PASS  (non-zero batch exit)
+    """
+    members = mandatory_discovery_modules()
+    if not members:
+        print("QUALITY_GATE_GOVERNANCE_FAIL empty-mandatory-set")
+        return 1
+    exit_code, output = _run_governance_batch(members)
+    if not re.search(r"^Ran \d+ tests?", output, flags=re.MULTILINE):
+        print("QUALITY_GATE_GOVERNANCE_FAIL not-run (no tests executed)")
+        return 1
+    if exit_code != 0:
+        print(f"QUALITY_GATE_GOVERNANCE_FAIL exit={exit_code}")
+        return exit_code
+    print(f"QUALITY_GATE_GOVERNANCE_PASS modules={len(members)}")
+    return 0
 
 
 def gate_compile() -> int:
@@ -259,6 +347,17 @@ def gate_capability_matrix() -> int:
     return run_python(["packages/client-neutral-core/scripts/verify_capability_matrix.py"])
 
 
+def gate_policy_coverage() -> int:
+    """U17.7/27: Global Agent Policy coverage + freshness.
+
+    Fail-closed check that the derived policy-coverage surfaces (loss reports,
+    the capability-matrix coverage block, the golden projections) are fresh with
+    respect to their sources (the policy SSOT + per-software extensions).
+    Hand-editing a generated artifact without moving the source policy is drift.
+    """
+    return run_python(["scripts/ci/verify_policy_coverage.py"])
+
+
 def gate_context_control_plane() -> int:
     """Context Control Plane: stable prefix, cache truth, drift guard tests."""
     return run_python(["tests/workflow-assistance/test_context_control_plane.py"])
@@ -267,6 +366,30 @@ def gate_context_control_plane() -> int:
 def gate_external_libraries_index() -> int:
     """External libraries index: JSON valid + sharedRoots resolve + assets present."""
     return run_python(["packages/client-neutral-core/scripts/verify_external_libraries_index.py"])
+
+
+def gate_protected_drives_consistency() -> int:
+    """WS-3: E/F protected-drive truth consistent across all three governed surfaces.
+
+    The user standing rule protects BOTH data drives (E: and F:). The gate reads the
+    SSOT (config/global-agent-policy.yaml protected_drives), projects.json forbiddenRoots,
+    and project-data-boundary.json (forbiddenExternalRoots + protectedDataVolume.roots)
+    and fails if any surface drops a drive. In-script runner (not a test file) mirrors
+    gate_external_libraries_index: deterministic, offline, stdlib-only.
+    """
+    return run_python(
+        ["packages/client-neutral-core/scripts/verify_protected_drives_consistency.py"]
+    )
+
+
+def gate_three_project_boundary() -> int:
+    """V2: control-plane / knowledge / design ownership split — boundary marked + gated.
+
+    Fail-closed: proves every three-project boundary split is recorded in the SSOT,
+    has a dir marker (BOUNDARY.md), an ArcheAxis seam, and a migration-manifest entry.
+    In-script runner, deterministic, offline, stdlib-only.
+    """
+    return run_python(["scripts/ci/verify_three_project_boundary.py"])
 
 
 def gate_github_delivery() -> int:
@@ -566,7 +689,7 @@ def gate_exact_sha_ci() -> int:
 
 
 GATES: dict[str, Gate] = {
-    "governance": Gate("governance", "Run all portable workflow and project-boundary tests.", gate_governance),
+    "governance": Gate("governance", "Run all mandatory workflow + negative-control (nf*) tests in one fail-closed batch.", gate_governance),
     "compile": Gate("compile", "Compile repository Python workflow/security/test files.", gate_compile),
     "skill-provenance": Gate("skill-provenance", "Validate source skill metadata, references, and provenance hashes.", gate_skill_provenance),
     "security": Gate("security", "Scan templates, skills, docs, scripts and README for prompt/security hazards.", gate_security),
@@ -591,6 +714,11 @@ GATES: dict[str, Gate] = {
         "WL3-100: verify capability-matrix.json stays consistent with the adapter registry.",
         gate_capability_matrix,
     ),
+    "policy-coverage": Gate(
+        "policy-coverage",
+        "U17.7/27: verify Global Agent Policy coverage + freshness (loss reports, matrix block, golden projections).",
+        gate_policy_coverage,
+    ),
     "context-control-plane": Gate(
         "context-control-plane",
         "Context Control Plane: stable prefix + cache truth + drift guard.",
@@ -600,6 +728,17 @@ GATES: dict[str, Gate] = {
         "external-libraries-index",
         "External libraries index: JSON valid + roots resolve + assets listed (content stays local).",
         gate_external_libraries_index,
+    ),
+    "protected-drives-consistency": Gate(
+        "protected-drives-consistency",
+        "WS-3: E/F protected-drive truth consistent across policy SSOT, projects.json, and project-data-boundary.json.",
+        gate_protected_drives_consistency,
+    ),
+    "three-project-boundary": Gate(
+        "three-project-boundary",
+        "V2: WORK-LAB control-plane vs ArcheAxis knowledge vs DESIGN-LAB design ownership split — "
+        "boundary SSOT + dir markers + ArcheAxis seams + migration manifest, fail-closed.",
+        gate_three_project_boundary,
     ),
     "github-delivery": Gate(
         "github-delivery",
@@ -678,8 +817,11 @@ VERIFY_ORDER = (
     "core-schemas",
     "adapter-registry",
     "capability-matrix",
+    "policy-coverage",
     "context-control-plane",
     "external-libraries-index",
+    "protected-drives-consistency",
+    "three-project-boundary",
     "github-delivery",
     "adapter-conformance",
     "acp-conformance",
@@ -745,6 +887,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "core-schemas": ("packages/contracts/schemas/", "config/"),
     "adapter-registry": ("config/adapters.json", "packages/client-neutral-core/scripts/verify_adapter_registry.py"),
     "capability-matrix": ("config/capability-matrix.json", "packages/client-neutral-core/scripts/verify_capability_matrix.py"),
+    "policy-coverage": ("config/global-agent-policy.yaml", "config/loss-reports/", "config/capability-matrix.json", "config/adapter-registry.json", "services/policy/policy_projection.py", "integrations/executors/codex/codex_policy_renderer.py", "integrations/executors/hermes/hermes_policy_renderer.py", "integrations/executors/codex/codex-policy-extension.yaml", "integrations/executors/hermes/hermes-policy-extension.yaml", "integrations/executors/codex/global-guidance.md", "config/SOUL.md", "scripts/ci/verify_policy_coverage.py", "tests/workflow-assistance/test_policy_projection.py"),
     "context-control-plane": ("packages/client-neutral-core/scripts/context_control_plane.py", "packages/client-neutral-core/scripts/context_bundle.py", "packages/client-neutral-core/scripts/context_drift_guard.py"),
     "external-libraries-index": (".project/governance/external-libraries-index.json", "packages/client-neutral-core/scripts/verify_external_libraries_index.py"),
     "github-delivery": ("packages/client-neutral-core/scripts/github_common.py", "packages/client-neutral-core/scripts/github_upload_accelerator.py", "packages/client-neutral-core/scripts/github_review_accelerator.py"),

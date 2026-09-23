@@ -8,6 +8,18 @@ The app reads user-selected local `.json` and `.jsonl` files/directories and onl
 
 It does not estimate tokens from text length, read credentials, call provider APIs, or upload logs.
 
+## Role: specialist helper (U09 usage convergence)
+
+This app is the **specialist helper** of WORK-LAB's usage observability, not a
+second usage/cost engine. The single canonical token/usage/cost contract is the
+JSON-Schema SSOT `packages/contracts/schemas/workflow/usage-observation.schema.json`
+(the Observer's main UI reads that same canonical projection). This tool only
+**counts explicit token fields** from user-selected local files and never
+computes money cost (no price/FX/quota), so it cannot fork cost truth away from
+the canonical contract. Retiring this specialist UI is an explicit, authorized
+decision ("no deletion before parity"), not an implicit one. Conformance to the
+canonical contract is machine-verified by `scripts/ci/verify_usage_convergence.py`.
+
 ## Provider display
 
 Models and explicit provider/source labels are grouped as:

@@ -2,17 +2,140 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+UI_TOKENS (20260921): B10/L4/L7 authoritative design tokens.
+Single numeric source of truth for CI-assertable values lives in
+src/theme/tokens.ts — the :root / html.light blocks below MUST mirror it
+(checked by src/theme/tokens.test.ts). Tailwind resolves the six accents
+through the channel form `rgb(var(--X-rgb) / <alpha-value>)` so alpha
+modifiers (bg-success/10, border-error/20, …) work at runtime in BOTH
+themes; surfaces (bg/sidebar/panel/panel2/border/ink/muted) are plain
+variables.
+Authority chain: .ui-reference/WORK-LAB/10_B10 (visual supreme) +
+L4 WORK-LAB_design_tokens.json + L7 theme/tokens.json (three-way identical).
+Deep-navy console: NO purple / warm gold / magazine tones, no cross-project
+color mixing (CODEX prompt §3 hard constraints).
+Default (:root) = the Dark design language. html.light inverts all of it
+(SPEC-A defined light values, text contrast >= 4.5:1, primary deepened).
+*/
+
+:root {
+  color-scheme: dark;
+  /* surfaces (plain variables) */
+  --color-bg: #050D16;
+  --color-sidebar: #07111C;
+  --color-panel: #081420;
+  --color-panel2: #0C1B2A;
+  --color-border: #17435D;
+  --color-ink: #EEF6FC;
+  --color-muted: #8EABBC;
+  /* accents (channel form for Tailwind alpha modifiers) */
+  --primary-rgb: 42 145 255;
+  --secondary-rgb: 32 205 225;
+  --success-rgb: 34 197 94;
+  --warning-rgb: 245 158 11;
+  --error-rgb: 239 68 68;
+  --info-rgb: 56 130 246;
+  /* shape / depth / motion / density (L4 + L6) */
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --shadow: 0 20px 80px rgba(0, 0, 0, 0.35);
+  --glass-blur: 18px;
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-modal: 220ms;
+  --motion-drawer: 280ms;
+  --motion-emphasis: 420ms;
+  --motion-pressed: 80ms;
+  --pressed-scale: 0.99;
+  --density-comfortable: 68px;
+  --density-default: 56px;
+  --density-compact: 44px;
+}
+
+html.light {
+  color-scheme: light;
+  /* surfaces */
+  --color-bg: #F4F7FA;
+  --color-sidebar: #E4EBF2;
+  --color-panel: #FFFFFF;
+  --color-panel2: #EAF0F6;
+  --color-border: #D5E2EC;
+  --color-ink: #0B1420;
+  --color-muted: #5A7184;
+  /* accents (deepened for light-surface contrast) */
+  --primary-rgb: 27 127 230;
+  --secondary-rgb: 14 147 165;
+  --success-rgb: 21 128 61;
+  --warning-rgb: 180 83 9;
+  --error-rgb: 185 28 28;
+  --info-rgb: 29 78 216;
+}
+
 @layer base {
-  * { @apply border-border; }
-  body { @apply bg-bg text-zinc-100 antialiased; font-family: 'Inter', 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif; }
+  * { border-color: var(--color-border); }
+  html, body { background-color: var(--color-bg); }
+  body {
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    font-family: 'Inter', 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+  }
+  /* The fixed zinc-* text utilities used throughout the UI must flip in light
+     so they stay legible on light surfaces. Dark is the default (no override). */
+  html.light .text-zinc-100 { color: #111827; }
+  html.light .text-zinc-200 { color: #1f2937; }
+  html.light .text-zinc-300 { color: #374151; }
+  html.light .text-zinc-400 { color: #4b5563; }
+  html.light .text-zinc-500 { color: #6b7280; }
+  html.light .text-zinc-600 { color: #4b5563; }
 }
 
 @layer components {
-  .panel { @apply bg-panel border border-border rounded-md; }
-  .panel2 { @apply bg-panel2 border border-border rounded-md; }
-  .kpi-number { @apply text-3xl font-bold tabular-nums tracking-tight; }
-  .label { @apply text-xs text-zinc-500; }
+  .text-ink { color: var(--color-ink); }
+  .text-muted { color: var(--color-muted); }
+  .panel { background: var(--color-panel); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  .panel2 { background: var(--color-panel2); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  .glass { backdrop-filter: blur(var(--glass-blur)); }
+  .card-shadow { box-shadow: var(--shadow); }
+  .kpi-number { font-size: 1.875rem; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.025em; color: var(--color-ink); }
+  .label { font-size: 0.75rem; color: var(--color-ink); opacity: 0.6; }
   .status-pulse { animation: statusPulse 2s ease-in-out infinite; }
   @keyframes statusPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
-  .count-up { transition: opacity 0.2s; }
+  .count-up { transition: opacity var(--motion-base); }
+}
+
+/*
+U05/U19 (taskpack 20260919): Compact HUD is a dedicated single-column surface.
+320px-safe by construction: no min-width that would force horizontal scroll,
+numeric values use tabular-nums + truncate, and the 4-KPI strip reflows.
+*/
+@layer components {
+  .compact-hud { min-width: 0; }
+  .compact-hud * { min-width: 0; }
+  [data-layout="compact"] { min-width: 320px; }
+  [data-layout="compact"] .tabular-nums { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+  /* UI_COMPONENTS (20260921): overlay motion classes — L6 authority.
+     modal 220ms ease, drawer 280ms cubic-bezier(.2,0,0,1), toast 180ms.
+     prefers-reduced-motion degrades to opacity-only / instant. */
+  @keyframes uiModalIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+  @keyframes uiBackdropIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes uiDrawerInRight { from { transform: translateX(100%); } to { transform: none; } }
+  @keyframes uiDrawerInLeft { from { transform: translateX(-100%); } to { transform: none; } }
+  @keyframes uiToastIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .ui-modal-panel { animation: uiModalIn var(--motion-modal) ease; }
+  .ui-backdrop { animation: uiBackdropIn var(--motion-modal) ease; }
+  .ui-drawer-right { animation: uiDrawerInRight var(--motion-drawer) cubic-bezier(0.2, 0, 0, 1); }
+  .ui-drawer-left { animation: uiDrawerInLeft var(--motion-drawer) cubic-bezier(0.2, 0, 0, 1); }
+  .ui-toast-item { animation: uiToastIn var(--motion-base) ease; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .status-pulse { animation: none; }
+    .count-up { transition: none; }
+    .ui-modal-panel, .ui-backdrop, .ui-drawer-right, .ui-drawer-left, .ui-toast-item {
+      animation-duration: 1ms;
+    }
+  }
 }

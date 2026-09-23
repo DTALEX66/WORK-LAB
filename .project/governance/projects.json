@@ -32,7 +32,8 @@
   ],
   "singleWriter": true,
   "forbiddenRoots": [
-    "E:\\"
+    "E:\\",
+    "F:\\"
   ],
   "generatedData": {
     "runtimeRoot": ".project-local/runs",

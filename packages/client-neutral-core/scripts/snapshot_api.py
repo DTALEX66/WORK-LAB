@@ -43,6 +43,7 @@ def build_snapshot(
     platform_map: dict[str, str] | None = None,
     git_map: dict[str, dict[str, Any]] | None = None,
     agent_map: dict[str, str] | None = None,
+    software: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build the v3 snapshot from canonical facts (all fields optional for tests)."""
     generated_at = generated_at or _now()
@@ -93,6 +94,7 @@ def build_snapshot(
             for run in ci_runs
         ],
         "sourceRefs": [e.get("sourceRef") for e in executions if e.get("sourceRef")],
+        **({"software": software} if software is not None else {}),
     }
 
 

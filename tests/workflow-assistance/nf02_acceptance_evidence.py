@@ -155,5 +155,72 @@ class TestExactShaCiGate(unittest.TestCase):
             g.bind_required("g", "abc")  # too short to be an exact SHA
 
 
+# ---------------------------------------------------------------------------
+# U11 — REAL evidence binding: a REAL record must carry a complete, verifiable
+# binding (evidence type, non-empty handle, identity/digest, producer,
+# verifier/readback, observedAt, source SHA/run identity when applicable).
+# An EMPTY REAL handle is invalid.  These are additive optional fields, so the
+# frozen positional constructions above (and every other behavior) stay intact.
+# ---------------------------------------------------------------------------
+class TestRealEvidenceBinding(unittest.TestCase):
+    def test_real_record_rejects_empty_handle(self):
+        with self.assertRaises(ValueError):
+            ae.EvidenceRecord("AT-31", "REAL", "   ", simulated=False)
+        # a non-simulated real record with a real handle is fine.
+        ae.EvidenceRecord("AT-31", "REAL", "real-run-42", simulated=False)
+
+    def test_real_binding_requires_full_field_set(self):
+        r = ae.EvidenceRecord("AT-15", "REAL", "real-cicd-9", simulated=False,
+                              evidence_type="RUN_ARTIFACT",
+                              receipt_digest="sha256:abc123",
+                              producer="work-lab/observer",
+                              verifier="work-lab/readback",
+                              observed_at="2026-09-20T00:00:00Z")
+        issues = ae.validate_real_binding(r)
+        self.assertEqual(issues, [])
+        # dropping one required field surfaces it.
+        weak = ae.EvidenceRecord("AT-15", "REAL", "real-cicd-9", simulated=False,
+                                 evidence_type="RUN_ARTIFACT",
+                                 receipt_digest="sha256:abc123",
+                                 producer="work-lab/observer",
+                                 verifier=None,                 # missing
+                                 observed_at="2026-09-20T00:00:00Z")
+        self.assertIn("verifier", ae.validate_real_binding(weak))
+
+    def test_source_sha_optional_but_must_be_well_formed_when_present(self):
+        ok = ae.EvidenceRecord("AT-15", "REAL", "run", simulated=False,
+                               evidence_type="CI", receipt_digest="sha256:x",
+                               producer="p", verifier="v",
+                               observed_at="2026-09-20T00:00:00Z",
+                               source_sha="abc123def")
+        self.assertEqual(ae.validate_real_binding(ok), [])
+        # a present-but-malformed source sha (too short to be an identity) fails.
+        bad = ae.EvidenceRecord("AT-15", "REAL", "run", simulated=False,
+                                evidence_type="CI", receipt_digest="sha256:x",
+                                producer="p", verifier="v",
+                                observed_at="2026-09-20T00:00:00Z",
+                                source_sha="ab")
+        self.assertIn("source_sha", ae.validate_real_binding(bad))
+
+    def test_simulated_level_is_not_subject_to_real_binding(self):
+        # A simulated record legitimately has none of the real-binding fields;
+        # validating its REAL binding is simply not applicable, never an error.
+        s = ae.EvidenceRecord("AT-31", "SIMULATED", "sim-report-1", simulated=True)
+        self.assertEqual(ae.real_binding_status(s), "NOT_APPLICABLE")
+        r = ae.EvidenceRecord("AT-15", "REAL", "real-cicd-9", simulated=False,
+                              evidence_type="RUN_ARTIFACT",
+                              receipt_digest="sha256:abc123",
+                              producer="p", verifier="v",
+                              observed_at="2026-09-20T00:00:00Z")
+        self.assertEqual(ae.real_binding_status(r), "VALID")
+        weak = ae.EvidenceRecord("AT-15", "REAL", "real-cicd-9", simulated=False,
+                                 evidence_type="RUN_ARTIFACT",
+                                 receipt_digest="sha256:abc123",
+                                 producer=None,
+                                 verifier="v",
+                                 observed_at="2026-09-20T00:00:00Z")
+        self.assertEqual(ae.real_binding_status(weak), "INCOMPLETE")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

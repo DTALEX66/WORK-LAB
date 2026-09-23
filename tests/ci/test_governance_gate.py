@@ -67,7 +67,15 @@ class GovernanceGateTests(unittest.TestCase):
             capture_output=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("CONTRACT_CATALOG_PASS contracts=30 schemas=30", result.stdout)
+        # P0-07 / TaskPack §4.1: contract counts are a DYNAMIC inventory. Assert
+        # the verifier reports the authoritative catalog count — never a
+        # hard-coded number (a fixed "33" would silently go stale the next time
+        # a contract is added).
+        catalog = json.loads(
+            (ROOT / ".project/governance/contracts/contract-catalog.json").read_text(encoding="utf-8"))
+        expected = len(catalog["contracts"])
+        self.assertGreater(expected, 0)
+        self.assertIn(f"CONTRACT_CATALOG_PASS contracts={expected} schemas={expected}", result.stdout)
 
 if __name__ == "__main__":
     unittest.main()

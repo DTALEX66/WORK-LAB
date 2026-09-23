@@ -86,13 +86,13 @@ entries:
 - name: project-data-boundary
   source: packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md
   live: packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md
-  source_sha256: 43524b0125a13e666bce44014ff7694b40253459650d989fb286bf1889f043a8
+  source_sha256: 405e16d3a8f6490ec31107b91cf3fb1f011ab02e4d37f50aaa0e0e9cded5399b
   version: 1.3.0
   trust: repository-controlled
   enabled: true
   permission: read-write-via-explicit-wrapper
   profile_scope: default
-  live_sha256: 43524b0125a13e666bce44014ff7694b40253459650d989fb286bf1889f043a8
+  live_sha256: 405e16d3a8f6490ec31107b91cf3fb1f011ab02e4d37f50aaa0e0e9cded5399b
 - name: python-testing
   source: packages/client-neutral-core/skills/software-development/python-testing/SKILL.md
   live: packages/client-neutral-core/skills/software-development/python-testing/SKILL.md

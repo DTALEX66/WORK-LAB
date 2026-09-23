@@ -1,8 +1,9 @@
-"""WL-R04 audit gap: offline synthetic-payload tests for the E-drive guard.
+"""WL-R04 audit gap: offline synthetic-payload tests for the protected-drive guard.
 
 services/policy/e_drive_guard.py is a pre_tool_call hook that fail-closed
-blocks any tool-call payload touching the protected E:\\ drive unless an
-explicit authorization marker is present. It is registered in
+blocks any tool-call payload touching the protected E:\\ or F:\\ drives
+(standing user rule: both data drives are protected) unless an explicit
+authorization marker is present. It is registered in
 docs/decisions/LESSONS_LEARNED as 强制拦截 yet had ZERO tests.
 
 These tests drive the guard through a real subprocess with synthetic JSON
@@ -78,11 +79,18 @@ class EDriveGuardTests(unittest.TestCase):
         self.assertFalse(out.get("allow"))
 
     def test_other_drives_are_allowed(self):
-        for p in ("D:\\proj\\file.txt", "C:\\Users\\a\\file.txt",
-                  "F:\\media\\clip.mp4"):
+        for p in ("D:\\proj\\file.txt", "C:\\Users\\a\\file.txt"):
             rc, out = run_guard({"tool": "read_file", "args": {"path": p}})
             self.assertEqual(rc, 0, p)
             self.assertTrue(out.get("allow"), p)
+
+    def test_f_paths_are_blocked(self):
+        # Standing user rule: BOTH the E: and F: data drives are protected.
+        for p in ("F:\\media\\clip.mp4", "f:\\media\\clip.mp4", "F:/media/clip.mp4"):
+            rc, out = run_guard({"tool": "read_file", "args": {"path": p}})
+            self.assertEqual(rc, 1, p)
+            self.assertFalse(out.get("allow"), p)
+            self.assertIn("not authorized", out.get("reason", ""), p)
 
     def test_non_drive_colon_strings_are_not_false_positives(self):
         # "E:g" has no backslash/slash after the colon -> not a drive path

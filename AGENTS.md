@@ -3,6 +3,26 @@
 > 全局执行标准（跨软件跨项目）：见 `docs/decisions/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
 > 经验教训铁律（核实优先/治理最小化/官方优先）：见 `docs/decisions/LESSONS_LEARNED.md`。
 
+## Mandatory audit bootstrap (normative)
+
+Every audit and every execution task MUST resolve current authority in this order,
+before touching any implementation:
+
+1. Resolve current `origin/main` exact commit and tree.
+2. Read `WORK-LAB-AUTHORITY.md` (top human authority).
+3. Read `.project/governance/project-authority-index.json` (top machine authority).
+4. Read this `AGENTS.md`.
+5. Read the CURRENT taskpack referenced by `.project/governance/taskpack-authority-index.json`.
+6. Read the single live open-task register `taskpacks/current/OPEN-TASK-REGISTER.md`.
+7. Read scope-relevant machine contracts.
+8. Consult a specifically named historical record only when needed.
+
+Precedence: latest explicit user decision > `WORK-LAB-AUTHORITY.md` >
+`project-authority-index.json` > current taskpack / open register >
+`AGENTS.md` + scoped machine authorities > current exact-SHA code + CI/runtime
+readback > historical records. Historical records are frozen, non-normative
+evidence. Machine verifier: `scripts/ci/verify_project_authority_reference.py`.
+
 ## Scope
 
 This is a single-root monorepo. Allowed active module roots are exactly:
@@ -13,7 +33,7 @@ adapters, delivery gates), `services/` (orchestration/policy/receipts), and
 convergence and is no longer tracked. The
 managed client workflow is Hermes · Codex · CC Switch · GitHub · Open Design ·
 OpenHuman, plus any future AI software through the same Adapter contract.
-DSH (DeepSeek Harness / DSH Desktop 2.0.4 community desktop) is a managed agent runtime client
+DSH (DeepSeek Harness / DSH Desktop 2.0.13 community desktop, `D:\All projects\DSH\DSH Desktop.exe`; NSIS silent installs reset desktop .lnk TargetPath+IconLocation to the temp install dir — after ANY upgrade re-pin all three .lnk fields incl. `--user-data-dir` per skill `dsh-administration` and error-ledger ERR-087) is a managed agent runtime client
 through the same Adapter contract. CC Switch is LEGACY_OBSERVE (observe-only;
 no active writes) unless evidence restores it to active status.
 Open Design is an external *client* (`nexu-io/open-design`); the separate
@@ -106,7 +126,7 @@ following baseline, owned by the enhancement module:
    Hermes: official desktop app (`apps/desktop/release/win-unpacked/Hermes.exe`,
    Electron) + `hermes` CLI; Codex: single wrapper (`bin/codex` bash +
    `bin/codex.cmd`, identical versioned-glob resolution to the official
-   runtime); DSH: DSH Desktop 2.0.4 (community desktop, Electron, `D:\All projects\DSH\DSH Desktop.exe`);
+   runtime); DSH: DSH Desktop 2.0.13 (community desktop, Electron, `D:\All projects\DSH\DSH Desktop.exe`; launch arg `--user-data-dir="D:\All projects\DSH\desktop-user-data"` is REQUIRED on the desktop .lnk — without it the app falls back to the C: default user-data-dir and shows the 'Set up DSH Desktop' onboarding wizard (ERR-087));
    CC Switch / OpenHuman / Open Design: single desktop shortcut to
    their installed official executables. No duplicate or conflicting launchers;
    entries are the official standard formats — WORK-LAB never invents custom

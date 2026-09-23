@@ -1,8 +1,8 @@
 # WORK-LAB current state
 
-Generated at: `2026-09-17T12:49:25.949687Z`  \
-Source digest: `e86f6bc8879ffb7d4fc75169d795bbee8321533afc226060cc3f92e60865de56`  \
-Content digest: `211563dbbe070518b23744eb950be6320db9a27e3826b1fe974b07d70c90fbe2`
+Generated at: `2026-09-22T15:14:09.538703Z`  \
+Source digest: `06951248e555277c4d7867fb68e4fd7cf69853ada0d8d449f4f406786a617d16`  \
+Content digest: `3ed19a3bb25ded0f4e2a1c0ff52bafa48cfaef183112c04f68c695d062b8fcb9`
 
 ## Git and CI attestation
 
@@ -17,7 +17,7 @@ Content digest: `211563dbbe070518b23744eb950be6320db9a27e3826b1fe974b07d70c90fbe
 
 ## Governance
 
-- Contracts: `30`
+- Contracts: `37`
 - Repository skills: `13`
 - Single writer: `True`
 - Cross-module writes: `explicit-cross-task-only`
@@ -29,11 +29,12 @@ Content digest: `211563dbbe070518b23744eb950be6320db9a27e3826b1fe974b07d70c90fbe
 - Aggregate job: `aggregate`
 - Manifest-declared required workflows: `work-lab-gate`
 
-## Stage 3 task graph
+## Compatibility history (Stage 3, historical only — NOT current identity)
 
-- TaskPack: `WORK-LAB-FINAL-MASTER-CONTROL-PLANE`
-- Tasks: `28`
-- Initial state: `RECONCILED_20260810`
+- TaskPack: `None`
+- Tasks: `None`
+- Initial state: `None`
+- Historical baseline present: `True`
 - Historical baseline source: `.project/governance/generated/STAGE3_BASELINE.json`
 - Historical baseline status: `HISTORICAL_ONLY`
 

@@ -48,7 +48,7 @@ the project's AGENTS.md rules (auto-injected) and the DSH skill catalog
 (`.agents/skills` project-level + `~/.agents` user-level); it never applies
 client config, completes a Task Ledger task, or lets credentials enter the
 repository. Its configuration guide for other clients lives at
-`10-workflow/workflow-assistance/docs/runtime-adapters/deepseek-harness-config-guide.md`.
+`docs/current/workflow-assistance/runtime-adapters/deepseek-harness-config-guide.md`.
 
 Open Design is an external **client** (`nexu-io/open-design`, adapter id
 `open-design`); `DTALEX66/DESIGN-LAB` is a separate, independent **project**.
@@ -58,10 +58,10 @@ migration alias.
 
 ## Canonical active modules
 
-1. `10-workflow/workflow-assistance` — client-neutral workflow governance,
+1. `packages/client-neutral-core` — client-neutral workflow governance,
    execution control, portable contracts and delivery boundaries.
-2. `30-observer/work-lab-observer` — strictly read-only derived observation,
-   projections and evidence reports.
+2. `apps/observer` — strictly read-only derived observation, projections and
+   evidence reports.
 
 `30-products/minigame` is product history/fixture/archive material, not an
 active canonical module.
@@ -74,7 +74,7 @@ active canonical module.
 - The `E:` data volume is protected: any access requires explicit per-path,
   per-operation user authorization.
 - Any spill (a write outside the project boundary) is traceable, locatable,
-  cleanable and migratable. See `00-governance/project-data-boundary.json`.
+  cleanable and migratable. See `.project/governance/project-data-boundary.json`.
 
 ## Explicit non-positioning
 
@@ -91,13 +91,13 @@ WORK-LAB is **not**:
 
 ## Authoritative source files
 
-- `00-governance/projects.json` — canonical module registry;
-- `00-governance/module-ownership.json` — ownership and writer boundary;
-- `00-governance/project-data-boundary.json` — data containment + spill governance;
-- `00-governance/contracts/contract-catalog.json` — canonical contract catalog;
-- `10-workflow/workflow-assistance/config/config-ownership.json` — field-level ownership;
-- `10-workflow/workflow-assistance/config/adapter-registry.json` — client adapter inventory;
-- `50-taskpacks/TASKPACK_SUMMARY.md` — current task-pack summary;
+- `.project/governance/projects.json` — canonical module registry;
+- `.project/governance/module-ownership.json` — ownership and writer boundary;
+- `.project/governance/project-data-boundary.json` — data containment + spill governance;
+- `.project/governance/contracts/contract-catalog.json` — canonical contract catalog;
+- `config/config-ownership.json` — field-level ownership;
+- `config/adapter-registry.json` — client adapter inventory;
+- `taskpacks/current/TASKPACK_SUMMARY.md` — current task-pack summary;
 - `README.md` — public repository entrypoint.
 
 If another README, historical handoff or external description conflicts with

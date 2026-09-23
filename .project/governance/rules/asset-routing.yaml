@@ -8,5 +8,7 @@ routes:
   large-binary: lfs-or-approved-release-artifact
   research-material: provenance-inventory-and-external-artifact-record
   credentials: forbidden
-  generated-evidence: ignored-80-evidence
+  generated-evidence: ignored-.project-local-artifacts
+# 80-evidence/ is a pre-2026-09 legacy alias; since the directory
+# convergence it lands in .project-local/artifacts (canonicalEvidenceRoot).
 provenance: required-for-imported-assets

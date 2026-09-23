@@ -1,125 +1,296 @@
-import { useState, useEffect } from 'react'
-import { Bot, ListTodo, Coins, DollarSign } from 'lucide-react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopStatusBar } from '@/components/layout/TopStatusBar'
 import { KPICard } from '@/components/dashboard/KPICard'
-import { CostPanel } from '@/components/dashboard/CostPanel'
-import { ResourceMonitor } from '@/components/dashboard/ResourceMonitor'
-import { AgentsView, ExecutionsView, ModelsView, MemoryView, ToolsView, MonitoringView, SettingsView, DeliveryView, TrustView } from '@/views/Views'
-import { fetchSnapshot, executionsToAgents, snapshotToServices, snapshotToTimeline, snapshotToCosts, estimateCost, fmtTokens, fmtCost, promRange, fetchResources, type LiveSnapshot, type SysResources } from '@/lib/api'
-import type { Agent, TimelineEvent, ServiceHealth, CostPoint } from '@/types'
+import { ExecutionTable } from '@/components/dashboard/ExecutionTable'
+import { ProjectPanel } from '@/components/dashboard/ProjectPanel'
+import { TokenPanel } from '@/components/dashboard/TokenPanel'
+import { CommandPalette, type PaletteItem } from '@/components/ui/command-palette'
+import {
+  MonitoringView, TrustView, SettingsView,
+} from '@/views/Views'
+import { CompactHUD } from '@/views/CompactHUD'
+import {
+  useLiveSnapshot, fmtCostQuality, tokenTruth, executionsToRows,
+  type ThemeMode, type LayoutMode,
+} from '@/lib/api'
+import { VIEW_REGISTRY, OVERVIEW_ID } from '@/lib/viewRegistry'
+import { announce } from '@/lib/a11y'
+
+type ViewId = string
+
+// U04/U05: the active view + theme are driven by URL params (?view=, ?theme=,
+// ?layout=) so the dashboard is deep-linkable and Full/Compact/Dark/Light is
+// real, not a hardcoded class. The default landing view is the Overview panel.
+function readInitialView(): ViewId {
+  try {
+    const v = new URLSearchParams(window.location.search).get('view')
+    if (v && (VIEW_REGISTRY.some((e) => e.id === v) || v === OVERVIEW_ID)) return v
+  } catch { /* no URL (SSR/test) -> default */ }
+  return OVERVIEW_ID
+}
+
+function readInitialTheme(): ThemeMode {
+  try {
+    const t = new URLSearchParams(window.location.search).get('theme')
+    if (t === 'light' || t === 'dark') return t
+  } catch { /* ignore */ }
+  return 'dark'
+}
+
+function readInitialLayout(): LayoutMode {
+  try {
+    const l = new URLSearchParams(window.location.search).get('layout')
+    if (l === 'full' || l === 'compact') return l
+  } catch { /* ignore */ }
+  return 'full'
+}
 
 export default function App() {
-  const [view, setView] = useState(0)
-  const [snap, setSnap] = useState<LiveSnapshot | null>(null)
-  const [agents, setAgents] = useState<Agent[]>([])
-  const [services, setServices] = useState<ServiceHealth[]>([])
-  const [timeline, setTimeline] = useState<TimelineEvent[]>([])
-  const [costs, setCosts] = useState<CostPoint[]>([])
-  // WLR-130: truth-first — unknown stays null, never fabricated 0
-  const [tokenTotal, setTokenTotal] = useState<number | null>(null)
-  const [tokenIn, setTokenIn] = useState<number | null>(null)
-  const [tokenOut, setTokenOut] = useState<number | null>(null)
-  const [live, setLive] = useState(false)
-  const [resources, setResources] = useState<SysResources | null>(null)
-  const [tokenTrend, setTokenTrend] = useState<number[]>([])
-  const [costTrend, setCostTrend] = useState<number[]>([])
+  const [view, setView] = useState<ViewId>(readInitialView)
+  const [theme, setTheme] = useState<ThemeMode>(readInitialTheme)
+  const [layout, setLayout] = useState<LayoutMode>(readInitialLayout)
+  // U06/SSE: live snapshot — first poll + server-sent events, no fixed ports.
+  const { snap, source, live, error } = useLiveSnapshot()
 
-  // real time-series from Prometheus (KPI sparklines + cost line + resources)
+  // UI_SHELL (20260921): desktop rail collapse + mobile drawer + command palette.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  const openPalette = useCallback(() => setPaletteOpen(true), [])
+  const closePalette = useCallback(() => setPaletteOpen(false), [])
+
+  // L6 keyboard authority: global Ctrl/Cmd+K toggles the command palette.
   useEffect(() => {
-    let cancelled = false
-    const loadProm = async () => {
-      const [res, tt, ct] = await Promise.all([
-        fetchResources(),
-        promRange('wlobs_usage_tokens{kind="total"}', 360),
-        promRange('wlobs_cost_estimate', 360),
-      ])
-      if (cancelled) return
-      if (res) setResources(res)
-      if (tt.length) setTokenTrend(tt)
-      if (ct.length) setCostTrend(ct)
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen((o) => !o)
+      }
     }
-    loadProm()
-    const t = setInterval(loadProm, 15000)
-    return () => { cancelled = true; clearInterval(t) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // CommandPalette items = every reachable view (jump = setView) plus the
+  // theme/layout actions. Deep-link mechanism (?view=/theme=/layout=) is
+  // unchanged — selecting just calls setView, which the existing URL writer
+  // (useEffect below) persists.
+  const paletteItems = useMemo<PaletteItem[]>(() => {
+    const viewItems: PaletteItem[] = [
+      { id: 'nav-overview', label: '总览', group: '跳转', run: () => setView(OVERVIEW_ID) },
+      ...VIEW_REGISTRY.map((e): PaletteItem => ({
+        id: 'nav-' + e.id,
+        label: e.label,
+        group: '跳转',
+        run: () => setView(e.id),
+      })),
+    ]
+    const actions: PaletteItem[] = [
+      {
+        id: 'act-theme',
+        label: theme === 'dark' ? '切换到浅色主题' : '切换到深色主题',
+        group: '动作',
+        run: () => setTheme((t) => (t === 'dark' ? 'light' : 'dark')),
+      },
+      {
+        id: 'act-layout',
+        label: layout === 'full' ? '切换到紧凑布局' : '切换到完整布局',
+        group: '动作',
+        run: () => setLayout((l) => (l === 'full' ? 'compact' : 'full')),
+      },
+      {
+        id: 'act-rail',
+        label: sidebarCollapsed ? '展开侧边导航' : '折叠侧边导航',
+        group: '动作',
+        run: () => setSidebarCollapsed((c) => !c),
+      },
+    ]
+    return [...viewItems, ...actions]
+  }, [theme, layout, sidebarCollapsed])
+
+  // U05: real theme (dark/light) applied to <html> — no hardcoded class.
   useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      const s = await fetchSnapshot()
-      if (cancelled) return
-      if (s) {
-        setLive(true)
-        setSnap(s)
-        setAgents(executionsToAgents(s))
-        setServices(snapshotToServices(s))
-        setTimeline(snapshotToTimeline(s))
-        setCosts(snapshotToCosts(s))
-        setTokenTotal(s.tokenSummary?.totalTokens ?? null)
-        setTokenIn(s.tokenSummary?.inputTokens ?? null)
-        setTokenOut(s.tokenSummary?.outputTokens ?? null)
-      } else setLive(false)
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
+
+  // UI_SHELL (20260921): keep the deep-link (?view=/?theme=/?layout=) in sync
+  // so refreshing / sharing a URL preserves the active view + theme + layout.
+  // This extends (does not change) the existing read-only deep-link init.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const p = new URLSearchParams()
+    if (view !== OVERVIEW_ID) p.set('view', view)
+    if (theme !== 'dark') p.set('theme', theme)
+    if (layout !== 'full') p.set('layout', layout)
+    const qs = p.toString()
+    const url = window.location.pathname + (qs ? '?' + qs : '')
+    window.history.replaceState(null, '', url)
+  }, [view, theme, layout])
+
+  const isOverview = view === OVERVIEW_ID
+  const tt = tokenTruth(snap)
+  const rows = executionsToRows(snap)
+  // REAL v3 KPIs (no phantom agents/models/resources):
+  const activeExecs = rows.filter((r) => r.state === 'RUNNING' || r.state === 'STARTING').length
+
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
+  const toggleLayout = () => setLayout((l) => (l === 'full' ? 'compact' : 'full'))
+  const isCompact = layout === 'compact'
+
+  // U03/WlA11y parity: announce theme transitions to assistive tech (the static
+  // web/ surface did this via WlA11y.announce on theme switch).
+  useEffect(() => {
+    announce(theme === 'dark' ? '已切换为深色主题' : '已切换为浅色主题')
+  }, [theme])
+
+  // U03/WlA11y parity: announce data-source transitions (LIVE / STALE /
+  // OFFLINE) — the four state words the static surface announced verbatim.
+  useEffect(() => {
+    if (error && !snap) {
+      announce('实时数据不可用，界面显示 OFFLINE（不加载假数据）')
+    } else if (live) {
+      announce('已加载实时投影数据')
+    } else if (snap && source === 'stale') {
+      announce('实时数据不可用，已保留上次良好投影（last-good，标记为 STALE）')
     }
-    load()
-    const t = setInterval(load, 10000)
-    return () => { cancelled = true; clearInterval(t) }
-  }, [])
+  }, [snap, source, live, error])
 
-  const running = agents.filter((a) => a.status === 'running').length
-  const cost = (tokenIn == null || tokenOut == null) ? null : estimateCost(tokenIn, tokenOut)
-  const sparkTok = tokenTrend.length > 1 ? tokenTrend : []
-  const sparkCost = costTrend.length > 1 ? costTrend : []
-  // real trend % from prom series (first -> last)
-  const tokTrend = tokenTrend.length > 1 ? Math.round(((tokenTrend[tokenTrend.length - 1] - tokenTrend[0]) / (tokenTrend[0] || 1)) * 100) : undefined
-  const costTrendPct = costTrend.length > 1 ? Math.round(((costTrend[costTrend.length - 1] - costTrend[0]) / (costTrend[0] || 1)) * 100) : undefined
-
-  const overview = (
-    <div className="flex flex-col gap-4 min-h-0">
-      <div className="grid grid-cols-4 gap-4">
-        <KPICard icon={Bot} label="活跃 Agent" value={String(running)} color="#00d4ff" />
-        <KPICard icon={ListTodo} label="执行中" value={String(agents.length)} color="#7c6cf0" />
-        <KPICard icon={Coins} label="Token 用量" value={fmtTokens(tokenTotal)} trend={tokTrend} spark={sparkTok} color="#00d084" />
-        <KPICard icon={DollarSign} label="估算成本" value={fmtCost(cost)} trend={costTrendPct} spark={sparkCost} color="#ffb020" />
+  const mainContent = (
+    error && !snap ? (
+      <div className="max-w-xl mx-auto mt-10 panel2 rounded-md p-6 text-center">
+        <div className="text-lg text-error mb-2">数据源不可用</div>
+        <p className="text-xs text-zinc-500 whitespace-pre-wrap">{error}</p>
+        <p className="text-[11px] text-zinc-600 mt-3">
+          保持 UNKNOWN 真相 — 不伪造 Agent / 模型 / 成本 / 资源
+        </p>
       </div>
-      <div className="grid grid-cols-[1fr_320px] gap-4 min-h-0 flex-1">
-        <div className="flex flex-col gap-4 min-h-0">
-          <div className="flex-1 min-h-0 overflow-auto"><AgentsView agents={agents} snap={snap} /></div>
+    ) : isOverview ? (
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-4 gap-4">
+          <KPICard
+            title="项目"
+            value={String(snap?.projects?.length ?? 0)}
+            sub="registry"
+          />
+          <KPICard
+            title="活跃执行"
+            value={snap ? String(activeExecs) : 'UNKNOWN'}
+            sub={'共 ' + (snap ? String(rows.length) : '—') + ' 条'}
+          />
+          <KPICard
+            title="Token"
+            value={snap ? fmtTokensSafe(tt) : 'UNKNOWN'}
+            sub={'质量 ' + fmtCostQuality(tt?.costQuality)}
+          />
+          <KPICard
+            title="数据源"
+            value={live ? 'LIVE' : snap ? source.toUpperCase() : 'UNKNOWN'}
+            sub={snap ? ('revision ' + String(snap.revision)) : '等待数据'}
+          />
         </div>
-        <div className="flex flex-col gap-4 overflow-auto">
-          <CostPanel costs={costs} tokenTotal={tokenTotal} tokenIn={tokenIn} tokenOut={tokenOut} costTrend={costTrend} />
-          <ResourceMonitor resources={resources} />
+        <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-2 panel2 rounded-md p-4 min-h-[300px]">
+            <ExecutionTable rows={snap ? rows : []} hasData={!!snap} />
+          </div>
+          <div className="flex flex-col gap-4">
+            <ProjectPanel snap={snap} />
+            <TokenPanel snap={snap} />
+          </div>
         </div>
       </div>
-    </div>
+    ) : view === 'monitoring' ? (
+      <MonitoringView snap={snap} />
+    ) : view === 'trust' ? (
+      <TrustView snap={snap} />
+    ) : view === 'settings' ? (
+      <SettingsView snap={snap} />
+    ) : (
+      (() => {
+        const entry = VIEW_REGISTRY.find((e) => e.id === view)
+        if (!entry || !entry.component) {
+          // Unknown view id (bad URL) -> fall back to Overview; never a
+          // silent false view.
+          setView(OVERVIEW_ID)
+          return null
+        }
+        const C = entry.component
+        return <C snap={snap} />
+      })()
+    )
   )
 
-  const views = [
-    overview,
-    <AgentsView key="a" agents={agents} snap={snap} />,
-    <ExecutionsView key="e" timeline={timeline} snap={snap} />,
-    <ModelsView key="m" tokenIn={tokenIn} tokenOut={tokenOut} tokenTotal={tokenTotal} snap={snap} />,
-    <MemoryView key="me" snap={snap} />,
-    <ToolsView key="t" snap={snap} />,
-    <MonitoringView key="mo" services={services} snap={snap} />,
-    <DeliveryView key="d" snap={snap} />,
-    <TrustView key="t2" snap={snap} />,
-    <SettingsView key="s" live={live} snap={snap} />,
-  ]
+  // U05: compact is a DEDICATED HUD — no sidebar, single column, 320px-safe.
+  // full keeps the sidebar + multi-panel layout.
+  if (isCompact) {
+    return (
+      <div data-layout={layout} className="flex h-screen overflow-hidden text-ink">
+        <div className="flex-1 flex flex-col min-w-0">
+          <TopStatusBar
+            snap={snap}
+            source={source}
+            live={live}
+            theme={theme}
+            layout={layout}
+            onCycleTheme={toggleTheme}
+            onCycleLayout={toggleLayout}
+            onOpenSearch={openPalette}
+          />
+          <div className="flex-1">
+            <CompactHUD snap={snap} live={live} />
+          </div>
+        </div>
+        <CommandPalette
+          open={paletteOpen}
+          onClose={closePalette}
+          items={paletteItems}
+          title="命令面板"
+        />
+      </div>
+    )
+  }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar active={view} onSelect={setView} />
+    <div data-layout={layout} className="flex h-screen overflow-hidden text-ink">
+      <Sidebar
+        activeView={view}
+        onSelect={(id) => {
+          setView(id)
+          setMobileNavOpen(false)
+        }}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+        mobileOpen={mobileNavOpen}
+        onCloseMobile={() => setMobileNavOpen(false)}
+      />
       <div className="flex-1 flex flex-col min-w-0">
-        <TopStatusBar services={services} />
-        <div className="flex-1 p-4 overflow-auto min-h-0">
-          <div className="flex items-center gap-2 text-[11px] text-zinc-500 mb-4">
-            <span className={"w-1.5 h-1.5 rounded-full " + (live ? 'bg-success status-pulse' : 'bg-warning')} />
-            {live ? '已接入真实数据 · sidecar :61867 · 10s 刷新' : '数据源离线'}
-          </div>
-          {views[view]}
-        </div>
+        <TopStatusBar
+          snap={snap}
+          source={source}
+          live={live}
+          theme={theme}
+          layout={layout}
+          onCycleTheme={toggleTheme}
+          onCycleLayout={toggleLayout}
+          onOpenSearch={openPalette}
+          onOpenMobileNav={() => setMobileNavOpen(true)}
+        />
+        <div className="flex-1 overflow-auto p-4">{mainContent}</div>
       </div>
+      <CommandPalette
+        open={paletteOpen}
+        onClose={closePalette}
+        items={paletteItems}
+        title="命令面板"
+      />
     </div>
   )
+}
+
+// local helper — token formatting for KPI (null -> UNKNOWN)
+function fmtTokensSafe(tt: ReturnType<typeof tokenTruth>): string {
+  if (!tt || tt.totalTokens == null) return 'UNKNOWN'
+  const n = tt.totalTokens
+  return n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : (n / 1e3).toFixed(0) + 'k'
 }

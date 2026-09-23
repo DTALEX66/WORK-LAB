@@ -331,6 +331,55 @@ class DeepSeekHarnessAdapter:
             "events": [],
         }
 
+    # ------------------------------------------------------------------
+    # P0-07 / TaskPack §21, §15-18: fail-closed Software Installation Identity
+    # + Update Preflight gate for DSH. Reuses the shared resolver
+    # (single source of truth — no second engine, §22). The resolver is
+    # imported lazily so importing this module never hard-couples to the
+    # workflow-assistance scripts dir; if it is unavailable the methods
+    # fail closed rather than silently degrade.
+    # ------------------------------------------------------------------
+    def installation_identity(self, *, install_root: str | None = None,
+                              verified: bool = False,
+                              user_declared: str | None = None) -> dict[str, Any]:
+        """Return a software-installation-identity contract record for DSH.
+
+        Default install_root is the community desktop D-drive root. This is
+        Observed User State evidence, NOT a fourth authority (§12)."""
+        sii = _import_sii()
+        root = install_root or str(COMMUNITY_INSTALL_DIR)
+        return sii.preflight_identity_record(
+            software_id=ADAPTER_ID,
+            expected_existing=str(COMMUNITY_INSTALL_DIR),
+            observed=[root] if (install_root is not None or COMMUNITY_INSTALL_DIR.is_dir()) else [],
+            verified=verified or bool(community_detected()["present"]),
+            user_declared=user_declared,
+            os_managed=False,
+        )
+
+    def update_preflight(self, *, install_root: str | None = None,
+                         proposed_install_root: str | None = None,
+                         verified: bool = False,
+                         relocation_requested: bool = False,
+                         relocation_approved: bool = False,
+                         user_declared: str | None = None) -> dict[str, Any]:
+        """§15/§16 fail-closed preflight: a DSH update must not move the D-drive
+        install root. Any root change is a BLOCKED/RELOCATION that needs
+        explicit approval (§42)."""
+        sii = _import_sii()
+        identity = self.installation_identity(
+            install_root=install_root, verified=verified, user_declared=user_declared)
+        return sii.build_update_preflight(
+            software_id=ADAPTER_ID,
+            location_status=identity["location_status"],
+            install_root=install_root or str(COMMUNITY_INSTALL_DIR),
+            proposed_install_root=proposed_install_root,
+            verified=verified,
+            relocation_requested=relocation_requested,
+            relocation_approved=relocation_approved,
+            user_declared=user_declared,
+        )
+
     def plan(self, request: dict[str, Any]) -> dict[str, Any]:
         """Any install/start is approval-gated; return WAITING_APPROVAL."""
         return {
@@ -445,6 +494,16 @@ class DeepSeekHarnessAdapter:
         except (OSError, subprocess.SubprocessError):
             pass
         return None
+
+
+def _import_sii() -> Any:
+    """Lazily import the shared software-installation-identity resolver.
+
+    Fails closed (raises) rather than returning a silently-degraded verdict,
+    so a missing engine can never masquerade as a PASS.
+    """
+    import importlib
+    return importlib.import_module("software_installation_identity")
 
 
 def conformance_report(project: Path) -> dict[str, Any]:

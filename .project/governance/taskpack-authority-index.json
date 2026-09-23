@@ -1,15 +1,17 @@
 {
  "schemaVersion": "workflow/taskpack-authority-index/v1",
- "generatedAt": "2026-08-26",
- "currentTaskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918 (main@a55a0f3, tree 3890328)",
+ "generatedAt": "2026-09-18",
+ "currentTaskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
  "authority": {
   "owner": "DTALEX66",
   "created": "2026-09-18",
   "expires": "unbounded (main is sole authority; superseded only by a newer registered CURRENT)",
   "taskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
-  "supersedes": "WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25 (R1, main@2941412)",
-  "baseline_main": "a55a0f3ac4b04ede578fcc8a5db62902a7866cd6",
-  "baseline_tree": "3890328cf1abe5fbdb10ed16bea5886eee5c1794"
+  "topAuthority": "WORK-LAB-AUTHORITY.md",
+  "topMachineAuthority": ".project/governance/project-authority-index.json",
+  "supersedes": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918 (R1, main@a55a0f3) and WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25",
+  "baseline_main": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
+  "baseline_tree": "606db598abd3724baf6a45ffcfb319f9b0a4d550"
  },
  "classification": {
   "CURRENT": [
@@ -148,14 +150,14 @@
   }
  ],
  "baselineRevalidation": {
-  "ts": "2026-09-17T16:55:14.236639+00:00",
+  "ts": "2026-09-22T23:30:00+00:00",
   "branch": "main",
-  "local_head": "a55a0f3ac4b04ede578fcc8a5db62902a7866cd6",
-  "remote_head": "a55a0f3ac4b04ede578fcc8a5db62902a7866cd6",
+  "local_head": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
+  "remote_head": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
   "local_eq_remote": true,
   "worktree": "clean",
-  "main_ref": "a55a0f3ac4b04ede578fcc8a5db62902a7866cd6",
-  "main_note": "main is the sole ACTIVE/AUTHORITATIVE branch (branch convergence cutover EXECUTED 2026-09-17); no unmerged lane",
+  "main_ref": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
+  "main_note": "main (origin/main=803268da9dc356fe63f26b3b5405f724bc06b5b9) is the sole AUTHORITATIVE trunk; a live convergence lane u17/global-agent-policy-20260918 (PR #127) carries the V2 unified-product convergence work and is NOT yet merged. This baseline was re-verified 2026-09-22; re-run after the lane merges.",
   "authoritative": true
  },
  "decisions": [
