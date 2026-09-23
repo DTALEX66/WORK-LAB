@@ -61,7 +61,7 @@ The 2 references stay as-is; rebind is only ever needed if that contract changes
 
 ## 7. Merge chain status (fold-into-audit-branch done; merge GATED)
 - All drift work folded into u17 (audit branch) ✅
-- Merge u17→main blocked by: U19 step 8 exact-SHA CI PASS (probe-window fix landed in 6fd51d9, still FAIL on headless runner windows=0 — needs real WebView/CDP stack; documented as known blocker), governance exact-SHA PASS, then user "合并".
+- **RESOLVED 2026-09-23 (CONVERGED):** U19 re-qualified as R5 headless-session environment boundary (NOT a code bug); headless-conditional verdict `SKIPPED_HEADLESS` landed in 9f57ca3. work-lab-gate @b993e9c 5/5 SUCCESS (incl. observer SKIPPED_HEADLESS exit 0), aggregate green at ruleset 23825562 → gate cleared. User authorized "合并" → u17 merged to main via PR #127 (squash) at 62f666e. Post-merge authority revalidation via PR #128 (taskpack index baselineRevalidation re-pinned + V2 acceptance addendum). Real-Desktop WebView2 E2E remains a known-external layer (needs a real desktop/self-hosted runner), out of scope on hosted CI by design.
 
 ## 8. Drift prevention (why large-scale drift stops now)
 - Every authority index now resolves (0 dead in-repo refs)

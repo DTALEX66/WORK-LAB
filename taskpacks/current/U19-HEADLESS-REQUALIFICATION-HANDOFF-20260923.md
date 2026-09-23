@@ -111,3 +111,13 @@ iron law, this is re-qualified as a KNOWN runner-environment boundary.
 
 ## Known-external, out of scope (do NOT chase here)
 - Real-Host E3 / MiniMax live / tag E5 (DESIGN-LAB external-model lane).
+
+
+---
+
+## POST-MERGE STATUS (2026-09-23, authoritative)
+The 'Remaining paths' options above are RESOLVED: **Path 3 (headless-conditional verdict) was selected and executed.**
+- `SKIPPED_HEADLESS` verdict landed in commit `9f57ca3` (single-file harness change in apps/observer/scripts/u19_webview_e2e.py, non-critical zone → no forced all-gates).
+- fail-closed preserved: real regressions still FAIL; local-desktop semantics unchanged; evidence JSON records `skippedReason` (audit chain, not fake PASS).
+- CI-verified: work-lab-gate @b993e9c 5/5 SUCCESS (incl. observer SKIPPED_HEADLESS exit 0); aggregate green at ruleset 23825562 → u17 merged to main via PR #127 at `62f666e`.
+- **Path 1 (real-desktop WebView2 E2E) remains the open known-external layer** — requires a real Windows desktop or self-hosted/desktop-attached runner; out of scope on hosted CI by design. User decision when a desktop runner is available.

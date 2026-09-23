@@ -180,7 +180,7 @@
       "path": "taskpacks/current/WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918.md",
       "role": "CURRENT repair execution authority (single CURRENT)",
       "status": "ADOPTED_20260918",
-      "open_task_register": "taskpacks/current/OPEN-TASK-REGISTER-20260917.md (mapped into U00-U19; remains the single register, NOT a second one)",
+      "open_task_register": "taskpacks/current/OPEN-TASK-REGISTER.md (single live register; dated OPEN-TASK-REGISTER-20260917.md frozen to taskpacks/history/ as a pre-convergence artifact)",
       "evidence": [
         "baseline main@a55a0f3 tree 3890328 (matches pack)",
         ".project-local/runs/UPC-20260918/ledger.json"
