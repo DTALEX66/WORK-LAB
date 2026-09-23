@@ -42,15 +42,21 @@ Re-qualified on evidence:
 ### P0 — next authorized cycle
 1. **User ACCEPTED sign-off** for the 7 `READBACK` rows (A03/A04/U01/U17/U17a/U20/U21 + A00) — closes the
    lifecycle; no technical work remains.
-2. **Taskpack expiry watch**: `WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918` carries a
-   2026-09-24 expiry in its own index entry. V2 convergence work is LANDED; if the user starts new direction,
-   register a new CURRENT taskpack (discipline §6: only on explicit top-level direction change). Until then
-   the UPC remains the single CURRENT and its remaining work = items 1/3/4 below.
-3. **A02 residual**: physical removal of `90-archive/` (16 files) — user-authorized deletion action
-   (class D2, same auth gate as `.bak` deletion). No drift risk while marked+gated.
-4. **U19 desktop layer**: run `apps/observer/scripts/u19_webview_e2e.py` on a real Windows desktop or
-   self-hosted runner to produce the last "real WebView" evidence layer (user decision; out of scope on
-   hosted CI by design).
+2. **Taskpack expiry check (verified 2026-09-23, no action needed)**: UPC `authority.expires = unbounded`
+   (superseded only by a newer registered CURRENT). The '2026-09-24 expiry' string in the taskpack index
+   belongs to staticHandoffViews notes about the SUPERSEDED R1 taskpack, not to the UPC. V2 convergence
+   work is LANDED; register a new CURRENT taskpack only on explicit top-level direction change (discipline §6).
+   UPC remaining work = item 1 (user sign-off) + items 3/4 below.
+3. **A02 residual — EXECUTED (user-authorized 2026-09-23)**: 15 report files git-moved to
+   `docs/history/archive/reports-history/2026-09-05/` (MOVE-005 EXECUTED) on branch
+   `post-merge/90-archive-convergence`; `90-archive/` retains only the `BOUNDARY.md` gate marker
+   (verifier SPLIT_DIRS seam) — single history retrieval anchor = docs/history/ confirmed.
+4. **U19 desktop layer — owed to an MSVC-capable runner (local attempt documented)**: 2026-09-23 local
+   desktop harness run = honest FAIL (fail-closed, no fabricated PASS): local GNU-toolchain app.exe
+   early-exits 0xC0000135 (WebView2Loader not linked under GNU build) + this machine lacks a Rust/MSVC
+   toolchain (cargo/rustc absent). Backend v3 PASS + tauri_launch RUNNING reconfirmed locally; evidence
+   `.project-local/runs/u19_webview_readback.json`. To close: MSVC-capable desktop/self-hosted runner
+   (per U19 handoff Path 1; do NOT chase on hosted CI).
 
 ### P1 — deferred, individually authorized (no drift)
 - **U18** universal-workflow real slices: module infrastructure green; the `UNIVERSAL_WORKFLOW_VERIFIED`
@@ -58,7 +64,7 @@ Re-qualified on evidence:
   slices (taskpack holds `externalProjectWrite: NOT_AUTHORIZED_BY_TASKPACK`).
 - **U02/U08** partials: manifest/profile/setup/runtime-root/package-manager cleanup; Windows real-WebView
   E2E now folds into item 4 above.
-- **D2**: legacy `.bak` deletion — user authorization only.
+- **D2**: CLOSED-VACUOUS@2a1c7b2 — 2026-09-23 full-repo scan found 0 tracked .bak/.orig/.backup (the only untracked one is inside the declared .project-local runtime root); nothing to delete.
 
 ### P2 — optional / research (deferred, no schedule pressure)
 - C2 paid four-arm model experiment, C3 Kimi/Agents-API/Bolt research, O1 Hermes state.db
@@ -80,7 +86,7 @@ Re-qualified on evidence:
 | `DRIFT-AUDIT-CLOSURE-20260923.md` §7 "merge GATED" | STALE -> backfilled CONVERGED (this change set) |
 | `U19-HEADLESS-REQUALIFICATION-HANDOFF-20260923.md` remaining paths | open-options doc -> POST-MERGE STATUS addendum (Path 3 executed; Path 1 open known-external) |
 | `V2-FINAL-ACCEPTANCE-REPORT.md` DRAFT v1 "merge blocked" | SUPERSEDED (post-merge addendum @PR #128) |
-| `90-archive/` root | BY DESIGN marked+gated (BOUNDARY.md); residual pending user-authorized removal |
+| `90-archive/` root | CONVERGED: reports moved to docs/history (MOVE-005 EXECUTED, user-authorized); BOUNDARY.md marker retained as gate seam; no active content |
 | `docs/history/`, `taskpacks/history/` | FROZEN layer — untouched, correct |
 | `config/client-evidence.json` / `adapter-registry.json` / `AGENTS.md` DSH declarations | corrected @b993e9c (ERR-087 ledger, 87 entries PASS) |
 

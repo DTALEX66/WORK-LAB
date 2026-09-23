@@ -121,3 +121,13 @@ The 'Remaining paths' options above are RESOLVED: **Path 3 (headless-conditional
 - fail-closed preserved: real regressions still FAIL; local-desktop semantics unchanged; evidence JSON records `skippedReason` (audit chain, not fake PASS).
 - CI-verified: work-lab-gate @b993e9c 5/5 SUCCESS (incl. observer SKIPPED_HEADLESS exit 0); aggregate green at ruleset 23825562 → u17 merged to main via PR #127 at `62f666e`.
 - **Path 1 (real-desktop WebView2 E2E) remains the open known-external layer** — requires a real Windows desktop or self-hosted/desktop-attached runner; out of scope on hosted CI by design. User decision when a desktop runner is available.
+
+### Local desktop attempt 2026-09-23 (Path 1, pre-MSVC — honest FAIL, fail-closed)
+Ran `apps/observer/scripts/u19_webview_e2e.py` on the local Windows desktop session:
+- backend v3 PASS (projects=1), tauri_launch RUNNING (pid 30464), CDP no page target,
+- app.exe early-exit rc=3221225781 (0xC0000135 STATUS_DLL_NOT_FOUND): the local GNU-toolchain build does not link
+  WebView2Loader (MSVC-only runtime dep; target/release bundles only app_lib.dll + libgcc + libwinpthread),
+- this machine has no Rust/MSVC toolchain (cargo/rustc absent, .rustup data-only), so no clean MSVC build locally.
+Verdict recorded as FAIL (not SKIPPED_HEADLESS — that verdict requires GITHUB_ACTIONS + app ALIVE + probe=ok).
+Evidence: `.project-local/runs/u19_webview_readback.json`. Path 1 remains owed to an MSVC-capable
+desktop/self-hosted runner; do NOT chase on hosted CI (known-external, by design).

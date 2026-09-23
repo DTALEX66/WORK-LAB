@@ -94,7 +94,12 @@
       "classification": "BOUNDARY_SPLIT",
       "keepInWorklab": [
         "M1 prompt mutation, M2 skill mutation, M3 workflow mutation, M4 tool/runtime mutation, M5 governance mutation",
-        "sandbox", "security-evaluation", "independent-approval", "rollback", "trace", "receipt"
+        "sandbox",
+        "security-evaluation",
+        "independent-approval",
+        "rollback",
+        "trace",
+        "receipt"
       ],
       "moveToArcheAxis": [
         "continual-learning",
@@ -113,7 +118,9 @@
       "worklabDir": "90-archive",
       "classification": "HISTORY_ONLY_CONVERGE",
       "action": "root-level 90-archive/ is a second history system -> converge to docs/history (single history retrieval anchor)",
-      "gate": "verify_three_project_boundary"
+      "gate": "verify_three_project_boundary",
+      "status": "CONVERGED_20260923",
+      "note": "reports-history frozen under docs/history/archive/reports-history/2026-09-05 (MOVE-005 executed, user-authorized); root 90-archive/ retains only the BOUNDARY.md gate marker (verifier SPLIT_DIRS seam), no active content"
     },
     {
       "id": "DESIGN_LAB",
