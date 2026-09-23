@@ -74,13 +74,13 @@
       "client": "dsh",
       "evidence_level": "E2",
       "install_method": "community-desktop (Electron)",
-      "version": "2.0.4",
+      "version": "2.0.13",
       "install_path": "D:\\All projects\\DSH\\DSH Desktop.exe",
-      "config_path": "C:\\Users\\ALEX\\.dsh\\",
+      "config_path": "D:\\All projects\\DSH\\.dsh\\",
       "sessions_migrated": 94,
-      "verified_at": "2026-08-30T21:00:00Z",
-      "health": "web-43120-ok (not running at probe; version read from app.asar.unpacked)",
-      "note": "Community desktop (anywhere-labs/dsh-desktop v2.0.4, dsh-plugin-desktop); D-drive single entry; config root ~/.dsh; 94 sessions preserved"
+      "verified_at": "2026-09-23T19:30:00Z",
+      "health": "desktop-live-verified (2026-09-23: main window 'DeepSeek Harness Desktop', 43120 LISTENING, D:.dsh mtime advanced, 5 sessions read back)",
+      "note": "Community desktop (anywhere-labs/deepseek-harness-desktop v2.0.13; 2026-09-20 in-place official upgrade 2.0.11 -> 2.0.13, 2.0.2/2.0.4 superseded; see skill dsh-administration + ERR-087); D-drive single entry; config root D:\\All projects\\DSH\\.dsh pinned via DSH_HOME (HKCU\\Environment); desktop .lnk must carry the --user-data-dir argument or launch falls back to the C: default and shows the onboarding wizard (2026-09-23 regression lesson)"
     },
     "github": {
       "client": "github",

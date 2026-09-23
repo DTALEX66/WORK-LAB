@@ -434,7 +434,7 @@
         "scope": "portable-agent-runtime-adapter",
         "risk": "medium",
         "status": "active",
-        "note": "DSH promoted to active per WLR-010 (2026-08-26). Community DSH Desktop 2.0.2 installed at D:\\All projects\\DSH. Local build (Tauri shell) removed.",
+        "note": "DSH promoted to active per WLR-010 (2026-08-26). Community DSH Desktop 2.0.13 in place at D:\\All projects\\DSH (2026-09-20 in-place official upgrade 2.0.11 -> 2.0.13; 2.0.2/2.0.4 superseded; see skill dsh-administration + client-evidence). Local build (Tauri shell) removed.",
         "hash": {
           "algorithm": "sha256",
           "value": null,
