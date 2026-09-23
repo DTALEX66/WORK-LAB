@@ -101,3 +101,15 @@
   authority verifier PASS, unittest OK, py_compile OK
 - PENDING: 6fd51d9 work-lab-gate exact-SHA CI (in progress) — blocks merge
 - UNPROVEN (by design, out of scope): real-Host E3 / MiniMax live / tag E5 (DESIGN-LAB external-model lane)
+
+
+---
+
+## POST-MERGE ADDENDUM (2026-09-23, authoritative — supersedes DRAFT v1 "merge blocked" status above)
+
+LANE CONVERGED: `u17/global-agent-policy-20260918` merged to `main` via PR #127 (squash, user-authorized)
+at `62f666ef36999b846ea1c9bcb075a0970be18933` (2026-09-23T20:52:55+08:00). Post-merge revalidation performed on `main`:
+
+- work-lab-gate on `b993e9c`: 5/5 jobs SUCCESS (incl. observer `SKIPPED_HEADLESS` headless-conditional verdict, `9f57ca3`); aggregate green at ruleset 23825562 — the merge gate was cleared.
+- `.project/governance/taskpack-authority-index.json` `baselineRevalidation` re-pinned: `main_ref = 62f666ef36999b846ea1c9bcb075a0970be18933` (former main `803268d` retained as immutable frozen anchor in `WORK-LAB-AUTHORITY.md` + `project-authority-index.json` `baselineAtCreation`).
+- This report's DRAFT v1 verdicts remain VALID EVIDENCE for the pre-merge tree; its "main unchanged / PENDING CI" clause is CLOSED by this addendum.

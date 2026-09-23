@@ -1,220 +1,220 @@
 {
- "schemaVersion": "workflow/taskpack-authority-index/v1",
- "generatedAt": "2026-09-18",
- "currentTaskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
- "authority": {
-  "owner": "DTALEX66",
-  "created": "2026-09-18",
-  "expires": "unbounded (main is sole authority; superseded only by a newer registered CURRENT)",
-  "taskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
-  "topAuthority": "WORK-LAB-AUTHORITY.md",
-  "topMachineAuthority": ".project/governance/project-authority-index.json",
-  "supersedes": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918 (R1, main@a55a0f3) and WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25",
-  "baseline_main": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
-  "baseline_tree": "606db598abd3724baf6a45ffcfb319f9b0a4d550"
- },
- "classification": {
-  "CURRENT": [
-   "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918"
-  ],
-  "SUPERSEDED": [
-   "WORK-LAB-FORWARD-RECONCILIATION-2026-08-20",
-   "NX-000",
-   "NX-100",
-   "NX-110",
-   "NX-200",
-   "NX-210",
-   "NX-300",
-   "NX-310",
-   "NX-320",
-   "NX-400",
-   "NX-410",
-   "NX-500",
-   "NX-510",
-   "NX-520",
-   "NX-600",
-   "NX-700",
-   "NX-710",
-   "NX-720",
-   "TP-20260819-TASKPACK-WORKLAB",
-   "INT-002-006-READONLY-EVIDENCE-PROJECTION",
-   "AGENT-WORKFLOW-ENHANCEMENTS-20260812",
-   "WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25"
-  ],
-  "HISTORICAL": [
-   "WORK-LAB-DSH-HANDOFF-2026-08-15",
-   "WORK-LAB-DSH-HANDOFF-2026-08-18",
-   "WORK-LAB-DSH-HANDOFF-2026-08-19",
-   "WORK-LAB-DSH-HANDOFF-SUMMARY-2026-08-15",
-   "WORK-LAB-HANDOFF-2026-08-19",
-   "WORK-LAB-HANDOFF-2026-08-20",
-   "WORK-LAB-HERMES-HANDOFF-2026-08-11-FINAL",
-   "WORK-LAB-HERMES-HANDOFF-2026-08-11-EVENING",
-   "WORK-LAB-HERMES-DEEPSEEK-HANDOFF-2026-08-11",
-   "WORK-LAB-HERMES-HANDOFF-2026-08-20",
-   "WORK-LAB-HERMES-HANDOFF-2026-08-21",
-   "WORK-LAB-STAGE-2-ABSORPTION-INTEROPERABILITY-HANDOFF",
-   "WORK-LAB-STAGE-3-CONTROL-PLANE-CODEX-HANDOFF",
-   "WORK-LAB-STAGE-3-HANDOFF-SUMMARY",
-   "WORK-LAB-MASTER-2.0-DELIVERY-SUMMARY-2026-08-10",
-   "WORK-LAB-MASTER-2.0-DELIVERY-SUMMARY-2026-08-11",
-   "WORK-LAB-V2-HANDOFF",
-   "WORK-LAB-LOCAL-DEPLOYMENT-SMOOTHNESS-2026-08-11",
-   "WORK-LAB-OBSERVER-VISUAL-ASSETS-R2-STATUS",
-   "WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF",
-   "WORK-LAB-STAGE3-CONTRACT-RECONCILIATION-2026-08-11"
-  ],
-  "OUT_OF_SCOPE": [
-   "CODEX-DESKTOP-STORE-UPDATE-BEHAVIOR-20260812",
-   "EXTERNAL-ARTIFACT-RECOVERY-20260812"
-  ],
-  "DEFERRED": [
-   "WORK-LAB-HERMES-TASKPACK-RECONCILIATION",
-   "WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE",
-   "WORK-LAB-STAGE-3-TASK-GRAPH",
-   "WORK-LAB-HERMES-TASKPACK-RECONCILIATION-2026-08-11",
-   "WORK-LAB-V2-TASK-MATRIX"
-  ]
- },
- "acceptance": {
-  "indexReferencesExist": true,
-  "singleCurrent": true,
-  "noSupersedesCycle": true,
-  "baselineFresh": true,
-  "sha256Match": true
- },
- "release": {
-  "version": "WORK-LAB-0.1-usable",
-  "frozen_at": "2026-08-26",
-  "frozen_commit": "511fa467691c0bf1b4c2e3e77f694e7db7ba6dde",
-  "frozen_by": "WLR-130",
-  "taskpack": "WLR-FINAL-20260825-R2-OSS-FAST-TRACK",
-  "tasks_completed": [
-   "WLR-000",
-   "WLR-010",
-   "WLR-020",
-   "WLR-030",
-   "WLR-040",
-   "WLR-050",
-   "WLR-060",
-   "WLR-070",
-   "WLR-080",
-   "WLR-090",
-   "WLR-100",
-   "WLR-110",
-   "WLR-120",
-   "WLR-130"
-  ],
-  "tasks_deferred": [],
-  "status": "FROZEN"
- },
- "staticHandoffViews": [
-  {
-   "id": "WORK-LAB-INTEGRATED-TASKPACK-20260916",
-   "zip_sha256": "76e31e94f42db411d2a8e124ced8444dae0645155c9fafb73003728930a675cb",
-   "internal_manifest": "SHA256SUMS.txt (6 files, all verified OK on 2026-09-16)",
-   "mode": "plan_only",
-   "role": "static handoff view for user-selected task dispatch; NOT a runtime task store, NOT an auto-executor",
-   "supersedes": null,
-   "note": "currentTaskpack (R1) remains authoritative until its 2026-09-24 expiry; this pack is a planning/coverage layer, not a new authority (per START-HERMES §6)",
-   "superseded_by_current": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
-   "is_authority": false
+  "schemaVersion": "workflow/taskpack-authority-index/v1",
+  "generatedAt": "2026-09-18",
+  "currentTaskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
+  "authority": {
+    "owner": "DTALEX66",
+    "created": "2026-09-18",
+    "expires": "unbounded (main is sole authority; superseded only by a newer registered CURRENT)",
+    "taskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
+    "topAuthority": "WORK-LAB-AUTHORITY.md",
+    "topMachineAuthority": ".project/governance/project-authority-index.json",
+    "supersedes": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918 (R1, main@a55a0f3) and WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25",
+    "baseline_main": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
+    "baseline_tree": "606db598abd3724baf6a45ffcfb319f9b0a4d550"
   },
-  {
-   "id": "WORK-LAB-UNIVERSAL-WORKFLOW-TASKPACK-20260916",
-   "mode": "plan_only",
-   "role": "通用协作差集专项增量包；不是全项目总包、不是新运行时、不是执行授权。执行前必读范围更正。",
-   "tasks_json_sha256": "d1664f1e997315814c3154dac60682e55ede4cd7464a0e3a3ab553973f777c9c",
-   "scope_correction_sha256": "483ae11f59e1dda1f6d0079521148923cbdf5c0f5129484629d9b9d40e13d6b8",
-   "supersedes": null,
-   "note": "20 张差集卡 / 40 AT；15 续 + 4 条件项 deferred（NF-13/W05/W06/W08）。专项完成≠全项目完成。",
-   "execution_authorized": false,
-   "grants_new_permissions": false,
-   "superseded_by_current": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
-   "is_authority": false
+  "classification": {
+    "CURRENT": [
+      "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918"
+    ],
+    "SUPERSEDED": [
+      "WORK-LAB-FORWARD-RECONCILIATION-2026-08-20",
+      "NX-000",
+      "NX-100",
+      "NX-110",
+      "NX-200",
+      "NX-210",
+      "NX-300",
+      "NX-310",
+      "NX-320",
+      "NX-400",
+      "NX-410",
+      "NX-500",
+      "NX-510",
+      "NX-520",
+      "NX-600",
+      "NX-700",
+      "NX-710",
+      "NX-720",
+      "TP-20260819-TASKPACK-WORKLAB",
+      "INT-002-006-READONLY-EVIDENCE-PROJECTION",
+      "AGENT-WORKFLOW-ENHANCEMENTS-20260812",
+      "WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25"
+    ],
+    "HISTORICAL": [
+      "WORK-LAB-DSH-HANDOFF-2026-08-15",
+      "WORK-LAB-DSH-HANDOFF-2026-08-18",
+      "WORK-LAB-DSH-HANDOFF-2026-08-19",
+      "WORK-LAB-DSH-HANDOFF-SUMMARY-2026-08-15",
+      "WORK-LAB-HANDOFF-2026-08-19",
+      "WORK-LAB-HANDOFF-2026-08-20",
+      "WORK-LAB-HERMES-HANDOFF-2026-08-11-FINAL",
+      "WORK-LAB-HERMES-HANDOFF-2026-08-11-EVENING",
+      "WORK-LAB-HERMES-DEEPSEEK-HANDOFF-2026-08-11",
+      "WORK-LAB-HERMES-HANDOFF-2026-08-20",
+      "WORK-LAB-HERMES-HANDOFF-2026-08-21",
+      "WORK-LAB-STAGE-2-ABSORPTION-INTEROPERABILITY-HANDOFF",
+      "WORK-LAB-STAGE-3-CONTROL-PLANE-CODEX-HANDOFF",
+      "WORK-LAB-STAGE-3-HANDOFF-SUMMARY",
+      "WORK-LAB-MASTER-2.0-DELIVERY-SUMMARY-2026-08-10",
+      "WORK-LAB-MASTER-2.0-DELIVERY-SUMMARY-2026-08-11",
+      "WORK-LAB-V2-HANDOFF",
+      "WORK-LAB-LOCAL-DEPLOYMENT-SMOOTHNESS-2026-08-11",
+      "WORK-LAB-OBSERVER-VISUAL-ASSETS-R2-STATUS",
+      "WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF",
+      "WORK-LAB-STAGE3-CONTRACT-RECONCILIATION-2026-08-11"
+    ],
+    "OUT_OF_SCOPE": [
+      "CODEX-DESKTOP-STORE-UPDATE-BEHAVIOR-20260812",
+      "EXTERNAL-ARTIFACT-RECOVERY-20260812"
+    ],
+    "DEFERRED": [
+      "WORK-LAB-HERMES-TASKPACK-RECONCILIATION",
+      "WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE",
+      "WORK-LAB-STAGE-3-TASK-GRAPH",
+      "WORK-LAB-HERMES-TASKPACK-RECONCILIATION-2026-08-11",
+      "WORK-LAB-V2-TASK-MATRIX"
+    ]
   },
-  {
-   "id": "HERMES-UPDATE-20260917",
-   "zip_sha256": "71cd76b461f1bc6acd9624685cb3489e7733e2c42aa65ee3b68b5f62f1093c39",
-   "internal_manifest": "SHA256SUMS.txt (21 files, all verified OK on 2026-09-17)",
-   "archive_location": ".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/HERMES-UPDATE-20260917.zip",
-   "entry_record": "taskpacks/current/HERMES-UPDATE-AND-FIXES-20260917.md",
-   "mode": "plan_only",
-   "role": "maintenance record and static handoff view for the Hermes v0.21.2 -> v0.21.3 update and the 2026-09-17 defect fixes; NOT a runtime task store, NOT an auto-executor, NOT a new authority",
-   "supersedes": null,
-   "note": "currentTaskpack (R1) remains authoritative until its 2026-09-24 expiry; this view reports a completed maintenance round (update to v0.21.3 (2026.9.14), 21/21 managed assets CONVERGED, 38/38 gates, hooks healthy) plus the decided curator fold-back policy. Deliverables: taskpacks/current/HERMES-UPDATE-AND-FIXES-20260917.md and .project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/. Evidence stays inside the ignored per-project boundary per AGENTS.md.",
-   "execution_authorized": false,
-   "grants_new_permissions": false,
-   "superseded_by_current": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
-   "is_authority": false
+  "acceptance": {
+    "indexReferencesExist": true,
+    "singleCurrent": true,
+    "noSupersedesCycle": true,
+    "baselineFresh": true,
+    "sha256Match": true
+  },
+  "release": {
+    "version": "WORK-LAB-0.1-usable",
+    "frozen_at": "2026-08-26",
+    "frozen_commit": "511fa467691c0bf1b4c2e3e77f694e7db7ba6dde",
+    "frozen_by": "WLR-130",
+    "taskpack": "WLR-FINAL-20260825-R2-OSS-FAST-TRACK",
+    "tasks_completed": [
+      "WLR-000",
+      "WLR-010",
+      "WLR-020",
+      "WLR-030",
+      "WLR-040",
+      "WLR-050",
+      "WLR-060",
+      "WLR-070",
+      "WLR-080",
+      "WLR-090",
+      "WLR-100",
+      "WLR-110",
+      "WLR-120",
+      "WLR-130"
+    ],
+    "tasks_deferred": [],
+    "status": "FROZEN"
+  },
+  "staticHandoffViews": [
+    {
+      "id": "WORK-LAB-INTEGRATED-TASKPACK-20260916",
+      "zip_sha256": "76e31e94f42db411d2a8e124ced8444dae0645155c9fafb73003728930a675cb",
+      "internal_manifest": "SHA256SUMS.txt (6 files, all verified OK on 2026-09-16)",
+      "mode": "plan_only",
+      "role": "static handoff view for user-selected task dispatch; NOT a runtime task store, NOT an auto-executor",
+      "supersedes": null,
+      "note": "currentTaskpack (R1) remains authoritative until its 2026-09-24 expiry; this pack is a planning/coverage layer, not a new authority (per START-HERMES §6)",
+      "superseded_by_current": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
+      "is_authority": false
+    },
+    {
+      "id": "WORK-LAB-UNIVERSAL-WORKFLOW-TASKPACK-20260916",
+      "mode": "plan_only",
+      "role": "通用协作差集专项增量包；不是全项目总包、不是新运行时、不是执行授权。执行前必读范围更正。",
+      "tasks_json_sha256": "d1664f1e997315814c3154dac60682e55ede4cd7464a0e3a3ab553973f777c9c",
+      "scope_correction_sha256": "483ae11f59e1dda1f6d0079521148923cbdf5c0f5129484629d9b9d40e13d6b8",
+      "supersedes": null,
+      "note": "20 张差集卡 / 40 AT；15 续 + 4 条件项 deferred（NF-13/W05/W06/W08）。专项完成≠全项目完成。",
+      "execution_authorized": false,
+      "grants_new_permissions": false,
+      "superseded_by_current": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
+      "is_authority": false
+    },
+    {
+      "id": "HERMES-UPDATE-20260917",
+      "zip_sha256": "71cd76b461f1bc6acd9624685cb3489e7733e2c42aa65ee3b68b5f62f1093c39",
+      "internal_manifest": "SHA256SUMS.txt (21 files, all verified OK on 2026-09-17)",
+      "archive_location": ".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/HERMES-UPDATE-20260917.zip",
+      "entry_record": "taskpacks/current/HERMES-UPDATE-AND-FIXES-20260917.md",
+      "mode": "plan_only",
+      "role": "maintenance record and static handoff view for the Hermes v0.21.2 -> v0.21.3 update and the 2026-09-17 defect fixes; NOT a runtime task store, NOT an auto-executor, NOT a new authority",
+      "supersedes": null,
+      "note": "currentTaskpack (R1) remains authoritative until its 2026-09-24 expiry; this view reports a completed maintenance round (update to v0.21.3 (2026.9.14), 21/21 managed assets CONVERGED, 38/38 gates, hooks healthy) plus the decided curator fold-back policy. Deliverables: taskpacks/current/HERMES-UPDATE-AND-FIXES-20260917.md and .project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/. Evidence stays inside the ignored per-project boundary per AGENTS.md.",
+      "execution_authorized": false,
+      "grants_new_permissions": false,
+      "superseded_by_current": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
+      "is_authority": false
+    }
+  ],
+  "baselineRevalidation": {
+    "ts": "2026-09-23T13:05:00Z",
+    "branch": "main",
+    "local_head": "62f666ef36999b846ea1c9bcb075a0970be18933",
+    "remote_head": "62f666ef36999b846ea1c9bcb075a0970be18933",
+    "local_eq_remote": true,
+    "worktree": "clean",
+    "main_ref": "62f666ef36999b846ea1c9bcb075a0970be18933",
+    "main_note": "LANE CONVERGED: u17/global-agent-policy-20260918 merged to main via PR #127 (squash) at 62f666ef36999b846ea1c9bcb075a0970be18933 (2026-09-23, user-authorized). main is the sole trunk at 62f666ef36999b846ea1c9bcb075a0970be18933; the pre-convergence main pointer 803268da9dc356fe63f26b3b5405f724bc06b5b9 is retained as the immutable frozen anchor in WORK-LAB-AUTHORITY.md / project-authority-index.json. baseline re-verified at convergence.",
+    "authoritative": true
+  },
+  "decisions": [
+    {
+      "id": "BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917",
+      "path": "taskpacks/current/BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917.md",
+      "ledger": "taskpacks/current/BRANCH-RETIREMENT-LEDGER-20260917.json",
+      "status": "EXECUTED_20260917",
+      "note": "Branch convergence + anti-regression rules fully executed: residual audit (0 live-code residuals), 52 legacy branches -> wl-retire-20260917/* tags + deleted, PR#124 squash-merged main to r4 (6bd0bd5), PR#125 recorded cutover_event, r4 retired. main is sole ACTIVE/AUTHORITATIVE branch (ac323a2).",
+      "evidence": [
+        "github PR#124 MERGED (main squash merge)",
+        "github PR#125 MERGED (ledger record)",
+        "52x wl-retire-20260917/* tags on origin",
+        "wl-cutover-evidence-20260917 tag",
+        "taskpacks/current/BRANCH-RETIREMENT-LEDGER-20260917.json cutover_event"
+      ]
+    },
+    {
+      "id": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
+      "path": "taskpacks/current/WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918.md",
+      "role": "CURRENT repair execution authority (single CURRENT)",
+      "status": "ADOPTED_20260918",
+      "open_task_register": "taskpacks/current/OPEN-TASK-REGISTER-20260917.md (mapped into U00-U19; remains the single register, NOT a second one)",
+      "evidence": [
+        "baseline main@a55a0f3 tree 3890328 (matches pack)",
+        ".project-local/runs/UPC-20260918/ledger.json"
+      ]
+    }
+  ],
+  "historicalPreCutoverSnapshot": {
+    "NON_NORMATIVE": true,
+    "SUPERSEDED": true,
+    "note": "pre-2026-09-17 cutover state; NOT a current authority",
+    "universalScopeDistinction_superseded": {
+      "ts": "2026-09-16",
+      "card": "NF-00-SYNC",
+      "worklab_code_dev": "WORK-LAB 仓内契约/设计/合成+多进程测试/CI 接线/规则澄清（可自执行，checkpoint）",
+      "target_project_access": "目标项目/路径接入需用户对该项目的接入授权；合成项目限定批准测试根",
+      "remote_publish": "远端发布目标（GitHub/规划端）需写权限 + 用户对该批材料外发授权；未获权则停在待授权",
+      "local_deploy": "本机安装/启动项/全局资产需部署授权；未授权只暂停对应分支",
+      "carry_forward_anchor": "TASKS.json carry_forward（15 续 + 4 条件项）",
+      "default_path": "每项目一处材料权威 + 一个当前认领端；多设备按路由接入，之后受控转移",
+      "no_main_merge": true,
+      "baseline": "r4-recovery-exec@de2f3fd；main e5231f0 保持未合并"
+    },
+    "superseded_baselineRevalidation": {
+      "ts": "2026-09-15T17:40:49.542300+00:00",
+      "branch": "r4-recovery-exec",
+      "local_head": "693471c01f12956ec6e95567a164edde1a7f0879",
+      "remote_head": "693471c01f12956ec6e95567a164edde1a7f0879",
+      "local_eq_remote": true,
+      "worktree": "clean",
+      "main_ref": "e5231f0f605d1515ed12958267b394c9de1da20c",
+      "main_note": "historical main stays UNMERGED (no merge/push to main this pack); recovery branch is the only delivery lane",
+      "pack_observed_head": "693471c01f12956ec6e95567a164edde1a7f0879",
+      "pack_head_matches_current": true,
+      "r4_source_list_gap": "R4 local source manifest (.project-local/artifacts/task-artifacts/r4/history-source-manifest.json) NOT present in this checkout - recorded as gap, NOT filled from private session stores (NF-00 step 2)"
+    }
   }
- ],
- "baselineRevalidation": {
-  "ts": "2026-09-22T23:30:00+00:00",
-  "branch": "main",
-  "local_head": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
-  "remote_head": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
-  "local_eq_remote": true,
-  "worktree": "clean",
-  "main_ref": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
-  "main_note": "main (origin/main=803268da9dc356fe63f26b3b5405f724bc06b5b9) is the sole AUTHORITATIVE trunk; a live convergence lane u17/global-agent-policy-20260918 (PR #127) carries the V2 unified-product convergence work and is NOT yet merged. This baseline was re-verified 2026-09-22; re-run after the lane merges.",
-  "authoritative": true
- },
- "decisions": [
-  {
-   "id": "BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917",
-   "path": "taskpacks/current/BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917.md",
-   "ledger": "taskpacks/current/BRANCH-RETIREMENT-LEDGER-20260917.json",
-   "status": "EXECUTED_20260917",
-   "note": "Branch convergence + anti-regression rules fully executed: residual audit (0 live-code residuals), 52 legacy branches -> wl-retire-20260917/* tags + deleted, PR#124 squash-merged main to r4 (6bd0bd5), PR#125 recorded cutover_event, r4 retired. main is sole ACTIVE/AUTHORITATIVE branch (ac323a2).",
-   "evidence": [
-    "github PR#124 MERGED (main squash merge)",
-    "github PR#125 MERGED (ledger record)",
-    "52x wl-retire-20260917/* tags on origin",
-    "wl-cutover-evidence-20260917 tag",
-    "taskpacks/current/BRANCH-RETIREMENT-LEDGER-20260917.json cutover_event"
-   ]
-  },
-  {
-   "id": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
-   "path": "taskpacks/current/WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918.md",
-   "role": "CURRENT repair execution authority (single CURRENT)",
-   "status": "ADOPTED_20260918",
-   "open_task_register": "taskpacks/current/OPEN-TASK-REGISTER-20260917.md (mapped into U00-U19; remains the single register, NOT a second one)",
-   "evidence": [
-    "baseline main@a55a0f3 tree 3890328 (matches pack)",
-    ".project-local/runs/UPC-20260918/ledger.json"
-   ]
-  }
- ],
- "historicalPreCutoverSnapshot": {
-  "NON_NORMATIVE": true,
-  "SUPERSEDED": true,
-  "note": "pre-2026-09-17 cutover state; NOT a current authority",
-  "universalScopeDistinction_superseded": {
-   "ts": "2026-09-16",
-   "card": "NF-00-SYNC",
-   "worklab_code_dev": "WORK-LAB 仓内契约/设计/合成+多进程测试/CI 接线/规则澄清（可自执行，checkpoint）",
-   "target_project_access": "目标项目/路径接入需用户对该项目的接入授权；合成项目限定批准测试根",
-   "remote_publish": "远端发布目标（GitHub/规划端）需写权限 + 用户对该批材料外发授权；未获权则停在待授权",
-   "local_deploy": "本机安装/启动项/全局资产需部署授权；未授权只暂停对应分支",
-   "carry_forward_anchor": "TASKS.json carry_forward（15 续 + 4 条件项）",
-   "default_path": "每项目一处材料权威 + 一个当前认领端；多设备按路由接入，之后受控转移",
-   "no_main_merge": true,
-   "baseline": "r4-recovery-exec@de2f3fd；main e5231f0 保持未合并"
-  },
-  "superseded_baselineRevalidation": {
-   "ts": "2026-09-15T17:40:49.542300+00:00",
-   "branch": "r4-recovery-exec",
-   "local_head": "693471c01f12956ec6e95567a164edde1a7f0879",
-   "remote_head": "693471c01f12956ec6e95567a164edde1a7f0879",
-   "local_eq_remote": true,
-   "worktree": "clean",
-   "main_ref": "e5231f0f605d1515ed12958267b394c9de1da20c",
-   "main_note": "historical main stays UNMERGED (no merge/push to main this pack); recovery branch is the only delivery lane",
-   "pack_observed_head": "693471c01f12956ec6e95567a164edde1a7f0879",
-   "pack_head_matches_current": true,
-   "r4_source_list_gap": "R4 local source manifest (.project-local/artifacts/task-artifacts/r4/history-source-manifest.json) NOT present in this checkout - recorded as gap, NOT filled from private session stores (NF-00 step 2)"
-  }
- }
 }
