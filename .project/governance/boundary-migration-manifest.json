@@ -115,9 +115,10 @@
         "90-archive/reports-history -> frozen under docs/history (single anchor)"
       ],
       "seam": "90-archive/BOUNDARY.md (history-only marker)",
-      "status": "MARKED_ONLY_THIS_ROUND",
-      "executedThisRound": false,
-      "splitId": "ARCHIVE_90"
+      "status": "EXECUTED_20260923",
+      "executedThisRound": true,
+      "splitId": "ARCHIVE_90",
+      "executed": "git mv 90-archive/reports-history/2026-09-05 -> docs/history/archive/reports-history/2026-09-05 (15 files, branch post-merge/90-archive-convergence); BOUNDARY.md marker retained as the gate seam"
     },
     {
       "id": "MOVE-006",

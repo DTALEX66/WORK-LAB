@@ -16,4 +16,10 @@ drift the V2 convergence forbids.
 - No file moves this round; the boundary verifier forbids a new root-level
   second history system and keeps 90-archive/ as history-only.
 
-## Status: marked + gated. No file moves this round.
+## Status: CONVERGED 2026-09-23 (user-authorized, branch post-merge/90-archive-convergence).
+- `90-archive/reports-history/2026-09-05/*` (15 files) git-moved to
+  `docs/history/archive/reports-history/2026-09-05/` (single history retrieval anchor = docs/history/).
+- This directory now retains ONLY this BOUNDARY.md marker, which the three-project boundary
+  verifier (`scripts/ci/verify_three_project_boundary.py` SPLIT_DIRS) requires. No active content
+  here; no new files may be added (forbiddenNewOwners: '90-archive as a root active dir').
+- Migration record: `.project/governance/boundary-migration-manifest.json` MOVE-005 status=EXECUTED_20260923.
