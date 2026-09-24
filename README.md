@@ -7,23 +7,27 @@ portable Memory, Capabilities and workflow policy — as one canonical source,
 then adapts it into native projections for each current client. It is not an
 agent runtime, a product platform, or a fourth product.
 
-> **Current positioning:** the only active modules are Workflow-assistance and
-> **Hermes · Codex · CC Switch · GitHub · Open Design · OpenHuman · DeepSeek Harness (DSH)**, plus any
-> future AI software through the same Adapter contract.
-> `30-products/minigame` is retained as product history/fixture/archive
-> material, not as a canonical active module. See
+> **Current positioning (V2 converged):** the active module roots are
+> `packages/client-neutral-core` (task/telemetry ledger, sidecar, adapters,
+> delivery gates), `services/` (orchestration, policy, receipts) and
+> `apps/observer` (strictly read-only projection). Managed clients:
+> **Hermes · Codex · DSH · GitHub · Open Design · OpenHuman**, plus any future
+> AI software through the same Adapter contract; CC Switch is LEGACY_OBSERVE
+> (observe-only, no active writes). Frozen history lives under `docs/history/`
+> (single retrieval anchor; see `WL_INHERITANCE_MATRIX.json`, MiniGame =
+> `FOREIGN_HISTORICAL`). See
 > [`docs/decisions/PROJECT_POSITIONING.md`](docs/decisions/PROJECT_POSITIONING.md).
 
 ## Neutrality (unbound, unlocked)
 
 - **Client-neutral**: one canonical source → per-client native projection, not
   byte-identical copies.
-- **Unbound**: the current clients (Hermes · Codex · CC Switch · GitHub · Open Design · OpenHuman ·
-  DeepSeek Harness) are the *current* adapters, not permanent dependencies; future AI software plugs
-  into the same contract. DSH is a replaceable Agent Runtime (temporary executor in the model
+- **Unbound**: the current clients (Hermes · Codex · DSH · GitHub · Open Design ·
+  OpenHuman; CC Switch is LEGACY_OBSERVE, observe-only) are the *current*
+  adapters, not permanent dependencies; future AI software plugs into the same
+  contract. DSH is a replaceable agent runtime (temporary executor in the model
   control-plane taskpack), not a Hermes replacement; see
   [`docs/decisions/PROJECT_POSITIONING.md`](docs/decisions/PROJECT_POSITIONING.md).
-  dependencies; future AI software plugs into the same contract.
 - **Unlocked**: core schemas use stable IDs and capability discovery — never
   hard-coded programs, model IDs, versions, ports, or install paths.
 
@@ -50,14 +54,16 @@ evidence stay under the current Git root's ignored `.project-local/` boundary.
 ## Canonical active modules
 
 - `packages/client-neutral-core` — global, client-neutral workflow governance,
-  task execution control, observability and portable workflow assets
+  task/telemetry ledgers, sidecar, adapters and delivery gates
+- `services/` — orchestration, policy, execution-federation, receipts,
+  session-federation, task-governance, radar, security and cleanup
 - `apps/observer` — strictly read-only derived observation,
   projections and evidence reports
 
-`30-products/minigame` remains outside the active two-module registry as
-product history, fixture/reference material and migration/archive evidence. It
-does not imply a current platform release, commercial experiment or automatic
-merge/deletion decision.
+Frozen history lives under `docs/history/` (single retrieval anchor, incl.
+converged report history from `90-archive/` via MOVE-005; `90-archive/`
+retains only its `BOUNDARY.md` gate marker). MiniGame and pre-cutover
+r4-era material remain archive evidence, not active modules.
 
 The repository preserves source history and keeps module implementations under
 their canonical prefixes. Root governance owns stable contracts, task/evidence
@@ -75,8 +81,10 @@ dirty ownership, boundary violations or incomplete required jobs fail closed.
 ## Safety boundaries
 
 - One Git root; module rules may narrow root rules but never weaken them.
-- `.project-local/` holds ignored runtime + evidence data; `90-archive/` holds
-  archived report history. Durable handoffs may be retained only when explicitly
+- `.project-local/` holds ignored runtime + evidence data; frozen history
+  lives under `docs/history/` (single retrieval anchor — `90-archive/`
+  converged into it, retaining only its `BOUNDARY.md` gate marker).
+  Durable handoffs may be retained only when explicitly
   covered by a recovery contract.
 - Secrets, credentials, prompt/response bodies and private browser data never enter evidence.
 - Project artifacts never spill outside the project Git root; any spill is
