@@ -7,10 +7,12 @@ portable Memory, Capabilities and workflow policy — as one canonical source,
 then adapts it into native projections for each current client. It is not an
 agent runtime, a product platform, or a fourth product.
 
-> **Current positioning (V2 converged):** the active module roots are
+> **Current positioning (V2 converged):** the two canonical modules are
 > `packages/client-neutral-core` (task/telemetry ledger, sidecar, adapters,
-> delivery gates), `services/` (orchestration, policy, receipts) and
-> `apps/observer` (strictly read-only projection). Managed clients:
+> delivery gates) and `apps/observer` (strictly read-only projection). The
+> supporting source surfaces `services/`, `integrations/`, `config/` and
+> `apps/token-monitor/` serve those modules and are not separate module roots.
+> Managed clients:
 > **Hermes · Codex · DSH · GitHub · Open Design · OpenHuman**, plus any future
 > AI software through the same Adapter contract; CC Switch is LEGACY_OBSERVE
 > (observe-only, no active writes). Frozen history lives under `docs/history/`
@@ -53,12 +55,19 @@ evidence stay under the current Git root's ignored `.project-local/` boundary.
 
 ## Canonical active modules
 
-- `packages/client-neutral-core` — global, client-neutral workflow governance,
-  task/telemetry ledgers, sidecar, adapters and delivery gates
-- `services/` — orchestration, policy, execution-federation, receipts,
-  session-federation, task-governance, radar, security and cleanup
-- `apps/observer` — strictly read-only derived observation,
-  projections and evidence reports
+The machine module model (`.project/governance/projects.json`) defines exactly
+two canonical modules:
+
+- `packages/client-neutral-core` (module id `workflow-assistance`) — global,
+  client-neutral workflow governance, task/telemetry ledgers, sidecar,
+  adapters and delivery gates
+- `apps/observer` (module id `work-lab-observer`) — strictly read-only
+  derived observation, projections and evidence reports
+
+Active implementation / supporting source surfaces that serve those modules
+(not separate module roots): `services/` (orchestration, policy,
+execution-federation, receipts, session-federation, task-governance, radar,
+security and cleanup), `integrations/`, `config/` and `apps/token-monitor/`.
 
 Frozen history lives under `docs/history/` (single retrieval anchor, incl.
 converged report history from `90-archive/` via MOVE-005; `90-archive/`
