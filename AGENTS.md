@@ -25,12 +25,15 @@ evidence. Machine verifier: `scripts/ci/verify_project_authority_reference.py`.
 
 ## Scope
 
-This is a single-root monorepo. Allowed active module roots are exactly:
-`packages/client-neutral-core` (workflow-assistance: Task Ledger, Telemetry Ledger, sidecar,
-adapters, delivery gates), `services/` (orchestration/policy/receipts), and
-`apps/observer` (work-lab-observer, read-only projection). The legacy
-`10-workflow/workflow-assistance` path was split out at the 2026-09 directory
-convergence and is no longer tracked. The
+This is a single-root monorepo. Canonical module roots (per
+`.project/governance/module-ownership.json`, the machine authority) are exactly
+two: `packages/client-neutral-core` (workflow-assistance: Task Ledger,
+Telemetry Ledger, sidecar, adapters, delivery gates) and `apps/observer`
+(work-lab-observer, read-only projection). Active supporting source surfaces
+(not module roots): `services/` (orchestration/policy/receipts),
+`integrations/`, `config/`, `apps/token-monitor/`, `scripts/`, `tests/`. The
+legacy `10-workflow/workflow-assistance` path was split out at the 2026-09
+directory convergence and is no longer tracked. The
 managed client workflow is Hermes · Codex · CC Switch · GitHub · Open Design ·
 OpenHuman, plus any future AI software through the same Adapter contract.
 DSH (DeepSeek Harness / DSH Desktop 2.0.13 community desktop, `D:\All projects\DSH\DSH Desktop.exe`; NSIS silent installs reset desktop .lnk TargetPath+IconLocation to the temp install dir — after ANY upgrade re-pin all three .lnk fields incl. `--user-data-dir` per skill `dsh-administration` and error-ledger ERR-087) is a managed agent runtime client

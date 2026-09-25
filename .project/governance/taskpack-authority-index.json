@@ -76,6 +76,19 @@
       "WORK-LAB-V2-TASK-MATRIX"
     ]
   },
+  "currentTaskCards": [
+    {
+      "id": "WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925",
+      "path": "taskpacks/current/WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925.md",
+      "role": "subordinate current task card: planning record for the Product UI / Control Surface roadmap; grants no execution authority (feature scope frozen)"
+    },
+    {
+      "id": "ORCA-PILOT-TASK-CARD-20260925",
+      "path": "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md",
+      "registry_entry": "FUT-001",
+      "role": "subordinate current task card: Orca Pilot round-1 plan; execution individually authorized per operation"
+    }
+  ],
   "acceptance": {
     "indexReferencesExist": true,
     "singleCurrent": true,

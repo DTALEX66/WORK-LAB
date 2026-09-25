@@ -16,6 +16,30 @@ and fixed historical skill-count assumptions.
 Historical retrieval is defined by:
 `taskpacks/history/FROZEN-LEGACY-INDEX-20260918.md`.
 
+## P0-03 subordinate current task-card model (2026-09-25)
+
+The task authority model is: `CURRENT TaskPack -> OPEN Register + currentTaskCards`.
+Subordinate task cards (e.g. the Product UI / Control Surface roadmap card and the
+Orca Pilot card) are **planning records inside this directory**, NOT a second
+CURRENT taskpack. Their machine authority lives in
+`.project/governance/taskpack-authority-index.json` under `currentTaskCards[]`
+and is verified by `scripts/ci/verify_project_authority_reference.py`:
+
+```text
+CURRENT TaskPack (exactly 1, per taskpack-authority-index classification)
+├─ OPEN Register (taskpacks/current/OPEN-TASK-REGISTER.md, single live register)
+└─ currentTaskCards
+   ├─ WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925 (roadmap, no execution grant)
+   └─ ORCA-PILOT-TASK-CARD-20260925 (registry FUT-001 binding, execution individually authorized)
+```
+
+Invariant (fail-closed): a card path exists on disk; the card is referenced by the
+single OPEN Register; the card never self-claims top-level authority; the card
+grants no more authority than its task grant (an explicit deferral /
+no-execution-authorization marker is required); a declared `registry_entry`
+binding is reciprocated by the future-candidate-registry entry's `task_card`;
+and a card id is never classified in a taskpack bucket.
+
 ## P2-05 current/history re-convergence record (2026-09-25)
 
 Three dated one-off records with **no live or machine references** were moved
