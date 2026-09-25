@@ -79,8 +79,8 @@
       "config_path": "D:\\All projects\\DSH\\.dsh\\",
       "sessions_migrated": 94,
       "verified_at": "2026-09-23T19:30:00Z",
-      "health": "desktop-live-verified (2026-09-23: main window 'DeepSeek Harness Desktop', 43120 LISTENING, D:.dsh mtime advanced, 5 sessions read back)",
-      "note": "Community desktop (anywhere-labs/deepseek-harness-desktop v2.0.13; 2026-09-20 in-place official upgrade 2.0.11 -> 2.0.13, 2.0.2/2.0.4 superseded; see skill dsh-administration + ERR-087); D-drive single entry; config root D:\\All projects\\DSH\\.dsh pinned via DSH_HOME (HKCU\\Environment); desktop .lnk must carry the --user-data-dir argument or launch falls back to the C: default and shows the onboarding wizard (2026-09-23 regression lesson)"
+      "health": "desktop-live-verified (2026-09-23: main window 'DeepSeek Harness Desktop', 43120 LISTENING, D:.dsh mtime advanced, 5 sessions read back; 2026-09-24 ERR-088 relaunch on D root re-verified: 7 instances, 43120 LISTENING, D:.dsh mtime advanced 9/24)",
+      "note": "Community desktop (anywhere-labs/deepseek-harness-desktop v2.0.13; 2026-09-20 in-place official upgrade 2.0.11 -> 2.0.13, 2.0.2/2.0.4 superseded; see skill dsh-administration + ERR-087); D-drive single entry; config root D:\\All projects\\DSH\\.dsh pinned via DSH_HOME (HKCU\\Environment); desktop .lnk must carry the --user-data-dir argument or launch falls back to the C: default and shows the onboarding wizard (2026-09-23 regression lesson). SECOND LAYER (ERR-088, 2026-09-24): DSH_HOME is a HKCU user env var frozen out of live login sessions — after setx/new logon the live Explorer block lacks it and desktop launch falls back to the C:.dsh empty skeleton ('sessions/config lost' perception; data stays intact on D:). C skeleton archived to D:\\All projects\\DSH\\.migration\\20260924\\c-dsh-skeleton-backup-20260924; machine-level HKLM escalation awaits UAC; no reboot scheduled by automation."
     },
     "github": {
       "client": "github",

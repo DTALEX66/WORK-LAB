@@ -552,6 +552,21 @@ mod tests {
         dir
     }
 
+    /// Best-effort fixture cleanup. On Windows the directory can be briefly
+    /// locked (EACCES / antivirus / deferred deletion) right after a test,
+    /// so retry before giving up. Leftover temp fixture dirs are harmless
+    /// and are cleared by the OS; the test assertion must never fail just
+    /// because cleanup raced the filesystem.
+    fn cleanup_dir(dir: &Path) {
+        for _ in 0..10 {
+            match fs::remove_dir_all(dir) {
+                Ok(()) => return,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => return,
+                Err(_) => std::thread::sleep(std::time::Duration::from_millis(100)),
+            }
+        }
+    }
+
     #[test]
     fn parses_explicit_usage_and_model() {
         let dir = fixture(
@@ -564,7 +579,7 @@ mod tests {
         assert_eq!(snapshot.total_tokens, 20);
         assert_eq!(snapshot.models[0].model, "gpt-test");
         assert_eq!(snapshot.providers[0].provider, "GPT / Codex");
-        fs::remove_dir_all(dir).unwrap();
+        cleanup_dir(&dir);
     }
 
     #[test]
@@ -575,7 +590,7 @@ mod tests {
         assert_eq!(snapshot.total_tokens, 0);
         assert!(snapshot.unknown_records >= 2);
         assert_eq!(snapshot.confidence, "unknown");
-        fs::remove_dir_all(dir).unwrap();
+        cleanup_dir(&dir);
     }
 
     #[test]
@@ -585,7 +600,7 @@ mod tests {
         let snapshot = scan_source(dir.to_str().unwrap()).unwrap();
         assert_eq!(snapshot.total_tokens, 12);
         assert_eq!(snapshot.reasoning_tokens, 3);
-        fs::remove_dir_all(dir).unwrap();
+        cleanup_dir(&dir);
     }
 
     #[test]
@@ -595,7 +610,7 @@ mod tests {
         let snapshot = scan_source(dir.to_str().unwrap()).unwrap();
         assert_eq!(snapshot.recognized_requests, 2);
         assert_eq!(snapshot.total_tokens, 10);
-        fs::remove_dir_all(dir).unwrap();
+        cleanup_dir(&dir);
     }
 
     #[test]
@@ -606,7 +621,7 @@ mod tests {
         let snapshot = scan_source(dir.to_str().unwrap()).unwrap();
         assert_eq!(snapshot.recognized_requests, 1);
         assert_eq!(snapshot.total_tokens, 5);
-        fs::remove_dir_all(dir).unwrap();
+        cleanup_dir(&dir);
     }
 
     #[test]
@@ -617,7 +632,7 @@ mod tests {
         let snapshot = scan_source(dir.to_str().unwrap()).unwrap();
         assert_eq!(snapshot.recognized_requests, 1);
         assert_eq!(snapshot.total_tokens, 5);
-        fs::remove_dir_all(dir).unwrap();
+        cleanup_dir(&dir);
     }
 
     #[test]
@@ -630,7 +645,7 @@ mod tests {
         assert_eq!(snapshot.recognized_requests, 2);
         assert_eq!(snapshot.models.len(), 2);
         assert_eq!(snapshot.providers.len(), 2);
-        fs::remove_dir_all(dir).unwrap();
+        cleanup_dir(&dir);
     }
 
     #[test]
@@ -642,6 +657,6 @@ mod tests {
         let snapshot = scan_sources(&source_list).unwrap();
         assert_eq!(snapshot.recognized_requests, 1);
         assert_eq!(snapshot.total_tokens, 3);
-        fs::remove_dir_all(dir).unwrap();
+        cleanup_dir(&dir);
     }
 }

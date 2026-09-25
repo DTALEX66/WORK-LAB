@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 87,
+    "total": 88,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 35,
@@ -18,7 +18,7 @@
       "evidence_state": 11,
       "ci_configuration": 6,
       "feature_gap": 5,
-      "config_downgrade": 1,
+      "config_downgrade": 2,
       "dead_entry": 2,
       "path_boundary": 2,
       "ci_tooling": 1,
@@ -26,7 +26,7 @@
       "regression_contract": 5
     },
     "repeat_prevention_required": true,
-    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports)"
+    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer)"
   },
   "errors": [
     {
@@ -2454,6 +2454,37 @@
         "affectedCapability": "DSH desktop entry (five-dimension runtime baseline D1/D2)",
         "regressionCommand": "WScript.Shell .lnk three-field readback + live window-title check",
         "currentApplicability": "VERIFIED_LIVE_20260923"
+      }
+    },
+    {
+      "error_id": "ERR-088",
+      "date": "2026-09-24",
+      "taskpack": "DSH-ROOT-20260924",
+      "title": "DSH desktop data-root regression: DSH_HOME frozen out of the live login session -> launch fell back to C:.dsh empty skeleton, user perceived 'sessions/config lost'",
+      "root_cause": "DSH_HOME (data root D:\\All projects\\DSH\\.dsh, 1148 files / 127 session files) was pinned in HKCU\\Environment on 2026-09-20, but Windows login sessions freeze user env vars: no logoff/reboot happened since, so the live Explorer environment block did NOT contain DSH_HOME. Desktop-icon launch carries only --user-data-dir (shell dir, not data root) via the .lnk, so data root resolved to the C:\\Users\\ALEX\\.dsh fallback and DSH rebuilt it as an empty skeleton (8 files / 0 sessions, mtime 09-24 23:08) -> 'no sessions / no config'. The ERR-087 .lnk three-field fix was intact and re-verified this session; the break is a different layer: the data-root env, not the shortcut.",
+      "fix": "(1) Verified zero data loss: D:.dsh intact (1148 files, 5 sessions incl. WORK-LAB 3.6MB / ArcheAxis 3MB); .lnk three fields, official 2.0.13 install and all 7 running instances re-confirmed healthy. (2) Relaunched DSH with DSH_HOME injected into the launch environment -> D:.dsh mtime advanced 9/23 -> 9/24 23:27, 43120 LISTENING, main window 'DeepSeek Harness Desktop'. (3) Archived the misleading C: skeleton to D:\\All projects\\DSH\\.migration\\20260924\\c-dsh-skeleton-backup-20260924 (C: source removed). (4) Attempted machine-level HKLM\\...\\Environment DSH_HOME escalation - requires UAC; user prompt not approved in this session, remains open boundary. (5) No reboot was scheduled by automation; the existing HKCU value already takes effect at next logoff/reboot, so permanent durability is in place.",
+      "prevention": "Diagnose 'config/sessions disappeared' with the C:.dsh mtime + 0-sessions skeleton triad BEFORE touching the .lnk; Windows user env vars only refresh at the next logon session, so after setx a live session must be relaunched with the env injected (or one logoff/reboot); the .lnk layer (ERR-087) and the data-root env layer (ERR-088) must never be conflated. Discipline recorded in skill dsh-administration.",
+      "verified": true,
+      "classification": "config_downgrade",
+      "command": "Desktop 'DSH Desktop.lnk' launch without DSH_HOME in the live session; Test-Path C:\\Users\\ALEX\\.dsh returned True with 0 sessions while D:.dsh was intact",
+      "entrypoint": "DSH Desktop data-root resolution (DSH_HOME env layer; five-dimension baseline D1/D2/D3)",
+      "phase": "LOCAL_VERIFICATION",
+      "exit_code": 1,
+      "evidence_level": "local-focused",
+      "observed_error": "Desktop-icon launch rebuilt C:\\Users\\ALEX\\.dsh skeleton (mtime 09-24 23:08, 8 files / 0 sessions) while HKCU\\Environment DSH_HOME was present in the registry but absent from the live Explorer block; the app showed no sessions and no config.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "task_id": "DSH-ROOT-20260924",
+      "regression_test": "At any new logon: DSH_HOME present in the Explorer block, Test-Path C:\\Users\\ALEX\\.dsh False, and D:.dsh mtime advances on desktop launch",
+      "remaining_boundary": "Machine-level HKLM DSH_HOME escalation awaits UAC approval; until then durability rests on the HKCU value taking effect at next logoff/reboot (no reboot was scheduled by automation in this session).",
+      "repeat_prevention": "After any setx of a DSH env var, verify the live session's Explorer block (not just the registry); if frozen, relaunch DSH with the env injected and archive any C: skeleton to the D-drive migration archive; never schedule a reboot from automation without user consent.",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "DSH data-root resolution (five-dimension runtime baseline D1/D2/D3)",
+        "regressionCommand": "Test-Path C:\\Users\\ALEX\\.dsh (must be False at new logon) + D:.dsh mtime advance on desktop launch",
+        "currentApplicability": "VERIFIED_LIVE_20260924"
       }
     }
   ],
