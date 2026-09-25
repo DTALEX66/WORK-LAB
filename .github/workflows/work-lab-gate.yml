@@ -157,43 +157,46 @@ jobs:
     if: needs.plan.outputs.run_observer == 'true'
     runs-on: windows-latest
     timeout-minutes: 40
-    env:
-      PYTHONPATH: src:scripts
-    defaults:
-      run:
-        working-directory: apps/observer
+    # P0-01: no job-level relative PYTHONPATH. The multi-command Python groups
+    # route through scripts/ci/failfast_group.py, whose manifest expansion pins
+    # an absolute PYTHONPATH derived from each group's working_dir — a step-
+    # relative value here would re-introduce the environment drift that
+    # masked the 2026-09-25 fake-green. U19/cargo steps self-bootstrap.
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Verify Observer read-only skeleton
-        run: |
-          python scripts/verify_observer_skeleton.py
-          python tests/test_observer_skeleton.py
-          python tests/test_observer_runtime.py
-          python tests/test_observer_evidence.py
-          python tests/test_observer_store.py
-          python scripts/verify_usage_rollup.py
-          python tests/test_usage_rollup.py
-          python tests/test_observer_events_migration.py
+      # P0-01 CI Truth Repair: the observer job previously ran 8 Python test
+      # commands in a default-PowerShell multi-line step WITHOUT installing the
+      # locked dependencies, so jsonschema import errors were raised but masked
+      # by the last command's exit code (fake-green at 4d059c7). Install the
+      # canonical lock (dependency truth) and route every required group through
+      # the fail-fast runner so a failed required command can never be masked by
+      # a later success (failure propagation).
+      - name: Pin Python (locked dependency truth)
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - name: Install locked Python dependencies
+        working-directory: .
+        run: python -m pip install --disable-pip-version-check --no-input --require-hashes -r packages/client-neutral-core/requirements.lock
+      - name: Verify Observer read-only skeleton (fail-fast group)
+        working-directory: .
+        run: python scripts/ci/failfast_group.py --group observer-python-skeleton
       - name: Verify Observer Web and desktop contracts
-        shell: bash
-        run: |
-          node tests/run_all_tests.js
-          for file in web/scripts/*.js; do node --check "$file"; done
+        # P0-01: route through the fail-fast group runner (uniform mechanism).
+        working-directory: .
+        run: python scripts/ci/failfast_group.py --group observer-web-contracts
       - name: Typecheck observer frontend (React/TS production chain)
-        working-directory: apps/observer/frontend
-        run: |
-          npm ci
-          npm run typecheck
-          npm run build
+        # P0-01: default-PowerShell multi-line masked failures; route through fail-fast group.
+        working-directory: .
+        run: python scripts/ci/failfast_group.py --group observer-frontend-typecheck
       # U08: the observer desktop crate is a real Tauri 2 crate (src-tauri).
       # Mirror the token-monitor job (windows-latest): test + check the locked
       # Rust desktop crate. Tauri is Windows-native-first and on Windows uses
       # WebView2 (no system GTK/webkit2gtk needed); --locked keeps the dep tree exact.
       - name: Test locked observer Rust desktop crate
-        working-directory: apps/observer/src-tauri
-        run: |
-          cargo test --locked
-          cargo check --locked
+        # P0-01: default-PowerShell multi-line masked failures; route through fail-fast group.
+        working-directory: .
+        run: python scripts/ci/failfast_group.py --group observer-desktop-crate
       # U19 — WINDOWS_TAURI_E2E: real native-shell readback. CI windows-latest
       # has the complete MSVC toolchain (the local GNU chain lacks a link.exe,
       # so only CI can build a runnable exe) + the WebView2 runtime. Build the
@@ -205,6 +208,7 @@ jobs:
         working-directory: apps/observer/src-tauri
         run: cargo build --release --locked
       - name: U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)
+        working-directory: apps/observer
         run: python scripts/u19_webview_e2e.py
 
   supply-chain-security:
@@ -252,6 +256,8 @@ jobs:
         run: |
           python tests/ci/test_governance_gate.py
           python tests/ci/test_aggregate_gate.py
+      - name: Run fail-fast group runner negative controls (P0-01 CI Truth Repair)
+        run: python tests/ci/test_failfast_group.py
       - name: Verify contract catalog references
         run: python scripts/ci/verify_contract_catalog.py
       - name: Generate contract TS projection (U16 SSOT)
