@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "work-lab/future-candidate-registry",
+  "title": "WORK-LAB Future Candidate Registry",
+  "description": "Single machine registry of deferred/deferred-pilot candidate directions (external workspaces, context/memory engines, web-agent routes, evaluator/experiment lanes). Every entry is DEFERRED with default_enabled=false unless promotion evidence exists. This registry is a planning/persistence layer, NOT an execution authority: it grants no install, download, clone, or pilot permission. Pilot execution requires an individually authorized task card in taskpacks/current.",
+  "type": "object",
+  "required": ["schemaVersion", "governance", "candidates"],
+  "properties": {
+    "schemaVersion": { "const": "work-lab/future-candidate-registry/v1" },
+    "updatedAt": { "type": "string" },
+    "governance": {
+      "type": "object",
+      "required": ["status_default", "default_enabled", "production_authorized", "intake"],
+      "properties": {
+        "status_default": { "const": "DEFERRED" },
+        "default_enabled": { "const": false },
+        "production_authorized": { "const": false },
+        "intake": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Fixed external-capability intake pipeline (GOAL 18): DISCOVER -> CLASSIFY -> NATIVE OVERLAP -> LICENSE -> VERSION -> PERMISSION -> DATA BOUNDARY -> WINDOWS SUPPORT -> INSTALL SIDE EFFECT -> PILOT -> EVIDENCE -> DECISION"
+        },
+        "decisions": {
+          "type": "array",
+          "items": { "enum": ["PROMOTE", "KEEP_CANDIDATE", "REJECT"] }
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id", "name", "role", "source", "license", "windows_support",
+          "native_overlap", "integration_mode", "permissions", "data_boundary",
+          "status", "default_enabled", "pilot_trigger", "promotion_criteria",
+          "rejection_reason", "last_verified_at"
+        ],
+        "properties": {
+          "id": { "type": "string", "pattern": "^FUT-\\d{3}$" },
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "source": { "type": "string" },
+          "license": { "type": "string", "description": "Verify before any pilot. NOT_VERIFIED is an honest state, not a failure." },
+          "windows_support": { "enum": ["VERIFIED", "LIKELY", "NOT_VERIFIED"] },
+          "native_overlap": { "type": "string" },
+          "integration_mode": { "type": "string" },
+          "permissions": { "type": "string" },
+          "data_boundary": { "type": "string" },
+          "status": { "enum": ["DEFERRED", "PILOT_CANDIDATE", "PILOT", "PROMOTED", "REJECTED"] },
+          "default_enabled": { "type": "boolean" },
+          "pilot_trigger": { "type": "string" },
+          "promotion_criteria": { "type": "string" },
+          "rejection_reason": { "type": ["string", "null"] },
+          "last_verified_at": { "type": "string" },
+          "task_card": { "type": ["string", "null"], "description": "Path of the individually authorized task card if one exists; null when not yet authorized." }
+        }
+      }
+    }
+  }
+}
