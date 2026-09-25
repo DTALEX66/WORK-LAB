@@ -10,31 +10,27 @@ python services/orchestration/run_quality_gate.py verify
 ```
 
 The runner first performs a fail-fast dependency preflight from
-`requirements.txt`, then runs these client-neutral gates in order. CI resolves
-the same direct constraints through hash-locked `requirements.lock` with
-`--require-hashes`; regenerate the lock deliberately when direct constraints
-change.
+`requirements.txt`, then runs the registered client-neutral gates in order. CI
+resolves the same direct constraints through hash-locked `requirements.lock`
+with `--require-hashes`; regenerate the lock deliberately when direct
+constraints change.
 
-1. `governance`
-2. `compile`
-3. `skill-provenance`
-4. `security`
-5. `context-pack`
-6. `client-neutral-manifest`
-7. `core-schemas`
-8. `adapter-registry`
-9. `adapter-conformance`
-10. `acp-conformance`
-11. `otel-mapping`
-12. `usage-ingestion`
-13. `memory-contamination`
-14. `task-ledger-replay`
-15. `portable-install`
-16. `provider-inventory`
-17. `mcp-audit`
-18. `shell`
-19. `runtime-convergence`
-20. `powershell`
+The gate list is dynamic — the machine registry is the single source of
+truth. Discover the current gate set and counts with:
+
+```bash
+python services/orchestration/run_quality_gate.py list
+```
+
+Do not treat any gate count written in this document (or any other doc) as a
+permanent norm; counts grow as gates are added. Representative gates in the
+current registry include `governance`, `compile`, `skill-provenance`,
+`security`, `context-pack`, `client-neutral-manifest`, `core-schemas`,
+`adapter-registry`, `adapter-conformance`, `acp-conformance`, `otel-mapping`,
+`usage-ingestion`, `memory-contamination`, `task-ledger-replay`,
+`portable-install`, `provider-inventory`, `mcp-audit`, `shell`,
+`runtime-convergence`, `powershell` — run `list` above for the live set
+rather than relying on any hard-coded number.
 
 `portable-install-runtime` remains registered as an explicit optional Adapter
 compatibility gate. It is not part of default `verify`, and core CI must not

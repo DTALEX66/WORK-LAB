@@ -79,7 +79,8 @@
 
 运行时状态必须由现场 doctor/marker 重新验证；本文件不保存机器专属路径、凭据状态或历史 smoke 结论。
 
-- 本地仓库：`D:\All projects\WORK-LAB\10-workflow\workflow-assistance`
+- 本地仓库：`D:\All projects\WORK-LAB`（monorepo root；workflow 资产现位于
+  `packages/client-neutral-core`、`services/`、`apps/observer`）
 - 旧本地来源：`D:\All projects\Workflow-assistance`（legacy，保持只读 dirty 状态）
 - 云端仓库：`https://github.com/DTALEX66/WORK-LAB`
 - live Hermes Home：`%LOCALAPPDATA%\hermes`（或 `$HERMES_HOME`）。
@@ -101,7 +102,8 @@
 
 ## 本地项目定义
 
-- 本地路径：`D:\All projects\WORK-LAB\10-workflow\workflow-assistance`
+- 本地路径：`D:\All projects\WORK-LAB`（monorepo root；workflow 资产现位于
+  `packages/client-neutral-core`、`services/`、`apps/observer`）
 - 本地角色：可编辑、可验证、可提交的工作流增强资产源目录。
 - 本地操作原则：先检查 → 小步修改 → 语法/安全/MCP 或 ad-hoc 验证 → commit → push。
 
