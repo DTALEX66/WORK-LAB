@@ -1,6 +1,9 @@
 # 三项目联邦契约（TP-20260819 §6）
 
-> 权威位置：WORK-LAB/00-governance/federation/。WORK-LAB 保存联邦注册表和传输协议，不因此成为其他项目的父项目。
+> 权威位置：三项目联邦注册表与传输协议由 WORK-LAB 保存于
+> `.project/governance/` 与 `packages/contracts/`（`federation-registry.v1.json`、
+> `federation-envelope.v1.schema.json`）。WORK-LAB 保存联邦注册表和传输协议，
+> 不因此成为其他项目的父项目。
 
 ## 所有权
 

@@ -1,7 +1,9 @@
 # Instruction precedence
 
 1. Explicit user scope and safety boundaries.
-2. Root `AGENTS.md` and `00-governance/rules/`.
+2. Root `AGENTS.md` (scope/safety/bootstrap) and `.project/governance/`
+   machine authorities (`project-authority-index.json`,
+   `project-data-boundary.json`, `config-ownership.json`).
 3. The owning module's `AGENTS.md`.
 4. Task-card allowed paths and acceptance criteria.
 5. Local tool defaults.

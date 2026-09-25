@@ -65,8 +65,10 @@ Module instructions can narrow these rules, never weaken them.
 
 Do not read, print, copy, commit, or upload credentials, `.env` files, auth
 stores, private keys, browser data, tokens, prompt bodies, or response bodies.
-Never access `E:\` — read or write — without explicit per-path,
-per-operation user authorization. All content this project produces — builds,
+Never access `E:\` or `F:\` — read or write — without explicit per-path,
+per-operation user authorization (machine truth:
+`.project/governance/project-data-boundary.json`, E+F in
+`forbiddenExternalRoots`). All content this project produces — builds,
 caches, temp files, evidence, downloads, generated artifacts — stays locked
 inside the project Git root: build/cache/temp roots live under
 `.project-local/runs/` (TMP, npm/uv/pip caches, node_modules), evidence under

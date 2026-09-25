@@ -63,16 +63,20 @@ migration alias.
 2. `apps/observer` — strictly read-only derived observation, projections and
    evidence reports.
 
-`30-products/minigame` is product history/fixture/archive material, not an
-active canonical module.
+- **Historical products**: `30-products/minigame` is frozen product
+  history/fixture/archive material (retired at the 2026-09 directory
+  convergence), not an active canonical module.
 
 ## Data containment and spill governance
 
 - Project task data, caches, logs and artifacts stay inside the project Git
-  root (ignored `.hermes/` boundary) — never the user home, desktop, system
-  temp or another project.
-- The `E:` data volume is protected: any access requires explicit per-path,
-  per-operation user authorization.
+  root (ignored `.project-local/` root: `runs/`, `artifacts/`; `.hermes/`
+  task-runtime is a declared secondary runtime root) — never the user home,
+  desktop, system temp or another project.
+- The `E:\` and `F:\` data volumes are protected: any access requires
+  explicit per-path, per-operation user authorization (machine truth in
+  `.project/governance/project-data-boundary.json`, E+F in
+  `forbiddenExternalRoots`).
 - Any spill (a write outside the project boundary) is traceable, locatable,
   cleanable and migratable. See `.project/governance/project-data-boundary.json`.
 
@@ -97,7 +101,8 @@ WORK-LAB is **not**:
 - `.project/governance/contracts/contract-catalog.json` — canonical contract catalog;
 - `config/config-ownership.json` — field-level ownership;
 - `config/adapter-registry.json` — client adapter inventory;
-- `taskpacks/current/TASKPACK_SUMMARY.md` — current task-pack summary;
+- `taskpacks/current/OPEN-TASK-REGISTER.md` — single live open-task register;
+- `taskpacks/current/WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918.md` — current authority taskpack;
 - `README.md` — public repository entrypoint.
 
 If another README, historical handoff or external description conflicts with
