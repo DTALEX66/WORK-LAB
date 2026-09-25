@@ -23,10 +23,14 @@ python services/orchestration/run_quality_gate.py list
 ```
 
 Do not treat any gate count written in this document (or any other doc) as a
-permanent norm; counts grow as gates are added. At the time of writing the
-registry contained ~40+ gates starting with `governance`, `compile`,
-`skill-provenance`, `security`, `context-pack`, ... — run `list` above for
-the live set rather than relying on a hard-coded number.
+permanent norm; counts grow as gates are added. Representative gates in the
+current registry include `governance`, `compile`, `skill-provenance`,
+`security`, `context-pack`, `client-neutral-manifest`, `core-schemas`,
+`adapter-registry`, `adapter-conformance`, `acp-conformance`, `otel-mapping`,
+`usage-ingestion`, `memory-contamination`, `task-ledger-replay`,
+`portable-install`, `provider-inventory`, `mcp-audit`, `shell`,
+`runtime-convergence`, `powershell` — run `list` above for the live set
+rather than relying on any hard-coded number.
 
 `portable-install-runtime` remains registered as an explicit optional Adapter
 compatibility gate. It is not part of default `verify`, and core CI must not
