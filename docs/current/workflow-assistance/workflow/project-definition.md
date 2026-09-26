@@ -2,7 +2,12 @@
 
 ## 一句话定位
 
-`Workflow-assistance` 是一个**客户端中立的工作流控制、治理、任务、交付与可观测层**：用 manifest、Adapter、Domain Pack、ActionPlan、Run Ledger、事件和 evidence envelope 连接不同执行入口。Hermes、Codex、CC Switch、GitHub 是当前一级可替换 Adapter；Hermes 不是核心运行前提。Open Design 已迁出到独立仓库，不再是 WORK-LAB Adapter。
+`Workflow-assistance` 是一个**客户端中立的工作流控制、治理、任务、交付与可观测层**：用 manifest、Adapter、Domain Pack、ActionPlan、Run Ledger、事件和 evidence envelope 连接不同执行入口。Hermes、Codex、CC Switch、GitHub、OpenHuman、Open Design 是当前一级可替换 Adapter（`packages/client-neutral-core/workflow-manifest.yaml` 的 `first_class_adapters`：前四者 support=deep，OpenHuman / Open Design support=experimental）；Hermes 不是核心运行前提。DSH（DeepSeek Harness / DSH Desktop）通过同一 Adapter 合同作为受管 agent runtime client 管理，不在 manifest 的 `adapters.entries` 内单独登记。
+
+**Open Design client ≠ DESIGN-LAB project（两个不同身份，不得混用）：**
+
+- Open Design 是 WORK-LAB 的**外部 client identity**（`nexu-io/open-design`）：WORK-LAB 管理其 USER_GLOBAL desired state（rules、skills、plugins、workflow policy、capability mapping）为 `MANAGE`，`apply_supported=false`；2026-08-21 起用户授权管理 Open Design **plugins**（install/update/inventory of the client plugin layer）。Open Design 在 manifest 中仍登记为 `experimental` adapter（read-only observe，writes=unavailable）。
+- 设计 **capability**（models/tools、generation params、design assets、specs、design systems、quality gates、editable handoff）属于**独立的 `DTALEX66/DESIGN-LAB` 项目**，在本仓库**既不收集也不管理（`IGNORE`）**。字段级所有权在 `config/config-ownership.json`（adapter `open-design`，external project `design-lab-project`）。
 
 核心不是 Agent、聊天软件或模型网关，不负责 Prompt 输入、模型推理、Provider 路由、凭据管理或自动批准外部写入。核心在没有 Hermes 安装的隔离环境中也必须能够解析 manifest、验证合同并列出 Adapter 状态。
 
@@ -27,12 +32,16 @@
 
 ## Adapter 支持级别
 
+对齐 `packages/client-neutral-core/workflow-manifest.yaml` 的 `adapters.entries`：
+
 | Adapter | 当前级别 | 检测/能力原则 |
 |---|---|---|
 | Hermes | deep | 保留现有 portable overlay、项目边界和显式 runtime 检查；核心不要求安装 |
 | Codex | deep | launcher、TaskPack、review 和 worktree 通过 Adapter 合同接入 |
-| CC Switch | deep | 仅做明确的本地路由/网络前置检查，不读取认证数据库 |
+| CC Switch | deep（LEGACY_OBSERVE） | 仅做明确的本地路由/网络前置检查，不读取认证数据库；默认 observe-only，无活动写入 |
 | GitHub | deep | 复用只读状态、exact-SHA CI、分支和交付证据 |
+| OpenHuman | experimental | 本地 app 探测；写操作不可用（writes=unavailable） |
+| Open Design | experimental | 远程仓库只读探测；写操作不可用；client desired state + plugins 由 WORK-LAB 管理，设计 capability 归外部 DESIGN-LAB 项目（IGNORE） |
 | Cursor | manifest-only | 只登记能力，缺少真实证据时不可宣称可用 |
 | Claude Code | manifest-only | 只登记能力，缺少真实证据时不可宣称可用 |
 | WorkBuddy | manifest-only | 只登记能力，缺少真实证据时不可宣称可用 |
@@ -70,21 +79,22 @@
 
 | 层级 | 责任 | 本仓库沉淀内容 |
 |---|---|---|
-| Core control plane | manifest、合同、任务、计划、审批、恢复、观测、证据和项目边界 | `workflow-manifest.yaml`、`scripts/workflow/`、`docs/`、治理测试 |
-| Hermes Adapter | Hermes 配置基线、skills、MCP 默认策略、Gateway/cron/sleep-mode 和显式 runtime 检查 | `config/`、`skills/`、`bin/hermes-npx*`、Hermes 专用脚本 |
-| Codex / CC Switch Adapters | launcher、路由/网络前置检查、官方 CLI 只读验证、任务与复审边界 | adapter 声明、任务票据、只读审计和证据模板 |
+| Core control plane | manifest、合同、任务、计划、审批、恢复、观测、证据和项目边界 | `packages/client-neutral-core/workflow-manifest.yaml`、`packages/client-neutral-core/scripts/`、`services/`、`docs/`、治理测试 |
+| Hermes Adapter | Hermes 配置基线、skills、MCP 默认策略、Gateway/cron/sleep-mode 和显式 runtime 检查 | `config/`、`packages/client-neutral-core/skills/`、`packages/client-neutral-core/bin/hermes-npx*`、`integrations/executors/hermes/`（sync/doctor/switch-model 脚本） |
+| Codex / CC Switch Adapters | launcher、路由/网络前置检查、官方 CLI 只读验证、任务与复审边界 | `integrations/executors/codex/`（adapter 声明、全局 guidance、policy renderer）、任务票据、只读审计和证据模板 |
 | GitHub Adapter | 跨设备源代码事实源、分支、提交、CI 与发布证据 | `.github/` CI、exact-SHA 门禁、交接与恢复规范 |
 
 ## 当前同步状态
 
 运行时状态必须由现场 doctor/marker 重新验证；本文件不保存机器专属路径、凭据状态或历史 smoke 结论。
 
-- 本地仓库：`D:\All projects\WORK-LAB`（monorepo root；workflow 资产现位于
-  `packages/client-neutral-core`、`services/`、`apps/observer`）
+- 本地仓库：`D:\All projects\WORK-LAB`（monorepo root；canonical modules =
+  `packages/client-neutral-core`、`apps/observer`；supporting surfaces =
+  `services/`、`integrations/`、`config/`、`apps/token-monitor/`、`scripts/`、`tests/`）
 - 旧本地来源：`D:\All projects\Workflow-assistance`（legacy，保持只读 dirty 状态）
 - 云端仓库：`https://github.com/DTALEX66/WORK-LAB`
 - live Hermes Home：`%LOCALAPPDATA%\hermes`（或 `$HERMES_HOME`）。
-- Git / live / provider 状态：用 `git status`、`hermes_workflow_doctor.py` 与需要时的 `--live` marker 现场确认。
+- Git / live / provider 状态：用 `git status`、`integrations/executors/hermes/hermes_workflow_doctor.py` 与需要时的 `--live` marker 现场确认。
 - 同步保留当前 provider/model、OAuth/API key、私有 MCP 和用户自定义命令；同步 portable 的模型 picker、快捷命令与速度策略。
 - 默认 MCP：仅 `context7`；其他 MCP 必须按任务审计后启用。
 
@@ -92,18 +102,19 @@
 
 | 资产 | 仓库位置 | live Hermes 目标 | 说明 |
 |---|---|---|---|
-| Hermes 配置模板 | `config/config.yaml` | `config.yaml` | 新机器基线；同步脚本合并时保留 live provider/model，并管理 `display.busy_input_mode=queue` |
+| Hermes 配置模板 | `config/config.yaml` | `config.yaml` | 新机器基线；同步脚本合并时保留 live provider/model，并管理已声明 overlay 字段（其余 Hermes 字段一律 OBSERVE，绝不全量覆盖） |
 | 环境变量模板 | `config/.env.template` | `.env.template` | 只放占位说明，不放真实密钥 |
-| MCP wrapper | `bin/hermes-npx*` | `bin/hermes-npx*` | Windows live config 指向 `.cmd`；优先 bundled Node，缺失时可在用户信任且兼容的 PATH Node 环境中回退 |
-| 技能 | `skills/` | `skills/` | 包含 codex、五个 GitHub workflow skills、model-switch、sleep-mode、project-data-boundary、python-testing、windows-development-environment、agent-workflow-fortress；当前共 13 个 repository-controlled skill，其中 sleep-mode 通过项目 `.project-local/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
-| 项目数据执行器 | `bin/hermes-project-data.py` | `bin/hermes-project-data.py` | fail-closed 验证 Git ignore，并把任务临时文件、缓存、日志、测试环境与产物锁到 `<project>/.project-local/runs/` |
-| 同步脚本 | `scripts/workflow/sync_hermes_workflow_assets.py` | 手动运行 | repo ↔ live 定向同步；每次 apply 前备份可迁移资产 |
-| 排错记录 | `TROUBLESHOOTING.md`、`docs/workflow/error-fixes-2026-07-04.md`、`docs/workflow/error-fixes-2026-07-28.md`、`docs/workflow/gateway-cron-delivery.md` | 仓库文档 | 记录 Windows MCP、路径、GitHub CLI、GitHub skill ownership、凭据安全、PowerShell、Gateway/cron delivery、验证等已踩坑 |
+| MCP wrapper | `packages/client-neutral-core/bin/hermes-npx*` | `bin/hermes-npx*` | Windows live config 指向 `.cmd`；优先 bundled Node，缺失时可在用户信任且兼容的 PATH Node 环境中回退 |
+| 技能 | `packages/client-neutral-core/skills/` | `skills/` | 仓库受控 skill 集（codex、五个 GitHub workflow skills、model-switch、agent-workflow-fortress、project-data-boundary、python-testing、sleep-mode、windows-development-environment、requesting-code-review 等）；清单以 `config/skill-provenance.yaml` 为准；sleep-mode 通过项目 `.project-local/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
+| 项目数据执行器 | `packages/client-neutral-core/bin/hermes-project-data.py` | `bin/hermes-project-data.py` | fail-closed 验证 Git ignore，并把任务临时文件、缓存、日志、测试环境与产物锁到 `<project>/.project-local/runs/` |
+| 同步脚本 | `integrations/executors/hermes/sync_hermes_workflow_assets.py` | 手动运行 | repo ↔ live 定向同步；每次 apply 前备份可迁移资产 |
+| 排错记录 | `docs/current/workflow-assistance-TROUBLESHOOTING.md`、`docs/current/workflow-assistance/workflow/error-fixes-2026-07-04.md`、`docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md`、`docs/current/workflow-assistance/workflow/gateway-cron-delivery.md` | 仓库文档 | 记录 Windows MCP、路径、GitHub CLI、GitHub skill ownership、凭据安全、PowerShell、Gateway/cron delivery、验证等已踩坑 |
 
 ## 本地项目定义
 
-- 本地路径：`D:\All projects\WORK-LAB`（monorepo root；workflow 资产现位于
-  `packages/client-neutral-core`、`services/`、`apps/observer`）
+- 本地路径：`D:\All projects\WORK-LAB`（monorepo root；canonical modules =
+  `packages/client-neutral-core`、`apps/observer`；supporting surfaces =
+  `services/`、`integrations/`、`config/`、`apps/token-monitor/`、`scripts/`、`tests/`）
 - 本地角色：可编辑、可验证、可提交的工作流增强资产源目录。
 - 本地操作原则：先检查 → 小步修改 → 语法/安全/MCP 或 ad-hoc 验证 → commit → push。
 
@@ -119,10 +130,10 @@
 
 ```bash
 git status --short --branch
-bash -n setup.sh
-bash -n bin/hermes-npx
-python -m py_compile scripts/workflow/sync_hermes_workflow_assets.py scripts/workflow/hermes_workflow_doctor.py scripts/workflow/switch_model.py scripts/security/scan_agent_rules.py
-python scripts/security/scan_agent_rules.py .
+bash -n scripts/setup-workflow.sh
+bash -n packages/client-neutral-core/bin/hermes-npx
+python -m py_compile integrations/executors/hermes/sync_hermes_workflow_assets.py integrations/executors/hermes/hermes_workflow_doctor.py integrations/executors/hermes/switch_model.py packages/client-neutral-core/scripts/security/scan_agent_rules.py
+python packages/client-neutral-core/scripts/security/scan_agent_rules.py .
 hermes mcp test context7
 ```
 
@@ -135,8 +146,8 @@ hermes mcp test context7
 3. Windows 上 Hermes terminal 默认是 Git-Bash/MSYS；需要 PowerShell 时优先显式使用 PowerShell 7：`pwsh -NoProfile -Command ...`，只有旧模块/COM/Desktop edition 兼容问题才回退 `powershell.exe` 5.1。
 4. 用 conventional commit 提交。
 5. 推送到 GitHub。
-6. 新电脑 clone 后执行 `setup.ps1` 或 `setup.sh`，再手动补齐本机私密凭证和 OAuth。
-7. 对 live Hermes Home 做同步时优先使用 `scripts/workflow/sync_hermes_workflow_assets.py --apply --approved`，不要全量覆盖真实 `.env`、auth、session、logs。
+6. 新电脑 clone 后执行 `scripts/setup-workflow.ps1` 或 `scripts/setup-workflow.sh`，再手动补齐本机私密凭证和 OAuth。
+7. 对 live Hermes Home 做同步时优先使用 `integrations/executors/hermes/sync_hermes_workflow_assets.py --apply --approved`，不要全量覆盖真实 `.env`、auth、session、logs。
 
 ## 目标状态
 

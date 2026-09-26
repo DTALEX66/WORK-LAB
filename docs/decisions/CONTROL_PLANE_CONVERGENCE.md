@@ -1,5 +1,14 @@
 # WORK-LAB Control Plane 收敛审计（对照全球生态调研档案）
 
+> **STATUS: HISTORICAL ANALYSIS**
+> **SUPERSEDED BY WORK-LAB-AUTHORITY-20260918-V2**
+> **DO NOT USE AS FORWARD TASK LIST.**
+> 本文件是 2026-08-18 的全球生态对照分析（历史推演保留，不删除 Git 历史）。
+> 其中标注"缺失"的能力（Work Unit Engine / Policy Engine / Action Receipt /
+> Sandbox / MCP Gateway 等）已在后续实现或已收敛 —— 当前能力状态以
+> `taskpacks/current/OPEN-TASK-REGISTER.md` 与 CURRENT TaskPack 为准；
+> 顶层 authority 以 `WORK-LAB-AUTHORITY.md` 为准。
+
 > 依据：用户提供的《WORK-LAB 全球生态深度研究档案（完整版）》。目标：符合项目定位（Local AI Engineering Control Plane）、收敛成本、明确项目能做的任务。
 
 > **2026-08-18 更新（v5 三项目分层）**：WORK-LAB 定位 = 控制平面 + 转化器（ArcheAxis 的知识调用者与归档回写者）。知识最终归 ArcheAxis（唯一真源），但**分阶段演进**：现有规则/技能/插件（已转化沉淀完成）阶段 1 归 WORK-LAB 自有；阶段 2 待 ArcheAxis 完整后逆向归档。WORK-LAB 不存知识、不建运行时。详见 `docs/decisions/THREE_PROJECT_LAYERING_DECISION.md`。

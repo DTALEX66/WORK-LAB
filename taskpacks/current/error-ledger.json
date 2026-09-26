@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 88,
+    "total": 89,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 35,
@@ -23,7 +23,7 @@
       "path_boundary": 2,
       "ci_tooling": 1,
       "sql_schema": 1,
-      "regression_contract": 5
+      "regression_contract": 6
     },
     "repeat_prevention_required": true,
     "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer)"
@@ -2485,6 +2485,37 @@
         "affectedCapability": "DSH data-root resolution (five-dimension runtime baseline D1/D2/D3)",
         "regressionCommand": "Test-Path C:\\Users\\ALEX\\.dsh (must be False at new logon) + D:.dsh mtime advance on desktop launch",
         "currentApplicability": "VERIFIED_LIVE_20260924"
+      }
+    },
+    {
+      "error_id": "ERR-089",
+      "date": "2026-09-25",
+      "taskpack": "WORK-LAB-OPEN-20260925",
+      "title": "PR #135 delivery-sequence accident: short-lived branch deleted while mergeStateStatus=BLOCKED -> GitHub auto-closed the PR before it merged",
+      "root_cause": "Merge was attempted after a single run showed success while two sibling runs were still in-progress; the A01 ruleset (main-exact-sha-aggregate) kept mergeStateStatus=BLOCKED so the squash merge was refused. The then-executed delivery sequence (merge -> delete branch -> local main sync) had already deleted the remote head branch, and GitHub automatically closed PR #135 on branch deletion. No content was lost (commits 51ec051/53e7108 remained reachable locally; refs/pull/135/head retained by GitHub), but P0-02/P0-03 was not on main.",
+      "fix": "Recreated the branch from the exact head commit 53e7108 and pushed it, then `gh pr reopen 135` (state back to OPEN, MERGEABLE). A correct-sequence waiter (all runs on the head terminal-success AND mergeStateStatus=CLEAN, verified via gh) is in place before the squash merge; branch deletion now happens only AFTER a successful merge.",
+      "prevention": "Delivery sequence is: required checks all terminal on the head SHA AND mergeStateStatus=CLEAN -> squash merge -> main readback (new SHA) -> delete short-lived branch. A single green run is NOT a merge signal while sibling runs are in-progress; `gh pr merge` refusal with 'base branch policy prohibits the merge' means BLOCKED, never retry with --admin without user authorization.",
+      "verified": true,
+      "classification": "regression_contract",
+      "command": "gh pr merge 135 --squash (refused: BLOCKED); git push origin --delete p0/docs-taskcard-authority (closed the PR)",
+      "entrypoint": "PR delivery pipeline (short-lived branch -> PR -> exact-SHA CI -> squash merge -> branch removal)",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "exit_code": 1,
+      "evidence_level": "isolated-runtime",
+      "observed_error": "gh pr view 135 -> state=CLOSED, mergeStateStatus=BLOCKED, closedAt=2026-09-25T17:22:36Z; PR contents absent from main while head branch no longer existed on origin.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "task_id": "WORK-LAB-OPEN-20260925",
+      "regression_test": "After merge: main contains the P0-02/P0-03 diff; origin has no p0/docs-taskcard-authority; PR state=MERGED with the merge commit",
+      "remaining_boundary": "ERR-089 record lands with the PR that it documents; until merge, the P0-02/P0-03 diff is not on main.",
+      "repeat_prevention": "Wait for mergeStateStatus=CLEAN (not a single green run) before merging; never delete the head branch before the merge is confirmed on main.",
+      "lifecycle": {
+        "introducedCommit": "53e7108613117f225524a14bd3f0d83d655c7a35",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "short-lived branch delivery pipeline (AGENTS.md Git/delivery authority)",
+        "regressionCommand": "gh pr view 135 --json state,mergeStateStatus (state must be MERGED with the squash commit on main)",
+        "currentApplicability": "OPEN_UNTIL_MERGE_20260925"
       }
     }
   ],

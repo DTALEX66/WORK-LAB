@@ -83,6 +83,20 @@ def _make_fixture() -> Path:
         dst.parent.mkdir(parents=True, exist_ok=True)
         if src.is_file():
             shutil.copy2(src, dst)
+    # P0-03: current task cards declared by the index (and the registry they
+    # bind against) must exist in the fixture for the clean copy to pass.
+    for card in tidx.get("currentTaskCards", []):
+        if isinstance(card, dict) and isinstance(card.get("path"), str):
+            src = ROOT / card["path"]
+            dst = tmp / card["path"]
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            if src.is_file():
+                shutil.copy2(src, dst)
+    reg_src = ROOT / ".project" / "governance" / "future-candidate-registry.json"
+    if reg_src.is_file():
+        dst = tmp / ".project/governance/future-candidate-registry.json"
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(reg_src, dst)
     return tmp
 
 
@@ -186,6 +200,80 @@ class AuthorityReferenceNegativeTests(unittest.TestCase):
         tidx = _read(self.tmp, ".project/governance/taskpack-authority-index.json")
         current_id = tidx["classification"]["CURRENT"][0]
         tidx["classification"]["SUPERSEDED"].append(current_id)
+        _write(self.tmp, ".project/governance/taskpack-authority-index.json", tidx)
+        self.assertEqual(self.verifier.verify(self.tmp), 1)
+
+    # --- P0-03 negative controls (subordinate current task cards) ----------
+    def _with_card(self, card) -> None:
+        tidx = _read(self.tmp, ".project/governance/taskpack-authority-index.json")
+        tidx["currentTaskCards"] = [card]
+        _write(self.tmp, ".project/governance/taskpack-authority-index.json", tidx)
+
+    def test_task_card_missing_on_disk_fails(self) -> None:
+        tidx = _read(self.tmp, ".project/governance/taskpack-authority-index.json")
+        tidx["currentTaskCards"] = [
+            {"id": "X-1", "path": "taskpacks/current/DOES-NOT-EXIST-CARD.md"}
+        ]
+        _write(self.tmp, ".project/governance/taskpack-authority-index.json", tidx)
+        self.assertEqual(self.verifier.verify(self.tmp), 1)
+
+    def test_task_card_not_in_register_fails(self) -> None:
+        card_path = self.tmp / "taskpacks/current/ADHOC-CARD.md"
+        card_path.parent.mkdir(parents=True, exist_ok=True)
+        card_path.write_text(
+            "PLANNED card, no execution authority; execution stays OPEN pending "
+            "per-operation user authorization.", encoding="utf-8")
+        self._with_card({"id": "ADHOC-CARD", "path": "taskpacks/current/ADHOC-CARD.md"})
+        self.assertEqual(self.verifier.verify(self.tmp), 1)
+
+    def test_task_card_self_claims_authority_fails(self) -> None:
+        card_path = self.tmp / "taskpacks/current/ADHOC-CARD.md"
+        card_path.parent.mkdir(parents=True, exist_ok=True)
+        card_path.write_text(
+            "This card is the TOP-LEVEL AUTHORITY of this repository and grants "
+            "execution authority without further approval. no execution authority",
+            encoding="utf-8")
+        reg = self.tmp / "taskpacks/current/OPEN-TASK-REGISTER.md"
+        reg.write_text(reg.read_text(encoding="utf-8")
+                       + "\nADHOC-CARD taskpacks/current/ADHOC-CARD.md\n",
+                       encoding="utf-8")
+        self._with_card({"id": "ADHOC-CARD", "path": "taskpacks/current/ADHOC-CARD.md"})
+        self.assertEqual(self.verifier.verify(self.tmp), 1)
+
+    def test_task_card_without_deferral_marker_fails(self) -> None:
+        card_path = self.tmp / "taskpacks/current/ADHOC-CARD.md"
+        card_path.parent.mkdir(parents=True, exist_ok=True)
+        card_path.write_text(
+            "# ADHOC CARD\nThis card immediately executes and applies changes "
+            "with full authority.\n", encoding="utf-8")
+        reg = self.tmp / "taskpacks/current/OPEN-TASK-REGISTER.md"
+        reg.write_text(reg.read_text(encoding="utf-8")
+                       + "\nADHOC-CARD taskpacks/current/ADHOC-CARD.md\n",
+                       encoding="utf-8")
+        self._with_card({"id": "ADHOC-CARD", "path": "taskpacks/current/ADHOC-CARD.md"})
+        self.assertEqual(self.verifier.verify(self.tmp), 1)
+
+    def test_task_card_registry_binding_conflict_fails(self) -> None:
+        # Orca card's declared registry_entry is FUT-001; point it at FUT-002
+        # whose task_card does not reference this card path -> conflict.
+        card = {
+            "id": "ORCA-PILOT-TASK-CARD-20260925",
+            "path": "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md",
+            "registry_entry": "FUT-002",
+        }
+        self._with_card(card)
+        self.assertEqual(self.verifier.verify(self.tmp), 1)
+
+    def test_task_card_in_taskpack_bucket_fails(self) -> None:
+        tidx = _read(self.tmp, ".project/governance/taskpack-authority-index.json")
+        card = {
+            "id": "ORCA-PILOT-TASK-CARD-20260925",
+            "path": "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md",
+            "registry_entry": "FUT-001",
+        }
+        tidx["currentTaskCards"] = [card]
+        # Reclassify the card id into the HISTORICAL taskpack bucket.
+        tidx["classification"]["HISTORICAL"].append("ORCA-PILOT-TASK-CARD-20260925")
         _write(self.tmp, ".project/governance/taskpack-authority-index.json", tidx)
         self.assertEqual(self.verifier.verify(self.tmp), 1)
 

@@ -32,8 +32,48 @@ const STATE_TEXT: Record<string, string> = {
   BLOCKED: '受阻', COMPLETED: '完成', FAILED: '失败', UNKNOWN: '未知',
 }
 
-// ---------- 智能体 / 项目平台 ----------
-export function AgentsView({ snap }: { snap: Snap }) {
+// ---------- 共享：项目平台表（P1-01 抽出，ProjectsView 与旧 AgentsView 复用同一真值投影）----------
+export function ProjectsTable({ projects }: { projects: Project[] }) {
+  return (
+    <table className="w-full text-xs">
+      <thead>
+        <tr className="bg-panel2 text-left text-[11px] text-zinc-500">
+          <th className="px-4 py-2 font-medium">项目</th>
+          <th className="px-3 py-2 font-medium">平台</th>
+          <th className="px-3 py-2 font-medium">活动</th>
+          <th className="px-3 py-2 font-medium">执行</th>
+          <th className="px-3 py-2 font-medium">Token</th>
+          <th className="px-3 py-2 font-medium">Git</th>
+        </tr>
+      </thead>
+      <tbody>
+        {projects.map((p) => {
+          const tone = activityTone(p.activityState)
+          const dirty = p.git.dirtyCount
+          return (
+            <tr key={p.projectId} className="border-t border-border hover:bg-white/[0.03]">
+              <td className="px-4 py-2.5">
+                <div className="font-medium" style={{ fontSize: 12 }}>{p.displayName || p.projectId}</div>
+                <div className="text-[10px] text-zinc-600 font-mono">{p.identityState === 'RESOLVED' ? '已解析身份' : '身份未解析'}</div>
+              </td>
+              <td className="px-3 py-2.5 text-zinc-400">{p.agentPlatform || 'UNKNOWN'}</td>
+              <td className="px-3 py-2.5"><Badge variant={tone === 'active' ? 'success' : 'muted'}>{p.activityState || 'UNKNOWN'}</Badge></td>
+              <td className="px-3 py-2.5 tabular-nums text-zinc-300">{p.activeExecutionCount}</td>
+              <td className="px-3 py-2.5 tabular-nums text-zinc-300" title="costQuality（后端权威）">{fmtTokens(p.token.totalTokens)} <span className="text-[10px] text-zinc-600">{fmtCostQuality(p.token.costQuality)}</span></td>
+              <td className="px-3 py-2.5">
+                <span className="font-mono text-[11px] text-zinc-400">{p.git.branch || '—'}@{p.git.localSha ? p.git.localSha.slice(0, 7) : '—'}</span>{' '}
+                {dirty ? <Badge variant="warning">脏 {dirty}</Badge> : <Badge variant="muted">干净</Badge>}
+              </td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
+  )
+}
+
+// ---------- 项目（P1-D §3.1 一级入口 · 原 AgentsView 折叠的项目平台表，独立成视图）----------
+export function ProjectsView({ snap }: { snap: Snap }) {
   const projects: Project[] = snap?.projects || []
   return (
     <div className="flex flex-col gap-4">
@@ -43,38 +83,50 @@ export function AgentsView({ snap }: { snap: Snap }) {
           {projects.length === 0 ? (
             <div className="p-8 text-center text-zinc-500 text-xs">暂无已注册项目（registry 为空）</div>
           ) : (
+            <ProjectsTable projects={projects} />
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ---------- 智能体（agent 实例：真实 executions 按 agent 聚合，不发明字段）----------
+export function AgentsView({ snap }: { snap: Snap }) {
+  const exs: Execution[] = snap?.executions || []
+  // group executions by agent (null agent bucketed as UNKNOWN) — real rows only
+  const byAgent = new Map<string, Execution[]>()
+  for (const e of exs) {
+    const key = e.agent || 'UNKNOWN'
+    const arr = byAgent.get(key)
+    if (arr) arr.push(e); else byAgent.set(key, [e])
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      <Card>
+        <CardHeader><span>Agent 实例</span><span className="text-[11px] text-zinc-500">{byAgent.size} 个 agent · {exs.length} 条执行 · 真实投影</span></CardHeader>
+        <CardContent className="p-0 overflow-x-auto">
+          {exs.length === 0 ? (
+            <div className="p-8 text-center text-zinc-500 text-xs">暂无 agent 执行记录（保持 UNKNOWN）</div>
+          ) : (
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-panel2 text-left text-[11px] text-zinc-500">
-                  <th className="px-4 py-2 font-medium">项目</th>
-                  <th className="px-3 py-2 font-medium">平台</th>
-                  <th className="px-3 py-2 font-medium">活动</th>
-                  <th className="px-3 py-2 font-medium">执行</th>
-                  <th className="px-3 py-2 font-medium">Token</th>
-                  <th className="px-3 py-2 font-medium">Git</th>
+                  <th className="px-4 py-2 font-medium">Agent</th>
+                  <th className="px-3 py-2 font-medium">状态</th>
+                  <th className="px-3 py-2 font-medium">会话</th>
+                  <th className="px-3 py-2 font-medium">工作区</th>
                 </tr>
               </thead>
               <tbody>
-                {projects.map((p) => {
-                  const tone = activityTone(p.activityState)
-                  const dirty = p.git.dirtyCount
-                  return (
-                    <tr key={p.projectId} className="border-t border-border hover:bg-white/[0.03]">
-                      <td className="px-4 py-2.5">
-                        <div className="font-medium" style={{ fontSize: 12 }}>{p.displayName || p.projectId}</div>
-                        <div className="text-[10px] text-zinc-600 font-mono">{p.identityState === 'RESOLVED' ? '已解析身份' : '身份未解析'}</div>
-                      </td>
-                      <td className="px-3 py-2.5 text-zinc-400">{p.agentPlatform || 'UNKNOWN'}</td>
-                      <td className="px-3 py-2.5"><Badge variant={tone === 'active' ? 'success' : 'muted'}>{p.activityState || 'UNKNOWN'}</Badge></td>
-                      <td className="px-3 py-2.5 tabular-nums text-zinc-300">{p.activeExecutionCount}</td>
-                      <td className="px-3 py-2.5 tabular-nums text-zinc-300" title="costQuality（后端权威）">{fmtTokens(p.token.totalTokens)} <span className="text-[10px] text-zinc-600">{fmtCostQuality(p.token.costQuality)}</span></td>
-                      <td className="px-3 py-2.5">
-                        <span className="font-mono text-[11px] text-zinc-400">{p.git.branch || '—'}@{p.git.localSha ? p.git.localSha.slice(0, 7) : '—'}</span>{' '}
-                        {dirty ? <Badge variant="warning">脏 {dirty}</Badge> : <Badge variant="muted">干净</Badge>}
-                      </td>
-                    </tr>
-                  )
-                })}
+                {exs.map((e) => (
+                  <tr key={e.executionId} className="border-t border-border">
+                    <td className="px-4 py-2 font-mono text-zinc-300">{e.agent || 'UNKNOWN'}</td>
+                    <td className="px-3 py-2"><Badge variant={toneVariant(stateTone(e.state))}>{STATE_TEXT[e.state] || e.state}</Badge></td>
+                    <td className="px-3 py-2 font-mono text-[10px] text-zinc-500">{e.sessionId || 'UNKNOWN'}</td>
+                    <td className="px-3 py-2 font-mono text-[10px] text-zinc-500">{e.workingArea || 'UNKNOWN'}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           )}

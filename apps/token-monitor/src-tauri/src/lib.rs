@@ -541,15 +541,60 @@ mod tests {
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
 
+    /// Per-test exclusive fixture directory.
+    ///
+    /// `cargo test` runs test functions on parallel threads. The previous
+    /// implementation named the fixture directory with a bare
+    /// `SystemTime::now().as_nanos()` stamp and created it with the
+    /// non-exclusive `create_dir_all`, so on Windows (coarse SystemTime
+    /// resolution) two tests could land on the same millisecond stamp and
+    /// share one directory, cross-writing each other's `session.jsonl`.
+    /// That made `does_not_estimate_unknown_lines` read a neighbour test's
+    /// usage record and spuriously see `recognized_requests == 1`.
+    ///
+    /// The name now combines process id + thread id + timestamp + a process-wide
+    /// atomic counter (genuinely unique even if the clock is coarse), and the
+    /// directory is created EXCLUSIVELY (`fs::create_dir`, which fails if the
+    /// path already exists) with a retry on the pathological collision, so no
+    /// two tests can ever share a fixture path. The business assertions in the
+    /// individual tests are untouched.
     fn fixture(content: &str) -> PathBuf {
-        let name = SystemTime::now()
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static FIXTURE_SEQ: AtomicU64 = AtomicU64::new(0);
+
+        let pid = std::process::id();
+        let thread_id = std::thread::current().id();
+        let thread_hash = {
+            use std::collections::hash_map::DefaultHasher;
+            use std::hash::{Hash, Hasher};
+            let mut hasher = DefaultHasher::new();
+            thread_id.hash(&mut hasher);
+            hasher.finish()
+        };
+        let ts = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let dir = std::env::temp_dir().join(format!("hermes-token-monitor-{name}"));
-        fs::create_dir_all(&dir).unwrap();
-        fs::write(dir.join("session.jsonl"), content).unwrap();
-        dir
+
+        let mut seq = FIXTURE_SEQ.fetch_add(1, Ordering::SeqCst);
+        loop {
+            let dir = std::env::temp_dir().join(format!(
+                "hermes-token-monitor-{pid}-{thread_hash}-{ts}-{seq}"
+            ));
+            match fs::create_dir(&dir) {
+                Ok(()) => {
+                    fs::write(dir.join("session.jsonl"), content).unwrap();
+                    return dir;
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+                    // Pathological collision: draw a fresh counter value and retry.
+                    seq = FIXTURE_SEQ.fetch_add(1, Ordering::SeqCst);
+                }
+                Err(error) => {
+                    panic!("cannot create exclusive fixture directory {}: {error}", dir.display());
+                }
+            }
+        }
     }
 
     /// Best-effort fixture cleanup. On Windows the directory can be briefly
