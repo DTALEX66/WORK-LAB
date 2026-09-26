@@ -2365,7 +2365,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         for marker in (
             "客户端中立的工作流控制、治理、任务、交付与可观测层",
             "本仓库是可审计的 portable source",
-            "Hermes、Codex、CC Switch、GitHub 是当前一级可替换 Adapter",
+            "Hermes、Codex、CC Switch、GitHub、OpenHuman、Open Design 是当前一级可替换 Adapter",
             "## 全局增强边界",
             "任意业务项目",
             "不得进入默认 portable config、全局 skill、默认 MCP 或同步脚本",

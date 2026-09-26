@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 88,
+    "total": 89,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 35,
@@ -23,7 +23,7 @@
       "path_boundary": 2,
       "ci_tooling": 1,
       "sql_schema": 1,
-      "regression_contract": 5
+      "regression_contract": 6
     },
     "repeat_prevention_required": true,
     "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer)"
@@ -2499,9 +2499,9 @@
       "classification": "regression_contract",
       "command": "gh pr merge 135 --squash (refused: BLOCKED); git push origin --delete p0/docs-taskcard-authority (closed the PR)",
       "entrypoint": "PR delivery pipeline (short-lived branch -> PR -> exact-SHA CI -> squash merge -> branch removal)",
-      "phase": "DELIVERY",
+      "phase": "EVIDENCE_CLOSEOUT",
       "exit_code": 1,
-      "evidence_level": "REAL",
+      "evidence_level": "isolated-runtime",
       "observed_error": "gh pr view 135 -> state=CLOSED, mergeStateStatus=BLOCKED, closedAt=2026-09-25T17:22:36Z; PR contents absent from main while head branch no longer existed on origin.",
       "status_before": "FAIL",
       "status_after": "PASS",

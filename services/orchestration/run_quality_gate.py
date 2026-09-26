@@ -262,6 +262,83 @@ def _run_governance_batch(members: list[str]) -> tuple[int, str]:
     return overall, "\n".join(combined)
 
 
+def _git_head_identity() -> tuple[str, str]:
+    """Best-effort (head commit, head tree) for failure provenance. Never raises."""
+    def _git(*args: str) -> str:
+        try:
+            return subprocess.run(
+                ["git", *args], cwd=ROOT, capture_output=True, text=True
+            ).stdout.strip()
+        except Exception:
+            return ""
+    commit = _git("rev-parse", "HEAD") or "unknown"
+    tree = _git("rev-parse", "HEAD^{tree}") or "unknown"
+    return commit, tree
+
+
+_GOVERNANCE_SECRET_RE = re.compile(
+    r"(?:api[_-]?key|secret|password|authorization|cookie|private[_-]?key)\s*[:=]\s*\S+"
+    r"|\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/=-]{8,}"
+    r"|\b(?:sk-|gh[pousr]_|xox[baprs]-)[A-Za-z0-9_-]{8,}",
+    re.I,
+)
+
+
+def _redact_governance_text(text: str) -> str:
+    """Bounded credential redaction so a failure log never carries secrets."""
+    return _GOVERNANCE_SECRET_RE.sub("[REDACTED]", text)
+
+
+def _governance_failure_markers(output: str) -> list[str]:
+    """Which test/command failed — bounded, deduped, so a batch failure is diagnosable."""
+    markers: list[str] = []
+    for line in output.splitlines():
+        s = line.strip()
+        if (
+            s.startswith("FAIL: ")
+            or s.startswith("ERROR: ")
+            or re.match(r"^FAILED \((?:failures|errors)=", s)
+            or "AssertionError" in s
+            or "ModuleNotFoundError" in s
+            or "No module named" in s
+        ):
+            markers.append(s)
+    seen: set[str] = set()
+    out: list[str] = []
+    for m in markers:
+        if m not in seen:
+            seen.add(m)
+            out.append(m)
+    return out[:60]
+
+
+def _report_governance_failure(members: list[str], exit_code: int, output: str) -> None:
+    """A3: make a governance-batch failure diagnosable without leaking secrets.
+
+    Surfaces (1) the failing test/command names, (2) a bounded redacted error
+    summary, (3) where the full redacted log was written, (4) the actual exit
+    code, and (5) the commit/tree under test. The full environment is never
+    dumped and credential-like values are redacted.
+    """
+    commit, tree = _git_head_identity()
+    log_dir = ROOT / ".project-local" / "runs"
+    try:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / "quality-gate-governance-fail.log"
+        log_path.write_text(_redact_governance_text(output), encoding="utf-8")
+        log_rel = log_path.relative_to(ROOT).as_posix()
+    except Exception:
+        log_rel = "(could not write log)"
+    markers = _governance_failure_markers(output)
+    print(f"QUALITY_GATE_GOVERNANCE_FAIL exit={exit_code}")
+    print(f"  failing_members=[{'; '.join(markers) if markers else 'unknown-see-log'}]")
+    print(f"  modules_run={len(members)}")
+    print(f"  head_commit={commit} head_tree={tree}")
+    print(f"  full_log={log_rel}")
+    for line in _redact_governance_text(output).splitlines()[-25:]:
+        print(f"    | {line}")
+
+
 def gate_governance() -> int:
     """P0-05: run the mandatory tests, fail-closed on any hollow outcome.
 
@@ -278,7 +355,7 @@ def gate_governance() -> int:
         print("QUALITY_GATE_GOVERNANCE_FAIL not-run (no tests executed)")
         return 1
     if exit_code != 0:
-        print(f"QUALITY_GATE_GOVERNANCE_FAIL exit={exit_code}")
+        _report_governance_failure(members, exit_code, output)
         return exit_code
     print(f"QUALITY_GATE_GOVERNANCE_PASS modules={len(members)}")
     return 0
