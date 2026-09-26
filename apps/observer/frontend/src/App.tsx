@@ -40,9 +40,17 @@ function readInitialTheme(): ThemeMode {
 
 function readInitialLayout(): LayoutMode {
   try {
-    const l = new URLSearchParams(window.location.search).get('layout')
+    const s = new URLSearchParams(window.location.search)
+    const l = s.get('layout')
     if (l === 'full' || l === 'compact') return l
-  } catch { /* ignore */ }
+    // B2: the legacy tauri.conf.json entry contract picks the LAYOUT via
+    // view=full|compact (not a lane). Honor it as a layout alias so the
+    // floating panel (?view=compact) really renders the Compact HUD and old
+    // saved links keep working; `layout=` stays the canonical param that the
+    // URL write-back persists on navigation.
+    const v = s.get('view')
+    if (v === 'full' || v === 'compact') return v
+  } catch { /* no URL (SSR/test) -> default */ }
   return 'full'
 }
 
@@ -110,9 +118,14 @@ export default function App() {
     return [...viewItems, ...actions]
   }, [theme, layout, sidebarCollapsed])
 
-  // U05: real theme (dark/light) applied to <html> — no hardcoded class.
+  // U05/B3: theme is projected through the SAME contract as the pre-render
+  // script in index.html — the CSS defines :root (dark default) + html.light
+  // and has NO .dark rule, so the old .dark class toggle was a visual no-op.
+  // Unify: toggle .light + colorScheme, exactly like index.html does.
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
+    const root = document.documentElement
+    root.classList.toggle('light', theme === 'light')
+    root.style.colorScheme = theme === 'light' ? 'light' : 'dark'
   }, [theme])
 
   // UI_SHELL (20260921): keep the deep-link (?view=/?theme=/?layout=) in sync
@@ -124,6 +137,13 @@ export default function App() {
     if (view !== OVERVIEW_ID) p.set('view', view)
     if (theme !== 'dark') p.set('theme', theme)
     if (layout !== 'full') p.set('layout', layout)
+    // B4: keep the validated data-source param (?api=) that the Tauri shell
+    // injects — api.ts loadRuntimeDescriptor() reads it at module init, so
+    // dropping it on navigation/refresh would silently fall back to the
+    // non-authoritative static-preview default. Only a present, non-empty api
+    // is preserved; other runtime params are not blindly carried.
+    const api = new URLSearchParams(window.location.search).get('api')
+    if (api) p.set('api', api)
     const qs = p.toString()
     const url = window.location.pathname + (qs ? '?' + qs : '')
     window.history.replaceState(null, '', url)
@@ -171,8 +191,8 @@ export default function App() {
         <div className="grid grid-cols-4 gap-4">
           <KPICard
             title="项目"
-            value={String(snap?.projects?.length ?? 0)}
-            sub="registry"
+            value={snap ? String(snap.projects.length) : 'UNKNOWN'}
+            sub={snap ? 'registry' : '数据源未接入'}
           />
           <KPICard
             title="活跃执行"

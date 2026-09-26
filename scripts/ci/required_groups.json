@@ -33,7 +33,8 @@
       "commands": [
         ["npm", "ci"],
         ["npm", "run", "typecheck"],
-        ["npm", "run", "build"]
+        ["npm", "run", "build"],
+        ["npm", "run", "test"]
       ]
     },
     "observer-desktop-crate": {

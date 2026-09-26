@@ -94,7 +94,7 @@ def main() -> int:
     expected = {
         "observer-python-skeleton": 8,
         "observer-web-contracts": 2,
-        "observer-frontend-typecheck": 3,
+        "observer-frontend-typecheck": 4,
         "observer-desktop-crate": 2,
     }
     for name, count in expected.items():
