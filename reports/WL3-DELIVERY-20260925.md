@@ -61,19 +61,22 @@
 
 ## 三、交接（下一批接棒）
 
-**主分支 `main` @ `e6b501b`**（origin/main 一致）。短命分支 `p0/docs-taskcard-authority` @ `b219fe2`（PR `#135` OPEN，CI 待全绿）。
+**主分支 `main` @ `e6b501b`**（origin/main 一致）。短命分支 `p0/docs-taskcard-authority` @ **`2daa749`**（PR `#135` OPEN，CI 在 `2daa749` 重跑中）。
+
+> 历史过程（保留为历史，不再描述为当前）：#135 曾经历 `53e7108`（P0-02/03）→ `b219fe2`（+ERR-089 账本）→ `61f4db9`（+交付文档包，其 CI run `36204845454` 暴露 3 个真实失败 job）→ **`2daa749`（batch-1 修复：A1 账本枚举 + A2 排他 fixture + A3 governance 可诊断 + P0-02 测试 marker 对齐）**。ERR-089 交付时序事故已在 `b219fe2` 记入账本并于 `2daa749` 修合规。
 
 ### 1. 合并 #135（唯一未闭环动作）
 ```
-# 等 head SHA b219fe2 的所有 run 终态 success 且 mergeStateStatus=CLEAN（勿用单条 green 作合并信号）
+# 等 head SHA 2daa749 的所有 run 终态 success 且 mergeStateStatus=CLEAN（勿用单条 green 作合并信号）
 gh pr view 135 --repo DTALEX66/WORK-LAB --json state,mergeStateStatus
 # CLEAN 后：
 gh pr merge 135 --repo DTALEX66/WORK-LAB --squash
 git push origin --delete p0/docs-taskcard-authority   # 仅合并成功后
 git checkout main && git pull --ff-only origin main    # 回读新 SHA
 ```
-- 合并后 main 应含 P0-02/03 全 diff；`#135` state=MERGED；ERR-089 lifecycle 由 `OPEN_UNTIL_MERGE` → 已合并。
+- 合并后 main 应含 P0-02/03/04 全 diff；`#135` state=MERGED；ERR-089 lifecycle 由 `OPEN_UNTIL_MERGE` → 已合并。
 - **合并前**若 CI 报新失败：拉 `gh api` 逐 job 日志定位（`--allow-escape-sequences`），修真值，勿 --admin 强合（需用户授权）。
+- 本地验证状态（`2daa749`）：`ERROR_LEDGER_PASS entries=89`；governance 可诊断逻辑实测输出 failing_members/exit/head_commit/full_log；`test_workflow_governance` marker 测试 `OK`；投影 `CURRENT_STATE_FRESHNESS_PASS`（4 个改动文件均不在 CANONICAL_FILES 输入集，无需重生成投影）；本地 `Ran 1650 tests OK(skipped=8)` + 3 个本地 pytest 缺失（非 CI 失败，CI 经 lock 安装）。
 
 ### 2. P1-01 · Observer 一级导航 15→7（feature freeze 后另批）
 - 现 15 个一级 lane（`apps/observer/frontend/src/views/`）须 regroup 为 7 个一级入口（§6.1.1，P1-B 已定义，仅 UI 聚合，不加代码执行/审批/重试）。
