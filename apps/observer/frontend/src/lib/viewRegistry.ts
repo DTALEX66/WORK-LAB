@@ -10,13 +10,17 @@ import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, Bot, PlayCircle, Cpu, Brain, Wrench, Activity,
   Package, FolderGit2, ShieldCheck, Settings,
-  ScrollText, History, CheckCircle2, Plug, PackageCheck,
+  ScrollText, History, CheckCircle2, Plug, PackageCheck, SquareKanban,
 } from 'lucide-react'
 import {
   AgentsView, ExecutionsView, ModelsView, MemoryView, ToolsView,
   MonitoringView, DeliveryView, TrustView, SettingsView, ProjectsView,
 } from '@/views/Views'
 import { SoftwareView } from '@/views/SoftwareView'
+// D3 (2026-09-26 stage D): primary Work lane — the first read-only visible
+// closed loop (entry -> project -> task/execution -> state/failure ->
+// Context/Evidence -> next step) with a right-side Inspector.
+import { WorkView } from '@/views/WorkView'
 // UI_VIEWS (20260921): five L7-aligned governance lanes (honest projections).
 import { RulesPolicyView } from '@/views/RulesPolicyView'
 import { AuditTrailView } from '@/views/AuditTrailView'
@@ -34,6 +38,8 @@ export interface ViewEntry {
     | 'overview' | 'agents' | 'executions' | 'models' | 'memory' | 'tools'
     | 'monitoring' | 'delivery' | 'trust' | 'settings' | 'software'
     | 'projects'
+    // D3 (2026-09-26 stage D): primary Work lane
+    | 'work'
     // UI_VIEWS (20260921): L7 governance lanes
     | 'rules-policy' | 'audit' | 'approvals' | 'integrations' | 'task-packs'
 }
@@ -43,6 +49,11 @@ export interface ViewEntry {
 // Projects is folded into the Agents/Projects panel (AgentsView already renders
 // the per-project platform cards) — documented decision, not a separate view.
 export const VIEW_REGISTRY: ViewEntry[] = [
+  // D3 (2026-09-26 stage D): Work is the primary read-only closed-loop lane
+  // (entry -> project -> task/execution -> state/failure -> Context/Evidence
+  // -> next step) with a right-side Inspector. It reuses the SAME real v3
+  // snapshot projection (no second ledger, no fabricated fields).
+  { id: 'work',         label: '工作',   icon: SquareKanban,  component: WorkView,         lane: 'work' },
   { id: 'agents',       label: '智能体', icon: Bot,             component: AgentsView,       lane: 'agents' },
   // P1-D §3.1 (2026-09-26): Projects promoted to a first-level entry. The
   // project-platform table was folded into AgentsView (U04); it is now a
