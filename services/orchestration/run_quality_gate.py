@@ -339,25 +339,53 @@ def _report_governance_failure(members: list[str], exit_code: int, output: str) 
         print(f"    | {line}")
 
 
-def gate_governance() -> int:
-    """P0-05: run the mandatory tests, fail-closed on any hollow outcome.
+def _governance_execution_truth(output: str, has_unittest: bool) -> tuple[bool, str]:
+    """C4: required tests ACTUALLY ran, per the tool's real semantics.
 
-    missing  != PASS  (empty mandatory set is a red flag, not a clean pass)
-    not-run  != PASS  (clean exit but zero tests executed)
-    cancelled/failed != PASS  (non-zero batch exit)
+    A ``Ran N tests`` banner with N == 0, or all N skipped, is NOT execution.
+    The old single-regex check (``^Ran \\d+ tests?``) matched ``Ran 0 tests``
+    and reported a hollow batch as executed; every hollow outcome here fails
+    closed with a named state: not-run / zero-tests / all-skipped.
+    """
+    if not has_unittest:
+        return True, "script-only-batch(all-exit-0)"
+    m = re.search(r"^Ran (\d+) tests? in", output, flags=re.MULTILINE)
+    if not m:
+        return False, "not-run (no unittest execution banner found)"
+    total = int(m.group(1))
+    if total == 0:
+        return False, "zero-tests (Ran 0 tests: required tests did not execute)"
+    skipped_matches = re.findall(r"skipped=(\d+)", output)
+    skipped = int(skipped_matches[-1]) if skipped_matches else 0
+    executed = total - skipped
+    if executed <= 0:
+        return False, f"all-skipped (Ran {total} tests, skipped={skipped}: nothing actually executed)"
+    return True, f"executed={executed} ran={total} skipped={skipped}"
+
+
+def gate_governance() -> int:
+    """P0-05 + C4: run the mandatory tests, fail-closed on any hollow outcome.
+
+    missing        != PASS  (empty mandatory set is a red flag, not a clean pass)
+    not-run        != PASS  (clean exit but no execution banner)
+    zero-tests     != PASS  (C4: ``Ran 0 tests`` is a hollow outcome)
+    all-skipped    != PASS  (C4: skips are not executions)
+    cancelled/failed != PASS (non-zero batch exit; subcommand failures presented)
     """
     members = mandatory_discovery_modules()
     if not members:
         print("QUALITY_GATE_GOVERNANCE_FAIL empty-mandatory-set")
         return 1
     exit_code, output = _run_governance_batch(members)
-    if not re.search(r"^Ran \d+ tests?", output, flags=re.MULTILINE):
-        print("QUALITY_GATE_GOVERNANCE_FAIL not-run (no tests executed)")
+    has_unittest = any(not (ROOT / m).is_file() for m in members)
+    executed_ok, execution = _governance_execution_truth(output, has_unittest)
+    if not executed_ok:
+        print(f"QUALITY_GATE_GOVERNANCE_FAIL {execution}")
         return 1
     if exit_code != 0:
         _report_governance_failure(members, exit_code, output)
         return exit_code
-    print(f"QUALITY_GATE_GOVERNANCE_PASS modules={len(members)}")
+    print(f"QUALITY_GATE_GOVERNANCE_PASS modules={len(members)} {execution}")
     return 0
 
 
@@ -747,21 +775,194 @@ def gate_work_lab_os_canary() -> int:
                       env_updates={"PYTHONPATH": MODULE_PYTHONPATH})
 
 
+_EXACT_SHA_CI_PROVIDER_OK = {"github-actions", "gh-actions", "github_actions", "actions"}
+_EXACT_SHA_CI_LOCAL_SELF = {"local", "self", "self-filled", "manually-authored", ""}
+
+
+def _is_git_sha(value: object) -> bool:
+    import re as _re
+    return isinstance(value, str) and bool(_re.fullmatch(r"[0-9a-fA-F]{40}", value))
+
+
+def exact_sha_ci_evidence_digest(evidence: dict) -> str:
+    """C3: canonical identity digest over the tamper-bearing fields of an
+    exact-SHA CI evidence object. A reader recomputes this over the same core
+    fields and compares to the recorded ``content_sha256`` — that is the
+    integrity + read-back check, so a locally self-filled / edited success is
+    detectable, not trusted on presence alone.
+    """
+    import hashlib
+    import json as _json
+    core = {
+        "repository": evidence.get("repository"),
+        "commit": evidence.get("commit"),
+        "tree": evidence.get("tree"),
+        "ci_identity": {
+            "provider": str(evidence.get("ci", {}).get("provider", "")),
+            "run_id": evidence.get("ci", {}).get("run_id"),
+            "head_sha": evidence.get("ci", {}).get("head_sha"),
+        },
+        "required_checks": sorted(evidence.get("required_checks", [])),
+        "jobs": sorted(
+            (
+                {"name": j.get("name"), "conclusion": j.get("conclusion")}
+                for j in evidence.get("ci", {}).get("jobs", [])
+            ),
+            key=lambda d: _json.dumps(d, ensure_ascii=False, sort_keys=True),
+        ),
+    }
+    canonical = _json.dumps(core, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def validate_exact_sha_ci_evidence(
+    evidence: dict,
+    *,
+    expected_repo: str,
+    expected_commit: str,
+    expected_tree: str,
+) -> list[str]:
+    """C3: structural + truth checks an exact-SHA CI evidence object must pass
+    before it counts as valid CI evidence. Returns a list of issues (empty =
+    valid). Fails closed on every hollow outcome; a locally self-filled success
+    is refused.
+    """
+    issues: list[str] = []
+    if not isinstance(evidence, dict):
+        return ["evidence root is not an object"]
+
+    # schema / provenance fields
+    if not evidence.get("schema_version"):
+        issues.append("schema_version missing")
+    if not evidence.get("observed_at"):
+        issues.append("observed_at missing")
+    produced_by = str(evidence.get("produced_by", "")).strip().lower()
+    if produced_by in _EXACT_SHA_CI_LOCAL_SELF:
+        issues.append("evidence source unverifiable (locally/self-filled success is not CI evidence)")
+
+    # repository identity
+    if str(evidence.get("repository", "")).strip() != expected_repo:
+        issues.append(f"repository mismatch (evidence={evidence.get('repository')!r} expected={expected_repo!r})")
+
+    # subject commit/tree under validation (exact-SHA binding)
+    if not _is_git_sha(evidence.get("commit")):
+        issues.append("commit not a 40-hex git SHA")
+    elif evidence["commit"] != expected_commit:
+        issues.append(f"commit mismatch (evidence={evidence['commit']} expected={expected_commit})")
+    if not _is_git_sha(evidence.get("tree")):
+        issues.append("tree not a 40-hex git tree")
+    elif evidence["tree"] != expected_tree:
+        issues.append(f"tree mismatch (evidence={evidence['tree']} expected={expected_tree})")
+
+    # CI run/job identity
+    ci = evidence.get("ci") or {}
+    provider = str(ci.get("provider", "")).strip().lower()
+    if provider not in _EXACT_SHA_CI_PROVIDER_OK:
+        issues.append(f"ci.provider not a recognized hosted CI provider (got {provider!r})")
+    if not str(ci.get("run_id", "")).strip():
+        issues.append("ci.run_id missing")
+    head_sha = ci.get("head_sha")
+    if not _is_git_sha(head_sha):
+        issues.append("ci.head_sha not a 40-hex git SHA")
+    elif _is_git_sha(evidence.get("commit")) and head_sha != evidence["commit"]:
+        issues.append("ci.head_sha does not equal the subject commit")
+
+    # required checks: each must have an actual success conclusion (skipped != pass)
+    required = evidence.get("required_checks") or []
+    if not isinstance(required, list) or not required:
+        issues.append("required_checks missing or empty")
+    else:
+        jobs = ci.get("jobs") or []
+        by_name: dict[str, str] = {}
+        for j in jobs:
+            if isinstance(j, dict) and j.get("name"):
+                by_name[str(j["name"]).lower()] = str(j.get("conclusion", "")).strip().lower()
+        for check in required:
+            key = str(check).lower()
+            if key not in by_name:
+                issues.append(f"required check missing in CI jobs: {check}")
+            elif by_name[key] != "success":
+                issues.append(f"required check not success: {check} (conclusion={by_name[key]})")
+
+    # integrity / read-back digest
+    recorded = evidence.get("content_sha256")
+    recomputed = exact_sha_ci_evidence_digest(evidence)
+    if not recorded or recorded != recomputed:
+        issues.append("content_sha256 missing or does not match recomputed identity digest")
+
+    return issues
+
+
+def _git_origin_repo_identity() -> str:
+    """Owner/name of the origin remote, or '' when it cannot be resolved.
+
+    Accepts both ``https://host/owner/name.git`` and scp-like
+    ``git@host:owner/name.git`` URL forms; anything else (no remote, local
+    path remote) yields '' — an unverifiable identity fails the content check
+    rather than being guessed.
+    """
+    try:
+        out = subprocess.run(["git", "config", "--get", "remote.origin.url"],
+                             cwd=ROOT, capture_output=True, text=True, timeout=30).stdout.strip()
+    except Exception:
+        out = ""
+    if not out:
+        return ""
+    url = out
+    if "://" in url:
+        url = url.split("://", 1)[1]
+    url = url.replace(":", "/")  # scp-like git@host:owner/name
+    parts = [p for p in url.split("/") if p]
+    if len(parts) < 3:
+        return ""
+    owner, name = parts[-2], parts[-1]
+    if name.endswith(".git"):
+        name = name[: -4]
+    return f"{owner}/{name}"
+
+
 def gate_exact_sha_ci() -> int:
-    """§7: exact-SHA CI evidence. required=true 时缺证据必须失败；本地默认非 required。
+    """§7 + C3: exact-SHA CI evidence. required=true verifies the evidence
+    file's CONTENT, not just its existence.
 
     P0-7: only a required context (WLGM_EXACT_SHA_CI_REQUIRED=1) fails on
     missing evidence; the ordinary local structural check stays PENDING=0.
+    C3: when required, the evidence is parsed and content-validated —
+    repository identity, subject commit/tree, CI run/job identity, the actual
+    conclusion of every required check, a verifiable (non-self-filled)
+    source, and a recomputable integrity digest. Empty file / bad JSON /
+    wrong repo / wrong SHA / a failed-or-missing required check / an
+    unverifiable source all fail closed.
     """
+    import json as _json
     required = os.environ.get("WLGM_EXACT_SHA_CI_REQUIRED", "").strip().lower() in ("1", "true", "yes")
-    evidence = ROOT / ".project-local" / "artifacts" / "exact-sha-ci.json"
-    if required:
-        if not evidence.is_file():
-            print(f"EXACT_SHA_CI_FAIL required=true evidence_missing={evidence}")
-            return 1
-        print(f"EXACT_SHA_CI_PASS required=true evidence={evidence}")
+    if not required:
+        print("EXACT_SHA_CI PENDING (requires GitHub Actions run; local gate cannot verify)")
         return 0
-    print("EXACT_SHA_CI PENDING (requires GitHub Actions run; local gate cannot verify)")
+    evidence_path = ROOT / ".project-local" / "artifacts" / "exact-sha-ci.json"
+    if not evidence_path.is_file():
+        print(f"EXACT_SHA_CI_FAIL required=true evidence_missing={evidence_path}")
+        return 1
+    try:
+        evidence = _json.loads(evidence_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(f"EXACT_SHA_CI_FAIL required=true evidence_invalid_json ({exc})")
+        return 1
+    commit, tree = _git_head_identity()
+    repo = _git_origin_repo_identity()
+    issues = validate_exact_sha_ci_evidence(
+        evidence, expected_repo=repo, expected_commit=commit, expected_tree=tree
+    )
+    if issues:
+        print("EXACT_SHA_CI_FAIL required=true content_invalid:")
+        for item in issues:
+            print(f"  - {item}")
+        print(f"  (subject commit={commit[:12]} tree={tree[:12]} repo={repo or 'unresolved'})")
+        return 1
+    print(
+        f"EXACT_SHA_CI_PASS required=true evidence={evidence_path} "
+        f"commit={commit[:12]} tree={tree[:12]} checks={len(evidence.get('required_checks', []))}"
+    )
     return 0
 
 
@@ -949,20 +1150,25 @@ def run_gate_sequence(names: tuple[str, ...]) -> int:
     return 0
 
 
-# WLOSS-700: changed-files -> relevant gates (LOCAL convenience mapping only;
-# the canonical gate-selection authority is .project/governance/work-lab.project-profile.yaml
-# `gates:` consumed by impact_planner.py + scripts/ci/emit_gate_plan.py; CI never
-# consumes this table). Small edits run only the gates whose path scope they
-# touch; the full suite stays one command away.
+# WLOSS-700: changed-files -> relevant gates.
+#
+# C5: this table is the LOCAL convenience mapping for `--changed` quick runs.
+# The canonical gate-selection authority is the project profile consumed by
+# impact_planner.build_plan / scripts/ci/emit_gate_plan.py — CI consumes the
+# canonical planner, never this table. The table's path scopes are kept in
+# lock-step with the current repository tree (dead paths fixed in C5); when
+# the canonical planner fully retires local `--changed`, this table follows.
+# Unknown (unscoped) changed paths fail safe to the full VERIFY_ORDER so a
+# local convenience mapping can never drop a necessary check to save CI.
 GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "governance": ("tests/workflow-assistance/", "packages/client-neutral-core/scripts/", "config/"),
     "compile": ("scripts/", "packages/client-neutral-core/scripts/", "apps/observer/src/"),
     "skill-provenance": ("packages/client-neutral-core/skills/", "integrations/executors/codex/skills/", "config/skill-provenance.yaml"),
     "security": ("config/", "integrations/executors/codex/", "README.md", "docs/"),
     "context-pack": ("packages/client-neutral-core/scripts/build_context_pack.py",),
-    "client-neutral-manifest": ("config/client-neutral-manifest.json",),
+    "client-neutral-manifest": ("packages/client-neutral-core/workflow-manifest.yaml",),
     "core-schemas": ("packages/contracts/schemas/", "config/"),
-    "adapter-registry": ("config/adapters.json", "packages/client-neutral-core/scripts/verify_adapter_registry.py"),
+    "adapter-registry": ("config/adapter-registry.json", "packages/client-neutral-core/scripts/verify_adapter_registry.py"),
     "capability-matrix": ("config/capability-matrix.json", "packages/client-neutral-core/scripts/verify_capability_matrix.py"),
     "policy-coverage": ("config/global-agent-policy.yaml", "config/loss-reports/", "config/capability-matrix.json", "config/adapter-registry.json", "services/policy/policy_projection.py", "integrations/executors/codex/codex_policy_renderer.py", "integrations/executors/hermes/hermes_policy_renderer.py", "integrations/executors/codex/codex-policy-extension.yaml", "integrations/executors/hermes/hermes-policy-extension.yaml", "integrations/executors/codex/global-guidance.md", "config/SOUL.md", "scripts/ci/verify_policy_coverage.py", "tests/workflow-assistance/test_policy_projection.py"),
     "context-control-plane": ("packages/client-neutral-core/scripts/context_control_plane.py", "packages/client-neutral-core/scripts/context_bundle.py", "packages/client-neutral-core/scripts/context_drift_guard.py"),
@@ -977,9 +1183,9 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "portable-install": ("packages/client-neutral-core/scripts/verify_portable_install.py",),
     "provider-inventory": ("config/config.yaml",),
     "mcp-audit": ("packages/client-neutral-core/scripts/mcp_candidate_audit.py",),
-    "shell": ("setup.sh",),
+    "shell": ("scripts/setup-workflow.sh",),
     "runtime-convergence": ("packages/client-neutral-core/scripts/canonical_store.py", "services/orchestration/durable_worker.py", "packages/client-neutral-core/scripts/collectors.py", "services/orchestration/sse_hub.py", "tests/workflow-assistance/"),
-    "powershell": ("setup.ps1",),
+    "powershell": ("scripts/setup-workflow.ps1",),
     "project-identity-contract": ("packages/client-neutral-core/scripts/product_project.py", "packages/client-neutral-core/scripts/project_identity_resolver.py", "tests/workflow-assistance/test_product_project.py", "tests/workflow-assistance/test_project_identity_resolver.py"),
     "agent-adapter-readonly-contract": ("packages/client-neutral-core/scripts/adapter_sdk.py", "integrations/executors/hermes/hermes_adapter.py", "integrations/executors/codex/codex_adapter.py"),
     "execution-state-machine": ("services/receipts/evidence_aggregator.py",),
@@ -990,11 +1196,46 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "sse-browser-reconnect": ("services/orchestration/sse_revision.py", "services/orchestration/live_gate.py", "tests/workflow-assistance/test_snapshot_sse_live.py"),
     "field-quality-no-fabrication": ("services/orchestration/live_gate.py", "services/receipts/evidence_aggregator.py", "tests/workflow-assistance/test_evidence_aggregator.py"),
     "privacy-redaction": ("services/receipts/execution_evidence.py", "packages/client-neutral-core/scripts/canonical_store.py", "tests/workflow-assistance/test_execution_evidence.py", "tests/workflow-assistance/test_wlgm_privacy.py"),
-    "windows-project-resolution": ("packages/client-neutral-core/scripts/project_identity_resolver.py", "bin/hermes-project-terminal-guard.py", "tests/workflow-assistance/test_project_identity_resolver.py", "tests/workflow-assistance/test_project_terminal_guard.py"),
+    "windows-project-resolution": ("packages/client-neutral-core/scripts/project_identity_resolver.py", "packages/client-neutral-core/bin/hermes-project-terminal-guard.py", "tests/workflow-assistance/test_project_identity_resolver.py", "tests/workflow-assistance/test_project_terminal_guard.py"),
     "tauri-readonly-shell": ("apps/observer/src-tauri/", "services/orchestration/sidecar_endpoint.py", "tests/workflow-assistance/test_sidecar_endpoint.py"),
     "work-lab-os-canary": ("services/orchestration/canary_runner.py",),
     "exact-sha-ci": (),
 }
+
+
+# C5: recognized fast-gate-only surface prefixes. A change that ONLY hits
+# these runs the always-on fast sanity gate (``compile``) and nothing else.
+# These are surfaces with no dedicated gate of their own: the fast compile
+# scope plus the workflow-definition surface (``.github``), whose contract is
+# covered by the fast compile check. A change that hits NEITHER a gate's
+# scope NOR any fast-only prefix is genuinely unknown and must fail safe to
+# the full canonical verify (never skip necessary checks to save CI).
+_FAST_GATE_ONLY_PREFIXES: frozenset[str] = frozenset(
+    {
+        "scripts/",
+        "packages/client-neutral-core/scripts/",
+        "apps/observer/src/",
+        ".github/",
+    }
+)
+
+
+def _is_known_fast_gate_only(scope: str) -> bool:
+    s = scope.replace("\\", "/")
+    return any(s == p or s.startswith(p) for p in _FAST_GATE_ONLY_PREFIXES)
+
+
+def _is_uncovered(path: str) -> bool:
+    """True when the path matches no gate's scope (genuinely unknown)."""
+    s = path.replace("\\", "/")
+    for gate, scopes in GATE_PATH_SCOPES.items():
+        if gate not in GATES:
+            continue
+        for scope in scopes:
+            scope_n = scope.replace("\\", "/")
+            if s == scope_n or s.startswith(scope_n.rstrip("/") + "/"):
+                return False
+    return True
 
 
 def select_gates_for_changed(changed_paths: list[str]) -> tuple[str, ...]:
@@ -1002,6 +1243,13 @@ def select_gates_for_changed(changed_paths: list[str]) -> tuple[str, ...]:
 
     Paths may be monorepo-relative (packages/client-neutral-core/...) or
     module-relative (scripts/...); both forms are matched.
+
+    C5 safety fallback: a change that matches no gate's scope at all is
+    unknown — instead of silently running nothing we escalate to the full
+    canonical verify (``VERIFY_ORDER``) so necessary checks are never
+    dropped. Changes that only hit the fast-gate-only surface (``.github``
+    workflows, the fast ``compile`` sanity scope) keep their pinned fast
+    selection.
     """
     variants: list[str] = []
     for raw in changed_paths:
@@ -1022,6 +1270,13 @@ def select_gates_for_changed(changed_paths: list[str]) -> tuple[str, ...]:
                 break
     # Always include the fast sanity gates for any change.
     selected |= {"compile"}
+    # C5: unknown changes (no recognized scope) fail safe to the full suite.
+    # Pinned fast-gate-only surface (.github workflows) is NOT unknown.
+    if not all(
+        not _is_uncovered(v) or _is_known_fast_gate_only(v)
+        for v in variants
+    ):
+        return tuple(VERIFY_ORDER)
     order = [name for name in VERIFY_ORDER if name in selected]
     return tuple(order)
 

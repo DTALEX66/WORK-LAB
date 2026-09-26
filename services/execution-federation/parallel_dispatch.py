@@ -579,14 +579,39 @@ def parallel_dispatch_of(federation: Any, specs: list, *, max_workers: int = 4,
         status = "DEGRADED"
     else:
         status = "PARTIAL"
-    notes = [f"{name}: {r.status}" for name, r in results.items() if not r.ok]
+    # Deterministic batch summary (P1 contract: spec order == input order).
+    # ``results`` is populated via ``as_completed`` (L569) so its iteration
+    # order is *completion* order, which is nondeterministic across thread
+    # scheduling. Deriving the summary from it leaked that completion order
+    # into ``succeeded``/``failed``/``notes`` and made the batch flaky (CI:
+    # ['s2','s1'] vs ['s1','s2']). Reorder every summary field back to the
+    # input spec order so the payload is stable regardless of when each spec
+    # happens to finish.
+    seen: set = set()
+    names_in_order: list = []
+    for index, spec in enumerate(specs):
+        name = _spec_fields(index, spec)["name"]
+        if name not in seen:
+            seen.add(name)
+            names_in_order.append(name)
+
+    def _ok(name: str) -> bool:
+        r = results.get(name)
+        return bool(r and r.ok)
+
+    notes = [f"{name}: {results[name].status}"
+             for name in names_in_order
+             if name in results and not results[name].ok]
     top_op = _spec_fields(0, specs[0])["op"]
     return acp.ExecResult(
         top_op, "*", ok=(status == "OK"), status=status,
         payload={
-            "per_spec": {name: r.to_dict() for name, r in results.items()},
-            "succeeded": [n for n, r in results.items() if r.ok],
-            "failed": [n for n, r in results.items() if not r.ok],
+            "per_spec": {name: results[name].to_dict()
+                         for name in names_in_order if name in results},
+            "succeeded": [name for name in names_in_order
+                          if name in results and _ok(name)],
+            "failed": [name for name in names_in_order
+                      if name in results and not _ok(name)],
         },
         notes=notes,
     )

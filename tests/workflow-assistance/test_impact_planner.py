@@ -42,7 +42,7 @@ class ImpactPlannerTests(unittest.TestCase):
         self.assertEqual(profile["ci"]["stable_aggregate_job"], "aggregate")
         self.assertEqual(
             profile["gates"]["token-monitor"]["paths"],
-            ["packages/client-neutral-core/apps/token-monitor-desktop/**"],
+            ["apps/token-monitor/**"],
         )
 
     def test_token_monitor_path_selects_its_dedicated_gate(self) -> None:
@@ -53,7 +53,7 @@ class ImpactPlannerTests(unittest.TestCase):
             repository="DTALEX66/WORK-LAB",
             commit="commit",
             tree="tree",
-            changed_paths=["packages/client-neutral-core/apps/token-monitor-desktop/src-tauri/src/lib.rs"],
+            changed_paths=["apps/token-monitor/src-tauri/src/lib.rs"],
         )
         self.assertIn("token-monitor", plan["required_gates"])
 
