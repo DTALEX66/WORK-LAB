@@ -2512,10 +2512,10 @@
       "lifecycle": {
         "introducedCommit": "53e7108613117f225524a14bd3f0d83d655c7a35",
         "fixedCommit": null,
-        "verifiedCommit": null,
+        "verifiedCommit": "c59e621444c6278944fcef718694d35e1de92f16",
         "affectedCapability": "short-lived branch delivery pipeline (AGENTS.md Git/delivery authority)",
         "regressionCommand": "gh pr view 135 --json state,mergeStateStatus (state must be MERGED with the squash commit on main)",
-        "currentApplicability": "OPEN_UNTIL_MERGE_20260925"
+        "currentApplicability": "CLOSED_MERGED_c59e621_20260926"
       }
     }
   ],
