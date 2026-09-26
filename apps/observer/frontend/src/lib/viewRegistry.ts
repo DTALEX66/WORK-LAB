@@ -9,12 +9,12 @@ import type { ComponentType } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, Bot, PlayCircle, Cpu, Brain, Wrench, Activity,
-  Package, ShieldCheck, Settings,
+  Package, FolderGit2, ShieldCheck, Settings,
   ScrollText, History, CheckCircle2, Plug, PackageCheck,
 } from 'lucide-react'
 import {
   AgentsView, ExecutionsView, ModelsView, MemoryView, ToolsView,
-  MonitoringView, DeliveryView, TrustView, SettingsView,
+  MonitoringView, DeliveryView, TrustView, SettingsView, ProjectsView,
 } from '@/views/Views'
 import { SoftwareView } from '@/views/SoftwareView'
 // UI_VIEWS (20260921): five L7-aligned governance lanes (honest projections).
@@ -33,6 +33,7 @@ export interface ViewEntry {
   lane:
     | 'overview' | 'agents' | 'executions' | 'models' | 'memory' | 'tools'
     | 'monitoring' | 'delivery' | 'trust' | 'settings' | 'software'
+    | 'projects'
     // UI_VIEWS (20260921): L7 governance lanes
     | 'rules-policy' | 'audit' | 'approvals' | 'integrations' | 'task-packs'
 }
@@ -43,6 +44,10 @@ export interface ViewEntry {
 // the per-project platform cards) — documented decision, not a separate view.
 export const VIEW_REGISTRY: ViewEntry[] = [
   { id: 'agents',       label: '智能体', icon: Bot,             component: AgentsView,       lane: 'agents' },
+  // P1-D §3.1 (2026-09-26): Projects promoted to a first-level entry. The
+  // project-platform table was folded into AgentsView (U04); it is now a
+  // dedicated read-only view reusing the SAME real snap.projects projection.
+  { id: 'projects',     label: '项目',   icon: FolderGit2,     component: ProjectsView,     lane: 'projects' },
   { id: 'executions',   label: '执行',   icon: PlayCircle,      component: ExecutionsView,   lane: 'executions' },
   { id: 'models',       label: '模型',   icon: Cpu,             component: ModelsView,       lane: 'models' },
   { id: 'memory',       label: '记忆',   icon: Brain,           component: MemoryView,       lane: 'memory' },

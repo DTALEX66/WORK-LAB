@@ -9,7 +9,9 @@ import { VIEW_REGISTRY, OVERVIEW_ID } from '@/lib/viewRegistry'
  *  - Desktop: 260px expanded ↔ 72px collapsed (icon-only + tooltip), toggled
  *    by the parent (App). Colors resolve through SPEC-A CSS variables so both
  *    Dark/Light themes invert correctly.
- *  - Groups (概览 / 执行 / 洞察 / 治理) are foldable when expanded.
+ *  - Groups (P1-D §3.1 seven primary entries: Home/Work/Agents/Projects/
+ *    Governance/Integrations/System, see NAV_GROUPS) are foldable when
+ *    expanded; all registry lanes stay reachable by a stable id.
  *  - Mobile (<768px): rendered as a fixed overlay drawer with a backdrop,
  *    open/close driven by the parent. No new dependencies — plain media query
  *    (Tailwind `md:` = 768px) + conditional render.
@@ -23,13 +25,18 @@ interface LaneDef {
   icon: LucideIcon
 }
 
-// Lane groups aligned to L7 routing (D3 decision: keep the ?view= mechanism).
-// Overview is the synthetic landing lane; the rest map to registry ids.
-const GROUPS: { key: string; label: string; ids: string[] }[] = [
-  { key: 'overview', label: '概览', ids: [OVERVIEW_ID] },
-  { key: 'exec', label: '执行', ids: ['agents', 'executions', 'task-packs', 'approvals'] },
-  { key: 'insight', label: '洞察', ids: ['monitoring', 'audit', 'software', 'trust'] },
-  { key: 'gov', label: '治理', ids: ['rules-policy', 'integrations', 'models', 'memory', 'tools', 'delivery', 'settings'] },
+// Lane groups aligned to P1-D §3.1 (2026-09-26): 7 primary nav entries
+// (Home / Work / Agents / Projects / Governance / Integrations / System).
+// Each group folds to its second-level lanes; all 15 registry lanes + the
+// synthetic overview stay reachable (no data loss, pure IA regroup).
+export const NAV_GROUPS: { key: string; label: string; ids: string[] }[] = [
+  { key: 'home',   label: '首页',   ids: [OVERVIEW_ID] },
+  { key: 'work',   label: '工作',   ids: ['executions', 'task-packs', 'delivery'] },
+  { key: 'agents', label: '智能体', ids: ['agents'] },
+  { key: 'projects', label: '项目', ids: ['projects'] },
+  { key: 'gov',    label: '治理',   ids: ['rules-policy', 'approvals', 'audit', 'trust'] },
+  { key: 'integrations', label: '集成', ids: ['integrations'] },
+  { key: 'system', label: '系统',   ids: ['software', 'models', 'monitoring', 'memory', 'tools', 'settings'] },
 ]
 
 function buildLanes(): Map<string, LaneDef> {
@@ -62,7 +69,7 @@ export function Sidebar({
 }: SidebarProps) {
   const lanes = React.useMemo(buildLanes, [])
   const [openGroups, setOpenGroups] = React.useState<Set<string>>(
-    () => new Set(GROUPS.map((g) => g.key)),
+    () => new Set(NAV_GROUPS.map((g) => g.key)),
   )
 
   const toggleGroup = (key: string) => {
@@ -135,7 +142,7 @@ export function Sidebar({
   // Grouped nav (expanded desktop + mobile)
   const GroupedNav = () => (
     <nav className="flex-1 overflow-y-auto px-2 py-1" aria-label="主导航">
-      {GROUPS.map((g) => {
+      {NAV_GROUPS.map((g) => {
         const items = g.ids.map((id) => lanes.get(id)).filter(Boolean) as LaneDef[]
         if (items.length === 0) return null
         const open = openGroups.has(g.key)
