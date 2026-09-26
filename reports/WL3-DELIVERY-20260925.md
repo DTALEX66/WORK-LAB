@@ -61,27 +61,28 @@
 
 ## 三、交接（下一批接棒）
 
-**主分支 `main` @ `e6b501b`**（origin/main 一致）。短命分支 `p0/docs-taskcard-authority` @ **`2daa749`**（PR `#135` OPEN，CI 在 `2daa749` 重跑中）。
+**主分支 `main` @ `e6b501b`**（origin/main 一致）。短命分支 `p0/docs-taskcard-authority` @ **`0d18764`**（PR `#135` OPEN，CI 在 `0d18764` 重跑中）。
 
-> 历史过程（保留为历史，不再描述为当前）：#135 曾经历 `53e7108`（P0-02/03）→ `b219fe2`（+ERR-089 账本）→ `61f4db9`（+交付文档包，其 CI run `36204845454` 暴露 3 个真实失败 job）→ **`2daa749`（batch-1 修复：A1 账本枚举 + A2 排他 fixture + A3 governance 可诊断 + P0-02 测试 marker 对齐）**。ERR-089 交付时序事故已在 `b219fe2` 记入账本并于 `2daa749` 修合规。
+> 历史过程（保留为历史，不再描述为当前）：#135 曾经历 `53e7108`（P0-02/03）→ `b219fe2`（+ERR-089 账本）→ `61f4db9`（+交付文档包，其 CI run `36204845454` 暴露 3 个真实失败 job）→ `2daa749`（batch-1：A1 账本枚举 + A2 排他 fixture + A3 governance 可诊断 + P0-02 测试 marker 对齐，**主 gate run `36210426221` 7/7 job success 验证通过**）→ `440d257`（batch-1：A4 交接绑定最新 head + 真实 checks）→ `f28b1b0`（batch-2：前端功能真实性审计 `reports/FRONTEND-AUDIT-20260926.md`）→ **`0d18764`（batch-2：P1-01 前端 15-lane → 7 一级导航 IA 重组，按 P1-D §3.1）**。ERR-089 交付时序事故已在 `b219fe2` 记入账本并于 `2daa749` 修合规。
 
 ### 1. 合并 #135（唯一未闭环动作）
 ```
-# 等 head SHA 2daa749 的所有 run 终态 success 且 mergeStateStatus=CLEAN（勿用单条 green 作合并信号）
+# 等 head SHA 0d18764 的所有 run 终态 success 且 mergeStateStatus=CLEAN（勿用单条 green 作合并信号）
 gh pr view 135 --repo DTALEX66/WORK-LAB --json state,mergeStateStatus
 # CLEAN 后：
 gh pr merge 135 --repo DTALEX66/WORK-LAB --squash
 git push origin --delete p0/docs-taskcard-authority   # 仅合并成功后
 git checkout main && git pull --ff-only origin main    # 回读新 SHA
 ```
-- 合并后 main 应含 P0-02/03/04 全 diff；`#135` state=MERGED；ERR-089 lifecycle 由 `OPEN_UNTIL_MERGE` → 已合并。
+- 合并后 main 应含 P0-02/03/04 + P1-01 全 diff；`#135` state=MERGED；ERR-089 lifecycle 由 `OPEN_UNTIL_MERGE` → 已合并。
 - **合并前**若 CI 报新失败：拉 `gh api` 逐 job 日志定位（`--allow-escape-sequences`），修真值，勿 --admin 强合（需用户授权）。
-- 本地验证状态（`2daa749`）：`ERROR_LEDGER_PASS entries=89`；governance 可诊断逻辑实测输出 failing_members/exit/head_commit/full_log；`test_workflow_governance` marker 测试 `OK`；投影 `CURRENT_STATE_FRESHNESS_PASS`（4 个改动文件均不在 CANONICAL_FILES 输入集，无需重生成投影）；本地 `Ran 1650 tests OK(skipped=8)` + 3 个本地 pytest 缺失（非 CI 失败，CI 经 lock 安装）。
+- 本地验证状态（`0d18764`）：`ERROR_LEDGER_PASS entries=89`；governance 可诊断逻辑实测输出 failing_members/exit/head_commit/full_log；前端 P1-01 `tsc -b` rc=0 + `vitest` 8 文件/48 测试全过 + `vite build` 239kB 全绿；投影 `CURRENT_STATE_FRESHNESS_PASS`（P0-02/03/04 + P1-01 改动文件均不在 CANONICAL_FILES 输入集，无需重生成投影）；#135 batch-1 `2daa749` 主 gate 7/7 success（含 4 个原失败 job）已验证。
 
-### 2. P1-01 · Observer 一级导航 15→7（feature freeze 后另批）
-- 现 15 个一级 lane（`apps/observer/frontend/src/views/`）须 regroup 为 7 个一级入口（§6.1.1，P1-B 已定义，仅 UI 聚合，不加代码执行/审批/重试）。
-- 前置：冻结期已过（P0 收敛完成 + main 双端一致 + 无 open PR）。
-- 验收：7 一级入口 + 可导航 IA；保留全部 15 lane 的可达性（无数据丢失，仅导航聚合）；`#113` P1-B nav-regroup 契约。
+### 2. P1-01 · Observer 一级导航 15→7（**已落地 `0d18764`，随 #135 合入**）
+- 已按 P1-D §3.1 regroup 为 7 个一级入口（Home/Work/Agents/Projects/Governance/Integrations/System，`Sidebar.tsx` 导出 `NAV_GROUPS`）；Projects 提为一级视图（`ProjectsView`，复用原 AgentsView 折叠的项目平台表真值投影，抽出共享 `ProjectsTable`）。
+- 纯 IA 重组：16 个可达 lane（overview 合成 + 15 registry）恰好分满 7 组各一次（`viewRegistry.test.ts` 不变量测试锁定，48 测试全过）；`?view=` deep-link 机制不变；**零新增执行/审批/重试/apply/rollback**（§8 Observer 只读铁律守住）。
+- 前端功能真实性审计（0 合成/0 TODO/0 假完成 + 逐 lane 5 级定级 + build/test 铁证）：`reports/FRONTEND-AUDIT-20260926.md`。
+- 剩余边界（非本批次范围）：3 个后端投影缺口（approvals[] / software[] / workspace.plan.tasks 未 wire 进 snapshot）保持 UNKNOWN 现状即合规，需后端契约扩展另批。
 
 ### 3. 长期 OWE / 边界（非本周期范围，勿误判为已闭环）
 - **U19 desktop 层**：OBE（`app.exe` 缺 `WebView2Loader.dll`，需 MSVC runner + 真 WebView 回读才证）；CI `36088069094` 是 GREEN 先例但未证 live WebView。
