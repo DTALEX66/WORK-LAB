@@ -61,22 +61,18 @@
 
 ## 三、交接（下一批接棒）
 
-**主分支 `main` @ `e6b501b`**（origin/main 一致）。短命分支 `p0/docs-taskcard-authority` @ **`0d18764`**（PR `#135` OPEN，CI 在 `0d18764` 重跑中）。
+**主分支 `main` @ `c59e621`**（origin/main 一致，双端核验）。短命分支 `p0/docs-taskcard-authority` **已删除**（远端 + 本地），#135 state=**MERGED** @ `c59e621`（squash，mergedAt 2026-09-26T02:51:29Z；main gate run `36212991950` 7/7 job success）。
 
-> 历史过程（保留为历史，不再描述为当前）：#135 曾经历 `53e7108`（P0-02/03）→ `b219fe2`（+ERR-089 账本）→ `61f4db9`（+交付文档包，其 CI run `36204845454` 暴露 3 个真实失败 job）→ `2daa749`（batch-1：A1 账本枚举 + A2 排他 fixture + A3 governance 可诊断 + P0-02 测试 marker 对齐，**主 gate run `36210426221` 7/7 job success 验证通过**）→ `440d257`（batch-1：A4 交接绑定最新 head + 真实 checks）→ `f28b1b0`（batch-2：前端功能真实性审计 `reports/FRONTEND-AUDIT-20260926.md`）→ **`0d18764`（batch-2：P1-01 前端 15-lane → 7 一级导航 IA 重组，按 P1-D §3.1）**。ERR-089 交付时序事故已在 `b219fe2` 记入账本并于 `2daa749` 修合规。
+> 历史过程（保留为历史，不再描述为当前）：#135 曾经历 `53e7108`（P0-02/03）→ `b219fe2`（+ERR-089 账本）→ `61f4db9`（+交付文档包，其 CI run `36204845454` 暴露 3 个真实失败 job）→ `2daa749`（batch-1：A1 账本枚举 + A2 排他 fixture + A3 governance 可诊断 + P0-02 测试 marker 对齐，主 gate run `36210426221` 7/7 success）→ `440d257`（A4 交接绑定）→ `f28b1b0`（batch-2 前端审计）→ `0d18764`（P1-01 前端 15-lane → 7 一级导航）→ `0b64cbf`（register 登记 + 交付绑定，**pre-merge 双条件 MERGE_READY：全 run success + mergeStateStatus=CLEAN**）。ERR-089 交付时序事故已在 `b219fe2` 记入账本并于 `2daa749` 修合规；本次合并严格按 ERR-089 协议执行（pre-merge 即时复核 CLEAN → squash merge → main 回读 → 才删分支），未复现事故。
 
-### 1. 合并 #135（唯一未闭环动作）
-```
-# 等 head SHA 0d18764 的所有 run 终态 success 且 mergeStateStatus=CLEAN（勿用单条 green 作合并信号）
-gh pr view 135 --repo DTALEX66/WORK-LAB --json state,mergeStateStatus
-# CLEAN 后：
-gh pr merge 135 --repo DTALEX66/WORK-LAB --squash
-git push origin --delete p0/docs-taskcard-authority   # 仅合并成功后
-git checkout main && git pull --ff-only origin main    # 回读新 SHA
-```
-- 合并后 main 应含 P0-02/03/04 + P1-01 全 diff；`#135` state=MERGED；ERR-089 lifecycle 由 `OPEN_UNTIL_MERGE` → 已合并。
-- **合并前**若 CI 报新失败：拉 `gh api` 逐 job 日志定位（`--allow-escape-sequences`），修真值，勿 --admin 强合（需用户授权）。
-- 本地验证状态（`0d18764`）：`ERROR_LEDGER_PASS entries=89`；governance 可诊断逻辑实测输出 failing_members/exit/head_commit/full_log；前端 P1-01 `tsc -b` rc=0 + `vitest` 8 文件/48 测试全过 + `vite build` 239kB 全绿；投影 `CURRENT_STATE_FRESHNESS_PASS`（P0-02/03/04 + P1-01 改动文件均不在 CANONICAL_FILES 输入集，无需重生成投影）；#135 batch-1 `2daa749` 主 gate 7/7 success（含 4 个原失败 job）已验证。
+### 1. 合并 #135（**已完成 · 2026-09-26**）
+- `#135` state=**MERGED** @ main `c59e621`（squash，mergedAt 2026-09-26T02:51:29Z）；短命分支 `p0/docs-taskcard-authority` 已删（远端 + 本地），远端仅余 `main`。
+- main 新 gate run `36212991950` @ `c59e621`：**7/7 job success**（gate-plan/integration/workflow-assistance/observer/token-monitor/supply-chain-security/aggregate 全绿），双端一致核验通过。
+- 合并前 pre-check：`mergeStateStatus=CLEAN` + 全 run 终态 success（`0b64cbf` 三条 run 全绿）；严格按 ERR-089 协议（即时复核 CLEAN → squash → main 回读 → 才删分支），未复现交付时序事故。ERR-089 lifecycle 由 `OPEN_UNTIL_MERGE` → **已合并关闭**。
+- main 现含 P0-02/03/04 + P1-01 全 diff（18 文件 +802/−78），含交付文档包 `reports/WL3-DELIVERY-20260925.md` + 前端审计 `reports/FRONTEND-AUDIT-20260926.md`。
+
+### 1b. 下一批接棒（main `c59e621` 之后）
+- P0/P1 收敛段全部闭环；后续按 §32 冻结期管理。剩余非本周期 OWE 见第 3 节（U19 desktop 层 / DSH HKLM / 本地 venv pytest 缺口）。
 
 ### 2. P1-01 · Observer 一级导航 15→7（**已落地 `0d18764`，随 #135 合入**）
 - 已按 P1-D §3.1 regroup 为 7 个一级入口（Home/Work/Agents/Projects/Governance/Integrations/System，`Sidebar.tsx` 导出 `NAV_GROUPS`）；Projects 提为一级视图（`ProjectsView`，复用原 AgentsView 折叠的项目平台表真值投影，抽出共享 `ProjectsTable`）。
