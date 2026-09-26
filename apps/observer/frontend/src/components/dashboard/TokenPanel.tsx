@@ -10,6 +10,11 @@ export function TokenPanel({ snap }: { snap: SnapshotV3 | null }) {
   const outT = tt?.outputTokens ?? null
   const total = tt?.totalTokens ?? null
   const max = Math.max(inT ?? 0, outT ?? 0, 1)
+  // B5: a progress bar needs a REAL source. The value text is always shown
+  // honestly (fmtTokens(null) -> UNKNOWN, never "0"); the percentage bar is
+  // only drawn when at least one real token figure exists. No token data ->
+  // no fabricated 0% bar, just the UNKNOWN values + the real state.
+  const hasToken = inT != null || outT != null || total != null
   return (
     <Card>
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border text-sm font-medium">
@@ -26,15 +31,22 @@ export function TokenPanel({ snap }: { snap: SnapshotV3 | null }) {
               <span className="text-zinc-400">{d.label}</span>
               <span className="tabular-nums text-zinc-200">{fmtTokens(d.value)}</span>
             </div>
-            <div className="h-2 rounded-full bg-zinc-700/50 overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: (max ? ((d.value ?? 0) / max) * 100 : 0) + '%', background: d.color }} />
-            </div>
+            {hasToken && (
+              <div className="h-2 rounded-full bg-zinc-700/50 overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: (max ? ((d.value ?? 0) / max) * 100 : 0) + '%', background: d.color }} />
+              </div>
+            )}
           </div>
         ))}
         <div className="flex justify-between text-xs text-zinc-400 pt-1">
           <span>总计</span>
           <span className="tabular-nums text-zinc-200">{fmtTokens(total)}</span>
         </div>
+        {!hasToken && (
+          <p className="text-[11px] text-zinc-500">
+            无 token 数据{snap ? ' · 快照已接入但 token 未知' : ' · 数据源未接入'}（不估算、不伪造 0%）
+          </p>
+        )}
         <p className="text-[10px] text-zinc-600">成本质量（EXACT/ESTIMATED/UNKNOWN）由后端投影，前端不估算金额、汇率或配额。</p>
       </div>
     </Card>
