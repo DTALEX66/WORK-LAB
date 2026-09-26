@@ -473,15 +473,52 @@ class _WorkflowHTTPServer(ThreadingHTTPServer):
                     self._sidecar_lock.release()
 
 
+# D1 (Lite visible delivery): MIME types for the read-only static frontend.
+# A closed, explicit map — no dynamic content negotiation, no exec. Only the
+# asset classes a Vite React build emits.
+_STATIC_MIME = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".mjs": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".ico": "image/x-icon",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
+    ".txt": "text/plain; charset=utf-8",
+    ".map": "application/json; charset=utf-8",
+    ".webmanifest": "application/manifest+json",
+}
+
+
 def create_server(
     sidecar: WorkflowSidecar,
     host: str = "127.0.0.1",
     port: int = 0,
     *,
     live_updates: bool = False,
+    frontend_root: Path | None = None,
 ) -> ThreadingHTTPServer:
     if not _is_loopback_host(host):
         raise ValueError("sidecar host must be loopback-only")
+
+    # D1: optional read-only static root (a Vite React build's `dist/`). When
+    # provided, the sidecar serves it to the browser at `http://<host>:<port>/`
+    # so the SAME production artifact that Tauri ships is also reachable via
+    # an authorized local browser read-only entry — no second page, no fake
+    # data. API routes always take precedence over static files; every
+    # non-GET method stays 405 (read-only contract unchanged). `frontend_root`
+    # is None by default, so existing callers see zero behavior change.
+    static_root = None
+    if frontend_root is not None:
+        static_root = frontend_root.resolve()
+        if not static_root.is_dir():
+            raise ValueError("frontend_root is not a directory: " + str(frontend_root))
 
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -501,6 +538,43 @@ def create_server(
                 self.send_header("Vary", "Origin")
             self.end_headers()
             self.wfile.write(body)
+
+        def _serve_static(self, path: str) -> bool:
+            """D1: serve a file from the read-only static root (if enabled).
+
+            Returns True when a static file was served, False when the path is
+            not a static asset (caller falls through to the API 404). Every
+            mapping is content-neutral (no template substitution, no eval),
+            the root is a Vite `dist/` directory, and path traversal is
+            rejected so the sidecar can never read outside the artifact.
+            """
+            if static_root is None:
+                return False
+            rel = path.lstrip("/")
+            candidate = (static_root / rel).resolve() if rel else (static_root / "index.html").resolve()
+            try:
+                candidate.relative_to(static_root)
+            except ValueError:
+                self.send_json(403, {"status": "static_path_escape"})
+                return True
+            if not candidate.is_file():
+                # SPA fallback: any unknown non-asset GET -> index.html, so the
+                # React router can own client-side routes. index.html missing
+                # means the static root has no frontend -> not a static asset.
+                index = (static_root / "index.html").resolve()
+                if index.is_file() and index != candidate:
+                    candidate = index
+                else:
+                    return False
+            mime = _STATIC_MIME.get(candidate.suffix.lower(), "application/octet-stream")
+            data = candidate.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", mime)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(data)
+            return True
 
         def do_GET(self) -> None:  # noqa: N802
             origin = self.headers.get("Origin")
@@ -555,6 +629,8 @@ def create_server(
                     finally:
                         sidecar.revision_hub.disconnect(client.client_id)
             else:
+                if self._serve_static(path):
+                    return
                 self.send_json(404, {"status": "not_found"})
 
         def do_POST(self) -> None:  # noqa: N802
@@ -598,6 +674,11 @@ def main() -> int:
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--worker-tick", type=float, default=30.0)
     parser.add_argument("--no-worker", action="store_true")
+    parser.add_argument(
+        "--frontend-root", type=Path, default=None,
+        help="D1: read-only Vite `dist/` directory to serve at `/` (browser read-only entry). "
+             "Optional; when omitted the sidecar is API-only (unchanged behavior).",
+    )
     args = parser.parse_args()
     project_root = args.project_root.resolve()
     runtime_root = (args.runtime_root or project_root / ".hermes" / "task-runtime" / "workflow").resolve()
@@ -607,6 +688,7 @@ def main() -> int:
         args.host,
         args.port,
         live_updates=True,
+        frontend_root=args.frontend_root,
     )
     try:
         if not args.no_worker:

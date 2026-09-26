@@ -27,11 +27,14 @@ interface LaneDef {
 
 // Lane groups aligned to P1-D §3.1 (2026-09-26): 7 primary nav entries
 // (Home / Work / Agents / Projects / Governance / Integrations / System).
-// Each group folds to its second-level lanes; all 15 registry lanes + the
+// Each group folds to its second-level lanes; all registry lanes + the
 // synthetic overview stay reachable (no data loss, pure IA regroup).
+// D3 (2026-09-26 stage D): the new `work` lane leads the work group — the
+// primary read-only closed loop (entry -> project -> task/execution ->
+// state/failure -> Context/Evidence -> next step) with a right-side Inspector.
 export const NAV_GROUPS: { key: string; label: string; ids: string[] }[] = [
   { key: 'home',   label: '首页',   ids: [OVERVIEW_ID] },
-  { key: 'work',   label: '工作',   ids: ['executions', 'task-packs', 'delivery'] },
+  { key: 'work',   label: '工作',   ids: ['work', 'executions', 'task-packs', 'delivery'] },
   { key: 'agents', label: '智能体', ids: ['agents'] },
   { key: 'projects', label: '项目', ids: ['projects'] },
   { key: 'gov',    label: '治理',   ids: ['rules-policy', 'approvals', 'audit', 'trust'] },
