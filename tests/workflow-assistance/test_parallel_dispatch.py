@@ -333,6 +333,44 @@ class ParallelDispatchOfTests(unittest.TestCase):
         self.assertEqual(r.status, "DEGRADED")
         self.assertIn("no specs supplied to parallel_dispatch_of", r.notes)
 
+    def test_summary_order_is_input_order_even_when_completion_is_reversed(self):
+        """Regression: ``succeeded``/``failed``/``notes`` must follow the INPUT
+        spec order, never the (nondeterministic) thread-completion order.
+
+        ``s1`` uses a SlowAdapter so it finishes *after* the instant ``s2``; the
+        old code built the summary from an ``as_completed``-filled dict, so the
+        payload came back ``['s2', 's1']`` and CI flaked against the input-order
+        expectation. Determinism must hold regardless of finish order.
+        """
+        slow_a = SlowAdapter("a", delay=0.25)   # spec s1 -> slow, finishes second
+        fast_b = OkAdapter("b")                  # spec s2 -> fast, finishes first
+        fed = FakeFederation({"a": slow_a, "b": fast_b})
+        r = pd.parallel_dispatch_of(fed, [
+            {"name": "s1", "op": acp.Op.NEW, "executors": ["a"], "payload": {}},
+            {"name": "s2", "op": acp.Op.NEW, "executors": ["b"], "payload": {}},
+        ])
+        self.assertEqual(r.status, "OK")
+        # input order, not completion order:
+        self.assertEqual(r.payload["succeeded"], ["s1", "s2"])
+        self.assertEqual(list(r.payload["per_spec"].keys()), ["s1", "s2"])
+        self.assertEqual(r.payload["failed"], [])
+
+    def test_failed_summary_stays_in_input_order(self):
+        """A failing slow spec must still report in input order, and notes must
+        be ordered by spec position (s1 fails, s2 ok)."""
+        slow_raiser = RaisingAdapter("a")
+        fast_b = OkAdapter("b")
+        fed = FakeFederation({"a": slow_raiser, "b": fast_b})
+        r = pd.parallel_dispatch_of(fed, [
+            {"name": "s1", "op": acp.Op.NEW, "executors": ["a"], "payload": {}},
+            {"name": "s2", "op": acp.Op.NEW, "executors": ["b"], "payload": {}},
+        ])
+        self.assertEqual(r.status, "PARTIAL")
+        self.assertEqual(r.payload["succeeded"], ["s2"])
+        self.assertEqual(r.payload["failed"], ["s1"])
+        # only the failed spec appears in notes, by name:
+        self.assertEqual([n.split(":")[0] for n in r.notes], ["s1"])
+
 
 class RealFederationSmokeTests(unittest.TestCase):
     """Read-only smoke against the real registry: hermes new() degrades
