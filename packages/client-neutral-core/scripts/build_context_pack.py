@@ -4,6 +4,7 @@ import argparse
 import ctypes
 import datetime as dt
 import hashlib
+import json
 import os
 import re
 import subprocess
@@ -23,8 +24,30 @@ MAX_SECTION_CHARS = 8000
 DEFAULT_MAX_CHARS = 12000
 HARD_MAX_CHARS = 30000
 
-SELECTED_TEXT_FILES = (
+# C1: machine authorities the pack resolves dynamically — no second, hand-maintained
+# path list. The authority index is the source of truth for which files carry
+# top-level authority; module-ownership.json is the source of truth for which
+# source surfaces exist. Legacy docs/mcp and docs/absorption roots were removed
+# at the 2026-09 directory convergence and are no longer declared here.
+AUTHORITY_INDEX = ".project/governance/project-authority-index.json"
+TASKPACK_AUTHORITY_INDEX = ".project/governance/taskpack-authority-index.json"
+MODULE_OWNERSHIP = ".project/governance/module-ownership.json"
+PROJECT_DATA_BOUNDARY = ".project/governance/project-data-boundary.json"
+ERROR_LEDGER = "taskpacks/current/error-ledger.json"
+
+# Always-included top-level materials (machine-truth, current-tree paths only).
+SELECTED_TOP_MATERIALS = (
     "README.md",
+    "AGENTS.md",
+    "WORK-LAB-AUTHORITY.md",
+    AUTHORITY_INDEX,
+    TASKPACK_AUTHORITY_INDEX,
+)
+
+# Workflow docs that survive the 2026-09 convergence (declared, current-tree).
+# docs/mcp/* and docs/absorption/* are gone; a declared-but-missing entry is
+# marked MISSING explicitly, never silently skipped (C1: 缺少材料必须显式标记).
+SELECTED_WORKFLOW_DOCS = (
     "docs/current/workflow-assistance/workflow/project-definition.md",
     "docs/current/workflow-assistance/workflow/gateway-cron-delivery.md",
     "docs/current/workflow-assistance/workflow/agent-evaluation.md",
@@ -32,20 +55,18 @@ SELECTED_TEXT_FILES = (
     "docs/current/workflow-assistance/workflow/local-quality-gates.md",
     "docs/current/workflow-assistance/workflow/ui-skin-system.md",
     "docs/current/workflow-assistance/workflow/project-data-boundary.md",
-    "docs/mcp/workflow-mcp-stack.md",
-    "docs/mcp/mcp-catalog-governance.md",
-    "docs/absorption/open-source-workflow-absorption.md",
+)
+
+SELECTED_CONFIG = (
     "config/config.yaml",
     "config/SOUL.md",
 )
 
-INVENTORY_ROOTS = (
-    "bin",
-    "config",
-    "docs",
+INVENTORY_FALLBACK_ROOTS = (
+    "packages/client-neutral-core/scripts",
+    "packages/client-neutral-core/bin",
+    "services/orchestration",
     "scripts",
-    "skills",
-    "templates",
     "tests",
 )
 
@@ -71,7 +92,7 @@ FORBIDDEN_FILE_NAMES = {
 }
 
 SECRET_PATTERNS = (
-    re.compile(r"(?i)(api[_-]?key|token|secret|password|authorization|bearer)\s*[:=]\s*['\"]?[^\s'\"]{8,}"),
+    re.compile(r"(?i)(api[_-]?key|token|secret|password|authorization|bearer)\s*[:=]\s*['\"]?[^\\s'\"]{8,}"),
     re.compile(r"github_pat_[A-Za-z0-9_]{20,}"),
     re.compile(r"ghp_[A-Za-z0-9]{20,}"),
     re.compile(r"npm_[A-Za-z0-9]{20,}"),
@@ -210,19 +231,118 @@ def read_safe_text(root: Path, relative: str, max_chars: int = MAX_SECTION_CHARS
     return data
 
 
+def read_json_safe(root: Path, relative: str) -> dict | None:
+    path = root / relative
+    if not is_relative_to(path, root) or not path.is_file() or forbidden_path(Path(relative)):
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def authority_materials(root: Path) -> list[str]:
+    """C1: resolve the top-authority + CURRENT + OPEN material set from the
+    authority index itself, not from a second hand-written path list."""
+    materials = list(SELECTED_TOP_MATERIALS)
+    index = read_json_safe(root, AUTHORITY_INDEX)
+    if index:
+        for key in ("topHumanAuthority", "topMachineAuthority"):
+            value = index.get(key)
+            if isinstance(value, str) and value not in materials:
+                materials.append(value)
+        scoped = index.get("scopedAuthorities")
+        if isinstance(scoped, dict):
+            for value in scoped.values():
+                if isinstance(value, str) and value not in materials:
+                    materials.append(value)
+        current = index.get("currentTaskpack")
+        if isinstance(current, str) and current not in materials:
+            materials.append(current)
+        open_register = index.get("currentOpenTaskRegister")
+        if isinstance(open_register, str) and open_register not in materials:
+            materials.append(open_register)
+    else:
+        # Index unreadable: fall back to the declared machine-truth paths (still
+        # current-tree, not historical roots) and let the missing-marker surface
+        # the gap explicitly rather than silently.
+        for fallback in (
+            "WORK-LAB-AUTHORITY.md",
+            TASKPACK_AUTHORITY_INDEX,
+            "taskpacks/current/OPEN-TASK-REGISTER.md",
+        ):
+            if fallback not in materials:
+                materials.append(fallback)
+    return materials
+
+
+def inventory_roots(root: Path) -> list[str]:
+    """C1: the tracked-inventory roots come from module-ownership machine truth.
+
+    The module roots + root-owned paths are declared by
+    ``.project/governance/module-ownership.json``; legacy top-level
+    bin/skills/templates roots were removed at the 2026-09 convergence and are
+    not declared here. A missing/invalid index falls back to the module
+    source-surface roots only.
+    """
+    roots: list[str] = []
+    ownership = read_json_safe(root, MODULE_OWNERSHIP)
+    if ownership:
+        modules = ownership.get("modules")
+        if isinstance(modules, dict):
+            for module in modules.values():
+                if isinstance(module, dict):
+                    path = module.get("path")
+                    if isinstance(path, str):
+                        roots.append(path)
+        owned = ownership.get("rootOwnedPaths")
+        if isinstance(owned, list):
+            roots.extend(str(item) for item in owned if isinstance(item, str))
+    if not roots:
+        roots.extend(INVENTORY_FALLBACK_ROOTS)
+    deduped: list[str] = []
+    for item in roots:
+        if item not in deduped:
+            deduped.append(item)
+    return deduped
+
+
 def tracked_inventory(root: Path, limit: int = 300) -> list[str]:
-    raw = run_git(root, "ls-files", *INVENTORY_ROOTS).splitlines()
-    safe = []
+    raw = []
+    for item_root in inventory_roots(root):
+        try:
+            raw.extend(run_git(root, "ls-files", item_root).splitlines())
+        except Exception:
+            continue
+    seen: set[str] = set()
+    safe: list[str] = []
     for item in raw:
         relative = Path(item)
-        if forbidden_path(relative):
+        if item in seen or forbidden_path(relative):
             continue
+        seen.add(item)
         safe.append(item)
     return safe[:limit]
 
 
 def skill_inventory(root: Path) -> list[str]:
-    skills_root = root / "skills"
+    """C1: skill inventory derives from the module-ownership machine truth.
+
+    Skills live under the declared workflow-assistance module root; the count
+    comes from the actual on-disk inventory, never a historical fixed number.
+    """
+    skills_root: Path | None = None
+    ownership = read_json_safe(root, MODULE_OWNERSHIP)
+    if ownership:
+        modules = ownership.get("modules")
+        if isinstance(modules, dict):
+            for module in modules.values():
+                if isinstance(module, dict) and module.get("owner") == "workflow":
+                    skills_root = root / str(module.get("path", "")) / "skills"
+                    break
+    if skills_root is None:
+        skills_root = root / "packages" / "client-neutral-core" / "skills"
     if not skills_root.exists():
         return []
     items = []
@@ -230,6 +350,76 @@ def skill_inventory(root: Path) -> list[str]:
         rel = skill.parent.relative_to(skills_root)
         items.append(safe_rel(rel))
     return items
+
+
+def _register_head(root: Path, max_chars: int = 4000) -> str | None:
+    """Known state / open tasks: the single live register's head (statuses +
+    reconciliation notes), bounded so it cannot blow the pack budget."""
+    index = read_json_safe(root, AUTHORITY_INDEX)
+    if index and isinstance(index.get("currentOpenTaskRegister"), str):
+        relative = index["currentOpenTaskRegister"]
+    else:
+        relative = "taskpacks/current/OPEN-TASK-REGISTER.md"
+    text = read_safe_text(root, relative, max_chars=max_chars)
+    if text is None:
+        return None
+    return text
+
+
+def _error_ledger_head(root: Path, max_chars: int = 3000) -> str | None:
+    """Known failures: the open error-ledger head (bounded, redacted)."""
+    data = read_json_safe(root, ERROR_LEDGER)
+    if data is None:
+        return None
+    entries = data.get("errors")
+    if not isinstance(entries, list):
+        entries = data.get("entries")
+    if not isinstance(entries, list) or not entries:
+        return None
+    summary = data.get("summary")
+    lines: list[str] = []
+    if summary:
+        lines.append(f"summary: {json.dumps(summary, ensure_ascii=False, sort_keys=True)}")
+    for entry in entries[:10]:
+        if not isinstance(entry, dict):
+            continue
+        lines.append(
+            json.dumps(
+                {key: entry.get(key) for key in ("id", "status", "phase", "evidence_level", "title") if entry.get(key) is not None},
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+        )
+    text = "\n".join(lines)
+    return text[:max_chars] + ("\n[truncated]" if len(text) > max_chars else "")
+
+
+def _critical_constraints(root: Path, ownership: dict | None, boundary: dict | None) -> str:
+    """C1: key constraints that must survive compression, front-loaded.
+
+    Owner + allowed/forbidden paths + data boundary come from the machine
+    authorities, not from prose memory.
+    """
+    lines: list[str] = []
+    if ownership:
+        single_writer = ownership.get("singleWriter")
+        lines.append(f"- Single-writer checkout: {'yes' if single_writer else 'unknown'}.")
+        modules = ownership.get("modules")
+        if isinstance(modules, dict):
+            for name, module in modules.items():
+                if isinstance(module, dict):
+                    lines.append(f"- Module {name}: root `{module.get('path')}`, owner `{module.get('owner')}`.")
+        owned = ownership.get("rootOwnedPaths")
+        if isinstance(owned, list) and owned:
+            lines.append("- Root-owned paths: " + ", ".join(f"`{p}`" for p in owned))
+    if boundary:
+        forbidden = boundary.get("forbiddenExternalRoots")
+        if isinstance(forbidden, list) and forbidden:
+            lines.append("- Forbidden external roots: " + ", ".join(f"`{p}`" for p in forbidden))
+        runtime = boundary.get("runtimeRoot")
+        if runtime:
+            lines.append(f"- Runtime/task-artifact root: `{runtime}`.")
+    return "\n".join(lines)
 
 
 def build_context_pack(
@@ -245,6 +435,14 @@ def build_context_pack(
     recent = run_git(root, "log", "-5", "--oneline", "--date=short")
     inventory = tracked_inventory(root)
     skills = skill_inventory(root)
+
+    ownership = read_json_safe(root, MODULE_OWNERSHIP)
+    boundary = read_json_safe(root, PROJECT_DATA_BOUNDARY)
+    register_head = _register_head(root)
+    ledger_head = _error_ledger_head(root)
+
+    # Authority material set resolved from the index (C1: no second path list).
+    materials = authority_materials(root) + list(SELECTED_WORKFLOW_DOCS) + list(SELECTED_CONFIG)
 
     sections: list[str] = []
     sections.append(
@@ -264,12 +462,40 @@ def build_context_pack(
         "- Secret-like values are redacted before rendering.\n"
         "- It strengthens the global Hermes Agent + CC Switch + Codex workflow; it is not proof that live Hermes has reloaded these assets.\n"
     )
+    constraints = _critical_constraints(root, ownership, boundary)
+    if constraints:
+        sections.append(
+            "## Critical Constraints (must survive compression)\n\n"
+            f"{constraints}\n"
+        )
     if context_lines:
         project_id = context_project_id or root.name
         safe_lines = normalize_context_lines(context_lines, project_id=project_id)
         sections.append(render_context_lines(safe_lines))
     sections.append(f"## Git Status\n\n```text\n{status}\n```\n")
     sections.append(f"## Recent Commits\n\n```text\n{recent}\n```\n")
+
+    # C1: explicit missing-material markers — a generation success is NOT proof
+    # of a complete recovery; whatever the index declares but the tree lacks is
+    # listed here, never silently dropped.
+    present: list[str] = []
+    missing: list[str] = []
+    for relative in materials:
+        text = read_safe_text(root, relative)
+        if text is None:
+            missing.append(relative)
+        else:
+            present.append(relative)
+    if missing:
+        sections.append(
+            "## Missing Materials (explicit — do not reconstruct from memory)\n\n"
+            + "\n".join(f"- MISSING `{item}`" for item in missing)
+            + "\n"
+        )
+    if register_head:
+        sections.append(f"## Current Task State (live register head)\n\n```text\n{register_head.rstrip()}\n```\n")
+    if ledger_head:
+        sections.append(f"## Known Failures (open error-ledger head)\n\n```text\n{ledger_head.rstrip()}\n```\n")
     sections.append(
         "## Portable Asset Inventory\n\n"
         + "\n".join(f"- `{item}`" for item in inventory)
@@ -277,9 +503,17 @@ def build_context_pack(
         + "\n"
     )
     sections.append(
-        "## Skill Inventory\n\n"
+        "## Skill Inventory (from module-ownership machine truth; count is live, not historical)\n\n"
         + ("\n".join(f"- `{item}`" for item in skills) if skills else "_No skills found._")
-        + "\n"
+        + f"\n- total: {len(skills)}\n"
+    )
+    sections.append(
+        "## Recovery Checklist (generation success != recovery complete)\n\n"
+        "- Verify HEAD/branch against the authority baseline before acting; an unmerged PR is not main.\n"
+        "- A historical or archived path is not a current path; use only the declared current-tree materials above.\n"
+        "- A task without a receipt is not complete; check the live register + error ledger before claiming done.\n"
+        "- After a session or executor change, re-resolve the critical constraints section (owner, forbidden roots, single-writer) from the machine authorities.\n"
+        "- Acceptance: `python services/orchestration/run_quality_gate.py verify`; rollback = revert the last merge to the frozen pre-convergence anchor in WORK-LAB-AUTHORITY.md §13.\n"
     )
     sections.append(
         "## Handoff Reminders\n\n"
@@ -289,7 +523,7 @@ def build_context_pack(
         "- Keep one writer per checkout; context-pack generation is evidence/handoff, not completed product work by itself.\n"
         "- If output is used in another project, regenerate inside that project so paths and git evidence match.\n"
     )
-    for relative in SELECTED_TEXT_FILES:
+    for relative in present:
         text = read_safe_text(root, relative)
         if text is None:
             continue

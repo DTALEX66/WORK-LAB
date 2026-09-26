@@ -54,7 +54,7 @@ gates:
   token-monitor:
     command: npm ci && npm run build && cargo test --locked && cargo check --locked
     paths:
-      - packages/client-neutral-core/apps/token-monitor-desktop/**
+      - apps/token-monitor/**
     tiers:
       - module
       - full
