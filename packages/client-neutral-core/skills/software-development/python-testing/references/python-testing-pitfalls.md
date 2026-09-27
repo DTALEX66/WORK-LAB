@@ -132,6 +132,8 @@ Key patterns:
 - SQL-free service module testing (pass `list[dict]` instead of querying DB)
 - OS-specific `pytest.raises` match patterns
 - Dataclass with defaults — no TypeError on empty init
+- Hyphenated test directories (`tests/workflow-assistance/`…) cannot be dotted module paths: `python -m unittest tests.workflow-assistance.test_x` dies with `ModuleNotFoundError` (a hyphen is not a Python identifier, and the package chain is missing). Run the test FILE directly instead — a file that self-resolves the repo root via `Path(__file__).resolve().parents[N]` is standalone-runnable: `python tests/workflow-assistance/test_x.py`.
+- When a test file imports a module that lives in a sibling directory (`from canonical_store import ...` where the module sits in a `scripts/` dir), set `PYTHONPATH` to that directory for the run (Windows `;`-separator even from Git-Bash). Without it the run fails at import even though the test file itself is fine.
 
 ## §12 Similarity / Vector Search Tests Need Strong Anchors
 

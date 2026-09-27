@@ -96,13 +96,13 @@ entries:
 - name: python-testing
   source: packages/client-neutral-core/skills/software-development/python-testing/SKILL.md
   live: packages/client-neutral-core/skills/software-development/python-testing/SKILL.md
-  source_sha256: 2d1ffd75f2ae44eccfa6fe151fd690d0e68784dad48e31ad9599fb9a9b7e7eea
+  source_sha256: 207fe5e98f6c5459d1d8dc830be0482a5355a18617e6d1c94b79911191d95e1c
   version: 1.1.0
   trust: repository-controlled
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 2d1ffd75f2ae44eccfa6fe151fd690d0e68784dad48e31ad9599fb9a9b7e7eea
+  live_sha256: 207fe5e98f6c5459d1d8dc830be0482a5355a18617e6d1c94b79911191d95e1c
 - name: requesting-code-review
   source: packages/client-neutral-core/skills/software-development/requesting-code-review/SKILL.md
   live: packages/client-neutral-core/skills/software-development/requesting-code-review/SKILL.md
@@ -126,10 +126,10 @@ entries:
 - name: windows-development-environment
   source: packages/client-neutral-core/skills/software-development/windows-development-environment/SKILL.md
   live: packages/client-neutral-core/skills/software-development/windows-development-environment/SKILL.md
-  source_sha256: 454de204857506e7e49b635909048f6f067f084fd474cd70f932e6986246392d
+  source_sha256: 2e1fc6dcdf51ee899700da4615f50e419eb4d54cfb726a5250e58809f7ca1aae
   version: 1.3.0
   trust: repository-controlled
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 454de204857506e7e49b635909048f6f067f084fd474cd70f932e6986246392d
+  live_sha256: 2e1fc6dcdf51ee899700da4615f50e419eb4d54cfb726a5250e58809f7ca1aae

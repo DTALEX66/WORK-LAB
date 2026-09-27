@@ -41,6 +41,7 @@ Symptom → one-line cause → full write-up in `references/python-testing-pitfa
 | S-V-O extractor swallows "was" into subject | Passive-voice be-verbs | §9 |
 | `WindowsPath.is_relative()` missing | Use `relative_to` + `except ValueError` | §10 |
 | Monorepo subdir imports / dedup | Hyphen dirs, SQL-free services | §11 |
+| `python -m unittest a.b-c.test_x` → `No module named ...` | Hyphenated test dirs are not valid dotted module paths; run the test file directly | §11 |
 | Vector-search test ranks wrong doc | Weak anchors in query terms | §12 |
 | Green suite hides deprecation defects | Probe `-W error::DeprecationWarning` | §13 |
 | Compliance test missed a blocked engine | Hardcoded list vs registry-driven | §14 |
@@ -71,6 +72,10 @@ Symptom → one-line cause → full write-up in `references/python-testing-pitfa
 | WIP fixture re-dirties with CRLF/LF | Test opens it in default text mode | §35 |
 | Convention gate flags CRLF that's blob-clean | Working-tree vs blob divergence | §36 |
 | `isinstance`/`assertIs` on a class or enum loaded via `spec_from_file_location` passes locally, breaks in CI (or vice-versa) | Two copies of the same module hold two distinct class objects | §37 |
+| Green run littered with `WinError 10038` thread tracebacks | Teardown closed the socket while the background `serve_forever` thread was still in `select()`; close before join | §38 |
+| Client awaiting an error response on an HTTP request that carries a body sometimes gets `ConnectionAbortedError` (WinError 10053) instead of the 4xx | Server sent the error before draining the unread request body → socket reset | §39 |
+| A stress/"green" script whose only assertion is `errors == 0` proves nothing | Requests never actually reached the server (e.g. a NameError at connection setup), so the error set is empty — assert the expected status distribution instead | §40 |
+| Concurrent fan-out summary order flaps between runs | Output built from `as_completed()` completion order, not input order — derive slots in input order and add a forced-ordering negative control | §41 |
 
 ## §37 — Class/enum identity breaks across `spec_from_file_location` module copies
 
@@ -81,6 +86,27 @@ Services loaded with `importlib.util.spec_from_file_location` (no package `__ini
 - **Prefer local constants over cross-module class introspection** (e.g. `ExtensionType._MEMBERS`): reach for the same data via a module-local mirror or duck-typed read so a re-loaded copy can't break the gate.
 
 Rule: in any spec-loaded service boundary, write cross-object checks as shape/value tests, not identity tests; if a gate does `isinstance` on a loaded module's class, prove the check still holds when the module is loaded twice.
+
+## §38 — Serve-loop teardown order: `shutdown()` → `thread.join()` → `server_close()`
+
+A background-threaded `HTTPServer` test that only `addCleanup(server.shutdown)` + `addCleanup(server.server_close)` closes the socket while the `serve_forever` thread is still inside `selector.select()` on it. The thread then prints `OSError: [WinError 10038] 在一个非套接字上尝试了一个操作` (or the Linux equivalent) into stderr for every teardown — tests still pass, but the noise masks a later real failure and can trip strict runners. Fix: keep the thread reference, and in ONE cleanup do `server.shutdown(); thread.join(); server.server_close()`. `shutdown()` alone does not join the thread, and `server_close` before join is the race.
+
+## §39 — Drained request body on error responses (deterministic 4xx under load)
+
+When a request handler rejects BEFORE reading the request body (auth guard, routing 404, field validation), the socket still holds the client's unread body bytes; closing it makes the kernel send RST, so the client awaiting the error response gets `ConnectionAbortedError` (WinError 10053) instead of the 4xx payload. This is load- and timing-dependent, so it only surfaces under the full suite or a stress run. Server fix: before writing any error response, drain the unread body up to the declared `Content-Length` (best-effort, bounded chunks). Client/test side: never assert a 4xx over a connection whose request carried a body unless the server is known to drain.
+
+## §40 — Prove a fix against the load that produced it; assert the distribution, not just emptiness
+
+"No errors remain" is a vacuous green when the harness crashed before performing any request (a missing `import`, a NameError at connection setup, a mis-scoped fixture): `errors == []` then proves nothing. Rules:
+- Re-run the failing scenario exactly as it failed (same concurrency pattern if the original failure was load-induced), and assert the POSITIVE expected shape — e.g. "N requests of path P all returned code C" (a status-count distribution), not merely "zero exceptions".
+- A stress proof of a transport fix must keep in-flight concurrency at or under the server's listen backlog (single-threaded `HTTPServer` default `request_queue_size` is small); a burst that overflows the backlog produces refused connections that are a different bug from the one under test — it creates false positives and false negatives.
+- Confirm the requests actually reached the server (assert on response status distribution / server-side observation) before trusting an empty error list.
+
+## §41 — Concurrent dispatch must preserve input order, not completion order
+
+A fan-out that runs N subtasks with `concurrent.futures` and whose result order must match the input order leaks nondeterminism when the summary/list is built by iterating `as_completed()` in completion order: which task finishes first varies with timing, so an output order like `['s2','s1']` vs `['s1','s2']` flaps. Two rules:
+- **Derive order from the input, not completion.** Collect each result into a slot keyed by its input index as it completes, then read the slots in input order. `as_completed` is only for *running concurrently*; it must not drive the output ordering.
+- **Ship a forced-ordering negative control.** Add a test that deliberately slows one specific task (a bounded sleep on task 0) so completion order is guaranteed to differ from input order, then assert the summary is still input-ordered. Without this, the flake only surfaces under load and the suite is green locally by luck. Re-run the control a handful of times to confirm the ordering is stable, not coincidentally green.
 
 ## Verification Checklist
 

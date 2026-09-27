@@ -11,7 +11,7 @@
 | 层 | 本轮结论 | 证据 |
 |---|---|---|
 | ① Existence 存在 | PASS | 21/21 受管目标 live 仍在（3 项内容已漂移，见 §5） |
-| ② Source equivalence 源等价 | **有缺口** | 本轮**未**发布（guard 拒绝既有漂移），覆盖层未与仓库源重新对齐；`SOUL.md` 与 3 个 skill 仍为旧基线 |
+| ② Source equivalence 源等价 | **PASS（本轮修复后成立）** | 21/21 收敛；live 与仓库逐字节一致（例：`python-testing/SKILL.md` `207fe5e9…`、`windows-development-environment/SKILL.md` `2e1fc6dc…` 两侧相同）；guard verify `will write 0 target(s)`、`curator_foldback --check` = 0 漂移 |
 | ③ Runtime enablement 运行时启用 | PASS | `hermes --version` 读回新版本；`doctor` 读回 config v46；runtime venv 已切换 |
 | ④ Behavioral application 行为生效 | PASS（限桌面入口） | 桌面 `.lnk` 启动 → 6 进程、主窗口标题 `Hermes`、`responding=True`、关闭后进程归零 |
 
@@ -83,10 +83,12 @@ hermes update --yes --backup
 | 3 | 更新器自证 | receipt `outcome=success` + exit 0 | **PASS** |
 | 4 | 健康检查 | `hermes doctor` | **PASS（2 项非阻塞既有 issue）** |
 | 5 | hooks | `hermes hooks doctor` | **PASS** `All shell hooks look healthy`（allowlisted / script unchanged / JSON valid） |
-| 6 | 受管资产 guard | `sync_hermes_workflow_assets.py`（无 `--apply`，只读判定） | **零新增漂移**：前后 drift 集合逐字相同（3 项既有） |
-| 7 | curator 漂移 | `curator_foldback.py --check` | 5 项漂移（见 §5），与厂商更新无关 |
+| 6 | 受管资产 guard | `sync_hermes_workflow_assets.py`（无 `--apply`，只读判定） | **21/21 CONVERGED**：发布前 3 项漂移 → 修复后 `will write 0 target(s)`、exit 0（见 §5） |
+| 7 | curator 漂移 | `curator_foldback.py --check` | **drifted managed targets: 0**（发布前 5 项 → 0） |
 | 8 | 桌面入口真实启动 | 启动 → 进程/窗口/响应读回 → 关闭 | **PASS** `process_count=6`、`main_window_title=Hermes`、`responding=true`、关闭后 `0` |
 | 9 | 回滚材料就位 | 代码 ref + 数据备份 + 快照 | **PASS**（见 §6），且本轮备份**已核实含 `SOUL.md`（3492 条目）**，修复了 2026-09-17 记录的产品侧缺口 |
+| 10 | 技能来源门禁 | `run_quality_gate.py skill-provenance` | **PASS**（修复前 FAIL：`source SHA drift: windows-development-environment`） |
+| 11 | 技能生命周期 | `skill_lifecycle.py status` | **PASS**（exit 0） |
 
 ---
 
@@ -102,22 +104,35 @@ hermes update --yes --backup
 
 ---
 
-## 5. 既有覆盖层漂移（本轮登记，**未修复**）
+## 5. 覆盖层漂移：本轮**已全部修复**（operator 授权轮）
 
-`sync_hermes_workflow_assets.py`（guard，三方比较 baseline × live × candidate）**拒绝发布**，exit 1：
+更新后首轮 `sync_hermes_workflow_assets.py`（guard，三方比较 baseline × live × candidate）**拒绝发布**，exit 1，共 3 项漂移；`curator_foldback --check` 额外暴露 2 项。用户本轮明确授权"全部开始"，按已定策略（2026-09-17 用户裁决 C：curator 输出一律折回仓库，仓库保持唯一权威）逐项处置：
 
-| 目标 | verdict | baseline | live | 判定 |
+| 目标 | 首轮判定 | 根因（实证） | 处置 | 修复后 |
 |---|---|---|---|---|
-| `skills/autonomous-ai-agents/codex` | `DELETED_DRIFT` | `82aaece396b2403f` | `None` | live 目录缺失 |
-| `skills/software-development/python-testing` | `UNKNOWN_LIVE_CHANGE` | `2f9ea7dde6d261ee` | `458b2005c9585bf1` | live 非工具发布的内容 |
-| `skills/software-development/windows-development-environment` | `UNKNOWN_LIVE_CHANGE` | `5132fc01855817c3` | `ab8da2fab31dc8b3` | 同上 |
+| `skills/software-development/python-testing` | `UNKNOWN_LIVE_CHANGE`（live `458b2005`，baseline `2f9ea7dd`，仓库同步） | live 有 curator **纯新增**内容（§38–§41 + 2 条 references，`+20 / -0`） | `curator_foldback --apply` 自动折回仓库（策略内"只允许加"） | `CLEAN_UPDATE` → 已发布 |
+| `skills/software-development/windows-development-environment` | `UNKNOWN_LIVE_CHANGE`（live `ab8da2fa`，baseline `5132fc01`，仓库同步） | live 有 **201 行纯新增 + 0 删除**（含 1 个新参考文件 `references/vite-classic-script-bundle-contract.md`）；仅 1 行被"改写"（`>/dev/null` 在 wrapper 下的限制说明） | 因该目标整体被判 `NEEDS_REVIEW`（脚本规定一处改写阻止整个目标），由**操作者复核后折回**：逐行核对确认为纯增强，无删除、无弱化 | `CLEAN_UPDATE` → 已发布 |
+| `skills/autonomous-ai-agents/codex` | `DELETED_DRIFT`（live `None`，baseline `82aaece3`） | 受管单元在 live 侧被删空；仓库权威源仍在且摘要一致 | 操作者显式决定：**从仓库重建**该受管单元（`82aaece3` 逐字节一致），再走同一 R1 登记 | `CONVERGED`（baseline=live=candidate 三者相同，无需发布） |
+| `SOUL.md` | curator `NEEDS_REVIEW / REWRITTEN` | live `10d1697b`（mtime `2026-09-05`，**更弱的旧通用版本**：缺 E/F 边界、最小权限、模型中立、UNKNOWN 语义等 11 条）**落后于**仓库 `9da0bd48`（`config/SOUL.md`，commit `62f666e`） | **拒绝 live、保留仓库版**：仓库版是严格更强的上位版本，折回旧版会**弱化** E/F 保护与边界规则 | live 已推进至 `9da0bd48`（= 仓库），`CLEAN_UPDATE` → 已发布 |
+| `skills/software-development/project-data-boundary` | curator `NEEDS_REVIEW / REWRITTEN` | live 版本**删掉了 `F:\` 保护**（只声明 `E:\`），与机器真相 `.project/governance/project-data-boundary.json` 的 `forbiddenExternalRoots`（E:/ E:\ F:/ F:\）**冲突** | **拒绝 live、保留仓库版**（守卫更严，不得弱化） | live 已推进至 `3508aafe`（= 仓库），`CLEAN_UPDATE` → 已发布 |
 
-`curator_foldback --check`（5 项漂移）额外暴露两项：
+**发布与读回**（官方同步器，备份-先于-发布 + 原子替换）：
 
-- `SOUL.md`：`NEED_REVIEW / REWRITTEN`。**根因已定位**：live `10d1697b92260853`（mtime `2026-09-05`）**早于**仓库 `9da0bd4884af9fdb`（`config/SOUL.md`，commit `62f666e` / 2026-09-23）。即 **live 落后于仓库源**，不是 curator 新写；本轮更新**未触碰** `SOUL.md`（更新日志无相关行，mtime 未前进）。
-- `skills/software-development/project-data-boundary`：`REWRITTEN`（live `725276656b1fba4a` vs 仓库 `3508aafe7a9d9343`）。
+```
+sync_hermes_workflow_assets.py --adopt-baseline --adopt-target ...   # R1：只登记已复核基线，不写内容
+sync_hermes_workflow_assets.py --apply --approved                    # 发布
+→ ACTION_PLAN_READBACK_PASS
+→ baseline advanced at HERMES_HOME/.workflow-assistance-baseline.json (run_id=sync-20260927T021410Z)
+→ guard verify: will write 0 target(s); skip 21 converged   (21/21 收敛)
+→ curator_foldback --check: drifted managed targets: 0
+→ hooks doctor: All shell hooks look healthy（脚本重发布后批准仍有效）
+```
 
-**性质判定**：全部为**本轮更新之前既存在**的覆盖层↔仓库源不一致；guard 的 fail-closed 行为按设计工作。修复属**独立治理动作**（`--adopt-baseline --adopt-target <target>@<sha256>` 或 `--suspend <target>`，或先把已复核的 live 内容折回仓库），**需用户单独授权**，本轮不做。
+**修复后的源等价性**（本轮首次成立的"源等价"层）：live 与仓库**逐字节一致**——`python-testing/SKILL.md` `207fe5e9…`、`windows-development-environment/SKILL.md` `2e1fc6dc…`（两侧 SHA256 相同）。
+
+**附带门禁修复**：`windows-development-environment` 因整体折回未走脚本的 provenance 自动刷新，`config/skill-provenance.yaml` 的 `source_sha256`/`live_sha256` 由操作者显式更新为 `2e1fc6dc…`；`run_quality_gate.py skill-provenance` 由 FAIL 转为 **PASS**（`check_skill_provenance.py` exit 0）。
+
+**未做**：未 `--suspend` 任何目标；未改写 `SOUL.md`/`project-data-boundary` 的仓库内容（两者本就是更强的权威版本）；未删除任何用户或 curator 内容。
 
 ---
 
@@ -137,8 +152,9 @@ hermes update --yes --backup
 
 | 材料 | 路径 |
 |---|---|
-| 运行证据（本轮） | `.project-local/runs/hermes-update-20260927/`：`pre-state-20260927.json`、`update-20260927-run2.log`、`doctor-after.log`、`hooks-doctor-after.log`、`guard-verify-after.log`、`curator-check-after.log`、`desktop-launch-readback.json`、`watch.log` |
-| curator 漂移报告/差异 | `.project-local/artifacts/curator-foldback/curator-foldback-report.json` + 各目标 `.diff` |
+| 运行证据（本轮） | `.project-local/runs/hermes-update-20260927/`：`pre-state-20260927.json`、`update-20260927-run2.log`、`doctor-after.log`、`hooks-doctor-after.log`、`guard-verify-after.log`、`guard-verify-after-repair.log`、`curator-check-after.log`、`curator-check-after-repair.log`、`hooks-doctor-after-repair.log`、`overlay-publish.log`、`desktop-launch-readback.json`、`watch.log` |
+| 发布计划（结构化） | `.project-local/artifacts/task-artifacts/hermes-sync-plan-20260927.json` |
+| curator 漂移报告/差异 | `.project-local/artifacts/curator-foldback/curator-foldback-report.json` + 各目标 `.diff`（折回前/后两轮） |
 | Hermes 侧更新 receipt | `HERMES_HOME\logs\update_receipts\latest.json`（`outcome=success`） |
 | Hermes 侧更新日志 | `HERMES_HOME\logs\update.log`（含 `Found 8183 new commit(s)` 与完成行） |
 
@@ -156,14 +172,14 @@ hermes update --yes --backup
 | L-6 | curator ↔ 受管目录结构性冲突：策略为折回，删除/改写类仍需人工 | 否（新增类可自动折回） |
 | L-9 | 第二 profile 独立性：`deepseek-review` 有独立 skills/SOUL；覆盖层仅作用根 profile | 是：禁止外推 |
 | **L-10（本轮新增）** | **安装落点跟随 `origin/main`（`v0.21.5+3115`），非发布 tag**：本机运行的是未发布主线代码（相对 `v2026.9.24` 领先 3115 提交） | 中：稳定性风险高于 tag；若需 tag 基线，需官方支持 `origin/<tag>` 或改用 tag 检出（本轮未做） |
-| **L-11（本轮新增）** | **覆盖层与仓库源不一致未收敛**（3 项 guard 漂移 + 2 项 curator 漂移，含 `SOUL.md` 落后于仓库） | 是：**覆盖层"源等价"层不成立**；修复需单独授权 |
+| **L-11（本轮新增，同日已关闭）** | ~~覆盖层与仓库源不一致未收敛~~ | **已关闭**（§5：21/21 收敛、curator 0 漂移、源等价层 PASS） |
 | — | 产品备份**已含 `SOUL.md`**（本轮实测 3492 条目） | 是：**2026-09-17 记录 §2 的该缺口已关闭** |
 
 ---
 
 ## 9. 本轮未做（明确边界）
 
-- 未修复 §5 的覆盖层漂移（guard 保持 fail-closed，不 `--adopt`、不 `--suspend`、不 `--apply`）。
+- 未 `--suspend` 任何受管目标；未删除任何用户或 curator 内容；未改写仓库侧的 `SOUL.md` / `project-data-boundary`（两者本就是更强的权威版本，见 §5）。
 - 未执行 `hermes sessions optimize-storage`（离线可选动作，需停机窗口）。
-- 未改动任何 Hermes 全局规则/技能/模型/提供商/认证；未新建第二运行时或替代启动器。
+- 未改动任何 Hermes 模型/提供商/认证配置；未新建第二运行时或替代启动器。
 - 未推 `main`、未开 PR（本轮交付停在短分支提交，按 `WORK-LAB-AUTHORITY.md` §11）。
