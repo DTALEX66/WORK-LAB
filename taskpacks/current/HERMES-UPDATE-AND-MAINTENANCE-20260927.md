@@ -162,7 +162,26 @@ sync_hermes_workflow_assets.py --apply --approved                    # 发布
 
 ---
 
-## 8. 仍存在的限制（继承 + 本轮新增）
+## 10. 交付与 CI（短分支 + PR）
+
+| 项 | 值 |
+|---|---|
+| 分支 | `hermes-update-20260927`（短分支，按 `WORK-LAB-AUTHORITY.md` §11） |
+| PR | [#140](https://github.com/DTALEX66/WORK-LAB/pull/140)，base `main`（`main` 未被推送、未被改写） |
+| 提交 | `07f4fb2` 维护记录 → `bfe5262` 覆盖层折回与发布 → `23410d0` 投影重生成 |
+| `main` | 保持 `51fc77f`，未 squash、未改历史 |
+
+**首轮 CI 失败与根因修复（真实证据，非猜测）**：`bfe5262` 上 `integration` 与 `workflow-assistance` 两个 job **FAIL**，日志行 `CURRENT_STATE_FRESHNESS_FAIL source-digest-mismatch`（`aggregate` 汇总 `reason: required job(s) missing or failed: ['integration','workflow']`）。
+
+- **根因**：`config/skill-provenance.yaml` 是 `scripts/ci/generate_current_state.py` 的 `CANONICAL_FILES` 之一（第 54 行），本次覆盖层修复改动了它，导致受跟踪投影 `.project/governance/generated/CURRENT_STATE.{json,md}` 的 `source_digest` 失效。
+- **修法**：用**规范生成器**重算（非手改）：`generate_current_state.py` → `CURRENT_STATE_PASS projection=NO_HEAD_OR_BRANCH_CLAIM modules=2 skills=13 contracts=37 source_digest=9abc330e…`，随后 `--check-current` → `CURRENT_STATE_FRESHNESS_PASS`。投影声明 `NO_HEAD_OR_BRANCH_CLAIM`，因此 CI 在合并提交上重算得到同一值。
+- **修复验证**：`23410d0` 上 `integration` 与 `workflow-assistance` 均 **pass**（19–22s / 1m35s–1m45s），不再出现 digest 失配。
+
+**明确未做**：未把本地结果当作 CI 通过——CI 结论只取自 GitHub Actions 在该 PR **精确 SHA** 上的运行；本地门禁结论仅作本地证据（`EXACT_SHA_CI_UNVERIFIED` 在本地一律为真）。
+
+---
+
+## 11. 仍存在的限制（继承 + 本轮新增）
 
 | # | 限制 | 影响 |
 |---|---|---|
