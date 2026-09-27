@@ -1,20 +1,25 @@
-// L10 (2026-09-27): B10 Overview / 总览 — the landing surface.
-// B10 structure 1:1: 4-col KPI grid (glow big numbers) + two-col trend +
-// split recent-executions + Observer map (read-only radial graph) + system
-// status metric boxes + alerts. All values are the REAL v3 snapshot
-// projection; B5 discipline preserved: without a snapshot the three fact
-// KPIs read UNKNOWN (never a fabricated 0) and the "数据源未接入" honest
-// indicator is present.
+// L10 (2026-09-27) · L10b (2026-09-27): B10 Overview / 总览 — the landing surface.
+//
+// B10 structure 1:1:
+//   .page-head
+//   .kpi-grid          → 4 × .panel.kpi (strong + small + .trend)
+//   .two-col           → .panel 执行趋势 (.spark) | .panel 系统状态
+//                        (.metric-row 4 × .metric-box + .status-stack .tag)
+//   .split             → .panel 最近执行 (.list / .list-item)
+//                        | .panel Observer Signal Map (.graph-stage core + 6
+//                          .node-dot satellites)
+//
+// All values are the REAL v3 snapshot projection; B5 discipline preserved:
+// without a snapshot the three fact KPIs read UNKNOWN (never a fabricated 0),
+// the "数据源未接入" honest indicator is present, and NO trend percentage is
+// invented (the B10 demo's ↑ 18% has no real source here, so the trend row is
+// omitted until a real series exists).
 import * as React from 'react'
-import { Card, CardHeader, CardContent } from '@/components/ui/card'
+import { Plus } from 'lucide-react'
+import { PageHeader } from '@/components/ui/page-header'
 import { KPICard } from '@/components/dashboard/KPICard'
-import { ExecutionTable } from '@/components/dashboard/ExecutionTable'
-import { ProjectPanel } from '@/components/dashboard/ProjectPanel'
-import { TokenPanel } from '@/components/dashboard/TokenPanel'
 import { NodeGraph, type GraphNode } from '@/components/graph/node-graph'
 import { Sparkline } from '@/components/ui/sparkline'
-import { StatusPill } from '@/components/ui/status'
-import { ListView, type ListItem } from '@/components/ui/list'
 import { Badge } from '@/components/ui/badge'
 import {
   fmtCostQuality, tokenTruth, executionsToRows,
@@ -43,20 +48,20 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
 
   // Alerts = honest signals only: failed CI runs / failed executions /
   // transport OFFLINE. No fabricated alert counts.
-  const alerts: ListItem[] = React.useMemo(() => {
-    const out: ListItem[] = []
+  const alerts = React.useMemo(() => {
+    const out: { leading?: string; title: string; sub?: string; tag: string; variant: 'success' | 'warning' | 'error' | 'info' | 'muted' }[] = []
     for (const r of snap?.ci || []) {
       if (r.conclusion === 'failure' || r.conclusion === 'cancelled') {
-        out.push({ leading: r.runId ?? '—', title: `${r.workflow ?? 'CI'} 失败`, sub: r.headSha ? `@ ${r.headSha.slice(0, 8)}` : undefined, state: { text: r.conclusion ?? 'failure', variant: 'error' } })
+        out.push({ leading: r.runId ?? '—', title: `${r.workflow ?? 'CI'} 失败`, sub: r.headSha ? `@ ${r.headSha.slice(0, 8)}` : undefined, tag: r.conclusion ?? 'failure', variant: 'error' })
       }
     }
     for (const r of rows) {
       if (r.state === 'FAILED' || r.state === 'BLOCKED') {
-        out.push({ leading: r.id, title: '执行受阻 / 失败', sub: r.name || r.id, state: { text: r.state, variant: 'error' } })
+        out.push({ leading: r.id, title: '执行受阻 / 失败', sub: r.name || r.id, tag: r.state, variant: 'error' })
       }
     }
     if (tr && tr.transportState === 'OFFLINE') {
-      out.push({ title: '数据源离线', sub: 'sidecar 快照不可达', state: { text: 'OFFLINE', variant: 'error' } })
+      out.push({ title: '数据源离线', sub: 'sidecar 快照不可达', tag: 'OFFLINE', variant: 'error' })
     }
     return out.slice(0, 8)
   }, [snap, rows, tr])
@@ -73,121 +78,177 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
     { id: 'taskpack', label: 'Task Pack', state: 'idle' },
   ]
 
+  // B10 `.status-stack` tags — driven by REAL transport/coverage values only.
+  const stack: { text: string; variant: 'success' | 'warning' | 'info' | 'muted' }[] = [
+    live
+      ? { text: 'Transport LIVE', variant: 'success' }
+      : { text: `Transport ${tr?.transportState || 'UNKNOWN'}`, variant: tr?.transportState === 'OFFLINE' ? 'warning' : 'muted' },
+    { text: tr?.freshnessState ? `Freshness ${tr.freshnessState}` : 'Freshness UNKNOWN', variant: tr?.freshnessState === 'FRESH' ? 'info' : 'muted' },
+    { text: alerts.length ? `${alerts.length} 条告警信号` : '无告警信号', variant: alerts.length ? 'warning' : 'success' },
+  ]
+
+  const taskEntries = Object.entries(snap?.tasks || {}).slice(0, 6)
+
   return (
     <div className="flex flex-col gap-4">
-      {/* B10 `.kpi-grid` — 4 columns; first three are FACT KPIs (B5: UNKNOWN
-          without a snapshot, never 0) */}
-      <div className="grid grid-cols-4 gap-4">
-        <KPICard title="项目" value={snap ? String(snap.projects.length) : 'UNKNOWN'} sub={snap ? 'registry' : '数据源未接入'} />
-        <KPICard title="活跃执行" value={snap ? String(activeExecs) : 'UNKNOWN'} sub={'共 ' + (snap ? String(rows.length) : '—') + ' 条'} />
-        <KPICard title="Token" value={snap ? fmtTokensSafe(tt) : 'UNKNOWN'} sub={'质量 ' + fmtCostQuality(tt?.costQuality)} />
-        <KPICard title="数据源" value={live ? 'LIVE' : snap ? source.toUpperCase() : 'UNKNOWN'} sub={snap ? 'revision ' + String(snap.revision) : '等待数据'} />
+      <PageHeader
+        title="总览"
+        description="执行态势、工作流健康、观察者与审计信号整合到同一控制平面。真值来自 v3 快照投影；缺失即 UNKNOWN，不伪造。"
+        actions={
+          <>
+            <button type="button" className="ghost-btn" disabled>导出状态</button>
+            <button type="button" className="primary-btn" disabled>
+              <Plus size={14} aria-hidden /> 新建执行
+            </button>
+          </>
+        }
+      />
+
+      {/* B10 `.kpi-grid` — 4 columns; the first three are FACT KPIs (B5:
+          UNKNOWN without a snapshot, never 0). The 4th reads the real
+          transport word, which the CI contract requires to include LIVE. */}
+      <div className="kpi-grid">
+        <KPICard
+          title="项目"
+          value={snap ? String(snap.projects.length) : 'UNKNOWN'}
+          sub={snap ? 'registry · 真实' : '数据源未接入'}
+          trend={snap && snap.projects.length ? '实时投影' : undefined}
+          trendTone="up"
+        />
+        <KPICard
+          title="活跃执行"
+          value={snap ? String(activeExecs) : 'UNKNOWN'}
+          sub={'共 ' + (snap ? String(rows.length) : '—') + ' 条'}
+          trend={snap ? '实时' : undefined}
+        />
+        <KPICard
+          title="Token"
+          value={snap ? fmtTokensSafe(tt) : 'UNKNOWN'}
+          sub={'质量 ' + fmtCostQuality(tt?.costQuality)}
+        />
+        <KPICard
+          title="数据源"
+          value={live ? 'LIVE' : snap ? source.toUpperCase() : 'UNKNOWN'}
+          sub={snap ? 'revision ' + String(snap.revision) : '等待数据'}
+          trend={tr?.freshnessState ? '新鲜度 ' + tr.freshnessState : undefined}
+          trendTone={tr?.freshnessState === 'FRESH' ? 'up' : 'warn'}
+        />
       </div>
 
-      {/* B10 `.two-col` — execution trend + token trend (honest empty when no series) */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1.2fr))' }}>
-        <Card className="wl-card-hover">
-          <CardHeader>
-            <span>执行趋势</span>
-            <Badge variant="muted">{rows.length} 条记录</Badge>
-          </CardHeader>
-          <CardContent>
-            <Sparkline values={[]} height={150} />
-          </CardContent>
-        </Card>
-        <Card className="wl-card-hover">
-          <CardHeader>
-            <span>Token 用量趋势</span>
-            <Badge variant="muted">{fmtCostQuality(tt?.costQuality)}</Badge>
-          </CardHeader>
-          <CardContent>
-            <Sparkline values={[]} height={150} />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* B10 `.split` — recent executions + observer map & system status */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1.35fr))' }}>
-        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-          <div className="panel2 rounded-md p-4 min-h-[300px]">
-            <ExecutionTable rows={snap ? rows : []} hasData={!!snap} />
-          </div>
-          <div className="flex flex-col gap-4">
-            <ProjectPanel snap={snap} />
-            <TokenPanel snap={snap} />
+      {/* B10 `.two-col` — execution trend + system status */}
+      <div className="two-col">
+        <div className="panel">
+          <h3>执行趋势</h3>
+          {/* Honest: the v3 snapshot carries NO execution-trend series, so the
+              shared Sparkline renders "无趋势数据（UNKNOWN）" rather than the
+              B10 demo's fabricated sequence. */}
+          <Sparkline values={[]} height={180} />
+          <div className="mt-3 text-[11px] text-muted">
+            {rows.length ? `${rows.length} 条执行记录（趋势序列未投影）` : '执行趋势序列未由快照投影 — 保持 UNKNOWN'}
           </div>
         </div>
-
-        <div className="flex flex-col gap-4">
-          <Card className="wl-card-hover">
-            <CardHeader>
-              <span>Observer Map（只读拓扑）</span>
-              <StatusPill variant={live ? 'success' : 'muted'}>{live ? 'LIVE' : snap ? 'STALE' : 'OFFLINE'}</StatusPill>
-            </CardHeader>
-            <CardContent>
-              <NodeGraph core="Observer" nodes={graphNodes} className="min-h-[300px]" />
-            </CardContent>
-          </Card>
-
-          <Card className="wl-card-hover">
-            <CardHeader><span>系统状态（真实传输）</span></CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="panel2 rounded-lg border border-border/62 p-3.5">
-                  <div className="text-[11px] text-muted">传输</div>
-                  <div className="mt-1 text-lg font-bold text-ink tabular-nums">{tr?.transportState || 'UNKNOWN'}</div>
-                </div>
-                <div className="panel2 rounded-lg border border-border/62 p-3.5">
-                  <div className="text-[11px] text-muted">新鲜度</div>
-                  <div className="mt-1 text-lg font-bold text-ink tabular-nums">{tr?.freshnessState || 'UNKNOWN'}</div>
-                </div>
-                <div className="panel2 rounded-lg border border-border/62 p-3.5">
-                  <div className="text-[11px] text-muted">覆盖</div>
-                  <div className="mt-1 text-lg font-bold text-ink tabular-nums">
-                    {cov && cov.numerator != null ? `${cov.numerator}/${cov.denominator ?? '?'}` : 'UNKNOWN'}
-                  </div>
-                </div>
-                <div className="panel2 rounded-lg border border-border/62 p-3.5">
-                  <div className="text-[11px] text-muted">修订</div>
-                  <div className="mt-1 text-lg font-bold text-ink tabular-nums">{snap ? String(snap.revision) : 'UNKNOWN'}</div>
-                </div>
+        <div className="panel">
+          <h3>系统状态</h3>
+          <div className="metric-row">
+            <div className="metric-box">
+              <div className="muted text-[11px]">传输</div>
+              <div className="text-[15px] font-bold tabular-nums text-ink">{tr?.transportState || 'UNKNOWN'}</div>
+            </div>
+            <div className="metric-box">
+              <div className="muted text-[11px]">新鲜度</div>
+              <div className="text-[15px] font-bold tabular-nums text-ink">{tr?.freshnessState || 'UNKNOWN'}</div>
+            </div>
+            <div className="metric-box">
+              <div className="muted text-[11px]">覆盖</div>
+              <div className="text-[15px] font-bold tabular-nums text-ink">
+                {cov && cov.numerator != null ? `${cov.numerator}/${cov.denominator ?? '?'}` : 'UNKNOWN'}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="metric-box">
+              <div className="muted text-[11px]">修订</div>
+              <div className="text-[15px] font-bold tabular-nums text-ink">{snap ? String(snap.revision) : 'UNKNOWN'}</div>
+            </div>
+          </div>
+          <div className="status-stack mt-4">
+            {stack.map((s) => (
+              <Badge key={s.text} variant={s.variant}>{s.text}</Badge>
+            ))}
+          </div>
+        </div>
+      </div>
 
-          <Card className="wl-card-hover">
-            <CardHeader>
-              <span>告警（真实信号）</span>
-              <span className="text-[11px] text-muted">{alerts.length ? `${alerts.length} 条` : '无'}</span>
-            </CardHeader>
-            <CardContent>
-              {alerts.length ? (
-                <ListView items={alerts} />
-              ) : (
-                <div className="py-5 text-center text-xs text-muted">
-                  {snap ? '当前无告警信号（无失败 CI / 无受阻执行 / 传输在线）' : '数据源未接入 — 无法判断告警（保持 UNKNOWN，不伪造"全部正常"）'}
+      {/* B10 `.split` — recent executions + Observer Signal Map */}
+      <div className="split">
+        <div className="panel">
+          <h3>最近执行</h3>
+          {rows.length === 0 ? (
+            <div className="empty py-10">
+              <div className="icon" aria-hidden="true">◎</div>
+              <p className="m-0 text-sm font-semibold text-ink">数据源未接入</p>
+              <p className="mx-auto mt-1 max-w-md text-xs">无执行记录投影 —— 保持 UNKNOWN，不伪造执行行</p>
+            </div>
+          ) : (
+            <div className="list">
+              {rows.slice(0, 6).map((r) => (
+                <div key={r.id} className="list-item">
+                  <div className="min-w-0">
+                    <strong className="block truncate text-[13px] font-semibold text-ink">{r.name || r.id}</strong>
+                    <small className="block truncate font-mono">
+                      {r.platform || 'UNKNOWN'} · {r.id}
+                    </small>
+                  </div>
+                  <Badge variant={r.state === 'FAILED' ? 'error' : r.state === 'BLOCKED' ? 'warning' : r.state === 'COMPLETED' ? 'success' : 'info'}>
+                    {r.state}
+                  </Badge>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="panel">
+          <h3>Observer Signal Map</h3>
+          <NodeGraph core="Observer" nodes={graphNodes} className="min-h-[330px]" />
+        </div>
+      </div>
 
-          <Card className="wl-card-hover">
-            <CardHeader><span>最近任务包</span></CardHeader>
-            <CardContent>
-              {snap?.tasks && Object.keys(snap.tasks).length ? (
-                <div className="grid grid-cols-2 gap-3">
-                  {Object.entries(snap.tasks).slice(0, 6).map(([family, count]) => (
-                    <div key={family} className="panel2 rounded-lg border border-border/62 p-3">
-                      <div className="text-[11px] text-muted">{family}</div>
-                      <div className="text-xl font-bold text-secondary tabular-nums">{count}</div>
-                    </div>
-                  ))}
+      {/* Honest signal panels: alerts (real failures only) + task-family counts */}
+      <div className="two-col">
+        <div className="panel">
+          <h3>告警（真实信号）</h3>
+          {alerts.length ? (
+            <div className="list">
+              {alerts.map((a, i) => (
+                <div key={i} className="list-item">
+                  <div className="min-w-0">
+                    <strong className="block truncate text-[13px] font-semibold text-ink">{a.title}</strong>
+                    <small className="block truncate font-mono">
+                      {a.leading ? a.leading + ' · ' : ''}{a.sub || '—'}
+                    </small>
+                  </div>
+                  <Badge variant={a.variant}>{a.tag}</Badge>
                 </div>
-              ) : (
-                <div className="py-5 text-center text-xs text-muted">数据源未接入 — 无任务包计数（UNKNOWN）</div>
-              )}
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="py-5 text-center text-xs text-muted">
+              {snap ? '当前无告警信号（无失败 CI / 无受阻执行 / 传输在线）' : '数据源未接入 — 无法判断告警（保持 UNKNOWN，不伪造「全部正常」）'}
+            </div>
+          )}
+        </div>
+        <div className="panel">
+          <h3>最近任务包</h3>
+          {taskEntries.length ? (
+            <div className="metric-row" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+              {taskEntries.map(([family, count]) => (
+                <div key={family} className="metric-box">
+                  <div className="muted text-[11px]">{family}</div>
+                  <div className="big-number mt-1">{count}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-5 text-center text-xs text-muted">数据源未接入 — 无任务包计数（UNKNOWN）</div>
+          )}
         </div>
       </div>
     </div>

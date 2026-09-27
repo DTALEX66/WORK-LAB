@@ -1,19 +1,22 @@
+import * as React from 'react'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/ui/page-header'
 import type {
-  SnapshotV3, Execution, Project, ExecutionState, ProjectActivityState,
+  SnapshotV3, Execution, Project,
 } from '@/types'
 import { fmtTokens, fmtCostQuality, stateTone, activityTone } from '@/lib/api'
 
 type Snap = SnapshotV3 | null
 
+// L10b: B10 `.list-item` row — muted key on the left, real value (or UNKNOWN)
+// in mono on the right. Never a fabricated value.
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
   const empty = v === null || v === undefined || v === ''
   return (
-    <div className="flex items-center justify-between py-1 border-b border-border/40 last:border-0">
-      <span className="text-[11px] text-zinc-500">{k}</span>
-      <span className="text-[11px] text-zinc-200 truncate ml-3 text-right">{empty ? 'UNKNOWN' : v}</span>
+    <div className="list-item">
+      <span className="text-[11px] text-muted">{k}</span>
+      <span className="ml-3 min-w-0 truncate text-right font-mono text-[11px] text-ink">{empty ? 'UNKNOWN' : v}</span>
     </div>
   )
 }
@@ -36,40 +39,44 @@ const STATE_TEXT: Record<string, string> = {
 // ---------- 共享：项目平台表（P1-01 抽出，ProjectsView 与旧 AgentsView 复用同一真值投影）----------
 export function ProjectsTable({ projects }: { projects: Project[] }) {
   return (
-    <table className="w-full text-xs">
-      <thead>
-        <tr className="bg-panel2 text-left text-[11px] text-zinc-500">
-          <th className="px-4 py-2 font-medium">项目</th>
-          <th className="px-3 py-2 font-medium">平台</th>
-          <th className="px-3 py-2 font-medium">活动</th>
-          <th className="px-3 py-2 font-medium">执行</th>
-          <th className="px-3 py-2 font-medium">Token</th>
-          <th className="px-3 py-2 font-medium">Git</th>
-        </tr>
-      </thead>
-      <tbody>
-        {projects.map((p) => {
-          const tone = activityTone(p.activityState)
-          const dirty = p.git.dirtyCount
-          return (
-            <tr key={p.projectId} className="border-t border-border hover:bg-white/[0.03]">
-              <td className="px-4 py-2.5">
-                <div className="font-medium" style={{ fontSize: 12 }}>{p.displayName || p.projectId}</div>
-                <div className="text-[10px] text-zinc-600 font-mono">{p.identityState === 'RESOLVED' ? '已解析身份' : '身份未解析'}</div>
-              </td>
-              <td className="px-3 py-2.5 text-zinc-400">{p.agentPlatform || 'UNKNOWN'}</td>
-              <td className="px-3 py-2.5"><Badge variant={tone === 'active' ? 'success' : 'muted'}>{p.activityState || 'UNKNOWN'}</Badge></td>
-              <td className="px-3 py-2.5 tabular-nums text-zinc-300">{p.activeExecutionCount}</td>
-              <td className="px-3 py-2.5 tabular-nums text-zinc-300" title="costQuality（后端权威）">{fmtTokens(p.token.totalTokens)} <span className="text-[10px] text-zinc-600">{fmtCostQuality(p.token.costQuality)}</span></td>
-              <td className="px-3 py-2.5">
-                <span className="font-mono text-[11px] text-zinc-400">{p.git.branch || '—'}@{p.git.localSha ? p.git.localSha.slice(0, 7) : '—'}</span>{' '}
-                {dirty ? <Badge variant="warning">脏 {dirty}</Badge> : <Badge variant="muted">干净</Badge>}
-              </td>
-            </tr>
-          )
-        })}
-      </tbody>
-    </table>
+    <div className="table-wrap">
+      <table className="table">
+        <thead>
+          <tr>
+            <th>项目</th>
+            <th>平台</th>
+            <th>活动</th>
+            <th>执行</th>
+            <th>Token</th>
+            <th>Git</th>
+          </tr>
+        </thead>
+        <tbody>
+          {projects.map((p) => {
+            const tone = activityTone(p.activityState)
+            const dirty = p.git.dirtyCount
+            return (
+              <tr key={p.projectId}>
+                <td>
+                  <strong className="block text-[12px] font-semibold text-ink">{p.displayName || p.projectId}</strong>
+                  <small className="font-mono text-[10px] text-muted">{p.identityState === 'RESOLVED' ? '已解析身份' : '身份未解析'}</small>
+                </td>
+                <td className="text-muted">{p.agentPlatform || 'UNKNOWN'}</td>
+                <td><Badge variant={tone === 'active' ? 'success' : 'muted'}>{p.activityState || 'UNKNOWN'}</Badge></td>
+                <td className="tabular-nums text-ink">{p.activeExecutionCount}</td>
+                <td className="tabular-nums text-ink" title="costQuality（后端权威）">
+                  {fmtTokens(p.token.totalTokens)} <span className="text-[10px] text-muted">{fmtCostQuality(p.token.costQuality)}</span>
+                </td>
+                <td>
+                  <span className="font-mono text-[11px] text-muted">{p.git.branch || '—'}@{p.git.localSha ? p.git.localSha.slice(0, 7) : '—'}</span>{' '}
+                  {dirty ? <Badge variant="warning">脏 {dirty}</Badge> : <Badge variant="muted">干净</Badge>}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -79,10 +86,14 @@ export function ProjectsView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader><span>项目平台</span><span className="text-[11px] text-zinc-500">{projects.length} 个项目 · 真实 registry</span></CardHeader>
-        <CardContent className="p-0 overflow-x-auto">
+        <CardHeader><span>项目平台</span><span className="text-[11px] text-muted">{projects.length} 个项目 · 真实 registry</span></CardHeader>
+        <CardContent>
           {projects.length === 0 ? (
-            <div className="p-8 text-center text-zinc-500 text-xs">暂无已注册项目（registry 为空）</div>
+            <div className="empty py-10">
+              <div className="icon" aria-hidden="true">◇</div>
+              <p className="m-0 text-sm font-semibold text-ink">暂无已注册项目（registry 为空）</p>
+              <p className="mx-auto mt-1 max-w-md text-xs">数据源未接入时不伪造项目身份</p>
+            </div>
           ) : (
             <ProjectsTable projects={projects} />
           )}
@@ -105,31 +116,36 @@ export function AgentsView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader><span>Agent 实例</span><span className="text-[11px] text-zinc-500">{byAgent.size} 个 agent · {exs.length} 条执行 · 真实投影</span></CardHeader>
-        <CardContent className="p-0 overflow-x-auto">
+        <CardHeader><span>Agent 实例</span><span className="text-[11px] text-muted">{byAgent.size} 个 agent · {exs.length} 条执行 · 真实投影</span></CardHeader>
+        <CardContent>
           {exs.length === 0 ? (
-            <div className="p-8 text-center text-zinc-500 text-xs">暂无 agent 执行记录（保持 UNKNOWN）</div>
+            <div className="empty py-10">
+              <div className="icon" aria-hidden="true">◎</div>
+              <p className="m-0 text-sm font-semibold text-ink">暂无 agent 执行记录（保持 UNKNOWN）</p>
+            </div>
           ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-panel2 text-left text-[11px] text-zinc-500">
-                  <th className="px-4 py-2 font-medium">Agent</th>
-                  <th className="px-3 py-2 font-medium">状态</th>
-                  <th className="px-3 py-2 font-medium">会话</th>
-                  <th className="px-3 py-2 font-medium">工作区</th>
-                </tr>
-              </thead>
-              <tbody>
-                {exs.map((e) => (
-                  <tr key={e.executionId} className="border-t border-border">
-                    <td className="px-4 py-2 font-mono text-zinc-300">{e.agent || 'UNKNOWN'}</td>
-                    <td className="px-3 py-2"><Badge variant={toneVariant(stateTone(e.state))}>{STATE_TEXT[e.state] || e.state}</Badge></td>
-                    <td className="px-3 py-2 font-mono text-[10px] text-zinc-500">{e.sessionId || 'UNKNOWN'}</td>
-                    <td className="px-3 py-2 font-mono text-[10px] text-zinc-500">{e.workingArea || 'UNKNOWN'}</td>
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>状态</th>
+                    <th>会话</th>
+                    <th>工作区</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {exs.map((e) => (
+                    <tr key={e.executionId}>
+                      <td className="font-mono text-ink">{e.agent || 'UNKNOWN'}</td>
+                      <td><Badge variant={toneVariant(stateTone(e.state))}>{STATE_TEXT[e.state] || e.state}</Badge></td>
+                      <td className="font-mono text-[10px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
+                      <td className="font-mono text-[10px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -146,50 +162,61 @@ export function ExecutionsView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader><span>执行详情</span><span className="text-[11px] text-zinc-500">{exs.length} 个执行 · 真实</span></CardHeader>
-        <CardContent className="p-0 overflow-x-auto">
+        <CardHeader><span>执行详情</span><span className="text-[11px] text-muted">{exs.length} 个执行 · 真实</span></CardHeader>
+        <CardContent>
           {exs.length === 0 ? (
-            <div className="p-8 text-center text-zinc-500 text-xs">暂无执行记录（保持 UNKNOWN）</div>
+            <div className="empty py-10">
+              <div className="icon" aria-hidden="true">◎</div>
+              <p className="m-0 text-sm font-semibold text-ink">暂无执行记录（保持 UNKNOWN）</p>
+            </div>
           ) : (
-            <table className="w-full text-xs">
-              <thead><tr className="bg-panel2 text-left text-[11px] text-zinc-500">
-                <th className="px-4 py-2 font-medium">执行 ID</th>
-                <th className="px-3 py-2 font-medium">Agent</th>
-                <th className="px-3 py-2 font-medium">状态</th>
-                <th className="px-3 py-2 font-medium">项目</th>
-                <th className="px-3 py-2 font-medium">会话</th>
-                <th className="px-3 py-2 font-medium">工作区</th>
-              </tr></thead>
-              <tbody>
-                {exs.map((e) => (
-                  <tr key={e.executionId} className="border-t border-border">
-                    <td className="px-4 py-2 font-mono text-zinc-400">{e.executionId}</td>
-                    <td className="px-3 py-2">{e.agent || 'UNKNOWN'}</td>
-                    <td className="px-3 py-2"><Badge variant={toneVariant(stateTone(e.state))}>{STATE_TEXT[e.state] || e.state}</Badge></td>
-                    <td className="px-3 py-2 text-zinc-300">{e.anchorProjectId || 'UNKNOWN'}</td>
-                    <td className="px-3 py-2 font-mono text-[10px] text-zinc-500">{e.sessionId || 'UNKNOWN'}</td>
-                    <td className="px-3 py-2 font-mono text-[10px] text-zinc-500">{e.workingArea || 'UNKNOWN'}</td>
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>执行 ID</th>
+                    <th>Agent</th>
+                    <th>状态</th>
+                    <th>项目</th>
+                    <th>会话</th>
+                    <th>工作区</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {exs.map((e) => (
+                    <tr key={e.executionId}>
+                      <td className="font-mono text-muted">{e.executionId}</td>
+                      <td>{e.agent || 'UNKNOWN'}</td>
+                      <td><Badge variant={toneVariant(stateTone(e.state))}>{STATE_TEXT[e.state] || e.state}</Badge></td>
+                      <td className="text-ink">{e.anchorProjectId || 'UNKNOWN'}</td>
+                      <td className="font-mono text-[10px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
+                      <td className="font-mono text-[10px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="two-col">
         <Card><CardHeader><span>传输与水位（真实）</span></CardHeader><CardContent>
-          <Row k="传输状态" v={transport?.transportState} />
-          <Row k="新鲜度" v={transport?.freshnessState} />
-          <Row k="事件流" v={transport?.eventStreamConnected ? '已连接' : '未连接'} />
-          <Row k="最后心跳" v={transport?.lastHeartbeatAt ? new Date(transport.lastHeartbeatAt).toLocaleTimeString() : 'UNKNOWN'} />
-          <Row k="写入水位" v={transport?.writerWatermarkAt ? new Date(transport.writerWatermarkAt).toLocaleTimeString() : 'UNKNOWN'} />
+          <div className="list">
+            <Row k="传输状态" v={transport?.transportState} />
+            <Row k="新鲜度" v={transport?.freshnessState} />
+            <Row k="事件流" v={transport?.eventStreamConnected ? '已连接' : '未连接'} />
+            <Row k="最后心跳" v={transport?.lastHeartbeatAt ? new Date(transport.lastHeartbeatAt).toLocaleTimeString() : 'UNKNOWN'} />
+            <Row k="写入水位" v={transport?.writerWatermarkAt ? new Date(transport.writerWatermarkAt).toLocaleTimeString() : 'UNKNOWN'} />
+          </div>
         </CardContent></Card>
         <Card><CardHeader><span>任务状态桶 + 快照</span></CardHeader><CardContent>
-          {taskRows.length === 0
-            ? <Row k="任务桶" v="UNKNOWN" />
-            : taskRows.map(([k, v]) => <Row key={k} k={k} v={String(v)} />)}
-          <Row k="修订号" v={snap ? String(snap.revision) : 'UNKNOWN'} />
-          <Row k="数据水位" v={snap?.sourceWatermark} />
+          <div className="list">
+            {taskRows.length === 0
+              ? <Row k="任务桶" v="UNKNOWN" />
+              : taskRows.map(([k, v]) => <Row key={k} k={k} v={String(v)} />)}
+            <Row k="修订号" v={snap ? String(snap.revision) : 'UNKNOWN'} />
+            <Row k="数据水位" v={snap?.sourceWatermark} />
+          </div>
         </CardContent></Card>
       </div>
     </div>
@@ -211,35 +238,46 @@ export function ModelsView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader><span>Token 汇总</span><span className="text-[11px] text-zinc-500">质量 {fmtCostQuality(ts?.costQuality)} · 后端权威 · 前端不估算金额</span></CardHeader>
+        <CardHeader><span>Token 汇总</span><span className="text-[11px] text-muted">质量 {fmtCostQuality(ts?.costQuality)} · 后端权威 · 前端不估算金额</span></CardHeader>
         <CardContent className="flex flex-col gap-4">
           {dist.map((d) => (
             <div key={d.name}>
-              <div className="flex justify-between text-xs mb-1"><span className="flex items-center gap-1.5 text-zinc-300"><span className="w-2 h-2 rounded-full" style={{ background: d.color }} />{d.name}</span><span className="tabular-nums">{fmtTokens(d.value)}</span></div>
-              <div className="h-2 rounded-full bg-zinc-700/50 overflow-hidden"><div className="h-full rounded-full" style={{ width: (max ? ((d.value ?? 0) / max) * 100 : 0) + '%', background: d.color }} /></div>
+              <div className="mb-1 flex justify-between text-xs">
+                <span className="flex items-center gap-1.5 text-ink">
+                  <span className="h-2 w-2 rounded-full" style={{ background: d.color }} />{d.name}
+                </span>
+                <span className="tabular-nums">{fmtTokens(d.value)}</span>
+              </div>
+              <div className="progress">
+                <div style={{ width: (max ? ((d.value ?? 0) / max) * 100 : 0) + '%', background: d.color }} />
+              </div>
             </div>
           ))}
-          <div className="flex justify-between text-xs text-zinc-400"><span>总计</span><span className="tabular-nums text-zinc-200">{fmtTokens(total)}</span></div>
+          <div className="flex justify-between text-xs text-muted"><span>总计</span><span className="tabular-nums text-ink">{fmtTokens(total)}</span></div>
         </CardContent>
       </Card>
       <Card>
         <CardHeader><span>项目 Token 明细</span></CardHeader>
-        <CardContent className="p-0 overflow-x-auto">
-          {projects.length === 0 ? <div className="text-xs text-zinc-500 text-center py-4">无项目</div> : (
-            <table className="w-full text-xs">
-              <thead><tr className="bg-panel2 text-left text-[11px] text-zinc-500"><th className="px-4 py-2 font-medium">项目</th><th className="px-3 py-2 font-medium">输入</th><th className="px-3 py-2 font-medium">输出</th><th className="px-3 py-2 font-medium">总计</th><th className="px-3 py-2 font-medium">质量</th></tr></thead>
-              <tbody>
-                {projects.map((p) => (
-                  <tr key={p.projectId} className="border-t border-border">
-                    <td className="px-4 py-2">{p.displayName || p.projectId}</td>
-                    <td className="px-3 py-2 tabular-nums text-zinc-300">{fmtTokens(p.token.inputTokens)}</td>
-                    <td className="px-3 py-2 tabular-nums text-zinc-300">{fmtTokens(p.token.outputTokens)}</td>
-                    <td className="px-3 py-2 tabular-nums">{fmtTokens(p.token.totalTokens)}</td>
-                    <td className="px-3 py-2 tabular-nums text-zinc-400">{fmtCostQuality(p.token.costQuality)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <CardContent>
+          {projects.length === 0 ? <div className="py-4 text-center text-xs text-muted">无项目</div> : (
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr><th>项目</th><th>输入</th><th>输出</th><th>总计</th><th>质量</th></tr>
+                </thead>
+                <tbody>
+                  {projects.map((p) => (
+                    <tr key={p.projectId}>
+                      <td>{p.displayName || p.projectId}</td>
+                      <td className="tabular-nums text-ink">{fmtTokens(p.token.inputTokens)}</td>
+                      <td className="tabular-nums text-ink">{fmtTokens(p.token.outputTokens)}</td>
+                      <td className="tabular-nums">{fmtTokens(p.token.totalTokens)}</td>
+                      <td className="tabular-nums text-muted">{fmtCostQuality(p.token.costQuality)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -259,26 +297,30 @@ export function MemoryView({ snap }: { snap: Snap }) {
     { name: '适配器', state: fams?.adapters?.state, drift: fams?.adapters?.drift },
   ]
   return (
-    <div className="flex flex-col gap-4 overflow-auto p-1">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title="Memory Registry / 记忆注册"
         description="治理四大家族（规则/技能/记忆/适配器）的漂移真值 + 错误账本（workspace.history）的真实投影。缺失即 UNKNOWN，Observer 只读，不写记忆。"
       />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="two-col">
         <Card><CardHeader><span>治理漂移状态（真实）</span></CardHeader><CardContent>
-          {famItems.map((i) => (
-            <Row key={i.name} k={i.name} v={<span>{i.state || 'UNKNOWN'}{i.drift ? ' · 漂移 ' + i.drift : ''}</span>} />
-          ))}
+          <div className="list">
+            {famItems.map((i) => (
+              <Row key={i.name} k={i.name} v={<span>{i.state || 'UNKNOWN'}{i.drift ? ' · 漂移 ' + i.drift : ''}</span>} />
+            ))}
+          </div>
         </CardContent></Card>
         <Card><CardHeader><span>错误账本（workspace.history）</span></CardHeader><CardContent>
-          <Row k="总错误数" v={(hist.totalErrors != null ? String(hist.totalErrors) : 'UNKNOWN')} />
-          {(hist.recentErrors || []).slice(0, 6).map((e: any, i: number) => (
-            <div key={i} className="text-[11px] py-1 border-b border-border/40 last:border-0">
-              <span className="text-zinc-500 font-mono">{e.errorId || 'UNKNOWN'}</span>{' '}
-              <span className="text-zinc-300">{e.title || e.classification || ''}</span>
-            </div>
-          ))}
-          {(!hist.recentErrors || hist.recentErrors.length === 0) && <div className="text-xs text-zinc-500 text-center py-4">无错误记录（UNKNOWN）</div>}
+          <div className="list">
+            <Row k="总错误数" v={(hist.totalErrors != null ? String(hist.totalErrors) : 'UNKNOWN')} />
+            {(hist.recentErrors || []).slice(0, 6).map((e: any, i: number) => (
+              <div key={i} className="list-item">
+                <span className="font-mono text-[11px] text-muted">{e.errorId || 'UNKNOWN'}</span>
+                <span className="ml-3 min-w-0 truncate text-[11px] text-ink">{e.title || e.classification || ''}</span>
+              </div>
+            ))}
+          </div>
+          {(!hist.recentErrors || hist.recentErrors.length === 0) && <div className="py-4 text-center text-xs text-muted">无错误记录（UNKNOWN）</div>}
         </CardContent></Card>
       </div>
     </div>
@@ -291,13 +333,19 @@ export function ToolsView({ snap }: { snap: Snap }) {
   const gov = snap?.governance
   return (
     <div className="flex flex-col gap-4">
-      <Card><CardHeader><span>执行工作区</span></CardHeader><CardContent className="flex flex-col gap-2">
-        {areas.length ? areas.map((w) => <div key={w} className="panel2 p-3 rounded text-xs font-mono text-zinc-300">{w}</div>) : <div className="text-xs text-zinc-500 text-center py-4">暂无执行工作区（UNKNOWN）</div>}
+      <Card><CardHeader><span>执行工作区</span></CardHeader><CardContent>
+        {areas.length ? (
+          <div className="list">
+            {areas.map((w) => <div key={w} className="list-item font-mono text-xs text-ink">{w}</div>)}
+          </div>
+        ) : <div className="py-4 text-center text-xs text-muted">暂无执行工作区（UNKNOWN）</div>}
       </CardContent></Card>
       <Card><CardHeader><span>治理家族状态</span></CardHeader><CardContent>
-        {(['rules', 'skills', 'memory', 'adapters'] as const).map((k) => (
-          <Row key={k} k={k} v={gov?.families?.[k]?.state || 'UNKNOWN'} />
-        ))}
+        <div className="list">
+          {(['rules', 'skills', 'memory', 'adapters'] as const).map((k) => (
+            <Row key={k} k={k} v={gov?.families?.[k]?.state || 'UNKNOWN'} />
+          ))}
+        </div>
       </CardContent></Card>
     </div>
   )
@@ -310,12 +358,14 @@ export function MonitoringView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card><CardHeader><span>传输真值（永不伪造 LIVE）</span></CardHeader><CardContent>
-        <Row k="传输状态" v={<Badge variant={transport?.transportState === 'LIVE' ? 'success' : transport?.transportState === 'OFFLINE' ? 'error' : 'muted'}>{transport?.transportState || 'UNKNOWN'}</Badge>} />
-        <Row k="新鲜度" v={transport?.freshnessState || 'UNKNOWN'} />
-        <Row k="连接起点" v={transport?.connectedSince ? new Date(transport.connectedSince).toLocaleTimeString() : 'UNKNOWN'} />
-        <Row k="覆盖度" v={cov && cov.numerator != null ? cov.numerator + '/' + (cov.denominator ?? '?') + ' · ' + (cov.scope || 'UNKNOWN') : 'UNKNOWN'} />
+        <div className="list">
+          <Row k="传输状态" v={<Badge variant={transport?.transportState === 'LIVE' ? 'success' : transport?.transportState === 'OFFLINE' ? 'error' : 'muted'}>{transport?.transportState || 'UNKNOWN'}</Badge>} />
+          <Row k="新鲜度" v={transport?.freshnessState || 'UNKNOWN'} />
+          <Row k="连接起点" v={transport?.connectedSince ? new Date(transport.connectedSince).toLocaleTimeString() : 'UNKNOWN'} />
+          <Row k="覆盖度" v={cov && cov.numerator != null ? cov.numerator + '/' + (cov.denominator ?? '?') + ' · ' + (cov.scope || 'UNKNOWN') : 'UNKNOWN'} />
+        </div>
       </CardContent></Card>
-      <Card><CardHeader><span>说明</span></CardHeader><CardContent className="text-xs text-zinc-500">
+      <Card><CardHeader><span>说明</span></CardHeader><CardContent className="text-xs text-muted">
         服务健康 = 传输真值，不是伪造的 healthy。LIVE 仅当 live-gate verdict 为 LIVE；canonical readback 失败回退 DELAYED/OFFLINE。Observer 严格只读。
       </CardContent></Card>
     </div>
@@ -328,20 +378,26 @@ export function DeliveryView({ snap }: { snap: Snap }) {
   const ci = snap?.ci || []
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="two-col">
         <Card><CardHeader><span>Git 状态（真实）</span></CardHeader><CardContent>
-          <Row k="本地" v={git?.localSha ? git.localSha.slice(0, 7) : 'UNKNOWN'} />
-          <Row k="远程" v={git?.remoteSha ? git.remoteSha.slice(0, 7) : 'UNKNOWN'} />
-          <Row k="CI HEAD" v={git?.ciSha ? git.ciSha.slice(0, 7) : 'UNKNOWN'} />
-          <Row k="匹配状态" v={<Badge variant={git?.matchState === 'MATCH' ? 'success' : git?.matchState === 'DRIFT' ? 'error' : 'muted'}>{git?.matchState || 'UNKNOWN'}</Badge>} />
+          <div className="list">
+            <Row k="本地" v={git?.localSha ? git.localSha.slice(0, 7) : 'UNKNOWN'} />
+            <Row k="远程" v={git?.remoteSha ? git.remoteSha.slice(0, 7) : 'UNKNOWN'} />
+            <Row k="CI HEAD" v={git?.ciSha ? git.ciSha.slice(0, 7) : 'UNKNOWN'} />
+            <Row k="匹配状态" v={<Badge variant={git?.matchState === 'MATCH' ? 'success' : git?.matchState === 'DRIFT' ? 'error' : 'muted'}>{git?.matchState || 'UNKNOWN'}</Badge>} />
+          </div>
         </CardContent></Card>
         <Card><CardHeader><span>CI 运行</span></CardHeader><CardContent>
-          {ci.length ? ci.slice(0, 5).map((r, i) => (
-            <div key={i} className="flex justify-between py-1 text-xs">
-              <span className="font-mono text-zinc-400">{r.headSha ? r.headSha.slice(0, 7) : 'UNKNOWN'} · {r.workflow || 'UNKNOWN'}</span>
-              <Badge variant={r.conclusion === 'success' || r.status === 'success' ? 'success' : r.status ? 'warning' : 'muted'}>{r.conclusion || r.status || 'UNKNOWN'}</Badge>
+          {ci.length ? (
+            <div className="list">
+              {ci.slice(0, 5).map((r, i) => (
+                <div key={i} className="list-item">
+                  <span className="min-w-0 truncate font-mono text-xs text-muted">{r.headSha ? r.headSha.slice(0, 7) : 'UNKNOWN'} · {r.workflow || 'UNKNOWN'}</span>
+                  <Badge variant={r.conclusion === 'success' || r.status === 'success' ? 'success' : r.status ? 'warning' : 'muted'}>{r.conclusion || r.status || 'UNKNOWN'}</Badge>
+                </div>
+              ))}
             </div>
-          )) : <div className="text-zinc-600 py-2 text-xs">无 CI 记录（UNKNOWN）</div>}
+          ) : <div className="py-2 text-xs text-muted">无 CI 记录（UNKNOWN）</div>}
         </CardContent></Card>
       </div>
     </div>
@@ -358,14 +414,16 @@ export function TrustView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card><CardHeader><span>数据可信度（真实投影）</span></CardHeader><CardContent>
-        <Row k="Token 质量" v={<Badge variant={quality === 'EXACT' ? 'success' : quality === 'ESTIMATED' ? 'warning' : 'muted'}>{quality}</Badge>} />
-        <Row k="传输状态" v={transport?.transportState || 'UNKNOWN'} />
-        <Row k="新鲜度" v={transport?.freshnessState || 'UNKNOWN'} />
-        <Row k="覆盖度" v={cov && cov.numerator != null ? cov.numerator + '/' + (cov.denominator ?? '?') + ' · ' + (cov.scope || 'UNKNOWN') : 'UNKNOWN'} />
-        <Row k="证据引用数" v={refs.length ? String(refs.length) : '0'} />
-        <Row k="快照生成" v={snap?.generatedAt ? new Date(snap.generatedAt).toLocaleString() : 'UNKNOWN'} />
+        <div className="list">
+          <Row k="Token 质量" v={<Badge variant={quality === 'EXACT' ? 'success' : quality === 'ESTIMATED' ? 'warning' : 'muted'}>{quality}</Badge>} />
+          <Row k="传输状态" v={transport?.transportState || 'UNKNOWN'} />
+          <Row k="新鲜度" v={transport?.freshnessState || 'UNKNOWN'} />
+          <Row k="覆盖度" v={cov && cov.numerator != null ? cov.numerator + '/' + (cov.denominator ?? '?') + ' · ' + (cov.scope || 'UNKNOWN') : 'UNKNOWN'} />
+          <Row k="证据引用数" v={refs.length ? String(refs.length) : '0'} />
+          <Row k="快照生成" v={snap?.generatedAt ? new Date(snap.generatedAt).toLocaleString() : 'UNKNOWN'} />
+        </div>
       </CardContent></Card>
-      <Card><CardHeader><span>原则</span></CardHeader><CardContent className="text-xs text-zinc-500">
+      <Card><CardHeader><span>原则</span></CardHeader><CardContent className="text-xs text-muted">
         未知值保持 UNKNOWN，不伪造 0；Token/成本仅后端投影的质量标签（EXACT/ESTIMATED/UNKNOWN），前端不算金额、不算汇率、不算配额；Observer 严格只读，不构成第二 Update Authority。
       </CardContent></Card>
     </div>
@@ -377,26 +435,32 @@ export function SettingsView({ snap }: { snap: Snap }) {
   const cfg = (window as any).__OBSERVER_CONFIG__
   const descriptorSource = cfg?.apiBase ? 'window-config' : 'static-preview/tauri-injected'
   return (
-    <div className="flex flex-col gap-4 overflow-auto p-1">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title="Settings / 设置"
         description="数据源、事件流、版本与数据水位的真实投影。本地个人研究使用：无访问令牌、无锁定、无鉴权入口；Observer 严格只读。"
       />
-      <div className="flex flex-col gap-4 max-w-2xl">
+      <div className="split">
         <Card><CardHeader><span>数据源（真实）</span></CardHeader><CardContent>
-          <Row k="快照端点来源" v={descriptorSource} />
-          <Row k="事件流" v={snap?.transport.eventsUrl || 'UNKNOWN'} />
-          <Row k="传输状态" v={snap?.transport.transportState || 'UNKNOWN'} />
+          <div className="list">
+            <Row k="快照端点来源" v={descriptorSource} />
+            <Row k="事件流" v={snap?.transport.eventsUrl || 'UNKNOWN'} />
+            <Row k="传输状态" v={snap?.transport.transportState || 'UNKNOWN'} />
+          </div>
         </CardContent></Card>
-        <Card><CardHeader><span>版本信息</span></CardHeader><CardContent>
-          <Row k="修订号" v={snap ? String(snap.revision) : 'UNKNOWN'} />
-          <Row k="Schema" v={snap?.schemaVersion || 'UNKNOWN'} />
-          <Row k="生成时间" v={snap?.generatedAt ? new Date(snap.generatedAt).toLocaleString() : 'UNKNOWN'} />
-          <Row k="数据水位" v={snap?.sourceWatermark || 'UNKNOWN'} />
-        </CardContent></Card>
-        <Card><CardHeader><span>关于</span></CardHeader><CardContent className="text-xs text-zinc-400">
-          WORK-LAB Observer · 客户端中立控制塔 · 只读投影 · 严格真实（sidecar v3 snapshot + SSE；无 Prometheus/本地资源伪造）
-        </CardContent></Card>
+        <div className="flex flex-col gap-4">
+          <Card><CardHeader><span>版本信息</span></CardHeader><CardContent>
+            <div className="list">
+              <Row k="修订号" v={snap ? String(snap.revision) : 'UNKNOWN'} />
+              <Row k="Schema" v={snap?.schemaVersion || 'UNKNOWN'} />
+              <Row k="生成时间" v={snap?.generatedAt ? new Date(snap.generatedAt).toLocaleString() : 'UNKNOWN'} />
+              <Row k="数据水位" v={snap?.sourceWatermark || 'UNKNOWN'} />
+            </div>
+          </CardContent></Card>
+          <Card><CardHeader><span>关于</span></CardHeader><CardContent className="text-xs text-muted">
+            WORK-LAB Observer · 客户端中立控制塔 · 只读投影 · 严格真实（sidecar v3 snapshot + SSE；无 Prometheus/本地资源伪造）
+          </CardContent></Card>
+        </div>
       </div>
     </div>
   )

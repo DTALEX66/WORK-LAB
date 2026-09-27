@@ -1,10 +1,14 @@
-// S31/S32 (taskpack 20260919): read-only software installation-identity panel.
+// S31/S32 (taskpack 20260919) · L10b (2026-09-27): read-only software
+// installation-identity panel.
 //
 // The Observer projects the software-installation-identity contract (U17/P0-07)
 // already resolved by the sidecar/DHS adapter. It NEVER acts on it (no second
 // Update Authority, no relocation, no delete). When DSH has drifted to C: or a
 // duplicate install exists, this panel shows LOCATION_DRIFT / DUAL_INSTALLATION
 // — NOT "Healthy".
+//
+// L10b: the B10 `.panel` + `.list` / `.list-item` structure (each software
+// entry is a `.panel` block with a `.list` of detail rows) and `.tag` pills.
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { SoftwareIdentity, SoftwareLocationStatus } from '@/types'
@@ -40,9 +44,9 @@ function statusVariant(s: SoftwareLocationStatus): 'success' | 'warning' | 'erro
 
 function Row({ k, v, mono = false }: { k: string; v: React.ReactNode; mono?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-1 border-b border-border/40 last:border-0">
-      <span className="text-[11px] text-zinc-500">{k}</span>
-      <span className={'text-[11px] text-zinc-200 truncate ml-3 text-right' + (mono ? ' font-mono' : '')}>{v}</span>
+    <div className="list-item">
+      <span className="text-[11px] text-muted">{k}</span>
+      <span className={'ml-3 min-w-0 truncate text-right text-[11px] text-ink' + (mono ? ' font-mono' : '')}>{v}</span>
     </div>
   )
 }
@@ -50,30 +54,32 @@ function Row({ k, v, mono = false }: { k: string; v: React.ReactNode; mono?: boo
 export function SoftwareView({ snap }: { snap: any }) {
   const software: SoftwareIdentity[] = Array.isArray(snap?.software) ? snap.software : []
   return (
-    <div className="flex flex-col gap-4 overflow-auto p-4">
+    <div className="flex flex-col gap-4">
       <Card>
         <CardHeader>
           <span>软件安装身份（只读投影）</span>
-          <span className="text-[11px] text-zinc-500">
+          <span className="text-[11px] text-muted">
             {software.length ? software.length + ' 项 · 真实' : '无数据（UNKNOWN）'}
           </span>
         </CardHeader>
         <CardContent>
           {software.length === 0 ? (
-            <div className="text-xs text-zinc-600 py-6 text-center">
-              无软件身份投影（后端未提供 · 保持 UNKNOWN，不伪造 Healthy）
+            <div className="empty py-10">
+              <div className="icon" aria-hidden="true">▤</div>
+              <p className="m-0 text-sm font-semibold text-ink">无软件身份投影</p>
+              <p className="mx-auto mt-1 max-w-md text-xs">后端未提供 · 保持 UNKNOWN，不伪造 Healthy</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
               {software.map((s) => (
-                <div key={s.softwareId} className="panel2 p-3 rounded">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium">{s.displayName || s.softwareId}</span>
+                <div key={s.softwareId} className="panel">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <strong className="text-xs font-semibold text-ink">{s.displayName || s.softwareId}</strong>
                     <Badge variant={statusVariant(s.locationStatus)}>
                       {STATUS_LABEL[s.locationStatus] || s.locationStatus}
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                  <div className="list">
                     <Row k="安装位置" v={s.installRoot || 'UNKNOWN'} mono />
                     <Row k="可执行" v={s.executableRealpath || 'UNKNOWN'} mono />
                     <Row k="发现版本" v={s.discoveredVersion || 'UNKNOWN'} mono />
@@ -105,7 +111,7 @@ export function SoftwareView({ snap }: { snap: any }) {
       </Card>
       <Card>
         <CardHeader><span>原则</span></CardHeader>
-        <CardContent className="text-xs text-zinc-500">
+        <CardContent className="text-xs text-muted">
           软件位置真值来自后端安装身份契约（U17/P0-07）。Observer 仅投影，绝不构成第二
           Update Authority；位置漂移/双安装如实呈现，不伪装 Healthy。
         </CardContent>

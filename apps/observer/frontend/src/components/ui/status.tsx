@@ -1,8 +1,10 @@
-// L10 (2026-09-27): B10 `.status-stack` pills + `.tag` gradient status
+// L10 (2026-09-27) · L10b: B10 `.status-stack` pills + `.tag` gradient status
 // badges. Two contracts:
 //  - StatusDot: the transport-style state dot (live pulse) + optional label
 //  - StatusPill: a colored state pill (success/warning/error/info/muted),
-//    1:1 of B10 `.tag` (rounded-full, 12px bold, gradient fill)
+//    1:1 of B10 `.tag` (rounded-full, 12px bold, gradient fill). L10b routes
+//    it through the SAME `.tag` classes as Badge so there is exactly one B10
+//    pill implementation in the codebase.
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import type { BadgeVariant } from './badge'
@@ -17,19 +19,15 @@ export function StatusPill({
   className?: string
 }) {
   const fills: Record<BadgeVariant, string> = {
-    success: 'bg-gradient-to-br from-[#27c86a] to-[#11a74d] text-white',
-    warning: 'bg-gradient-to-br from-[#f2b541] to-[#c98c00] text-white',
-    error: 'bg-gradient-to-br from-[#f86b6b] to-[#cb3e3e] text-white',
-    info: 'bg-gradient-to-br from-primary to-secondary text-white',
-    muted: 'bg-panel2 text-muted border border-border/60',
+    success: 'tag ok',
+    warning: 'tag warn',
+    error: 'tag bad',
+    info: 'tag info',
+    muted: 'tag bg-panel2 text-muted border border-border/60',
   }
   return (
     <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-bold whitespace-nowrap',
-        fills[variant],
-        className,
-      )}
+      className={cn(fills[variant], 'gap-1.5', className)}
     >
       {children}
     </span>

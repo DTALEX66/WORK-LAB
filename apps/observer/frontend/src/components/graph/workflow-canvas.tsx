@@ -1,13 +1,24 @@
-// L10 (2026-09-27): B10 workflow editor canvas — an INTERACTIVE node surface
-// (NOT a static flow diagram). Drag nodes, zoom, pan, select, connect,
-// delete, with a B10 `.node` look (16px radius, primary border + glow) and
-// `.flow-svg` animated dashed edges. Node positions + edges live in the
-// caller's state (local model; persisted via localStorage by the view).
+// L10 (2026-09-27) · L10b: B10 workflow editor canvas — an INTERACTIVE node
+// surface (NOT a static flow diagram). Drag nodes, select, connect, delete,
+// zoom, with the verbatim B10 look:
+//
+//   <div class="canvas">
+//     <svg class="flow-svg"><path d="M … C …"/></svg>
+//     <div class="node" style="left:…px;top:…px">
+//       <div class="title">触发器</div><div class="meta">cron · 每日 02:00</div>
+//     </div> × N
+//   </div>
+//
+// `.canvas` (30px grid + primary radial wash, 18px radius) / `.flow-svg path`
+// (3px primary stroke, dashed, dashMove animation, glow) / `.node` (16px radius,
+// primary border, grab cursor, hover lift) / `.node .title` / `.node .meta` are
+// B10-verbatim in src/skins/b10.css. Position stays inline (real node
+// coordinates from the caller's model).
 //
 // Honest boundary: this canvas is a LOCAL editing model. "发布 / 运行" is the
 // caller's contract — until a real workflow-schema backend is wired the view
-// renders those actions disabled + explanatory (no fake success), but the
-// canvas interaction (drag/select/connect/delete/zoom) is fully real.
+// renders those actions disabled + explanatory (no fake success), while the
+// canvas interaction is fully real.
 import * as React from 'react'
 import { ZoomIn, ZoomOut, Maximize, Plus, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -78,6 +89,7 @@ export function WorkflowCanvas({
   const [connecting, setConnecting] = React.useState<{ from: string; x: number; y: number } | null>(null)
   const canvasRef = React.useRef<HTMLDivElement>(null)
   const [canvasSize, setCanvasSize] = React.useState({ w: 800, h: 520 })
+  void canvasSize
 
   // measure the canvas for edge geometry
   React.useEffect(() => {
@@ -175,9 +187,9 @@ export function WorkflowCanvas({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1 rounded-lg border border-border bg-panel2/72 px-2 py-1.5">
+      {/* toolbar — B10 `.toolbar` + `.seg` (node kinds) + `.ghost-btn` (view) */}
+      <div className="toolbar">
+        <div className="seg" role="group" aria-label="节点类型">
           {NODE_KINDS.map((k) => (
             <button
               key={k}
@@ -185,51 +197,45 @@ export function WorkflowCanvas({
               onClick={() => onAddNode?.(k)}
               title={`添加 ${k} 节点`}
               aria-label={`添加 ${k} 节点`}
-              className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-ink hover:bg-panel2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="flex items-center gap-1.5"
             >
               <span className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR[k] }} aria-hidden />
               {k}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-1 ml-auto">
-          <button type="button" onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))} aria-label="缩小" className="rounded-md border border-border bg-panel2/72 p-1.5 text-muted hover:text-ink"><ZoomOut size={14} /></button>
-          <button type="button" onClick={() => setZoom(1)} aria-label="适应画布" title="重置缩放与平移" className="rounded-md border border-border bg-panel2/72 p-1.5 text-muted hover:text-ink"><Maximize size={14} /></button>
-          <button type="button" onClick={() => setZoom((z) => Math.min(2.4, z + 0.1))} aria-label="放大" className="rounded-md border border-border bg-panel2/72 p-1.5 text-muted hover:text-ink"><ZoomIn size={14} /></button>
-          <button type="button" onClick={deleteSelected} disabled={!selectedId} aria-label="删除所选节点" title="删除所选节点" className="rounded-md border border-border bg-panel2/72 p-1.5 text-muted hover:text-error disabled:opacity-40"><Trash2 size={14} /></button>
+        <div className="ml-auto flex items-center gap-2">
+          <button type="button" className="ghost-btn" onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))} aria-label="缩小"><ZoomOut size={14} /></button>
+          <button type="button" className="ghost-btn" onClick={() => setZoom(1)} aria-label="适应画布" title="重置缩放与平移"><Maximize size={14} /></button>
+          <button type="button" className="ghost-btn" onClick={() => setZoom((z) => Math.min(2.4, z + 0.1))} aria-label="放大"><ZoomIn size={14} /></button>
+          <button type="button" className="ghost-btn" onClick={deleteSelected} disabled={!selectedId} aria-label="删除所选节点" title="删除所选节点"><Trash2 size={14} /></button>
         </div>
       </div>
 
-      {/* canvas */}
+      {/* canvas — B10 `.canvas` (30px grid + primary wash) + `.flow-svg` */}
       <div
         ref={canvasRef}
-        className="wl-canvas relative h-[520px] overflow-hidden rounded-lg border border-border/60"
-        style={{
-          background: [
-            'linear-gradient(var(--grid-line) 1px, transparent 1px)',
-            'linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)',
-            'radial-gradient(circle at 30% 20%, color-mix(in srgb, rgb(var(--primary-rgb)) 8%, transparent), transparent 40%)',
-          ].join(','),
-          backgroundSize: '30px 30px, 30px 30px, auto',
-          cursor: panStart.current ? 'grabbing' : 'default',
-        }}
+        className="canvas"
+        style={{ cursor: panStart.current ? 'grabbing' : 'default' }}
         onPointerDown={onBgPointerDown}
         onPointerMove={(e) => { onBgPointerMove(e); onPointerMove(e) }}
-        onPointerUp={(e) => { onBgPointerUp(); onPointerUp() }}
+        onPointerUp={() => { onBgPointerUp(); onPointerUp() }}
         onPointerLeave={() => { onBgPointerUp(); onPointerUp() }}
       >
         <div
           className="absolute inset-0"
           style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}
         >
-          <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" style={{ width: '100%', height: '100%' }}>
+          <svg className="flow-svg" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
             {edges.map((e) => {
               const a = nodeById.get(e.from), b = nodeById.get(e.to)
               if (!a || !b) return null
-              return <path key={e.id} d={edgePath(a, b)} className="wl-edge-line" />
+              return <path key={e.id} d={edgePath(a, b)} />
             })}
             {connecting ? (
-              <line x1={nodeById.get(connecting.from) ? nodeCenter(nodeById.get(connecting.from)!).x : 0} y1={nodeById.get(connecting.from) ? nodeCenter(nodeById.get(connecting.from)!).y : 0} x2={connecting.x} y2={connecting.y} className="wl-edge-line" />
+              <path
+                d={`M ${nodeById.get(connecting.from) ? nodeCenter(nodeById.get(connecting.from)!).x : 0} ${nodeById.get(connecting.from) ? nodeCenter(nodeById.get(connecting.from)!).y : 0} L ${connecting.x} ${connecting.y}`}
+              />
             ) : null}
           </svg>
           {nodes.map((n) => {
@@ -238,16 +244,8 @@ export function WorkflowCanvas({
               <div
                 key={n.id}
                 data-node-id={n.id}
-                className={cn(
-                  'wl-node absolute select-none rounded-lg border p-3',
-                  sel ? 'wl-node-active' : 'wl-node-glow',
-                )}
-                style={{
-                  left: n.x, top: n.y, width: NODE_W, height: NODE_H,
-                  background: 'linear-gradient(180deg, color-mix(in srgb, var(--color-panel2) 82%, white 1%), color-mix(in srgb, var(--color-panel2) 96%, #000 2%))',
-                  borderColor: sel ? 'rgb(var(--primary-rgb))' : 'color-mix(in srgb, rgb(var(--primary-rgb)) 42%, white 3%)',
-                  cursor: 'grab',
-                }}
+                className={cn('node', sel && 'active')}
+                style={{ left: n.x, top: n.y, minWidth: NODE_W, minHeight: NODE_H }}
                 onPointerDown={(e) => startDrag(e, n.id)}
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
@@ -255,8 +253,8 @@ export function WorkflowCanvas({
               >
                 <div className="flex items-start justify-between gap-1">
                   <div className="min-w-0">
-                    <div className="truncate text-[12px] font-bold text-ink">{n.label}</div>
-                    <div className="mt-0.5 text-[10px] text-muted">{n.meta || n.kind}</div>
+                    <div className="title truncate">{n.label}</div>
+                    <div className="meta truncate">{n.meta || n.kind}</div>
                   </div>
                   <button
                     type="button"
@@ -279,8 +277,8 @@ export function WorkflowCanvas({
 
       {/* save / publish / run — honest when the real contract is not wired */}
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" onClick={onRun} aria-label="运行" disabled={runDisabled} className="rounded-lg border border-border bg-panel2/72 px-3.5 py-2 text-[12px] font-semibold text-ink hover:border-primary/40 disabled:opacity-40">运行</button>
-        <button type="button" onClick={onPublish} aria-label="保存并发布" disabled={publishDisabled} className="rounded-lg bg-gradient-to-br from-primary to-secondary px-3.5 py-2 text-[12px] font-bold text-white shadow-card hover:scale-[1.01] disabled:opacity-40">保存并发布</button>
+        <button type="button" onClick={onRun} aria-label="运行" disabled={runDisabled} className="ghost-btn">运行</button>
+        <button type="button" onClick={onPublish} aria-label="保存并发布" disabled={publishDisabled} className="primary-btn">保存并发布</button>
         {(publishHint || runHint) ? (
           <span className="text-[11px] text-muted">{publishHint || runHint}</span>
         ) : null}

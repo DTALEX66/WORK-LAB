@@ -1,11 +1,15 @@
 import * as React from 'react'
-import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
- * UI_COMPONENTS (20260921): Drawer — L6 authority: 280ms
- * cubic-bezier(0.2,0,0,1) slide, side=right|left, Esc closes, aria-modal.
- * Motion classes (.ui-drawer-right / .ui-drawer-left) live in src/index.css.
+ * UI_COMPONENTS (20260921) · L10b (2026-09-27): Drawer — L6 authority: 280ms
+ * cubic-bezier(0.2,0,0,1) slide from the right, Esc closes, aria-modal.
+ *
+ * L10b: the panel is the verbatim B10 `.drawer` element (fixed to the right,
+ * translate via `right:-540px` → `right:0` on `.open`, 24px padding, primary
+ * left border, --shadow). B10 has no backdrop for the drawer, so the component
+ * adds a transparent click-catcher only (no new visual layer) to keep the
+ * existing click-outside-to-close behavior.
  */
 export interface DrawerProps {
   open: boolean
@@ -26,38 +30,29 @@ export function Drawer({ open, onClose, title, children, side = 'right', classNa
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  // L10b: B10 slides the `.drawer` in/out with `.open`. The repo contract is
+  // "closed drawer renders nothing" (so its content never duplicates page
+  // text), so the element is mounted only while open.
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <>
       <div
-        className="ui-backdrop absolute inset-0 bg-black/[0.62]"
+        className="fixed inset-0"
+        style={{ zIndex: 87, background: 'transparent' }}
         aria-hidden="true"
         onClick={onClose}
       />
-      <div
+      <aside
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={cn(
-          'ui-drawer relative z-10 flex h-full w-96 max-w-[90vw] flex-col panel card-shadow',
-          side === 'right' ? 'ui-drawer-right ml-auto border-l' : 'ui-drawer-left mr-auto border-r',
-          className,
-        )}
+        className={cn('drawer', 'open', className)}
+        style={side === 'left' ? { right: 'auto', left: 0 } : undefined}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="text-base font-semibold text-ink">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="关闭"
-            className="rounded-md p-1.5 text-muted hover:text-ink hover:bg-panel2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 py-4 text-sm text-ink">{children}</div>
-      </div>
-    </div>
+        <h3 className="m-0 mb-2">{title}</h3>
+        <div className="text-sm text-ink">{children}</div>
+      </aside>
+    </>
   )
 }

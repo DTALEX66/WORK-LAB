@@ -1,9 +1,14 @@
-// L10 (2026-09-27): B10 Observer lane — the READ-ONLY observer topology
-// (Observer §8: topology / Agent / Workflow / Tool / MCP / Memory / Task Pack /
-// abnormal nodes / running state, metrics + trend). A radial NodeGraph with a
-// pulsing core + satellite nodes (B10 `.graph-stage`), a metric row, and an
-// honest trend surface. Clicking a satellite opens a read-only detail Drawer;
-// there are NO write/approve/retry controls anywhere on this page.
+// L10 (2026-09-27) · L10b (2026-09-27): B10 Observer lane — the READ-ONLY
+// observer topology (Observer §8: topology / Agent / Workflow / Tool / MCP /
+// Memory / Task Pack / abnormal nodes / running state, metrics + trend).
+//
+// The DOM is the verbatim B10 `.split` (1.35fr .95fr) + `.graph-stage`
+// (core pulse + 6 `.node-dot` satellites + connector lines, clickable to open a
+// read-only `.drawer` detail) on the left, and the `.panel` `.metric-row`
+// (4 `.metric-box`) + honest `.spark` trend on the right.
+//
+// There are NO write/approve/retry/apply/rollback controls anywhere on this
+// page — not even a disabled one.
 import * as React from 'react'
 import { PageHeader } from '@/components/ui/page-header'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
@@ -79,8 +84,8 @@ export function ObserverView({ snap }: { snap: SnapshotV3 | null }) {
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
-        <Card className="wl-card-hover">
+      <div className="split">
+        <Card>
           <CardHeader>
             <span>观测拓扑（只读）</span>
             <span className="text-[11px] text-muted">核心 = Observer 投影 · 卫星 = 观测实体</span>
@@ -96,21 +101,21 @@ export function ObserverView({ snap }: { snap: SnapshotV3 | null }) {
         </Card>
 
         <div className="flex flex-col gap-4">
-          <Card className="wl-card-hover">
+          <Card>
             <CardHeader><span>指标（真实投影）</span></CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="metric-row" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
                 {metrics.map((m) => (
-                  <div key={m.label} className="panel2 rounded-lg border border-border/62 p-3.5">
-                    <div className="text-[11px] text-muted">{m.label}</div>
-                    <div className="mt-1 text-lg font-bold text-ink tabular-nums">{m.value}</div>
+                  <div key={m.label} className="metric-box">
+                    <div className="muted text-[11px]">{m.label}</div>
+                    <div className="mt-1 text-[15px] font-bold tabular-nums text-ink">{m.value}</div>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="wl-card-hover">
+          <Card>
             <CardHeader><span>执行趋势</span></CardHeader>
             <CardContent>
               {/* Honest: the v3 snapshot carries NO execution-trend series.
@@ -126,9 +131,11 @@ export function ObserverView({ snap }: { snap: SnapshotV3 | null }) {
       <Drawer open={!!selNode} onClose={() => setSelected(null)} title={selNode ? `实体 · ${selNode.label}` : '实体详情'}>
         {selNode ? (
           <div className="flex flex-col gap-3">
-            <StatusPill variant={selNode.state === 'active' ? 'success' : selNode.state === 'error' ? 'error' : 'muted'}>
-              {selNode.state === 'active' ? '运行中' : selNode.state === 'error' ? '异常' : '空闲'}
-            </StatusPill>
+            <div className="status-stack">
+              <StatusPill variant={selNode.state === 'active' ? 'success' : selNode.state === 'error' ? 'error' : 'muted'}>
+                {selNode.state === 'active' ? '运行中' : selNode.state === 'error' ? '异常' : '空闲'}
+              </StatusPill>
+            </div>
             <p className="text-xs leading-relaxed text-muted">
               该实体为 Observer 只读观测投影。{selNode.state === 'active' ? '当前存在真实运行中的执行（agent 维度命中）。' : '未观测到运行中的执行。'}
               无任何操作入口 — 观测不等于控制。

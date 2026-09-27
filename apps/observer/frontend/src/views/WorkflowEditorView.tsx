@@ -1,9 +1,13 @@
-// L10 (2026-09-27): B10 Workflow Editor — the CORE interactive page.
-// Interactive node canvas (drag/zoom/pan/select/connect/delete) via the
-// shared WorkflowCanvas + a B10 property panel for the selected node.
-// Local editing model (positions/edges in React state, persisted to
-// localStorage). Honest: 发布/运行 are disabled until a real workflow-schema
-// backend contract is wired (no fake success — UI_DECISIONS D-06).
+// L10 (2026-09-27) · L10b (2026-09-27): B10 Workflow Editor — the CORE
+// interactive page, in the verbatim B10 `.split` grid:
+//   .page-head → .split[ .panel > .canvas(.flow-svg + .node tiles) | .panel 属性与运行配置 ]
+// The right panel carries `.list-item` rows and the nested 部署说明 panel.
+//
+// Interactive node canvas (drag/zoom/pan/select/connect/delete) via the shared
+// WorkflowCanvas + the B10 property panel for the selected node. Local editing
+// model (positions/edges in React state, persisted to localStorage). Honest:
+// 发布/运行 are disabled until a real workflow-schema backend contract is wired
+// (no fake success — UI_DECISIONS D-06).
 import * as React from 'react'
 import { Save } from 'lucide-react'
 import { PageHeader } from '@/components/ui/page-header'
@@ -43,6 +47,7 @@ function loadModel(): EditorModel {
 }
 
 export function WorkflowEditorView({ snap }: { snap: unknown }) {
+  void snap
   const [model, setModel] = React.useState<EditorModel>(loadModel)
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
   const selected = model.nodes.find((n) => n.id === selectedId) ?? null
@@ -64,6 +69,10 @@ export function WorkflowEditorView({ snap }: { snap: unknown }) {
     setNodes(model.nodes.map((n) => (n.id === selected.id ? { ...n, ...patch } : n)))
   }
 
+  const edgeCount = selected
+    ? model.edges.filter((e) => e.from === selected.id || e.to === selected.id).length
+    : 0
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
@@ -80,24 +89,27 @@ export function WorkflowEditorView({ snap }: { snap: unknown }) {
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_280px]">
-        <WorkflowCanvas
-          nodes={model.nodes}
-          edges={model.edges}
-          onNodesChange={setNodes}
-          onEdgesChange={setEdges}
-          onAddNode={addNode}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onPublish={() => { /* contract not wired — disabled */ }}
-          onRun={() => { /* contract not wired — disabled */ }}
-          publishDisabled
-          runDisabled
-          publishHint="发布需 workflow-schema 契约（未接入，不伪造成功）"
-          runHint="运行需执行契约（未接入，不伪造成功）"
-        />
+      <div className="split">
+        <div className="panel">
+          <h3>Workflow Canvas</h3>
+          <WorkflowCanvas
+            nodes={model.nodes}
+            edges={model.edges}
+            onNodesChange={setNodes}
+            onEdgesChange={setEdges}
+            onAddNode={addNode}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onPublish={() => { /* contract not wired — disabled */ }}
+            onRun={() => { /* contract not wired — disabled */ }}
+            publishDisabled
+            runDisabled
+            publishHint="发布需 workflow-schema 契约（未接入，不伪造成功）"
+            runHint="运行需执行契约（未接入，不伪造成功）"
+          />
+        </div>
 
-        {/* B10 property panel */}
+        {/* B10 property panel — 属性与运行配置 */}
         <Card>
           <CardHeader>
             <span>属性面板</span>
@@ -114,26 +126,35 @@ export function WorkflowEditorView({ snap }: { snap: unknown }) {
                   说明
                   <Input value={selected.meta ?? ''} onChange={(e) => updateSelected({ meta: e.target.value })} placeholder="节点说明" />
                 </label>
-                <label className="flex flex-col gap-1 text-[11px] text-muted">
-                  节点类型
-                  <span className="font-mono text-xs text-ink">{selected.kind}</span>
-                </label>
-                <div className="text-[11px] text-muted">
-                  连接数：
-                  <span className="font-mono text-ink">
-                    {model.edges.filter((e) => e.from === selected.id || e.to === selected.id).length}
-                  </span>
+                <div className="list">
+                  <div className="list-item">
+                    <span className="text-muted">节点类型</span>
+                    <span className="font-mono text-xs text-ink">{selected.kind}</span>
+                  </div>
+                  <div className="list-item">
+                    <span className="text-muted">连接数</span>
+                    <span className="font-mono text-xs text-ink">{edgeCount}</span>
+                  </div>
                 </div>
                 <p className="text-[11px] leading-relaxed text-muted">
                   选中节点后在画布内拖动以移动；点节点右上 + 手柄向目标节点拖出即可连线；工具栏删除所选。
                 </p>
               </>
             ) : (
-              <div className="py-8 text-center text-xs text-muted">
-                点击画布中的节点查看属性
+              <div className="empty py-8">
+                <div className="icon" aria-hidden="true">＋</div>
+                <p className="m-0 text-sm font-semibold text-ink">点击画布中的节点查看属性</p>
+                <p className="mx-auto mt-1 max-w-md text-xs">未选中任何节点（无本地编辑焦点）</p>
               </div>
             )}
           </CardContent>
+          {/* B10 nested 部署说明 panel (panel inside panel) */}
+          <div className="panel mt-3.5">
+            <h3>部署说明</h3>
+            <div className="muted text-xs">
+              该编辑器为本地编辑模型；发布 / 运行在真实 workflow-schema 与执行契约接入前保持禁用（不伪造成功）。
+            </div>
+          </div>
         </Card>
       </div>
     </div>
