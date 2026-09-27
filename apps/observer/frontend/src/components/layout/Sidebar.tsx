@@ -25,21 +25,18 @@ interface LaneDef {
   icon: LucideIcon
 }
 
-// Lane groups aligned to P1-D §3.1 (2026-09-26): 7 primary nav entries
-// (Home / Work / Agents / Projects / Governance / Integrations / System).
-// Each group folds to its second-level lanes; all registry lanes + the
-// synthetic overview stay reachable (no data loss, pure IA regroup).
-// D3 (2026-09-26 stage D): the new `work` lane leads the work group — the
-// primary read-only closed loop (entry -> project -> task/execution ->
-// state/failure -> Context/Evidence -> next step) with a right-side Inspector.
+// L10 (2026-09-27): B07 IA page matrix regrouping — 7 primary nav groups
+// covering all 22 reachable lanes exactly once (the P1-01 invariant, now
+// including the four B10 lanes: workflows / workflow-editor / observer /
+// execution-detail). D3 `work` lane still leads the work group.
 export const NAV_GROUPS: { key: string; label: string; ids: string[] }[] = [
   { key: 'home',   label: '首页',   ids: [OVERVIEW_ID] },
-  { key: 'work',   label: '工作',   ids: ['work', 'executions', 'task-packs', 'delivery'] },
+  { key: 'work',   label: '工作',   ids: ['work', 'executions', 'task-packs', 'delivery', 'execution-detail'] },
   { key: 'agents', label: '智能体', ids: ['agents'] },
   { key: 'projects', label: '项目', ids: ['projects'] },
-  { key: 'gov',    label: '治理',   ids: ['rules-policy', 'approvals', 'audit', 'trust'] },
-  { key: 'integrations', label: '集成', ids: ['integrations'] },
-  { key: 'system', label: '系统',   ids: ['software', 'models', 'monitoring', 'memory', 'tools', 'settings'] },
+  { key: 'gov',    label: '治理',   ids: ['workflows', 'rules-policy', 'approvals', 'audit', 'trust'] },
+  { key: 'integrations', label: '集成', ids: ['integrations', 'workflow-editor'] },
+  { key: 'system', label: '系统',   ids: ['observer', 'software', 'models', 'monitoring', 'memory', 'tools', 'settings'] },
 ]
 
 function buildLanes(): Map<string, LaneDef> {
@@ -86,16 +83,25 @@ export function Sidebar({
 
   const Header = ({ isCollapsed }: { isCollapsed: boolean }) => (
     <div className={cn('flex items-center gap-3 px-3 py-4', isCollapsed && 'justify-center px-0')}>
+      {/* L10: B10 `.brand-mark` — 48px gradient rounded tile + "WL" 900 glyph,
+          primary glow shadow (D-02: B10 brand lock wins over L7). */}
       <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white"
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-black tracking-wide text-white"
+        style={{
+          background: [
+            'radial-gradient(circle at 30% 30%, color-mix(in srgb, rgb(var(--primary-rgb)) 80%, white 6%), transparent 45%)',
+            'linear-gradient(135deg, color-mix(in srgb, rgb(var(--primary-rgb)) 80%, white 3%), color-mix(in srgb, rgb(var(--secondary-rgb)) 55%, rgb(var(--primary-rgb))))',
+          ].join(', '),
+          boxShadow: '0 0 0 1px color-mix(in srgb, rgb(var(--primary-rgb)) 25%, white 5%), 0 10px 30px var(--glow-primary)',
+        }}
         aria-hidden="true"
       >
         WL
       </div>
       {!isCollapsed && (
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-ink">WORK-LAB</div>
-          <div className="text-[10px] uppercase tracking-wider text-secondary">AI Workflow Control Plane</div>
+          <div className="text-[15px] font-semibold text-ink leading-tight">WORK-LAB</div>
+          <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-primary">AI Workflow Control Plane</div>
         </div>
       )}
       {onToggleCollapse && (
@@ -176,13 +182,22 @@ export function Sidebar({
                       title={l.label}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors duration-fast',
+                        'group relative flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-all duration-fast',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
                         active
-                          ? 'bg-primary/15 text-ink'
-                          : 'text-muted hover:bg-panel2 hover:text-ink',
+                          ? 'text-ink'
+                          : 'text-muted hover:bg-panel2/78 hover:text-ink hover:translate-x-[3px]',
                       )}
+                      style={active ? {
+                        background: [
+                          'linear-gradient(180deg, color-mix(in srgb, rgb(var(--primary-rgb)) 26%, transparent), color-mix(in srgb, rgb(var(--primary-rgb)) 16%, transparent))',
+                          'color-mix(in srgb, var(--color-panel2) 68%, transparent)',
+                        ].join(', '),
+                        border: '1px solid color-mix(in srgb, rgb(var(--primary-rgb)) 45%, white 5%)',
+                        boxShadow: '0 8px 28px color-mix(in srgb, rgb(var(--primary-rgb)) 18%, transparent)',
+                      } : undefined}
                     >
+                      {active ? <span className="wl-nav-edge" aria-hidden="true" /> : null}
                       <Icon size={16} className={cn('shrink-0', active ? 'text-primary' : 'text-muted group-hover:text-secondary')} />
                       <span className="truncate">{l.label}</span>
                     </button>
@@ -198,18 +213,20 @@ export function Sidebar({
 
   return (
     <>
-      {/* Desktop rail */}
+      {/* Desktop rail — L10: B10 `.sidebar` 280px surface + gradient (D-02:
+          B10 width wins over L7 260px) */}
       <aside
         className={cn(
-          'hidden md:flex flex-col bg-sidebar border-r border-border transition-[width] duration-base overflow-hidden',
-          collapsed ? 'md:w-[72px]' : 'md:w-[260px]',
+          'wl-sidebar-surface hidden md:flex flex-col border-r transition-[width] duration-base overflow-hidden',
+          'border-border/75',
+          collapsed ? 'md:w-[72px]' : 'md:w-[280px]',
         )}
         aria-label="侧边导航"
       >
         <Header isCollapsed={collapsed} />
         {collapsed ? <RailItems /> : <GroupedNav />}
         {!collapsed && (
-          <div className="px-3 py-3 text-[10px] font-mono text-muted border-t border-border">
+          <div className="px-3 py-3 text-[10px] font-mono text-muted border-t border-border/55">
             {activeView}
           </div>
         )}
@@ -219,7 +236,7 @@ export function Sidebar({
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/50" onClick={onCloseMobile} aria-hidden="true" />
-          <aside className="ui-drawer-left relative z-10 flex h-full w-[280px] flex-col bg-sidebar border-r border-border" aria-label="侧边导航">
+          <aside className="ui-drawer-left wl-sidebar-surface relative z-10 flex h-full w-[280px] flex-col border-r border-border/75" aria-label="侧边导航">
             <Header isCollapsed={false} />
             <GroupedNav />
           </aside>

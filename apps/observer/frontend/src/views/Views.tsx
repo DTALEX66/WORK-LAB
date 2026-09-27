@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
 import type {
   SnapshotV3, Execution, Project, ExecutionState, ProjectActivityState,
 } from '@/types'
@@ -258,8 +259,12 @@ export function MemoryView({ snap }: { snap: Snap }) {
     { name: '适配器', state: fams?.adapters?.state, drift: fams?.adapters?.drift },
   ]
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-4">
+    <div className="flex flex-col gap-4 overflow-auto p-1">
+      <PageHeader
+        title="Memory Registry / 记忆注册"
+        description="治理四大家族（规则/技能/记忆/适配器）的漂移真值 + 错误账本（workspace.history）的真实投影。缺失即 UNKNOWN，Observer 只读，不写记忆。"
+      />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card><CardHeader><span>治理漂移状态（真实）</span></CardHeader><CardContent>
           {famItems.map((i) => (
             <Row key={i.name} k={i.name} v={<span>{i.state || 'UNKNOWN'}{i.drift ? ' · 漂移 ' + i.drift : ''}</span>} />
@@ -372,21 +377,27 @@ export function SettingsView({ snap }: { snap: Snap }) {
   const cfg = (window as any).__OBSERVER_CONFIG__
   const descriptorSource = cfg?.apiBase ? 'window-config' : 'static-preview/tauri-injected'
   return (
-    <div className="flex flex-col gap-4 max-w-2xl">
-      <Card><CardHeader><span>数据源（真实）</span></CardHeader><CardContent>
-        <Row k="快照端点来源" v={descriptorSource} />
-        <Row k="事件流" v={snap?.transport.eventsUrl || 'UNKNOWN'} />
-        <Row k="传输状态" v={snap?.transport.transportState || 'UNKNOWN'} />
-      </CardContent></Card>
-      <Card><CardHeader><span>版本信息</span></CardHeader><CardContent>
-        <Row k="修订号" v={snap ? String(snap.revision) : 'UNKNOWN'} />
-        <Row k="Schema" v={snap?.schemaVersion || 'UNKNOWN'} />
-        <Row k="生成时间" v={snap?.generatedAt ? new Date(snap.generatedAt).toLocaleString() : 'UNKNOWN'} />
-        <Row k="数据水位" v={snap?.sourceWatermark || 'UNKNOWN'} />
-      </CardContent></Card>
-      <Card><CardHeader><span>关于</span></CardHeader><CardContent className="text-xs text-zinc-400">
-        WORK-LAB Observer · 客户端中立控制塔 · 只读投影 · 严格真实（sidecar v3 snapshot + SSE；无 Prometheus/本地资源伪造）
-      </CardContent></Card>
+    <div className="flex flex-col gap-4 overflow-auto p-1">
+      <PageHeader
+        title="Settings / 设置"
+        description="数据源、事件流、版本与数据水位的真实投影。本地个人研究使用：无访问令牌、无锁定、无鉴权入口；Observer 严格只读。"
+      />
+      <div className="flex flex-col gap-4 max-w-2xl">
+        <Card><CardHeader><span>数据源（真实）</span></CardHeader><CardContent>
+          <Row k="快照端点来源" v={descriptorSource} />
+          <Row k="事件流" v={snap?.transport.eventsUrl || 'UNKNOWN'} />
+          <Row k="传输状态" v={snap?.transport.transportState || 'UNKNOWN'} />
+        </CardContent></Card>
+        <Card><CardHeader><span>版本信息</span></CardHeader><CardContent>
+          <Row k="修订号" v={snap ? String(snap.revision) : 'UNKNOWN'} />
+          <Row k="Schema" v={snap?.schemaVersion || 'UNKNOWN'} />
+          <Row k="生成时间" v={snap?.generatedAt ? new Date(snap.generatedAt).toLocaleString() : 'UNKNOWN'} />
+          <Row k="数据水位" v={snap?.sourceWatermark || 'UNKNOWN'} />
+        </CardContent></Card>
+        <Card><CardHeader><span>关于</span></CardHeader><CardContent className="text-xs text-zinc-400">
+          WORK-LAB Observer · 客户端中立控制塔 · 只读投影 · 严格真实（sidecar v3 snapshot + SSE；无 Prometheus/本地资源伪造）
+        </CardContent></Card>
+      </div>
     </div>
   )
 }

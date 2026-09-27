@@ -3,9 +3,10 @@
 // snap.workspace.plan.approvals (when the plan carries it). Everything else
 // must stay UNKNOWN: this view states the projection gap explicitly and
 // renders ONLY what is actually present. No approve/deny buttons (read-only).
-import { Card, CardHeader, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { UnknownState } from '@/components/ui/states'
+import { PageHeader } from '@/components/ui/page-header'
 
 function approvalVariant(state: string | undefined): 'success' | 'warning' | 'error' | 'muted' {
   const s = (state ?? '').toLowerCase()
@@ -21,20 +22,24 @@ export function ApprovalsView({ snap }: { snap: any }) {
     plan?.approvals && Array.isArray(plan.approvals) ? plan.approvals : undefined
 
   return (
-    <div className="flex flex-col gap-4 overflow-auto p-4">
+    <div className="flex flex-col gap-4 overflow-auto p-1">
+      <PageHeader
+        title="Approval Center / 审批中心"
+        description="审批真值来自后端审批契约（workspace.plan.approvals）。本视图只读：不渲染批准 / 拒绝 / 撤销按钮，不构成第二个审批 Authority；缺失即 UNKNOWN，不伪造已审批状态。"
+      />
       <Card>
-        <CardHeader>
-          <span>审批中心（只读投影）</span>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
+          <span className="text-sm font-medium">审批中心（只读投影）</span>
           <span className="text-[11px] text-muted">
             {approvals?.length ? `${approvals.length} 项审批记录` : '无审批数据'}
           </span>
-        </CardHeader>
+        </div>
         <CardContent>
           {approvals && approvals.length > 0 ? (
             <ul className="flex flex-col gap-2">
               {approvals.map((a, i) => (
-                <li key={i} className="panel2 p-3 flex items-center justify-between gap-3">
-                  <div className="text-[11px] text-ink min-w-0">
+                <li key={i} className="panel2 rounded-xl border border-border/62 p-4 flex items-center justify-between gap-3">
+                  <div className="text-[12px] text-ink min-w-0">
                     <span className="font-mono">
                       {String(a.taskId ?? a.id ?? `approval-${i + 1}`)}
                     </span>
@@ -55,7 +60,7 @@ export function ApprovalsView({ snap }: { snap: any }) {
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><span>原则</span></CardHeader>
+        <div className="px-4 py-3 border-b border-border/60 text-sm font-medium">原则</div>
         <CardContent className="text-xs text-muted">
           审批真值来自后端审批契约（workspace.plan.approvals）。本视图只读：
           不渲染批准 / 拒绝 / 撤销按钮，不构成第二个审批 Authority。
