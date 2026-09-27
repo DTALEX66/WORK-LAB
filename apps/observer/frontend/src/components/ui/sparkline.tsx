@@ -1,6 +1,11 @@
-// L10 (2026-09-27): B10 `.spark` sparkline — SVG polyline with the
-// primary->secondary gradient stroke. Values are the caller's truth; a
-// missing series renders nothing (honest UNKNOWN, no fabricated trend).
+// L10 (2026-09-27) · L10b: B10 `.spark` sparkline — SVG polyline with the
+// primary→secondary gradient stroke. Values are the caller's truth; a missing
+// series renders an honest UNKNOWN placeholder, never a fabricated trend.
+//
+// B10: `<svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none">`
+// with a 3.4px gradient polyline — `.spark` (100% × 180px) is verbatim in
+// src/skins/b10.css. The explicit `height` prop still controls the box so
+// callers keep their density control.
 import { cn } from '@/lib/utils'
 
 export interface SparklineProps {
@@ -15,7 +20,7 @@ export function Sparkline({ values, height = 120, className }: SparklineProps) {
   return (
     <div className={cn('w-full', className)} style={{ height }} aria-hidden={pts.length === 0}>
       {pts.length > 1 ? (
-        <svg className="spark w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <svg className="spark h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <defs>
             <linearGradient id="wl-spark-grad" x1="0" x2="1">
               <stop offset="0%" stopColor="rgb(var(--primary-rgb))" />
@@ -37,7 +42,7 @@ export function Sparkline({ values, height = 120, className }: SparklineProps) {
           />
         </svg>
       ) : (
-        <div className="h-full w-full grid place-items-center text-[11px] text-muted">
+        <div className="grid h-full w-full place-items-center text-[11px] text-muted">
           无趋势数据（UNKNOWN）
         </div>
       )}

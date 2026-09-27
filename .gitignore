@@ -11,6 +11,9 @@ htmlcov/
 node_modules/
 dist/
 build/
+# Vite/Vitest write their dep-optimizer + results cache at the invocation CWD;
+# when the runner is started from the repo root that cache lands here.
+.vite/
 *.log
 
 # Local secrets and credentials (never commit)

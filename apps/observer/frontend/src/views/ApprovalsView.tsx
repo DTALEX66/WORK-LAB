@@ -1,8 +1,12 @@
-// UI_VIEWS (20260921): Approvals lane — the backend snapshot has NO
-// approvals[] array. The only real approval data that can exist today is
-// snap.workspace.plan.approvals (when the plan carries it). Everything else
-// must stay UNKNOWN: this view states the projection gap explicitly and
-// renders ONLY what is actually present. No approve/deny buttons (read-only).
+// UI_VIEWS (20260921) · L10b (2026-09-27): Approvals lane — the backend
+// snapshot has NO approvals[] array. The only real approval data that can exist
+// today is snap.workspace.plan.approvals (when the plan carries it).
+//
+// L10b keeps the B10 `.panel > .table-wrap > .table` shape (the request / risk /
+// submitter / status columns) but renders it strictly READ-ONLY: the B10 demo's
+// 审批 action column is deliberately absent, because Observer is a pure
+// projection and must never expose 批准 / 拒绝 / 撤销. Everything the snapshot
+// does not carry stays UNKNOWN.
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { UnknownState } from '@/components/ui/states'
@@ -16,41 +20,66 @@ function approvalVariant(state: string | undefined): 'success' | 'warning' | 'er
   return 'muted'
 }
 
+function riskOf(a: { risk?: unknown; state?: string }): { text: string; variant: 'error' | 'warning' | 'muted' } {
+  const raw = typeof a.risk === 'string' ? a.risk.toLowerCase() : ''
+  if (raw === 'high' || raw === 'critical') return { text: '高风险', variant: 'error' }
+  if (raw === 'medium' || raw === 'moderate') return { text: '中风险', variant: 'warning' }
+  if (raw === 'low') return { text: '低风险', variant: 'muted' }
+  return { text: 'UNKNOWN', variant: 'muted' }
+}
+
 export function ApprovalsView({ snap }: { snap: any }) {
   const plan = snap?.workspace?.plan
   const approvals: { state?: string; [k: string]: unknown }[] | undefined =
     plan?.approvals && Array.isArray(plan.approvals) ? plan.approvals : undefined
 
   return (
-    <div className="flex flex-col gap-4 overflow-auto p-1">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title="Approval Center / 审批中心"
         description="审批真值来自后端审批契约（workspace.plan.approvals）。本视图只读：不渲染批准 / 拒绝 / 撤销按钮，不构成第二个审批 Authority；缺失即 UNKNOWN，不伪造已审批状态。"
       />
       <Card>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
-          <span className="text-sm font-medium">审批中心（只读投影）</span>
+        <div className="mb-3.5 flex items-center justify-between gap-3">
+          <h3 className="m-0">审批中心（只读投影）</h3>
           <span className="text-[11px] text-muted">
             {approvals?.length ? `${approvals.length} 项审批记录` : '无审批数据'}
           </span>
         </div>
         <CardContent>
           {approvals && approvals.length > 0 ? (
-            <ul className="flex flex-col gap-2">
-              {approvals.map((a, i) => (
-                <li key={i} className="panel2 rounded-xl border border-border/62 p-4 flex items-center justify-between gap-3">
-                  <div className="text-[12px] text-ink min-w-0">
-                    <span className="font-mono">
-                      {String(a.taskId ?? a.id ?? `approval-${i + 1}`)}
-                    </span>
-                    {a.reason ? <span className="ml-2 text-muted">{String(a.reason)}</span> : null}
-                  </div>
-                  <Badge variant={approvalVariant(a.state)}>
-                    {a.state ?? 'UNKNOWN'}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>请求</th>
+                    <th>风险</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {approvals.map((a, i) => {
+                    const risk = riskOf(a)
+                    return (
+                      <tr key={i}>
+                        <td>
+                          <strong className="font-mono">
+                            {String(a.taskId ?? a.id ?? `approval-${i + 1}`)}
+                          </strong>
+                          {a.reason ? <span className="ml-2 text-muted">{String(a.reason)}</span> : null}
+                        </td>
+                        <td><Badge variant={risk.variant}>{risk.text}</Badge></td>
+                        <td>
+                          <Badge variant={approvalVariant(a.state)}>
+                            {a.state ?? 'UNKNOWN'}
+                          </Badge>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <UnknownState
               title="审批数据未知"
@@ -60,7 +89,7 @@ export function ApprovalsView({ snap }: { snap: any }) {
         </CardContent>
       </Card>
       <Card>
-        <div className="px-4 py-3 border-b border-border/60 text-sm font-medium">原则</div>
+        <h3>原则</h3>
         <CardContent className="text-xs text-muted">
           审批真值来自后端审批契约（workspace.plan.approvals）。本视图只读：
           不渲染批准 / 拒绝 / 撤销按钮，不构成第二个审批 Authority。

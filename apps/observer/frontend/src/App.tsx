@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopStatusBar } from '@/components/layout/TopStatusBar'
 import { CommandPalette, type PaletteItem } from '@/components/ui/command-palette'
+import { Drawer } from '@/components/ui/drawer'
+import { Toaster, useToaster } from '@/components/ui/toast'
 import {
   MonitoringView, TrustView, SettingsView,
 } from '@/views/Views'
@@ -60,20 +62,29 @@ export default function App() {
   // U06/SSE: live snapshot — first poll + server-sent events, no fixed ports.
   const { snap, source, live, error } = useLiveSnapshot()
 
-  // UI_SHELL (20260921): desktop rail collapse + mobile drawer + command palette.
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  // UI_SHELL (20260921): mobile drawer + command palette.
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  // L10b: B10 global overlays — the right-hand 工作区 / Context drawer and the
+  // bottom-right Toast (B10 `.drawer` + `.toast`, 1800ms auto-hide).
+  const [workspaceOpen, setWorkspaceOpen] = useState(false)
+  const { toasts, toast, dismiss } = useToaster(1800)
 
   const openPalette = useCallback(() => setPaletteOpen(true), [])
   const closePalette = useCallback(() => setPaletteOpen(false), [])
 
   // L6 keyboard authority: global Ctrl/Cmd+K toggles the command palette.
+  // L10b: Esc closes every B10 overlay in one place (palette → modal handled
+  // by the Modal itself → drawer), matching the B10 single-file keydown block.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setPaletteOpen((o) => !o)
+      }
+      if (e.key === 'Escape') {
+        setPaletteOpen(false)
+        setWorkspaceOpen(false)
       }
     }
     window.addEventListener('keydown', onKey)
@@ -108,14 +119,14 @@ export default function App() {
         run: () => setLayout((l) => (l === 'full' ? 'compact' : 'full')),
       },
       {
-        id: 'act-rail',
-        label: sidebarCollapsed ? '展开侧边导航' : '折叠侧边导航',
+        id: 'act-workspace',
+        label: '打开工作区 / Context',
         group: '动作',
-        run: () => setSidebarCollapsed((c) => !c),
+        run: () => setWorkspaceOpen(true),
       },
     ]
     return [...viewItems, ...actions]
-  }, [theme, layout, sidebarCollapsed])
+  }, [theme, layout])
 
   // U05/B3: theme is projected through the SAME contract as the pre-render
   // script in index.html — the CSS defines :root (dark default) + html.light
@@ -174,10 +185,10 @@ export default function App() {
 
   const mainContent = (
     error && !snap ? (
-      <div className="max-w-xl mx-auto mt-10 panel2 rounded-md p-6 text-center">
-        <div className="text-lg text-error mb-2">数据源不可用</div>
-        <p className="text-xs text-zinc-500 whitespace-pre-wrap">{error}</p>
-        <p className="text-[11px] text-zinc-600 mt-3">
+      <div className="panel mx-auto mt-10 max-w-xl text-center">
+        <div className="mb-2 text-lg text-error">数据源不可用</div>
+        <p className="whitespace-pre-wrap text-xs text-muted">{error}</p>
+        <p className="mt-3 text-[11px] text-muted">
           保持 UNKNOWN 真相 — 不伪造 Agent / 模型 / 成本 / 资源
         </p>
       </div>
@@ -204,12 +215,54 @@ export default function App() {
     )
   )
 
+  // L10b: the B10 global overlays (palette / workspace drawer / toast) render
+  // in BOTH layouts so the Ctrl/Cmd+K contract, the honest toasts and the
+  // read-only context drawer never depend on the shell variant.
+  const overlays = (
+    <>
+      <CommandPalette
+        open={paletteOpen}
+        onClose={closePalette}
+        items={paletteItems}
+        title="命令面板"
+      />
+      <Drawer
+        open={workspaceOpen}
+        onClose={() => setWorkspaceOpen(false)}
+        title="工作区 / Context"
+      >
+        <p className="m-0 text-sm text-muted">
+          本地个人研究工作区：{snap ? 'Sidecar v3 快照投影已接入' : '数据源未接入（UNKNOWN）'}。
+          Command Palette（Ctrl/Cmd + K）、Drawer、Toast 与 Modal 均可用；
+          Observer 严格只读，无访问令牌 / 无锁定 / 无鉴权入口。
+        </p>
+        <div className="status-stack my-4">
+          <span className="tag info">{live ? 'Live Transport' : (snap?.transport.transportState || 'UNKNOWN')}</span>
+          <span className="tag ok">Local State</span>
+          <span className="tag warn">Read-only</span>
+        </div>
+        <div className="panel">
+          <h3>界面状态</h3>
+          <div className="list">
+            <div className="list-item"><span>Rendering</span><span className="tag ok">Ready</span></div>
+            <div className="list-item"><span>Motion Effects</span><span className="tag ok">Enabled</span></div>
+            <div className="list-item"><span>Palette</span><span className="tag info">Ctrl/Cmd + K</span></div>
+            <div className="list-item"><span>Snapshot revision</span><span className="tag info">{snap ? String(snap.revision) : 'UNKNOWN'}</span></div>
+          </div>
+        </div>
+      </Drawer>
+      <Toaster toasts={toasts} onDismiss={dismiss} />
+    </>
+  )
+
   // U05: compact is a DEDICATED HUD — no sidebar, single column, 320px-safe.
-  // full keeps the sidebar + multi-panel layout.
+  // full keeps the B10 sidebar + multi-panel layout.
   if (isCompact) {
     return (
-      <div data-layout={layout} className="flex h-screen overflow-hidden text-ink">
-        <div className="flex-1 flex flex-col min-w-0">
+      <div data-layout={layout} className="app app-compact">
+        <div className="ambient" aria-hidden="true" />
+        <div className="grid-bg" aria-hidden="true" />
+        <main className="main">
           <TopStatusBar
             snap={snap}
             source={source}
@@ -219,53 +272,38 @@ export default function App() {
             onCycleTheme={toggleTheme}
             onCycleLayout={toggleLayout}
             onOpenSearch={openPalette}
+            onOpenDrawer={() => setWorkspaceOpen(true)}
+            onNotify={() => toast({ title: '暂无新的通知', variant: 'info' })}
           />
-          <div className="flex-1">
+          <section className="content" id="content">
             <CompactHUD snap={snap} live={live} />
-          </div>
-        </div>
-        <CommandPalette
-          open={paletteOpen}
-          onClose={closePalette}
-          items={paletteItems}
-          title="命令面板"
-        />
+          </section>
+        </main>
+        {overlays}
       </div>
     )
   }
 
   return (
-    <div data-layout={layout} className="relative flex h-screen overflow-hidden text-ink">
-      {/* L10 B10 `.grid-bg` + `.ambient`: 32px grid backdrop (radial fade
-          mask) + two floating glow blobs — the "faint blue ambient light" the
-          B10 spec locks in (D-08: B10 beats the §八 "no glassmorphism flood"
-          reading; the glow is the requested system state language, not a
-          neon effect). */}
-      <div className="wl-grid-bg" aria-hidden="true" />
-      <div className="pointer-events-none absolute inset-0 z-[-2] overflow-hidden" aria-hidden="true">
-        <div className="wl-ambient" />
-        <div
-          className="wl-ambient"
-          style={{
-            width: 320, height: 320, left: 'auto', right: '8%', top: '8vh',
-            position: 'absolute',
-            background: 'color-mix(in srgb, rgb(var(--secondary-rgb)) 30%, transparent)',
-            animationDelay: '-4s',
-          }}
-        />
-      </div>
+    <div data-layout={layout} className="app">
+      {/* L10 B10 `.ambient` + `.grid-bg`: the 32px grid backdrop (radial fade
+          mask) + floating glow blobs — the "faint blue ambient light" the B10
+          spec locks in (D-08: B10 beats the §八 "no glassmorphism flood"
+          reading; the glow is the requested system state language). Both are
+          the verbatim B10 elements: `.ambient` carries the `::before/::after`
+          blobs, `.grid-bg` the grid. */}
+      <div className="ambient" aria-hidden="true" />
+      <div className="grid-bg" aria-hidden="true" />
       <Sidebar
         activeView={view}
         onSelect={(id) => {
           setView(id)
           setMobileNavOpen(false)
         }}
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
         mobileOpen={mobileNavOpen}
         onCloseMobile={() => setMobileNavOpen(false)}
       />
-      <div className="flex-1 flex flex-col min-w-0">
+      <main className="main">
         <TopStatusBar
           snap={snap}
           source={source}
@@ -275,16 +313,13 @@ export default function App() {
           onCycleTheme={toggleTheme}
           onCycleLayout={toggleLayout}
           onOpenSearch={openPalette}
+          onOpenDrawer={() => setWorkspaceOpen(true)}
+          onNotify={() => toast({ title: '暂无新的通知', variant: 'info' })}
           onOpenMobileNav={() => setMobileNavOpen(true)}
         />
-        <div className="flex-1 overflow-auto p-4">{mainContent}</div>
-      </div>
-      <CommandPalette
-        open={paletteOpen}
-        onClose={closePalette}
-        items={paletteItems}
-        title="命令面板"
-      />
+        <section className="content" id="content">{mainContent}</section>
+      </main>
+      {overlays}
     </div>
   )
 }

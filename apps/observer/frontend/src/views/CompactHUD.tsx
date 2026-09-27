@@ -1,8 +1,11 @@
 
-// U05 (taskpack 20260919): Compact is a DEDICATED HUD, not just a narrow full
-// layout. Single column, no sidebar, dense 4-KPI strip + one live truth row,
-// 320px-safe. Reads the REAL v3 transport/token/coverage truth; UNKNOWN when
-// there is no data (no fabricated 0 / "online").
+// U05 (taskpack 20260919) · L10b (2026-09-27): Compact is a DEDICATED HUD, not
+// just a narrow full layout. Single column, no sidebar, dense KPI strip + one
+// live truth row, 320px-safe. Reads the REAL v3 transport/token/coverage truth;
+// UNKNOWN when there is no data (no fabricated 0 / "online").
+//
+// L10b: the strip uses the B10 `.kpi-grid` of `.panel.kpi` cells (35px primary
+// numbers) and the truth row the B10 `.panel` + `.status-stack` `.tag` pills.
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { SnapshotV3 } from '@/types'
@@ -18,26 +21,26 @@ export function CompactHUD({ snap, live }: { snap: SnapshotV3 | null; live: bool
     { k: '质量', v: fmtCostQuality(tt?.costQuality) },
   ]
   return (
-    <div className="compact-hud h-full overflow-auto p-3 text-ink">
-      <div className="grid grid-cols-4 gap-2 mb-3">
+    <div className="compact-hud text-ink">
+      <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
         {kpis.map((x) => (
-          <div key={x.k} className="panel2 rounded p-2 text-center min-w-0">
-            <div className="text-[10px] text-zinc-500">{x.k}</div>
-            <div className="text-sm font-bold tabular-nums truncate">{x.v}</div>
+          <div key={x.k} className="panel kpi">
+            <strong className="truncate text-[22px]">{x.v}</strong>
+            <small>{x.k}</small>
           </div>
         ))}
       </div>
-      <Card>
-        <div className="flex items-center justify-between px-3 py-2 text-[11px]">
+      <Card className="mt-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Badge variant={live ? 'success' : tr && tr.transportState === 'OFFLINE' ? 'error' : 'muted'}>
             {live ? 'LIVE' : (tr ? tr.transportState : 'UNKNOWN')}
           </Badge>
-          <span className="text-zinc-500 tabular-nums">
+          <span className="tabular-nums text-muted">
             {tr && tr.coverageNumerator != null
               ? '覆盖 ' + tr.coverageNumerator + '/' + (tr.coverageDenominator ?? '?')
               : '覆盖 UNKNOWN'}
           </span>
-          <span className="text-zinc-600 font-mono">{snap ? 'rev ' + snap.revision : '—'}</span>
+          <span className="font-mono text-muted">{snap ? 'rev ' + snap.revision : '—'}</span>
         </div>
       </Card>
     </div>

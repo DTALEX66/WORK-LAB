@@ -6,6 +6,10 @@ import './index.css'
 // index.css so the B10 skin classes win; data still comes from the v3
 // snapshot projection, styles come 1:1 from the UI-suite B10 source.
 import './skins/b10.css'
+// L10b: shell reinforcement layer — the handful of responsive overrides the
+// unlayered B10 skin needs (rail visibility + compact grid). Loaded last so it
+// beats both index.css and the B10 skin.
+import './skins/l10b-shell.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

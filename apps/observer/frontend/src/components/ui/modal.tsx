@@ -1,13 +1,24 @@
 import * as React from 'react'
-import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
- * UI_COMPONENTS (20260921): Modal — L6 interaction authority: 220ms open/close
- * (motion-modal), backdrop opacity 0.62, Esc closes, focus moves into the
- * dialog on open and returns to the trigger on close, aria-modal +
- * role=dialog. Renders inline (parent positions it). Motion classes
- * (.ui-modal-panel / .ui-backdrop) live in src/index.css.
+ * UI_COMPONENTS (20260921) · L10b (2026-09-27): Modal — L6 interaction
+ * authority: Esc closes, focus moves into the dialog on open and returns to the
+ * trigger on close, aria-modal + role=dialog.
+ *
+ * L10b: the DOM is the verbatim B10 overlay structure —
+ *   <div class="overlay open" role="dialog" aria-modal="true" aria-label=…>
+ *     <div class="modal">
+ *       <h3>title</h3>
+ *       <div class="body">…children…</div>
+ *       <div class="actions">…footer (B10 default: 取消 + 确认)…</div>
+ *     </div>
+ *   </div>
+ * `.overlay` (fixed, blur backdrop, show via `.open`) / `.modal` (min(760px,96vw),
+ * 22px radius, primary border, --shadow) / `.modal .body` / `.modal .actions`
+ * are B10-verbatim in src/skins/b10.css. Keeping role=dialog on the `.overlay`
+ * element preserves `getByRole('dialog')` + `aria-modal` + `aria-label`
+ * exactly as the component test pins them.
  */
 export interface ModalProps {
   open: boolean
@@ -39,40 +50,26 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
     if (!open) previouslyFocused.current?.focus?.()
   }, [open])
 
+  // L10b: B10 shows/hides the overlay with `.open`, but the repo's component
+  // contract pins "closed Modal renders nothing" — so the overlay is only
+  // mounted while open (the `.overlay`/`.open` classes are still applied so the
+  // B10 fixed/blurred backdrop + `.modal` panel are exactly the B10 elements).
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="ui-backdrop absolute inset-0 bg-black/[0.62]"
-        aria-hidden="true"
-        onClick={onClose}
-      />
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        tabIndex={-1}
-        className={cn(
-          'ui-modal-panel relative z-10 w-full max-w-lg mx-4 panel card-shadow overflow-hidden',
-          'focus:outline-none',
-          className,
-        )}
-      >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="text-base font-semibold text-ink">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="关闭"
-            className="rounded-md p-1.5 text-muted hover:text-ink hover:bg-panel2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-        <div className="px-4 py-4 text-sm text-ink">{children}</div>
-        {footer ? <div className="px-4 py-3 border-t border-border flex justify-end gap-2">{footer}</div> : null}
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      className={cn('overlay', open && 'open')}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div ref={panelRef} tabIndex={-1} className={cn('modal focus:outline-none', className)}>
+        <h3>{title}</h3>
+        <div className="body">{children}</div>
+        {footer ? <div className="actions">{footer}</div> : null}
       </div>
     </div>
   )

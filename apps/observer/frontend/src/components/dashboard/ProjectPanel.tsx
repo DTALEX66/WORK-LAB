@@ -1,49 +1,51 @@
-import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { SnapshotV3 } from '@/types'
 import { fmtTokens, fmtCostQuality, activityTone } from '@/lib/api'
 
-// U07: per-project panel reading the REAL v3 `projects[]` projection.
-// activityState is real (ACTIVE/REGISTERED/IDLE/UNKNOWN); git dirty is the
-// real counter; token/costQuality is the backend label (no fabricated cost).
+/**
+ * U07 · L10b: per-project panel reading the REAL v3 `projects[]` projection,
+ * rendered with the B10 `.panel` + `.list` / `.list-item` structure.
+ * activityState is real (ACTIVE/REGISTERED/IDLE/UNKNOWN); git dirty is the real
+ * counter; token/costQuality is the backend label (no fabricated cost).
+ */
 export function ProjectPanel({ snap }: { snap: SnapshotV3 | null }) {
   const projects = snap?.projects || []
   return (
-    <Card>
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border text-sm font-medium">
-        <span>项目</span>
-        <span className="text-[11px] text-zinc-500">{snap ? projects.length + ' 个 · 真实' : '等待数据'}</span>
-      </div>
-      <div className="p-0">
-        {projects.length === 0 ? (
-          <div className="p-6 text-center text-zinc-500 text-xs">{snap ? 'registry 为空（UNKNOWN）' : '数据源未接入'}</div>
-        ) : (
-          <div className="flex flex-col">
-            {projects.slice(0, 8).map((p) => {
-              const tone = activityTone(p.activityState)
-              const dirty = p.git.dirtyCount
-              return (
-                <div key={p.projectId} className="px-4 py-2.5 border-b border-border/40 last:border-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium truncate">{p.displayName || p.projectId}</span>
-                    <Badge variant={tone === 'active' ? 'success' : 'muted'}>{p.activityState || 'UNKNOWN'}</Badge>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between text-[10px] text-zinc-500">
-                    <span className="font-mono">{p.agentPlatform || '—'}</span>
-                    <span className="tabular-nums">
-                      {p.activeExecutionCount} 执行 · {fmtTokens(p.token.totalTokens)} <span className="text-zinc-600">{fmtCostQuality(p.token.costQuality)}</span>
-                    </span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-2 text-[10px] text-zinc-600 font-mono">
-                    <span>{p.git.branch || '—'}@{p.git.localSha ? p.git.localSha.slice(0, 7) : '—'}</span>
-                    {dirty ? <Badge variant="warning">脏 {dirty}</Badge> : <Badge variant="muted">干净</Badge>}
-                  </div>
+    <div className="panel">
+      <h3>项目</h3>
+      <div className="mb-3 text-[11px] text-muted">{snap ? projects.length + ' 个 · 真实' : '等待数据'}</div>
+      {projects.length === 0 ? (
+        <div className="empty py-10">
+          <div className="icon" aria-hidden="true">◇</div>
+          <p className="m-0 text-sm font-semibold text-ink">{snap ? 'registry 为空（UNKNOWN）' : '数据源未接入'}</p>
+          <p className="mx-auto mt-1 max-w-md text-xs">不伪造项目身份与活动状态</p>
+        </div>
+      ) : (
+        <div className="list">
+          {projects.slice(0, 8).map((p) => {
+            const tone = activityTone(p.activityState)
+            const dirty = p.git.dirtyCount
+            return (
+              <div key={p.projectId} className="list-item">
+                <div className="min-w-0">
+                  <strong className="block truncate text-[13px] font-semibold text-ink">{p.displayName || p.projectId}</strong>
+                  <small className="block font-mono">
+                    {p.agentPlatform || '—'} · {p.activeExecutionCount} 执行 · {fmtTokens(p.token.totalTokens)}{' '}
+                    {fmtCostQuality(p.token.costQuality)}
+                  </small>
+                  <small className="block font-mono">
+                    {p.git.branch || '—'}@{p.git.localSha ? p.git.localSha.slice(0, 7) : '—'}
+                  </small>
                 </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-    </Card>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <Badge variant={tone === 'active' ? 'success' : 'muted'}>{p.activityState || 'UNKNOWN'}</Badge>
+                  {dirty ? <Badge variant="warning">脏 {dirty}</Badge> : <Badge variant="muted">干净</Badge>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }

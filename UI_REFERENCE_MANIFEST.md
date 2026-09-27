@@ -1,12 +1,19 @@
-# WORK-LAB · UI 最终落地参考清单（L10 Execution Reference Manifest）
+# WORK-LAB · UI 最终落地参考清单（L10 / L10b Execution Reference Manifest）
 
-> 本清单是 L10 UI 工程落地执行（2026-09-27）的共享视觉事实源。所有页面/组件/代理
-> 的工作必须锁定到本清单；发现与清单冲突时，按权威等级 B10 > B09 > B08 > B07 >
+> 本清单是 L10 / L10b UI 工程落地执行（2026-09-27）的共享视觉事实源。所有页面/组件/
+> 代理的工作必须锁定到本清单；发现与清单冲突时，按权威等级 B10 > B09 > B08 > B07 >
 > B06 > B05 > B04 > B03 > B02 > B01 裁决，并把裁决记入 `UI_DECISIONS.md`。
 >
+> **L10b 追加锁定（2026-09-27）**：B10 不再只是「风格参考」，而是 **DOM/类名事实源**。
+> 皮肤层 `apps/observer/frontend/src/skins/b10.css` 是 B10 单一文件 `<style>` 块的
+> **逐字拷贝**；shell 与 12 页必须使用 B10 逐字存在的类名（见 §8 代码映射）。唯一
+> 非 B10 样式文件是 `src/skins/l10b-shell.css`（断点/角落/可见性，逐条有理由，见 §11）。
+>
 > 参考资产根：`D:\All projects\UI套件`（用户授权只读源，**不得**把 zip/原图散进业务
-> 源码；项目内引用走 `src/assets/generated/` 或组件/CSS token，见 §10 资产策略）。
-> 解压工作区：`.project-local/runs/ui-suite/`（gitignored，非权威内容，仅审计用）。
+> 源码；项目内引用走 `src/assets/generated/` 或组件/CSS token，见 §7 资产策略）。
+> 解压工作区 / 视觉事实源：`.project-local/runs/ui-suite/`（gitignored，仅审计用）；
+> B10 单一文件路径 `.project-local/runs/ui-suite/work-lab_最终版_高保真可部署UI/index.html`
+> （43,685 字节：head+style L1-530 / body DOM L531-616 / JS L618-1029）。
 
 ## 1. 权威批次（WORK-LAB 相关条目，SHA 见 .project-local/runs/ui-suite/extraction-report.json）
 
@@ -98,15 +105,40 @@
 
 ## 8. 代码映射（参考 → 本仓实现）
 
-| 参考位 | 当前实现位 | 差距 |
+### 8.1 L10b 现状（B10 1:1 DOM，已达成）
+
+| B10 参考元素 | 本仓实现位 | 差距 |
 |---|---|---|
-| B10 AppShell/Sidebar/Topbar | `components/layout/{Sidebar,TopStatusBar}` + `App.tsx` | Sidebar 260px 无 B10 active 光条/组头；TopBar 56px 无 B10 78px 搜索栏形态 |
-| B10 Overview | `App.tsx` 内联 overview（KPI+表+面板） | 无趋势图/Observer 信号图/告警/系统状态卡（B05 01 页） |
-| B10 Editor | 无 | 新增 `WorkflowEditorView` + `components/graph/`（B10 拖拽/连线/光效） |
-| B05 12 页 | `views/*.tsx`（治理 5 视图 + Work + 旧 Views） | IA 重组为 B07 路由矩阵；缺 workflows/editor/observer/execution-detail |
-| L4 组件系统 | `components/ui/*`（button/input/card/badge/modal/drawer/toast/command-palette/states/tag） | 缺 Table/Tree/Timeline/Graph/Tooltip/Popover/ContextMenu/Status/Progress |
-| L6 交互 token | `index.css` 已有 modal/drawer/toast/pulse 关键帧 + reduced-motion | 并入 B10 dashMove/scanSweep/节点 glow |
-| L7 路由/权限/状态机 | `lib/viewRegistry.ts`（lane 制，无路由库） | 保持 lane 制（仓内无 router 依赖；B10 也是 hash 路由），NAV_GROUPS 按 B07 重组 |
+| `.app` / `.ambient` / `.grid-bg` / `.main` / `.content` | `App.tsx` | 零差异（元素与层级逐字对应） |
+| `.sidebar` / `.brand` / `.brand-mark` / `.nav` / `.nav button.active::before` / `.nav-dot` / `.sidebar-footer` / `.avatar` | `components/layout/Sidebar.tsx` | 零差异（`aria-label="侧边导航"` 锚点保留；7 组 `NAV_GROUPS` 以组标题 + B10 按钮呈现） |
+| `.topbar` / `.search` / `.top-actions` / `.ghost-btn` | `components/layout/TopStatusBar.tsx` | 结构零差异；搜索框文案 `搜索或命令…` + `Ctrl K` 为 CI 锚点，逐字保留 |
+| `.overlay` / `.modal` / `.body` / `.actions` | `components/ui/modal.tsx` | 结构零差异；closed 不挂载（仓内组件契约）；`role=dialog`/`aria-modal`/`aria-label` 保留 |
+| `.palette` / `.palette input` / `.palette .item` | `components/ui/command-palette.tsx` | 结构零差异；closed 时面板挂载但内容不渲染（避免复制导航文案） |
+| `.drawer` / `.toast(.show)` | `components/ui/drawer.tsx` / `toast.tsx` | 结构零差异；B10 `.toast` 为单元素，仓内保留小栈（每项仍是 `.toast.show`） |
+| `.page-head` / `.page-head h2` / `.page-head p` / `.page-actions` | `components/ui/page-header.tsx` | 零差异（h2 32px 由 b10.css 提供） |
+| `.panel` / `.panel h3` | `components/ui/card.tsx` | 零差异（18px 圆角 + 表面渐变 + inset 高光 + hover 边缘光） |
+| `.primary-btn` / `.ghost-btn` / `.soft-btn` / `.danger-btn` | `components/ui/button.tsx` | 零差异（半径/内边距/渐变/光晕/位移由 B10 类提供） |
+| `.tag` / `.ok` / `.warn` / `.bad` / `.info` | `components/ui/badge.tsx` + `status.tsx` | 零差异（`Tag` 组件与 Badge 共用同一实现） |
+| `.table-wrap` / `.table` | `components/ui/table.tsx` + audit/approvals/workflows/Views/dashboard | 零差异（密度档仅保留接口，内边距由 `.table` 决定） |
+| `.list` / `.list-item` / `small` | `components/ui/list.tsx` + lane views | 零差异（`item.active` 为仓内选中态附加类） |
+| `.kpi` / `.kpi strong` / `.kpi small` / `.trend up\|warn` | `components/dashboard/KPICard.tsx` | 零差异；`.kpi-number` 锚点保留在 `<strong>` 上 |
+| `.metric-row` / `.metric-box` | `OverviewView` / `ObserverView` / `TaskPacksView` / `CompactHUD` | 零差异 |
+| `.empty` / `.empty .icon` | `components/ui/states.tsx`（Empty/Unknown/Error/Offline 共用） | 零差异；`ErrorState` 的 `重试` 动作已移除（只读铁律） |
+| `.graph-stage` / `.core` / `circle.node-dot` | `components/graph/node-graph.tsx` | 结构零差异；卫星标签锚点贴圆外侧（B10 演示在圆心，真实容器尺寸下会压住节点） |
+| `.canvas` / `.flow-svg` / `.node` / `.title` / `.meta` | `components/graph/workflow-canvas.tsx` | 零差异（节点坐标来自本地编辑模型，内联 `left/top`） |
+| `.toolbar` / `.seg` / `.input` / `.progress` / `.spark` / `.status-stack` / `.mono` | 各 lane + `sparkline.tsx` / `progress.tsx` | 零差异 |
+
+### 8.2 L10 历史差距记录（已由 L10b 关闭）
+
+| 参考位 | L10 当时实现位 | 当时差距 |
+|---|---|---|
+| B10 AppShell/Sidebar/Topbar | `components/layout/*` + `App.tsx` | Sidebar 260px 无 B10 active 光条/组头；TopBar 56px 无 B10 78px 搜索栏形态 |
+| B10 Overview | `App.tsx` 内联 overview | 无趋势图/Observer 信号图/告警/系统状态卡 |
+| B10 Editor | 无 | 新增 `WorkflowEditorView` + `components/graph/` |
+| B05 12 页 | `views/*.tsx` | IA 重组为 B07 路由矩阵 |
+| L4 组件系统 | `components/ui/*` | 缺 Table/Tree/Timeline/Graph/Tooltip/Popover/ContextMenu/Status/Progress |
+| L6 交互 token | `index.css` | 并入 B10 dashMove/scanSweep/节点 glow |
+| L7 路由/权限/状态机 | `lib/viewRegistry.ts` | 保持 lane 制（仓内无 router 依赖）；NAV_GROUPS 按 B07 重组 |
 
 ## 9. 验收（对齐 prompt §16 + B07 acceptance-checklist）
 
@@ -114,3 +146,43 @@ build / typecheck / vitest 全绿；12 路由全部可达；Editor 可交互（�
 Observer 可展示真实拓扑且只读；Approval/Audit 完整且真值诚实；统一 token（无散落品牌色）；
 光效/动效/状态/响应式/可访问性（焦点环、44px 命中、对比度、reduced-motion）完成；
 产出 `UI_IMPLEMENTATION_REPORT.md` / `ASSET_REPLACEMENT_MANIFEST.md` / `VISUAL_QA_REPORT.md`。
+
+**L10b 追加验收（已回读）**
+
+- 全 12 页 + shell 的 DOM 使用 B10 逐字类名；皮肤层为 B10 `<style>` 块逐字拷贝。
+- HANDOFF §3 列出的**全部测试锚点仍绿**（11 文件 / 72 测试）；锚点文案逐字未改。
+- `tsc --noEmit` 干净 · `vitest run` 72/72 · `vite build` 绿。
+- 无鉴权扫描零命中（唯一 2 处为「声明不存在」的说明文案）。
+- 只读扫描：只读页零 批准/拒绝/撤销/重试/回滚 控件；`ErrorState` 重试动作已删除。
+- 像素层：17 张 headless 截图（真实渲染路径，`?api=` → 本地 preview 的 v3 形状快照），
+  覆盖 12 页 + compact + light；结构/比例/布局/颜色/组件/字体/光效全部目检通过。
+
+## 10. 品牌锁（不可协商）
+
+`#050D16` 深海军蓝底 + `#2A91FF` 电光蓝主交互 + `#20CDE1` 青色信号/连线。
+禁用：橙色/金色/米白主色、浅色企业 SaaS、大面积紫、玻璃泛滥、霓虹夜店。
+光效 = 系统状态语言（节点发光、活动 pulse、选中 glow、hover 边缘高亮），非装饰。
+L10b 全量对比度/色相审查：零禁用色引入（原 `WorkView` 的 amber 源缺口标记已改为
+品牌 warning 色 + 青色点）。
+
+## 11. `src/skins/l10b-shell.css` 逐条理由（唯一非 B10 样式文件）
+
+| 规则 | 为什么必需 |
+|---|---|
+| `.sidebar-slot`（≥841px flex / ≤840px none） | B10 `.sidebar{display:flex}` 未分层，Tailwind `hidden md:flex` 无法表达断点 |
+| `.app-compact{grid-template-columns:1fr}` | compact 布局无 rail，B10 `.app` 的 `280px 1fr` 必须塌成单列 |
+| `.mobile-nav` / `.topbar-mobile` 可见性 | 移动端抽屉与 nav trigger 的断点切换 |
+| `.sidebar{padding-left/right:16px}` | B10 品牌字标（10px/.12em）在 280px 栏内单行显示；B10 字体/字距未改 |
+| `.toast-stack` | B10 `.toast` 是单个 fixed 元素；仓内保留小栈，每项仍是 `.toast.show` |
+| `.sr-only` | Tailwind `sr-only` 位于 `@layer`，不能与未分层皮肤共存（Workflows 的隐藏原生 select 需要） |
+
+## 12. 已知边界（诚实）
+
+1. **浅色主题为部分实现**：`b10.css` 逐字编码 B10 深色调色板（无令牌间接化），故
+   `html.light` 下壳层背景随 `index.css` 翻转，而 B10 表面（`.sidebar`/`.panel`/`.topbar`/
+   `.table`/`.tag`）保持 B10 深色。修复需重写皮肤为令牌间接化 ⇒ 不再是逐字复刻，
+   故记录而不静默修补。深色为品牌锁与主用主题。
+2. **编辑器画布为本地编辑模型**（localStorage 持久化）；发布/运行在真实契约接入前禁用。
+3. **`graph-stage` 卫星标签锚点**相对 B10 演示偏移约 4px（真实容器尺寸下会压住节点）。
+4. 像素 QA 使用 loopback preview + v3 形状快照，证明渲染路径与 B10 结构/样式，不等于
+   生产 sidecar 实时回读。

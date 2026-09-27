@@ -4,29 +4,39 @@ import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
- * UI_COMPONENTS (20260921): shared Button from the L4/L6 interaction authority.
- * hover 120-180ms (transitionDuration base), pressed scale(.99) 80ms
- * (active:scale + transition-duration fast/pressed), focus-visible ring 2px
- * primary offset 2px. All colors resolve through the SPEC-A CSS variables.
+ * UI_COMPONENTS (20260921) · L10b (2026-09-27): shared Button.
+ *
+ * L10b: the visual contract is now the B10 single-file's own button classes —
+ * `.primary-btn` / `.ghost-btn` / `.soft-btn` / `.danger-btn` (verbatim in
+ * src/skins/b10.css, which loads AFTER index.css so those rules win). The B10
+ * classes carry the radius (12px), padding (10/14), gradient fill, glow shadow
+ * and hover lift, so no Tailwind shape utilities are applied on top — only the
+ * focus-visible ring, the disabled contract and the caller's className.
+ *
+ * Behavior contract is unchanged: `variant`, `size` (kept for call sites that
+ * only need the density hint) and `iconLeft` still resolve as before.
  */
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-md font-medium select-none ' +
-  'transition-[background-color,border-color,box-shadow,transform,opacity] duration-base ' +
+  'inline-flex items-center justify-center gap-2 select-none ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ' +
-  'focus-visible:ring-offset-bg active:scale-[0.99] active:duration-fast ' +
+  'focus-visible:ring-offset-bg ' +
   'disabled:opacity-50 disabled:pointer-events-none',
   {
     variants: {
       variant: {
-        primary: 'bg-primary text-white hover:bg-primary/90 shadow-card',
-        secondary: 'bg-secondary/15 text-secondary border border-secondary/30 hover:bg-secondary/25',
-        ghost: 'bg-transparent text-ink hover:bg-panel2 border border-transparent hover:border-border',
-        danger: 'bg-error/15 text-error border border-error/30 hover:bg-error/25',
+        // B10 `.primary-btn` — gradient (primary → secondary), white bold label
+        primary: 'primary-btn',
+        // B10 `.soft-btn` — secondary-tinted soft surface
+        secondary: 'soft-btn',
+        // B10 `.ghost-btn` — surface2 fill + border, lifts 1px on hover
+        ghost: 'ghost-btn',
+        // B10 `.danger-btn` — error gradient
+        danger: 'danger-btn',
       },
       size: {
-        sm: 'h-8 px-3 text-xs',
-        md: 'h-10 px-4 text-sm',
-        lg: 'h-12 px-5 text-base',
+        sm: 'text-xs',
+        md: 'text-sm',
+        lg: 'text-base',
       },
     },
     defaultVariants: { variant: 'primary', size: 'md' },

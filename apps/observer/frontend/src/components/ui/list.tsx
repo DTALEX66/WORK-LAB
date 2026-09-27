@@ -1,7 +1,15 @@
-// L10 (2026-09-27): B04 `.list` / `.list-item` + Timeline variant —
-// dense read-only rows with hover lift (L6 120ms). B10 `.list-item`:
-// surface2 background, 14px radius, title + small muted sub + optional
-// right-hand state pill. Timeline = same rows with a leading time column.
+// L10 (2026-09-27) · L10b: B04 `.list` / `.list-item` + Timeline variant —
+// dense read-only rows with hover lift (L6 120ms).
+//
+// L10b: the row is the verbatim B10 structure
+//   <div class="list-item">
+//     <div><strong>title</strong><small>sub</small></div>
+//     <span class="tag …">state</span>
+//   </div>
+// `.list-item` supplies surface2 fill, 14px radius, 13/14px padding and the
+// hover lift; `small` is muted (B10 `.list-item small`). The optional leading
+// mono column is an observer-side extension (timeline / execution id) and keeps
+// the same font-mono muted treatment.
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import type { BadgeVariant } from './badge'
@@ -19,22 +27,16 @@ export interface ListItem {
 
 export function ListView({ items, className }: { items: ListItem[]; className?: string }) {
   return (
-    <div className={cn('flex flex-col gap-2.5', className)}>
+    <div className={cn('list', className)}>
       {items.map((it, i) => (
-        <div
-          key={i}
-          className={cn(
-            'panel2 wl-card-hover flex items-center justify-between gap-3 rounded-lg border border-border/68 px-3.5 py-3',
-            'transition-[transform,border-color,box-shadow] duration-fast hover:-translate-y-px',
-          )}
-        >
+        <div key={i} className="list-item">
           <div className="flex min-w-0 items-center gap-3">
             {it.leading ? (
               <span className="shrink-0 font-mono text-[11px] text-muted tabular-nums">{it.leading}</span>
             ) : null}
             <div className="min-w-0">
-              <div className="text-[13px] font-medium text-ink truncate">{it.title}</div>
-              {it.sub != null ? <div className="mt-0.5 text-[11px] text-muted truncate">{it.sub}</div> : null}
+              <strong className="block truncate text-[13px] font-semibold text-ink">{it.title}</strong>
+              {it.sub != null ? <small className="truncate">{it.sub}</small> : null}
             </div>
           </div>
           {it.state ? <StatusPill variant={it.state.variant ?? 'muted'}>{it.state.text}</StatusPill> : null}

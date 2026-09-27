@@ -1,0 +1,75 @@
+/* L10b (2026-09-27) — shell reinforcement layer.
+ *
+ * Loaded AFTER src/skins/b10.css. The B10 skin is unlayered, so it wins over
+ * Tailwind's @layer utilities; that means utility classes such as `hidden`,
+ * `md:flex` or `md:w-[280px]` can no longer express the responsive shell.
+ * This file carries ONLY those shell-level overrides, in one place, so
+ * src/skins/b10.css stays a verbatim copy of the B10 single-file <style>.
+ */
+
+/* The B10 rail owns the 280px column through `.app`'s grid-template-columns;
+ * the slot itself just has to be a flex column at >=840px and absent below. */
+.sidebar-slot { display: none; }
+
+/* `.app` is a 2-column grid (280px 1fr) at >840px and 1-column below. The
+ * compact layout has no rail, so it must always collapse to a single column. */
+.app-compact { grid-template-columns: 1fr; }
+
+/* Desktop shell (>=841px) */
+@media (min-width: 841px) {
+  .sidebar-slot { display: flex; flex-direction: column; }
+  .mobile-nav { display: none; }
+  .topbar-mobile { display: none; }
+}
+
+/* Mobile shell (<=840px) — mirrors the B10 narrow breakpoint */
+@media (max-width: 840px) {
+  .sidebar-slot { display: none !important; }
+  .topbar-mobile { display: inline-flex; }
+  .nav { overflow: auto; }
+}
+
+@media (min-width: 841px) {
+  .mobile-nav-panel { display: flex; flex-direction: column; }
+}
+
+/* B10 `.sidebar` padding is 22px 18px; the rail's content box is then too
+ * narrow for the B10 brand lockup ("AI WORKFLOW CONTROL PLANE" at 10px with
+ * .12em tracking needs ~186px, leaving only ~184px usable). The shell layer
+ * trims the horizontal padding by 2px per side so the B10 lettering fits on one
+ * line — same 280px rail, same B10 lockup, no shrunk type. */
+.sidebar { padding-left: 16px; padding-right: 16px; }
+
+/* B10 `.toast` is a single fixed element (right/bottom 18px). The repo keeps a
+ * small stack, so the container is a transparent flex column anchored to the
+ * same corner; each child is the verbatim B10 `.toast.show` element. */
+.toast-stack {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+  pointer-events: auto;
+}
+.toast-stack .toast { position: static; right: auto; bottom: auto; }
+.toast-stack .toast:hover { border-color: color-mix(in srgb, var(--primary) 55%, white 5%); }
+
+/* L10b: visually-hidden helper. Tailwind's `sr-only` utility is layered and
+ * cannot be relied on next to the unlayered B10 skin, so the contract for the
+ * pinned-but-hidden native controls lives here. */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border-width: 0 !important;
+}
+
+

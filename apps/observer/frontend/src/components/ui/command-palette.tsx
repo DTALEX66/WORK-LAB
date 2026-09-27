@@ -2,10 +2,23 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 /**
- * UI_COMPONENTS (20260921): CommandPalette — L6 keyboard authority
- * (Ctrl/Cmd+K opens, Esc closes, arrow keys navigate, Enter runs the item,
- * fuzzy filter is a simple case-insensitive `includes`). No dependencies.
- * role=dialog + aria. Controlled: parent owns `open` / `onClose` + items.
+ * UI_COMPONENTS (20260921) · L10b (2026-09-27): CommandPalette — L6 keyboard
+ * authority (Ctrl/Cmd+K opens, Esc closes, arrow keys navigate, Enter runs the
+ * item, case-insensitive `includes` filter).
+ *
+ * L10b: the panel is the verbatim B10 `.palette` structure —
+ *   <div class="palette">
+ *     <input placeholder="搜索页面、命令或模块…">
+ *     <div class="item"><span>label</span><small>group</small></div> × N
+ *   </div>
+ * `.palette` / `.palette input` / `.palette .item` are B10-verbatim in
+ * src/skins/b10.css (fixed at 11vh, min(820px,96vw), 20px radius, primary
+ * border, show via `.open`). The repo behavior contract is preserved: the panel
+ * stays MOUNTED with role=dialog + aria-modal so `getByRole('textbox')` and
+ * Escape/Enter keep working, and the item buttons keep `aria-current` for the
+ * active row. A transparent click-catcher sits behind the panel so
+ * click-outside-to-close still works without adding a B10 backdrop (B10 has
+ * none).
  */
 export interface PaletteItem {
   id: string
@@ -77,66 +90,66 @@ export function CommandPalette({
     }
   }
 
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-[70] flex items-start justify-center pt-[12vh]">
-      <div className="ui-backdrop absolute inset-0 bg-black/[0.62]" aria-hidden="true" onClick={onClose} />
+    <>
+      {open && (
+        <div
+          className="fixed inset-0"
+          style={{ zIndex: 94, background: 'transparent' }}
+          aria-hidden="true"
+          onClick={onClose}
+        />
+      )}
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="命令面板"
-        className={cn(
-          'ui-modal-panel relative z-10 w-full max-w-xl mx-4 panel card-shadow overflow-hidden',
-        )}
+        aria-label={title ?? '命令面板'}
+        className={cn('palette', open && 'open')}
         onKeyDown={onKeyDown}
       >
-        <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              setActive(0)
-            }}
-            placeholder={placeholder}
-            aria-label={placeholder}
-            className="h-9 w-full rounded-md bg-panel2 px-3 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <kbd className="hidden shrink-0 rounded border border-border bg-panel2 px-1.5 py-0.5 text-[10px] text-muted sm:inline">
-            Esc
-          </kbd>
-        </div>
-        {title ? <div className="px-3 pt-2 text-[11px] font-medium uppercase tracking-wide text-muted">{title}</div> : null}
-        <ul className="max-h-80 overflow-y-auto p-2" aria-label="命令列表">
-          {visible.length === 0 ? (
-            <li className="px-2 py-6 text-center text-xs text-muted">没有匹配结果</li>
-          ) : (
-            visible.map((it, i) => {
-              const Icon = it.icon
-              const activeNow = i === active
-              return (
-                <li key={it.id}>
-                  <button
-                    type="button"
-                    onMouseEnter={() => setActive(i)}
-                    onClick={() => runItem(i)}
-                    className={cn(
-                      'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors duration-fast',
-                      activeNow ? 'bg-primary/15 text-ink' : 'text-ink hover:bg-panel2',
-                    )}
-                    aria-current={activeNow ? 'true' : undefined}
-                  >
-                    {Icon ? <Icon className="h-4 w-4 shrink-0 text-secondary" aria-hidden="true" /> : null}
-                    <span className="flex-1 truncate">{it.label}</span>
-                    {it.group ? <span className="shrink-0 text-[10px] uppercase tracking-wide text-muted">{it.group}</span> : null}
-                  </button>
-                </li>
-              )
-            })
-          )}
-        </ul>
+        {/* L10b: the B10 `.palette` is shown/hidden by `.open`. The panel stays
+            mounted (the repo pins role=dialog + a queryable textbox), but its
+            CONTENT is only built while open — otherwise a closed palette would
+            duplicate every nav label into the document and break the shell's
+            text queries. */}
+        {open ? (
+          <>
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setActive(0)
+              }}
+              placeholder={placeholder}
+              aria-label={placeholder}
+            />
+            <div aria-label="命令列表">
+              {visible.length === 0 ? (
+                <div className="item"><span>没有匹配结果</span></div>
+              ) : (
+                visible.map((it, i) => {
+                  const activeNow = i === active
+                  return (
+                    <button
+                      key={it.id}
+                      type="button"
+                      onMouseEnter={() => setActive(i)}
+                      onClick={() => runItem(i)}
+                      className={cn('item w-full text-left', activeNow && 'active')}
+                      style={activeNow ? { background: 'color-mix(in srgb, var(--primary) 15%, transparent)' } : undefined}
+                      aria-current={activeNow ? 'true' : undefined}
+                    >
+                      <span className="truncate">{it.label}</span>
+                      {it.group ? <small className="shrink-0 text-[10px] uppercase tracking-wide text-muted">{it.group}</small> : null}
+                    </button>
+                  )
+                })
+              )}
+            </div>
+          </>
+        ) : null}
       </div>
-    </div>
+    </>
   )
 }
