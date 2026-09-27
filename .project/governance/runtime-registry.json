@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "work-lab/runtime-registry/v1",
+  "title": "WORK-LAB local runtime registry — which serving processes exist, how they are launched, and what they can serve",
+  "purpose": "Declare the local inference runtimes once. Projects must never launch their own copy of a runtime; they call a logical provider from provider-registry.json, which maps onto a runtime declared here.",
+  "precedence": "WORK-LAB-AUTHORITY.md > .project/governance/project-authority-index.json > this file.",
+  "policy": {
+    "oneRuntimePerCapabilityRole": true,
+    "noDuplicateServers": "Do not install a second runtime that only repeats what a declared runtime already does.",
+    "runtimeBinariesInsideSharedModelRoot": false,
+    "runtimeCacheLocation": ".project-local/ (WORK-LAB ignored runtime area)",
+    "noGlobalConfigRewrite": "Starting/stopping a runtime is per-session process control; global product config is never rewritten by the model control plane."
+  },
+  "capabilityRoles": {
+    "ollama": "Ollama-managed GGUFs: chat/completions, embeddings, rerank; simple model lifecycle by name.",
+    "llamacpp": "Raw GGUF files with explicit offload control (-ngl / --n-cpu-moe), OpenAI-compatible /v1 server, precise context and KV control."
+  },
+  "runtimes": [
+    {
+      "id": "ollama",
+      "display_name": "Ollama",
+      "kind": "openai-compatible-model-server",
+      "version_observed": "0.34.3",
+      "installed_product_root": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\Ollama",
+      "cli": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
+      "cli_sha256": "f282bab3cb8ece9f1843811c08e54fec449557efadc49ee0f9af07f1b93407fc",
+      "tray_app_sha256": "c995d0196035bbc517042aea19779a659c7f8af876b7071cbe194a80384fc3a5",
+      "server_endpoint": "http://127.0.0.1:11434",
+      "serve_command": "& \"$env:LOCALAPPDATA\\Programs\\Ollama\\ollama.exe\" serve",
+      "model_root_env": "OLLAMA_MODELS=D:\\All projects\\Model library\\ollama",
+      "health_check": "GET http://127.0.0.1:11434/api/version  ->  {\"version\":\"0.34.3\"}",
+      "list_models": "GET http://127.0.0.1:11434/api/tags",
+      "capabilities": ["chat.completions", "text.completions", "embeddings", "rerank", "model.lifecycle.by-name", "openai.compat./v1"],
+      "gpu": {
+        "backend": "CUDA",
+        "observed_backend_log": "library=CUDA compute=12.0 libdirs=ollama,cuda_v13 driver=13.2 total=8.0GiB",
+        "offload_control": "automatic (Ollama decides); coarse"
+      },
+      "concurrency_default": {"OLLAMA_NUM_PARALLEL": 1, "OLLAMA_MAX_LOADED_MODELS": 0, "OLLAMA_KEEP_ALIVE": "5m0s"},
+      "context_default": {"OLLAMA_CONTEXT_LENGTH": 0, "vram_based_default_num_ctx": 4096},
+      "status": "RUNNING",
+      "status_evidence": "started this session (pid observed); /api/version returned 0.34.3; /api/tags listed 5 models",
+      "notes": [
+        "Ollama's own updater states v0.34.4 is available and already downloaded to %LOCALAPPDATA%\\Ollama\\updates_v2; the update is NOT applied by this round (protect-current-state rule).",
+        "The tray app 'ollama app.exe' does not reliably keep a server on 11434; session work starts 'ollama serve' explicitly."
+      ],
+      "upgrade": {
+        "available_version": "0.34.4",
+        "bundle_present": "%LOCALAPPDATA%\\Ollama\\updates_v2\\66387dbcedca09dcb8239fdf32fc5b6068927f630c2e045b4e65f1c75196002f\\OllamaSetup.exe",
+        "applied_this_round": false,
+        "user_decision": "Ollama may be updated; model manifest/index location must stay inside the shared model library (OLLAMA_MODELS unchanged)"
+      }
+    },
+    {
+      "id": "llamacpp",
+      "display_name": "llama.cpp (llama-server)",
+      "kind": "gguf-native-openai-compatible-server",
+      "version_observed": "0.5.0-dev (build 11221, commit 136887b66)",
+      "build_flavor": "win-cuda-12.4-x64",
+      "install_root": "D:\\All projects\\WORK-LAB\\.project-local\\toolchains\\lambda",
+      "binaries": {
+        "server": "llama-server.exe",
+        "cli": "llama-cli.exe",
+        "bench": "llama-bench.exe",
+        "quantize": "llama-quantize.exe",
+        "cuda_backend_dll": "ggml-cuda.dll (569,357,824 B)"
+      },
+      "source": {
+        "release": "ggml-org/llama.cpp b11221",
+        "asset": "llama-b11221-bin-win-cuda-12.4-x64.zip",
+        "sha256": "95e15aa4f9cdcf27ea8705b6857567215dc20117ce75ff3701c51f23f6a267d1",
+        "bytes": 264519230,
+        "downloaded_via": "gh-proxy.com (domestic GitHub accelerator; GitHub direct measured 77 KB/s)",
+        "downloaded_at": "2026-09-28"
+      },
+      "server_endpoint": "http://127.0.0.1:8080",
+      "serve_command_template": "llama-server.exe -m <gguf> -c <ctx> -ngl <n> --host 127.0.0.1 --port 8080",
+      "health_check": "GET http://127.0.0.1:8080/health  -> {\"status\":\"ok\"}",
+      "capabilities": ["chat.completions", "text.completions", "openai.compat./v1", "gguf.any", "offload.explicit", "kv_cache.control", "streaming"],
+      "gpu": {
+        "backend": "CUDA (ggml-cuda.dll)",
+        "offload_control": "explicit: -ngl (layers), --n-cpu-moe (MoE experts), -c (context), --no-kv-offload",
+        "note": "chosen for DEEP because the 8 GiB card cannot hold 13.27 GB of weights and Ollama's automatic offload is too coarse"
+      },
+      "status": "INSTALLED",
+      "status_evidence": "llama-server.exe --version -> 'version: 0.5.0-dev (build 11221, commit 136887b66)', exit 0",
+      "why_not_ollama_only": "User decision: keep Ollama as the primary runtime and add llama.cpp for arbitrary GGUF plus fine-grained offload (DEEP 27B is a hybrid CPU+GPU workload on this machine)."
+    }
+  ],
+  "notInstalled": [
+    {"id": "lmstudio", "reason": "would duplicate the declared runtime role"},
+    {"id": "vllm", "reason": "Linux/datacenter oriented; no benefit for a single 8 GiB consumer GPU"}
+  ],
+  "lastVerified": "2026-09-28"
+}
