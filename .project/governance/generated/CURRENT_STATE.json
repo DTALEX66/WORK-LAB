@@ -1,7 +1,7 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-09-26T17:17:51.329099Z",
-  "source_digest": "664a684ce2db3b71c2320befe3e4c1dd558765f91f4b71b8f2898490301605ba",
+  "generated_at": "2026-09-27T02:35:55.395235Z",
+  "source_digest": "9abc330eb87a1d4ec902090ac174a34de5e798870d2104555bc41526359d6d1f",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
     "tracked_projection": "NO_HEAD_OR_BRANCH_CLAIM",
@@ -142,7 +142,7 @@
         "name": "python-testing",
         "source": "packages/client-neutral-core/skills/software-development/python-testing/SKILL.md",
         "version": "1.1.0",
-        "source_sha256": "2d1ffd75f2ae44eccfa6fe151fd690d0e68784dad48e31ad9599fb9a9b7e7eea",
+        "source_sha256": "207fe5e98f6c5459d1d8dc830be0482a5355a18617e6d1c94b79911191d95e1c",
         "trust": "repository-controlled",
         "enabled": true,
         "live_readback": "not-run"
@@ -169,7 +169,7 @@
         "name": "windows-development-environment",
         "source": "packages/client-neutral-core/skills/software-development/windows-development-environment/SKILL.md",
         "version": "1.3.0",
-        "source_sha256": "454de204857506e7e49b635909048f6f067f084fd474cd70f932e6986246392d",
+        "source_sha256": "2e1fc6dcdf51ee899700da4615f50e419eb4d54cfb726a5250e58809f7ca1aae",
         "trust": "repository-controlled",
         "enabled": true,
         "live_readback": "not-run"
@@ -221,5 +221,5 @@
     "real_device_validation",
     "commercial_release"
   ],
-  "content_digest": "78644f3c8587f76403c3a350c9ad54a3ebd07e4287063d632b804e828bcebb16"
+  "content_digest": "45be468aab431555f05fbcd027c034ad57c5309060b7b341530aceb3d73209c3"
 }
