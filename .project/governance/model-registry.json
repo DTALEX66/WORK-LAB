@@ -78,14 +78,15 @@
       "benchmark": {
         "cold_start_seconds_to_health": 21.6,
         "warm_restart_seconds_to_health": 9.5,
-        "prompt_tok_per_s": 14.54,
-        "gen_tok_per_s": 1.97,
-        "offload_recommendation": "-ngl 8 -c 16384 -t 14",
+        "prompt_tok_per_s": 20.10,
+        "gen_tok_per_s": 2.52,
+        "offload_recommendation": "-ngl 32 -c 16384 -t 14 (GPU free) / -ngl 8 (GPU busy)",
         "thinking_mode": "must set chat_template_kwargs {enable_thinking:false}; otherwise the token budget is consumed by reasoning and the visible answer is empty",
-        "sample_answer_zh": "1. 降低存储成本与硬件压力… 2. 简化版本管理与一致性… 3. 提升部署与更新效率…"
+        "sample_answer_zh": "1. 降低存储成本与硬件压力… 2. 简化版本管理与一致性… 3. 提升部署与更新效率…",
+        "bandwidth_bound": "13.27 GB at ~38 GB/s DDR4-3600 caps a dense 27B near 2.7 tok/s; the measured 2.52 is ~93% of that ceiling"
       },
       "last_verified": "2026-09-28",
-      "serving_note": "GPU offload buys only ~+10% here because the desktop session holds ~6.8 of 8 GiB VRAM; the model is effectively CPU-bound at ~2 tok/s. It runs correctly and is usable for batch/long-form work. For interactive 30B-class work the already-installed qwen3-coder:30b-a3b MoE measured 7.81 tok/s (3.9x faster) — recorded as a data point, not a substitution, since the brief fixes DEEP = Qwen3.8-27B UD-IQ4_XS.",
+      "serving_note": "With the desktop's GPU footprint released (VRAM used 6.8 -> 2.0 GiB) offload finally pays: ngl 0 -> 32 lifted generation 1.32 -> 2.52 tok/s (+91%) and prompt 14.54 -> 20.10 (+38%), then went flat from ngl 16 to 32 because only about a third of the model fits in 8 GiB. The dense 27B is memory-bandwidth bound on DDR4-3600, so it is usable for batch/long-form work but slow for interactive chat. For interactive 30B-class work the already-installed qwen3-coder:30b-a3b MoE measured 7.81 tok/s (3.9x faster) — recorded as a data point, not a substitution, since the brief fixes DEEP = Qwen3.8-27B UD-IQ4_XS.",
       "source": {
         "primary": "https://modelscope.cn/models/unsloth/Qwen3.8-27B-GGUF",
         "upstream_origin": "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF",
