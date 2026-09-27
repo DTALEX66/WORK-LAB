@@ -1,17 +1,16 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopStatusBar } from '@/components/layout/TopStatusBar'
-import { KPICard } from '@/components/dashboard/KPICard'
-import { ExecutionTable } from '@/components/dashboard/ExecutionTable'
-import { ProjectPanel } from '@/components/dashboard/ProjectPanel'
-import { TokenPanel } from '@/components/dashboard/TokenPanel'
 import { CommandPalette, type PaletteItem } from '@/components/ui/command-palette'
 import {
   MonitoringView, TrustView, SettingsView,
 } from '@/views/Views'
 import { CompactHUD } from '@/views/CompactHUD'
+// L10 (2026-09-27): B10 overview landing surface (KPI grid + trends +
+// Observer Map + system status + alerts + recent task packs).
+import { OverviewView } from '@/views/OverviewView'
 import {
-  useLiveSnapshot, fmtCostQuality, tokenTruth, executionsToRows,
+  useLiveSnapshot,
   type ThemeMode, type LayoutMode,
 } from '@/lib/api'
 import { VIEW_REGISTRY, OVERVIEW_ID } from '@/lib/viewRegistry'
@@ -150,10 +149,6 @@ export default function App() {
   }, [view, theme, layout])
 
   const isOverview = view === OVERVIEW_ID
-  const tt = tokenTruth(snap)
-  const rows = executionsToRows(snap)
-  // REAL v3 KPIs (no phantom agents/models/resources):
-  const activeExecs = rows.filter((r) => r.state === 'RUNNING' || r.state === 'STARTING').length
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
   const toggleLayout = () => setLayout((l) => (l === 'full' ? 'compact' : 'full'))
@@ -187,39 +182,7 @@ export default function App() {
         </p>
       </div>
     ) : isOverview ? (
-      <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-4 gap-4">
-          <KPICard
-            title="项目"
-            value={snap ? String(snap.projects.length) : 'UNKNOWN'}
-            sub={snap ? 'registry' : '数据源未接入'}
-          />
-          <KPICard
-            title="活跃执行"
-            value={snap ? String(activeExecs) : 'UNKNOWN'}
-            sub={'共 ' + (snap ? String(rows.length) : '—') + ' 条'}
-          />
-          <KPICard
-            title="Token"
-            value={snap ? fmtTokensSafe(tt) : 'UNKNOWN'}
-            sub={'质量 ' + fmtCostQuality(tt?.costQuality)}
-          />
-          <KPICard
-            title="数据源"
-            value={live ? 'LIVE' : snap ? source.toUpperCase() : 'UNKNOWN'}
-            sub={snap ? ('revision ' + String(snap.revision)) : '等待数据'}
-          />
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2 panel2 rounded-md p-4 min-h-[300px]">
-            <ExecutionTable rows={snap ? rows : []} hasData={!!snap} />
-          </div>
-          <div className="flex flex-col gap-4">
-            <ProjectPanel snap={snap} />
-            <TokenPanel snap={snap} />
-          </div>
-        </div>
-      </div>
+      <OverviewView snap={snap} source={source} live={live} />
     ) : view === 'monitoring' ? (
       <MonitoringView snap={snap} />
     ) : view === 'trust' ? (
@@ -272,7 +235,25 @@ export default function App() {
   }
 
   return (
-    <div data-layout={layout} className="flex h-screen overflow-hidden text-ink">
+    <div data-layout={layout} className="relative flex h-screen overflow-hidden text-ink">
+      {/* L10 B10 `.grid-bg` + `.ambient`: 32px grid backdrop (radial fade
+          mask) + two floating glow blobs — the "faint blue ambient light" the
+          B10 spec locks in (D-08: B10 beats the §八 "no glassmorphism flood"
+          reading; the glow is the requested system state language, not a
+          neon effect). */}
+      <div className="wl-grid-bg" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 z-[-2] overflow-hidden" aria-hidden="true">
+        <div className="wl-ambient" />
+        <div
+          className="wl-ambient"
+          style={{
+            width: 320, height: 320, left: 'auto', right: '8%', top: '8vh',
+            position: 'absolute',
+            background: 'color-mix(in srgb, rgb(var(--secondary-rgb)) 30%, transparent)',
+            animationDelay: '-4s',
+          }}
+        />
+      </div>
       <Sidebar
         activeView={view}
         onSelect={(id) => {
@@ -306,11 +287,4 @@ export default function App() {
       />
     </div>
   )
-}
-
-// local helper — token formatting for KPI (null -> UNKNOWN)
-function fmtTokensSafe(tt: ReturnType<typeof tokenTruth>): string {
-  if (!tt || tt.totalTokens == null) return 'UNKNOWN'
-  const n = tt.totalTokens
-  return n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : (n / 1e3).toFixed(0) + 'k'
 }

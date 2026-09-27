@@ -2,9 +2,10 @@
 // states (rules/skills/memory/adapters) already resolved by the backend.
 // Honest discipline: when the snapshot carries no family detail we render an
 // EmptyState, never a fabricated "all clean" KPI.
-import { Card, CardHeader, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/states'
+import { PageHeader } from '@/components/ui/page-header'
+import { StatusPill } from '@/components/ui/status'
 import type { FamilyState, GovernanceFamily } from '@/types'
 
 const FAMILY_LABEL: Record<keyof GovernanceFamily extends never ? never : 'rules' | 'skills' | 'memory' | 'adapters', string> = {
@@ -44,14 +45,16 @@ export function RulesPolicyView({ snap }: { snap: any }) {
     !!families && FAMILY_KEYS.some((k) => hasFamilyData(families?.[k]))
 
   return (
-    <div className="flex flex-col gap-4 overflow-auto p-4">
+    <div className="flex flex-col gap-4 overflow-auto p-1">
+      <PageHeader
+        title="Rules & Policy / 规则与策略"
+        description="治理契约四大家族（规则/技能/记忆/适配器）的真实状态投影。只读，不修改、不新增、不执行任何治理动作；缺失即 UNKNOWN，不伪造『全部干净』。"
+      />
       <Card>
-        <CardHeader>
-          <span>治理契约 · 家族状态（只读投影）</span>
-          <span className="text-[11px] text-muted">
-            {hasAny ? '携带真实明细' : '无明细（UNKNOWN）'}
-          </span>
-        </CardHeader>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
+          <span className="text-sm font-medium">治理契约 · 家族状态（只读投影）</span>
+          <StatusPill variant={hasAny ? 'info' : 'muted'}>{hasAny ? '携带真实明细' : '无明细（UNKNOWN）'}</StatusPill>
+        </div>
         <CardContent>
           {!hasAny ? (
             <EmptyState
@@ -64,12 +67,10 @@ export function RulesPolicyView({ snap }: { snap: any }) {
                 const fam = families?.[key]
                 if (!fam) return null
                 return (
-                  <div key={key} className="panel2 p-3">
+                  <div key={key} className="panel2 rounded-xl border border-border/62 p-4 transition-transform duration-fast hover:-translate-y-px">
                     <div className="mb-2 flex items-center justify-between">
                       <span className="text-xs font-medium text-ink">{FAMILY_LABEL[key]}</span>
-                      <Badge variant={stateVariant(fam.state)}>
-                        {stateLabel(fam.state)}
-                      </Badge>
+                      <StatusPill variant={stateVariant(fam.state)}>{stateLabel(fam.state)}</StatusPill>
                     </div>
                     <div className="text-[11px] text-muted">
                       漂移项：
@@ -85,7 +86,7 @@ export function RulesPolicyView({ snap }: { snap: any }) {
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><span>原则</span></CardHeader>
+        <div className="px-4 py-3 border-b border-border/60 text-sm font-medium">原则</div>
         <CardContent className="text-xs text-muted">
           规则 / 技能 / 记忆 / 适配器的真值来自后端治理契约（governance.families）。
           Observer 仅投影状态，不修改、不新增、不执行任何治理动作。

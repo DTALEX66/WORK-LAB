@@ -11,6 +11,7 @@ import {
   LayoutDashboard, Bot, PlayCircle, Cpu, Brain, Wrench, Activity,
   Package, FolderGit2, ShieldCheck, Settings,
   ScrollText, History, CheckCircle2, Plug, PackageCheck, SquareKanban,
+  Workflow, Network, GitBranch,
 } from 'lucide-react'
 import {
   AgentsView, ExecutionsView, ModelsView, MemoryView, ToolsView,
@@ -27,6 +28,12 @@ import { AuditTrailView } from '@/views/AuditTrailView'
 import { ApprovalsView } from '@/views/ApprovalsView'
 import { IntegrationsView } from '@/views/IntegrationsView'
 import { TaskPacksView } from '@/views/TaskPacksView'
+// L10 (2026-09-27): B10 final-deployable lanes (B07 IA page matrix) —
+// Workflows / Workflow Editor / Observer / Execution Detail.
+import { WorkflowsView } from '@/views/WorkflowsView'
+import { WorkflowEditorView } from '@/views/WorkflowEditorView'
+import { ObserverView } from '@/views/ObserverView'
+import { ExecutionDetailView } from '@/views/ExecutionDetailView'
 
 export interface ViewEntry {
   id: string
@@ -42,6 +49,8 @@ export interface ViewEntry {
     | 'work'
     // UI_VIEWS (20260921): L7 governance lanes
     | 'rules-policy' | 'audit' | 'approvals' | 'integrations' | 'task-packs'
+    // L10 (2026-09-27): B10 final-deployable lanes
+    | 'workflows' | 'workflow-editor' | 'observer' | 'execution-detail'
 }
 
 // TaskPack U04 lanes: Overview, Projects, Agents, Executions, Models/Usage,
@@ -78,6 +87,13 @@ export const VIEW_REGISTRY: ViewEntry[] = [
   { id: 'approvals',    label: '审批中心', icon: CheckCircle2,  component: ApprovalsView,   lane: 'approvals' },
   { id: 'integrations', label: '集成/MCP', icon: Plug,          component: IntegrationsView, lane: 'integrations' },
   { id: 'task-packs',   label: '任务包',   icon: PackageCheck,  component: TaskPacksView,   lane: 'task-packs' },
+  // L10 (2026-09-27): B10 final-deployable lanes (B07 page matrix) —
+  // Workflows / interactive Workflow Editor / read-only Observer /
+  // Execution Detail.
+  { id: 'workflows',         label: '工作流',   icon: Workflow,    component: WorkflowsView,         lane: 'workflows' },
+  { id: 'workflow-editor',   label: '编辑器',   icon: GitBranch,   component: WorkflowEditorView,    lane: 'workflow-editor' },
+  { id: 'observer',         label: '观察者',   icon: Network,     component: ObserverView,          lane: 'observer' },
+  { id: 'execution-detail',  label: '执行详情', icon: PlayCircle,  component: ExecutionDetailView,   lane: 'execution-detail' },
 ]
 
 export const VIEW_BY_ID: Record<string, ViewEntry> = Object.fromEntries(

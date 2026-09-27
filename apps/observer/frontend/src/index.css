@@ -42,6 +42,7 @@ Default (:root) = the Dark design language. html.light inverts all of it
   --radius-lg: 16px;
   --radius-xl: 22px;
   --shadow: 0 20px 80px rgba(0, 0, 0, 0.35);
+  --shadow-soft: 0 12px 48px rgba(0, 0, 0, 0.22);
   --glass-blur: 18px;
   --motion-fast: 120ms;
   --motion-base: 180ms;
@@ -53,6 +54,23 @@ Default (:root) = the Dark design language. html.light inverts all of it
   --density-comfortable: 68px;
   --density-default: 56px;
   --density-compact: 44px;
+  /* L10 (2026-09-27): B10 glow/light-language tokens. Glow is a SYSTEM STATE
+     language (node halo, activity pulse, selected glow, hover edge highlight),
+     never decoration. Channels derive from --primary-rgb/--secondary-rgb so
+     the light theme (deepened accents) inherits correct glow color. */
+  --glow-primary: rgba(42, 145, 255, 0.40);
+  --glow-secondary: rgba(32, 205, 225, 0.40);
+  --glow-node: 0 0 14px var(--glow-primary);
+  --glow-node-active: 0 0 18px var(--glow-primary);
+  --glow-edge: 0 0 16px color-mix(in srgb, rgb(var(--primary-rgb)) 70%, transparent);
+  --glow-card: 0 18px 44px rgba(0, 0, 0, 0.22);
+  --grid-line: rgba(255, 255, 255, 0.05);
+  /* B10 overlay z-order (matches .overlay/.drawer/.palette/.toast stacking) */
+  --z-tooltip: 80;
+  --z-drawer: 88;
+  --z-modal: 90;
+  --z-palette: 95;
+  --z-toast: 110;
 }
 
 html.light {
@@ -104,6 +122,91 @@ html.light {
   .status-pulse { animation: statusPulse 2s ease-in-out infinite; }
   @keyframes statusPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   .count-up { transition: opacity var(--motion-base); }
+
+  /* L10 (2026-09-27): B10 light-language classes. Grid backdrop + ambient
+     glow, node/edge halo, activity pulse, scan sweep, active-nav edge
+     highlight, KPI big-number glow. All reference the --glow- and --grid-line
+     tokens above so the light theme inverts automatically. */
+  .wl-grid-bg {
+    position: absolute; inset: 0; z-index: -3; opacity: 0.22; pointer-events: none;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(circle at center, black 45%, transparent 95%);
+  }
+  .wl-ambient {
+    position: absolute; z-index: -2; pointer-events: none;
+    width: 360px; height: 360px; left: -100px; top: -80px;
+    border-radius: 999px; opacity: 0.45; filter: blur(80px);
+    background: color-mix(in srgb, rgb(var(--primary-rgb)) 40%, transparent);
+    animation: wlFloatGlow 12s ease-in-out infinite;
+  }
+  .wl-nav-edge {
+    position: absolute; left: -4px; top: 10px; bottom: 10px; width: 3px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgb(var(--secondary-rgb)), rgb(var(--primary-rgb)));
+    box-shadow: var(--glow-edge);
+  }
+  .wl-node-glow { box-shadow: 0 16px 34px rgba(0,0,0,0.28), var(--glow-node), inset 0 1px 0 rgba(255,255,255,0.03); }
+  .wl-node-active { box-shadow: 0 16px 34px rgba(0,0,0,0.28), var(--glow-node-active), inset 0 1px 0 rgba(255,255,255,0.03); }
+  .wl-edge-line {
+    stroke: color-mix(in srgb, rgb(var(--primary-rgb)) 62%, white 3%);
+    stroke-width: 3; fill: none; stroke-linecap: round;
+    stroke-dasharray: 10 14;
+    animation: wlDashMove 3.6s linear infinite;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, rgb(var(--primary-rgb)) 40%, transparent));
+  }
+  .wl-core-pulse { animation: wlPulse 3s ease-in-out infinite; }
+  .wl-scanline { position: relative; overflow: hidden; }
+  .wl-scanline::after {
+    content: ""; position: absolute; left: 0; right: 0; top: -20%; height: 36%;
+    background: linear-gradient(180deg, transparent, color-mix(in srgb, rgb(var(--primary-rgb)) 18%, white 3%), transparent);
+    animation: wlScanSweep 2.4s linear infinite;
+    pointer-events: none;
+  }
+  .wl-kpi-glow { text-shadow: 0 0 24px color-mix(in srgb, rgb(var(--primary-rgb)) 32%, transparent); }
+  /* B10 `.panel` restyle: 18px radius, surface gradient + inset top highlight,
+     hover edge glow. Applied via Card className (later in cascade than .panel,
+     same specificity → wins for radius/gradient; D-04 decision). */
+  .wl-panel {
+    border-radius: 18px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-panel) 82%, white 1%), color-mix(in srgb, var(--color-panel) 94%, #000 2%));
+    box-shadow: var(--shadow-soft, 0 12px 48px rgba(0, 0, 0, 0.22)), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  }
+  .wl-sidebar-surface {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-sidebar) 85%, white 2%), var(--color-sidebar));
+    backdrop-filter: blur(var(--glass-blur));
+  }
+  .wl-topbar-surface {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-panel) 82%, transparent), color-mix(in srgb, var(--color-panel) 72%, transparent));
+    backdrop-filter: blur(var(--glass-blur));
+  }
+  .wl-card-hover { transition: border-color var(--motion-base), box-shadow var(--motion-base); }
+  .wl-card-hover:hover {
+    border-color: color-mix(in srgb, rgb(var(--primary-rgb)) 44%, white 3%);
+    box-shadow: var(--glow-card), 0 0 0 1px color-mix(in srgb, rgb(var(--primary-rgb)) 10%, white 2%);
+  }
+  @keyframes wlFloatGlow {
+    0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+    50% { transform: translateY(20px) translateX(12px) scale(1.06); }
+  }
+  @keyframes wlDashMove { to { stroke-dashoffset: -48; } }
+  @keyframes wlPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.86; }
+  }
+  @keyframes wlScanSweep {
+    0% { transform: translateY(-120%); }
+    100% { transform: translateY(420%); }
+  }
+
+  /* B10 z-order utilities (z-index tokens from :root) */
+  .z-tooltip { z-index: var(--z-tooltip); }
+  .z-drawer { z-index: var(--z-drawer); }
+  .z-modal { z-index: var(--z-modal); }
+  .z-palette { z-index: var(--z-palette); }
+  .z-toast { z-index: var(--z-toast); }
 }
 
 /*
@@ -137,5 +240,10 @@ numeric values use tabular-nums + truncate, and the 4-KPI strip reflows.
     .ui-modal-panel, .ui-backdrop, .ui-drawer-right, .ui-drawer-left, .ui-toast-item {
       animation-duration: 1ms;
     }
+    /* L10: B10 light-language animations degrade to static (no glow motion) */
+    .wl-ambient { animation: none; }
+    .wl-edge-line { animation: none; }
+    .wl-core-pulse { animation: none; }
+    .wl-scanline::after { animation: none; opacity: 0; }
   }
 }

@@ -5,9 +5,10 @@
 //      a static factual statement of which clients the control plane governs;
 //      NOT a live integration status, no fabricated health).
 // Everything else stays UNKNOWN.
-import { Card, CardHeader, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/states'
+import { PageHeader } from '@/components/ui/page-header'
 import type { FamilyState, GovernanceFamily } from '@/types'
 
 // Static documentation of the control plane's governed clients. This is a
@@ -34,14 +35,18 @@ export function IntegrationsView({ snap }: { snap: any }) {
   const adapters: GovernanceFamily | undefined = snap?.governance?.families?.adapters
 
   return (
-    <div className="flex flex-col gap-4 overflow-auto p-4">
+    <div className="flex flex-col gap-4 overflow-auto p-1">
+      <PageHeader
+        title="Integrations / MCP · 集成"
+        description="适配器族的真实治理状态投影 + 控制面受治理客户端的静态说明（非实时健康度）。后端未携带 integrations[] 时保持 UNKNOWN，不伪造集成健康。"
+      />
       <Card>
-        <CardHeader>
-          <span>集成 / MCP · 适配器族</span>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
+          <span className="text-sm font-medium">集成 / MCP · 适配器族</span>
           <span className="text-[11px] text-muted">
             {adapters && adapters.state !== 'UNKNOWN' ? '携带真实状态' : '无适配器明细'}
           </span>
-        </CardHeader>
+        </div>
         <CardContent>
           {!adapters || (adapters.state === 'UNKNOWN' && adapters.drift == null) ? (
             <EmptyState
@@ -49,7 +54,7 @@ export function IntegrationsView({ snap }: { snap: any }) {
               description="当前快照未携带 integrations[] 数组或适配器族明细。Observer 保持 UNKNOWN，不伪造集成健康度。"
             />
           ) : (
-            <div className="panel2 p-3 flex items-center justify-between">
+            <div className="panel2 rounded-xl border border-border/62 p-4 flex items-center justify-between">
               <div>
                 <div className="text-xs text-ink">适配器等价状态</div>
                 <div className="text-[11px] text-muted">
@@ -65,16 +70,16 @@ export function IntegrationsView({ snap }: { snap: any }) {
       </Card>
 
       <Card>
-        <CardHeader><span>受治理客户端（文档 · 非实时状态）</span></CardHeader>
+        <div className="px-4 py-3 border-b border-border/60 text-sm font-medium">受治理客户端（文档 · 非实时状态）</div>
         <CardContent>
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {GOVERNED_CLIENTS.map((c) => (
-              <div key={c.id} className="flex items-center justify-between gap-3 border-b border-border/40 py-2 last:border-0">
-                <div>
-                  <div className="text-xs font-medium text-ink">{c.id}</div>
-                  <div className="text-[11px] text-muted">{c.note}</div>
+              <div key={c.id} className="panel2 rounded-xl border border-border/62 p-4 flex items-center justify-between gap-3 transition-transform duration-fast hover:-translate-y-px">
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-ink">{c.id}</div>
+                  <div className="mt-0.5 text-[11px] text-muted truncate">{c.note}</div>
                 </div>
-                <span className="text-[10px] text-muted">受控（无实时状态投影）</span>
+                <span className="shrink-0 text-[10px] text-muted">受控（无实时状态投影）</span>
               </div>
             ))}
           </div>

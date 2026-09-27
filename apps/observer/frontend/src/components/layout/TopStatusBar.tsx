@@ -44,7 +44,7 @@ export function TopStatusBar({
   const stateText = live ? 'LIVE' : (ts || 'UNKNOWN')
 
   return (
-    <div className="h-14 bg-panel2 border-b border-border flex items-center gap-3 px-3 sm:px-4 overflow-x-auto">
+    <div className="wl-topbar-surface h-[78px] border-b border-border/60 flex items-center gap-3 px-3 sm:px-6 overflow-x-auto">
       {/* mobile nav trigger */}
       {onOpenMobileNav && (
         <button
@@ -71,6 +71,28 @@ export function TopStatusBar({
         </div>
       </div>
 
+      {/* L10 B10 `.search`: the primary search affordance, min(620px,54vw),
+          14px radius, inset top highlight (smoke-test anchors 搜索或命令… /
+          Ctrl K preserved verbatim). */}
+      {onOpenSearch && (
+        <button
+          type="button"
+          onClick={onOpenSearch}
+          className={cn(
+            'hidden md:flex items-center gap-2.5 rounded-xl border bg-panel2/72 px-3.5 py-3 text-xs text-muted transition-colors duration-fast',
+            'border-border/72 hover:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+            'shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]',
+          )}
+          style={{ width: 'min(620px, 54vw)' }}
+        >
+          <Search size={15} aria-hidden="true" />
+          <span className="truncate">搜索或命令…</span>
+          <kbd className="rounded border border-border bg-panel2 px-1.5 py-0.5 text-[9px] text-muted shrink-0">
+            Ctrl K
+          </kbd>
+        </button>
+      )}
+
       <div className="hidden sm:flex items-center gap-1.5 shrink-0 text-[10px] text-muted">
         <span>覆盖</span>
         <span className="tabular-nums text-ink">
@@ -87,23 +109,6 @@ export function TopStatusBar({
       )}
 
       <div className="ml-auto flex items-center gap-1.5 shrink-0">
-        {/* global search affordance → CommandPalette */}
-        {onOpenSearch && (
-          <button
-            type="button"
-            onClick={onOpenSearch}
-            className={cn(
-              'hidden md:flex items-center gap-2 h-8 rounded-md border border-border bg-panel px-3 text-[11px] text-muted transition-colors duration-fast',
-              'hover:text-ink hover:border-secondary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
-            )}
-          >
-            <Search size={13} aria-hidden="true" />
-            <span>搜索或命令…</span>
-            <kbd className="rounded border border-border bg-panel2 px-1 py-0.5 text-[9px] text-muted">
-              Ctrl K
-            </kbd>
-          </button>
-        )}
         {/* notification indicator = transport state (honest, not a fake bell count) */}
         <span title={live ? 'LIVE 数据源在线' : '数据源非 LIVE'}>
           <Bell size={15} className="text-muted" aria-hidden="true" />
