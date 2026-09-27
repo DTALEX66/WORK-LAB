@@ -51,7 +51,8 @@ from this directory to `taskpacks/history/` (register row P2-05):
 
 The dated files retained here (e.g. `WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md`,
 `WORK-LAB-HERMES-TASKPACK-RECONCILIATION.json`, `BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917.md`,
-`BRANCH-RETIREMENT-LEDGER-20260917.json`, `HERMES-UPDATE-AND-FIXES-20260917.md`)
+`BRANCH-RETIREMENT-LEDGER-20260917.json`, `HERMES-UPDATE-AND-FIXES-20260917.md`,
+`HERMES-UPDATE-AND-MAINTENANCE-20260927.md`)
 are retained because they carry live consumers — machine authority-index
 references and code/test imports — so moving them would break the gates.
 `U19-HEADLESS-REQUALIFICATION-HANDOFF-20260923.md` is retained as
