@@ -1,8 +1,9 @@
 # HERMES 更新与维护记录（2026-09-27）
 
 **性质**：维护记录与可复核入口，**不是**新的任务权威。`currentTaskpack`（`WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918`）**仍然权威**；本文件是覆盖层/交接视图，登记在 `.project/governance/taskpack-authority-index.json` 的 `staticHandoffViews`（`is_authority: false`）。
+**接手用简版**：`taskpacks/current/HERMES-UPDATE-HANDOFF-20260927.md`（照抄命令、恢复材料、限制陷阱）。
 **目标软件**：Hermes Agent（受管客户端）。**执行者**：DSH / DeepSeek（外部写入者身份维护 Hermes）。
-**本轮结论**：Hermes 已由 `v0.21.3 (2026.9.14)` 更新至 **`v0.21.5+3115.g10938a7 (2026.9.24)`**，更新器自报 `outcome=success`、exit 0，桌面入口真实启动读回通过；**受管覆盖层本轮零新增漂移**（guard verify 前后逐字相同）；同时**登记 3 项既有覆盖层漂移**（本轮**未**修复，需单独授权）。
+**本轮结论**：Hermes 已由 `v0.21.3 (2026.9.14)` 更新至 **`v0.21.5+3115.g10938a7 (2026.9.24)`**（`outcome=success`、exit 0、config v45→v46），桌面入口真实启动读回通过；**上线后发现的 5 项覆盖层漂移已全部修复**，受管覆盖层 **21/21 CONVERGED**、curator **0 漂移**（详见 §5，含被拒绝的两项弱化版本）。
 
 ---
 
