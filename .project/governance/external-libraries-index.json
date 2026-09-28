@@ -18,13 +18,41 @@
       "managedBy": "WORK-LAB model control plane",
       "totalSizeGb": 29.2,
       "assets": [
-        {"name": "qwen3:8b", "sizeGb": 5.2, "role": "local.general.fast"},
-        {"name": "qwen3-coder:30b-a3b-q4_K_M", "sizeGb": 18.0, "role": "local.code.readonly"},
-        {"name": "qwen2.5vl:7b", "sizeGb": 6.0, "role": "local.vision.ocr"},
-        {"name": "qwen3-embedding:0.6b", "sizeGb": 0.6, "role": "local.embedding"},
-        {"name": "qwen3-reranker:latest", "sizeGb": 0.5, "role": "local.reranker"}
+        {
+          "name": "qwen3:8b",
+          "sizeGb": 5.2,
+          "role": "local.general.fast",
+          "status": "RETAINED IN PLACE - not deleted, not currently served, pending user decision"
+        },
+        {
+          "name": "qwen3-coder:30b-a3b-q4_K_M",
+          "sizeGb": 18.0,
+          "role": "local.code.readonly",
+          "status": "RETAINED IN PLACE - not deleted, not currently served, pending user decision"
+        },
+        {
+          "name": "qwen2.5vl:7b",
+          "sizeGb": 6.0,
+          "role": "local.vision.ocr",
+          "status": "SUPERSEDED - this blob has NO vision projector layer (hasVision=false, no clip.* keys)",
+          "verified": "not usable for vision; replaced by ggml-org/Qwen2.5-VL-7B-Instruct-GGUF (model + mmproj)"
+        },
+        {
+          "name": "qwen3-embedding:0.6b",
+          "sizeGb": 0.6,
+          "role": "local.embedding",
+          "status": "MIGRATED -> D:\\All projects\\Model library\\Qwen\\Qwen3-Embedding-0.6B-GGUF\\",
+          "verified": "serving: 1024-dim, separation 0.494417"
+        },
+        {
+          "name": "qwen3-reranker:latest",
+          "sizeGb": 0.5,
+          "role": "local.reranker",
+          "status": "MIGRATED -> D:\\All projects\\Model library\\Qwen\\Qwen3-Reranker-0.6B-GGUF\\",
+          "verified": "serving: binary yes/no verdict, correct on all cases"
+        }
       ],
-      "note": "Ollama OLLAMA_MODELS 指向此处；blobs/manifests 为 Ollama 管理形态"
+      "note": "RETAINED AS AN ARTIFACT STORE, NO LONGER SERVED. Ollama 0.34.4 no longer resolves OLLAMA_MODELS here (it fell back to C:\\Users\\ALEX\\.ollama\\models and reported \"total blobs: 0\"), and the Ollama runtime is being uninstalled per user directive. qwen3-embedding:0.6b and qwen3-reranker:latest were moved out to the standard <publisher>/<repo> layout and now serve through LM Studio; the remaining blobs stay in place pending a user decision and were NOT deleted."
     },
     {
       "id": "whisper-models",
@@ -35,7 +63,11 @@
       "managedBy": "WORK-LAB model control plane",
       "totalSizeGb": 1.5,
       "assets": [
-        {"name": "faster-whisper-large-v3-turbo", "sizeGb": 1.5, "role": "local.asr"}
+        {
+          "name": "faster-whisper-large-v3-turbo",
+          "sizeGb": 1.5,
+          "role": "local.asr"
+        }
       ]
     },
     {
@@ -47,9 +79,21 @@
       "managedBy": "DESIGN-LAB (WORK-LAB read-only reference)",
       "totalSizeGb": 39.6,
       "assets": [
-        {"name": "diffusion_models/minimax_h3_fl2va (1 file)", "sizeGb": 19.5, "role": "video-generation-diT"},
-        {"name": "text_encoders/qwen3vl_32b (1 file)", "sizeGb": 14.6, "role": "text-encoder"},
-        {"name": "vae (2 files)", "sizeGb": 5.4, "role": "video-vae"}
+        {
+          "name": "diffusion_models/minimax_h3_fl2va (1 file)",
+          "sizeGb": 19.5,
+          "role": "video-generation-diT"
+        },
+        {
+          "name": "text_encoders/qwen3vl_32b (1 file)",
+          "sizeGb": 14.6,
+          "role": "text-encoder"
+        },
+        {
+          "name": "vae (2 files)",
+          "sizeGb": 5.4,
+          "role": "video-vae"
+        }
       ],
       "note": "DESIGN-LAB 视觉链资产，WORK-LAB 只读 inventory，不管理内容"
     },
@@ -73,11 +117,18 @@
       "managedBy": "OS External Configuration",
       "totalSizeGb": null,
       "assets": [
-        {"name": "PaddlePaddle PP-OCR 系列", "role": "ocr"},
-        {"name": "Systran faster-whisper-base", "role": "asr"}
+        {
+          "name": "PaddlePaddle PP-OCR 系列",
+          "role": "ocr"
+        },
+        {
+          "name": "Systran faster-whisper-base",
+          "role": "asr"
+        }
       ],
       "note": "HuggingFace hub 缓存形态（models--*），跨项目共用"
     }
   ],
-  "verification": "清单由 run_quality_gate.py external-libraries-index gate 校验（JSON 合法 + sharedRoot 可解析 + 资产列表非空）"
+  "verification": "清单由 run_quality_gate.py external-libraries-index gate 校验（JSON 合法 + sharedRoot 可解析 + 资产列表非空）",
+  "lastVerified": "2026-09-29"
 }
