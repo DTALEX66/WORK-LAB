@@ -82,6 +82,24 @@ Ollama 无 rerank 接口（交 llama.cpp）· **删除前核验拦下 0.46 GB �
 3. 27B 的交互速度受硬件限制（内存带宽天花板 ≈2.7 tok/s，实测 2.52 = 93%）；
    提速只有"更小量化"或"更大 GPU"，**不得**再下载多个 20–30B 替代模型。
 
+## 6.5 证据归档（本地，可校验）
+
+原始证据已按仓库既有归档惯例整理到 `.project-local/artifacts/model-governance-20260928/`：
+
+| 目录 | 内容 |
+|---|---|
+| `01-docs/` | CLOSEOUT、本 HANDOFF、下载前登记、commit message、PR 正文、项目 PR 全表 |
+| `02-machine-snapshot/` | 变更前只读机器盘点（逐文件 sha256） |
+| `03-benchmark/` | DEEP/FAST 吞吐、offload 阶梯、线程与上下文敏感性 |
+| `04-e2e/` | 真实全链路 E2E（11/11）、DEEP 生命周期/并发/重启/超长上下文 |
+| `05-lmstudio/` | LM Studio 接入实测：索引、端口、加载生命周期、吞吐、参数差异 |
+| `06-download/` | 可续传+哈希校验下载器、盘点器、保护快照器、清单生成器 |
+| `07-protection/` | 变更前保护快照与回滚方案 |
+| `fixtures/` | E2E 真实输入（中英 md/txt、生成 PDF、CJK PNG、中文 WAV） |
+
+- 清单（**逐文件 sha256**）：`MANIFEST.json` · 说明：`ARCHIVE-README.md` · 规模 59 文件 / 546 KB
+- 排除：一次性 8 MiB 范围探测（可由 `ms_download.py` 复现）、浏览器 profile 临时目录
+- 校验：按 `MANIFEST.json` 的 sha256 逐文件比对即可证明归档未被篡改
 ## 7. 证据与交付物
 
 - 机器真相：`.project/governance/` 7 份 JSON（model / runtime / provider / capability /
