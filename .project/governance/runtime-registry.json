@@ -146,7 +146,7 @@
         ],
         "residentPolicy": {
           "rationale": "RTX 5060 has 8151 MiB. Holding FAST + DEEP + the VLM simultaneously measured 7673 MiB used / 223 MiB free, which forces heavy spill and slows every model.",
-          "config": "FAST (qwen3.5-4b) resident at ctx 8192 with ttl 86400; DEEP and the VLM are NOT preloaded and load just-in-time",
+          "config": "FAST (qwen3.5-4b) resident at ctx 8192, parallel 1, ttl 86400; DEEP and the VLM are NOT preloaded and load just-in-time",
           "measuredAfter": "1246 MiB used / 6650 MiB free with FAST resident"
         },
         "justInTimeLoading": {
@@ -175,6 +175,49 @@
           "context": 8192,
           "comparison": "llama.cpp b11221 with explicit -ngl 32 reached 2.52 tok/s, i.e. about 27% faster than LM Studio's automatic placement; that path remains available but is not started.",
           "action_taken": "no override applied - the default is left in place because it wins"
+        },
+        "parallelTuning": {
+          "question": "does --parallel 1 beat the default 4 for a single-user desktop?",
+          "answer": "YES - it saves memory AND is marginally faster; measured rather than assumed",
+          "measurements": {
+            "parallel_4": {
+              "vramUsedMiB": 3869,
+              "vramFreeMiB": 4027,
+              "tokPerSec": 75.91,
+              "avgSeconds": 0.67
+            },
+            "parallel_1": {
+              "vramUsedMiB": 3716,
+              "vramFreeMiB": 4180,
+              "tokPerSec": 77.28,
+              "avgSeconds": 0.66
+            }
+          },
+          "vramSavedMiB": 153,
+          "speedDeltaTokPerSec": 1.37,
+          "verdict": "USE_PARALLEL_1"
+        },
+        "defectFoundAndFixed": {
+          "what": "Each `lms load` of an already-loaded model creates ANOTHER instance (qwen3.5-4b, then qwen3.5-4b:2, ...). The warm-up script decided whether to load by matching the model NAME anywhere in `lms ps` output, so it could not see duplicates and each duplicate silently held real VRAM.",
+          "how_noticed": "During final verification the loaded list showed both qwen3.5-4b and qwen3.5-4b:2 simultaneously resident.",
+          "fix": "The script now parses `lms ps --json` (the plain table has no reliable delimiter) and counts EXACT identifiers, treating '<name>:<n>' as an extra instance. It unloads every instance beyond the first. The JSON is read by splitting on the first '[' because the CLI emits spinner control characters before it.",
+          "verified": "Deliberately created a duplicate, ran the script, and it logged 'duplicate FAST instances detected: qwen3.5-4b, qwen3.5-4b:2 - removing all but the first' then unloaded the extra. A second run reported 'FAST already loaded' and created nothing.",
+          "residual": "none observed after the fix; resident list shows exactly one instance"
+        },
+        "finalAcceptance": {
+          "date": "2026-09-29",
+          "script": ".project-local/runs/model-governance-20260928/final_acceptance.py",
+          "result": "8/8 PASS, verdict ACCEPTED_ALL_LINES",
+          "lines": {
+            "inventory": "6 models indexed, none missing",
+            "fast": "89 chars, 48 tokens, 77.9 tok/s, reasoning tokens 0",
+            "deep": "cold auto-load and answered in 28.6 s",
+            "embedding": "dim 1024, separation +0.4944",
+            "rerank": "relevant=yes / irrelevant=no (binary verdict, no score available)",
+            "ocr": "8/8 key lines in 13.8 s",
+            "asr": "runtime and weights present; not re-exercised in this pass",
+            "automation": "2/2 scheduled tasks registered"
+          }
         }
       }
     },
