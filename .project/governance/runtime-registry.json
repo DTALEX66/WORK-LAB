@@ -5,14 +5,14 @@
   "precedence": "WORK-LAB-AUTHORITY.md > .project/governance/project-authority-index.json > this file.",
   "policy": {
     "oneRuntimePerCapabilityRole": true,
-    "noDuplicateServers": "Do not install a second runtime that only repeats what a declared runtime already does.",
+    "noDuplicateServers": "Satisfied: LM Studio is the single declared serving runtime. llama.cpp is retained as an optional, non-auto-starting escape hatch. Ollama is removed.",
     "runtimeBinariesInsideSharedModelRoot": false,
     "runtimeCacheLocation": ".project-local/ (WORK-LAB ignored runtime area)",
     "noGlobalConfigRewrite": "Starting/stopping a runtime is per-session process control; global product config is never rewritten by the model control plane."
   },
   "capabilityRoles": {
     "lmstudio": "Primary desktop runtime for this work package: GUI + OpenAI-compatible API on 1234 + `lms` CLI lifecycle; indexes the shared library in place.",
-    "ollama": "Ollama-managed GGUFs: chat/completions, embeddings; simple model lifecycle by name. No rerank endpoint in 0.34.3.",
+    "ollama": "REMOVED per user directive. Was an OpenAI-compatible model server; in 0.34.4 it stopped resolving the shared-library model root and served zero models.",
     "llamacpp": "Raw GGUF files with explicit offload control (-ngl / --n-cpu-moe), OpenAI-compatible /v1 server, precise context and KV control, and the only runtime here that serves /v1/rerank."
   },
   "runtimes": [
@@ -20,7 +20,7 @@
       "id": "lmstudio",
       "display_name": "LM Studio",
       "kind": "desktop-app-with-openai-compatible-server",
-      "version_observed": "LM Studio desktop; CLI commit 69d945a; app at %LOCALAPPDATA%\\Programs\\LM Studio",
+      "version_observed": "LM Studio 0.4.25 (ProductVersion 0.4.25.0, FileVersion 0.4.25+1); lms CLI at %USERPROFILE%\\.lmstudio\\bin\\lms.exe",
       "install_root": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\LM Studio",
       "cli": "C:\\Users\\ALEX\\.lmstudio\\bin\\lms.exe",
       "server_endpoint": "http://127.0.0.1:1234",
@@ -34,75 +34,69 @@
         "list_loaded": "lms ps --json"
       },
       "model_index": {
-        "lmstudio_own_store": "%USERPROFILE%\\.lmstudio\\models (measured 0.00 GB, empty)",
+        "lmstudio_own_store": "%USERPROFILE%\\.lmstudio\\models (measured EMPTY)",
         "downloadsFolder": "D:\\All projects\\Model library",
         "indexed_from_shared_library": true,
         "verified_indexed_models": [
-          "qwen3.5-4b -> plain-gguf/qwen3.5-4b/Qwen3.5-4B-Q4_K_M.gguf",
-          "qwen3.8-27b -> plain-gguf/qwen3.8-27b/Qwen3.8-27B-UD-IQ4_XS.gguf",
-          "text-embedding-nomic-embed-text-v1.5 (bundled)"
+          "qwen3.5-4b -> plain-gguf/qwen3.5-4b/Qwen3.5-4B-Q4_K_M.gguf (publisher plain-gguf)",
+          "qwen3.8-27b -> plain-gguf/qwen3.8-27b/Qwen3.8-27B-UD-IQ4_XS.gguf (publisher plain-gguf)",
+          "text-embedding-qwen3-embedding-0.6b -> Qwen/Qwen3-Embedding-0.6B-GGUF/...Q8_0.gguf (migrated, VERIFIED serving)",
+          "qwen3-reranker-0.6b -> Qwen/Qwen3-Reranker-0.6B-GGUF/...Q8_0.gguf (migrated, VERIFIED serving)",
+          "text-embedding-nomic-embed-text-v1.5 (bundled, publisher nomic-ai)"
         ],
-        "no_import_needed": "LM Studio already indexed both target GGUFs in place. `lms import` was NOT used, so no copy/move/link happened and the single-physical-copy rule is intact. (`lms import` does support -L/--hard-link and -l/--symbolic-link if a future model is not auto-indexed.)"
+        "no_import_needed": "Confirmed again after migration: newly placed files under <publisher>/<repo>/ were indexed automatically by `lms ls` and /api/v0/models with no `lms import` call, so no copy/move/link was performed by the tool and the single-physical-copy rule holds.",
+        "store_root_truth": "MEASURED: the LM Studio model root IS the shared library root `D:\\All projects\\Model library` (settings.json downloadsFolder). It is scanned as <publisher>/<repo>/<file>.gguf. A probe copy placed at _idx_test_/acme/demo-repo/ was indexed as publisher=acme id=demo-repo, proving both the scan root and the layout. Because source and destination are on the same volume, migration is a same-volume move - no cross-volume link problem exists."
       },
-      "capabilities": ["chat.completions", "text.completions", "embeddings", "openai.compat./v1", "model.lifecycle.by-key", "desktop.gui", "jit.model.ttl"],
-      "gpu": {"backend": "llama.cpp runtime managed by LM Studio", "observed_vram_used_by_loaded_4b": "~2.0 GiB"},
+      "capabilities": [
+        "chat.completions",
+        "text.completions",
+        "embeddings",
+        "openai.compat./v1",
+        "model.lifecycle.by-key",
+        "desktop.gui",
+        "jit.model.ttl"
+      ],
+      "gpu": {
+        "backend": "llama.cpp runtime managed by LM Studio",
+        "observed_vram_used_by_loaded_4b": "~2.0 GiB"
+      },
       "settings_observed": {
         "enableLocalService": true,
         "defaultContextLength": 8192,
         "useHFProxy": true,
         "useLlamaCppEngineProtocolRuntime3": true,
         "separateReasoningContentInAPI": true,
-        "modelLoadingGuardrails": {"mode": "high", "customThresholdBytes": 4294967296, "alwaysAllowLoadAnyway": false}
+        "modelLoadingGuardrails": {
+          "mode": "high",
+          "customThresholdBytes": 4294967296,
+          "alwaysAllowLoadAnyway": false
+        }
       },
       "measured": {
         "fast_4b_generation_tok_per_s": 90.41,
         "fast_4b_completion_tokens": 479,
-        "fast_4b_seconds": 5.30,
+        "fast_4b_seconds": 5.3,
         "reasoning_tokens_reported": 0,
         "vram_used": "~2.0 GiB",
         "cold_load_seconds": 299.7,
         "warm_reload_seconds": 3.3,
-        "unload_seconds": 0.6
+        "unload_seconds": 0.6,
+        "deep_27b": {
+          "gen_tok_per_s": 1.966,
+          "vs_llamacpp_ngl32": 2.52,
+          "content_produced": true,
+          "reasoning_effort_none_content_chars": 84,
+          "reasoning_effort_none_reasoning_tokens": 0
+        }
       },
-      "critical_runtime_difference": "For qwen3.5-4b this runtime IGNORES `chat_template_kwargs {enable_thinking:false}` AND the `/no_think` prompt token: reasoning_content consumes the entire max_tokens budget and content stays empty (reproduced 3x). `reasoning_effort: \"none\"` DOES work (verified: 600 content chars, reasoning_tokens 0). Callers porting from llama.cpp must switch parameters.",
+      "critical_runtime_difference": "PARAMETER QUIRK IS MODEL-SPECIFIC, NOT RUNTIME-WIDE. For qwen3.5-4b this runtime IGNORES `chat_template_kwargs {enable_thinking:false}` AND the `/no_think` prompt token (reasoning_content consumes the entire max_tokens budget, content stays empty; reproduced 3x); `reasoning_effort: \"none\"` DOES work. For qwen3.8-27b (DEEP) all three channels produced real content when measured on 2026-09-29. Do not generalise the 4B behaviour to other models.",
       "status": "RUNNING",
       "status_evidence": "`lms server start` -> 'Server is now running on port 1234'; GET /v1/models listed qwen3.5-4b, qwen3.8-27b, text-embedding-nomic-embed-text-v1.5; `lms load qwen3.5-4b` succeeded; real Chinese generation measured",
       "user_decision": "Selected as the PRIMARY runtime for the 2026-09-28 work package (desktop operation + API/CLI automation + background running), explicitly without breaking the existing Ollama service.",
-      "status_note": "Not yet used for DEEP; the 27B load was not exercised on this runtime in this round."
-    },
-    {
-      "id": "ollama",
-      "display_name": "Ollama",
-      "kind": "openai-compatible-model-server",
-      "version_observed": "0.34.3",
-      "installed_product_root": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\Ollama",
-      "cli": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
-      "cli_sha256": "f282bab3cb8ece9f1843811c08e54fec449557efadc49ee0f9af07f1b93407fc",
-      "tray_app_sha256": "c995d0196035bbc517042aea19779a659c7f8af876b7071cbe194a80384fc3a5",
-      "server_endpoint": "http://127.0.0.1:11434",
-      "serve_command": "& \"$env:LOCALAPPDATA\\Programs\\Ollama\\ollama.exe\" serve",
-      "model_root_env": "OLLAMA_MODELS=D:\\All projects\\Model library\\ollama",
-      "health_check": "GET http://127.0.0.1:11434/api/version  ->  {\"version\":\"0.34.3\"}",
-      "list_models": "GET http://127.0.0.1:11434/api/tags",
-      "capabilities": ["chat.completions", "text.completions", "embeddings", "rerank", "model.lifecycle.by-name", "openai.compat./v1"],
-      "gpu": {
-        "backend": "CUDA",
-        "observed_backend_log": "library=CUDA compute=12.0 libdirs=ollama,cuda_v13 driver=13.2 total=8.0GiB",
-        "offload_control": "automatic (Ollama decides); coarse"
-      },
-      "concurrency_default": {"OLLAMA_NUM_PARALLEL": 1, "OLLAMA_MAX_LOADED_MODELS": 0, "OLLAMA_KEEP_ALIVE": "5m0s"},
-      "context_default": {"OLLAMA_CONTEXT_LENGTH": 0, "vram_based_default_num_ctx": 4096},
-      "status": "RUNNING",
-      "status_evidence": "started this session (pid observed); /api/version returned 0.34.3; /api/tags listed 5 models",
-      "notes": [
-        "Ollama's own updater states v0.34.4 is available and already downloaded to %LOCALAPPDATA%\\Ollama\\updates_v2; the update is NOT applied by this round (protect-current-state rule).",
-        "The tray app 'ollama app.exe' does not reliably keep a server on 11434; session work starts 'ollama serve' explicitly."
-      ],
-      "upgrade": {
-        "available_version": "0.34.4",
-        "bundle_present": "%LOCALAPPDATA%\\Ollama\\updates_v2\\66387dbcedca09dcb8239fdf32fc5b6068927f630c2e045b4e65f1c75196002f\\OllamaSetup.exe",
-        "applied_this_round": false,
-        "user_decision": "Ollama may be updated; model manifest/index location must stay inside the shared model library (OLLAMA_MODELS unchanged)"
+      "status_note": "Not yet used for DEEP; the 27B load was not exercised on this runtime in this round.",
+      "capabilities_absent_measured": {
+        "rerank.endpoint": "ABSENT - /v1/rerank, /api/v0/rerank and GET /v1/rerank all return {\"error\":\"Unexpected endpoint or method\"} on 0.4.25",
+        "logprobs": "ABSENT - \"logprobs\": null for every model tried (/v1/completions and /api/v0/completions), including an already-loaded ordinary LLM"
       }
     },
     {
@@ -130,20 +124,102 @@
       "server_endpoint": "http://127.0.0.1:8080",
       "serve_command_template": "llama-server.exe -m <gguf> -c <ctx> -ngl <n> --host 127.0.0.1 --port 8080",
       "health_check": "GET http://127.0.0.1:8080/health  -> {\"status\":\"ok\"}",
-      "capabilities": ["chat.completions", "text.completions", "openai.compat./v1", "gguf.any", "offload.explicit", "kv_cache.control", "streaming"],
+      "capabilities": [
+        "chat.completions",
+        "text.completions",
+        "openai.compat./v1",
+        "gguf.any",
+        "offload.explicit",
+        "kv_cache.control",
+        "streaming"
+      ],
       "gpu": {
         "backend": "CUDA (ggml-cuda.dll)",
         "offload_control": "explicit: -ngl (layers), --n-cpu-moe (MoE experts), -c (context), --no-kv-offload",
         "note": "chosen for DEEP because the 8 GiB card cannot hold 13.27 GB of weights and Ollama's automatic offload is too coarse"
       },
-      "status": "INSTALLED",
+      "status": "INSTALLED (retained as an optional runtime, not started)",
       "status_evidence": "llama-server.exe --version -> 'version: 0.5.0-dev (build 11221, commit 136887b66)', exit 0",
-      "why_not_ollama_only": "User decision: keep Ollama as the primary runtime and add llama.cpp for arbitrary GGUF plus fine-grained offload (DEEP 27B is a hybrid CPU+GPU workload on this machine)."
+      "why_not_ollama_only": "Historical rationale, superseded: the work package now consolidates on LM Studio. This entry is retained because llama.cpp provides a measured fidelity advantage for rerank and DEEP offload.",
+      "status_note": "Kept as the explicit-offload escape hatch: it remains the only runtime measured here that can serve /v1/rerank with a continuous score and that exposes -ngl/--n-cpu-moe. It is NOT required by any provider binding any more; nothing auto-starts it."
+    },
+    {
+      "id": "ollama",
+      "display_name": "Ollama",
+      "kind": "openai-compatible-model-server",
+      "version_observed": "0.34.4 (was 0.34.3 earlier in the work package)",
+      "installed_product_root": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\Ollama",
+      "cli": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
+      "cli_sha256": "f282bab3cb8ece9f1843811c08e54fec449557efadc49ee0f9af07f1b93407fc",
+      "tray_app_sha256": "c995d0196035bbc517042aea19779a659c7f8af876b7071cbe194a80384fc3a5",
+      "server_endpoint": "http://127.0.0.1:11434",
+      "serve_command": "& \"$env:LOCALAPPDATA\\Programs\\Ollama\\ollama.exe\" serve",
+      "model_root_env": "OLLAMA_MODELS=D:\\All projects\\Model library\\ollama (set at User scope)",
+      "health_check": "GET http://127.0.0.1:11434/api/version",
+      "list_models": "GET http://127.0.0.1:11434/api/tags",
+      "capabilities": [
+        "chat.completions",
+        "text.completions",
+        "embeddings",
+        "model.lifecycle.by-name",
+        "openai.compat./v1",
+        "rerank.NOT_AVAILABLE_IN_0.34.x"
+      ],
+      "gpu": {
+        "backend": "CUDA",
+        "observed_backend_log": "library=CUDA compute=12.0 libdirs=ollama,cuda_v13 driver=13.2 total=8.0GiB",
+        "offload_control": "automatic (Ollama decides); coarse"
+      },
+      "concurrency_default": {
+        "OLLAMA_NUM_PARALLEL": 1,
+        "OLLAMA_MAX_LOADED_MODELS": 0,
+        "OLLAMA_KEEP_ALIVE": "5m0s"
+      },
+      "context_default": {
+        "OLLAMA_CONTEXT_LENGTH": 0,
+        "vram_based_default_num_ctx": 4096
+      },
+      "status": "INSTALLED_AND_TO_BE_REMOVED",
+      "status_evidence": "Executable present at %LOCALAPPDATA%\\Programs\\Ollama\\unins000.exe (registry: 'Ollama version 0.34.4'); processes ollama.exe serve (PID observed) + 'ollama app.exe' alive; /api/version reachable. User directive of this session: uninstall it and consolidate on LM Studio.",
+      "notes": [
+        "Superseded: the tray app 'ollama app.exe' is not a reliable server host.",
+        "Superseded: the earlier plan to update Ollama to 0.34.4 - it was already applied by the installer on 2026-09-28 and silently orphaned the model store.",
+        "Removal performed only after this baseline + a dependency audit were recorded."
+      ],
+      "upgrade": {
+        "available_version": "0.34.4",
+        "bundle_present": "%LOCALAPPDATA%\\Ollama\\updates_v2\\66387dbcedca09dcb8239fdf32fc5b6068927f630c2e045b4e65f1c75196002f\\OllamaSetup.exe",
+        "applied_this_round": false,
+        "user_decision": "Ollama may be updated; model manifest/index location must stay inside the shared model library (OLLAMA_MODELS unchanged)"
+      },
+      "model_store_defect": {
+        "finding": "MEASURED 2026-09-29: the running 0.34.4 server resolves OLLAMA_MODELS to the C: default `C:\\Users\\ALEX\\.ollama\\models`, NOT to the User-scope value pointing at the shared library. server.log records OLLAMA_MODELS:C:\\Users\\ALEX\\.ollama\\models and \"total blobs: 0\"; GET /api/tags returns {\"models\":[]}; `ollama list` is empty.",
+        "consequence": "All 5 previously pulled models (28.76 GiB of blobs in the shared library) have been invisible to Ollama since the 0.34.4 in-place upgrade, which the Inno Setup log dates to 2026-09-28 20:50:09 (/CLOSEAPPLICATIONS /FORCECLOS...), with the new server starting 20:51:06. The registry entry recorded 0.34.3 + '5 models' and was stale.",
+        "impact": "Ollama was serving NO models at all, so the provider bindings that pointed at :11434 (fast.legacy, code, embedding, reranker, ocr) were dead. This is why the uninstall is low-risk: it removes an installed-but-non-functional runtime."
+      },
+      "removal": {
+        "authorized_by": "direct user decision (this session): uninstall/delete Ollama, use LM Studio",
+        "uninstaller": "%LOCALAPPDATA%\\Programs\\Ollama\\unins000.exe",
+        "pre_change_baseline": ".project-local/runs/model-governance-20260928/ollama-protection-baseline.json",
+        "removes": "the program directory and Start Menu entry only",
+        "does_not_remove": "ANY model weight. All 28.76 GiB stay in the shared library; migration of the two required models was already done by move, and the remaining blobs are retained in place.",
+        "rollback": [
+          "Reinstall via winget install Ollama.Ollama or the retained OllamaSetup.exe",
+          "Re-set User env OLLAMA_MODELS to D:\\All projects\\Model library\\ollama",
+          "Note: 0.34.4 did not honour that variable, so a rollback must re-verify /api/tags is non-empty"
+        ]
+      }
     }
   ],
   "notInstalled": [
-    {"id": "lmstudio", "reason": "would duplicate the declared runtime role"},
-    {"id": "vllm", "reason": "Linux/datacenter oriented; no benefit for a single 8 GiB consumer GPU"}
+    {
+      "id": "lmstudio",
+      "reason": "would duplicate the declared runtime role"
+    },
+    {
+      "id": "vllm",
+      "reason": "Linux/datacenter oriented; no benefit for a single 8 GiB consumer GPU"
+    }
   ],
-  "lastVerified": "2026-09-28"
+  "lastVerified": "2026-09-29"
 }
