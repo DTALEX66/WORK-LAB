@@ -119,7 +119,8 @@
       "expected_latency_class": "batch / long-form (hybrid CPU+GPU on this machine)",
       "owner": "WORK-LAB",
       "weight_location": "D:\\All projects\\Model library\\plain-gguf\\qwen3.8-27b\\Qwen3.8-27B-UD-IQ4_XS.gguf",
-      "binding_note": "Indexed in place by LM Studio from the shared library root; single physical copy."
+      "binding_note": "Indexed in place by LM Studio from the shared library root; single physical copy.",
+      "runtime_status": "ONLINE and verified: LM Studio served real content on all three parameter channels (2026-09-29). 1.966 tok/s vs llama.cpp -ngl 32 at 2.52 tok/s."
     },
     {
       "id": "local.code.default",
@@ -183,7 +184,8 @@
         "method": "same-volume move (os.replace) after sha256 verification - one physical copy, one path",
         "source_sha256": "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439",
         "date": "2026-09-29"
-      }
+      },
+      "runtime_status": "ONLINE and verified: live /v1/embeddings returned 1024-dim vectors."
     },
     {
       "id": "local.reranker.default",
@@ -245,7 +247,8 @@
         "method": "same-volume move after sha256 verification",
         "source_sha256": "eae89db7f8d56fcead26125f6e3ddabf6ad1702d9d4c23d3d69a7059c4c4d64d",
         "date": "2026-09-29"
-      }
+      },
+      "runtime_status": "ONLINE and verified as a binary verdict (correct on every tested case), but NO score is exposed: LM Studio 0.4.25 has no rerank endpoint and never returns logprobs."
     },
     {
       "id": "local.ocr.default",
@@ -254,22 +257,35 @@
       "binds_to_runtime": "lmstudio",
       "endpoint": "http://127.0.0.1:1234/v1",
       "api_shape": "openai-compatible (vision)",
-      "model_name_on_wire": "Qwen2.5-VL-7B-Instruct-Q4_K_M",
+      "model_name_on_wire": "qwen2.5-vl-7b-instruct",
       "capabilities": [
         "ocr.image",
         "vision.describe",
         "layout.understand"
       ],
-      "context_window": 32768,
+      "context_window": 128000,
       "allowed_projects": [
         "ArcheAxis-Knowledge-OS"
       ],
       "access_tier": "archeaxis-first",
-      "provisional": true,
-      "provisional_reason": "Model and projector are being downloaded; the zh/en/mixed/PDF/scanned/table/page-order matrix has not yet been run on this model under LM Studio.",
+      "provisional": false,
+      "provisional_reason": null,
       "owner": "WORK-LAB",
-      "weight_location": "D:\\All projects\\Model library\\ggml-org\\Qwen2.5-VL-7B-Instruct-GGUF\\",
-      "provenance_note": "The Ollama `qwen2.5vl:7b` blob was inspected at the GGUF header and contains NO vision projector: the manifest lists a single image.model layer, `hasVision` is false (no clip.* keys), and no mmproj file exists anywhere in the shared library. That blob therefore cannot provide vision under any runtime. OCR is bound instead to the llama.cpp project's own repository ggml-org/Qwen2.5-VL-7B-Instruct-GGUF, which ships a matched mmproj (mmproj-Qwen2.5-VL-7B-Instruct-Q8_0.gguf)."
+      "weight_location": "D:\\All projects\\Model library\\ggml-org\\Qwen2.5-VL-7B-Instruct-GGUF\\(Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf + mmproj-Qwen2.5-VL-7B-Instruct-Q8_0.gguf)",
+      "provenance_note": "Alternative to migrating the Ollama blob: that blob contains no vision projector (hasVision=false, no clip.* keys, single image.model layer, no mmproj anywhere in the library), so OCR could not be migrated. Downloaded from the llama.cpp project's own repository via hf-mirror.com (domestic route; huggingface.co direct was avoided on user instruction so the personal VPN is not consumed). 8 parallel ranged connections measured up to 13.4 MiB/s.",
+      "mmproj": "mmproj-Qwen2.5-VL-7B-Instruct-Q8_0.gguf (853119712 B, sha256 2ddb555391bae966e412deab9e07b58afa18bcc06930ba0f1c78a3695ab9e506)",
+      "measured": {
+        "verification": "live vision call on the zh/en fixture, 2 independent runs",
+        "fixture": "page-zh-en.png (1240x520, Chinese + English mixed)",
+        "seconds_per_run": 5.3,
+        "prompt_tokens": 892,
+        "completion_tokens": 70,
+        "exact_lines": 8,
+        "total_lines": 8,
+        "exact_rate": 1.0,
+        "verdict": "REAL_OCR_WORKING",
+        "comparison": "The earlier Ollama qwen2.5vl:7b result was 6/6 in 61.7 s. This is 8/8 in 5.3 s and, unlike that blob, it genuinely has a vision projector."
+      }
     },
     {
       "id": "local.asr.default",
@@ -338,6 +354,8 @@
   "migrationEpoch": {
     "date": "2026-09-29",
     "directive": "user decision: uninstall Ollama and consolidate on LM Studio",
-    "summary": "All model providers now resolve through the lmstudio runtime; Ollama bindings removed."
+    "summary": "All model providers now resolve through the lmstudio runtime; Ollama bindings removed.",
+    "completed": "2026-09-29",
+    "ollamaRemoved": true
   }
 }

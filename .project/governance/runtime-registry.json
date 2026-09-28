@@ -20,7 +20,7 @@
       "id": "lmstudio",
       "display_name": "LM Studio",
       "kind": "desktop-app-with-openai-compatible-server",
-      "version_observed": "LM Studio 0.4.25 (ProductVersion 0.4.25.0, FileVersion 0.4.25+1); lms CLI at %USERPROFILE%\\.lmstudio\\bin\\lms.exe",
+      "version_observed": "LM Studio 0.4.25 (ProductVersion 0.4.25.0); lms CLI at %USERPROFILE%\\.lmstudio\\bin\\lms.exe",
       "install_root": "C:\\Users\\ALEX\\AppData\\Local\\Programs\\LM Studio",
       "cli": "C:\\Users\\ALEX\\.lmstudio\\bin\\lms.exe",
       "server_endpoint": "http://127.0.0.1:1234",
@@ -38,19 +38,24 @@
         "downloadsFolder": "D:\\All projects\\Model library",
         "indexed_from_shared_library": true,
         "verified_indexed_models": [
-          "qwen3.5-4b -> plain-gguf/qwen3.5-4b/Qwen3.5-4B-Q4_K_M.gguf (publisher plain-gguf)",
-          "qwen3.8-27b -> plain-gguf/qwen3.8-27b/Qwen3.8-27B-UD-IQ4_XS.gguf (publisher plain-gguf)",
-          "text-embedding-qwen3-embedding-0.6b -> Qwen/Qwen3-Embedding-0.6B-GGUF/...Q8_0.gguf (migrated, VERIFIED serving)",
-          "qwen3-reranker-0.6b -> Qwen/Qwen3-Reranker-0.6B-GGUF/...Q8_0.gguf (migrated, VERIFIED serving)",
+          "qwen3.5-4b -> plain-gguf/qwen3.5-4b/  (publisher plain-gguf, LLM, loaded)",
+          "qwen3.8-27b -> plain-gguf/qwen3.8-27b/  (publisher plain-gguf, LLM, verified serving)",
+          "qwen2.5-vl-7b-instruct -> ggml-org/  (publisher ggml-org, type VLM, OCR verified 8/8)",
+          "text-embedding-qwen3-embedding-0.6b -> Qwen/  (publisher Qwen, dim 1024, verified)",
+          "qwen3-reranker-0.6b -> Qwen/  (publisher Qwen, binary verdict, verified)",
           "text-embedding-nomic-embed-text-v1.5 (bundled, publisher nomic-ai)"
         ],
         "no_import_needed": "Confirmed again after migration: newly placed files under <publisher>/<repo>/ were indexed automatically by `lms ls` and /api/v0/models with no `lms import` call, so no copy/move/link was performed by the tool and the single-physical-copy rule holds.",
-        "store_root_truth": "MEASURED: the LM Studio model root IS the shared library root `D:\\All projects\\Model library` (settings.json downloadsFolder). It is scanned as <publisher>/<repo>/<file>.gguf. A probe copy placed at _idx_test_/acme/demo-repo/ was indexed as publisher=acme id=demo-repo, proving both the scan root and the layout. Because source and destination are on the same volume, migration is a same-volume move - no cross-volume link problem exists."
+        "store_root_truth": "MEASURED: the LM Studio model root IS the shared library root `D:\\All projects\\Model library` (settings.json downloadsFolder). It is scanned as <publisher>/<repo>/<file>.gguf. A probe copy placed at _idx_test_/acme/demo-repo/ was indexed as publisher=acme id=demo-repo, proving both the scan root and the layout. Because source and destination are on the same volume, migration is a same-volume move - no cross-volume link problem exists.",
+        "indexed_count": 6,
+        "store_total_gb": 23.75,
+        "vision_pairing": "LM Studio automatically paired Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf with mmproj-Qwen2.5-VL-7B-Instruct-Q8_0.gguf from the same repo directory and reported the model as type=vlm (5.54 GB = 4.36 GB weights + 0.795 GB projector). No manual mmproj wiring was needed. This is exactly what the Ollama qwen2.5vl:7b blob could not provide."
       },
       "capabilities": [
         "chat.completions",
         "text.completions",
         "embeddings",
+        "vision.image_input",
         "openai.compat./v1",
         "model.lifecycle.by-key",
         "desktop.gui",
@@ -87,6 +92,19 @@
           "content_produced": true,
           "reasoning_effort_none_content_chars": 84,
           "reasoning_effort_none_reasoning_tokens": 0
+        },
+        "vlm_ocr": {
+          "model": "qwen2.5-vl-7b-instruct",
+          "fixture": "page-zh-en.png (sha256 a52a57af...bcd31, 1240x520, zh+en mixed)",
+          "runs": 2,
+          "seconds_per_run": 5.3,
+          "prompt_tokens": 892,
+          "completion_tokens": 70,
+          "reasoning_tokens": 0,
+          "exact_lines": 8,
+          "total_lines": 8,
+          "exact_rate": 1.0,
+          "verdict": "REAL_OCR_WORKING - byte-identical transcript on both runs"
         }
       },
       "critical_runtime_difference": "PARAMETER QUIRK IS MODEL-SPECIFIC, NOT RUNTIME-WIDE. For qwen3.5-4b this runtime IGNORES `chat_template_kwargs {enable_thinking:false}` AND the `/no_think` prompt token (reasoning_content consumes the entire max_tokens budget, content stays empty; reproduced 3x); `reasoning_effort: \"none\"` DOES work. For qwen3.8-27b (DEEP) all three channels produced real content when measured on 2026-09-29. Do not generalise the 4B behaviour to other models.",
@@ -179,8 +197,8 @@
         "OLLAMA_CONTEXT_LENGTH": 0,
         "vram_based_default_num_ctx": 4096
       },
-      "status": "INSTALLED_AND_TO_BE_REMOVED",
-      "status_evidence": "Executable present at %LOCALAPPDATA%\\Programs\\Ollama\\unins000.exe (registry: 'Ollama version 0.34.4'); processes ollama.exe serve (PID observed) + 'ollama app.exe' alive; /api/version reachable. User directive of this session: uninstall it and consolidate on LM Studio.",
+      "status": "REMOVED",
+      "status_evidence": "Uninstalled 2026-09-29 with exit code 0. Verified afterwards: program directory gone, no ollama processes, nothing listening on 11434, no uninstall registry entry, no Start Menu shortcut. All six model weights verified present; zero accidental deletions.",
       "notes": [
         "Superseded: the tray app 'ollama app.exe' is not a reliable server host.",
         "Superseded: the earlier plan to update Ollama to 0.34.4 - it was already applied by the installer on 2026-09-28 and silently orphaned the model store.",
@@ -207,7 +225,30 @@
           "Reinstall via winget install Ollama.Ollama or the retained OllamaSetup.exe",
           "Re-set User env OLLAMA_MODELS to D:\\All projects\\Model library\\ollama",
           "Note: 0.34.4 did not honour that variable, so a rollback must re-verify /api/tags is non-empty"
-        ]
+        ],
+        "executed_at": "2026-09-29",
+        "command": "%LOCALAPPDATA%\\Programs\\Ollama\\unins000.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART",
+        "exit_code": 0,
+        "verified_after": {
+          "install_directory_exists": false,
+          "ollama_exe_exists": false,
+          "unins000_exe_exists": false,
+          "processes_remaining": 0,
+          "port_11434_listening": 0,
+          "registry_uninstall_entries": 0,
+          "start_menu_shortcuts": 0,
+          "program_dir_freed_mib": 2830.5
+        },
+        "also_removed": [
+          "C:\\Users\\ALEX\\.ollama (empty blobs/models dirs, cache, ssh keys, onboarding marker)",
+          "User environment variable OLLAMA_MODELS"
+        ],
+        "weights_untouched": {
+          "verified": true,
+          "migrated_weights_all_present": 6,
+          "accidentally_deleted": 0,
+          "remaining_artifact_store": "D:\\All projects\\Model library\\ollama - 16 blobs, 5 manifests, 27.71 GB, retained"
+        }
       }
     }
   ],
