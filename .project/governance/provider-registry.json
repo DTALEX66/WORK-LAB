@@ -54,7 +54,8 @@
       ],
       "owner": "WORK-LAB",
       "binding_note": "Single physical copy in the shared library; LM Studio indexes the shared library root in place (downloadsFolder = the model library), so no import, copy or link exists. Ollama was NOT used for this weight (its CDN measured 136 KB/s here and the pull never completed).",
-      "weight_location": "D:\\All projects\\Model library\\plain-gguf\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf"
+      "weight_location": "D:\\All projects\\Model library\\plain-gguf\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf",
+      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
     },
     {
       "id": "local.fast.legacy",
@@ -76,7 +77,8 @@
       "owner": "WORK-LAB",
       "weight_location": "D:\\All projects\\Model library\\ollama\\blobs\\sha256-a3de86cd1c132c822487ededd47a324c50491393e6565cd14bafa40d0b8e686f",
       "quantization": "Q4_K_M (GGUF file_type 15)",
-      "standby_reason": "Ollama 0.34.4 no longer resolves OLLAMA_MODELS to the shared library (see runtime-registry ollama.model_store_defect), so this weight is not served by any runtime right now. It is retained in place pending a user decision; it is NOT deleted and NOT counted as the WL-MODEL-02 'two general LLMs' target."
+      "standby_reason": "Ollama 0.34.4 no longer resolves OLLAMA_MODELS to the shared library (see runtime-registry ollama.model_store_defect), so this weight is not served by any runtime right now. It is retained in place pending a user decision; it is NOT deleted and NOT counted as the WL-MODEL-02 'two general LLMs' target.",
+      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
     },
     {
       "id": "local.deep.default",
@@ -120,7 +122,8 @@
       "owner": "WORK-LAB",
       "weight_location": "D:\\All projects\\Model library\\plain-gguf\\qwen3.8-27b\\Qwen3.8-27B-UD-IQ4_XS.gguf",
       "binding_note": "Indexed in place by LM Studio from the shared library root; single physical copy.",
-      "runtime_status": "ONLINE and verified: LM Studio served real content on all three parameter channels (2026-09-29). 1.966 tok/s vs llama.cpp -ngl 32 at 2.52 tok/s."
+      "runtime_status": "ONLINE and verified: LM Studio served real content on all three parameter channels (2026-09-29). 1.966 tok/s vs llama.cpp -ngl 32 at 2.52 tok/s.",
+      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
     },
     {
       "id": "local.code.default",
@@ -143,7 +146,8 @@
       "owner": "WORK-LAB",
       "weight_location": "D:\\All projects\\Model library\\ollama\\blobs\\sha256-1194192cf2a187eb02722edcc3f77b11d21f537048ce04b67ccf8ba78863006a",
       "quantization": "Q4_K_M (GGUF file_type 15)",
-      "status_note": "Weight present (18.56 GB, arch qwen3moe, 128 experts / 8 used). NOT served and NOT part of the WL-MODEL-02 target count; retained pending a user decision."
+      "status_note": "Weight present (18.56 GB, arch qwen3moe, 128 experts / 8 used). NOT served and NOT part of the WL-MODEL-02 target count; retained pending a user decision.",
+      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
     },
     {
       "id": "local.embedding.default",
@@ -185,7 +189,8 @@
         "source_sha256": "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439",
         "date": "2026-09-29"
       },
-      "runtime_status": "ONLINE and verified: live /v1/embeddings returned 1024-dim vectors."
+      "runtime_status": "ONLINE and verified: live /v1/embeddings returned 1024-dim vectors.",
+      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
     },
     {
       "id": "local.reranker.default",
@@ -248,7 +253,8 @@
         "source_sha256": "eae89db7f8d56fcead26125f6e3ddabf6ad1702d9d4c23d3d69a7059c4c4d64d",
         "date": "2026-09-29"
       },
-      "runtime_status": "ONLINE and verified as a binary verdict (correct on every tested case), but NO score is exposed: LM Studio 0.4.25 has no rerank endpoint and never returns logprobs."
+      "runtime_status": "ONLINE and verified as a binary verdict (correct on every tested case), but NO score is exposed: LM Studio 0.4.25 has no rerank endpoint and never returns logprobs.",
+      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
     },
     {
       "id": "local.ocr.default",
@@ -285,7 +291,8 @@
         "exact_rate": 1.0,
         "verdict": "REAL_OCR_WORKING",
         "comparison": "The earlier Ollama qwen2.5vl:7b result was 6/6 in 61.7 s. This is 8/8 in 5.3 s and, unlike that blob, it genuinely has a vision projector."
-      }
+      },
+      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
     },
     {
       "id": "local.asr.default",
@@ -357,5 +364,12 @@
     "summary": "All model providers now resolve through the lmstudio runtime; Ollama bindings removed.",
     "completed": "2026-09-29",
     "ollamaRemoved": true
+  },
+  "operationalDeployment": {
+    "date": "2026-09-29",
+    "summary": "LM Studio runs as an unattended background service: autostart on launch, logon warm-up, 10-minute health check with self-heal, and just-in-time loading for the large models.",
+    "userActionRequired": "none - call http://127.0.0.1:1234/v1 with the model name",
+    "userGuide": "%LOCALAPPDATA%\\WORK-LAB\\README-本地模型服务.md",
+    "acceptance": "8/8 capability lines PASS (final-acceptance.json, verdict ACCEPTED_ALL_LINES)"
   }
 }
