@@ -115,6 +115,67 @@
       "capabilities_absent_measured": {
         "rerank.endpoint": "ABSENT - /v1/rerank, /api/v0/rerank and GET /v1/rerank all return {\"error\":\"Unexpected endpoint or method\"} on 0.4.25",
         "logprobs": "ABSENT - \"logprobs\": null for every model tried (/v1/completions and /api/v0/completions), including an already-loaded ordinary LLM"
+      },
+      "operationalDeployment": {
+        "why": "The user does not operate the LM Studio GUI, so the service must become ready by itself and recover by itself. Everything below was executed and verified on 2026-09-29.",
+        "serverAutostart": {
+          "setting": "autoStartOnLaunch",
+          "file": "%USERPROFILE%\\.lmstudio\\.internal\\http-server-config.json",
+          "was": false,
+          "now": true,
+          "enabledBy": "stopped the GUI, edited the config, relaunched; confirmed persisted after restart",
+          "verified": "killed the GUI, relaunched, and the server answered on 1234 with no manual step",
+          "note": "LM Studio already had an HKCU Run entry with --run-as-service, so the app itself starts at logon; autoStartOnLaunch is what makes the inference server come up with it."
+        },
+        "scheduledTasks": [
+          {
+            "name": "WORK-LAB LM Studio warm-up",
+            "trigger": "AtLogOn + PT1M30S",
+            "script": "%LOCALAPPDATA%\\WORK-LAB\\lmstudio-autostart.ps1",
+            "does": "waits for 1234, launches LM Studio if needed, preloads qwen3.5-4b at ctx 8192 with ttl 86400",
+            "verified": "LastTaskResult 0; FAST unloaded then reloaded automatically (server log 01:55:56-01:56:00)"
+          },
+          {
+            "name": "WORK-LAB LM Studio health",
+            "trigger": "repeats every PT10M, unbounded",
+            "script": "%LOCALAPPDATA%\\WORK-LAB\\lmstudio-heal.ps1 (heal mode wrapper)",
+            "does": "if 1234 is unreachable, relaunch LM Studio and preload FAST again",
+            "verified": "killed LM Studio (server unreachable), ran heal, and the endpoint returned HTTP 200 again with FAST reloaded; when healthy it stays silent (log grew 0 bytes)",
+            "registrationNote": "registered through schtasks: the ScheduledTasks cmdlets reject an unbounded repetition duration (P99999999DT... is out of range). The task runs a wrapper script so /TR contains only a bare path, because schtasks mangles quoted -File arguments and mistakes '-Heal' for one of its own switches."
+          }
+        ],
+        "residentPolicy": {
+          "rationale": "RTX 5060 has 8151 MiB. Holding FAST + DEEP + the VLM simultaneously measured 7673 MiB used / 223 MiB free, which forces heavy spill and slows every model.",
+          "config": "FAST (qwen3.5-4b) resident at ctx 8192 with ttl 86400; DEEP and the VLM are NOT preloaded and load just-in-time",
+          "measuredAfter": "1246 MiB used / 6650 MiB free with FAST resident"
+        },
+        "justInTimeLoading": {
+          "setting": "justInTimeModelLoading",
+          "value": true,
+          "measuredColdLoadSeconds": {
+            "qwen3.5-4b": 0.4,
+            "text-embedding-qwen3-embedding-0.6b": 3.3,
+            "qwen3-reranker-0.6b": 3.2,
+            "qwen3.8-27b": 17.2,
+            "qwen3.8-27b_in_final_acceptance": 21.9,
+            "qwen2.5-vl-7b-instruct": 5.4
+          },
+          "verdict": "JIT_AUTOLOAD_WORKS - 4/4 probed models loaded from cold with no manual step"
+        },
+        "deepOffloadTuning": {
+          "question": "can DEEP go faster than the automatic placement on an 8 GiB card?",
+          "answer": "NO - automatic placement is the fastest measured option; every explicit ratio was worse",
+          "measurements_tok_per_s": {
+            "auto": 1.977,
+            "gpu=max": 0.817,
+            "gpu=0.6": 0.911,
+            "gpu=0.75": 0.781,
+            "gpu=0.9": 0.825
+          },
+          "context": 8192,
+          "comparison": "llama.cpp b11221 with explicit -ngl 32 reached 2.52 tok/s, i.e. about 27% faster than LM Studio's automatic placement; that path remains available but is not started.",
+          "action_taken": "no override applied - the default is left in place because it wins"
+        }
       }
     },
     {
