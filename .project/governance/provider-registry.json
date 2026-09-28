@@ -370,6 +370,6 @@
     "summary": "LM Studio runs as an unattended background service: autostart on launch, logon warm-up, 10-minute health check with self-heal, and just-in-time loading for the large models.",
     "userActionRequired": "none - call http://127.0.0.1:1234/v1 with the model name",
     "userGuide": "%LOCALAPPDATA%\\WORK-LAB\\README-本地模型服务.md",
-    "acceptance": "8/8 capability lines PASS (final-acceptance.json, verdict ACCEPTED_ALL_LINES)"
+    "acceptance": "8/8 capability lines PASS (final-acceptance.json, verdict ACCEPTED_ALL_LINES, 2026-09-29)"
   }
 }
