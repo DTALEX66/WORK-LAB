@@ -57,6 +57,14 @@
   },
   "toolchain": {
     "canonicalDownloader": ".project-local/runs/model-governance-20260928/wl_model_download.py",
+    "canonicalDownloaderNote": "The runner path is inside the deliberately untracked .project-local evidence area, so it does NOT exist in a fresh clone. To obtain it on another machine, extract it from the archived copy below and verify its sha256 against the archive manifest. The policy above is the normative part; the script is a convenience implementation of it.",
+    "canonicalDownloaderArchivedCopy": {
+      "path": ".project-local/artifacts/model-runtime-migration-20260929/04-scripts/wl_model_download.py",
+      "manifest": ".project-local/artifacts/model-runtime-migration-20260929/MANIFEST.json",
+      "sha256": "ed842e5aea87a4f0977112636bdbd301e868a71605c0a51d7fb4e19f68d9ee49",
+      "sha256Note": "recorded for the 2026-09-29 archive (64 files). The authoritative value is always the one in MANIFEST.json; this field is a convenience cross-check and may change if the archive is rebuilt.",
+      "archiveSelfCheck": ".project-local/runs/model-governance-20260928/verify_migration_archive.py (64 files, ARCHIVE INTACT)"
+    },
     "guarantees": [
       "refuses any foreign host before opening a connection",
       "resolves sha256 from the mirror's own metadata instead of a hand-typed value",
