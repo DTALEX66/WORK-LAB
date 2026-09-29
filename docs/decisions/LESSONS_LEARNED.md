@@ -87,3 +87,25 @@
 - 主因是执行方式（批量替换不验证 + 循环无止损 + 不汇报），不是模型随机抽风
 - 客观因素：大型目录迁移（28 commits、数百文件）本身对路径语义是毁灭性改动
 - 次要因素：会话内模型多次切换（mimo-v2.5 → deepseek-v4-pro → deepseek-v4-flash），flash 级模型在精确长尾修复上更易上下文丢失/批量出错——但同样的坏习惯换更强模型仍会犯错
+
+---
+
+## 六、2026-09-29 补充：三项目 GitHub 交付链与本机身份（ERR-090..091）
+
+本节记录本次已验证的事件，不替代当前 Authority、GitHub 规则或实时身份检查。WORK-LAB PR [#159](https://github.com/DTALEX66/WORK-LAB/pull/159)、ArcheAxis-Knowledge-OS PR [#154](https://github.com/DTALEX66/ArcheAxis-Knowledge-OS/pull/154)、DESIGN-LAB PR [#207](https://github.com/DTALEX66/DESIGN-LAB/pull/207) 已合并；main 回读分别为 `d424236ea5dabc135775c444014263adf60cc160`、`df1a0d59961d0ced18c99dc3e31a5c5bee4a4eac`、`7a00b8bc8d9688ff387b3a5984d91b3ee90027b7`。三个合并提交的主线门禁已通过；DESIGN-LAB 的 H001 main-run 上传证明也通过。这是当时的 exact-SHA 证据，不保证未来运行状态。
+
+### 1. 身份与权限必须分层诊断（ERR-090）
+
+- 网页 GitHub 连接、`gh` CLI、Git SSH/HTTPS 与 Codex 沙箱是不同身份和运行层。网页连接返回仓库写权限，不能推出本机 `gh` 或 Git 已可用；`gh` 登录也不能推出 Git 实际传输身份。`user.name`/`user.email` 只是提交署名。
+- 本机 `gh auth status` 以退出码 1 报告进程继承的 `GH_TOKEN` 无效；忽略该覆盖后，已有 keyring 登录识别为 DTALEX66，三个仓库的 API `pull/push/admin` 均为 true。用户级 `GH_TOKEN` 已在用户明确授权后删除，Windows 环境变更通知已发送；**已运行的 Agent 软件和终端仍可能继承旧值，必须重启并重新验证**。未读取、记录或上传令牌值。
+- 三仓库 Git 实际 SSH 读取与 PR 分支推送成功；AAOS 的 HTTPS 配置经 Git URL 重写后实际走 SSH。一次 WORK-LAB SSH `publickey` 拒绝在两次复测后消失，不能据此宣称永久故障或永久无故障。Codex 沙箱账户访问用户 `known_hosts` 受限也不能归因为凭据失效。链路正常时不为统一而切换 HTTPS + GCM。
+
+### 2. 交付脚本必须先确认写边界
+
+- PR #159 修复了硬编码项目路径、隐式 `git add -A`、可能写 main、`--create-pr` 静默成功、干净工作区漏报未推送提交、Git 失败被当成 CLEAN、错误质量门禁路径以及仅凭 PASS 文本/空检查列表批准审核等缺陷。修复后以项目注册表和 Git root/remote 身份定位仓库，写操作前检查分支、upstream、显式任务文件与已有暂存；检查 PR head SHA、必需检查和分页，失败/未知即拒绝批准。
+- 16 项针对性回归测试及 WORK-LAB 本地质量门禁通过，PR head 与合并后 main 的 `aggregate` 均通过。AAOS 与 DESIGN-LAB 文档改用当前入口，WORK-LAB 保持可选协调工具，不成为其独立运行的强制依赖。模拟 PR 创建测试不能冒充真实凭据或所有 Agent 软件的桌面验收。
+
+### 3. 分支规则检查要跟随变化的 main（ERR-091）
+
+- PR head 上已有绿色检查时，WORK-LAB 和 DESIGN-LAB 的 main 又前进；GitHub 合并接口返回 405，要求在更新后的合并基线上重新取得必需检查。绿色的旧 head 检查不代表最新合并候选满足规则。
+- 在隔离分支中合入最新 main，确认 PR 自身文件范围未扩大，推送普通分支并等待新 exact-SHA CI；随后合并、回读 main SHA 和合并后 CI。不得用 `--admin`、强推或修改 ruleset 绕过检查，也不得在合并确认前删除 PR 分支。一次被拒绝的合并是 BLOCKED，不是成功。
