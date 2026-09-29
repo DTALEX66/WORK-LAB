@@ -108,6 +108,11 @@ class UploadTests(unittest.TestCase):
         self.assertNotIn("abc123", redact("Authorization: abc123"))
         self.assertNotIn("ghp_example123", redact("git error ghp_example123"))
 
+    def test_git_timeout_is_structured(self):
+        with mock.patch("github_common.subprocess.run", side_effect=subprocess.TimeoutExpired(["git"], 60)):
+            with self.assertRaisesRegex(RuntimeError, "git status timed out"):
+                git(self.path, "status", "--porcelain")
+
 
 class ReviewTests(unittest.TestCase):
     def _pr(self):
@@ -143,6 +148,16 @@ class ReviewTests(unittest.TestCase):
         required_rule = {"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": "ci"}]}}
         req.side_effect = [self._pr(), [{"type": "non_fast_forward"}] * 100,
                            [required_rule], {}, {"check_runs": []}]
+        self.assertEqual(review("DTALEX66/WORK-LAB", 1)["recommendation"], "BLOCK")
+
+    @mock.patch("github_review_accelerator._run_local_gate", return_value={"applicable": False})
+    @mock.patch("github_review_accelerator.request")
+    def test_duplicate_success_cannot_hide_pending(self, req, _gate):
+        required_rule = {"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": "ci"}]}}
+        req.side_effect = [self._pr(), [required_rule], {}, {"check_runs": [
+            {"name": "ci", "status": "in_progress", "conclusion": None},
+            {"name": "ci", "status": "completed", "conclusion": "success"},
+        ]}]
         self.assertEqual(review("DTALEX66/WORK-LAB", 1)["recommendation"], "BLOCK")
 
     @mock.patch("github_review_accelerator.subprocess.run")

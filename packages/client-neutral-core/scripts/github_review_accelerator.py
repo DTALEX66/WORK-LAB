@@ -64,7 +64,11 @@ def _all_check_runs(repo: str, sha: str) -> dict[str, str]:
                 raise RuntimeError("check run SHA differs from PR head")
             name = row.get("name")
             if name:
-                found[name] = row.get("conclusion") if row.get("status") == "completed" else row.get("status")
+                state = row.get("conclusion") if row.get("status") == "completed" else row.get("status")
+                # Push and PR suites can emit the same context for one SHA.
+                # A successful duplicate must not hide a pending or failed run.
+                if name not in found or found[name] == "success":
+                    found[name] = state
         if len(rows) < 100:
             return found
     raise RuntimeError("check-runs pagination limit reached")
