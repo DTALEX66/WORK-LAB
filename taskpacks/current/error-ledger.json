@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 89,
+    "total": 91,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 35,
@@ -18,12 +18,12 @@
       "evidence_state": 11,
       "ci_configuration": 6,
       "feature_gap": 5,
-      "config_downgrade": 2,
+      "config_downgrade": 3,
       "dead_entry": 2,
       "path_boundary": 2,
       "ci_tooling": 1,
       "sql_schema": 1,
-      "regression_contract": 6
+      "regression_contract": 7
     },
     "repeat_prevention_required": true,
     "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer)"
@@ -2516,6 +2516,60 @@
         "affectedCapability": "short-lived branch delivery pipeline (AGENTS.md Git/delivery authority)",
         "regressionCommand": "gh pr view 135 --json state,mergeStateStatus (state must be MERGED with the squash commit on main)",
         "currentApplicability": "CLOSED_MERGED_c59e621_20260926"
+      }
+    },
+    {
+      "error_id": "ERR-090",
+      "date": "2026-09-29",
+      "task_id": "GITHUB-DELIVERY-20260929",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "config_downgrade",
+      "entrypoint": "Windows user environment -> gh CLI account selection",
+      "command": "gh auth status -h github.com (inherited environment; output suppressed for exit-code readback)",
+      "exit_code": 1,
+      "observed_error": "gh selected an invalid GH_TOKEN override even though the saved DTALEX66 keyring login was valid. The inherited gh auth status command exited 1; without the override, gh api user exited 0 and three repository permission readbacks returned pull/push/admin true.",
+      "root_cause": "A stale user-scoped GH_TOKEN overrode gh's valid keyring login; the running Codex process had inherited the old value. Web GitHub connection, gh account selection, and Git SSH transport were separate layers.",
+      "fix": "After explicit user authorization, removed only the user-scoped GH_TOKEN and broadcast the Windows Environment change. Preserved the keyring login and SSH configuration. Verified the user and machine scopes contain no GH_TOKEN and a child process without the stale override uses DTALEX66.",
+      "regression_test": "Check only GH_TOKEN presence by scope; in a fresh process run gh api user --jq .login and read repository permissions for WORK-LAB, ArcheAxis-Knowledge-OS, and DESIGN-LAB without displaying any credential.",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Must diagnose process, user, and machine auth-variable precedence separately from gh keyring and Git SSH; never print credential values, and require restart/readback for already running Agent processes after a user-environment change.",
+      "remaining_boundary": "Already running Agent software and terminals may retain the inherited value until restart; their post-restart authentication has not been observed. One transient WORK-LAB SSH publickey refusal was followed by two successful readbacks and has no confirmed persistent cause.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "local gh account selection across Agent processes",
+        "regressionCommand": "fresh-process gh api user --jq .login plus repository permission readback",
+        "currentApplicability": "USER_SCOPE_FIXED_RUNNING_PROCESSES_UNVERIFIED_20260929"
+      }
+    },
+    {
+      "error_id": "ERR-091",
+      "date": "2026-09-29",
+      "task_id": "GITHUB-DELIVERY-20260929",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "regression_contract",
+      "entrypoint": "WORK-LAB PR #159 and DESIGN-LAB PR #207 protected-main merge",
+      "command": "GitHub API merge pull request with expected head SHA (HTTP 405 rule refusal)",
+      "exit_code": 405,
+      "observed_error": "Despite successful checks on the earlier PR heads, GitHub refused both merges because required checks were expected on the updated merge basis after main advanced.",
+      "root_cause": "main received independent commits after the PR checks completed; old green checks did not establish the protected-branch requirement for the new candidate merge commit.",
+      "fix": "Merged current origin/main into each clean isolated PR branch without force push, confirmed the PR-owned file lists were unchanged, pushed the updated branches, waited for fresh exact-SHA CI, then squash-merged. Read back PR state and main SHA for all three repositories and post-merge main checks, including WORK-LAB aggregate and DESIGN-LAB H001 proof.",
+      "regression_test": "PR head SHA and base must be current; required checks must succeed on the new candidate; after merge, PR state is merged, main equals the returned merge SHA, and main-run checks finish successfully.",
+      "evidence_level": "isolated-runtime",
+      "repeat_prevention": "Must re-evaluate the merge candidate whenever main moves; old head success is insufficient. A 405 rules refusal is BLOCKED: never bypass with admin, force push, or ruleset edits, and never delete the PR branch before main readback.",
+      "remaining_boundary": "The recorded exact SHAs prove this delivery only; future PRs require fresh rule and check readback.",
+      "status_before": "BLOCKED",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": "d424236ea5dabc135775c444014263adf60cc160",
+        "affectedCapability": "protected-main GitHub delivery chain",
+        "regressionCommand": "GitHub PR/main SHA readback and required check-run readback",
+        "currentApplicability": "CLOSED_MERGED_20260929"
       }
     }
   ],
