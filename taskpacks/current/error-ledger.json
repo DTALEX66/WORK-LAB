@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 91,
+    "total": 92,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 35,
+      "contract_drift": 36,
       "test_behavior_alignment": 10,
       "working_directory_recovery": 2,
       "evidence_state": 11,
@@ -26,7 +26,7 @@
       "regression_contract": 7
     },
     "repeat_prevention_required": true,
-    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer)"
+    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer); 2026-09-30: ERR-092 (client-evidence codex wrapper path + version drift vs live readback)"
   },
   "errors": [
     {
@@ -2570,6 +2570,33 @@
         "affectedCapability": "protected-main GitHub delivery chain",
         "regressionCommand": "GitHub PR/main SHA readback and required check-run readback",
         "currentApplicability": "CLOSED_MERGED_20260929"
+      }
+    },
+    {
+      "error_id": "ERR-092",
+      "date": "2026-09-30",
+      "task_id": "DSH-CODEX-REGISTRY-RECONCILE-20260930",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "config/client-evidence.json (codex entry) + config/adapter-registry.json (codex + dsh provenance)",
+      "command": "python .project-local/runs/dsh_codex_probe.py (read-only live probe)",
+      "exit_code": 1,
+      "observed_error": "client-evidence.json codex entry carried install_method='wrapper (bin/codex)' (path removed by the 2026-09 directory convergence) and version='UNVERIFIED', while a live wrapper readback returned version 0.158.0-alpha.2.1 from packages/client-neutral-core/bin/codex; adapter-registry dsh provenance.version was still the 0.1.0-rc.5 governance pin while live desktop is 2.0.13 and upstream v2.0.16 is available-not-applied.",
+      "root_cause": "G15 client-version drift: live client installations and registry records were not re-reconciled after the 2026-09 directory convergence moved the codex wrapper and after the 2026-09-29 upstream releases (deepseek-harness-desktop v2.0.16, openai codex 0.159.0).",
+      "fix": "Reconciled both registries to the 2026-09-30 read-only live readback: codex wrapper path + version 0.158.0-alpha.2.1 (upstream 0.159.0 available, not installed), dsh provenance.version 2.0.13 with v2.0.16 recorded in version_historical as available-not-applied; no install, upgrade, or global-config write performed.",
+      "regression_test": "python packages/client-neutral-core/scripts/verify_adapter_registry.py --registry config/adapter-registry.json --schema packages/contracts/schemas/workflow/adapter-registry.schema.json --root . plus python -m pytest tests/workflow-assistance/test_adapter_registry.py tests/workflow-assistance/test_core_schemas.py tests/workflow-assistance/test_policy_projection.py -x -q",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Client-lifecycle changes (wrapper moves, upstream releases) must re-reconcile config/adapter-registry.json and config/client-evidence.json in the same change that discovers them; registry version fields carry native readback only, and upgrades remain a separately authorized act.",
+      "remaining_boundary": "Upstream 0.159.0 and v2.0.16 are recorded as available-not-applied; actual install/upgrade is not authorized in this change and no global Codex/DSH configuration was written.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "client registry reconciliation (G15)",
+        "regressionCommand": "verify_adapter_registry.py + test_adapter_registry/test_core_schemas/test_policy_projection",
+        "currentApplicability": "REGISTRIES_RECONCILED_UPGRADES_NOT_APPLIED_20260930"
       }
     }
   ],

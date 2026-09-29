@@ -65,10 +65,11 @@
     "codex": {
       "client": "codex",
       "evidence_level": "E1",
-      "install_method": "wrapper (bin/codex)",
-      "version": "UNVERIFIED",
+      "install_method": "wrapper (packages/client-neutral-core/bin/codex)",
+      "version": "0.158.0-alpha.2.1",
       "status": "quarantined",
-      "note": "Codex adapter quarantined; wrapper exists but runtime unverified"
+      "note": "Version is a measured wrapper readback (2026-09-30: bash wrapper rc=0 -> 'codex-cli 0.158.0-alpha.2.1', resolving %LOCALAPPDATA%\\OpenAI\\Codex\\bin\\<versioned>/codex.exe). The legacy 'bin/codex' path no longer exists at repo root after the 2026-09 directory convergence; the managed wrappers live under packages/client-neutral-core/bin/. Upstream stable openai/codex rust-v0.159.0 (2026-09-29) is UPDATE AVAILABLE but NOT APPLIED (install/upgrade not authorized this session). Adapter stays quarantined: execution/approval-gated, never a free write.",
+      "upstream_available": "openai/codex rust-v0.159.0 (published 2026-09-29)"
     },
     "dsh": {
       "client": "dsh",
@@ -79,6 +80,9 @@
       "config_path": "D:\\All projects\\DSH\\.dsh\\",
       "sessions_migrated": 94,
       "verified_at": "2026-09-23T19:30:00Z",
+      "reverified_at": "2026-09-30T00:00:00Z",
+      "reverify_note": "2026-09-30 read-only probe: DSH-Desktop.exe present (225,653,760 B), resources/app/package.json version=2.0.13, 127 session files under D:\\All projects\\DSH\\.dsh, desktop .lnk three fields (Target/Arguments/Icon) all resolve end-to-end to the D: install, DSH_HOME(HKCU)=D:\\...\\.dsh. Desktop not running at probe time (43120 not listening). No version drift on live install.",
+      "upstream_available": "anywhere-labs/deepseek-harness-desktop v2.0.16 (released 2026-09-29, x64-Setup.exe present in release assets) — UPDATE AVAILABLE but NOT APPLIED this session; in-place official upgrade + .lnk re-pinning follow the dsh-administration runbook and need explicit authorization.",
       "health": "desktop-live-verified (2026-09-23: main window 'DeepSeek Harness Desktop', 43120 LISTENING, D:.dsh mtime advanced, 5 sessions read back; 2026-09-24 ERR-088 relaunch on D root re-verified: 7 instances, 43120 LISTENING, D:.dsh mtime advanced 9/24)",
       "note": "Community desktop (anywhere-labs/deepseek-harness-desktop v2.0.13; 2026-09-20 in-place official upgrade 2.0.11 -> 2.0.13, 2.0.2/2.0.4 superseded; see skill dsh-administration + ERR-087); D-drive single entry; config root D:\\All projects\\DSH\\.dsh pinned via DSH_HOME (HKCU\\Environment); desktop .lnk must carry the --user-data-dir argument or launch falls back to the C: default and shows the onboarding wizard (2026-09-23 regression lesson). SECOND LAYER (ERR-088, 2026-09-24): DSH_HOME is a HKCU user env var frozen out of live login sessions — after setx/new logon the live Explorer block lacks it and desktop launch falls back to the C:.dsh empty skeleton ('sessions/config lost' perception; data stays intact on D:). C skeleton archived to D:\\All projects\\DSH\\.migration\\20260924\\c-dsh-skeleton-backup-20260924; machine-level HKLM escalation awaits UAC; no reboot scheduled by automation."
     },
