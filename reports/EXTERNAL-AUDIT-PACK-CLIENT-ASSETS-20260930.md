@@ -4,7 +4,7 @@
 |---|---|
 | 包 ID | `assets-20260930` |
 | 采集时间（UTC） | 客户端元数据探针 `2026-09-30T14:02:29Z`；全量清点 `2026-09-30T14:02:48Z`；清理候选 `2026-09-30T14:04:25Z` |
-| 证据锚定提交 | `636d5eced04046ed479d9d797413e8ffbcedbcc5` |
+| 证据锚定提交 | `d43d07a75ef8c556344e9b3a99f9257dd2db7b5c` |
 | 分支 | `audit/client-asset-inventory-20260930`（基于 `main` = `cd4daa8`） |
 | 审计对象 | Hermes / Codex(又名 ChatGPT Agent 侧代理运行时) / DSH(DeepSeek Harness) / CC Switch / Open Design / OpenHuman / GitHub 客户端面，以及本项目（WORK-LAB）全部工作流增强·治理·管理·全局部署·配置·技能·插件·记忆资产 |
 | 性质 | **只读元数据清点 + 只读内容归档**（元数据：名称/路径/类型/字节/时间/哈希；内容归档：规则·规范·技能·配置文本的 LF 副本，源文件未修改），引用现有权威登记表，不新建平行账本 |
@@ -20,10 +20,10 @@
 4. 证据清单与哈希：`…/reports/audit-evidence/assets-20260930/MANIFEST.json`
 5. 原始清点数据：`…/reports/audit-evidence/assets-20260930/asset-inventory.json`
 
-把上面 `…` 替换为 `https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413e8ffbcedbcc5` 即为**不可变锚点 URL**（路径为**仓库相对路径**，可直接替换为任意包内文件）：
+把上面 `…` 替换为 `https://raw.githubusercontent.com/DTALEX66/WORK-LAB/d43d07a75ef8c556344e9b3a99f9257dd2db7b5c` 即为**不可变锚点 URL**（路径为**仓库相对路径**，可直接替换为任意包内文件）：
 
 ```
-https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413e8ffbcedbcc5/<repo-relative-path>
+https://raw.githubusercontent.com/DTALEX66/WORK-LAB/d43d07a75ef8c556344e9b3a99f9257dd2db7b5c/<repo-relative-path>
 ```
 
 | 文件（仓库相对路径） | 用途 | 字节（仓库字节，LF） |
@@ -133,9 +133,9 @@ https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413
 
 | # | 声明 | 核验方法 | 预期 |
 |---|---|---|---|
-| F1 | 锚定提交存在 | `https://api.github.com/repos/DTALEX66/WORK-LAB/commits/636d5eced04046ed479d9d797413e8ffbcedbcc5` | HTTP 200 |
+| F1 | 锚定提交存在 | `https://api.github.com/repos/DTALEX66/WORK-LAB/commits/d43d07a75ef8c556344e9b3a99f9257dd2db7b5c` | HTTP 200 |
 | F2 | 证据文件确在该提交树内 | 直接抓 §0 的 raw URL | HTTP 200 且非空 |
-| F3 | 证据未被篡改 | 用 `MANIFEST.json` 内 sha256 对每个文件**下载到的字节**重算（含 9 个证据文件；32 个引用权威文件按同一 SHA 的 blob 复核） | 逐一相符（本机已实测 9/9 与 32/32） |
+| F3 | 证据未被篡改 | 用 `MANIFEST.json` 内 sha256 对每个文件**下载到的字节**重算（含 12 个证据/归档索引文件；32 个引用权威文件按同一 SHA 的 blob 复核；归档 476 个副本按其自身索引复核） | 逐一相符 |
 | F4 | 分支存在 | `https://api.github.com/repos/DTALEX66/WORK-LAB/branches/audit/client-asset-inventory-20260930` | HTTP 200 |
 
 ### G. 隐私与边界声明
@@ -230,8 +230,8 @@ https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413
 公开（无需本机）：
 
 ```bash
-curl -s https://api.github.com/repos/DTALEX66/WORK-LAB/commits/636d5eced04046ed479d9d797413e8ffbcedbcc5 | jq -r .sha
-curl -s -o /dev/null -w '%{http_code}\n' https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413e8ffbcedbcc5/reports/audit-evidence/assets-20260930/MANIFEST.json
+curl -s https://api.github.com/repos/DTALEX66/WORK-LAB/commits/d43d07a75ef8c556344e9b3a99f9257dd2db7b5c | jq -r .sha
+curl -s -o /dev/null -w '%{http_code}\n' https://raw.githubusercontent.com/DTALEX66/WORK-LAB/d43d07a75ef8c556344e9b3a99f9257dd2db7b5c/reports/audit-evidence/assets-20260930/MANIFEST.json
 ```
 
 一次跑完完整性校验（下载 MANIFEST → 逐个重算 sha256，含 12 个证据/归档索引文件与 32 个引用权威文件；随后校验归档 476 个副本）：
@@ -239,7 +239,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://raw.githubusercontent.com/DTALE
 ```bash
 python - <<'PY'
 import json, hashlib, urllib.request
-SHA = "636d5eced04046ed479d9d797413e8ffbcedbcc5"
+SHA = "d43d07a75ef8c556344e9b3a99f9257dd2db7b5c"
 B = f"https://raw.githubusercontent.com/DTALEX66/WORK-LAB/{SHA}"
 g = lambda u: urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": "audit"}), timeout=60).read()
 ok = bad = 0
@@ -269,7 +269,7 @@ PY
 缺陷登记核验（ERR-093 / ERR-094 / ERR-095 / ERR-096）：
 
 ```bash
-curl -s https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413e8ffbcedbcc5/taskpacks/current/error-ledger.json | jq -r '.errors[-4:][] | "\(.error_id) \(.classification) \(.status_before)->\(.status_after)"'
+curl -s https://raw.githubusercontent.com/DTALEX66/WORK-LAB/d43d07a75ef8c556344e9b3a99f9257dd2db7b5c/taskpacks/current/error-ledger.json | jq -r '.errors[-4:][] | "\(.error_id) \(.classification) \(.status_before)->\(.status_after)"'
 ```
 
 本机（可复现清点）：
