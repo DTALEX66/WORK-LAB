@@ -1,0 +1,122 @@
+{
+  "schema": "workflow/audit-evidence-manifest/v1",
+  "generated_at_utc": "2026-09-30T14:04:25Z",
+  "package": "assets-20260930",
+  "files": [
+    {
+      "name": "asset-inventory.json",
+      "bytes": 76293,
+      "sha256": "1b79e3eab3261fa762bf4a285f9377eb16f45ff5d8487da0e27f500d7f00d165"
+    },
+    {
+      "name": "inventory-verification.json",
+      "bytes": 6966,
+      "sha256": "a77ff5875c513a68f16d6a88af96e70453654f4d62934f0912d0393c8dd06501"
+    },
+    {
+      "name": "CLEANUP-CANDIDATES.json",
+      "bytes": 8623,
+      "sha256": "57e363aaff26afb3d2af5b8552b450f215dbb23ac276d067db9a586029772aa8"
+    },
+    {
+      "name": "REPO-ASSET-INDEX.md",
+      "bytes": 7081,
+      "sha256": "7c5108310300ca48f0cc3cf76daab18298d2c1ca2bf24af219401bf84776e38a"
+    }
+  ],
+  "referenced_repo_files": [
+    {
+      "rel": "config/skill-provenance.yaml",
+      "sha256": "6816b73f616bf73e",
+      "bytes": 6330
+    },
+    {
+      "rel": "config/plugin-inventory.json",
+      "sha256": "60fd5219b48d32e3",
+      "bytes": 2417
+    },
+    {
+      "rel": "config/skills-inventory.json",
+      "sha256": "b858208ededf6827",
+      "bytes": 3727
+    },
+    {
+      "rel": "config/config-ownership.json",
+      "sha256": "d799c9925d32b1e1",
+      "bytes": 21535
+    },
+    {
+      "rel": "config/adapter-registry.json",
+      "sha256": "245e7e1829757d2d",
+      "bytes": 24343
+    },
+    {
+      "rel": "config/software-registry.json",
+      "sha256": "3a60543fdbd538e3",
+      "bytes": 4703
+    },
+    {
+      "rel": "config/client-evidence.json",
+      "sha256": "1f1db25b8805ff73",
+      "bytes": 7675
+    },
+    {
+      "rel": "config/machine-registry.json",
+      "sha256": "6c696d72f78c2fee",
+      "bytes": 212
+    },
+    {
+      "rel": ".project/governance/config-authority-index.json",
+      "sha256": "eea9f10c34b384e2",
+      "bytes": 6525
+    },
+    {
+      "rel": ".project/governance/runtime-registry.json",
+      "sha256": "ad74bc7c21919203",
+      "bytes": 22657
+    },
+    {
+      "rel": ".project/governance/project-authority-index.json",
+      "sha256": "448e994e41309ba1",
+      "bytes": 2334
+    },
+    {
+      "rel": ".project/governance/taskpack-authority-index.json",
+      "sha256": "fa88e13b82d7dd59",
+      "bytes": 13998
+    },
+    {
+      "rel": ".project/governance/module-ownership.json",
+      "sha256": "db866bab3cc01e97",
+      "bytes": 522
+    },
+    {
+      "rel": ".project/governance/project-data-boundary.json",
+      "sha256": "54a0e5c4c03a6f4c",
+      "bytes": 3203
+    },
+    {
+      "rel": ".project/governance/provider-registry.json",
+      "sha256": "d6fc30b7af23c85a",
+      "bytes": 19032
+    },
+    {
+      "rel": ".project/governance/model-registry.json",
+      "sha256": "0ee88689a46dff6f",
+      "bytes": 24409
+    },
+    {
+      "rel": ".project/governance/three-project-boundary.json",
+      "sha256": "1833136debe98bdd",
+      "bytes": 6444
+    },
+    {
+      "rel": ".project/governance/external-libraries-index.json",
+      "sha256": "e9d8e0653f524906",
+      "bytes": 5236
+    }
+  ],
+  "secrets_included": false,
+  "secret_scan_note": "No credential values, env values, tokens or memory bodies are included.",
+  "external_roots_touched": []
+}

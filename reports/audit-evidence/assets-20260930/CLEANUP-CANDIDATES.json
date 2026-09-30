@@ -1,0 +1,210 @@
+{
+  "schema": "workflow/neutral-cleanup-candidates/v1",
+  "generated_at_utc": "2026-09-30T14:04:25Z",
+  "policy": "CANDIDATES ONLY. No deletion/move/modification performed. Each item requires explicit per-path, per-operation authorization. E:/F: untouched.",
+  "totals": {
+    "candidates": 13,
+    "surfaces": [
+      "hermes",
+      "codex",
+      "dsh",
+      "repo"
+    ]
+  },
+  "candidates": [
+    {
+      "id": "CC-1",
+      "surface": "codex",
+      "path_token": "%USERPROFILE%\\.codex\\..codex-global-state.json[.bak].tmp-*",
+      "kind": "stale_temp",
+      "evidence": "14 个 Codex 全局状态临时/备份临时文件（含 0 字节残留）",
+      "bytes": null,
+      "count": 14,
+      "risk": "low",
+      "recommended_action": "删除（先备份清单，不触 config.toml / auth.json）",
+      "retention_note": "确认非当前进程占用（时间戳均早于最新状态文件）",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "CC-2",
+      "surface": "codex",
+      "path_token": "%USERPROFILE%\\.codex\\.codex-provisioning-*.guard",
+      "kind": "stale_guard",
+      "evidence": "6 个 0 字节 provisioning 守卫文件",
+      "bytes": 0,
+      "count": 6,
+      "risk": "low",
+      "recommended_action": "删除（守卫已失效，0 字节）",
+      "retention_note": "若 Codex 正在 provisioning 则跳过",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "CC-3",
+      "surface": "codex",
+      "path_token": "%USERPROFILE%\\.codex\\*.bak*",
+      "kind": "backup",
+      "evidence": "11 个历史备份（config.toml.bak-*×5、AGENTS.md.bak-*×2、state.bak 等）",
+      "bytes": null,
+      "count": 11,
+      "risk": "medium",
+      "recommended_action": "归档到项目外置归档或删除（保留最近 1 份）",
+      "retention_note": "config.toml 备份含用户私有配置，删除前确认当前配置可用",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "CC-4",
+      "surface": "codex",
+      "path_token": "%USERPROFILE%\\.codex\\logs_2.sqlite + thread_history_1.sqlite",
+      "kind": "large_history",
+      "evidence": "两个 SQLite 历史库：logs_2=675,295,232B、thread_history_1=930,263,040B（合计约 1.5 GiB）",
+      "bytes": 1605558272,
+      "count": 2,
+      "risk": "medium",
+      "recommended_action": "按 Codex 官方机制清理历史（勿手工删活动库）",
+      "retention_note": "活动数据库不可直接删；用官方 prune/清理路径",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "HH-1",
+      "surface": "hermes",
+      "path_token": "%LOCALAPPDATA%\\hermes\\state.db",
+      "kind": "large_state",
+      "evidence": "state.db = 4,518,653,952 bytes（约 4.2 GiB），占最大单项",
+      "bytes": 4518653952,
+      "count": 1,
+      "risk": "medium",
+      "recommended_action": "由用户 Hermes 设置（sessions.auto_prune）决定，本项目只 OBSERVE，不覆盖",
+      "retention_note": "config-ownership.json 规定该字段为 OBSERVE",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "HH-2",
+      "surface": "hermes",
+      "path_token": "%LOCALAPPDATA%\\hermes\\skills\\.curator_backups + .curator_ledger.jsonl + .archive + .hub",
+      "kind": "curator_artifacts",
+      "evidence": "技能策展备份/账本/归档：.curator_backups(5)、.curator_ledger.jsonl(1,632,973B)、.archive(71)、.hub(7)",
+      "bytes": 1632973,
+      "count": 4,
+      "risk": "low",
+      "recommended_action": "归档 .archive/.curator_backups 旧条目；账本保留（审计用）",
+      "retention_note": "账本是被审计证据，不建议删除",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "HH-3",
+      "surface": "hermes",
+      "path_token": "%LOCALAPPDATA%\\hermes\\backups",
+      "kind": "backup",
+      "evidence": "Hermes 自动备份目录（存在，未展开计数）",
+      "bytes": null,
+      "count": null,
+      "risk": "low",
+      "recommended_action": "保留最近 N 份，其余归档",
+      "retention_note": "备份是可逆性保障，先列清单再处理",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "DD-1",
+      "surface": "dsh",
+      "path_token": "%DSH_ROOT%\\.dsh-backup-20260918 (+ .dsh-backup-20260920-data)",
+      "kind": "backup",
+      "evidence": "两套历史备份（26 / 14 子项），覆盖 09-18、09-20 迁移期",
+      "bytes": null,
+      "count": 40,
+      "risk": "medium",
+      "recommended_action": "本轮部署已验证成功后归档到项目外置归档",
+      "retention_note": "部署回退保障；确认新 2.0.13 稳定后再归档",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "DD-2",
+      "surface": "dsh",
+      "path_token": "%DSH_ROOT%\\.research-20260918 + .migration",
+      "kind": "historical",
+      "evidence": "研究快照(3) 与迁移脚本/日志(4，含 junctions.dsh.json、upgrade-2.0.11-to-2.0.13.log)",
+      "bytes": null,
+      "count": 7,
+      "risk": "low",
+      "recommended_action": "保留 .migration 日志（审计链），.research-* 可归档",
+      "retention_note": ".migration/verify.py 仍是可复用的验证器",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "DD-3",
+      "surface": "dsh",
+      "path_token": "%DSH_ROOT%\\pnpm-store",
+      "kind": "cache",
+      "evidence": "pnpm store 目录（1 子项，疑似空/未用）",
+      "bytes": null,
+      "count": 1,
+      "risk": "low",
+      "recommended_action": "确认无活动安装后删除（可再生）",
+      "retention_note": "如 DSH 用 pnpm 安装依赖则保留",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "RR-1",
+      "surface": "repo",
+      "path_token": "config/skills-inventory.json",
+      "kind": "stale_record",
+      "evidence": "记录 14 项中 6 项 sha256 与 live 不符（observer-delivery / project-data-boundary / safe-project-execution / self-improvement / verification-hardening / windows-development）",
+      "bytes": null,
+      "count": 6,
+      "risk": "low",
+      "recommended_action": "重新生成该清点表（非删除）",
+      "retention_note": "它是登记的陈旧副本，权威为 live 文件 + skill-provenance.yaml",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "RR-2",
+      "surface": "repo",
+      "path_token": "config/plugin-inventory.json",
+      "kind": "incomplete_record",
+      "evidence": "chrome-profiles 记 commit=null，live 实际 revision=5b9c3257b464c0f926d4355149a8aed9c8f307b4（pinned=false）",
+      "bytes": null,
+      "count": 1,
+      "risk": "low",
+      "recommended_action": "补录 revision/source 到清点表（非删除）",
+      "retention_note": "上游 anpicasso/hermes-plugin-chrome-profiles",
+      "authorization_required": true,
+      "executed": false
+    },
+    {
+      "id": "RR-3",
+      "surface": "repo",
+      "path_token": "config/skill-provenance.yaml → model-switch",
+      "kind": "drift",
+      "evidence": "model-switch: source_sha256=37aed9558bc1… ≠ live_sha256=0a02c1fc8b65…（其余 12 项一致）",
+      "bytes": null,
+      "count": 1,
+      "risk": "low",
+      "recommended_action": "对齐 source/live（确认哪侧为准后再单向同步）",
+      "retention_note": "scripts/sync_hermes_workflow_assets.py 是唯一部署通道",
+      "authorization_required": true,
+      "executed": false
+    }
+  ],
+  "corrections": [
+    {
+      "claim": "Hermes 技能目录 st_size=0 表示空/垃圾",
+      "correction": "Windows 下目录 st_size 恒为 0（假象）。补测 child_count 后：26 个技能目录全部非空，无空目录垃圾。",
+      "evidence": "asset-inventory.json: clients.hermes.skills.children[].child_count"
+    },
+    {
+      "claim": "plugin-inventory.json 列出的 3 个启用插件未全部出现在 live plugins 目录",
+      "correction": "security-guidance / web-ddgs 为 bundled（随 Hermes 发行版），不在用户 plugins 目录；live 用户插件目录只有 chrome-profiles。",
+      "evidence": "inventory-verification.json: plugin_inventory_check / hermes_plugin_install_metadata"
+    }
+  ]
+}
