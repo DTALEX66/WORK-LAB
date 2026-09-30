@@ -43,7 +43,7 @@
 | 5 | 发现**可回收冗余候选 13 条**（≈1.5 GiB Codex 历史库、20 个 Codex 临时/守卫文件、Hermes `state.db` 4.2 GiB、DSH 两套历史备份等） | **未执行删除** |
 | 6 | 隐私：凭据与记忆正文**未被读取**；包内 **0** 处密钥命中（正则扫描 6 文件，含本文件） | 见 §2-G |
 | 7 | 外部数据盘 `E:\` `F:\` **未访问** | 见 §2-G |
-| 8 | 清点过程本身产出价值证据：**发现并修复 1 处真实边界外溢**（`apps/.project-local`），门禁由 FAIL 恢复 | 见 §2-C5 |
+| 8 | 清点过程本身产出价值证据：**发现并修复 2 处真实缺陷**（`apps/.project-local` 边界外溢 → ERR-093；证据哈希 CRLF/LF 口径错误 → ERR-094），门禁与完整性校验均已恢复 | 见 §2-C5、§2-C6 |
 
 ## 2. 逐条可判定声明
 
@@ -78,7 +78,8 @@
 | C2 | `config/plugin-inventory.json`（生成于 `2026-08-26`）对 `chrome-profiles` 记 `commit: null`，而 live 安装元数据已有 `revision=5b9c3257…` → **登记不完整** | 比对两文件 | `commit=null` vs live revision 非空 |
 | C3 | `config/skill-provenance.yaml` 的 `model-switch`：`source_sha256=37aed9558bc1…` ≠ `live_sha256=0a02c1fc8b65…`，其余 12 项完全一致 → **单点漂移** | 读 `repo_assets.skill_provenance_drift` | 仅 `model-switch` 的 `drift=true` |
 | C4 | 两个清点表的 `generatedAt` 均早于本轮（09-04 / 08-26），而 live 已在 09-27~09-30 变动 | 时间戳比对 | 表旧于 live |
-| C5 | 清点过程**发现并修复**一处真实边界外溢：`apps/.project-local/runs/frontend-baseline.json`（206 B，早期失败基线），已被仓库门禁 `test_nf11_manifests_present_and_apps_clean` 判为 `unexpected_apps=['.project-local']` | 读 `CLEANUP-CANDIDATES.json: resolved_during_audit[0]`；`ls apps/` | 现存 `observer` + `token-monitor`；副本在 `.project-local/runs/frontend-baseline.failed-attempt-20260930.json` |
+| C5 | 清点过程**发现并修复**一处真实边界外溢：`apps/.project-local/runs/frontend-baseline.json`（206 B，早期失败基线），已被仓库门禁 `test_nf11_manifests_present_and_apps_clean` 判为 `unexpected_apps=['.project-local']` → 登记为 **ERR-093**（`path_boundary`） | 读 `CLEANUP-CANDIDATES.json: resolved_during_audit[0]`；`ls apps/`；`taskpacks/current/error-ledger.json` 的 ERR-093 | 现存 `observer` + `token-monitor`；副本在 `.project-local/runs/frontend-baseline.failed-attempt-20260930.json` |
+| C6 | 发布前自检**发现并修复**证据哈希口径错误：初版 `MANIFEST.json` 按工作区 **CRLF** 字节计算，与仓库实际存储/分发的 **LF** 字节不符（例：`asset-inventory.json` 本地 76,293 B vs 仓库 73,749 B），导致 4/4 完整性校验失败 → 登记为 **ERR-094**（`evidence_state`） | 读 `error-ledger.json` 的 ERR-094；用 §5 的网络回读命令复核 | 修正后 **4/4 通过**（本机实测） |
 
 ### D. 清理候选（**仅候选，未执行**）
 
@@ -157,6 +158,36 @@
 ```bash
 curl -s https://api.github.com/repos/DTALEX66/WORK-LAB/commits/c8398cd15c3df0848404d937310f4c682daa84cc | jq -r .sha
 curl -s -o /dev/null -w '%{http_code}\n' https://raw.githubusercontent.com/DTALEX66/WORK-LAB/c8398cd15c3df0848404d937310f4c682daa84cc/reports/audit-evidence/assets-20260930/MANIFEST.json
+```
+
+一次跑完完整性校验（下载 MANIFEST → 逐个重算 sha256，含 4 个证据文件与 18 个引用权威文件）：
+
+```bash
+python - <<'PY'
+import json, hashlib, urllib.request
+SHA = "c8398cd15c3df0848404d937310f4c682daa84cc"
+B = f"https://raw.githubusercontent.com/DTALEX66/WORK-LAB/{SHA}"
+g = lambda u: urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": "audit"}), timeout=60).read()
+mf = json.loads(g(f"{B}/reports/audit-evidence/assets-20260930/MANIFEST.json"))
+ok = bad = 0
+for f in mf["files"]:
+    b = g(f"{B}/reports/audit-evidence/assets-20260930/{f['name']}")
+    good = hashlib.sha256(b).hexdigest() == f["sha256"] and len(b) == f["bytes"]
+    ok, bad = (ok + 1, bad) if good else (ok, bad + 1)
+    print("OK " if good else "FAIL", f["name"])
+for r in mf["referenced_repo_files"]:
+    b = g(f"{B}/{r['rel']}")
+    good = hashlib.sha256(b).hexdigest() == r["sha256"]
+    ok, bad = (ok + 1, bad) if good else (ok, bad + 1)
+    print("OK " if good else "FAIL", r["rel"])
+print(f"verified={ok} failed={bad}")
+PY
+```
+
+缺陷登记核验（ERR-093 / ERR-094）：
+
+```bash
+curl -s https://raw.githubusercontent.com/DTALEX66/WORK-LAB/c8398cd15c3df0848404d937310f4c682daa84cc/taskpacks/current/error-ledger.json | jq -r '.errors[-2:][] | "\(.error_id) \(.classification) \(.status_before)->\(.status_after)"'
 ```
 
 本机（可复现清点）：
