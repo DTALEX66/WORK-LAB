@@ -1,119 +1,141 @@
 {
   "schema": "workflow/audit-evidence-manifest/v1",
-  "generated_at_utc": "2026-09-30T14:08:44Z",
+  "generated_at_utc": "2026-09-30T14:14:59Z",
   "package": "assets-20260930",
   "files": [
     {
       "name": "asset-inventory.json",
-      "bytes": 76293,
-      "sha256": "1b79e3eab3261fa762bf4a285f9377eb16f45ff5d8487da0e27f500d7f00d165"
+      "bytes": 73749,
+      "sha256": "74b700ff67ed58540f7a6a5876ef86fbc60b0fe971b5c192b5a02c553b7ffd89",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
       "name": "inventory-verification.json",
-      "bytes": 6966,
-      "sha256": "a77ff5875c513a68f16d6a88af96e70453654f4d62934f0912d0393c8dd06501"
+      "bytes": 6712,
+      "sha256": "b282283ead305643ec10fbd61b5b5fd5fd796608a4d50f0471df4b13ef46b784",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
       "name": "CLEANUP-CANDIDATES.json",
-      "bytes": 9996,
-      "sha256": "643b054d056373034c968bc2a7228cec9a74de21156b12e9842defe36a416c67"
+      "bytes": 9771,
+      "sha256": "cd03a481e12e97050183d89e54e606fb5a9487de33bd8feadf34a73118339926",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
       "name": "REPO-ASSET-INDEX.md",
-      "bytes": 7081,
-      "sha256": "7c5108310300ca48f0cc3cf76daab18298d2c1ca2bf24af219401bf84776e38a"
+      "bytes": 6971,
+      "sha256": "b5e80daa624451d4a603eb10ebf21eb4af4f253e00ad11b003dd3a1369041176",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
     }
   ],
   "referenced_repo_files": [
     {
       "rel": "config/skill-provenance.yaml",
-      "sha256": "6816b73f616bf73e",
-      "bytes": 6330
+      "bytes": 6330,
+      "sha256": "6816b73f616bf73ec13f977f360fdcbfca24f957cb00b85241b8e185b718890e",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": "config/plugin-inventory.json",
-      "sha256": "60fd5219b48d32e3",
-      "bytes": 2417
+      "bytes": 2417,
+      "sha256": "60fd5219b48d32e3c678162aa0f3fdc39d95b4df26140b97aaf21a4557dceb40",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": "config/skills-inventory.json",
-      "sha256": "b858208ededf6827",
-      "bytes": 3727
+      "bytes": 3727,
+      "sha256": "b858208ededf68275e3bd95e5e49b7ae0859ad26a7bf32c5e32da44337958fce",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": "config/config-ownership.json",
-      "sha256": "d799c9925d32b1e1",
-      "bytes": 21535
+      "bytes": 21535,
+      "sha256": "d799c9925d32b1e14c04fc99d2639ca3be6b8eba224ff72001e936da704b1b2b",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": "config/adapter-registry.json",
-      "sha256": "245e7e1829757d2d",
-      "bytes": 24343
+      "bytes": 24343,
+      "sha256": "245e7e1829757d2d10a089b80622e599ac829b55d00d937cf597a55d37e42bc4",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": "config/software-registry.json",
-      "sha256": "3a60543fdbd538e3",
-      "bytes": 4703
+      "bytes": 4703,
+      "sha256": "3a60543fdbd538e3471eb31da05844b961364741435bf3c27f0ad6477264fa9d",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": "config/client-evidence.json",
-      "sha256": "1f1db25b8805ff73",
-      "bytes": 7675
+      "bytes": 7675,
+      "sha256": "1f1db25b8805ff731491128e05ca9dcf29b5e1054266076b48258cf89f4f54de",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": "config/machine-registry.json",
-      "sha256": "6c696d72f78c2fee",
-      "bytes": 212
+      "bytes": 212,
+      "sha256": "6c696d72f78c2fee0134477ac0127fec934f1015c6d6473bbfe2dff764e9fee3",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": ".project/governance/config-authority-index.json",
-      "sha256": "eea9f10c34b384e2",
-      "bytes": 6525
+      "bytes": 6525,
+      "sha256": "eea9f10c34b384e2f7bae7d0c1f0b395b3f18251c7b1f93c2197725aed78e7b1",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": ".project/governance/runtime-registry.json",
-      "sha256": "ad74bc7c21919203",
-      "bytes": 22657
+      "bytes": 22657,
+      "sha256": "ad74bc7c219192030641697e3b7c1e45ed819f95bd4af1379d0f7277d646c543",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": ".project/governance/project-authority-index.json",
-      "sha256": "448e994e41309ba1",
-      "bytes": 2334
+      "bytes": 2334,
+      "sha256": "448e994e41309ba1e0125783b3876ccadbd0f972a94fe510611e963636a10408",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": ".project/governance/taskpack-authority-index.json",
-      "sha256": "fa88e13b82d7dd59",
-      "bytes": 13998
+      "bytes": 13998,
+      "sha256": "fa88e13b82d7dd593c8e962a1456cc8414cf13e1bda75db28daa3e58289852b2",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": ".project/governance/module-ownership.json",
-      "sha256": "db866bab3cc01e97",
-      "bytes": 522
+      "bytes": 522,
+      "sha256": "db866bab3cc01e97ee03586ccf50f3236d9fe16e4579192274ee91e28b8c0364",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": ".project/governance/project-data-boundary.json",
-      "sha256": "54a0e5c4c03a6f4c",
-      "bytes": 3203
+      "bytes": 3203,
+      "sha256": "54a0e5c4c03a6f4cc61f382a165c4e0c9f60697b05874001539969a01106379c",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": ".project/governance/provider-registry.json",
-      "sha256": "d6fc30b7af23c85a",
-      "bytes": 19032
+      "bytes": 19032,
+      "sha256": "d6fc30b7af23c85aea4e586d196417f47d573328a9136998e64c86e0368bfbc9",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": ".project/governance/model-registry.json",
-      "sha256": "0ee88689a46dff6f",
-      "bytes": 24409
+      "bytes": 24409,
+      "sha256": "0ee88689a46dff6f0a2079edcebbc382304142f9106d8175f08412982d3abcff",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": ".project/governance/three-project-boundary.json",
-      "sha256": "1833136debe98bdd",
-      "bytes": 6444
+      "bytes": 6444,
+      "sha256": "1833136debe98bddd8683d2e035c2a4ecbe16685a5ba36c4dbf08a6b875dbb30",
+      "hashing_basis": "repository blob bytes at HEAD"
     },
     {
       "rel": ".project/governance/external-libraries-index.json",
-      "sha256": "e9d8e0653f524906",
-      "bytes": 5236
+      "bytes": 5102,
+      "sha256": "40de8775c9d04c3b5f07350b23dcab65583d5a516912246b358a35ebdd41f443",
+      "hashing_basis": "repository blob bytes at HEAD"
     }
   ],
   "secrets_included": false,
@@ -122,5 +144,6 @@
   "audit_findings": {
     "spills_found_and_fixed": 1,
     "spill_id": "SPILL-1"
-  }
+  },
+  "integrity_note": "Every digest is computed over the bytes the repository stores and serves. A verifier must hash the exact downloaded bytes (LF) and expect a match. Referenced repository authorities are hashed from their HEAD blobs, so they match https://raw.githubusercontent.com/DTALEX66/WORK-LAB/<sha>/<rel> at the anchored commit."
 }
