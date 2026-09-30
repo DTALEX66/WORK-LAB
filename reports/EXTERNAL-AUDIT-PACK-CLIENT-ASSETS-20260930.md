@@ -4,7 +4,7 @@
 |---|---|
 | 包 ID | `assets-20260930` |
 | 采集时间（UTC） | 客户端元数据探针 `2026-09-30T14:02:29Z`；全量清点 `2026-09-30T14:02:48Z`；清理候选 `2026-09-30T14:04:25Z` |
-| 证据锚定提交 | `b8cf5fb4c77e25426ff044be9ec8031f82455c4e` |
+| 证据锚定提交 | `7882034ee447e2150b6fe8087d4cf6b6f9ff7ac4` |
 | 分支 | `audit/client-asset-inventory-20260930`（基于 `main` = `cd4daa8`） |
 | 审计对象 | Hermes / Codex(又名 ChatGPT Agent 侧代理运行时) / DSH(DeepSeek Harness) / CC Switch / Open Design / OpenHuman / GitHub 客户端面，以及本项目（WORK-LAB）全部工作流增强·治理·管理·全局部署·配置·技能·插件·记忆资产 |
 | 性质 | **只读元数据清点**（名称/路径/类型/字节/时间/哈希），引用现有权威登记表，不新建平行账本 |
@@ -14,11 +14,11 @@
 ## 0. 给审计者的最短路径（三个 URL）
 
 1. 本包（入口）：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/audit/client-asset-inventory-20260930/reports/EXTERNAL-AUDIT-PACK-CLIENT-ASSETS-20260930.md`
-2. 证据清单与哈希：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/b8cf5fb4c77e25426ff044be9ec8031f82455c4e/reports/audit-evidence/assets-20260930/MANIFEST.json`
-3. 原始清点数据：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/b8cf5fb4c77e25426ff044be9ec8031f82455c4e/reports/audit-evidence/assets-20260930/asset-inventory.json`
+2. 证据清单与哈希：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/7882034ee447e2150b6fe8087d4cf6b6f9ff7ac4/reports/audit-evidence/assets-20260930/MANIFEST.json`
+3. 原始清点数据：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/7882034ee447e2150b6fe8087d4cf6b6f9ff7ac4/reports/audit-evidence/assets-20260930/asset-inventory.json`
 
 同目录其余文件（同一 SHA 前缀可替换 `{file}`）：
-`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/b8cf5fb4c77e25426ff044be9ec8031f82455c4e/reports/audit-evidence/assets-20260930/{file}`
+`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/7882034ee447e2150b6fe8087d4cf6b6f9ff7ac4/reports/audit-evidence/assets-20260930/{file}`
 
 | 文件 | 用途 | 字节（仓库字节，LF） |
 |---|---|---|
@@ -123,7 +123,7 @@
 
 | # | 声明 | 核验方法 | 预期 |
 |---|---|---|---|
-| F1 | 锚定提交存在 | `https://api.github.com/repos/DTALEX66/WORK-LAB/commits/b8cf5fb4c77e25426ff044be9ec8031f82455c4e` | HTTP 200 |
+| F1 | 锚定提交存在 | `https://api.github.com/repos/DTALEX66/WORK-LAB/commits/7882034ee447e2150b6fe8087d4cf6b6f9ff7ac4` | HTTP 200 |
 | F2 | 证据文件确在该提交树内 | 直接抓 §0 的 raw URL | HTTP 200 且非空 |
 | F3 | 证据未被篡改 | 用 `MANIFEST.json` 内 sha256 对每个文件**下载到的字节**重算（含 9 个证据文件；32 个引用权威文件按同一 SHA 的 blob 复核） | 逐一相符（本机已实测 9/9 与 32/32） |
 | F4 | 分支存在 | `https://api.github.com/repos/DTALEX66/WORK-LAB/branches/audit/client-asset-inventory-20260930` | HTTP 200 |
@@ -194,14 +194,17 @@
 | `skills-inventory.json`（14 Codex 技能）与 `skill-provenance.yaml`（13 受管技能）为何数量不同？ | 二者是**不同面**：前者登记 Codex 执行器技能，后者登记部署到 Hermes Home 的受管技能。不是重复账本，无需合并。 |
 | 本包是否构成"平行账本"？ | 否。本包只**引用**现有权威登记表（`config/*`、`.project/governance/*`），不定义新权威字段；`schema` 为 `workflow/neutral-asset-inventory/v1`，属证据层。 |
 | 为什么把 `%USERPROFILE%` 等令牌化，而不是绝对路径？ | 中立化要求：产物需跨机器可读；同时避免把用户名写进公开仓库。本机绝对路径仅存在于 `.project-local/`（不跟踪）。 |
+| 为什么包内存在一个"再锚定"提交（pack 文本晚于证据提交）？ | 证据文件与 `MANIFEST.json` 先冻结为提交 `7882034`，再由 pack 把 URL 指向该提交，因此 `7882034` 是**证据的可信锚点**；本包文本的最新修订位于分支 tip。锚点提交内的 pack 文本可能引用更早的锚点，这属预期，不是缺失。 |
+| 为什么引用权威文件的 sha256 以 HEAD blob 为准？ | 只有按仓库存储的字节计算，审计者用 raw URL 下载后重算才能逐字匹配；曾因按工作区 CRLF 字节计算而全部不匹配（见 ERR-094）。 |
+| 第 10 条里"部署层 4 处缺口"是否等于项目失败？ | 否。它表示**声明/登记与 live 原生面不一致**（G1–G4），已按纪律登记为 ERR-095/ERR-096 且状态为 `DRIFT_OPEN_20260930`；修复需被授权写入通道，本包未执行任何写入。 |
 
 ## 5. 复核命令（公开可做 / 本机可做）
 
 公开（无需本机）：
 
 ```bash
-curl -s https://api.github.com/repos/DTALEX66/WORK-LAB/commits/b8cf5fb4c77e25426ff044be9ec8031f82455c4e | jq -r .sha
-curl -s -o /dev/null -w '%{http_code}\n' https://raw.githubusercontent.com/DTALEX66/WORK-LAB/b8cf5fb4c77e25426ff044be9ec8031f82455c4e/reports/audit-evidence/assets-20260930/MANIFEST.json
+curl -s https://api.github.com/repos/DTALEX66/WORK-LAB/commits/7882034ee447e2150b6fe8087d4cf6b6f9ff7ac4 | jq -r .sha
+curl -s -o /dev/null -w '%{http_code}\n' https://raw.githubusercontent.com/DTALEX66/WORK-LAB/7882034ee447e2150b6fe8087d4cf6b6f9ff7ac4/reports/audit-evidence/assets-20260930/MANIFEST.json
 ```
 
 一次跑完完整性校验（下载 MANIFEST → 逐个重算 sha256，含 9 个证据文件与 32 个引用权威文件）：
@@ -209,7 +212,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://raw.githubusercontent.com/DTALE
 ```bash
 python - <<'PY'
 import json, hashlib, urllib.request
-SHA = "b8cf5fb4c77e25426ff044be9ec8031f82455c4e"
+SHA = "7882034ee447e2150b6fe8087d4cf6b6f9ff7ac4"
 B = f"https://raw.githubusercontent.com/DTALEX66/WORK-LAB/{SHA}"
 g = lambda u: urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": "audit"}), timeout=60).read()
 mf = json.loads(g(f"{B}/reports/audit-evidence/assets-20260930/MANIFEST.json"))
@@ -231,7 +234,7 @@ PY
 缺陷登记核验（ERR-093 / ERR-094 / ERR-095 / ERR-096）：
 
 ```bash
-curl -s https://raw.githubusercontent.com/DTALEX66/WORK-LAB/b8cf5fb4c77e25426ff044be9ec8031f82455c4e/taskpacks/current/error-ledger.json | jq -r '.errors[-4:][] | "\(.error_id) \(.classification) \(.status_before)->\(.status_after)"'
+curl -s https://raw.githubusercontent.com/DTALEX66/WORK-LAB/7882034ee447e2150b6fe8087d4cf6b6f9ff7ac4/taskpacks/current/error-ledger.json | jq -r '.errors[-4:][] | "\(.error_id) \(.classification) \(.status_before)->\(.status_after)"'
 ```
 
 本机（可复现清点）：
