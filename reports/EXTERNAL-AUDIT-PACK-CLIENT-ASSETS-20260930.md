@@ -26,7 +26,9 @@
 | `inventory-verification.json` | 清点表 vs live 逐文件哈希比对 | 6,712 |
 | `CLEANUP-CANDIDATES.json` | 13 条清理候选（证据/风险/授权要求）+ 1 条审计中发现并修复的外溢 | 9,771 |
 | `REPO-ASSET-INDEX.md` | 仓库侧人类可读索引（技能/插件/治理/部署映射） | 6,971 |
-| `MANIFEST.json` | 上述文件 sha256（仓库字节口径）+ 18 个引用权威文件的 HEAD blob sha256 | 5,785 |
+| `three-project-probe.json` | 三项目（WORK-LAB / ArcheAxis-Knowledge-OS / DESIGN-LAB）只读元数据探针 | 12,070 |
+| `THREE-PROJECT-AND-NORMS-INDEX.md` | 三项目边界 + 规范规则 + 决策文档索引（人类可读） | 7,680 |
+| `MANIFEST.json` | 上述 6 个文件的 sha256（仓库字节口径）+ 25 个引用权威文件的 HEAD blob sha256 | 8,097 |
 
 > 哈希口径：`MANIFEST.json` 内的 sha256 一律按**仓库字节（LF 归一化后）**计算。审计者下载 raw 内容后直接对**下载到的字节**重算，应逐字匹配（本地 Windows 工作区的 CRLF 字节不算作基准）。
 
@@ -44,6 +46,7 @@
 | 6 | 隐私：凭据与记忆正文**未被读取**；包内 **0** 处密钥命中（正则扫描 6 文件，含本文件） | 见 §2-G |
 | 7 | 外部数据盘 `E:\` `F:\` **未访问** | 见 §2-G |
 | 8 | 清点过程本身产出价值证据：**发现并修复 2 处真实缺陷**（`apps/.project-local` 边界外溢 → ERR-093；证据哈希 CRLF/LF 口径错误 → ERR-094），门禁与完整性校验均已恢复 | 见 §2-C5、§2-C6 |
+| 9 | **三项目边界与规范规则已纳入**：3 个独立仓库、6 条边界切分、8 条禁止新所有者、规范/规则 14 文件 + 决策文档 18 文件 | 见 §2-H 与 `THREE-PROJECT-AND-NORMS-INDEX.md` |
 
 ## 2. 逐条可判定声明
 
@@ -130,6 +133,20 @@
 | G3 | 未读取记忆正文 | `clients.hermes.memories` 仅含名称/大小/mtime | 无正文 |
 | G4 | 未访问 `E:\` `F:\` | 包内路径令牌集合仅含 `%WORKLAB_ROOT%`/`%USERPROFILE%`/`%LOCALAPPDATA%`/`%APPDATA%`/`%DSH_ROOT%` | 无 E/F 路径 |
 | G5 | 清理零执行 | `CLEANUP-CANDIDATES.json` 每条 `executed: false` | 全为 false |
+
+### H. 三项目边界与规范规则（放行清理/重部署前的所有权前提）
+
+| # | 声明 | 证据 | 预期 |
+|---|---|---|---|
+| H1 | 三项目为**各自独立仓库**，且 ArcheAxis 的本地目录名不等于俗称 | `three-project-probe.json: projects` | WORK-LAB=`DTALEX66/WORK-LAB`；ArcheAxis=`DTALEX66/ArcheAxis-Knowledge-OS`，本地目录 `%PROJECTS_ROOT%/ArcheAxis-Knowledge-OS`（**不存在** `%PROJECTS_ROOT%/ArcheAxis`）；DESIGN-LAB=`DTALEX66/DESIGN-LAB` |
+| H2 | 各自当前 git 引用（本包采集时点事实） | 同上 `head`/`branch`/`dirty_entries` | WORK-LAB `049cf40…`@`audit/client-asset-inventory-20260930`（dirty 6）；ArcheAxis `43c2cafa1bfe…`@`codex/Audit`（**dirty 111**）；DESIGN-LAB `0fbb67439755…`@`feat/ui-commercial-workbench-20260930`（dirty 0） |
+| H3 | 另两项目**只读探测**，未被修改 | `three-project-probe.json: policy` | 仅记录存在性、git 引用、顶层清单与权威类文件摘要；无写入 |
+| H4 | 边界权威与门禁 | `.project/governance/three-project-boundary.json` + `scripts/ci/verify_three_project_boundary.py` | 6 条 `boundary_splits`（MEMORY_BACKEND / KNOWLEDGE_TRUTH / KNOWLEDGE_STAGING / EVOLUTION / ARCHIVE_90 / DESIGN_LAB）+ 8 条 `forbiddenNewOwners` |
+| H5 | 规范规则权威面已索引 | `THREE-PROJECT-AND-NORMS-INDEX.md`；`MANIFEST.json: referenced_repo_files` | 规范/规则 14 文件 + `docs/decisions/` 18 文件，逐一附字节与摘要 |
+| H6 | **Open Design 客户端 ≠ DESIGN-LAB 项目** | `three-project-boundary.json` 的 `DESIGN_LAB` 条目 | 客户端层 `MANAGE`（`apply_supported=false`）；设计能力/资产/质量体系 `IGNORE` |
+| H7 | 记忆与知识类资产的真值归属 | 同上 `MEMORY_BACKEND` / `KNOWLEDGE_TRUTH` | 长期记忆/知识真值/学习演化属 **ArcheAxis**；WORK-LAB 只保留边界守卫与 `KnowledgeCandidate` |
+
+> 对**清理与重部署**的直接约束：任何待清理/待重部署资产必须先落入三者之一的所有权内；跨边界搬迁须走 §H4 的 seam/gate；`memories/`、`memory/`、`services/memory` 不得在 WORK-LAB 内被当作长期记忆真值处理。
 
 ## 3. 审计者**无法**从公开信息验证的部分（请据此调整结论强度）
 

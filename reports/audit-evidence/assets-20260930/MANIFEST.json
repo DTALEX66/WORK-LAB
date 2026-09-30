@@ -1,6 +1,6 @@
 {
   "schema": "workflow/audit-evidence-manifest/v1",
-  "generated_at_utc": "2026-09-30T14:14:59Z",
+  "generated_at_utc": "2026-09-30T14:58:39Z",
   "package": "assets-20260930",
   "files": [
     {
@@ -25,6 +25,18 @@
       "name": "REPO-ASSET-INDEX.md",
       "bytes": 6971,
       "sha256": "b5e80daa624451d4a603eb10ebf21eb4af4f253e00ad11b003dd3a1369041176",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+    },
+    {
+      "name": "three-project-probe.json",
+      "bytes": 12070,
+      "sha256": "a6fcc0c28cf6d01fdb51152f3b242cd9804b0adaeb757eb0182e9418f862529e",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+    },
+    {
+      "name": "THREE-PROJECT-AND-NORMS-INDEX.md",
+      "bytes": 7680,
+      "sha256": "73398604968200b092ec78496207aad6f9ab7c4b975e438162ed9b410f448830",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     }
   ],
@@ -136,6 +148,48 @@
       "bytes": 5102,
       "sha256": "40de8775c9d04c3b5f07350b23dcab65583d5a516912246b358a35ebdd41f443",
       "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": ".project/governance/projects.json",
+      "bytes": 1199,
+      "sha256": "10c4d141e14aa4c89252804f8d22de0906b1abaa394afe590e5ff34badcc49ea",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": "WORK-LAB-AUTHORITY.md",
+      "bytes": 10777,
+      "sha256": "0938ff2452da5c5a5eef08673e25009d4f558ad5199a700aab8d7e2e56d6221c",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": "AGENTS.md",
+      "bytes": 9879,
+      "sha256": "e5cb346ea56e6e1bab3485916e83b862c1aa80045dd50ec7f990067cda45d912",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": "docs/decisions/PROJECT_POSITIONING.md",
+      "bytes": 5243,
+      "sha256": "ab89d055e04fca5c6144e716bbe70533e81002c50237da01b23edecd7b8b6b7a",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": "docs/decisions/global-execution-standard.md",
+      "bytes": 6320,
+      "sha256": "6a6fdd30a1fab8395299515ce8eaabfecfc8bd282e47901445061b8205c2227f",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": "docs/decisions/LESSONS_LEARNED.md",
+      "bytes": 9516,
+      "sha256": "4e0bdd64c3ba01055efe6191b649f1f1f747c11c62bb70674bb242526558ace4",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": "taskpacks/current/error-ledger.json",
+      "bytes": 175342,
+      "sha256": "8bd141db1c5073d7ac5f7e03a34331429484b4c0634553d8384972d483014e4e",
+      "hashing_basis": "repository blob bytes at HEAD"
     }
   ],
   "secrets_included": false,
@@ -145,5 +199,6 @@
     "spills_found_and_fixed": 1,
     "spill_id": "SPILL-1"
   },
-  "integrity_note": "Every digest is computed over the bytes the repository stores and serves. A verifier must hash the exact downloaded bytes (LF) and expect a match. Referenced repository authorities are hashed from their HEAD blobs, so they match https://raw.githubusercontent.com/DTALEX66/WORK-LAB/<sha>/<rel> at the anchored commit."
+  "integrity_note": "Every digest is computed over the bytes the repository stores and serves. A verifier must hash the exact downloaded bytes (LF) and expect a match. Referenced repository authorities (including the three-project boundary, the top authority and AGENTS.md) are hashed from their HEAD blobs.",
+  "scope_note": "Covers the managed client software surface (hermes/codex/dsh/cc-switch/open-design/openhuman/github), this repository's workflow/governance/config/skill/plugin assets, and the three-project boundary plus the norms/rules surface. ArcheAxis-Knowledge-OS and DESIGN-LAB were probed read-only (metadata only)."
 }
