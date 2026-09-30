@@ -28,7 +28,10 @@
 | `REPO-ASSET-INDEX.md` | 仓库侧人类可读索引（技能/插件/治理/部署映射） | 6,971 |
 | `three-project-probe.json` | 三项目（WORK-LAB / ArcheAxis-Knowledge-OS / DESIGN-LAB）只读元数据探针 | 12,070 |
 | `THREE-PROJECT-AND-NORMS-INDEX.md` | 三项目边界 + 规范规则 + 决策文档索引（人类可读） | 7,680 |
-| `MANIFEST.json` | 上述 6 个文件的 sha256（仓库字节口径）+ 25 个引用权威文件的 HEAD blob sha256 | 8,097 |
+| `global-workflow-coverage.json` | 全局策略 SSOT + 10 客户端投影矩阵 + 三项目规范面（只读探测） | 10,806 |
+| `global-deployment-readback.json` | 仓库源 vs 原生 live 目标的哈希/标记回读（hermes 13 技能、codex 4 目标） | 4,471 |
+| `GLOBAL-WORKFLOW-AND-PROJECT-NORMS-INDEX.md` | 全局工作流完成度判定 + 逐项缺口 G1–G4 + 三项目规范索引（人类可读） | 8,612 |
+| `MANIFEST.json` | 上述 9 个文件的 sha256（仓库字节口径）+ 32 个引用权威文件的 HEAD blob sha256 | 10,541 |
 
 > 哈希口径：`MANIFEST.json` 内的 sha256 一律按**仓库字节（LF 归一化后）**计算。审计者下载 raw 内容后直接对**下载到的字节**重算，应逐字匹配（本地 Windows 工作区的 CRLF 字节不算作基准）。
 
@@ -47,6 +50,7 @@
 | 7 | 外部数据盘 `E:\` `F:\` **未访问** | 见 §2-G |
 | 8 | 清点过程本身产出价值证据：**发现并修复 2 处真实缺陷**（`apps/.project-local` 边界外溢 → ERR-093；证据哈希 CRLF/LF 口径错误 → ERR-094），门禁与完整性校验均已恢复 | 见 §2-C5、§2-C6 |
 | 9 | **三项目边界与规范规则已纳入**：3 个独立仓库、6 条边界切分、8 条禁止新所有者、规范/规则 14 文件 + 决策文档 18 文件 | 见 §2-H 与 `THREE-PROJECT-AND-NORMS-INDEX.md` |
+| 10 | **全局工作流**：策略 SSOT + 10 客户端 × 19 域投影声明**完整**；原生**部署层 4 处缺口**（codex overlay/skills 缺失、hermes 1/13 技能与源不一致、登记记录陈旧），已登记 ERR-095/ERR-096 | 见 §2-I 与 `GLOBAL-WORKFLOW-AND-PROJECT-NORMS-INDEX.md` |
 
 ## 2. 逐条可判定声明
 
@@ -121,7 +125,7 @@
 |---|---|---|---|
 | F1 | 锚定提交存在 | `https://api.github.com/repos/DTALEX66/WORK-LAB/commits/aeef86c332908907bd7d2f083680a2a55b7a07f2` | HTTP 200 |
 | F2 | 证据文件确在该提交树内 | 直接抓 §0 的 raw URL | HTTP 200 且非空 |
-| F3 | 证据未被篡改 | 用 `MANIFEST.json` 内 sha256 对每个文件**下载到的字节**重算（含 6 个证据文件；25 个引用权威文件按同一 SHA 的 blob 复核） | 逐一相符（本机已实测 6/6 与 25/25） |
+| F3 | 证据未被篡改 | 用 `MANIFEST.json` 内 sha256 对每个文件**下载到的字节**重算（含 9 个证据文件；32 个引用权威文件按同一 SHA 的 blob 复核） | 逐一相符（本机已实测 9/9 与 32/32） |
 | F4 | 分支存在 | `https://api.github.com/repos/DTALEX66/WORK-LAB/branches/audit/client-asset-inventory-20260930` | HTTP 200 |
 
 ### G. 隐私与边界声明
@@ -147,6 +151,29 @@
 | H7 | 记忆与知识类资产的真值归属 | 同上 `MEMORY_BACKEND` / `KNOWLEDGE_TRUTH` | 长期记忆/知识真值/学习演化属 **ArcheAxis**；WORK-LAB 只保留边界守卫与 `KnowledgeCandidate` |
 
 > 对**清理与重部署**的直接约束：任何待清理/待重部署资产必须先落入三者之一的所有权内；跨边界搬迁须走 §H4 的 seam/gate；`memories/`、`memory/`、`services/memory` 不得在 WORK-LAB 内被当作长期记忆真值处理。
+
+### I. 全局工作流：覆盖判定与部署回读（结论：**权威层完整，部署层有 4 处缺口**）
+
+| # | 声明 | 证据 | 预期 |
+|---|---|---|---|
+| I1 | 存在唯一的跨软件语义 SSOT，且受机器合同约束 | `config/global-agent-policy.yaml`（revision 2）+ `packages/contracts/schemas/workflow/global-agent-policy.schema.json` | 20 个语义域；所有权 `USER_OVERLAY/MANAGE`；显式声明"非第二权威/非第二配置治理/非第二账本/非第二适配器登记" |
+| I2 | 每个客户端的投影模式与 19 域能力状态**全部显式声明**，无空缺 | `config/adapter-registry.json → entries[].policy_projection` | 10 客户端；hermes/codex = `READBACK_VERIFIED`（detect/plan/apply/readback/rollback/drift 六项齐）；其余 8 个按声明为 OBSERVE/PLAN/MANIFEST 且 `capability_coverage_complete: true` |
+| I3 | DSH 无扩展文件属**声明内**状态，不是缺口 | 同 I2 的 `deepseek-harness` 条目 | `observe-plan` / `PLAN_SUPPORTED`，apply_supported=false，前置条件写在 note 中 |
+| I4 | Hermes 原生目标部分一致 | `global-deployment-readback.json: hermes_managed_skills` | 13 项中 **12 一致 / 1 不一致（`windows-development-environment`）/ 0 缺失**；`SOUL.md` 仓库与 live **哈希一致** |
+| I5 | Codex 原生目标**部分缺失** | `global-deployment-readback.json: codex_native_targets` | `config.toml` 有受管标记 ✓；**`AGENTS.md` 无受管 overlay 块** ✗；`skills/workflow-assistance-*` live 目录数 **0** ✗ |
+| I6 | 两处漂移已登记错误账本 | `taskpacks/current/error-ledger.json` 的 ERR-095（codex）、ERR-096（hermes） | 均 `UNVERIFIED → FAIL`，`currentApplicability=DRIFT_OPEN_20260930` |
+| I7 | 三项目**自身**的规范/规则已索引（只读） | `global-workflow-coverage.json: project_norms`、`three-project-probe.json` | ArcheAxis-Knowledge-OS：`AGENTS.md` + `DIRECTORY_AUTHORITY.yaml`；DESIGN-LAB：`AGENTS.md` + `AUTHORITY.md`；WORK-LAB：14 规范文件 + 18 决策文档 |
+
+**逐项缺口（G1–G4）**：
+
+| id | 面 | 事实（live 实测） | 修复通道（未授权执行） |
+|---|---|---|---|
+| G1 | codex | `CODEX_HOME/AGENTS.md`（16,805 B）**无** `WORKFLOW-ASSISTANCE MANAGED` 块标记，`WORK-LAB` 命中 0，而登记称 `READBACK_VERIFIED` + BEGIN/END + hash fencing | `sync_codex_global_assets.py` + 原生回读（或按用户意愿改写登记成熟度） |
+| G2 | codex | 扩展声明的 `skills/workflow-assistance-*` 在 `CODEX_HOME/skills/` 匹配 **0** 个 | 同上 |
+| G3 | hermes | `windows-development-environment/SKILL.md` live `39bbb61a…`(23,825 B) ≠ 仓库源 `2e1fc6dc…`(21,982 B) | `sync_hermes_workflow_assets.py` + 回读 |
+| G4 | 记录 | `skill-provenance.yaml`：`model-switch.live_sha256` 已不符实际；`windows-development-environment` 记录仍为旧值；另 `skills-inventory.json` 6/14、`plugin-inventory.json` 缺 revision | 由部署通道同批重算，手改禁止 |
+
+> 纪律：I4–I6 与 G1–G4 均为**声明/登记与 live 不一致**的已核实事实，不等于"产品不可用"；本包**未执行任何写入**，修复必须走被授权通道并附原生回读。
 
 ## 3. 审计者**无法**从公开信息验证的部分（请据此调整结论强度）
 
@@ -177,7 +204,7 @@ curl -s https://api.github.com/repos/DTALEX66/WORK-LAB/commits/aeef86c332908907b
 curl -s -o /dev/null -w '%{http_code}\n' https://raw.githubusercontent.com/DTALEX66/WORK-LAB/aeef86c332908907bd7d2f083680a2a55b7a07f2/reports/audit-evidence/assets-20260930/MANIFEST.json
 ```
 
-一次跑完完整性校验（下载 MANIFEST → 逐个重算 sha256，含 6 个证据文件与 25 个引用权威文件）：
+一次跑完完整性校验（下载 MANIFEST → 逐个重算 sha256，含 9 个证据文件与 32 个引用权威文件）：
 
 ```bash
 python - <<'PY'

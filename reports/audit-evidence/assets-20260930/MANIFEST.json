@@ -1,6 +1,6 @@
 {
   "schema": "workflow/audit-evidence-manifest/v1",
-  "generated_at_utc": "2026-09-30T14:58:39Z",
+  "generated_at_utc": "2026-09-30T15:07:06Z",
   "package": "assets-20260930",
   "files": [
     {
@@ -37,6 +37,24 @@
       "name": "THREE-PROJECT-AND-NORMS-INDEX.md",
       "bytes": 7680,
       "sha256": "73398604968200b092ec78496207aad6f9ab7c4b975e438162ed9b410f448830",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+    },
+    {
+      "name": "global-workflow-coverage.json",
+      "bytes": 10806,
+      "sha256": "5c720d9360fdbca3b4c35c13109cdaf34ae8a2371e6aeeace8a202fa133c1102",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+    },
+    {
+      "name": "global-deployment-readback.json",
+      "bytes": 4471,
+      "sha256": "fedd647162284ebcdc9ddc0715a57852fc6a4844593646e4a9a514d5ca3eba86",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+    },
+    {
+      "name": "GLOBAL-WORKFLOW-AND-PROJECT-NORMS-INDEX.md",
+      "bytes": 8612,
+      "sha256": "cd1c430f2509ba7848ce432c3fb93b413a23e352a2af6b004981a9f21d528435",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     }
   ],
@@ -87,6 +105,12 @@
       "rel": "config/machine-registry.json",
       "bytes": 212,
       "sha256": "6c696d72f78c2fee0134477ac0127fec934f1015c6d6473bbfe2dff764e9fee3",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": "config/global-agent-policy.yaml",
+      "bytes": 7172,
+      "sha256": "928a9989f41b1808dddc92e100b51f80ad7ce972985286e1c187476df4452b2f",
       "hashing_basis": "repository blob bytes at HEAD"
     },
     {
@@ -168,6 +192,12 @@
       "hashing_basis": "repository blob bytes at HEAD"
     },
     {
+      "rel": "config/SOUL.md",
+      "bytes": 2446,
+      "sha256": "9da0bd4884af9fdb4fb95301852b1b65d1587b8ccae7da92fd9d27eaa63eca87",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
       "rel": "docs/decisions/PROJECT_POSITIONING.md",
       "bytes": 5243,
       "sha256": "ab89d055e04fca5c6144e716bbe70533e81002c50237da01b23edecd7b8b6b7a",
@@ -186,6 +216,36 @@
       "hashing_basis": "repository blob bytes at HEAD"
     },
     {
+      "rel": "packages/contracts/schemas/workflow/global-agent-policy.schema.json",
+      "bytes": 11647,
+      "sha256": "f611de1a9ead2964c7dbbc01ded0755e51bb1b212c365523947d1d8e5d71914c",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": "integrations/executors/hermes/hermes-policy-extension.yaml",
+      "bytes": 4947,
+      "sha256": "b3c0652ed71d7db67a1dcf508a2eb8d148b3701017fa6f1f64f56e71c00a9c84",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": "integrations/executors/codex/codex-policy-extension.yaml",
+      "bytes": 3947,
+      "sha256": "ec2912a11d017dff91d69f6e41a54a1f1c3be4fd66e27c40c68e60e228df19a3",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": "integrations/executors/hermes/sync_hermes_workflow_assets.py",
+      "bytes": 62458,
+      "sha256": "315daadd4b2886cf1fa31df84b73550500443383ff07aa398df20db36c543db3",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
+      "rel": "integrations/executors/codex/sync_codex_global_assets.py",
+      "bytes": 44902,
+      "sha256": "15aedf186aaae25f97ea6779edebb9ba5f3f4ca2cd76d239640aff74d1fee375",
+      "hashing_basis": "repository blob bytes at HEAD"
+    },
+    {
       "rel": "taskpacks/current/error-ledger.json",
       "bytes": 175342,
       "sha256": "8bd141db1c5073d7ac5f7e03a34331429484b4c0634553d8384972d483014e4e",
@@ -199,6 +259,6 @@
     "spills_found_and_fixed": 1,
     "spill_id": "SPILL-1"
   },
-  "integrity_note": "Every digest is computed over the bytes the repository stores and serves. A verifier must hash the exact downloaded bytes (LF) and expect a match. Referenced repository authorities (including the three-project boundary, the top authority and AGENTS.md) are hashed from their HEAD blobs.",
-  "scope_note": "Covers the managed client software surface (hermes/codex/dsh/cc-switch/open-design/openhuman/github), this repository's workflow/governance/config/skill/plugin assets, and the three-project boundary plus the norms/rules surface. ArcheAxis-Knowledge-OS and DESIGN-LAB were probed read-only (metadata only)."
+  "integrity_note": "Every digest is computed over the bytes the repository stores and serves. A verifier must hash the exact downloaded bytes (LF) and expect a match. Referenced repository authorities are hashed from their HEAD blobs, so they match the raw URL at the anchored commit.",
+  "scope_note": "Managed client software surface (hermes/codex/dsh/cc-switch/open-design/openhuman/github), this repository's workflow/governance/config/skill/plugin assets, the three-project boundary, the global workflow policy projection matrix and its live deployment readback, and the norms/rules surface. ArcheAxis-Knowledge-OS and DESIGN-LAB were probed read-only (metadata only)."
 }

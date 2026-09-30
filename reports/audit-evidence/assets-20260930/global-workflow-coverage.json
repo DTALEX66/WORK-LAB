@@ -1,0 +1,328 @@
+{
+  "generated_at_utc": "2026-09-30T15:05:34Z",
+  "policy": "Structure-only probe. Credential values and memory/session bodies are never read or printed.",
+  "global_policy_ssot": {
+    "rel": "config/global-agent-policy.yaml",
+    "bytes": 7172,
+    "sha256": "928a9989f41b1808dddc92e100b51f80ad7ce972985286e1c187476df4452b2f",
+    "revision_declared": 2,
+    "semantic_domains": [
+      "ownership",
+      "communication",
+      "execution",
+      "authority_discovery",
+      "authorization",
+      "task_grant",
+      "workspace_boundary",
+      "protected_storage",
+      "credentials",
+      "session_privacy",
+      "network",
+      "git_safety",
+      "dependency_policy",
+      "evidence_semantics",
+      "verification",
+      "parallelism",
+      "skills",
+      "model_neutrality",
+      "tool_truth",
+      "historical_record_policy"
+    ],
+    "schemas": [
+      "packages/contracts/schemas/workflow/global-agent-policy.schema.json"
+    ]
+  },
+  "per_software": {
+    "extension_files": [
+      {
+        "rel": "integrations/executors/codex/codex-policy-extension.yaml",
+        "bytes": 3947
+      },
+      {
+        "rel": "integrations/executors/hermes/hermes-policy-extension.yaml",
+        "bytes": 4947
+      }
+    ],
+    "executors": [
+      "codex",
+      "dsh",
+      "hermes",
+      "opencode"
+    ],
+    "hermes": {
+      "home_soul": {
+        "path_token": "%LOCALAPPDATA%/hermes/SOUL.md",
+        "exists": true,
+        "bytes": 2446,
+        "sha256": "9da0bd4884af9fdb4fb95301852b1b65d1587b8ccae7da92fd9d27eaa63eca87",
+        "headings": [
+          "## 主动完成",
+          "## 项目规则优先",
+          "## 不伪造、证据分层",
+          "## E/F 盘边界",
+          "## 凭据与私有状态边界",
+          "## 最小权限与项目数据边界",
+          "## 模型与 provider 中立",
+          "## 授权语义",
+          "## 铁律"
+        ]
+      },
+      "home_agents": {
+        "path_token": "%LOCALAPPDATA%/hermes/AGENTS.md",
+        "exists": false
+      },
+      "repo_soul": {
+        "path_token": "config/SOUL.md (repo, managed asset)",
+        "exists": true,
+        "bytes": 2446,
+        "sha256": "9da0bd4884af9fdb4fb95301852b1b65d1587b8ccae7da92fd9d27eaa63eca87",
+        "headings": [
+          "## 主动完成",
+          "## 项目规则优先",
+          "## 不伪造、证据分层",
+          "## E/F 盘边界",
+          "## 凭据与私有状态边界",
+          "## 最小权限与项目数据边界",
+          "## 模型与 provider 中立",
+          "## 授权语义",
+          "## 铁律"
+        ]
+      },
+      "managed_skills_count": 13,
+      "live_skill_groups": 26
+    },
+    "codex": {
+      "global_agents": {
+        "path_token": "%USERPROFILE%/.codex/AGENTS.md",
+        "exists": true,
+        "bytes": 16805,
+        "sha256": "cf73c8e58ba8fbf9a721fc2db886161f49ab56db325e0df51ea87016917fea76",
+        "headings": [
+          "# Codex 全局个性化指令",
+          "## 0. 角色与总原则",
+          "# 1. 指令与项目规则发现",
+          "# 2. 当前事实必须动态读取",
+          "# 3. GPT / Codex 模型自适应",
+          "## 模型使用原则",
+          "## 面向 GPT 模型的提示方式",
+          "# 4. Subagent / 多智能体规则",
+          "# 5. 工作区默认边界",
+          "# 6. E 盘保护规则",
+          "## E 盘授权",
+          "# 7. 凭据与敏感数据"
+        ]
+      },
+      "managed_baks": [
+        "AGENTS.md",
+        "AGENTS.md.bak-manual-inject",
+        "AGENTS.md.hermes-managed-bak"
+      ],
+      "config_toml_exists": true,
+      "ext_repo": {
+        "path_token": "integrations/executors/codex/codex-policy-extension.yaml",
+        "exists": true,
+        "bytes": 3947,
+        "sha256": "ec2912a11d017dff91d69f6e41a54a1f1c3be4fd66e27c40c68e60e228df19a3",
+        "headings": [
+          "# WORK-LAB Global Agent Policy — Codex native extension (U17.5)",
+          "#",
+          "# Software-specific knobs that are ALLOWED to live here, OUT of the neutral",
+          "# config/global-agent-policy.yaml core. The renderer reads the neutral core",
+          "# PLUS this extension and emits the Codex native surface",
+          "# (CODEX_HOME/AGENTS.md managed block + config.toml managed fields + rules).",
+          "#",
+          "# Native enforcement model for Codex:",
+          "# - sandbox_mode / approval_policy in config.toml are NATIVE_ENFORCED by the",
+          "#   Codex runtime itself (the CLI enforces the sandbox).",
+          "# - The managed guidance block in AGENTS.md is NATIVE_GUIDANCE: Codex reads",
+          "#   AGENTS.md context but does not machine-enforce its prose."
+        ]
+      },
+      "has_worklab_managed_marker": true
+    },
+    "dsh": {
+      "settings_exists": true,
+      "settings_bytes": 61987,
+      "yaml_available": true,
+      "settings_top_level_keys": [
+        "agent-default-model",
+        "agent-presets",
+        "dsh-community-market",
+        "dsh-desktop",
+        "dsh-desktop-notifications",
+        "llm-pi-ai",
+        "locale",
+        "pet",
+        "skin-custom-theme",
+        "ui-onboarding",
+        "ui-theme"
+      ],
+      "agent_presets": [
+        "code",
+        "liangshen"
+      ]
+    }
+  },
+  "project_norms": {
+    "ArcheAxis-Knowledge-OS": {
+      "AGENTS.md": {
+        "bytes": 10132,
+        "sha256": "dbaa61d05d5d0134",
+        "headings": [
+          "# AGENTS.md - 星环知识平台（ArcheAxis Knowledge）Operating Guide",
+          "## 1. Project Mission",
+          "## 2. Configuration Categories",
+          "## 3. Safety Rules",
+          "## 4. Git Rules",
+          "## 5. Network Rules",
+          "## 6. Implementation Workflow",
+          "## 7. Current System Boundaries",
+          "## 8. Private Configuration Not Stored Here",
+          "## 9. External Coordination (Optional)"
+        ]
+      },
+      "DIRECTORY_AUTHORITY.yaml": {
+        "bytes": 20601,
+        "sha256": "310096407363c3cb",
+        "headings": []
+      },
+      "README.md": {
+        "bytes": 25189,
+        "sha256": "9ee45ef082ac7e34",
+        "headings": [
+          "# 星环知识平台（ArcheAxis Knowledge）",
+          "## 外置依赖与不可吸收开源项目（锁死展示）",
+          "### 外置环境与工具链（必须单独安装/下载）",
+          "### 已吸收（代码/依赖已并入）",
+          "### 吸收不了 / 许可或边界阻断（外置保留，仅链接）",
+          "### 待 bake-off（H2 识别转译，需模型/硬件评估）",
+          "## 当前重点",
+          "## Phase 4 Research Status",
+          "## 规划与进度",
+          "### 冻结执行基线（权威任务包）",
+          "### 当前里程碑：Product Stage A0 真相基线",
+          "## 五分钟启动",
+          "## 当前可运行基线",
+          "## 当前模块边界"
+        ]
+      },
+      "docs/decisions/": [
+        "ADR-0001-vnext-language-authority.md",
+        "ADR-AXW-IDENTITY-001.md",
+        "ADR-AXW-LEGACY-COMPAT-004.md",
+        "ADR-AXW-LER-RETENTION-003.md",
+        "ADR-AXW-SYSTEM-LEVEL-002.md"
+      ],
+      "config/": [
+        "__init__.py",
+        "defaults.yaml",
+        "desktop",
+        "domain-packs",
+        "environment",
+        "model-profiles",
+        "models.yaml",
+        "naming-registry.yaml",
+        "product",
+        "product-naming-registry.yaml",
+        "profiles",
+        "route_policy.yaml",
+        "schemas",
+        "settings.yaml",
+        "tools.yaml"
+      ]
+    },
+    "DESIGN-LAB": {
+      "AGENTS.md": {
+        "bytes": 10055,
+        "sha256": "7531838c75adb665",
+        "headings": [
+          "# AGENTS.md - DESIGN-LAB 设计实验室 Operating Guide",
+          "## TOP-LEVEL AUTHORITY — MUST READ FIRST",
+          "## 项目定位",
+          "## 宿主与入口（Standalone-first，ADR-001）",
+          "## Owner 与 SSOT",
+          "## Evidence 等级（E0-E5）",
+          "## 执行规范",
+          "## 模块",
+          "## Human Gate（人工门）",
+          "## KnowledgeCandidate 出口",
+          "## 模型与工具",
+          "## 当前任务包"
+        ]
+      },
+      "AUTHORITY.md": {
+        "bytes": 15036,
+        "sha256": "7b29d3ea90122b74",
+        "headings": [
+          "# DESIGN-LAB TOP-LEVEL AUTHORITY",
+          "## 0. 云端审计强制启动顺序",
+          "## 1. 项目身份",
+          "## 2. 产品完成语义",
+          "## 3. 前端权威",
+          "## 4. 后端权威",
+          "## 5. Host/Tool 权威",
+          "## 6. Evidence 权威",
+          "## 7. 仓库责任",
+          "## 8. 语言权威",
+          "## 9. REUSE / Source / Rights",
+          "## 10. Branch 权威",
+          "## 11. 历史记录权威",
+          "## 12. 执行血统"
+        ]
+      },
+      "README.md": {
+        "bytes": 6257,
+        "sha256": "5b1ba5b0f383699d",
+        "headings": [
+          "# DESIGN-LAB（设计实验室）",
+          "## GitHub 交付",
+          "## 一屏说明",
+          "## 视觉设计是第一主线",
+          "## 六能力域",
+          "## 当前主目录 / 云端仓库",
+          "## 目录职责",
+          "## 关键文档",
+          "## 主规则",
+          "## 已吸收内容（历史）",
+          "## 生成状态（DL-MIG-005）",
+          "## 验证入口"
+        ]
+      },
+      "docs/decisions/": [
+        "ADAPTER_POLICY.md",
+        "ADR-001-standalone-design-runtime.md",
+        "CD-SPILL-AUDIT-2026-09-16.md",
+        "E-SLICE-SESSION-CONVERGENCE-2026-09-19.md",
+        "EVIDENCE_POLICY.md",
+        "K-CASE-SELECTION-RECORD-2026-09-26.md",
+        "MINIGAME_FROZEN_BOUNDARY.md",
+        "NEUTRALITY_POLICY.md",
+        "R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "R3-COMFY-ENTRY-LIVE-2026-09-07.md",
+        "R3-COMPOUND-NATIVE-2026-09-08.md",
+        "R3-CURRENT-ENTRY-REFRESH-2026-09-07.md",
+        "R3-ENTRY-WRITE-TRACE-2026-09-07.md",
+        "R3-EXPLICIT-STORE-OWNER-2026-09-07.md",
+        "R3-GATE-SCAN-BOUNDARY-2026-09-06.md",
+        "R3-ILLUSTRATOR-BATCH-AUDIT-2026-09-07.md",
+        "R3-ILLUSTRATOR-COM-DISPATCH-2026-09-08.md",
+        "R3-ILLUSTRATOR-MASK-PATCH-2026-09-08.md",
+        "R3-ILLUSTRATOR-PATH-FIX-2026-09-07.md",
+        "R3-ILLUSTRATOR-PRODUCT-ASSEMBLY-2026-09-08.md",
+        "R3-ILLUSTRATOR-RECOVERY-AUDIT-2026-09-07.md",
+        "R3-IMAGE-IMPORT-HTTP-2026-09-07.md",
+        "R3-INSTALLABLE-SERVICE-DESIGN-2026-09-07.md",
+        "R3-INSTALLED-CLI-QUALIFICATION-2026-09-07.md",
+        "R3-INSTALLED-NATIVE-REFRESH-2026-09-08.md"
+      ],
+      ".project/governance/": [
+        "active-capability-allowlist.yaml",
+        "authority-index.json",
+        "data-ownership.yaml",
+        "gates.yaml",
+        "path-ref-policy.json",
+        "path-risk.yaml"
+      ]
+    }
+  }
+}
