@@ -1,6 +1,6 @@
 {
   "schema": "workflow/audit-evidence-manifest/v1",
-  "generated_at_utc": "2026-09-30T15:09:07Z",
+  "generated_at_utc": "2026-09-30T15:11:54Z",
   "package": "assets-20260930",
   "files": [
     {
@@ -41,8 +41,8 @@
     },
     {
       "name": "global-workflow-coverage.json",
-      "bytes": 10806,
-      "sha256": "5c720d9360fdbca3b4c35c13109cdaf34ae8a2371e6aeeace8a202fa133c1102",
+      "bytes": 26819,
+      "sha256": "1d209a104e81712cdcbce89d88742772c191fa2d48bddd6332b68e49fcea7403",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
@@ -53,8 +53,8 @@
     },
     {
       "name": "GLOBAL-WORKFLOW-AND-PROJECT-NORMS-INDEX.md",
-      "bytes": 8612,
-      "sha256": "cd1c430f2509ba7848ce432c3fb93b413a23e352a2af6b004981a9f21d528435",
+      "bytes": 12104,
+      "sha256": "d8f4f4e06e778966f4eff2ab249085dc23934d63618b912568d24d7bb5c99c36",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     }
   ],

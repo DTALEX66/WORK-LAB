@@ -28,10 +28,10 @@
 | `REPO-ASSET-INDEX.md` | 仓库侧人类可读索引（技能/插件/治理/部署映射） | 6,971 |
 | `three-project-probe.json` | 三项目（WORK-LAB / ArcheAxis-Knowledge-OS / DESIGN-LAB）只读元数据探针 | 12,070 |
 | `THREE-PROJECT-AND-NORMS-INDEX.md` | 三项目边界 + 规范规则 + 决策文档索引（人类可读） | 7,680 |
-| `global-workflow-coverage.json` | 全局策略 SSOT + 10 客户端投影矩阵 + 三项目规范面（只读探测） | 10,806 |
+| `global-workflow-coverage.json` | 全局策略 SSOT + 10 客户端投影矩阵（模式/六项能力/19 域状态分布/扩展路径）+ 三项目规范面 | 26,819 |
 | `global-deployment-readback.json` | 仓库源 vs 原生 live 目标的哈希/标记回读（hermes 13 技能、codex 4 目标） | 4,471 |
-| `GLOBAL-WORKFLOW-AND-PROJECT-NORMS-INDEX.md` | 全局工作流完成度判定 + 逐项缺口 G1–G4 + 三项目规范索引（人类可读） | 8,612 |
-| `MANIFEST.json` | 上述 9 个文件的 sha256（仓库字节口径）+ 32 个引用权威文件的 HEAD blob sha256 | 10,541 |
+| `GLOBAL-WORKFLOW-AND-PROJECT-NORMS-INDEX.md` | 全局工作流完成度判定 + 逐项缺口 G1–G4 + 三项目规范索引（人类可读） | 12,104 |
+| `MANIFEST.json` | 上述 9 个文件的 sha256（仓库字节口径）+ 32 个引用权威文件的 HEAD blob sha256 | 10,725 |
 
 > 哈希口径：`MANIFEST.json` 内的 sha256 一律按**仓库字节（LF 归一化后）**计算。审计者下载 raw 内容后直接对**下载到的字节**重算，应逐字匹配（本地 Windows 工作区的 CRLF 字节不算作基准）。
 
@@ -157,7 +157,7 @@
 | # | 声明 | 证据 | 预期 |
 |---|---|---|---|
 | I1 | 存在唯一的跨软件语义 SSOT，且受机器合同约束 | `config/global-agent-policy.yaml`（revision 2）+ `packages/contracts/schemas/workflow/global-agent-policy.schema.json` | 20 个语义域；所有权 `USER_OVERLAY/MANAGE`；显式声明"非第二权威/非第二配置治理/非第二账本/非第二适配器登记" |
-| I2 | 每个客户端的投影模式与 19 域能力状态**全部显式声明**，无空缺 | `config/adapter-registry.json → entries[].policy_projection` | 10 客户端；hermes/codex = `READBACK_VERIFIED`（detect/plan/apply/readback/rollback/drift 六项齐）；其余 8 个按声明为 OBSERVE/PLAN/MANIFEST 且 `capability_coverage_complete: true` |
+| I2 | 每个客户端的投影模式与 19 域能力状态**全部显式声明**，无空缺 | `config/adapter-registry.json → entries[].policy_projection`；机器可读副本见 `global-workflow-coverage.json: client_projection_matrix`（含六项能力位与 19 域状态分布直方图） | 10 客户端；hermes/codex = `READBACK_VERIFIED`（detect/plan/apply/readback/rollback/drift 六项齐）；其余 8 个按声明为 OBSERVE/PLAN/MANIFEST 且 `capability_coverage_complete: true` |
 | I3 | DSH 无扩展文件属**声明内**状态，不是缺口 | 同 I2 的 `deepseek-harness` 条目 | `observe-plan` / `PLAN_SUPPORTED`，apply_supported=false，前置条件写在 note 中 |
 | I4 | Hermes 原生目标部分一致 | `global-deployment-readback.json: hermes_managed_skills` | 13 项中 **12 一致 / 1 不一致（`windows-development-environment`）/ 0 缺失**；`SOUL.md` 仓库与 live **哈希一致** |
 | I5 | Codex 原生目标**部分缺失** | `global-deployment-readback.json: codex_native_targets` | `config.toml` 有受管标记 ✓；**`AGENTS.md` 无受管 overlay 块** ✗；`skills/workflow-assistance-*` live 目录数 **0** ✗ |

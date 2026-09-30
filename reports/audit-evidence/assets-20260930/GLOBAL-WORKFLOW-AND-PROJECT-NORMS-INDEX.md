@@ -31,6 +31,23 @@
 
 > DSH（`deepseek-harness`）无扩展文件是**声明内**的：`observe-plan` / `PLAN_SUPPORTED`，须待「稳定官方原生接口 + 所有权定义 + 隔离 fixture + readback + rollback + 负向测试」齐备后才允许 apply。
 
+## 2.2 机器可读矩阵（`global-workflow-coverage.json → client_projection_matrix`）
+
+| client | mode | apply | maturity | 六项能力(detect/plan/apply/readback/rollback/drift) | 19 域状态分布 | 扩展/渲染器 |
+|---|---|---|---|---|---|---|
+| `hermes` | managed-overlay | True | READBACK_VERIFIED | `✓✓✓✓✓✓` | NATIVE_ENFORCED×1, NATIVE_GUIDANCE×9, OBSERVE_ONLY×2, WORKFLOW_GUARD×7 | integrations/executors/hermes/hermes-policy-extension.yaml |
+| `codex` | managed-block | True | READBACK_VERIFIED | `✓✓✓✓✓✓` | NATIVE_ENFORCED×1, NATIVE_GUIDANCE×9, OBSERVE_ONLY×2, WORKFLOW_GUARD×7 | integrations/executors/codex/codex-policy-extension.yaml |
+| `cc-switch` | observe-only | False | OBSERVE_ONLY | `✓✗✗✗✗✗` | UNSUPPORTED×19 | — |
+| `github` | git-delivery-projection | False | PLAN_SUPPORTED | `✓✓✗✗✗✗` | UNSUPPORTED×19 | — |
+| `openhuman` | observe-only | False | OBSERVE_ONLY | `✓✗✗✗✗✗` | UNSUPPORTED×19 | — |
+| `open-design` | observe-only | False | OBSERVE_ONLY | `✓✗✗✗✗✗` | UNSUPPORTED×19 | — |
+| `deepseek-harness` | observe-plan | False | PLAN_SUPPORTED | `✓✓✗✗✗✗` | UNSUPPORTED×19 | integrations/executors/dsh/dsh_adapter.py |
+| `cursor` | manifest-only | False | OBSERVE_ONLY | `✓✗✗✗✗✗` | UNSUPPORTED×19 | — |
+| `claude-code` | manifest-only | False | OBSERVE_ONLY | `✓✗✗✗✗✗` | UNSUPPORTED×19 | — |
+| `workbuddy` | manifest-only | False | OBSERVE_ONLY | `✓✗✗✗✗✗` | UNSUPPORTED×19 | — |
+
+> 判据：`apply` 为 ✓ 的客户端必须六项能力齐备 + **原生回读证据**；其余只能停在 OBSERVE/PLAN/MANIFEST，且必须显式声明 `capability_coverage_complete`。`19 域状态分布` 取自 `capability_states`（NATIVE_ENFORCED / NATIVE_GUIDANCE / WORKFLOW_GUARD / OBSERVE_ONLY / UNSUPPORTED）。
+
 ## 3. 部署回读（仓库源 vs 原生 live 目标）
 
 ### 3.1 Hermes 受管技能：13 项 → 一致 **12** / 不一致 **1** / 缺失 **0**
@@ -86,8 +103,28 @@
 
 ### WORK-LAB
 
-- 目录：`%PROJECTS_ROOT%/WORK-LAB`｜远端 `git@github.com:DTALEX66/WORK-LAB.git`｜分支 `audit/client-asset-inventory-20260930`｜HEAD `049cf406a66d`
-- 顶层权威类文件：`AGENTS.md`（9879 B，`e5cb346ea56e6e1b`）；`README.md`（5686 B，`c2f299349ce6642e`）；`WORK-LAB-AUTHORITY.md`（10777 B，`0938ff2452da5c5a`）
+- 目录：`%PROJECTS_ROOT%/WORK-LAB`｜远端 `git@github.com:DTALEX66/WORK-LAB.git`｜分支 `audit/client-asset-inventory-20260930`｜HEAD `de04206cfd37`
+- **规范/规则面 14 项**（角色 + 字节 + sha16 + 关键结构）：
+
+| 文件 | 角色 | 字节 | sha16 |
+|---|---|---|---|
+| `WORK-LAB-AUTHORITY.md` | top_human_authority | 10777 | `0938ff2452da5c5a` |
+| `AGENTS.md` | execution_rules | 9879 | `e5cb346ea56e6e1b` |
+| `docs/decisions/PROJECT_POSITIONING.md` | positioning | 5243 | `ab89d055e04fca5c` |
+| `docs/decisions/global-execution-standard.md` | execution_standard | 6320 | `6a6fdd30a1fab839` |
+| `docs/decisions/LESSONS_LEARNED.md` | lessons | 9516 | `4e0bdd64c3ba0105` |
+| `.project/governance/project-authority-index.json` | machine_authority_root | 2334 | `448e994e41309ba1` |
+| `.project/governance/taskpack-authority-index.json` | taskpack_authority | 13998 | `fa88e13b82d7dd59` |
+| `.project/governance/config-authority-index.json` | config_authority | 6525 | `eea9f10c34b384e2` |
+| `.project/governance/module-ownership.json` | module_ownership | 522 | `db866bab3cc01e97` |
+| `.project/governance/projects.json` | project_roster | 1199 | `10c4d141e14aa4c8` |
+| `.project/governance/project-data-boundary.json` | data_boundary | 3203 | `54a0e5c4c03a6f4c` |
+| `.project/governance/three-project-boundary.json` | three_project_boundary | 6444 | `1833136debe98bdd` |
+| `config/config-ownership.json` | config_ownership | 21535 | `d799c9925d32b1e1` |
+| `config/global-agent-policy.yaml` | global_workflow_policy_ssot | 7172 | `928a9989f41b1808` |
+
+- 决策记录 `docs/decisions/`：**18 篇**（`ARCHEAXIS_API_CONTRACT_SURVEY.md, CONTROL_PLANE_CONVERGENCE.md, DSH_PLUGIN_EVALUATION.md, ECOSYSTEM_AUDIT_COMPARISON.md, LESSONS_LEARNED.md, PROJECT_POSITIONING.md` …）
+- 强制 bootstrap 顺序（8 步）与优先级（7 级）见 `AGENTS.md`；机器校验器 `scripts/ci/verify_project_authority_reference.py`。
 
 ### ArcheAxis-Knowledge-OS
 
