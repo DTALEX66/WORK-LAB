@@ -20,13 +20,15 @@
 同目录其余文件（同一 SHA 前缀可替换 `{file}`）：
 `https://raw.githubusercontent.com/DTALEX66/WORK-LAB/e5936b6ea0f9a788602c09b1de161369296285fe/reports/audit-evidence/assets-20260930/{file}`
 
-| 文件 | 用途 | 字节 |
+| 文件 | 用途 | 字节（仓库字节，LF） |
 |---|---|---|
-| `asset-inventory.json` | 全量元数据清点（客户端 + 仓库侧） | 76,293 |
-| `inventory-verification.json` | 清点表 vs live 逐文件哈希比对 | 6,966 |
-| `CLEANUP-CANDIDATES.json` | 13 条清理候选（证据/风险/授权要求）+ 1 条审计中发现并修复的外溢 | 9,996 |
-| `REPO-ASSET-INDEX.md` | 仓库侧人类可读索引（技能/插件/治理/部署映射） | 7,081 |
-| `MANIFEST.json` | 上述文件 sha256 + 引用文件 sha256 | 3,405 |
+| `asset-inventory.json` | 全量元数据清点（客户端 + 仓库侧） | 73,749 |
+| `inventory-verification.json` | 清点表 vs live 逐文件哈希比对 | 6,712 |
+| `CLEANUP-CANDIDATES.json` | 13 条清理候选（证据/风险/授权要求）+ 1 条审计中发现并修复的外溢 | 9,771 |
+| `REPO-ASSET-INDEX.md` | 仓库侧人类可读索引（技能/插件/治理/部署映射） | 6,971 |
+| `MANIFEST.json` | 上述文件 sha256 + 引用文件 sha256 | 3,280 |
+
+> 哈希口径：`MANIFEST.json` 内的 sha256 一律按**仓库字节（LF 归一化后）**计算。审计者下载 raw 内容后直接对**下载到的字节**重算，应逐字匹配（本地 Windows 工作区的 CRLF 字节不算作基准）。
 
 > 锚定说明：`证据锚定提交` 是**包含全部最终证据文件**的提交（不可变）；本包文本的最新修订位于分支 tip。合并到 `main` 后，稳定 URL 应改用合并提交 SHA。
 
