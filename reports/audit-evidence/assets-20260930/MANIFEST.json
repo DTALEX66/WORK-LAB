@@ -1,6 +1,6 @@
 {
   "schema": "workflow/audit-evidence-manifest/v1",
-  "generated_at_utc": "2026-09-30T15:07:06Z",
+  "generated_at_utc": "2026-09-30T15:09:07Z",
   "package": "assets-20260930",
   "files": [
     {
@@ -247,8 +247,8 @@
     },
     {
       "rel": "taskpacks/current/error-ledger.json",
-      "bytes": 175342,
-      "sha256": "8bd141db1c5073d7ac5f7e03a34331429484b4c0634553d8384972d483014e4e",
+      "bytes": 181015,
+      "sha256": "23596310d8bafb6107069c86266eb30818abb8e7b3eefdb340dfa66177f41acf",
       "hashing_basis": "repository blob bytes at HEAD"
     }
   ],
@@ -260,5 +260,6 @@
     "spill_id": "SPILL-1"
   },
   "integrity_note": "Every digest is computed over the bytes the repository stores and serves. A verifier must hash the exact downloaded bytes (LF) and expect a match. Referenced repository authorities are hashed from their HEAD blobs, so they match the raw URL at the anchored commit.",
-  "scope_note": "Managed client software surface (hermes/codex/dsh/cc-switch/open-design/openhuman/github), this repository's workflow/governance/config/skill/plugin assets, the three-project boundary, the global workflow policy projection matrix and its live deployment readback, and the norms/rules surface. ArcheAxis-Knowledge-OS and DESIGN-LAB were probed read-only (metadata only)."
+  "scope_note": "Managed client software surface (hermes/codex/dsh/cc-switch/open-design/openhuman/github), this repository's workflow/governance/config/skill/plugin assets, the three-project boundary, the global workflow policy projection matrix and its live deployment readback, and the norms/rules surface. ArcheAxis-Knowledge-OS and DESIGN-LAB were probed read-only (metadata only).",
+  "ordering_note": "Referenced authority digests are taken from the commit that contains the final ledger/evidence edits, so every entry matches the raw URL at the anchored commit."
 }
