@@ -4,7 +4,7 @@
 |---|---|
 | 包 ID | `assets-20260930` |
 | 采集时间（UTC） | 客户端元数据探针 `2026-09-30T14:02:29Z`；全量清点 `2026-09-30T14:02:48Z`；清理候选 `2026-09-30T14:04:25Z` |
-| 证据锚定提交 | `49ce5031de5f29c7fa6e8f32f2be4052fd335650` |
+| 证据锚定提交 | `e5936b6ea0f9a788602c09b1de161369296285fe` |
 | 分支 | `audit/client-asset-inventory-20260930`（基于 `main` = `cd4daa8`） |
 | 审计对象 | Hermes / Codex(又名 ChatGPT Agent 侧代理运行时) / DSH(DeepSeek Harness) / CC Switch / Open Design / OpenHuman / GitHub 客户端面，以及本项目（WORK-LAB）全部工作流增强·治理·管理·全局部署·配置·技能·插件·记忆资产 |
 | 性质 | **只读元数据清点**（名称/路径/类型/字节/时间/哈希），引用现有权威登记表，不新建平行账本 |
@@ -14,11 +14,11 @@
 ## 0. 给审计者的最短路径（三个 URL）
 
 1. 本包（入口）：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/audit/client-asset-inventory-20260930/reports/EXTERNAL-AUDIT-PACK-CLIENT-ASSETS-20260930.md`
-2. 证据清单与哈希：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/49ce5031de5f29c7fa6e8f32f2be4052fd335650/reports/audit-evidence/assets-20260930/MANIFEST.json`
-3. 原始清点数据：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/49ce5031de5f29c7fa6e8f32f2be4052fd335650/reports/audit-evidence/assets-20260930/asset-inventory.json`
+2. 证据清单与哈希：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/e5936b6ea0f9a788602c09b1de161369296285fe/reports/audit-evidence/assets-20260930/MANIFEST.json`
+3. 原始清点数据：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/e5936b6ea0f9a788602c09b1de161369296285fe/reports/audit-evidence/assets-20260930/asset-inventory.json`
 
 同目录其余文件（同一 SHA 前缀可替换 `{file}`）：
-`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/49ce5031de5f29c7fa6e8f32f2be4052fd335650/reports/audit-evidence/assets-20260930/{file}`
+`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/e5936b6ea0f9a788602c09b1de161369296285fe/reports/audit-evidence/assets-20260930/{file}`
 
 | 文件 | 用途 | 字节 |
 |---|---|---|
@@ -27,6 +27,8 @@
 | `CLEANUP-CANDIDATES.json` | 13 条清理候选（证据/风险/授权要求）+ 1 条审计中发现并修复的外溢 | 9,996 |
 | `REPO-ASSET-INDEX.md` | 仓库侧人类可读索引（技能/插件/治理/部署映射） | 7,081 |
 | `MANIFEST.json` | 上述文件 sha256 + 引用文件 sha256 | 3,405 |
+
+> 锚定说明：`证据锚定提交` 是**包含全部最终证据文件**的提交（不可变）；本包文本的最新修订位于分支 tip。合并到 `main` 后，稳定 URL 应改用合并提交 SHA。
 
 ## 1. 摘要（被审计的结论）
 
@@ -111,7 +113,7 @@
 
 | # | 声明 | 核验方法 | 预期 |
 |---|---|---|---|
-| F1 | 锚定提交存在 | `https://api.github.com/repos/DTALEX66/WORK-LAB/commits/49ce5031de5f29c7fa6e8f32f2be4052fd335650` | HTTP 200 |
+| F1 | 锚定提交存在 | `https://api.github.com/repos/DTALEX66/WORK-LAB/commits/e5936b6ea0f9a788602c09b1de161369296285fe` | HTTP 200 |
 | F2 | 证据文件确在该提交树内 | 直接抓 §0 的 raw URL | HTTP 200 且非空 |
 | F3 | 证据未被篡改 | 用 `MANIFEST.json` 内 sha256 对每个文件重算 | 逐一相符 |
 | F4 | 分支存在 | `https://api.github.com/repos/DTALEX66/WORK-LAB/branches/audit/client-asset-inventory-20260930` | HTTP 200 |
@@ -151,8 +153,8 @@
 公开（无需本机）：
 
 ```bash
-curl -s https://api.github.com/repos/DTALEX66/WORK-LAB/commits/49ce5031de5f29c7fa6e8f32f2be4052fd335650 | jq -r .sha
-curl -s -o /dev/null -w '%{http_code}\n' https://raw.githubusercontent.com/DTALEX66/WORK-LAB/49ce5031de5f29c7fa6e8f32f2be4052fd335650/reports/audit-evidence/assets-20260930/MANIFEST.json
+curl -s https://api.github.com/repos/DTALEX66/WORK-LAB/commits/e5936b6ea0f9a788602c09b1de161369296285fe | jq -r .sha
+curl -s -o /dev/null -w '%{http_code}\n' https://raw.githubusercontent.com/DTALEX66/WORK-LAB/e5936b6ea0f9a788602c09b1de161369296285fe/reports/audit-evidence/assets-20260930/MANIFEST.json
 ```
 
 本机（可复现清点）：
