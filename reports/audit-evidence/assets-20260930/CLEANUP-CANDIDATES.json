@@ -1,6 +1,6 @@
 {
   "schema": "workflow/neutral-cleanup-candidates/v1",
-  "generated_at_utc": "2026-09-30T14:04:25Z",
+  "generated_at_utc": "2026-09-30T14:08:44Z",
   "policy": "CANDIDATES ONLY. No deletion/move/modification performed. Each item requires explicit per-path, per-operation authorization. E:/F: untouched.",
   "totals": {
     "candidates": 13,
@@ -205,6 +205,22 @@
       "claim": "plugin-inventory.json 列出的 3 个启用插件未全部出现在 live plugins 目录",
       "correction": "security-guidance / web-ddgs 为 bundled（随 Hermes 发行版），不在用户 plugins 目录；live 用户插件目录只有 chrome-profiles。",
       "evidence": "inventory-verification.json: plugin_inventory_check / hermes_plugin_install_metadata"
+    }
+  ],
+  "resolved_during_audit": [
+    {
+      "id": "SPILL-1",
+      "surface": "repo",
+      "path_token": "%WORKLAB_ROOT%/apps/.project-local/runs/frontend-baseline.json",
+      "kind": "boundary_spill",
+      "found_by": "仓库质量门禁 gate=governance → test_nf11_manifests_present_and_apps_clean（unexpected_apps=['.project-local']）",
+      "evidence": "apps/ 下出现 git 忽略的 .project-local 目录，内含早期失败基线（206 B，内容为 typecheck/vitest 均 [WinError 2] 系统找不到指定的文件）",
+      "root_cause": "本轮更早的基线脚本以相对路径 .project-local/runs/ 写入，而当时工作目录为 apps/，导致产物散落到 apps/.project-local（违反项目数据边界声明）",
+      "action_taken": "已把该文件复制保存到 %WORKLAB_ROOT%/.project-local/runs/frontend-baseline.failed-attempt-20260930.json（sha256 前缀 f06a97b6002608de），再删除 apps/.project-local 整个目录树",
+      "state": "RESOLVED_AND_VERIFIED",
+      "verification": "apps/ 目录现存 observer + token-monitor 两项；门禁重跑后 governance 模块应恢复干净",
+      "authorization_required": false,
+      "authorization_note": "修复的是本轮自己在仓库内造成的外溢（git 忽略区、可逆、已保留副本），非用户既有数据，故直接修复并登记"
     }
   ]
 }

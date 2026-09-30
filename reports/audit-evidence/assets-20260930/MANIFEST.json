@@ -1,6 +1,6 @@
 {
   "schema": "workflow/audit-evidence-manifest/v1",
-  "generated_at_utc": "2026-09-30T14:04:25Z",
+  "generated_at_utc": "2026-09-30T14:08:44Z",
   "package": "assets-20260930",
   "files": [
     {
@@ -15,8 +15,8 @@
     },
     {
       "name": "CLEANUP-CANDIDATES.json",
-      "bytes": 8623,
-      "sha256": "57e363aaff26afb3d2af5b8552b450f215dbb23ac276d067db9a586029772aa8"
+      "bytes": 9996,
+      "sha256": "643b054d056373034c968bc2a7228cec9a74de21156b12e9842defe36a416c67"
     },
     {
       "name": "REPO-ASSET-INDEX.md",
@@ -118,5 +118,9 @@
   ],
   "secrets_included": false,
   "secret_scan_note": "No credential values, env values, tokens or memory bodies are included.",
-  "external_roots_touched": []
+  "external_roots_touched": [],
+  "audit_findings": {
+    "spills_found_and_fixed": 1,
+    "spill_id": "SPILL-1"
+  }
 }

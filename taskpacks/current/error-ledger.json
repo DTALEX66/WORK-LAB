@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 91,
+    "total": 92,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 35,
@@ -20,13 +20,13 @@
       "feature_gap": 5,
       "config_downgrade": 3,
       "dead_entry": 2,
-      "path_boundary": 2,
+      "path_boundary": 3,
       "ci_tooling": 1,
       "sql_schema": 1,
       "regression_contract": 7
     },
     "repeat_prevention_required": true,
-    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer)"
+    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer); 2026-09-30: ERR-093 (asset-inventory boundary spill; ERR-092 is reserved by the unmerged branch g15-dsh-codex-registry-reconcile-20260930)"
   },
   "errors": [
     {
@@ -2570,6 +2570,33 @@
         "affectedCapability": "protected-main GitHub delivery chain",
         "regressionCommand": "GitHub PR/main SHA readback and required check-run readback",
         "currentApplicability": "CLOSED_MERGED_20260929"
+      }
+    },
+    {
+      "error_id": "ERR-093",
+      "date": "2026-09-30",
+      "task_id": "CLIENT-ASSET-INVENTORY-20260930",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "path_boundary",
+      "entrypoint": "tests/workflow-assistance/nf10nf11nf12_convergence_audit.py (quality gate module: governance)",
+      "command": "python services/orchestration/run_quality_gate.py verify",
+      "exit_code": 1,
+      "observed_error": "The governance gate failed with unexpected_apps=['.project-local'] because an ignored .project-local directory had appeared inside apps/, so the dependency-convergence contract no longer saw exactly the known app surfaces.",
+      "root_cause": "An earlier frontend baseline script in the same session wrote its evidence with a repo-relative path .project-local/runs/frontend-baseline.json while the process working directory was apps/, so the artifact was created at apps/.project-local/runs/ instead of the single declared task-data root at the repository top level.",
+      "fix": "Copied the spilled file to the canonical root .project-local/runs/frontend-baseline.failed-attempt-20260930.json (206 bytes, sha256 prefix f06a97b6002608de), removed the whole apps/.project-local tree, confirmed apps/ lists exactly observer and token-monitor, then re-ran the governance gate to exit 0 and re-ran the convergence audit suite to 6 passed.",
+      "regression_test": "Dependency convergence must report unexpected_apps == [] and apps/ top level must contain only the registered app surfaces; any new ignored directory under apps/ fails the gate.",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Scripts must resolve the task-data root from the repository top level (or an explicit root argument) and never write project-local output through a relative path that depends on the current working directory; the boundary check must run before committing evidence.",
+      "remaining_boundary": "This entry proves the single spill found on 2026-09-30; other client-side directories outside the repository were inventoried as metadata only and were not written to.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "repository data-boundary cleanliness under the governance quality gate",
+        "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python -m pytest tests/workflow-assistance/nf10nf11nf12_convergence_audit.py -q",
+        "currentApplicability": "FIXED_AND_VERIFIED_20260930"
       }
     }
   ],
