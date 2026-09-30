@@ -1,60 +1,114 @@
 {
   "schema": "workflow/audit-evidence-manifest/v1",
-  "generated_at_utc": "2026-09-30T15:11:54Z",
+  "generated_at_utc": "2026-09-30T15:26:32Z",
   "package": "assets-20260930",
   "files": [
     {
+      "rel": "reports/audit-evidence/assets-20260930/asset-inventory.json",
       "name": "asset-inventory.json",
+      "category": "inventory",
+      "purpose": "全量元数据清点（客户端 + 仓库侧）",
       "bytes": 73749,
       "sha256": "74b700ff67ed58540f7a6a5876ef86fbc60b0fe971b5c192b5a02c553b7ffd89",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
+      "rel": "reports/audit-evidence/assets-20260930/inventory-verification.json",
       "name": "inventory-verification.json",
+      "category": "verification",
+      "purpose": "清点表 vs live 逐文件哈希比对",
       "bytes": 6712,
       "sha256": "b282283ead305643ec10fbd61b5b5fd5fd796608a4d50f0471df4b13ef46b784",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
+      "rel": "reports/audit-evidence/assets-20260930/CLEANUP-CANDIDATES.json",
       "name": "CLEANUP-CANDIDATES.json",
+      "category": "cleanup",
+      "purpose": "13 条清理候选（executed=false）",
       "bytes": 9771,
       "sha256": "cd03a481e12e97050183d89e54e606fb5a9487de33bd8feadf34a73118339926",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
+      "rel": "reports/audit-evidence/assets-20260930/REPO-ASSET-INDEX.md",
       "name": "REPO-ASSET-INDEX.md",
+      "category": "index",
+      "purpose": "仓库侧人类可读索引",
       "bytes": 6971,
       "sha256": "b5e80daa624451d4a603eb10ebf21eb4af4f253e00ad11b003dd3a1369041176",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
+      "rel": "reports/audit-evidence/assets-20260930/three-project-probe.json",
       "name": "three-project-probe.json",
+      "category": "three-projects",
+      "purpose": "三项目只读元数据探针",
       "bytes": 12070,
       "sha256": "a6fcc0c28cf6d01fdb51152f3b242cd9804b0adaeb757eb0182e9418f862529e",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
+      "rel": "reports/audit-evidence/assets-20260930/THREE-PROJECT-AND-NORMS-INDEX.md",
       "name": "THREE-PROJECT-AND-NORMS-INDEX.md",
+      "category": "three-projects",
+      "purpose": "三项目边界 + 规范规则索引",
       "bytes": 7680,
       "sha256": "73398604968200b092ec78496207aad6f9ab7c4b975e438162ed9b410f448830",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
+      "rel": "reports/audit-evidence/assets-20260930/global-workflow-coverage.json",
       "name": "global-workflow-coverage.json",
+      "category": "global-workflow",
+      "purpose": "全局策略 SSOT + 10 客户端投影矩阵 + 三项目规范面",
       "bytes": 26819,
       "sha256": "1d209a104e81712cdcbce89d88742772c191fa2d48bddd6332b68e49fcea7403",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
+      "rel": "reports/audit-evidence/assets-20260930/global-deployment-readback.json",
       "name": "global-deployment-readback.json",
+      "category": "global-workflow",
+      "purpose": "仓库源 vs 原生 live 目标回读",
       "bytes": 4471,
       "sha256": "fedd647162284ebcdc9ddc0715a57852fc6a4844593646e4a9a514d5ca3eba86",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     },
     {
+      "rel": "reports/audit-evidence/assets-20260930/GLOBAL-WORKFLOW-AND-PROJECT-NORMS-INDEX.md",
       "name": "GLOBAL-WORKFLOW-AND-PROJECT-NORMS-INDEX.md",
+      "category": "global-workflow",
+      "purpose": "全局工作流判定 + 缺口 G1-G4",
       "bytes": 12104,
       "sha256": "d8f4f4e06e778966f4eff2ab249085dc23934d63618b912568d24d7bb5c99c36",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+    },
+    {
+      "rel": "reports/audit-archive/20260930/ARCHIVE-README.md",
+      "name": "ARCHIVE-README.md",
+      "category": "archive",
+      "purpose": "内容层入口：归档口径/覆盖/排除/脱敏/校验",
+      "bytes": 5246,
+      "sha256": "0e6c7d493ab4a6fb8cd4bd355f73a62be01c45dd9e23856b88fe47cbd23ffa6d",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+    },
+    {
+      "rel": "reports/audit-archive/20260930/ARCHIVE-INDEX.json",
+      "name": "ARCHIVE-INDEX.json",
+      "category": "archive",
+      "purpose": "归档逐文件索引与 sha256",
+      "bytes": 313019,
+      "sha256": "78e6b6ba96ae8b8a5b055bf342f8bf142ce5a1835ed457c7c3b9d839d656457a",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+    },
+    {
+      "rel": "reports/audit-archive/20260930/SECRET-SCAN-REPORT.json",
+      "name": "SECRET-SCAN-REPORT.json",
+      "category": "archive",
+      "purpose": "归档安全报告",
+      "bytes": 851,
+      "sha256": "3860a0e65378ae33befe46630379d33548d19ab6a81d1a8ce3f5ddea8ffa8080",
       "hashing_basis": "repository bytes (LF-normalized, as committed)"
     }
   ],
@@ -259,7 +313,8 @@
     "spills_found_and_fixed": 1,
     "spill_id": "SPILL-1"
   },
-  "integrity_note": "Every digest is computed over the bytes the repository stores and serves. A verifier must hash the exact downloaded bytes (LF) and expect a match. Referenced repository authorities are hashed from their HEAD blobs, so they match the raw URL at the anchored commit.",
-  "scope_note": "Managed client software surface (hermes/codex/dsh/cc-switch/open-design/openhuman/github), this repository's workflow/governance/config/skill/plugin assets, the three-project boundary, the global workflow policy projection matrix and its live deployment readback, and the norms/rules surface. ArcheAxis-Knowledge-OS and DESIGN-LAB were probed read-only (metadata only).",
-  "ordering_note": "Referenced authority digests are taken from the commit that contains the final ledger/evidence edits, so every entry matches the raw URL at the anchored commit."
+  "integrity_note": "Every digest is computed over the bytes the repository stores and serves; hash the exact downloaded bytes (LF) and expect a match. Referenced repository authorities are hashed from their HEAD blobs at generation time, so they match the raw URL at the anchored commit. The archive layer carries its own per-file digests in reports/audit-archive/20260930/ARCHIVE-INDEX.json.",
+  "scope_note": "Managed client software surface (hermes/codex/dsh/cc-switch/open-design/openhuman/github), this repository's workflow/governance/config/skill/plugin assets, the three-project boundary, the global workflow policy projection matrix with its live deployment readback, and a read-only content archive of rules/norms/skills/configs. Credentials, sessions, private memories and databases are excluded by policy and are NOT represented here. ArcheAxis-Knowledge-OS and DESIGN-LAB were read only.",
+  "ordering_note": "Referenced authority digests are taken from the commit that contains the final ledger/evidence edits, so every entry matches the raw URL at the anchored commit.",
+  "url_template": "https://raw.githubusercontent.com/DTALEX66/WORK-LAB/<commit-sha>/<rel>"
 }

@@ -7,31 +7,40 @@
 | 证据锚定提交 | `636d5eced04046ed479d9d797413e8ffbcedbcc5` |
 | 分支 | `audit/client-asset-inventory-20260930`（基于 `main` = `cd4daa8`） |
 | 审计对象 | Hermes / Codex(又名 ChatGPT Agent 侧代理运行时) / DSH(DeepSeek Harness) / CC Switch / Open Design / OpenHuman / GitHub 客户端面，以及本项目（WORK-LAB）全部工作流增强·治理·管理·全局部署·配置·技能·插件·记忆资产 |
-| 性质 | **只读元数据清点**（名称/路径/类型/字节/时间/哈希），引用现有权威登记表，不新建平行账本 |
-| 目的 | 为「清理垃圾与过时技能/插件」与「重新部署软件相关内容」提供可审计基线 |
+| 性质 | **只读元数据清点 + 只读内容归档**（元数据：名称/路径/类型/字节/时间/哈希；内容归档：规则·规范·技能·配置文本的 LF 副本，源文件未修改），引用现有权威登记表，不新建平行账本 |
+| 目的 | 为「清理垃圾与过时技能/插件」与「重新部署软件相关内容」提供可审计基线；**并为网页 GPT 审计收敛提供可逐字核对的文本层** |
 | 是否已执行清理 | **否**。13 条候选全部 `executed: false`，需逐路径逐操作显式授权 |
+| 内容归档 | `reports/audit-archive/20260930/`（476 文件 / 4.45 MiB，见 `ARCHIVE-README.md`） |
 
-## 0. 给审计者的最短路径（三个 URL）
+## 0. 给审计者的最短路径（URL）
 
-1. 本包（入口）：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/audit/client-asset-inventory-20260930/reports/EXTERNAL-AUDIT-PACK-CLIENT-ASSETS-20260930.md`
-2. 证据清单与哈希：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413e8ffbcedbcc5/reports/audit-evidence/assets-20260930/MANIFEST.json`
-3. 原始清点数据：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413e8ffbcedbcc5/reports/audit-evidence/assets-20260930/asset-inventory.json`
+1. 本包（索引层入口）：`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/audit/client-asset-inventory-20260930/reports/EXTERNAL-AUDIT-PACK-CLIENT-ASSETS-20260930.md`
+2. 归档说明（**内容层入口**）：`…/reports/audit-archive/20260930/ARCHIVE-README.md`
+3. 归档逐文件索引与 sha256：`…/reports/audit-archive/20260930/ARCHIVE-INDEX.json`
+4. 证据清单与哈希：`…/reports/audit-evidence/assets-20260930/MANIFEST.json`
+5. 原始清点数据：`…/reports/audit-evidence/assets-20260930/asset-inventory.json`
 
-同目录其余文件（同一 SHA 前缀可替换 `{file}`）：
-`https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413e8ffbcedbcc5/reports/audit-evidence/assets-20260930/{file}`
+把上面 `…` 替换为 `https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413e8ffbcedbcc5` 即为**不可变锚点 URL**（路径为**仓库相对路径**，可直接替换为任意包内文件）：
 
-| 文件 | 用途 | 字节（仓库字节，LF） |
+```
+https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413e8ffbcedbcc5/<repo-relative-path>
+```
+
+| 文件（仓库相对路径） | 用途 | 字节（仓库字节，LF） |
 |---|---|---|
-| `asset-inventory.json` | 全量元数据清点（客户端 + 仓库侧） | 73,749 |
-| `inventory-verification.json` | 清点表 vs live 逐文件哈希比对 | 6,712 |
-| `CLEANUP-CANDIDATES.json` | 13 条清理候选（证据/风险/授权要求）+ 1 条审计中发现并修复的外溢 | 9,771 |
-| `REPO-ASSET-INDEX.md` | 仓库侧人类可读索引（技能/插件/治理/部署映射） | 6,971 |
-| `three-project-probe.json` | 三项目（WORK-LAB / ArcheAxis-Knowledge-OS / DESIGN-LAB）只读元数据探针 | 12,070 |
-| `THREE-PROJECT-AND-NORMS-INDEX.md` | 三项目边界 + 规范规则 + 决策文档索引（人类可读） | 7,680 |
-| `global-workflow-coverage.json` | 全局策略 SSOT + 10 客户端投影矩阵（模式/六项能力/19 域状态分布/扩展路径）+ 三项目规范面 | 26,819 |
-| `global-deployment-readback.json` | 仓库源 vs 原生 live 目标的哈希/标记回读（hermes 13 技能、codex 4 目标） | 4,471 |
-| `GLOBAL-WORKFLOW-AND-PROJECT-NORMS-INDEX.md` | 全局工作流完成度判定 + 逐项缺口 G1–G4 + 三项目规范索引（人类可读） | 12,104 |
-| `MANIFEST.json` | 上述 9 个文件的 sha256（仓库字节口径）+ 32 个引用权威文件的 HEAD blob sha256 | 10,725 |
+| `reports/audit-evidence/assets-20260930/asset-inventory.json` | 全量元数据清点（客户端 + 仓库侧） | 73,749 |
+| `reports/audit-evidence/assets-20260930/inventory-verification.json` | 清点表 vs live 逐文件哈希比对 | 6,712 |
+| `reports/audit-evidence/assets-20260930/CLEANUP-CANDIDATES.json` | 13 条清理候选（证据/风险/授权要求）+ 1 条审计中发现并修复的外溢 | 9,771 |
+| `reports/audit-evidence/assets-20260930/REPO-ASSET-INDEX.md` | 仓库侧人类可读索引（技能/插件/治理/部署映射） | 6,971 |
+| `reports/audit-evidence/assets-20260930/three-project-probe.json` | 三项目（WORK-LAB / ArcheAxis-Knowledge-OS / DESIGN-LAB）只读元数据探针 | 12,070 |
+| `reports/audit-evidence/assets-20260930/THREE-PROJECT-AND-NORMS-INDEX.md` | 三项目边界 + 规范规则 + 决策文档索引（人类可读） | 7,680 |
+| `reports/audit-evidence/assets-20260930/global-workflow-coverage.json` | 全局策略 SSOT + 10 客户端投影矩阵（模式/六项能力/19 域状态分布/扩展路径）+ 三项目规范面 | 26,819 |
+| `reports/audit-evidence/assets-20260930/global-deployment-readback.json` | 仓库源 vs 原生 live 目标的哈希/标记回读（hermes 13 技能、codex 4 目标） | 4,471 |
+| `reports/audit-evidence/assets-20260930/GLOBAL-WORKFLOW-AND-PROJECT-NORMS-INDEX.md` | 全局工作流完成度判定 + 逐项缺口 G1–G4 + 三项目规范索引（人类可读） | 12,104 |
+| `reports/audit-archive/20260930/ARCHIVE-README.md` | **内容层**入口：归档口径、覆盖、排除项、脱敏、配额与校验方法 | 5,246 |
+| `reports/audit-archive/20260930/ARCHIVE-INDEX.json` | 归档逐文件索引（来源/归档路径/字节/sha256/状态/脱敏） | 见文件 |
+| `reports/audit-archive/20260930/SECRET-SCAN-REPORT.json` | 归档安全报告（排除项、脱敏项、占位符保留项） | 见文件 |
+| `reports/audit-evidence/assets-20260930/MANIFEST.json` | 上述 12 个文件的 sha256（仓库字节口径）+ 32 个引用权威文件的 HEAD blob sha256 | 见文件 |
 
 > 哈希口径：`MANIFEST.json` 内的 sha256 一律按**仓库字节（LF 归一化后）**计算。审计者下载 raw 内容后直接对**下载到的字节**重算，应逐字匹配（本地 Windows 工作区的 CRLF 字节不算作基准）。
 
@@ -51,6 +60,7 @@
 | 8 | 清点过程本身产出价值证据：**发现并修复 2 处真实缺陷**（`apps/.project-local` 边界外溢 → ERR-093；证据哈希 CRLF/LF 口径错误 → ERR-094），门禁与完整性校验均已恢复 | 见 §2-C5、§2-C6 |
 | 9 | **三项目边界与规范规则已纳入**：3 个独立仓库、6 条边界切分、8 条禁止新所有者、规范/规则 14 文件 + 决策文档 18 文件 | 见 §2-H 与 `THREE-PROJECT-AND-NORMS-INDEX.md` |
 | 10 | **全局工作流**：策略 SSOT + 10 客户端 × 19 域投影声明**完整**；原生**部署层 4 处缺口**（codex overlay/skills 缺失、hermes 1/13 技能与源不一致、登记记录陈旧），已登记 ERR-095/ERR-096 | 见 §2-I 与 `GLOBAL-WORKFLOW-AND-PROJECT-NORMS-INDEX.md` |
+| 11 | **内容归档已建立（只读）**：8 个面（hermes/codex/dsh/cc-switch/open-design/openhuman + 两项目规则面）共 **476 文件 / 4.45 MiB** 文本副本；源文件**未修改**；0 密钥泄漏、0 误报；所有 SKILL.md 完整（仅附属 references 受配额裁剪） | 见 §2-J 与 `reports/audit-archive/20260930/ARCHIVE-README.md` |
 
 ## 2. 逐条可判定声明
 
@@ -175,6 +185,20 @@
 
 > 纪律：I4–I6 与 G1–G4 均为**声明/登记与 live 不一致**的已核实事实，不等于"产品不可用"；本包**未执行任何写入**，修复必须走被授权通道并附原生回读。
 
+### J. 内容归档层（只读副本，供逐字审计）
+
+| # | 声明 | 证据 | 预期 |
+|---|---|---|---|
+| J1 | 归档为**只读复制**，源文件零修改 | `ARCHIVE-INDEX.json: policy.mode = READ_ONLY_COPY` | 归档在 `reports/audit-archive/20260930/`；本机源路径未发生写入（只读打开） |
+| J2 | 归档覆盖 8 个面，含全部技能主文件 | `ARCHIVE-INDEX.json: summary` | hermes 363 / design-lab 61 / codex 18 / dsh 17 / archeaxis 8 / openhuman 4 / open-design 3 / cc-switch 2；**SKILL.md 无缺失**（186 个） |
+| J3 | 归档不含凭据 | `SECRET-SCAN-REPORT.json` + 独立复扫 | 名称策略排除 `.env`/`.credentials.yaml`/`auth*.json`/`*.sqlite*`/`Local State` 等；内容扫描 0 排除、0 命中 |
+| J4 | 凭据类配置文件以**脱敏**而非排除处理 | 同 J3 | 命中即整值替换 `[REDACTED_BY_WORKLAB]`；本次仅 1 个技能文件 1 处（`kv_secret`），清单在报告中 |
+| J5 | 误报防护有据 | 扫描器含词边界 + 占位符判定 | `task-2026-…` 之类的 `sk-` 假命中不会触发排除；文档示例令牌（3 个文件）**原样保留**并在报告中列明 |
+| J6 | 配额裁剪**未伤及技能主文件** | `ARCHIVE-INDEX.json` 中 `EXCLUDED_CLIENT_BUDGET` 明细 | 494 个被裁文件**全部**为 `skills/**/references/*.md`（附属文档）；`SKILL.md` 丢弃数 = **0** |
+| J7 | 归档逐文件可校验 | `ARCHIVE-INDEX.json` 内每文件 sha256（LF 仓库字节） | 下载任意归档副本重算 sha256 应逐字匹配 |
+
+> 使用方式（给网页 GPT）：先读 `ARCHIVE-README.md` 了解口径与排除项，再按 `ARCHIVE-INDEX.json` 的 `archive_path` 逐个取原文核对声明；**不要**把"未归档的凭据/会话/记忆"读成"不存在"。
+
 ## 3. 审计者**无法**从公开信息验证的部分（请据此调整结论强度）
 
 | 无法公开验证 | 原因 | 本机自证方式 |
@@ -194,9 +218,12 @@
 | `skills-inventory.json`（14 Codex 技能）与 `skill-provenance.yaml`（13 受管技能）为何数量不同？ | 二者是**不同面**：前者登记 Codex 执行器技能，后者登记部署到 Hermes Home 的受管技能。不是重复账本，无需合并。 |
 | 本包是否构成"平行账本"？ | 否。本包只**引用**现有权威登记表（`config/*`、`.project/governance/*`），不定义新权威字段；`schema` 为 `workflow/neutral-asset-inventory/v1`，属证据层。 |
 | 为什么把 `%USERPROFILE%` 等令牌化，而不是绝对路径？ | 中立化要求：产物需跨机器可读；同时避免把用户名写进公开仓库。本机绝对路径仅存在于 `.project-local/`（不跟踪）。 |
-| 为什么包内存在一个"再锚定"提交（pack 文本晚于证据提交）？ | 证据文件与 `MANIFEST.json` 先冻结为提交 `7882034`，再由 pack 把 URL 指向该提交，因此 `7882034` 是**证据的可信锚点**；本包文本的最新修订位于分支 tip。锚点提交内的 pack 文本可能引用更早的锚点，这属预期，不是缺失。 |
+| 为什么包内存在一个"再锚定"提交（pack 文本晚于证据提交）？ | 证据文件与 `MANIFEST.json` 先冻结为提交 `636d5ece`，再由 pack 把 URL 指向该提交，因此 `636d5ece` 是**证据的可信锚点**；本包文本的最新修订位于分支 tip。锚点提交内的 pack 文本可能引用更早的锚点，这属预期，不是缺失。 |
 | 为什么引用权威文件的 sha256 以 HEAD blob 为准？ | 只有按仓库存储的字节计算，审计者用 raw URL 下载后重算才能逐字匹配；曾因按工作区 CRLF 字节计算而全部不匹配（见 ERR-094）。 |
 | 第 10 条里"部署层 4 处缺口"是否等于项目失败？ | 否。它表示**声明/登记与 live 原生面不一致**（G1–G4），已按纪律登记为 ERR-095/ERR-096 且状态为 `DRIFT_OPEN_20260930`；修复需被授权写入通道，本包未执行任何写入。 |
+| 归档是"复制"还是"改写"？源文件会受影响吗？ | 源文件**零修改**（只读打开）：归档把文本按 LF 写入本项目，仅对 1 个技能文件做了 1 处模式级脱敏（公开仓库不得含可疑令牌）。原始 CRLF 差异不影响内容语义，且 `ARCHIVE-INDEX.json` 记录的是**副本** sha256。 |
+| 为什么有 494 个文件被"丢弃"？会漏审计吗？ | 它们是 `skills/**/references/*.md` 附属文档，因客户端配额裁剪；**技能主文件 `SKILL.md` 一个未丢**（186/186）。若某结论依赖附属文档，请标注"依据缺失"而非推断内容。 |
+| 归档里有"任务/状态"类文件吗？ | 有少量状态文件（如 hermes `.workflow-assistance-baseline.json`、openhuman `window_state.toml`）——它们是**本机运行状态的只读快照**，用于核对部署声明，不是新的权威账本。 |
 
 ## 5. 复核命令（公开可做 / 本机可做）
 
@@ -207,7 +234,7 @@ curl -s https://api.github.com/repos/DTALEX66/WORK-LAB/commits/636d5eced04046ed4
 curl -s -o /dev/null -w '%{http_code}\n' https://raw.githubusercontent.com/DTALEX66/WORK-LAB/636d5eced04046ed479d9d797413e8ffbcedbcc5/reports/audit-evidence/assets-20260930/MANIFEST.json
 ```
 
-一次跑完完整性校验（下载 MANIFEST → 逐个重算 sha256，含 9 个证据文件与 32 个引用权威文件）：
+一次跑完完整性校验（下载 MANIFEST → 逐个重算 sha256，含 12 个证据/归档索引文件与 32 个引用权威文件；随后校验归档 476 个副本）：
 
 ```bash
 python - <<'PY'
@@ -215,19 +242,27 @@ import json, hashlib, urllib.request
 SHA = "636d5eced04046ed479d9d797413e8ffbcedbcc5"
 B = f"https://raw.githubusercontent.com/DTALEX66/WORK-LAB/{SHA}"
 g = lambda u: urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": "audit"}), timeout=60).read()
-mf = json.loads(g(f"{B}/reports/audit-evidence/assets-20260930/MANIFEST.json"))
 ok = bad = 0
+
+mf = json.loads(g(f"{B}/reports/audit-evidence/assets-20260930/MANIFEST.json"))
 for f in mf["files"]:
-    b = g(f"{B}/reports/audit-evidence/assets-20260930/{f['name']}")
+    b = g(f"{B}/{f['rel']}")
     good = hashlib.sha256(b).hexdigest() == f["sha256"] and len(b) == f["bytes"]
     ok, bad = (ok + 1, bad) if good else (ok, bad + 1)
-    print("OK " if good else "FAIL", f["name"])
+    print("OK " if good else "FAIL", f["rel"])
 for r in mf["referenced_repo_files"]:
-    b = g(f"{B}/{r['rel']}")
-    good = hashlib.sha256(b).hexdigest() == r["sha256"]
+    good = hashlib.sha256(g(f"{B}/{r['rel']}")).hexdigest() == r["sha256"]
     ok, bad = (ok + 1, bad) if good else (ok, bad + 1)
     print("OK " if good else "FAIL", r["rel"])
-print(f"verified={ok} failed={bad}")
+
+idx = json.loads(g(f"{B}/reports/audit-archive/20260930/ARCHIVE-INDEX.json"))
+aok = abad = 0
+for r in idx["files"]:
+    if not r["status"].startswith("COPIED"):
+        continue
+    good = hashlib.sha256(g(f"{B}/reports/audit-archive/20260930/{r['archive_path']}")).hexdigest() == r["sha256"]
+    aok, abad = (aok + 1, abad) if good else (aok, abad + 1)
+print(f"authority verified={ok} failed={bad} | archive verified={aok} failed={abad}")
 PY
 ```
 
