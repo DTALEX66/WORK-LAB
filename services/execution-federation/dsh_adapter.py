@@ -75,7 +75,11 @@ class DshAdapter(_acp().ExecutorAcpAdapter):
         acp = _acp()
         caps = {acp.Capability.CAPABILITIES, acp.Capability.PROBE}
         caps |= {acp.Capability.SESSION, acp.Capability.PERSIST,
-                 acp.Capability.HANDOFF, acp.Capability.RESUME}
+                 acp.Capability.HANDOFF}
+        # RESUME is deliberately NOT declared: it is an execution promise whose
+        # ACP operation resume() is the base implementation returning
+        # NOT_IMPLEMENTED (AG-06, 2026-10-01). Session reading is covered by
+        # SESSION/PERSIST; advertising RESUME was a false success surface.
         if self.is_launchable():
             caps |= {acp.Capability.LAUNCH, acp.Capability.FORK,
                      acp.Capability.CANCEL, acp.Capability.STREAM}

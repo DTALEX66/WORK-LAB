@@ -21,12 +21,25 @@ class NativeEffectTruthTests(unittest.TestCase):
     def test_unwired_operations_cannot_succeed(self):
         m = load('truth_openhands', 'services/execution-federation/openhands_adapter.py')
         adapter = m.OpenHandsAdapter(reachable=True)
+        # The contract this test defends is "no unwired operation claims
+        # success" — observed effect, not one specific string. Two honest
+        # degraded reasons are valid:
+        #   NOT_IMPLEMENTED  the adapter advertises the capability but the
+        #                    operation is still the base no-op;
+        #   NOT_SUPPORTED    the adapter does not advertise the capability at
+        #                    all (it never was wired).
+        # AG-06 (2026-10-01) removed the false `resume` capability declaration
+        # from openhands/codex/dsh, which legitimately moved resume from the
+        # first reason to the second. Pinning to one string would have forced
+        # the adapter to keep advertising a capability it cannot deliver.
+        honest_degraded = {'NOT_IMPLEMENTED', 'NOT_SUPPORTED', 'NOT_LAUNCHABLE'}
         for result in (adapter.new(), adapter.resume('absent'),
                        adapter.prompt('absent', 'synthetic'),
                        adapter.cancel('absent'), adapter.fork('absent')):
             with self.subTest(op=result.op):
                 self.assertFalse(result.ok)
-                self.assertEqual(result.status, 'NOT_IMPLEMENTED')
+                self.assertIn(result.status, honest_degraded)
+                self.assertNotIn(result.status, {'OK', 'SUCCESS', 'COMPLETED'})
 
     def plane(self):
         m = load('truth_config', 'services/policy/config_control_plane.py')

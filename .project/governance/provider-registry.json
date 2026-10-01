@@ -78,7 +78,10 @@
       "weight_location": "D:\\All projects\\Model library\\ollama\\blobs\\sha256-a3de86cd1c132c822487ededd47a324c50491393e6565cd14bafa40d0b8e686f",
       "quantization": "Q4_K_M (GGUF file_type 15)",
       "standby_reason": "Ollama 0.34.4 no longer resolves OLLAMA_MODELS to the shared library (see runtime-registry ollama.model_store_defect), so this weight is not served by any runtime right now. It is retained in place pending a user decision; it is NOT deleted and NOT counted as the WL-MODEL-02 'two general LLMs' target.",
-      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
+      "binding_status": "UNSERVED_RETAINED_PENDING_DECISION",
+      "binding_status_source": "model-registry.json models[id=qwen3-8b].status",
+      "binding_status_note": "Separated from operationalStatus on 2026-10-01 (AG-05) because the two describe different things and reading operationalStatus alone wrongly implied the model was callable. The runtime endpoint is up; THIS BINDING IS NOT SERVED. Evidence: the weight is an Ollama blob under Model library\\ollama\\blobs (LM Studio indexes <publisher>/<repo>/<file>.gguf, not that layout), it is absent from runtime-registry lmstudio.model_index.verified_indexed_models, and model-registry states runtime=\"none (was ollama)\".",
+      "operationalStatus": "RUNTIME endpoint scope only (2026-09-29): the LM Studio HTTP server is up, autostarts, and self-heals every 10 minutes, so the ENDPOINT accepts requests. This is not a claim that this provider's binding resolves — see binding_status above; it does not."
     },
     {
       "id": "local.deep.default",
@@ -147,7 +150,10 @@
       "weight_location": "D:\\All projects\\Model library\\ollama\\blobs\\sha256-1194192cf2a187eb02722edcc3f77b11d21f537048ce04b67ccf8ba78863006a",
       "quantization": "Q4_K_M (GGUF file_type 15)",
       "status_note": "Weight present (18.56 GB, arch qwen3moe, 128 experts / 8 used). NOT served and NOT part of the WL-MODEL-02 target count; retained pending a user decision.",
-      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
+      "binding_status": "UNSERVED_RETAINED_PENDING_DECISION",
+      "binding_status_source": "model-registry.json models[id=qwen3-coder-30b-a3b].status",
+      "binding_status_note": "Separated from operationalStatus on 2026-10-01 (AG-05); see local.fast.legacy for the full reasoning. The runtime endpoint is up; THIS BINDING IS NOT SERVED (Ollama blob layout, not indexed by LM Studio, model-registry runtime=\"none (was ollama)\").",
+      "operationalStatus": "RUNTIME endpoint scope only (2026-09-29): the LM Studio HTTP server is up, autostarts, and self-heals every 10 minutes, so the ENDPOINT accepts requests. This is not a claim that this provider's binding resolves — see binding_status above; it does not."
     },
     {
       "id": "local.embedding.default",
@@ -259,7 +265,8 @@
     {
       "id": "local.ocr.default",
       "display_name": "Local OCR / document vision",
-      "binds_to_model": "qwen2.5vl-7b",
+      "binds_to_model": "qwen2.5-vl-7b-instruct",
+      "binding_note": "Foreign key closed 2026-10-01 (AG-05). This previously read \"qwen2.5vl-7b\", which is the LEGACY Ollama BLOB name (model-registry previous_entry.id, and finalStructureTarget.ingestion[0] as an OCR candidate label). That blob has no vision projector and is NOT the served artifact. The live binding is the model-registry entry id \"qwen2.5-vl-7b-instruct\" (ggml-org/Qwen2.5-VL-7B-Instruct-GGUF, Q4_K_M weights + paired mmproj), which is what LM Studio reports as type=vlm and what model_name_on_wire resolves to.",
       "binds_to_runtime": "lmstudio",
       "endpoint": "http://127.0.0.1:1234/v1",
       "api_shape": "openai-compatible (vision)",
