@@ -313,12 +313,20 @@ SOFTWARE_CANDIDATE_INVENTORY: list[dict[str, Any]] = [
     {
         "software_id": "deepseek-harness",
         "package_identity": "deepseek-harness",
-        "install_roots": ["D:/All projects/DSH"],
-        "executables": ["DSH Desktop.exe"],
-        "expected_existing": "D:/All projects/DSH",
+        # AG-07 (2026-10-01): the OFFICIAL build installs at the vendor default
+        # per-user path, declared here via %LOCALAPPDATA% so no drive letter is
+        # pinned. The old community root is kept only as a legacy probe: it now
+        # holds nothing but the .dsh data directory, so it must not be reported
+        # as the install root.
+        "install_roots": [
+            "%LOCALAPPDATA%/Programs/DeepSeek Harness",
+            "D:/All projects/DSH",
+        ],
+        "executables": ["DeepSeek Harness.exe", "DSH Desktop.exe"],
+        "expected_existing": None,
         "config_root_env": None,
         "os_managed": False,
-        "install_type": "community_desktop_release",
+        "install_type": "official_per_user_electron",
     },
     {
         "software_id": "hermes-agent",
@@ -375,19 +383,45 @@ SOFTWARE_CANDIDATE_INVENTORY: list[dict[str, Any]] = [
 
 def _probe_install(candidate: dict[str, Any]) -> dict[str, Any]:
     """Read-only probe of one software's declared install roots. No writes,
-    no user config / data / credentials reads."""
+    no user config / data / credentials reads.
+
+    Two correctness rules learned from the 2026-10-01 DSH reinstall:
+
+    * roots are environment-expanded, so a vendor-default root can be declared
+      as ``%LOCALAPPDATA%/Programs/...`` instead of hardcoding one machine's
+      drive letter (a pinned path rots the moment the user reinstalls);
+    * a root that actually CONTAINS the declared executable wins over one that
+      merely exists. The previous first-existing-directory-wins rule reported
+      the stale leftover community directory ``D:/All projects/DSH`` as the DSH
+      install root even though its executable is gone, producing a misleading
+      ``SINGLE_UNVERIFIED`` in the snapshot's software[] projection.
+    """
     install_root: str | None = None
     executable: str | None = None
-    for root in candidate.get("install_roots", []):
-        probe = Path(root)
-        if probe.is_dir():
-            install_root = str(probe)
-            for exe_name in candidate.get("executables", []):
-                exe_path = probe / exe_name
-                if exe_path.is_file():
-                    executable = str(exe_path.resolve())
-                    break
-            break
+    fallback_root: str | None = None
+    for raw_root in candidate.get("install_roots", []):
+        expanded = os.path.expandvars(str(raw_root))
+        expanded = os.path.expanduser(expanded)
+        probe = Path(expanded)
+        if not probe.is_dir():
+            continue
+        if fallback_root is None:
+            fallback_root = str(probe)
+        for exe_name in candidate.get("executables", []):
+            exe_path = probe / exe_name
+            if exe_path.is_file():
+                return {
+                    "install_root": str(probe),
+                    "executable_realpath": str(exe_path.resolve()),
+                    "os_managed": bool(candidate.get("os_managed")),
+                    "install_type": candidate.get("install_type"),
+                    "config_root_env": candidate.get("config_root_env"),
+                }
+    # No root carried the executable: report the directory that exists, if any,
+    # with executable None so the resolver can classify it as unverified rather
+    # than pretending it is a valid install.
+    if fallback_root is not None:
+        install_root = fallback_root
     return {
         "install_root": install_root,
         "executable_realpath": executable,
