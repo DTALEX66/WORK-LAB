@@ -62,9 +62,10 @@
       "name": "global-workflow-coverage.json",
       "category": "global-workflow",
       "purpose": "全局策略 SSOT + 10 客户端投影矩阵 + 三项目规范面",
-      "bytes": 26819,
-      "sha256": "1d209a104e81712cdcbce89d88742772c191fa2d48bddd6332b68e49fcea7403",
-      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+      "bytes": 28217,
+      "sha256": "a391f16800a28b10cd78f9cdcec1476583016004191883e65e4aa710d052b76b",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)",
+      "correction": "2026-10-01: has_worklab_managed_marker corrected from true to false; it asserted a managed block in CODEX_HOME/AGENTS.md that does not exist. Digest updated to the corrected bytes."
     },
     {
       "rel": "reports/audit-evidence/assets-20260930/global-deployment-readback.json",

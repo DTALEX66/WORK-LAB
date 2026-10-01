@@ -138,7 +138,28 @@
           "#   AGENTS.md context but does not machine-enforce its prose."
         ]
       },
-      "has_worklab_managed_marker": true
+      "has_worklab_managed_marker": false,
+      "has_worklab_managed_marker_correction": {
+        "corrected_at": "2026-10-01",
+        "previous_value": true,
+        "reason": "The previous value asserted a managed block in CODEX_HOME/AGENTS.md. It is FALSE: the file contains no managed overlay marker. Checked both the live deployment and the archived copy in this very evidence package - both are 16,805 bytes / 691 lines and neither contains the renderer's marker string. Left as a verifiable claim rather than a silent boolean: the field is now false, with the marker string and the checked files recorded below so the correction can be re-derived.",
+        "marker_string": "<!-- BEGIN WORKFLOW-ASSISTANCE MANAGED CODEX OVERLAY -->",
+        "checked": [
+          {
+            "path": "%USERPROFILE%/.codex/AGENTS.md",
+            "bytes": 16805,
+            "lines": 691,
+            "marker_present": false
+          },
+          {
+            "path": "reports/audit-archive/20260930/codex/AGENTS.md",
+            "bytes": 16805,
+            "lines": 691,
+            "marker_present": false
+          }
+        ],
+        "note": "managed_baks in this same block still lists AGENTS.md.hermes-managed-bak, which is evidence the managed-block mechanism ran at some point; the marker was later removed from the live file while the coverage field kept saying true. F02 of the 2026-10-01 audit is the same observation."
+      }
     },
     "dsh": {
       "settings_exists": true,
