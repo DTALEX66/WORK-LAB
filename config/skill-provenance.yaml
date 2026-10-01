@@ -133,3 +133,40 @@ entries:
   permission: skill-guidance
   profile_scope: default
   live_sha256: 2e1fc6dcdf51ee899700da4615f50e419eb4d54cfb726a5250e58809f7ca1aae
+  live_content_divergence:
+    recorded_at: '2026-10-01'
+    recorded_by: AG-06o (audit F04)
+    live_ahead_of_source: true
+    live_lines: 145
+    source_lines: 142
+    live_bytes: 23825
+    source_bytes: 21982
+    live_only_lessons:
+    - '30. `.cmd` binary parsing with Python subprocess.run on Windows: .cmd wrappers
+      must go through cmd.exe /d /s /c or be passed directly as the executable; running
+      `node <path>.cmd` raises SyntaxError inside the wrapper.'
+    - '31. Frontend toolchain gaps (pnpm / cargo missing) must be reported honestly
+      as BLOCKED, not fabricated PASS: when cargo is MISSING the Tauri native build
+      is BLOCKED while Vite typecheck/vitest can still be verified independently.'
+    live_only_references:
+    - rel: references/frontend-baseline-contract.md
+      bytes: 2742
+      sha256: 79c130865eedde3aa1727e0069ed5e10b7b0f65cfcf8ab2896073f5606fa9131
+    stale_citations:
+    - .project-local/runs/frontend-baseline-vitest-only.py - cited by live lesson
+      31 but ABSENT from the repository, so the citation dangles (ephemeral .project-local
+      path across sessions).
+    effect_if_redeployed_without_review: The sanctioned single-direction publish would
+      OVERWRITE the live file and lose both lessons and the live-only reference, because
+      the repository source does not contain them.
+    why_not_merged_here: AGENTS.md makes sync_hermes_workflow_assets.py the only deploy
+      path to Hermes Home, and audit F04 requires the appended content to be reviewed
+      under the existing curator policy BEFORE merging; that review is not authorized
+      in this task, and hand-editing a deployed managed skill would itself be the
+      unaudited path the provenance design exists to prevent.
+    remediation_path: Review the two lessons and the reference under the curator policy,
+      then land them in the repository source and publish through sync_hermes_workflow_assets.py,
+      which refreshes source_sha256 and live_sha256 together. Until then this record
+      preserves the content so a redeploy cannot silently destroy it.
+    evidence_level: OBSERVED (live file diffed against the repository source on 2026-10-01;
+      both sides hashed)
