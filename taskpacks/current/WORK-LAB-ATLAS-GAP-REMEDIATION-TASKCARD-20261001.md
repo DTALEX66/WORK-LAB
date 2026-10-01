@@ -132,7 +132,8 @@ Recorded as **observed**, not as full preflight completion (AG-08 still owes the
 | Repo root | `D:\All projects\WORK-LAB` | single checkout; no second copy in the working tree |
 | Remote | `git@github.com:DTALEX66/WORK-LAB.git` (SSH) | `git ls-remote` succeeded — live refs readable |
 | Live `origin/main` | `cd4daa83e107afab8438c0e85f63a10e75314d5a` | matches local `main`, `0 / 0` ahead/behind |
-| `python` on PATH | **NOT FOUND** | `python` / `py` / `python3` all unresolvable; a runtime Python 3.12.14 exists only via the DSH-bundled dependency path |
+| `python` on PATH | **NOT FOUND** | `python` / `py` / `python3` all unresolvable. But the shared/project toolchain **does** exist and must be used instead of the bare interpreter: `.project-local/toolchains/wl-py311` (Python 3.11.15 + `yaml 6.0.3` + `jsonschema 4.26.0`) satisfies the canonical gate's `PyYAML>=6,<7` / `jsonschema>=4,<5` contract. Running the gate under the bare DSH-bundled runtime instead fails closed at `QUALITY_GATE_DEPENDENCY_FAIL` — a wrong-interpreter artifact, **not** a missing dependency that needs installing. |
+| Shared library roots | present | `external-libraries-index.json` registers `os-external-toolchains` → `D:\All projects\OS External Configuration\10-toolchains` plus a `uv-cache`. Absent everywhere checked: Rust/cargo, MSVC (`cl`/`link`), cmake, dotnet; Node/npm/pnpm are off PATH (DSH-bundled Node only). |
 | `git` | present and functional | identity/credential/network split diagnosis still owed by AG-08 |
 | Uncommitted user work | 4 modified files + 1 untracked path | preserved untouched — see §5 |
 
