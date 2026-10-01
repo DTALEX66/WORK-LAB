@@ -91,19 +91,20 @@
       "name": "ARCHIVE-README.md",
       "category": "archive",
       "purpose": "内容层入口：归档口径/覆盖/排除/脱敏/校验",
-      "bytes": 5408,
-      "sha256": "62cc60f8562f7a55838958c431306cdd56da45950e851340ebf53705ea65ec54",
+      "bytes": 6844,
+      "sha256": "08f5388e6385739a709652667b1139ec9e07dd8f5983c4f72ba23bb5645a4ba5",
       "hashing_basis": "repository bytes (LF-normalized, as committed)",
-      "correction": "2026-10-01: the SKILL.md count in section 4 was corrected from 'hermes 186' to 'hermes 178 + codex 8 = 186'. The substantive claim (all SKILL.md main files were copied in full) is unchanged; only the attribution was wrong."
+      "correction": "2026-10-01: corrected the completeness claim per audit F05 - 5 root-level skills were never archived, one of them (model-switch) a managed skill. Declaration corrected; the archive itself was not regenerated."
     },
     {
       "rel": "reports/audit-archive/20260930/ARCHIVE-INDEX.json",
       "name": "ARCHIVE-INDEX.json",
       "category": "archive",
       "purpose": "归档逐文件索引与 sha256",
-      "bytes": 313019,
-      "sha256": "78e6b6ba96ae8b8a5b055bf342f8bf142ce5a1835ed457c7c3b9d839d656457a",
-      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+      "bytes": 314049,
+      "sha256": "3cab6e5716afab492861a82b34dba53104322af7c0a851a25b775a490d65d14a",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)",
+      "correction": "2026-10-01: added skills_depth_reconciliation recording the F05 root-level enumeration gap."
     },
     {
       "rel": "reports/audit-archive/20260930/SECRET-SCAN-REPORT.json",

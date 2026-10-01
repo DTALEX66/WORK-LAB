@@ -318,5 +318,91 @@ class CleanupCandidateNegativeControls(unittest.TestCase):
         self.assertIn("CC-3", by_id["CC-1"].get("precedence_over", []))
 
 
+class ArchiveCoverageNegativeControls(unittest.TestCase):
+    """Audit F05: a silent enumeration gap must not pass as complete coverage.
+
+    The archive claimed every SKILL.md main file was copied, while its enumeration
+    only descended into categorised directories, so root-level skills were never
+    captured - 5 of them, one being a MANAGED skill. The tell is structural: one
+    nesting level richly populated and a sibling level empty.
+    """
+
+    def _check(self, obj: dict) -> list[str]:
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".json", delete=False, encoding="utf-8"
+        ) as handle:
+            json.dump(obj, handle, ensure_ascii=False)
+            path = Path(handle.name)
+        try:
+            return V.check_archive_index_coverage(path)
+        finally:
+            path.unlink()
+
+    def test_single_depth_population_is_flagged(self) -> None:
+        obj = {
+            "files": [
+                {"archive_path": f"hermes/skills/.archive/s{i}/SKILL.md"}
+                for i in range(5)
+            ]
+        }
+        problems = self._check(obj)
+        self.assertTrue(any("ARCHIVE_SKILL_DEPTH_UNAUDITED" in p for p in problems))
+
+    def test_declared_reconciliation_clears_the_flag(self) -> None:
+        obj = {
+            "files": [
+                {"archive_path": f"hermes/skills/.archive/s{i}/SKILL.md"}
+                for i in range(5)
+            ],
+            "skills_depth_reconciliation": {"hermes": {"declared_not_silent": True}},
+        }
+        self.assertEqual(self._check(obj), [])
+
+    def test_categorised_with_root_present_is_not_flagged(self) -> None:
+        # The healthy shape: categorised skills AND root-level skills both present,
+        # which is what the live tree actually holds.
+        obj = {
+            "files": [
+                {"archive_path": "hermes/skills/.archive/a/SKILL.md"},
+                {"archive_path": "hermes/skills/software-development/b/SKILL.md"},
+                {"archive_path": "hermes/skills/model-switch/SKILL.md"},
+            ]
+        }
+        self.assertEqual(self._check(obj), [])
+
+    def test_root_level_layout_is_not_flagged_and_categorised_only_is(self) -> None:
+        # Pins the semantics instead of a hand-counted number: the root-level
+        # layout `<client>/skills/<name>/SKILL.md` is the SAME depth the detection
+        # derives, so an index holding only that layout is not an enumeration gap;
+        # an index holding only a categorised layout is.
+        root_only = {"files": [{"archive_path": "hermes/skills/model-switch/SKILL.md"}]}
+        self.assertEqual(self._check(root_only), [])
+        categorised_only = {
+            "files": [
+                {"archive_path": "hermes/skills/.archive/a/SKILL.md"},
+                {"archive_path": "hermes/skills/software-development/b/SKILL.md"},
+            ]
+        }
+        self.assertTrue(self._check(categorised_only))
+
+    def test_shallow_only_index_is_not_flagged(self) -> None:
+        obj = {"files": [{"archive_path": "hermes/skills/a/SKILL.md"}]}
+        self.assertEqual(self._check(obj), [])
+
+    def test_index_without_files_is_ignored(self) -> None:
+        self.assertEqual(self._check({"totals": {"copied": 0}}), [])
+
+    def test_live_archive_declares_its_depth_reconciliation(self) -> None:
+        path = ROOT / "reports/audit-archive/20260930/ARCHIVE-INDEX.json"
+        self.assertEqual(V.check_archive_index_coverage(path), [])
+        data = json.loads(path.read_text(encoding="utf-8"))
+        reconciliation = data["skills_depth_reconciliation"]["hermes"]
+        self.assertEqual(reconciliation["entries_at_shallow_layout"], 0)
+        self.assertIs(reconciliation["declared_not_silent"], True)
+        # The managed skill that was missing must stay named.
+        self.assertIn("model-switch", reconciliation["reason"])
+        self.assertIn("MANAGED", reconciliation["reason"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -240,6 +240,71 @@ def check_cleanup_candidates(path: Path) -> list[str]:
     return problems
 
 
+def check_archive_index_coverage(path: Path) -> list[str]:
+    """Refuse an archive index whose skill enumeration skipped a layout level.
+
+    Audit F05: the archive claimed "all SKILL.md main files were copied in full",
+    but its enumeration only covered categorised skills
+    (`hermes/skills/<category>/<name>/SKILL.md`). Root-level skills
+    (`hermes/skills/<name>/SKILL.md`) were never captured at all - 5 of them,
+    including `model-switch`, one of the 13 MANAGED skills. So the completeness
+    claim was false, and the failure was silent because the index reported a
+    healthy-looking total.
+
+    The shape that gives it away is structural, not textual: a directory layout
+    where one nesting level is richly populated and a sibling level is empty. If
+    an index records many `SKILL.md` at one depth under a client and ZERO at the
+    documented shallower layout, the enumeration almost certainly skipped it, and
+    that must be declared rather than left to look like an absence of content.
+    """
+    data = _load(path)
+    files = data.get("files")
+    if not isinstance(files, list):
+        return []
+
+    # client prefix -> set of depths at which SKILL.md files are indexed
+    skills_by_client: dict[str, dict[int, int]] = {}
+    for entry in files:
+        if not isinstance(entry, dict):
+            continue
+        rel = entry.get("archive_path") or ""
+        if not rel.endswith("SKILL.md"):
+            continue
+        head = rel.split("/", 1)[0]
+        depth = rel.count("/")
+        skills_by_client.setdefault(head, {}).setdefault(depth, 0)
+        skills_by_client[head][depth] += 1
+
+    declared = data.get("skills_depth_reconciliation")
+    # Separator count of the ROOT-LEVEL layout, `<client>/skills/<name>/SKILL.md`,
+    # which is the placement audit F05 found missing. Derived, not hardcoded, so
+    # the check keeps meaning if the archive prefix changes.
+    root_layout_depth = f"x/skills/n/SKILL.md".count("/")
+    problems: list[str] = []
+    for client, depths in sorted(skills_by_client.items()):
+        if not depths:
+            continue
+        populated = sorted(d for d, n in depths.items() if n > 0)
+        if not populated:
+            continue
+        deepest_populated = populated[-1]
+        if isinstance(declared, dict) and client in declared:
+            continue  # explicitly reconciled, so the gap is recorded not silent
+        # Only ONE level populated, and it is DEEPER than the root-level layout:
+        # that is the signature of an enumeration that descended into categories
+        # and never looked at the flat layout.
+        if len(populated) == 1 and deepest_populated > root_layout_depth:
+            problems.append(
+                f"ARCHIVE_SKILL_DEPTH_UNAUDITED: {path.name} indexes {client} SKILL.md "
+                f"only at depth {deepest_populated} ({depths[deepest_populated]} entries) "
+                "and at no shallower depth, so the root-level layout "
+                "(<client>/skills/<name>/SKILL.md) could have been skipped silently; "
+                "declare skills_depth_reconciliation for this client or account for the "
+                "missing depths"
+            )
+    return problems
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("paths", nargs="+", type=Path, help="evidence bundle JSON files to check")
@@ -254,7 +319,11 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         # Both checks run: a bundle can be correctly tiered AND still present user
         # state as a deletion target, so neither may short-circuit the other.
-        findings = check_bundle(path) + check_cleanup_candidates(path)
+        findings = (
+            check_bundle(path)
+            + check_cleanup_candidates(path)
+            + check_archive_index_coverage(path)
+        )
         if _find_behavioural(_load(path)):
             claimed += 1
         problems.extend(findings)

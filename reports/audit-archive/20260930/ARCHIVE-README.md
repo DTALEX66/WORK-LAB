@@ -41,7 +41,16 @@
 ## 4. 配额与丢弃（审计完整性说明）
 
 - 按客户端配额裁剪共丢弃 **494** 个文件，其中 `SKILL.md` **0** 个。
-- 丢弃对象为附属文档（`skills/**/references/*.md`，优先级最低者）；**所有技能主文件 SKILL.md 均已完整复制**（计数已更正 2026-10-01：hermes 363 个文件中含 **178** 个 SKILL.md，另 **8** 个在 codex 目录下，两者合计 186。此前的「hermes 186」把 codex 的 8 个错记到了 hermes 名下。）。
+- 丢弃对象为附属文档（`skills/**/references/*.md`，优先级最低者）。**计数已更正 2026-10-01：hermes 363 个文件中含 178 个 SKILL.md，另 8 个在 codex 目录下，合计 186；此前的「hermes 186」把 codex 的 8 个错记到了 hermes 名下。**
+- **更正 2026-10-01（audit F05）——此前「所有技能主文件 SKILL.md 均已完整复制」的说法是错的。** 归档的枚举只覆盖带分类层级的技能（`hermes/skills/<category>/<name>/SKILL.md`，索引里 178 条都在该深度），**根级技能 `hermes/skills/<name>/SKILL.md` 一条都没有**，实机核实为 **5 个技能从未被归档**：
+  | 未归档技能 | 字节 | sha256（实机，2026-10-01） |
+  |---|---|---|
+  | `model-switch` | 4,250 | `37aed9558bc16be5c4da9aa2133d63e03cabbcf353d6bbf248d156aceaf4c5d9` |
+  | `hermes-desktop-plugins` | 8,849 | `7c48ace0a0eae6088804287bbaa5c8a47473809b09004da236ee9354d0bdccb8` |
+  | `hermes-themes` | 7,119 | `488172d60b26cc499f350f66aa8c848b6d1a0083c4dad4cf95ec49275da0330a` |
+  | `refactor-fidelity-proof` | 3,783 | `ea663268f12200d3eba0c00e3104bbda6452ca40ce61688415cc1a4295bb8512` |
+  | `yuanbao` | 3,795 | `239e4875f511124fab06e94ff21511fd8f857554c6ffd82dfb796ed275b4ff32` |
+  **其中 `model-switch` 是 `config/skill-provenance.yaml` 的 13 个受管技能之一**，因此归档缺的不只是一个普通技能，而是一个按契约必须被覆盖的技能；审计 F05 的「全技能主文件完整」与「13 项完整三方核验」不成立，结论正确。**本文件只更正声明，不重做归档**：补齐这 5 个文件属于重新生成归档，不是本次对账的范围，且状态报告（`ARCHIVE-INDEX.json` 的计数）保持不变，因为它们描述的是当时实际发生的事。。
 - 逐客户端配额：hermes=4,000,000B、codex=500,000B、dsh=600,000B、cc-switch=400,000B、open-design=400,000B、openhuman=300,000B、project-archeaxis-rules=400,000B、project-design-lab-rules=800,000B。
 - 若某条结论依赖被丢弃的附属文档，请注明『依据缺失』，不要据缺口推断内容。
 

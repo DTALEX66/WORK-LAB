@@ -7400,5 +7400,18 @@
       "redactions": 0,
       "status": "COPIED"
     }
-  ]
+  ],
+  "skills_depth_reconciliation": {
+    "hermes": {
+      "indexed_depths": {
+        "4": 178,
+        "5": 181
+      },
+      "documented_shallow_layout": "hermes/skills/<name>/SKILL.md (depth 3)",
+      "entries_at_shallow_layout": 0,
+      "reason": "ENUMERATION GAP (audit F05, corrected 2026-10-01). The copy step only descended into categorised skill directories, so root-level skills were never captured. Live verification found 5 such skills: model-switch (4,250 B, sha256 37aed955...), hermes-desktop-plugins (8,849 B), hermes-themes (7,119 B), refactor-fidelity-proof (3,783 B), yuanbao (3,795 B). model-switch is one of the 13 MANAGED skills, so coverage of a contractually required skill was missing, not just an incidental one.",
+      "declared_not_silent": true,
+      "remediation_status": "DECLARATION CORRECTED, ARCHIVE NOT REGENERATED. Re-copying the 5 files is a regeneration of the archive, outside a reconciliation pass; the counts here continue to describe what actually happened on 2026-09-30."
+    }
+  }
 }
