@@ -76,8 +76,30 @@ Delta vs the snapshot's reference `main@3a98384a` / tree `45067cd8`: **3 commits
 (`660b294` #160, `d424236` #159, `cd4daa8` #161). None of them touch the defect files below, which
 are **byte-identical** to the snapshot (verified by git object store, not filesystem hashing).
 
-This card is a planning + verified-gap record. Every row is **not executed** and stays
-**individually authorized** per operation. AG numbering is disjoint from the existing `AT-*`
+> **SESSION DELIVERY STATUS (self-audited 2026-10-01, round 8).** Read this before any row below.
+> The rows were originally a *planning + verified-gap* record where "every row is not executed".
+> **That is no longer true of the whole set**, and it is equally false to read them as shipped.
+> The accurate position is:
+>
+> * **Implemented and verified LOCALLY, on branch `task-decomposition/atlas-gap-archive-20261001`
+>   only:** AG-01, AG-02, AG-03, AG-04, AG-05, AG-05b/AG-14b, AG-06, AG-07, AG-14 (pre-existing,
+>   already merged via PR #143/#144), AG-15's read-only prerequisite, AG-16's contract.
+> * **NOT merged to `main`.** `main` is still `cd4daa83e107afab8438c0e85f63a10e75314d5a`. No PR was
+>   opened for this session's work, and **no exact-SHA CI has run on any of it.**
+> * **NOT released and NOT deployed.** Nothing was pushed, published, installed or migrated, and no
+>   global or machine configuration was changed.
+> * **`TEST_PASS` below means the local canonical suite** (`run_quality_gate.py verify`, 44 gates,
+>   run under `.project-local/toolchains/wl-py311`). It is **not** `EXACT_SHA_CI`, not `NATIVE_RUN`,
+>   and not `USER_ACCEPTED`; those remain `NOT_RUN` for every row.
+> * **87 new negative-control tests** across `nf20`–`nf25`, all green locally, plus 3 new fail-closed
+>   gates (`model-registry-integrity`, `acp-adapter-honesty`, `observer-readonly-boundary`).
+> * Rows still **not started** keep an explicit `PLANNED` / `BLOCKED` / `OWNER DECISION NEEDED`
+>   status, and every not-performed item is written `NOT_RUN` / `UNKNOWN` / `BLOCKED` rather than
+>   left blank.
+
+This card is a planning + verified-gap record. Rows are **individually authorized** per operation;
+check the status of each row above rather than assuming the whole set is either unstarted or done.
+AG numbering is disjoint from the existing `AT-*`
 candidate lanes of the unadopted snapshot taskpack and from the `U*` CURRENT-TaskPack rows.
 
 | ID | Priority | Status | Work |
