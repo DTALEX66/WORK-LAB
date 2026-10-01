@@ -26,10 +26,10 @@
       "name": "CLEANUP-CANDIDATES.json",
       "category": "cleanup",
       "purpose": "13 条清理候选（executed=false）",
-      "bytes": 11325,
-      "sha256": "913db0f76315431330bf4354b24b8d2123a2baf1ef35405dea911f2258f5fc67",
+      "bytes": 15598,
+      "sha256": "e2d37997f5c99c961bcd93fe795342ec6fcc82e8871e6e30037175e6c3c7886a",
       "hashing_basis": "repository bytes (LF-normalized, as committed)",
-      "correction": "2026-10-01: added behavior_declarations (audit F15); digest updated."
+      "correction": "2026-10-01: added per-candidate disposition + CC-1/CC-3 overlap precedence + reconciliation (audit F13/F14)."
     },
     {
       "rel": "reports/audit-evidence/assets-20260930/REPO-ASSET-INDEX.md",

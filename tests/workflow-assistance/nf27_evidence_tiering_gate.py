@@ -186,5 +186,137 @@ class EvidenceTieringNegativeControls(unittest.TestCase):
                 )
 
 
+class CleanupCandidateNegativeControls(unittest.TestCase):
+    """Audit F13/F14: a candidate list must not read as a delete queue.
+
+    F14 is a blocker: live user state must never sit in such a list without an
+    explicit, machine-readable rejection, because a reinstall-time reader may act
+    on the list as written. F13 adds that overlapping globs need a declared
+    precedence so two candidates cannot both own one path.
+    """
+
+    def _check(self, obj: dict) -> list[str]:
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".json", delete=False, encoding="utf-8"
+        ) as handle:
+            json.dump(obj, handle, ensure_ascii=False)
+            path = Path(handle.name)
+        try:
+            return V.check_cleanup_candidates(path)
+        finally:
+            path.unlink()
+
+    @staticmethod
+    def _rejected(**overrides) -> dict:
+        candidate = {
+            "id": "CC-9",
+            "path_token": "x",
+            "disposition": "REJECT_USER_DATA",
+            "disposition_reason": "live user state",
+            "deletion_rejected": True,
+            "authorization_required": True,
+            "executed": False,
+            "permitted_actions": ["observe_metadata"],
+            "forbidden_actions": ["delete", "move"],
+        }
+        candidate.update(overrides)
+        return {"candidates": [candidate]}
+
+    def test_properly_rejected_user_state_passes(self) -> None:
+        self.assertEqual(self._check(self._rejected()), [])
+
+    def test_candidate_without_disposition_fails(self) -> None:
+        obj = self._rejected()
+        obj["candidates"][0].pop("disposition")
+        problems = self._check(obj)
+        self.assertTrue(any("CLEANUP_CANDIDATE_UNDISPOSITIONED" in p for p in problems))
+
+    def test_rejected_but_marked_executed_fails(self) -> None:
+        problems = self._check(self._rejected(executed=True))
+        self.assertTrue(any("CLEANUP_REJECTED_BUT_EXECUTED" in p for p in problems))
+
+    def test_rejected_without_deletion_rejected_flag_fails(self) -> None:
+        problems = self._check(self._rejected(deletion_rejected=False))
+        self.assertTrue(any("CLEANUP_REJECTED_WITHOUT_FLAG" in p for p in problems))
+
+    def test_rejected_without_authorization_gate_fails(self) -> None:
+        problems = self._check(self._rejected(authorization_required=False))
+        self.assertTrue(any("CLEANUP_REJECTED_WITHOUT_AUTH_GATE" in p for p in problems))
+
+    def test_rejected_without_forbidden_actions_fails(self) -> None:
+        problems = self._check(self._rejected(forbidden_actions=[]))
+        self.assertTrue(
+            any("CLEANUP_REJECTED_WITHOUT_FORBIDDEN_ACTIONS" in p for p in problems)
+        )
+
+    def test_overlap_needs_a_declared_precedence(self) -> None:
+        obj = {
+            "candidates": [
+                {"id": "A", "disposition": "CANDIDATE_NOT_AUTHORIZED", "overlaps_with": ["B"]},
+                {"id": "B", "disposition": "CANDIDATE_NOT_AUTHORIZED", "overlaps_with": ["A"]},
+            ]
+        }
+        problems = self._check(obj)
+        self.assertTrue(any("CLEANUP_OVERLAP_WITHOUT_PRECEDENCE" in p for p in problems))
+
+    def test_overlap_must_be_reciprocal(self) -> None:
+        obj = {
+            "candidates": [
+                {
+                    "id": "A",
+                    "disposition": "CANDIDATE_NOT_AUTHORIZED",
+                    "overlaps_with": ["B"],
+                    "precedence_over": ["B"],
+                },
+                {"id": "B", "disposition": "CANDIDATE_NOT_AUTHORIZED"},
+            ]
+        }
+        problems = self._check(obj)
+        self.assertTrue(any("CLEANUP_OVERLAP_NOT_RECIPROCAL" in p for p in problems))
+
+    def test_dangling_overlap_fails(self) -> None:
+        obj = {
+            "candidates": [
+                {
+                    "id": "A",
+                    "disposition": "CANDIDATE_NOT_AUTHORIZED",
+                    "overlaps_with": ["ZZ"],
+                    "precedence_over": ["ZZ"],
+                }
+            ]
+        }
+        problems = self._check(obj)
+        self.assertTrue(any("CLEANUP_OVERLAP_DANGLING" in p for p in problems))
+
+    def test_live_cleanup_candidates_pass_and_reject_user_state(self) -> None:
+        path = (
+            ROOT
+            / "reports/audit-evidence/assets-20260930/CLEANUP-CANDIDATES.json"
+        )
+        self.assertEqual(V.check_cleanup_candidates(path), [])
+        data = json.loads(path.read_text(encoding="utf-8"))
+        rejected = {
+            c["id"] for c in data["candidates"] if c.get("disposition") == "REJECT_USER_DATA"
+        }
+        # These are the two the audit called a blocker. If a future edit drops the
+        # rejection, this test fails rather than the list silently becoming a
+        # delete queue again.
+        self.assertEqual(rejected, {"CC-4", "HH-1"})
+        for candidate in data["candidates"]:
+            self.assertIs(candidate.get("executed"), False)
+            self.assertIs(candidate.get("authorization_required"), True)
+
+    def test_live_overlap_precedence_is_declared(self) -> None:
+        data = json.loads(
+            (
+                ROOT / "reports/audit-evidence/assets-20260930/CLEANUP-CANDIDATES.json"
+            ).read_text(encoding="utf-8")
+        )
+        by_id = {c["id"]: c for c in data["candidates"]}
+        self.assertIn("CC-3", by_id["CC-1"].get("overlaps_with", []))
+        self.assertIn("CC-1", by_id["CC-3"].get("overlaps_with", []))
+        self.assertIn("CC-3", by_id["CC-1"].get("precedence_over", []))
+
+
 if __name__ == "__main__":
     unittest.main()

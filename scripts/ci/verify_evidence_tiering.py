@@ -160,6 +160,86 @@ def check_bundle(path: Path) -> list[str]:
     return problems
 
 
+def check_cleanup_candidates(path: Path) -> list[str]:
+    """Refuse a cleanup-candidate list that could be read as a delete queue.
+
+    Audit F14 is a blocker: user state (session/history or state databases) must
+    never be mixed into a cleanup list without an explicit, machine-readable
+    rejection, because a reinstall-time reader may act on the list as written.
+    Audit F13 adds that overlapping globs need an explicit precedence so the same
+    path cannot be owned by two candidates.
+    """
+    data = _load(path)
+    candidates = data.get("candidates")
+    if not isinstance(candidates, list):
+        return []
+    problems: list[str] = []
+    for index, candidate in enumerate(candidates):
+        if not isinstance(candidate, dict):
+            problems.append(
+                f"CLEANUP_CANDIDATE_MALFORMED: {path.name}.candidates[{index}]"
+            )
+            continue
+        cid = candidate.get("id") or f"[{index}]"
+        label = f"{path.name}.{cid}"
+        disposition = candidate.get("disposition")
+        if disposition is None:
+            problems.append(
+                f"CLEANUP_CANDIDATE_UNDISPOSITIONED: {label} has no disposition, so a "
+                "reader cannot tell a rejected item from an authorised one"
+            )
+            continue
+        # A rejected item must be impossible to execute and must say why.
+        if disposition == "REJECT_USER_DATA":
+            if candidate.get("executed") is not False:
+                problems.append(
+                    f"CLEANUP_REJECTED_BUT_EXECUTED: {label} is REJECT_USER_DATA yet "
+                    "executed is not false"
+                )
+            if candidate.get("deletion_rejected") is not True:
+                problems.append(
+                    f"CLEANUP_REJECTED_WITHOUT_FLAG: {label} is REJECT_USER_DATA but "
+                    "deletion_rejected is not true"
+                )
+            if candidate.get("authorization_required") is not True:
+                problems.append(
+                    f"CLEANUP_REJECTED_WITHOUT_AUTH_GATE: {label} is REJECT_USER_DATA but "
+                    "authorization_required is not true"
+                )
+            if not candidate.get("forbidden_actions"):
+                problems.append(
+                    f"CLEANUP_REJECTED_WITHOUT_FORBIDDEN_ACTIONS: {label} is "
+                    "REJECT_USER_DATA but names no forbidden actions"
+                )
+        elif not isinstance(disposition, str):
+            problems.append(f"CLEANUP_DISPOSITION_MALFORMED: {label}")
+
+    # Overlap must be declared in both directions, with a precedence.
+    by_id = {
+        c.get("id"): c for c in candidates if isinstance(c, dict) and c.get("id")
+    }
+    for cid, candidate in by_id.items():
+        for other in candidate.get("overlaps_with") or []:
+            counterpart = by_id.get(other)
+            if counterpart is None:
+                problems.append(
+                    f"CLEANUP_OVERLAP_DANGLING: {cid} overlaps {other}, which is not a candidate"
+                )
+                continue
+            if cid not in (counterpart.get("overlaps_with") or []):
+                problems.append(
+                    f"CLEANUP_OVERLAP_NOT_RECIPROCAL: {cid} names {other} but not the reverse"
+                )
+        if candidate.get("overlaps_with") and not (
+            candidate.get("precedence_over") or candidate.get("subordinate_to")
+        ):
+            problems.append(
+                f"CLEANUP_OVERLAP_WITHOUT_PRECEDENCE: {cid} overlaps another candidate "
+                "without declaring which one owns the shared path"
+            )
+    return problems
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("paths", nargs="+", type=Path, help="evidence bundle JSON files to check")
@@ -172,7 +252,9 @@ def main(argv: list[str] | None = None) -> int:
         if not path.is_file():
             print(f"EVIDENCE_TIER_IO_FAIL missing file: {path}", file=sys.stderr)
             return 2
-        findings = check_bundle(path)
+        # Both checks run: a bundle can be correctly tiered AND still present user
+        # state as a deletion target, so neither may short-circuit the other.
+        findings = check_bundle(path) + check_cleanup_candidates(path)
         if _find_behavioural(_load(path)):
             claimed += 1
         problems.extend(findings)

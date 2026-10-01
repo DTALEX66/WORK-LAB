@@ -24,7 +24,15 @@
       "recommended_action": "删除（先备份清单，不触 config.toml / auth.json）",
       "retention_note": "确认非当前进程占用（时间戳均早于最新状态文件）",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "CANDIDATE_NOT_AUTHORIZED",
+      "disposition_note": "Takes PRECEDENCE over CC-3 on overlap. Audit F13: CC-1 (.tmp-*) and CC-3 (*.bak*) are not mutually exclusive; files named *.bak.tmp-* match both, so a per-candidate sweep would double-count or double-operate on the same path.",
+      "overlaps_with": [
+        "CC-3"
+      ],
+      "precedence_over": [
+        "CC-3"
+      ]
     },
     {
       "id": "CC-2",
@@ -38,7 +46,8 @@
       "recommended_action": "删除（守卫已失效，0 字节）",
       "retention_note": "若 Codex 正在 provisioning 则跳过",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "CANDIDATE_NOT_AUTHORIZED"
     },
     {
       "id": "CC-3",
@@ -52,7 +61,16 @@
       "recommended_action": "归档到项目外置归档或删除（保留最近 1 份）",
       "retention_note": "config.toml 备份含用户私有配置，删除前确认当前配置可用",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "CANDIDATE_NOT_AUTHORIZED",
+      "disposition_note": "CC-1 takes precedence on overlap. The pattern *.bak* also matches *.bak.tmp-* files that CC-1 owns.",
+      "overlaps_with": [
+        "CC-1"
+      ],
+      "subordinate_to": [
+        "CC-1"
+      ],
+      "pattern_widened_by_catchall": true
     },
     {
       "id": "CC-4",
@@ -66,7 +84,20 @@
       "recommended_action": "按 Codex 官方机制清理历史（勿手工删活动库）",
       "retention_note": "活动数据库不可直接删；用官方 prune/清理路径",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "REJECT_USER_DATA",
+      "disposition_reason": "This is live USER STATE (a session/history or state database), not redundant project output. Audit F14 is a blocker: including it in a list titled cleanup candidates invites a reinstall-time deletion that would destroy unrecoverable data. The already-recorded recommended_action was and remains non-destructive (official vendor prune path; never delete an active database; config change only, OBSERVE tier) - the defect is that this was expressed only in prose inside a deletion-flavoured list, so it is now stated as data. Decision: REJECTED for deletion. No automatic cleanup setting is changed by this record.",
+      "deletion_rejected": true,
+      "permitted_actions": [
+        "observe_metadata",
+        "user_controlled_backup"
+      ],
+      "forbidden_actions": [
+        "delete",
+        "move",
+        "truncate",
+        "vacuum_without_user_request"
+      ]
     },
     {
       "id": "HH-1",
@@ -80,7 +111,20 @@
       "recommended_action": "由用户 Hermes 设置（sessions.auto_prune）决定，本项目只 OBSERVE，不覆盖",
       "retention_note": "config-ownership.json 规定该字段为 OBSERVE",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "REJECT_USER_DATA",
+      "disposition_reason": "This is live USER STATE (a session/history or state database), not redundant project output. Audit F14 is a blocker: including it in a list titled cleanup candidates invites a reinstall-time deletion that would destroy unrecoverable data. The already-recorded recommended_action was and remains non-destructive (official vendor prune path; never delete an active database; config change only, OBSERVE tier) - the defect is that this was expressed only in prose inside a deletion-flavoured list, so it is now stated as data. Decision: REJECTED for deletion. No automatic cleanup setting is changed by this record.",
+      "deletion_rejected": true,
+      "permitted_actions": [
+        "observe_metadata",
+        "user_controlled_backup"
+      ],
+      "forbidden_actions": [
+        "delete",
+        "move",
+        "truncate",
+        "vacuum_without_user_request"
+      ]
     },
     {
       "id": "HH-2",
@@ -94,7 +138,8 @@
       "recommended_action": "归档 .archive/.curator_backups 旧条目；账本保留（审计用）",
       "retention_note": "账本是被审计证据，不建议删除",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "CANDIDATE_NOT_AUTHORIZED"
     },
     {
       "id": "HH-3",
@@ -108,7 +153,8 @@
       "recommended_action": "保留最近 N 份，其余归档",
       "retention_note": "备份是可逆性保障，先列清单再处理",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "CANDIDATE_NOT_AUTHORIZED"
     },
     {
       "id": "DD-1",
@@ -122,7 +168,8 @@
       "recommended_action": "本轮部署已验证成功后归档到项目外置归档",
       "retention_note": "部署回退保障；确认新 2.0.13 稳定后再归档",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "CANDIDATE_NOT_AUTHORIZED"
     },
     {
       "id": "DD-2",
@@ -136,7 +183,8 @@
       "recommended_action": "保留 .migration 日志（审计链），.research-* 可归档",
       "retention_note": ".migration/verify.py 仍是可复用的验证器",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "CANDIDATE_NOT_AUTHORIZED"
     },
     {
       "id": "DD-3",
@@ -150,7 +198,8 @@
       "recommended_action": "确认无活动安装后删除（可再生）",
       "retention_note": "如 DSH 用 pnpm 安装依赖则保留",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "CANDIDATE_NOT_AUTHORIZED"
     },
     {
       "id": "RR-1",
@@ -164,7 +213,8 @@
       "recommended_action": "重新生成该清点表（非删除）",
       "retention_note": "它是登记的陈旧副本，权威为 live 文件 + skill-provenance.yaml",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "CANDIDATE_NOT_AUTHORIZED"
     },
     {
       "id": "RR-2",
@@ -178,7 +228,8 @@
       "recommended_action": "补录 revision/source 到清点表（非删除）",
       "retention_note": "上游 anpicasso/hermes-plugin-chrome-profiles",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "CANDIDATE_NOT_AUTHORIZED"
     },
     {
       "id": "RR-3",
@@ -192,7 +243,8 @@
       "recommended_action": "对齐 source/live（确认哪侧为准后再单向同步）",
       "retention_note": "scripts/sync_hermes_workflow_assets.py 是唯一部署通道",
       "authorization_required": true,
-      "executed": false
+      "executed": false,
+      "disposition": "CANDIDATE_NOT_AUTHORIZED"
     }
   ],
   "corrections": [
@@ -239,5 +291,22 @@
     },
     "policy_field_note": "The existing policy string 'No deletion/move/modification performed' is a BEHAVIOURAL assertion of the same DECLARED tier; it is retained verbatim and is not upgraded by this addition."
   },
-  "regenerate_procedure_retained": false
+  "regenerate_procedure_retained": false,
+  "reconciliation_2026_10_01": {
+    "performed": "AG-06j (audit F13/F14)",
+    "method": "listed filenames only in %USERPROFILE%\\.codex; no file content was read",
+    "observed": {
+      "CC-1_pattern_matches_today": 15,
+      "CC-3_pattern_matches_today": 11,
+      "matching_both": 3,
+      "both_examples": [
+        "..codex-global-state.json.bak.tmp-<id>",
+        "..codex-global-state.json.bak.tmp-<id>",
+        "..codex-global-state.json.bak.tmp-<id>"
+      ]
+    },
+    "recorded_counts_kept": true,
+    "note": "The 2026-09-30 counts (CC-1=14, CC-3=11) are the historical observation and are NOT rewritten; today's counts differ because these are live filesystem globs over user state. The overlap of 3 is the substantive finding and matches audit F13. A wildcard cannot be reviewed, so each candidate carries an explicit disposition and the CC-1 > CC-3 precedence as data; a per-path operation table would still be required before any action, and every candidate keeps authorization_required=true with executed=false.",
+    "not_done": "No deletion, move, modification or glob expansion to paths was performed; nothing outside the repository was written, and no private file content was read."
+  }
 }
