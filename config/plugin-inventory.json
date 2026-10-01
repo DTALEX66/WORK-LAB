@@ -69,23 +69,19 @@
       "lifecycle": "enabled",
       "security_scan": "bundled",
       "installed_at": "2026-08-26",
-      "record_note": "AG-06l / audit F07 (2026-10-01): this is an INVENTORY RECORD, not evidence of an installed plugin. On 2026-10-01 the live plugins directory contained only 'chrome-profiles', and .install-metadata.json contained only a chrome-profiles entry, so this plugin is recorded but NOT observed as installed. commit and hash stay null rather than being guessed; null here means 'no verified value', which is the honest state, not a defect to be filled in.",
-      "declared_vs_observed": {
-        "declared_lifecycle": "enabled",
-        "declared_installed_at": "2026-08-26",
-        "observed_installed": false,
-        "agreement": false,
-        "interpretation": "UNRESOLVED: the record declares an installed+enabled plugin dated 2026-08-26, while the 2026-10-01 observation found neither an installed directory nor an install-metadata entry. The declared lifecycle is left EXACTLY as recorded rather than being rewritten to match today, because 'enabled in config' and 'present on disk' are different facts and collapsing them would destroy whichever of the two is the surprise. Resolving it needs an owner decision: either the plugins were removed after 2026-08-26, or the record was aspirational. Not guessed here."
-      },
+      "record_note": "CORRECTION 2026-10-01 (AG-06q). An earlier pass in this session reported a declared-vs-observed disagreement between this entry's lifecycle 'enabled' and its absence from the user plugins directory. That was WRONG and is withdrawn here. This entry's own type/upstream/spdx say 'bundled' (type desktop-plugin, upstream bundled, spdx bundled), which is exactly what it is: it is a BUNDLED plugin shipped with the Hermes application, not a user-installed one. It was PRESENT where it should be, so there was no disagreement to resolve and no lifecycle value needed changing. The lesson recorded: an install-shaped observation cannot be applied to a non-installed component class; the absence of a bundled plugin from the user install directory is the correct state, not a finding.",
       "observed": {
         "observed_at": "2026-10-01",
-        "method": "listed %LOCALAPPDATA%/hermes/plugins/ and read .install-metadata.json",
-        "installed_directory_present": false,
-        "install_metadata_entry_present": false,
+        "method": "enumerated %LOCALAPPDATA%/hermes/hermes-agent/plugins and the user plugins directory",
+        "bundled": true,
+        "observed_path": "%LOCALAPPDATA%/hermes/hermes-agent/plugins/security-guidance",
+        "present_in_application": true,
+        "user_install_directory_present": false,
         "working_tree_matches_commit": "NOT_COMPARABLE",
-        "comparison_not_possible_reason": "no installed directory was observed, so no bytes existed to compare",
+        "comparison_not_possible_reason": "bundled component with no independent checkout; it ships inside the Hermes application",
         "observed_commit": null
-      }
+      },
+      "verification_kind": "BUNDLED_COMPONENT"
     },
     {
       "id": "web-ddgs",
@@ -102,23 +98,19 @@
       "lifecycle": "enabled",
       "security_scan": "bundled",
       "installed_at": "2026-08-26",
-      "record_note": "AG-06l / audit F07 (2026-10-01): this is an INVENTORY RECORD, not evidence of an installed plugin. On 2026-10-01 the live plugins directory contained only 'chrome-profiles', and .install-metadata.json contained only a chrome-profiles entry, so this plugin is recorded but NOT observed as installed. commit and hash stay null rather than being guessed; null here means 'no verified value', which is the honest state, not a defect to be filled in.",
-      "declared_vs_observed": {
-        "declared_lifecycle": "enabled",
-        "declared_installed_at": "2026-08-26",
-        "observed_installed": false,
-        "agreement": false,
-        "interpretation": "UNRESOLVED: the record declares an installed+enabled plugin dated 2026-08-26, while the 2026-10-01 observation found neither an installed directory nor an install-metadata entry. The declared lifecycle is left EXACTLY as recorded rather than being rewritten to match today, because 'enabled in config' and 'present on disk' are different facts and collapsing them would destroy whichever of the two is the surprise. Resolving it needs an owner decision: either the plugins were removed after 2026-08-26, or the record was aspirational. Not guessed here."
-      },
+      "record_note": "CORRECTION 2026-10-01 (AG-06q). An earlier pass in this session reported a declared-vs-observed disagreement between this entry's lifecycle 'enabled' and its absence from the user plugins directory. That was WRONG and is withdrawn here. This entry's own type/upstream/spdx say 'bundled' (type desktop-plugin, upstream bundled, spdx bundled), which is exactly what it is: it is the bundled DuckDuckGo web-search provider (plugins/web/ddgs), not a user-installed plugin. It was PRESENT where it should be, so there was no disagreement to resolve and no lifecycle value needed changing. The lesson recorded: an install-shaped observation cannot be applied to a non-installed component class; the absence of a bundled plugin from the user install directory is the correct state, not a finding.",
       "observed": {
         "observed_at": "2026-10-01",
-        "method": "listed %LOCALAPPDATA%/hermes/plugins/ and read .install-metadata.json",
-        "installed_directory_present": false,
-        "install_metadata_entry_present": false,
+        "method": "enumerated %LOCALAPPDATA%/hermes/hermes-agent/plugins and the user plugins directory",
+        "bundled": true,
+        "observed_path": "%LOCALAPPDATA%/hermes/hermes-agent/plugins/web/ddgs",
+        "present_in_application": true,
+        "user_install_directory_present": false,
         "working_tree_matches_commit": "NOT_COMPARABLE",
-        "comparison_not_possible_reason": "no installed directory was observed, so no bytes existed to compare",
+        "comparison_not_possible_reason": "bundled component with no independent checkout; it ships inside the Hermes application",
         "observed_commit": null
-      }
+      },
+      "verification_kind": "BUNDLED_COMPONENT"
     }
   ],
   "quarantined": [

@@ -70,6 +70,49 @@ def check_inventory(path: Path) -> list[str]:
         lifecycle = entry.get("lifecycle")
         observed = entry.get("observed")
 
+        # AG-06q: a BUNDLED component ships inside the application. Applying an
+        # install-shaped observation to it produced a false "declared vs observed
+        # disagreement" during this session (security-guidance, web-ddgs), because
+        # absence from the USER install directory is its correct state. The rule
+        # now makes that category error impossible to record.
+        bundled = (
+            entry.get("verification_kind") == "BUNDLED_COMPONENT"
+            or entry.get("upstream") == "bundled"
+        )
+        if bundled:
+            if entry.get("commit") is not None or entry.get("hash") is not None:
+                problems.append(
+                    f"PLUGIN_BUNDLED_CLAIMS_A_CHECKOUT: {label} is a bundled component "
+                    "but records a commit or hash, as if it had an independent checkout"
+                )
+            if isinstance(observed, dict):
+                if observed.get("working_tree_matches_commit") != "NOT_COMPARABLE":
+                    problems.append(
+                        f"PLUGIN_BUNDLED_COMPARED_AS_INSTALL: {label} is bundled yet its "
+                        "observation compares a working tree to a commit; a bundled "
+                        "component has no independent checkout to compare"
+                    )
+                if observed.get("bundled") is not True:
+                    problems.append(
+                        f"PLUGIN_BUNDLED_NOT_DECLARED: {label} is bundled but its "
+                        "observation does not say so"
+                    )
+                if not observed.get("observed_path"):
+                    problems.append(
+                        f"PLUGIN_BUNDLED_WITHOUT_PATH: {label} does not record where the "
+                        "bundled component was found"
+                    )
+            # The category error in its original form: flagging absence from the
+            # user install directory as a disagreement.
+            disagreement = entry.get("declared_vs_observed")
+            if isinstance(disagreement, dict) and disagreement.get("agreement") is False:
+                problems.append(
+                    f"PLUGIN_BUNDLED_FALSE_DISAGREEMENT: {label} is bundled yet records a "
+                    "declared/observed disagreement, which is the category error this "
+                    "rule exists to prevent (its absence from the user install directory "
+                    "is the correct state)"
+                )
+
         if lifecycle in PRESENCE_STATES and not isinstance(observed, dict):
             problems.append(
                 f"PLUGIN_PRESENCE_WITHOUT_OBSERVATION: {label} declares lifecycle "

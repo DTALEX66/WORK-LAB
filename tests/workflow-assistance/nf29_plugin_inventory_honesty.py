@@ -175,19 +175,128 @@ class PluginInventoryNegativeControls(unittest.TestCase):
         self.assertIs(entry["pinned"], False)
         self.assertEqual(entry["version_kind"], "FLOATING_REVISION")
 
-    def test_live_uninstalled_entries_keep_declared_lifecycle(self) -> None:
-        # The disagreement must be RECORDED, not resolved by rewriting the
-        # declared lifecycle to match today's observation.
+    # NOTE: an earlier revision of this file asserted that security-guidance and
+    # web-ddgs carried a declared-vs-observed disagreement. That assertion encoded a
+    # WRONG finding and was removed with it (AG-06q); the replacement lives in
+    # BundledComponentControls.test_live_bundled_entries_are_marked_and_corrected.
+
+
+class BundledComponentControls(unittest.TestCase):
+    """AG-06q: a bundled component must not be judged as an installation.
+
+    During this session I reported that security-guidance and web-ddgs disagreed
+    with observation because they were absent from the user plugins directory. That
+    was wrong: their own type/upstream/spdx say `bundled`, they ship inside the
+    Hermes application, and their absence from the user install directory is the
+    CORRECT state. The rule below makes that category error impossible to record.
+    """
+
+    def _check(self, entry: dict) -> list[str]:
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".json", delete=False, encoding="utf-8"
+        ) as handle:
+            json.dump({"entries": [entry]}, handle, ensure_ascii=False)
+            path = Path(handle.name)
+        try:
+            return P.check_inventory(path)
+        finally:
+            path.unlink()
+
+    @staticmethod
+    def _bundled(**overrides) -> dict:
+        entry = {
+            "id": "b1",
+            "lifecycle": "enabled",
+            "upstream": "bundled",
+            "spdx": "bundled",
+            "type": "desktop-plugin",
+            "verification_kind": "BUNDLED_COMPONENT",
+            "commit": None,
+            "hash": None,
+            "observed": {
+                "observed_at": "2026-10-01",
+                "method": "enumerated the application plugins directory",
+                "bundled": True,
+                "observed_path": "%LOCALAPPDATA%/hermes/hermes-agent/plugins/b1",
+                "present_in_application": True,
+                "user_install_directory_present": False,
+                "working_tree_matches_commit": "NOT_COMPARABLE",
+                "comparison_not_possible_reason": "bundled component with no independent checkout",
+                "observed_commit": None,
+            },
+        }
+        entry.update(overrides)
+        return entry
+
+    def test_bundled_component_passes(self) -> None:
+        self.assertEqual(self._check(self._bundled()), [])
+
+    def test_bundled_with_commit_claims_a_checkout(self) -> None:
+        problems = self._check(self._bundled(commit="a" * 40))
+        self.assertTrue(any("PLUGIN_BUNDLED_CLAIMS_A_CHECKOUT" in p for p in problems))
+
+    def test_bundled_compared_as_install_fails(self) -> None:
+        entry = self._bundled()
+        entry["observed"]["working_tree_matches_commit"] = True
+        problems = self._check(entry)
+        self.assertTrue(any("PLUGIN_BUNDLED_COMPARED_AS_INSTALL" in p for p in problems))
+
+    def test_bundled_without_declaring_bundled_fails(self) -> None:
+        entry = self._bundled()
+        entry["observed"].pop("bundled")
+        problems = self._check(entry)
+        self.assertTrue(any("PLUGIN_BUNDLED_NOT_DECLARED" in p for p in problems))
+
+    def test_bundled_without_path_fails(self) -> None:
+        entry = self._bundled()
+        entry["observed"].pop("observed_path")
+        problems = self._check(entry)
+        self.assertTrue(any("PLUGIN_BUNDLED_WITHOUT_PATH" in p for p in problems))
+
+    def test_bundled_false_disagreement_is_refused(self) -> None:
+        # The exact mistake this rule exists to prevent.
+        entry = self._bundled(
+            declared_vs_observed={"agreement": False, "interpretation": "absent from user dir"}
+        )
+        problems = self._check(entry)
+        self.assertTrue(
+            any("PLUGIN_BUNDLED_FALSE_DISAGREEMENT" in p for p in problems)
+        )
+
+    def test_upstream_bundled_alone_triggers_the_rule(self) -> None:
+        entry = self._bundled()
+        entry.pop("verification_kind")
+        entry["observed"]["working_tree_matches_commit"] = False
+        entry["observed"]["locally_modified_paths"] = ["x.py"]
+        problems = self._check(entry)
+        self.assertTrue(any("PLUGIN_BUNDLED_COMPARED_AS_INSTALL" in p for p in problems))
+
+    def test_live_bundled_entries_are_marked_and_corrected(self) -> None:
         data = json.loads(LIVE.read_text(encoding="utf-8"))
-        for entry in data["entries"]:
-            if entry["id"] == "chrome-profiles":
-                continue
-            with self.subTest(plugin=entry["id"]):
-                self.assertEqual(entry["lifecycle"], "enabled")
-                dvo = entry["declared_vs_observed"]
-                self.assertIs(dvo["agreement"], False)
-                self.assertTrue(dvo["interpretation"])
-                self.assertIs(entry["observed"]["installed_directory_present"], False)
+        bundled = {
+            e["id"]: e
+            for e in data["entries"]
+            if e.get("verification_kind") == "BUNDLED_COMPONENT"
+        }
+        self.assertEqual(set(bundled), {"security-guidance", "web-ddgs"})
+        for pid, entry in bundled.items():
+            with self.subTest(plugin=pid):
+                self.assertEqual(entry["upstream"], "bundled")
+                self.assertIs(entry["observed"]["bundled"], True)
+                self.assertEqual(
+                    entry["observed"]["working_tree_matches_commit"], "NOT_COMPARABLE"
+                )
+                # The withdrawn claim must be gone, and the withdrawal recorded.
+                self.assertNotIn("declared_vs_observed", entry)
+                self.assertIn("WRONG", entry["record_note"])
+                self.assertIn("withdrawn", entry["record_note"])
+
+    def test_live_bundled_web_ddgs_names_the_real_bundled_path(self) -> None:
+        # web-ddgs is the bundled DuckDuckGo provider under plugins/web/ddgs, not a
+        # separate plugin that went missing.
+        data = json.loads(LIVE.read_text(encoding="utf-8"))
+        entry = next(e for e in data["entries"] if e["id"] == "web-ddgs")
+        self.assertIn("plugins/web/ddgs", entry["observed"]["observed_path"])
 
 
 if __name__ == "__main__":
