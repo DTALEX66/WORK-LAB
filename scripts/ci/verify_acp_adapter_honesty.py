@@ -206,23 +206,30 @@ def verify(root: Path) -> int:
             if row["declared"] and not row["implemented"] and row["probe_status"] == "NO_METHOD":
                 _fail("DECLARED_OPERATION_NOT_IMPLEMENTED", f"{name}.{op}")
 
-        # check 5: an execution capability must not be declared when its
-        # operation is not implemented. This is the over-claim that the Atlas
-        # recorded: reporting `resume` in `supports` while `resume()` falls
-        # through to the base NOT_IMPLEMENTED is a false success surface — a
-        # caller reading `supports` concludes the executor can be resumed.
+        # check 5: an execution capability must not be declared unless the
+        # operation is actually EXECUTABLE. This is the over-claim the Atlas
+        # recorded: reporting `resume` in `supports` while `resume()` returns the
+        # base NOT_IMPLEMENTED is a false success surface - a caller reading
+        # `supports` concludes the executor can be resumed.
+        #
+        # The test is `executable`, NOT `implemented`. Method presence proves
+        # nothing: the base class DEFINES resume/prompt/cancel/fork, so a
+        # subclass that overrides nothing still reports implemented=True while
+        # the call returns a degraded status. Only `executable` (overridden AND
+        # the probe did not come back degraded) reflects a real effect.
         for capability, op in EXECUTION_CAPABILITY_TO_OPERATION.items():
             if capability not in set(entry["declared_capabilities"]):
                 continue
             row = entry["operations"].get(op)
             if row is None:
                 continue
-            if not row["implemented"]:
+            if not row["executable"]:
                 _fail(
                     "DECLARED_CAPABILITY_WITHOUT_IMPLEMENTATION",
-                    f"{name} advertises capability {capability!r} but {op}() is the base "
-                    f"implementation (probe={row['probe_status']}); the declaration is a "
-                    "false success surface",
+                    f"{name} advertises execution capability {capability!r} but {op}() "
+                    f"produced no real effect (probe={row['probe_status']}, "
+                    f"overridden={row['implemented']}); the declaration is a false "
+                    "success surface",
                 )
 
     # check 4: matrix covers exactly the registered executors
