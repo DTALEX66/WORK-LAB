@@ -625,6 +625,20 @@ def gate_portable_install_runtime() -> int:
     return run_python(["packages/client-neutral-core/scripts/verify_portable_install.py", "--runtime"])
 
 
+def gate_plugin_inventory_honesty() -> int:
+    """AG-06l (audit F07): a plugin record may not outrun its evidence.
+
+    F07's visible half was `commit: null` beside a declared revision. Its
+    important half is the caveat: a revision string cannot prove the installed
+    bytes match that commit — verified live, where chrome-profiles' declared
+    revision is correct while its working tree is locally modified. The gate also
+    refuses presence without observation and an observation that hides a delta.
+    """
+    return run_python(
+        ["scripts/ci/verify_plugin_inventory.py", "config/plugin-inventory.json"]
+    )
+
+
 def gate_provider_inventory() -> int:
     return run_python(
         [
@@ -1163,6 +1177,13 @@ GATES: dict[str, Gate] = {
         gate_portable_install_runtime,
     ),
     "provider-inventory": Gate("provider-inventory", "Generate the secret-free configured provider/model inventory.", gate_provider_inventory),
+    "plugin-inventory-honesty": Gate(
+        "plugin-inventory-honesty",
+        "AG-06l (audit F07): a plugin record may not claim presence without an "
+        "observation, and an observation may not hide a local delta; a revision "
+        "string alone never proves the installed bytes match that commit.",
+        gate_plugin_inventory_honesty,
+    ),
     "mcp-audit": Gate("mcp-audit", "Smoke the MCP candidate audit template generator.", gate_mcp_audit),
     "shell": Gate("shell", "Parse setup.sh with bash -n when bash is available.", gate_shell),
     "runtime-convergence": Gate(
@@ -1217,6 +1238,7 @@ VERIFY_ORDER = (
     "task-ledger-replay",
     "portable-install",
     "provider-inventory",
+    "plugin-inventory-honesty",
     "mcp-audit",
     "shell",
     "runtime-convergence",
@@ -1295,6 +1317,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "task-ledger-replay": ("packages/client-neutral-core/scripts/task_ledger_replay.py",),
     "portable-install": ("packages/client-neutral-core/scripts/verify_portable_install.py",),
     "provider-inventory": ("config/config.yaml",),
+    "plugin-inventory-honesty": ("config/plugin-inventory.json", "scripts/ci/verify_plugin_inventory.py"),
     "mcp-audit": ("packages/client-neutral-core/scripts/mcp_candidate_audit.py",),
     "shell": ("scripts/setup-workflow.sh",),
     "runtime-convergence": ("packages/client-neutral-core/scripts/canonical_store.py", "services/orchestration/durable_worker.py", "packages/client-neutral-core/scripts/collectors.py", "services/orchestration/sse_hub.py", "tests/workflow-assistance/"),

@@ -3,21 +3,58 @@
   "generated_at": "2026-08-26",
   "generated_by": "WLR-080",
   "purpose": "Managed plugin inventory. Each item binds upstream, commit/tag, SPDX, hash, consumer, permissions, lifecycle state.",
-  "lifecycle_states": ["discovered", "installed", "enabled", "active", "disabled", "quarantined", "removed"],
+  "lifecycle_states": [
+    "discovered",
+    "installed",
+    "enabled",
+    "active",
+    "disabled",
+    "quarantined",
+    "removed"
+  ],
   "entries": [
     {
       "id": "chrome-profiles",
       "display_name": "Hermes Plugin Chrome Profiles",
       "type": "agent-plugin",
       "upstream": "anpicasso/hermes-plugin-chrome-profiles",
-      "commit": null,
+      "commit": "5b9c3257b464c0f926d4355149a8aed9c8f307b4",
       "spdx": "MIT",
-      "hash": null,
+      "hash": "33ffc598c56e9bde61574df2e2f7966eabb4e85a1b860b748687da9a9ea07f76",
       "consumer": "hermes",
-      "permissions": ["browser"],
+      "permissions": [
+        "browser"
+      ],
       "lifecycle": "enabled",
       "security_scan": "PASSED",
-      "installed_at": "2026-08-26"
+      "installed_at": "2026-08-26",
+      "pinned": false,
+      "version_kind": "FLOATING_REVISION",
+      "install_metadata_source": "%LOCALAPPDATA%/hermes/plugins/.install-metadata.json",
+      "declared_revision": "5b9c3257b464c0f926d4355149a8aed9c8f307b4",
+      "declared_source": "https://github.com/anpicasso/hermes-plugin-chrome-profiles.git",
+      "observed": {
+        "observed_at": "2026-10-01",
+        "method": "git -C %LOCALAPPDATA%/hermes/plugins/chrome-profiles rev-parse HEAD plus per-file sha256",
+        "observed_commit": "5b9c3257b464c0f926d4355149a8aed9c8f307b4",
+        "clone_kind": "shallow",
+        "shallow_point": "5b9c3257b464c0f926d4355149a8aed9c8f307b4",
+        "tracked_files_at_head": 6,
+        "committed_tree_digest": "dcf18d52964ec76f4fb3370a4f3b0f62aed9efd8ffbc6313b02784e7f4e9e97e",
+        "working_tree_digest": "33ffc598c56e9bde61574df2e2f7966eabb4e85a1b860b748687da9a9ea07f76",
+        "working_tree_matches_commit": false,
+        "locally_modified_paths": [
+          "__init__.py"
+        ],
+        "installed_file_digests": {
+          "__init__.py": "a56a2ebefd1c68262dabc18060ae766f4be7b33ca39f4ec88a33742783e2c8e6"
+        },
+        "committed_file_digests": {
+          "__init__.py": "8e5595cb6db55f15aa2528be26c19497a8a919e2f8ca0c3e5e481549eae88217"
+        }
+      },
+      "hash_note": "AG-06l / audit F07 (2026-10-01). The record previously carried commit=null and hash=null while the install metadata declared a revision, so traceability was weak. Now both halves are recorded and, crucially, the audit's own caveat is honoured: a revision STRING cannot prove that the installed bytes match that commit. Verified from the live clone - the declared revision is CORRECT (git rev-parse HEAD equals it, shallow clone of the same commit) BUT the working tree does NOT match the commit: __init__.py is locally modified, 24,433 B / a56a2ebe... installed versus 23,764 B / 8e5595cb... committed, i.e. 669 bytes larger than what revision 5b9c3257 contains. No value was invented: where a fact is unknown it stays absent rather than guessed.",
+      "hash_scope": "working tree over the 6 tracked paths, sha256 of path then file content, sorted"
     },
     {
       "id": "security-guidance",
@@ -31,7 +68,24 @@
       "permissions": [],
       "lifecycle": "enabled",
       "security_scan": "bundled",
-      "installed_at": "2026-08-26"
+      "installed_at": "2026-08-26",
+      "record_note": "AG-06l / audit F07 (2026-10-01): this is an INVENTORY RECORD, not evidence of an installed plugin. On 2026-10-01 the live plugins directory contained only 'chrome-profiles', and .install-metadata.json contained only a chrome-profiles entry, so this plugin is recorded but NOT observed as installed. commit and hash stay null rather than being guessed; null here means 'no verified value', which is the honest state, not a defect to be filled in.",
+      "declared_vs_observed": {
+        "declared_lifecycle": "enabled",
+        "declared_installed_at": "2026-08-26",
+        "observed_installed": false,
+        "agreement": false,
+        "interpretation": "UNRESOLVED: the record declares an installed+enabled plugin dated 2026-08-26, while the 2026-10-01 observation found neither an installed directory nor an install-metadata entry. The declared lifecycle is left EXACTLY as recorded rather than being rewritten to match today, because 'enabled in config' and 'present on disk' are different facts and collapsing them would destroy whichever of the two is the surprise. Resolving it needs an owner decision: either the plugins were removed after 2026-08-26, or the record was aspirational. Not guessed here."
+      },
+      "observed": {
+        "observed_at": "2026-10-01",
+        "method": "listed %LOCALAPPDATA%/hermes/plugins/ and read .install-metadata.json",
+        "installed_directory_present": false,
+        "install_metadata_entry_present": false,
+        "working_tree_matches_commit": "NOT_COMPARABLE",
+        "comparison_not_possible_reason": "no installed directory was observed, so no bytes existed to compare",
+        "observed_commit": null
+      }
     },
     {
       "id": "web-ddgs",
@@ -42,10 +96,29 @@
       "spdx": "bundled",
       "hash": null,
       "consumer": "hermes",
-      "permissions": ["web"],
+      "permissions": [
+        "web"
+      ],
       "lifecycle": "enabled",
       "security_scan": "bundled",
-      "installed_at": "2026-08-26"
+      "installed_at": "2026-08-26",
+      "record_note": "AG-06l / audit F07 (2026-10-01): this is an INVENTORY RECORD, not evidence of an installed plugin. On 2026-10-01 the live plugins directory contained only 'chrome-profiles', and .install-metadata.json contained only a chrome-profiles entry, so this plugin is recorded but NOT observed as installed. commit and hash stay null rather than being guessed; null here means 'no verified value', which is the honest state, not a defect to be filled in.",
+      "declared_vs_observed": {
+        "declared_lifecycle": "enabled",
+        "declared_installed_at": "2026-08-26",
+        "observed_installed": false,
+        "agreement": false,
+        "interpretation": "UNRESOLVED: the record declares an installed+enabled plugin dated 2026-08-26, while the 2026-10-01 observation found neither an installed directory nor an install-metadata entry. The declared lifecycle is left EXACTLY as recorded rather than being rewritten to match today, because 'enabled in config' and 'present on disk' are different facts and collapsing them would destroy whichever of the two is the surprise. Resolving it needs an owner decision: either the plugins were removed after 2026-08-26, or the record was aspirational. Not guessed here."
+      },
+      "observed": {
+        "observed_at": "2026-10-01",
+        "method": "listed %LOCALAPPDATA%/hermes/plugins/ and read .install-metadata.json",
+        "installed_directory_present": false,
+        "install_metadata_entry_present": false,
+        "working_tree_matches_commit": "NOT_COMPARABLE",
+        "comparison_not_possible_reason": "no installed directory was observed, so no bytes existed to compare",
+        "observed_commit": null
+      }
     }
   ],
   "quarantined": [
