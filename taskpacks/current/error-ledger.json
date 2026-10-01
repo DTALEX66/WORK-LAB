@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-08-15T00:00:00Z",
+  "generated_at": "2026-10-01",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 95,
+    "total": 96,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 37,
+      "contract_drift": 38,
       "test_behavior_alignment": 10,
       "working_directory_recovery": 2,
       "evidence_state": 12,
@@ -2678,6 +2678,33 @@
         "affectedCapability": "Hermes managed skill deployment fidelity",
         "regressionCommand": "compare sha256 of packages/client-neutral-core/skills/**/SKILL.md with the live Hermes skills tree",
         "currentApplicability": "DRIFT_OPEN_20260930"
+      }
+    },
+    {
+      "error_id": "ERR-097",
+      "date": "2026-10-01",
+      "task_id": "ATLAS-GAP-REMEDIATION-20261001",
+      "phase": "GOVERNANCE_RECONCILIATION",
+      "classification": "contract_drift",
+      "entrypoint": "config/adapter-registry.json policy_projection.maturity for the codex adapter",
+      "command": "python services/orchestration/run_quality_gate.py verify",
+      "exit_code": 0,
+      "observed_error": "config/adapter-registry.json declared maturity=READBACK_VERIFIED for the codex adapter while live CODEX_HOME/AGENTS.md contained no managed overlay marker. ERR-095 had already recorded exactly this on 2026-09-30 and instructed that registry maturity must not be raised again until the block and skill targets were re-rendered and read back, so the declaration was in breach of the ledger rather than merely unproven.",
+      "root_cause": "maturity conflated implementation maturity with deployment verification. The renderer channel and its apply path ARE implemented, so APPLY_SUPPORTED is true; the readback claim was not, because the deployed file no longer carries the managed block (the user's own AGENTS.md content replaced it).",
+      "fix": "Downgraded maturity to APPLY_SUPPORTED (055c08d-era record corrected in a2eb028), mirrored the change into config/capability-matrix.json which declares the registry as a source, and added an explicit policy_projection.deployment_observation block (status UNVERIFIED, reason, observed_at, the two checked paths, authority=ERR-095) plus maturity_note recording the exact condition to raise it again: a sanctioned renderer run AND a fresh native readback. left readback_supported=true because that field states a real capability; collapsing the two was the original defect.",
+      "regression_test": "A registry entry may not claim READBACK_VERIFIED unless a matching deployment_observation with status VERIFIED exists; maturity and deployment state must be readable separately.",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Never raise maturity on the strength of a renderer run alone. The deployment_observation block must be produced by an actual native readback of the live surface, and a drift in it must never be smoothed back into maturity.",
+      "remaining_boundary": "The live drift itself is NOT repaired: no managed block was rendered into the user's AGENTS.md, because that write needs the sanctioned sync channel plus authorization and would touch user-owned content. Only the false claim was corrected.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "a2eb028",
+        "verifiedCommit": null,
+        "affectedCapability": "adapter registry honesty: implementation maturity vs deployment observation",
+        "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python -c \"read config/adapter-registry.json policy_projection.deployment_observation\"",
+        "currentApplicability": "CLAIM_CORRECTED_LIVE_DRIFT_STILL_OPEN"
       }
     }
   ],
