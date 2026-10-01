@@ -113,6 +113,63 @@
               "hash"
             ],
             "properties": {
+              "version_readback": {
+                "description": "AG-07 (2026-10-01): a structured record of a native version observation, separated from `note` so drift stays machine-checkable instead of buried in prose. `observed_at` is required because an undated observation cannot be aged; `verified_version` is required because the whole point is what the native readback actually returned.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "observed_at",
+                  "verified_version",
+                  "method"
+                ],
+                "properties": {
+                  "observed_at": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "verified_version": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "method": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "native_readback": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "command": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "commit": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "install_method": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "conflict_note": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "note": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "install_path_policy": {
+                "description": "AG-07 (2026-10-01): how the install root for this client is obtained. RESOLVE_AT_RUNTIME_NOT_HARDCODED means the root is derived at call time (registry entry / shortcut TargetPath / vendor default) and no drive letter may be pinned in the registry.",
+                "type": "string",
+                "minLength": 1
+              },
               "source_kind": {
                 "enum": [
                   "repository",
