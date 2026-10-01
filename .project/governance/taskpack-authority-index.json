@@ -87,6 +87,11 @@
       "path": "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md",
       "registry_entry": "FUT-001",
       "role": "subordinate current task card: Orca Pilot round-1 plan; execution individually authorized per operation"
+    },
+    {
+      "id": "WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001",
+      "path": "taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md",
+      "role": "subordinate current task card: verified-gap delta table + work breakdown (AG-01..AG-20) derived from the 2026-09-29 Master Atlas snapshot and re-verified against live main cd4daa8; planning record only, grants no execution authority"
     }
   ],
   "acceptance": {
