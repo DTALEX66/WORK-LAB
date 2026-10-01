@@ -477,6 +477,17 @@ def gate_acp_adapter_honesty() -> int:
     return run_python(["scripts/ci/verify_acp_adapter_honesty.py"])
 
 
+def gate_observer_readonly_boundary() -> int:
+    """AG-15 prerequisite: the Observer read-only split is machine-enforced repo-wide.
+
+    Three fail-closed rules: the serving surface denies every non-GET method, the
+    Observer frontend never issues a write verb, and no authoritative write control
+    is rendered without an explicit disabled guard. Complements the per-view
+    runtime assertions in l10-views.test.tsx, which only cover one rendered lane.
+    """
+    return run_python(["scripts/ci/verify_observer_readonly_boundary.py"])
+
+
 def gate_policy_coverage() -> int:
     """U17.7/27: Global Agent Policy coverage + freshness.
 
@@ -1029,6 +1040,12 @@ GATES: dict[str, Gate] = {
         "separately; no execution capability is advertised without a real effect.",
         gate_acp_adapter_honesty,
     ),
+    "observer-readonly-boundary": Gate(
+        "observer-readonly-boundary",
+        "AG-15: the Observer read-only split is enforced repo-wide (no non-GET "
+        "handler, no write verb, no unguarded authoritative write control).",
+        gate_observer_readonly_boundary,
+    ),
     "policy-coverage": Gate(
         "policy-coverage",
         "U17.7/27: verify Global Agent Policy coverage + freshness (loss reports, matrix block, golden projections).",
@@ -1134,6 +1151,7 @@ VERIFY_ORDER = (
     "capability-matrix",
     "model-registry-integrity",
     "acp-adapter-honesty",
+    "observer-readonly-boundary",
     "policy-coverage",
     "context-control-plane",
     "external-libraries-index",
@@ -1211,6 +1229,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "capability-matrix": ("config/capability-matrix.json", "packages/client-neutral-core/scripts/verify_capability_matrix.py"),
     "model-registry-integrity": (".project/governance/provider-registry.json", ".project/governance/model-registry.json", ".project/governance/runtime-registry.json", "scripts/ci/verify_model_registry_integrity.py"),
     "acp-adapter-honesty": ("services/execution-federation/", "scripts/ci/verify_acp_adapter_honesty.py"),
+    "observer-readonly-boundary": ("apps/observer/frontend/src/", "services/orchestration/sidecar.py", "scripts/ci/verify_observer_readonly_boundary.py"),
     "policy-coverage": ("config/global-agent-policy.yaml", "config/loss-reports/", "config/capability-matrix.json", "config/adapter-registry.json", "services/policy/policy_projection.py", "integrations/executors/codex/codex_policy_renderer.py", "integrations/executors/hermes/hermes_policy_renderer.py", "integrations/executors/codex/codex-policy-extension.yaml", "integrations/executors/hermes/hermes-policy-extension.yaml", "integrations/executors/codex/global-guidance.md", "config/SOUL.md", "scripts/ci/verify_policy_coverage.py", "tests/workflow-assistance/test_policy_projection.py"),
     "context-control-plane": ("packages/client-neutral-core/scripts/context_control_plane.py", "packages/client-neutral-core/scripts/context_bundle.py", "packages/client-neutral-core/scripts/context_drift_guard.py"),
     "external-libraries-index": (".project/governance/external-libraries-index.json", "packages/client-neutral-core/scripts/verify_external_libraries_index.py"),
