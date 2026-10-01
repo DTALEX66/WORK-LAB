@@ -19,9 +19,24 @@ Fail-closed rules:
 - code-write defaults to agent.code.primary
 - observer tasks never get a model invocation
 - selected and rejected candidates both carry reason codes
+
+AG-01..AG-04 (2026-10-01 atlas gap remediation, see
+taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md):
+- an explicit user choice is TERMINAL when usable — a project overlay can
+  never silently overwrite it (AG-01);
+- every entry path (explicit, overlay, scan) shares the SAME capability /
+  boundary / availability gate, so a missing required capability is refused
+  on all of them with a specific reason (AG-02);
+- session affinity uses a stable digest instead of the salted builtin
+  ``hash()``, so it does not drift across processes (AG-03);
+- ``runtime_health`` / ``resource`` are enforced (unhealthy candidate ->
+  refusal with ``RUNTIME_UNHEALTHY``) instead of being accepted and ignored
+  (AG-04). An unknown health shape is not treated as unhealthy: absence of
+  evidence is not evidence of failure.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from typing import Any
 
@@ -43,6 +58,28 @@ R_EGRESS_BLOCKED = "CLOUD_EGRESS_BLOCKED"
 R_OBSERVER_NO_MODEL = "OBSERVER_TASK_NO_MODEL"
 R_NO_KEY = "EXECUTOR_NO_API_KEY"
 R_CODE_WRITE_DEFAULT = "CODE_WRITE_AGENT_PRIMARY"
+R_MISSING_CAPABILITY = "MISSING_CAPABILITY"
+R_RUNTIME_UNHEALTHY = "RUNTIME_UNHEALTHY"
+
+# Health states that refuse a candidate. Only these explicit values are
+# treated as unhealthy; an unknown/absent shape stays "no evidence" so the
+# resolver never invents a failure.
+UNHEALTHY_STATUSES = frozenset(
+    {"DOWN", "UNHEALTHY", "FAILED", "BLOCKED", "UNAVAILABLE", "ERROR"}
+)
+# Advisory states: not serving ad-hoc work, but not a fault.
+SATURATED_STATUSES = frozenset({"SATURATED", "EXHAUSTED", "FULL", "BUSY"})
+
+# Ordered gate reasons, most specific first, so an explicit user choice gets
+# the most actionable refusal code available.
+_UNUSABLE_REASON_ORDER = (
+    (R_RETIRED, "lifecycle"),
+    ("QUALITY_BLOCKED", "quality_state"),
+    (R_RUNTIME_UNHEALTHY, "health"),
+    (R_PRIVATE_DATA, "privacy"),
+    (R_UNKNOWN_DATA, "privacy"),
+    (R_EGRESS_BLOCKED, "egress"),
+)
 
 
 class Resolver:
@@ -61,49 +98,51 @@ class Resolver:
         explicit_model = task.get("explicit_model")
 
         candidates = self._candidate_pool()
-        selected = None
         rejected: list[dict[str, Any]] = []
 
         # Observer tasks never get a model.
         if task_kind == "observer":
             return self._plan(task_id, None, [], R_OBSERVER_NO_MODEL, no_model=True)
 
-        # 1. user explicit choice
+        # 1. user explicit choice — TERMINAL when usable (AG-01). A project
+        # overlay must never silently overwrite what the user asked for.
         if explicit_model:
             cand = candidates.get(explicit_model)
-            if cand and self._usable(cand, data_privacy):
-                selected = self._pick(explicit_model, cand, R_USER_CHOSEN)
-            else:
-                reason = self._unusable_reason(explicit_model, candidates.get(explicit_model), data_privacy)
-                rejected.append({"candidate": explicit_model, "reason": reason})
-                return self._plan(task_id, None, rejected, reason)
+            reason = self._reject_reason(cand, required_capabilities, data_privacy)
+            if reason is None:
+                # Picked under the same gate as any other candidate (AG-02).
+                return self._plan(task_id, self._pick(explicit_model, cand, R_USER_CHOSEN),
+                                  rejected, R_USER_CHOSEN)
+            rejected.append({"candidate": explicit_model, "reason": reason})
+            return self._plan(task_id, None, rejected, reason)
 
-        # 2. project approved overlay
+        # 2. project approved overlay — same gate as every other path (AG-02).
         overlay = (self.policy.get("project_overlay") or {}).get("preferred_models") or []
         for model_id in overlay:
             cand = candidates.get(model_id)
-            if cand and self._usable(cand, data_privacy):
-                selected = self._pick(model_id, cand, R_PROJECT_OVERLAY)
-                break
+            reason = self._reject_reason(cand, required_capabilities, data_privacy)
+            if reason is None:
+                return self._plan(task_id, self._pick(model_id, cand, R_PROJECT_OVERLAY),
+                                  rejected, R_PROJECT_OVERLAY)
+            rejected.append({"candidate": model_id, "reason": reason})
 
-        # 3. capability satisfaction scan
-        if not selected:
-            for model_id, cand in sorted(candidates.items(), key=lambda kv: kv[0]):
-                if not self._usable(cand, data_privacy):
-                    rejected.append({"candidate": model_id, "reason": self._unusable_reason(model_id, cand, data_privacy)})
-                    continue
-                caps = set(cand.get("capabilities", []))
-                if required_capabilities and not required_capabilities.issubset(caps):
-                    rejected.append({"candidate": model_id, "reason": "MISSING_CAPABILITY"})
-                    continue
-                # code-write default
-                if "code.write" in required_capabilities and cand.get("role") != "agent.code.primary":
-                    rejected.append({"candidate": model_id, "reason": "NOT_CODE_WRITE_PRIMARY"})
-                    continue
-                # session affinity (deterministic by task id hash)
-                affinity = self._session_affinity(model_id, task_id)
-                if not selected or affinity > self._session_affinity(selected["candidate"], task_id):
-                    selected = self._pick(model_id, cand, R_CAPABILITY_OK if not affinity else R_SESSION_AFFINITY)
+        # 3. capability satisfaction scan. Deterministic order: best session
+        # affinity wins, ties broken by model id — never selected-first.
+        selected = None
+        best_affinity = -1
+        for model_id in sorted(candidates):
+            cand = candidates[model_id]
+            reason = self._reject_reason(cand, required_capabilities, data_privacy)
+            if reason is not None:
+                rejected.append({"candidate": model_id, "reason": reason})
+                continue
+            affinity = self._session_affinity(model_id, task_id)
+            if selected is None or affinity > best_affinity:
+                best_affinity = affinity
+                selected = self._pick(
+                    model_id, cand,
+                    R_SESSION_AFFINITY if affinity > 0 else R_CAPABILITY_OK,
+                )
 
         if not selected:
             reason = self._first_rejection_reason(rejected)
@@ -122,36 +161,100 @@ class Resolver:
             pool[model_id] = entry
         return pool
 
-    def _usable(self, cand: dict[str, Any] | None, data_privacy: str) -> bool:
-        if not cand:
-            return False
-        if cand.get("lifecycle") == "RETIRED":
-            return False
-        if cand.get("quality_state") == "BLOCKED":
-            return False
-        locality = cand.get("locality", "local")
-        if locality == "cloud" and data_privacy in ("private", "unknown"):
-            return False
-        if locality == "cloud" and cand.get("egress") == "approval_required":
-            return False
-        return True
+    def _runtime_keys(self, cand: dict[str, Any]) -> list[str]:
+        keys = []
+        for field in ("runtime_id", "binds_to_runtime", "runtime", "provider"):
+            value = cand.get(field)
+            if isinstance(value, str) and value:
+                keys.append(value)
+        return keys
 
-    def _unusable_reason(self, model_id: str, cand: dict[str, Any] | None, data_privacy: str) -> str:
+    def _health_entry(self, cand: dict[str, Any]) -> dict[str, Any] | None:
+        """Best-effort lookup of a health record for the candidate.
+
+        Accepts either a flat ``{id: {...}}`` map or a wrapper whose
+        ``runtimes``/``providers`` member is that map. An unknown shape
+        returns None (no evidence), never an invented failure.
+        """
+        lookup: dict[str, Any] = {}
+        for key in ("runtimes", "providers", "health"):
+            member = self.runtime_health.get(key)
+            if isinstance(member, dict):
+                lookup.update(member)
+        # Also accept a flat {runtime_or_provider_id: {...}} map.
+        for key, value in self.runtime_health.items():
+            if isinstance(key, str) and isinstance(value, dict):
+                lookup.setdefault(key, value)
+        for name in self._runtime_keys(cand):
+            entry = lookup.get(name)
+            if isinstance(entry, dict):
+                return entry
+        return None
+
+    def _unhealthy(self, cand: dict[str, Any]) -> bool:
+        entry = self._health_entry(cand)
+        if not entry:
+            return False
+        status = entry.get("status")
+        if not isinstance(status, str):
+            return False
+        return status.strip().upper() in UNHEALTHY_STATUSES
+
+    def _reject_reason(self, cand: dict[str, Any] | None,
+                       required_capabilities: set[str],
+                       data_privacy: str) -> str | None:
+        """Single shared gate for every selection path. None == acceptable.
+
+        Most specific refusal wins so an explicit user choice is told exactly
+        what was wrong, and a missing required capability is always refused
+        (never silently satisfied by an unusable candidate).
+        """
         if not cand:
             return "UNKNOWN_CANDIDATE"
-        if cand.get("lifecycle") == "RETIRED":
-            return R_RETIRED
-        if cand.get("quality_state") == "BLOCKED":
-            return "QUALITY_BLOCKED"
-        if cand.get("locality") == "cloud" and data_privacy in ("private", "unknown"):
-            return R_PRIVATE_DATA if data_privacy == "private" else R_UNKNOWN_DATA
-        if cand.get("locality") == "cloud" and cand.get("egress") == "approval_required":
-            return R_EGRESS_BLOCKED
-        return R_UNAVAILABLE
+
+        # Capability conformance must never be bypassed on any path. The
+        # code-write role guard is checked first and without a prerequisite
+        # capability test so a non-primary writer is reported as
+        # NOT_CODE_WRITE_PRIMARY — the precise, actionable reason — rather
+        # than as a generic missing capability.
+        if "code.write" in required_capabilities and cand.get("role") != "agent.code.primary":
+            return "NOT_CODE_WRITE_PRIMARY"
+        caps = set(cand.get("capabilities", []) or [])
+        if required_capabilities and not required_capabilities.issubset(caps):
+            return R_MISSING_CAPABILITY
+
+        for reason, kind in _UNUSABLE_REASON_ORDER:
+            if kind == "lifecycle" and cand.get("lifecycle") == "RETIRED":
+                return reason
+            if kind == "quality_state" and cand.get("quality_state") == "BLOCKED":
+                return reason
+            if kind == "health" and self._unhealthy(cand):
+                return reason
+            if kind == "privacy" and cand.get("locality", "local") == "cloud" \
+                    and data_privacy in ("private", "unknown"):
+                return R_PRIVATE_DATA if data_privacy == "private" else R_UNKNOWN_DATA
+            if kind == "egress" and cand.get("locality", "local") == "cloud" \
+                    and cand.get("egress") == "approval_required":
+                return reason
+        return None
+
+    def _usable(self, cand: dict[str, Any] | None, data_privacy: str) -> bool:
+        """Availability/boundary check only (no capability knowledge)."""
+        return self._reject_reason(cand, set(), data_privacy) is None
+
+    def _unusable_reason(self, model_id: str, cand: dict[str, Any] | None,
+                         data_privacy: str) -> str:
+        return self._reject_reason(cand, set(), data_privacy) or R_UNAVAILABLE
 
     def _session_affinity(self, model_id: str, task_id: str) -> int:
-        # Deterministic pseudo-affinity: same task family reuses prior model.
-        return hash((task_id.split("-")[0] if "-" in task_id else task_id, model_id)) % 100
+        """Stable pseudo-affinity: same task family reuses the prior model.
+
+        Uses SHA-256 over an explicit encoding instead of the builtin
+        ``hash()``, whose string hashing is salted per process (AG-03).
+        """
+        family = task_id.split("-")[0] if "-" in task_id else task_id
+        digest = hashlib.sha256(f"{family}\x1f{model_id}".encode("utf-8")).digest()
+        return int.from_bytes(digest[:8], "big") % 100
 
     def _pick(self, model_id: str, cand: dict[str, Any], reason: str) -> dict[str, Any]:
         return {
