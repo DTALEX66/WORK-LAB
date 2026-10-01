@@ -12,6 +12,18 @@ this file last.
 
 ## 1. Where things actually stand
 
+> **ADDENDUM (2026-10-01, rounds 8-11).** The table below was written at round 8
+> (`9e68469`). Work continued to round 11 (`c3a38fc`) and added: the AG-05c
+> resolvable model→runtime binding and orphan-digest honesty; the AG-05d
+> field-level closure report (new gate `registry-closure-report`, reaching
+> `closed=47 explicitly_open=11 unclosed=0`); and the AG-05e re-anchoring of the
+> reranker runtime note. **`verify` is now 45 gates and the branch is 46 commits
+> ahead of `main`.** Nothing about the "not merged / not released / no exact-SHA
+> CI" position changed. New gates: `model-registry-integrity`,
+> `acp-adapter-honesty`, `observer-readonly-boundary`, `registry-closure-report`.
+> New negative controls: `nf20`-`nf26`, **111 tests** (18 / 6 / 28 / 7 / 13 / 24 / 15),
+> all green locally.
+
 | Item | Value |
 |---|---|
 | Branch | `task-decomposition/atlas-gap-archive-20261001` |
