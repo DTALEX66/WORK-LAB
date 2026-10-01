@@ -222,5 +222,22 @@
       "authorization_required": false,
       "authorization_note": "修复的是本轮自己在仓库内造成的外溢（git 忽略区、可逆、已保留副本），非用户既有数据，故直接修复并登记"
     }
-  ]
+  ],
+  "behavior_declarations": {
+    "evidence_tier": "DECLARED",
+    "tier_definition": "AG-06i (2026-10-01), audit F15/F16. These entries are DECLARED, not OBSERVED or VERIFIED: they record what the generating procedure was instructed to do, not independently reproduced proof that it did it. The bundle's own verification section can only re-hash the files (integrity), which says nothing about whether any particular root was or was not accessed or written. Concretely, each claim below is BLIND to the following, and must not be cited as if it were proof of them: (1) it cannot show a root was never read, (2) it cannot show a root was never written, (3) it cannot show nothing was cleaned up. A trusted audit log from the performing process would be required for that; in its absence the honest tier stays DECLARED. Do NOT re-access a protected volume merely to try to demonstrate that it was not accessed - that would itself be the access it claims did not happen.",
+    "executed": {
+      "value": false,
+      "tier": "DECLARED",
+      "can_establish": [
+        "the candidate list is data only"
+      ],
+      "cannot_establish": [
+        "that no deletion/move/modification occurred during the audit",
+        "that the listed paths still exist in the state described"
+      ]
+    },
+    "policy_field_note": "The existing policy string 'No deletion/move/modification performed' is a BEHAVIOURAL assertion of the same DECLARED tier; it is retained verbatim and is not upgraded by this addition."
+  },
+  "regenerate_procedure_retained": false
 }

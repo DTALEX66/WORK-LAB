@@ -500,6 +500,30 @@ def gate_registry_closure_report() -> int:
     return run_python(["scripts/ci/report_registry_closure.py"])
 
 
+EVIDENCE_TIER_BUNDLES = (
+    "reports/audit-evidence/assets-20260930/MANIFEST.json",
+    "reports/audit-evidence/assets-20260930/CLEANUP-CANDIDATES.json",
+    "reports/audit-evidence/assets-20260930/global-workflow-coverage.json",
+    "reports/audit-evidence/assets-20260930/inventory-verification.json",
+    "reports/audit-evidence/assets-20260930/asset-inventory.json",
+)
+
+
+def gate_evidence_tiering() -> int:
+    """AG-06i (audit F15/F16): a bundle may not read as proof it cannot be.
+
+    The motivating defect was a package whose every digest matched while it still
+    invited a conclusion it could not support (`external_roots_touched: []` cannot
+    show a root was never read; a secret scan whose scanner source was not
+    retained cannot be re-derived). The gate refuses a behavioural claim that
+    carries no tier, and refuses a sub-VERIFIED tier that names nothing it cannot
+    establish.
+    """
+    return run_python(
+        ["scripts/ci/verify_evidence_tiering.py", *EVIDENCE_TIER_BUNDLES]
+    )
+
+
 def gate_policy_coverage() -> int:
     """U17.7/27: Global Agent Policy coverage + freshness.
 
@@ -1064,6 +1088,13 @@ GATES: dict[str, Gate] = {
         "(CLOSED / EXPLICITLY_OPEN / UNCLOSED).",
         gate_registry_closure_report,
     ),
+    "evidence-tiering": Gate(
+        "evidence-tiering",
+        "AG-06i (audit F15/F16): an evidence bundle that makes a behavioural "
+        "claim must tier it, and a claim below VERIFIED must name what it cannot "
+        "establish, so a declared claim cannot be read as proof.",
+        gate_evidence_tiering,
+    ),
     "policy-coverage": Gate(
         "policy-coverage",
         "U17.7/27: verify Global Agent Policy coverage + freshness (loss reports, matrix block, golden projections).",
@@ -1171,6 +1202,7 @@ VERIFY_ORDER = (
     "acp-adapter-honesty",
     "observer-readonly-boundary",
     "registry-closure-report",
+    "evidence-tiering",
     "policy-coverage",
     "context-control-plane",
     "external-libraries-index",
@@ -1250,6 +1282,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "acp-adapter-honesty": ("services/execution-federation/", "scripts/ci/verify_acp_adapter_honesty.py"),
     "observer-readonly-boundary": ("apps/observer/frontend/src/", "services/orchestration/sidecar.py", "scripts/ci/verify_observer_readonly_boundary.py"),
     "registry-closure-report": (".project/governance/provider-registry.json", ".project/governance/model-registry.json", ".project/governance/runtime-registry.json", "scripts/ci/report_registry_closure.py"),
+    "evidence-tiering": ("reports/audit-evidence/", "reports/audit-archive/", "scripts/ci/verify_evidence_tiering.py"),
     "policy-coverage": ("config/global-agent-policy.yaml", "config/loss-reports/", "config/capability-matrix.json", "config/adapter-registry.json", "services/policy/policy_projection.py", "integrations/executors/codex/codex_policy_renderer.py", "integrations/executors/hermes/hermes_policy_renderer.py", "integrations/executors/codex/codex-policy-extension.yaml", "integrations/executors/hermes/hermes-policy-extension.yaml", "integrations/executors/codex/global-guidance.md", "config/SOUL.md", "scripts/ci/verify_policy_coverage.py", "tests/workflow-assistance/test_policy_projection.py"),
     "context-control-plane": ("packages/client-neutral-core/scripts/context_control_plane.py", "packages/client-neutral-core/scripts/context_bundle.py", "packages/client-neutral-core/scripts/context_drift_guard.py"),
     "external-libraries-index": (".project/governance/external-libraries-index.json", "packages/client-neutral-core/scripts/verify_external_libraries_index.py"),

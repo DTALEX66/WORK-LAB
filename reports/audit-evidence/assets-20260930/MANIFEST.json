@@ -26,9 +26,10 @@
       "name": "CLEANUP-CANDIDATES.json",
       "category": "cleanup",
       "purpose": "13 条清理候选（executed=false）",
-      "bytes": 9771,
-      "sha256": "cd03a481e12e97050183d89e54e606fb5a9487de33bd8feadf34a73118339926",
-      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+      "bytes": 11325,
+      "sha256": "913db0f76315431330bf4354b24b8d2123a2baf1ef35405dea911f2258f5fc67",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)",
+      "correction": "2026-10-01: added behavior_declarations (audit F15); digest updated."
     },
     {
       "rel": "reports/audit-evidence/assets-20260930/REPO-ASSET-INDEX.md",
@@ -318,5 +319,51 @@
   "integrity_note": "Every digest is computed over the bytes the repository stores and serves; hash the exact downloaded bytes (LF) and expect a match. Referenced repository authorities are hashed from their HEAD blobs at generation time, so they match the raw URL at the anchored commit. The archive layer carries its own per-file digests in reports/audit-archive/20260930/ARCHIVE-INDEX.json.",
   "scope_note": "Managed client software surface (hermes/codex/dsh/cc-switch/open-design/openhuman/github), this repository's workflow/governance/config/skill/plugin assets, the three-project boundary, the global workflow policy projection matrix with its live deployment readback, and a read-only content archive of rules/norms/skills/configs. Credentials, sessions, private memories and databases are excluded by policy and are NOT represented here. ArcheAxis-Knowledge-OS and DESIGN-LAB were read only.",
   "ordering_note": "Referenced authority digests are taken from the commit that contains the final ledger/evidence edits, so every entry matches the raw URL at the anchored commit.",
-  "url_template": "https://raw.githubusercontent.com/DTALEX66/WORK-LAB/<commit-sha>/<rel>"
+  "url_template": "https://raw.githubusercontent.com/DTALEX66/WORK-LAB/<commit-sha>/<rel>",
+  "behavior_declarations": {
+    "evidence_tier": "DECLARED",
+    "tier_definition": "AG-06i (2026-10-01), audit F15/F16. These entries are DECLARED, not OBSERVED or VERIFIED: they record what the generating procedure was instructed to do, not independently reproduced proof that it did it. The bundle's own verification section can only re-hash the files (integrity), which says nothing about whether any particular root was or was not accessed or written. Concretely, each claim below is BLIND to the following, and must not be cited as if it were proof of them: (1) it cannot show a root was never read, (2) it cannot show a root was never written, (3) it cannot show nothing was cleaned up. A trusted audit log from the performing process would be required for that; in its absence the honest tier stays DECLARED. Do NOT re-access a protected volume merely to try to demonstrate that it was not accessed - that would itself be the access it claims did not happen.",
+    "claims": [
+      {
+        "field": "external_roots_touched",
+        "value": [],
+        "tier": "DECLARED",
+        "can_establish": [
+          "the bundle records no external-root access"
+        ],
+        "cannot_establish": [
+          "that no external root was read",
+          "that no external root was written",
+          "that nothing was cleaned up"
+        ]
+      },
+      {
+        "field": "secrets_included",
+        "value": false,
+        "tier": "DECLARED",
+        "can_establish": [
+          "the generating procedure asserted no credential values were included"
+        ],
+        "cannot_establish": [
+          "that no secret exists in the scanned set beyond the rules that were applied"
+        ]
+      },
+      {
+        "field": "audit_findings",
+        "value": {
+          "spills_found_and_fixed": 1,
+          "spill_id": "SPILL-1"
+        },
+        "tier": "OBSERVED",
+        "can_establish": [
+          "one repository spill was found and fixed"
+        ],
+        "cannot_establish": [
+          "that no other spill exists outside the scanned scope"
+        ]
+      }
+    ],
+    "generating_procedure_retained": false,
+    "generating_procedure_note": "The secret-scan scanner source and the complete rule set that produced SECRET-SCAN-REPORT.json are NOT retained in this bundle, so a third party cannot re-run the scan against the same inputs and compare. The report's counts are therefore not independently reproducible from the published package alone (audit F16). Re-running a scan is not the same as reproducing this one."
+  }
 }
