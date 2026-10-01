@@ -1,8 +1,8 @@
 {
  "schema_version": "workflow/skills-inventory/v1",
- "generatedAt": "2026-09-04T16:49:43Z",
+ "generatedAt": "2026-10-01T06:18:24Z",
  "count": 14,
- "sourceDigest": "54cfe81c9012c4c977b5b939eda1fbd5d2216132697de0ce5e220cddaf334bdb",
+ "sourceDigest": "e0b9305a97140335918d5b979c01cafd49f412517399f48b2cd631e20fdf4b85",
  "sources": [
   "integrations\\executors\\codex\\skills"
  ],
@@ -20,7 +20,7 @@
   {
    "name": "workflow-assistance-observer-delivery",
    "path": "integrations\\executors\\codex\\skills\\workflow-assistance-observer-delivery\\SKILL.md",
-   "sha256": "dff7674c358ec2ab0e0d97baff2556c3cb21ecf2ab724a20d354fb839a5772fb"
+   "sha256": "ed8d47d1b7505758cb0e1e7642d6a556d204b86651e3babf51b05c492a49f769"
   },
   {
    "name": "workflow-assistance-open-design-integration",
@@ -35,7 +35,7 @@
   {
    "name": "workflow-assistance-project-data-boundary",
    "path": "integrations\\executors\\codex\\skills\\workflow-assistance-project-data-boundary\\SKILL.md",
-   "sha256": "12221c2b4c66dff77fc965858e26cd344a926a378455af3677029ba66f2ce658"
+   "sha256": "3ab0301e84d61f92b22fa5943654ee08caf58c3d52b72c4f8dc2ee79fb8cad0e"
   },
   {
    "name": "workflow-assistance-python-testing",
@@ -45,12 +45,12 @@
   {
    "name": "workflow-assistance-safe-project-execution",
    "path": "integrations\\executors\\codex\\skills\\workflow-assistance-safe-project-execution\\SKILL.md",
-   "sha256": "5faae15df19eabac8149b7892a7dfa3cdb105ea6d234f5436eace702d58f19fd"
+   "sha256": "4015f96cd6556d020582bdbc5bc3529b07ceb1d292a3cf11f24fe850d9138925"
   },
   {
    "name": "workflow-assistance-self-improvement",
    "path": "integrations\\executors\\codex\\skills\\workflow-assistance-self-improvement\\SKILL.md",
-   "sha256": "140da74588895f4e48bf1efa1b5f44bda313f47349af97e096f68a15a24f29ba"
+   "sha256": "2101758a8b04daab2cbaf3f4310f564c1750dc7d7c41a2e35d519f726dba1c21"
   },
   {
    "name": "workflow-assistance-single-writer-delivery",
@@ -70,12 +70,12 @@
   {
    "name": "workflow-assistance-verification-hardening",
    "path": "integrations\\executors\\codex\\skills\\workflow-assistance-verification-hardening\\SKILL.md",
-   "sha256": "44830285f80ee9b772868e8df3a7c7a933514b2fdd77ecee2d7281c655a1b641"
+   "sha256": "9b18c759b7c3faf9ca3825b4ddc279fba644413cc442d92194b8b67230f113f9"
   },
   {
    "name": "workflow-assistance-windows-development",
    "path": "integrations\\executors\\codex\\skills\\workflow-assistance-windows-development\\SKILL.md",
-   "sha256": "20bebff6aa7e3fd674ad7b73826c76cd68791a8100100d3c2cb0a9be721eb5e2"
+   "sha256": "8ed5225352ca7f747c0eb672f86c0a1075ae7223e96c33a7e1aec68d7f1c84de"
   }
  ]
 }
