@@ -39,6 +39,15 @@ def _load():
 P = _load()
 
 
+def entry_version(skill_dir: Path) -> str:
+    """Read `version:` from a SKILL.md frontmatter block."""
+    text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+    for line in text.splitlines():
+        if line.startswith("version:"):
+            return line.split(":", 1)[1].strip()
+    return ""
+
+
 class LiveDivergenceControls(unittest.TestCase):
     def _validate(self, divergence, *, live_sha_equals_source=True) -> str:
         """Build a minimal manifest and return the raised message, or ''."""
@@ -134,6 +143,9 @@ class LiveDivergenceControls(unittest.TestCase):
         self.assertIn("live/source self-inconsistency", message)
 
     def test_live_manifest_records_the_windows_divergence(self) -> None:
+        # The block is now a RESOLVED record rather than an open hazard (AG-06r), but
+        # every field that made it actionable must survive, otherwise the history of
+        # what was nearly lost disappears with the fix.
         manifest = yaml.safe_load(
             (ROOT / "config/skill-provenance.yaml").read_text(encoding="utf-8")
         )
@@ -141,31 +153,50 @@ class LiveDivergenceControls(unittest.TestCase):
             e for e in manifest["entries"] if e["name"] == "windows-development-environment"
         )
         block = entry["live_content_divergence"]
-        self.assertIs(block["live_ahead_of_source"], True)
         self.assertEqual(len(block["live_only_lessons"]), 2)
         self.assertTrue(block["live_only_references"])
         self.assertTrue(block["remediation_path"])
         self.assertTrue(block["effect_if_redeployed_without_review"])
         # The dangling citation is part of the record, not smoothed away.
         self.assertTrue(block["stale_citations"])
+        # Resolved means the deployed copy is no longer ahead.
+        self.assertIs(block["live_ahead_of_source"], False)
+        self.assertIn("RESOLVED", block["resolution"])
 
-    def test_live_manifest_divergence_names_the_missing_reference(self) -> None:
+    def test_live_manifest_divergence_records_the_resolution(self) -> None:
+        # The divergence was LANDED into the repository on 2026-10-01 (AG-06r): the two
+        # live-only lessons were added to SKILL.md and the live-only reference was
+        # copied in, so the deployed copy may now be replaced without losing anything.
+        # This test previously asserted the reference was ABSENT from the repository;
+        # that assertion was correct before the fix and is now the thing the fix
+        # disproves, so it is replaced by the resolution checks below rather than
+        # deleted - losing it would lose the record of what the problem was.
         manifest = yaml.safe_load(
             (ROOT / "config/skill-provenance.yaml").read_text(encoding="utf-8")
         )
         entry = next(
             e for e in manifest["entries"] if e["name"] == "windows-development-environment"
         )
-        refs = entry["live_content_divergence"]["live_only_references"]
-        self.assertEqual(refs[0]["rel"], "references/frontend-baseline-contract.md")
-        # And that reference must genuinely be absent from the repository source,
-        # which is why a redeploy would lose it.
-        repo_ref = (
+        block = entry["live_content_divergence"]
+        self.assertIn("resolution", block)
+        self.assertIn("RESOLVED", block["resolution"])
+        # Once resolved, the entry must stop claiming the deployed copy is ahead.
+        self.assertIs(block["live_ahead_of_source"], False)
+
+    def test_live_repository_now_carries_the_recovered_content(self) -> None:
+        skill = (
             ROOT
             / "packages/client-neutral-core/skills/software-development"
-            / "windows-development-environment/references/frontend-baseline-contract.md"
+            / "windows-development-environment"
         )
-        self.assertFalse(repo_ref.exists())
+        text = (skill / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("`.cmd` binary parsing", text)
+        self.assertIn("must be reported honestly as BLOCKED", text)
+        # The dangling citation to an ephemeral .project-local path was replaced.
+        self.assertNotIn("frontend-baseline-vitest-only.py", text)
+        # And the reference that only the deployed copy had is now in the repository.
+        self.assertTrue((skill / "references/frontend-baseline-contract.md").is_file())
+        self.assertEqual(entry_version(skill), "1.4.0")
 
     def test_live_manifest_passes_the_gate(self) -> None:
         manifest_path = ROOT / "config/skill-provenance.yaml"

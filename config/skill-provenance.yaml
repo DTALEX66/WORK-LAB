@@ -126,17 +126,17 @@ entries:
 - name: windows-development-environment
   source: packages/client-neutral-core/skills/software-development/windows-development-environment/SKILL.md
   live: packages/client-neutral-core/skills/software-development/windows-development-environment/SKILL.md
-  source_sha256: 2e1fc6dcdf51ee899700da4615f50e419eb4d54cfb726a5250e58809f7ca1aae
-  version: 1.3.0
+  source_sha256: 6525d9c80668aa47b2c68dd0866ab43d4b2607acd11b61dbf5a2d5aa2317047c
+  version: 1.4.0
   trust: repository-controlled
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 2e1fc6dcdf51ee899700da4615f50e419eb4d54cfb726a5250e58809f7ca1aae
+  live_sha256: 6525d9c80668aa47b2c68dd0866ab43d4b2607acd11b61dbf5a2d5aa2317047c
   live_content_divergence:
     recorded_at: '2026-10-01'
     recorded_by: AG-06o (audit F04)
-    live_ahead_of_source: true
+    live_ahead_of_source: false
     live_lines: 145
     source_lines: 142
     live_bytes: 23825
@@ -170,3 +170,10 @@ entries:
       preserves the content so a redeploy cannot silently destroy it.
     evidence_level: OBSERVED (live file diffed against the repository source on 2026-10-01;
       both sides hashed)
+    resolved_at: '2026-10-01'
+    resolution: 'RESOLVED (AG-06r). The live-only content was LANDED into the repository
+      source: lessons 30 and 31 added verbatim to SKILL.md (now 31 lessons), references/frontend-baseline-contract.md
+      copied in, and the live lesson''s dangling citation to the ephemeral .project-local/runs/frontend-baseline-vitest-only.py
+      REPLACED with the durable reference path that now exists in the repository.
+      Version bumped 1.3.0 -> 1.4.0. The deployed copy may now be replaced by the
+      repository source without losing anything; re-verify after the reinstall deploy.'
