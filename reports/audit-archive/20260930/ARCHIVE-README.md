@@ -41,7 +41,7 @@
 ## 4. 配额与丢弃（审计完整性说明）
 
 - 按客户端配额裁剪共丢弃 **494** 个文件，其中 `SKILL.md` **0** 个。
-- 丢弃对象为附属文档（`skills/**/references/*.md`，优先级最低者）；**所有技能主文件 SKILL.md 均已完整复制**（363 个 hermes 文件中含 186 个 SKILL.md）。
+- 丢弃对象为附属文档（`skills/**/references/*.md`，优先级最低者）；**所有技能主文件 SKILL.md 均已完整复制**（计数已更正 2026-10-01：hermes 363 个文件中含 **178** 个 SKILL.md，另 **8** 个在 codex 目录下，两者合计 186。此前的「hermes 186」把 codex 的 8 个错记到了 hermes 名下。）。
 - 逐客户端配额：hermes=4,000,000B、codex=500,000B、dsh=600,000B、cc-switch=400,000B、open-design=400,000B、openhuman=300,000B、project-archeaxis-rules=400,000B、project-design-lab-rules=800,000B。
 - 若某条结论依赖被丢弃的附属文档，请注明『依据缺失』，不要据缺口推断内容。
 

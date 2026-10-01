@@ -90,9 +90,10 @@
       "name": "ARCHIVE-README.md",
       "category": "archive",
       "purpose": "内容层入口：归档口径/覆盖/排除/脱敏/校验",
-      "bytes": 5246,
-      "sha256": "0e6c7d493ab4a6fb8cd4bd355f73a62be01c45dd9e23856b88fe47cbd23ffa6d",
-      "hashing_basis": "repository bytes (LF-normalized, as committed)"
+      "bytes": 5408,
+      "sha256": "62cc60f8562f7a55838958c431306cdd56da45950e851340ebf53705ea65ec54",
+      "hashing_basis": "repository bytes (LF-normalized, as committed)",
+      "correction": "2026-10-01: the SKILL.md count in section 4 was corrected from 'hermes 186' to 'hermes 178 + codex 8 = 186'. The substantive claim (all SKILL.md main files were copied in full) is unchanged; only the attribution was wrong."
     },
     {
       "rel": "reports/audit-archive/20260930/ARCHIVE-INDEX.json",
