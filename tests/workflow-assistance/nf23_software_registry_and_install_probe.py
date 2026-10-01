@@ -94,6 +94,14 @@ class InstallProbePrefersTheRealRoot(unittest.TestCase):
         return stale, real
 
     def test_env_vars_are_expanded_in_roots(self) -> None:
+        # NOTE (2026-10-01, AG-06u): this assertion is platform-INDEPENDENT by design.
+        # It implies the probe expands the Windows-style `%VAR%` form on any platform.
+        # That was originally false: the probe used os.path.expandvars, which honours
+        # `%VAR%` only on Windows, so the case passed here and FAILED on the Linux CI
+        # runner with `AssertionError: None != '/tmp/tmp...'` - the variable stayed
+        # literal, the root did not exist, and the probe reported no install root at
+        # all. The production defect was in _expand_root, not in this test, so the
+        # probe was fixed rather than the assertion weakened or skipped.
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             (base / "App.exe").write_bytes(b"stub")
@@ -108,6 +116,42 @@ class InstallProbePrefersTheRealRoot(unittest.TestCase):
                 self.assertIsNotNone(probe["executable_realpath"])
             finally:
                 os.environ.pop("WL_TEST_INSTALL_ROOT", None)
+
+    def test_expand_root_handles_both_forms_and_never_blanks_unknowns(self) -> None:
+        os.environ["WL_EXPAND_POSIX"] = "posix-ok"
+        os.environ["WL_EXPAND_WIN"] = "win-ok"
+        os.environ["WL_EXPAND_A"] = "%WL_EXPAND_B%"
+        os.environ["WL_EXPAND_B"] = "nested-ok"
+        os.environ["WL_EXPAND_CASE"] = "case-ok"
+        try:
+            # The declared form in this inventory is Windows-like, so it must expand
+            # even where the host is POSIX.
+            self.assertEqual(pd._expand_root("%WL_EXPAND_WIN%"), "win-ok")
+            # POSIX form must keep working too.
+            self.assertEqual(pd._expand_root("$WL_EXPAND_POSIX"), "posix-ok")
+            # An unset variable must stay LITERAL: blanking it would silently turn a
+            # misdeclared root into the filesystem root or the cwd.
+            self.assertEqual(
+                pd._expand_root("%WL_EXPAND_DEFINITELY_UNSET%"),
+                "%WL_EXPAND_DEFINITELY_UNSET%",
+            )
+            # A variable holding another variable resolves (bounded, not infinite).
+            self.assertEqual(pd._expand_root("%WL_EXPAND_A%"), "nested-ok")
+            # Windows environment variables are case-insensitive.
+            self.assertEqual(pd._expand_root("%wl_expand_case%"), "case-ok")
+        finally:
+            for key in (
+                "WL_EXPAND_POSIX",
+                "WL_EXPAND_WIN",
+                "WL_EXPAND_A",
+                "WL_EXPAND_B",
+                "WL_EXPAND_CASE",
+            ):
+                os.environ.pop(key, None)
+
+    def test_expand_root_leaves_a_path_free_of_variables_untouched(self) -> None:
+        plain = str(Path("/tmp") / "no-vars") if os.name != "nt" else r"C:\no-vars"
+        self.assertEqual(pd._expand_root(plain), plain)
 
     def test_root_with_executable_wins_over_stale_existing_dir(self) -> None:
         stale, real = self._fixture()

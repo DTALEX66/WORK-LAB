@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -381,6 +382,38 @@ SOFTWARE_CANDIDATE_INVENTORY: list[dict[str, Any]] = [
 ]
 
 
+_PERCENT_VAR_RE = re.compile(r"%([A-Za-z_][A-Za-z0-9_]*)%")
+
+
+def _expand_root(raw_root: str) -> str:
+    """Expand a declared install root portably, including ``%VAR%`` on any platform.
+
+    ``os.path.expandvars`` honours ``%VAR%`` only on Windows; on POSIX it leaves that
+    form untouched and expands only ``$VAR``. Because this inventory declares vendor
+    DEFAULTS in Windows form (``%LOCALAPPDATA%/Programs/...``), relying on it meant
+    the probe silently failed to resolve those roots anywhere except Windows — found
+    by CI running the suite on Linux, where ``%WL_TEST_INSTALL_ROOT%`` stayed literal
+    and the probe reported no install root at all.
+
+    The declared form is Windows-like, so expand that form explicitly and
+    case-insensitively (Windows environment variables are case-insensitive), then
+    still let ``os.path.expandvars`` handle whatever POSIX-style form a caller used.
+    """
+    expanded = str(raw_root)
+    for _ in range(4):  # bounded: a var may itself contain a var, but not forever
+        replaced = _PERCENT_VAR_RE.sub(
+            lambda m: os.environ.get(m.group(1))
+            or os.environ.get(m.group(1).upper())
+            or m.group(0),
+            expanded,
+        )
+        if replaced == expanded:
+            break
+        expanded = replaced
+    expanded = os.path.expandvars(expanded)
+    return os.path.expanduser(expanded)
+
+
 def _probe_install(candidate: dict[str, Any]) -> dict[str, Any]:
     """Read-only probe of one software's declared install roots. No writes,
     no user config / data / credentials reads.
@@ -400,8 +433,7 @@ def _probe_install(candidate: dict[str, Any]) -> dict[str, Any]:
     executable: str | None = None
     fallback_root: str | None = None
     for raw_root in candidate.get("install_roots", []):
-        expanded = os.path.expandvars(str(raw_root))
-        expanded = os.path.expanduser(expanded)
+        expanded = _expand_root(raw_root)
         probe = Path(expanded)
         if not probe.is_dir():
             continue
