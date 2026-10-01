@@ -511,6 +511,19 @@ EVIDENCE_TIER_BUNDLES = (
 )
 
 
+def gate_root_governance_suite() -> int:
+    """AG-06t: run the root `tests/ci/` governance suite (the push-time blind spot).
+
+    The canonical gate ran 43 `tests/workflow-assistance/` modules and ZERO of the 22
+    `tests/ci/` ones, so editing the shared error ledger could go green locally and
+    still fail CI — which is exactly what happened (an invalid `phase` enum and a
+    zero original-failure `exit_code` were found only by CI). The module globs the
+    suite so a new check is covered automatically; the single post-merge-state module
+    is excluded with its reason asserted in the script.
+    """
+    return run_python(["scripts/ci/run_root_governance_suite.py"])
+
+
 def gate_evidence_tiering() -> int:
     """AG-06i (audit F15/F16): a bundle may not read as proof it cannot be.
 
@@ -1111,6 +1124,13 @@ GATES: dict[str, Gate] = {
         "establish, so a declared claim cannot be read as proof.",
         gate_evidence_tiering,
     ),
+    "root-governance-suite": Gate(
+        "root-governance-suite",
+        "AG-06t: run the root tests/ci/ governance suite, which the canonical gate "
+        "previously skipped entirely, so a green local run can no longer hide a CI "
+        "failure in the shared ledgers and contracts.",
+        gate_root_governance_suite,
+    ),
     "policy-coverage": Gate(
         "policy-coverage",
         "U17.7/27: verify Global Agent Policy coverage + freshness (loss reports, matrix block, golden projections).",
@@ -1226,6 +1246,7 @@ VERIFY_ORDER = (
     "observer-readonly-boundary",
     "registry-closure-report",
     "evidence-tiering",
+    "root-governance-suite",
     "policy-coverage",
     "context-control-plane",
     "external-libraries-index",
@@ -1307,6 +1328,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "observer-readonly-boundary": ("apps/observer/frontend/src/", "services/orchestration/sidecar.py", "scripts/ci/verify_observer_readonly_boundary.py"),
     "registry-closure-report": (".project/governance/provider-registry.json", ".project/governance/model-registry.json", ".project/governance/runtime-registry.json", "scripts/ci/report_registry_closure.py"),
     "evidence-tiering": ("reports/audit-evidence/", "reports/audit-archive/", "scripts/ci/verify_evidence_tiering.py"),
+    "root-governance-suite": ("tests/ci/", "scripts/ci/run_root_governance_suite.py", "taskpacks/current/error-ledger.json"),
     "policy-coverage": ("config/global-agent-policy.yaml", "config/loss-reports/", "config/capability-matrix.json", "config/adapter-registry.json", "services/policy/policy_projection.py", "integrations/executors/codex/codex_policy_renderer.py", "integrations/executors/hermes/hermes_policy_renderer.py", "integrations/executors/codex/codex-policy-extension.yaml", "integrations/executors/hermes/hermes-policy-extension.yaml", "integrations/executors/codex/global-guidance.md", "config/SOUL.md", "scripts/ci/verify_policy_coverage.py", "tests/workflow-assistance/test_policy_projection.py"),
     "context-control-plane": ("packages/client-neutral-core/scripts/context_control_plane.py", "packages/client-neutral-core/scripts/context_bundle.py", "packages/client-neutral-core/scripts/context_drift_guard.py"),
     "external-libraries-index": (".project/governance/external-libraries-index.json", "packages/client-neutral-core/scripts/verify_external_libraries_index.py"),
