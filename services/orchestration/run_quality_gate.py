@@ -452,6 +452,31 @@ def gate_capability_matrix() -> int:
     return run_python(["packages/client-neutral-core/scripts/verify_capability_matrix.py"])
 
 
+def gate_model_registry_integrity() -> int:
+    """AG-05: model/provider/runtime registries stay internally consistent.
+
+    Fail-closed checks that a provider's `binds_to_model` resolves to a model id
+    (or a declared external asset), that `binds_to_runtime` resolves to an HTTP
+    runtime or an explicitly declared in-process library, that `binding_status`
+    cannot contradict the model lifecycle, that a runtime-scoped operationalStatus
+    does not use serving vocabulary for an unserved binding, and that a digest is
+    either COMPLETE with a 64-hex sha256 or TRUNCATED with a stated reason. Reads
+    JSON only: never downloads, installs, or touches runtime or global config.
+    """
+    return run_python(["scripts/ci/verify_model_registry_integrity.py"])
+
+
+def gate_acp_adapter_honesty() -> int:
+    """AG-06: the ACP surface reports declared/implemented/executable/native_verified.
+
+    Fail-closed: an execution capability may not be advertised when its operation
+    produces no real effect, an operation may not be reported executable unless the
+    probe avoided a degraded status, and native_verified requires a native receipt.
+    Probing is read-only and never launches an executor process.
+    """
+    return run_python(["scripts/ci/verify_acp_adapter_honesty.py"])
+
+
 def gate_policy_coverage() -> int:
     """U17.7/27: Global Agent Policy coverage + freshness.
 
@@ -992,6 +1017,18 @@ GATES: dict[str, Gate] = {
         "WL3-100: verify capability-matrix.json stays consistent with the adapter registry.",
         gate_capability_matrix,
     ),
+    "model-registry-integrity": Gate(
+        "model-registry-integrity",
+        "AG-05: provider/model/runtime registries have no dangling foreign key, "
+        "contradictory binding status, or unverifiable digest.",
+        gate_model_registry_integrity,
+    ),
+    "acp-adapter-honesty": Gate(
+        "acp-adapter-honesty",
+        "AG-06: ACP operations report declared/implemented/executable/native_verified "
+        "separately; no execution capability is advertised without a real effect.",
+        gate_acp_adapter_honesty,
+    ),
     "policy-coverage": Gate(
         "policy-coverage",
         "U17.7/27: verify Global Agent Policy coverage + freshness (loss reports, matrix block, golden projections).",
@@ -1095,6 +1132,8 @@ VERIFY_ORDER = (
     "core-schemas",
     "adapter-registry",
     "capability-matrix",
+    "model-registry-integrity",
+    "acp-adapter-honesty",
     "policy-coverage",
     "context-control-plane",
     "external-libraries-index",
@@ -1170,6 +1209,8 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "core-schemas": ("packages/contracts/schemas/", "config/"),
     "adapter-registry": ("config/adapter-registry.json", "packages/client-neutral-core/scripts/verify_adapter_registry.py"),
     "capability-matrix": ("config/capability-matrix.json", "packages/client-neutral-core/scripts/verify_capability_matrix.py"),
+    "model-registry-integrity": (".project/governance/provider-registry.json", ".project/governance/model-registry.json", ".project/governance/runtime-registry.json", "scripts/ci/verify_model_registry_integrity.py"),
+    "acp-adapter-honesty": ("services/execution-federation/", "scripts/ci/verify_acp_adapter_honesty.py"),
     "policy-coverage": ("config/global-agent-policy.yaml", "config/loss-reports/", "config/capability-matrix.json", "config/adapter-registry.json", "services/policy/policy_projection.py", "integrations/executors/codex/codex_policy_renderer.py", "integrations/executors/hermes/hermes_policy_renderer.py", "integrations/executors/codex/codex-policy-extension.yaml", "integrations/executors/hermes/hermes-policy-extension.yaml", "integrations/executors/codex/global-guidance.md", "config/SOUL.md", "scripts/ci/verify_policy_coverage.py", "tests/workflow-assistance/test_policy_projection.py"),
     "context-control-plane": ("packages/client-neutral-core/scripts/context_control_plane.py", "packages/client-neutral-core/scripts/context_bundle.py", "packages/client-neutral-core/scripts/context_drift_guard.py"),
     "external-libraries-index": (".project/governance/external-libraries-index.json", "packages/client-neutral-core/scripts/verify_external_libraries_index.py"),

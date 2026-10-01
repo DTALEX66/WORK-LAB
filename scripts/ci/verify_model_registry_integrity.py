@@ -76,6 +76,36 @@ def _fail(reason: str, detail: str = "") -> None:
     _errors.append(f"{reason}{suffix}")
 
 
+def _check_asset_digest(owner: str, digest: object) -> None:
+    """Shared digest-honesty rule for any entry that carries assetDigest.
+
+    A digest block is either absent, or COMPLETE with a lowercase 64-hex
+    sha256, or TRUNCATED with a stated reason. A truncated prefix may never
+    masquerade as a complete digest, and a bare prefix with no explanation is
+    indistinguishable from a fabricated checksum.
+    """
+    if digest is None:
+        return
+    if not isinstance(digest, dict):
+        _fail("ASSET_DIGEST_MALFORMED", f"{owner}.assetDigest must be an object")
+        return
+    state = digest.get("state")
+    if state not in DIGEST_STATES:
+        _fail("ASSET_DIGEST_STATE_UNKNOWN",
+              f"{owner}.assetDigest.state={state!r} not in {sorted(DIGEST_STATES)}")
+        return
+    if state == "COMPLETE":
+        sha = digest.get("sha256")
+        if not (isinstance(sha, str) and HEX64.match(sha)):
+            _fail("ASSET_DIGEST_INCOMPLETE",
+                  f"{owner}.assetDigest.state=COMPLETE but sha256 is not 64 lowercase hex")
+    elif state == "TRUNCATED":
+        reason = digest.get("reason")
+        if not (isinstance(reason, str) and reason.strip()):
+            _fail("ASSET_DIGEST_TRUNCATED_WITHOUT_REASON",
+                  f"{owner}.assetDigest.state=TRUNCATED requires a reason")
+
+
 def _load(path: Path) -> dict:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -200,36 +230,16 @@ def verify(root: Path) -> int:
                   f"{pid} claims OPERATIONAL with an unserved model and no bound scope")
 
         # --- check 5: digest honesty ----------------------------------
-        digest = provider.get("assetDigest")
-        if digest is not None:
-            if not isinstance(digest, dict):
-                _fail("ASSET_DIGEST_MALFORMED", f"{pid}.assetDigest must be an object")
-            else:
-                state = digest.get("state")
-                if state not in DIGEST_STATES:
-                    _fail("ASSET_DIGEST_STATE_UNKNOWN",
-                          f"{pid}.assetDigest.state={state!r} not in {sorted(DIGEST_STATES)}")
-                elif state == "COMPLETE":
-                    sha = digest.get("sha256")
-                    if not (isinstance(sha, str) and HEX64.match(sha)):
-                        _fail("ASSET_DIGEST_INCOMPLETE",
-                              f"{pid}.assetDigest.state=COMPLETE but sha256 is not 64 lowercase hex")
-                elif state == "TRUNCATED":
-                    reason = digest.get("reason")
-                    if not (isinstance(reason, str) and reason.strip()):
-                        _fail("ASSET_DIGEST_TRUNCATED_WITHOUT_REASON",
-                              f"{pid}.assetDigest.state=TRUNCATED requires a reason")
+        _check_asset_digest(pid, provider.get("assetDigest"))
 
     # --- check: model registry digest honesty -------------------------
     for model_id, entry in sorted(models.items()):
         raw = entry.get("sha256")
-        if raw is None:
-            continue
-        if isinstance(raw, str) and HEX64.match(raw):
-            continue
-        _fail("MODEL_SHA256_UNVERIFIABLE",
-              f"model {model_id}.sha256={str(raw)[:48]!r} is neither a 64-hex digest nor an "
-              "explicit null; move the prose to assetDigest and null the field")
+        if raw is not None and not (isinstance(raw, str) and HEX64.match(raw)):
+            _fail("MODEL_SHA256_UNVERIFIABLE",
+                  f"model {model_id}.sha256={str(raw)[:48]!r} is neither a 64-hex digest nor an "
+                  "explicit null; move the prose to assetDigest and null the field")
+        _check_asset_digest(f"model {model_id}", entry.get("assetDigest"))
 
     # --- check: process libraries are not HTTP servers ---------------
     for lib_id, lib in sorted(process_libs.items()):
