@@ -101,10 +101,10 @@
       "name": "ARCHIVE-INDEX.json",
       "category": "archive",
       "purpose": "归档逐文件索引与 sha256",
-      "bytes": 314661,
-      "sha256": "b6362b37ed745d821ce04456c3ec0c6699f2578c10346910f25a62ccee11d9da",
+      "bytes": 316803,
+      "sha256": "93ff0713686557787b43c9a60981be3d15bf6fe81ed16b98180ea625fb3d2158",
       "hashing_basis": "repository bytes (LF-normalized, as committed)",
-      "correction": "2026-10-01: AGENTS.md copy digests updated after the F18 disarm banner."
+      "correction": "2026-10-01: added project_provenance recording UNKNOWN per-project commit bindings (audit F01)."
     },
     {
       "rel": "reports/audit-archive/20260930/SECRET-SCAN-REPORT.json",

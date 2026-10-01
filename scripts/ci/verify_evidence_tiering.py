@@ -347,6 +347,71 @@ def find_undisarmed_instruction_files(root: Path) -> list[str]:
     return problems
 
 
+def check_cross_project_provenance(path: Path) -> list[str]:
+    """Refuse a cross-project archive that hides which revision it copied.
+
+    Audit F01 asks that history gaps be registered with fixed ids and that anything
+    not recovered stay UNKNOWN. The archive copies files from two OTHER projects
+    (ArcheAxis-Knowledge-OS, DESIGN-LAB) while anchoring only its own freeze commit,
+    so a reader cannot tell which revision of those projects was copied - or that
+    nobody knows. The honest states are a real commit/tree, or an explicit UNKNOWN
+    with a reason; a silent null is the one that must not pass, because it looks
+    like there was nothing to record.
+    """
+    data = _load(path)
+    projects = data.get("project_provenance")
+    if not isinstance(projects, dict):
+        # Only required when the index actually references another project's files.
+        if any(
+            isinstance(entry, dict)
+            and str(entry.get("archive_path", "")).startswith("projects/")
+            for entry in (data.get("files") or [])
+        ):
+            return [
+                f"ARCHIVE_CROSS_PROJECT_UNBOUND: {path.name} contains files copied from "
+                "other projects but declares no project_provenance, so no revision "
+                "binding and no explicit UNKNOWN is recorded"
+            ]
+        return []
+
+    problems: list[str] = []
+    per_project = projects.get("per_project")
+    if not isinstance(per_project, dict) or not per_project:
+        problems.append(
+            f"ARCHIVE_PROJECT_PROVENANCE_EMPTY: {path.name} declares project_provenance "
+            "with no per_project entries"
+        )
+        return problems
+
+    for name, entry in sorted(per_project.items()):
+        label = f"{path.name}.project_provenance.{name}"
+        if not isinstance(entry, dict):
+            problems.append(f"ARCHIVE_PROJECT_ENTRY_MALFORMED: {label}")
+            continue
+        if not entry.get("files_in_archive"):
+            problems.append(
+                f"ARCHIVE_PROJECT_NO_FILE_COUNT: {label} does not say how many files it "
+                "contributed"
+            )
+        bound = bool(entry.get("commit")) or bool(entry.get("tree"))
+        status = entry.get("provenance_status")
+        if bound:
+            continue
+        # Unbound: acceptable ONLY when declared UNKNOWN with a reason.
+        if status != "UNKNOWN":
+            problems.append(
+                f"ARCHIVE_PROJECT_UNBOUND_NOT_DECLARED: {label} has no commit or tree and "
+                f"provenance_status={status!r}; accept only an explicit UNKNOWN so the gap "
+                "is visible instead of looking like nothing to record"
+            )
+        if not entry.get("reason"):
+            problems.append(
+                f"ARCHIVE_PROJECT_UNBOUND_WITHOUT_REASON: {label} is UNKNOWN but gives no "
+                "reason"
+            )
+    return problems
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("paths", nargs="+", type=Path, help="evidence bundle JSON files to check")
@@ -370,6 +435,7 @@ def main(argv: list[str] | None = None) -> int:
             check_bundle(path)
             + check_cleanup_candidates(path)
             + check_archive_index_coverage(path)
+            + check_cross_project_provenance(path)
         )
         if _find_behavioural(_load(path)):
             claimed += 1

@@ -463,5 +463,118 @@ class ArchivedInstructionFileControls(unittest.TestCase):
                 self.assertIn("00-governance", flat)
 
 
+class CrossProjectProvenanceControls(unittest.TestCase):
+    """Audit F01: a cross-project copy must say which revision it came from.
+
+    The archive copies files from two other projects while anchoring only its own
+    freeze commit, so nothing binds the copies to a source revision. The audit's
+    remedy is to register gaps with fixed ids and leave anything unrecovered as
+    UNKNOWN - so a silent null must not pass, because it looks like there was
+    nothing to record.
+    """
+
+    def _check(self, obj: dict) -> list[str]:
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".json", delete=False, encoding="utf-8"
+        ) as handle:
+            json.dump(obj, handle, ensure_ascii=False)
+            path = Path(handle.name)
+        try:
+            return V.check_cross_project_provenance(path)
+        finally:
+            path.unlink()
+
+    def test_cross_project_files_without_provenance_fail(self) -> None:
+        obj = {"files": [{"archive_path": "projects/OTHER/AGENTS.md"}]}
+        problems = self._check(obj)
+        self.assertTrue(any("ARCHIVE_CROSS_PROJECT_UNBOUND" in p for p in problems))
+
+    def test_no_cross_project_files_needs_no_provenance(self) -> None:
+        obj = {"files": [{"archive_path": "hermes/config.yaml"}]}
+        self.assertEqual(self._check(obj), [])
+
+    def test_explicit_unknown_with_reason_passes(self) -> None:
+        obj = {
+            "files": [{"archive_path": "projects/OTHER/AGENTS.md"}],
+            "project_provenance": {
+                "per_project": {
+                    "OTHER": {
+                        "files_in_archive": 3,
+                        "commit": None,
+                        "tree": None,
+                        "provenance_status": "UNKNOWN",
+                        "reason": "source repository not accessed",
+                    }
+                }
+            },
+        }
+        self.assertEqual(self._check(obj), [])
+
+    def test_bound_commit_passes(self) -> None:
+        obj = {
+            "files": [{"archive_path": "projects/OTHER/AGENTS.md"}],
+            "project_provenance": {
+                "per_project": {
+                    "OTHER": {
+                        "files_in_archive": 3,
+                        "commit": "a" * 40,
+                        "provenance_status": "BOUND",
+                    }
+                }
+            },
+        }
+        self.assertEqual(self._check(obj), [])
+
+    def test_silent_null_fails(self) -> None:
+        obj = {
+            "files": [{"archive_path": "projects/OTHER/AGENTS.md"}],
+            "project_provenance": {
+                "per_project": {
+                    "OTHER": {"files_in_archive": 3, "commit": None, "tree": None}
+                }
+            },
+        }
+        problems = self._check(obj)
+        self.assertTrue(any("ARCHIVE_PROJECT_UNBOUND_NOT_DECLARED" in p for p in problems))
+
+    def test_unknown_without_reason_fails(self) -> None:
+        obj = {
+            "files": [{"archive_path": "projects/OTHER/AGENTS.md"}],
+            "project_provenance": {
+                "per_project": {
+                    "OTHER": {
+                        "files_in_archive": 3,
+                        "commit": None,
+                        "provenance_status": "UNKNOWN",
+                    }
+                }
+            },
+        }
+        problems = self._check(obj)
+        self.assertTrue(
+            any("ARCHIVE_PROJECT_UNBOUND_WITHOUT_REASON" in p for p in problems)
+        )
+
+    def test_live_index_declares_unknown_project_bindings(self) -> None:
+        path = ROOT / "reports/audit-archive/20260930/ARCHIVE-INDEX.json"
+        self.assertEqual(V.check_cross_project_provenance(path), [])
+        data = json.loads(path.read_text(encoding="utf-8"))
+        per_project = data["project_provenance"]["per_project"]
+        self.assertEqual(
+            set(per_project), {"ArcheAxis-Knowledge-OS", "DESIGN-LAB"}
+        )
+        for name, entry in per_project.items():
+            with self.subTest(project=name):
+                # Unbound is the current truth; what matters is that it is DECLARED
+                # rather than left ambiguous.
+                self.assertIsNone(entry["commit"])
+                self.assertEqual(entry["provenance_status"], "UNKNOWN")
+                self.assertTrue(entry["reason"])
+                self.assertTrue(entry["files_in_archive"])
+        # The record must also say what is NOT proven, so it cannot be read as a
+        # complete mirror of those projects.
+        self.assertTrue(data["project_provenance"]["what_is_not_proven"])
+
+
 if __name__ == "__main__":
     unittest.main()

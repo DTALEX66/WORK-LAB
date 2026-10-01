@@ -7416,5 +7416,38 @@
       "declared_not_silent": true,
       "remediation_status": "DECLARATION CORRECTED, ARCHIVE NOT REGENERATED. Re-copying the 5 files is a regeneration of the archive, outside a reconciliation pass; the counts here continue to describe what actually happened on 2026-09-30."
     }
+  },
+  "project_provenance": {
+    "recorded_at": "2026-10-01",
+    "recorded_by": "AG-06p (audit F01)",
+    "scope_statement": "This archive copies files FROM two other projects (ArcheAxis-Knowledge-OS, DESIGN-LAB) into tests/../reports/audit-archive. It is a targeted copy for audit, not a mirror of those repositories.",
+    "per_project": {
+      "ArcheAxis-Knowledge-OS": {
+        "files_in_archive": 8,
+        "commit": null,
+        "tree": null,
+        "provenance_status": "UNKNOWN",
+        "reason": "the source repository was NOT accessed to bind a commit or tree; guessing one would fabricate provenance"
+      },
+      "DESIGN-LAB": {
+        "files_in_archive": 61,
+        "commit": null,
+        "tree": null,
+        "provenance_status": "UNKNOWN",
+        "reason": "the source repository was NOT accessed to bind a commit or tree; guessing one would fabricate provenance"
+      }
+    },
+    "archive_anchor": {
+      "kind": "single_commit",
+      "commit": "636d5ece",
+      "note": "the archive's own freeze commit; it anchors THIS repository's copy, not the source repositories' revisions"
+    },
+    "what_is_not_proven": [
+      "that the copied files equal any particular commit of ArcheAxis-Knowledge-OS or DESIGN-LAB",
+      "that the copy is complete for either project (only the enumerated files were taken)",
+      "that either source repository was at a clean state when copied"
+    ],
+    "remediation": "Binding real per-project commit/tree ids requires authorized access to those repositories, which is outside this task's boundary. Until then these fields stay null with provenance_status UNKNOWN, which is the honest state rather than a filled-in guess.",
+    "not_claimed_correction": "Audit F01's wording says the archive is not a 'three-repo cloud full tree' nor 'all GPT history'. Checked: neither this index, ARCHIVE-README.md nor the external audit pack makes either claim. The README declares a per-client coverage table and explicit privacy exclusions instead. So that half of F01 does not describe any assertion the package actually makes, and is recorded here rather than silently accepted."
   }
 }
