@@ -63,11 +63,19 @@ def _valid_registries() -> tuple[dict, dict, dict]:
     model = {
         "schemaVersion": "work-lab/model-registry/v1",
         "models": [
-            {"id": "qwen-small", "sha256": "a" * 64, "status": "active"},
+            {"id": "qwen-small", "sha256": "a" * 64, "status": "active",
+             "runtime_id": "lmstudio"},
             {"id": "qwen-old", "sha256": None, "status": "RETIRED_PENDING_DECISION",
+             "runtime_id": None,
              "assetDigest": {"state": "TRUNCATED", "prefix": "deadbeefdeadbeef",
                              "reason": "only a prefix survives in the record"}},
-            {"id": "whisper", "sha256": None, "status": "active"},
+            {"id": "whisper", "sha256": None, "status": "active",
+             "runtime_id": "faster-whisper"},
+        ],
+        "candidateOrphans": [
+            {"path": "leftover.gguf", "sha256": None,
+             "assetDigest": {"state": "TRUNCATED", "prefix": "a18ae2a5f553fe02",
+                             "reason": "partial download residue; full digest never captured"}},
         ],
     }
     runtime = {
@@ -199,6 +207,52 @@ class ModelRegistryIntegrityNegativeControls(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             code = MRI.verify(Path(tmp))
             self.assertEqual(code, 1)
+
+    def test_unresolved_model_runtime_id_fails(self) -> None:
+        p, m, r = _valid_registries()
+        m["models"][0]["runtime_id"] = "ghost-runtime"
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("MODEL_RUNTIME_ID_UNRESOLVED", err)
+
+    def test_missing_model_runtime_id_fails(self) -> None:
+        # `runtime` prose must never stand in for a resolvable id.
+        p, m, r = _valid_registries()
+        del m["models"][0]["runtime_id"]
+        m["models"][0]["runtime"] = "lmstudio (:1234), prose only"
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("MODEL_RUNTIME_ID_MISSING", err)
+
+    def test_active_model_with_null_runtime_id_fails(self) -> None:
+        p, m, r = _valid_registries()
+        m["models"][0]["runtime_id"] = None
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("UNBOUND_RUNTIME_ON_ACTIVE_MODEL", err)
+
+    def test_process_library_runtime_id_is_accepted(self) -> None:
+        p, m, r = _valid_registries()
+        m["models"][2]["runtime_id"] = "faster-whisper"
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 0, err)
+
+    def test_orphan_prose_digest_fails(self) -> None:
+        p, m, r = _valid_registries()
+        m["candidateOrphans"] = [{"path": "residue.gguf", "sha256": "a18ae2a5f553fe02"}]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("ORPHAN_SHA256_UNVERIFIABLE", err)
+
+    def test_orphan_truncated_digest_with_reason_passes(self) -> None:
+        p, m, r = _valid_registries()
+        m["candidateOrphans"] = [{
+            "path": "residue.gguf", "sha256": None,
+            "assetDigest": {"state": "TRUNCATED", "prefix": "a18ae2a5f553fe02",
+                            "reason": "partial download residue; full digest never captured"},
+        }]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 0, err)
 
     def test_null_binding_without_note_fails(self) -> None:
         p, m, r = _valid_registries()

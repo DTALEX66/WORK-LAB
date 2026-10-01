@@ -68,7 +68,10 @@
         "downloaded_at": "2026-09-28",
         "mirror_throughput_observed": "28-29 MB/s"
       },
-      "status": "active"
+      "status": "active",
+      "runtime_id": "lmstudio",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
     },
     {
       "id": "qwen3.8-27b-ud-iq4_xs",
@@ -120,7 +123,10 @@
         "upstream_origin": "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF",
         "domesticMirrorPreferred": true
       },
-      "status": "active"
+      "status": "active",
+      "runtime_id": "lmstudio",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
     },
     {
       "id": "qwen3-embedding-0.6b",
@@ -162,7 +168,10 @@
       "ownership_note": "Weights+runtime = WORK-LAB. Embedding vectors, indexes and their semantics = ArcheAxis-Knowledge-OS. Never conflate.",
       "status": "active",
       "dimensions": 1024,
-      "migration_note": "Moved out of the Ollama blob store into <publisher>/<repo> by same-volume move after sha256 verification; the old blob path no longer exists. It is now indexed by LM Studio."
+      "migration_note": "Moved out of the Ollama blob store into <publisher>/<repo> by same-volume move after sha256 verification; the old blob path no longer exists. It is now indexed by LM Studio.",
+      "runtime_id": "lmstudio",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
     },
     {
       "id": "qwen3-reranker-0.6b",
@@ -212,7 +221,9 @@
         ],
         "measured_on": "llama.cpp b11221 /v1/rerank --rerank --pooling rank",
         "status": "NOT REPRODUCIBLE ON LM STUDIO — kept only as the llama.cpp reference record"
-      }
+      },
+      "runtime_id": "lmstudio",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
     },
     {
       "id": "qwen2.5-vl-7b-instruct",
@@ -283,7 +294,10 @@
         "id": "qwen2.5vl-7b",
         "status": "SUPERSEDED",
         "reason": "The Ollama blob contains no vision projector (hasVision=false, no clip.* keys, single image.model layer, no mmproj anywhere in the library), so it cannot do OCR under any runtime. Its weights remain in place and were NOT deleted."
-      }
+      },
+      "runtime_id": "lmstudio",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
     },
     {
       "id": "faster-whisper-large-v3-turbo",
@@ -328,7 +342,10 @@
         "verdict": "real Chinese audio transcribed exactly (CPU int8, no GPU needed); the default ASR provider"
       },
       "last_verified": "2026-09-28",
-      "status": "active"
+      "status": "active",
+      "runtime_id": "faster-whisper",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
     },
     {
       "id": "sherpa-onnx-sense-voice",
@@ -363,7 +380,10 @@
       "health": "PRESENT",
       "benchmark": null,
       "last_verified": null,
-      "status": "standby"
+      "status": "standby",
+      "runtime_id": "sherpa-onnx",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
     },
     {
       "id": "sherpa-onnx-streaming-zipformer-zh-14m",
@@ -397,7 +417,10 @@
       "health": "PRESENT",
       "benchmark": null,
       "last_verified": null,
-      "status": "standby"
+      "status": "standby",
+      "runtime_id": "sherpa-onnx",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
     },
     {
       "id": "qwen3-8b",
@@ -433,7 +456,10 @@
       "last_verified": "2026-09-29",
       "status": "RETIRED_PENDING_DECISION",
       "not_deleted_reason": "brief forbids deleting an existing model without confirmed duplication + a rollback plan; it still covers WORK-LAB-side general use",
-      "retirement_note": "Ollama runtime removed; weight retained in place, NOT served, NOT deleted. It is outside the WL-MODEL-02 target of exactly two general LLMs and is reported as a candidate for removal, not removed."
+      "retirement_note": "Ollama runtime removed; weight retained in place, NOT served, NOT deleted. It is outside the WL-MODEL-02 target of exactly two general LLMs and is reported as a candidate for removal, not removed.",
+      "runtime_id": null,
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
     },
     {
       "id": "qwen3-coder-30b-a3b",
@@ -468,7 +494,10 @@
       "benchmark": null,
       "last_verified": "2026-09-29",
       "status": "RETIRED_PENDING_DECISION",
-      "retirement_note": "Ollama runtime removed; weight retained in place, NOT served, NOT deleted. It is outside the WL-MODEL-02 target of exactly two general LLMs and is reported as a candidate for removal, not removed."
+      "retirement_note": "Ollama runtime removed; weight retained in place, NOT served, NOT deleted. It is outside the WL-MODEL-02 target of exactly two general LLMs and is reported as a candidate for removal, not removed.",
+      "runtime_id": null,
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
     }
   ],
   "designLabOwnedModels": {
@@ -529,17 +558,28 @@
     {
       "path": "runtimes-tmp/reranker-dl.gguf",
       "bytes": 494879360,
-      "sha256": "a18ae2a5f553fe02",
+      "sha256": null,
       "reason": "reranker GGUF download leftover; qwen3-reranker is already served by Ollama",
       "action": "REGISTERED_NOT_DELETED — deletion requires user confirmation (brief forbids removing existing models without confirmed duplication + rollback)",
-      "recoverable_gb": 0.46
+      "recoverable_gb": 0.46,
+      "assetDigest": {
+        "state": "TRUNCATED",
+        "prefix": "a18ae2a5f553fe02",
+        "reason": "only a 16-hex prefix was captured for this residue and the full digest is not recorded anywhere, so it is NOT verifiable; completing it would require re-hashing the file under a separate path-scoped read authorization. Recorded as residue, not as a model asset."
+      }
     },
     {
       "path": "ollama/blobs/sha256-81fb60c7…-partial (+16 zero-length part files)",
       "bytes": 3389971840,
       "reason": "abandoned `ollama pull qwen3.5:4b-q4_K_M`: the Ollama CDN measured 136 KB/s and stalled at 3.157 GB, so the mirror route was used instead. These are partial-download fragments, NOT a model — no Ollama model of qwen3.5 exists and /api/tags confirms only the five original models.",
       "action": "REGISTERED_NOT_DELETED — pure partial-download residue, safe to reclaim once the user confirms",
-      "recoverable_gb": 3.157
+      "recoverable_gb": 3.157,
+      "assetDigest": {
+        "state": "TRUNCATED",
+        "prefix": "a18ae2a5f553fe02",
+        "reason": "only a 16-hex prefix of this residue was ever captured and the full digest is recorded nowhere, so it is NOT verifiable. Completing it would require re-hashing the file under a separate path-scoped read authorization. This is download residue, not a model asset."
+      },
+      "sha256": null
     }
   ],
   "finalStructureTarget": {

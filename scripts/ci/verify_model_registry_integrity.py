@@ -241,6 +241,48 @@ def verify(root: Path) -> int:
                   "explicit null; move the prose to assetDigest and null the field")
         _check_asset_digest(f"model {model_id}", entry.get("assetDigest"))
 
+    # --- check: residue/orphan entries obey the same digest honesty ----
+    # candidateOrphans records leftover files (partial downloads, abandoned
+    # pulls). They are not model assets, but a bare 16-hex prefix sitting in a
+    # `sha256` field reads exactly like a checksum a tool might verify, so the
+    # same COMPLETE-or-TRUNCATED-with-reason rule applies.
+    for index, orphan in enumerate(models_doc.get("candidateOrphans") or []):
+        if not isinstance(orphan, dict):
+            continue
+        label = f"candidateOrphans[{index}] ({str(orphan.get('path'))[:48]})"
+        raw = orphan.get("sha256")
+        if raw is not None and not (isinstance(raw, str) and HEX64.match(raw)):
+            _fail("ORPHAN_SHA256_UNVERIFIABLE",
+                  f"{label}.sha256={str(raw)[:32]!r} is neither 64-hex nor an explicit null")
+        _check_asset_digest(label, orphan.get("assetDigest"))
+
+    # --- check: the model -> runtime binding is a RESOLVABLE id --------
+    # The `runtime` field in model-registry.json is human-readable prose
+    # ("lmstudio (:1234), BINARY VERDICT ONLY"), so it can never be used as a
+    # foreign key — that is the same defect class as the OCR binding AG-05
+    # fixed, where a descriptive string sat where an id belonged. A machine
+    # consumer must use `runtime_id`, which is therefore required to resolve.
+    known_runtimes = set(runtimes) | set(process_libs)
+    for model_id, entry in sorted(models.items()):
+        if "runtime_id" not in entry:
+            _fail("MODEL_RUNTIME_ID_MISSING",
+                  f"model {model_id} has no runtime_id; the sibling `runtime` field is prose and "
+                  "must not be read as an id")
+            continue
+        runtime_id = entry.get("runtime_id")
+        if runtime_id is None:
+            # Explicitly unbound (retired/standby). Allowed, but the model must
+            # not simultaneously claim to be served.
+            status = entry.get("status")
+            if status == "active":
+                _fail("UNBOUND_RUNTIME_ON_ACTIVE_MODEL",
+                      f"model {model_id} is status=active but runtime_id=null (nothing serves it)")
+            continue
+        if not isinstance(runtime_id, str) or runtime_id not in known_runtimes:
+            _fail("MODEL_RUNTIME_ID_UNRESOLVED",
+                  f"model {model_id}.runtime_id={runtime_id!r} is neither a runtimes[].id nor a "
+                  f"processLibraries[].id ({sorted(known_runtimes)})")
+
     # --- check: process libraries are not HTTP servers ---------------
     for lib_id, lib in sorted(process_libs.items()):
         model = lib.get("executionModel")
