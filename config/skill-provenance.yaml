@@ -82,7 +82,7 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 0a02c1fc8b6520ad5e7000d80b83597a66f7a65c3a52a56ca7ebda3e84ca15b9
+  live_sha256: 37aed9558bc16be5c4da9aa2133d63e03cabbcf353d6bbf248d156aceaf4c5d9
 - name: project-data-boundary
   source: packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md
   live: packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md

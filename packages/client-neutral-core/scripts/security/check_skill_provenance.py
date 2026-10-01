@@ -155,6 +155,24 @@ def validate(repo_root: Path, manifest_path: Path, live_root: Path | None = None
                 raise ValueError(f"source SHA drift: {name}")
         if not entry.get("trust") or not entry.get("permission") or "enabled" not in entry:
             raise ValueError(f"provenance trust/permission/enabled missing: {name}")
+        # Offline self-consistency (added AG-08b, 2026-10-01). `live_sha256` is
+        # only checked against a real deployment root when --live-root is passed,
+        # and the canonical CI gate does NOT pass it (it prints
+        # live_checked=False). So a stale live_sha256 could sit in the manifest
+        # undetected: model-switch carried a digest that differed from its own
+        # source file for an unknown period.
+        #
+        # Where `live` equals `source` (all entries today, because the live field
+        # holds a repo-relative path rather than a deployment target), the two
+        # digests describe the SAME file and must therefore agree. source_sha256
+        # is already validated against disk above, so this comparison needs no
+        # external root and closes the silent-drift hole offline.
+        if entry.get("live") == source_rel:
+            if entry.get("live_sha256") != entry.get("source_sha256"):
+                raise ValueError(
+                    f"live/source self-inconsistency: {name} records live==source but "
+                    "live_sha256 != source_sha256 (the two digests describe the same file)"
+                )
         if live_root is not None:
             live_rel = entry.get("live")
             if not isinstance(live_rel, str):
