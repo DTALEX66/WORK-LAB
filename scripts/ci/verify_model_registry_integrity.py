@@ -145,6 +145,10 @@ def verify(root: Path) -> int:
     models = _index(models_doc.get("models"), "id")
     runtimes = _index(runtimes_doc.get("runtimes"), "id")
     process_libs = _index(runtimes_doc.get("processLibraries"), "id")
+    # Every id a binding may legitimately resolve to (HTTP runtime or declared
+    # in-process library). Computed up front because both the provider checks and
+    # the model checks need it.
+    known_runtimes = set(runtimes) | set(process_libs)
     external_assets = _index(providers_doc.get("externalAssets"), "id")
 
     known_bindings = set(models) | set(external_assets)
@@ -231,6 +235,30 @@ def verify(root: Path) -> int:
 
         # --- check 5: digest honesty ----------------------------------
         _check_asset_digest(pid, provider.get("assetDigest"))
+
+        # --- check: a runtime note may not name a DIFFERENT live runtime --
+        # AG-05e. The provider's `runtime_note` described a different runtime
+        # than `binds_to_runtime` (it said llama.cpp while the binding was
+        # lmstudio), so a reader following the prose was pointed at the wrong
+        # server. Historical narration is legitimate, but it must be marked as
+        # such, not left reading as the current binding.
+        bound_runtime = provider.get("binds_to_runtime")
+        if isinstance(bound_runtime, str) and isinstance(rt_note := provider.get("runtime_note"), str):
+            for other in sorted(known_runtimes):
+                if other == bound_runtime:
+                    continue
+                if other.lower() not in rt_note.lower():
+                    continue
+                lowered = rt_note.lower()
+                marked_historical = any(
+                    marker in lowered for marker in
+                    ("historical", "previously said", "superseded", "no longer",
+                     "was measured on", "retained only", "corrected 2026")
+                )
+                if not marked_historical:
+                    _fail("RUNTIME_NOTE_NAMES_OTHER_RUNTIME",
+                          f"{pid}.runtime_note mentions {other!r} while binds_to_runtime is "
+                          f"{bound_runtime!r}, without marking it historical")
 
     # --- check: model registry digest honesty -------------------------
     for model_id, entry in sorted(models.items()):

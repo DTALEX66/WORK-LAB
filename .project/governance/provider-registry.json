@@ -235,7 +235,7 @@
         },
         "verdict": "Correct on every case, including the hard distractor; but it returns only yes/no."
       },
-      "runtime_note": "Ollama 0.34.3 exposes NO rerank endpoint (probed: /api/rerank, /v1/rerank, /api/reranking all 404), so reranking is served by llama.cpp with --rerank --pooling rank.",
+      "runtime_note": "ACTIVE BINDING = lmstudio (see binds_to_runtime). CORRECTED 2026-10-01 (AG-05e): this note previously said reranking 'is served by llama.cpp with --rerank --pooling rank', which described a DIFFERENT runtime than the one actually bound, and it also still narrated the removed Ollama server. Both were historical. The accurate position: LM Studio is the declared serving runtime and it has NO rerank endpoint and never returns logprobs (see runtime_limitation), so reranking here is a BINARY verdict produced through /v1/completions. llama.cpp is retained only as an optional, non-auto-starting escape hatch that CAN serve /v1/rerank with continuous scores; it is not bound and is not running.",
       "owner": "WORK-LAB",
       "context_window": 40960,
       "weight_location": "D:\\All projects\\Model library\\Qwen\\Qwen3-Reranker-0.6B-GGUF\\Qwen3-Reranker-0.6B-Q8_0.gguf",
@@ -260,7 +260,8 @@
         "date": "2026-09-29"
       },
       "runtime_status": "ONLINE and verified as a binary verdict (correct on every tested case), but NO score is exposed: LM Studio 0.4.25 has no rerank endpoint and never returns logprobs.",
-      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
+      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio.",
+      "runtime_note_history": "Ollama 0.34.3 exposes NO rerank endpoint (probed: /api/rerank, /v1/rerank, /api/reranking all 404), so reranking is served by llama.cpp with --rerank --pooling rank.  [historical text, retained verbatim; both runtimes it names are either removed or unbound]"
     },
     {
       "id": "local.ocr.default",

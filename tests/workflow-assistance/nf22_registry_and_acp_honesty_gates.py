@@ -254,6 +254,32 @@ class ModelRegistryIntegrityNegativeControls(unittest.TestCase):
         code, err = self._run(p, m, r)
         self.assertEqual(code, 0, err)
 
+    def test_runtime_note_naming_another_live_runtime_fails(self) -> None:
+        # A note that points the reader at a DIFFERENT live runtime than the one
+        # actually bound is the AG-05e defect.
+        p, m, r = _valid_registries()
+        r["runtimes"].append({"id": "llamacpp", "status": "INSTALLED"})
+        p["providers"][0]["runtime_note"] = "reranking is served by llamacpp with --pooling rank"
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("RUNTIME_NOTE_NAMES_OTHER_RUNTIME", err)
+
+    def test_runtime_note_naming_another_runtime_MARKED_historical_passes(self) -> None:
+        p, m, r = _valid_registries()
+        r["runtimes"].append({"id": "llamacpp", "status": "INSTALLED"})
+        p["providers"][0]["runtime_note"] = (
+            "CORRECTED 2026-10-01: previously said llamacpp served this; it is historical. "
+            "The active binding is lmstudio."
+        )
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 0, err)
+
+    def test_runtime_note_not_mentioning_other_runtimes_passes(self) -> None:
+        p, m, r = _valid_registries()
+        p["providers"][0]["runtime_note"] = "served by the active runtime"
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 0, err)
+
     def test_null_binding_without_note_fails(self) -> None:
         p, m, r = _valid_registries()
         p["providers"][0]["binds_to_model"] = None
