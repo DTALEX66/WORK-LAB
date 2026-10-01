@@ -280,6 +280,85 @@ class ModelRegistryIntegrityNegativeControls(unittest.TestCase):
         code, err = self._run(p, m, r)
         self.assertEqual(code, 0, err)
 
+    # --- structured negative capabilities (AG-05f) ----------------------
+    def test_well_formed_negative_capability_passes(self) -> None:
+        p, m, r = _valid_registries()
+        p["providers"][0]["negative_capabilities"] = [{
+            "capability": "rerank.expose_score", "state": "UNAVAILABLE",
+            "why": "the API never returns logprobs",
+            "evidence": "runtime_limitation (b)", "escape_hatch": None,
+        }]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 0, err)
+
+    def test_negative_capability_with_unknown_state_fails(self) -> None:
+        p, m, r = _valid_registries()
+        p["providers"][0]["negative_capabilities"] = [{
+            "capability": "x", "state": "MAYBE", "why": "w", "evidence": "e"}]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("NEGATIVE_CAPABILITY_STATE_UNKNOWN", err)
+
+    def test_negative_capability_without_why_fails(self) -> None:
+        p, m, r = _valid_registries()
+        p["providers"][0]["negative_capabilities"] = [{
+            "capability": "x", "state": "UNAVAILABLE", "evidence": "e"}]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("NEGATIVE_CAPABILITY_WITHOUT_WHY", err)
+
+    def test_negative_capability_without_evidence_fails(self) -> None:
+        p, m, r = _valid_registries()
+        p["providers"][0]["negative_capabilities"] = [{
+            "capability": "x", "state": "UNAVAILABLE", "why": "w"}]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("NEGATIVE_CAPABILITY_WITHOUT_EVIDENCE", err)
+
+    def test_negative_capability_without_name_fails(self) -> None:
+        p, m, r = _valid_registries()
+        p["providers"][0]["negative_capabilities"] = [{
+            "state": "UNAVAILABLE", "why": "w", "evidence": "e"}]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("NEGATIVE_CAPABILITY_NO_NAME", err)
+
+    def test_negative_capability_contradicting_a_positive_one_fails(self) -> None:
+        # A provider that both claims and denies the same capability is
+        # refusing to say what it can do.
+        p, m, r = _valid_registries()
+        p["providers"][0]["capabilities"] = ["text", "ocr"]
+        p["providers"][0]["negative_capabilities"] = [{
+            "capability": "ocr", "state": "UNAVAILABLE", "why": "w", "evidence": "e"}]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("NEGATIVE_CAPABILITY_CONTRADICTS_POSITIVE", err)
+
+    def test_malformed_negative_capability_entry_fails(self) -> None:
+        p, m, r = _valid_registries()
+        p["providers"][0]["negative_capabilities"] = ["not an object"]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("NEGATIVE_CAPABILITY_MALFORMED", err)
+
+    def test_live_registry_declares_its_known_limitations(self) -> None:
+        # The three recorded limitations (binary-only rerank, the 4B reasoning
+        # quirk, the unverified OCR matrix) must exist as DATA, not only prose.
+        code = MRI.verify(ROOT)
+        self.assertEqual(code, 0)
+        import json as _json
+
+        registry = _json.loads(
+            (ROOT / ".project/governance/provider-registry.json").read_text(encoding="utf-8"))
+        named = {
+            neg["capability"]
+            for provider in registry["providers"]
+            for neg in (provider.get("negative_capabilities") or [])
+        }
+        for expected in ("rerank.expose_score", "rerank.endpoint",
+                         "reasoning.long_chain_visible", "ocr.full_matrix_verified"):
+            self.assertIn(expected, named)
+
     def test_null_binding_without_note_fails(self) -> None:
         p, m, r = _valid_registries()
         p["providers"][0]["binds_to_model"] = None

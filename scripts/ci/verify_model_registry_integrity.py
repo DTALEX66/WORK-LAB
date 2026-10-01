@@ -60,6 +60,12 @@ UNSERVED_MODEL_STATUSES = frozenset({"RETIRED_PENDING_DECISION", "RETIRED"})
 # Digest states for the assetDigest block.
 DIGEST_STATES = frozenset({"COMPLETE", "TRUNCATED"})
 
+# AG-05f: closed vocabulary for structured negative capabilities. The Atlas G05
+# acceptance wording explicitly requires "negative capabilities"; before this the
+# registry expressed its limitations only in prose a machine consumer cannot read,
+# so a caller could treat a partial capability as a full one.
+NEGATIVE_STATES = frozenset({"UNAVAILABLE", "UNVERIFIED", "REFUSED"})
+
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
 # Serving vocabulary that must not appear in a runtime-scoped operationalStatus
 # when the provider's own binding is declared unserved.
@@ -235,6 +241,42 @@ def verify(root: Path) -> int:
 
         # --- check 5: digest honesty ----------------------------------
         _check_asset_digest(pid, provider.get("assetDigest"))
+
+        # --- check: structured negative capabilities ----------------------
+        # A limitation that exists only in prose is one an agent can miss and
+        # then report a partial capability as complete. Every declared negative
+        # capability must be typed, evidenced, and MUST NOT contradict a positive
+        # capability the same provider declares.
+        declared_caps = {str(c) for c in (provider.get("capabilities") or [])}
+        negatives = provider.get("negative_capabilities")
+        if negatives is None and "partial" in str(provider.get("provisional_reason") or "").lower():
+            _fail("NEGATIVE_CAPABILITIES_MISSING",
+                  f"{pid} declares a provisional/partial status without structured "
+                  "negative_capabilities")
+        for index, neg in enumerate(negatives or []):
+            label = f"{pid}.negative_capabilities[{index}]"
+            if not isinstance(neg, dict):
+                _fail("NEGATIVE_CAPABILITY_MALFORMED", f"{label} must be an object")
+                continue
+            cap = neg.get("capability")
+            if not isinstance(cap, str) or not cap:
+                _fail("NEGATIVE_CAPABILITY_NO_NAME", f"{label} has no capability name")
+                continue
+            state = neg.get("state")
+            if state not in NEGATIVE_STATES:
+                _fail("NEGATIVE_CAPABILITY_STATE_UNKNOWN",
+                      f"{label}.state={state!r} not in {sorted(NEGATIVE_STATES)}")
+            if not (isinstance(neg.get("why"), str) and neg["why"].strip()):
+                _fail("NEGATIVE_CAPABILITY_WITHOUT_WHY",
+                      f"{label} states a limitation with no 'why'")
+            if not (isinstance(neg.get("evidence"), str) and neg["evidence"].strip()):
+                _fail("NEGATIVE_CAPABILITY_WITHOUT_EVIDENCE",
+                      f"{label} states a limitation with no evidence pointer")
+            # A negative entry whose name is exactly a positive capability means
+            # the same provider both claims and denies it: refuse the ambiguity.
+            if cap in declared_caps:
+                _fail("NEGATIVE_CAPABILITY_CONTRADICTS_POSITIVE",
+                      f"{label} denies {cap!r} while the provider also declares it in capabilities[]")
 
         # --- check: a runtime note may not name a DIFFERENT live runtime --
         # AG-05e. The provider's `runtime_note` described a different runtime
