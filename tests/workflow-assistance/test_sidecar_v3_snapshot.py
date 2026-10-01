@@ -429,7 +429,18 @@ class SidecarV3SnapshotTests(unittest.TestCase):
                 sidecar._last_heartbeat_at = now
                 sidecar._last_write_at = now
                 sidecar.mark_sse_connected()
+                # `entered` only proves the SECOND collector has started; the
+                # first collector's health record is written asynchronously by
+                # the worker thread, so reading the snapshot immediately raced
+                # and intermittently observed numerator=0 (order-dependent flake
+                # seen in the full governance batch on 2026-10-01, never in
+                # isolation). Poll to the deadline the way the sibling test above
+                # does, instead of asserting on an unsynchronized read.
+                deadline = time.time() + 5
                 snapshot = sidecar.v3_snapshot()
+                while snapshot["coverage"]["numerator"] < 1 and time.time() < deadline:
+                    time.sleep(0.02)
+                    snapshot = sidecar.v3_snapshot()
                 self.assertEqual(snapshot["coverage"]["numerator"], 1)
                 self.assertEqual(snapshot["coverage"]["denominator"], 3)
                 self.assertNotEqual(snapshot["transport"]["transportState"], "LIVE")
