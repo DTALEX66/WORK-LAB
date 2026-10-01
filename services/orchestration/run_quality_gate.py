@@ -488,6 +488,18 @@ def gate_observer_readonly_boundary() -> int:
     return run_python(["scripts/ci/verify_observer_readonly_boundary.py"])
 
 
+def gate_registry_closure_report() -> int:
+    """AG-05: produce the field-level closure report for the three registries.
+
+    The Atlas closed gap G05 as "close it field by field"; this is the aggregate
+    answer an auditor actually asks (which fields are CLOSED / EXPLICITLY_OPEN /
+    UNCLOSED). It reports rather than fails, because an unclosed field is a hole
+    to surface, not a reason to hide one — but the report must be produced, and
+    the accompanying negative controls (`nf26`) prove it can detect each hole.
+    """
+    return run_python(["scripts/ci/report_registry_closure.py"])
+
+
 def gate_policy_coverage() -> int:
     """U17.7/27: Global Agent Policy coverage + freshness.
 
@@ -1046,6 +1058,12 @@ GATES: dict[str, Gate] = {
         "handler, no write verb, no unguarded authoritative write control).",
         gate_observer_readonly_boundary,
     ),
+    "registry-closure-report": Gate(
+        "registry-closure-report",
+        "AG-05: field-level closure report for provider/model/runtime registries "
+        "(CLOSED / EXPLICITLY_OPEN / UNCLOSED).",
+        gate_registry_closure_report,
+    ),
     "policy-coverage": Gate(
         "policy-coverage",
         "U17.7/27: verify Global Agent Policy coverage + freshness (loss reports, matrix block, golden projections).",
@@ -1152,6 +1170,7 @@ VERIFY_ORDER = (
     "model-registry-integrity",
     "acp-adapter-honesty",
     "observer-readonly-boundary",
+    "registry-closure-report",
     "policy-coverage",
     "context-control-plane",
     "external-libraries-index",
@@ -1230,6 +1249,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "model-registry-integrity": (".project/governance/provider-registry.json", ".project/governance/model-registry.json", ".project/governance/runtime-registry.json", "scripts/ci/verify_model_registry_integrity.py"),
     "acp-adapter-honesty": ("services/execution-federation/", "scripts/ci/verify_acp_adapter_honesty.py"),
     "observer-readonly-boundary": ("apps/observer/frontend/src/", "services/orchestration/sidecar.py", "scripts/ci/verify_observer_readonly_boundary.py"),
+    "registry-closure-report": (".project/governance/provider-registry.json", ".project/governance/model-registry.json", ".project/governance/runtime-registry.json", "scripts/ci/report_registry_closure.py"),
     "policy-coverage": ("config/global-agent-policy.yaml", "config/loss-reports/", "config/capability-matrix.json", "config/adapter-registry.json", "services/policy/policy_projection.py", "integrations/executors/codex/codex_policy_renderer.py", "integrations/executors/hermes/hermes_policy_renderer.py", "integrations/executors/codex/codex-policy-extension.yaml", "integrations/executors/hermes/hermes-policy-extension.yaml", "integrations/executors/codex/global-guidance.md", "config/SOUL.md", "scripts/ci/verify_policy_coverage.py", "tests/workflow-assistance/test_policy_projection.py"),
     "context-control-plane": ("packages/client-neutral-core/scripts/context_control_plane.py", "packages/client-neutral-core/scripts/context_bundle.py", "packages/client-neutral-core/scripts/context_drift_guard.py"),
     "external-libraries-index": (".project/governance/external-libraries-index.json", "packages/client-neutral-core/scripts/verify_external_libraries_index.py"),

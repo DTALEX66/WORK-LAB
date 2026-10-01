@@ -383,7 +383,8 @@
       "status": "standby",
       "runtime_id": "sherpa-onnx",
       "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
-      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "last_verified_note": "last_verified is deliberately null: no verification DATE was ever recorded for this weight. health='PRESENT' attests existence on disk only (the 2026-09-29 round checked that the ASR weights were present) and is NOT a quality or behaviour verification. A date is not invented to fill this field; a future run that actually executes the model should set it."
     },
     {
       "id": "sherpa-onnx-streaming-zipformer-zh-14m",
@@ -420,7 +421,8 @@
       "status": "standby",
       "runtime_id": "sherpa-onnx",
       "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
-      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby)."
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "last_verified_note": "last_verified is deliberately null: no verification DATE was ever recorded for this weight. health='PRESENT' attests existence on disk only (the 2026-09-29 round checked that the ASR weights were present) and is NOT a quality or behaviour verification. A date is not invented to fill this field; a future run that actually executes the model should set it."
     },
     {
       "id": "qwen3-8b",
