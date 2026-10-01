@@ -507,6 +507,7 @@ EVIDENCE_TIER_BUNDLES = (
     "reports/audit-evidence/assets-20260930/inventory-verification.json",
     "reports/audit-evidence/assets-20260930/asset-inventory.json",
     "reports/audit-archive/20260930/ARCHIVE-INDEX.json",
+    "reports/audit-archive/20260930",
 )
 
 

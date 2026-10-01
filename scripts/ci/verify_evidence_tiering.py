@@ -305,6 +305,48 @@ def check_archive_index_coverage(path: Path) -> list[str]:
     return problems
 
 
+ARCHIVE_DISARM_MARKER = "ARCHIVED EVIDENCE — NOT LIVE INSTRUCTIONS"
+
+# Filenames that agent tooling auto-loads as governance. Copying one into a
+# repository is not inert: whichever file an agent reads, it obeys.
+INSTRUCTION_FILENAMES = ("AGENTS.md", "CLAUDE.md", ".cursorrules")
+
+
+def find_undisarmed_instruction_files(root: Path) -> list[str]:
+    """Return archived instruction-shaped files that lack a disarm banner.
+
+    Audit F18 found an ArcheAxis `AGENTS.md` archived inside WORK-LAB whose text
+    still pointed at WORK-LAB's removed `00-governance/` path. Reconciling it
+    surfaced something the audit had not stated: because the file is named
+    AGENTS.md, agent tooling loads it as guidance and injects it into a WORK-LAB
+    session - observed live during the reconciliation itself, before the banner
+    existed. A read-only archive copy is therefore not passive.
+
+    Structural, not textual, in the sense that matters: it keys off the filename
+    class that tooling auto-loads, so a future archived AGENTS.md cannot inherit
+    the same silent authority.
+    """
+    problems: list[str] = []
+    if not root.is_dir():
+        return problems
+    for name in INSTRUCTION_FILENAMES:
+        for path in sorted(root.rglob(name)):
+            if not path.is_file():
+                continue
+            try:
+                head = path.read_text(encoding="utf-8", errors="ignore")[:2000]
+            except OSError:
+                continue
+            if ARCHIVE_DISARM_MARKER not in head:
+                rel = path.relative_to(root).as_posix()
+                problems.append(
+                    f"ARCHIVED_INSTRUCTION_FILE_UNDISARMED: {rel} is an auto-loaded "
+                    "governance filename sitting in an archive, so agent tooling will "
+                    "inject it as live guidance; prefix it with the disarm banner"
+                )
+    return problems
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("paths", nargs="+", type=Path, help="evidence bundle JSON files to check")
@@ -314,6 +356,11 @@ def main(argv: list[str] | None = None) -> int:
     checked = 0
     claimed = 0
     for path in args.paths:
+        if path.is_dir():
+            # A directory argument means "check this archive", not "check a bundle".
+            problems.extend(find_undisarmed_instruction_files(path))
+            checked += 1
+            continue
         if not path.is_file():
             print(f"EVIDENCE_TIER_IO_FAIL missing file: {path}", file=sys.stderr)
             return 2

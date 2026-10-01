@@ -404,5 +404,64 @@ class ArchiveCoverageNegativeControls(unittest.TestCase):
         self.assertIn("MANAGED", reconciliation["reason"])
 
 
+class ArchivedInstructionFileControls(unittest.TestCase):
+    """Audit F18: an archived AGENTS.md is not inert, it gets auto-loaded.
+
+    F18 found an ArcheAxis AGENTS.md archived inside WORK-LAB whose text pointed at
+    WORK-LAB's removed 00-governance/ path. Reconciling it surfaced a live effect
+    the audit had not stated: because the file is named AGENTS.md, agent tooling
+    loads it as guidance and injected it into this session - observed happening
+    before the banner existed.
+    """
+
+    def test_undisarmed_instruction_file_is_flagged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "projects" / "OTHER").mkdir(parents=True)
+            (root / "projects" / "OTHER" / "AGENTS.md").write_text(
+                "# other project guide\n", encoding="utf-8"
+            )
+            problems = V.find_undisarmed_instruction_files(root)
+            self.assertTrue(problems)
+            self.assertIn("ARCHIVED_INSTRUCTION_FILE_UNDISARMED", problems[0])
+
+    def test_disarmed_instruction_file_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "projects" / "OTHER").mkdir(parents=True)
+            (root / "projects" / "OTHER" / "AGENTS.md").write_text(
+                f"<!-- {V.ARCHIVE_DISARM_MARKER} -->\n# other project guide\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(V.find_undisarmed_instruction_files(root), [])
+
+    def test_non_instruction_files_are_ignored(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "docs").mkdir(parents=True)
+            (root / "docs" / "GUIDE.md").write_text("# guide\n", encoding="utf-8")
+            self.assertEqual(V.find_undisarmed_instruction_files(root), [])
+
+    def test_live_archive_has_no_undisarmed_instruction_files(self) -> None:
+        archive = ROOT / "reports/audit-archive/20260930"
+        self.assertEqual(V.find_undisarmed_instruction_files(archive), [])
+
+    def test_live_archived_agents_copies_keep_the_stale_path_warning(self) -> None:
+        # The banner must name the stale 00-governance path, not just say "archive",
+        # otherwise a reader could still follow the dead reference. Whitespace is
+        # collapsed first because the prose wraps mid-phrase.
+        archive = ROOT / "reports/audit-archive/20260930"
+        for rel in (
+            "projects/ArcheAxis-Knowledge-OS/AGENTS.md",
+            "projects/DESIGN-LAB/AGENTS.md",
+            "codex/AGENTS.md",
+        ):
+            with self.subTest(file=rel):
+                head = (archive / rel).read_text(encoding="utf-8")[:2000]
+                flat = " ".join(head.split())
+                self.assertIn(V.ARCHIVE_DISARM_MARKER, flat)
+                self.assertIn("00-governance", flat)
+
+
 if __name__ == "__main__":
     unittest.main()

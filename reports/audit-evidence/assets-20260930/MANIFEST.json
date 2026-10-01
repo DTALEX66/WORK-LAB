@@ -101,10 +101,10 @@
       "name": "ARCHIVE-INDEX.json",
       "category": "archive",
       "purpose": "归档逐文件索引与 sha256",
-      "bytes": 314049,
-      "sha256": "3cab6e5716afab492861a82b34dba53104322af7c0a851a25b775a490d65d14a",
+      "bytes": 314661,
+      "sha256": "b6362b37ed745d821ce04456c3ec0c6699f2578c10346910f25a62ccee11d9da",
       "hashing_basis": "repository bytes (LF-normalized, as committed)",
-      "correction": "2026-10-01: added skills_depth_reconciliation recording the F05 root-level enumeration gap."
+      "correction": "2026-10-01: AGENTS.md copy digests updated after the F18 disarm banner."
     },
     {
       "rel": "reports/audit-archive/20260930/SECRET-SCAN-REPORT.json",

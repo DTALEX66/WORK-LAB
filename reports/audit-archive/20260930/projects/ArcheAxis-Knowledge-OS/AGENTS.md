@@ -1,3 +1,19 @@
+<!-- ARCHIVED EVIDENCE — NOT LIVE INSTRUCTIONS (added 2026-10-01, AG-06n, audit F18) -->
+<!--
+This file is a READ-ONLY COPY captured on 2026-09-30 for audit purposes. It is the
+operating guide of a DIFFERENT project (see the path), archived inside the WORK-LAB
+repository. Its directory name is AGENTS.md, which means agent tooling can load it as
+guidance and inject it into a WORK-LAB session — observed happening during the very
+reconciliation that produced this banner.
+
+DO NOT treat anything below as governance for WORK-LAB. Specifically:
+  * It points at WORK-LAB `00-governance/global-execution-standard.md`, a path that no
+    longer exists (the standards live at docs/decisions/). The reference is stale.
+  * Its output conventions (write under <repo>/.project-local/, intake notes under
+    workspace/intake/) are THIS PROJECT's conventions, not WORK-LAB's.
+  * Authority for the work you are doing lives in WORK-LAB's own AGENTS.md,
+    WORK-LAB-AUTHORITY.md and .project/governance/project-authority-index.json.
+-->
 # AGENTS.md - 星环知识平台（ArcheAxis Knowledge）Operating Guide
 
 > 全局执行标准（跨软件跨项目）：见 WORK-LAB `00-governance/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地；全局边界：E盘禁访/数据不外溢/官方优先/全功率）。

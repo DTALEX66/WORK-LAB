@@ -6387,10 +6387,11 @@
       "label": "codex",
       "src": "%USERPROFILE%/.codex/AGENTS.md",
       "archive_path": "codex/AGENTS.md",
-      "bytes": 16805,
-      "sha256": "cf73c8e58ba8fbf9a721fc2db886161f49ab56db325e0df51ea87016917fea76",
+      "bytes": 17837,
+      "sha256": "6650113c280a8049b4754a78f4d68c059c57b883e3a2ce0339f80fe39f3014e4",
       "redactions": 0,
-      "status": "COPIED"
+      "status": "COPIED",
+      "correction": "2026-10-01: prefixed a disarm banner (audit F18) so this archived cross-project AGENTS.md is not injected as live WORK-LAB instructions; digest updated from cf73c8e58ba8 (16805 B)."
     },
     {
       "label": "codex",
@@ -6783,10 +6784,11 @@
       "label": "project-archeaxis-rules",
       "src": "%PROJECTS_ROOT%/ArcheAxis-Knowledge-OS/AGENTS.md",
       "archive_path": "projects/ArcheAxis-Knowledge-OS/AGENTS.md",
-      "bytes": 10132,
-      "sha256": "dbaa61d05d5d0134fe2e9d1fdaa1ad57b818de2acc64956174e617871d2d8576",
+      "bytes": 11164,
+      "sha256": "f15e58b3a7ead08eb46620f3ddc48f55bfdb4c82d5e11bc61f019ed7c710e21d",
       "redactions": 0,
-      "status": "COPIED"
+      "status": "COPIED",
+      "correction": "2026-10-01: prefixed a disarm banner (audit F18) so this archived cross-project AGENTS.md is not injected as live WORK-LAB instructions; digest updated from dbaa61d05d5d (10132 B)."
     },
     {
       "label": "project-archeaxis-rules",
@@ -6864,10 +6866,11 @@
       "label": "project-design-lab-rules",
       "src": "%PROJECTS_ROOT%/DESIGN-LAB/AGENTS.md",
       "archive_path": "projects/DESIGN-LAB/AGENTS.md",
-      "bytes": 10055,
-      "sha256": "7531838c75adb6659a8b82bd6d39e7a381b4c1275cfba9bc8d088c27bb285b50",
+      "bytes": 11087,
+      "sha256": "621a5503993f2976df5ef49768f13540f17e5f647f60330435eab2d1a2bed0fb",
       "redactions": 0,
-      "status": "COPIED"
+      "status": "COPIED",
+      "correction": "2026-10-01: prefixed a disarm banner (audit F18) so this archived cross-project AGENTS.md is not injected as live WORK-LAB instructions; digest updated from 7531838c75ad (10055 B)."
     },
     {
       "label": "project-design-lab-rules",
