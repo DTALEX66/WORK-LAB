@@ -338,6 +338,51 @@
                   "UNSUPPORTED"
                 ]
               },
+              "maturity_note": {
+                "description": "AG-06h / audit F02 + F10 (2026-10-01): why `maturity` holds its current value, in particular after a DOWNGRADE. `maturity` describes implementation maturity; deployment state must not be inferred from it.",
+                "type": "string",
+                "minLength": 1
+              },
+              "deployment_observation": {
+                "description": "AG-06h / audit F10 (2026-10-01): the deployment half of the split the audit asks for. `maturity` records what the adapter IMPLEMENTS; this records what was actually OBSERVED on the live client surface, with the exact targets checked and the date. A drift here must not be smoothed back into `maturity`.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "reason",
+                  "observed_at"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "VERIFIED",
+                      "UNVERIFIED",
+                      "DRIFT",
+                      "NOT_APPLICABLE",
+                      "UNKNOWN"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "checked": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "authority": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
               "note": {
                 "type": "string"
               }

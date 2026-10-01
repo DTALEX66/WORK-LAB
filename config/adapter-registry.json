@@ -159,11 +159,22 @@
           "tool_truth": "NATIVE_GUIDANCE",
           "historical_record_policy": "NATIVE_GUIDANCE"
         },
-        "maturity": "READBACK_VERIFIED",
+        "maturity": "APPLY_SUPPORTED",
         "renderer": "integrations/executors/codex/sync_codex_global_assets.py",
         "extensions_path": "integrations/executors/codex/codex-policy-extension.yaml",
         "note": "Managed BEGIN/END block + hash fencing in CODEX_HOME/AGENTS.md + config.toml + rules + skills. Second-plan NOOP idempotency. provider/model/reasoning OBSERVE.",
-        "capability_coverage_complete": true
+        "capability_coverage_complete": true,
+        "maturity_note": "AG-06h / audit F02 (2026-10-01): maturity DOWNGRADED from READBACK_VERIFIED to APPLY_SUPPORTED. The renderer channel is real and its apply path is implemented, so the implementation maturity is APPLY_SUPPORTED. What is NOT true is the readback claim: ERR-095 (2026-09-30, contract_drift, currentApplicability=DRIFT_OPEN_20260930) recorded that live CODEX_HOME/AGENTS.md contains ZERO managed overlay markers and zero WORK-LAB occurrences, and independently re-verified on 2026-10-01 (live file and its archived copy are both 16,805 bytes / 691 lines with the renderer marker absent). ERR-095's own repeat_prevention states that registry maturity must not be raised again until the block and skill targets are re-rendered AND read back, so leaving READBACK_VERIFIED in place was itself the ledger violation. Raise this back to READBACK_VERIFIED only after the sanctioned renderer runs (integrations/executors/codex/sync_codex_global_assets.py) AND a fresh native readback confirms the managed block and the declared skill targets.",
+        "deployment_observation": {
+          "status": "UNVERIFIED",
+          "reason": "ERR-095 drift open: no managed overlay marker in the live CODEX_HOME/AGENTS.md",
+          "observed_at": "2026-10-01",
+          "checked": [
+            "%USERPROFILE%/.codex/AGENTS.md (16,805 B / 691 lines, marker absent)",
+            "reports/audit-archive/20260930/codex/AGENTS.md (16,805 B / 691 lines, marker absent)"
+          ],
+          "authority": "taskpacks/current/error-ledger.json ERR-095"
+        }
       }
     },
     {
