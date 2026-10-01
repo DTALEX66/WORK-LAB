@@ -125,16 +125,26 @@ authorization with impact and rollback.
 
 ## 4. Read-only environment facts already observed in this session
 
-Recorded as **observed**, not as full preflight completion (AG-08 still owes the full sweep):
+AG-08 is **complete** as a read-only sweep; nothing was installed. Note the three-way
+distinction that a PATH check alone gets wrong: *on PATH*, *off PATH but working*, and
+*broken/partial*.
 
 | Fact | Observed value | Note |
 |---|---|---|
 | Repo root | `D:\All projects\WORK-LAB` | single checkout; no second copy in the working tree |
-| Remote | `git@github.com:DTALEX66/WORK-LAB.git` (SSH) | `git ls-remote` succeeded — live refs readable |
+| Remote | `git@github.com:DTALEX66/WORK-LAB.git` (SSH, scp-style) | `git ls-remote` and a real `git fetch origin --prune` both succeed |
 | Live `origin/main` | `cd4daa83e107afab8438c0e85f63a10e75314d5a` | matches local `main`, `0 / 0` ahead/behind |
-| `python` on PATH | **NOT FOUND** | `python` / `py` / `python3` all unresolvable. But the shared/project toolchain **does** exist and must be used instead of the bare interpreter: `.project-local/toolchains/wl-py311` (Python 3.11.15 + `yaml 6.0.3` + `jsonschema 4.26.0`) satisfies the canonical gate's `PyYAML>=6,<7` / `jsonschema>=4,<5` contract. Running the gate under the bare DSH-bundled runtime instead fails closed at `QUALITY_GATE_DEPENDENCY_FAIL` — a wrong-interpreter artifact, **not** a missing dependency that needs installing. |
-| Shared library roots | present | `external-libraries-index.json` registers `os-external-toolchains` → `D:\All projects\OS External Configuration\10-toolchains` plus a `uv-cache`. Absent everywhere checked: Rust/cargo, MSVC (`cl`/`link`), cmake, dotnet; Node/npm/pnpm are off PATH (DSH-bundled Node only). |
-| `git` | present and functional | identity/credential/network split diagnosis still owed by AG-08 |
+| Git identity | `DTALEX66` + GitHub noreply email | set at BOTH global and local layers |
+| Git credential | only `credential.helper=manager` at the **system** layer (GCM) | irrelevant to an SSH URL; global/local helpers empty; `GIT_ASKPASS` and `SSH_AUTH_SOCK` empty and `ssh-agent` stopped, yet fetch works |
+| Git network | DNS `github.com` → `20.205.243.166`; TCP 22 reachable on `github.com` and `ssh.github.com` | read route proven; **write permission UNVERIFIED** (no push attempted) |
+| On PATH | `git` 2.54.0.windows.1 (`C:\Program Files\Git\cmd\git.exe`), `gh` 2.98.0 | |
+| Off PATH but working | Rust **GNU** toolchain `rustc`/`cargo` **1.97.1** (`~/.rustup/toolchains/stable-x86_64-pc-windows-gnu/bin`, both exit 0); Node **v24.21.0** (DSH-bundled) and v24.19.0 (codex-runtime); project Python `.project-local/toolchains/wl-py311` (3.11.15 + `yaml 6.0.3` + `jsonschema 4.26.0`) | the declared Python toolchain satisfies the canonical gate contract; use it, never the bare bundled runtime |
+| Broken / partial | Rust **MSVC** toolchain has `cargo 1.98.1` but **no `rustc.exe`**; **no Visual Studio and no VC tools** (`vswhere` returns nothing, no `VC\Tools\MSVC`); `~/.cargo/bin` absent; shared `venv312`/`venv313` trampolines broken | the MSVC toolchain cannot compile, and with no VC tools it would have no linker even if complete |
+| Absent | `npm`, `pnpm`, `yarn`, `cmake`, `ninja`, `msbuild`, `dotnet`, `python`/`py` on PATH | |
+| Rust build blocker | `cargo check --offline` in `apps/observer/src-tauri` fails: `no matching package named 'tauri-plugin-log' found` | the shared CARGO_HOME registry (`…\10-toolchains\rust\cargo`) does not carry every locked dependency; a Rust build needs an approved network fetch or a vendored cache |
+| Frontend gates | **runnable without npm** against the existing `node_modules` | `tsc --noEmit` exit 0, `vitest run` **72/72**, `vite build` exit 0 (`dist/` is gitignored; tree stayed clean). "No npm" blocks *installing* deps, not *running* the gates |
+| Shared library roots | present | `external-libraries-index.json` registers `os-external-toolchains` → `D:\All projects\OS External Configuration\10-toolchains` plus a `uv-cache` |
+| WebView2 runtime | 154.0.4258.37 | the render engine for the Tauri shell |
 | Uncommitted user work | 4 modified files + 1 untracked path | preserved untouched — see §5 |
 
 ## 5. Working-tree protection notice
