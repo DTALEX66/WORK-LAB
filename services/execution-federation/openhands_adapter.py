@@ -76,7 +76,10 @@ class OpenHandsAdapter(_acp().ExecutorAcpAdapter):
         caps = {acp.Capability.CAPABILITIES, acp.Capability.PROBE}
         # OpenHands POC: execution surface only; governance is WORK-LAB's.
         caps |= {acp.Capability.SESSION, acp.Capability.PERSIST,
-                 acp.Capability.HANDOFF, acp.Capability.RESUME}
+                 acp.Capability.HANDOFF}
+        # RESUME is deliberately NOT declared (AG-06, 2026-10-01): resume() is
+        # the base implementation returning NOT_IMPLEMENTED, so declaring the
+        # capability would advertise an effect that cannot happen.
         if self.is_launchable():
             caps |= {acp.Capability.LAUNCH, acp.Capability.FORK,
                      acp.Capability.CANCEL, acp.Capability.STREAM}

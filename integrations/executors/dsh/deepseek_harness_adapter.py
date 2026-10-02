@@ -21,6 +21,7 @@ identity and are what detect()/observe() report against.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -60,10 +61,26 @@ COMMUNITY_RELEASE_TRACK = "stable"
 COMMUNITY_UPSTREAM_VERSION = "0.1.2-rc.1"
 COMMUNITY_BINARY_SIGNATURE = "UNSIGNED"
 COMMUNITY_SOURCE_EQUIVALENCE = "UNVERIFIED"
+# SUPERSEDED 2026-10-01: the user reinstalled the OFFICIAL build at the vendor
+# default path. This D:-drive location is retained ONLY as a legacy probe so a
+# machine still running the community build is still reported honestly; it is
+# no longer the primary identity and its directory is now empty apart from the
+# user's .dsh data root. Never treat this constant as the install truth.
 COMMUNITY_INSTALL_DIR = Path("D:/All projects/DSH")
 COMMUNITY_EXE = COMMUNITY_INSTALL_DIR / "DSH Desktop.exe"
 COMMUNITY_VERSION_FILE = COMMUNITY_INSTALL_DIR / "resources" / "app.asar.unpacked" / "package.json"
 COMMUNITY_WEB_PORT = 43120
+
+# ---------------------------------------------------------------------------
+# Official DeepSeek Harness build (0.2.x, observed installed 2026-10-01).
+# Installed at the vendor DEFAULT per-user path. AG-07: the install root is
+# RESOLVED, never hardcoded to a drive letter, because the vendor default is
+# %LOCALAPPDATA% and a pinned path silently rots when the user reinstalls.
+# ---------------------------------------------------------------------------
+OFFICIAL_ADAPTER_TRACK = "official_electron_per_user"
+OFFICIAL_EXE_NAME = "DeepSeek Harness.exe"
+OFFICIAL_UNINSTALL_KEY = "DeepSeek Harness"
+OFFICIAL_SHORTCUT_NAMES = ("DeepSeek Harness.lnk",)
 
 # ---------------------------------------------------------------------------
 # Agent-runtime contract (taskpack §4.1). These are the auditable invariants.
@@ -129,6 +146,150 @@ def community_detected() -> dict[str, Any]:
         "source_equivalence": COMMUNITY_SOURCE_EQUIVALENCE,
         "user_config_access": "NOT_ACCESSED",
         "web_port": COMMUNITY_WEB_PORT,
+        "superseded_by": "official_deepseek_harness (2026-10-01); retained as a legacy probe only",
+    }
+
+
+def _official_candidates() -> list[Path]:
+    """Candidate install roots for the official build, most authoritative first.
+
+    Resolution order deliberately avoids a hardcoded drive letter:
+    1. an explicit override environment variable (test/portable hook);
+    2. the OS-reported per-user program directory (vendor default);
+    3. the install root recorded by the Windows uninstall entry.
+    """
+    candidates: list[Path] = []
+    override = os.environ.get("WORKLAB_DSH_INSTALL_ROOT")
+    if override:
+        candidates.append(Path(override))
+    local_appdata = os.environ.get("LOCALAPPDATA")
+    if local_appdata:
+        candidates.append(Path(local_appdata) / "Programs" / "DeepSeek Harness")
+    if os.name == "nt":
+        try:
+            import winreg  # type: ignore[import-not-found]
+
+            for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+                for view in (0, getattr(winreg, "KEY_WOW64_32KEY", 0)):
+                    try:
+                        with winreg.OpenKey(
+                            hive,
+                            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+                            f"\\{OFFICIAL_UNINSTALL_KEY}",
+                            0,
+                            winreg.KEY_READ | view,
+                        ) as key:
+                            value, _ = winreg.QueryValueEx(key, "InstallLocation")
+                            if value:
+                                candidates.append(Path(value))
+                    except OSError:
+                        continue
+        except ImportError:
+            pass
+    # De-duplicate while preserving order.
+    seen: set[str] = set()
+    unique: list[Path] = []
+    for candidate in candidates:
+        key = str(candidate).lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(candidate)
+    return unique
+
+
+def official_install_root(candidates: list[Path] | None = None) -> Path | None:
+    """Resolve the official install root, or None when not installed.
+
+    `candidates` is injectable so callers and tests can drive the resolution
+    deterministically instead of depending on what happens to be installed on
+    the machine. When omitted, the real candidate chain is used.
+    """
+    for root in (candidates if candidates is not None else _official_candidates()):
+        if (root / OFFICIAL_EXE_NAME).is_file():
+            return root
+    return None
+
+
+def official_version() -> str | None:
+    """Best-effort official build version from the Windows uninstall entry.
+
+    The official Electron payload keeps its package metadata inside
+    resources/app.asar, which is not unpacked, so reading it would require
+    extracting a ~244 MB archive. The uninstall entry carries the same version
+    string and costs a few registry reads.
+
+    The uninstall key is a GUID (observed: 1bf39983-50d0-5fe0-9ef4-cece76f67c5e),
+    NOT the product name, so the subkeys are enumerated and matched on the
+    DisplayName prefix. This also prevents matching the superseded community
+    entry (\"DSH Desktop 2.0.13\"), whose DisplayName does not carry the official
+    prefix and whose InstallLocation is empty.
+
+    Returns None when unavailable - an unknown version is reported as unknown,
+    never guessed.
+    """
+    if os.name != "nt":
+        return None
+    try:
+        import winreg  # type: ignore[import-not-found]
+    except ImportError:
+        return None
+
+    uninstall_roots = (
+        r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+    )
+    for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        for uninstall_root in uninstall_roots:
+            try:
+                with winreg.OpenKey(hive, uninstall_root) as root_key:
+                    index = 0
+                    while True:
+                        try:
+                            subkey_name = winreg.EnumKey(root_key, index)
+                        except OSError:
+                            break
+                        index += 1
+                        try:
+                            with winreg.OpenKey(root_key, subkey_name) as subkey:
+                                try:
+                                    display_name = str(
+                                        winreg.QueryValueEx(subkey, "DisplayName")[0]
+                                    )
+                                except OSError:
+                                    continue
+                                if not display_name.startswith(OFFICIAL_UNINSTALL_KEY):
+                                    continue
+                                try:
+                                    return str(winreg.QueryValueEx(subkey, "DisplayVersion")[0])
+                                except OSError:
+                                    return None
+                        except OSError:
+                            continue
+            except OSError:
+                continue
+    return None
+
+
+def official_detected(candidates: list[Path] | None = None) -> dict[str, Any]:
+    """Probe the official DeepSeek Harness install without side effects.
+
+    `candidates` is injectable for deterministic testing; see
+    :func:`official_install_root`.
+    """
+    resolved = candidates if candidates is not None else _official_candidates()
+    root = official_install_root(resolved)
+    version = official_version()
+    return {
+        "present": root is not None,
+        "install_root": str(root) if root else None,
+        "install": str(root / OFFICIAL_EXE_NAME) if root else None,
+        "version": version,
+        "release_track": OFFICIAL_ADAPTER_TRACK,
+        "install_path_policy": "RESOLVE_AT_RUNTIME_NOT_HARDCODED",
+        "resolution_basis": "explicit override env, then LOCALAPPDATA vendor default, then the Windows uninstall entry",
+        "user_config_access": "NOT_ACCESSED",
+        "web_port": None,
+        "note": "Official build detection added 2026-10-01 (AG-07). The prior hardcoded D: path reported present=false on a machine where the official build IS installed at the vendor default path.",
     }
 
 
@@ -267,10 +428,10 @@ class DeepSeekHarnessAdapter:
     def detect(self) -> dict[str, Any]:
         """Report which DSH deployment is present (no side effects).
 
-        Legacy 0.1.x isolated source checkout (project-local) is detected
-        first; the community desktop build (2.0.x, D-drive) is the current
-        deployment and is always probed alongside. User `.dsh` state is never
-        read.
+        Probed in order of currency: the official build (resolved, never a
+        hardcoded path) first, then the legacy project-local 0.1.x source
+        checkout, then the superseded community desktop build (2.0.x) as a
+        legacy probe. User `.dsh` state is never read.
         """
         src = source_dir(self.project)
         installed = src.is_dir() and (src / ".git").exists()
@@ -279,7 +440,10 @@ class DeepSeekHarnessAdapter:
             commit = self._git_rev_parse(src)
         ok, detail = validate_commit_pin(commit)
         community = community_detected()
-        if community["present"]:
+        official = official_detected()
+        if official["present"]:
+            deployment, detected_version = "official-deepseek-harness", official["version"]
+        elif community["present"]:
             deployment, detected_version = "community-desktop", community["version"]
         elif installed:
             deployment, detected_version = "isolated-source-checkout", UPSTREAM_VERSION
@@ -297,6 +461,7 @@ class DeepSeekHarnessAdapter:
             "pin_detail": detail,
             "deployment": deployment,
             "detected_version": detected_version,
+            "official_deepseek_harness": official,
             "community_desktop": community,
         }
 

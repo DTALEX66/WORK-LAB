@@ -2682,6 +2682,12 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "core-schemas",
                 "adapter-registry",
                 "capability-matrix",
+                "model-registry-integrity",
+                "acp-adapter-honesty",
+                "observer-readonly-boundary",
+                "registry-closure-report",
+                "evidence-tiering",
+                "root-governance-suite",
                 "policy-coverage",
                 "context-control-plane",
                 "external-libraries-index",
@@ -2696,6 +2702,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "task-ledger-replay",
                 "portable-install",
                 "provider-inventory",
+                "plugin-inventory-honesty",
                 "mcp-audit",
                 "shell",
                 "runtime-convergence",
@@ -2790,7 +2797,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         )
         self.assertIn(
             "verify: Run governance, compile, skill-provenance, security, context-pack, "
-            "client-neutral-manifest, core-schemas, adapter-registry, capability-matrix, policy-coverage, context-control-plane, external-libraries-index, protected-drives-consistency, three-project-boundary, github-delivery, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, memory-contamination, task-ledger-replay, portable-install, provider-inventory, mcp-audit",
+            "client-neutral-manifest, core-schemas, adapter-registry, capability-matrix, model-registry-integrity, acp-adapter-honesty, observer-readonly-boundary, registry-closure-report, evidence-tiering, root-governance-suite, policy-coverage, context-control-plane, external-libraries-index, protected-drives-consistency, three-project-boundary, github-delivery, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, memory-contamination, task-ledger-replay, portable-install, provider-inventory, plugin-inventory-honesty, mcp-audit",
             list_result.stdout,
         )
         self.assertTrue({"design-contract", "production-evidence", "standard-validators"}.isdisjoint(module.GATES))

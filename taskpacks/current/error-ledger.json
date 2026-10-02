@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-08-15T00:00:00Z",
+  "generated_at": "2026-10-01",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,24 +9,24 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 91,
+    "total": 96,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 35,
+      "contract_drift": 38,
       "test_behavior_alignment": 10,
       "working_directory_recovery": 2,
-      "evidence_state": 11,
+      "evidence_state": 12,
       "ci_configuration": 6,
       "feature_gap": 5,
       "config_downgrade": 3,
       "dead_entry": 2,
-      "path_boundary": 2,
+      "path_boundary": 3,
       "ci_tooling": 1,
       "sql_schema": 1,
       "regression_contract": 7
     },
     "repeat_prevention_required": true,
-    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer)"
+    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer); 2026-09-30: ERR-093 (asset-inventory boundary spill), ERR-094 (audit-package digest basis: CRLF vs repository bytes), ERR-095 (codex global overlay/skill targets absent in live CODEX_HOME while the registry claims READBACK_VERIFIED), ERR-096 (Hermes managed skill live drift + stale skill-provenance records); ERR-092 is reserved by the unmerged branch g15-dsh-codex-registry-reconcile-20260930)"
   },
   "errors": [
     {
@@ -2570,6 +2570,141 @@
         "affectedCapability": "protected-main GitHub delivery chain",
         "regressionCommand": "GitHub PR/main SHA readback and required check-run readback",
         "currentApplicability": "CLOSED_MERGED_20260929"
+      }
+    },
+    {
+      "error_id": "ERR-093",
+      "date": "2026-09-30",
+      "task_id": "CLIENT-ASSET-INVENTORY-20260930",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "path_boundary",
+      "entrypoint": "tests/workflow-assistance/nf10nf11nf12_convergence_audit.py (quality gate module: governance)",
+      "command": "python services/orchestration/run_quality_gate.py verify",
+      "exit_code": 1,
+      "observed_error": "The governance gate failed with unexpected_apps=['.project-local'] because an ignored .project-local directory had appeared inside apps/, so the dependency-convergence contract no longer saw exactly the known app surfaces.",
+      "root_cause": "An earlier frontend baseline script in the same session wrote its evidence with a repo-relative path .project-local/runs/frontend-baseline.json while the process working directory was apps/, so the artifact was created at apps/.project-local/runs/ instead of the single declared task-data root at the repository top level.",
+      "fix": "Copied the spilled file to the canonical root .project-local/runs/frontend-baseline.failed-attempt-20260930.json (206 bytes, sha256 prefix f06a97b6002608de), removed the whole apps/.project-local tree, confirmed apps/ lists exactly observer and token-monitor, then re-ran the governance gate to exit 0 and re-ran the convergence audit suite to 6 passed.",
+      "regression_test": "Dependency convergence must report unexpected_apps == [] and apps/ top level must contain only the registered app surfaces; any new ignored directory under apps/ fails the gate.",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Scripts must resolve the task-data root from the repository top level (or an explicit root argument) and never write project-local output through a relative path that depends on the current working directory; the boundary check must run before committing evidence.",
+      "remaining_boundary": "This entry proves the single spill found on 2026-09-30; other client-side directories outside the repository were inventoried as metadata only and were not written to.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "repository data-boundary cleanliness under the governance quality gate",
+        "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python -m pytest tests/workflow-assistance/nf10nf11nf12_convergence_audit.py -q",
+        "currentApplicability": "FIXED_AND_VERIFIED_20260930"
+      }
+    },
+    {
+      "error_id": "ERR-094",
+      "date": "2026-09-30",
+      "task_id": "CLIENT-ASSET-INVENTORY-20260930",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": "reports/audit-evidence/assets-20260930/MANIFEST.json integrity self-check over raw.githubusercontent content",
+      "command": "python -c \"urllib.request fetch raw evidence and compare sha256 with MANIFEST.json\"",
+      "exit_code": 1,
+      "observed_error": "All four published evidence files failed the integrity check: the sha256 recomputed from the downloaded repository content did not match the value recorded in MANIFEST.json, and the byte counts differed (for example asset-inventory.json was 76,293 locally but 73,749 in the repository).",
+      "root_cause": "The manifest was hashed over the Windows working-tree bytes, which carried CRLF line endings, while git stores and serves the same files with LF endings; the published bytes therefore never matched the recorded digests.",
+      "fix": "Normalized the four evidence files to LF in the working tree so local bytes equal repository bytes, regenerated every MANIFEST.json digest from those exact bytes, documented the hashing basis inside the manifest and the audit pack, then re-fetched all four raw URLs and confirmed a four of four digest match.",
+      "regression_test": "For every published evidence file, the sha256 of the bytes returned by the raw URL must equal the digest recorded in MANIFEST.json, and the recorded byte count must equal the downloaded length.",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Evidence digests must be computed over the bytes that the repository actually stores and serves (LF-normalized), never over working-tree bytes, and a network readback of the published files must pass before any audit package is declared auditable.",
+      "remaining_boundary": "This entry covers the assets-20260930 package only; earlier packages were not re-hashed in this session.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "external audit package integrity verification chain",
+        "regressionCommand": "fetch each raw evidence URL and compare sha256 against MANIFEST.json",
+        "currentApplicability": "FIXED_AND_VERIFIED_20260930"
+      }
+    },
+    {
+      "error_id": "ERR-095",
+      "date": "2026-09-30",
+      "task_id": "CLIENT-ASSET-INVENTORY-20260930",
+      "phase": "AUDIT_ONLY",
+      "classification": "contract_drift",
+      "entrypoint": "config/adapter-registry.json codex policy_projection vs live CODEX_HOME native targets",
+      "command": "python .project-local/runs/readback_global_deployment.py (hash and marker readback of CODEX_HOME/AGENTS.md, config.toml, rules, skills)",
+      "exit_code": 1,
+      "observed_error": "The codex adapter entry declares maturity READBACK_VERIFIED with a Managed BEGIN/END block plus hash fencing in CODEX_HOME/AGENTS.md and native targets including skills/workflow-assistance-*, but the live AGENTS.md contains zero occurrences of the managed overlay markers or of WORK-LAB, and zero workflow-assistance skill directories exist under CODEX_HOME/skills.",
+      "root_cause": "The live Codex global file no longer carries the overlay block that the renderer emits (a manual replacement is the likely path: CODEX_HOME holds AGENTS.md.bak-manual-inject with a different first line), while the registry maturity claim and note were not re-verified against the live native surface afterwards.",
+      "fix": "Recorded here as a verified drift with exact evidence; the repair requires the sanctioned renderer channel (integrations/executors/codex/sync_codex_global_assets.py) plus native readback, which is NOT authorized in this task. Registry maturity must not be raised again until the block and skill targets are re-rendered and read back.",
+      "regression_test": "After any codex global projection, CODEX_HOME/AGENTS.md must contain the managed BEGIN/END overlay block markers and the declared skills/workflow-assistance-* directories must exist; a registry maturity of READBACK_VERIFIED requires that live readback.",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "A READBACK_VERIFIED claim must never be recorded from a successful render; it requires a fresh live readback of every declared native target, and any user-side replacement of the native file must downgrade the registry state instead of leaving a stale claim.",
+      "remaining_boundary": "The user may have intentionally replaced the Codex global file; user-owned native state must be preserved, so the decision between re-rendering and correcting the registry needs explicit direction.",
+      "status_before": "UNVERIFIED",
+      "status_after": "FAIL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "codex global policy projection truthfulness",
+        "regressionCommand": "readback CODEX_HOME/AGENTS.md for managed block markers and list CODEX_HOME/skills/workflow-assistance-*",
+        "currentApplicability": "DRIFT_OPEN_20260930"
+      }
+    },
+    {
+      "error_id": "ERR-096",
+      "date": "2026-09-30",
+      "task_id": "CLIENT-ASSET-INVENTORY-20260930",
+      "phase": "AUDIT_ONLY",
+      "classification": "contract_drift",
+      "entrypoint": "config/skill-provenance.yaml records vs live Hermes managed skill files",
+      "command": "python .project-local/runs/readback_global_deployment.py (sha256 repo source vs live Hermes skills tree)",
+      "exit_code": 1,
+      "observed_error": "Twelve of thirteen managed skills match between the repository source and the live Hermes skills tree, but software-development/windows-development-environment/SKILL.md differs (live sha 39bbb61a723914d5, 23825 bytes vs repo sha 2e1fc6dcdf51ee89, 21982 bytes), and the provenance records are stale: the model-switch live_sha256 no longer describes any current file and the windows-development-environment source and live entries both still hold the old digest.",
+      "root_cause": "The live Hermes copy of one managed skill has diverged from the repository source (edit or older deployment), and skill-provenance.yaml was not regenerated after the underlying files changed, so the record no longer proves anything about the live surface.",
+      "fix": "Recorded here with exact digests. The repair path is the sanctioned asset sync (integrations/executors/hermes/sync_hermes_workflow_assets.py, which updates skill-provenance hashes in the same change) followed by a live readback; that write is NOT authorized in this task.",
+      "regression_test": "For every managed skill, the sha256 of the live Hermes file must equal the repository source sha256, and skill-provenance.yaml entries must be regenerated in the same change that deploys them.",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Skill provenance must be regenerated by the deployment channel itself, never hand-edited, and a deployment is only complete when a live readback of all managed skills matches the source digests.",
+      "remaining_boundary": "Only the metadata of the diverging skill was compared; the content difference was not judged for quality or intent, and the memory and session bodies were not read.",
+      "status_before": "UNVERIFIED",
+      "status_after": "FAIL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Hermes managed skill deployment fidelity",
+        "regressionCommand": "compare sha256 of packages/client-neutral-core/skills/**/SKILL.md with the live Hermes skills tree",
+        "currentApplicability": "DRIFT_OPEN_20260930"
+      }
+    },
+    {
+      "error_id": "ERR-097",
+      "date": "2026-10-01",
+      "task_id": "ATLAS-GAP-REMEDIATION-20261001",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "contract_drift",
+      "entrypoint": "config/adapter-registry.json policy_projection.maturity for the codex adapter",
+      "command": "python services/orchestration/run_quality_gate.py verify",
+      "exit_code": 1,
+      "observed_error": "config/adapter-registry.json declared maturity=READBACK_VERIFIED for the codex adapter while live CODEX_HOME/AGENTS.md contained no managed overlay marker. ERR-095 had already recorded exactly this on 2026-09-30 and instructed that registry maturity must not be raised again until the block and skill targets were re-rendered and read back, so the declaration was in breach of the ledger rather than merely unproven.",
+      "root_cause": "maturity conflated implementation maturity with deployment verification. The renderer channel and its apply path ARE implemented, so APPLY_SUPPORTED is true; the readback claim was not, because the deployed file no longer carries the managed block (the user's own AGENTS.md content replaced it).",
+      "fix": "Downgraded maturity to APPLY_SUPPORTED (055c08d-era record corrected in a2eb028), mirrored the change into config/capability-matrix.json which declares the registry as a source, and added an explicit policy_projection.deployment_observation block (status UNVERIFIED, reason, observed_at, the two checked paths, authority=ERR-095) plus maturity_note recording the exact condition to raise it again: a sanctioned renderer run AND a fresh native readback. left readback_supported=true because that field states a real capability; collapsing the two was the original defect.",
+      "regression_test": "A registry entry may not claim READBACK_VERIFIED unless a matching deployment_observation with status VERIFIED exists; maturity and deployment state must be readable separately.",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Never raise maturity on the strength of a renderer run alone. The deployment_observation block must be produced by an actual native readback of the live surface, and a drift in it must never be smoothed back into maturity.",
+      "remaining_boundary": "The live drift itself is NOT repaired: no managed block was rendered into the user's AGENTS.md, because that write needs the sanctioned sync channel plus authorization and would touch user-owned content. Only the false claim was corrected.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "a2eb028",
+        "verifiedCommit": null,
+        "affectedCapability": "adapter registry honesty: implementation maturity vs deployment observation",
+        "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python -c \"read config/adapter-registry.json policy_projection.deployment_observation\"",
+        "currentApplicability": "CLAIM_CORRECTED_LIVE_DRIFT_STILL_OPEN"
       }
     }
   ],

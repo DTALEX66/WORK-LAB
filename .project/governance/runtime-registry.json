@@ -366,5 +366,46 @@
       "reason": "Linux/datacenter oriented; no benefit for a single 8 GiB consumer GPU"
     }
   ],
+  "processLibraries": [
+    {
+      "id": "faster-whisper",
+      "display_name": "faster-whisper (CTranslate2) ASR",
+      "executionModel": "in-process",
+      "listensOnPort": false,
+      "kind": "python-library",
+      "declaredBy": "AG-05 (2026-10-01)",
+      "why": "provider-registry local.asr.default binds to binds_to_runtime=\"faster-whisper\", which did not resolve to anything in runtimes[] because it is a Python library loaded inside the caller's own process, NOT a server. Declaring it here closes the foreign key while keeping the distinction explicit: there is no port to poll, no health endpoint, and no lifecycle to start or stop. A process library must never be probed as if it were a service.",
+      "import_name": "faster_whisper",
+      "entry_symbol": "faster_whisper.WhisperModel",
+      "backend": "CTranslate2 (int8 on CPU or float16 on GPU)",
+      "model_ids": [
+        "faster-whisper-large-v3-turbo"
+      ],
+      "health_probe": null,
+      "health_state": "UNKNOWN",
+      "probe_note": "Existence of the library and the weight was checked on 2026-09-29; transcription quality was NOT re-tested in that round, and no load-test was performed in this round. UNKNOWN is retained rather than inferred from file presence.",
+      "rollback_contract": null
+    },
+    {
+      "id": "sherpa-onnx",
+      "display_name": "sherpa-onnx ASR (CPU-friendly alternate)",
+      "executionModel": "in-process",
+      "listensOnPort": false,
+      "kind": "python-library",
+      "declaredBy": "AG-05 (2026-10-01)",
+      "why": "provider-registry local.asr.cpu.sensevoice binds to binds_to_runtime=\"sherpa-onnx\"; declared here for the same reason as faster-whisper. It is an in-process CPU library with no service surface.",
+      "import_name": "sherpa_onnx",
+      "entry_symbol": "sherpa_onnx.OfflineRecognizer",
+      "backend": "onnxruntime (CPU)",
+      "model_ids": [
+        "sherpa-onnx-sense-voice",
+        "sherpa-onnx-streaming-zipformer-zh-14m"
+      ],
+      "health_probe": null,
+      "health_state": "UNKNOWN",
+      "probe_note": "Weights and library presence verified on 2026-09-29; real-audio benchmark not completed. UNKNOWN is retained rather than inferred from file presence.",
+      "rollback_contract": null
+    }
+  ],
   "lastVerified": "2026-09-29"
 }

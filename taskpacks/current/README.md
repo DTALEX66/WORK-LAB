@@ -30,7 +30,8 @@ CURRENT TaskPack (exactly 1, per taskpack-authority-index classification)
 ├─ OPEN Register (taskpacks/current/OPEN-TASK-REGISTER.md, single live register)
 └─ currentTaskCards
    ├─ WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925 (roadmap, no execution grant)
-   └─ ORCA-PILOT-TASK-CARD-20260925 (registry FUT-001 binding, execution individually authorized)
+   ├─ ORCA-PILOT-TASK-CARD-20260925 (registry FUT-001 binding, execution individually authorized)
+   └─ WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001 (verified-gap delta + AG-01..AG-20 breakdown, no execution grant)
 ```
 
 Invariant (fail-closed): a card path exists on disk; the card is referenced by the

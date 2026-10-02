@@ -55,7 +55,16 @@
       "owner": "WORK-LAB",
       "binding_note": "Single physical copy in the shared library; LM Studio indexes the shared library root in place (downloadsFolder = the model library), so no import, copy or link exists. Ollama was NOT used for this weight (its CDN measured 136 KB/s here and the pull never completed).",
       "weight_location": "D:\\All projects\\Model library\\plain-gguf\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf",
-      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
+      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio.",
+      "negative_capabilities": [
+        {
+          "capability": "reasoning.long_chain_visible",
+          "state": "UNAVAILABLE",
+          "why": "Without reasoning_effort:'none' the model's reasoning_content consumes the entire max_tokens budget and the visible content comes back EMPTY (reproduced 3x). chat_template_kwargs{enable_thinking:false} and the /no_think token are both IGNORED here.",
+          "evidence": "required_request_options.why",
+          "escape_hatch": "Send reasoning_effort:'none' (declared in required_request_options)."
+        }
+      ]
     },
     {
       "id": "local.fast.legacy",
@@ -78,7 +87,10 @@
       "weight_location": "D:\\All projects\\Model library\\ollama\\blobs\\sha256-a3de86cd1c132c822487ededd47a324c50491393e6565cd14bafa40d0b8e686f",
       "quantization": "Q4_K_M (GGUF file_type 15)",
       "standby_reason": "Ollama 0.34.4 no longer resolves OLLAMA_MODELS to the shared library (see runtime-registry ollama.model_store_defect), so this weight is not served by any runtime right now. It is retained in place pending a user decision; it is NOT deleted and NOT counted as the WL-MODEL-02 'two general LLMs' target.",
-      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
+      "binding_status": "UNSERVED_RETAINED_PENDING_DECISION",
+      "binding_status_source": "model-registry.json models[id=qwen3-8b].status",
+      "binding_status_note": "Separated from operationalStatus on 2026-10-01 (AG-05) because the two describe different things and reading operationalStatus alone wrongly implied the model was callable. The runtime endpoint is up; THIS BINDING IS NOT SERVED. Evidence: the weight is an Ollama blob under Model library\\ollama\\blobs (LM Studio indexes <publisher>/<repo>/<file>.gguf, not that layout), it is absent from runtime-registry lmstudio.model_index.verified_indexed_models, and model-registry states runtime=\"none (was ollama)\".",
+      "operationalStatus": "RUNTIME endpoint scope only (2026-09-29): the LM Studio HTTP server is up, autostarts, and self-heals every 10 minutes, so the ENDPOINT accepts requests. This is not a claim that this provider's binding resolves — see binding_status above; it does not."
     },
     {
       "id": "local.deep.default",
@@ -147,7 +159,10 @@
       "weight_location": "D:\\All projects\\Model library\\ollama\\blobs\\sha256-1194192cf2a187eb02722edcc3f77b11d21f537048ce04b67ccf8ba78863006a",
       "quantization": "Q4_K_M (GGUF file_type 15)",
       "status_note": "Weight present (18.56 GB, arch qwen3moe, 128 experts / 8 used). NOT served and NOT part of the WL-MODEL-02 target count; retained pending a user decision.",
-      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
+      "binding_status": "UNSERVED_RETAINED_PENDING_DECISION",
+      "binding_status_source": "model-registry.json models[id=qwen3-coder-30b-a3b].status",
+      "binding_status_note": "Separated from operationalStatus on 2026-10-01 (AG-05); see local.fast.legacy for the full reasoning. The runtime endpoint is up; THIS BINDING IS NOT SERVED (Ollama blob layout, not indexed by LM Studio, model-registry runtime=\"none (was ollama)\").",
+      "operationalStatus": "RUNTIME endpoint scope only (2026-09-29): the LM Studio HTTP server is up, autostarts, and self-heals every 10 minutes, so the ENDPOINT accepts requests. This is not a claim that this provider's binding resolves — see binding_status above; it does not."
     },
     {
       "id": "local.embedding.default",
@@ -229,7 +244,7 @@
         },
         "verdict": "Correct on every case, including the hard distractor; but it returns only yes/no."
       },
-      "runtime_note": "Ollama 0.34.3 exposes NO rerank endpoint (probed: /api/rerank, /v1/rerank, /api/reranking all 404), so reranking is served by llama.cpp with --rerank --pooling rank.",
+      "runtime_note": "ACTIVE BINDING = lmstudio (see binds_to_runtime). CORRECTED 2026-10-01 (AG-05e): this note previously said reranking 'is served by llama.cpp with --rerank --pooling rank', which described a DIFFERENT runtime than the one actually bound, and it also still narrated the removed Ollama server. Both were historical. The accurate position: LM Studio is the declared serving runtime and it has NO rerank endpoint and never returns logprobs (see runtime_limitation), so reranking here is a BINARY verdict produced through /v1/completions. llama.cpp is retained only as an optional, non-auto-starting escape hatch that CAN serve /v1/rerank with continuous scores; it is not bound and is not running.",
       "owner": "WORK-LAB",
       "context_window": 40960,
       "weight_location": "D:\\All projects\\Model library\\Qwen\\Qwen3-Reranker-0.6B-GGUF\\Qwen3-Reranker-0.6B-Q8_0.gguf",
@@ -254,12 +269,37 @@
         "date": "2026-09-29"
       },
       "runtime_status": "ONLINE and verified as a binary verdict (correct on every tested case), but NO score is exposed: LM Studio 0.4.25 has no rerank endpoint and never returns logprobs.",
-      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
+      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio.",
+      "runtime_note_history": "Ollama 0.34.3 exposes NO rerank endpoint (probed: /api/rerank, /v1/rerank, /api/reranking all 404), so reranking is served by llama.cpp with --rerank --pooling rank.  [historical text, retained verbatim; both runtimes it names are either removed or unbound]",
+      "negative_capabilities": [
+        {
+          "capability": "rerank.scored_sort_by_continuous_score",
+          "state": "UNAVAILABLE",
+          "why": "LM Studio 0.4.25 always returns a binary verdict here, so two ACCEPTABLE candidates cannot be ordered relative to each other. Ranking is filter-quality, not sort-quality.",
+          "evidence": "runtime_limitation (a)+(b); fidelity_tradeoff records the regression vs the llama.cpp path",
+          "escape_hatch": "llama.cpp is retained as an optional, non-auto-starting runtime that CAN serve /v1/rerank with continuous scores; it is not bound here."
+        },
+        {
+          "capability": "rerank.expose_score",
+          "state": "UNAVAILABLE",
+          "why": "The serving API never returns logprobs (logprobs=20 yields null even for an already-loaded ordinary LLM), so no numeric score is exposed to a caller.",
+          "evidence": "runtime_limitation (b)",
+          "escape_hatch": null
+        },
+        {
+          "capability": "rerank.endpoint",
+          "state": "UNAVAILABLE",
+          "why": "/v1/rerank, /api/v0/rerank and GET /v1/rerank all return 'Unexpected endpoint or method'. The verdict is produced through /v1/completions instead.",
+          "evidence": "runtime_limitation (a)",
+          "escape_hatch": null
+        }
+      ]
     },
     {
       "id": "local.ocr.default",
       "display_name": "Local OCR / document vision",
-      "binds_to_model": "qwen2.5vl-7b",
+      "binds_to_model": "qwen2.5-vl-7b-instruct",
+      "binding_note": "Foreign key closed 2026-10-01 (AG-05). This previously read \"qwen2.5vl-7b\", which is the LEGACY Ollama BLOB name (model-registry previous_entry.id, and finalStructureTarget.ingestion[0] as an OCR candidate label). That blob has no vision projector and is NOT the served artifact. The live binding is the model-registry entry id \"qwen2.5-vl-7b-instruct\" (ggml-org/Qwen2.5-VL-7B-Instruct-GGUF, Q4_K_M weights + paired mmproj), which is what LM Studio reports as type=vlm and what model_name_on_wire resolves to.",
       "binds_to_runtime": "lmstudio",
       "endpoint": "http://127.0.0.1:1234/v1",
       "api_shape": "openai-compatible (vision)",
@@ -292,7 +332,16 @@
         "verdict": "REAL_OCR_WORKING",
         "comparison": "The earlier Ollama qwen2.5vl:7b result was 6/6 in 61.7 s. This is 8/8 in 5.3 s and, unlike that blob, it genuinely has a vision projector."
       },
-      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio."
+      "operationalStatus": "OPERATIONAL 2026-09-29: server autostarts, self-heals every 10 minutes, and loads this model on demand without the user opening LM Studio.",
+      "negative_capabilities": [
+        {
+          "capability": "ocr.full_matrix_verified",
+          "state": "UNVERIFIED",
+          "why": "Only a single zh/en mixed page (8/8 exact, 2 runs) has been verified. PDF, scanned, table and page-order cases have NOT been run, so the capability must not be read as matrix-verified.",
+          "evidence": "measured.fixture and measured.verification; see AG-11 for the uncovered matrix",
+          "escape_hatch": null
+        }
+      ]
     },
     {
       "id": "local.asr.default",
@@ -371,5 +420,6 @@
     "userActionRequired": "none - call http://127.0.0.1:1234/v1 with the model name",
     "userGuide": "%LOCALAPPDATA%\\WORK-LAB\\README-本地模型服务.md",
     "acceptance": "8/8 capability lines PASS (final-acceptance.json, verdict ACCEPTED_ALL_LINES, 2026-09-29)"
-  }
+  },
+  "negativeCapabilityVocabulary": "Closed vocabulary for negative_capabilities[].state: UNAVAILABLE (measured to not work here), UNVERIFIED (not exercised, so must not be assumed), REFUSED (blocked by policy). Every entry carries why + evidence, and escape_hatch is null when no configured path exists. Added by AG-05f (2026-10-01) because the Atlas G05 acceptance wording explicitly requires 'negative 能力' and the registry previously expressed its limitations only in prose that a machine consumer could not read."
 }

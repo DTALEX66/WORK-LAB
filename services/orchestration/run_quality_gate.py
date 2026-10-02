@@ -452,6 +452,93 @@ def gate_capability_matrix() -> int:
     return run_python(["packages/client-neutral-core/scripts/verify_capability_matrix.py"])
 
 
+def gate_model_registry_integrity() -> int:
+    """AG-05: model/provider/runtime registries stay internally consistent.
+
+    Fail-closed checks that a provider's `binds_to_model` resolves to a model id
+    (or a declared external asset), that `binds_to_runtime` resolves to an HTTP
+    runtime or an explicitly declared in-process library, that `binding_status`
+    cannot contradict the model lifecycle, that a runtime-scoped operationalStatus
+    does not use serving vocabulary for an unserved binding, and that a digest is
+    either COMPLETE with a 64-hex sha256 or TRUNCATED with a stated reason. Reads
+    JSON only: never downloads, installs, or touches runtime or global config.
+    """
+    return run_python(["scripts/ci/verify_model_registry_integrity.py"])
+
+
+def gate_acp_adapter_honesty() -> int:
+    """AG-06: the ACP surface reports declared/implemented/executable/native_verified.
+
+    Fail-closed: an execution capability may not be advertised when its operation
+    produces no real effect, an operation may not be reported executable unless the
+    probe avoided a degraded status, and native_verified requires a native receipt.
+    Probing is read-only and never launches an executor process.
+    """
+    return run_python(["scripts/ci/verify_acp_adapter_honesty.py"])
+
+
+def gate_observer_readonly_boundary() -> int:
+    """AG-15 prerequisite: the Observer read-only split is machine-enforced repo-wide.
+
+    Three fail-closed rules: the serving surface denies every non-GET method, the
+    Observer frontend never issues a write verb, and no authoritative write control
+    is rendered without an explicit disabled guard. Complements the per-view
+    runtime assertions in l10-views.test.tsx, which only cover one rendered lane.
+    """
+    return run_python(["scripts/ci/verify_observer_readonly_boundary.py"])
+
+
+def gate_registry_closure_report() -> int:
+    """AG-05: produce the field-level closure report for the three registries.
+
+    The Atlas closed gap G05 as "close it field by field"; this is the aggregate
+    answer an auditor actually asks (which fields are CLOSED / EXPLICITLY_OPEN /
+    UNCLOSED). It reports rather than fails, because an unclosed field is a hole
+    to surface, not a reason to hide one — but the report must be produced, and
+    the accompanying negative controls (`nf26`) prove it can detect each hole.
+    """
+    return run_python(["scripts/ci/report_registry_closure.py"])
+
+
+EVIDENCE_TIER_BUNDLES = (
+    "reports/audit-evidence/assets-20260930/MANIFEST.json",
+    "reports/audit-evidence/assets-20260930/CLEANUP-CANDIDATES.json",
+    "reports/audit-evidence/assets-20260930/global-workflow-coverage.json",
+    "reports/audit-evidence/assets-20260930/inventory-verification.json",
+    "reports/audit-evidence/assets-20260930/asset-inventory.json",
+    "reports/audit-archive/20260930/ARCHIVE-INDEX.json",
+    "reports/audit-archive/20260930",
+)
+
+
+def gate_root_governance_suite() -> int:
+    """AG-06t: run the root `tests/ci/` governance suite (the push-time blind spot).
+
+    The canonical gate ran 43 `tests/workflow-assistance/` modules and ZERO of the 22
+    `tests/ci/` ones, so editing the shared error ledger could go green locally and
+    still fail CI — which is exactly what happened (an invalid `phase` enum and a
+    zero original-failure `exit_code` were found only by CI). The module globs the
+    suite so a new check is covered automatically; the single post-merge-state module
+    is excluded with its reason asserted in the script.
+    """
+    return run_python(["scripts/ci/run_root_governance_suite.py"])
+
+
+def gate_evidence_tiering() -> int:
+    """AG-06i (audit F15/F16): a bundle may not read as proof it cannot be.
+
+    The motivating defect was a package whose every digest matched while it still
+    invited a conclusion it could not support (`external_roots_touched: []` cannot
+    show a root was never read; a secret scan whose scanner source was not
+    retained cannot be re-derived). The gate refuses a behavioural claim that
+    carries no tier, and refuses a sub-VERIFIED tier that names nothing it cannot
+    establish.
+    """
+    return run_python(
+        ["scripts/ci/verify_evidence_tiering.py", *EVIDENCE_TIER_BUNDLES]
+    )
+
+
 def gate_policy_coverage() -> int:
     """U17.7/27: Global Agent Policy coverage + freshness.
 
@@ -551,6 +638,20 @@ def gate_portable_install_runtime() -> int:
         print("\n=== FAIL portable-install-runtime: hermes CLI not found; runtime compatibility is required ===")
         return 1
     return run_python(["packages/client-neutral-core/scripts/verify_portable_install.py", "--runtime"])
+
+
+def gate_plugin_inventory_honesty() -> int:
+    """AG-06l (audit F07): a plugin record may not outrun its evidence.
+
+    F07's visible half was `commit: null` beside a declared revision. Its
+    important half is the caveat: a revision string cannot prove the installed
+    bytes match that commit — verified live, where chrome-profiles' declared
+    revision is correct while its working tree is locally modified. The gate also
+    refuses presence without observation and an observation that hides a delta.
+    """
+    return run_python(
+        ["scripts/ci/verify_plugin_inventory.py", "config/plugin-inventory.json"]
+    )
 
 
 def gate_provider_inventory() -> int:
@@ -992,6 +1093,44 @@ GATES: dict[str, Gate] = {
         "WL3-100: verify capability-matrix.json stays consistent with the adapter registry.",
         gate_capability_matrix,
     ),
+    "model-registry-integrity": Gate(
+        "model-registry-integrity",
+        "AG-05: provider/model/runtime registries have no dangling foreign key, "
+        "contradictory binding status, or unverifiable digest.",
+        gate_model_registry_integrity,
+    ),
+    "acp-adapter-honesty": Gate(
+        "acp-adapter-honesty",
+        "AG-06: ACP operations report declared/implemented/executable/native_verified "
+        "separately; no execution capability is advertised without a real effect.",
+        gate_acp_adapter_honesty,
+    ),
+    "observer-readonly-boundary": Gate(
+        "observer-readonly-boundary",
+        "AG-15: the Observer read-only split is enforced repo-wide (no non-GET "
+        "handler, no write verb, no unguarded authoritative write control).",
+        gate_observer_readonly_boundary,
+    ),
+    "registry-closure-report": Gate(
+        "registry-closure-report",
+        "AG-05: field-level closure report for provider/model/runtime registries "
+        "(CLOSED / EXPLICITLY_OPEN / UNCLOSED).",
+        gate_registry_closure_report,
+    ),
+    "evidence-tiering": Gate(
+        "evidence-tiering",
+        "AG-06i (audit F15/F16): an evidence bundle that makes a behavioural "
+        "claim must tier it, and a claim below VERIFIED must name what it cannot "
+        "establish, so a declared claim cannot be read as proof.",
+        gate_evidence_tiering,
+    ),
+    "root-governance-suite": Gate(
+        "root-governance-suite",
+        "AG-06t: run the root tests/ci/ governance suite, which the canonical gate "
+        "previously skipped entirely, so a green local run can no longer hide a CI "
+        "failure in the shared ledgers and contracts.",
+        gate_root_governance_suite,
+    ),
     "policy-coverage": Gate(
         "policy-coverage",
         "U17.7/27: verify Global Agent Policy coverage + freshness (loss reports, matrix block, golden projections).",
@@ -1060,6 +1199,13 @@ GATES: dict[str, Gate] = {
         gate_portable_install_runtime,
     ),
     "provider-inventory": Gate("provider-inventory", "Generate the secret-free configured provider/model inventory.", gate_provider_inventory),
+    "plugin-inventory-honesty": Gate(
+        "plugin-inventory-honesty",
+        "AG-06l (audit F07): a plugin record may not claim presence without an "
+        "observation, and an observation may not hide a local delta; a revision "
+        "string alone never proves the installed bytes match that commit.",
+        gate_plugin_inventory_honesty,
+    ),
     "mcp-audit": Gate("mcp-audit", "Smoke the MCP candidate audit template generator.", gate_mcp_audit),
     "shell": Gate("shell", "Parse setup.sh with bash -n when bash is available.", gate_shell),
     "runtime-convergence": Gate(
@@ -1095,6 +1241,12 @@ VERIFY_ORDER = (
     "core-schemas",
     "adapter-registry",
     "capability-matrix",
+    "model-registry-integrity",
+    "acp-adapter-honesty",
+    "observer-readonly-boundary",
+    "registry-closure-report",
+    "evidence-tiering",
+    "root-governance-suite",
     "policy-coverage",
     "context-control-plane",
     "external-libraries-index",
@@ -1109,6 +1261,7 @@ VERIFY_ORDER = (
     "task-ledger-replay",
     "portable-install",
     "provider-inventory",
+    "plugin-inventory-honesty",
     "mcp-audit",
     "shell",
     "runtime-convergence",
@@ -1170,6 +1323,12 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "core-schemas": ("packages/contracts/schemas/", "config/"),
     "adapter-registry": ("config/adapter-registry.json", "packages/client-neutral-core/scripts/verify_adapter_registry.py"),
     "capability-matrix": ("config/capability-matrix.json", "packages/client-neutral-core/scripts/verify_capability_matrix.py"),
+    "model-registry-integrity": (".project/governance/provider-registry.json", ".project/governance/model-registry.json", ".project/governance/runtime-registry.json", "scripts/ci/verify_model_registry_integrity.py"),
+    "acp-adapter-honesty": ("services/execution-federation/", "scripts/ci/verify_acp_adapter_honesty.py"),
+    "observer-readonly-boundary": ("apps/observer/frontend/src/", "services/orchestration/sidecar.py", "scripts/ci/verify_observer_readonly_boundary.py"),
+    "registry-closure-report": (".project/governance/provider-registry.json", ".project/governance/model-registry.json", ".project/governance/runtime-registry.json", "scripts/ci/report_registry_closure.py"),
+    "evidence-tiering": ("reports/audit-evidence/", "reports/audit-archive/", "scripts/ci/verify_evidence_tiering.py"),
+    "root-governance-suite": ("tests/ci/", "scripts/ci/run_root_governance_suite.py", "taskpacks/current/error-ledger.json"),
     "policy-coverage": ("config/global-agent-policy.yaml", "config/loss-reports/", "config/capability-matrix.json", "config/adapter-registry.json", "services/policy/policy_projection.py", "integrations/executors/codex/codex_policy_renderer.py", "integrations/executors/hermes/hermes_policy_renderer.py", "integrations/executors/codex/codex-policy-extension.yaml", "integrations/executors/hermes/hermes-policy-extension.yaml", "integrations/executors/codex/global-guidance.md", "config/SOUL.md", "scripts/ci/verify_policy_coverage.py", "tests/workflow-assistance/test_policy_projection.py"),
     "context-control-plane": ("packages/client-neutral-core/scripts/context_control_plane.py", "packages/client-neutral-core/scripts/context_bundle.py", "packages/client-neutral-core/scripts/context_drift_guard.py"),
     "external-libraries-index": (".project/governance/external-libraries-index.json", "packages/client-neutral-core/scripts/verify_external_libraries_index.py"),
@@ -1182,6 +1341,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "task-ledger-replay": ("packages/client-neutral-core/scripts/task_ledger_replay.py",),
     "portable-install": ("packages/client-neutral-core/scripts/verify_portable_install.py",),
     "provider-inventory": ("config/config.yaml",),
+    "plugin-inventory-honesty": ("config/plugin-inventory.json", "scripts/ci/verify_plugin_inventory.py"),
     "mcp-audit": ("packages/client-neutral-core/scripts/mcp_candidate_audit.py",),
     "shell": ("scripts/setup-workflow.sh",),
     "runtime-convergence": ("packages/client-neutral-core/scripts/canonical_store.py", "services/orchestration/durable_worker.py", "packages/client-neutral-core/scripts/collectors.py", "services/orchestration/sse_hub.py", "tests/workflow-assistance/"),

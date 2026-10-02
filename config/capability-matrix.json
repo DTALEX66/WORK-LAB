@@ -507,7 +507,7 @@
       }
     },
     "maturity_by_software": {
-      "codex": "READBACK_VERIFIED",
+      "codex": "APPLY_SUPPORTED",
       "hermes": "READBACK_VERIFIED",
       "deepseek-harness": "PLAN_SUPPORTED",
       "cc-switch": "OBSERVE_ONLY",
@@ -522,6 +522,7 @@
       "config/loss-reports/codex-policy-loss-report.json",
       "config/loss-reports/hermes-policy-loss-report.json"
     ],
-    "invariant": "No cell may be promoted to a VERIFIED/READBACK state unless that adapter's loss report + registry both assert apply+readback+rollback+drift. OBSERVE_ONLY / UNSUPPORTED cells are honest gaps, not omissions."
+    "invariant": "No cell may be promoted to a VERIFIED/READBACK state unless that adapter's loss report + registry both assert apply+readback+rollback+drift. OBSERVE_ONLY / UNSUPPORTED cells are honest gaps, not omissions.",
+    "maturity_by_software_note": "Synchronized 2026-10-01 with config/adapter-registry.json (this file declares that registry as a source): codex maturity READBACK_VERIFIED -> APPLY_SUPPORTED per ERR-095 / audit F02."
   }
 }

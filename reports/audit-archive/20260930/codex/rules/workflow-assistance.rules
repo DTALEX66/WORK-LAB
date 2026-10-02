@@ -1,0 +1,116 @@
+# Workflow Assistance user-layer command policy.
+# These rules govern requests to run commands outside the sandbox.
+
+# Shell-portable Git revision syntax (PowerShell hazard):
+# PowerShell parses an unquoted @-brace token as a hashtable literal, so git
+# revision shorthand must never be passed unquoted. Prefer explicit refs
+# (git rev-parse origin/main, git rev-parse HEAD) or single-quote the
+# shorthand form (e.g. git rev-parse '@{upstream}'). After a fetch,
+# re-resolve the refs you depend on instead of reusing a pre-fetch expansion.
+#
+# Windows shell dialect portability:
+# The same command text parses differently in cmd.exe, PowerShell, Git Bash
+# (MSYS) and WSL. PowerShell double quotes expand $var/$(); single quotes are
+# verbatim; --% stops parsing. MSYS auto-converts /... arguments to Windows
+# paths (MSYS2_ARG_CONV_EXCL=* / MSYS_NO_PATHCONV=1 disable it). Keep shell
+# scripts LF (CRLF causes 'bad interpreter'); use UTF-8 output on Chinese
+# Windows (chcp 65001, core.quotepath false); enable core.longpaths for deep
+# trees; treat open-file locks as BLOCKED_PROCESS_LOCK and retry after the
+# owning process exits. Never retry an identical failed command string;
+# re-issue the dialect-correct form.
+# PowerShell Remove-Item is successful only when it uses -LiteralPath and
+# -ErrorAction Stop and a following Test-Path proves the exact target absent.
+# A zero process exit alone is not cleanup evidence. On access denial, inspect
+# lock/ACL/attribute/reparse state; do not elevate, change ACLs, or kill shared
+# processes merely to remove ignored project data.
+# Strip ANSI terminal control sequences before parsing command evidence.
+#
+# Private and project evidence boundaries:
+# Never read $CODEX_HOME/memories, auth, session, keychain, cookie, prompt, or
+# response bodies for project context. A denied read is a correct boundary
+# signal; use tracked repository truth or user-provided redacted evidence.
+# Before tests, report the exact Python interpreter and optional modules. Before
+# Git conclusions, distinguish current/upstream, current/origin-main, PR merge
+# state, merge SHA, and exact-SHA CI. Squash merge creates a new merge SHA.
+# Resolve Markdown relative links from the containing document's directory.
+# Keep PLANNED, BRANCH_PUBLISHED, IMPLEMENTED_LOCAL, TESTED_LOCAL,
+# CI_VERIFIED_EXACT_SHA, MERGED_MAIN, and INSTALLED_RUNTIME_VERIFIED distinct.
+#
+# Codex performance evidence:
+# Do not infer latency from sandbox, approval, trust, WebSocket capability, MCP
+# timeout, or other field names. Use matched timed samples, preserve the official
+# Windows sandbox by default, keep one persistent writer, batch independent
+# reads, run targeted development checks, and run the full gate once on the
+# final aggregate tree.
+#
+# OpenHuman coordination:
+# OpenHuman is a separate local desktop agent. Its .openhuman private runtime
+# (keychain/users/logs/memory/workspace) is never to be read, copied, or
+# committed, same as .codex/.hermes. Its scan output is candidate evidence:
+# verify junction/duplicate/path claims with fsutil reparsepoint query and
+# Get-Item LinkType/Target on the exact path before any action; never act on
+# an unverified scanner label.
+
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "forbidden",
+    justification = "Destructive reset is forbidden; preserve the checkout and reconcile ownership instead.",
+    match = ["git reset --hard", "git reset --hard HEAD~1"],
+    not_match = ["git reset --soft HEAD~1", "git status"],
+)
+
+prefix_rule(
+    pattern = ["git", "clean"],
+    decision = "forbidden",
+    justification = "Broad Git clean can destroy untracked work; inspect and remove only explicitly authorized paths.",
+    match = ["git clean -fd", "git clean -fdX"],
+    not_match = ["git status", "git diff --check"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "--force"],
+    decision = "forbidden",
+    justification = "Force-push rewrites remote history; use a normal push or obtain a separately reviewed recovery plan.",
+    match = ["git push --force", "git push --force origin main"],
+    not_match = ["git push", "git push origin feature"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "-f"],
+    decision = "forbidden",
+    justification = "Force-push rewrites remote history; use a normal push or obtain a separately reviewed recovery plan.",
+    match = ["git push -f", "git push -f origin main"],
+    not_match = ["git push", "git fetch --force"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", ["--force-with-lease", "--force-if-includes"]],
+    decision = "forbidden",
+    justification = "Conditional force-push still rewrites remote history and is forbidden by the overlay contract.",
+    match = ["git push --force-with-lease", "git push --force-if-includes"],
+    not_match = ["git push", "git push origin feature"],
+)
+
+prefix_rule(
+    pattern = ["git", "push"],
+    decision = "prompt",
+    justification = "Publishing changes requires explicit user approval and final diff/readback evidence.",
+    match = ["git push", "git push origin feature"],
+    not_match = ["git status", "git fetch origin"],
+)
+
+prefix_rule(
+    pattern = ["gh", "pr", ["create", "merge", "close"]],
+    decision = "prompt",
+    justification = "Creating, merging, or closing a pull request is an external side effect requiring explicit approval.",
+    match = ["gh pr create", "gh pr merge 42", "gh pr close 42"],
+    not_match = ["gh pr view 42", "gh pr checks 42"],
+)
+
+prefix_rule(
+    pattern = ["gh", "release", ["create", "delete"]],
+    decision = "prompt",
+    justification = "Publishing or deleting a release requires explicit approval and exact-SHA evidence.",
+    match = ["gh release create v1.0.0", "gh release delete v1.0.0"],
+    not_match = ["gh release view v1.0.0", "gh release list"],
+)
