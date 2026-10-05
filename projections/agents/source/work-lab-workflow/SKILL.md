@@ -12,7 +12,7 @@ Use this skill only inside the WORK-LAB Git repository.
 
 - `services/` + `packages/` + `integrations/` owns workflow configuration, Task Ledger, Telemetry Ledger, sidecar, adapters, and delivery gates.
 - `apps/observer` is read-only. It may read Workflow-owned projections but must not execute, approve, retry, apply, rollback, change task state, or write the Telemetry Ledger.
-- Open Design and MINIGAME are archive/transferred scope and must not be restored as active modules.
+- Open Design is an external client; DESIGN-LAB owns design capabilities. Retired module paths must not be restored.
 
 ## Writer boundary
 
@@ -40,3 +40,7 @@ Distinguish structural checks, local runtime checks, exact-SHA CI, and release e
 ## Task execution
 
 Before changing code, read the relevant `AGENTS.md`, inspect the project task contract, and locate the symbol or configuration owner. Use the Workflow-owned Task Ledger for durable task state when the task contract requires it. Observer projections are read-only and are never a second source of truth.
+
+## Scoped references
+
+Read repository-relative `docs/current/workflow-assistance/skill-references/observer.md` only for Observer delivery, or `docs/current/workflow-assistance/skill-references/external-clients.md` for Open Design/OpenHuman boundary work. Generic debugging/testing advice is not a separate required workflow.

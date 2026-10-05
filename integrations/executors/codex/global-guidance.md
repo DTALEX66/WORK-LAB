@@ -40,5 +40,5 @@ invariants live in on-demand skills, not in this global overlay.
 - Use real command output; keep working until verified, or report the exact blocker. Never fabricate state.
 
 ### Skill use
-- Before executing, scan available skills (SKILL.md descriptions) and load the matching one; on a miss proceed directly — a skill is a manual, not authorization for side effects.
+- Use a skill when its specific workflow helps the current task; ordinary work needs no forced skill-loading ceremony. User instructions and project authority take precedence; skills do not add authorization or repeat an existing approval.
 - Windows/Git/PowerShell and other long-form techniques are on-demand skills, not resident global policy.

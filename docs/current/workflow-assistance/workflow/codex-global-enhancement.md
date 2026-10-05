@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 用户规则 | `$CODEX_HOME/AGENTS.md` | 合并带标记的 managed block | 字段级 overlay |
 | 项目规则 | `<project>/AGENTS.md` | 只读发现，不全局复制 | 项目 |
-| 用户 Skills | `$HOME/.agents/skills` | 管理十四个 `workflow-assistance-*` 根 | 精确目录 |
+| 用户 Skills | `$HOME/.agents/skills` | 管理五个 `workflow-assistance-*` 根 | 精确目录 |
 | 项目 Skills | `<project>/.agents/skills` | 只读发现 | 项目 |
 | 命令规则 | `$CODEX_HOME/rules/*.rules` | 管理 `workflow-assistance.rules` | 精确文件 |
 | 用户配置 | `$CODEX_HOME/config.toml` | 只管理三个顶层默认字段 | 字段级 overlay |
@@ -96,16 +96,16 @@ project_doc_max_bytes  = 65536
 从 `10-workflow/workflow-assistance` 运行：
 
 ```bash
-python scripts/workflow/sync_codex_global_assets.py plan \
+python integrations/executors/codex/sync_codex_global_assets.py plan \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 
-python scripts/workflow/sync_codex_global_assets.py apply \
+python integrations/executors/codex/sync_codex_global_assets.py apply \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 
-python scripts/workflow/sync_codex_global_assets.py verify \
+python integrations/executors/codex/sync_codex_global_assets.py verify \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 
-python scripts/workflow/sync_codex_global_assets.py rollback \
+python integrations/executors/codex/sync_codex_global_assets.py rollback \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 ```
 
@@ -179,3 +179,5 @@ Windows Git Bash 也可显式使用：
 provider/model、认证、MCP/plugin、会话、memory、Desktop 私有状态、项目 Task Ledger、
 Telemetry Ledger、Sidecar、Git 发布或外部项目写入能力。任何新增全局能力必须先修改
 机器合同、文档和测试，不能仅通过增加脚本或 Skill 实现。
+
+> 2026-10-05 技能收敛：本机全局个性化规则使用 personal-guidance.md 的单一文件；只更新技能时运行同步器 --skills-only，保留 config/AGENTS/rules。普通全量 overlay 不应重建已由用户替换的旧 managed block。项目专属说明见 docs/current/workflow-assistance/skill-references/。历史运行记录不代表本次部署。

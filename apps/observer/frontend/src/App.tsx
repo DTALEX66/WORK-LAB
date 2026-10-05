@@ -55,6 +55,8 @@ function readInitialLayout(): LayoutMode {
   return 'full'
 }
 
+// WORK-LAB-FRONTEND-TASKPACK-20260930: Control/Observer contract enforcement.
+// Per taskpack authority: only Control Surface executes writes (through adapter/service contract); Observer projection never writes. All observer lanes (observer, rules-policy, audit, approvals as read-only projection) stay READ-ONLY; any approve/retry/cancel/rollback/install/apply must be blocked by backend contract and must not be reachable through hidden shortcuts/deep-links/shared components.
 export default function App() {
   const [view, setView] = useState<ViewId>(readInitialView)
   const [theme, setTheme] = useState<ThemeMode>(readInitialTheme)

@@ -1,81 +1,108 @@
 {
  "schema_version": "workflow/skills-inventory/v1",
- "generatedAt": "2026-10-01T06:18:24Z",
- "count": 14,
- "sourceDigest": "e0b9305a97140335918d5b979c01cafd49f412517399f48b2cd631e20fdf4b85",
+ "generatedAt": "2026-10-05T13:27:57Z",
+ "count": 19,
+ "sourceDigest": "9392f818db01299d227b9bbe423097177c45c0d5c64e57d7e5c18657a413da1e",
  "sources": [
-  "integrations\\executors\\codex\\skills"
+  "integrations\\executors\\codex\\skills",
+  "packages\\client-neutral-core\\skills",
+  "projections\\agents\\source"
  ],
  "skills": [
   {
-   "name": "workflow-assistance-evidence-verification",
-   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-evidence-verification\\SKILL.md",
-   "sha256": "6ad71bf12d36f472a3e539551568e34c6dc77b592523c3f092871b1eccd05636"
+   "name": "agent-workflow-fortress",
+   "path": "packages\\client-neutral-core\\skills\\software-development\\agent-workflow-fortress\\SKILL.md",
+   "sha256": "4fafb79ace30a62de2e83bd76a8437aede6c6219da38502ebe158b5f71be16ad"
+  },
+  {
+   "name": "codex",
+   "path": "packages\\client-neutral-core\\skills\\autonomous-ai-agents\\codex\\SKILL.md",
+   "sha256": "5dda48acc2075b89d7d458b4feda01a185b58601a9f05fc02890f920841daa02"
+  },
+  {
+   "name": "github-auth",
+   "path": "packages\\client-neutral-core\\skills\\github\\github-auth\\SKILL.md",
+   "sha256": "5a4463dc0f70b3a8a6acc6b82119cf99832f82f14106efc012925cfd2cc5cc08"
+  },
+  {
+   "name": "github-code-review",
+   "path": "packages\\client-neutral-core\\skills\\github\\github-code-review\\SKILL.md",
+   "sha256": "9c45fad547ebd9a779656c0fb85a1f671b779d18ff51b89786a1957aa9d7d1e5"
+  },
+  {
+   "name": "github-issues",
+   "path": "packages\\client-neutral-core\\skills\\github\\github-issues\\SKILL.md",
+   "sha256": "4a50f1606618e4b09d57394530e31e41ab77346e398627306919cbaab8f51f44"
+  },
+  {
+   "name": "github-pr-workflow",
+   "path": "packages\\client-neutral-core\\skills\\github\\github-pr-workflow\\SKILL.md",
+   "sha256": "a359651470c607f7074c589ced336607fefe7f9db802c28dd34d995b8fd15eca"
+  },
+  {
+   "name": "github-repo-management",
+   "path": "packages\\client-neutral-core\\skills\\github\\github-repo-management\\SKILL.md",
+   "sha256": "af0da4c8b9d6293540d494495db7d0bf4881a3d0e69c8c5c93309979ae25af43"
+  },
+  {
+   "name": "model-switch",
+   "path": "packages\\client-neutral-core\\skills\\model-switch\\SKILL.md",
+   "sha256": "37aed9558bc16be5c4da9aa2133d63e03cabbcf353d6bbf248d156aceaf4c5d9"
+  },
+  {
+   "name": "project-data-boundary",
+   "path": "packages\\client-neutral-core\\skills\\software-development\\project-data-boundary\\SKILL.md",
+   "sha256": "405e16d3a8f6490ec31107b91cf3fb1f011ab02e4d37f50aaa0e0e9cded5399b"
+  },
+  {
+   "name": "python-testing",
+   "path": "packages\\client-neutral-core\\skills\\software-development\\python-testing\\SKILL.md",
+   "sha256": "207fe5e98f6c5459d1d8dc830be0482a5355a18617e6d1c94b79911191d95e1c"
+  },
+  {
+   "name": "requesting-code-review",
+   "path": "packages\\client-neutral-core\\skills\\software-development\\requesting-code-review\\SKILL.md",
+   "sha256": "d506d7eddd42931dc3122440e64f2e2f6d5757b54e6f5984c6dd5eb43e5f377a"
+  },
+  {
+   "name": "sleep-mode",
+   "path": "packages\\client-neutral-core\\skills\\software-development\\sleep-mode\\SKILL.md",
+   "sha256": "bc42141d57ccd8b4d22c5fa040a4d6abd0e9fb3feae11afbb4f3135b3688594e"
+  },
+  {
+   "name": "windows-development-environment",
+   "path": "packages\\client-neutral-core\\skills\\software-development\\windows-development-environment\\SKILL.md",
+   "sha256": "6525d9c80668aa47b2c68dd0866ab43d4b2607acd11b61dbf5a2d5aa2317047c"
+  },
+  {
+   "name": "work-lab-workflow",
+   "path": "projections\\agents\\source\\work-lab-workflow\\SKILL.md",
+   "sha256": "0fa23c3ac12cb542b71c6f44a237468f676268c3b8fa4f2e07264ee274907a9b"
   },
   {
    "name": "workflow-assistance-github-delivery",
    "path": "integrations\\executors\\codex\\skills\\workflow-assistance-github-delivery\\SKILL.md",
-   "sha256": "98842751c9a045bd79e088b6073cdb2a905ee490d05182f5d25631c8413b806d"
-  },
-  {
-   "name": "workflow-assistance-observer-delivery",
-   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-observer-delivery\\SKILL.md",
-   "sha256": "ed8d47d1b7505758cb0e1e7642d6a556d204b86651e3babf51b05c492a49f769"
-  },
-  {
-   "name": "workflow-assistance-open-design-integration",
-   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-open-design-integration\\SKILL.md",
-   "sha256": "e4dc8d495b53e298a497430eb198729203e8ba74de1ecdfe377ebd78ed12df20"
-  },
-  {
-   "name": "workflow-assistance-openhuman-integration",
-   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-openhuman-integration\\SKILL.md",
-   "sha256": "c2b4ebfebc736b1a89a4443f6a39e8786c7c1946536a17bea4827deeec5bfc40"
+   "sha256": "5dc76444492483950bd20230ab4fd9e11e3085f8dd0751ea61ecd25101e9acd1"
   },
   {
    "name": "workflow-assistance-project-data-boundary",
    "path": "integrations\\executors\\codex\\skills\\workflow-assistance-project-data-boundary\\SKILL.md",
-   "sha256": "3ab0301e84d61f92b22fa5943654ee08caf58c3d52b72c4f8dc2ee79fb8cad0e"
-  },
-  {
-   "name": "workflow-assistance-python-testing",
-   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-python-testing\\SKILL.md",
-   "sha256": "7c47fb10b95c26e3f9fbecbabdcc1db9f3d80142bc246b6929bec116b4e4daec"
+   "sha256": "6d2afac60fcff5ee9f1ffacdebefcf9932a7a7339f6cd23f234d47dc7965fc64"
   },
   {
    "name": "workflow-assistance-safe-project-execution",
    "path": "integrations\\executors\\codex\\skills\\workflow-assistance-safe-project-execution\\SKILL.md",
-   "sha256": "4015f96cd6556d020582bdbc5bc3529b07ceb1d292a3cf11f24fe850d9138925"
-  },
-  {
-   "name": "workflow-assistance-self-improvement",
-   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-self-improvement\\SKILL.md",
-   "sha256": "2101758a8b04daab2cbaf3f4310f564c1750dc7d7c41a2e35d519f726dba1c21"
-  },
-  {
-   "name": "workflow-assistance-single-writer-delivery",
-   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-single-writer-delivery\\SKILL.md",
-   "sha256": "08de65f6031a21e44302a40bce536cbc9a3fff77b97fa5368e88ae5632fdbf01"
-  },
-  {
-   "name": "workflow-assistance-systematic-debugging",
-   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-systematic-debugging\\SKILL.md",
-   "sha256": "3f12eda62833713a52a11eff9c1e69896882e1eb0374f008b2d56841ef171255"
+   "sha256": "e966d4330e58a4f5c9b75b4a308849a58dc96324fd7bfe43772a230c3045588d"
   },
   {
    "name": "workflow-assistance-update-safety",
    "path": "integrations\\executors\\codex\\skills\\workflow-assistance-update-safety\\SKILL.md",
-   "sha256": "1c35407178ff7f0bfc2b649fa6cb646e20ec25f027e4d7d19a1451937f37dbab"
-  },
-  {
-   "name": "workflow-assistance-verification-hardening",
-   "path": "integrations\\executors\\codex\\skills\\workflow-assistance-verification-hardening\\SKILL.md",
-   "sha256": "9b18c759b7c3faf9ca3825b4ddc279fba644413cc442d92194b8b67230f113f9"
+   "sha256": "66038b2397c09717113461fae80a74bd88d28738123e07e6d09b289e68e88144"
   },
   {
    "name": "workflow-assistance-windows-development",
    "path": "integrations\\executors\\codex\\skills\\workflow-assistance-windows-development\\SKILL.md",
-   "sha256": "8ed5225352ca7f747c0eb672f86c0a1075ae7223e96c33a7e1aec68d7f1c84de"
+   "sha256": "50e92aefae7604255965e94359ccdd85b5789bacd324a302e866865bbc4d3a88"
   }
  ]
 }

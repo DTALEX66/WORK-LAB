@@ -96,7 +96,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             self.assertEqual(guidance.count(module.GUIDANCE_BEGIN), 1)
             self.assertTrue((codex_home / "rules/workflow-assistance.rules").is_file())
             installed = sorted((agent_home / "skills").glob("workflow-assistance-*/SKILL.md"))
-            self.assertGreaterEqual(len(installed), 6)
+            self.assertEqual(len(installed), len(module._skill_sources(ROOT / "integrations/executors/codex")))
             self.assertEqual(module.verify_overlay(codex_home, agent_home, ROOT / "integrations" / "executors" / "codex")["status"], "PASS")
 
     def test_writer_rejects_direct_apply_without_reviewed_plan_digest(self) -> None:
@@ -575,6 +575,58 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
             self.assertFalse((agent_home / "skills" / retired).exists())
             state = json.loads((codex_home / module.STATE_FILE).read_text("utf-8"))
             self.assertNotIn(retired, state["managed_skill_names"])
+
+    def test_skills_only_migration_preserves_drifted_user_rules_and_config(self) -> None:
+        with tempfile.TemporaryDirectory(dir=_runtime_tmp()) as td:
+            base = Path(td)
+            codex_home, agent_home = self.make_homes(base / "homes")
+            source_root = base / "assets"
+            shutil.copytree(ROOT / "integrations/executors/codex", source_root)
+            approved_apply_overlay(codex_home, agent_home, source_root)
+            (codex_home / "AGENTS.md").write_text("User replaced global guidance.\n", encoding="utf-8")
+            config_before = (codex_home / "config.toml").read_bytes()
+            guidance_before = (codex_home / "AGENTS.md").read_bytes()
+            state_before = module._load_state(codex_home)
+            retired = "workflow-assistance-windows-development"
+            shutil.rmtree(source_root / "skills" / retired)
+            plan = module.build_plan(codex_home, agent_home, source_root, skills_only=True)
+            self.assertTrue(all(a["target"].startswith("skills/") for a in plan["actions"]))
+            with self.assertRaisesRegex(module.ManagedConflict, "ACTION_PLAN_DIGEST_MISMATCH"):
+                module.apply_overlay(codex_home, agent_home, source_root,
+                    approved_plan_digest="0" * 64, skills_only=True)
+            result = module.apply_overlay(codex_home, agent_home, source_root,
+                approved_plan_digest=plan["plan_digest"], skills_only=True)
+            self.assertEqual(result["status"], "APPLIED")
+            self.assertEqual((codex_home / "config.toml").read_bytes(), config_before)
+            self.assertEqual((codex_home / "AGENTS.md").read_bytes(), guidance_before)
+            self.assertFalse((agent_home / "skills" / retired).exists())
+            state_after = module._load_state(codex_home)
+            self.assertEqual(state_after["managed_block_hashes"], state_before["managed_block_hashes"])
+            self.assertEqual(state_after["managed_config_fields"], state_before["managed_config_fields"])
+            self.assertEqual(module.verify_overlay(codex_home, agent_home, source_root, skills_only=True)["status"], "PASS")
+            self.assertEqual(module.build_plan(codex_home, agent_home, source_root, skills_only=True)["write_set_count"], 0)
+            self.assertEqual(module.verify_overlay(codex_home, agent_home, source_root)["status"], "FAIL")
+
+    def test_personal_guidance_requires_current_digest_and_backs_up_exact_file(self) -> None:
+        with tempfile.TemporaryDirectory(dir=_runtime_tmp()) as td:
+            base = Path(td)
+            codex_home, _ = self.make_homes(base)
+            source = base / "personal.md"
+            source.write_text("# User selected concise rules\n", encoding="utf-8")
+            before = (codex_home / "AGENTS.md").read_bytes()
+            backup = base / "backup.md"
+            plan = module.build_personal_guidance_plan(codex_home, source, backup)
+            (codex_home / "AGENTS.md").write_bytes(before + b"User edit\n")
+            with self.assertRaisesRegex(module.ManagedConflict, "ACTION_PLAN_DIGEST_MISMATCH"):
+                module.apply_personal_guidance(codex_home, source, backup, plan["plan_digest"])
+            current = (codex_home / "AGENTS.md").read_bytes()
+            plan = module.build_personal_guidance_plan(codex_home, source, backup)
+            result = module.apply_personal_guidance(codex_home, source, backup, plan["plan_digest"])
+            self.assertEqual(result["status"], "APPLIED")
+            self.assertEqual(backup.read_bytes(), current)
+            self.assertEqual((codex_home / "AGENTS.md").read_bytes(), source.read_bytes())
+            self.assertEqual(module.build_personal_guidance_plan(codex_home, source, backup)["write_set_count"], 0)
+            self.assertNotIn('model', (codex_home / 'AGENTS.md').read_text('utf-8'))
 
     def test_interrupted_rollback_is_retryable_from_rolling_back_state(self) -> None:
         with tempfile.TemporaryDirectory(dir=_runtime_tmp()) as td:

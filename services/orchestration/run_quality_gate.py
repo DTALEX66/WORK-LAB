@@ -232,7 +232,7 @@ def _run_governance_batch(members: list[str]) -> tuple[int, str]:
     existing = os.environ.get("PYTHONPATH")
     if existing:
         pythonpath += os.pathsep + existing
-    env = os.environ.copy()
+    env = project_runtime_environment(ROOT)
     env["PYTHONPATH"] = pythonpath
     unittest_modules = [member for member in members if not (ROOT / member).is_file()]
     script_files = [member for member in members if (ROOT / member).is_file()]

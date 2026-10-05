@@ -1,14 +1,15 @@
 # Official baseline + user overlay configuration standard
 
-Status: normative Stage 3 configuration guidance. This document does not authorize a live global apply.
+Status: current configuration layering guidance, subordinate to WORK-LAB-AUTHORITY.md and config/config-ownership.json. The dated filename is a stable reference, not a fixed runtime baseline. This document does not authorize a live global apply.
 
 ## 1. Control-plane boundary
 
 WORK-LAB has one writer, `workflow-assistance`, and one read-only consumer,
 `work-lab-observer`. Hermes, Codex, CC Switch and GitHub remain external actors.
-OpenHuman is an optional candidate-evidence source. Open Design remains an
-independent repository and may be connected only as an external read-only design
-capability. None of them becomes a third WORK-LAB module.
+OpenHuman is an optional candidate-evidence source. Open Design is an external
+client; DESIGN-LAB is the independent owner of design capabilities. Declared
+client overlays follow the current adapter/ownership contract; unsupported apply
+stays unsupported. None of them becomes a third WORK-LAB module.
 
 The target layering is:
 
@@ -32,8 +33,8 @@ recipe, not a live deployment policy.
 
 | Product | Official/native owner | WORK-LAB owns | Must not cross the boundary |
 |---|---|---|---|
-| Codex | `~/.codex/config.toml`, native auth, sandbox and runtime; each project owns its trusted project config, `AGENTS.md`, rules and Skills | global user `AGENTS.md` managed block, one user rules file, fourteen user Skills, and missing field-level defaults only | auth files, private sessions, generated local memories, caches, Desktop internal state, or any project-local rules/Skills |
-| Hermes | `~/.project-local/config.yaml`, `.env`, `auth.json`, native `SOUL.md`, `MEMORY.md`, `USER.md`, session search and runtime | portable Rules/Skills package, explicit non-secret preferences and project execution boundaries; an explicitly approved model switch uses only `hermes config get/set/unset` | credentials, raw conversations, memory bodies, logs, cache, automatic cross-client memory import |
+| Codex | `~/.codex/config.toml`, native auth, sandbox and runtime; each project owns its trusted project config, `AGENTS.md`, rules and Skills | global user `AGENTS.md` managed block, one user rules file, five declared user Skills, and missing field-level defaults only | auth files, private sessions, generated local memories, caches, Desktop internal state, or any project-local rules/Skills |
+| Hermes | native Hermes Home 的 config.yaml, `.env`, `auth.json`, native `SOUL.md`, `MEMORY.md`, `USER.md`, session search and runtime | portable Rules/Skills package, explicit non-secret preferences and project execution boundaries; an explicitly approved model switch uses only `hermes config get/set/unset` | credentials, raw conversations, memory bodies, logs, cache, automatic cross-client memory import |
 | CC Switch | its `~/.cc-switch` provider catalog, supported-client routing and local proxy state | desired routing policy for the clients it officially controls and secret-free observations | owning Hermes' independent native model selection; Codex/Hermes prompt, Skill, session or memory synchronization; credentials/database copies |
 | GitHub | repository, branch protection, Actions and native `GITHUB_TOKEN` | desired workflows, gates and exact-SHA evidence contracts | broad write tokens, unpinned third-party Actions, fabricated check conclusions |
 | ChatGPT | ChatGPT web memory and connected-app state | only explicit user-authored portable rules that are separately versioned | treating ChatGPT web memory as Codex local memory or mandatory project policy |
@@ -135,3 +136,21 @@ and [`GITHUB_TOKEN` security](https://docs.github.com/en/actions/concepts/securi
 This standard intentionally leaves live global apply, paid smoke tests, external
 project writes, agent installation and Open Design mutation in
 `WAITING_APPROVAL`/`UNSUPPORTED` until separately authorized and implemented.
+
+> 2026-10-05 技能收敛：本机全局个性化规则使用 personal-guidance.md 的单一文件；只更新技能时运行同步器 --skills-only，保留 config/AGENTS/rules。普通全量 overlay 不应重建已由用户替换的旧 managed block。项目专属说明见 docs/current/workflow-assistance/skill-references/。历史运行记录不代表本次部署。
+
+## 6. Software and model neutral deployment invariants
+
+The machine ownership contract and current native discovery determine the deployment set. Skill counts, software names, model IDs, provider routes, reasoning levels and historical installation paths are snapshots, not universal defaults. Future clients use the same adapter/ownership/evidence boundary rather than copying another client's layout.
+
+Keep one user-global preference and safety source, project-owned differences, native adapters and on-demand specialized skills. A global AGENTS file is a carrier of personal rules, not a competing authority. Do not append a second equivalent policy to a personalized file. Ordinary work does not require forced skill loading, design approval, repeated confirmation, auxiliary paid review or full testing unless the current task/risk/project contract actually requires them.
+
+Before an update or deployment, discover official native configuration and skill/plugin loading surfaces and supported schemas/APIs. Preserve the user's model/provider/reasoning/auth and unknown fields. Choose an overlay by concrete workflow benefit, precise trigger, measured failure coverage and maintenance cost. Generic scaffolding is a merge/retirement candidate; deterministic receipts, ownership and safe transactions remain separate implementation responsibilities. Missing use telemetry means UNKNOWN, never zero use.
+
+Review upstream changes for affected fields, interfaces, loading precedence and behavioral compatibility. Use a narrow plan bound to the actual target and source, back up only the authorized owned assets without collecting credentials or private sessions, apply through the existing adapter, then native readback and an idempotent plan. Runtime/file existence, source equivalence, discovery and behavioral use are separate evidence layers. Unsupported operations stay UNSUPPORTED; skip does not mean supported.
+
+Project guidance stays in its project. Conditional detail stays in references. Retired skills leave active discovery roots after source callers, manifests, provenance and sync ownership have been reconciled. Preserve recoverable originals; user-modified content remains a conflict. Plugin enable/disable/uninstall uses the product's native supported management interface, within explicit user scope; no blanket deletion of caches or internal runtime bridges.
+
+Test the affected migration and failure paths, including preservation of unrelated config, path isolation, concurrent edits, negative controls, backup and readback. Use real/disposable task comparisons to assess success, unnecessary prompts, context and elapsed time. New models may justify simpler prompts; they do not remove permission, data, ownership or evidence boundaries. Never invent a global skill-count ceiling or declare an improvement from a smaller file alone.
+
+The 2026-10-05 event record is `docs/history/archive/workflow-convergence-20261005.md` (non-normative). Read current source/contracts first; use that record only for the explicitly relevant repair, rationale or recovery question. It grants no future native write, paid call or publish permission.

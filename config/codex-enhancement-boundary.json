@@ -6,7 +6,7 @@
   "responsibility": {
     "owns": [
       "repository-controlled, secret-free Codex guidance overlay",
-      "fourteen explicitly named user skill roots under $HOME/.agents/skills",
+      "declared user skill roots under $HOME/.agents/skills",
       "one repository-controlled command rules file under $CODEX_HOME/rules",
       "three field-level config defaults when the user has not already set them",
       "plan/apply/verify/rollback evidence for its own managed assets",
@@ -25,31 +25,76 @@
   "capabilities": {
     "detect": {
       "mode": "READ_ONLY",
-      "allowed": ["Codex executable version when available", "declared target paths", "managed asset hashes", "owned-state metadata", "secret-free user environment inventory (Hermes/Codex config keys + skill lists via user_profile_export.py)", "read-only project-local opaque machine identity status and profile-digest comparison via machine_identity.py", "read-only Git/Python/Markdown execution preflight via execution_preflight.py", "redacted Codex performance timelines without prompt, response, auth, or memory bodies"],
-      "forbidden": ["private config body disclosure", "credential or session inspection"]
+      "allowed": [
+        "Codex executable version when available",
+        "declared target paths",
+        "managed asset hashes",
+        "owned-state metadata",
+        "secret-free user environment inventory (Hermes/Codex config keys + skill lists via user_profile_export.py)",
+        "read-only project-local opaque machine identity status and profile-digest comparison via machine_identity.py",
+        "read-only Git/Python/Markdown execution preflight via execution_preflight.py",
+        "redacted Codex performance timelines without prompt, response, auth, or memory bodies"
+      ],
+      "forbidden": [
+        "private config body disclosure",
+        "credential or session inspection"
+      ]
     },
     "plan": {
       "mode": "READ_ONLY",
-      "allowed": ["produce a redacted action plan", "classify preserved user fields", "fail closed on conflicts or unsafe paths"],
+      "allowed": [
+        "produce a redacted action plan",
+        "classify preserved user fields",
+        "fail closed on conflicts or unsafe paths",
+        "skills-only plan does not read or write native config/guidance/rules"
+      ],
       "writes": false
     },
     "apply": {
       "mode": "USER_APPROVAL_REQUIRED",
-      "allowed": ["atomic update of owned guidance block", "replace owned rules file", "replace the fourteen owned skill roots", "write missing managed config fields only"],
+      "allowed": [
+        "atomic update of owned guidance block",
+        "replace owned rules file",
+        "replace the declared owned skill roots",
+        "write missing managed config fields only",
+        "explicitly requested personal-guidance replacement through the same syncer, with project-local backup and target/source digest"
+      ],
       "writes": true,
-      "preserves": ["all existing user config fields", "provider/model/routing", "MCP/plugins", "auth/session/memory/Desktop state"],
-      "fails_closed_on": ["unknown ownership", "duplicate or malformed markers", "symlink/junction/reparse traversal", "concurrent modification", "unsafe target path"]
+      "preserves": [
+        "all existing user config fields",
+        "provider/model/routing",
+        "MCP/plugins",
+        "auth/session/memory/Desktop state"
+      ],
+      "fails_closed_on": [
+        "unknown ownership",
+        "duplicate or malformed markers",
+        "symlink/junction/reparse traversal",
+        "concurrent modification",
+        "unsafe target path"
+      ]
     },
     "verify": {
       "mode": "READ_ONLY",
-      "allowed": ["TOML entry parsing", "managed marker/hash readback", "owned skill count and hash readback", "idempotent plan"],
+      "allowed": [
+        "TOML entry parsing",
+        "managed marker/hash readback",
+        "owned skill count and hash readback",
+        "idempotent plan"
+      ],
       "writes": false
     },
     "rollback": {
       "mode": "OWNED_HASH_FENCED",
-      "allowed": ["remove or restore only assets still matching this overlay's recorded ownership/hash"],
+      "allowed": [
+        "remove or restore only assets still matching this overlay's recorded ownership/hash"
+      ],
       "writes": true,
-      "never": ["delete user-modified managed-looking content", "rollback private Codex state", "restore from untrusted or unrecorded content"]
+      "never": [
+        "delete user-modified managed-looking content",
+        "rollback private Codex state",
+        "restore from untrusted or unrecorded content"
+      ]
     },
     "invoke": {
       "mode": "NOT_PROVIDED",
@@ -66,20 +111,11 @@
       "config.toml:project_doc_max_bytes when absent"
     ],
     "agent_home": [
-      "skills/workflow-assistance-evidence-verification",
       "skills/workflow-assistance-github-delivery",
-      "skills/workflow-assistance-observer-delivery",
-      "skills/workflow-assistance-open-design-integration",
       "skills/workflow-assistance-project-data-boundary",
-      "skills/workflow-assistance-python-testing",
       "skills/workflow-assistance-safe-project-execution",
-      "skills/workflow-assistance-single-writer-delivery",
-      "skills/workflow-assistance-systematic-debugging",
       "skills/workflow-assistance-update-safety",
-      "skills/workflow-assistance-verification-hardening",
-      "skills/workflow-assistance-windows-development",
-      "skills/workflow-assistance-openhuman-integration",
-      "skills/workflow-assistance-self-improvement"
+      "skills/workflow-assistance-windows-development"
     ]
   },
   "approval_policy": {
@@ -96,7 +132,9 @@
     "verify status PASS and issues empty",
     "idempotent plan write_set_count=0",
     "native Windows path readback on Windows",
-    "no credentials, tokens, sessions, or config正文 in evidence"
+    "no credentials, tokens, sessions, or config正文 in evidence",
+    "skills-only verification is not whole-overlay or runtime behavior verification",
+    "personal-guidance publication preserves native config and is verified independently of legacy managed-block ownership"
   ],
   "non_goals": [
     "global agent personality or chat product",

@@ -10,11 +10,11 @@
 | 软件 | 角色 | 支持级 | 管理方式 | 所有权 |
 |---|---|---|---|---|
 | **Hermes** | 主动客户端（执行面） | deep | 受管 skills/bin/SOUL/.env.template 同步到 live Home | USER_OVERLAY / MANAGE |
-| **Codex** | 主动客户端（执行面） | deep | 全局 guidance overlay、rules、14 个 user skills、3 个受管 config 字段 | USER_OVERLAY / MANAGE |
+| **Codex** | 主动客户端（执行面） | deep | 全局 guidance overlay、rules、5 个 user skills、3 个受管 config 字段 | USER_OVERLAY / MANAGE |
 | **CC Switch** | provider 路由客户端 | deep | 只读观察 provider catalog/routing；codex.skill_sync 等平台内部同步 IGNORE | USER_OVERLAY / OBSERVE |
 | **GitHub** | 交付通道 | deep | 6 个 Hermes github skills、Codex github-delivery skill、CI（work-lab-gate）、gh 认证 | USER_OVERLAY / OBSERVE |
-| **OpenHuman** | 本地 AI 桌面代理（观察源） | experimental | 观察 workspace_metadata；没有受审查 adapter，不写 global configuration；openhuman-integration skill 提供私有边界与 junction 验证阶梯 | PLATFORM_INTERNAL / OBSERVE |
-| **Open Design** | 已迁出独立库（只读观察） | experimental | WORK-LAB 声明非设计治理资产（迁移指针/注册/映射/MCP 声明/审计边界），但在受审查 adapter 落地前 `apply_supported=false`，不产生 live write；内部设计资料不动；read_only_mcp OBSERVE | PROJECT_OVERLAY / OBSERVE |
+| **OpenHuman** | 本地 AI 桌面代理（观察源） | experimental | 观察 workspace_metadata；没有受审查 adapter，不写 global configuration；项目 scoped references 提供私有边界与路径验证 | PLATFORM_INTERNAL / OBSERVE |
+| **Open Design** | 外部客户端；DESIGN-LAB 是独立项目 | experimental | WORK-LAB 声明非设计治理资产（迁移指针/注册/映射/MCP 声明/审计边界），但在受审查 adapter 落地前 `apply_supported=false`，不产生 live write；内部设计资料不动；read_only_mcp OBSERVE | PROJECT_OVERLAY / OBSERVE |
 | **Cursor** | 未来客户端（未接入） | manifest-only | 仅清单登记，无写入 | USER_OVERLAY / OBSERVE |
 | **Claude Code** | 未来客户端（未接入） | manifest-only | 仅清单登记，无写入 | USER_OVERLAY / OBSERVE |
 | **WorkBuddy** | 未来客户端（未接入） | manifest-only | 仅清单登记，无写入 | USER_OVERLAY / OBSERVE |
@@ -28,26 +28,17 @@
 |---|---|---|
 | 全局 guidance | `~/.codex/AGENTS.md`（WORK-LAB managed block） | 1 |
 | 全局 rules | `~/.codex/rules/workflow-assistance.rules` | 1 |
-| 用户 skills | `~/.agents/skills/workflow-assistance-*` | 14 |
+| 用户 skills | `~/.agents/skills/workflow-assistance-*` | 5 |
 | 受管 config 字段 | `config.toml` managed block：`approval_policy` `sandbox_mode` `project_doc_max_bytes` | 3 |
 | overlay state | `$CODEX_HOME/.workflow-assistance-state.json` | 1 |
 
-14 个 skills：
+5 个 skills：
 
 ```text
-workflow-assistance-evidence-verification
 workflow-assistance-github-delivery
-workflow-assistance-observer-delivery
-workflow-assistance-openhuman-integration
-workflow-assistance-open-design-integration   ← 2026-08-11 新增
 workflow-assistance-project-data-boundary
-workflow-assistance-python-testing
 workflow-assistance-safe-project-execution
-workflow-assistance-self-improvement
-workflow-assistance-single-writer-delivery
-workflow-assistance-systematic-debugging
 workflow-assistance-update-safety
-workflow-assistance-verification-hardening
 workflow-assistance-windows-development
 ```
 
@@ -60,15 +51,15 @@ workflow-assistance-windows-development
 | `SOUL.md`（managed mapping） | 1 |
 | `.env.template` | 1 |
 
-### 2.3 仓库侧权威资产（`10-workflow/workflow-assistance/`）
+### 2.3 仓库侧权威资产（当前单根仓库）
 
 | 资产 | 路径 |
 |---|---|
 | 所有权合同 | `config/config-ownership.json` |
 | 隔离空 home 兼容配方 | `config/managed-config-schema.yaml` |
-| Codex overlay 源 | `codex-assets/global-guidance.md`、`codex-assets/rules/`、`codex-assets/skills/`（14） |
+| Codex overlay 源 | `integrations/executors/codex/global-guidance.md`、`integrations/executors/codex/rules/`、`integrations/executors/codex/skills/`（5） |
 | 部署清单 | `workflow-manifest.yaml` |
-| 同步器 | `scripts/workflow/sync_codex_global_assets.py`、`sync_hermes_workflow_assets.py` |
+| 同步器 | `integrations/executors/codex/sync_codex_global_assets.py`、`sync_hermes_workflow_assets.py` |
 | 边界合同 | `config/codex-enhancement-boundary.json` |
 | 性能诊断 | `docs/workflow/codex-performance-diagnosis.md` |
 | 执行可靠性 | `docs/workflow/codex-execution-reliability.md` |
@@ -122,7 +113,9 @@ Open Design:     skill 已载入 · 跨项目实测可引用
 | 入口唯一 | 官方 GUI 入口 + `hermes` CLI；实际目标逐机回读 | bash+cmd 单一 wrapper（版本目录 glob 一致） | 桌面 .lnk→cc-switch.exe | 已安装时桌面 .lnk→官方 exe | 桌面 .lnk→Open Design.exe |
 | 桌面可达 | 逐机 Test-Path 链路回读 | CLI 无 GUI（官方形态，入口唯一） | 逐机回读 | 未安装为 N/A，不伪造通过 | 逐机回读 |
 | 官方标准+用户配置 | config-ownership 中明确 allowlist 的 MANAGE 字段；其余 preserve/observe | overlay 3 字段仅在缺失时写入，用户字段 preserve；项目规则由项目自身拥有 | OBSERVE，catalog/routing 不由 WORK-LAB 写入 | 全局配置 OBSERVE/私有 IGNORE | 非设计配置仅合同登记且 `apply_supported=false`；设计能力 IGNORE |
-| 无阻塞 | 受管 skills 按需加载；实际大小逐机核验 | 14 个受管 skills；大小和按需加载逐机核验 | 代理超时与运行状态逐机核验 | N/A 或逐机核验 | N/A 或独立项目核验 |
+| 无阻塞 | 受管 skills 按需加载；实际大小逐机核验 | 5 个受管 skills；大小和按需加载逐机核验 | 代理超时与运行状态逐机核验 | N/A 或逐机核验 | N/A 或独立项目核验 |
 | 模型满血 | 用户/官方模型配置：只读观察，不自动调参 | Provider/model 路由属用户；不自动覆盖 | 官方路由由其自身负责；只读观察 | N/A | 设计能力属独立项目，不在此审计范围 |
 
 审计命令：桌面快捷方式 `Test-Path` 全链；wrapper `--version`；`config-ownership.json` 字段层校验；skills 体积 `du -sh`；模型 `reasoning_effort` grep + CC Switch proxy_config 检查。
+
+> 2026-10-05 技能收敛：本机全局个性化规则使用 personal-guidance.md 的单一文件；只更新技能时运行同步器 --skills-only，保留 config/AGENTS/rules。普通全量 overlay 不应重建已由用户替换的旧 managed block。项目专属说明见 docs/current/workflow-assistance/skill-references/。历史运行记录不代表本次部署。

@@ -14,6 +14,15 @@ SPEC.loader.exec_module(MODULE)
 
 
 class QualityGateTests(unittest.TestCase):
+    def test_governance_child_receives_project_runtime_even_with_external_temp(self) -> None:
+        from types import SimpleNamespace
+        with patch.dict(MODULE.os.environ, {"TMP": "X:/external-temp", "TEMP": "X:/external-temp"}):
+            with patch.object(MODULE.subprocess, "run", return_value=SimpleNamespace(returncode=0, stdout="Ran 1 test in 0.0s\nOK\n", stderr="")) as child:
+                MODULE._run_governance_batch(["test_placeholder"])
+        environment = child.call_args.kwargs["env"]
+        for name in ("TMP", "TEMP", "TMPDIR"):
+            self.assertTrue(Path(environment[name]).resolve().is_relative_to(ROOT / ".project-local/runs"))
+
     def test_dependency_preflight_fails_once_with_install_instruction(self) -> None:
         with patch.object(MODULE.importlib.util, "find_spec", return_value=None):
             self.assertEqual(MODULE.dependency_preflight(), 2)

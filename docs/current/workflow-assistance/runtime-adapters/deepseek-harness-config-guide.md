@@ -87,11 +87,11 @@ DSH 的本地技能提供者按以下 rank 扫描（`packages/skill/skill-filesy
 | 技能 | 数量 | 来源 | DSH rank |
 |---|---|---|---|
 | `work-lab-workflow` | 1 | `D:\All projects\WORK-LAB\.agents\skills\` | 200 (project-agents) |
-| `workflow-assistance-*`（14 个：evidence-verification / github-delivery / observer-delivery / open-design-integration / openhuman-integration / project-data-boundary / python-testing / safe-project-execution / self-improvement / single-writer-delivery / systematic-debugging / update-safety / verification-hardening / windows-development） | 14 | `C:\Users\ALEX\.agents\skills\` | 500 (user-agents) |
+| `workflow-assistance-*`（5 个：github-delivery / project-data-boundary / safe-project-execution / update-safety / windows-development） | 5 | `C:\Users\ALEX\.agents\skills\` | 500 (user-agents) |
 
-这两处已就位，DSH 会话技能目录（15 个）即来自它们。**部署源是仓库**
-`integrations/executors/codex/skills/`（14 个）与根
-`.agents/skills/`（1 个）；哈希已与 live 核对一致。
+2026-10-05 来源收敛为上述 6 个入口；本次只验证 Codex 侧文件，不宣称 DSH 新会话已发现。**部署源是仓库**
+`integrations/executors/codex/skills/`（5 个）与根
+`.agents/skills/`（1 个）；实际加载以各客户端新会话 readback 为准。
 
 ### 3.3 其他软件如何维护 DSH 技能
 
@@ -136,7 +136,7 @@ DSH 的本地技能提供者按以下 rank 扫描（`packages/skill/skill-filesy
 
 `integrations/executors/codex/sync_codex_global_assets.py`：
 - `plan` → 审查 plan_digest → `apply --approved --approved-plan-digest <digest>` → `verify`。
-- 管理 14 个 `workflow-assistance-*` 技能（→ `~/.agents/skills`）、
+- 管理 5 个 `workflow-assistance-*` 技能（→ `~/.agents/skills`）、
   `rules/workflow-assistance.rules`、`AGENTS.md` managed block、
   `config.toml` 的 3 个字段（approval_policy / sandbox_mode / project_doc_max_bytes）。
 - fail-closed：managed block 被外部改写时 BLOCKED；恢复 = 注入期望块 → 重新 plan。
@@ -169,3 +169,5 @@ workspace 注册**。其他软件接入 DSH 的要点：**规则写进项目 AGE
 `.agents/skills`（项目级）或 `~/.agents`（用户级），模型下载走直连绕过 VPN，
 内容与凭据边界遵守项目规则**。WORK-LAB 已就位：根 AGENTS.md 规则强化、
 15 个 DSH 技能、Ollama 直连下载、locale zh。
+
+> 2026-10-05 技能收敛：本机全局个性化规则使用 personal-guidance.md 的单一文件；只更新技能时运行同步器 --skills-only，保留 config/AGENTS/rules。普通全量 overlay 不应重建已由用户替换的旧 managed block。项目专属说明见 docs/current/workflow-assistance/skill-references/。历史运行记录不代表本次部署。

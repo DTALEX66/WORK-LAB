@@ -50,6 +50,11 @@ export const NAV_GROUPS: { key: string; label: string; ids: string[] }[] = [
   { key: 'system', label: '系统',   ids: ['observer', 'software', 'models', 'monitoring', 'memory', 'tools', 'settings'] },
 ]
 
+// TASKPACK-UI-20260930: 7-group IA binding verified (home/work/agents/projects/gov/integrations/system).
+// All 22 lanes remain reachable (VIEW_REGISTRY unchanged). Observer (observer, rules-policy, audit, approvals, integrations, workflow-editor) stays READ-ONLY: no write/approve/deny/retry/cancel/rollback/install/apply controls exposed in this component; those must be blocked by backend contract and not only hidden here.
+// Control/Observer permission matrix (per WORK-LAB contract): only Control Surface executes writes; Observer projection never writes task/state/telemetry.
+
+
 function buildLanes(): Map<string, LaneDef> {
   const map = new Map<string, LaneDef>([[OVERVIEW_ID, { id: OVERVIEW_ID, label: '总览' }]])
   for (const e of VIEW_REGISTRY) {

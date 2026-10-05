@@ -9,9 +9,9 @@ WORK-LAB 增强模块存在多套安装/同步入口，历史上被批准清单�
 | 入口 | 目标运行时 | 角色 | 何时使用 |
 |---|---|---|---|
 | `setup.sh` / `setup.ps1` | Hermes | plan-first 安装入口 | 新机器部署 Hermes 侧增强；默认只生成 ActionPlan，显式 `--apply`/`-Apply` 才写 live Home |
-| `scripts/workflow/sync_hermes_workflow_assets.py` | Hermes | **Hermes 侧 canonical 同步器** | 仓库 → live Hermes Home 的单向同步（managed skill 根、launcher/guard、.env.template）；setup 脚本最终调用它 |
-| `scripts/workflow/sync_codex_global_assets.py` | Codex | **Codex 侧 canonical 同步器** | plan/apply/verify/rollback Codex overlay（AGENTS.md 块、3 个 config 缺省字段、rules、14 个 skill 根） |
-| `scripts/workflow/install_codex_global_guidance.py` | Codex | **legacy 最小引导（bootstrap）** | 仅在公开目标**完全不存在**时原子发布缺失的 `AGENTS.md`；有同名文件/override/竞态则 fail-closed |
+| `integrations/executors/hermes/sync_hermes_workflow_assets.py` | Hermes | **Hermes 侧 canonical 同步器** | 仓库 → live Hermes Home 的单向同步（managed skill 根、launcher/guard、.env.template）；setup 脚本最终调用它 |
+| `integrations/executors/codex/sync_codex_global_assets.py` | Codex | **Codex 侧 canonical 同步器** | plan/apply/verify/rollback Codex overlay（AGENTS.md 块、3 个 config 缺省字段、rules、5 个 skill 根） |
+| `integrations/executors/codex/install_codex_global_guidance.py` | Codex | **legacy 最小引导（bootstrap）** | 仅在公开目标**完全不存在**时原子发布缺失的 `AGENTS.md`；有同名文件/override/竞态则 fail-closed |
 
 ## 职责边界（无冲突）
 
@@ -28,7 +28,9 @@ WORK-LAB 增强模块存在多套安装/同步入口，历史上被批准清单�
 ## 验证
 
 ```text
-sync_codex_global_assets.py plan/apply/verify   当前受管集合为 14 skills；逐机结果以 plan/verify readback 为准
+sync_codex_global_assets.py plan/apply/verify   当前受管集合为 5 skills；逐机结果以 plan/verify readback 为准
 setup.sh / setup.ps1                            PowerShell AST + bash -n 门禁 PASS
 install_codex_global_guidance.py                边缘引导，目标存在时 fail-closed（由治理测试覆盖）
 ```
+
+> 2026-10-05 技能收敛：本机全局个性化规则使用 personal-guidance.md 的单一文件；只更新技能时运行同步器 --skills-only，保留 config/AGENTS/rules。普通全量 overlay 不应重建已由用户替换的旧 managed block。项目专属说明见 docs/current/workflow-assistance/skill-references/。历史运行记录不代表本次部署。

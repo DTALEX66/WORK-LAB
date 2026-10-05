@@ -2,6 +2,7 @@
 
 > 全局执行标准（跨软件跨项目）：见 `docs/decisions/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
 > 经验教训铁律（核实优先/治理最小化/官方优先）：见 `docs/decisions/LESSONS_LEARNED.md`。
+> 全局部署与升级：按需读取 docs/current/workflow-assistance/workflow/official-plus-user-configuration-standard-2026-08-11.md；软件、模型、技能数量由当前发现与机器合同确定。2026-10-05 修复归档见 docs/history/archive/workflow-convergence-20261005.md，仅作历史证据。
 
 ## Mandatory audit bootstrap (normative)
 
