@@ -1359,7 +1359,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "execution-state-machine": ("services/receipts/evidence_aggregator.py",),
     "collector-noninterference": ("services/orchestration/collector_scheduler.py", "packages/client-neutral-core/scripts/process_collector.py", "packages/client-neutral-core/scripts/git_collector.py"),
     "canonical-single-writer": ("packages/client-neutral-core/scripts/canonical_store.py", "tests/workflow-assistance/test_canonical_store_v2.py"),
-    "observer-no-business-write": ("services/receipts/execution_evidence.py", "apps/observer/web/", "tests/workflow-assistance/test_wlgm_privacy.py"),
+    "observer-no-business-write": ("services/receipts/execution_evidence.py", "apps/observer/frontend/src", "tests/workflow-assistance/test_wlgm_privacy.py"),
     "snapshot-schema-v3": ("packages/client-neutral-core/scripts/snapshot_api.py", "packages/client-neutral-core/scripts/snapshot_validator.py", "tests/workflow-assistance/test_snapshot_validator.py", "tests/workflow-assistance/test_snapshot_sse_live.py"),
     "sse-browser-reconnect": ("services/orchestration/sse_revision.py", "services/orchestration/live_gate.py", "tests/workflow-assistance/test_snapshot_sse_live.py"),
     "field-quality-no-fabrication": ("services/orchestration/live_gate.py", "services/receipts/evidence_aggregator.py", "tests/workflow-assistance/test_evidence_aggregator.py"),

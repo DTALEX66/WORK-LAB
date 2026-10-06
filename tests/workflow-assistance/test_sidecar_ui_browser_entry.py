@@ -9,12 +9,21 @@ later be re-justified as "we still need it for browsers".
 from __future__ import annotations
 
 import json
+import sys
 import threading
 import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
+# Same preamble as the sibling sidecar tests: this file must run standalone
+# (`python tests/workflow-assistance/test_sidecar_ui_browser_entry.py`), not only
+# through the gate's PYTHONPATH, otherwise the regression command recorded in the
+# ledger fails for a reason that has nothing to do with the contract it points at.
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+sys.path.insert(0, str(ROOT / "services" / "orchestration"))
 
 from sidecar import WorkflowSidecar, create_server
 

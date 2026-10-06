@@ -1,7 +1,9 @@
 # Observer delivery reference
 
 Scope: WORK-LAB Observer changes only. Current production roots are
-`apps/observer/frontend` and `apps/observer/src-tauri`; `apps/observer/web` is legacy.
+`apps/observer/frontend` and `apps/observer/src-tauri`; the legacy static
+`apps/observer/web` surface was retired on 2026-10-07 (manifest:
+`docs/audits/OBSERVER_WEB_RETIREMENT_MANIFEST_2026-10-07.json`).
 Observer is read-only: never introduce control-plane writes or write telemetry
 for a display probe. Use disposable test fixtures for generated telemetry.
 

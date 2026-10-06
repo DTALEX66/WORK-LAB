@@ -22,11 +22,7 @@
     "observer-web-contracts": {
       "working_dir": "apps/observer",
       "commands": [
-        ["node", "tests/run_all_tests.js"],
-        {
-          "glob": "web/scripts/*.js",
-          "argv_template": ["node", "--check", "{path}"]
-        }
+        ["node", "tests/run_all_tests.js"]
       ]
     },
     "observer-frontend-typecheck": {

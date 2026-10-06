@@ -183,7 +183,7 @@ Production frontend targets:
 - `apps/observer/frontend`
 - `apps/observer/src-tauri`
 
-`apps/observer/web` is legacy/static compatibility material until parity cutover. It must not remain a second production UI.
+`apps/observer/web` was the legacy/static compatibility surface until the parity cutover; it was retired on 2026-10-07 after every assertion of its five contract suites (72 in total) received a named production owner or a recorded verdict. `apps/observer/frontend` (Vite `dist`, shipped by Tauri and served read-only by the sidecar's `--frontend-root`) is the only Observer UI. Per-file hashes and the recovery point are in `docs/audits/OBSERVER_WEB_RETIREMENT_MANIFEST_2026-10-07.json`; the attribution is `apps/observer/parity-matrix-u03.md`. A second production UI is not allowed.
 
 Frontend renders backend truth; it must not invent provider prices, FX, quotas, fake zeroes, fixed production ports, or success states.
 

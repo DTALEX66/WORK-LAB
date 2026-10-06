@@ -447,3 +447,45 @@ LIVE 结论由后端 `snapshot_api/sidecar` 判，前端再算一遍就是第二
 `run_quality_gate.py` 受护路径、`run_all_tests.js` 注册表）、README/架构文档/退役桩文案，
 以及 `WORK-LAB-AUTHORITY.md` §7 的日期事实更正。
 
+### 2026-10-07 切换完成：静态面已退役（矩阵第 3、4 步）
+
+**先落审计清单与可恢复点，再删除**：
+`docs/audits/OBSERVER_WEB_RETIREMENT_MANIFEST_2026-10-07.json`（提交 `d6976dc`，
+早于删除提交）逐文件记录 24 个 `web/` 文件（242,007 字节）与 6 个套件/`helpers.js`
+（63,363 字节）的 SHA-256 与字节数，写完后又回读工作树逐个复核哈希；
+恢复点就是清单里的 `pre_deletion_commit`（已推到 origin 的提交），
+恢复命令 `git checkout 6de25fe -- apps/observer/web apps/observer/tests`；
+另有一份工作树副本放在 `.project-local/artifacts/observer-web-retired-20261007/`（48 文件）。
+**不新推 tag**（owner 要求不发布），可恢复性由已推送历史 + 清单承担。
+
+删除：`apps/observer/web/`（24 文件）＋ `test_projection_contract.js`、
+`test_read_only_surface.js`、`test_render_v3.js`、`test_responsive_contract.js`、
+`test_visual_assets_r2.js`、`helpers.js`。
+
+四处绑定与四处文案同批改：
+`run_all_tests.js` 注册表去掉 5 条旧套件；
+`scripts/ci/required_groups.json` 的 `observer-web-contracts` 去掉 `web/scripts/*.js` glob；
+`tests/ci/test_failfast_group.py` 的钉死命令清单同步（ERR-109 纪律：改清单必须改钉死表）；
+`run_quality_gate.py` 的 `observer-no-business-write` 触发路径由 `apps/observer/web/`
+换成 `apps/observer/frontend/src`；`observer_live_server.py` 退役桩文案、
+`observer-source-architecture.md`（加 2026-10-07 规范修订，并把运行入口从
+`python -m http.server 8089 --directory apps/observer/web` 换成 sidecar `--frontend-root`）、
+`docs/current/…/skill-references/observer.md`、`WORK-LAB-AUTHORITY.md` §7。
+
+验证（删除之后）：`failfast_group --group observer-web-contracts` commands=1 PASS；
+`run_all_tests.js` 绿；`tests/ci/test_failfast_group.py` 绿；
+`generate_current_state.py --check-current` CURRENT_STATE_FRESHNESS_PASS；
+`verify_blueprint_coverage` 绿；十门电池 **BATTERY_FAILURES=0**；
+vitest 与 `tsc --noEmit` 未受影响（未改前端源）。
+
+顺带修一处**我自己记错的可执行性**：`tests/workflow-assistance/test_sidecar_ui_browser_entry.py`
+没有做 `sys.path` 前置，靠 gate 的 PYTHONPATH 才能跑，而台账与登记行里把它写成
+可直接运行的回归命令——单独运行会 `ModuleNotFoundError: sidecar`。
+现按同目录兄弟测试的做法加上 ROOT/sys.path 前置，命令自洽。
+**一处未解释的现象保持未知**：加前置后首跑 8 例里 1 例 error，随后连续三次单独运行 8/8 OK
+（端口是 `0` 由系统分配，非端口冲突），未定位到原因，记在台账 ERR-122 的 remaining_boundary 里。
+
+U03 到此为**已切换**：生产 UI 只有 `apps/observer/frontend`（Tauri 打包 `dist`，
+sidecar `--frontend-root` 只读服务同一份 dist）。本文件的判定表继续作为
+"旧断言去哪了"的唯一归属记录，删除内容可由清单 + 历史提交逐字节复核。
+

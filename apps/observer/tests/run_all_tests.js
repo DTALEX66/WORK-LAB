@@ -4,13 +4,12 @@
 "use strict";
 
 const suites = [
-  "./test_projection_contract.js",
-  "./test_read_only_surface.js",
-  "./test_responsive_contract.js",
-  "./test_visual_assets_r2.js",
+  // U03 (2026-10-07): the five static-surface suites and the helpers.js that read
+  // apps/observer/web were retired with that tree. Their guarantees live on the
+  // production side now — see docs/audits/OBSERVER_WEB_RETIREMENT_MANIFEST_2026-10-07.json
+  // and apps/observer/parity-matrix-u03.md for the per-assertion attribution.
   "./test_desktop_component_contract.js",
   "./test_production_surface_static_contract.js",
-  "./test_render_v3.js",
 ];
 
 async function main() {

@@ -9,11 +9,11 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 120,
+    "total": 121,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 43,
-      "test_behavior_alignment": 13,
+      "test_behavior_alignment": 14,
       "working_directory_recovery": 2,
       "evidence_state": 19,
       "ci_configuration": 8,
@@ -3334,6 +3334,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer read-only transport: endpoint trust, payload validation, revision ordering, LIVE semantics",
         "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/lib/transportTruthContract.test.ts"
+      }
+    },
+    {
+      "error_id": "ERR-122",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "tests/workflow-assistance/test_sidecar_ui_browser_entry.py, taskpacks/current/error-ledger.json (ERR-118 lifecycle.regressionCommand), taskpacks/current/OPEN-TASK-REGISTER.md (U03 row)",
+      "command": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py",
+      "exit_code": 1,
+      "observed_error": "ModuleNotFoundError: No module named 'sidecar' — the exact command that ERR-118 and the U03 register row cite as the browser-entry regression check could not be run on its own. It only worked because the governance gate exports PYTHONPATH for the whole tests/workflow-assistance directory.",
+      "root_cause": "The file imported the sidecar module without the ROOT/sys.path preamble that its sibling sidecar tests carry, so its runnability depended on whoever invoked it. A regression command recorded in the ledger is a promise that the next reader can execute it; recording a command that only works under one specific runner is a broken pointer, and the breakage is invisible to the person who wrote it because their own environment already had the path.",
+      "fix": "Added the same preamble the sibling tests use (ROOT = parents[2], sys.path.insert for packages/client-neutral-core/scripts and services/orchestration), so the file runs standalone and through the gate alike. The gate's dynamic discovery is unchanged, so CI coverage does not depend on this edit.",
+      "regression_test": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py — 8 tests OK on three consecutive standalone runs with PYTHONDONTWRITEBYTECODE=1, no PYTHONPATH exported.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Before recording a command as a regression check, run it from a bare shell with nothing exported but the interpreter. A test that lives in a directory whose imports come from a runner-provided PYTHONPATH must set its own path preamble, exactly as the neighbouring tests do.",
+      "remaining_boundary": "Unexplained and still unknown: on the FIRST standalone run right after adding the preamble, 1 of the 8 tests errored; the three runs after that were 8/8 clean. The server binds port 0 (OS-assigned), so this was not a port collision, and I have no evidence naming the cause — recorded rather than smoothed over. If it recurs, capture the traceback instead of re-running until green.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "977040b",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer browser-entry regression runnability",
+        "regressionCommand": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py"
       }
     }
   ],

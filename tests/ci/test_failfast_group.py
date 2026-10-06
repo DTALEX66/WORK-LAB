@@ -108,8 +108,6 @@ def main() -> int:
         ],
         "observer-web-contracts": [
             ["node", "tests/run_all_tests.js"],
-            {"glob": "web/scripts/*.js",
-             "argv_template": ["node", "--check", "{path}"]},
         ],
         "observer-frontend-typecheck": [
             ["npm", "ci"],
