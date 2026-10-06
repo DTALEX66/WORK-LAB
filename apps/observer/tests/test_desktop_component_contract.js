@@ -33,14 +33,29 @@ function run() {
     assert.strictEqual(config.build.frontendDist, "../frontend/dist");
   });
 
+  // The configured entry URL is pinned verbatim so any drift fails loudly. The
+  // query is additionally parsed because the cold-start UNKNOWN state is the
+  // contract being tested: without a separate assertion, re-pinning this string
+  // for an unrelated edit (a new param, a theme change) could silently drop
+  // mode=UNKNOWN and still pass. shell=tauri is how the frameless shell declares
+  // itself to the frontend, which has no other deterministic way to know it is
+  // not a plain-browser entry.
+  function query(url) {
+    return new URL(url, "http://tauri.localhost").searchParams;
+  }
+
   test("main window starts UNKNOWN and uses an opaque desktop canvas", () => {
-    assert.strictEqual(windows.main.url, "index.html?view=full&mode=UNKNOWN&theme=dark");
+    assert.strictEqual(windows.main.url, "index.html?view=full&mode=UNKNOWN&theme=dark&shell=tauri");
+    assert.strictEqual(query(windows.main.url).get("mode"), "UNKNOWN");
+    assert.strictEqual(query(windows.main.url).get("view"), "full");
     assert.strictEqual(windows.main.decorations, false);
     assert.strictEqual(windows.main.transparent, false);
   });
 
   test("panel window is a fixed compact component entry", () => {
-    assert.strictEqual(windows.panel.url, "index.html?view=compact&mode=UNKNOWN&theme=dark");
+    assert.strictEqual(windows.panel.url, "index.html?view=compact&mode=UNKNOWN&theme=dark&shell=tauri");
+    assert.strictEqual(query(windows.panel.url).get("mode"), "UNKNOWN");
+    assert.strictEqual(query(windows.panel.url).get("view"), "compact");
     assert.strictEqual(windows.panel.width, 440);
     assert.strictEqual(windows.panel.height, 780);
     assert.strictEqual(windows.panel.minWidth, 440);
