@@ -72,3 +72,15 @@
 3. 任何"环境缺 X"结论前，先探 `OS External Configuration\10-toolchains`、`toolchains\rust`、`Windows Kits`（已写入 `.project/governance/external-libraries-index.json` 的 `os-external-toolchains` / `os-external-rust-build-root`）。
 4. 构建配方：`RUST_BIN=…\1.88.0-x86_64-pc-windows-msvc\bin`、`CARGO_HOME=…\toolchains\rust\cargo`、先 `call vcvars64.bat`、`-- --locked`、`CARGO_TARGET_DIR` 落 `.project-local`；脚本 `.project-local/runs/u19-msvc-20261006/build-tauri-msvc.bat`。
 5. 取证脚本 `.project-local/runs/u19-msvc-20261006/shot2.py`（含 DPI/CSS 视口/离散色自检）；截图必须**先看内容再当证据**。
+
+## 8. 目录规范化第二批：三项候选全部实测后否决或改判（2026-10-06 续）
+
+| 候选 | 结论 | 实测依据 |
+|---|---|---|
+| `taskpacks/current/WORK-LAB-UNIVERSAL-WORKFLOW-TASKPACK-20260916/`（212 KB） | **不动** | `git grep` 证明它被 `.project/governance/taskpack-authority-index.json` 的 `staticHandoffViews` 引用（id + `tasks_json_sha256` + `scope_correction_sha256`）。收益 212 KB / 总 16.80 MB = 1.3%，代价是改权威索引并重验，不成比例 |
+| `knowledge-staging/` 与 `reports/audit-archive/` "同字节双份可去重" | **我的原判断被否证，禁止删除** | 逐文件 sha256 比对：`exact-sha-ci-delivery` 164,571 B `8a98329b697f` 对 160,444 B `…` → **DIFF**；`audited-project-delivery` 100,899 B `8e052cf37cc4` → **DIFF**。两者内容不同（不同大小、不同摘要），删除会毁掉唯一内容。且 `knowledge-staging` 被 `module-ownership.json`、`three-project-boundary.json`、`boundary-migration-manifest.json`、生成的 `CURRENT_STATE.json` 四处声明为面 |
+| `reports/`（5.48 MB，最大追踪目录） | **不动** | 被 `config/adapter-registry.json`、`config/capability-matrix.json`、`scripts/ci/verify_policy_coverage.py`、`services/orchestration/run_quality_gate.py`、`services/policy/policy_projection.py`、`tests/workflow-assistance/nf27_evidence_tiering_gate.py` 引用；其中 `audit-evidence/`、`audit-archive/20260930/` 是 `evidence-tiering` 与 `plugin-inventory-honesty` 两道门的输入，且 `MANIFEST.json` 注册了逐文件摘要 |
+
+**净结论**：目录规范化中**可安全执行的部分已在第一批完成**（4 个无引用 dated 记录冻结到 `taskpacks/history/`，活登记路径同步改写，权威校验与 47 门通过）。剩余项不是"还没做"，而是**实测证明不该做**：它们的分类本身就是权威的一部分（被索引/所有权/门引用的记录不是垃圾）。
+
+**我在此撤回一条自己先前写下的判断**：`knowledge-staging` 与审计归档"同字节双份"的说法未经验证就写进了登记，实测为 DIFF。这正是本文件 §2 记录的同一种错——先断言后取证。
