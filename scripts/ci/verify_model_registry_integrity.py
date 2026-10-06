@@ -140,6 +140,29 @@ def _check_local_verification(owner: str, entry: dict) -> None:
     health = str(entry.get("health") or "").upper()
     claims_verified = "VERIFIED" in health
     verification = entry.get("localVerification")
+
+    # A model that is being retired by an open decision must say what it still costs,
+    # whether or not anyone ever hashed it. 0 is a legitimate answer; silence is not.
+    if entry.get("status") in UNSERVED_MODEL_STATUSES:
+        if not isinstance(verification, dict) or not isinstance(verification.get("bytesRetained"), int) \
+                or verification.get("bytesRetained") < 0:
+            _fail("RETIRING_MODEL_WITHOUT_A_COST",
+                  f"{owner}: status={entry.get('status')!r} must record localVerification."
+                  "bytesRetained as a byte count (0 once released), so a pending decision "
+                  "carries the disk it actually occupies")
+        else:
+            retained = verification["bytesRetained"]
+            presence = verification.get("presence")
+            verified_present = presence in ("VERIFIED_FILE", "VERIFIED_BLOB_CONTENT_ADDRESS",
+                                            "VERIFIED_DIR")
+            if retained == 0 and verified_present:
+                _fail("ZERO_RETAINED_WITH_VERIFIED_PRESENCE",
+                      f"{owner}: bytesRetained=0 while presence={presence!r} claims the bytes are here")
+            if retained > 0 and not verified_present:
+                _fail("RETAINED_BYTES_WITHOUT_PRESENCE",
+                      f"{owner}: bytesRetained={retained} but presence={presence!r} does not "
+                      "claim the bytes are here")
+
     if sha is None and not claims_verified and verification is None:
         return
     if not isinstance(verification, dict):
@@ -193,12 +216,6 @@ def _check_local_verification(owner: str, entry: dict) -> None:
         _fail("DIR_MANIFEST_MISSING",
               f"{owner}: a directory-backed model needs a per-file manifest, not one "
               "truncated prefix for one arbitrary file")
-    if entry.get("status") in UNSERVED_MODEL_STATUSES:
-        retained = verification.get("bytesRetained")
-        if not isinstance(retained, int) or retained <= 0:
-            _fail("RETIRING_MODEL_WITHOUT_A_COST",
-                  f"{owner}: status={entry.get('status')!r} must record bytesRetained, so a "
-                  "pending decision carries the disk it actually occupies")
 
 
 def _load(path: Path) -> dict:

@@ -39,6 +39,48 @@ KEEP_CANDIDATE with no blocker, REJECT with no reason, a placeholder word (TBD /
 recorded at DISCOVER) in any trigger, criterion or overlap field, and `governance.decisions` drifting
 from the enforced vocabulary. Schema and contract updated to match.
 
+## Second half of the round — 模型与工具入库
+
+**A recorded hash is only evidence if it says what it was taken over.** Nine of ten models in
+`.project/governance/model-registry.json` carried a 64-hex `sha256` and health words like
+`DOWNLOADED_HASH_VERIFIED`, and `verify_model_registry_integrity.py` checked the *shape* of those
+values and passed — a digest copied back from an upstream page was indistinguishable from one
+recomputed on this disk. New tool `scripts/audit/model_library_readback.py` re-hashed the declared
+root: **48,531,408,516 B (45.20 GiB) over ten entries, nine digests matched**. The directory-backed
+zipformer entry now carries twelve per-file digests instead of one truncated prefix claim. It is
+deliberately **not** wired into the aggregate gate: the runner has no weight root, and AGENTS.md
+says a required job that can only skip fails the aggregate — so the CI-side gate checks the claim's
+internal consistency (check 7, AG-05g: presence, digestState, bytesObserved, dated basis, tool; a
+RECOMPUTED_MATCH must equal the recorded `sha256` and agree with `file.bytes`) and the on-machine
+tool produces the numbers, failing closed if its root is missing.
+
+Three findings came from measuring rather than reading:
+
+- The two `RETIRED_PENDING_DECISION` weights **are on disk** (5,225,374,496 B and 18,556,688,736 B,
+  each blob hashing to its own content-addressed name). The registry now records `bytesRetained`
+  beside each, so an open decision stops looking free.
+- `runtimes-tmp/reranker-dl.gguf` is the same byte length as the registered reranker weight but has
+  a different full digest — so it is **not** a duplicate, and the owner rule (deletion only after a
+  confirmed duplicate plus a rollback point) does not authorize removing it. The row had implied it
+  was a deletable leftover.
+- One `candidateOrphans` row asserted 3,389,971,840 B of retained fragments behind a path written as
+  prose (`sha256-81fb60c7…-partial (+16 zero-length part files)`), which no tool can open. It is now
+  `UNRESOLVABLE_AS_WRITTEN`: the honest verdict is "unverifiable as written", not "proven absent".
+  And a 5,969,233,408 B ollama weight layer for the `qwen2.5vl/7b` family belonged to **no entry at
+  all** — now registered, content address verified, and left in another runtime's store.
+
+**No tool was installed for the tool half of the item.** `docs/current/workflow-assistance/workflow/wloss-reference-decisions.md`
+records each `source-ledger.json` tool (OPA, conftest, trivy, actionlint, zizmor, cosign, promptfoo,
+mcp-inspector, superpowers, agent-skills) as deliberately REFERENCE-only with its own trigger
+condition, and the compatibility policy declares no licence allowlist. Nothing in a gate or an open
+task lacks one of them, so "缺工具就下载到工具库里" has no subject here and inventing an install
+would have been the failure. The real residue in that file is still owed: all 17 rows carry
+`license: UNKNOWN`, and its `agent-skills` canonicalUrl (`https://agent-skills.org/`) could not be
+verified — the specification resolves at agentskills.io.
+
+ERR-127; the new rules were falsified 14/14, and the same harness run against the committed
+verifier is recorded as the reproduced original failure: **0/14 caught**.
+
 ## What is owed after this round
 
 - **FUT-001 Orca pilot** — still the only external-workspace candidate, needs an owner-authorized

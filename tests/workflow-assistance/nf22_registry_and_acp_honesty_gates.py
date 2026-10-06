@@ -64,18 +64,33 @@ def _valid_registries() -> tuple[dict, dict, dict]:
         "schemaVersion": "work-lab/model-registry/v1",
         "models": [
             {"id": "qwen-small", "sha256": "a" * 64, "status": "active",
-             "runtime_id": "lmstudio"},
+             "runtime_id": "lmstudio",
+             "localVerification": {
+                 "presence": "VERIFIED_FILE", "digestState": "RECOMPUTED_MATCH",
+                 "sha256Recomputed": "a" * 64, "bytesObserved": 1024,
+                 "checkedAt": "2026-10-07", "basis": "fixture: sha256 over the file bytes",
+                 "tool": "scripts/audit/model_library_readback.py"}},
             {"id": "qwen-old", "sha256": None, "status": "RETIRED_PENDING_DECISION",
              "runtime_id": None,
              "assetDigest": {"state": "TRUNCATED", "prefix": "deadbeefdeadbeef",
-                             "reason": "only a prefix survives in the record"}},
+                             "reason": "only a prefix survives in the record"},
+             "localVerification": {
+                 "presence": "VERIFIED_DIR", "digestState": "NOT_RECOMPUTED",
+                 "bytesRetained": 4096, "bytesObserved": 4096, "checkedAt": "2026-10-07",
+                 "basis": "fixture: directory of leftover layers, never hashed as one artifact",
+                 "tool": "scripts/audit/model_library_readback.py",
+                 "directoryManifest": [{"relative_path": "layer.bin", "bytes": 4096,
+                                        "sha256": "d" * 64}]}},
             {"id": "whisper", "sha256": None, "status": "active",
              "runtime_id": "faster-whisper"},
         ],
         "candidateOrphans": [
-            {"path": "leftover.gguf", "sha256": None,
+            {"path": "leftover.gguf", "sha256": None, "bytes": 512,
              "assetDigest": {"state": "TRUNCATED", "prefix": "a18ae2a5f553fe02",
-                             "reason": "partial download residue; full digest never captured"}},
+                             "reason": "partial download residue; full digest never captured"},
+             "recheck": {"state": "PRESENT", "checkedAt": "2026-10-07", "bytesObserved": 512,
+                         "sha256Recomputed": "a18ae2a5f553fe02" + "0" * 48,
+                         "duplicateTested": True, "byteDuplicateOf": None}},
         ],
     }
     runtime = {
@@ -156,6 +171,102 @@ class ModelRegistryIntegrityNegativeControls(unittest.TestCase):
         code, err = self._run(p, m, r)
         self.assertEqual(code, 1)
         self.assertIn("UNSERVED_MODEL_WITHOUT_BINDING_STATUS", err)
+
+    # --- AG-05g: a byte claim must say what it was computed over -------------
+
+    def test_digest_claim_without_a_verification_basis_fails(self) -> None:
+        p, m, r = _valid_registries()
+        del m["models"][0]["localVerification"]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("LOCAL_VERIFICATION_MISSING", err)
+
+    def test_recomputed_digest_contradicting_the_record_fails(self) -> None:
+        p, m, r = _valid_registries()
+        m["models"][0]["localVerification"]["sha256Recomputed"] = "f" * 64
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("LOCAL_VERIFICATION_CONTRADICTS_SHA256", err)
+
+    def test_match_claim_without_observed_bytes_fails(self) -> None:
+        p, m, r = _valid_registries()
+        del m["models"][0]["localVerification"]["bytesObserved"]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("LOCAL_VERIFICATION_BYTES_MISSING", err)
+
+    def test_verified_health_word_without_recomputation_fails(self) -> None:
+        p, m, r = _valid_registries()
+        m["models"][0]["health"] = "DOWNLOADED_HASH_VERIFIED"
+        m["models"][0]["localVerification"]["digestState"] = "NOT_RECOMPUTED"
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("HEALTH_CLAIMS_VERIFIED_WITHOUT_RECOMPUTATION", err)
+
+    def test_undated_readback_fails(self) -> None:
+        p, m, r = _valid_registries()
+        m["models"][0]["localVerification"]["checkedAt"] = "recently"
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("LOCAL_VERIFICATION_UNDATED", err)
+
+    def test_retiring_model_without_a_cost_fails(self) -> None:
+        p, m, r = _valid_registries()
+        del m["models"][1]["localVerification"]["bytesRetained"]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("RETIRING_MODEL_WITHOUT_A_COST", err)
+
+    def test_retiring_model_released_to_zero_still_passes(self) -> None:
+        p, m, r = _valid_registries()
+        verification = m["models"][1]["localVerification"]
+        verification["bytesRetained"] = 0
+        verification["presence"] = "ABSENT"
+        del verification["directoryManifest"]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 0, err)
+
+    def test_zero_retained_with_verified_presence_fails(self) -> None:
+        p, m, r = _valid_registries()
+        m["models"][1]["localVerification"]["bytesRetained"] = 0
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("ZERO_RETAINED_WITH_VERIFIED_PRESENCE", err)
+
+    def test_directory_model_without_a_manifest_fails(self) -> None:
+        p, m, r = _valid_registries()
+        del m["models"][1]["localVerification"]["directoryManifest"]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("DIR_MANIFEST_MISSING", err)
+
+    def test_orphan_without_a_recheck_fails(self) -> None:
+        p, m, r = _valid_registries()
+        del m["candidateOrphans"][0]["recheck"]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("ORPHAN_RECHECK_MISSING", err)
+
+    def test_orphan_prose_path_asserted_present_fails(self) -> None:
+        p, m, r = _valid_registries()
+        m["candidateOrphans"][0]["path"] = "ollama/blobs/sha256-81fb…-partial (+16 files)"
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("ORPHAN_PATH_NOT_RESOLVABLE_AS_WRITTEN", err)
+
+    def test_orphan_stale_prefix_claim_fails(self) -> None:
+        p, m, r = _valid_registries()
+        m["candidateOrphans"][0]["recheck"]["sha256Recomputed"] = "0" * 64
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("ORPHAN_PREFIX_CLAIM_STALE", err)
+
+    def test_orphan_present_without_a_duplicate_test_fails(self) -> None:
+        p, m, r = _valid_registries()
+        del m["candidateOrphans"][0]["recheck"]["duplicateTested"]
+        code, err = self._run(p, m, r)
+        self.assertEqual(code, 1)
+        self.assertIn("ORPHAN_DUPLICATE_UNTESTED", err)
 
     def test_operational_status_using_serving_vocabulary_fails(self) -> None:
         # The exact defect AG-05 fixed: an unserved binding whose status line
@@ -250,6 +361,7 @@ class ModelRegistryIntegrityNegativeControls(unittest.TestCase):
             "path": "residue.gguf", "sha256": None,
             "assetDigest": {"state": "TRUNCATED", "prefix": "a18ae2a5f553fe02",
                             "reason": "partial download residue; full digest never captured"},
+            "recheck": {"state": "ABSENT_NOW", "checkedAt": "2026-10-07"},
         }]
         code, err = self._run(p, m, r)
         self.assertEqual(code, 0, err)
