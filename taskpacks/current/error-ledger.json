@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 105,
+    "total": 106,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
       "test_behavior_alignment": 11,
       "working_directory_recovery": 2,
-      "evidence_state": 15,
+      "evidence_state": 16,
       "ci_configuration": 7,
       "feature_gap": 8,
       "config_downgrade": 3,
@@ -2944,6 +2944,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer frameless shell top row",
         "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
+      }
+    },
+    {
+      "error_id": "ERR-107",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "evidence_state",
+      "entrypoint": "apps/observer/scripts/u19_webview_e2e.py (discover_cdp_ws, _cdp_http_get), .project-local/runs/p0c-oracle-20261006/probe_cdp.py, .project-local/runs/p0c-final-20261006/verify_once.py",
+      "command": "python .project-local/runs/p0c-final-20261006/verify_once.py (release binary + WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=N --remote-allow-origins=* with a private WEBVIEW2_USER_DATA_FOLDER, polled 120s at 12s recv timeout)",
+      "exit_code": 1,
+      "observed_error": "The desktop proof I said was one launch away did not happen: verdict NO_CDP_ENDPOINT. Nine polling rounds over ~120s each returned `ERR recv TimeoutError` — the port accepts the TCP connection and never sends a byte. No page target, no DOM, no Page.captureScreenshot, and therefore no interaction proof for ERR-103 either.",
+      "root_cause": "Two separate mistakes. (1) The instrument claim was built on a weak witness: I recorded 'cdpPortListening: True' from a successful socket.connect_ex() and reported 'CDP is reachable, the devtools feature was never the gate'. A TCP accept says nothing about an HTTP answer, and in the same session the flag was verified present in the browser process command line — that part holds — but the endpoint answered in only two earlier attempts (curl and a raw socket, both at 4s and 6s) and has refused every attempt since, including the patient ones. (2) The probe that produced the first real desktop evidence had two defects of its own before that: it selected the first 'Tauri Window' on the pid, which is the hidden compact panel (550x975, visible:false), and it probed the port once instead of polling. Both were fixed and the window readout is now correct (1600x1025, visible, title 'WORK-LAB Observer'), which is what exposed the endpoint problem as real rather than a probe artifact.",
+      "fix": "Not fixed; the claim is retracted. What the release path is proven by stays: the network oracle (snapshot plus EventSource from Origin http://tauri.localhost, all 200) and the Win32 readout (visible 1600x1025 Tauri Window with a Chrome_RenderWidgetHostHWND child sized to the client rect). The capability grant is proven at build level (gen/schemas/capabilities.json carries all six permissions from the same compile as the exe). Not proven: the composited pixels and the click-through, because both need an instrument that either answers or captures correctly.",
+      "regression_test": "An instrument claim must name the observation that supports it. Any future CDP work in this repository has to treat 'connect succeeded' as no evidence and require a parsed /json/version body containing a webSocketDebuggerUrl before reporting an endpoint as available; the retry loop and the raw first response are now recorded in the probe output so the failure mode is visible instead of inferred.",
+      "evidence_level": "isolated-runtime",
+      "repeat_prevention": "Never promote a connection-level success to a service-level capability in a report, and never build the next step of a plan on an instrument that worked twice at short timeouts and failed at long ones. Windows.Graphics.Capture is the remaining non-GDI route to the surface; a real desktop click is the route to the caption controls, and after two failed launches the owner's own five-second check is cheaper and outranks my instrument.",
+      "remaining_boundary": "U19's real-desktop surface proof, ERR-103's click-through confirmation and ERR-106's visual read all still depend on one observation nobody has made yet. Everything decidable without a window is decided: gates green, ledger consistent, ACL grants in the built artifact, top-row clearance measured at 12px in both windows.",
+      "status_before": "PASS",
+      "status_after": "FAIL",
+      "lifecycle": {
+        "introducedCommit": "b0fc828",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "U19 desktop surface instrumentation",
+        "regressionCommand": "python .project-local/runs/p0c-final-20261006/verify_once.py"
       }
     }
   ],
