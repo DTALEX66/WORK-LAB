@@ -21,6 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
+import u19_webview_e2e as u19  # noqa: E402
 from u19_webview_e2e import artifact_freshness, content_change_floor  # noqa: E402
 from u19_webview_e2e import receipt_verdict  # noqa: E402
 from write_artifact_receipt import write_receipt  # noqa: E402
@@ -131,6 +132,37 @@ class ArtifactFreshnessTests(unittest.TestCase):
             self.assertGreaterEqual(floor, before)
             self.assertEqual(detail["deletedInputs"],
                              ["apps/observer/src-tauri/src/lib.rs"])
+
+    def test_a_nested_source_edit_reaches_the_floor(self) -> None:
+        """`frontend/src` is a directory pathspec, not a depth-one glob."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            obs = build_repo(root)
+            committed = commit_time(root)
+            nested = obs / "frontend" / "src" / "components" / "Deep.tsx"
+            nested.parent.mkdir(parents=True)
+            nested.write_text("export const deep = 1\n", encoding="utf-8")
+            set_mtime(nested, committed + 3 * HOUR)
+
+            floor, detail = content_change_floor(root, obs, u19.FRONTEND_SOURCE_INPUTS)
+            self.assertIn("apps/observer/frontend/src/components/Deep.tsx",
+                          detail["changedSinceHead"])
+            self.assertAlmostEqual(floor, committed + 3 * HOUR, delta=2)
+
+    def test_the_transform_configs_are_inputs_too(self) -> None:
+        """tailwind/postcss feed the bundle; ignoring them hid a real edit."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            obs = build_repo(root)
+            committed = commit_time(root)
+            config = obs / "frontend" / "tailwind.config.js"
+            config.write_text("module.exports = {changed: true}\n", encoding="utf-8")
+            set_mtime(config, committed + 4 * HOUR)
+
+            floor, detail = content_change_floor(root, obs, u19.FRONTEND_SOURCE_INPUTS)
+            self.assertIn("apps/observer/frontend/tailwind.config.js",
+                          detail["changedSinceHead"])
+            self.assertAlmostEqual(floor, committed + 4 * HOUR, delta=2)
 
     def test_dist_older_than_its_source_is_superseded(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -326,6 +358,162 @@ class BuildReceiptTests(unittest.TestCase):
             self.assertTrue(verdict["present"])
             self.assertFalse(verdict["usable"])
             self.assertIn("error", verdict)
+
+    def test_the_receipt_attests_the_frontend_chain_that_made_the_bundle(self) -> None:
+        """ERR-105 blind spot (2): the chain's own inputs are now recorded."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            obs = build_repo(root)
+            (obs / "frontend" / "node_modules").mkdir()
+            (obs / "frontend" / "node_modules" / ".package-lock.json").write_text(
+                '{"lockfileVersion": 3}\n', encoding="utf-8")
+            exe = self.fake_build(root, obs)
+            recorded = json.loads(json.dumps(write_receipt(root, obs, exe)))
+
+            chain = [i["path"] for i in recorded["frontendInputs"]]
+            for expected in ("apps/observer/frontend/src/App.tsx",
+                             "apps/observer/frontend/index.html",
+                             "apps/observer/frontend/package.json",
+                             "apps/observer/frontend/node_modules/.package-lock.json"):
+                self.assertIn(expected, chain)
+            self.assertEqual(recorded["schemaVersion"],
+                             "work-lab/artifact-input-receipt/v2")
+            # The compiler stage keeps its own list; the two are not merged, so
+            # a reader can still tell which bytes the linker consumed.
+            self.assertIn("apps/observer/frontend/dist/index.js",
+                          [i["path"] for i in recorded["inputs"]])
+            self.assertNotIn("apps/observer/frontend/src/App.tsx",
+                            [i["path"] for i in recorded["inputs"]])
+
+    def test_a_back_dated_frontend_edit_is_still_seen_by_the_receipt(self) -> None:
+        """The exact case mtime cannot catch, closed by content identity."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            obs = build_repo(root)
+            committed = commit_time(root)
+            exe = self.fake_build(root, obs)
+            write_receipt(root, obs, exe)
+            self.assertTrue(receipt_verdict(root, obs, exe)["matches"])
+
+            source = obs / "frontend" / "src" / "App.tsx"
+            source.write_text("export const a = 42\n", encoding="utf-8")
+            # Push its timestamp before the build and before dist: the weak rule
+            # is structurally blind to this, which is why it is not the judge.
+            set_mtime(source, committed - 10 * HOUR)
+            self.assertFalse(artifact_freshness(root, obs)["distSuperseded"],
+                             "the content-evidence rule must be blind here")
+            # The blindness is measured, not assumed: with the receipt moved
+            # aside (not rewritten — a rewrite would attest the edited tree)
+            # the same tree passes on timestamps alone.
+            receipt_path = Path(str(exe) + ".inputs.json")
+            saved_receipt = receipt_path.read_bytes()
+            receipt_path.unlink()
+            saved_root, saved_obs = u19.ROOT, u19.OBS
+            saved_env = os.environ.get("CARGO_TARGET_DIR")
+            os.environ["CARGO_TARGET_DIR"] = str(obs / ".tmp-build")
+            u19.ROOT, u19.OBS = root, obs
+            try:
+                blind_chosen, blind_report = u19.resolve_app_exe()
+            finally:
+                u19.ROOT, u19.OBS = saved_root, saved_obs
+                if saved_env is None:
+                    os.environ.pop("CARGO_TARGET_DIR", None)
+                else:
+                    os.environ["CARGO_TARGET_DIR"] = saved_env
+            receipt_path.write_bytes(saved_receipt)
+            self.assertIsNotNone(blind_chosen, "the weak rule must be shown blind")
+            self.assertEqual(blind_report["basis"], "content-evidence")
+
+            verdict = receipt_verdict(root, obs, exe)
+            self.assertTrue(verdict["usable"])
+            self.assertFalse(verdict["matches"])
+            self.assertEqual(verdict["changedInputs"],
+                             ["apps/observer/frontend/src/App.tsx"])
+
+            saved_root, saved_obs = u19.ROOT, u19.OBS
+            saved_env = os.environ.get("CARGO_TARGET_DIR")
+            u19.ROOT, u19.OBS = root, obs
+            os.environ["CARGO_TARGET_DIR"] = str(obs / ".tmp-build")
+            try:
+                chosen, report = u19.resolve_app_exe()
+            finally:
+                u19.ROOT, u19.OBS = saved_root, saved_obs
+                if saved_env is None:
+                    os.environ.pop("CARGO_TARGET_DIR", None)
+                else:
+                    os.environ["CARGO_TARGET_DIR"] = saved_env
+            self.assertIsNone(chosen, "a mismatching receipt must fail closed")
+            self.assertEqual(report["status"], "STALE_OR_MISSING_BINARY")
+            self.assertIn("apps/observer/frontend/src/App.tsx", report["reason"])
+
+    def test_a_changed_dependency_manifest_is_seen(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            obs = build_repo(root)
+            manifest = obs / "frontend" / "node_modules" / ".package-lock.json"
+            manifest.parent.mkdir()
+            manifest.write_text('{"lockfileVersion": 3}\n', encoding="utf-8")
+            exe = self.fake_build(root, obs)
+            write_receipt(root, obs, exe)
+            manifest.write_text('{"lockfileVersion": 3, "reinstalled": true}\n',
+                                encoding="utf-8")
+
+            verdict = receipt_verdict(root, obs, exe)
+            self.assertFalse(verdict["matches"])
+            self.assertIn("apps/observer/frontend/node_modules/.package-lock.json",
+                          verdict["changedInputs"])
+
+    def test_an_untracked_frontend_source_file_is_added_not_invisible(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            obs = build_repo(root)
+            exe = self.fake_build(root, obs)
+            write_receipt(root, obs, exe)
+            (obs / "frontend" / "src" / "Late.tsx").write_text(
+                "export const late = true\n", encoding="utf-8")
+
+            verdict = receipt_verdict(root, obs, exe)
+            self.assertFalse(verdict["matches"])
+            self.assertIn("apps/observer/frontend/src/Late.tsx",
+                          verdict["addedInputs"])
+
+    def test_a_v1_receipt_covers_only_the_compiler_stage(self) -> None:
+        """Reading the old receipt must not flood it with 'added' files, and
+        must not let anyone mistake it for frontend-chain coverage."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            obs = build_repo(root)
+            exe = self.fake_build(root, obs)
+            receipt = write_receipt(root, obs, exe)
+            v1 = {"schemaVersion": "work-lab/artifact-input-receipt/v1",
+                  "writtenAt": receipt["writtenAt"], "gitHead": receipt["gitHead"],
+                  "binary": receipt["binary"],
+                  "inputCount": receipt["inputCount"], "inputs": receipt["inputs"]}
+            Path(str(exe) + ".inputs.json").write_text(json.dumps(v1, indent=2),
+                                                        encoding="utf-8")
+
+            verdict = receipt_verdict(root, obs, exe)
+            self.assertTrue(verdict["usable"])
+            self.assertTrue(verdict["matches"],
+                            "a v1 receipt must not be judged against v2 coverage")
+            self.assertEqual(verdict["addedInputs"], [])
+            self.assertFalse(verdict["frontendChainAttested"])
+            self.assertEqual(verdict["schemaVersion"],
+                             "work-lab/artifact-input-receipt/v1")
+
+    def test_an_unknown_schema_is_refused_not_assumed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            obs = build_repo(root)
+            exe = self.fake_build(root, obs)
+            receipt = write_receipt(root, obs, exe)
+            receipt["schemaVersion"] = "work-lab/artifact-input-receipt/v99"
+            Path(str(exe) + ".inputs.json").write_text(json.dumps(receipt, indent=2),
+                                                        encoding="utf-8")
+
+            verdict = receipt_verdict(root, obs, exe)
+            self.assertFalse(verdict["usable"])
+            self.assertIn("v99", verdict["reason"])
 
 
 if __name__ == "__main__":

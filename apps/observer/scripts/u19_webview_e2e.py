@@ -51,7 +51,8 @@ sys.path.insert(0, str(ROOT / "services" / "orchestration"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from write_artifact_receipt import (  # noqa: E402
-    RECEIPT_SCHEMA, RECEIPT_SUFFIX, digest, input_files)
+    RECEIPT_SCHEMA, RECEIPT_SCHEMA_V1, RECEIPT_SUFFIX, digest, frontend_chain_files,
+    input_files)
 
 RUNS = ROOT / ".project-local" / "runs"
 RUNS.mkdir(parents=True, exist_ok=True)
@@ -618,6 +619,8 @@ FRONTEND_SOURCE_INPUTS = [
     "frontend/package-lock.json",
     "frontend/vite.config.ts",
     "frontend/tsconfig.json",
+    "frontend/postcss.config.js",
+    "frontend/tailwind.config.js",
 ]
 RUST_INPUTS = [
     "src-tauri/src",
@@ -735,6 +738,11 @@ def receipt_verdict(root: Path, obs: Path, exe: Path) -> dict:
     where every input matches HEAD and nothing in the tree evidences the
     change. A receipt that does not describe the binary on disk is unusable
     rather than convenient — that is the one way this can be forged.
+
+    The comparison set is whatever the receipt claims to cover, never whatever
+    the current code happens to collect: a v1 receipt records only the
+    compiler's inputs, so the frontend chain is reported as unattested rather
+    than silently counted as a set of new files.
     """
     path = exe.with_name(exe.name + RECEIPT_SUFFIX)
     out: dict = {"present": False, "usable": False, "matches": False,
@@ -745,18 +753,32 @@ def receipt_verdict(root: Path, obs: Path, exe: Path) -> dict:
     out["receiptPath"] = str(path)
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        recorded = {i["path"]: i["sha256"] for i in data["inputs"]}
+        stages = {RECEIPT_SCHEMA: ("inputs", "frontendInputs"),
+                  RECEIPT_SCHEMA_V1: ("inputs",)}
+        recorded: dict[str, str] = {}
+        for key in stages.get(data.get("schemaVersion"), ()):
+            for item in data.get(key, []):
+                recorded[item["path"]] = item["sha256"]
     except Exception as exc:  # noqa: BLE001
         out["error"] = repr(exc)[:200]
         return out
-    if data.get("schemaVersion") != RECEIPT_SCHEMA:
+    if data.get("schemaVersion") not in stages:
         out["reason"] = f"unexpected receipt schema {data.get('schemaVersion')!r}"
         return out
     if data.get("binary", {}).get("sha256") != out["exeSha256"]:
         out["reason"] = ("the receipt describes a different binary than the one "
                          "on disk, so it attests to nothing here")
         return out
+    schema = data["schemaVersion"]
+    live = input_files(root, obs)
+    if schema == RECEIPT_SCHEMA:
+        live = live + frontend_chain_files(root, obs)
     out["usable"] = True
+    out["schemaVersion"] = schema
+    out["coverage"] = ("compiler inputs + frontend build chain"
+                      if schema == RECEIPT_SCHEMA else
+                      "compiler inputs only")
+    out["frontendChainAttested"] = schema == RECEIPT_SCHEMA
     out["writtenAt"] = data.get("writtenAt")
     out["gitHead"] = data.get("gitHead")
     out["inputCount"] = len(recorded)
@@ -767,7 +789,7 @@ def receipt_verdict(root: Path, obs: Path, exe: Path) -> dict:
             missing.append(rel)
         elif digest(current) != sha:
             changed.append(rel)
-    added = [p.relative_to(root).as_posix() for p in input_files(root, obs)
+    added = [p.relative_to(root).as_posix() for p in live
              if p.relative_to(root).as_posix() not in recorded]
     out.update({"changedInputs": changed[:20], "missingInputs": missing[:20],
                 "addedInputs": added[:20],
@@ -845,6 +867,7 @@ def resolve_app_exe() -> tuple[Path | None, dict]:
     # the one case content evidence cannot — a rollback to an older commit,
     # where every input matches HEAD and nothing in the tree evidences change.
     receipted: list[Path] = []
+    mismatched: list[tuple[Path, dict]] = []
     for c in ordered:
         if not c.exists():
             report["candidates"].append({"path": str(c), "exists": False})
@@ -857,13 +880,47 @@ def resolve_app_exe() -> tuple[Path | None, dict]:
         })
         if rv["usable"] and rv["matches"]:
             receipted.append(c)
+        elif rv["usable"]:
+            mismatched.append((c, rv))
 
     if receipted:
         chosen = max(receipted, key=lambda p: p.stat().st_mtime)
+        chosen_receipt = receipt_verdict(ROOT, OBS, chosen)
         report["status"] = "PASS"
         report["basis"] = "build-receipt"
+        report["receiptCoverage"] = chosen_receipt["coverage"]
+        report["receiptSchema"] = chosen_receipt["schemaVersion"]
+        if not chosen_receipt["frontendChainAttested"]:
+            report["basisLimit"] = (
+                "this receipt predates the frontend-chain stage (schema "
+                f"{chosen_receipt['schemaVersion']}), so the bundle it embeds is "
+                "attested but the source that produced that bundle is not; an "
+                "uncommitted frontend edit with a back-dated mtime would still "
+                "only be visible through the content-evidence rule. Rebuild to "
+                "get a v2 receipt.")
         report["chosen"] = _describe(chosen)
         return chosen, report
+
+    if mismatched:
+        # A receipt that describes this binary but not this tree is positive
+        # evidence that the tree moved after the build. Falling through to the
+        # weaker rule here would let a timestamp that nothing proves re-certify
+        # a binary the stronger witness already condemned.
+        c, rv = max(mismatched, key=lambda pair: pair[0].stat().st_mtime)
+        named = (rv["changedInputs"] + rv["missingInputs"] + rv["addedInputs"])[:6]
+        report["status"] = "STALE_OR_MISSING_BINARY"
+        report["basis"] = "build-receipt"
+        report["receiptCoverage"] = rv["coverage"]
+        report["reason"] = (
+            "the build receipt for %s does not match this tree: %d changed, %d "
+            "missing, %d added of its %d recorded inputs (%s). It was written at "
+            "%s against gitHead %s, so these bytes were edited after the build "
+            "that produced this binary. Rebuild (and `npm run build` first if the "
+            "frontend chain moved)."
+            % (c.name, len(rv["changedInputs"]), len(rv["missingInputs"]),
+               len(rv["addedInputs"]), rv["inputCount"], ", ".join(named) or "none",
+               rv["writtenAt"], rv["gitHead"][:9]))
+        return None, report
 
     report["basis"] = "content-evidence"
     report["basisLimit"] = (
