@@ -11,7 +11,7 @@ import re
 import time
 from pathlib import Path
 
-INDEX_FILE = ".hermes/skill-call-index.json"
+INDEX_FILE = ".project-local/runs/skill-call-index.json"
 WORD_RE = re.compile(r"[a-zA-Z0-9_\u4e00-\u9fff-]{3,}")
 
 

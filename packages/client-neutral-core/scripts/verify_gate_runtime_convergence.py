@@ -28,8 +28,8 @@ def _git(root: Path, *args: str) -> str:
 def check_1_current_state_attestation() -> dict:
     """Old branch/head/CI must not pass freshness.
 
-    On CI runners the local CI-evidence file (.hermes/task-artifacts/
-    current-state-ci.json) is not checked out (it is git-ignored), so the
+    On CI runners the local CI-evidence file
+    (.project-local/artifacts/current-state-ci.json) is not checked out (it is git-ignored), so the
     tracked CI run cannot be compared. Per Master TaskPack §15 this is an
     environment limitation reported as PENDING, not a code failure; the
     attestation is fully verified on the developer workstation where the
@@ -43,7 +43,7 @@ def check_1_current_state_attestation() -> dict:
     if ok:
         return {"id": 1, "name": "current-state-attestation", "pass": True,
                 "evidence": "generate_current_state --check-current"}
-    evidence_file = ROOT / ".hermes/task-artifacts/current-state-ci.json"
+    evidence_file = ROOT / ".project-local/artifacts/current-state-ci.json"
     if not evidence_file.is_file():
         return {"id": 1, "name": "current-state-attestation", "pass": False,
                 "evidence": "PENDING: local CI-evidence file absent on runner (environment-limited, §15)"}

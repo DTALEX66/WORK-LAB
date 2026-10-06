@@ -79,7 +79,7 @@ Use the repository's canonical synchronizer, not ad-hoc `cp`:
 ```bash
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 HERMES_HOME="${HERMES_HOME:?Set HERMES_HOME to the intended Hermes Home}"
-python scripts/workflow/sync_hermes_workflow_assets.py --repo "$REPO_ROOT" --home "$HERMES_HOME"   # dry-run
+python integrations/executors/hermes/sync_hermes_workflow_assets.py --repo "$REPO_ROOT" --home "$HERMES_HOME"   # dry-run
 # authorized deployment adds --apply, then: hermes config check
 ```
 

@@ -60,7 +60,7 @@ Context Pack 是 handoff/evidence artifact，不是实际产品任务完成，�
 - `python tests/test_workflow_governance.py -v`；
 - `python scripts/security/scan_agent_rules.py ...`；
 - `hermes mcp test context7`；
-- `scripts/workflow/sync_hermes_workflow_assets.py --apply`；
+- `integrations/executors/hermes/sync_hermes_workflow_assets.py --apply`；
 - exact-tree review / CI verdict。
 
 ## 推荐使用场景

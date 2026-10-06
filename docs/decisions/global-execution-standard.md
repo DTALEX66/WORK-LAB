@@ -49,14 +49,14 @@
 
 ```
 各软件执行任务前按需走步骤②（命中才加载，未命中直接执行，绝不阻塞）：
-  1. 先查项目技能调用索引（.hermes/skill-call-index.json）
+  1. 先查项目技能调用索引（.project-local/runs/skill-call-index.json）
      → 命中 → 直接调用技能（不重复扫描）
   2. 索引未命中 → 扫描技能清单（SKILL.md description）
      → 匹配 → 加载技能执行 + 记录到索引（下次直接命中）
   3. 仍未命中 → 直接执行（不阻塞）
 
 技能调用索引（优化，避免每次扫描；文件按需生成，fail-open）：
-  索引：.hermes/skill-call-index.json（首次扫描后落盘；不存在时直接扫描 SKILL 清单）
+  索引：.project-local/runs/skill-call-index.json（首次扫描后落盘；不存在时直接扫描 SKILL 清单）
   机制：build（扫描建关键词→技能映射）/ lookup（任务关键词查索引）/ record（学习新映射）
   每项目一个索引文件，后续相同任务直接调用；索引缺失/损坏时降级为全量扫描，绝不阻塞
 
