@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 136,
+    "total": 137,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 48,
@@ -17,7 +17,7 @@
       "working_directory_recovery": 2,
       "evidence_state": 23,
       "ci_configuration": 11,
-      "feature_gap": 9,
+      "feature_gap": 10,
       "config_downgrade": 3,
       "dead_entry": 3,
       "path_boundary": 6,
@@ -3789,6 +3789,33 @@
         "affectedCapability": "Managed Hermes skill provenance; U02 publish",
         "regressionCommand": "python packages/client-neutral-core/scripts/security/check_skill_provenance.py --manifest config/skill-provenance.yaml",
         "bindingNote": "bound 2026-10-07: fix in fe5d7a6; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
+      }
+    },
+    {
+      "error_id": "ERR-138",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "feature_gap",
+      "entrypoint": "scripts/audit/ag16_handback_roundtrip.py, docs/audits/AG16_HANDBACK_ROUNDTRIP_2026-10-07.json, tests/workflow-assistance/test_ag16_handback_evidence.py, packages/client-neutral-core/scripts/plan_candidate.py, packages/client-neutral-core/scripts/capability_roles.py, .project/governance/runtime-registry.json",
+      "command": "python scripts/audit/ag16_handback_roundtrip.py",
+      "exit_code": 1,
+      "observed_error": "Round-tripping AG-16's handback against the live local planning end (qwen2.5-vl-7b-instruct via LM Studio, response_format json_schema, temperature 0.0, 8.43 s) produced a well-formed plan whose targetCapability was `publish`, and the contract answered `REFUSED_CAPABILITY_UNAVAILABLE: no registered executor advertises capability 'publish'`. The refusal is correct behaviour and simultaneously proves the chain cannot complete today: the contract's probe vocabulary is agent operations (read/publish/execute/status/cancel/resume/observe/review/store), while the only RUNNING runtime in runtime-registry.json advertises inference operations (chat.completions, text.completions, embeddings, vision.image_input, desktop.gui, model.lifecycle.by-key, jit.model.ttl, openai.compat./v1). The two sets do not intersect.",
+      "root_cause": "Two vocabularies were defined apart from each other. `capability_roles.PROBE_CAPABILITY_EXAMPLES` describes what an agent client can be probed to do, and the runtime registry records what an inference server can do. Nothing maps one to the other, and no executor is registered at all under the first vocabulary — ollama is REMOVED, llamacpp is INSTALLED-but-not-started, and lmstudio is recorded as a model server, not as a work-unit executor. So the capability gate, which correctly runs BEFORE authorization, has nothing it can ever accept.",
+      "fix": "The refusal is left in place and the run is published as measured evidence — docs/audits/AG16_HANDBACK_ROUNDTRIP_2026-10-07.json records 7 cases: the bare model return REFUSED_MISSING_ENVELOPE (the contract will not infer baseline/contextDigest/planningSoftware/workUnitId/taskRevision), the same content in a real harness-supplied envelope REFUSED_CAPABILITY_UNAVAILABLE with the refusal reason quoted, identical content re-delivered under a fresh id detected as DUPLICATE_CONTENT, a fixture plan with a fixture grant reaching AUTHORIZED_NOT_EXECUTED, an unresolved item forcing NEEDS_INPUT even with that grant, and a plan that self-declares approved+scope seen as ignoredSelfClaims=[approved, scope]. Loosening the check or registering an unprobed capability would have made the round-trip 'pass' and destroyed the finding.",
+      "regression_test": "tests/workflow-assistance/test_ag16_handback_evidence.py — 11 tests. It refuses any claim of execution or a named executor, any AUTHORIZED verdict without grantSource=fixture, any model-origin AUTHORIZED case, a bare return that is not refused, a replay that is not detected as duplicate, counts that disagree with the cases, and a prompt or response body copied into the record. Two of its controls earned their keep immediately: comparing the status against the exact word AUTHORIZED hid the one authorized fixture case, because the contract spells it AUTHORIZED_NOT_EXECUTED, and a substring 'no bodies' check tripped on the endpoint path /chat/completions",
+      "evidence_level": "isolated-runtime",
+      "repeat_prevention": "When a chain is refused at a gate, check whether the gate's vocabulary and the registry's vocabulary can meet at all before concluding the plan is bad; never loosen a fail-closed check to make a round-trip pass. Record the vocabulary mismatch as its own defect. Any status-name comparison must be prefix-aware when the contract composes statuses (AUTHORIZED_NOT_EXECUTED), or the gate will silently assert nothing.",
+      "remaining_boundary": "What this does NOT close: no executor is selected and nothing executed, the automatic cross-client connection remains AG-17/OD02 (owner decision), and registering a real executor under the agent-operation vocabulary needs the DSH/Hermes/Codex adapters to be probed for those capabilities — which is AG-15's boundary and an owner choice about which client runs work units. One model, temperature 0.0, one planning return: this is a round-trip, not a quality measurement of the planner.",
+      "status_before": "NOT_RUN",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "left null deliberately: the two vocabularies were defined apart from each other long before this round, and naming the head where it was observed (fd57eeb) as the introducing commit would be a false attribution — the same discipline ERR-134 and ERR-136 exist for",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "AG-16 super-entry chain capability gate; executor registration",
+        "regressionCommand": "python tests/workflow-assistance/test_ag16_handback_evidence.py"
       }
     }
   ],

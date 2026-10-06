@@ -102,6 +102,10 @@ I pushed 51c723d after running the gates I thought were relevant and skipped `sc
 
 21 error records now name the commit that fixed them, each validated against that commit's tree rather than typed in; 8 more were recovered from commit messages that cite the ERR id, and 99 PASS records are publicly owed with a stated reason (their fixing commit never names the id, or several do). Inventing a SHA is what ERR-125/ERR-134 forbid, so they are listed instead. Two new gates hold the line: `test_ledger_fix_commit_binding.py` (10 tests, the owed set must match the ledger exactly so it can only shrink) and `test_tool_inventory_coverage.py` (11 tests, 33 tracked instruments vs `docs/audits/TOOL_INVENTORY_2026-10-07.json`, digests on the blob-at-HEAD basis). See `docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json`.
 
+## AG-16 handback round-trip (same round, ERR-138)
+
+The link AG-16 said had never been exercised has now been exercised once against the live local model server, and it refused — correctly. 7 cases in `docs/audits/AG16_HANDBACK_ROUNDTRIP_2026-10-07.json`: a bare model return is refused for the missing envelope; the same plan inside a real harness-supplied envelope is refused at the capability gate because the contract probes agent-operations (`publish`) and the registry advertises inference operations (`chat.completions`) — the two vocabularies never meet and no executor is registered under the first. Dedupe, blocking-before-authorization, and self-grant-ignored all behaved as specified. Nothing executed; the automatic connection is still AG-17/OD02. Two gate controls earned their keep on first run: an exact-word `AUTHORIZED` comparison hid the fixture case because the contract composes `AUTHORIZED_NOT_EXECUTED`, and a substring body check tripped on `/chat/completions`.
+
 ## Verification discipline in force
 
 `python scripts/ci/reproduce_ci_commands.py --skip "pip install" --skip cargo --skip "npm ci"

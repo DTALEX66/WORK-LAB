@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-06T23:06:09Z",
+  "generatedAt": "2026-10-06T23:21:55Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 33,
+    "trackedTools": 34,
     "withLedgerPromise": 12,
-    "referencedSomewhere": 33,
+    "referencedSomewhere": 34,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -33,6 +33,20 @@
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-G.md",
         "tests/workflow-assistance/test_ag11_matrix_evidence.py"
+      ]
+    },
+    {
+      "path": "scripts/audit/ag16_handback_roundtrip.py",
+      "sha256": "2582e7d2fe45c30ce8a0ca5ce4834d33c69248a00a144cc48dbe50da5662c73d",
+      "bytes": 16107,
+      "lines": 293,
+      "digestBasis": "working-tree-uncommitted",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 3,
+      "citedBy": [
+        "docs/audits/AG16_HANDBACK_ROUNDTRIP_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
@@ -70,10 +84,11 @@
       "sha256": "d9e001b2ecbb42d8b92eb90b5b0c68a25c5a2eabce7bedf849678f6069504578",
       "bytes": 5310,
       "lines": 117,
-      "digestBasis": "working-tree-uncommitted",
+      "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 1,
+      "citedByRecords": 2,
       "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/error-ledger.json"
       ]
     },
@@ -141,11 +156,12 @@
       "sha256": "77d86e8bd5fbf4f7abda08821bb3975feb4b45299d9abf55f53ecf89f5c902e1",
       "bytes": 5833,
       "lines": 123,
-      "digestBasis": "working-tree-uncommitted",
+      "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 1,
+      "citedByRecords": 2,
       "citedBy": [
-        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json"
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
       ]
     },
     {
@@ -361,7 +377,7 @@
       "sha256": "af2834738cef37dee4e394af73efc30699fef133e999cce2044a159cc945ac59",
       "bytes": 6309,
       "lines": 134,
-      "digestBasis": "working-tree-uncommitted",
+      "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
       "citedByRecords": 1,
       "citedBy": [
