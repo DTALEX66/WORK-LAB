@@ -109,21 +109,73 @@ this console is GBK.
 The provenance I wanted to record did not get thrown away either: it moved into `integrationNote`,
 a field the contract allows, keeping the previous URL, the readback command and the date. ERR-128.
 
+## Round E — the greening residue, done by class rather than by directory
+
+Two defects met in the same place. Durable records (four `error-ledger.json` entries, three
+register rows) gave `regressionCommand` values starting with `python .project-local/runs/<scratch>/…py` —
+a reproduce path inside the git-ignored runtime root, which the cleanup rounds themselves delete.
+And the trees that greening had *retained* because one file inside them was cited turned out to be
+mostly not evidence: **116,216,094 B across 1,395 files** were WebView2 and headless-Chrome
+user-data (`EBWebView-cdp-*`, `EBWebView-final-*`, `l10b-verify/chrome-profile`).
+
+- Five probes (62,484 B, 1,485 lines) copied byte-for-byte into tracked `scripts/audit/`, with
+  both-side digests and the count of durable records naming each old path in
+  `docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json`. Originals stay until the records are
+  re-pointed, so nothing is orphaned in either direction.
+- The release ran behind four guards (browser-name pattern plus two profile markers, outermost
+  match only, no cited path inside a deletion target, and a re-check of every tracked-referenced
+  `.project-local` path afterwards): **0 cited paths lost**. Measured after: p0c-oracle 154→112 MB,
+  p0c-final 33→1 MB, ui-suite 71→34 MB.
+- Retained **with sizes and reasons**: `u19-msvc-20261006` 1.39 GB (cargo target holding the release
+  binary the U19 desktop evidence refers to, cited 14×), `imported-from-workbuddy-20261006` 453 MB
+  (the only surviving copy of another agent's worktree evidence — 2,309 files verified identical at
+  import, source retired; it is an original, not a cache), `dsh-backup-pre-deploy` 225 MB (rollback
+  point), `toolchains/lambda` 843 MB (the installed optional llama.cpp runtime; only its 253 MB
+  source archive is a candidate, pending an extraction-completeness check), `wl-py311` 22 MB (the
+  gate's own dependency).
+- Found and *not* papered over: **28 tracked documents cite `.project-local` paths that no longer
+  exist** (some traceable to the six files lost to the ERR-123 bug). That is a traceability defect
+  owed its own pass — the post-check's raw count was 37, of which 9 were my own regex eating
+  trailing punctuation.
+
+Pre-push validation was the new `scripts/ci/reproduce_ci_commands.py`: 86 commands run across both
+workflows, 4 failures, all four classified as local-environment (cargo not on PATH, no
+`app.exe` at the default target dir because the MSVC build used a separate `CARGO_TARGET_DIR`, the
+U19 WebView2 E2E needing the real binary, and the workflow's inline `python -c` JSON-schema check
+reading UTF-8 files with Windows' GBK default). 21 commands reported `CI_CONTEXT`/`STEP_ENV`/
+`TOOL_NOT_ON_PATH` rather than being quietly dropped. ERR-129 records the round; commit `473a3f9`
+carries it (one-line subject — the message body lives in the two audit manifests, and the commit was
+already pushed so it was not amended).
+
 ## What is owed after this round
 
+- **Finish the command re-pointing.** The five promoted probes are copies; four `error-ledger.json`
+  entries and three register rows still name the `.project-local/runs/...` path. The mapping with
+  digests is in `docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json`; the remaining step is a dated
+  correction inside those records (keep the original sentence, add the tracked command), after
+  which the scratch originals can be released with their own manifest.
+- **28 stale citations** from tracked documents into `.project-local` paths that do not exist,
+  enumerated in `docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json`. Each needs the same choice:
+  restore, re-point, or mark historically absent. Do not close it by deleting records.
+- `toolchains/lambda/llama-b11221-bin-win-cuda-12.4-x64.zip` (253 MB) is the next plausible
+  release — an installed runtime plus its own source archive — after checking extraction
+  completeness and that `runtime-registry.json` still resolves.
 - **FUT-001 Orca pilot** — still the only external-workspace candidate, needs an owner-authorized
   pilot on a real external project *and* a launch path that does not exist in this repository.
 - **Licence decisions for the owner**, not mine: OpenViking AGPL-3.0, EvoMap GPL-3.0, n8n fair-code.
   The repository declares no licence allowlist, so those questions stay visible.
-- **`.project/governance/source-ledger.json`** still records `agent-skills` at
-  `https://agent-skills.org/`, which this pass could not verify — the specification resolves at
-  agentskills.io. All 17 ledger rows carry `license: UNKNOWN`, `windowsSupport: unknown`; the pool
-  item is closed, the ledger item is not.
+- **`.project/governance/source-ledger.json`**: its `agent-skills` row is corrected (commit
+  `e0b296d`: canonicalUrl → `github.com/agentskills/agentskills`, Apache-2.0 from the API readback,
+  the unverifiable `agent-skills.org` kept inside `integrationNote`). Still open: all 17 rows carry
+  `license: UNKNOWN` except that one, `windowsSupport: unknown`, and the row-level review each
+  `review-required` entry asks for has not been done. The pool item is closed; the ledger item is not.
 - **REQ-RANGE-20261007** — the byte-range artifact-slicing gap migrated out of the retired FUT-031
   row into a register row, because the missing piece is ours to write, not a project to import.
-- U02's publish step (`sync_hermes_workflow_assets.py --apply`), AG-09/10/11, the writable Control
-  Surface, the real-desktop readback, and the three retained large trees whose citations must be
-  migrated before deletion.
+- U02's publish step (`sync_hermes_workflow_assets.py --apply`), AG-09/10/11 (inference path for
+  AG-11 does not exist in any environment the gates can reach — see the register row), the writable
+  Control Surface, and the real-desktop readback. The three retained large trees are resolved:
+  116 MB of browser user-data released with 0 cited paths lost, the rest retained with sizes and
+  reasons, and the leftover obligations are the three bullets above this list.
 
 ## Method notes worth carrying
 
