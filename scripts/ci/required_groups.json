@@ -13,6 +13,7 @@
         ["python", "tests/test_observer_runtime.py"],
         ["python", "tests/test_observer_evidence.py"],
         ["python", "tests/test_observer_store.py"],
+        ["python", "tests/test_artifact_freshness.py"],
         ["python", "scripts/verify_usage_rollup.py"],
         ["python", "tests/test_usage_rollup.py"],
         ["python", "tests/test_observer_events_migration.py"]

@@ -599,6 +599,121 @@ def _stderr_tail(path: Path, n: int = 2048) -> str:
 # ---------------------------------------------------------------------------
 # 3d. Artifact resolution — the binary must be the one THIS tree just built.
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Freshness, keyed to content rather than to filesystem times (ERR-105).
+# ---------------------------------------------------------------------------
+# Paths are relative to apps/observer. Git normalises line endings on this
+# working copy, so `git checkout`, `git stash` or a filter pass can rewrite a
+# file's mtime without changing one byte of it; keying freshness to mtime then
+# reports a perfectly current binary as STALE, which is what blocked this gate
+# twice on 2026-10-06.
+FRONTEND_SOURCE_INPUTS = [
+    "frontend/src",
+    "frontend/index.html",
+    "frontend/package.json",
+    "frontend/package-lock.json",
+    "frontend/vite.config.ts",
+    "frontend/tsconfig.json",
+]
+RUST_INPUTS = [
+    "src-tauri/src",
+    "src-tauri/Cargo.toml",
+    "src-tauri/Cargo.lock",
+    "src-tauri/build.rs",
+    "src-tauri/tauri.conf.json",
+    "src-tauri/capabilities",
+]
+
+
+def _git_raw(root: Path, *args: str) -> str:
+    try:
+        done = subprocess.run(["git", "-C", str(root), *args],
+                              capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", check=False)
+    except OSError:
+        return ""
+    return done.stdout
+
+
+def content_change_floor(root: Path, obs: Path, segments: list[str]) -> tuple[float, dict]:
+    """The latest evidenced content change among these inputs, else 0.0.
+
+    Only a change that git can see in the *bytes* counts, and git answers for
+    that through `git diff` (which applies the working-copy filters, so an
+    end-of-line rewrite that leaves the text alone is not a change) plus
+    untracked additions. Files that match HEAD contribute nothing: their mtimes
+    move under checkout, stash and filter passes without any edit, and a
+    timestamp is not content. A path that was deleted contributes "now", which
+    fails the gate closed — the tree demonstrably changed.
+    """
+    pathspecs = [(obs / s).relative_to(root).as_posix() for s in segments]
+    detail: dict = {"pathspecs": pathspecs}
+
+    if _git_raw(root, "rev-parse", "--git-dir").strip() == "":
+        detail["gitUnavailable"] = True
+        return 0.0, detail
+
+    changed = set()
+    for args in (("diff", "--name-only", "HEAD", "-z", "--"),
+                 ("ls-files", "--others", "--exclude-standard", "-z", "--")):
+        raw = _git_raw(root, *args, *pathspecs)
+        changed.update(r.strip().strip('"') for r in raw.split("\0") if r.strip())
+    changed.discard("")
+
+    floor = 0.0
+    evidenced: list[str] = []
+    for path in sorted(changed):
+        target = root / path
+        if not target.exists():
+            detail.setdefault("deletedInputs", []).append(path)
+            floor = max(floor, time.time())
+            continue
+        floor = max(floor, target.stat().st_mtime)
+        evidenced.append(path)
+    detail["changedSinceHead"] = evidenced
+    return floor, detail
+
+
+def artifact_freshness(root: Path, obs: Path) -> dict:
+    """The timestamp each build stage must beat, plus the stage boundaries."""
+    frontend_floor, frontend_detail = content_change_floor(
+        root, obs, FRONTEND_SOURCE_INPUTS)
+    rust_floor, rust_detail = content_change_floor(root, obs, RUST_INPUTS)
+
+    dist = obs / "frontend" / "dist"
+    dist_files = sorted(p for p in dist.rglob("*") if p.is_file()) if dist.is_dir() else []
+    dist_newest = 0.0
+    dist_newest_path = None
+    for p in dist_files:
+        m = p.stat().st_mtime
+        if m >= dist_newest:
+            dist_newest, dist_newest_path = m, p
+
+    def iso(seconds: float) -> str:
+        return (time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(seconds))
+                if seconds else "NONE")
+
+    return {
+        "basis": "content-not-mtime",
+        "gitUnavailable": bool(frontend_detail.get("gitUnavailable")
+                               or rust_detail.get("gitUnavailable")),
+        "frontendSourceFloor": frontend_floor,
+        "frontendSourceFloorAt": iso(frontend_floor),
+        "frontendSourceDetail": frontend_detail,
+        "rustFloor": rust_floor,
+        "rustFloorAt": iso(rust_floor),
+        "rustDetail": rust_detail,
+        "frontendDistFileCount": len(dist_files),
+        "frontendDistNewest": {"path": str(dist_newest_path), "mtime": iso(dist_newest)}
+        if dist_files else {"path": None, "mtime": "NONE"},
+        # The bundle embedded in the binary is only as current as dist, and
+        # dist is only as current as the source that produced it.
+        "distSuperseded": bool(dist_files) and dist_newest < frontend_floor,
+        "binaryFloor": max(rust_floor, dist_newest),
+        "binaryFloorAt": iso(max(rust_floor, dist_newest)),
+    }
+
+
 def resolve_app_exe() -> tuple[Path | None, dict]:
     """Pick the binary the build actually produced, and prove it is not stale.
 
@@ -610,11 +725,12 @@ def resolve_app_exe() -> tuple[Path | None, dict]:
     conclusion (ERR-099). CI does not set CARGO_TARGET_DIR, so the default path
     is correct there and stays as the fallback.
 
-    Freshness is mechanical: the exe must be at least as new as every build
-    input. `frontendDist` (../frontend/dist) is embedded into the binary by
-    tauri-build at compile time, so it is an input too — a stale dist silently
-    ships stale UI. An exe older than its inputs proves nothing about this
-    tree, so the harness FAILS instead of quietly capturing it.
+    Freshness compares content, not filesystem times (ERR-105), and covers
+    every stage of the chain: frontend source → `frontend/dist` → `app.exe`.
+    Checking only "exe newer than dist" certified a binary whose dist predated
+    the source that should have rebuilt it. An artifact older than its inputs
+    proves nothing about this tree, so the harness FAILS instead of quietly
+    capturing it.
     """
     src_tauri = OBS / "src-tauri"
     target_override = os.environ.get("CARGO_TARGET_DIR")
@@ -633,40 +749,49 @@ def resolve_app_exe() -> tuple[Path | None, dict]:
             seen.add(key)
             ordered.append(c)
 
-    rs_files = sorted((src_tauri / "src").rglob("*.rs"))
-    dist = OBS / "frontend" / "dist"
-    dist_files = sorted(p for p in dist.rglob("*") if p.is_file()) if dist.is_dir() else []
-    inputs = [src_tauri / "tauri.conf.json", src_tauri / "Cargo.toml"]
-    inputs += rs_files + dist_files
-    inputs = [p for p in inputs if p.is_file()]
-
+    freshness = artifact_freshness(ROOT, OBS)
+    rs_files = [p for p in sorted((src_tauri / "src").rglob("*.rs"))] if (
+        src_tauri / "src").is_dir() else []
     report: dict = {
         "cargoTargetDirEnv": target_override,
-        "srcRustFileCount": len([p for p in rs_files if p.is_file()]),
-        "frontendDistFileCount": len(dist_files),
-        "inputCount": len(inputs),
+        "srcRustFileCount": len(rs_files),
+        "frontendDistFileCount": freshness["frontendDistFileCount"],
+        "freshness": freshness,
         "candidates": [],
     }
-    if not inputs:
+    if not rs_files and not freshness["frontendDistFileCount"]:
         report["status"] = "FAIL"
         report["reason"] = ("no build inputs found under %s — cannot prove any "
                             "binary is current" % src_tauri)
         return None, report
 
-    newest_input = max(inputs, key=lambda p: p.stat().st_mtime)
-    newest_mtime = newest_input.stat().st_mtime
-    report["newestInput"] = {
-        "path": str(newest_input),
-        "mtime": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(newest_mtime)),
-    }
+    if freshness["gitUnavailable"]:
+        report["status"] = "FAIL"
+        report["reason"] = (
+            "no git repository answers for this tree, so no content change can be "
+            "seen in it and no binary can be shown to be current. Run this gate "
+            "from a checkout, not from an export.")
+        return None, report
 
+    if freshness["distSuperseded"]:
+        report["status"] = "STALE_OR_MISSING_BINARY"
+        report["reason"] = (
+            "frontend/dist is older than the last change to the frontend source "
+            "that feeds it (dist newest %s, source floor %s). Run `npm run build` "
+            "in apps/observer/frontend, then rebuild: a binary embedding a "
+            "superseded bundle is not evidence about this tree."
+            % (freshness["frontendDistNewest"]["mtime"],
+               freshness["frontendSourceFloorAt"]))
+        return None, report
+
+    floor = freshness["binaryFloor"]
     fresh = []
     for c in ordered:
         if not c.exists():
             report["candidates"].append({"path": str(c), "exists": False})
             continue
         st = c.stat()
-        is_fresh = st.st_mtime >= newest_mtime
+        is_fresh = st.st_mtime >= floor
         report["candidates"].append({
             "path": str(c), "exists": True, "bytes": st.st_size,
             "mtime": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(st.st_mtime)),
@@ -679,11 +804,13 @@ def resolve_app_exe() -> tuple[Path | None, dict]:
     if not fresh:
         report["status"] = "STALE_OR_MISSING_BINARY"
         report["reason"] = (
-            "no release app.exe is at least as new as %s (mtime %s). Rebuild "
-            "before running this gate: a superseded binary is not evidence "
-            "about the current tree. Set CARGO_TARGET_DIR if your build writes "
-            "outside src-tauri/target."
-            % (report["newestInput"]["path"], report["newestInput"]["mtime"])
+            "no release app.exe is at least as new as the last content change of "
+            "its inputs (floor %s, from %s). Rebuild before running this gate: a "
+            "superseded binary is not evidence about the current tree. Set "
+            "CARGO_TARGET_DIR if your build writes outside src-tauri/target."
+            % (freshness["binaryFloorAt"],
+               (freshness["rustDetail"]["changedSinceHead"]
+                or [freshness["frontendDistNewest"]["path"]])[0])
         )
         return None, report
 
