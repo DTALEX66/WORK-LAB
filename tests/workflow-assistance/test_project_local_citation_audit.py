@@ -18,6 +18,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "audit" / "project_local_citation_audit.py"
 AUDIT = ROOT / "docs" / "audits" / "PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json"
+IMPORT_ROOT = (ROOT / ".project-local" / "imported-from-workbuddy-20261006" /
+               "WORK-LAB__task-decomposition-atlas-gap-archive-20261001-381e33ec")
 
 spec = importlib.util.spec_from_file_location("plca", SCRIPT)
 plca = importlib.util.module_from_spec(spec)
@@ -43,14 +45,29 @@ class CitationAuditGate(unittest.TestCase):
         self.assertEqual(unadjudicated, [], "queued citations without a per-path disposition")
         self.assertEqual(doc["counts"]["unadjudicated"], 0)
 
-    def test_the_two_repaired_claims_are_reachable_on_disk(self) -> None:
-        # the P0C re-point must land on bytes that actually exist, or the correction is itself a lie
-        imported = (ROOT / ".project-local" / "imported-from-workbuddy-20261006" /
-                    "WORK-LAB__task-decomposition-atlas-gap-archive-20261001-381e33ec" /
-                    ".project-local" / "runs" / "p0c-diag-20261006")
-        self.assertTrue(imported.is_dir(), "the re-pointed evidence root is not on disk")
-        self.assertGreater(len(list(imported.iterdir())), 10)
+    def test_the_repair_names_the_import_root_that_the_register_records(self) -> None:
+        # CI checks the tracked records agree; whether the bytes are still on this machine is a
+        # local observation, because .project-local is git-ignored and absent from a fresh checkout.
+        handoff = (ROOT / "taskpacks" / "current" / "SESSION-HANDOFF-P0C-20261006.md") \
+            .read_text(encoding="utf-8")
+        rows = [ln for ln in (ROOT / "taskpacks" / "current" / "OPEN-TASK-REGISTER.md")
+                .read_text(encoding="utf-8").splitlines()
+                if ln.startswith("| WB-IMPORT-20261006 ")]
+        self.assertEqual(len(rows), 1, "the import round is no longer a single register row")
+        for token in ("imported-from-workbuddy-20261006", "381e33ec"):
+            self.assertIn(token, handoff, token)
+            self.assertIn(token, rows[0], token)
+        self.assertIn("runs/p0c-diag-20261006", handoff)
         self.assertTrue((ROOT / "taskpacks" / "current" / "error-ledger.json").is_file())
+
+    @unittest.skipUnless(IMPORT_ROOT.is_dir(),
+                         "the WorkBuddy import sits in the git-ignored runtime root; a clean CI "
+                         "checkout has no .project-local, so only the machine holding it can "
+                         "observe the bytes")
+    def test_the_re_pointed_bytes_are_present_on_the_machine_that_holds_them(self) -> None:
+        diag = IMPORT_ROOT / ".project-local" / "runs" / "p0c-diag-20261006"
+        self.assertTrue(diag.is_dir(), "the re-pointed evidence root is not on disk")
+        self.assertGreater(len(list(diag.iterdir())), 10)
 
     def test_an_evidence_citation_to_an_absent_path_reaches_the_review_queue(self) -> None:
         self.assertIn(classify("复现命令（证据在 `.project-local/runs/x/receipt.json`）："), REVIEW_CLASSES)

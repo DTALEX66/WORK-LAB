@@ -263,7 +263,7 @@
       "status": "INSTALLED (retained as an optional runtime, not started)",
       "status_evidence": "llama-server.exe --version -> 'version: 0.5.0-dev (build 11221, commit 136887b66)', exit 0",
       "why_not_ollama_only": "Historical rationale, superseded: the work package now consolidates on LM Studio. This entry is retained because llama.cpp provides a measured fidelity advantage for rerank and DEEP offload.",
-      "status_note": "Kept as the explicit-offload escape hatch: it remains the only runtime measured here that can serve /v1/rerank with a continuous score and that exposes -ngl/--n-cpu-moe. It is NOT required by any provider binding any more; nothing auto-starts it."
+      "status_note": "Kept as the explicit-offload escape hatch: it remains the only runtime measured here that can serve /v1/rerank with a continuous score and that exposes -ngl/--n-cpu-moe. It is NOT required by any provider binding any more; nothing auto-starts it. 2026-10-07: the downloaded asset above is no longer on disk — it was released as a redundant copy after scripts/audit/archive_extraction_completeness.py matched all 52 zip members to the extracted tree by name, size and CRC-32 (missing=0, disagree=0, treeOnly=0; 264,519,230 B freed). The sha256 and bytes above are the archive's retained identity; install_root and its binaries were not touched and still resolve. Proof: docs/audits/LAMBDA_ARCHIVE_RELEASE_2026-10-07.json."
     },
     {
       "id": "ollama",

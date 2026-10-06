@@ -9,11 +9,11 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 131,
+    "total": 132,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 47,
-      "test_behavior_alignment": 14,
+      "test_behavior_alignment": 15,
       "working_directory_recovery": 2,
       "evidence_state": 22,
       "ci_configuration": 10,
@@ -3643,6 +3643,32 @@
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Traceability of .project-local citations; the greening owed-item list itself",
+        "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py"
+      }
+    },
+    {
+      "error_id": "ERR-133",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "tests/workflow-assistance/test_project_local_citation_audit.py, taskpacks/current/SESSION-HANDOFF-P0C-20261006.md",
+      "command": "python tests/workflow-assistance/test_project_local_citation_audit.py",
+      "exit_code": 1,
+      "observed_error": "CI went red at 30802cc in the workflow-assistance job, step `Run workflow structural and contract gates`. Reproduced deterministically in a detached worktree that has no `.project-local`: `FAIL: test_the_two_repaired_claims_are_reachable_on_disk — AssertionError: False is not true : the re-pointed evidence root is not on disk`. The gate passed on this machine and failed on a clean checkout, which is exactly the shape ERR-125 taught me to expect.",
+      "root_cause": "I wrote a gate that asserted filesystem state inside the git-ignored runtime root. `.project-local` is never in a CI checkout, so the assertion was about my machine, not about the repository — a gate that encodes local state is guaranteed to contradict CI on the first clean run.",
+      "fix": "Split the two properties. What CI can hold forever: the handoff correction must name the import root, and that same identifier must appear in the register row that documents the import — tracked records agreeing with each other. Whether the bytes are still on the machine that has them is now a separate, explicitly skip-named test, so a clean checkout reports `skipped=1` instead of failing and this machine still checks it. In the clean worktree the module now runs 9 tests OK with 1 named skip.",
+      "regression_test": "tests/workflow-assistance/test_project_local_citation_audit.py — the agreement test is unconditional; the presence test carries skipUnless(IMPORT_ROOT.is_dir()) with a reason that says why",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Never assert state that lives under `.project-local` from a CI-discovered gate; assert agreement between tracked records instead, and make any machine-local observation a separately named skip. Also: a worktree created inside the ignored root is NOT a clean-checkout simulation — the repo's own boundary guards change the outcome (17 unrelated failures here came from the simulation, not from the tree).",
+      "remaining_boundary": "The 30802cc workflow-assistance log could not be fetched while the run was still in progress (gh returns no logs until completion, and the escape-sequence guard blocks the job-log path), so the cause is established by reproducing the failure in a clean worktree plus the restored green at the next head, not by reading the runner log. No evidence yet that any other test at 30802cc failed.",
+      "status_before": "FAIL",
+      "status_after": "UNVERIFIED",
+      "lifecycle": {
+        "introducedCommit": "30802cc",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "CI-discovered governance gates must pass on a clean checkout",
         "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py"
       }
     }
