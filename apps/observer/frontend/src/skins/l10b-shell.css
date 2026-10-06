@@ -290,3 +290,50 @@ html.light {
  * The 78px top bar absorbs the larger size at no layout cost. */
 .winctl { gap: 4px; }
 .winctl-btn { width: 32px; height: 32px; }
+
+/* ---------------------------------------------------------------------------
+ * 2026-10-06 ordering repair. Read-only audit found this file defeating
+ * itself: equal-specificity rules declared LATER in the same file win, so the
+ * unconditional `.two-col` / `.split` rewrites above cancelled the `@container`
+ * collapse above them, and `.app-compact` was overridden before the compact
+ * layout ever applied. Everything that must win is therefore stated once, here,
+ * at the end. b10.css remains untouched.
+ * ------------------------------------------------------------------------- */
+
+/* Compact HUD has no rail, so it must own a single full-width track. It renders
+ * `class="app app-compact"` with one in-flow child, which previously squeezed
+ * the whole HUD into the 210-280px rail column. */
+@media (min-width: 841px) {
+  .app.app-compact { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Paired / triple / split rows keep B10's proportions but can always shrink,
+ * and collapse to one column inside a narrow content container. */
+.two-col { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.split { grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.95fr); }
+.three-col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@container page (max-width: 900px) {
+  .three-col { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container page (max-width: 760px) {
+  .two-col, .three-col, .split { grid-template-columns: minmax(0, 1fr); }
+  .metric-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Flex/grid children that carry projected data need an explicit zero minimum,
+ * otherwise their min-content width pushes the page past the window and the
+ * `.app{overflow:hidden}` + `body{overflow:hidden}` pair makes the excess
+ * permanently unreachable rather than scrollable. */
+.page-head { flex-wrap: wrap; }
+.page-actions { min-width: 0; flex-wrap: wrap; }
+.list-item > * { min-width: 0; }
+.metric-box { min-width: 0; }
+.top-actions { flex-wrap: wrap; min-width: 0; }
+
+/* Install roots, working-area paths and SHAs are evidence-bearing and have no
+ * spaces to break on; `.panel{overflow:hidden}` was clipping them mid-token. */
+.mono, .font-mono, code { overflow-wrap: anywhere; }
+
+/* The mobile drawer's rail was only displayed at >=841px while b10 hides
+ * `.sidebar` at <=840, so the hamburger opened an empty overlay. */
+.mobile-nav-panel { display: flex; flex-direction: column; }

@@ -17,6 +17,7 @@
 import * as React from 'react'
 import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/ui/page-header'
+import { Tooltip } from '@/components/ui/tooltip'
 import { KPICard } from '@/components/dashboard/KPICard'
 import { NodeGraph, type GraphNode } from '@/components/graph/node-graph'
 import { Sparkline } from '@/components/ui/sparkline'
@@ -96,10 +97,22 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
         description="执行态势、工作流健康、观察者与审计信号整合到同一控制平面。真值来自 v3 快照投影；缺失即 UNKNOWN，不伪造。"
         actions={
           <>
-            <button type="button" className="ghost-btn" disabled>导出状态</button>
-            <button type="button" className="primary-btn" disabled>
-              <Plus size={14} aria-hidden /> 新建执行
-            </button>
+            {/* b10.css has no :disabled rule and keeps `button{cursor:pointer}`
+                plus a hover lift, so a bare disabled button renders exactly like
+                a working control that silently does nothing. Each one now states
+                why it cannot act. */}
+            <Tooltip text="状态导出契约未接入 — Observer 只读，不写文件">
+              <span>
+                <button type="button" className="ghost-btn" disabled aria-disabled="true">导出状态</button>
+              </span>
+            </Tooltip>
+            <Tooltip text="执行由 Task Protocol 创建，Observer 不发起执行">
+              <span>
+                <button type="button" className="primary-btn" disabled aria-disabled="true">
+                  <Plus size={14} aria-hidden /> 新建执行
+                </button>
+              </span>
+            </Tooltip>
           </>
         }
       />

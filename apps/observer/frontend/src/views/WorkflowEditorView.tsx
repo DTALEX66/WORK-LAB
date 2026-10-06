@@ -80,11 +80,10 @@ export function WorkflowEditorView({ snap }: { snap: unknown }) {
         description="交互式节点画布：拖动 / 缩放 / 平移 / 选择 / 连线 / 删除。本地编辑模型（localStorage 持久化）；发布与运行在真实 workflow-schema 契约接入前保持禁用。"
         actions={
           <Tooltip text="本地编辑已自动持久化">
-            <span>
-              <Button variant="secondary" iconLeft={Save} size="sm">
-                已保存
-              </Button>
-            </span>
+            {/* This had no onClick: a button that looks pressable and does
+                nothing is exactly the fake affordance the read-only rule is
+                about, so it is a status label instead. */}
+            <span className="tag info" role="status">已自动保存</span>
           </Tooltip>
         }
       />
