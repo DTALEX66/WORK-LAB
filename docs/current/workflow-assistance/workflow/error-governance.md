@@ -10,9 +10,13 @@ responses, or private configuration values.
 
 Canonical files:
 
-- `.project-local/artifacts/error-ledger-20260806.json`
+- `taskpacks/current/error-ledger.json` (the live ledger; verified by `scripts/ci/verify_error_ledger.py`)
 - `scripts/ci/verify_error_ledger.py`
 - `tests/ci/test_error_ledger.py`
+
+> 2026-10-07 更正：本节此前把 `.project-local/artifacts/error-ledger-20260806.json` 列为 canonical file。
+> 那个 2026-08-06 快照早已被并入上面的在册台账，磁盘上也不存在该文件；照旧说明去读它会失败。
+> 保留这条更正，是为了让"文档里的路径就是一句会被执行的命令"这件事留下痕迹（见 ERR-131）。
 
 ## Required record fields
 

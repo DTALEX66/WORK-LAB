@@ -26,6 +26,11 @@
 
 复现命令（证据在 `.project-local/runs/p0c-diag-20261006/`）：
 
+> 2026-10-07 更正：仓库根的这个路径已不在磁盘上。原件没有丢——它随 2026-10-06 的 WorkBuddy 工作树导入保存在
+> `.project-local/imported-from-workbuddy-20261006/WORK-LAB__task-decomposition-atlas-gap-archive-20261001-381e33ec/.project-local/runs/p0c-diag-20261006/`
+> （含 `bitblt_screen__logical.png`、`capture_modes_nocdp.json`、`chrome_dump_dom.err` 等 30 余项，逐文件 sha256 与来源一致：onlySrc=0、onlyDst=0、contentDiff=0，见同目录 `MANIFEST.md`）。
+> 本仓库根下不存在同名目录，是因为那轮实验运行在另一个工作树里；按导入路径读取，不要按本行原句的路径读取。
+
 ```
 # 供出同一份 dist
 cd apps/observer/frontend/dist && python -m http.server 41874 --bind 127.0.0.1

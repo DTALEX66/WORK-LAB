@@ -1,0 +1,1691 @@
+{
+  "schemaVersion": "work-lab/project-local-citation-audit/v2",
+  "generatedAt": "2026-10-06T22:06:24Z",
+  "generatedBy": "scripts/audit/project_local_citation_audit.py",
+  "scope": {
+    "trackedFilesScanned": 1992,
+    "distinctProjectLocalTokens": 366,
+    "tokensResolvedOnDisk": 166,
+    "tokensAbsent": 200,
+    "citationsToAbsentTokens": 265
+  },
+  "classificationRules": {
+    "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
+    "negative_assertion_or_removal_record": "the sentence says the path must not exist, or records that it was removed",
+    "declared_output_destination_or_fixture_in_code": "a script or command names a location it will create, or a synthetic fixture path; absence is the normal state and creating it unasked would be the spill",
+    "machine_field_pointing_at_absent_path": "a machine-readable evidence/receipt/artifact field names an absent path",
+    "prose_in_frozen_history_or_audit": "historical or audit narrative describing where files were at the time",
+    "unclassified_needs_human_read": "not auto-disposed; listed for a per-path decision"
+  },
+  "countsByClass": {
+    "declared_output_destination_or_fixture_in_code": {
+      "citations": 36,
+      "distinctPaths": 19
+    },
+    "machine_field_pointing_at_absent_path": {
+      "citations": 1,
+      "distinctPaths": 1
+    },
+    "negative_assertion_or_removal_record": {
+      "citations": 15,
+      "distinctPaths": 12
+    },
+    "path_pattern_or_truncated_token": {
+      "citations": 7,
+      "distinctPaths": 7
+    },
+    "prose_in_frozen_history_or_audit": {
+      "citations": 183,
+      "distinctPaths": 167
+    },
+    "unclassified_needs_human_read": {
+      "citations": 23,
+      "distinctPaths": 16
+    }
+  },
+  "buckets": {
+    "declared_output_destination_or_fixture_in_code": [
+      {
+        "path": ".project-local/artifacts/current-state-ci.json",
+        "file": "packages/client-neutral-core/scripts/verify_gate_runtime_convergence.py",
+        "line": 46,
+        "text": "evidence_file = ROOT / \".project-local/artifacts/current-state-ci.json\""
+      },
+      {
+        "path": ".project-local/artifacts/current-state-ci.json",
+        "file": "scripts/ci/generate_current_state.py",
+        "line": 23,
+        "text": "DEFAULT_CI_EVIDENCE = Path(\".project-local/artifacts/current-state-ci.json\")"
+      },
+      {
+        "path": ".project-local/artifacts/current-state-ci.json",
+        "file": "scripts/maintenance/converge_u02_runtime_paths.py",
+        "line": 35,
+        "text": "# generate_current_state.py writes .project-local/artifacts/current-state-ci.json,"
+      },
+      {
+        "path": ".project-local/artifacts/current-state-ci.json",
+        "file": "scripts/maintenance/converge_u02_runtime_paths.py",
+        "line": 40,
+        "text": "'evidence_file = ROOT / \".project-local/artifacts/current-state-ci.json\"'),"
+      },
+      {
+        "path": ".project-local/artifacts/current-state-ci.json",
+        "file": "scripts/maintenance/converge_u02_runtime_paths.py",
+        "line": 43,
+        "text": "\"On CI runners the local CI-evidence file\\n    (.project-local/artifacts/current-state-ci.json)\"),"
+      },
+      {
+        "path": ".project-local/artifacts/current-state-runtime-attestation.json",
+        "file": "scripts/ci/generate_current_state.py",
+        "line": 24,
+        "text": "DEFAULT_RUNTIME_ATTESTATION = Path(\".project-local/artifacts/current-state-runtime-attestation.json\")"
+      },
+      {
+        "path": ".project-local/artifacts/mcp-candidate.yaml",
+        "file": "docs/current/workflow-assistance-README.md",
+        "line": 435,
+        "text": "python packages/client-neutral-core/scripts/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml"
+      },
+      {
+        "path": ".project-local/artifacts/mcp-candidate.yaml",
+        "file": "docs/current/workflow-assistance-README.md",
+        "line": 711,
+        "text": "python packages/client-neutral-core/scripts/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml"
+      },
+      {
+        "path": ".project-local/artifacts/mcp-candidate.yaml",
+        "file": "docs/current/workflow-assistance/mcp/mcp-catalog-governance.md",
+        "line": 14,
+        "text": "python scripts/workflow/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml"
+      },
+      {
+        "path": ".project-local/artifacts/mcp-candidate.yaml",
+        "file": "docs/current/workflow-assistance/mcp/workflow-mcp-stack.md",
+        "line": 46,
+        "text": "python scripts/workflow/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml"
+      },
+      {
+        "path": ".project-local/artifacts/setup-plan.json",
+        "file": "scripts/maintenance/converge_u02_runtime_paths.py",
+        "line": 18,
+        "text": "'PLAN_FILE=\"$REPO_ROOT/.project-local/artifacts/setup-plan.json\"'),"
+      },
+      {
+        "path": ".project-local/artifacts/setup-plan.json",
+        "file": "scripts/setup-workflow.sh",
+        "line": 15,
+        "text": "PLAN_FILE=\"$REPO_ROOT/.project-local/artifacts/setup-plan.json\""
+      },
+      {
+        "path": ".project-local/audits/handoff-audit.jsonl",
+        "file": "services/session-federation/audit.py",
+        "line": 4,
+        "text": "under ``.project-local/audits/handoff-audit.jsonl``.  The ledger is"
+      },
+      {
+        "path": ".project-local/evidence",
+        "file": "packages/client-neutral-core/bin/hermes-project-data.py",
+        "line": 196,
+        "text": "- durable verification evidence: `.project-local/artifacts/` or `.project-local/evidence/`"
+      },
+      {
+        "path": ".project-local/handoffs",
+        "file": "packages/client-neutral-core/bin/hermes-project-data.py",
+        "line": 194,
+        "text": "- plans and handoffs: `.project-local/plans/` and `.project-local/handoffs/`"
+      },
+      {
+        "path": ".project-local/kanban",
+        "file": "packages/client-neutral-core/bin/hermes-project-data.py",
+        "line": 197,
+        "text": "- Hermes project board: `.project-local/kanban/` (run through `hermes-project-data.py kanban`)"
+      },
+      {
+        "path": ".project-local/logs/app.log",
+        "file": "tests/workflow-assistance/test_cleanup.py",
+        "line": 45,
+        "text": "Path(d, \".project-local/logs/app.log\").write_text(\"boot\")"
+      },
+      {
+        "path": ".project-local/logs/app.log",
+        "file": "tests/workflow-assistance/test_cleanup.py",
+        "line": 108,
+        "text": "d = gov.decide({\"path\": \".project-local/logs/app.log\"})"
+      },
+      {
+        "path": ".project-local/plans",
+        "file": "packages/client-neutral-core/bin/hermes-project-data.py",
+        "line": 194,
+        "text": "- plans and handoffs: `.project-local/plans/` and `.project-local/handoffs/`"
+      },
+      {
+        "path": ".project-local/runs/acp-sdk-canary",
+        "file": "integrations/protocols/acp/sdk_canary.py",
+        "line": 49,
+        "text": "scratch = root / '.project-local/runs/acp-sdk-canary'"
+      },
+      {
+        "path": ".project-local/runs/ci/changed-paths.txt",
+        "file": ".github/workflows/work-lab-gate.yml",
+        "line": 39,
+        "text": "git diff --name-only \"$PR_BASE_SHA\" \"$HEAD_SHA\" > .project-local/runs/ci/changed-paths.txt"
+      },
+      {
+        "path": ".project-local/runs/ci/changed-paths.txt",
+        "file": ".github/workflows/work-lab-gate.yml",
+        "line": 41,
+        "text": "git ls-files > .project-local/runs/ci/changed-paths.txt"
+      },
+      {
+        "path": ".project-local/runs/ci/changed-paths.txt",
+        "file": ".github/workflows/work-lab-gate.yml",
+        "line": 43,
+        "text": "git diff --name-only \"$BEFORE_SHA\" \"$HEAD_SHA\" > .project-local/runs/ci/changed-paths.txt"
+      },
+      {
+        "path": ".project-local/runs/scratch/ghost.py",
+        "file": "tests/workflow-assistance/test_error_ledger_regression_commands.py",
+        "line": 112,
+        "text": "\"python .project-local/runs/scratch/ghost.py\"}}]"
+      },
+      {
+        "path": ".project-local/runs/skill-call-index.json",
+        "file": "packages/client-neutral-core/scripts/skill_call_index.py",
+        "line": 14,
+        "text": "INDEX_FILE = \".project-local/runs/skill-call-index.json\""
+      },
+      {
+        "path": ".project-local/runs/skill-call-index.json",
+        "file": "scripts/maintenance/converge_u02_runtime_paths.py",
+        "line": 28,
+        "text": "'INDEX_FILE = \".project-local/runs/skill-call-index.json\"'),"
+      },
+      {
+        "path": ".project-local/runs/skill-call-index.json",
+        "file": "scripts/maintenance/converge_u02_runtime_paths.py",
+        "line": 31,
+        "text": "\"先查项目技能调用索引（.project-local/runs/skill-call-index.json）\"),"
+      },
+      {
+        "path": ".project-local/runs/skill-call-index.json",
+        "file": "scripts/maintenance/converge_u02_runtime_paths.py",
+        "line": 34,
+        "text": "\"索引：.project-local/runs/skill-call-index.json\"),"
+      },
+      {
+        "path": ".project-local/sandboxes/exo",
+        "file": "services/evolution/exo_sandbox.py",
+        "line": 6,
+        "text": ".project-local/sandboxes/exo/"
+      },
+      {
+        "path": ".project-local/sandboxes/exo",
+        "file": "services/evolution/exo_sandbox.py",
+        "line": 27,
+        "text": "EXO_SANDBOX_ROOT = \".project-local/sandboxes/exo\""
+      },
+      {
+        "path": ".project-local/sessions/index.sqlite",
+        "file": "services/session-federation/index.py",
+        "line": 3,
+        "text": "Stores a local SQLite index under ``.project-local/sessions/index.sqlite``"
+      },
+      {
+        "path": ".project-local/sleep-mode",
+        "file": "docs/current/workflow-assistance/workflow/gateway-cron-delivery.md",
+        "line": 48,
+        "text": "<project>/.project-local/sleep-mode/"
+      },
+      {
+        "path": ".project-local/sleep-mode",
+        "file": "packages/client-neutral-core/bin/hermes-project-data.py",
+        "line": 193,
+        "text": "- queues and durable task state: `.project-local/tasks/` or `.project-local/sleep-mode/`"
+      },
+      {
+        "path": ".project-local/state.db",
+        "file": "tests/workflow-assistance/test_cleanup.py",
+        "line": 122,
+        "text": "d = gov.decide({\"path\": \".project-local/state.db\"})"
+      },
+      {
+        "path": ".project-local/state.db",
+        "file": "tests/workflow-assistance/test_cleanup.py",
+        "line": 137,
+        "text": "spills = [{\"path\": \".project-local/state.db\"},"
+      },
+      {
+        "path": ".project-local/tasks",
+        "file": "packages/client-neutral-core/bin/hermes-project-data.py",
+        "line": 193,
+        "text": "- queues and durable task state: `.project-local/tasks/` or `.project-local/sleep-mode/`"
+      }
+    ],
+    "machine_field_pointing_at_absent_path": [
+      {
+        "path": ".project-local/runs/observer",
+        "file": "apps/observer/module-profile.json",
+        "line": 9,
+        "text": "\"evidencePath\": \".project-local/runs/observer\","
+      }
+    ],
+    "negative_assertion_or_removal_record": [
+      {
+        "path": ".project-local/artifacts/current-state-ci.json",
+        "file": "packages/client-neutral-core/scripts/verify_gate_runtime_convergence.py",
+        "line": 32,
+        "text": "(.project-local/artifacts/current-state-ci.json) is not checked out (it is git-ignored), so the"
+      },
+      {
+        "path": ".project-local/artifacts/current-state-ci.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 3178,
+        "text": "\"observed_error\": \"Both bootstrap scripts invoked $REPO_ROOT/scripts/workflow/sync_hermes_workflow_assets.py, a path that has not existed since the 2026-09 directory convergence — the real entry point"
+      },
+      {
+        "path": ".project-local/artifacts/work-lab-migration-v6",
+        "file": ".project/governance/migration-status.json",
+        "line": 40,
+        "text": "\"evidencePath\": \"local .project-local/artifacts/work-lab-migration-v6 (ignored)\""
+      },
+      {
+        "path": ".project-local/cache/vendor",
+        "file": "reports/audit-archive/20260930/hermes/skills/software-development/repository-directory-restructuring/SKILL.md",
+        "line": 157,
+        "text": "2. **Copy to the ignored cache BEFORE git rm** (fidelity backup): `shutil.copytree(src, .project-local/cache/vendor/<key>)`, record a manifest (src → cache key, file count). Deletions are only safe af"
+      },
+      {
+        "path": ".project-local/runs/frontend-baseline-vitest-only.py",
+        "file": "reports/SESSION-CONSOLIDATION-20261001.md",
+        "line": 75,
+        "text": "**已 land 进仓库源码**（144 行，版本 1.3.0 → 1.4.0），并把 live 中指向 `.project-local/runs/frontend-baseline-vitest-only.py`（**不存在**）的**悬空引用换成真实路径**。"
+      },
+      {
+        "path": ".project-local/runs/skill-call-index.json",
+        "file": "docs/decisions/global-execution-standard.md",
+        "line": 59,
+        "text": "索引：.project-local/runs/skill-call-index.json（首次扫描后落盘；不存在时直接扫描 SKILL 清单）"
+      },
+      {
+        "path": ".project-local/sessions/index.sqlite",
+        "file": "services/session-federation/index.py",
+        "line": 32,
+        "text": "(``.project-local/sessions/index.sqlite`` by default) and must never"
+      },
+      {
+        "path": ".project-local/sessions/registry.sqlite",
+        "file": "services/session-federation/registry.py",
+        "line": 23,
+        "text": "``.project-local/sessions/registry.sqlite``; it never touches a native"
+      },
+      {
+        "path": ".project-local/task-artifacts",
+        "file": "reports/audit-archive/20260930/hermes/skills/software-development/design-lab-authority-convergence/SKILL.md",
+        "line": 126,
+        "text": "stdlib-only, writes its run record under `.project-local/task-artifacts/` (ignored),"
+      },
+      {
+        "path": ".project-local/task-artifacts",
+        "file": "reports/audit-archive/20260930/hermes/skills/software-development/design-lab-authority-convergence/SKILL.md",
+        "line": 491,
+        "text": "4. **Negative-control fixtures go under `.project-local/task-artifacts/<topic>/` (gitignored)** — a bad-matrix file written there proves the FAIL path without polluting the tracked tree (same conventi"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-RECOVERY-AUDIT-2026-09-07.md",
+        "line": 32,
+        "text": "所有产物位于 `.project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/`，Git ignored；换机缺失须报 MISSING，不得重造日志。"
+      },
+      {
+        "path": ".project-local/task-artifacts/entry-trace-readback/20260906T184453743620Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ENTRY-WRITE-TRACE-2026-09-07.md",
+        "line": 28,
+        "text": "- [独立读回与定向/统一验证](../../.project-local/task-artifacts/entry-trace-readback/20260906T184453743620Z/results.json)：核对所有源/证据 hash、四对保留的 SVG/PNG、实际解码像素、指定失败原因、回滚后的不存在性。最终结果以此文件为准。"
+      },
+      {
+        "path": ".project-local/task-runtime/wheel-build/uv-cache",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-WHEEL-QUALIFICATION-2026-09-07.md",
+        "line": 11,
+        "text": "所有构建缓存与安装环境在本仓 `.project-local`；设置 `UV_CACHE_DIR` 为 `.project-local/task-runtime/wheel-build/uv-cache`，`UV_PYTHON_DOWNLOADS=never`。使用既有 uv 和 Python 3.13.14，没有安装全局 Python 或修改全局配置。"
+      },
+      {
+        "path": ".project-local/tooling",
+        "file": "packages/client-neutral-core/skills/software-development/windows-development-environment/SKILL.md",
+        "line": 122,
+        "text": "20. **Setting a registered external toolchain path on the wrapper command line** (`set ARCHEAXIS_RUST_TOOLCHAINS=D:\\...`, `cmd.exe /c`, a bare `-c \"...D:\\...\"`): the project-data guard rejects the chi"
+      },
+      {
+        "path": ".project-local/tooling",
+        "file": "reports/audit-archive/20260930/hermes/skills/software-development/windows-development-environment/SKILL.md",
+        "line": 122,
+        "text": "20. **Setting a registered external toolchain path on the wrapper command line** (`set ARCHEAXIS_RUST_TOOLCHAINS=D:\\...`, `cmd.exe /c`, a bare `-c \"...D:\\...\"`): the project-data guard rejects the chi"
+      }
+    ],
+    "path_pattern_or_truncated_token": [
+      {
+        "path": ".project-local/dist/build/__pycache__",
+        "file": ".project/governance/seam-caller-baseline.json",
+        "line": 7,
+        "text": "\"method\": \"Scanned *.py/*.sh/*.ps1/*.cmd/*.bat/*.js/*.ts/*.tsx under services, packages, apps, scripts, integrations, tests for each seam contract's module marker, skipping node_modules/.project-local"
+      },
+      {
+        "path": ".project-local/prune-manifest-",
+        "file": "reports/audit-archive/20260930/hermes/skills/software-development/design-lab-authority-convergence/SKILL.md",
+        "line": 882,
+        "text": "`.project-local/prune-manifest-<date>.json` listing removed roots with their"
+      },
+      {
+        "path": ".project-local/quarantine/dsh-",
+        "file": "taskpacks/history/WORK-LAB-HERMES-HANDOFF-2026-09-21.md",
+        "line": 61,
+        "text": "3. `.project-local/quarantine/dsh-*` retention review if DSH work is ever closed out (only with explicit authorization)."
+      },
+      {
+        "path": ".project-local/runs/dsh-codex-live-probe-202XX.json",
+        "file": "reports/audit-archive/20260930/hermes/skills/software-development/dsh-administration/SKILL.md",
+        "line": 357,
+        "text": "1. 只读 live 探针（不写任何全局配置）：运行 `python .project-local/runs/dsh_codex_probe.py`（或等效只读脚本），将 DSH exe 路径、版本（从 resources/app/package.json）、桌面 .lnk 三字段（TargetPath/Arguments/IconLocation）、Codex wrapper 路径（packag"
+      },
+      {
+        "path": ".project-local/runs/u19_",
+        "file": "taskpacks/current/U19-HEADLESS-REQUALIFICATION-HANDOFF-20260923.md",
+        "line": 25,
+        "text": "Grep next CI log: `grep all_pid_windows .project-local/runs/u19_*`"
+      },
+      {
+        "path": ".project-local/runs/ui-suite/l10b-verify/shot-",
+        "file": "ASSET_REPLACEMENT_MANIFEST.md",
+        "line": 43,
+        "text": "- `.project-local/runs/ui-suite/l10b-verify/shot-*.png` —— 17 张 1600×1050 headless 截图，"
+      },
+      {
+        "path": ".project-local/task-runtime/run_",
+        "file": "docs/history/archive/session-history/WORK-LAB/WORK-LAB-PARALLEL-DISPATCH-HANDOFF-2026-09-20.md",
+        "line": 72,
+        "text": "- 多段 PYTHONPATH 测试用 gitignored scratch runner（`.project-local/task-runtime/run_*.py`），"
+      }
+    ],
+    "prose_in_frozen_history_or_audit": [
+      {
+        "path": ".project-local/agents",
+        "file": "reports/audit-archive/20260930/projects/ArcheAxis-Knowledge-OS/DIRECTORY_AUTHORITY.yaml",
+        "line": 561,
+        "text": "- .project-local/agents/"
+      },
+      {
+        "path": ".project-local/artifacts/current-state-ci.json",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 89,
+        "text": "\".project-local/artifacts/current-state-ci.json\","
+      },
+      {
+        "path": ".project-local/artifacts/current-state-runtime-attestation.json",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 90,
+        "text": "\".project-local/artifacts/current-state-runtime-attestation.json\","
+      },
+      {
+        "path": ".project-local/artifacts/error-ledger-20260806.json",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 91,
+        "text": "\".project-local/artifacts/error-ledger-20260806.json\","
+      },
+      {
+        "path": ".project-local/artifacts/evals",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 92,
+        "text": "\".project-local/artifacts/evals/\","
+      },
+      {
+        "path": ".project-local/artifacts/mcp-candidate.yaml",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 93,
+        "text": "\".project-local/artifacts/mcp-candidate.yaml\","
+      },
+      {
+        "path": ".project-local/artifacts/orca-pilot",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 94,
+        "text": "\".project-local/artifacts/orca-pilot/\","
+      },
+      {
+        "path": ".project-local/artifacts/r4",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 96,
+        "text": "\".project-local/artifacts/r4/（R4-COMPLETE\","
+      },
+      {
+        "path": ".project-local/artifacts/r4",
+        "file": "docs/history/archive/session-history/WORK-LAB/WORK-LAB-CLEANUP-SUMMARY-2026-09-05.md",
+        "line": 9,
+        "text": "- 报告：.project-local/artifacts/r4/（R4-COMPLETE + R4-HANDOFF）+ 50-taskpacks/WORK-LAB-HANDOFF-2026-09-05.md"
+      },
+      {
+        "path": ".project-local/artifacts/r4/R4-COMPLETE.md",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 95,
+        "text": "\".project-local/artifacts/r4/R4-COMPLETE.md\","
+      },
+      {
+        "path": ".project-local/artifacts/r4/R4-COMPLETE.md",
+        "file": "docs/history/archive/session-history/WORK-LAB/WORK-LAB-CLEANUP-SUMMARY-2026-09-05.md",
+        "line": 43,
+        "text": "- R4：.project-local/artifacts/r4/R4-COMPLETE.md"
+      },
+      {
+        "path": ".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 98,
+        "text": "\".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json\","
+      },
+      {
+        "path": ".project-local/artifacts/work-lab-migration-v6",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 99,
+        "text": "\".project-local/artifacts/work-lab-migration-v6\","
+      },
+      {
+        "path": ".project-local/cache/models",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PROJECT-PATHS-2026-09-06.md",
+        "line": 19,
+        "text": "| 新模型缓存 | `.project-local/cache/models` | `child_environment` 提供 HF/Torch 路径，不自动下载 |"
+      },
+      {
+        "path": ".project-local/cache/models/huggingface",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-PREPARATION-BOUNDARY-2026-09-07.md",
+        "line": 7,
+        "text": "1. 只读检查已登记模型库顶层及项目 `.project-local/cache/models/huggingface`，未发现本次可复用的 OCR 权重。旧报告指向用户目录且称只有 refs 指针；本轮没有读取该用户缓存，不作“全机未安装”的结论。"
+      },
+      {
+        "path": ".project-local/desktop-attachments",
+        "file": "docs/history/archive/workflow-assistance/handoffs/audit-r2-fixes-handoff-2026-08-14.md",
+        "line": 36,
+        "text": "WLGM_TASKPACK_IN_GIT:   P1-6——WLGM-000~240 权威任务包仍在 .project-local/desktop-attachments/"
+      },
+      {
+        "path": ".project-local/leases",
+        "file": "reports/audit-archive/20260930/projects/ArcheAxis-Knowledge-OS/DIRECTORY_AUTHORITY.yaml",
+        "line": 562,
+        "text": "- .project-local/leases/"
+      },
+      {
+        "path": ".project-local/logs",
+        "file": "reports/audit-archive/20260930/projects/ArcheAxis-Knowledge-OS/DIRECTORY_AUTHORITY.yaml",
+        "line": 567,
+        "text": "- .project-local/logs/"
+      },
+      {
+        "path": ".project-local/projects",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-IMAGE-IMPORT-HTTP-2026-09-07.md",
+        "line": 10,
+        "text": "- 输入副本位于 `.project-local/task-runtime/image-imports/<attempt>/input`，最终文件位于 `.project-local/projects/<project-id>/assets/versions/<publication>/reference.png|jpg`。存储与数据库全部传入显式拥有项目根。"
+      },
+      {
+        "path": ".project-local/projects",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-NATIVE-TASK-EXECUTION-2026-09-08.md",
+        "line": 5,
+        "text": "新增 `src/design_lab/native_tasks.py`，将已实测的 Illustrator/Photoshop COM adapter 接到现有 service SQLite、operation/attempt、资产 fencing 和 `publish_version`。安装包实机已分别生成 AI/PSD，登记到 `.project-local/projects/`；重建服务对象"
+      },
+      {
+        "path": ".project-local/projects",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-NATIVE-TASK-EXECUTION-2026-09-08.md",
+        "line": 42,
+        "text": "日期均为 2026-09-07 UTC（本地 09-08）。两宿主文档数量均 0→0。输入是受控合成 fixture，不计入 5–10 张复杂参考。项目资产位置由结果 JSON 的 `asset.path` 给出，可用 `.project-local/projects/<project_id>/assets/versions/` 定位；这些原生工程不上传 Git。"
+      },
+      {
+        "path": ".project-local/projects",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PROJECT-PATHS-2026-09-06.md",
+        "line": 18,
+        "text": "| 持久作品 | `.project-local/projects` | 作品与运行临时目录分开，不自动搬动旧作品 |"
+      },
+      {
+        "path": ".project-local/runs/acp-sdk-canary",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 100,
+        "text": "\".project-local/runs/acp-sdk-canary\""
+      },
+      {
+        "path": ".project-local/runs/frontend-baseline-vitest-only.py",
+        "file": "reports/audit-archive/20260930/hermes/skills/software-development/windows-development-environment/SKILL.md",
+        "line": 144,
+        "text": "30. **`.cmd` binary parsing with Python `subprocess.run` on Windows.** The node binary lives under `C:\\Program Files\\nodejs\\node.EXE`, but `.cmd` wrappers (`.bin/vitest.cmd`, `.bin/tsc.cmd`) must be e"
+      },
+      {
+        "path": ".project-local/runs/p0c-final-20261006/EBWebView-final-1791293904",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 42,
+        "text": "\"path\": \".project-local/runs/p0c-final-20261006/EBWebView-final-1791293904\","
+      },
+      {
+        "path": ".project-local/runs/p0c-final-20261006/EBWebView-final-1791294853",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 54,
+        "text": "\"path\": \".project-local/runs/p0c-final-20261006/EBWebView-final-1791294853\","
+      },
+      {
+        "path": ".project-local/runs/p0c-final-20261006/EBWebView-final-1791294986",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 24,
+        "text": "\"path\": \".project-local/runs/p0c-final-20261006/EBWebView-final-1791294986\","
+      },
+      {
+        "path": ".project-local/runs/p0c-oracle-20261006/EBWebView-cdp-1791289824",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 48,
+        "text": "\"path\": \".project-local/runs/p0c-oracle-20261006/EBWebView-cdp-1791289824\","
+      },
+      {
+        "path": ".project-local/runs/p0c-oracle-20261006/EBWebView-cdp-1791289942",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 30,
+        "text": "\"path\": \".project-local/runs/p0c-oracle-20261006/EBWebView-cdp-1791289942\","
+      },
+      {
+        "path": ".project-local/runs/p0c-oracle-20261006/EBWebView-cdp-1791290124",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 18,
+        "text": "\"path\": \".project-local/runs/p0c-oracle-20261006/EBWebView-cdp-1791290124\","
+      },
+      {
+        "path": ".project-local/runs/p0c-oracle-20261006/EBWebView-x-1791290074",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 36,
+        "text": "\"path\": \".project-local/runs/p0c-oracle-20261006/EBWebView-x-1791290074\","
+      },
+      {
+        "path": ".project-local/runs/ui-suite/l10b-verify/chrome-profile",
+        "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+        "line": 12,
+        "text": "\"path\": \".project-local/runs/ui-suite/l10b-verify/chrome-profile\","
+      },
+      {
+        "path": ".project-local/task-artifacts",
+        "file": "reports/audit-archive/20260930/hermes/skills/software-development/workspace-hygiene/SKILL.md",
+        "line": 299,
+        "text": "(e.g. a project's `.project-local/task-artifacts/`, `archive/` legacy roots),"
+      },
+      {
+        "path": ".project-local/task-artifacts",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PROJECT-PATHS-2026-09-06.md",
+        "line": 17,
+        "text": "| 验证证据 | `.project-local/task-artifacts` | 保留日志与哈希，生成时间不等于实测时间 |"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-BATCH-AUDIT-2026-09-07.md",
+        "line": 16,
+        "text": "运行根：`.project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/17-result.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-BATCH-AUDIT-2026-09-07.md",
+        "line": 21,
+        "text": "- [宿主终态记录](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/17-result.json)：脚本所检查的操作完成三轮。"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/independent-verification.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-BATCH-AUDIT-2026-09-07.md",
+        "line": 22,
+        "text": "- [独立核验与逐文件 hash](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/independent-verification.json)：106 项，其中 SVG 原始字节重复性失败。"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/repeat-1/edited.ai",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-BATCH-AUDIT-2026-09-07.md",
+        "line": 19,
+        "text": "- [修改后的原生 AI](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/repeat-1/edited.ai)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/repeat-1/edited.png",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-BATCH-AUDIT-2026-09-07.md",
+        "line": 20,
+        "text": "- [修改预览](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/repeat-1/edited.png)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/repeat-1/restored.ai",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-BATCH-AUDIT-2026-09-07.md",
+        "line": 18,
+        "text": "- [恢复后的原生 AI](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/repeat-1/restored.ai)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/svg-id-diagnosis.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-BATCH-AUDIT-2026-09-07.md",
+        "line": 23,
+        "text": "- [SVG 差异诊断](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-batch/run-1788717978664/svg-id-diagnosis.json)：九份 SVG 的原始和诊断 hash、ID 映射、五项诊断检查。"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/2-production-validator.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-RECOVERY-AUDIT-2026-09-07.md",
+        "line": 39,
+        "text": "- [产品校验失败原件](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/2-production-validator.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/baseline.ai",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-RECOVERY-AUDIT-2026-09-07.md",
+        "line": 34,
+        "text": "- [原始工程](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/baseline.ai)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/independent-20260906T204650558825Z.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-RECOVERY-AUDIT-2026-09-07.md",
+        "line": 40,
+        "text": "- [独立核验及全部 22 个原始输出 hash](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/independent-20260906T204650558825Z.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/interrupted.ai",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-RECOVERY-AUDIT-2026-09-07.md",
+        "line": 35,
+        "text": "- [中断时工程](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/interrupted.ai)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/recovered.ai",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-RECOVERY-AUDIT-2026-09-07.md",
+        "line": 36,
+        "text": "- [恢复后的可编辑 AI](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/recovered.ai)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/recovered.png",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-RECOVERY-AUDIT-2026-09-07.md",
+        "line": 37,
+        "text": "- [恢复后预览](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/recovered.png)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/restored.ai",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-RECOVERY-AUDIT-2026-09-07.md",
+        "line": 38,
+        "text": "- [原生回退工程](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run-1788727466747/restored.ai)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run.jsx",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-RECOVERY-AUDIT-2026-09-07.md",
+        "line": 41,
+        "text": "- [诊断脚本](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/run.jsx)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/verify.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-RECOVERY-AUDIT-2026-09-07.md",
+        "line": 42,
+        "text": "- [独立读回脚本](../../.project-local/task-artifacts/adobe-live-20260907/illustrator-recovery-v1/verify.py)"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/path-fix-qualification/run-1788796615014/terminal.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-PATH-FIX-2026-09-07.md",
+        "line": 34,
+        "text": "`.project-local/task-artifacts/adobe-live-20260907/path-fix-qualification/run-1788796615014/terminal.json`"
+      },
+      {
+        "path": ".project-local/task-artifacts/adobe-live-20260907/path-fix-qualification/run.jsx",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-PATH-FIX-2026-09-07.md",
+        "line": 22,
+        "text": "验证脚本仅准备在 `.project-local/task-artifacts/adobe-live-20260907/path-fix-qualification/run.jsx`；目录检查只有此文件，没有运行目录或 terminal receipt。不得把准备好的脚本当实际执行证据。该脚本只调用实际 assertInside，不调用创建文档或导出操作。"
+      },
+      {
+        "path": ".project-local/task-artifacts/asr-qualification/20260906T195532284136Z/chinese.wav",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 50,
+        "text": "- [英文输入](../../.project-local/task-artifacts/asr-qualification/20260906T195532284136Z/english.wav) / [中文输入](../../.project-local/task-artifacts/asr-qualification/20260906T195532284136Z/chinese.wav)"
+      },
+      {
+        "path": ".project-local/task-artifacts/asr-qualification/20260906T195532284136Z/english.wav",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 50,
+        "text": "- [英文输入](../../.project-local/task-artifacts/asr-qualification/20260906T195532284136Z/english.wav) / [中文输入](../../.project-local/task-artifacts/asr-qualification/20260906T195532284136Z/chinese.wav)"
+      },
+      {
+        "path": ".project-local/task-artifacts/asr-qualification/20260906T195532284136Z/inference-20260906T200010211099Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 51,
+        "text": "- [原始失败结果](../../.project-local/task-artifacts/asr-qualification/20260906T195532284136Z/inference-20260906T200010211099Z/results.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/asr-qualification/20260906T195532284136Z/install-report.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 49,
+        "text": "- [实际 wheel 安装报告](../../.project-local/task-artifacts/asr-qualification/20260906T195532284136Z/install-report.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/asr-qualification/20260906T195532284136Z/preparation.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 48,
+        "text": "- [固定来源、五文件完整 hash 与准备结果](../../.project-local/task-artifacts/asr-qualification/20260906T195532284136Z/preparation.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/asr-qualification/20260906T195532284136Z/vad-comparison-20260906T200758490223Z",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 62,
+        "text": "& '.venv/Scripts/python.exe' -I -B '.project-local/task-artifacts/asr-qualification/verify_vad_comparison.py' 'D:/All projects/DESIGN-LAB/.project-local/task-artifacts/asr-qualification/20260906T19553"
+      },
+      {
+        "path": ".project-local/task-artifacts/asr-qualification/20260906T195532284136Z/vad-comparison-20260906T200758490223Z/independent-20260906T201031872880Z.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 54,
+        "text": "- [独立 195 项读回](../../.project-local/task-artifacts/asr-qualification/20260906T195532284136Z/vad-comparison-20260906T200758490223Z/independent-20260906T201031872880Z.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/asr-qualification/20260906T195532284136Z/vad-comparison-20260906T200758490223Z/protocol.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 52,
+        "text": "- [预先固定的对照协议](../../.project-local/task-artifacts/asr-qualification/20260906T195532284136Z/vad-comparison-20260906T200758490223Z/protocol.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/asr-qualification/20260906T195532284136Z/vad-comparison-20260906T200758490223Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 53,
+        "text": "- [完整对照结果与逐段概率/时间](../../.project-local/task-artifacts/asr-qualification/20260906T195532284136Z/vad-comparison-20260906T200758490223Z/results.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/asr-qualification/vad_comparison.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 61,
+        "text": "& '.project-local/task-runtime/asr-qualification/20260906T195532284136Z/venv/Scripts/python.exe' -I -B '.project-local/task-artifacts/asr-qualification/vad_comparison.py'"
+      },
+      {
+        "path": ".project-local/task-artifacts/asr-qualification/verify_vad_comparison.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 62,
+        "text": "& '.venv/Scripts/python.exe' -I -B '.project-local/task-artifacts/asr-qualification/verify_vad_comparison.py' 'D:/All projects/DESIGN-LAB/.project-local/task-artifacts/asr-qualification/20260906T19553"
+      },
+      {
+        "path": ".project-local/task-artifacts/cli-qualification/verify_installed_cli.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-INSTALLED-CLI-QUALIFICATION-2026-09-07.md",
+        "line": 20,
+        "text": "运行入口：`.project-local/task-artifacts/cli-qualification/verify_installed_cli.py`。脚本每次使用独立 UUID 新建合成记录，不覆盖既有记录；安装环境及脚本是本地证据，不随 Git 上传。"
+      },
+      {
+        "path": ".project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/independent-20260906T194359544174Z.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-COMFY-ENTRY-LIVE-2026-09-07.md",
+        "line": 31,
+        "text": "- [独立核验结果](../../.project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/independent-20260906T194359544174Z.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/prior-history-after-restart.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-COMFY-ENTRY-LIVE-2026-09-07.md",
+        "line": 36,
+        "text": "- [重启后的原任务历史](../../.project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/prior-history-after-restart.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-COMFY-ENTRY-LIVE-2026-09-07.md",
+        "line": 30,
+        "text": "- [实际运行结果](../../.project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/results.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/round-1-baseline.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-COMFY-ENTRY-LIVE-2026-09-07.md",
+        "line": 34,
+        "text": "- [任务 ID、WS 事件及历史](../../.project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/round-1-baseline.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/round-1-launch.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-COMFY-ENTRY-LIVE-2026-09-07.md",
+        "line": 32,
+        "text": "- [首轮启动与路径配置](../../.project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/round-1-launch.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/round-1-repeat.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-COMFY-ENTRY-LIVE-2026-09-07.md",
+        "line": 35,
+        "text": "- [缓存事件与历史](../../.project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/round-1-repeat.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/round-1-server.log",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-COMFY-ENTRY-LIVE-2026-09-07.md",
+        "line": 33,
+        "text": "- [首轮原始服务日志](../../.project-local/task-artifacts/comfy-normalization/20260906T194131462525Z/round-1-server.log)"
+      },
+      {
+        "path": ".project-local/task-artifacts/compound-native-20260908",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-COMPOUND-NATIVE-2026-09-08.md",
+        "line": 26,
+        "text": "All paths below are relative to `.project-local/task-artifacts/compound-native-20260908/`."
+      },
+      {
+        "path": ".project-local/task-artifacts/entry-trace-20260907/run_trace.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ENTRY-WRITE-TRACE-2026-09-07.md",
+        "line": 29,
+        "text": "- [执行脚本](../../.project-local/task-artifacts/entry-trace-20260907/run_trace.py)、[追踪器](../../.project-local/task-artifacts/entry-trace-20260907/trace_child.py)、[独立读回脚本](../../.project-local/task-artifa"
+      },
+      {
+        "path": ".project-local/task-artifacts/entry-trace-20260907/trace_child.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ENTRY-WRITE-TRACE-2026-09-07.md",
+        "line": 29,
+        "text": "- [执行脚本](../../.project-local/task-artifacts/entry-trace-20260907/run_trace.py)、[追踪器](../../.project-local/task-artifacts/entry-trace-20260907/trace_child.py)、[独立读回脚本](../../.project-local/task-artifa"
+      },
+      {
+        "path": ".project-local/task-artifacts/entry-trace-20260907/verify_trace.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ENTRY-WRITE-TRACE-2026-09-07.md",
+        "line": 29,
+        "text": "- [执行脚本](../../.project-local/task-artifacts/entry-trace-20260907/run_trace.py)、[追踪器](../../.project-local/task-artifacts/entry-trace-20260907/trace_child.py)、[独立读回脚本](../../.project-local/task-artifa"
+      },
+      {
+        "path": ".project-local/task-artifacts/entry-trace/20260906T184203081358Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ENTRY-WRITE-TRACE-2026-09-07.md",
+        "line": 35,
+        "text": "[首轮失败记录](../../.project-local/task-artifacts/entry-trace/20260906T184203081358Z/results.json)保留，SHA256 `86be4f77c48235eccd5986f08e718d06475970e259727eb4ad313fbe6c22af13`。Windows 的 `subprocess.Popen` 审"
+      },
+      {
+        "path": ".project-local/task-artifacts/entry-trace/20260906T184313916756Z/configured-repo-reconstruct.trace.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ENTRY-WRITE-TRACE-2026-09-07.md",
+        "line": 27,
+        "text": "- [默认根、仓库 CWD 的渲染追踪](../../.project-local/task-artifacts/entry-trace/20260906T184313916756Z/configured-repo-reconstruct.trace.json)。同目录包含各次 stdout/stderr、trace 和回滚前文件 hash 清单。"
+      },
+      {
+        "path": ".project-local/task-artifacts/entry-trace/20260906T184313916756Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ENTRY-WRITE-TRACE-2026-09-07.md",
+        "line": 26,
+        "text": "- [36 次执行结果及源文件绑定](../../.project-local/task-artifacts/entry-trace/20260906T184313916756Z/results.json)：SHA256 `33e3892128b3feec2be447ef213fcffd8d10b5b27150deae941897a52b333a9a`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/external-recovery-20260916-hermes-taskpacks",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/CD-SPILL-AUDIT-2026-09-16.md",
+        "line": 26,
+        "text": "落位 `.project-local/task-artifacts/external-recovery-20260916-hermes-taskpacks/`："
+      },
+      {
+        "path": ".project-local/task-artifacts/h3-qualification/20260906T193014699719Z/embedded-runtime.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-READBACK-AND-H3-PREFLIGHT-2026-09-07.md",
+        "line": 30,
+        "text": "[真实内嵌解释器结果](../../.project-local/task-artifacts/h3-qualification/20260906T193014699719Z/embedded-runtime.json)："
+      },
+      {
+        "path": ".project-local/task-artifacts/h3-qualification/20260906T193014699719Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-READBACK-AND-H3-PREFLIGHT-2026-09-07.md",
+        "line": 26,
+        "text": "[完整哈希、时间与输入记录](../../.project-local/task-artifacts/h3-qualification/20260906T193014699719Z/results.json)，[固定上游元数据](../../.project-local/task-artifacts/h3-qualification/20260906T193014699719Z/upstream-"
+      },
+      {
+        "path": ".project-local/task-artifacts/h3-qualification/20260906T193014699719Z/upstream-metadata.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-READBACK-AND-H3-PREFLIGHT-2026-09-07.md",
+        "line": 26,
+        "text": "[完整哈希、时间与输入记录](../../.project-local/task-artifacts/h3-qualification/20260906T193014699719Z/results.json)，[固定上游元数据](../../.project-local/task-artifacts/h3-qualification/20260906T193014699719Z/upstream-"
+      },
+      {
+        "path": ".project-local/task-artifacts/h3-qualification/license-20260906T193212972936Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-READBACK-AND-H3-PREFLIGHT-2026-09-07.md",
+        "line": 41,
+        "text": "[固定 MiniMaxAI revision 的 LICENSE 来源](https://huggingface.co/MiniMaxAI/MiniMax-H3/raw/42ed227ee7df40d41602854ae760620d6eb651fe/LICENSE)已读取并保存为 inert source：[来源与哈希记录](../../.project-local/task-artifacts"
+      },
+      {
+        "path": ".project-local/task-artifacts/history-public-git/verified-20260906T192404159811Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-READBACK-AND-H3-PREFLIGHT-2026-09-07.md",
+        "line": 11,
+        "text": "- [公开历史独立读回](../../.project-local/task-artifacts/history-public-git/verified-20260906T192404159811Z/results.json)：884 检查通过，实际读取 145 个 Git blob、3 个提交树；有效状态 289 可取回、4 占位、243 未解决。原 536/1450 与历史基线字节未改；`hi"
+      },
+      {
+        "path": ".project-local/task-artifacts/http-qualification/dist/design_lab-0.1.0a0-py3-none-any.whl",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-LOCAL-HTTP-METADATA-2026-09-07.md",
+        "line": 32,
+        "text": "- wheel SHA256：`43a7026829183087f2fb66248b678845a5e67280e69a84fe55b9f2c10fd725f5`，位置 `.project-local/task-artifacts/http-qualification/dist/design_lab-0.1.0a0-py3-none-any.whl`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/illustrator-com-wheel/design_lab-0.1.0a0-py3-none-any.whl",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-COM-DISPATCH-2026-09-08.md",
+        "line": 58,
+        "text": "- wheel `.project-local/task-artifacts/illustrator-com-wheel/design_lab-0.1.0a0-py3-none-any.whl` SHA256 `9267a6184a60e2935f07e187bfd456d6dfad094884efd8af6b444642321fbfe6`，46 个归档项；桥资源逐字节等于仓库源码；无缓存或 `."
+      },
+      {
+        "path": ".project-local/task-artifacts/illustrator-editable-20260908/run-1788799336709",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-MASK-PATCH-2026-09-08.md",
+        "line": 21,
+        "text": "忽略目录：`.project-local/task-artifacts/illustrator-editable-20260908/run-1788799336709/`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/illustrator-lowering-20260908",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-COM-DISPATCH-2026-09-08.md",
+        "line": 31,
+        "text": "两轮均使用 `prepare_illustrator_lowered.py` 生成真实 builder payload，再通过产品适配器运行，不执行该目录的测试 `run.jsx`。输出根均在 `.project-local/task-artifacts/illustrator-lowering-20260908/`："
+      },
+      {
+        "path": ".project-local/task-artifacts/illustrator-lowering-20260908/run-9a138a99f3dc4b17b8cdeb3454d71566/native-task-readback.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-NATIVE-TASK-EXECUTION-2026-09-08.md",
+        "line": 40,
+        "text": "AI attempt `att-328e9b2c870e449c881c0f9c538d84ed`，版本 `v-6d641133195244e89f84dd8a5ca805f7`，UTC 18:42:28–18:43:08（约 40.91 秒）。结果位于 `.project-local/task-artifacts/illustrator-lowering-20260908/run-9a138a9"
+      },
+      {
+        "path": ".project-local/task-artifacts/illustrator-lowering-20260908/run-f326f58012eb4cbda79292b3c4a1462c",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-RIR-ILLUSTRATOR-LINK-2026-09-08.md",
+        "line": 32,
+        "text": "忽略目录：`.project-local/task-artifacts/illustrator-lowering-20260908/run-f326f58012eb4cbda79292b3c4a1462c/`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/illustrator-product-20260908",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-PRODUCT-ASSEMBLY-2026-09-08.md",
+        "line": 48,
+        "text": "`D:/All projects/DESIGN-LAB/.project-local/task-artifacts/illustrator-product-20260908/`."
+      },
+      {
+        "path": ".project-local/task-artifacts/native-task-live-20260908/run-a53d21f20aa44f019f16bb26b48ac5a1/result.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-NATIVE-TASK-EXECUTION-2026-09-08.md",
+        "line": 38,
+        "text": "PS attempt `att-68eacb45ca7e4516bb0811f6f04e2f82`，版本 `v-928cb30433ef41b3be8493edcad4ba9d`，UTC 18:41:25–18:41:31（约 6.47 秒）。结果位于 `.project-local/task-artifacts/native-task-live-20260908/run-a53d21f20aa4"
+      },
+      {
+        "path": ".project-local/task-artifacts/native-tasks-wheel/design_lab-0.1.0a0-py3-none-any.whl",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-NATIVE-TASK-EXECUTION-2026-09-08.md",
+        "line": 31,
+        "text": "Wheel `.project-local/task-artifacts/native-tasks-wheel/design_lab-0.1.0a0-py3-none-any.whl` SHA256 `bc8887ece65f0e22bf8ed07c037b7fe5d015d038530b1af5d2b70d70d1c21cce`；49 项，模块与源码逐字节一致，无缓存/`.project-loc"
+      },
+      {
+        "path": ".project-local/task-artifacts/native-workbench-wheel/design_lab-0.1.0a0-py3-none-any.whl",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-NATIVE-WORKBENCH-READBACK-2026-09-08.md",
+        "line": 32,
+        "text": "Wheel：`.project-local/task-artifacts/native-workbench-wheel/design_lab-0.1.0a0-py3-none-any.whl`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/normalization-20260907",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-NORMALIZATION-2026-09-07.md",
+        "line": 17,
+        "text": "| 证据目录（`.project-local/task-artifacts/normalization-20260907/` 下） | 实际结果 | 范围 |"
+      },
+      {
+        "path": ".project-local/task-artifacts/normalization-20260907/20260906T205320957684Z",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-CURRENT-ENTRY-REFRESH-2026-09-07.md",
+        "line": 13,
+        "text": "运行根：`.project-local/task-artifacts/normalization-20260907/20260906T205320957684Z/`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/normalization-20260907/20260906T205320957684Z/entry-document-readback.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-CURRENT-ENTRY-REFRESH-2026-09-07.md",
+        "line": 26,
+        "text": "[证据和文档链接读回](../../.project-local/task-artifacts/normalization-20260907/20260906T205320957684Z/entry-document-readback.json)。验证脚本所绑定来源在本次命令前后相同；未重跑完整 Python 套件，旧 756 项结果仍属于旧运行。"
+      },
+      {
+        "path": ".project-local/task-artifacts/normalization-20260907/20260906T205320957684Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-CURRENT-ENTRY-REFRESH-2026-09-07.md",
+        "line": 15,
+        "text": "使用现有 `.venv/Scripts/python.exe -B .project-local/task-artifacts/normalization-20260907/verify.py --post-full`，新建独占运行根，不覆盖旧测试。进程终态 exit 1，所有子命令与时间在[原始结果](../../.project-local/task-artifacts/normalizati"
+      },
+      {
+        "path": ".project-local/task-artifacts/normalization-20260907/20260906T205320957684Z/unified.log",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-CURRENT-ENTRY-REFRESH-2026-09-07.md",
+        "line": 34,
+        "text": "统一门中直接执行该脚本失败；Open Design adapter verifier 又将该脚本作为 secondary verifier，因此同一根因传播为第二道失败。不是 Open Design 软件启动失败，也不是下载的模型权重损坏。完整信息见[统一门日志](../../.project-local/task-artifacts/normalization-20260907/20260906"
+      },
+      {
+        "path": ".project-local/task-artifacts/normalization-20260907/verify.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-CURRENT-ENTRY-REFRESH-2026-09-07.md",
+        "line": 15,
+        "text": "使用现有 `.venv/Scripts/python.exe -B .project-local/task-artifacts/normalization-20260907/verify.py --post-full`，新建独占运行根，不覆盖旧测试。进程终态 exit 1，所有子命令与时间在[原始结果](../../.project-local/task-artifacts/normalizati"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/20260906T201809209621Z/preparation.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-PREPARATION-BOUNDARY-2026-09-07.md",
+        "line": 42,
+        "text": "- [RapidOCR 下载失败原件](../../.project-local/task-artifacts/ocr-qualification/20260906T201809209621Z/preparation.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/object-plan-20260907T195541256926Z",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-OBJECT-PLAN-2026-09-08.md",
+        "line": 30,
+        "text": "运行目录：`.project-local/task-artifacts/ocr-qualification/object-plan-20260907T195541256926Z`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/onnx-20260907T193520352697Z",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-ONNX-CONTROLLED-2026-09-08.md",
+        "line": 13,
+        "text": "模型证据根：`.project-local/task-artifacts/ocr-qualification/onnx-20260907T193520352697Z`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/onnx_live.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-ONNX-CONTROLLED-2026-09-08.md",
+        "line": 36,
+        "text": "- 原始执行脚本 `.project-local/task-artifacts/ocr-qualification/onnx_live.py` SHA256 `747844c1cf6cdce6d4bbd828598f2bfe49f1ec8e3523f0ee8732eff027467d1b`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/live-20260906T202626725459Z/error.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-PREPARATION-BOUNDARY-2026-09-07.md",
+        "line": 46,
+        "text": "- [具体调用栈](../../.project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/live-20260906T202626725459Z/error.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/live-20260906T202626725459Z/protocol.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-ONNX-CONTROLLED-2026-09-08.md",
+        "line": 37,
+        "text": "- 固定 fixture protocol：`.project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/live-20260906T202626725459Z/protocol.json`，SHA256 `2f8724aaca4ced708208bd757d97682bf98b7886833436f6"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/live-20260906T202626725459Z/protocol.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-PREPARATION-BOUNDARY-2026-09-07.md",
+        "line": 47,
+        "text": "- [预先定义的图片与验收协议](../../.project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/live-20260906T202626725459Z/protocol.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/live-20260906T202626725459Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-PREPARATION-BOUNDARY-2026-09-07.md",
+        "line": 45,
+        "text": "- [导入实际失败结果](../../.project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/live-20260906T202626725459Z/results.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/preparation.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-PREPARATION-BOUNDARY-2026-09-07.md",
+        "line": 43,
+        "text": "- [官方源核验与长路径安装失败](../../.project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/preparation.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/short-env-20260906T202539513167Z/preparation.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-PREPARATION-BOUNDARY-2026-09-07.md",
+        "line": 44,
+        "text": "- [短路径环境恢复](../../.project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/short-env-20260906T202539513167Z/preparation.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/verified-20260906T202906121417Z.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-PREPARATION-BOUNDARY-2026-09-07.md",
+        "line": 48,
+        "text": "- [独立 34 项读回](../../.project-local/task-artifacts/ocr-qualification/paddle-20260906T202022263722Z/verified-20260906T202906121417Z.json)"
+      },
+      {
+        "path": ".project-local/task-artifacts/ocr-qualification/verify_preparation.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-PREPARATION-BOUNDARY-2026-09-07.md",
+        "line": 50,
+        "text": "复核命令：`.venv/Scripts/python.exe -I -B .project-local/task-artifacts/ocr-qualification/verify_preparation.py`。它不运行 OCR，也不重装；生成独立新结果，原日志不改。"
+      },
+      {
+        "path": ".project-local/task-artifacts/photoshop-com-wheel/design_lab-0.1.0a0-py3-none-any.whl",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PHOTOSHOP-INSTALLED-ADAPTER-2026-09-08.md",
+        "line": 25,
+        "text": "Wheel：`.project-local/task-artifacts/photoshop-com-wheel/design_lab-0.1.0a0-py3-none-any.whl`"
+      },
+      {
+        "path": ".project-local/task-artifacts/photoshop-native-20260908",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PHOTOSHOP-NATIVE-ROUNDTRIP-2026-09-08.md",
+        "line": 26,
+        "text": "两轮真实运行保留于 `.project-local/task-artifacts/photoshop-native-20260908/`："
+      },
+      {
+        "path": ".project-local/task-artifacts/photoshop-native-20260908/run-d7f622de47cd4365971bdf9e07fdf7b9",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PHOTOSHOP-INSTALLED-ADAPTER-2026-09-08.md",
+        "line": 39,
+        "text": "最终运行目录 `.project-local/task-artifacts/photoshop-native-20260908/run-d7f622de47cd4365971bdf9e07fdf7b9`；UTC `2026-09-07T18:26:27.942692+00:00` 记录。Windows 11 build 26100；宿主 26.7.0。"
+      },
+      {
+        "path": ".project-local/task-artifacts/photoshop-open-input-20260908/run-5548e498c2d0493f8dd3599bb7f7e75d/result.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PHOTOSHOP-INSTALLED-ADAPTER-2026-09-08.md",
+        "line": 56,
+        "text": "- 负向记录 `.project-local/task-artifacts/photoshop-open-input-20260908/run-5548e498c2d0493f8dd3599bb7f7e75d/result.json`；UTC `18:27:53.817196+00:00`。输入 SHA `ba83c6adb54d8b3245a21f8ef9b5cb23c5db416b272872"
+      },
+      {
+        "path": ".project-local/task-artifacts/photoshop-rir-20260908/run-1bffa7c8518a4cfdbf4d35f77a8ce7f0",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PHOTOSHOP-RIR-LOWERING-2026-09-08.md",
+        "line": 26,
+        "text": "本轮 run：`.project-local/task-artifacts/photoshop-rir-20260908/run-1bffa7c8518a4cfdbf4d35f77a8ce7f0`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/photoshop-rir-20260908/run-6cd6954a96a24a1ebcdb88ba12fc11b1",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-INSTALLED-RIR-FACADE-2026-09-08.md",
+        "line": 37,
+        "text": "Run：`.project-local/task-artifacts/photoshop-rir-20260908/run-6cd6954a96a24a1ebcdb88ba12fc11b1`；原始输入/producer binding/native-task-readback 均保留。"
+      },
+      {
+        "path": ".project-local/task-artifacts/r3-execution/migration-demo/selection.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PROJECT-PATHS-2026-09-06.md",
+        "line": 46,
+        "text": ".venv/Scripts/python.exe -B scripts/design_lab_doctor.py --migration-preview .project-local/task-artifacts/r3-execution/migration-demo/selection.json --json"
+      },
+      {
+        "path": ".project-local/task-artifacts/r3-execution/model-readiness-final",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-MODEL-READINESS-2026-09-06.md",
+        "line": 60,
+        "text": "`.project-local/task-artifacts/r3-execution/model-readiness-final/`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/r3-execution/profile-reviewed-final",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PROFILE-EVIDENCE-2026-09-06.md",
+        "line": 52,
+        "text": "本轮最终命令和源哈希见 `.project-local/task-artifacts/r3-execution/profile-reviewed-final/`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/real-poster-20260908/run-17eace2eebe44ac288541d0bd82d6df3",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-REAL-POSTER-CANDIDATE-2026-09-08.md",
+        "line": 37,
+        "text": "Run: `.project-local/task-artifacts/real-poster-20260908/run-17eace2eebe44ac288541d0bd82d6df3/`."
+      },
+      {
+        "path": ".project-local/task-artifacts/real-poster-20260908/run-2da53ed9a0aa4deb92c3dbe7493b1fff",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-REAL-POSTER-CANDIDATE-2026-09-08.md",
+        "line": 60,
+        "text": "Run: `.project-local/task-artifacts/real-poster-20260908/run-2da53ed9a0aa4deb92c3dbe7493b1fff/`."
+      },
+      {
+        "path": ".project-local/task-artifacts/real-poster-20260908/run-3bc50140e7f44caca5393c29002c43f9",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-REAL-POSTER-PSD-2026-09-08.md",
+        "line": 17,
+        "text": "`.project-local/task-artifacts/real-poster-20260908/run-3bc50140e7f44caca5393c29002c43f9/`."
+      },
+      {
+        "path": ".project-local/task-artifacts/real-poster-20260908/run-3bc50140e7f44caca5393c29002c43f9",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-TEXT-POSITION-RECOVERY-2026-09-08.md",
+        "line": 79,
+        "text": "`.project-local/task-artifacts/real-poster-20260908/run-3bc50140e7f44caca5393c29002c43f9/`:"
+      },
+      {
+        "path": ".project-local/task-artifacts/real-poster-20260908/run-8139ef6705404872815fe8ccdc77e4e6",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-REAL-POSTER-CANDIDATE-2026-09-08.md",
+        "line": 32,
+        "text": "`.project-local/task-artifacts/real-poster-20260908/run-8139ef6705404872815fe8ccdc77e4e6/`."
+      },
+      {
+        "path": ".project-local/task-artifacts/real-poster-20260908/run-b06126a08d8a42f6a98b985555d9cac3",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-TEXT-POSITION-RECOVERY-2026-09-08.md",
+        "line": 62,
+        "text": "Candidate 3 run: `.project-local/task-artifacts/real-poster-20260908/run-b06126a08d8a42f6a98b985555d9cac3/`."
+      },
+      {
+        "path": ".project-local/task-artifacts/real-poster-patches-20260908",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-REAL-POSTER-PATCHES-2026-09-08.md",
+        "line": 33,
+        "text": "`.project-local/task-artifacts/real-poster-patches-20260908/`."
+      },
+      {
+        "path": ".project-local/task-artifacts/real-poster-ps-20260908/run-2d83da284b144263ab26ab00028cbd64",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PSD-READBACK-SCALING-2026-09-08.md",
+        "line": 28,
+        "text": "`.project-local/task-artifacts/real-poster-ps-20260908/run-2d83da284b144263ab26ab00028cbd64/`."
+      },
+      {
+        "path": ".project-local/task-artifacts/real-poster-ps-20260908/run-2d83da284b144263ab26ab00028cbd64",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-REAL-POSTER-PSD-2026-09-08.md",
+        "line": 21,
+        "text": "`.project-local/task-artifacts/real-poster-ps-20260908/run-2d83da284b144263ab26ab00028cbd64/`."
+      },
+      {
+        "path": ".project-local/task-artifacts/reference-qualification/behance-5783221/reference.jpg",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-REAL-REFERENCE-FIRST-2026-09-08.md",
+        "line": 21,
+        "text": "- 本地：`.project-local/task-artifacts/reference-qualification/behance-5783221/reference.jpg`。"
+      },
+      {
+        "path": ".project-local/task-artifacts/reference-qualification/ocr_reference.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-REAL-REFERENCE-FIRST-2026-09-08.md",
+        "line": 28,
+        "text": "使用项目隔离 ONNX 环境和此前固定 det/rec 权重，运行本地资格脚本 `.project-local/task-artifacts/reference-qualification/ocr_reference.py`。会话 82309 退出 1；不隐藏失败。"
+      },
+      {
+        "path": ".project-local/task-artifacts/report-observation-20260907/python-14679-terminal.log",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-REPORT-OBSERVATION-SEMANTICS-2026-09-07.md",
+        "line": 25,
+        "text": "- 完整 Python 测试由 `.venv/Scripts/python.exe -B scripts/run_python_tests.py` 启动，会话 14679 现已终态 exit 0：762 项、1062.010 秒，760 PASS / 2 SKIP。终态输出保存 `.project-local/task-artifacts/report-observation-20260907/p"
+      },
+      {
+        "path": ".project-local/task-artifacts/report-observation-20260907/unified-81500.log",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-REPORT-OBSERVATION-SEMANTICS-2026-09-07.md",
+        "line": 24,
+        "text": "- 聚合树统一门会话 81500 终态 exit 0，49 PASS / 0 FAIL；原始终态输出保留 `.project-local/task-artifacts/report-observation-20260907/unified-81500.log`。这是仓库门，不是宿主或模型推理。"
+      },
+      {
+        "path": ".project-local/task-artifacts/rir-installed-wheel/design_lab-0.1.0a0-py3-none-any.whl",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-INSTALLED-NATIVE-REFRESH-2026-09-08.md",
+        "line": 55,
+        "text": "`.project-local/task-artifacts/rir-installed-wheel/design_lab-0.1.0a0-py3-none-any.whl`,"
+      },
+      {
+        "path": ".project-local/task-artifacts/rir-installed-wheel/design_lab-0.1.0a0-py3-none-any.whl",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-INSTALLED-RIR-FACADE-2026-09-08.md",
+        "line": 33,
+        "text": "Wheel `.project-local/task-artifacts/rir-installed-wheel/design_lab-0.1.0a0-py3-none-any.whl` SHA256 `c630dbe77f5559c98e017c79d3de8d60bc46f32bb25245a424ba0c14398c711c`；56 项，无缓存或运行目录污染，四个模块和两个 schema 与"
+      },
+      {
+        "path": ".project-local/task-artifacts/test-entry-20260907/check.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-TEST-ENTRY-ENVIRONMENT-2026-09-07.md",
+        "line": 37,
+        "text": "完整检查命令为 `.project-local/task-artifacts/test-entry-20260907/check.py full`：真实根测试入口、统一门、许可检查均已终态，执行会话 **25917 TERMINAL / exit 0**，无需再轮询。结果观察时间 `2026-09-06T19:14:06.550744+00:00`。本切片按源文件绑定与独立分层口径登记正式账本；一"
+      },
+      {
+        "path": ".project-local/task-artifacts/test-entry/bytecode-20260906T185926550068Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-TEST-ENTRY-ENVIRONMENT-2026-09-07.md",
+        "line": 19,
+        "text": "| 启动/异常补验 | [独立结果](../../.project-local/task-artifacts/test-entry/bytecode-20260906T185926550068Z/results.json) | 专用项目 fixture 使用源文件精确字节副本，真正 `__main__`、无 `-B` 启动两入口及空选择；零 pyc。context 初始 flag=False，成功"
+      },
+      {
+        "path": ".project-local/task-artifacts/test-entry/full-20260906T185503635278Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-TEST-ENTRY-ENVIRONMENT-2026-09-07.md",
+        "line": 20,
+        "text": "| 完整根入口 | [运行日志](../../.project-local/task-artifacts/test-entry/full-20260906T185503635278Z/root-suite.log)、[终态结果](../../.project-local/task-artifacts/test-entry/full-20260906T185503635278Z/results.js"
+      },
+      {
+        "path": ".project-local/task-artifacts/test-entry/full-20260906T185503635278Z/root-suite.log",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-TEST-ENTRY-ENVIRONMENT-2026-09-07.md",
+        "line": 20,
+        "text": "| 完整根入口 | [运行日志](../../.project-local/task-artifacts/test-entry/full-20260906T185503635278Z/root-suite.log)、[终态结果](../../.project-local/task-artifacts/test-entry/full-20260906T185503635278Z/results.js"
+      },
+      {
+        "path": ".project-local/task-artifacts/test-entry/green-20260906T185420020280Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-TEST-ENTRY-ENVIRONMENT-2026-09-07.md",
+        "line": 18,
+        "text": "| GREEN | [最终定向结果](../../.project-local/task-artifacts/test-entry/green-20260906T185420020280Z/results.json) | 新 6 项 + 原路径 16 项通过；真实隔离入口随机顺序重复 2 轮，每轮 22 项通过；绑定源前后无变化 |"
+      },
+      {
+        "path": ".project-local/task-artifacts/test-entry/handoff-20260906T192318127345Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-READBACK-AND-H3-PREFLIGHT-2026-09-07.md",
+        "line": 9,
+        "text": "- [文档修改后定向核验](../../.project-local/task-artifacts/test-entry/handoff-20260906T192318127345Z/results.json)：85 个真实测试、零跳过，Comfy policy 与许可门 PASS；链接存在性与旧测试源码哈希重新读回通过。"
+      },
+      {
+        "path": ".project-local/task-artifacts/test-entry/red-20260906T185202997851Z/focused.log",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-TEST-ENTRY-ENVIRONMENT-2026-09-07.md",
+        "line": 17,
+        "text": "| RED | [修复前结果](../../.project-local/task-artifacts/test-entry/red-20260906T185202997851Z/results.json)、[日志](../../.project-local/task-artifacts/test-entry/red-20260906T185202997851Z/focused.log) | 6 "
+      },
+      {
+        "path": ".project-local/task-artifacts/test-entry/red-20260906T185202997851Z/results.json",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-TEST-ENTRY-ENVIRONMENT-2026-09-07.md",
+        "line": 17,
+        "text": "| RED | [修复前结果](../../.project-local/task-artifacts/test-entry/red-20260906T185202997851Z/results.json)、[日志](../../.project-local/task-artifacts/test-entry/red-20260906T185202997851Z/focused.log) | 6 "
+      },
+      {
+        "path": ".project-local/task-artifacts/test-run/history.jsonl",
+        "file": "reports/audit-archive/20260930/hermes/skills/software-development/design-lab-authority-convergence/SKILL.md",
+        "line": 506,
+        "text": "6. **Local `DRIFT` is not always CI `DRIFT` — read the CI job log to see which sub-gates actually failed.** `test-gate` compares against `.project-local/task-artifacts/test-run/history.jsonl`, which e"
+      },
+      {
+        "path": ".project-local/task-artifacts/text-position-probe-20260908/run-752fbabb7d704289966b0d2685b88b70",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-TEXT-POSITION-RECOVERY-2026-09-08.md",
+        "line": 26,
+        "text": "Run root: `.project-local/task-artifacts/text-position-probe-20260908/run-752fbabb7d704289966b0d2685b88b70/`."
+      },
+      {
+        "path": ".project-local/task-artifacts/wheel-f2f8c79",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-INSTALLED-NATIVE-REFRESH-2026-09-08.md",
+        "line": 14,
+        "text": ".venv/Scripts/python.exe --out-dir .project-local/task-artifacts/wheel-f2f8c79`."
+      },
+      {
+        "path": ".project-local/task-artifacts/wheel-f2f8c79/design_lab-0.1.0a0-py3-none-any.whl",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-INSTALLED-NATIVE-REFRESH-2026-09-08.md",
+        "line": 8,
+        "text": "Wheel: `.project-local/task-artifacts/wheel-f2f8c79/design_lab-0.1.0a0-py3-none-any.whl`."
+      },
+      {
+        "path": ".project-local/task-artifacts/wheel-qualification",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-WHEEL-QUALIFICATION-2026-09-07.md",
+        "line": 24,
+        "text": "验证脚本和 wheel 都保留 `.project-local/task-artifacts/wheel-qualification/`，不上传二进制发布件。脚本 `verify_installed.py` 可从非仓库 CWD 重新核验当前 wheel。"
+      },
+      {
+        "path": ".project-local/task-artifacts/wheel-qualification/dist",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-WHEEL-QUALIFICATION-2026-09-07.md",
+        "line": 15,
+        "text": "1. `uv build --wheel --python .venv/Scripts/python.exe --out-dir .project-local/task-artifacts/wheel-qualification/dist`：成功。"
+      },
+      {
+        "path": ".project-local/task-artifacts/wheel-qualification/dist/design_lab-0.1.0a0-py3-none-any.whl",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-WHEEL-QUALIFICATION-2026-09-07.md",
+        "line": 17,
+        "text": "3. `uv pip install --python .project-local/task-runtime/wheel-qualification/venv/Scripts/python.exe --no-deps .project-local/task-artifacts/wheel-qualification/dist/design_lab-0.1.0a0-py3-none-any.whl"
+      },
+      {
+        "path": ".project-local/task-artifacts/workbench-wheel/design_lab-0.1.0a0-py3-none-any.whl",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-WORKBENCH-ENTRY-2026-09-08.md",
+        "line": 18,
+        "text": "3. wheel 位于本地忽略路径 `.project-local/task-artifacts/workbench-wheel/design_lab-0.1.0a0-py3-none-any.whl`；SHA256 `d00dab7bac26a6d6ae0d7ee7c1ab4ca9ec4fdecc10bb1b8ab976457d07f3a4b8`。构建后检查 44 个归档项，三项 UI 资源与源"
+      },
+      {
+        "path": ".project-local/task-runtime/asr-qualification/20260906T195532284136Z/venv",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 8,
+        "text": "- 新建专用环境 `.project-local/task-runtime/asr-qualification/20260906T195532284136Z/venv/`；Python 3.13.14，faster-whisper 1.2.1、CTranslate2 4.8.2、ONNX Runtime 1.29.0、PyAV 18.1.0、NumPy 2.5.3、psutil 7.2.2。安装报"
+      },
+      {
+        "path": ".project-local/task-runtime/asr-qualification/20260906T195532284136Z/venv/Scripts/python.exe",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ASR-CPU-VAD-AUDIT-2026-09-07.md",
+        "line": 61,
+        "text": "& '.project-local/task-runtime/asr-qualification/20260906T195532284136Z/venv/Scripts/python.exe' -I -B '.project-local/task-artifacts/asr-qualification/vad_comparison.py'"
+      },
+      {
+        "path": ".project-local/task-runtime/explicit-owner-qualification/venv",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-EXPLICIT-STORE-OWNER-2026-09-07.md",
+        "line": 23,
+        "text": "独立 wheel SHA256：`833ae3f21b65c40bf363b7c6f9e3200b8cfa6579ece579ba6c537e094a34fe25`。以 `--no-deps` 安装到 `.project-local/task-runtime/explicit-owner-qualification/venv`，使用该环境 Python `-I -B` 执行同一测试文件，`DESI"
+      },
+      {
+        "path": ".project-local/task-runtime/http-qualification/venv/Scripts/python.exe",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-LOCAL-HTTP-METADATA-2026-09-07.md",
+        "line": 33,
+        "text": "- 安装解释器：`.project-local/task-runtime/http-qualification/venv/Scripts/python.exe`；测试通过专用 `DESIGN_LAB_QUALIFICATION_PYTHON` 选择安装入口，未向子进程添加源码 sys.path。"
+      },
+      {
+        "path": ".project-local/task-runtime/image-imports",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-IMAGE-IMPORT-HTTP-2026-09-07.md",
+        "line": 10,
+        "text": "- 输入副本位于 `.project-local/task-runtime/image-imports/<attempt>/input`，最终文件位于 `.project-local/projects/<project-id>/assets/versions/<publication>/reference.png|jpg`。存储与数据库全部传入显式拥有项目根。"
+      },
+      {
+        "path": ".project-local/task-runtime/import-qualification/venv",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-IMAGE-IMPORT-HTTP-2026-09-07.md",
+        "line": 29,
+        "text": "- 安装环境 `.project-local/task-runtime/import-qualification/venv` 的 Python `-I -B -m design_lab` 从非源码目录运行，13 项 HTTP 验收全部 PASS。Pillow 12.3.0 实际解码与原始字节读回；安装了全依赖不等于所有算法/模型已验证。"
+      },
+      {
+        "path": ".project-local/task-runtime/installed-state-resource-tests",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-INSTALLED-STATE-RESOURCES-2026-09-07.md",
+        "line": 15,
+        "text": "测试资源、复制的包、SQLite 夹具仅在本项目 `.project-local/task-runtime/installed-state-resource-tests` 内；SQLite 迁移正例使用内存 DB。没有写安装目录、用户工程或全局环境。"
+      },
+      {
+        "path": ".project-local/task-runtime/native-browser-20260908/run-f0e22d36e0ae44408276c93e4462d052",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-NATIVE-WORKBENCH-READBACK-2026-09-08.md",
+        "line": 37,
+        "text": "此浏览器测试使用隔离合成数据库和先前真实 PSD 的副本，任务事件为专用种子，不是本轮新 Adobe 执行。测试根 `.project-local/task-runtime/native-browser-20260908/run-f0e22d36e0ae44408276c93e4462d052`，项目 ID `92167a04dda04d129f6df6e167aeac63`。测试页已关闭，服务通"
+      },
+      {
+        "path": ".project-local/task-runtime/o6-01/v",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-CURRENT-ENTRY-REFRESH-2026-09-07.md",
+        "line": 32,
+        "text": "本次误读 `.project-local/task-runtime/ocr-qualification/.../venv/` 和 `.project-local/task-runtime/o6-01/v/` 内 Paddle CINN tile_config 文件；18 条 `Extra data: line 2 column 1` 来自这些第三方调优数据。它们不是 DESIGN-LAB 视觉质量"
+      },
+      {
+        "path": ".project-local/task-runtime/o6-01/v",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-PREPARATION-BOUNDARY-2026-09-07.md",
+        "line": 22,
+        "text": "改为本项目短根 `.project-local/task-runtime/o6-01/v/`，所有包名/版本来自原 install-report 固定集合，重新安装复用项目缓存。独立比对两次 resolved 版本与 distribution SHA256 完全相同；此前失败成员现在为 **215 字符**，存在且 hash 已绑定。安装耗时 28.233 秒，pip check exit 0；未"
+      },
+      {
+        "path": ".project-local/task-runtime/ocr-onnx-01/v/Scripts/python.exe",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-ONNX-CONTROLLED-2026-09-08.md",
+        "line": 35,
+        "text": "- 环境：`.project-local/task-runtime/ocr-onnx-01/v/Scripts/python.exe`，Python 3.13.14、rapidocr 3.9.2、onnxruntime 1.29.0、numpy 2.5.3、opencv-python 5.0.0.93。"
+      },
+      {
+        "path": ".project-local/task-runtime/ocr-onnx-01/v/Scripts/python.exe",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-OCR-ONNX-CONTROLLED-2026-09-08.md",
+        "line": 42,
+        "text": ".project-local/task-runtime/ocr-onnx-01/v/Scripts/python.exe -I -B design-lab/tests/host_fixtures/qualify_ocr_onnx.py"
+      },
+      {
+        "path": ".project-local/task-runtime/ocr-qualification/.../venv",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-CURRENT-ENTRY-REFRESH-2026-09-07.md",
+        "line": 32,
+        "text": "本次误读 `.project-local/task-runtime/ocr-qualification/.../venv/` 和 `.project-local/task-runtime/o6-01/v/` 内 Paddle CINN tile_config 文件；18 条 `Extra data: line 2 column 1` 来自这些第三方调优数据。它们不是 DESIGN-LAB 视觉质量"
+      },
+      {
+        "path": ".project-local/task-runtime/playwright/npm-cache/_npx",
+        "file": "reports/audit-archive/20260930/hermes/skills/software-development/design-lab-authority-convergence/SKILL.md",
+        "line": 332,
+        "text": "(`.project-local/task-runtime/playwright/npm-cache/_npx/<hash>/node_modules`)"
+      },
+      {
+        "path": ".project-local/task-runtime/service-http-tests",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-TASK-QUERY-API-2026-09-08.md",
+        "line": 34,
+        "text": "运行目录均在本仓 `.project-local/task-runtime/service-http-tests/` 的隔离子目录，夹具由测试自行清理。"
+      },
+      {
+        "path": ".project-local/task-runtime/service/state.db",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-INSTALLED-CLI-QUALIFICATION-2026-09-07.md",
+        "line": 15,
+        "text": "2. 创建中文项目名；第二个独立进程列出相同 ID、名称与时间，SQLite 实际位于合成项目的 `.project-local/task-runtime/service/state.db`。"
+      },
+      {
+        "path": ".project-local/task-runtime/service/state.db",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-NATIVE-TASK-EXECUTION-2026-09-08.md",
+        "line": 21,
+        "text": "- 使用已有 `.project-local/task-runtime/service/state.db`，新增同库 `native_execution_v1` / `native_host_guard_v1` 辅助表，不建立第二套 operation 状态源。"
+      },
+      {
+        "path": ".project-local/task-runtime/tmp",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-INSTALLED-NATIVE-REFRESH-2026-09-08.md",
+        "line": 17,
+        "text": "`.project-local/task-runtime/tmp`. No new download or global installation."
+      },
+      {
+        "path": ".project-local/task-runtime/visual-quality-boundary-tests",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-VISUAL-QUALITY-SCAN-FIX-2026-09-07.md",
+        "line": 24,
+        "text": "测试：`design-lab/tests/test_visual_quality_scan_boundary.py`。其测试目录和合成输入仅在 `.project-local/task-runtime/visual-quality-boundary-tests/` 内，测试自行回收自己的夹具。"
+      },
+      {
+        "path": ".project-local/task-runtime/wheel-qualification",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-WHEEL-QUALIFICATION-2026-09-07.md",
+        "line": 18,
+        "text": "4. 从 `.project-local/task-runtime/wheel-qualification` 非仓库 CWD，以已安装环境 Python `-I -B` 执行验证脚本：成功，导入路径实际位于该环境 site-packages，不是仓库 src。"
+      },
+      {
+        "path": ".project-local/task-runtime/wheel-qualification/venv",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-WHEEL-QUALIFICATION-2026-09-07.md",
+        "line": 16,
+        "text": "2. `uv venv --python .venv/Scripts/python.exe .project-local/task-runtime/wheel-qualification/venv`：成功。"
+      },
+      {
+        "path": ".project-local/task-runtime/wheel-qualification/venv/Scripts/python.exe",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-WHEEL-QUALIFICATION-2026-09-07.md",
+        "line": 17,
+        "text": "3. `uv pip install --python .project-local/task-runtime/wheel-qualification/venv/Scripts/python.exe --no-deps .project-local/task-artifacts/wheel-qualification/dist/design_lab-0.1.0a0-py3-none-any.whl"
+      },
+      {
+        "path": ".project-local/task-runtime/workbench-browser-20260908",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-WORKBENCH-ENTRY-2026-09-08.md",
+        "line": 19,
+        "text": "4. 内部浏览器实际完成连接 → 新建“工作台端到端验证” → 选择合成 PNG → 导入 → 点击读回预览 → 查看真实任务三条事件。测试服务使用独立合成工程 `.project-local/task-runtime/workbench-browser-20260908`，当时端口 58904；端口不是持续可用承诺。"
+      },
+      {
+        "path": ".project-local/task-runtime/workbench-installed",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-INSTALLED-NATIVE-REFRESH-2026-09-08.md",
+        "line": 24,
+        "text": "Reinstalled only into `.project-local/task-runtime/workbench-installed` using"
+      },
+      {
+        "path": ".project-local/task-runtime/workbench-installed/Lib/site-packages/design_lab/adapters/photoshop_com.py",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PHOTOSHOP-INSTALLED-ADAPTER-2026-09-08.md",
+        "line": 37,
+        "text": "子进程使用 `python -I -B`，cwd 为新运行目录，实际 module 位于 `.project-local/task-runtime/workbench-installed/Lib/site-packages/design_lab/adapters/photoshop_com.py`，没有源码路径注入。"
+      },
+      {
+        "path": ".project-local/task-runtime/workbench-installed/Scripts/python.exe",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-ILLUSTRATOR-COM-DISPATCH-2026-09-08.md",
+        "line": 38,
+        "text": "安装包运行用 `.project-local/task-runtime/workbench-installed/Scripts/python.exe -I -B`，cwd 是新 run 目录；实际模块路径为该 venv 下 `Lib/site-packages/design_lab/adapters/illustrator_com.py`，没有注入 repo/src 到子进程。"
+      },
+      {
+        "path": ".project-local/task-runtime/workbench-installed/Scripts/python.exe",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-NATIVE-WORKBENCH-READBACK-2026-09-08.md",
+        "line": 28,
+        "text": "安装解释器 `.project-local/task-runtime/workbench-installed/Scripts/python.exe -I -B` 的 HTTP 19 项另行 PASS。"
+      },
+      {
+        "path": ".project-local/task-runtime/workbench-installed/Scripts/python.exe",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PHOTOSHOP-INSTALLED-ADAPTER-2026-09-08.md",
+        "line": 34,
+        "text": ".venv/Scripts/python.exe -B design-lab/tests/host_fixtures/prepare_photoshop_native.py --installed-python .project-local/task-runtime/workbench-installed/Scripts/python.exe"
+      },
+      {
+        "path": ".project-local/task-runtime/workbench-installed/Scripts/python.exe",
+        "file": "reports/audit-archive/20260930/projects/DESIGN-LAB/docs/decisions/R3-PHOTOSHOP-RIR-LOWERING-2026-09-08.md",
+        "line": 24,
+        "text": "执行命令：`.project-local/task-runtime/workbench-installed/Scripts/python.exe -I -B design-lab/tests/host_fixtures/qualify_native_tasks.py <repo> photoshop <run>/job.json`。"
+      },
+      {
+        "path": ".project-local/tmp",
+        "file": "reports/audit-archive/20260930/projects/ArcheAxis-Knowledge-OS/DIRECTORY_AUTHORITY.yaml",
+        "line": 566,
+        "text": "- .project-local/tmp/"
+      },
+      {
+        "path": ".project-local/tmp-commit-msgs",
+        "file": "reports/audit-archive/20260930/hermes/skills/software-development/design-lab-authority-convergence/SKILL.md",
+        "line": 1089,
+        "text": "poller script (written to `.project-local/tmp-commit-msgs/`, regenerated for the"
+      }
+    ],
+    "unclassified_needs_human_read": [
+      {
+        "path": ".project-local/artifacts/current-state-ci.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 214,
+        "text": "| U02-PATHS-20261007 | P0 | FIXED_IN_REPO / PUBLISH_DEFERRED / U02_STILL_PARTIAL | 台账 **ERR-115**。两个 bootstrap 脚本与在册技能、`docs/current` 一直在调用 `scripts/workflow/sync_hermes_workflow_assets.py`——该路径在 2026"
+      },
+      {
+        "path": ".project-local/artifacts/error-ledger-20260806.json",
+        "file": "docs/current/workflow-assistance/workflow/error-governance.md",
+        "line": 17,
+        "text": "> 2026-10-07 更正：本节此前把 `.project-local/artifacts/error-ledger-20260806.json` 列为 canonical file。"
+      },
+      {
+        "path": ".project-local/artifacts/evals",
+        "file": "docs/current/workflow-assistance/workflow/agent-evaluation.md",
+        "line": 46,
+        "text": ".project-local/artifacts/evals/"
+      },
+      {
+        "path": ".project-local/artifacts/evals",
+        "file": "docs/current/workflow-assistance/workflow/agent-evaluation.md",
+        "line": 51,
+        "text": "1. 先复制模板到当前项目 `.project-local/artifacts/evals/` 或项目自己的 `tests/evals/`；"
+      },
+      {
+        "path": ".project-local/artifacts/mcp-candidate.yaml",
+        "file": "docs/current/workflow-assistance-README.md",
+        "line": 436,
+        "text": "python packages/client-neutral-core/scripts/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml"
+      },
+      {
+        "path": ".project-local/artifacts/mcp-candidate.yaml",
+        "file": "docs/current/workflow-assistance-README.md",
+        "line": 712,
+        "text": "python packages/client-neutral-core/scripts/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml"
+      },
+      {
+        "path": ".project-local/artifacts/mcp-candidate.yaml",
+        "file": "docs/current/workflow-assistance/mcp/workflow-mcp-stack.md",
+        "line": 47,
+        "text": "python scripts/workflow/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml"
+      },
+      {
+        "path": ".project-local/artifacts/orca-pilot",
+        "file": "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md",
+        "line": 46,
+        "text": "3. **数据边界**：Pilot 产物只落 `.project-local/artifacts/orca-pilot/`，"
+      },
+      {
+        "path": ".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json",
+        "file": ".project/governance/migration-status.json",
+        "line": 28,
+        "text": "\"legacyLocalArchiveManifest\": \".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json\","
+      },
+      {
+        "path": ".project-local/kanban",
+        "file": "docs/current/workflow-assistance-README.md",
+        "line": 475,
+        "text": "该执行器以 Git 根为边界，要求 `.project-local/` 已被 Git 忽略，并在子进程启动前把 `TMP`、`TEMP`、`TMPDIR`、XDG/pip/uv/npm/yarn/Playwright/Cargo home+target/Rust/Ruff/mypy/pre-commit cache 与 Python bytecode 指向 `<project>/.project-"
+      },
+      {
+        "path": ".project-local/runs/ci/changed-paths.txt",
+        "file": ".github/workflows/work-lab-gate.yml",
+        "line": 55,
+        "text": "--changed-path-file .project-local/runs/ci/changed-paths.txt \\"
+      },
+      {
+        "path": ".project-local/runs/deepseek-harness",
+        "file": "docs/current/workflow-assistance/runtime-adapters/deepseek-harness.md",
+        "line": 48,
+        "text": "legacy isolated-checkout layout `.project-local/runs/deepseek-harness/`"
+      },
+      {
+        "path": ".project-local/runs/frontend-baseline-vitest-only.py",
+        "file": "config/skill-provenance.yaml",
+        "line": 156,
+        "text": "- .project-local/runs/frontend-baseline-vitest-only.py - cited by live lesson"
+      },
+      {
+        "path": ".project-local/runs/frontend-baseline-vitest-only.py",
+        "file": "config/skill-provenance.yaml",
+        "line": 176,
+        "text": "copied in, and the live lesson''s dangling citation to the ephemeral .project-local/runs/frontend-baseline-vitest-only.py"
+      },
+      {
+        "path": ".project-local/runs/frontend-baseline-vitest-only.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 128,
+        "text": "| AG-06o | P1 | FIXED@9464ca7 (audit F04) | **F04 — CONFIRMED and the missing content is real.** Diffing the deployed `windows-development-environment/SKILL.md` against the repository source: **145 li"
+      },
+      {
+        "path": ".project-local/runs/observer",
+        "file": "apps/observer/README.md",
+        "line": 8,
+        "text": "- 只持久化在项目 `.project-local/runs/observer/` 下的 Observer-owned event log；"
+      },
+      {
+        "path": ".project-local/runs/p0c-diag-20261006",
+        "file": "taskpacks/current/SESSION-HANDOFF-P0C-20261006.md",
+        "line": 27,
+        "text": "复现命令（证据在 `.project-local/runs/p0c-diag-20261006/`）："
+      },
+      {
+        "path": ".project-local/runs/skill-call-index.json",
+        "file": "docs/decisions/global-execution-standard.md",
+        "line": 52,
+        "text": "1. 先查项目技能调用索引（.project-local/runs/skill-call-index.json）"
+      },
+      {
+        "path": ".project-local/sleep-mode",
+        "file": "docs/current/workflow-assistance/workflow/gateway-cron-delivery.md",
+        "line": 41,
+        "text": "| 项目长期推进 | sleep-mode 创建项目级 cron job | 每轮只做一个 bounded task，结果写入 `.project-local/sleep-mode/` 与 `.project-local/artifacts/` |"
+      },
+      {
+        "path": ".project-local/sleep-mode",
+        "file": "docs/current/workflow-assistance/workflow/project-definition.md",
+        "line": 108,
+        "text": "| 技能 | `packages/client-neutral-core/skills/` | `skills/` | 仓库受控 skill 集（codex、五个 GitHub workflow skills、model-switch、agent-workflow-fortress、project-data-boundary、python-testing、sleep-mode、windows-de"
+      },
+      {
+        "path": ".project-local/sleep-mode/activity.jsonl",
+        "file": "docs/current/workflow-assistance/workflow/gateway-cron-delivery.md",
+        "line": 60,
+        "text": "3. `.project-local/sleep-mode/activity.jsonl` 看最近状态迁移；"
+      },
+      {
+        "path": ".project-local/sleep-mode/state.json",
+        "file": "docs/current/workflow-assistance/workflow/gateway-cron-delivery.md",
+        "line": 12,
+        "text": "| Sleep mode state active | 项目账本声明队列活跃 | job 一定存在或正在运行 | `.project-local/sleep-mode/state.json` + `hermes cron list` |"
+      },
+      {
+        "path": ".project-local/sleep-mode/state.json",
+        "file": "docs/current/workflow-assistance/workflow/gateway-cron-delivery.md",
+        "line": 59,
+        "text": "2. `.project-local/sleep-mode/state.json` 确认 mode、job_id、baseline/head；"
+      }
+    ]
+  },
+  "unavailableEvidenceReviewQueue": [
+    ".project-local/artifacts/current-state-ci.json",
+    ".project-local/artifacts/error-ledger-20260806.json",
+    ".project-local/artifacts/evals",
+    ".project-local/artifacts/mcp-candidate.yaml",
+    ".project-local/artifacts/orca-pilot",
+    ".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json",
+    ".project-local/kanban",
+    ".project-local/runs/ci/changed-paths.txt",
+    ".project-local/runs/deepseek-harness",
+    ".project-local/runs/frontend-baseline-vitest-only.py",
+    ".project-local/runs/observer",
+    ".project-local/runs/p0c-diag-20261006",
+    ".project-local/runs/skill-call-index.json",
+    ".project-local/sleep-mode",
+    ".project-local/sleep-mode/activity.jsonl",
+    ".project-local/sleep-mode/state.json"
+  ],
+  "dispositions": {
+    ".project-local/artifacts/current-state-ci.json": "DESTINATION — written by `scripts/ci/generate_current_state.py`; the register row names it as the producer side of a producer/consumer divergence that round D fixed.",
+    ".project-local/artifacts/error-ledger-20260806.json": "FIXED 2026-10-07 — a current doc listed it under 'Canonical files', which told a reader to read a file that does not exist; re-pointed at `taskpacks/current/error-ledger.json` with a dated correction kept in place (ERR-131).",
+    ".project-local/artifacts/evals": "DESTINATION — doc instruction to copy an eval template into the current project's own dir.",
+    ".project-local/artifacts/mcp-candidate.yaml": "DESTINATION — created by `mcp_candidate_audit.py --write-template` in the documented usage examples; the input-side example assumes you ran the template step first.",
+    ".project-local/artifacts/orca-pilot": "DESTINATION — the pilot card's declared data boundary (产物只落此处); the pilot never ran.",
+    ".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json": "HISTORICAL POINTER, bytes gone with the 2026-08-10 archive retirement. The same file records the retirement and the surviving root `docs/history/archive-manifests/migration-20260805/`; the field is named `legacy*`, so it states where it was, not where it is. Not edited.",
+    ".project-local/kanban": "DESTINATION — one of the cache/TMP roots the guarded executor redirects to `<project>/.project-local/…` before launching a child process.",
+    ".project-local/runs/ci/changed-paths.txt": "DESTINATION — the runner writes it and passes it with `--changed-path-file`; it exists only during a CI run.",
+    ".project-local/runs/deepseek-harness": "SUPERSEDED LAYOUT — the adapter doc names it explicitly as the legacy isolated-checkout layout, i.e. the thing that is no longer used.",
+    ".project-local/runs/frontend-baseline-vitest-only.py": "ALREADY RECORDED AS DANGLING — `config/skill-provenance.yaml` states that the live lesson's dangling citation to this ephemeral path was removed; the register row cites it historically.",
+    ".project-local/runs/observer": "DESTINATION — `apps/observer/module-profile.json` declares where the read-only projection writes when it runs; nothing validates its existence and it has not been asked to run.",
+    ".project-local/runs/p0c-diag-20261006": "RE-POINTED 2026-10-07 — the bytes survive inside the WorkBuddy worktree import at `imported-from-workbuddy-20261006/WORK-LAB__task-decomposition-atlas-gap-archive-20261001-381e33ec/.project-local/runs/p0c-diag-20261006/` (per-file sha256: onlySrc=0, onlyDst=0, contentDiff=0). `SESSION-HANDOFF-P0C-20261006.md` now says to read the import path.",
+    ".project-local/runs/skill-call-index.json": "DESTINATION — the per-project skill-call index the global execution standard tells a reader to consult when it has been built.",
+    ".project-local/sleep-mode": "DESTINATION — state root the sleep-mode feature writes; the feature is not scheduled here.",
+    ".project-local/sleep-mode/activity.jsonl": "DESTINATION — sleep-mode's own state-transition log, read when the feature has run.",
+    ".project-local/sleep-mode/state.json": "DESTINATION — sleep-mode's mode/job_id/baseline state file, read when the feature has run."
+  },
+  "counts": {
+    "reviewQueue": 16,
+    "unadjudicated": 0
+  },
+  "disposition": "Read the classes before quoting a number. A full-tree scan yields 200 absent tokens and a narrower one yielded 28; neither is a count of broken promises. The number that matters is unavailableEvidenceReviewQueue: citations that claim recoverable evidence while the bytes are gone. Everything else is a pattern, a destination a program will create, a negative assertion, or frozen narrative — all correct states, and deleting those records would destroy provenance rather than protect it."
+}

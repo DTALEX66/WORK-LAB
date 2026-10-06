@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 129,
+    "total": 131,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 47,
       "test_behavior_alignment": 14,
       "working_directory_recovery": 2,
-      "evidence_state": 21,
-      "ci_configuration": 9,
+      "evidence_state": 22,
+      "ci_configuration": 10,
       "feature_gap": 9,
       "config_downgrade": 3,
       "dead_entry": 3,
@@ -3592,6 +3592,58 @@
         "verifiedCommit": null,
         "affectedCapability": "Error-ledger reproducibility promises; scripts/audit and scripts/maintenance tool inventory",
         "regressionCommand": "python tests/workflow-assistance/test_error_ledger_regression_commands.py"
+      }
+    },
+    {
+      "error_id": "ERR-131",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_configuration",
+      "entrypoint": ".github/workflows/wlr-060-gates.yml, scripts/ci/reproduce_ci_commands.py, tests/workflow-assistance/test_workflow_locale_discipline_gate.py",
+      "command": "python -c \"import json,glob; [json.load(open(f)) for f in glob.glob('packages/contracts/schemas/**/*.json',recursive=True)]; print('ALL SCHEMAS VALID')\"",
+      "exit_code": 1,
+      "observed_error": "The whole-workflow repro (`.project-local/runs/ci/reproduce_ci_commands_receipt.json`, head 5c6bfe9, ran=86 failures=4) turned `schema-fixtures / Validate all JSON schemas` red with `UnicodeDecodeError: 'gbk' codec can't decode byte 0x94 in position 2844`. Five tracked schemas carry UTF-8 non-ASCII (em dash, §) in their title and description, and the recorded command read them with the interpreter's default locale encoding. The other three failures in the same receipt are consequences of my own `--skip cargo`/`--skip npm` flags (no binary, stale binary, no cargo on PATH) and are not repo defects.",
+      "root_cause": "A recorded CI command was written against one runner's locale. The job runs on ubuntu-latest, where Python's default text encoding is UTF-8, so the step has always passed by accident of platform rather than by stating what it reads. The same command is a lie about reproducibility anywhere else, including on this host, whose default codepage is GBK.",
+      "fix": "The schema command now opens with `encoding='utf-8'` and sorts its glob so the run order is fixed; the capsule-verify heredoc's three `.read_text()` calls got the same explicit encoding. Re-running the corrected command under the default GBK locale prints `ALL SCHEMAS VALID` with exit 0. A new gate refuses the class: any python command recorded in either workflow file that reads text without an explicit encoding, in a step that does not force PYTHONUTF8, fails CI.",
+      "regression_test": "tests/workflow-assistance/test_workflow_locale_discipline_gate.py — 8 tests, incl. the shipped `json.load(open(f))` shape and the `.read_text()` method shape injected as negative controls, plus accept-cases for encoding=, binary mode and PYTHONUTF8=1",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Every recorded CI command must state the encoding it reads text with, or force PYTHONUTF8 in the same step; never rely on the runner's default locale. Run scripts/ci/reproduce_ci_commands.py before pushing and read the receipt, not the wrapper exit code.",
+      "remaining_boundary": "The capsule-verify heredoc is classified CI_CONTEXT by the repro tool (it interpolates ${{ }} expressions), so its three edits are verified by YAML parse plus the new gate, not by local execution; the corrected schema command was executed locally. Local green is not exact-SHA CI.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "5c6bfe9",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "wlr-060-production-gates schema validation; portability of every recorded CI command",
+        "regressionCommand": "python tests/workflow-assistance/test_workflow_locale_discipline_gate.py"
+      }
+    },
+    {
+      "error_id": "ERR-132",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": "scripts/audit/project_local_citation_audit.py, docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json, tests/workflow-assistance/test_project_local_citation_audit.py, docs/current/workflow-assistance/workflow/error-governance.md, taskpacks/current/SESSION-HANDOFF-P0C-20261006.md",
+      "command": "python scripts/audit/project_local_citation_audit.py",
+      "exit_code": 1,
+      "observed_error": "The owed item was phrased as a count: `28 tracked documents cite .project-local paths that no longer exist`. A full-tree scan of the same repository reports 365 distinct `.project-local` tokens, 165 resolving on disk and 200 absent, across 265 citations — the 28 was one scanner's scope, not a measurement of broken promises. Treating 200 as the debt would have meant restoring or deleting records that are correct as written.",
+      "root_cause": "Absence of a path says nothing until the citing sentence is read. Of the 200 absent tokens, 183 citations are frozen narrative under docs/history or docs/audits (where the files were, at the time), 36 are destinations a script or command will create, 15 are negative assertions and removal records, and 7 are patterns with a placeholder or a cut-off name. The claim that would have been a lie is narrower: a sentence that sends a reader to bytes as evidence.",
+      "fix": "Two such sentences existed and are repaired in place with dated corrections, keeping the original claim visible: `error-governance.md` listed .project-local/artifacts/error-ledger-20260806.json under 'Canonical files' (the live ledger is taskpacks/current/error-ledger.json) and `SESSION-HANDOFF-P0C-20261006.md` said the P0C evidence sat at .project-local/runs/p0c-diag-20261006/ (it survives at the WorkBuddy import path, so the handoff now names that). The remaining 14 review-queue paths each carry a written disposition, and the audit is regenerated by one tracked command.",
+      "regression_test": "tests/workflow-assistance/test_project_local_citation_audit.py — 8 tests: queued paths must all be adjudicated, the re-pointed evidence root must exist on disk, and four classifier controls proving an evidence citation reaches the queue while a destination, a removal record and a placeholder do not",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Never carry a stale count in a durable record without its scope. When a scan and a recorded figure disagree, re-derive from the citing sentence: must not exist / will create / was here / proof is here. Fix a dangling evidence citation per path — restore, re-point, or mark absent — and never by deleting the record.",
+      "remaining_boundary": "The classifier is regex over a single line, so a two-line sentence that cites evidence can land in the frozen-narrative bucket; the review queue is deliberately over-inclusive (16 paths, 0 unadjudicated). The legacy archive manifest in migration-status.json is left as written — its bytes are gone with the 2026-08-10 retirement and the field name already says legacy.",
+      "status_before": "PARTIAL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "5c6bfe9",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Traceability of .project-local citations; the greening owed-item list itself",
+        "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py"
       }
     }
   ],
