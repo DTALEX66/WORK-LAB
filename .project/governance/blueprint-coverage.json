@@ -435,10 +435,10 @@
         "knowledge-staging/BOUNDARY.md",
         ".project/governance/cross-module-source-index.json"
       ],
-      "status": "FAIL",
-      "evidence": "AG-19 open: original long chat, WORK-LAB-SUMMARY and the 9/28 attachments remain inaccessible",
+      "status": "PARTIAL",
+      "evidence": "4 of 5 pinned originals verified hash-identical on this machine (summary, R3 and daily taskpacks, 09-03 handoff); the 15.5 MB conversation timeline negatively proven absent across the tree, git history and archives; the two 2026-09-28 items have no digest pin so nothing can be claimed either way. Registry amended in place with AG-20 increments appended",
       "disposition": "RETAINED",
-      "nextOrBlocked": "any restored item is registered by path/time/hash/original location/coverage relation"
+      "nextOrBlocked": "originals remain unrecoverable from the source platform only; history_complete stays false; the registry is machine-local so the amendment is not CI-enforced and an atlas rebuild must re-apply it"
     },
     {
       "id": "T08",

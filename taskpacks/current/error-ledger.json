@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 112,
+    "total": 113,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
       "test_behavior_alignment": 13,
       "working_directory_recovery": 2,
-      "evidence_state": 18,
+      "evidence_state": 19,
       "ci_configuration": 8,
       "feature_gap": 9,
       "config_downgrade": 3,
@@ -3126,6 +3126,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Model and external-library registry truth",
         "regressionCommand": "python services/orchestration/run_quality_gate.py model-registry-integrity"
+      }
+    },
+    {
+      "error_id": "ERR-114",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": ".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json missing_or_recovered_pins, .project-local/artifacts/task-artifacts/r4/history-source-manifest.json",
+      "command": "python .project-local/runs/convergence-20261007-c/ag19_scan.py; python .project-local/runs/convergence-20261007-c/scan_digest_refs.py",
+      "exit_code": 1,
+      "observed_error": "The source registry carried BLOCKED_NOT_VISIBLE for SRC-WL-SUMMARY while a byte-identical copy has been on this machine the whole time at .project-local/runs/legacy-task-runtime/totals-full/WORK-LAB-SUMMARY.md (164,397 B, sha256 280b10be0c5f793f…). Measured now: 4 of 5 pinned sources are hash-identical on disk, and only one (the 15,558,839 B conversation timeline) is genuinely absent.",
+      "root_cause": "The 2026-09-29 round answered 'is the original here?' with a name search inside the atlas sources folder plus an assumption that anything not visible in the source platform was unavailable. A pin that carries sha256 and size makes a hash-level search possible and cheap, and that search is the only thing that can answer the question. The wrong verdict then propagated: AG-19/T07 were recorded as blocked, and the P0 gap list repeated it.",
+      "fix": "Whole-tree size index over the project (long-path safe walk, because the atlas copy contains paths past MAX_PATH and an ordinary rglob dies at 260 chars), hashing only the files whose size matches a pin: 5 pins checked against 47,073 files with 0 unreadable entries; git was asked separately (14,592 objects, largest 4,533,919 B, 0 of the timeline's size) and 60 archives were opened member-by-member. The registry is amended in place (both copies written identically, a pristine backup retained), and the AG-20 increments are appended in the registry's own schema: the recovered copy, the scan, its evidence file, and the two owner input documents — 642 sources total.",
+      "regression_test": "Both scanners fail loudly instead of returning a clean-looking empty result: scan_digest_refs.py exits 3 when the walk reports any error or inspects fewer than 1,000 files, because two earlier attempts of mine printed 'NONE' after inspecting zero (a malformed \\\\?\\ prefix in a heredoc swallowed a backslash). The recovery claim is bound to a digest: the script only writes RECOVERED when the computed sha256 equals the pin, and it refuses to touch the live registry when the backup differs from what it read.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A pin with a digest is a search key: 'missing' may only be recorded after a content-level search with a stated scope and a stated count of files actually inspected. And a scan that inspected nothing must not be able to report the same verdict as a scan that inspected everything — an empty result and a clean result need different exit codes.",
+      "remaining_boundary": "What is NOT recovered: the 15,558,839 B / 432,344-line conversation timeline (negatively proven absent from the machine, from git history and from every archive in scope — reachable only from the source platform, which this repository cannot touch), and the two 2026-09-28 items, which carry a name but no expected_sha256, so no hash-level statement is possible about them either way. history_complete stays false. The recovered WORK-LAB-SUMMARY is a derived assembly (built by legacy-task-runtime/build-full.py from DSH session archives), content-identical to the pin but not an original export, and it holds session UUIDs and prompt bodies, so it stays ignored and is registered by path and digest only. The registry itself lives under .project-local and is machine-local: nothing here is enforced by CI, and a rebuild of the atlas must re-apply the amendment or the pins revert to BLOCKED_NOT_VISIBLE.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "35045a0",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Historical source registry and AG-19 recovery",
+        "regressionCommand": "python .project-local/runs/convergence-20261007-c/ag19_scan.py"
       }
     }
   ],
