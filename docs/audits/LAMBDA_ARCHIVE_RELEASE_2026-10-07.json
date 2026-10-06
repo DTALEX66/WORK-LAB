@@ -44,5 +44,58 @@
     },
     "bytesFreed": 264519230,
     "filesRemoved": 1
+  },
+  "runtimeStillResolves": {
+    "checkedAt": "2026-10-06T22:58:07Z",
+    "tool": "readback of .project/governance/runtime-registry.json claims after the archive release",
+    "installRoot": "D:\\All projects\\WORK-LAB\\.project-local\\toolchains\\lambda",
+    "binaries": [
+      {
+        "role": "server",
+        "file": "llama-server.exe",
+        "present": true,
+        "bytes": 9216,
+        "claimedBytes": null,
+        "claimMatches": null
+      },
+      {
+        "role": "cli",
+        "file": "llama-cli.exe",
+        "present": true,
+        "bytes": 9216,
+        "claimedBytes": null,
+        "claimMatches": null
+      },
+      {
+        "role": "bench",
+        "file": "llama-bench.exe",
+        "present": true,
+        "bytes": 9216,
+        "claimedBytes": null,
+        "claimMatches": null
+      },
+      {
+        "role": "quantize",
+        "file": "llama-quantize.exe",
+        "present": true,
+        "bytes": 9216,
+        "claimedBytes": null,
+        "claimMatches": null
+      },
+      {
+        "role": "cuda_backend_dll",
+        "file": "ggml-cuda.dll",
+        "present": true,
+        "bytes": 569357824,
+        "claimedBytes": 569357824,
+        "claimMatches": true
+      }
+    ],
+    "versionCommand": "llama-server.exe --version",
+    "versionExitCode": 0,
+    "versionMeasured": "version: 0.5.0-dev (build 11221, commit 136887b66)",
+    "versionClaimed": "0.5.0-dev (build 11221, commit 136887b66)",
+    "versionClaimVerified": true,
+    "note": "The registry claims ggml-cuda.dll at 569,357,824 B; that byte count is re-measured here and equal. The four .exe entry points are 9,216 B thin launchers — the registry never claimed their size, so nothing is asserted about them beyond presence. Running --version starts no server, binds no port and reads no model."
   }
 }
