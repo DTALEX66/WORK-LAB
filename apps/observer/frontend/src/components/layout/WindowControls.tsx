@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useState } from 'react'
 import { Minus, Square, X, Plus, RotateCcw } from 'lucide-react'
 
@@ -14,7 +15,8 @@ const ZOOM_MIN = 0.6
 const ZOOM_MAX = 2.0
 
 function inTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+  return typeof window !== 'undefined'
+    && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
 }
 
 export function WindowControls() {
@@ -64,7 +66,11 @@ export function WindowControls() {
 
   if (!tauri) return null
 
-  return (
+  // Portalled to <body>: inside the top bar the cluster inherited a containing
+  // block from an ancestor with filter/backdrop-filter, so `position: fixed`
+  // stopped being viewport-relative and `.app{overflow:hidden}` clipped the whole
+  // group away - it rendered and simply could never be seen.
+  return createPortal(
     <div className="winctl" role="group" aria-label="窗口控制">
       <div className="winctl-zoomgroup">
       <button
@@ -124,6 +130,7 @@ export function WindowControls() {
       >
         <X size={13} aria-hidden="true" />
       </button>
-    </div>
+    </div>,
+    document.body,
   )
 }
