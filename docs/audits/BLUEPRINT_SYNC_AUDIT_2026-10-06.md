@@ -6,22 +6,15 @@
 
 ```json
 {
-  "observedAt": "2026-10-06T22:48:51+0800",
+  "observedAt": "2026-10-06T23:07:54+0800",
   "remote": "git@github.com:DTALEX66/WORK-LAB.git",
   "branch": "task-decomposition/atlas-gap-archive-20261001",
-  "localHead": "a018fbefe4b6f9b67028b5dd12ddbf0eb2a746ed",
+  "localHead": "4115d6324ef0c7727fb65413adc6c25c966ed613",
   "baseSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
-  "dirtyFiles": [
-    ".project/governance/generated/CURRENT_STATE.json",
-    ".project/governance/generated/CURRENT_STATE.md",
-    "docs/audits/BLUEPRINT_SYNC_AUDIT_2026-10-06.md",
-    "scripts/ci/record_blueprint_audit_snapshot.py",
-    "taskpacks/current/error-ledger.json",
-    "tests/ci/test_failfast_group.py"
-  ],
-  "statusRecords": 7,
+  "dirtyFiles": [],
+  "statusRecords": 1,
   "liveMainSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
-  "liveBranchSha": "a018fbefe4b6f9b67028b5dd12ddbf0eb2a746ed"
+  "liveBranchSha": "4115d6324ef0c7727fb65413adc6c25c966ed613"
 }
 ```
 
@@ -32,7 +25,7 @@
 ```json
 {
   "baseRefName": "main",
-  "headRefOid": "a018fbefe4b6f9b67028b5dd12ddbf0eb2a746ed",
+  "headRefOid": "4115d6324ef0c7727fb65413adc6c25c966ed613",
   "mergeable": "MERGEABLE",
   "state": "OPEN",
   "url": "https://github.com/DTALEX66/WORK-LAB/pull/162"
@@ -60,31 +53,12 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
 
 ```json
 {
-  "headSha": "a018fbefe4b6f9b67028b5dd12ddbf0eb2a746ed",
-  "count": 22,
+  "headSha": "4115d6324ef0c7727fb65413adc6c25c966ed613",
+  "count": 19,
   "buckets": {
-    "fail": 2,
-    "pass": 18,
-    "pending": 2
+    "pass": 19
   },
-  "pendingOrFailing": [
-    {
-      "name": "integration",
-      "bucket": "fail"
-    },
-    {
-      "name": "observer",
-      "bucket": "pending"
-    },
-    {
-      "name": "observer",
-      "bucket": "pending"
-    },
-    {
-      "name": "integration",
-      "bucket": "fail"
-    }
-  ]
+  "pendingOrFailing": []
 }
 ```
 
