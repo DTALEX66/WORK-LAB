@@ -6,31 +6,23 @@
 
 ```json
 {
-  "observedAt": "2026-10-07T00:35:11+0800",
+  "observedAt": "2026-10-07T01:35:34+0800",
   "remote": "git@github.com:DTALEX66/WORK-LAB.git",
   "branch": "task-decomposition/atlas-gap-archive-20261001",
-  "localHead": "6015f0ba1dc0c195a83e704bd73117b68f077347",
+  "localHead": "05994d0beeb97812d1f0094d9ef2812d0f4cec87",
   "baseSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
   "dirtyFiles": [
-    ".github/workflows/work-lab-gate.yml",
-    ".project/governance/blueprint-coverage.json",
-    ".project/governance/future-candidate-registry.json",
     ".project/governance/generated/CURRENT_STATE.json",
     ".project/governance/generated/CURRENT_STATE.md",
-    "apps/observer/scripts/u19_webview_e2e.py",
-    "apps/observer/scripts/write_artifact_receipt.py",
-    "apps/observer/tests/test_artifact_freshness.py",
-    "docs/audits/BLUEPRINT_SYNC_AUDIT_2026-10-06.md",
-    "docs/future/WORK-LAB-BLUEPRINT-20261006.md",
-    "docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md",
+    ".project/governance/project-data-boundary.json",
     "scripts/ci/record_blueprint_audit_snapshot.py",
-    "scripts/ci/verify_future_candidate_registry.py",
+    "scripts/ci/verify_project_data_boundary.py",
     "taskpacks/current/OPEN-TASK-REGISTER.md",
     "taskpacks/current/error-ledger.json"
   ],
-  "statusRecords": 16,
+  "statusRecords": 8,
   "liveMainSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
-  "liveBranchSha": "6015f0ba1dc0c195a83e704bd73117b68f077347"
+  "liveBranchSha": "05994d0beeb97812d1f0094d9ef2812d0f4cec87"
 }
 ```
 
@@ -41,7 +33,7 @@
 ```json
 {
   "baseRefName": "main",
-  "headRefOid": "6015f0ba1dc0c195a83e704bd73117b68f077347",
+  "headRefOid": "05994d0beeb97812d1f0094d9ef2812d0f4cec87",
   "mergeable": "MERGEABLE",
   "state": "OPEN",
   "url": "https://github.com/DTALEX66/WORK-LAB/pull/162"
@@ -69,12 +61,30 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
 
 ```json
 {
-  "headSha": "6015f0ba1dc0c195a83e704bd73117b68f077347",
-  "count": 19,
+  "headSha": "05994d0beeb97812d1f0094d9ef2812d0f4cec87",
+  "count": 22,
   "buckets": {
-    "pass": 19
+    "pass": 18,
+    "pending": 4
   },
-  "pendingOrFailing": []
+  "pendingOrFailing": [
+    {
+      "name": "observer",
+      "bucket": "pending"
+    },
+    {
+      "name": "token-monitor",
+      "bucket": "pending"
+    },
+    {
+      "name": "token-monitor",
+      "bucket": "pending"
+    },
+    {
+      "name": "observer",
+      "bucket": "pending"
+    }
+  ]
 }
 ```
 
@@ -116,7 +126,7 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
     "ERR-110": "PASS",
     "ERR-111": "PASS"
   },
-  "ledgerEntries": 110,
+  "ledgerEntries": 116,
   "candidatePool": {
     "candidates": 21,
     "sourceRows": 19,
@@ -141,9 +151,11 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
 | 命令 | 退出码 | 末行结果 |
 |---|---|---|
 | `scripts/ci/verify_project_authority_reference.py` | 0 | AUTHORITY_REFERENCE_PASS top=WORK-LAB-AUTHORITY.md current=WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918 register=OPEN-TASK-REGISTER.md |
-| `scripts/ci/verify_error_ledger.py` | 0 | ERROR_LEDGER_PASS entries=110 classifications=13 raw_sensitive_data=false counts_consistent=true |
+| `scripts/ci/verify_error_ledger.py` | 0 | ERROR_LEDGER_PASS entries=116 classifications=13 raw_sensitive_data=false counts_consistent=true |
 | `scripts/ci/verify_blueprint_coverage.py` | 0 | BLUEPRINT_COVERAGE_PASS rows=87 kinds={'chapter': 19, 'appendix': 1, 'closed-loop-task': 9, 'owner-default': 5, 'input-source': 11, 'atlas-gap': 20, 'register-row': 22} status_vocabulary=reused dispositions=owner_prompt_ |
 | `scripts/ci/verify_future_candidate_registry.py` | 0 | FUTURE_CANDIDATE_REGISTRY_PASS candidates=21 blueprint_rows=19 claimed_rows=19 |
+| `scripts/ci/verify_project_data_boundary.py` | 0 | PROJECT_DATA_BOUNDARY_PASS runtime=.project-local/runs evidence=.project-local/artifacts |
+| `scripts/ci/verify_model_registry_integrity.py` | 0 | MODEL_REGISTRY_INTEGRITY_PASS providers=9 models=10 runtimes=3 processLibraries=2 externalAssets=0 served_bindings=0 |
 | `scripts/ci/failfast_group.py --group observer-web-contracts` | 0 | FAILFAST_GROUP_PASS group=observer-web-contracts commands=10 all_exit_0 |
 | `scripts/ci/failfast_group.py --group observer-python-skeleton` | 0 | OK |
 
@@ -152,8 +164,8 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
 | 路径 | 字节 | SHA-256 |
 |---|---|---|
 | `docs/future/WORK-LAB-BLUEPRINT-20261006.md` | 21789 | `1e647ecd09ce4ac7f062884a04e43412bfcde5bcd5bdba3f91b3b8e610c9abd3` |
-| `docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md` | 35385 | `4324243967e42429599e722959f3fbfacef171dfc1628fd2ac91332cd57acfe4` |
-| `.project/governance/blueprint-coverage.json` | 31447 | `4ab851e917d7d53caba7dc245cb284e565bb726226e2e380dc86956b2b6cf7bc` |
+| `docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md` | 35759 | `ba729d9d73f6a33406bb471e25f2aa838d1ab8c3234513309bec562bd5613d18` |
+| `.project/governance/blueprint-coverage.json` | 31821 | `31bc834a266edbcd181e23d24705e1b61fed953d6e145a46a19b1a03efee5a08` |
 | `.project/governance/future-candidate-registry.json` | 23479 | `627a8cb389c77aac4ea195ee04d20647370bce8f31254328bbe3f5dad8d9927e` |
 | `scripts/ci/verify_blueprint_coverage.py` | 13822 | `9ded1cd312df28866bd0f5915cf8e1efde120b7725b70463822bbfb2a34ee8f4` |
 | `scripts/ci/verify_future_candidate_registry.py` | 7974 | `1220c5d97438975672df3545190fa3365652f18791d1561e303b5cb2224397ba` |

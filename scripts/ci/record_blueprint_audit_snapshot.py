@@ -42,6 +42,8 @@ CHECKS = [
     ["scripts/ci/verify_error_ledger.py"],
     ["scripts/ci/verify_blueprint_coverage.py"],
     ["scripts/ci/verify_future_candidate_registry.py"],
+    ["scripts/ci/verify_project_data_boundary.py"],
+    ["scripts/ci/verify_model_registry_integrity.py"],
     ["scripts/ci/failfast_group.py", "--group", "observer-web-contracts"],
     ["scripts/ci/failfast_group.py", "--group", "observer-python-skeleton"],
 ]

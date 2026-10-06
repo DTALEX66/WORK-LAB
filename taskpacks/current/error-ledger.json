@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 115,
+    "total": 116,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 38,
+      "contract_drift": 39,
       "test_behavior_alignment": 13,
       "working_directory_recovery": 2,
       "evidence_state": 19,
@@ -3204,6 +3204,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Audited cleanup retention",
         "regressionCommand": "python .project-local/runs/convergence-20261007-c/finish_cleanup.py"
+      }
+    },
+    {
+      "error_id": "ERR-117",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "contract_drift",
+      "entrypoint": "taskpacks/current/OPEN-TASK-REGISTER.md (P1-01 row, lane counts), taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md (AG-01..AG-08 rows), apps/observer/frontend/src/lib/viewRegistry.ts",
+      "command": "python .project-local/runs/convergence-20261007-c/record_drifts.py",
+      "exit_code": 1,
+      "observed_error": "Two live records describe the code as it was, not as it is. The register's own lane vocabulary says 15 lanes (P1-01: 'frontend 15-lane -> 7 primary nav regroup'), while the production registry now holds 21 entries plus the synthetic overview lane = 22 reachable views. Separately, the atlas gap card carries AG-01..AG-08 with no live status column, and the coverage matrix therefore prints 'PLANNED (no live status column)' for all twenty AG rows — including seven whose fixes were committed on 2026-10-01 and are ancestors of this branch.",
+      "root_cause": "A planning record was written as the current state and then kept as the only statement of it. The register rows are dated observations that were correct when written, and nothing later re-derived the lane count from the registry it describes; the atlas card is explicitly a planning record that grants no execution authority, yet the extractor reads its missing status column as 'no live status' rather than as 'this file never carried one'.",
+      "fix": "Dated corrections appended instead of rewriting history, which is the rule this repository already follows: the P1-01 row keeps its 9/26 wording and this entry states the measured count with the command that measured it. The AG staleness is recorded with git-resolved SHAs and subjects (fix: unify the model selection gate and make; fix: close the registry foreign keys and sto; fix: stop pinning the DSH install path and r), verified as ancestors of the branch rather than asserted, and the atlas card stays untouched because it is a frozen planning record.",
+      "regression_test": "The counts are derived at run time: the lane figure is a regex count over viewRegistry.ts entries plus the one documented synthetic lane, and the script exits 2 if any cited SHA fails `git merge-base --is-ancestor` — so a citation that names a commit not in this branch cannot be written. No hand-typed digests.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A number that describes code must be re-derived from the code, not carried forward from the row that first measured it; and a planning record without a status column is not evidence of absence — the extractor should say 'this source has no status field' rather than rendering every row as PLANNED forever.",
+      "remaining_boundary": "Not changed: the atlas card's AG rows (frozen planning record), the coverage matrix's extractor (still renders AG liveStatus as 'PLANNED (no live status column)' — widening it to read the register would invent a status the card never had), and the P1-01 row's 9/26 wording. The UI-CHECK M-7 finding is discharged by this dated correction, not by editing the old prose.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "d10a42c",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Register and atlas accuracy",
+        "regressionCommand": "python .project-local/runs/convergence-20261007-c/record_drifts.py"
       }
     }
   ],
