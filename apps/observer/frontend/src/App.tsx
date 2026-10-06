@@ -4,9 +4,7 @@ import { TopStatusBar } from '@/components/layout/TopStatusBar'
 import { CommandPalette, type PaletteItem } from '@/components/ui/command-palette'
 import { Drawer } from '@/components/ui/drawer'
 import { Toaster, useToaster } from '@/components/ui/toast'
-import {
-  MonitoringView, TrustView, SettingsView,
-} from '@/views/Views'
+import { UnknownState } from '@/components/ui/states'
 import { CompactHUD } from '@/views/CompactHUD'
 // L10 (2026-09-27): B10 overview landing surface (KPI grid + trends +
 // Observer Map + system status + alerts + recent task packs).
@@ -19,6 +17,28 @@ import { VIEW_REGISTRY, OVERVIEW_ID } from '@/lib/viewRegistry'
 import { announce } from '@/lib/a11y'
 
 type ViewId = string
+
+/**
+ * An unknown ?view= id used to call setView() from inside render and return
+ * null: React warned about updating during render, the user saw one blank
+ * frame, and the invalid link was never explained. It now reports the state and
+ * offers an explicit way out.
+ */
+function UnknownLane({ requested, onFallback }: { requested: string; onFallback: () => void }) {
+  return (
+    <div>
+      <UnknownState
+        title="未知视图"
+        description={`链接要求的 lane「${requested}」不在注册表中，因此未渲染任何内容；地址也没有被静默改写。`}
+      />
+      <div className="mt-3 flex justify-center">
+        <button type="button" className="ghost-btn" onClick={onFallback}>
+          返回总览
+        </button>
+      </div>
+    </div>
+  )
+}
 
 // U04/U05: the active view + theme are driven by URL params (?view=, ?theme=,
 // ?layout=) so the dashboard is deep-linkable and Full/Compact/Dark/Light is
@@ -187,7 +207,7 @@ export default function App() {
 
   const mainContent = (
     error && !snap ? (
-      <div className="panel mx-auto mt-10 max-w-xl text-center">
+      <div className="panel mx-auto mt-10 max-w-xl text-center" role="alert">
         <div className="mb-2 text-lg text-error">数据源不可用</div>
         <p className="whitespace-pre-wrap text-xs text-muted">{error}</p>
         <p className="mt-3 text-[11px] text-muted">
@@ -196,20 +216,15 @@ export default function App() {
       </div>
     ) : isOverview ? (
       <OverviewView snap={snap} source={source} live={live} />
-    ) : view === 'monitoring' ? (
-      <MonitoringView snap={snap} />
-    ) : view === 'trust' ? (
-      <TrustView snap={snap} />
-    ) : view === 'settings' ? (
-      <SettingsView snap={snap} />
     ) : (
       (() => {
+        // Single resolution path: every lane, including monitoring/trust/settings,
+        // comes from VIEW_REGISTRY. The hardcoded branches that used to sit here
+        // won over the registry, so "add a lane by editing only the registry"
+        // silently stopped being true.
         const entry = VIEW_REGISTRY.find((e) => e.id === view)
         if (!entry || !entry.component) {
-          // Unknown view id (bad URL) -> fall back to Overview; never a
-          // silent false view.
-          setView(OVERVIEW_ID)
-          return null
+          return <UnknownLane onFallback={() => setView(OVERVIEW_ID)} requested={view} />
         }
         const C = entry.component
         return <C snap={snap} />
@@ -314,6 +329,10 @@ export default function App() {
         onSelect={(id) => {
           setView(id)
           setMobileNavOpen(false)
+          // A lane switch was silent for assistive tech: focus stayed on the
+          // rail and nothing announced the new context.
+          const label = VIEW_REGISTRY.find((e) => e.id === id)?.label ?? id
+          announce('已进入 ' + label)
         }}
         mobileOpen={mobileNavOpen}
         onCloseMobile={() => setMobileNavOpen(false)}

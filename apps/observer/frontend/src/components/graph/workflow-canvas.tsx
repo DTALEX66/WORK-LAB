@@ -250,6 +250,18 @@ export function WorkflowCanvas({
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
                 onClick={() => onSelect?.(n.id)}
+                // Nodes are the editor's primary interaction and were reachable
+                // only by mouse. Keyboard selection works without touching drag.
+                role="button"
+                tabIndex={0}
+                aria-pressed={sel}
+                aria-label={n.label}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onSelect?.(n.id)
+                  }
+                }}
               >
                 <div className="flex items-start justify-between gap-1">
                   <div className="min-w-0">

@@ -242,3 +242,51 @@
   .search { flex: 1 1 220px; }
   .winctl { margin-left: auto; }
 }
+
+/* ---------------------------------------------------------------------------
+ * 2026-10-06 accessibility repair (parallel audit).
+ * All of it lives in this shell layer; b10.css stays verbatim (D-11).
+ * ------------------------------------------------------------------------- */
+
+/* Light theme was unusable: index.css:76-93 redefines only the Tailwind
+ * --color-* tokens, while the B10 skin reads its OWN variable set
+ * (--bg/--surface/--surface2/--border/--text/--muted/...). Those kept their dark
+ * values, so layered text flipped to near-black on an unchanged #081420 surface
+ * — measured 1.03:1 for .text-ink, effectively invisible. Mirror the light
+ * palette into the names the skin actually consumes. */
+html.light {
+  --bg: #F4F7FA;
+  --sidebar: #E4EBF2;
+  --surface: #FFFFFF;
+  --surface2: #EAF0F6;
+  --border: #D5E2EC;
+  --text: #0B1420;
+  --muted: #4A6172;
+  --primary: #1B7FE6;
+  --success: #15803D;
+  --warning: #B45309;
+  --error: #B91C1C;
+}
+
+/* Status pills set white text at 12px/700 over #27c86a (2.2:1), #f2b541 (1.8:1),
+ * #f86b6b (2.9:1) and #2A91FF (3.2:1) — every one fails AA. Darkening the
+ * background to these values reaches 5.3-7.7:1 against the same white label and
+ * keeps B10's radius, padding and gradient treatment. */
+.tag.ok { background: #0D7A38; }
+.tag.warn { background: #7A4A00; }
+.tag.bad { background: #A11D1D; }
+.tag.info { background: #1B6CC4; }
+
+/* There was no global focus indicator anywhere except .winctl-btn, and
+ * b10.css:381 `.palette{overflow:hidden}` clips the UA ring. */
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.palette :focus-visible { outline-offset: -2px; }
+/* b10.css:392 kills the outline on the palette input with no replacement. */
+.palette input:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+/* modal.tsx deleted its own only cue with `focus:outline-none`. */
+.modal:focus { outline: 2px solid var(--primary); outline-offset: -2px; }
+
+/* Chrome buttons were 26x24 with a 2px gap — including close and maximise.
+ * The 78px top bar absorbs the larger size at no layout cost. */
+.winctl { gap: 4px; }
+.winctl-btn { width: 32px; height: 32px; }

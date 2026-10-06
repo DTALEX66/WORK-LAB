@@ -78,7 +78,23 @@ export function NodeGraph({ core, nodes, edges, className, onSelect, selected }:
           // the circle along the radial direction (readable, still B10-styled).
           const labelY = cy < 50 ? cy - 8 : cy + 10.5
           return (
-            <g key={n.id} className="cursor-pointer" onClick={() => onSelect?.(isSel ? null : n.id)}>
+            <g
+              key={n.id}
+              className="cursor-pointer"
+              onClick={() => onSelect?.(isSel ? null : n.id)}
+              // Satellite state was carried by fill colour alone (active / error
+              // / idle / unknown), so it was invisible to colour-blind users and
+              // to screen readers, and the node could not be reached by keyboard.
+              role="button"
+              tabIndex={0}
+              aria-label={`${n.label} · ${n.state}`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onSelect?.(isSel ? null : n.id)
+                }
+              }}
+            >
               <circle
                 className={cn('node-dot', isSel && 'active')}
                 cx={cx}
