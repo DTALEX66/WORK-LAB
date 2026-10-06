@@ -403,3 +403,47 @@ DOM 文本拼接会吃掉词边界。
 `apps/observer/web` 仍不删，U03 仍 PARTIAL。实测存量：vitest 17 文件 **114** 条、node 静态契约 **16** 条、
 `run_all_tests.js` **99 passed 0 failed**、`tsc --noEmit` 干净、`vite build` 绿。
 
+### 2026-10-07 步骤 4：品牌/约束/文案/紧凑层与断点归属（基准 `be6c2de`）
+
+工作单剩余 5 条全部关闭（node 静态契约 16→21）：
+
+- **13 品牌资产已迁入生产树**：`apps/observer/web/assets/brand/` 的 5 个文件
+  （`design-tokens.json`、`observer-icons.svg`、`work-lab-observer-symbol.svg`、
+  `work-lab-observer-tray.svg`、`app-icon-512.png`）逐字节复制到
+  `apps/observer/frontend/src/assets/brand/`，5/5 SHA-256 与源文件相同后落盘；
+  新断言钉「在场 ＋ SVG 以 `<svg>` 开头 ＋ 无远程 href/src」。
+  本轮**只迁移不挂载**：生产头部品牌是文字标，插入 SVG 属于视觉改动，另案处理。
+- **14 只读约束已有机器可读位置**：`design-tokens.json` 的 `constraints`
+  （`readOnly:true / externalMutation:false / modelSummary:false`）＋ themes 含 dark/light、
+  views 含 full/compact 由新断言逐项核。
+- **15 紧凑层四张 KPI 已钉**（传输/项目/Token/质量，多一张少一张都红）。
+  **密集项目列表记为有意放弃**，不是遗漏：紧凑 HUD 是单列状态条，
+  项目真值在「项目」车道（`ProjectPanel` 已有挂载断言），在 HUD 里再列一份会造出第二处项目视图，
+  与旧断言自己反对的"重复项目面"（CC2 single unified project grid）相矛盾。
+- **17 只读与不伪造文案有具名归属**：`Views.tsx` 的「只读」「不构成第二 Update Authority」
+  与 `App.tsx` 的「不伪造 / 保持 UNKNOWN 真相」各有断言。首版我写成扫全量 `appCode`，
+  那样连测试自己引用的文字都能算命中；改为分别扫这两个具体文件，
+  删掉 `Views.tsx` 那句"第二 Update Authority"即变红。
+- **16 断点那一半按行为而非数值移植**：生产用容器查询（`@container page 760px`
+  把 `.two-col/.three-col/.split` 收成 `1fr`）而不是旧的 800/640 媒体查询，
+  所以断言读的是**声明值必须是单个 `1fr`**（写 `1fr 1fr` 也红），外加 840px 媒体查询与
+  `src/index.css` 的 320px 下限仍在。
+
+**一条有意不移植，理由是要守更高的规则**：只读表里"LIVE v3 requires exact coverage,
+timestamps, and loopback events URL"（前端自己重算 LIVE 门）**不移植**——
+LIVE 结论由后端 `snapshot_api/sidecar` 判，前端再算一遍就是第二个 Update Authority，
+违反铁律。前端只做三件属于它自己的事：不接受不可信端点（步骤 3）、
+非权威来源不得显 LIVE（步骤 3）、乱序与坏帧不覆盖（步骤 3）。这三件都已钉住。
+
+**证伪 5/5**（`.project-local/runs/convergence-20261007-c/falsify_step4_node.py`，
+注入都落在生产文件上并按字节复原核对 SHA-256）：给品牌 SVG 加远程 `href`、把
+`constraints.readOnly` 改成 false、删掉"第二 Update Authority"字样、
+往紧凑 HUD 塞第 5 张 KPI、把 `1fr` 改成 `1fr 1fr`。
+
+至此**旧树 72 条断言全部有判定**（投影 13 ＋ 渲染 19 ＋ 只读 24 ＋ 响应式 11 ＋ 视觉 5），
+矩阵第 1、2 步完成。剩下的只是切换本身（矩阵第 3、4 步）：
+`web/` 与其 5 个 JS 套件与 `helpers.js` 的删除、四处清单绑定
+（`scripts/ci/required_groups.json`、`tests/ci/test_failfast_group.py` 钉死清单、
+`run_quality_gate.py` 受护路径、`run_all_tests.js` 注册表）、README/架构文档/退役桩文案，
+以及 `WORK-LAB-AUTHORITY.md` §7 的日期事实更正。
+

@@ -222,6 +222,81 @@ function run() {
     assert(offenders.length === 0, "non-loopback or non-v1 URLs in the UI layer: " + offenders.join(", "));
   });
 
+  // --- U03 step 4: the visual/brand ports, and the read-only wording ---
+  const BRAND = path.join(SRC, "assets", "brand");
+  const BRAND_FILES = ["design-tokens.json", "observer-icons.svg",
+                       "work-lab-observer-symbol.svg", "work-lab-observer-tray.svg", "app-icon-512.png"];
+
+  t("the brand set is preserved inside the production tree, locally and structurally valid", () => {
+    // Port of "R2 brand assets are checked in" + "R2 brand SVGs are local and
+    // structurally valid". Without this the SVGs and the icon exist only under
+    // web/assets/brand and would be lost with the tree they live in.
+    for (const name of BRAND_FILES) {
+      assert(fs.existsSync(path.join(BRAND, name)), "missing frontend/src/assets/brand/" + name);
+    }
+    for (const name of BRAND_FILES.filter((n) => n.endsWith(".svg"))) {
+      const svg = fs.readFileSync(path.join(BRAND, name), "utf-8");
+      assert(/^\s*<svg\b/.test(svg), name + " must start with an <svg> root");
+      assert(!/<(?:image|use|script)[^>]+(?:href|src)=["']https?:\/\//i.test(svg),
+        name + " references a remote asset");
+    }
+  });
+
+  t("the production brand tokens declare the approved themes/views and the read-only constraints", () => {
+    // Port of the R2 constraints assertion: this is the machine-readable place
+    // the read-only iron law is stated for the visual layer.
+    const tokens = JSON.parse(fs.readFileSync(path.join(BRAND, "design-tokens.json"), "utf-8"));
+    assert(tokens.version === "2.0.0", "expected R2 token version 2.0.0, got " + tokens.version);
+    assert(tokens.themes.includes("dark") && tokens.themes.includes("light"), "themes must list dark and light");
+    assert(tokens.views.includes("full") && tokens.views.includes("compact"), "views must list full and compact");
+    assert(tokens.constraints.readOnly === true, "constraints.readOnly must be true");
+    assert(tokens.constraints.externalMutation === false, "constraints.externalMutation must be false");
+    assert(tokens.constraints.modelSummary === false, "constraints.modelSummary must be false");
+  });
+
+  t("the read-only iron law and the no-fabrication rule are stated on the production surface", () => {
+    // Port of "index uses only local visual assets and preserves read-only web
+    // surface" — the wording half, which lived in web/index.html and moved into
+    // the React shell without a named owner. Scoped to the two files that carry
+    // the statements, so the scan cannot pass by matching its own test text.
+    const views = read("src/views/Views.tsx");
+    const app = read("src/App.tsx");
+    assert(/只读/.test(views), "Views.tsx no longer states the 只读 rule");
+    assert(/第二 Update Authority/.test(views), "Views.tsx no longer states the no-second-authority rule");
+    assert(/不伪造|保持 UNKNOWN 真相/.test(app), "App.tsx no longer states the no-fabrication rule");
+  });
+
+  t("the compact surface keeps exactly the four contracted KPI cells", () => {
+    // Port of "compact R2 hierarchy keeps four KPIs". The dense project list half
+    // is a recorded drop, not an oversight: the HUD is a single-column strip and
+    // the project truth lives in the 项目 lane (see parity-matrix-u03.md step 4).
+    const hud = fs.readFileSync(path.join(SRC, "views", "CompactHUD.tsx"), "utf-8");
+    const labels = [...hud.matchAll(/\{ k: '([^']+)', v:/g)].map((m) => m[1]);
+    assert(labels.length === 4, "expected 4 compact KPI cells, found " + labels.length + ": " + labels.join(", "));
+    for (const want of ["传输", "项目", "Token", "质量"]) {
+      assert(labels.includes(want), "compact KPI cell missing: " + want);
+    }
+  });
+
+  t("the shell collapses its grid layouts at its own declared breakpoints", () => {
+    // Port of the legacy "truth cards reflow at the DPI-safe breakpoints". The
+    // production breakpoints differ by design (container queries, not the 800/640
+    // media queries), so the ported rule is the collapse behaviour, not the
+    // numbers — and it reads the declaration value, so `1fr 1fr` cannot pass.
+    const block = /@container page \(max-width: 760px\)\s*\{([\s\S]*?)\n\}/.exec(shell);
+    assert(block, "l10b-shell.css has no @container page (max-width: 760px) block");
+    const values = [...block[1].matchAll(/([^{}]+)\{([^}]*)\}/g)]
+      .filter(([, sel]) => /\.two-col|\.split|\.three-col/.test(sel))
+      .map(([, , body]) => /grid-template-columns:\s*([^;]+)/.exec(body))
+      .filter(Boolean).map((m) => m[1].trim());
+    assert(values.length > 0, "the 760px container block sets no grid-template-columns any more");
+    assert(values.every((v) => v === "1fr"),
+      "narrow layouts must collapse to one column, got: " + values.join(" | "));
+    assert(/@media \(max-width: 840px\)/.test(shell), "the 840px viewport reflow is gone");
+    assert(/min-width:\s*320px/.test(fs.readFileSync(path.join(SRC, "index.css"), "utf-8")),
+      "the 320px floor disappeared from src/index.css");
+  });
+
   console.log(`TOTAL: ${pass} passed, ${fail} failed`);
   return { pass, fail };
 }
