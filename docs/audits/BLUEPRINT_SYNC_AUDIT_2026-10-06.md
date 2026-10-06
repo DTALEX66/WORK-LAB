@@ -6,15 +6,22 @@
 
 ```json
 {
-  "observedAt": "2026-10-06T22:33:16+0800",
+  "observedAt": "2026-10-06T22:48:51+0800",
   "remote": "git@github.com:DTALEX66/WORK-LAB.git",
   "branch": "task-decomposition/atlas-gap-archive-20261001",
-  "localHead": "28afeaad1adba5e0444acf39f8ca920d99bc75ee",
+  "localHead": "a018fbefe4b6f9b67028b5dd12ddbf0eb2a746ed",
   "baseSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
-  "dirtyFiles": [],
+  "dirtyFiles": [
+    ".project/governance/generated/CURRENT_STATE.json",
+    ".project/governance/generated/CURRENT_STATE.md",
+    "docs/audits/BLUEPRINT_SYNC_AUDIT_2026-10-06.md",
+    "scripts/ci/record_blueprint_audit_snapshot.py",
+    "taskpacks/current/error-ledger.json",
+    "tests/ci/test_failfast_group.py"
+  ],
   "statusRecords": 7,
   "liveMainSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
-  "liveBranchSha": "f3b5decf31ac6094d23dc4b77cec27a040b23d99"
+  "liveBranchSha": "a018fbefe4b6f9b67028b5dd12ddbf0eb2a746ed"
 }
 ```
 
@@ -25,7 +32,7 @@
 ```json
 {
   "baseRefName": "main",
-  "headRefOid": "f3b5decf31ac6094d23dc4b77cec27a040b23d99",
+  "headRefOid": "a018fbefe4b6f9b67028b5dd12ddbf0eb2a746ed",
   "mergeable": "MERGEABLE",
   "state": "OPEN",
   "url": "https://github.com/DTALEX66/WORK-LAB/pull/162"
@@ -33,6 +40,55 @@
 ```
 
 更正记录：蓝图原文记载 PR #162 head 为 `6f323a318a9db1c3a3ed4429bab0d4eff129876c`；本次实时读回是其自身的观察值，两者不同则以上方读回为准，原文值保留为历史观察，不改写。原文记载的 `origin/main = cd4daa83…` 与本次读回一致。
+
+## GitHub About（Git 外元数据）
+
+```json
+{
+  "before": "Client-neutral AI-agent control plane: user global config overlay for Hermes/Codex/DSH/GitHub/Open Design/OpenHuman via one adapter contract (CC Switch observe-only). Modules: client-neutral-core (task/telemetry ledger, sidecar), services (orchestration/policy/receipts), read-only observer. Authority chain + exact-SHA CI gates.",
+  "target": "Client-neutral workflow governance, control and delivery: portable rules, native client adapters, task coordination, permissions and evidence-based completion. Ongoing.",
+  "readBackNow": "Client-neutral workflow governance, control and delivery: portable rules, native client adapters, task coordination, permissions and evidence-based completion. Ongoing.",
+  "matchesTarget": true,
+  "homepageUrl": "(empty — no site claimed)",
+  "topicsChanged": false
+}
+```
+
+About 不属于仓库内容，提交 README 不等于改过 About；此处单独记录 before → target → 现场读回。homepageUrl 与 topics 未改动（无真实站点依据，不编造）。
+
+## exact-SHA CI（PR #162 checks，绑定推送后的 head）
+
+```json
+{
+  "headSha": "a018fbefe4b6f9b67028b5dd12ddbf0eb2a746ed",
+  "count": 22,
+  "buckets": {
+    "fail": 2,
+    "pass": 18,
+    "pending": 2
+  },
+  "pendingOrFailing": [
+    {
+      "name": "integration",
+      "bucket": "fail"
+    },
+    {
+      "name": "observer",
+      "bucket": "pending"
+    },
+    {
+      "name": "observer",
+      "bucket": "pending"
+    },
+    {
+      "name": "integration",
+      "bucket": "fail"
+    }
+  ]
+}
+```
+
+本地通过不称为 CI 绿；CI 绿也不宣告产品发布或本机 full gate 通过。
 
 ## 输入与摘要
 
@@ -59,7 +115,7 @@
 | 命令 | 退出码 | 末行结果 |
 |---|---|---|
 | `scripts/ci/verify_project_authority_reference.py` | 0 | AUTHORITY_REFERENCE_PASS top=WORK-LAB-AUTHORITY.md current=WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918 register=OPEN-TASK-REGISTER.md |
-| `scripts/ci/verify_error_ledger.py` | 0 | ERROR_LEDGER_PASS entries=107 classifications=13 raw_sensitive_data=false counts_consistent=true |
+| `scripts/ci/verify_error_ledger.py` | 0 | ERROR_LEDGER_PASS entries=108 classifications=13 raw_sensitive_data=false counts_consistent=true |
 | `scripts/ci/verify_blueprint_coverage.py` | 0 | BLUEPRINT_COVERAGE_PASS rows=87 kinds={'chapter': 19, 'appendix': 1, 'closed-loop-task': 9, 'owner-default': 5, 'input-source': 11, 'atlas-gap': 20, 'register-row': 22} status_vocabulary=reused dispositions=owner_prompt_ |
 | `scripts/ci/failfast_group.py --group observer-web-contracts` | 0 | FAILFAST_GROUP_PASS group=observer-web-contracts commands=10 all_exit_0 |
 | `scripts/ci/failfast_group.py --group observer-python-skeleton` | 0 | OK |
@@ -71,7 +127,7 @@
 | `docs/future/WORK-LAB-BLUEPRINT-20261006.md` | 18359 | `4cead2bf8c296b65966a2ad74d8ccdae7dd54ea819dd5aafbfe69b3bee134a73` |
 | `docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md` | 34095 | `710e58f5b1cf9c397b15e1662f9e8b99737a6bb2a6c97c1e7a4cd16bb29ad53a` |
 | `.project/governance/blueprint-coverage.json` | 25829 | `947b00c088eedcd0ed26359b3f29d14dbabdebec55c31b5d9fd786c124f0a6f5` |
-| `scripts/ci/verify_blueprint_coverage.py` | 12495 | `d6a7b7c3f35a924bb68e9595d981cde2a52d57e9ffc14dd365a2aa8c91f00417` |
+| `scripts/ci/verify_blueprint_coverage.py` | 13822 | `9ded1cd312df28866bd0f5915cf8e1efde120b7725b70463822bbfb2a34ee8f4` |
 | `apps/observer/scripts/write_artifact_receipt.py` | 4233 | `83527e3dcef1888e4cc0ce93796cfbd2814ef4e54e7dc367229d3e1fd309b344` |
 
 ## 范围与未决缺口

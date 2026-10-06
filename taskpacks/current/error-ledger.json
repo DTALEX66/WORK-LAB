@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 107,
+    "total": 108,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
       "test_behavior_alignment": 12,
       "working_directory_recovery": 2,
       "evidence_state": 16,
-      "ci_configuration": 7,
+      "ci_configuration": 8,
       "feature_gap": 8,
       "config_downgrade": 3,
       "dead_entry": 2,
@@ -2996,6 +2996,32 @@
         "verifiedCommit": null,
         "affectedCapability": "U19 artifact provenance receipt",
         "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py"
+      }
+    },
+    {
+      "error_id": "ERR-109",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_configuration",
+      "entrypoint": "scripts/ci/required_groups.json (observer-python-skeleton), tests/ci/test_failfast_group.py (manifest-completeness guard)",
+      "command": "python tests/ci/test_failfast_group.py; gh pr checks 162",
+      "exit_code": 1,
+      "observed_error": "CI on the pushed branch showed 16 pass / 2 fail / 4 pending at the exact SHA, with the failing step named 'Run fail-fast group runner negative controls'. Locally the same test reported required_groups: observer-python-skeleton has 9 commands, expected 8.",
+      "root_cause": "Adding tests/test_artifact_freshness.py to the group in the ERR-105 round was correct, but tests/ci/test_failfast_group.py pins the group command counts and I never ran it. I verified only the two observer groups I had touched (10/10 and 9/9) and treated that as sufficient before pushing, so the manifest guard — whose entire purpose is to notice that a required-group changed — was the one thing left unexecuted.",
+      "fix": "Manifest guard strengthened rather than merely re-tuned: it now pins the full command list of all four observer groups instead of their counts, and reports missing/unexpected entries on drift. Verified in both directions — baseline PASS, and a swap that drops test_artifact_freshness.py while duplicate-filling the cheap test_observer_skeleton.py (count preserved at 9, so the old guard could not have seen it) now fails with missing=[[python, tests/test_artifact_freshness.py]].",
+      "regression_test": "python tests/ci/test_failfast_group.py is a step of the CI integration job and now runs locally before every push of a manifest change; the full set of 25 CI-invoked governance and integration steps was executed locally with exit codes read from the process, not from output text, before the follow-up push.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A change to scripts/ci/required_groups.json must be followed by `python tests/ci/test_failfast_group.py` and by the full set of CI-invoked governance steps before any push; run the checks the pipeline actually invokes — its negative controls included — never only the groups whose contents changed. A test's verdict must be read from its exit code, because a negative-control suite prints expected FAIL lines and its last line is not its conclusion.",
+      "remaining_boundary": "test_exact_tree_review.py fails locally (HEAD != origin/main, not every task COMPLETED) and is not invoked by any CI job: it is a main-branch release-acceptance harness, so those two failures are structural to a feature branch, not evidence about this work. Recorded so a later agent does not chase it.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "770d733",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "required-group manifest completeness guard",
+        "regressionCommand": "python tests/ci/test_failfast_group.py"
       }
     }
   ],

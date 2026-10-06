@@ -25,6 +25,17 @@ INPUT_DOCX = INPUT_DIR / "02_WORK-LAB_完整项目描述与未来蓝图_20261006
 INPUT_PROMPT = (INPUT_DIR /
                 "02_WORK-LAB_权威修复_双端描述同步_可审计执行提示词_20261006.txt")
 DECLARED_DOCX_SHA = "f3784a9950adce06e8d87015a0ecb39d1ed4fdb3b93d5ccd3c9b40398bea3440"
+# Observed live at 2026-10-06T22:20 +08:00, before this task's metadata write.
+# GitHub About is not Git content, so the prior value is kept here rather than
+# left to memory or to a README claim.
+ABOUT_BEFORE = ("Client-neutral AI-agent control plane: user global config overlay for "
+                "Hermes/Codex/DSH/GitHub/Open Design/OpenHuman via one adapter contract "
+                "(CC Switch observe-only). Modules: client-neutral-core (task/telemetry "
+                "ledger, sidecar), services (orchestration/policy/receipts), read-only "
+                "observer. Authority chain + exact-SHA CI gates.")
+ABOUT_TARGET = ("Client-neutral workflow governance, control and delivery: portable "
+                "rules, native client adapters, task coordination, permissions and "
+                "evidence-based completion. Ongoing.")
 CHECKS = [
     ["scripts/ci/verify_project_authority_reference.py"],
     ["scripts/ci/verify_error_ledger.py"],
@@ -78,6 +89,44 @@ def run_check(argv: list[str]) -> dict:
             "result": tail[0][:220]}
 
 
+def collect_about() -> dict:
+    """GitHub About is metadata outside Git: read it back, never infer it."""
+    done = subprocess.run(["gh", "repo", "view", "DTALEX66/WORK-LAB", "--json",
+                           "description,homepageUrl"],
+                          capture_output=True, text=True, errors="replace",
+                          check=False)
+    try:
+        live = json.loads(done.stdout)
+    except json.JSONDecodeError:
+        return {"error": (done.stderr or "gh unavailable").strip()[:200]}
+    return {"before": ABOUT_BEFORE, "target": ABOUT_TARGET,
+            "readBackNow": live.get("description"),
+            "matchesTarget": live.get("description") == ABOUT_TARGET,
+            "homepageUrl": live.get("homepageUrl") or "(empty — no site claimed)",
+            "topicsChanged": False}
+
+
+def collect_ci(head_sha: str) -> dict:
+    if not head_sha or head_sha == "UNKNOWN":
+        return {"note": "no pushed head SHA to bind checks to"}
+    done = subprocess.run(["gh", "pr", "checks", "162", "--json", "name,state,bucket"],
+                          capture_output=True, text=True, errors="replace",
+                          check=False)
+    try:
+        checks = json.loads(done.stdout)
+    except json.JSONDecodeError:
+        return {"error": (done.stderr or "gh unavailable").strip()[:200],
+                "headSha": head_sha}
+    buckets = {}
+    for check in checks:
+        buckets[check.get("bucket") or "unknown"] = \
+            buckets.get(check.get("bucket") or "unknown", 0) + 1
+    return {"headSha": head_sha, "count": len(checks), "buckets": buckets,
+            "pendingOrFailing": [
+                {"name": c.get("name"), "bucket": c.get("bucket")}
+                for c in checks if c.get("bucket") != "pass"][:12]}
+
+
 def main() -> int:
     write = "--write" in sys.argv
     shanghai = datetime.now().astimezone()
@@ -102,6 +151,9 @@ def main() -> int:
                         capture_output=True, text=True, errors="replace", check=False)
     facts["pr162"] = json.loads(pr.stdout) if pr.returncode == 0 else {
         "error": (pr.stderr or "gh unavailable").strip()[:200]}
+    facts["about"] = collect_about()
+    facts["ci"] = collect_ci(facts["liveBranchSha"] if facts["liveBranchSha"] !=
+                              "NOT-PUSHED" else git("rev-parse", "HEAD"))
     facts["inputs"] = {
         "blueprintDocx": {"path": str(INPUT_DOCX), "exists": INPUT_DOCX.is_file(),
                           "sha256": sha256(INPUT_DOCX) if INPUT_DOCX.is_file() else None,
@@ -155,6 +207,23 @@ def main() -> int:
         "`6f323a318a9db1c3a3ed4429bab0d4eff129876c`；本次实时读回是其自身的观察值，"
         "两者不同则以上方读回为准，原文值保留为历史观察，不改写。原文记载的 "
         "`origin/main = cd4daa83…` 与本次读回一致。",
+        "",
+        "## GitHub About（Git 外元数据）",
+        "",
+        "```json",
+        json.dumps(facts["about"], indent=2, ensure_ascii=False),
+        "```",
+        "",
+        "About 不属于仓库内容，提交 README 不等于改过 About；此处单独记录 "
+        "before → target → 现场读回。homepageUrl 与 topics 未改动（无真实站点依据，不编造）。",
+        "",
+        "## exact-SHA CI（PR #162 checks，绑定推送后的 head）",
+        "",
+        "```json",
+        json.dumps(facts["ci"], indent=2, ensure_ascii=False),
+        "```",
+        "",
+        "本地通过不称为 CI 绿；CI 绿也不宣告产品发布或本机 full gate 通过。",
         "",
         "## 输入与摘要",
         "",
