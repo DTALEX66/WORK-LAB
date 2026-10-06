@@ -2905,16 +2905,16 @@
       "exit_code": 1,
       "observed_error": "The freshness gate refused to run: STALE_OR_MISSING_BINARY because app.exe was older than src-tauri/Cargo.toml, whose mtime read 19:40:34 that evening. The same rule had already been defeated once in the other direction: it certified a binary built from a dist whose frontend/src had been edited half an hour earlier.",
       "root_cause": "Freshness was keyed to filesystem mtimes on a working copy where git normalises line endings. The build's own output said it plainly: 'in the working copy of apps/observer/src-tauri/Cargo.toml, LF will be replaced by CRLF the next time Git touches it'. Every such touch raises an mtime with zero content change, so the rule reports a stale binary for a file nobody edited, and it never compared frontend/src against frontend/dist at all, so a genuinely stale bundle passed. mtime is not content.",
-      "fix": "Not fixed in this round. The correct rule is content-keyed: an input is superseded only if its bytes differ from the commit the binary was built from, with frontend/src feeding dist added to the input set. Measured in the meantime: rebuilding produced byte-identical asset names, so the dist under test was not content-stale after all, and the 19:40 Cargo.toml hash equals HEAD exactly.",
-      "regression_test": "A freshness gate must pass a touch-without-edit and fail an edit-with-touch; both cases must be in the gate's own tests before it is trusted to block U19.",
+      "fix": "Content-keyed. An input raises the floor only when git sees a change in its bytes — `git diff --name-only HEAD` with the working-copy filters applied, plus untracked additions — so a file that matches HEAD contributes nothing and a content-free touch cannot move the gate; a deleted input fails closed. Both stage boundaries are now checked: frontend/dist must beat frontend/src, and app.exe must beat the rust inputs and dist. Commit timestamps were implemented first and then rejected on measurement: %ct is second-granular and postdates a build that already consumed the same content, so committing a built change demanded a rebuild of nothing.",
+      "regression_test": "apps/observer/tests/test_artifact_freshness.py (registered in the observer-python-skeleton group, now 9/9): touch-without-edit must not raise the floor, a back-dated real edit and an untracked addition must, a deletion must fail closed, and both dist boundaries must behave. Additionally falsified against the real tree: PASS as it stands, STALE_OR_MISSING_BINARY naming apps/observer/frontend/src/App.tsx once that file is genuinely edited past the bundle, PASS again after revert.",
       "evidence_level": "local-full",
-      "repeat_prevention": "Artifact staleness must be decided from content identity, never from mtime, on any tree where git performs line-ending conversion; and a build chain must compare every stage to its own input, because certifying exe-newer-than-dist says nothing about dist-newer-than-src.",
-      "remaining_boundary": "Until the rule is content-keyed, expect false STALE_OR_MISSING_BINARY verdicts after any git checkout, stash or filter touch, and rebuild rather than argue with the gate.",
+      "repeat_prevention": "Artifact staleness must be decided from content identity, never from mtime, on any tree where git performs line-ending conversion; and a build chain must compare every stage to its own input, because certifying exe-newer-than-dist says nothing about dist-newer-than-src. A freshness probe must also fail closed when it cannot parse its own instrument, and every timestamp comparison must respect the granularity of the coarser side.",
+      "remaining_boundary": "Two blind spots remain and are not papered over. (1) A rollback to an older commit leaves every input matching HEAD, so no evidence of a change exists and the current binary is trusted — only a build-time receipt of input hashes closes that, and none is emitted yet. (2) An uncommitted edit whose mtime is back-dated before the build is still judged by mtime, because git offers no timestamp for bytes that were never committed. U19's desktop surface proof is separately owed (ERR-104) and unrelated to this gate.",
       "status_before": "FAIL",
-      "status_after": "FAIL",
+      "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "f3b5dec",
-        "fixedCommit": null,
+        "fixedCommit": "770d733",
         "verifiedCommit": null,
         "affectedCapability": "U19 release binary provenance gate",
         "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py"
@@ -2961,4 +2961,4 @@
       "prevention": "build caches stay untracked; WAL mode closes with checkpoint"
     }
   ]
-}
+}
