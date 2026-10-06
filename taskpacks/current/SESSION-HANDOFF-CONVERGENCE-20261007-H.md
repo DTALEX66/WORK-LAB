@@ -10,8 +10,8 @@ the llama.cpp archive, and the source-ledger licence review. Branch
 |---|---|---|
 | `daeb76c` | AG-11 instrument + 9-cell evidence + re-deriving gate + round-G handoff | local gates green |
 | `30802cc` | locale-independent CI command + locale gate, citation audit + gate, ERR-131/132, register rows | **CI RED — my gate's fault, see ERR-133** |
-| `41858fe` | gate split into CI-stable agreement + named local skip; llama.cpp archive released on its extraction proof; ERR-133; AG-11 status column → PARTIAL | CI readback in progress at the time of writing |
-| (this round's tail) | licence readback landed in `source-ledger.json`, `docs/audits/LICENCE_READBACK_2026-10-07.json`, `test_source_ledger_licence_evidence.py`, LICENCE-20261007 row | governance 187 modules / 1,971 tests PASS locally; CI readback at its own head follows |
+| `41858fe` | gate split into CI-stable agreement + named local skip; llama.cpp archive released on its extraction proof; ERR-133; AG-11 status column → PARTIAL | **CI ALL_SUCCESS, 24 runs** |
+| `e6bb43c`…`522fe80` | licence values + LICENSE-byte hashes, ERR-134/135/136/137, U02 live-path re-point with the managed SKILL.md held back, canonical snapshot regenerated, scratch originals released, ledger fix-commit bindings, tool inventory | **CI ALL_SUCCESS, 24 runs at 522fe80** |
 
 ## What this round proved
 

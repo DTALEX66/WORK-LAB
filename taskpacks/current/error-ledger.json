@@ -3704,10 +3704,10 @@
       "lifecycle": {
         "introducedCommit": "4a1d81a",
         "fixedCommit": "51c723d",
-        "verifiedCommit": null,
+        "verifiedCommit": "522fe80",
         "affectedCapability": "Licence evidence in the source ledger and its readback audit",
         "regressionCommand": "python scripts/audit/prove_previous_licence_audit_miscounted_the_files.py HEAD",
-        "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
+        "bindingNote": "bound 2026-10-07: fix in 51c723d; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
       }
     },
     {
@@ -3731,10 +3731,10 @@
       "lifecycle": {
         "introducedCommit": "51c723d",
         "fixedCommit": "e9875d7",
-        "verifiedCommit": null,
+        "verifiedCommit": "522fe80",
         "affectedCapability": "U02 path convergence in live instruction surfaces",
         "regressionCommand": "python tests/workflow-assistance/test_live_doc_command_targets.py",
-        "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
+        "bindingNote": "bound 2026-10-07: fix in e9875d7; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
       }
     },
     {
@@ -3758,10 +3758,10 @@
       "lifecycle": {
         "introducedCommit": "51c723d",
         "fixedCommit": "e6bb43c",
-        "verifiedCommit": null,
+        "verifiedCommit": "522fe80",
         "affectedCapability": "Canonical-file freshness snapshot; the pre-push validation rule",
         "regressionCommand": "python scripts/ci/generate_current_state.py --check-current",
-        "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
+        "bindingNote": "bound 2026-10-07: fix in e6bb43c; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
       }
     },
     {
@@ -3785,10 +3785,10 @@
       "lifecycle": {
         "introducedCommit": "e9875d7",
         "fixedCommit": "fe5d7a6",
-        "verifiedCommit": null,
+        "verifiedCommit": "522fe80",
         "affectedCapability": "Managed Hermes skill provenance; U02 publish",
         "regressionCommand": "python packages/client-neutral-core/scripts/security/check_skill_provenance.py --manifest config/skill-provenance.yaml",
-        "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
+        "bindingNote": "bound 2026-10-07: fix in fe5d7a6; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
       }
     }
   ],
