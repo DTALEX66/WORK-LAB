@@ -2784,11 +2784,12 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "c1983621353ca9db7297b7cf91b0a76cecb9d320",
-        "fixedCommit": null,
+        "fixedCommit": "6c63218",
         "verifiedCommit": null,
         "affectedCapability": "Exact-SHA CI truth for the Observer desktop contract",
         "regressionCommand": "python scripts/ci/failfast_group.py --group observer-web-contracts",
-        "currentApplicability": "ALWAYS"
+        "currentApplicability": "ALWAYS",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-100 is 6c63218, and its tree contains the promised scripts/ci/failfast_group.py. verifiedCommit stays null until an exact-SHA readback names a green head."
       }
     },
     {
@@ -3001,10 +3002,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": null,
-        "fixedCommit": null,
+        "fixedCommit": "28afeaa",
         "verifiedCommit": null,
         "affectedCapability": "U19 artifact provenance receipt",
-        "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py"
+        "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-108 is 28afeaa, and its tree contains the promised apps/observer/tests/test_artifact_freshness.py. verifiedCommit stays null until an exact-SHA readback names a green head."
       }
     },
     {
@@ -3053,10 +3055,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "28afeaa",
-        "fixedCommit": null,
+        "fixedCommit": "5348ba7",
         "verifiedCommit": null,
         "affectedCapability": "U19 release binary provenance gate",
-        "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py"
+        "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-110 is 5348ba7, and its tree contains the promised apps/observer/tests/test_artifact_freshness.py. verifiedCommit stays null until an exact-SHA readback names a green head."
       }
     },
     {
@@ -3131,10 +3134,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "d4f9723",
-        "fixedCommit": null,
+        "fixedCommit": "90734c2",
         "verifiedCommit": null,
         "affectedCapability": "Model and external-library registry truth",
-        "regressionCommand": "python services/orchestration/run_quality_gate.py model-registry-integrity"
+        "regressionCommand": "python services/orchestration/run_quality_gate.py model-registry-integrity",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-113 is 90734c2, and its tree contains the promised services/orchestration/run_quality_gate.py. verifiedCommit stays null until an exact-SHA readback names a green head."
       }
     },
     {
@@ -3377,10 +3381,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "977040b",
-        "fixedCommit": null,
+        "fixedCommit": "891c871",
         "verifiedCommit": null,
         "affectedCapability": "Observer browser-entry regression runnability",
-        "regressionCommand": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py"
+        "regressionCommand": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-122 is 891c871, and its tree contains the promised tests/workflow-assistance/test_sidecar_ui_browser_entry.py. verifiedCommit stays null until an exact-SHA readback names a green head."
       }
     },
     {
@@ -3455,10 +3460,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "1cffd9f",
-        "fixedCommit": null,
+        "fixedCommit": "e0b296d",
         "verifiedCommit": null,
         "affectedCapability": "AG-19/AG-20 recovered-source registry digest claims; CI workflow-assistance job",
-        "regressionCommand": "python tests/workflow-assistance/test_recovered_source_registry.py"
+        "regressionCommand": "python tests/workflow-assistance/test_recovered_source_registry.py",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-125 is e0b296d, and its tree contains the promised tests/workflow-assistance/test_recovered_source_registry.py. verifiedCommit stays null until an exact-SHA readback names a green head."
       }
     },
     {
@@ -3481,10 +3487,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "4d059c7",
-        "fixedCommit": null,
+        "fixedCommit": "08ca2e6",
         "verifiedCommit": null,
         "affectedCapability": "Open-source candidate pool decisions; the registry integrity gate",
-        "regressionCommand": "python scripts/ci/verify_future_candidate_registry.py"
+        "regressionCommand": "python scripts/ci/verify_future_candidate_registry.py",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-126 is 08ca2e6, and its tree contains the promised scripts/ci/verify_future_candidate_registry.py. verifiedCommit stays null until an exact-SHA readback names a green head."
       }
     },
     {
@@ -3507,10 +3514,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "90734c2",
-        "fixedCommit": null,
+        "fixedCommit": "7627748",
         "verifiedCommit": null,
         "affectedCapability": "AG-05 model registry integrity; model and tool intake (模型与工具入库)",
-        "regressionCommand": "python scripts/ci/verify_model_registry_integrity.py && python scripts/audit/model_library_readback.py"
+        "regressionCommand": "python scripts/ci/verify_model_registry_integrity.py && python scripts/audit/model_library_readback.py",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-127 is 7627748, and its tree contains the promised scripts/ci/verify_model_registry_integrity.py. verifiedCommit stays null until an exact-SHA readback names a green head."
       }
     },
     {
@@ -3614,10 +3622,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "5c6bfe9",
-        "fixedCommit": null,
-        "verifiedCommit": null,
+        "fixedCommit": "30802cc",
+        "verifiedCommit": "41858fe",
         "affectedCapability": "wlr-060-production-gates schema validation; portability of every recorded CI command",
-        "regressionCommand": "python tests/workflow-assistance/test_workflow_locale_discipline_gate.py"
+        "regressionCommand": "python tests/workflow-assistance/test_workflow_locale_discipline_gate.py",
+        "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
       }
     },
     {
@@ -3640,10 +3649,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "5c6bfe9",
-        "fixedCommit": null,
-        "verifiedCommit": null,
+        "fixedCommit": "30802cc",
+        "verifiedCommit": "41858fe",
         "affectedCapability": "Traceability of .project-local citations; the greening owed-item list itself",
-        "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py"
+        "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py",
+        "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
       }
     },
     {
@@ -3666,10 +3676,11 @@
       "status_after": "UNVERIFIED",
       "lifecycle": {
         "introducedCommit": "30802cc",
-        "fixedCommit": null,
-        "verifiedCommit": null,
+        "fixedCommit": "41858fe",
+        "verifiedCommit": "41858fe",
         "affectedCapability": "CI-discovered governance gates must pass on a clean checkout",
-        "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py"
+        "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py",
+        "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
       }
     },
     {
@@ -3692,10 +3703,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "4a1d81a",
-        "fixedCommit": null,
+        "fixedCommit": "51c723d",
         "verifiedCommit": null,
         "affectedCapability": "Licence evidence in the source ledger and its readback audit",
-        "regressionCommand": "python scripts/audit/prove_previous_licence_audit_miscounted_the_files.py HEAD"
+        "regressionCommand": "python scripts/audit/prove_previous_licence_audit_miscounted_the_files.py HEAD",
+        "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
       }
     },
     {
@@ -3718,10 +3730,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "51c723d",
-        "fixedCommit": null,
+        "fixedCommit": "e9875d7",
         "verifiedCommit": null,
         "affectedCapability": "U02 path convergence in live instruction surfaces",
-        "regressionCommand": "python tests/workflow-assistance/test_live_doc_command_targets.py"
+        "regressionCommand": "python tests/workflow-assistance/test_live_doc_command_targets.py",
+        "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
       }
     },
     {
@@ -3744,10 +3757,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "51c723d",
-        "fixedCommit": null,
+        "fixedCommit": "e6bb43c",
         "verifiedCommit": null,
         "affectedCapability": "Canonical-file freshness snapshot; the pre-push validation rule",
-        "regressionCommand": "python scripts/ci/generate_current_state.py --check-current"
+        "regressionCommand": "python scripts/ci/generate_current_state.py --check-current",
+        "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
       }
     },
     {
@@ -3770,10 +3784,11 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "e9875d7",
-        "fixedCommit": null,
+        "fixedCommit": "fe5d7a6",
         "verifiedCommit": null,
         "affectedCapability": "Managed Hermes skill provenance; U02 publish",
-        "regressionCommand": "python packages/client-neutral-core/scripts/security/check_skill_provenance.py --manifest config/skill-provenance.yaml"
+        "regressionCommand": "python packages/client-neutral-core/scripts/security/check_skill_provenance.py --manifest config/skill-provenance.yaml",
+        "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
       }
     }
   ],

@@ -98,6 +98,10 @@ The documents had never been re-asked after ERR-115: 104 command-shaped referenc
 
 I pushed 51c723d after running the gates I thought were relevant and skipped `scripts/ci/reproduce_ci_commands.py`. CI's integration job went red on `generate_current_state.py --check-current`: `.project/governance/generated/CURRENT_STATE.json` pins the digest of every CANONICAL_FILE, and source-ledger.json is one — so landing 14 licence hashes invalidates the snapshot, and no other verifier notices. Regenerated and committed with the change. The rule is now stated where it can be enforced by the next session: **repro before every push, read the receipt**.
 
+## Ledger fix-commit binding (same round)
+
+21 error records now name the commit that fixed them, each validated against that commit's tree rather than typed in; 8 more were recovered from commit messages that cite the ERR id, and 99 PASS records are publicly owed with a stated reason (their fixing commit never names the id, or several do). Inventing a SHA is what ERR-125/ERR-134 forbid, so they are listed instead. Two new gates hold the line: `test_ledger_fix_commit_binding.py` (10 tests, the owed set must match the ledger exactly so it can only shrink) and `test_tool_inventory_coverage.py` (11 tests, 33 tracked instruments vs `docs/audits/TOOL_INVENTORY_2026-10-07.json`, digests on the blob-at-HEAD basis). See `docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json`.
+
 ## Verification discipline in force
 
 `python scripts/ci/reproduce_ci_commands.py --skip "pip install" --skip cargo --skip "npm ci"

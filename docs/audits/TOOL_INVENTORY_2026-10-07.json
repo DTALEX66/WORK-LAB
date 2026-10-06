@@ -1,0 +1,502 @@
+{
+  "schemaVersion": "work-lab/tool-inventory/v1",
+  "generatedAt": "2026-10-06T23:06:09Z",
+  "generatedBy": "scripts/audit/tool_inventory_readback.py",
+  "scope": [
+    "scripts/audit/",
+    "scripts/maintenance/"
+  ],
+  "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
+  "counts": {
+    "trackedTools": 33,
+    "withLedgerPromise": 12,
+    "referencedSomewhere": 33,
+    "unclaimed": 0
+  },
+  "unclaimed": [],
+  "relationToPromotionEvent": {
+    "record": "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+    "note": "that file is the 2026-10-07 promotion of 22 scratch originals and stays as history; this one is the live inventory of all 30 tracked instruments and is the file the coverage gate reads"
+  },
+  "tools": [
+    {
+      "path": "scripts/audit/ag11_ocr_asr_matrix.py",
+      "sha256": "a8f9db8425d4e85834f95c746c8d8050b89c5e4a06d96ca0ba436a5d558caa50",
+      "bytes": 18550,
+      "lines": 372,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 5,
+      "citedBy": [
+        "docs/audits/AG11_OCR_ASR_MATRIX_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-G.md",
+        "tests/workflow-assistance/test_ag11_matrix_evidence.py"
+      ]
+    },
+    {
+      "path": "scripts/audit/ag19_source_presence_scan.py",
+      "sha256": "3979a425c177d7d8f4d04d62c9862b06a0c87dba06cd086d9d9288f9bcc26b82",
+      "bytes": 4582,
+      "lines": 112,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 3,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/archive_extraction_completeness.py",
+      "sha256": "26c8783b42e197f955e0329c04c0a8891c12be93e7b4d42506951815130f55de",
+      "bytes": 5786,
+      "lines": 131,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 5,
+      "citedBy": [
+        ".project/governance/runtime-registry.json",
+        "docs/audits/LAMBDA_ARCHIVE_RELEASE_2026-10-07.json",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ]
+    },
+    {
+      "path": "scripts/audit/bind_remaining_ledger_fixes.py",
+      "sha256": "d9e001b2ecbb42d8b92eb90b5b0c68a25c5a2eabce7bedf849678f6069504578",
+      "bytes": 5310,
+      "lines": 117,
+      "digestBasis": "working-tree-uncommitted",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 1,
+      "citedBy": [
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/blueprint_section16_extract.py",
+      "sha256": "1e028a3b9c34b5489bc01b719214b91d8b8f2704e91526315db88694b50a1b32",
+      "bytes": 1853,
+      "lines": 50,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/cdp_layout_probe.mjs",
+      "sha256": "3984cd5a5d15d5aedb8c0a78301a20cd3b4f4ec5e0ab172cf26518fe60bb86f1",
+      "bytes": 5918,
+      "lines": 127,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 7,
+      "citedBy": [
+        "docs/audits/OBSERVER_UI_RENDER_AUDIT_2026-10-07.md",
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-C.md"
+      ]
+    },
+    {
+      "path": "scripts/audit/falsify_browser_entry.py",
+      "sha256": "ebafe6ab50b91aae732624e0b16eaccd5626a005329730fcfc062dabd3b78b9d",
+      "bytes": 2937,
+      "lines": 67,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 5,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/global_deployment_readback.py",
+      "sha256": "48bed8664f76434072d259b28fd02221560d5b169968131b69043478a0efbf5d",
+      "bytes": 4186,
+      "lines": 89,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/ledger_binding_readback.py",
+      "sha256": "77d86e8bd5fbf4f7abda08821bb3975feb4b45299d9abf55f53ecf89f5c902e1",
+      "bytes": 5833,
+      "lines": 123,
+      "digestBasis": "working-tree-uncommitted",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 1,
+      "citedBy": [
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/licence_file_bytes.py",
+      "sha256": "50280bdf73e6a419b14fb53d539ec1f0554a36d3587d4fa2173a2f70961f3233",
+      "bytes": 4201,
+      "lines": 92,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 5,
+      "citedBy": [
+        "docs/audits/LICENCE_READBACK_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/live_doc_command_targets.py",
+      "sha256": "4bb9755e088da0044455354d0f34e6e6a41f071d77df17d11c02f0e82e21901e",
+      "bytes": 14633,
+      "lines": 271,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 6,
+      "citedBy": [
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
+        "taskpacks/current/error-ledger.json",
+        "tests/workflow-assistance/test_live_doc_command_targets.py"
+      ]
+    },
+    {
+      "path": "scripts/audit/model_library_readback.py",
+      "sha256": "28e870245d069ab58ff89dc66540fb82cb300ddf3d40330fad9c262b8da7643f",
+      "bytes": 11193,
+      "lines": 218,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 9,
+      "citedBy": [
+        ".project/governance/model-registry.json",
+        "docs/audits/MODEL_LIBRARY_READBACK_2026-10-07.md",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "scripts/ci/verify_model_registry_integrity.py",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-D.md"
+      ]
+    },
+    {
+      "path": "scripts/audit/mutation_probe_pathspec.py",
+      "sha256": "858bbdbeb7e664987b4b373728b790049d96714d57c997af3fda43038b0da77e",
+      "bytes": 1151,
+      "lines": 30,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 6,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/observer_client_area_capture.py",
+      "sha256": "5e9a9ccb306b1bbd17ebf020c91c800de5f26e098532f79adcece1dd8bc1b973",
+      "bytes": 21229,
+      "lines": 466,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 4,
+      "citedBy": [
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/p0c_cdp_truth.py",
+      "sha256": "14a731ba31888af73fd604579e06142a4049e7c8ee6280ad5b74be0a3e88f9fb",
+      "bytes": 17327,
+      "lines": 410,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/p0c_oracle_discriminator.py",
+      "sha256": "be9988656ae4cf638d4df6f89a70bab13c8ca3b1661babfa469d29d3b018c345",
+      "bytes": 13929,
+      "lines": 353,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 4,
+      "citedBy": [
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/project_definition_path_check.py",
+      "sha256": "1be255d26c552387680dd91d467587bfbdd5538d34335bae9eb8a3164e782790",
+      "bytes": 2301,
+      "lines": 50,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/project_local_citation_audit.py",
+      "sha256": "723c1e8e73a3f3917d78e493a51e33a53b6d41c96fefe89ab9ea935044fff248",
+      "bytes": 14569,
+      "lines": 247,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 2,
+      "citedByRecords": 6,
+      "citedBy": [
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json",
+        "tests/workflow-assistance/test_project_local_citation_audit.py"
+      ]
+    },
+    {
+      "path": "scripts/audit/prove_previous_candidate_gate_missed_the_lies.py",
+      "sha256": "60ed99afd87add244c14e73057a30adcd0bc3aaf2cea7c91782a7be09376dcb1",
+      "bytes": 2392,
+      "lines": 54,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/prove_previous_licence_audit_miscounted_the_files.py",
+      "sha256": "f712deee1d7b9a6a5cfba709826f7e1b85d551071d2e635b6be7062ecdd3d378",
+      "bytes": 3074,
+      "lines": 66,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 4,
+      "citedBy": [
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/prove_previous_model_gate_missed_the_lies.py",
+      "sha256": "ca4f6f0fd1ffc4ff951779aefaae55acc5d08ea245f48fbb3a0442fdd1828830",
+      "bytes": 1842,
+      "lines": 39,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/scan_stale_digest_references.py",
+      "sha256": "4b30f243ce787bbc6a2dc2499e4d600c354118740b98bade286ab0cc6079815d",
+      "bytes": 2105,
+      "lines": 58,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/scratch_promotion_redundancy.py",
+      "sha256": "af3d7369687cbf3268888ccb0811a4097845229617a66af9c4814005bec6a43a",
+      "bytes": 5892,
+      "lines": 130,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 3,
+      "citedBy": [
+        "docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-H.md"
+      ]
+    },
+    {
+      "path": "scripts/audit/tool_inventory_readback.py",
+      "sha256": "af2834738cef37dee4e394af73efc30699fef133e999cce2044a159cc945ac59",
+      "bytes": 6309,
+      "lines": 134,
+      "digestBasis": "working-tree-uncommitted",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 1,
+      "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/topbar_geometry_via_cdp.py",
+      "sha256": "d9ef5cc8238b3d48913bcace11671b3c039fdd6d5ec31e4968096814f1a72db9",
+      "bytes": 5376,
+      "lines": 128,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/topbar_geometry_via_dump_dom.py",
+      "sha256": "3fa3cfda7b3b9a370fd378ae35d89adcaaecb10eb5d1585ca1b7f901328a07e8",
+      "bytes": 7010,
+      "lines": 160,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/u19_verify_once.py",
+      "sha256": "985df34bd045075bf5550c575ed8c5f8654b85b88e3d1b61a4ecb894bf3b3ecf",
+      "bytes": 18120,
+      "lines": 434,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 3,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/verify_no_stale_runtime_paths.py",
+      "sha256": "35b0371dc6872e0f54816b854e9c2210c320a3c690fc6e1b6a3e2794da1fb286",
+      "bytes": 1845,
+      "lines": 51,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 3,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/maintenance/absorb_local_assets.py",
+      "sha256": "fac8ab0dab24db2e1ede27ec3896404420b6435e5b0798f9c75fac41a900aaef",
+      "bytes": 9788,
+      "lines": 213,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 5,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/maintenance/converge_u02_runtime_paths.py",
+      "sha256": "b75492d9d323dc6f166e7f3e401e41dec84eb053217e39a96a8eee84e8d9d389",
+      "bytes": 5048,
+      "lines": 109,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 3,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/maintenance/finish_tmp_tree_cleanup.py",
+      "sha256": "467d99b98ecf3ed0ef96bb8622fb27cb33dc1b4929854ff81156691c5c951350",
+      "bytes": 3209,
+      "lines": 88,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 3,
+      "citedBy": [
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/maintenance/record_documentation_drifts.py",
+      "sha256": "7a476c71f649255517b00d7fa0cbdf09f5ffaee3ce3357ef0cc32f8087aea292",
+      "bytes": 8988,
+      "lines": 145,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 4,
+      "citedBy": [
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/maintenance/release_browser_state.py",
+      "sha256": "376cd26086142a7a97e91abee9d3c44fbc38ed9c3ca021b30cc79820dee748f6",
+      "bytes": 7353,
+      "lines": 167,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 6,
+      "citedBy": [
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
+        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json"
+      ]
+    }
+  ]
+}
