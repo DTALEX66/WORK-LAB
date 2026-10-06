@@ -106,6 +106,10 @@ I pushed 51c723d after running the gates I thought were relevant and skipped `sc
 
 The link AG-16 said had never been exercised has now been exercised once against the live local model server, and it refused — correctly. 7 cases in `docs/audits/AG16_HANDBACK_ROUNDTRIP_2026-10-07.json`: a bare model return is refused for the missing envelope; the same plan inside a real harness-supplied envelope is refused at the capability gate because the contract probes agent-operations (`publish`) and the registry advertises inference operations (`chat.completions`) — the two vocabularies never meet and no executor is registered under the first. Dedupe, blocking-before-authorization, and self-grant-ignored all behaved as specified. Nothing executed; the automatic connection is still AG-17/OD02. Two gate controls earned their keep on first run: an exact-word `AUTHORIZED` comparison hid the fixture case because the contract composes `AUTHORIZED_NOT_EXECUTED`, and a substring body check tripped on `/chat/completions`.
 
+## Source-tree bytecode residue (same round)
+
+27 `__pycache__` directories totalling 9,740,083 file bytes had accumulated inside the tracked source tree from direct `python <script>` invocations that bypassed the sanctioned entry points — which do set `PYTHONPYCACHEPREFIX` into `.project-local/runs` and are gated by `tests/workflow-assistance/test_project_data_boundary.py`. Released with `scripts/maintenance/release_source_tree_bytecode.py`: report first, `--apply` explicit, eligible only if every file is an untracked `.pyc` outside the ignored roots, manifest written before any deletion, and a refusal (exit 2) if any candidate holds a non-bytecode or tracked file. Re-scan reports 0 candidates and `git status` shows nothing tracked was touched.
+
 ## Verification discipline in force
 
 `python scripts/ci/reproduce_ci_commands.py --skip "pip install" --skip cargo --skip "npm ci"
