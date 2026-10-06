@@ -279,6 +279,12 @@ jobs:
         run: python scripts/ci/verify_project_data_boundary.py
       - name: Verify authority-reference integrity (A03)
         run: python scripts/ci/verify_project_authority_reference.py
+      - name: Verify blueprint coverage matrix and its projection
+        # The matrix under .project/governance is the single mutable source; the
+        # docs/future projection must match it, AG and U rows are re-extracted
+        # from the live files so no row can be dropped or invented, anchors must
+        # resolve, and no artifact may carry its own digest.
+        run: python scripts/ci/verify_blueprint_coverage.py
       - name: Run authority-reference negative controls
         run: python tests/ci/test_project_authority_reference.py
       - name: Verify supply-chain pins

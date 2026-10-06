@@ -48,6 +48,22 @@
     {
       "path": "taskpacks/current/error-ledger.json",
       "role": "operational error evidence; non-authority"
+    },
+    {
+      "path": ".project/governance/blueprint-coverage.json",
+      "role": "blueprint coverage matrix: single mutable source of the 整理稿→repo mapping; non-authority, grants no decision; projection + AG/U rows are regenerated from live files by scripts/ci/verify_blueprint_coverage.py"
+    },
+    {
+      "path": "docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md",
+      "role": "generated projection of blueprint-coverage.json — never hand-edited; drift fails the gate"
+    },
+    {
+      "path": "docs/future/WORK-LAB-BLUEPRINT-20261006.md",
+      "role": "repository landing of the owner's 2026-10-06 blueprint 整理稿; carries no authority over WORK-LAB-AUTHORITY.md"
+    },
+    {
+      "path": "docs/audits/BLUEPRINT_SYNC_AUDIT_2026-10-06.md",
+      "role": "runtime-observed audit snapshot (identity, remote SHAs, input digests, gate exit codes, gaps); evidence for its base SHA only"
     }
   ],
   "forbiddenActiveRoots": [
