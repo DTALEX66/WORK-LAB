@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 128,
+    "total": 129,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 46,
+      "contract_drift": 47,
       "test_behavior_alignment": 14,
       "working_directory_recovery": 2,
       "evidence_state": 21,
@@ -2757,8 +2757,11 @@
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Observer desktop UI evidence chain and shell caption-cluster layout",
-        "regressionCommand": "python .project-local/runs/p0a-diag-20261006/shot3.py",
-        "currentApplicability": "INSTRUMENT_SELF_PROVEN_UI_DEFECTS_CLOSED_U19_STILL_OPEN"
+        "regressionCommand": "python scripts/audit/observer_client_area_capture.py",
+        "currentApplicability": "INSTRUMENT_SELF_PROVEN_UI_DEFECTS_CLOSED_U19_STILL_OPEN",
+        "regressionCommandPrior": "python .project-local/runs/p0a-diag-20261006/shot3.py",
+        "regressionCommandCorrectedAt": "2026-10-07",
+        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
       }
     },
     {
@@ -2891,7 +2894,10 @@
         "fixedCommit": null,
         "verifiedCommit": "6015f0b",
         "affectedCapability": "U19 desktop surface evidence quality",
-        "regressionCommand": "python .project-local/runs/p0c-oracle-20261006/probe_oracle.py"
+        "regressionCommand": "python scripts/audit/p0c_oracle_discriminator.py",
+        "regressionCommandPrior": "python .project-local/runs/p0c-oracle-20261006/probe_oracle.py",
+        "regressionCommandCorrectedAt": "2026-10-07",
+        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
       }
     },
     {
@@ -2969,7 +2975,10 @@
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "U19 desktop surface instrumentation",
-        "regressionCommand": "python .project-local/runs/p0c-final-20261006/verify_once.py"
+        "regressionCommand": "python scripts/audit/u19_verify_once.py",
+        "regressionCommandPrior": "python .project-local/runs/p0c-final-20261006/verify_once.py",
+        "regressionCommandCorrectedAt": "2026-10-07",
+        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
       }
     },
     {
@@ -3151,7 +3160,10 @@
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Historical source registry and AG-19 recovery",
-        "regressionCommand": "python .project-local/runs/convergence-20261007-c/ag19_scan.py"
+        "regressionCommand": "python scripts/audit/ag19_source_presence_scan.py",
+        "regressionCommandPrior": "python .project-local/runs/convergence-20261007-c/ag19_scan.py",
+        "regressionCommandCorrectedAt": "2026-10-07",
+        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
       }
     },
     {
@@ -3177,7 +3189,10 @@
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Bootstrap, skill guidance and current-state attestation paths",
-        "regressionCommand": "python .project-local/runs/convergence-20261007-c/verify_no_stale_paths.py"
+        "regressionCommand": "python scripts/audit/verify_no_stale_runtime_paths.py",
+        "regressionCommandPrior": "python .project-local/runs/convergence-20261007-c/verify_no_stale_paths.py",
+        "regressionCommandCorrectedAt": "2026-10-07",
+        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
       }
     },
     {
@@ -3203,7 +3218,10 @@
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Audited cleanup retention",
-        "regressionCommand": "python .project-local/runs/convergence-20261007-c/finish_cleanup.py"
+        "regressionCommand": "python scripts/maintenance/finish_tmp_tree_cleanup.py",
+        "regressionCommandPrior": "python .project-local/runs/convergence-20261007-c/finish_cleanup.py",
+        "regressionCommandCorrectedAt": "2026-10-07",
+        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
       }
     },
     {
@@ -3229,7 +3247,10 @@
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Register and atlas accuracy",
-        "regressionCommand": "python .project-local/runs/convergence-20261007-c/record_drifts.py"
+        "regressionCommand": "python scripts/maintenance/record_documentation_drifts.py",
+        "regressionCommandPrior": "python .project-local/runs/convergence-20261007-c/record_drifts.py",
+        "regressionCommandCorrectedAt": "2026-10-07",
+        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
       }
     },
     {
@@ -3541,7 +3562,36 @@
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Project-local footprint and traceability of durable regression commands",
-        "regressionCommand": "python .project-local/runs/convergence-20261007-e/release_browser_state.py"
+        "regressionCommand": "python scripts/maintenance/release_browser_state.py",
+        "regressionCommandPrior": "python .project-local/runs/convergence-20261007-e/release_browser_state.py",
+        "regressionCommandCorrectedAt": "2026-10-07",
+        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
+      }
+    },
+    {
+      "error_id": "ERR-130",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "contract_drift",
+      "entrypoint": "taskpacks/current/error-ledger.json lifecycle.regressionCommand, scripts/audit/, scripts/maintenance/, tests/workflow-assistance/test_error_ledger_regression_commands.py, docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
+      "command": "python tests/workflow-assistance/test_error_ledger_regression_commands.py",
+      "exit_code": 1,
+      "observed_error": "Measured across the whole ledger, not the examples I happened to notice: 43 records carry a forward-looking `lifecycle.regressionCommand`, and 17 of them named a script under `.project-local/runs/<session>/` — the git-ignored root that the greening rounds delete — while 2 more named paths that the 2026-09 directory convergence had already moved (`tests/run_all_tests.js`, `tests/test_production_surface_static_contract.js`), so those promises resolved nowhere at all. A first pass of my own scan also reported 49 absent paths; that number was inflated by two defects in the scanner (an extension alternation matching `.js` inside `.json`, and prose fields being scanned as if they were commands), which is why the gate ended up scoped to the two command-bearing fields.",
+      "root_cause": "`command` and `regressionCommand` look alike and mean opposite things. The first is history — what was run then, at a path that existed then — and rewriting it would falsify the record. The second is a promise to whoever comes next, and it was written the same casual way: whatever path the script happened to sit in at the moment of recording. Nothing anywhere distinguished them, so a durable register accumulated promises that were already broken or would break at the next cleanup.",
+      "fix": "The two moved paths were left alone after measuring them against the `cd` prefix the command itself carries — `cd apps/observer && node tests/run_all_tests.js` is correct and my first pass had turned it into a false defect by double-prefixing it. The seventeen real cases were promoted: byte-for-byte copies (digests and line counts in the promotion manifest) into `scripts/audit/` for read-only probes and measurement tools and `scripts/maintenance/` for the ones that write, each entry keeping its original command string in `regressionCommandPrior` with a dated correction note, so the record shows both what ran then and what runs now. The new tracked test module then enforces the distinction: every regression command must resolve to a tracked file, none may point into `.project-local/`, a promise may not be dropped rather than re-pointed, and a correction must carry its prior string and a date. No exemptions were needed because the population is clean at the point the gate lands.",
+      "regression_test": "tests/workflow-assistance/test_error_ledger_regression_commands.py, 7 cases including two synthetic negative controls that never touch the real file (an unresolvable command must be flagged; a `cd`-relative command must not). Falsified 4/4 against the real ledger (.project-local/runs/convergence-20261007-f/falsify_regression_gate.py): a promise into the ignored root, a promise naming a moved path, a promise deleted after being corrected, and a correction without a date — each turns its named case red, and the ledger is restored and digest-verified afterwards.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Never write a forward-looking promise as a path in the ignored runtime root: promote the instrument to a tracked file first, then point at it. Distinguish a record of what happened from a commitment about what can be re-run, and gate only the second, because history must not be edited to look tidy. When a scan produces a number that makes a defect look bigger than the examples you know, suspect the scanner before enlarging the claim — restrict it to the fields that actually state commands and re-resolve paths against the `cd` prefix the command carries.",
+      "remaining_boundary": "The gate checks that the promised script exists in the repository, not that running it reproduces the finding: several of these tools need the real desktop binary, a live sidecar, or the machine-local weight root, so they stay owner-machine instruments. The originals under `.project-local/runs/` were not deleted, so both copies exist until the next authorized cleanup removes the scratch ones. The 28 stale citations from round E remain open: those are `command`/prose references to absent paths, deliberately not rewritten here, and each needs restore-or-repoint-or-mark-absent on its own merits.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "473a3f9",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Error-ledger reproducibility promises; scripts/audit and scripts/maintenance tool inventory",
+        "regressionCommand": "python tests/workflow-assistance/test_error_ledger_regression_commands.py"
       }
     }
   ],
