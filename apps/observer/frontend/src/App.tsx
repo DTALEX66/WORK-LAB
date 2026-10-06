@@ -14,6 +14,7 @@ import {
   type ThemeMode, type LayoutMode,
 } from '@/lib/api'
 import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL } from '@/lib/viewRegistry'
+import { LaneErrorBoundary } from '@/components/ui/lane-error-boundary'
 import { announce } from '@/lib/a11y'
 
 type ViewId = string
@@ -314,7 +315,9 @@ export default function App() {
           />
           {loadingStrip}
           <section className="content" id="content">
-            <CompactHUD snap={snap} live={live} />
+            <LaneErrorBoundary lane="compact" onReset={() => setLayout('full')}>
+              <CompactHUD snap={snap} live={live} />
+            </LaneErrorBoundary>
           </section>
         </main>
         {overlays}
@@ -360,7 +363,11 @@ export default function App() {
           onOpenMobileNav={() => setMobileNavOpen(true)}
         />
         {loadingStrip}
-        <section className="content" id="content">{mainContent}</section>
+        <section className="content" id="content">
+          <LaneErrorBoundary lane={view} onReset={() => setView(OVERVIEW_ID)}>
+            {mainContent}
+          </LaneErrorBoundary>
+        </section>
       </main>
       {overlays}
     </div>

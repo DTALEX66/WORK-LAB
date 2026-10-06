@@ -209,6 +209,21 @@ function run() {
       "the container-driven two-column collapse for .kpi-grid is gone");
   });
 
+  // An error boundary that exists but is never mounted protects nothing. Both
+  // layouts render their lane inside <section id="content">, so every one of those
+  // sections has to open with the boundary.
+  test("every content section renders inside an error boundary", () => {
+    const APP = fs.readFileSync(path.join(ROOT, "frontend", "src", "App.tsx"), "utf8");
+    assert(/import \{ LaneErrorBoundary \} from '@\/components\/ui\/lane-error-boundary'/.test(APP),
+      "App.tsx does not import LaneErrorBoundary");
+    const sections = (APP.match(/<section className="content" id="content">/g) || []).length;
+    const guarded = (APP.match(
+      /<section className="content" id="content">\s*<LaneErrorBoundary[^>]*>/g) || []).length;
+    assert(sections >= 2, `expected a content section in both layouts, found ${sections}`);
+    assert(guarded === sections,
+      `${guarded} of ${sections} content sections open with LaneErrorBoundary`);
+  });
+
   console.log("\n==== WORK-LAB desktop component contract tests ====");
   console.log(`TOTAL: ${pass} passed, ${fail} failed`);
   return { pass, fail };
