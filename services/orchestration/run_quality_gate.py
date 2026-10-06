@@ -1297,7 +1297,7 @@ def run_gate_sequence(names: tuple[str, ...]) -> int:
     print(
         "GATE_SEMANTICS STRUCTURAL_LOCAL_PASS=yes "
         "RUNTIME_CANARY_PENDING=yes(without WORKLAB_CANARY_PROJECT_ROOTS) "
-        "TAURI_WINDOWS_PENDING=yes(without Rust toolchain) "
+        "TAURI_WINDOWS_PENDING=yes(real desktop WebView2 E2E not executed in this run) "
         "EXACT_SHA_CI_UNVERIFIED=yes(local only, no exact-SHA Actions run)"
     )
     return 0

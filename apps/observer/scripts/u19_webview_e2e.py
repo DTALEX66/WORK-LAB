@@ -315,18 +315,38 @@ def _gdi_render_proof(app_pid: int) -> dict:
     #   gdi32 : CreateCompatibleDC / CreateCompatibleBitmap / SelectObject /
     #           DeleteDC / DeleteObject / GetBitmapBits
     u32.GetWindowThreadProcessId.argtypes = [wt.HWND, ctypes.POINTER(wt.DWORD)]
-    u32.GetClientRect.argtypes = [wt.HWND, ctypes.POINTER(wt.INT), ctypes.POINTER(wt.INT)]
+    # GetClientRect takes (HWND, LPRECT) — a RECT out-param, NOT two INT outs.
+    # Calling it with byref(w), byref(h) writes the whole RECT into `w`, so the
+    # width/height read back as left/top (always 0) and every real window looked
+    # "0x0" — the defect that made a rendered surface look impossible.
+    u32.GetClientRect.argtypes = [wt.HWND, ctypes.POINTER(wt.RECT)]
     u32.EnumWindows.argtypes = [ctypes.WINFUNCTYPE(ctypes.c_int, wt.HWND, wt.LPARAM), wt.LPARAM]
     u32.IsWindowVisible.argtypes = [wt.HWND]
-    u32.GetDC.argtypes = [wt.HWND]
+    # GDI handles must be typed BOTH ways. These functions return HDC / HBITMAP
+    # but default to c_int, so a raw int was being passed into the next call's
+    # argtypes=[wt.HDC] and ctypes raised "argument 2: TypeError: wrong type".
+    # Latent until 2026-10-06: the GetClientRect bug above meant `found` was
+    # always empty, so PrintWindow was never reached on any machine.
+    u32.GetDC.restype = wt.HDC
     u32.ReleaseDC.argtypes = [wt.HWND, wt.HDC]
     u32.PrintWindow.argtypes = [wt.HWND, wt.HDC, ctypes.c_uint]
+    u32.PrintWindow.restype = ctypes.c_bool
+    g32.CreateCompatibleDC.restype = wt.HDC
     g32.CreateCompatibleDC.argtypes = [wt.HDC]
+    g32.CreateCompatibleBitmap.restype = wt.HBITMAP
     g32.CreateCompatibleBitmap.argtypes = [wt.HDC, wt.INT, wt.INT]
-    g32.SelectObject.argtypes = [wt.HDC, wt.HANDLE]
+    g32.SelectObject.argtypes = [wt.HDC, wt.HGDIOBJ]
+    g32.SelectObject.restype = wt.HGDIOBJ
     g32.GetBitmapBits.argtypes = [wt.HANDLE, ctypes.c_ulong, ctypes.c_void_p]
+    g32.GetBitmapBits.restype = ctypes.c_ulong
     g32.DeleteObject.argtypes = [wt.HANDLE]
     g32.DeleteDC.argtypes = [wt.HDC]
+
+    def _client_size(hwnd):
+        rect = wt.RECT()
+        if not u32.GetClientRect(hwnd, ctypes.byref(rect)):
+            return 0, 0
+        return rect.right - rect.left, rect.bottom - rect.top
 
     # 1) find the app's capturable top-level windows (sizeable, not the tray)
     found = {}
@@ -334,10 +354,9 @@ def _gdi_render_proof(app_pid: int) -> dict:
         pidout = wt.DWORD()
         u32.GetWindowThreadProcessId(hwnd, ctypes.byref(pidout))
         if pidout.value == app_pid:
-            w = wt.INT(); h = wt.INT()
-            u32.GetClientRect(hwnd, ctypes.byref(w), ctypes.byref(h))
-            if w.value >= 200 and h.value >= 150:
-                found[int(hwnd)] = (w.value, h.value, bool(u32.IsWindowVisible(hwnd)))
+            w, h = _client_size(hwnd)
+            if w >= 200 and h >= 150:
+                found[int(hwnd)] = (w, h, bool(u32.IsWindowVisible(hwnd)))
         return True
     cb = ctypes.WINFUNCTYPE(ctypes.c_int, wt.HWND, wt.LPARAM)(_enum)
     # Diagnostic: also enumerate EVERY top-level window owned by the pid (no
@@ -348,9 +367,8 @@ def _gdi_render_proof(app_pid: int) -> dict:
         pidout = wt.DWORD()
         u32.GetWindowThreadProcessId(hwnd, ctypes.byref(pidout))
         if pidout.value == app_pid:
-            w = wt.INT(); h = wt.INT()
-            u32.GetClientRect(hwnd, ctypes.byref(w), ctypes.byref(h))
-            all_windows[int(hwnd)] = {"w": w.value, "h": h.value,
+            w, h = _client_size(hwnd)
+            all_windows[int(hwnd)] = {"w": w, "h": h,
                                      "visible": bool(u32.IsWindowVisible(hwnd))}
         return True
     cb_all = ctypes.WINFUNCTYPE(ctypes.c_int, wt.HWND, wt.LPARAM)(_enum_all)
@@ -370,8 +388,11 @@ def _gdi_render_proof(app_pid: int) -> dict:
         ok = u32.PrintWindow(hwnd, mem_dc, 2)  # PW_RENDERFULLCONTENT
         data_size = w * h * 4
         buf = ctypes.create_string_buffer(data_size)
-        n = ctypes.c_size_t(data_size)
-        got = g32.GetBitmapBits(hbm, ctypes.byref(n), buf)
+        # GetBitmapBits(hBmp, DWORD cbBuffer, LPVOID) — the count is a VALUE.
+        # The previous call passed ctypes.byref(c_size_t(...)), which ctypes
+        # rejects with "argument 2: TypeError: wrong type". It was never
+        # reached before because the GetClientRect bug kept `found` empty.
+        got = g32.GetBitmapBits(hbm, data_size, buf)
         g32.SelectObject(mem_dc, old)
         g32.DeleteObject(hbm)
         g32.DeleteDC(mem_dc)
@@ -456,6 +477,16 @@ def main() -> int:
         # wry — wry always passes app-level args — so the port must reach the
         # window through the Rust builder hook, which is what this var drives.)
         env["WORK_LAB_U19_CDP_PORT"] = str(cdp_port)
+        # Process-level CDP injection. The probe window's per-window
+        # additional_browser_args CANNOT open the debug port: WebView2 creates
+        # ONE browser environment per user-data folder, and the main window
+        # creates it first, so a later window's args are inert (measured
+        # 2026-10-06: probe=ok yet no top-level "u19cdp" window and the port
+        # refused connections). This variable is read by the WebView2 loader
+        # when it creates that first environment.
+        env["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = (
+            f"--remote-debugging-port={cdp_port} --remote-allow-origins=*"
+        )
         # U19 next-cycle discriminator: the app writes the probe-window build
         # outcome to this exact path (lib.rs), so the CI log below can tell
         # "window built (R1 headless-visible)" from "build failed" from

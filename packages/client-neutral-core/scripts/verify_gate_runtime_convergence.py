@@ -231,15 +231,78 @@ def check_8_ci_queued_no_job_releases_writer() -> dict:
             "evidence": "bounded retry -> BLOCKED_POLICY, lease released"}
 
 
+def _cargo_candidates() -> list[Path]:
+    """Where cargo may legitimately live, in probe order.
+
+    The declared shared-library roots in external-libraries-index.json are
+    consulted, not just the PATH and the per-user cargo home: a failed PATH
+    probe is not evidence that the toolchain is absent (windows-development
+    environment reference, 'Never turn a failed path probe into the persistent
+    claim MSVC/Tauri is unavailable').
+    """
+    candidates: list[Path] = []
+    override = os.environ.get("WORKLAB_CARGO")
+    if override:
+        candidates.append(Path(override))
+    from shutil import which
+    found = which("cargo") or which("cargo.exe")
+    if found:
+        candidates.append(Path(found))
+    candidates.append(Path(os.path.expanduser("~/.cargo/bin/cargo.exe")))
+    index = ROOT / ".project/governance/external-libraries-index.json"
+    if index.is_file():
+        try:
+            data = json.loads(index.read_text(encoding="utf-8"))
+        except Exception:
+            data = {}
+        roots = data.get("sharedRoots", {}) or {}
+        for lib in data.get("libraries", []) or []:
+            if lib.get("kind") != "toolchains":
+                continue
+            base = roots.get(lib.get("sharedRoot", ""))
+            if not base:
+                continue
+            for asset in lib.get("assets", []) or []:
+                if asset.get("tool") != "cargo":
+                    continue
+                rel = asset.get("relativePath") or ""
+                if rel:
+                    candidates.append(Path(base) / lib.get("relativePath", "") / rel)
+    out: list[Path] = []
+    for c in candidates:
+        if c not in out:
+            out.append(c)
+    return out
+
+
+def _cargo_readback(cargo: Path) -> str | None:
+    """Run the candidate and return its version line, or None if it will not run."""
+    try:
+        result = subprocess.run(
+            [str(cargo), "--version"], text=True, capture_output=True,
+            check=False, timeout=30, encoding="utf-8", errors="replace",
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    line = (result.stdout or "").strip().splitlines()
+    return line[0] if line else ""
+
+
 def check_9_tauri_real_sidecar() -> dict:
     """Tauri must connect real Sidecar, not silent fixture LIVE."""
-    import shutil
-    # Rust toolchain was installed (2026-08-14); locate cargo including the
-    # per-user .cargo/bin which is not on the git-bash PATH by default.
-    cargo = shutil.which("cargo") or Path(os.path.expanduser("~/.cargo/bin/cargo.exe")).resolve()
-    present = cargo is not None and Path(str(cargo)).is_file()
+    resolved = [(c, _cargo_readback(c)) for c in _cargo_candidates() if c.is_file()]
+    usable = [(c, v) for c, v in resolved if v is not None]
+    if usable:
+        cargo, version = usable[0]
+        return {"id": 9, "name": "tauri-real-sidecar", "pass": False,
+                "evidence": ("PENDING: desktop WebView2 E2E not executed; build toolchain "
+                             f"available: cargo={version} at {cargo} "
+                             f"({len(usable)} candidate(s) resolve)")[:400]}
+    probed = ", ".join(str(c) for c in _cargo_candidates()[:4])
     return {"id": 9, "name": "tauri-real-sidecar", "pass": False,
-            "evidence": f"PENDING: cargo={'present' if present else 'absent'} (Windows toolchain not installed)"}
+            "evidence": f"PENDING: no runnable cargo among probed candidates: {probed}"}
 
 
 def check_10_no_credentials_in_store() -> dict:

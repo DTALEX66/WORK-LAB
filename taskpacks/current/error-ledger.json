@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 96,
+    "total": 97,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 2,
       "path_boundary": 3,
-      "ci_tooling": 1,
+      "ci_tooling": 2,
       "sql_schema": 1,
       "regression_contract": 7
     },
@@ -2705,6 +2705,33 @@
         "affectedCapability": "adapter registry honesty: implementation maturity vs deployment observation",
         "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python -c \"read config/adapter-registry.json policy_projection.deployment_observation\"",
         "currentApplicability": "CLAIM_CORRECTED_LIVE_DRIFT_STILL_OPEN"
+      }
+    },
+    {
+      "error_id": "ERR-098",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "apps/observer/scripts/u19_webview_e2e.py::_gdi_render_proof, packages/client-neutral-core/scripts/verify_gate_runtime_convergence.py::check_9_tauri_real_sidecar, services/orchestration/run_quality_gate.py GATE_SEMANTICS",
+      "command": "python services/orchestration/run_quality_gate.py verify plus apps/observer/scripts/u19_webview_e2e.py",
+      "exit_code": 1,
+      "observed_error": "Three defects made the Windows desktop layer look impossible. (1) The harness called GetClientRect with three arguments (byref(w), byref(h)) against a two-argument API, so the whole RECT landed in the first pointer and width/height were read back as left/top = 0. Every window therefore measured 0x0 and the GDI proof returned windows=0 on a machine where the real main window measures 1280x820 and visible=true. (2) Because (1) kept `found` empty, PrintWindow and GetBitmapBits were never executed on any machine, hiding two further defects: the GDI/DC functions declared argtypes but no restype, so a raw int was passed where wt.HDC was required, and GetBitmapBits received ctypes.byref(c_size_t(n)) where a DWORD value was required - both raise 'argument 2: TypeError: wrong type' the moment the path is finally reached. (3) check_9 probed only shutil.which('cargo') and ~/.cargo/bin/cargo.exe and then asserted 'Windows toolchain not installed' unconditionally, and GATE_SEMANTICS printed 'TAURI_WINDOWS_PENDING=yes(without Rust toolchain)'. That claim is false on this machine and contradicts the repository's own reference (windows-development-environment/references/tauri-build-shared-toolchain.md: 'Never turn a failed path probe into the persistent claim MSVC/Tauri is unavailable'), and register row AG-08 had promoted it to a machine-level blocker ('no Visual Studio and no VC tools at all').",
+      "root_cause": "Probe scope and dead code paths. The toolchain probe looked only at system PATH and the per-user cargo home, never at the declared shared roots in .project/governance/external-libraries-index.json (os-external), where MSVC 14.44.35207 (cl/link/MSBuild), a complete stable-x86_64-pc-windows-msvc toolchain with rustc.exe, cargo-tauri.exe and tauri-driver.exe all live; the Windows SDK import libraries are on the system volume at C:/Program Files (x86)/Windows Kits/10/Lib/10.0.28000.0/{ucrt,um}/x64. Separately, a Win32 signature error made the GDI branch always return an empty set, so the two downstream ctypes defects were unreachable and stayed latent from the day the harness was written.",
+      "fix": "Corrected all three at the root. check_9 now resolves cargo through the declared shared roots (external-libraries-index.json sharedRoots + libraries[kind=toolchains].assets[tool=cargo]) after an optional WORKLAB_CARGO override, PATH and ~/.cargo/bin, and performs a real 'cargo --version' readback, reporting the resolved path and version; the false unconditional 'Windows toolchain not installed' string is gone and the pending reason now names what is actually outstanding (desktop WebView2 E2E not executed). GATE_SEMANTICS no longer asserts 'without Rust toolchain'. The harness's GetClientRect now takes (HWND, LPRECT) and is wrapped in _client_size, and the GDI call chain got the restypes it was missing (GetDC/CreateCompatibleDC -> wt.HDC, CreateCompatibleBitmap -> wt.HBITMAP, SelectObject -> wt.HGDIOBJ, GetBitmapBits -> c_ulong, PrintWindow -> c_bool) with the count passed as a value. Positive readbacks from the same round: the shared toolchain compiled and RAN an msvc-target binary with zero downloads (RUSTC_EXIT=0, RUN_EXIT=0, 251,392 B), the Observer built with BUILD_EXIT=0 in 1m30s (app.exe 9,779,712 B, sha256 e659bbe9b20a2677, PE imports api-ms-win-crt-*/dwmapi with no libgcc/libwinpthread), and the app now stays ALIVE against the real sidecar instead of early-exiting 0xC0000135 as the previous GNU artifact did.",
+      "regression_test": "A Win32 wrapper must declare argtypes AND restype for every handle-returning call, and value parameters must be passed as values; a probe may not report a toolchain as absent unless every declared location in external-libraries-index.json has been probed and its exact path recorded in the evidence.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Never record a machine-level blocker from a single-path probe: enumerate the declared shared roots and Windows Kits first and cite the paths attempted. Environment-limited branches must be executed at least once, because a branch that is never reached cannot fail and therefore cannot be trusted.",
+      "remaining_boundary": "Not yet closed: the real desktop surface proof. CDP over the process-level WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS still yields no page target, so the probe window path (per-window additional_browser_args) is inert by architecture - WebView2 creates one browser environment per user-data folder and the main window creates it first. The corrected GDI proof has not yet produced a green verdict, so U19's desktop layer stays FAIL/PENDING and is not reported as passed. Full canonical gate after these edits: 47 gates PASS, exit 0.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Windows desktop E2E evidence chain and toolchain capability probing",
+        "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python apps/observer/scripts/u19_webview_e2e.py",
+        "currentApplicability": "PROBE_DEFECTS_FIXED_DESKTOP_VERDICT_STILL_OPEN"
       }
     }
   ],

@@ -105,8 +105,60 @@
       "ownedBy": "OS External Configuration (cross-project)",
       "managedBy": "OS External Configuration",
       "totalSizeGb": null,
-      "assets": [],
-      "note": "跨项目共用工具链（msvc/python 等），详见 OS External Configuration/EXTERNAL_DEPENDENCIES.md"
+      "assets": [
+        {
+          "name": "cargo (10-toolchains cargo home)",
+          "tool": "cargo",
+          "kind": "build-executable",
+          "relativePath": "cargo/bin/cargo.exe",
+          "verifiedAt": "2026-10-06"
+        },
+        {
+          "name": "MSVC vcvars entry (Build Tools)",
+          "kind": "build-script",
+          "relativePath": "msvc/VC/Auxiliary/Build/vcvars64.bat",
+          "verifiedAt": "2026-10-06"
+        },
+        {
+          "name": "tauri-driver (Windows WebDriver E2E)",
+          "kind": "build-executable",
+          "relativePath": "tauri-driver/bin/tauri-driver.exe",
+          "verifiedAt": "2026-10-06"
+        }
+      ],
+      "note": "跨项目共用工具链（msvc/python 等），详见 OS External Configuration/EXTERNAL_DEPENDENCIES.md。assets 只登记位置与存在性，不上传内容；MSVC 版本目录（如 VC/Tools/MSVC/14.44.35207）随更新变动，故只声明稳定的 vcvars 入口。"
+    },
+    {
+      "id": "os-external-rust-build-root",
+      "sharedRoot": "os-external",
+      "relativePath": "toolchains/rust",
+      "kind": "toolchains",
+      "ownedBy": "OS External Configuration (cross-project)",
+      "managedBy": "OS External Configuration",
+      "totalSizeGb": 3.2,
+      "assets": [
+        {
+          "name": "cargo (rust build root cargo home)",
+          "tool": "cargo",
+          "kind": "build-executable",
+          "relativePath": "cargo/bin/cargo.exe",
+          "verifiedAt": "2026-10-06"
+        },
+        {
+          "name": "cargo 1.88.0 MSVC toolchain (matches observer rust-version=1.88)",
+          "tool": "cargo",
+          "kind": "build-executable",
+          "relativePath": "rustup/toolchains/1.88.0-x86_64-pc-windows-msvc/bin/cargo.exe",
+          "verifiedAt": "2026-10-06"
+        },
+        {
+          "name": "cargo-tauri CLI",
+          "kind": "build-executable",
+          "relativePath": "cargo/bin/cargo-tauri.exe",
+          "verifiedAt": "2026-10-06"
+        }
+      ],
+      "note": "Observer/Tauri 桌面构建用 Rust 根；CARGO_HOME 把 crates-io 替换为使用者自己声明的 rsproxy 镜像（见该 cargo home 的 config.toml）。Windows SDK 导入库在 C:/Program Files (x86)/Windows Kits/10（系统位置，不在本共享根内）。"
     },
     {
       "id": "os-external-hf-models",
