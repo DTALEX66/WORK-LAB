@@ -62,3 +62,43 @@ Retiring `web/` from production requires:
 2. The exact-SHA release (tag + checksum + installer + public readback).
 Only then is `web/` deletion "parity reached" and safe. Until then the static
 surface stays as the browser read-only entry — it is live, not dead.
+
+
+## 2026-10-07 实测对等清单（本轮新增，非沿用旧表格）
+
+方法说明：先按断言名逐个统计旧树套件，再按**测试标题**（不是关键字命中）在生产树里找等价物。
+关键字搜索曾给出"概念已存在"的假乐观（例如 `UNKNOWN` 在 `frontend/src` 出现 36 处），
+但"出现该词"不等于"有一条断言守着它"，因此下表只认后者。
+
+| 旧树套件 | 断言数 | 契约主题 | 生产侧等价物 |
+|---|---|---|---|
+| `test_projection_contract.js` | 13 | 不伪造真值（UNKNOWN、估算≠账单、RFC3339、覆盖率、前向兼容） | **无** |
+| `test_read_only_surface.js` | 17 | 只读面（无可变控件、无重试控件、无 CDN、不读凭据、仅 loopback、last-good、拒绝低 revision 乱序） | **无** |
+| `test_render_v3.js` | 19（另一声明风格，按套件运行计入总数） | v3 渲染契约 | **无** |
+| `test_responsive_contract.js` | 11 | 响应式（无横向溢出、DPI 安全断点、body ≥12px、tabular-nums、CJK/SHA 换行、reduced-motion、320px-safe） | 部分（`test_desktop_component_contract.js` 只钉住顶部留白与网格归属） |
+| `test_visual_assets_r2.js` | 5 | 品牌资产与设计令牌（本地 SVG、批准的关注主题/视图、只读） | 部分（主题令牌有 `theme/tokens.test.ts` 断言双主题与 legacy purple 清除） |
+
+生产侧现存量：vitest/RTL 标题 84 条（焦点陷阱、提示语义、主题令牌、CommandPalette、
+空态/未知态诚实标题），桌面契约 11 条（能力授权映射、原生调用 await、无边框留白、
+窄屏动作簇可达、标签单源、KPI 网格归属、错误边界挂载）。
+
+**结论（纠正本轮开始时的判断）**：U03 的卡点不是浏览器入口——入口已在
+`tests/workflow-assistance/test_sidecar_ui_browser_entry.py`（8 例）里钉到同一份 Vite `dist/`。
+真正的卡点是：这 65 条只读与不伪造契约目前**只存在于旧树套件中**，
+`git rm -r apps/observer/web` 会连带删掉它们所描述的对象，而这些套件读的就是
+`web/index.html`、`web/styles/*.css`、`web/scripts/*.js`。
+先删除即等于**删除项目的铁律测试**，与"truth tests outrank new features"相反。
+
+因此切换的可执行顺序（逐项可验证，不做无法验证的那一步）：
+1. 把 `test_read_only_surface.js` 与 `test_projection_contract.js` 的断言逐条重锚到生产面
+   （`frontend/index.html`、`frontend/src/skins/*.css`、`frontend/dist` 与
+   `src-tauri/tauri.conf.json`/`capabilities`），并保留同名主题；
+2. 把 `test_responsive_contract.js` 的溢出/字号/换行/reduced-motion/320px 断言重锚到壳层 CSS，
+   `test_visual_assets_r2.js` 重锚到 `frontend/src/assets` 与令牌；
+3. 两条生产侧入口都各有门禁之后，删除 `web/` 与 `helpers.js` 的 `WEB/loadScripts`，
+   同步 `scripts/ci/required_groups.json:27` 的 glob 与 `tests/ci/test_failfast_group.py`
+   钉死清单（ERR-109）、`run_quality_gate.py:1362` 受护路径、README/架构文档、
+   `observer_live_server.py` 退役桩文案；
+4. 删除前落 `web/` 全量哈希清单与整目录保留点，并更新 `WORK-LAB-AUTHORITY.md` §7 的日期事实。
+
+第 1 步完成前，`web/` 不删；U03 保持 PARTIAL。
