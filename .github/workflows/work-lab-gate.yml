@@ -285,6 +285,12 @@ jobs:
         # from the live files so no row can be dropped or invented, anchors must
         # resolve, and no artifact may carry its own digest.
         run: python scripts/ci/verify_blueprint_coverage.py
+      - name: Verify the future-candidate pool has row-level coverage
+        # The §16 table is landed with row keys 16.NN, so registry coverage is a
+        # name-level check instead of the count arithmetic (19 - 14 = 5) that hid
+        # six unregistered rows. A row with no candidate, or a candidate naming a
+        # row that does not exist, fails the gate.
+        run: python scripts/ci/verify_future_candidate_registry.py
       - name: Run authority-reference negative controls
         run: python tests/ci/test_project_authority_reference.py
       - name: Verify supply-chain pins

@@ -11,6 +11,8 @@ Design (fail-open, like verify_contract_ssot.py):
     * every candidate has default_enabled == False unless status is PROMOTED
       (a PROMOTED candidate must have promotion evidence in the task register);
     * ids are unique and match ^FUT-\\d{3}$;
+    * every candidate names a `blueprint_row` that exists in the landed §16 table,
+      and every landed §16 row has at least one candidate (pool coverage);
     * the registry declares no execution authority (governance.production_authorized
       must stay false) so a registry row can never be mistaken for a pilot grant.
 - Schema-conformance failures are ADVISORY (exit 0 with warnings) so a new field
@@ -30,15 +32,34 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 REGISTRY = REPO / ".project/governance/future-candidate-registry.json"
 SCHEMA = REPO / ".project/governance/contracts/future-candidate-registry.schema.json"
+BLUEPRINT = REPO / "docs/future/WORK-LAB-BLUEPRINT-20261006.md"
 
 STATUS_ENUM = {"DEFERRED", "PILOT_CANDIDATE", "PILOT", "PROMOTED", "REJECTED"}
 ID_RE = re.compile(r"^FUT-\d{3}$")
+ROW_RE = re.compile(r"^\| (16\.\d{2}) \|", re.M)
 REQUIRED = [
     "id", "name", "role", "source", "license", "windows_support",
     "native_overlap", "integration_mode", "permissions", "data_boundary",
     "status", "default_enabled", "pilot_trigger", "promotion_criteria",
     "rejection_reason", "last_verified_at",
 ]
+
+
+def blueprint_rows() -> tuple[set[str], str]:
+    """The §16 candidate rows as landed in the repository copy of the blueprint.
+
+    The registry used to be checked only against itself, so a source row could go
+    unregistered and nothing noticed: the recorded gap was even stated as a count
+    difference (19 - 14 = 5) rather than a name-level diff, which hid six rows.
+    Landing the table gave the pool an in-repo anchor, so coverage is now checkable.
+    """
+    if not BLUEPRINT.is_file():
+        return set(), f"blueprint landing missing: {BLUEPRINT.name}"
+    rows = set(ROW_RE.findall(BLUEPRINT.read_text(encoding="utf-8", errors="replace")))
+    if not rows:
+        return set(), ("blueprint §16 carries no keyed candidate table; the gate "
+                       "cannot check coverage")
+    return rows, ""
 
 
 def load_json(path: Path):
@@ -49,6 +70,8 @@ def load_json(path: Path):
 def main() -> int:
     hard_errors: list[str] = []
     warnings: list[str] = []
+    rows: set[str] = set()
+    claimed: set[str] = set()
 
     if not REGISTRY.exists():
         hard_errors.append("registry missing: " + REGISTRY.name)
@@ -103,6 +126,33 @@ def main() -> int:
                     if not tc.exists():
                         hard_errors.append(f"{cid}: task_card path missing: {task_card}")
 
+        # Row coverage: every landed §16 candidate row needs a registry claimant,
+        # and every claimant must name a row that exists. This is the invariant
+        # whose absence let six rows go unregistered.
+        rows, rows_error = blueprint_rows()
+        if rows_error:
+            hard_errors.append(rows_error)
+        claimed: set[str] = set()
+        for c in reg.get("candidates", []):
+            cid = c.get("id", "<no-id>")
+            row = c.get("blueprint_row")
+            if not isinstance(row, str) or not row:
+                hard_errors.append(
+                    f"{cid}: no blueprint_row — every candidate must name the §16 "
+                    "source row it answers to")
+                continue
+            if row not in rows:
+                hard_errors.append(
+                    f"{cid}: blueprint_row {row!r} is not a landed §16 row")
+                continue
+            claimed.add(row)
+        unclaimed = sorted(rows - claimed)
+        if unclaimed:
+            hard_errors.append(
+                f"blueprint §16 rows with no registry candidate: {unclaimed} — "
+                "register the candidate or retire the row with a reason; a count "
+                "difference (19 - 14) is not coverage")
+
     # schema conformance is advisory
     if SCHEMA.exists():
         try:
@@ -126,7 +176,8 @@ def main() -> int:
             print("  ! " + e)
         return 1
 
-    print("FUTURE_CANDIDATE_REGISTRY_PASS candidates=%d" % len(load_json(REGISTRY).get("candidates", [])))
+    print("FUTURE_CANDIDATE_REGISTRY_PASS candidates=%d blueprint_rows=%d claimed_rows=%d"
+          % (len(load_json(REGISTRY).get("candidates", [])), len(rows), len(claimed)))
     return 0
 
 

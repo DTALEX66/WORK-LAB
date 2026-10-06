@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/future-candidate-registry/v1",
-  "updatedAt": "2026-09-25",
+  "updatedAt": "2026-10-07",
   "governance": {
     "status_default": "DEFERRED",
     "default_enabled": false,
@@ -19,7 +19,11 @@
       "EVIDENCE",
       "DECISION"
     ],
-    "decisions": ["PROMOTE", "KEEP_CANDIDATE", "REJECT"],
+    "decisions": [
+      "PROMOTE",
+      "KEEP_CANDIDATE",
+      "REJECT"
+    ],
     "note": "Every entry is a planning record only. This registry grants no install/download/clone/pilot permission. A pilot requires an individually authorized task card in taskpacks/current plus user authorization for each external side effect. Licenses marked NOT_VERIFIED must be verified during DISCOVER/CLASSIFY before any pilot."
   },
   "candidates": [
@@ -40,7 +44,8 @@
       "promotion_criteria": "real pilot round: project launch + worktree identity + task correlation + exit/readback, with REAL evidence (GOAL 12 first round)",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md"
+      "task_card": "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md",
+      "blueprint_row": "16.01"
     },
     {
       "id": "FUT-002",
@@ -59,7 +64,8 @@
       "promotion_criteria": "verified Codex/Hermes/custom-agent session continuation + multi-agent orchestration slice",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.02"
     },
     {
       "id": "FUT-003",
@@ -78,7 +84,8 @@
       "promotion_criteria": "ACP external runtime + MCP + Windows + Skills verified in a real pilot",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.03"
     },
     {
       "id": "FUT-004",
@@ -97,7 +104,8 @@
       "promotion_criteria": "launch + task correlation + exit/readback pilot with REAL evidence",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.04"
     },
     {
       "id": "FUT-010",
@@ -116,7 +124,8 @@
       "promotion_criteria": "Remote MCP round-trip verified on the official route only",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.06"
     },
     {
       "id": "FUT-020",
@@ -135,7 +144,8 @@
       "promotion_criteria": "hierarchical context slice verified behind the existing contract",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.07"
     },
     {
       "id": "FUT-021",
@@ -154,7 +164,8 @@
       "promotion_criteria": "gateway/auth slice verified under WORK-LAB permission model",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.08"
     },
     {
       "id": "FUT-022",
@@ -173,7 +184,8 @@
       "promotion_criteria": "temporal relationship slice verified against evidence contracts",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.09"
     },
     {
       "id": "FUT-023",
@@ -192,7 +204,8 @@
       "promotion_criteria": "shadow-experiment readback vs current memory, no contamination (memory-contamination gate)",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.10"
     },
     {
       "id": "FUT-024",
@@ -211,7 +224,8 @@
       "promotion_criteria": "shadow-experiment readback vs current memory, no contamination",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.10"
     },
     {
       "id": "FUT-030",
@@ -230,7 +244,8 @@
       "promotion_criteria": "TBD",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.12"
     },
     {
       "id": "FUT-031",
@@ -249,7 +264,8 @@
       "promotion_criteria": "handle convention verified against evidence-envelope contract",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.13"
     },
     {
       "id": "FUT-032",
@@ -268,7 +284,8 @@
       "promotion_criteria": "evaluator slice verified against evidence contracts",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.14"
     },
     {
       "id": "FUT-033",
@@ -287,7 +304,148 @@
       "promotion_criteria": "DISCOVER/CLASSIFY intake complete + pilot round-trip",
       "rejection_reason": null,
       "last_verified_at": "2026-09-25",
-      "task_card": null
+      "task_card": null,
+      "blueprint_row": "16.05"
+    },
+    {
+      "id": "FUT-041",
+      "name": "Hindsight",
+      "role": "后续检索到的长期记忆候选",
+      "source": "整理稿 §16 表格行 16.11（D:\\All projects\\Record\\02_WORK-LAB_完整项目描述与未来蓝图_20261006.docx），上游身份/版本/许可未在线复核",
+      "license": "NOT_VERIFIED",
+      "windows_support": "NOT_VERIFIED",
+      "native_overlap": "At most one retrieval-backed long-term memory comparator; not a chosen memory base, and long-term knowledge truth belongs to ArcheAxis/AAOS, not this repository",
+      "integration_mode": "后续检索到的长期记忆候选",
+      "permissions": "none until individually authorized",
+      "data_boundary": "project-local; no credential or private-session reads; design-domain fields stay with DTALEX66/DESIGN-LAB",
+      "status": "DEFERRED",
+      "default_enabled": false,
+      "pilot_trigger": "不是已选底座；验证具体范围与本机路径",
+      "promotion_criteria": "DISCOVER/CLASSIFY intake complete (identity, version, license, Windows support) + a pilot round-trip that proves net-new capability over the native path",
+      "rejection_reason": null,
+      "last_verified_at": "2026-10-07",
+      "task_card": null,
+      "blueprint_row": "16.11"
+    },
+    {
+      "id": "FUT-042",
+      "name": "Oh-My-Hermes",
+      "role": "少量技能/方法供体",
+      "source": "整理稿 §16 表格行 16.15（D:\\All projects\\Record\\02_WORK-LAB_完整项目描述与未来蓝图_20261006.docx），上游身份/版本/许可未在线复核",
+      "license": "NOT_VERIFIED",
+      "windows_support": "NOT_VERIFIED",
+      "native_overlap": "Skill/method donor only; must not restore Hermes as the single centre — the managed Hermes overlay stays under skills/ with declared fields",
+      "integration_mode": "少量技能/方法供体",
+      "permissions": "none until individually authorized",
+      "data_boundary": "project-local; no credential or private-session reads; design-domain fields stay with DTALEX66/DESIGN-LAB",
+      "status": "DEFERRED",
+      "default_enabled": false,
+      "pilot_trigger": "只验证净新增方法，不恢复 Hermes 唯一中心",
+      "promotion_criteria": "DISCOVER/CLASSIFY intake complete (identity, version, license, Windows support) + a pilot round-trip that proves net-new capability over the native path",
+      "rejection_reason": null,
+      "last_verified_at": "2026-10-07",
+      "task_card": null,
+      "blueprint_row": "16.15"
+    },
+    {
+      "id": "FUT-043",
+      "name": "Paperclip / agent-skills / OpenPencil research clues",
+      "role": "分别为治理/执行/技能/设计宿主研究线索",
+      "source": "整理稿 §16 表格行 16.16（D:\\All projects\\Record\\02_WORK-LAB_完整项目描述与未来蓝图_20261006.docx），上游身份/版本/许可未在线复核",
+      "license": "NOT_VERIFIED",
+      "windows_support": "NOT_VERIFIED",
+      "native_overlap": "Separate governance, skill and design-host research leads; OpenPencil's design capability belongs to DTALEX66/DESIGN-LAB and is neither collected nor managed here",
+      "integration_mode": "分别为治理/执行/技能/设计宿主研究线索",
+      "permissions": "none until individually authorized",
+      "data_boundary": "project-local; no credential or private-session reads; design-domain fields stay with DTALEX66/DESIGN-LAB",
+      "status": "DEFERRED",
+      "default_enabled": false,
+      "pilot_trigger": "按项目归属核验，不将材料组合直接变成生产基线",
+      "promotion_criteria": "DISCOVER/CLASSIFY intake complete (identity, version, license, Windows support) + a pilot round-trip that proves net-new capability over the native path",
+      "rejection_reason": null,
+      "last_verified_at": "2026-10-07",
+      "task_card": null,
+      "blueprint_row": "16.16"
+    },
+    {
+      "id": "FUT-044",
+      "name": "Prompts.chat / GEP-EvoMap material sources",
+      "role": "资料/经验方法来源",
+      "source": "整理稿 §16 表格行 16.17（D:\\All projects\\Record\\02_WORK-LAB_完整项目描述与未来蓝图_20261006.docx），上游身份/版本/许可未在线复核",
+      "license": "NOT_VERIFIED",
+      "windows_support": "NOT_VERIFIED",
+      "native_overlap": "Prompt and experience-method material sources; durable knowledge may belong to AAOS, this repository keeps only references and contracts",
+      "integration_mode": "资料/经验方法来源",
+      "permissions": "none until individually authorized",
+      "data_boundary": "project-local; no credential or private-session reads; design-domain fields stay with DTALEX66/DESIGN-LAB",
+      "status": "DEFERRED",
+      "default_enabled": false,
+      "pilot_trigger": "长期知识可归 AAOS；工作流仅留引用/合同",
+      "promotion_criteria": "DISCOVER/CLASSIFY intake complete (identity, version, license, Windows support) + a pilot round-trip that proves net-new capability over the native path",
+      "rejection_reason": null,
+      "last_verified_at": "2026-10-07",
+      "task_card": null,
+      "blueprint_row": "16.17"
+    },
+    {
+      "id": "FUT-045",
+      "name": "ChatCut",
+      "role": "视频 Host 研究方向",
+      "source": "整理稿 §16 表格行 16.18（D:\\All projects\\Record\\02_WORK-LAB_完整项目描述与未来蓝图_20261006.docx），上游身份/版本/许可未在线复核",
+      "license": "NOT_VERIFIED",
+      "windows_support": "NOT_VERIFIED",
+      "native_overlap": "Video-host research direction; professional design capability belongs to DTALEX66/DESIGN-LAB",
+      "integration_mode": "视频 Host 研究方向",
+      "permissions": "none until individually authorized",
+      "data_boundary": "project-local; no credential or private-session reads; design-domain fields stay with DTALEX66/DESIGN-LAB",
+      "status": "DEFERRED",
+      "default_enabled": false,
+      "pilot_trigger": "专业设计能力归 DESIGN-LAB",
+      "promotion_criteria": "DISCOVER/CLASSIFY intake complete (identity, version, license, Windows support) + a pilot round-trip that proves net-new capability over the native path",
+      "rejection_reason": null,
+      "last_verified_at": "2026-10-07",
+      "task_card": null,
+      "blueprint_row": "16.18"
+    },
+    {
+      "id": "FUT-046",
+      "name": "EigenFlux / Dream-RSI / cc-haha / free-provider and security-course cases",
+      "role": "历史研究保留",
+      "source": "整理稿 §16 表格行 16.19（D:\\All projects\\Record\\02_WORK-LAB_完整项目描述与未来蓝图_20261006.docx），上游身份/版本/许可未在线复核",
+      "license": "NOT_VERIFIED",
+      "windows_support": "NOT_VERIFIED",
+      "native_overlap": "Historical research retained for provenance; none of these is a current capability claim and the list is not exhaustive in the source",
+      "integration_mode": "历史研究保留",
+      "permissions": "none until individually authorized",
+      "data_boundary": "project-local; no credential or private-session reads; design-domain fields stay with DTALEX66/DESIGN-LAB",
+      "status": "DEFERRED",
+      "default_enabled": false,
+      "pilot_trigger": "身份、许可、授权环境与需求逐项复核",
+      "promotion_criteria": "DISCOVER/CLASSIFY intake complete (identity, version, license, Windows support) + a pilot round-trip that proves net-new capability over the native path",
+      "rejection_reason": null,
+      "last_verified_at": "2026-10-07",
+      "task_card": null,
+      "blueprint_row": "16.19"
+    },
+    {
+      "id": "FUT-040",
+      "name": "n8n",
+      "role": "辅助入口/桥接或外部流程候选",
+      "source": "整理稿 §16 表格行 16.05（D:\\All projects\\Record\\02_WORK-LAB_完整项目描述与未来蓝图_20261006.docx），上游身份/版本/许可未在线复核",
+      "license": "NOT_VERIFIED",
+      "windows_support": "NOT_VERIFIED",
+      "native_overlap": "External flow/bridge auxiliary candidate; workflow truth stays with the Task Ledger",
+      "integration_mode": "辅助入口/桥接或外部流程候选",
+      "permissions": "none until individually authorized",
+      "data_boundary": "project-local; no credential or private-session reads; design-domain fields stay with DTALEX66/DESIGN-LAB",
+      "status": "DEFERRED",
+      "default_enabled": false,
+      "pilot_trigger": "具体缺口、版本、取消/幂等与实际净收益",
+      "promotion_criteria": "DISCOVER/CLASSIFY intake complete (identity, version, license, Windows support) + a pilot round-trip that proves net-new capability over the native path",
+      "rejection_reason": null,
+      "last_verified_at": "2026-10-07",
+      "task_card": null,
+      "blueprint_row": "16.05"
     }
   ]
 }
