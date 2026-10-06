@@ -104,3 +104,8 @@ export const VIEW_BY_ID: Record<string, ViewEntry> = Object.fromEntries(
 // default landing view, so it is not a registry entry with its own component —
 // it is a synthetic first lane.
 export const OVERVIEW_ID = 'overview'
+
+// N-1: the label lived in App.tsx, Sidebar.tsx and OverviewView.tsx as three
+// separate string literals, so the nav could say 总览 while the page header said
+// anything else. Overview has no registry entry, so it needs its own constant.
+export const OVERVIEW_LABEL = '总览'

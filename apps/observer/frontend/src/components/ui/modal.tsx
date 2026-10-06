@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { useFocusTrap } from '@/lib/useFocusTrap'
 
 /**
  * UI_COMPONENTS (20260921) · L10b (2026-09-27): Modal — L6 interaction
@@ -31,13 +32,11 @@ export interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, children, footer, className }: ModalProps) {
+  const overlayRef = React.useRef<HTMLDivElement>(null)
   const panelRef = React.useRef<HTMLDivElement>(null)
-  const previouslyFocused = React.useRef<HTMLElement | null>(null)
 
   React.useEffect(() => {
     if (!open) return
-    previouslyFocused.current = document.activeElement as HTMLElement | null
-    panelRef.current?.focus()
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
@@ -45,10 +44,8 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  // restore focus on close
-  React.useEffect(() => {
-    if (!open) previouslyFocused.current?.focus?.()
-  }, [open])
+  // M-3: focus enters the dialog, stays inside it, and returns to the trigger.
+  useFocusTrap(open, overlayRef)
 
   // L10b: B10 shows/hides the overlay with `.open`, but the repo's component
   // contract pins "closed Modal renders nothing" — so the overlay is only
@@ -58,6 +55,7 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
 
   return (
     <div
+      ref={overlayRef}
       role="dialog"
       aria-modal="true"
       aria-label={title}

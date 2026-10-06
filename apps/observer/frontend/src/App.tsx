@@ -13,7 +13,7 @@ import {
   useLiveSnapshot,
   type ThemeMode, type LayoutMode,
 } from '@/lib/api'
-import { VIEW_REGISTRY, OVERVIEW_ID } from '@/lib/viewRegistry'
+import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL } from '@/lib/viewRegistry'
 import { announce } from '@/lib/a11y'
 
 type ViewId = string
@@ -119,7 +119,7 @@ export default function App() {
   // (useEffect below) persists.
   const paletteItems = useMemo<PaletteItem[]>(() => {
     const viewItems: PaletteItem[] = [
-      { id: 'nav-overview', label: '总览', group: '跳转', run: () => setView(OVERVIEW_ID) },
+      { id: 'nav-overview', label: OVERVIEW_LABEL, group: '跳转', run: () => setView(OVERVIEW_ID) },
       ...VIEW_REGISTRY.map((e): PaletteItem => ({
         id: 'nav-' + e.id,
         label: e.label,
@@ -198,10 +198,13 @@ export default function App() {
     announce(theme === 'dark' ? '已切换为深色主题' : '已切换为浅色主题')
   }, [theme])
 
-  // U03/WlA11y parity: announce data-source transitions (LIVE / STALE /
-  // OFFLINE) — the four state words the static surface announced verbatim.
+  // U03/WlA11y parity: announce data-source transitions (LOADING / LIVE / STALE /
+  // OFFLINE) — the load strip on screen says LOADING, so the live region has to
+  // say it too or a screen-reader user gets silence during the first fetch.
   useEffect(() => {
-    if (error && !snap) {
+    if (!snap && !error) {
+      announce('投影加载中，首次快照未到达，数值保持 UNKNOWN')
+    } else if (error && !snap) {
       announce('实时数据不可用，界面显示 OFFLINE（不加载假数据）')
     } else if (live) {
       announce('已加载实时投影数据')

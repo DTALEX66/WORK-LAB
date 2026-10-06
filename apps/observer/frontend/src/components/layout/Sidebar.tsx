@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { VIEW_REGISTRY, OVERVIEW_ID } from '@/lib/viewRegistry'
+import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL } from '@/lib/viewRegistry'
 
 /**
  * L10b (2026-09-27): B10 sidebar — the verbatim B10 DOM:
@@ -56,7 +56,7 @@ export const NAV_GROUPS: { key: string; label: string; ids: string[] }[] = [
 
 
 function buildLanes(): Map<string, LaneDef> {
-  const map = new Map<string, LaneDef>([[OVERVIEW_ID, { id: OVERVIEW_ID, label: '总览' }]])
+  const map = new Map<string, LaneDef>([[OVERVIEW_ID, { id: OVERVIEW_ID, label: OVERVIEW_LABEL }]])
   for (const e of VIEW_REGISTRY) {
     if (e.component) map.set(e.id, { id: e.id, label: e.label })
   }

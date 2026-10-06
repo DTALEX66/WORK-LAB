@@ -55,6 +55,7 @@ export function CommandPalette({
   const [query, setQuery] = React.useState('')
   const [active, setActive] = React.useState(0)
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const dialogRef = React.useRef<HTMLDivElement>(null)
 
   const visible = React.useMemo(() => filterItems(items, query), [items, query])
 
@@ -101,6 +102,7 @@ export function CommandPalette({
         />
       )}
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title ?? '命令面板'}

@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 110,
+    "total": 111,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
@@ -17,7 +17,7 @@
       "working_directory_recovery": 2,
       "evidence_state": 17,
       "ci_configuration": 8,
-      "feature_gap": 8,
+      "feature_gap": 9,
       "config_downgrade": 3,
       "dead_entry": 2,
       "path_boundary": 3,
@@ -3074,6 +3074,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Future candidate pool coverage",
         "regressionCommand": "python scripts/ci/verify_future_candidate_registry.py"
+      }
+    },
+    {
+      "error_id": "ERR-112",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "feature_gap",
+      "entrypoint": "apps/observer/frontend/src/components/ui/drawer.tsx, modal.tsx, command-palette.tsx, toast.tsx, states.tsx, src/views/CompactHUD.tsx, src/lib/viewRegistry.ts, src/App.tsx, src/components/layout/Sidebar.tsx, src/views/OverviewView.tsx",
+      "command": "node apps/observer/tests/test_desktop_component_contract.js; npm run typecheck; npm run test (apps/observer/frontend)",
+      "exit_code": 1,
+      "observed_error": "The 2026-10-06 design walkthrough raised 12 findings and only 5 were repaired in later commits. Six declared defects stayed live, and two of them were lies the interface told: all three overlays set aria-modal=\"true\" with no focus trap, so a keyboard user was told they were inside a dialog and then tabbed straight through it into the surface behind the overlay; and CompactHUD's header claimed 320px-safe while pinning four equal grid tracks inline, which overrode the shell's fluid auto-fit .kpi-grid and its 820px container collapse, giving each KPI about 70px at that width.",
+      "root_cause": "Four separate omissions with one shape: a declared contract with no mechanism behind it. aria-modal was markup, not behaviour, and nothing exercised Tab. The narrow-screen repair that re-shows .top-actions after b10.css hides it (the B-1 blocker fix) worked only through CSS import order with zero tests guarding that order. The Overview lane has no registry entry, so its label was hand-typed in App.tsx, Sidebar.tsx and OverviewView.tsx independently. And the loading affordance existed as a visible strip while the live region only announced LIVE / STALE / OFFLINE, so LOADING was invisible to a screen reader; the skeleton that the audit had recommended was added to the design system and never called, because the B5 rule forbids the one thing a skeleton does (replacing content, which is exactly what hides a real UNKNOWN).",
+      "fix": "useFocusTrap() added and wired into Modal, Drawer and CommandPalette: focus enters the first control on open, Tab/Shift+Tab cycle inside, focus returns to the trigger on close. Toast errors now announce with role=alert + aria-live=assertive and stay until dismissed (polite status messages keep the 1800ms lifetime), and the App announcement gained the LOADING branch. The inline grid override is deleted so the shell owns grid geometry. OVERVIEW_LABEL moves into viewRegistry as the single source. Dead LoadingSkeleton is removed with the reason recorded where it stood. Nothing was touched in skins/b10.css (D-11 pins it verbatim) and no write affordance was added anywhere (Observer stays read-only).",
+      "regression_test": "vitest cases grew to 83 across 13 files including src/components/ui/overlays.test.tsx (6 new); the desktop component contract grew to 10 cases, now pinning the b10-then-shell import order, the single label source and the fluid .kpi-grid. All seven new assertions were falsified by injecting their own violation (trap removed from drawer and modal, toast role reverted, error TTL reverted, shell override deleted, label re-hardcoded, inline grid restored) — each turned the matching suite red and every file was restored byte-for-byte.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "An ARIA attribute is a promise about behaviour: a component that declares aria-modal must be tested by tabbing out of it, because no type checker or snapshot can see a missing trap. A repair that works only because of the order two files are imported in must pin that order in a test. A lane without a registry entry still needs one label source. And a loading affordance has to be announced in the same words the screen shows, or the screen is lying to anyone who cannot see it.",
+      "remaining_boundary": "Not closed by this round, and still open in the 2026-10-06 walkthrough: M-1 (two CSS authorities still negotiate through !important in the shell layer and the 840/841 thresholds remain spread across seven shell rules), M-5 (D-02 promises a 72px collapsed sidebar that the implementation never had, which is a decision to make, not a bug to fix), M-7 (the register's own lane-count prose still says 16/15 against the real 22). These changes are in frontend/src only: dist and the release binary were deliberately NOT rebuilt, so the artifact the owner observed predates them and the local freshness gate correctly reports the bundle as superseded until the next build. The rebuild is what needs a further owner look, not these files.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "b0fc828",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer overlay accessibility and narrow-screen operability",
+        "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
       }
     }
   ],

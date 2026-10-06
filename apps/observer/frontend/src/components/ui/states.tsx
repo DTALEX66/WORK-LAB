@@ -61,27 +61,12 @@ export function EmptyState({ title, description, action, className }: EmptyState
   )
 }
 
-export interface LoadingSkeletonProps {
-  rows?: number
-  className?: string
-}
-
-export function LoadingSkeleton({ rows = 4, className }: LoadingSkeletonProps) {
-  return (
-    <div className={cn('panel', className)} role="status" aria-label="加载中">
-      <span className="sr-only">加载中…</span>
-      <div className="flex flex-col gap-3">
-        {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <div className="h-4 w-4 rounded bg-panel2 animate-pulse" />
-            <div className="h-3 flex-1 rounded bg-panel2 animate-pulse" />
-            <div className="h-3 w-16 rounded bg-panel2 animate-pulse" />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+// M-2 (UI-CHECK-20261006): LoadingSkeleton is gone. It had zero callers, and the
+// shell settled on a load strip instead (App.tsx `loadingStrip`) because the B5
+// rule pins every KPI to UNKNOWN with no snapshot — a skeleton that *replaces*
+// content hides exactly the state that rule defends. Keeping an unused skeleton
+// in the design system invited the other implementation: it is the one loading
+// affordance whose presence would make a real UNKNOWN invisible.
 
 export interface ErrorStateProps {
   message: string

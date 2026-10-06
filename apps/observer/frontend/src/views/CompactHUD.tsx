@@ -22,7 +22,12 @@ export function CompactHUD({ snap, live }: { snap: SnapshotV3 | null; live: bool
   ]
   return (
     <div className="compact-hud text-ink">
-      <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
+      {/* N-2: the shell owns the grid. The inline `repeat(4, minmax(0,1fr))`
+          overrode l10b-shell.css's fluid `auto-fit minmax(max(150px,20cqi),1fr)`
+          and its `@container page (max-width: 820px)` collapse to two columns,
+          so at the 320px width this file claims to be safe for, four tracks got
+          ~70px each and clipped. Deleting the override makes the claim true. */}
+      <div className="kpi-grid">
         {kpis.map((x) => (
           <div key={x.k} className="panel kpi">
             <strong className="truncate text-[22px]">{x.v}</strong>

@@ -159,6 +159,56 @@ function run() {
     }
   });
 
+  // B-1 (UI-CHECK-20261006, blocker): b10.css hides the whole action strip under
+  // 840px, which strands theme / compact / Context / notifications on a narrow
+  // window and on touch. The repair lives in the shell layer because D-11 pins
+  // b10.css verbatim, so it only holds while the shell is imported AFTER b10 and
+  // re-declares the same selector at the same specificity. That ordering is the
+  // fix — nothing else about it is load-bearing — so the ordering is what gets
+  // pinned, and it is the kind of thing a later "cleanup" silently breaks.
+  test("narrow screens keep the top action cluster reachable (b10 hide is overridden)", () => {
+    const B10 = fs.readFileSync(path.join(ROOT, "frontend", "src", "skins", "b10.css"), "utf8");
+    const shellBlock = /\.top-actions\s*\{[^}]*display:\s*flex/.exec(SHELL_CSS);
+    assert(shellBlock, "the shell never re-shows .top-actions under the narrow breakpoint");
+    assert(/\.top-actions\{display:none\}/.test(B10.replace(/\s+/g, "")),
+      "b10.css no longer hides .top-actions; re-read which layer the fix belongs to");
+    const MAIN = fs.readFileSync(path.join(ROOT, "frontend", "src", "main.tsx"), "utf8");
+    const b10At = MAIN.indexOf("skins/b10.css");
+    const shellAt = MAIN.indexOf("skins/l10b-shell.css");
+    assert(b10At >= 0 && shellAt >= 0, "both skin imports must exist in main.tsx");
+    assert(shellAt > b10At,
+      "l10b-shell.css must be imported after b10.css or its unlayered override loses");
+  });
+
+  // N-1: the Overview lane has no registry entry, so its label was written by
+  // hand in three files; three literals can disagree with nobody noticing.
+  test("the overview lane label has exactly one source", () => {
+    const REGISTRY = fs.readFileSync(
+      path.join(ROOT, "frontend", "src", "lib", "viewRegistry.ts"), "utf8");
+    assert(/export const OVERVIEW_LABEL\s*=\s*'[^']+'/.test(REGISTRY),
+      "viewRegistry.ts must export OVERVIEW_LABEL");
+    const offenders = ["App.tsx", "components/layout/Sidebar.tsx", "views/OverviewView.tsx"]
+      .map((rel) => [rel, fs.readFileSync(path.join(ROOT, "frontend", "src", rel), "utf8")])
+      .filter(([, body]) => /['\"]总览['\"]/.test(body))
+      .map(([rel]) => rel);
+    assert.deepStrictEqual(offenders, [],
+      "overview label hardcoded again in: " + offenders.join(", "));
+  });
+
+  // N-2: CompactHUD claimed 320px-safe while pinning four equal tracks inline,
+  // which overrode the shell's fluid auto-fit grid and its 820px container
+  // collapse. Grid geometry belongs to the shell, not to a view.
+  test("the compact HUD leaves KPI grid geometry to the shell", () => {
+    const HUD = fs.readFileSync(
+      path.join(ROOT, "frontend", "src", "views", "CompactHUD.tsx"), "utf8");
+    assert(!/gridTemplateColumns/.test(HUD),
+      "CompactHUD.tsx sets gridTemplateColumns inline and defeats the shell's fluid .kpi-grid");
+    assert(/grid-template-columns:\s*repeat\(auto-fit/.test(SHELL_CSS),
+      "the shell must keep a fluid auto-fit .kpi-grid");
+    assert(/@container page \(max-width:\s*820px\)\s*\{\s*\.kpi-grid/.test(SHELL_CSS),
+      "the container-driven two-column collapse for .kpi-grid is gone");
+  });
+
   console.log("\n==== WORK-LAB desktop component contract tests ====");
   console.log(`TOTAL: ${pass} passed, ${fail} failed`);
   return { pass, fail };

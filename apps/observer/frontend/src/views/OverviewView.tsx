@@ -22,6 +22,7 @@ import { KPICard } from '@/components/dashboard/KPICard'
 import { NodeGraph, type GraphNode } from '@/components/graph/node-graph'
 import { Sparkline } from '@/components/ui/sparkline'
 import { Badge } from '@/components/ui/badge'
+import { OVERVIEW_LABEL } from '@/lib/viewRegistry'
 import {
   fmtCostQuality, tokenTruth, executionsToRows,
   type LiveSnapshotState,
@@ -93,7 +94,7 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="总览"
+        title={OVERVIEW_LABEL}
         description="执行态势、工作流健康、观察者与审计信号整合到同一控制平面。真值来自 v3 快照投影；缺失即 UNKNOWN，不伪造。"
         actions={
           <>
