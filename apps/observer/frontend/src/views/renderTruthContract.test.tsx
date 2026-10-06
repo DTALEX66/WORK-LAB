@@ -195,4 +195,20 @@ describe('U03 step 2 — render_v3 truth contracts mounted on the production tre
     expect(screen.getByText('覆盖 3/4')).toBeTruthy()
     expect(calls).toBeGreaterThan(1)
   })
+
+  it('the alert chip has three states: with no data source it reads UNKNOWN, not a green "no alerts"', () => {
+    // The panel body already refused to say "all clear" without a snapshot
+    // (保持 UNKNOWN，不伪造「全部正常」), but the status chip counted zero alerts from
+    // an absent snapshot and painted it green — the two halves disagreed.
+    render(<OverviewView snap={null} source="stale" live={false} />)
+    expect(screen.getByText('告警状态 UNKNOWN')).toBeTruthy()
+    expect(screen.queryByText('无告警信号')).toBeNull()
+    cleanup()
+    render(<OverviewView snap={mkSnap()} source="live" live={true} />)
+    expect(screen.getByText('无告警信号')).toBeTruthy()
+    cleanup()
+    render(<OverviewView snap={mkSnap({ ci: [{ runId: 'r1', workflow: 'gate', headSha: 'abc', status: 'completed', conclusion: 'failure', sourceRef: null }] })} source="live" live={true} />)
+    expect(screen.getByText('1 条告警信号')).toBeTruthy()
+    expect(screen.queryByText('无告警信号')).toBeNull()
+  })
 })

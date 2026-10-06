@@ -321,6 +321,19 @@ function run() {
       gated + "/" + total + " rail-track declarations are outside the @media (min-width: 841px) gate");
   });
 
+  t("a disabled control is visually disabled", () => {
+    // b10.css ships no :disabled rule and keeps `button{cursor:pointer}` plus a
+    // hover lift, so the permanently-disabled 导出状态 / 新建执行 buttons rendered
+    // exactly like working ones. D-11 pins b10 verbatim, so the shell must carry
+    // the affordance; this case is what keeps it from silently disappearing.
+    assert(/button:disabled[^{]*\{[^}]*cursor:\s*not-allowed/.test(shell),
+      "the shell declares no cursor:not-allowed affordance for disabled buttons");
+    assert(/button:disabled[^{]*\{[^}]*opacity/.test(shell),
+      "disabled buttons must be visually dimmed, not identical to enabled ones");
+    assert(/button:disabled:hover[^{]*\{[^}]*transform:\s*none/.test(shell),
+      "the b10 hover lift is still active on disabled buttons");
+  });
+
   console.log(`TOTAL: ${pass} passed, ${fail} failed`);
   return { pass, fail };
 }

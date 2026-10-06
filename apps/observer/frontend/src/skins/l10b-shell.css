@@ -438,3 +438,23 @@ html, body, #root { max-width: 100vw; overflow-x: hidden; }
   .top-actions .ghost-btn,
   .top-actions .primary-btn { flex: 1 1 auto; padding: 5px 6px; font-size: 12px; }
 }
+
+/* Disabled controls must look disabled. b10.css ships no `:disabled` rule and
+ * keeps `button{cursor:pointer}` plus a hover lift, so 导出状态 / 新建执行 — which
+ * the read-only iron law freezes permanently — rendered exactly like working
+ * controls that silently do nothing. D-11 pins b10 verbatim, so the shell owns
+ * this. Opacity is bounded rather than aggressive: the label has to stay
+ * readable, because the tooltip is the only other place the reason is written. */
+button:disabled,
+button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  filter: none;
+  transform: none;
+  box-shadow: none;
+}
+button:disabled:hover,
+button[aria-disabled="true"]:hover {
+  transform: none;
+  box-shadow: none;
+}

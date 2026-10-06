@@ -86,7 +86,14 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
       ? { text: 'Transport LIVE', variant: 'success' }
       : { text: `Transport ${tr?.transportState || 'UNKNOWN'}`, variant: tr?.transportState === 'OFFLINE' ? 'warning' : 'muted' },
     { text: tr?.freshnessState ? `Freshness ${tr.freshnessState}` : 'Freshness UNKNOWN', variant: tr?.freshnessState === 'FRESH' ? 'info' : 'muted' },
-    { text: alerts.length ? `${alerts.length} 条告警信号` : '无告警信号', variant: alerts.length ? 'warning' : 'success' },
+    // Three states, not two: with no snapshot there are no alerts *and* no way to
+    // know — the panel below already says 保持 UNKNOWN，不伪造「全部正常」, so a green
+    // "no alert signals" chip here would contradict it and read as a clean system.
+    !snap
+      ? { text: '告警状态 UNKNOWN', variant: 'muted' as const }
+      : alerts.length
+        ? { text: `${alerts.length} 条告警信号`, variant: 'warning' as const }
+        : { text: '无告警信号', variant: 'success' as const },
   ]
 
   const taskEntries = Object.entries(snap?.tasks || {}).slice(0, 6)

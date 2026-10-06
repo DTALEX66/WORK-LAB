@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 122,
+    "total": 123,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 44,
+      "contract_drift": 45,
       "test_behavior_alignment": 14,
       "working_directory_recovery": 2,
       "evidence_state": 19,
@@ -3386,6 +3386,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer responsive shell below the rail breakpoint",
         "regressionCommand": "cd apps/observer && node tests/test_production_surface_static_contract.js"
+      }
+    },
+    {
+      "error_id": "ERR-124",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "apps/observer/frontend/src/views/OverviewView.tsx (status-stack chip), apps/observer/frontend/src/skins/l10b-shell.css (disabled affordance)",
+      "command": "node node_modules/vitest/vitest.mjs run src/views/renderTruthContract.test.tsx",
+      "exit_code": 1,
+      "observed_error": "With no data source the overview status stack painted a green 无告警信号 chip while the panel directly beneath it said 数据源未接入 — 无法判断告警（保持 UNKNOWN，不伪造「全部正常」). Two halves of one surface disagreed, and the optimistic one was the colour a user reads first. Found while reading the rendered screenshots from the headless render audit, not from the source.",
+      "root_cause": "The chip was derived from `alerts.length`, and `alerts` is built by iterating `snap?.ci` and the execution rows — with no snapshot both are empty, so 'zero alerts' and 'nothing observed' collapsed onto the same value. The same absence-vs-measurement confusion as the dirtyCount case in ERR-120, one layer up: a count over missing data is not a measurement of zero.",
+      "fix": "The chip is now three-state: no snapshot -> 告警状态 UNKNOWN (muted), alerts present -> N 条告警信号 (warning), snapshot with none -> 无告警信号 (success). In the same pass the permanently-disabled 导出状态 / 新建执行 buttons were given a real affordance in the shell (cursor:not-allowed, dimmed, no hover lift), because b10.css ships no :disabled rule and keeps button{cursor:pointer} plus a lift, so a frozen control looked live; D-11 pins b10 verbatim, so the shell owns it.",
+      "regression_test": "renderTruthContract.test.tsx case 'the alert chip has three states: with no data source it reads UNKNOWN, not a green \"no alerts\"' and test_production_surface_static_contract.js case 'a disabled control is visually disabled'. Falsified 3/3 (falsify_ui_round4.py): restoring the two-state chip, deleting cursor:not-allowed, and deleting the disabled hover override — each turns its case red, each file restored byte-for-byte with SHA-256 verified.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A positive label must never be derived from the emptiness of a collection: where the collection can be empty because nothing was observed, the code must carry a third state and the colour must follow it, because a green chip is read before the sentence beneath it. Rendered screens must stay in the review loop — this contradiction was visible in a screenshot and invisible in the source that produced it. And after appending to a CRLF working copy with a shell heredoc, normalise the file: the mixed line endings made two of my own falsification needles miss their target.",
+      "remaining_boundary": "The disabled affordance is asserted as a CSS-shape contract, not as a rendered computed-style check (jsdom has no cascade, and the CDP probe measures but is not wired into CI). Other places where an empty collection could be read as a measurement were not enumerated — the alert list itself, `sourceRefs.length ? … : '0'` in the trust rows, and the CI run list all derive from iteration and deserve the same three-state question. The migrated brand SVGs are still not mounted in the header.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "f95baef",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Overview alert status chip; disabled-control affordance",
+        "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/views/renderTruthContract.test.tsx"
       }
     }
   ],

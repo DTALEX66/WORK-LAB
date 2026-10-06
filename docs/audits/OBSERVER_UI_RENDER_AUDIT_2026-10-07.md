@@ -93,6 +93,38 @@ b10 里那条 `@media (max-width:840px){.app{grid-template-columns:1fr}}` 是有
 
 复现命令（sidecar 起在 61912，服务 `frontend/dist`）：
 `node .project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs`。
-现状：vitest 17 文件 114 条、node 契约 33 条（静态 22 ＋ 桌面 11）、电池 0 失败、
+现状：vitest 17 文件 114 条、node 契约 33 条（静态 22＋桌面 11）、电池 0 失败、
 `vite build` 绿；`dist` 已用修复后的源重建，release 二进制仍未重建。
+
+## 第四轮：截图里读出来的两处自相矛盾（同日，已修）
+
+看渲染图能看见源码看不见的东西。两条都是从 PNG 里发现的：
+
+1. **总览状态条在"无数据源"时亮绿灯**：alerts 由 `snap?.ci` 与执行行迭代得出，
+   没有快照时两者皆空 ⇒ chip 显示绿色`无告警信号`，而它正下方的面板写着
+   `数据源未接入 — 无法判断告警（保持 UNKNOWN，不伪造「全部正常」）`。
+   同一面屏幕的两半互相打脸，而颜色比文字先被读到。
+   改成三态：无快照→`告警状态 UNKNOWN`（muted）、有告警→`N 条告警信号`（warning）、
+   确有快照且无告警→`无告警信号`（success）。
+   这与 ERR-120 的 dirtyCount 是同一类错误：**对缺失数据做计数，不等于测得零**。
+2. **永久禁用的 `导出状态 / 新建执行` 与可用按钮长得一模一样**：b10.css 没有 `:disabled` 规则，
+   还保留 `button{cursor:pointer}` 与 hover 抬起；D-11 锁住 b10 逐字，所以只能由壳层补——
+   现加 `cursor:not-allowed` ＋ 降透明度 ＋ 取消 hover 抬起。
+
+回归锁：vitest 新增 `the alert chip has three states…`（三态各自断言），
+node 静态契约新增 `a disabled control is visually disabled`（三条形状检查）。
+**证伪 3/3**（`falsify_ui_round4.py`：把 chip 改回两态、删掉 `cursor:not-allowed`、
+删掉 disabled 的 hover 覆盖），每次注入后按字节复原核对 SHA-256。
+台账 **ERR-124**。
+
+两处过程教训：① 用 heredoc 往 CRLF 工作树里追加会造出混合换行——
+我自己的两条证伪针因此连续 NEEDLE-ERROR，归一化换行后才命中（内容不变）；
+② 台账校验器要求 `repeat_prevention` 含祈使词（must/never/必须…），
+第一版写成陈述句被 `ERROR_LEDGER_FAIL … not enforceable` 拦下——门是活的，它拦的就是我。
+
+现状：vitest 17 文件 **115** 条、node 契约 **34** 条（静态 23＋桌面 11）、
+`tsc --noEmit` 干净、`vite build` 绿、电池 **BATTERY_FAILURES=0**；
+CI 在退役提交 `891c871` 上两条工作流全部 job completed/success。
+仍未做：品牌 SVG 挂载到头部；禁用态是 CSS 形状契约而非渲染后计算样式（CDP 探针能量但没接进 CI）。
+
 
