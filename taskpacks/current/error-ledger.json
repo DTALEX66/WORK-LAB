@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 123,
+    "total": 124,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 45,
       "test_behavior_alignment": 14,
       "working_directory_recovery": 2,
-      "evidence_state": 19,
+      "evidence_state": 20,
       "ci_configuration": 8,
       "feature_gap": 9,
       "config_downgrade": 3,
@@ -3412,6 +3412,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Overview alert status chip; disabled-control affordance",
         "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/views/renderTruthContract.test.tsx"
+      }
+    },
+    {
+      "error_id": "ERR-125",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": ".project/governance/recovered-source-registry.json, tests/workflow-assistance/test_recovered_source_registry.py",
+      "command": "python services/orchestration/run_quality_gate.py governance",
+      "exit_code": 1,
+      "observed_error": "CI job workflow-assistance failed at 1cffd9f, e7ede1f and ab33537 with `src-brand-observer-icons.svg drifted from its recorded digest` (2dafc74e185fde83… != 8ef2372d736f8c3d…), while the same 45-command step list run locally at the same head passed 45/45. The 60b0424 run before it was green, so the break was mine and it was invisible to my own battery.",
+      "root_cause": "The registry recorded sha256 over working-tree bytes. `.gitattributes` carries `* text=auto`, so the same commit is checked out with CRLF on this machine and LF on the runner; three of the six tracked entries (all brand SVGs) therefore recorded a digest that could only ever match on a CRLF checkout. `digest()` read the working tree, so the gate silently tested a machine-local property and called it a versioned claim. Nothing in the suite asked whether the recorded bytes are the bytes another checkout will get.",
+      "fix": "Tracked entries now record the digest and size of the blob at HEAD (`git show HEAD:<path>`), the test hashes that blob, and the registry declares the rule in `digestBasis`. A second new test executes each recorded `git cat-file -p 6de25fe:<original path>` recovery command and requires it to reproduce the recorded digest and the HEAD blob, so `byte-identical` is now a computed relation rather than an adjective. The rebind script that first did this replaced `verificationCommand` wholesale and deleted the 6de25fe recovery commands; `test_migrated_assets_record_where_they_came_from` caught it on the next run and the commands were restored before the change was kept.",
+      "regression_test": "tests/workflow-assistance/test_recovered_source_registry.py, 8 cases. Falsified 5/5 (.project-local/runs/convergence-20261007-d/falsify_source_registry_fix.py): flipping the SVG working tree CRLF->LF must stay GREEN (portability), and each of recorded-digest drift, recorded-size drift, a recovery commit that does not exist, and a removed recovery command turns its named case RED; both mutated files restored and verified by SHA-256.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Never record a byte-level claim over a working tree when the bytes have a canonical stored form — hash the blob, not the checkout. Before trusting a local green on a gate that hashes files, run the CI-invoked command list itself rather than the groups you touched, and ask what the assertion measures on a checkout you do not control. When a script regenerates a governance file, keep every field it did not intend to change: provenance commands are evidence, so a generator must append to them, not overwrite them, and the test that reads them is the guard that says so.",
+      "remaining_boundary": "The blob-at-HEAD binding assumes the checked-out repository contains the commit the registry names; a shallow clone without history would make `git show HEAD:<path>` succeed but `git cat-file -p 6de25fe:…` fail, so the recovery-command test would turn RED rather than silently pass — that is fail-closed, but it has not been exercised on a shallow runner. `machine-local` entries still hash working-tree bytes by design (they are untracked), so their digests remain machine-specific and CI skips them. The three retained large trees under .project-local still need their citations migrated before deletion.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "1cffd9f",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "AG-19/AG-20 recovered-source registry digest claims; CI workflow-assistance job",
+        "regressionCommand": "python tests/workflow-assistance/test_recovered_source_registry.py"
       }
     }
   ],

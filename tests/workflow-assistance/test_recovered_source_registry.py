@@ -6,6 +6,11 @@ its own remaining_boundary). This tracked mirror is the part a gate can check:
 every `tracked` entry is re-hashed here, and every `machine-local` entry is
 checked for honest labelling rather than being silently trusted.
 
+Tracked digests are taken from the blob at HEAD, never from the working tree:
+`.gitattributes` carries `* text=auto`, so one commit is checked out with CRLF on
+this machine and LF on the runner, and a working-tree digest recorded here passed
+locally while CI failed on three brand SVGs (ERR-125).
+
 Discovered dynamically by `run_quality_gate.py governance`, so no manifest edit
 is needed to put it in CI.
 """
@@ -13,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
 import unittest
 from pathlib import Path
@@ -20,6 +26,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 REGISTRY = ROOT / ".project" / "governance" / "recovered-source-registry.json"
 STATUSES = {"tracked", "machine-local", "absent", "unpinned"}
+RECOVERY_CMD_RE = re.compile(r"git cat-file -p (\w+):(\S+)")
 REQUIRED_FIELDS = ("id", "kind", "status", "path", "observedAt", "originalLocation",
                    "coverageRelation", "verificationCommand", "notes")
 # The five originals AG-19 pins. Dropping one of these rows must fail the gate:
@@ -39,6 +46,23 @@ def git_tracked(rel: str) -> bool:
 
 def digest(rel: str) -> str:
     return hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
+
+
+def blob(rel: str) -> bytes:
+    """The exact bytes of this path in HEAD — the only checkout-stable form.
+
+    `* text=auto` in .gitattributes means a tracked file can be CRLF on one
+    machine and LF on another while the commit is identical, so working-tree
+    digests are not portable claims (ERR-125).
+    """
+    proc = subprocess.run(["git", "show", f"HEAD:{rel}"], cwd=ROOT, capture_output=True)
+    if proc.returncode != 0:
+        raise AssertionError(f"{rel} is not readable from HEAD: {proc.stderr[:120]!r}")
+    return proc.stdout
+
+
+def blob_digest(rel: str) -> str:
+    return hashlib.sha256(blob(rel)).hexdigest()
 
 
 class RecoveredSourceRegistryTests(unittest.TestCase):
@@ -77,9 +101,11 @@ class RecoveredSourceRegistryTests(unittest.TestCase):
         for e in tracked:
             self.assertTrue((ROOT / e["path"]).exists(), f"{e['id']} points at a missing file")
             self.assertTrue(git_tracked(e["path"]), f"{e['id']} claims tracked but is not versioned")
-            self.assertEqual(digest(e["path"]), e["sha256"],
+            self.assertEqual(blob_digest(e["path"]), e["sha256"],
                              f"{e['id']} drifted from its recorded digest")
-            self.assertGreater(e["bytes"], 0, f"{e['id']} records a non-positive size")
+            self.assertEqual(len(blob(e["path"])), e["bytes"],
+                             f"{e['id']} drifted from its recorded size")
+            self.assertGreater(e["bytes"], 0, f"{e['id']} records an empty blob")
 
     def test_machine_local_entries_cannot_masquerade_as_tracked(self) -> None:
         for e in [x for x in self.entries if x["status"] == "machine-local"]:
@@ -113,6 +139,38 @@ class RecoveredSourceRegistryTests(unittest.TestCase):
                           f"{e['id']} does not record its coverage relation")
             self.assertIn("6de25fe", e["verificationCommand"] + e["notes"],
                           f"{e['id']} does not name the recovery point")
+
+    def test_recorded_recovery_commands_actually_reproduce_the_recorded_digest(self) -> None:
+        """A provenance command that does not run is decoration, not evidence.
+
+        This is what turns `byte-identical` from an adjective into a check: the
+        blob at the recovery commit is fetched and hashed, and must equal both
+        the recorded digest and the blob at HEAD.
+        """
+        checked = 0
+        for e in self.entries:
+            if e["status"] != "tracked":
+                continue
+            m = RECOVERY_CMD_RE.search(e["verificationCommand"])
+            if not m:
+                continue
+            commit, orig_path = m.group(1), m.group(2)
+            proc = subprocess.run(["git", "cat-file", "-p", f"{commit}:{orig_path}"],
+                                  cwd=ROOT, capture_output=True)
+            self.assertEqual(proc.returncode, 0,
+                             f"{e['id']}: recovery command names an unreadable blob "
+                             f"{commit}:{orig_path}")
+            recovered = hashlib.sha256(proc.stdout).hexdigest()
+            self.assertEqual(recovered, e["sha256"],
+                             f"{e['id']}: the blob at {commit} does not hash to the "
+                             "recorded digest, so the migration is not byte-identical")
+            self.assertEqual(recovered, blob_digest(e["path"]),
+                             f"{e['id']}: the recovered original drifted from the "
+                             "versioned copy")
+            checked += 1
+        self.assertGreaterEqual(checked, 5,
+                                "no recovery command was checkable; the provenance "
+                                "gate would pass vacuously")
 
 
 if __name__ == "__main__":
