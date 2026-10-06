@@ -81,6 +81,34 @@ verified — the specification resolves at agentskills.io.
 ERR-127; the new rules were falsified 14/14, and the same harness run against the committed
 verifier is recorded as the reproduced original failure: **0/14 caught**.
 
+## The mistake worth carrying: I validated part of CI and called it CI
+
+Pushing `8c78b0d` turned the **integration** job red in 17 seconds: `Additional properties are not
+allowed ('identityReadback' was unexpected)`. I had added a readback field to the agent-skills row
+in `.project/governance/source-ledger.json`; `verify_source_ledger_v4.py` passed it because it does
+not enforce the closed property set, and the CI-invoked `verify_source_ledger.py` validates against
+`.project/governance/contracts/source-ledger.schema.json`, which declares
+`additionalProperties: false`. My pre-push check had reproduced the 45 commands of the
+workflow-assistance STEP and nothing else.
+
+This is the third occurrence of one shape in this session — ERR-109 (a pinned command count inside
+a required group), ERR-125 (a digest basis only the runner could contradict), and now this. The
+cause is not the field or the hash: it is treating a slice of the CI command set as the whole.
+`scripts/ci/reproduce_ci_commands.py` is now the durable answer: it parses BOTH workflow files with
+a YAML parser, splits each `run:` block the way a shell groups statements (continuations and quoted
+multi-line arguments), honours `working-directory`, and classifies what it cannot reproduce by name
+— `CI_CONTEXT` for steps whose command or `env:` map comes from `github.*` or a previous job's
+output, `STEP_ENV` for commands referencing a variable the runner exports, `TOOL_NOT_ON_PATH` for
+cargo/npm on a machine that has them elsewhere. 107 interpreter commands across the two workflows;
+the integration job alone contributes 12 that my earlier harness never ran. Everything still failing
+locally is environmental, and each is named as such rather than passed off: cargo absent
+(`observer-desktop-crate`), no local `app.exe` for the artifact receipt, the U19 WebView2 E2E needing
+a real desktop, and `tests/ci` inline commands that read the UTF-8 default the Linux runner has while
+this console is GBK.
+
+The provenance I wanted to record did not get thrown away either: it moved into `integrationNote`,
+a field the contract allows, keeping the previous URL, the readback command and the date. ERR-128.
+
 ## What is owed after this round
 
 - **FUT-001 Orca pilot** — still the only external-workspace candidate, needs an owner-authorized

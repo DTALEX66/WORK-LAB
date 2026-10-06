@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 126,
+    "total": 127,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 46,
       "test_behavior_alignment": 14,
       "working_directory_recovery": 2,
       "evidence_state": 21,
-      "ci_configuration": 8,
+      "ci_configuration": 9,
       "feature_gap": 9,
       "config_downgrade": 3,
       "dead_entry": 3,
@@ -3490,6 +3490,32 @@
         "verifiedCommit": null,
         "affectedCapability": "AG-05 model registry integrity; model and tool intake (模型与工具入库)",
         "regressionCommand": "python scripts/ci/verify_model_registry_integrity.py && python scripts/audit/model_library_readback.py"
+      }
+    },
+    {
+      "error_id": "ERR-128",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "ci_configuration",
+      "entrypoint": ".github/workflows/work-lab-gate.yml (integration job, step \"Verify source ledger readback\"), .project/governance/contracts/source-ledger.schema.json",
+      "command": "python scripts/ci/verify_source_ledger.py --root .",
+      "exit_code": 1,
+      "observed_error": "After pushing 8c78b0d, the integration job failed in ~17 seconds on the step \"Verify source ledger readback\" with `jsonschema.exceptions.ValidationError: Additional properties are not allowed ('identityReadback' was unexpected)`, while every local check I had run said PASS. The agent-skills row had gained an `identityReadback` object holding the GitHub API readback, and the ledger schema declares additionalProperties: false.",
+      "root_cause": "Two verifiers guard one file and I ran only one of them. `verify_source_ledger_v4.py` (the shape check I ran locally) does not enforce the closed property set, `verify_source_ledger.py` validates against the schema and does. My pre-push harness reproduced the 45 commands of the workflow-assistance STEP and treated that as the CI surface, so commands belonging to the integration job were never executed locally. This is the third time the same shape of mistake bit this session: ERR-109 (a pinned command count in a CI-only group), ERR-125 (a digest basis that only the runner contradicted), and now this. The recurring cause is not the specific field, it is validating a part of the CI command set and calling it the whole.",
+      "fix": "The provenance text moved into `integrationNote`, which the contract already allows, keeping the previous URL and the readback command and date inside it rather than dropping them; canonicalUrl stays on the verified repository. Then `.project-local/runs/convergence-20261007-d/ci_workflow_repro.py` was written: it walks BOTH workflow files, extracts every python/node/npm/bash/pytest/cargo line from every run block in order, labels each with job and step, runs them, and prints SKIPPED for anything explicitly excluded instead of silently omitting it. The whole-workflow pass is what runs before the next push.",
+      "regression_test": "python scripts/ci/verify_source_ledger.py --root . (SOURCE_LEDGER_PASS entries=17 local_readback=0 blocked=2) plus verify_source_ledger_v4.py and tests/ci/test_source_ledger.py, all executed by the workflow-wide repro tool rather than by hand. The tool's own guarantee is coverage: it prints commands_seen for both workflows, so a job whose commands were not run is visible as an omission.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Before pushing, reproduce every command in every job of the workflows that guard this repository, not the step of the job you touched; when a file has more than one verifier, run all of them. Never add a field to a governance file whose schema closes its property set without running that schema's validator afterwards. And when the same class of mistake recurs a third time, treat the workflow as the unit of verification rather than the change.",
+      "remaining_boundary": "The repro tool runs commands, not actions: it cannot reproduce a clean checkout, a matrix, environment differences or the cargo/npm builds it is told to skip, so a local whole-workflow pass still does not equal exact-SHA CI. The deeper structural question this exposes — that two verifiers disagree about the same ledger, one lax and one strict — is a governance defect worth its own task: the v4 verifier should validate against the same schema, or the schema should be the single source both read.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "8c78b0d",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "CI integration job source-ledger guard; pre-push validation practice",
+        "regressionCommand": "python scripts/ci/verify_source_ledger.py --root ."
       }
     }
   ],

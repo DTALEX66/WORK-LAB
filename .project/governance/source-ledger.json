@@ -397,22 +397,8 @@
       },
       "freshness": "review-required",
       "integrationMode": "REFERENCE",
-      "integrationNote": "Open skill format; candidate for WLOSS-500 export. The specification site is https://agentskills.io (the repository's own homepage field).",
-      "rollback": "not integrated; remove the reference entry (no vendored source or runtime dependency)",
-      "identityReadback": {
-        "queried": "gh api repos/agentskills/agentskills",
-        "at": "2026-10-06T20:38Z",
-        "htmlUrl": "https://github.com/agentskills/agentskills",
-        "homepage": "https://agentskills.io",
-        "licenseSpdxFromApi": "Apache-2.0",
-        "stars": 25941,
-        "pushedAt": "2026-08-09T20:36:04Z",
-        "archived": false,
-        "previousUrlStatus": "https://agent-skills.org/ resolved to no repository and no homepage in the 2026-10-07 candidate-pool DISCOVER; corrected rather than silently replaced, the old value is recorded here",
-        "previousCanonicalUrl": "https://agent-skills.org/",
-        "licenseFileHash": null,
-        "licenseFileNote": "SPDX came from the API's license field; the LICENSE file bytes were not read, so licenseFileHash stays null and freshness stays review-required"
-      }
+      "integrationNote": "open skill format; candidate for WLOSS-500 export. Specification site https://agentskills.io is the repository's own homepage field. Identity readback 2026-10-06T20:38Z via `gh api repos/agentskills/agentskills`: Apache-2.0 (from the API license field, the LICENSE file bytes were not read, so licenseFileHash stays null and freshness stays review-required), 25941 stars, pushed 2026-08-09, not archived. This row previously pointed at https://agent-skills.org/, which that readback could not resolve to any repository or homepage; the old value is kept here rather than quietly replaced.",
+      "rollback": "not integrated; remove the reference entry (no vendored source or runtime dependency)"
     },
     {
       "id": "mcp-inspector",
