@@ -78,6 +78,10 @@ The documents had never been re-asked after ERR-115: 104 command-shaped referenc
 - **Readback for `41858fe` and the licence commit** must be recorded in this file's table before the
   round is called closed.
 
+## Retracted again, same shape (ERR-136)
+
+I pushed 51c723d after running the gates I thought were relevant and skipped `scripts/ci/reproduce_ci_commands.py`. CI's integration job went red on `generate_current_state.py --check-current`: `.project/governance/generated/CURRENT_STATE.json` pins the digest of every CANONICAL_FILE, and source-ledger.json is one — so landing 14 licence hashes invalidates the snapshot, and no other verifier notices. Regenerated and committed with the change. The rule is now stated where it can be enforced by the next session: **repro before every push, read the receipt**.
+
 ## Verification discipline in force
 
 `python scripts/ci/reproduce_ci_commands.py --skip "pip install" --skip cargo --skip "npm ci"
