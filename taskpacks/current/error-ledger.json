@@ -9,15 +9,15 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 99,
+    "total": 101,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
       "test_behavior_alignment": 10,
       "working_directory_recovery": 2,
-      "evidence_state": 13,
+      "evidence_state": 14,
       "ci_configuration": 7,
-      "feature_gap": 5,
+      "feature_gap": 6,
       "config_downgrade": 3,
       "dead_entry": 2,
       "path_boundary": 3,
@@ -26,7 +26,7 @@
       "regression_contract": 7
     },
     "repeat_prevention_required": true,
-    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer); 2026-09-30: ERR-093 (asset-inventory boundary spill), ERR-094 (audit-package digest basis: CRLF vs repository bytes), ERR-095 (codex global overlay/skill targets absent in live CODEX_HOME while the registry claims READBACK_VERIFIED), ERR-096 (Hermes managed skill live drift + stale skill-provenance records); ERR-092 is reserved by the unmerged branch g15-dsh-codex-registry-reconcile-20260930)"
+    "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer); 2026-09-30: ERR-093 (asset-inventory boundary spill), ERR-094 (audit-package digest basis: CRLF vs repository bytes), ERR-095 (codex global overlay/skill targets absent in live CODEX_HOME while the registry claims READBACK_VERIFIED), ERR-096 (Hermes managed skill live drift + stale skill-provenance records); ERR-092 is reserved by the unmerged branch g15-dsh-codex-registry-reconcile-20260930) 2026-10-06: ERR-101 (U19 GDI capture rectangle exceeded the measured client area by 25% and photographed the desktop, forging 375-722 colours on a blank window); ERR-102 (release binary paints only #08090a while the identical dist renders fully in Chrome: 3387 colours, 0.00% near-black, versus 41 colours, 100% near-black; root cause still open)."
   },
   "errors": [
     {
@@ -2785,6 +2785,60 @@
         "verifiedCommit": null,
         "affectedCapability": "Exact-SHA CI truth for the Observer desktop contract",
         "regressionCommand": "python scripts/ci/failfast_group.py --group observer-web-contracts",
+        "currentApplicability": "ALWAYS"
+      }
+    },
+    {
+      "error_id": "ERR-101",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "evidence_state",
+      "entrypoint": "apps/observer/scripts/u19_webview_e2e.py::_gdi_render_proof (capture rect derivation), apps/observer/src-tauri/tauri.conf.json (app.windows[0].width = 1280 logical)",
+      "command": "python apps/observer/scripts/u19_webview_e2e.py",
+      "exit_code": 1,
+      "observed_error": "The GDI capture rectangle was derived from the comparison 'w * 12 >= WINDOW_LOGICAL_WIDTH_PX * dpi', a typo for * 96. On this machine GetClientRect already returns PHYSICAL pixels because the instrument had just made itself per-monitor DPI aware (main window reads 1600x1025 at GetDpiForWindow = 120, i.e. 1280x820 logical x 1.25), so the comparison wrongly concluded the value was still logical, scaled it by 1.25 a second time and allocated 2000x1281 for a 1600x1025 client area. BitBlt then copied 400x256 px of desktop and neighbouring windows past the subject's right and bottom edges. That foreign content made a window painting nothing but its own #08090a background read as 375, 635, 722 and 384 distinct colours across four windows, and a first-cut conclusion that the screen BitBlt had captured the real UI was recorded on that basis before the rectangle was checked.",
+      "root_cause": "The instrument inferred its coordinate space from a number instead of from the DPI-awareness state it had itself set, and it never bounded the capture rectangle by the client area it had measured microseconds earlier. Both failures point the same way: a capture larger than its subject photographs the surroundings and manufactures content that belongs to no application.",
+      "fix": "Scale is applied only when SetProcessDpiAwarenessContext(PER_MONITOR_AWARE_V2) did not take effect, and that fact is recorded per run as dpiAwareProcess. The requested rectangle is now clamped with min(w, round(w * scale)) and min(h, round(h * scale)), so it can never exceed the measured client area. Every window entry records sizeAsRead, captureSize, scaleApplied, dpi and expectedPhysicalWIfMain so the coordinate space is auditable after the fact.",
+      "regression_test": "python scripts/ci/failfast_group.py --group observer-python-skeleton plus the GDI stage of python apps/observer/scripts/u19_webview_e2e.py: every window entry must satisfy captureSize <= sizeAsRead. Re-running the corrected instrument against the same binary returned 41 distinct colours at #08090a 99.99% dominant, in place of the forged 375-722, which is the regression assertion.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Every capture must record the coordinate space it believes it is in and the rectangle it used, and that rectangle must never exceed the client area measured in the same run; a capture larger than its subject must be rejected rather than read, because it photographs the desktop and forges evidence.",
+      "remaining_boundary": "Only the 1280x820 main and 440x780 panel windows were measured, so other resize states remain unmeasured. PrintWindow still cannot photograph the WebView2 surface (1-2 distinct colours across all four flags at both sizes), so the screen BitBlt remains the only working capture path and still depends on z-order.",
+      "status_before": "PASS",
+      "status_after": "FAIL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer U19 GDI pixel-capture geometry",
+        "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py",
+        "currentApplicability": "ALWAYS"
+      }
+    },
+    {
+      "error_id": "ERR-102",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "feature_gap",
+      "entrypoint": "apps/observer/src-tauri/tauri.conf.json (app.windows[*].url, app.security.csp), apps/observer/src-tauri/src/lib.rs (on_page_load navigate), apps/observer/frontend/dist/index.html, apps/observer/frontend/src/lib/api.ts",
+      "command": "python apps/observer/scripts/u19_webview_e2e.py (release binary) versus chrome --headless=new --dump-dom --screenshot against the same dist served over http",
+      "exit_code": 1,
+      "observed_error": "The packaged release binary paints nothing but its configured backgroundColor. A screen BitBlt of the corrected 1600x1025 client rectangle returned 41 distinct colours, #08090a at 99.99% and 100% near-black pixels. The SAME dist directory served over http and opened in Chrome --headless=new renders the complete application: 10736 bytes of rendered DOM including the sidebar, the WL brand block and every route button, and a 1280x820 screenshot with 3387 distinct colours, #050d16 at 44.66% and 0.00% near-black. The bundle, the React mount and the stylesheet are therefore all correct; the failure is specific to the packaged Tauri path.",
+      "root_cause": "Not yet located. Ruled out by measurement rather than by argument: session isolation (session = 2, WinSta0\\Default, interactive desktop present); the on_page_load webview.navigate in lib.rs (an identical blank result was produced with and without WORK_LAB_OBSERVER_API_URL set, in one controlled pair); the frontend assets not being embedded (assets/index-DSUnrSyS.js and the view=full&theme=dark&shell=tauri query are both present inside the exe bytes); and a broken WebView2 runtime (the same runtime renders the application in the dev-server path). What remains is the app.security.csp string in tauri.conf.json (\"default-src 'self' http://127.0.0.1:* http://localhost:*; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; font-src 'self'\") evaluated against the packaged asset origin, or the custom-protocol layer that Tauri uses to serve the embedded assets.",
+      "fix": "Not fixed. The measurement defect that masked it is recorded and fixed under ERR-101. The step that would decide between the two remaining hypotheses is to enable the Tauri devtools feature: apps/observer/src-tauri/Cargo.toml declares no [features] section today, so release builds expose no CDP endpoint, the U19 harness can never attach, and no console, network or exception evidence exists for the failing path. That is a build-configuration change and has not been authorized.",
+      "regression_test": "chrome --headless=new --dump-dom against apps/observer/frontend/dist must keep returning the sidebar and brand markup, and --screenshot must keep returning non-black pixel statistics; any later claim that the release binary renders must cite both the capture rectangle and the sha256 of the artifact actually launched.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A blank-window report must never be closed on pixel statistics from one capture path alone: the same dist must first be rendered in an independent browser, because only the contrast between the two paths separates a product defect from an instrument artifact, and an instrument artifact must never be recorded as a product defect nor a product defect as an instrument artifact.",
+      "remaining_boundary": "Root cause open. Release builds expose no CDP endpoint, so no console, network or exception evidence exists yet for the failing path; producing it requires adding the Tauri devtools feature, which is a build-configuration change not yet authorized.",
+      "status_before": "UNVERIFIED",
+      "status_after": "FAIL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer release desktop surface rendering",
+        "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py",
         "currentApplicability": "ALWAYS"
       }
     }

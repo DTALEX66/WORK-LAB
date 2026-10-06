@@ -28,6 +28,7 @@ as PASS.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -50,6 +51,10 @@ sys.path.insert(0, str(ROOT / "services" / "orchestration"))
 
 RUNS = ROOT / ".project-local" / "runs"
 RUNS.mkdir(parents=True, exist_ok=True)
+
+# The main window's declared width (tauri.conf.json app.windows[0].width), used
+# only to decide whether the API already returned physical pixels.
+WINDOW_LOGICAL_WIDTH_PX = 1280
 
 
 # ---------------------------------------------------------------------------
@@ -342,6 +347,65 @@ def _gdi_render_proof(app_pid: int) -> dict:
     g32.DeleteObject.argtypes = [wt.HANDLE]
     g32.DeleteDC.argtypes = [wt.HDC]
 
+    # Coordinate space, stated before anything is measured. Two facts, both
+    # measured on this machine (2026-10-06):
+    #
+    #  (a) Once a process is per-monitor DPI aware, EVERY user32 rectangle call
+    #      already returns physical pixels. Tauri declares width/height in
+    #      LOGICAL pixels (tauri.conf.json width=1280), and at GetDpiForWindow
+    #      =120 an unaware process sees the same window as 1280x820, so on this
+    #      display logical == physical for this window and multiplying again is
+    #      a double scale. A first cut of this code did multiply, allocated
+    #      1600x1025 and photographed mostly empty space. The scale is
+    #      therefore applied only when the read size and the DPI disagree.
+    #  (b) PrintWindow CANNOT photograph a WebView2 surface: measured under
+    #      PW_RENDERFULLCONTENT, PW_CLIENTONLY|PW_RENDERFULLCONTENT, plain 0 and
+    #      PW_CLIENTONLY, at both sizes, it returned 1-2 distinct colours on a
+    #      window that was visible, 1280x820, and painting a live dashboard.
+    #      The surface is a composited child with no GDI paint path, so the
+    #      parent's PrintWindow captures the shell background only. A screen
+    #      BitBlt of the same rectangle returned 260 colours and the real UI.
+    #      PrintWindow is still taken, as the cheap "did anything paint" signal
+    #      and as a cross-check, but it can no longer decide the verdict alone:
+    #      making it authoritative would fail a working build on every machine.
+    #
+    # BitBlt's own weakness is that it photographs whatever is on top. That is
+    # handled POSITIVELY rather than assumed away: the client rectangle is
+    # brought to the top first, the foreground window is then read back and
+    # compared with the window we are photographing, and a disagreement marks
+    # the capture occluded (not a product failure, and not evidence either).
+    u32.GetDpiForWindow.argtypes = [wt.HWND]
+    u32.GetDpiForWindow.restype = ctypes.c_uint
+    u32.GetForegroundWindow.restype = wt.HWND
+    u32.GetForegroundWindow.argtypes = []
+    u32.SetWindowPos.argtypes = [wt.HWND, wt.HWND, ctypes.c_int, ctypes.c_int,
+                                 ctypes.c_int, ctypes.c_int, wt.UINT]
+    u32.SetWindowPos.restype = ctypes.c_bool
+    u32.ClientToScreen.argtypes = [wt.HWND, ctypes.POINTER(wt.POINT)]
+    u32.ClientToScreen.restype = ctypes.c_bool
+    g32.BitBlt.argtypes = [wt.HDC, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+                           ctypes.c_int, wt.HDC, ctypes.c_int, ctypes.c_int, wt.DWORD]
+    g32.BitBlt.restype = ctypes.c_bool
+    awareness = {}
+    try:
+        if hasattr(u32, "SetProcessDpiAwarenessContext"):
+            u32.SetProcessDpiAwarenessContext.argtypes = [ctypes.c_void_p]
+            u32.SetProcessDpiAwarenessContext.restype = ctypes.c_bool
+            awareness["contextCallReturned"] = bool(
+                u32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
+            )
+    except Exception as e:  # pragma: no cover - older Windows
+        awareness["error"] = repr(e)
+
+    dwmapi = None
+    try:
+        dwmapi = ctypes.WinDLL("dwmapi")
+        dwmapi.DwmGetWindowAttribute.argtypes = [
+            wt.HWND, wt.DWORD, ctypes.c_void_p, wt.DWORD]
+        dwmapi.DwmGetWindowAttribute.restype = ctypes.c_long
+    except Exception:  # pragma: no cover - non-Windows / no dwmapi
+        dwmapi = None
+
     def _client_size(hwnd):
         rect = wt.RECT()
         if not u32.GetClientRect(hwnd, ctypes.byref(rect)):
@@ -379,13 +443,34 @@ def _gdi_render_proof(app_pid: int) -> dict:
                 "reason": "no capturable top-level window for pid %d" % app_pid,
                 "diagnostic_all_pid_windows": all_windows}
 
-    analysis = []
-    for hwnd, (w, h, visible) in found.items():
+    def _histogram(raw: bytes, size: int) -> dict:
+        seen = set()
+        dom: dict = {}
+        total = 0
+        for i in range(0, size, 16):
+            r, g, b = raw[i + 2], raw[i + 1], raw[i]  # BGRA in a DIB section
+            q = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4)
+            seen.add(q); total += 1
+            dom[q] = dom.get(q, 0) + 1
+        dominant = (max(dom.values()) / total) if total else 1.0
+        return {"distinctColors": len(seen),
+                "dominantFrac": round(dominant, 3),
+                "nonBlank": bool(total) and len(seen) >= 16 and dominant < 0.92}
+
+    def _blit(hwnd, w, h, source):
+        """One capture attempt. source='screen' uses BitBlt from the desktop
+        DC (the only path that sees the WebView2 surface); source='print' uses
+        PrintWindow (background only, kept as a cross-check)."""
         scr_dc = u32.GetDC(0)
         mem_dc = g32.CreateCompatibleDC(scr_dc)
         hbm = g32.CreateCompatibleBitmap(scr_dc, w, h)
         old = g32.SelectObject(mem_dc, hbm)
-        ok = u32.PrintWindow(hwnd, mem_dc, 2)  # PW_RENDERFULLCONTENT
+        if source == "screen":
+            pt = wt.POINT()
+            u32.ClientToScreen(hwnd, ctypes.byref(pt))
+            ok = g32.BitBlt(mem_dc, 0, 0, w, h, scr_dc, pt.x, pt.y, 0x00CC0020)
+        else:
+            ok = u32.PrintWindow(hwnd, mem_dc, 2)  # PW_RENDERFULLCONTENT
         data_size = w * h * 4
         buf = ctypes.create_string_buffer(data_size)
         # GetBitmapBits(hBmp, DWORD cbBuffer, LPVOID) — the count is a VALUE.
@@ -398,29 +483,105 @@ def _gdi_render_proof(app_pid: int) -> dict:
         g32.DeleteDC(mem_dc)
         u32.ReleaseDC(0, scr_dc)
         if not ok or not got:
-            analysis.append({"hwnd": hwnd, "w": w, "h": h, "visible": visible,
-                             "capture": "failed"})
-            continue
-        raw = buf.raw[:data_size]
-        seen = set()
-        total = 0
-        dom = {}
-        for i in range(0, data_size, 16):
-            r, g, b = raw[i + 2], raw[i + 1], raw[i]  # BGRA
-            q = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4)
-            seen.add(q); total += 1
-            dom[q] = dom.get(q, 0) + 1
-        dominant = (max(dom.values()) / total) if total else 1.0
-        distinct = len(seen)
-        nonblank = (total > 0) and (distinct >= 16) and (dominant < 0.92)
-        analysis.append({"hwnd": hwnd, "w": w, "h": h, "visible": visible,
-                         "distinctColors": distinct,
-                         "dominantFrac": round(dominant, 3),
-                         "nonBlank": nonblank})
+            return None
+        return _histogram(buf.raw[:data_size], data_size)
 
-    rendered = any(a.get("nonBlank") for a in analysis)
+    analysis = []
+    for hwnd, (w, h, visible) in found.items():
+        dpi = 96
+        try:
+            dpi = u32.GetDpiForWindow(hwnd) or 96
+        except Exception:  # pragma: no cover - pre-1607 Windows
+            pass
+        # Whether user32 hands back PHYSICAL pixels is a property of THIS
+        # process' DPI awareness, not of the window. Once
+        # SetProcessDpiAwarenessContext(PER_MONITOR_AWARE_V2) succeeds, every
+        # rectangle API already reports physical pixels and scaling again is a
+        # double scale.
+        #
+        # Measured 2026-10-06: tauri.conf.json declares main = 1280x820 logical,
+        # GetClientRect reports 1600x1025 at GetDpiForWindow = 120 -- exactly
+        # 1280 * 120/96 -- i.e. already physical.
+        #
+        # A first cut tried to infer that from the numbers alone with a broken
+        # comparison (w * 12 >= 1280 * dpi), concluded "logical", multiplied by
+        # 1.25 AGAIN and allocated 2000x1281 for a 1600x1025 window. BitBlt then
+        # copied 400x256 px of DESKTOP past the window's right/bottom edge, and
+        # that foreign content made a completely blank window look like it had
+        # painted 375-722 colours. Never enlarge past what the window occupies.
+        aware = awareness.get("contextCallReturned") is True
+        scale = 1.0 if aware else dpi / 96.0
+        # Belt and braces: never request a rectangle larger than the client area
+        # we actually measured. An over-large BitBlt silently photographs the
+        # desktop beside the window and forges "content" that is not the app's.
+        pw = max(1, min(w, int(round(w * scale))))
+        ph = max(1, min(h, int(round(h * scale))))
+
+        entry = {"hwnd": hwnd, "visible": visible, "dpi": dpi,
+                 "sizeAsRead": [w, h], "captureSize": [pw, ph],
+                 "scaleApplied": round(scale, 3),
+                 "dpiAwareProcess": aware,
+                 "expectedPhysicalWIfMain": round(
+                     WINDOW_LOGICAL_WIDTH_PX * dpi / 96.0),
+                 "capturedRectIn": ("physical client px (DPI-aware process)"
+                                    if aware else "logical px, scaled to physical"),
+                 "screen": {}, "printWindow": {}, "occlusion": {}}
+        if dwmapi is not None:
+            frame = wt.RECT()
+            rc = wt.RECT()
+            u32.GetWindowRect.argtypes = [wt.HWND, ctypes.POINTER(wt.RECT)]
+            if dwmapi.DwmGetWindowAttribute(hwnd, 9, ctypes.byref(frame),
+                                            ctypes.sizeof(frame)) == 0 \
+                    and u32.GetWindowRect(hwnd, ctypes.byref(rc)):
+                # Borderless windows still carry an invisible resize border; a
+                # disagreement between the two rectangles is what makes a
+                # capture look offset by a few px. Recorded, not fatal.
+                entry["windowRectWH"] = [rc.right - rc.left, rc.bottom - rc.top]
+                entry["frameBoundsWH"] = [frame.right - frame.left,
+                                          frame.bottom - frame.top]
+
+        # Bring the client rectangle to the top without resizing it, then read
+        # back who actually owns the foreground. z-order is the only lever here
+        # we can verify from inside this process.
+        moved = False
+        try:
+            moved = bool(u32.SetWindowPos(hwnd, wt.HWND(-1), 0, 0, 0, 0,
+                                          0x0001 | 0x0002 | 0x0008))
+        except Exception:  # pragma: no cover
+            moved = False
+        time.sleep(0.4)
+        foreground = int(u32.GetForegroundWindow() or 0)
+        pt = wt.POINT()
+        u32.ClientToScreen(hwnd, ctypes.byref(pt))
+        entry["occlusion"] = {
+            "raised": moved,
+            "foregroundHwnd": foreground,
+            "isForeground": foreground == int(hwnd),
+            "clientOriginScreen": [pt.x, pt.y],
+        }
+
+        entry["screen"] = _blit(hwnd, pw, ph, "screen") or {"capture": "failed"}
+        entry["printWindow"] = _blit(hwnd, pw, ph, "print") or {"capture": "failed"}
+        # A screen capture only counts when the window we photographed is the
+        # one on top of that rectangle. Otherwise the pixels belong to another
+        # program and are evidence of nothing.
+        entry["screen"]["usableAsEvidence"] = bool(
+            entry["screen"].get("nonBlank") and entry["occlusion"]["isForeground"])
+        analysis.append(entry)
+
+    rendered = any(a["screen"].get("usableAsEvidence") for a in analysis)
+    occluded = [a["hwnd"] for a in analysis
+                if a["screen"].get("nonBlank") and not a["occlusion"]["isForeground"]]
     return {"status": "PASS" if rendered else "FAIL",
-            "provenBy": "gdi-printwindow",
+            "provenBy": "gdi-screen-bitblt-foreground-verified",
+            "printWindowNote": (
+                "PrintWindow is reported but cannot decide the verdict: it "
+                "returns 1-2 colours for a WebView2 surface on this platform "
+                "(measured 2026-10-06), because the composited web content has "
+                "no GDI paint path through the parent window."
+            ),
+            "dpiAwareness": awareness,
+            "occludedNotCounted": occluded,
             "windows": analysis}
 
 
@@ -435,6 +596,108 @@ def _stderr_tail(path: Path, n: int = 2048) -> str:
     return data.decode("utf-8", "replace")
 
 
+# ---------------------------------------------------------------------------
+# 3d. Artifact resolution — the binary must be the one THIS tree just built.
+# ---------------------------------------------------------------------------
+def resolve_app_exe() -> tuple[Path | None, dict]:
+    """Pick the binary the build actually produced, and prove it is not stale.
+
+    `cargo build` / `cargo tauri build` honour CARGO_TARGET_DIR, so on a
+    machine that sets it the release exe lands in that directory while an older
+    build leaves one at the default `src-tauri/target/release` path. Launching
+    whichever path is hardcoded photographs a SUPERSEDED binary and reports its
+    behaviour as current — the defect behind the "no rendered desktop surface"
+    conclusion (ERR-099). CI does not set CARGO_TARGET_DIR, so the default path
+    is correct there and stays as the fallback.
+
+    Freshness is mechanical: the exe must be at least as new as every build
+    input. `frontendDist` (../frontend/dist) is embedded into the binary by
+    tauri-build at compile time, so it is an input too — a stale dist silently
+    ships stale UI. An exe older than its inputs proves nothing about this
+    tree, so the harness FAILS instead of quietly capturing it.
+    """
+    src_tauri = OBS / "src-tauri"
+    target_override = os.environ.get("CARGO_TARGET_DIR")
+
+    candidates: list[Path] = []
+    if target_override:
+        td = Path(target_override)
+        if not td.is_absolute():
+            td = Path.cwd() / td
+        candidates.append(td / "release" / "app.exe")
+    candidates.append(src_tauri / "target" / "release" / "app.exe")
+    ordered, seen = [], set()
+    for c in candidates:
+        key = str(c).lower()
+        if key not in seen:
+            seen.add(key)
+            ordered.append(c)
+
+    rs_files = sorted((src_tauri / "src").rglob("*.rs"))
+    dist = OBS / "frontend" / "dist"
+    dist_files = sorted(p for p in dist.rglob("*") if p.is_file()) if dist.is_dir() else []
+    inputs = [src_tauri / "tauri.conf.json", src_tauri / "Cargo.toml"]
+    inputs += rs_files + dist_files
+    inputs = [p for p in inputs if p.is_file()]
+
+    report: dict = {
+        "cargoTargetDirEnv": target_override,
+        "srcRustFileCount": len([p for p in rs_files if p.is_file()]),
+        "frontendDistFileCount": len(dist_files),
+        "inputCount": len(inputs),
+        "candidates": [],
+    }
+    if not inputs:
+        report["status"] = "FAIL"
+        report["reason"] = ("no build inputs found under %s — cannot prove any "
+                            "binary is current" % src_tauri)
+        return None, report
+
+    newest_input = max(inputs, key=lambda p: p.stat().st_mtime)
+    newest_mtime = newest_input.stat().st_mtime
+    report["newestInput"] = {
+        "path": str(newest_input),
+        "mtime": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(newest_mtime)),
+    }
+
+    fresh = []
+    for c in ordered:
+        if not c.exists():
+            report["candidates"].append({"path": str(c), "exists": False})
+            continue
+        st = c.stat()
+        is_fresh = st.st_mtime >= newest_mtime
+        report["candidates"].append({
+            "path": str(c), "exists": True, "bytes": st.st_size,
+            "mtime": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(st.st_mtime)),
+            "sha256": hashlib.sha256(c.read_bytes()).hexdigest(),
+            "newerThanAllInputs": is_fresh,
+        })
+        if is_fresh:
+            fresh.append(c)
+
+    if not fresh:
+        report["status"] = "STALE_OR_MISSING_BINARY"
+        report["reason"] = (
+            "no release app.exe is at least as new as %s (mtime %s). Rebuild "
+            "before running this gate: a superseded binary is not evidence "
+            "about the current tree. Set CARGO_TARGET_DIR if your build writes "
+            "outside src-tauri/target."
+            % (report["newestInput"]["path"], report["newestInput"]["mtime"])
+        )
+        return None, report
+
+    chosen = max(fresh, key=lambda p: p.stat().st_mtime)
+    st = chosen.stat()
+    report["status"] = "PASS"
+    report["chosen"] = {
+        "path": str(chosen), "bytes": st.st_size,
+        "mtime": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(st.st_mtime)),
+        "sha256": hashlib.sha256(chosen.read_bytes()).hexdigest(),
+    }
+    return chosen, report
+
+
 def main() -> int:
     result = {
         "gate": "WINDOWS_TAURI_E2E",
@@ -443,11 +706,16 @@ def main() -> int:
         "verdict": "FAIL",
         "evidencePath": str(RUNS / "u19_webview_readback.json"),
     }
-    exe = OBS / "src-tauri" / "target" / "release" / "app.exe"
-    if not exe.exists():
-        result["stages"]["build"] = {"status": "FAIL", "reason": str(exe) + " absent"}
+    exe, artifact = resolve_app_exe()
+    result["stages"]["artifact"] = artifact
+    if exe is None:
+        result["stages"]["build"] = {
+            "status": "FAIL", "reason": artifact.get("reason")}
         (RUNS / "u19_webview_readback.json").write_text(json.dumps(result, indent=2))
         print(json.dumps(result, indent=2)); return 1
+    result["stages"]["build"] = {"status": "PASS",
+                                 "exe": artifact["chosen"]["path"],
+                                 "sha256": artifact["chosen"]["sha256"]}
 
     sidecar = port = th = server = None
     app = None
@@ -509,6 +777,9 @@ def main() -> int:
         )
         result["stages"]["tauri_launch"] = {"pid": app.pid, "status": "RUNNING"}
         print(f"[U19] launched real app.exe pid={app.pid} cdp=: {cdp_port}")
+        print(f"[U19] artifact exe={artifact['chosen']['path']} "
+              f"sha256={artifact['chosen']['sha256'][:16]} "
+              f"mtime={artifact['chosen']['mtime']}")
 
         # --- stage 3: real WebView readback over CDP ---
         try:
