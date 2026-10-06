@@ -129,6 +129,32 @@ DISPOSITIONS: dict[str, str] = {
         "DESTINATION — sleep-mode's own state-transition log, read when the feature has run.",
     ".project-local/sleep-mode/state.json":
         "DESTINATION — sleep-mode's mode/job_id/baseline state file, read when the feature has run.",
+    # --- 2026-10-07: five scratch originals released after their tracked promotions survived a
+    #     full cycle, plus one fixture inside this instrument's own gate
+    ".project-local/runs/convergence-20261007-c/absorb_local_assets.py":
+        "RELEASED 2026-10-07 as a redundant scratch original — the tracked copy "
+        "`scripts/maintenance/absorb_local_assets.py` has the identical sha256 "
+        "(docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json). Cited only in ledger `command` "
+        "fields, which are history; the live promise points at the tracked path (ERR-130).",
+    ".project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs":
+        "RELEASED 2026-10-07 — identical sha256 to the tracked `scripts/audit/cdp_layout_probe.mjs`; "
+        "cited from ledger history and round C's handoff narrative.",
+    ".project-local/runs/convergence-20261007-c/falsify_browser_entry.py":
+        "RELEASED 2026-10-07 — identical sha256 to the tracked "
+        "`scripts/audit/falsify_browser_entry.py`; cited only in ledger `command`/`regression_test` "
+        "history.",
+    ".project-local/runs/convergence-20261007-c/mutation_probe_pathspec.py":
+        "RELEASED 2026-10-07 — identical sha256 to the tracked "
+        "`scripts/audit/mutation_probe_pathspec.py`; cited only in ledger history.",
+    ".project-local/runs/convergence-20261007-e/release_browser_state.py":
+        "RELEASED 2026-10-07 — identical sha256 to the tracked `scripts/maintenance/"
+        "release_browser_state.py`, the tool that freed the 116,216,094 B of browser state in "
+        "round E; cited only in ledger history.",
+    ".project-local/runs/x/receipt.json":
+        "TEST FIXTURE, not a citation — the path appears only inside this instrument's own negative "
+        "controls in tests/workflow-assistance/test_project_local_citation_audit.py, which feed the "
+        "classifier an evidence-shaped sentence and a destination-shaped sentence. A fictional path "
+        "used to prove a matcher works is not a broken promise.",
 }
 
 

@@ -83,9 +83,14 @@ The documents had never been re-asked after ERR-115: 104 command-shaped referenc
 - **AG-11 real material:** ASR on a user recording, OCR over a multi-page PDF. Both stay UNKNOWN
   until the material exists; `page-order` used three synthetic pages.
 - **Licence depth DONE 2026-10-07:** all 14 named rows are bound to the SHA-256 of the LICENSE bytes they were read from (`scripts/audit/licence_file_bytes.py`, 14/14 fetched, 0 failures), and the gate compares the ledger hash to the audit hash. Doing it exposed a self-contradiction in the shipped audit — prose said three file-confirmed rows, its own method fields said six — recorded as ERR-134 and reproducible against the committed blob. What is NOT closed: no row has a commit/tag basis, so `reviewedCommit` stays null and freshness stays `review-required`.
-- **Scratch originals** under `.project-local/runs/convergence-20261007-{d,e,f,h}` are still on disk
-  (~40 scripts, plus the 272 MB `wl-ag11` venv). They may go once the promoted paths have survived
-  one full cleanup cycle.
+- **Scratch originals — closed as far as it is worth (2026-10-07):**
+  `scripts/audit/scratch_promotion_redundancy.py` compares each scratch script against its tracked
+  namesake by sha256 and releases only byte-identical copies: 5 released (27,147 B), proof per file in
+  `docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json`. One file is DIVERGENT and kept
+  (`runs/legacy-task-runtime/test_apply_safety.py` — neither copy contains the other, so deleting it
+  would destroy a version). Deliberately retained: the 272 MB `wl-ag11` venv, because the AG-11 matrix
+  cannot be re-run without it, and everything under `.project-local/artifacts/`, which is the evidence
+  root AGENTS.md says to preserve — an identical digest does not make a rescue copy worthless.
 - **Readback for `41858fe` and the licence commit** must be recorded in this file's table before the
   round is called closed.
 
