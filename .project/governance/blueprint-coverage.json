@@ -4,8 +4,8 @@
   "mutableSourceOfTruth": true,
   "projection": "docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md",
   "blueprintDoc": "docs/future/WORK-LAB-BLUEPRINT-20261006.md",
-  "observedAt": "2026-10-06T22:20:02+08:00",
-  "baseSha": "f3b5decf31ac6094d23dc4b77cec27a040b23d99",
+  "observedAt": "2026-10-07T00:31:37+0800",
+  "baseSha": "6015f0ba1dc0c195a83e704bd73117b68f077347",
   "note": "status reuses the existing register vocabulary (NOT_RUN FAIL UNVERIFIED PASS PARTIAL BLOCKED); disposition reuses the owner prompt's four decisions plus SOURCE_GAP. No parallel task-state enum is introduced. This file records its base SHA only: no artifact hashes itself, and the final commit SHA is read back by the PR/CI receipt, never written inside the commit it describes.",
   "inputs": [
     {
@@ -285,10 +285,10 @@
         ".project/governance/future-candidate-registry.json",
         "scripts/ci/verify_future_candidate_registry.py"
       ],
-      "status": "PARTIAL",
-      "evidence": "registry holds 14 candidates with statuses DEFERRED/PILOT_CANDIDATE",
+      "status": "PASS",
+      "evidence": "the §16 table is landed with row keys 16.01…16.19 generated from the docx; the registry holds 21 candidates and every row has at least one claimant, checked in both directions by scripts/ci/verify_future_candidate_registry.py (CI governance job)",
       "disposition": "RETAINED",
-      "nextOrBlocked": "COVERAGE GAP: source lists 19 table rows vs 14 registry entries; 5 unregistered. Also W03 itself says '14 未来候选', so the source disagrees internally (SOURCE_GAP). The paragraph-only items (MissionControl, Dagu, TokenTelemetry, MCP/skill/plugin/provider research pool, Strata/Qwen) carry no candidate fields"
+      "nextOrBlocked": "registrations only: identity, license, version and Windows support stay NOT_VERIFIED until each candidate's own intake, and a pilot needs individually authorized task cards"
     },
     {
       "id": "CH-17",
@@ -382,10 +382,10 @@
         "apps/observer/scripts/u19_webview_e2e.py",
         "taskpacks/current/error-ledger.json"
       ],
-      "status": "FAIL",
-      "evidence": "backend + native shell proven; composited desktop surface still unobserved (ERR-104 retraction, ERR-107 CDP unreliability)",
+      "status": "PASS",
+      "evidence": "Observed by the owner on the real desktop on 2026-10-07, running `.project-local/runs/u19-msvc-20261006/target/release/app.exe` (sha256 6f73c14eb542f1a7…, 9,850,368 B, built against gitHead 307d90b): caption controls respond (ERR-103 re-confirmed), the top command row clears the window edge (ERR-106), and the layout is the intended one. Supported by the network oracle, the compiled capability artifact and a build receipt whose 12 inputs still match this tree.",
       "disposition": "RETAINED",
-      "nextOrBlocked": "one desktop observation owed; owner's on-screen report takes precedence"
+      "nextOrBlocked": "no desktop observation owed any more; automated composited-surface capture (Windows.Graphics.Capture) is still unwired, so a pixel-only regression would not be caught without another owner look"
     },
     {
       "id": "T04",
@@ -566,8 +566,8 @@
       "anchors": [
         ".project/governance/future-candidate-registry.json"
       ],
-      "status": "PARTIAL",
-      "evidence": "internal contradiction with the blueprint's 19-row pool recorded under CH-16",
+      "status": "PASS",
+      "evidence": "its '14 candidates' figure is kept as a historical observation; the pool it describes is now row-keyed (19 rows, 21 candidates), so the count no longer stands in for coverage",
       "disposition": "RETAINED",
       "nextOrBlocked": "none"
     },

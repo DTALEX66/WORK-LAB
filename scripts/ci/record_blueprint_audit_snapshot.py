@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime
@@ -40,29 +41,33 @@ CHECKS = [
     ["scripts/ci/verify_project_authority_reference.py"],
     ["scripts/ci/verify_error_ledger.py"],
     ["scripts/ci/verify_blueprint_coverage.py"],
+    ["scripts/ci/verify_future_candidate_registry.py"],
     ["scripts/ci/failfast_group.py", "--group", "observer-web-contracts"],
     ["scripts/ci/failfast_group.py", "--group", "observer-python-skeleton"],
 ]
 GAPS = [
-    "U19 / T03: the composited desktop surface has not been observed. GDI capture "
-    "cannot see a WebView2 DirectComposition visual (ERR-104, retracted), and the "
-    "WebView2 remote-debugging port proved unreliable — it accepts TCP and answers "
-    "in two early short-timeout attempts but never under patient polling (ERR-107).",
-    "T02: the 2026-10-05 local full gate FAIL (1903 tests, 9 skipped, 12 errors, "
-    "22 failures) was never re-run after the runtime fix. Recorded here alongside "
-    "the affected-group passes below; a group pass is not the aggregate.",
-    "ERR-103: the caption-control ACL grants are proven present in the compiled "
-    "capability artifact of this build, but the click behaviour has not been "
-    "re-observed on a desktop (the owner asked for no further window launches).",
-    "ERR-106: the frameless top-row clearance is measured in headless Chrome at a "
-    "1262x668 CSS viewport, not in the real 1280x820 logical window.",
     "AG-19 / T07: the original WORK-LAB long conversation, WORK-LAB-SUMMARY and the "
     "2026-09-28 startup/final attachments remain inaccessible (SOURCE_MISSING).",
-    "Source-side gaps carried honestly: the blueprint has no AG-14 row, merges "
-    "AG-16/AG-17, omits AG-01..AG-08 and W09, cites OD03/OD04 jointly, and its "
-    "19-row candidate pool exceeds the 14-entry registry.",
+    "P0 product gaps still open in the register: U02/U03/U08 partial; P1 AG-09 needs the "
+    "owner to pick a project and two executors; AG-10/11/15/14/12/13/20 unstarted or "
+    "partial; P2 AG-16/17/18.",
     "Merge to main, release, install, global configuration and other-project writes "
-    "are outside this task's authorization and were not performed.",
+    "remain unauthorized and were not performed; the four old branches are not retired.",
+    "Instrument coverage, not product truth: no automated path in this repository can "
+    "capture a WebView2 DirectComposition surface (GDI is structurally blind, ERR-104; "
+    "the CDP port accepts TCP and answers nothing, ERR-107), so Windows.Graphics.Capture "
+    "stays unwired and a pixel-only regression would need another owner observation.",
+    "Source-side defects kept as the source has them: the blueprint has no AG-14 row, "
+    "merges AG-16/AG-17 into one line, omits AG-01..AG-08 and W09, cites OD03/OD04 "
+    "jointly, and §16 rows 16.16/16.17/16.19 enumerate their members with 等, so the "
+    "candidate list is not exhaustive at the source.",
+    "Candidate registrations are not assessments: identity, license, version and Windows "
+    "support are NOT_VERIFIED for every §16 row, and a pilot still needs an individually "
+    "authorized task card.",
+    "The desktop artifact the owner observed carries a v1 build receipt, so its frontend "
+    "chain is attested only by the content-evidence rule; a v2 receipt arrives with the "
+    "next build. The v1 receipt was deliberately not rewritten for the current binary — "
+    "writing it after the fact would attest the tree to itself.",
 ]
 
 
@@ -127,6 +132,77 @@ def collect_ci(head_sha: str) -> dict:
                 for c in checks if c.get("bucket") != "pass"][:12]}
 
 
+def collect_live_claims() -> dict:
+    """Read the claims this snapshot documents straight out of their owned files.
+
+    The gap list used to be the only place these facts appeared, and it is static text,
+    so it kept asserting an unobserved desktop surface after the owner had observed it.
+    Anything that lives in a file is read from that file instead of restated here.
+    """
+    out: dict = {}
+    register = REPO / "taskpacks" / "current" / "OPEN-TASK-REGISTER.md"
+    if register.is_file():
+        status = "ROW_ABSENT"
+        for line in register.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("| U19 |"):
+                cells = [c.strip() for c in line.split("|")]
+                status = cells[3] if len(cells) > 3 else "UNPARSED"
+                break
+        out["u19RegisterStatus"] = status
+
+    ledger_path = REPO / "taskpacks" / "current" / "error-ledger.json"
+    if ledger_path.is_file():
+        ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+        wanted = {"ERR-103", "ERR-104", "ERR-105", "ERR-106", "ERR-107",
+                  "ERR-110", "ERR-111"}
+        out["ledgerStatusAfter"] = {
+            e["error_id"]: e.get("status_after") for e in ledger["errors"]
+            if e["error_id"] in wanted}
+        out["ledgerEntries"] = len(ledger["errors"])
+
+    registry_path = REPO / ".project/governance/future-candidate-registry.json"
+    blueprint = REPO / "docs" / "future" / "WORK-LAB-BLUEPRINT-20261006.md"
+    if registry_path.is_file() and blueprint.is_file():
+        candidates = json.loads(
+            registry_path.read_text(encoding="utf-8"))["candidates"]
+        rows = set(re.findall(r"^\| (16\.\d{2}) \|",
+                              blueprint.read_text(encoding="utf-8", errors="replace"),
+                              re.M))
+        claimed = {c.get("blueprint_row") for c in candidates}
+        out["candidatePool"] = {
+            "candidates": len(candidates), "sourceRows": len(rows),
+            "claimedRows": len(claimed & rows),
+            "unclaimed": sorted(rows - claimed),
+            "claimsToUnknownRow": sorted(r for r in claimed - rows if r)}
+
+    receipt = (REPO / ".project-local/runs/u19-msvc-20261006/target/release"
+               / "app.exe.inputs.json")
+    if receipt.is_file():
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        drift = []
+        for item in data.get("inputs", []):
+            path = REPO / item["path"]
+            if not path.is_file() or sha256(path) != item["sha256"]:
+                drift.append(item["path"])
+        out["observedArtifact"] = {
+            "schema": data.get("schemaVersion"), "inputsRecorded":
+                data.get("inputCount"), "gitHeadAtBuild": data.get("gitHead", "")[:7],
+            "exeSha256Prefix": data.get("binary", {}).get("sha256", "")[:16],
+            "bytesNowOnDisk": (REPO / ".project-local/runs/u19-msvc-20261006/target"
+                               / "release" / "app.exe").stat().st_size
+            if (REPO / ".project-local/runs/u19-msvc-20261006/target"
+                / "release" / "app.exe").is_file() else None,
+            "binaryMatchesReceiptOnDisk": (
+                (REPO / ".project-local/runs/u19-msvc-20261006/target/release"
+                 / "app.exe").is_file() and
+                sha256(REPO / ".project-local/runs/u19-msvc-20261006/target"
+                       / "release" / "app.exe") == data["binary"]["sha256"]),
+            "inputDriftSinceBuild": drift}
+    else:
+        out["observedArtifact"] = "LOCAL_RECEIPT_ABSENT (no .project-local build run here)"
+    return out
+
+
 def main() -> int:
     write = "--write" in sys.argv
     shanghai = datetime.now().astimezone()
@@ -166,12 +242,17 @@ def main() -> int:
                             "declaredInPrompt": None},
     }
     facts["checks"] = [run_check(argv) for argv in CHECKS]
+    facts["liveClaims"] = collect_live_claims()
     facts["artifacts"] = []
     for rel in ["docs/future/WORK-LAB-BLUEPRINT-20261006.md",
                 "docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md",
                 ".project/governance/blueprint-coverage.json",
+                ".project/governance/future-candidate-registry.json",
                 "scripts/ci/verify_blueprint_coverage.py",
-                "apps/observer/scripts/write_artifact_receipt.py"]:
+                "scripts/ci/verify_future_candidate_registry.py",
+                "apps/observer/scripts/write_artifact_receipt.py",
+                "apps/observer/scripts/u19_webview_e2e.py",
+                "apps/observer/tests/test_artifact_freshness.py"]:
         path = REPO / rel
         if path.is_file():
             facts["artifacts"].append({"path": rel, "bytes": path.stat().st_size,
@@ -229,6 +310,17 @@ def main() -> int:
         "",
         "```json",
         json.dumps(facts["inputs"], indent=2, ensure_ascii=False),
+        "```",
+        "",
+        "## 在册主张现场读回",
+        "",
+        "下面每个字段都从拥有它的文件里现场解析（U19 状态取唯一 open register 的状态列，"
+        "台账状态取 `error-ledger.json` 的 `status_after`，候选池覆盖取注册表与 §16 "
+        "行键的集合差，被目测的产物按其构建期凭据重算），不是从上一版报告转录。"
+        "缺口清单是静态文字，会过期，所以可核验的部分一律改读真文件。",
+        "",
+        "```json",
+        json.dumps(facts["liveClaims"], indent=2, ensure_ascii=False),
         "```",
         "",
         "## 检查命令与退出码（本次运行）",

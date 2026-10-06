@@ -6,21 +6,31 @@
 
 ```json
 {
-  "observedAt": "2026-10-06T23:11:50+0800",
+  "observedAt": "2026-10-07T00:35:11+0800",
   "remote": "git@github.com:DTALEX66/WORK-LAB.git",
   "branch": "task-decomposition/atlas-gap-archive-20261001",
-  "localHead": "0726a1420372719fc59ffafedc65693b544a7c18",
+  "localHead": "6015f0ba1dc0c195a83e704bd73117b68f077347",
   "baseSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
   "dirtyFiles": [
+    ".github/workflows/work-lab-gate.yml",
     ".project/governance/blueprint-coverage.json",
+    ".project/governance/future-candidate-registry.json",
     ".project/governance/generated/CURRENT_STATE.json",
     ".project/governance/generated/CURRENT_STATE.md",
+    "apps/observer/scripts/u19_webview_e2e.py",
+    "apps/observer/scripts/write_artifact_receipt.py",
+    "apps/observer/tests/test_artifact_freshness.py",
+    "docs/audits/BLUEPRINT_SYNC_AUDIT_2026-10-06.md",
+    "docs/future/WORK-LAB-BLUEPRINT-20261006.md",
     "docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md",
-    "taskpacks/current/OPEN-TASK-REGISTER.md"
+    "scripts/ci/record_blueprint_audit_snapshot.py",
+    "scripts/ci/verify_future_candidate_registry.py",
+    "taskpacks/current/OPEN-TASK-REGISTER.md",
+    "taskpacks/current/error-ledger.json"
   ],
-  "statusRecords": 6,
+  "statusRecords": 16,
   "liveMainSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
-  "liveBranchSha": "0726a1420372719fc59ffafedc65693b544a7c18"
+  "liveBranchSha": "6015f0ba1dc0c195a83e704bd73117b68f077347"
 }
 ```
 
@@ -31,7 +41,7 @@
 ```json
 {
   "baseRefName": "main",
-  "headRefOid": "0726a1420372719fc59ffafedc65693b544a7c18",
+  "headRefOid": "6015f0ba1dc0c195a83e704bd73117b68f077347",
   "mergeable": "MERGEABLE",
   "state": "OPEN",
   "url": "https://github.com/DTALEX66/WORK-LAB/pull/162"
@@ -59,30 +69,12 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
 
 ```json
 {
-  "headSha": "0726a1420372719fc59ffafedc65693b544a7c18",
-  "count": 17,
+  "headSha": "6015f0ba1dc0c195a83e704bd73117b68f077347",
+  "count": 19,
   "buckets": {
-    "pass": 13,
-    "pending": 4
+    "pass": 19
   },
-  "pendingOrFailing": [
-    {
-      "name": "observer",
-      "bucket": "pending"
-    },
-    {
-      "name": "token-monitor",
-      "bucket": "pending"
-    },
-    {
-      "name": "observer",
-      "bucket": "pending"
-    },
-    {
-      "name": "token-monitor",
-      "bucket": "pending"
-    }
-  ]
+  "pendingOrFailing": []
 }
 ```
 
@@ -108,13 +100,50 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
 }
 ```
 
+## 在册主张现场读回
+
+下面每个字段都从拥有它的文件里现场解析（U19 状态取唯一 open register 的状态列，台账状态取 `error-ledger.json` 的 `status_after`，候选池覆盖取注册表与 §16 行键的集合差，被目测的产物按其构建期凭据重算），不是从上一版报告转录。缺口清单是静态文字，会过期，所以可核验的部分一律改读真文件。
+
+```json
+{
+  "u19RegisterStatus": "PASS (owner-observed desktop surface 2026-10-07)",
+  "ledgerStatusAfter": {
+    "ERR-103": "PASS",
+    "ERR-104": "PASS",
+    "ERR-105": "PASS",
+    "ERR-106": "PASS",
+    "ERR-107": "FAIL",
+    "ERR-110": "PASS",
+    "ERR-111": "PASS"
+  },
+  "ledgerEntries": 110,
+  "candidatePool": {
+    "candidates": 21,
+    "sourceRows": 19,
+    "claimedRows": 19,
+    "unclaimed": [],
+    "claimsToUnknownRow": []
+  },
+  "observedArtifact": {
+    "schema": "work-lab/artifact-input-receipt/v1",
+    "inputsRecorded": 12,
+    "gitHeadAtBuild": "307d90b",
+    "exeSha256Prefix": "6f73c14eb542f1a7",
+    "bytesNowOnDisk": 9850368,
+    "binaryMatchesReceiptOnDisk": true,
+    "inputDriftSinceBuild": []
+  }
+}
+```
+
 ## 检查命令与退出码（本次运行）
 
 | 命令 | 退出码 | 末行结果 |
 |---|---|---|
 | `scripts/ci/verify_project_authority_reference.py` | 0 | AUTHORITY_REFERENCE_PASS top=WORK-LAB-AUTHORITY.md current=WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918 register=OPEN-TASK-REGISTER.md |
-| `scripts/ci/verify_error_ledger.py` | 0 | ERROR_LEDGER_PASS entries=108 classifications=13 raw_sensitive_data=false counts_consistent=true |
+| `scripts/ci/verify_error_ledger.py` | 0 | ERROR_LEDGER_PASS entries=110 classifications=13 raw_sensitive_data=false counts_consistent=true |
 | `scripts/ci/verify_blueprint_coverage.py` | 0 | BLUEPRINT_COVERAGE_PASS rows=87 kinds={'chapter': 19, 'appendix': 1, 'closed-loop-task': 9, 'owner-default': 5, 'input-source': 11, 'atlas-gap': 20, 'register-row': 22} status_vocabulary=reused dispositions=owner_prompt_ |
+| `scripts/ci/verify_future_candidate_registry.py` | 0 | FUTURE_CANDIDATE_REGISTRY_PASS candidates=21 blueprint_rows=19 claimed_rows=19 |
 | `scripts/ci/failfast_group.py --group observer-web-contracts` | 0 | FAILFAST_GROUP_PASS group=observer-web-contracts commands=10 all_exit_0 |
 | `scripts/ci/failfast_group.py --group observer-python-skeleton` | 0 | OK |
 
@@ -122,21 +151,25 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
 
 | 路径 | 字节 | SHA-256 |
 |---|---|---|
-| `docs/future/WORK-LAB-BLUEPRINT-20261006.md` | 18359 | `4cead2bf8c296b65966a2ad74d8ccdae7dd54ea819dd5aafbfe69b3bee134a73` |
-| `docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md` | 34806 | `8c540aa11c6eef70adf3805d36c56a8f5ba9b8c679debc2b4f6955546fdfbd6e` |
-| `.project/governance/blueprint-coverage.json` | 30851 | `30bcabd65e7fba8dffe57b7acd9b1f0bf64bec94820ca1d81ff4587d18c51915` |
+| `docs/future/WORK-LAB-BLUEPRINT-20261006.md` | 21789 | `1e647ecd09ce4ac7f062884a04e43412bfcde5bcd5bdba3f91b3b8e610c9abd3` |
+| `docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md` | 35385 | `4324243967e42429599e722959f3fbfacef171dfc1628fd2ac91332cd57acfe4` |
+| `.project/governance/blueprint-coverage.json` | 31447 | `4ab851e917d7d53caba7dc245cb284e565bb726226e2e380dc86956b2b6cf7bc` |
+| `.project/governance/future-candidate-registry.json` | 23479 | `627a8cb389c77aac4ea195ee04d20647370bce8f31254328bbe3f5dad8d9927e` |
 | `scripts/ci/verify_blueprint_coverage.py` | 13822 | `9ded1cd312df28866bd0f5915cf8e1efde120b7725b70463822bbfb2a34ee8f4` |
-| `apps/observer/scripts/write_artifact_receipt.py` | 4233 | `83527e3dcef1888e4cc0ce93796cfbd2814ef4e54e7dc367229d3e1fd309b344` |
+| `scripts/ci/verify_future_candidate_registry.py` | 7974 | `1220c5d97438975672df3545190fa3365652f18791d1561e303b5cb2224397ba` |
+| `apps/observer/scripts/write_artifact_receipt.py` | 6389 | `807f5102eeb35e0b8df1e3b85c5f37067487a0c53880b20d42d637531bea364f` |
+| `apps/observer/scripts/u19_webview_e2e.py` | 57122 | `a922e0cca20400a5786b2cddf667633b18b52087d8ba2fbf12d1c8e4a45c3ab0` |
+| `apps/observer/tests/test_artifact_freshness.py` | 26172 | `1a1f8a7369cc6c1ee694ecb11201738da3a977e9a0f1b30182fd13056d3aba8e` |
 
 ## 范围与未决缺口
 
-- U19 / T03: the composited desktop surface has not been observed. GDI capture cannot see a WebView2 DirectComposition visual (ERR-104, retracted), and the WebView2 remote-debugging port proved unreliable — it accepts TCP and answers in two early short-timeout attempts but never under patient polling (ERR-107).
-- T02: the 2026-10-05 local full gate FAIL (1903 tests, 9 skipped, 12 errors, 22 failures) was never re-run after the runtime fix. Recorded here alongside the affected-group passes below; a group pass is not the aggregate.
-- ERR-103: the caption-control ACL grants are proven present in the compiled capability artifact of this build, but the click behaviour has not been re-observed on a desktop (the owner asked for no further window launches).
-- ERR-106: the frameless top-row clearance is measured in headless Chrome at a 1262x668 CSS viewport, not in the real 1280x820 logical window.
 - AG-19 / T07: the original WORK-LAB long conversation, WORK-LAB-SUMMARY and the 2026-09-28 startup/final attachments remain inaccessible (SOURCE_MISSING).
-- Source-side gaps carried honestly: the blueprint has no AG-14 row, merges AG-16/AG-17, omits AG-01..AG-08 and W09, cites OD03/OD04 jointly, and its 19-row candidate pool exceeds the 14-entry registry.
-- Merge to main, release, install, global configuration and other-project writes are outside this task's authorization and were not performed.
+- P0 product gaps still open in the register: U02/U03/U08 partial; P1 AG-09 needs the owner to pick a project and two executors; AG-10/11/15/14/12/13/20 unstarted or partial; P2 AG-16/17/18.
+- Merge to main, release, install, global configuration and other-project writes remain unauthorized and were not performed; the four old branches are not retired.
+- Instrument coverage, not product truth: no automated path in this repository can capture a WebView2 DirectComposition surface (GDI is structurally blind, ERR-104; the CDP port accepts TCP and answers nothing, ERR-107), so Windows.Graphics.Capture stays unwired and a pixel-only regression would need another owner observation.
+- Source-side defects kept as the source has them: the blueprint has no AG-14 row, merges AG-16/AG-17 into one line, omits AG-01..AG-08 and W09, cites OD03/OD04 jointly, and §16 rows 16.16/16.17/16.19 enumerate their members with 等, so the candidate list is not exhaustive at the source.
+- Candidate registrations are not assessments: identity, license, version and Windows support are NOT_VERIFIED for every §16 row, and a pilot still needs an individually authorized task card.
+- The desktop artifact the owner observed carries a v1 build receipt, so its frontend chain is attested only by the content-evidence rule; a v2 receipt arrives with the next build. The v1 receipt was deliberately not rewritten for the current binary — writing it after the fact would attest the tree to itself.
 
 ## 双端同步状态定义
 

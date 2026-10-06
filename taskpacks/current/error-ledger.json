@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 108,
+    "total": 110,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
-      "test_behavior_alignment": 12,
+      "test_behavior_alignment": 13,
       "working_directory_recovery": 2,
-      "evidence_state": 16,
+      "evidence_state": 17,
       "ci_configuration": 8,
       "feature_gap": 8,
       "config_downgrade": 3,
@@ -2857,13 +2857,13 @@
       "regression_test": "node apps/observer/tests/test_desktop_component_contract.js derives the native calls from frontend/src and fails if any call has no ACL identifier, or if a needed identifier is missing from capabilities/default.json. Both failure modes were injected and observed to fail before the gate was trusted.",
       "evidence_level": "local-full",
       "repeat_prevention": "Any UI call into the native shell must be awaited and must appear in the capability-contract map, because a Tauri v2 permission that is not granted fails as an asynchronous rejection that no synchronous try/catch will ever see. Capability grants must be derived from calls, never from a feature list.",
-      "remaining_boundary": "The four grants are proven to have reached this compile (tauri-build regenerated gen/schemas/capabilities.json at 20:45:33 with all six permissions, app.exe at 20:45:54) and the contract suite passes, but the click behaviour on a real desktop has not been re-observed yet; the owner asked for no further window launches.",
+      "remaining_boundary": "Closed by direct observation. Observed by the owner on the real desktop on 2026-10-07, running `.project-local/runs/u19-msvc-20261006/target/release/app.exe` (sha256 6f73c14eb542f1a7…, 9,850,368 B, built against gitHead 307d90b), the owner reports all three caption controls (minimise, maximise/restore, close) respond. The owner's on-screen report outranks every instrument in this repository (ERR-104, ERR-107), so this is the confirmation the ACL grant needed. The receipt of this binary still matches all 12 recorded inputs byte for byte 8 commits after it was written, so what was observed is this tree's artifact, not a superseded one.",
       "status_before": "FAIL",
-      "status_after": "PARTIAL",
+      "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "c198362",
-        "fixedCommit": null,
-        "verifiedCommit": null,
+        "fixedCommit": "c6d51a6",
+        "verifiedCommit": "6015f0b",
         "affectedCapability": "Observer borderless shell window controls",
         "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
       }
@@ -2883,13 +2883,13 @@
       "regression_test": "python .project-local/runs/p0c-oracle-20261006/probe_oracle.py must keep observing snapshot and events requests from the release binary with Origin http://tauri.localhost, with headless Chrome on the same dist as the matched positive control.",
       "evidence_level": "local-full",
       "repeat_prevention": "A pixel statistic may never decide a rendering verdict on its own when both capture paths read the same GDI layer: an independent path means a different mechanism, not a second call site. Any claim that a webview rendered nothing must first be cross-checked against evidence that does not involve the screen at all.",
-      "remaining_boundary": "U19's real-desktop surface proof is still owed. The network oracle proves the app runs and fetches; it does not prove what the user sees. The capture path that can see a composited WebView2 surface (Page.captureScreenshot over CDP, or Windows.Graphics.Capture) is not wired yet.",
+      "remaining_boundary": "The surface itself is no longer owed: Observed by the owner on the real desktop on 2026-10-07, running `.project-local/runs/u19-msvc-20261006/target/release/app.exe` (sha256 6f73c14eb542f1a7…, 9,850,368 B, built against gitHead 307d90b), the rendered interface is what the owner expected. What remains is instrument coverage, not product truth — no automated path in this repository can capture a WebView2 DirectComposition surface yet (GDI is structurally blind, the CDP port answered twice at short timeouts and never under polling), so Windows.Graphics.Capture stays unwired and a pixel-only regression would still need another owner observation to be seen.",
       "status_before": "FAIL",
-      "status_after": "PARTIAL",
+      "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "b0fc828",
         "fixedCommit": null,
-        "verifiedCommit": null,
+        "verifiedCommit": "6015f0b",
         "affectedCapability": "U19 desktop surface evidence quality",
         "regressionCommand": "python .project-local/runs/p0c-oracle-20261006/probe_oracle.py"
       }
@@ -2909,7 +2909,7 @@
       "regression_test": "apps/observer/tests/test_artifact_freshness.py (registered in the observer-python-skeleton group, now 9/9): touch-without-edit must not raise the floor, a back-dated real edit and an untracked addition must, a deletion must fail closed, and both dist boundaries must behave. Additionally falsified against the real tree: PASS as it stands, STALE_OR_MISSING_BINARY naming apps/observer/frontend/src/App.tsx once that file is genuinely edited past the bundle, PASS again after revert.",
       "evidence_level": "local-full",
       "repeat_prevention": "Artifact staleness must be decided from content identity, never from mtime, on any tree where git performs line-ending conversion; and a build chain must compare every stage to its own input, because certifying exe-newer-than-dist says nothing about dist-newer-than-src. A freshness probe must also fail closed when it cannot parse its own instrument, and every timestamp comparison must respect the granularity of the coarser side.",
-      "remaining_boundary": "Closed by a build-time input receipt: apps/observer/scripts/write_artifact_receipt.py records the sha256 of every byte the compiler consumed plus the binary itself, is invoked by the build entry (the CI step 'Record the artifact input receipt' right after cargo build --release --locked, and the local MSVC bat), and resolve_app_exe() reads it first — a rollback to an older commit now shows up as changedInputs even though every file matches HEAD. Blind spot (2) is NOT closed: an uncommitted edit whose mtime is back-dated before the build still rests on mtime, because nothing but git and the receipt exist as witnesses and the receipt is written after the compile. A receipt that does not match the binary on disk is treated as unusable rather than convenient, and the gate then reports basis=content-evidence with basisLimit naming the gap, so the weaker evidence is never presented as the stronger one.",
+      "remaining_boundary": "Both blind spots are now closed by build-time evidence. (1) A rollback to an older commit shows up as changedInputs because the receipt records the bytes the build consumed. (2) Schema v2 of the receipt also records the frontend build chain — `frontend/src/**`, the entry html, package.json and package-lock.json, vite/tsconfig/postcss/tailwind configs and npm's installed-tree manifest (`node_modules/.package-lock.json`) — so an uncommitted edit whose mtime is back-dated is caught by content identity instead of resting on mtime. The gate reads the coverage level from the receipt's own schema: the artifact the owner observed carries a v1 receipt, so for that binary the frontend chain is still attested only by the content-evidence rule, and resolve_app_exe() prints that limit in `basisLimit` instead of letting a v1 witness look like a v2 one. The next build produces a v2 receipt.",
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
@@ -2935,13 +2935,13 @@
       "regression_test": "node apps/observer/tests/test_desktop_component_contract.js asserts all four clearance values are declared in px and at least 10, naming the rule that fails. Falsified by zeroing padding-top (6 passed, 1 failed: '.topbar padding-top = 0px gives a frameless window no clearance'), then restored to 7 passed.",
       "evidence_level": "local-full",
       "repeat_prevention": "A visual audit of a frameless window must measure clearance to all four edges, never overflow to the right and bottom alone, because the container edge is the OS window edge there. Any layout rule that a reference design imports verbatim must be re-checked against the shell it is embedded in — a padding value chosen for a framed window is not a padding value for a borderless one.",
-      "remaining_boundary": "Numbers come from headless Chrome at a 1262x668 CSS viewport, not from the real WebView2 window (1600x1025 physical, 1280x820 logical). The owner's eye on the desktop stays the authority for whether the spacing reads right, and that observation is still owed — together with the caption-control re-test under ERR-103 and U19's surface proof under ERR-104.",
+      "remaining_boundary": "The measured numbers came from headless Chrome at a 1262x668 CSS viewport, and that instrument limit is unchanged. The visual question is closed: Observed by the owner on the real desktop on 2026-10-07, running `.project-local/runs/u19-msvc-20261006/target/release/app.exe` (sha256 6f73c14eb542f1a7…, 9,850,368 B, built against gitHead 307d90b), the owner reports the top command row no longer sits on the window edge and reads right.",
       "status_before": "FAIL",
-      "status_after": "PARTIAL",
+      "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "6bd0bd5",
-        "fixedCommit": null,
-        "verifiedCommit": null,
+        "fixedCommit": "3abf1bf",
+        "verifiedCommit": "6015f0b",
         "affectedCapability": "Observer frameless shell top row",
         "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
       }
@@ -2961,7 +2961,7 @@
       "regression_test": "An instrument claim must name the observation that supports it. Any future CDP work in this repository has to treat 'connect succeeded' as no evidence and require a parsed /json/version body containing a webSocketDebuggerUrl before reporting an endpoint as available; the retry loop and the raw first response are now recorded in the probe output so the failure mode is visible instead of inferred.",
       "evidence_level": "isolated-runtime",
       "repeat_prevention": "Never promote a connection-level success to a service-level capability in a report, and never build the next step of a plan on an instrument that worked twice at short timeouts and failed at long ones. Windows.Graphics.Capture is the remaining non-GDI route to the surface; a real desktop click is the route to the caption controls, and after two failed launches the owner's own five-second check is cheaper and outranks my instrument.",
-      "remaining_boundary": "U19's real-desktop surface proof, ERR-103's click-through confirmation and ERR-106's visual read all still depend on one observation nobody has made yet. Everything decidable without a window is decided: gates green, ledger consistent, ACL grants in the built artifact, top-row clearance measured at 12px in both windows.",
+      "remaining_boundary": "The three observations this entry said were owed (composited surface, click-through, spacing) were made — by the owner, on the real desktop, on 2026-10-07. That does not repair the instrument and this entry stays FAIL on purpose: it records a claim I built on `connect_ex()` success, and somebody else's success does not undo an overclaim. The CDP endpoint still accepts TCP and answers nothing; the only routes left for automated surface proof are Windows.Graphics.Capture or a working DevTools bridge, and neither is wired.",
       "status_before": "PASS",
       "status_after": "FAIL",
       "lifecycle": {
@@ -3022,6 +3022,58 @@
         "verifiedCommit": null,
         "affectedCapability": "required-group manifest completeness guard",
         "regressionCommand": "python tests/ci/test_failfast_group.py"
+      }
+    },
+    {
+      "error_id": "ERR-110",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "apps/observer/scripts/u19_webview_e2e.py (resolve_app_exe candidate loop), apps/observer/scripts/write_artifact_receipt.py",
+      "command": "python apps/observer/tests/test_artifact_freshness.py, then .project-local/runs/convergence-20261007-c/mutation_probe_pathspec.py",
+      "exit_code": 1,
+      "observed_error": "Writing the v2 receipt exposed a hole in the v1 gate: when a receipt described the binary on disk but not the tree (changed/missing/added inputs), resolve_app_exe() treated that candidate as simply not receipted and fell through to the weaker content-evidence rule — which compares timestamps — and could then report PASS for the very binary the receipt had just condemned.",
+      "root_cause": "The loop only asked `usable and matches`, so a mismatch was discarded instead of read as evidence. A receipt that matches the binary but not the tree is a positive statement that the tree moved after the build; treating 'strongest witness disagrees' as 'no witness' demotes the verdict to the weakest rule available, which is the failure mode ERR-105 was raised for.",
+      "fix": "Mismatching-but-usable receipts are collected and, if no candidate matches, the gate fails closed with STALE_OR_MISSING_BINARY naming the changed/missing/added inputs and the receipt's writtenAt and gitHead. The content-evidence fallback is now reachable only when no receipt describes the binary at all, and it says so in basisLimit.",
+      "regression_test": "apps/observer/tests/test_artifact_freshness.py test_a_back_dated_frontend_edit_is_still_seen_by_the_receipt: with the receipt present the gate must refuse, and the same tree with the receipt moved aside must pass on content-evidence — both directions asserted in one case, so the blindness is measured rather than claimed. Falsified by short-circuiting the new branch (`if False and mismatched`), which turned the case red, then restored byte-for-byte.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A stronger witness that disagrees must never be converted into absence and handed to a weaker rule; when evidence levels are stacked, the fallthrough condition has to be 'no witness exists', not 'this witness did not say yes'.",
+      "remaining_boundary": "Landing commit is recorded in the open-task register row RECEIPT-V2-20261007 and in the audit snapshot's localHead; lifecycle.fixedCommit stays null until that commit exists. The second candidate binary at the default path (apps/observer/src-tauri/target/release/app.exe, sha256 prefix 1e8528e355bd7fc7, 13:51 build, no receipt) is a superseded artifact left on disk; it is correctly never chosen, and it has not been deleted because cleanup needs its own authorization.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "28afeaa",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "U19 release binary provenance gate",
+        "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py"
+      }
+    },
+    {
+      "error_id": "ERR-111",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": "docs/future/WORK-LAB-BLUEPRINT-20261006.md §16, .project/governance/blueprint-coverage.json rows CH-16 and W03, .project/governance/future-candidate-registry.json",
+      "command": "python .project-local/runs/convergence-20261007-c/extract_section16.py (header-matched table extraction from the owner's 整理稿 docx)",
+      "exit_code": 1,
+      "observed_error": "The recorded candidate-pool gap said 'source 19 rows vs registry 14 entries, 5 unregistered'. The real name-level gap was six unregistered rows plus one unregistered name inside a registered row: 16.11 Hindsight, 16.15 Oh-My-Hermes, 16.16 Paperclip/agent-skills/OpenPencil, 16.17 Prompts.chat/GEP-EvoMap, 16.18 ChatCut, 16.19 EigenFlux/Dream-RSI/cc-haha/free-provider and security-course cases, and n8n inside row 16.05.",
+      "root_cause": "The gap was computed as subtraction on counts (19 - 14) instead of as a set difference on names. The arithmetic is wrong twice over: row 16.10 is carried by two entries (Supermemory and Mem0), so entries and rows are not the same unit, and a row can be partially covered. No artifact tied a registry entry to a source row, so nothing could check coverage and the count stood in for the check.",
+      "fix": "Landed the source table itself in the blueprint copy with row keys 16.01…16.19 generated from the docx rather than retyped, keyed every registry entry to a row (`blueprint_row`), and added the seven missing entries — 21 candidates covering all 19 rows. The registry verifier now enforces both directions of that mapping and is wired into the CI governance job. The stale '5' sentence is left in place with a dated correction above the table instead of being rewritten.",
+      "regression_test": "scripts/ci/verify_future_candidate_registry.py row-coverage invariant, falsified with four injections in a scratch copy: drop the only claimant of 16.18, strip one candidate's blueprint_row, point one at 16.99, strip all of them — all four exit 1, the untouched registry exits 0, and the real file is verified byte-identical afterwards.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A coverage gap must be a set difference between named entities, never the difference of two counts, because a count hides one-to-many mappings and partial coverage. If the claim is 'every source row has a landing', the gate has to see both sides of the mapping.",
+      "remaining_boundary": "The seven new entries are registrations, not assessments: license, identity, version and Windows support are all NOT_VERIFIED and rows 16.16/16.17/16.19 name their members with 等 in the source, so the source list itself is not exhaustive. Rows 16.16/16.18 keep design capability with DTALEX66/DESIGN-LAB; nothing here authorizes an install.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "8003980",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Future candidate pool coverage",
+        "regressionCommand": "python scripts/ci/verify_future_candidate_registry.py"
       }
     }
   ],
