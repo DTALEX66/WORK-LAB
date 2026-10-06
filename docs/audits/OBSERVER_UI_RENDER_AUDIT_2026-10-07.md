@@ -45,3 +45,54 @@
   动之前必须先跑 `test_desktop_component_contract.js` 与
   `test_production_surface_static_contract.js`（字号/溢出/微角色白名单都在那里）。
 - 品牌 SVG 已迁入 `frontend/src/assets/brand/` 但**未挂载**到头部（现头部是文字锁扣）。
+
+---
+
+## 第二轮：把"看起来不对"变成量出来的数（同日）
+
+先说失败的方法：`--dump-dom --virtual-time-budget` 挂死（SSE 长连接），
+所以截图给不了数值；in-app 浏览器是 0×0 视口，也没有布局。
+于是写了一个**零依赖 CDP 探针**（Node 22 自带全局 `WebSocket` 与 `fetch`）：
+`.project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs`，
+用 `Emulation.setDeviceMetricsOverride` 在 320/560/840/1440 四档量真实盒模型。
+
+**量出来的根因（不是顶栏，是整个应用列）**：
+
+| 视口 | 修复前 `.app` 计算网格 | `.main` 宽 | 顶栏高 | 四个动作按钮 |
+|---|---|---|---|---|
+| 320 | `210px 110px` | **210** | 263 | 各占一行（y=118/152/186/220） |
+| 560 | `210px 350px` | **210** | 263 | 各占一行 |
+| 840 | `210px 630px` | **210** | 305 | 各占一行 |
+| 1440 | `244.8px 1195.2px` | 1195 | — | 一行（正常） |
+
+机制：≤840px 时导航栏 `display:none` —— **display:none 的网格子项根本不参与布局**，
+于是 `main.main` 被自动放进了**第一根轨道（210px 的栏轨）**，右边 1fr 空着。
+所以窄屏看到的"顶栏堆叠""内容挤成一条"其实是同一个缺陷：整个应用列被压成 210px。
+b10 里那条 `@media (max-width:840px){.app{grid-template-columns:1fr}}` 是有效的，
+但壳层后面有一条**无条件的** `.app{grid-template-columns:clamp(210px,17vw,280px) minmax(0,1fr)}`
+（同特异性、位置更后）把它覆盖了——那条规则当初是为了让内容轨可收缩而故意写成无条件的，
+写的时候没人量过 ≤840px 的情形。
+
+**修复**：把两轨形式收进 `@media (min-width: 841px)`，默认单轨 `minmax(0,1fr)`；
+另加 ≤560px 一档让动作簇整行横排、搜索框按剩余空间收缩。
+**修完再量**：320/560/840 的 `.app` 都是单轨＝视口宽，`.main`＝视口宽，
+四个按钮全部回到同一行（320：x=14/56/110/152，顶栏高从 263 降到 ~104）；
+1440 的两轨不变（244.8 + 1195.2），桌面端无回归。
+
+**回归锁**：`test_production_surface_static_contract.js` 新增
+`the shell keeps a single app track below the rail breakpoint`（22 条全绿），
+两种注入各自变红：把单轨改回无条件两轨；把某一处 clamp 声明移出 841 门
+（第一版我写成"clamp 声明只能出现一次"，被自己打脸——壳层本来就在两个小节各写一次且都在门内，
+改成"每一条都必须处在 `@media (min-width: 841px)` 里"才是这条规则真正要守的东西）。
+
+**顺带纠正本轮先前两处判断**：
+① 我在上文把 320px 的顶栏堆叠当成"顶栏自身的问题"，实为应用列被压成 210px 的下游症状；
+② 我第一次用 `closest()` 探测按钮归属时，选择器列表里没写 `.top-actions`，
+于是误读成"按钮不在 `.top-actions` 里"——**探针的选择器集合会决定你能看见什么**，
+与"grep 把定义处过滤掉"是同一类错误。
+
+复现命令（sidecar 起在 61912，服务 `frontend/dist`）：
+`node .project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs`。
+现状：vitest 17 文件 114 条、node 契约 33 条（静态 22 ＋ 桌面 11）、电池 0 失败、
+`vite build` 绿；`dist` 已用修复后的源重建，release 二进制仍未重建。
+

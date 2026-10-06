@@ -297,6 +297,30 @@ function run() {
       "the 320px floor disappeared from src/index.css");
   });
 
+  t("the shell keeps a single app track below the rail breakpoint", () => {
+    // Measured with a CDP layout probe on 2026-10-07, not inferred: with the rail
+    // `display:none` below 841px it stops being a grid item, so `.main` was
+    // auto-placed into the RAIL track and the whole application column collapsed
+    // to 210px inside a 320/560/840px viewport (`.app` computed `210px 110px` at
+    // 320px). The two-track form is only valid where the rail exists.
+    const single = /\.app\s*\{\s*grid-template-columns:\s*minmax\(0, *1fr\)\s*;?\s*\}/;
+    assert(single.test(shell), "the shell must declare a single shrinkable .app track by default");
+    const twoTrack = /@media \(min-width: 841px\)\s*\{[^}]*\.app\s*\{\s*grid-template-columns:\s*clamp\(/;
+    assert(twoTrack.test(shell), "the rail+content two-track grid must live inside @media (min-width: 841px)");
+    // Every clamp() rail declaration must sit inside the >=841px gate. Counting
+    // them would be wrong: the shell legitimately declares it twice (once per
+    // section), and both are gated.
+    const declRe = /\.app\s*\{\s*grid-template-columns:\s*clamp\(/g;
+    let hit, total = 0, gated = 0;
+    while ((hit = declRe.exec(shell)) !== null) {
+      total += 1;
+      const before = shell.slice(Math.max(0, hit.index - 200), hit.index);
+      if (/@media \(min-width: 841px\)\s*\{[^}]*$/.test(before)) gated += 1;
+    }
+    assert(total >= 1 && gated === total,
+      gated + "/" + total + " rail-track declarations are outside the @media (min-width: 841px) gate");
+  });
+
   console.log(`TOTAL: ${pass} passed, ${fail} failed`);
   return { pass, fail };
 }

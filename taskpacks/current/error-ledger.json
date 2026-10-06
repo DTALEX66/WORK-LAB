@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 121,
+    "total": 122,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 43,
+      "contract_drift": 44,
       "test_behavior_alignment": 14,
       "working_directory_recovery": 2,
       "evidence_state": 19,
@@ -3360,6 +3360,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer browser-entry regression runnability",
         "regressionCommand": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py"
+      }
+    },
+    {
+      "error_id": "ERR-123",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "apps/observer/frontend/src/skins/l10b-shell.css (.app track declaration), apps/observer/frontend/src/components/layout/TopStatusBar.tsx (symptom surface)",
+      "command": "node .project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs",
+      "exit_code": 1,
+      "observed_error": "Below the rail breakpoint the whole application column, not just the top bar, collapsed to the rail's width. Measured with a CDP layout probe at an emulated viewport: at 320px `.app` computed `210px 110px` with `.main` 210px wide and a 263px-tall top bar whose four action buttons each took their own row; the same 210px `.main` at 560px and 840px. Only 1440px behaved (244.8px + 1195.2px). Screenshots made this look like a top-bar wrapping bug, which is why it stayed unfixed for two audit rounds.",
+      "root_cause": "A `display:none` grid child is not a grid item, so when the rail is hidden below 841px `main.main` is auto-placed into the FIRST track — the 210-280px rail column — and the 1fr column is left empty. B10 does collapse `.app` to one track at <=840px, but the shell declares `.app{grid-template-columns:clamp(210px,17vw,280px) minmax(0,1fr)}` unconditionally and later in the cascade, so it wins at every width. That unconditional form was deliberate when it was written (to make the content track shrinkable) and nobody had measured the sub-841px case.",
+      "fix": "The two-track form now lives inside `@media (min-width: 841px)` and the default is a single shrinkable track `minmax(0, 1fr)`; a <=560px tier additionally gives the action cluster a full row and lets the search box shrink to the space that remains. Re-measured after the change: `.app` is one track equal to the viewport at 320/560/840, `.main` equals the viewport, the four buttons share one row (320px: x=14/56/110/152, top bar 263px -> ~104px), and the 1440px desktop layout is byte-for-byte the same as before.",
+      "regression_test": "apps/observer/tests/test_production_surface_static_contract.js — 'the shell keeps a single app track below the rail breakpoint' (22 cases green). Falsified twice: restoring the unconditional two-track declaration, and moving one clamp() declaration outside its media gate; both turn the case red and the CSS is restored byte-for-byte with SHA-256 verified.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Hiding a grid child does not remove its track: if a child can be display:none, the track layout must be declared for the hidden case too, and it must be measured with the child hidden. Screenshots show symptoms; before fixing a responsive report, get numbers out of the engine — a dependency-free CDP probe (Node 22 global WebSocket) measures any viewport in seconds, and `--dump-dom --virtual-time-budget` is not a substitute because a page holding an SSE connection never goes idle. Two self-corrections in the same round: an earlier `closest()` probe omitted `.top-actions` from its selector list and so misattributed the buttons (a probe's selector set decides what you can see — same class as grepping out the file that defines the symbol), and the first version of the new contract counted clamp() declarations instead of checking that each one sits inside the gate.",
+      "remaining_boundary": "The probe measures, it does not gate: CI has no Chromium and the contract is a CSS-shape assertion, so a future rule could still reintroduce an ungated track without a red test unless the static case is kept. Untouched polish items: the disabled 导出状态/新建执行 buttons look enabled (b10.css has no :disabled rule and D-11 pins it verbatim, so only the shell can fix it), the 无告警信号 green chip reads as healthy next to a screen of UNKNOWNs, and the migrated brand SVGs are still not mounted in the header.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "5274199",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer responsive shell below the rail breakpoint",
+        "regressionCommand": "cd apps/observer && node tests/test_production_surface_static_contract.js"
       }
     }
   ],

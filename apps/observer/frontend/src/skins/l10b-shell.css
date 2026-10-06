@@ -343,8 +343,19 @@ html.light {
  * ~1132px inside a 990px column, i.e. the second track was still B10's bare
  * `1fr` with its min-content floor, so the media query was not the right gate.
  * Stated unconditionally and last: the rail track stays fluid, the content
- * track is allowed to shrink to zero, and nothing may push past the viewport. */
-.app { grid-template-columns: clamp(210px, 17vw, 280px) minmax(0, 1fr); }
+ * track is allowed to shrink to zero, and nothing may push past the viewport.
+ *
+ * 2026-10-07, measured with a CDP layout probe rather than inferred from a
+ * screenshot: below 841px the rail is `display:none`, which means it is not a
+ * grid item at all, so `.main` was auto-placed into the FIRST track and the
+ * whole application column collapsed to 210px inside a 320/560/840px viewport
+ * (`.app` computed `210px 110px` at 320px, `.main` w=210, topbar h=263 with the
+ * four action buttons stacked one per row). The two-track form therefore only
+ * makes sense where the rail exists; below it the shell is a single track. */
+.app { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 841px) {
+  .app { grid-template-columns: clamp(210px, 17vw, 280px) minmax(0, 1fr); }
+}
 html, body, #root { max-width: 100vw; overflow-x: hidden; }
 .content { max-width: 100%; }
 
@@ -411,4 +422,19 @@ html, body, #root { max-width: 100vw; overflow-x: hidden; }
 .topbar { padding-right: 130px; }
 @media (min-width: 1241px) {
   .topbar { padding-right: 285px; }
+}
+
+/* Phone width (<=560 CSS px), measured rather than guessed. At 320px the top bar
+ * still reserves 130px for the fixed caption cluster and the search box wants
+ * 160px, which leaves `.top-actions` a column about 60px wide — so every action
+ * button wrapped onto its own row and the bar ate roughly 40% of the first screen
+ * (docs/audits/OBSERVER_UI_RENDER_AUDIT_2026-10-07.md). The action cluster now
+ * takes a full row and stays horizontal, and the search shrinks to what is
+ * actually left instead of clipping to "搜...". */
+@media (max-width: 560px) {
+  .topbar { row-gap: 6px; }
+  .topbar .search { flex: 1 1 120px; min-width: 0; }
+  .top-actions { flex: 1 1 100%; order: 3; gap: 4px; }
+  .top-actions .ghost-btn,
+  .top-actions .primary-btn { flex: 1 1 auto; padding: 5px 6px; font-size: 12px; }
 }
