@@ -6,15 +6,21 @@
 
 ```json
 {
-  "observedAt": "2026-10-06T23:07:54+0800",
+  "observedAt": "2026-10-06T23:11:50+0800",
   "remote": "git@github.com:DTALEX66/WORK-LAB.git",
   "branch": "task-decomposition/atlas-gap-archive-20261001",
-  "localHead": "4115d6324ef0c7727fb65413adc6c25c966ed613",
+  "localHead": "0726a1420372719fc59ffafedc65693b544a7c18",
   "baseSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
-  "dirtyFiles": [],
-  "statusRecords": 1,
+  "dirtyFiles": [
+    ".project/governance/blueprint-coverage.json",
+    ".project/governance/generated/CURRENT_STATE.json",
+    ".project/governance/generated/CURRENT_STATE.md",
+    "docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md",
+    "taskpacks/current/OPEN-TASK-REGISTER.md"
+  ],
+  "statusRecords": 6,
   "liveMainSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
-  "liveBranchSha": "4115d6324ef0c7727fb65413adc6c25c966ed613"
+  "liveBranchSha": "0726a1420372719fc59ffafedc65693b544a7c18"
 }
 ```
 
@@ -25,7 +31,7 @@
 ```json
 {
   "baseRefName": "main",
-  "headRefOid": "4115d6324ef0c7727fb65413adc6c25c966ed613",
+  "headRefOid": "0726a1420372719fc59ffafedc65693b544a7c18",
   "mergeable": "MERGEABLE",
   "state": "OPEN",
   "url": "https://github.com/DTALEX66/WORK-LAB/pull/162"
@@ -53,12 +59,30 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
 
 ```json
 {
-  "headSha": "4115d6324ef0c7727fb65413adc6c25c966ed613",
-  "count": 19,
+  "headSha": "0726a1420372719fc59ffafedc65693b544a7c18",
+  "count": 17,
   "buckets": {
-    "pass": 19
+    "pass": 13,
+    "pending": 4
   },
-  "pendingOrFailing": []
+  "pendingOrFailing": [
+    {
+      "name": "observer",
+      "bucket": "pending"
+    },
+    {
+      "name": "token-monitor",
+      "bucket": "pending"
+    },
+    {
+      "name": "observer",
+      "bucket": "pending"
+    },
+    {
+      "name": "token-monitor",
+      "bucket": "pending"
+    }
+  ]
 }
 ```
 
@@ -99,8 +123,8 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
 | 路径 | 字节 | SHA-256 |
 |---|---|---|
 | `docs/future/WORK-LAB-BLUEPRINT-20261006.md` | 18359 | `4cead2bf8c296b65966a2ad74d8ccdae7dd54ea819dd5aafbfe69b3bee134a73` |
-| `docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md` | 34095 | `710e58f5b1cf9c397b15e1662f9e8b99737a6bb2a6c97c1e7a4cd16bb29ad53a` |
-| `.project/governance/blueprint-coverage.json` | 25829 | `947b00c088eedcd0ed26359b3f29d14dbabdebec55c31b5d9fd786c124f0a6f5` |
+| `docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md` | 34806 | `8c540aa11c6eef70adf3805d36c56a8f5ba9b8c679debc2b4f6955546fdfbd6e` |
+| `.project/governance/blueprint-coverage.json` | 30851 | `30bcabd65e7fba8dffe57b7acd9b1f0bf64bec94820ca1d81ff4587d18c51915` |
 | `scripts/ci/verify_blueprint_coverage.py` | 13822 | `9ded1cd312df28866bd0f5915cf8e1efde120b7725b70463822bbfb2a34ee8f4` |
 | `apps/observer/scripts/write_artifact_receipt.py` | 4233 | `83527e3dcef1888e4cc0ce93796cfbd2814ef4e54e7dc367229d3e1fd309b344` |
 

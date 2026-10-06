@@ -52,50 +52,629 @@
     }
   ],
   "rows": [
-    {"id": "CH-01", "kind": "chapter", "title": "口径、名称与最新规划", "decision": "对外 Workflow Lab / 对内 WORK-LAB，展示状态 Ongoing；AG/U/T/W/C/OD 仅作追溯", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#1", "README.md"], "status": "PASS", "evidence": "naming present in README + blueprint; C01 cited", "disposition": "RETAINED", "nextOrBlocked": "GitHub About sync pending (§CH-19)"},
-    {"id": "CH-02", "kind": "chapter", "title": "母定义：执行与工作流治理层", "decision": "客户端中立的个人 AI 工作流治理、控制与交付系统；不缩成 Dashboard，不扩成通用 Agent OS；企业化/K8S/集中账号非前置", "anchors": ["WORK-LAB-AUTHORITY.md#3", "docs/future/WORK-LAB-BLUEPRINT-20261006.md#2"], "status": "PASS", "evidence": "Authority §3 already states the control-plane mother definition", "disposition": "RETAINED", "nextOrBlocked": "README wording drift corrected this round (it called the project a global-configuration layer only)"},
-    {"id": "CH-03", "kind": "chapter", "title": "所有权与不可混同的领域", "decision": "七域划分；Evidence 同名不同域不赋跨项目写权；DESIGN-LAB 设计域与 AAOS 知识域不接管", "anchors": ["config/config-ownership.json", ".project/governance/module-ownership.json", ".project/governance/project-data-boundary.json", "knowledge-staging/BOUNDARY.md"], "status": "PASS", "evidence": "machine contracts exist and are gated by verify_project_data_boundary.py / verify_module_dependencies.py", "disposition": "RETAINED", "nextOrBlocked": "none"},
-    {"id": "CH-04", "kind": "chapter", "title": "五项核心能力与完整控制面", "decision": "五核保留但 Runtime Control 重释为外部执行协作；完整能力集不得变成多个平行产品或账本", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#4", "packages/client-neutral-core", "services/"], "status": "PARTIAL", "evidence": "registry/work-unit/governance/evidence surfaces exist; Runtime Control interpretation change is documentation, not code", "disposition": "RETAINED", "nextOrBlocked": "no second ledger; capability claims stay bound to §13 evidence vocabulary"},
-    {"id": "CH-05", "kind": "chapter", "title": "Canonical Source：规则、技能与配置", "decision": "9 类受管内容 + 最小治理形态；配置事务八步；preserve_unknown；UPDATE ≠ RELOCATION", "anchors": ["config/config-ownership.json", "AGENTS.md#Managed global configuration (Hermes)", "docs/future/WORK-LAB-BLUEPRINT-20261006.md#5"], "status": "PARTIAL", "evidence": "Hermes overlay + sync script + provenance file exist; transaction steps are enforced per surface, not by one contract test", "disposition": "RETAINED", "nextOrBlocked": "readback truth across all clients is an open register item"},
-    {"id": "CH-06", "kind": "chapter", "title": "Skills、Plugins、MCP 与能力生命周期", "decision": "治理十步；七层状态不可互证；SKILL.md 或 enabled 界面不证明生效", "anchors": ["scripts/ci/verify_skill_mcp_consistency.py", "scripts/ci/verify_capability_conformance.py", ".project/governance/model-capability-matrix.json"], "status": "PARTIAL", "evidence": "verifiers present; the seven-level ladder is not yet a machine-checked schema", "disposition": "RETAINED", "nextOrBlocked": "candidate: express the ladder in the capability conformance contract"},
-    {"id": "CH-07", "kind": "chapter", "title": "Task / Work Unit", "decision": "Work Unit 是主对象；12 行字段职责表不是新 JSON Schema；执行器不得自报 done；唯一 writer + lease + 隔离 worktree", "anchors": ["packages/client-neutral-core", "scripts/ci/verify_contract_ssot.py", "docs/future/WORK-LAB-BLUEPRINT-20261006.md#7"], "status": "PARTIAL", "evidence": "ledger and contract verifiers exist; lifecycle-state fidelity is tracked in the open register", "disposition": "RETAINED", "nextOrBlocked": "late-receipt / revision semantics need live execution evidence"},
-    {"id": "CH-08", "kind": "chapter", "title": "原生执行器、Adapter 与会话联邦", "decision": "逐任务选执行器，无永久唯一主执行器；Adapter 八字词逐项声明，未实现须可见 NOT_IMPLEMENTED；Hermes 卸载与双执行器验收的张力保留", "anchors": ["integrations/", "scripts/ci/verify_acp_adapter_honesty.py", "docs/future/WORK-LAB-BLUEPRINT-20261006.md#8"], "status": "UNVERIFIED", "evidence": "no live two-executor golden-chain run; AG-09/U18 remain open", "disposition": "PENDING_CONFIRMATION", "nextOrBlocked": "blocked on an owner-selected project + two real executors"},
-    {"id": "CH-09", "kind": "chapter", "title": "Context、记忆、交接与中断恢复", "decision": "ContextEnvelope 带版本/摘要/有边界句柄；示例路径非现场事实；记忆候选非已选底座", "anchors": ["packages/client-neutral-core", ".project/governance/future-candidate-registry.json", "docs/future/WORK-LAB-BLUEPRINT-20261006.md#9"], "status": "PARTIAL", "evidence": "handoff and context surfaces implemented for in-repo use; cross-client envelope not exercised", "disposition": "RETAINED", "nextOrBlocked": "none newly invented"},
-    {"id": "CH-10", "kind": "chapter", "title": "统一入口：网页规划 → 原生执行", "decision": "当前取结构化人工 handoff (OD02)；Remote MCP 为独立升级项需七项验证；网页额度 ≠ API 配额 ≠ OAuth 会话", "anchors": ["docs/future/WORK-LAB-SUPER-ENTRY-COMMAND-CENTER-LAB-ROUTER-2026-09-27.md", "docs/future/WORK-LAB-BLUEPRINT-20261006.md#10"], "status": "NOT_RUN", "evidence": "no automated transport implemented; manual handoff path is used but not registered as an executable contract", "disposition": "PENDING_CONFIRMATION", "nextOrBlocked": "AG-16/AG-17 open; the blueprint merges them into one row (SOURCE_GAP)"},
-    {"id": "CH-11", "kind": "chapter", "title": "Control 与 Observer：界面统一，权限分离", "decision": "Control 是唯一写入口，默认 loopback-only (OD01) 复用 Permission Gate/Task Protocol/Completion Authority/Config Control Plane；Observer 严格只读；六条诚实等式", "anchors": ["apps/observer/AGENTS.md", "scripts/ci/verify_observer_readonly_boundary.py", "scripts/ci/verify_evidence_tiering.py"], "status": "PARTIAL", "evidence": "Observer read-only enforced and tested; a writable Control surface does not exist yet (AG-15)", "disposition": "RETAINED", "nextOrBlocked": "T04/AG-15 open; OD01 is a task-pack default, not a renewed permanent approval"},
-    {"id": "CH-12", "kind": "chapter", "title": "模型、用量、费用与共享运行环境", "decision": "八维度可表达；不得静默降质量或隐私；ready ≠ loaded；成本未知≠0；Token Monitor 不成第二成本真值", "anchors": [".project/governance/model-registry.json", "scripts/ci/verify_model_registry_integrity.py", "apps/observer/scripts/verify_usage_rollup.py", "apps/token-monitor"], "status": "PARTIAL", "evidence": "registry + rollup + integrity checks exist; real consumer verification (AG-10) and OCR/ASR acceptance (AG-11) are open", "disposition": "RETAINED", "nextOrBlocked": "9/29 environment snapshot is time-pointed; no reinstall or delete authorization"},
-    {"id": "CH-13", "kind": "chapter", "title": "完成裁决、证据、交付与恢复", "decision": "完成由目标+验证导出；NO_EVIDENCE/SIMULATED/SYNTHETIC/INTEGRATED/REAL；E0—E5 属 DESIGN-LAB 不可互换；跳过/取消/缺失不计 PASS；本轮不合并", "anchors": ["WORK-LAB-AUTHORITY.md#10", "WORK-LAB-AUTHORITY.md#11", "scripts/ci/verify_evidence_tiering.py", "services/orchestration/run_quality_gate.py"], "status": "PASS", "evidence": "vocabulary is machine-enforced (verify_evidence_tiering.py) and the aggregate gate fails on skipped required jobs", "disposition": "RETAINED", "nextOrBlocked": "none"},
-    {"id": "CH-14", "kind": "chapter", "title": "产品界面、技术栈与数据组织", "decision": "七导航保留；五种界面模式是一系统的模式而非五套数据；不复制 DL Workbench/Launcher；不全仓 Rust 重写；前端不得推断价格/汇率/配额/端口/成功", "anchors": ["docs/decisions/language-architecture.md", "apps/observer/frontend", "apps/observer/src-tauri"], "status": "PARTIAL", "evidence": "stack matches the declared layering; U19 real-desktop surface still unproven (ERR-104/107)", "disposition": "RETAINED", "nextOrBlocked": "desktop surface observation owed; see ERR-107 remaining_boundary"},
-    {"id": "CH-15", "kind": "chapter", "title": "未来蓝图六阶段", "decision": "阶段名是本文组织，不是新 CURRENT 也不承诺工期；每阶段以真实旅程+回执+恢复能力放行", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#15", "taskpacks/current/OPEN-TASK-REGISTER.md"], "status": "UNVERIFIED", "evidence": "phase 15.1 items map to open register rows; 15.5/15.6 have no acceptance criteria in the source", "disposition": "RETAINED", "nextOrBlocked": "SOURCE_GAP: §15.6 conditional enhancements lack scenario, acceptance, phase slot and exit in the original — not invented here"},
-    {"id": "CH-16", "kind": "chapter", "title": "未来候选池", "decision": "19 行候选 + 2 段落项；上游身份/版本/许可未在线复核；四条默认停止条件；失败回原生/人工路径", "anchors": [".project/governance/future-candidate-registry.json", "scripts/ci/verify_future_candidate_registry.py"], "status": "PARTIAL", "evidence": "registry holds 14 candidates with statuses DEFERRED/PILOT_CANDIDATE", "disposition": "RETAINED", "nextOrBlocked": "COVERAGE GAP: source lists 19 table rows vs 14 registry entries; 5 unregistered. Also W03 itself says '14 未来候选', so the source disagrees internally (SOURCE_GAP). The paragraph-only items (MissionControl, Dagu, TokenTelemetry, MCP/skill/plugin/provider research pool, Strata/Qwen) carry no candidate fields"},
-    {"id": "CH-17", "kind": "chapter", "title": "最新闭环任务与未来目标的一一映射", "decision": "T01—T09 与 AG/U 横切项映射到唯一 open register；未列出的 current 项不因此删减", "anchors": ["taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md", "taskpacks/current/OPEN-TASK-REGISTER.md"], "status": "PARTIAL", "evidence": "AG-01..AG-20 and U01..U21 are enumerated in this matrix from the live files", "disposition": "RETAINED", "nextOrBlocked": "SOURCE_GAP: blueprint has no AG-14 row, merges AG-16/17, omits AG-01..AG-08, omits W09, and cites OD03/04 jointly"},
-    {"id": "CH-18", "kind": "chapter", "title": "当前证据边界、历史缺口与禁止漂移", "decision": "原文状态是文件观察值；10/5 本机 full gate FAIL 与 CI 绿同时保留；未重验不得升级；十条禁止漂移", "anchors": ["docs/audits/BLUEPRINT_SYNC_AUDIT_2026-10-06.md", "taskpacks/current/error-ledger.json"], "status": "PARTIAL", "evidence": "live re-observation recorded in the audit snapshot; PR #162 head correction recorded", "disposition": "RETAINED", "nextOrBlocked": "SOURCE_MISSING: original long chat, WORK-LAB-SUMMARY and the 9/28 startup/final attachments remain unrecovered (AG-19)"},
-    {"id": "CH-19", "kind": "chapter", "title": "可采用的项目描述与覆盖检查", "decision": "一段式对外描述 + 覆盖自检；不宣称 Universal Workflow 已完成；不把本稿自动升为 Authority", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#19", "README.md"], "status": "PARTIAL", "evidence": "About text recorded as before→after in the audit snapshot; repository About is non-Git metadata", "disposition": "RETAINED", "nextOrBlocked": "About readback required after the metadata write; source coverage table is chapter-keyed, not ID-keyed, hence this matrix"},
-    {"id": "CH-APP", "kind": "appendix", "title": "来源、覆盖范围与追溯", "decision": "12 条来源，11 条带 SHA-256；摘要是本会话副本的哈希，不证明上游未变", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#19", ".project/governance/cross-module-source-index.json"], "status": "PARTIAL", "evidence": "source ids registered in the matrix inputs block", "disposition": "RETAINED", "nextOrBlocked": "the blueprint's 章节索引 omits this appendix; the doubled atlas path segment is recorded as-is"},
-    {"id": "T01", "kind": "closed-loop-task", "title": "PR #162 或等价最小修复主线收敛", "decision": "验收：修复/分类 full gate + exact-SHA 与 main 读回", "anchors": ["taskpacks/current/OPEN-TASK-REGISTER.md"], "status": "PARTIAL", "evidence": "PR #162 OPEN, head f3b5dec (advanced from the source-recorded 6f323a3); merge not authorized", "disposition": "RETAINED", "nextOrBlocked": "merge to main requires explicit authorization"},
-    {"id": "T02", "kind": "closed-loop-task", "title": "本机完整门与 runtime/toolchain", "decision": "required 项实际执行，失败/跳过保持诚实", "anchors": ["services/orchestration/run_quality_gate.py", "taskpacks/current/error-ledger.json"], "status": "FAIL", "evidence": "10/5 full gate FAIL (1903 tests / 9 skipped / 12 errors / 22 failures) never re-run after the runtime fix; 10/6 re-ran only the affected observer groups (9/9, 10/10)", "disposition": "RETAINED", "nextOrBlocked": "full aggregate re-run at the current SHA is still owed"},
-    {"id": "T03", "kind": "closed-loop-task", "title": "Windows Tauri U19 E2E", "decision": "sidecar、Snapshot/SSE、Tauri、React、重连与隔离", "anchors": ["apps/observer/scripts/u19_webview_e2e.py", "taskpacks/current/error-ledger.json"], "status": "FAIL", "evidence": "backend + native shell proven; composited desktop surface still unobserved (ERR-104 retraction, ERR-107 CDP unreliability)", "disposition": "RETAINED", "nextOrBlocked": "one desktop observation owed; owner's on-screen report takes precedence"},
-    {"id": "T04", "kind": "closed-loop-task", "title": "Thin Control Surface", "decision": "真写路径、授权、回执、readback/rollback", "anchors": ["taskpacks/current/OPEN-TASK-REGISTER.md"], "status": "NOT_RUN", "evidence": "no writable control surface implemented; AG-15 open", "disposition": "RETAINED", "nextOrBlocked": "must not smuggle write authority into Observer"},
-    {"id": "T05", "kind": "closed-loop-task", "title": "Super Entry / WebGPT handoff", "decision": "结构化人工链，规划候选可校验", "anchors": ["docs/future/WORK-LAB-SUPER-ENTRY-COMMAND-CENTER-LAB-ROUTER-2026-09-27.md"], "status": "NOT_RUN", "evidence": "AG-16/17 open; no registered handoff contract", "disposition": "RETAINED", "nextOrBlocked": "manual paste must never be reported as an automatic transport"},
-    {"id": "T06", "kind": "closed-loop-task", "title": "双执行器 / 模型路由 / OCR-ASR", "decision": "真实 consumer、修订取消恢复、质量矩阵", "anchors": ["taskpacks/current/OPEN-TASK-REGISTER.md"], "status": "UNVERIFIED", "evidence": "AG-09/AG-10/AG-11 open; Hermes uninstall history conflicts with the package's dual-executor goal", "disposition": "PENDING_CONFIRMATION", "nextOrBlocked": "owner must select the project and the two executors"},
-    {"id": "T07", "kind": "closed-loop-task", "title": "缺失原件与 Source Registry", "decision": "恢复真实旧资料，不能新写后冒充原件", "anchors": ["knowledge-staging/BOUNDARY.md", ".project/governance/cross-module-source-index.json"], "status": "FAIL", "evidence": "AG-19 open: original long chat, WORK-LAB-SUMMARY and the 9/28 attachments remain inaccessible", "disposition": "RETAINED", "nextOrBlocked": "any restored item is registered by path/time/hash/original location/coverage relation"},
-    {"id": "T08", "kind": "closed-loop-task", "title": "旧分支吸收与退役", "decision": "语义/字段差异，禁止整支盲合并", "anchors": ["taskpacks/current/BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917.md"], "status": "PARTIAL", "evidence": "2026-09-17 convergence executed and frozen; later absorbable increments still judged per semantic diff", "disposition": "RETAINED", "nextOrBlocked": "no long-lived shadow-main"},
-    {"id": "T09", "kind": "closed-loop-task", "title": "最终验收与 Authority 回写", "decision": "状态、open register、证据与实际一致", "anchors": ["WORK-LAB-AUTHORITY.md#15", ".project/governance/project-authority-index.json"], "status": "PARTIAL", "evidence": "this round lands documentation and coverage; Authority unchanged (no decision changed)", "disposition": "RETAINED", "nextOrBlocked": "final acceptance pending T02/T03 re-runs"},
-    {"id": "OD01", "kind": "owner-default", "title": "loopback-only Control 服务/合同", "decision": "调用既有 Permission Gate/Task Protocol/Completion Authority/Config Control Plane", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#11"], "status": "UNVERIFIED", "evidence": "source category is 任务包默认, not a renewed permanent approval", "disposition": "PENDING_CONFIRMATION", "nextOrBlocked": "surface does not exist yet"},
-    {"id": "OD02", "kind": "owner-default", "title": "先做结构化人工 handoff", "decision": "自动桥接延后，禁止伪装", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#10"], "status": "NOT_RUN", "evidence": "matches AG-16/17 sequencing", "disposition": "RETAINED", "nextOrBlocked": "none"},
-    {"id": "OD03", "kind": "owner-default", "title": "binary rerank 核心 + continuous 按需", "decision": "当前无运维范围的默认收敛", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#12"], "status": "UNVERIFIED", "evidence": "SOURCE_GAP: the blueprint cites OD03/OD04 jointly, so the split of meaning between them is not recoverable from the source", "disposition": "PENDING_CONFIRMATION", "nextOrBlocked": "do not assign the joint citation's content to either id alone"},
-    {"id": "OD04", "kind": "owner-default", "title": "登录后自启动与自愈；session-0 真服务留未来", "decision": "同 OD03 联合引用", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#12"], "status": "UNVERIFIED", "evidence": "SOURCE_GAP as recorded for OD03", "disposition": "PENDING_CONFIRMATION", "nextOrBlocked": "same"},
-    {"id": "OD05", "kind": "owner-default", "title": "Lite / 托盘 HUD / Quick Entry / Control / Observer 为界面模式", "decision": "一套系统五种模式，不是五套数据", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#14"], "status": "PARTIAL", "evidence": "SOURCE_GAP: Lite, tray HUD and Quick Entry have no field or permission spec anywhere in the source; only Control and Observer are defined", "disposition": "RETAINED", "nextOrBlocked": "must not be presented as implemented modes"},
-    {"id": "W01", "kind": "input-source", "title": "WORK-LAB-AUTHORITY-20260918-V2 归档副本 (9/29)", "decision": "母定义/治理/边界的主要来源；非今日实时副本", "anchors": ["WORK-LAB-AUTHORITY.md"], "status": "PARTIAL", "evidence": "live Authority re-read this session; the archived copy is historical", "disposition": "RETAINED", "nextOrBlocked": "hash recorded in the source appendix only"},
-    {"id": "W02", "kind": "input-source", "title": "历史与当前总报告 (9/29)", "decision": "当前边界与历史缺口叙述", "anchors": ["taskpacks/current/OPEN-TASK-REGISTER.md"], "status": "PARTIAL", "evidence": "its byte/line counts are report values, not proof", "disposition": "RETAINED", "nextOrBlocked": "AG-19 recovery still open"},
-    {"id": "W03", "kind": "input-source", "title": "能力总图 (9/29)", "decision": "能力面与 14 未来候选", "anchors": [".project/governance/future-candidate-registry.json"], "status": "PARTIAL", "evidence": "internal contradiction with the blueprint's 19-row pool recorded under CH-16", "disposition": "RETAINED", "nextOrBlocked": "none"},
-    {"id": "W04", "kind": "input-source", "title": "统一入口架构对账 (9/29)", "decision": "入口/Control/Observer 分层", "anchors": ["docs/future/WORK-LAB-SUPER-ENTRY-COMMAND-CENTER-LAB-ROUTER-2026-09-27.md"], "status": "PARTIAL", "evidence": "architecture documented; write path unimplemented", "disposition": "RETAINED", "nextOrBlocked": "none"},
-    {"id": "W05", "kind": "input-source", "title": "Future Roadmap (9/23)", "decision": "阶段与候选来源之一", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#15"], "status": "PARTIAL", "evidence": "dates and phases are planning prose, no committed duration", "disposition": "RETAINED", "nextOrBlocked": "none"},
-    {"id": "W06", "kind": "input-source", "title": "最新闭环审计结论 (10/6)", "decision": "T01—T09 与状态观察值", "anchors": ["docs/audits/BLUEPRINT_SYNC_AUDIT_2026-10-06.md"], "status": "PARTIAL", "evidence": "its SHA/PR/CI/test figures re-observed this round; PR head moved", "disposition": "RETAINED", "nextOrBlocked": "see CH-18"},
-    {"id": "W07", "kind": "input-source", "title": "Owner Decisions 默认裁决 (10/6)", "decision": "OD01—OD05 的载体文件", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#11"], "status": "PARTIAL", "evidence": "OD sub-ids are cited in the body but not enumerated in the appendix", "disposition": "RETAINED", "nextOrBlocked": "recorded as task-pack defaults"},
-    {"id": "W08", "kind": "input-source", "title": "移交/独立审计对账 (10/1)", "decision": "启动器归属、受管块缺失、重装保全行为案例", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#5"], "status": "PARTIAL", "evidence": "carried as cases, not as unverified conclusions", "disposition": "RETAINED", "nextOrBlocked": "none"},
-    {"id": "W09", "kind": "input-source", "title": "编号缺位", "decision": "原文与附录均无 W09", "anchors": ["docs/future/WORK-LAB-BLUEPRINT-20261006.md#19"], "status": "UNVERIFIED", "evidence": "SOURCE_MISSING: numbering gap; the body also claims a read list of W01—W08 while citing W10", "disposition": "SOURCE_MISSING", "nextOrBlocked": "do not reconstruct what W09 was"},
-    {"id": "W10", "kind": "input-source", "title": "三项目未来蓝图历史分析 (2026-08-18)", "decision": "五核的原始出处", "anchors": ["docs/decisions/THREE_PROJECT_FUTURE_BLUEPRINT_ANALYSIS.md"], "status": "PARTIAL", "evidence": "superseded in part by CH-04's re-interpretation of Runtime Control", "disposition": "SUPERSEDED", "nextOrBlocked": "retained as historical evidence, not current spec"},
-    {"id": "C01", "kind": "input-source", "title": "CONTENT-COPY-V2 命名与状态口径", "decision": "对外命名 + Ongoing", "anchors": ["README.md", "docs/future/WORK-LAB-BLUEPRINT-20261006.md#1"], "status": "PARTIAL", "evidence": "appendix hash abbreviated; About sync recorded separately as non-Git metadata", "disposition": "RETAINED", "nextOrBlocked": "full hash value UNKNOWN, not reconstructed"}
+    {
+      "id": "CH-01",
+      "kind": "chapter",
+      "title": "口径、名称与最新规划",
+      "decision": "对外 Workflow Lab / 对内 WORK-LAB，展示状态 Ongoing；AG/U/T/W/C/OD 仅作追溯",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#1",
+        "README.md"
+      ],
+      "status": "PASS",
+      "evidence": "naming present in README + blueprint; C01 cited",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "GitHub About sync pending (§CH-19)"
+    },
+    {
+      "id": "CH-02",
+      "kind": "chapter",
+      "title": "母定义：执行与工作流治理层",
+      "decision": "客户端中立的个人 AI 工作流治理、控制与交付系统；不缩成 Dashboard，不扩成通用 Agent OS；企业化/K8S/集中账号非前置",
+      "anchors": [
+        "WORK-LAB-AUTHORITY.md#3",
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#2"
+      ],
+      "status": "PASS",
+      "evidence": "Authority §3 already states the control-plane mother definition",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "README wording drift corrected this round (it called the project a global-configuration layer only)"
+    },
+    {
+      "id": "CH-03",
+      "kind": "chapter",
+      "title": "所有权与不可混同的领域",
+      "decision": "七域划分；Evidence 同名不同域不赋跨项目写权；DESIGN-LAB 设计域与 AAOS 知识域不接管",
+      "anchors": [
+        "config/config-ownership.json",
+        ".project/governance/module-ownership.json",
+        ".project/governance/project-data-boundary.json",
+        "knowledge-staging/BOUNDARY.md"
+      ],
+      "status": "PASS",
+      "evidence": "machine contracts exist and are gated by verify_project_data_boundary.py / verify_module_dependencies.py",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "none"
+    },
+    {
+      "id": "CH-04",
+      "kind": "chapter",
+      "title": "五项核心能力与完整控制面",
+      "decision": "五核保留但 Runtime Control 重释为外部执行协作；完整能力集不得变成多个平行产品或账本",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#4",
+        "packages/client-neutral-core",
+        "services/"
+      ],
+      "status": "PARTIAL",
+      "evidence": "registry/work-unit/governance/evidence surfaces exist; Runtime Control interpretation change is documentation, not code",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "no second ledger; capability claims stay bound to §13 evidence vocabulary"
+    },
+    {
+      "id": "CH-05",
+      "kind": "chapter",
+      "title": "Canonical Source：规则、技能与配置",
+      "decision": "9 类受管内容 + 最小治理形态；配置事务八步；preserve_unknown；UPDATE ≠ RELOCATION",
+      "anchors": [
+        "config/config-ownership.json",
+        "AGENTS.md#Managed global configuration (Hermes)",
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#5"
+      ],
+      "status": "PARTIAL",
+      "evidence": "Hermes overlay + sync script + provenance file exist; transaction steps are enforced per surface, not by one contract test",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "readback truth across all clients is an open register item"
+    },
+    {
+      "id": "CH-06",
+      "kind": "chapter",
+      "title": "Skills、Plugins、MCP 与能力生命周期",
+      "decision": "治理十步；七层状态不可互证；SKILL.md 或 enabled 界面不证明生效",
+      "anchors": [
+        "scripts/ci/verify_skill_mcp_consistency.py",
+        "scripts/ci/verify_capability_conformance.py",
+        ".project/governance/model-capability-matrix.json"
+      ],
+      "status": "PARTIAL",
+      "evidence": "verifiers present; the seven-level ladder is not yet a machine-checked schema",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "candidate: express the ladder in the capability conformance contract"
+    },
+    {
+      "id": "CH-07",
+      "kind": "chapter",
+      "title": "Task / Work Unit",
+      "decision": "Work Unit 是主对象；12 行字段职责表不是新 JSON Schema；执行器不得自报 done；唯一 writer + lease + 隔离 worktree",
+      "anchors": [
+        "packages/client-neutral-core",
+        "scripts/ci/verify_contract_ssot.py",
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#7"
+      ],
+      "status": "PARTIAL",
+      "evidence": "ledger and contract verifiers exist; lifecycle-state fidelity is tracked in the open register",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "late-receipt / revision semantics need live execution evidence"
+    },
+    {
+      "id": "CH-08",
+      "kind": "chapter",
+      "title": "原生执行器、Adapter 与会话联邦",
+      "decision": "逐任务选执行器，无永久唯一主执行器；Adapter 八字词逐项声明，未实现须可见 NOT_IMPLEMENTED；Hermes 卸载与双执行器验收的张力保留",
+      "anchors": [
+        "integrations/",
+        "scripts/ci/verify_acp_adapter_honesty.py",
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#8"
+      ],
+      "status": "UNVERIFIED",
+      "evidence": "no live two-executor golden-chain run; AG-09/U18 remain open",
+      "disposition": "PENDING_CONFIRMATION",
+      "nextOrBlocked": "blocked on an owner-selected project + two real executors"
+    },
+    {
+      "id": "CH-09",
+      "kind": "chapter",
+      "title": "Context、记忆、交接与中断恢复",
+      "decision": "ContextEnvelope 带版本/摘要/有边界句柄；示例路径非现场事实；记忆候选非已选底座",
+      "anchors": [
+        "packages/client-neutral-core",
+        ".project/governance/future-candidate-registry.json",
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#9"
+      ],
+      "status": "PARTIAL",
+      "evidence": "handoff and context surfaces implemented for in-repo use; cross-client envelope not exercised",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "none newly invented"
+    },
+    {
+      "id": "CH-10",
+      "kind": "chapter",
+      "title": "统一入口：网页规划 → 原生执行",
+      "decision": "当前取结构化人工 handoff (OD02)；Remote MCP 为独立升级项需七项验证；网页额度 ≠ API 配额 ≠ OAuth 会话",
+      "anchors": [
+        "docs/future/WORK-LAB-SUPER-ENTRY-COMMAND-CENTER-LAB-ROUTER-2026-09-27.md",
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": "no automated transport implemented; manual handoff path is used but not registered as an executable contract",
+      "disposition": "PENDING_CONFIRMATION",
+      "nextOrBlocked": "AG-16/AG-17 open; the blueprint merges them into one row (SOURCE_GAP)"
+    },
+    {
+      "id": "CH-11",
+      "kind": "chapter",
+      "title": "Control 与 Observer：界面统一，权限分离",
+      "decision": "Control 是唯一写入口，默认 loopback-only (OD01) 复用 Permission Gate/Task Protocol/Completion Authority/Config Control Plane；Observer 严格只读；六条诚实等式",
+      "anchors": [
+        "apps/observer/AGENTS.md",
+        "scripts/ci/verify_observer_readonly_boundary.py",
+        "scripts/ci/verify_evidence_tiering.py"
+      ],
+      "status": "PARTIAL",
+      "evidence": "Observer read-only enforced and tested; a writable Control surface does not exist yet (AG-15)",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "T04/AG-15 open; OD01 is a task-pack default, not a renewed permanent approval"
+    },
+    {
+      "id": "CH-12",
+      "kind": "chapter",
+      "title": "模型、用量、费用与共享运行环境",
+      "decision": "八维度可表达；不得静默降质量或隐私；ready ≠ loaded；成本未知≠0；Token Monitor 不成第二成本真值",
+      "anchors": [
+        ".project/governance/model-registry.json",
+        "scripts/ci/verify_model_registry_integrity.py",
+        "apps/observer/scripts/verify_usage_rollup.py",
+        "apps/token-monitor"
+      ],
+      "status": "PARTIAL",
+      "evidence": "registry + rollup + integrity checks exist; real consumer verification (AG-10) and OCR/ASR acceptance (AG-11) are open",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "9/29 environment snapshot is time-pointed; no reinstall or delete authorization"
+    },
+    {
+      "id": "CH-13",
+      "kind": "chapter",
+      "title": "完成裁决、证据、交付与恢复",
+      "decision": "完成由目标+验证导出；NO_EVIDENCE/SIMULATED/SYNTHETIC/INTEGRATED/REAL；E0—E5 属 DESIGN-LAB 不可互换；跳过/取消/缺失不计 PASS；本轮不合并",
+      "anchors": [
+        "WORK-LAB-AUTHORITY.md#10",
+        "WORK-LAB-AUTHORITY.md#11",
+        "scripts/ci/verify_evidence_tiering.py",
+        "services/orchestration/run_quality_gate.py"
+      ],
+      "status": "PASS",
+      "evidence": "vocabulary is machine-enforced (verify_evidence_tiering.py) and the aggregate gate fails on skipped required jobs",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "none"
+    },
+    {
+      "id": "CH-14",
+      "kind": "chapter",
+      "title": "产品界面、技术栈与数据组织",
+      "decision": "七导航保留；五种界面模式是一系统的模式而非五套数据；不复制 DL Workbench/Launcher；不全仓 Rust 重写；前端不得推断价格/汇率/配额/端口/成功",
+      "anchors": [
+        "docs/decisions/language-architecture.md",
+        "apps/observer/frontend",
+        "apps/observer/src-tauri"
+      ],
+      "status": "PARTIAL",
+      "evidence": "stack matches the declared layering; U19 real-desktop surface still unproven (ERR-104/107)",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "desktop surface observation owed; see ERR-107 remaining_boundary"
+    },
+    {
+      "id": "CH-15",
+      "kind": "chapter",
+      "title": "未来蓝图六阶段",
+      "decision": "阶段名是本文组织，不是新 CURRENT 也不承诺工期；每阶段以真实旅程+回执+恢复能力放行",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#15",
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ],
+      "status": "UNVERIFIED",
+      "evidence": "phase 15.1 items map to open register rows; 15.5/15.6 have no acceptance criteria in the source",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "SOURCE_GAP: §15.6 conditional enhancements lack scenario, acceptance, phase slot and exit in the original — not invented here"
+    },
+    {
+      "id": "CH-16",
+      "kind": "chapter",
+      "title": "未来候选池",
+      "decision": "19 行候选 + 2 段落项；上游身份/版本/许可未在线复核；四条默认停止条件；失败回原生/人工路径",
+      "anchors": [
+        ".project/governance/future-candidate-registry.json",
+        "scripts/ci/verify_future_candidate_registry.py"
+      ],
+      "status": "PARTIAL",
+      "evidence": "registry holds 14 candidates with statuses DEFERRED/PILOT_CANDIDATE",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "COVERAGE GAP: source lists 19 table rows vs 14 registry entries; 5 unregistered. Also W03 itself says '14 未来候选', so the source disagrees internally (SOURCE_GAP). The paragraph-only items (MissionControl, Dagu, TokenTelemetry, MCP/skill/plugin/provider research pool, Strata/Qwen) carry no candidate fields"
+    },
+    {
+      "id": "CH-17",
+      "kind": "chapter",
+      "title": "最新闭环任务与未来目标的一一映射",
+      "decision": "T01—T09 与 AG/U 横切项映射到唯一 open register；未列出的 current 项不因此删减",
+      "anchors": [
+        "taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md",
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ],
+      "status": "PARTIAL",
+      "evidence": "AG-01..AG-20 and U01..U21 are enumerated in this matrix from the live files",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "SOURCE_GAP: blueprint has no AG-14 row, merges AG-16/17, omits AG-01..AG-08, omits W09, and cites OD03/04 jointly"
+    },
+    {
+      "id": "CH-18",
+      "kind": "chapter",
+      "title": "当前证据边界、历史缺口与禁止漂移",
+      "decision": "原文状态是文件观察值；10/5 本机 full gate FAIL 与 CI 绿同时保留；未重验不得升级；十条禁止漂移",
+      "anchors": [
+        "docs/audits/BLUEPRINT_SYNC_AUDIT_2026-10-06.md",
+        "taskpacks/current/error-ledger.json"
+      ],
+      "status": "PARTIAL",
+      "evidence": "live re-observation recorded in the audit snapshot; PR #162 head correction recorded",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "SOURCE_MISSING: original long chat, WORK-LAB-SUMMARY and the 9/28 startup/final attachments remain unrecovered (AG-19)"
+    },
+    {
+      "id": "CH-19",
+      "kind": "chapter",
+      "title": "可采用的项目描述与覆盖检查",
+      "decision": "一段式对外描述 + 覆盖自检；不宣称 Universal Workflow 已完成；不把本稿自动升为 Authority",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#19",
+        "README.md"
+      ],
+      "status": "PARTIAL",
+      "evidence": "About text recorded as before→after in the audit snapshot; repository About is non-Git metadata",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "About readback required after the metadata write; source coverage table is chapter-keyed, not ID-keyed, hence this matrix"
+    },
+    {
+      "id": "CH-APP",
+      "kind": "appendix",
+      "title": "来源、覆盖范围与追溯",
+      "decision": "12 条来源，11 条带 SHA-256；摘要是本会话副本的哈希，不证明上游未变",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#19",
+        ".project/governance/cross-module-source-index.json"
+      ],
+      "status": "PARTIAL",
+      "evidence": "source ids registered in the matrix inputs block",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "the blueprint's 章节索引 omits this appendix; the doubled atlas path segment is recorded as-is"
+    },
+    {
+      "id": "T01",
+      "kind": "closed-loop-task",
+      "title": "PR #162 或等价最小修复主线收敛",
+      "decision": "验收：修复/分类 full gate + exact-SHA 与 main 读回",
+      "anchors": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ],
+      "status": "PARTIAL",
+      "evidence": "PR #162 OPEN, head f3b5dec (advanced from the source-recorded 6f323a3); merge not authorized",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "merge to main requires explicit authorization"
+    },
+    {
+      "id": "T02",
+      "kind": "closed-loop-task",
+      "title": "本机完整门与 runtime/toolchain",
+      "decision": "required 项实际执行，失败/跳过保持诚实",
+      "anchors": [
+        "services/orchestration/run_quality_gate.py",
+        "taskpacks/current/error-ledger.json"
+      ],
+      "status": "PASS",
+      "evidence": "2026-10-06T23:06+08:00 local re-run of the full canonical gate on the working copy at base 4115d63 (two docs-only files edited during the run): QUALITY_GATE_PASS, modules=180 executed=1896 ran=1904 skipped=8, aggregate exit 0. Receipt: .project-local/runs/blueprint-doc-20261006/full-gate.log (1019 lines, no gate FAIL). The 2026-10-05 FAIL figures (1903 tests / 9 skipped / 12 errors / 22 failures, rerun_after_runtime_fix=false) stay on the record as history — that round was archived without ever being re-run after its environment fix, which is precisely why T02 existed.",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "Residuals the aggregate itself declares, not closed by this run: RUNTIME_CANARY_PENDING (no WORKLAB_CANARY_PROJECT_ROOTS), TAURI_WINDOWS_PENDING (real desktop WebView2 E2E — see T03), and the exact-sha-ci / work-lab-os-canary gates report PENDING by design off GitHub Actions. skipped=8 are test-level skips inside modules, not skipped required gates."
+    },
+    {
+      "id": "T03",
+      "kind": "closed-loop-task",
+      "title": "Windows Tauri U19 E2E",
+      "decision": "sidecar、Snapshot/SSE、Tauri、React、重连与隔离",
+      "anchors": [
+        "apps/observer/scripts/u19_webview_e2e.py",
+        "taskpacks/current/error-ledger.json"
+      ],
+      "status": "FAIL",
+      "evidence": "backend + native shell proven; composited desktop surface still unobserved (ERR-104 retraction, ERR-107 CDP unreliability)",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "one desktop observation owed; owner's on-screen report takes precedence"
+    },
+    {
+      "id": "T04",
+      "kind": "closed-loop-task",
+      "title": "Thin Control Surface",
+      "decision": "真写路径、授权、回执、readback/rollback",
+      "anchors": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ],
+      "status": "NOT_RUN",
+      "evidence": "no writable control surface implemented; AG-15 open",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "must not smuggle write authority into Observer"
+    },
+    {
+      "id": "T05",
+      "kind": "closed-loop-task",
+      "title": "Super Entry / WebGPT handoff",
+      "decision": "结构化人工链，规划候选可校验",
+      "anchors": [
+        "docs/future/WORK-LAB-SUPER-ENTRY-COMMAND-CENTER-LAB-ROUTER-2026-09-27.md"
+      ],
+      "status": "NOT_RUN",
+      "evidence": "AG-16/17 open; no registered handoff contract",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "manual paste must never be reported as an automatic transport"
+    },
+    {
+      "id": "T06",
+      "kind": "closed-loop-task",
+      "title": "双执行器 / 模型路由 / OCR-ASR",
+      "decision": "真实 consumer、修订取消恢复、质量矩阵",
+      "anchors": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ],
+      "status": "UNVERIFIED",
+      "evidence": "AG-09/AG-10/AG-11 open; Hermes uninstall history conflicts with the package's dual-executor goal",
+      "disposition": "PENDING_CONFIRMATION",
+      "nextOrBlocked": "owner must select the project and the two executors"
+    },
+    {
+      "id": "T07",
+      "kind": "closed-loop-task",
+      "title": "缺失原件与 Source Registry",
+      "decision": "恢复真实旧资料，不能新写后冒充原件",
+      "anchors": [
+        "knowledge-staging/BOUNDARY.md",
+        ".project/governance/cross-module-source-index.json"
+      ],
+      "status": "FAIL",
+      "evidence": "AG-19 open: original long chat, WORK-LAB-SUMMARY and the 9/28 attachments remain inaccessible",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "any restored item is registered by path/time/hash/original location/coverage relation"
+    },
+    {
+      "id": "T08",
+      "kind": "closed-loop-task",
+      "title": "旧分支吸收与退役",
+      "decision": "语义/字段差异，禁止整支盲合并",
+      "anchors": [
+        "taskpacks/current/BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917.md"
+      ],
+      "status": "PARTIAL",
+      "evidence": "2026-09-17 convergence executed and frozen; later absorbable increments still judged per semantic diff",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "no long-lived shadow-main"
+    },
+    {
+      "id": "T09",
+      "kind": "closed-loop-task",
+      "title": "最终验收与 Authority 回写",
+      "decision": "状态、open register、证据与实际一致",
+      "anchors": [
+        "WORK-LAB-AUTHORITY.md#15",
+        ".project/governance/project-authority-index.json"
+      ],
+      "status": "PARTIAL",
+      "evidence": "this round lands documentation and coverage; Authority unchanged (no decision changed)",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "final acceptance pending T02/T03 re-runs"
+    },
+    {
+      "id": "OD01",
+      "kind": "owner-default",
+      "title": "loopback-only Control 服务/合同",
+      "decision": "调用既有 Permission Gate/Task Protocol/Completion Authority/Config Control Plane",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#11"
+      ],
+      "status": "UNVERIFIED",
+      "evidence": "source category is 任务包默认, not a renewed permanent approval",
+      "disposition": "PENDING_CONFIRMATION",
+      "nextOrBlocked": "surface does not exist yet"
+    },
+    {
+      "id": "OD02",
+      "kind": "owner-default",
+      "title": "先做结构化人工 handoff",
+      "decision": "自动桥接延后，禁止伪装",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": "matches AG-16/17 sequencing",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "none"
+    },
+    {
+      "id": "OD03",
+      "kind": "owner-default",
+      "title": "binary rerank 核心 + continuous 按需",
+      "decision": "当前无运维范围的默认收敛",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#12"
+      ],
+      "status": "UNVERIFIED",
+      "evidence": "SOURCE_GAP: the blueprint cites OD03/OD04 jointly, so the split of meaning between them is not recoverable from the source",
+      "disposition": "PENDING_CONFIRMATION",
+      "nextOrBlocked": "do not assign the joint citation's content to either id alone"
+    },
+    {
+      "id": "OD04",
+      "kind": "owner-default",
+      "title": "登录后自启动与自愈；session-0 真服务留未来",
+      "decision": "同 OD03 联合引用",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#12"
+      ],
+      "status": "UNVERIFIED",
+      "evidence": "SOURCE_GAP as recorded for OD03",
+      "disposition": "PENDING_CONFIRMATION",
+      "nextOrBlocked": "same"
+    },
+    {
+      "id": "OD05",
+      "kind": "owner-default",
+      "title": "Lite / 托盘 HUD / Quick Entry / Control / Observer 为界面模式",
+      "decision": "一套系统五种模式，不是五套数据",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#14"
+      ],
+      "status": "PARTIAL",
+      "evidence": "SOURCE_GAP: Lite, tray HUD and Quick Entry have no field or permission spec anywhere in the source; only Control and Observer are defined",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "must not be presented as implemented modes"
+    },
+    {
+      "id": "W01",
+      "kind": "input-source",
+      "title": "WORK-LAB-AUTHORITY-20260918-V2 归档副本 (9/29)",
+      "decision": "母定义/治理/边界的主要来源；非今日实时副本",
+      "anchors": [
+        "WORK-LAB-AUTHORITY.md"
+      ],
+      "status": "PARTIAL",
+      "evidence": "live Authority re-read this session; the archived copy is historical",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "hash recorded in the source appendix only"
+    },
+    {
+      "id": "W02",
+      "kind": "input-source",
+      "title": "历史与当前总报告 (9/29)",
+      "decision": "当前边界与历史缺口叙述",
+      "anchors": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ],
+      "status": "PARTIAL",
+      "evidence": "its byte/line counts are report values, not proof",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "AG-19 recovery still open"
+    },
+    {
+      "id": "W03",
+      "kind": "input-source",
+      "title": "能力总图 (9/29)",
+      "decision": "能力面与 14 未来候选",
+      "anchors": [
+        ".project/governance/future-candidate-registry.json"
+      ],
+      "status": "PARTIAL",
+      "evidence": "internal contradiction with the blueprint's 19-row pool recorded under CH-16",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "none"
+    },
+    {
+      "id": "W04",
+      "kind": "input-source",
+      "title": "统一入口架构对账 (9/29)",
+      "decision": "入口/Control/Observer 分层",
+      "anchors": [
+        "docs/future/WORK-LAB-SUPER-ENTRY-COMMAND-CENTER-LAB-ROUTER-2026-09-27.md"
+      ],
+      "status": "PARTIAL",
+      "evidence": "architecture documented; write path unimplemented",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "none"
+    },
+    {
+      "id": "W05",
+      "kind": "input-source",
+      "title": "Future Roadmap (9/23)",
+      "decision": "阶段与候选来源之一",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#15"
+      ],
+      "status": "PARTIAL",
+      "evidence": "dates and phases are planning prose, no committed duration",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "none"
+    },
+    {
+      "id": "W06",
+      "kind": "input-source",
+      "title": "最新闭环审计结论 (10/6)",
+      "decision": "T01—T09 与状态观察值",
+      "anchors": [
+        "docs/audits/BLUEPRINT_SYNC_AUDIT_2026-10-06.md"
+      ],
+      "status": "PARTIAL",
+      "evidence": "its SHA/PR/CI/test figures re-observed this round; PR head moved",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "see CH-18"
+    },
+    {
+      "id": "W07",
+      "kind": "input-source",
+      "title": "Owner Decisions 默认裁决 (10/6)",
+      "decision": "OD01—OD05 的载体文件",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#11"
+      ],
+      "status": "PARTIAL",
+      "evidence": "OD sub-ids are cited in the body but not enumerated in the appendix",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "recorded as task-pack defaults"
+    },
+    {
+      "id": "W08",
+      "kind": "input-source",
+      "title": "移交/独立审计对账 (10/1)",
+      "decision": "启动器归属、受管块缺失、重装保全行为案例",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#5"
+      ],
+      "status": "PARTIAL",
+      "evidence": "carried as cases, not as unverified conclusions",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "none"
+    },
+    {
+      "id": "W09",
+      "kind": "input-source",
+      "title": "编号缺位",
+      "decision": "原文与附录均无 W09",
+      "anchors": [
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#19"
+      ],
+      "status": "UNVERIFIED",
+      "evidence": "SOURCE_MISSING: numbering gap; the body also claims a read list of W01—W08 while citing W10",
+      "disposition": "SOURCE_MISSING",
+      "nextOrBlocked": "do not reconstruct what W09 was"
+    },
+    {
+      "id": "W10",
+      "kind": "input-source",
+      "title": "三项目未来蓝图历史分析 (2026-08-18)",
+      "decision": "五核的原始出处",
+      "anchors": [
+        "docs/decisions/THREE_PROJECT_FUTURE_BLUEPRINT_ANALYSIS.md"
+      ],
+      "status": "PARTIAL",
+      "evidence": "superseded in part by CH-04's re-interpretation of Runtime Control",
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "retained as historical evidence, not current spec"
+    },
+    {
+      "id": "C01",
+      "kind": "input-source",
+      "title": "CONTENT-COPY-V2 命名与状态口径",
+      "decision": "对外命名 + Ongoing",
+      "anchors": [
+        "README.md",
+        "docs/future/WORK-LAB-BLUEPRINT-20261006.md#1"
+      ],
+      "status": "PARTIAL",
+      "evidence": "appendix hash abbreviated; About sync recorded separately as non-Git metadata",
+      "disposition": "RETAINED",
+      "nextOrBlocked": "full hash value UNKNOWN, not reconstructed"
+    }
   ]
 }
