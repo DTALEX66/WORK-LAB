@@ -123,3 +123,26 @@ UI 层不读凭据/env/cookie、主题与布局态不落 web storage（编辑器
 **投影真值与渲染契约仍未重锚**（它们断言的是 fixture 数值、估算≠账单、RFC3339、
 覆盖率、乱序 revision 拒绝等，React 侧由 `truth.test.tsx`/`lib/api.test.ts` 部分承担但
 未逐条对齐），故 `apps/observer/web` 仍不删，U03 保持 PARTIAL。基准 `214acb0`。
+
+### 2026-10-07 投影真值 13 条的逐条归属（只认具名测试标题）
+
+生产侧现有 87 条具名断言被用于判定；下列 13 条旧断言里，**5 条**能指到具名等价物，**8 条 OPEN**。
+
+| 旧断言（test_projection_contract.js） | 生产侧归属 |
+|---|---|
+| fixture parses as valid JSON object with core keys | **OPEN — no named production assertion covers this** |
+| inline API FIXTURE matches authoritative fixture numbers | **OPEN — no named production assertion covers this** |
+| input/output/cache/cost never collapsed into a fabricated total token | lib/api.test.ts — fmtTokens null/undefined -> UNKNOWN, never "0"; executionsToRows: unknown project -> null tokens + UNKNOWN quality (no 0) |
+| cost shown as API estimate / USD, never as an exact bill | lib/api.test.ts — fmtCostQuality: absent -> UNKNOWN; components/truth.test.tsx — TokenPanel with no data renders UNKNOWN everywhere, no 0 |
+| subscriptionUsage=not-metered renders as 订阅未计量, never 0 | **OPEN — no named production assertion covers this** |
+| all fixture dates are strict RFC3339 | **OPEN — no named production assertion covers this** |
+| coverage has numerator/denominator/scope | **OPEN — no named production assertion covers this** |
+| unknown/new fields are forward compatible (extra keys ignored, no crash) | **OPEN — no named production assertion covers this** |
+| missing required core keys degrade gracefully (no crash, partial/unknown shown) | **OPEN — no named production assertion covers this** |
+| empty-new-install fixture renders (empty state, no crash, no fake success) | components/truth.test.tsx — ProjectPanel with no data says the registry is empty / UNKNOWN; ExecutionTable with no data and no source says waiting, not fabricates rows |
+| schema file is valid JSON and lists the 10 core required keys | **OPEN — no named production assertion covers this** |
+| bundled snapshot has an explicit non-live mode | App.behavior.test.tsx — without a ?api= the write-back adds no api param (no fabricated source); every KPI number is UNKNOWN when there is no snapshot |
+| compact header reflects the active data mode | components/truth.test.tsx — CompactHUD with no data shows UNKNOWN transport + 0-fabrication; App.behavior.test.tsx — ?view=compact renders the Compact HUD, no sidebar rail |
+
+`test_render_v3.js` 的 19 条同法处理前，`web/` 不删。OPEN 项的共同主题：fixture 数值一致性、RFC3339 严格日期、覆盖率三元组、未知字段前向兼容、缺键优雅降级、schema 必含 10 键、not-metered 渲染为「订阅未计量」而非 0——这些都是可从 v3 快照/`lib/api.ts` 直接断言的纯函数级性质，迁移不需要真实素材。
+

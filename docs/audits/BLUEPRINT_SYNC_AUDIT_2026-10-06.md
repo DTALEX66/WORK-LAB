@@ -6,23 +6,19 @@
 
 ```json
 {
-  "observedAt": "2026-10-07T01:35:34+0800",
+  "observedAt": "2026-10-07T01:55:14+0800",
   "remote": "git@github.com:DTALEX66/WORK-LAB.git",
   "branch": "task-decomposition/atlas-gap-archive-20261001",
-  "localHead": "05994d0beeb97812d1f0094d9ef2812d0f4cec87",
+  "localHead": "1d3b20d03ac2fa5c2adb92b95ffdf878336f169d",
   "baseSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
   "dirtyFiles": [
     ".project/governance/generated/CURRENT_STATE.json",
     ".project/governance/generated/CURRENT_STATE.md",
-    ".project/governance/project-data-boundary.json",
-    "scripts/ci/record_blueprint_audit_snapshot.py",
-    "scripts/ci/verify_project_data_boundary.py",
-    "taskpacks/current/OPEN-TASK-REGISTER.md",
-    "taskpacks/current/error-ledger.json"
+    "apps/observer/parity-matrix-u03.md"
   ],
-  "statusRecords": 8,
+  "statusRecords": 4,
   "liveMainSha": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
-  "liveBranchSha": "05994d0beeb97812d1f0094d9ef2812d0f4cec87"
+  "liveBranchSha": "1d3b20d03ac2fa5c2adb92b95ffdf878336f169d"
 }
 ```
 
@@ -33,7 +29,7 @@
 ```json
 {
   "baseRefName": "main",
-  "headRefOid": "05994d0beeb97812d1f0094d9ef2812d0f4cec87",
+  "headRefOid": "1d3b20d03ac2fa5c2adb92b95ffdf878336f169d",
   "mergeable": "MERGEABLE",
   "state": "OPEN",
   "url": "https://github.com/DTALEX66/WORK-LAB/pull/162"
@@ -61,14 +57,18 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
 
 ```json
 {
-  "headSha": "05994d0beeb97812d1f0094d9ef2812d0f4cec87",
-  "count": 22,
+  "headSha": "1d3b20d03ac2fa5c2adb92b95ffdf878336f169d",
+  "count": 21,
   "buckets": {
-    "pass": 18,
-    "pending": 4
+    "pending": 12,
+    "pass": 9
   },
   "pendingOrFailing": [
     {
+      "name": "wlr060-aggregate",
+      "bucket": "pending"
+    },
+    {
       "name": "observer",
       "bucket": "pending"
     },
@@ -77,11 +77,39 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
       "bucket": "pending"
     },
     {
-      "name": "token-monitor",
+      "name": "workflow-assistance",
+      "bucket": "pending"
+    },
+    {
+      "name": "integration",
+      "bucket": "pending"
+    },
+    {
+      "name": "supply-chain-security",
       "bucket": "pending"
     },
     {
       "name": "observer",
+      "bucket": "pending"
+    },
+    {
+      "name": "token-monitor",
+      "bucket": "pending"
+    },
+    {
+      "name": "workflow-assistance",
+      "bucket": "pending"
+    },
+    {
+      "name": "supply-chain-security",
+      "bucket": "pending"
+    },
+    {
+      "name": "integration",
+      "bucket": "pending"
+    },
+    {
+      "name": "config-compiler",
       "bucket": "pending"
     }
   ]
@@ -126,7 +154,7 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
     "ERR-110": "PASS",
     "ERR-111": "PASS"
   },
-  "ledgerEntries": 116,
+  "ledgerEntries": 117,
   "candidatePool": {
     "candidates": 21,
     "sourceRows": 19,
@@ -151,7 +179,7 @@ About 不属于仓库内容，提交 README 不等于改过 About；此处单独
 | 命令 | 退出码 | 末行结果 |
 |---|---|---|
 | `scripts/ci/verify_project_authority_reference.py` | 0 | AUTHORITY_REFERENCE_PASS top=WORK-LAB-AUTHORITY.md current=WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918 register=OPEN-TASK-REGISTER.md |
-| `scripts/ci/verify_error_ledger.py` | 0 | ERROR_LEDGER_PASS entries=116 classifications=13 raw_sensitive_data=false counts_consistent=true |
+| `scripts/ci/verify_error_ledger.py` | 0 | ERROR_LEDGER_PASS entries=117 classifications=13 raw_sensitive_data=false counts_consistent=true |
 | `scripts/ci/verify_blueprint_coverage.py` | 0 | BLUEPRINT_COVERAGE_PASS rows=87 kinds={'chapter': 19, 'appendix': 1, 'closed-loop-task': 9, 'owner-default': 5, 'input-source': 11, 'atlas-gap': 20, 'register-row': 22} status_vocabulary=reused dispositions=owner_prompt_ |
 | `scripts/ci/verify_future_candidate_registry.py` | 0 | FUTURE_CANDIDATE_REGISTRY_PASS candidates=21 blueprint_rows=19 claimed_rows=19 |
 | `scripts/ci/verify_project_data_boundary.py` | 0 | PROJECT_DATA_BOUNDARY_PASS runtime=.project-local/runs evidence=.project-local/artifacts |
