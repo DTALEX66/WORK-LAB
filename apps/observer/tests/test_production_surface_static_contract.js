@@ -334,6 +334,27 @@ function run() {
       "the b10 hover lift is still active on disabled buttons");
   });
 
+  t("the declared read-only constraints agree between TypeScript and the brand JSON", () => {
+    // Work-order 14's real point is not that the constraints are written down
+    // somewhere, but that the two places they are written down cannot disagree:
+    // tokens.ts is what the code imports, design-tokens.json is what non-TS
+    // consumers (packaging, audits, the desktop shell) read.
+    const tokens = fs.readFileSync(path.join(SRC, "theme", "tokens.ts"), "utf-8");
+    const block = /export const VIEW_CONSTRAINTS\s*=\s*\{([\s\S]*?)\}/.exec(tokens);
+    assert(block, "theme/tokens.ts must export VIEW_CONSTRAINTS");
+    const declared = {};
+    for (const [, key, val] of block[1].matchAll(/(\w+):\s*(true|false)/g)) declared[key] = val === "true";
+    const json = JSON.parse(fs.readFileSync(path.join(BRAND, "design-tokens.json"), "utf-8"));
+    for (const key of ["readOnly", "externalMutation", "modelSummary"]) {
+      assert(key in declared, `VIEW_CONSTRAINTS does not declare ${key}`);
+      assert(key in json.constraints, `design-tokens.json does not declare constraints.${key}`);
+      assert(declared[key] === json.constraints[key],
+        `${key} disagrees: tokens.ts=${declared[key]} design-tokens.json=${json.constraints[key]}`);
+    }
+    assert(declared.readOnly === true && declared.externalMutation === false && declared.modelSummary === false,
+      "the iron law itself has changed: readOnly must be true, externalMutation and modelSummary false");
+  });
+
   console.log(`TOTAL: ${pass} passed, ${fail} failed`);
   return { pass, fail };
 }

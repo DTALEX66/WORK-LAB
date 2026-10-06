@@ -362,6 +362,24 @@ DOM 文本拼接会吃掉词边界。
 
 **这 18 条做完之前 `apps/observer/web` 不删。**
 
+### 2026-10-07 工作单收口：18 条全部关闭
+
+后续三轮把上面工作单逐条落地：1-12 由步骤 3（`transportTruthContract.test.ts` 11 条 ＋
+node 文件级 2 条，证伪 15/15）关闭；13／15／16／17 与"只读文案归属"由步骤 4
+（品牌 5 件迁入并断言、紧凑四张 KPI 钉住、密集项目列表记为有意放弃、断点按**行为**移植、
+`Views.tsx`/`App.tsx` 的只读与不伪造措辞各有具名断言，证伪 5/5）关闭；
+最后一条 14 由 `theme/tokens.ts` 新增 `VIEW_CONSTRAINTS` 与 `design-tokens.json.constraints`
+的**双向对撞断言**关闭（`the declared read-only constraints agree between TypeScript and the
+brand JSON`，node 契约 23→24）——两处各写一份不叫单源，两处一旦不一致就红，
+所以证伪用了三针：改 JSON、删 tokens 声明、只改 tokens 里的 `readOnly`，三针各自变红
+（第三针第一次被判 SURVIVED 是**我的预期字符串写错**——它先撞上"disagrees"那条断言，
+报错文本是 `readOnly disagrees: tokens.ts=false design-tokens.json=true`，门是对的）。
+
+至此旧树 72 条断言全部有归属，`apps/observer/web` 已在 `891c871` 退役删除，
+CI 两条工作流在该提交上全绿。**留给下轮的不是工作单条目，而是两件新事**：
+把迁入的品牌 SVG 真正挂到头部（视觉改动，需单独走查），以及把 CDP 布局探针接成 CI 门
+（现在它只量不门，窄屏那类缺陷靠静态形状契约兜，不如真实盒模型硬）。
+
 ### 2026-10-07 步骤 3 落地：传输面 OPEN 已收（基准 `78a81c3`）
 
 工作单头 12 条是**会产生假象的生产缺陷**，不是缺测试，所以先做它们。

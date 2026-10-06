@@ -129,3 +129,17 @@ export const THEMES: Record<"dark" | "light", ThemeValues> = {
   dark: DARK,
   light: LIGHT,
 };
+
+/**
+ * The read-only iron law, machine-readable — the visual layer's share of the
+ * authority chain (Observer projects, it never acts).
+ *
+ * assets/brand/design-tokens.json carries the same three values for consumers
+ * that do not read TypeScript; the production-surface static contract compares
+ * the two and fails on a disagreement, so this cannot drift into a decoration.
+ */
+export const VIEW_CONSTRAINTS = {
+  readOnly: true,
+  externalMutation: false,
+  modelSummary: false,
+} as const;
