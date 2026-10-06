@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 111,
+    "total": 112,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
       "test_behavior_alignment": 13,
       "working_directory_recovery": 2,
-      "evidence_state": 17,
+      "evidence_state": 18,
       "ci_configuration": 8,
       "feature_gap": 9,
       "config_downgrade": 3,
@@ -3100,6 +3100,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer overlay accessibility and narrow-screen operability",
         "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
+      }
+    },
+    {
+      "error_id": "ERR-113",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "evidence_state",
+      "entrypoint": ".project/governance/model-registry.json, .project/governance/external-libraries-index.json, services/orchestration/run_quality_gate.py (gate_external_libraries_index)",
+      "command": "python .project-local/runs/convergence-20261007-c/absorb_local_assets.py; …/fix_hf_measure.py; python services/orchestration/run_quality_gate.py model-registry-integrity",
+      "exit_code": 1,
+      "observed_error": "Three faults came out of one absorption pass. (1) A first measurement counted files under huggingface/hub/<repo>/blobs/ only and reported the Systran faster-whisper repos as having no weights; they hold 226,088,372 B under snapshots/<revision>/model.bin. The wrong probe produced a wrong UNKNOWN and would have written it into the governance file. (2) model-registry.json recorded the whisper weight as bytes=1,618,000,000 while the file is 1,617,884,929 B — a rounded figure stored as fact. (3) gate_external_libraries_index promised 'sharedRoots resolve + assets present' in its own docstring but never passed --authorized-discovery, so every run reported NOT_SEARCHED for all four roots and the promise was never checked.",
+      "root_cause": "(1) A hub cache has two layouts — a blobs/ store with symlinks, and files written straight into snapshots/<revision>/ — and a claim about 'what is on disk' must enumerate the repo directory, not one subdirectory of it. (2) Numbers copied from a migration summary rather than measured keep their rounding; a byte field is a measurement claim. (3) A gate was written to be safe on machines without the shared roots (CI, a fresh clone) by not searching them, and the opt-in flag that makes a local run actually look was never used by the local gate.",
+      "fix": "(1) Re-measured per repo across the whole directory: the five PaddlePaddle repos hold only a 40 B refs pointer each and zero weight files, so the OCR entry is now REFS_ONLY_NO_WEIGHTS with the per-repo byte counts, and the Systran entry is WEIGHTS_PRESENT_ON_DISK with measured model.bin digests. (2) file.bytes replaced with the measured size and the digest completed: whisper model.bin = e76620f83d5f5b69… (1,617,884,929 B), sense-voice model.int8.onnx = c71f0ce00bec95b0… (239,233,841 B). (3) The gate now passes --authorized-discovery, and its docstring states which class of check is fatal and which is reported.",
+      "regression_test": "Digest completion is self-falsifying: the script aborts unless the computed sha256 starts with the 16-hex prefix the 2026-09-29 migration round recorded, so a substituted file cannot be certified. The zipformer entry was left TRUNCATED — no prior prefix identifies its six .onnx files, so no digest is claimed, only measured names and byte counts. MODEL_REGISTRY_INTEGRITY_PASS providers=9 models=10 confirms the completed blocks satisfy the closed COMPLETE/TRUNCATED vocabulary, and the index gate reports FOUND_COMPATIBLE for all four roots.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A claim about what exists on disk is produced by enumerating the whole directory tree of the thing, not a conventional subdirectory of it; a byte count is a measurement and must come from stat, never from a summary; and a gate whose docstring asserts a check must pass the flag that performs it — reporting NOT_SEARCHED for four roots while claiming roots resolve is a green light that never looked.",
+      "remaining_boundary": "Absorbed: two ASR digests completed, one ASR artifact list corrected, tesseract (tesseract v5.5) and ffmpeg (ffmpeg version ) registered with executed version readback plus executable digests, and 326 traineddata files counted. NOT absorbed: rapidocr-onnxruntime 1.4.4 with its three PP-OCRv4 ONNX weights lives inside another project's venv and is registered as a read-only reference with measured digests only — making it a WORK-LAB dependency means installing it into a WORK-LAB-owned environment, which is an AG-11 decision. PP-OCRv6 weights are genuinely absent, so AG-11 gains no OCR capability from this root, and no PaddleOCR download was performed here. AG-12 still has no llama.cpp on either shared root, so continuous rerank scores remain unavailable and the binary-vs-continuous decision stays open.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "d4f9723",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Model and external-library registry truth",
+        "regressionCommand": "python services/orchestration/run_quality_gate.py model-registry-integrity"
       }
     }
   ],

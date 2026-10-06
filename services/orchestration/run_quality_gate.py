@@ -556,8 +556,16 @@ def gate_context_control_plane() -> int:
 
 
 def gate_external_libraries_index() -> int:
-    """External libraries index: JSON valid + sharedRoots resolve + assets present."""
-    return run_python(["packages/client-neutral-core/scripts/verify_external_libraries_index.py"])
+    """External libraries index: structure is fatal, root discovery is reported.
+
+    The docstring promised "sharedRoots resolve + assets present" while the call never
+    passed --authorized-discovery, so every run reported NOT_SEARCHED for all four roots
+    and the promise was never actually checked. Discovery states stay non-fatal by the
+    verifier's own design (a volume that is offline is not evidence of missing
+    software); what changes is that this machine's roots are now really searched.
+    """
+    return run_python(["packages/client-neutral-core/scripts/verify_external_libraries_index.py",
+                       "--authorized-discovery"])
 
 
 def gate_protected_drives_consistency() -> int:

@@ -306,15 +306,16 @@
       "revision": "large-v3-turbo (CTranslate2)",
       "quantization": "float16 CT2",
       "file": {
-        "relative_path": "whisper/faster-whisper-large-v3-turbo",
-        "bytes": 1618000000
+        "relative_path": "whisper/faster-whisper-large-v3-turbo/model.bin",
+        "bytes": 1617884929
       },
-      "sha256": null,
+      "sha256": "e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da",
       "assetDigest": {
-        "state": "TRUNCATED",
-        "prefix": "e76620f83d5f5b69",
+        "state": "COMPLETE",
         "artifact": "model.bin",
-        "reason": "AG-05 (2026-10-01): the full 64-hex digest of model.bin was never captured in any repository record; only this 16-hex prefix from the 2026-09-29 migration round survives, and no manifest carries the whole value. The digest is therefore NOT verifiable and must not be read as one. Completing it requires re-hashing the weight in the shared Model library, which needs a separate, path-scoped read authorization and was not performed here."
+        "completedAt": "2026-10-07",
+        "how": "Re-hashed whisper/faster-whisper-large-v3-turbo/model.bin on 2026-10-07 under the owner's 2026-10-07 authorization; the computed digest starts with the 16-hex prefix the 2026-09-29 migration round recorded, which is what identifies this file as the same artifact rather than a replacement. The prior state was TRUNCATED with sha256=null.",
+        "sha256": "e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da"
       },
       "license": "MIT",
       "runtime": "faster-whisper (CTranslate2)",
@@ -354,14 +355,16 @@
       "revision": "2024-07-17",
       "quantization": "int8 + fp32 variants",
       "file": {
-        "relative_path": "sherpa-onnx/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17"
+        "relative_path": "sherpa-onnx/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx",
+        "bytes": 239233841
       },
-      "sha256": null,
+      "sha256": "c71f0ce00bec95b07744e116345e33d8cbbe08cef896382cf907bf4b51a2cd51",
       "assetDigest": {
-        "state": "TRUNCATED",
-        "prefix": "c71f0ce00bec95b0",
+        "state": "COMPLETE",
         "artifact": "model.int8.onnx",
-        "reason": "AG-05 (2026-10-01): only a 16-hex prefix exists in the repository record; the full digest was never captured and no manifest carries it. Not verifiable as-is; completing it requires re-hashing the weight in the shared Model library under a separate path-scoped read authorization."
+        "completedAt": "2026-10-07",
+        "how": "Re-hashed sherpa-onnx/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx on 2026-10-07 under the owner's 2026-10-07 authorization; the computed digest starts with the 16-hex prefix the 2026-09-29 migration round recorded, which is what identifies this file as the same artifact rather than a replacement. The prior state was TRUNCATED with sha256=null.",
+        "sha256": "c71f0ce00bec95b07744e116345e33d8cbbe08cef896382cf907bf4b51a2cd51"
       },
       "license": "apache-2.0",
       "runtime": "sherpa-onnx",
@@ -398,9 +401,34 @@
       "sha256": null,
       "assetDigest": {
         "state": "TRUNCATED",
-        "prefix": "84c6a8f372686faa",
-        "artifact": "encoder fp32",
-        "reason": "AG-05 (2026-10-01): only a 16-hex prefix exists in the repository record; the full digest was never captured and no manifest carries it. Not verifiable as-is; completing it requires re-hashing the weight in the shared Model library under a separate path-scoped read authorization."
+        "artifact": "encoder-epoch-99-avg-1.onnx",
+        "reason": "The record named an artifact called `encoder` that does not exist; this streaming model is a triple (encoder/decoder/joiner), each in fp32 and int8. Measured on 2026-10-07 the six .onnx files and their byte counts are listed in `directoryContents`. No 64-hex digest is claimed because no earlier record carries a prefix to identify these files against — asserting one would be a digest with no provenance.",
+        "directoryContents": [
+          {
+            "name": "decoder-epoch-99-avg-1.int8.onnx",
+            "bytes": 1888682
+          },
+          {
+            "name": "decoder-epoch-99-avg-1.onnx",
+            "bytes": 7509745
+          },
+          {
+            "name": "encoder-epoch-99-avg-1.int8.onnx",
+            "bytes": 21621684
+          },
+          {
+            "name": "encoder-epoch-99-avg-1.onnx",
+            "bytes": 40948171
+          },
+          {
+            "name": "joiner-epoch-99-avg-1.int8.onnx",
+            "bytes": 1795562
+          },
+          {
+            "name": "joiner-epoch-99-avg-1.onnx",
+            "bytes": 7109975
+          }
+        ]
       },
       "license": "apache-2.0",
       "runtime": "sherpa-onnx",
@@ -611,6 +639,6 @@
       "sherpa-onnx-streaming-zipformer-zh-14m"
     ]
   },
-  "lastVerified": "2026-09-29",
+  "lastVerified": "2026-10-07",
   "verifier": "PENDING (see model-governance closeout)"
 }
