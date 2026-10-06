@@ -117,3 +117,17 @@
 已证实：`0103286` 双端一致（`git ls-remote` 回读同 SHA）；push 事件 run `37424935288` head_sha = `0103286…` conclusion=success；本机 `observer-web-contracts` 76/76、`observer-python-skeleton` 8/8、前端 typecheck + vitest(77) + build 全 exit 0；MSVC 增量重建 `BUILD_EXIT=0`。
 
 仍未闭合（不得记 PASS）：§5.3 U19 真实桌面表面证明（`ERR-098` 结论不变）；`pull_request` 事件 run 于本文件写作时仍在跑；本地门禁对 Node 契约组仍无覆盖（`ERR-100` 的 remaining_boundary）；气泡右缘夹取；除默认 1280×820 与被压窄的 946px 之外的窗口尺寸未测；其他客户端 live 部署与回读；merge main（需授权）；AG-15/16/17/10/11；AG-19 历史原件恢复。
+
+### 9.5 P0-C 的下一个真实障碍：仓库自己的 U19 harness 也认死路径（2026-10-06 续）
+
+`0103286` / `c46481d` / `6c63218` 的 exact-SHA CI 已全绿（两个 workflow × pull_request 与 push 两个事件全部 success；PR #162 的 `head=6c63218`，`observer` 与 `aggregate` 均 SUCCESS）。**`pull_request` run 后来也跑完了，§9.4 里"仍在跑"这一条作废。**
+
+P0-C 仍未 PASS，且新查明一个与 `ERR-099` 同种的障碍在**仓库自己的门禁脚本**里：`apps/observer/scripts/u19_webview_e2e.py:446` 写死
+
+```python
+exe = OBS / "src-tauri" / "target" / "release" / "app.exe"
+```
+
+而本项目文档化的本机构建配方设了 `CARGO_TARGET_DIR`（`.project-local/runs/u19-msvc-20261006/target`），产物落在那边（本次实测 `a06f4c85…` 与 `c9a5b833…` 两次都在 runs 目录，而 `src-tauri/target/release/app.exe` 停在 13:51 的 `1e8528e3…`）。所以**在本机跑 U19 得到的桌面表面判定，key 的是被超越的二进制**；CI 不受影响（CI 在 `apps/observer/src-tauri` 里跑 `cargo build --release --locked`，未设 `CARGO_TARGET_DIR`，默认路径恰好正确）——这也解释了为什么这条缺陷至今没有在 CI 上暴露。
+
+下一步（建议顺序，尚未执行）：① 把该行改为先解析 `CARGO_TARGET_DIR`、再回落默认路径，并要求产物比 `tauri.conf.json`/`src/*.rs`/`frontend/dist/**` 新，否则 `FAIL` 而不是照拍；② 重跑 harness，让它的 GDI 像素证明建立在被修正的窗口几何上；③ 才谈"真实桌面表面"能否记 PASS。§9.1 的 `shot3.py` 已经在做 ①②所想要求的事（按 SHA+新鲜度选件、拍 `GetClientRect`、双路互证），可以作为该行的实现参照，但**它是本机仪器、不是仓库门禁**，不能拿它的读数替代门禁的读回。
