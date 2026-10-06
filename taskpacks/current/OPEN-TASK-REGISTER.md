@@ -183,7 +183,7 @@ candidate lanes of the unadopted snapshot taskpack and from the `U*` CURRENT-Tas
 
 保留项：`.project-local/toolchains`（860 MB，门禁唯一依赖）、本轮全部日志与证据（`e2e-run1..5.log`、`build-msvc.log`、`retired-gnu/app-gnu-20260921.exe`、诊断 JSON）。仓库外增量：共用 `CARGO_HOME/registry` 今日新增 123 文件 / 4.18 MB（镜像 crate 与解包源），可定位可清理，未动。
 
-**追踪内容无需瘦身**：1,959 文件 / 16.80 MB，`__pycache__/node_modules/target/zip/log/exe` 被追踪数为 **0**。剩余一个待裁决的重复项（不在本次授权范围内，未动）：`knowledge-staging/asset-provenance/skills/hermes/<name>-<hash>.md` 与 `reports/audit-archive/20260930/hermes/skills/**/SKILL.md` 存在同字节双份（exact-sha-ci 160.7 KB ×2、audited-project-delivery 98.4 KB ×2）。
+**追踪内容无需瘦身**：1,959 文件 / 16.80 MB，`__pycache__/node_modules/target/zip/log/exe` 被追踪数为 **0**。剩余一个待裁决的重复项（不在本次授权范围内，未动）：`knowledge-staging/asset-provenance/skills/hermes/<name>-<hash>.md` 与 `reports/audit-archive/20260930/hermes/skills/**/SKILL.md` 疑似双份，**2026-10-06 逐文件 sha256 实测否证**：exact-sha-ci 164,571 B vs 160,444 B、audited-project-delivery 100,899 B vs 98,422 B，摘要均不同 ⇒ 内容不同，**禁止删除**；且 knowledge-staging 被 module-ownership / three-project-boundary / boundary-migration-manifest / CURRENT_STATE 四处声明为面。
 
 ## 2026-10-06 会话归档行
 
