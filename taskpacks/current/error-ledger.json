@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 104,
+    "total": 105,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
@@ -17,7 +17,7 @@
       "working_directory_recovery": 2,
       "evidence_state": 15,
       "ci_configuration": 7,
-      "feature_gap": 7,
+      "feature_gap": 8,
       "config_downgrade": 3,
       "dead_entry": 2,
       "path_boundary": 3,
@@ -2918,6 +2918,32 @@
         "verifiedCommit": null,
         "affectedCapability": "U19 release binary provenance gate",
         "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py"
+      }
+    },
+    {
+      "error_id": "ERR-106",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "feature_gap",
+      "entrypoint": "apps/observer/frontend/src/skins/l10b-shell.css (.topbar, .winctl), apps/observer/frontend/src/skins/b10.css (.topbar{padding:0 24px}), apps/observer/src-tauri/tauri.conf.json (app.windows[*].decorations=false)",
+      "command": "python .project-local/runs/topbar-measure-20261006/measure_dom.py (headless Chrome on a scratch copy of the shipped dist, geometry read back through --dump-dom)",
+      "exit_code": 1,
+      "observed_error": "Owner report from the running app: the command row at the top has no margin at all, it sits directly on the window border. Measured at a 1262 CSS-px viewport: .topbar computed padding was `0px 285px 0px 24px`, the bar had wrapped to 105px tall, and both .search (h=50) and .drag-region reported top=0. Because both windows are declared decorations:false, the top of the layout IS the edge of the OS window, so that is literally flush.",
+      "root_cause": "b10.css carries .topbar{padding:0 24px} verbatim, written for a framed window where an OS title bar separates the content from the screen edge; the shell became frameless in 6bd0bd5 and nothing added vertical clearance afterwards. The shell layer did reserve horizontal space for the fixed caption cluster (285px) but left the vertical axis at zero, and align-items:center can only centre inside a box that starts below the edge — once the row wrapped, the first row began at y=0. Compounding it: my own visual audit measured only right- and bottom-edge overflow, so a flush top edge was not a detectable defect to it.",
+      "fix": "Shell-layer vertical padding only — .topbar{padding-top:12px;padding-bottom:12px} — so every hand-calculated horizontal reserve keeps its exact value, and .winctl moved top:10px to 18px so the 38px-tall cluster centres on the same line as the first row (12 + 50/2 = 37). Re-measured: .search top went 0 to 12 in both the 1280-wide main window and the compact panel, .top-actions to 70, and the cluster's centre now coincides with the command row's. The <=840px rule keeps its own padding:10px 14px.",
+      "regression_test": "node apps/observer/tests/test_desktop_component_contract.js asserts all four clearance values are declared in px and at least 10, naming the rule that fails. Falsified by zeroing padding-top (6 passed, 1 failed: '.topbar padding-top = 0px gives a frameless window no clearance'), then restored to 7 passed.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A visual audit of a frameless window must measure clearance to all four edges, never overflow to the right and bottom alone, because the container edge is the OS window edge there. Any layout rule that a reference design imports verbatim must be re-checked against the shell it is embedded in — a padding value chosen for a framed window is not a padding value for a borderless one.",
+      "remaining_boundary": "Numbers come from headless Chrome at a 1262x668 CSS viewport, not from the real WebView2 window (1600x1025 physical, 1280x820 logical). The owner's eye on the desktop stays the authority for whether the spacing reads right, and that observation is still owed — together with the caption-control re-test under ERR-103 and U19's surface proof under ERR-104.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "6bd0bd5",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer frameless shell top row",
+        "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
       }
     }
   ],

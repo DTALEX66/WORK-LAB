@@ -129,6 +129,36 @@ function run() {
       "capability does not grant:\n        " + missing.join("\n        "));
   });
 
+  // Both windows are frameless, so the top of the layout IS the edge of the OS
+  // window: a rule with no vertical clearance puts content directly against the
+  // border, which is exactly what the owner found by eye after a visual audit
+  // that only ever measured overflow to the right and bottom. These assertions
+  // keep the measured clearance from being zeroed again.
+  const SHELL_CSS = fs.readFileSync(
+    path.join(ROOT, "frontend", "src", "skins", "l10b-shell.css"), "utf8");
+
+  function px(property, where) {
+    const block = SHELL_CSS.match(where);
+    if (!block) return null;
+    const found = new RegExp(property + ":\\s*(-?[\\d.]+)px").exec(block[0]);
+    return found ? parseFloat(found[1]) : null;
+  }
+
+  test("the frameless shell keeps the top row clear of the window edge", () => {
+    const fixedCluster = /\.winctl\s*\{[^}]*position:\s*fixed[^}]*\}/;
+    const top = px("padding-top", /\.topbar\s*\{[^}]*padding-top[^}]*\}/);
+    const bottom = px("padding-bottom", /\.topbar\s*\{[^}]*padding-bottom[^}]*\}/);
+    const clusterTop = px("top", fixedCluster);
+    const clusterRight = px("right", fixedCluster);
+    for (const [name, value] of [[".topbar padding-top", top],
+                                 [".topbar padding-bottom", bottom],
+                                 [".winctl top", clusterTop],
+                                 [".winctl right", clusterRight]]) {
+      assert(typeof value === "number", `${name} is not declared in px`);
+      assert(value >= 10, `${name} = ${value}px gives a frameless window no clearance`);
+    }
+  });
+
   console.log("\n==== WORK-LAB desktop component contract tests ====");
   console.log(`TOTAL: ${pass} passed, ${fail} failed`);
   return { pass, fail };
