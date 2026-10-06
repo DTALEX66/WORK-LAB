@@ -3752,7 +3752,7 @@
       "regression_test": "tests/ci/test_current_state.py plus the CI step's own `generate_current_state.py --check-current`, both run locally here; scripts/ci/reproduce_ci_commands.py is the pre-push gate that would have caught this before the push",
       "evidence_level": "local-full",
       "repeat_prevention": "Before every push, run scripts/ci/reproduce_ci_commands.py over both workflow files and read its receipt; expect only the known build-skip failures. Never infer the CI verdict from the subset of gates that seems relevant to the change — a canonical-file digest is invisible to every verifier except the one that regenerates it.",
-      "remaining_boundary": "The repro run for this commit is in progress; until its receipt and the exact-SHA CI readback both report green, the fix is local-only evidence. README.md is also a CANONICAL_FILE, and the U02 round rewrote live documents, so the snapshot regenerated here carries that digest change too.",
+      "remaining_boundary": "The repro run for this commit is in progress; until its receipt and the exact-SHA CI readback both report green, the fix is local-only evidence. README.md is also a CANONICAL_FILE, and the U02 round rewrote live documents, so the snapshot regenerated here carries that digest change too. DEVIATION the same day: I pushed fd57eeb BEFORE running the repro, breaking the rule this record establishes. The run afterwards showed only the three known build-skip failures, so no red state shipped, but the ordering was wrong and is recorded rather than omitted; cf2b7e5 was pushed only after its receipt read failures=3.",
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
