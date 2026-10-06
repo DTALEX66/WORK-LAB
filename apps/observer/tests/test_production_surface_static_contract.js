@@ -64,8 +64,15 @@ function run() {
   t("read-only: no write request leaves the UI layer", () => {
     const mutating = appCode.match(/method\s*:\s*["'](POST|PUT|PATCH|DELETE)["']/gi) || [];
     assert(mutating.length === 0, "mutating HTTP methods in src: " + mutating.join(", "));
-    const verbs = appCode.match(/\bfetch\s*\(\s*[^)]*,\s*\{[^}]*\bmethod\b/gi) || [];
-    assert(verbs.length === 0, "fetch call with an options object found — re-check its method");
+    const verbs = [...appCode.matchAll(/\bfetch\s*\(\s*[^,)]+,\s*\{([\s\S]*?)\}\s*\)/g)];
+    const undeclared = verbs.filter((m) => !/method\s*:\s*["']GET["']/.test(m[1]));
+    // An implicit GET is not enough for a read-only surface: this is the
+    // "only GET fetch exists" half of the legacy contract, and it had no owner
+    // until the production read started declaring its method explicitly.
+    assert(verbs.length > 0, "the scan found no options-bearing fetch — re-check it before trusting this PASS");
+    assert(undeclared.length === 0,
+      "fetch with an options object must declare method: 'GET' — offenders: "
+      + undeclared.map((m) => m[1].replace(/\s+/g, " ").slice(0, 48)).join(" | "));
   });
 
   t("read-only: no credential, auth store or env read in the UI layer", () => {
@@ -164,10 +171,13 @@ function run() {
   t("no v3 snapshot literal is embedded in the production source", () => {
     // The legacy front hard-coded WlApi.FIXTURE and pinned its numbers to the
     // real fixture; the production front's only data source is the sidecar.
-    const typesPath = path.resolve(SRC, "types.ts");
+    // The scan is anchored on the assignment shape (a property holding the
+    // schema id), so a validator COMPARING schemaVersion is not mistaken for an
+    // embedded snapshot — the first version of this needle flagged api.ts's own
+    // parseSnapshotPayload as a violation.
+    const embedded = /[,{\s]schemaVersion\s*:\s*["']workflow\/snapshot\/v3["']/;
     const hits = sources
-      .filter((p) => path.resolve(p) !== typesPath)
-      .filter((p) => /workflow\/snapshot\/v3/.test(fs.readFileSync(p, "utf-8")))
+      .filter((p) => embedded.test(fs.readFileSync(p, "utf-8")))
       .map((p) => path.relative(SRC, p));
     assert(hits.length === 0, "files embedding a v3 snapshot literal: " + hits.join(", "));
   });
@@ -186,6 +196,30 @@ function run() {
     if (money.test(skins)) inMarkup.push("skins");
     assert(hits.length === 0 && inMarkup.length === 0,
       "currency/subscription wording in: " + [...hits, ...inMarkup].join(", "));
+  });
+
+  t("the production entry declares a responsive viewport and the compact shell keeps its 320px floor", () => {
+    // Ports of the legacy responsive checks that hold in the production tree but
+    // had no owner: the entry meta tag, and the min-width floor that lives in
+    // src/index.css (a file the skins-based cases above never read).
+    const viewport = /<meta[^>]+name=["']viewport["'][^>]+content=["'][^"']*width=device-width[^"']*["']/i.test(html);
+    assert(viewport, "frontend/index.html must declare width=device-width");
+    const indexCss = fs.readFileSync(path.join(SRC, "index.css"), "utf-8");
+    assert(/\[data-layout="compact"\][^{]*\{[^}]*min-width:\s*320px/.test(indexCss.replace(/\s+/g, " ")),
+      "the compact shell must keep a 320px min-width floor in src/index.css");
+  });
+
+  t("the UI layer names no endpoint outside the loopback read-only v1 API", () => {
+    // Port of "web tree has no server/backoffice entry points", re-anchored to
+    // frontend/src. Anchored on a scheme: `@tauri-apps/api/window` is a module
+    // path, not an endpoint, and the first version of this needle reported it as
+    // one. If the scan finds no URL at all it fails — an empty result and a
+    // clean result must not share a verdict.
+    const urls = [...new Set(appCode.match(/https?:\/\/[A-Za-z0-9._~:/?#@!=;()[\]-]+/g) || [])];
+    assert(urls.length > 0, "the scan matched no URL — re-check it before trusting this PASS");
+    const ok = /^http:\/\/(?:127(?:\.\d{1,3}){3}|localhost|\[::1\])(?::\d+)?\/api\/v1\/(?:snapshot|events)$/;
+    const offenders = urls.filter((u) => !ok.test(u));
+    assert(offenders.length === 0, "non-loopback or non-v1 URLs in the UI layer: " + offenders.join(", "));
   });
 
   console.log(`TOTAL: ${pass} passed, ${fail} failed`);

@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 119,
+    "total": 120,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 42,
+      "contract_drift": 43,
       "test_behavior_alignment": 13,
       "working_directory_recovery": 2,
       "evidence_state": 19,
@@ -3308,6 +3308,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer render truth: dirty state, compact transport status",
         "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/views/renderTruthContract.test.tsx"
+      }
+    },
+    {
+      "error_id": "ERR-121",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "apps/observer/frontend/src/lib/api.ts (loadRuntimeDescriptor, fetchSnapshot, openEventStream, useLiveSnapshot)",
+      "command": "node node_modules/vitest/vitest.mjs run src/lib/transportTruthContract.test.ts",
+      "exit_code": 1,
+      "observed_error": "Six transport-truth properties the legacy suite pinned were absent in the production front: (1) the snapshot GET carried no cache directive, so a cached projection could be presented as current; (2) the response body was cast straight to SnapshotV3 with no structural check, so a legacy/v2 or truncated 200 response rendered as truth; (3) apply() overwrote unconditionally, so a delayed response with a LOWER revision replaced newer facts already on screen; (4) a browser-supplied ?api= was accepted as authoritative with no validation, so anything reachable from the webview (external host, https, credentials in the URL, an added ?write=1, a non-/api/v1 path) became the data source; (5) a payload read through the non-authoritative static-preview endpoint could set live=true and announce LIVE; (6) an EventSource error was an empty handler, so the surface kept its LIVE claim after the stream dropped, and a snapshot frame that failed to parse was swallowed without degrading.",
+      "root_cause": "The read path grew in one place (api.ts) while its contracts stayed in the retired static suite, so nothing in the production tree asserted them and no gate could notice the drift. Two of the six were the classic shape: an unvalidated cast of an external payload, and a trust decision delegated to the caller (the URL) instead of validated at the boundary. The three gate-side needle failures found while fixing this are the same class pointed at my own tests: the old clause read 'any fetch with an options object is suspicious' (which forbids the explicit GET the legacy contract required), a bare-text scan flagged the validator's own schema constant as an embedded snapshot, and an endpoint scan matched a module path (@tauri-apps/api/window) plus a regex replacement ('$1') as URLs.",
+      "fix": "fetchSnapshot now declares method:'GET' with cache:'no-store' and runs every body (SSE frames included) through parseSnapshotPayload, which fails closed. useLiveSnapshot tracks the last accepted revision and rejects a lower one without touching the displayed projection; a stream error or a corrupt snapshot frame stops the LIVE claim (the EventSource is never closed by us, so native reconnect survives); onOpen and resync_required schedule exactly one re-read, with bursts coalesced to one in-flight plus one follow-up; heartbeats cost no read; live is set only when the descriptor is authoritative AND the payload verdict is LIVE. isTrustedObserverEndpoint mirrors the Rust gate observer_api_is_loopback_get_only on the client side, and an untrusted ?api= is refused outright rather than being used or marked authoritative.",
+      "regression_test": "apps/observer/frontend/src/lib/transportTruthContract.test.ts (11 mounted-hook cases with a controllable EventSource stand-in) plus two new file-level cases in apps/observer/tests/test_production_surface_static_contract.js (viewport/320px floor, loopback-v1-only URLs). Falsified 15/15 with byte-for-byte restore and SHA-256 verification: falsify_transport_ports.py (query-guard removed, cache downgraded, schema check removed, monotonicity disabled, endpoint rotated from a payload field, authority gate removed, corrupt frame swallowed, coalescing disabled, onOpen not re-reading, refresh wiping the snapshot, stream error ignored) and falsify_step3_node.py (explicit GET dropped, snapshot literal embedded, off-loopback URL added, viewport pinned to width=1024).",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A read that crosses a process boundary needs three things at the boundary, not in the UI: an explicit method, a cache policy, and a structural parse that fails closed. Never accept an injected endpoint as authoritative without validating scheme/host/credentials/query/path; mirror the shell's gate in the client so a compromise of one layer is not enough. A needle written against source text must match the SHAPE of the violation (an assignment, a URL with a scheme) and must fail when it matches nothing, because a scan that silently matches zero files reads as a PASS. When a new compliant construct turns an old assertion red, adjudicate which is right before editing either - here the old clause was wrong, and the fix was to require the explicit GET rather than to forbid options.",
+      "remaining_boundary": "Not ported: the five brand SVGs still live only under apps/observer/web/assets/brand, src/theme/tokens.ts declares no read-only constraint block, the compact surface's dense project list is undecided, and the legacy 800/640 reflow breakpoints have no production analogue (the shell uses 840/1160/1240/1000 plus @container 820/900/760). The LIVE semantic now treats a stream error as 'not live until the next successful read', which is deliberately stricter than the poll-only model but has no timing guarantee shorter than pollMs.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "62f666e",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer read-only transport: endpoint trust, payload validation, revision ordering, LIVE semantics",
+        "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/lib/transportTruthContract.test.ts"
       }
     }
   ],

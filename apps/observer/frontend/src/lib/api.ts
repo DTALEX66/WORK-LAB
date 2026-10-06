@@ -43,26 +43,52 @@ function _urlParam(name: string): string | null {
 // loopback `/api/v1/snapshot` (or `/api/v1/events`) endpoint. If it already IS
 // the snapshot endpoint, use it as-is (NO double-append); otherwise treat it as
 // a base. The events endpoint is derived, not a second hardcoded port.
+// The browser must not be steered off that endpoint by a crafted `?api=`: this
+// is the client-side mirror of the Rust gate `observer_api_is_loopback_get_only`
+// (https, external hosts, credentials in the URL, an added query such as
+// `?write=1`, and any non-`/api/v1` path are all refused).
+const LOOPBACK_HOST_RE = /^(?:127(?:\.\d{1,3}){3}|localhost|\[::1\])$/i
+
+function _loopbackHttp(raw: string): URL | null {
+  try {
+    const u = new URL(raw)
+    if (u.protocol !== 'http:') return null
+    if (!LOOPBACK_HOST_RE.test(u.hostname)) return null
+    if (u.username || u.password) return null
+    if (u.search || u.hash) return null
+    return u
+  } catch {
+    return null
+  }
+}
+
+export function isTrustedObserverEndpoint(raw: string): boolean {
+  const u = _loopbackHttp(raw)
+  return u !== null && /\/api\/v1\/(snapshot|events)$/.test(u.pathname)
+}
+
+function _descriptorFromBase(base: string, source: 'tauri' | 'window-config'): RuntimeDescriptor | null {
+  const isSnapshot = /\/api\/v1\/snapshot$/.test(base)
+  const snapshotUrl = isSnapshot ? base : base.replace(/\/$/, '') + '/api/v1/snapshot'
+  const eventsUrl = isSnapshot
+    ? base.replace(/\/api\/v1\/snapshot$/, '/api/v1/events')
+    : base.replace(/\/$/, '') + '/api/v1/events'
+  if (!isTrustedObserverEndpoint(snapshotUrl) || !isTrustedObserverEndpoint(eventsUrl)) return null
+  return { schemaVersion: 'work-lab/runtime-descriptor/v1', snapshotUrl, eventsUrl, authoritative: true, source }
+}
+
 export function loadRuntimeDescriptor(): RuntimeDescriptor {
   const api = _urlParam('api')
   if (api) {
-    const isSnapshotEndpoint = /\/api\/v1\/snapshot$/.test(api)
-    const snapshotUrl = isSnapshotEndpoint ? api : api.replace(/\/$/, '') + '/api/v1/snapshot'
-    const eventsUrl = isSnapshotEndpoint
-      ? api.replace(/\/api\/v1\/snapshot$/, '/api/v1/events')
-      : api.replace(/\/$/, '') + '/api/v1/events'
-    return { schemaVersion: 'work-lab/runtime-descriptor/v1', snapshotUrl, eventsUrl, authoritative: true, source: 'tauri' }
+    // An untrusted injected endpoint is refused outright: it must not even reach
+    // the fallback as `authoritative`, and nothing is ever sent to it.
+    const d = _descriptorFromBase(api, 'tauri')
+    if (d) return d
   }
   const cfg = (window as unknown as { __OBSERVER_CONFIG__?: { apiBase?: string } }).__OBSERVER_CONFIG__
   if (cfg?.apiBase) {
-    const base = String(cfg.apiBase).replace(/\/$/, '')
-    return {
-      schemaVersion: 'work-lab/runtime-descriptor/v1',
-      snapshotUrl: base + '/api/v1/snapshot',
-      eventsUrl: base + '/api/v1/events',
-      authoritative: true,
-      source: 'window-config',
-    }
+    const d = _descriptorFromBase(String(cfg.apiBase).replace(/\/$/, ''), 'window-config')
+    if (d) return d
   }
   // NON-AUTHORITATIVE static-preview fallback. This single loopback default lets
   // a dev preview reach a locally-running sidecar; it is explicitly not the
@@ -80,11 +106,32 @@ const DESCRIPTOR = loadRuntimeDescriptor()
 const SNAPSHOT_URL = DESCRIPTOR.snapshotUrl
 const EVENTS_URL = DESCRIPTOR.eventsUrl
 
+// Structural read of the wire payload. The front must not cast whatever arrives
+// into `SnapshotV3`: a legacy/v2 body, or a truncated one, would then render as
+// if it were current truth. Fail closed — `null` is a read failure, so the
+// surface keeps the last-good projection and says so.
+export function parseSnapshotPayload(value: unknown): SnapshotV3 | null {
+  if (!value || typeof value !== 'object') return null
+  const s = value as Record<string, unknown>
+  if (s.schemaVersion !== 'workflow/snapshot/v3') return null
+  if (typeof s.revision !== 'number' || !Number.isFinite(s.revision)) return null
+  if (!Array.isArray(s.projects) || !Array.isArray(s.executions)) return null
+  for (const k of ['transport', 'coverage', 'tokenSummary', 'governance', 'git']) {
+    if (!s[k] || typeof s[k] !== 'object') return null
+  }
+  return value as SnapshotV3
+}
+
 export async function fetchSnapshot(): Promise<SnapshotV3 | null> {
   try {
-    const res = await fetch(SNAPSHOT_URL, { headers: { Origin: SNAPSHOT_URL.replace(/https?:\/\/([^/]+)/, 'http://$1') } })
+    const res = await fetch(SNAPSHOT_URL, {
+      method: 'GET',
+      // A cached snapshot must never be presented as the current one.
+      cache: 'no-store',
+      headers: { Origin: SNAPSHOT_URL.replace(/https?:\/\/([^/]+)/, 'http://$1') },
+    })
     if (!res.ok) return null
-    return (await res.json()) as SnapshotV3
+    return parseSnapshotPayload(await res.json())
   } catch {
     return null
   }
@@ -100,6 +147,10 @@ export interface EventStreamHandlers {
   onOpen?: () => void
   onError?: (err: Event) => void
   onReconnect?: (lastEventId: string | null) => void
+  /** a `heartbeat` frame proves the stream is up; it must not cost a snapshot GET */
+  onHeartbeat?: (event: MessageEvent) => void
+  /** `observed` / `resync_required`: the caller re-reads the canonical snapshot */
+  onResync?: () => void
 }
 
 export function openEventStream(handlers: EventStreamHandlers, url: string = EVENTS_URL ?? ''): () => void {
@@ -121,13 +172,27 @@ export function openEventStream(handlers: EventStreamHandlers, url: string = EVE
     es.addEventListener('snapshot', (ev: MessageEvent) => {
       if (ev.lastEventId) lastEventId = ev.lastEventId
       let snap: SnapshotV3 | undefined
-      try { snap = JSON.parse(ev.data) as SnapshotV3 } catch { snap = undefined }
+      // Same structural gate as the GET: a malformed or legacy frame degrades to
+      // "no snapshot" instead of being cast into the typed model.
+      try { snap = parseSnapshotPayload(JSON.parse(ev.data)) ?? undefined } catch { snap = undefined }
       handlers.onEvent(ev, snap)
     })
     es.addEventListener('message', (ev: MessageEvent) => {
       if (ev.lastEventId) lastEventId = ev.lastEventId
       handlers.onEvent(ev)
     })
+    es.addEventListener('heartbeat', (ev: MessageEvent) => {
+      if (ev.lastEventId) lastEventId = ev.lastEventId
+      // A heartbeat only proves the stream is up. It must NOT trigger a snapshot
+      // GET — that is what keeps a heartbeat burst from becoming a read storm.
+      handlers.onHeartbeat?.(ev)
+    })
+    for (const name of ['observed', 'resync_required']) {
+      es.addEventListener(name, (ev: MessageEvent) => {
+        if (ev.lastEventId) lastEventId = ev.lastEventId
+        handlers.onResync?.()
+      })
+    }
     es.addEventListener('error', (err: Event) => {
       // EventSource auto-reconnects on transient errors; report + reset cursor.
       handlers.onError?.(err)
@@ -372,32 +437,52 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
     setSource(descriptor.authoritative ? (descriptor.source === 'static-preview' ? 'static-preview' : 'stale') : 'static-preview')
     let closed = false
 
+    let lastRevision: number | null = null
+    let inFlight = false
+    let followUp = false
+
     const apply = (next: SnapshotV3 | null) => {
       if (closed || !next) return
+      // Reject an out-of-order LOWER revision: a delayed older projection must
+      // never replace the newer facts already on screen (nor rotate anything).
+      if (lastRevision !== null && next.revision < lastRevision) {
+        setError('拒绝低于 ' + lastRevision + ' 的乱序投影（revision ' + next.revision + '）— 保持上次良好投影')
+        return
+      }
+      lastRevision = next.revision
       setSnap(next)
       setDataUpdatedAt(Date.now())
-      setLive(next.transport.transportState === 'LIVE')
+      // The payload's own verdict only makes THIS surface live when it came from
+      // an authoritative endpoint; a non-authoritative source is never LIVE.
+      setLive(descriptor.authoritative && next.transport.transportState === 'LIVE')
       setError(null)
     }
 
     const reportReadFailure = (message: string) => {
       if (closed) return
-      // A failed read stops the LIVE claim and re-labels the retained snapshot
-      // as last-good. The projection itself is kept: no data wipe, no fake zero.
       setLive(false)
       setSource(descriptor.authoritative ? 'stale' : 'static-preview')
       setError(message)
     }
 
     const tick = async () => {
+      // Coalesce bursts: one read in flight at a time; a request that arrives
+      // while one is running is noted and done once after it — never a stampede,
+      // and never a dropped latest read.
+      if (inFlight) { followUp = true; return }
+      inFlight = true
       try {
-        const s = await fetchSnapshot()
-        apply(s)
-        if (s === null) {
-          reportReadFailure('快照获取失败（数据源离线或端点不可达）— 保持 UNKNOWN，不伪造数据')
-        }
+        do {
+          followUp = false
+          const s = await fetchSnapshot()
+          if (closed) break
+          if (s === null) reportReadFailure('快照获取失败（数据源离线或端点不可达）— 保持 UNKNOWN，不伪造数据')
+          else apply(s)
+        } while (followUp && !closed)
       } catch (e) {
         reportReadFailure(e instanceof Error ? e.message : 'snapshot fetch failed')
+      } finally {
+        inFlight = false
       }
     }
 
@@ -411,9 +496,26 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
     if (descriptor.eventsUrl) {
       try {
         closeSse = openEventStream({
-          onEvent: (_ev, s) => apply(s ?? null),
-          onOpen: () => setSource(descriptor.authoritative ? 'live' : 'static-preview'),
-          onError: () => { /* poll fallback keeps it honest */ },
+          onEvent: (_ev, s) => {
+            if (s) { apply(s); return }
+            // Only a `snapshot` frame that fails the structural gate is a protocol
+            // failure; an untyped `message` frame carries no projection and must
+            // not degrade the surface.
+            if (_ev.type === 'snapshot') {
+              reportReadFailure('SSE 帧不合 v3 结构 — 保持上次良好投影，不伪造数据')
+            }
+          },
+          // On (re)connect the stream may be behind us; re-read once to resync.
+          onOpen: () => { setSource(descriptor.authoritative ? 'live' : 'static-preview'); void tick() },
+          // A stream error stops the LIVE claim immediately (the legacy contract
+          // demanded this of the EventSource transport, not of the poll). The next
+          // successful read clears it; nothing is wiped and nothing is invented.
+          onError: () => reportReadFailure('事件流中断 — 已停止 LIVE 宣称，等待下一次读取恢复'),
+          // A heartbeat is proof that the stream is alive: it never costs a
+          // snapshot GET and it never manufactures a LIVE data claim.
+          onHeartbeat: () => { /* no read, no verdict change */ },
+          // observed / resync_required: re-read the canonical snapshot.
+          onResync: () => { void tick() },
         })
       } catch { closeSse = null }
     }

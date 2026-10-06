@@ -362,3 +362,44 @@ DOM 文本拼接会吃掉词边界。
 
 **这 18 条做完之前 `apps/observer/web` 不删。**
 
+### 2026-10-07 步骤 3 落地：传输面 OPEN 已收（基准 `78a81c3`）
+
+工作单头 12 条是**会产生假象的生产缺陷**，不是缺测试，所以先做它们。
+新增 `frontend/src/lib/transportTruthContract.test.ts`（11 条具名断言，真 `useLiveSnapshot`
+＋可控 EventSource 替身）与 `test_production_surface_static_contract.js` 2 条文件级（14→16）。
+生产侧改动全在 `lib/api.ts`：
+
+| 工作单项 | 关闭方式 |
+|---|---|
+| 1 revision 单调 | `apply()` 记住 `lastRevision`，低 revision 载荷被拒并写错误，画面保持上次投影 |
+| 2 载荷校验 fail-closed | 新增 `parseSnapshotPayload`：schemaVersion/revision/数组/五个对象键逐项核，v2 与残缺载荷返回 null |
+| 3 SSE 失败保持 OFFLINE、坏帧即刻降级 | `onError` 改为停止 LIVE 宣称（不 close，交给浏览器原生重连）；`snapshot` 帧走同一校验，坏帧降级；无类型 `message` 帧**不**算协议失败 |
+| 4 `cache:'no-store'` | `fetchSnapshot` 带 `method:'GET'` ＋ `cache:'no-store'`；静态契约同时升级要求"带 options 的 fetch 必须显式声明 GET" |
+| 5 浏览器路径 `?api=` 信任 | 新增 `isTrustedObserverEndpoint`：拒 https、外链、URL 内凭据、query/hash、非 `/api/v1` 路径；不信任就整体退回 non-authoritative，绝不向它发一个字节 |
+| 6 non-authoritative 不得显新鲜 | `setLive(descriptor.authoritative && payload==='LIVE')` |
+| 7 `frontTransportState` 具名归属 | 步骤 2 的挂载断言 ＋ 本文件的 transport-failure 断言 |
+| 8 载荷不得改订阅端点 | 断言订阅 URL 只来自 descriptor；注入"用载荷 eventsUrl 再开一条流"即变红，且我们出错时从不 `close()` |
+| 9 onOpen 重读、心跳零 GET、突发合并 | `onOpen` 触发一次读；`heartbeat` 不读；在途只一次，多余请求合并成**一次**追平 |
+| 10 出错保留字符串质量字段 | 断言 `costQuality/matchState/governance.families.memory.state` 在失败后仍在 |
+| 11 last-good 保留并回落 STALE | `reportReadFailure` 不清空快照，只改 live/source/error |
+| 12 具名 SSE 事件绑定 | 断言 `open/snapshot/message/heartbeat/observed/resync_required/error` 都绑上 |
+| 16（一半）viewport 与 320px 下限 | 文件级两条：入口 `width=device-width`、`src/index.css` 的 `[data-layout=compact]{min-width:320px}` |
+| 18 只引用 loopback v1 端点 | 文件级一条：UI 层任何带 scheme 的 URL 必须是 `http://127.0.0.1|localhost|[::1]:port/api/v1/(snapshot\|events)` |
+
+**证伪 15/15**：vitest 11 条（`falsify_transport_ports.py`）＋ node 4 条
+（`falsify_step3_node.py`），注入全部落在 `api.ts`/`index.html`/源码上，每次按字节复原核对 SHA-256。
+
+三条**门禁自己先写错**、按事实改正而非放宽（都记进台账 ERR-121）：
+① 新的显式 `method:'GET'` 撞上旧断言"任何带 options 的 fetch 都要可疑"——旧条款把
+"必须显式 GET"这一半反着钉了；改成要求带 options 的 fetch 必须声明 GET，并在扫描命中 0 条时直接失败。
+② `parseSnapshotPayload` 里的 schema 常量被"不得内嵌 v3 快照"的裸文本针判成违规——
+针改成属性赋值形状（`schemaVersion: '…'`），验证器里的比较句不再误伤。
+③ 端点扫描把 `@tauri-apps/api/window`（模块路径）和正则里的 `http://$1`（替换串）当成 URL——
+针改为必须带 scheme 且主机首字符是字母数字，并把"扫不到任何 URL"判为失败而不是通过。
+
+**仍未关闭**：工作单 13（5 个品牌 SVG 未迁入生产树）、14（`theme/tokens.ts` 未声明约束）、
+15（紧凑面 4 KPI 需钉、密集项目列表需决定移植或有意放弃）、17（"只读观察，不提供重试操作"等文案无具名归属）、
+16 的 DPI 断点回流一半（生产断点与旧 800/640 不同，需先决定是移植语义还是记录为新契约）。
+`apps/observer/web` 仍不删，U03 仍 PARTIAL。实测存量：vitest 17 文件 **114** 条、node 静态契约 **16** 条、
+`run_all_tests.js` **99 passed 0 failed**、`tsc --noEmit` 干净、`vite build` 绿。
+
