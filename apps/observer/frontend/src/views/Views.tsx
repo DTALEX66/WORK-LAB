@@ -69,7 +69,9 @@ export function ProjectsTable({ projects }: { projects: Project[] }) {
                 </td>
                 <td>
                   <span className="font-mono text-[11px] text-muted">{p.git.branch || '—'}@{p.git.localSha ? p.git.localSha.slice(0, 7) : '—'}</span>{' '}
-                  {dirty ? <Badge variant="warning">脏 {dirty}</Badge> : <Badge variant="muted">干净</Badge>}
+                  {dirty == null ? <Badge variant="muted">脏 UNKNOWN</Badge>
+                    : dirty ? <Badge variant="warning">脏 {dirty}</Badge>
+                    : <Badge variant="muted">干净</Badge>}
                 </td>
               </tr>
             )

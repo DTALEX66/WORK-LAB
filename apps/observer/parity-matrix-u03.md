@@ -194,10 +194,171 @@ UNKNOWN 传输粉饰成 LIVE、往 `a11y.ts` 塞 v3 字面量、塞 `USD $4.29`�
 `replace(..., 'http://$1')` 的 `$1` 会被裸 `$`+数字命中，第一版把我自己的合规代码报成违规。
 
 实测存量更新：vitest/RTL **具名标题 95 条 / 执行 95 条（15 个文件）**，node 静态契约 **14 条**，
-旧树 5 个套件仍为 13/17/19/11/5。全量：`vitest run` 15 files / 95 passed，
+旧树 5 个套件仍为 13/17/19/11/5。（这两个数字后被"步骤 2"一节纠正：只读面实测 24 条，旧树总量 72。）全量：`vitest run` 15 files / 95 passed，
 `tests/run_all_tests.js` 97 passed 0 failed，`tsc --noEmit` 干净，`vite build` 绿。
 
 **仍未完成**：`test_render_v3.js`(19)、`test_read_only_surface.js`(17)、
 `test_responsive_contract.js`(11)、`test_visual_assets_r2.js`(5) 的逐条归属；
 这四张表填完并且第 1 步的等价物全部落地之前，`apps/observer/web` 不删，U03 保持 PARTIAL。
+
+### 2026-10-07 `test_render_v3.js` 19 条逐条归属（基准 `580df3c`）
+
+方法同投影表：只认具名生产标题。生产侧候选归属池 = vitest 95 条标题（15 文件）
+＋ node 静态契约 14 条 = 109 条。下表引用的 8 条生产标题已逐条 `grep` 回原文核对，
+不是转述。**实测统计：COVERED 4 / PORTED 0 / OPEN 10 / LEGACY-ONLY 5（共 19）**。
+PORTED 为 0 这件事本身是结论：14 条静态契约全是文件级（入口/skins/源码文本），
+一条都不承接 v3 渲染性质。
+
+| 旧断言（test_render_v3.js，文件顺序，逐字） | 它守的性质 | 判定 | 生产侧归属 / 理由 |
+|---|---|---|---|
+| connection strip reports the real sidecar/event state without 0/0 coverage | 传输结论逐字呈现 + 展示真实 sourceWatermark；覆盖率缺失不得写成 0/0；不泄漏内部表名 | OPEN | 需挂载连接条：transportState 逐字、sourceWatermark 出现、coverage 为 null 时是 UNKNOWN 而非 "0/0"、正文不含 `collector_health` |
+| last-good becomes visibly OFFLINE when the EventSource transport fails | 本地流/轮询失败要把 last-good 翻成 OFFLINE，并撤掉"已连接"宣称 | OPEN | 驱动 `useLiveSnapshot` 的 SSE onError + 已接受过快照，断言 OFFLINE 标注；`l10-views.test.tsx — an honest OFFLINE snapshot keeps every metric UNKNOWN-ish, never a fake LIVE` 只覆盖快照自带 OFFLINE，不覆盖本地传输失败 |
+| project surface keeps canonical registry and local Git facts | 项目面呈现注册表与本地 Git 事实（分支、短 SHA、dirtyCount、观测时刻、REGISTERED 措辞） | OPEN | `ProjectPanel.tsx` 源码里这么渲染，但没有标题断言它；`truth.test.tsx — ProjectPanel with no data…` 只覆盖空态 |
+| unsupported execution/CI/governance fields never become cards | v3 没有的模块不得变成卡片/KPI | OPEN | 生产面反向成立（车道恒在、诚实显示 UNKNOWN/EmptyState），端口应断言"模型/时序/资源/逐执行成本"这四类无卡 |
+| task and usage sections appear only when canonical samples exist | 任务与用量段只从规范数据出现 | OPEN | 任务半边已归属（`views.test.tsx — TaskPacksView renders the real task-family counts and plan tasks`）；用量半边无归属 |
+| full view: connection + token dash + status matrix + governance only | 旧单页 innerHTML 组成 | LEGACY-ONLY | 断言的是旧单页字符串；React 有意把 taskpack/history/evidence 拆成独立只读车道 |
+| production v3 entry calls fusion + truthful surfaces | 旧 `app.js` 接线 `WlFusionV3.render`，且不调用四个退役渲染器 | LEGACY-ONLY | 读的是 `web/scripts/app.js` 文本与 `Wl*` 全局，生产树无这些标识符 |
+| metric cards render real data only | KPI 卡呈现真实项目/任务/Token 总数与覆盖 | OPEN | `fmtTokens` 只测格式化器，没有标题断言挂载后的 KPI 数值 |
+| metric cards never fabricate from UNKNOWN/zero | 无规范数据时不产出正向或 0 指标 | COVERED | `App.behavior.test.tsx — every KPI number is UNKNOWN when there is no snapshot` |
+| full view has no per-project task matrix | 旧 DOM id `wl-taskpack`/`wl-project-truth-card` 不在字符串里 | LEGACY-ONLY | 断言旧 id 缺失；React 壳无这些 id，且任务包车道是既定生产视图 |
+| platform status matrix shows project/platform/activity | 跨项目行呈现名称/平台/活动态/分支 | OPEN | `WorkView.behavior.test.tsx — real snapshot -> the closed loop renders project -> execution -> CI -> evidence` 只覆盖名称与状态 |
+| token dashboard renders real tokens only | Token 面板呈现真实总数与缓存命中率 | OPEN | 真实数值半边需端口；命中率半边不可移植——`TokenSummary` 只有 input/output/total/costQuality，v3 无缓存字段，移植即造 KPI |
+| token dashboard empty when no sample | 无样本→诚实空态 | COVERED | `components/truth.test.tsx — TokenPanel with no data renders UNKNOWN everywhere, no 0` |
+| full view prefers runtime matrix over task matrix | 旧 id 的 index-of 先后 | LEGACY-ONLY | 字符串次序无生产对应物（车道是路由） |
+| CC2: single unified project grid (no duplicated surfaces | 一个全局命令 + 一个项目面，不重复 | COVERED | `lib/viewRegistry.test.ts — P1-01: NAV_GROUPS has 7 primary entries and covers every reachable lane exactly once`（命令入口：`components/ui/components.test.tsx — CommandPalette: filters by query and Enter runs the item`） |
+| CC2: truth - token telemetry empty state when no sample | 无样本不写 "0 Token" | COVERED | `components/truth.test.tsx — TokenPanel with no data renders UNKNOWN everywhere, no 0` |
+| CC2: telemetry renders real tokens | 遥测段呈现真实总量＋命中率 | OPEN | 同第 12 行：数值半边可移植，命中率不可 |
+| CC2: project card shows platform/git/status | 项目卡呈现平台/分支/状态点 | OPEN | 旧 id 名不可移植，但数据真值无归属 |
+| app.js wires fusion render | 旧入口脚本含 `WlFusionV3.render` | LEGACY-ONLY | 退役脚本源码文本 grep |
+
+10 条 OPEN 收敛成 6 个可移植性质（其余是同一性质换个旧包装）：连接条逐字真值与
+"缺失≠0/0"、本地传输失败翻 OFFLINE、项目面 Git 事实、Token 面板真实数值、
+KPI 条真实数值、v3 无字段不得成卡。5 条 LEGACY-ONLY 随 `web/` 一起退役，不需要归属。
+
+**门禁结论不变**：`apps/observer/web` 仍不删，U03 仍 PARTIAL——但删除阻塞现在是可枚举的：
+10 条 render_v3 OPEN ＋ 下面三张表的 OPEN 项。
+
+### 2026-10-07 步骤 2 落地：render_v3 的 10 条 OPEN 已收敛为 8 条挂载断言（基准 `580df3c`）
+
+新增 `frontend/src/views/renderTruthContract.test.tsx`（8 条具名标题，挂真实组件：
+ProjectPanel / TokenPanel / OverviewView / CompactHUD / 真 `useLiveSnapshot`）。
+**先纠正上一轮的计数**：`test_read_only_surface.js` 实测是 **24 条**（17 条 `t(` ＋ 7 条
+`asyncTest(`），不是 17；因此旧树五套件总量是 **72**（13+24+19+11+5），不是 65。
+方法教训：按 `t(` 计数会漏掉同一套件里的另一种断言风格。
+
+8 条移植断言（标题里带被替代的旧断言名）：注册表身份/平台/执行数/branch@sha/脏数渲染；
+**未观测的 dirtyCount 绝不显示"干净"**；Token 面板呈现真实数值且不编造命中率
+（`TokenSummary` 只有 input/output/total/costQuality，v3 无缓存字段）；
+无 token 数据时不画进度条也不写 0；总览 KPI 条渲染快照真值；
+覆盖率三元组缺失时是 `覆盖 UNKNOWN` 而不是 `覆盖 0/0`（而测得的 0/0 仍按数字显示）；
+v3 没有的字段不得长成指标卡（CPU/GPU/内存/显存/磁盘/QPS/模型数）；
+**读取路径失败必须停止 LIVE 宣称并保留 last-good**。
+
+顺带修掉两处生产真缺陷（都先证伪再改，都写进台账 ERR-120）：
+1. `ProjectPanel.tsx:42` 与 `Views.tsx:72` 都写 `dirty ? 脏N : 干净`——
+   `dirtyCount` 为 null（未观测）会渲染成"干净"，等于把未知报成正面结论，
+   而本仓库自己的说明文字就写着"缺失即 UNKNOWN，不伪造『全部干净』"（RulesPolicyView）。
+   现在 null → `脏 UNKNOWN`，0 → `干净`，>0 → `脏 N`，三态各自有断言。
+2. 读取失败时 `useLiveSnapshot` 只 `setError` 不动 `live`，于是 CompactHUD 继续播
+   上次快照里烤进去的 `LIVE`。现在拉取失败即 `live=false` 且回到非 live 标签，
+   HUD 状态词改由新增的 `frontTransportState(snap, live, error)` 给出：
+   无数据 UNKNOWN、本地读失败 OFFLINE、否则用快照自己的传输词。数据不清空，只改宣称。
+
+证伪 8/8（`.project-local/runs/convergence-20261007-c/falsify_render_ports.py`，
+每次注入后按字节复原并核对 SHA-256；注入全打在生产组件上，不打在测试自身夹具上）。
+**第 7 条首版是门禁自己瞎**：断言写 `/\bCPU\b/`，而 `textContent` 把标签和数值连成
+`CPU11`，词边界不成立——我把一个 CPU 指标卡注入 OverviewView，套件仍然全绿。
+去掉 `\b` 后同一注入立刻变红。这条教训与"针要写违规的形状，不写裸 token"是同族：
+DOM 文本拼接会吃掉词边界。
+
+实测存量更新：vitest/RTL **16 文件 / 具名标题 103 条 / 执行 103 条**，node 静态契约 14 条，
+`run_all_tests.js` 97 passed 0 failed，`tsc --noEmit` 干净。
+
+### 2026-10-07 其余三套件逐条归属（`test_read_only_surface.js` 24 / `test_responsive_contract.js` 11 / `test_visual_assets_r2.js` 5）
+
+判定同样只认具名标题；下表引用的生产标题、`src-tauri/src/lib.rs` 的 Rust 测试名、
+`index.html:5` viewport、`src/index.css:220` 320px 下限，**全部逐条 grep 回原文核对**。
+
+#### 只读面 24 条
+
+| 旧断言（逐字，文件顺序） | 它守的性质 | 判定 | 生产侧归属 / 理由 |
+|---|---|---|---|
+| api layer exposes no success path for POST/PUT/PATCH/DELETE | 非 GET 动词不可能成功 | PORTED | `test_production_surface_static_contract.js — read-only: no write request leaves the UI layer`（生产侧无运行时 `rejectNonGet` 门，只有源码级扫描） |
+| snapshot fetch rejects legacy and partial LIVE success payloads | 载荷校验 fail-closed | OPEN | `fetchSnapshot` 直接 `res.json() as SnapshotV3`，零校验（api.ts:83-91） |
+| snapshot fetch is explicitly cache-bypassed | GET 带 `cache:"no-store"` | OPEN | 现只带 Origin 头——缓存快照可能被当成当前值呈现 |
+| v3 display mode cannot override the backend transport verdict | 传输结论优先于载荷 mode | OPEN | `frontTransportState` 是对应物但尚无断言；`live` 直接取自载荷 |
+| LIVE v3 requires exact coverage, timestamps, and loopback events URL | LIVE 门槛：覆盖相等、时间戳齐、eventsUrl 是 loopback | OPEN | 生产侧无 LIVE 门，静态契约只钉住类型键 |
+| rendered full+compact surfaces have no mutating controls | 无可交互写控件 | COVERED | `WorkView.behavior.test.tsx — WorkView is strictly read-only: zero interactive write affordances` ＋ `l10-views.test.tsx — exposes ZERO write/approve/deny/retry controls (read-only iron law)`（按车道，不是全局：编辑器/模态确实有按钮） |
+| blocker evidence card offers NO retry control | 错误/证据面无重试 | COVERED | 同上两条 ＋ `lane-error-boundary.test.tsx — recovers when the lane changes, without retrying the read itself`；「只读观察，不提供重试操作」这句文案本身无归属 |
+| index.html references no remote runtime/framework/CDN | 入口无远程资产 | PORTED | `the production entry loads no remote runtime, framework or CDN` |
+| no credentials/session/prompt/secret access in scripts | 不读凭据/存储/auth | PORTED | `read-only: no credential, auth store or env read in the UI layer`（两个扫描都未覆盖 prompt/response 正文） |
+| api layer never writes; only GET fetch exists | 网络层只 GET | PORTED | 同上；「显式 `method:'GET'`」这一半无归属（生产依赖 fetch 默认值） |
+| retired dashboard helper fails closed without a network request | 退役 `WlApi.fetchDashboard` 抛错 | LEGACY-ONLY | 断言 `Wl*` 全局；其实质（退役 `/api/dashboard` 被拒）由下面的 Rust 测试承接 |
+| snapshot endpoint accepts only explicit loopback read-only URL (v3) | 端点必须 loopback、无 query、非旧路径 | COVERED | `src-tauri/src/lib.rs — #[test] fn observer_api_is_loopback_get_only`（cargo 侧，拒绝 https/外链、`?write=1`、`/api/dashboard`） |
+| theme toggle is memory-only | 不写服务端、不写存储 | PORTED | `theme and layout state never persist to web storage`；URL 那一半由 `App.behavior.test.tsx — navigating does not drop a Tauri-injected ?api= endpoint` 承接 |
+| EventSource open refreshes the read-only snapshot after sidecar reconnect | onOpen 立即重读快照 | OPEN | api.ts `onOpen` 只改 source，不重读；子断言多为对 `web/scripts/app.js` 的正则 |
+| state last-good survives refresh error (never clears to zero) | 失败保留 last-good 并标记过期 | OPEN | 本轮已补 `live=false` 与 `source` 回落，但"新鲜度必须翻 STALE"仍无专属标题 |
+| state rejects an out-of-order lower-revision projection | revision 单调 | OPEN | `apply()` 无条件覆盖，迟到的旧载荷会赢 |
+| heartbeat avoids snapshot GET and refresh bursts are coalesced | 心跳不发 GET、突发合并 | OPEN | 只绑 `snapshot`/`message`；轮询与 SSE 无协调 |
+| SSE failure fences an older GET and preserves native reconnect | 传输失败保持 OFFLINE 且不关源 | OPEN | `onError` 是空的；迟到的 GET 仍会把 live 置真 |
+| rejected lower revision cannot rotate the EventSource endpoint | 载荷不能改订阅端点 | OPEN | 结构上成立（URL 来自 descriptor），但浏览器路径的 `?api=` 未校验，且不拒旧 revision |
+| malformed SSE payload degrades without waiting for a transport reopen | 协议错误与传输错误分离 | OPEN | 解析失败→`apply(null)`→不降级，仍显示旧 LIVE |
+| refresh errors preserve string-valued v3 quality fields without throwing | 出错时质量字符串不丢 | OPEN | 无 `markRefreshError` 对应物 |
+| bundled snapshot is always rendered stale rather than live | 静态/内置快照不得显新鲜 | OPEN | `static-preview` 有标注（这一半由 `projectionTruthContract.test.ts` 承接），但从不强制 stale |
+| SSE client accepts only loopback event endpoint and forwards named events | 端点信任 ＋ 具名事件派发 | OPEN | `loadRuntimeDescriptor` 对 `?api=` 字符串不设限；`observed`/`heartbeat`/`resync_required` 未绑；坏帧被吞 |
+| web tree has no server/backoffice entry points | 只引用 `/api/v1/snapshot` | LEGACY-ONLY | 扫的是 `web/index.html` 与 `web/scripts/api.js`；端点那一半归 Rust 测试，需补一条对 `frontend/src` 的扫描 |
+
+#### 响应式 11 条
+
+| 旧断言 | 性质 | 判定 | 归属 / 理由 |
+|---|---|---|---|
+| viewport meta present | `width=device-width` | HOLDS-BUT-UNGUARDED | `frontend/index.html:5` 成立；无人断言——补一条 querySelector 即可 |
+| horizontal overflow suppressed | 页面不横滚 | PORTED | `responsive: horizontal page overflow is suppressed by construction`（`.table-wrap` 那一半未钉） |
+| truth cards reflow at the DPI-safe breakpoints (800/640) | 断点回流 | HOLDS-BUT-UNGUARDED | 生产断点在 840/1160/1240/1000 ＋ `@container page` 820/900/760，**无 640/420**，也无断言 |
+| compact view is a separate single-column layout | 紧凑面独立 | COVERED | `App.behavior.test.tsx — ?view=compact renders the Compact HUD, no sidebar rail` |
+| body font-size >= 12px | 可读下限 | PORTED | `legibility: no rule sets the page or lane base text below 12px` |
+| tabular numerals enabled | 数字等宽 | PORTED | `responsive: numeric columns use tabular numerals` |
+| long CJK / SHA / tokens wrap | 长串换行 | PORTED | `responsive: long CJK, SHA and token strings wrap instead of overflowing` |
+| prefers-reduced-motion honored | 尊重减弱动效 | PORTED | `motion: a reduced-motion preference is honoured` |
+| no horizontal page scroll by construction (min-width 320) | 320px 壳下限 | HOLDS-BUT-UNGUARDED | `src/index.css:220` 成立，但静态契约只读 `skins/*`，从不读 `index.css` |
+| v3 compact view is 320px-safe (WLGM-200) | 紧凑面无固定宽 | HOLDS-BUT-UNGUARDED | CompactHUD 无超宽、SHA 截断、chip 带文字；旧断言扫的是自己的 `render-v3.js` 路径 |
+| status never relies on color alone | 状态带文字 | COVERED | `l10-views.test.tsx — projects the B10 metric row from the REAL v3 transport/coverage truth` ＋ `truth.test.tsx — CompactHUD with no data shows UNKNOWN transport + 0-fabrication`；图标那一半是旧标记（生产小圆点 `aria-hidden`） |
+
+#### 视觉资产 5 条
+
+| 旧断言 | 性质 | 判定 | 归属 / 理由 |
+|---|---|---|---|
+| R2 brand assets are checked in under web/assets/brand | 5 个品牌文件在场 | OPEN | `frontend/src/assets/` 不存在；Tauri 打包用 `src-tauri/icons/*`，删了不坏构建，但品牌资产会丢 |
+| R2 design tokens declare the approved themes/views and read-only constraints | 机器可读约束 | OPEN | `src/theme/tokens.ts` 未声明约束；主题与视图各自有归属，约束只隐含 |
+| R2 brand SVGs are local and structurally valid | SVG 本地且无远程 href | OPEN | 必须先把它复制进生产树才谈得上断言 |
+| index uses only local visual assets and preserves read-only web surface | 入口只引用本地资产 | PORTED | 无远程那一半已由静态契约承接；但「品牌挂载」失败（`frontend/index.html` 无 favicon/品牌 link），且「只读」措辞搬到了 `App.tsx:263` 无归属 |
+| compact R2 hierarchy keeps four KPIs and a dense project list | 4 KPI ＋ 密集列表 | OPEN | CompactHUD 确实是 4 张 KPI（传输/项目/Token/质量），但旧版 `slice(0,3)` 密集项目列表无生产对应物 |
+
+#### 三套件合并计数与步骤 3 工作单
+
+**COVERED 5 · PORTED 11 · HOLDS-BUT-UNGUARDED 4 · OPEN 18 · LEGACY-ONLY 2（共 40 行）。**
+加上 render_v3 的 8 条（本轮已全部落地）与投影 13 条（上一轮全部落地），
+`web/` 退役的剩余阻塞就是下面这 18 条 OPEN，按危险度排序（前 6 条是**会产生假象的生产缺陷**，
+不只是缺测试）：
+
+1. revision 单调：迟到的低 revision 载荷不得覆盖 last-good（现在会覆盖，会显示旧事实）。
+2. `fetchSnapshot` 载荷校验：v2/仅 mode/残缺 LIVE 载荷必须 fail-closed，而不是当 v3 渲染。
+3. SSE 失败必须保持 OFFLINE 且不关原生重连；坏帧按协议错误降级，不能继续播旧 LIVE。
+4. `cache:'no-store'`：否则缓存快照会被当成当前值。
+5. 浏览器路径 `?api=` 的信任：非 loopback / 带 query / 带 userinfo 必须先拒（Rust 侧已拒，浏览器路径未拒）。
+6. `static-preview`/内置快照必须显示过期，不能显示新鲜。
+7. `frontTransportState` 的专属具名断言（现在只有间接归属）。
+8. 载荷不能改订阅中的 events 端点。
+9. onOpen 立即重读规范快照；心跳不发 GET、突发合并为「一次在途 ＋ 一次追平」。
+10. 刷新出错时保留字符串型质量字段。
+11. 出错时 last-good 保留 **且** 新鲜度必须翻 STALE 的直接断言。
+12. 具名 SSE 事件（`observed`/`heartbeat`/`resync_required`）派发与 Last-Event-ID 透传。
+13. 把 5 个品牌 SVG 复制进 `frontend/src/assets/brand` 并钉「在场 ＋ 无远程 href」。
+14. `src/theme/tokens.ts` 声明约束（`readOnly:true / externalMutation:false / modelSummary:false`）。
+15. 紧凑面：4 KPI 已成立需钉住；密集项目列表要么移植、要么记录为有意放弃。
+16. viewport meta、320px 下限、DPI 断点回流三条 HOLDS-BUT-UNGUARDED 各补一行守卫（含让静态契约读 `index.css`）。
+17. 「只读观察，不提供重试操作」等文案的具名归属。
+18. 对 `frontend/src` 补一条「只引用 `/api/v1/*` 端点、无后台入口」的静态扫描。
+
+**这 18 条做完之前 `apps/observer/web` 不删。**
 

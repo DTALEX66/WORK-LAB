@@ -316,7 +316,7 @@ export default function App() {
           {loadingStrip}
           <section className="content" id="content">
             <LaneErrorBoundary lane="compact" onReset={() => setLayout('full')}>
-              <CompactHUD snap={snap} live={live} />
+              <CompactHUD snap={snap} live={live} error={error} />
             </LaneErrorBoundary>
           </section>
         </main>

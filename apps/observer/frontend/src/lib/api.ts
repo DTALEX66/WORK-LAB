@@ -287,6 +287,16 @@ export function tokenTruth(snap: SnapshotV3 | null): TokenSummary | null {
   return snap?.tokenSummary ?? null
 }
 
+// The transport word this surface may claim about ITSELF. A snapshot accepted a
+// minute ago carries `transportState: LIVE` forever, so replaying that field
+// after the read path fails would advertise a live connection the browser no
+// longer has. Absent data is UNKNOWN; a failed read is OFFLINE.
+export function frontTransportState(snap: SnapshotV3 | null, live: boolean, error: string | null): string {
+  if (!snap) return 'UNKNOWN'
+  if (!live && error) return 'OFFLINE'
+  return snap.transport?.transportState ?? 'UNKNOWN'
+}
+
 // Per-project token rows (for the token/cost panel; costQuality only, no $).
 export interface ProjectTokenRow {
   projectId: string
@@ -370,13 +380,24 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
       setError(null)
     }
 
+    const reportReadFailure = (message: string) => {
+      if (closed) return
+      // A failed read stops the LIVE claim and re-labels the retained snapshot
+      // as last-good. The projection itself is kept: no data wipe, no fake zero.
+      setLive(false)
+      setSource(descriptor.authoritative ? 'stale' : 'static-preview')
+      setError(message)
+    }
+
     const tick = async () => {
       try {
         const s = await fetchSnapshot()
         apply(s)
-        if (s === null) setError('快照获取失败（数据源离线或端点不可达）— 保持 UNKNOWN，不伪造数据')
+        if (s === null) {
+          reportReadFailure('快照获取失败（数据源离线或端点不可达）— 保持 UNKNOWN，不伪造数据')
+        }
       } catch (e) {
-        if (!closed) setError(e instanceof Error ? e.message : 'snapshot fetch failed')
+        reportReadFailure(e instanceof Error ? e.message : 'snapshot fetch failed')
       }
     }
 

@@ -39,7 +39,9 @@ export function ProjectPanel({ snap }: { snap: SnapshotV3 | null }) {
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
                   <Badge variant={tone === 'active' ? 'success' : 'muted'}>{p.activityState || 'UNKNOWN'}</Badge>
-                  {dirty ? <Badge variant="warning">脏 {dirty}</Badge> : <Badge variant="muted">干净</Badge>}
+                  {dirty == null ? <Badge variant="muted">脏 UNKNOWN</Badge>
+                    : dirty ? <Badge variant="warning">脏 {dirty}</Badge>
+                    : <Badge variant="muted">干净</Badge>}
                 </div>
               </div>
             )

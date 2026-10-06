@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 118,
+    "total": 119,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 41,
+      "contract_drift": 42,
       "test_behavior_alignment": 13,
       "working_directory_recovery": 2,
       "evidence_state": 19,
@@ -3282,6 +3282,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer v3 timestamp rendering and projection degradation",
         "regressionCommand": "cd apps/observer && node tests/run_all_tests.js && cd frontend && node node_modules/vitest/vitest.mjs run src/lib/projectionTruthContract.test.ts"
+      }
+    },
+    {
+      "error_id": "ERR-120",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "apps/observer/frontend/src/components/dashboard/ProjectPanel.tsx, apps/observer/frontend/src/views/Views.tsx, apps/observer/frontend/src/views/CompactHUD.tsx, apps/observer/frontend/src/lib/api.ts (useLiveSnapshot)",
+      "command": "node node_modules/vitest/vitest.mjs run src/views/renderTruthContract.test.tsx",
+      "exit_code": 1,
+      "observed_error": "Two production surfaces reported an unknown as a positive. (1) A project whose git.dirtyCount is null rendered the badge 干净 (clean): the code was `dirty ? 脏 N : 干净`, so absence fell into the clean branch, contradicting the repository's own wording in RulesPolicyView ('缺失即 UNKNOWN，不伪造『全部干净』'). (2) After the snapshot read failed, the compact HUD kept showing LIVE, because useLiveSnapshot only called setError() on a failed fetch and the HUD replayed whatever transportState the retained snapshot was read with.",
+      "root_cause": "A falsy test used where a three-state test belongs: null (unobserved), 0 (observed clean) and >0 (observed dirty) are three different facts, and `dirty ? A : B` collapses the first two. For the HUD, the LIVE/UNKNOWN distinction was modelled as one boolean instead of two - the snapshot's own transport verdict and this surface's read health - so the stale field kept advertising a connection the browser had lost.",
+      "fix": "ProjectPanel and the cross-project grid in Views.tsx now branch on `dirty == null` first and render 脏 UNKNOWN; 干净 requires an observed 0. useLiveSnapshot stops the LIVE claim and returns to the non-live source label on a failed or throwing read, keeping the retained projection untouched, and the HUD status word comes from the new frontTransportState(snap, live, error): no snapshot -> UNKNOWN, failed read -> OFFLINE, otherwise the snapshot's own word.",
+      "regression_test": "apps/observer/frontend/src/views/renderTruthContract.test.tsx (8 mounted cases). Falsified 8/8 by mutating the production components (.project-local/runs/convergence-20261007-c/falsify_render_ports.py), each file restored byte-for-byte with SHA-256 verified: reverting the dirty branch to 干净, forcing the project name, hardcoding the token total to '0', drawing the progress bar without a source, replacing a KPI value with a constant, padding absent coverage to 覆盖 0/0, injecting a CPU metric box, and deleting setLive(false) from the read-failure path.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Never render an unobserved value through a truthiness test - branch on `== null` first, and make 干净/正常/OK require a positive observation. A status word that mixes the backend verdict with this client's own connection health needs two inputs, not one boolean. And a needle matched against DOM textContent must not use word boundaries: label and value concatenate into `CPU11`, so the first version of the no-fabricated-metric-card assertion passed while an injected CPU card stayed green - falsify a gate before trusting it, and write the needle as the shape of the violation.",
+      "remaining_boundary": "Ports cover the render surfaces the legacy suite pinned for real data, empty data and a failed read. The remaining retirement blockers are the 18 OPEN items listed in apps/observer/parity-matrix-u03.md (read-only transport layer: revision monotonicity, payload validation, cache:'no-store', ?api= trust on the browser path, named SSE events; plus brand-asset and design-token constraint ports). No test yet asserts that a stale-quality field survives an error tick, and the 干净/UNKNOWN rule is asserted only for dirtyCount, not for other observed-vs-unobserved pairs.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "62f666e",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer render truth: dirty state, compact transport status",
+        "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/views/renderTruthContract.test.tsx"
       }
     }
   ],

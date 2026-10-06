@@ -9,13 +9,19 @@
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { SnapshotV3 } from '@/types'
-import { fmtTokens, fmtCostQuality, tokenTruth, snapshotToTransportTruth } from '@/lib/api'
+import { fmtTokens, fmtCostQuality, tokenTruth, snapshotToTransportTruth, frontTransportState } from '@/lib/api'
 
-export function CompactHUD({ snap, live }: { snap: SnapshotV3 | null; live: boolean }) {
+export function CompactHUD({ snap, live, error = null }: {
+  snap: SnapshotV3 | null; live: boolean; error?: string | null
+}) {
   const tt = tokenTruth(snap)
   const tr = snapshotToTransportTruth(snap)
+  // The HUD's own status word: a snapshot keeps whatever transportState it was
+  // read with, so replaying it after the read path fails would claim a live
+  // connection the browser no longer has.
+  const transport = frontTransportState(snap, live, error)
   const kpis = [
-    { k: '传输', v: live ? 'LIVE' : (tr ? tr.transportState : 'UNKNOWN') },
+    { k: '传输', v: transport },
     { k: '项目', v: snap ? String(snap.projects.length) : 'UNKNOWN' },
     { k: 'Token', v: snap ? fmtTokens(tt?.totalTokens ?? null) : 'UNKNOWN' },
     { k: '质量', v: fmtCostQuality(tt?.costQuality) },
@@ -37,8 +43,8 @@ export function CompactHUD({ snap, live }: { snap: SnapshotV3 | null; live: bool
       </div>
       <Card className="mt-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Badge variant={live ? 'success' : tr && tr.transportState === 'OFFLINE' ? 'error' : 'muted'}>
-            {live ? 'LIVE' : (tr ? tr.transportState : 'UNKNOWN')}
+          <Badge variant={transport === 'LIVE' ? 'success' : transport === 'OFFLINE' ? 'error' : 'muted'}>
+            {transport}
           </Badge>
           <span className="tabular-nums text-muted">
             {tr && tr.coverageNumerator != null
