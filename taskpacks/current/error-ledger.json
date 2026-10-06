@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 116,
+    "total": 117,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 39,
+      "contract_drift": 40,
       "test_behavior_alignment": 13,
       "working_directory_recovery": 2,
       "evidence_state": 19,
@@ -3230,6 +3230,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Register and atlas accuracy",
         "regressionCommand": "python .project-local/runs/convergence-20261007-c/record_drifts.py"
+      }
+    },
+    {
+      "error_id": "ERR-118",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "taskpacks/current/OPEN-TASK-REGISTER.md (U03 row), services/orchestration/sidecar.py (create_server frontend_root, main --frontend-root), apps/observer/observer_live_server.py, apps/observer/web",
+      "command": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py; python .project-local/runs/convergence-20261007-c/falsify_browser_entry.py",
+      "exit_code": 1,
+      "observed_error": "U03 holds the static surface in place with the claim that `web/` is \"the live browser read-only entry via sidecar.py\", so deleting it would break the browser path. In this tree that is not true: the sidecar's static root is documented in code as a Vite `dist/`, `main()` exposes `--frontend-root` and passes it to create_server, and `observer_live_server.py` is already a retirement stub. No runtime code path resolves into apps/observer/web at all.",
+      "root_cause": "A blocker kept in a register row outlived the change that removed it. Beyond that, my own first measurement of it was wrong in an instructive way: I grepped for `frontend_root` call sites while excluding `sidecar.py:` from the output and concluded the browser entry did not exist — but the CLI that wires it lives in that same file, so excluding the definition site answers 'who else calls this', not 'is it wired'. Reading main() corrected it within the same session.",
+      "fix": "The browser path is pinned by executable evidence instead of by a sentence: 8 tests in tests/workflow-assistance/test_sidecar_ui_browser_entry.py start the real sidecar on a loopback port against a Vite-shaped dist and assert that / serves the production index byte-for-byte, assets keep their JavaScript MIME type (a wrong type breaks module loading), an unknown route falls back to the app shell rather than inventing a page, /api/v1/snapshot still answers v3 JSON so the API cannot be shadowed by a static file, a path escape is refused without leaking the parent file, POST to a static path is still 405, and that with no static root the sidecar stays API-only exactly as before. The file sits in tests/workflow-assistance, which run_quality_gate discovers dynamically (run_quality_gate.py:174-176), so it joins the aggregate without a manifest edit.",
+      "regression_test": "Both security-relevant assertions were falsified by mutation: removing the `relative_to` escape guard turns the escape case red, and disabling the static branch turns the root/asset/fallback cases red; sidecar.py was restored byte-for-byte after each (.project-local/runs/convergence-20261007-c/falsify_browser_entry.py, 2/2 caught). The fixture is written with newline=\"\" after a first attempt failed on CRLF translation — a fixture that lies about bytes makes a byte assertion meaningless.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A register row that blocks a deletion must name a live dependency, and that dependency has to be re-checked by executing it, not by re-reading the row. And a caller/callee grep must not exclude the file that defines both, or it silently answers a different question.",
+      "remaining_boundary": "Retiring apps/observer/web is now unblocked in principle but NOT done in this change, because its real blast radius is measured rather than assumed: `apps/observer/tests/helpers.js` exports WEB/loadScripts and the JS contract suites that consume it (helpers.js, test_projection_contract.js, test_read_only_surface.js, test_render_v3.js, test_responsive_contract.js, test_visual_assets_r2.js) test the legacy render contract; scripts/ci/required_groups.json:27 glob-checks web/scripts/*.js; and run_quality_gate.py:1362 lists apps/observer/web/ as a guarded path for observer-no-business-write. Deleting the surface without migrating or retiring those four bindings would break CI, which is the opposite of a parity cutover. The cutover therefore needs: the React-side equivalents for the render/responsive/visual-asset contracts, the group entry removed together with the pinned list in tests/ci/test_failfast_group.py (ERR-109), the guarded-path tuple updated, docs and README re-pointed at the browser entry (`python services/orchestration/sidecar.py --frontend-root apps/observer/frontend/dist`), a hash manifest plus a full copy of web/ as the retention point, and WORK-LAB-AUTHORITY.md §7 amended with the dated cutover fact. U03 stays PARTIAL until then.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "62f666e",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer browser read-only entry and legacy surface retirement",
+        "regressionCommand": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py"
       }
     }
   ],
