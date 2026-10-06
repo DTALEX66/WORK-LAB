@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 127,
+    "total": 128,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 46,
@@ -20,7 +20,7 @@
       "feature_gap": 9,
       "config_downgrade": 3,
       "dead_entry": 3,
-      "path_boundary": 4,
+      "path_boundary": 5,
       "ci_tooling": 2,
       "sql_schema": 1,
       "regression_contract": 7
@@ -3516,6 +3516,32 @@
         "verifiedCommit": null,
         "affectedCapability": "CI integration job source-ledger guard; pre-push validation practice",
         "regressionCommand": "python scripts/ci/verify_source_ledger.py --root ."
+      }
+    },
+    {
+      "error_id": "ERR-129",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "path_boundary",
+      "entrypoint": ".project-local/runs/{p0c-oracle-20261006,p0c-final-20261006,topbar-measure-20261006,ui-suite}, scripts/audit/, docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json, docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
+      "command": "python .project-local/runs/convergence-20261007-e/release_browser_state.py --apply",
+      "exit_code": 1,
+      "observed_error": "Two defects in one. (a) Four error-ledger entries and three register rows give a regressionCommand that begins `python .project-local/runs/<scratch>/…py` — durable records whose reproduce path lives in the git-ignored runtime root, which any future cleanup deletes. (b) The retained evidence trees were mostly not evidence: 116,216,094 B across 1,395 files of WebView2 and headless-Chrome user-data (EBWebView-cdp-*, EBWebView-final-*, l10b-verify/chrome-profile) sat inside directories kept only because tracked documents cite a screenshot or a JSON receipt in the same tree. Measured after release: p0c-oracle 154→112 MB, p0c-final 33→1 MB, ui-suite 71→34 MB.",
+      "root_cause": "Retention was decided at directory granularity. A tree containing one cited artifact was kept whole, so every browser profile the probes wrote came with it; and the durable records recorded the command that happened to be running at the time, in the path where it happened to live, instead of promoting the instrument to a tracked location the record could keep pointing at.",
+      "fix": "Five probes (62,484 B, 1,485 lines) were copied byte-for-byte into tracked `scripts/audit/` with the digest of both sides and the count of durable records naming the old path recorded in docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json; originals stay until the records are re-pointed, so no command is orphaned either way. The release then ran under four guards — browser-name pattern plus two profile markers, outermost-match only, no cited path inside the target, and a re-check of every tracked-referenced .project-local path after deletion — and it removed 0 cited paths, recorded in docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json together with the items deliberately retained and why (cargo target holding the U19 release binary, the only surviving copy of another agent's imported evidence tree, a DSH rollback point, the installed optional llama.cpp runtime, and the gate's own venv).",
+      "regression_test": "The release tool returns exit 1 if any cited path disappears, and the post-check found 37 absences of which 9 were trailing-punctuation artifacts of my own regex and 0 lay under a deleted directory, so the attribution is in the receipt rather than in prose. `python .project-local/runs/convergence-20261007-e/release_browser_state.py` without --apply is a dry run that prints the plan and touches nothing.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Never keep a whole directory because one file inside it is cited — measure what the citation actually names and release the rest by class, with the guard that no cited path may lie inside a deletion target. Never let a durable record's regressionCommand point into the git-ignored runtime root: promote the instrument to a tracked path and record the mapping with digests. And state retention reasons as facts a later session can re-measure (bytes, what the file proves, what would rebuild it), because 'it was cited' is not a size.",
+      "remaining_boundary": "The release covers only directories matching the browser user-data patterns; `toolchains/lambda/llama-b11221-bin-win-cuda-12.4-x64.zip` (253 MB) is a source archive of an installed runtime and a plausible next release, but only after confirming the extraction is complete and the runtime record still resolves. 28 tracked documents still cite .project-local paths that do not exist on this machine (pre-existing, some traceable to the six files lost to the ERR-123 bug); that is a traceability defect owed its own pass, not a deletion. Nothing in this round touched another project, the model library, or the tool library.",
+      "status_before": "PARTIAL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "e0b296d",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Project-local footprint and traceability of durable regression commands",
+        "regressionCommand": "python .project-local/runs/convergence-20261007-e/release_browser_state.py"
       }
     }
   ],

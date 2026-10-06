@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "work-lab/probe-tool-promotion/v1",
+  "at": "2026-10-07",
+  "why": "A durable record's regressionCommand must be runnable by the next session. Commands pointing into the git-ignored runtime root are not: they survive only until a cleanup removes the directory, and the record then silently loses its reproduce path.",
+  "method": "byte-for-byte copy, digest verified on both sides; originals left in place",
+  "entries": [
+    {
+      "promotedFrom": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
+      "promotedTo": "scripts/audit/p0c_oracle_discriminator.py",
+      "sourceSha256": "be9988656ae4cf638d4df6f89a70bab13c8ca3b1661babfa469d29d3b018c345",
+      "copySha256": "be9988656ae4cf638d4df6f89a70bab13c8ca3b1661babfa469d29d3b018c345",
+      "bytes": 13929,
+      "lines": 353,
+      "purpose": "Decides whether the release 'black screen' is real or a GDI capture artifact, by comparing renderer-side surface capture against a screen BitBlt of the same window.",
+      "referencedByRecords": {
+        "error-ledger.json": 4
+      },
+      "reproducedCommandBefore": "python .project-local/runs/p0c-oracle-20261006/probe_oracle.py",
+      "reproducedCommandAfter": "python scripts/audit/p0c_oracle_discriminator.py",
+      "deleteSourceYet": false
+    },
+    {
+      "promotedFrom": ".project-local/runs/p0c-oracle-20261006/probe_cdp.py",
+      "promotedTo": "scripts/audit/p0c_cdp_truth.py",
+      "sourceSha256": "14a731ba31888af73fd604579e06142a4049e7c8ee6280ad5b74be0a3e88f9fb",
+      "copySha256": "14a731ba31888af73fd604579e06142a4049e7c8ee6280ad5b74be0a3e88f9fb",
+      "bytes": 17327,
+      "lines": 410,
+      "purpose": "Attaches to the running release binary over WebView2 remote debugging and reads the document/network truth without putting a window in front of the owner.",
+      "referencedByRecords": {
+        "error-ledger.json": 1
+      },
+      "reproducedCommandBefore": "python .project-local/runs/p0c-oracle-20261006/probe_cdp.py",
+      "reproducedCommandAfter": "python scripts/audit/p0c_cdp_truth.py",
+      "deleteSourceYet": false
+    },
+    {
+      "promotedFrom": ".project-local/runs/topbar-measure-20261006/measure_dom.py",
+      "promotedTo": "scripts/audit/topbar_geometry_via_dump_dom.py",
+      "sourceSha256": "f448a3a23398785f42fcae4d27b09b0f6a9f913040747407b51fe645c1736c12",
+      "copySha256": "f448a3a23398785f42fcae4d27b09b0f6a9f913040747407b51fe645c1736c12",
+      "bytes": 7170,
+      "lines": 160,
+      "purpose": "Measures the rendered top-row geometry by injecting one script into a scratch copy of the shipped dist and reading the JSON back with --dump-dom (no CDP attach).",
+      "referencedByRecords": {
+        "error-ledger.json": 1
+      },
+      "reproducedCommandBefore": "python .project-local/runs/topbar-measure-20261006/measure_dom.py",
+      "reproducedCommandAfter": "python scripts/audit/topbar_geometry_via_dump_dom.py",
+      "deleteSourceYet": false
+    },
+    {
+      "promotedFrom": ".project-local/runs/topbar-measure-20261006/measure.py",
+      "promotedTo": "scripts/audit/topbar_geometry_via_cdp.py",
+      "sourceSha256": "997ae89ede812de2c1fa243224b9072ecd357c0f94c78e81fba312a796dd8f0a",
+      "copySha256": "997ae89ede812de2c1fa243224b9072ecd357c0f94c78e81fba312a796dd8f0a",
+      "bytes": 5504,
+      "lines": 128,
+      "purpose": "Measures the same geometry over CDP against the bundle the release binary embeds, silently, keeping ?shell=tauri because that is the production route.",
+      "referencedByRecords": {},
+      "reproducedCommandBefore": "python .project-local/runs/topbar-measure-20261006/measure.py",
+      "reproducedCommandAfter": "python scripts/audit/topbar_geometry_via_cdp.py",
+      "deleteSourceYet": false
+    },
+    {
+      "promotedFrom": ".project-local/runs/p0c-final-20261006/verify_once.py",
+      "promotedTo": "scripts/audit/u19_verify_once.py",
+      "sourceSha256": "15d0a776fa4b5a5e4e3e760f6969fd701e6e3ecd00d713ff1e103ad573ba3a3b",
+      "copySha256": "15d0a776fa4b5a5e4e3e760f6969fd701e6e3ecd00d713ff1e103ad573ba3a3b",
+      "bytes": 18554,
+      "lines": 434,
+      "purpose": "One desktop launch that answers every remaining U19/P0-C/ERR-103 question in a single observable session, after all silent checks are done.",
+      "referencedByRecords": {
+        "error-ledger.json": 3
+      },
+      "reproducedCommandBefore": "python .project-local/runs/p0c-final-20261006/verify_once.py",
+      "reproducedCommandAfter": "python scripts/audit/u19_verify_once.py",
+      "deleteSourceYet": false
+    }
+  ],
+  "problems": []
+}
