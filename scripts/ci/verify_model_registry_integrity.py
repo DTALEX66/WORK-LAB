@@ -38,6 +38,13 @@ Checks (every one fails closed with a named reason)
    lowercase 64-hex `sha256`, or has `state: TRUNCATED` with a non-empty
    reason. A truncated prefix may never masquerade as a complete digest.
 6  A provider id appears at most once; provider ids are namespaced.
+7  AG-05g: a model that carries a `sha256`, or a `health` word containing VERIFIED,
+   or a retired-with-decision status, must carry a `localVerification` block naming
+   presence, digest state, bytes seen, the date, the basis and the tool; a
+   RECOMPUTED_MATCH must agree with `sha256` and with `file.bytes`, a VERIFIED health
+   word may not sit on an unrecomputed digest, and a leftover-file (`candidateOrphans`)
+   record must say whether the file is still there — including the honest answer that
+   its path was written as prose and cannot be resolved at all.
 
 Exit codes: 0 PASS, 1 FAIL (named reason printed), 2 environment error.
 """
@@ -59,6 +66,13 @@ BINDING_STATUSES = frozenset({"SERVED", "UNSERVED_RETAINED_PENDING_DECISION"})
 UNSERVED_MODEL_STATUSES = frozenset({"RETIRED_PENDING_DECISION", "RETIRED"})
 # Digest states for the assetDigest block.
 DIGEST_STATES = frozenset({"COMPLETE", "TRUNCATED"})
+# AG-05g: how a byte claim was checked on the machine that owns the weights.
+PRESENCE_STATES = frozenset({"VERIFIED_FILE", "VERIFIED_BLOB_CONTENT_ADDRESS",
+                             "VERIFIED_DIR", "ABSENT", "UNRESOLVED", "NOT_CHECKED"})
+DIGEST_VERIFICATION_STATES = frozenset({"RECOMPUTED_MATCH", "RECOMPUTED_MISMATCH",
+                                        "NOT_RECOMPUTED"})
+ORPHAN_RECHECK_STATES = frozenset({"PRESENT", "ABSENT_NOW", "UNRESOLVABLE_AS_WRITTEN"})
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
 # AG-05f: closed vocabulary for structured negative capabilities. The Atlas G05
 # acceptance wording explicitly requires "negative capabilities"; before this the
@@ -110,6 +124,81 @@ def _check_asset_digest(owner: str, digest: object) -> None:
         if not (isinstance(reason, str) and reason.strip()):
             _fail("ASSET_DIGEST_TRUNCATED_WITHOUT_REASON",
                   f"{owner}.assetDigest.state=TRUNCATED requires a reason")
+
+
+def _check_local_verification(owner: str, entry: dict) -> None:
+    """A byte claim must say how it was checked, and agree with itself.
+
+    `sha256` and a health word containing VERIFIED both read as "someone verified
+    these bytes". Before AG-05g nothing recorded what the digest was taken over, when,
+    or with what tool, so a copied-back upstream hash and a locally recomputed digest
+    were indistinguishable in the machine authority. This is structural on purpose:
+    the runner cannot see the weight root, so it checks the claim's internal
+    consistency and `scripts/audit/model_library_readback.py` produces the numbers.
+    """
+    sha = entry.get("sha256")
+    health = str(entry.get("health") or "").upper()
+    claims_verified = "VERIFIED" in health
+    verification = entry.get("localVerification")
+    if sha is None and not claims_verified and verification is None:
+        return
+    if not isinstance(verification, dict):
+        _fail("LOCAL_VERIFICATION_MISSING",
+              f"{owner}: sha256 or a VERIFIED health word is a byte claim; it needs "
+              "localVerification with presence, digestState, bytesObserved, checkedAt, "
+              "basis and tool")
+        return
+    presence = verification.get("presence")
+    if presence not in PRESENCE_STATES:
+        _fail("LOCAL_VERIFICATION_PRESENCE_UNKNOWN",
+              f"{owner}.localVerification.presence={presence!r} not in {sorted(PRESENCE_STATES)}")
+    state = verification.get("digestState")
+    if state not in DIGEST_VERIFICATION_STATES:
+        _fail("LOCAL_VERIFICATION_STATE_UNKNOWN",
+              f"{owner}.localVerification.digestState={state!r} not in "
+              f"{sorted(DIGEST_VERIFICATION_STATES)}")
+    if not DATE_RE.match(str(verification.get("checkedAt") or "")):
+        _fail("LOCAL_VERIFICATION_UNDATED",
+              f"{owner}.localVerification.checkedAt={str(verification.get('checkedAt'))[:24]!r} "
+              "is not a date; an undated readback is not evidence")
+    for field in ("basis", "tool"):
+        if not str(verification.get(field) or "").strip():
+            _fail("LOCAL_VERIFICATION_FIELD_MISSING",
+                  f"{owner}.localVerification.{field} must say how the claim was checked")
+
+    if state == "RECOMPUTED_MATCH":
+        recomputed = verification.get("sha256Recomputed")
+        if not (isinstance(recomputed, str) and HEX64.match(recomputed)):
+            _fail("LOCAL_VERIFICATION_DIGEST_NOT_HEX",
+                  f"{owner}.localVerification.sha256Recomputed must be 64 lowercase hex")
+        elif sha != recomputed:
+            _fail("LOCAL_VERIFICATION_CONTRADICTS_SHA256",
+                  f"{owner}: digestState=RECOMPUTED_MATCH but sha256 and sha256Recomputed differ")
+        observed = verification.get("bytesObserved")
+        if not isinstance(observed, int) or observed <= 0:
+            _fail("LOCAL_VERIFICATION_BYTES_MISSING",
+                  f"{owner}: RECOMPUTED_MATCH requires a positive bytesObserved")
+        stated_bytes = (entry.get("file") or {}).get("bytes")
+        if isinstance(stated_bytes, int) and isinstance(observed, int) and stated_bytes != observed:
+            _fail("LOCAL_VERIFICATION_BYTES_DISAGREE",
+                  f"{owner}: file.bytes={stated_bytes} but bytesObserved={observed}")
+        if presence in ("ABSENT", "UNRESOLVED", "NOT_CHECKED"):
+            _fail("VERIFIED_MATCH_WITHOUT_PRESENCE",
+                  f"{owner}: digestState=RECOMPUTED_MATCH with presence={presence!r}")
+    if claims_verified and state != "RECOMPUTED_MATCH":
+        _fail("HEALTH_CLAIMS_VERIFIED_WITHOUT_RECOMPUTATION",
+              f"{owner}: health={str(entry.get('health'))[:60]!r} says VERIFIED while "
+              f"digestState={state!r}; say what was verified, or stop claiming it")
+    if presence == "VERIFIED_DIR" and not (verification.get("directoryManifest") or []):
+        _fail("DIR_MANIFEST_MISSING",
+              f"{owner}: a directory-backed model needs a per-file manifest, not one "
+              "truncated prefix for one arbitrary file")
+    if entry.get("status") in UNSERVED_MODEL_STATUSES:
+        retained = verification.get("bytesRetained")
+        if not isinstance(retained, int) or retained <= 0:
+            _fail("RETIRING_MODEL_WITHOUT_A_COST",
+                  f"{owner}: status={entry.get('status')!r} must record bytesRetained, so a "
+                  "pending decision carries the disk it actually occupies")
 
 
 def _load(path: Path) -> dict:
@@ -311,6 +400,18 @@ def verify(root: Path) -> int:
                   "explicit null; move the prose to assetDigest and null the field")
         _check_asset_digest(f"model {model_id}", entry.get("assetDigest"))
 
+    # --- check: a byte claim names how it was checked (AG-05g) --------
+    # The registry's `health` strings had phrases like DOWNLOADED_HASH_VERIFIED and
+    # a 64-hex `sha256` per model, while nothing on either side said what that digest
+    # was a digest OF or when anyone last recomputed it. Shape checks could not see
+    # the difference between a verified weight and a copied-back hash. So a claim
+    # now needs a `localVerification` block: presence state, digest state, the bytes
+    # seen, the recomputed digest, the date and the tool that produced it. This stays
+    # a structural check on purpose — the CI runner has no weight root, and a required
+    # job that can only skip there is worse than no job.
+    for model_id, entry in sorted(models.items()):
+        _check_local_verification(f"model {model_id}", entry)
+
     # --- check: residue/orphan entries obey the same digest honesty ----
     # candidateOrphans records leftover files (partial downloads, abandoned
     # pulls). They are not model assets, but a bare 16-hex prefix sitting in a
@@ -325,6 +426,51 @@ def verify(root: Path) -> int:
             _fail("ORPHAN_SHA256_UNVERIFIABLE",
                   f"{label}.sha256={str(raw)[:32]!r} is neither 64-hex nor an explicit null")
         _check_asset_digest(label, orphan.get("assetDigest"))
+
+        # AG-05g: a leftover-file record is a claim about the disk, so it must say
+        # whether the file is still there. One of the two records described its path as
+        # prose with an ellipsis, which no tool can resolve while the row keeps
+        # asserting 3.4 GB of retained fragments.
+        path_claim = str(orphan.get("path") or "")
+        unresolvable = any(marker in path_claim for marker in ("…", "(", "+"))
+        recheck = orphan.get("recheck")
+        if not isinstance(recheck, dict):
+            _fail("ORPHAN_RECHECK_MISSING",
+                  f"{label}: a leftover-file claim must carry recheck with a state and a date, "
+                  "otherwise a row about deleted data is indistinguishable from a row about kept data")
+            continue
+        rstate = recheck.get("state")
+        if rstate not in ORPHAN_RECHECK_STATES:
+            _fail("ORPHAN_RECHECK_STATE_UNKNOWN",
+                  f"{label}.recheck.state={rstate!r} not in {sorted(ORPHAN_RECHECK_STATES)}")
+        if not DATE_RE.match(str(recheck.get("checkedAt") or "")):
+            _fail("ORPHAN_RECHECK_UNDATED", f"{label}.recheck.checkedAt is not a date")
+        if unresolvable and rstate != "UNRESOLVABLE_AS_WRITTEN":
+            _fail("ORPHAN_PATH_NOT_RESOLVABLE_AS_WRITTEN",
+                  f"{label}: path {path_claim[:60]!r} contains prose, so it cannot be reported as "
+                  "PRESENT or ABSENT; mark the recheck UNRESOLVABLE_AS_WRITTEN")
+        if rstate == "PRESENT":
+            observed = recheck.get("bytesObserved")
+            if not isinstance(observed, int) or observed <= 0:
+                _fail("ORPHAN_PRESENT_WITHOUT_BYTES", f"{label}: recheck=PRESENT needs bytesObserved")
+            claimed = orphan.get("bytes")
+            if isinstance(claimed, int) and isinstance(observed, int) and claimed != observed:
+                _fail("ORPHAN_BYTES_DISAGREE",
+                      f"{label}: claimed bytes={claimed} but observed {observed}")
+            digest = recheck.get("sha256Recomputed")
+            if not (isinstance(digest, str) and HEX64.match(digest)):
+                _fail("ORPHAN_DIGEST_NOT_RECOMPUTED",
+                      f"{label}: PRESENT requires the recomputed full sha256, not a prefix alone")
+            prefix_claim = str((orphan.get("assetDigest") or {}).get("prefix") or "")
+            if prefix_claim and isinstance(digest, str) and not digest.startswith(prefix_claim):
+                _fail("ORPHAN_PREFIX_CLAIM_STALE",
+                      f"{label}: the recorded {prefix_claim!r} prefix is not the head of the "
+                      "recomputed digest, so the file is not the one that was registered")
+            duplicate_of = recheck.get("byteDuplicateOf")
+            if duplicate_of is None and recheck.get("duplicateTested") is not True:
+                _fail("ORPHAN_DUPLICATE_UNTESTED",
+                      f"{label}: a leftover may only be proposed for deletion against a proven "
+                      "duplicate; record duplicateTested with the answer")
 
     # --- check: the model -> runtime binding is a RESOLVABLE id --------
     # The `runtime` field in model-registry.json is human-readable prose
