@@ -9,11 +9,11 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 106,
+    "total": 107,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
-      "test_behavior_alignment": 11,
+      "test_behavior_alignment": 12,
       "working_directory_recovery": 2,
       "evidence_state": 16,
       "ci_configuration": 7,
@@ -2909,7 +2909,7 @@
       "regression_test": "apps/observer/tests/test_artifact_freshness.py (registered in the observer-python-skeleton group, now 9/9): touch-without-edit must not raise the floor, a back-dated real edit and an untracked addition must, a deletion must fail closed, and both dist boundaries must behave. Additionally falsified against the real tree: PASS as it stands, STALE_OR_MISSING_BINARY naming apps/observer/frontend/src/App.tsx once that file is genuinely edited past the bundle, PASS again after revert.",
       "evidence_level": "local-full",
       "repeat_prevention": "Artifact staleness must be decided from content identity, never from mtime, on any tree where git performs line-ending conversion; and a build chain must compare every stage to its own input, because certifying exe-newer-than-dist says nothing about dist-newer-than-src. A freshness probe must also fail closed when it cannot parse its own instrument, and every timestamp comparison must respect the granularity of the coarser side.",
-      "remaining_boundary": "Two blind spots remain and are not papered over. (1) A rollback to an older commit leaves every input matching HEAD, so no evidence of a change exists and the current binary is trusted — only a build-time receipt of input hashes closes that, and none is emitted yet. (2) An uncommitted edit whose mtime is back-dated before the build is still judged by mtime, because git offers no timestamp for bytes that were never committed. U19's desktop surface proof is separately owed (ERR-104) and unrelated to this gate.",
+      "remaining_boundary": "Closed by a build-time input receipt: apps/observer/scripts/write_artifact_receipt.py records the sha256 of every byte the compiler consumed plus the binary itself, is invoked by the build entry (the CI step 'Record the artifact input receipt' right after cargo build --release --locked, and the local MSVC bat), and resolve_app_exe() reads it first — a rollback to an older commit now shows up as changedInputs even though every file matches HEAD. Blind spot (2) is NOT closed: an uncommitted edit whose mtime is back-dated before the build still rests on mtime, because nothing but git and the receipt exist as witnesses and the receipt is written after the compile. A receipt that does not match the binary on disk is treated as unusable rather than convenient, and the gate then reports basis=content-evidence with basisLimit naming the gap, so the weaker evidence is never presented as the stronger one.",
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
@@ -2970,6 +2970,32 @@
         "verifiedCommit": null,
         "affectedCapability": "U19 desktop surface instrumentation",
         "regressionCommand": "python .project-local/runs/p0c-final-20261006/verify_once.py"
+      }
+    },
+    {
+      "error_id": "ERR-108",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "apps/observer/scripts/write_artifact_receipt.py (digest), apps/observer/scripts/u19_webview_e2e.py (resolve_app_exe decision order), .project-local/runs/u19-msvc-20261006/build-tauri-msvc.bat",
+      "command": "python apps/observer/tests/test_artifact_freshness.py plus python -c import of the harness, plus the build entry run with the receipt deleted to see whether it comes back",
+      "exit_code": 1,
+      "observed_error": "Three defects in the receipt mechanism itself, all of them mine, all caught before commit: (1) `h.digest().hexdigest()` — sha256 has no such chain, so every input hash raised AttributeError; (2) the receipt check ran before the frontend/dist boundary and would have certified a binary built from a stale bundle, which is the very ERR-105 failure mode the receipt was supposed to keep closed; (3) in the batch file, a guard testing `%BUILD_EXIT%` that was never set could never fire, and a path inserted through a non-raw Python string turned `\\toolchains` into a TAB plus 'oolchains', producing a silently wrong path.",
+      "root_cause": "(1) A typo in an unexercised helper — the writer had never been run when its consumer was written, so the reader's happy path was fiction. (2) I reasoned about the receipt as 'the strongest witness' and put it first, forgetting it attests to the dist on disk rather than to the dist versus its source: two different boundaries, and the weaker-looking one has to gate first. (3) Editing scripts through shell string surgery instead of writing the file, which is the recurring personal defect of this project's session log.",
+      "fix": "digest() corrected to h.hexdigest(); the bundle boundary moved ahead of the receipt decision and covered by a dedicated test; the batch entry point rewritten as a whole file with setlocal, an explicit BE variable, and the writer invoked only on a successful build. The harness now reports which basis decided (build-receipt or content-evidence) and, when it falls back, names the gap instead of quietly relying on weaker evidence.",
+      "regression_test": "apps/observer/tests/test_artifact_freshness.pytest_a_matching_receipt_does_not_outrank_a_stale_bundle monkeypatches ROOT/OBS plus CARGO_TARGET_DIR onto a temp repo, writes a matching receipt, then edits the frontend source past dist and asserts resolve_app_exe returns STALE_OR_MISSING_BINARY naming `npm run build`. Also: receipt-vs-other-bytes unusable, garbled receipt unusable, added input uncertified, absent receipt simply absent. 14 tests, and the whole group is 9/9.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A new provenance mechanism must be executed on the real tree before its consumer is trusted, and its short-circuit order must be stated as an invariant: a receipt proves which bytes the build consumed, never that those bytes were current against their own source. Never patch scripts through shell string surgery — write the file and assert on the written bytes.",
+      "remaining_boundary": "The receipt covers only the inputs the compiler consumes (rust sources, crate manifests, tauri.conf.json, capabilities, embedded dist). It does not record the frontend build toolchain's own inputs — frontend/src, package-lock, vite config, or the installed node_modules — so a source edit that is committed together with a matching dist rebuild is outside its attestation, and the content-evidence rule remains the only witness for that stage.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "U19 artifact provenance receipt",
+        "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py"
       }
     }
   ],

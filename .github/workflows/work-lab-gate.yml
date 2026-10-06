@@ -207,6 +207,13 @@ jobs:
       - name: Build the real Tauri desktop binary (MSVC, for U19 E2E)
         working-directory: apps/observer/src-tauri
         run: cargo build --release --locked
+      - name: Record the artifact input receipt
+        # ERR-105: the receipt must be written by the build side, immediately
+        # after the compiler, so it attests to a build that was observed. The
+        # gate only reads it. Without it the gate falls back to content
+        # evidence and says so in its own report.
+        working-directory: .
+        run: python apps/observer/scripts/write_artifact_receipt.py
       - name: U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)
         working-directory: apps/observer
         run: python scripts/u19_webview_e2e.py

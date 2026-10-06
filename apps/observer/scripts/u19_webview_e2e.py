@@ -48,6 +48,10 @@ ROOT = Path(__file__).resolve().parents[3]  # WORK-LAB (file lives at apps/obser
 OBS = ROOT / "apps" / "observer"
 sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
 sys.path.insert(0, str(ROOT / "services" / "orchestration"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from write_artifact_receipt import (  # noqa: E402
+    RECEIPT_SCHEMA, RECEIPT_SUFFIX, digest, input_files)
 
 RUNS = ROOT / ".project-local" / "runs"
 RUNS.mkdir(parents=True, exist_ok=True)
@@ -714,6 +718,63 @@ def artifact_freshness(root: Path, obs: Path) -> dict:
     }
 
 
+def _iso(seconds: float) -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(seconds))
+
+
+def _describe(path: Path) -> dict:
+    st = path.stat()
+    return {"path": str(path), "bytes": st.st_size, "mtime": _iso(st.st_mtime),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def receipt_verdict(root: Path, obs: Path, exe: Path) -> dict:
+    """Judge the tree against the bytes the build itself attested to.
+
+    Stronger than any timestamp rule: it sees a rollback to an older commit,
+    where every input matches HEAD and nothing in the tree evidences the
+    change. A receipt that does not describe the binary on disk is unusable
+    rather than convenient — that is the one way this can be forged.
+    """
+    path = exe.with_name(exe.name + RECEIPT_SUFFIX)
+    out: dict = {"present": False, "usable": False, "matches": False,
+                 "exeSha256": digest(exe)}
+    if not path.is_file():
+        return out
+    out["present"] = True
+    out["receiptPath"] = str(path)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        recorded = {i["path"]: i["sha256"] for i in data["inputs"]}
+    except Exception as exc:  # noqa: BLE001
+        out["error"] = repr(exc)[:200]
+        return out
+    if data.get("schemaVersion") != RECEIPT_SCHEMA:
+        out["reason"] = f"unexpected receipt schema {data.get('schemaVersion')!r}"
+        return out
+    if data.get("binary", {}).get("sha256") != out["exeSha256"]:
+        out["reason"] = ("the receipt describes a different binary than the one "
+                         "on disk, so it attests to nothing here")
+        return out
+    out["usable"] = True
+    out["writtenAt"] = data.get("writtenAt")
+    out["gitHead"] = data.get("gitHead")
+    out["inputCount"] = len(recorded)
+    changed, missing = [], []
+    for rel, sha in sorted(recorded.items()):
+        current = root / rel
+        if not current.is_file():
+            missing.append(rel)
+        elif digest(current) != sha:
+            changed.append(rel)
+    added = [p.relative_to(root).as_posix() for p in input_files(root, obs)
+             if p.relative_to(root).as_posix() not in recorded]
+    out.update({"changedInputs": changed[:20], "missingInputs": missing[:20],
+                "addedInputs": added[:20],
+                "matches": not (changed or missing or added)})
+    return out
+
+
 def resolve_app_exe() -> tuple[Path | None, dict]:
     """Pick the binary the build actually produced, and prove it is not stale.
 
@@ -765,14 +826,9 @@ def resolve_app_exe() -> tuple[Path | None, dict]:
                             "binary is current" % src_tauri)
         return None, report
 
-    if freshness["gitUnavailable"]:
-        report["status"] = "FAIL"
-        report["reason"] = (
-            "no git repository answers for this tree, so no content change can be "
-            "seen in it and no binary can be shown to be current. Run this gate "
-            "from a checkout, not from an export.")
-        return None, report
-
+    # The bundle boundary is checked before any receipt: a receipt can prove a
+    # binary consumed the dist that sits on disk, and that dist can itself be
+    # older than the frontend source that should have rebuilt it.
     if freshness["distSuperseded"]:
         report["status"] = "STALE_OR_MISSING_BINARY"
         report["reason"] = (
@@ -784,30 +840,62 @@ def resolve_app_exe() -> tuple[Path | None, dict]:
                freshness["frontendSourceFloorAt"]))
         return None, report
 
-    floor = freshness["binaryFloor"]
-    fresh = []
+    # A build receipt is then the strongest witness available: it compares the
+    # bytes the compiler consumed against the bytes on disk now, which catches
+    # the one case content evidence cannot — a rollback to an older commit,
+    # where every input matches HEAD and nothing in the tree evidences change.
+    receipted: list[Path] = []
     for c in ordered:
         if not c.exists():
             report["candidates"].append({"path": str(c), "exists": False})
             continue
-        st = c.stat()
-        is_fresh = st.st_mtime >= floor
+        rv = receipt_verdict(ROOT, OBS, c)
         report["candidates"].append({
-            "path": str(c), "exists": True, "bytes": st.st_size,
-            "mtime": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(st.st_mtime)),
-            "sha256": hashlib.sha256(c.read_bytes()).hexdigest(),
-            "newerThanAllInputs": is_fresh,
+            "path": str(c), "exists": True, "bytes": c.stat().st_size,
+            "mtime": _iso(c.stat().st_mtime), "sha256": rv["exeSha256"],
+            "receipt": {k: rv[k] for k in sorted(rv) if k != "exeSha256"},
         })
-        if is_fresh:
+        if rv["usable"] and rv["matches"]:
+            receipted.append(c)
+
+    if receipted:
+        chosen = max(receipted, key=lambda p: p.stat().st_mtime)
+        report["status"] = "PASS"
+        report["basis"] = "build-receipt"
+        report["chosen"] = _describe(chosen)
+        return chosen, report
+
+    report["basis"] = "content-evidence"
+    report["basisLimit"] = (
+        "no usable build receipt describes this binary, so a rollback to an "
+        "older commit would not be seen (ERR-105). Run "
+        "apps/observer/scripts/write_artifact_receipt.py right after the build.")
+
+    if freshness["gitUnavailable"]:
+        report["status"] = "FAIL"
+        report["reason"] = (
+            "no git repository answers for this tree, so no content change can be "
+            "seen in it and no binary can be shown to be current. Run this gate "
+            "from a checkout, not from an export.")
+        return None, report
+
+    floor = freshness["binaryFloor"]
+    fresh = []
+    for c in ordered:
+        if not c.exists():
+            continue
+        st = c.stat()
+        if st.st_mtime >= floor:
             fresh.append(c)
 
     if not fresh:
         report["status"] = "STALE_OR_MISSING_BINARY"
         report["reason"] = (
             "no release app.exe is at least as new as the last content change of "
-            "its inputs (floor %s, from %s). Rebuild before running this gate: a "
-            "superseded binary is not evidence about the current tree. Set "
-            "CARGO_TARGET_DIR if your build writes outside src-tauri/target."
+            "its inputs (floor %s, from %s), and no build receipt vouches for one. "
+            "Rebuild before running this gate: a superseded binary is not evidence "
+            "about the current tree. Set CARGO_TARGET_DIR if your build writes "
+            "outside src-tauri/target."
             % (freshness["binaryFloorAt"],
                (freshness["rustDetail"]["changedSinceHead"]
                 or [freshness["frontendDistNewest"]["path"]])[0])
@@ -815,13 +903,8 @@ def resolve_app_exe() -> tuple[Path | None, dict]:
         return None, report
 
     chosen = max(fresh, key=lambda p: p.stat().st_mtime)
-    st = chosen.stat()
     report["status"] = "PASS"
-    report["chosen"] = {
-        "path": str(chosen), "bytes": st.st_size,
-        "mtime": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(st.st_mtime)),
-        "sha256": hashlib.sha256(chosen.read_bytes()).hexdigest(),
-    }
+    report["chosen"] = _describe(chosen)
     return chosen, report
 
 
