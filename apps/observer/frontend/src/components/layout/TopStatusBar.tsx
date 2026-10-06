@@ -1,4 +1,5 @@
 import { Menu, Search } from 'lucide-react'
+import { WindowControls } from '@/components/layout/WindowControls'
 import type { SnapshotV3 } from '@/types'
 import type { ThemeMode, LayoutMode, LiveSnapshotState } from '@/lib/api'
 
@@ -103,8 +104,9 @@ export function TopStatusBar({
         </div>
       )}
 
-      {/* honest transport truth strip (REAL v3 fields only) */}
-      <div className="hidden shrink-0 items-center gap-3 text-[10px] text-muted lg:flex">
+      {/* honest transport truth strip (REAL v3 fields only). Shrinks instead of
+          forcing the action buttons into one-glyph columns. */}
+      <div className="truth-strip hidden items-center gap-3 text-[10px] text-muted lg:flex">
         <span className="flex items-center gap-2">
           <span className="status-pulse shrink-0" style={dotStyle} aria-hidden="true" />
           <span className="font-medium text-ink">{stateText}</span>
@@ -121,6 +123,10 @@ export function TopStatusBar({
           </span>
         )}
       </div>
+
+      {/* Custom title bar: both windows set decorations:false, so this strip is
+          the only drag surface the shell has. */}
+      <div className="drag-region" data-tauri-drag-region aria-hidden="true" />
 
       <div className="top-actions">
         <button type="button" className="ghost-btn" onClick={onNotify}>
@@ -148,6 +154,8 @@ export function TopStatusBar({
           {theme === 'dark' ? '浅色' : '深色'}
         </button>
       </div>
+
+      <WindowControls />
     </header>
   )
 }

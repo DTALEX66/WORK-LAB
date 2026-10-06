@@ -73,3 +73,172 @@
 }
 
 
+/* ---------------------------------------------------------------------------
+ * 2026-10-06 — window chrome and fluid scaling.
+ *
+ * Both windows set `decorations: false`, so the OS draws no title bar: the rail
+ * has to supply the drag surface and the min / maximize / close controls, and
+ * without them the window is neither movable nor closable from inside the app.
+ * These rules live in the shell layer because src/skins/b10.css stays a verbatim
+ * copy of the B10 source (UI_DECISIONS D-11).
+ * ------------------------------------------------------------------------- */
+.drag-region {
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-width: 24px;
+}
+
+.winctl {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  margin-left: 12px;
+}
+.winctl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.winctl-btn:hover { border-color: var(--border); background: var(--panel2); color: var(--ink); }
+.winctl-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.winctl-close:hover { border-color: #7f1d1d; background: #7f1d1d; color: #fff; }
+.winctl-zoom {
+  min-width: 38px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--muted);
+}
+.winctl-sep { width: 1px; height: 16px; margin: 0 4px; background: var(--border); }
+
+/* First-frame loading strip: sits above the lane content, which keeps rendering
+ * its UNKNOWN values (B5 rule), so this only answers "still fetching?". */
+.load-strip {
+  flex: 0 0 auto;
+  margin: 10px clamp(14px, 2.4cqi, 28px) 0;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel2);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* Fluid shell: query the CONTAINER, not the viewport.
+ *
+ * The B10 skin hard-codes a 4-column `.kpi-grid`, fixed fr ratios for
+ * `.two-col/.three-col/.split` and fixed padding, with only two viewport
+ * breakpoints (1160 / 840). Between 841 and 1160px nothing re-steps, so every
+ * panel compresses at once - that is the "挤在一起" behaviour.
+ *
+ * `1vw` would be the wrong unit here: the content column is the viewport MINUS
+ * the 210-280px rail, and in the compact layout the rail is gone entirely, so
+ * viewport-relative sizing mis-scales exactly when the shell changes shape.
+ * `.content` is a scroll box whose width comes from its parent, so it can own a
+ * containment context safely.
+ *
+ * Type sizes are deliberately NOT made fluid: b10.css is a verbatim copy of the
+ * B10 reference (UI_DECISIONS D-11) and pixel QA keys on it. Reading text at a
+ * smaller window is the new zoom level's job, not a re-typed scale. */
+.content {
+  container-type: inline-size;
+  container-name: page;
+}
+
+/* The content column must be able to SHRINK. B10's `.app{grid-template-columns:
+ * 280px 1fr}` sizes `1fr` against min-content, so an unshrinkable KPI row pushed
+ * the whole column past the window edge and clipped the third card and every
+ * window control off-screen. minmax(0,1fr) is what makes the rest of this layer
+ * observable at all. */
+@media (min-width: 841px) {
+  .app { grid-template-columns: clamp(210px, 17vw, 280px) minmax(0, 1fr); }
+}
+.main { min-width: 0; }
+
+/* Continuous reflow for card grids: the minimum track is a fraction of the
+ * content column, clamped to a readable floor, so columns are added as space
+ * appears instead of waiting for a cliff. */
+.kpi-grid {
+  /* `min(100%, 1fr)` as the maximum track is rejected by the parser, which
+   * discarded this whole declaration and fell back to the B10 fixed four
+   * columns - the KPI row then overflowed and clipped the third card. */
+  grid-template-columns: repeat(auto-fit, minmax(max(150px, 20cqi), 1fr));
+  gap: clamp(10px, 1.6cqi, 20px);
+}
+
+/* The top bar WRAPS instead of overflowing.
+ *
+ * Sequence of evidence: with the B10 defaults the action buttons were squeezed
+ * into one-glyph columns; forcing `nowrap` fixed that but pushed the fourth KPI
+ * card, the layout/theme buttons and the whole window-control cluster past the
+ * right edge, because the CSS viewport is narrower than the physical window
+ * (2048x1104 work area with display scaling). Wrapping keeps every control
+ * reachable at any width and costs nothing at wide sizes, where the row still
+ * fits on one line. */
+.topbar { flex-wrap: wrap; min-width: 0; height: auto; min-height: 78px; row-gap: 8px; }
+.topbar .search { flex: 1 1 320px; width: auto; min-width: 200px; }
+.top-actions { flex: 0 1 auto; white-space: nowrap; }
+.top-actions .ghost-btn { white-space: nowrap; flex: 0 0 auto; }
+.winctl { flex: 0 0 auto; margin-left: auto; }
+.winctl-zoomgroup { display: flex; align-items: center; gap: 2px; }
+/* The zoom cluster is a convenience; min / maximize / close are not. Under a
+ * 1240px window the cluster yields so the window buttons stay on screen, and
+ * Ctrl +/−/0 keeps working without them. */
+@media (max-width: 1240px) {
+  .winctl-zoomgroup { display: none; }
+}
+.drag-region { min-width: 8px; }
+/* No `display` here: this rule is unlayered and would override the layered
+ * `.hidden` / `lg:flex` utilities that gate the strip by width. */
+.truth-strip { flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; }
+@container page (max-width: 820px) {
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Paired/triple/split rows collapse inside the container, not the viewport. */
+@container page (max-width: 900px) {
+  .three-col { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container page (max-width: 760px) {
+  .two-col, .three-col, .split { grid-template-columns: 1fr; }
+  .metric-row { grid-template-columns: 1fr; }
+}
+
+.panel { min-width: 0; }
+.panel h3 { overflow-wrap: anywhere; }
+
+/* THE overflow cause: B10 declares `.two-col{1.2fr 1fr}`, `.split{1.35fr .95fr}`
+ * and `.three-col{repeat(3,minmax(0,1fr))}`. A bare `fr` track has a min-content
+ * floor, so a 720px `.table` inside one of those panels forced the whole track -
+ * and therefore the page - wider than the window, which is what pushed the
+ * fourth KPI card and the window controls past the right edge. Every fr track
+ * that holds projected data needs an explicit zero minimum. */
+.two-col { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.split { grid-template-columns: minmax(0, 1.35fr) minmax(0, .95fr); }
+.main, .content, .sidebar-slot { min-width: 0; }
+
+/* Tables keep the B10 720px intrinsic width and scroll horizontally inside
+ * `.table-wrap{overflow:auto}`. Forcing min-width:0 here would collapse the
+ * columns instead, which reads worse than a scrollbar. */
+.table-wrap { max-width: 100%; }
+@media (max-width: 840px) {
+  .content { padding: 16px 14px 20px; }
+}
+
+/* Narrow screens stay operable: the top actions keep their meaning at reduced
+ * size rather than disappearing, and the bar wraps instead of overlapping. */
+@media (max-width: 840px) {
+  .topbar { height: auto; min-height: 62px; flex-wrap: wrap; gap: 10px; padding: 10px 14px; }
+  .top-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .top-actions .ghost-btn { padding: 6px 10px; font-size: 12px; }
+  .search { flex: 1 1 220px; }
+  .winctl { margin-left: auto; }
+}

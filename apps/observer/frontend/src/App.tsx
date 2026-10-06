@@ -259,6 +259,18 @@ export default function App() {
 
   // U05: compact is a DEDICATED HUD — no sidebar, single column, 320px-safe.
   // full keeps the B10 sidebar + multi-panel layout.
+  //
+  // First-frame loading affordance. It sits ABOVE the lane content rather than
+  // replacing it: the B5 rule pins that with no snapshot every KPI renders
+  // UNKNOWN and never a fabricated 0, so swapping the content for a skeleton
+  // would hide the very state the test defends. The strip answers "is it still
+  // fetching?" without touching that discipline.
+  const loadingStrip = (!snap && !error) ? (
+    <div className="load-strip" role="status">
+      投影加载中 · 首次快照未到达，数值保持 UNKNOWN，不预填任何数据
+    </div>
+  ) : null
+
   if (isCompact) {
     return (
       <div data-layout={layout} className="app app-compact">
@@ -277,6 +289,7 @@ export default function App() {
             onOpenDrawer={() => setWorkspaceOpen(true)}
             onNotify={() => toast({ title: '暂无新的通知', variant: 'info' })}
           />
+          {loadingStrip}
           <section className="content" id="content">
             <CompactHUD snap={snap} live={live} />
           </section>
@@ -319,6 +332,7 @@ export default function App() {
           onNotify={() => toast({ title: '暂无新的通知', variant: 'info' })}
           onOpenMobileNav={() => setMobileNavOpen(true)}
         />
+        {loadingStrip}
         <section className="content" id="content">{mainContent}</section>
       </main>
       {overlays}
