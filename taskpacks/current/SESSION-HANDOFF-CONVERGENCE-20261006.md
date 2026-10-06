@@ -84,3 +84,36 @@
 **净结论**：目录规范化中**可安全执行的部分已在第一批完成**（4 个无引用 dated 记录冻结到 `taskpacks/history/`，活登记路径同步改写，权威校验与 47 门通过）。剩余项不是"还没做"，而是**实测证明不该做**：它们的分类本身就是权威的一部分（被索引/所有权/门引用的记录不是垃圾）。
 
 **我在此撤回一条自己先前写下的判断**：`knowledge-staging` 与审计归档"同字节双份"的说法未经验证就写进了登记，实测为 DIFF。这正是本文件 §2 记录的同一种错——先断言后取证。
+
+## 9. §5.1 与 §5.2 复核：两条"未闭合"都是取证仪器造成的假象（2026-10-06 续，会话 B）
+
+起点 HEAD `c198362`。先记一条与启动提示不符的实测：**`c198362` 的 exact-SHA CI 是红的**，`work-lab-gate :: observer` 与 `aggregate` = FAILURE（2 FAIL / 74 PASS，本机同命令复现），不是"两门皆绿"。根因是 `c198362` 给两个窗口 URL 追加了 `&shell=tauri`，撞断 `test_desktop_component_contract.js:37,43` 的整串 URL 等值钉。已在 `0103286` 修正：保留严格等值，另把 `mode=UNKNOWN` 与 `view` 拆成独立断言（冷启动 UNKNOWN 原本只被一条长字符串隐含，改天为无关原因重钉字符串就能悄悄丢掉）。台账 `ERR-100`。
+
+### 9.1 §5.2 窗口控制簇：已渲染，先前"看不见"是仪器错（P0-A 关闭）
+
+新仪器 `.project-local/runs/p0a-diag-20261006/shot3.py`，取证 `observer-authoritative.png` / `observer-topright-3x.png` / `capture-provenance.json`。**控制簇真实渲染**：胶囊内含 缩小 / `100%` / 放大 / 重置 / 分隔 / 最小化 / 最大化 / 关闭，位置 `top:10 right:12`，与 `revision 0` 之间留有空隙。
+
+四条仪器缺陷（台账 `ERR-099`，逐条实测）：
+
+| 缺陷 | 实测 |
+|---|---|
+| 启动**过期二进制** | 硬编码 `apps/observer/src-tauri/target/release/app.exe`（`1e8528e3…`，13:51），而配方设了 `CARGO_TARGET_DIR`，真产物在 `.project-local/runs/u19-msvc-20261006/target/release/app.exe`（`a06f4c85…`）。**`shell=tauri` 从未进过任何被截图的二进制** |
+| 拍的是 `GetWindowRect` | 无边框窗口仍含不可见缩放边：图比客户端区左移 9px、上移 1px |
+| 用**物理** 1200×800 强制改窗 | Tauri 声明的是**逻辑**像素。真 CSS 视口被压成 `946×632`，KPI 网格因此折成 2 列——被当作"裁切证据"的四列布局当场消失 |
+| 屏幕 BitBlt 分不清遮挡 | 一张图中央像素纯白 `[255,255,255]`：整个内容区被"Design Projects"资源管理器窗口占着；另一次鼠标停在按钮上，`:hover` 提示气泡冻结在画面里，看着像右边被裁的文字 |
+
+修正后仪器自证：按 SHA+新鲜度选二进制（不比输入新就 `STALE_OR_MISSING_BINARY` 退出）、进程转 per-monitor-DPI 并记录前后、改拍 `GetClientRect`+`ClientToScreen` 并与 `DWMWA_EXTENDED_FRAME_BOUNDS` 比对（差 >3px 即 `INSTRUMENT_INVALID`）、`SWP_NOSIZE` 只置顶不移尺寸、同一矩形**双路各拍一次**（BitBlt 与 `PrintWindow(PW_CLIENTONLY|PW_RENDERFULLCONTENT)`）并报差异像素比、启动前把指针挪走并还原。最终读数：`cssViewport=[1280,820]`、`differingPixelRatio=0.0001`、右缘墨迹只剩顶/底两条环境光带（无内容裁切带）。
+
+### 9.2 §5.1 KPI 第 4 张卡：不可复现；同区域真实缺陷是顶栏预留宽度（P0-B 改判后关闭）
+
+在真视口 `1280 CSS px` 下四张 KPI 卡完整可见、左右皆有余量，"第 4 张被右边界裁"不成立——它是在被压窄的视口和过期二进制上得到的读数。**同一次走查发现的真缺陷**是 `.topbar { padding-right: 210px }`：控制簇含缩放组时实测约 269 CSS px + 12px 右偏（缩放组在 `≤1240px` 隐藏，`>1240px` 才出现），于是数据源真值条 `覆盖 UNKNOWN — revision 0` 整段滑到按钮底下。已改为 130px、并在 `min-width:1241px` 切到 285px（与缩放组同宽同断点），**删除**了那条已被超越的 210px 声明而不是压过它。顺带把缩放按钮的 `Minus/Plus` 换成 `ZoomOut/ZoomIn`——同一胶囊里原本有两个一模一样的减号，一个"缩小"一个"最小化"。
+
+### 9.3 新发现（未修，登记在案）
+
+`Tooltip` 用 `left-1/2 -translate-x-1/2` + `whitespace-nowrap` 且无视口夹取：靠近右缘的触发元素（如"新建执行"）悬停时气泡被窗口右边界裁断。已编译 CSS 确认 `group-hover/tt:opacity-100` 与 `opacity-0` 均在，故"气泡常显"是 WebView2 的 `:hover` 残留而非产品缺陷。
+
+### 9.4 本轮已证实 / 仍未闭合
+
+已证实：`0103286` 双端一致（`git ls-remote` 回读同 SHA）；push 事件 run `37424935288` head_sha = `0103286…` conclusion=success；本机 `observer-web-contracts` 76/76、`observer-python-skeleton` 8/8、前端 typecheck + vitest(77) + build 全 exit 0；MSVC 增量重建 `BUILD_EXIT=0`。
+
+仍未闭合（不得记 PASS）：§5.3 U19 真实桌面表面证明（`ERR-098` 结论不变）；`pull_request` 事件 run 于本文件写作时仍在跑；本地门禁对 Node 契约组仍无覆盖（`ERR-100` 的 remaining_boundary）；气泡右缘夹取；除默认 1280×820 与被压窄的 946px 之外的窗口尺寸未测；其他客户端 live 部署与回读；merge main（需授权）；AG-15/16/17/10/11；AG-19 历史原件恢复。

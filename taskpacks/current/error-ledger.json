@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-10-01",
+  "generated_at": "2026-10-06",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 97,
+    "total": 99,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
       "test_behavior_alignment": 10,
       "working_directory_recovery": 2,
-      "evidence_state": 12,
-      "ci_configuration": 6,
+      "evidence_state": 13,
+      "ci_configuration": 7,
       "feature_gap": 5,
       "config_downgrade": 3,
       "dead_entry": 2,
@@ -2732,6 +2732,60 @@
         "affectedCapability": "Windows desktop E2E evidence chain and toolchain capability probing",
         "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python apps/observer/scripts/u19_webview_e2e.py",
         "currentApplicability": "PROBE_DEFECTS_FIXED_DESKTOP_VERDICT_STILL_OPEN"
+      }
+    },
+    {
+      "error_id": "ERR-099",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "evidence_state",
+      "entrypoint": ".project-local/runs/u19-msvc-20261006/shot2.py (window enumeration, capture rect, artifact path), apps/observer/frontend/src/skins/l10b-shell.css (.topbar padding-right, .winctl fixed cluster), apps/observer/frontend/src/components/layout/WindowControls.tsx",
+      "command": "python .project-local/runs/p0a-diag-20261006/shot3.py against cargo tauri build --no-bundle -- --locked output",
+      "exit_code": 1,
+      "observed_error": "Two open UI defects, 'the window-control cluster never renders' (P0-A) and 'the fourth KPI card is clipped at the right edge' (P0-B), were both readings of the instrument rather than of the app. Four separate defects in the capture harness produced them. (1) It launched a hardcoded apps/observer/src-tauri/target/release/app.exe while the documented build recipe sets CARGO_TARGET_DIR under .project-local/runs, so every 'I rebuilt and nothing changed' observation was of a superseded binary - the two exes differ (1e8528e3... vs a06f4c85...), and the shell=tauri marker was in neither. (2) It captured GetWindowRect, which on a frameless window still includes the invisible resize border, so the image started 9px left and 1px above the client area. (3) It forced SetWindowPos to a PHYSICAL 1200x800 while Tauri declares window size in LOGICAL pixels, shrinking the real CSS viewport from 1280x820 to 946x632 and changing the layout under measurement - at 946px the KPI grid reflows to two columns, so the four-across row that 'proved' the clipping no longer existed. (4) A screen BitBlt cannot distinguish the app from whatever overlaps it: one capture showed a File Explorer window filling the content area and a centre pixel of pure white, and the pointer left inside the window also froze a hover-revealed tooltip that read as clipped text.",
+      "root_cause": "The instrument reported numbers but never proved its own assumptions: which artifact it launched, whether that artifact was current, which rectangle it photographed, what coordinate space that rectangle lived in, and whether anything was on top of it. Each assumption was inherited from the previous run's guess, and every downstream breakpoint conclusion was stated as though measured. The one genuine layout defect the region did contain - .topbar reserving 210px for a cluster that is ~269 CSS px wide once the zoom group appears above 1240px, letting the transport truth strip slide under the caption buttons - was invisible because the captures never showed the real viewport.",
+      "fix": "New instrument .project-local/runs/p0a-diag-20261006/shot3.py: resolves the launched exe from every candidate target dir and refuses to run unless it is newer than tauri.conf.json, Cargo.toml, src/*.rs and frontend/dist/** (STALE_OR_MISSING_BINARY otherwise); makes the process per-monitor-DPI-aware and records before/after; captures GetClientRect + ClientToScreen instead of GetWindowRect and fails if the client size disagrees with DWMWA_EXTENDED_FRAME_BOUNDS by more than 3px; moves with SWP_NOSIZE so the app's own logical size is what gets judged; photographs the same rect twice, once by screen BitBlt and once by PrintWindow(PW_CLIENTONLY|PW_RENDERFULLCONTENT), reports the differing-pixel ratio, and treats PrintWindow as authoritative when they disagree (occlusion) or the BitBlt is covered; parks the pointer outside the window before launch and restores it; and reports right-edge ink bands so clipping is measured rather than eyeballed. Product fix: .topbar now reserves 130px, switching to 285px at min-width 1241px - the same width at which the zoom group appears - and the stale unconditional 210px declaration was deleted rather than overridden. Zoom buttons switched from Minus/Plus to ZoomOut/ZoomIn, which had made two identical minus glyphs sit in one pill meaning 'zoom out' and 'minimize'.",
+      "regression_test": "shot3.py exits non-zero on STALE_OR_MISSING_BINARY, INSTRUMENT_INVALID or a blank capture, and writes capture-provenance.json with the artifact sha256 it launched; a layout conclusion may only be recorded from a run whose instrumentDisagreements is empty and whose captureCrossCheck.differingPixelRatio is near zero. Readback at 0103286+working tree: artifact c9a5b833b4c3dd3de0973b643cd0c5af42f2b94944ac077779a2a2dcf6f3f6e3, cssViewport [1280,820], differingPixelRatio 0.0001, rightEdgeInk bands only at the top and bottom ambient edges (no content band clipped), observer-topright-3x.png shows the cluster clear of 'revision 0'.",
+      "evidence_level": "isolated-runtime",
+      "repeat_prevention": "Before trusting a screenshot as product evidence, prove four things about the instrument and record them in the provenance file: the SHA of the artifact actually launched and that it is newer than every input; the exact rectangle captured and the coordinate space it is in; that two independent paint paths agree; and that no pointer is resting on the UI. A capture whose window size was set by the harness is not the app's window size. Never restate a breakpoint conclusion drawn before the CSS viewport was measured.",
+      "remaining_boundary": "Not covered: the U19 real-desktop surface proof is still open (ERR-098's CDP conclusion stands); only the default 1280x820 window and one resized 946px width were measured, so other resizable states are unproven; the tooltip overflowing the right edge near a right-aligned trigger is a separate, still-open defect (Tooltip uses left-1/2 -translate-x-1/2 with whitespace-nowrap and no viewport clamping); and the harness still photographs a live desktop, so a window raised by the user mid-run can still intrude.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer desktop UI evidence chain and shell caption-cluster layout",
+        "regressionCommand": "python .project-local/runs/p0a-diag-20261006/shot3.py",
+        "currentApplicability": "INSTRUMENT_SELF_PROVEN_UI_DEFECTS_CLOSED_U19_STILL_OPEN"
+      }
+    },
+    {
+      "error_id": "ERR-100",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_configuration",
+      "entrypoint": "apps/observer/tests/test_desktop_component_contract.js, scripts/ci/required_groups.json (observer-web-contracts), services/orchestration/run_quality_gate.py verify, .github/workflows/work-lab-gate.yml",
+      "command": "python services/orchestration/run_quality_gate.py verify (local) vs work-lab-gate observer job",
+      "exit_code": 1,
+      "observed_error": "c198362 appended &shell=tauri to both configured window URLs in tauri.conf.json, which broke the two verbatim URL pins in the desktop component contract. work-lab-gate observer and aggregate were FAILURE at that exact SHA (2 FAIL / 74 PASS), yet the same tree reported QUALITY_GATE_PASS across all 47 local gates, and the handoff recorded 'verify 47 gates PASS' alongside 'both gates success'. The observer job also aborts at its first command, so observer-frontend-typecheck, observer-desktop-crate and the U19 step never ran for c198362 or 2fbd4e7 at all.",
+      "root_cause": "The local aggregate gate does not execute the Node contract groups that the CI observer job runs, so a green local QUALITY_GATE_PASS says nothing about them; and the contract pinned a whole URL string, so an intentional entry-URL change read as a failure of the UNKNOWN cold-start rule it was written to protect rather than as a contract update.",
+      "fix": "Contract expectations updated to the new canonical entry URLs with strict equality kept, and each window's query is now additionally parsed to assert mode=UNKNOWN and view separately, so the cold-start rule cannot be lost by re-pinning a string. Ran the CI groups themselves locally through scripts/ci/failfast_group.py (observer-web-contracts 76/76, observer-python-skeleton 8/8) plus frontend typecheck, vitest and build, instead of relying on QUALITY_GATE_PASS.",
+      "regression_test": "python scripts/ci/failfast_group.py --group observer-web-contracts and --group observer-python-skeleton, with node and python on PATH, must both report FAILFAST_GROUP_PASS before a delivery push; exact-SHA readback for 01032866919617026785cc6f5d784e9e3f3afcf2.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A local QUALITY_GATE_PASS is not a substitute for the CI groups: run every required group named in scripts/ci/required_groups.json locally through failfast_group.py before pushing, and read the rollup by head SHA rather than accepting a green summary. When a test that looks like a string pin encodes a truth rule, split the rule into its own assertion instead of relaxing the pin.",
+      "remaining_boundary": "Not fixed here: the local gate still has no node/python-group coverage, so the blind spot that let this through remains open as a gate-coverage task; and observer-desktop-crate plus the U19 step were only exercised through the local MSVC build, not through CI's own job.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "c1983621353ca9db7297b7cf91b0a76cecb9d320",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Exact-SHA CI truth for the Observer desktop contract",
+        "regressionCommand": "python scripts/ci/failfast_group.py --group observer-web-contracts",
+        "currentApplicability": "ALWAYS"
       }
     }
   ],
