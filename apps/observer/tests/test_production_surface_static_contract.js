@@ -140,6 +140,54 @@ function run() {
       "small text outside the micro roles:\n        " + offenders.join("\n        "));
   });
 
+  // --- file-level halves of the projection-truth ports (U03 step 1b) ---
+  // The behavior halves are in frontend/src/lib/projectionTruthContract.test.ts;
+  // these three need the disk, which the frontend tsconfig (no @types/node) must
+  // not do from a test.
+  t("the typed front model declares the v3 core keys, with `software` the only optional", () => {
+    const types = fs.readFileSync(path.join(SRC, "types.ts"), "utf-8");
+    const block = /export interface SnapshotV3 \{([\s\S]*?)\n\}/.exec(types);
+    assert(block, "types.ts must declare SnapshotV3");
+    const declared = [...block[1].matchAll(/^\s+(\w+)(\??):/gm)]
+      .map((m) => ({ name: m[1], optional: m[2] === "?" }));
+    const CORE = ["schemaVersion", "revision", "generatedAt", "sourceWatermark", "transport",
+                  "coverage", "governance", "workspace", "projects", "executions", "tasks",
+                  "tokenSummary", "git", "ci", "sourceRefs"];
+    for (const k of CORE) {
+      assert(declared.some((d) => d.name === k && !d.optional), "types.ts must declare required " + k);
+    }
+    const optional = declared.filter((d) => d.optional).map((d) => d.name);
+    assert(optional.length === 1 && optional[0] === "software",
+      "only `software` may be optional, got " + (optional.join(", ") || "none"));
+  });
+
+  t("no v3 snapshot literal is embedded in the production source", () => {
+    // The legacy front hard-coded WlApi.FIXTURE and pinned its numbers to the
+    // real fixture; the production front's only data source is the sidecar.
+    const typesPath = path.resolve(SRC, "types.ts");
+    const hits = sources
+      .filter((p) => path.resolve(p) !== typesPath)
+      .filter((p) => /workflow\/snapshot\/v3/.test(fs.readFileSync(p, "utf-8")))
+      .map((p) => path.relative(SRC, p));
+    assert(hits.length === 0, "files embedding a v3 snapshot literal: " + hits.join(", "));
+  });
+
+  t("the production tree renders no currency amount and no subscription wording", () => {
+    // Port of "cost shown as API estimate / USD, never as an exact bill" and
+    // "subscriptionUsage=not-metered renders as 订阅未计量, never 0". v3 has no
+    // monetary field at all, so the ported rule is stronger: money never appears.
+    // The needle is a bill SHAPE, not a bare `$` — api.ts legitimately contains
+    // `$1` inside a URL replacement.
+    const money = /(?:US?\$|RMB|¥|￥)\s?\d|\$\s?\d+\.\d|\bUSD\b|人民币|账单|订阅/;
+    const hits = sources.filter((p) => money.test(fs.readFileSync(p, "utf-8")))
+      .map((p) => path.relative(SRC, p));
+    const inMarkup = [];
+    if (money.test(html)) inMarkup.push("index.html");
+    if (money.test(skins)) inMarkup.push("skins");
+    assert(hits.length === 0 && inMarkup.length === 0,
+      "currency/subscription wording in: " + [...hits, ...inMarkup].join(", "));
+  });
+
   console.log(`TOTAL: ${pass} passed, ${fail} failed`);
   return { pass, fail };
 }

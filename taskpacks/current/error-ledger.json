@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-10-06",
+  "generated_at": "2026-10-07",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 117,
+    "total": 118,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 40,
+      "contract_drift": 41,
       "test_behavior_alignment": 13,
       "working_directory_recovery": 2,
       "evidence_state": 19,
@@ -3256,6 +3256,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer browser read-only entry and legacy surface retirement",
         "regressionCommand": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py"
+      }
+    },
+    {
+      "error_id": "ERR-119",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "apps/observer/frontend/src/lib/api.ts, apps/observer/frontend/src/views/Views.tsx, apps/observer/frontend/src/views/SoftwareView.tsx, apps/observer/frontend/src/views/WorkflowsView.tsx",
+      "command": "node node_modules/vitest/vitest.mjs run src/lib/projectionTruthContract.test.ts (from apps/observer/frontend)",
+      "exit_code": 1,
+      "observed_error": "Two failures while porting the legacy projection-truth contracts. (1) fmtTimestamp('2026-02-30T10:00:00Z') returned '2026/3/2 18:00:00': the seven production render sites used `value ? new Date(value).toLocaleString() : 'UNKNOWN'`, so an impossible calendar date was silently normalised into a plausible timestamp, and any unparseable string rendered as the literal text 'Invalid Date'. (2) The ported no-currency scan flagged apps/observer/frontend/src/lib/api.ts as a violation.",
+      "root_cause": "(1) The front had no date-validity gate at a cross-process boundary: a sidecar of a different build can hand it anything. A shape regex is not a validity check because V8's Date.parse does not fail on 2026-02-30, it rolls over to March 2, so the corrupt value looks authoritative on screen. (2) My own needle was wrong, not the tree: it matched a bare '$' followed by a digit, and api.ts legitimately contains 'http://$1' inside a URL replacement. The file-scan rule was written as a token match instead of a violation-shape match.",
+      "fix": "Added isRfc3339 (shape plus calendar: month 1-12, day within the month including the leap rule, hour <=23, minute <=59, second <=60 for leap seconds, offset hours/minutes in range) and fmtTimestamp, and routed all seven render sites through it so an unparseable or impossible date is UNKNOWN, never 'Invalid Date' and never a rolled-over day. snapshotToTransportTruth / executionsToRows / snapshotToProjectTokens now degrade a missing transport / coverage / projects / executions / token object to UNKNOWN/null instead of throwing. The currency scan needle requires a bill shape (symbol+digits, $ with decimals, or the words USD/RMB/人民币/账单/订阅).",
+      "regression_test": "frontend/src/lib/projectionTruthContract.test.ts (8 titled cases) + tests/test_production_surface_static_contract.js cases 'the typed front model declares the v3 core keys, with `software` the only optional', 'no v3 snapshot literal is embedded in the production source', 'the production tree renders no currency amount and no subscription wording'. All 11 falsified by mutation (.project-local/runs/convergence-20261007-c/falsify_u03_ports.py): bypassing the gate makes 2026-02-30 render, padding coverage to 0, falling stateTone through to 'done', removing optional chaining, dressing an UNKNOWN transport as LIVE, renaming a types.ts key, embedding a v3 literal and adding 'USD $4.29' each turn their case red; every file restored byte-for-byte with SHA-256 verified.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Never trust a shape-only date check: Date.parse rolls impossible dates over, so a validity gate must also round-trip the calendar fields. Any render site that localises a string from another process goes through that gate, and the producing side is checked first (collector_scheduler._now_iso and durable_worker emit '...Z') so strictness cannot hide real data. A file-scan needle is written against the SHAPE of the violation and then run against the compliant tree, because a token needle reports the codebase as guilty.",
+      "remaining_boundary": "Behaviour is pinned on the projection functions, not on a mounted component: no test renders a corrupt date through Views.tsx. test_render_v3.js (19), test_read_only_surface.js (17), test_responsive_contract.js (11) and test_visual_assets_r2.js (5) still need per-assertion attribution before apps/observer/web can be retired.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "62f666e\n6bd0bd5",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer v3 timestamp rendering and projection degradation",
+        "regressionCommand": "cd apps/observer && node tests/run_all_tests.js && cd frontend && node node_modules/vitest/vitest.mjs run src/lib/projectionTruthContract.test.ts"
       }
     }
   ],

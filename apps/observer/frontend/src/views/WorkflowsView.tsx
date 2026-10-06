@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { UnknownState } from '@/components/ui/states'
 import { Tooltip } from '@/components/ui/tooltip'
 import type { SnapshotV3 } from '@/types'
+import { fmtTimestamp } from '@/lib/api'
 
 export interface WorkflowRow {
   id: string
@@ -158,7 +159,7 @@ export function WorkflowsView({ snap }: { snap: SnapshotV3 | null }) {
                     <td className="text-muted">{w.owner || 'UNKNOWN'}</td>
                     <td className="font-mono text-muted">{w.version ?? 'UNKNOWN'}</td>
                     <td className="text-muted">
-                      {w.lastRunAt ? new Date(w.lastRunAt).toLocaleString() : 'UNKNOWN'}
+                      {fmtTimestamp(w.lastRunAt)}
                     </td>
                   </tr>
                 ))

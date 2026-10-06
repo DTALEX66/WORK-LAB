@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/ui/page-header'
 import type {
   SnapshotV3, Execution, Project,
 } from '@/types'
-import { fmtTokens, fmtCostQuality, stateTone, activityTone } from '@/lib/api'
+import { fmtTokens, fmtCostQuality, fmtTimestamp, stateTone, activityTone } from '@/lib/api'
 
 type Snap = SnapshotV3 | null
 
@@ -205,8 +205,8 @@ export function ExecutionsView({ snap }: { snap: Snap }) {
             <Row k="传输状态" v={transport?.transportState} />
             <Row k="新鲜度" v={transport?.freshnessState} />
             <Row k="事件流" v={transport?.eventStreamConnected ? '已连接' : '未连接'} />
-            <Row k="最后心跳" v={transport?.lastHeartbeatAt ? new Date(transport.lastHeartbeatAt).toLocaleTimeString() : 'UNKNOWN'} />
-            <Row k="写入水位" v={transport?.writerWatermarkAt ? new Date(transport.writerWatermarkAt).toLocaleTimeString() : 'UNKNOWN'} />
+            <Row k="最后心跳" v={fmtTimestamp(transport?.lastHeartbeatAt, 'time')} />
+            <Row k="写入水位" v={fmtTimestamp(transport?.writerWatermarkAt, 'time')} />
           </div>
         </CardContent></Card>
         <Card><CardHeader><span>任务状态桶 + 快照</span></CardHeader><CardContent>
@@ -361,7 +361,7 @@ export function MonitoringView({ snap }: { snap: Snap }) {
         <div className="list">
           <Row k="传输状态" v={<Badge variant={transport?.transportState === 'LIVE' ? 'success' : transport?.transportState === 'OFFLINE' ? 'error' : 'muted'}>{transport?.transportState || 'UNKNOWN'}</Badge>} />
           <Row k="新鲜度" v={transport?.freshnessState || 'UNKNOWN'} />
-          <Row k="连接起点" v={transport?.connectedSince ? new Date(transport.connectedSince).toLocaleTimeString() : 'UNKNOWN'} />
+          <Row k="连接起点" v={fmtTimestamp(transport?.connectedSince, 'time')} />
           <Row k="覆盖度" v={cov && cov.numerator != null ? cov.numerator + '/' + (cov.denominator ?? '?') + ' · ' + (cov.scope || 'UNKNOWN') : 'UNKNOWN'} />
         </div>
       </CardContent></Card>
@@ -420,7 +420,7 @@ export function TrustView({ snap }: { snap: Snap }) {
           <Row k="新鲜度" v={transport?.freshnessState || 'UNKNOWN'} />
           <Row k="覆盖度" v={cov && cov.numerator != null ? cov.numerator + '/' + (cov.denominator ?? '?') + ' · ' + (cov.scope || 'UNKNOWN') : 'UNKNOWN'} />
           <Row k="证据引用数" v={refs.length ? String(refs.length) : '0'} />
-          <Row k="快照生成" v={snap?.generatedAt ? new Date(snap.generatedAt).toLocaleString() : 'UNKNOWN'} />
+          <Row k="快照生成" v={fmtTimestamp(snap?.generatedAt)} />
         </div>
       </CardContent></Card>
       <Card><CardHeader><span>原则</span></CardHeader><CardContent className="text-xs text-muted">
@@ -453,7 +453,7 @@ export function SettingsView({ snap }: { snap: Snap }) {
             <div className="list">
               <Row k="修订号" v={snap ? String(snap.revision) : 'UNKNOWN'} />
               <Row k="Schema" v={snap?.schemaVersion || 'UNKNOWN'} />
-              <Row k="生成时间" v={snap?.generatedAt ? new Date(snap.generatedAt).toLocaleString() : 'UNKNOWN'} />
+              <Row k="生成时间" v={fmtTimestamp(snap?.generatedAt)} />
               <Row k="数据水位" v={snap?.sourceWatermark || 'UNKNOWN'} />
             </div>
           </CardContent></Card>

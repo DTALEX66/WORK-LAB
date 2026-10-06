@@ -12,6 +12,7 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { SoftwareIdentity, SoftwareLocationStatus } from '@/types'
+import { fmtTimestamp } from '@/lib/api'
 
 const STATUS_LABEL: Record<SoftwareLocationStatus, string> = {
   NOT_INSTALLED: '未安装',
@@ -88,7 +89,7 @@ export function SoftwareView({ snap }: { snap: any }) {
                     <Row k="双安装" v={s.duplicateInstallation ? '是' : '否'} />
                     <Row k="预期位置" v={s.expectedLocation || '—'} mono />
                     <Row k="观测位置" v={s.observedLocation || '—'} mono />
-                    <Row k="最后核验" v={s.lastVerified ? new Date(s.lastVerified).toLocaleString() : 'UNKNOWN'} />
+                    <Row k="最后核验" v={fmtTimestamp(s.lastVerified)} />
                     <Row k="发现源" v={s.discoverySource || '—'} />
                   </div>
                   {s.locationStatus === 'LOCATION_DRIFT' && s.expectedLocation && s.observedLocation && (

@@ -154,6 +154,42 @@ export function fmtCostQuality(q: CostQuality | null | undefined): string {
   return q ?? 'UNKNOWN'
 }
 
+// The snapshot crosses a process boundary (the sidecar may run a different
+// build), so a timestamp is localised only when it is strict RFC3339. A value
+// the front cannot parse stays UNKNOWN — never the string "Invalid Date".
+// The calendar check is not decoration: `Date.parse('2026-02-30T10:00:00Z')`
+// does NOT fail, it rolls over to March 2, which would present a corrupt
+// timestamp as a plausible one.
+const RFC3339_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+export function isRfc3339(value: unknown): value is string {
+  if (typeof value !== 'string') return false
+  const m = RFC3339_RE.exec(value)
+  if (!m) return false
+  const year = +m[1], month = +m[2], day = +m[3]
+  const hour = +m[4], minute = +m[5], second = +m[6]
+  if (month < 1 || month > 12) return false
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)
+  if (day < 1 || day > DAYS_IN_MONTH[month - 1] + (month === 2 && leap ? 1 : 0)) return false
+  if (hour > 23 || minute > 59 || second > 60) return false
+  if (m[8] !== 'Z') {
+    const offHour = +m[8].slice(1, 3), offMinute = +m[8].slice(4, 6)
+    if (offHour > 23 || offMinute > 59) return false
+  }
+  return !Number.isNaN(Date.parse(value))
+}
+
+export function fmtTimestamp(
+  value: string | null | undefined,
+  mode: 'datetime' | 'time' = 'datetime',
+): string {
+  if (!isRfc3339(value)) return 'UNKNOWN'
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return 'UNKNOWN'
+  return mode === 'time' ? d.toLocaleTimeString() : d.toLocaleString()
+}
+
 // ---------------------------------------------------------------------------
 // projections: map the REAL v3 fields into display rows (no phantom fields).
 // ---------------------------------------------------------------------------
@@ -177,8 +213,8 @@ export interface AgentRow {
 export function executionsToRows(snap: SnapshotV3 | null): AgentRow[] {
   if (!snap) return []
   const byProject = new Map<string, Project>()
-  for (const p of snap.projects) byProject.set(p.projectId, p)
-  return snap.executions.map((ex: Execution) => {
+  for (const p of snap.projects ?? []) byProject.set(p.projectId, p)
+  return (snap.executions ?? []).map((ex: Execution) => {
     const proj = ex.anchorProjectId ? byProject.get(ex.anchorProjectId) : undefined
     return {
       id: ex.executionId || 'exec',
@@ -190,8 +226,8 @@ export function executionsToRows(snap: SnapshotV3 | null): AgentRow[] {
       sessionId: ex.sessionId,
       stateQuality: ex.stateQuality,
       platform: proj?.agentPlatform ?? null,
-      totalTokens: proj?.token.totalTokens ?? null,
-      costQuality: proj?.token.costQuality ?? 'UNKNOWN',
+      totalTokens: proj?.token?.totalTokens ?? null,
+      costQuality: proj?.token?.costQuality ?? 'UNKNOWN',
     }
   })
 }
@@ -232,16 +268,17 @@ export interface TransportTruth {
 
 export function snapshotToTransportTruth(snap: SnapshotV3 | null): TransportTruth | null {
   if (!snap) return null
+  const tr = snap.transport
   const cov = snap.coverage
   return {
-    transportState: snap.transport.transportState,
-    freshnessState: snap.transport.freshnessState,
-    eventsUrl: snap.transport.eventsUrl,
-    connectedSince: snap.transport.connectedSince,
-    coverageNumerator: cov.numerator,
-    coverageDenominator: cov.denominator,
-    coverageScope: cov.scope,
-    revision: snap.revision,
+    transportState: tr?.transportState ?? 'UNKNOWN',
+    freshnessState: tr?.freshnessState ?? 'UNKNOWN',
+    eventsUrl: tr?.eventsUrl ?? null,
+    connectedSince: tr?.connectedSince ?? null,
+    coverageNumerator: cov?.numerator ?? null,
+    coverageDenominator: cov?.denominator ?? null,
+    coverageScope: cov?.scope ?? null,
+    revision: snap.revision ?? null,
   }
 }
 
@@ -262,13 +299,13 @@ export interface ProjectTokenRow {
 
 export function snapshotToProjectTokens(snap: SnapshotV3 | null): ProjectTokenRow[] {
   if (!snap) return []
-  return snap.projects.map((p) => ({
+  return (snap.projects ?? []).map((p) => ({
     projectId: p.projectId,
     displayName: p.displayName,
-    inputTokens: p.token.inputTokens,
-    outputTokens: p.token.outputTokens,
-    totalTokens: p.token.totalTokens,
-    costQuality: p.token.costQuality,
+    inputTokens: p.token?.inputTokens ?? null,
+    outputTokens: p.token?.outputTokens ?? null,
+    totalTokens: p.token?.totalTokens ?? null,
+    costQuality: p.token?.costQuality ?? 'UNKNOWN',
   }))
 }
 

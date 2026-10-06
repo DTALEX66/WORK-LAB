@@ -146,3 +146,58 @@ UI 层不读凭据/env/cookie、主题与布局态不落 web storage（编辑器
 
 `test_render_v3.js` 的 19 条同法处理前，`web/` 不删。OPEN 项的共同主题：fixture 数值一致性、RFC3339 严格日期、覆盖率三元组、未知字段前向兼容、缺键优雅降级、schema 必含 10 键、not-metered 渲染为「订阅未计量」而非 0——这些都是可从 v3 快照/`lib/api.ts` 直接断言的纯函数级性质，迁移不需要真实素材。
 
+### 2026-10-07 步骤 1 完成：8 条 OPEN 投影契约已重锚（基准 `10ae5cb`）
+
+新增 `frontend/src/lib/projectionTruthContract.test.ts`（8 条具名行为断言，标题里写清它替代哪条旧断言）
+与 `tests/test_production_surface_static_contract.js` 的 3 条文件级断言（11→14）。
+文件级那一半不能放进 vitest：`frontend/tsconfig.json` 没有 `@types/node`，
+`node:fs` 直接 `TS2307`，而 CI 会跑 `npm run typecheck`——所以磁盘扫描留在 node 套件里。
+
+| 旧断言 | 生产侧新标题（节选） | 位置 |
+|---|---|---|
+| fixture parses as valid JSON object with core keys | legacy "fixture parses as valid JSON object with core keys": a v3 snapshot carries every key the front reads, with the declared type | vitest |
+| 同上（typed model 漂移守护） | the typed front model declares the v3 core keys, with `software` the only optional | node |
+| inline API FIXTURE matches authoritative fixture numbers | legacy "inline API FIXTURE…": with no injected endpoint the descriptor is the labelled non-authoritative loopback fallback, never a fabricated source | vitest |
+| 同上（不许内嵌快照字面量） | no v3 snapshot literal is embedded in the production source | node |
+| cost shown as API estimate / USD, never as an exact bill ＋ subscriptionUsage=not-metered renders as 订阅未计量, never 0 | legacy "cost shown as API estimate / USD…": the token summary carries counts plus a quality label and nothing that could be read as a bill | vitest |
+| 同上（整树不得出现金额/订阅字样） | the production tree renders no currency amount and no subscription wording | node |
+| all fixture dates are strict RFC3339 | legacy "all fixture dates are strict RFC3339": real dates localise, malformed ones render UNKNOWN, never "Invalid Date" | vitest |
+| coverage has numerator/denominator/scope | legacy "coverage has numerator/denominator/scope": the triple survives projection, a real 0 stays 0, an absent triple stays null | vitest |
+| unknown/new fields are forward compatible | legacy "unknown/new fields are forward compatible…": extra keys at any level and unknown enum values never fabricate a positive | vitest |
+| missing required core keys degrade gracefully | legacy "missing required core keys degrade gracefully…": absent nested objects degrade to UNKNOWN/null instead of throwing or 0 | vitest |
+| empty-new-install fixture renders | legacy "empty-new-install fixture renders…": an empty install projects zero rows and an UNKNOWN transport | vitest |
+
+**迁移时发现的真缺陷（不是测试写错）**：生产侧 7 处日期渲染都是
+`x ? new Date(x).toLocaleString() : 'UNKNOWN'`。两个后果：
+（1）不合法字符串会渲染成字面 "Invalid Date"；
+（2）更坏——`Date.parse('2026-02-30T10:00:00Z')` **不失败**，它滚成 3 月 2 日，
+把损坏时间戳伪装成可信时刻。旧契约的"严格 RFC3339"正是防这个。
+因此 `lib/api.ts` 新增 `isRfc3339`/`fmtTimestamp`（形状 + 月/日/时/分/秒 + 偏移量 + 闰年的日历校验），
+`Views.tsx`(5)、`SoftwareView.tsx`(1)、`WorkflowsView.tsx`(1) 全部改用它。
+生产侧两个发射方（`collector_scheduler._now_iso`、`durable_worker`）都输出 `...Z`，
+所以严格门不会把真数据判成 UNKNOWN——这条我是先核发射方再改渲染方的。
+另外 `snapshotToTransportTruth`/`executionsToRows`/`snapshotToProjectTokens`
+原先对 `snap.transport.x` 直接取属性，缺键即抛；快照跨进程（sidecar 可能不同版本），
+故按旧契约补了降级。
+
+**证伪 11/11**（`.project-local/runs/convergence-20261007-c/falsify_u03_ports.py`，每条注入后按字节复原并核对 SHA-256）：
+`types.ts` 键改名、`api.ts` 里 `authoritative:false→true`、`?? 'UNKNOWN'→'ZERO'`、
+绕过 RFC3339 门、覆盖率补 0、`stateTone` 默认落到 `done`、去掉可选链使其抛错、
+UNKNOWN 传输粉饰成 LIVE、往 `a11y.ts` 塞 v3 字面量、塞 `USD $4.29`、
+以及删掉测试自身 fixture 的一个核心键（这条是断言的变异测试，证明它真在断言）。
+
+两处证伪**首版是我预期写错**而非门禁失效，都已按事实改注入而不是放宽断言：
+`transportState ?? 'LIVE'` 打不中"空安装"一例（该例显式传 'UNKNOWN'，`??` 不触发），
+`tokenTruth` 补零也打不中它——空安装例的 tokenSummary 是存在且为 null；
+换成"把 UNKNOWN 传输粉饰成 LIVE"后由空安装例与降级例同时变红。
+`a11y.ts` 那次也暴露 node 侧 needle 要写"账单形状"而不是裸 `$`：`api.ts` 里
+`replace(..., 'http://$1')` 的 `$1` 会被裸 `$`+数字命中，第一版把我自己的合规代码报成违规。
+
+实测存量更新：vitest/RTL **具名标题 95 条 / 执行 95 条（15 个文件）**，node 静态契约 **14 条**，
+旧树 5 个套件仍为 13/17/19/11/5。全量：`vitest run` 15 files / 95 passed，
+`tests/run_all_tests.js` 97 passed 0 failed，`tsc --noEmit` 干净，`vite build` 绿。
+
+**仍未完成**：`test_render_v3.js`(19)、`test_read_only_surface.js`(17)、
+`test_responsive_contract.js`(11)、`test_visual_assets_r2.js`(5) 的逐条归属；
+这四张表填完并且第 1 步的等价物全部落地之前，`apps/observer/web` 不删，U03 保持 PARTIAL。
+
