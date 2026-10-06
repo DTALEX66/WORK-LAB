@@ -34,7 +34,7 @@ A post-push independent review flagged that default MCP config used floating npm
 python3 -m py_compile scripts/workflow/*.py scripts/security/*.py
 bash -n setup.sh
 bash -n bin/hermes-npx
-python3 scripts/security/scan_agent_rules.py templates skills docs scripts bin
+python3 packages/client-neutral-core/scripts/security/scan_agent_rules.py templates skills docs scripts bin
 grep -RInE '@latest|gpt-4o|--json' README.md config docs scripts skills bin setup.sh setup.ps1 templates || true
 hermes mcp test context7
 hermes mcp test context7

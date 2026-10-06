@@ -31,7 +31,7 @@
 
 ## 标准升级顺序
 
-1. 运行 `scripts/workflow/verify_portable_install.py`，确认仓库可安装到隔离空目录，且不复制凭据。
+1. 运行 `packages/client-neutral-core/scripts/verify_portable_install.py`，确认仓库可安装到隔离空目录，且不复制凭据。
 2. 使用官方 `hermes update` 把 managed checkout、依赖、bundled skills 和 Desktop 恢复到当前官方基线；不得在活动 venv 被占用时使用 `--force-venv`。
 3. 使用 `sync_hermes_workflow_assets.py --apply` 部署仓库所拥有的配置、技能和工具；该脚本保留活动模型、provider、API 配置、自定义 MCP 和非仓库负责的 skills，并精确替换仓库负责的 skill 子树。
 4. 用 `hermes config check`、skill provenance 和 `hermes_workflow_doctor.py` 验证结构；只有显式要求 live 网络验证时才运行 `--live`。

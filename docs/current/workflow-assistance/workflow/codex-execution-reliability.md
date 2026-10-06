@@ -76,7 +76,7 @@ python scripts/workflow/execution_preflight.py \
 首选项目数据入口：
 
 ```bash
-python bin/hermes-project-data.py --project D:/All-projects/Target \
+python packages/client-neutral-core/bin/hermes-project-data.py --project D:/All-projects/Target \
   cleanup-path audit-residue-name
 ```
 

@@ -38,19 +38,19 @@
 
 ```powershell
 # 只读：查看当前项目副本状态；不写文件
-python scripts/workflow/machine_identity.py status
+python services/authority/machine_identity.py status
 
 # 只读：生成初始化计划；不写文件
-python scripts/workflow/machine_identity.py init
+python services/authority/machine_identity.py init
 
 # 即使带 --write 仍只输出计划；持久化必须走单独、受审查的项目本地工作流
-python scripts/workflow/machine_identity.py init --write
+python services/authority/machine_identity.py init --write
 
 # 只读：生成登记计划；不写 registry
-python scripts/workflow/machine_identity.py record --label 'office-pc'
+python services/authority/machine_identity.py record --label 'office-pc'
 
 # 即使带 --write 仍只输出登记计划；登记表必须通过受审查的 Git 变更维护
-python scripts/workflow/machine_identity.py record --label 'office-pc' --write
+python services/authority/machine_identity.py record --label 'office-pc' --write
 ```
 
 `--label` 只用于人工识别，不要填写真实姓名、用户名、路径、序列号或账号信息。

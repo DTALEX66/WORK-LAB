@@ -12,7 +12,7 @@
 
 **问题：** WLG-050 修改 `skills/model-switch/SKILL.md`（去硬编码路径）后，`skill-provenance` gate 报 `source SHA drift: model-switch`。原因是 `config/skill-provenance.yaml` 中登记的 `source_sha256` 仍是旧值，且校验器使用 **CRLF→LF 规范化 hash**（Windows CRLF 与 Linux LF 需一致），直接对字节算 hash 会算错。
 
-**根因：** `scripts/security/check_skill_provenance.py` 的 `sha256()` 先 `read_bytes().replace(b"\r\n", b"\n")` 再哈希；文档修改后必须用同一规范化算法更新 provenance。
+**根因：** `packages/client-neutral-core/scripts/security/check_skill_provenance.py` 的 `sha256()` 先 `read_bytes().replace(b"\r\n", b"\n")` 再哈希；文档修改后必须用同一规范化算法更新 provenance。
 
 **修复：** 用规范化 hash 更新 provenance：
 ```python

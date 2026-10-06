@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 133,
+    "total": 134,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 47,
@@ -20,7 +20,7 @@
       "feature_gap": 9,
       "config_downgrade": 3,
       "dead_entry": 3,
-      "path_boundary": 5,
+      "path_boundary": 6,
       "ci_tooling": 2,
       "sql_schema": 1,
       "regression_contract": 7
@@ -3696,6 +3696,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Licence evidence in the source ledger and its readback audit",
         "regressionCommand": "python scripts/audit/prove_previous_licence_audit_miscounted_the_files.py HEAD"
+      }
+    },
+    {
+      "error_id": "ERR-135",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "path_boundary",
+      "entrypoint": "scripts/audit/live_doc_command_targets.py, tests/workflow-assistance/test_live_doc_command_targets.py, docs/current/, packages/client-neutral-core/skills/, README.md, AGENTS.md",
+      "command": "python scripts/audit/live_doc_command_targets.py --apply",
+      "exit_code": 1,
+      "observed_error": "The first `--apply` rewrote 35 files and then the scan it ran afterwards reported 6 UNRESOLVED lines of a shape that had never existed before: `packages/client-neutral-core/packages/client-neutral-core/scripts/security/scan_agent_rules.py`, `packages/client-neutral-core/packages/client-neutral-core/bin/codex.cmd`. My own rewriter had duplicated a prefix on documents that already carried the correct path. Nothing was committed in that state; the 35 edits were set aside with `git stash push -u` and the tree restored.",
+      "root_cause": "The substitution was an unanchored `str.replace(dead, live)`. For every MAP entry whose target ENDS with the dead key (`bin/codex.cmd` -> `packages/client-neutral-core/bin/codex.cmd`), the dead key is a substring of the correct text, so a doc that was already right got rewritten into a doubled path. The post-write assertion checked the wrong thing — plain substring absence — and a doubled path still contains the dead key preceded by `/`, so the check passed on corrupted bytes. ERR-130 already records this family: a path rewrite that re-applies its own prefix.",
+      "fix": "The substitution is now anchored — `(?<![\\w./-])` before the escaped dead key — so it fires only on an unprefixed occurrence, and the verification uses the same anchor instead of substring absence. Re-applied: 28 files rewritten, 77 lines changed symmetrically (77 insertions / 77 deletions, pure path swaps), no doubled prefix anywhere in the live surfaces, and RESULT dead=29 repointed=0 allowed=29 unresolved=0. Two of the re-pointed commands were then executed to prove the new target is live: `packages/client-neutral-core/scripts/build_context_pack.py --stdout --max-chars 2000` produced a 2,042-byte context pack, and `packages/client-neutral-core/scripts/security/scan_agent_rules.py --help` exits 0.",
+      "regression_test": "tests/workflow-assistance/test_live_doc_command_targets.py — 9 tests: unresolved must be empty, every MAP target must exist while every MAP source must still be absent, every ALLOWED path must still be dead, the two tables must be disjoint, and the matcher must not fire inside a `.json` filename (the ERR-130 extension defect)",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Never rewrite a path with an unanchored substring replace, and never verify a rewrite by plain substring absence: anchor both to an unprefixed occurrence, and re-run the scan after applying so a new-shape regression surfaces in the same command. Set a bad batch aside reversibly (`git stash push -u`) instead of hand-editing it back.",
+      "remaining_boundary": "The 29 ALLOWED paths are kept with a written reason, not repaired: most are illustrative filenames inside generic skill lessons (a hypothetical `scripts/run_tests.sh`, `bin/cli.js`, `/usr/bin/link.exe`) or Hermes' vendor-relative layout, and three are `scripts/workflow/` names whose successors I could not identify from tracked files alone (sync_codex_global_assets.py, execution_preflight.py, user_profile_export.py) — those sit in dated 2026-08 investigation documents, so naming a successor would be guessing. `docs/current/…/examples/governance.yml` is pointed at by two docs and was never landed; authoring it would invent governance content, so it is listed for an owner call. The re-pointed docs are not executed by CI, and the three verified commands were run from this machine only.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "51c723d",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "U02 path convergence in live instruction surfaces",
+        "regressionCommand": "python tests/workflow-assistance/test_live_doc_command_targets.py"
       }
     }
   ],

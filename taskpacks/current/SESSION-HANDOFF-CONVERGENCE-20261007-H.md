@@ -59,6 +59,10 @@ the llama.cpp archive, and the source-ledger licence review. Branch
   under-filled (a regex that required the path literal to follow `=` immediately, missing `Path(`).
   Fixed before any record was written from the wrong number.
 
+## U02 live-path convergence (same round)
+
+The documents had never been re-asked after ERR-115: 104 command-shaped references in live surfaces pointed at paths that no longer exist, 77 of them mechanically re-pointable to a single tracked namesake, 29 kept with a written reason. `scripts/audit/live_doc_command_targets.py` (report + `--apply`) and `tests/workflow-assistance/test_live_doc_command_targets.py` now make that a machine check; ERR-135 records the unanchored-replace regression my first apply produced and how it was caught before commit.
+
 ## Still owed
 
 - **Owner-side, unchanged:** U02 publish; AG-09/AG-10 (BLOCKED); AG-12/13/15/16/17/18 decisions; the

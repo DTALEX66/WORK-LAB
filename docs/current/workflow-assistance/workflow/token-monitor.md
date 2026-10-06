@@ -5,7 +5,7 @@
 本项目提供两个层次的本地监视器：
 
 - `apps/token-monitor-desktop/`：主版本，Windows Tauri 2 Dashboard，按 Provider/模型实时展示；
-- `scripts/workflow/token_monitor.py`：兼容性探针和无 GUI 自检工具。
+- `packages/client-neutral-core/scripts/token_monitor.py`：兼容性探针和无 GUI 自检工具。
 
 主版本默认面向 Codex session JSON/JSONL，也可以扫描多个本地 JSON/JSONL 目录。多个目录使用分号分隔，适合分别接入 GPT/Codex、DeepSeek、Kimi 或本地 Router 导出的 usage 文件。
 
@@ -52,13 +52,13 @@ npm run build
 从仓库根目录运行：
 
 ```powershell
-python scripts/workflow/token_monitor.py
+python packages/client-neutral-core/scripts/token_monitor.py
 ```
 
 指定日志：
 
 ```powershell
-python scripts/workflow/token_monitor.py `
+python packages/client-neutral-core/scripts/token_monitor.py `
   --file "$env:LOCALAPPDATA\hermes\logs\agent.log"
 ```
 
@@ -90,7 +90,7 @@ Tauri 主版本额外显示：
 不打开 GUI 的自检：
 
 ```powershell
-python scripts/workflow/token_monitor.py --self-test
+python packages/client-neutral-core/scripts/token_monitor.py --self-test
 ```
 
 预期：
@@ -102,7 +102,7 @@ TOKEN_MONITOR_SELF_TEST_PASS
 项目测试：
 
 ```powershell
-python tests/test_token_monitor.py -v
+python tests/workflow-assistance/test_token_monitor.py -v
 ```
 
 ## 重要限制

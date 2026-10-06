@@ -147,13 +147,13 @@ git config user.email "${GH_ID}+${GH_LOGIN}@users.noreply.github.com"
 把逻辑沉淀为独立脚本：
 
 ```text
-scripts/workflow/sync_hermes_workflow_assets.py
+integrations/executors/hermes/sync_hermes_workflow_assets.py
 ```
 
 后续用：
 
 ```bash
-python scripts/workflow/sync_hermes_workflow_assets.py --apply
+python integrations/executors/hermes/sync_hermes_workflow_assets.py --apply
 ```
 
 ---
@@ -165,7 +165,7 @@ python scripts/workflow/sync_hermes_workflow_assets.py --apply
 残留扫描发现：
 
 ```text
-scripts/workflow/sync_hermes_workflow_assets.py: ... "hermes" + "-pack"
+integrations/executors/hermes/sync_hermes_workflow_assets.py: ... "hermes" + "-pack"
 ```
 
 **根因**
@@ -248,7 +248,7 @@ C:/Users/admin/AppData/Local/hermes/node/npx.cmd
 更新：
 
 - `bin/hermes-npx`
-- `bin/hermes-npx.cmd`
+- `packages/client-neutral-core/bin/hermes-npx.cmd`
 
 新策略：
 
@@ -305,10 +305,10 @@ Invalid JSON: expected value ... input_value='Starting MCP server...'
 
 本轮修复已固化为：
 
-- `scripts/workflow/sync_hermes_workflow_assets.py`
+- `integrations/executors/hermes/sync_hermes_workflow_assets.py`
 - `TROUBLESHOOTING.md`
 - `bin/hermes-npx`
-- `bin/hermes-npx.cmd`
+- `packages/client-neutral-core/bin/hermes-npx.cmd`
 - `setup.sh`
 - `skills/model-switch/`
 - `skills/software-development/python-testing/`
@@ -320,11 +320,11 @@ Invalid JSON: expected value ... input_value='Starting MCP server...'
 cd 'D:/All projects/Workflow-assistance'
 
 git status --short --branch
-python scripts/workflow/sync_hermes_workflow_assets.py --apply
+python integrations/executors/hermes/sync_hermes_workflow_assets.py --apply
 bash -n setup.sh
 bash -n bin/hermes-npx
-python -m py_compile scripts/workflow/sync_hermes_workflow_assets.py scripts/workflow/hermes_workflow_doctor.py scripts/workflow/switch_model.py scripts/security/scan_agent_rules.py
-python scripts/security/scan_agent_rules.py .
+python -m py_compile integrations/executors/hermes/sync_hermes_workflow_assets.py integrations/executors/hermes/hermes_workflow_doctor.py integrations/executors/hermes/switch_model.py packages/client-neutral-core/scripts/security/scan_agent_rules.py
+python packages/client-neutral-core/scripts/security/scan_agent_rules.py .
 hermes mcp test public-apis
 hermes mcp test sequential-thinking
 hermes mcp test context7

@@ -15,7 +15,7 @@ Context Pack 是给新会话、长任务恢复、Codex/CC Switch handoff 和人�
 ## 入口
 
 ```bash
-python scripts/workflow/build_context_pack.py
+python packages/client-neutral-core/scripts/build_context_pack.py
 ```
 
 默认输出：
@@ -35,8 +35,8 @@ python scripts/workflow/build_context_pack.py
 也可以显式指定：
 
 ```bash
-python scripts/workflow/build_context_pack.py --output .project-local/artifacts/context-pack.md
-python scripts/workflow/build_context_pack.py --stdout --max-chars 20000
+python packages/client-neutral-core/scripts/build_context_pack.py --output .project-local/artifacts/context-pack.md
+python packages/client-neutral-core/scripts/build_context_pack.py --stdout --max-chars 20000
 ```
 
 ## 安全边界
@@ -57,8 +57,8 @@ python scripts/workflow/build_context_pack.py --stdout --max-chars 20000
 
 Context Pack 是 handoff/evidence artifact，不是实际产品任务完成，也不是 live Hermes 已加载证明。它不能替代：
 
-- `python tests/test_workflow_governance.py -v`；
-- `python scripts/security/scan_agent_rules.py ...`；
+- `python tests/workflow-assistance/test_workflow_governance.py -v`；
+- `python packages/client-neutral-core/scripts/security/scan_agent_rules.py ...`；
 - `hermes mcp test context7`；
 - `integrations/executors/hermes/sync_hermes_workflow_assets.py --apply`；
 - exact-tree review / CI verdict。
@@ -73,10 +73,10 @@ Context Pack 是 handoff/evidence artifact，不是实际产品任务完成，�
 ## 验证
 
 ```bash
-python scripts/workflow/build_context_pack.py --max-chars 20000
-python -m py_compile scripts/workflow/build_context_pack.py
-python tests/test_workflow_governance.py -v
-python scripts/security/scan_agent_rules.py templates skills docs scripts README.md
+python packages/client-neutral-core/scripts/build_context_pack.py --max-chars 20000
+python -m py_compile packages/client-neutral-core/scripts/build_context_pack.py
+python tests/workflow-assistance/test_workflow_governance.py -v
+python packages/client-neutral-core/scripts/security/scan_agent_rules.py templates skills docs scripts README.md
 ```
 
 如果系统要求 fresh ad-hoc evidence，应只在当前项目 Git-ignored 的 `.project-local/runs/` 内创建临时脚本，检查默认输出路径、Git-ignore fail-closed、脱敏和单测方法；不得使用用户 Home 或系统 Temp 作为项目运行时落点。

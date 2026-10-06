@@ -14,7 +14,7 @@
 
 ## 可部署执行器与强制 gate
 
-仓库的 `bin/hermes-project-data.py` 与 `bin/hermes-project-terminal-guard.py` 会随 `sync_hermes_workflow_assets.py --apply` 部署到 `$HERMES_HOME/bin/`。
+仓库的 `packages/client-neutral-core/bin/hermes-project-data.py` 与 `packages/client-neutral-core/bin/hermes-project-terminal-guard.py` 会随 `sync_hermes_workflow_assets.py --apply` 部署到 `$HERMES_HOME/bin/`。
 
 默认 Hermes profile 配置了官方 `pre_tool_call` shell hook：对于 `terminal` 工具，它会 fail-closed 地拒绝以下情况：缺少显式 `workdir`、workdir 不是 Git 项目、未通过 wrapper 启动、wrapper 未以 `--project .` 固定到 workdir，或 shell 链式命令。新 Desktop/Gateway/CLI 会话生效；现有进程需 `/reset` 或重启。
 

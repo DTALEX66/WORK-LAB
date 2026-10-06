@@ -509,7 +509,7 @@
           "historical_record_policy": "UNSUPPORTED"
         },
         "maturity": "PLAN_SUPPORTED",
-        "renderer": "integrations/executors/dsh/dsh_adapter.py",
+        "renderer": "services/execution-federation/dsh_adapter.py",
         "note": "OBSERVE/PLAN only until stable official native interface + ownership def + isolated fixture + readback + rollback + negative tests all exist. native model/provider/reasoning user-owned.",
         "capability_coverage_complete": true
       }

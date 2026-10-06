@@ -13,8 +13,8 @@
 | 门禁 | 状态 | 证据 |
 |---|---|---|
 | Authority Index 19 领域 | ✅ | `00-governance/config-authority-index.json` (19 domains, 11 ACTIVE) |
-| Capsule Schema + CLI | ✅ | `schemas/workflow/context-capsule.schema.json` + `scripts/workflow/capsule.py` |
-| Config Compiler Pipeline | ✅ | `schemas/workflow/canonical-config-intent.schema.json` + `scripts/workflow/config_compiler.py` |
+| Capsule Schema + CLI | ✅ | `schemas/workflow/context-capsule.schema.json` + `packages/client-neutral-core/scripts/capsule.py` |
+| Config Compiler Pipeline | ✅ | `schemas/workflow/canonical-config-intent.schema.json` + `services/policy/config_compiler.py` |
 | CloudEvent + OTel Schema | ✅ | `schemas/workflow/cloud-event-envelope.schema.json` |
 | Observer Truth | ✅ | pricing provider/model/version + usage null/observation_state |
 | Plugin Inventory | ✅ | `config/plugin-inventory.json` (3 active + 2 quarantined) |

@@ -55,13 +55,13 @@ project_doc_max_bytes  = 65536
 
 `workflow-assistance-openhuman-integration` 定义与本地 OpenHuman 桌面 agent 的协作边界：`.openhuman/` 私密运行时（keychain/users/logs/memory/workspace）与 `.codex`/`.hermes` 同级不可读取；OpenHuman 的扫描输出只是候选证据，junction/重复/路径类结论必须用 `fsutil reparsepoint query`、`Get-Item` LinkType/Target 与内容对比原生核验后才可行动（2026-08-10 OpenHuman 误报两个不存在 junction 的回归案例已写入）。
 
-`workflow-assistance-self-improvement` 以中立形态吸收个人 agent 的技能自动成长模式（usage sidecar + active/stale/archived + pin 豁免 + 只归档不删除 + 转变前备份 + provenance 过滤），配套 `scripts/workflow/skill_lifecycle.py`（stdlib-only，可对任意 skills 根运行）；自动生长的知识通过 PR 提升进模块 codex-assets，仓库即跨机器持久存储。
+`workflow-assistance-self-improvement` 以中立形态吸收个人 agent 的技能自动成长模式（usage sidecar + active/stale/archived + pin 豁免 + 只归档不删除 + 转变前备份 + provenance 过滤），配套 `packages/client-neutral-core/scripts/skill_lifecycle.py`（stdlib-only，可对任意 skills 根运行）；自动生长的知识通过 PR 提升进模块 codex-assets，仓库即跨机器持久存储。
 
 ## 用户环境画像（跨机器留存）
 
 `scripts/workflow/user_profile_export.py` 以只读、无密方式导出 Hermes/Codex 用户配置与技能清单到 tracked `config/user-environment-profile.json`；具体数量以当次导出和同步器读回为准，不在文档中冻结。配置键值会脱敏，凭据一律 `[REDACTED]`，发现未脱敏值即拒绝写入。恢复流程见 `docs/workflow/user-environment-profile.md`：新机器 `sync apply` 部署模块 skills 后，按画像键名重建配置、重填凭据。
 
-跨电脑识别不依赖用户画像或凭据：`scripts/workflow/machine_identity.py` 只在项目本地维护随机 opaque `machine_id`，并以非敏感画像摘要判断是否需要复核。它只能输出 `KNOWN_MACHINE`、`NEW_MACHINE` 或 `CONFIGURATION_REVIEW_REQUIRED` 等只读状态，不能证明账户身份，也不会因换机自动 apply、重登、清理或覆盖用户配置。完整边界和显式命令见 `docs/workflow/machine-identity-and-config-review.md`。
+跨电脑识别不依赖用户画像或凭据：`services/authority/machine_identity.py` 只在项目本地维护随机 opaque `machine_id`，并以非敏感画像摘要判断是否需要复核。它只能输出 `KNOWN_MACHINE`、`NEW_MACHINE` 或 `CONFIGURATION_REVIEW_REQUIRED` 等只读状态，不能证明账户身份，也不会因换机自动 apply、重登、清理或覆盖用户配置。完整边界和显式命令见 `docs/workflow/machine-identity-and-config-review.md`。
 
 ## 命令策略
 
@@ -171,7 +171,7 @@ Windows Git Bash 也可显式使用：
 
 - 人类交接：`docs/workflow/codex-enhancement-boundary.md`
 - 机器可读权威：`config/codex-enhancement-boundary.json`
-- 回归合同：`tests/test_codex_enhancement_boundary.py`
+- 回归合同：`tests/workflow-assistance/test_codex_enhancement_boundary.py`
 
 合同固定以下结论：该模块只提供官方 Codex 配置面上的 secret-free 用户 overlay，具备
 `detect/plan/apply/verify/rollback` 的受限能力；`apply` 必须由用户明确授权，`rollback`

@@ -131,7 +131,7 @@ following baseline, owned by the enhancement module:
    OFFICIAL standard release format (whatever the vendor ships is the entry).
    Hermes: official desktop app (`apps/desktop/release/win-unpacked/Hermes.exe`,
    Electron) + `hermes` CLI; Codex: single wrapper (`bin/codex` bash +
-   `bin/codex.cmd`, identical versioned-glob resolution to the official
+   `packages/client-neutral-core/bin/codex.cmd`, identical versioned-glob resolution to the official
    runtime); DSH: official DeepSeek Harness `0.2.0-rc.2` (Electron, installed at the
    vendor default per-user path `%LOCALAPPDATA%\Programs\DeepSeek Harness\DeepSeek Harness.exe`;
    the install root is RESOLVED from the uninstall registry entry or the shortcut

@@ -9,13 +9,13 @@
 
 ```bash
 # 全部托管仓库（WORK-LAB/DESIGN-LAB/ArcheAxis/Obsidian/OS External）状态体检
-python scripts/workflow/github_upload_accelerator.py
+python packages/client-neutral-core/scripts/github_upload_accelerator.py
 
 # 单仓库提交+推送（自动加 conventional 前缀）
-python scripts/workflow/github_upload_accelerator.py --repo WORK-LAB -m "feat: add dashboard"
+python packages/client-neutral-core/scripts/github_upload_accelerator.py --repo WORK-LAB -m "feat: add dashboard"
 
 # 只提交不推送（安全预览）
-python scripts/workflow/github_upload_accelerator.py --repo DESIGN-LAB -m "docs: fix readme" --no-push
+python packages/client-neutral-core/scripts/github_upload_accelerator.py --repo DESIGN-LAB -m "docs: fix readme" --no-push
 ```
 
 **安全设计**：
@@ -28,7 +28,7 @@ python scripts/workflow/github_upload_accelerator.py --repo DESIGN-LAB -m "docs:
 一键聚合 PR 审核信号：mergeable + checks + 本地 gate → 建议 APPROVE/BLOCK。
 
 ```bash
-python scripts/workflow/github_review_accelerator.py --repo DTALEX66/WORK-LAB --pr 118
+python packages/client-neutral-core/scripts/github_review_accelerator.py --repo DTALEX66/WORK-LAB --pr 118
 # 输出: mergeable/mergeable_state/checks/local_gate/recommendation/reasons
 ```
 

@@ -85,8 +85,8 @@ import json, yaml
 json.load(open('templates/windows-terminal/catppuccin-mocha.json', encoding='utf-8'))
 yaml.safe_load(open('templates/ui/skin-presets.yaml', encoding='utf-8'))
 PY
-python tests/test_workflow_governance.py -v
-python scripts/security/scan_agent_rules.py templates skills docs scripts README.md
+python tests/workflow-assistance/test_workflow_governance.py -v
+python packages/client-neutral-core/scripts/security/scan_agent_rules.py templates skills docs scripts README.md
 ```
 
 如果系统要求 fresh ad-hoc evidence，用 `C:\Users\admin\AppData\Local\Temp\hermes-verify-*` 临时脚本验证 JSON/YAML 解析、关键 token、runtime-neutral 边界和治理测试方法。

@@ -134,7 +134,7 @@ MCP server initial connection failed: [WinError 193] %1 不是有效的 Win32 �
 GUI/TUI WebSocket client_disconnect(code=1006)
 ```
 
-**原因：** Windows 上 Hermes 直接 spawn MCP `command` 时，不能把命令指向 POSIX bash 脚本 `bin/hermes-npx`；必须指向 `bin/hermes-npx.cmd`，否则 MCP 初始化失败，严重时会造成界面断连/闪退。
+**原因：** Windows 上 Hermes 直接 spawn MCP `command` 时，不能把命令指向 POSIX bash 脚本 `bin/hermes-npx`；必须指向 `packages/client-neutral-core/bin/hermes-npx.cmd`，否则 MCP 初始化失败，严重时会造成界面断连/闪退。
 
 **解决：**
 ```yaml

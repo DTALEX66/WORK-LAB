@@ -68,8 +68,8 @@ templates/evals/agent-behavior-smoke.yaml
 新增或修改 Agent 行为评估资产时，至少验证：
 
 ```bash
-python tests/test_workflow_governance.py -v
-python scripts/security/scan_agent_rules.py templates skills docs scripts README.md
+python tests/workflow-assistance/test_workflow_governance.py -v
+python packages/client-neutral-core/scripts/security/scan_agent_rules.py templates skills docs scripts README.md
 ```
 
 如果只改模板/文档且系统要求 fresh evidence，可创建 `C:\Users\admin\AppData\Local\Temp\hermes-verify-*` 临时脚本做 focused ad-hoc verification，并明确说明它不是完整测试套件 green。

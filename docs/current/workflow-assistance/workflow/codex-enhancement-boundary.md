@@ -120,4 +120,4 @@ The only supported outcomes are read-only review states such as
 `plan/verify`, but never automatic `apply`, authentication changes, Reset/Repair,
 provider routing changes, or writes to OBSERVE/SECRET fields. See
 `docs/workflow/machine-identity-and-config-review.md` and
-`scripts/workflow/machine_identity.py`.
+`services/authority/machine_identity.py`.
