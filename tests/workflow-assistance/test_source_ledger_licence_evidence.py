@@ -11,6 +11,7 @@ agreement check is not a formality.
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -19,6 +20,7 @@ LEDGER = ROOT / ".project/governance" / "source-ledger.json"
 AUDIT = ROOT / "docs" / "audits" / "LICENCE_READBACK_2026-10-07.json"
 SELF_HOSTS = ("github.com/DTALEX66/WORK-LAB",)
 METHODS = {"gh-api-detection", "license-file", "docs-page"}
+HEX64 = re.compile(r"[0-9a-f]{64}")
 
 
 def violations(rows: list[dict], audit: dict) -> list[str]:
@@ -55,6 +57,20 @@ def violations(rows: list[dict], audit: dict) -> list[str]:
             out.append(f"{rid}: evidence entry has no fetched URL")
         if row.get("licenseFileHash") and entry["method"] == "gh-api-detection":
             out.append(f"{rid}: detection-only evidence cannot back a licenseFileHash")
+        # A licence value must be bound to the bytes it was read from, and both tracked records must
+        # name the same digest — otherwise "I read the file" is itself an unevidenced claim.
+        if not row.get("licenseFileHash"):
+            out.append(f"{rid}: claims {spdx} but names no licence-file hash")
+        elif not HEX64.fullmatch(str(row["licenseFileHash"])):
+            out.append(f"{rid}: licenseFileHash is not 64 lowercase hex characters")
+        if entry.get("method") == "license-file":
+            if str(entry.get("licenseFileSha256") or "") != str(row.get("licenseFileHash") or ""):
+                out.append(f"{rid}: audit licenseFileSha256 {entry.get('licenseFileSha256')!r} != "
+                           f"ledger licenseFileHash {row.get('licenseFileHash')!r}")
+            if not (entry.get("licenseFileName") or ""):
+                out.append(f"{rid}: file-based evidence names no file")
+            if not isinstance(entry.get("licenseFileBytes"), int) or entry["licenseFileBytes"] <= 0:
+                out.append(f"{rid}: file-based evidence states no positive byte count")
     for rid in entries:
         if rid not in by_id:
             out.append(f"audit entry {rid!r} matches no ledger row")
@@ -135,6 +151,32 @@ class SourceLedgerLicenceEvidenceGate(unittest.TestCase):
                 for r in self.rows]
         self.assertTrue(any("opa" in v and "licenseFileHash" in v
                             for v in violations(rows, self.audit)))
+
+    def test_a_hash_that_disagrees_with_the_audit_is_refused(self) -> None:
+        rows = [dict(r, **({"licenseFileHash": "f" * 64} if r["id"] == "opa" else {}))
+                for r in self.rows]
+        found = violations(rows, self.audit)
+        self.assertTrue(any("opa" in v and "licenseFileSha256" in v for v in found), found)
+
+    def test_a_licence_value_without_a_file_hash_is_refused(self) -> None:
+        rows = [dict(r, **({"licenseFileHash": None} if r["id"] == "cosign" else {}))
+                for r in self.rows]
+        self.assertIn("cosign: claims APACHE-2.0 but names no licence-file hash",
+                      violations(rows, self.audit))
+
+    def test_a_file_hash_that_is_not_a_digest_is_refused(self) -> None:
+        rows = [dict(r, **({"licenseFileHash": "c71d23"} if r["id"] == "trivy" else {}))
+                for r in self.rows]
+        self.assertIn("trivy: licenseFileHash is not 64 lowercase hex characters",
+                      violations(rows, self.audit))
+
+    def test_file_evidence_without_a_name_or_byte_count_is_refused(self) -> None:
+        audit = json.loads(AUDIT.read_text(encoding="utf-8"))
+        e = next(x for x in audit["rows"] if x["id"] == "trivy")
+        e.pop("licenseFileName")
+        e["licenseFileBytes"] = 0
+        self.assertTrue(any("trivy" in v and "no positive byte count" in v
+                            for v in violations(self.rows, audit)))
 
 
 if __name__ == "__main__":

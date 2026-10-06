@@ -67,9 +67,7 @@ the llama.cpp archive, and the source-ledger licence review. Branch
 - **Merge the duplicate row** `otel-semconv` into `opentelemetry-genai-reference` or retire one.
 - **AG-11 real material:** ASR on a user recording, OCR over a multi-page PDF. Both stay UNKNOWN
   until the material exists; `page-order` used three synthetic pages.
-- **Licence depth:** 8 of 14 external rows rest on GitHub auto-detection only. Opening the LICENSE
-  bytes and filling `licenseFileHash` (with `freshness` still review-required until a commit basis is
-  recorded) is the next verifiable step.
+- **Licence depth DONE 2026-10-07:** all 14 named rows are bound to the SHA-256 of the LICENSE bytes they were read from (`scripts/audit/licence_file_bytes.py`, 14/14 fetched, 0 failures), and the gate compares the ledger hash to the audit hash. Doing it exposed a self-contradiction in the shipped audit — prose said three file-confirmed rows, its own method fields said six — recorded as ERR-134 and reproducible against the committed blob. What is NOT closed: no row has a commit/tag basis, so `reviewedCommit` stays null and freshness stays `review-required`.
 - **Scratch originals** under `.project-local/runs/convergence-20261007-{d,e,f,h}` are still on disk
   (~40 scripts, plus the 272 MB `wl-ag11` venv). They may go once the promoted paths have survived
   one full cleanup cycle.

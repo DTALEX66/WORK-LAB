@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 132,
+    "total": 133,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 47,
       "test_behavior_alignment": 15,
       "working_directory_recovery": 2,
-      "evidence_state": 22,
+      "evidence_state": 23,
       "ci_configuration": 10,
       "feature_gap": 9,
       "config_downgrade": 3,
@@ -3670,6 +3670,32 @@
         "verifiedCommit": null,
         "affectedCapability": "CI-discovered governance gates must pass on a clean checkout",
         "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py"
+      }
+    },
+    {
+      "error_id": "ERR-134",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": "docs/audits/LICENCE_READBACK_2026-10-07.json, scripts/audit/licence_file_bytes.py, scripts/audit/prove_previous_licence_audit_miscounted_the_files.py, .project/governance/source-ledger.json, tests/workflow-assistance/test_source_ledger_licence_evidence.py",
+      "command": "python scripts/audit/prove_previous_licence_audit_miscounted_the_files.py HEAD  → exit 1: prose says 3, the document's own method fields say 6",
+      "exit_code": 1,
+      "observed_error": "The licence audit I shipped at 4a1d81a stated in `limits[1]` that \"Only three rows were confirmed by opening the licence file\", while the same document's `method` fields marked six entries `license-file`, and the commit message for that same file said five. Three numbers, one fact. A reader who believed the sentence would have re-opened three files and treated eleven as unverified; a reader who believed the fields would have over-trusted one row that was only ever detected.",
+      "root_cause": "I wrote the prose count by recollection instead of deriving it from the structure it described, and nothing compared the two. It is the same shape as ERR-132 — a number carried into a durable record without the scope that produced it — so the lesson had been recorded and still was not enforced by an instrument.",
+      "fix": "Every named licence value is now bound to the SHA-256 of the LICENSE bytes actually fetched (scripts/audit/licence_file_bytes.py, 14 of 14 rows, 0 fetch failures), so the count is no longer a sentence anyone has to trust: the gate requires each row's `licenseFileHash` to equal the audit entry's `licenseFileSha256`, to be 64 lowercase hex, and to be backed by a file name and a positive byte count. The corrected limits line states the measurable fact and records what it replaced instead of quietly rewriting history. The mismatch itself is reproducible against the committed blob, not against a scratch copy.",
+      "regression_test": "tests/workflow-assistance/test_source_ledger_licence_evidence.py — now 13 tests, 10 negative controls, incl. a hash disagreeing with the audit, a value without a hash, a truncated hash, and file evidence with no name or byte count",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Never type a count into a durable record. Derive it from the structure the record itself carries, and make a gate compare the prose number to the data when both exist. When a shipped record is found wrong, correct it in place with a dated sentence that says what was wrong, and prove the old version was wrong from the committed blob.",
+      "remaining_boundary": "A file hash proves which document was read, not which commit the ledger's artefact corresponds to: reviewedCommit/reviewedTag stay null and freshness stays review-required, so no row here is a version-pinned claim. Three rows (conftest, in-toto, ccusage) still show GitHub detection as NOASSERTION; the file text governs and that disagreement is recorded in each row's note.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "4a1d81a",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Licence evidence in the source ledger and its readback audit",
+        "regressionCommand": "python scripts/audit/prove_previous_licence_audit_miscounted_the_files.py HEAD"
       }
     }
   ],
