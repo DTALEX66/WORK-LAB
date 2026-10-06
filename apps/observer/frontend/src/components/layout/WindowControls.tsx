@@ -15,8 +15,17 @@ const ZOOM_MIN = 0.6
 const ZOOM_MAX = 2.0
 
 function inTauri(): boolean {
-  return typeof window !== 'undefined'
-    && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
+  if (typeof window === 'undefined') return false
+  // The native shell declares itself on the window URL. Feature-detecting the
+  // injected IPC globals alone proved undiagnosable from the outside: the
+  // controls rendered in tests and never appeared in a real capture, and there
+  // was no way to tell "not injected" from "injected but invisible". A declared
+  // parameter makes the desktop branch deterministic; the globals check stays as
+  // a fallback for entries that carry no parameter.
+  try {
+    if (new URLSearchParams(window.location.search).get('shell') === 'tauri') return true
+  } catch { /* no URL (SSR/test) */ }
+  return '__TAURI_INTERNALS__' in window || '__TAURI__' in window
 }
 
 export function WindowControls() {

@@ -174,8 +174,13 @@ export default function App() {
     // dropping it on navigation/refresh would silently fall back to the
     // non-authoritative static-preview default. Only a present, non-empty api
     // is preserved; other runtime params are not blindly carried.
-    const api = new URLSearchParams(window.location.search).get('api')
+    const params = new URLSearchParams(window.location.search)
+    const api = params.get('api')
     if (api) p.set('api', api)
+    // The shell marker must survive navigation too, or the window controls would
+    // vanish on the first lane switch.
+    const shell = params.get('shell')
+    if (shell) p.set('shell', shell)
     const qs = p.toString()
     const url = window.location.pathname + (qs ? '?' + qs : '')
     window.history.replaceState(null, '', url)
