@@ -9,15 +9,15 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 101,
+    "total": 104,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 38,
-      "test_behavior_alignment": 10,
+      "test_behavior_alignment": 11,
       "working_directory_recovery": 2,
-      "evidence_state": 14,
+      "evidence_state": 15,
       "ci_configuration": 7,
-      "feature_gap": 6,
+      "feature_gap": 7,
       "config_downgrade": 3,
       "dead_entry": 2,
       "path_boundary": 3,
@@ -2841,6 +2841,84 @@
         "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py",
         "currentApplicability": "ALWAYS"
       }
+    },
+    {
+      "error_id": "ERR-103",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "feature_gap",
+      "entrypoint": "apps/observer/src-tauri/capabilities/default.json (permissions), apps/observer/frontend/src/components/layout/WindowControls.tsx (minimize / toggleMaximize / close / setZoom)",
+      "command": "python -c reading apps/observer/src-tauri/gen/schemas/acl-manifests.json for core:window default_permission, then node apps/observer/tests/test_desktop_component_contract.js",
+      "exit_code": 1,
+      "observed_error": "Owner report from the real desktop: several controls do nothing when clicked, specifically the caption cluster (minimise, maximise/restore, close) and the zoom pair. No error, no visual change. The window itself renders the full interface, which also disproves the blank-release conclusion in ERR-102.",
+      "root_cause": "Tauri v2 denies every mutating window and webview command by default. The compiled capability was [core:default, core:window:allow-start-dragging], and core:window:default in the build's own ACL manifest lists only readers (allow-is-maximized, allow-inner-size, allow-title and friends); allow-minimize, allow-toggle-maximize, allow-close and core:webview:allow-set-webview-zoom are separate identifiers that were never granted, so each click rejected at the ACL boundary. The rejection was then erased twice over: WindowControls called the API without awaiting it, so the rejected promise bypassed its own try/catch and surfaced as an unhandled rejection, and the catch body was empty.",
+      "fix": "Granted exactly the four identifiers the shipped UI actually calls: core:window:allow-minimize, core:window:allow-toggle-maximize, core:window:allow-close, core:webview:allow-set-webview-zoom; and awaited each native call so a future denial cannot vanish silently. No other permission was added: the read-only-surface assertion in the same suite still forbids shell/fs/http/process grants.",
+      "regression_test": "node apps/observer/tests/test_desktop_component_contract.js derives the native calls from frontend/src and fails if any call has no ACL identifier, or if a needed identifier is missing from capabilities/default.json. Both failure modes were injected and observed to fail before the gate was trusted.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Any UI call into the native shell must be awaited and must appear in the capability-contract map, because a Tauri v2 permission that is not granted fails as an asynchronous rejection that no synchronous try/catch will ever see. Capability grants must be derived from calls, never from a feature list.",
+      "remaining_boundary": "The four grants are proven to have reached this compile (tauri-build regenerated gen/schemas/capabilities.json at 20:45:33 with all six permissions, app.exe at 20:45:54) and the contract suite passes, but the click behaviour on a real desktop has not been re-observed yet; the owner asked for no further window launches.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "c198362",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Observer borderless shell window controls",
+        "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
+      }
+    },
+    {
+      "error_id": "ERR-104",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": "apps/observer/scripts/u19_webview_e2e.py (_gdi_render_proof: screen BitBlt + PrintWindow), .project-local/runs/p0c-oracle-20261006/probe_oracle.py",
+      "command": "python .project-local/runs/p0c-oracle-20261006/probe_oracle.py (HTTP-level oracle against the real in-process sidecar)",
+      "exit_code": 1,
+      "observed_error": "ERR-102 recorded that the release binary paints only its backgroundColor, based on a screen BitBlt showing 41 distinct colours of #08090a. #08090a is literally the app.windows[*].backgroundColor string in tauri.conf.json, i.e. the window brush under the web content, not a rendered page.",
+      "root_cause": "Two GDI capture paths were treated as independent corroboration. Screen BitBlt and PrintWindow both read GDI redirection surfaces, and neither can see the DirectComposition visual WebView2 presents, so they share one blind spot and agreed for the wrong reason. The release path was in fact healthy: within 0.49s of launch the shipped binary issued GET /api/v1/snapshot and GET /api/v1/events (Accept: text/event-stream) with Origin http://tauri.localhost, every one answered 200, and the window carried a visible Chrome_RenderWidgetHostHWND sized to the full client rect. That also retires both open hypotheses in ERR-102: a CSP-blocked bundle or a failing custom-protocol layer could not have issued those requests.",
+      "fix": "ERR-102's blank-release conclusion is retracted as an instrument artifact. The release path is now judged from an oracle that needs no pixels: the backend sees the webview's own requests. In the same capture round the harness's own occlusion guard threw away two usable captures (183 and 188 distinct colours from BitBlt and PrintWindow) and reported contextCallReturned=false as dpiAwareProcess=false for a process that was already per-monitor aware; both are recorded here rather than patched blind, because the owner suspended desktop launches.",
+      "regression_test": "python .project-local/runs/p0c-oracle-20261006/probe_oracle.py must keep observing snapshot and events requests from the release binary with Origin http://tauri.localhost, with headless Chrome on the same dist as the matched positive control.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A pixel statistic may never decide a rendering verdict on its own when both capture paths read the same GDI layer: an independent path means a different mechanism, not a second call site. Any claim that a webview rendered nothing must first be cross-checked against evidence that does not involve the screen at all.",
+      "remaining_boundary": "U19's real-desktop surface proof is still owed. The network oracle proves the app runs and fetches; it does not prove what the user sees. The capture path that can see a composited WebView2 surface (Page.captureScreenshot over CDP, or Windows.Graphics.Capture) is not wired yet.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "b0fc828",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "U19 desktop surface evidence quality",
+        "regressionCommand": "python .project-local/runs/p0c-oracle-20261006/probe_oracle.py"
+      }
+    },
+    {
+      "error_id": "ERR-105",
+      "date": "2026-10-06",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261006",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "apps/observer/scripts/u19_webview_e2e.py (resolve_app_exe freshness rule), apps/observer/src-tauri/Cargo.toml",
+      "command": "python apps/observer/scripts/u19_webview_e2e.py plus git hash-object apps/observer/src-tauri/Cargo.toml against git rev-parse HEAD:apps/observer/src-tauri/Cargo.toml",
+      "exit_code": 1,
+      "observed_error": "The freshness gate refused to run: STALE_OR_MISSING_BINARY because app.exe was older than src-tauri/Cargo.toml, whose mtime read 19:40:34 that evening. The same rule had already been defeated once in the other direction: it certified a binary built from a dist whose frontend/src had been edited half an hour earlier.",
+      "root_cause": "Freshness was keyed to filesystem mtimes on a working copy where git normalises line endings. The build's own output said it plainly: 'in the working copy of apps/observer/src-tauri/Cargo.toml, LF will be replaced by CRLF the next time Git touches it'. Every such touch raises an mtime with zero content change, so the rule reports a stale binary for a file nobody edited, and it never compared frontend/src against frontend/dist at all, so a genuinely stale bundle passed. mtime is not content.",
+      "fix": "Not fixed in this round. The correct rule is content-keyed: an input is superseded only if its bytes differ from the commit the binary was built from, with frontend/src feeding dist added to the input set. Measured in the meantime: rebuilding produced byte-identical asset names, so the dist under test was not content-stale after all, and the 19:40 Cargo.toml hash equals HEAD exactly.",
+      "regression_test": "A freshness gate must pass a touch-without-edit and fail an edit-with-touch; both cases must be in the gate's own tests before it is trusted to block U19.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Artifact staleness must be decided from content identity, never from mtime, on any tree where git performs line-ending conversion; and a build chain must compare every stage to its own input, because certifying exe-newer-than-dist says nothing about dist-newer-than-src.",
+      "remaining_boundary": "Until the rule is content-keyed, expect false STALE_OR_MISSING_BINARY verdicts after any git checkout, stash or filter touch, and rebuild rather than argue with the gate.",
+      "status_before": "FAIL",
+      "status_after": "FAIL",
+      "lifecycle": {
+        "introducedCommit": "f3b5dec",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "U19 release binary provenance gate",
+        "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py"
+      }
     }
   ],
   "wlrReconciled": true,
@@ -2883,4 +2961,4 @@
       "prevention": "build caches stay untracked; WAL mode closes with checkpoint"
     }
   ]
-}
+}

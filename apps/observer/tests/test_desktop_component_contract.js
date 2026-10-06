@@ -73,6 +73,62 @@ function run() {
     assert(!permissions.match(/shell|process|fs:allow|http:allow|os:allow/i));
   });
 
+  // Tauri v2 denies every mutating window/webview command by default:
+  // core:default carries only readers (is-maximized, inner-size, title…), so a
+  // caption button that calls close() against an ungranted ACL rejects
+  // asynchronously and the user just sees a dead button. Deriving the called
+  // set from the shipped source is what keeps that from recurring — an
+  // un-mapped new call, or a dropped grant, fails here rather than on someone's
+  // desktop.
+  const NATIVE_CALL_PERMISSIONS = {
+    minimize: "core:window:allow-minimize",
+    toggleMaximize: "core:window:allow-toggle-maximize",
+    close: "core:window:allow-close",
+    startDragging: "core:window:allow-start-dragging",
+    setZoom: "core:webview:allow-set-webview-zoom",
+  };
+
+  function nativeCallsInFrontend() {
+    const srcRoot = path.join(ROOT, "frontend", "src");
+    const calls = new Map();
+    const walk = (dir) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const fp = path.join(dir, entry.name);
+        if (entry.isDirectory()) { walk(fp); continue; }
+        if (!/\.(ts|tsx)$/.test(entry.name)) continue;
+        const src = fs.readFileSync(fp, "utf8");
+        const found = [
+          ...[...src.matchAll(/\(await win\(\)\)\.(\w+)\(/g)].map((m) => m[1]),
+          ...[...src.matchAll(/getCurrentWebview\(\)\.(\w+)\(/g)].map((m) => m[1]),
+          ...( /data-tauri-drag-region/.test(src) ? ["startDragging"] : []),
+        ];
+        for (const c of found) {
+          if (!calls.has(c)) calls.set(c, path.relative(ROOT, fp));
+        }
+      }
+    };
+    walk(srcRoot);
+    return calls;
+  }
+
+  const nativeCalls = nativeCallsInFrontend();
+
+  test("every native call the frontend makes maps to an ACL identifier", () => {
+    const unmapped = [...nativeCalls.keys()].filter(
+      (c) => !Object.prototype.hasOwnProperty.call(NATIVE_CALL_PERMISSIONS, c));
+    assert.deepStrictEqual(unmapped, [],
+      "add the permission identifier for: " + unmapped.join(", "));
+  });
+
+  test("the capability grants every native call the frontend makes", () => {
+    const granted = new Set(caps.permissions || []);
+    const missing = [...nativeCalls].filter(
+      ([call, file]) => !granted.has(NATIVE_CALL_PERMISSIONS[call]))
+      .map(([call, file]) => `${call} (${file}) → ${NATIVE_CALL_PERMISSIONS[call]}`);
+    assert.deepStrictEqual(missing, [],
+      "capability does not grant:\n        " + missing.join("\n        "));
+  });
+
   console.log("\n==== WORK-LAB desktop component contract tests ====");
   console.log(`TOTAL: ${pass} passed, ${fail} failed`);
   return { pass, fail };

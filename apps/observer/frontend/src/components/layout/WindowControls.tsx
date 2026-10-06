@@ -39,16 +39,19 @@ export function WindowControls() {
     return getCurrentWindow()
   }, [])
 
+  // Each native call is awaited. A command the capability does not grant
+  // rejects asynchronously, and an un-awaited promise walks straight past this
+  // try/catch — which is how the caption cluster ended up dead and silent.
   const minimize = useCallback(async () => {
-    try { (await win()).minimize() } catch { /* not under Tauri */ }
+    try { await (await win()).minimize() } catch { /* not under Tauri */ }
   }, [win])
 
   const toggleMaximize = useCallback(async () => {
-    try { (await win()).toggleMaximize() } catch { /* not under Tauri */ }
+    try { await (await win()).toggleMaximize() } catch { /* not under Tauri */ }
   }, [win])
 
   const close = useCallback(async () => {
-    try { (await win()).close() } catch { /* not under Tauri */ }
+    try { await (await win()).close() } catch { /* not under Tauri */ }
   }, [win])
 
   const setZoom = useCallback(async (next: number) => {
