@@ -102,3 +102,24 @@ surface stays as the browser read-only entry — it is live, not dead.
 4. 删除前落 `web/` 全量哈希清单与整目录保留点，并更新 `WORK-LAB-AUTHORITY.md` §7 的日期事实。
 
 第 1 步完成前，`web/` 不删；U03 保持 PARTIAL。
+
+### 2026-10-07 步骤 1 落地进度（同一轮内）
+
+新增 `apps/observer/tests/test_production_surface_static_contract.js`（11 条静态契约），
+把旧树里**文件级**那部分保证重锚到生产面：入口无远程运行时/CDN、skins 无 `url(http`/`@import http`、
+UI 层无写请求（`method: POST/PUT/PATCH/DELETE` 与带 options 的 `fetch` 都为 0）、
+UI 层不读凭据/env/cookie、主题与布局态不落 web storage（编辑器画布模型为唯一具名例外）、
+横向溢出抑制、tabular-nums、CJK/SHA 换行、`prefers-reduced-motion`、
+基础字号不被压低且**所有 <12px 声明必须落在具名微角色**（`.winctl-zoom`、`.load-strip`、
+`.brand small`、`.tag/.badge`、`.kpi small`）。
+
+断言先证伪再用：注入 CDN script、组件里加 PATCH、正文加 10px 规则、往 `lib/a11y.ts` 塞
+`localStorage` —— 4/4 各自变红，文件按字节复原（`falsify_prod_surface.py`）。
+两条断言首版**是我自己写错**而非生产偏离：路径分隔符未归一导致编辑器没被排除（报出 4 处
+"违规"），以及把 body 字号规则误用成"任何 px 字号"（把品牌小标签算成违规）；
+都按事实改正而不是放宽。
+
+**步骤 1 只完成一半**：`test_projection_contract.js`(13) 与 `test_render_v3.js`(19) 的
+**投影真值与渲染契约仍未重锚**（它们断言的是 fixture 数值、估算≠账单、RFC3339、
+覆盖率、乱序 revision 拒绝等，React 侧由 `truth.test.tsx`/`lib/api.test.ts` 部分承担但
+未逐条对齐），故 `apps/observer/web` 仍不删，U03 保持 PARTIAL。基准 `214acb0`。
