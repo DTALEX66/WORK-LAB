@@ -110,6 +110,10 @@ The link AG-16 said had never been exercised has now been exercised once against
 
 27 `__pycache__` directories totalling 9,740,083 file bytes had accumulated inside the tracked source tree from direct `python <script>` invocations that bypassed the sanctioned entry points — which do set `PYTHONPYCACHEPREFIX` into `.project-local/runs` and are gated by `tests/workflow-assistance/test_project_data_boundary.py`. Released with `scripts/maintenance/release_source_tree_bytecode.py`: report first, `--apply` explicit, eligible only if every file is an untracked `.pyc` outside the ignored roots, manifest written before any deletion, and a refusal (exit 2) if any candidate holds a non-bytecode or tracked file. Re-scan reports 0 candidates and `git status` shows nothing tracked was touched.
 
+## Second binding pass: the ledger cites no usable fix SHA about itself
+
+`scripts/audit/bind_ledger_fixes_from_cited_shas.py` reads the other direction from the message search — records that quote a SHA next to a fix verb. After refusing digests (`committed head (digest fe0f68d3…)`), hex-shaped timestamps (`20260812105059`) and multi-commit citations ("5 commits (d01f59f…)"), **zero** records bound. So 99 owed records stay owed for a real reason: the ledger's own citations are not fix-commit citations. It caught one mistake of mine on the way — binding ERR-089 to 53e7108, which is that record's *introducedCommit*, and a squash merge means it is not an ancestor of its own verifiedCommit; the binding gate flagged that as an anomaly within seconds and the value was reverted before commit, so the record stays unbound and honest.
+
 ## Verification discipline in force
 
 `python scripts/ci/reproduce_ci_commands.py --skip "pip install" --skip cargo --skip "npm ci"

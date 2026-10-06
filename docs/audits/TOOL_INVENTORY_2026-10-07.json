@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-06T23:30:15Z",
+  "generatedAt": "2026-10-06T23:34:17Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 35,
+    "trackedTools": 36,
     "withLedgerPromise": 12,
-    "referencedSomewhere": 35,
+    "referencedSomewhere": 36,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -78,6 +78,19 @@
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ]
+    },
+    {
+      "path": "scripts/audit/bind_ledger_fixes_from_cited_shas.py",
+      "sha256": "6f673455c89cda40bef2d18859c1a9b8551a244169655061ed0ce313b215f985",
+      "bytes": 7878,
+      "lines": 166,
+      "digestBasis": "working-tree-uncommitted",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-H.md"
       ]
     },
     {
@@ -520,7 +533,7 @@
       "sha256": "d0e5891793bc7f2b14e9b97b423ffc44d1763f1db38939367d9b3acd8dc5054c",
       "bytes": 5674,
       "lines": 124,
-      "digestBasis": "working-tree-uncommitted",
+      "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
       "citedByRecords": 3,
       "citedBy": [
