@@ -59,7 +59,7 @@ metadata:
 
 ## 标准执行器
 
-部署包会把 `packages/client-neutral-core/bin/hermes-project-data.py` 同步到 `$HERMES_HOME/bin/`。对会产生数据的命令，先检查再经 wrapper 启动：
+部署包会把 `bin/hermes-project-data.py` 同步到 `$HERMES_HOME/bin/`。对会产生数据的命令，先检查再经 wrapper 启动：
 
 ```bash
 python "$HERMES_HOME/bin/hermes-project-data.py" --project . check

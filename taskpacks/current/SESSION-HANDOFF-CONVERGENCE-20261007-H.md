@@ -68,6 +68,17 @@ The documents had never been re-asked after ERR-115: 104 command-shaped referenc
 - **Owner-side, unchanged:** U02 publish; AG-09/AG-10 (BLOCKED); AG-12/13/15/16/17/18 decisions; the
   writable Control Surface; the owner's on-screen desktop readback. `mcp-inspector`'s licence pick
   and whether WORK-LAB declares a licence at all are now also owner decisions.
+- **U02 publish is PINNED, not vague (ERR-137):** `sync_hermes_workflow_assets.py --plan-json` (plan
+  only, nothing written) refuses to publish because
+  `skills/software-development/requesting-code-review` has unreviewed live content in Hermes Home —
+  `live=a219c2579a2e9864` vs `candidate=abf9ca1b3549dc41`, `baseline=None`. Unlocking it means
+  `--adopt-baseline --adopt-target <t>@<reviewed-sha256> --adopt-operator <name>`, i.e. a named human
+  attesting they reviewed content I did not write. I did not adopt it and did not write to Hermes
+  Home. Because of that same invariant, one managed `SKILL.md` re-point from the U02 document round is
+  held back (restored to its 51c723d content; the re-pointed bytes are preserved at
+  `.project-local/runs/convergence-20261007-h/project-data-boundary.SKILL.repointed.md`) and must land
+  in the same change as the deployment, which is what refreshes the live hashes in
+  `config/skill-provenance.yaml`.
 - **Merge the duplicate row** `otel-semconv` into `opentelemetry-genai-reference` or retire one.
 - **AG-11 real material:** ASR on a user recording, OCR over a multi-page PDF. Both stay UNKNOWN
   until the material exists; `page-order` used three synthetic pages.

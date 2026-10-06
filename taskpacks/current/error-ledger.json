@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 135,
+    "total": 136,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 47,
+      "contract_drift": 48,
       "test_behavior_alignment": 15,
       "working_directory_recovery": 2,
       "evidence_state": 23,
@@ -3748,6 +3748,32 @@
         "verifiedCommit": null,
         "affectedCapability": "Canonical-file freshness snapshot; the pre-push validation rule",
         "regressionCommand": "python scripts/ci/generate_current_state.py --check-current"
+      }
+    },
+    {
+      "error_id": "ERR-137",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "config/skill-provenance.yaml, packages/client-neutral-core/scripts/security/check_skill_provenance.py, integrations/executors/hermes/sync_hermes_workflow_assets.py, integrations/executors/hermes/managed_asset_baseline.py, packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md",
+      "command": "python packages/client-neutral-core/scripts/security/check_skill_provenance.py --manifest config/skill-provenance.yaml",
+      "exit_code": 1,
+      "observed_error": "The whole-workflow pre-push repro (the one I had just promised to always run — ERR-136) turned two more reds that my hand-picked verifier list missed: `ValueError: source SHA drift: project-data-boundary` in the skill-provenance gate, and the same failure inside the governance batch. My U02 document re-point had edited a MANAGED skill's SKILL.md (project-data-boundary), and `config/skill-provenance.yaml` records that skill as live==source, so the deployed copy in Hermes Home and the repository source were no longer the same bytes.",
+      "root_cause": "A managed asset has two identities and my re-point changed only one. AGENTS.md requires deployment through `sync_hermes_workflow_assets.py`, which updates the live hashes in the same change; editing the source in the repository without that deployment silently breaks the invariant the provenance manifest exists to hold. ERR-096 is the same class: skill source drift against stale provenance records.",
+      "fix": "Attempted the sanctioned route first, not a hand-edit: `sync_hermes_workflow_assets.py --plan-json …` (plan only, no writes) returned the blast radius and then REFUSED to publish — `MANAGED_ASSET_LIVE_CHANGE_REFUSED` because `skills/software-development/requesting-code-review` has live content in Hermes Home (live=a219c2579a2e9864) that differs from the repository candidate (abf9ca1b3549dc41) with NO baseline recorded. Resolving that means `--adopt-baseline --adopt-target <target>@<reviewed-sha256> --adopt-operator <name>`, i.e. a named human attesting they reviewed content I did not write and cannot attribute. Owner directive says tasks needing a real person's confirmation are skipped, so I did not adopt. Instead the managed SKILL.md edit is held back (restored to its 51c723d content; the re-pointed version is preserved at `.project-local/runs/convergence-20261007-h/project-data-boundary.SKILL.repointed.md` and will be re-applied in the same change as the deployment), which returns `SKILL_PROVENANCE_PASS skills=13 live_checked=False`.",
+      "regression_test": "packages/client-neutral-core/scripts/security/check_skill_provenance.py --manifest config/skill-provenance.yaml is a required CI step in the governance batch; the held-back file is re-discovered by scripts/audit/live_doc_command_targets.py, which still lists bin/hermes-project-data.py as a re-pointable reference",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Never edit a managed skill's SKILL.md (or any file under packages/client-neutral-core/skills/) without the sanctioned sync_hermes_workflow_assets.py deployment in the same change. When the deployment is blocked by unreviewed live content, stop and record the exact target and digest for the owner — do not adopt a baseline yourself. Run the repro before pushing; it found this, my hand-picked gates did not.",
+      "remaining_boundary": "U02 publish is now pinned rather than vague: exactly one target blocks it (requesting-code-review live vs candidate, baseline=None), and the nine other managed skill targets report CLEAN_UPDATE. Whether the live Hermes copy of requesting-code-review should be adopted, overwritten or kept is an owner/operator decision about a running tool's state; I have not written to Hermes Home in this round. The other four skill-side edits I made are under references/ and did not drift the manifest, but they are part of the same undeployed delta.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "e9875d7",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Managed Hermes skill provenance; U02 publish",
+        "regressionCommand": "python packages/client-neutral-core/scripts/security/check_skill_provenance.py --manifest config/skill-provenance.yaml"
       }
     }
   ],
