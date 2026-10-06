@@ -41,7 +41,7 @@ Usage-Cost truth engine / 第二 CURRENT。
 | P2-03 | Omnigent / Argos 保持对照候选（DEFERRED） | — | 不阻塞现阶段 |
 | P2-04 | Impact planner / local `--changed` SSOT（one canonical impact planner） | CI/local | 单一 changed-path truth，分类精度提升，fail-safe |
 | P2-05 | CURRENT / HISTORY 再收口 | taskpacks/current | current=TaskPack/Register/operation records/unresolved evidence；其余→history |
-| P2-06 | Future Candidate Registry 落仓（已完成，见 registry） | Registry | 14 条目 DEFERRED，schema 校验 PASS |
+| P2-06 | Future Candidate Registry 落仓（已完成，见 registry） | Registry | 落仓时 14 条目 DEFERRED、schema 校验 PASS；2026-10-07 判定轮补齐为 22 条候选并逐行加 `discovery`/`native_evidence`/`decision`（15 退役 / 7 保留 / 0 晋升，台账 ERR-126）——当时的 schema PASS 只校形状，不证明内容 |
 
 ## Hard boundaries (do not break)
 

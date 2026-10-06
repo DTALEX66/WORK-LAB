@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 124,
+    "total": 125,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 45,
+      "contract_drift": 46,
       "test_behavior_alignment": 14,
       "working_directory_recovery": 2,
       "evidence_state": 20,
@@ -3438,6 +3438,32 @@
         "verifiedCommit": null,
         "affectedCapability": "AG-19/AG-20 recovered-source registry digest claims; CI workflow-assistance job",
         "regressionCommand": "python tests/workflow-assistance/test_recovered_source_registry.py"
+      }
+    },
+    {
+      "error_id": "ERR-126",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": ".project/governance/future-candidate-registry.json, scripts/ci/verify_future_candidate_registry.py, .project/governance/contracts/future-candidate-registry.schema.json",
+      "command": "python .project-local/runs/convergence-20261007-d/prove_old_gate_accepts_the_lies.py (swaps in the committed verifier, runs falsify_candidate_decisions.py against it, restores the new verifier and digest-verifies the restore)",
+      "exit_code": 1,
+      "observed_error": "Reproduced: with the committed verifier in place, all ten injected lies left `FUTURE_CANDIDATE_REGISTRY_PASS candidates=22` and the harness exited 1 with FALSIFIED=0 NOT-CAUGHT=10. The pool said 20 DEFERRED + 1 PILOT_CANDIDATE and nothing else, while the repository already played three of those roles in code: OpenHands was one of the five fleet adapters (services/execution-federation/openhands_adapter.py, honest about being not launchable), Hindsight was a scored POC on the unified nine-operation contract (services/memory/hindsight_poc.py), and n8n was explicitly barred as a fourth task core (thin_deployment.py FORBIDDEN_TASK_CORES, asserted by nf11). Two rows carried `TBD` triggers and `not yet assessed` overlaps, and 14 of 21 rows still named their source as an action to be done later (`exact repo recorded at DISCOVER`) two weeks after the pool landed. The gate passed all of this because it only checked shape.",
+      "root_cause": "The registry was built as an intake form and validated as an intake form: it enforced ids, statuses, enum words and row coverage, but nothing forced a row to state what it knows. A planning record with no evidence field cannot disagree with the code, so it never could, and `DEFERRED` stayed a comfortable word for three different states - not looked up, looked up and redundant, or already implemented here. The absence of a decision field meant retirement and neglect looked identical in the machine authority.",
+      "fix": "Every row now carries a discovery verdict with the GitHub API readback behind it (13 RESOLVED with org/repo plus the licence returned, 7 AMBIGUOUS, 2 NOT_FOUND; UNKNOWN and NOASSERTION recorded as results rather than smoothed into NOT_VERIFIED), an absorption level, a native_evidence list of paths, a decision and, for kept rows, a blocker. The decisions were drawn from each §16 row's own trigger column measured against that code: 15 retired, 7 kept, 0 promoted, because no candidate has pilot evidence and promotion by editing a status word is exactly what the registry exists to prevent. FUT-043's three bundled leads were retired as a bundle with Paperclip migrated into its own row FUT-047, and the byte-range-slicing residue of FUT-031 was migrated into the register as an internal requirement (REQ-RANGE-20261007) instead of posing as an external candidate. Copyleft and fair-code upstreams (OpenViking AGPL-3.0, EvoMap GPL-3.0, n8n fair-code) were left as owner decisions; the repository declares no licence allowlist, so nothing was quietly absorbed on a licence assumption.",
+      "regression_test": "scripts/ci/verify_future_candidate_registry.py now hard-fails on: a decision missing or disagreeing with the status word, a RESOLVED row without an org/repo and the licence the readback returned, a NOT_FOUND/AMBIGUOUS row claiming a verified licence, a windows_support=VERIFIED without the artifact that proved it, a native_evidence path that does not exist, absorption claimed with no path behind it, status=PILOT with absorption=NONE, KEEP_CANDIDATE with no blocker, REJECT with no reason, a placeholder word (TBD / not yet assessed / recorded at DISCOVER) in any trigger, criterion or overlap field, and governance.decisions drifting from the enforced vocabulary. The same harness reports FALSIFIED=0 against the committed verifier (the reproduced original failure) and 10/10 against the repaired one (.project-local/runs/convergence-20261007-d/falsify_candidate_decisions.py) with the registry restored and digest-verified.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Never let a planning register be validated only on shape: require every row to name evidence that can be checked (a path that must exist, a readback that must be recorded, a blocker that must be written), and refuse placeholder words outright, because a placeholder is how an undecided row survives review indefinitely. When a candidate list is audited, compare each row against the code that may already do its job before judging it deferred or needed - the registry and the repository must be read together, and a mismatch is the finding. Record UNKNOWN/NOASSERTION as the result of a licence readback rather than as an absence, so a copyleft question stays visible for the owner instead of disappearing into a default.",
+      "remaining_boundary": "The identity readback is upstream metadata (GitHub API on 2026-10-06), not a Windows run: no candidate was installed, launched or piloted, so every windows_support value stays LIKELY or NOT_VERIFIED and none is VERIFIED. Seven kept rows are still alive on named gaps plus owner-side actions (Orca's pilot needs a real external project and per-operation authorization; the ChatGPT route needs account and terms; OpenViking needs a licence decision; Graphiti and Hindsight need an install). .project/governance/source-ledger.json still records agent-skills at https://agent-skills.org/, which this pass could not verify - the specification resolves at agentskills.io - and that correction is owed there, not invented here.",
+      "status_before": "PARTIAL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "4d059c7",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Open-source candidate pool decisions; the registry integrity gate",
+        "regressionCommand": "python scripts/ci/verify_future_candidate_registry.py"
       }
     }
   ],

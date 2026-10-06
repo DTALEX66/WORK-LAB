@@ -286,9 +286,9 @@
         "scripts/ci/verify_future_candidate_registry.py"
       ],
       "status": "PASS",
-      "evidence": "the §16 table is landed with row keys 16.01…16.19 generated from the docx; the registry holds 21 candidates and every row has at least one claimant, checked in both directions by scripts/ci/verify_future_candidate_registry.py (CI governance job)",
+      "evidence": "the §16 table is landed with row keys 16.01…16.19 generated from the docx; the registry holds 22 candidates over 19 rows and every row has at least one claimant, checked in both directions. Since 2026-10-07 each row also carries a discovery readback (13 RESOLVED with org/repo and licence as returned by the GitHub API, 7 AMBIGUOUS, 2 NOT_FOUND), an absorption level with repository paths that must exist, and a decision: 15 REJECT, 7 KEEP_CANDIDATE, 0 PROMOTED. The gate refuses a licence the readback did not return, an evidence path that is not on disk, a PILOT row with no code, a kept row with no blocker and a retired row with no reason; falsified 10/10 and reproduced as 0/10 against the previous verifier (ERR-126)",
       "disposition": "RETAINED",
-      "nextOrBlocked": "registrations only: identity, license, version and Windows support stay NOT_VERIFIED until each candidate's own intake, and a pilot needs individually authorized task cards"
+      "nextOrBlocked": "7 kept rows, each with its blocker written down: FUT-001 needs an owner-authorized pilot on a real external project plus a launch path that does not exist yet, FUT-010 needs the official route's account and terms (AG-16/AG-17), FUT-020 needs an AGPL-3.0 licence decision, FUT-021 waits on a second MCP identity, FUT-022 on a real cross-time query, FUT-041 is a POC without a Windows artifact, FUT-047 is a research lead with no named gap. Retired rows keep their reversal conditions in pilot_trigger; no candidate was installed, launched or piloted, so no windows_support value is VERIFIED"
     },
     {
       "id": "CH-17",
@@ -567,7 +567,7 @@
         ".project/governance/future-candidate-registry.json"
       ],
       "status": "PASS",
-      "evidence": "its '14 candidates' figure is kept as a historical observation; the pool it describes is now row-keyed (19 rows, 21 candidates), so the count no longer stands in for coverage",
+      "evidence": "its '14 candidates' figure is kept as a historical observation; the pool it describes is now row-keyed (19 rows, 22 candidates) and every row carries a decision, so the count no longer stands in for coverage and neither does the status word",
       "disposition": "RETAINED",
       "nextOrBlocked": "none"
     },

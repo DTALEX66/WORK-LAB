@@ -40,7 +40,8 @@ plugins/MCP 声明、Portable Memory、Capabilities、workflow policy）收成�
   [`docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md`](docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md)
   的生成投影，唯一可变源是 `.project/governance/blueprint-coverage.json`。
 - **候选（按需触发，不按名单部署）**：`.project/governance/future-candidate-registry.json`，
-  状态词表 `DEFERRED / PILOT_CANDIDATE`；蓝图原文 19 行候选与注册表 14 条之间的差集已记为覆盖缺口。
+  状态词表 `DEFERRED / PILOT_CANDIDATE / PILOT / PROMOTED / REJECTED`；22 条候选覆盖蓝图 §16 的 19 行，
+  每行另有 `discovery` 上游回读、`native_evidence` 现存路径与 `decision`（2026-10-07 判定：15 退役 / 7 保留 / 0 晋升）。
 - 完整项目描述与未来蓝图的仓库承接：
   [`docs/future/WORK-LAB-BLUEPRINT-20261006.md`](docs/future/WORK-LAB-BLUEPRINT-20261006.md)。
 
