@@ -383,9 +383,22 @@ html, body, #root { max-width: 100vw; overflow-x: hidden; }
   border-radius: 10px;
   background: color-mix(in srgb, var(--surface) 82%, transparent);
 }
-.topbar { padding-right: 210px; }
 
-/* KPI cards: the grid track can shrink, but the item inside was still sized by
- * its own min-content, so the fourth card overhang the container edge. */
+/* KPI cards: a grid track can shrink, but an item inside it is still sized by its own
+ * min-content unless told otherwise - which is what let a wide value like UNKNOWN
+ * push a card past the container edge. */
 .kpi-grid > * { min-width: 0; }
 .kpi strong, .kpi .truncate { max-width: 100%; }
+
+/* The caption cluster is fixed to the viewport, so the top bar has to reserve its
+ * width by hand - and 210px was a guess that was only right when the zoom group was
+ * hidden. Box model, from the rules above: three 32px caption buttons + 2x4px gaps
+ * + 8px padding + 2px border = 114px; the zoom group adds 32+38+32+32+9px of content
+ * with 4x2px gaps and one more 4px gap to its sibling = another 155px. Plus the 12px
+ * right offset. The zoom group disappears at <=1240px, so the reserve switches at the
+ * same width - below it the transport truth strip would otherwise lose 155px for
+ * nothing on a 946px viewport. */
+.topbar { padding-right: 130px; }
+@media (min-width: 1241px) {
+  .topbar { padding-right: 285px; }
+}

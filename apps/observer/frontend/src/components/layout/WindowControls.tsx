@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useState } from 'react'
-import { Minus, Square, X, Plus, RotateCcw } from 'lucide-react'
+import { Minus, Square, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
 
 /**
  * Native window chrome for the Tauri shell.
@@ -89,7 +89,7 @@ export function WindowControls() {
         aria-label="缩小界面"
         title={`缩小 (Ctrl −)`}
       >
-        <Minus size={13} aria-hidden="true" />
+        <ZoomOut size={13} aria-hidden="true" />
       </button>
       <span className="winctl-zoom" aria-live="off">{Math.round(zoom * 100)}%</span>
       <button
@@ -99,7 +99,7 @@ export function WindowControls() {
         aria-label="放大界面"
         title="放大 (Ctrl +)"
       >
-        <Plus size={13} aria-hidden="true" />
+        <ZoomIn size={13} aria-hidden="true" />
       </button>
       <button
         type="button"
