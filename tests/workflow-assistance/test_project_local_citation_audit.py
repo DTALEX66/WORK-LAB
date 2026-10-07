@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -98,6 +100,43 @@ class CitationAuditGate(unittest.TestCase):
         self.assertGreaterEqual(len(doc["countsByClass"]), 5)
         self.assertGreaterEqual(sum(v["citations"] for v in doc["countsByClass"].values()), 150)
         self.assertGreaterEqual(len(doc["unavailableEvidenceReviewQueue"]), 10)
+
+
+    def test_the_record_never_scans_itself(self) -> None:
+        """Self-exclusion, because a record that quotes its own findings is a feedback loop.
+
+        Before the exclusion the audit's own JSON was part of the corpus, so every regeneration
+        re-scanned the citations it had just written and the file grew 1.7 MB -> 3.7 MB in one pass,
+        while the adjudicated state (22 queued / 0 unadjudicated) did not change at all.
+        """
+        doc = json.loads(AUDIT.read_text(encoding="utf-8"))
+        citing = {c["file"] for bucket in doc["buckets"].values() for c in bucket}
+        self.assertNotIn(AUDIT.relative_to(ROOT).as_posix(), citing,
+                         "the audit scanned its own output")
+        self.assertFalse(any("PROJECT_LOCAL_CITATION_AUDIT" in f for f in citing),
+                         "a citation in the record originates from the record itself")
+        self.assertNotIn("PROJECT_LOCAL_CITATION_AUDIT",
+                         json.dumps(doc["unavailableEvidenceReviewQueue"]))
+
+    def test_regenerating_the_record_is_idempotent_apart_from_the_timestamp(self) -> None:
+        """Two passes over the same tree must agree.
+
+        Not compared against the shipped record: a scratch run does not exclude the shipped record
+        from its corpus, so it legitimately quotes the citations that record carries. Equality with
+        the shipped state is asserted by the record-agreement test above.
+        """
+        scratch = ROOT / ".project-local" / "runs" / "citation-audit-selftest"
+        scratch.mkdir(parents=True, exist_ok=True)
+        outs = []
+        for name in ("first.json", "second.json"):
+            target = scratch / name
+            proc = subprocess.run([sys.executable, str(SCRIPT), "--out", str(target)], cwd=ROOT,
+                                  capture_output=True, text=True, encoding="utf-8", errors="replace")
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            body = json.loads(target.read_text(encoding="utf-8"))
+            body.pop("generatedAt")
+            outs.append(body)
+        self.assertEqual(outs[0], outs[1], "two passes over the same tree disagreed")
 
 
 if __name__ == "__main__":

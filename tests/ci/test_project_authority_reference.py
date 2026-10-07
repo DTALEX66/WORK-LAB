@@ -1,8 +1,11 @@
 """A03: negative controls for the authority-reference verifier.
 
-Each test mutates a throwaway copy of the repository's authority package under
-a temp directory and asserts the verifier fails closed with the exact named
-reason. The live repository is never mutated.
+Each test mutates a throwaway copy of the repository's authority package under the project-local
+runtime root (`.project-local/runs/`, git-ignored) and asserts the verifier fails closed with the
+exact named reason. The live repository is never mutated, and no copy is ever written to the system
+temp directory — an earlier version used a bare `mkdtemp(prefix="auth-ref-")`, whose `ignore_errors`
+teardown left nineteen mirrors of the governance package in %TEMP%, outside the project boundary
+(ERR-140).
 """
 from __future__ import annotations
 
@@ -33,9 +36,20 @@ def _load_verifier():
     return module
 
 
+def _runtime_root() -> Path:
+    """The git-ignored in-boundary runtime root, auto-created (same convention the other suites use)."""
+    p = ROOT / ".project-local" / "runs"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
 def _make_fixture() -> Path:
-    """Copy the live authority package into a temp root that verifies clean."""
-    tmp = Path(tempfile.mkdtemp(prefix="auth-ref-"))
+    """Copy the live authority package into a fixture root that verifies clean.
+
+    `dir=` is mandatory: without it the fixture lands in the system temp directory, outside the
+    project boundary declared by .project/governance/project-data-boundary.json.
+    """
+    tmp = Path(tempfile.mkdtemp(prefix="auth-ref-", dir=_runtime_root()))
     # Build the fixture from live files so it reflects the real package.
     for rel in _REQUIRED:
         source = ROOT / rel

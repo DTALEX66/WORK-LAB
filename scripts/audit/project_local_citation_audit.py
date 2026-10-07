@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -165,7 +166,13 @@ def main() -> int:
 
     hits: dict[str, list[dict]] = defaultdict(list)
     files_scanned = 0
+    out_norm = os.path.normpath(str(REPO / args.out))
     for rel in tracked_files():
+        if os.path.normpath(str(REPO / rel)) == out_norm:
+            # never scan own output: the record quotes every token it found, and each citation it
+            # stores carries the citing line, so reading itself back makes the file grow on every
+            # regeneration (1.7 MB -> 3.7 MB in one re-run) instead of reporting a stable state
+            continue
         ap_ = REPO / rel
         if not ap_.is_file():
             continue
