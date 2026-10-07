@@ -82,3 +82,28 @@ canonical 门：`python services/orchestration/run_quality_gate.py verify`（项
 
 本卡是加法文档记录：删除本卡 + `taskpack-authority-index.json` 的对应 `currentTaskCards[]` 条目 +
 register 行即完全撤销本卡；代码改动按批次在 register 行内逐项给出回滚句柄。不依赖改写历史。
+
+## 9. 授权变更（2026-10-08，owner「全部授权」）
+
+owner 于 2026-10-08 给出「全部授权」，并按本项目既定优先级（最新明确用户决定 > 一切记录）取代第 4 节里
+针对 **commit / push / 开 PR** 的不授权列举。已据此执行：11 次分片提交、台账绑定与两条 PASS 记录的创建，
+push 到在册 PR #162 并读 exact-SHA CI 作为 verifiedCommit 的唯一来源。
+
+第 4 节其余条目**没有被这次授权取代**，仍然有效：安装到用户系统、改全局配置、跨项目写真值、付费调用、
+跨 Provider 传输私人数据、访问 `E:\`/`F:\`、批量删除；`force push`、`reset --hard`、`clean`、改写历史与
+伪造人工签名一律不做。config.apply/rollback 与 dispatch/cancel/retry/resume 仍需 owner 指名具体
+project/path/field 或真实执行器，不在本次授权内。
+
+## 10. push 前的对抗性复核结果
+
+复核在提交后、push 前对新建的 Control 面与区间读路由做逐条验证，**发现一处已在 HEAD 的真实缺陷**：区间读
+只把「不出仓库」当边界，而本项目的凭证就在仓库内——恢复备份的 `hermes/config.yaml`、`config/config.yaml`、
+`.hermes/task-runtime/**/canonical.sqlite` 三处实测返回内容。已修复并绑定为 ERR-166（提交 6d20d28），
+修复后同一批路径连同 `sidecar.py`、`.git/config`、治理机读文件全部 REFUSED 且不返回内容，真实运行日志仍可按
+区间读取，25 项测试通过。因此 push 推迟到该修复落地之后：一条 200 不是完成，一次绿门禁也不是安全边界。
+
+复核另报 Control 面五处缺陷（空策略、门禁 target 传成操作名因而 `.env`/credential 升级永不命中、范围检查只
+覆盖「绝对且带盘符」因而不拒绝 UNC 与盘相对路径、盲目 upsert 可覆盖在活 lease 并使 fencing token 倒退、
+`--runtime-root` 一给即把证据上限抬到 INTEGRATED）。定位到行为止，修复排在并发写作者释放
+`services/control/control_service.py` 之后，未修复前不称闭合。
+
