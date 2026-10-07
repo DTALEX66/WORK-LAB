@@ -220,7 +220,7 @@ export type TaskLedgerEvent = {
 // schema: packages/contracts/schemas/workflow/control-operation.schema.json
 export type ControlOperation = {
     schema_version: unknown,
-    operation: ["work-unit.create", "work-unit.revise", "work-unit.dispatch", "approval.decide", "execution.cancel", "execution.retry", "execution.resume", "config.discover", "config.diff", "config.apply", "config.readback", "config.rollback"],
+    operation: ["work-unit.create", "work-unit.materialize", "work-unit.revise", "work-unit.dispatch", "approval.decide", "execution.cancel", "execution.retry", "execution.resume", "config.discover", "config.diff", "config.apply", "config.readback", "config.rollback"],
     project_id: string,
     task_id: string | null,
     revision: number | null,

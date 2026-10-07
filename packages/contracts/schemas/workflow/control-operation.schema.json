@@ -9,8 +9,10 @@
   "properties": {
     "schema_version": {"const": "worklab/control-operation/v1"},
     "operation": {
+      "description": "`work-unit.materialize` consumes an AG-16 PlanningCandidate: the service re-runs the candidate's authorization check against its own local record, so an `authorized` claim inside this request is never the evidence. `work-unit.create` remains the direct write.",
       "enum": [
         "work-unit.create",
+        "work-unit.materialize",
         "work-unit.revise",
         "work-unit.dispatch",
         "approval.decide",
