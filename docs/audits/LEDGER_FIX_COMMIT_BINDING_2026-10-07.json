@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-07T10:58:43Z",
+  "generatedAt": "2026-10-07T11:02:29Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -487,10 +487,10 @@
       "id": "ERR-161",
       "statusAfter": "PASS",
       "fixedCommit": "3a3ee11093aa3a360b40f4849346f5fde0df2ff9",
-      "verifiedCommit": null,
+      "verifiedCommit": "9f587aba737417608ca2bdf5b281d2b8cf1504a9",
       "promise": "scripts/ci/reproduce_ci_commands.py",
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": true
     },
     {

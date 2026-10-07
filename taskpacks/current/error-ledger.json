@@ -4848,12 +4848,12 @@
         "introducedCommit": "e0b296dea46ed5bb752d6d8e565535ce1e9b588d",
         "introducedCommitNote": "derived by walking the file's history oldest-first to the first version containing the assembly-time head field: e0b296d created the script with it. The first attempt here named 3a3ee11, which is the fix itself - a loop that kept overwriting instead of stopping - and that wrong value is what the corrected derivation replaced.",
         "fixedCommit": "3a3ee11093aa3a360b40f4849346f5fde0df2ff9",
-        "verifiedCommit": null,
+        "verifiedCommit": "9f587aba737417608ca2bdf5b281d2b8cf1504a9",
         "affectedCapability": "Whole-CI reproduction provenance",
         "regressionCommand": "python scripts/ci/reproduce_ci_commands.py --only verify_error_ledger --receipt .project-local/runs/ci/probe.json",
         "bindingNote": "bound 2026-10-07 against 3a3ee11: that commit carries the promised file and adds zero records; git cat-file confirmed the operand before writing",
         "bindingBasis": "fix-commit-introduction: the instrument change is its own fix commit",
-        "verifiedCommitNote": "left null: the record lands after the fix, so no head yet contains both the record and a green exact-SHA readback"
+        "verifiedCommitNote": "exact-SHA Actions readback at 9f587aba737417608ca2bdf5b281d2b8cf1504a9: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "the command's script operand resolves against git ls-files"
