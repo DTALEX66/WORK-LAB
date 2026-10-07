@@ -192,3 +192,55 @@ completed success。本轮各头在写下本节时的实测状态：
 ```
 
 **未绿的头一律不称绿，也不写进 verifiedCommit。**
+
+### 6.7 L 轮收尾（UI 可达性与我自己把 CI 跑红四次）
+
+| SHA | 内容 |
+|---|---|
+| `9e13d80` | 每泳道传输真值扫测（11 例）+ 抽出共用快照 fixture |
+| `2c0afe5` | 重测派生审计 |
+| `dcabd71`…见 6.5 | 诚实态矩阵与口径更正 |
+| `e5f9756` | **UI 修复**：禁用动作的理由从"只能鼠标读"变成键盘可达（台账 ERR-156） |
+| `13e07d9` | ERR-156 落账（绑定门前两次拒绝我写的命令，见下） |
+| `abc2578` | **CI 修复**：`src/test/**` 不再被当成生产源码，并配一条"生产不得 import 它"的同伴断言（台账 ERR-157） |
+| `9d4297d`, `065e363` | ERR-157 与其第四个红头的实测补记 |
+
+新确立的事实：
+
+1. **G1 的"禁用＋解释"此前只对一半输入模态成立。** 21 条泳道枚举控件后：18 条不渲染任何控件，
+   4 个禁用写动作的理由全在 hover-only 的 Tooltip 里，而原生 `disabled` 按钮不接受焦点、
+   共享 Button 还带 `disabled:pointer-events-none`；理由文本在 DOM 里有两份却谁也走不到。
+   修在 `tooltip.tsx`：焦点也显露，且**只有**裹住不可聚焦的禁用控件时外层才成为 tab stop。
+   证伪 4/4。仍未证明：真实 WebView2 里的 Tab 顺序与焦点环落点（jsdom 证不了）。
+2. **我把 CI 连续跑红四个头**（`2c0afe5`、`cf94322`、`1e56058`、`13e07d9`，observer 作业
+   `Verify Observer Web and desktop contracts`），原因是静态生产面契约把
+   `src/**` 里除 `*.test.*` 全当生产源码，于是我新加的 `src/test/snapshotFixture.ts` 被读成
+   "把 v3 快照字面量嵌进生产代码"。本地同类命令全绿而 runner 红——作用域问题，不是代码问题。
+   收窄的同时配上"没有任何生产源码 import `src/test/**`"的同伴断言，两个方向各注入变异验过一次（2/2）；
+   我第一版匹配器要求斜杠前恰好一个字符，所以 `./x` 命中而 `@/test/x` 不命中——**是证伪发现的，不是绿灯发现的**。
+3. **绑定门两次拦下我自己的记录**：ERR-156 首版 `regressionCommand` 写了
+   `node node_modules/vitest/vitest.mjs`，而 `node_modules` 不在任何提交里（ERR-124 的同一形状），
+   改为 CI 真正执行的受版本控制契约 `cd apps/observer/frontend && npm run test` 并先裸跑一遍（24 文件 / 165 例全绿）。
+4. **合并预演（只读）在 `065e363` 上重跑过**：`git merge-tree --write-tree origin/main HEAD` 退出 0 无冲突；
+   合并态台账 155 行、`summary.total` 一致、error_id 无重复；注册表 14 行（tracked 9 / machine-local 2 /
+   absent 1 / unpinned 2）；被晋升的 atlas 在合并态里仍是 `79bf958a6e92…` 的 446,119 B。
+
+本轮 CI 实测（逐头 `gh run list`，写下本节时）：
+
+```
+   - `9e13d80`：gate=absent；wlr060=absent
+   - `2c0afe5`：gate=completed/failure；wlr060=completed/success
+   - `cf94322`：gate=completed/failure；wlr060=completed/success
+   - `1e56058`：gate=completed/failure；wlr060=completed/success
+   - `e5f9756`：gate=absent；wlr060=absent
+   - `13e07d9`：gate=completed/failure；wlr060=completed/success
+   - `abc2578`：gate=absent；wlr060=absent
+   - `9d4297d`：gate=completed/success；wlr060=completed/success
+   - `065e363`：gate=completed/success；wlr060=completed/success
+   - `8567be8`：gate=absent；wlr060=absent
+```
+
+绿过的头：2 个。修复自 `abc2578` 起生效，**在它之前四个头的红不追溯为绿**；
+ERR-156/157 已在本节写完后盖戳于 `9d4297d`：该头四条运行（两条 work-lab-gate＋两条 wlr-060）全部
+completed success，且该头含记录本身，`verifiedCommitNote` 记的就是这次实测。
+`ERR-158/159` 仍 PENDING：它们的修复在 `8567be8`，要等一个同时包含这两条记录且全绿的头再盖。

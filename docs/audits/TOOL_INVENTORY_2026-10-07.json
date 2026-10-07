@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T09:44:51Z",
+  "generatedAt": "2026-10-07T10:05:06Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -204,14 +204,15 @@
     },
     {
       "path": "scripts/audit/executor_live_probe.py",
-      "sha256": "1bec9689d6ef9865685d1628aabdba7e1c899a7e1dbce29d5bd23529b10e9cdc",
-      "bytes": 9812,
-      "lines": 194,
+      "sha256": "70b6c991de76b3e22835b7c7d33d0cbbaa747c5a1320f298743d324a33d16d62",
+      "bytes": 10761,
+      "lines": 211,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 5,
+      "citedByRecords": 6,
       "citedBy": [
         "docs/audits/EXECUTOR_LIVE_PROBE_2026-10-07.json",
+        "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json",
@@ -616,17 +617,19 @@
     },
     {
       "path": "scripts/audit/tool_version_metadata_probe.py",
-      "sha256": "e7d857484bc084d25d43b3cb4a5f0348f9aef70069764bdaa9ee79d328bd26c8",
-      "bytes": 9567,
-      "lines": 197,
+      "sha256": "2fd4571c76d119b43f986db6a65088fd0a1eb7be0c759707fda3f5fcd402c4cb",
+      "bytes": 11583,
+      "lines": 235,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 6,
       "citedBy": [
+        "config/adapter-registry.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007.md"
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007.md",
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
