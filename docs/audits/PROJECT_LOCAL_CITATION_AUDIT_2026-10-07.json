@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T10:33:44Z",
+  "generatedAt": "2026-10-07T10:45:17Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2083,
-    "distinctProjectLocalTokens": 405,
+    "distinctProjectLocalTokens": 407,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 405,
-    "citationsToAbsentTokens": 1102
+    "tokensAbsent": 407,
+    "citationsToAbsentTokens": 1104
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,8 +29,8 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 541,
-      "distinctPaths": 316
+      "citations": 543,
+      "distinctPaths": 318
     },
     "machine_local_runtime_pointer": {
       "citations": 137,
@@ -2268,10 +2268,22 @@
         "text": "\"command\": \"python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json\","
       },
       {
+        "path": ".project-local/runs/ci/probe.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4853,
+        "text": "\"regressionCommand\": \"python scripts/ci/reproduce_ci_commands.py --only verify_error_ledger --receipt .project-local/runs/ci/probe.json\","
+      },
+      {
         "path": ".project-local/runs/ci/reproduce_ci_commands_receipt.json",
         "file": "taskpacks/current/error-ledger.json",
         "line": 3935,
         "text": "\"observed_error\": \"The whole-workflow repro (`.project-local/runs/ci/reproduce_ci_commands_receipt.json`, head 5c6bfe9, ran=86 failures=4) turned `schema-fixtures / Validate all JSON schemas` red with"
+      },
+      {
+        "path": ".project-local/runs/ci_repro_at_b9933c2_stale.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4838,
+        "text": "\"observed_error\": \"I read a governance failure in a whole-CI reproduction as evidence about the current head. The receipt's `head` field said b3271fc3b - a head the run had not measured, because the v"
       },
       {
         "path": ".project-local/runs/client_roots_probe.py",
@@ -6703,7 +6715,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 191
+    "presentOnThisMachine": 192
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

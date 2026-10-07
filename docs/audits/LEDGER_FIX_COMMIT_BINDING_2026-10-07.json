@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-07T10:33:44Z",
+  "generatedAt": "2026-10-07T10:45:17Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -8,7 +8,7 @@
     "null": "an unverified fix stays null, and a PASS record with no fixedCommit is listed as owed rather than left silently unbound"
   },
   "counts": {
-    "bound": 47,
+    "bound": 48,
     "unboundPassRecords": 94,
     "anomalies": 0
   },
@@ -457,20 +457,20 @@
       "id": "ERR-158",
       "statusAfter": "PASS",
       "fixedCommit": "8567be889a98f4eda66ee4eec38d174f004eeb79",
-      "verifiedCommit": null,
+      "verifiedCommit": "01798ebb55c23786e440ab88cd0fcf8b7602a2e4",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": true
     },
     {
       "id": "ERR-159",
       "statusAfter": "PASS",
       "fixedCommit": "8567be889a98f4eda66ee4eec38d174f004eeb79",
-      "verifiedCommit": null,
+      "verifiedCommit": "01798ebb55c23786e440ab88cd0fcf8b7602a2e4",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": true
     },
     {
@@ -479,6 +479,16 @@
       "fixedCommit": "01798ebb55c23786e440ab88cd0fcf8b7602a2e4",
       "verifiedCommit": null,
       "promise": "tests/workflow-assistance/test_adapter_registry.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-161",
+      "statusAfter": "PASS",
+      "fixedCommit": "3a3ee11093aa3a360b40f4849346f5fde0df2ff9",
+      "verifiedCommit": null,
+      "promise": "scripts/ci/reproduce_ci_commands.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": false,
       "bindingNotePresent": true

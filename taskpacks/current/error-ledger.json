@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 158,
+    "total": 159,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 52,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 3,
       "path_boundary": 8,
-      "ci_tooling": 6,
+      "ci_tooling": 7,
       "sql_schema": 1,
       "regression_contract": 7
     },
@@ -4752,12 +4752,12 @@
         "introducedCommit": "a676e63e83f2ec94a6c09cae5088a07242457e6d",
         "introducedCommitNote": "derived with git log -S over the file the record names: a676e63 is the commit that wrote the state this record describes (adapter registry for ERR-158, the probe's registrySha256 line for ERR-159)",
         "fixedCommit": "8567be889a98f4eda66ee4eec38d174f004eeb79",
-        "verifiedCommit": null,
+        "verifiedCommit": "01798ebb55c23786e440ab88cd0fcf8b7602a2e4",
         "affectedCapability": "Adapter registry version observability; the five-dimension runtime baseline",
         "regressionCommand": "cd apps/observer/frontend && npm run test",
         "bindingNote": "bound 2026-10-07 against 8567be8: that commit carries the version source, the pin change and both promised files; git cat-file confirmed each operand and the commit adds zero ledger records",
         "bindingBasis": "fix-commit-introduction: the source change and its gate land together",
-        "verifiedCommitNote": "left null: the record lands after the fix, so no head yet contains both the record and a green exact-SHA readback. Inventing one is ERR-125/ERR-134."
+        "verifiedCommitNote": "exact-SHA Actions readback at 01798ebb55c23786e440ab88cd0fcf8b7602a2e4: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "the recorded npm contract is the CI-invoked one and its test-file operand resolves in the tree"
@@ -4784,12 +4784,12 @@
         "introducedCommit": "1b2a747b311af518566cccd354d935c7f9f02791",
         "introducedCommitNote": "derived with git log -S over the file the record names: 1b2a747 is the commit that wrote the state this record describes (adapter registry for ERR-158, the probe's registrySha256 line for ERR-159)",
         "fixedCommit": "8567be889a98f4eda66ee4eec38d174f004eeb79",
-        "verifiedCommit": null,
+        "verifiedCommit": "01798ebb55c23786e440ab88cd0fcf8b7602a2e4",
         "affectedCapability": "Executor live probe reproducibility; registry pin traceability",
         "regressionCommand": "cd apps/observer/frontend && npm run test",
         "bindingNote": "bound 2026-10-07 against 8567be8: that commit carries the version source, the pin change and both promised files; git cat-file confirmed each operand and the commit adds zero ledger records",
         "bindingBasis": "fix-commit-introduction: the source change and its gate land together",
-        "verifiedCommitNote": "left null: the record lands after the fix, so no head yet contains both the record and a green exact-SHA readback. Inventing one is ERR-125/ERR-134."
+        "verifiedCommitNote": "exact-SHA Actions readback at 01798ebb55c23786e440ab88cd0fcf8b7602a2e4: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "the recorded npm contract is the CI-invoked one and its test-file operand resolves in the tree"
@@ -4825,6 +4825,38 @@
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
+    },
+    {
+      "error_id": "ERR-161",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/ci/reproduce_ci_commands.py",
+      "command": "python scripts/ci/reproduce_ci_commands.py --only verify_error_ledger",
+      "exit_code": 3,
+      "observed_error": "I read a governance failure in a whole-CI reproduction as evidence about the current head. The receipt's `head` field said b3271fc3b - a head the run had not measured, because the value was taken at assembly time, after the batch had already executed against an earlier tree in which the derived audits had not been regenerated. The instrument therefore published a provenance claim its rows could not support; the artifact I misread is kept as .project-local/runs/ci_repro_at_b9933c2_stale.json (sha256 381ea54f665e1fe6…, headAtStart absent because it predates the fix).",
+      "root_cause": "A proof artifact recorded the state at the moment of writing rather than the moment of measurement, and nothing compared the two. Same family as ERR-153 (a digest resolved from HEAD while the edit was in the index) and ERR-159 (a pin over working-tree bytes): the claim was about a different object than the reader assumed, and the assumption was mine because the artifact gave no way to check it.",
+      "fix": "reproduce_ci_commands.py now captures HEAD before the first command, records headAtStart and headAtEnd plus headMovedDuringRun, prints CI_REPRO_HEAD_MOVED naming which head the rows belong to, and exits 3 instead of emitting an ambiguous receipt. Falsified 2/2: with an injected start head the run exits 3 and flags the move, and a stable head still exits 0 with the flag false. The misread artifact was renamed to say it is stale and annotated with the head it actually measured.",
+      "regression_test": "scripts/ci/reproduce_ci_commands.py",
+      "evidence_level": "isolated-runtime",
+      "repeat_prevention": "Every generated proof must record the state it measured at measurement time, and a tool must refuse to publish a receipt whose start and end states differ. A reader must be able to ask 'which object does this name?' from inside the artifact, not from the file's name.",
+      "remaining_boundary": "The guard detects a commit landing mid-run; it cannot detect a working-tree edit that never became a commit during the run, because the batch reads the tree, not HEAD. Files under .project-local are ignored, so the misread artifact itself is not CI-checkable - its sha256 prefix is recorded here so a reader on this machine can confirm it.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "e0b296dea46ed5bb752d6d8e565535ce1e9b588d",
+        "introducedCommitNote": "derived by walking the file's history oldest-first to the first version containing the assembly-time head field: e0b296d created the script with it. The first attempt here named 3a3ee11, which is the fix itself - a loop that kept overwriting instead of stopping - and that wrong value is what the corrected derivation replaced.",
+        "fixedCommit": "3a3ee11093aa3a360b40f4849346f5fde0df2ff9",
+        "verifiedCommit": null,
+        "affectedCapability": "Whole-CI reproduction provenance",
+        "regressionCommand": "python scripts/ci/reproduce_ci_commands.py --only verify_error_ledger --receipt .project-local/runs/ci/probe.json",
+        "bindingNote": "bound 2026-10-07 against 3a3ee11: that commit carries the promised file and adds zero records; git cat-file confirmed the operand before writing",
+        "bindingBasis": "fix-commit-introduction: the instrument change is its own fix commit",
+        "verifiedCommitNote": "left null: the record lands after the fix, so no head yet contains both the record and a green exact-SHA readback"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "the command's script operand resolves against git ls-files"
     }
   ],
   "wlrReconciled": true,
