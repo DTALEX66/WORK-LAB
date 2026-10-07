@@ -124,6 +124,10 @@ class CitationAuditGate(unittest.TestCase):
                          "the runtime root became machine-dependent again: exists() must answer from "
                          "the repository, never from this box")
         self.assertTrue(plca.exists("README.md"), "tracked verification broke; the audit is now blind")
+        doc = json.loads(AUDIT.read_text(encoding="utf-8"))
+        self.assertEqual(doc["counts"]["checkoutVerifiable"], 0,
+                         "the shipped record claims something under the git-ignored root is "
+                         "checkout-verifiable, which is the machine-dependence ERR-142 removed")
 
     def test_the_record_never_scans_itself(self) -> None:
         """Self-exclusion, because a record that quotes its own findings is a feedback loop.
@@ -164,10 +168,19 @@ class CitationAuditGate(unittest.TestCase):
             body.pop("generatedAt")
             outs.append(body)
         self.assertEqual(outs[0], outs[1], "two passes over the same tree disagreed")
+        # Only the checkout-deterministic counts are compared against the shipped record.
+        # `presentOnThisMachine` is deliberately machine-dependent — it reports what the box that runs
+        # the audit actually holds under the git-ignored root — and a clean-checkout simulation proved
+        # it: 174 here against 10 in a fresh worktree. Asserting equality on it would re-create the
+        # ERR-142 failure inside the gate that exists to prevent it.
+        deterministic = ("reviewQueue", "unadjudicated", "checkoutVerifiable")
         shipped = json.loads(AUDIT.read_text(encoding="utf-8"))
-        shipped.pop("generatedAt")
-        self.assertEqual(outs[0]["counts"], shipped["counts"],
+        self.assertEqual({k: outs[0]["counts"][k] for k in deterministic},
+                         {k: shipped["counts"][k] for k in deterministic},
                          "a fresh scan disagrees with the shipped record about the adjudicated state")
+        self.assertGreaterEqual(shipped["counts"]["presentOnThisMachine"],
+                                outs[0]["counts"]["presentOnThisMachine"],
+                                "the shipped record should reflect the box that produced it")
 
 
 if __name__ == "__main__":
