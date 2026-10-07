@@ -101,3 +101,14 @@ owner 原话：「我只要结果，赶紧完成UI」「继续 完成UI任务 �
 
 回滚方式随之改变（覆盖第 7 节）：`git revert -m 1 85545b3` 撤销整轮 UI 合并，
 收敛线其余提交不受影响；`ui-commercial-polish-20261007` 分支继续保留作证据。
+
+## 9. 落地提交（2026-10-07，owner 指令之后）
+
+- `71b1ae8` UI 轮提交在分支 `ui-commercial-polish-20261007`（基底 `285704a`）。
+- `85545b3` 合入收敛线；`384c89f` 补每泳道诚实态穷举、命令面板焦点归还、`OfflineState` 消费者；
+  `926d0e3` 让两条被桌面唯一化决定作废的产品合同随之更新，并重量工具清单。
+- 合并后实测：`npm run build` 退出 0；vitest 22 files / 150 tests；observer web contracts 35/35；
+  `tests/ci/test_desktop_only_shell.py`＋`tests/ci/test_topbar_geometry_gate.py` 21 passed；
+  全 CI 面复现 89 条命令，仅剩本机无 cargo 造成的 3 条。
+- 仍未闭合：G3 的真实桌面几何读回（本机 Chrome headless `/json/list` 不应答），以及需真人目测的
+  真实 Tauri 窗口验收。二者都不允许用绿灯替代。
