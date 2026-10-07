@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T03:14:37Z",
+  "generatedAt": "2026-10-07T04:49:00Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2044,
-    "distinctProjectLocalTokens": 386,
+    "trackedFilesScanned": 2046,
+    "distinctProjectLocalTokens": 387,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 386,
-    "citationsToAbsentTokens": 1034
+    "tokensAbsent": 387,
+    "citationsToAbsentTokens": 1036
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,12 +29,12 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 516,
-      "distinctPaths": 305
+      "citations": 517,
+      "distinctPaths": 306
     },
     "machine_local_runtime_pointer": {
-      "citations": 132,
-      "distinctPaths": 56
+      "citations": 133,
+      "distinctPaths": 57
     },
     "negative_assertion_or_removal_record": {
       "citations": 102,
@@ -2086,6 +2086,12 @@
         "file": "reports/EXTERNAL-AUDIT-PACK-CLIENT-ASSETS-20260930.md",
         "line": 279,
         "text": "python .project-local/runs/build_asset_inventory.py      # 全量清点"
+      },
+      {
+        "path": ".project-local/runs/ci/geometry_gate.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4342,
+        "text": "\"command\": \"python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json\","
       },
       {
         "path": ".project-local/runs/ci/reproduce_ci_commands_receipt.json",
@@ -4932,6 +4938,12 @@
         "file": ".github/workflows/work-lab-gate.yml",
         "line": 55,
         "text": "--changed-path-file .project-local/runs/ci/changed-paths.txt \\"
+      },
+      {
+        "path": ".project-local/runs/ci/geometry_gate.json",
+        "file": ".github/workflows/work-lab-gate.yml",
+        "line": 226,
+        "text": "run: python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json"
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/falsify_render_ports.py",
