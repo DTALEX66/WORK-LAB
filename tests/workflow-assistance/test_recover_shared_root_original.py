@@ -269,12 +269,14 @@ class ArchiveMemberRecoveryTests(unittest.TestCase):
 
 
 class UpstreamScannerGapTests(unittest.TestCase):
-    """ERR-139: the shared secret scanner does not see a bare string inside a list.
+    """ERR-139: the shared secret scanner once missed a bare string inside a list.
 
-    Pinned here so the recovery tool's keyed-lines workaround is not later "simplified" back into a
-    silent blind spot, and so the defect in
-    `packages/client-neutral-core/scripts/artifact_flow_policy.py::_walk_keys` carries a runnable
-    reproduction instead of a prose claim.
+    Fixed 2026-10-07 under the subordinate cross-module card: `_walk_keys` now emits
+    non-container list elements as leaves, so a one-line token is visible without the
+    keyed workaround. These tests pin BOTH directions — the leaf is caught, and a benign
+    list still produces no hits — so the recursion cannot be "simplified" back into a
+    silent blind spot. The keyed-lines workaround in
+    `scripts/maintenance/recover_shared_root_original.py` stays supported and stays tested.
     """
 
     def setUp(self) -> None:
@@ -285,14 +287,31 @@ class UpstreamScannerGapTests(unittest.TestCase):
     def tearDown(self) -> None:
         sys.path.remove(str(ROOT / "packages" / "client-neutral-core" / "scripts"))
 
-    def test_list_of_strings_is_invisible_but_keyed_lines_are_not(self) -> None:
+    def test_bare_string_list_element_is_now_a_visible_leaf(self) -> None:
         token = "sk-" + "a" * 30
         self.assertTrue(self.afp._SECRET_VALUE_RE.match(token), "the fixture token is not token-shaped")
-        self.assertEqual(self.afp.find_nested_secrets({"content": {"lines": [token]}}), [],
-                         "the upstream scanner caught a list element; update this test and the "
-                         "workaround in scripts/maintenance/recover_shared_root_original.py")
+        self.assertEqual(self.afp.find_nested_secrets({"content": {"lines": [token]}}), ["content.lines[0]"],
+                         "a one-line token inside a list must be caught by the scanner itself")
+
+    def test_keyed_lines_workaround_still_works(self) -> None:
+        token = "sk-" + "b" * 30
         self.assertEqual(self.afp.find_nested_secrets({"content": {"L1": token}}), ["content.L1"],
-                         "the keyed workaround the recovery tool relies on does not actually work")
+                         "the keyed form the recovery tool emits must keep working")
+
+    def test_nested_key_inside_list_element_still_caught(self) -> None:
+        self.assertTrue(any("password" in h for h in
+                            self.afp.find_nested_secrets({"items": [{"password": "p"}, {"ok": "v"}]})))
+
+    def test_benign_string_list_produces_no_hits(self) -> None:
+        """Negative control: widening the walk must not turn ordinary list text into secrets."""
+        self.assertEqual(
+            self.afp.find_nested_secrets({"tags": ["ok", "task-1", "D:/All projects/WORK-LAB"]}),
+            [],
+        )
+
+    def test_list_of_lists_reaches_the_inner_leaf(self) -> None:
+        token = "sk-" + "c" * 30
+        self.assertEqual(self.afp.find_nested_secrets({"rows": [[token]]}), ["rows[0][0]"])
 
 
 class MirroredOriginalTests(unittest.TestCase):

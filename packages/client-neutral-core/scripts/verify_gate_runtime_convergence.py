@@ -135,7 +135,6 @@ def check_6_dual_project_canary() -> dict:
     developer workstation).
     """
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
     from canonical_store import CanonicalStore
     from collectors import build_standard_collectors
     from durable_worker import DurableWorker
@@ -158,9 +157,11 @@ def check_6_dual_project_canary() -> dict:
         return {"id": 6, "name": "dual-project-canary", "pass": False,
                 "evidence": "PENDING: declared canary roots contain no eligible OS project (§15)"}
     real = os_projects[0]
-    td = tempfile.mkdtemp()
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import project_temp
+    td = project_temp.fixture_dir(prefix="gate-convergence-")
     try:
-        store = CanonicalStore(Path(td) / "c.sqlite")
+        store = CanonicalStore(td / "c.sqlite")
         try:
             worker = DurableWorker(store, project_id=real.project_id,
                                    collectors=build_standard_collectors(real.root))
@@ -171,7 +172,7 @@ def check_6_dual_project_canary() -> dict:
             store.close()
     finally:
         import shutil
-        shutil.rmtree(td, ignore_errors=True)
+        shutil.rmtree(td)
     return {"id": 6, "name": "dual-project-canary", "pass": ok, "evidence": evidence}
 
 
@@ -183,12 +184,12 @@ def _discover_os_projects(search_root):
 def check_7_worker_resume_from_ledger() -> dict:
     """Worker must resume from Task Ledger after restart."""
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
     from canonical_store import CanonicalStore
     from durable_worker import DurableWorker
-    td = tempfile.mkdtemp()
+    import project_temp
+    td = project_temp.fixture_dir(prefix="gate-convergence-")
     try:
-        store = CanonicalStore(Path(td) / "c.sqlite")
+        store = CanonicalStore(td / "c.sqlite")
         try:
             store.upsert_task({"task_id": "resume-task", "project_id": "p", "status": "PENDING"})
             worker1 = DurableWorker(store, task_handler=lambda s, task: None)
@@ -201,7 +202,7 @@ def check_7_worker_resume_from_ledger() -> dict:
             store.close()
     finally:
         import shutil
-        shutil.rmtree(td, ignore_errors=True)
+        shutil.rmtree(td)
     return {"id": 7, "name": "worker-resume-from-ledger", "pass": ok,
             "evidence": "task persisted to COMPLETED_LOCAL, readable by new worker"}
 

@@ -46,12 +46,16 @@ DEBT_TESTS = {
     "tests/workflow-assistance/test_usage_ingestion.py": 1,
     "tests/workflow-assistance/test_wlgm_privacy.py": 3,
 }
-# Cross-module debt (client-neutral-core / services): AGENTS.md requires an explicit cross-module
-# task card before changing those owners' code, so they are named here rather than edited silently.
-DEBT_PRODUCTION = {
-    "packages/client-neutral-core/scripts/platform_collector.py": 1,
-    "packages/client-neutral-core/scripts/verify_gate_runtime_convergence.py": 2,
-    "services/session-federation/gate.py": 4,
+# Cross-module debt: closed 2026-10-07 under the subordinate cross-module card
+# (WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007). Seven bare sites in three
+# production self-checks were the ones that actually spilled — they run outside the gate runner, so
+# the gate's TMPDIR binding never applied to them. They now go through
+# `packages/client-neutral-core/scripts/project_temp.py`, and `gate.py` additionally had to close the
+# SQLite handles it never released (a Windows fixture with an open connection cannot be removed).
+FIXED_PRODUCTION = {
+    "packages/client-neutral-core/scripts/platform_collector.py",
+    "packages/client-neutral-core/scripts/verify_gate_runtime_convergence.py",
+    "services/session-federation/gate.py",
 }
 
 
@@ -119,13 +123,20 @@ class TempFixtureBoundaryTests(unittest.TestCase):
         self.assertIn("dir=_runtime_root()", source, "the fixture no longer pins its temp root")
 
     def test_every_remaining_bare_site_is_a_named_debt_that_can_only_shrink(self) -> None:
-        pinned = {f: n for d in (DEBT_TESTS, DEBT_PRODUCTION) for f, n in d.items()}
+        pinned = dict(DEBT_TESTS)
         measured = {f: len(lines) for f, lines in self.sites.items()}
         new = {f: n for f, n in measured.items() if f not in pinned}
         self.assertEqual(new, {}, f"unadjudicated bare mkdtemp sites: {new}")
         for f, n in measured.items():
             self.assertLessEqual(n, pinned[f],
                                  f"{f} grew from {pinned[f]} to {n} bare mkdtemp sites")
+
+    def test_the_closed_production_sites_stay_closed(self) -> None:
+        for rel in FIXED_PRODUCTION:
+            self.assertNotIn(rel, self.sites, f"{rel} went back to a bare mkdtemp")
+            self.assertTrue((ROOT / rel).is_file(), f"{rel} disappeared from the tree")
+        self.assertTrue((ROOT / "packages/client-neutral-core/scripts/project_temp.py").is_file(),
+                        "the bounded fixture helper the closed sites depend on is missing")
 
     def test_the_pinned_debt_is_real_so_the_table_cannot_be_satisfied_by_an_empty_scan(self) -> None:
         """Anti-vacuity: every pinned file must actually be found by the matcher.
@@ -134,12 +145,15 @@ class TempFixtureBoundaryTests(unittest.TestCase):
         not widen the matcher's blind spot to keep a stale number.
         """
         self.assertGreaterEqual(sum(DEBT_TESTS.values()), 20)
-        self.assertGreaterEqual(sum(DEBT_PRODUCTION.values()), 6)
         measured = {f: len(lines) for f, lines in self.sites.items()}
-        for f, n in {**DEBT_TESTS, **DEBT_PRODUCTION}.items():
+        for f, n in DEBT_TESTS.items():
             self.assertTrue((ROOT / f).is_file(), f"{f} in the debt table does not exist")
             self.assertEqual(measured.get(f), n,
                              f"{f}: the debt table says {n}, the tree says {measured.get(f)}")
+        # the matcher must still be able to see something: an empty scan over 21 pinned sites is a
+        # broken matcher, not a clean tree
+        self.assertGreaterEqual(len(measured), 10,
+                                 "the scan found almost nothing while 21 sites are pinned — the matcher is blind")
 
     def test_the_releaser_and_recovery_tools_exist_for_their_register_citations(self) -> None:
         for tool in ("scripts/maintenance/release_authority_reference_temp_residue.py",

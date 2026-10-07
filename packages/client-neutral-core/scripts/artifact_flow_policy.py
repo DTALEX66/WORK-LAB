@@ -69,7 +69,10 @@ def _walk_keys(node: Any, path: str = "") -> list[tuple[str, Any]]:
     elif isinstance(node, list):
         for idx, value in enumerate(node):
             dotted = f"{path}[{idx}]" if path else f"[{idx}]"
-            out.extend(_walk_keys(value, dotted))
+            if isinstance(value, (dict, list)):
+                out.extend(_walk_keys(value, dotted))
+            else:
+                out.append((dotted, value))
     return out
 
 

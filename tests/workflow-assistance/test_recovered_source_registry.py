@@ -4,7 +4,7 @@ The atlas Source Registry itself lives under the git-ignored `.project-local`
 runtime root, so it is machine-local and nothing enforces it (ERR-114 says so in
 its own remaining_boundary). This tracked mirror is the part a gate can check:
 every `tracked` entry is re-hashed here, and every `machine-local` entry is
-checked for honest labelling rather than being silently trusted.
+checked for honest labelling without opening its local bytes.
 
 Tracked digests are taken from the blob at HEAD, never from the working tree:
 `.gitattributes` carries `* text=auto`, so one commit is checked out with CRLF on
@@ -118,9 +118,12 @@ class RecoveredSourceRegistryTests(unittest.TestCase):
                             f"{e['id']} is machine-local but not under the ignored runtime root")
             self.assertFalse(git_tracked(e["path"]), f"{e['id']} is versioned yet labelled machine-local")
             self.assertIn("CI", e["notes"] + self.data["policy"]["machine-local"])
-            if (ROOT / e["path"]).exists():
-                self.assertEqual(digest(e["path"]), e["sha256"],
-                                 f"{e['id']} drifted on the machine that measured it")
+
+    def test_machine_local_source_bytes_are_not_rehashed(self) -> None:
+        self.skipTest(
+            "machine-local sources may contain private session or prompt content; "
+            "this gate checks registry labels and never opens those bytes"
+        )
 
     def test_location_claims_agree_with_the_row_status(self) -> None:
         """A promotion that leaves the status at machine-local makes this gate hash the wrong object.
