@@ -38,8 +38,14 @@ def blob(rel: str) -> bytes | None:
 
 
 def describe(rel: str) -> tuple[str, int, int, str]:
-    data = blob(rel)
-    basis = "git-blob-at-HEAD"
+    """Same resolution order as the tool: index, then HEAD, then the working tree."""
+    def show(rev: str) -> bytes | None:
+        r = subprocess.run(["git", "show", rev], cwd=ROOT, capture_output=True)
+        return r.stdout if r.returncode == 0 else None
+
+    data, basis = show(f":{rel}"), "git-index"
+    if data is None:
+        data, basis = show(f"HEAD:{rel}"), "git-blob-at-HEAD"
     if data is None:
         data = (ROOT / rel).read_bytes()
         basis = "working-tree-uncommitted"
@@ -71,7 +77,7 @@ def violations(entries: list[dict], tools: list[str]) -> list[str]:
             out.append(f"{path}: inventory bytes {e.get('bytes')} != {size}")
         if e.get("lines") != lines:
             out.append(f"{path}: inventory lines {e.get('lines')} != {lines}")
-        if e.get("digestBasis") not in {"git-blob-at-HEAD", "working-tree-uncommitted"}:
+        if e.get("digestBasis") not in {"git-index", "git-blob-at-HEAD", "working-tree-uncommitted"}:
             out.append(f"{path}: digestBasis {e.get('digestBasis')!r} is not a named basis")
         if not re.fullmatch(r"[0-9a-f]{64}", str(e.get("sha256") or "")):
             out.append(f"{path}: sha256 is not 64 lowercase hex")

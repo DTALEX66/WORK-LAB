@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T07:50:09Z",
+  "generatedAt": "2026-10-07T08:06:23Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 52,
+    "trackedTools": 53,
     "withLedgerPromise": 17,
-    "referencedSomewhere": 52,
+    "referencedSomewhere": 53,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -24,11 +24,12 @@
       "sha256": "49f6b4e375a87b29872bf4b43ee20d71f19911c0f3850f0da17e9eaf77ceffef",
       "bytes": 5071,
       "lines": 90,
-      "digestBasis": "working-tree-uncommitted",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 2,
+      "citedByRecords": 3,
       "citedBy": [
         "docs/audits/LEDGER_GONE_GUARD_ADJUDICATION_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
@@ -37,7 +38,7 @@
       "sha256": "a8f9db8425d4e85834f95c746c8d8050b89c5e4a06d96ca0ba436a5d558caa50",
       "bytes": 18550,
       "lines": 372,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 5,
       "citedBy": [
@@ -53,7 +54,7 @@
       "sha256": "2582e7d2fe45c30ce8a0ca5ce4834d33c69248a00a144cc48dbe50da5662c73d",
       "bytes": 16107,
       "lines": 293,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 5,
       "citedBy": [
@@ -69,7 +70,7 @@
       "sha256": "7d78e206ac5715ddac08f88b9cbcd64edf5965eb0113afc5954b70545419f313",
       "bytes": 17134,
       "lines": 309,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 7,
       "citedBy": [
@@ -86,7 +87,7 @@
       "sha256": "3979a425c177d7d8f4d04d62c9862b06a0c87dba06cd086d9d9288f9bcc26b82",
       "bytes": 4582,
       "lines": 112,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 4,
       "citedBy": [
@@ -101,7 +102,7 @@
       "sha256": "26c8783b42e197f955e0329c04c0a8891c12be93e7b4d42506951815130f55de",
       "bytes": 5786,
       "lines": 131,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 5,
       "citedBy": [
@@ -117,7 +118,7 @@
       "sha256": "ac98b03c6c218e5112153bb6c96738b9c2682bbf5f5581ed531bc00618bde289",
       "bytes": 3902,
       "lines": 66,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 3,
       "citedBy": [
@@ -131,7 +132,7 @@
       "sha256": "6f673455c89cda40bef2d18859c1a9b8551a244169655061ed0ce313b215f985",
       "bytes": 7878,
       "lines": 166,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 3,
       "citedBy": [
@@ -145,7 +146,7 @@
       "sha256": "ddf4cae93c04a2dd7d8f2b314b83046317fb39879cea61d8ac32fa46adbc2916",
       "bytes": 9196,
       "lines": 190,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 4,
       "citedBy": [
@@ -160,7 +161,7 @@
       "sha256": "d9e001b2ecbb42d8b92eb90b5b0c68a25c5a2eabce7bedf849678f6069504578",
       "bytes": 5310,
       "lines": 117,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 3,
       "citedBy": [
@@ -174,7 +175,7 @@
       "sha256": "1e028a3b9c34b5489bc01b719214b91d8b8f2704e91526315db88694b50a1b32",
       "bytes": 1853,
       "lines": 50,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 3,
       "citedBy": [
@@ -188,7 +189,7 @@
       "sha256": "3984cd5a5d15d5aedb8c0a78301a20cd3b4f4ec5e0ab172cf26518fe60bb86f1",
       "bytes": 5918,
       "lines": 127,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 10,
       "citedBy": [
@@ -205,7 +206,7 @@
       "sha256": "1bec9689d6ef9865685d1628aabdba7e1c899a7e1dbce29d5bd23529b10e9cdc",
       "bytes": 9812,
       "lines": 194,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 5,
       "citedBy": [
@@ -221,7 +222,7 @@
       "sha256": "75c20038c3b13168e34b03cf3f8986496f836c78f593907392636ce277df4a32",
       "bytes": 3847,
       "lines": 114,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 2,
       "citedBy": [
@@ -234,7 +235,7 @@
       "sha256": "ebafe6ab50b91aae732624e0b16eaccd5626a005329730fcfc062dabd3b78b9d",
       "bytes": 2937,
       "lines": 67,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 6,
       "citedBy": [
@@ -251,7 +252,7 @@
       "sha256": "fcb4626216a4e2971fa0588bfcd84127348ca0920d6e653f948f9e8a9817b15d",
       "bytes": 2555,
       "lines": 64,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 3,
       "citedBy": [
@@ -265,7 +266,7 @@
       "sha256": "48bed8664f76434072d259b28fd02221560d5b169968131b69043478a0efbf5d",
       "bytes": 4186,
       "lines": 89,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 2,
       "citedBy": [
@@ -278,7 +279,7 @@
       "sha256": "92d79ce509cc2b841749bd9530b90a28700fbaa5f728f77df12625d1222a1482",
       "bytes": 12662,
       "lines": 262,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 7,
       "citedBy": [
@@ -295,7 +296,7 @@
       "sha256": "77d86e8bd5fbf4f7abda08821bb3975feb4b45299d9abf55f53ecf89f5c902e1",
       "bytes": 5833,
       "lines": 123,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 3,
       "citedBy": [
@@ -309,7 +310,7 @@
       "sha256": "6217e6725c0e171ebbfcbe5ec3c2dcb642bac3170e3da892380fa28e9d050e41",
       "bytes": 21092,
       "lines": 362,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 8,
       "citedBy": [
@@ -326,7 +327,7 @@
       "sha256": "50280bdf73e6a419b14fb53d539ec1f0554a36d3587d4fa2173a2f70961f3233",
       "bytes": 4201,
       "lines": 92,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 5,
       "citedBy": [
@@ -342,7 +343,7 @@
       "sha256": "4bb9755e088da0044455354d0f34e6e6a41f071d77df17d11c02f0e82e21901e",
       "bytes": 14633,
       "lines": 271,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 7,
       "citedBy": [
@@ -359,7 +360,7 @@
       "sha256": "28e870245d069ab58ff89dc66540fb82cb300ddf3d40330fad9c262b8da7643f",
       "bytes": 11193,
       "lines": 218,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 11,
       "citedBy": [
@@ -376,7 +377,7 @@
       "sha256": "858bbdbeb7e664987b4b373728b790049d96714d57c997af3fda43038b0da77e",
       "bytes": 1151,
       "lines": 30,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 6,
       "citedBy": [
@@ -393,7 +394,7 @@
       "sha256": "5e9a9ccb306b1bbd17ebf020c91c800de5f26e098532f79adcece1dd8bc1b973",
       "bytes": 21229,
       "lines": 466,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 5,
       "citedBy": [
@@ -409,7 +410,7 @@
       "sha256": "7e5437b75b8cd770b9f4b17b7d95c81d89290725a687465bb72146920ffd7dc0",
       "bytes": 24929,
       "lines": 414,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 8,
       "citedBy": [
@@ -426,7 +427,7 @@
       "sha256": "14a731ba31888af73fd604579e06142a4049e7c8ee6280ad5b74be0a3e88f9fb",
       "bytes": 17327,
       "lines": 410,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 2,
       "citedBy": [
@@ -439,7 +440,7 @@
       "sha256": "be9988656ae4cf638d4df6f89a70bab13c8ca3b1661babfa469d29d3b018c345",
       "bytes": 13929,
       "lines": 353,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 4,
       "citedBy": [
@@ -454,7 +455,7 @@
       "sha256": "1be255d26c552387680dd91d467587bfbdd5538d34335bae9eb8a3164e782790",
       "bytes": 2301,
       "lines": 50,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 2,
       "citedBy": [
@@ -467,7 +468,7 @@
       "sha256": "495a7068a35bd43460484e968e6fe20a3e5e168425f19b333552834c37281742",
       "bytes": 20673,
       "lines": 327,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 4,
       "citedByRecords": 7,
       "citedBy": [
@@ -484,7 +485,7 @@
       "sha256": "60ed99afd87add244c14e73057a30adcd0bc3aaf2cea7c91782a7be09376dcb1",
       "bytes": 2392,
       "lines": 54,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 2,
       "citedBy": [
@@ -497,7 +498,7 @@
       "sha256": "f712deee1d7b9a6a5cfba709826f7e1b85d551071d2e635b6be7062ecdd3d378",
       "bytes": 3074,
       "lines": 66,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 4,
       "citedBy": [
@@ -512,7 +513,7 @@
       "sha256": "ca4f6f0fd1ffc4ff951779aefaae55acc5d08ea245f48fbb3a0442fdd1828830",
       "bytes": 1842,
       "lines": 39,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 2,
       "citedBy": [
@@ -521,11 +522,25 @@
       ]
     },
     {
+      "path": "scripts/audit/rerun_unbound_pass_checks.py",
+      "sha256": "234c07856077136d4f75f17895602de0d531b8b5776e3d1a7daa2264fa27a78e",
+      "bytes": 10555,
+      "lines": 200,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 3,
+      "citedBy": [
+        "docs/audits/LEDGER_UNBOUND_RERUN_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ]
+    },
+    {
       "path": "scripts/audit/scan_stale_digest_references.py",
       "sha256": "4b30f243ce787bbc6a2dc2499e4d600c354118740b98bade286ab0cc6079815d",
       "bytes": 2105,
       "lines": 58,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 3,
       "citedBy": [
@@ -539,7 +554,7 @@
       "sha256": "af3d7369687cbf3268888ccb0811a4097845229617a66af9c4814005bec6a43a",
       "bytes": 5892,
       "lines": 130,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 4,
       "citedBy": [
@@ -554,7 +569,7 @@
       "sha256": "8f5f1317478b42decf9f30957cbd0f212e556709c66c384656c93287a0abcb84",
       "bytes": 7807,
       "lines": 167,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 6,
       "citedBy": [
@@ -568,14 +583,15 @@
     },
     {
       "path": "scripts/audit/tool_inventory_readback.py",
-      "sha256": "9706642e139c082c151757514610f4ccf923764bca174107371143140ac96abf",
-      "bytes": 7802,
-      "lines": 158,
-      "digestBasis": "git-blob-at-HEAD",
+      "sha256": "87ff541a5c7aedd8f85ceaa4eb368e1d207e7e02701c0a040faecd155b225b97",
+      "bytes": 8355,
+      "lines": 167,
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 2,
+      "citedByRecords": 3,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json"
       ]
     },
@@ -584,7 +600,7 @@
       "sha256": "e7d857484bc084d25d43b3cb4a5f0348f9aef70069764bdaa9ee79d328bd26c8",
       "bytes": 9567,
       "lines": 197,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 4,
       "citedBy": [
@@ -599,7 +615,7 @@
       "sha256": "2e844c307288446723e56e7d247d4e7c2ab17352d2f23497e18adcb13914cf23",
       "bytes": 22812,
       "lines": 494,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 10,
       "citedBy": [
@@ -616,7 +632,7 @@
       "sha256": "3fa3cfda7b3b9a370fd378ae35d89adcaaecb10eb5d1585ca1b7f901328a07e8",
       "bytes": 7010,
       "lines": 160,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 2,
       "citedBy": [
@@ -629,7 +645,7 @@
       "sha256": "ccf3051ab28407b0812cb6727ea992a37616cf1a7417e3b2289d9449c907d50e",
       "bytes": 1816,
       "lines": 34,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 2,
       "citedBy": [
@@ -642,7 +658,7 @@
       "sha256": "6168ab9e9d8e7a010a10503efcbdeef7324b80b62e4fc0e69e60b62742d9bdb4",
       "bytes": 8617,
       "lines": 163,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 4,
       "citedBy": [
@@ -657,7 +673,7 @@
       "sha256": "985df34bd045075bf5550c575ed8c5f8654b85b88e3d1b61a4ecb894bf3b3ecf",
       "bytes": 18120,
       "lines": 434,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 3,
       "citedBy": [
@@ -671,7 +687,7 @@
       "sha256": "35b0371dc6872e0f54816b854e9c2210c320a3c690fc6e1b6a3e2794da1fb286",
       "bytes": 1845,
       "lines": 51,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 3,
       "citedBy": [
@@ -685,7 +701,7 @@
       "sha256": "fac8ab0dab24db2e1ede27ec3896404420b6435e5b0798f9c75fac41a900aaef",
       "bytes": 9788,
       "lines": 213,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 5,
       "citedBy": [
@@ -701,7 +717,7 @@
       "sha256": "b75492d9d323dc6f166e7f3e401e41dec84eb053217e39a96a8eee84e8d9d389",
       "bytes": 5048,
       "lines": 109,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 3,
       "citedBy": [
@@ -715,7 +731,7 @@
       "sha256": "467d99b98ecf3ed0ef96bb8622fb27cb33dc1b4929854ff81156691c5c951350",
       "bytes": 3209,
       "lines": 88,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 4,
       "citedBy": [
@@ -730,7 +746,7 @@
       "sha256": "7a476c71f649255517b00d7fa0cbdf09f5ffaee3ce3357ef0cc32f8087aea292",
       "bytes": 8988,
       "lines": 145,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 5,
       "citedBy": [
@@ -746,7 +762,7 @@
       "sha256": "8270a62284a432b0e963fe02cb4bc2dda647c188b1d09c4c10b21b8c5b3c2972",
       "bytes": 14151,
       "lines": 273,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 2,
       "citedByRecords": 12,
       "citedBy": [
@@ -763,7 +779,7 @@
       "sha256": "a8c6cce826826f18f4f13b98d9da74c58904e9fb22e828ba9e8a6d8c3db41b56",
       "bytes": 9531,
       "lines": 180,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 7,
       "citedBy": [
@@ -780,7 +796,7 @@
       "sha256": "376cd26086142a7a97e91abee9d3c44fbc38ed9c3ca021b30cc79820dee748f6",
       "bytes": 7353,
       "lines": 167,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 7,
       "citedBy": [
@@ -797,7 +813,7 @@
       "sha256": "d0e5891793bc7f2b14e9b97b423ffc44d1763f1db38939367d9b3acd8dc5054c",
       "bytes": 5674,
       "lines": 124,
-      "digestBasis": "git-blob-at-HEAD",
+      "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 4,
       "citedBy": [

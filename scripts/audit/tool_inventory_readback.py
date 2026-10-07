@@ -48,16 +48,25 @@ def blob(rel: str) -> bytes | None:
     return r.stdout if r.returncode == 0 else None
 
 
+def staged(rel: str) -> bytes | None:
+    """The bytes the next commit will carry, or None when the path is not in the index."""
+    r = subprocess.run(["git", "show", f":{rel}"], cwd=REPO, capture_output=True)
+    return r.stdout if r.returncode == 0 else None
+
+
 def digest(rel: str) -> tuple[str, int, int, str]:
     """(sha256, bytes, lines, basis).
 
     The digest is of the git blob, not the working file: `.gitattributes` says `* text=auto`, so the
     same source has different bytes on a Windows checkout and on a Linux runner, and a digest recorded
-    over working-tree bytes is what turned CI red at three heads (ERR-125). A file not yet committed
-    is hashed from the working tree and says so in its own basis field.
+    over working-tree bytes is what turned CI red at three heads (ERR-125). The index is read before HEAD
+    because HEAD is the previous commit: measuring a modified instrument before committing it recorded the
+    OLD blob, and the very next head was red on the runner for exactly that (ERR-153). A path that is in
+    neither is hashed from the working tree and says so in its own basis field.
     """
-    data = blob(rel)
-    basis = "git-blob-at-HEAD"
+    data, basis = staged(rel), "git-index"
+    if data is None:
+        data, basis = blob(rel), "git-blob-at-HEAD"
     if data is None:
         data = (REPO / rel).read_bytes()
         basis = "working-tree-uncommitted"
