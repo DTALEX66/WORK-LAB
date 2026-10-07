@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T01:50:37Z",
+  "generatedAt": "2026-10-07T01:55:47Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2038,
@@ -4540,7 +4540,7 @@
       {
         "path": ".project-local/artifacts/curator-foldback",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 175,
+        "line": 208,
         "text": "\"note\": \"currentTaskpack remains authoritative; this view reports a completed maintenance round (official `hermes update --yes --backup`: 8183 new commits, config v45 -> v46, desktop entry real-launch"
       },
       {
@@ -4624,13 +4624,13 @@
       {
         "path": ".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 163,
+        "line": 196,
         "text": "\"note\": \"currentTaskpack (R1) remains authoritative until its 2026-09-24 expiry; this view reports a completed maintenance round (update to v0.21.3 (2026.9.14), 21/21 managed assets CONVERGED, 38/38 g"
       },
       {
         "path": ".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/HERMES-UPDATE-20260917.zip",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 158,
+        "line": 191,
         "text": "\"archive_location\": \".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/HERMES-UPDATE-20260917.zip\","
       },
       {
@@ -4642,7 +4642,7 @@
       {
         "path": ".project-local/artifacts/task-artifacts/r4/history-source-manifest.json",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 259,
+        "line": 292,
         "text": "\"r4_source_list_gap\": \"R4 local source manifest (.project-local/artifacts/task-artifacts/r4/history-source-manifest.json) NOT present in this checkout - recorded as gap, NOT filled from private sessio"
       },
       {
@@ -4852,7 +4852,7 @@
       {
         "path": ".project-local/runs/UPC-20260918/ledger.json",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 228,
+        "line": 261,
         "text": "\".project-local/runs/UPC-20260918/ledger.json\""
       },
       {
@@ -4978,7 +4978,7 @@
       {
         "path": ".project-local/runs/hermes-update-20260927",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 175,
+        "line": 208,
         "text": "\"note\": \"currentTaskpack remains authoritative; this view reports a completed maintenance round (official `hermes update --yes --backup`: 8183 new commits, config v45 -> v46, desktop entry real-launch"
       },
       {

@@ -4258,11 +4258,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the defect lived in a binder written earlier in this same session and superseded before commit, so naming a tracked commit as its origin would be false attribution",
         "fixedCommit": "f49025c",
-        "verifiedCommit": null,
+        "verifiedCommit": "285704a",
         "affectedCapability": "Ledger traceability; regression-command verifiability",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_ledger_regression_command_targets.py",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: record: every ledger promise now states whether it can still be re-run. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
-        "bindingBasis": "ledger-entry-introduction: this commit adds only 1 record(s), it changes docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json which the record names, and the record promises no script"
+        "bindingBasis": "ledger-entry-introduction: this commit adds only 1 record(s), it changes docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json which the record names, and the record promises no script",
+        "verifiedCommitNote": "exact-SHA Actions readback at 285704a5f885bf76a64655082485f88b6c812bc8: ALL_SUCCESS, 3 runs, 7 jobs, no non-green job; that head descends from the bound fix commit and contains both the labeller and its gate"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"

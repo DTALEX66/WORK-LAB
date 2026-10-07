@@ -8,6 +8,14 @@ NOT authorize writing UI code or installing anything (feature scope frozen §32)
 **Architecture:** `docs/decisions/WORK-LAB-LITE-AND-PARALLEL-WORKSPACE-ARCHITECTURE.md` (D 落仓)
 **Future candidates:** `.project/governance/future-candidate-registry.json` (E 落仓)
 
+## Supersession note (2026-10-07) — 授权状态已变，原文保留不删
+
+本卡 Status 段的「does NOT authorize writing UI code or installing anything」在 2026-10-07 被 owner 明确
+指令更新（先「按照 WORKLAB UI 提示词 开始执行」，后「按照提示词任务包推进 / 将新 UI 任务并入目标」）。
+执行授权现由 `WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md` 承载；本卡的路线登记内容、边界与
+feature-scope 说明仍有效，但**不再构成"不许写 UI 码"的阻碍**。两条不变：跨项目边界与单写者规则照旧；
+UI 代码本轮仍**不提交、不推送、不开 PR、不合并**（owner 明令）。
+
 ## Why this card exists
 
 前端不再视为 Observer 的小修补项（GOAL §6 P1-A）。它正式成为 WORK-LAB 的

@@ -92,6 +92,39 @@
       "id": "WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001",
       "path": "taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md",
       "role": "subordinate current task card: verified-gap delta table + work breakdown (AG-01..AG-20) derived from the 2026-09-29 Master Atlas snapshot and re-verified against live main cd4daa8; planning record only, grants no execution authority"
+    },
+    {
+      "id": "WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007",
+      "path": "taskpacks/current/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md",
+      "role": "subordinate current task card: executes the owner's UI prompt pack (P1-P8) on the isolated ui-commercial-polish-20261007 branch; supersedes the 2026-09-25 card's no-UI-code limit, keeps cross-project boundaries, single-writer rule, and the no-commit/no-push/no-PR delivery limit for UI code",
+      "register_row": "UI-PRODUCT-PROMPT-20261007",
+      "sources_pinned": [
+        {
+          "file": "WORKLAB_CODEX_PROMPT.md",
+          "bytes": 6501,
+          "sha256": "31bfdba2bfc2fad9e2dee6b8ea03d0da63dfd4f4154bc5e7628d46d92dd6effd",
+          "mtime": "2026-10-07T00:58:35Z"
+        },
+        {
+          "file": "UI_KIT_AUDIT.md",
+          "bytes": 10181,
+          "sha256": "1eaf44826132b2f0e8b8cd62a67202b0982aa49fb603061347b5de569e7645de",
+          "mtime": "2026-10-07T00:58:55Z"
+        },
+        {
+          "file": "UI_COMPONENT_ADOPTION_PLAN.md",
+          "bytes": 6397,
+          "sha256": "5e6b472a0d0ca5d30baff11aa83b1b7da8e453b472d59db8775fa3bf7f4b04ae",
+          "mtime": "2026-10-07T00:59:00Z"
+        },
+        {
+          "file": "WORK-LAB_UI开发资料总包_按批次.zip",
+          "bytes": 37048117,
+          "sha256": "c94ff634dad3fa47cd843493c5f3b59c946fd987295085b8c821febba13eef48",
+          "mtime": "2026-10-07T00:54:42Z"
+        }
+      ],
+      "supersedes": "WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925 (only its 'does NOT authorize writing UI code' limit)"
     }
   ],
   "acceptance": {
