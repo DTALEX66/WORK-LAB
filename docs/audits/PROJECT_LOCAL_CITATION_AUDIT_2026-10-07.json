@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T09:16:42Z",
+  "generatedAt": "2026-10-07T09:21:27Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2080,
-    "distinctProjectLocalTokens": 401,
+    "distinctProjectLocalTokens": 402,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 401,
-    "citationsToAbsentTokens": 1097
+    "tokensAbsent": 402,
+    "citationsToAbsentTokens": 1098
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -33,8 +33,8 @@
       "distinctPaths": 314
     },
     "machine_local_runtime_pointer": {
-      "citations": 136,
-      "distinctPaths": 59
+      "citations": 137,
+      "distinctPaths": 60
     },
     "negative_assertion_or_removal_record": {
       "citations": 113,
@@ -5270,6 +5270,12 @@
         "text": "\"extractionPath\": \".project-local/runs/convergence-20261007-j/ag19_extraction/WORK-LAB_MASTER_ATLAS_2026-09-29.zip__WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md\""
       },
       {
+        "path": ".project-local/runs/convergence-20261007-k/measure_lane_state_matrix.py",
+        "file": "UI_IMPLEMENTATION_REPORT.md",
+        "line": 313,
+        "text": "因此「要么被用要么删」的处置前提不成立。实测（`.project-local/runs/convergence-20261007-k/measure_lane_state_matrix.py`"
+      },
+      {
         "path": ".project-local/runs/convergence-20261007-k/promote-atlas-master-source-registry.json",
         "file": ".project/governance/recovered-source-registry.json",
         "line": 40,
@@ -6673,7 +6679,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 187
+    "presentOnThisMachine": 188
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

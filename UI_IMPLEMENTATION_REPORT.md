@@ -305,3 +305,38 @@ run `37585453264` / head `8847cdc` / observer 作业第 12 步（必需步骤）
 另修一处会误导人的文案：日志里 `topbar_measured PASS no .topbar element` 的详情字符串是写死的失败文案，
 元素其实已测到（下一行就报高度）。现在通过时详情报 `height=<实测> element=found`，缺元素时报 `MISSING`
 并判失败，`tests/ci/test_topbar_geometry_gate.py::test_a_passing_detail_says_what_was_measured` 双向钉住。
+
+
+## 15. 2026-10-07 L 轮实测：泳道 × 诚实态矩阵（更正 §11「未完成」第 3 条）
+
+§11 第 3 条写着「`OfflineState` 仍无消费者」。**这条是错的**，本轮逐文件量过：五个诚实态组件每一个都有消费者，
+因此「要么被用要么删」的处置前提不成立。实测（`.project-local/runs/convergence-20261007-k/measure_lane_state_matrix.py`
+与一次 `grep -rl` 全 src 反查，排除定义文件本身 `src/components/ui/states.tsx`）：
+
+| 组件 | 消费者（除定义文件 `states.tsx` 外；测试引用另注） |
+|---|---|
+| `ErrorState` | `src/components/ui/lane-error-boundary.tsx` |
+| `OfflineState` | `src/App.tsx`（第 224 行，`error && !snap` 的硬错误面板） |
+| `EmptyState` | `src/lib/viewRegistry.ts`、`views/AuditTrailView.tsx`、`views/IntegrationsView.tsx`、`views/RulesPolicyView.tsx`、`views/TaskPacksView.tsx`（另有 `components/ui/components.test.tsx`、`views/views.test.tsx`） |
+| `PermissionState` | `src/views/ApprovalsView.tsx`（另有 `views/permissionContract.test.tsx`） |
+| `UnknownState` | `src/App.tsx`、`src/lib/viewRegistry.ts`、`views/ApprovalsView.tsx`、`views/WorkflowsView.tsx`、`views/ExecutionDetailView.tsx`（另有 `components/ui/components.test.tsx`、`views/l10-views.test.tsx`、`views/views.test.tsx`） |
+
+按注册表泳道看组件归属（21 条带组件的泳道，静态解析 `viewRegistry.ts` 的 import 链，0 条未解析）：
+
+- 直接引用诚实态组件的泳道：`rules-policy`/`audit`/`integrations`/`task-packs`（`EmptyState`）、
+  `approvals`（`UnknownState`+`PermissionState`）、`workflows`/`execution-detail`（`UnknownState`）。
+- `agents`/`projects`/`executions`/`models`/`memory`/`tools`/`monitoring`/`delivery`/`trust`/`settings`
+  十条共用 `src/views/Views.tsx`，因此**静态归属无法逐泳道区分它们**；
+  `work`/`software`/`workflow-editor`/`observer` 四个模块本轮未量到诚实态组件引用。
+
+要点：静态矩阵只能说明"谁引用了组件"，不能证明"渲染出来的是诚实态"。逐页的**渲染**证据在
+`src/laneTruth.sweep.test.tsx`：它遍历 `VIEW_REGISTRY` 里每条带组件的泳道，以 `snap={null}` 挂载后断言
+①无 `.tag.ok`／`[data-tone="success"]`（无数据却给出健康配色即为伪造），②KPI 槽不出现伪造的 `0`/`0/0`，
+③文本里必须出现声明过的缺失标记（`UNKNOWN｜无数据｜暂无｜不可用｜未接入｜—｜STALE｜PARTIAL｜ERROR｜OFFLINE`），
+并且先跑一个**探测器自检**（人造的成功徽标与人造的 0 必须被抓到）——否则"全绿"只是探测器看不见。
+门禁由 `scripts/ci/required_groups.json` 的 `observer-frontend-typecheck` 组执行（`npm ci`→typecheck→build→
+`npm run test`＝`vitest run`），CI 在 `work-lab-gate.yml` 里跑这个组，所以这些断言不是装饰。
+
+因此 §11 第 3 条的正确表述是：**逐泳道渲染诚实态已有 CI 强制覆盖；缺的是"每泳道 × 四种场景
+（Loading／Empty／Offline／Permission）"的渲染矩阵**——它不能靠静态归属凑出来，也不能靠给十条共用
+`Views.tsx` 的泳道编造逐条差异。这一项保持未完成，不改口径。
