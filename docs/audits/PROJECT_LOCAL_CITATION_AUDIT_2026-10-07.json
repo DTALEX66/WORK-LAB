@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T07:20:03Z",
+  "generatedAt": "2026-10-07T07:27:04Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2064,
+    "trackedFilesScanned": 2068,
     "distinctProjectLocalTokens": 390,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 390,
-    "citationsToAbsentTokens": 1049
+    "citationsToAbsentTokens": 1051
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,7 +29,7 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 520,
+      "citations": 522,
       "distinctPaths": 309
     },
     "machine_local_runtime_pointer": {
@@ -3052,6 +3052,18 @@
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "line": 1980,
         "text": "\"operand\": \".project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
+      },
+      {
+        "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
+        "file": "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
+        "line": 792,
+        "text": "\"operand\": \".project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
+      },
+      {
+        "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
+        "file": "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
+        "line": 793,
+        "text": "\"command\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py must keep observing snapshot and events requests from the\""
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",

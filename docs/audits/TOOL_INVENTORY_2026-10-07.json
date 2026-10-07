@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T07:20:10Z",
+  "generatedAt": "2026-10-07T07:27:04Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 48,
+    "trackedTools": 50,
     "withLedgerPromise": 17,
-    "referencedSomewhere": 48,
+    "referencedSomewhere": 50,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -595,6 +595,32 @@
       "citedBy": [
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/triage_gone_guard_records.py",
+      "sha256": "ccf3051ab28407b0812cb6727ea992a37616cf1a7417e3b2289d9449c907d50e",
+      "bytes": 1816,
+      "lines": 34,
+      "digestBasis": "working-tree-uncommitted",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 1,
+      "citedBy": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ]
+    },
+    {
+      "path": "scripts/audit/triage_unbound_ledger_records.py",
+      "sha256": "975b6324a74bea17360fdae350f517e8279a85f5828b80bbd0f26da0bd3c95a2",
+      "bytes": 5242,
+      "lines": 105,
+      "digestBasis": "working-tree-uncommitted",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 3,
+      "citedBy": [
+        "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "tests/workflow-assistance/test_ledger_unbound_triage.py"
       ]
     },
     {
