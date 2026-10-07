@@ -69,7 +69,12 @@ class HelperDeclarationsMatchTheTree(unittest.TestCase):
             name = Path(path).name
             referrers = subprocess.run(["git", "grep", "-l", "-F", name], cwd=REPO,
                                        capture_output=True, text=True).stdout.split()
-            real = [r for r in referrers if r != path
+            # exclusions are measured, not convenient: this file itself names the schema (it is the
+            # list under test), and so does the verifier -- both are harness references. The first
+            # version of this assertion passed only because `git grep` cannot see an untracked file;
+            # the moment the test was committed it became its own referrer and the suite went red.
+            here = str(Path(__file__).resolve().relative_to(REPO)).replace("\\", "/")
+            real = [r for r in referrers if r != path and r != here
                     and not r.startswith(("scripts/ci/verify_contract_ssot.py", "reports/",
                                           "docs/history/", "taskpacks/"))]
             # measured, not assumed: the census test pins the filename, and verify_core_schemas.py
