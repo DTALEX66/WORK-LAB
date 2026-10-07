@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import re
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[2]
 DECL = ROOT / ".project/governance/toolchain-declarations.json"
@@ -25,6 +25,7 @@ BOUNDARY = ROOT / ".project/governance/project-data-boundary.json"
 MANIFEST = ROOT / "packages/client-neutral-core/workflow-manifest.yaml"
 # Most CI commands live in the required-group manifest, not in the YAML, so the command set spans two files.
 GROUPS = ROOT / "scripts/ci/required_groups.json"
+LOCKFILE_NAMES = {"package-lock.json", "Cargo.lock", "requirements.lock"}
 
 
 class ToolchainDeclarationGate(unittest.TestCase):
@@ -41,17 +42,31 @@ class ToolchainDeclarationGate(unittest.TestCase):
             lines.update(" ".join(cmd) for cmd in group["commands"])
         return lines
 
-    def test_the_file_declares_every_lockfile_that_exists_in_the_repository(self) -> None:
-        declared = {m["lockfile"] for m in self.doc["managers"]}
-        real = set()
-        for path in ROOT.rglob("*"):
-            if not path.is_file():
+    def lockfiles_in_the_repository(self) -> set:
+        """The tracked file list, not a walk of the working tree.
+
+        The property is about the repository: an ignored cache under `.project-local/` can hold a
+        hundred `package-lock.json` files that are nobody's declaration obligation. Walking it also
+        crashed the whole governance batch — `ROOT.rglob` raised FileNotFoundError on an atlas
+        extraction directory that a concurrent cleanup removed mid-walk (ERR-162), so a locally dead
+        gate hid behind a CI checkout that has no ignored root at all.
+        """
+        import subprocess
+        listing = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True)
+        out = set()
+        for raw in listing.stdout.split(b"\0"):
+            if not raw:
                 continue
-            rel = path.relative_to(ROOT).as_posix()
+            rel = raw.decode("utf-8", "replace")
             if rel.startswith(".project-local/") or "/node_modules/" in f"/{rel}":
                 continue
-            if path.name in {"package-lock.json", "Cargo.lock", "requirements.lock"}:
-                real.add(rel)
+            if PurePosixPath(rel).name in LOCKFILE_NAMES:
+                out.add(rel)
+        return out
+
+    def test_the_file_declares_every_lockfile_that_exists_in_the_repository(self) -> None:
+        declared = {m["lockfile"] for m in self.doc["managers"]}
+        real = self.lockfiles_in_the_repository()
         self.assertEqual(real, declared,
                          "the declaration drifted from the tree: added or removed lockfiles")
         self.assertGreaterEqual(len(real), 5)
