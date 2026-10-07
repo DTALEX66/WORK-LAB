@@ -46,6 +46,14 @@ VERB_CITING_EVIDENCE = re.compile(r"(see |at |per |recorded in|captured in|store
                                   r"evidence is|receipt is|proof:|full output in|日志|见 |存于|证据在)",
                                   re.I)
 FROZEN = re.compile(r"^(docs/history/|docs/audits/|taskpacks/archive|.*archive/)")
+# A register row, handoff note or report that names a runtime path is narration about bytes its author
+# produced, not a pointer a reader has to be able to open. `.project-local/` is the declared
+# git-ignored runtime root, so those paths exist on exactly one machine by design; judging them from
+# local disk state made the verdict machine-dependent and turned CI red on the author's own tooling
+# (ERR-142).
+NARRATION_ROOTS = re.compile(r"^(taskpacks/|reports/|docs/history/|docs/audits/|.*archive/)")
+# Reader-facing entry points are the places where a sentence can actually send someone to bytes.
+READER_FACING = re.compile(r"^(README.md|docs/current/|config/|docs/decisions/|apps/observer/README.md)")
 
 
 def tracked_files() -> list[str]:
@@ -59,6 +67,22 @@ def looks_like_file(token: str) -> bool:
 
 
 def exists(rel: str) -> bool:
+    """Is this token's bytes verifiable from the repository itself?
+
+    `.project-local/` is the git-ignored runtime root by declaration, so nothing under it can ever be
+    checked out: answering from the local disk made the verdict machine-dependent, and CI failed on
+    `.project-local/toolchains/…` paths that exist on the author's box and nowhere else (ERR-142). A
+    citation into that root is therefore treated as not-verifiable-here on every machine, so the
+    verdict is the same in a clean checkout as on the box that produced the bytes.
+    """
+    if PurePosixPath(rel).parts[:1] == (".project-local",):
+        return False
+    p = REPO / PurePosixPath(rel)
+    return p.is_file() if looks_like_file(rel) else p.exists()
+
+
+def exists_on_this_machine(rel: str) -> bool:
+    """Raw disk state, reported separately so the record does not pretend nothing is there."""
     p = REPO / PurePosixPath(rel)
     return p.is_file() if looks_like_file(rel) else p.exists()
 
@@ -74,6 +98,15 @@ def classify(token: str, file: str, line: str) -> str:
         return "declared_output_destination_or_fixture_in_code"
     if EVIDENCE_FIELD.search(line):
         return "machine_field_pointing_at_absent_path"
+    if token.startswith(".project-local/") and NARRATION_ROOTS.match(file):
+        return "machine_local_runtime_narration"
+    if token.startswith(".project-local/"):
+        # A pointer into the declared runtime root is only a promise worth chasing when a reader-facing
+        # document actually tells someone to open those bytes. Everywhere else it is bookkeeping about
+        # machine-local state, and CI cannot see that state by design — so the class is stated rather
+        # than left to be adjudicated path by path (ERR-142).
+        if not (READER_FACING.match(file) and VERB_CITING_EVIDENCE.search(line)):
+            return "machine_local_runtime_pointer"
     if FROZEN.match(file):
         return "prose_in_frozen_history_or_audit"
     return "unclassified_needs_human_read"
@@ -83,6 +116,29 @@ def classify(token: str, file: str, line: str) -> str:
 # unavailable-evidence claim. A queue entry with no disposition prints as UNADJUDICATED, which is
 # the state this table exists to eliminate.
 DISPOSITIONS: dict[str, str] = {
+    ".project-local":
+        "DECLARED ROOT — `.project/governance/project-data-boundary.json` names it as the runtime and "
+        "evidence root every sanctioned writer targets. A directory declaration is not evidence a "
+        "reader has to open, and it is git-ignored by design, so CI never sees it and is not asked to.",
+    ".project-local/artifacts":
+        "DECLARED ROOT — `taskArtifactsRoot`/`canonicalEvidenceRoot` in the boundary declaration; the "
+        "citations name where sanctioned tools write, not bytes a reader must recover.",
+    ".project-local/runs":
+        "DECLARED ROOT — `runtimeRoot`/`logsRoot`/`cacheRoot` in the boundary declaration; the citations "
+        "describe where run logs and receipts land.",
+    ".project-local/artifacts/model-library-readback.json":
+        "MACHINE-LOCAL RECEIPT WITH A RE-MEASURE COMMAND — `.project/governance/model-registry.json` "
+        "quotes it as '(machine-local receipt; regenerate with: python scripts/audit/"
+        "model_library_readback.py)', the regenerator is tracked, and a tracked counterpart exists at "
+        "`docs/audits/MODEL_LIBRARY_READBACK_2026-10-07.md`. The file was present on the authoring box "
+        "(14,754 B, 2026-10-07). CI is not asked to believe the bytes — only to see that the claim "
+        "names how to reproduce them.",
+    ".project-local/runs/u19-msvc-20261006/target/release/app.exe":
+        "MACHINE-LOCAL BUILD OUTPUT NAMED AS WHAT WAS RUN — the desktop readback records "
+        "(`docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json`, "
+        "`docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md`) cite the binary the owner actually launched. The "
+        "readback claim rests on that recorded observation, not on this path existing on a runner, and "
+        "the binary is regenerable from tracked source by the recorded cargo build.",
     ".project-local/runs/observer":
         "DESTINATION — `apps/observer/module-profile.json` declares where the read-only projection "
         "writes when it runs; nothing validates its existence and it has not been asked to run.",
@@ -218,6 +274,13 @@ def main() -> int:
                 "a machine-readable evidence/receipt/artifact field names an absent path",
             "prose_in_frozen_history_or_audit":
                 "historical or audit narrative describing where files were at the time",
+            "machine_local_runtime_pointer":
+                "a tracked record names a path inside the declared git-ignored runtime root without "
+                "telling a reader to open it. CI cannot see that root by design, so the class is "
+                "declared here rather than adjudicated path by path (ERR-142)",
+            "machine_local_runtime_narration":
+                "a register row, handoff note or report describing which runtime paths its own run "
+                "produced; narration about the authoring machine, not a pointer to follow",
             "unclassified_needs_human_read": "not auto-disposed; listed for a per-path decision",
         },
         "countsByClass": {k: {"citations": len(v), "distinctPaths": len({r['path'] for r in v})}
@@ -227,14 +290,24 @@ def main() -> int:
         "unavailableEvidenceReviewQueue": queue,
         "dispositions": {p: DISPOSITIONS.get(p, "UNADJUDICATED") for p in queue},
         "counts": {"reviewQueue": len(queue),
-                   "unadjudicated": sum(1 for p in queue if p not in DISPOSITIONS)},
+                   "unadjudicated": sum(1 for p in queue if p not in DISPOSITIONS),
+                   "checkoutVerifiable": len(present),
+                   "presentOnThisMachine": sum(1 for token in hits
+                                               if exists_on_this_machine(token))},
         "disposition": (
-            "Read the classes before quoting a number. A full-tree scan yields 200 absent tokens and "
-            "a narrower one yielded 28; neither is a count of broken promises. The number that "
-            "matters is unavailableEvidenceReviewQueue: citations that claim recoverable evidence "
-            "while the bytes are gone. Everything else is a pattern, a destination a program will "
-            "create, a negative assertion, or frozen narrative — all correct states, and deleting "
-            "those records would destroy provenance rather than protect it."),
+            "Read the classes before quoting a number. Existence is answered from the repository, not "
+            "from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under "
+            "it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, "
+            "while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. "
+            "Before that rule the verdict moved with the machine and CI failed on the author's own "
+            "runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: "
+            "citations in reader-facing documents or tracked machine fields that claim recoverable "
+            "evidence while the bytes are not verifiable from the repository. Everything else is a "
+            "pattern, a destination a program will create, a negative assertion, frozen narrative, or a "
+            "declared machine-local runtime pointer/narration — all correct states, and deleting those "
+            "records would destroy provenance rather than protect it. A machine-local citation counts as "
+            "adjudicated only when the record says how to re-measure it or names the tracked observation "
+            "that stands in for it; that is what the dispositions do, path by path."),
     }
     out = REPO / args.out
     out.parent.mkdir(parents=True, exist_ok=True)

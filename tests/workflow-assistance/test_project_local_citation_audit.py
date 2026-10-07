@@ -99,8 +99,31 @@ class CitationAuditGate(unittest.TestCase):
         doc = json.loads(AUDIT.read_text(encoding="utf-8"))
         self.assertGreaterEqual(len(doc["countsByClass"]), 5)
         self.assertGreaterEqual(sum(v["citations"] for v in doc["countsByClass"].values()), 150)
-        self.assertGreaterEqual(len(doc["unavailableEvidenceReviewQueue"]), 10)
+        # the queue shrank by design when the machine-local classes were declared (ERR-142): it went
+        # 148 -> 57 -> 6 as runtime-root pointers stopped being adjudicated path by path. The floor is
+        # therefore the new one, and the two declared buckets are guarded so nobody empties them and
+        # calls the resulting quiet a clean tree.
+        self.assertGreaterEqual(len(doc["unavailableEvidenceReviewQueue"]), 5)
+        classes = {k: v for k, v in doc["countsByClass"].items()}
+        self.assertGreaterEqual(classes.get("machine_local_runtime_pointer", {}).get("citations", 0),
+                                100, "the declared machine-local class went quiet; that is not a fix")
+        self.assertGreaterEqual(
+            classes.get("machine_local_runtime_narration", {}).get("citations", 0), 400,
+            "the narration class went quiet; the classifier order changed silently")
 
+
+    def test_a_runtime_root_path_is_never_treated_as_checkout_verifiable(self) -> None:
+        """The rule that made the verdict machine-independent (ERR-142).
+
+        `.project-local/artifacts/model-library-readback.json` really exists on the box that wrote the
+        records. If `exists()` ever answers True for it, the queue grows on one machine and shrinks on
+        another, and CI fails on the author's own tooling — which is exactly what happened at c53de17.
+        """
+        real = ".project-local/artifacts/model-library-readback.json"
+        self.assertFalse(plca.exists(real),
+                         "the runtime root became machine-dependent again: exists() must answer from "
+                         "the repository, never from this box")
+        self.assertTrue(plca.exists("README.md"), "tracked verification broke; the audit is now blind")
 
     def test_the_record_never_scans_itself(self) -> None:
         """Self-exclusion, because a record that quotes its own findings is a feedback loop.
@@ -132,11 +155,19 @@ class CitationAuditGate(unittest.TestCase):
             target = scratch / name
             proc = subprocess.run([sys.executable, str(SCRIPT), "--out", str(target)], cwd=ROOT,
                                   capture_output=True, text=True, encoding="utf-8", errors="replace")
+            # the exit code is a governance state (unadjudicated -> 1), not a property of this test, so
+            # determinism is asserted on the record's own counts instead of on the wrapper status
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             body = json.loads(target.read_text(encoding="utf-8"))
+            self.assertEqual(body["counts"]["unadjudicated"], 0,
+                             f"the audit is not machine-independent any more: {body['counts']}")
             body.pop("generatedAt")
             outs.append(body)
         self.assertEqual(outs[0], outs[1], "two passes over the same tree disagreed")
+        shipped = json.loads(AUDIT.read_text(encoding="utf-8"))
+        shipped.pop("generatedAt")
+        self.assertEqual(outs[0]["counts"], shipped["counts"],
+                         "a fresh scan disagrees with the shipped record about the adjudicated state")
 
 
 if __name__ == "__main__":
