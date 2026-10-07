@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-07T18:43:20Z",
+  "at": "2026-10-07T19:19:57Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -45,22 +45,22 @@
     }
   },
   "counts": {
-    "RESOLVES": 49,
+    "RESOLVES": 51,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
-    "RESOLVES": 82,
+    "RESOLVES": 84,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
-  "resolvedAfterApply": 82,
-  "records": 164,
-  "stateDigest": "2100434c828724038d935485d04912c8f0628aba453297b4db3451ce58c22cbc",
+  "resolvedAfterApply": 84,
+  "records": 166,
+  "stateDigest": "b1d72a00c1bd17edfa7eb12776e709148765288c761d8c025350969d65d4149d",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -3267,6 +3267,40 @@
       ],
       "state": "RESOLVES",
       "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-167",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "tests/workflow-assistance/test_control_service.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_control_service.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_control_service.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-168",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "tests/workflow-assistance/test_snapshot_task_records.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_snapshot_task_records.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_snapshot_task_records.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
     }
   ],
   "notClaimed": [
@@ -3276,5 +3310,5 @@
     "OUT_OF_REPO_TARGET claims are re-checkable only on the machine holding the live client home, which is why they are labelled instead of counted as resolved",
     "no record's status_after was changed by this tool"
   ],
-  "whyItMatters": "the ledger carries 145 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
+  "whyItMatters": "the ledger carries 147 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
 }
