@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T06:01:35Z",
+  "generatedAt": "2026-10-07T06:16:56Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 45,
+    "trackedTools": 46,
     "withLedgerPromise": 16,
-    "referencedSomewhere": 45,
+    "referencedSomewhere": 46,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -180,11 +180,12 @@
       "lines": 194,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 5,
       "citedBy": [
         "docs/audits/EXECUTOR_LIVE_PROBE_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json",
         "tests/workflow-assistance/test_executor_live_probe.py"
       ]
     },
@@ -203,6 +204,18 @@
         "docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/falsify_toolchain_gate.py",
+      "sha256": "fcb4626216a4e2971fa0588bfcd84127348ca0920d6e653f948f9e8a9817b15d",
+      "bytes": 2555,
+      "lines": 64,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 1,
+      "citedBy": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -514,9 +527,10 @@
       "lines": 158,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 1,
+      "citedByRecords": 2,
       "citedBy": [
-        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {

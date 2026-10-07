@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T06:04:04Z",
+  "generatedAt": "2026-10-07T06:17:05Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2055,
+    "trackedFilesScanned": 2058,
     "distinctProjectLocalTokens": 389,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 389,
-    "citationsToAbsentTokens": 1045
+    "citationsToAbsentTokens": 1048
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,7 +21,7 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 194,
+      "citations": 197,
       "distinctPaths": 77
     },
     "machine_field_pointing_at_absent_path": {
@@ -246,6 +246,12 @@
         "file": "tests/workflow-assistance/test_recovered_source_registry.py",
         "line": 112,
         "text": "self.assertTrue(e[\"path\"].startswith(\".project-local/\"),"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/workflow-assistance/test_toolchain_declarations.py",
+        "line": 51,
+        "text": "if rel.startswith(\".project-local/\") or \"/node_modules/\" in f\"/{rel}\":"
       },
       {
         "path": ".project-local/artifacts",
@@ -717,6 +723,12 @@
       },
       {
         "path": ".project-local/runs",
+        "file": "scripts/audit/falsify_toolchain_gate.py",
+        "line": 39,
+        "text": "\"root value restated\": lambda d: d[\"managers\"][0].__setitem__(\"runtimeRoot\", \".project-local/runs\"),"
+      },
+      {
+        "path": ".project-local/runs",
         "file": "scripts/audit/outside_root_spill_sweep.py",
         "line": 76,
         "text": "\"disposition\": \"root cause fixed (the fixture is now built under `.project-local/runs/`) and the \""
@@ -804,6 +816,12 @@
         "file": "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py",
         "line": 117,
         "text": "\"the ERR-140 offender is bare again: pass dir= inside .project-local/runs\")"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_toolchain_declarations.py",
+        "line": 99,
+        "text": "self.assertEqual(\".project-local/runs\", self.boundary[\"runtimeRoot\"])"
       },
       {
         "path": ".project-local/runs/acp-sdk-canary",
