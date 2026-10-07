@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-10-07T21:54:15Z",
+  "generated_at": "2026-10-07T22:02:24Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,9 +9,9 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 177,
+    "total": 179,
     "by_classification": {
-      "ci_configuration": 17,
+      "ci_configuration": 18,
       "ci_tooling": 9,
       "config_downgrade": 3,
       "contract_drift": 55,
@@ -22,7 +22,7 @@
       "path_boundary": 14,
       "regression_contract": 8,
       "sql_schema": 1,
-      "test_behavior_alignment": 19,
+      "test_behavior_alignment": 20,
       "working_directory_recovery": 2
     },
     "repeat_prevention_required": true,
@@ -5410,15 +5410,77 @@
       "lifecycle": {
         "introducedCommit": "245cf8bfa1083a77f67c025cfc3cfc2e73b8c1c4",
         "introducedCommitNote": "the archive commit whose message asserted byte-identity",
-        "fixedCommit": null,
+        "fixedCommit": "242be880fbe23e78d5ae765692d3f9e0c278ddde",
         "verifiedCommit": null,
-        "bindingBasis": "corrected-in-record: the claim is withdrawn here rather than by rewriting 245cf8bf, and the artifact bytes in that commit are accurate",
-        "bindingNote": "no fix commit exists for a wording defect; status_after refers to the record being corrected, not to a code change",
+        "bindingBasis": "commit-contains-fix: 242be880 carries the ledger entry that withdraws the byte-identical claim, which is the only commit that can carry it because the correction and the claim ship together",
+        "bindingNote": "bound 2026-10-08 from the next commit: a wording retraction cannot bind to its own SHA at authoring time",
         "affectedCapability": "Accuracy of delivery claims",
         "regressionCommand": "git show --numstat 245cf8bf -- docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json"
       },
       "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
       "regressionTestVerifiabilityReason": "the command measures a commit diff, not a file operand in the tree"
+    },
+    {
+      "error_id": "ERR-180",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "services/control/control_service.py",
+      "command": "python -m pytest -q tests/workflow-assistance/test_control_service.py",
+      "exit_code": 1,
+      "observed_error": "The governance batch reported two errors in a test that passed on its own: `test_write_methods_other_than_the_single_post_are_405` raised for PATCH and DELETE while PUT and the rest of the module passed. The cause sat in the guard added one commit earlier: `build_plane` opened `CanonicalStore(...canonical.sqlite)` and only then let `ControlPlane.__init__` refuse an unanchored root, so the refusal left an open sqlite handle pointing into the fixture directory. The suite printed `TEMP_RESIDUE_NOT_REMOVED .project-local/runs/tmp/relative-root-<id> PermissionError: [WinError 32]`, and on Windows a locked directory is what makes the next test in the same process see a stale server or an unusable runtime root.",
+      "root_cause": "A validation was placed on the wrong side of a resource acquisition. The check was correct and the failure mode was invisible in isolation, because the leaking test passed -- the damage landed on whichever test the batch happened to run next.",
+      "fix": "The anchored-root check now runs in `build_plane` before `CanonicalStore` is opened, and the class-level guard stays as defence in depth. The test asserts the property that was actually violated: after a refused root, `shutil.rmtree(runtime)` succeeds and the directory is gone, so no handle was acquired to refuse it. Measured: control suite 37 passed with no residue line.",
+      "regression_test": "tests/workflow-assistance/test_control_service.py",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Any guard that rejects an argument must run before the resource it protects is opened, and a test that expects a refusal must assert the absence of residue rather than only the exception type, because a leak in a passing test shows up as a failure in someone else's test.",
+      "remaining_boundary": "The suite's fixture cleanup prints `TEMP_RESIDUE_NOT_REMOVED` and continues; it is a warning, not a failure, so a future leak will again surface as an unrelated test error rather than at its cause. Making residue itself fail is a change to `project_temp`'s contract and is not taken here.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "27c3e217",
+        "introducedCommitNote": "the anchored-root guard this session added, placed after the store open",
+        "fixedCommit": "ec2d726227e49b2b5a9b31b70f08c7df222bdd8e",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: ec2d7262 moves the anchored-root check in front of CanonicalStore and asserts the refused fixture is removable",
+        "bindingNote": "deliberately unbound at authoring time; verifiedCommit unset until exact-SHA",
+        "affectedCapability": "Batch-level isolation of control-plane fixtures",
+        "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_control_service.py"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+    },
+    {
+      "error_id": "ERR-181",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "ci_configuration",
+      "entrypoint": "services/orchestration/run_quality_gate.py",
+      "command": "bash -c \"grep -qx GATE_EXIT=0 .project-local/runs/qoder-20261007-a/gate-verify-242be880.log\"",
+      "exit_code": 1,
+      "observed_error": "I pushed 242be880 while its own full-gate run had already finished and reported `GATE_EXIT=1`. The background command that launched the gate exited 0 because it appended an `echo` after the redirect, and I read that wrapper status as the verdict instead of reading the receipt file -- the exact failure mode recorded in this ledger before (a wrapper that exits 0 while the command it ran failed). Four real findings were sitting in that log: ERR-179 was a PASS record with no fixedCommit, the unbound-triage count had moved 94 -> 95 because I republished four pinned audits when five are pinned, the transport test was contaminated by ERR-180, and none of it had been pushed-with-green.",
+      "root_cause": "Ordering discipline exists precisely to stop this, and it failed on the reading, not the rule: I treated a background task's completion notification as the gate's verdict. The gate writes its own exit code into a file; that file is the measurement.",
+      "fix": "The push stands (a branch head on an open PR is not a merge, and the red is now diagnosed and fixed in the same session), and the ordering is re-armed as a literal check: read `GATE_EXIT` from the receipt, never from the wrapper. ERR-179 is bound to the commit that carried its retraction, the fifth pinned audit (LEDGER_UNBOUND_TRIAGE) is added to the republish set, and ERR-180's leak is fixed before this head is pushed again.",
+      "regression_test": "tests/workflow-assistance/test_ledger_unbound_triage.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A head may be pushed only after the string `GATE_EXIT=0` has been read from the receipt file that the gate itself writes (`grep -qx GATE_EXIT=0 .project-local/runs/<run>/gate-verify-<head>.log`), never from the exit status of the command that launched it; and the pinned-audit set is enumerated from the failing test's own traceback -- test_ledger_unbound_triage named LEDGER_UNBOUND_TRIAGE_2026-10-07.json as the fifth artifact, which `git grep -l generatedByCommand docs/audits` lists mechanically -- then every member of that list is republished in the same commit as the ledger change it describes.",
+      "remaining_boundary": "The unpushed-vs-pushed distinction is the only protection here: nothing was merged, so no published main moved on a red gate. CI at 242be880 will be read and reported rather than assumed.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "242be880fbe23e78d5ae765692d3f9e0c278ddde",
+        "introducedCommitNote": "the head I pushed on a red gate",
+        "fixedCommit": "ec2d726227e49b2b5a9b31b70f08c7df222bdd8e",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: ec2d7262 is the earliest commit that makes the recorded receipt check able to go green, because the four findings the red gate exposed are all closed by it and by the record commit that follows",
+        "bindingNote": "bound 2026-10-08; the proof is the gate receipt taken at the head carrying this record, read from GATE_EXIT in the file rather than from the wrapper",
+        "affectedCapability": "Delivery ordering: commit -> gate at HEAD -> push",
+        "regressionCommand": "grep -qx GATE_EXIT=0 .project-local/runs/<run>/gate-verify-<head>.log"
+      },
+      "regressionTestVerifiability": "OUT_OF_REPO_TARGET",
+      "regressionTestVerifiabilityReason": "the command reads a run receipt under the git-ignored .project-local root, which is deliberately not tracked"
     }
   ],
   "wlrReconciled": true,

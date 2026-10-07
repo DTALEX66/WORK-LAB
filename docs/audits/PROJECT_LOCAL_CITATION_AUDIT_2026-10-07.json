@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T21:55:00Z",
+  "generatedAt": "2026-10-07T22:04:04Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2128,
-    "distinctProjectLocalTokens": 426,
+    "distinctProjectLocalTokens": 428,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 426,
-    "citationsToAbsentTokens": 1177
+    "tokensAbsent": 428,
+    "citationsToAbsentTokens": 1180
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,8 +29,8 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 563,
-      "distinctPaths": 325
+      "citations": 565,
+      "distinctPaths": 326
     },
     "machine_local_runtime_pointer": {
       "citations": 149,
@@ -41,8 +41,8 @@
       "distinctPaths": 52
     },
     "path_pattern_or_truncated_token": {
-      "citations": 10,
-      "distinctPaths": 9
+      "citations": 11,
+      "distinctPaths": 10
     },
     "prose_in_frozen_history_or_audit": {
       "citations": 28,
@@ -436,7 +436,7 @@
       {
         "path": ".project-local/artifacts/backup/hermes/config.yaml",
         "file": "tests/workflow-assistance/test_control_service.py",
-        "line": 409,
+        "line": 410,
         "text": "\".project-local/artifacts/backup/hermes/config.yaml\","
       },
       {
@@ -1354,7 +1354,7 @@
       {
         "path": ".project-local/runs/tmp/cookies.sqlite",
         "file": "tests/workflow-assistance/test_control_service.py",
-        "line": 410,
+        "line": 411,
         "text": "\".project-local/runs/tmp/cookies.sqlite\"):"
       },
       {
@@ -2392,6 +2392,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 4217,
         "text": "\"fix\": \"Root cause: the fixture is now built with dir=_runtime_root() (.project-local/runs/, the convention test_machine_identity.py already used), so any residue lands inside the boundary and inside "
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 5480,
+        "text": "\"regressionCommand\": \"grep -qx GATE_EXIT=0 .project-local/runs/<run>/gate-verify-<head>.log\""
       },
       {
         "path": ".project-local/runs",
@@ -3586,6 +3592,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 3140,
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
+      },
+      {
+        "path": ".project-local/runs/qoder-20261007-a/gate-verify-242be880.log",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 5461,
+        "text": "\"command\": \"bash -c \\\"grep -qx GATE_EXIT=0 .project-local/runs/qoder-20261007-a/gate-verify-242be880.log\\\"\","
       },
       {
         "path": ".project-local/runs/qoder-20261007-a/gate-verify.log",
@@ -6678,6 +6690,12 @@
         "text": "token=\".project-local/runs/probe-202XX.json\"),"
       },
       {
+        "path": ".project-local/runs/tmp/relative-root-",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 5432,
+        "text": "\"observed_error\": \"The governance batch reported two errors in a test that passed on its own: `test_write_methods_other_than_the_single_post_are_405` raised for PATCH and DELETE while PUT and the rest"
+      },
+      {
         "path": ".project-local/runs/u19_",
         "file": "taskpacks/current/U19-HEADLESS-REQUALIFICATION-HANDOFF-20260923.md",
         "line": 25,
@@ -7153,7 +7171,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 204
+    "presentOnThisMachine": 205
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
