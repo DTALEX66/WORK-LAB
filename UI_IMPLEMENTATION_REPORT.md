@@ -287,3 +287,21 @@ command-palette/states/status/tag/toast/tooltip/progress/sparkline/list/page-hea
 仍未闭合（保持未知）：真实窗口的**人眼**目测仍按 owner 指令跳过——上面证明的是渲染链与几何合同可测且通过，
 不证明审美与可用性验收；本机 headless CDP 的 `/json/list` 仍不应答，所以本地无法复算 runner 的读数，
 只能引用 run id。
+
+## 14. 2026-10-07 runner 几何读数原文（把"通过"换成数字）
+
+run `37585453264` / head `8847cdc` / observer 作业第 12 步（必需步骤）逐项读数：
+
+- 桌面档：`scrollWidth=1264 innerWidth=1264`（无横向溢出）· 顶栏 `height=129`（上限 140）· 品牌位
+  `brand=91` · 动作区 `display=flex` · 窗控 `clipped=[]` · 动作行右余量 `gap=731.1` ·
+  导轨 `rail=214.9`（下限 200）· `left=0`。
+- 紧凑档：`scrollWidth=500 innerWidth=500` · 顶栏 `height=111`（上限 260）· `brand=22` · `gap=130` ·
+  `rail=None`（紧凑态不渲染导轨）· `viewport=500x629`。
+- 结尾 `GEOMETRY_GATE_PASS`，并如实报出两个删不掉的临时 user-data 目录（`GEOMETRY_GATE_RESIDUE`，
+  PermissionError 13）；一次性 runner 上不判失败，但名字被打出来而不是咽下去。
+
+两条不粉饰的边界：**紧凑档实测视口 500×629 ≠ `tauri.conf.json` 声明的 440×780**，所以这条步骤证明的是
+"窄内容区不溢出、顶栏不堆叠、无导轨"，不是"面板窗像素级等于声明值"；后者要从 Tauri 侧读回窗口内部尺寸才能钉。
+另修一处会误导人的文案：日志里 `topbar_measured PASS no .topbar element` 的详情字符串是写死的失败文案，
+元素其实已测到（下一行就报高度）。现在通过时详情报 `height=<实测> element=found`，缺元素时报 `MISSING`
+并判失败，`tests/ci/test_topbar_geometry_gate.py::test_a_passing_detail_says_what_was_measured` 双向钉住。

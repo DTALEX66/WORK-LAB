@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T07:36:05Z",
+  "generatedAt": "2026-10-07T07:41:45Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -104,10 +104,11 @@
       "sha256": "ac98b03c6c218e5112153bb6c96738b9c2682bbf5f5581ed531bc00618bde289",
       "bytes": 3902,
       "lines": 66,
-      "digestBasis": "working-tree-uncommitted",
+      "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 2,
+      "citedByRecords": 3,
       "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json"
       ]
@@ -625,9 +626,9 @@
     },
     {
       "path": "scripts/audit/triage_unbound_ledger_records.py",
-      "sha256": "975b6324a74bea17360fdae350f517e8279a85f5828b80bbd0f26da0bd3c95a2",
-      "bytes": 5242,
-      "lines": 105,
+      "sha256": "6168ab9e9d8e7a010a10503efcbdeef7324b80b62e4fc0e69e60b62742d9bdb4",
+      "bytes": 8617,
+      "lines": 163,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
       "citedByRecords": 4,

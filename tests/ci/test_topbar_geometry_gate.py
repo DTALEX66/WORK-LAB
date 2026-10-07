@@ -97,6 +97,21 @@ class VerdictTests(unittest.TestCase):
         self.assertFalse([c for c in geometry.verdict(measured, "full")["checks"]
                           if c["check"] == "topbar_not_stacked"][0]["pass"])
 
+    def test_a_passing_detail_says_what_was_measured(self) -> None:
+        # On the runner the gate logged `topbar_measured PASS no .topbar element`, which reads as a missing
+        # element while the next line reports a height. A PASS detail must name the quantity it passed on.
+        detail = [c for c in self.v["checks"] if c["check"] == "topbar_measured"][0]["detail"]
+        self.assertIn("height=", detail)
+        self.assertIn("found", detail)
+        self.assertNotIn("no .topbar element", detail)
+
+        measured = good_measured("full")
+        del measured[".topbar"]
+        absent = [c for c in geometry.verdict(measured, "full")["checks"]
+                  if c["check"] == "topbar_measured"][0]
+        self.assertFalse(absent["pass"])
+        self.assertIn("MISSING", absent["detail"])
+
     def test_horizontal_overflow_fails(self) -> None:
         measured = good_measured("full")
         measured["__docScrollWidth"] = 1400

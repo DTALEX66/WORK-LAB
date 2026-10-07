@@ -249,7 +249,8 @@ def verdict(measured: dict, view: str) -> dict:
     add("no_horizontal_overflow", scroll <= width + 1, f"scrollWidth={scroll} innerWidth={width}")
 
     topbar = _first(measured, ".topbar")
-    add("topbar_measured", topbar is not None, "no .topbar element")
+    add("topbar_measured", topbar is not None,
+        f"height={topbar['height'] if topbar else None} element={'found' if topbar else 'MISSING'}")
     if topbar:
         add("topbar_not_stacked", topbar["height"] <= MAX_HEIGHT[view],
             f"height={topbar['height']} limit={MAX_HEIGHT[view]}")
