@@ -479,3 +479,46 @@ runner 的模式量一遍。
 （10 项 skip 全是具名隐私跳过）、`CI_ROOT_GOVERNANCE_PASS modules=23`、整门 `GATE_EXIT=0`；
 前端 tsc 退出 0、vitest 28 files / 207 tests、vite build 退出 0。
 本轮不申请也不执行：提交、推送、PR、合并、发布、安装、改全局配置、跨项目写。
+
+> **2026-10-08 更正（§19 末句已过期）**：owner 随后给出「全部授权」，提交与推送**已被授权并已执行**；
+> 未被这次授权覆盖、仍然不做的仍是：合并、tag/release、安装到用户系统、改全局配置、跨项目写真值、
+> 付费调用、跨 Provider 传私人数据、访问 `E:\`/`F:\`、批量删除，以及 force push／reset --hard／改写历史。
+
+## 20. 2026-10-08 交付轮：分片提交、绑定、以及一次在 push 前拦住我的复核
+
+**提交分片按"为什么这样切"而不是按文件数量**：`34b324e` 仪表与边界残留、`7b7a2e9` 读投影（任务记录＋能力阶梯＋
+深链焦点）、`449829d` 全站 reduced-motion 地板、`a279f54` Control 后端与薄壳、`07e76ed` `--changed` 接回 canonical
+规划器、`e70c04c` 证据字节区间读、`efb6a19` CDP 画像目录释放、`fcc40df` 记录、`7fadfcd` 台账绑定、
+`2f04622` 被打断的两份审计重发布、`62a8ebf` ERR-166、`936e597` 授权变更与本节。
+
+**加一条记录不是免费动作（本轮新学）**：`LEDGER_REGRESSION_COMMAND_TARGETS` 把记录数与由每条记录标签算出的
+`stateDigest` 钉死，`TOOL_INVENTORY` 描述跟踪工具集。写完三条 PASS 绑定后整门仍红，报的是
+`160 != 163` 与两份分布不一致；再加 ERR-166 又红一次。结论不是"门禁太严"，而是**记录与它打断的审计必须在同一次
+提交里落地**，否则中间任何一个 head 都不可绿。两次都由工具自身重发布（人不改写审计），随后 39 项目标测试转绿。
+
+**绑定采用两步**：先提交修复，再在后续提交里把 `fixedCommit` 写成真实 SHA（ERR-163→e70c04c、ERR-164→a279f54、
+ERR-165→efb6a19），`verifiedCommit` 一律留空——它只能来自 push 之后 exact-SHA 的 Actions 读数，由
+`scripts/audit/stamp_record_verification.py` 自己核对"修提交是它的祖先且该 head 全绿"再写。
+ERR-166 反过来：修提交在记录之前已存在，所以按门禁规则**建记录即绑定**，不留未绑 PASS。
+
+**复核在 push 之前发现真缺陷（ERR-166，已修 6d20d28）**：新的 `GET /api/v1/evidence-range` 只把"路径不出仓库"
+当边界，而这个项目的凭证就住在仓库里。复核实测三处返回内容——恢复安装前的 `hermes/config.yaml`（31 KB，本来就在
+证据根下）、`config/config.yaml`、`.hermes/task-runtime/**/canonical.sqlite`（221 KB 任务/会话库）。
+文档字符串写着"绝不把句柄带出项目"，这句是真的，同时也是无关的：唯一被我自己实现的边界保护不了任何东西。
+修复分三层且顺序固定：先按名字拒绝（凭证形状即使在证据根下也拒绝），再要求句柄落在
+`project-data-boundary.json` 声明的证据面上（而不是我另写一份意见），显式空面拒绝一切；路由另外要求对端是
+字面环回地址，而不是今天解析到环回、明天可被 HOSTS 改走的主机名。改后实测：上述三处加 `sidecar.py`、
+`.git/config`、治理机读文件全部 REFUSED 且不返回内容，`.project-local/runs` 下真实运行日志仍按区间读出；
+25 项测试通过，其中 6 项是新增负向控制。一次 HTTP 200 不是完成，一次全门绿也不是安全边界——push 因此推迟。
+
+**同一次复核报出但尚未修的 Control 面五处**（已在任务清单挂住，等并发写作者释放
+`services/control/control_service.py`）：`PermissionGate(Policy())` 空策略令两个已实现操作自动 ALLOW；
+门禁 `target` 传的是操作名，于是门禁里针对 `.env`/credential 的 CRITICAL 升级结构上不可能命中；
+`_scope_failure` 只在"绝对且带盘符"时做包含检查，UNC `\\host\C$\x` 与盘相对 `E:secrets` 会被当作已授予范围写入
+台账；盲目 upsert 可覆盖在活的 lease holder 并使 fencing token 倒退；`--runtime-root` 一给即把证据上限抬成
+INTEGRATED。这些是"已定位到行、未修、不称闭合"的状态，不是已完成。
+
+**并行在飞（互斥路径，未到结果不称完成）**：真实 WebView2 键盘/焦点读回、Tauri 侧窗口内部尺寸读回（补
+440×780 声明与 500×629 CDP 仿真的差额，这是 E9 唯一真欠项）、PlanningCandidate 终点消费者、测试侧裸
+`mkdtemp` 收口、Inspector 完备性与证据三列视图、适配器逐动词证据、快照 `artifactHandles` 投影（正是 REQ-RANGE
+UI 落点的欠因）、以及 AGENTS.md 五维基线第 1/2 维的入口链读回。
