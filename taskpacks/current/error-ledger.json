@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 142,
+    "total": 143,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 49,
       "test_behavior_alignment": 16,
       "working_directory_recovery": 2,
-      "evidence_state": 24,
+      "evidence_state": 25,
       "ci_configuration": 12,
       "feature_gap": 10,
       "config_downgrade": 3,
@@ -4296,6 +4296,37 @@
         "bindingNote": "bound 2026-10-07 against 87dcf6d: that commit's only source change is the assertion in tests/workflow-assistance/test_project_local_citation_audit.py that this record describes, so the fix and its gate landed together; verifiedCommit stays unclaimed until an exact-SHA CI readback covers a head containing this record",
         "bindingBasis": "fix-commit-introduction: HEAD is the gate-fix commit when this record is written; the binding gate's own promise check (`git cat-file -e <fix>:<script>`) was run before stamping",
         "verifiedCommitNote": "exact-SHA Actions readback at e06f57e7f2f535f161308ccb0df409e42084c8f2: work-lab-gate success and wlr-060-production-gates success on the same head (both the push run and the PR run), 6 jobs, no non-green job; that head carries both the assertion fix (87dcf6d) and this record"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
+    },
+    {
+      "error_id": "ERR-145",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "evidence_state",
+      "entrypoint": "scripts/audit/topbar_geometry_via_cdp.py, tests/ci/test_topbar_geometry_gate.py, taskpacks/current/OPEN-TASK-REGISTER.md",
+      "command": "python scripts/audit/topbar_geometry_via_cdp.py --root . --view full",
+      "exit_code": 1,
+      "observed_error": "G3 of the UI prompt pack asked for the existing CDP geometry probe to be wired into the gate. The probe could not be wired as written: main() had no return statement, so sys.exit(None) always returned 0 whatever was measured; ROOT was hardcoded to the author's machine and Chrome to %PROGRAMFILES%; it printed numbers with no verdict; and a grep over .github/, scripts/ and tests/ found zero references to it. An instrument that cannot fail and that nothing calls is not a gate.",
+      "root_cause": "The script was written on 2026-10-06 as a one-off answer to a screenshot question and was never converted into a contract. Its filename was then cited as evidence coverage without re-reading its exit path.",
+      "fix": "topbar_geometry_via_cdp.py is now a gate. The verdict is a pure function over measured geometry (no horizontal overflow; top bar within 140px; brand mark present; action row visible and inside the viewport; window controls not clipped; desktop-only rail contract: always present at >=200px against the left edge for the full layout, provably absent for the compact HUD). Exit codes are 0 PASS / 1 FAIL / 2 bad input / 3 NOT_RUN, and NOT_RUN always names its precondition (DIST_ABSENT, BROWSER_NOT_FOUND, MEASURE_FAILED). The root resolves from __file__ and the browser is discovered (WL_CHROME, then PATH, then vendor defaults). Its own gate tests/ci/test_topbar_geometry_gate.py runs 12 checks with no browser, including that a refusal cannot report a pass and that the absence-detector can actually see. The 320px main-window floor became 900x600 under the owner's desktop-first instruction; the UI branch pins the rest of that shell contract in tests/ci/test_desktop_only_shell.py.",
+      "regression_test": "tests/ci/test_topbar_geometry_gate.py::VerdictTests::test_a_clean_desktop_measurement_passes_and_names_every_check",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Before citing an instrument as coverage, read its exit path: find the return, grep for a caller, and run it against a tree that must fail. Wire a probe into CI only after it has produced one verdict; when it refuses to run, name the precondition and exit non-zero instead of folding the refusal into a green.",
+      "remaining_boundary": "Owed, and not papered over: a real geometry readback. Against this machine Chrome 154 headless never answered /json/list from the gate. Measured side by side in one session: the same bytes with a User-Agent and a portless Host returned 200 once, urllib returned 200, u19's raw shape timed out, and --remote-debugging-port=0 announces a websocket port that serves no HTTP endpoint. So the gate is deliberately NOT wired into the workflow: a step that exits 3 every run manufactures a red, and forcing it to exit 0 manufactures a green. Register row GEOMETRY-GATE-20261007 carries the state. The keyboard/focus and Reduced-Motion geometry assertions depend on the same readback, and OfflineState still has no consumer.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "left null: the print-only instrument and the claim that it counted as coverage came from the same 2026-10-06 round; naming one commit as the origin of a missing contract would be attribution rather than evidence",
+        "fixedCommit": "f07ea67ec14dc0ae147d69df9989ba8d7593cd83",
+        "verifiedCommit": null,
+        "affectedCapability": "Desktop geometry evidence; CI-surface reproducibility",
+        "regressionCommand": "python -m pytest tests/ci/test_topbar_geometry_gate.py",
+        "bindingNote": "bound 2026-10-07 against f07ea67: that commit carries both the gate (scripts/audit/topbar_geometry_via_cdp.py) and its test (tests/ci/test_topbar_geometry_gate.py); the binding gate's promise check (`git cat-file -e <fix>:<script>`) was run before stamping, the bulk guard counted the records that commit adds to the ledger (0), and its subject is quoted. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
+        "bindingBasis": "fix-and-gate-in-one-commit: f07ea67 (`feat(gates): the CDP geometry probe becomes a verdict, and E...`) is the commit whose source change is the instrument this record describes; ERR-145 itself is written in the following commit, so ledger-entry-introduction is explicitly NOT claimed as the basis"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"

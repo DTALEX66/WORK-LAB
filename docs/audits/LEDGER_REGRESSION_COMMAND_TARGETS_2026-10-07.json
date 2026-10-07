@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-07T03:10:54Z",
+  "at": "2026-10-07T03:12:04Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -45,22 +45,22 @@
     }
   },
   "counts": {
-    "RESOLVES": 27,
+    "RESOLVES": 28,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
-    "RESOLVES": 60,
+    "RESOLVES": 61,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
-  "resolvedAfterApply": 60,
-  "records": 142,
-  "stateDigest": "12ccbc8c23e11f1e6bc091b0a0bf12808ff39755c4dbb89eb5cd0020859e4edc",
+  "resolvedAfterApply": 61,
+  "records": 143,
+  "stateDigest": "f615150d150fadb2b04e89fb4d820e73282c4e98c56ee9ab70920df7aafa1a93",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -2893,6 +2893,23 @@
       ],
       "state": "RESOLVES",
       "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-145",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "tests/ci/test_topbar_geometry_gate.py::VerdictTests::test_a_clean_desktop_measurement_passes_and_names_every_check",
+      "operands": [
+        {
+          "operand": "tests/ci/test_topbar_geometry_gate.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/ci/test_topbar_geometry_gate.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
     }
   ],
   "notClaimed": [
@@ -2902,5 +2919,5 @@
     "OUT_OF_REPO_TARGET claims are re-checkable only on the machine holding the live client home, which is why they are labelled instead of counted as resolved",
     "no record's status_after was changed by this tool"
   ],
-  "whyItMatters": "the ledger carries 123 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
+  "whyItMatters": "the ledger carries 124 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
 }
