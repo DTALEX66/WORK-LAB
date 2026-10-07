@@ -379,6 +379,42 @@ class ControlPlaneTestCase(unittest.TestCase):
         self.assertTrue(change["present_before"], result["readback"]["target"])
         self.assertEqual(result["readback"]["target"], ".project/governance/work-lab.project-profile.yaml")
 
+    def test_the_diff_reads_the_declared_case_not_the_folded_path(self) -> None:
+        """The CI failure at 7ca2fd45: containment folds case, I/O must not.
+
+        `UI_IMPLEMENTATION_REPORT.md` is a tracked file whose NAME is uppercase, so the folded path
+        `ui_implementation_report.md` does not exist on a case-sensitive filesystem while opening it
+        succeeds on Windows. Asserting the echoed target keeps the declared case is what makes this
+        falsifiable on one machine: before the fix the readback reported the folded name on every host.
+        """
+        result = self.plane.execute(request_payload(
+            operation="config.diff",
+            payload={"target_file": "UI_IMPLEMENTATION_REPORT.md",
+                     "field": "schema_version", "value": "whatever"}))
+        self.assertEqual("PLANNED", result["status"], result["reason"])
+        self.assertEqual("UI_IMPLEMENTATION_REPORT.md", result["readback"]["target"],
+                         "the readback echoed a case-folded path, which no case-sensitive host has")
+        # a key that is genuinely present must read as present; FILE_ABSENT here is the folded-path bug
+        present = self.plane.execute(request_payload(
+            operation="config.diff",
+            payload={"target_file": "UI_IMPLEMENTATION_REPORT.md",
+                     "field": "Control", "value": "x"}))
+        self.assertNotEqual("FILE_ABSENT", present["readback"]["changes"][0]["presenceBasis"],
+                            "the document was read as absent: the folded path does not exist on Linux")
+
+    def test_relative_inside_keeps_case_and_refuses_a_guessed_remainder(self) -> None:
+        cases = [
+            ("D:/All projects/WORK-LAB", "D:/All projects/WORK-LAB/UI_REPORT.md", "UI_REPORT.md"),
+            ("/home/Runner/work/WORK-LAB", "/home/Runner/work/WORK-LAB/Config.YAML", "Config.YAML"),
+            ("/home/runner/work/WORK-LAB", "/home/runner/WORK-LAB/other/x", None),
+            # a dot-segment is collapsed for the containment decision and preserved for the read,
+            # because Path("/srv/app/./x") is the same file the caller named
+            ("/srv/app", "/srv/app/./x", "./x"),
+        ]
+        for root, candidate, expected in cases:
+            with self.subTest(root=root, candidate=candidate):
+                self.assertEqual(expected, control_service.relative_inside(candidate, root))
+
     def test_config_diff_answers_key_questions_not_substring_questions(self) -> None:
         """A string that is present in the file but is not a declared key must read as absent."""
         result = self.plane.execute(request_payload(

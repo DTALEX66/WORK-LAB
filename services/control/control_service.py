@@ -153,6 +153,29 @@ def _inside_project(candidate: Any, project_root: Any) -> tuple[bool, str, str]:
     return lexical == root or lexical.startswith(root + "/"), root, lexical
 
 
+def relative_inside(candidate: Any, project_root: Any) -> str | None:
+    """The declared path relative to the root, decided by the folded test but keeping the given case.
+
+    Two different jobs, two different strings: containment must not depend on the host's case rules, so
+    it is decided on `normalise_path` text; the read must find the file the caller named, and a
+    case-folded path does not exist on a case-sensitive filesystem. Deriving the remainder from the
+    folded text is what made CI report FILE_ABSENT for a document that was in the tree.
+    """
+    lexical = normalise_path(candidate)
+    root = normalise_path(project_root).rstrip("/")
+    if lexical == root:
+        return ""
+    if not lexical.startswith(root + "/"):
+        return None
+    unified = str(candidate).replace("\\", "/").rstrip("/")
+    remainder = unified[len(root):].lstrip("/")
+    # the slice is only valid when the folded root really is a prefix of the unfolded text; if the
+    # caller wrote dot-segments or a different case length, refuse rather than read a guessed path
+    if normalise_path(remainder) != lexical[len(root) + 1:]:
+        return None
+    return remainder
+
+
 def relative_within_root(lexical: str, lexical_root: str) -> str | None:
     """The path of the target relative to the project, computed as TEXT.
 
@@ -171,7 +194,7 @@ def _is_non_diffable_target(resolved: Path, relative: str | None) -> bool:
         return True  # outside this project there is nothing for this operation to plan against
     if name_is_sensitive(resolved, exempt=_DIFFABLE_EXEMPTIONS):
         return True
-    return any(relative.startswith(prefix) for prefix in NON_DIFFABLE_ROOTS)
+    return any(relative.lower().startswith(prefix) for prefix in NON_DIFFABLE_ROOTS)
 
 
 def _now() -> str:
@@ -802,14 +825,16 @@ class ControlPlane:
         # the service from — a diff computed against the wrong file is a plan built on nothing.
         # The refusal is decided from the text (see `_inside_project`); only after that is a real path built,
         # so a Linux runner can never turn "outside this project" into "a file inside it".
-        anchored = target if path_is_anchored(target) else f"{normalise_path(self.project_root)}/{target}"
+        root_text = self.project_root.as_posix()
+        anchored = target if path_is_anchored(target) else f"{root_text}/{target}"
         inside, lexical_root, lexical = _inside_project(anchored, self.project_root)
         if not inside:
             return self.result(spec, "REFUSED", "TARGET_OUT_OF_PROJECT",
                                f"配置目标 {target} 不在本仓库内（规范化后 {lexical} 不在 {lexical_root} 之内）；"
                                "本轮没有对它之外的写权或读权。", request=request)
-        resolved = Path(lexical)
-        relative_target = relative_within_root(lexical, lexical_root)
+        # `anchored` keeps the declared case; `lexical` is only ever used to decide containment.
+        resolved = Path(anchored)
+        relative_target = relative_inside(anchored, self.project_root)
         if _is_non_diffable_target(resolved, relative_target):
             # The diff answers "does this document declare this key", which makes any file an oracle if the
             # answer is a substring test -- see ERR-166 for the same hole on the read side one commit
@@ -832,7 +857,7 @@ class ControlPlane:
         # as a write that was verified by readback.
         return self.result(spec, "PLANNED", spec.reason_code, spec.reason, request=request,
                            receipt=None,
-                           readback={"plan_only": True, "target": relative_within_root(lexical, lexical_root),
+                           readback={"plan_only": True, "target": relative_target,
                                      "changes": changes,
                                      "written": False,
                                      "next": "config.apply 需要对该 exact target 的单独授权"},
