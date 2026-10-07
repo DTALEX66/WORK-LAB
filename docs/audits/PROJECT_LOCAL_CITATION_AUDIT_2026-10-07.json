@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T01:55:47Z",
+  "generatedAt": "2026-10-07T03:14:37Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2038,
-    "distinctProjectLocalTokens": 384,
+    "trackedFilesScanned": 2044,
+    "distinctProjectLocalTokens": 386,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 384,
-    "citationsToAbsentTokens": 1029
+    "tokensAbsent": 386,
+    "citationsToAbsentTokens": 1034
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,7 +21,7 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 192,
+      "citations": 193,
       "distinctPaths": 77
     },
     "machine_field_pointing_at_absent_path": {
@@ -29,8 +29,8 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 512,
-      "distinctPaths": 303
+      "citations": 516,
+      "distinctPaths": 305
     },
     "machine_local_runtime_pointer": {
       "citations": 132,
@@ -780,6 +780,12 @@
         "file": "tests/ci/test_root_governance_contracts.py",
         "line": 53,
         "text": "self.assertEqual(data[\"runtimeRoot\"], \".project-local/runs\")"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_project_local_citation_audit.py",
+        "line": 180,
+        "text": "# first.json/second.json into `.project-local/runs/` before re-scanning. Any bound on it —"
       },
       {
         "path": ".project-local/runs",
@@ -2524,6 +2530,18 @@
         "file": "docs/audits/AG19_RECORD_ROOT_PIN_TEST_2026-10-07.json",
         "line": 94,
         "text": "\"extractedTo\": \".project-local/runs/convergence-20261007-j/ag19_extraction/WORK-LAB_MASTER_ATLAS_2026-09-29.zip__WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md\","
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-k",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 243,
+        "text": "| GEOMETRY-GATE-20261007 | P1 | 已落地＝判定逻辑＋拒绝语义（12 项单测）/ 未落地＝真实浏览器读回，故暂不接成 CI 必需步骤 | `scripts/audit/topbar_geometry_via_cdp.py` 原来只是一台会打印数字的仪器：`main()` 返回 None（永远退出 0），没有任何 CI 步骤或测试引用它——这就是提示词任务包 G3 的缺口"
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-k/uipack",
+        "file": "taskpacks/current/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md",
+        "line": 32,
+        "text": "项目 Authority）。已抽取文本层到 `.project-local/runs/convergence-20261007-k/uipack/`"
       },
       {
         "path": ".project-local/runs/drift-scan-sa.md",
@@ -4366,6 +4384,18 @@
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 241,
         "text": "| UI-PRODUCT-PROMPT-20261007 | P0 |并入目标（owner 2026-10-07 指令：按提示词把 UI 任务并入） / 基底=285704a（实测 `cd4daa83` 并入是 no-op：其为主分支祖先且 Codex worktree 零未提交内容） / 清单实测 G1 缺 PermissionState 与动作级 disabled＋原因、G2 顶栏无品牌图形且"
+      },
+      {
+        "path": ".project-local/worktrees/ui-20261007",
+        "file": "taskpacks/current/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md",
+        "line": 10,
+        "text": "**工作区（隔离、单写者）:** 分支 `ui-commercial-polish-20261007` @ `.project-local/worktrees/ui-20261007`。"
+      },
+      {
+        "path": ".project-local/worktrees/ui-20261007",
+        "file": "taskpacks/current/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md",
+        "line": 86,
+        "text": "未提交工作只存在于 `.project-local/worktrees/ui-20261007`：删该 worktree ＋ 删分支"
       }
     ],
     "machine_local_runtime_pointer": [
@@ -6265,7 +6295,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 176
+    "presentOnThisMachine": 178
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
