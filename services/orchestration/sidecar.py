@@ -13,11 +13,12 @@ import queue
 import threading
 import time
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 import uuid
 
 from sidecar_lock import SingleInstanceLock
 from canonical_store import CanonicalStore
+import evidence_range_reader
 from sse_hub import HEARTBEAT_SECONDS, LIVE, LiveProjection, SNAPSHOT, STALE, render_sse_frames
 from composition_root import build_v3_snapshot, load_approved_index
 from live_gate import evaluate_live
@@ -588,6 +589,31 @@ def create_server(
                 self.send_json(200, sidecar.projection())  # 旧 v1 兼容，保留
             elif path == "/api/v1/snapshot":
                 self.send_json(200, sidecar.v3_snapshot())  # P0-2: 真 v3
+            elif path == "/api/v1/evidence-range":
+                # REQ-RANGE: a read-only slice of a large artifact, addressed by an exact byte interval.
+                # The typed verdict lives in the body (HTTP 200 never means the read succeeded), and the
+                # reader refuses any handle that resolves outside this project or any verification it would
+                # have to buy by reading the whole file.
+                query = parse_qs(urlsplit(self.path).query)
+                try:
+                    offset = int((query.get("offset") or ["0"])[0])
+                    limit = int((query.get("limit") or [str(evidence_range_reader.DEFAULT_LIMIT)])[0])
+                except ValueError:
+                    self.send_json(400, {
+                        "schema_version": evidence_range_reader.SCHEMA_VERSION,
+                        "status": "REFUSED", "reason_code": "BAD_QUERY",
+                        "reason": "offset 与 limit 必须是整数。",
+                        "content": None,
+                    })
+                    return
+                self.send_json(200, evidence_range_reader.read_range(
+                    handle=(query.get("handle") or [""])[0],
+                    root=sidecar.project_root,
+                    offset=offset,
+                    limit=limit,
+                    expected_digest=(query.get("expectedDigest") or [None])[0],
+                    whole_digest=(query.get("wholeDigest") or [None])[0],
+                ))
             elif path == "/api/v1/events":
                 if server._closed:
                     self.send_json(503, {"status": "server_closed"})
