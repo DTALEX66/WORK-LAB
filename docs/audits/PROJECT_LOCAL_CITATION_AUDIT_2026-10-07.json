@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T10:30:19Z",
+  "generatedAt": "2026-10-07T10:33:44Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2083,
-    "distinctProjectLocalTokens": 404,
+    "distinctProjectLocalTokens": 405,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 404,
-    "citationsToAbsentTokens": 1101
+    "tokensAbsent": 405,
+    "citationsToAbsentTokens": 1102
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,8 +29,8 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 540,
-      "distinctPaths": 315
+      "citations": 541,
+      "distinctPaths": 316
     },
     "machine_local_runtime_pointer": {
       "citations": 137,
@@ -2770,6 +2770,12 @@
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 247,
         "text": "| GREENING-20261007-J | P1 | ELIGIBLE_BYTES_1,460,600_OF_4.19_GB / NOTHING_MORE_SAFELY_RELEASABLE / MEASURED_NOT_ASSUMED | 本轮不再猜哪块缓存能删，而是量「**删除合法性**」：对 `.project-local` 每个一级子目录求 apparent bytes，并统计受版本控"
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-k/measure_schema_validation_coverage.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4812,
+        "text": "\"remaining_boundary\": \"The three red heads stay red in the record and the fix only moves forward. Measured before deciding whether machinery was missing: all 39 schemas under packages/contracts/schema"
       },
       {
         "path": ".project-local/runs/convergence-20261007-k/promote-atlas-master-source-registry.json",
@@ -6697,7 +6703,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 190
+    "presentOnThisMachine": 191
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
