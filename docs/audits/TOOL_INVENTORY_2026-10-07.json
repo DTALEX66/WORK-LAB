@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T05:39:30Z",
+  "generatedAt": "2026-10-07T05:46:15Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 43,
+    "trackedTools": 44,
     "withLedgerPromise": 16,
-    "referencedSomewhere": 43,
+    "referencedSomewhere": 44,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -171,6 +171,20 @@
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/executor_live_probe.py",
+      "sha256": "1bec9689d6ef9865685d1628aabdba7e1c899a7e1dbce29d5bd23529b10e9cdc",
+      "bytes": 9812,
+      "lines": 194,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 3,
+      "citedBy": [
+        "docs/audits/EXECUTOR_LIVE_PROBE_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "tests/workflow-assistance/test_executor_live_probe.py"
       ]
     },
     {

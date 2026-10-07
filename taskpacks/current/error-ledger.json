@@ -4418,11 +4418,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the missing capability is the recovery tool's original scope, designed before the AG-19 pin test produced a digest hit; naming an origin commit for an absent feature would be attribution",
         "fixedCommit": "50f77d175891ae8bd24c534498df7510a98946c7",
-        "verifiedCommit": null,
+        "verifiedCommit": "07082ed98e3aa21b8e375f94dbcbbfd6c63a014c",
         "affectedCapability": "AG-19 original recovery; Source Registry checkout-verifiability",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_recover_shared_root_original.py tests/workflow-assistance/test_ag19_record_root_pin_test.py",
         "bindingNote": "bound 2026-10-07 against 50f77d1: that commit carries the tool, its 18 checks, the pin-test verdict change and the recovered original itself; the promise check ran before stamping and the bulk guard counted its ledger rows",
-        "bindingBasis": "fix-and-artifact-in-one-commit: `feat(ag19): recover the pinned second original out of the ow…`"
+        "bindingBasis": "fix-and-artifact-in-one-commit: `feat(ag19): recover the pinned second original out of the ow…`",
+        "verifiedCommitNote": "exact-SHA Actions readback at 07082ed98e3aa21b8e375f94dbcbbfd6c63a014c: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
