@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-10-07T22:54:49Z",
+  "generated_at": "2026-10-07T23:37:50Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 183,
+    "total": 184,
     "by_classification": {
       "ci_configuration": 18,
       "ci_tooling": 9,
@@ -22,7 +22,7 @@
       "path_boundary": 15,
       "regression_contract": 8,
       "sql_schema": 1,
-      "test_behavior_alignment": 21,
+      "test_behavior_alignment": 22,
       "working_directory_recovery": 2
     },
     "repeat_prevention_required": true,
@@ -5650,6 +5650,37 @@
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_tool_inventory_coverage.py is tracked",
       "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_tool_inventory_coverage.py"
+    },
+    {
+      "error_id": "ERR-186",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "packages/client-neutral-core/bin/hermes-project-terminal-guard.py",
+      "command": "bash -c \"python -m pytest -q tests/workflow-assistance/test_project_terminal_guard.py --collect-only | grep -q BothHostBranchesAreExercisedOnThisMachine\"",
+      "exit_code": 1,
+      "observed_error": "The guard decides ALLOW/BLOCK for every pre-tool-call command, and 25 tests covered its Windows arm. Its non-Windows arm -- `if os.name != \"nt\": return candidate`, which refuses a UNC share or a drive-qualified path on a POSIX host -- was exercised only because the ubuntu job happens to run the same suite. A regression there (a branch removed, an inverted condition) would produce no signal on the machine where the guard is authored and reviewed.",
+      "root_cause": "Coverage was counted per test file rather than per branch, and a branch that only the other platform can reach looks covered because CI is green. Separately, I nearly classified this guard as a third instance of the host-query defect that cost three CI reds today; reading the branches showed they encode path syntax (a POSIX host cannot contain `C:/` or `\\server\\share`), with both sides of every comparison normalised by the same ntpath calls. Rewriting it would have weakened a correct security guard -- the same 'fixing a non-defect' trap this ledger records elsewhere.",
+      "fix": "Four tests force `os.name` so both arms run on one machine, including the assertion that must stay quiet: a path inside the declared root on a Windows host is not flagged. That last one is what makes a future over-tightening visible instead of silently accepted. Adjudicated as syntax, not privilege, and left unchanged -- measured by reading each branch's comparison operands, not by assuming the pattern matched. Measured: 29 passed (was 25).",
+      "regression_test": "tests/workflow-assistance/test_project_terminal_guard.py",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Every platform-conditional arm of a security guard must have a test that forces the condition instead of waiting for the other runner, and the suite must assert both directions: `grep -c BothHostBranchesAreExercisedOnThisMachine` in the collected test list must be >= 1, and the non-refusal case (a path inside the declared root) must be present, because a coverage claim that only counts refusals hides an over-tightening.",
+      "remaining_boundary": "The two other `os.name` users named by the sweep (services/authority/resource_lease.py, machine_identity.py) choose lock and identity implementations, which is legitimate host I/O; machine_identity.py:141 uses relative_to in a mild decision and is not covered by this record.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the guard and its tests predate this session; the coverage gap is original",
+        "fixedCommit": "5d8bf3c248eb0a973832e15810ed2115377d0207",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 5d8bf3c2 adds the four forced-branch tests",
+        "bindingNote": "bound 2026-10-08; verifiedCommit awaits the next green exact-SHA run",
+        "affectedCapability": "Cross-platform coverage of the project terminal guard",
+        "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_project_terminal_guard.py"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_project_terminal_guard.py is tracked"
     }
   ],
   "wlrReconciled": true,
