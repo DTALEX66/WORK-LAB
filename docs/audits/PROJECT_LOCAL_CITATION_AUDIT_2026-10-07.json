@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T22:55:42Z",
+  "generatedAt": "2026-10-07T23:07:59Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2131,
@@ -1754,7 +1754,7 @@
       {
         "path": ".project-local/artifacts/SECRET_SHAPE_SCAN_HEAD.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 5341,
+        "line": 5369,
         "text": "\"fix\": \"Measured rather than assumed: a secret-shape scanner was written and run over the committed tree -- 2,107 files scanned, 20 binary skipped, 6 pattern hits, every one adjudicated to a placehold"
       },
       {
@@ -1940,13 +1940,13 @@
       {
         "path": ".project-local/artifacts/pre-reinstall-archive-20261001/hermes/config.yaml",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4998,
+        "line": 5004,
         "text": "\"observed_error\": \"The new read-only evidence-range route served any file inside the Git root over HTTP, and the reader CLI reported success while doing it: `evidence_range_reader.py --handle <.projec"
       },
       {
         "path": ".project-local/artifacts/qoder-handoff-20261007/GEOMETRY_20261008.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4965,
+        "line": 4969,
         "text": "\"command\": \"python scripts/audit/topbar_geometry_via_cdp.py --view full --view compact --json-out .project-local/artifacts/qoder-handoff-20261007/GEOMETRY_20261008.json\","
       },
       {
@@ -2426,14 +2426,14 @@
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 5468,
+        "line": 5502,
         "text": "\"repeat_prevention\": \"A head may be pushed only after the string `GATE_EXIT=0` has been read from the receipt file that the gate itself writes (`grep -qx GATE_EXIT=0 .project-local/runs/<run>/gate-ver"
       },
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 5480,
-        "text": "\"regressionCommand\": \"grep -qx GATE_EXIT=0 .project-local/runs/<run>/gate-verify-<head>.log\""
+        "line": 5514,
+        "text": "\"regressionCommand\": \"grep -qx GATE_EXIT=0 .project-local/runs/<run>/gate-verify-<head>.log\","
       },
       {
         "path": ".project-local/runs",
@@ -3584,13 +3584,13 @@
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
-        "line": 1434,
+        "line": 1432,
         "text": "\"operand\": \".project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
-        "line": 1435,
+        "line": 1433,
         "text": "\"command\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py must keep observing snapshot and events requests from the\","
       },
       {
@@ -3632,7 +3632,7 @@
       {
         "path": ".project-local/runs/qoder-20261007-a/gate-verify-242be880.log",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 5461,
+        "line": 5495,
         "text": "\"command\": \"bash -c \\\"grep -qx GATE_EXIT=0 .project-local/runs/qoder-20261007-a/gate-verify-242be880.log\\\"\","
       },
       {
@@ -6414,7 +6414,7 @@
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 5000,
+        "line": 5006,
         "text": "\"fix\": \"Three layers, in this order: a credential-shaped name is refused by name even when it sits under an evidence root; the handle must then lie on an evidence surface read from .project/governance"
       },
       {
@@ -6710,7 +6710,7 @@
       {
         "path": ".project-local/runs/geometry-gate/udf-",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4967,
+        "line": 4971,
         "text": "\"observed_error\": \"GEOMETRY_GATE_PASS for both views, and the same run printed GEOMETRY_GATE_RESIDUE with two entries: PermissionError(13, 'another process is using the file') removing .project-local/"
       },
       {
@@ -6728,7 +6728,7 @@
       {
         "path": ".project-local/runs/tmp/relative-root-",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 5432,
+        "line": 5464,
         "text": "\"observed_error\": \"The governance batch reported two errors in a test that passed on its own: `test_write_methods_other_than_the_single_post_are_405` raised for PATCH and DELETE while PUT and the rest"
       },
       {

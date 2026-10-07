@@ -4915,11 +4915,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "the wrong probe lived in this round's uncommitted test and never reached a commit; e70c04c is the first commit that carries the corrected boundary case",
         "fixedCommit": "e70c04c9f236375ee7bc281711f051e8f9a97698",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: e70c04c carries tests/workflow-assistance/test_evidence_range_reader.py with OUTSIDE_PROBE one level above the repository and the before/after non-existence assertions",
         "bindingNote": "bound 2026-10-08 against e70c04c: operand checked with git cat-file before writing, the promised command re-ran in the canonical runner's mode (the mode that binds TMP inside the repo) and the three boundary cases read OUT_OF_BOUNDARY rather than READ_OK",
         "affectedCapability": "Evidence boundary refusal testing",
-        "regressionCommand": "python -m unittest -q test_evidence_range_reader"
+        "regressionCommand": "python -m unittest -q test_evidence_range_reader",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "the named test file exists and is tracked by git ls-files"
@@ -4946,11 +4948,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "drift surfaced by this round's additions; the three registration points moved together in one commit, so there is no separate introducing commit to name",
         "fixedCommit": "a279f5432d2ab9c36fd8ffd463be07ae98865d98",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: a279f54 registers control-operation and control-operation-result in .project/governance/contracts/contract-catalog.json, in scripts/ci/verify_contract_catalog.py EXPECTED owners plus CANONICAL_SCHEMA_PREFIXES, and in tests/workflow-assistance/test_core_schemas.py, and regenerates contracts.ts to 39 contracts",
         "bindingNote": "bound 2026-10-08 against a279f54: the promised gate script services/orchestration/run_quality_gate.py is present in that tree, and both gates that went red — governance and root-governance-suite — read green with the registration in place",
         "affectedCapability": "Contract registration integrity",
-        "regressionCommand": "python services/orchestration/run_quality_gate.py root-governance-suite"
+        "regressionCommand": "python services/orchestration/run_quality_gate.py root-governance-suite",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "named test file is tracked and discoverable"
@@ -4977,11 +4981,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "the instrument predates this round; its original cleanup block did kill-then-single-rmtree, so the introducing commit is the instrument's own, not this round's",
         "fixedCommit": "efb6a19c6b88c514ce77ecae99095c1aa071e9ae",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: efb6a19 adds _release_profile() — bounded retry over a waited-for process, and the directory is reported by name when it still cannot be removed",
         "bindingNote": "bound 2026-10-08 against efb6a19: scripts/audit/topbar_geometry_via_cdp.py is present in that tree and the same two views re-ran to GEOMETRY_GATE_PASS with no GEOMETRY_GATE_RESIDUE line",
         "affectedCapability": "Desktop geometry gate run cleanliness",
-        "regressionCommand": "python scripts/audit/topbar_geometry_via_cdp.py --view full --view compact"
+        "regressionCommand": "python scripts/audit/topbar_geometry_via_cdp.py --view full --view compact",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/ci/test_topbar_geometry_gate.py is tracked"
@@ -5008,11 +5014,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "introduced and caught inside this uncommitted round: the route first existed in e70c04c, but the review that found the hole ran against the working tree before the hardened version was committed",
         "fixedCommit": "6d20d28e55dce4ad0fc5555652f95e77aaeb1d6b",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: 6d20d28 carries the surface/name checks in packages/client-neutral-core/scripts/evidence_range_reader.py, the loopback peer check in services/orchestration/sidecar.py, and the six new negative controls",
         "bindingNote": "bound 2026-10-08 against 6d20d28 at creation time rather than left unset: the fix commit existed before this record was written, so the rule that a PASS record dated after the cut-off may not be created unbound is satisfied instead of deferred. verifiedCommit stays null until the exact-SHA Actions readback exists.",
         "affectedCapability": "Evidence range read boundary",
-        "regressionCommand": "python -m unittest -q test_evidence_range_reader"
+        "regressionCommand": "python -m unittest -q test_evidence_range_reader",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_evidence_range_reader.py is tracked"
@@ -5039,11 +5047,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "introduced in a279f54 and 7b7a2e9 by this round's own additions, which is why the fix commit is named separately from any introducing commit",
         "fixedCommit": "06908ae34ac7400b72a8377139cd4515ea60571c",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: 06908ae carries the guard and the negative controls named in `fix` and `regression_test`",
         "bindingNote": "bound 2026-10-08 at creation time against 06908ae: the fix commit existed before this record was written, so no PASS record is created unbound; verifiedCommit stays null until the exact-SHA Actions readback exists",
         "affectedCapability": "Control-plane authorisation and lease integrity",
-        "regressionCommand": "python -m unittest -q test_control_service"
+        "regressionCommand": "python -m unittest -q test_control_service",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
@@ -5070,11 +5080,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "the projection and the store parser both predate this record and were written this round (7b7a2e9)",
         "fixedCommit": "06908ae34ac7400b72a8377139cd4515ea60571c",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: 06908ae carries the guard and the negative controls named in `fix` and `regression_test`",
         "bindingNote": "bound 2026-10-08 at creation time against 06908ae: the fix commit existed before this record was written, so no PASS record is created unbound; verifiedCommit stays null until the exact-SHA Actions readback exists",
         "affectedCapability": "Snapshot projection honesty and capability-ladder ordering",
-        "regressionCommand": "python -m unittest -q test_snapshot_task_records"
+        "regressionCommand": "python -m unittest -q test_snapshot_task_records",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
@@ -5101,11 +5113,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "surfaced by this round's own additions and caught after the push, not before it, because the command that fails is a CI-only command",
         "fixedCommit": "dcee507687809a1404ffd503bdf951adf0b067ee",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: dcee507 carries the fix and the guard named in regression_test",
         "bindingNote": "bound 2026-10-08 at creation time against dcee507 (the commit predates this record, so no PASS record is created unbound); verifiedCommit stays null until the exact-SHA Actions readback exists",
         "affectedCapability": "Current-state freshness across CI and local gates",
-        "regressionCommand": "python scripts/ci/generate_current_state.py --check-current"
+        "regressionCommand": "python scripts/ci/generate_current_state.py --check-current",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "scripts/ci/generate_current_state.py is tracked"
@@ -5132,11 +5146,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "surfaced by this round's own additions and caught after the push, not before it, because the command that fails is a CI-only command",
         "fixedCommit": "dcee507687809a1404ffd503bdf951adf0b067ee",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: dcee507 carries the fix and the guard named in regression_test",
         "bindingNote": "bound 2026-10-08 at creation time against dcee507 (the commit predates this record, so no PASS record is created unbound); verifiedCommit stays null until the exact-SHA Actions readback exists",
         "affectedCapability": "Typed model / snapshot contract agreement",
-        "regressionCommand": "python scripts/ci/failfast_group.py --group observer-web-contracts"
+        "regressionCommand": "python scripts/ci/failfast_group.py --group observer-web-contracts",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "apps/observer/tests/test_production_surface_static_contract.js is tracked"
@@ -5163,11 +5179,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "surfaced by this round's own additions and caught after the push, not before it, because the command that fails is a CI-only command",
         "fixedCommit": "97d0ede8bd6d33d420b5d609e599ea01596c10a9",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: 97d0ede carries the fix and the guard named in regression_test",
         "bindingNote": "bound 2026-10-08 at creation time against 97d0ede (the commit predates this record, so no PASS record is created unbound); verifiedCommit stays null until the exact-SHA Actions readback exists",
         "affectedCapability": "Spill ledger conformance and out-of-root adjudication",
-        "regressionCommand": "python scripts/audit/outside_root_spill_sweep.py"
+        "regressionCommand": "python scripts/audit/outside_root_spill_sweep.py",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "scripts/audit/outside_root_spill_sweep.py is tracked"
@@ -5194,11 +5212,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "surfaced by this round's own additions and caught after the push, not before it, because the command that fails is a CI-only command",
         "fixedCommit": "051ecbc11c10b48d4ef019ec933d5fd11686a5b4",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: 051ecbc carries the fix and the guard named in regression_test",
         "bindingNote": "bound 2026-10-08 at creation time against 051ecbc (the commit predates this record, so no PASS record is created unbound); verifiedCommit stays null until the exact-SHA Actions readback exists",
         "affectedCapability": "Control-plane scope authorisation determinism",
-        "regressionCommand": "python -m unittest -q test_control_service"
+        "regressionCommand": "python -m unittest -q test_control_service",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
@@ -5225,11 +5245,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "pre-existing drift surfaced by this round's census, not introduced by it",
         "fixedCommit": "27aa946a666042118e90aae9f3fdeab53a58a5d9",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: 27aa946 carries the catalogue entry, the verifier expectation, the regenerated types and the refreshed freshness snapshot",
         "bindingNote": "bound 2026-10-08 at creation time against 27aa946; verifiedCommit stays null until the exact-SHA Actions readback exists",
         "affectedCapability": "Contract catalogue as the cross-language single source",
-        "regressionCommand": "python scripts/ci/verify_contract_catalog.py"
+        "regressionCommand": "python scripts/ci/verify_contract_catalog.py",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/ci/test_governance_gate.py is tracked"
@@ -5256,11 +5278,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "the host-dependent comparison was introduced by 051ecbc, this round's own attempt to fix ERR-172",
         "fixedCommit": "f9f38d6f92e41783fbca4eea8fc8dd30ae89aff6",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: f9f38d6 carries normalise_path, the three rewired call sites, the twelve platform-free containment rows and the os.path AST guard",
         "bindingNote": "bound 2026-10-08 at creation against f9f38d6; verifiedCommit deliberately unset because the proving CI run for this commit was still in progress",
         "affectedCapability": "Cross-platform determinism of control-plane authorisation",
-        "regressionCommand": "python -m unittest -q test_control_service"
+        "regressionCommand": "python -m unittest -q test_control_service",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
@@ -5287,11 +5311,13 @@
         "introducedCommit": "f9f38d6f92e41783fbca4eea8fc8dd30ae89aff6",
         "introducedCommitNote": "the literal was written earlier (a279f543's suite); it became a defect the moment f9f38d6 started comparing boundaries to the real root",
         "fixedCommit": "b4da0007b036048e607436cc46cb3b4cb0b3e3cb",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: b4da0007 changes the fixture to str(ROOT) and adds the machine-independence guard plus the foreign-root control",
         "bindingNote": "bound 2026-10-08 at creation; verifiedCommit deliberately unset until an exact-SHA run on the disagreeing host is green",
         "affectedCapability": "Cross-machine determinism of the control-plane test surface",
-        "regressionCommand": "python -m unittest -q test_control_service"
+        "regressionCommand": "python -m unittest -q test_control_service",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
@@ -5318,11 +5344,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "the six rows drifted apart over several heads; no single commit introduced the set",
         "fixedCommit": "b4da0007b036048e607436cc46cb3b4cb0b3e3cb",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: b4da0007b036048e607436cc46cb3b4cb0b3e3cb holds the seven corrected rows and the two machine checks that replace prose",
         "bindingNote": "bound 2026-10-08 at creation",
         "affectedCapability": "Truthfulness of the current-surface task register",
-        "regressionCommand": "python -m pytest -q tests/ci/test_no_home_credential_document_is_tracked.py"
+        "regressionCommand": "python -m pytest -q tests/ci/test_no_home_credential_document_is_tracked.py",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/ci/test_no_home_credential_document_is_tracked.py is tracked"
@@ -5380,11 +5408,13 @@
         "introducedCommit": "f9f38d6f92e41783fbca4eea8fc8dd30ae89aff6",
         "introducedCommitNote": "the commit that made containment host-free also made the two remaining host queries in the same decision path observable",
         "fixedCommit": "27c3e2172b9e307f5b5cbbab2d0c44bc821e187f",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: 27c3e217 replaces relative_to with text, drops resolve() at the root, adds the anchored-root refusal and the three-way AST guard",
         "bindingNote": "bound 2026-10-08 at creation; verifiedCommit deliberately unset",
         "affectedCapability": "Host-independent config.diff authorisation",
-        "regressionCommand": "python -m unittest -q test_control_service"
+        "regressionCommand": "python -m unittest -q test_control_service",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
@@ -5411,11 +5441,13 @@
         "introducedCommit": "245cf8bfa1083a77f67c025cfc3cfc2e73b8c1c4",
         "introducedCommitNote": "the archive commit whose message asserted byte-identity",
         "fixedCommit": "242be880fbe23e78d5ae765692d3f9e0c278ddde",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: 242be880 carries the ledger entry that withdraws the byte-identical claim, which is the only commit that can carry it because the correction and the claim ship together",
         "bindingNote": "bound 2026-10-08 from the next commit: a wording retraction cannot bind to its own SHA at authoring time",
         "affectedCapability": "Accuracy of delivery claims",
-        "regressionCommand": "git show --numstat 245cf8bf -- docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json"
+        "regressionCommand": "git show --numstat 245cf8bf -- docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
       "regressionTestVerifiabilityReason": "the command measures a commit diff, not a file operand in the tree"
@@ -5442,11 +5474,13 @@
         "introducedCommit": "27c3e217",
         "introducedCommitNote": "the anchored-root guard this session added, placed after the store open",
         "fixedCommit": "ec2d726227e49b2b5a9b31b70f08c7df222bdd8e",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: ec2d7262 moves the anchored-root check in front of CanonicalStore and asserts the refused fixture is removable",
         "bindingNote": "deliberately unbound at authoring time; verifiedCommit unset until exact-SHA",
         "affectedCapability": "Batch-level isolation of control-plane fixtures",
-        "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_control_service.py"
+        "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_control_service.py",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
@@ -5473,11 +5507,13 @@
         "introducedCommit": "242be880fbe23e78d5ae765692d3f9e0c278ddde",
         "introducedCommitNote": "the head I pushed on a red gate",
         "fixedCommit": "ec2d726227e49b2b5a9b31b70f08c7df222bdd8e",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: ec2d7262 is the earliest commit that makes the recorded receipt check able to go green, because the four findings the red gate exposed are all closed by it and by the record commit that follows",
         "bindingNote": "bound 2026-10-08; the proof is the gate receipt taken at the head carrying this record, read from GATE_EXIT in the file rather than from the wrapper",
         "affectedCapability": "Delivery ordering: commit -> gate at HEAD -> push",
-        "regressionCommand": "grep -qx GATE_EXIT=0 .project-local/runs/<run>/gate-verify-<head>.log"
+        "regressionCommand": "grep -qx GATE_EXIT=0 .project-local/runs/<run>/gate-verify-<head>.log",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_ledger_unbound_triage.py is tracked and is the gate that observed the unbound count move 94 -> 95; the recorded command reads a gate receipt, which is a run artifact rather than a file operand of the regression test"
@@ -5504,11 +5540,13 @@
         "introducedCommit": null,
         "introducedCommitNote": "the advisory design predates this session; ERR-173 already surfaced the collision and registered one half of it",
         "fixedCommit": "999d659aeb924e322e340e5fbbc2bd6442bd69b6",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "commit-contains-fix: 999d659a adds DECLARED_HELPER_SCHEMAS, unlisted_verdict, the workflow-observer-event registration and the falsification test",
         "bindingNote": "bound 2026-10-08 at creation; verifiedCommit unset until exact-SHA CI",
         "affectedCapability": "Completeness of the cross-language contract SSOT",
-        "regressionCommand": "python -m pytest -q tests/ci/test_contract_ssot_helper_boundary.py"
+        "regressionCommand": "python -m pytest -q tests/ci/test_contract_ssot_helper_boundary.py",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/ci/test_contract_ssot_helper_boundary.py is tracked"
@@ -5537,11 +5575,13 @@
         "introducedCommit": "27c3e217",
         "introducedCommitNote": "the containment rewrite that folded the path and then used it for I/O",
         "fixedCommit": "f2c7a702d7a6955d65943fa7f3a7111c2bde95e5",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "",
         "bindingNote": "bound 2026-10-08 at creation; verifiedCommit stays null until the exact-SHA run that carries the fix is green",
         "affectedCapability": "Host-independent config.diff reads as well as decisions",
-        "regressionCommand": "python -m unittest -q test_control_service"
+        "regressionCommand": "python -m unittest -q test_control_service",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -5568,11 +5608,13 @@
         "introducedCommit": "f8ffc138",
         "introducedCommitNote": "the commit that added the census test",
         "fixedCommit": "867f1903811b8708f3e1e6260c6d04ed3a250f45",
-        "verifiedCommit": null,
+        "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "bindingBasis": "",
         "bindingNote": "bound 2026-10-08 at creation; verifiedCommit stays null until the exact-SHA run that carries the fix is green",
         "affectedCapability": "Self-consistency of tracked-tree census tests",
-        "regressionCommand": "python -m unittest -q test_control_service"
+        "regressionCommand": "python -m unittest -q test_control_service",
+        "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
+        "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
