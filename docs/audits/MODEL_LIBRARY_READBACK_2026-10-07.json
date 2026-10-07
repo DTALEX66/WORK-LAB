@@ -1,8 +1,14 @@
 {
   "schemaVersion": "work-lab/model-library-readback/v1",
-  "checkedAt": "2026-10-07T06:39:34Z",
+  "checkedAt": "2026-10-07T08:33:24Z",
   "root": "D:\\All projects\\Model library",
   "hashBasis": "sha256 over the full bytes of each file as it sits on this machine",
+  "bytesBasisLegend": {
+    "file": "the resolved file's own size",
+    "directory": "sum of files under the model's own directory",
+    "blob": "the single ollama blob the model points at; store totals are reported separately as store_dir_bytes"
+  },
+  "modelsSharingOneBlob": {},
   "models": [
     {
       "id": "qwen3.5-4b",
@@ -13,6 +19,7 @@
       "stated_bytes": 2740937888,
       "presence": "VERIFIED_FILE",
       "bytes_observed": 2740937888,
+      "bytesBasis": "file",
       "sha256_recomputed": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
       "prefix_1miB_sha256": "53849c9412c644136636faddc06c25e7fd119a058c6282a0d48e4a81072b66f5",
       "digest_matches": true
@@ -26,6 +33,7 @@
       "stated_bytes": 14252845984,
       "presence": "VERIFIED_FILE",
       "bytes_observed": 14252845984,
+      "bytesBasis": "file",
       "sha256_recomputed": "40fac4050e940397dbf13087afd50f4734a11805bf9d65ef8ddd7483470e6199",
       "prefix_1miB_sha256": "177ae5e70ef0d340fdf2d1d75539cf992d69eecdd8d244e36e33456cdcb07cfa",
       "digest_matches": true
@@ -39,6 +47,7 @@
       "stated_bytes": null,
       "presence": "VERIFIED_FILE",
       "bytes_observed": 639150592,
+      "bytesBasis": "file",
       "sha256_recomputed": "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439",
       "prefix_1miB_sha256": "9220223cd8a60ae48d03e25ee8b495fa82e1d534934a6b5a1d76ebd0f54a4964",
       "digest_matches": true
@@ -52,6 +61,7 @@
       "stated_bytes": null,
       "presence": "VERIFIED_FILE",
       "bytes_observed": 494879360,
+      "bytesBasis": "file",
       "sha256_recomputed": "eae89db7f8d56fcead26125f6e3ddabf6ad1702d9d4c23d3d69a7059c4c4d64d",
       "prefix_1miB_sha256": "2d1867fa8a91ac68a43aa6a2f5dcd856581b1153a1c0b087d8a7148990a7fdfc",
       "digest_matches": true
@@ -65,6 +75,7 @@
       "stated_bytes": 4683072032,
       "presence": "VERIFIED_FILE",
       "bytes_observed": 4683072032,
+      "bytesBasis": "file",
       "sha256_recomputed": "9258bf05b12686d097ff3b6b18d968ab393649780aa2b3cd67fec43d50554392",
       "prefix_1miB_sha256": "5110ba2d3a3022a6f6ef7c6e43a7c02d5a425b05327caa52237a89ab74205fc5",
       "digest_matches": true
@@ -78,6 +89,7 @@
       "stated_bytes": 1617884929,
       "presence": "VERIFIED_FILE",
       "bytes_observed": 1617884929,
+      "bytesBasis": "file",
       "sha256_recomputed": "e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da",
       "prefix_1miB_sha256": "53c4ecea100a6817edfafc5c8abbc5dfc4f845c8f1c6a7f047126deb98991eaf",
       "digest_matches": true
@@ -91,6 +103,7 @@
       "stated_bytes": 239233841,
       "presence": "VERIFIED_FILE",
       "bytes_observed": 239233841,
+      "bytesBasis": "file",
       "sha256_recomputed": "c71f0ce00bec95b07744e116345e33d8cbbe08cef896382cf907bf4b51a2cd51",
       "prefix_1miB_sha256": "e7ede23b3d25750a8f953273887aa39ecf00c9ddc04bb10b9486d7d2194085d3",
       "digest_matches": true
@@ -105,6 +118,7 @@
       "presence": "VERIFIED_DIR",
       "file_count": 12,
       "bytes_observed": 81340658,
+      "bytesBasis": "directory",
       "directory_manifest": [
         {
           "relative_path": "decoder-epoch-99-avg-1.int8.onnx",
@@ -177,7 +191,10 @@
       "stated_bytes": null,
       "presence": "VERIFIED_BLOB_CONTENT_ADDRESS",
       "file_count": 26,
-      "bytes_observed": 29751357111,
+      "store_dir": "ollama",
+      "store_dir_bytes": 29751357111,
+      "bytes_observed": 5225374496,
+      "bytesBasis": "blob",
       "blob_path": "ollama/blobs/sha256-a3de86cd1c132c822487ededd47a324c50491393e6565cd14bafa40d0b8e686f",
       "blob_bytes": 5225374496,
       "sha256_recomputed": "a3de86cd1c132c822487ededd47a324c50491393e6565cd14bafa40d0b8e686f",
@@ -196,7 +213,10 @@
       "stated_bytes": null,
       "presence": "VERIFIED_BLOB_CONTENT_ADDRESS",
       "file_count": 26,
-      "bytes_observed": 29751357111,
+      "store_dir": "ollama",
+      "store_dir_bytes": 29751357111,
+      "bytes_observed": 18556688736,
+      "bytesBasis": "blob",
       "blob_path": "ollama/blobs/sha256-1194192cf2a187eb02722edcc3f77b11d21f537048ce04b67ccf8ba78863006a",
       "blob_bytes": 18556688736,
       "sha256_recomputed": "1194192cf2a187eb02722edcc3f77b11d21f537048ce04b67ccf8ba78863006a",

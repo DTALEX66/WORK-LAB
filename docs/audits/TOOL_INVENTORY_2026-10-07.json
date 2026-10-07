@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T08:26:06Z",
+  "generatedAt": "2026-10-07T08:35:57Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -358,12 +358,12 @@
     },
     {
       "path": "scripts/audit/model_library_readback.py",
-      "sha256": "28e870245d069ab58ff89dc66540fb82cb300ddf3d40330fad9c262b8da7643f",
-      "bytes": 11193,
-      "lines": 218,
+      "sha256": "817dd779f70984c352b7c49a4cb0c3972f57cad33527eda785e0826fc083f6d5",
+      "bytes": 13880,
+      "lines": 261,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 11,
+      "citedByRecords": 12,
       "citedBy": [
         ".project/governance/model-registry.json",
         "docs/audits/MODEL_LIBRARY_READBACK_2026-10-07.md",
@@ -529,8 +529,10 @@
       "lines": 165,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 1,
+      "citedByRecords": 3,
       "citedBy": [
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
