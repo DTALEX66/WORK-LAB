@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Callable, NamedTuple
+from typing import Any, Callable, NamedTuple
 
 ROOT = Path(__file__).resolve().parents[2]
 RETIRED_ORDINARY_TESTS = {
@@ -1449,6 +1449,57 @@ def select_gates_for_changed(changed_paths: list[str]) -> tuple[str, ...]:
     return tuple(order)
 
 
+PROJECT_PROFILE = ROOT / ".project/governance/work-lab.project-profile.yaml"
+
+
+def canonical_impact_plan(changed_paths: list[str]) -> tuple[dict[str, Any] | None, str]:
+    """Ask the ONE canonical impact planner (the one CI consumes) about these paths.
+
+    Two vocabularies exist and are not merged here: the profile names CI *jobs* (workflow, observer,
+    token-monitor, supply-chain-security, integration) while this runner names *local gates*. Merging
+    them is a delivery-structure decision, so the planner is consulted for the two things the local table
+    cannot honestly decide on its own — whether a change is classified at all, and whether it is
+    critical — and for reporting the CI jobs the same change would require.
+
+    Returns (plan, note). A missing or unreadable plan is a NOTE plus None: the caller treats that as
+    "not classified" and runs the full suite. A convenience lookup that fails must never widen scope
+    reduction.
+    """
+    sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+    try:
+        from impact_planner import build_plan, load_profile  # noqa: PLC0415
+    except Exception as error:  # noqa: BLE001 - reported, then the caller escalates
+        return None, f"planner unavailable ({type(error).__name__}: {error})"
+    try:
+        profile = load_profile(PROJECT_PROFILE)
+    except Exception as error:  # noqa: BLE001
+        return None, f"profile unreadable ({type(error).__name__}: {error})"
+    try:
+        plan = build_plan(
+            profile,
+            repository="DTALEX66/WORK-LAB",
+            commit=_head_commit(),
+            tree=_head_tree(),
+            changed_paths=changed_paths,
+            plan_id="local-changed",
+        )
+    except Exception as error:  # noqa: BLE001
+        return None, f"plan rejected ({type(error).__name__}: {error})"
+    return plan, "ok"
+
+
+def _head_commit() -> str:
+    result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
+                            capture_output=True, check=False)
+    return result.stdout.strip() if result.returncode == 0 else "unresolved"
+
+
+def _head_tree() -> str:
+    result = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True,
+                            capture_output=True, check=False)
+    return result.stdout.strip() if result.returncode == 0 else "unresolved"
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Workflow-assistance local quality gate runner.")
     parser.add_argument(
@@ -1481,7 +1532,18 @@ def main(argv: list[str] | None = None) -> int:
     if args.changed:
         changed = [p.strip() for p in args.changed.split(",") if p.strip()]
         selected = select_gates_for_changed(changed)
-        print(f"WLOSS_700 changed={len(changed)} files -> gates={','.join(selected) or 'none'}")
+        # P2-04: the canonical planner is the authority on whether a change is classified at all and
+        # whether it is critical. Anything it cannot answer is treated as unclassified — this wiring can
+        # only ever widen the run, never narrow it below what the local table chose.
+        plan, note = canonical_impact_plan(changed)
+        if plan is None:
+            selected, why = tuple(VERIFY_ORDER), f"planner said nothing ({note})"
+        elif plan["risk"] == "critical" or not plan["required_gates"]:
+            selected, why = tuple(VERIFY_ORDER), f"canonical risk={plan['risk']} required={len(plan['required_gates'])}"
+        else:
+            why = f"canonical risk={plan['risk']} required_jobs={','.join(plan['required_gates'])}"
+        print(f"WLOSS_700 changed={len(changed)} files -> {why}; "
+              f"gates={','.join(selected) or 'none'} executed={len(selected)}")
         if not selected:
             return 0
         return run_gate_sequence(selected)

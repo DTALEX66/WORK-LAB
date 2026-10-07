@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "packages/client-neutral-core/scripts/impact_planner.py"
+LIVE_PROFILE = ROOT / ".project/governance/work-lab.project-profile.yaml"
 
 
 def load_module():
@@ -145,6 +146,113 @@ class ImpactPlannerTests(unittest.TestCase):
             generated_at="2026-08-07T01:00:00Z",
         )
         self.assertEqual(first["plan_digest"], second["plan_digest"])
+
+
+class UnselectedChangeTests(unittest.TestCase):
+    """P2-04 (2026-10-08): a change the mapping does not cover must never yield an empty plan.
+
+    Proven before the fix: a path inside a declared module root whose module had no same-named gate made
+    `required_gates` empty with risk "medium" — a plan that reads like a cheap PASS. A gate-id set the CI
+    aggregate does not know about is the same class of failure from the other side.
+    """
+
+    def profile(self):
+        import copy
+        return copy.deepcopy(PROFILE)
+
+    def test_a_module_without_a_same_named_gate_is_refused_at_load(self) -> None:
+        import tempfile
+        module = load_module()
+        broken = self.profile()
+        broken["modules"]["control-plane"] = {"roots": ["services/control"]}
+        with tempfile.TemporaryDirectory(dir=ROOT / ".project-local" / "runs") as raw:
+            path = Path(raw) / "profile.yaml"
+            import yaml
+            path.write_text(yaml.safe_dump(broken, sort_keys=False), encoding="utf-8")
+            with self.assertRaises(ValueError) as caught:
+                module.load_profile(path)
+            self.assertIn("no same-named gate", str(caught.exception))
+
+    def test_an_unselected_change_escalates_to_every_gate(self) -> None:
+        module = load_module()
+        orphaned = self.profile()
+        # bypass load_profile's check on purpose: this is the shape that used to pass silently
+        orphaned["modules"]["orphan"] = {"roots": ["services/orphan"]}
+        plan = module.build_plan(orphaned, repository="r", commit="c", tree="t",
+                                 changed_paths=["services/orphan/x.py"])
+        self.assertEqual(plan["risk"], "critical")
+        self.assertEqual(sorted(plan["required_gates"]), sorted(orphaned["gates"]))
+
+    def test_a_path_outside_every_root_still_escalates(self) -> None:
+        module = load_module()
+        plan = module.build_plan(self.profile(), repository="r", commit="c", tree="t",
+                                 changed_paths=["elsewhere/x.py"])
+        self.assertEqual(plan["risk"], "critical")
+
+    def test_no_change_requires_nothing(self) -> None:
+        """Negative control: the escalation must be triggered by a change, not by an empty input."""
+        module = load_module()
+        plan = module.build_plan(self.profile(), repository="r", commit="c", tree="t", changed_paths=[])
+        self.assertEqual(plan["required_gates"], [])
+        self.assertEqual(plan["risk"], "low")
+
+    def test_the_canonical_profile_keeps_the_ci_gate_set_exactly(self) -> None:
+        """scripts/ci/aggregate_gate.py compares the plan against its own PLAN_GATES.
+
+        A profile gate that the aggregate does not know rejects every plan, and a gate it knows but the
+        profile lacks makes skipped_gates incomplete — so the two sets are asserted equal here rather than
+        discovered in CI.
+        """
+        module = load_module()
+        profile = module.load_profile(LIVE_PROFILE)
+        aggregate = (ROOT / "scripts/ci/aggregate_gate.py").read_text(encoding="utf-8")
+        declared = aggregate.split("PLAN_GATES = {", 1)[1].split("}", 1)[0]
+        plan_gates = {token.strip().strip('"\'') for token in declared.split(",") if token.strip()}
+        self.assertEqual(set(profile["gates"]), plan_gates)
+
+    def test_the_supporting_surfaces_select_the_workflow_job_instead_of_everything(self) -> None:
+        """The precision P2-04 actually buys, with the transitive dependent named, not hidden.
+
+        `observer` appears in every workflow-facing expectation because the profile declares
+        observer depends_on workflow — a workflow-side change must re-run the read-only projection's own
+        job. That is the planner working, not over-selecting. What used to be forced and no longer is:
+        token-monitor and supply-chain-security.
+        """
+        module = load_module()
+        profile = module.load_profile(LIVE_PROFILE)
+        all_gates = set(profile["gates"])
+        for changed, expected in (
+            ("services/control/control_service.py", {"workflow", "observer"}),
+            ("services/orchestration/sidecar.py", {"workflow", "observer"}),
+            ("integrations/executors/codex/codex_adapter.py", {"workflow", "observer"}),
+            ("packages/contracts/README.md", {"workflow", "integration", "observer"}),
+        ):
+            with self.subTest(changed=changed):
+                plan = module.build_plan(profile, repository="r", commit="c", tree="t",
+                                          changed_paths=[changed])
+                self.assertEqual(set(plan["required_gates"]), expected,
+                                 f"{changed} selected {plan['required_gates']} (risk {plan['risk']})")
+                self.assertNotIn("token-monitor", plan["required_gates"])
+                self.assertNotIn("supply-chain-security", plan["required_gates"])
+                self.assertLess(len(plan["required_gates"]), len(all_gates))
+
+    def test_a_schema_change_stays_in_the_critical_zone(self) -> None:
+        """Precision must not loosen the declared critical surfaces."""
+        module = load_module()
+        profile = module.load_profile(LIVE_PROFILE)
+        plan = module.build_plan(profile, repository="r", commit="c", tree="t",
+                                  changed_paths=["packages/contracts/schemas/workflow/"
+                                                 "control-operation.schema.json"])
+        self.assertEqual(plan["risk"], "critical")
+        self.assertEqual(set(plan["required_gates"]), set(profile["gates"]))
+
+    def test_an_unnamed_surface_still_requires_the_whole_set(self) -> None:
+        module = load_module()
+        profile = module.load_profile(LIVE_PROFILE)
+        plan = module.build_plan(profile, repository="r", commit="c", tree="t",
+                                 changed_paths=["apps/control-surface/index.html"])
+        self.assertEqual(plan["risk"], "critical",
+                         "a surface nobody named must fail safe to every gate")
 
 
 if __name__ == "__main__":

@@ -45,6 +45,15 @@ def load_profile(path: Path) -> dict[str, Any]:
     for key in ("project", "modules", "risk_zones", "gates", "ci"):
         if not isinstance(profile.get(key), dict):
             raise ValueError(f"profile field must be an object: {key}")
+    # A module root without a gate of the same id is a mapping that can never select work: a change
+    # inside it would be "known" to the planner and still require nothing. Refuse the profile instead
+    # of shipping a fail-open classifier (proven on 2026-10-08: required_gates=[] , risk=medium).
+    ungated = sorted(set(profile["modules"]) - set(profile["gates"]))
+    if ungated:
+        raise ValueError(
+            f"profile declares modules with no same-named gate: {ungated}; "
+            "every module root must map to a gate that can be required"
+        )
     return profile
 
 
@@ -67,12 +76,14 @@ def build_plan(
     unknown_paths: list[str] = []
     for path in changed_paths:
         normalized_path = path.replace("\\", "/")
+        path_selected: set[str] = set()
         if _matches(normalized_path, profile.get("risk_zones", {}).get("critical", [])):
             critical = True
         for gate_id, gate in gates.items():
             gate_paths = gate.get("paths", []) if isinstance(gate, dict) else []
             if _matches(normalized_path, gate_paths):
                 direct.add(gate_id)
+                path_selected.add(gate_id)
         matched = False
         for module_id, module in modules.items():
             roots = module.get("roots", []) if isinstance(module, dict) else []
@@ -80,7 +91,11 @@ def build_plan(
                 matched = True
                 if module_id in gates:
                     direct.add(module_id)
-        if not matched:
+                    path_selected.add(module_id)
+        # "Unknown" means the change is not classified by EITHER mechanism. Judging it only by module
+        # roots made a path that a gate explicitly lists look unclassified, which escalated it to every
+        # gate and, worse, described a mapped surface as unmapped.
+        if not matched and not path_selected:
             unknown_paths.append(normalized_path)
 
     reverse: dict[str, set[str]] = {name: set() for name in modules}
@@ -100,6 +115,11 @@ def build_plan(
     # already covered by risk_zones.critical above; only unknown paths add a
     # fail-closed critical here.
     if unknown_paths:
+        critical = True
+    if changed_paths and not direct:
+        # Something changed and the mapping selected no gate at all. Whether the path matched no root
+        # or matched a root whose gate is missing, the answer is the same: this work is not covered, so
+        # escalate to every gate instead of returning an empty plan that reads like a cheap PASS.
         critical = True
     if critical:
         affected.update(gates)
