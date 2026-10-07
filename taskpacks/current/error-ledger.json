@@ -4290,11 +4290,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the bound was introduced by the ERR-142 fix commit earlier the same day, and naming it here would claim an origin that the record's own fix field already covers",
         "fixedCommit": "87dcf6d575a6c91a8436dd8c5880dcc231c9e89f",
-        "verifiedCommit": null,
+        "verifiedCommit": "e06f57e7f2f535f161308ccb0df409e42084c8f2",
         "affectedCapability": "Citation-audit gate; CI-surface reproducibility",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_project_local_citation_audit.py",
         "bindingNote": "bound 2026-10-07 against 87dcf6d: that commit's only source change is the assertion in tests/workflow-assistance/test_project_local_citation_audit.py that this record describes, so the fix and its gate landed together; verifiedCommit stays unclaimed until an exact-SHA CI readback covers a head containing this record",
-        "bindingBasis": "fix-commit-introduction: HEAD is the gate-fix commit when this record is written; the binding gate's own promise check (`git cat-file -e <fix>:<script>`) was run before stamping"
+        "bindingBasis": "fix-commit-introduction: HEAD is the gate-fix commit when this record is written; the binding gate's own promise check (`git cat-file -e <fix>:<script>`) was run before stamping",
+        "verifiedCommitNote": "exact-SHA Actions readback at e06f57e7f2f535f161308ccb0df409e42084c8f2: work-lab-gate success and wlr-060-production-gates success on the same head (both the push run and the PR run), 6 jobs, no non-green job; that head carries both the assertion fix (87dcf6d) and this record"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"

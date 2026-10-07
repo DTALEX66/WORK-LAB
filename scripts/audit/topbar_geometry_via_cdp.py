@@ -1,44 +1,56 @@
 #!/usr/bin/env python
-"""Measure the top row's real geometry against the window edge.
+"""Desktop geometry gate — measure the shipped bundle in a real browser and PASS or FAIL.
 
-Silent by design: headless Chrome on the shipped dist, driven over CDP, so the
-numbers come from the same bundle the release binary embeds without putting a
-window on the desktop. `?shell=tauri` is kept in the URL because that is the
-configuration the owner is looking at.
+This instrument existed as a one-off measurement: it printed numbers, returned None, and nothing in
+CI or in a test ever referenced it. That is the G3 finding in the UI prompt pack — a geometry probe
+that cannot fail is not a gate. It is now a gate with three deliberate properties:
+
+  1. the verdict is a PURE function of the measured geometry, so it is unit-testable without a
+     browser, and the assertions are reviewable as text rather than as a screenshot;
+  2. the browser is DISCOVERED, never assumed (env WL_CHROME, then PATH, then the vendor default
+     install dirs). If none is found the script exits 3 and prints `GEOMETRY_GATE_NOT_RUN
+     BROWSER_NOT_FOUND` — a named category, not a silent zero;
+  3. the project root is resolved from this file, not hardcoded to the author's machine.
+
+Silent by design: headless Chromium over CDP against the built `dist`, so the numbers come from the
+same bundle the release binary embeds, without putting a window on the owner's desktop.
+
+Exit: 0 GEOMETRY_GATE_PASS, 1 GEOMETRY_GATE_FAIL, 2 bad input, 3 GEOMETRY_GATE_NOT_RUN.
 """
 from __future__ import annotations
 
+import argparse
+import base64
 import importlib.util
 import json
 import os
+import re
 import socket
+import shutil
 import subprocess
 import sys
 import time
+import urllib.parse
 from pathlib import Path
 
-ROOT = Path(r"D:\All projects\WORK-LAB")
+LISTEN_RE = re.compile(r"DevTools listening on ws://127\.0\.0\.1:(\d+)")
+
+ROOT = Path(__file__).resolve().parents[2]
 OBS = ROOT / "apps" / "observer"
-HERE = ROOT / ".project-local" / "runs" / "topbar-measure-20261006"
-HERE.mkdir(parents=True, exist_ok=True)
+DIST = OBS / "frontend" / "dist"
+OUT_DIR = ROOT / ".project-local" / "runs" / "geometry-gate"
 
-spec = importlib.util.spec_from_file_location(
-    "u19", OBS / "scripts" / "u19_webview_e2e.py")
-u19 = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(u19)  # type: ignore[attr-defined]
+SELECTORS = [".app", ".topbar", ".search", ".top-actions", ".topbar-brand", ".winctl",
+             ".winctl-btn", ".sidebar", ".main", ".kpi-grid", "body"]
 
-CHROME = str(Path(os.environ.get("PROGRAMFILES", "C:/Program Files"))
-             / "Google/Chrome/Application/chrome.exe")
-
-SELECTORS = [".app", ".topbar", ".search", ".top-actions", ".winctl",
-             ".winctl-btn", ".sidebar", ".main", "body"]
-
+# `top-actions` is the control row a user must be able to reach; a rule that hides it below some
+# width is exactly the phone behaviour this shell no longer ships.
 EXPR = """JSON.stringify((()=>{
   const out = {};
   for (const sel of SELECTORS) {
     const els = [...document.querySelectorAll(sel)];
     if (!els.length) { out[sel] = {absent: true}; continue; }
-    out[sel] = els.slice(0,2).map(el=>{
+    out[sel] = els.slice(0,6).map(el=>{
       const r = el.getBoundingClientRect();
       const cs = getComputedStyle(el);
       return {
@@ -46,82 +58,376 @@ EXPR = """JSON.stringify((()=>{
         top: Math.round(r.top*10)/10, bottom: Math.round(r.bottom*10)/10,
         width: Math.round(r.width*10)/10, height: Math.round(r.height*10)/10,
         gapToViewportRight: Math.round((innerWidth - r.right)*10)/10,
-        gapToViewportLeft: Math.round(r.left*10)/10,
-        gapToViewportTop: Math.round(r.top*10)/10,
-        padding: cs.padding, margin: cs.margin, position: cs.position,
-        overflowX: cs.overflowX
+        display: cs.display,
       };
     });
   }
   out.__viewport = innerWidth + 'x' + innerHeight;
+  out.__innerWidth = innerWidth;
   out.__docScrollWidth = document.documentElement.scrollWidth;
   out.__elementsOverlappingRightEdge = [...document.querySelectorAll('body *')]
       .filter(e=>{const r=e.getBoundingClientRect();
         return r.width>0 && r.right > innerWidth - 2 && r.left < innerWidth - 2;})
       .slice(0,12).map(e=>e.tagName+'.'+(typeof e.className==='string'?e.className:'')
         +' right='+Math.round(e.getBoundingClientRect().right));
-  out.__elementsAtTopEdge = [...document.querySelectorAll('body *')]
-      .filter(e=>{const r=e.getBoundingClientRect();
-        return r.width>0 && r.height>0 && r.top < 3;})
-      .slice(0,12).map(e=>e.tagName+'.'+(typeof e.className==='string'?e.className:'')
-        +' top='+Math.round(r0(e)));
   return out;
 })())"""
 
+TOPBAR_MAX_HEIGHT = 140.0
+RAIL_MIN_WIDTH = 200.0
+RESIDUE: list[str] = []
+ANNOUNCED_MISMATCH: list[str] = []
+
+
+def load_u19():
+    """Reuse the CDP client the release line already trusts, rather than a second websocket stack."""
+    path = OBS / "scripts" / "u19_webview_e2e.py"
+    spec = importlib.util.spec_from_file_location("u19", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)  # type: ignore[attr-defined]
+    return module
+
+
+def find_browser() -> str | None:
+    env = os.environ.get("WL_CHROME") or os.environ.get("CHROME_PATH")
+    candidates: list[str | None] = [env] if env else []
+    candidates += [shutil.which(name) for name in
+                   ("chrome", "chrome.exe", "msedge", "msedge.exe", "chromium", "chromium-browser")]
+    for base in (os.environ.get("PROGRAMFILES"), os.environ.get("PROGRAMFILES(X86)")):
+        if not base:
+            continue
+        candidates += [str(Path(base) / "Google/Chrome/Application/chrome.exe"),
+                       str(Path(base) / "Microsoft/Edge/Application/msedge.exe")]
+    for cand in candidates:
+        if cand and Path(cand).is_file():
+            return cand
+    return None
+
+
+def _send(ws: socket.socket, payload: bytes) -> None:
+    """Client frames must be masked (RFC 6455); no padding, so every length fits 8 or 16 bytes."""
+    header = bytearray([0x81])
+    n = len(payload)
+    if n < 126:
+        header.append(0x80 | n)
+    else:
+        header.append(0x80 | 126)
+        header += n.to_bytes(2, "big")
+    mask = bytes([0x37, 0x7A, 0x51, 0x29])
+    header += mask
+    ws.sendall(bytes(header) + bytes(b ^ mask[i % 4] for i, b in enumerate(payload)))
+
+
+def _recv_text(ws: socket.socket, wanted_id: int, timeout: float) -> str:
+    """Read frames until the response for `wanted_id` arrives, skipping event frames."""
+    deadline = time.time() + timeout
+    buffer = bytearray()
+
+    def one_frame() -> bytes | None:
+        nonlocal buffer
+        while len(buffer) < 2:
+            chunk = ws.recv(4096)
+            if not chunk:
+                return None
+            buffer += chunk
+        b1, b2 = buffer[0], buffer[1]
+        length = b2 & 0x7F
+        offset = 2
+        if length == 126:
+            while len(buffer) < offset + 2:
+                buffer += ws.recv(4096)
+            length = int.from_bytes(buffer[offset:offset + 2], "big")
+            offset += 2
+        elif length == 127:
+            while len(buffer) < offset + 8:
+                buffer += ws.recv(4096)
+            length = int.from_bytes(buffer[offset:offset + 8], "big")
+            offset += 8
+        while len(buffer) < offset + length:
+            buffer += ws.recv(4096)
+        payload = bytes(buffer[offset:offset + length])
+        del buffer[:offset + length]
+        return payload if (b1 & 0x0F) in (0x1, 0x2) else b""
+
+    while time.time() < deadline:
+        frame = one_frame()
+        if frame is None:
+            break
+        if not frame:
+            continue
+        try:
+            message = json.loads(frame.decode("utf-8", "replace"))
+        except json.JSONDecodeError:
+            continue
+        if message.get("id") == wanted_id:
+            if "error" in message:
+                raise RuntimeError(f"CDP error: {message['error']}")
+            return json.dumps(message.get("result", {}))
+    raise RuntimeError(f"no CDP response for id={wanted_id} before {timeout}s")
+
+
+class ChromeCDP:
+    """Minimal CDP-over-WebSocket client for the headless browser this gate drives.
+
+    u19's client targets WebView2 through a proxy and is left alone (changing it would put the
+    release line's desktop evidence at risk for a quirk that belongs to Chrome). Chrome 154 stalls
+    any DevTools HTTP request without a User-Agent, or with a port in Host — measured side by side
+    against one instance — so discovery uses `cdp_list`, and the websocket handshake below sends the
+    headers a browser expects.
+    """
+
+    def __init__(self, ws_url: str, timeout: float = 60.0) -> None:
+        parts = urllib.parse.urlsplit(ws_url)
+        host, _, port = parts.netloc.partition(":")
+        self.sock = socket.create_connection((host, int(port or 9222)), timeout=10)
+        key = base64.b64encode(os.urandom(16)).decode()
+        path = parts.path + ("?" + parts.query if parts.query else "")
+        request = (f"GET {path} HTTP/1.1\r\nHost: {parts.netloc}\r\nUpgrade: websocket\r\n"
+                   f"Connection: Upgrade\r\nSec-WebSocket-Key: {key}\r\n"
+                   f"Sec-WebSocket-Version: 13\r\nUser-Agent: worklab-geometry-gate\r\n\r\n")
+        self.sock.sendall(request.encode("latin-1"))
+        handshake = b""
+        while b"\r\n\r\n" not in handshake:
+            piece = self.sock.recv(4096)
+            if not piece:
+                raise RuntimeError("websocket handshake closed")
+            handshake += piece
+        status = handshake.split(b"\r\n", 1)[0].decode("latin-1", "replace")
+        if "101" not in status:
+            raise RuntimeError(f"websocket handshake failed: {status}")
+        self._id = 0
+        self.timeout = timeout
+
+    def send(self, method: str, params: dict | None = None) -> dict:
+        self._id += 1
+        _send(self.sock, json.dumps({"id": self._id, "method": method,
+                                     "params": params or {}}).encode("utf-8"))
+        return json.loads(_recv_text(self.sock, self._id, self.timeout)).get("result", {})
+
+    def evaluate(self, expression: str) -> str:
+        result = self.send("Runtime.evaluate",
+                           {"expression": expression, "returnByValue": True, "awaitPromise": True})
+        if result.get("exceptionDetails"):
+            raise RuntimeError(f"evaluate threw: {json.dumps(result['exceptionDetails'])[:400]}")
+        return result.get("result", {}).get("value")
+
+    def close(self) -> None:
+        try:
+            self.sock.close()
+        except OSError:
+            pass
+
+
+def _first(measured: dict, selector: str) -> dict | None:
+    value = measured.get(selector)
+    if isinstance(value, list) and value:
+        return value[0]
+    return None
+
+
+def verdict(measured: dict, view: str) -> dict:
+    """Pure: no browser, no filesystem. Every check is one line of the acceptance contract."""
+    width = measured.get("__innerWidth") or 0
+    checks: list[dict] = []
+
+    def add(name: str, ok: bool, detail: str) -> None:
+        checks.append({"check": name, "pass": bool(ok), "detail": detail})
+
+    scroll = measured.get("__docScrollWidth") or 0
+    add("no_horizontal_overflow", scroll <= width + 1, f"scrollWidth={scroll} innerWidth={width}")
+
+    topbar = _first(measured, ".topbar")
+    add("topbar_measured", topbar is not None, "no .topbar element")
+    if topbar:
+        add("topbar_not_stacked", topbar["height"] <= TOPBAR_MAX_HEIGHT,
+            f"height={topbar['height']} limit={TOPBAR_MAX_HEIGHT}")
+
+    brand = _first(measured, ".topbar-brand")
+    add("brand_mark_present", bool(brand) and brand["width"] > 0,
+        f"brand={brand and brand['width']}")
+
+    actions = _first(measured, ".top-actions")
+    add("actions_visible", bool(actions) and actions["display"] != "none",
+        f"display={actions and actions['display']}")
+
+    clipped = [e for e in (measured.get(".winctl-btn") or []) if isinstance(e, dict)
+               and e.get("gapToViewportRight", 0) < -1]
+    add("window_controls_reachable", bool(measured.get(".winctl-btn")) and not clipped,
+        f"clipped={json.dumps(clipped, ensure_ascii=False)[:200]}")
+
+    clipped_actions = [e for e in (measured.get(".top-actions") or []) if isinstance(e, dict)
+                       and e.get("gapToViewportRight", 0) < -1]
+    add("action_row_inside_viewport", not clipped_actions,
+        f"gap={measured.get('.top-actions') and measured['.top-actions'][0].get('gapToViewportRight')}")
+
+    rail = _first(measured, ".sidebar")
+    if view == "full":
+        # The desktop-only contract: the rail is the only navigation surface, so it must exist
+        # at every width the main window can take — including a 125%-scaled narrow window.
+        add("rail_always_present", bool(rail) and rail["width"] >= RAIL_MIN_WIDTH,
+            f"rail={rail and rail['width']} min={RAIL_MIN_WIDTH}")
+        add("rail_at_left_edge", bool(rail) and rail["left"] <= 1, f"left={rail and rail['left']}")
+    else:
+        add("compact_has_no_rail", rail is None, f"rail={rail}")
+
+    return {"view": view, "viewport": measured.get("__viewport"),
+            "passed": all(c["pass"] for c in checks), "checks": checks,
+            "overlappingRightEdge": measured.get("__elementsOverlappingRightEdge") or []}
+
+
+def cdp_list(port: int, path: str = "/json/list") -> list[dict]:
+    """Chrome 154's DevTools HTTP endpoint stalls a request that carries no User-Agent, or that puts
+    a port in Host: the socket accepts and never answers. Measured side by side against one running
+    instance — u19's raw GET timed out while the same bytes plus `User-Agent`/`Accept` and a portless
+    Host returned HTTP/1.1 200 at once. u19 keeps its own shape because WebView2 is served by it;
+    the browser this gate drives is Chrome, so the gate speaks Chrome."""
+    s = socket.create_connection(("127.0.0.1", port), timeout=2)
+    try:
+        s.sendall(f"GET {path} HTTP/1.1\r\nHost: 127.0.0.1\r\nUser-Agent: worklab-geometry-gate\r\n"
+                  f"Accept: application/json\r\nConnection: close\r\n\r\n".encode("latin-1"))
+        chunks = []
+        while True:
+            piece = s.recv(65536)
+            if not piece:
+                break
+            chunks.append(piece)
+    finally:
+        s.close()
+    raw = b"".join(chunks)
+    head, sep, body = raw.partition(b"\r\n\r\n")
+    if not sep or not head.split(b"\r\n", 1)[0].decode("latin-1", "replace").endswith("200"):
+        raise RuntimeError(f"CDP {path}: bad response {head[:80]!r}")
+    return json.loads(body.decode("utf-8", "replace"))
+
+
+def discover_page_ws(port: int, tries: int = 20) -> str:
+    last: Exception | None = None
+    seen: list[str] = []
+    for _ in range(tries):
+        try:
+            targets = cdp_list(port)
+            seen = [f"{t.get('type')}:{(t.get('url') or '')[:40]}" for t in targets]
+            for target in targets:
+                if target.get("type") == "page" and target.get("webSocketDebuggerUrl"):
+                    return target["webSocketDebuggerUrl"]
+        except Exception as exc:  # noqa: BLE001 — retried, but the last reason is always reported
+            last = exc
+        time.sleep(0.5)
+    # A refusal that hides why is the failure mode this gate exists to prevent.
+    raise RuntimeError(f"no CDP page target on 127.0.0.1:{port}; last_error={last!r}; "
+                       f"targets_seen={seen[:6]}")
+
+
+def measure(root: Path, view: str, browser: str, u19, shot: Path | None) -> dict:
+    port = u19.pick_free_port()
+    srv = subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"],
+                           cwd=str(root / "apps/observer/frontend/dist"),
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    udf = OUT_DIR / f"udf-{int(time.time())}"
+    log_path = OUT_DIR / f"chrome-{int(time.time())}.log"
+    url = f"http://127.0.0.1:{port}/index.html?view={view}&mode=UNKNOWN&theme=dark&shell=tauri"
+    requested_cdp = u19.pick_free_port()
+    # Request a specific port and then believe what Chrome announces. `--remote-debugging-port=0`
+    # announces a websocket port but serves no /json HTTP endpoint there, so discovery times out;
+    # a requested port can also be re-bound by Chrome if the reservation races, and then the
+    # requested number is the wrong one to query. The log line is the only authority.
+    with log_path.open("wb") as log:
+        proc = subprocess.Popen(
+            [browser, "--headless=new", "--disable-gpu", "--no-sandbox",
+             # Without these the profile's first-run UI wins and no page target appears in time.
+             "--no-first-run", "--no-default-browser-check", "--disable-extensions",
+             f"--user-data-dir={udf}", "--window-size=1280,820",
+             f"--remote-debugging-port={requested_cdp}", "--remote-allow-origins=*", url],
+            stdout=log, stderr=subprocess.STDOUT)
+        cdp_port = None
+        deadline = time.time() + 25
+        while time.time() < deadline and cdp_port is None:
+            time.sleep(0.5)
+            match = LISTEN_RE.search(log_path.read_text(encoding="utf-8", errors="replace"))
+            if match:
+                cdp_port = int(match.group(1))
+            if proc.poll() is not None:
+                raise RuntimeError(f"chrome exited rc={proc.returncode}: "
+                                   f"{log_path.read_text(encoding='utf-8', errors='replace')[:400]}")
+        if cdp_port is None:
+            proc.kill()
+            srv.kill()
+            raise RuntimeError("no `DevTools listening on` line in the chrome log")
+        if cdp_port != requested_cdp:
+            ANNOUNCED_MISMATCH.append(f"requested {requested_cdp}, announced {cdp_port}")
+        time.sleep(2.0)  # the page target appears once the document has loaded
+        try:
+            cdp = ChromeCDP(discover_page_ws(cdp_port, tries=20))
+            try:
+                cdp.send("Page.enable")
+                time.sleep(1.0)
+                raw = cdp.evaluate(EXPR.replace("SELECTORS", json.dumps(SELECTORS)))
+                if shot is not None:
+                    data = cdp.send("Page.captureScreenshot", {"format": "png"}).get("data", "")
+                    shot.write_bytes(base64.b64decode(data))
+                return json.loads(raw)
+            finally:
+                cdp.close()
+        finally:
+            proc.kill()
+            srv.kill()
+            try:
+                shutil.rmtree(udf)
+            except OSError as exc:
+                # A profile dir the browser has not released yet is derived scratch, not evidence.
+                # It is reported rather than swallowed, because ERR-140 exists for exactly that habit.
+                RESIDUE.append(f"{udf} {exc!r}")
+
 
 def main() -> int:
-    port = u19.pick_free_port()
-    srv = subprocess.Popen([sys.executable, "-m", "http.server", str(port),
-                            "--bind", "127.0.0.1"],
-                           cwd=str(OBS / "frontend" / "dist"),
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    cdp_port = u19.pick_free_port()
-    udd = HERE / f"chrome-udf-{int(time.time())}"
-    expr = EXPR.replace("SELECTORS", json.dumps(SELECTORS)).replace(
-        "Math.round(r0(e))", "Math.round(e.getBoundingClientRect().top)")
-    url = (f"http://127.0.0.1:{port}/index.html?view=full&mode=UNKNOWN"
-           "&theme=dark&shell=tauri")
-    proc = subprocess.Popen(
-        [CHROME, "--headless=new", "--disable-gpu", "--no-sandbox",
-         f"--user-data-dir={udd}", "--window-size=1280,820",
-         f"--remote-debugging-port={cdp_port}", "--remote-allow-origins=*",
-         url],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    report: dict = {"url": url}
-    time.sleep(2.0)  # let the static server bind before Chrome asks for it
-    try:
-        time.sleep(3.0)  # let Chrome come up and finish loading
-        ws = u19.discover_cdp_ws(cdp_port, tries=40)
-        report["ws"] = ws
-        cdp = u19.CDP(ws)
-        cdp._send_cmd("Page.enable")
-        time.sleep(1.0)
-        report["measured"] = json.loads(cdp.evaluate(expr))
-        png = HERE / "topbar.png"
-        import base64
-        png.write_bytes(base64.b64decode(
-            cdp._send_cmd("Page.captureScreenshot", {"format": "png"}).get("data", "")))
-        report["screenshot"] = str(png)
-    except Exception as exc:  # noqa: BLE001
-        report["error"] = repr(exc)
-    finally:
-        proc.kill()
-        srv.kill()
-    (HERE / "measure.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-    m = report.get("measured", {})
-    print("viewport:", m.get("__viewport"), "scrollWidth:", m.get("__docScrollWidth"))
-    for sel in SELECTORS:
-        v = m.get(sel)
-        if isinstance(v, list):
-            for e in v:
-                print(f"{sel:<12} top={e.get('top')} left={e.get('left')} "
-                      f"right-gap={e.get('gapToViewportRight')} "
-                      f"w={e.get('width')} h={e.get('height')} pad={e.get('padding')}")
-        else:
-            print(f"{sel:<12} {v}")
-    print("at right edge:", json.dumps(m.get("__elementsOverlappingRightEdge"),
-                                       ensure_ascii=False)[:600])
-    return 0
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--root", default=str(ROOT))
+    ap.add_argument("--view", choices=("full", "compact"), action="append")
+    ap.add_argument("--json-out", default=None)
+    ap.add_argument("--screenshot", action="store_true")
+    args = ap.parse_args()
+
+    root = Path(args.root).resolve()
+    if not (root / "apps/observer/frontend/dist/index.html").is_file():
+        print(f"GEOMETRY_GATE_NOT_RUN DIST_ABSENT {root/'apps/observer/frontend/dist'}")
+        return 3
+    browser = find_browser()
+    if not browser:
+        print("GEOMETRY_GATE_NOT_RUN BROWSER_NOT_FOUND "
+              "set WL_CHROME to a Chrome/Edge binary; a named category is not a pass")
+        return 3
+
+    views = args.view or ["full", "compact"]
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    u19 = load_u19()
+    reports = []
+    for view in views:
+        shot = OUT_DIR / f"topbar-{view}.png" if args.screenshot else None
+        try:
+            measured = measure(root, view, browser, u19, shot)
+        except Exception as exc:  # noqa: BLE001
+            print(f"GEOMETRY_GATE_NOT_RUN MEASURE_FAILED {view} {exc!r}")
+            return 3
+        reports.append({"view": view, "verdict": verdict(measured, view),
+                        "measured": measured, "browser": browser})
+
+    out = Path(args.json_out) if args.json_out else (
+        OUT_DIR / f"geometry_{int(time.time())}.json")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(reports, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    ok = all(r["verdict"]["passed"] for r in reports)
+    for r in reports:
+        v = r["verdict"]
+        for c in v["checks"]:
+            print(f"{v['view']:<8} {c['check']:<28} {'PASS' if c['pass'] else 'FAIL'} {c['detail']}")
+        print(f"{v['view']:<8} viewport={v['viewport']}")
+    print(("GEOMETRY_GATE_PASS " if ok else "GEOMETRY_GATE_FAIL ") + str(out))
+    if ANNOUNCED_MISMATCH:
+        print("GEOMETRY_GATE_PORT_MISMATCH " + json.dumps(ANNOUNCED_MISMATCH))
+    if RESIDUE:
+        print("GEOMETRY_GATE_RESIDUE " + json.dumps(RESIDUE, ensure_ascii=False))
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":
