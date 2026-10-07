@@ -4322,11 +4322,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the print-only instrument and the claim that it counted as coverage came from the same 2026-10-06 round; naming one commit as the origin of a missing contract would be attribution rather than evidence",
         "fixedCommit": "f07ea67ec14dc0ae147d69df9989ba8d7593cd83",
-        "verifiedCommit": null,
+        "verifiedCommit": "926d0e36c142eab693ec472759a2539f383b6cd5",
         "affectedCapability": "Desktop geometry evidence; CI-surface reproducibility",
         "regressionCommand": "python -m pytest tests/ci/test_topbar_geometry_gate.py",
         "bindingNote": "bound 2026-10-07 against f07ea67: that commit carries both the gate (scripts/audit/topbar_geometry_via_cdp.py) and its test (tests/ci/test_topbar_geometry_gate.py); the binding gate's promise check (`git cat-file -e <fix>:<script>`) was run before stamping, the bulk guard counted the records that commit adds to the ledger (0), and its subject is quoted. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
-        "bindingBasis": "fix-and-gate-in-one-commit: f07ea67 (`feat(gates): the CDP geometry probe becomes a verdict, and E...`) is the commit whose source change is the instrument this record describes; ERR-145 itself is written in the following commit, so ledger-entry-introduction is explicitly NOT claimed as the basis"
+        "bindingBasis": "fix-and-gate-in-one-commit: f07ea67 (`feat(gates): the CDP geometry probe becomes a verdict, and E...`) is the commit whose source change is the instrument this record describes; ERR-145 itself is written in the following commit, so ledger-entry-introduction is explicitly NOT claimed as the basis",
+        "verifiedCommitNote": "exact-SHA Actions readback at 926d0e36c142eab693ec472759a2539f383b6cd5: work-lab-gate success with 7 jobs (gate-plan, supply-chain-security, token-monitor, workflow-assistance, integration, observer, aggregate) and no non-green job, plus wlr-060-production-gates success on the same head. The observer job is the one that builds the desktop crate and runs the WebView E2E readback, so this head also covers the shell that ERR-145's sibling round changed; the geometry gate itself still has no live readback (see remaining_boundary)"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
