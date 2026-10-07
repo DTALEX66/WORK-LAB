@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 144,
+    "total": 145,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 49,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 3,
       "path_boundary": 7,
-      "ci_tooling": 2,
+      "ci_tooling": 3,
       "sql_schema": 1,
       "regression_contract": 7
     },
@@ -4360,6 +4360,37 @@
         "bindingNote": "bound 2026-10-07 against 91c2c8a: that commit removes the required step and carries both HTTP fixes plus the gate's test (tests/ci/test_topbar_geometry_gate.py); the promise check ran before stamping and the bulk guard counted the ledger rows it adds (0). verifiedCommit stays null until an exact-SHA readback covers a head containing this record",
         "bindingBasis": "fix-and-revert-in-one-commit: the fix is the removal of the wiring that the record describes, so the same commit is both the change and its evidence",
         "verifiedCommitNote": "exact-SHA Actions readback at 904806202ae93e772b4e0a24d47c7aebb8c55491: work-lab-gate success, 7 jobs (gate-plan, supply-chain-security, token-monitor, workflow-assistance, integration, observer, aggregate) with no non-green job, plus wlr-060-production-gates success on the same head. The observer job built the desktop crate and passed the WebView E2E readback after the geometry step was removed, which is the state this record argues for: green restored by taking the refusing step out, not by softening its verdict."
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
+    },
+    {
+      "error_id": "ERR-147",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/audit/topbar_geometry_via_cdp.py, tests/ci/test_topbar_geometry_gate.py, .github/workflows/work-lab-gate.yml, taskpacks/current/OPEN-TASK-REGISTER.md",
+      "command": "python scripts/audit/topbar_geometry_via_cdp.py --root . --view full",
+      "exit_code": 1,
+      "observed_error": "ERR-146 left the instrument refusing on two different Windows hosts with `no CDP page target … targets_seen=[]`, and I had written that up as a boundary rather than a bug. Reading the refusal instead produced three separate defects, none of them the browser: the status check inherited from the project's CDP helper tested the whole status line against endswith(\"200\"), which rejects a genuine HTTP/1.1 200 OK; the body was drained until the socket closed instead of for Content-Length bytes, so a multi-kilobyte /json/list never parsed (a small /json/version fits one recv, which is why the same helper looked alive); and Chrome builds webSocketDebuggerUrl from the request's Host header, so the portless Host its HTTP endpoint demands made it echo a portless URL whose connect is refused — the last_error finally printed as `last_target=ws://127.0.0.1/devtools/page/…` with no port in it.",
+      "root_cause": "A client that had only ever worked against WebView2 was reused against Chrome, and each of its three shortcuts (status suffix, read-to-EOF, trust-the-echoed-URL) is invisible while responses are small, same-origin and served by a browser that fills in the port. Treating the refusal as an environment limit instead of as evidence about my own code kept it alive for a whole round.",
+      "fix": "`cdp_list` parses the status line as tokens, reads exactly Content-Length bytes and raises on a truncated body; `discover_page_ws` rebuilds `ws://127.0.0.1:<port><path>` from the port it was given and re-discovers before each attempt; `evaluate` reports the payload it got instead of letting json.loads(None) be the message. The first PASS after that was measured at desktop width for both surfaces, so each window is now driven at its declared shape (1280x820 and 440x780), with a per-view top-bar bound the panel can actually meet. Result: GEOMETRY_GATE_PASS with 9/9 checks on each surface — rail 214.5px at left 0, topbar 129px, scrollWidth 1262 == innerWidth 1262, no clipped control, brand 91px; compact: no rail, topbar 111px, brand 22px, scrollWidth 504 == innerWidth 504. The required CI step is restored on the strength of that measurement.",
+      "regression_test": "tests/ci/test_topbar_geometry_gate.py::InstrumentTests::test_the_page_session_url_carries_the_port_that_was_asked_for",
+      "evidence_level": "local-full",
+      "repeat_prevention": "When an instrument refuses identically on two machines, stop calling it an environment limit and read the last_error it prints: make the refusal carry the payload, not just the verdict. Never rebuild a client on top of one that has only ever served a different browser engine; and never accept a PASS whose measurement shape does not match the surface it claims to test — print the viewport you actually drove.",
+      "remaining_boundary": "The panel measures 504 CSS px wide although the window is declared 440, because Chrome enforces a minimum window width in headless; the compact checks therefore run at 504x628, a slightly wider panel than the shipped one, and that is a real (small) difference, not a rounding. The residue line the gate prints (a Chrome profile directory it cannot delete while the process settles) is reported rather than swallowed; deletion is retried next run. Human目测 of a live Tauri window is still skipped by the owner's own instruction, and remains the one acceptance item no instrument here can replace.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "left null: the shortcuts came from the CDP helper written for WebView2 in an earlier round; the commit that turned it into a Chrome client is quoted in bindingBasis, and naming a single origin for all three bugs would be attribution rather than evidence",
+        "fixedCommit": "1b4224abd75b77db51d16ad92edb12928cbb91cf",
+        "verifiedCommit": null,
+        "affectedCapability": "Desktop geometry evidence; CI step surface",
+        "regressionCommand": "python -m pytest tests/ci/test_topbar_geometry_gate.py",
+        "bindingNote": "bound 2026-10-07 against 1b4224a: that commit carries the instrument and its 16 unit checks, restores the required CI step, and re-measures the tool inventory plus the current-state snapshot in the same change; the promise check ran before stamping",
+        "bindingBasis": "fix-and-gate-in-one-commit: HEAD `fix(gates): the geometry gate can now drive Chro…` is the commit whose source change is the client this record describes"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
