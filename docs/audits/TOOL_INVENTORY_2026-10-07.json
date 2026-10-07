@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T05:15:45Z",
+  "generatedAt": "2026-10-07T05:29:01Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 42,
-    "withLedgerPromise": 15,
-    "referencedSomewhere": 42,
+    "trackedTools": 43,
+    "withLedgerPromise": 16,
+    "referencedSomewhere": 43,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -201,6 +201,22 @@
       "citedBy": [
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/in_boundary_residue_sweep.py",
+      "sha256": "92d79ce509cc2b841749bd9530b90a28700fbaa5f728f77df12625d1222a1482",
+      "bytes": 12662,
+      "lines": 262,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 5,
+      "citedBy": [
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
+        "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json",
+        "tests/workflow-assistance/test_in_boundary_residue_sweep.py"
       ]
     },
     {

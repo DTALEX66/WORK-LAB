@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T05:15:45Z",
+  "generatedAt": "2026-10-07T05:29:01Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2047,
-    "distinctProjectLocalTokens": 387,
+    "trackedFilesScanned": 2049,
+    "distinctProjectLocalTokens": 389,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 387,
-    "citationsToAbsentTokens": 1038
+    "tokensAbsent": 389,
+    "citationsToAbsentTokens": 1044
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,7 +21,7 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 193,
+      "citations": 194,
       "distinctPaths": 77
     },
     "machine_field_pointing_at_absent_path": {
@@ -29,15 +29,15 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 517,
-      "distinctPaths": 306
+      "citations": 520,
+      "distinctPaths": 309
     },
     "machine_local_runtime_pointer": {
       "citations": 133,
       "distinctPaths": 57
     },
     "negative_assertion_or_removal_record": {
-      "citations": 103,
+      "citations": 105,
       "distinctPaths": 40
     },
     "path_pattern_or_truncated_token": {
@@ -270,6 +270,12 @@
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
         "line": 196,
         "text": "- durable verification evidence: `.project-local/artifacts/` or `.project-local/evidence/`"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "scripts/audit/in_boundary_residue_sweep.py",
+        "line": 11,
+        "text": "sha256) under `.project-local/artifacts/`, so the action is auditable after the fact."
       },
       {
         "path": ".project-local/artifacts",
@@ -1578,6 +1584,18 @@
         "text": "- R4：.project-local/artifacts/r4/R4-COMPLETE.md"
       },
       {
+        "path": ".project-local/artifacts/residue-cleanup",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4436,
+        "text": "\"entrypoint\": \"scripts/audit/in_boundary_residue_sweep.py, tests/workflow-assistance/test_in_boundary_residue_sweep.py, .project/governance/project-data-boundary.json, .project-local/artifacts/residue"
+      },
+      {
+        "path": ".project-local/artifacts/residue-cleanup/residue_20261007T132700.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4441,
+        "text": "\"fix\": \"`scripts/audit/in_boundary_residue_sweep.py` enumerates only directories matching a DECLARED residue pattern, and each pattern must name the command that regenerates it. Recoverability is prov"
+      },
+      {
         "path": ".project-local/artifacts/scan4d.json",
         "file": "reports/WL3-DELIVERY-20260925.md",
         "line": 103,
@@ -1594,6 +1612,12 @@
         "file": "docs/history/archive/workflow-convergence-20261005.md",
         "line": 35,
         "text": "- 同步、合同、清单定向测试：32 passed，含 Windows junction 路径安全用例。policy projection/quality gate 定向测试：31 passed，含新 runtime 环境负向控制。最终合并定向检查为 63 passed / 0 skipped；机器回执为 `.project-local/artifacts/skill-convergence-202"
+      },
+      {
+        "path": ".project-local/artifacts/spill-ledger.jsonl",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4436,
+        "text": "\"entrypoint\": \"scripts/audit/in_boundary_residue_sweep.py, tests/workflow-assistance/test_in_boundary_residue_sweep.py, .project/governance/project-data-boundary.json, .project-local/artifacts/residue"
       },
       {
         "path": ".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917",
@@ -5603,9 +5627,21 @@
       },
       {
         "path": ".project-local/runs",
+        "file": "scripts/audit/in_boundary_residue_sweep.py",
+        "line": 3,
+        "text": "`.project-local/runs` is the declared git-ignored runtime root, so everything under it is already"
+      },
+      {
+        "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
         "line": 2972,
         "text": "\"observed_error\": \"Two open UI defects, 'the window-control cluster never renders' (P0-A) and 'the fourth KPI card is clipped at the right edge' (P0-B), were both readings of the instrument rather tha"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4439,
+        "text": "\"observed_error\": \"The declared git-ignored runtime root `.project-local/runs` measured 3,236,021,813 B across its top-level directories, including 38 leftover `auth-ref-*` authority fixtures (36 MB) "
       },
       {
         "path": ".project-local/runs",
@@ -6319,7 +6355,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 179
+    "presentOnThisMachine": 181
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
