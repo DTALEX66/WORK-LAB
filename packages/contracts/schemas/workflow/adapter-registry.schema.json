@@ -159,6 +159,45 @@
                     "type": "string",
                     "minLength": 1
                   },
+                  "authority_note": {
+                    "description": "2026-10-07: why the named source is the authority rather than a stand-in for it - required when the source is not the one a human would assume (hermes reads its install stamp because its own resolver lists that file first).",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "superseded_observation": {
+                    "description": "2026-10-07: the previous reading, kept verbatim when a source change replaces it. Deleting a superseded observation would destroy the only evidence of how long the old claim stood, which is what makes staleness auditable.",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "observed_at",
+                      "verified_version",
+                      "method"
+                    ],
+                    "properties": {
+                      "observed_at": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "verified_version": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "method": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "commit": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "note": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
                   "note": {
                     "type": "string",
                     "minLength": 1
