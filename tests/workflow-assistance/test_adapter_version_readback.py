@@ -34,6 +34,8 @@ class AdapterVersionReadbackGate(unittest.TestCase):
         row = self.receipt_row(adapter)
         if row.get("fileVersion"):
             return row["fileVersion"]
+        if row.get("displayVersion"):
+            return row["displayVersion"]
         binary = row.get("binary") or {}
         return binary.get("fileVersion")
 
@@ -79,18 +81,58 @@ class AdapterVersionReadbackGate(unittest.TestCase):
             self.assertEqual("UNVERIFIED", entry["provenance"]["version"], adapter)
             self.assertNotIn("version_readback", entry["provenance"], adapter)
 
-    def test_hermes_and_deepseek_harness_keep_their_older_dated_readbacks(self) -> None:
-        # Both were observed before this receipt existed; aging them out is honest, deleting the record is not.
-        for adapter in ("hermes", "deepseek-harness"):
-            readback = self.entries[adapter]["provenance"]["version_readback"]
-            self.assertRegex(readback["observed_at"], r"^\d{4}-\d{2}-\d{2}$", adapter)
-            self.assertLessEqual(readback["observed_at"], "2026-10-07", adapter)
-            self.assertEqual(self.entries[adapter]["provenance"]["version"],
-                             readback["verified_version"], adapter)
+    def test_deepseek_harness_keeps_its_older_dated_readback(self) -> None:
+        # Observed before this receipt existed; aging it out honestly means keeping the date, not
+        # deleting the record. Hermes left this test on 2026-10-07: it now has a launch-free source
+        # (its install stamp), so pinning it to an old date would pin it to a value nobody can re-read.
+        readback = self.entries["deepseek-harness"]["provenance"]["version_readback"]
+        self.assertRegex(readback["observed_at"], r"^\d{4}-\d{2}-\d{2}$")
+        self.assertLessEqual(readback["observed_at"], "2026-10-07")
+        self.assertEqual(self.entries["deepseek-harness"]["provenance"]["version"],
+                         readback["verified_version"])
+
+    def test_hermes_version_comes_from_a_source_that_needs_no_launch(self) -> None:
+        readback = self.entries["hermes"]["provenance"]["version_readback"]
+        self.assertEqual("install-stamp-readback", readback["method"],
+                         "hermes has no version resource and its --version times out; only the stamp "
+                         "can be re-read here")
+        self.assertIs(False, self.receipt["launchedAnyProcessForVersion"])
+        self.assertIs(False, self.receipt_row("hermes").get("launched"))
+        self.assertEqual(self.entries["hermes"]["provenance"]["version"],
+                         readback["verified_version"])
+        self.assertIn("install-stamp.json", readback["native_readback"])
+        self.assertTrue(readback.get("superseded_observation"),
+                        "the earlier CLI reading was deleted instead of superseded")
+        superseded = readback["superseded_observation"]["verified_version"]
+        historical = self.entries["hermes"]["provenance"]["version_historical"]
+        matches = [h for h in historical if h.startswith(superseded)]
+        self.assertEqual(1, len(matches),
+                         f"{superseded} must appear once in version_historical, got {len(matches)}")
+        self.assertFalse([h for h in historical if "(current" in h],
+                         "a superseded version still carries a current label in history")
+
+    def test_the_stamp_row_in_the_receipt_is_the_row_the_registry_quotes(self) -> None:
+        row = self.receipt_row("hermes")
+        self.assertEqual("LIVE_VERSION_FROM_INSTALL_STAMP", row["verdict"])
+        self.assertNotIn("fileVersion", row,
+                         "the stamp is not a file version resource and must not look like one")
+        self.assertEqual(self.entries["hermes"]["provenance"]["version"], row["displayVersion"])
+        self.assertEqual(self.entries["hermes"]["provenance"]["version_readback"]["commit"],
+                         row["commit"])
+
+    def test_a_stamp_source_that_only_exists_on_this_machine_is_claimed_as_such(self) -> None:
+        """CI cannot see Hermes' install stamp, so the re-read is a named skip, never a silent pass."""
+        row = self.receipt_row("hermes")
+        stamp = Path(row["stampPath"])
+        if not stamp.is_file():
+            self.skipTest("the Hermes install stamp is outside the repository; a clean checkout "
+                          "legitimately has no such file, so only the recorded claim is checkable here")
+        live = json.loads(stamp.read_text(encoding="utf-8"))
+        self.assertEqual(live["displayVersion"], row["displayVersion"])
+        self.assertEqual(live["commit"], row["commit"])
 
     def test_the_wrapper_and_the_resourceless_binary_are_not_claimed_as_versions(self) -> None:
         hermes = self.receipt_row("hermes")
-        self.assertEqual("FILE_EXISTS_WITHOUT_VERSION_RESOURCE", hermes["verdict"])
         self.assertNotIn("fileVersion", hermes)
         self.assertEqual("ENTRY_IS_WRAPPER_USE_LIVE_PROBE", self.receipt_row("codex")["verdict"])
         # The codex number in the registry therefore came from running the wrapper, not from a file.

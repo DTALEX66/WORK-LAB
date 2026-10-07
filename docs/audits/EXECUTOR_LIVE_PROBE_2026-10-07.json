@@ -1,13 +1,15 @@
 {
   "schemaVersion": "work-lab/executor-live-probe/v1",
-  "at": "2026-10-07T13:38:38+0800",
+  "at": "2026-10-07T18:01:03+0800",
   "tool": "scripts/audit/executor_live_probe.py",
   "readOnly": true,
-  "registrySha256": "bc2b512230f46825252457824d3e382ad8b39705c2f1b5b9a773c3ffef06c1d7",
+  "registrySha256": "2abffd0995d0a1a84d6f3e4696790c2558ddc884bbc0ff29e44f37ce96a7dcea",
+  "registryDigestBasis": "git-index",
   "counts": {
-    "PROBE_TIMEOUT": 2,
-    "MEASURED_NO_CLAIM_TO_COMPARE": 2,
+    "LIVE_VERIFIED": 2,
     "ENTRY_NOT_RESOLVED": 3,
+    "VERSION_MOVED": 1,
+    "PROBE_TIMEOUT": 1,
     "NOT_PROBED_DECLARATIVE_ONLY": 3
   },
   "results": [
@@ -17,14 +19,16 @@
         "C:\\Users\\ALEX\\AppData\\Local\\hermes\\bin\\hermes.exe",
         "--version"
       ],
-      "state": "PROBE_TIMEOUT",
-      "detail": "exit=None PROBE_TIMEOUT_25s",
+      "state": "LIVE_VERIFIED",
+      "detail": "observed=0.21.5+6948.gedd2476 agrees with claimed=0.21.5+6948.gedd2476",
       "probe": {
         "invoked": true,
-        "exitCode": null,
-        "reason": "PROBE_TIMEOUT_25s"
+        "exitCode": 0,
+        "outputSha256": "95f01c441b6b07beebac29d720ca46fb5e47046fd646f0c090adf7a09a609402",
+        "versionLine": "Hermes Agent v0.21.5+6948.gedd2476 (2026.9.24) · upstream edd24765",
+        "observedVersion": "0.21.5+6948.gedd2476"
       },
-      "claimedVersion": "0.21.5+3115.g10938a7"
+      "claimedVersion": "0.21.5+6948.gedd2476"
     },
     {
       "adapter": "codex",
@@ -35,8 +39,8 @@
         "D:\\All projects\\WORK-LAB\\packages\\client-neutral-core\\bin\\codex.cmd",
         "--version"
       ],
-      "state": "MEASURED_NO_CLAIM_TO_COMPARE",
-      "detail": "observed='0.160.1'; registry claims 'UNVERIFIED' which is not a version string",
+      "state": "LIVE_VERIFIED",
+      "detail": "observed=0.160.1 agrees with claimed=0.160.1",
       "probe": {
         "invoked": true,
         "exitCode": 0,
@@ -44,7 +48,7 @@
         "versionLine": "codex-cli 0.160.1",
         "observedVersion": "0.160.1"
       },
-      "claimedVersion": "UNVERIFIED"
+      "claimedVersion": "0.160.1"
     },
     {
       "adapter": "cc-switch",
@@ -57,8 +61,8 @@
         "C:\\Program Files\\GitHub CLI\\gh.EXE",
         "--version"
       ],
-      "state": "MEASURED_NO_CLAIM_TO_COMPARE",
-      "detail": "observed='2.98.0'; registry claims 'UNVERIFIED' which is not a version string",
+      "state": "VERSION_MOVED",
+      "detail": "observed=2.98.0 claimed=2.98.0 (2026-08-20) — both kept, neither reconciled",
       "probe": {
         "invoked": true,
         "exitCode": 0,
@@ -66,7 +70,7 @@
         "versionLine": "gh version 2.98.0 (2026-08-20)",
         "observedVersion": "2.98.0"
       },
-      "claimedVersion": "UNVERIFIED"
+      "claimedVersion": "2.98.0 (2026-08-20)"
     },
     {
       "adapter": "openhuman",

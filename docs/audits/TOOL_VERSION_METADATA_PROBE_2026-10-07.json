@@ -1,13 +1,21 @@
 {
   "schemaVersion": "work-lab/tool-version-metadata-probe/v1",
   "tool": "scripts/audit/tool_version_metadata_probe.py",
-  "method": "FileVersion/ProductVersion from the binary version resource, then HKCU/HKLM uninstall keys when the declared entry does not resolve",
+  "method": "FileVersion/ProductVersion from the binary version resource, then the tool's own install stamp when the binary carries no resource, then HKCU/HKLM uninstall keys when the declared entry does not resolve",
   "launchedAnyProcessForVersion": false,
   "results": {
     "hermes": {
       "path": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\bin\\hermes.exe",
       "launched": false,
-      "verdict": "FILE_EXISTS_WITHOUT_VERSION_RESOURCE",
+      "verdict": "LIVE_VERSION_FROM_INSTALL_STAMP",
+      "stampPath": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\hermes-agent\\install-stamp.json",
+      "displayVersion": "0.21.5+6948.gedd2476",
+      "baseVersion": "0.21.5",
+      "distance": 6948,
+      "commit": "edd24765435374be8ede7599053a1743d5f5d9a7",
+      "builtAt": "2026-10-04T12:19:37.018705+00:00",
+      "dirty": false,
+      "updateMechanism": "self",
       "argvDeclared": [
         "C:\\Users\\ALEX\\AppData\\Local\\hermes\\bin\\hermes.exe",
         "--version"

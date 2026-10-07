@@ -8,13 +8,16 @@ would be worse than the gap it fills, because the register would then read as cl
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
+import subprocess
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "audit" / "executor_live_probe.py"
 RECORD = ROOT / "docs" / "audits" / "EXECUTOR_LIVE_PROBE_2026-10-07.json"
+REGISTRY_REL = "config/adapter-registry.json"
 
 spec = importlib.util.spec_from_file_location("executor_live_probe", SCRIPT)
 probe = importlib.util.module_from_spec(spec)
@@ -72,6 +75,24 @@ class RecordTests(unittest.TestCase):
     def test_the_record_declares_itself_read_only_and_pins_the_registry_it_read(self) -> None:
         self.assertTrue(self.doc["readOnly"])
         self.assertEqual(64, len(self.doc["registrySha256"]))
+
+    def test_the_pinned_registry_is_the_one_the_commit_carries(self) -> None:
+        """A length-64 hash proves formatting; only comparison proves the receipt is about this registry.
+
+        On 2026-10-07 I re-pointed hermes' declared version at its install stamp and re-ran the probe
+        without `--out`, so the printed summary was new while the shipped receipt still pinned the old
+        registry and quoted the superseded version. The gate accepted it, because nothing had ever
+        checked the pin against the file. The index is read first (ERR-153): in a CI checkout it equals
+        HEAD, so this asks the runner for nothing extra.
+        """
+        index = subprocess.run(["git", "show", f":{REGISTRY_REL}"], cwd=ROOT, capture_output=True)
+        if index.returncode != 0:
+            index = subprocess.run(["git", "show", f"HEAD:{REGISTRY_REL}"], cwd=ROOT,
+                                   capture_output=True)
+        self.assertEqual(0, index.returncode, f"{REGISTRY_REL} is not readable from git")
+        self.assertEqual(hashlib.sha256(index.stdout).hexdigest(), self.doc["registrySha256"],
+                         "the receipt pins a different registry than the tree carries, so its "
+                         "claimedVersion rows describe an older declaration")
 
     def test_counts_are_derived_from_the_rows_not_typed(self) -> None:
         derived: dict[str, int] = {}

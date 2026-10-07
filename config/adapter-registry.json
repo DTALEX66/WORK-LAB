@@ -30,25 +30,33 @@
       "provenance": {
         "source_kind": "repository",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=hermes]",
-        "version": "0.21.5+3115.g10938a7",
+        "version": "0.21.5+6948.gedd2476",
         "version_readback": {
-          "observed_at": "2026-10-01",
-          "verified_version": "0.21.5+3115.g10938a7",
-          "method": "official-cli-version-readback",
-          "native_readback": "Hermes Agent v0.21.5+3115.g10938a7 (2026.9.24) · upstream 10938a7c",
-          "command": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\bin\\hermes.exe --version",
-          "source": "official Hermes CLI at HERMES_HOME/bin/hermes.exe (HERMES_HOME=C:\\Users\\ALEX\\AppData\\Local\\hermes); install directory hermes-agent",
-          "commit": "10938a7cf93be84b9f8695699e607ab423d87db4",
+          "observed_at": "2026-10-07",
+          "verified_version": "0.21.5+6948.gedd2476",
+          "method": "install-stamp-readback",
+          "native_readback": "install-stamp.json displayVersion=0.21.5+6948.gedd2476 baseVersion=0.21.5 distance=6948 commit=edd24765435374be8ede7599053a1743d5f5d9a7 builtAt=2026-10-04T12:19:37.018705+00:00 dirty=False",
+          "command": "python scripts/audit/tool_version_metadata_probe.py",
+          "source": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\hermes-agent\\install-stamp.json",
+          "commit": "edd24765435374be8ede7599053a1743d5f5d9a7",
           "install_method": "git",
+          "authority_note": "Not a proxy for running the CLI: hermes_cli/version_info.py resolves runtime identity in the order install stamp, then live git, then unknown, and states the stamp is authoritative for packaged builds. So the stamp the updater writes on 2026-10-04 and the string `hermes.exe --version` would print come from the same file - and the CLI launcher itself carries no Windows version resource and times out at 25s under the live probe, which is why no launch-free source existed before this.",
+          "superseded_observation": {
+            "observed_at": "2026-10-01",
+            "verified_version": "0.21.5+3115.g10938a7",
+            "method": "official-cli-version-readback",
+            "commit": "10938a7cf93be84b9f8695699e607ab423d87db4",
+            "note": "retained verbatim rather than deleted: the 2026-10-01 CLI reading was correct for the build installed then, and Hermes self-updated on 2026-10-04 (updateMechanism=self, builtAt in the stamp). The two commits differ, so this is ageing, not a contradiction."
+          },
           "conflict_note": "TWO VERSION STRINGS EXIST FOR THE SAME COMMIT and both are recorded rather than reconciled by guesswork. (1) The CLI self-reports v0.21.5+3115.g10938a7, which is what the 2026-09-27 maintenance record (HERMES-UPDATE-AND-MAINTENANCE-20260927.md) also states. (2) `git describe --tags --always` in the same checkout returns v0.21.4+canary.20260926T065603Z-662-g10938a7cf9: it counts 662 commits from a v0.21.4 canary tag where the CLI counts 3115 from its own baseline tag. Both resolve to commit 10938a7cf9, so the identity is not in doubt; only the human-facing label differs by tag basis. `version` carries the CLI value because that is what a user sees. NOT a resolved discrepancy - do not treat either string as a typo of the other."
         },
         "version_historical": [
           ">=0.19,<0.21 (previously declared support range; never natively verified on this machine)",
           "0.21.2 (natively verified 2026-09-14: CLI version/status/doctor readback exit 0, registry-fresh PATH resolution, native discovery of all 13 managed skills, one non-tool completion; package hash still UNAVAILABLE so detection.evidence_state stays UNVERIFIED)",
           "0.21.3 (2026.9.14) (superseded by the 2026-09-27 official `hermes update --yes --backup` round)",
-          "0.21.5+3115.g10938a7 (2026.9.24) (current; recorded 2026-09-27, re-read natively 2026-10-01)"
+          "0.21.5+3115.g10938a7 (2026.9.24) (superseded on 2026-10-04 by the self-update now in install-stamp.json; recorded 2026-09-27, re-read natively 2026-10-01)"
         ],
-        "note": "The schema cannot express 'declared support range' separately from 'verified version', so `version` carries ONLY the natively verified value and production admission is limited to it. A wider range is deliberately not claimed: the earlier >=0.19,<0.21 declaration is retained in version_historical as history, not as current support. AG-07 (2026-10-01) corrected `version` from 0.21.2 to 0.21.5+3115.g10938a7: the registry had not been updated since the 2026-09-27 maintenance round, so it understated the installed engine by one round. detection.evidence_state deliberately REMAINS UNVERIFIED: the runtime package hash is still UNAVAILABLE (hash.state=UNAVAILABLE), and a version readback is not a hash verification, so it must not be promoted into one.",
+        "note": "The schema cannot express 'declared support range' separately from 'verified version', so `version` carries ONLY the natively verified value and production admission is limited to it. A wider range is deliberately not claimed: the earlier >=0.19,<0.21 declaration is retained in version_historical as history, not as current support. AG-07 (2026-10-01) corrected `version` from 0.21.2 to 0.21.5+3115.g10938a7: the registry had not been updated since the 2026-09-27 maintenance round, so it understated the installed engine by one round. detection.evidence_state deliberately REMAINS UNVERIFIED: the runtime package hash is still UNAVAILABLE (hash.state=UNAVAILABLE), and a version readback is not a hash verification, so it must not be promoted into one. | AG-19-adjacent 2026-10-07: `version` now carries the install stamp's displayVersion, read without launching anything. detection.evidence_state still deliberately remains UNVERIFIED - a version readback is not a package-hash check.",
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "active",

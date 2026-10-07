@@ -133,6 +133,22 @@ def adjudicate(entry: dict, probe: dict) -> tuple[str, str]:
     return "VERSION_MOVED", f"observed={observed} claimed={claimed} — both kept, neither reconciled"
 
 
+def registry_pin() -> tuple[str, str]:
+    """(sha256, basis) of the registry bytes a checkout will actually carry.
+
+    The receipt used to hash the working tree, which under `* text=auto` differs between this machine
+    (CRLF) and the runner (LF) — so the pin was unrepeatable across machines, and the gate that finally
+    compares it had to reproduce the same checkout state (ERR-125). The index is read first because it
+    is what the next commit carries; in a CI checkout the index equals HEAD.
+    """
+    rel = str(REGISTRY.relative_to(REPO)).replace("\\", "/")
+    for ref, basis in ((f":{rel}", "git-index"), (f"HEAD:{rel}", "git-blob-at-HEAD")):
+        r = subprocess.run(["git", "show", ref], cwd=REPO, capture_output=True)
+        if r.returncode == 0:
+            return hashlib.sha256(r.stdout).hexdigest(), basis
+    return hashlib.sha256(REGISTRY.read_bytes()).hexdigest(), "working-tree-uncommitted"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=None)
@@ -167,10 +183,11 @@ def main() -> int:
     counts: dict[str, int] = {}
     for r in results:
         counts[r["state"]] = counts.get(r["state"], 0) + 1
+    pin, pin_basis = registry_pin()
     report = {"schemaVersion": "work-lab/executor-live-probe/v1",
               "at": time.strftime("%Y-%m-%dT%H:%M:%S+0800", time.gmtime(time.time() + 8 * 3600)),
               "tool": "scripts/audit/executor_live_probe.py", "readOnly": True,
-              "registrySha256": hashlib.sha256(REGISTRY.read_bytes()).hexdigest(),
+              "registrySha256": pin, "registryDigestBasis": pin_basis,
               "counts": counts, "results": results,
               "note": ("LIVE_VERIFIED requires exit 0 and agreement with the version the registry "
                        "already claims. This script mutates nothing: it reports, and a human or a "

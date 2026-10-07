@@ -85,6 +85,38 @@ def ps(command: str, env: dict[str, str]) -> str:
     return r.stdout
 
 
+def install_stamp_for(binary: str) -> dict | None:
+    """The install stamp the tool itself trusts, found by walking up from its binary.
+
+    Hermes' CLI resolves its own identity in exactly this order (hermes_cli/version_info.py: stamp
+    first, live git second, unknown third), so reading the file is not a proxy for running the CLI —
+    it is the same authority, reached without launching. That matters here because `hermes.exe` carries
+    no Windows version resource and `hermes.exe --version` times out at 25s in the live probe, which
+    left the declared version aging twice without anyone being able to check it.
+    """
+    p = Path(binary)
+    if not p.is_absolute():
+        return None
+    for parent in list(p.parents)[:4]:
+        for candidate in (parent / "install-stamp.json",
+                          parent / "hermes-agent" / "install-stamp.json"):
+            if candidate.is_file():
+                try:
+                    data = json.loads(candidate.read_text(encoding="utf-8"))
+                except (ValueError, OSError):
+                    return None
+                if data.get("displayVersion"):
+                    return {"stampPath": str(candidate),
+                            "displayVersion": data.get("displayVersion"),
+                            "baseVersion": data.get("baseVersion"),
+                            "distance": data.get("distance"),
+                            "commit": data.get("commit"),
+                            "builtAt": data.get("builtAt"),
+                            "dirty": data.get("dirty"),
+                            "updateMechanism": data.get("updateMechanism")}
+    return None
+
+
 def version_of(path: str) -> dict:
     for line in ps(VERSION_PS, {"WL_TARGET": path}).splitlines():
         if line.startswith("FOUND|"):
@@ -94,6 +126,10 @@ def version_of(path: str) -> dict:
             # A binary can exist and carry no version resource at all (hermes' bundled CLI launcher does
             # not). Naming that "LIVE_VERSION..." would be a version claim with no version behind it.
             if not file_version and not product_version:
+                stamp = install_stamp_for(path)
+                if stamp:
+                    return {"path": path, "launched": False,
+                            "verdict": "LIVE_VERSION_FROM_INSTALL_STAMP", **stamp}
                 return {"path": path, "launched": False,
                         "verdict": "FILE_EXISTS_WITHOUT_VERSION_RESOURCE"}
             return {"path": path, "fileVersion": file_version, "productVersion": product_version,
@@ -175,7 +211,8 @@ def main() -> int:
     Path(args.out).write_text(json.dumps(
         {"schemaVersion": "work-lab/tool-version-metadata-probe/v1",
          "tool": "scripts/audit/tool_version_metadata_probe.py",
-         "method": "FileVersion/ProductVersion from the binary version resource, then HKCU/HKLM uninstall "
+         "method": "FileVersion/ProductVersion from the binary version resource, then the tool's own "
+                   "install stamp when the binary carries no resource, then HKCU/HKLM uninstall "
                    "keys when the declared entry does not resolve",
          "launchedAnyProcessForVersion": False,
          "results": results}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -184,6 +221,7 @@ def main() -> int:
     for key, row in results.items():
         counts[row["verdict"]] = counts.get(row["verdict"], 0) + 1
         detail = row.get("fileVersion") \
+            or row.get("displayVersion") \
             or (row.get("binary") or {}).get("fileVersion") \
             or (row.get("registry") or [{}])[0].get("displayVersion") \
             or row.get("verdict")
