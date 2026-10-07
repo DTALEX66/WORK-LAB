@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T22:41:34Z",
+  "generatedAt": "2026-10-07T22:53:53Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2129,
-    "distinctProjectLocalTokens": 428,
+    "trackedFilesScanned": 2131,
+    "distinctProjectLocalTokens": 431,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 428,
-    "citationsToAbsentTokens": 1181
+    "tokensAbsent": 431,
+    "citationsToAbsentTokens": 1186
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,8 +21,8 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 247,
-      "distinctPaths": 89
+      "citations": 252,
+      "distinctPaths": 92
     },
     "machine_field_pointing_at_absent_path": {
       "citations": 14,
@@ -202,7 +202,7 @@
       {
         "path": ".project-local",
         "file": "services/control/control_service.py",
-        "line": 97,
+        "line": 106,
         "text": "NON_DIFFABLE_ROOTS = (\".project-local/\", \".hermes/\", \"docs/\", \"tests/\")"
       },
       {
@@ -304,7 +304,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
-        "line": 56,
+        "line": 62,
         "text": "DEFAULT_EVIDENCE_ROOTS = (\".project-local/artifacts\", \".project-local/runs\")"
       },
       {
@@ -420,6 +420,12 @@
         "file": "tests/ci/test_no_home_credential_document_is_tracked.py",
         "line": 43,
         "text": "\"(.project-local/artifacts/SECRET_SHAPE_SCAN_HEAD.json), removal is owner-gated because \""
+      },
+      {
+        "path": ".project-local/artifacts/a.json",
+        "file": "tests/workflow-assistance/test_path_text_is_one_predicate.py",
+        "line": 62,
+        "text": "(\"/home/runner/work/WORK-LAB/.project-local/artifacts/a.json\","
       },
       {
         "path": ".project-local/artifacts/ag16-handback/evidence.json",
@@ -820,7 +826,7 @@
       {
         "path": ".project-local/runs",
         "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
-        "line": 56,
+        "line": 62,
         "text": "DEFAULT_EVIDENCE_ROOTS = (\".project-local/artifacts\", \".project-local/runs\")"
       },
       {
@@ -1002,6 +1008,30 @@
         "file": "tests/workflow-assistance/test_toolchain_declarations.py",
         "line": 114,
         "text": "self.assertEqual(\".project-local/runs\", self.boundary[\"runtimeRoot\"])"
+      },
+      {
+        "path": ".project-local/runs/a.log",
+        "file": "tests/workflow-assistance/test_path_text_is_one_predicate.py",
+        "line": 43,
+        "text": "result = reader.read_range(handle=\"D:/elsewhere/project/.project-local/runs/a.log\","
+      },
+      {
+        "path": ".project-local/runs/a.log",
+        "file": "tests/workflow-assistance/test_path_text_is_one_predicate.py",
+        "line": 47,
+        "text": "self.assertIn(\"d:/elsewhere/project/.project-local/runs/a.log\", result[\"reason\"],"
+      },
+      {
+        "path": ".project-local/runs/a.txt",
+        "file": "tests/workflow-assistance/test_path_text_is_one_predicate.py",
+        "line": 55,
+        "text": "(\"D:/All projects/WORK-LAB/.project-local/runs/a.txt\", \"D:/All projects/WORK-LAB\", True),"
+      },
+      {
+        "path": ".project-local/runs/a.txt",
+        "file": "tests/workflow-assistance/test_path_text_is_one_predicate.py",
+        "line": 56,
+        "text": "(\"d:/ALL PROJECTS/work-lab/.project-local/runs/a.txt\", \"D:/All projects/WORK-LAB\", True),"
       },
       {
         "path": ".project-local/runs/acp-sdk-canary",
@@ -5182,7 +5212,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
-        "line": 53,
+        "line": 59,
         "text": "# `.project-local/artifacts` and `.project-local/runs` are what the boundary declaration names as evidence"
       },
       {
@@ -5524,7 +5554,7 @@
       {
         "path": ".project-local/runs",
         "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
-        "line": 53,
+        "line": 59,
         "text": "# `.project-local/artifacts` and `.project-local/runs` are what the boundary declaration names as evidence"
       },
       {
