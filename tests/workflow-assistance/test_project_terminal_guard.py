@@ -5,6 +5,7 @@ import json
 import subprocess
 import tempfile
 import unittest
+import unittest.mock as mock
 from pathlib import Path
 
 
@@ -404,6 +405,49 @@ class ProjectTerminalGuardTests(unittest.TestCase):
         self.assertTrue(reason)
         self.assertEqual(module.BLOCK_PREFIX, "PROJECT DATA BOUNDARY BLOCKED:")
         self.assertEqual(json.loads(json.dumps({"action": "block", "message": f"{module.BLOCK_PREFIX} {reason}"}))["action"], "block")
+
+
+class BothHostBranchesAreExercisedOnThisMachine(unittest.TestCase):
+    """The guard's `os.name != "nt"` branches only ever ran on the ubuntu job.
+
+    Twenty-five tests covered the NT side here and the POSIX side was covered only by CI passing there, so
+    a regression in the non-NT arm had no local signal at all. Forcing the attribute makes both arms
+    testable on one machine. What they encode is path *syntax*, not a host privilege: on a POSIX host a UNC
+    share or a drive-qualified path can never be inside this project, while on Windows a drive path may be,
+    and must then be compared to the real root rather than refused.
+    """
+
+    def setUp(self) -> None:
+        self.guard = load_module()
+        self.root = Path("D:/All projects/WORK-LAB")
+
+    def test_a_posix_host_blocks_a_unc_share(self) -> None:
+        command = 'net use "\\\\SERVER\\share\\x"'
+        with mock.patch.object(self.guard.os, "name", "posix"):
+            self.assertEqual("\\\\SERVER\\share\\x",
+                             self.guard.external_raw_unc(command, self.root))
+
+    def test_a_posix_host_blocks_a_drive_qualified_path(self) -> None:
+        command = 'type "C:/Windows/win.ini"'
+        with mock.patch.object(self.guard.os, "name", "posix"):
+            found = self.guard.external_raw_windows_path(command, self.root)
+        self.assertIsNotNone(found, "the non-NT arm did not flag a drive path at all")
+        self.assertIn("C:", found)
+
+    def test_a_windows_host_blocks_an_external_drive_but_not_its_own_project(self) -> None:
+        with mock.patch.object(self.guard.os, "name", "nt"):
+            self.assertIsNotNone(
+                self.guard.external_raw_windows_path('type "D:/elsewhere/x.txt"', self.root),
+                "a sibling project on the same drive must be flagged")
+            self.assertIsNone(
+                self.guard.external_raw_windows_path(
+                    'type "D:/All projects/WORK-LAB/config/x.yaml"', self.root),
+                "a path inside the declared root must not be flagged")
+
+    def test_a_windows_host_blocks_a_unc_share_that_is_not_the_project(self) -> None:
+        with mock.patch.object(self.guard.os, "name", "nt"):
+            self.assertEqual("\\\\SERVER\\share\\x", self.guard.external_raw_unc(
+                'copy "\\\\SERVER\\share\\x" .', self.root))
 
 
 if __name__ == "__main__":
