@@ -94,6 +94,22 @@
 - 记录：`LEDGER-PROMISE-STATE-20261007`、ERR-143；ERR-139/140/142 的 verifiedCommit 已在 c1b2997 的全绿回读后补上（该提交含其修复与门禁）。
 
 
+
+## UI 任务并入目标（owner 2026-10-07 指令）
+
+- 在册：`UI-PRODUCT-PROMPT-20261007`（P0）。提示词任务包的 8 步与验收门自此属于本闭环目标的一部分，不再是外部旁述。
+- 基底实测：`cd4daa83`（= `origin/main` = `ui-taskpack-e-20260930`）已是 UI 分支 `ui-commercial-polish-20261007` 的祖先，
+  `git rev-list --count 285704a..cd4daa83 = 0`，Codex worktree `git status` 空 ⇒ **并入是 no-op，无可吸收提交**；
+  且 `apps/observer/web` 在 main 上 24 文件、在尖端已 0（重复树已退役）⇒ UI 只能从 `285704a` 起。
+- 权威来源钉住（只读，未改写 owner 材料）：[{"n": "WORKLAB_CODEX_PROMPT.md", "bytes": 6501, "sha256_12": "31bfdba2bfc2", "mtime": "2026-10-07T00:58:35Z"}, {"n": "UI_KIT_AUDIT.md", "bytes": 10181, "sha256_12": "1eaf44826132", "mtime": "2026-10-07T00:58:55Z"}, {"n": "UI_COMPONENT_ADOPTION_PLAN.md", "bytes": 6397, "sha256_12": "5e6b472a0d0c", "mtime": "2026-10-07T00:59:00Z"}, {"n": "WORK-LAB_UI开发资料总包_按批次.zip", "bytes": 37048117, "sha256_12": "c94ff634dad3", "mtime": "2026-10-07T00:54:42Z"}]
+- 我的错判已撤回并写在报告里：token 校准不是 UI 缺口（`tokens.ts` + `tokens.test.ts` 已是 `#2A91FF/#20CDE1`）；
+  蓝紫只在两件被 digest 钉住、应用不消费的档案物里 ⇒ 转为 owner 决策项。
+- 实测缺口（下一步，UI 码不提交不推送）：G1 `PermissionState` ＋写动作"disabled＋原因"（views/layout 仅 9 处 `disabled`）；
+  G2 顶栏品牌图形与 `TopStatusBar.tsx:62` 的 `#F59E0B` 字面量；G3 把 `topbar_geometry_via_cdp.py` / `cdp_layout_probe.mjs`
+  接成**几何**门禁（矩形、重叠面积、`elementFromPoint` 命中测试、偏移实测，禁 presence/class/aria 冒充）。
+- 采纳门结论：**不新增依赖、不装包**（现有 20 个自研 primitive 覆盖计划点名要试的三件）。
+
+
 ## 仍然未知 / 仍然欠（不伪装成已完成）
 
 - 28 处不带 `dir=` 的 `mkdtemp` 在册债务（12 测试文件 21 处 / 3 生产文件 7 处）；是否漏出残渣只对被实测的
