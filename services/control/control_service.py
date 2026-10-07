@@ -815,14 +815,59 @@ class _Handler(BaseHTTPRequestHandler):
     def log_message(self, *args: Any) -> None:  # no request bodies in logs
         return
 
+    def _declared_length(self) -> int:
+        try:
+            return max(0, int(self.headers.get("Content-Length") or 0))
+        except (TypeError, ValueError):
+            return 0
+
+    def _read_request_body(self) -> bytes:
+        """The request body, read AT MOST ONCE and cached.
+
+        Both halves of this handler need the same bytes: the POST path consumes them as the operation, and
+        a refusal has to clear them so a keep-alive client's next read starts at a status line. A second
+        `rfile.read(Content-Length)` after the body was already consumed blocks until the client times out
+        -- which is exactly what the first version of this drain did to the success path.
+        """
+        cached = getattr(self, "_request_body_cache", None)
+        if cached is not None:
+            return cached
+        length = self._declared_length()
+        if length <= 0 or length > MAX_BODY_BYTES:
+            # never buffer a request this handler has already decided not to serve
+            self.close_connection = True
+            data = b""
+        else:
+            try:
+                data = self.rfile.read(length)
+            except OSError:
+                data = b""
+            self.close_connection = True
+        self._request_body_cache = data
+        return data
+
+    def _drain_request_body(self) -> None:
+        """Clear a request body before a refusal is written, so the refusal is what the client reads.
+
+        A 405 for a PUT that carried bytes left them in the socket buffer, and a client that keeps the
+        connection open reads them as the beginning of the next response -- which is how a transport test
+        came to see a broken status line instead of the refusal it was asserting.
+        """
+        self._read_request_body()
+
     def _send(self, status: int, payload: dict[str, Any]) -> None:
+        self._drain_request_body()
         body = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.wfile.write(body)
+        except (ConnectionResetError, BrokenPipeError, OSError):
+            # the peer went away; that is not a reason to log a traceback as if the service failed
+            self.close_connection = True
 
     def _refused(self, status: int, code: str, reason: str) -> None:
         self._send(status, {"schema_version": "worklab/control-error/v1", "reason_code": code,
@@ -906,7 +951,7 @@ class _Handler(BaseHTTPRequestHandler):
         if length > MAX_BODY_BYTES:
             self._refused(413, "BODY_TOO_LARGE", f"操作请求超过 {MAX_BODY_BYTES} 字节上限。")
             return
-        raw = self.rfile.read(length)
+        raw = self._read_request_body()
         try:
             request = json.loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as error:

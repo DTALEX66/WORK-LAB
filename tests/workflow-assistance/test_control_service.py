@@ -594,6 +594,37 @@ class ControlTransportTests(unittest.TestCase):
         except urllib.error.HTTPError as error:
             return error.code
 
+    def test_a_refusal_arrives_whole_even_when_the_caller_sent_a_body(self) -> None:
+        """The 405 is a promise, so it must be the whole response -- not the caller's JSON in front of it.
+
+        A PUT that carried a body used to be refused with the body still sitting in the socket buffer. On a
+        keep-alive connection the next read then starts with those bytes instead of a status line, which is
+        how a transport test saw a broken status where it expected 405. This test speaks raw so it can see
+        the byte order, not just the parsed status.
+        """
+        import socket
+        from urllib.parse import urlparse
+
+        parsed = urlparse(self.base)
+        with socket.create_connection((parsed.hostname, parsed.port), timeout=5) as sock:
+            sock.sendall(b"PUT /api/control/operations HTTP/1.1\r\nHost: 127.0.0.1\r\n"
+                         b"Content-Length: 11\r\nConnection: close\r\n\r\n{\"leftover\":")
+            received = b""
+            while True:
+                chunk = sock.recv(4096)
+                if not chunk:
+                    break
+                received += chunk
+        head, _, tail = received.partition(b"\r\n\r\n")
+        status_line = head.split(b"\r\n", 1)[0].decode("latin-1")
+        self.assertTrue(status_line.startswith("HTTP/1."),
+                        f"the response did not begin with a status line: {status_line!r}")
+        self.assertIn(" 405 ", status_line, status_line)
+        self.assertNotIn(b"leftover", head, "the request body was reflected ahead of the refusal")
+        self.assertIn(b"405", head)
+        self.assertTrue(tail, "the refusal carried no body")
+        self.assertNotIn(b"leftover", tail[:30], "unconsumed request bytes preceded the refusal body")
+
     def test_binds_loopback_and_publishes_a_dynamic_endpoint_descriptor(self) -> None:
         self.assertEqual(self.server.host, "127.0.0.1")
         self.assertGreater(self.server.bound_port, 0)

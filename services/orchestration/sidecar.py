@@ -538,7 +538,41 @@ def create_server(
                 self.send_header("Access-Control-Allow-Origin", cors_origin)
                 self.send_header("Vary", "Origin")
             self.end_headers()
-            self.wfile.write(body)
+            try:
+                self.wfile.write(body)
+            except (ConnectionResetError, BrokenPipeError, OSError):
+                # a browser that navigates away is normal; it is not a service failure
+                self.close_connection = True
+
+        def _drain_request_body(self) -> int:
+            """Read and discard a request body, returning how many bytes went unread.
+
+            This server speaks HTTP/1.1, so the connection stays open after a response. A refused write
+            that left its body in the buffer made the NEXT response on that connection begin with the
+            caller's JSON -- a client then sees a broken status line where the read-only contract says
+            405. The 405 is the promise the UI and the delivery proofs rely on, so it has to arrive whole.
+            """
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+            except (TypeError, ValueError):
+                length = 0
+            if length <= 0:
+                return 0
+            try:
+                self.rfile.read(length)
+            except OSError:
+                self.close_connection = True
+            return length
+
+        def refuse_write(self) -> None:
+            """Drain then deny. The denial is spelled out in each `do_<verb>` on purpose.
+
+            `verify_observer_readonly_boundary.py` reads the body of every write handler and fails if the
+            405 is not stated there, so routing the refusal through this helper alone would launder the
+            guard's own evidence. A guard that reads source shape is a deliberate anti-indirection device:
+            when it fires on a refactor, the call site changes, not the check.
+            """
+            self._drain_request_body()
 
         def _serve_static(self, path: str) -> bool:
             """D1: serve a file from the read-only static root (if enabled).
@@ -669,15 +703,19 @@ def create_server(
                 self.send_json(404, {"status": "not_found"})
 
         def do_POST(self) -> None:  # noqa: N802
+            self.refuse_write()
             self.send_json(405, {"status": "method_not_allowed"})
 
         def do_PUT(self) -> None:  # noqa: N802
+            self.refuse_write()
             self.send_json(405, {"status": "method_not_allowed"})
 
         def do_PATCH(self) -> None:  # noqa: N802
+            self.refuse_write()
             self.send_json(405, {"status": "method_not_allowed"})
 
         def do_DELETE(self) -> None:  # noqa: N802
+            self.refuse_write()
             self.send_json(405, {"status": "method_not_allowed"})
 
         def log_message(self, format: str, *args: Any) -> None:
