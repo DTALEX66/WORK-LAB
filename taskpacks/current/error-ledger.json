@@ -5596,9 +5596,9 @@
       "lifecycle": {
         "introducedCommit": "a8df7bdb",
         "introducedCommitNote": "the commit whose message overstated what the republish changed",
-        "fixedCommit": null,
+        "fixedCommit": "25235f7de1fe7306221484485d3bd82c599da272",
         "verifiedCommit": null,
-        "bindingBasis": "corrected-in-record: the wording is withdrawn here; the artifact bytes in a8df7bdb are accurate and the gate that reads them is green",
+        "bindingBasis": "commit-contains-fix: 25235f7d carries the retraction text and the corrected guard path; a wording correction cannot name its own SHA at authoring time, so the binding is written by the following commit -- the ERR-179 precedent",
         "bindingNote": "no fix commit for a wording defect; ERR-179 set the precedent of recording rather than rewriting published history",
         "affectedCapability": "Accuracy of delivery claims",
         "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_tool_inventory_coverage.py"
