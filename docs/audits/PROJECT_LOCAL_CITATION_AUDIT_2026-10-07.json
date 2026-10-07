@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T09:13:26Z",
+  "generatedAt": "2026-10-07T09:16:42Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2080,
@@ -250,13 +250,13 @@
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_recovered_source_registry.py",
-        "line": 116,
+        "line": 117,
         "text": "self.assertTrue(e[\"path\"].startswith(\".project-local/\"),"
       },
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_recovered_source_registry.py",
-        "line": 143,
+        "line": 144,
         "text": "self.assertTrue(claim.startswith(\".project-local/\"),"
       },
       {

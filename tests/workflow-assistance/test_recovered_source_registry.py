@@ -25,6 +25,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 REGISTRY = ROOT / ".project" / "governance" / "recovered-source-registry.json"
+ATLAS_MIRROR = ROOT / "docs" / "history" / "archive" / "recovered-originals" / "WORK-LAB_MASTER_SOURCE_REGISTRY.json"
 STATUSES = {"tracked", "machine-local", "absent", "unpinned"}
 # fields that assert where a row's bytes live; the gate reads `path`, so a second location claim that
 # contradicts `status` silently moves the digest check to the wrong object (ERR-154)
@@ -202,6 +203,95 @@ class RecoveredSourceRegistryTests(unittest.TestCase):
         self.assertGreaterEqual(checked, 5,
                                 "no recovery command was checkable; the provenance "
                                 "gate would pass vacuously")
+
+
+class AtlasPinAgreementTests(unittest.TestCase):
+    """Two tracked records must tell the same story about the same five pins.
+
+    Before the promotion the atlas lived under the ignored root, so this comparison could only be made
+    on one machine and a CI run could not assert agreement at all (ERR-114's boundary, ERR-142's
+    complaint). Now both sides are versioned, and the check is the kind the ledger rules ask for:
+    agreement between tracked records, never a claim about bytes a clean checkout cannot see.
+
+    The vocabulary is the atlas's own: a pin either names a recovered digest that exists among its 642
+    sources, or it carries the negative proof. Both are checked, and the machine-local summary row is
+    pinned against being promoted — the atlas itself states the reason it must stay uncommitted.
+    """
+
+    RECOVERED = "RECOVERED_HASH_IDENTICAL_COPY"
+    DECLARED_STATUSES = {
+        "RECOVERED_HASH_IDENTICAL_COPY",
+        "NOT_RECOVERED_NEGATIVELY_PROVEN_IN_SCOPE",
+        "NOT_FOUND_EXACT_NAME_OR_VERIFIED_COPY",
+    }
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        assert ATLAS_MIRROR.is_file(), f"missing {ATLAS_MIRROR}"
+        cls.rel = ATLAS_MIRROR.relative_to(ROOT).as_posix()
+        cls.atlas = json.loads(ATLAS_MIRROR.read_text(encoding="utf-8"))
+        cls.data = json.loads(REGISTRY.read_text(encoding="utf-8"))
+        cls.rows = {e["id"]: e for e in cls.data["entries"]}
+        cls.pins = {p["id"]: p for p in cls.atlas["missing_or_recovered_pins"]}
+        cls.source_digests = {s["sha256"] for s in cls.atlas["sources"] if s.get("sha256")}
+
+    def test_the_versioned_atlas_is_the_document_the_mirror_row_claims(self) -> None:
+        row = self.rows["src-atlas-master-source-registry"]
+        self.assertEqual(blob_digest(self.rel), row["sha256"],
+                         "the mirror row and the versioned atlas disagree, so every cross-check below "
+                         "would compare the mirror against a different document")
+        self.assertEqual(len(blob(self.rel)), row["bytes"])
+
+    def test_every_pin_uses_a_declared_status_and_carries_its_own_kind_of_evidence(self) -> None:
+        self.assertEqual(set(self.pins), {
+            "SRC-WL-CHAT-TIMELINE", "SRC-WL-SUMMARY", "SRC-WL-HANDOFF-20260903",
+            "REQ-20260928-START", "REQ-20260928-EXEC"}, "the pin set changed identity")
+        self.assertGreaterEqual(len(self.source_digests), 500,
+                                "the atlas source list collapsed, so digest presence proves nothing")
+        for pin_id, pin in self.pins.items():
+            self.assertIn(pin["status"], self.DECLARED_STATUSES,
+                          f"{pin_id}: an undeclared recovery status cannot be checked")
+            if pin["status"] == self.RECOVERED:
+                self.assertTrue(pin.get("expected_sha256"), f"{pin_id}: recovered without a digest")
+                self.assertIn(pin["expected_sha256"], self.source_digests,
+                              f"{pin_id}: claims recovery of a digest no atlas source holds")
+                if pin.get("recovered_sha256"):
+                    self.assertEqual(pin["recovered_sha256"], pin["expected_sha256"],
+                                     f"{pin_id}: recovered digest differs from the pin it satisfies")
+            else:
+                proof = pin.get("negativeProof") or pin.get("searchScopeNote") or ""
+                self.assertGreaterEqual(len(proof), 120,
+                                        f"{pin_id}: {pin['status']} without a stated scope and proof")
+
+    def test_the_mirror_agrees_with_the_atlas_for_every_pin_it_reproduces(self) -> None:
+        pairs = {"SRC-WL-SUMMARY": "src-worklab-summary-2026-09",
+                 "SRC-WL-HANDOFF-20260903": "src-new-chat-handoff-20260903"}
+        for pin_id, row_id in pairs.items():
+            self.assertEqual(self.rows[row_id]["sha256"], self.pins[pin_id]["expected_sha256"],
+                             f"{row_id} no longer carries the digest the atlas pins")
+
+    def test_the_unrecovered_timeline_stays_unclaimed_on_both_sides(self) -> None:
+        pin = self.pins["SRC-WL-CHAT-TIMELINE"]
+        row = self.rows["src-conversation-timeline-2026-09"]
+        self.assertNotIn(pin["expected_sha256"], self.source_digests,
+                         "the timeline digest is among the atlas sources while the pin still claims "
+                         "it was negatively proven absent")
+        self.assertEqual(row["status"], "absent")
+        self.assertIsNone(row["sha256"], "the mirror claims a digest for the unrecovered timeline")
+
+    def test_the_summary_copy_must_stay_machine_local(self) -> None:
+        """The atlas registers this original by path and digest and refuses to commit it."""
+        row = self.rows["src-worklab-summary-2026-09"]
+        self.assertEqual(row["status"], "machine-local",
+                         "promoting this row would commit session UUIDs and prompt bodies; the atlas "
+                         "source record states that boundary in its own content_access field")
+        declared = [s for s in self.atlas["sources"] if s.get("sha256") == row["sha256"]]
+        self.assertTrue(declared, "the atlas no longer holds the summary original it registered")
+        self.assertIn("prompt bodies", declared[0]["content_access"],
+                      "the atlas's own boundary note for the summary changed; re-read the rule before "
+                      "touching this row")
+        self.assertIn("prompt", row["notes"].lower(),
+                      "the mirror row no longer states why it stays ignored")
 
 
 if __name__ == "__main__":
