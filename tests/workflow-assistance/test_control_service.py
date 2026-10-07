@@ -51,7 +51,7 @@ def request_payload(**over):
         "task_id": "WL-CONTROL-1",
         "revision": None,
         "attempt": None,
-        "scope": {"boundaries": ["D:/All projects/WORK-LAB"], "granted_by": "owner 2026-10-08 授权批次 C"},
+        "scope": {"boundaries": [str(ROOT)], "granted_by": "owner 2026-10-08 授权批次 C"},
         "expected_version": None,
         "idempotency_key": "idem-control-0001",
         "actor": "qoder-session",
@@ -403,6 +403,41 @@ class ControlPlaneTestCase(unittest.TestCase):
         self.assertNotIn(goal, serialised)
         self.assertIn("goal", line["record"]["checkpointKeys"])
         self.assertEqual(len(line["record"]["checkpointDigest"]), 64)
+
+
+class TestFixturesDoNotAssumeTheAuthorMachine(unittest.TestCase):
+    """The literal that made CI red: 18 refusals while every local run was green.
+
+    The default request fixture named *this developer's* checkout as the authorised scope
+    boundary. The containment rule (`f9f38d6`) is what made that literal observable, and it
+    refused correctly -- so the defect was the fixture, not the rule. A fixture that is only true
+    on one machine tests nothing on another, and the failure lands on the machine that cannot
+    edit it.
+    """
+
+    def test_default_boundary_is_the_checkout_under_test(self) -> None:
+        boundaries = request_payload()["scope"]["boundaries"]
+        self.assertEqual([str(ROOT)], boundaries,
+                         "fixture boundary must be derived from this file's own root, never a "
+                         "hard-coded machine path")
+
+    def test_every_default_boundary_is_inside_the_planes_project_root(self) -> None:
+        inside = control_service._inside_project
+        plane_root = ROOT
+        for boundary in request_payload()["scope"]["boundaries"]:
+            ok, root_text, lexical = inside(boundary, plane_root)
+            self.assertTrue(ok, f"{boundary} resolves outside {root_text} (lexical {lexical}); "
+                                f"the plane would refuse every write in this suite")
+
+    def test_the_fixture_proves_the_refusal_still_works_for_a_foreign_root(self) -> None:
+        """Fixing the fixture must not quietly delete the guard it was caught by."""
+        plane = control_service.build_plane(fixture_dir(prefix="control-machine-"), ROOT)
+        try:
+            result = plane.execute(request_payload(
+                scope={"boundaries": ["D:/All projects/OTHER-PROJECT"], "granted_by": "x"}))
+            self.assertNotEqual("ACCEPTED", result["status"], result)
+        finally:
+            plane.store.close()
 
 
 class ControlTransportTests(unittest.TestCase):
