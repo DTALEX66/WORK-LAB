@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 139,
+    "total": 140,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 49,
       "test_behavior_alignment": 15,
       "working_directory_recovery": 2,
       "evidence_state": 23,
-      "ci_configuration": 11,
+      "ci_configuration": 12,
       "feature_gap": 10,
       "config_downgrade": 3,
       "dead_entry": 3,
@@ -3872,6 +3872,34 @@
       "repeat_prevention": "Never swallow a removal error inside a fixture teardown; every temp fixture must pass dir= inside the declared runtime root; and a cleanup outside the repository must write its manifest and archive unique bytes before deleting anything. A sweep may not answer with one verb for hits of different authorship — each needs a rule with a tracked basis, and an unmatched hit must fail the run.",
       "remaining_boundary": "28 mkdtemp call sites in tracked code still pass no dir= (21 in 12 test files, 7 in 3 production files under client-neutral-core and services/session-federation, which need a cross-module card); their residue-forming status is NOT adjudicated — only auth-ref-* was proven to leak. TemporaryDirectory() self-cleans and is out of scope. The 7 archived contents live under .project-local, so CI cannot see them; the tracked claim is the manifest's structure and the gate, not the archive bytes.",
       "status_after": "PASS"
+    },
+    {
+      "error_id": "ERR-142",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "ci_configuration",
+      "entrypoint": "scripts/audit/project_local_citation_audit.py, tests/workflow-assistance/test_project_local_citation_audit.py, docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json, tests/workflow-assistance/test_ag19_record_root_pin_test.py",
+      "command": "python services/orchestration/run_quality_gate.py governance",
+      "exit_code": 1,
+      "observed_error": "Actions failed the workflow-assistance job at c53de17 and again at 3e1f88b. The failing member was my own gate: test_regenerating_the_record_is_idempotent_apart_from_the_timestamp asserted the citation audit's exit code was 0 and got 1, because on a clean runner the audit queued .project-local/toolchains, .project-local/toolchains/wl-ag11, .project-local/toolchains/wl-py311/Scripts/python.exe and four other runtime paths that exist only on the box that produced them. Local repro was green moments earlier: reproduce_ci_commands.py ran 89 commands with only the three known cargo/npm skips, because it ran on this machine, where the files are present. The same class was already recorded as ERR-133.",
+      "root_cause": "The audit answered 'does this citation's bytes exist?' from the local filesystem, and the declared runtime root .project-local/ is git-ignored, so the answer — and therefore the queue, the unadjudicated count and the exit code — differs per machine. A gate discovered by run_quality_gate.py governance runs in CI, so a machine-dependent verdict is a machine-dependent build. Second-order: my new test asserted a machine-dependent value (exit code, then counts.presentOnThisMachine) instead of the invariant. Third-order: I pushed without the clean-checkout run that would have caught both, which is the discipline ERR-136 states.",
+      "fix": "exists() now answers from the repository: any token under .project-local/ is treated as not checkout-verifiable on every machine, counts.checkoutVerifiable is 0 by construction, and counts.presentOnThisMachine reports local disk state separately as information, never as a claim to compare. The naive version of that rule pushed the review queue from 22 to 148 entries, so two classes were declared instead of adjudicated path by path: machine_local_runtime_narration (489 citations — register rows, handoff notes and reports describing what their own run produced) and machine_local_runtime_pointer (132 — code and docs naming a runtime location without telling a reader to open it). Reader-facing documents and tracked machine fields still queue, so the ERR-131 class is unchanged: the queue is 6 and every entry carries a disposition that either names the re-measure command or the tracked observation standing in for the bytes. The gate asserts the deterministic subset only, and the AG-19 extraction test skips where the ignored root was never populated.",
+      "regression_test": "tests/workflow-assistance/test_project_local_citation_audit.py::CitationAuditGate::test_a_runtime_root_path_is_never_treated_as_checkout_verifiable",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Any tracked instrument whose exit code a CI-discovered gate consumes must answer from the repository, never from local disk state; a machine-local path can only be called adjudicated when the record names how to re-measure it or what tracked observation replaces it. Before pushing a CI-visible gate, run it in a clean checkout (git worktree at the exact head, with an empty ignored root) as well as locally, and never assert a count the record itself declares machine-dependent.",
+      "remaining_boundary": "The clean-checkout simulation still cannot reproduce the Hermes-home and portable-install guards: 17 members (test_action_plan_sync, test_workflow_governance, test_machine_identity) fail inside a worktree for want of the live environment, exactly as ERR-133 recorded, so a worktree is a detector for machine-local-file bugs and not a full CI substitute. The real CI readback at the fixing head is still owed when this record is written; verifiedCommit stays null until it comes back green.",
+      "status_before": "PASS",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "f33b784",
+        "fixedCommit": "9e518e2",
+        "verifiedCommit": null,
+        "affectedCapability": "CI gate determinism; citation-debt auditing",
+        "regressionCommand": "python -m pytest tests/workflow-assistance/test_project_local_citation_audit.py",
+        "introducedCommitNote": "f33b784 is where the idempotence test that asserted the exit code landed; the underlying exists() rule is older than that, so this names the commit that made the defect CI-visible rather than the one that created it",
+        "bindingNote": "bound 2026-10-07: the rule fix is 4950041, the test-count fix d2e0234 and the inventory re-measure 9e518e2; status_after is PARTIAL until an exact-SHA CI readback at 9e518e2 or later returns all-green"
+      }
     }
   ],
   "wlrReconciled": true,

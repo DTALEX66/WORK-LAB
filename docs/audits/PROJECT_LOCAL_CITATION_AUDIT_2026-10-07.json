@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T00:52:08Z",
+  "generatedAt": "2026-10-07T00:59:30Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2034,
     "distinctProjectLocalTokens": 382,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 382,
-    "citationsToAbsentTokens": 999
+    "citationsToAbsentTokens": 1010
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,7 +29,7 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 489,
+      "citations": 494,
       "distinctPaths": 301
     },
     "machine_local_runtime_pointer": {
@@ -37,7 +37,7 @@
       "distinctPaths": 56
     },
     "negative_assertion_or_removal_record": {
-      "citations": 100,
+      "citations": 102,
       "distinctPaths": 40
     },
     "path_pattern_or_truncated_token": {
@@ -49,7 +49,7 @@
       "distinctPaths": 1
     },
     "unclassified_needs_human_read": {
-      "citations": 37,
+      "citations": 41,
       "distinctPaths": 3
     }
   },
@@ -4092,6 +4092,18 @@
         "text": "保留项：`.project-local/toolchains`（860 MB，门禁唯一依赖）、本轮全部日志与证据（`e2e-run1..5.log`、`build-msvc.log`、`retired-gnu/app-gnu-20260921.exe`、诊断 JSON）。仓库外增量：共用 `CARGO_HOME/registry` 今日新增 123 文件 / 4.18 MB（镜像 crate 与解"
       },
       {
+        "path": ".project-local/toolchains",
+        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "line": 74,
+        "text": "`.project-local/toolchains/…` 路径入了队。本地 `reproduce_ci_commands.py` 89 条命令只有 3 个已知 cargo/npm 失败，因为它跑在这台机器上。"
+      },
+      {
+        "path": ".project-local/toolchains",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 3885,
+        "text": "\"observed_error\": \"Actions failed the workflow-assistance job at c53de17 and again at 3e1f88b. The failing member was my own gate: test_regenerating_the_record_is_idempotent_apart_from_the_timestamp a"
+      },
+      {
         "path": ".project-local/toolchains/lambda",
         "file": "docs/audits/LAMBDA_ARCHIVE_RELEASE_2026-10-07.json",
         "line": 13,
@@ -4138,6 +4150,12 @@
         "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-G.md",
         "line": 34,
         "text": "- New project-local environment `.project-local/toolchains/wl-ag11` (272,004,834 B: pillow,"
+      },
+      {
+        "path": ".project-local/toolchains/wl-ag11",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 3885,
+        "text": "\"observed_error\": \"Actions failed the workflow-assistance job at c53de17 and again at 3e1f88b. The failing member was my own gate: test_regenerating_the_record_is_idempotent_apart_from_the_timestamp a"
       },
       {
         "path": ".project-local/toolchains/wl-py311",
@@ -4195,6 +4213,12 @@
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 239,
+        "text": "| CI-MACHINE-STATE-20261007 | P0 | CI_RED_AT_c53de17_AND_3e1f88b / RULE_FIXED / CLEAN_CHECKOUT_SIM_VERIFIES / ERR-142 / CI_READBACK_OWED_AT_9e518e2 | 我自己加的门禁把 CI 弄红了两次，根因不是新代码写错，而是**引用审计用本机磁盘状态回答“这些字节"
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261006-B.md",
         "line": 110,
         "text": "3. 工具链：Python `.project-local/toolchains/wl-py311/Scripts/python.exe`（**必须前置 PATH**，否则"
@@ -4210,6 +4234,12 @@
         "file": "taskpacks/current/SESSION-HANDOFF-P0C-20261006.md",
         "line": 184,
         "text": "- Python 用 .project-local/toolchains/wl-py311/Scripts/python.exe，并前置到 PATH"
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 3885,
+        "text": "\"observed_error\": \"Actions failed the workflow-assistance job at c53de17 and again at 3e1f88b. The failing member was my own gate: test_regenerating_the_record_is_idempotent_apart_from_the_timestamp a"
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
@@ -5213,6 +5243,18 @@
       },
       {
         "path": ".project-local",
+        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "line": 75,
+        "text": "- 根因：审计用**本机磁盘**回答“字节在不在”，而 `.project-local/` 按声明就是 git-ignored 运行根 ⇒ 结论随机器变，CI 就跟着随机器变。"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 3886,
+        "text": "\"root_cause\": \"The audit answered 'does this citation's bytes exist?' from the local filesystem, and the declared runtime root .project-local/ is git-ignored, so the answer — and therefore the queue, "
+      },
+      {
+        "path": ".project-local",
         "file": "taskpacks/history/WORK-LAB-INTEGRATED-TASKPACK-20260916-NF03-SPILL-RECEIPT.md",
         "line": 11,
         "text": "| 隔离 gate venv `gate-venv/` | `.project-local/runs/gate-venv` | runtimeRoot ✅ | 被 `.gitignore` 的 `.project-local/` 覆盖，不入 Git；**未**用 `--require-hashes`/未碰 Hermes 运行时 venv 与全局 Python |"
@@ -6005,9 +6047,33 @@
       },
       {
         "path": ".project-local",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 239,
+        "text": "| CI-MACHINE-STATE-20261007 | P0 | CI_RED_AT_c53de17_AND_3e1f88b / RULE_FIXED / CLEAN_CHECKOUT_SIM_VERIFIES / ERR-142 / CI_READBACK_OWED_AT_9e518e2 | 我自己加的门禁把 CI 弄红了两次，根因不是新代码写错，而是**引用审计用本机磁盘状态回答“这些字节"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 239,
+        "text": "| CI-MACHINE-STATE-20261007 | P0 | CI_RED_AT_c53de17_AND_3e1f88b / RULE_FIXED / CLEAN_CHECKOUT_SIM_VERIFIES / ERR-142 / CI_READBACK_OWED_AT_9e518e2 | 我自己加的门禁把 CI 弄红了两次，根因不是新代码写错，而是**引用审计用本机磁盘状态回答“这些字节"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "line": 76,
+        "text": "- 修法是一条规则：`exists()` 只对仓库负责；`.project-local/` 在任何机器上都判为不可从检出验证；`checkoutVerifiable` 恒 0；`presentOnThisMachine` 只报数不参与跨机比较。"
+      },
+      {
+        "path": ".project-local",
         "file": "taskpacks/current/error-ledger.json",
         "line": 3589,
         "text": "\"fix\": \"The two moved paths were left alone after measuring them against the `cd` prefix the command itself carries — `cd apps/observer && node tests/run_all_tests.js` is correct and my first pass had"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 3887,
+        "text": "\"fix\": \"exists() now answers from the repository: any token under .project-local/ is treated as not checkout-verifiable on every machine, counts.checkoutVerifiable is 0 by construction, and counts.pre"
       },
       {
         "path": ".project-local",

@@ -67,6 +67,22 @@
 - 门禁：`tests/workflow-assistance/test_ag19_record_root_pin_test.py`（12 项）。
 
 
+
+## CI 红了两次：机器状态泄漏进门禁（ERR-142）
+
+- 现象：`workflow-assistance` 作业在 c53de17 与 3e1f88b 失败，失败项是我本轮新加的引用审计幂等测试——它断言审计退出码为 0，而 runner 上审计把只有本机的
+  `.project-local/toolchains/…` 路径入了队。本地 `reproduce_ci_commands.py` 89 条命令只有 3 个已知 cargo/npm 失败，因为它跑在这台机器上。
+- 根因：审计用**本机磁盘**回答“字节在不在”，而 `.project-local/` 按声明就是 git-ignored 运行根 ⇒ 结论随机器变，CI 就跟着随机器变。
+- 修法是一条规则：`exists()` 只对仓库负责；`.project-local/` 在任何机器上都判为不可从检出验证；`checkoutVerifiable` 恒 0；`presentOnThisMachine` 只报数不参与跨机比较。
+- 直接套规则会让队列 22 → 148，于是改成声明两个类别：`machine_local_runtime_narration`(489 引用) 与 `machine_local_runtime_pointer`(132 引用)；面向读者的文档与
+  被跟踪的 machine 字段仍入队 ⇒ ERR-131 类缺陷没有被放宽，队列 6 条全部带处置（写明重测命令或替代的 tracked 观察）。
+- 我加的测试自己也犯过一次同类错：比较了 `presentOnThisMachine`（干净检出里是 10 vs 本机 174），已在 d2e0234 改为只比较三个确定性计数，并加断言
+  `checkoutVerifiable == 0`。AG-19 的解包件校验改为在缺 `.project-local` 的检出上诚实 skip。
+- **验证方式换掉**：推之前用 `git worktree` 指向精确 SHA、`.project-local` 为空，跑相关门禁；六个门禁 61 passed / 2 skipped。同时确认 worktree 不能替代 CI：
+  Hermes Home / portable-install 那 17 项因缺实际环境而红（与 ERR-133 的结论一致），所以 worktree 只用来抓“本机文件泄漏进判定”这一类。
+- 在册：`CI-MACHINE-STATE-20261007`；错误账本 ERR-142（status_after=PARTIAL，verifiedCommit 仍空，等 9e518e2 或更后面的 exact-SHA 回读全绿才转正）。
+
+
 ## 仍然未知 / 仍然欠（不伪装成已完成）
 
 - 28 处不带 `dir=` 的 `mkdtemp` 在册债务（12 测试文件 21 处 / 3 生产文件 7 处）；是否漏出残渣只对被实测的

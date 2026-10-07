@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T00:56:47Z",
+  "generatedAt": "2026-10-07T00:59:37Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -58,7 +58,7 @@
       "lines": 265,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 7,
+      "citedByRecords": 8,
       "citedBy": [
         ".project/governance/recovered-source-registry.json",
         "docs/audits/AG19_RECORD_ROOT_PIN_TEST_2026-10-07.json",
@@ -348,7 +348,7 @@
       "bytes": 20673,
       "lines": 327,
       "digestBasis": "git-blob-at-HEAD",
-      "citedByLedgerPromises": 2,
+      "citedByLedgerPromises": 3,
       "citedByRecords": 6,
       "citedBy": [
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
