@@ -7,8 +7,9 @@ belong to the digest that was recorded.
 
 This module reads an exact interval and reports enough identity to trust it:
 
-* the handle must resolve inside this repository — an absolute path outside the boundary, a missing file,
-  a directory, and an unreadable file are each their own typed failure, never an empty success;
+* the handle must resolve inside a declared evidence surface — an absolute path outside the repository, a
+  path that is inside the repository but not evidence, a credential-shaped name, a missing file, a
+  directory, and an unreadable file are each their own typed failure, never an empty success;
 * the caller may pin the expected whole-file digest; a mismatch is DIGEST_MISMATCH and returns NO content,
   because showing bytes from a file that is not the recorded one is worse than showing nothing;
 * `sliceDigest` is a digest of exactly the bytes returned, so an interval can be cited without shipping
@@ -16,7 +17,8 @@ This module reads an exact interval and reports enough identity to trust it:
 * cost is measured and reported (bytes read against file size), because the point of the feature is that a
   slice of a large log is cheap, and that claim has to be checkable.
 
-Read-only by construction: there is no write path here, and it never follows a handle out of the project.
+Read-only by construction: there is no write path here, it never follows a handle out of the project, and
+it never serves a file that the project's own boundary calls configuration, credentials, or a session store.
 """
 from __future__ import annotations
 
@@ -36,6 +38,8 @@ REFUSALS = {
     "HANDLE_REQUIRED": "handle 为空：没有句柄就没有对象。",
     "ABSOLUTE_PATH_REQUIRED": "handle 必须是绝对路径；相对路径会随调用者的工作目录改变所指文件。",
     "OUT_OF_BOUNDARY": "handle 解析到本仓库之外，只读投影不跨越项目边界。",
+    "OUT_OF_EVIDENCE_SURFACE": "handle 不在声明的证据目录内：项目内部本身就是敏感的，边界不等于许可。",
+    "SENSITIVE_NAME": "handle 指向凭证、配置、会话库或密钥类文件，读取投影在任何边界内都不提供这类内容。",
     "UNRESOLVABLE": "handle 无法解析，按失败关闭处理。",
     "NOT_A_FILE": "handle 不指向普通文件（不存在、目录或特殊文件）。",
     "UNREADABLE": "handle 存在但读不了；这是实测到的失败，不是没有内容。",
@@ -44,6 +48,42 @@ REFUSALS = {
     "DIGEST_SHAPE": "expected_digest 必须是 64 位十六进制 sha256。",
     "DIGEST_UNAVAILABLE": "调用方给了 expected_digest 却没有可比的摘要来源，无法判定一致性；不返回内容。",
 }
+
+# `.project-local/artifacts` and `.project-local/runs` are what the boundary declaration names as evidence
+# and runtime surfaces. Everything else inside the repository is source, configuration, or a local database:
+# staying inside the Git root is a spill rule, not a reading licence.
+DEFAULT_EVIDENCE_ROOTS = (".project-local/artifacts", ".project-local/runs")
+
+# The owner's no-read law is about kinds of content, so it is enforced by name as well as by directory: a
+# restored pre-install backup sits under an evidence root and still contains another tool's config.
+SENSITIVE_NAME_TOKENS = (
+    ".env", "credential", "secret", "token", "cookie", "password", "private_key", ".key", ".pem",
+    ".pfx", ".pkcs12", "id_rsa", "config.yaml", "config.yml", "canonical.sqlite", ".sqlite", ".db",
+    "session", "auth_store", "login data", "history",
+)
+
+
+def _name_is_sensitive(resolved: Path) -> bool:
+    names = [part.lower() for part in resolved.parts]
+    return any(token in name for name in names for token in SENSITIVE_NAME_TOKENS)
+
+
+BOUNDARY_DECLARATION = ".project/governance/project-data-boundary.json"
+_BOUNDARY_ROOT_KEYS = ("canonicalEvidenceRoot", "taskArtifactsRoot", "runtimeRoot")
+
+
+def declared_evidence_roots(root: Path) -> tuple[str, ...]:
+    """Read the evidence surfaces from the boundary declaration instead of hardcoding a second opinion.
+
+    A missing or unreadable declaration falls back to the narrow default, never to "everything in the
+    repository": an absent authority is a reason to refuse, not to allow.
+    """
+    try:
+        document = json.loads((Path(root) / BOUNDARY_DECLARATION).read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return DEFAULT_EVIDENCE_ROOTS
+    declared = tuple(str(document[key]) for key in _BOUNDARY_ROOT_KEYS if document.get(key))
+    return declared or DEFAULT_EVIDENCE_ROOTS
 
 
 def _sha256_slice(data: bytes) -> str:
@@ -63,8 +103,14 @@ def _refusal(code: str, *, handle: str, detail: str = "") -> dict[str, Any]:
 
 
 def read_range(*, handle: str, root: Path, offset: int = 0, limit: int = DEFAULT_LIMIT,
-               expected_digest: str | None = None, whole_digest: str | None = None) -> dict[str, Any]:
-    """Read `limit` bytes at `offset` from a project-scoped artifact handle."""
+               expected_digest: str | None = None, whole_digest: str | None = None,
+               evidence_roots: tuple[str, ...] = DEFAULT_EVIDENCE_ROOTS) -> dict[str, Any]:
+    """Read `limit` bytes at `offset` from a declared evidence artifact inside this project.
+
+    `evidence_roots` are relative to `root` and default to the surfaces the boundary declaration names as
+    evidence and runtime storage. Passing an explicit tuple narrows the surface; passing () refuses
+    everything, because an unset surface is not the same as an unrestricted one.
+    """
     root = Path(root).resolve()
     if not handle or not str(handle).strip():
         return _refusal("HANDLE_REQUIRED", handle=str(handle))
@@ -77,6 +123,13 @@ def read_range(*, handle: str, root: Path, offset: int = 0, limit: int = DEFAULT
         return _refusal("UNRESOLVABLE", handle=str(handle), detail=type(error).__name__)
     if not resolved.is_relative_to(root):
         return _refusal("OUT_OF_BOUNDARY", handle=str(handle), detail=str(resolved))
+    if _name_is_sensitive(resolved):
+        # Named before the surface test: a credential-looking path is refused even when it sits in an
+        # evidence root, so a restored backup cannot be read just because it was filed under artifacts/.
+        return _refusal("SENSITIVE_NAME", handle=str(handle), detail=resolved.name)
+    surfaces = tuple((root / relative).resolve() for relative in evidence_roots)
+    if not surfaces or not any(resolved.is_relative_to(surface) for surface in surfaces):
+        return _refusal("OUT_OF_EVIDENCE_SURFACE", handle=str(handle), detail=str(resolved))
     if not resolved.is_file():
         return _refusal("NOT_A_FILE", handle=str(handle))
     if limit <= 0:
@@ -167,10 +220,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--offset", type=int, default=0)
     parser.add_argument("--limit", type=int, default=DEFAULT_LIMIT)
     parser.add_argument("--expected-digest", default=None)
+    parser.add_argument("--evidence-root", action="append", default=None,
+                        help="relative evidence surface; defaults to the boundary declaration")
     parser.add_argument("--json", action="store_true", help="print the full typed result")
     args = parser.parse_args(argv)
+    roots = tuple(args.evidence_root) if args.evidence_root else declared_evidence_roots(args.root)
     result = read_range(handle=args.handle, root=args.root, offset=args.offset, limit=args.limit,
-                        expected_digest=args.expected_digest)
+                        expected_digest=args.expected_digest, evidence_roots=roots)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     else:

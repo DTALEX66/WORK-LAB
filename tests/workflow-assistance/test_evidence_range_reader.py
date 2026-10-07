@@ -150,7 +150,8 @@ class RefusalTests(unittest.TestCase):
             ({}, "HANDLE_REQUIRED", {"handle": "  "}),
             ({}, "ABSOLUTE_PATH_REQUIRED", {"handle": "relative/file.log"}),
             ({}, "OUT_OF_BOUNDARY", {"handle": str(OUTSIDE_PROBE)}),
-            ({}, "NOT_A_FILE", {"handle": str(ROOT)}),
+            ({}, "OUT_OF_EVIDENCE_SURFACE", {"handle": str(ROOT)}),
+            ({}, "NOT_A_FILE", {"handle": str(self.dir)}),
             ({}, "NOT_A_FILE", {"handle": str(self.dir / "never-created.log")}),
             ({}, "LIMIT_TOO_LARGE", {"limit": err.MAX_LIMIT + 1}),
             ({}, "OFFSET_PAST_END", {"offset": 500}),
@@ -181,7 +182,70 @@ class RefusalTests(unittest.TestCase):
         self.assertFalse(OUTSIDE_PROBE.exists(), "the reader created the file it was refusing to read")
 
     def test_a_directory_handle_is_refused_as_not_a_file(self) -> None:
-        self.assertEqual(self.read(handle=str(ROOT))["reason_code"], "NOT_A_FILE")
+        self.assertEqual(self.read(handle=str(self.dir))["reason_code"], "NOT_A_FILE")
+
+    def test_the_repository_root_is_not_an_evidence_surface(self) -> None:
+        """Inside the Git root is a spill rule, not a reading licence.
+
+        The first version of this reader stopped at `is_relative_to(root)` and therefore served any file in
+        the repository over HTTP: `.hermes/task-runtime/**/canonical.sqlite` (a task/session database), a
+        restored `hermes/config.yaml` backup, and anything named `.env*` all sat inside that boundary and
+        answered READ_OK. The reviewer reproduced all three.
+        """
+        result = self.read(handle=str(ROOT))
+        self.assertEqual(result["reason_code"], "OUT_OF_EVIDENCE_SURFACE")
+        self.assertIsNone(result["content"])
+
+
+class EvidenceSurfaceTests(unittest.TestCase):
+    """Staying inside the project is necessary and not sufficient — the surface and the name both decide."""
+
+    def setUp(self) -> None:
+        self.dir = fixture_dir(prefix="range-surface-")
+        self.path = self.dir / "run.log"
+        self.path.write_text("evidence bytes", encoding="utf-8")
+
+    def read(self, handle: str, **over):
+        return err.read_range(handle=handle, root=ROOT, offset=0, limit=64, **over)
+
+    def test_a_file_on_a_declared_evidence_surface_reads(self) -> None:
+        self.assertEqual(self.read(str(self.path))["reason_code"], "READ_OK")
+
+    def test_source_inside_the_repository_is_not_evidence(self) -> None:
+        for probe in (ROOT / "services" / "orchestration" / "sidecar.py",
+                      ROOT / ".project" / "governance" / "project-authority-index.json",
+                      ROOT / "config" / "config-ownership.json"):
+            with self.subTest(probe=str(probe)):
+                result = self.read(str(probe))
+                self.assertEqual(result["reason_code"], "OUT_OF_EVIDENCE_SURFACE")
+                self.assertIsNone(result["content"])
+
+    def test_credential_shaped_names_are_refused_even_under_an_evidence_root(self) -> None:
+        # The refusal is decided from the path alone, so these names stay uncreated: no test may plant a
+        # .env or a session database in the project just to prove it will not be read.
+        for name in (".env", "hermes-config.yaml", "canonical.sqlite", "id_rsa",
+                     "cookies.sqlite", "browser_data.session", "server.pem"):
+            with self.subTest(name=name):
+                probe = self.dir / "never-created" / name
+                self.assertFalse(probe.exists())
+                result = self.read(str(probe))
+                self.assertEqual(result["reason_code"], "SENSITIVE_NAME", result["reason"])
+                self.assertIsNone(result["content"])
+
+    def test_a_narrowed_surface_refuses_a_file_that_the_default_surface_allows(self) -> None:
+        """An unset surface must fail closed, not fall back to the whole repository."""
+        self.assertEqual(self.read(str(self.path), evidence_roots=())["reason_code"],
+                         "OUT_OF_EVIDENCE_SURFACE")
+        self.assertEqual(self.read(str(self.path), evidence_roots=(".project-local/artifacts",))["reason_code"],
+                         "OUT_OF_EVIDENCE_SURFACE")
+        self.assertEqual(self.read(str(self.path))["reason_code"], "READ_OK")
+
+    def test_the_declared_roots_come_from_the_boundary_authority(self) -> None:
+        declared = err.declared_evidence_roots(ROOT)
+        self.assertIn(".project-local/artifacts", declared)
+        self.assertIn(".project-local/runs", declared)
+        # A machine without the declaration falls back to the narrow default, never to "everything".
+        self.assertEqual(err.declared_evidence_roots(ROOT / "no-such-place"), err.DEFAULT_EVIDENCE_ROOTS)
 
 
 class LargeArtifactCostTests(unittest.TestCase):

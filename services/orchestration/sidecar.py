@@ -591,10 +591,18 @@ def create_server(
                 self.send_json(200, sidecar.v3_snapshot())  # P0-2: 真 v3
             elif path == "/api/v1/evidence-range":
                 # REQ-RANGE: a read-only slice of a large artifact, addressed by an exact byte interval.
-                # The typed verdict lives in the body (HTTP 200 never means the read succeeded), and the
-                # reader refuses any handle that resolves outside this project or any verification it would
-                # have to buy by reading the whole file.
+                # The typed verdict lives in the body (HTTP 200 never means the read succeeded). Two things
+                # narrow it beyond "inside the repository": the handle must sit on an evidence surface the
+                # boundary declaration names, and the peer must be a literal loopback address — a name that
+                # resolves to loopback today can be redirected by a HOSTS entry tomorrow.
                 query = parse_qs(urlsplit(self.path).query)
+                if not ipaddress.ip_address(str(self.client_address[0])).is_loopback:
+                    self.send_json(403, {
+                        "schema_version": evidence_range_reader.SCHEMA_VERSION,
+                        "status": "REFUSED", "reason_code": "PEER_NOT_LOOPBACK",
+                        "reason": "证据区间只从环回地址提供。", "content": None,
+                    })
+                    return
                 try:
                     offset = int((query.get("offset") or ["0"])[0])
                     limit = int((query.get("limit") or [str(evidence_range_reader.DEFAULT_LIMIT)])[0])
@@ -613,6 +621,7 @@ def create_server(
                     limit=limit,
                     expected_digest=(query.get("expectedDigest") or [None])[0],
                     whole_digest=(query.get("wholeDigest") or [None])[0],
+                    evidence_roots=evidence_range_reader.declared_evidence_roots(sidecar.project_root),
                 ))
             elif path == "/api/v1/events":
                 if server._closed:
