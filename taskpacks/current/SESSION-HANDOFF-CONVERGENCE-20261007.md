@@ -304,3 +304,22 @@ completed success，且该头含记录本身，`verifiedCommitNote` 记的就是
 
 5. **合并预演（只读，写下本节时实测）**：在 `7fedb3c` 上 `git merge-tree --write-tree origin/main HEAD` 退出 0、无冲突（合并态树 fa5aaba22）；台账 160 行、`summary.total=160` 一致、error_id 重复 无；注册表 14 行 （tracked 9／machine-local 2／absent 1／unpinned 2）；晋升进树的 atlas 在合并态仍是 446,119 B、sha256 79bf958a6e92…。合并仍未做，未打 tag，未发布；
    PR #162 的合并与发布决定权在 owner。
+
+### 6.9 本轮收口（实测，写下本节时）
+
+分支头 `e97ea2e` 的全部运行：
+
+```
+   - wlr-060-production-gates：completed/success
+   - work-lab-gate：completed/success
+   - work-lab-gate：completed/success
+```
+
+本地 CI 等价批次在同一棵树上通过：`QUALITY_GATE_GOVERNANCE_PASS modules=207 executed=2176 ran=2184 skipped=8`。台账 160 行，已盖 verifiedCommit
+的记录 51 条；仍空的是 ['ERR-085']——ERR-085 的修复提交不在本分支历史里，盖任何本分支头都会
+谎报覆盖，原因已写进该条记录本身，不用邻近 SHA 糊过去。
+
+本轮之后自治可推进项清空：剩下的全部是 owner 决定（PR #162 合并、tag/release 与 U19 发布二进制、
+U02 发布半、U03 `web/` 退役、OD02/03/04、`qwen2.5vl/7b` 入库或撤账、两处许可判断），
+或需要真实项目与第二真实执行器（AG-09/AG-10/AG-16 端到端、AG-11 的真实音频与多页 PDF）。
+未合并、未打 tag、未发布。
