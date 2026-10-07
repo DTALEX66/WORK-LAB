@@ -4359,7 +4359,7 @@
         "regressionCommand": "python -m pytest tests/ci/test_topbar_geometry_gate.py",
         "bindingNote": "bound 2026-10-07 against 91c2c8a: that commit removes the required step and carries both HTTP fixes plus the gate's test (tests/ci/test_topbar_geometry_gate.py); the promise check ran before stamping and the bulk guard counted the ledger rows it adds (0). verifiedCommit stays null until an exact-SHA readback covers a head containing this record",
         "bindingBasis": "fix-and-revert-in-one-commit: the fix is the removal of the wiring that the record describes, so the same commit is both the change and its evidence",
-        "verifiedCommitNote": "exact-SHA Actions readback at 904806202ae93e772b4e0a24d47c7aebb8c55491: work-lab-gate success, 7 jobs (gate-plan, supply-chain-security, token-monitor, workflow-assistance, integration, observer, aggregate) with no non-green job, plus wlr-060-production-gates success on the same head. The observer job built the desktop crate and passed the WebView E2E readback after the geometry step was removed, which is the state this record argues for: green restored by taking the refusing step out, not by softening its verdict."
+        "verifiedCommitNote": "exact-SHA Actions readback at 99c1107: work-lab-gate success, 7 jobs, none non-green. This head carries ERR-146's removal AND the later re-wiring that ERR-147 justified; the record stays as the account of why the step was taken out once."
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
@@ -4386,11 +4386,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the shortcuts came from the CDP helper written for WebView2 in an earlier round; the commit that turned it into a Chrome client is quoted in bindingBasis, and naming a single origin for all three bugs would be attribution rather than evidence",
         "fixedCommit": "1b4224abd75b77db51d16ad92edb12928cbb91cf",
-        "verifiedCommit": null,
+        "verifiedCommit": "99c1107746d25ab3a5ef39a1b9a1c0e36561d8c7",
         "affectedCapability": "Desktop geometry evidence; CI step surface",
         "regressionCommand": "python -m pytest tests/ci/test_topbar_geometry_gate.py",
         "bindingNote": "bound 2026-10-07 against 1b4224a: that commit carries the instrument and its 16 unit checks, restores the required CI step, and re-measures the tool inventory plus the current-state snapshot in the same change; the promise check ran before stamping",
-        "bindingBasis": "fix-and-gate-in-one-commit: HEAD `fix(gates): the geometry gate can now drive Chro…` is the commit whose source change is the client this record describes"
+        "bindingBasis": "fix-and-gate-in-one-commit: HEAD `fix(gates): the geometry gate can now drive Chro…` is the commit whose source change is the client this record describes",
+        "verifiedCommitNote": "exact-SHA Actions readback at 99c1107: the required step `Desktop geometry gate (CDP measurement of the built shell)` concluded success in the observer job, so the fixes this record describes hold on a second, independent Windows host and not only on the machine that found them. This supersedes the same record's remaining_boundary claim that G3 was still owed: it is now closed by measurement, on the runner and here."
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
