@@ -24,6 +24,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import random
 import sys
 import unittest
 from pathlib import Path
@@ -88,12 +89,16 @@ def summary_for(handles, **over):
                       "completeEnumeration": True, "filesObserved": len(handles)}],
         "surfaceState": [{"root": ARTIFACTS, "exists": True, "insideRepository": True}],
         "order": "modifiedAt-desc",
-        "selection": {"policy": "digest-reserve-then-newest-per-surface", "cap": len(handles) or 1,
+        "orderingKey": projection.ORDERING_KEY,
+        "orderingRule": projection.ORDERING_RULE,
+        "selection": {"policy": "digest-reserve-then-newest-per-surface", "orderingKey": projection.ORDERING_KEY,
+                      "tieBrokenBy": "handle-asc", "cap": len(handles) or 1,
                       "capTrimmedTail": False, "candidatesAfterQuotas": len(handles),
                       "digestReserve": {"artifactsWithRecordedDigest": 0, "seats": 0, "filled": 0},
                       "perSurface": {}},
         "enumeratedCount": len(handles),
         "projectedCount": len(handles),
+        "omittedCount": 0,
         "cap": len(handles) or 1,
         "truncated": False,
         "complete": True,
@@ -366,12 +371,16 @@ class ValidatorRuleTests(unittest.TestCase):
                 "digestRecorded": True, "digest": hashlib.sha256(b"pdf").hexdigest(),
                 "digestSource": "record:.project-local/artifacts/MANIFEST.json"}
 
-    def reject(self, rows, fragment, summary_over=None):
+    def reject(self, rows, fragment, summary_over=None, drop=()):
+        """`drop` removes a field the producer would have stated — an absent key is not an empty one."""
         summary = summary_for(rows, **(summary_over or {}))
+        for key in drop:
+            summary.pop(key, None)
         verdict = snapshot_validator.validate_snapshot(snapshot_with(rows, summary))
         self.assertFalse(verdict["valid"], f"accepted {rows}")
         self.assertTrue(any(fragment in error for error in verdict["errors"]),
                         f"errors={verdict['errors']} did not name {fragment!r}")
+        return verdict
 
     def test_a_real_projection_validates(self) -> None:
         root = make_root()
@@ -436,6 +445,42 @@ class ValidatorRuleTests(unittest.TestCase):
         self.reject(rows, "enumeratedCount", summary_over={"enumeratedCount": -3})
         self.reject(rows, "digestIndex required", summary_over={"digestIndex": "61 records"})
 
+    def test_a_truncated_list_must_name_the_ordering_key_it_used(self) -> None:
+        """A cap that keeps some rows and drops others owes the reader the key that decided it."""
+        rows = [self.good(), self.good_with_digest()]
+        # positive control: the identical payload WITH the stated key validates, so the refusals below
+        # convict the missing key and not the fixture
+        truncated = {"truncated": True, "enumeratedCount": 9, "projectedCount": 2, "cap": 2,
+                     "omittedCount": 7, "complete": False,
+                     "orderingKey": projection.ORDERING_KEY,
+                     "selection": {"policy": "digest-reserve-then-newest-per-surface",
+                                   "orderingKey": projection.ORDERING_KEY, "cap": 2}}
+        self.assertTrue(snapshot_validator.validate_snapshot(
+            snapshot_with(rows, summary_for(rows, **truncated)))["valid"])
+
+        self.reject(rows, "orderingKey required when truncated", summary_over=truncated,
+                    drop=("orderingKey",))
+        self.reject(rows, "orderingKey required when truncated", summary_over={**truncated,
+                                                                              "orderingKey": ""})
+        self.reject(rows, "orderingKey required when truncated", summary_over={**truncated,
+                                                                              "orderingKey": None})
+
+        # an empty key is refused even when the list was not capped — a blank rule is not a rule
+        self.reject([self.good()], "orderingKey must be a non-empty string",
+                    summary_over={"orderingKey": "   "})
+
+    def test_a_real_capped_projection_still_validates_after_the_disclosure_changed(self) -> None:
+        root = make_root()
+        for index in range(9):
+            path = write_evidence(root, f"shape/evidence-{index:02d}.txt", f"row {index}\n")
+            os.utime(path, (1_700_000_000 + index, 1_700_000_000 + index))
+        result = project(root, max_handles=4)
+        summary = result["summary"]
+        self.assertTrue(summary["truncated"])
+        verdict = snapshot_validator.validate_snapshot(snapshot_with(result["handles"], summary))
+        self.assertTrue(verdict["valid"], verdict["errors"])
+        self.assertEqual(summary["orderingKey"], projection.ORDERING_KEY)
+
     def test_a_summary_without_a_list_is_refused(self) -> None:
         """Hand-built producer path: the builder never splits the two, but another writer can."""
         snapshot = {"schemaVersion": snapshot_api.SNAPSHOT_SCHEMA_VERSION, "revision": 1,
@@ -497,6 +542,184 @@ class CapDisclosureTests(unittest.TestCase):
         self.assertGreaterEqual(reserve["filled"], 1)
         self.assertLessEqual(len(result["handles"]), 6)
         self.assertTrue(all(Path(handle).is_absolute() for handle in rows))
+
+
+class DeterministicSelectionTests(unittest.TestCase):
+    """The cap is a policy, so which rows survive it must not depend on the order the walk reached them.
+
+    Measured on this machine: 4.1k artifacts enumerate against ``MAX_HANDLES`` of 200, so ranking IS the
+    selection. If the surviving set were whatever the directory listing produced first, the Observer's
+    evidence lane would show one set now and another after any other run wrote a file, and two readers of
+    one snapshot revision would be shown different evidence. Each test below attacks that from one side.
+
+    Every fixture here stamps whole-second modification times, so the second-resolution ``modifiedAt`` a
+    reader sees cannot hide an inversion of the raw mtime the ranking actually used.
+    """
+
+    def stamp(self, path: Path, epoch: int) -> Path:
+        os.utime(path, (epoch, epoch))
+        return path
+
+    def names(self, rows) -> list[str]:
+        return [Path(row["handle"]).name for row in rows]
+
+    def handles_of(self, result) -> list[str]:
+        return [row["handle"] for row in result["handles"]]
+
+    # (a) same filesystem state -> the same list, in the same order, byte for byte.
+    def test_two_calls_over_the_same_state_project_identical_rows_in_identical_order(self) -> None:
+        root = make_root()
+        for index in range(12):
+            path = write_evidence(root, f"stable/evidence-{index:02d}.txt", f"row {index}\n")
+            # deliberately paired timestamps: a repeatability test whose fixture has no ties cannot see a
+            # tie-break leak, because distinct mtimes re-sort to one order however the rows arrive
+            self.stamp(path, 1_700_000_000 + index // 2)
+        first = project(root, max_handles=5)
+        second = project(root, max_handles=5)
+        self.assertTrue(first["handles"], "nothing was projected, so the comparison proved nothing")
+        self.assertEqual(self.handles_of(first), self.handles_of(second),
+                         "two calls over an unchanged tree projected the same artifacts in another order")
+        self.assertEqual(json.dumps(first["handles"], sort_keys=True, ensure_ascii=False),
+                         json.dumps(second["handles"], sort_keys=True, ensure_ascii=False),
+                         "the rows themselves are not byte-identical across calls")
+
+    # (b) eviction follows the ranked key: a NEW arrival pushes out the OLDEST projected row, never the newest.
+    def test_a_newer_artifact_evicts_the_oldest_projected_row_not_the_newest(self) -> None:
+        root = make_root()
+        base = 1_700_000_000
+        for index, name in enumerate(("aa.txt", "bb.txt", "cc.txt", "dd.txt", "ee.txt", "ff.txt")):
+            self.stamp(write_evidence(root, f"queue/{name}", f"row {index}\n"), base + index)
+        before = project(root, max_handles=5)
+        self.assertEqual(self.names(before["handles"]),
+                         ["ff.txt", "ee.txt", "dd.txt", "cc.txt", "bb.txt"],
+                         "the cap did not keep the 5 newest, newest-first")
+        self.assertFalse([row for row in before["handles"] if row["handle"].endswith("aa.txt")],
+                         "the oldest row survived a cap that still had newer candidates")
+
+        # one strictly newer file now occupies the seat the OLDEST projected row held
+        self.stamp(write_evidence(root, "queue/gg.txt", "newest\n"), base + 99)
+        after = project(root, max_handles=5)
+        self.assertEqual(self.names(after["handles"]),
+                         ["gg.txt", "ff.txt", "ee.txt", "dd.txt", "cc.txt"],
+                         "the arrival evicted something other than the oldest projected row (bb.txt)")
+        self.assertTrue(any(row["handle"].endswith("gg.txt") for row in after["handles"]),
+                        "the newest artifact was evicted by its own arrival")
+        again = project(root, max_handles=5)
+        self.assertEqual(self.handles_of(after), self.handles_of(again),
+                         "the same tree evicted a different row on the second call")
+
+    # (c) ties on mtime resolve by path, so a permuted directory listing cannot move the set.
+    def test_mtime_ties_resolve_by_handle_and_survive_a_permuted_listing(self) -> None:
+        root = make_root()
+        same_moment = 1_700_000_000
+        written_last_first = ["zeta.txt", "omega.txt", "middle.txt", "alpha.txt", "delta.txt", "bravo.txt"]
+        for name in written_last_first:
+            self.stamp(write_evidence(root, f"tied/{name}", "row\n"), same_moment)
+        cap = 3
+        result = project(root, max_handles=cap)
+        # equal timestamps => the tie-break alone decides, and it decides by the handle string
+        self.assertEqual(self.names(result["handles"]), sorted(written_last_first)[:cap],
+                         "equal-mtime rows were not ordered by handle")
+
+        original = projection._walk_all
+
+        def permuted_walk(walk_root, surfaces):
+            rows, per_surface, totals = original(walk_root, surfaces)
+            random.Random(20261008).shuffle(rows)
+            return rows, per_surface, totals
+
+        projection._walk_all = permuted_walk
+        try:
+            shuffled = project(root, max_handles=cap)
+        finally:
+            projection._walk_all = original
+        self.assertEqual(self.handles_of(shuffled), self.handles_of(result),
+                         "a permuted directory listing changed the projected rows, so the selection is "
+                         "still a function of walk order")
+        self.assertEqual(json.dumps(shuffled["handles"], sort_keys=True, ensure_ascii=False),
+                         json.dumps(result["handles"], sort_keys=True, ensure_ascii=False),
+                         "a permuted directory listing changed the row bytes")
+
+    # (d) the rule is written down, and what is written down is what was applied.
+    def test_the_summary_states_the_ordering_key_that_was_actually_applied(self) -> None:
+        root = make_root()
+        base = 1_700_000_000
+        self.stamp(write_evidence(root, "stated/new-01.txt", "row\n"), base + 30)
+        self.stamp(write_evidence(root, "stated/new-02.txt", "row\n"), base + 29)
+        # created in an order that CONTRADICTS the sorted order, so a projection that fell back on the
+        # directory listing could not pass this test by accident
+        for name in ("tie-c.txt", "tie-a.txt", "tie-b.txt"):
+            self.stamp(write_evidence(root, f"stated/{name}", "row\n"), base)
+        runtime = root / RUNS / "stated"
+        runtime.mkdir(parents=True, exist_ok=True)
+        for index in range(3):
+            log = runtime / f"run-{index}.log"
+            log.write_text("a real runtime log line\n", encoding="utf-8")
+            self.stamp(log, base + 5)
+
+        result = project(root, max_handles=4)
+        summary = result["summary"]
+        self.assertTrue(summary["truncated"], "this fixture did not exercise the truncation path")
+        self.assertEqual(summary["orderingKey"], projection.ORDERING_KEY,
+                         "the summary states an ordering key that is not the one the module ranks by")
+        self.assertEqual(summary["selection"]["orderingKey"], projection.ORDERING_KEY)
+        self.assertEqual(summary["order"], projection.ORDER_LABEL)
+        self.assertIn("handle", summary["orderingRule"],
+                      "the stated rule omits the tie-break, so a reader cannot reproduce the selection")
+
+        # a disclosure the reader can act on: cap, projected, enumerated, omitted, truncated, agreeing
+        self.assertEqual(summary["cap"], 4)
+        self.assertEqual(summary["projectedCount"], len(result["handles"]))
+        self.assertEqual(summary["enumeratedCount"], summary["projectedCount"] + summary["omittedCount"])
+        self.assertGreater(summary["omittedCount"], 0, "a truncated list declared no omission")
+        self.assertFalse(summary["complete"], "complete lost its existing false-on-truncation meaning")
+
+        # the emitted rows really do satisfy the key that was stated
+        self.assertEqual(self.names(result["handles"]),
+                         ["new-01.txt", "new-02.txt", "tie-a.txt", "tie-b.txt"])
+        for left, right in zip(result["handles"], result["handles"][1:]):
+            self.assertGreaterEqual(left["modifiedAt"], right["modifiedAt"],
+                                    f"rows are not newest-first: {left['handle']} before {right['handle']}")
+            if left["modifiedAt"] == right["modifiedAt"]:
+                self.assertLess(left["handle"], right["handle"],
+                                f"equal timestamps were not tie-broken by handle: {left['handle']}, "
+                                f"{right['handle']}")
+
+        verdict = snapshot_validator.validate_snapshot(snapshot_with(result["handles"], summary))
+        self.assertTrue(verdict["valid"], verdict["errors"])
+
+    def test_the_projected_order_reproduces_from_the_fields_the_rows_disclose(self) -> None:
+        """The key is auditable, not just declared: re-ranking the rows by their own `modifiedAt`+`handle`
+        must return the emitted list exactly. A key ranked on precision the row does not show — the raw
+        sub-second mtime — fails here, because a reader cannot re-derive the selection it claims."""
+        root = make_root()
+        base = 1_700_000_000
+        for index in range(9):
+            path = write_evidence(root, f"audit/evidence-{index:02d}.txt", "row\n")
+            # three artifacts per second: the disclosed stamp ties, the sub-second mtime does not
+            os.utime(path, (base + index / 3, base + index / 3))
+        result = project(root, max_handles=5)
+        self.assertEqual(len(result["handles"]), 5, "the cap did not bind, so re-ranking proved nothing")
+        disclosed = sorted(result["handles"], key=lambda row: row["handle"])
+        disclosed = sorted(disclosed, key=lambda row: row["modifiedAt"], reverse=True)
+        self.assertEqual([row["handle"] for row in disclosed], self.handles_of(result),
+                         "the projected list is not reproducible from the ordering it states")
+        self.assertEqual(json.dumps(disclosed, sort_keys=True, ensure_ascii=False),
+                         json.dumps(result["handles"], sort_keys=True, ensure_ascii=False))
+
+        verdict = snapshot_validator.validate_snapshot(
+            snapshot_with(result["handles"], result["summary"]))
+        self.assertTrue(verdict["valid"], verdict["errors"])
+
+    def test_one_ranking_function_answers_for_every_bound_taken(self) -> None:
+        """``_rank`` is what ORDERING_KEY names; a bound ranked elsewhere is a second, unstated policy."""
+        self.assertEqual(projection._rank(10, "b"), (-10, "b"))
+        self.assertEqual(projection._rank_row({"mtimeSecond": 10, "handle": "b"}), projection._rank(10, "b"))
+        rows = [{"mtimeSecond": 9, "handle": "z"}, {"mtimeSecond": 9, "handle": "a"},
+                {"mtimeSecond": 11, "handle": "m"}]
+        self.assertEqual([row["handle"] for row in sorted(rows, key=projection._rank_row)], ["m", "a", "z"])
+        # the ranked term is the disclosed whole second, never the raw float the filesystem returned
+        self.assertNotIn("mtime", projection._rank_row.__code__.co_names)
 
 
 class CompositionRootShapeTests(unittest.TestCase):

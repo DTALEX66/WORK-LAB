@@ -30,10 +30,19 @@ Hard refusals (ERR-166 is the reason these exist and are not optional):
   and indexes their stated digests, never their prose.
 
 Cost discipline, because this runs inside the read path (twice per snapshot: the live-gate skeleton and the
-snapshot itself): the canonical evidence surface is walked completely (measured 1.3k files, ~27 ms) and the
-runtime surface is walked to a declared depth with regenerable trees pruned (~2.9k files, ~60 ms). Anything
-that did not reach the snapshot is declared in ``artifactHandlesSummary`` — an enumeration can be capped,
-it can never be quietly capped.
+snapshot itself, TTL-cached at 60 s by the composition root): the canonical evidence surface is walked
+completely (measured 1.3k files, ~27 ms) and the runtime surface is walked to a declared depth with
+regenerable trees pruned (~2.9k files, ~60 ms). Anything that did not reach the snapshot is declared in
+``artifactHandlesSummary`` — an enumeration can be capped, it can never be quietly capped.
+
+Which rows the cap keeps is a policy, not a side effect of the walk, and it is stated as one constant:
+``ORDERING_KEY`` (newest ``modifiedAt`` first, ties broken by ascending handle). Every bound this module
+takes — the cap, the per-surface quotas, the digest reserve, and the digest-record budget that decides
+which citations exist at all — ranks through ``_rank``/``_rank_row``, so the projected set is a function of
+the repository's state rather than of directory listing order, and the same input yields byte-identical
+rows. The summary repeats the key alongside ``cap``/``projectedCount``/``enumeratedCount``/``omittedCount``
+/``truncated``, because a reader who is being truncated has to be able to tell what they are missing and
+why; ``snapshot_validator`` refuses a ``truncated: true`` list that names no ordering key.
 """
 from __future__ import annotations
 
@@ -122,6 +131,40 @@ FILE_ATTRIBUTE_REPARSE_POINT = 0x00000400  # junctions and symlinks, from the li
 # A row that carries any of these keys would be carrying content, which is the whole point of refusing it.
 CONTENT_BEARING_KEYS = frozenset({"content", "body", "text", "bytes", "data", "raw", "preview",
                                   "excerpt", "snippet", "head", "tail", "lines", "value"})
+
+# THE ordering rule, stated once and applied everywhere a bound is taken.
+#
+# Why this exists as a named key rather than as folklore: the cap is smaller than the enumeration (measured
+# 4.1k artifacts against MAX_HANDLES=200), so ranking is not a presentation choice, it IS the selection. A
+# cap applied to whatever the walk reached first makes the projected set a function of directory listing
+# order, which means the Observer's evidence lane can show one set now and another set after any other run
+# writes a file, and two readers of the same snapshot revision can be shown different evidence. Recency is
+# the ranked term because it is what a reader wants to inspect; the handle is the tiebreak because it is
+# the only field that is unique, stable and already in the row.
+#
+# The ranked term is the modification time AT THE RESOLUTION THAT IS DISCLOSED (`modifiedAt` is whole
+# seconds), not the raw float the filesystem returned. Ranking on sub-second precision the row does not show
+# would leave a reader auditing the list with apparent tie-break inversions — measured 28 of 200 rows on this
+# machine — which is precisely the unfalsifiable folklore this key exists to remove. Two artifacts written
+# inside one second are therefore ordered by handle, and the emitted list reproduces from its own fields.
+ORDERING_KEY = "modifiedAt-second-desc,handle-asc"
+# The coarse label of the ranked term, kept under its original name for consumers that read `order`.
+ORDER_LABEL = "modifiedAt-desc"
+ORDERING_RULE = (
+    "candidate rows are ranked by modifiedAt (whole seconds, as disclosed on the row) newest first, and "
+    "every tie — including two artifacts written inside the same second — is broken by the ascending "
+    "handle string; the cap, the per-surface quotas, the digest reserve and the digest-record budget are "
+    "all applied to that one ranking, so the projected set is a function of the repository state and "
+    "never of directory listing order")
+
+
+def _rank(mtime_second: int, handle: str) -> tuple[int, str]:
+    """The sort key behind ORDERING_KEY. Every bound in this module ranks through here or not at all."""
+    return (-mtime_second, handle)
+
+
+def _rank_row(row: dict[str, Any]) -> tuple[int, str]:
+    return _rank(row["mtimeSecond"], row["handle"])
 
 
 class Surface(NamedTuple):
@@ -268,7 +311,8 @@ def _walk(surface: Surface) -> tuple[list[dict[str, Any]], dict[str, int]]:
                 rows.append({"handle": os.path.normpath(entry.path), "name": entry.name,
                              "surface": surface.name, "surfaceRoot": surface.relative,
                              "sizeBytes": int(info.st_size), "modifiedAt": _now_iso(info.st_mtime),
-                             "mtime": info.st_mtime, "directory": current})
+                             # the ranked term, at the resolution `modifiedAt` discloses
+                             "mtimeSecond": int(info.st_mtime), "directory": current})
     return rows, counters
 
 
@@ -313,8 +357,7 @@ def _select_by_surface(rows: list[dict[str, Any]], index: dict[str, tuple[str, s
         by_surface.setdefault(row["surface"], []).append(row)
     report: dict[str, dict[str, int]] = {}
     chosen: dict[str, dict[str, Any]] = {}
-    digested = sorted((row for row in rows if row["handle"].lower() in index),
-                      key=lambda row: (-row["mtime"], row["handle"]))
+    digested = sorted((row for row in rows if row["handle"].lower() in index), key=_rank_row)
     reserve = [row for row in digested[:DIGEST_RESERVE] if len(chosen) < max_handles]
     for row in reserve:
         chosen[row["handle"]] = row
@@ -322,7 +365,7 @@ def _select_by_surface(rows: list[dict[str, Any]], index: dict[str, tuple[str, s
                                "taken": len(reserve)}
     for name, group in sorted(by_surface.items()):
         quota = SURFACE_QUOTAS.get(name, DEFAULT_QUOTA)
-        group.sort(key=lambda row: (-row["mtime"], row["handle"]))
+        group.sort(key=_rank_row)
         taken = 0
         for row in group:
             if len(chosen) >= max_handles or taken >= quota:
@@ -332,7 +375,7 @@ def _select_by_surface(rows: list[dict[str, Any]], index: dict[str, tuple[str, s
             chosen[row["handle"]] = row
             taken += 1
         report[name] = {"observed": len(group), "quota": quota, "poolTaken": taken}
-    candidates = sorted(chosen.values(), key=lambda row: (-row["mtime"], row["handle"]))
+    candidates = sorted(chosen.values(), key=_rank_row)
     return candidates, report, len(digested)
 
 
@@ -371,10 +414,16 @@ def _candidate_digest_records(rows: list[dict[str, Any]], spill_path: str | None
     canonical evidence surface ranks above the runtime surface because that is where this project files the
     digests it intends to be cited; a newest-first order alone let another writer's scratch records crowd
     the budget out.
+
+    The budget below (``MAX_DIGEST_RECORDS``) is applied to a TOTAL order — surface, then the disclosed
+    modification second, then handle — because this ranking decides which records get read and therefore
+    which rows get a digest and a reserved seat. A partial order here would silently re-inherit walk order
+    at the exact point where the projection stops listing and starts choosing.
     """
     candidates: list[Path] = []
     seen: set[str] = set()
-    ranked = sorted(rows, key=lambda row: (SURFACE_PRIORITY.index(row["surface"]), -row["mtime"]))
+    ranked = sorted(rows, key=lambda row: (SURFACE_PRIORITY.index(row["surface"]),
+                                           _rank_row(row)))
     for row in ranked:
         name = row["name"].lower()
         if not name.endswith((".json", ".jsonl", ".ndjson")):
@@ -542,8 +591,8 @@ def project_artifact_handles(*, root: Path, generated_at: str | None = None,
         if stated is not None:
             projected["digest"] = stated[0]
             projected["digestSource"] = stated[1]
-        ordered.append((candidate["mtime"], resolved, projected))
-    ordered.sort(key=lambda item: (-item[0], item[1]))
+        ordered.append((candidate["mtimeSecond"], resolved, projected))
+    ordered.sort(key=lambda item: _rank(item[0], item[1]))
     handles = [item[2] for item in ordered[:max_handles]]
     with_digest = sum(1 for row in handles if "digest" in row)
 
@@ -558,8 +607,17 @@ def project_artifact_handles(*, root: Path, generated_at: str | None = None,
         "generatedAt": generated_at or _now_iso(time.time()),
         "surfaces": per_surface,
         "surfaceState": surface_state(root),
-        "order": "modifiedAt-desc",
-        "selection": {"policy": "digest-reserve-then-newest-per-surface", "cap": int(max_handles),
+        "order": ORDER_LABEL,
+        # The disclosure a reader needs when the list is capped: the cap, how many were enumerated, how
+        # many survived, whether the tail was cut, how many you are missing, and the exact key that
+        # decided which rows those are. A truncation without its ordering key is a truncation that cannot
+        # be audited, which is why the validator refuses it.
+        "orderingKey": ORDERING_KEY,
+        "orderingRule": ORDERING_RULE,
+        "selection": {"policy": "digest-reserve-then-newest-per-surface",
+                      "orderingKey": ORDERING_KEY,
+                      "tieBrokenBy": "handle-asc",
+                      "cap": int(max_handles),
                       "capTrimmedTail": bool(len(pool) > len(handles)),
                       "candidatesAfterQuotas": len(pool),
                       "digestReserve": {"artifactsWithRecordedDigest": int(digested_count),
@@ -570,6 +628,7 @@ def project_artifact_handles(*, root: Path, generated_at: str | None = None,
                                      for name, item in selection.items() if name != "digestReserve"}},
         "enumeratedCount": observed,
         "projectedCount": len(handles),
+        "omittedCount": max(0, observed - len(handles)),
         "cap": int(max_handles),
         "truncated": truncated,
         "complete": bool(not truncated and all(item["completeEnumeration"] for item in per_surface)),
