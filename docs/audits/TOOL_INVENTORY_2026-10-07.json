@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T07:14:10Z",
+  "generatedAt": "2026-10-07T07:20:10Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -194,10 +194,11 @@
       "sha256": "75c20038c3b13168e34b03cf3f8986496f836c78f593907392636ce277df4a32",
       "bytes": 3847,
       "lines": 114,
-      "digestBasis": "working-tree-uncommitted",
+      "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 1,
+      "citedByRecords": 2,
       "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
@@ -333,7 +334,7 @@
       "lines": 218,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 10,
+      "citedByRecords": 11,
       "citedBy": [
         ".project/governance/model-registry.json",
         "docs/audits/MODEL_LIBRARY_READBACK_2026-10-07.md",
@@ -528,8 +529,9 @@
       "lines": 167,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 5,
+      "citedByRecords": 6,
       "citedBy": [
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
@@ -557,11 +559,12 @@
       "lines": 197,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 3,
+      "citedByRecords": 4,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007.md"
       ]
     },
     {
