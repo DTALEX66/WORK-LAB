@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-10-07T23:37:50Z",
+  "generated_at": "2026-10-07T23:47:20Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,12 +9,12 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 184,
+    "total": 185,
     "by_classification": {
       "ci_configuration": 18,
       "ci_tooling": 9,
       "config_downgrade": 3,
-      "contract_drift": 56,
+      "contract_drift": 57,
       "dead_entry": 3,
       "entrypoint": 6,
       "evidence_state": 31,
@@ -5681,6 +5681,37 @@
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_project_terminal_guard.py is tracked"
+    },
+    {
+      "error_id": "ERR-187",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "services/orchestration/sidecar.py",
+      "command": "python -m unittest -q test_control_service",
+      "exit_code": 1,
+      "observed_error": "Both servers promise that every write verb is refused with 405, and the promise was unreachable for a caller that had already sent a body: the refusal was written while the request bytes were still in the socket buffer, so a keep-alive client's next read began with its own JSON instead of a status line. The visible symptom was a governance-batch error in test_write_methods_other_than_the_single_post_are_405 with three server-side ConnectionResetError [WinError 10054] tracebacks, while the same module passed five consecutive standalone runs -- the signature of a transport-level defect that only appears under connection reuse.",
+      "root_cause": "The 405 was treated as the whole contract, when the contract is a *parseable response*. Nothing in the suite spoke raw bytes, so every assertion went through a parser that hides what actually arrives first. The Observer sidecar runs HTTP/1.1 where the control server does not, so the exposure differed per server and neither was tested at the byte level.",
+      "fix": "The request body is read at most once and cached (`_read_request_body`): the POST path consumes the operation, a refusal clears the buffer, and a body over MAX_BODY_BYTES is never buffered at all. Both servers close the connection rather than risk misalignment. The sidecar keeps the 405 spelled out inside each do_<verb> body because verify_observer_readonly_boundary.py reads those bodies -- routing the denial through the shared helper alone made the guard go red, which is the guard working, not failing. A new raw-socket test asserts the status line precedes any echoed body. My first attempt put the drain in _send, which made the success path read Content-Length twice and block; caught by running the suite three times, and the reason the accessor exists.",
+      "regression_test": "tests/workflow-assistance/test_control_service.py",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Any server that answers a write verb must be asserted at the byte level, not only through a client parser: a test that opens a raw socket and reads the response proves the status line came first. And when a source-shape guard fires on a refactor, change the call site, never the check.",
+      "remaining_boundary": "The sidecar's own keep-alive byte-level test is not written: its handler class is nested inside the serving function, so the assertion needs a subprocess boot like the browser-entry tests use. The drain is in place there, but only the control server has a proof at the byte level.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the 405 paths predate this session; the unread-body behaviour came with them",
+        "fixedCommit": "98df72c3d51d4da2b7e452a06f12c256feb76e54",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 98df72c3 adds the single-read body accessor, the drain on refusals and the raw-socket assertion",
+        "bindingNote": "bound 2026-10-08; verifiedCommit awaits the next green exact-SHA run",
+        "affectedCapability": "Read-only denial is parseable by every client",
+        "regressionCommand": "python -m unittest -q test_control_service"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
     }
   ],
   "wlrReconciled": true,
