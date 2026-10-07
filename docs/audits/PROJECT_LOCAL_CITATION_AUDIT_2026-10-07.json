@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T10:45:17Z",
+  "generatedAt": "2026-10-07T10:57:42Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2083,
-    "distinctProjectLocalTokens": 407,
+    "distinctProjectLocalTokens": 408,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 407,
-    "citationsToAbsentTokens": 1104
+    "tokensAbsent": 408,
+    "citationsToAbsentTokens": 1108
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,16 +29,16 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 543,
-      "distinctPaths": 318
+      "citations": 544,
+      "distinctPaths": 319
     },
     "machine_local_runtime_pointer": {
       "citations": 137,
       "distinctPaths": 60
     },
     "negative_assertion_or_removal_record": {
-      "citations": 114,
-      "distinctPaths": 48
+      "citations": 116,
+      "distinctPaths": 49
     },
     "path_pattern_or_truncated_token": {
       "citations": 9,
@@ -49,7 +49,7 @@
       "distinctPaths": 1
     },
     "unclassified_needs_human_read": {
-      "citations": 43,
+      "citations": 44,
       "distinctPaths": 3
     }
   },
@@ -262,7 +262,7 @@
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_toolchain_declarations.py",
-        "line": 51,
+        "line": 61,
         "text": "if rel.startswith(\".project-local/\") or \"/node_modules/\" in f\"/{rel}\":"
       },
       {
@@ -868,7 +868,7 @@
       {
         "path": ".project-local/runs",
         "file": "tests/workflow-assistance/test_toolchain_declarations.py",
-        "line": 99,
+        "line": 114,
         "text": "self.assertEqual(\".project-local/runs\", self.boundary[\"runtimeRoot\"])"
       },
       {
@@ -1876,6 +1876,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 3417,
         "text": "\"entrypoint\": \".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json missing_or_recovered_pins, .project-local/artifacts/task-artifacts/r4/history-sourc"
+      },
+      {
+        "path": ".project-local/atlas-2026-09-29/atlas/.../expanded/.../config",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4870,
+        "text": "\"observed_error\": \"QUALITY_GATE_FAIL gate=governance exit_code=1 locally, with `FAILED (errors=1, skipped=8)` out of 2184 tests: test_the_file_declares_every_lockfile_that_exists_in_the_repository rai"
       },
       {
         "path": ".project-local/build",
@@ -5759,6 +5765,12 @@
       },
       {
         "path": ".project-local",
+        "file": "tests/workflow-assistance/test_toolchain_declarations.py",
+        "line": 48,
+        "text": "The property is about the repository: an ignored cache under `.project-local/` can hold a"
+      },
+      {
+        "path": ".project-local",
         "file": "tests/workflow-assistance/test_workflow_governance.py",
         "line": 323,
         "text": "(target / \".gitignore\").write_text(\".hermes/\\n.project-local/\\n\", encoding=\"utf-8\")"
@@ -6050,6 +6062,12 @@
         "file": ".project/governance/recovered-source-registry.json",
         "line": 204,
         "text": "\"notes\": \"promoted out of the ignored run root into the tracked tree, so the versioned bytes are now the checked ones; the row previously said machine-local while the recovered copy was already versio"
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-k",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4872,
+        "text": "\"fix\": \"lockfiles_in_the_repository() now enumerates `git ls-files -z` and keeps the same exclusions, so the census is checkout-independent and cannot race a cleanup. Verified the comparison still bit"
       },
       {
         "path": ".project-local/runs/convergence-20261007-k/falsify_testdir_exclusion.py",
@@ -6638,6 +6656,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 4487,
         "text": "\"root_cause\": \"Path convergence was treated as a property of the entry documents. Nothing checked the rest of the reader-facing surface, and the citation audit — which does scan those roots — only rep"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4871,
+        "text": "\"root_cause\": \"The property is about the repository ('every lockfile the repository has is declared') but was measured by walking the filesystem, then filtering out `.project-local/` afterwards. Filte"
       },
       {
         "path": ".project-local",

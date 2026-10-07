@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 159,
+    "total": 160,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 52,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 3,
       "path_boundary": 8,
-      "ci_tooling": 7,
+      "ci_tooling": 8,
       "sql_schema": 1,
       "regression_contract": 7
     },
@@ -4857,6 +4857,38 @@
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "the command's script operand resolves against git ls-files"
+    },
+    {
+      "error_id": "ERR-162",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "tests/workflow-assistance/test_toolchain_declarations.py",
+      "command": "python services/orchestration/run_quality_gate.py governance",
+      "exit_code": 1,
+      "observed_error": "QUALITY_GATE_FAIL gate=governance exit_code=1 locally, with `FAILED (errors=1, skipped=8)` out of 2184 tests: test_the_file_declares_every_lockfile_that_exists_in_the_repository raised FileNotFoundError [WinError 3] from ROOT.rglob('*') while descending .project-local/atlas-2026-09-29/atlas/.../expanded/.../config - a directory that had been removed from under the walk. The same batch is green on the runner, because a fresh checkout has no ignored root to fall over on, so the failure looked like a local artifact rather than a defect.",
+      "root_cause": "The property is about the repository ('every lockfile the repository has is declared') but was measured by walking the filesystem, then filtering out `.project-local/` afterwards. Filtering after the descent means the ignored root is still traversed - hundreds of megabytes of caches and archive extractions, mutable underneath a long-running test, and irrelevant to the claim. A set that must come from version control has to be read from version control.",
+      "fix": "lockfiles_in_the_repository() now enumerates `git ls-files -z` and keeps the same exclusions, so the census is checkout-independent and cannot race a cleanup. Verified the comparison still bites: declaring a lockfile nothing tracks fails the member, and the clean run passes (falsifier under .project-local/runs/convergence-20261007-k/).",
+      "regression_test": "tests/workflow-assistance/test_toolchain_declarations.py::ToolchainDeclarationGate::test_the_file_declares_every_lockfile_that_exists_in_the_repository",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "A gate must enumerate its subject from the authority the claim is about. When the claim is over tracked files, read git's file list; never walk an ignored runtime root and filter it out afterwards, and never treat 'green on CI, red on my machine' as noise - it is the signature of a check whose input set is the filesystem.",
+      "remaining_boundary": "The census now covers tracked lockfiles only, which is the contract; an untracked lockfile inside the working tree is deliberately not a declaration obligation, so a genuinely new lockfile is caught only when it is staged. This record is fixed forward: the earlier green CI heads stay green, and the local red they hid remains in this entry.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "8a5b4452b9557f3eef94e9df0350e24209c97112",
+        "introducedCommitNote": "derived by walking this file's history oldest-first to the first version containing the `ROOT.rglob(` call: 8a5b445",
+        "fixedCommit": "706664e2a3eae984e8dc1147dfc7c5cd5206f9c1",
+        "verifiedCommit": null,
+        "affectedCapability": "Governance gate reliability on a dirty working tree",
+        "regressionCommand": "python -m pytest tests/workflow-assistance/test_toolchain_declarations.py",
+        "bindingNote": "bound 2026-10-07 against 706664e: that commit carries the promised file and adds zero records; the operand was checked with git cat-file before writing",
+        "bindingBasis": "fix-commit-introduction: the census change and its own module are the fix",
+        "verifiedCommitNote": "left null: the record lands after the fix, so no head yet contains both the record and a green exact-SHA readback"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "the command's test-file operand resolves against git ls-files"
     }
   ],
   "wlrReconciled": true,
