@@ -9,7 +9,7 @@
 // does not carry stays UNKNOWN.
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { UnknownState } from '@/components/ui/states'
+import { UnknownState, PermissionState } from '@/components/ui/states'
 import { PageHeader } from '@/components/ui/page-header'
 
 function approvalVariant(state: string | undefined): 'success' | 'warning' | 'error' | 'muted' {
@@ -48,6 +48,7 @@ export function ApprovalsView({ snap }: { snap: any }) {
         </div>
         <CardContent>
           {approvals && approvals.length > 0 ? (
+            <>
             <div className="table-wrap">
               <table className="table">
                 <thead>
@@ -80,6 +81,14 @@ export function ApprovalsView({ snap }: { snap: any }) {
                 </tbody>
               </table>
             </div>
+            {/* G1: rows exist, so the reader must be told where the decision
+                lives rather than finding a table with no action column. */}
+            <PermissionState
+              blocked="本视图不提供批准 / 拒绝 / 撤销"
+              reason="裁决由后端审批契约与 Permission Gate 持有，Observer 不构成第二个审批 Authority"
+              stillAvailable="每一行的请求、风险与真实状态仍可完整阅读"
+            />
+            </>
           ) : (
             <UnknownState
               title="审批数据未知"

@@ -23,6 +23,8 @@ import * as React from 'react'
 import { ZoomIn, ZoomOut, Maximize, Plus, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+const HINT_ID = 'workflow-canvas-contract-hint'
+
 export type NodeKind =
   | 'Trigger' | 'Validate' | 'Agent' | 'Tool' | 'Approval'
   | 'Condition' | 'Deploy' | 'Output'
@@ -287,13 +289,43 @@ export function WorkflowCanvas({
         </div>
       </div>
 
-      {/* save / publish / run — honest when the real contract is not wired */}
+      {/* save / publish / run — honest when the real contract is not wired.
+          A disabled button receives no focus and no pointer events, so the
+          reason cannot live only in a hover tooltip: it is stated in the
+          adjacent note AND bound to each control by aria-describedby, which is
+          what a screen reader reads when it lands on the control. */}
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" onClick={onRun} aria-label="运行" disabled={runDisabled} className="ghost-btn">运行</button>
-        <button type="button" onClick={onPublish} aria-label="保存并发布" disabled={publishDisabled} className="primary-btn">保存并发布</button>
-        {(publishHint || runHint) ? (
-          <span className="text-[11px] text-muted">{publishHint || runHint}</span>
-        ) : null}
+        <p
+          id={HINT_ID}
+          role="note"
+          className={cn('text-[11px] text-muted', !(publishHint || runHint) && 'hidden')}
+        >
+          {publishHint || runHint}
+        </p>
+        <button
+          type="button"
+          onClick={onRun}
+          aria-label="运行"
+          disabled={runDisabled}
+          aria-disabled={runDisabled || undefined}
+          title={runDisabled ? runHint : undefined}
+          aria-describedby={runDisabled && runHint ? HINT_ID : undefined}
+          className="ghost-btn"
+        >
+          运行
+        </button>
+        <button
+          type="button"
+          onClick={onPublish}
+          aria-label="保存并发布"
+          disabled={publishDisabled}
+          aria-disabled={publishDisabled || undefined}
+          title={publishDisabled ? publishHint : undefined}
+          aria-describedby={publishDisabled && publishHint ? HINT_ID : undefined}
+          className="primary-btn"
+        >
+          保存并发布
+        </button>
       </div>
     </div>
   )

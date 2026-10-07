@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Loader2, CloudOff, Inbox, TriangleAlert } from 'lucide-react'
+import { Loader2, CloudOff, Inbox, TriangleAlert, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
@@ -120,6 +120,45 @@ export function UnknownState({
       icon={<Inbox size={26} strokeWidth={1.8} />}
       title={title}
       description={description}
+      className={className}
+      role="status"
+    />
+  )
+}
+
+export interface PermissionStateProps {
+  /** what the user cannot do here, in one line */
+  blocked: string
+  /** WHY it is blocked: the contract or permission that owns the write */
+  reason: string
+  /** what this surface still does, so the reader is not left with a dead end */
+  stillAvailable?: string
+  title?: string
+  className?: string
+}
+
+/**
+ * PERMISSION / READ-ONLY state (UI prompt pack G1).
+ *
+ * Distinct from UnknownState on purpose: UNKNOWN says "the projection has no
+ * value", this says "the value may be known and this surface still cannot act".
+ * The prompt pack forbids a write action that merely looks available, so a
+ * read-only lane has to name the owner of the write rather than go quiet.
+ */
+export function PermissionState({
+  blocked,
+  reason,
+  stillAvailable,
+  title = '此界面只读',
+  className,
+}: PermissionStateProps) {
+  return (
+    <StateShell
+      icon={<Lock size={26} strokeWidth={1.8} />}
+      title={title}
+      description={
+        [blocked, reason, stillAvailable].filter(Boolean).join(' — ')
+      }
       className={className}
       role="status"
     />

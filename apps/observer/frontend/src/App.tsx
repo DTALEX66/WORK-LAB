@@ -85,8 +85,8 @@ export default function App() {
   // U06/SSE: live snapshot — first poll + server-sent events, no fixed ports.
   const { snap, source, live, error } = useLiveSnapshot()
 
-  // UI_SHELL (20260921): mobile drawer + command palette.
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  // UI_SHELL (20260921): command palette. The rail is the only navigation
+  // surface — the shell is desktop-only, so there is no drawer state to hold.
   const [paletteOpen, setPaletteOpen] = useState(false)
   // L10b: B10 global overlays — the right-hand 工作区 / Context drawer and the
   // bottom-right Toast (B10 `.drawer` + `.toast`, 1800ms auto-hide).
@@ -339,14 +339,11 @@ export default function App() {
         activeView={view}
         onSelect={(id) => {
           setView(id)
-          setMobileNavOpen(false)
           // A lane switch was silent for assistive tech: focus stayed on the
           // rail and nothing announced the new context.
           const label = VIEW_REGISTRY.find((e) => e.id === id)?.label ?? id
           announce('已进入 ' + label)
         }}
-        mobileOpen={mobileNavOpen}
-        onCloseMobile={() => setMobileNavOpen(false)}
       />
       <main className="main">
         <TopStatusBar
@@ -360,7 +357,6 @@ export default function App() {
           onOpenSearch={openPalette}
           onOpenDrawer={() => setWorkspaceOpen(true)}
           onNotify={() => toast({ title: '暂无新的通知', variant: 'info' })}
-          onOpenMobileNav={() => setMobileNavOpen(true)}
         />
         {loadingStrip}
         <section className="content" id="content">

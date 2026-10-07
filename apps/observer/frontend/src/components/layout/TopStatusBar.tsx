@@ -1,5 +1,6 @@
-import { Menu, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { WindowControls } from '@/components/layout/WindowControls'
+import { THEMES } from '@/theme/tokens'
 import type { SnapshotV3 } from '@/types'
 import type { ThemeMode, LayoutMode, LiveSnapshotState } from '@/lib/api'
 
@@ -35,7 +36,6 @@ export function TopStatusBar({
   onOpenSearch,
   onOpenDrawer,
   onNotify,
-  onOpenMobileNav,
 }: {
   snap: SnapshotV3 | null
   source: LiveSnapshotState['source']
@@ -50,16 +50,15 @@ export function TopStatusBar({
   onOpenDrawer?: () => void
   /** B10 `.toast` notification (1800ms auto-hide) */
   onNotify?: () => void
-  /** opens the mobile sidebar drawer (<841px) */
-  onOpenMobileNav?: () => void
 }) {
   const ts = snap?.transport.transportState
   const freshness = snap?.transport.freshnessState
   const cov = snap?.coverage
+  const palette = THEMES[theme].colors
   const dotHex =
-    live || ts === 'LIVE' ? '#22C55E' :
-    ts === 'OFFLINE' ? '#EF4444' :
-    ts ? '#F59E0B' : '#8EABBC'
+    live || ts === 'LIVE' ? palette.successHex :
+    ts === 'OFFLINE' ? palette.errorHex :
+    ts ? palette.warningHex : palette.muted
   const dotStyle = { width: 8, height: 8, borderRadius: '50%', background: dotHex }
   const stateText = live ? 'LIVE' : (ts || 'UNKNOWN')
   const coverageText =
@@ -69,17 +68,15 @@ export function TopStatusBar({
 
   return (
     <header className="topbar">
-      {/* mobile nav trigger (hidden >=841px by the L10b shell layer) */}
-      {onOpenMobileNav && (
-        <button
-          type="button"
-          onClick={onOpenMobileNav}
-          aria-label="打开导航"
-          className="ghost-btn topbar-mobile shrink-0 px-2 py-1.5"
-        >
-          <Menu size={16} aria-hidden="true" />
-        </button>
-      )}
+      {/* B10 brand lockup, reduced to a chip. This is not decoration: the
+          compact HUD renders no rail, so without it the floating panel has no
+          identity at all, and the main window runs with `decorations:false` —
+          this row IS the chrome. Colors come from the skin's own --primary /
+          --secondary, never a literal here (G2). */}
+      <span className="topbar-brand" data-testid="topbar-brand">
+        <span className="topbar-brand-mark" aria-hidden="true" />
+        <span className="topbar-brand-word">WORK-LAB</span>
+      </span>
 
       {/* B10 `.search` — the primary search affordance (opens the palette) */}
       {onOpenSearch && (

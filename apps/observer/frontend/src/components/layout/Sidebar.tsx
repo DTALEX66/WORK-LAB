@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL } from '@/lib/viewRegistry'
 
@@ -66,9 +65,6 @@ function buildLanes(): Map<string, LaneDef> {
 export interface SidebarProps {
   activeView: string
   onSelect: (id: string) => void
-  /** mobile overlay open */
-  mobileOpen?: boolean
-  onCloseMobile?: () => void
 }
 
 function Brand() {
@@ -86,11 +82,9 @@ function Brand() {
 function Nav({
   activeView,
   onSelect,
-  onAfterSelect,
 }: {
   activeView: string
   onSelect: (id: string) => void
-  onAfterSelect?: () => void
 }) {
   const lanes = React.useMemo(buildLanes, [])
   return (
@@ -110,10 +104,8 @@ function Nav({
                 <button
                   key={l.id}
                   type="button"
-                  onClick={() => {
-                    onSelect(l.id)
-                    onAfterSelect?.()
-                  }}
+                  onClick={() => onSelect(l.id)}
+                  data-lane={l.id}
                   title={l.label}
                   aria-current={active ? 'page' : undefined}
                   className={cn(active && 'active')}
@@ -142,39 +134,12 @@ function SidebarFooter() {
   )
 }
 
-export function Sidebar({ activeView, onSelect, mobileOpen = false, onCloseMobile }: SidebarProps) {
+export function Sidebar({ activeView, onSelect }: SidebarProps) {
   return (
-    <>
-      {/* Desktop rail — B10 `.sidebar` (280px). `.sidebar-slot` (L10b shell
-          layer, loaded after the B10 skin) hides it below 840px, matching the
-          B10 `@media (max-width:840px){.sidebar{display:none}}` intent. */}
-      <aside className="sidebar sidebar-slot" aria-label="侧边导航">
-        <Brand />
-        <Nav activeView={activeView} onSelect={onSelect} />
-        <SidebarFooter />
-      </aside>
-
-      {/* Mobile overlay drawer (< 840px): same B10 rail inside a backdrop */}
-      {mobileOpen && (
-        <div className="mobile-nav fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/55" onClick={onCloseMobile} aria-hidden="true" />
-          <aside className="sidebar mobile-nav-panel relative z-10 h-full" aria-label="侧边导航">
-            <div className="flex items-start justify-between gap-2">
-              <Brand />
-              <button
-                type="button"
-                onClick={onCloseMobile}
-                aria-label="关闭导航"
-                className="ghost-btn mt-2 shrink-0 px-2 py-1"
-              >
-                <X size={14} aria-hidden="true" />
-              </button>
-            </div>
-            <Nav activeView={activeView} onSelect={onSelect} onAfterSelect={onCloseMobile} />
-            <SidebarFooter />
-          </aside>
-        </div>
-      )}
-    </>
+    <aside className="sidebar sidebar-slot" aria-label="侧边导航">
+      <Brand />
+      <Nav activeView={activeView} onSelect={onSelect} />
+      <SidebarFooter />
+    </aside>
   )
 }
