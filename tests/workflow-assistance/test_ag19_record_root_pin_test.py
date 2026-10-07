@@ -190,6 +190,24 @@ class RuntimeBehaviourTests(unittest.TestCase):
         self.assertEqual(doc["verdict"],
                          "NEGATIVELY_PROVEN_FOR_PINNED_TARGETS_ONLY_UNPINNED_HAVE_NO_HASH_PROOF")
 
+    def test_the_preferred_pin_source_is_a_file_a_clean_checkout_also_has(self) -> None:
+        """The promotion only matters if the scan actually reads the versioned copy.
+
+        Before it, a runner silently fell back to the last published list, so the pins this gate
+        checks could differ from the atlas without anything noticing.
+        """
+        targets, source = ag19.load_targets()
+        self.assertEqual(source, "tracked-promoted-copy",
+                         "the scan is not reading the promoted copy, so CI cannot see the pins")
+        self.assertGreaterEqual(len(targets), 5, "the versioned pin list is shorter than the five AG-19 items")
+        self.assertEqual(subprocess.run(["git", "ls-files", "--error-unmatch",
+                                         str(ag19.TRACKED_ATLAS.relative_to(ag19.REPO))],
+                                        cwd=ag19.REPO, capture_output=True).returncode, 0,
+                         "the preferred pin source is not versioned")
+        if ag19.ATLAS.is_file():
+            self.assertEqual(ag19.TRACKED_ATLAS.read_bytes(), ag19.ATLAS.read_bytes(),
+                             "the promoted copy and the atlas the machine still holds have diverged")
+
 
 if __name__ == "__main__":
     unittest.main()

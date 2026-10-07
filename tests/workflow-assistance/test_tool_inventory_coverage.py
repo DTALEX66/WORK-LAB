@@ -156,6 +156,34 @@ class ToolInventoryCoverageGate(unittest.TestCase):
         self.assertTrue(any("duplicate inventory entries" in v
                             for v in violations(entries, self.tools)))
 
+    def test_the_warning_only_names_still_untracked_instruments(self) -> None:
+        """The readback's directive has to be true, or a reader re-does work they already did (ERR-155).
+
+        Driven against the shipped function with fixture porcelain lines rather than a copy of its
+        logic, and against the real repository state as well.
+        """
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "tool_inventory_readback", ROOT / "scripts" / "audit" / "tool_inventory_readback.py")
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        cases = {
+            "?? scripts/audit/new_probe.py": ["scripts/audit/new_probe.py"],
+            "A  scripts/audit/just_staged.py": [],
+            "AM scripts/maintenance/edited.py": [],
+            "?? docs/notes.md": [],
+            "?? scripts/audit/new_probe.js": [],
+            "": [],
+        }
+        for line, expected in cases.items():
+            self.assertEqual(module.untracked_instruments(line), expected, f"porcelain line {line!r}")
+        self.assertEqual(module.untracked_instruments(
+            subprocess.run(["git", "status", "--porcelain", "--untracked-files=normal", "--"] +
+                           list(DIRS), cwd=ROOT, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace").stdout),
+            [], "the tree carries a still-untracked instrument, so the inventory cannot be trusted")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

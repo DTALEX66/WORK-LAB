@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-07T08:26:06Z",
+  "at": "2026-10-07T09:07:15Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -45,22 +45,22 @@
     }
   },
   "counts": {
-    "RESOLVES": 36,
+    "RESOLVES": 38,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
-    "RESOLVES": 69,
+    "RESOLVES": 71,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
-  "resolvedAfterApply": 69,
-  "records": 151,
-  "stateDigest": "89a1217293d80cdf3f350202dd839c1f751b1718b6aa80419777ea1a8f84e9ca",
+  "resolvedAfterApply": 71,
+  "records": 153,
+  "stateDigest": "f225b33df1d2953e610779fd15d92fea6fe67a9b49e193587ad064907ed70ac9",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -3046,6 +3046,40 @@
       ],
       "state": "RESOLVES",
       "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-154",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "tests/workflow-assistance/test_recovered_source_registry.py::RecoveredSourceRegistryTests::test_location_claims_agree_with_the_row_status",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_recovered_source_registry.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_recovered_source_registry.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-155",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "tests/workflow-assistance/test_tool_inventory_coverage.py::ToolInventoryCoverageGate::test_the_warning_only_names_still_untracked_instruments",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_tool_inventory_coverage.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_tool_inventory_coverage.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
     }
   ],
   "notClaimed": [
@@ -3055,5 +3089,5 @@
     "OUT_OF_REPO_TARGET claims are re-checkable only on the machine holding the live client home, which is why they are labelled instead of counted as resolved",
     "no record's status_after was changed by this tool"
   ],
-  "whyItMatters": "the ledger carries 132 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
+  "whyItMatters": "the ledger carries 134 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
 }

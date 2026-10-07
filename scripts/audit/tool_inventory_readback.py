@@ -74,6 +74,22 @@ def digest(rel: str) -> tuple[str, int, int, str]:
     return hashlib.sha256(data).hexdigest(), len(data), lines, basis
 
 
+def untracked_instruments(porcelain: str) -> list[str]:
+    """The still-untracked instruments in `git status --porcelain` output.
+
+    Only `??` qualifies. A staged-new file (`A `) is already in the index and `digest()` reads it from
+    there; the first version warned about it too, which told a reader to stage a file they had just
+    staged — a false directive from the guard that measures the guards (ERR-155).
+    """
+    out = []
+    for line in porcelain.splitlines():
+        if line.startswith("??"):
+            path = line[3:].strip().replace("\\", "/")
+            if path.endswith(".py") and path.startswith(DIRS):
+                out.append(path)
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=DEFAULT_OUT)
@@ -84,18 +100,11 @@ def main() -> int:
 
     # The discovery set comes from the index, so a *still-untracked* instrument is invisible until it is
     # staged. Saying so loudly here is what turns a future red-on-the-runner into a message at the
-    # moment of the mistake (ERR-151). A staged-new file (`A `) is deliberately NOT warned about: it is
-    # already in the index, and `digest()` reads it from there — warning on it told a reader to stage a
-    # file they had just staged.
-    untracked = []
+    # moment of the mistake (ERR-151).
     proc = subprocess.run(["git", "status", "--porcelain", "--untracked-files=normal", "--"] +
                           list(DIRS), cwd=REPO, capture_output=True, text=True,
                           encoding="utf-8", errors="replace")
-    for line in proc.stdout.splitlines():
-        if line.startswith("??"):
-            path = line[3:].strip().replace("\\", "/")
-            if path.endswith(".py") and path.startswith(DIRS):
-                untracked.append(path)
+    untracked = untracked_instruments(proc.stdout or "")
     if untracked:
         print(f"WARNING untracked instruments are not in the index yet, so the inventory cannot "
               f"describe them: {untracked}. Stage first, then re-measure.")

@@ -26,6 +26,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 REGISTRY = ROOT / ".project" / "governance" / "recovered-source-registry.json"
 STATUSES = {"tracked", "machine-local", "absent", "unpinned"}
+# fields that assert where a row's bytes live; the gate reads `path`, so a second location claim that
+# contradicts `status` silently moves the digest check to the wrong object (ERR-154)
+LOCATION_CLAIM_KEYS = ("location", "trackedPath", "extractionPath", "ignoredSourcePath",
+                       "promotionEvidence", "backupDir")
 RECOVERY_CMD_RE = re.compile(r"git cat-file -p (\w+):(\S+)")
 REQUIRED_FIELDS = ("id", "kind", "status", "path", "observedAt", "originalLocation",
                    "coverageRelation", "verificationCommand", "notes")
@@ -116,6 +120,33 @@ class RecoveredSourceRegistryTests(unittest.TestCase):
             if (ROOT / e["path"]).exists():
                 self.assertEqual(digest(e["path"]), e["sha256"],
                                  f"{e['id']} drifted on the machine that measured it")
+
+    def test_location_claims_agree_with_the_row_status(self) -> None:
+        """A promotion that leaves the status at machine-local makes this gate hash the wrong object.
+
+        `src-new-chat-handoff-20260903` was versioned at `50f77d1` while its row still said
+        machine-local and kept the tracked location in a side field (ERR-154): every digest check then
+        ran against the ignored extraction, so the versioned copy could drift unwatched. A row may not
+        hold a second location that contradicts the field the gate reads.
+        """
+        for e in self.entries:
+            for key in LOCATION_CLAIM_KEYS:
+                claim = e.get(key)
+                if not isinstance(claim, str) or not claim.strip():
+                    continue
+                versioned = git_tracked(claim)
+                if e["status"] == "machine-local":
+                    self.assertFalse(
+                        versioned,
+                        f"{e['id']}: {key} points at a versioned path while the row claims "
+                        "machine-local, so the tracked bytes are never re-hashed")
+                    self.assertTrue(claim.startswith(".project-local/"),
+                                    f"{e['id']}: {key} is outside the ignored root but the row is "
+                                    "machine-local")
+                if e["status"] == "tracked" and key == "trackedPath":
+                    self.assertEqual(claim, e["path"],
+                                     f"{e['id']}: trackedPath contradicts path")
+
 
     def test_absent_and_unpinned_entries_make_no_digest_claim(self) -> None:
         absent = [e for e in self.entries if e["status"] == "absent"]

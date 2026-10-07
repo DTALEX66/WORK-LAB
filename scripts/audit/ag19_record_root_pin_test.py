@@ -13,11 +13,12 @@ Two of the five atlas items (the 2026-09-28 startup prompt and the final executi
 record labels them unpinned and the verdict cannot claim more than "no exact name hit attributed to
 WORK-LAB". Naming that limit is the point of the instrument, not a caveat to smooth over.
 
-CI-stability: the pins live in the machine-local atlas under `.project-local`, which a fresh runner
-does not have, and the Record root is not on a runner either. So the target list is published in the
-tracked record; a run without the root present reports `SCOPE_NOT_AVAILABLE_ON_THIS_MACHINE` and
-makes no absence claim about the originals. Reads are read-only outside the Git root; the only writes
-are the tracked record and the ignored detail file.
+CI-stability: the pin list is read from the promoted copy under `docs/history/archive/recovered-originals`
+first, so a fresh runner has the real pins instead of a published echo of them (the atlas under
+`.project-local` is only the fallback, and it is not on a runner). The Record root is not on a runner
+either, so a run without it present reports `SCOPE_NOT_AVAILABLE_ON_THIS_MACHINE` and makes no absence
+claim about the originals. Reads are read-only outside the Git root; the only writes are the tracked
+record and the ignored detail file.
 
 Usage: python scripts/audit/ag19_record_root_pin_test.py [--json-out PATH]
 Exit: 0 measured (recovered or negatively proven in scope); 1 a recovery was found and needs landing;
@@ -37,6 +38,8 @@ import zipfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+TRACKED_ATLAS = (REPO / "docs/history/archive/recovered-originals"
+                 / "WORK-LAB_MASTER_SOURCE_REGISTRY.json")
 ATLAS = (REPO / ".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29"
          / "WORK-LAB_MASTER_SOURCE_REGISTRY.json")
 RECORD_ROOT = Path(r"D:\All projects\Record")
@@ -60,12 +63,14 @@ def attribute(name: str) -> str:
 
 
 def load_targets() -> tuple[list[dict], str]:
-    """The five atlas pins, or the last published list when this machine has no atlas."""
-    if ATLAS.is_file():
-        data = json.loads(ATLAS.read_text(encoding="utf-8"))["missing_or_recovered_pins"]
-        return ([{"pinId": p.get("id"), "name": p.get("name"), "status": p.get("status"),
-                  "expectedBytes": p.get("expected_bytes"), "expectedSha256": p.get("expected_sha256"),
-                  "pinned": bool(p.get("expected_sha256"))} for p in data], "atlas-machine-local")
+    """The five atlas pins, from the first source this machine (or a runner) can actually read."""
+    for path, source in ((TRACKED_ATLAS, "tracked-promoted-copy"), (ATLAS, "atlas-machine-local")):
+        if path.is_file():
+            data = json.loads(path.read_text(encoding="utf-8"))["missing_or_recovered_pins"]
+            return ([{"pinId": p.get("id"), "name": p.get("name"), "status": p.get("status"),
+                      "expectedBytes": p.get("expected_bytes"),
+                      "expectedSha256": p.get("expected_sha256"),
+                      "pinned": bool(p.get("expected_sha256"))} for p in data], source)
     if TRACKED_RECORD.is_file():
         published = json.loads(TRACKED_RECORD.read_text(encoding="utf-8"))
         return published["targets"], "tracked-record-published-list"
