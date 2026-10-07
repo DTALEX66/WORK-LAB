@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T10:07:27Z",
+  "generatedAt": "2026-10-07T10:09:26Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2083,
-    "distinctProjectLocalTokens": 403,
+    "distinctProjectLocalTokens": 404,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 403,
-    "citationsToAbsentTokens": 1099
+    "tokensAbsent": 404,
+    "citationsToAbsentTokens": 1101
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,8 +29,8 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 539,
-      "distinctPaths": 314
+      "citations": 540,
+      "distinctPaths": 315
     },
     "machine_local_runtime_pointer": {
       "citations": 137,
@@ -49,7 +49,7 @@
       "distinctPaths": 1
     },
     "unclassified_needs_human_read": {
-      "citations": 42,
+      "citations": 43,
       "distinctPaths": 3
     }
   },
@@ -2764,6 +2764,12 @@
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 243,
         "text": "| GEOMETRY-GATE-20261007 | P1 | 已落地＝判定逻辑＋拒绝语义（12 项单测）/ 未落地＝真实浏览器读回，故暂不接成 CI 必需步骤 | `scripts/audit/topbar_geometry_via_cdp.py` 原来只是一台会打印数字的仪器：`main()` 返回 None（永远退出 0），没有任何 CI 步骤或测试引用它——这就是提示词任务包 G3 的缺口"
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-k/measure_residue_eligibility.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 247,
+        "text": "| GREENING-20261007-J | P1 | ELIGIBLE_BYTES_1,460,600_OF_4.19_GB / NOTHING_MORE_SAFELY_RELEASABLE / MEASURED_NOT_ASSUMED | 本轮不再猜哪块缓存能删，而是量「**删除合法性**」：对 `.project-local` 每个一级子目录求 apparent bytes，并统计受版本控"
       },
       {
         "path": ".project-local/runs/convergence-20261007-k/promote-atlas-master-source-registry.json",
@@ -6587,6 +6593,12 @@
       },
       {
         "path": ".project-local",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 247,
+        "text": "| GREENING-20261007-J | P1 | ELIGIBLE_BYTES_1,460,600_OF_4.19_GB / NOTHING_MORE_SAFELY_RELEASABLE / MEASURED_NOT_ASSUMED | 本轮不再猜哪块缓存能删，而是量「**删除合法性**」：对 `.project-local` 每个一级子目录求 apparent bytes，并统计受版本控"
+      },
+      {
+        "path": ".project-local",
         "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
         "line": 76,
         "text": "- 修法是一条规则：`exists()` 只对仓库负责；`.project-local/` 在任何机器上都判为不可从检出验证；`checkoutVerifiable` 恒 0；`presentOnThisMachine` 只报数不参与跨机比较。"
@@ -6685,7 +6697,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 189
+    "presentOnThisMachine": 190
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
