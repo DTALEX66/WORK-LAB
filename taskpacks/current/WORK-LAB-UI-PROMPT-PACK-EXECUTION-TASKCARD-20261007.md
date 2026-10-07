@@ -1,9 +1,9 @@
 # WORK-LAB UI 提示词包执行 — TASK CARD（2026-10-07）
 
 **Task ID:** `WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007`
-**Status:** ACTIVE-CURRENT（执行已授权，交付未开始）— owner 2026-10-07 指令「按照提示词任务包推进」+
-「将新 UI 任务并入目标」。本卡取代 2026-09-25 卡中「只登记路线、不授权写 UI 码」的限制，但**不取代**其
-跨项目边界与单写者规则。
+**Status:** ACTIVE-CURRENT（核心 UI 实现已合并到收敛线；完整产品验收仍有未闭合项，见 `UI_IMPLEMENTATION_REPORT.md` §15–§17）—
+owner 2026-10-07 指令「按照提示词任务包推进」+「将新 UI 任务并入目标」。本卡取代 2026-09-25 卡中
+「只登记路线、不授权写 UI 码」的限制，但**不取代**其跨项目边界与单写者规则。
 **Authority 链:** `/WORK-LAB-AUTHORITY.md` → `taskpack-authority-index.json` →
 `WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918` → 本卡。
 **唯一在册任务行:** `taskpacks/current/OPEN-TASK-REGISTER.md` 的 `UI-PRODUCT-PROMPT-20261007`。

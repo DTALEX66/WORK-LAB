@@ -137,9 +137,9 @@
         ".project/governance/model-capability-matrix.json"
       ],
       "status": "PARTIAL",
-      "evidence": "verifiers present; the seven-level ladder is not yet a machine-checked schema",
+      "evidence": "verifiers present. 2026-10-08: the seven-layer ladder is machine-checked — `adapter_capability_projection.py` is the single source that decides each layer's state (MET requires a named source and a non-NO_EVIDENCE level; NOT_PROBED requires the missing thing by name; repeated layers refused), and `snapshot_validator` rejects `nativeStatus=NATIVELY_VERIFIED` unless OBSERVED_IN_EXECUTION is MET — the ladder cannot be climbed from the top. Live readback on this machine: 10 cards, INSTALLED=MET only for the client whose install identity is SINGLE_VERIFIED, NOT_SUPPORTED where absence was measured, NOT_PROBED where discovery says UNKNOWN; every card reports nativeStatus=NOT_IMPLEMENTED with the AG-06/G06 reason.",
       "disposition": "RETAINED",
-      "nextOrBlocked": "candidate: express the ladder in the capability conformance contract"
+      "nextOrBlocked": "ladder is expressed as a snapshot contract, not inside capability-conformance.schema.json (that file describes protocols, not clients — binding it there would have been the wrong home); the upper five layers still need real execution evidence, and hermes/codex need U17 discovery to stop reporting UNKNOWN before INSTALLED can be MET"
     },
     {
       "id": "CH-07",
@@ -152,9 +152,9 @@
         "docs/future/WORK-LAB-BLUEPRINT-20261006.md#7"
       ],
       "status": "PARTIAL",
-      "evidence": "ledger and contract verifiers exist; lifecycle-state fidelity is tracked in the open register",
+      "evidence": "ledger and contract verifiers exist; lifecycle-state fidelity is tracked in the open register. 2026-10-08: the Work Unit is now addressable in the product — the snapshot carries taskRecords projected from the canonical store's own task rows, the Work lane deep-links to one record (?view=work&taskId=) and refuses to fall back to another record when the id is unknown, and a control-created unit reads back through the real sidecar.",
       "disposition": "RETAINED",
-      "nextOrBlocked": "late-receipt / revision semantics need live execution evidence"
+      "nextOrBlocked": "late-receipt / revision semantics need live execution evidence; the v3 snapshot still carries no task↔execution foreign key, no Goal text, and no revision/attempt projection, so the detail card lists them as source gaps"
     },
     {
       "id": "CH-08",
@@ -211,9 +211,9 @@
         "scripts/ci/verify_evidence_tiering.py"
       ],
       "status": "PARTIAL",
-      "evidence": "Observer read-only enforced and tested; a writable Control surface does not exist yet (AG-15)",
+      "evidence": "Observer read-only enforced and tested (a POST to the live sidecar is measured at 405, not asserted). 2026-10-08: the writable Control surface exists and is a separate loopback-only service that calls the existing Permission Gate and the one canonical store — the Observer gained no write path and the shell has no auth control of any kind. Completion Authority is still not reached from a control write, because dispatch is NOT_IMPLEMENTED.",
       "disposition": "RETAINED",
-      "nextOrBlocked": "T04/AG-15 open; OD01 is a task-pack default, not a renewed permanent approval"
+      "nextOrBlocked": "T04 landed as PARTIAL; AG-15 stays open until an executor accepts a dispatch. OD01 remains a task-pack default, not a renewed permanent approval"
     },
     {
       "id": "CH-12",
@@ -393,12 +393,15 @@
       "title": "Thin Control Surface",
       "decision": "真写路径、授权、回执、readback/rollback",
       "anchors": [
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "services/control/control_service.py",
+        "apps/control-surface",
+        "packages/contracts/schemas/workflow/control-operation.schema.json"
       ],
-      "status": "NOT_RUN",
-      "evidence": "no writable control surface implemented; AG-15 open",
+      "status": "PARTIAL",
+      "evidence": "2026-10-08: the loopback-only Control service and its dependency-free shell landed. Two operations are implemented (work-unit.create writes to the one canonical store and is read back through the Observer snapshot; config.diff returns a plan marked written=false), the other ten answer NOT_IMPLEMENTED with a reason code and a next step, and a 23-test gate pins idempotent replay, foreign-key refusal, out-of-boundary refusal and READBACK_MISMATCH-when-unreadable. Register rows P1-06-CONTROL-SURFACE-20261008 and P1-02-RECORD-FOCUS-20261008.",
       "disposition": "RETAINED",
-      "nextOrBlocked": "must not smuggle write authority into Observer"
+      "nextOrBlocked": "must not smuggle write authority into Observer. Still owed: an authorised native executor for dispatch/cancel/retry/resume, an approval write contract, config apply/rollback with a recovery handle on an authorised exact target, and the measured gap that a Control write does not advance the sidecar revision (content visible on the next snapshot, no push event)."
     },
     {
       "id": "T05",
@@ -475,10 +478,10 @@
       "anchors": [
         "docs/future/WORK-LAB-BLUEPRINT-20261006.md#11"
       ],
-      "status": "UNVERIFIED",
-      "evidence": "source category is 任务包默认, not a renewed permanent approval",
+      "status": "PARTIAL",
+      "evidence": "source category is 任务包默认, not a renewed permanent approval. The default landed on 2026-10-08 as a loopback-only bind with a dynamic port and an endpoint descriptor in the runtime root, exercised by two real processes in one proof run.",
       "disposition": "PENDING_CONFIRMATION",
-      "nextOrBlocked": "surface does not exist yet"
+      "nextOrBlocked": "continued loopback-only operation is a task-pack default; a broader exposure would need a new owner decision"
     },
     {
       "id": "OD02",

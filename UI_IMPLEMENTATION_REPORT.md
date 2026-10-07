@@ -387,3 +387,95 @@ run `37585453264` / head `8847cdc` / observer 作业第 12 步（必需步骤）
 
 **尚未证明的**：jsdom 只证属性与 class 契约，证不了真实 WebView2 里的焦点顺序、透明度过渡与焦点环落点；
 这四个禁用动作的实际 Tab 到达仍欠一次桌面读回。样式不变也只是我对 diff 的读法，不是渲染证明。
+
+## 17. 2026-10-07 产品审计跟进（当前工作树 `cda4165`）
+
+审计发现工作区抽屉把 `Motion Effects` 固定显示为 `Enabled`，但用户启用系统减少动态效果时，B10 的抽屉、Toast、翻卡和若干过渡仍继续移动。产品表示与实际样式均不符合 §6 的 Reduced Motion 要求。修复如下：
+
+- `apps/observer/frontend/src/skins/l10b-shell.css` 在最终壳层增加 `prefers-reduced-motion: reduce` 规则，统一关闭动画、过渡与平滑滚动。
+- `apps/observer/frontend/src/App.tsx` 将静态的 `Enabled` 改为“遵循系统设置”，不再声称动态效果始终开启。
+- `src/reducedMotion.contract.test.ts` 覆盖壳层规则；`App.behavior.test.tsx` 覆盖抽屉文案。
+
+复验：Observer 前端 25 文件 / 167 项通过；`tsc -p tsconfig.json --noEmit` 退出 0；Vite production build 退出 0，输出写入 `.project-local/runs/ui-audit-20261007-cda-build/`。没有安装依赖。
+
+整仓 `python services/orchestration/run_quality_gate.py verify` **FAIL / 本地环境未能完成**：治理批次运行 2,184 项，出现 22 个 `test_project_terminal_guard` 断言失败和 `test_clean_with_unpushed_commit` 错误；前一组的失败值集中为 Windows `Path.resolve(strict=True)` 对 `.project-local/runs/tmp` 子目录返回 `PermissionError`，后一组的本地 bare-repository `git push` 返回 `Could not read from remote repository`。这些结果不能记作门禁 PASS；受限环境下也未绕过路径或 Git 写入限制。`--changed apps/observer/frontend/src` 安全回退到完整验证，因此同样止于治理批次。
+
+**【2026-10-07 当日更正，原文保留不改】** 上面那段 FAIL 在换一台主机后被证伪：同一棵树（HEAD `cda4165`）用声明工具链 `.project-local/toolchains/wl-py311/Scripts/python.exe` 重跑整仓 `verify`，得到 `QUALITY_GATE_GOVERNANCE_PASS modules=207 executed=2175 ran=2185 skipped=10`、47 门全部执行、退出 0，1,021 行日志里 `FAILED`/`Traceback`/`PermissionError` 各 0 处（`.project-local/runs/qoder-20261007-a/gate-verify.log`、`gate-exit.txt`）。`test_project_terminal_guard` 的 22 项与 `test_clean_with_unpushed_commit` 的 1 项在这一侧全绿，所以它们是**上一会话沙箱对 `.project-local/runs/tmp` 的权限**与该会话自身的 Git 写入限制，不是产品缺陷，也不是工具链缺失。据此也不得反过来宣称"整仓已验证"：GATE_SEMANTICS 同日仍明写 `RUNTIME_CANARY_PENDING`、`TAURI_WINDOWS_PENDING`（真实桌面 WebView2 未跑）、`EXACT_SHA_CI_UNVERIFIED`（本地不冒充 exact-SHA CI），`skipped=10` 是具名隐私跳过，照常保留。
+
+隐私边界复核另发现两处治理测试曾在机器本地素材存在时读取其字节计算摘要。已移除这类读取；两个测试现在以具名 `skipTest` 明示机器本地素材未复核，tracked registry / pin 仍做结构检查。此前那次全仓批次发生在修正前，聚合日志未包含素材正文，但无法从聚合输出判定条件摘要是否触发；它不作为这两项隐私边界修正的验证证据。
+
+修正后定向验证：`test_recovered_source_registry.py` + `test_ag19_record_root_pin_test.py` 为 **26 passed / 2 skipped**；两项 skip 都逐字说明机器本地原件的字节未打开。Python 进程退出后另有已知 `pyreadline3` destructor `OSError`，pytest 退出码仍为 0。
+
+审计边界：本分支为 `task-decomposition/atlas-gap-archive-20261001`，HEAD `cda416523deb108d721feada367f02aa77ef01cb`。本地 `origin/main` 跟踪值为 `cd4daa83e107afab8438c0e85f63a10e75314d5a`；远端读取失败，当前远端 main 的 SHA 未核实。**【2026-10-07 当日更正】** 同一会话的远端读取阻塞在下一会话的可信 Shell 里不存在：`git ls-remote origin refs/heads/main` 实测返回 `cd4daa83e107afab8438c0e85f63a10e75314d5a`，与本地跟踪值一致，远端 main 已核实为该 SHA（不是"UNKNOWN"，也不是猜测）。顶层结构检查 `verify_project_authority_reference.py` 与 `verify_error_ledger.py` 均通过。当前项目仍有已登记的 U02、U18 未完成范围；UI 的逐泳道 Loading/Permission 矩阵及非审批泳道的动作级权限说明仍按 §15.1 保持未完成。本轮修改限于 Observer UI、其登记状态与两项机器本地读取边界测试；没有增加登录、令牌、密钥或防护机制。回滚时逐项撤销本节 App/CSS/测试更改、恢复 U03 登记行并删除本节；不需要改写提交历史。
+
+对照产品路线卡，仍有两项功能缺口：P1-02 的 `taskId` / `executionId` URL 定位尚未实现（当前 URL 仅接收 `view`、`theme`、`layout`）；P1-03 的 Codex/Hermes/DSH 原生能力卡尚未实现（当前 Agents 页只按真实执行记录显示 agent、状态、会话和工作区）。这些字段没有当前 Snapshot 合同来源，继续显示 UNKNOWN 比伪造值更准确；本轮未新增 placeholder 卡片或隐藏路由。
+
+**【2026-10-08 当日更正】** 上面这句里 P1-02 已经不再成立，P1-03 仍然成立。P1-02 按 合同 → 后端投影 → 一致性 → UI → 行为验证 落地：`snapshot_api.project_task_record()` + `taskRecords` 字段（缺席≠空列表）+ `snapshot_validator` 逐条校 + `types.ts` 的 `TaskRecord` + `lib/recordFocus.ts` 的封闭标识校验 + Work 泳道行链接与详情卡；`?view=work&taskId=…` 刷新、前进/后退、复制地址落同一条记录，找不到就说找不到，不回退到第一条。验证：vitest 26 files / 194 tests、tsc 0、vite build 0、Python 13 项新门；仍欠真实 WebView2 里的同一条深链读回。
+
+## 18. 2026-10-08 Control Surface 落地（批次 C 首条真实写链）
+
+独立写边界第一次以代码存在，不再只是路线登记：`services/control/control_service.py`（loopback-only、动态端口、把监听点写进运行根 `control-endpoint.json`）+ `apps/control-surface/`（零依赖零构建薄壳，同源提供，CSP `default-src 'none'; script-src 'self'`，页面上没有任何登录/令牌/密钥控件——测试扫的是 `<input>` 控件而不是散文）。合同 `control-operation` / `control-operation-result` 已登记 catalog（37→39）、`tests/workflow-assistance/test_core_schemas.py` 的钉住集合与 `scripts/ci/verify_contract_catalog.py` 的清单（**两处**登记是刻意的：合同出现必须是一次被审阅的决定）。
+
+12 个操作里只有两个真的实现：`work-unit.create`（写唯一 canonical store 的 tasks 表并读回）与 `config.diff`（`plan_only:true, written:false`）。其余十个 NOT_IMPLEMENTED，各自带 reason_code 与下一步，且合同规定这类回答必须 receipt=null——不可用动作不可能伪装成成功。
+
+真实读回（`.project-local/runs/qoder-20261007-a/prove_control_to_observer.py`，两个真进程、项目内运行根）：写入 WL-E2E-CONTROL-1 → ACCEPTED + digest 回执 → Observer 的 `/api/v1/snapshot` 实测含该记录（QUEUED、checkpoint 键名与摘要、无正文）→ 对 sidecar 的 POST 实测 **405**。证据等级封顶 SYNTHETIC，`completion_authority_reached:false`。
+
+**实测到但没有抹平的三个缺口**：(1) `revision_before=0 / revision_after=0`，关 worker 与开 worker（tick 1s）两次都一样——写的内容能在下一次全量快照读到，但没有推进 revision，因此不会作为推送事件到达正打开的 Observer，“同一任务新 revision 可见”只完成一半，下一步查 `LiveProjection`/`start_live_updates` 的 canonical fingerprint 为何没因新任务行而变；**【2026-10-08 当日更正，原文保留】缺口 (1) 判定作废：那是我的探针在写入与 watcher 下一次 tick 之间抓快照，抄下了还没 bump 的旧 revision。给探针补上“内容出现后继续等 revision”重跑得 `0 → 1`（等待 0.25s，两个真进程、同一项目内运行根、真实 `/api/v1/snapshot`）。同一形状已升为永久回归 `tests/workflow-assistance/test_sidecar_publishes_cross_process_write.py`（跨连接写必须在有界时间内推进 Observer revision 且 `transport.freshnessState=FRESH`；重启后的 sidecar 不得发出比已发布游标更低的种子）。教训：内容可见与 revision 推进是两个保证，仪器提前读数不等于产品缺陷。**(2) checkpoint 正文只在 store，UI 详情卡的 Goal/Revision/Attempt/Planner/Agent Routes/Execution Timeline/Diff/Tests/CI/Receipts/Approval/Handoff 全是显式来源缺口，其中 task↔execution 外键确实不存在；(3) 我自己在这一轮里制造并被门抓住的两次：stdout 未 flush 导致 launcher 读不到端口、以及合同登记只改了一处清单。
+
+
+## 19. 2026-10-08 续轮：能力卡、区间读、逐泳道状态矩阵与影响分析器
+
+owner 追加「继续」后按批次推进的四件事，全部有可失败的门，不以登记代替实现。
+
+**P1-03 Agents 原生能力卡。** 七层阶梯（Registered→Installed→Loaded/Connected→Qualified→
+Enabled for Task→Native Projection→Observed in Execution）此前只在蓝图 §6 的散文里，没有任何东西阻止界面
+把一个清单条目说成「已安装」或「已原生验证」。现在它是机器可校验的合同：唯一投影
+`packages/client-neutral-core/scripts/adapter_capability_projection.py` 决定每层状态，
+`snapshot_validator` 强制 MET 必须带来源且证据等级不得是 NO_EVIDENCE、NOT_PROBED 必须写明缺什么、
+层名不得重复、`nativeStatus=NATIVELY_VERIFIED` 只有在 OBSERVED_IN_EXECUTION 层 MET 时才合法。
+本机真实读回 10 张卡：deepseek-harness 的 INSTALLED 因 `SINGLE_VERIFIED` 而成立；cc-switch / open-design
+因实测未安装而是 NOT_SUPPORTED（测出来的缺失不等于没测）；hermes / codex / github / openhuman 因软件身份
+发现给出 UNKNOWN 而是 NOT_PROBED；所有卡 nativeStatus=NOT_IMPLEMENTED，理由与 AG-06/G06 一致。
+第一次我把能力清单绑到了 `capability-conformance.json` 的条目上，但那些条目是**协议**（adapter-interface /
+acp-compat-layer / repo-managed-skills / context7…）不是客户端，照它画卡就是画一张没有源的卡；每客户端事实
+一律改自 `capability-matrix.json#clients[]`。registry 与 matrix 动词不一致时两处都列并标注不一致，不替
+owner 选真值。界面在 `views/AdapterCapabilityCards.tsx`，零交互控件。
+
+**REQ-RANGE 大产物精确区间读。** 证据链早有 sha256 与成本预算，但读取只有整读或 `_truncate(limit=4000)`
+式前缀；前缀不是切片，读者不知道停在哪、后面还有没有、给出的字节是否仍属于被记录的摘要。
+`evidence_range_reader.py` 补上：绝对句柄必须解析进本仓库、4 MiB 上限超限拒绝而不静默截断、回报
+offset/limit/endOffset/eof/`sliceDigest`（对返回字节本身求摘要）。一致性只与调用方给的 `wholeDigest` 比对，
+缺来源即 DIGEST_UNAVAILABLE —— 这条设计就是「区间读不会偷偷变成整读」的可证形式。8,388,614 B 的项目内
+日志实测整读 0.0023s 对照区间读 0.000420s（比值 0.000488）。只读 sidecar 暴露
+`GET /api/v1/evidence-range`，同路由 POST 实测 405，坏参数 400。UI 落点仍欠，且欠因已具体化：快照还没有
+把 Evidence Store 的 `artifact` 句柄投影成可点列表，在那之前不做让用户手填路径的假入口。
+
+**E5 逐泳道 Loading/Permission 矩阵。** `laneStateMatrix.sweep.test.tsx` 遍历 21 条注册泳道 × 2 种快照并
+打印实测矩阵：无快照时 21/21 无成功色 pill、21/21 带 UNKNOWN/未接入/来源缺口措辞、12/21 另有显式空态、
+整页塌成裸 `0` 判失败、OFFLINE 下任何泳道不得自称在线。权限态是**双向**规则：以 `PermissionState` 自己的
+默认标题「此界面只读」为签名，有审批行时 approvals 必须给出 blocked/reason/stillAvailable，没有行时不得
+凭空立一块权限牌；其余 20 条只读泳道出现权限块即失败（伪造权限控件等于宣称一个不存在的动作）。
+这一项里我自己的仪器错过两次：第一版断言查 `[data-permission-state]`，而生产组件根本没有这个属性，于是
+「双向」退化成长年为真的单向假绿；第二版写了 `result.cleanup()`，被 tsc 当场拒绝。
+
+**P2-04 影响分析器。** 先用一次真实调用证明 fail-open 存在（不是读代码猜）：module root 命中但该 module
+没有同名 gate 时 `required_gates=[]`、risk 仍是 medium —— 一份读起来像便宜 PASS 的计划。修三处：
+`load_profile` 拒绝无 gate 的 module；`build_plan` 对「有变更但零选择」升级 critical；
+`unknown` 的定义从「只看 module 命中」改为「既不匹配 module 也不匹配任何 gate 的 paths」—— 后者曾把
+`packages/contracts/README.md` 这种**已被 gate 明确分类**的路径说成未分类。profile 里 services/ 与
+integrations/ 归到 workflow 作业、packages/contracts/ 同时归 workflow+integration；刻意不新增 gate id
+（会破坏 `aggregate_gate.PLAN_GATES` 不变量，现在有测试直接读它的源码比对这条不变量）。
+local `--changed` 接上唯一 planner，planner 不可用/计划为空一律回全门，且打印本次实际执行范围。
+
+**本轮三次「 inherited 说法 vs 实测」的更正**：上轮我登记为缺口的「Control 写不推进 revision」经补完
+等待后是 `0 → 1`（0.25s），是我自己的探针在写入与 watcher 下一次 tick 之间抓快照抄了旧值 —— 已就地更正并
+升为永久回归 `test_sidecar_publishes_cross_process_write.py`（含重启后不得发出更低游标）。
+区间读的边界测试第一版把系统 temp 当「仓库外」，本地全绿、进门就红 3 项：canonical runner 会把
+`TMP/TEMP/TMPDIR` 绑到 `.project-local/runs/tmp`，门内系统 temp 在仓库里；探针改为引用上一级一个永不创建
+的路径并断言前后都不存在（读取器在打开任何东西之前判定边界）。教训：探针的「外部」不能靠常识，要按被测
+runner 的模式量一遍。
+
+**末次验证**：Python `QUALITY_GATE_GOVERNANCE_PASS modules=214 executed=2277 ran=2287 skipped=10`
+（10 项 skip 全是具名隐私跳过）、`CI_ROOT_GOVERNANCE_PASS modules=23`、整门 `GATE_EXIT=0`；
+前端 tsc 退出 0、vitest 28 files / 207 tests、vite build 退出 0。
+本轮不申请也不执行：提交、推送、PR、合并、发布、安装、改全局配置、跨项目写。
