@@ -4354,11 +4354,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: 02194c8 is the wiring commit and is quoted in observed_error; naming it as introducedCommit and as the fix's ancestor in the same pair of fields is how ERR-089 was mis-bound, so the origin is stated in prose instead",
         "fixedCommit": "91c2c8aca4d43d4a5b88f53b82824950e389a607",
-        "verifiedCommit": null,
+        "verifiedCommit": "904806202ae93e772b4e0a24d47c7aebb8c55491",
         "affectedCapability": "CI step surface; desktop geometry evidence",
         "regressionCommand": "python -m pytest tests/ci/test_topbar_geometry_gate.py",
         "bindingNote": "bound 2026-10-07 against 91c2c8a: that commit removes the required step and carries both HTTP fixes plus the gate's test (tests/ci/test_topbar_geometry_gate.py); the promise check ran before stamping and the bulk guard counted the ledger rows it adds (0). verifiedCommit stays null until an exact-SHA readback covers a head containing this record",
-        "bindingBasis": "fix-and-revert-in-one-commit: the fix is the removal of the wiring that the record describes, so the same commit is both the change and its evidence"
+        "bindingBasis": "fix-and-revert-in-one-commit: the fix is the removal of the wiring that the record describes, so the same commit is both the change and its evidence",
+        "verifiedCommitNote": "exact-SHA Actions readback at 904806202ae93e772b4e0a24d47c7aebb8c55491: work-lab-gate success, 7 jobs (gate-plan, supply-chain-security, token-monitor, workflow-assistance, integration, observer, aggregate) with no non-green job, plus wlr-060-production-gates success on the same head. The observer job built the desktop crate and passed the WebView E2E readback after the geometry step was removed, which is the state this record argues for: green restored by taking the refusing step out, not by softening its verdict."
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
