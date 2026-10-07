@@ -4450,11 +4450,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the gap is the absence of a policy, not a commit; the ERR-140 fix that moved fixtures inside the boundary is named in observed_error because it is where the residue started accumulating, not where it was decided nobody would clean it",
         "fixedCommit": "51437269f2f27c945ed6aaad200f49ac4fc32f88",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "In-boundary residue governance; repository greening",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_in_boundary_residue_sweep.py",
         "bindingNote": "bound 2026-10-07 against 5143726: that commit carries the sweep and its 7 checks; the promise check ran before stamping and the bulk guard counted its ledger rows (0)",
-        "bindingBasis": "fix-and-gate-in-one-commit: `feat(greening): sweep regenerable residue inside the boundar…`"
+        "bindingBasis": "fix-and-gate-in-one-commit: `feat(greening): sweep regenerable residue inside the boundar…`",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
@@ -4481,11 +4482,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the drift is the absence of a sweep after the 2026-09 convergence; naming one commit for a missing check would be attribution rather than evidence",
         "fixedCommit": "cd3533d69ea908a7442bedf39e4c7f1f963d7144",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Reader-facing path authority; U02 convergence",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_superseded_path_instructions.py",
         "bindingNote": "bound 2026-10-07 against cd3533d: that commit carries the five re-pointed documents and the gate; verified from `git show` for each promised path before stamping",
-        "bindingBasis": "fix-and-gate-in-one-commit: `deepseek-harness-config-guide.md` `codex-enhancement-boundary.md` … re-pointed in the same commit as test_superseded_path_instructions.py"
+        "bindingBasis": "fix-and-gate-in-one-commit: `deepseek-harness-config-guide.md` `codex-enhancement-boundary.md` … re-pointed in the same commit as test_superseded_path_instructions.py",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
@@ -4512,11 +4514,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the discovery source has been the index since the tool existed; the exposure came from adding an instrument and its inventory in one motion on 2026-10-07, and the red head is quoted above rather than attributed to a SHA nobody wrote",
         "fixedCommit": "950ce65aeb6622247ed8eea82d94d5eff2292509",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Tool inventory traceability; CI-surface reproducibility",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_tool_inventory_coverage.py",
         "bindingNote": "bound 2026-10-07 against 950ce65: that commit adds the warning and the ordering rule to the tool the record describes; verified from `git show` before stamping",
-        "bindingBasis": "fix-commit-introduction: the tool change and its gate are both tracked there"
+        "bindingBasis": "fix-commit-introduction: the tool change and its gate are both tracked there",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"

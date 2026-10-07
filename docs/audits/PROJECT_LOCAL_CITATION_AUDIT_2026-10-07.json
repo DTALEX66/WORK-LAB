@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T06:17:05Z",
+  "generatedAt": "2026-10-07T06:28:04Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2058,
-    "distinctProjectLocalTokens": 389,
+    "distinctProjectLocalTokens": 390,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 389,
-    "citationsToAbsentTokens": 1048
+    "tokensAbsent": 390,
+    "citationsToAbsentTokens": 1049
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -37,8 +37,8 @@
       "distinctPaths": 57
     },
     "negative_assertion_or_removal_record": {
-      "citations": 105,
-      "distinctPaths": 40
+      "citations": 106,
+      "distinctPaths": 41
     },
     "path_pattern_or_truncated_token": {
       "citations": 9,
@@ -5608,6 +5608,12 @@
         "text": "\"evidencePath\": \"local .project-local/artifacts/work-lab-migration-v6 (ignored)\""
       },
       {
+        "path": ".project-local/atlas-2026-09-29/.../TaskPack_v3.1/TaskPack_v3.1/config",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 237,
+        "text": "| INSTRUMENT-FIXES-20261007 | P1 | AUDIT_SELF_SCAN_REMOVED_1.7MB_TO_130KB / POLICY_SCANNER_BLIND_TO_LIST_STRINGS_ERR-139 / 2_NEW_GATE_MODULES | 两处是自家仪器骗了自己。(1) `scripts/audit/project_local_citation_au"
+      },
+      {
         "path": ".project-local/cache/vendor",
         "file": "reports/audit-archive/20260930/hermes/skills/software-development/repository-directory-restructuring/SKILL.md",
         "line": 157,
@@ -6300,7 +6306,7 @@
       {
         "path": ".project-local",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4472,
+        "line": 4473,
         "text": "\"root_cause\": \"Path convergence was treated as a property of the entry documents. Nothing checked the rest of the reader-facing surface, and the citation audit — which does scan those roots — only rep"
       },
       {
