@@ -169,18 +169,20 @@ class CitationAuditGate(unittest.TestCase):
             outs.append(body)
         self.assertEqual(outs[0], outs[1], "two passes over the same tree disagreed")
         # Only the checkout-deterministic counts are compared against the shipped record.
-        # `presentOnThisMachine` is deliberately machine-dependent — it reports what the box that runs
-        # the audit actually holds under the git-ignored root — and a clean-checkout simulation proved
-        # it: 174 here against 10 in a fresh worktree. Asserting equality on it would re-create the
-        # ERR-142 failure inside the gate that exists to prevent it.
         deterministic = ("reviewQueue", "unadjudicated", "checkoutVerifiable")
         shipped = json.loads(AUDIT.read_text(encoding="utf-8"))
         self.assertEqual({k: outs[0]["counts"][k] for k in deterministic},
                          {k: shipped["counts"][k] for k in deterministic},
                          "a fresh scan disagrees with the shipped record about the adjudicated state")
-        self.assertGreaterEqual(shipped["counts"]["presentOnThisMachine"],
-                                outs[0]["counts"]["presentOnThisMachine"],
-                                "the shipped record should reflect the box that produced it")
+        # `presentOnThisMachine` is reported, never compared. It counts citation tokens whose bytes the
+        # running box happens to hold under the git-ignored root, so it moves with the disk: a clean
+        # checkout showed 10 against 174 here, and it also self-amplifies, because this very test writes
+        # first.json/second.json into `.project-local/runs/` before re-scanning. Any bound on it —
+        # equality *or* >= — is a gate that decays with the machine, which is the ERR-142 failure class.
+        for doc in (outs[0], shipped):
+            value = doc["counts"]["presentOnThisMachine"]
+            self.assertIsInstance(value, int)
+            self.assertGreaterEqual(value, 0)
 
 
 if __name__ == "__main__":
