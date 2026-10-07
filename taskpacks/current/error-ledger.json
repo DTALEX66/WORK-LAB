@@ -9,12 +9,12 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 170,
+    "total": 171,
     "by_classification": {
       "ci_configuration": 17,
       "ci_tooling": 9,
       "config_downgrade": 3,
-      "contract_drift": 54,
+      "contract_drift": 55,
       "dead_entry": 3,
       "entrypoint": 6,
       "evidence_state": 28,
@@ -5202,6 +5202,37 @@
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+    },
+    {
+      "error_id": "ERR-173",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": ".project/governance/contracts/contract-catalog.json",
+      "command": "python scripts/ci/verify_contract_catalog.py",
+      "exit_code": 1,
+      "observed_error": "A census of the contract catalogue against the tree found one name bound to two different documents. `evidence-envelope` is registered at .project/governance/contracts/evidence-envelope.schema.json -- camelCase fields (taskId, runId, status) and additionalProperties:true, with only `contentBodies` and `credentials` pinned to the literal \"excluded\", so any other key name is accepted. The contract producers actually validate against is packages/contracts/schemas/workflow/evidence-envelope.schema.json: snake_case (evidence_id, task_id, state, level, source, artifacts, redaction), additionalProperties:false, and asserted by verify_core_schemas.py and apps/observer/src/observer_evidence.py. Both verifiers pass because each reads a different file, so the registry describes a document nothing produces while the document in use is invisible to every consumer that reads the catalogue -- including the generated TypeScript types, which the cross-language contract is supposed to be the single source of. Census also measured the wider shape of the problem: 53 schema files on disk, 39 registered, and the SSOT tool reporting the other 14 as advisory with exit 0.",
+      "root_cause": "Registration is per-file and manual, and nothing compares the set of schema files to the set of registered contracts as a hard invariant; the tool that enumerates both sides downgrades the difference to advice. An advisory that has never once blocked anything is not a guard: the count of unregistered contracts can only grow, silently, one accepted file at a time. And two verifiers matching by filename rather than by contract identity let one name mean two shapes.",
+      "fix": "Registered the producing document under its own id `workflow-evidence-envelope` (owner workflow, consumers observer/workflow/ci) -- additively, with no $id rename, so no holder of an existing document breaks. Catalog and its verifier now agree at 40, generated types regenerate to 40, and the current-state freshness snapshot is regenerated in the same commit because the contract count is one of the inputs it digests. Measured after the change: CONTRACT_CATALOG_PASS contracts=40 schemas=40, CONTRACT_SSOT_PASS contracts=40 disk_schemas=53 unlisted_advisory=13, test_core_schemas 4 OK, test_contract_shapes 2 OK, test_governance_gate 8 OK.",
+      "regression_test": "tests/ci/test_governance_gate.py",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Every schema file tracked under a contract directory must be either registered under a unique contract id or named in a dated, reason-carrying exclusion list, and a second file claiming an already-registered id must fail the catalogue gate. Treating an unregistered contract as advice is never acceptable, because an advisory that has never blocked anything is not a guard.",
+      "remaining_boundary": "13 schema files are still unregistered and still advisory-only: task-ledger, adapter-registry, agent-runtime-adapter, cloud-event-envelope, context-capsule, error, model-asset, model-invocation-plan, observer-event, runtime-registry, usage-observation, canonical-config-intent and the governance future-candidate-registry. Each needs a decision about whether both languages must see it, which is not mine to make by bulk registration; this round fixed the collision, not the count. The older camelCase envelope is additionally still loose: with additionalProperties:true it accepts any key except the two names it pins, so a credential riding in under another name is a shape problem the registry does not yet catch.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "pre-existing drift surfaced by this round's census, not introduced by it",
+        "fixedCommit": "27aa946a666042118e90aae9f3fdeab53a58a5d9",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 27aa946 carries the catalogue entry, the verifier expectation, the regenerated types and the refreshed freshness snapshot",
+        "bindingNote": "bound 2026-10-08 at creation time against 27aa946; verifiedCommit stays null until the exact-SHA Actions readback exists",
+        "affectedCapability": "Contract catalogue as the cross-language single source",
+        "regressionCommand": "python scripts/ci/verify_contract_catalog.py"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/ci/test_governance_gate.py is tracked"
     }
   ],
   "wlrReconciled": true,
