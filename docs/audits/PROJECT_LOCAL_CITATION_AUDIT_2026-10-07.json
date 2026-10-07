@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T05:39:30Z",
+  "generatedAt": "2026-10-07T05:54:06Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2049,
+    "trackedFilesScanned": 2055,
     "distinctProjectLocalTokens": 389,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 389,
-    "citationsToAbsentTokens": 1044
+    "citationsToAbsentTokens": 1045
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -49,7 +49,7 @@
       "distinctPaths": 1
     },
     "unclassified_needs_human_read": {
-      "citations": 41,
+      "citations": 42,
       "distinctPaths": 3
     }
   },
@@ -1586,13 +1586,13 @@
       {
         "path": ".project-local/artifacts/residue-cleanup",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4436,
+        "line": 4437,
         "text": "\"entrypoint\": \"scripts/audit/in_boundary_residue_sweep.py, tests/workflow-assistance/test_in_boundary_residue_sweep.py, .project/governance/project-data-boundary.json, .project-local/artifacts/residue"
       },
       {
         "path": ".project-local/artifacts/residue-cleanup/residue_20261007T132700.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4441,
+        "line": 4442,
         "text": "\"fix\": \"`scripts/audit/in_boundary_residue_sweep.py` enumerates only directories matching a DECLARED residue pattern, and each pattern must name the command that regenerates it. Recoverability is prov"
       },
       {
@@ -1616,7 +1616,7 @@
       {
         "path": ".project-local/artifacts/spill-ledger.jsonl",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4436,
+        "line": 4437,
         "text": "\"entrypoint\": \"scripts/audit/in_boundary_residue_sweep.py, tests/workflow-assistance/test_in_boundary_residue_sweep.py, .project/governance/project-data-boundary.json, .project-local/artifacts/residue"
       },
       {
@@ -4540,7 +4540,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "docs/current/workflow-assistance/runtime-adapters/deepseek-harness-config-guide.md",
-        "line": 44,
+        "line": 45,
         "text": "`.project-local/artifacts/` 或 `80-evidence/`），不外溢到用户目录/其他项目/共用库；"
       },
       {
@@ -4858,7 +4858,7 @@
       {
         "path": ".project-local/runs",
         "file": "docs/current/workflow-assistance/runtime-adapters/deepseek-harness-config-guide.md",
-        "line": 43,
+        "line": 44,
         "text": "（TMP、npm/uv/pip 缓存、node_modules → `.project-local/runs/`；证据 →"
       },
       {
@@ -5640,7 +5640,7 @@
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4439,
+        "line": 4440,
         "text": "\"observed_error\": \"The declared git-ignored runtime root `.project-local/runs` measured 3,236,021,813 B across its top-level directories, including 38 leftover `auth-ref-*` authority fixtures (36 MB) "
       },
       {
@@ -6278,6 +6278,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 4219,
         "text": "\"fix\": \"exists() now answers from the repository: any token under .project-local/ is treated as not checkout-verifiable on every machine, counts.checkoutVerifiable is 0 by construction, and counts.pre"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4472,
+        "text": "\"root_cause\": \"Path convergence was treated as a property of the entry documents. Nothing checked the rest of the reader-facing surface, and the citation audit — which does scan those roots — only rep"
       },
       {
         "path": ".project-local",
