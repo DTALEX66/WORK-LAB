@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-07T19:19:57Z",
+  "at": "2026-10-07T20:40:39Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -45,22 +45,22 @@
     }
   },
   "counts": {
-    "RESOLVES": 51,
+    "RESOLVES": 55,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
-    "RESOLVES": 84,
+    "RESOLVES": 88,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
-  "resolvedAfterApply": 84,
-  "records": 166,
-  "stateDigest": "b1d72a00c1bd17edfa7eb12776e709148765288c761d8c025350969d65d4149d",
+  "resolvedAfterApply": 88,
+  "records": 170,
+  "stateDigest": "d1e76f09b82d6513e4a1a74b539c0e535612d69041da4a1bb02885b5c752e3fd",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -3301,6 +3301,74 @@
       ],
       "state": "RESOLVES",
       "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-169",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "scripts/ci/generate_current_state.py",
+      "operands": [
+        {
+          "operand": "scripts/ci/generate_current_state.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "scripts/ci/generate_current_state.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-170",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "apps/observer/tests/test_production_surface_static_contract.js",
+      "operands": [
+        {
+          "operand": "apps/observer/tests/test_production_surface_static_contract.js",
+          "category": "RESOLVES",
+          "candidates": [
+            "apps/observer/tests/test_production_surface_static_contract.js"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-171",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "scripts/audit/outside_root_spill_sweep.py",
+      "operands": [
+        {
+          "operand": "scripts/audit/outside_root_spill_sweep.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "scripts/audit/outside_root_spill_sweep.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-172",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "tests/workflow-assistance/test_control_service.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_control_service.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_control_service.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
     }
   ],
   "notClaimed": [
@@ -3310,5 +3378,5 @@
     "OUT_OF_REPO_TARGET claims are re-checkable only on the machine holding the live client home, which is why they are labelled instead of counted as resolved",
     "no record's status_after was changed by this tool"
   ],
-  "whyItMatters": "the ledger carries 147 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
+  "whyItMatters": "the ledger carries 151 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
 }
