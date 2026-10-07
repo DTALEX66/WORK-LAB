@@ -1,7 +1,7 @@
 {
   "schemaVersion": "work-lab/recovered-source-registry/v1",
   "generatedAt": "2026-10-07",
-  "generatedAgainstHead": "ab33537419909943987d3d5466469ef6a74a22b0",
+  "generatedAgainstHead": "f33b78470b108e70d91820a94c7e597010ecddfb",
   "scope": "recovered originals, migrated assets and retired trees this repository must keep verifiable",
   "policy": {
     "tracked": "versioned here: the gate re-hashes the file and a drift fails",
@@ -166,6 +166,19 @@
       "coverageRelation": "byte-identical copy; the production path is the owner from 2026-10-07",
       "verificationCommand": "git cat-file -p 6de25fe:apps/observer/web/assets/brand/app-icon-512.png | sha256sum  ;  current form is asserted against `git show HEAD:apps/observer/frontend/src/assets/brand/app-icon-512.png` by tests/workflow-assistance/test_recovered_source_registry.py",
       "notes": "copied and compared before the source tree was deleted; the SVGs are asserted local and structurally valid by the production-surface static contract"
+    },
+    {
+      "id": "src-shared-dependencies-register-20260815",
+      "kind": "recovered-original",
+      "status": "tracked",
+      "path": "docs/history/archive/recovered-originals/WORK-LAB-SHARED-DEPENDENCIES-2026-08-15.md",
+      "bytes": 3763,
+      "sha256": "3a71b7bedd042d7c9e936a01ab08c2625ca4356a880cd2a3f899a950eeee5972",
+      "observedAt": "2026-10-07",
+      "originalLocation": "declared shared root os-external, docs/WORK-LAB-SHARED-DEPENDENCIES-2026-08-15.md (the same path the outside-root sweep still finds there; it was not moved, deleted or rewritten)",
+      "coverageRelation": "byte-identical mirror: working tree, git blob at f33b784 and the outside original all hash to 3a71b7bedd04… over 3763 B, so the repository now holds the bytes while the declared root keeps the authoritative copy. Content is a 2026-08-15 dependency register and is STALE on cache paths — it names .hermes/task-runtime roots that the 2026-09 directory convergence superseded — so it is archived as history, not as current guidance",
+      "verificationCommand": "git cat-file -p f33b78470b108e70d91820a94c7e597010ecddfb:docs/history/archive/recovered-originals/WORK-LAB-SHARED-DEPENDENCIES-2026-08-15.md | sha256sum",
+      "notes": "recovered by scripts/maintenance/recover_shared_root_original.py, which mirrors in only from a root declared in .project/governance/external-libraries-index.json, refuses E:/ and F:/, refuses an existing or tracked destination, and requires artifact_flow_policy.classify_flow to return ALLOW; it predates the spill ledger (earliest line 2026-10-06), so no per-write record of its creation exists and the mirror-in itself is the first ledger line for it"
     }
   ],
   "digestBasis": "tracked entries: sha256 over the bytes of the blob at generatedAgainstHead (checkout-independent); machine-local entries: sha256 over the bytes on this machine"

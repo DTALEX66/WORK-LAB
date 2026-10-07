@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-06T23:34:17Z",
+  "generatedAt": "2026-10-07T00:17:43Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 36,
+    "trackedTools": 39,
     "withLedgerPromise": 12,
-    "referencedSomewhere": 36,
+    "referencedSomewhere": 39,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -85,7 +85,7 @@
       "sha256": "6f673455c89cda40bef2d18859c1a9b8551a244169655061ed0ce313b215f985",
       "bytes": 7878,
       "lines": 166,
-      "digestBasis": "working-tree-uncommitted",
+      "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
       "citedByRecords": 2,
       "citedBy": [
@@ -261,6 +261,22 @@
       ]
     },
     {
+      "path": "scripts/audit/outside_root_spill_sweep.py",
+      "sha256": "7e5437b75b8cd770b9f4b17b7d95c81d89290725a687465bb72146920ffd7dc0",
+      "bytes": 24929,
+      "lines": 414,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 5,
+      "citedBy": [
+        "docs/audits/OUTSIDE_ROOT_SPILL_SWEEP_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "tests/workflow-assistance/test_outside_root_spill_sweep.py",
+        "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py"
+      ]
+    },
+    {
       "path": "scripts/audit/p0c_cdp_truth.py",
       "sha256": "14a731ba31888af73fd604579e06142a4049e7c8ee6280ad5b74be0a3e88f9fb",
       "bytes": 17327,
@@ -303,9 +319,9 @@
     },
     {
       "path": "scripts/audit/project_local_citation_audit.py",
-      "sha256": "723c1e8e73a3f3917d78e493a51e33a53b6d41c96fefe89ab9ea935044fff248",
-      "bytes": 14569,
-      "lines": 247,
+      "sha256": "6bd1d791da9401e671154b56696817cf248f060e2b41626e2bfd6f7d64b2a733",
+      "bytes": 15004,
+      "lines": 254,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 2,
       "citedByRecords": 6,
@@ -509,6 +525,37 @@
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/maintenance/recover_shared_root_original.py",
+      "sha256": "de12cb8553672524c421b35f1137345f9b6c060d2dda228c36373efd449a18a0",
+      "bytes": 10491,
+      "lines": 208,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 5,
+      "citedBy": [
+        "docs/audits/OUTSIDE_ROOT_SPILL_SWEEP_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "tests/workflow-assistance/test_recover_shared_root_original.py",
+        "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py"
+      ]
+    },
+    {
+      "path": "scripts/maintenance/release_authority_reference_temp_residue.py",
+      "sha256": "a8c6cce826826f18f4f13b98d9da74c58904e9fb22e828ba9e8a6d8c3db41b56",
+      "bytes": 9531,
+      "lines": 180,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 4,
+      "citedBy": [
+        "docs/audits/OUTSIDE_ROOT_SPILL_SWEEP_2026-10-07.json",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "tests/workflow-assistance/test_outside_root_spill_sweep.py",
+        "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py"
       ]
     },
     {

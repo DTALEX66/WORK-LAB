@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 137,
+    "total": 139,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 48,
+      "contract_drift": 49,
       "test_behavior_alignment": 15,
       "working_directory_recovery": 2,
       "evidence_state": 23,
@@ -20,7 +20,7 @@
       "feature_gap": 10,
       "config_downgrade": 3,
       "dead_entry": 3,
-      "path_boundary": 6,
+      "path_boundary": 7,
       "ci_tooling": 2,
       "sql_schema": 1,
       "regression_contract": 7
@@ -3816,6 +3816,62 @@
         "affectedCapability": "AG-16 super-entry chain capability gate; executor registration",
         "regressionCommand": "python tests/workflow-assistance/test_ag16_handback_evidence.py"
       }
+    },
+    {
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "evidence_level": "local-focused",
+      "status_before": "FAIL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "left null deliberately: the scanner gap predates this round, and the parameter-name bug was mine inside a file that did not exist before f33b784, so naming that commit as the introducing commit would attribute a long-standing upstream hole to this round",
+        "fixedCommit": "f33b78470b108e70d91820a94c7e597010ecddfb",
+        "verifiedCommit": null,
+        "affectedCapability": "Shared-root recovery; artifact-flow screening",
+        "regressionCommand": "python -m pytest tests/workflow-assistance/test_recover_shared_root_original.py",
+        "bindingNote": "bound 2026-10-07 against f33b784: the fix and its gate landed in the same commit, so no separate verifiedCommit is claimed until an exact-SHA CI readback covers it"
+      },
+      "error_id": "ERR-139",
+      "classification": "contract_drift",
+      "entrypoint": "scripts/maintenance/recover_shared_root_original.py, packages/client-neutral-core/scripts/artifact_flow_policy.py, tests/workflow-assistance/test_recover_shared_root_original.py",
+      "command": "python -m pytest tests/workflow-assistance/test_recover_shared_root_original.py",
+      "exit_code": 2,
+      "observed_error": "Two separate self-deceptions while building the shared-root recovery tool. (1) I built the artifact dict with the key `kind`, while classify_flow reads `artifact_kind`; the policy therefore saw kind=None, took its unknown-kind branch and returned PENDING_AUTHORIZATION for a document it had never classified, and my screen only refused REJECT/ISOLATE — so a document that was never evaluated looked like an evaluated one, and the value printed in the evidence record read like a real decision. (2) My own negative control (a fixture doc with `sk-…` on its own line) then failed to trip the secret screen at all: `artifact_flow_policy._walk_keys` descends into dicts and into lists of containers, but a bare string inside a list is never yielded, so `find_nested_secrets` cannot see one-token-per-line content, even though its docstring claims to match 'list elements' and free-text fields.",
+      "root_cause": "(1) A parameter name was assumed rather than read from the callee. (2) The shared scanner's recursion has a hole its own documentation does not describe, and every caller that feeds it a list of strings inherits the hole silently. Fixing the scanner belongs to packages/client-neutral-core, which per AGENTS.md needs an explicit cross-module task card, so this round does not touch it.",
+      "fix": "The recovery tool now passes `artifact_kind` and refuses anything the policy does not affirmatively call ALLOW (PENDING_AUTHORIZATION included), and it feeds the document as line-keyed entries ({\"L1\": text}) so the existing scanner can actually see each line. The upstream gap is pinned by a test that asserts the list form finds nothing and the keyed form finds the token, so neither the defect nor the workaround can be quietly 'simplified' away.",
+      "regression_test": "tests/workflow-assistance/test_recover_shared_root_original.py::UpstreamScannerGapTests::test_list_of_strings_is_invisible_but_keyed_lines_are_not",
+      "repeat_prevention": "Never pass a keyword to a policy function without reading which key it reads; require an explicit ALLOW from a fail-closed classifier instead of refusing only the worst verdict; and must keep a negative control for every screen — a screen nobody falsifies is decoration. When a shared scanner is found defective, record it and pin it with a test rather than silently fixing another module's code.",
+      "remaining_boundary": "The defect in artifact_flow_policy._walk_keys is unfixed and still live for every other caller in the repository; this round only proves the recovery tool is not fooled by it. One document, one planning-shaped fixture: no claim about scanner quality overall.",
+      "status_after": "PASS"
+    },
+    {
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "evidence_level": "local-focused",
+      "status_before": "FAIL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "left null: the ref named by this file's history is e9875d7-era and the residue is a behaviour of the fixture, not of one commit; naming the observation head would be the false attribution ERR-134/136 exist to prevent",
+        "fixedCommit": "f33b78470b108e70d91820a94c7e597010ecddfb",
+        "verifiedCommit": null,
+        "affectedCapability": "Project data boundary; spill governance; CI fixtures",
+        "regressionCommand": "python -m pytest tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py",
+        "bindingNote": "bound 2026-10-07 against f33b784: fix, releaser, sweep adjudication and both gates landed together; verifiedCommit stays null until an exact-SHA CI readback covers this head"
+      },
+      "error_id": "ERR-140",
+      "classification": "path_boundary",
+      "entrypoint": "tests/ci/test_project_authority_reference.py, scripts/maintenance/release_authority_reference_temp_residue.py, scripts/audit/outside_root_spill_sweep.py, tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py, tests/workflow-assistance/test_outside_root_spill_sweep.py",
+      "command": "python scripts/audit/outside_root_spill_sweep.py",
+      "exit_code": 1,
+      "observed_error": "The outside-root sweep reported WORK-LAB-named files under %TEMP%: 19 directories matching auth-ref-*, 304 files / 7,126,653 bytes, every one created 2026-10-01, each a full copy of the live authority package (WORK-LAB-AUTHORITY.md, both authority indexes, the open-task register, the error ledger, current taskcards). Producer: tests/ci/test_project_authority_reference.py::_make_fixture, which used tempfile.mkdtemp(prefix=\"auth-ref-\") with no dir= — outside the Git root, against the boundary declaration — and whose tearDown swallowed removal errors with ignore_errors=True. 133 of the 304 files differ from the live tree because they are 2026-10-01 snapshots; one of them, taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md, matches no blob anywhere in git history, so the residue held the only copy of that state.",
+      "root_cause": "A test fixture was written to the system temp directory instead of the declared runtime root, and the cleanup path was made non-fatal. Silent cleanup failure inside a gate file is the defect class: nothing reported it, so nineteen mirrors accumulated invisibly for six days while every governance test stayed green.",
+      "fix": "Root cause: the fixture is now built with dir=_runtime_root() (.project-local/runs/, the convention test_machine_identity.py already used), so any residue lands inside the boundary and inside .gitignore. Residue: released by manifest-first deletion — every file hashed, classified as live-byte-equal / recoverable-from-a-git-commit / unique, the 7 unique contents (271,845 B) archived before any delete, then rmtree without ignore_errors, then re-enumeration returning 0. The spill ledger carries the cleanup line with its reversibility claim, and the sweep now adjudicates this class as project-authored so a recurrence fails the verdict instead of explaining it away.",
+      "regression_test": "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py::TempFixtureBoundaryTests::test_the_file_that_leaked_is_now_clean",
+      "repeat_prevention": "Never swallow a removal error inside a fixture teardown; every temp fixture must pass dir= inside the declared runtime root; and a cleanup outside the repository must write its manifest and archive unique bytes before deleting anything. A sweep may not answer with one verb for hits of different authorship — each needs a rule with a tracked basis, and an unmatched hit must fail the run.",
+      "remaining_boundary": "28 mkdtemp call sites in tracked code still pass no dir= (21 in 12 test files, 7 in 3 production files under client-neutral-core and services/session-federation, which need a cross-module card); their residue-forming status is NOT adjudicated — only auth-ref-* was proven to leak. TemporaryDirectory() self-cleans and is out of scope. The 7 archived contents live under .project-local, so CI cannot see them; the tracked claim is the manifest's structure and the gate, not the archive bytes.",
+      "status_after": "PASS"
     }
   ],
   "wlrReconciled": true,
