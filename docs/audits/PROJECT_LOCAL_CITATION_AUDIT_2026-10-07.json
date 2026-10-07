@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T22:23:38Z",
+  "generatedAt": "2026-10-07T22:41:34Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2129,
@@ -436,7 +436,7 @@
       {
         "path": ".project-local/artifacts/backup/hermes/config.yaml",
         "file": "tests/workflow-assistance/test_control_service.py",
-        "line": 410,
+        "line": 446,
         "text": "\".project-local/artifacts/backup/hermes/config.yaml\","
       },
       {
@@ -1354,7 +1354,7 @@
       {
         "path": ".project-local/runs/tmp/cookies.sqlite",
         "file": "tests/workflow-assistance/test_control_service.py",
-        "line": 411,
+        "line": 447,
         "text": "\".project-local/runs/tmp/cookies.sqlite\"):"
       },
       {

@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-10-07T22:22:00Z",
+  "generated_at": "2026-10-07T22:40:57Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 180,
+    "total": 182,
     "by_classification": {
       "ci_configuration": 18,
       "ci_tooling": 9,
@@ -19,10 +19,10 @@
       "entrypoint": 6,
       "evidence_state": 30,
       "feature_gap": 10,
-      "path_boundary": 14,
+      "path_boundary": 15,
       "regression_contract": 8,
       "sql_schema": 1,
-      "test_behavior_alignment": 20,
+      "test_behavior_alignment": 21,
       "working_directory_recovery": 2
     },
     "repeat_prevention_required": true,
@@ -5512,6 +5512,68 @@
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/ci/test_contract_ssot_helper_boundary.py is tracked"
+    },
+    {
+      "error_id": "ERR-183",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "path_boundary",
+      "entrypoint": "services/control/control_service.py",
+      "regression_test": "tests/workflow-assistance/test_control_service.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "evidence_level": "local-focused",
+      "command": "python -m unittest -q test_control_service",
+      "exit_code": 1,
+      "observed_error": "The runner's next three failures at 7ca2fd45 were `FILE_ABSENT` for .project/governance/work-lab.project-profile.yaml and `None is not true` for a key that exists. The containment fix had folded the path with normalise_path so the DECISION would be host-independent -- and then handed that folded string to the filesystem. On a case-sensitive host `/home/runner/work/work-lab/work-lab/...` is not a path that exists, so an in-tree document read as absent and the diff planned against nothing.",
+      "root_cause": "One representation was used for two jobs with different requirements. Folding is correct for comparison and wrong for opening a file; I fixed the comparison and propagated its output into the read without noticing the role change.",
+      "fix": "Containment stays lexical; the read uses the anchored text with its declared case, and `relative_inside` returns the case-preserving remainder, refusing (None) when the folded prefix does not line up with the unfolded text rather than guessing. NON_DIFFABLE prefix matching folds its own comparison. The falsifier is a tracked file whose NAME is uppercase (`UI_IMPLEMENTATION_REPORT.md`) plus a table over drive-anchored, POSIX, mixed-case and out-of-root candidates; the echo-the-declared-case assertion fails on every host, which is why it is the assertion and not 'the file opened'.",
+      "repeat_prevention": "When a value is normalised for comparison, check every consumer of that normalised value: any consumer that performs I/O, or that a human must recognise, needs the original text. And prefer a falsifier whose failure does not depend on the host's case rules, because a case-insensitive machine cannot demonstrate a case-sensitivity bug by opening the file.",
+      "remaining_boundary": "CI at 7ca2fd45 was red for this reason and is fixed at f2c7a702; the exact-SHA verdict for f2c7a702 is not yet read, so verifiedCommit is null by rule. The same folded-then-read pattern still exists in the three modules listed in ERR-178's neighbouring task (evidence_range_reader, hermes-project-terminal-guard, artifact_handle_projection), which resolve() and then use the resolved value.",
+      "lifecycle": {
+        "introducedCommit": "27c3e217",
+        "introducedCommitNote": "the containment rewrite that folded the path and then used it for I/O",
+        "fixedCommit": "f2c7a702d7a6955d65943fa7f3a7111c2bde95e5",
+        "verifiedCommit": null,
+        "bindingBasis": "",
+        "bindingNote": "bound 2026-10-08 at creation; verifiedCommit stays null until the exact-SHA run that carries the fix is green",
+        "affectedCapability": "Host-independent config.diff reads as well as decisions",
+        "regressionCommand": "python -m unittest -q test_control_service"
+      }
+    },
+    {
+      "error_id": "ERR-184",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "tests/ci/test_contract_ssot_helper_boundary.py",
+      "regression_test": "tests/workflow-assistance/test_control_service.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "evidence_level": "local-focused",
+      "command": "python scripts/ci/run_root_governance_suite.py",
+      "exit_code": 1,
+      "observed_error": "CI_ROOT_GOVERNANCE_FAIL ran=28 failed=7 on a module that passed under pytest minutes earlier: the test asserts that `cloud-event-envelope.schema.json` is referenced only by the directory census, and its own file names that schema in the expectation list. `git grep` searches tracked files only, so before the commit the test did not exist to the census and after it the test was its own referrer.",
+      "root_cause": "A test that measures the tracked tree becomes a member of the tracked tree. Writing and verifying it in the same uncommitted state cannot detect that, and the failure appeared as a suite-only red with no local reproduction.",
+      "fix": "The referrer filter excludes this file by name (computed, not hardcoded), the verifier under test, and the history/evidence directories; the census test is still required to be the only remaining referrer. Measured: CI_ROOT_GOVERNANCE_PASS modules=28 excluded_post_merge=1 discovered=29.",
+      "repeat_prevention": "Any test that greps the tracked tree for a literal must exclude its own path, and any claim of the form 'nothing references X' must be run once against the committed tree, because the assertion changes truth value at the moment it is committed.",
+      "remaining_boundary": "Other tests in tests/ci grep the tree the same way and were not audited for self-reference in this record; the suite is green at this head, which is the only evidence available that they do not.",
+      "lifecycle": {
+        "introducedCommit": "f8ffc138",
+        "introducedCommitNote": "the commit that added the census test",
+        "fixedCommit": "867f1903811b8708f3e1e6260c6d04ed3a250f45",
+        "verifiedCommit": null,
+        "bindingBasis": "",
+        "bindingNote": "bound 2026-10-08 at creation; verifiedCommit stays null until the exact-SHA run that carries the fix is green",
+        "affectedCapability": "Self-consistency of tracked-tree census tests",
+        "regressionCommand": "python -m unittest -q test_control_service"
+      }
     }
   ],
   "wlrReconciled": true,
