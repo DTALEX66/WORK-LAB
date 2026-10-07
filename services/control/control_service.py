@@ -59,6 +59,15 @@ from permission_gate import ActionKind, PermissionGate, Policy, RiskTier  # noqa
 from plan_candidate import (R_AUTHORIZED, SELF_CONFER_FIELDS, build_candidate,  # noqa: E402
                             check_candidate)
 from project_temp import fixture_dir  # noqa: E402
+from path_text import (  # noqa: E402  single home for the text rule: see path_text's docstring
+    inside_root as _inside_project,
+    normalise_path,
+    path_is_anchored,
+    path_is_drive_relative,
+    path_is_unc,
+    relative_inside,
+)
+
 from sidecar import _allowed_origin, _is_loopback_host  # noqa: E402
 from sidecar_endpoint import read_descriptor, validate_descriptor  # noqa: E402
 from snapshot_api import project_task_record  # noqa: E402
@@ -95,85 +104,6 @@ _DIFFABLE_EXEMPTIONS = ("config.yaml", "config.yml")
 # allowed to reason about: it can carry another machine's providers, paths and field names, and it is not
 # what a plan would change. Config documents are diffable only on a declared configuration surface.
 NON_DIFFABLE_ROOTS = (".project-local/", ".hermes/", "docs/", "tests/")
-
-
-def normalise_path(text: Any) -> str:
-    """Case-fold, unify separators and collapse a path as TEXT, deliberately without the host's help.
-
-    `os.path.normpath`/`normcase` are host-specific: on the Linux CI job `D:/a/WORK-LAB` has no drive and no
-    leading slash, so posixpath reads a Windows path as RELATIVE and anchors it inside the current project.
-    That is how the same boundary assertions were green locally and red on the runner, twice. Every rule
-    here is string work, so one input gives one answer on Windows, Linux and macOS alike.
-    """
-    unified = str(text).replace("\\", "/").lower().strip()
-    if unified.startswith("//"):
-        leading, rest = "//", unified[2:]
-    else:
-        drive = re.match(r"^([a-z]:)(/.*)?$", unified)
-        if drive:
-            leading, rest = drive.group(1) + "/", (drive.group(2) or "").lstrip("/")
-        elif unified.startswith("/"):
-            leading, rest = "/", unified[1:]
-        else:
-            leading, rest = "", unified
-    collapsed: list[str] = []
-    for part in rest.split("/"):
-        if part in ("", "."):
-            continue
-        if part == "..":
-            if collapsed and collapsed[-1] != "..":
-                collapsed.pop()
-                continue
-            if leading:
-                continue  # `..` cannot climb above an anchored root
-            collapsed.append("..")
-            continue
-        collapsed.append(part)
-    return leading + "/".join(collapsed)
-
-
-def path_is_drive_relative(text: Any) -> bool:
-    """`E:secrets` means "relative to whatever the current directory on E: happens to be"."""
-    return bool(re.match(r"^[a-z]:[^/]", str(text).replace("\\", "/").lower().strip()))
-
-
-def path_is_unc(text: Any) -> bool:
-    return str(text).startswith(("\\\\", "//"))
-
-
-def path_is_anchored(text: Any) -> bool:
-    raw = str(text).replace("\\", "/")
-    return bool(re.match(r"^[a-z]:/", raw.lower())) or raw.startswith("/")
-
-
-def _inside_project(candidate: Any, project_root: Any) -> tuple[bool, str, str]:
-    """Containment by text alone: the same normalised path, or below the root's own boundary."""
-    root = normalise_path(project_root).rstrip("/")
-    lexical = normalise_path(candidate)
-    return lexical == root or lexical.startswith(root + "/"), root, lexical
-
-
-def relative_inside(candidate: Any, project_root: Any) -> str | None:
-    """The declared path relative to the root, decided by the folded test but keeping the given case.
-
-    Two different jobs, two different strings: containment must not depend on the host's case rules, so
-    it is decided on `normalise_path` text; the read must find the file the caller named, and a
-    case-folded path does not exist on a case-sensitive filesystem. Deriving the remainder from the
-    folded text is what made CI report FILE_ABSENT for a document that was in the tree.
-    """
-    lexical = normalise_path(candidate)
-    root = normalise_path(project_root).rstrip("/")
-    if lexical == root:
-        return ""
-    if not lexical.startswith(root + "/"):
-        return None
-    unified = str(candidate).replace("\\", "/").rstrip("/")
-    remainder = unified[len(root):].lstrip("/")
-    # the slice is only valid when the folded root really is a prefix of the unfolded text; if the
-    # caller wrote dot-segments or a different case length, refuse rather than read a guessed path
-    if normalise_path(remainder) != lexical[len(root) + 1:]:
-        return None
-    return remainder
 
 
 def relative_within_root(lexical: str, lexical_root: str) -> str | None:

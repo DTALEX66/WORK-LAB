@@ -26,6 +26,12 @@ import hashlib
 import json
 import re
 from pathlib import Path
+import sys
+
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from path_text import inside_root, path_is_anchored  # noqa: E402
 from typing import Any
 
 SCHEMA_VERSION = "worklab/evidence-range-result/v1"
@@ -138,26 +144,37 @@ def read_range(*, handle: str, root: Path, offset: int = 0, limit: int = DEFAULT
     evidence and runtime storage. Passing an explicit tuple narrows the surface; passing () refuses
     everything, because an unset surface is not the same as an unrestricted one.
     """
-    root = Path(root).resolve()
+    # Containment is decided from TEXT first (path_text), because `resolve()`/`is_relative_to` consult the
+    # host: on the Linux runner a Windows-shaped handle has no drive, so posixpath reads it as relative and
+    # anchors it inside this project -- the verdict then depends on which machine asks. The resolved real path
+    # is still computed, but ONLY ever to add a refusal (a symlink that climbs out of the project), never to
+    # grant one, so no host can make an outside file look inside.
+    root_declared = Path(str(root))
     if not handle or not str(handle).strip():
         return _refusal("HANDLE_REQUIRED", handle=str(handle))
-    path = Path(str(handle))
-    if not path.is_absolute():
+    if not path_is_anchored(handle):
         return _refusal("ABSOLUTE_PATH_REQUIRED", handle=str(handle))
-    try:
-        resolved = path.resolve()
-    except OSError as error:
-        return _refusal("UNRESOLVABLE", handle=str(handle), detail=type(error).__name__)
-    if not resolved.is_relative_to(root):
-        return _refusal("OUT_OF_BOUNDARY", handle=str(handle), detail=str(resolved))
-    if name_is_sensitive(resolved):
+    inside, root_lex, cand_lex = inside_root(handle, root_declared)
+    if not inside:
+        return _refusal("OUT_OF_BOUNDARY", handle=str(handle),
+                        detail=f"{cand_lex} 不在 {root_lex} 之内")
+    path = Path(str(handle))
+    if name_is_sensitive(path):
         # Named before the surface test: a credential-looking path is refused even when it sits in an
         # evidence root, so a restored backup cannot be read just because it was filed under artifacts/.
-        return _refusal("SENSITIVE_NAME", handle=str(handle), detail=resolved.name)
-    surfaces = tuple((root / relative).resolve() for relative in evidence_roots)
-    if not surfaces or not any(resolved.is_relative_to(surface) for surface in surfaces):
-        return _refusal("OUT_OF_EVIDENCE_SURFACE", handle=str(handle), detail=str(resolved))
-    if not resolved.is_file():
+        return _refusal("SENSITIVE_NAME", handle=str(handle), detail=path.name)
+    if not evidence_roots or not any(inside_root(handle, root_declared / relative)[0]
+                                     for relative in evidence_roots):
+        return _refusal("OUT_OF_EVIDENCE_SURFACE", handle=str(handle), detail=cand_lex)
+    try:
+        real = path.resolve()
+    except OSError as error:
+        return _refusal("UNRESOLVABLE", handle=str(handle), detail=type(error).__name__)
+    real_inside, _, real_lex = inside_root(real, root_declared)
+    if not real_inside:
+        return _refusal("OUT_OF_BOUNDARY", handle=str(handle),
+                        detail=f"realpath {real_lex} 逃出了 {root_lex}（链接或重定向），只读投影不跟出项目")
+    if not path.is_file():
         return _refusal("NOT_A_FILE", handle=str(handle))
     if limit <= 0:
         return {
@@ -172,7 +189,7 @@ def read_range(*, handle: str, root: Path, offset: int = 0, limit: int = DEFAULT
     if limit > MAX_LIMIT:
         return _refusal("LIMIT_TOO_LARGE", handle=str(handle), detail=f"requested={limit}")
 
-    size = resolved.stat().st_size
+    size = path.stat().st_size
     if offset < 0:
         return {
             "schema_version": SCHEMA_VERSION,
@@ -211,7 +228,7 @@ def read_range(*, handle: str, root: Path, offset: int = 0, limit: int = DEFAULT
             return result
 
     try:
-        with resolved.open("rb") as stream:
+        with path.open("rb") as stream:
             stream.seek(offset)
             data = stream.read(limit)
     except OSError as error:
@@ -223,7 +240,7 @@ def read_range(*, handle: str, root: Path, offset: int = 0, limit: int = DEFAULT
         "status": STATUS_OK,
         "reason_code": "READ_OK",
         "reason": "按精确区间读取。",
-        "handle": str(resolved),
+        "handle": str(path),
         "offset": offset,
         "limit": limit,
         "bytesRequested": min(limit, size - offset),
