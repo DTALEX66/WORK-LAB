@@ -1044,7 +1044,17 @@ def verified_evidence_ceiling(runtime_root: Path | None) -> tuple[str, str]:
 
 
 def build_plane(runtime_root: Path, project_root: Path, *, evidence_ceiling: str = "SYNTHETIC") -> ControlPlane:
-    """Open the ONE canonical store the Observer also reads, then hand the control plane to it."""
+    """Open the ONE canonical store the Observer also reads, then hand the control plane to it.
+
+    The root is validated BEFORE the store is opened: refusing after `CanonicalStore` exists leaves an
+    open sqlite handle, and on Windows that makes the whole fixture directory undeletable
+    (`PermissionError [WinError 32]`), which then contaminates whichever test the batch runs next.
+    """
+    project_root = Path(project_root)
+    if not path_is_anchored(str(project_root)):
+        raise ValueError(
+            f"project_root {project_root} is not anchored: a root that depends on the current working "
+            "directory would make every boundary decision machine-relative")
     store = CanonicalStore(Path(runtime_root).resolve() / "canonical.sqlite")
     return ControlPlane(store, project_root=project_root, evidence_ceiling=evidence_ceiling,
                         receipts_path=Path(runtime_root) / RECEIPTS_PATH,

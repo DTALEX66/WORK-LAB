@@ -21,6 +21,7 @@ from __future__ import annotations
 import ast
 import json
 import re
+import shutil
 import sys
 import threading
 import unittest
@@ -502,10 +503,19 @@ class TestFixturesDoNotAssumeTheAuthorMachine(unittest.TestCase):
 
 
     def test_a_relative_project_root_is_refused_at_construction(self) -> None:
-        """Without `resolve()` a relative root would mean "whatever the cwd is" -- so refuse it outright."""
+        """Without `resolve()` a relative root would mean "whatever the cwd is" -- so refuse it outright.
+
+        The refusal must happen before any sqlite handle exists: an earlier version opened the store and
+        then raised, and on Windows the open handle made the fixture directory undeletable
+        (`WinError 32`), which is the residue that poisoned the next test in the batch.
+        """
+        runtime = fixture_dir(prefix="relative-root-")
         with self.assertRaises(ValueError) as caught:
-            control_service.build_plane(fixture_dir(prefix="relative-root-"), Path("some/relative/root"))
+            control_service.build_plane(runtime, Path("some/relative/root"))
         self.assertIn("not anchored", str(caught.exception))
+        shutil.rmtree(runtime, ignore_errors=False)
+        self.assertFalse(runtime.exists(),
+                         "a refused root left residue behind, which means a handle was opened first")
         for anchored in ("/srv/work-lab", "D:/All projects/WORK-LAB", str(ROOT)):
             plane = control_service.build_plane(fixture_dir(prefix="anchored-root-"), Path(anchored))
             plane.store.close()
