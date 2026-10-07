@@ -143,3 +143,52 @@
 1. `999c668` 变绿后：`python scripts/audit/stamp_record_verification.py ERR-154 999c668` 与 ERR-155，然后重测 `ledger_binding_readback.py` 与 `LEDGER_FIX_COMMIT_BINDING` 快照。
 2. `test_location_claims_agree_with_the_row_status` 只管**字段级**位置声明；prose 里提到的受版本控制路径仍不受管。若要收紧，先量误报率（多条行的 notes 合法地提到树内文件）。
 3. 观测老化项未变：harness 版本收据周期性重生成、hermes 版本来源；`qwen2.5vl/7b` 入库、U02 发布半、U03 `web/` 退役、OD02/03/04、AG-09/AG-10/AG-16 仍属 owner 或真实第二执行人类。
+
+### 6.5 L 轮续做（同一交接内的后半段）
+
+| SHA | 内容 |
+|---|---|
+| `0941e12` | record: round L handoff, including the limit that stops the unbound-record debt from being "fixed" |
+| `8192e08` | record: ERR-154's prose boundary is now a measurement, not an open question |
+| `1c3d170` | gate: the mirror registry and the atlas are now checked against each other |
+| `dcabd71` | record: the lane-by-lane honest-state matrix, measured, and a claim retracted |
+| `9e13d80` | test(ui): every lane must tell the transport truth it was handed |
+| `2c0afe5` | record: re-measure the derived audits after the two new frontend files |
+| `cf94322` | record: the lane transport matrix, and the three false failures the measurement stopped |
+
+新增事实（不需要再论证）：
+
+1. **镜像注册表与 atlas 现在互查**（`test_recovered_source_registry.py` 增至 14 例）。可核的口径是
+   「两条受版本控制的记录是否讲同一件事」，不是「本机文件是否存在」：atlas 的 5 条钉要么声明 RECOVERED 且其
+   `expected_sha256` **确实**在 642 sources 里，要么声明 NOT_RECOVERED/NOT_FOUND 且自带 ≥120 字符的负证明；
+   镜像行的摘要必须与钉逐字节相等；时间线两侧都必须保持「无摘要」。证伪 7/7（改状态词、把未找回的说成找回、
+   删负证明、把 summary 升成 tracked、三处摘要漂移），注入后两份文件逐字节复原。
+2. **`src-worklab-summary-2026-09` 不得晋升，而且这是 atlas 自己写的**：其 source 行的 `content_access`
+   记着「contains session UUIDs and prompt bodies; path and digest registered, content not committed (boundary rule)」。
+   门禁把这句话钉住了——要改它必须重读规则，而不是顺手把行改成 tracked。
+3. **UI 的场景矩阵是量出来的**：21 条带组件泳道 × 4 传输场景全渲染后，三个「离线却称实时」的嫌疑全部是误报
+   （两处是复述规则的否定句与 live-gate 原文，一处绿 pill 打的是 `git.matchState=MATCH` 真值）。
+   落地的因此只有元素级断言 `laneTransportTruth.sweep.test.tsx`（11 例；整套 23 文件 / 161 例全绿），
+   外加探测器自检。细节登在 `UI_IMPLEMENTATION_REPORT.md` §15 与 §15.1。
+4. **§11 未完成项 3 的两处口径已更正**：`OfflineState` 一直有消费者（`App.tsx:224` 硬错误面板），
+   五个诚实态组件每一个都有；「逐泳道 × 场景矩阵」现已覆盖传输与空集合两维，
+   **Loading 与 Permission 两维仍未进矩阵**，动作级禁用解释只有 `approvals` 有 `PermissionState` 消费者。
+5. **台账 153 行**；ERR-154/155 的 verifiedCommit 已在本节写完后落定——`8192e08` 的两条 workflow 都
+   completed success 且该头含记录本身，因此用
+   `python scripts/audit/stamp_record_verification.py ERR-154 8192e08`（ERR-155 同）盖戳，SHA 由工具从
+   `gh` 实测得来，没有手写。绑定门随后 10 例全绿。
+
+读回口径（逐头用 `gh run list` 读，不从包装退出码推断）。`96d06f4` 与 `a382366` 两条 workflow 均已
+completed success。本轮各头在写下本节时的实测状态：
+
+```
+   - `0941e12`：gate=in_progress/-；wlr060=completed/success
+   - `8192e08`：gate=completed/success；wlr060=completed/success
+   - `1c3d170`：gate=in_progress/-；wlr060=completed/success
+   - `dcabd71`：gate=in_progress/-；wlr060=completed/success
+   - `9e13d80`：gate=absent；wlr060=absent
+   - `2c0afe5`：gate=in_progress/-；wlr060=completed/success
+   - `cf94322`：gate=queued/-；wlr060=queued/-
+```
+
+**未绿的头一律不称绿，也不写进 verifiedCommit。**
