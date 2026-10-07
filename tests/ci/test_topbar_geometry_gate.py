@@ -148,6 +148,31 @@ class InstrumentTests(unittest.TestCase):
         finally:
             shutil.rmtree(scratch, ignore_errors=False)
 
+    def test_the_page_session_url_carries_the_port_that_was_asked_for(self) -> None:
+        # Chrome builds webSocketDebuggerUrl from the request's Host header, so a portless Host —
+        # the shape that gets a 200 from its HTTP endpoint at all — makes it echo a portless URL,
+        # and connecting to that refuses. The gate must rebuild the URL from the port it was given.
+        target = [{"type": "page",
+                   "webSocketDebuggerUrl": "ws://127.0.0.1/devtools/page/ABC123",
+                   "url": "http://x/index.html"}]
+        with mock.patch.object(geometry, "cdp_list", return_value=target):
+            self.assertEqual(geometry.discover_page_ws(59123, tries=1),
+                             "ws://127.0.0.1:59123/devtools/page/ABC123")
+
+    def test_each_surface_is_measured_at_its_own_declared_shape(self) -> None:
+        # Measuring the compact layout at desktop width proved nothing about the panel.
+        self.assertEqual(geometry.WIN_SIZE["full"], "1280,820")
+        self.assertEqual(geometry.WIN_SIZE["compact"], "440,780")
+        self.assertGreater(geometry.MAX_HEIGHT["compact"], geometry.MAX_HEIGHT["full"],
+                           "the 440px panel wraps its bar into more rows than the desktop shell")
+
+    def test_a_missing_evaluate_value_is_reported_not_crashed_on(self) -> None:
+        client = geometry.ChromeCDP.__new__(geometry.ChromeCDP)
+        with mock.patch.object(client, "send", return_value={"type": "string"}):
+            with self.assertRaises(RuntimeError) as caught:
+                client.evaluate("1+1")
+        self.assertIn("produced no value", str(caught.exception))
+
     def test_the_chrome_port_is_read_from_the_browser_instead_of_assumed(self) -> None:
         # The gate asks Chrome for port 0 and parses the announced one; a socket reserved first is
         # free again by the time Chrome binds, and Chrome then picks a different port silently.

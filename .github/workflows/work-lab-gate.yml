@@ -217,10 +217,13 @@ jobs:
       - name: U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)
         working-directory: apps/observer
         run: python scripts/u19_webview_e2e.py
-      # G3 is wired as a required step only after it produces one GEOMETRY_GATE_PASS readback — ERR-146.
-      # The gate and its 13 unit checks stay tracked; the step does not, because the instrument
-      # currently refuses on two different Windows hosts (this machine and the Actions runner), and a
-      # required step that refuses every run is a permanent red rather than a measurement.
+      # G3: required now that the instrument has produced a real GEOMETRY_GATE_PASS readback (ERR-146 states
+      # the condition). It measures the bundle this job just built, at each window's declared shape: the main
+      # shell at 1280x820 and the floating panel at 440x780. A refusal exits 3 and names why, which is a red
+      # on purpose — the gate cannot report green without a measurement.
+      - name: Desktop geometry gate (CDP measurement of the built shell)
+        working-directory: .
+        run: python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json
 
   supply-chain-security:
     name: supply-chain-security

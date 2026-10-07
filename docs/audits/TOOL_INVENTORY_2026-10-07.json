@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T04:22:03Z",
+  "generatedAt": "2026-10-07T04:47:16Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -481,14 +481,14 @@
       "lines": 452,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 9,
+      "citedByRecords": 10,
       "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
         "UI_IMPLEMENTATION_REPORT.md",
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {

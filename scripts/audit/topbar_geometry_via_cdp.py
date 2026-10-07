@@ -74,6 +74,13 @@ EXPR = """JSON.stringify((()=>{
 })())"""
 
 TOPBAR_MAX_HEIGHT = 140.0
+# The two windows are different surfaces with different sizes, so each is measured at its own
+# declared shape: the main window at its default 1280x820, the floating panel at the 440x780
+# non-resizable size tauri.conf.json gives it. Measuring the compact layout at desktop width would
+# have proved nothing about the panel — the first PASS this script produced did exactly that, and
+# the per-view height bound below is what a 440px bar actually needs.
+WIN_SIZE = {"full": "1280,820", "compact": "440,780"}
+MAX_HEIGHT = {"full": 140.0, "compact": 260.0}
 RAIL_MIN_WIDTH = 200.0
 RESIDUE: list[str] = []
 ANNOUNCED_MISMATCH: list[str] = []
@@ -162,7 +169,7 @@ def _recv_text(ws: socket.socket, wanted_id: int, timeout: float) -> str:
         if message.get("id") == wanted_id:
             if "error" in message:
                 raise RuntimeError(f"CDP error: {message['error']}")
-            return json.dumps(message.get("result", {}))
+            return json.dumps(message)
     raise RuntimeError(f"no CDP response for id={wanted_id} before {timeout}s")
 
 
@@ -209,7 +216,12 @@ class ChromeCDP:
                            {"expression": expression, "returnByValue": True, "awaitPromise": True})
         if result.get("exceptionDetails"):
             raise RuntimeError(f"evaluate threw: {json.dumps(result['exceptionDetails'])[:400]}")
-        return result.get("result", {}).get("value")
+        value = result.get("result", {}).get("value")
+        if value is None:
+            # A missing value is not an empty measurement: report what the debugger did return
+            # rather than letting json.loads(None) become the error message.
+            raise RuntimeError(f"evaluate produced no value: {json.dumps(result)[:400]}")
+        return value
 
     def close(self) -> None:
         try:
@@ -239,8 +251,8 @@ def verdict(measured: dict, view: str) -> dict:
     topbar = _first(measured, ".topbar")
     add("topbar_measured", topbar is not None, "no .topbar element")
     if topbar:
-        add("topbar_not_stacked", topbar["height"] <= TOPBAR_MAX_HEIGHT,
-            f"height={topbar['height']} limit={TOPBAR_MAX_HEIGHT}")
+        add("topbar_not_stacked", topbar["height"] <= MAX_HEIGHT[view],
+            f"height={topbar['height']} limit={MAX_HEIGHT[view]}")
 
     brand = _first(measured, ".topbar-brand")
     add("brand_mark_present", bool(brand) and brand["width"] > 0,
@@ -324,16 +336,45 @@ def discover_page_ws(port: int, tries: int = 20) -> str:
     for _ in range(tries):
         try:
             targets = cdp_list(port)
-            seen = [f"{t.get('type')}:{(t.get('url') or '')[:40]}" for t in targets]
-            for target in targets:
-                if target.get("type") == "page" and target.get("webSocketDebuggerUrl"):
-                    return target["webSocketDebuggerUrl"]
         except Exception as exc:  # noqa: BLE001 — retried, but the last reason is always reported
             last = exc
+            time.sleep(0.5)
+            continue
+        seen = [f"{t.get('type')}:{(t.get('url') or '')[:40]}" for t in targets]
+        for target in targets:
+            url = target.get("webSocketDebuggerUrl") or ""
+            if target.get("type") == "page" and url:
+                # Chrome builds that URL from the request's Host header, so it echoes back whatever
+                # authority was used — including a portless one, which refuses on connect (measured:
+                # `ws://127.0.0.1/devtools/page/…`). The port this function was given is the truth.
+                path = urllib.parse.urlsplit(url).path
+                return f"ws://127.0.0.1:{port}{path}"
         time.sleep(0.5)
-    # A refusal that hides why is the failure mode this gate exists to prevent.
     raise RuntimeError(f"no CDP page target on 127.0.0.1:{port}; last_error={last!r}; "
                        f"targets_seen={seen[:6]}")
+
+
+def connect_with_retry(port: int, attempts: int = 6):
+    """Re-discover the page target before each websocket attempt.
+
+    A refused connect after a successful /json/list is not contradiction: the target list is a
+    snapshot, and a page target that has just been replaced (navigation, a crash-reload, or the
+    first-run window settling) stops answering on its port while the browser endpoint keeps serving.
+    Re-fetching is what makes that a retry rather than a refusal, and the last reason is reported
+    rather than swallowed.
+    """
+    last_ws: str | None = None
+    last_exc: Exception | None = None
+    for _ in range(attempts):
+        try:
+            ws = discover_page_ws(port, tries=6)
+            last_ws = ws
+            return ChromeCDP(ws), ws
+        except (ConnectionRefusedError, OSError, RuntimeError) as exc:
+            last_exc = exc
+            time.sleep(1.0)
+    raise RuntimeError(f"no usable CDP page session on port {port}; last_target={last_ws}; "
+                       f"last_error={last_exc!r}")
 
 
 def measure(root: Path, view: str, browser: str, u19, shot: Path | None) -> dict:
@@ -354,7 +395,7 @@ def measure(root: Path, view: str, browser: str, u19, shot: Path | None) -> dict
             [browser, "--headless=new", "--disable-gpu", "--no-sandbox",
              # Without these the profile's first-run UI wins and no page target appears in time.
              "--no-first-run", "--no-default-browser-check", "--disable-extensions",
-             f"--user-data-dir={udf}", "--window-size=1280,820",
+             f"--user-data-dir={udf}", f"--window-size={WIN_SIZE[view]}",
              f"--remote-debugging-port={requested_cdp}", "--remote-allow-origins=*", url],
             stdout=log, stderr=subprocess.STDOUT)
         cdp_port = None
@@ -375,7 +416,7 @@ def measure(root: Path, view: str, browser: str, u19, shot: Path | None) -> dict
             ANNOUNCED_MISMATCH.append(f"requested {requested_cdp}, announced {cdp_port}")
         time.sleep(2.0)  # the page target appears once the document has loaded
         try:
-            cdp = ChromeCDP(discover_page_ws(cdp_port, tries=20))
+            cdp, _ws = connect_with_retry(cdp_port)
             try:
                 cdp.send("Page.enable")
                 time.sleep(1.0)
