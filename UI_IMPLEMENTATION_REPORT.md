@@ -268,3 +268,22 @@ command-palette/states/status/tag/toast/tooltip/progress/sparkline/list/page-hea
 应答（同一实例旁测：urllib 与"裸 socket＋User-Agent＋无端口 Host"曾返回 200，u19 原形状超时；
 `--remote-debugging-port=0` 只公布 ws 端口不服务 HTTP），所以几何门禁仍未接入 CI 必需步骤；
 真实 Tauri 窗口的目测属需真人确认类，按指令跳过。
+
+## 13. 2026-10-07 runner 侧读回（更正 §12 的最后一段）
+
+§12 写"几何门禁仍未接入 CI 必需步骤"时它是事实；此后本机 CDP 仪器被修到能自己报错（ERR-145/146/147：
+恒定绿色的 main()、硬编码 ROOT、`endswith("200")`、读到 EOF、无端口 ws URL 回显 Host、
+用桌面宽度量紧凑窗），并在真实 PASS 之后重新接成 observer 作业的必需步骤
+（`.github/workflows/work-lab-gate.yml:224`）。本节以 runner 读数为准，不再用本地推断：
+
+- exact SHA `17eb5b6`、run `37579527214`（work-lab-gate）的 observer 作业三步全部 `success`：
+  `Build the real Tauri desktop binary (MSVC, for U19 E2E)` →
+  `U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)` →
+  `Desktop geometry gate (CDP measurement of the built shell)`。
+- 也就是说：真实 Tauri 二进制在 Windows runner 上编出来、WebView2 里的页面被 CDP 读回非 about:blank、
+  顶栏几何按 full/compact 两档各自的 `WIN_SIZE`+`MAX_HEIGHT` 判过 9 项。这正是 §12 当时缺的那块证据，
+  现在由 runner 而不是我的本机提供。
+
+仍未闭合（保持未知）：真实窗口的**人眼**目测仍按 owner 指令跳过——上面证明的是渲染链与几何合同可测且通过，
+不证明审美与可用性验收；本机 headless CDP 的 `/json/list` 仍不应答，所以本地无法复算 runner 的读数，
+只能引用 run id。
