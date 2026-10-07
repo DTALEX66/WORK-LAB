@@ -158,7 +158,7 @@ function run() {
   // The behavior halves are in frontend/src/lib/projectionTruthContract.test.ts;
   // these three need the disk, which the frontend tsconfig (no @types/node) must
   // not do from a test.
-  t("the typed front model declares the v3 core keys, with `software` the only optional", () => {
+  t("the typed front model declares the v3 core keys, and only the named optional ones", () => {
     const types = fs.readFileSync(path.join(SRC, "types.ts"), "utf-8");
     const block = /export interface SnapshotV3 \{([\s\S]*?)\n\}/.exec(types);
     assert(block, "types.ts must declare SnapshotV3");
@@ -170,9 +170,14 @@ function run() {
     for (const k of CORE) {
       assert(declared.some((d) => d.name === k && !d.optional), "types.ts must declare required " + k);
     }
-    const optional = declared.filter((d) => d.optional).map((d) => d.name);
-    assert(optional.length === 1 && optional[0] === "software",
-      "only `software` may be optional, got " + (optional.join(", ") || "none"));
+    // Each optional key is optional for the same reason: the producer omits it when its source was not
+    // read, and an empty array would claim "the source was read and declared nothing". Naming the set here
+    // is the point -- an unlisted new optional key means somebody added a projection without deciding
+    // whether absent and empty are different statements.
+    const OPTIONAL = ["software", "taskRecords", "adapterCapabilities"];
+    const optional = declared.filter((d) => d.optional).map((d) => d.name).sort();
+    assert(JSON.stringify(optional) === JSON.stringify([...OPTIONAL].sort()),
+      "optional keys must be exactly " + OPTIONAL.join("/") + ", got " + (optional.join(", ") || "none"));
   });
 
   t("no v3 snapshot literal is embedded in the production source", () => {
