@@ -432,11 +432,29 @@ def measure(root: Path, view: str, browser: str, u19, shot: Path | None) -> dict
             proc.kill()
             srv.kill()
             try:
-                shutil.rmtree(udf)
-            except OSError as exc:
-                # A profile dir the browser has not released yet is derived scratch, not evidence.
-                # It is reported rather than swallowed, because ERR-140 exists for exactly that habit.
-                RESIDUE.append(f"{udf} {exc!r}")
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                RESIDUE.append(f"{udf} chrome did not exit within 10s")
+            _release_profile(udf)
+
+
+def _release_profile(udf: Path, attempts: int = 12, pause: float = 0.5) -> None:
+    """Remove the Chromium profile dir, waiting for the browser tree to actually let go.
+
+    Measured 2026-10-08: a single `rmtree` right after `proc.kill()` failed with WinError 32 for BOTH
+    views, because Chrome's child processes keep the `--user-data-dir` alive for a moment after the
+    parent dies — every run left an undeletable directory behind. Retrying bounded is the fix; reporting
+    what still cannot be removed is the discipline (ERR-140 exists for the habit of swallowing it).
+    """
+    last: OSError | None = None
+    for _ in range(attempts):
+        try:
+            shutil.rmtree(udf)
+            return
+        except OSError as exc:
+            last = exc
+            time.sleep(pause)
+    RESIDUE.append(f"{udf} {last!r}")
 
 
 def main() -> int:
