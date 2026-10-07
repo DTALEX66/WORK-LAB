@@ -145,6 +145,42 @@ export interface CapabilityLayerState {
   reason: string
 }
 
+// P1-03 open item, the verb dimension: the seven layers say what a CLIENT is; they cannot say which verbs of
+// the adapter interface the client actually answers. This orthogonal row set is projected by
+// packages/client-neutral-core/scripts/adapter_capability_projection.py from the read-only probe record in
+// docs/audits/EXECUTOR_LIVE_PROBE_2026-10-08.json#verbProbe. One row per contract verb, each either MET from
+// a named read-only call, NOT_SUPPORTED from a named declaration, or NOT_PROBED carrying the concrete
+// refusal reason. `attempted` is what separates two very different NOT_PROBED statements — the probe ran
+// the call and the answer was not creditable (attempted=true) versus the probe refused to run it at all
+// (attempted=false). A verb row never promotes a layer.
+//
+// On the card the whole dimension is OPTIONAL: an absent probe record emits NO `verbEvidence` key at all
+// rather than an empty list, because an empty list would render as "declares nothing" where the truth is
+// "I did not look". The Observer renders that absence as the named source gap, never as zero rows.
+export type VerbEvidenceState = 'MET' | 'NOT_PROBED' | 'NOT_SUPPORTED'
+export type VerbEvidenceLevel = 'NO_EVIDENCE' | 'SIMULATED' | 'SYNTHETIC' | 'INTEGRATED' | 'REAL'
+
+export interface AdapterVerbEvidenceRow {
+  verb: string
+  state: VerbEvidenceState
+  evidenceLevel: VerbEvidenceLevel
+  source: string | null
+  reason: string | null
+  attempted: boolean
+  probedAt?: string | null
+  command?: string[]
+  exitCode?: number | null
+  outputDigest?: string
+  outputLines?: number
+  detail?: string
+  basis?: string
+  declaredIn?: Record<string, boolean>
+  declaresDrift?: string
+  entryResolution?: string
+  checkedPaths?: string[]
+  ref?: string
+}
+
 export interface AdapterCapabilityCard {
   clientId: string
   displayName: string
@@ -168,6 +204,11 @@ export interface AdapterCapabilityCard {
   observedAt: string | null
   layers: CapabilityLayerState[]
   nativeStatus: 'NOT_IMPLEMENTED' | 'NOT_PROBED' | 'NATIVELY_VERIFIED'
+  // Optional per-verb dimension (see AdapterVerbEvidenceRow). ABSENT (no key) is the probe-record gap and
+  // renders as such; it is never synthesised into an empty list.
+  verbEvidence?: AdapterVerbEvidenceRow[]
+  verbEvidenceCounts?: Partial<Record<VerbEvidenceState, number>> & Record<string, number>
+  verbEvidenceProbedAt?: string | null
 }
 
 export interface TokenSummary {

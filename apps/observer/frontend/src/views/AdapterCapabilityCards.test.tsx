@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { AdapterCapabilityCards } from '@/views/AdapterCapabilityCards'
 import { AgentsView } from '@/views/Views'
-import type { AdapterCapabilityCard, SnapshotV3 } from '@/types'
+import type { AdapterCapabilityCard, AdapterVerbEvidenceRow, SnapshotV3 } from '@/types'
 
 function snapshotWith(cards?: AdapterCapabilityCard[]): SnapshotV3 {
   const s = {} as unknown as SnapshotV3
@@ -143,5 +143,102 @@ describe('AdapterCapabilityCards', () => {
     expect(screen.getAllByText('hermes').length).toBeGreaterThanOrEqual(2)
     expect(screen.getByText('sess-9')).toBeTruthy()
     expect(screen.getByText(/阶梯 1\/7 层成立/)).toBeTruthy()
+  })
+})
+
+function verbRow(over: Partial<AdapterVerbEvidenceRow> = {}): AdapterVerbEvidenceRow {
+  return {
+    verb: 'detect', state: 'MET', evidenceLevel: 'INTEGRATED',
+    source: 'read-only version readback: hermes.exe --version', reason: null, attempted: true,
+    command: ['hermes.exe', '--version'], exitCode: 0,
+    outputDigest: '95f01c44a4b1f5c0d1e2a3b4c5d6e7f80123456789abcdef0123456789abcdef',
+    probedAt: '2026-10-08T03:00:00+0800',
+    ...over,
+  }
+}
+
+describe('AdapterCapabilityCards verb evidence dimension', () => {
+  it('an absent verbEvidence key is the probe-record gap, never zero rows', () => {
+    const { container } = render(<AdapterCapabilityCards snap={snapshotWith([card()])} />)
+    expect(screen.getByText(/动词证据来源缺口/)).toBeTruthy()
+    expect(screen.getByText(/未探测 ≠ 不支持任何动词/)).toBeTruthy()
+    // the honest gap must not be dressed up as a measured count of verbs
+    expect(container.textContent).not.toMatch(/已作答/)
+  })
+
+  it('an empty verbEvidence list is the same gap, not "declares nothing"', () => {
+    // The producer never emits this shape (absent is a missing key), but a renderer that turned [] into a
+    // zero-row summary would be the exact lie requirement 4 forbids, so the card must still show the gap.
+    render(<AdapterCapabilityCards snap={snapshotWith([card({ verbEvidence: [] })])} />)
+    expect(screen.getByText(/动词证据来源缺口/)).toBeTruthy()
+    expect(screen.queryByText(/已作答/)).toBeNull()
+  })
+
+  it('shows the re-runnable proof of a MET verb and the refusal of a never-attempted one', () => {
+    const rows: AdapterVerbEvidenceRow[] = [
+      verbRow({ verb: 'detect' }),
+      verbRow({
+        verb: 'apply', state: 'NOT_PROBED', evidenceLevel: 'NO_EVIDENCE', source: null, reason: '拒绝尝试：apply 会写入真实用户配置。',
+        attempted: false, command: undefined, exitCode: undefined, outputDigest: undefined,
+      }),
+    ]
+    const { container } = render(
+      <AdapterCapabilityCards snap={snapshotWith([card({ verbEvidence: rows, verbEvidenceCounts: { MET: 1, NOT_PROBED: 1, NOT_SUPPORTED: 0 } })])} />)
+    // MET names the call, the exit code and a digest — that is what makes it re-runnable evidence
+    expect(container.textContent).toContain('$ hermes.exe --version')
+    expect(container.textContent).toContain('exit=0')
+    expect(container.textContent).toContain('digest=95f01c44a4b1')
+    expect(screen.getByText('已作答')).toBeTruthy()
+    // a refused write verb says so and never wears the MET label
+    expect(screen.getByText('未尝试')).toBeTruthy()
+    expect(container.textContent).toContain('拒绝尝试：apply')
+  })
+
+  it('attempted-and-uncredited is a different statement from never-attempted', () => {
+    const rows: AdapterVerbEvidenceRow[] = [
+      verbRow({ verb: 'observe', state: 'NOT_PROBED', evidenceLevel: 'NO_EVIDENCE', source: null,
+        reason: '已调用 adapter.observe() 但 events=[] 且 observed_at=null，自报完成不予采信。', attempted: true }),
+      verbRow({ verb: 'apply', state: 'NOT_PROBED', evidenceLevel: 'NO_EVIDENCE', source: null,
+        reason: '拒绝尝试：apply 会写入真实用户配置。', attempted: false }),
+    ]
+    render(<AdapterCapabilityCards snap={snapshotWith([card({ verbEvidence: rows })])} />)
+    expect(screen.getByText('已尝试·未采信')).toBeTruthy()
+    expect(screen.getByText('未尝试')).toBeTruthy()
+    // neither of them is credited as an answer
+    expect(screen.queryByText('已作答')).toBeNull()
+  })
+
+  it('a NOT_SUPPORTED verb is shown as a declaration, not a measurement', () => {
+    const rows: AdapterVerbEvidenceRow[] = [
+      verbRow({ verb: 'rollback', state: 'NOT_SUPPORTED', evidenceLevel: 'SYNTHETIC',
+        source: 'config/adapter-registry.json#entries[hermes].operations 不含 rollback', reason: '声明缺失',
+        attempted: false, command: undefined, exitCode: undefined, outputDigest: undefined }),
+    ]
+    const { container } = render(<AdapterCapabilityCards snap={snapshotWith([card({ verbEvidence: rows })])} />)
+    expect(screen.getByText('声明不支持')).toBeTruthy()
+    // SYNTHETIC also marks the ladder's REGISTERED row, so assert containment, not a unique hit
+    expect(container.textContent).toContain('SYNTHETIC')
+    expect(container.textContent).toContain('config/adapter-registry.json')
+  })
+
+  it('the verb dimension never moves the ladder or the native status', () => {
+    const rows: AdapterVerbEvidenceRow[] = ['detect', 'capabilities', 'plan', 'apply', 'invoke', 'observe', 'rollback']
+      .map((verb) => verbRow({ verb }))
+    const { container } = render(
+      <AdapterCapabilityCards snap={snapshotWith([card({ verbEvidence: rows })])} />)
+    // the ladder still reports 1/7 — seven answered verbs do not climb a single rung
+    expect(screen.getByText(/阶梯 1\/7 层成立/)).toBeTruthy()
+    expect(container.textContent).not.toMatch(/NATIVELY_VERIFIED/)
+  })
+
+  it('the verb rows add no interactive control: the Agents lane stays a projection', () => {
+    const rows: AdapterVerbEvidenceRow[] = [verbRow(), verbRow({ verb: 'apply', state: 'NOT_PROBED',
+      evidenceLevel: 'NO_EVIDENCE', source: null, reason: '拒绝尝试', attempted: false })]
+    const { container } = render(
+      <AdapterCapabilityCards snap={snapshotWith([card({ verbEvidence: rows })])} />)
+    expect(container.innerHTML).not.toContain('<button')
+    expect(container.innerHTML).not.toContain('<input')
+    expect(container.innerHTML).not.toContain('<textarea')
+    expect(container.querySelectorAll('a')).toHaveLength(0)
   })
 })

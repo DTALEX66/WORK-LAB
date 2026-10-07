@@ -25,6 +25,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
 
+import adapter_capability_projection as acp  # noqa: E402
 import snapshot_api  # noqa: E402
 import snapshot_validator  # noqa: E402
 from canonical_store import CanonicalStore  # noqa: E402
@@ -238,6 +239,94 @@ class ValidatorRefusalTests(unittest.TestCase):
                     "must be a digest when a checkpoint exists")
         self.reject([dict(self.good(), checkpointDigest=hashlib.sha256(b"x").hexdigest())],
                     "must be null when no checkpoint exists")
+
+
+class CompositionRootVerbWiringTests(unittest.TestCase):
+    """The read path attaches verb rows, and on an unreadable or malformed verb record it degrades to no
+    verbEvidence — never to an empty list, and never at the cost of the seven honest layers."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        sys.path.insert(0, str(ROOT / "services" / "orchestration"))
+        import composition_root
+        cls.cr = composition_root
+
+    def test_the_real_record_attaches_verb_rows_through_the_read_path(self) -> None:
+        cards = self.cr._adapter_capability_rows([])
+        self.assertTrue(cards, "the declared sources are present, so the card set must not be absent")
+        wired = [card for card in cards if "verbEvidence" in card]
+        self.assertTrue(wired, "the tracked probe record should attach verb rows through the real read path")
+        for card_row in wired:
+            self.assertTrue(card_row["verbEvidence"], "a present verbEvidence key is never an empty list")
+
+    def test_an_unreadable_verb_record_leaves_the_ladder_without_verb_evidence(self) -> None:
+        def boom(_root):
+            raise ValueError("corrupt verbProbe block")
+        original = acp.load_verb_probe
+        acp.load_verb_probe = boom
+        try:
+            cards = self.cr._adapter_capability_rows([])
+        finally:
+            acp.load_verb_probe = original
+        self.assertTrue(cards and any(card["layers"] for card in cards),
+                        "a broken verb record must not remove the seven layers that were read fine")
+        self.assertTrue(all("verbEvidence" not in card for card in cards),
+                        "an unreadable verb record yields no verbEvidence key, never an empty list")
+
+    def test_a_malformed_verb_row_rebuilds_the_cards_without_the_dimension(self) -> None:
+        # load_verb_probe returns a structurally-shaped row the projection itself refuses (MET, no source);
+        # the read path must not crash the snapshot or drop the ladder — it rebuilds without verb rows.
+        bad = {"hermes": [{"verb": "detect", "state": "MET", "evidenceLevel": "INTEGRATED",
+                           "source": None, "reason": None, "attempted": True}]}
+        original = acp.load_verb_probe
+        acp.load_verb_probe = lambda _root: (bad, "2026-10-08T03:04:16+0800")
+        try:
+            cards = self.cr._adapter_capability_rows([])
+        finally:
+            acp.load_verb_probe = original
+        self.assertTrue(cards, "the ladder survives a row the projection refuses")
+        self.assertTrue(all("verbEvidence" not in card for card in cards),
+                        "the refused row is dropped dimension-wide, never laundered into a bad key")
+
+
+class AdapterVerbPassThroughTests(unittest.TestCase):
+    """build_snapshot carries each card's verb rows verbatim and keeps adapterCapabilities emit-only.
+
+    The verb dimension rides inside the adapterCapabilities cards (the projection adds it per client), so
+    the Snapshot API must pass those cards through untouched and must keep the "absent stays absent" rule it
+    already honours for taskRecords — never defaulting adapterCapabilities to [] when the producer read
+    nothing, and never stripping the verbEvidence key off a card that carries it.
+    """
+
+    def wired_cards(self):
+        registry, conformance, matrix = acp.load_inputs(ROOT)
+        probe_rows, probe_at = acp.load_live_probe(ROOT)
+        verb_rows, verb_at = acp.load_verb_probe(ROOT)
+        return acp.project_adapter_capabilities(
+            registry=registry, conformance=conformance, matrix=matrix,
+            live_probe_rows=probe_rows, live_probe_at=probe_at,
+            verb_rows=verb_rows, verb_probe_at=verb_at,
+            contract_verbs=acp.contract_verb_vocabulary(ROOT), observed_at=GENERATED_AT)
+
+    def test_verb_rows_survive_the_snapshot_and_validate(self) -> None:
+        cards = self.wired_cards()
+        self.assertTrue(any("verbEvidence" in card for card in cards),
+                        "the tracked record should attach verb rows to at least one card")
+        snapshot = snapshot_api.build_snapshot(revision=1, projects=[], adapter_capabilities=cards)
+        self.assertIn("adapterCapabilities", snapshot)
+        self.assertTrue(snapshot_validator.validate_snapshot(snapshot)["valid"])
+        carried = next(c for c in snapshot["adapterCapabilities"] if "verbEvidence" in c)
+        self.assertTrue(carried["verbEvidence"])
+        # a card the probe record says nothing about keeps NO verbEvidence key — absent, not an empty list
+        for card_row in self.wired_cards():
+            if "verbEvidence" in card_row:
+                self.assertNotEqual(card_row["verbEvidence"], [],
+                                    "a present verbEvidence key must never be an empty list")
+
+    def test_absent_adapter_capabilities_are_not_defaulted_to_an_empty_list(self) -> None:
+        snapshot = snapshot_api.build_snapshot(revision=1, projects=[])
+        self.assertNotIn("adapterCapabilities", snapshot)
+        self.assertTrue(snapshot_validator.validate_snapshot(snapshot)["valid"])
 
 
 if __name__ == "__main__":

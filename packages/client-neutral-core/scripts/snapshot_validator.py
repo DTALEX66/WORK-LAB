@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from typing import Any
 
 SNAPSHOT_SCHEMA_VERSION = "workflow/snapshot/v3"
@@ -57,6 +57,69 @@ CAPABILITY_LAYERS = ("REGISTERED", "INSTALLED", "LOADED_CONNECTED", "QUALIFIED",
 RFC3339_RE = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"
 )
+
+# The per-verb dimension (the open register item the adapter probe closed): one row per contract verb a
+# client actually answers. Its row rules and its verb vocabulary live with the projection that builds them,
+# never restated here — a validator with its own copy of MET-requires-a-source, NOT_PROBED-requires-a-reason
+# or the closed verb list is a second opinion that drifts the moment the probe changes. So both are imported
+# from `adapter_capability_projection`: `validate_verb_evidence` for the per-row refusals and
+# `contract_verb_vocabulary` for the closed verb set (which cross-checks schema + matrix and raises on
+# drift). The vocabulary is a tracked-schema enum, so it is resolved lazily from the repo root only when a
+# card actually carries verb rows. If either the import or the vocabulary read is unavailable, a card that
+# carries verb rows is refused rather than waved through — a degraded read path is visible, a permissive
+# one is not — while cards without the dimension are untouched and still validate exactly as before.
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+try:  # pragma: no cover - the fallback is a deployment fault, not a normal branch
+    from adapter_capability_projection import (
+        contract_verb_vocabulary as _contract_verb_vocabulary,
+        validate_verb_evidence as _validate_verb_rows,
+    )
+    VERB_VOCABULARY_SOURCE = "adapter_capability_projection"
+except Exception as _verb_vocabulary_error:  # noqa: BLE001 - fail closed and name the fault
+    _contract_verb_vocabulary = None
+    _validate_verb_rows = None
+    VERB_VOCABULARY_SOURCE = f"unavailable:{type(_verb_vocabulary_error).__name__}"
+
+_VERB_VOCABULARY_RESOLVED = False
+_VERB_VOCABULARY_CACHE: tuple[str, ...] | None = None
+
+
+def _verb_vocabulary() -> tuple[str, ...] | None:
+    """The closed adapter verb list, read once through the projection's own discovery helper."""
+    global _VERB_VOCABULARY_RESOLVED, _VERB_VOCABULARY_CACHE
+    if _VERB_VOCABULARY_RESOLVED:
+        return _VERB_VOCABULARY_CACHE
+    _VERB_VOCABULARY_RESOLVED = True
+    if _contract_verb_vocabulary is None:
+        _VERB_VOCABULARY_CACHE = None
+    else:
+        try:
+            _VERB_VOCABULARY_CACHE = _contract_verb_vocabulary(_REPO_ROOT)
+        except Exception:  # noqa: BLE001 - an unreadable vocabulary makes every verb row unverifiable
+            _VERB_VOCABULARY_CACHE = None
+    return _VERB_VOCABULARY_CACHE
+
+
+def _validate_verb_evidence(index: int, rows: Any) -> list[str]:
+    """Refuse a malformed verb dimension on one card; delegate the row rules to their single owner.
+
+    Absent (no key) is legal and means "the producer did not read the verb record" — that is handled by the
+    caller not invoking this. An empty list present is NOT legal: it reads as "this client declares no
+    verbs", the exact opposite claim from "nothing was probed", and the projection never emits it.
+    """
+    if _validate_verb_rows is None:
+        return [f"adapterCapabilities[{index}].verbEvidence cannot be validated — the verb row rules are "
+                f"unavailable (source: {VERB_VOCABULARY_SOURCE})"]
+    if not isinstance(rows, list):
+        return [f"adapterCapabilities[{index}].verbEvidence must be a list when present"]
+    if not rows:
+        return [f"adapterCapabilities[{index}].verbEvidence is an empty list — absent evidence stays absent "
+                "(no key); an empty list reads as 'declares nothing', not 'I did not look'"]
+    verbs = _verb_vocabulary()
+    if verbs is None:
+        return [f"adapterCapabilities[{index}].verbEvidence cannot be validated — the contract verb "
+                f"vocabulary could not be read from the tracked schema (source: {VERB_VOCABULARY_SOURCE})"]
+    return [f"adapterCapabilities[{index}].{error}" for error in _validate_verb_rows(rows, verbs=verbs)]
 
 
 def validate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
@@ -271,6 +334,12 @@ def validate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
                             f"adapterCapabilities[{index}] claims NATIVELY_VERIFIED while "
                             "OBSERVED_IN_EXECUTION is not MET — the ladder cannot be climbed from the top"
                         )
+                # The per-verb dimension is orthogonal to the ladder: it never promotes a layer, and a
+                # malformed row is refused here exactly as it is refused by the probe that wrote it. An
+                # absent key is legal ("the verb record was not read"); a present-but-bad list is not.
+                verb_rows = card.get("verbEvidence")
+                if verb_rows is not None:
+                    errors.extend(_validate_verb_evidence(index, verb_rows))
 
     transport = snapshot.get("transport")
     if transport is not None and not isinstance(transport, dict):
@@ -287,8 +356,9 @@ def _validate_artifact_handles(snapshot: dict[str, Any]) -> list[str]:
     Absent is legal and means "the producer did not enumerate". Present means every row is a handle the
     evidence-range route can be asked about: absolute, unique, on a surface this project declares, sized,
     timestamped, and carrying a digest ONLY when some project record states one. A row that carries file
-    content, a digest that was not recorded, a list longer than its declared cap, or a list without the
-    scope report that produced it is refused here rather than discovered by a broken viewer.
+    content, a digest that was not recorded, a list longer than its declared cap, a capped list that names
+    no ordering key, or a list without the scope report that produced it is refused here rather than
+    discovered by a broken viewer.
     """
     errors: list[str] = []
     handles = snapshot.get("artifactHandles")
@@ -390,6 +460,17 @@ def _validate_artifact_handles(snapshot: dict[str, Any]) -> list[str]:
     elif isinstance(enumerated, int) and isinstance(projected, int) and truncated != (enumerated > projected):
         errors.append(f"artifactHandlesSummary.truncated={truncated} contradicts enumerated={enumerated} "
                       f"vs projected={projected}")
+    # A cap keeps some rows and drops others, so the rule that chose which ones is part of the list's
+    # identity, not a comment on it. Without a stated ordering key a truncated list is walk order wearing
+    # the clothes of a policy: two readers of the same revision cannot tell whether they were shown the
+    # same evidence, and neither can this validator.
+    ordering_key = summary.get("orderingKey")
+    if truncated is True and not (isinstance(ordering_key, str) and ordering_key.strip()):
+        errors.append("artifactHandlesSummary.orderingKey required when truncated is true — a capped "
+                      "enumeration must name the key that ranked the rows it kept, or the reader cannot "
+                      "tell which artifacts are missing or on what grounds")
+    elif ordering_key is not None and not (isinstance(ordering_key, str) and ordering_key.strip()):
+        errors.append(f"artifactHandlesSummary.orderingKey must be a non-empty string, got {ordering_key!r}")
     if summary.get("contentIncluded") is not False:
         errors.append("artifactHandlesSummary.contentIncluded must be false — this projection never carries "
                       "artifact bytes, and a true or missing value says otherwise")

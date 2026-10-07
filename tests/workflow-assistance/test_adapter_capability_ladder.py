@@ -317,5 +317,65 @@ class ValidatorRefusalTests(unittest.TestCase):
         self.assertTrue(snapshot_validator.validate_snapshot(snapshot)["valid"])
 
 
+class ValidatorVerbRefusalTests(unittest.TestCase):
+    """The snapshot gate refuses a malformed verb row independently of the projection that built it.
+
+    A real snapshot reaches ``validate_snapshot`` straight from the read path; the projection validated
+    these rows first, but the gate is defence in depth — a hand-edited or differently-produced card with a
+    row that reads like proof but names nothing must not pass. The refusals are the same five the probe
+    holds itself to, and the verb vocabulary is read from the tracked contract through the projection's own
+    discovery helper, never restated here.
+    """
+
+    def verb(self, **over):
+        row = {"verb": "detect", "state": "MET", "evidenceLevel": "INTEGRATED",
+               "source": "read-only version readback: hermes.exe --version", "reason": None,
+               "attempted": True}
+        row.update(over)
+        return row
+
+    def reject(self, rows, fragment):
+        card_row = card(verbEvidence=rows)
+        verdict = snapshot_validator.validate_snapshot(snapshot_with([card_row]))
+        self.assertFalse(verdict["valid"], f"accepted rows: {json.dumps(rows, ensure_ascii=False)}")
+        self.assertTrue(any(fragment in error for error in verdict["errors"]),
+                        f"errors={verdict['errors']} did not name {fragment!r}")
+
+    def test_a_valid_verb_dimension_validates_clean(self) -> None:
+        rows = [self.verb(),
+                self.verb(verb="apply", state="NOT_PROBED", evidenceLevel="NO_EVIDENCE", source=None,
+                          reason="拒绝尝试：apply 会写入真实用户配置。", attempted=False)]
+        verdict = snapshot_validator.validate_snapshot(snapshot_with([card(verbEvidence=rows)]))
+        self.assertTrue(verdict["valid"], verdict["errors"])
+
+    def test_an_absent_verb_dimension_is_not_a_verb_error(self) -> None:
+        verdict = snapshot_validator.validate_snapshot(snapshot_with([card()]))
+        self.assertTrue(verdict["valid"], verdict["errors"])
+        self.assertFalse(any("verbEvidence" in error for error in verdict["errors"]))
+
+    def test_a_state_outside_the_verb_vocabulary_is_refused(self) -> None:
+        self.reject([self.verb(state="PROBABLY")], "must be MET|NOT_PROBED|NOT_SUPPORTED")
+
+    def test_a_met_verb_without_a_source_is_refused(self) -> None:
+        self.reject([self.verb(source=None)], "claims MET without a named source")
+
+    def test_a_not_probed_verb_without_a_reason_is_refused(self) -> None:
+        self.reject([self.verb(state="NOT_PROBED", evidenceLevel="NO_EVIDENCE", source=None, reason=None)],
+                    "must say why nothing was established")
+
+    def test_a_repeated_verb_inside_one_card_is_refused(self) -> None:
+        self.reject([self.verb(), self.verb()], "repeats verb")
+
+    def test_a_verb_outside_the_contract_vocabulary_is_refused(self) -> None:
+        # the refusal must come from the contract, not a list copied into the validator
+        self.reject([self.verb(verb="teleport")], "not an adapter interface verb")
+
+    def test_an_empty_verb_list_is_refused_rather_than_read_as_declares_nothing(self) -> None:
+        card_row = card(verbEvidence=[])
+        verdict = snapshot_validator.validate_snapshot(snapshot_with([card_row]))
+        self.assertFalse(verdict["valid"])
+        self.assertTrue(any("empty list" in error for error in verdict["errors"]), verdict["errors"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

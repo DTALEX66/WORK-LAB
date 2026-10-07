@@ -490,7 +490,7 @@ def build_v3_snapshot(
 
 
 def _adapter_capability_rows(software_rows: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
-    """P1-03: one capability card per managed client, seven layers each.
+    """P1-03: one capability card per managed client, seven layers each, plus the per-verb dimension.
 
     The projection lives in ``adapter_capability_projection`` (the single place that decides a layer's
     state) so the read side cannot promote a declared capability into an observed one. If either declared
@@ -500,6 +500,15 @@ def _adapter_capability_rows(software_rows: list[dict[str, Any]]) -> list[dict[s
     Absent, never empty: returning [] when the load failed told the UI "the sources were read and nothing
     is declared", which is the opposite claim from "I could not look" and made the honest gap branch
     unreachable in production.
+
+    The verb dimension is loaded alongside the entry probe and is additive and optional in exactly the
+    same way: a client with rows gets ``verbEvidence``, a client the probe record says nothing about keeps
+    no key at all. An absent file yields ``({}, None)`` from ``load_verb_probe``, and a record that exists
+    but cannot be read or whose verb vocabulary disagrees with the contract is degraded HERE to "no verb
+    rows for anyone" rather than being laundered into an empty list (which a renderer would read as
+    "declares nothing" instead of "I did not look") and rather than removing the seven layers that were
+    read successfully. The contract verb list is taken from the projection's own discovery helper, never
+    restated here, so the cards and the probe adjudicate verbs against the same closed vocabulary.
     """
     try:
         from adapter_capability_projection import (load_inputs, load_live_probe,
@@ -509,15 +518,28 @@ def _adapter_capability_rows(software_rows: list[dict[str, Any]]) -> list[dict[s
         probe_rows, probe_at = load_live_probe(_ROOT)
     except Exception:  # noqa: BLE001 - a failed read is a source gap, not an empty capability set
         return None
-    return project_adapter_capabilities(
-        registry=registry,
-        conformance=conformance,
-        matrix=matrix,
-        software_rows=software_rows,
-        live_probe_rows=probe_rows,
-        live_probe_at=probe_at,
-        observed_at=_snapshot_now(),
-    )
+    # Everything the seven layers need, without the additive verb dimension. Reused by both the verb-on and
+    # the degraded-to-verbless calls so the ladder is byte-identical whichever way the verb record reads.
+    layers_only = {
+        "registry": registry,
+        "conformance": conformance,
+        "matrix": matrix,
+        "software_rows": software_rows,
+        "live_probe_rows": probe_rows,
+        "live_probe_at": probe_at,
+        "observed_at": _snapshot_now(),
+    }
+    try:
+        from adapter_capability_projection import load_verb_probe, contract_verb_vocabulary
+        verb_rows, verb_at = load_verb_probe(_ROOT)
+        contract_verbs = contract_verb_vocabulary(_ROOT)
+    except Exception:  # noqa: BLE001 - an unreadable or disagreeing verb record is "did not look", no verbEvidence
+        return project_adapter_capabilities(**layers_only)
+    try:
+        return project_adapter_capabilities(
+            **layers_only, verb_rows=verb_rows, verb_probe_at=verb_at, contract_verbs=contract_verbs)
+    except Exception:  # noqa: BLE001 - a malformed verb row must not remove the honest seven-layer ladder
+        return project_adapter_capabilities(**layers_only)
 
 
 def _task_rows(store: CanonicalStore) -> list[dict[str, Any]]:
