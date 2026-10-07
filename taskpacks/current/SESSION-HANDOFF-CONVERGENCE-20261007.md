@@ -108,3 +108,38 @@
    都属需要 owner 点头的入库/撤账动作。
 5. PR #162 合并与发布决定权在 owner；本轮未合并、未打 tag、未发布。合并预演在交接时**重跑过一次**：对
    `origin/main` 的 `git merge-tree` 干净无冲突，合并态台账 151 行（ERR-001…ERR-153）、候选池 22 行，两者均无重复 id。
+
+
+## 6. L 轮（同日续做）：Source Registry 升进受版本控制的树
+
+### 6.1 已落地（全部已提交并推送）
+
+| SHA | 内容 | 关键证据 |
+|---|---|---|
+| `cab412a` | atlas 主 Source Registry 从**本项目自己的忽略根**升进树内；新增升迁工具与其门禁；纠正两条行的 status | `PROMOTED bytes=446119 sha256=79bf958a6e928952… blobIdentical=True`；`test_promote_ignored_root_original.py` 8/8 |
+| `999c668` | ERR-154/155 落账；"半升迁标签"变成双向违法；AG-19 钉扫描改读受版本控制的副本 | 证伪 3/3（注入后注册表逐字节复原）；`pinSource=tracked-promoted-copy` |
+
+精确 SHA 读回（`gh run list` 逐头读，不从包装退出码推断）：
+
+- `a382366`：`work-lab-gate` completed **success**、`wlr-060-production-gates` completed **success**（两条 gate 运行都绿）。
+- `96d06f4`：`work-lab-gate` completed **success**、`wlr-060-production-gates` completed **success**。
+- `999c668`：本轮推送头，读回时仍在跑——**在其变绿之前不得写进 verifiedCommit，也不得对外称绿**。
+
+### 6.2 新确立的事实
+
+1. **AG-19 的权威记录现在 CI 能哈希了。** `.project/governance/recovered-source-registry.json` 的 tracked 行由 7 增至 9；`src-atlas-master-source-registry` 的钉 `79bf958a…` 就是树内 blob 的摘要（`*.json text eol=lf` 且源文件本就是纯 LF，所以工作树＝索引＝blob，没有 ERR-125 的空隙）。
+2. **它不是原始导出。** 文档内的 `recoveryAmendment` 记录了 2026-10-07 由 `ag19_register.py` 就地修订；修订前的基线 `439,365 B / 4281e4818890…` 只登记为 `preAmendmentBaseline` 事实，字节仍只在 `.project-local/artifacts/ag19-registry-backup-20261007/`。重建 atlas 必须重放修订，否则钉退回 `BLOCKED_NOT_VISIBLE`。
+3. **升迁的判定性质是"干净检出看不见"，不是我猜的三个 role root。** 数据边界只声明 `runtimeRoot/taskArtifactsRoot/canonicalEvidenceRoot`，而 atlas 落在这三者之外的 `.project-local/atlas-2026-09-29/`；屏幕改用 `git check-ignore -v`，并同时要求"在 Git 根内"。
+4. **内容安全性是量出来的，不是想当然：** 解析后按键名走一遍——5,608 个字符串、0 个 session UUID、0 个 secret 形键名／prompt-body 形字段／credential 形值／E: 或 F: 路径，最长串 395 字符是关于缺 sha 钉的散文；绝对路径只有 2 处，都指向 owner 素材根的文件名。**绝不晋升**的两件：`src-worklab-summary-2026-09`（含 session UUID 与 prompt body，AGENTS.md 禁止）、`src-history-source-manifest-r4`（派生扫描收据，留在忽略根）。
+5. **台账 153 行**（`ERROR_LEDGER_PASS entries=153 classifications=13 counts_consistent=true`），ERR-154/155 的 fixedCommit 绑定前先跑过四条守卫：是提交、含两条承诺路径、动了记录自己点名的路径、相对父提交新增 0 条记录；introducedCommit 由 `git log -S` 量得（`50f77d1`、`950ce65`），不是回忆。
+
+### 6.3 L 轮撤回
+
+- 升迁工具的**第一版屏幕写错**：要求源必须在三个 role root 之一内，会把这次合法晋升直接拒掉。落盘前自测发现的，未提交——但形状要登：判定"CI 看不见"要用仓库自己的忽略规则，不能拿声明的角色根当全集。
+- 台账 §5 的"选项 (a) 今天重跑以重建证据"**不足以解锁 verifiedCommit**：`stamp_record_verification.py` 要求 fixedCommit 是该头的祖先，而 86 条导入出生的记录本仓历史给不出 fixedCommit。重跑只能把"今天仍然通过"留在 `LEDGER_UNBOUND_RERUN_2026-10-07.json` 里当补偿证据，不能写进 lifecycle 字段。**不要**为了让计数下降而给它们配邻近提交。
+
+### 6.4 下一件事
+
+1. `999c668` 变绿后：`python scripts/audit/stamp_record_verification.py ERR-154 999c668` 与 ERR-155，然后重测 `ledger_binding_readback.py` 与 `LEDGER_FIX_COMMIT_BINDING` 快照。
+2. `test_location_claims_agree_with_the_row_status` 只管**字段级**位置声明；prose 里提到的受版本控制路径仍不受管。若要收紧，先量误报率（多条行的 notes 合法地提到树内文件）。
+3. 观测老化项未变：harness 版本收据周期性重生成、hermes 版本来源；`qwen2.5vl/7b` 入库、U02 发布半、U03 `web/` 退役、OD02/03/04、AG-09/AG-10/AG-16 仍属 owner 或真实第二执行人类。

@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T09:07:57Z",
+  "generatedAt": "2026-10-07T09:10:59Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2080,
     "distinctProjectLocalTokens": 401,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 401,
-    "citationsToAbsentTokens": 1095
+    "citationsToAbsentTokens": 1097
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,7 +29,7 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 538,
+      "citations": 539,
       "distinctPaths": 314
     },
     "machine_local_runtime_pointer": {
@@ -37,8 +37,8 @@
       "distinctPaths": 59
     },
     "negative_assertion_or_removal_record": {
-      "citations": 112,
-      "distinctPaths": 46
+      "citations": 113,
+      "distinctPaths": 47
     },
     "path_pattern_or_truncated_token": {
       "citations": 9,
@@ -1522,6 +1522,12 @@
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 213,
         "text": "| AG19-RECOVERY-20261007 | P0 | 4_OF_5_PINS_HASH_IDENTICAL / TIMELINE_NEGATIVELY_PROVEN / REGISTRY_AMENDED | **AG-19 的定性被推翻**（台账 **ERR-114**，status_after=PARTIAL）。源册把 `SRC-WL-SUMMARY` 记成 `BLOCKED_NOT_"
+      },
+      {
+        "path": ".project-local/artifacts/ag19-registry-backup-20261007",
+        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007.md",
+        "line": 131,
+        "text": "2. **它不是原始导出。** 文档内的 `recoveryAmendment` 记录了 2026-10-07 由 `ag19_register.py` 就地修订；修订前的基线 `439,365 B / 4281e4818890…` 只登记为 `preAmendmentBaseline` 事实，字节仍只在 `.project-local/artifacts/ag19-registry-backup"
       },
       {
         "path": ".project-local/artifacts/ci-faildiag-36204845454.txt",
@@ -5846,6 +5852,12 @@
         "file": ".project/governance/migration-status.json",
         "line": 40,
         "text": "\"evidencePath\": \"local .project-local/artifacts/work-lab-migration-v6 (ignored)\""
+      },
+      {
+        "path": ".project-local/atlas-2026-09-29",
+        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007.md",
+        "line": 132,
+        "text": "3. **升迁的判定性质是\"干净检出看不见\"，不是我猜的三个 role root。** 数据边界只声明 `runtimeRoot/taskArtifactsRoot/canonicalEvidenceRoot`，而 atlas 落在这三者之外的 `.project-local/atlas-2026-09-29/`；屏幕改用 `git check-ignore -v`，并同时要求\"在 Git 根内\""
       },
       {
         "path": ".project-local/atlas-2026-09-29/.../TaskPack_v3.1/TaskPack_v3.1/config",
