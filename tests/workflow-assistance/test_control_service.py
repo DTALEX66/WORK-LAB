@@ -18,6 +18,7 @@ Discovered dynamically by ``run_quality_gate.py governance``.
 """
 from __future__ import annotations
 
+import ast
 import json
 import re
 import sys
@@ -199,13 +200,13 @@ class ControlPlaneTestCase(unittest.TestCase):
         self.assertEqual(row["lease_holder"], "executor-8")
 
     def test_containment_is_decoded_from_the_text_not_from_the_filesystem(self) -> None:
-        """The verdict must not depend on what the machine happens to have on disk.
+        """The verdict must not depend on which operating system asks.
 
         Same boundary string, same project root, two machines: this passed locally and flipped on the CI
-        runner while the check went through `Path.resolve()`. resolve() consults existing parents,
-        substitute drives, short names, junctions and cwd, so an authorisation decision built on it is a
-        statement about the host. The helper is now pure string normalisation, and these rows pin it
-        against paths that exist nowhere.
+        runner twice — first through `Path.resolve()`, then through `os.path.normcase/normpath`, because on
+        the Linux job a Windows-style path has no drive and no leading slash and reads as RELATIVE, which
+        anchored another project inside this one. The helper is pure string work now, and these rows are
+        written so they mean the same thing on Windows, Linux and macOS.
         """
         inside = control_service._inside_project
         root = Path("D:/a/WORK-LAB/WORK-LAB")
@@ -217,9 +218,38 @@ class ControlPlaneTestCase(unittest.TestCase):
                 (Path("D:/a/WORK-LAB/WORK-LABX"), False),
                 (Path("D:/All projects/OTHER-PROJECT"), False),
                 (Path("C:/Users/anyone/config.yaml"), False),
-                (Path("d:/a/work-lab/work-lab/config"), True)):
+                (Path("d:/a/work-lab/work-lab/config"), True),
+                ("D:\\a\\WORK-LAB\\WORK-LAB\\services", True),
+                ("D:/a/WORK-LAB/WORK-LAB/./services/../services", True),
+                ("/etc/passwd", False),
+                ("services/control", False)):  # unanchored text is not yet a project path
             with self.subTest(candidate=str(candidate)):
                 self.assertIs(inside(candidate, root)[0], expected)
+
+    def test_the_authorisation_check_never_asks_the_host_about_paths(self) -> None:
+        """No `os.path` call may decide authority: an AST check, because the last two fixes went stale quietly.
+
+        The first guard asserted behaviour I had just changed with os.path, which was host-specific and kept
+        failing on the runner. Enumerating the syntax that reaches the host is the only assertion that cannot
+        rot into a lie the next time someone adds a convenient `os.path.join`.
+        """
+        tree = ast.parse(Path(control_service.__file__).read_text(encoding="utf-8"))
+        offenders = []
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Attribute) and isinstance(node.value, ast.Attribute)
+                    and isinstance(node.value.value, ast.Name)
+                    and node.value.value.id == "os" and node.value.attr == "path"):
+                offenders.append((node.lineno, node.attr))
+        self.assertEqual(offenders, [], "host-dependent path calls in the control service: %s" % offenders)
+        self.assertEqual(control_service.normalise_path("D:\\A\\x\\..\\y"), "d:/a/y")
+        self.assertEqual(control_service.normalise_path("/etc/../etc"), "/etc")
+        self.assertEqual(control_service.normalise_path("D:/a/b/../.."), "d:/")
+        self.assertEqual(control_service.normalise_path("D:/a/b/.."), "d:/a")
+        self.assertTrue(control_service.path_is_drive_relative("E:secrets"))
+        self.assertFalse(control_service.path_is_drive_relative("E:/secrets"))
+        self.assertTrue(control_service.path_is_anchored("D:/x"))
+        self.assertTrue(control_service.path_is_anchored("/x"))
+        self.assertFalse(control_service.path_is_anchored("x/y"))
 
     def test_a_refusal_names_the_two_normalised_paths_it_compared(self) -> None:
         """A red on another machine has to explain itself, not be re-derived by whoever comes next."""

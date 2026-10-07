@@ -34,6 +34,7 @@ import hashlib
 import ipaddress
 import json
 import os
+import re
 import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -96,19 +97,60 @@ _DIFFABLE_EXEMPTIONS = ("config.yaml", "config.yml")
 NON_DIFFABLE_ROOTS = (".project-local/", ".hermes/", "docs/", "tests/")
 
 
-def _inside_project(candidate: Path, project_root: Path) -> tuple[bool, str, str]:
-    """Decide containment lexically, and return the two normalised strings that made the answer.
+def normalise_path(text: Any) -> str:
+    """Case-fold, unify separators and collapse a path as TEXT, deliberately without the host's help.
 
-    `Path.resolve()` consults the operating system: existing parents, substitute drives, 8.3 short names,
-    junctions and the current directory. A control-plane authorisation decided that way can come out
-    differently on two machines for the same input string -- which is exactly what happened when the same
-    boundary assertions passed locally and flipped on the runner. Normalising and case-folding here makes
-    the verdict a property of the text, and the returned pair goes into the refusal so any future red
-    explains itself instead of being re-derived by whoever comes next.
+    `os.path.normpath`/`normcase` are host-specific: on the Linux CI job `D:/a/WORK-LAB` has no drive and no
+    leading slash, so posixpath reads a Windows path as RELATIVE and anchors it inside the current project.
+    That is how the same boundary assertions were green locally and red on the runner, twice. Every rule
+    here is string work, so one input gives one answer on Windows, Linux and macOS alike.
     """
-    root = os.path.normcase(os.path.normpath(str(project_root)))
-    lexical = os.path.normcase(os.path.normpath(str(candidate)))
-    return lexical == root or lexical.startswith(root + os.sep), root, lexical
+    unified = str(text).replace("\\", "/").lower().strip()
+    if unified.startswith("//"):
+        leading, rest = "//", unified[2:]
+    else:
+        drive = re.match(r"^([a-z]:)(/.*)?$", unified)
+        if drive:
+            leading, rest = drive.group(1) + "/", (drive.group(2) or "").lstrip("/")
+        elif unified.startswith("/"):
+            leading, rest = "/", unified[1:]
+        else:
+            leading, rest = "", unified
+    collapsed: list[str] = []
+    for part in rest.split("/"):
+        if part in ("", "."):
+            continue
+        if part == "..":
+            if collapsed and collapsed[-1] != "..":
+                collapsed.pop()
+                continue
+            if leading:
+                continue  # `..` cannot climb above an anchored root
+            collapsed.append("..")
+            continue
+        collapsed.append(part)
+    return leading + "/".join(collapsed)
+
+
+def path_is_drive_relative(text: Any) -> bool:
+    """`E:secrets` means "relative to whatever the current directory on E: happens to be"."""
+    return bool(re.match(r"^[a-z]:[^/]", str(text).replace("\\", "/").lower().strip()))
+
+
+def path_is_unc(text: Any) -> bool:
+    return str(text).startswith(("\\\\", "//"))
+
+
+def path_is_anchored(text: Any) -> bool:
+    raw = str(text).replace("\\", "/")
+    return bool(re.match(r"^[a-z]:/", raw.lower())) or raw.startswith("/")
+
+
+def _inside_project(candidate: Any, project_root: Any) -> tuple[bool, str, str]:
+    """Containment by text alone: the same normalised path, or below the root's own boundary."""
+    root = normalise_path(project_root).rstrip("/")
+    lexical = normalise_path(candidate)
+    return lexical == root or lexical.startswith(root + "/"), root, lexical
 
 
 def _is_non_diffable_target(resolved: Path, project_root: Path) -> bool:
@@ -421,14 +463,12 @@ class ControlPlane:
             raw = str(request.get("task_id") or "")
         if not raw:
             return str(request["operation"])
-        candidate = Path(raw)
-        if not candidate.is_absolute():
-            candidate = self.project_root / raw
-        normalized = Path(os.path.normpath(str(candidate)))
-        inside, _root, lexical = _inside_project(normalized, self.project_root)
+        anchored = raw if path_is_anchored(raw) else f"{normalise_path(self.project_root)}/{raw}"
+        inside, _root, lexical = _inside_project(anchored, self.project_root)
         if inside:
-            return normalized.relative_to(self.project_root).as_posix()
-        return lexical.replace("\\", "/")
+            root = normalise_path(self.project_root).rstrip("/")
+            return lexical[len(root) + 1:] if lexical != root else "."
+        return lexical
 
     def _scope_failure(self, request: dict[str, Any]) -> tuple[str, str] | None:
         """Every declared boundary must resolve inside this repository.
@@ -443,26 +483,21 @@ class ControlPlane:
             lowered = text.replace("\\", "/").lower()
             if lowered.startswith(("e:/", "f:/")):
                 return ("FORBIDDEN_ROOT", f"边界 {text} 位于受保护的外部盘根，本项目的边界合同禁止读写。")
-            candidate = Path(text)
-            if candidate.drive and not candidate.is_absolute():
-                # `E:secrets` is drive-relative on Windows: it means "relative to whatever the current
-                # directory on E: happens to be", so it cannot be verified and it names a protected root.
+            if path_is_drive_relative(text):
+                # `E:secrets` means "relative to whatever the current directory on E: happens to be", so it
+                # cannot be verified or narrowed. Detected from the text: Path.drive only reports a drive on
+                # the platform that owns the path syntax, and says nothing on the other one.
                 return ("DRIVE_RELATIVE_BOUNDARY",
                         f"边界 {text} 是盘符相对路径，指向随当前目录而变的对象，无法验证也无法收窄。")
-            if text.startswith(("\\\\", "//")):
+            if path_is_unc(text):
                 # UNC has no drive and does not report itself as absolute on Windows, so it used to fall
                 # through the containment test and be recorded as granted scope.
                 return ("UNANCHORED_BOUNDARY",
                         f"边界 {text} 是 UNC 路径，无法在本机之外判定它包含于哪个项目根，控制服务不接受不能验证的边界。")
-            if not candidate.is_absolute():
-                # A relative boundary is legal, but only once it is anchored: it resolves against this
-                # project, never against whatever directory the service happened to start in.
-                candidate = self.project_root / candidate
-            # Containment is decided LEXICALLY, not by Path.resolve(): resolve() consults the operating
-            # system -- existing parents, substitute drives, short (8.3) names, junctions and the current
-            # directory -- so the same boundary string can be judged differently on two machines. A
-            # control-plane authorisation must mean the same thing everywhere, so the comparison is
-            # normalised and case-folded here, and the normalised pair is named in the refusal.
+            # Anchoring is decided from the string, not from Path: on the Linux job a Windows-style absolute
+            # path looks relative to posixpath, and joining it under the project root turns "refuse this
+            # other project" into "grant a write inside this one".
+            candidate = text if path_is_anchored(text) else f"{normalise_path(self.project_root)}/{text}"
             inside, lexical_root, lexical = _inside_project(candidate, self.project_root)
             if not inside:
                 return ("OUT_OF_PROJECT_SCOPE",
@@ -747,15 +782,15 @@ class ControlPlane:
                                request=request)
         # Relative targets are relative to the project, never to whatever directory the caller ran
         # the service from — a diff computed against the wrong file is a plan built on nothing.
-        path = Path(target)
-        candidate = path if path.is_absolute() else (self.project_root / path)
-        normalized = Path(os.path.normpath(str(candidate)))
-        inside, lexical_root, lexical = _inside_project(normalized, self.project_root)
+        # The refusal is decided from the text (see `_inside_project`); only after that is a real path built,
+        # so a Linux runner can never turn "outside this project" into "a file inside it".
+        anchored = target if path_is_anchored(target) else f"{normalise_path(self.project_root)}/{target}"
+        inside, lexical_root, lexical = _inside_project(anchored, self.project_root)
         if not inside:
             return self.result(spec, "REFUSED", "TARGET_OUT_OF_PROJECT",
                                f"配置目标 {target} 不在本仓库内（规范化后 {lexical} 不在 {lexical_root} 之内）；"
                                "本轮没有对它之外的写权或读权。", request=request)
-        resolved = normalized
+        resolved = Path(lexical)
         if _is_non_diffable_target(resolved, self.project_root):
             # The diff answers "does this document declare this key", which makes any file an oracle if the
             # answer is a substring test -- see ERR-166 for the same hole on the read side one commit
