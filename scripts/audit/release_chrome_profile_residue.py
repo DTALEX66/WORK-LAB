@@ -144,12 +144,27 @@ def main() -> int:
             failures.append({"dir": row["dir"], "error": f"{type(exc).__name__}: {exc}"})
 
     freed = sum(r["bytes"] for r in rows if not (RUNS / r["dir"]).exists())
+    # The boundary declaration names ten required fields for every spill-ledger line
+    # (project-data-boundary.json -> spillGovernance.ledger.requiredFields). This line used to carry its own
+    # rich-but-different shape, so the outside-root sweep counted it as a schema violation while still
+    # reporting the cleanup as safe -- a record that is informative and non-conforming is exactly the kind
+    # a reader trusts without checking. outOfRoot=false because every path here is inside the Git root.
+    handle_manifest = manifest.relative_to(ROOT).as_posix()
     with LEDGER.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps({
             "at": stamp, "actor": "scripts/audit/release_chrome_profile_residue.py",
+            "action": "released regenerable headless-Chrome profile directories under .project-local/runs",
+            "outOfRoot": False,
+            "target": ".project-local/runs",
+            "source": ".project-local/runs (profiles created by this repository's own CDP probes)",
+            "trace": handle_manifest,
+            "locate": handle_manifest,
+            "clean": "every removed file is listed by path, byte length and sha256 in the manifest",
+            "migrate": "not required: nothing left the repository, and the profiles are re-created on the "
+                       "next probe run",
             "scope": ".project-local/runs", "kind": "headless-chrome-profiles",
             "dirs": len(rows), "files": len(entries), "bytesReleased": freed,
-            "manifest": manifest.relative_to(ROOT).as_posix(),
+            "manifest": handle_manifest,
             "regeneratedBy": "the CDP probes that created them",
             "recoverability": "regenerable by re-running the instrument; per-file sha256 preserved in the manifest",
             "failures": len(failures),

@@ -37,6 +37,28 @@ REPO = Path(__file__).resolve().parents[2]
 BOUNDARY = REPO / ".project/governance/project-data-boundary.json"
 EXTERNAL_INDEX = REPO / ".project/governance/external-libraries-index.json"
 SPILL_LEDGER = REPO / ".project-local" / "artifacts" / "spill-ledger.jsonl"
+
+
+def _ledger_digest(row: dict) -> str:
+    """Content identity for one ledger line, so a waiver cannot drift onto a different record."""
+    basis = json.dumps({"at": row.get("at"), "actor": row.get("actor"), "action": row.get("action"),
+                        "tool": row.get("tool"), "manifest": row.get("manifest")},
+                       sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(basis.encode("utf-8")).hexdigest()
+
+
+# Append-only history cannot be edited to look compliant, so pre-rule lines are named here with the reason
+# each one is let stand. The list can only shrink -- a new non-conforming line is a violation, and a waived
+# line that later turns out to be absent is caught by the coverage test that counts these digests.
+LEDGER_LEGACY_WAIVERS: dict[str, str] = {
+    # written 2026-10-07T08:24:53Z by the tool before its own ledger line carried the
+    # declared ten fields; the tool is fixed in this round, and the historical line stays as
+    # evidence rather than being rewritten to look compliant
+    "b592f9dcc201ed68e37ce5f1137ca3c87b3e6170badb8c0ea873901c124a5480": (
+        "pre-fix chrome-profile release record (actor=scripts/audit/release_chrome_profile_residue.py, "
+        "at=20261007T082453Z): emitted ten informative fields but not the declared ones; the manifest it "
+        "names still lists every file by path, length and sha256"),
+}
 TRACKED_SUMMARY = REPO / "docs" / "audits" / "OUTSIDE_ROOT_SPILL_SWEEP_2026-10-07.json"
 DETAIL_OUT_DEFAULT = ".project-local/runs/convergence-20261007-h/spill_sweep_detail.json"
 
@@ -225,10 +247,16 @@ def ledger_review() -> dict:
     if not SPILL_LEDGER.is_file():
         return {"present": False}
     lines = [json.loads(l) for l in SPILL_LEDGER.read_text(encoding="utf-8").splitlines() if l.strip()]
-    required = ("at", "actor", "action", "outOfRoot", "target", "source", "trace", "locate",
-                "clean", "migrate", "reversible")
+    # The field list is read from the declaration that defines it, not restated here. The sweep used to
+    # hardcode eleven names while `project-data-boundary.json` declares ten, so the verifier enforced a
+    # superset of the contract: a line could be faithful to the declared schema and still be convicted,
+    # and nobody could tell which of the two was authoritative without reading both.
+    declared = json.loads(BOUNDARY.read_text(encoding="utf-8"))
+    required = tuple(declared["spillGovernance"]["ledger"]["requiredFields"])
     problems = []
     for i, r in enumerate(lines):
+        if _ledger_digest(r) in LEDGER_LEGACY_WAIVERS:
+            continue
         missing = [f for f in required if f not in r]
         if missing:
             problems.append({"line": i + 1, "problem": f"missing fields {missing}"})
@@ -236,6 +264,12 @@ def ledger_review() -> dict:
             target = str(r.get("target") or "")
             if not target:
                 problems.append({"line": i + 1, "problem": "outOfRoot=true with no target"})
+            # the declaration's own rule for an out-of-root line: a reversibility statement, in whatever
+            # field the writer chose, so prose like `recoverability` is not silently treated as absent
+            if not any(str(r.get(field) or "").strip()
+                       for field in ("reversible", "recoverability", "reversibility", "migrate")):
+                problems.append({"line": i + 1,
+                                 "problem": "outOfRoot=true carries no reversibility statement"})
             if "WORK-LAB" in target or "work-lab" in target:
                 # a recorded out-of-root spill naming this project must be locatable, not a bare phrase
                 if not re.search(r"[A-Za-z]:[\\/]|\\$[A-Z_]+\\|\$[A-Z_]+/", target):

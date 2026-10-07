@@ -1,25 +1,24 @@
 {
   "schemaVersion": "work-lab/outside-root-spill-sweep-summary/v3",
-  "at": "2026-10-07T00:12:31Z",
+  "at": "2026-10-07T20:04:40Z",
   "tool": "scripts/audit/outside_root_spill_sweep.py",
   "scopeStatement": "enumerated every declared shared root plus the tool caches this project's sanctioned runners can reach, %TEMP% and the sibling project directories, without following links or junctions and without entering E:/ or F:/ (the forbidden data volumes). Depth-bounded name matching: the summary reports how far it looked, and a cap hit is disclosed, not averaged away.",
-  "stateDigest": "6a8ddad6f46a934814115540fc3e6f0f9c2adeae44b17d97682888e4e66e7f3b",
+  "stateDigest": "d371a21b720cd24eb6f269b2029e1309f07b4f9c36d05260632e44b58294dd05",
   "counts": {
     "probes": 13,
     "probesPresent": 12,
     "probesTruncatedAtDepthCap": 12,
-    "spillHitsInToolCachesOrSiblings": 14,
-    "namedButDisclosedElsewhere": 2,
-    "hitsTotal": 16,
+    "spillHitsInToolCachesOrSiblings": 16,
+    "namedButDisclosedElsewhere": 1,
+    "hitsTotal": 17,
     "hitsByClass": {
       "projectAuthoredPreLedgerOriginal": 1,
-      "clientRuntimeScratch": 1,
       "siblingProjectOwnedDocument": 1,
-      "inboundOwnerMaterial": 13
+      "inboundOwnerMaterial": 15
     },
     "unadjudicatedHits": 0,
     "projectAuthoredUnrecovered": 0,
-    "ledgerLines": 6,
+    "ledgerLines": 10,
     "ledgerOutOfRoot": 2,
     "ledgerViolations": 0
   },
@@ -28,12 +27,12 @@
       "probe": "declared:model-library",
       "category": "declaredSharedRoot",
       "exists": true,
-      "files": 62,
-      "bytes": 110215778399,
+      "files": 67,
+      "bytes": 110248310464,
       "maxDepth": 3,
       "nameOnly": false,
       "truncatedAtCap": true,
-      "newestMtime": "2026-09-28T17:03:47Z",
+      "newestMtime": "2026-10-07T11:53:06Z",
       "attributionHits": 0
     },
     {
@@ -52,12 +51,12 @@
       "probe": "declared:os-external",
       "category": "declaredSharedRoot",
       "exists": true,
-      "files": 795,
-      "bytes": 3341530151,
+      "files": 822,
+      "bytes": 3458599450,
       "maxDepth": 3,
       "nameOnly": false,
       "truncatedAtCap": true,
-      "newestMtime": "2026-10-06T22:57:52Z",
+      "newestMtime": "2026-10-07T16:43:28Z",
       "attributionHits": 1
     },
     {
@@ -88,36 +87,36 @@
       "probe": "uv-cache",
       "category": "toolCache",
       "exists": true,
-      "files": 26323,
-      "bytes": 2825273288,
+      "files": 26771,
+      "bytes": 2908574133,
       "maxDepth": 3,
       "nameOnly": false,
       "truncatedAtCap": true,
-      "newestMtime": "2026-10-06T17:24:55Z",
+      "newestMtime": "2026-10-07T19:33:50Z",
       "attributionHits": 0
     },
     {
       "probe": "pip-cache",
       "category": "toolCache",
       "exists": true,
-      "files": 35,
-      "bytes": 5042,
+      "files": 36,
+      "bytes": 5188,
       "maxDepth": 3,
       "nameOnly": false,
       "truncatedAtCap": true,
-      "newestMtime": "2026-10-06T15:39:35Z",
+      "newestMtime": "2026-10-07T18:46:08Z",
       "attributionHits": 0
     },
     {
       "probe": "cargo-registry",
       "category": "toolCache",
       "exists": true,
-      "files": 5444,
-      "bytes": 234718208,
+      "files": 4386,
+      "bytes": 116319748,
       "maxDepth": 3,
       "nameOnly": false,
       "truncatedAtCap": true,
-      "newestMtime": "2026-10-06T01:56:17Z",
+      "newestMtime": "2026-10-07T15:48:29Z",
       "attributionHits": 0
     },
     {
@@ -160,25 +159,25 @@
       "probe": "temp",
       "category": "runtimeScratch",
       "exists": true,
-      "files": 8440,
+      "files": 2260,
       "bytes": null,
       "maxDepth": 1,
       "nameOnly": true,
       "truncatedAtCap": true,
       "newestMtime": null,
-      "attributionHits": 1
+      "attributionHits": 0
     },
     {
       "probe": "sibling-projects",
       "category": "siblingProject",
       "exists": true,
-      "files": 238,
+      "files": 250,
       "bytes": null,
       "maxDepth": 1,
       "nameOnly": true,
       "truncatedAtCap": true,
       "newestMtime": null,
-      "attributionHits": 14
+      "attributionHits": 16
     }
   ],
   "adjudicationRules": [
@@ -249,17 +248,6 @@
       "class": "projectAuthoredPreLedgerOriginal",
       "projectAuthored": true,
       "recoveredIn": true
-    },
-    {
-      "probe": "temp",
-      "category": "runtimeScratch",
-      "kind": "file-name",
-      "under": "codex-file-preview-",
-      "relative": "WORK-LAB_UI_FRONTEND_TASKPACK_20260930.zip",
-      "rule": "client-runtime-preview-scratch",
-      "class": "clientRuntimeScratch",
-      "projectAuthored": false,
-      "recoveredIn": false
     },
     {
       "probe": "sibling-projects",
@@ -398,6 +386,17 @@
       "category": "siblingProject",
       "kind": "file-name",
       "under": "Record",
+      "relative": "WORK-LAB_UI开发资料总包_按批次.zip",
+      "rule": "record-owner-material",
+      "class": "inboundOwnerMaterial",
+      "projectAuthored": false,
+      "recoveredIn": false
+    },
+    {
+      "probe": "sibling-projects",
+      "category": "siblingProject",
+      "kind": "file-name",
+      "under": "Record",
       "relative": "WORK-LAB_审计收敛报告_2026-10-01.html",
       "rule": "record-owner-material",
       "class": "inboundOwnerMaterial",
@@ -410,6 +409,17 @@
       "kind": "file-name",
       "under": "Record",
       "relative": "WORK-LAB_审计裁决_2026-10-01.json",
+      "rule": "record-owner-material",
+      "class": "inboundOwnerMaterial",
+      "projectAuthored": false,
+      "recoveredIn": false
+    },
+    {
+      "probe": "sibling-projects",
+      "category": "siblingProject",
+      "kind": "file-name",
+      "under": "Record",
+      "relative": "WORKLAB_CODEX_PROMPT.md",
       "rule": "record-owner-material",
       "class": "inboundOwnerMaterial",
       "projectAuthored": false,
