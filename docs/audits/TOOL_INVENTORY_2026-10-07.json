@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T19:59:48Z",
+  "generatedAt": "2026-10-07T20:18:50Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -425,9 +425,9 @@
     },
     {
       "path": "scripts/audit/outside_root_spill_sweep.py",
-      "sha256": "7e5437b75b8cd770b9f4b17b7d95c81d89290725a687465bb72146920ffd7dc0",
-      "bytes": 24929,
-      "lines": 414,
+      "sha256": "99f15beb84f0b190d5e059eebe8766c23c18902a51fe2978bbd835bb0f29b6e0",
+      "bytes": 27305,
+      "lines": 448,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 8,
@@ -555,9 +555,9 @@
     },
     {
       "path": "scripts/audit/release_chrome_profile_residue.py",
-      "sha256": "38220e3c1117ddceee6cb6de15d2418ed9e549b0224af90f1c3b8a89ab65368d",
-      "bytes": 7138,
-      "lines": 165,
+      "sha256": "56a8938e902157b0d10d6d7ff73c1ed77992ce9a2a2379753a47ac3d386081c5",
+      "bytes": 8296,
+      "lines": 180,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 3,
@@ -727,8 +727,9 @@
       "lines": 1310,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 1,
+      "citedByRecords": 2,
       "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "tests/ci/test_keyboard_focus_contract.py"
       ]
     },
