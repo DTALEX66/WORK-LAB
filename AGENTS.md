@@ -85,9 +85,14 @@ reset/clean/force-push operations.
 ## Managed global configuration (Hermes)
 
 WORK-LAB manages a declared Hermes user overlay on the official baseline:
-the managed **assets** — 13 skills under `skills/`, `config/SOUL.md`, and
-`bin/` launchers (`codex`, `codex.cmd`, `hermes-npx`, `hermes-npx.cmd`,
-`hermes-project-data.py`, `hermes-project-terminal-guard.py`). The managed
+the managed **assets** — 13 skills (overlay `skills/`; the tracked sources are
+`packages/client-neutral-core/skills/**/SKILL.md`, measured 13), `config/SOUL.md`, and
+`bin/` launchers (overlay `bin/`; tracked sources under
+`packages/client-neutral-core/bin/`, measured 6: `codex`, `codex.cmd`, `hermes-npx`,
+`hermes-npx.cmd`, `hermes-project-data.py`, `hermes-project-terminal-guard.py`). There is
+no repository-root `skills/` or `bin/` directory: those two names are Hermes-Home overlay
+paths, and the distinction matters because a reader who greps the repo for `skills/` finds
+nothing and concludes the assets are missing. The managed
 **config fields** are only `display.language` and `display.busy_input_mode`;
 every other Hermes field (`sessions.auto_prune`, `memory.*`,
 `hooks.pre_tool_call`, `mcp_servers.*`, `hermes.model.*`, `plugins`) is
