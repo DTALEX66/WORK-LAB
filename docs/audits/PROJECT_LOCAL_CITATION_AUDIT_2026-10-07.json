@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T11:33:58Z",
+  "generatedAt": "2026-10-07T20:32:19Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2083,
-    "distinctProjectLocalTokens": 408,
+    "trackedFilesScanned": 2126,
+    "distinctProjectLocalTokens": 424,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 408,
-    "citationsToAbsentTokens": 1108
+    "tokensAbsent": 424,
+    "citationsToAbsentTokens": 1172
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,28 +21,28 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 216,
-      "distinctPaths": 81
+      "citations": 244,
+      "distinctPaths": 87
     },
     "machine_field_pointing_at_absent_path": {
       "citations": 14,
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 544,
-      "distinctPaths": 319
+      "citations": 561,
+      "distinctPaths": 324
     },
     "machine_local_runtime_pointer": {
-      "citations": 137,
-      "distinctPaths": 60
+      "citations": 149,
+      "distinctPaths": 66
     },
     "negative_assertion_or_removal_record": {
-      "citations": 116,
-      "distinctPaths": 49
+      "citations": 122,
+      "distinctPaths": 52
     },
     "path_pattern_or_truncated_token": {
-      "citations": 9,
-      "distinctPaths": 8
+      "citations": 10,
+      "distinctPaths": 9
     },
     "prose_in_frozen_history_or_audit": {
       "citations": 28,
@@ -201,6 +201,12 @@
       },
       {
         "path": ".project-local",
+        "file": "services/control/control_service.py",
+        "line": 96,
+        "text": "NON_DIFFABLE_ROOTS = (\".project-local/\", \".hermes/\", \"docs/\", \"tests/\")"
+      },
+      {
+        "path": ".project-local",
         "file": "services/orchestration/run_quality_gate.py",
         "line": 107,
         "text": "# WL-010/020/030: Runtime Boundary V2 — .project-local/ is the single runtime root"
@@ -256,7 +262,7 @@
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_recovered_source_registry.py",
-        "line": 144,
+        "line": 147,
         "text": "self.assertTrue(claim.startswith(\".project-local/\"),"
       },
       {
@@ -288,6 +294,18 @@
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
         "line": 196,
         "text": "- durable verification evidence: `.project-local/artifacts/` or `.project-local/evidence/`"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "packages/client-neutral-core/scripts/artifact_handle_projection.py",
+        "line": 62,
+        "text": "# When one path is declared under two keys (this project declares `.project-local/artifacts` as both the"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
+        "line": 56,
+        "text": "DEFAULT_EVIDENCE_ROOTS = (\".project-local/artifacts\", \".project-local/runs\")"
       },
       {
         "path": ".project-local/artifacts",
@@ -368,6 +386,30 @@
         "text": "self.assertEqual(data[\"canonicalEvidenceRoot\"], \".project-local/artifacts\")"
       },
       {
+        "path": ".project-local/artifacts",
+        "file": "tests/workflow-assistance/test_evidence_range_reader.py",
+        "line": 239,
+        "text": "self.assertEqual(self.read(str(self.path), evidence_roots=(\".project-local/artifacts\",))[\"reason_code\"],"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "tests/workflow-assistance/test_evidence_range_reader.py",
+        "line": 245,
+        "text": "self.assertIn(\".project-local/artifacts\", declared)"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 41,
+        "text": "ARTIFACTS = \".project-local/artifacts\""
+      },
+      {
+        "path": ".project-local/artifacts/MANIFEST.json",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 367,
+        "text": "\"digestSource\": \"record:.project-local/artifacts/MANIFEST.json\"}"
+      },
+      {
         "path": ".project-local/artifacts/ag16-handback/evidence.json",
         "file": "scripts/audit/ag16_handback_roundtrip.py",
         "line": 109,
@@ -378,6 +420,12 @@
         "file": "scripts/audit/scan_stale_digest_references.py",
         "line": 14,
         "text": "BACKUP = ROOT / \".project-local/artifacts/ag19-registry-backup-20261007/SOURCE_REGISTRY.copy1.json\""
+      },
+      {
+        "path": ".project-local/artifacts/backup/hermes/config.yaml",
+        "file": "tests/workflow-assistance/test_control_service.py",
+        "line": 318,
+        "text": "\".project-local/artifacts/backup/hermes/config.yaml\","
       },
       {
         "path": ".project-local/artifacts/context-pack.md",
@@ -548,6 +596,12 @@
         "text": "\".project-local/artifacts/provider-health.json\","
       },
       {
+        "path": ".project-local/artifacts/qoder-handoff-20261007",
+        "file": "tests/ci/test_keyboard_focus_contract.py",
+        "line": 674,
+        "text": "# `.project-local/artifacts/qoder-handoff-20261007`."
+      },
+      {
         "path": ".project-local/artifacts/setup-plan.json",
         "file": "scripts/maintenance/converge_u02_runtime_paths.py",
         "line": 18,
@@ -658,13 +712,13 @@
       {
         "path": ".project-local/logs/app.log",
         "file": "tests/workflow-assistance/test_cleanup.py",
-        "line": 45,
+        "line": 49,
         "text": "Path(d, \".project-local/logs/app.log\").write_text(\"boot\")"
       },
       {
         "path": ".project-local/logs/app.log",
         "file": "tests/workflow-assistance/test_cleanup.py",
-        "line": 108,
+        "line": 112,
         "text": "d = gov.decide({\"path\": \".project-local/logs/app.log\"})"
       },
       {
@@ -678,6 +732,12 @@
         "file": "apps/observer/scripts/u19_webview_e2e.py",
         "line": 20,
         "text": "4. Writes a real E2E evidence artifact under `.project-local/runs/`."
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "apps/observer/scripts/window_state_readback.py",
+        "line": 49,
+        "text": "emulation browser's `--user-data-dir` — is resolved under `.project-local/runs/`"
       },
       {
         "path": ".project-local/runs",
@@ -747,6 +807,18 @@
       },
       {
         "path": ".project-local/runs",
+        "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
+        "line": 56,
+        "text": "DEFAULT_EVIDENCE_ROOTS = (\".project-local/artifacts\", \".project-local/runs\")"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "scripts/audit/entry_baseline_readback.py",
+        "line": 61,
+        "text": "already-set TMPDIR/TEMP/TMP, otherwise fall back to .project-local/runs in this repo.\"\"\""
+      },
+      {
+        "path": ".project-local/runs",
         "file": "scripts/audit/falsify_toolchain_gate.py",
         "line": 39,
         "text": "\"root value restated\": lambda d: d[\"managers\"][0].__setitem__(\"runtimeRoot\", \".project-local/runs\"),"
@@ -754,7 +826,7 @@
       {
         "path": ".project-local/runs",
         "file": "scripts/audit/outside_root_spill_sweep.py",
-        "line": 76,
+        "line": 98,
         "text": "\"disposition\": \"root cause fixed (the fixture is now built under `.project-local/runs/`) and the \""
       },
       {
@@ -778,7 +850,25 @@
       {
         "path": ".project-local/runs",
         "file": "scripts/audit/release_chrome_profile_residue.py",
-        "line": 150,
+        "line": 156,
+        "text": "\"action\": \"released regenerable headless-Chrome profile directories under .project-local/runs\","
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "scripts/audit/release_chrome_profile_residue.py",
+        "line": 158,
+        "text": "\"target\": \".project-local/runs\","
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "scripts/audit/release_chrome_profile_residue.py",
+        "line": 159,
+        "text": "\"source\": \".project-local/runs (profiles created by this repository's own CDP probes)\","
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "scripts/audit/release_chrome_profile_residue.py",
+        "line": 165,
         "text": "\"scope\": \".project-local/runs\", \"kind\": \"headless-chrome-profiles\","
       },
       {
@@ -792,6 +882,12 @@
         "file": "scripts/audit/scratch_promotion_redundancy.py",
         "line": 30,
         "text": "SCRATCH_ROOTS = (\".project-local/runs/\",)"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "scripts/audit/u19_keyboard_focus_cdp.py",
+        "line": 999,
+        "text": "\"src-tauri/target/release, or under .project-local/runs — there is \""
       },
       {
         "path": ".project-local/runs",
@@ -849,6 +945,24 @@
       },
       {
         "path": ".project-local/runs",
+        "file": "tests/ci/test_window_state_claim.py",
+        "line": 392,
+        "text": "\"evidence must live under the declared .project-local/runs root\")"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_evidence_range_reader.py",
+        "line": 20,
+        "text": "`.project-local/runs` and released by the bounded fixture helper."
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_evidence_range_reader.py",
+        "line": 246,
+        "text": "self.assertIn(\".project-local/runs\", declared)"
+      },
+      {
+        "path": ".project-local/runs",
         "file": "tests/workflow-assistance/test_project_local_citation_audit.py",
         "line": 180,
         "text": "# first.json/second.json into `.project-local/runs/` before re-scanning. Any bound on it —"
@@ -861,8 +975,14 @@
       },
       {
         "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 42,
+        "text": "RUNS = \".project-local/runs\""
+      },
+      {
+        "path": ".project-local/runs",
         "file": "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py",
-        "line": 117,
+        "line": 112,
         "text": "\"the ERR-140 offender is bare again: pass dir= inside .project-local/runs\")"
       },
       {
@@ -1000,7 +1120,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-h/spill_sweep_detail.json",
         "file": "scripts/audit/outside_root_spill_sweep.py",
-        "line": 41,
+        "line": 63,
         "text": "DETAIL_OUT_DEFAULT = \".project-local/runs/convergence-20261007-h/spill_sweep_detail.json\""
       },
       {
@@ -1130,6 +1250,12 @@
         "text": "\".project-local/runs/pycache\", REL):"
       },
       {
+        "path": ".project-local/runs/qoder-agent-verbs",
+        "file": "packages/client-neutral-core/scripts/adapter_verb_probe.py",
+        "line": 62,
+        "text": "SCRATCH_ROOT = \".project-local/runs/qoder-agent-verbs\""
+      },
+      {
         "path": ".project-local/runs/scratch/ghost.py",
         "file": "tests/workflow-assistance/test_error_ledger_regression_commands.py",
         "line": 112,
@@ -1167,6 +1293,12 @@
       },
       {
         "path": ".project-local/runs/tmp",
+        "file": "packages/client-neutral-core/scripts/project_temp.py",
+        "line": 9,
+        "text": "The canonical gate runner binds ``TMP``/``TEMP``/``TMPDIR`` to ``.project-local/runs/tmp`` for its"
+      },
+      {
+        "path": ".project-local/runs/tmp",
         "file": "scripts/maintenance/finish_tmp_tree_cleanup.py",
         "line": 1,
         "text": "\"\"\"Finish removing .project-local/runs/tmp: the refusal is a read-only bit on nested"
@@ -1179,9 +1311,33 @@
       },
       {
         "path": ".project-local/runs/tmp",
+        "file": "tests/ci/test_window_state_claim.py",
+        "line": 64,
+        "text": "runner TMP/TEMP/TMPDIR are bound into `.project-local/runs/tmp`, so \"the temp"
+      },
+      {
+        "path": ".project-local/runs/tmp",
+        "file": "tests/ci/test_window_state_claim.py",
+        "line": 424,
+        "text": "`.project-local/runs/tmp`. A fixture"
+      },
+      {
+        "path": ".project-local/runs/tmp",
+        "file": "tests/workflow-assistance/test_evidence_range_reader.py",
+        "line": 175,
+        "text": "project binds TMP/TEMP/TMPDIR into `.project-local/runs/tmp`, i.e. inside the repository, and"
+      },
+      {
+        "path": ".project-local/runs/tmp",
         "file": "tests/workflow-assistance/test_skills_inventory_roots.py",
         "line": 14,
         "text": "runtime = ROOT / '.project-local/runs/tmp'"
+      },
+      {
+        "path": ".project-local/runs/tmp/cookies.sqlite",
+        "file": "tests/workflow-assistance/test_control_service.py",
+        "line": 319,
+        "text": "\".project-local/runs/tmp/cookies.sqlite\"):"
       },
       {
         "path": ".project-local/runs/u19-msvc-20261006/target",
@@ -1236,6 +1392,12 @@
         "file": "scripts/maintenance/finish_tmp_tree_cleanup.py",
         "line": 55,
         "text": "\".project-local/runs/u19-msvc-20261006/target/release/app.exe.inputs.json\":"
+      },
+      {
+        "path": ".project-local/runs/window-state/readback.json",
+        "file": "apps/observer/scripts/window_state_readback.py",
+        "line": 46,
+        "text": "--label panel --json-out .project-local/runs/window-state/readback.json"
       },
       {
         "path": ".project-local/runs/workflow",
@@ -1324,13 +1486,13 @@
       {
         "path": ".project-local/state.db",
         "file": "tests/workflow-assistance/test_cleanup.py",
-        "line": 122,
+        "line": 126,
         "text": "d = gov.decide({\"path\": \".project-local/state.db\"})"
       },
       {
         "path": ".project-local/state.db",
         "file": "tests/workflow-assistance/test_cleanup.py",
-        "line": 137,
+        "line": 141,
         "text": "spills = [{\"path\": \".project-local/state.db\"},"
       },
       {
@@ -1344,6 +1506,12 @@
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
         "line": 193,
         "text": "- queues and durable task state: `.project-local/tasks/` or `.project-local/sleep-mode/`"
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "scripts/audit/entry_baseline_readback.py",
+        "line": 767,
+        "text": "\"rerun_command\": \".project-local/toolchains/wl-py311/Scripts/python.exe scripts/audit/entry_baseline_readback.py --out docs/audits/ENTRY_BASELINE_2026-10-08.json\","
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
@@ -1483,9 +1651,15 @@
       },
       {
         "path": ".project-local/artifacts",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
-        "line": 92,
-        "text": "cannot be re-run without it, and everything under `.project-local/artifacts/`, which is the evidence"
+        "file": "taskpacks/current/WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007.md",
+        "line": 20,
+        "text": "| 落点 | 该文件位于被忽略的运行根 `.project-local/artifacts` 内，不作仓库真值，不改变权威顺序 |"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "taskpacks/current/WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007.md",
+        "line": 61,
+        "text": "7. 缓存/临时/日志/构建产物留 `.project-local/runs`，证据与交接留 `.project-local/artifacts`；"
       },
       {
         "path": ".project-local/artifacts",
@@ -1518,6 +1692,12 @@
         "text": "| 证据位置允许 `.project-local/artifacts/` **或 `reports/`** | 本包产物全部在 `.project-local/artifacts/` | ✅ |"
       },
       {
+        "path": ".project-local/artifacts",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
+        "line": 92,
+        "text": "cannot be re-run without it, and everything under `.project-local/artifacts/`, which is the evidence"
+      },
+      {
         "path": ".project-local/artifacts/ag19-registry-backup-20261007",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 213,
@@ -1525,7 +1705,7 @@
       },
       {
         "path": ".project-local/artifacts/ag19-registry-backup-20261007",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007.md",
         "line": 131,
         "text": "2. **它不是原始导出。** 文档内的 `recoveryAmendment` 记录了 2026-10-07 由 `ag19_register.py` 就地修订；修订前的基线 `439,365 B / 4281e4818890…` 只登记为 `preAmendmentBaseline` 事实，字节仍只在 `.project-local/artifacts/ag19-registry-backup"
       },
@@ -1669,7 +1849,7 @@
       },
       {
         "path": ".project-local/artifacts/observer-web-retired-20261007",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-C.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-C.md",
         "line": 14,
         "text": "另有 `.project-local/artifacts/observer-web-retired-20261007/` 副本）。"
       },
@@ -1696,6 +1876,30 @@
         "file": "reports/HANDOFF-EXTERNAL-REVIEW-20261001.md",
         "line": 120,
         "text": "**已归档**（`reports` 外的本地归档）：`.project-local/artifacts/pre-reinstall-archive-20261001/`，**130 项、130/130 摘要校验通过**，含 `BOUNDARY-AND-RECOVERY-REPORT.json`。"
+      },
+      {
+        "path": ".project-local/artifacts/pre-reinstall-archive-20261001/hermes/config.yaml",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4998,
+        "text": "\"observed_error\": \"The new read-only evidence-range route served any file inside the Git root over HTTP, and the reader CLI reported success while doing it: `evidence_range_reader.py --handle <.projec"
+      },
+      {
+        "path": ".project-local/artifacts/qoder-handoff-20261007/GEOMETRY_20261008.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4965,
+        "text": "\"command\": \"python scripts/audit/topbar_geometry_via_cdp.py --view full --view compact --json-out .project-local/artifacts/qoder-handoff-20261007/GEOMETRY_20261008.json\","
+      },
+      {
+        "path": ".project-local/artifacts/qoder-handoff-20261007/QODER_新规划前后端完整后续任务提示词.txt",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 254,
+        "text": "| QODER-FULLSTACK-20261007 | P0 | CARD_LANDED / LOCAL_FULL_GATE_PASS_ON_THIS_HOST / PRIOR_FAIL_CLAIM_CORRECTED | owner 2026-10-07 附带的完整执行提示词（`.project-local/artifacts/qoder-handoff-20261007/QODER_新规划前"
+      },
+      {
+        "path": ".project-local/artifacts/qoder-handoff-20261007/QODER_新规划前后端完整后续任务提示词.txt",
+        "file": "taskpacks/current/WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007.md",
+        "line": 16,
+        "text": "| 文件 | `.project-local/artifacts/qoder-handoff-20261007/QODER_新规划前后端完整后续任务提示词.txt` |"
       },
       {
         "path": ".project-local/artifacts/r4",
@@ -1837,7 +2041,7 @@
       },
       {
         "path": ".project-local/artifacts/ui-audit-20261007",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-C.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-C.md",
         "line": 28,
         "text": "`.project-local/artifacts/ui-audit-20261007/`。"
       },
@@ -1862,13 +2066,13 @@
       {
         "path": ".project-local/atlas-2026-09-29",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 244,
+        "line": 245,
         "text": "| AG19-PROMOTION-20261007 | P0 | 2_ROWS_TRACKED_AND_GATED / HANDOFF_STATUS_CORRECTED / NEW_INSTRUMENT_FALSIFIED_8_OF_8 | AG-19 的 Source Registry 此前只是一条**本机断言**：`src-atlas-master-source-registry`（atlas"
       },
       {
         "path": ".project-local/atlas-2026-09-29",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 244,
+        "line": 245,
         "text": "| AG19-PROMOTION-20261007 | P0 | 2_ROWS_TRACKED_AND_GATED / HANDOFF_STATUS_CORRECTED / NEW_INSTRUMENT_FALSIFIED_8_OF_8 | AG-19 的 Source Registry 此前只是一条**本机断言**：`src-atlas-master-source-registry`（atlas"
       },
       {
@@ -1976,7 +2180,7 @@
       {
         "path": ".project-local/runs",
         "file": "docs/audits/OUTSIDE_ROOT_SPILL_SWEEP_2026-10-07.json",
-        "line": 216,
+        "line": 215,
         "text": "\"disposition\": \"root cause fixed (the fixture is now built under `.project-local/runs/`) and the 19 leaked mirrors released with a per-file manifest by `scripts/maintenance/release_authority_reference"
       },
       {
@@ -2113,27 +2317,9 @@
       },
       {
         "path": ".project-local/runs",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-D.md",
-        "line": 115,
-        "text": "register rows) gave `regressionCommand` values starting with `python .project-local/runs/<scratch>/…py` —"
-      },
-      {
-        "path": ".project-local/runs",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-D.md",
-        "line": 153,
-        "text": "entries and three register rows still name the `.project-local/runs/...` path. The mapping with"
-      },
-      {
-        "path": ".project-local/runs",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
-        "line": 111,
-        "text": "27 `__pycache__` directories totalling 9,740,083 file bytes had accumulated inside the tracked source tree from direct `python <script>` invocations that bypassed the sanctioned entry points — which d"
-      },
-      {
-        "path": ".project-local/runs",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
-        "line": 27,
-        "text": "`dir=_runtime_root()`（`.project-local/runs/`，与 `test_machine_identity.py` 已在用的在册约定一致），"
+        "file": "taskpacks/current/WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007.md",
+        "line": 61,
+        "text": "7. 缓存/临时/日志/构建产物留 `.project-local/runs`，证据与交接留 `.project-local/artifacts`；"
       },
       {
         "path": ".project-local/runs",
@@ -2224,6 +2410,30 @@
         "file": "taskpacks/history/WORK-LAB-WL-BASELINE-HERMES-HANDOFF-2026-09-14.md",
         "line": 83,
         "text": "| Hermes hooks allowlist | **HOLD（待用户一次同意）** | `hooks doctor` 报 1 issue：受管守卫**在批准后被修改**（改动仅 1 行，`.hermes/task-runtime` → `.project-local/runs`）。**未执行** `revoke`（会改变用户运行状态） |"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-D.md",
+        "line": 115,
+        "text": "register rows) gave `regressionCommand` values starting with `python .project-local/runs/<scratch>/…py` —"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-D.md",
+        "line": 153,
+        "text": "entries and three register rows still name the `.project-local/runs/...` path. The mapping with"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
+        "line": 111,
+        "text": "27 `__pycache__` directories totalling 9,740,083 file bytes had accumulated inside the tracked source tree from direct `python <script>` invocations that bypassed the sanctioned entry points — which d"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "line": 27,
+        "text": "`dir=_runtime_root()`（`.project-local/runs/`，与 `test_machine_identity.py` 已在用的在册约定一致），"
       },
       {
         "path": ".project-local/runs/NF-00-baseline-receipt-20260916.json",
@@ -2419,15 +2629,15 @@
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-C.md",
-        "line": 24,
-        "text": "4. **UI 商业级走查有了量具**：`.project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs`"
-      },
-      {
-        "path": ".project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs",
         "file": "taskpacks/current/error-ledger.json",
         "line": 3689,
         "text": "\"command\": \"node .project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs\","
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-C.md",
+        "line": 24,
+        "text": "4. **UI 商业级走查有了量具**：`.project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs`"
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/extract_section16.py",
@@ -2557,7 +2767,7 @@
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/run-gate-battery.sh",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-C.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-C.md",
         "line": 60,
         "text": "bash .project-local/runs/convergence-20261007-c/run-gate-battery.sh   # BATTERY_FAILURES=0"
       },
@@ -2611,7 +2821,7 @@
       },
       {
         "path": ".project-local/runs/convergence-20261007-d/ci_step_repro.py",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-D.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-D.md",
         "line": 183,
         "text": "not the groups you touched. `.project-local/runs/convergence-20261007-d/ci_step_repro.py` parses"
       },
@@ -2707,13 +2917,13 @@
       },
       {
         "path": ".project-local/runs/convergence-20261007-d/watch_exact_sha_ci.py",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-G.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-G.md",
         "line": 76,
         "text": "by `.project-local/runs/convergence-20261007-d/watch_exact_sha_ci.py`. Heads pushed and green:"
       },
       {
         "path": ".project-local/runs/convergence-20261007-d/watch_exact_sha_ci.py",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
         "line": 124,
         "text": "`.project-local/runs/convergence-20261007-d/watch_exact_sha_ci.py`. Interpreter:"
       },
@@ -2761,7 +2971,7 @@
       },
       {
         "path": ".project-local/runs/convergence-20261007-h/project-data-boundary.SKILL.repointed.md",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
         "line": 79,
         "text": "`.project-local/runs/convergence-20261007-h/project-data-boundary.SKILL.repointed.md`) and must land"
       },
@@ -2780,13 +2990,13 @@
       {
         "path": ".project-local/runs/convergence-20261007-k",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 243,
-        "text": "| GEOMETRY-GATE-20261007 | P1 | 已落地＝判定逻辑＋拒绝语义（12 项单测）/ 未落地＝真实浏览器读回，故暂不接成 CI 必需步骤 | `scripts/audit/topbar_geometry_via_cdp.py` 原来只是一台会打印数字的仪器：`main()` 返回 None（永远退出 0），没有任何 CI 步骤或测试引用它——这就是提示词任务包 G3 的缺口"
+        "line": 244,
+        "text": "| GEOMETRY-GATE-20261007 | P1 | 已落地＝判定逻辑＋拒绝语义＋真实浏览器读回（该步骤已是 CI 必需项：`.github/workflows/work-lab-gate.yml:224`，run `37585453264` / head `8847cdc` 两档均 `GEOMETRY_GATE_PASS`）/ 未落地＝面板窗内容区是否等于 `tauri.conf.js"
       },
       {
         "path": ".project-local/runs/convergence-20261007-k/measure_residue_eligibility.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 247,
+        "line": 248,
         "text": "| GREENING-20261007-J | P1 | ELIGIBLE_BYTES_1,460,600_OF_4.19_GB / NOTHING_MORE_SAFELY_RELEASABLE / MEASURED_NOT_ASSUMED | 本轮不再猜哪块缓存能删，而是量「**删除合法性**」：对 `.project-local` 每个一级子目录求 apparent bytes，并统计受版本控"
       },
       {
@@ -2798,7 +3008,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-k/promote-atlas-master-source-registry.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 244,
+        "line": 245,
         "text": "| AG19-PROMOTION-20261007 | P0 | 2_ROWS_TRACKED_AND_GATED / HANDOFF_STATUS_CORRECTED / NEW_INSTRUMENT_FALSIFIED_8_OF_8 | AG-19 的 Source Registry 此前只是一条**本机断言**：`src-atlas-master-source-registry`（atlas"
       },
       {
@@ -2881,7 +3091,7 @@
       },
       {
         "path": ".project-local/runs/gate-recheck-20261006",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261006.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261006.md",
         "line": 11,
         "text": "| 10/05 全量门禁 FAIL **不可复现** | `QUALITY_GATE_GOVERNANCE_PASS modules=180 executed=1896 ran=1904 skipped=8`；`verify` 47 门 PASS，exit 0。日志 `.project-local/runs/gate-recheck-20261006/{governance,verify}-6f3"
       },
@@ -3145,12 +3355,6 @@
       },
       {
         "path": ".project-local/runs/p0a-diag-20261006/shot3.py",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261006.md",
-        "line": 94,
-        "text": "新仪器 `.project-local/runs/p0a-diag-20261006/shot3.py`，取证 `observer-authoritative.png` / `observer-topright-3x.png` / `capture-provenance.json`。**控制簇真实渲染**：胶囊内含 缩小 / `100%` / 放大 / 重置 / 分隔 / 最小化 / 最大化 / "
-      },
-      {
-        "path": ".project-local/runs/p0a-diag-20261006/shot3.py",
         "file": "taskpacks/current/error-ledger.json",
         "line": 2973,
         "text": "\"command\": \"python .project-local/runs/p0a-diag-20261006/shot3.py against cargo tauri build --no-bundle -- --locked output\","
@@ -3162,10 +3366,10 @@
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/p0a-diag-20261006/shot3.py\","
       },
       {
-        "path": ".project-local/runs/p0c-diag-20261006",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
-        "line": 32,
-        "text": "handoff sent a reader to `.project-local/runs/p0c-diag-20261006` while the bytes live in the"
+        "path": ".project-local/runs/p0a-diag-20261006/shot3.py",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261006.md",
+        "line": 94,
+        "text": "新仪器 `.project-local/runs/p0a-diag-20261006/shot3.py`，取证 `observer-authoritative.png` / `observer-topright-3x.png` / `capture-provenance.json`。**控制簇真实渲染**：胶囊内含 缩小 / `100%` / 放大 / 重置 / 分隔 / 最小化 / 最大化 / "
       },
       {
         "path": ".project-local/runs/p0c-diag-20261006",
@@ -3178,6 +3382,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 3969,
         "text": "\"fix\": \"Two such sentences existed and are repaired in place with dated corrections, keeping the original claim visible: `error-governance.md` listed .project-local/artifacts/error-ledger-20260806.jso"
+      },
+      {
+        "path": ".project-local/runs/p0c-diag-20261006",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
+        "line": 32,
+        "text": "handoff sent a reader to `.project-local/runs/p0c-diag-20261006` while the bytes live in the"
       },
       {
         "path": ".project-local/runs/p0c-final-20261006/EBWebView-final-1791293904",
@@ -3348,6 +3558,18 @@
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
       },
       {
+        "path": ".project-local/runs/qoder-20261007-a/gate-verify.log",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 254,
+        "text": "| QODER-FULLSTACK-20261007 | P0 | CARD_LANDED / LOCAL_FULL_GATE_PASS_ON_THIS_HOST / PRIOR_FAIL_CLAIM_CORRECTED | owner 2026-10-07 附带的完整执行提示词（`.project-local/artifacts/qoder-handoff-20261007/QODER_新规划前"
+      },
+      {
+        "path": ".project-local/runs/qoder-20261007-a/prove_p1_02_read_path.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 250,
+        "text": "| P1-02-RECORD-FOCUS-20261008 | P1 | LANDED_LOCAL_READBACK_SYNTHETIC / UI_BEHAVIOR_PROVEN / EXACT_SHA_CI_NOT_RUN(no commit authorization) | 批次 B 第 1—2 项：Work 泳道现在能真实定位一条记录。链路按 合同 → 后端投影 → 一致性 → UI → 行"
+      },
+      {
         "path": ".project-local/runs/quality-gate-governance-fail.log",
         "file": "docs/history/archive/workflow-convergence-20261005.md",
         "line": 37,
@@ -3391,9 +3613,33 @@
       },
       {
         "path": ".project-local/runs/tmp",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 234,
+        "text": "| REQ-RANGE-20261007 | P2 | BACKEND_LANDED_LOCAL_TESTED / OBSERVER_ROUTE_READ_ONLY / UI_LANDING_BLOCKED_ON_HANDLE_PROJECTION | 从退役行里迁出的**内部**需求，不再伪装成外部候选：证据链已有 sha256 与成本预算，但大产物只能整读，代码里只有 `_truncate(l"
+      },
+      {
+        "path": ".project-local/runs/tmp",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 237,
+        "text": "| TEMP-FIXTURE-DEBT-20261007 | P2 | 28_BARE_MKDTEMP_SITES_OWED / 12_TEST_FILES_21_SITES / 3_PRODUCTION_FILES_7_SITES / ROOT_CAUSE_FIXED_IN_tests_ci_test_project_authority_reference.py / ERR-140 | ERR-"
+      },
+      {
+        "path": ".project-local/runs/tmp",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 254,
+        "text": "| QODER-FULLSTACK-20261007 | P0 | CARD_LANDED / LOCAL_FULL_GATE_PASS_ON_THIS_HOST / PRIOR_FAIL_CLAIM_CORRECTED | owner 2026-10-07 附带的完整执行提示词（`.project-local/artifacts/qoder-handoff-20261007/QODER_新规划前"
+      },
+      {
+        "path": ".project-local/runs/tmp",
         "file": "taskpacks/current/error-ledger.json",
         "line": 3484,
         "text": "\"observed_error\": \"Before deleting .project-local/runs/tmp the script copied its 7 spill-report.json files into the manifest directory — and reported 1 afterwards. The destination was keyed on report."
+      },
+      {
+        "path": ".project-local/runs/tmp",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4905,
+        "text": "\"observed_error\": \"QUALITY_GATE_FAIL gate=governance exit_code=1: three boundary cases in test_evidence_range_reader failed inside the batch with 'READ_OK' != 'OUT_OF_BOUNDARY', while the identical fi"
       },
       {
         "path": ".project-local/runs/topbar-measure-20261006/measure.py",
@@ -3433,21 +3679,21 @@
       },
       {
         "path": ".project-local/runs/u19-msvc-20261006/build-tauri-msvc.bat",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261006-B.md",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 3241,
+        "text": "\"entrypoint\": \"apps/observer/scripts/write_artifact_receipt.py (digest), apps/observer/scripts/u19_webview_e2e.py (resolve_app_exe decision order), .project-local/runs/u19-msvc-20261006/build-tauri-ms"
+      },
+      {
+        "path": ".project-local/runs/u19-msvc-20261006/build-tauri-msvc.bat",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261006-B.md",
         "line": 113,
         "text": "构建用 `.project-local/runs/u19-msvc-20261006/build-tauri-msvc.bat`（已含写凭据步骤），并"
       },
       {
         "path": ".project-local/runs/u19-msvc-20261006/build-tauri-msvc.bat",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261006.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261006.md",
         "line": 73,
         "text": "4. 构建配方：`RUST_BIN=…\\1.88.0-x86_64-pc-windows-msvc\\bin`、`CARGO_HOME=…\\toolchains\\rust\\cargo`、先 `call vcvars64.bat`、`-- --locked`、`CARGO_TARGET_DIR` 落 `.project-local`；脚本 `.project-local/runs/u19-msvc-2"
-      },
-      {
-        "path": ".project-local/runs/u19-msvc-20261006/build-tauri-msvc.bat",
-        "file": "taskpacks/current/error-ledger.json",
-        "line": 3241,
-        "text": "\"entrypoint\": \"apps/observer/scripts/write_artifact_receipt.py (digest), apps/observer/scripts/u19_webview_e2e.py (resolve_app_exe decision order), .project-local/runs/u19-msvc-20261006/build-tauri-ms"
       },
       {
         "path": ".project-local/runs/u19-msvc-20261006/retired-gnu",
@@ -3457,15 +3703,9 @@
       },
       {
         "path": ".project-local/runs/u19-msvc-20261006/retired-gnu",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261006.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261006.md",
         "line": 14,
         "text": "| Observer 首次在本机产出**可运行 MSVC 桌面二进制** | `cargo tauri build --no-bundle -- --locked` → `BUILD_EXIT=0`；PE 导入表为 `api-ms-win-crt-*`+`dwmapi`，无 libgcc/libwinpthread；旧 GNU 件（早退 `0xC0000135`）留证于 `.project-loc"
-      },
-      {
-        "path": ".project-local/runs/u19-msvc-20261006/shot2.py",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261006.md",
-        "line": 74,
-        "text": "5. 取证脚本 `.project-local/runs/u19-msvc-20261006/shot2.py`（含 DPI/CSS 视口/离散色自检）；截图必须**先看内容再当证据**。"
       },
       {
         "path": ".project-local/runs/u19-msvc-20261006/shot2.py",
@@ -3474,16 +3714,16 @@
         "text": "\"entrypoint\": \".project-local/runs/u19-msvc-20261006/shot2.py (window enumeration, capture rect, artifact path), apps/observer/frontend/src/skins/l10b-shell.css (.topbar padding-right, .winctl fixed c"
       },
       {
-        "path": ".project-local/runs/u19-msvc-20261006/target",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261006.md",
-        "line": 131,
-        "text": "而本项目文档化的本机构建配方设了 `CARGO_TARGET_DIR`（`.project-local/runs/u19-msvc-20261006/target`），产物落在那边（本次实测 `a06f4c85…` 与 `c9a5b833…` 两次都在 runs 目录，而 `src-tauri/target/release/app.exe` 停在 13:51 的 `1e8528e3…`）。所以**"
+        "path": ".project-local/runs/u19-msvc-20261006/shot2.py",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261006.md",
+        "line": 74,
+        "text": "5. 取证脚本 `.project-local/runs/u19-msvc-20261006/shot2.py`（含 DPI/CSS 视口/离散色自检）；截图必须**先看内容再当证据**。"
       },
       {
-        "path": ".project-local/runs/u19-msvc-20261006/target/release/app.exe",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261006.md",
-        "line": 100,
-        "text": "| 启动**过期二进制** | 硬编码 `apps/observer/src-tauri/target/release/app.exe`（`1e8528e3…`，13:51），而配方设了 `CARGO_TARGET_DIR`，真产物在 `.project-local/runs/u19-msvc-20261006/target/release/app.exe`（`a06f4c85…`）。**`she"
+        "path": ".project-local/runs/u19-msvc-20261006/target",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261006.md",
+        "line": 131,
+        "text": "而本项目文档化的本机构建配方设了 `CARGO_TARGET_DIR`（`.project-local/runs/u19-msvc-20261006/target`），产物落在那边（本次实测 `a06f4c85…` 与 `c9a5b833…` 两次都在 runs 目录，而 `src-tauri/target/release/app.exe` 停在 13:51 的 `1e8528e3…`）。所以**"
       },
       {
         "path": ".project-local/runs/u19-msvc-20261006/target/release/app.exe",
@@ -3496,6 +3736,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 3191,
         "text": "\"remaining_boundary\": \"The measured numbers came from headless Chrome at a 1262x668 CSS viewport, and that instrument limit is unchanged. The visual question is closed: Observed by the owner on the re"
+      },
+      {
+        "path": ".project-local/runs/u19-msvc-20261006/target/release/app.exe",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261006.md",
+        "line": 100,
+        "text": "| 启动**过期二进制** | 硬编码 `apps/observer/src-tauri/target/release/app.exe`（`1e8528e3…`，13:51），而配方设了 `CARGO_TARGET_DIR`，真产物在 `.project-local/runs/u19-msvc-20261006/target/release/app.exe`（`a06f4c85…`）。**`she"
       },
       {
         "path": ".project-local/runs/u19.zip",
@@ -4525,15 +4771,15 @@
       },
       {
         "path": ".project-local/toolchains",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
-        "line": 74,
-        "text": "`.project-local/toolchains/…` 路径入了队。本地 `reproduce_ci_commands.py` 89 条命令只有 3 个已知 cargo/npm 失败，因为它跑在这台机器上。"
-      },
-      {
-        "path": ".project-local/toolchains",
         "file": "taskpacks/current/error-ledger.json",
         "line": 4234,
         "text": "\"observed_error\": \"Actions failed the workflow-assistance job at c53de17 and again at 3e1f88b. The failing member was my own gate: test_regenerating_the_record_is_idempotent_apart_from_the_timestamp a"
+      },
+      {
+        "path": ".project-local/toolchains",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "line": 74,
+        "text": "`.project-local/toolchains/…` 路径入了队。本地 `reproduce_ci_commands.py` 89 条命令只有 3 个已知 cargo/npm 失败，因为它跑在这台机器上。"
       },
       {
         "path": ".project-local/toolchains/lambda",
@@ -4579,15 +4825,15 @@
       },
       {
         "path": ".project-local/toolchains/wl-ag11",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-G.md",
-        "line": 34,
-        "text": "- New project-local environment `.project-local/toolchains/wl-ag11` (272,004,834 B: pillow,"
-      },
-      {
-        "path": ".project-local/toolchains/wl-ag11",
         "file": "taskpacks/current/error-ledger.json",
         "line": 4234,
         "text": "\"observed_error\": \"Actions failed the workflow-assistance job at c53de17 and again at 3e1f88b. The failing member was my own gate: test_regenerating_the_record_is_idempotent_apart_from_the_timestamp a"
+      },
+      {
+        "path": ".project-local/toolchains/wl-ag11",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-G.md",
+        "line": 34,
+        "text": "- New project-local environment `.project-local/toolchains/wl-ag11` (272,004,834 B: pillow,"
       },
       {
         "path": ".project-local/toolchains/wl-py311",
@@ -4639,6 +4885,12 @@
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "docs/audits/ENTRY_BASELINE_2026-10-08.json",
+        "line": 4,
+        "text": "\"rerun_command\": \".project-local/toolchains/wl-py311/Scripts/python.exe scripts/audit/entry_baseline_readback.py --out docs/audits/ENTRY_BASELINE_2026-10-08.json\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 112,
         "text": "| AG-01..04 gate | P1 | TEST_PASS (local canonical) / EXACT_SHA_CI NOT_RUN →【2026-10-07 精确化】分支级 exact-SHA CI 已在 `5037dd2` 两条 workflow 全绿，且 `5a6d5cd`/`6e16684`/`a676e63` 实测都是它的祖先（`git merge-base --is-a"
@@ -4646,14 +4898,14 @@
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 239,
+        "line": 240,
         "text": "| CI-MACHINE-STATE-20261007 | P0 | CI_RED_AT_c53de17_AND_3e1f88b / RULE_FIXED / CLEAN_CHECKOUT_SIM_VERIFIES / ERR-142 / CI_READBACK_OWED_AT_9e518e2 | 我自己加的门禁把 CI 弄红了两次，根因不是新代码写错，而是**引用审计用本机磁盘状态回答“这些字节"
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261006-B.md",
-        "line": 110,
-        "text": "3. 工具链：Python `.project-local/toolchains/wl-py311/Scripts/python.exe`（**必须前置 PATH**，否则"
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 254,
+        "text": "| QODER-FULLSTACK-20261007 | P0 | CARD_LANDED / LOCAL_FULL_GATE_PASS_ON_THIS_HOST / PRIOR_FAIL_CLAIM_CORRECTED | owner 2026-10-07 附带的完整执行提示词（`.project-local/artifacts/qoder-handoff-20261007/QODER_新规划前"
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
@@ -4669,6 +4921,12 @@
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007.md",
+        "line": 79,
+        "text": "`.project-local/toolchains/wl-py311/Scripts/python.exe`）。"
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/error-ledger.json",
         "line": 4234,
         "text": "\"observed_error\": \"Actions failed the workflow-assistance job at c53de17 and again at 3e1f88b. The failing member was my own gate: test_regenerating_the_record_is_idempotent_apart_from_the_timestamp a"
@@ -4680,6 +4938,12 @@
         "text": "| Toolchain required | `.project-local/toolchains/wl-py311/Scripts/python.exe` (Python 3.11.15, yaml 6.0.3, jsonschema 4.26.0) |"
       },
       {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261006-B.md",
+        "line": 110,
+        "text": "3. 工具链：Python `.project-local/toolchains/wl-py311/Scripts/python.exe`（**必须前置 PATH**，否则"
+      },
+      {
         "path": ".project-local/worktrees",
         "file": "reports/audit-archive/20260930/projects/ArcheAxis-Knowledge-OS/DIRECTORY_AUTHORITY.yaml",
         "line": 560,
@@ -4688,8 +4952,14 @@
       {
         "path": ".project-local/worktrees/ui-20261007",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 241,
+        "line": 242,
         "text": "| UI-PRODUCT-PROMPT-20261007 | P0 |并入目标（owner 2026-10-07 指令：按提示词把 UI 任务并入） / 基底=285704a（实测 `cd4daa83` 并入是 no-op：其为主分支祖先且 Codex worktree 零未提交内容） / 清单实测 G1 缺 PermissionState 与动作级 disabled＋原因、G2 顶栏无品牌图形且"
+      },
+      {
+        "path": ".project-local/worktrees/ui-20261007",
+        "file": "taskpacks/current/WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007.md",
+        "line": 72,
+        "text": "`.project-local/worktrees/ui-20261007` 是上一轮的隔离 worktree，本卡不写入。"
       },
       {
         "path": ".project-local/worktrees/ui-20261007",
@@ -4792,7 +5062,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "AGENTS.md",
-        "line": 120,
+        "line": 125,
         "text": "`.project-local/artifacts/`; do not treat local tests as exact-SHA CI or release"
       },
       {
@@ -4862,6 +5132,18 @@
         "text": "`.project-local/runs/` for transient state and `.project-local/artifacts/` for evidence."
       },
       {
+        "path": ".project-local/artifacts",
+        "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
+        "line": 53,
+        "text": "# `.project-local/artifacts` and `.project-local/runs` are what the boundary declaration names as evidence"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 200,
+        "text": "``.project-local/artifacts`` — so a projection that listed it would leak by proxy."
+      },
+      {
         "path": ".project-local/artifacts/ag19-registry-backup-20261007",
         "file": ".project/governance/recovered-source-registry.json",
         "line": 38,
@@ -4888,7 +5170,7 @@
       {
         "path": ".project-local/artifacts/curator-foldback",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 208,
+        "line": 222,
         "text": "\"note\": \"currentTaskpack remains authoritative; this view reports a completed maintenance round (official `hermes update --yes --backup`: 8183 new commits, config v45 -> v46, desktop entry real-launch"
       },
       {
@@ -4958,6 +5240,12 @@
         "text": "另有一份工作树副本放在 `.project-local/artifacts/observer-web-retired-20261007/`（48 文件）。"
       },
       {
+        "path": ".project-local/artifacts/qoder-handoff-20261007/QODER_新规划前后端完整后续任务提示词.txt",
+        "file": ".project/governance/taskpack-authority-index.json",
+        "line": 136,
+        "text": "\"file\": \".project-local/artifacts/qoder-handoff-20261007/QODER_新规划前后端完整后续任务提示词.txt\","
+      },
+      {
         "path": ".project-local/artifacts/spill-ledger.jsonl",
         "file": ".project/governance/project-data-boundary.json",
         "line": 57,
@@ -4972,13 +5260,13 @@
       {
         "path": ".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 196,
+        "line": 210,
         "text": "\"note\": \"currentTaskpack (R1) remains authoritative until its 2026-09-24 expiry; this view reports a completed maintenance round (update to v0.21.3 (2026.9.14), 21/21 managed assets CONVERGED, 38/38 g"
       },
       {
         "path": ".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/HERMES-UPDATE-20260917.zip",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 191,
+        "line": 205,
         "text": "\"archive_location\": \".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/HERMES-UPDATE-20260917.zip\","
       },
       {
@@ -4990,7 +5278,7 @@
       {
         "path": ".project-local/artifacts/task-artifacts/r4/history-source-manifest.json",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 292,
+        "line": 306,
         "text": "\"r4_source_list_gap\": \"R4 local source manifest (.project-local/artifacts/task-artifacts/r4/history-source-manifest.json) NOT present in this checkout - recorded as gap, NOT filled from private sessio"
       },
       {
@@ -5098,7 +5386,7 @@
       {
         "path": ".project-local/runs",
         "file": "AGENTS.md",
-        "line": 119,
+        "line": 124,
         "text": "Keep Task Ledger and runtime evidence under `.project-local/runs/` and"
       },
       {
@@ -5187,6 +5475,12 @@
       },
       {
         "path": ".project-local/runs",
+        "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
+        "line": 53,
+        "text": "# `.project-local/artifacts` and `.project-local/runs` are what the boundary declaration names as evidence"
+      },
+      {
+        "path": ".project-local/runs",
         "file": "packages/client-neutral-core/skills/software-development/windows-development-environment/SKILL.md",
         "line": 127,
         "text": "25. **The guard's path-token regex false-positives on harmless flag tokens — when in doubt, move the probe into a project-local script.** Beyond `/dev/null` and external absolute paths, the guard also"
@@ -5194,7 +5488,7 @@
       {
         "path": ".project-local/runs/UPC-20260918/ledger.json",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 261,
+        "line": 275,
         "text": "\".project-local/runs/UPC-20260918/ledger.json\""
       },
       {
@@ -5344,7 +5638,7 @@
       {
         "path": ".project-local/runs/hermes-update-20260927",
         "file": ".project/governance/taskpack-authority-index.json",
-        "line": 208,
+        "line": 222,
         "text": "\"note\": \"currentTaskpack remains authoritative; this view reports a completed maintenance round (official `hermes update --yes --backup`: 8183 new commits, config v45 -> v46, desktop entry real-launch"
       },
       {
@@ -5402,10 +5696,46 @@
         "text": "- 只持久化在项目 `.project-local/runs/observer/` 下的 Observer-owned event log；"
       },
       {
+        "path": ".project-local/runs/qoder-20261007-a/gate-verify.log",
+        "file": "UI_IMPLEMENTATION_REPORT.md",
+        "line": 403,
+        "text": "**【2026-10-07 当日更正，原文保留不改】** 上面那段 FAIL 在换一台主机后被证伪：同一棵树（HEAD `cda4165`）用声明工具链 `.project-local/toolchains/wl-py311/Scripts/python.exe` 重跑整仓 `verify`，得到 `QUALITY_GATE_GOVERNANCE_PASS modules=207 executed"
+      },
+      {
+        "path": ".project-local/runs/qoder-20261007-a/prove_control_to_observer.py",
+        "file": "UI_IMPLEMENTATION_REPORT.md",
+        "line": 423,
+        "text": "真实读回（`.project-local/runs/qoder-20261007-a/prove_control_to_observer.py`，两个真进程、项目内运行根）：写入 WL-E2E-CONTROL-1 → ACCEPTED + digest 回执 → Observer 的 `/api/v1/snapshot` 实测含该记录（QUEUED、checkpoint 键名与摘要、无正文）→ 对"
+      },
+      {
+        "path": ".project-local/runs/qoder-agent-ui/evidence.log",
+        "file": "apps/observer/frontend/src/views/EvidenceView.test.tsx",
+        "line": 31,
+        "text": "const HANDLE = 'D:/All projects/WORK-LAB/.project-local/runs/qoder-agent-ui/evidence.log'"
+      },
+      {
         "path": ".project-local/runs/skill-call-index.json",
         "file": "docs/decisions/global-execution-standard.md",
         "line": 52,
         "text": "1. 先查项目技能调用索引（.project-local/runs/skill-call-index.json）"
+      },
+      {
+        "path": ".project-local/runs/tmp",
+        "file": "UI_IMPLEMENTATION_REPORT.md",
+        "line": 401,
+        "text": "整仓 `python services/orchestration/run_quality_gate.py verify` **FAIL / 本地环境未能完成**：治理批次运行 2,184 项，出现 22 个 `test_project_terminal_guard` 断言失败和 `test_clean_with_unpushed_commit` 错误；前一组的失败值集中为 Windows `Pa"
+      },
+      {
+        "path": ".project-local/runs/tmp",
+        "file": "UI_IMPLEMENTATION_REPORT.md",
+        "line": 403,
+        "text": "**【2026-10-07 当日更正，原文保留不改】** 上面那段 FAIL 在换一台主机后被证伪：同一棵树（HEAD `cda4165`）用声明工具链 `.project-local/toolchains/wl-py311/Scripts/python.exe` 重跑整仓 `verify`，得到 `QUALITY_GATE_GOVERNANCE_PASS modules=207 executed"
+      },
+      {
+        "path": ".project-local/runs/tmp",
+        "file": "UI_IMPLEMENTATION_REPORT.md",
+        "line": 476,
+        "text": "`TMP/TEMP/TMPDIR` 绑到 `.project-local/runs/tmp`，门内系统 temp 在仓库里；探针改为引用上一级一个永不创建"
       },
       {
         "path": ".project-local/runs/tmp",
@@ -5430,6 +5760,12 @@
         "file": "docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md",
         "line": 49,
         "text": "| T03 | Windows Tauri U19 E2E | sidecar、Snapshot/SSE、Tauri、React、重连与隔离 | PASS | RETAINED | `apps/observer/scripts/u19_webview_e2e.py`<br>`taskpacks/current/error-ledger.json` | Observed by the owner o"
+      },
+      {
+        "path": ".project-local/runs/ui-audit-20261007-cda-build",
+        "file": "UI_IMPLEMENTATION_REPORT.md",
+        "line": 399,
+        "text": "复验：Observer 前端 25 文件 / 167 项通过；`tsc -p tsconfig.json --noEmit` 退出 0；Vite production build 退出 0，输出写入 `.project-local/runs/ui-audit-20261007-cda-build/`。没有安装依赖。"
       },
       {
         "path": ".project-local/runs/ui-suite",
@@ -5526,6 +5862,12 @@
         "file": "scripts/audit/project_local_citation_audit.py",
         "line": 74,
         "text": "`.project-local/toolchains/…` paths that exist on the author's box and nowhere else (ERR-142). A"
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "UI_IMPLEMENTATION_REPORT.md",
+        "line": 403,
+        "text": "**【2026-10-07 当日更正，原文保留不改】** 上面那段 FAIL 在换一台主机后被证伪：同一棵树（HEAD `cda4165`）用声明工具链 `.project-local/toolchains/wl-py311/Scripts/python.exe` 重跑整仓 `verify`，得到 `QUALITY_GATE_GOVERNANCE_PASS modules=207 executed"
       }
     ],
     "negative_assertion_or_removal_record": [
@@ -5729,12 +6071,6 @@
       },
       {
         "path": ".project-local",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
-        "line": 75,
-        "text": "- 根因：审计用**本机磁盘**回答“字节在不在”，而 `.project-local/` 按声明就是 git-ignored 运行根 ⇒ 结论随机器变，CI 就跟着随机器变。"
-      },
-      {
-        "path": ".project-local",
         "file": "taskpacks/current/error-ledger.json",
         "line": 4235,
         "text": "\"root_cause\": \"The audit answered 'does this citation's bytes exist?' from the local filesystem, and the declared runtime root .project-local/ is git-ignored, so the answer — and therefore the queue, "
@@ -5750,6 +6086,12 @@
         "file": "taskpacks/history/WORK-LAB-INTEGRATED-TASKPACK-20260916-NF03-SPILL-RECEIPT.md",
         "line": 18,
         "text": "- 上述全部位于 `runtimeRoot`，**无一经 git 跟踪区**（`git status` 干净，`.project-local/` 在 `.gitignore`）。"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "line": 75,
+        "text": "- 根因：审计用**本机磁盘**回答“字节在不在”，而 `.project-local/` 按声明就是 git-ignored 运行根 ⇒ 结论随机器变，CI 就跟着随机器变。"
       },
       {
         "path": ".project-local",
@@ -5896,15 +6238,21 @@
         "text": "\"evidencePath\": \"local .project-local/artifacts/work-lab-migration-v6 (ignored)\""
       },
       {
+        "path": ".project-local/artifacts/x.txt",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 387,
+        "text": "self.reject([dict(self.good(), handle=\".project-local/artifacts/x.txt\")], \"must be an absolute path\")"
+      },
+      {
         "path": ".project-local/atlas-2026-09-29",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007.md",
         "line": 132,
         "text": "3. **升迁的判定性质是\"干净检出看不见\"，不是我猜的三个 role root。** 数据边界只声明 `runtimeRoot/taskArtifactsRoot/canonicalEvidenceRoot`，而 atlas 落在这三者之外的 `.project-local/atlas-2026-09-29/`；屏幕改用 `git check-ignore -v`，并同时要求\"在 Git 根内\""
       },
       {
         "path": ".project-local/atlas-2026-09-29/.../TaskPack_v3.1/TaskPack_v3.1/config",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 237,
+        "line": 238,
         "text": "| INSTRUMENT-FIXES-20261007 | P1 | AUDIT_SELF_SCAN_REMOVED_1.7MB_TO_130KB / POLICY_SCANNER_BLIND_TO_LIST_STRINGS_ERR-139 / 2_NEW_GATE_MODULES | 两处是自家仪器骗了自己。(1) `scripts/audit/project_local_citation_au"
       },
       {
@@ -5924,6 +6272,12 @@
         "file": "reports/audit-archive/20260930/hermes/skills/software-development/repository-directory-restructuring/SKILL.md",
         "line": 157,
         "text": "2. **Copy to the ignored cache BEFORE git rm** (fidelity backup): `shutil.copytree(src, .project-local/cache/vendor/<key>)`, record a manifest (src → cache key, file count). Deletions are only safe af"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "UI_IMPLEMENTATION_REPORT.md",
+        "line": 513,
+        "text": "`.git/config`、治理机读文件全部 REFUSED 且不返回内容，`.project-local/runs` 下真实运行日志仍按区间读出；"
       },
       {
         "path": ".project-local/runs",
@@ -5964,7 +6318,7 @@
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 237,
+        "line": 238,
         "text": "| INSTRUMENT-FIXES-20261007 | P1 | AUDIT_SELF_SCAN_REMOVED_1.7MB_TO_130KB / POLICY_SCANNER_BLIND_TO_LIST_STRINGS_ERR-139 / 2_NEW_GATE_MODULES | 两处是自家仪器骗了自己。(1) `scripts/audit/project_local_citation_au"
       },
       {
@@ -5978,6 +6332,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 4457,
         "text": "\"observed_error\": \"The declared git-ignored runtime root `.project-local/runs` measured 3,236,021,813 B across its top-level directories, including 38 leftover `auth-ref-*` authority fixtures (36 MB) "
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 5000,
+        "text": "\"fix\": \"Three layers, in this order: a credential-shaped name is refused by name even when it sits under an evidence root; the handle must then lie on an evidence surface read from .project/governance"
       },
       {
         "path": ".project-local/runs",
@@ -6011,7 +6371,7 @@
       },
       {
         "path": ".project-local/runs/ci/reproduce_ci_commands_receipt.json",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
         "line": 121,
         "text": "`.project-local/runs/ci/reproduce_ci_commands_receipt.json` — the receipt is the verdict, never the"
       },
@@ -6138,14 +6498,32 @@
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 237,
+        "line": 238,
         "text": "| INSTRUMENT-FIXES-20261007 | P1 | AUDIT_SELF_SCAN_REMOVED_1.7MB_TO_130KB / POLICY_SCANNER_BLIND_TO_LIST_STRINGS_ERR-139 / 2_NEW_GATE_MODULES | 两处是自家仪器骗了自己。(1) `scripts/audit/project_local_citation_au"
+      },
+      {
+        "path": ".project-local/runs/qoder-agent-verbs",
+        "file": "packages/client-neutral-core/scripts/adapter_verb_probe.py",
+        "line": 33,
+        "text": "Nothing here writes inside the repository except `.project-local/runs/qoder-agent-verbs/` (`--out` refuses"
       },
       {
         "path": ".project-local/runs/skill-call-index.json",
         "file": "docs/decisions/global-execution-standard.md",
         "line": 59,
         "text": "索引：.project-local/runs/skill-call-index.json（首次扫描后落盘；不存在时直接扫描 SKILL 清单）"
+      },
+      {
+        "path": ".project-local/runs/tmp",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4907,
+        "text": "\"fix\": \"OUTSIDE_PROBE is now a path one level above the repository that no test creates, and the test asserts it does not exist before and after the call: the reader decides the boundary before openin"
+      },
+      {
+        "path": ".project-local/runs/tmp",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4910,
+        "text": "\"repeat_prevention\": \"任何声称'仓库之外'的测试夹具必须按被测 runner 的环境模式量一遍，不得用系统 temp 目录代表外部；本项目把 TMPDIR 绑在 .project-local/runs/tmp 之内，所以 gettempdir() 在门内是边界内。边界类断言优先用'永不创建的路径 + 前后都断言不存在'，这样即使读取器行为改变也藏不住。\","
       },
       {
         "path": ".project-local/runs/u19-msvc-20261006/target/release/app.exe",
@@ -6250,6 +6628,12 @@
         "file": "reports/audit-archive/20260930/hermes/skills/software-development/dsh-administration/SKILL.md",
         "line": 357,
         "text": "1. 只读 live 探针（不写任何全局配置）：运行 `python .project-local/runs/dsh_codex_probe.py`（或等效只读脚本），将 DSH exe 路径、版本（从 resources/app/package.json）、桌面 .lnk 三字段（TargetPath/Arguments/IconLocation）、Codex wrapper 路径（packag"
+      },
+      {
+        "path": ".project-local/runs/geometry-gate/udf-",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4967,
+        "text": "\"observed_error\": \"GEOMETRY_GATE_PASS for both views, and the same run printed GEOMETRY_GATE_RESIDUE with two entries: PermissionError(13, 'another process is using the file') removing .project-local/"
       },
       {
         "path": ".project-local/runs/probe-202XX.json",
@@ -6618,26 +7002,20 @@
       {
         "path": ".project-local",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 239,
+        "line": 240,
         "text": "| CI-MACHINE-STATE-20261007 | P0 | CI_RED_AT_c53de17_AND_3e1f88b / RULE_FIXED / CLEAN_CHECKOUT_SIM_VERIFIES / ERR-142 / CI_READBACK_OWED_AT_9e518e2 | 我自己加的门禁把 CI 弄红了两次，根因不是新代码写错，而是**引用审计用本机磁盘状态回答“这些字节"
       },
       {
         "path": ".project-local",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 239,
+        "line": 240,
         "text": "| CI-MACHINE-STATE-20261007 | P0 | CI_RED_AT_c53de17_AND_3e1f88b / RULE_FIXED / CLEAN_CHECKOUT_SIM_VERIFIES / ERR-142 / CI_READBACK_OWED_AT_9e518e2 | 我自己加的门禁把 CI 弄红了两次，根因不是新代码写错，而是**引用审计用本机磁盘状态回答“这些字节"
       },
       {
         "path": ".project-local",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 247,
+        "line": 248,
         "text": "| GREENING-20261007-J | P1 | ELIGIBLE_BYTES_1,460,600_OF_4.19_GB / NOTHING_MORE_SAFELY_RELEASABLE / MEASURED_NOT_ASSUMED | 本轮不再猜哪块缓存能删，而是量「**删除合法性**」：对 `.project-local` 每个一级子目录求 apparent bytes，并统计受版本控"
-      },
-      {
-        "path": ".project-local",
-        "file": "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
-        "line": 76,
-        "text": "- 修法是一条规则：`exists()` 只对仓库负责；`.project-local/` 在任何机器上都判为不可从检出验证；`checkoutVerifiable` 恒 0；`presentOnThisMachine` 只报数不参与跨机比较。"
       },
       {
         "path": ".project-local",
@@ -6700,6 +7078,12 @@
         "text": "新根：`.project/`（治理合同 + manifest）· `.project-local/`（运行数据）· `apps/` · `services/` · `packages/` · `integrations/` · `projections/` · `knowledge-staging/` · `taskpacks/current/`"
       },
       {
+        "path": ".project-local",
+        "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "line": 76,
+        "text": "- 修法是一条规则：`exists()` 只对仓库负责；`.project-local/` 在任何机器上都判为不可从检出验证；`checkoutVerifiable` 恒 0；`presentOnThisMachine` 只报数不参与跨机比较。"
+      },
+      {
         "path": ".project-local/artifacts",
         "file": "docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md",
         "line": 203,
@@ -6739,7 +7123,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 192
+    "presentOnThisMachine": 202
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

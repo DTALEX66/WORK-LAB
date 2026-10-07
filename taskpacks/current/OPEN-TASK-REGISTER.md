@@ -200,7 +200,7 @@ candidate lanes of the unadopted snapshot taskpack and from the `U*` CURRENT-Tas
 
 | ID | Status | Evidence |
 |---|---|---|
-| HANDOFF-20261006 | RECORDED (read-only handoff, grants nothing) | 归档 `taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261006.md`：已证实事实（全量门禁重跑 47 门 PASS 及"失败从未重跑"根因、共用库 MSVC+SDK+1.88.0 工具链实证、首次本机可运行 MSVC 桌面二进制、125% 缩放实测、追踪内容 16.80 MB 无需瘦身、`.project-local` 回收 5,390 MB 与 `.git` 回收 459 MB）；**9 条我本轮犯的错及纠正**（含两条已撤回的假发现：BGRA→RGBA 通道互换造成的"橙色品牌违规"、误判窗口离屏、覆盖层自相矛盾、构建脚本连错 4 次、`@tauri-apps/api` 版本奇偶校验、截图两次拍到别的窗口、误报并行会话冲突、试图改铁律测试、ctypes 签名 3 处）；仓库真实缺陷（E2E harness 的 `GetClientRect` 三参误用制造"无渲染表面"假象 + 其后两处从未可达的 ctypes 缺陷 + `check_9` 单路径探测，台账 ERR-098）；界面审计闭环清单；**4 项明确未闭合**（横向溢出、窗口控制簇可见性、U19 桌面表面证明、exact-SHA CI/其他客户端/merge）；以及下次接手的 5 步恢复清单。 |
+| HANDOFF-20261006 | RECORDED (read-only handoff, grants nothing) | 归档 `taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261006.md`（2026-10-08 实际移入历史区，本行引用随之追正）：已证实事实（全量门禁重跑 47 门 PASS 及"失败从未重跑"根因、共用库 MSVC+SDK+1.88.0 工具链实证、首次本机可运行 MSVC 桌面二进制、125% 缩放实测、追踪内容 16.80 MB 无需瘦身、`.project-local` 回收 5,390 MB 与 `.git` 回收 459 MB）；**9 条我本轮犯的错及纠正**（含两条已撤回的假发现：BGRA→RGBA 通道互换造成的"橙色品牌违规"、误判窗口离屏、覆盖层自相矛盾、构建脚本连错 4 次、`@tauri-apps/api` 版本奇偶校验、截图两次拍到别的窗口、误报并行会话冲突、试图改铁律测试、ctypes 签名 3 处）；仓库真实缺陷（E2E harness 的 `GetClientRect` 三参误用制造"无渲染表面"假象 + 其后两处从未可达的 ctypes 缺陷 + `check_9` 单路径探测，台账 ERR-098）；界面审计闭环清单；**4 项明确未闭合**（横向溢出、窗口控制簇可见性、U19 桌面表面证明、exact-SHA CI/其他客户端/merge）；以及下次接手的 5 步恢复清单。 |
 
 
 ## 2026-10-07 桌面表面结清 + 凭据二段化 + 候选池行级补齐
