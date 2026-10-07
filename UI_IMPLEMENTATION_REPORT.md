@@ -340,3 +340,28 @@ run `37585453264` / head `8847cdc` / observer 作业第 12 步（必需步骤）
 因此 §11 第 3 条的正确表述是：**逐泳道渲染诚实态已有 CI 强制覆盖；缺的是"每泳道 × 四种场景
 （Loading／Empty／Offline／Permission）"的渲染矩阵**——它不能靠静态归属凑出来，也不能靠给十条共用
 `Views.tsx` 的泳道编造逐条差异。这一项保持未完成，不改口径。
+
+### 15.1 同日追加（30 分钟后）：场景矩阵量出来了，而且它先推翻了我准备写的断言
+
+上面那句"保持未完成"只维持了 30 分钟。用一次性探针把 21 条泳道 × 4 个传输场景全渲染一遍
+（`LIVE／OFFLINE+STALE／CONNECTING+UNKNOWN／EMPTY`），把每条泳道出现的状态词、成功配色 pill 的**文字**、
+零值槽位数全部打表之后，结论是：
+
+1. **我原本打算写的断言是错的。** 文本层扫描报了三个"传输已 OFFLINE 却说 LIVE/实时"的嫌疑：
+   `integrations`（`实时` 出现在"**非**实时健康度"这句否定说明里）、`monitoring`（`LIVE,DELAYED,OFFLINE`
+   是它在复述 live-gate 规则原文）、`delivery` 与 `monitoring` 在 EMPTY 场景仍亮绿 pill——把 pill 的文字打出来
+   才知道是 `MATCH`/`LIVE · 只读`，而 `git.matchState` 与 transport 在我这份快照里**确实**是 `MATCH`/`LIVE`。
+   三条全是误报。若直接把它们写进门禁，就会用一条假失败去腐蚀一条真绿灯。
+2. **因此落地的断言是元素级的**，新文件 `apps/observer/frontend/src/laneTransportTruth.sweep.test.tsx`
+   （11 例，`vitest run` 全绿；整套 23 文件 / 161 例）钉住三件事：
+   ① 任何泳道都不得在传输非 LIVE 时渲染一个写着 `LIVE` 的成功 pill；② 主题就是传输的 5 条泳道
+   （`executions／trust／observer／settings／monitoring`）必须把快照自己的状态词 surface 出来，
+   并且这 5 条若从注册表消失，测试会因"覆盖面自己缩水"而红；③ 空集合场景不得出现伪造的 `0`/`0/0`。
+   另有**探测器自检**：人造一个对着 OFFLINE 快照的 `LIVE` 成功 pill，断言它必须被抓到。
+3. **场景矩阵的实际读数**（可用于后续对照）：传输真值会翻转的泳道是上面那 5 条；其余泳道只投影数据，
+   与传输状态无关，因此对它们*不*要求出现状态词——这条区分是量出来的，不是规定的。
+4. 顺带把快照 fixture 抽成 `src/test/snapshotFixture.ts` 并让 `renderTruthContract.test.tsx` 改用它：
+   两处各留一份 `mkSnap` 的话，"什么算健康快照"就会有两种定义。
+
+仍未完成的部分照登：Loading 与 Permission 两维**没有**进入这次的场景矩阵（探针只覆盖传输与空集合），
+每条泳道的动作级禁用解释也只有 `approvals` 一条有 `PermissionState` 消费者。
