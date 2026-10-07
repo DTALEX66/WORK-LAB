@@ -5,13 +5,19 @@ record was inside it. The tool must therefore fail closed on every ambiguity, an
 each hand it an ambiguous case and require a refusal. The ancestry check has its own test because the
 first version compared a captured stdout against zero and refused everything: an ancestry test prints
 nothing, so only the return code answers the question.
+
+Every control that runs the CLI hands it a fixture ledger with `--ledger`. Without that, a control's
+ability to fail depends on whether the shipped record happens to be stamped yet - which is how two of
+them went red the moment their own record was legitimately verified.
 """
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -48,24 +54,71 @@ class AncestryTests(unittest.TestCase):
                             cwd=ROOT, capture_output=True).returncode
         self.assertEqual(0, rc, "the stamper must not refuse a genuine descendant")
 
-    def test_the_cli_refuses_a_head_that_cannot_be_resolved(self) -> None:
-        proc = subprocess.run([sys.executable, str(SCRIPT), "ERR-149", "deadbee"],
+class RefusalsRunAgainstAFixtureLedger(unittest.TestCase):
+    """A refusal can only be proven by handing the tool a record it has no stamp for.
+
+    These controls used to invoke the shipped ledger by error id. That worked while ERR-149 was unstamped
+    and silently stopped working the moment ERR-149 was legitimately verified: the tool short-circuits on
+    an existing verifiedCommit, exits 0, and the check that is supposed to prove it refuses anything
+    ambiguous had nothing left to refuse. The fixture ledger is what makes the control independent of how
+    much of the real debt has since been closed.
+    """
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.ledger = Path(self.tmp.name) / "error-ledger.json"
+        self.real_before = hashlib.sha256(LEDGER.read_bytes()).hexdigest()
+        shipped = json.loads(LEDGER.read_text(encoding="utf-8"))
+        self.row = next(e for e in shipped["errors"] if e["error_id"] == "ERR-149")
+
+    def tearDown(self) -> None:
+        self.assertEqual(self.real_before, hashlib.sha256(LEDGER.read_bytes()).hexdigest(),
+                         "a negative control must never write the shipped ledger")
+        self.tmp.cleanup()
+
+    def fixture(self, verified: str | None) -> None:
+        row = json.loads(json.dumps(self.row))
+        row["lifecycle"]["verifiedCommit"] = verified
+        self.ledger.write_text(json.dumps({"errors": [row]}, ensure_ascii=False, indent=2),
+                               encoding="utf-8")
+
+    def cli(self, *args: str) -> subprocess.CompletedProcess:
+        return subprocess.run([sys.executable, str(SCRIPT), "--ledger", str(self.ledger), *args],
                               cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
                               errors="replace")
+
+    def test_an_unresolvable_head_is_refused(self) -> None:
+        self.fixture(None)
+        proc = self.cli("ERR-149", "deadbee")
         self.assertEqual(1, proc.returncode, proc.stdout + proc.stderr)
         self.assertIn("REFUSED ERR-149", proc.stdout)
         self.assertIn("does not resolve", proc.stdout)
 
-    def test_an_already_verified_record_is_never_overwritten(self) -> None:
-        proc = subprocess.run([sys.executable, str(SCRIPT), "ERR-143", "285704a"],
-                              cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
-                              errors="replace")
+    def test_a_head_without_the_record_is_refused_even_though_ancestry_holds(self) -> None:
+        # 5143726 is ERR-149's own fix commit, so ancestry passes trivially, but the record is written in
+        # the commit after it — a stamp there would claim a readback of a tree that lacks the record.
+        self.fixture(None)
+        proc = self.cli("ERR-149", "5143726")
+        self.assertEqual(1, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("REFUSED ERR-149", proc.stdout)
+        self.assertIn("does not contain the record", proc.stdout)
+
+    def test_an_existing_verifiedCommit_survives_untouched(self) -> None:
+        self.fixture("17eb5b6" + "0" * 33)
+        proc = self.cli("ERR-149", "deadbee")
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
         self.assertIn("already stamped", proc.stdout)
-        after = json.loads(LEDGER.read_text(encoding="utf-8"))
-        row = next(e for e in after["errors"] if e["error_id"] == "ERR-143")
-        self.assertEqual("285704a", row["lifecycle"]["verifiedCommit"][:7],
-                         "an existing verifiedCommit must survive untouched")
+        after = json.loads(self.ledger.read_text(encoding="utf-8"))
+        self.assertEqual("17eb5b6" + "0" * 33, after["errors"][0]["lifecycle"]["verifiedCommit"])
+
+    def test_the_tool_reads_the_ledger_it_was_handed(self) -> None:
+        # If --ledger were ignored, every refusal above would turn into a success on the shipped record,
+        # so this is the control that keeps the three controls above honest.
+        self.fixture(None)
+        self.ledger.write_text("{ not json", encoding="utf-8")
+        proc = self.cli("ERR-149", "deadbee")
+        self.assertEqual(2, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("STAMP_LEDGER_UNREADABLE", proc.stdout)
 
 
 class CiVerdictTests(unittest.TestCase):
@@ -103,19 +156,6 @@ class CiVerdictTests(unittest.TestCase):
             verdict = stamper.ci_verdict("c" * 40)
         self.assertFalse(verdict["known"])
         self.assertIn("GH_QUERY_FAILED", verdict["reason"])
-
-
-class RecordPresenceTests(unittest.TestCase):
-    def test_a_head_that_cannot_show_the_record_cannot_verify_it(self) -> None:
-        # 5143726 is ERR-149's own fix commit, so ancestry passes trivially — but the record is
-        # written in the commit after it. A stamp there would claim a readback of a record the
-        # tested tree does not contain.
-        proc = subprocess.run([sys.executable, str(SCRIPT), "ERR-149", "5143726"],
-                              cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
-                              errors="replace")
-        self.assertEqual(1, proc.returncode, proc.stdout + proc.stderr)
-        self.assertIn("REFUSED ERR-149", proc.stdout)
-        self.assertIn("does not contain the record", proc.stdout)
 
 
 if __name__ == "__main__":

@@ -8,6 +8,10 @@ lives here instead.
 Usage:
     python scripts/audit/stamp_record_verification.py ERR-148 07082ed
     python scripts/audit/stamp_record_verification.py --all-eligible      # resolve verdicts per head
+    python scripts/audit/stamp_record_verification.py --ledger <path> ERR-149 <head>
+`--ledger` exists for the negative controls: they must hand the tool an unstamped record to refuse, and
+pointing them at the shipped ledger means the day a record is legitimately stamped, the check that proves
+the tool refuses becomes unable to fail.
 Exit: 0 stamped or already stamped; 1 refused (no such commit, not an ancestor, or the head is not
 green); 2 the ledger could not be read.
 """
@@ -73,9 +77,15 @@ def main() -> int:
     ap.add_argument("error_id", nargs="?")
     ap.add_argument("head", nargs="?")
     ap.add_argument("--all-eligible", action="store_true")
+    ap.add_argument("--ledger", default=str(LEDGER))
     args = ap.parse_args()
 
-    doc = json.loads(LEDGER.read_text(encoding="utf-8"))
+    ledger = Path(args.ledger)
+    try:
+        doc = json.loads(ledger.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"STAMP_LEDGER_UNREADABLE {ledger}: {exc}")
+        return 2
     targets = []
     if args.all_eligible:
         targets = [(e["error_id"], (e["lifecycle"] or {}).get("pendingHead") or "")
@@ -140,8 +150,8 @@ def main() -> int:
         stamped.append((eid, sha, "stamped"))
 
     if stamped:
-        LEDGER.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        back = json.loads(LEDGER.read_text(encoding="utf-8"))
+        ledger.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        back = json.loads(ledger.read_text(encoding="utf-8"))
         for eid, sha, how in stamped:
             if how != "already stamped":
                 row = next(e for e in back["errors"] if e["error_id"] == eid)
