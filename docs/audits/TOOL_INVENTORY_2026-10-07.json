@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T07:41:45Z",
+  "generatedAt": "2026-10-07T07:50:09Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 51,
+    "trackedTools": 52,
     "withLedgerPromise": 17,
-    "referencedSomewhere": 51,
+    "referencedSomewhere": 52,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -19,6 +19,19 @@
     "note": "that file is the 2026-10-07 promotion of 22 scratch originals and stays as history; this one is the live inventory of all 30 tracked instruments and is the file the coverage gate reads"
   },
   "tools": [
+    {
+      "path": "scripts/audit/adjudicate_gone_guards.py",
+      "sha256": "49f6b4e375a87b29872bf4b43ee20d71f19911c0f3850f0da17e9eaf77ceffef",
+      "bytes": 5071,
+      "lines": 90,
+      "digestBasis": "working-tree-uncommitted",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/LEDGER_GONE_GUARD_ADJUDICATION_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ]
+    },
     {
       "path": "scripts/audit/ag11_ocr_asr_matrix.py",
       "sha256": "a8f9db8425d4e85834f95c746c8d8050b89c5e4a06d96ca0ba436a5d558caa50",
@@ -583,9 +596,9 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "5b7eded789b72ecf69e0a3054a08206c5385cb5c1b55ca3ad2d26857bc44165f",
-      "bytes": 22733,
-      "lines": 493,
+      "sha256": "2e844c307288446723e56e7d247d4e7c2ab17352d2f23497e18adcb13914cf23",
+      "bytes": 22812,
+      "lines": 494,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
       "citedByRecords": 10,

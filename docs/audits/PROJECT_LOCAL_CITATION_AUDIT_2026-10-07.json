@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T07:45:14Z",
+  "generatedAt": "2026-10-07T07:50:09Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2069,
+    "trackedFilesScanned": 2072,
     "distinctProjectLocalTokens": 390,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 390,
-    "citationsToAbsentTokens": 1051
+    "citationsToAbsentTokens": 1056
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,7 +21,7 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 197,
+      "citations": 198,
       "distinctPaths": 77
     },
     "machine_field_pointing_at_absent_path": {
@@ -29,7 +29,7 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 522,
+      "citations": 524,
       "distinctPaths": 309
     },
     "machine_local_runtime_pointer": {
@@ -37,8 +37,8 @@
       "distinctPaths": 57
     },
     "negative_assertion_or_removal_record": {
-      "citations": 106,
-      "distinctPaths": 41
+      "citations": 108,
+      "distinctPaths": 42
     },
     "path_pattern_or_truncated_token": {
       "citations": 9,
@@ -234,6 +234,12 @@
         "file": "tests/workflow-assistance/test_error_ledger_regression_commands.py",
         "line": 88,
         "text": "if token.startswith(\".project-local/\"):"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/workflow-assistance/test_gone_guard_adjudication.py",
+        "line": 73,
+        "text": "for token in row[\"goneOperands\"] if token.startswith(\".project-local/\")]"
       },
       {
         "path": ".project-local",
@@ -3037,6 +3043,18 @@
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
+        "file": "docs/audits/LEDGER_GONE_GUARD_ADJUDICATION_2026-10-07.json",
+        "line": 182,
+        "text": "\".project-local/runs/p0c-oracle-20261006/probe_oracle.py\""
+      },
+      {
+        "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
+        "file": "docs/audits/LEDGER_GONE_GUARD_ADJUDICATION_2026-10-07.json",
+        "line": 187,
+        "text": "\"command\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py must keep observing snapshot and events requests from the release binary with Origin http://tauri\","
+      },
+      {
+        "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "line": 230,
         "text": "\"operand\": \".project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
@@ -5669,6 +5687,12 @@
       },
       {
         "path": ".project-local/runs",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 237,
+        "text": "| INSTRUMENT-FIXES-20261007 | P1 | AUDIT_SELF_SCAN_REMOVED_1.7MB_TO_130KB / POLICY_SCANNER_BLIND_TO_LIST_STRINGS_ERR-139 / 2_NEW_GATE_MODULES | 两处是自家仪器骗了自己。(1) `scripts/audit/project_local_citation_au"
+      },
+      {
+        "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
         "line": 2974,
         "text": "\"observed_error\": \"Two open UI defects, 'the window-control cluster never renders' (P0-A) and 'the fourth KPI card is clipped at the right edge' (P0-B), were both readings of the instrument rather tha"
@@ -5810,6 +5834,12 @@
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 226,
         "text": "| CITATION-TRIAGE-20261007 | P1 | 365_TOKENS_200_ABSENT_16_REVIEW_0_UNADJUDICATED / 2_SENTENCES_REPAIRED_IN_PLACE / GATE_ADDED_8_TESTS / ERR-132 | 挂账写的是「28 个在册文档引用了已不存在的 `.project-local` 路径」。全树重扫得到 36"
+      },
+      {
+        "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 237,
+        "text": "| INSTRUMENT-FIXES-20261007 | P1 | AUDIT_SELF_SCAN_REMOVED_1.7MB_TO_130KB / POLICY_SCANNER_BLIND_TO_LIST_STRINGS_ERR-139 / 2_NEW_GATE_MODULES | 两处是自家仪器骗了自己。(1) `scripts/audit/project_local_citation_au"
       },
       {
         "path": ".project-local/runs/skill-call-index.json",
