@@ -21,8 +21,12 @@
 | `7eb8ab4` | 模型库回读收据入仓 + UI 报告 §13 | `docs/audits/MODEL_LIBRARY_READBACK_2026-10-07.json`（blob 摘要见在册行） |
 | `25e58c2` | ERR-152 修复：负控制改用 `--ledger` 夹具 | 4 项新控制 + 1 项"忽略 --ledger 就露馅"的检查 |
 | `5ee34f9` | ERR-152 入账 + 两处状态精确化 | CI **全绿**（`gh run watch --exit-status` 返回 0；PR 检查面 workflow-assistance=SUCCESS） |
-| `8847cdc` | `tool_version_metadata_probe.py`：不启动进程取版本 | 收据 `docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json` |
-| `1276547` | 五个适配器版本按 AG-07 既有字段入账 + 交叉门禁 | 门禁 8 项、反证 7/7 转红；`QUALITY_GATE_PASS gates=adapter-registry` |
+| `8847cdc` | `tool_version_metadata_probe.py`：不启动进程取版本 | 收据 `docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json`；**CI 两条 workflow 全绿** |
+| `1276547` | 五个适配器版本按 AG-07 既有字段入账 + 交叉门禁 | 门禁 8 项、反证 7/7 转红；`QUALITY_GATE_PASS gates=adapter-registry`；**CI 两条 workflow 全绿** |
+| `15ed970` | 本轮交接记录 | **CI 两条 workflow 全绿** |
+| `ad441a3` | 未绑定台账债务分诊入仓（95→RESOLVES 37 / 无文件操作数 42 / 路径已消失 15 / 仓外 1） | 门禁 7 项 + 反证 5/5；债务数为派生量 |
+| `737dac2` | **ERR-123 绑定到真实修复 `763a77f`** 并盖 verifiedCommit=`8847cdc`；分诊加"出生提交"信号后得出硬结论：94 条里 **86 条出生在 cutover 导入提交 `6bd0bd5`**，本仓历史可证的可绑定候选 = **0** | `bound=39 unboundPass=94 anomalies=0`；`test_ledger_fix_commit_binding` 10 项通过；反证增至 6 例（含"把导入出生的行说成可绑定"）全转红 |
+| `11042dd` | 几何门禁的 runner 实测读数入档 + 修掉一条误导性 PASS 文案 | 见 §2.7；`tests/ci/test_topbar_geometry_gate.py::test_a_passing_detail_says_what_was_measured` 双向钉住 |
 
 ## 2. 已确立的事实（不要重复论证）
 
@@ -44,7 +48,15 @@
    `CONSTRAINT_IN_CODE` 是规则本地化，门禁查路径存在与标签一致、查不了来源。旧 absorption 文档的
    13 条"已吸收"落点全部存在（按模块根 `packages/client-neutral-core/` 与收敛后 docs 路径解析）。
 6. **台账现况**：150 行 / 41 行有 fixedCommit / 38 行已盖 verifiedCommit / 3 行故意不盖 / 109 行无修复；
-   `ERROR_LEDGER_PASS counts_consistent=true`，`bound=38 unboundPass=95 anomalies=0`。
+   `ERROR_LEDGER_PASS counts_consistent=true`，`bound=38 unboundPass=95 anomalies=0`。后续 ERR-123 绑定并盖印后
+   更新为 **bound=39 / unboundPass=94**（见 §1 的 `737dac2` 行），旧数保留以显示移动方向。
+7. **几何门禁给出的是数字不是口号**（run `37585453264`、head `8847cdc`、observer 第 12 步 success）：桌面档
+   `scrollWidth=1264 innerWidth=1264`、顶栏 `height=129/limit=140`、导轨 `rail=214.9/min=200`、`left=0`、
+   `gap=731.1`、`brand=91`；紧凑档 `500x629`、`height=111/limit=260`、`rail=None`，结尾 `GEOMETRY_GATE_PASS`。
+   **但它不证明面板窗等于声明的 440×780**（实测视口与 tauri.conf.json 不一致，窗框/缩放未量化），也不证明
+   临时 user-data 目录被删干净（同跑报出 2 个 PermissionError 残留，一次性 runner 上仍判过，名字被打印出来）。
+   同一次运行还暴露我自己的一条误导文案：`topbar_measured PASS no .topbar element` 的详情字符串是写死失败文案，
+   元素其实测到；已改为通过时报实测高度、缺元素时报 MISSING 并失败。
 
 ## 3. 本轮撤回与自我纠错（照登，不改口径）
 
@@ -56,6 +68,12 @@
 5. **本地整轮复现曾出现 governance `errors=1`**，消息指向一个未被跟踪的本机残留目录（其中任务包目录名重复
    了一层），同头裸跑 2130 项全过；我按"本机竞态"记录且**未据此报 PASS**，最终仍以 exact-SHA 读数为准。
    这一条仍未彻底解释，保持挂账。
+6. **"14 条可绑定"是我自己工具的假象**：加入"出生提交"信号后初看得 14 条候选，逐条核查发现 13 条出生在同一次
+   cutover 导入提交（一次搬进整批 2026-08 记录），导入提交不是修复提交；加上"相对父提交最多新增 1 条"的判据后
+   归零。结论入档而不是悄悄改掉前一个数。
+7. **有一条本地测试常红，但不是本分支的缺陷**：`tests/ci/test_exact_tree_review.py` 断言 HEAD==origin/main 且
+   在册任务全 COMPLETED——那是**合并之后**才成立的交付不变量，且没有 CI 作业调用它。我没有为了让分支好看去
+   改它；要么由 owner 把它移到合并后检查，要么保持"未合并即红"这一诚实信号。
 
 ## 4. 需要 owner 或真人操作（明确挂账，不得代答）
 
@@ -68,8 +86,15 @@
 
 ## 5. 下一份工作的优先顺序
 
-1. 109 条无 fixedCommit 的挂账记录：先做**只读分诊**（承诺补救是否已在树里），分"可绑定"与"仍是缺口"，
-   不得批量造修复。
-2. `model_library_readback.py` 的字节数缺陷（内容地址行报整个存储体量）——本机仪器，改前先写反证。
-3. 适配器观测的老化：收据日期与注册表 observed_at 一致已由门禁钉住，下一步是让收据本身周期性重生成。
-4. PR #162 合并与发布决定权在 owner；本轮未合并、未打 tag。
+1. **94 条未绑定 PASS 的正确处理方式已被本轮实测限定**：86 条出生在导入提交，本仓历史给不出修复 SHA，
+   所以只有两条诚实路径——(a) 逐条**今天重跑**它自己的回归命令以重建证据（36 条有可解析操作数，先做这些）；
+   (b) 回到被合并前的分支历史（`6bd0bd5` 的父链之外）去取真实因果。**不得**用邻近提交冒充 fixedCommit。
+   15 条 PATH_GONE 需要先判断守卫是"搬走"还是"删除"，再决定重建还是撤换 PASS 状态。
+2. `model_library_readback.py` 的字节数缺陷（两条内容地址行报的是整个 blob 存储 29,751,357,111 B 而非单模型）；
+   改前先写反证，改后重生成 `docs/audits/MODEL_LIBRARY_READBACK_2026-10-07.json`。
+3. 观测老化：`test_adapter_version_readback` 已把"声明↔收据"钉住，下一步是让版本收据周期性重生成，
+   并给 hermes 找到不需要启动的版本来源（它的 CLI 无版本资源）。
+4. `qwen2.5vl/7b` 权重在库未登记（5,969,233,408 B）、`30-products/minigame` 等已消失守卫的归属，
+   都属需要 owner 点头的入库/撤账动作。
+5. PR #162 合并与发布决定权在 owner；本轮未合并、未打 tag、未发布。合并前 `git merge-tree` 预演干净
+   （150 行台账、22 行候选池在合并态均无重复）。
