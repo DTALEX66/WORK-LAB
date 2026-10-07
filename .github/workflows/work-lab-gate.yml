@@ -217,6 +217,15 @@ jobs:
       - name: U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)
         working-directory: apps/observer
         run: python scripts/u19_webview_e2e.py
+      # G3 (UI prompt pack): the desktop geometry contract, measured in a real browser over CDP.
+      # This is a required step on purpose. The gate exits 0 only when every check passes, 1 when
+      # the rendered shell violates it, and 3 when it refuses to run — and 3 names the
+      # precondition (no dist, no discovered browser, no CDP page target) instead of passing.
+      # A refusal that reported green is the defect ERR-145 records, so a red here is information,
+      # not noise. It measures the bundle the job just built, in the runner's own Chromium/Edge.
+      - name: Desktop geometry gate (CDP measurement of the built shell)
+        working-directory: .
+        run: python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json
 
   supply-chain-security:
     name: supply-chain-security
