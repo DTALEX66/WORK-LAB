@@ -767,5 +767,49 @@ class SpillAndOwnershipSourceTests(unittest.TestCase):
                          "a digest stated by config-ownership.json was not carried to its artifact")
 
 
+
+class HandleVerdictIsHostFree(unittest.TestCase):
+    """`_verify` is pure string work now, so its verdict can be compared across path vocabularies.
+
+    It used to call `path.relative_to(surface.absolute)` inside a try/except whose arm means
+    "outside the declared surface". `relative_to` compares with the host's case rules, so a handle whose
+    case disagreed with the surface raised ValueError and was reported as a boundary violation -- the same
+    conflation of "I could not compare" with "this is outside" that CI punished twice in the control plane.
+    Nothing here touches the filesystem: surfaces are constructed, not stat'd.
+    """
+
+    def verdict(self, root, surface_relative, handle):
+        surfaces = [projection.Surface("runs", surface_relative, Path(root) / surface_relative, 4)]
+        return projection._verify({"handle": handle, "surface": "runs"},
+                              root=Path(root), surfaces=surfaces)[1]
+
+    def test_the_same_handle_shape_gives_the_same_verdict_in_both_vocabularies(self) -> None:
+        cases = [
+            ("D:/proj", ".project-local/runs", "D:/proj/.project-local/runs/a.log", None),
+            ("D:/proj", ".project-local/runs", r"D:\proj\.project-local\runs\a.log", None),
+            ("D:/proj", ".project-local/runs", "d:/PROJ/.project-local/RUNS/a.log", None),
+            ("/home/runner/proj", ".project-local/runs", "/home/runner/proj/.project-local/runs/a.log", None),
+            ("/home/Runner/proj", ".project-local/runs", "/home/runner/PROJ/.project-local/runs/a.log", None),
+            # a sibling whose name starts with the root name is not inside,
+            ("D:/proj", ".project-local/runs", "D:/projX/.project-local/runs/a.log", "outside-declared-surface"),
+            ("D:/proj", ".project-local/runs", "D:/other/.project-local/runs/a.log", "outside-declared-surface"),
+            ("/home/runner/proj", ".project-local/runs", "/home/runner/projX/a.log", "outside-declared-surface"),
+            # dot segments may not climb out,
+            ("D:/proj", ".project-local/runs", "D:/proj/.project-local/runs/../../../Windows/x", "outside-declared-surface"),
+            # an unanchored handle is refused in both vocabularies,
+            ("D:/proj", ".project-local/runs", ".project-local/runs/a.log", "not-absolute"),
+        ]
+        for root, surface, handle, expected in cases:
+            with self.subTest(root=root, handle=handle):
+                self.assertEqual(expected, self.verdict(root, surface, handle))
+
+    def test_a_credential_named_component_is_refused_whatever_the_surface(self) -> None:
+        for root, surface in (("D:/proj", ".project-local/runs"),
+                              ("/home/runner/proj", ".project-local/artifacts")):
+            with self.subTest(root=root):
+                self.assertEqual("sensitive-name",
+                                 self.verdict(root, surface, f"{root}/{surface}/creds/token.bin"))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

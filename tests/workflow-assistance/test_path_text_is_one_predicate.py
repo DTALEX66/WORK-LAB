@@ -38,6 +38,13 @@ class OnePredicate(unittest.TestCase):
         self.assertIs(path_text.inside_root, reader.inside_root)
         self.assertIs(path_text.path_is_anchored, reader.path_is_anchored)
 
+    def test_the_handle_projection_holds_the_same_predicate(self) -> None:
+        import artifact_handle_projection as projection
+        self.assertIs(path_text.inside_root, projection.inside_root)
+        self.assertIs(path_text.relative_inside, projection.relative_inside)
+        self.assertIs(path_text.normalise_path, projection.normalise_path)
+        self.assertIs(path_text.path_is_anchored, projection.path_is_anchored)
+
     def test_the_reader_actually_decides_with_the_text_predicate(self) -> None:
         """A shared import is not proof of use: the refusal must name both lexical values."""
         result = reader.read_range(handle="D:/elsewhere/project/.project-local/runs/a.log",

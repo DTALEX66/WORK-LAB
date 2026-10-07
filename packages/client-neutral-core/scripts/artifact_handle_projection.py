@@ -55,6 +55,7 @@ from pathlib import Path, PurePath
 from typing import Any, Iterator, NamedTuple
 
 from evidence_range_reader import declared_evidence_roots, name_is_sensitive
+from path_text import inside_root, normalise_path, path_is_anchored, relative_inside
 
 SUMMARY_SCHEMA_VERSION = "worklab/artifact-handles-summary/v1"
 BOUNDARY_DECLARATION = ".project/governance/project-data-boundary.json"
@@ -218,16 +219,20 @@ def enumerate_surfaces(root: Path) -> tuple[list[Surface], str | None]:
         if isinstance(spill, str) and spill:
             spill_path = spill
     surfaces: list[Surface] = []
-    seen: set[Path] = set()
+    # Dedup on normalised TEXT, not on Path objects: Path.__eq__ is case-insensitive on Windows and
+    # case-sensitive on Linux, so a set of Paths can collapse two declared surfaces on one host and keep
+    # both on another -- which changes the row set the projection ships.
+    seen: set[str] = set()
     for relative in declared:
         absolute = (root / relative).resolve()
-        if absolute in seen:
+        key = normalise_path(absolute)
+        if key in seen:
             continue
-        seen.add(absolute)
+        seen.add(key)
         if not absolute.is_dir():
             # An absent surface is a real machine state, reported, not a surface to fabricate rows from.
             continue
-        if not absolute.is_relative_to(root):
+        if not inside_root(absolute, root)[0]:
             continue
         name = named.get(PurePath(relative).as_posix(), UNNAMED_SURFACE)
         surfaces.append(Surface(name, str(relative), absolute, SCAN_MAX_DEPTH.get(name, DEFAULT_SCAN_MAX_DEPTH)))
@@ -243,7 +248,7 @@ def surface_state(root: Path) -> list[dict[str, Any]]:
         absolute = (root / relative).resolve()
         exists = absolute.is_dir()
         states.append({"root": str(relative), "exists": bool(exists),
-                       "insideRepository": bool(absolute.is_relative_to(root))})
+                       "insideRepository": inside_root(absolute, root)[0]})
     return states
 
 
@@ -390,20 +395,23 @@ def _verify(candidate: dict[str, Any], *, root: Path, surfaces: list[Surface]) -
     it on use and answers ``NOT_A_FILE``, so a file deleted between projection and click is a typed
     refusal, not a phantom row.
     """
-    path = PurePath(candidate["handle"])
-    if not path.is_absolute():
+    handle = str(candidate["handle"])
+    if not path_is_anchored(handle):
         return None, "not-absolute"
     surface = next((item for item in surfaces if item.name == candidate["surface"]), None)
     if surface is None:
         return None, "unknown-surface"
-    try:
-        relative = path.relative_to(surface.absolute)
-        path.relative_to(root)
-    except ValueError:
+    # `relative_to` raised ValueError for a case-mismatched or cross-vocabulary path, and the except arm
+    # means "outside the declared surface" -- the same conflation CI punished twice in the control plane.
+    # Containment is therefore decided from text, and only the case-preserving remainder is used later.
+    if not inside_root(handle, root)[0]:
         return None, "outside-declared-surface"
-    if any(_is_sensitive_name(part) for part in relative.parts):
+    relative_text = relative_inside(handle, surface.absolute)
+    if relative_text is None:
+        return None, "outside-declared-surface"
+    if any(_is_sensitive_name(part) for part in PurePath(handle).parts):
         return None, "sensitive-name"
-    return str(path), None
+    return str(PurePath(handle)), None
 
 
 def _candidate_digest_records(rows: list[dict[str, Any]], spill_path: str | None, root: Path) -> list[Path]:
@@ -449,11 +457,16 @@ def _candidate_digest_records(rows: list[dict[str, Any]], spill_path: str | None
 
 
 def _relative(path: Path, root: Path) -> str:
-    """Repository-relative provenance, so a digest names the record it came from without a machine path."""
-    try:
-        return str(Path(path).resolve().relative_to(Path(root).resolve())).replace("\\", "/")
-    except ValueError:
-        return Path(path).name
+    """Repository-relative provenance, so a digest names the record it came from without a machine path.
+
+    Text containment, not `relative_to`: the old version raised on a case-mismatched pair on a
+    case-sensitive host and silently degraded the provenance to a bare filename, which is a weaker citation
+    that nothing downstream noticed.
+    """
+    remainder = relative_inside(path, root)
+    if remainder is not None and remainder != "":
+        return remainder
+    return Path(path).name
 
 
 def _pairs(node: Any, record: Path, root: Path, index: dict[str, tuple[str, str]],
