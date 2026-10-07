@@ -21,7 +21,13 @@ keep it honest are:
   runtime adapter, config-ownership default). `config/capability-conformance.json` describes PROTOCOLS, so
   it is attached as protocol status and never renamed into a per-client capability list;
 * where the registry and the matrix state different verb sets for the same client, both are shown and the
-  drift is named. Choosing one as truth is an owner decision, not a projection's.
+  drift is named. Choosing one as truth is an owner decision, not a projection's;
+* the seven layers say what a CLIENT is (declared, installed, observed). They cannot say which verbs of the
+  adapter interface it answers, so a card carries an orthogonal `verbEvidence` dimension — one row per verb,
+  each either MET from a named read-only call, NOT_SUPPORTED from a named declaration, or NOT_PROBED with a
+  concrete refusal reason. An honest NOT_PROBED outranks a fabricated MET: a verb row never promotes a
+  layer, never moves `nativeStatus`, and an absent probe record emits NO rows at all rather than an empty
+  list that would render as "declared to support nothing".
 """
 from __future__ import annotations
 
@@ -40,6 +46,18 @@ LAYER_ORDER: tuple[str, ...] = (
 )
 
 CONFORMANCE_PROTOCOLS = ("acp", "skills", "mcp")
+
+# The per-verb dimension's own vocabulary. `MET` is only legal for a verb that was actually answered by a
+# read-only call the row can name; `NOT_SUPPORTED` is a declaration or a measured "not implemented" answer;
+# `NOT_PROBED` covers both "this probe refuses to exercise it" and "it was exercised and the answer does not
+# carry enough to be credited" — the `reason` says which, and `attempted` says whether a call was made.
+VERB_STATES = frozenset({"MET", "NOT_PROBED", "NOT_SUPPORTED"})
+VERB_EVIDENCE_LEVELS = frozenset({"NO_EVIDENCE", "SIMULATED", "SYNTHETIC", "INTEGRATED", "REAL"})
+VERB_ROW_FIELDS = ("verb", "state", "evidenceLevel", "source", "reason")
+
+# The interface verb list is a closed enum in a tracked schema; nothing in this module assumes a number.
+ADAPTER_INTERFACE_SCHEMA_RECORD = "packages/contracts/schemas/workflow/client-adapter.schema.json"
+CAPABILITY_MATRIX_RECORD = "config/capability-matrix.json"
 
 # Why the upper layers are unprobed, stated once so every card says the same thing about the same gap.
 UNPROBED_REASON = {
@@ -133,15 +151,146 @@ def _matrix_client(matrix: dict[str, Any], client_id: str) -> dict[str, Any] | N
     return None
 
 
+def contract_verb_vocabulary(root: Path) -> tuple[str, ...]:
+    """Discover the adapter interface's verb set instead of assuming it.
+
+    Three tracked sources name the same closed list and all three must agree, because a card that says
+    "this verb is not supported" is only honest if the verb belongs to the contract being refused:
+    `client-adapter.schema.json#properties.interface.const` (the contract), its `operations` item enum
+    (what a client may declare), and `capability-matrix.json#interface_contract` (the reconciled copy).
+    A disagreement raises — resolving which list is truth is an owner decision, not a projection's.
+    """
+    schema = json.loads((root / ADAPTER_INTERFACE_SCHEMA_RECORD).read_text(encoding="utf-8"))
+    interface = (schema.get("properties") or {}).get("interface") or {}
+    declared = ((schema.get("properties") or {}).get("entries") or {}).get("items") or {}
+    operations = (((declared.get("properties") or {}).get("operations") or {}).get("items") or {})
+    matrix = json.loads((root / CAPABILITY_MATRIX_RECORD).read_text(encoding="utf-8"))
+    lists = {
+        "schema.interface.const": [str(v) for v in (interface.get("const") or [])],
+        "schema.operations.enum": [str(v) for v in (operations.get("enum") or [])],
+        "capability-matrix#interface_contract": [str(v) for v in (matrix.get("interface_contract") or [])],
+    }
+    verbs = lists["schema.interface.const"]
+    if not verbs:
+        raise ValueError("adapter interface verb list is absent from the tracked schema")
+    for name, values in lists.items():
+        if values != verbs:
+            raise ValueError(f"adapter interface verb drift: {name}={values} vs {verbs}")
+    return tuple(verbs)
+
+
+def validate_verb_evidence(rows: list[dict[str, Any]], *, verbs: tuple[str, ...]) -> list[str]:
+    """Return the reasons a set of verb rows may not be published; empty means it may.
+
+    The refusals are the same shape as the layer rules, and for the same reason: a row that reads like
+    proof but names nothing is worse than a row that admits it measured nothing.
+    """
+    errors: list[str] = []
+    seen: set[str] = set()
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            errors.append(f"verbEvidence[{index}] must be an object")
+            continue
+        verb = str(row.get("verb") or "")
+        if not verb:
+            errors.append(f"verbEvidence[{index}].verb required")
+        elif verb not in verbs:
+            errors.append(f"verbEvidence[{index}] names {verb!r}, which is not an adapter interface verb "
+                          f"{sorted(verbs)}")
+        elif verb in seen:
+            errors.append(f"verbEvidence[{index}] repeats verb {verb!r}")
+        else:
+            seen.add(verb)
+        state = row.get("state")
+        if state not in VERB_STATES:
+            errors.append(f"verbEvidence[{index}].state must be MET|NOT_PROBED|NOT_SUPPORTED, got {state!r}")
+        evidence = row.get("evidenceLevel")
+        if evidence not in VERB_EVIDENCE_LEVELS:
+            errors.append(f"verbEvidence[{index}].evidenceLevel must be one of "
+                          f"{sorted(VERB_EVIDENCE_LEVELS)}, got {evidence!r}")
+        source = row.get("source")
+        reason = row.get("reason")
+        has_source = isinstance(source, str) and bool(source.strip())
+        has_reason = isinstance(reason, str) and bool(reason.strip())
+        if state == "MET":
+            if not has_source:
+                errors.append(f"verbEvidence[{index}] ({verb}) claims MET without a named source")
+            if evidence == "NO_EVIDENCE":
+                errors.append(f"verbEvidence[{index}] ({verb}) claims MET with NO_EVIDENCE")
+            if row.get("attempted") is False:
+                errors.append(f"verbEvidence[{index}] ({verb}) claims MET while saying the verb was never "
+                              "attempted — a refusal cannot be credited as an answer")
+        elif state == "NOT_PROBED" and not has_reason:
+            errors.append(f"verbEvidence[{index}] ({verb}) is NOT_PROBED and must say why nothing was "
+                          "established (refused, or exercised but not creditable)")
+        elif state == "NOT_SUPPORTED":
+            if not (has_source or has_reason):
+                errors.append(f"verbEvidence[{index}] ({verb}) is NOT_SUPPORTED and must name the "
+                              "declaration or the measured answer it rests on")
+            if evidence == "NO_EVIDENCE":
+                errors.append(f"verbEvidence[{index}] ({verb}) reports NOT_SUPPORTED with NO_EVIDENCE — "
+                              "an absence must come from a named source")
+    return errors
+
+
+# The provenance a reader needs to re-run or re-check a verb row. Listed explicitly — and a field that is
+# not listed raises rather than being dropped, because silently losing `checkedPaths` is how a probe record
+# starts looking tidier than the machine it measured.
+VERB_ROW_PROVENANCE = ("command", "exitCode", "outputDigest", "outputLines", "detail", "probedAt",
+                       "attempted", "basis", "declaredIn", "declaresDrift", "entryResolution",
+                       "checkedPaths", "ref")
+
+
+def _verb_evidence_rows(client_id: str, verb_rows: dict[str, list[dict[str, Any]]],
+                        verbs: tuple[str, ...]) -> list[dict[str, Any]] | None:
+    """Normalize this client's verb rows, or return None when the probe record says nothing about it."""
+    raw = verb_rows.get(client_id)
+    if not raw:
+        return None
+    errors = validate_verb_evidence(raw, verbs=verbs)
+    if errors:
+        raise ValueError(f"{client_id} verb evidence refused: {'; '.join(errors)}")
+    rows: list[dict[str, Any]] = []
+    for item in raw:
+        unknown = sorted(set(item) - set(VERB_ROW_FIELDS) - set(VERB_ROW_PROVENANCE))
+        if unknown:
+            raise ValueError(f"{client_id} verb evidence carries fields this projection does not "
+                             f"understand: {unknown}")
+        row = {field: item.get(field) for field in VERB_ROW_FIELDS}
+        for field in VERB_ROW_PROVENANCE:
+            if item.get(field) is not None:
+                row[field] = item.get(field)
+        rows.append(row)
+    return rows
+
+
+def _verb_evidence_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
+    counts = {"MET": 0, "NOT_PROBED": 0, "NOT_SUPPORTED": 0}
+    for row in rows:
+        counts[str(row.get("state"))] = counts.get(str(row.get("state")), 0) + 1
+    return counts
+
+
 def project_adapter_capabilities(*, registry: dict[str, Any], conformance: dict[str, Any],
                                 matrix: dict[str, Any],
                                 software_rows: list[dict[str, Any]] | None = None,
                                 live_probe_rows: list[dict[str, Any]] | None = None,
                                 live_probe_at: str | None = None,
+                                verb_rows: dict[str, list[dict[str, Any]]] | None = None,
+                                verb_probe_at: str | None = None,
+                                contract_verbs: tuple[str, ...] | None = None,
                                 observed_at: str | None = None) -> list[dict[str, Any]]:
-    """Build one card per declared adapter. Absent evidence stays NOT_PROBED with its reason."""
+    """Build one card per declared adapter. Absent evidence stays NOT_PROBED with its reason.
+
+    Verb evidence is additive and optional: without a probe record carrying rows for a client the card gets
+    no `verbEvidence` key at all, and the seven layers keep exactly the meaning they had before.
+    """
     software_rows = software_rows or []
     probes = {str(row.get("adapter") or row.get("clientId") or ""): row for row in (live_probe_rows or [])}
+    verb_rows = verb_rows or {}
+    verbs = tuple(contract_verbs or matrix.get("interface_contract") or ())
+    if verb_rows and not verbs:
+        raise ValueError("verb evidence needs the adapter interface verb list; none is declared")
     cards: list[dict[str, Any]] = []
     for entry in registry.get("entries") or []:
         client_id = str(entry.get("id") or "")
@@ -200,6 +349,13 @@ def project_adapter_capabilities(*, registry: dict[str, Any], conformance: dict[
             "layers": layers,
             "nativeStatus": "NOT_IMPLEMENTED",
         })
+        evidence = _verb_evidence_rows(client_id, verb_rows, verbs)
+        if evidence is not None:
+            # absent input stays absent: no key at all rather than an empty list a renderer reads as
+            # "this client declared no verbs", which is the same lie in a different shape.
+            cards[-1]["verbEvidence"] = evidence
+            cards[-1]["verbEvidenceCounts"] = _verb_evidence_counts(evidence)
+            cards[-1]["verbEvidenceProbedAt"] = verb_probe_at
     return cards
 
 
@@ -218,6 +374,32 @@ def load_live_probe(root: Path) -> tuple[list[dict[str, Any]], str | None]:
         return [], None
     record = json.loads(path.read_text(encoding="utf-8"))
     return list(record.get("results") or []), record.get("at")
+
+
+def load_verb_probe(root: Path) -> tuple[dict[str, list[dict[str, Any]]], str | None]:
+    """Read the per-verb rows of the tracked probe record, keyed by client id.
+
+    The `verbProbe` block is written by `packages/client-neutral-core/scripts/adapter_verb_probe.py` and is
+    optional in the same way the entry probe is: no block means no verb was established on this machine,
+    which is a NOT_PROBED state, never an empty capability list. A block that exists but is malformed raises
+    rather than projecting nothing at all.
+    """
+    path = root / LIVE_PROBE_RECORD
+    if not path.is_file():
+        return {}, None
+    record = json.loads(path.read_text(encoding="utf-8"))
+    block = record.get("verbProbe")
+    if not block:
+        return {}, None
+    rows: dict[str, list[dict[str, Any]]] = {}
+    for entry in block.get("results") or []:
+        client_id = str(entry.get("client") or entry.get("adapter") or "")
+        if not client_id:
+            raise ValueError("verb probe record has a result row without a client id")
+        rows[client_id] = list(entry.get("verbs") or [])
+        if not rows[client_id]:
+            raise ValueError(f"verb probe row for {client_id} carries no verbs — drop the row instead")
+    return rows, block.get("at")
 
 
 def load_inputs(root: Path) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
