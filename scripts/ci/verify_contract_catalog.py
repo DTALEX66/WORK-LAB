@@ -17,6 +17,7 @@ EXPECTED = {
 
     "domain-pack": "external-design-lab",
     "evidence-envelope": "root-governance",
+    "workflow-evidence-envelope": "workflow",
     "release-manifest": "root-governance",
     "adapter-capability": "workflow",
     "action-plan": "workflow",
@@ -62,6 +63,7 @@ CANONICAL_SCHEMA_PREFIXES = {
 
     "domain-pack": ("packages/contracts/",),
     "evidence-envelope": (".project/governance/",),
+    "workflow-evidence-envelope": ("packages/contracts/",),
     "release-manifest": (".project/governance/",),
     "adapter-capability": ("packages/contracts/",),
     "action-plan": ("packages/contracts/",),

@@ -13,6 +13,7 @@ export type ContractId =
   | "runtime-lock"
   | "domain-pack"
   | "evidence-envelope"
+  | "workflow-evidence-envelope"
   | "release-manifest"
   | "adapter-capability"
   | "action-plan"
@@ -138,6 +139,28 @@ export type EvidenceEnvelope = {
     source: string,
     contentBodies?: unknown,
     credentials?: unknown
+  };
+
+// @contract workflow-evidence-envelope
+// schema: packages/contracts/schemas/workflow/evidence-envelope.schema.json
+export type WorkflowEvidenceEnvelope = {
+    schema_version: unknown,
+    evidence_id: string,
+    task_id: string,
+    state: ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "UNVERIFIED", "SKIPPED_OPTIONAL"],
+    level: ["E0", "E1", "E2", "E3", "E4", "E5"],
+    source: {
+    kind: ["static", "isolated", "runtime", "ci", "external"],
+    identity: string
+  },
+    artifacts: Record<string, unknown>[],
+    redaction: {
+    policy: unknown,
+    secrets_stored: unknown,
+    notes?: string
+  },
+    checks?: string[],
+    message?: string
   };
 
 // @contract release-manifest

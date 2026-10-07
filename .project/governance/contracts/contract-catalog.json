@@ -69,6 +69,16 @@
       ]
     },
     {
+      "id": "workflow-evidence-envelope",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/evidence-envelope.schema.json",
+      "consumers": [
+        "observer",
+        "workflow",
+        "ci"
+      ]
+    },
+    {
       "id": "release-manifest",
       "owner": "root-governance",
       "schemaPath": ".project/governance/contracts/release-manifest.schema.json",
