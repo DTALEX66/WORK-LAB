@@ -265,14 +265,49 @@ class ValidatorRefusalTests(unittest.TestCase):
         self.reject([card(nativeStatus="NATIVELY_VERIFIED")], "cannot be climbed from the top")
 
     def test_native_verification_is_accepted_when_execution_was_observed(self) -> None:
-        layers = [
-            card()["layers"][0],
-            {"layer": "OBSERVED_IN_EXECUTION", "state": "MET", "evidenceLevel": "REAL",
-             "source": "receipt:run-77 readback ok", "reason": "observed"},
-        ]
+        # A complete ladder: this positive control used to pass with only two layers named
+        # (REGISTERED + OBSERVED_IN_EXECUTION) and still validate, which is exactly the hole the
+        # monotonicity rule now closes -- an absent lower layer is not a disproved one, it is an
+        # unstated one. The assertion's meaning is unchanged: a full, evidenced ladder is accepted.
+        order = ["REGISTERED", "INSTALLED", "LOADED_CONNECTED", "QUALIFIED",
+                 "ENABLED_FOR_TASK", "NATIVE_PROJECTION", "OBSERVED_IN_EXECUTION"]
+        layers = [card()["layers"][0]]
+        layers += [{"layer": name, "state": "MET", "evidenceLevel": "REAL",
+                    "source": "receipt:run-77 readback ok", "reason": "observed"}
+                   for name in order[1:]]
         verdict = snapshot_validator.validate_snapshot(
             snapshot_with([card(layers=layers, nativeStatus="NATIVELY_VERIFIED")]))
         self.assertTrue(verdict["valid"], verdict["errors"])
+
+    def test_a_ladder_climbed_from_the_top_is_refused(self) -> None:
+        """OBSERVED_IN_EXECUTION=MET with the layers below it simply absent is not a verified client.
+
+        The validator enforced "no NATIVELY_VERIFIED status without an observed layer" but never that the
+        lower rungs hold, so a card listing only the top rung validated clean. Absent is not MET, and
+        absent is not NOT_PROBED either -- it is unstated, which is the shape this rule refuses.
+        """
+        for layers in (
+            [{"layer": "OBSERVED_IN_EXECUTION", "state": "MET", "evidenceLevel": "REAL",
+              "source": "receipt:run-77", "reason": "observed"}],
+            [{"layer": "QUALIFIED", "state": "MET", "evidenceLevel": "INTEGRATED",
+              "source": "conformance run", "reason": "ok"}],
+        ):
+            with self.subTest(top=layers[0]["layer"]):
+                verdict = snapshot_validator.validate_snapshot(snapshot_with([card(layers=layers)]))
+                self.assertFalse(verdict["valid"])
+                self.assertTrue(any("are not MET" in error for error in verdict["errors"]),
+                                verdict["errors"])
+
+    def test_a_layer_name_outside_the_ladder_is_refused(self) -> None:
+        verdict = snapshot_validator.validate_snapshot(snapshot_with([card(layers=[
+            {"layer": "REGISTERED", "state": "MET", "evidenceLevel": "REAL", "source": "registry",
+             "reason": "ok"},
+            {"layer": "TELEPORTED", "state": "MET", "evidenceLevel": "REAL", "source": "vibes",
+             "reason": "ok"},
+        ])]))
+        self.assertFalse(verdict["valid"])
+        self.assertTrue(any("outside the ladder" in error for error in verdict["errors"]),
+                        verdict["errors"])
 
     def test_absent_adapter_capabilities_stay_absent(self) -> None:
         snapshot = {

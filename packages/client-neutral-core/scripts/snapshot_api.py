@@ -9,6 +9,8 @@ Workflow-owned module. The snapshot:
 - separates projects, tasks and executions;
 - splits token columns with exact/estimated/unknown cost marking;
 - separates git local/remote/CI SHAs with match state;
+- carries ``artifactHandles`` (identity-only evidence rows for the byte-range route) only when the caller
+  supplies them, alongside the ``artifactHandlesSummary`` that states that list's enumeration scope;
 - every core field is traceable to sourceRef where applicable.
 
 Null vs zero: unknown values are null; counters that were observed are 0 or
@@ -18,6 +20,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -48,6 +51,8 @@ def build_snapshot(
     software: list[dict[str, Any]] | None = None,
     task_records: list[dict[str, Any]] | None = None,
     adapter_capabilities: list[dict[str, Any]] | None = None,
+    artifact_handles: list[dict[str, Any]] | None = None,
+    artifact_handles_summary: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the v3 snapshot from canonical facts (all fields optional for tests)."""
     generated_at = generated_at or _now()
@@ -101,7 +106,22 @@ def build_snapshot(
         **({"software": software} if software is not None else {}),
         **({"taskRecords": task_records} if task_records is not None else {}),
         **({"adapterCapabilities": adapter_capabilities} if adapter_capabilities is not None else {}),
+        # REQ-RANGE-20261007: the evidence artifact list the range route reads from. Absent stays absent for
+        # the same reason taskRecords does — an empty list tells a reader "this project owns no evidence",
+        # which is a different lie from saying nothing. The summary travels with the list or with neither:
+        # it is the enumeration scope (cap, truncation, refusals) of that exact list, and a scope report for
+        # an unprojected list would be a claim about a snapshot the reader is not looking at.
+        **({"artifactHandles": artifact_handles,
+            **({"artifactHandlesSummary": artifact_handles_summary}
+               if artifact_handles_summary is not None else {})}
+           if artifact_handles is not None else {}),
     }
+
+
+_CHECKPOINT_KEY_NAME = re.compile(r"[A-Za-z0-9_.:/@+#=-]{1,64}")
+
+
+_CHECKPOINT_KEY_NAME = re.compile(r"[A-Za-z0-9_.:/@+#=-]{1,64}")
 
 
 def project_task_record(row: dict[str, Any]) -> dict[str, Any]:
@@ -116,14 +136,23 @@ def project_task_record(row: dict[str, Any]) -> dict[str, Any]:
     Absent means absent: no field is padded to a zero or an empty string.
     """
     checkpoint = row.get("checkpoint")
-    if checkpoint is None:
-        checkpoint = {}
-    has_checkpoint = row.get("checkpoint") is not None and bool(checkpoint)
-    digest = None
-    if has_checkpoint:
-        canonical = json.dumps(checkpoint, ensure_ascii=False, sort_keys=True,
-                               separators=(",", ":")).encode("utf-8")
-        digest = hashlib.sha256(canonical).hexdigest()
+    parse_state = str(row.get("checkpointParseState") or "").upper()
+    # Present is present, even when it will not parse: an unreadable checkpoint used to become `{}` in the
+    # store and then `checkpointPresent: false` here, which asserts "this task has no checkpoint" about a
+    # checkpoint that exists (ERR follow-up to the read-surface review).
+    has_checkpoint = checkpoint is not None or parse_state == "UNPARSEABLE"
+    keys: list[str] = []
+    digest = row.get("checkpointDigest") if has_checkpoint else None
+    if isinstance(checkpoint, dict):
+        # Only a mapping's KEY NAMES are workflow field names. A checkpoint stored as a list would iterate
+        # values and one stored as a bare string would iterate single characters -- both put user text into
+        # a read-only projection while looking like a key list, so a non-mapping payload yields no keys.
+        keys = sorted(name for name in (str(key) for key in checkpoint)
+                      if _CHECKPOINT_KEY_NAME.fullmatch(name))
+        if digest is None:
+            canonical = json.dumps(checkpoint, ensure_ascii=False, sort_keys=True,
+                                   separators=(",", ":")).encode("utf-8")
+            digest = hashlib.sha256(canonical).hexdigest()
     fencing = row.get("fencing_token")
     return {
         "taskId": row.get("task_id"),
@@ -135,7 +164,7 @@ def project_task_record(row: dict[str, Any]) -> dict[str, Any]:
         "leaseExpiresAt": row.get("lease_expires_at"),
         "fencingToken": fencing if isinstance(fencing, int) and not isinstance(fencing, bool) else None,
         "checkpointPresent": has_checkpoint,
-        "checkpointKeys": sorted(str(key) for key in checkpoint) if has_checkpoint else [],
+        "checkpointKeys": keys,
         "checkpointDigest": digest,
     }
 

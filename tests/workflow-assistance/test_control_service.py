@@ -159,6 +159,45 @@ class ControlPlaneTestCase(unittest.TestCase):
         self.assertEqual(result["status"], "READBACK_MISMATCH")
 
     # -- 4 idempotency ------------------------------------------------------
+    def test_a_create_never_clobbers_a_live_lease(self) -> None:
+        """A control-plane create carries no lease, so it must not write lease columns at all.
+
+        The write used to be an upsert whose ON CONFLICT branch took lease_holder, lease_expires_at and
+        fencing_token from the incoming record -- all absent for a create, i.e. NULL. A replay under a
+        foreign identity therefore wiped whoever held the task and sent the fencing token backwards, the
+        exact property the fence exists to hold, and the identity check itself ran outside any lock the
+        sidecar shares.
+        """
+        first = self.plane.execute(request_payload(
+            task_id="WL-LEASE-1", idempotency_key="idem-lease-1",
+            payload={"goal": "keep my lease"},
+        ))
+        self.assertEqual(first["status"], "ACCEPTED", first["reason"])
+        self.assertTrue(self.plane.store.acquire_lease("WL-LEASE-1", "executor-7", ttl_seconds=300))
+        before = {r["task_id"]: r for r in self.plane.store.list_tasks()}["WL-LEASE-1"]
+        self.assertEqual(before["lease_holder"], "executor-7")
+
+        conflict = self.plane.execute(request_payload(
+            task_id="WL-LEASE-1", idempotency_key="idem-lease-DIFFERENT",
+            payload={"goal": "hijack"},
+        ))
+        self.assertEqual(conflict["status"], "REFUSED", conflict["reason"])
+        self.assertEqual(conflict["reason_code"], "IDEMPOTENCY_CONFLICT")
+        after = {r["task_id"]: r for r in self.plane.store.list_tasks()}["WL-LEASE-1"]
+        self.assertEqual(after["lease_holder"], "executor-7", "a create overwrote a live holder")
+        self.assertEqual(after["fencing_token"], before["fencing_token"], "the fencing token moved backwards")
+        self.assertNotEqual(str((after.get("checkpoint") or {}).get("goal")), "hijack")
+
+    def test_replay_of_the_same_identity_keeps_a_lease_it_did_not_claim(self) -> None:
+        self.plane.execute(request_payload(task_id="WL-LEASE-2", idempotency_key="idem-lease-2",
+                                           payload={"goal": "replay me"}))
+        self.plane.store.acquire_lease("WL-LEASE-2", "executor-8", ttl_seconds=300)
+        replay = self.plane.execute(request_payload(task_id="WL-LEASE-2", idempotency_key="idem-lease-2",
+                                                    payload={"goal": "replay me"}))
+        self.assertEqual(replay["status"], "ACCEPTED", replay["reason"])
+        row = {r["task_id"]: r for r in self.plane.store.list_tasks()}["WL-LEASE-2"]
+        self.assertEqual(row["lease_holder"], "executor-8")
+
     def test_replaying_the_same_key_returns_the_same_record(self) -> None:
         first = self.plane.execute(request_payload())
         again = self.plane.execute(request_payload())
@@ -200,18 +239,87 @@ class ControlPlaneTestCase(unittest.TestCase):
     def test_config_diff_returns_a_plan_and_says_it_did_not_write(self) -> None:
         result = self.plane.execute(request_payload(
             operation="config.diff",
-            payload={"target_file": "services/control/control_service.py", "field": "SCHEMA_VERSION",
-                     "value": "worklab/control-service/v2"},
+            payload={"target_file": ".project/governance/work-lab.project-profile.yaml",
+                     "field": "schema_version", "value": "work-lab-project-profile/v2"},
         ))
         self.assert_result_shape(result)
         self.assertEqual(result["status"], "PLANNED", result["reason"])
         self.assertIsNone(result["receipt"], "a plan is not a receipt")
         self.assertTrue(result["readback"]["plan_only"])
         self.assertIs(result["readback"]["written"], False)
-        # the field exists in that file, so the plan must say present_before — proof it read the real target
+        # the key exists in that document, so the plan must say present_before -- proof it read the real
+        # target. It is a KEY question: the same operation used to answer "is this substring anywhere in
+        # the file", which turns any in-repo file into a content oracle one yes/no at a time.
         change = result["readback"]["changes"][0]
         self.assertTrue(change["present_before"], result["readback"]["target"])
-        self.assertEqual(result["readback"]["target"], "services/control/control_service.py")
+        self.assertEqual(result["readback"]["target"], ".project/governance/work-lab.project-profile.yaml")
+
+    def test_config_diff_answers_key_questions_not_substring_questions(self) -> None:
+        """A string that is present in the file but is not a declared key must read as absent."""
+        result = self.plane.execute(request_payload(
+            operation="config.diff",
+            payload={"target_file": ".project/governance/work-lab.project-profile.yaml",
+                     "field": "gates", "value": "workflow"},
+        ))
+        self.assertEqual(result["status"], "PLANNED", result["reason"])
+        change = result["readback"]["changes"][0]
+        self.assertTrue(change["present_before"])
+        probe = self.plane.execute(request_payload(
+            operation="config.diff",
+            payload={"target_file": ".project/governance/work-lab.project-profile.yaml",
+                     "field": "workflow", "value": "anything"},
+        ))
+        self.assertIs(probe["readback"]["changes"][0]["present_before"], False,
+                      "'workflow' occurs in that document as a value, but it is not a declared key")
+        self.assertEqual(probe["readback"]["changes"][0]["presenceBasis"], "KEY_PATH_RESOLVES")
+
+    def test_config_diff_refuses_a_credential_shaped_target(self) -> None:
+        """Refusing by name, before reading: the boundary is not the only thing that decides.
+
+        Two layers can answer first -- the policy's prefix denials and the operation's own name test -- so
+        the assertion is on the outcome that matters: REFUSED, with a reason that names why. An allowed
+        reason list is not a weakened test; it is the honest shape of a defence with two independent
+        layers, and any third path that answers PLANNED fails here.
+        """
+        for target in (".hermes/task-runtime/x/canonical.sqlite", "config/.env",
+                       ".project-local/artifacts/backup/hermes/config.yaml",
+                       ".project-local/runs/tmp/cookies.sqlite"):
+            with self.subTest(target=target):
+                result = self.plane.execute(request_payload(
+                    operation="config.diff", payload={"target_file": target, "field": "a"},
+                ))
+                self.assertEqual(result["status"], "REFUSED", result["reason"])
+                self.assertIn(result["reason_code"],
+                              {"TARGET_SENSITIVE", "GATE_DENIED", "GATE_NEEDS_HUMAN"})
+
+    def test_config_diff_reports_an_unparseable_document_as_unknown(self) -> None:
+        """A file that is not a mapping gets no boolean: 'cannot tell' is not 'not declared'."""
+        result = self.plane.execute(request_payload(
+            operation="config.diff",
+            payload={"target_file": "services/control/control_service.py", "field": "SCHEMA_VERSION"},
+        ))
+        self.assertEqual(result["status"], "PLANNED", result["reason"])
+        change = result["readback"]["changes"][0]
+        self.assertIsNone(change["present_before"])
+        # Which of the two unknown states it lands in is the parser's business (.py is either a scalar or
+        # invalid YAML); that it is unknown and named is the property this operation must never lose.
+        self.assertTrue(str(change["presenceBasis"]).startswith("DOCUMENT"), change["presenceBasis"])
+
+    def test_a_credential_target_is_denied_before_the_operation_is_reached(self) -> None:
+        """The gate sees the subject, not the operation name -- so CRITICAL escalation is reachable.
+
+        This is the regression ERR-166-style review found: `target=request["operation"]` meant the
+        permission gate's own '.env / credential / secret / auth' rule could never match anything, because
+        an operation id contains none of those words even when the payload names a keystore.
+        """
+        for field in ("path", "target_file", "file", "target"):
+            with self.subTest(field=field):
+                payload = {field: ".hermes/task-runtime/x/canonical.sqlite", "field": "a"}
+                result = self.plane.execute(request_payload(operation="config.diff", payload=payload))
+                self.assertEqual(result["status"], "REFUSED", result["reason"])
+                decision = self.plane.gate.evaluate(
+                    "filesystem", target=self.plane._subject({"operation": "config.diff", "payload": payload}))
+                self.assertNotEqual(decision.status.value, "allowed", decision.reason)
 
     def test_config_diff_refuses_a_target_outside_the_repository(self) -> None:
         result = self.plane.execute(request_payload(

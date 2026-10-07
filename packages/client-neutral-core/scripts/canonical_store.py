@@ -8,6 +8,7 @@ forbidden. Token fields use a strict allowlist so legal usage counters such as
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sqlite3
@@ -640,6 +641,42 @@ class CanonicalStore:
             )
             self._conn.commit()
 
+    def insert_task_if_absent(self, task: dict[str, Any]) -> bool:
+        """Create a task, or report that the identity already exists -- without overwriting theirs.
+
+        `upsert_task` resolves a conflict by taking the incoming row wholesale, including
+        lease_holder / lease_expires_at / fencing_token. A writer that has no lease to claim (a control-plane
+        create) therefore wipes a live holder's lease and can send the fencing token backwards, which
+        destroys the exact property the fence exists to provide. Identity creation and identity conflict
+        are different outcomes; this one says which happened, in a single transaction, and touches nothing
+        that already exists.
+        """
+        validate_record(task, allow_usage_tokens=False)
+        task_id = str(task["task_id"])
+        with self._lock:
+            cursor = self._conn.execute(
+                """
+                INSERT INTO tasks
+                (task_id, project_id, status, created_at, updated_at, checkpoint,
+                 lease_holder, lease_expires_at, fencing_token)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(task_id) DO NOTHING
+                """,
+                (
+                    task_id,
+                    str(task.get("project_id", "unknown")),
+                    str(task.get("status", "PENDING")),
+                    str(task.get("created_at", _now())),
+                    str(task.get("updated_at", _now())),
+                    json.dumps(task.get("checkpoint") or {}, ensure_ascii=False, sort_keys=True),
+                    task.get("lease_holder"),
+                    task.get("lease_expires_at"),
+                    task.get("fencing_token"),
+                ),
+            )
+            self._conn.commit()
+            return cursor.rowcount == 1
+
     def acquire_lease(self, task_id: str, holder: str, ttl_seconds: int = 300) -> bool:
         """Transactional lease acquisition with fencing token bump."""
         with self._lock:
@@ -768,10 +805,24 @@ class CanonicalStore:
             result = []
             for row in rows:
                 item = dict(row)
-                try:
-                    item["checkpoint"] = json.loads(item.get("checkpoint") or "{}")
-                except json.JSONDecodeError:
-                    item["checkpoint"] = {}
+                raw = item.get("checkpoint")
+                # An identity over exactly what is stored, computed here where the bytes live: the read
+                # surface must be able to say "this checkpoint exists and this is which one" without the
+                # projection ever holding the text. A checkpoint that will not parse still gets a digest,
+                # because "unreadable" is a different claim from "absent".
+                item["checkpointDigest"] = (
+                    hashlib.sha256(raw.encode("utf-8")).hexdigest()
+                    if isinstance(raw, str) and raw else None)
+                if raw in (None, ""):
+                    item["checkpoint"] = None
+                    item["checkpointParseState"] = "ABSENT"
+                else:
+                    try:
+                        item["checkpoint"] = json.loads(raw)
+                        item["checkpointParseState"] = "PARSED"
+                    except (json.JSONDecodeError, TypeError):
+                        item["checkpoint"] = None
+                        item["checkpointParseState"] = "UNPARSEABLE"
                 result.append(item)
             return result
 

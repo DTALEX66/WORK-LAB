@@ -95,6 +95,84 @@ class ProjectionShapeTests(unittest.TestCase):
         self.assertIsNone(projected["fencingToken"])
 
 
+class CheckpointShapeTests(unittest.TestCase):
+    """A checkpoint's VALUES never enter a read-only projection, whatever shape it was stored in.
+
+    The projection iterated `checkpoint` to build `checkpointKeys` and trusted it to be a mapping. A
+    checkpoint stored as a JSON array yielded its elements as "key names" and one stored as a bare string
+    yielded single characters -- user text reaching the Observer under a field named like metadata, while
+    the docstring said only key names are projected.
+    """
+
+    def project(self, value, **over):
+        row = {"task_id": "WL-900", "project_id": "work-lab", "status": "RUNNING",
+               "created_at": "2026-10-08T00:00:00Z", "updated_at": "2026-10-08T00:01:00Z",
+               "lease_holder": None, "lease_expires_at": None, "fencing_token": None,
+               "checkpoint": value, "checkpointParseState": "PARSED",
+               "checkpointDigest": "a" * 64}
+        row.update(over)
+        return snapshot_api.project_task_record(row)
+
+    def test_a_list_checkpoint_projects_no_values(self) -> None:
+        secret = "the user's own sentence, verbatim"
+        projected = self.project([secret, "second item"])
+        self.assertEqual(projected["checkpointKeys"], [])
+        self.assertTrue(projected["checkpointPresent"])
+        self.assertNotIn(secret, json.dumps(projected, ensure_ascii=False))
+
+    def test_a_string_checkpoint_projects_no_characters(self) -> None:
+        projected = self.project("please do not spell me out")
+        self.assertEqual(projected["checkpointKeys"], [])
+        self.assertNotIn("spelling", "".join(projected["checkpointKeys"]))
+        self.assertFalse(any(len(key) == 1 for key in projected["checkpointKeys"]))
+
+    def test_only_name_shaped_keys_survive(self) -> None:
+        projected = self.project({"stage": "verify", "user note": "free text as a key",
+                                  "x" * 200: "too long to be a field name"})
+        self.assertEqual(projected["checkpointKeys"], ["stage"])
+
+    def test_a_non_mapping_checkpoint_still_carries_an_identity(self) -> None:
+        """Withheld keys must not turn into 'no checkpoint' -- presence and readability are separate."""
+        projected = self.project(["only", "values"])
+        self.assertTrue(projected["checkpointPresent"])
+        self.assertEqual(projected["checkpointDigest"], "a" * 64)
+
+
+class StoreParseStateTests(unittest.TestCase):
+    """Present-but-unreadable is a different fact from absent, and the store must not conflate them."""
+
+    def setUp(self) -> None:
+        self.dir = fixture_dir(prefix="store-parse-")
+        self.store = CanonicalStore(self.dir / "canonical.sqlite")
+
+    def tearDown(self) -> None:
+        self.store.close()
+
+    def row(self, task_id: str, raw: str) -> dict:
+        self.store.upsert_task({"task_id": task_id, "project_id": "work-lab", "status": "RUNNING"})
+        self.store._conn.execute("UPDATE tasks SET checkpoint=? WHERE task_id=?", (raw, task_id))
+        self.store._conn.commit()
+        return {r["task_id"]: r for r in self.store.list_tasks()}[task_id]
+
+    def test_absent_checkpoint_is_absent(self) -> None:
+        row = self.row("WL-P1", "")
+        self.assertIsNone(row["checkpoint"])
+        self.assertEqual(row["checkpointParseState"], "ABSENT")
+        self.assertIsNone(row["checkpointDigest"])
+        self.assertFalse(snapshot_api.project_task_record(row)["checkpointPresent"])
+
+    def test_unparseable_checkpoint_is_present_with_an_identity(self) -> None:
+        row = self.row("WL-P2", "{ not json }")
+        self.assertEqual(row["checkpointParseState"], "UNPARSEABLE")
+        self.assertIsNone(row["checkpoint"])
+        self.assertEqual(len(row["checkpointDigest"]), 64, "a digest of exactly what is stored")
+        projected = snapshot_api.project_task_record(row)
+        self.assertTrue(projected["checkpointPresent"])
+        self.assertEqual(projected["checkpointKeys"], [])
+        verdict = snapshot_validator.validate_snapshot(minimal_snapshot(taskRecords=[projected]))
+        self.assertTrue(verdict["valid"], verdict["errors"])
+
+
 class SnapshotPresenceTests(unittest.TestCase):
     def test_absent_when_the_producer_did_not_query(self) -> None:
         snapshot = snapshot_api.build_snapshot(revision=1, projects=[])

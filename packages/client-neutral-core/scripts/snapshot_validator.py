@@ -18,14 +18,42 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
+from pathlib import PurePath
 from typing import Any
 
 SNAPSHOT_SCHEMA_VERSION = "workflow/snapshot/v3"
 
+# The handle vocabulary is imported from the module that produces it, never restated here: a validator with
+# its own copy of the surface names, the kind names, or the content-bearing keys is a second opinion that
+# drifts the moment the projection changes. If the import fails the sets stay EMPTY, which then refuses
+# every handle row — a degraded read path is visible, a permissive one is not.
+try:  # pragma: no cover - the fallback is a deployment fault, not a normal branch
+    from artifact_handle_projection import (
+        ARTIFACT_KINDS as _VOCAB_ARTIFACT_KINDS,
+        CONTENT_BEARING_KEYS as _VOCAB_CONTENT_KEYS,
+        KNOWN_SURFACES as _VOCAB_SURFACES,
+    )
+    PROJECTION_VOCABULARY_SOURCE = "artifact_handle_projection"
+except Exception as _vocabulary_error:  # noqa: BLE001 - fail closed and name the fault
+    _VOCAB_ARTIFACT_KINDS = frozenset()
+    _VOCAB_CONTENT_KEYS = frozenset()
+    _VOCAB_SURFACES = frozenset()
+    PROJECTION_VOCABULARY_SOURCE = f"unavailable:{type(_vocabulary_error).__name__}"
+
+ARTIFACT_KINDS: frozenset[str] = _VOCAB_ARTIFACT_KINDS
+EVIDENCE_SURFACES: frozenset[str] = _VOCAB_SURFACES
+# A digest is 64 hex characters or it is not the same identity claim the record made.
+DIGEST_HEX_LENGTH = 64
+HEXDIGITS = frozenset("0123456789abcdefABCDEF")
+CONTENT_BEARING_ROW_KEYS = frozenset(str(key).lower() for key in _VOCAB_CONTENT_KEYS)
+
 # The fixed evidence vocabulary (WORK-LAB-AUTHORITY.md §10). A projection may report a lower level than
 # a caller hopes for; it may never spell a higher one.
 EVIDENCE_LEVELS = frozenset({"NO_EVIDENCE", "SIMULATED", "SYNTHETIC", "INTEGRATED", "REAL"})
-
+# The seven capability layers, bottom first. A test binds this tuple to the projection's own LAYER_ORDER so
+# the validator cannot quietly disagree with the code that builds the ladder.
+CAPABILITY_LAYERS = ("REGISTERED", "INSTALLED", "LOADED_CONNECTED", "QUALIFIED",
+                     "ENABLED_FOR_TASK", "NATIVE_PROJECTION", "OBSERVED_IN_EXECUTION")
 RFC3339_RE = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"
 )
@@ -136,13 +164,24 @@ def validate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
                 if not isinstance(keys, list) or any(not isinstance(item, str) for item in keys):
                     errors.append(f"taskRecords[{index}].checkpointKeys must be a list of key names")
                 digest = record.get("checkpointDigest")
+                shaped = isinstance(digest, str) and len(digest) == 64 and all(
+                    character in "0123456789abcdefABCDEF" for character in digest)
                 if present and not isinstance(digest, str):
                     errors.append(
                         f"taskRecords[{index}].checkpointDigest must be a digest when a checkpoint exists"
                     )
-                if not present and digest is not None:
+                if not present:
+                    if digest is not None:
+                        errors.append(
+                            f"taskRecords[{index}].checkpointDigest must be null when no checkpoint exists"
+                        )
+                    if keys:
+                        errors.append(
+                            f"taskRecords[{index}].checkpointKeys must be empty when no checkpoint exists"
+                        )
+                elif digest is not None and not shaped:
                     errors.append(
-                        f"taskRecords[{index}].checkpointDigest must be null when no checkpoint exists"
+                        f"taskRecords[{index}].checkpointDigest is present but is not a 64-hex digest"
                     )
 
     adapter_cards = snapshot.get("adapterCapabilities")
@@ -166,6 +205,24 @@ def validate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
                     errors.append(f"adapterCapabilities[{index}].layers contains a non-object entry")
                 if len(set(names)) != len(names):
                     errors.append(f"adapterCapabilities[{index}].layers repeats a layer name")
+                unknown = sorted(name for name in set(names) if name not in CAPABILITY_LAYERS)
+                if unknown:
+                    errors.append(
+                        f"adapterCapabilities[{index}].layers names are outside the ladder: {unknown}"
+                    )
+                # Monotonicity: "the ladder cannot be climbed from the top" has to be a rule, not a comment.
+                # Before this, a card listing only OBSERVED_IN_EXECUTION=MET with a hand-written source
+                # string validated clean -- the two lower layers were simply absent rather than unproven.
+                met_layers = {str(layer.get("layer")) for layer in layers
+                              if isinstance(layer, dict) and layer.get("state") == "MET"}
+                for name in sorted(met_layers & set(CAPABILITY_LAYERS)):
+                    position = CAPABILITY_LAYERS.index(name)
+                    missing_below = [lower for lower in CAPABILITY_LAYERS[:position] if lower not in met_layers]
+                    if missing_below:
+                        errors.append(
+                            f"adapterCapabilities[{index}].layers claims {name}=MET while "
+                            f"{missing_below} are not MET"
+                        )
                 for layer_index, layer in enumerate(layers):
                     if not isinstance(layer, dict):
                         continue
@@ -219,7 +276,144 @@ def validate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     if transport is not None and not isinstance(transport, dict):
         errors.append("transport must be an object")
 
+    errors.extend(_validate_artifact_handles(snapshot))
+
     return {"valid": not errors, "errors": errors, "warnings": warnings}
+
+
+def _validate_artifact_handles(snapshot: dict[str, Any]) -> list[str]:
+    """REQ-RANGE-20261007: the artifact handle list and the enumeration scope that produced it.
+
+    Absent is legal and means "the producer did not enumerate". Present means every row is a handle the
+    evidence-range route can be asked about: absolute, unique, on a surface this project declares, sized,
+    timestamped, and carrying a digest ONLY when some project record states one. A row that carries file
+    content, a digest that was not recorded, a list longer than its declared cap, or a list without the
+    scope report that produced it is refused here rather than discovered by a broken viewer.
+    """
+    errors: list[str] = []
+    handles = snapshot.get("artifactHandles")
+    summary = snapshot.get("artifactHandlesSummary")
+    if handles is None:
+        if summary is not None:
+            errors.append("artifactHandlesSummary without artifactHandles — a scope report of a list "
+                          "this snapshot does not carry")
+        return errors
+    if not isinstance(handles, list):
+        errors.append("artifactHandles must be a list when present")
+        return errors
+    if summary is None:
+        errors.append("artifactHandles requires artifactHandlesSummary — an enumeration without its stated "
+                      "scope reads as a complete list whether or not it is one")
+        return errors
+    if not isinstance(summary, dict):
+        errors.append("artifactHandlesSummary must be an object")
+        return errors
+
+    seen: set[str] = set()
+    for index, row in enumerate(handles):
+        if not isinstance(row, dict):
+            errors.append(f"artifactHandles[{index}] must be an object")
+            continue
+        carried = sorted(key for key in row if str(key).lower() in CONTENT_BEARING_ROW_KEYS)
+        if carried:
+            errors.append(f"artifactHandles[{index}] carries content field(s) {carried} — a handle list "
+                          "projects identity, and bytes are read through /api/v1/evidence-range by interval")
+        handle = row.get("handle")
+        if not isinstance(handle, str) or not handle.strip():
+            errors.append(f"artifactHandles[{index}].handle required (non-empty string)")
+        elif PurePath(handle).is_absolute() is False:
+            errors.append(f"artifactHandles[{index}].handle must be an absolute path, got {handle!r} — "
+                          "a relative handle means a different file under a different working directory")
+        elif handle in seen:
+            errors.append(f"artifactHandles[{index}].handle duplicates {handle!r}")
+        else:
+            seen.add(handle)
+        surface = row.get("surface")
+        if surface not in EVIDENCE_SURFACES:
+            errors.append(f"artifactHandles[{index}].surface must be one of {sorted(EVIDENCE_SURFACES)}, "
+                          f"got {surface!r}")
+        kind = row.get("kind")
+        if kind not in ARTIFACT_KINDS:
+            errors.append(f"artifactHandles[{index}].kind must be one of {sorted(ARTIFACT_KINDS)}, "
+                          f"got {kind!r}")
+        size = row.get("sizeBytes")
+        if not isinstance(size, int) or isinstance(size, bool) or size < 0:
+            errors.append(f"artifactHandles[{index}].sizeBytes must be a non-negative int, got {size!r}")
+        modified = row.get("modifiedAt")
+        if not isinstance(modified, str) or not RFC3339_RE.match(modified):
+            errors.append(f"artifactHandles[{index}].modifiedAt must be RFC3339 UTC, got {modified!r}")
+        digest = row.get("digest")
+        recorded = row.get("digestRecorded")
+        if not isinstance(recorded, bool):
+            errors.append(f"artifactHandles[{index}].digestRecorded must be boolean — a reader must be able "
+                          "to tell 'no digest exists' from 'nobody looked'")
+        if "digest" in row and digest is None:
+            errors.append(f"artifactHandles[{index}].digest must be absent, not null — a null digest would "
+                          "be a padded identity")
+        if digest is not None:
+            if not isinstance(digest, str) or len(digest) != DIGEST_HEX_LENGTH or any(
+                    character not in HEXDIGITS for character in digest):
+                errors.append(f"artifactHandles[{index}].digest must be 64 hex characters, got {digest!r}")
+            if recorded is not True:
+                errors.append(f"artifactHandles[{index}] carries a digest while digestRecorded is not True")
+            source = row.get("digestSource")
+            if not isinstance(source, str) or not source.strip():
+                errors.append(f"artifactHandles[{index}].digestSource required — a recorded digest must name "
+                              "the record it was read from, or it is an invented one")
+        elif recorded is True:
+            errors.append(f"artifactHandles[{index}] claims a recorded digest but carries none")
+        if not isinstance(row.get("surfaceRoot"), str) or not row.get("surfaceRoot"):
+            errors.append(f"artifactHandles[{index}].surfaceRoot required — the declared surface the row was "
+                          "enumerated from")
+
+    projected = summary.get("projectedCount")
+    if not isinstance(projected, int) or isinstance(projected, bool):
+        errors.append(f"artifactHandlesSummary.projectedCount must be an int, got {projected!r}")
+    elif projected != len(handles):
+        errors.append(f"artifactHandlesSummary.projectedCount {projected} does not match the "
+                      f"{len(handles)} projected artifactHandles")
+    cap = summary.get("cap")
+    if not isinstance(cap, int) or isinstance(cap, bool) or cap <= 0:
+        errors.append(f"artifactHandlesSummary.cap must be a positive int, got {cap!r}")
+    elif isinstance(projected, int) and projected > cap:
+        errors.append(f"artifactHandles carries {projected} rows above its declared cap {cap} — an oversized "
+                      "enumeration may be capped, it may never be quietly over-cap")
+    enumerated = summary.get("enumeratedCount")
+    if not isinstance(enumerated, int) or isinstance(enumerated, bool) or enumerated < 0:
+        errors.append(f"artifactHandlesSummary.enumeratedCount must be a non-negative int, got {enumerated!r}")
+    elif isinstance(projected, int) and projected > enumerated:
+        errors.append(f"artifactHandlesSummary projects {projected} rows from {enumerated} enumerated")
+    truncated = summary.get("truncated")
+    if not isinstance(truncated, bool):
+        errors.append("artifactHandlesSummary.truncated must be boolean — the list is either capped or it "
+                      "is not, and a reader cannot be left to guess")
+    elif isinstance(enumerated, int) and isinstance(projected, int) and truncated != (enumerated > projected):
+        errors.append(f"artifactHandlesSummary.truncated={truncated} contradicts enumerated={enumerated} "
+                      f"vs projected={projected}")
+    if summary.get("contentIncluded") is not False:
+        errors.append("artifactHandlesSummary.contentIncluded must be false — this projection never carries "
+                      "artifact bytes, and a true or missing value says otherwise")
+    digest_index = summary.get("digestIndex")
+    if not isinstance(digest_index, dict):
+        errors.append("artifactHandlesSummary.digestIndex required — how many digests were read from records")
+    else:
+        if digest_index.get("computedByHashing") is not False:
+            errors.append("artifactHandlesSummary.digestIndex.computedByHashing must be false — a digest this "
+                          "projection hashed itself out of file bytes is not a recorded digest")
+        with_digest = digest_index.get("rowsWithDigest")
+        if isinstance(with_digest, int) and isinstance(projected, int) and with_digest > projected:
+            errors.append(f"artifactHandlesSummary.digestIndex.rowsWithDigest {with_digest} exceeds the "
+                          f"projected rows {projected}")
+    generated = summary.get("generatedAt")
+    if not isinstance(generated, str) or not RFC3339_RE.match(generated):
+        errors.append(f"artifactHandlesSummary.generatedAt must be RFC3339, got {generated!r}")
+    if not isinstance(summary.get("surfaces"), list) or not summary.get("surfaces"):
+        errors.append("artifactHandlesSummary.surfaces required — which declared surfaces were enumerated")
+    state = summary.get("surfaceState")
+    if not isinstance(state, list):
+        errors.append("artifactHandlesSummary.surfaceState required — each declared surface with whether it "
+                      "exists on this machine, so an absent source is reported instead of read as empty")
+    return errors
 
 
 def snapshot_to_json(snapshot: dict[str, Any]) -> str:

@@ -63,7 +63,7 @@ SENSITIVE_NAME_TOKENS = (
 )
 
 
-def _name_is_sensitive(resolved: Path) -> bool:
+def name_is_sensitive(resolved: Path) -> bool:
     names = [part.lower() for part in resolved.parts]
     return any(token in name for name in names for token in SENSITIVE_NAME_TOKENS)
 
@@ -123,7 +123,7 @@ def read_range(*, handle: str, root: Path, offset: int = 0, limit: int = DEFAULT
         return _refusal("UNRESOLVABLE", handle=str(handle), detail=type(error).__name__)
     if not resolved.is_relative_to(root):
         return _refusal("OUT_OF_BOUNDARY", handle=str(handle), detail=str(resolved))
-    if _name_is_sensitive(resolved):
+    if name_is_sensitive(resolved):
         # Named before the surface test: a credential-looking path is refused even when it sits in an
         # evidence root, so a restored backup cannot be read just because it was filed under artifacts/.
         return _refusal("SENSITIVE_NAME", handle=str(handle), detail=resolved.name)
