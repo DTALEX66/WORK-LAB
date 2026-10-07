@@ -281,22 +281,40 @@ def cdp_list(port: int, path: str = "/json/list") -> list[dict]:
     instance — u19's raw GET timed out while the same bytes plus `User-Agent`/`Accept` and a portless
     Host returned HTTP/1.1 200 at once. u19 keeps its own shape because WebView2 is served by it;
     the browser this gate drives is Chrome, so the gate speaks Chrome."""
-    s = socket.create_connection(("127.0.0.1", port), timeout=2)
+    s = socket.create_connection(("127.0.0.1", port), timeout=6)
     try:
         s.sendall(f"GET {path} HTTP/1.1\r\nHost: 127.0.0.1\r\nUser-Agent: worklab-geometry-gate\r\n"
                   f"Accept: application/json\r\nConnection: close\r\n\r\n".encode("latin-1"))
-        chunks = []
+        raw = b""
+        head = None
+        expected = None
         while True:
             piece = s.recv(65536)
             if not piece:
                 break
-            chunks.append(piece)
+            raw += piece
+            if head is None:
+                split = raw.find(b"\r\n\r\n")
+                if split == -1:
+                    continue
+                head, body_start = raw[:split], split + 4
+                match = re.search(rb"Content-Length:\s*(\d+)", head, re.IGNORECASE)
+                expected = int(match.group(1)) if match else None
+            if expected is not None and len(raw) - (raw.find(b"\r\n\r\n") + 4) >= expected:
+                break
     finally:
         s.close()
-    raw = b"".join(chunks)
-    head, sep, body = raw.partition(b"\r\n\r\n")
-    if not sep or not head.split(b"\r\n", 1)[0].decode("latin-1", "replace").endswith("200"):
-        raise RuntimeError(f"CDP {path}: bad response {head[:80]!r}")
+    if head is None:
+        raise RuntimeError(f"CDP {path}: no response head ({raw[:80]!r})")
+    status_line = head.split(b"\r\n", 1)[0].decode("latin-1", "replace")
+    parts = status_line.split()
+    if len(parts) < 2 or parts[1] != "200":
+        raise RuntimeError(f"CDP {path}: HTTP {status_line}")
+    body = raw[len(head) + 4:]
+    if expected is not None and len(body) < expected:
+        # A short read is not a Chrome quirk to tolerate: a JSON document cut mid-list is exactly how
+        # a `page` target silently disappears, which is the failure this function used to report.
+        raise RuntimeError(f"CDP {path}: truncated body {len(body)} of {expected}")
     return json.loads(body.decode("utf-8", "replace"))
 
 
