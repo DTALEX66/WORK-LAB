@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 145,
+    "total": 146,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 49,
       "test_behavior_alignment": 16,
       "working_directory_recovery": 2,
-      "evidence_state": 25,
+      "evidence_state": 26,
       "ci_configuration": 13,
       "feature_gap": 10,
       "config_downgrade": 3,
@@ -4391,6 +4391,37 @@
         "regressionCommand": "python -m pytest tests/ci/test_topbar_geometry_gate.py",
         "bindingNote": "bound 2026-10-07 against 1b4224a: that commit carries the instrument and its 16 unit checks, restores the required CI step, and re-measures the tool inventory plus the current-state snapshot in the same change; the promise check ran before stamping",
         "bindingBasis": "fix-and-gate-in-one-commit: HEAD `fix(gates): the geometry gate can now drive Chro…` is the commit whose source change is the client this record describes"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
+    },
+    {
+      "error_id": "ERR-148",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": "scripts/maintenance/recover_shared_root_original.py, tests/workflow-assistance/test_recover_shared_root_original.py, scripts/audit/ag19_record_root_pin_test.py, .project/governance/recovered-source-registry.json, .project/governance/project-data-boundary.json, docs/audits/AG19_RECORD_ROOT_PIN_TEST_2026-10-07.json",
+      "command": "python scripts/audit/ag19_record_root_pin_test.py",
+      "exit_code": 1,
+      "observed_error": "AG-19's widened negative proof had found one digest-exact copy of a missing WORK-LAB original — WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md, 11,876 B, sha256 dff24bed… inside WORK-LAB_MASTER_ATLAS_2026-09-29.zip in the owner's Record root — and the audit's verdict was PIN_MATCH_FOUND_EXTRACTION_OWED with exit 1. The registry carried the same document as location machine-local, which is the ERR-142 complaint in registry form: bytes that only the authoring machine can re-measure.",
+      "root_cause": "The recovery tool could only mirror in from a declared *shared* root (toolchains, libraries) and required a loose file. Owner material is a different kind of root — readable, never writable — and an archive member is not a file the tool could name, so the one hit the audit could prove had no path back into the repository.",
+      "fix": "The boundary declares readOnlyInboundRoots (owner-material-record, neverWrite, an explicit forbidden/allowed-operations list). The recovery tool gains an archive-member mode that refuses without a digest pin, refuses on any mismatch, refuses read-only-inbound roots without --allow-owner-material, and records archive sha, member path, member size and CRC on the spill ledger line alongside the basis. The pin test now resolves a digest hit against the repository through git show HEAD:<path> and compares the blob digest, so the verdict can only become PIN_MATCH_FOUND_AND_RECOVERED_TRACKED when a clean checkout reproduces the bytes; while the recovery was staged-but-uncommitted it still said OWED, which is that strictness working. Result: 11,876 B mirrored, digest equal at member and blob level, outside archive verified untouched after the read, registry entry promoted machine-local → tracked.",
+      "regression_test": "tests/workflow-assistance/test_recover_shared_root_original.py::ArchiveMemberRecoveryTests::test_an_inbound_owner_material_root_needs_its_own_opt_in",
+      "evidence_level": "local-full",
+      "repeat_prevention": "When a recovery path cannot reach the bytes a prior round proved exist, fix the path rather than downgrading the claim, and require a digest pin for anything extracted from an archive: a filename inside a 15 GB root is not evidence. Declare read-only inbound roots separately from shared roots and gate them behind an explicit opt-in, and let the audit resolve recovery against git rather than the disk so a recovery cannot be counted before it is committable.",
+      "remaining_boundary": "AG-19 is not closed as a whole: four of the five pinned targets remain NOT_RECOVERED and negatively proven in scope only (the biggest is the 15,078,228,346 B timeline at 15,558,839 B, whose digest was never recorded), and the two unpinned targets still have no hash proof at all. nameHits grew to 11 with 4 unattributed and 6 otherProject — the unattributed rows are a naming question for the owner, not a recovery this project may guess at. The fixture's first version nested the two roots so the opt-in guard could never fire; it was caught by the tests failing, not by inspection, and the note is in the commit.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "left null: the missing capability is the recovery tool's original scope, designed before the AG-19 pin test produced a digest hit; naming an origin commit for an absent feature would be attribution",
+        "fixedCommit": "50f77d175891ae8bd24c534498df7510a98946c7",
+        "verifiedCommit": null,
+        "affectedCapability": "AG-19 original recovery; Source Registry checkout-verifiability",
+        "regressionCommand": "python -m pytest tests/workflow-assistance/test_recover_shared_root_original.py tests/workflow-assistance/test_ag19_record_root_pin_test.py",
+        "bindingNote": "bound 2026-10-07 against 50f77d1: that commit carries the tool, its 18 checks, the pin-test verdict change and the recovered original itself; the promise check ran before stamping and the bulk guard counted its ledger rows",
+        "bindingBasis": "fix-and-artifact-in-one-commit: `feat(ag19): recover the pinned second original out of the ow…`"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"

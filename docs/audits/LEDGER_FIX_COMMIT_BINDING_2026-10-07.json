@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-07T04:48:21Z",
+  "generatedAt": "2026-10-07T05:15:33Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -8,7 +8,7 @@
     "null": "an unverified fix stays null, and a PASS record with no fixedCommit is listed as owed rather than left silently unbound"
   },
   "counts": {
-    "bound": 33,
+    "bound": 34,
     "unboundPassRecords": 95,
     "anomalies": 0
   },
@@ -339,6 +339,16 @@
       "fixedCommit": "1b4224abd75b77db51d16ad92edb12928cbb91cf",
       "verifiedCommit": null,
       "promise": "tests/ci/test_topbar_geometry_gate.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-148",
+      "statusAfter": "PASS",
+      "fixedCommit": "50f77d175891ae8bd24c534498df7510a98946c7",
+      "verifiedCommit": null,
+      "promise": "tests/workflow-assistance/test_recover_shared_root_original.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": false,
       "bindingNotePresent": true

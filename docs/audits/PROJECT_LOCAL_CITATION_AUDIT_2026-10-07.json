@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T04:49:00Z",
+  "generatedAt": "2026-10-07T05:15:45Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2046,
+    "trackedFilesScanned": 2047,
     "distinctProjectLocalTokens": 387,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 387,
-    "citationsToAbsentTokens": 1036
+    "citationsToAbsentTokens": 1038
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -37,7 +37,7 @@
       "distinctPaths": 57
     },
     "negative_assertion_or_removal_record": {
-      "citations": 102,
+      "citations": 103,
       "distinctPaths": 40
     },
     "path_pattern_or_truncated_token": {
@@ -45,7 +45,7 @@
       "distinctPaths": 8
     },
     "prose_in_frozen_history_or_audit": {
-      "citations": 27,
+      "citations": 28,
       "distinctPaths": 1
     },
     "unclassified_needs_human_read": {
@@ -568,7 +568,7 @@
       {
         "path": ".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29",
         "file": "scripts/audit/ag19_record_root_pin_test.py",
-        "line": 39,
+        "line": 40,
         "text": "ATLAS = (REPO / \".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29\""
       },
       {
@@ -934,7 +934,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-j/ag19_detail.json",
         "file": "scripts/audit/ag19_record_root_pin_test.py",
-        "line": 43,
+        "line": 44,
         "text": "DETAIL_DEFAULT = \".project-local/runs/convergence-20261007-j/ag19_detail.json\""
       },
       {
@@ -5279,6 +5279,12 @@
       },
       {
         "path": ".project-local",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md",
+        "line": 121,
+        "text": "└─ .project-local/      # ignored：runs、cache、logs、worktrees、artifacts"
+      },
+      {
+        "path": ".project-local",
         "file": "docs/history/archive/workflow-assistance/handoffs/workflow-assistance-2026-07-23.md",
         "line": 12,
         "text": "- 项目执行数据：必须留在 `<project>/.project-local/` 下的受忽略目录；禁止把 cache、测试输出、日志、artifact、任务状态写到项目根外或用户 Temp。"
@@ -5907,6 +5913,12 @@
       },
       {
         "path": ".project-local",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md",
+        "line": 31,
+        "text": "- 项目内可创建隔离子目录；运行数据、worktree、cache、logs、artifacts 必须留在项目根 `.project-local/`（或经批准的项目内等价根），不得外溢到其他项目、用户目录或其他盘符。"
+      },
+      {
+        "path": ".project-local",
         "file": "docs/history/archive/workflow-assistance/handoffs/workflow-assistance-2026-07-23.md",
         "line": 31,
         "text": "- `project-data-boundary` 规则要求项目任务 runtime、cache、logs、artifacts、测试输出均锁在项目内 `.project-local/`。"
@@ -6307,7 +6319,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 178
+    "presentOnThisMachine": 179
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

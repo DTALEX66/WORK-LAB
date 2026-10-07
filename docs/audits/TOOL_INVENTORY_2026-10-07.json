@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T04:53:31Z",
+  "generatedAt": "2026-10-07T05:15:45Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -9,7 +9,7 @@
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
     "trackedTools": 42,
-    "withLedgerPromise": 14,
+    "withLedgerPromise": 15,
     "referencedSomewhere": 42,
     "unclaimed": 0
   },
@@ -53,19 +53,19 @@
     },
     {
       "path": "scripts/audit/ag19_record_root_pin_test.py",
-      "sha256": "b62022eb128cec4f7f22b19c9d97bb3a5c7fc89a4e51d6d8f260c968fbff6c79",
-      "bytes": 14945,
-      "lines": 265,
+      "sha256": "7d78e206ac5715ddac08f88b9cbcd64edf5965eb0113afc5954b70545419f313",
+      "bytes": 17134,
+      "lines": 309,
       "digestBasis": "git-blob-at-HEAD",
-      "citedByLedgerPromises": 0,
-      "citedByRecords": 8,
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 7,
       "citedBy": [
-        ".project/governance/recovered-source-registry.json",
         "docs/audits/AG19_RECORD_ROOT_PIN_TEST_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md"
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
@@ -595,11 +595,11 @@
     },
     {
       "path": "scripts/maintenance/recover_shared_root_original.py",
-      "sha256": "de12cb8553672524c421b35f1137345f9b6c060d2dda228c36373efd449a18a0",
-      "bytes": 10491,
-      "lines": 208,
+      "sha256": "8270a62284a432b0e963fe02cb4bc2dda647c188b1d09c4c10b21b8c5b3c2972",
+      "bytes": 14151,
+      "lines": 273,
       "digestBasis": "git-blob-at-HEAD",
-      "citedByLedgerPromises": 1,
+      "citedByLedgerPromises": 2,
       "citedByRecords": 12,
       "citedBy": [
         ".project/governance/recovered-source-registry.json",
