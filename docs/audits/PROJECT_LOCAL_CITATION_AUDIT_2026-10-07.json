@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T23:07:59Z",
+  "generatedAt": "2026-10-07T23:25:00Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2131,
-    "distinctProjectLocalTokens": 431,
+    "distinctProjectLocalTokens": 433,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 431,
-    "citationsToAbsentTokens": 1186
+    "tokensAbsent": 433,
+    "citationsToAbsentTokens": 1206
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,8 +21,8 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 252,
-      "distinctPaths": 92
+      "citations": 272,
+      "distinctPaths": 94
     },
     "machine_field_pointing_at_absent_path": {
       "citations": 14,
@@ -272,6 +272,12 @@
         "text": "if rel.startswith(\".project-local/\") or \"/node_modules/\" in f\"/{rel}\":"
       },
       {
+        "path": ".project-local/RUNS/a.log",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 790,
+        "text": "(\"D:/proj\", \".project-local/runs\", \"d:/PROJ/.project-local/RUNS/a.log\", None),"
+      },
+      {
         "path": ".project-local/artifacts",
         "file": "docs/current/workflow-assistance/workflow/gateway-cron-delivery.md",
         "line": 52,
@@ -298,7 +304,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "packages/client-neutral-core/scripts/artifact_handle_projection.py",
-        "line": 71,
+        "line": 72,
         "text": "# When one path is declared under two keys (this project declares `.project-local/artifacts` as both the"
       },
       {
@@ -404,6 +410,12 @@
         "text": "ARTIFACTS = \".project-local/artifacts\""
       },
       {
+        "path": ".project-local/artifacts",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 808,
+        "text": "(\"/home/runner/proj\", \".project-local/artifacts\")):"
+      },
+      {
         "path": ".project-local/artifacts/MANIFEST.json",
         "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
         "line": 372,
@@ -424,7 +436,7 @@
       {
         "path": ".project-local/artifacts/a.json",
         "file": "tests/workflow-assistance/test_path_text_is_one_predicate.py",
-        "line": 62,
+        "line": 69,
         "text": "(\"/home/runner/work/WORK-LAB/.project-local/artifacts/a.json\","
       },
       {
@@ -999,6 +1011,72 @@
       },
       {
         "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 788,
+        "text": "(\"D:/proj\", \".project-local/runs\", \"D:/proj/.project-local/runs/a.log\", None),"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 789,
+        "text": "(\"D:/proj\", \".project-local/runs\", r\"D:\\proj\\.project-local\\runs\\a.log\", None),"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 790,
+        "text": "(\"D:/proj\", \".project-local/runs\", \"d:/PROJ/.project-local/RUNS/a.log\", None),"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 791,
+        "text": "(\"/home/runner/proj\", \".project-local/runs\", \"/home/runner/proj/.project-local/runs/a.log\", None),"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 792,
+        "text": "(\"/home/Runner/proj\", \".project-local/runs\", \"/home/runner/PROJ/.project-local/runs/a.log\", None),"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 794,
+        "text": "(\"D:/proj\", \".project-local/runs\", \"D:/projX/.project-local/runs/a.log\", \"outside-declared-surface\"),"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 795,
+        "text": "(\"D:/proj\", \".project-local/runs\", \"D:/other/.project-local/runs/a.log\", \"outside-declared-surface\"),"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 796,
+        "text": "(\"/home/runner/proj\", \".project-local/runs\", \"/home/runner/projX/a.log\", \"outside-declared-surface\"),"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 798,
+        "text": "(\"D:/proj\", \".project-local/runs\", \"D:/proj/.project-local/runs/../../../Windows/x\", \"outside-declared-surface\"),"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 800,
+        "text": "(\"D:/proj\", \".project-local/runs\", \".project-local/runs/a.log\", \"not-absolute\"),"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 807,
+        "text": "for root, surface in ((\"D:/proj\", \".project-local/runs\"),"
+      },
+      {
+        "path": ".project-local/runs",
         "file": "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py",
         "line": 112,
         "text": "\"the ERR-140 offender is bare again: pass dir= inside .project-local/runs\")"
@@ -1010,27 +1088,69 @@
         "text": "self.assertEqual(\".project-local/runs\", self.boundary[\"runtimeRoot\"])"
       },
       {
+        "path": ".project-local/runs/../../../Windows/x",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 798,
+        "text": "(\"D:/proj\", \".project-local/runs\", \"D:/proj/.project-local/runs/../../../Windows/x\", \"outside-declared-surface\"),"
+      },
+      {
         "path": ".project-local/runs/a.log",
         "file": "tests/workflow-assistance/test_path_text_is_one_predicate.py",
-        "line": 43,
+        "line": 50,
         "text": "result = reader.read_range(handle=\"D:/elsewhere/project/.project-local/runs/a.log\","
       },
       {
         "path": ".project-local/runs/a.log",
         "file": "tests/workflow-assistance/test_path_text_is_one_predicate.py",
-        "line": 47,
+        "line": 54,
         "text": "self.assertIn(\"d:/elsewhere/project/.project-local/runs/a.log\", result[\"reason\"],"
+      },
+      {
+        "path": ".project-local/runs/a.log",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 788,
+        "text": "(\"D:/proj\", \".project-local/runs\", \"D:/proj/.project-local/runs/a.log\", None),"
+      },
+      {
+        "path": ".project-local/runs/a.log",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 791,
+        "text": "(\"/home/runner/proj\", \".project-local/runs\", \"/home/runner/proj/.project-local/runs/a.log\", None),"
+      },
+      {
+        "path": ".project-local/runs/a.log",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 792,
+        "text": "(\"/home/Runner/proj\", \".project-local/runs\", \"/home/runner/PROJ/.project-local/runs/a.log\", None),"
+      },
+      {
+        "path": ".project-local/runs/a.log",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 794,
+        "text": "(\"D:/proj\", \".project-local/runs\", \"D:/projX/.project-local/runs/a.log\", \"outside-declared-surface\"),"
+      },
+      {
+        "path": ".project-local/runs/a.log",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 795,
+        "text": "(\"D:/proj\", \".project-local/runs\", \"D:/other/.project-local/runs/a.log\", \"outside-declared-surface\"),"
+      },
+      {
+        "path": ".project-local/runs/a.log",
+        "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
+        "line": 800,
+        "text": "(\"D:/proj\", \".project-local/runs\", \".project-local/runs/a.log\", \"not-absolute\"),"
       },
       {
         "path": ".project-local/runs/a.txt",
         "file": "tests/workflow-assistance/test_path_text_is_one_predicate.py",
-        "line": 55,
+        "line": 62,
         "text": "(\"D:/All projects/WORK-LAB/.project-local/runs/a.txt\", \"D:/All projects/WORK-LAB\", True),"
       },
       {
         "path": ".project-local/runs/a.txt",
         "file": "tests/workflow-assistance/test_path_text_is_one_predicate.py",
-        "line": 56,
+        "line": 63,
         "text": "(\"d:/ALL PROJECTS/work-lab/.project-local/runs/a.txt\", \"D:/All projects/WORK-LAB\", True),"
       },
       {
