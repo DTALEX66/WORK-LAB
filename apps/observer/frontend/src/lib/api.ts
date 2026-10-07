@@ -106,6 +106,26 @@ const DESCRIPTOR = loadRuntimeDescriptor()
 const SNAPSHOT_URL = DESCRIPTOR.snapshotUrl
 const EVENTS_URL = DESCRIPTOR.eventsUrl
 
+// REQ-RANGE-20261007: `GET /api/v1/evidence-range` is the THIRD endpoint of the same loopback sidecar
+// surface. It is derived from the descriptor's snapshot base — never a second hardcoded port — and it has
+// to clear the same gate the snapshot endpoint clears (http, literal loopback, no credentials, no added
+// query), so a crafted `?api=` cannot steer an evidence read at an external host. The route is GET-only by
+// contract; this module exposes no mutating variant.
+export function isTrustedEvidenceRangeEndpoint(raw: string): boolean {
+  const u = _loopbackHttp(raw)
+  return u !== null && u.pathname === '/api/v1/evidence-range'
+}
+
+export function evidenceRangeEndpoint(): { url: string; authoritative: boolean } | null {
+  const base = _loopbackHttp(SNAPSHOT_URL)
+  if (!base) return null
+  base.pathname = '/api/v1/evidence-range'
+  base.search = ''
+  base.hash = ''
+  const url = base.toString().replace(/\?$/, '')
+  return isTrustedEvidenceRangeEndpoint(url) ? { url, authoritative: DESCRIPTOR.authoritative } : null
+}
+
 // Structural read of the wire payload. The front must not cast whatever arrives
 // into `SnapshotV3`: a legacy/v2 body, or a truncated one, would then render as
 // if it were current truth. Fail closed — `null` is a read failure, so the

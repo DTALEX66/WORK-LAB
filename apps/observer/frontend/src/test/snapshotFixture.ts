@@ -7,7 +7,31 @@
  * Everything here is a declared value, never a default: a fixture that quietly filled in `0` or
  * `LIVE` would make a fabricated UI state look correct.
  */
-import type { SnapshotV3, Project } from '@/types'
+import type { SnapshotV3, Project, TaskRecord, Execution } from '@/types'
+
+/** A fully-populated canonical-store task record (the shape `snapshot_api.py::project_task_record` emits).
+ *  Every field is declared, never defaulted: a fixture that padded `0` or `''` would make a fabricated
+ *  Inspector value look correct. */
+export function mkTaskRecord(over: Partial<TaskRecord> = {}): TaskRecord {
+  return {
+    taskId: 'WL-900', projectId: 'work-lab', status: 'WAITING_APPROVAL',
+    createdAt: '2026-10-08T01:00:00Z', updatedAt: '2026-10-08T01:20:00Z',
+    leaseHolder: 'worker-9', leaseExpiresAt: '2026-10-08T01:30:00Z', fencingToken: 7,
+    checkpointPresent: true, checkpointKeys: ['cursor', 'stage'],
+    checkpointDigest: 'b'.repeat(64),
+    ...over,
+  }
+}
+
+/** An execution row as the v3 projection carries it (no timestamps: the timeline gap is a real gap). */
+export function mkExecution(over: Partial<Execution> = {}): Execution {
+  return {
+    executionId: 'ex-9', anchorProjectId: 'work-lab', workingArea: 'apps/observer',
+    state: 'RUNNING', stateQuality: 'strong', agent: 'codex', sessionId: 'sess-42',
+    sourceRef: 'git:origin/main@abc1234',
+    ...over,
+  } as Execution
+}
 
 export function mkProject(over: Partial<Project> = {}): Project {
   return {

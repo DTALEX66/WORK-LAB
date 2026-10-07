@@ -20,6 +20,9 @@ import {
   readRecordFocus, writeRecordFocus, EMPTY_FOCUS,
   type RecordFocus,
 } from '@/lib/recordFocus'
+// REQ-RANGE-20261007: the evidence slice address rides the same single ?view= mechanism; the URL writer has
+// to keep it or a refresh silently turns an addressed read into an unaddressed one.
+import { EVIDENCE_PARAM_NAMES } from '@/lib/evidenceRange'
 import { LaneErrorBoundary } from '@/components/ui/lane-error-boundary'
 import { announce } from '@/lib/a11y'
 
@@ -205,6 +208,17 @@ export default function App() {
     if (shell) p.set('shell', shell)
     // P1-02: the focused record survives refresh, back/forward and copy-paste exactly like the lane.
     writeRecordFocus(p, focus)
+    // REQ-RANGE-20261007: an addressed evidence slice is the same kind of deep link. It is preserved while
+    // the evidence lane is the active one, so a theme/layout toggle cannot silently drop the read the owner
+    // is looking at — and it is dropped the moment another lane takes over, because a stale byte interval is
+    // not a state worth carrying.
+    if (view === 'evidence') {
+      const current = new URLSearchParams(window.location.search)
+      for (const name of EVIDENCE_PARAM_NAMES) {
+        const value = current.get(name)
+        if (value !== null && value !== '') p.set(name, value)
+      }
+    }
     const qs = p.toString()
     const url = window.location.pathname + (qs ? '?' + qs : '')
     window.history.replaceState(null, '', url)

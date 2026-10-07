@@ -193,7 +193,11 @@ export interface WorkspaceEvidence {
   }
   governance?: { contracts?: number; [k: string]: unknown }
   history?: { totalErrors?: number; recentErrors?: { errorId?: string; [k: string]: unknown }[]; [k: string]: unknown }
-  sources?: { evidenceKind?: string; [k: string]: unknown }[]
+  // packages/client-neutral-core/scripts/workspace_evidence.py appends one row per loaded surface:
+  // {path, evidenceKind, loadedAt} (+ generatedAt for the JSON projections). `path` is a repository-RELATIVE
+  // POSIX path — the projection has no project root to absolutize it with, which is exactly why an
+  // evidence-range read of it comes back refused rather than empty.
+  sources?: { evidenceKind?: string; path?: string; loadedAt?: string; generatedAt?: string; [k: string]: unknown }[]
   [k: string]: unknown
 }
 

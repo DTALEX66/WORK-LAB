@@ -26,6 +26,10 @@ import { fmtTokens, fmtCostQuality, stateTone } from '@/lib/api'
 // P1-02: record focus is one query parameter per record, resolved against the records the backend
 // actually carries. The lane mechanism (?view=) is unchanged and no second router exists.
 import { EMPTY_FOCUS, recordLink, resolveFocus, type RecordFocus } from '@/lib/recordFocus'
+// P1-04: the Inspector's dimension contract lives in its own module so every record kind answers the same
+// list of questions, and so a dimension can be tested one at a time. `Dim` moved there (one marker, one
+// vocabulary: PROJECTED / NULL_FIELD / SOURCE_GAP).
+import { Dim, RecordInspector } from '@/views/RecordInspector'
 
 type Snap = SnapshotV3 | null
 
@@ -50,26 +54,6 @@ function toneVariant(tone: string): 'success' | 'warning' | 'error' | 'info' | '
     case 'done': return 'info'
     default: return 'muted'
   }
-}
-
-// A single Inspector dimension. When `value` is empty we show an explicit
-// source-gap marker, NOT a blank cell or a fake "0" — the prompt requires the
-// gap to be visible so the user knows what is / is not wired yet.
-function Dim({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
-  const present = value !== null && value !== undefined && value !== '' && value !== false
-  return (
-    <div className="list-item flex-col items-stretch gap-1">
-      <div className="text-[10px] uppercase tracking-[0.12em] text-muted">{label}</div>
-      {present ? (
-        <div className="whitespace-pre-wrap text-[11px] text-ink">{value}</div>
-      ) : (
-        <div className="flex items-center gap-1.5 text-[11px] text-warning">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-secondary" aria-hidden="true" />
-          来源缺口（当前 v3 快照未携带{hint ? ` · ${hint}` : ''}）
-        </div>
-      )}
-    </div>
-  )
 }
 
 export function WorkView({
@@ -184,35 +168,13 @@ export function WorkView({
               </span>
             </CardHeader>
             <CardContent>
-              <div className="list">
-                <Dim label="Task ID" value={selectedTask.taskId || null}
-                  hint="任务标识来自 canonical store 的 tasks 表" />
-                <Dim label="Project" value={selectedTask.projectId || null} hint="任务归属项目" />
-                <Dim label="Status" value={selectedTask.status || null}
-                  hint="真实状态；状态机里没有的写法原样显示，不改写成成功" />
-                <Dim label="Lease / Fencing"
-                  value={selectedTask.leaseHolder
-                    ? `${selectedTask.leaseHolder} · fence ${selectedTask.fencingToken ?? 'UNKNOWN'} · 到期 ${selectedTask.leaseExpiresAt || 'UNKNOWN'}`
-                    : null}
-                  hint="当前无持有者时为 null，不是 0" />
-                <Dim label="Checkpoint 身份"
-                  value={selectedTask.checkpointPresent
-                    ? `键 ${selectedTask.checkpointKeys.join(' / ') || '（无键）'} · digest ${selectedTask.checkpointDigest ? selectedTask.checkpointDigest.slice(0, 12) : 'UNKNOWN'}`
-                    : null}
-                  hint="检查点正文不进入只读投影，只投影键名与摘要（摘要随正文变化）" />
-                <Dim label="创建 / 更新"
-                  value={selectedTask.updatedAt ? `${selectedTask.createdAt || 'UNKNOWN'} → ${selectedTask.updatedAt}` : null} />
-                <Dim label="Goal" value={null}
-                  hint="目标文本属提示词面，只读投影不带正文" />
-                <Dim label="Revision / Attempt" value={null}
-                  hint="修订与尝试由 Task Ledger 合同持有，尚未进入快照投影" />
-                <Dim label="Planner / Agent Routes" value={null} hint="计划与路由未投影" />
-                <Dim label="Execution Timeline" value={null}
-                  hint="v3 快照没有 task↔execution 外键，因此不假装列出「该任务的执行」" />
-                <Dim label="Diff / Tests / exact-SHA CI" value={null}
-                  hint="CI 运行是项目级的，未与任务绑定；不冒充任务级验证" />
-                <Dim label="Receipts / Approval / Handoff" value={null} hint="回执、审批与交接未投影" />
-                <Dim label="Next Action" value={null} hint="下一步由操作员判定；Observer 只读" />
+              {/* P1-04: the record's dimensions are answered once, in the Inspector below, and they follow
+                  the URL focus. Duplicating them here would put two different ages of the same record on
+                  screen when the address changes. */}
+              <div className="text-xs text-muted">
+                这条记录的 18 个维度（身份 / 归属 / 状态 / 租约 / 检查点 / 时间线 / Goal / Revision /
+                Attempt / Planner / Routes / Diff / Tests / CI / Receipts / Approval / Handoff /
+                Next Action）在右侧 Inspector 逐条投影；本卡片只保留定位与地址。
               </div>
               <p className="mt-2 break-all font-mono text-[10px] text-muted" data-testid="work-focus-link">{origin}{shareUrl}</p>
             </CardContent>
@@ -427,7 +389,28 @@ export function WorkView({
       {/* -------- Right pane: Inspector (explicit source gaps, read-only) -------- */}
       <div className="flex flex-col gap-4">
         <Card>
-          <CardHeader><span>Inspector · 证据与引用</span></CardHeader>
+          <CardHeader>
+            <span>Inspector · 记录维度</span>
+            <span className="text-[11px] text-muted">
+              {taskState.kind === 'matched' ? '已定位任务'
+                : executionState.kind === 'matched' ? '已定位执行'
+                : '未定位记录'}
+            </span>
+          </CardHeader>
+          <CardContent>
+            <RecordInspector
+              taskState={taskState}
+              executionState={executionState}
+              focus={focus}
+              snap={snap}
+              clearHref={laneHref(EMPTY_FOCUS)}
+              onClearClick={linkClick(EMPTY_FOCUS, clearFocus)}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><span>Inspector · 快照级证据与引用</span></CardHeader>
           <CardContent>
             <div className="list">
               <Dim label="Authority"

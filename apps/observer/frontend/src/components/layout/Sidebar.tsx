@@ -41,7 +41,7 @@ interface LaneDef {
 // execution-detail). D3 `work` lane still leads the work group.
 export const NAV_GROUPS: { key: string; label: string; ids: string[] }[] = [
   { key: 'home',   label: '首页',   ids: [OVERVIEW_ID] },
-  { key: 'work',   label: '工作',   ids: ['work', 'executions', 'task-packs', 'delivery', 'execution-detail'] },
+  { key: 'work',   label: '工作',   ids: ['work', 'evidence', 'executions', 'task-packs', 'delivery', 'execution-detail'] },
   { key: 'agents', label: '智能体', ids: ['agents'] },
   { key: 'projects', label: '项目', ids: ['projects'] },
   { key: 'gov',    label: '治理',   ids: ['workflows', 'rules-policy', 'approvals', 'audit', 'trust'] },

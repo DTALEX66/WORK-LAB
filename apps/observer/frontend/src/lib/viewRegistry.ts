@@ -11,7 +11,7 @@ import {
   LayoutDashboard, Bot, PlayCircle, Cpu, Brain, Wrench, Activity,
   Package, FolderGit2, ShieldCheck, Settings,
   ScrollText, History, CheckCircle2, Plug, PackageCheck, SquareKanban,
-  Workflow, Network, GitBranch,
+  Workflow, Network, GitBranch, FileSearch,
 } from 'lucide-react'
 import {
   AgentsView, ExecutionsView, ModelsView, MemoryView, ToolsView,
@@ -22,6 +22,9 @@ import { SoftwareView } from '@/views/SoftwareView'
 // closed loop (entry -> project -> task/execution -> state/failure ->
 // Context/Evidence -> next step) with a right-side Inspector.
 import { WorkView } from '@/views/WorkView'
+// REQ-RANGE-20261007: the evidence slice lane — three columns per artifact (identity / slice / verdict),
+// reading the sidecar's typed `worklab/evidence-range-result/v1` body instead of an opaque reference.
+import { EvidenceView } from '@/views/EvidenceView'
 // UI_VIEWS (20260921): five L7-aligned governance lanes (honest projections).
 import { RulesPolicyView } from '@/views/RulesPolicyView'
 import { AuditTrailView } from '@/views/AuditTrailView'
@@ -50,7 +53,10 @@ export interface ViewEntry {
     // UI_VIEWS (20260921): L7 governance lanes
     | 'rules-policy' | 'audit' | 'approvals' | 'integrations' | 'task-packs'
     // L10 (2026-09-27): B10 final-deployable lanes
+    // L10 (2026-09-27): B10 final-deployable lanes
     | 'workflows' | 'workflow-editor' | 'observer' | 'execution-detail'
+    // REQ-RANGE-20261007: evidence slice lane (identity / slice / verdict)
+    | 'evidence'
 }
 
 // TaskPack U04 lanes: Overview, Projects, Agents, Executions, Models/Usage,
@@ -94,6 +100,9 @@ export const VIEW_REGISTRY: ViewEntry[] = [
   { id: 'workflow-editor',   label: '编辑器',   icon: GitBranch,   component: WorkflowEditorView,    lane: 'workflow-editor' },
   { id: 'observer',         label: '观察者',   icon: Network,     component: ObserverView,          lane: 'observer' },
   { id: 'execution-detail',  label: '执行详情', icon: PlayCircle,  component: ExecutionDetailView,   lane: 'execution-detail' },
+  // REQ-RANGE-20261007: the evidence lane rides the same registry so the per-lane truth sweeps cover it
+  // the moment it exists — a lane that only its own test file can reach is the lane that regresses.
+  { id: 'evidence',          label: '证据区间', icon: FileSearch,  component: EvidenceView,          lane: 'evidence' },
 ]
 
 export const VIEW_BY_ID: Record<string, ViewEntry> = Object.fromEntries(
