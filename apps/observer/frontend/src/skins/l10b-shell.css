@@ -299,6 +299,20 @@ html.light {
   .metric-row { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* Reduced-motion floor for the complete production shell. The older skin-level
+ * rules cover selected B10 animations but leave the drawer, toast, and several
+ * transitions moving. Keep system accessibility preferences effective across
+ * every component, including future CSS additions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Flex/grid children that carry projected data need an explicit zero minimum,
  * otherwise their min-content width pushes the page past the window and the
  * `.app{overflow:hidden}` + `body{overflow:hidden}` pair makes the excess
