@@ -5479,8 +5479,8 @@
         "affectedCapability": "Delivery ordering: commit -> gate at HEAD -> push",
         "regressionCommand": "grep -qx GATE_EXIT=0 .project-local/runs/<run>/gate-verify-<head>.log"
       },
-      "regressionTestVerifiability": "OUT_OF_REPO_TARGET",
-      "regressionTestVerifiabilityReason": "the command reads a run receipt under the git-ignored .project-local root, which is deliberately not tracked"
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_ledger_unbound_triage.py is tracked and is the gate that observed the unbound count move 94 -> 95; the recorded command reads a gate receipt, which is a run artifact rather than a file operand of the regression test"
     }
   ],
   "wlrReconciled": true,
