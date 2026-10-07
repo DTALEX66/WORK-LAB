@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -56,16 +57,42 @@ DEFAULT_EVIDENCE_ROOTS = (".project-local/artifacts", ".project-local/runs")
 
 # The owner's no-read law is about kinds of content, so it is enforced by name as well as by directory: a
 # restored pre-install backup sits under an evidence root and still contains another tool's config.
-SENSITIVE_NAME_TOKENS = (
-    ".env", "credential", "secret", "token", "cookie", "password", "private_key", ".key", ".pem",
-    ".pfx", ".pkcs12", "id_rsa", "config.yaml", "config.yml", "canonical.sqlite", ".sqlite", ".db",
-    "session", "auth_store", "login data", "history",
-)
+#
+# Matching is per delimited word, not per substring, because a substring test over-refuses real evidence:
+# `02_SCOPE_SUPERSESSION_MAP.md` was being refused for containing "session", and a stylesheet called
+# `design-tokens.css` for containing "token". Both are project files with nothing credential about them.
+SENSITIVE_PREFIXES = (".env",)
+SENSITIVE_SUFFIXES = (".env", ".sqlite", ".sqlite3", ".db", ".key", ".pem", ".pfx", ".pkcs12",
+                      "config.yaml", "config.yml", ".credentials", "login data", "id_rsa")
+SENSITIVE_WORDS = frozenset({
+    "credential", "credentials", "secret", "secrets", "token", "auth", "auth_store", "cookie", "cookies",
+    "password", "passwords", "passwd", "session", "sessions", "private_key", "keystore", "browser_data",
+    "history", "sqlite", "sqlite3", "db", "p12", "pkcs12",
+})
+
+# Kept as the coarse vocabulary for callers that describe the rule in prose; the matcher below is the law.
+SENSITIVE_NAME_TOKENS = tuple(sorted(SENSITIVE_WORDS | {"config.yaml", ".env", ".sqlite", ".db", ".key",
+                                                        ".pem", "id_rsa", "canonical.sqlite"}))
+_NAME_SPLIT = re.compile(r"[^a-z0-9]+")
 
 
-def name_is_sensitive(resolved: Path) -> bool:
-    names = [part.lower() for part in resolved.parts]
-    return any(token in name for name in names for token in SENSITIVE_NAME_TOKENS)
+def name_is_sensitive(resolved: Path, exempt: tuple[str, ...] = ()) -> bool:
+    """True when any path segment names a credential, session, cookie, auth or config-store kind.
+
+    `exempt` removes exact tokens from the judgement -- the control plane's config diff is the one operation
+    whose legitimate subject IS a configuration document, and it answers only key-path questions.
+    """
+    for part in resolved.parts:
+        lowered = part.lower()
+        if lowered in exempt:
+            continue
+        if lowered.startswith(SENSITIVE_PREFIXES):
+            return True
+        if lowered.endswith(SENSITIVE_SUFFIXES):
+            return True
+        if any(word in SENSITIVE_WORDS for word in _NAME_SPLIT.split(lowered) if word):
+            return True
+    return False
 
 
 BOUNDARY_DECLARATION = ".project/governance/project-data-boundary.json"

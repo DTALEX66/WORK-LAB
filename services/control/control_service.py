@@ -53,7 +53,7 @@ for _entry in (
 
 import jsonschema  # noqa: E402
 from canonical_store import CanonicalStore  # noqa: E402
-from evidence_range_reader import SENSITIVE_NAME_TOKENS  # noqa: E402
+from evidence_range_reader import name_is_sensitive  # noqa: E402
 from permission_gate import ActionKind, PermissionGate, Policy, RiskTier  # noqa: E402
 from plan_candidate import (R_AUTHORIZED, SELF_CONFER_FIELDS, build_candidate,  # noqa: E402
                             check_candidate)
@@ -97,9 +97,7 @@ NON_DIFFABLE_ROOTS = (".project-local/", ".hermes/", "docs/", "tests/")
 
 
 def _is_non_diffable_target(resolved: Path, project_root: Path) -> bool:
-    names = [part.lower() for part in resolved.parts]
-    if any(token in name for name in names for token in SENSITIVE_NAME_TOKENS
-           if token not in _DIFFABLE_EXEMPTIONS):
+    if name_is_sensitive(resolved, exempt=_DIFFABLE_EXEMPTIONS):
         return True
     try:
         relative = resolved.relative_to(project_root).as_posix().lower()
