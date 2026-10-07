@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T01:29:42Z",
+  "generatedAt": "2026-10-07T03:29:31Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -120,8 +120,9 @@
       "lines": 190,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 3,
+      "citedByRecords": 4,
       "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
         "taskpacks/current/error-ledger.json"
@@ -162,14 +163,14 @@
       "lines": 127,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 7,
+      "citedByRecords": 10,
       "citedBy": [
+        "UI_IMPLEMENTATION_REPORT.md",
         "docs/audits/OBSERVER_UI_RENDER_AUDIT_2026-10-07.md",
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json",
-        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-C.md"
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
       ]
     },
     {
@@ -223,14 +224,14 @@
       "lines": 362,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 7,
+      "citedByRecords": 8,
       "citedBy": [
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
-        "taskpacks/current/error-ledger.json"
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md"
       ]
     },
     {
@@ -380,7 +381,7 @@
       "bytes": 20673,
       "lines": 327,
       "digestBasis": "git-blob-at-HEAD",
-      "citedByLedgerPromises": 3,
+      "citedByLedgerPromises": 4,
       "citedByRecords": 7,
       "citedBy": [
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
@@ -475,15 +476,19 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "d9ef5cc8238b3d48913bcace11671b3c039fdd6d5ec31e4968096814f1a72db9",
-      "bytes": 5376,
-      "lines": 128,
+      "sha256": "3c1a2733bd593eab7d3d1cdf6bf4a9519fc9f9ed0ac0ba8898217c520ec424af",
+      "bytes": 19581,
+      "lines": 434,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 2,
+      "citedByRecords": 9,
       "citedBy": [
+        "UI_IMPLEMENTATION_REPORT.md",
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
-        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md"
       ]
     },
     {

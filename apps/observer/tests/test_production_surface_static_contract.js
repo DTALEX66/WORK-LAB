@@ -135,6 +135,7 @@ function run() {
     // brand lockup caption and status chips. Any new 10px paragraph of real
     // content fails here even though the base rule above would still pass.
     const ALLOWED = [/\.winctl-zoom/, /\.load-strip/, /\.brand\s+small/,
+                     /\.topbar-brand-word/,
                      /\.tag\b/, /\.badge\b/, /\.kpi\s+small\b/];
     const offenders = [];
     for (const [, selector, body] of skins.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
@@ -297,28 +298,28 @@ function run() {
       "the 320px floor disappeared from src/index.css");
   });
 
-  t("the shell keeps a single app track below the rail breakpoint", () => {
-    // Measured with a CDP layout probe on 2026-10-07, not inferred: with the rail
-    // `display:none` below 841px it stops being a grid item, so `.main` was
-    // auto-placed into the RAIL track and the whole application column collapsed
-    // to 210px inside a 320/560/840px viewport (`.app` computed `210px 110px` at
-    // 320px). The two-track form is only valid where the rail exists.
-    const single = /\.app\s*\{\s*grid-template-columns:\s*minmax\(0, *1fr\)\s*;?\s*\}/;
-    assert(single.test(shell), "the shell must declare a single shrinkable .app track by default");
-    const twoTrack = /@media \(min-width: 841px\)\s*\{[^}]*\.app\s*\{\s*grid-template-columns:\s*clamp\(/;
-    assert(twoTrack.test(shell), "the rail+content two-track grid must live inside @media (min-width: 841px)");
-    // Every clamp() rail declaration must sit inside the >=841px gate. Counting
-    // them would be wrong: the shell legitimately declares it twice (once per
-    // section), and both are gated.
-    const declRe = /\.app\s*\{\s*grid-template-columns:\s*clamp\(/g;
-    let hit, total = 0, gated = 0;
-    while ((hit = declRe.exec(shell)) !== null) {
-      total += 1;
-      const before = shell.slice(Math.max(0, hit.index - 200), hit.index);
-      if (/@media \(min-width: 841px\)\s*\{[^}]*$/.test(before)) gated += 1;
-    }
-    assert(total >= 1 && gated === total,
-      gated + "/" + total + " rail-track declarations are outside the @media (min-width: 841px) gate");
+  t("the shell declares one unconditional two-track grid and one HUD track", () => {
+    // 2026-10-07, superseded by the owner's desktop-first instruction (「先删除手机端其他端」).
+    // The version of this contract below pinned `@media (min-width: 841px)` because the rail was
+    // `display:none` underneath it, and a hidden rail is not a grid item — measured by CDP, `.main`
+    // had been auto-placed into the 210px rail track. The mobile shell is now deleted instead of
+    // accommodated: the rail is a grid item at every width the main window can take (its floor is
+    // 900x600 in src-tauri/tauri.conf.json), so the two-track form is unconditional and the gate
+    // that protects the original defect is that no `.app` track rule may sit behind a width query.
+    const twoTrack = /^\.app\s*\{\s*grid-template-columns:\s*clamp\([^)]*\)\s+minmax\(0, *1fr\);\s*\}/m;
+    assert(twoTrack.test(shell),
+      "the shell must declare the rail+content two-track grid unconditionally");
+    const hudTrack = /^\.app\.app-compact\s*\{\s*grid-template-columns:\s*minmax\(0, *1fr\);\s*\}/m;
+    assert(hudTrack.test(shell), "the compact HUD must own a single shrinkable track");
+    assert(!/@media \(min-width: 841px\)/.test(shell.replace(/\/\*[\s\S]*?\*\//g, "")),
+      "a width query is gating the desktop shell again");
+    // The property that actually mattered: the content track must be shrinkable, and the rail must
+    // be re-shown inside the pinned skin's own <=840px hiding rule rather than by editing b10.css.
+    assert(/\.main\s*\{\s*min-width:\s*0;?\s*\}/.test(shell), ".main must stay shrinkable");
+    assert(/@media \(max-width: 840px\)\s*\{\s*\.sidebar\.sidebar-slot\s*\{\s*display:\s*flex/.test(shell),
+      "the shell must re-show the rail inside the b10 width query it cannot edit");
+    assert(/\.sidebar\{display:none\}/.test(skins),
+      "b10.css must stay verbatim — the override, not the skin, carries the desktop decision");
   });
 
   t("a disabled control is visually disabled", () => {
