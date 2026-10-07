@@ -244,3 +244,63 @@ completed success。本轮各头在写下本节时的实测状态：
 ERR-156/157 已在本节写完后盖戳于 `9d4297d`：该头四条运行（两条 work-lab-gate＋两条 wlr-060）全部
 completed success，且该头含记录本身，`verifiedCommitNote` 记的就是这次实测。
 `ERR-158/159` 仍 PENDING：它们的修复在 `8567be8`，要等一个同时包含这两条记录且全绿的头再盖。
+
+### 6.8 L 轮之后：又一次"我跑了读字段的门，没跑定形状的门"
+
+| SHA | 内容 |
+|---|---|
+| `065e363` | record: ERR-157 names the fourth head, read from the runner rather than assumed |
+| `8567be8` | fix(observability): hermes gets a version source that needs no launch, and the pin becomes repeatable |
+| `0c1aa1b` | record: ERR-156/157 stamped at a measured green head, and the hermes aging closes as ERR-158/159 |
+| `e11d3e1` | record: hermes' version now has a source that ages visibly, and the register says so |
+| `4dfbcff` | record: what is left in the ignored root is cited evidence, not residue |
+| `01798eb` | fix(contract): the readback schema declares the two observation fields I added |
+| `5c2f8d4` | record: ERR-160, the third time a shape validator caught what my chosen gates did not |
+| `b9933c2` | record: ERR-160's boundary measured - no validator is missing, so no new engine is warranted |
+| `b3271fc` | record: finish the ERR-160 boundary edit properly |
+| `3a3ee11` | fix(ci): a repro receipt must name the head its rows actually measured |
+| `9f587ab` | record: ERR-160/161 and the ERR-158/159 stamps, with the introducer derivation corrected |
+| `706664e` | fix(gates): the lockfile census reads git, not a walk of the working tree |
+| `ff64960` | record: ERR-162, the gate whose input set was the filesystem |
+| `ee570da` | record: ERR-160 stamped at b3271fc, and the stamper refusing ERR-161 there |
+| `7fedb3c` | record: ERR-161 stamped at 9f587ab |
+
+1. **三个连续头红**（`0c1aa1b`、`e11d3e1`、`4dfbcff`，workflow-assistance 作业），同一条原因，实测自 runner：
+   `ADAPTER_REGISTRY_FAIL Additional properties are not allowed ('authority_note',
+   'superseded_observation' were unexpected)`。我给 `version_readback` 加了两个观察字段，
+   跑的是**读这些字段**的门（`test_adapter_version_readback`，10 例全绿），没跑**定义这些字段**的
+   JSON Schema 校验器（`additionalProperties: false`）。这是 ERR-125/ERR-153 同族：
+   被发表的工件只被我恰好调用的检查覆盖过，没被 runner 调用的那些覆盖。台账 **ERR-160**（修复 `01798eb`）。
+2. **处置是声明字段而不是放宽合同**：schema 保留 `additionalProperties: false`，
+   `superseded_observation` 自己带 required（observed_at/verified_version/method），
+   所以"被取代的读回"不能退化成一个裸字符串。本机复跑真注册表：`ADAPTER_REGISTRY_PASS entries=10 hash_unavailable=10`，
+   然后跑 **CI 等价批次**（不再挑门跑）：`QUALITY_GATE_GOVERNANCE_PASS modules=207 executed=2176 ran=2184 skipped=8`。
+3. **本轮 hermes 侧的结论**（详见 `HERMES-VERSION-SOURCE-20261007` 在册行）：戳是 CLI 自己解析身份的第一来源，
+   所以读戳等于读同一权威，只是不需要启动；注册表声明此前落后整整一次自更新（10-01 的 `+3115` 对 10-04 的
+   `+6948.gedd2476`），而且这是第二次发生（AG-07 已纠正过同类漂移）。
+4. **盖戳状态（从台账读，不靠记忆）**：当前 fixedCommit 已定而 verifiedCommit 仍空的记录 =
+   `ERR-085, ERR-113, ERR-127`。等一个同时包含这些记录且两条 workflow 全绿的头再盖；
+   工具是 `python scripts/audit/stamp_record_verification.py <ERR-id> <head>`。
+
+本轮各头实测读回（逐头 `gh run list`，写下本节时）：
+
+```
+   - `065e363`：gate=completed/success；wlr060=completed/success
+   - `8567be8`：gate=absent；wlr060=absent
+   - `0c1aa1b`：gate=completed/failure；wlr060=completed/success
+   - `e11d3e1`：gate=completed/failure；wlr060=completed/success
+   - `4dfbcff`：gate=completed/failure；wlr060=completed/success
+   - `01798eb`：gate=completed/success；wlr060=completed/success
+   - `5c2f8d4`：gate=completed/success；wlr060=completed/success
+   - `b9933c2`：gate=completed/success；wlr060=completed/success
+   - `b3271fc`：gate=completed/success；wlr060=completed/success
+   - `3a3ee11`：gate=absent；wlr060=absent
+   - `9f587ab`：gate=completed/success；wlr060=completed/success
+   - `706664e`：gate=absent；wlr060=absent
+   - `ff64960`：gate=completed/success；wlr060=completed/success
+   - `ee570da`：gate=completed/success；wlr060=completed/success
+   - `7fedb3c`：gate=absent；wlr060=absent
+```
+
+5. **合并预演（只读，写下本节时实测）**：在 `7fedb3c` 上 `git merge-tree --write-tree origin/main HEAD` 退出 0、无冲突（合并态树 fa5aaba22）；台账 160 行、`summary.total=160` 一致、error_id 重复 无；注册表 14 行 （tracked 9／machine-local 2／absent 1／unpinned 2）；晋升进树的 atlas 在合并态仍是 446,119 B、sha256 79bf958a6e92…。合并仍未做，未打 tag，未发布；
+   PR #162 的合并与发布决定权在 owner。
