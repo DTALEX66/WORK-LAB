@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T06:32:58Z",
+  "generatedAt": "2026-10-07T06:38:24Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2058,
@@ -1376,7 +1376,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3446,
+        "line": 3453,
         "text": "\"fix\": \"Nine targeted replacements, each asserted to have exactly one anchor before the write and verified in the bytes after: both setup scripts now point at integrations/executors/hermes/, their pla"
       },
       {
@@ -1466,7 +1466,7 @@
       {
         "path": ".project-local/artifacts/error-ledger-20260806.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3952,
+        "line": 3964,
         "text": "\"fix\": \"Two such sentences existed and are repaired in place with dated corrections, keeping the original claim visible: `error-governance.md` listed .project-local/artifacts/error-ledger-20260806.jso"
       },
       {
@@ -1604,13 +1604,13 @@
       {
         "path": ".project-local/artifacts/residue-cleanup",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4437,
+        "line": 4449,
         "text": "\"entrypoint\": \"scripts/audit/in_boundary_residue_sweep.py, tests/workflow-assistance/test_in_boundary_residue_sweep.py, .project/governance/project-data-boundary.json, .project-local/artifacts/residue"
       },
       {
         "path": ".project-local/artifacts/residue-cleanup/residue_20261007T132700.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4442,
+        "line": 4454,
         "text": "\"fix\": \"`scripts/audit/in_boundary_residue_sweep.py` enumerates only directories matching a DECLARED residue pattern, and each pattern must name the command that regenerates it. Recoverability is prov"
       },
       {
@@ -1634,7 +1634,7 @@
       {
         "path": ".project-local/artifacts/spill-ledger.jsonl",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4437,
+        "line": 4449,
         "text": "\"entrypoint\": \"scripts/audit/in_boundary_residue_sweep.py, tests/workflow-assistance/test_in_boundary_residue_sweep.py, .project/governance/project-data-boundary.json, .project-local/artifacts/residue"
       },
       {
@@ -1700,7 +1700,7 @@
       {
         "path": ".project-local/artifacts/task-artifacts/r4/history-source-manifest.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3410,
+        "line": 3417,
         "text": "\"entrypoint\": \".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json missing_or_recovered_pins, .project-local/artifacts/task-artifacts/r4/history-sourc"
       },
       {
@@ -1742,7 +1742,7 @@
       {
         "path": ".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3410,
+        "line": 3417,
         "text": "\"entrypoint\": \".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json missing_or_recovered_pins, .project-local/artifacts/task-artifacts/r4/history-sourc"
       },
       {
@@ -2000,43 +2000,43 @@
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 2797,
+        "line": 2798,
         "text": "\"root_cause\": \"An earlier frontend baseline script in the same session wrote its evidence with a repo-relative path .project-local/runs/frontend-baseline.json while the process working directory was a"
       },
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3446,
+        "line": 3453,
         "text": "\"fix\": \"Nine targeted replacements, each asserted to have exactly one anchor before the write and verified in the bytes after: both setup scripts now point at integrations/executors/hermes/, their pla"
       },
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3854,
+        "line": 3864,
         "text": "\"entrypoint\": \".project-local/runs/{p0c-oracle-20261006,p0c-final-20261006,topbar-measure-20261006,ui-suite}, scripts/audit/, docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json, docs/audits/RELEASED_BRO"
       },
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3857,
+        "line": 3867,
         "text": "\"observed_error\": \"Two defects in one. (a) Four error-ledger entries and three register rows give a regressionCommand that begins `python .project-local/runs/<scratch>/…py` — durable records whose rep"
       },
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3891,
+        "line": 3902,
         "text": "\"observed_error\": \"Measured across the whole ledger, not the examples I happened to notice: 43 records carry a forward-looking `lifecycle.regressionCommand`, and 17 of them named a script under `.proj"
       },
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3897,
+        "line": 3908,
         "text": "\"remaining_boundary\": \"The gate checks that the promised script exists in the repository, not that running it reproduces the finding: several of these tools need the real desktop binary, a live sideca"
       },
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4200,
+        "line": 4212,
         "text": "\"fix\": \"Root cause: the fixture is now built with dir=_runtime_root() (.project-local/runs/, the convention test_machine_identity.py already used), so any residue lands inside the boundary and inside "
       },
       {
@@ -2132,13 +2132,13 @@
       {
         "path": ".project-local/runs/ci/geometry_gate.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4342,
+        "line": 4354,
         "text": "\"command\": \"python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json\","
       },
       {
         "path": ".project-local/runs/ci/reproduce_ci_commands_receipt.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3921,
+        "line": 3933,
         "text": "\"observed_error\": \"The whole-workflow repro (`.project-local/runs/ci/reproduce_ci_commands_receipt.json`, head 5c6bfe9, ran=86 failures=4) turned `schema-fixtures / Validate all JSON schemas` red with"
       },
       {
@@ -2174,7 +2174,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/absorb_local_assets.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3382,
+        "line": 3389,
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-c/absorb_local_assets.py; …/fix_hf_measure.py; python services/orchestration/run_quality_gate.py model-registry-integrity\","
       },
       {
@@ -2186,13 +2186,13 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/ag19_scan.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3411,
+        "line": 3418,
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-c/ag19_scan.py; python .project-local/runs/convergence-20261007-c/scan_digest_refs.py\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/ag19_scan.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3428,
+        "line": 3435,
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/convergence-20261007-c/ag19_scan.py\","
       },
       {
@@ -2228,7 +2228,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3679,
+        "line": 3687,
         "text": "\"command\": \"node .project-local/runs/convergence-20261007-c/cdp_layout_probe.mjs\","
       },
       {
@@ -2240,7 +2240,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/extract_section16.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3325,
+        "line": 3332,
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-c/extract_section16.py (header-matched table extraction from the owner's 整理稿 docx)\","
       },
       {
@@ -2264,7 +2264,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/falsify_browser_entry.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3536,
+        "line": 3543,
         "text": "\"command\": \"python tests/workflow-assistance/test_sidecar_ui_browser_entry.py; python .project-local/runs/convergence-20261007-c/falsify_browser_entry.py\","
       },
       {
@@ -2288,7 +2288,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/falsify_render_ports.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3599,
+        "line": 3606,
         "text": "\"regression_test\": \"apps/observer/frontend/src/views/renderTruthContract.test.tsx (8 mounted cases). Falsified 8/8 by mutating the production components (.project-local/runs/convergence-20261007-c/fal"
       },
       {
@@ -2312,13 +2312,13 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/falsify_u03_ports.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3570,
+        "line": 3577,
         "text": "\"regression_test\": \"apps/observer/frontend/src/lib/projectionTruthContract.test.ts (8 titled cases) + apps/observer/tests/test_production_surface_static_contract.js cases 'the typed front model declar"
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/green_the_repo.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3472,
+        "line": 3479,
         "text": "\"entrypoint\": \".project-local/runs/convergence-20261007-c/green_the_repo.py (retention copy loop)\","
       },
       {
@@ -2336,7 +2336,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/mutation_probe_pathspec.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3296,
+        "line": 3302,
         "text": "\"command\": \"python apps/observer/tests/test_artifact_freshness.py, then .project-local/runs/convergence-20261007-c/mutation_probe_pathspec.py\","
       },
       {
@@ -2348,13 +2348,13 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/record_drifts.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3504,
+        "line": 3511,
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-c/record_drifts.py\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/record_drifts.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3521,
+        "line": 3528,
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/convergence-20261007-c/record_drifts.py\","
       },
       {
@@ -2372,7 +2372,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/scan_digest_refs.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3411,
+        "line": 3418,
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-c/ag19_scan.py; python .project-local/runs/convergence-20261007-c/scan_digest_refs.py\","
       },
       {
@@ -2384,7 +2384,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/u02_paths.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3442,
+        "line": 3449,
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-c/u02_paths.py; bash -n scripts/setup-workflow.sh; python .project-local/runs/convergence-20261007-c/verify_no_stale_paths.py\","
       },
       {
@@ -2402,13 +2402,13 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/verify_no_stale_paths.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3442,
+        "line": 3449,
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-c/u02_paths.py; bash -n scripts/setup-workflow.sh; python .project-local/runs/convergence-20261007-c/verify_no_stale_paths.py\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/verify_no_stale_paths.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3459,
+        "line": 3466,
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/convergence-20261007-c/verify_no_stale_paths.py\","
       },
       {
@@ -2420,7 +2420,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-d/ci_workflow_repro.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3830,
+        "line": 3840,
         "text": "\"fix\": \"The provenance text moved into `integrationNote`, which the contract already allows, keeping the previous URL and the readback command and date inside it rather than dropping them; canonicalUr"
       },
       {
@@ -2438,7 +2438,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-d/falsify_candidate_decisions.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3772,
+        "line": 3781,
         "text": "\"regression_test\": \"scripts/ci/verify_future_candidate_registry.py now hard-fails on: a decision missing or disagreeing with the status word, a RESOLVED row without an org/repo and the licence the rea"
       },
       {
@@ -2456,7 +2456,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-d/falsify_model_claims.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3801,
+        "line": 3811,
         "text": "\"regression_test\": \"Tracked regression: tests/workflow-assistance/nf22_registry_and_acp_honesty_gates.py now carries thirteen named cases for AG-05g (a digest claim with no verification basis, a recom"
       },
       {
@@ -2480,7 +2480,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-d/falsify_source_registry_fix.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3743,
+        "line": 3751,
         "text": "\"regression_test\": \"tests/workflow-assistance/test_recovered_source_registry.py, 8 cases. Falsified 5/5 (.project-local/runs/convergence-20261007-d/falsify_source_registry_fix.py): flipping the SVG wo"
       },
       {
@@ -2492,7 +2492,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-d/prove_old_gate_accepts_the_lies.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3767,
+        "line": 3776,
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-d/prove_old_gate_accepts_the_lies.py (swaps in the committed verifier, runs falsify_candidate_decisions.py against it, restores the new veri"
       },
       {
@@ -2504,7 +2504,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-d/prove_old_model_gate_misses.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3796,
+        "line": 3806,
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-d/prove_old_model_gate_misses.py\","
       },
       {
@@ -2540,13 +2540,13 @@
       {
         "path": ".project-local/runs/convergence-20261007-e/release_browser_state.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3855,
+        "line": 3865,
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-e/release_browser_state.py --apply\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-e/release_browser_state.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3872,
+        "line": 3882,
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/convergence-20261007-e/release_browser_state.py\","
       },
       {
@@ -2654,7 +2654,7 @@
       {
         "path": ".project-local/runs/frontend-baseline.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 2797,
+        "line": 2798,
         "text": "\"root_cause\": \"An earlier frontend baseline script in the same session wrote its evidence with a repo-relative path .project-local/runs/frontend-baseline.json while the process working directory was a"
       },
       {
@@ -2780,7 +2780,7 @@
       {
         "path": ".project-local/runs/legacy-task-runtime/totals-full/WORK-LAB-SUMMARY.md",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3413,
+        "line": 3420,
         "text": "\"observed_error\": \"The source registry carried BLOCKED_NOT_VISIBLE for SRC-WL-SUMMARY while a byte-identical copy has been on this machine the whole time at .project-local/runs/legacy-task-runtime/tot"
       },
       {
@@ -2918,13 +2918,13 @@
       {
         "path": ".project-local/runs/p0a-diag-20261006/shot3.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 2970,
+        "line": 2972,
         "text": "\"command\": \"python .project-local/runs/p0a-diag-20261006/shot3.py against cargo tauri build --no-bundle -- --locked output\","
       },
       {
         "path": ".project-local/runs/p0a-diag-20261006/shot3.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 2988,
+        "line": 2990,
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/p0a-diag-20261006/shot3.py\","
       },
       {
@@ -2942,7 +2942,7 @@
       {
         "path": ".project-local/runs/p0c-diag-20261006",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3952,
+        "line": 3964,
         "text": "\"fix\": \"Two such sentences existed and are repaired in place with dated corrections, keeping the original claim visible: `error-governance.md` listed .project-local/artifacts/error-ledger-20260806.jso"
       },
       {
@@ -2978,19 +2978,19 @@
       {
         "path": ".project-local/runs/p0c-final-20261006/verify_once.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3205,
+        "line": 3209,
         "text": "\"entrypoint\": \"apps/observer/scripts/u19_webview_e2e.py (discover_cdp_ws, _cdp_http_get), .project-local/runs/p0c-oracle-20261006/probe_cdp.py, .project-local/runs/p0c-final-20261006/verify_once.py\","
       },
       {
         "path": ".project-local/runs/p0c-final-20261006/verify_once.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3206,
+        "line": 3210,
         "text": "\"command\": \"python .project-local/runs/p0c-final-20261006/verify_once.py (release binary + WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=N --remote-allow-origins=* with a private WEBVI"
       },
       {
         "path": ".project-local/runs/p0c-final-20261006/verify_once.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3223,
+        "line": 3227,
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/p0c-final-20261006/verify_once.py\","
       },
       {
@@ -3032,7 +3032,7 @@
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_cdp.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3205,
+        "line": 3209,
         "text": "\"entrypoint\": \"apps/observer/scripts/u19_webview_e2e.py (discover_cdp_ws, _cdp_http_get), .project-local/runs/p0c-oracle-20261006/probe_cdp.py, .project-local/runs/p0c-final-20261006/verify_once.py\","
       },
       {
@@ -3068,25 +3068,25 @@
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3118,
+        "line": 3121,
         "text": "\"entrypoint\": \"apps/observer/scripts/u19_webview_e2e.py (_gdi_render_proof: screen BitBlt + PrintWindow), .project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3119,
+        "line": 3122,
         "text": "\"command\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py (HTTP-level oracle against the real in-process sidecar)\","
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3124,
+        "line": 3127,
         "text": "\"regression_test\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py must keep observing snapshot and events requests from the release binary with Origin http://tauri.localhost, with hea"
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3136,
+        "line": 3139,
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
       },
       {
@@ -3116,13 +3116,13 @@
       {
         "path": ".project-local/runs/readback_global_deployment.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 2852,
+        "line": 2853,
         "text": "\"command\": \"python .project-local/runs/readback_global_deployment.py (hash and marker readback of CODEX_HOME/AGENTS.md, config.toml, rules, skills)\","
       },
       {
         "path": ".project-local/runs/readback_global_deployment.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 2881,
+        "line": 2882,
         "text": "\"command\": \"python .project-local/runs/readback_global_deployment.py (sha256 repo source vs live Hermes skills tree)\","
       },
       {
@@ -3134,7 +3134,7 @@
       {
         "path": ".project-local/runs/tmp",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3475,
+        "line": 3482,
         "text": "\"observed_error\": \"Before deleting .project-local/runs/tmp the script copied its 7 spill-report.json files into the manifest directory — and reported 1 afterwards. The destination was keyed on report."
       },
       {
@@ -3164,7 +3164,7 @@
       {
         "path": ".project-local/runs/topbar-measure-20261006/measure_dom.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3178,
+        "line": 3182,
         "text": "\"command\": \"python .project-local/runs/topbar-measure-20261006/measure_dom.py (headless Chrome on a scratch copy of the shipped dist, geometry read back through --dump-dom)\","
       },
       {
@@ -3188,7 +3188,7 @@
       {
         "path": ".project-local/runs/u19-msvc-20261006/build-tauri-msvc.bat",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3236,
+        "line": 3240,
         "text": "\"entrypoint\": \"apps/observer/scripts/write_artifact_receipt.py (digest), apps/observer/scripts/u19_webview_e2e.py (resolve_app_exe decision order), .project-local/runs/u19-msvc-20261006/build-tauri-ms"
       },
       {
@@ -3212,7 +3212,7 @@
       {
         "path": ".project-local/runs/u19-msvc-20261006/shot2.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 2969,
+        "line": 2971,
         "text": "\"entrypoint\": \".project-local/runs/u19-msvc-20261006/shot2.py (window enumeration, capture rect, artifact path), apps/observer/frontend/src/skins/l10b-shell.css (.topbar padding-right, .winctl fixed c"
       },
       {
@@ -3230,13 +3230,13 @@
       {
         "path": ".project-local/runs/u19-msvc-20261006/target/release/app.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3098,
+        "line": 3101,
         "text": "\"remaining_boundary\": \"Closed by direct observation. Observed by the owner on the real desktop on 2026-10-07, running `.project-local/runs/u19-msvc-20261006/target/release/app.exe` (sha256 6f73c14eb54"
       },
       {
         "path": ".project-local/runs/u19-msvc-20261006/target/release/app.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3186,
+        "line": 3190,
         "text": "\"remaining_boundary\": \"The measured numbers came from headless Chrome at a 1262x668 CSS viewport, and that instrument limit is unchanged. The visual question is closed: Observed by the owner on the re"
       },
       {
@@ -4274,7 +4274,7 @@
       {
         "path": ".project-local/toolchains",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4217,
+        "line": 4229,
         "text": "\"observed_error\": \"Actions failed the workflow-assistance job at c53de17 and again at 3e1f88b. The failing member was my own gate: test_regenerating_the_record_is_idempotent_apart_from_the_timestamp a"
       },
       {
@@ -4328,7 +4328,7 @@
       {
         "path": ".project-local/toolchains/wl-ag11",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4217,
+        "line": 4229,
         "text": "\"observed_error\": \"Actions failed the workflow-assistance job at c53de17 and again at 3e1f88b. The failing member was my own gate: test_regenerating_the_record_is_idempotent_apart_from_the_timestamp a"
       },
       {
@@ -4412,7 +4412,7 @@
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4217,
+        "line": 4229,
         "text": "\"observed_error\": \"Actions failed the workflow-assistance job at c53de17 and again at 3e1f88b. The failing member was my own gate: test_regenerating_the_record_is_idempotent_apart_from_the_timestamp a"
       },
       {
@@ -5454,7 +5454,7 @@
       {
         "path": ".project-local",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4218,
+        "line": 4230,
         "text": "\"root_cause\": \"The audit answered 'does this citation's bytes exist?' from the local filesystem, and the declared runtime root .project-local/ is git-ignored, so the answer — and therefore the queue, "
       },
       {
@@ -5562,7 +5562,7 @@
       {
         "path": ".project-local/artifacts/current-state-ci.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3444,
+        "line": 3451,
         "text": "\"observed_error\": \"Both bootstrap scripts invoked $REPO_ROOT/scripts/workflow/sync_hermes_workflow_assets.py, a path that has not existed since the 2026-09 directory convergence — the real entry point"
       },
       {
@@ -5658,13 +5658,13 @@
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 2972,
+        "line": 2974,
         "text": "\"observed_error\": \"Two open UI defects, 'the window-control cluster never renders' (P0-A) and 'the fourth KPI card is clipped at the right edge' (P0-B), were both readings of the instrument rather tha"
       },
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4440,
+        "line": 4452,
         "text": "\"observed_error\": \"The declared git-ignored runtime root `.project-local/runs` measured 3,236,021,813 B across its top-level directories, including 38 leftover `auth-ref-*` authority fixtures (36 MB) "
       },
       {
@@ -5712,19 +5712,19 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/finish_cleanup.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3473,
+        "line": 3480,
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-c/finish_cleanup.py\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/finish_cleanup.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3490,
+        "line": 3497,
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/convergence-20261007-c/finish_cleanup.py\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-f/falsify_regression_gate.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3894,
+        "line": 3905,
         "text": "\"regression_test\": \"tests/workflow-assistance/test_error_ledger_regression_commands.py, 7 cases including two synthetic negative controls that never touch the real file (an unresolvable command must b"
       },
       {
@@ -5736,7 +5736,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-h/project-data-boundary.SKILL.repointed.md",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4098,
+        "line": 4110,
         "text": "\"fix\": \"Attempted the sanctioned route first, not a hand-edit: `sync_hermes_workflow_assets.py --plan-json …` (plan only, no writes) returned the blast radius and then REFUSED to publish — `MANAGED_AS"
       },
       {
@@ -5748,7 +5748,7 @@
       {
         "path": ".project-local/runs/frontend-baseline.failed-attempt-20260930.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 2798,
+        "line": 2799,
         "text": "\"fix\": \"Copied the spilled file to the canonical root .project-local/runs/frontend-baseline.failed-attempt-20260930.json (206 bytes, sha256 prefix f06a97b6002608de), removed the whole apps/.project-lo"
       },
       {
@@ -5784,7 +5784,7 @@
       {
         "path": ".project-local/runs/p0a-diag-20261006/shot3.py",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 2974,
+        "line": 2976,
         "text": "\"fix\": \"New instrument .project-local/runs/p0a-diag-20261006/shot3.py: resolves the launched exe from every candidate target dir and refuses to run unless it is newer than tauri.conf.json, Cargo.toml,"
       },
       {
@@ -5808,7 +5808,7 @@
       {
         "path": ".project-local/runs/u19-msvc-20261006/target/release/app.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3127,
+        "line": 3130,
         "text": "\"remaining_boundary\": \"The surface itself is no longer owed: Observed by the owner on the real desktop on 2026-10-07, running `.project-local/runs/u19-msvc-20261006/target/release/app.exe` (sha256 6f7"
       },
       {
@@ -6294,19 +6294,19 @@
       {
         "path": ".project-local",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 3893,
+        "line": 3904,
         "text": "\"fix\": \"The two moved paths were left alone after measuring them against the `cd` prefix the command itself carries — `cd apps/observer && node tests/run_all_tests.js` is correct and my first pass had"
       },
       {
         "path": ".project-local",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4219,
+        "line": 4231,
         "text": "\"fix\": \"exists() now answers from the repository: any token under .project-local/ is treated as not checkout-verifiable on every machine, counts.checkoutVerifiable is 0 by construction, and counts.pre"
       },
       {
         "path": ".project-local",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 4473,
+        "line": 4485,
         "text": "\"root_cause\": \"Path convergence was treated as a property of the entry documents. Nothing checked the rest of the reader-facing surface, and the citation audit — which does scan those roots — only rep"
       },
       {

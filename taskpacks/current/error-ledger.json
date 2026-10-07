@@ -1688,12 +1688,13 @@
       "lifecycle": {
         "introducedCommit": null,
         "fixedCommit": "2e36309",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: feat: complete two-module work-lab cutover. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
-        "bindingBasis": "regression-operand-introduction:tests/ci/test_source_ledger.py: this commit adds only 0 record(s), it changes 00-governance/source-ledger.json which the record names, and the record promises no script"
+        "bindingBasis": "regression-operand-introduction:tests/ci/test_source_ledger.py: this commit adds only 0 record(s), it changes 00-governance/source-ledger.json which the record names, and the record promises no script",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "taskpack": "R2",
       "title": "source-ledger v3→v4 升级遗漏 schema/verify 脚本/测试三方同步",
@@ -2922,10 +2923,11 @@
       "lifecycle": {
         "introducedCommit": null,
         "fixedCommit": "a2eb028",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "adapter registry honesty: implementation maturity vs deployment observation",
         "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python -c \"read config/adapter-registry.json policy_projection.deployment_observation\"",
-        "currentApplicability": "CLAIM_CORRECTED_LIVE_DRIFT_STILL_OPEN"
+        "currentApplicability": "CLAIM_CORRECTED_LIVE_DRIFT_STILL_OPEN",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
       "regressionTestVerifiabilityReason": "the command names no file operand to check"
@@ -3013,11 +3015,12 @@
       "lifecycle": {
         "introducedCommit": "c1983621353ca9db7297b7cf91b0a76cecb9d320",
         "fixedCommit": "6c63218",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Exact-SHA CI truth for the Observer desktop contract",
         "regressionCommand": "python scripts/ci/failfast_group.py --group observer-web-contracts",
         "currentApplicability": "ALWAYS",
-        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-100 is 6c63218, and its tree contains the promised scripts/ci/failfast_group.py. verifiedCommit stays null until an exact-SHA readback names a green head."
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-100 is 6c63218, and its tree contains the promised scripts/ci/failfast_group.py. verifiedCommit stays null until an exact-SHA readback names a green head.",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
@@ -3161,9 +3164,10 @@
       "lifecycle": {
         "introducedCommit": "f3b5dec",
         "fixedCommit": "770d733",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "U19 release binary provenance gate",
-        "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py"
+        "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "PATH_GONE",
       "regressionTestVerifiabilityReason": "no tracked file carries this basename"
@@ -3248,10 +3252,11 @@
       "lifecycle": {
         "introducedCommit": null,
         "fixedCommit": "28afeaa",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "U19 artifact provenance receipt",
         "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py",
-        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-108 is 28afeaa, and its tree contains the promised apps/observer/tests/test_artifact_freshness.py. verifiedCommit stays null until an exact-SHA readback names a green head."
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-108 is 28afeaa, and its tree contains the promised apps/observer/tests/test_artifact_freshness.py. verifiedCommit stays null until an exact-SHA readback names a green head.",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "PATH_GONE",
       "regressionTestVerifiabilityReason": "no tracked file carries this basename"
@@ -3277,11 +3282,12 @@
       "lifecycle": {
         "introducedCommit": "770d733",
         "fixedCommit": "4115d63",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "required-group manifest completeness guard",
         "regressionCommand": "python tests/ci/test_failfast_group.py",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: fix(ci): the manifest guard I skipped was the one that mattered. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
-        "bindingBasis": "ledger-entry-introduction: this commit adds only 1 record(s), it changes tests/ci/test_failfast_group.py which the record names, and the promised tests/ci/test_failfast_group.py exists in it"
+        "bindingBasis": "ledger-entry-introduction: this commit adds only 1 record(s), it changes tests/ci/test_failfast_group.py which the record names, and the promised tests/ci/test_failfast_group.py exists in it",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
@@ -3307,10 +3313,11 @@
       "lifecycle": {
         "introducedCommit": "28afeaa",
         "fixedCommit": "5348ba7",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "U19 release binary provenance gate",
         "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py",
-        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-110 is 5348ba7, and its tree contains the promised apps/observer/tests/test_artifact_freshness.py. verifiedCommit stays null until an exact-SHA readback names a green head."
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-110 is 5348ba7, and its tree contains the promised apps/observer/tests/test_artifact_freshness.py. verifiedCommit stays null until an exact-SHA readback names a green head.",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
@@ -3661,10 +3668,11 @@
       "lifecycle": {
         "introducedCommit": "977040b",
         "fixedCommit": "891c871",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Observer browser-entry regression runnability",
         "regressionCommand": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py",
-        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-122 is 891c871, and its tree contains the promised tests/workflow-assistance/test_sidecar_ui_browser_entry.py. verifiedCommit stays null until an exact-SHA readback names a green head."
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-122 is 891c871, and its tree contains the promised tests/workflow-assistance/test_sidecar_ui_browser_entry.py. verifiedCommit stays null until an exact-SHA readback names a green head.",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
@@ -3749,10 +3757,11 @@
       "lifecycle": {
         "introducedCommit": "1cffd9f",
         "fixedCommit": "e0b296d",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "AG-19/AG-20 recovered-source registry digest claims; CI workflow-assistance job",
         "regressionCommand": "python tests/workflow-assistance/test_recovered_source_registry.py",
-        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-125 is e0b296d, and its tree contains the promised tests/workflow-assistance/test_recovered_source_registry.py. verifiedCommit stays null until an exact-SHA readback names a green head."
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-125 is e0b296d, and its tree contains the promised tests/workflow-assistance/test_recovered_source_registry.py. verifiedCommit stays null until an exact-SHA readback names a green head.",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "PATH_GONE",
       "regressionTestVerifiabilityReason": "no tracked file carries this basename"
@@ -3778,10 +3787,11 @@
       "lifecycle": {
         "introducedCommit": "4d059c7",
         "fixedCommit": "08ca2e6",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Open-source candidate pool decisions; the registry integrity gate",
         "regressionCommand": "python scripts/ci/verify_future_candidate_registry.py",
-        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-126 is 08ca2e6, and its tree contains the promised scripts/ci/verify_future_candidate_registry.py. verifiedCommit stays null until an exact-SHA readback names a green head."
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-126 is 08ca2e6, and its tree contains the promised scripts/ci/verify_future_candidate_registry.py. verifiedCommit stays null until an exact-SHA readback names a green head.",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "PATH_GONE",
       "regressionTestVerifiabilityReason": "no tracked file carries this basename"
@@ -3866,14 +3876,15 @@
       "lifecycle": {
         "introducedCommit": "e0b296d",
         "fixedCommit": "5c6bfe9",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Project-local footprint and traceability of durable regression commands",
         "regressionCommand": "python scripts/maintenance/release_browser_state.py",
         "regressionCommandPrior": "python .project-local/runs/convergence-20261007-e/release_browser_state.py",
         "regressionCommandCorrectedAt": "2026-10-07",
         "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root.",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: fix(records): a promise to reproduce must point at a tracked file. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
-        "bindingBasis": "regression-operand-introduction:scripts/maintenance/release_browser_state.py: this commit adds only 1 record(s), it changes docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json which the record names, and the promised scripts/maintenance/release_browser_state.py exists in it"
+        "bindingBasis": "regression-operand-introduction:scripts/maintenance/release_browser_state.py: this commit adds only 1 record(s), it changes docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json which the record names, and the promised scripts/maintenance/release_browser_state.py exists in it",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
       "regressionTestVerifiability": "REPOINTED_20261007",
@@ -3900,11 +3911,12 @@
       "lifecycle": {
         "introducedCommit": "473a3f9",
         "fixedCommit": "5c6bfe9",
-        "verifiedCommit": null,
+        "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Error-ledger reproducibility promises; scripts/audit and scripts/maintenance tool inventory",
         "regressionCommand": "python tests/workflow-assistance/test_error_ledger_regression_commands.py",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: fix(records): a promise to reproduce must point at a tracked file. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
-        "bindingBasis": "ledger-entry-introduction: this commit adds only 1 record(s), it changes docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json which the record names, and the promised tests/workflow-assistance/test_error_ledger_regression_commands.py exists in it"
+        "bindingBasis": "ledger-entry-introduction: this commit adds only 1 record(s), it changes docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json which the record names, and the promised tests/workflow-assistance/test_error_ledger_regression_commands.py exists in it",
+        "verifiedCommitNote": "exact-SHA Actions readback at 17eb5b68e562109973c8bb0e3c01f6a10183d041: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "PATH_GONE",
       "regressionTestVerifiabilityReason": "no tracked file carries this basename"
