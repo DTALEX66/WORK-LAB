@@ -365,3 +365,25 @@ run `37585453264` / head `8847cdc` / observer 作业第 12 步（必需步骤）
 
 仍未完成的部分照登：Loading 与 Permission 两维**没有**进入这次的场景矩阵（探针只覆盖传输与空集合），
 每条泳道的动作级禁用解释也只有 `approvals` 一条有 `PermissionState` 消费者。
+
+## 16. 2026-10-07 L 轮：G1 的"禁用＋理由"此前只对鼠标成立（台账 **ERR-156**）
+
+接着上面那条未完成项量下去，把 21 条泳道的可交互控件全部枚举出来，结论是 **18 条泳道一个控件都不渲染**
+（只读投影本应如此），控件集中在这几处：`audit` 4 个筛选（全部／CI 运行／执行／失败）、
+`observer` 6 个跳转、`workflows` 5 个（其中 `新建工作流` 为禁用）、`workflow-editor` 24 个（其中 3 个禁用）。
+
+**四个禁用动作的理由全都只能靠鼠标读到**：`Button` 走原生 `disabled` 且带
+`disabled:pointer-events-none`，所以它不接受焦点；`Tooltip` 只有 `group-hover/tt:opacity-100` 一条显露路径。
+理由文本在 DOM 里其实有两份（外层 span 的 `aria-label` 与 `role="tooltip"` 的 span），
+但外层是个没有 tabindex 的普通 span，键盘与读屏用户既走不到那个控件、也读不到它的解释。
+§11 里"G1 动作级禁用与理由（已补）"这句因此只对一半的输入模态成立——这条口径由 ERR-156 更正。
+
+修复在 `src/components/ui/tooltip.tsx`（`e5f9756`）：提示同时响应焦点显露（`group-focus-within/tt:opacity-100`），
+并且**只有当它裹着一个无法获得焦点的禁用控件时**，外层才自己成为 tab stop（`tabIndex=0`＋`role="note"`），
+以免给每个 tooltip 都加一个停靠点；递归是因为调用点把按钮包在定位用的 `<span>` 里。
+契约测试 `src/components/ui/tooltip.contract.test.tsx` 4 例，证伪 4/4
+（删掉焦点显露、把 tab stop 无条件加上、完全不加、丢掉 `aria-label`），改完源码逐字节复原。
+全套 `npm run test` 24 文件 / 165 例全绿，`tsc --noEmit` 干净。
+
+**尚未证明的**：jsdom 只证属性与 class 契约，证不了真实 WebView2 里的焦点顺序、透明度过渡与焦点环落点；
+这四个禁用动作的实际 Tab 到达仍欠一次桌面读回。样式不变也只是我对 diff 的读法，不是渲染证明。

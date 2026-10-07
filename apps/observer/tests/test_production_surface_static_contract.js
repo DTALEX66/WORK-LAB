@@ -36,7 +36,13 @@ function run() {
   const shell = read("src/skins/l10b-shell.css");
   const base10 = read("src/skins/b10.css");
   const skins = shell + base10;
-  const sources = walk(SRC).filter((p) => /\.(ts|tsx)$/.test(p) && !/\.test\.(ts|tsx)$/.test(p));
+  const TESTDIR = path.join(SRC, "test") + path.sep;
+  // src/test/** holds vitest-only helpers (setup.ts, the shared snapshot fixture). They are not the
+  // shipped front, so a snapshot literal living there is not "embedded in production source" — but the
+  // exclusion below is only honest while nothing in the front imports them, which the next assertion
+  // proves rather than assumes.
+  const sources = walk(SRC).filter((p) => /\.(ts|tsx)$/.test(p) && !/\.test\.(ts|tsx)$/.test(p)
+                                      && !p.startsWith(TESTDIR));
   const appCode = sources.map((p) => fs.readFileSync(p, "utf-8")).join("\n");
   // The editor lane persists a canvas model locally and is the one sanctioned
   // storage user. Paths come back with the platform separator, so normalise
@@ -181,6 +187,24 @@ function run() {
       .filter((p) => embedded.test(fs.readFileSync(p, "utf-8")))
       .map((p) => path.relative(SRC, p));
     assert(hits.length === 0, "files embedding a v3 snapshot literal: " + hits.join(", "));
+  });
+
+  t("the excluded test-helper directory stays unreachable from production source", () => {
+    // The companion of the exclusion above: if any production file imported a snapshot from src/test/,
+    // the literal would ship and the rule would be silent exactly where it mattered.
+    const dir = path.join(SRC, "test");
+    assert(fs.existsSync(dir), "src/test/ vanished, so the exclusion above hides nothing");
+    const helpers = walk(dir).filter((p) => /\.(ts|tsx)$/.test(p));
+    assert(helpers.length > 0, "src/test/ is empty; re-check the exclusion's purpose");
+    for (const h of helpers) {
+      const base = path.basename(h).replace(/\.(ts|tsx)$/, "");
+      const shape = new RegExp("from\\s*['\"][^'\"]*/" + base + "['\"]|from\\s*['\"]\\.{1,2}/[^'\"]*" + base + "['\"]");
+      const importers = sources.filter((p) => shape.test(fs.readFileSync(p, "utf-8")))
+        .map((p) => path.relative(SRC, p));
+      assert(importers.length === 0,
+        path.relative(SRC, h) + " is imported by production source: " + importers.join(", "));
+    }
+    console.log("        (checked " + helpers.length + " test helpers)");
   });
 
   t("the production tree renders no currency amount and no subscription wording", () => {
