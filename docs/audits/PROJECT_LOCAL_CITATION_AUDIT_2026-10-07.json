@@ -1,11 +1,11 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T00:15:55Z",
+  "generatedAt": "2026-10-07T00:35:19Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2023,
-    "distinctProjectLocalTokens": 375,
-    "tokensResolvedOnDisk": 167,
+    "trackedFilesScanned": 2034,
+    "distinctProjectLocalTokens": 382,
+    "tokensResolvedOnDisk": 174,
     "tokensAbsent": 208,
     "citationsToAbsentTokens": 324
   },

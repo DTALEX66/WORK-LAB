@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T00:17:43Z",
+  "generatedAt": "2026-10-07T00:35:25Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 39,
-    "withLedgerPromise": 12,
-    "referencedSomewhere": 39,
+    "trackedTools": 40,
+    "withLedgerPromise": 13,
+    "referencedSomewhere": 40,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -48,6 +48,22 @@
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/ag19_record_root_pin_test.py",
+      "sha256": "b62022eb128cec4f7f22b19c9d97bb3a5c7fc89a4e51d6d8f260c968fbff6c79",
+      "bytes": 14945,
+      "lines": 265,
+      "digestBasis": "git-blob-at-HEAD",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 5,
+      "citedBy": [
+        ".project/governance/recovered-source-registry.json",
+        "docs/audits/AG19_RECORD_ROOT_PIN_TEST_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "tests/workflow-assistance/test_ag19_record_root_pin_test.py"
       ]
     },
     {
@@ -267,13 +283,14 @@
       "lines": 414,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 5,
+      "citedByRecords": 7,
       "citedBy": [
         "docs/audits/OUTSIDE_ROOT_SPILL_SWEEP_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
-        "tests/workflow-assistance/test_outside_root_spill_sweep.py",
-        "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py"
+        "taskpacks/current/error-ledger.json",
+        "tests/workflow-assistance/test_outside_root_spill_sweep.py"
       ]
     },
     {
@@ -533,14 +550,15 @@
       "bytes": 10491,
       "lines": 208,
       "digestBasis": "git-blob-at-HEAD",
-      "citedByLedgerPromises": 0,
-      "citedByRecords": 5,
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 8,
       "citedBy": [
+        ".project/governance/recovered-source-registry.json",
         "docs/audits/OUTSIDE_ROOT_SPILL_SWEEP_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
-        "tests/workflow-assistance/test_recover_shared_root_original.py",
-        "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py"
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
@@ -550,10 +568,12 @@
       "lines": 180,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 6,
       "citedBy": [
         "docs/audits/OUTSIDE_ROOT_SPILL_SWEEP_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/SESSION-HANDOFF-CONVERGENCE-20261007-J.md",
+        "taskpacks/current/error-ledger.json",
         "tests/workflow-assistance/test_outside_root_spill_sweep.py",
         "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py"
       ]
