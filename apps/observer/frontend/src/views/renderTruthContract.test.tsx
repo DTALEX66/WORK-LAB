@@ -12,60 +12,13 @@ import { ProjectPanel } from '@/components/dashboard/ProjectPanel'
 import { OverviewView } from '@/views/OverviewView'
 import { CompactHUD } from '@/views/CompactHUD'
 import { useLiveSnapshot } from '@/lib/api'
-import type { SnapshotV3, Project } from '@/types'
+import { mkProject, mkSnap } from '@/test/snapshotFixture'
 
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
   vi.useRealTimers()
 })
-
-function mkProject(over: Partial<Project> = {}): Project {
-  return {
-    projectId: 'work-lab', displayName: 'WORK-LAB', agentPlatform: 'codex',
-    identityState: 'RESOLVED', activityState: 'ACTIVE',
-    attentionState: 'NONE', activeExecutionCount: 2, workingAreas: ['apps/observer'],
-    visibility: 'LOCAL', quality: 'EXACT', lastStrongEvidenceAt: '2026-10-07T08:59:59Z',
-    repositories: [],
-    git: {
-      localSha: 'abc1234def5678', remoteSha: 'abc1234def5678', matchState: 'MATCH',
-      branch: 'main', dirtyCount: 3, observedAt: '2026-10-07T09:00:00Z',
-      quality: 'EXACT', freshness: 'FRESH', sourceRef: null,
-    },
-    token: { inputTokens: 64391, outputTokens: 26821, totalTokens: 91212, costQuality: 'ESTIMATED' },
-    ci: [], executionIds: ['e1'], sourceRefs: [],
-    ...over,
-  }
-}
-
-function mkSnap(over: Partial<SnapshotV3> = {}): SnapshotV3 {
-  return {
-    schemaVersion: 'workflow/snapshot/v3',
-    revision: 11,
-    generatedAt: '2026-10-07T09:12:33Z',
-    sourceWatermark: '2026-10-07T09:12:30Z',
-    transport: { transportState: 'LIVE', freshnessState: 'FRESH', connectedSince: null, eventsUrl: null },
-    coverage: { numerator: 3, denominator: 4, scope: 'collectors' },
-    governance: {
-      state: 'CLEAN',
-      families: {
-        rules: { state: 'CLEAN', current: null, drift: 0 },
-        skills: { state: 'CLEAN', current: null, drift: 0 },
-        memory: { state: 'UNKNOWN', current: null, drift: null },
-        adapters: { state: 'CLEAN', current: null, drift: 0 },
-      },
-    },
-    workspace: {},
-    projects: [mkProject(), mkProject({ projectId: 'design-lab', displayName: 'DESIGN-LAB', activeExecutionCount: 0 })],
-    executions: [],
-    tasks: { PENDING: 2 },
-    tokenSummary: { inputTokens: 64391, outputTokens: 26821, totalTokens: 91212, costQuality: 'ESTIMATED' },
-    git: { localSha: 'abc1234', remoteSha: 'abc1234', ciSha: 'abc1234', matchState: 'MATCH' },
-    ci: [],
-    sourceRefs: [],
-    ...over,
-  }
-}
 
 // B10 `.panel.kpi` cards are (strong.kpi-number, small label) pairs.
 function kpiValue(label: string): string {
