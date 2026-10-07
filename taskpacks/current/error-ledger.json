@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 153,
+    "total": 154,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 50,
+      "contract_drift": 51,
       "test_behavior_alignment": 17,
       "working_directory_recovery": 2,
       "evidence_state": 27,
@@ -4665,6 +4665,38 @@
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
+    },
+    {
+      "error_id": "ERR-156",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "contract_drift",
+      "entrypoint": "apps/observer/frontend/src/components/ui/tooltip.tsx, apps/observer/frontend/src/components/ui/tooltip.contract.test.tsx",
+      "command": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run components/ui/tooltip.contract",
+      "exit_code": 1,
+      "observed_error": "Rendering all 21 registry lanes and listing every interactive control found four disabled write-actions (workflows: 新建工作流; workflow-editor: 运行, 保存并发布 and one node op). Each one explains itself only inside a Tooltip, and none of that text was reachable from the keyboard: the button carried the native disabled attribute, so it took no focus, and the shared Button applies disabled:pointer-events-none; the tip revealed on group-hover/tt:opacity-100 only. The reason text existed twice in the DOM (aria-label on the wrapper span and the role=tooltip span) but the wrapper was a generic span with no tabindex, so a keyboard or screen-reader user met a control that could not be reached and a refusal that could not be read.",
+      "root_cause": "The G1 rule was written as a visual interaction ('a disabled action says why in a tooltip') and the tooltip was built hover-first on 2026-09-27 (f95baef). No test rendered a disabled control and asked how its reason is reachable, so the gap was invisible to the suite: every existing assertion checked the reason string, which is present in both shapes.",
+      "fix": "tooltip.tsx reveals on focus as well as hover (group-focus-within/tt:opacity-100) and, when the tooltip is hiding a control that cannot take focus, the wrapper itself becomes the tab stop (tabIndex=0, role=note) so the refusal is reachable; enabled controls keep no extra stop, which would have polluted the keyboard tour. The recursion is needed because call sites wrap the button in a positioning span. New contract test tooltip.contract.test.tsx (4 cases) is falsified by four mutations - dropping the focus reveal, making the tab stop unconditional, removing it, and losing the accessible name - with the source restored byte-identically afterwards.",
+      "regression_test": "apps/observer/frontend/src/components/ui/tooltip.contract.test.tsx",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Any rule phrased as an interaction (hover, focus, drag) must be tested from at least two input modalities, and a disabled control must never be the only carrier of its own explanation: assert that the reason is reachable by keyboard, not merely that the string exists in the DOM.",
+      "remaining_boundary": "jsdom proves attributes and class contracts, not focus order, opacity transitions or where the ring lands in a real WebView2 window; the tab traversal of these four actions still needs one desktop readback. The visual style of the disabled action is unchanged, but 'unchanged' is my reading of the diff, not a rendered proof.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "f95baefec55e098a1a5cb39281d078637e355f8c",
+        "introducedCommitNote": "git log --diff-filter=A on tooltip.tsx names f95baef (2026-09-27, the L10 B10 convergence) as the commit that shipped the hover-only reveal",
+        "fixedCommit": "e5f9756f8b5249b751acc7b10f42b3f6ce7c50b1",
+        "verifiedCommit": null,
+        "affectedCapability": "Observer UI accessibility; the G1 disabled-action explanation contract",
+        "regressionCommand": "cd apps/observer/frontend && npm run test",
+        "bindingNote": "bound 2026-10-07 against e5f9756f8: that commit changes tooltip.tsx and adds the promised test file; both operands were checked with git cat-file before writing. The first version of this command promised node_modules/vitest/vitest.mjs, which no commit contains - the ERR-124 shape, caught by the binding gate before any push - so it now names the tracked npm contract the CI group runs (package.json scripts.test), and the specific file stays in regression_test",
+        "bindingBasis": "fix-commit-introduction: the component change and its contract test land together",
+        "verifiedCommitNote": "left null: the record lands after the fix, so no head yet contains both the record and a green exact-SHA readback. Inventing one is ERR-125/ERR-134."
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "the command's file operand resolves in apps/observer/frontend"
     }
   ],
   "wlrReconciled": true,
