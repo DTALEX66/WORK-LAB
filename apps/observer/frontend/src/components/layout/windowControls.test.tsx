@@ -79,7 +79,6 @@ describe('top bar drag surface', () => {
         onOpenSearch={noop}
         onOpenDrawer={noop}
         onNotify={noop}
-        onOpenMobileNav={noop}
       />,
     )
     expect(container.querySelector('[data-tauri-drag-region]')).toBeTruthy()

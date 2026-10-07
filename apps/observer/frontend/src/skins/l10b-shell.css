@@ -7,31 +7,19 @@
  * src/skins/b10.css stays a verbatim copy of the B10 single-file <style>.
  */
 
-/* The B10 rail owns the 280px column through `.app`'s grid-template-columns;
- * the slot itself just has to be a flex column at >=840px and absent below. */
-.sidebar-slot { display: none; }
-
-/* `.app` is a 2-column grid (280px 1fr) at >840px and 1-column below. The
- * compact layout has no rail, so it must always collapse to a single column. */
-.app-compact { grid-template-columns: 1fr; }
-
-/* Desktop shell (>=841px) */
-@media (min-width: 841px) {
-  .sidebar-slot { display: flex; flex-direction: column; }
-  .mobile-nav { display: none; }
-  .topbar-mobile { display: none; }
-}
-
-/* Mobile shell (<=840px) — mirrors the B10 narrow breakpoint */
+/* The rail is the only navigation surface, so it is a flex column at every width
+ * the app runs at. b10.css hides `.sidebar` below 840px and that query stays
+ * verbatim (D-11), so this layer re-shows it with a two-class selector, which
+ * wins on specificity regardless of order. A CSS viewport under 840px is a real
+ * desktop case, not a phone: the display runs at 125% scale, so a 1024px window
+ * measures ~819 CSS px. */
+.sidebar-slot { display: flex; flex-direction: column; }
 @media (max-width: 840px) {
-  .sidebar-slot { display: none !important; }
-  .topbar-mobile { display: inline-flex; }
-  .nav { overflow: auto; }
+  .sidebar.sidebar-slot { display: flex; flex-direction: column; }
 }
 
-@media (min-width: 841px) {
-  .mobile-nav-panel { display: flex; flex-direction: column; }
-}
+/* The compact HUD renders no rail, so it collapses to a single track. */
+.app-compact { grid-template-columns: 1fr; }
 
 /* B10 `.sidebar` padding is 22px 18px; the rail's content box is then too
  * narrow for the B10 brand lockup ("AI WORKFLOW CONTROL PLANE" at 10px with
@@ -157,10 +145,8 @@
  * 280px 1fr}` sizes `1fr` against min-content, so an unshrinkable KPI row pushed
  * the whole column past the window edge and clipped the third card and every
  * window control off-screen. minmax(0,1fr) is what makes the rest of this layer
- * observable at all. */
-@media (min-width: 841px) {
-  .app { grid-template-columns: clamp(210px, 17vw, 280px) minmax(0, 1fr); }
-}
+ * observable at all. The declaration itself lives with the two-track rule at the
+ * end of this file, where it is stated unconditionally. */
 .main { min-width: 0; }
 
 /* Continuous reflow for card grids: the minimum track is a fraction of the
@@ -300,13 +286,6 @@ html.light {
  * at the end. b10.css remains untouched.
  * ------------------------------------------------------------------------- */
 
-/* Compact HUD has no rail, so it must own a single full-width track. It renders
- * `class="app app-compact"` with one in-flow child, which previously squeezed
- * the whole HUD into the 210-280px rail column. */
-@media (min-width: 841px) {
-  .app.app-compact { grid-template-columns: minmax(0, 1fr); }
-}
-
 /* Paired / triple / split rows keep B10's proportions but can always shrink,
  * and collapse to one column inside a narrow content container. */
 .two-col { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
@@ -334,28 +313,23 @@ html.light {
  * spaces to break on; `.panel{overflow:hidden}` was clipping them mid-token. */
 .mono, .font-mono, code { overflow-wrap: anywhere; }
 
-/* The mobile drawer's rail was only displayed at >=841px while b10 hides
- * `.sidebar` at <=840, so the hamburger opened an empty overlay. */
-.mobile-nav-panel { display: flex; flex-direction: column; }
-
-/* Decisive correction. The `.app` track fix above was wrapped in
+/* Decisive correction. The `.app` track fix was once wrapped in
  * `@media (min-width: 841px)`; a screenshot measured the content column at
  * ~1132px inside a 990px column, i.e. the second track was still B10's bare
  * `1fr` with its min-content floor, so the media query was not the right gate.
- * Stated unconditionally and last: the rail track stays fluid, the content
- * track is allowed to shrink to zero, and nothing may push past the viewport.
  *
  * 2026-10-07, measured with a CDP layout probe rather than inferred from a
- * screenshot: below 841px the rail is `display:none`, which means it is not a
+ * screenshot: below 841px the rail was `display:none`, which means it is not a
  * grid item at all, so `.main` was auto-placed into the FIRST track and the
  * whole application column collapsed to 210px inside a 320/560/840px viewport
  * (`.app` computed `210px 110px` at 320px, `.main` w=210, topbar h=263 with the
- * four action buttons stacked one per row). The two-track form therefore only
- * makes sense where the rail exists; below it the shell is a single track. */
-.app { grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 841px) {
-  .app { grid-template-columns: clamp(210px, 17vw, 280px) minmax(0, 1fr); }
-}
+ * four action buttons stacked one per row). That collapse was a property of the
+ * mobile shell, and the mobile shell is gone: the rail is a grid item at every
+ * width, so the two-track form is stated once, unconditionally, and last.
+ * b10.css's `@media (max-width:840px){.app{grid-template-columns:1fr}}` is
+ * earlier and less specific, so it no longer wins. */
+.app { grid-template-columns: clamp(210px, 17vw, 280px) minmax(0, 1fr); }
+.app.app-compact { grid-template-columns: minmax(0, 1fr); }
 html, body, #root { max-width: 100vw; overflow-x: hidden; }
 .content { max-width: 100%; }
 
@@ -424,8 +398,10 @@ html, body, #root { max-width: 100vw; overflow-x: hidden; }
   .topbar { padding-right: 285px; }
 }
 
-/* Phone width (<=560 CSS px), measured rather than guessed. At 320px the top bar
- * still reserves 130px for the fixed caption cluster and the search box wants
+/* Narrow CSS viewport (<=560 px) on a desktop window, measured rather than
+ * guessed. The app ships no phone layout, but at 125% display scale a small
+ * desktop window still measures this narrow: the top bar reserves 130px for the
+ * fixed caption cluster and the search box wants
  * 160px, which leaves `.top-actions` a column about 60px wide — so every action
  * button wrapped onto its own row and the bar ate roughly 40% of the first screen
  * (docs/audits/OBSERVER_UI_RENDER_AUDIT_2026-10-07.md). The action cluster now
@@ -458,3 +434,23 @@ button[aria-disabled="true"]:hover {
   transform: none;
   box-shadow: none;
 }
+
+/* G2 — the brand mark the top bar never had. The chip is B10's own `.brand-mark`
+ * geometry at 22px, so the row reads as the same system as the rail lockup. Both
+ * halves take the skin's accent variables; there is no literal brand hex in the
+ * component, which is what the acceptance checklist asked for. The wordmark is
+ * dropped in the compact HUD because that surface is 440px and the mark alone
+ * carries identity there. */
+.topbar-brand { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; min-width: 0; }
+.topbar-brand-mark {
+  width: 22px; height: 22px; border-radius: 7px; flex: 0 0 auto;
+  background:
+    radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--primary) 80%, white 6%), transparent 45%),
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 80%, white 3%),
+                    color-mix(in srgb, var(--secondary) 55%, var(--primary)));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 25%, white 5%);
+}
+.topbar-brand-word {
+  font-size: 10px; letter-spacing: .14em; color: var(--muted); white-space: nowrap;
+}
+.app-compact .topbar-brand-word { display: none; }
