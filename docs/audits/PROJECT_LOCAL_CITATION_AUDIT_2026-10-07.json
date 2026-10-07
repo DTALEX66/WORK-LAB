@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T22:53:53Z",
+  "generatedAt": "2026-10-07T22:55:42Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2131,
@@ -3584,13 +3584,13 @@
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
-        "line": 1432,
+        "line": 1434,
         "text": "\"operand\": \".project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
-        "line": 1433,
+        "line": 1435,
         "text": "\"command\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py must keep observing snapshot and events requests from the\","
       },
       {

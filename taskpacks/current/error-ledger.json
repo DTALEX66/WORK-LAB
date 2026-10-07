@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-10-07T22:40:57Z",
+  "generated_at": "2026-10-07T22:54:49Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 182,
+    "total": 183,
     "by_classification": {
       "ci_configuration": 18,
       "ci_tooling": 9,
@@ -17,7 +17,7 @@
       "contract_drift": 56,
       "dead_entry": 3,
       "entrypoint": 6,
-      "evidence_state": 30,
+      "evidence_state": 31,
       "feature_gap": 10,
       "path_boundary": 15,
       "regression_contract": 8,
@@ -5574,6 +5574,38 @@
         "affectedCapability": "Self-consistency of tracked-tree census tests",
         "regressionCommand": "python -m unittest -q test_control_service"
       }
+    },
+    {
+      "error_id": "ERR-185",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+      "command": "bash -c \"test $(git show --numstat --format= a8df7bdb -- docs/audits/TOOL_INVENTORY_2026-10-07.json | awk '{s+=$1} END {print s+0}') -gt 1\"",
+      "exit_code": 1,
+      "observed_error": "My commit message for a8df7bdb asserted that the tool inventory, the ledger regression targets and the citation audit `all changed under` the new path_text module. `git show --numstat` says otherwise: TOOL_INVENTORY is 1/1 and LEDGER_REGRESSION_COMMAND_TARGETS is 1/1 -- both only the `generatedAt` line, confirmed by filtering it out and finding no remaining diff -- and the inventory's own scope is `DIRS = (\"scripts/audit/\", \"scripts/maintenance/\")` (tool_inventory_readback.py:35), so a module under packages/client-neutral-core/scripts is legitimately not enumerated at all. Only PROJECT_LOCAL_CITATION_AUDIT changed substantively (42/12). The same message also cited a guard that does not exist (tests/workflow-assistance/test_tool_inventory.py); the real file is tests/workflow-assistance/test_tool_inventory_coverage.py, found by `git grep -ln TOOL_INVENTORY tests`.",
+      "root_cause": "I ran the publishers, saw three files marked modified in `git status`, and attributed the change to the most recent thing I had written instead of diffing each one. A generator that stamps a timestamp into every artifact it writes makes `git status` a useless signal of substance.",
+      "fix": "Retracted here with the measured numstat; the accurate statement is that the citation audit changed because new tracked source cites paths, while the other two were rewritten with a fresh timestamp and no content change. No file content is altered by this record.",
+      "regression_test": "tests/workflow-assistance/test_tool_inventory_coverage.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "When a regenerated tracked artifact shows modified, diff it before describing it: `git show --numstat --format= <commit> -- <path>` and a `grep -v generatedAt` pass. A commit message may claim only what the diff supports, and an inventory scope is read from its own tool's DIRS constant, never assumed from a directory name.",
+      "remaining_boundary": "The citation audit's 42/12 change was not itemised here; it is the tool's own output and is asserted equal by its test, which passed.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "a8df7bdb",
+        "introducedCommitNote": "the commit whose message overstated what the republish changed",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "bindingBasis": "corrected-in-record: the wording is withdrawn here; the artifact bytes in a8df7bdb are accurate and the gate that reads them is green",
+        "bindingNote": "no fix commit for a wording defect; ERR-179 set the precedent of recording rather than rewriting published history",
+        "affectedCapability": "Accuracy of delivery claims",
+        "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_tool_inventory_coverage.py"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_tool_inventory_coverage.py is tracked",
+      "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_tool_inventory_coverage.py"
     }
   ],
   "wlrReconciled": true,

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-07T22:41:12Z",
+  "generatedAt": "2026-10-07T22:55:19Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -9,7 +9,7 @@
   },
   "counts": {
     "bound": 70,
-    "unboundPassRecords": 94,
+    "unboundPassRecords": 95,
     "anomalies": 0
   },
   "bound": [
@@ -1277,6 +1277,12 @@
       "id": "ERR-128",
       "date": "2026-10-07",
       "promise": "scripts/ci/verify_source_ledger.py",
+      "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
+    },
+    {
+      "id": "ERR-185",
+      "date": "2026-10-08",
+      "promise": "tests/workflow-assistance/test_tool_inventory_coverage.py",
       "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
     }
   ],
