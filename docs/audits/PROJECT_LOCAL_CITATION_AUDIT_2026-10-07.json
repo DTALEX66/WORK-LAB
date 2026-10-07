@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T08:08:03Z",
+  "generatedAt": "2026-10-07T08:26:06Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2075,
+    "trackedFilesScanned": 2076,
     "distinctProjectLocalTokens": 390,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 390,
-    "citationsToAbsentTokens": 1056
+    "citationsToAbsentTokens": 1060
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,7 +21,7 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 198,
+      "citations": 202,
       "distinctPaths": 77
     },
     "machine_field_pointing_at_absent_path": {
@@ -294,6 +294,12 @@
         "file": "scripts/audit/project_local_citation_audit.py",
         "line": 123,
         "text": "\".project-local/artifacts\":"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "scripts/audit/release_chrome_profile_residue.py",
+        "line": 31,
+        "text": "ARTIFACTS = ROOT / \".project-local/artifacts\""
       },
       {
         "path": ".project-local/artifacts",
@@ -744,6 +750,24 @@
         "file": "scripts/audit/project_local_citation_audit.py",
         "line": 126,
         "text": "\".project-local/runs\":"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "scripts/audit/release_chrome_profile_residue.py",
+        "line": 1,
+        "text": "\"\"\"Release headless-Chrome profile directories left under .project-local/runs by CDP probes."
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "scripts/audit/release_chrome_profile_residue.py",
+        "line": 28,
+        "text": "RUNS = ROOT / \".project-local/runs\""
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "scripts/audit/release_chrome_profile_residue.py",
+        "line": 150,
+        "text": "\"scope\": \".project-local/runs\", \"kind\": \"headless-chrome-profiles\","
       },
       {
         "path": ".project-local/runs",

@@ -127,4 +127,12 @@ node 静态契约新增 `a disabled control is visually disabled`（三条形状
 CI 在退役提交 `891c871` 上两条工作流全部 job completed/success。
 仍未做：品牌 SVG 挂载到头部；禁用态是 CSS 形状契约而非渲染后计算样式（CDP 探针能量但没接进 CI）。
 
+> **2026-10-07 下午更正（本文件按快照保留原文，不改写历史）**：上面三条"仍未做/修复方式"里有两条已被同日的
+> 后续工作取代。(1) 本文第 76 行的修复形式——把两轨收进 `@media (min-width: 841px)`——按 owner 的桌面唯一化
+> 指令在 `71b1ae8` 被删除，现在 `.app` 无条件声明 `clamp(...) minmax(0, 1fr)`，不变量改由重锚定的契约测试
+> 与 `tests/ci/test_desktop_only_shell.py` 守（ERR-123 的 bindingNote 记录了这次换据）。(2) CDP 几何探针已接成
+> observer 作业的**必需步骤**，并在 runner 上给出实测读数（`17eb5b6` 与 `95c62a4` 两个头全绿；读数见
+> `UI_IMPLEMENTATION_REPORT.md` §13–§14）。(3) 顶栏品牌已落：几何门禁在 runner 上量到 `brand_mark_present
+> PASS brand=91`（紧凑态 `brand=22`）。仍成立的只有"禁用态是 CSS 形状契约而非渲染后计算样式"这一条。
+
 

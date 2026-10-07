@@ -4592,12 +4592,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the resolution order has been HEAD-then-disk since the readback existed; it only became observable once an already-tracked instrument was modified in the same motion as its inventory",
         "fixedCommit": "4303bf8a018a6b593181c825589aaee053eff24e",
-        "verifiedCommit": null,
+        "verifiedCommit": "2f818e71a04cd7ac1f93fd1add28f0eccab653b3",
         "affectedCapability": "Tool inventory traceability; CI-surface reproducibility",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_tool_inventory_coverage.py",
         "bindingNote": "bound 2026-10-07 against 4303bf8: that commit changes digest() to resolve from the index and updates the gate's basis vocabulary and resolution order; both promised paths were checked with git cat-file before writing",
         "bindingBasis": "fix-commit-introduction: the tool change and its gate land together",
-        "verifiedCommitNote": null
+        "verifiedCommitNote": "exact-SHA Actions readback at 2f818e71a04cd7ac1f93fd1add28f0eccab653b3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"

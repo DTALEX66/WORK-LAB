@@ -24,9 +24,11 @@
 | `8847cdc` | `tool_version_metadata_probe.py`：不启动进程取版本 | 收据 `docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json`；**CI 两条 workflow 全绿** |
 | `1276547` | 五个适配器版本按 AG-07 既有字段入账 + 交叉门禁 | 门禁 8 项、反证 7/7 转红；`QUALITY_GATE_PASS gates=adapter-registry`；**CI 两条 workflow 全绿** |
 | `15ed970` | 本轮交接记录 | **CI 两条 workflow 全绿** |
-| `ad441a3` | 未绑定台账债务分诊入仓（95→RESOLVES 37 / 无文件操作数 42 / 路径已消失 15 / 仓外 1） | 门禁 7 项 + 反证 5/5；债务数为派生量 |
-| `737dac2` | **ERR-123 绑定到真实修复 `763a77f`** 并盖 verifiedCommit=`8847cdc`；分诊加"出生提交"信号后得出硬结论：94 条里 **86 条出生在 cutover 导入提交 `6bd0bd5`**，本仓历史可证的可绑定候选 = **0** | `bound=39 unboundPass=94 anomalies=0`；`test_ledger_fix_commit_binding` 10 项通过；反证增至 6 例（含"把导入出生的行说成可绑定"）全转红 |
-| `11042dd` | 几何门禁的 runner 实测读数入档 + 修掉一条误导性 PASS 文案 | 见 §2.7；`tests/ci/test_topbar_geometry_gate.py::test_a_passing_detail_says_what_was_measured` 双向钉住 |
+| `ad441a3` | 未绑定台账债务分诊入仓（95→RESOLVES 37 / 无文件操作数 42 / 路径已消失 15 / 仓外 1） | 门禁 7 项 + 反证 5/5；债务数为派生量；**CI 两条 workflow 全绿** |
+| `737dac2` | **ERR-123 绑定到真实修复 `763a77f`** 并盖 verifiedCommit=`8847cdc`；分诊加"出生提交"信号后得出硬结论：94 条里 **86 条出生在 cutover 导入提交 `6bd0bd5`**，本仓历史可证的可绑定候选 = **0** | `bound=39 unboundPass=94 anomalies=0`；`test_ledger_fix_commit_binding` 10 项通过；反证增至 6 例（含"把导入出生的行说成可绑定"）全转红。**该头 CI 红**：清单摘要取错 git 对象（ERR-153），修在 `4303bf8` |
+| `11042dd` | 几何门禁的 runner 实测读数入档 + 修掉一条误导性 PASS 文案 | 见 §2.7；该文件与 `test_desktop_only_shell.py` 合跑 25 项通过。**该头 CI 红**（同一 ERR-153 因） |
+| `95c62a4` | 15 条 PATH_GONE 拆成 6 真丢失 / 3 部分丢失 / 6 非路径 token；新仪器 `adjudicate_gone_guards.py` + 门禁 7 项 + 反证 4/4 | **CI 两条 workflow 全绿**（修复后首个完整读回的头） |
+| `4303bf8`+`2f818e7` | **ERR-153**：清单摘要改从**索引**取（要发布的那个对象）；旧 PASS 重跑收据 23 PASS / 7 FAIL（全为"命令已不能按原文执行"）/ 6 REFUSED，**今天真失败的不变量 = 0**；新仪器 `rerun_unbound_pass_checks.py` + 门禁 6 项 | `ERROR_LEDGER_PASS entries=151`、binding 门 10 项、52 项派生门全通过；`2f818e7` CI 于写作时在跑 |
 
 ## 2. 已确立的事实（不要重复论证）
 
@@ -74,6 +76,11 @@
 7. **有一条本地测试常红，但不是本分支的缺陷**：`tests/ci/test_exact_tree_review.py` 断言 HEAD==origin/main 且
    在册任务全 COMPLETED——那是**合并之后**才成立的交付不变量，且没有 CI 作业调用它。我没有为了让分支好看去
    改它；要么由 owner 把它移到合并后检查，要么保持"未合并即红"这一诚实信号。
+8. **三个头是红的，原因已定位并修复**：`737dac2`、`11042dd`、`7595adb` 的 work-lab-gate 都败在同一门
+   `test_the_shipped_inventory_describes_the_tree`（清单摘要记的是**上一个提交**的字节：`tool_inventory_readback.py`
+   原来"HEAD 优先、否则工作树"，对已跟踪文件的修改就取错对象）。三个红因逐个从各自 runner 日志确认为同一类，
+   修复在 `4303bf8`（摘要改取索引 `git show :path`）；修复后的头 `95c62a4` **两条 workflow 全绿**（实测读回），
+   `2f818e7` 在跑。教训是"暂存→重测→提交"这条纪律本身没错，错在测量取错了 git 对象——**要被发布的那个**。
 
 ## 4. 需要 owner 或真人操作（明确挂账，不得代答）
 
@@ -87,7 +94,9 @@
 ## 5. 下一份工作的优先顺序
 
 1. **94 条未绑定 PASS 的正确处理方式已被本轮实测限定**：86 条出生在导入提交，本仓历史给不出修复 SHA，
-   所以只有两条诚实路径——(a) 逐条**今天重跑**它自己的回归命令以重建证据（36 条有可解析操作数，先做这些）；
+   所以只有两条诚实路径——(a) 逐条**今天重跑**它自己的回归命令以重建证据：**这条已在 2026-10-07 做完**
+   （36 条可解析命令 → 23 PASS / 7 "命令已不能按原文执行" / 6 REFUSED，**今天真失败的不变量 0 条**，
+   见 `docs/audits/LEDGER_UNBOUND_RERUN_2026-10-07.json`；剩下 58 条要么无文件操作数要么守卫已消失）；
    (b) 回到被合并前的分支历史（`6bd0bd5` 的父链之外）去取真实因果。**不得**用邻近提交冒充 fixedCommit。
    15 条 PATH_GONE 已进一步拆开（`docs/audits/LEDGER_GONE_GUARD_ADJUDICATION_2026-10-07.json`）：6 条真的失去文件守卫且无后继、3 条只是多操作数命令部分丢失、6 条根本没有丢失文件（上游匹配器把 URL/分数/标识对/裸目录当路径）。
    其中 **ERR-104 的"守卫"位于被忽略根目录**——干净检出永远看不到它，这类 PASS 从未可验证，不是"测试消失"，需单独处置。
@@ -97,5 +106,5 @@
    并给 hermes 找到不需要启动的版本来源（它的 CLI 无版本资源）。
 4. `qwen2.5vl/7b` 权重在库未登记（5,969,233,408 B）、`30-products/minigame` 等已消失守卫的归属，
    都属需要 owner 点头的入库/撤账动作。
-5. PR #162 合并与发布决定权在 owner；本轮未合并、未打 tag、未发布。合并前 `git merge-tree` 预演干净
-   （150 行台账、22 行候选池在合并态均无重复）。
+5. PR #162 合并与发布决定权在 owner；本轮未合并、未打 tag、未发布。合并预演在交接时**重跑过一次**：对
+   `origin/main` 的 `git merge-tree` 干净无冲突，合并态台账 151 行（ERR-001…ERR-153）、候选池 22 行，两者均无重复 id。
