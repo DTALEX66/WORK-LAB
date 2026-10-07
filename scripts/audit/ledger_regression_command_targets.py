@@ -262,8 +262,18 @@ def main() -> int:
         data, applied = apply_labels(data)
     rows, mapping, ambiguous, gone, external = measure(data["errors"])
     # after an apply nothing measures as MOVED any more, so the map a reader must audit is the one that
-    # was substituted, not the empty remainder
-    published_map = applied or mapping
+    # was substituted, not the empty remainder — and it must survive a second run: a re-point history
+    # that disappears when the tool is re-run is data loss, and the audit would then claim no re-points
+    # ever happened while 34 records carry notes saying otherwise
+    published_map = dict(applied or mapping)
+    if AUDIT.is_file():
+        try:
+            prior = json.loads(AUDIT.read_text(encoding="utf-8")).get("repointMap") or {}
+        except (json.JSONDecodeError, OSError):
+            prior = {}
+        for stale, fresh in prior.items():
+            published_map.setdefault(stale, fresh)
+    published_map = dict(sorted(published_map.items()))
 
     # `counts` publishes what the records CLAIM (their label), never what a fresh measurement happens to
     # say: a re-pointed promise measures as RESOLVES afterwards, and publishing the measure as the claim

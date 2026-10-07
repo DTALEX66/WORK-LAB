@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-07T01:24:11Z",
+  "generatedAt": "2026-10-07T01:25:51Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -8,8 +8,8 @@
     "null": "an unverified fix stays null, and a PASS record with no fixedCommit is listed as owed rather than left silently unbound"
   },
   "counts": {
-    "bound": 28,
-    "unboundPassRecords": 96,
+    "bound": 29,
+    "unboundPassRecords": 95,
     "anomalies": 0
   },
   "bound": [
@@ -291,6 +291,16 @@
       "promise": "tests/workflow-assistance/test_project_local_citation_audit.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-143",
+      "statusAfter": "PASS",
+      "fixedCommit": "f49025c",
+      "verifiedCommit": null,
+      "promise": "tests/workflow-assistance/test_ledger_regression_command_targets.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
       "bindingNotePresent": true
     }
   ],
@@ -863,12 +873,6 @@
       "id": "ERR-128",
       "date": "2026-10-07",
       "promise": "scripts/ci/verify_source_ledger.py",
-      "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
-    },
-    {
-      "id": "ERR-143",
-      "date": "2026-10-07",
-      "promise": "tests/workflow-assistance/test_ledger_regression_command_targets.py",
       "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
     }
   ],

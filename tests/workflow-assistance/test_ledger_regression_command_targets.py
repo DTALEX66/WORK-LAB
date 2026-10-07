@@ -91,7 +91,11 @@ class LedgerLabelTests(unittest.TestCase):
         cls.audit = json.loads(AUDIT.read_text(encoding="utf-8"))
 
     def test_every_record_carries_a_declared_label(self) -> None:
-        self.assertEqual(len(self.errors), 140, "the record count moved without the audit being rerun")
+        # the floor is a floor, not a frozen number: the ledger grows as records are added, and a gate
+        # that fails on growth teaches nobody anything except to edit the gate
+        self.assertGreaterEqual(len(self.errors), 140)
+        self.assertEqual(self.audit["records"], len(self.errors),
+                         "the audit was published against a different ledger than the one in the tree")
         missing = [e["error_id"] for e in self.errors
                    if str(e.get("regressionTestVerifiability") or "") not in lrct.STATES]
         self.assertEqual(missing, [], f"records without a valid label: {missing[:8]}")

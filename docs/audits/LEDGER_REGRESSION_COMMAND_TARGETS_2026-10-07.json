@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-07T01:14:38Z",
+  "at": "2026-10-07T01:26:41Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -45,22 +45,22 @@
     }
   },
   "counts": {
-    "RESOLVES": 25,
+    "RESOLVES": 26,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
-    "RESOLVES": 58,
+    "RESOLVES": 59,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
-  "resolvedAfterApply": 58,
-  "records": 140,
-  "stateDigest": "a16ae8637837650046f82b88340de24c3708fac6bff438770b136a7b289feedb",
+  "resolvedAfterApply": 59,
+  "records": 141,
+  "stateDigest": "509e2cbea9cfa2204300d77673355fad91d99b259264767529f5cab2dc39b788",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -421,7 +421,7 @@
     }
   ],
   "unlabelled": [],
-  "apply": true,
+  "apply": false,
   "rows": [
     {
       "errorId": "ERR-001",
@@ -1399,7 +1399,7 @@
     {
       "errorId": "ERR-058",
       "statusAfter": "PASS",
-      "hasFixedCommit": false,
+      "hasFixedCommit": true,
       "command": "tests/ci/test_source_ledger.py + tests/ci/test_source_ledger_v4.py",
       "operands": [
         {
@@ -2079,7 +2079,7 @@
     {
       "errorId": "ERR-109",
       "statusAfter": "PASS",
-      "hasFixedCommit": false,
+      "hasFixedCommit": true,
       "command": "python tests/ci/test_failfast_group.py is a step of the CI integration job and now runs locally before every push of a manifest change; the full set of 25 CI-invoked governance and integration steps w",
       "operands": [
         {
@@ -2587,7 +2587,7 @@
     {
       "errorId": "ERR-129",
       "statusAfter": "PASS",
-      "hasFixedCommit": false,
+      "hasFixedCommit": true,
       "command": "The release tool returns exit 1 if any cited path disappears, and the post-check found 37 absences of which 9 were trailing-punctuation artifacts of my own regex and 0 lay under a deleted directory, s",
       "operands": [
         {
@@ -2604,7 +2604,7 @@
     {
       "errorId": "ERR-130",
       "statusAfter": "PASS",
-      "hasFixedCommit": false,
+      "hasFixedCommit": true,
       "command": "tests/workflow-assistance/test_error_ledger_regression_commands.py, 7 cases including two synthetic negative controls that never touch the real file (an unresolvable command must be flagged; a `cd`-re",
       "operands": [
         {
@@ -2845,7 +2845,7 @@
     },
     {
       "errorId": "ERR-142",
-      "statusAfter": "PARTIAL",
+      "statusAfter": "PASS",
       "hasFixedCommit": true,
       "command": "tests/workflow-assistance/test_project_local_citation_audit.py::CitationAuditGate::test_a_runtime_root_path_is_never_treated_as_checkout_verifiable",
       "operands": [
@@ -2854,6 +2854,23 @@
           "category": "RESOLVES",
           "candidates": [
             "tests/workflow-assistance/test_project_local_citation_audit.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-143",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "tests/workflow-assistance/test_ledger_regression_command_targets.py::LedgerLabelTests::test_a_repoint_claim_requires_a_note_and_fully_resolving_operands",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_ledger_regression_command_targets.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_ledger_regression_command_targets.py"
           ]
         }
       ],
@@ -2868,5 +2885,5 @@
     "OUT_OF_REPO_TARGET claims are re-checkable only on the machine holding the live client home, which is why they are labelled instead of counted as resolved",
     "no record's status_after was changed by this tool"
   ],
-  "whyItMatters": "the ledger carries 120 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
+  "whyItMatters": "the ledger carries 122 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
 }

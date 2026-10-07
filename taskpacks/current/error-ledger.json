@@ -4257,12 +4257,15 @@
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "left null: the defect lived in a binder written earlier in this same session and superseded before commit, so naming a tracked commit as its origin would be false attribution",
-        "fixedCommit": null,
+        "fixedCommit": "f49025c",
         "verifiedCommit": null,
         "affectedCapability": "Ledger traceability; regression-command verifiability",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_ledger_regression_command_targets.py",
-        "bindingNote": "fixedCommit is filled by the follow-up step that reads the real commit sha; it is never typed here"
-      }
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: record: every ledger promise now states whether it can still be re-run. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
+        "bindingBasis": "ledger-entry-introduction: this commit adds only 1 record(s), it changes docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json which the record names, and the record promises no script"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     }
   ],
   "wlrReconciled": true,
