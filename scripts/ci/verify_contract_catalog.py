@@ -26,6 +26,11 @@ EXPECTED = {
     # makes a new cross-language write boundary an explicit decision instead of a file that appeared.
     "control-operation": "workflow",
     "control-operation-result": "workflow",
+    # ERR-173 precedent: the packages/.../workflow copy of an observer-event name is a DIFFERENT
+    # document from apps/observer/schemas/observer-event.schema.json (snake_case projection-event shape,
+    # $id work-lab/observer-event/v1, validated by verify_core_schemas.py). Registered additively under
+    # its own id so one filename no longer hides two contracts in the SSOT.
+    "workflow-observer-event": "workflow",
     "rule-asset": "workflow",
     "skill-package": "workflow",
     "growth-candidate": "workflow",
@@ -70,6 +75,7 @@ CANONICAL_SCHEMA_PREFIXES = {
     "task-ledger-event": ("packages/contracts/",),
     "control-operation": ("packages/contracts/",),
     "control-operation-result": ("packages/contracts/",),
+    "workflow-observer-event": ("packages/contracts/",),
     "rule-asset": ("packages/contracts/",),
     "skill-package": ("packages/contracts/",),
     "growth-candidate": ("packages/contracts/",),

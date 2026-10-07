@@ -6,189 +6,47 @@
 // scripts/ci/verify_contract_ssot.py to prove generated == catalog.
 
 export type ContractId =
-  "module-profile"
-  | "source-ledger"
-  | "capability-conformance"
-  | "task-card"
-  | "runtime-lock"
-  | "domain-pack"
-  | "evidence-envelope"
-  | "workflow-evidence-envelope"
-  | "release-manifest"
+  "action-plan"
   | "adapter-capability"
-  | "action-plan"
-  | "task-ledger-event"
+  | "archive-manifest"
+  | "blocker"
+  | "capability-conformance"
+  | "ci-observation"
+  | "config-ownership"
   | "control-operation"
   | "control-operation-result"
-  | "rule-asset"
-  | "skill-package"
-  | "growth-candidate"
-  | "project-profile"
-  | "gate-registry"
-  | "gate-plan"
-  | "blocker"
-  | "ci-observation"
+  | "dashboard-projection"
+  | "data-quality"
+  | "domain-pack"
+  | "evidence-envelope"
   | "evidence-manifest"
-  | "model-policy"
+  | "execution-parallel-dispatch"
+  | "gate-plan"
+  | "gate-registry"
+  | "global-agent-policy"
+  | "growth-candidate"
   | "memory-record"
-  | "rule-drift"
-  | "platform-identity"
-  | "config-ownership"
+  | "model-policy"
+  | "module-profile"
   | "observer-event"
   | "observer-pricing"
-  | "data-quality"
-  | "dashboard-projection"
-  | "global-agent-policy"
+  | "platform-identity"
   | "policy-projection-contract"
   | "policy-projection-loss-report"
-  | "archive-manifest"
+  | "project-profile"
+  | "release-manifest"
+  | "rule-asset"
+  | "rule-drift"
+  | "runtime-lock"
+  | "skill-package"
   | "software-installation-identity"
+  | "software-update-postflight"
   | "software-update-preflight"
-  | "execution-parallel-dispatch"
-  | "software-update-postflight";
-
-// @contract module-profile
-// schema: .project/governance/contracts/module-profile.schema.json
-export type ModuleProfile = {
-    schemaVersion: unknown,
-    id: string,
-    path: string,
-    owner: string,
-    role: string,
-    releasePrefix: string,
-    dependsOn: string[],
-    evidencePath?: string,
-    externalMutationDefault?: unknown
-  };
-
-// @contract source-ledger
-// schema: .project/governance/contracts/source-ledger.schema.json
-export type SourceLedger = {
-    "$schema"?: string,
-    schemaVersion: unknown,
-    ledgerVersion: unknown,
-    scope: unknown,
-    entries: unknown[]
-  };
-
-// @contract capability-conformance
-// schema: .project/governance/contracts/capability-conformance.schema.json
-export type CapabilityConformance = {
-    "$schema"?: string,
-    schemaVersion: unknown,
-    scope: unknown,
-    acp: unknown,
-    skills: unknown,
-    mcp: unknown
-  };
-
-// @contract task-card
-// schema: packages/contracts/schemas/workflow/task-card.schema.json
-export type TaskCard = {
-    schema_version: unknown,
-    id: string,
-    title: string,
-    scope: string,
-    action: string,
-    acceptance: string,
-    phase?: string,
-    priority?: ["P0", "P1", "P2", "P3"],
-    constraints?: string[]
-  };
-
-// @contract runtime-lock
-// schema: .project/governance/contracts/runtime-lock.schema.json
-export type RuntimeLock = {
-    schemaVersion: unknown,
-    runId: string,
-    root: Record<string, unknown>,
-    modules: Record<string, unknown>
-  };
-
-// @contract domain-pack
-// schema: packages/contracts/schemas/workflow/domain-pack.schema.json
-export type DomainPack = {
-    schema_version: unknown,
-    pack_id: string,
-    version: string,
-    display_name: string,
-    description: string,
-    capabilities: string[],
-    entrypoints: {
-    human: string[],
-    machine: string[]
-  },
-    evidence_policy: {
-    minimum_level: ["E0", "E1", "E2", "E3", "E4", "E5"],
-    required_artifacts: string[]
-  },
-    safety: {
-    approval_required: unknown,
-    forbidden_paths: string[],
-    redaction_required: unknown
-  }
-  };
-
-// @contract evidence-envelope
-// schema: .project/governance/contracts/evidence-envelope.schema.json
-export type EvidenceEnvelope = {
-    schemaVersion: unknown,
-    taskId: string,
-    runId: string,
-    status: ["PASS", "FAIL", "BLOCKED", "UNKNOWN"],
-    source: string,
-    contentBodies?: unknown,
-    credentials?: unknown
-  };
-
-// @contract workflow-evidence-envelope
-// schema: packages/contracts/schemas/workflow/evidence-envelope.schema.json
-export type WorkflowEvidenceEnvelope = {
-    schema_version: unknown,
-    evidence_id: string,
-    task_id: string,
-    state: ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "UNVERIFIED", "SKIPPED_OPTIONAL"],
-    level: ["E0", "E1", "E2", "E3", "E4", "E5"],
-    source: {
-    kind: ["static", "isolated", "runtime", "ci", "external"],
-    identity: string
-  },
-    artifacts: Record<string, unknown>[],
-    redaction: {
-    policy: unknown,
-    secrets_stored: unknown,
-    notes?: string
-  },
-    checks?: string[],
-    message?: string
-  };
-
-// @contract release-manifest
-// schema: .project/governance/contracts/release-manifest.schema.json
-export type ReleaseManifest = {
-    schemaVersion: unknown,
-    releaseId: string,
-    module: string,
-    version: string,
-    source: {
-    repository: string,
-    commit: string
-  },
-    artifacts: Record<string, unknown>[],
-    evidence: string[],
-    approval: {
-    status: ["PENDING", "APPROVED", "REJECTED"],
-    scope?: string
-  }
-  };
-
-// @contract adapter-capability
-// schema: packages/contracts/schemas/workflow/client-adapter.schema.json
-export type AdapterCapability = {
-    schema_version: unknown,
-    interface: unknown[],
-    entries: Record<string, unknown>[]
-  };
+  | "source-ledger"
+  | "task-card"
+  | "task-ledger-event"
+  | "workflow-evidence-envelope"
+  | "workflow-observer-event";
 
 // @contract action-plan
 // schema: packages/contracts/schemas/workflow/action-plan.schema.json
@@ -220,23 +78,87 @@ export type ActionPlan = {
   }
   };
 
-// @contract task-ledger-event
-// schema: packages/contracts/schemas/workflow/run-event.schema.json
-export type TaskLedgerEvent = {
+// @contract adapter-capability
+// schema: packages/contracts/schemas/workflow/client-adapter.schema.json
+export type AdapterCapability = {
     schema_version: unknown,
-    event_id: string,
-    run_id: string,
-    task_id: string,
-    phase: ["planning", "approval", "execution", "observation", "delivery", "review", "rollback"],
-    status: ["QUEUED", "PLANNING", "WAITING_APPROVAL", "RUNNING", "RETRYING", "PAUSED", "BLOCKED", "REVIEWING", "COMPLETED", "FAILED", "CANCELLED"],
-    timestamp: string,
-    sequence?: number,
-    payload?: {
-    adapter?: string,
-    operation?: string,
-    checkpoint?: string,
-    error_code?: string
-  }
+    interface: unknown[],
+    entries: Record<string, unknown>[]
+  };
+
+// @contract archive-manifest
+// schema: .project/governance/contracts/archive-manifest.schema.json
+export type ArchiveManifest = {
+    archiveId: string,
+    source: string,
+    classification: ["product-history", "fixture-source", "reference-only", "regenerate-or-exclude"],
+    recovery: {
+    repository: string,
+    refs: string[],
+    verification: string
+  },
+    status: ["planned", "recorded", "verified", "blocked"]
+  };
+
+// @contract blocker
+// schema: packages/contracts/schemas/workflow/blocker.schema.json
+export type Blocker = {
+    schema_version: unknown,
+    blocker_id: string,
+    class: ["CODE_DEFECT", "TEST_FAILURE", "POLICY_VIOLATION", "APPROVAL_REQUIRED", "MISSING_CAPABILITY", "REMOTE_DIVERGENCE", "CI_OUTAGE", "CI_QUEUE_STALLED", "CI_RATE_LIMITED", "FLAKY_GATE", "ENVIRONMENT_UNAVAILABLE"],
+    scope: ["task", "batch", "gate", "delivery", "release", "observation"],
+    retry_policy: ["never", "once_after_recovery", "retry_after_retry_after", "budgeted_diagnostic"],
+    fingerprint: string,
+    message: string,
+    created_at: string,
+    resolved_at?: string | null
+  };
+
+// @contract capability-conformance
+// schema: .project/governance/contracts/capability-conformance.schema.json
+export type CapabilityConformance = {
+    "$schema"?: string,
+    schemaVersion: unknown,
+    scope: unknown,
+    acp: unknown,
+    skills: unknown,
+    mcp: unknown
+  };
+
+// @contract ci-observation
+// schema: packages/contracts/schemas/workflow/ci-observation.schema.json
+export type CiObservation = {
+    schema_version: unknown,
+    observation_id: string,
+    repository: string,
+    commit: string,
+    state: ["NOT_REQUESTED", "TRIGGER_EXPECTED", "DISCOVERING", "QUEUED_NO_JOB", "QUEUED_WITH_JOB", "RUNNING", "SUCCEEDED", "FAILED_PRODUCT", "FAILED_INFRASTRUCTURE", "CI_OUTAGE", "PLATFORM_OUTAGE", "CI_RATE_LIMITED", "TIMED_OUT", "CANCELLED", "STALE", "BLOCKED", "DEFERRED_CI"],
+    workflow?: string | null,
+    run_id?: number | string | null,
+    attempt?: number | null,
+    queue_age_seconds?: number | null,
+    job_count?: number | null,
+    observed_at: string,
+    next_observation_at?: string | null,
+    retry_budget: number,
+    message?: string
+  };
+
+// @contract config-ownership
+// schema: packages/contracts/schemas/workflow/config-ownership.schema.json
+export type ConfigOwnership = {
+    schema_version: unknown,
+    single_authority: unknown,
+    note: string,
+    layers: Record<string, unknown>,
+    operation_modes: ["MANAGE", "OBSERVE", "IGNORE", "FORBIDDEN"][],
+    default_unknown: {
+    mode: unknown,
+    quarantine: unknown
+  },
+    adapter_defaults: Record<string, unknown>,
+    fields: Record<string, unknown>[],
+    rules: Record<string, unknown>
   };
 
 // @contract control-operation
@@ -279,317 +201,6 @@ export type ControlOperationResult = {
     evidence_level: ["NO_EVIDENCE", "SIMULATED", "SYNTHETIC", "INTEGRATED", "REAL"],
     observed_at: string,
     next_action: string | null
-  };
-
-// @contract rule-asset
-// schema: packages/contracts/schemas/workflow/rule-asset.schema.json
-export type RuleAsset = {
-    schema_version: unknown,
-    id: string,
-    version: string,
-    origin: string,
-    scope: ["session", "project", "domain", "client", "global"],
-    risk: ["low", "medium", "high", "critical"],
-    status: ["candidate", "isolated", "approved", "deployed", "blocked", "retired"],
-    packageDigest?: string
-  };
-
-// @contract skill-package
-// schema: packages/contracts/schemas/workflow/skill-package.schema.json
-export type SkillPackage = {
-    schema_version: unknown,
-    id: string,
-    version: string,
-    source: string,
-    packageDigest: string,
-    status: ["candidate", "isolated", "approved", "deployed", "blocked", "retired"],
-    risk?: ["low", "medium", "high", "critical"]
-  };
-
-// @contract growth-candidate
-// schema: packages/contracts/schemas/workflow/growth-candidate.schema.json
-export type GrowthCandidate = {
-    schema_version: unknown,
-    candidateId: string,
-    origin: string,
-    classification: ["curator", "learn", "manual", "hub", "upstream", "deployment"],
-    status: ["discovered", "isolated", "scanned", "evaluated", "candidate", "approved", "blocked", "retired"],
-    risk: ["low", "medium", "high", "critical"],
-    sourceDigest?: string
-  };
-
-// @contract project-profile
-// schema: packages/contracts/schemas/workflow/project-profile.schema.json
-export type ProjectProfile = {
-    schema_version: unknown,
-    project: {
-    id: string,
-    root_policy: ["discover_git_root", "explicit_git_root"],
-    windows_native_first: boolean
-  },
-    configuration: {
-    precedence: ["global_defaults", "project_profile", "local_runtime", "environment", "cli"][]
-  },
-    modules: Record<string, unknown>,
-    risk_zones: Record<string, unknown>,
-    gates: Record<string, unknown>,
-    ci: {
-    stable_aggregate_check: string,
-    stable_aggregate_job?: string,
-    workflow_file?: string,
-    workflow_name?: string,
-    release_workflow?: string,
-    observation_privacy_policy?: string,
-    watcher_policy?: Record<string, unknown>,
-    exact_sha_required_for: string[],
-    outage_blocks: string[]
-  }
-  };
-
-// @contract gate-registry
-// schema: packages/contracts/schemas/workflow/gate-registry.schema.json
-export type GateRegistry = {
-    schema_version: unknown,
-    gate: unknown
-  };
-
-// @contract gate-plan
-// schema: packages/contracts/schemas/workflow/gate-plan.schema.json
-export type GatePlan = {
-    schema_version: unknown,
-    plan_id: string,
-    source_identity: unknown,
-    changed_paths: string[],
-    required_gates: string[],
-    skipped_gates: Record<string, unknown>[],
-    risk: ["low", "medium", "high", "critical"],
-    delivery_effect: ["none", "commit", "push", "pull_request", "merge", "release"],
-    platform_scope: string[],
-    plan_digest: unknown,
-    generated_at: string
-  };
-
-// @contract blocker
-// schema: packages/contracts/schemas/workflow/blocker.schema.json
-export type Blocker = {
-    schema_version: unknown,
-    blocker_id: string,
-    class: ["CODE_DEFECT", "TEST_FAILURE", "POLICY_VIOLATION", "APPROVAL_REQUIRED", "MISSING_CAPABILITY", "REMOTE_DIVERGENCE", "CI_OUTAGE", "CI_QUEUE_STALLED", "CI_RATE_LIMITED", "FLAKY_GATE", "ENVIRONMENT_UNAVAILABLE"],
-    scope: ["task", "batch", "gate", "delivery", "release", "observation"],
-    retry_policy: ["never", "once_after_recovery", "retry_after_retry_after", "budgeted_diagnostic"],
-    fingerprint: string,
-    message: string,
-    created_at: string,
-    resolved_at?: string | null
-  };
-
-// @contract ci-observation
-// schema: packages/contracts/schemas/workflow/ci-observation.schema.json
-export type CiObservation = {
-    schema_version: unknown,
-    observation_id: string,
-    repository: string,
-    commit: string,
-    state: ["NOT_REQUESTED", "TRIGGER_EXPECTED", "DISCOVERING", "QUEUED_NO_JOB", "QUEUED_WITH_JOB", "RUNNING", "SUCCEEDED", "FAILED_PRODUCT", "FAILED_INFRASTRUCTURE", "CI_OUTAGE", "PLATFORM_OUTAGE", "CI_RATE_LIMITED", "TIMED_OUT", "CANCELLED", "STALE", "BLOCKED", "DEFERRED_CI"],
-    workflow?: string | null,
-    run_id?: number | string | null,
-    attempt?: number | null,
-    queue_age_seconds?: number | null,
-    job_count?: number | null,
-    observed_at: string,
-    next_observation_at?: string | null,
-    retry_budget: number,
-    message?: string
-  };
-
-// @contract evidence-manifest
-// schema: packages/contracts/schemas/workflow/evidence-manifest.schema.json
-export type EvidenceManifest = {
-    schema_version: unknown,
-    manifest_id: string,
-    source_identity: unknown,
-    plan: {
-    digest: unknown,
-    base_oid: string,
-    head_oid: string
-  },
-    evidence: Record<string, unknown>[],
-    redaction: {
-    policy: unknown,
-    secrets_stored: unknown
-  }
-  };
-
-// @contract model-policy
-// schema: packages/contracts/schemas/workflow/model-policy.schema.json
-export type ModelPolicy = {
-    schema_version: unknown,
-    policy_id: string,
-    task_class: ["planning", "coding", "review", "observer", "design", "recovery"],
-    model_class: ["reasoning", "general", "fast", "local", "unknown"],
-    selection: ["user-selected", "capability-match", "offline-fixture", "unavailable"],
-    context_budget: {
-    input_tokens: number,
-    output_tokens: number,
-    reserved_tokens: number,
-    overflow: ["fail-closed", "summarize", "drop-oldest"]
-  },
-    cost: {
-    mode: ["unknown", "estimated", "subscription", "not-metered", "reconciled"],
-    currency?: string,
-    unit_price_per_million_tokens?: number,
-    effective_at?: string,
-    source: string
-  },
-    redaction: {
-    prompt_response_bodies: unknown,
-    credentials: unknown
-  },
-    degradation: ["unknown-when-unavailable", "blocked-when-unavailable"]
-  };
-
-// @contract memory-record
-// schema: packages/contracts/schemas/workflow/memory-record.schema.json
-export type MemoryRecord = {
-    schema_version: unknown,
-    ttlSeconds: number,
-    authoritative: boolean,
-    memory_id: string,
-    layer: ["ephemeral", "session", "project", "domain", "global"],
-    kind: ["fact", "preference", "procedure", "candidate", "event"],
-    status: ["observed", "proposed", "approved", "blocked", "retired"],
-    project_id: string,
-    scope?: ["project", "domain", "global"],
-    valid_from?: string | null,
-    valid_to?: string | null,
-    ttl_days?: number | null,
-    supersedes?: string | null,
-    conflicts_with?: string[] | null,
-    last_used_at?: string | null,
-    pinned_context?: boolean,
-    source_digest: string,
-    content_digest: string,
-    confidence: ["low", "medium", "high"],
-    promotion: ["never", "manual-approval"],
-    redaction: {
-    prompt_response_bodies: unknown,
-    credentials: unknown
-  }
-  };
-
-// @contract rule-drift
-// schema: packages/contracts/schemas/workflow/rule-drift.schema.json
-export type RuleDrift = {
-    schema_version: unknown,
-    drift_id: string,
-    rule_id: string,
-    baseline_digest: string | null,
-    observed_digest: string | null,
-    state: ["unchanged", "changed", "missing", "new"],
-    severity: ["info", "medium", "high"],
-    action: ["report-only", "quarantine", "manual-review"]
-  };
-
-// @contract platform-identity
-// schema: packages/contracts/schemas/workflow/platform-identity.schema.json
-export type PlatformIdentity = {
-    schema_version: unknown,
-    platform_id: string,
-    logical_instance_id: string,
-    package_identity: string,
-    publisher: string,
-    install_channel: ["store", "official-installer", "package-manager", "portable", "source", "unknown"],
-    executable_realpath: string,
-    binary_digest: string,
-    discovered_version: string,
-    launcher_id: string,
-    launcher_target: string,
-    arguments: string[],
-    working_directory: string,
-    effective_config_root: string,
-    profile_id: string,
-    user_context: ["current-user", "service-user", "unknown"],
-    capabilities: string[],
-    evidence_source: string[],
-    observed_at: string,
-    freshness: ["CURRENT", "STALE", "UNKNOWN"],
-    state: ["UNIQUE", "ALIAS_DUPLICATE", "STALE_SHORTCUT", "CONFIG_SPLIT", "VERSION_COLLISION", "DUAL_INSTALLATION", "PROFILE_SPLIT", "IDENTITY_AMBIGUOUS", "UNAVAILABLE"]
-  };
-
-// @contract config-ownership
-// schema: packages/contracts/schemas/workflow/config-ownership.schema.json
-export type ConfigOwnership = {
-    schema_version: unknown,
-    single_authority: unknown,
-    note: string,
-    layers: Record<string, unknown>,
-    operation_modes: ["MANAGE", "OBSERVE", "IGNORE", "FORBIDDEN"][],
-    default_unknown: {
-    mode: unknown,
-    quarantine: unknown
-  },
-    adapter_defaults: Record<string, unknown>,
-    fields: Record<string, unknown>[],
-    rules: Record<string, unknown>
-  };
-
-// @contract observer-event
-// schema: apps/observer/schemas/observer-event.schema.json
-export type ObserverEvent = {
-    eventId: string,
-    schemaVersion: unknown,
-    eventType: string,
-    sourceModule: string,
-    sourceId?: string,
-    projectId?: string,
-    taskId?: string,
-    taskTitle?: string,
-    runId?: string,
-    observedAt: string,
-    occurredAt?: string,
-    originId?: string,
-    causationId?: string,
-    correlationId?: string,
-    contentDigest: string,
-    coverage?: ["full", "partial", "unknown"],
-    quality: ["source-exact", "deduplicated", "partial", "unknown"],
-    usage?: {
-    input_tokens: number | null,
-    output_tokens: number | null,
-    total_tokens: number | null,
-    records: number | null,
-    observation_state: ["observed", "estimated", "unknown"]
-  },
-    evidenceRefs?: string[],
-    telemetry?: {
-    operation?: string,
-    provider?: string,
-    model?: string,
-    input_tokens?: number,
-    output_tokens?: number,
-    total_tokens?: number,
-    reasoning_tokens?: number,
-    latency_ms?: number,
-    cache_read_tokens?: number,
-    cache_write_tokens?: number,
-    outcome?: string,
-    error_class?: string
-  }
-  };
-
-// @contract observer-pricing
-// schema: apps/observer/schemas/observer-pricing.schema.json
-export type ObserverPricing = Record<string, unknown>;
-
-// @contract data-quality
-// schema: apps/observer/schemas/data-quality.schema.json
-export type DataQuality = {
-    quality: ["source-exact", "deduplicated", "partial", "unknown"],
-    coverage: ["full", "partial", "unknown"],
-    sourceCount: number,
-    acceptedCount: number,
-    rejectedCount: number,
-    reason?: string
   };
 
 // @contract dashboard-projection
@@ -659,6 +270,116 @@ export type DashboardProjection = {
     approvalMutation?: boolean,
     gitControl?: boolean
   }
+  };
+
+// @contract data-quality
+// schema: apps/observer/schemas/data-quality.schema.json
+export type DataQuality = {
+    quality: ["source-exact", "deduplicated", "partial", "unknown"],
+    coverage: ["full", "partial", "unknown"],
+    sourceCount: number,
+    acceptedCount: number,
+    rejectedCount: number,
+    reason?: string
+  };
+
+// @contract domain-pack
+// schema: packages/contracts/schemas/workflow/domain-pack.schema.json
+export type DomainPack = {
+    schema_version: unknown,
+    pack_id: string,
+    version: string,
+    display_name: string,
+    description: string,
+    capabilities: string[],
+    entrypoints: {
+    human: string[],
+    machine: string[]
+  },
+    evidence_policy: {
+    minimum_level: ["E0", "E1", "E2", "E3", "E4", "E5"],
+    required_artifacts: string[]
+  },
+    safety: {
+    approval_required: unknown,
+    forbidden_paths: string[],
+    redaction_required: unknown
+  }
+  };
+
+// @contract evidence-envelope
+// schema: .project/governance/contracts/evidence-envelope.schema.json
+export type EvidenceEnvelope = {
+    schemaVersion: unknown,
+    taskId: string,
+    runId: string,
+    status: ["PASS", "FAIL", "BLOCKED", "UNKNOWN"],
+    source: string,
+    contentBodies?: unknown,
+    credentials?: unknown
+  };
+
+// @contract evidence-manifest
+// schema: packages/contracts/schemas/workflow/evidence-manifest.schema.json
+export type EvidenceManifest = {
+    schema_version: unknown,
+    manifest_id: string,
+    source_identity: unknown,
+    plan: {
+    digest: unknown,
+    base_oid: string,
+    head_oid: string
+  },
+    evidence: Record<string, unknown>[],
+    redaction: {
+    policy: unknown,
+    secrets_stored: unknown
+  }
+  };
+
+// @contract execution-parallel-dispatch
+// schema: packages/contracts/schemas/workflow/execution-parallel-dispatch.schema.json
+export type ExecutionParallelDispatch = {
+    schema_version: unknown,
+    op: ["NEW", "PROMPT"],
+    executors: string[],
+    payload?: Record<string, unknown>,
+    adapter_kind?: ["new", "prompt"],
+    per_executor_timeout?: number,
+    fail_fast?: boolean,
+    status: ["OK", "PARTIAL", "DEGRADED", "FAILED"],
+    per_executor?: Record<string, unknown>,
+    succeeded?: string[],
+    failed?: string[],
+    timed_out?: string[],
+    unknown?: string[],
+    events: Record<string, unknown>[],
+    events_stream?: Record<string, unknown>[],
+    streamed?: boolean,
+    notes?: string[]
+  };
+
+// @contract gate-plan
+// schema: packages/contracts/schemas/workflow/gate-plan.schema.json
+export type GatePlan = {
+    schema_version: unknown,
+    plan_id: string,
+    source_identity: unknown,
+    changed_paths: string[],
+    required_gates: string[],
+    skipped_gates: Record<string, unknown>[],
+    risk: ["low", "medium", "high", "critical"],
+    delivery_effect: ["none", "commit", "push", "pull_request", "merge", "release"],
+    platform_scope: string[],
+    plan_digest: unknown,
+    generated_at: string
+  };
+
+// @contract gate-registry
+// schema: packages/contracts/schemas/workflow/gate-registry.schema.json
+export type GateRegistry = {
+    schema_version: unknown,
+    gate: unknown
   };
 
 // @contract global-agent-policy
@@ -813,6 +534,163 @@ export type GlobalAgentPolicy = {
   }
   };
 
+// @contract growth-candidate
+// schema: packages/contracts/schemas/workflow/growth-candidate.schema.json
+export type GrowthCandidate = {
+    schema_version: unknown,
+    candidateId: string,
+    origin: string,
+    classification: ["curator", "learn", "manual", "hub", "upstream", "deployment"],
+    status: ["discovered", "isolated", "scanned", "evaluated", "candidate", "approved", "blocked", "retired"],
+    risk: ["low", "medium", "high", "critical"],
+    sourceDigest?: string
+  };
+
+// @contract memory-record
+// schema: packages/contracts/schemas/workflow/memory-record.schema.json
+export type MemoryRecord = {
+    schema_version: unknown,
+    ttlSeconds: number,
+    authoritative: boolean,
+    memory_id: string,
+    layer: ["ephemeral", "session", "project", "domain", "global"],
+    kind: ["fact", "preference", "procedure", "candidate", "event"],
+    status: ["observed", "proposed", "approved", "blocked", "retired"],
+    project_id: string,
+    scope?: ["project", "domain", "global"],
+    valid_from?: string | null,
+    valid_to?: string | null,
+    ttl_days?: number | null,
+    supersedes?: string | null,
+    conflicts_with?: string[] | null,
+    last_used_at?: string | null,
+    pinned_context?: boolean,
+    source_digest: string,
+    content_digest: string,
+    confidence: ["low", "medium", "high"],
+    promotion: ["never", "manual-approval"],
+    redaction: {
+    prompt_response_bodies: unknown,
+    credentials: unknown
+  }
+  };
+
+// @contract model-policy
+// schema: packages/contracts/schemas/workflow/model-policy.schema.json
+export type ModelPolicy = {
+    schema_version: unknown,
+    policy_id: string,
+    task_class: ["planning", "coding", "review", "observer", "design", "recovery"],
+    model_class: ["reasoning", "general", "fast", "local", "unknown"],
+    selection: ["user-selected", "capability-match", "offline-fixture", "unavailable"],
+    context_budget: {
+    input_tokens: number,
+    output_tokens: number,
+    reserved_tokens: number,
+    overflow: ["fail-closed", "summarize", "drop-oldest"]
+  },
+    cost: {
+    mode: ["unknown", "estimated", "subscription", "not-metered", "reconciled"],
+    currency?: string,
+    unit_price_per_million_tokens?: number,
+    effective_at?: string,
+    source: string
+  },
+    redaction: {
+    prompt_response_bodies: unknown,
+    credentials: unknown
+  },
+    degradation: ["unknown-when-unavailable", "blocked-when-unavailable"]
+  };
+
+// @contract module-profile
+// schema: .project/governance/contracts/module-profile.schema.json
+export type ModuleProfile = {
+    schemaVersion: unknown,
+    id: string,
+    path: string,
+    owner: string,
+    role: string,
+    releasePrefix: string,
+    dependsOn: string[],
+    evidencePath?: string,
+    externalMutationDefault?: unknown
+  };
+
+// @contract observer-event
+// schema: apps/observer/schemas/observer-event.schema.json
+export type ObserverEvent = {
+    eventId: string,
+    schemaVersion: unknown,
+    eventType: string,
+    sourceModule: string,
+    sourceId?: string,
+    projectId?: string,
+    taskId?: string,
+    taskTitle?: string,
+    runId?: string,
+    observedAt: string,
+    occurredAt?: string,
+    originId?: string,
+    causationId?: string,
+    correlationId?: string,
+    contentDigest: string,
+    coverage?: ["full", "partial", "unknown"],
+    quality: ["source-exact", "deduplicated", "partial", "unknown"],
+    usage?: {
+    input_tokens: number | null,
+    output_tokens: number | null,
+    total_tokens: number | null,
+    records: number | null,
+    observation_state: ["observed", "estimated", "unknown"]
+  },
+    evidenceRefs?: string[],
+    telemetry?: {
+    operation?: string,
+    provider?: string,
+    model?: string,
+    input_tokens?: number,
+    output_tokens?: number,
+    total_tokens?: number,
+    reasoning_tokens?: number,
+    latency_ms?: number,
+    cache_read_tokens?: number,
+    cache_write_tokens?: number,
+    outcome?: string,
+    error_class?: string
+  }
+  };
+
+// @contract observer-pricing
+// schema: apps/observer/schemas/observer-pricing.schema.json
+export type ObserverPricing = Record<string, unknown>;
+
+// @contract platform-identity
+// schema: packages/contracts/schemas/workflow/platform-identity.schema.json
+export type PlatformIdentity = {
+    schema_version: unknown,
+    platform_id: string,
+    logical_instance_id: string,
+    package_identity: string,
+    publisher: string,
+    install_channel: ["store", "official-installer", "package-manager", "portable", "source", "unknown"],
+    executable_realpath: string,
+    binary_digest: string,
+    discovered_version: string,
+    launcher_id: string,
+    launcher_target: string,
+    arguments: string[],
+    working_directory: string,
+    effective_config_root: string,
+    profile_id: string,
+    user_context: ["current-user", "service-user", "unknown"],
+    capabilities: string[],
+    evidence_source: string[],
+    observed_at: string,
+    freshness: ["CURRENT", "STALE", "UNKNOWN"],
+    state: ["UNIQUE", "ALIAS_DUPLICATE", "STALE_SHORTCUT", "CONFIG_SPLIT", "VERSION_COLLISION", "DUAL_INSTALLATION", "PROFILE_SPLIT", "IDENTITY_AMBIGUOUS", "UNAVAILABLE"]
+  };
+
 // @contract policy-projection-contract
 // schema: packages/contracts/schemas/workflow/policy-projection-contract.schema.json
 export type PolicyProjectionContract = {
@@ -848,18 +726,98 @@ export type PolicyProjectionLossReport = {
     notes?: string
   };
 
-// @contract archive-manifest
-// schema: .project/governance/contracts/archive-manifest.schema.json
-export type ArchiveManifest = {
-    archiveId: string,
-    source: string,
-    classification: ["product-history", "fixture-source", "reference-only", "regenerate-or-exclude"],
-    recovery: {
-    repository: string,
-    refs: string[],
-    verification: string
+// @contract project-profile
+// schema: packages/contracts/schemas/workflow/project-profile.schema.json
+export type ProjectProfile = {
+    schema_version: unknown,
+    project: {
+    id: string,
+    root_policy: ["discover_git_root", "explicit_git_root"],
+    windows_native_first: boolean
   },
-    status: ["planned", "recorded", "verified", "blocked"]
+    configuration: {
+    precedence: ["global_defaults", "project_profile", "local_runtime", "environment", "cli"][]
+  },
+    modules: Record<string, unknown>,
+    risk_zones: Record<string, unknown>,
+    gates: Record<string, unknown>,
+    ci: {
+    stable_aggregate_check: string,
+    stable_aggregate_job?: string,
+    workflow_file?: string,
+    workflow_name?: string,
+    release_workflow?: string,
+    observation_privacy_policy?: string,
+    watcher_policy?: Record<string, unknown>,
+    exact_sha_required_for: string[],
+    outage_blocks: string[]
+  }
+  };
+
+// @contract release-manifest
+// schema: .project/governance/contracts/release-manifest.schema.json
+export type ReleaseManifest = {
+    schemaVersion: unknown,
+    releaseId: string,
+    module: string,
+    version: string,
+    source: {
+    repository: string,
+    commit: string
+  },
+    artifacts: Record<string, unknown>[],
+    evidence: string[],
+    approval: {
+    status: ["PENDING", "APPROVED", "REJECTED"],
+    scope?: string
+  }
+  };
+
+// @contract rule-asset
+// schema: packages/contracts/schemas/workflow/rule-asset.schema.json
+export type RuleAsset = {
+    schema_version: unknown,
+    id: string,
+    version: string,
+    origin: string,
+    scope: ["session", "project", "domain", "client", "global"],
+    risk: ["low", "medium", "high", "critical"],
+    status: ["candidate", "isolated", "approved", "deployed", "blocked", "retired"],
+    packageDigest?: string
+  };
+
+// @contract rule-drift
+// schema: packages/contracts/schemas/workflow/rule-drift.schema.json
+export type RuleDrift = {
+    schema_version: unknown,
+    drift_id: string,
+    rule_id: string,
+    baseline_digest: string | null,
+    observed_digest: string | null,
+    state: ["unchanged", "changed", "missing", "new"],
+    severity: ["info", "medium", "high"],
+    action: ["report-only", "quarantine", "manual-review"]
+  };
+
+// @contract runtime-lock
+// schema: .project/governance/contracts/runtime-lock.schema.json
+export type RuntimeLock = {
+    schemaVersion: unknown,
+    runId: string,
+    root: Record<string, unknown>,
+    modules: Record<string, unknown>
+  };
+
+// @contract skill-package
+// schema: packages/contracts/schemas/workflow/skill-package.schema.json
+export type SkillPackage = {
+    schema_version: unknown,
+    id: string,
+    version: string,
+    source: string,
+    packageDigest: string,
+    status: ["candidate", "isolated", "approved", "deployed", "blocked", "retired"],
+    risk?: ["low", "medium", "high", "critical"]
   };
 
 // @contract software-installation-identity
@@ -890,6 +848,20 @@ export type SoftwareInstallationIdentity = {
     verified_at?: string | null
   };
 
+// @contract software-update-postflight
+// schema: packages/contracts/schemas/workflow/software-update-postflight.schema.json
+export type SoftwareUpdatePostflight = {
+    schema_version: unknown,
+    software_id: string,
+    target_version: string,
+    before: Record<string, unknown>,
+    after: Record<string, unknown>,
+    checks: Record<string, unknown>[],
+    location_readback_passed: boolean,
+    overall: ["PASS", "FAIL", "PENDING"],
+    reasons: ["POSTFLIGHT_ALL_CHECKS_PASS", "VERSION_READBACK_FAIL", "BODY_INTEGRITY_FAIL", "LAUNCHER_PINNING_FAIL", "DATA_ROOT_PINNING_FAIL", "C_RESIDUE_DETECTED", "LOCATION_READBACK_FAIL", "RUNTIME_HEALTH_UNVERIFIED", "RUNTIME_HEALTH_FAIL", "POSTFLIGHT_INCOMPLETE"][]
+  };
+
 // @contract software-update-preflight
 // schema: packages/contracts/schemas/workflow/software-update-preflight.schema.json
 export type SoftwareUpdatePreflight = {
@@ -917,39 +889,83 @@ export type SoftwareUpdatePreflight = {
     reasons?: ["IN_PLACE_UPDATE_OK", "INSTALL_ROOT_CHANGE_REQUIRES_EXPLICIT_RELOCATION", "DUAL_INSTALLATION_UPDATE_BLOCKED", "LOCATION_DRIFT_UPDATE_BLOCKED", "MISSING_EXPECTED_INSTALL_NO_VENDOR_FALLBACK", "SINGLE_UNVERIFIED_IDENTITY_VALIDATION_FIRST", "OS_MANAGED_PRESERVE_OFFICIAL_CHANNEL", "LOCATION_READBACK_FAIL", "RELOCATION_APPROVED", "RELOCATION_NOT_APPROVED"][]
   };
 
-// @contract execution-parallel-dispatch
-// schema: packages/contracts/schemas/workflow/execution-parallel-dispatch.schema.json
-export type ExecutionParallelDispatch = {
-    schema_version: unknown,
-    op: ["NEW", "PROMPT"],
-    executors: string[],
-    payload?: Record<string, unknown>,
-    adapter_kind?: ["new", "prompt"],
-    per_executor_timeout?: number,
-    fail_fast?: boolean,
-    status: ["OK", "PARTIAL", "DEGRADED", "FAILED"],
-    per_executor?: Record<string, unknown>,
-    succeeded?: string[],
-    failed?: string[],
-    timed_out?: string[],
-    unknown?: string[],
-    events: Record<string, unknown>[],
-    events_stream?: Record<string, unknown>[],
-    streamed?: boolean,
-    notes?: string[]
+// @contract source-ledger
+// schema: .project/governance/contracts/source-ledger.schema.json
+export type SourceLedger = {
+    "$schema"?: string,
+    schemaVersion: unknown,
+    ledgerVersion: unknown,
+    scope: unknown,
+    entries: unknown[]
   };
 
-// @contract software-update-postflight
-// schema: packages/contracts/schemas/workflow/software-update-postflight.schema.json
-export type SoftwareUpdatePostflight = {
+// @contract task-card
+// schema: packages/contracts/schemas/workflow/task-card.schema.json
+export type TaskCard = {
     schema_version: unknown,
-    software_id: string,
-    target_version: string,
-    before: Record<string, unknown>,
-    after: Record<string, unknown>,
-    checks: Record<string, unknown>[],
-    location_readback_passed: boolean,
-    overall: ["PASS", "FAIL", "PENDING"],
-    reasons: ["POSTFLIGHT_ALL_CHECKS_PASS", "VERSION_READBACK_FAIL", "BODY_INTEGRITY_FAIL", "LAUNCHER_PINNING_FAIL", "DATA_ROOT_PINNING_FAIL", "C_RESIDUE_DETECTED", "LOCATION_READBACK_FAIL", "RUNTIME_HEALTH_UNVERIFIED", "RUNTIME_HEALTH_FAIL", "POSTFLIGHT_INCOMPLETE"][]
+    id: string,
+    title: string,
+    scope: string,
+    action: string,
+    acceptance: string,
+    phase?: string,
+    priority?: ["P0", "P1", "P2", "P3"],
+    constraints?: string[]
+  };
+
+// @contract task-ledger-event
+// schema: packages/contracts/schemas/workflow/run-event.schema.json
+export type TaskLedgerEvent = {
+    schema_version: unknown,
+    event_id: string,
+    run_id: string,
+    task_id: string,
+    phase: ["planning", "approval", "execution", "observation", "delivery", "review", "rollback"],
+    status: ["QUEUED", "PLANNING", "WAITING_APPROVAL", "RUNNING", "RETRYING", "PAUSED", "BLOCKED", "REVIEWING", "COMPLETED", "FAILED", "CANCELLED"],
+    timestamp: string,
+    sequence?: number,
+    payload?: {
+    adapter?: string,
+    operation?: string,
+    checkpoint?: string,
+    error_code?: string
+  }
+  };
+
+// @contract workflow-evidence-envelope
+// schema: packages/contracts/schemas/workflow/evidence-envelope.schema.json
+export type WorkflowEvidenceEnvelope = {
+    schema_version: unknown,
+    evidence_id: string,
+    task_id: string,
+    state: ["NOT_RUN", "PASS", "FAIL", "BLOCKED", "UNVERIFIED", "SKIPPED_OPTIONAL"],
+    level: ["E0", "E1", "E2", "E3", "E4", "E5"],
+    source: {
+    kind: ["static", "isolated", "runtime", "ci", "external"],
+    identity: string
+  },
+    artifacts: Record<string, unknown>[],
+    redaction: {
+    policy: unknown,
+    secrets_stored: unknown,
+    notes?: string
+  },
+    checks?: string[],
+    message?: string
+  };
+
+// @contract workflow-observer-event
+// schema: packages/contracts/schemas/workflow/observer-event.schema.json
+export type WorkflowObserverEvent = {
+    schema_version: unknown,
+    sequence: number,
+    event_id: string,
+    run_id: string,
+    task_id: string,
+    event_type: string,
+    occurred_at: string,
+    source: string,
+    projection_key?: string,
+    payload: Record<string, unknown>
   };
 

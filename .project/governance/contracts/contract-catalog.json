@@ -2,23 +2,38 @@
   "schemaVersion": "work-lab-contract-catalog/v2",
   "contracts": [
     {
-      "id": "module-profile",
-      "owner": "root-governance",
-      "schemaPath": ".project/governance/contracts/module-profile.schema.json",
+      "id": "action-plan",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/action-plan.schema.json",
       "consumers": [
         "workflow",
-        "observer",
-        "ci"
+        "evidence"
       ]
     },
     {
-      "id": "source-ledger",
-      "owner": "root-governance",
-      "schemaPath": ".project/governance/contracts/source-ledger.schema.json",
+      "id": "adapter-capability",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/client-adapter.schema.json",
       "consumers": [
         "workflow",
-        "observer",
-        "ci"
+        "integration"
+      ]
+    },
+    {
+      "id": "archive-manifest",
+      "owner": "root-governance",
+      "schemaPath": ".project/governance/contracts/archive-manifest.schema.json",
+      "consumers": [
+        "archive-audit"
+      ]
+    },
+    {
+      "id": "blocker",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/blocker.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
       ]
     },
     {
@@ -32,21 +47,56 @@
       ]
     },
     {
-      "id": "task-card",
+      "id": "ci-observation",
       "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/task-card.schema.json",
+      "schemaPath": "packages/contracts/schemas/workflow/ci-observation.schema.json",
       "consumers": [
-        "writer",
-        "reviewer"
+        "workflow",
+        "observer"
       ]
     },
     {
-      "id": "runtime-lock",
+      "id": "config-ownership",
       "owner": "workflow",
-      "schemaPath": ".project/governance/contracts/runtime-lock.schema.json",
+      "schemaPath": "packages/contracts/schemas/workflow/config-ownership.schema.json",
       "consumers": [
-        "evidence",
-        "reviewer"
+        "workflow",
+        "ci"
+      ]
+    },
+    {
+      "id": "control-operation",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/control-operation.schema.json",
+      "consumers": [
+        "control",
+        "ci"
+      ]
+    },
+    {
+      "id": "control-operation-result",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/control-operation-result.schema.json",
+      "consumers": [
+        "control",
+        "ci"
+      ]
+    },
+    {
+      "id": "dashboard-projection",
+      "owner": "observer",
+      "schemaPath": "apps/observer/schemas/dashboard-projection.schema.json",
+      "consumers": [
+        "observer",
+        "ui"
+      ]
+    },
+    {
+      "id": "data-quality",
+      "owner": "observer",
+      "schemaPath": "apps/observer/schemas/data-quality.schema.json",
+      "consumers": [
+        "observer"
       ]
     },
     {
@@ -69,111 +119,22 @@
       ]
     },
     {
-      "id": "workflow-evidence-envelope",
+      "id": "evidence-manifest",
       "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/evidence-envelope.schema.json",
+      "schemaPath": "packages/contracts/schemas/workflow/evidence-manifest.schema.json",
       "consumers": [
+        "workflow",
         "observer",
-        "workflow",
         "ci"
       ]
     },
     {
-      "id": "release-manifest",
-      "owner": "root-governance",
-      "schemaPath": ".project/governance/contracts/release-manifest.schema.json",
-      "consumers": [
-        "github",
-        "audit"
-      ]
-    },
-    {
-      "id": "adapter-capability",
+      "id": "execution-parallel-dispatch",
       "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/client-adapter.schema.json",
+      "schemaPath": "packages/contracts/schemas/workflow/execution-parallel-dispatch.schema.json",
       "consumers": [
         "workflow",
-        "integration"
-      ]
-    },
-    {
-      "id": "action-plan",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/action-plan.schema.json",
-      "consumers": [
-        "workflow",
-        "evidence"
-      ]
-    },
-    {
-      "id": "task-ledger-event",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/run-event.schema.json",
-      "consumers": [
-        "workflow",
-        "observer"
-      ]
-    },
-    {
-      "id": "control-operation",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/control-operation.schema.json",
-      "consumers": [
-        "control",
-        "ci"
-      ]
-    },
-    {
-      "id": "control-operation-result",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/control-operation-result.schema.json",
-      "consumers": [
-        "control",
-        "ci"
-      ]
-    },
-    {
-      "id": "rule-asset",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/rule-asset.schema.json",
-      "consumers": [
-        "workflow",
-        "observer"
-      ]
-    },
-    {
-      "id": "skill-package",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/skill-package.schema.json",
-      "consumers": [
-        "workflow",
-        "observer"
-      ]
-    },
-    {
-      "id": "growth-candidate",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/growth-candidate.schema.json",
-      "consumers": [
-        "workflow",
-        "observer"
-      ]
-    },
-    {
-      "id": "project-profile",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/project-profile.schema.json",
-      "consumers": [
-        "workflow",
-        "ci"
-      ]
-    },
-    {
-      "id": "gate-registry",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/gate-registry.schema.json",
-      "consumers": [
-        "workflow",
+        "observer",
         "ci"
       ]
     },
@@ -188,31 +149,39 @@
       ]
     },
     {
-      "id": "blocker",
+      "id": "gate-registry",
       "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/blocker.schema.json",
+      "schemaPath": "packages/contracts/schemas/workflow/gate-registry.schema.json",
       "consumers": [
         "workflow",
-        "observer"
-      ]
-    },
-    {
-      "id": "ci-observation",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/ci-observation.schema.json",
-      "consumers": [
-        "workflow",
-        "observer"
-      ]
-    },
-    {
-      "id": "evidence-manifest",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/evidence-manifest.schema.json",
-      "consumers": [
-        "workflow",
-        "observer",
         "ci"
+      ]
+    },
+    {
+      "id": "global-agent-policy",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/global-agent-policy.schema.json",
+      "consumers": [
+        "workflow",
+        "ci"
+      ]
+    },
+    {
+      "id": "growth-candidate",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/growth-candidate.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "memory-record",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/memory-record.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
       ]
     },
     {
@@ -226,39 +195,12 @@
       ]
     },
     {
-      "id": "memory-record",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/memory-record.schema.json",
-      "consumers": [
-        "workflow",
-        "observer"
-      ]
-    },
-    {
-      "id": "rule-drift",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/rule-drift.schema.json",
-      "consumers": [
-        "workflow",
-        "observer"
-      ]
-    },
-    {
-      "id": "platform-identity",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/platform-identity.schema.json",
+      "id": "module-profile",
+      "owner": "root-governance",
+      "schemaPath": ".project/governance/contracts/module-profile.schema.json",
       "consumers": [
         "workflow",
         "observer",
-        "ci"
-      ]
-    },
-    {
-      "id": "config-ownership",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/config-ownership.schema.json",
-      "consumers": [
-        "workflow",
         "ci"
       ]
     },
@@ -279,28 +221,12 @@
       ]
     },
     {
-      "id": "data-quality",
-      "owner": "observer",
-      "schemaPath": "apps/observer/schemas/data-quality.schema.json",
-      "consumers": [
-        "observer"
-      ]
-    },
-    {
-      "id": "dashboard-projection",
-      "owner": "observer",
-      "schemaPath": "apps/observer/schemas/dashboard-projection.schema.json",
-      "consumers": [
-        "observer",
-        "ui"
-      ]
-    },
-    {
-      "id": "global-agent-policy",
+      "id": "platform-identity",
       "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/global-agent-policy.schema.json",
+      "schemaPath": "packages/contracts/schemas/workflow/platform-identity.schema.json",
       "consumers": [
         "workflow",
+        "observer",
         "ci"
       ]
     },
@@ -324,17 +250,73 @@
       ]
     },
     {
-      "id": "archive-manifest",
-      "owner": "root-governance",
-      "schemaPath": ".project/governance/contracts/archive-manifest.schema.json",
+      "id": "project-profile",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/project-profile.schema.json",
       "consumers": [
-        "archive-audit"
+        "workflow",
+        "ci"
+      ]
+    },
+    {
+      "id": "release-manifest",
+      "owner": "root-governance",
+      "schemaPath": ".project/governance/contracts/release-manifest.schema.json",
+      "consumers": [
+        "github",
+        "audit"
+      ]
+    },
+    {
+      "id": "rule-asset",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/rule-asset.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "rule-drift",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/rule-drift.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "runtime-lock",
+      "owner": "workflow",
+      "schemaPath": ".project/governance/contracts/runtime-lock.schema.json",
+      "consumers": [
+        "evidence",
+        "reviewer"
+      ]
+    },
+    {
+      "id": "skill-package",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/skill-package.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
       ]
     },
     {
       "id": "software-installation-identity",
       "owner": "workflow",
       "schemaPath": "packages/contracts/schemas/workflow/software-installation-identity.schema.json",
+      "consumers": [
+        "workflow",
+        "observer",
+        "ci"
+      ]
+    },
+    {
+      "id": "software-update-postflight",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/software-update-postflight.schema.json",
       "consumers": [
         "workflow",
         "observer",
@@ -352,9 +334,9 @@
       ]
     },
     {
-      "id": "execution-parallel-dispatch",
-      "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/execution-parallel-dispatch.schema.json",
+      "id": "source-ledger",
+      "owner": "root-governance",
+      "schemaPath": ".project/governance/contracts/source-ledger.schema.json",
       "consumers": [
         "workflow",
         "observer",
@@ -362,12 +344,39 @@
       ]
     },
     {
-      "id": "software-update-postflight",
+      "id": "task-card",
       "owner": "workflow",
-      "schemaPath": "packages/contracts/schemas/workflow/software-update-postflight.schema.json",
+      "schemaPath": "packages/contracts/schemas/workflow/task-card.schema.json",
+      "consumers": [
+        "writer",
+        "reviewer"
+      ]
+    },
+    {
+      "id": "task-ledger-event",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/run-event.schema.json",
       "consumers": [
         "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "workflow-evidence-envelope",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/evidence-envelope.schema.json",
+      "consumers": [
         "observer",
+        "workflow",
+        "ci"
+      ]
+    },
+    {
+      "id": "workflow-observer-event",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/observer-event.schema.json",
+      "consumers": [
+        "workflow",
         "ci"
       ]
     }
