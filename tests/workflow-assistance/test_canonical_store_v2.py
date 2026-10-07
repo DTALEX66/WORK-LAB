@@ -2,11 +2,19 @@
 from __future__ import annotations
 
 import sqlite3
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from canonical_store import CanonicalStore, WAL_TABLES, rollback_v2_backup
+# The governance batch inserts this path for every module it loads, which is why these imports resolve
+# there and nowhere else. Bootstrapping it here means the file is runnable on its own too -- a test that
+# only passes inside one runner cannot be reproduced by whoever is debugging it.
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+
+import project_temp  # noqa: E402
+from canonical_store import CanonicalStore, WAL_TABLES, rollback_v2_backup  # noqa: E402
 
 V2_TABLES = {
     "project_definitions",
@@ -144,8 +152,7 @@ class CanonicalStoreV2Tests(unittest.TestCase):
             store.close()
 
     def test_v2_migration_creates_backup_once(self) -> None:
-        raw = Path(tempfile.mkdtemp())
-        self.addCleanup(lambda: None)
+        raw = project_temp.fixture_dir(prefix="store-v2-")
         db = raw / "canonical.sqlite"
         # Pre-create a v1-only database (no v2 tables, no version-2 row).
         conn = sqlite3.connect(str(db))
@@ -175,8 +182,7 @@ class CanonicalStoreV2Tests(unittest.TestCase):
             db.unlink(missing_ok=True)
 
     def test_v2_migration_is_idempotent_no_extra_backup(self) -> None:
-        raw = Path(tempfile.mkdtemp())
-        self.addCleanup(lambda: None)
+        raw = project_temp.fixture_dir(prefix="store-v2-")
         db = raw / "canonical.sqlite"
         store1 = CanonicalStore(db)
         store1.close()
@@ -186,8 +192,7 @@ class CanonicalStoreV2Tests(unittest.TestCase):
         self.assertEqual(len(backups), 1, "second open must not create another backup")
 
     def test_rollback_v2_backup_restores_v1(self) -> None:
-        raw = Path(tempfile.mkdtemp())
-        self.addCleanup(lambda: None)
+        raw = project_temp.fixture_dir(prefix="store-v2-")
         db = raw / "canonical.sqlite"
         store = CanonicalStore(db)
         store.register_project("p1", "C:/p1")
@@ -205,8 +210,7 @@ class CanonicalStoreV2Tests(unittest.TestCase):
         self.assertIn("projects", tables)
 
     def test_rollback_v2_no_backup_returns_none(self) -> None:
-        raw = Path(tempfile.mkdtemp())
-        self.addCleanup(lambda: None)
+        raw = project_temp.fixture_dir(prefix="store-v2-")
         self.assertIsNone(rollback_v2_backup(raw / "missing.sqlite"))
 
 

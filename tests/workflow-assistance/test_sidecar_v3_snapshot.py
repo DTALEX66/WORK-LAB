@@ -21,6 +21,7 @@ from sidecar import WorkflowSidecar, create_server
 from sse_hub import HEARTBEAT_SECONDS, STALE
 from snapshot_validator import validate_snapshot
 from workspace_evidence import load_workspace_evidence
+import project_temp
 import socket
 import urllib.request
 
@@ -199,7 +200,7 @@ class CompositionRootTests(unittest.TestCase):
 
 class SidecarV3SnapshotTests(unittest.TestCase):
     def _start(self) -> tuple[WorkflowSidecar, object, Path]:
-        runtime = Path(tempfile.mkdtemp())
+        runtime = project_temp.fixture_dir(prefix="sidecar-v3-")
         sidecar = make_sidecar(runtime)
         server = create_server(sidecar, port=0, live_updates=True)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -210,6 +211,18 @@ class SidecarV3SnapshotTests(unittest.TestCase):
             server.server_close()
             thread.join(timeout=2)
 
+        def release_sidecar() -> None:
+            # None of the three _start() tests ever closed the sidecar, so the CanonicalStore kept
+            # a WAL handle on runtime/canonical.sqlite: on Windows the fixture directory then
+            # cannot be removed (WinError 32). A watcher that will not stop is announced with the
+            # token project_temp's sweeper uses, never hidden by an ignored teardown.
+            try:
+                sidecar.close()
+            except RuntimeError as error:
+                print(f"TEMP_RESIDUE_NOT_REMOVED {runtime} {type(error).__name__}: {error}")
+
+        # addCleanup runs LIFO: the server stops touching the store, then the store is released.
+        self.addCleanup(release_sidecar)
         self.addCleanup(stop_server)
         return sidecar, server, runtime
 

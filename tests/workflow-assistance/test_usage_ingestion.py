@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -24,12 +23,13 @@ sys.path.insert(0, str(WF_SCRIPTS))
 from usage_ingestion import (  # noqa: E402
     UsageReader, coverage_matrix, normalize_event, _sanitize_record,
 )
+import project_temp  # noqa: E402
 
 
 class UsageIngestionTest(unittest.TestCase):
     def _reader(self, lines: list[str], agent: str = "hermes") -> tuple[UsageReader, Path]:
-        d = tempfile.mkdtemp()
-        p = Path(d) / "usage.jsonl"
+        d = project_temp.fixture_dir(prefix="usage-ingestion-")
+        p = d / "usage.jsonl"
         p.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return UsageReader(agent, p), p
 

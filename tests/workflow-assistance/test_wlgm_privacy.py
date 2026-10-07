@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import subprocess
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -14,12 +13,13 @@ from live_gate import evaluate_live
 from product_project import ProductProject, ProjectRootBinding, RepositoryIdentity
 from project_candidate_discovery import DiscoveryConfig, discover_candidates
 from project_identity_resolver import ApprovedProjectIndex, GitProbe, resolve_execution_path
+import project_temp
 from sse_revision import SseRevisionHub
 
 
 class PrivacyAdversarialTests(unittest.TestCase):
     def test_prompt_response_never_enter_canonical(self) -> None:
-        store = CanonicalStore(Path(tempfile.mkdtemp()) / "c.sqlite")
+        store = CanonicalStore(project_temp.fixture_dir(prefix="wlgm-privacy-") / "c.sqlite")
         try:
             with self.assertRaises(ValueError):
                 store.upsert_execution_instance(
@@ -41,8 +41,9 @@ class PrivacyAdversarialTests(unittest.TestCase):
             self.assertNotIn(forbidden, blob)
 
     def test_unapproved_project_cannot_be_collected(self) -> None:
-        root = Path(tempfile.mkdtemp())
-        self.addCleanup(lambda: None)
+        # A nested `git init` under the ignored runtime root is still its own toplevel, so
+        # discovery sees the same shape it saw in system temp — and the root is now released.
+        root = project_temp.fixture_dir(prefix="wlgm-discovery-")
         repo = root / "secret-repo"
         repo.mkdir()
         subprocess.run(["git", "init", "-q", str(repo)], check=True)
@@ -101,7 +102,7 @@ class PrivacyAdversarialTests(unittest.TestCase):
         self.assertIsNone(hub.connect("c4"))
 
     def test_sqlite_partial_migration_fails_closed(self) -> None:
-        raw = Path(tempfile.mkdtemp())
+        raw = project_temp.fixture_dir(prefix="wlgm-migration-")
         db = raw / "bad.sqlite"
         db.write_bytes(b"not a sqlite database at all")
         with self.assertRaises(Exception):

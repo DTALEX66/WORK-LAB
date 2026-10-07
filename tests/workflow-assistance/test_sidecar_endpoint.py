@@ -11,8 +11,18 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import sidecar_endpoint
-from sidecar_endpoint import (
+# Bootstrapped rather than inherited from the batch runner: this module used to resolve both imports only
+# because `run_quality_gate.py` happens to put these directories on sys.path, and the conversion that added
+# `project_temp` here inserted the line twice while adding neither path.
+ROOT = Path(__file__).resolve().parents[2]
+for _entry in (str(ROOT / "packages" / "client-neutral-core" / "scripts"),
+               str(ROOT / "services" / "orchestration")):
+    if _entry not in sys.path:
+        sys.path.insert(0, _entry)
+
+import project_temp  # noqa: E402
+import sidecar_endpoint  # noqa: E402
+from sidecar_endpoint import (  # noqa: E402
     _pid_alive,
     capability_probe,
     read_descriptor,
@@ -137,7 +147,7 @@ class SidecarEndpointTests(unittest.TestCase):
         self.assertTrue(validate_descriptor(descriptor).valid)
 
     def test_read_missing_returns_none(self) -> None:
-        self.assertIsNone(read_descriptor(Path(tempfile.mkdtemp()) / "missing.json"))
+        self.assertIsNone(read_descriptor(project_temp.fixture_dir(prefix="endpoint-") / "missing.json"))
 
     def test_capability_probe(self) -> None:
         probe = capability_probe(make_descriptor())

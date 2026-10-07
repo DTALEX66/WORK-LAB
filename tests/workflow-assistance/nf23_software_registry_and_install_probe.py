@@ -31,6 +31,7 @@ sys.path.insert(0, str(ROOT / "services" / "orchestration"))
 sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
 
 import platform_discovery as pd  # noqa: E402
+import project_temp  # noqa: E402
 
 
 class SoftwareRegistryIsLoadable(unittest.TestCase):
@@ -85,7 +86,8 @@ class InstallProbePrefersTheRealRoot(unittest.TestCase):
     """A root that contains the executable must beat one that merely exists."""
 
     def _fixture(self) -> tuple[Path, Path]:
-        tmp = Path(tempfile.mkdtemp())
+        # ERR-140 class: this helper created a system-temp root and never removed it.
+        tmp = project_temp.fixture_dir(prefix="nf23-install-")
         stale = tmp / "stale"
         real = tmp / "real"
         stale.mkdir()

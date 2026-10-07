@@ -32,20 +32,11 @@ ROOT = Path(__file__).resolve().parents[2]
 FIXED = "tests/ci/test_project_authority_reference.py"
 
 # Same-module debt: test helpers that build fixtures. Listed so the count is visible and can shrink.
-DEBT_TESTS = {
-    "tests/ci/test_source_ledger_v4.py": 1,
-    "tests/workflow-assistance/nf08_b_durable_inbox.py": 1,
-    "tests/workflow-assistance/nf23_software_registry_and_install_probe.py": 1,
-    "tests/workflow-assistance/nf24_observer_readonly_boundary.py": 1,
-    "tests/workflow-assistance/test_canonical_store_v2.py": 4,
-    "tests/workflow-assistance/test_cleanup.py": 1,
-    "tests/workflow-assistance/test_context_pack_recovery.py": 1,
-    "tests/workflow-assistance/test_session_federation.py": 5,
-    "tests/workflow-assistance/test_sidecar_endpoint.py": 1,
-    "tests/workflow-assistance/test_sidecar_v3_snapshot.py": 1,
-    "tests/workflow-assistance/test_usage_ingestion.py": 1,
-    "tests/workflow-assistance/test_wlgm_privacy.py": 3,
-}
+# Closed 2026-10-08: the 21 sites across these 12 files were measured by this gate's own scan and all now
+# go through project_temp.fixture_dir() or an explicit in-repo dir=. The table stays as the empty set the
+# scan must agree with, so a new bare call anywhere in tracked source fails here instead of being absorbed
+# into a tolerance.
+DEBT_TESTS: dict[str, int] = {}
 # Cross-module debt: closed 2026-10-07 under the subordinate cross-module card
 # (WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007). Seven bare sites in three
 # production self-checks were the ones that actually spilled — they run outside the gate runner, so
@@ -138,22 +129,28 @@ class TempFixtureBoundaryTests(unittest.TestCase):
         self.assertTrue((ROOT / "packages/client-neutral-core/scripts/project_temp.py").is_file(),
                         "the bounded fixture helper the closed sites depend on is missing")
 
-    def test_the_pinned_debt_is_real_so_the_table_cannot_be_satisfied_by_an_empty_scan(self) -> None:
-        """Anti-vacuity: every pinned file must actually be found by the matcher.
+    def test_the_matcher_is_still_competent_and_the_scan_still_sees_the_tree(self) -> None:
+        """Anti-vacuity without a debt floor: prove the guard can still see a violation.
 
-        If this fails because a site was fixed, that is good news — delete the row and the entry, do
-        not widen the matcher's blind spot to keep a stale number.
+        This test used to assert `sum(DEBT_TESTS.values()) >= 20`, which is only satisfiable while the
+        debt exists -- paying it off would have forced a fake number rather than a clean tree. The real
+        question was never "is the count big enough" but "would this gate notice a new bare mkdtemp at
+        all", so the positive controls are now on the matcher itself, plus a scope check proving the
+        walk is not silently empty. A zero result with a wide scope means no debt; a zero result with a
+        blind matcher means nothing.
         """
-        self.assertGreaterEqual(sum(DEBT_TESTS.values()), 20)
-        measured = {f: len(lines) for f, lines in self.sites.items()}
-        for f, n in DEBT_TESTS.items():
-            self.assertTrue((ROOT / f).is_file(), f"{f} in the debt table does not exist")
-            self.assertEqual(measured.get(f), n,
-                             f"{f}: the debt table says {n}, the tree says {measured.get(f)}")
-        # the matcher must still be able to see something: an empty scan over 21 pinned sites is a
-        # broken matcher, not a clean tree
-        self.assertGreaterEqual(len(measured), 10,
-                                 "the scan found almost nothing while 21 sites are pinned — the matcher is blind")
+        self.assertEqual(bare_mkdtemp_calls("x = tempfile.mkdtemp()\n"), [1])
+        self.assertEqual(bare_mkdtemp_calls("x = mkdtemp()\n"), [1])
+        self.assertEqual(bare_mkdtemp_calls("x = tempfile.mkdtemp(dir=str(root))\n"), [])
+        self.assertEqual(bare_mkdtemp_calls("x = tempfile.mkdtemp(prefix='p', dir=d)\n"), [])
+        # a call buried in the middle of a real body must still be found at the right line
+        nested = "def f():\n    with a:\n        t = tempfile.mkdtemp()\n    return t\n"
+        self.assertEqual(bare_mkdtemp_calls(nested), [3])
+        self.assertGreater(len(tracked_python()), 100,
+                           "the scan sees almost no tracked python -- a zero debt result would mean nothing")
+        self.assertGreaterEqual(len(scan()), 0)
+        self.assertEqual(DEBT_TESTS, {}, "the debt table must list exactly the sites the scan finds")
+        self.assertEqual(scan(), {}, "unadjudicated bare mkdtemp sites appeared: %s" % scan())
 
     def test_the_releaser_and_recovery_tools_exist_for_their_register_citations(self) -> None:
         for tool in ("scripts/maintenance/release_authority_reference_temp_residue.py",

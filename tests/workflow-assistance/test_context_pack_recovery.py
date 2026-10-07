@@ -16,12 +16,14 @@ import json
 import shutil
 import subprocess
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "packages/client-neutral-core" / "scripts" / "build_context_pack.py"
+sys.path.insert(0, str(SCRIPT.parent))
+
+import project_temp  # noqa: E402
 
 
 def load_module():
@@ -37,7 +39,10 @@ def _git(root: Path, *args: str) -> None:
 
 
 def _make_tmp_repo() -> Path:
-    tmp = Path(tempfile.mkdtemp(prefix="wl-context-pack-"))
+    # A nested `git init` inside the ignored runtime root is still its own toplevel, which is what
+    # `build_context_pack.git_root()` resolves; `project_temp` additionally guarantees the release
+    # attempt, because these five fixtures used to depend on a rmtree that ignored its own errors.
+    tmp = project_temp.fixture_dir(prefix="wl-context-pack-")
     _git(tmp, "init", "-q")
     _git(tmp, "config", "user.email", "test@local")
     _git(tmp, "config", "user.name", "test")

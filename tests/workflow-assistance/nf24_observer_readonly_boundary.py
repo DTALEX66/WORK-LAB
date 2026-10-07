@@ -6,8 +6,10 @@ authoritative write control in its UI. A verifier that only ever sees clean
 input proves nothing, so each rule is exercised against a deliberately broken
 copy of the tree in a temp directory.
 
-Nothing here touches the real repository: the fixture is a small synthetic
-`apps/observer` tree.
+Nothing here touches the real repository's tracked content: the fixture is a small synthetic
+`apps/observer` tree, built under the project runtime root by ``project_temp.fixture_dir`` so a
+failed release can never spill outside the boundary either
+(``.project/governance/project-data-boundary.json``).
 """
 from __future__ import annotations
 
@@ -19,6 +21,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = ROOT / "scripts" / "ci" / "verify_observer_readonly_boundary.py"
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+
+import project_temp  # noqa: E402
 
 
 def _load():
@@ -98,7 +103,9 @@ export function View() {
 
 class BoundaryNegativeControls(unittest.TestCase):
     def _tree(self, *, sidecar: str = GOOD_SIDECAR, files: dict[str, str] | None = None) -> Path:
-        tmp = Path(tempfile.mkdtemp())
+        # The verifier resolves every rule relative to the root it is handed, so an in-boundary
+        # fixture exercises exactly the same code path the system-temp root used to.
+        tmp = project_temp.fixture_dir(prefix="nf24-tree-")
         (tmp / "services" / "orchestration").mkdir(parents=True)
         (tmp / "services" / "orchestration" / "sidecar.py").write_text(sidecar, encoding="utf-8")
         src = tmp / "apps" / "observer" / "frontend" / "src"
