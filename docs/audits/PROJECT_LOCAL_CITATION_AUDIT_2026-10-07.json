@@ -1,9 +1,9 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T06:54:03Z",
+  "generatedAt": "2026-10-07T07:07:03Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2059,
+    "trackedFilesScanned": 2061,
     "distinctProjectLocalTokens": 390,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 390,
@@ -4383,7 +4383,7 @@
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 112,
-        "text": "| AG-01..04 gate | P1 | TEST_PASS (local canonical) / EXACT_SHA_CI NOT_RUN | Verification for the four rows above. **Interpreter note (corrected):** the canonical gate MUST run under the project's dec"
+        "text": "| AG-01..04 gate | P1 | TEST_PASS (local canonical) / EXACT_SHA_CI NOT_RUN →【2026-10-07 精确化】分支级 exact-SHA CI 已在 `5037dd2` 两条 workflow 全绿，且 `5a6d5cd`/`6e16684`/`a676e63` 实测都是它的祖先（`git merge-base --is-a"
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
