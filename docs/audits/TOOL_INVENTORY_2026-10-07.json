@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T06:44:53Z",
+  "generatedAt": "2026-10-07T06:54:02Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -9,7 +9,7 @@
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
     "trackedTools": 46,
-    "withLedgerPromise": 16,
+    "withLedgerPromise": 17,
     "referencedSomewhere": 46,
     "unclaimed": 0
   },
@@ -511,15 +511,17 @@
     },
     {
       "path": "scripts/audit/stamp_record_verification.py",
-      "sha256": "2dbfcdd0468ed8fc1af9599ebb5274793ffb3b15063c53535693df6a20c04436",
-      "bytes": 7248,
-      "lines": 157,
+      "sha256": "8f5f1317478b42decf9f30957cbd0f212e556709c66c384656c93287a0abcb84",
+      "bytes": 7807,
+      "lines": 167,
       "digestBasis": "git-blob-at-HEAD",
-      "citedByLedgerPromises": 0,
-      "citedByRecords": 3,
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 5,
       "citedBy": [
+        "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json",
         "tests/workflow-assistance/test_stamp_record_verification.py"
       ]
     },
