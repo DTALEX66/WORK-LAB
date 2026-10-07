@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T07:07:03Z",
+  "generatedAt": "2026-10-07T07:14:10Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 47,
+    "trackedTools": 48,
     "withLedgerPromise": 17,
-    "referencedSomewhere": 47,
+    "referencedSomewhere": 48,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -187,6 +187,18 @@
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json",
         "tests/workflow-assistance/test_executor_live_probe.py"
+      ]
+    },
+    {
+      "path": "scripts/audit/falsify_adapter_version_gate.py",
+      "sha256": "75c20038c3b13168e34b03cf3f8986496f836c78f593907392636ce277df4a32",
+      "bytes": 3847,
+      "lines": 114,
+      "digestBasis": "working-tree-uncommitted",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 1,
+      "citedBy": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -543,10 +555,11 @@
       "sha256": "e7d857484bc084d25d43b3cb4a5f0348f9aef70069764bdaa9ee79d328bd26c8",
       "bytes": 9567,
       "lines": 197,
-      "digestBasis": "working-tree-uncommitted",
+      "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 2,
+      "citedByRecords": 3,
       "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]

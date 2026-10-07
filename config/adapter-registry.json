@@ -117,7 +117,7 @@
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=codex]",
-        "version": "UNVERIFIED",
+        "version": "0.160.1",
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "quarantined",
@@ -127,6 +127,14 @@
           "state": "UNAVAILABLE",
           "basis": "Codex runtime package is external and not vendored",
           "files": []
+        },
+        "version_readback": {
+          "observed_at": "2026-10-07",
+          "verified_version": "0.160.1",
+          "method": "official-cli-version-readback",
+          "native_readback": "cmd.exe /d /c packages/client-neutral-core/bin/codex.cmd --version",
+          "source": "the repo's single codex wrapper resolved through the official runtime; the wrapper itself is a .cmd and has no version resource, so this number came from running it",
+          "note": "The previous value was the placeholder 'UNVERIFIED'. `windows-file-version-resource` reads the executable's own version table and starts no process, which is the only acceptable method on a machine whose owner asked not to be disturbed by launched windows. Evidence receipt: docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json. This is a machine-scoped observation: it says what is installed here on this date, not what a different machine will find, and detection.evidence_state stays UNVERIFIED because a version is not a package hash."
         }
       },
       "policy_projection": {
@@ -193,7 +201,7 @@
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=cc-switch]",
-        "version": "UNVERIFIED",
+        "version": "3.20.0",
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "legacy_observe",
@@ -204,6 +212,14 @@
           "state": "UNAVAILABLE",
           "basis": "CC Switch runtime package is external and not vendored",
           "files": []
+        },
+        "version_readback": {
+          "observed_at": "2026-10-07",
+          "verified_version": "3.20.0",
+          "method": "windows-file-version-resource",
+          "native_readback": "FileVersion '3.20.0' of D:\\Programs\\CC Switch\\cc-switch.exe, agreeing with the HKLM/HKCU uninstall key DisplayVersion '3.20.0'",
+          "source": "LEGACY_OBSERVE surface: recording an installed version is an observation, not a grant of active status",
+          "note": "The previous value was the placeholder 'UNVERIFIED'. `windows-file-version-resource` reads the executable's own version table and starts no process, which is the only acceptable method on a machine whose owner asked not to be disturbed by launched windows. Evidence receipt: docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json. This is a machine-scoped observation: it says what is installed here on this date, not what a different machine will find, and detection.evidence_state stays UNVERIFIED because a version is not a package hash."
         }
       },
       "policy_projection": {
@@ -261,7 +277,7 @@
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=github]",
-        "version": "UNVERIFIED",
+        "version": "2.98.0 (2026-08-20)",
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "quarantined",
@@ -271,6 +287,14 @@
           "state": "UNAVAILABLE",
           "basis": "GitHub CLI/API runtime package is external and not vendored",
           "files": []
+        },
+        "version_readback": {
+          "observed_at": "2026-10-07",
+          "verified_version": "2.98.0 (2026-08-20)",
+          "method": "windows-file-version-resource",
+          "native_readback": "FileVersion '2.98.0 (2026-08-20)' / ProductVersion '2.98.0' of C:\\Program Files\\GitHub CLI\\gh.EXE",
+          "source": "official GitHub CLI install directory; no process was started for this number",
+          "note": "The previous value was the placeholder 'UNVERIFIED'. `windows-file-version-resource` reads the executable's own version table and starts no process, which is the only acceptable method on a machine whose owner asked not to be disturbed by launched windows. Evidence receipt: docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json. This is a machine-scoped observation: it says what is installed here on this date, not what a different machine will find, and detection.evidence_state stays UNVERIFIED because a version is not a package hash."
         }
       },
       "policy_projection": {
@@ -324,7 +348,7 @@
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=openhuman]",
-        "version": "UNVERIFIED",
+        "version": "0.63.12",
         "scope": "portable-workflow-adapter",
         "risk": "medium",
         "status": "quarantined",
@@ -334,6 +358,14 @@
           "state": "UNAVAILABLE",
           "basis": "OpenHuman runtime package is external and not vendored",
           "files": []
+        },
+        "version_readback": {
+          "observed_at": "2026-10-07",
+          "verified_version": "0.63.12",
+          "method": "windows-file-version-resource",
+          "native_readback": "FileVersion '0.63.12' of C:\\Users\\ALEX\\AppData\\Local\\OpenHuman\\OpenHuman.exe, agreeing with the uninstall key DisplayVersion '0.63.12'",
+          "source": "the desktop shortcut resolver finds no .lnk for this client, which is why the live probe previously reported ENTRY_NOT_RESOLVED while the tool is in fact installed",
+          "note": "The previous value was the placeholder 'UNVERIFIED'. `windows-file-version-resource` reads the executable's own version table and starts no process, which is the only acceptable method on a machine whose owner asked not to be disturbed by launched windows. Evidence receipt: docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json. This is a machine-scoped observation: it says what is installed here on this date, not what a different machine will find, and detection.evidence_state stays UNVERIFIED because a version is not a package hash."
         }
       },
       "policy_projection": {
@@ -386,7 +418,7 @@
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=open-design]",
-        "version": "UNVERIFIED",
+        "version": "0.24.1",
         "scope": "portable-workflow-adapter",
         "risk": "medium",
         "status": "quarantined",
@@ -396,6 +428,14 @@
           "state": "UNAVAILABLE",
           "basis": "Open Design client (nexu-io/open-design) is external and not vendored",
           "files": []
+        },
+        "version_readback": {
+          "observed_at": "2026-10-07",
+          "verified_version": "0.24.1",
+          "method": "windows-file-version-resource",
+          "native_readback": "FileVersion '0.24.1' / ProductVersion '0.24.1.0' of C:\\Users\\ALEX\\AppData\\Local\\Programs\\Open Design\\Open Design.exe, agreeing with the uninstall key DisplayVersion '0.24.1'",
+          "source": "client identity only: design capability stays with DTALEX66/DESIGN-LAB per config/config-ownership.json",
+          "note": "The previous value was the placeholder 'UNVERIFIED'. `windows-file-version-resource` reads the executable's own version table and starts no process, which is the only acceptable method on a machine whose owner asked not to be disturbed by launched windows. Evidence receipt: docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json. This is a machine-scoped observation: it says what is installed here on this date, not what a different machine will find, and detection.evidence_state stays UNVERIFIED because a version is not a package hash."
         }
       },
       "policy_projection": {

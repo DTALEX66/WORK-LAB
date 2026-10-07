@@ -4558,12 +4558,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the controls were written against live ledger state when the file was created; the exposure arrived with the first legitimate stamp on the named record, whose head is quoted above",
         "fixedCommit": "25e58c26c09a60f997253455272c8d6a19a85e5b",
-        "verifiedCommit": null,
+        "verifiedCommit": "5ee34f95a967e25d66b3f05c9d39164cdb6b0211",
         "affectedCapability": "Error-ledger traceability; negative-control reliability",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_stamp_record_verification.py",
         "bindingNote": "bound 2026-10-07 against 25e58c2: that commit adds --ledger to the tool, moves the controls onto a fixture ledger and adds the exit-2 path; verified by `git show` before writing",
         "bindingBasis": "fix-commit-introduction: the tool change and its controls land together",
-        "verifiedCommitNote": null
+        "verifiedCommitNote": "exact-SHA Actions readback at 5ee34f95a967e25d66b3f05c9d39164cdb6b0211: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
