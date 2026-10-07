@@ -83,6 +83,17 @@
 - 在册：`CI-MACHINE-STATE-20261007`；错误账本 ERR-142（status_after=PARTIAL，verifiedCommit 仍空，等 9e518e2 或更后面的 exact-SHA 回读全绿才转正）。
 
 
+## 账本承诺的可核验性：标注、改指，以及被现有门禁抓住的绑定器
+
+- 140 条记录全部打上 `regressionTestVerifiability`；50 个操作数改指到当前跟踪路径；34 条 PATH_GONE、44 条无文件操作数、3 条**故意读客户端 home**（不是坏指针）。
+- 标注只从写入后的字节产生：替换没命中就在 note 里自我声明"不声称 re-point"（9 条如此），面向读者的路径全部可解析才叫 REPOINTED。
+- 绑定：两个依据（条目引入提交 / 回归文件引入提交 + 日期窗）× 四道闸（≤3 条记录的批量上限、承诺脚本必须存在于该提交、提交必须改到记录点名的路径、不得等于 introducedCommit）。
+- **我自己写的绑定器把 86 条记录的分支 cutover 读成 +1 条**（`git show --format= -- <commit> -- <path>` 顺序错，读到空 diff），于是报告 99/99 可绑定；这个"过于干净"的数字本身就是探测器坏了的信号。
+  已有的 `test_ledger_fix_commit_binding` 抓到了 ERR-124（承诺 `node_modules/vitest/vitest.mjs`）——按"改我的作品，不动真值测试"，撤销当天 6 条绑定、写明原因、加闸，重跑得 4 条成立（共 28 绑定 / 95 逐条拒绝并给理由）。
+- 门禁 17 项，含六种 token 形状反例；标签分布由账本自身结构重算，计数不许手写。工具：`scripts/audit/ledger_regression_command_targets.py`、`scripts/audit/bind_ledger_fixes_with_guards.py`。
+- 记录：`LEDGER-PROMISE-STATE-20261007`、ERR-143；ERR-139/140/142 的 verifiedCommit 已在 c1b2997 的全绿回读后补上（该提交含其修复与门禁）。
+
+
 ## 仍然未知 / 仍然欠（不伪装成已完成）
 
 - 28 处不带 `dir=` 的 `mkdtemp` 在册债务（12 测试文件 21 处 / 3 生产文件 7 处）；是否漏出残渣只对被实测的

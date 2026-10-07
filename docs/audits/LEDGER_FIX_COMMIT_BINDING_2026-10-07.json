@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-06T23:33:52Z",
+  "generatedAt": "2026-10-07T01:24:11Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -8,11 +8,21 @@
     "null": "an unverified fix stays null, and a PASS record with no fixedCommit is listed as owed rather than left silently unbound"
   },
   "counts": {
-    "bound": 21,
-    "unboundPassRecords": 99,
+    "bound": 28,
+    "unboundPassRecords": 96,
     "anomalies": 0
   },
   "bound": [
+    {
+      "id": "ERR-058",
+      "statusAfter": "PASS",
+      "fixedCommit": "2e36309",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
     {
       "id": "ERR-084",
       "statusAfter": "PASS",
@@ -94,6 +104,16 @@
       "bindingNotePresent": true
     },
     {
+      "id": "ERR-109",
+      "statusAfter": "PASS",
+      "fixedCommit": "4115d63",
+      "verifiedCommit": null,
+      "promise": "tests/ci/test_failfast_group.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
       "id": "ERR-110",
       "statusAfter": "PASS",
       "fixedCommit": "5348ba7",
@@ -149,6 +169,26 @@
       "fixedCommit": "7627748",
       "verifiedCommit": null,
       "promise": "scripts/ci/verify_model_registry_integrity.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-129",
+      "statusAfter": "PASS",
+      "fixedCommit": "5c6bfe9",
+      "verifiedCommit": null,
+      "promise": "scripts/maintenance/release_browser_state.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-130",
+      "statusAfter": "PASS",
+      "fixedCommit": "5c6bfe9",
+      "verifiedCommit": null,
+      "promise": "tests/workflow-assistance/test_error_ledger_regression_commands.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": false,
       "bindingNotePresent": true
@@ -219,6 +259,36 @@
       "fixedCommit": "fe5d7a6",
       "verifiedCommit": "522fe80",
       "promise": "packages/client-neutral-core/scripts/security/check_skill_provenance.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-139",
+      "statusAfter": "PASS",
+      "fixedCommit": "f33b78470b108e70d91820a94c7e597010ecddfb",
+      "verifiedCommit": "c1b2997",
+      "promise": "tests/workflow-assistance/test_recover_shared_root_original.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-140",
+      "statusAfter": "PASS",
+      "fixedCommit": "f33b78470b108e70d91820a94c7e597010ecddfb",
+      "verifiedCommit": "c1b2997",
+      "promise": "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-142",
+      "statusAfter": "PASS",
+      "fixedCommit": "9e518e2",
+      "verifiedCommit": "c1b2997",
+      "promise": "tests/workflow-assistance/test_project_local_citation_audit.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
       "bindingNotePresent": true
@@ -562,12 +632,6 @@
       "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
     },
     {
-      "id": "ERR-058",
-      "date": "2026-08-14",
-      "promise": null,
-      "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
-    },
-    {
       "id": "ERR-059",
       "date": "2026-08-14",
       "promise": null,
@@ -772,12 +836,6 @@
       "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
     },
     {
-      "id": "ERR-109",
-      "date": "2026-10-06",
-      "promise": "tests/ci/test_failfast_group.py",
-      "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
-    },
-    {
       "id": "ERR-111",
       "date": "2026-10-07",
       "promise": "scripts/ci/verify_future_candidate_registry.py",
@@ -808,15 +866,9 @@
       "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
     },
     {
-      "id": "ERR-129",
+      "id": "ERR-143",
       "date": "2026-10-07",
-      "promise": "scripts/maintenance/release_browser_state.py",
-      "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
-    },
-    {
-      "id": "ERR-130",
-      "date": "2026-10-07",
-      "promise": "tests/workflow-assistance/test_error_ledger_regression_commands.py",
+      "promise": "tests/workflow-assistance/test_ledger_regression_command_targets.py",
       "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
     }
   ],

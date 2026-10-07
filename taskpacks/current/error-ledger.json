@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 140,
+    "total": 141,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 49,
       "test_behavior_alignment": 15,
       "working_directory_recovery": 2,
-      "evidence_state": 23,
+      "evidence_state": 24,
       "ci_configuration": 12,
       "feature_gap": 10,
       "config_downgrade": 3,
@@ -53,7 +53,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-002",
@@ -79,7 +81,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-003",
@@ -92,7 +96,7 @@
       "observed_error": "CORE_SCHEMA_CONTRACT_FAIL: forbidden key token in task-ledger schema.",
       "root_cause": "The budget field name collided with the global sensitive-key denylist.",
       "fix": "Renamed the budget field to tokens across the Ledger implementation, schema, tests and verifier expectations.",
-      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python scripts/workflow/verify_core_schemas.py",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python packages/client-neutral-core/scripts/verify_core_schemas.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Scan new schema keys against the global denylist before implementation and require positive/negative schema controls.",
       "remaining_boundary": "No live provider or runtime state was inspected.",
@@ -105,7 +109,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-004",
@@ -131,7 +138,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-005",
@@ -157,7 +166,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-006",
@@ -183,7 +194,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-007",
@@ -209,7 +222,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-008",
@@ -222,7 +237,7 @@
       "observed_error": "ModuleNotFoundError: No module named test_workflow_governance.",
       "root_cause": "The tests directory is not a Python package, so module-name unittest loading is not a supported entrypoint.",
       "fix": "Used file-based discovery from the module root: python -m unittest discover -s tests -p test_workflow_governance.py.",
-      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests -p 'test_workflow_governance.py'",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests -p 'tests/workflow-assistance/test_workflow_governance.py'",
       "evidence_level": "local-focused",
       "repeat_prevention": "Focused Python tests in non-package directories must use file-based discovery or direct file execution; module-name loading must not be used without package markers.",
       "remaining_boundary": "This validates the local test entrypoint only; it does not prove cloud CI.",
@@ -235,7 +250,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-009",
@@ -248,7 +266,7 @@
       "observed_error": "dataclasses import failed with NoneType.__dict__ during direct importlib loading.",
       "root_cause": "The focused test loader did not register the dynamically created module in sys.modules before execution.",
       "fix": "Registered the module under spec.name before calling exec_module.",
-      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python tests/test_adapter_conformance.py",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python tests/workflow-assistance/test_adapter_conformance.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Dynamic import tests must register the module in sys.modules before executing code that introspects __module__.",
       "remaining_boundary": "The conformance adapter is an isolated fake and does not prove a real client adapter.",
@@ -261,7 +279,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-010",
@@ -287,7 +308,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-011",
@@ -313,7 +336,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-012",
@@ -339,7 +364,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-013",
@@ -365,7 +392,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-014",
@@ -391,7 +420,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-015",
@@ -417,7 +448,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-016",
@@ -443,7 +476,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-017",
@@ -469,7 +504,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-018",
@@ -482,7 +519,7 @@
       "observed_error": "CURRENT_STATE_FRESHNESS_FAIL git-head tracked=... actual=... (old branch/head could pass)",
       "root_cause": "Freshness check excluded git identity and CI evidence; tracked CURRENT_STATE could contain stale branch/head/CI and still pass",
       "fix": "Added head_tree/remote_main readback, git-identity ancestor check, CI-evidence default fallback, and tracked-head tree consistency check",
-      "regression_test": "tests/ci/test_current_state.py + generate_current_state.py --check-current",
+      "regression_test": "tests/ci/test_current_state.py + scripts/ci/generate_current_state.py --check-current",
       "evidence_level": "local-full",
       "repeat_prevention": "Freshness gate must reject stale git/CI unconditionally; CI requires fetch-depth 0",
       "remaining_boundary": "PR merge-ref ancestor semantics requires fetch-depth 0 in CI",
@@ -495,7 +532,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-019",
@@ -521,7 +561,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-020",
@@ -547,7 +589,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-021",
@@ -560,7 +604,7 @@
       "observed_error": "Growth watcher was offline-only; no trigger chain into the durable worker",
       "root_cause": "WL3-300 required watcher triggers (on-start/on-task-complete/schedule); growth_watcher existed but was not wired into build_standard_collectors",
       "fix": "Added collect_growth_watcher as fifth standard collector; records discovered candidates via growth pipeline state machine (no auto-promotion)",
-      "regression_test": "tests/test_growth_watcher_collector.py (4 tests)",
+      "regression_test": "tests/workflow-assistance/test_growth_watcher_collector.py (4 tests)",
       "evidence_level": "local-full",
       "repeat_prevention": "Watcher must stay wired in build_standard_collectors; gate must register its test",
       "remaining_boundary": "Live promotion still requires explicit approval",
@@ -573,7 +617,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-022",
@@ -586,7 +633,7 @@
       "observed_error": "test_stage3_baseline asserted old taskpackId and dirty count 13; test_current_state asserted dirty count 13",
       "root_cause": "Baseline and CURRENT_STATE were regenerated for Master 2.0 (28 tasks, dirty=5) but test expectations were not updated",
       "fix": "Updated assertions to WORK-LAB-FINAL-MASTER-CONTROL-PLANE, dirty count 5, incomingCandidateSourceDigest",
-      "regression_test": "tests/ci/test_stage3_baseline.py + test_current_state.py",
+      "regression_test": "tests/ci/test_stage3_baseline.py + tests/ci/test_current_state.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Baseline regeneration must require test-assertion sync",
       "remaining_boundary": "None",
@@ -599,7 +646,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-023",
@@ -612,7 +662,7 @@
       "observed_error": "UNIQUE constraint failed: telemetry_events.event_id (duplicate timestamps)",
       "root_cause": "Event IDs derived from _now() timestamps collide within same tick; collector wrote to store AND worker wrote again",
       "fix": "UUID-suffixed event IDs; collectors return records and worker is the single writer",
-      "regression_test": "tests/test_collectors.py + test_durable_worker.py",
+      "regression_test": "tests/workflow-assistance/test_collectors.py + tests/workflow-assistance/test_durable_worker.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Single-writer contract must be enforced; event IDs must use UUID suffix",
       "remaining_boundary": "None",
@@ -625,7 +675,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-024",
@@ -651,7 +704,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-025",
@@ -664,7 +719,7 @@
       "observed_error": "The v2 ownership registry, v1 JSON Schema and legacy repo-to-live merge recipe made conflicting authority claims.",
       "root_cause": "The registry was upgraded without upgrading the schema or retiring the legacy live-deployment wording.",
       "fix": "Made the v2 registry authoritative, upgraded its schema and constrained the legacy recipe to isolated empty-home compatibility.",
-      "regression_test": "python tests/test_config_ownership.py",
+      "regression_test": "python tests/workflow-assistance/test_config_ownership.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Every ownership change must update registry, schema, verifier and legacy-authority negative control together.",
       "remaining_boundary": "No global live configuration was applied.",
@@ -677,7 +732,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-026",
@@ -690,7 +748,7 @@
       "observed_error": "Sidecar snapshots read JSON/JSONL ledgers and the SSE response ended immediately with Content-Length.",
       "root_cause": "The canonical SQLite and in-memory SSE hub foundations were implemented but never connected to the HTTP sidecar.",
       "fix": "Projected canonical SQLite directly and implemented a persistent loopback SSE stream with replay, heartbeat and bounded subscribers.",
-      "regression_test": "python tests/test_sidecar.py",
+      "regression_test": "python tests/workflow-assistance/test_sidecar.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "The sidecar must use canonical SQLite only and every SSE regression must prove a new event arrives on the same open connection.",
       "remaining_boundary": "Long-duration real desktop soak testing remains pending.",
@@ -703,7 +761,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-027",
@@ -716,7 +777,7 @@
       "observed_error": "Observer still wrote observer-events.jsonl and opened the canonical database through a migrating read-write constructor.",
       "root_cause": "A read-only wrapper was added around a writable store instead of removing the second business ledger and write-capable connection.",
       "fix": "Retired Observer append, added SQLite mode=ro, and made the dashboard read Workflow canonical SQLite directly without creating runtime paths.",
-      "regression_test": "python tests/test_observer_store.py && python tests/test_observer_dashboard.py",
+      "regression_test": "python apps/observer/tests/test_observer_store.py && python tests/test_observer_dashboard.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Observer tests must assert database timestamps and runtime paths remain unchanged after every GET.",
       "remaining_boundary": "Tauri desktop packaging was not launched in this environment.",
@@ -729,7 +790,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "a substitution was attempted 2026-10-07 but the operand still does not resolve, so no re-point is claimed and the promise stays where it was",
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-028",
@@ -742,7 +806,7 @@
       "observed_error": "Approved adapter plans returned APPLIED and rollback returned success although neither operation changed or restored anything.",
       "root_cause": "Conformance checked only for a status string and mistook approval gating for a real implementation.",
       "fix": "Declared the implemented read-only operations and return UNSUPPORTED for mutation and invocation until official implementations exist.",
-      "regression_test": "python tests/test_real_adapters.py && python tests/test_adapter_conformance.py",
+      "regression_test": "python tests/workflow-assistance/test_real_adapters.py && python tests/workflow-assistance/test_adapter_conformance.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Conformance must reject success for every operation absent from advertised capabilities; approval must never substitute for implementation.",
       "remaining_boundary": "Live adapter apply remains unsupported and requires separate implementation and approval.",
@@ -755,7 +819,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-029",
@@ -768,7 +835,7 @@
       "observed_error": "The suite emitted many downstream errors before revealing that the JSON Schema validator dependency was missing.",
       "root_cause": "There was no checked-in dependency file or fail-fast preflight, and the module workflow installed only one validator dependency.",
       "fix": "Added requirements.txt, installed it in both workflows and added a single fail-fast dependency diagnostic.",
-      "regression_test": "python tests/test_quality_gate.py",
+      "regression_test": "python tests/workflow-assistance/test_quality_gate.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Every quality-gate entrypoint must run dependency preflight before collecting or executing tests.",
       "remaining_boundary": "This sandbox intentionally did not install missing global dependencies.",
@@ -781,7 +848,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-030",
@@ -794,7 +864,7 @@
       "observed_error": "Missing usage and CI sources were rendered as zero, unknown projects were promoted to running and every successful GET was labelled LIVE.",
       "root_cause": "Fallback defaults encoded display convenience as factual evidence and the frontend ignored the server projection mode.",
       "fix": "Represented unknown metrics as null, preserved unknown task state and made the frontend honor LIVE, SNAPSHOT, OFFLINE and UNKNOWN modes.",
-      "regression_test": "python tests/test_observer_canonical.py && node tests/run_all_tests.js",
+      "regression_test": "python tests/test_observer_canonical.py && node apps/observer/tests/run_all_tests.js",
       "evidence_level": "local-focused",
       "repeat_prevention": "Unknown values must never be normalized to zero, running, exact, complete or LIVE without source evidence.",
       "remaining_boundary": "Real multi-project canary data is still required before LIVE product claims.",
@@ -807,7 +877,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "a substitution was attempted 2026-10-07 but the operand still does not resolve, so no re-point is claimed and the promise stays where it was",
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-031",
@@ -820,7 +893,7 @@
       "observed_error": "Selecting a target immediately mutated the global Hermes model route without a separate plan/apply approval gate.",
       "root_cause": "The switcher had field readback and rollback but predated the control-plane ActionPlan contract and treated invocation as approval.",
       "fix": "Made every switch plan-only by default, required --apply --approved, capability-detected official get/set/unset, used unset for absent-field rollback, and kept paid live smoke separately explicit.",
-      "regression_test": "python tests/test_switch_model.py",
+      "regression_test": "python tests/workflow-assistance/test_switch_model.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Every global config writer must default to a schema-valid ActionPlan and must prove stable read, write, readback and inverse operations before the first mutation.",
       "remaining_boundary": "No global Hermes configuration or paid live smoke was applied in this audit.",
@@ -833,7 +906,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-032",
@@ -846,7 +922,7 @@
       "observed_error": "The client-neutral core manifest and CI pinned a Hermes package/config version and default verify required that optional runtime.",
       "root_cause": "A historical portable compatibility snapshot was promoted into the permanent core dependency contract.",
       "fix": "Replaced Agent/config version ranges with capability discovery, removed Hermes installation from core CI, and kept portable-install-runtime as an explicit optional gate.",
-      "regression_test": "python tests/test_client_neutral_manifest.py and python scripts/workflow/verify_portable_install.py",
+      "regression_test": "python tests/workflow-assistance/test_client_neutral_manifest.py and python packages/client-neutral-core/scripts/verify_portable_install.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Core manifests and CI must never pin or install a replaceable Agent solely to make an optional Adapter gate pass.",
       "remaining_boundary": "A real Hermes runtime compatibility check remains optional and requires an already-discovered installation.",
@@ -859,7 +935,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-033",
@@ -872,7 +951,7 @@
       "observed_error": "Production diagnostics guessed local router ports and formal loopback services used fixed default ports.",
       "root_cause": "Historical workstation defaults were encoded as product capabilities instead of being discovered or advertised.",
       "fix": "Removed guessed router probes, used declared proxy environment, bound Sidecar/Observer to OS-assigned ports, advertised actual endpoints, and removed the frontend fixed-port fallback.",
-      "regression_test": "python tests/test_sidecar.py and python tests/test_observer_dashboard.py and node tests/run_all_tests.js",
+      "regression_test": "python tests/workflow-assistance/test_sidecar.py and python tests/test_observer_dashboard.py and node apps/observer/tests/run_all_tests.js",
       "evidence_level": "local-focused",
       "repeat_prevention": "Runtime clients must discover an advertised endpoint and must never infer service availability from a repository-fixed port.",
       "remaining_boundary": "Tauri dynamic dashboard endpoint injection remains pending; until then it degrades to a labelled non-live snapshot.",
@@ -885,7 +964,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "a substitution was attempted 2026-10-07 but the operand still does not resolve, so no re-point is claimed and the promise stays where it was",
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-034",
@@ -898,7 +980,7 @@
       "observed_error": "The dual-project canary searched a fixed set of workstation paths and could miss or misclassify the user's actual project roots.",
       "root_cause": "Historical local drive layout was embedded in a portable acceptance gate.",
       "fix": "Removed fixed roots and made canary discovery consume the explicit path-list capability WORKLAB_CANARY_PROJECT_ROOTS; absent capability remains PENDING.",
-      "regression_test": "python scripts/workflow/verify_gate_runtime_convergence.py",
+      "regression_test": "python packages/client-neutral-core/scripts/verify_gate_runtime_convergence.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Portable gates must never guess a user's drive, home, installation, project root or executable path.",
       "remaining_boundary": "This runner has no declared real OS project root, so the canary remains environment-limited PENDING.",
@@ -911,7 +993,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-035",
@@ -924,7 +1009,7 @@
       "observed_error": "The tracked user profile contained nearly complete client configs, provider/model values, environment key names, Skill inventories and absolute workstation paths.",
       "root_cause": "Secret redaction was treated as sufficient for a portable user overlay, so machine-private and officially owned state was copied into Git.",
       "fix": "Replaced the snapshot with a v2 field-allowlisted overlay, excluded private/runtime state entirely, used capability-discovered roots and made export plan-only unless --write is explicit.",
-      "regression_test": "python tests/test_user_profile_export.py",
+      "regression_test": "python tests/workflow-assistance/test_user_profile_export.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Tracked user overlays must contain only fields marked MANAGE by the ownership authority and must never persist absolute paths or full native client configuration.",
       "remaining_boundary": "No live user profile was changed; approved field application still requires client-native backup, diff, readback and rollback.",
@@ -937,7 +1022,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-036",
@@ -950,7 +1038,7 @@
       "observed_error": "Observer projection paths embedded concrete model identities and dated provider prices, trusted a manually assigned stale flag, and initialized missing governance sources as zero.",
       "root_cause": "Historical test fixture pricing and display defaults were promoted into production projection logic instead of being supplied as observed canonical facts.",
       "fix": "Removed embedded models and prices, required caller-supplied provenance and validity intervals, computed expiry from time evidence, kept absent/invalid/partial pricing without a USD total, and left missing governance counts null.",
-      "regression_test": "python tests/test_usage_rollup.py and python scripts/verify_usage_rollup.py and python tests/test_observer_runtime.py",
+      "regression_test": "python apps/observer/tests/test_usage_rollup.py and python apps/observer/scripts/verify_usage_rollup.py and python apps/observer/tests/test_observer_runtime.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "Observer must never own provider pricing or hardcode a replaceable model/version; every estimate must require fresh Workflow canonical evidence.",
       "remaining_boundary": "No live vendor pricing collector was run, so real prices remain unknown until Workflow records approved observations.",
@@ -963,7 +1051,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-037",
@@ -989,7 +1080,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-038",
@@ -1015,7 +1108,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-039",
@@ -1041,7 +1136,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-040",
@@ -1067,7 +1164,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-041",
@@ -1093,7 +1192,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-042",
@@ -1119,7 +1220,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-043",
@@ -1132,7 +1235,7 @@
       "observed_error": "Codex CLI launcher exited 126 (Permission denied) executing the WindowsApps OpenAI.Codex copy at app/resources/codex.exe after the Store package updated; the plugin copy hash no longer matched the Store copy, and the pinned non-versioned OpenAI/Codex/bin/codex.exe candidate did not exist.",
       "root_cause": "bin/codex pinned a non-versioned OpenAI/Codex/bin/codex.exe candidate that does not exist (official CLI installs live under versioned subdirectories), and on Store/plugin hash mismatch it still queued the WindowsApps copy whose ACLs block Git Bash exec, aborting the whole wrapper.",
       "fix": "bin/codex now globs OpenAI/Codex/bin/*/codex.exe (user-writable, bypasses WindowsApps ACLs) ahead of the Store/plugin pair, uses the plugin copy only on exact hash match, and exec failures (126) fall through to the next candidate instead of aborting.",
-      "regression_test": "bash -n bin/codex && ./bin/codex --version && ./bin/codex exec --ephemeral 'Reply exactly: WRAPPER_FIX_SMOKE'",
+      "regression_test": "bash -n packages/client-neutral-core/bin/codex && packages/client-neutral-core/bin/codex --version && packages/client-neutral-core/bin/codex exec --ephemeral 'Reply exactly: WRAPPER_FIX_SMOKE'",
       "evidence_level": "local-focused",
       "repeat_prevention": "The launcher must keep multiple resolvable candidate paths and must never abort on a single exec ACL failure; every wrapper change must re-run the regression_test.",
       "remaining_boundary": "Store package updates can still change the plugin hash; the versioned install covers the real CLI.",
@@ -1145,7 +1248,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-044",
@@ -1171,7 +1277,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-045",
@@ -1197,7 +1305,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "OUT_OF_REPO_TARGET",
+      "regressionTestVerifiabilityReason": "the command greps `reasoning_effort` in the live Hermes Home config.yaml; no checkout contains that file, so the promise is about the managed client's state on the authoring machine. The tracked field-ownership record (config/config-ownership.json) is what a reader can verify here."
     },
     {
       "error_id": "ERR-046",
@@ -1210,7 +1320,7 @@
       "observed_error": "codex.cmd kept a fixed candidate path (OpenAI/Codex/bin/codex.exe) that no longer exists after Codex moved to versioned directories (bin/<commit>/codex.exe); the cmd entry could silently miss and fall through.",
       "root_cause": "cmd wrapper was not updated alongside the bash wrapper's versioned-glob fix.",
       "fix": "codex.cmd now globs OpenAI/Codex/bin/*/codex.exe (newest first), matching the bash wrapper; verified --version returns codex-cli 0.147.0-alpha.6.5.",
-      "regression_test": "powershell -Command \"& '.../codex.cmd' --version\"",
+      "regression_test": "powershell -Command \"& 'packages/client-neutral-core/bin/codex.cmd' --version\"",
       "evidence_level": "local-focused",
       "repeat_prevention": "Five-dimension baseline requires bash and cmd wrappers resolve identically; both must glob versioned bin directories.",
       "remaining_boundary": "Store-package ownership unchanged; wrapper never pins or reads credentials.",
@@ -1223,7 +1333,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-047",
@@ -1249,7 +1362,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "HISTORICAL"
-      }
+      },
+      "regressionTestVerifiability": "OUT_OF_REPO_TARGET",
+      "regressionTestVerifiabilityReason": "the command counts a line in another machine's Codex Home config.toml (C:/Users/admin/...), which neither this checkout nor CI can contain; the 2026-09-30 audit copy under reports/audit-archive is a snapshot, not the subject of the promise."
     },
     {
       "error_id": "ERR-048",
@@ -1262,7 +1377,7 @@
       "observed_error": "New workflow-assistance-observer-delivery SKILL.md contained the word 'curl' in an SSE subscription example; supply-chain scanner flagged remote-download-hint (medium) and QUARANTINED the whole skills root.",
       "root_cause": "skill_plugin_scan.py pattern-matches 'curl'/'download' as a remote-download hint; the example was a loopback SSE read, not a download.",
       "fix": "Reworded the example to 'open a background process on <url> with a bounded read timeout' (no curl literal); scanner then PASS.",
-      "regression_test": "python 10-workflow/workflow-assistance/scripts/workflow/skill_plugin_scan.py 10-workflow/workflow-assistance/codex-assets/skills",
+      "regression_test": "python packages/client-neutral-core/scripts/skill_plugin_scan.py 10-workflow/workflow-assistance/codex-assets/skills",
       "evidence_level": "local-full",
       "repeat_prevention": "Skill examples that read network resources must avoid literal curl/download wording or the supply-chain scanner will quarantine the root; keep loopback SSE examples description-based and always re-run skill_plugin_scan before commit.",
       "remaining_boundary": "None.",
@@ -1275,7 +1390,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "a substitution was attempted 2026-10-07 but the operand still does not resolve, so no re-point is claimed and the promise stays where it was",
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-049",
@@ -1288,7 +1406,7 @@
       "observed_error": "The generic configuration coordinator could treat an existing null machine value as absent, its rollback scope included PRESERVE/NOOP fields, the Codex writer could be called without a reviewed plan when bypassing the CLI, the Hermes writer could follow a symlink/junction or remove an unfenced retired asset, and the supply-chain verifier could miss a later unpinned pip install if the workflow also contained one safe install, accept a noncanonical *requirements.lock, treat a hash flag in a shell comment as active, or skip a backslash-continued/escaped shell pip invocation.",
       "root_cause": "Action-plan semantics used value truthiness rather than key presence, rollback derived scope from all classified fields rather than write_set, approval existed only in the CLI wrapper, Hermes path mutation did not inspect Home-to-target reparse components or require recorded ownership for retirement, and workflow dependency validation checked YAML physical lines rather than every shell logical command and normalized tokenized argument set.",
       "fix": "Plans preserve every existing machine key including null, emit a write set only for absent declared MANAGE drift, require discovered machine identity before approval, return NOOP for an empty write set, and rollback only recorded writes. Codex apply_overlay itself now requires a current target-bound reviewed plan digest; CLI passes the same digest. Hermes plan, backup, staging, promotion, readback, and backup pruning reject every Home-to-target symlink/junction/reparse component; ordinary sync blocks any legacy retired asset without a recorded ownership fence instead of replacing its parent tree. The supply-chain verifier joins shell backslash continuations by removing only the backslash-newline pair (without inventing whitespace) before splitting ;, &&, ||, and |, recognizes standard Python pip launchers after shell token normalization, and requires an actual --require-hashes token plus exactly one requirement argument equal to 10-workflow/workflow-assistance/requirements.lock for every install. Successfully tokenized comments and quoted data are not executable installs; only a shell parse error retains a conservative pip-shaped fail-closed fallback.",
-      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python tests/test_config_coordinator.py && PYTHONDONTWRITEBYTECODE=1 python tests/test_config_ownership.py && PYTHONDONTWRITEBYTECODE=1 python tests/test_action_plan_sync.py && PYTHONDONTWRITEBYTECODE=1 python tests/test_codex_global_asset_sync.py && PYTHONDONTWRITEBYTECODE=1 python tests/ci/test_supply_chain.py",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python tests/workflow-assistance/test_config_coordinator.py && PYTHONDONTWRITEBYTECODE=1 python tests/workflow-assistance/test_config_ownership.py && PYTHONDONTWRITEBYTECODE=1 python tests/workflow-assistance/test_action_plan_sync.py && PYTHONDONTWRITEBYTECODE=1 python tests/workflow-assistance/test_codex_global_asset_sync.py && PYTHONDONTWRITEBYTECODE=1 python tests/ci/test_supply_chain.py",
       "evidence_level": "local-full",
       "repeat_prevention": "Every global configuration operation must distinguish key absence from null, discover the current target machine first, classify fields by ownership, create a machine-scoped minimum write set, derive rollback only from recorded writes, require current target-bound approval at the actual writer, read back after apply, and never write a NOOP plan. Every filesystem writer must reject Home-to-target symlink/junction/reparse paths before read, backup, replace, remove, rollback, or prune; no retired asset may be removed or replaced without a recorded ownership fence and explicit migration. CI dependency checks must normalize shell backslash-newline pairs without inserting whitespace, validate every standard and shell-normalized pip installation command after shell separators, tokenize away comments, require an actual --require-hashes argument, and permit exactly one canonical 10-workflow/workflow-assistance/requirements.lock reference, with negative fixtures for mixed same-line chains, bare/escaped/quoted and command-name-split pip launchers, noncanonical locks, comment spoofs, multiple requirements inputs, unsafe continued commands, and non-executing comment/quoted pip text.",
       "remaining_boundary": "The coordinator enforces planning semantics only; each live adapter still requires its own explicit dry-run, approval, path-safety checks, and same-target readback. Legacy retired assets deliberately block ordinary Hermes sync until a future explicit, per-path, ownership-fenced migration is designed and approved. No live config, credential, session, or private configuration body was read for this regression test.",
@@ -1301,7 +1419,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-050",
@@ -1314,7 +1435,7 @@
       "observed_error": "Guard regression (P1-1): an embedded absolute path inside a project whose root contains spaces was truncated by the [^\\s\"']+ regex (e.g. D:/All projects/... -> D:/All) and misjudged as external; plain ellipsis text '...' was misclassified as parent-directory traversal (RAW_PARENT_TRAVERSAL matched the trailing '..' followed by end-of-string).",
       "root_cause": "ABSOLUTE_PATH regex truncates at whitespace and external_child_path had no project-prefix truncation guard; RAW_PARENT_TRAVERSAL lacked a path-boundary lookbehind so '...' and other non-path text ending in '..' matched.",
       "fix": "RAW_PARENT_TRAVERSAL now requires a path/command boundary before '..' (space/quote/=<>:([{/\\ or start) and a following separator, space/quote, slash, backslash or EOL. external_child_path now mirrors external_raw_windows_path: when the truncated candidate is a character prefix of the project root (root_str.startswith(res_str)), it defers to exact full-token judgement instead of blocking. Added 4 tracked two-way tests (22 total): ellipsis/HEAD.. range allowed, real ../..\\ and 'ls ..' still blocked, project-internal space path allowed, external space path blocked.",
-      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python 10-workflow/workflow-assistance/tests/test_project_terminal_guard.py",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python tests/workflow-assistance/test_project_terminal_guard.py",
       "evidence_level": "local-full",
       "repeat_prevention": "Guard regex changes require a two-way block/allow matrix (E-drive/external/traversal/chaining/raw must block; git/pytest/in-project scripts/space paths/scheme URLs/ellipsis/range-refs must allow) as tracked tests, plus live hook re-approval (hermes hooks revoke + --accept-hooks) after deploying the script.",
       "remaining_boundary": "Local tracked tests only; exact-SHA cloud CI not yet run. Live guard re-approved and hook doctor healthy.",
@@ -1327,7 +1448,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-051",
@@ -1340,7 +1464,7 @@
       "observed_error": "PR #89/#90 declared 26/41 tests but the tracked suite had only 18 tests, leaving embedded space-path, ellipsis, git-range-ref and real quoted-argument combinations uncovered (P1-2).",
       "root_cause": "Local temporary verification was not converted into sustainable tracked regression tests after the guard fixes.",
       "fix": "Added 4 tracked two-way tests covering: ellipsis + git range refs allowed, real parent-traversal forms blocked, project-internal absolute path with spaces allowed, external absolute path with spaces blocked. Suite now 22 tests, all passing.",
-      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python 10-workflow/workflow-assistance/tests/test_project_terminal_guard.py",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 python tests/workflow-assistance/test_project_terminal_guard.py",
       "evidence_level": "local-full",
       "repeat_prevention": "Every guard fix must land with tracked two-way tests in the same change; ad-hoc scripts are not a substitute for the canonical suite.",
       "remaining_boundary": "Exact-SHA CI not yet run for the new tests.",
@@ -1353,7 +1477,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-052",
@@ -1366,7 +1493,7 @@
       "observed_error": "WLGM-230 self-canary failed: the WORK-LAB root resolved to UNRESOLVED because ProductProject.add_repository appended the repository identity to repositories[] but never synchronized remote_identities, so ApprovedProjectIndex.by_remote could never match.",
       "root_cause": "remote_identities (the match list used by the identity resolver) and repositories[].remote_identity were written independently; add_repository did not keep them in sync.",
       "fix": "ProductProject.add_repository now also appends repo.remote_identity to remote_identities when present. Canary then resolves WORK-LAB root via remote identity (RESOLVED).",
-      "regression_test": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/workflow python scripts/workflow/canary_runner.py && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/workflow python tests/test_product_project.py",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/workflow python services/orchestration/canary_runner.py && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/workflow python tests/workflow-assistance/test_product_project.py",
       "evidence_level": "local-full",
       "repeat_prevention": "Any model with parallel identity lists (repositories[] vs remote_identities) must keep them synchronized in a single mutator and be covered by a canary that resolves a real repository root.",
       "remaining_boundary": "External OS-project canary still PENDING (WORKLAB_CANARY_PROJECT_ROOTS not authorized).",
@@ -1379,7 +1506,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-053",
@@ -1405,7 +1535,9 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-054",
@@ -1418,7 +1550,7 @@
       "observed_error": "v2 migration backup copied the SQLite main file while the store was in WAL mode, so the backup contained no tables/data (uncheckpointed WAL); rollback restored an empty database.",
       "root_cause": "WAL writes live in the -wal file until checkpoint; file copy alone misses them.",
       "fix": "Backup now runs PRAGMA wal_checkpoint(TRUNCATE) before copying the main db file; rollback_v2_backup restores a complete pre-v2 database.",
-      "regression_test": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/workflow python tests/test_canonical_store_v2.py",
+      "regression_test": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/workflow python tests/workflow-assistance/test_canonical_store_v2.py",
       "evidence_level": "local-full",
       "repeat_prevention": "Any SQLite file backup must checkpoint WAL first; migration-recovery tests assert the restored db contains v1 tables and legacy rows.",
       "remaining_boundary": "None.",
@@ -1431,7 +1563,10 @@
         "affectedCapability": null,
         "regressionCommand": null,
         "currentApplicability": "UNVERIFIED_CURRENT_TREE"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-055",
@@ -1462,7 +1597,9 @@
       "taskpack": "R2",
       "title": "Guard P0-8: 前缀修复首版在 Windows 下 drive 映射 POSIX 路径产生错误路径",
       "prevention": "Windows 路径处理优先文本边界比较；resolve 仅用于同风格路径",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-056",
@@ -1493,7 +1630,9 @@
       "taskpack": "R2",
       "title": "Guard 双匹配：同一 C:/ 路径被 Windows+POSIX 正则分支各匹配一次",
       "prevention": "正则多分支匹配同一文本时，恢复逻辑必须容忍非直接引号起点",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-057",
@@ -1524,7 +1663,9 @@
       "taskpack": "R2",
       "title": "zizmor Docker action 的 version input 映射失效（zizmor== 空版本）",
       "prevention": "第三方 Docker action 的 input 映射不可靠时改用 shell 安装；CI 工具安装优先本机已有运行时",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-058",
@@ -1538,7 +1679,7 @@
       "observed_error": "schema const v3 + verifier + test entries==5 not updated; additionalProperties rejected v4 fields",
       "root_cause": "只更新 ledger JSON，未同步 contracts/source-ledger.schema.json const、verify_source_ledger.py、test_source_ledger.py（entries==5）",
       "fix": "三处同步到 v4 + 新字段；CI integration 失败暴露",
-      "regression_test": "tests/ci/test_source_ledger.py + test_source_ledger_v4.py",
+      "regression_test": "tests/ci/test_source_ledger.py + tests/ci/test_source_ledger_v4.py",
       "evidence_level": "local-focused",
       "repeat_prevention": "schema upgrade MUST update JSON + schema file + verifier + tests in one change",
       "remaining_boundary": "older schema consumers must migrate",
@@ -1546,16 +1687,21 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": null,
-        "fixedCommit": null,
+        "fixedCommit": "2e36309",
         "verifiedCommit": null,
         "affectedCapability": null,
         "regressionCommand": null,
-        "currentApplicability": "UNVERIFIED_CURRENT_TREE"
+        "currentApplicability": "UNVERIFIED_CURRENT_TREE",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: feat: complete two-module work-lab cutover. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
+        "bindingBasis": "regression-operand-introduction:tests/ci/test_source_ledger.py: this commit adds only 0 record(s), it changes 00-governance/source-ledger.json which the record names, and the record promises no script"
       },
       "taskpack": "R2",
       "title": "source-ledger v3→v4 升级遗漏 schema/verify 脚本/测试三方同步",
       "prevention": "schema 升级必须一次更新：JSON + schema 文件 + verifier + 测试断言",
-      "verified": true
+      "verified": true,
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-059",
@@ -1586,7 +1732,9 @@
       "taskpack": "R2",
       "title": "max_watermark 引用不存在的 telemetry_samples 表",
       "prevention": "新增 SQL 查询先核对真实表结构（PRAGMA table_info）",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-060",
@@ -1617,7 +1765,9 @@
       "taskpack": "R2",
       "title": "ObserverStore 移除 reader 后丢失 FileNotFoundError fail-closed 检查",
       "prevention": "删除依赖时保留其 fail-closed 契约，用既有测试反向验证",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-061",
@@ -1648,7 +1798,9 @@
       "taskpack": "R2",
       "title": "Observer 初始 Snapshot 失败后不会自行恢复",
       "prevention": "启动竞态和 sidecar 延迟恢复必须由产品状态机覆盖，不能只依赖外部启动脚本。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-062",
@@ -1679,7 +1831,9 @@
       "taskpack": "R2",
       "title": "SSE 指数退避在每次重建前被重置为 1 秒",
       "prevention": "资源关闭与重试状态重置必须是两个独立操作，并由替换连接路径的回归合同锁定。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-063",
@@ -1710,7 +1864,9 @@
       "taskpack": "R2",
       "title": "多 SSE 客户端共享布尔连接状态导致错误离线判定",
       "prevention": "多客户端资源状态必须由计数或集合派生，禁止由最后一个事件覆盖全局布尔状态。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-064",
@@ -1741,7 +1897,9 @@
       "taskpack": "R2",
       "title": "SSE 已连接但 snapshot 不投影连接事实，且启动时间被误作 heartbeat/writer freshness",
       "prevention": "连接可达性与 freshness 必须分别投影真实来源；禁止用进程启动时间替代采集心跳或 writer watermark。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-065",
@@ -1772,7 +1930,9 @@
       "taskpack": "R2",
       "title": "普通 sidecar 生命周期未启动 durable producer，tick 顶层异常会永久终止线程",
       "prevention": "唯一普通入口必须拥有 producer 与 API 的完整生命周期；持锁不等于监督，必须测试异常恢复和真实线程退出。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-066",
@@ -1803,7 +1963,9 @@
       "taskpack": "R2",
       "title": "collector health 未持久化，coverage 输入类型与 Snapshot 证据断裂",
       "prevention": "同一健康事实必须同时驱动 live verdict 与 Snapshot coverage，禁止一个分支使用自造字段或不同类型。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-067",
@@ -1834,7 +1996,9 @@
       "taskpack": "R2",
       "title": "writer 已新鲜但 freshnessState 永久 UNKNOWN",
       "prevention": "每个用户可见状态字段必须有一条从证据源到序列化合同的端到端断言。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-068",
@@ -1865,7 +2029,9 @@
       "taskpack": "R2",
       "title": "随机 collector ID 使常驻轮询重复累计同一事实和 usage",
       "prevention": "任何可轮询来源在进入 additive projection 前必须具有稳定事件身份，并以两轮相同输入的行数与总量断言锁定。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-069",
@@ -1896,7 +2062,9 @@
       "taskpack": "R2",
       "title": "PR #104 已合并但审批包仍显示 27/28、dirty WIP 与 exact-SHA CI 未执行",
       "prevention": "合并闭环必须包含 post-merge 文档事实对账，禁止把已完成的 Git 交付继续投影成 pending。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-070",
@@ -1927,7 +2095,9 @@
       "taskpack": "R2",
       "title": "EventSource 中断后 last-good 仍伪显示 Sidecar 已连接",
       "prevention": "离线恢复测试必须覆盖冷启动无数据、已有 last-good 后断流、同一 app PID 自动恢复三种对称状态。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-071",
@@ -1958,7 +2128,9 @@
       "taskpack": "R2",
       "title": "审批文档硬编码最新 PR 导致每次 merge 后立即事实漂移",
       "prevention": "tracked 文档只保存稳定历史锚点和查询规则；当前 merge SHA、run URL 与最终状态必须在交付读回中获取。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-072",
@@ -1989,7 +2161,9 @@
       "taskpack": "R2",
       "title": "Windows sidecar PID 校验把已退出进程误判为存活",
       "prevention": "Windows PID liveness 必须同时覆盖句柄可打开、STILL_ACTIVE 和已退出码三种分支，不能把句柄存在等同于进程存活。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-073",
@@ -2020,7 +2194,9 @@
       "taskpack": "R2",
       "title": "退休 dashboard helper 仍把 v3 响应当作旧 API 成功",
       "prevention": "退休入口必须拒绝而不是代理到新入口；任何兼容 stub 都必须有明确的负向测试，不能用成功响应掩盖迁移遗漏。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-074",
@@ -2051,7 +2227,9 @@
       "taskpack": "R2",
       "title": "usage JSONL 以行号作为事实身份导致头插或重排重复累计",
       "prevention": "Additive usage 合同必须覆盖重复轮询、相同合法行、头插、重排和同位重写，禁止把物理行位等同于事件身份。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-075",
@@ -2082,7 +2260,9 @@
       "taskpack": "R2",
       "title": "部分 collector health 与超时关闭可破坏单 writer 和完整 coverage",
       "prevention": "运行态验收必须覆盖 partial health、worker 已停、重复 collector 名、阻塞 collector、阻塞 watcher，以及 worker/watcher 启动失败六类负路径。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-076",
@@ -2096,7 +2276,7 @@
       "observed_error": "The non-GET rejection test was counted as PASS before its Promise and assertions had settled.",
       "root_cause": "helpers.test() 直接调用 async 回调并立即记 PASS，run_all_tests.js 也未等待 suite Promise。",
       "fix": "增加 asyncTest() 真正 await 回调；同步 harness 遇 Promise 明确失败；aggregate runner 顺序 await 每个 suite。",
-      "regression_test": "run_all_tests.js awaits test_read_only_surface.run and asyncTest awaits non-GET plus invalid-snapshot controls",
+      "regression_test": "apps/observer/tests/run_all_tests.js awaits test_read_only_surface.run and asyncTest awaits non-GET plus invalid-snapshot controls",
       "evidence_level": "local-full",
       "repeat_prevention": "A synchronous test helper MUST reject Promise-returning callbacks instead of optimistically recording PASS.",
       "remaining_boundary": "The suite remains a local Node contract layer; native WebView execution is verified separately.",
@@ -2113,7 +2293,10 @@
       "taskpack": "R2",
       "title": "同步 JavaScript test harness 未 await Promise 导致异步负控假绿",
       "prevention": "任何返回 thenable 的测试必须由 await-aware harness 执行，aggregate runner 必须等待 suite 完成后才汇总与退出。",
-      "verified": true
+      "verified": true,
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-077",
@@ -2144,7 +2327,9 @@
       "taskpack": "R2",
       "title": "canonical v3 fetch 仍接受 legacy/partial 200 并允许顶层 mode 覆盖 transport",
       "prevention": "客户端必须对 legacy schema、未知 schema、partial LIVE、冲突 mode、无效时间戳、过量 coverage 和非精确 loopback SSE URL 建立对称负控。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-078",
@@ -2175,7 +2360,9 @@
       "taskpack": "R2",
       "title": "supply-chain-security 未纳入唯一 required aggregate 导致安全扫描可红而合并门仍绿",
       "prevention": "所有会阻断交付的 CI job 必须由同一 GatePlan 选择并被唯一 required aggregate 读取；不得存在只运行但不参与 aggregate 的旁路安全门。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-079",
@@ -2206,7 +2393,9 @@
       "taskpack": "R2",
       "title": "SSE resync_required 不推进 cursor 且 frame 无 id 导致永久重复重同步",
       "prevention": "每个 resync 负控必须断言 frame id、server cursor 和下一次 frames_for 收敛，不能只断言 event 名存在。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-080",
@@ -2237,7 +2426,9 @@
       "taskpack": "R2",
       "title": "前端并发 refresh 可回滚 revision，heartbeat 放大 GET，协议错误又被静默丢弃",
       "prevention": "前端 transport 测试必须覆盖乱序响应、burst、heartbeat、error-before-response、failed retry、endpoint replacement 与 malformed SSE，不得只测单次成功。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-081",
@@ -2268,7 +2459,9 @@
       "taskpack": "R2",
       "title": "历史 collector success 与死亡 watcher 可在新 worker 存活时冒充完整 LIVE",
       "prevention": "LIVE gate 必须同时验证每个 expected collector 的新鲜成功、supervising worker 和 watcher 当前存活，publish 异常必须有恢复测试。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-082",
@@ -2299,7 +2492,9 @@
       "taskpack": "R2",
       "title": "aggregate 接受缺 commit、零 gate 与伪 digest algorithm，且其负控未进入 required CI",
       "prevention": "aggregate trust boundary 必须验证 plan 自身身份与选择非空性，所有 failure/skipped/malformed 负控必须由受保护 required job 真实执行。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-083",
@@ -2330,7 +2525,9 @@
       "taskpack": "R2",
       "title": "两个 backend suite 依赖其它测试污染 sys.path，单文件执行失败",
       "prevention": "每个 focused test file 必须可从仓库根独立执行，不能依赖 discovery 顺序或其它模块的 import side effect。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-084",
@@ -2361,7 +2558,9 @@
       "taskpack": "WL-DIR-MIG-R1",
       "title": "批量路径替换不验证语义，脚本代码被破坏（SyntaxError/双重前缀）",
       "prevention": "批量替换铁律：改前先 grep 计数命中、改后立即 py_compile + 单文件测试；对含复杂语法的代码块用 patch 而非 str.replace。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-085",
@@ -2392,7 +2591,9 @@
       "taskpack": "WL-DIR-MIG-R1",
       "title": "修复循环无止损：13 个 fix commit 在同一测试套件打转，未先验证 baseline 是否本来就红",
       "prevention": "止损铁律：同一目标修 2 轮不收敛必须停下重新评估问题性质；修复前先回答『baseline 绿不绿 / 义务载体在哪』再动手。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-086",
@@ -2423,7 +2624,9 @@
       "taskpack": "WL-DIR-MIG-R1",
       "title": "任务漂移：用户已交付的主任务（交接/上传/清理）完成后仍无限延伸 CI 修复，中途不汇报",
       "prevention": "主任务完成后延伸工作前必须先汇报并取得同意；每次状态变更（commit/push/清理）后汇报，不等用户质疑。",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-087",
@@ -2454,7 +2657,9 @@
       "taskpack": "DSH-ENTRY-20260923",
       "title": "DSH desktop entry regression: .lnk dead link to cleaned temp dir + dropped --user-data-dir arg -> onboarding wizard + dead icon reference",
       "prevention": "Any DSH .lnk re-pin or NSIS silent install requires a three-field readback (TargetPath + Arguments + IconLocation) and live window-title/port/data-root-mtime triple verification; the discipline is recorded in skill dsh-administration (NSIS pitfall section) so it cannot regress silently again.",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-088",
@@ -2485,7 +2690,9 @@
       "taskpack": "DSH-ROOT-20260924",
       "title": "DSH desktop data-root regression: DSH_HOME frozen out of the live login session -> launch fell back to C:.dsh empty skeleton, user perceived 'sessions/config lost'",
       "prevention": "Diagnose 'config/sessions disappeared' with the C:.dsh mtime + 0-sessions skeleton triad BEFORE touching the .lnk; Windows user env vars only refresh at the next logon session, so after setx a live session must be relaunched with the env injected (or one logoff/reboot); the .lnk layer (ERR-087) and the data-root env layer (ERR-088) must never be conflated. Discipline recorded in skill dsh-administration.",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-089",
@@ -2515,7 +2722,9 @@
       "taskpack": "WORK-LAB-OPEN-20260925",
       "title": "PR #135 delivery-sequence accident: short-lived branch deleted while mergeStateStatus=BLOCKED -> GitHub auto-closed the PR before it merged",
       "prevention": "Delivery sequence is: required checks all terminal on the head SHA AND mergeStateStatus=CLEAN -> squash merge -> main readback (new SHA) -> delete short-lived branch. A single green run is NOT a merge signal while sibling runs are in-progress; `gh pr merge` refusal with 'base branch policy prohibits the merge' means BLOCKED, never retry with --admin without user authorization.",
-      "verified": true
+      "verified": true,
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-090",
@@ -2542,7 +2751,9 @@
         "affectedCapability": "local gh account selection across Agent processes",
         "regressionCommand": "fresh-process gh api user --jq .login plus repository permission readback",
         "currentApplicability": "USER_SCOPE_FIXED_RUNNING_PROCESSES_UNVERIFIED_20260929"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-091",
@@ -2569,7 +2780,9 @@
         "affectedCapability": "protected-main GitHub delivery chain",
         "regressionCommand": "GitHub PR/main SHA readback and required check-run readback",
         "currentApplicability": "CLOSED_MERGED_20260929"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-093",
@@ -2596,7 +2809,9 @@
         "affectedCapability": "repository data-boundary cleanliness under the governance quality gate",
         "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python -m pytest tests/workflow-assistance/nf10nf11nf12_convergence_audit.py -q",
         "currentApplicability": "FIXED_AND_VERIFIED_20260930"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-094",
@@ -2623,7 +2838,9 @@
         "affectedCapability": "external audit package integrity verification chain",
         "regressionCommand": "fetch each raw evidence URL and compare sha256 against MANIFEST.json",
         "currentApplicability": "FIXED_AND_VERIFIED_20260930"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "regression_test is a prose sentence naming `MANIFEST.json` as a kind, not a path; three archived manifests carry that basename, so choosing one would invent a pointer the record never made."
     },
     {
       "error_id": "ERR-095",
@@ -2650,7 +2867,9 @@
         "affectedCapability": "codex global policy projection truthfulness",
         "regressionCommand": "readback CODEX_HOME/AGENTS.md for managed block markers and list CODEX_HOME/skills/workflow-assistance-*",
         "currentApplicability": "DRIFT_OPEN_20260930"
-      }
+      },
+      "regressionTestVerifiability": "OUT_OF_REPO_TARGET",
+      "regressionTestVerifiabilityReason": "the operand is `$CODEX_HOME/AGENTS.md` — a managed client projection target, deliberately outside the repository. The overlay-block requirement is enforced here by the skill-provenance and config-ownership gates, not by reading that home in CI."
     },
     {
       "error_id": "ERR-096",
@@ -2664,7 +2883,7 @@
       "observed_error": "Twelve of thirteen managed skills match between the repository source and the live Hermes skills tree, but software-development/windows-development-environment/SKILL.md differs (live sha 39bbb61a723914d5, 23825 bytes vs repo sha 2e1fc6dcdf51ee89, 21982 bytes), and the provenance records are stale: the model-switch live_sha256 no longer describes any current file and the windows-development-environment source and live entries both still hold the old digest.",
       "root_cause": "The live Hermes copy of one managed skill has diverged from the repository source (edit or older deployment), and skill-provenance.yaml was not regenerated after the underlying files changed, so the record no longer proves anything about the live surface.",
       "fix": "Recorded here with exact digests. The repair path is the sanctioned asset sync (integrations/executors/hermes/sync_hermes_workflow_assets.py, which updates skill-provenance hashes in the same change) followed by a live readback; that write is NOT authorized in this task.",
-      "regression_test": "For every managed skill, the sha256 of the live Hermes file must equal the repository source sha256, and skill-provenance.yaml entries must be regenerated in the same change that deploys them.",
+      "regression_test": "For every managed skill, the sha256 of the live Hermes file must equal the repository source sha256, and config/skill-provenance.yaml entries must be regenerated in the same change that deploys them.",
       "evidence_level": "local-focused",
       "repeat_prevention": "Skill provenance must be regenerated by the deployment channel itself, never hand-edited, and a deployment is only complete when a live readback of all managed skills matches the source digests.",
       "remaining_boundary": "Only the metadata of the diverging skill was compared; the content difference was not judged for quality or intent, and the memory and session bodies were not read.",
@@ -2677,7 +2896,10 @@
         "affectedCapability": "Hermes managed skill deployment fidelity",
         "regressionCommand": "compare sha256 of packages/client-neutral-core/skills/**/SKILL.md with the live Hermes skills tree",
         "currentApplicability": "DRIFT_OPEN_20260930"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-097",
@@ -2704,7 +2926,9 @@
         "affectedCapability": "adapter registry honesty: implementation maturity vs deployment observation",
         "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python -c \"read config/adapter-registry.json policy_projection.deployment_observation\"",
         "currentApplicability": "CLAIM_CORRECTED_LIVE_DRIFT_STILL_OPEN"
-      }
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command names no file operand to check"
     },
     {
       "error_id": "ERR-098",
@@ -2718,7 +2942,7 @@
       "observed_error": "Three defects made the Windows desktop layer look impossible. (1) The harness called GetClientRect with three arguments (byref(w), byref(h)) against a two-argument API, so the whole RECT landed in the first pointer and width/height were read back as left/top = 0. Every window therefore measured 0x0 and the GDI proof returned windows=0 on a machine where the real main window measures 1280x820 and visible=true. (2) Because (1) kept `found` empty, PrintWindow and GetBitmapBits were never executed on any machine, hiding two further defects: the GDI/DC functions declared argtypes but no restype, so a raw int was passed where wt.HDC was required, and GetBitmapBits received ctypes.byref(c_size_t(n)) where a DWORD value was required - both raise 'argument 2: TypeError: wrong type' the moment the path is finally reached. (3) check_9 probed only shutil.which('cargo') and ~/.cargo/bin/cargo.exe and then asserted 'Windows toolchain not installed' unconditionally, and GATE_SEMANTICS printed 'TAURI_WINDOWS_PENDING=yes(without Rust toolchain)'. That claim is false on this machine and contradicts the repository's own reference (windows-development-environment/references/tauri-build-shared-toolchain.md: 'Never turn a failed path probe into the persistent claim MSVC/Tauri is unavailable'), and register row AG-08 had promoted it to a machine-level blocker ('no Visual Studio and no VC tools at all').",
       "root_cause": "Probe scope and dead code paths. The toolchain probe looked only at system PATH and the per-user cargo home, never at the declared shared roots in .project/governance/external-libraries-index.json (os-external), where MSVC 14.44.35207 (cl/link/MSBuild), a complete stable-x86_64-pc-windows-msvc toolchain with rustc.exe, cargo-tauri.exe and tauri-driver.exe all live; the Windows SDK import libraries are on the system volume at C:/Program Files (x86)/Windows Kits/10/Lib/10.0.28000.0/{ucrt,um}/x64. Separately, a Win32 signature error made the GDI branch always return an empty set, so the two downstream ctypes defects were unreachable and stayed latent from the day the harness was written.",
       "fix": "Corrected all three at the root. check_9 now resolves cargo through the declared shared roots (external-libraries-index.json sharedRoots + libraries[kind=toolchains].assets[tool=cargo]) after an optional WORKLAB_CARGO override, PATH and ~/.cargo/bin, and performs a real 'cargo --version' readback, reporting the resolved path and version; the false unconditional 'Windows toolchain not installed' string is gone and the pending reason now names what is actually outstanding (desktop WebView2 E2E not executed). GATE_SEMANTICS no longer asserts 'without Rust toolchain'. The harness's GetClientRect now takes (HWND, LPRECT) and is wrapped in _client_size, and the GDI call chain got the restypes it was missing (GetDC/CreateCompatibleDC -> wt.HDC, CreateCompatibleBitmap -> wt.HBITMAP, SelectObject -> wt.HGDIOBJ, GetBitmapBits -> c_ulong, PrintWindow -> c_bool) with the count passed as a value. Positive readbacks from the same round: the shared toolchain compiled and RAN an msvc-target binary with zero downloads (RUSTC_EXIT=0, RUN_EXIT=0, 251,392 B), the Observer built with BUILD_EXIT=0 in 1m30s (app.exe 9,779,712 B, sha256 e659bbe9b20a2677, PE imports api-ms-win-crt-*/dwmapi with no libgcc/libwinpthread), and the app now stays ALIVE against the real sidecar instead of early-exiting 0xC0000135 as the previous GNU artifact did.",
-      "regression_test": "A Win32 wrapper must declare argtypes AND restype for every handle-returning call, and value parameters must be passed as values; a probe may not report a toolchain as absent unless every declared location in external-libraries-index.json has been probed and its exact path recorded in the evidence.",
+      "regression_test": "A Win32 wrapper must declare argtypes AND restype for every handle-returning call, and value parameters must be passed as values; a probe may not report a toolchain as absent unless every declared location in .project/governance/external-libraries-index.json has been probed and its exact path recorded in the evidence.",
       "evidence_level": "local-full",
       "repeat_prevention": "Never record a machine-level blocker from a single-path probe: enumerate the declared shared roots and Windows Kits first and cite the paths attempted. Environment-limited branches must be executed at least once, because a branch that is never reached cannot fail and therefore cannot be trusted.",
       "remaining_boundary": "Not yet closed: the real desktop surface proof. CDP over the process-level WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS still yields no page target, so the probe window path (per-window additional_browser_args) is inert by architecture - WebView2 creates one browser environment per user-data folder and the main window creates it first. The corrected GDI proof has not yet produced a green verdict, so U19's desktop layer stays FAIL/PENDING and is not reported as passed. Full canonical gate after these edits: 47 gates PASS, exit 0.",
@@ -2731,7 +2955,10 @@
         "affectedCapability": "Windows desktop E2E evidence chain and toolchain capability probing",
         "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python apps/observer/scripts/u19_webview_e2e.py",
         "currentApplicability": "PROBE_DEFECTS_FIXED_DESKTOP_VERDICT_STILL_OPEN"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-099",
@@ -2761,7 +2988,9 @@
         "regressionCommandPrior": "python .project-local/runs/p0a-diag-20261006/shot3.py",
         "regressionCommandCorrectedAt": "2026-10-07",
         "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-100",
@@ -2789,7 +3018,9 @@
         "regressionCommand": "python scripts/ci/failfast_group.py --group observer-web-contracts",
         "currentApplicability": "ALWAYS",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-100 is 6c63218, and its tree contains the promised scripts/ci/failfast_group.py. verifiedCommit stays null until an exact-SHA readback names a green head."
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-101",
@@ -2816,7 +3047,9 @@
         "affectedCapability": "Observer U19 GDI pixel-capture geometry",
         "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py",
         "currentApplicability": "ALWAYS"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-102",
@@ -2843,7 +3076,9 @@
         "affectedCapability": "Observer release desktop surface rendering",
         "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py",
         "currentApplicability": "ALWAYS"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-103",
@@ -2857,7 +3092,7 @@
       "observed_error": "Owner report from the real desktop: several controls do nothing when clicked, specifically the caption cluster (minimise, maximise/restore, close) and the zoom pair. No error, no visual change. The window itself renders the full interface, which also disproves the blank-release conclusion in ERR-102.",
       "root_cause": "Tauri v2 denies every mutating window and webview command by default. The compiled capability was [core:default, core:window:allow-start-dragging], and core:window:default in the build's own ACL manifest lists only readers (allow-is-maximized, allow-inner-size, allow-title and friends); allow-minimize, allow-toggle-maximize, allow-close and core:webview:allow-set-webview-zoom are separate identifiers that were never granted, so each click rejected at the ACL boundary. The rejection was then erased twice over: WindowControls called the API without awaiting it, so the rejected promise bypassed its own try/catch and surfaced as an unhandled rejection, and the catch body was empty.",
       "fix": "Granted exactly the four identifiers the shipped UI actually calls: core:window:allow-minimize, core:window:allow-toggle-maximize, core:window:allow-close, core:webview:allow-set-webview-zoom; and awaited each native call so a future denial cannot vanish silently. No other permission was added: the read-only-surface assertion in the same suite still forbids shell/fs/http/process grants.",
-      "regression_test": "node apps/observer/tests/test_desktop_component_contract.js derives the native calls from frontend/src and fails if any call has no ACL identifier, or if a needed identifier is missing from capabilities/default.json. Both failure modes were injected and observed to fail before the gate was trusted.",
+      "regression_test": "node apps/observer/tests/test_desktop_component_contract.js derives the native calls from frontend/src and fails if any call has no ACL identifier, or if a needed identifier is missing from apps/observer/src-tauri/capabilities/default.json. Both failure modes were injected and observed to fail before the gate was trusted.",
       "evidence_level": "local-full",
       "repeat_prevention": "Any UI call into the native shell must be awaited and must appear in the capability-contract map, because a Tauri v2 permission that is not granted fails as an asynchronous rejection that no synchronous try/catch will ever see. Capability grants must be derived from calls, never from a feature list.",
       "remaining_boundary": "Closed by direct observation. Observed by the owner on the real desktop on 2026-10-07, running `.project-local/runs/u19-msvc-20261006/target/release/app.exe` (sha256 6f73c14eb542f1a7…, 9,850,368 B, built against gitHead 307d90b), the owner reports all three caption controls (minimise, maximise/restore, close) respond. The owner's on-screen report outranks every instrument in this repository (ERR-104, ERR-107), so this is the confirmation the ACL grant needed. The receipt of this binary still matches all 12 recorded inputs byte for byte 8 commits after it was written, so what was observed is this tree's artifact, not a superseded one.",
@@ -2869,7 +3104,10 @@
         "verifiedCommit": "6015f0b",
         "affectedCapability": "Observer borderless shell window controls",
         "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "two tracked files carry the basename capabilities/default.json (observer and token-monitor), so the matcher cannot choose. The record decides: its regression test is apps/observer/tests/test_desktop_component_contract.js and its symptom is the observer's caption cluster and zoom controls, so the operand is the OBSERVER's Tauri capability file. Applied to this record only, never as a global substitution."
     },
     {
       "error_id": "ERR-104",
@@ -2898,7 +3136,9 @@
         "regressionCommandPrior": "python .project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "regressionCommandCorrectedAt": "2026-10-07",
         "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-105",
@@ -2924,7 +3164,9 @@
         "verifiedCommit": null,
         "affectedCapability": "U19 release binary provenance gate",
         "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-106",
@@ -2950,7 +3192,9 @@
         "verifiedCommit": "6015f0b",
         "affectedCapability": "Observer frameless shell top row",
         "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-107",
@@ -2979,7 +3223,9 @@
         "regressionCommandPrior": "python .project-local/runs/p0c-final-20261006/verify_once.py",
         "regressionCommandCorrectedAt": "2026-10-07",
         "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-108",
@@ -3006,7 +3252,9 @@
         "affectedCapability": "U19 artifact provenance receipt",
         "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-108 is 28afeaa, and its tree contains the promised apps/observer/tests/test_artifact_freshness.py. verifiedCommit stays null until an exact-SHA readback names a green head."
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-109",
@@ -3028,11 +3276,15 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "770d733",
-        "fixedCommit": null,
+        "fixedCommit": "4115d63",
         "verifiedCommit": null,
         "affectedCapability": "required-group manifest completeness guard",
-        "regressionCommand": "python tests/ci/test_failfast_group.py"
-      }
+        "regressionCommand": "python tests/ci/test_failfast_group.py",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: fix(ci): the manifest guard I skipped was the one that mattered. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
+        "bindingBasis": "ledger-entry-introduction: this commit adds only 1 record(s), it changes tests/ci/test_failfast_group.py which the record names, and the promised tests/ci/test_failfast_group.py exists in it"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-110",
@@ -3059,7 +3311,9 @@
         "affectedCapability": "U19 release binary provenance gate",
         "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-110 is 5348ba7, and its tree contains the promised apps/observer/tests/test_artifact_freshness.py. verifiedCommit stays null until an exact-SHA readback names a green head."
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-111",
@@ -3085,7 +3339,9 @@
         "verifiedCommit": null,
         "affectedCapability": "Future candidate pool coverage",
         "regressionCommand": "python scripts/ci/verify_future_candidate_registry.py"
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-112",
@@ -3099,7 +3355,7 @@
       "observed_error": "The 2026-10-06 design walkthrough raised 12 findings and only 5 were repaired in later commits. Six declared defects stayed live, and two of them were lies the interface told: all three overlays set aria-modal=\"true\" with no focus trap, so a keyboard user was told they were inside a dialog and then tabbed straight through it into the surface behind the overlay; and CompactHUD's header claimed 320px-safe while pinning four equal grid tracks inline, which overrode the shell's fluid auto-fit .kpi-grid and its 820px container collapse, giving each KPI about 70px at that width.",
       "root_cause": "Four separate omissions with one shape: a declared contract with no mechanism behind it. aria-modal was markup, not behaviour, and nothing exercised Tab. The narrow-screen repair that re-shows .top-actions after b10.css hides it (the B-1 blocker fix) worked only through CSS import order with zero tests guarding that order. The Overview lane has no registry entry, so its label was hand-typed in App.tsx, Sidebar.tsx and OverviewView.tsx independently. And the loading affordance existed as a visible strip while the live region only announced LIVE / STALE / OFFLINE, so LOADING was invisible to a screen reader; the skeleton that the audit had recommended was added to the design system and never called, because the B5 rule forbids the one thing a skeleton does (replacing content, which is exactly what hides a real UNKNOWN).",
       "fix": "useFocusTrap() added and wired into Modal, Drawer and CommandPalette: focus enters the first control on open, Tab/Shift+Tab cycle inside, focus returns to the trigger on close. Toast errors now announce with role=alert + aria-live=assertive and stay until dismissed (polite status messages keep the 1800ms lifetime), and the App announcement gained the LOADING branch. The inline grid override is deleted so the shell owns grid geometry. OVERVIEW_LABEL moves into viewRegistry as the single source. Dead LoadingSkeleton is removed with the reason recorded where it stood. Nothing was touched in skins/b10.css (D-11 pins it verbatim) and no write affordance was added anywhere (Observer stays read-only).",
-      "regression_test": "vitest cases grew to 83 across 13 files including src/components/ui/overlays.test.tsx (6 new); the desktop component contract grew to 10 cases, now pinning the b10-then-shell import order, the single label source and the fluid .kpi-grid. All seven new assertions were falsified by injecting their own violation (trap removed from drawer and modal, toast role reverted, error TTL reverted, shell override deleted, label re-hardcoded, inline grid restored) — each turned the matching suite red and every file was restored byte-for-byte.",
+      "regression_test": "vitest cases grew to 83 across 13 files including apps/observer/frontend/src/components/ui/overlays.test.tsx (6 new); the desktop component contract grew to 10 cases, now pinning the b10-then-shell import order, the single label source and the fluid .kpi-grid. All seven new assertions were falsified by injecting their own violation (trap removed from drawer and modal, toast role reverted, error TTL reverted, shell override deleted, label re-hardcoded, inline grid restored) — each turned the matching suite red and every file was restored byte-for-byte.",
       "evidence_level": "local-full",
       "repeat_prevention": "An ARIA attribute is a promise about behaviour: a component that declares aria-modal must be tested by tabbing out of it, because no type checker or snapshot can see a missing trap. A repair that works only because of the order two files are imported in must pin that order in a test. A lane without a registry entry still needs one label source. And a loading affordance has to be announced in the same words the screen shows, or the screen is lying to anyone who cannot see it.",
       "remaining_boundary": "Not closed by this round, and still open in the 2026-10-06 walkthrough: M-1 (two CSS authorities still negotiate through !important in the shell layer and the 840/841 thresholds remain spread across seven shell rules), M-5 (D-02 promises a 72px collapsed sidebar that the implementation never had, which is a decision to make, not a bug to fix), M-7 (the register's own lane-count prose still says 16/15 against the real 22). These changes are in frontend/src only: dist and the release binary were deliberately NOT rebuilt, so the artifact the owner observed predates them and the local freshness gate correctly reports the bundle as superseded until the next build. The rebuild is what needs a further owner look, not these files.",
@@ -3111,7 +3367,10 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer overlay accessibility and narrow-screen operability",
         "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-113",
@@ -3138,7 +3397,9 @@
         "affectedCapability": "Model and external-library registry truth",
         "regressionCommand": "python services/orchestration/run_quality_gate.py model-registry-integrity",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-113 is 90734c2, and its tree contains the promised services/orchestration/run_quality_gate.py. verifiedCommit stays null until an exact-SHA readback names a green head."
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-114",
@@ -3167,7 +3428,9 @@
         "regressionCommandPrior": "python .project-local/runs/convergence-20261007-c/ag19_scan.py",
         "regressionCommandCorrectedAt": "2026-10-07",
         "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-115",
@@ -3196,7 +3459,9 @@
         "regressionCommandPrior": "python .project-local/runs/convergence-20261007-c/verify_no_stale_paths.py",
         "regressionCommandCorrectedAt": "2026-10-07",
         "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-116",
@@ -3225,7 +3490,9 @@
         "regressionCommandPrior": "python .project-local/runs/convergence-20261007-c/finish_cleanup.py",
         "regressionCommandCorrectedAt": "2026-10-07",
         "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-117",
@@ -3239,7 +3506,7 @@
       "observed_error": "Two live records describe the code as it was, not as it is. The register's own lane vocabulary says 15 lanes (P1-01: 'frontend 15-lane -> 7 primary nav regroup'), while the production registry now holds 21 entries plus the synthetic overview lane = 22 reachable views. Separately, the atlas gap card carries AG-01..AG-08 with no live status column, and the coverage matrix therefore prints 'PLANNED (no live status column)' for all twenty AG rows — including seven whose fixes were committed on 2026-10-01 and are ancestors of this branch.",
       "root_cause": "A planning record was written as the current state and then kept as the only statement of it. The register rows are dated observations that were correct when written, and nothing later re-derived the lane count from the registry it describes; the atlas card is explicitly a planning record that grants no execution authority, yet the extractor reads its missing status column as 'no live status' rather than as 'this file never carried one'.",
       "fix": "Dated corrections appended instead of rewriting history, which is the rule this repository already follows: the P1-01 row keeps its 9/26 wording and this entry states the measured count with the command that measured it. The AG staleness is recorded with git-resolved SHAs and subjects (fix: unify the model selection gate and make; fix: close the registry foreign keys and sto; fix: stop pinning the DSH install path and r), verified as ancestors of the branch rather than asserted, and the atlas card stays untouched because it is a frozen planning record.",
-      "regression_test": "The counts are derived at run time: the lane figure is a regex count over viewRegistry.ts entries plus the one documented synthetic lane, and the script exits 2 if any cited SHA fails `git merge-base --is-ancestor` — so a citation that names a commit not in this branch cannot be written. No hand-typed digests.",
+      "regression_test": "The counts are derived at run time: the lane figure is a regex count over apps/observer/frontend/src/lib/viewRegistry.ts entries plus the one documented synthetic lane, and the script exits 2 if any cited SHA fails `git merge-base --is-ancestor` — so a citation that names a commit not in this branch cannot be written. No hand-typed digests.",
       "evidence_level": "local-full",
       "repeat_prevention": "A number that describes code must be re-derived from the code, not carried forward from the row that first measured it; and a planning record without a status column is not evidence of absence — the extractor should say 'this source has no status field' rather than rendering every row as PLANNED forever.",
       "remaining_boundary": "Not changed: the atlas card's AG rows (frozen planning record), the coverage matrix's extractor (still renders AG liveStatus as 'PLANNED (no live status column)' — widening it to read the register would invent a status the card never had), and the P1-01 row's 9/26 wording. The UI-CHECK M-7 finding is discharged by this dated correction, not by editing the old prose.",
@@ -3254,7 +3521,10 @@
         "regressionCommandPrior": "python .project-local/runs/convergence-20261007-c/record_drifts.py",
         "regressionCommandCorrectedAt": "2026-10-07",
         "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-118",
@@ -3268,7 +3538,7 @@
       "observed_error": "U03 holds the static surface in place with the claim that `web/` is \"the live browser read-only entry via sidecar.py\", so deleting it would break the browser path. In this tree that is not true: the sidecar's static root is documented in code as a Vite `dist/`, `main()` exposes `--frontend-root` and passes it to create_server, and `observer_live_server.py` is already a retirement stub. No runtime code path resolves into apps/observer/web at all.",
       "root_cause": "A blocker kept in a register row outlived the change that removed it. Beyond that, my own first measurement of it was wrong in an instructive way: I grepped for `frontend_root` call sites while excluding `sidecar.py:` from the output and concluded the browser entry did not exist — but the CLI that wires it lives in that same file, so excluding the definition site answers 'who else calls this', not 'is it wired'. Reading main() corrected it within the same session.",
       "fix": "The browser path is pinned by executable evidence instead of by a sentence: 8 tests in tests/workflow-assistance/test_sidecar_ui_browser_entry.py start the real sidecar on a loopback port against a Vite-shaped dist and assert that / serves the production index byte-for-byte, assets keep their JavaScript MIME type (a wrong type breaks module loading), an unknown route falls back to the app shell rather than inventing a page, /api/v1/snapshot still answers v3 JSON so the API cannot be shadowed by a static file, a path escape is refused without leaking the parent file, POST to a static path is still 405, and that with no static root the sidecar stays API-only exactly as before. The file sits in tests/workflow-assistance, which run_quality_gate discovers dynamically (run_quality_gate.py:174-176), so it joins the aggregate without a manifest edit.",
-      "regression_test": "Both security-relevant assertions were falsified by mutation: removing the `relative_to` escape guard turns the escape case red, and disabling the static branch turns the root/asset/fallback cases red; sidecar.py was restored byte-for-byte after each (.project-local/runs/convergence-20261007-c/falsify_browser_entry.py, 2/2 caught). The fixture is written with newline=\"\" after a first attempt failed on CRLF translation — a fixture that lies about bytes makes a byte assertion meaningless.",
+      "regression_test": "Both security-relevant assertions were falsified by mutation: removing the `relative_to` escape guard turns the escape case red, and disabling the static branch turns the root/asset/fallback cases red; services/orchestration/sidecar.py was restored byte-for-byte after each (scripts/audit/falsify_browser_entry.py, 2/2 caught). The fixture is written with newline=\"\" after a first attempt failed on CRLF translation — a fixture that lies about bytes makes a byte assertion meaningless.",
       "evidence_level": "local-full",
       "repeat_prevention": "A register row that blocks a deletion must name a live dependency, and that dependency has to be re-checked by executing it, not by re-reading the row. And a caller/callee grep must not exclude the file that defines both, or it silently answers a different question.",
       "remaining_boundary": "Retiring apps/observer/web is now unblocked in principle but NOT done in this change, because its real blast radius is measured rather than assumed: `apps/observer/tests/helpers.js` exports WEB/loadScripts and the JS contract suites that consume it (helpers.js, test_projection_contract.js, test_read_only_surface.js, test_render_v3.js, test_responsive_contract.js, test_visual_assets_r2.js) test the legacy render contract; scripts/ci/required_groups.json:27 glob-checks web/scripts/*.js; and run_quality_gate.py:1362 lists apps/observer/web/ as a guarded path for observer-no-business-write. Deleting the surface without migrating or retiring those four bindings would break CI, which is the opposite of a parity cutover. The cutover therefore needs: the React-side equivalents for the render/responsive/visual-asset contracts, the group entry removed together with the pinned list in tests/ci/test_failfast_group.py (ERR-109), the guarded-path tuple updated, docs and README re-pointed at the browser entry (`python services/orchestration/sidecar.py --frontend-root apps/observer/frontend/dist`), a hash manifest plus a full copy of web/ as the retention point, and WORK-LAB-AUTHORITY.md §7 amended with the dated cutover fact. Progress since: 11 production-surface static contracts now pin the file-level half of that work on the production tree (test_production_surface_static_contract.js, falsified 4/4 by injecting a CDN tag, a PATCH, a 10px body rule and a localStorage write). The projection-truth half (test_projection_contract 13 assertions) and the v3 render half (test_render_v3 19 assertions) are still un-ported, so apps/observer/web is not deleted and U03 stays PARTIAL until then.",
@@ -3280,7 +3550,10 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer browser read-only entry and legacy surface retirement",
         "regressionCommand": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py"
-      }
+      },
+      "regressionRepointNote": "a substitution was attempted 2026-10-07 but the operand still does not resolve, so no re-point is claimed and the promise stays where it was",
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-119",
@@ -3294,7 +3567,7 @@
       "observed_error": "Two failures while porting the legacy projection-truth contracts. (1) fmtTimestamp('2026-02-30T10:00:00Z') returned '2026/3/2 18:00:00': the seven production render sites used `value ? new Date(value).toLocaleString() : 'UNKNOWN'`, so an impossible calendar date was silently normalised into a plausible timestamp, and any unparseable string rendered as the literal text 'Invalid Date'. (2) The ported no-currency scan flagged apps/observer/frontend/src/lib/api.ts as a violation.",
       "root_cause": "(1) The front had no date-validity gate at a cross-process boundary: a sidecar of a different build can hand it anything. A shape regex is not a validity check because V8's Date.parse does not fail on 2026-02-30, it rolls over to March 2, so the corrupt value looks authoritative on screen. (2) My own needle was wrong, not the tree: it matched a bare '$' followed by a digit, and api.ts legitimately contains 'http://$1' inside a URL replacement. The file-scan rule was written as a token match instead of a violation-shape match.",
       "fix": "Added isRfc3339 (shape plus calendar: month 1-12, day within the month including the leap rule, hour <=23, minute <=59, second <=60 for leap seconds, offset hours/minutes in range) and fmtTimestamp, and routed all seven render sites through it so an unparseable or impossible date is UNKNOWN, never 'Invalid Date' and never a rolled-over day. snapshotToTransportTruth / executionsToRows / snapshotToProjectTokens now degrade a missing transport / coverage / projects / executions / token object to UNKNOWN/null instead of throwing. The currency scan needle requires a bill shape (symbol+digits, $ with decimals, or the words USD/RMB/人民币/账单/订阅).",
-      "regression_test": "frontend/src/lib/projectionTruthContract.test.ts (8 titled cases) + tests/test_production_surface_static_contract.js cases 'the typed front model declares the v3 core keys, with `software` the only optional', 'no v3 snapshot literal is embedded in the production source', 'the production tree renders no currency amount and no subscription wording'. All 11 falsified by mutation (.project-local/runs/convergence-20261007-c/falsify_u03_ports.py): bypassing the gate makes 2026-02-30 render, padding coverage to 0, falling stateTone through to 'done', removing optional chaining, dressing an UNKNOWN transport as LIVE, renaming a types.ts key, embedding a v3 literal and adding 'USD $4.29' each turn their case red; every file restored byte-for-byte with SHA-256 verified.",
+      "regression_test": "apps/observer/frontend/src/lib/projectionTruthContract.test.ts (8 titled cases) + apps/observer/tests/test_production_surface_static_contract.js cases 'the typed front model declares the v3 core keys, with `software` the only optional', 'no v3 snapshot literal is embedded in the production source', 'the production tree renders no currency amount and no subscription wording'. All 11 falsified by mutation (.project-local/runs/convergence-20261007-c/falsify_u03_ports.py): bypassing the gate makes 2026-02-30 render, padding coverage to 0, falling stateTone through to 'done', removing optional chaining, dressing an UNKNOWN transport as LIVE, renaming a apps/observer/frontend/src/types.ts key, embedding a v3 literal and adding 'USD $4.29' each turn their case red; every file restored byte-for-byte with SHA-256 verified.",
       "evidence_level": "local-full",
       "repeat_prevention": "Never trust a shape-only date check: Date.parse rolls impossible dates over, so a validity gate must also round-trip the calendar fields. Any render site that localises a string from another process goes through that gate, and the producing side is checked first (collector_scheduler._now_iso and durable_worker emit '...Z') so strictness cannot hide real data. A file-scan needle is written against the SHAPE of the violation and then run against the compliant tree, because a token needle reports the codebase as guilty.",
       "remaining_boundary": "Behaviour is pinned on the projection functions, not on a mounted component: no test renders a corrupt date through Views.tsx. test_render_v3.js (19), test_read_only_surface.js (17), test_responsive_contract.js (11) and test_visual_assets_r2.js (5) still need per-assertion attribution before apps/observer/web can be retired.",
@@ -3306,7 +3579,10 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer v3 timestamp rendering and projection degradation",
         "regressionCommand": "cd apps/observer && node tests/run_all_tests.js && cd frontend && node node_modules/vitest/vitest.mjs run src/lib/projectionTruthContract.test.ts"
-      }
+      },
+      "regressionRepointNote": "a substitution was attempted 2026-10-07 but the operand still does not resolve, so no re-point is claimed and the promise stays where it was",
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-120",
@@ -3332,7 +3608,9 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer render truth: dirty state, compact transport status",
         "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/views/renderTruthContract.test.tsx"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-121",
@@ -3358,7 +3636,9 @@
         "verifiedCommit": null,
         "affectedCapability": "Observer read-only transport: endpoint trust, payload validation, revision ordering, LIVE semantics",
         "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/lib/transportTruthContract.test.ts"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-122",
@@ -3385,7 +3665,9 @@
         "affectedCapability": "Observer browser-entry regression runnability",
         "regressionCommand": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-122 is 891c871, and its tree contains the promised tests/workflow-assistance/test_sidecar_ui_browser_entry.py. verifiedCommit stays null until an exact-SHA readback names a green head."
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-123",
@@ -3410,8 +3692,11 @@
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Observer responsive shell below the rail breakpoint",
-        "regressionCommand": "cd apps/observer && node tests/test_production_surface_static_contract.js"
-      }
+        "regressionCommand": "cd apps/observer && node tests/test_production_surface_static_contract.js",
+        "bindingNote": "unbound 2026-10-07: the first version of the binder accepted a commit whose promised regression script is not in that tree (ERR-124 named node_modules/vitest/vitest.mjs), and read a cutover merge as adding one record because `git show <c> -- <path>` was written with the commit after `--`. Both guards now live in the binder."
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-124",
@@ -3425,7 +3710,7 @@
       "observed_error": "With no data source the overview status stack painted a green 无告警信号 chip while the panel directly beneath it said 数据源未接入 — 无法判断告警（保持 UNKNOWN，不伪造「全部正常」). Two halves of one surface disagreed, and the optimistic one was the colour a user reads first. Found while reading the rendered screenshots from the headless render audit, not from the source.",
       "root_cause": "The chip was derived from `alerts.length`, and `alerts` is built by iterating `snap?.ci` and the execution rows — with no snapshot both are empty, so 'zero alerts' and 'nothing observed' collapsed onto the same value. The same absence-vs-measurement confusion as the dirtyCount case in ERR-120, one layer up: a count over missing data is not a measurement of zero.",
       "fix": "The chip is now three-state: no snapshot -> 告警状态 UNKNOWN (muted), alerts present -> N 条告警信号 (warning), snapshot with none -> 无告警信号 (success). In the same pass the permanently-disabled 导出状态 / 新建执行 buttons were given a real affordance in the shell (cursor:not-allowed, dimmed, no hover lift), because b10.css ships no :disabled rule and keeps button{cursor:pointer} plus a lift, so a frozen control looked live; D-11 pins b10 verbatim, so the shell owns it.",
-      "regression_test": "renderTruthContract.test.tsx case 'the alert chip has three states: with no data source it reads UNKNOWN, not a green \"no alerts\"' and test_production_surface_static_contract.js case 'a disabled control is visually disabled'. Falsified 3/3 (falsify_ui_round4.py): restoring the two-state chip, deleting cursor:not-allowed, and deleting the disabled hover override — each turns its case red, each file restored byte-for-byte with SHA-256 verified.",
+      "regression_test": "apps/observer/frontend/src/views/renderTruthContract.test.tsx case 'the alert chip has three states: with no data source it reads UNKNOWN, not a green \"no alerts\"' and apps/observer/tests/test_production_surface_static_contract.js case 'a disabled control is visually disabled'. Falsified 3/3 (falsify_ui_round4.py): restoring the two-state chip, deleting cursor:not-allowed, and deleting the disabled hover override — each turns its case red, each file restored byte-for-byte with SHA-256 verified.",
       "evidence_level": "local-full",
       "repeat_prevention": "A positive label must never be derived from the emptiness of a collection: where the collection can be empty because nothing was observed, the code must carry a third state and the colour must follow it, because a green chip is read before the sentence beneath it. Rendered screens must stay in the review loop — this contradiction was visible in a screenshot and invisible in the source that produced it. And after appending to a CRLF working copy with a shell heredoc, normalise the file: the mixed line endings made two of my own falsification needles miss their target.",
       "remaining_boundary": "The disabled affordance is asserted as a CSS-shape contract, not as a rendered computed-style check (jsdom has no cascade, and the CDP probe measures but is not wired into CI). Other places where an empty collection could be read as a measurement were not enumerated — the alert list itself, `sourceRefs.length ? … : '0'` in the trust rows, and the CI run list all derive from iteration and deserve the same three-state question. The migrated brand SVGs are still not mounted in the header.",
@@ -3436,8 +3721,12 @@
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Overview alert status chip; disabled-control affordance",
-        "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/views/renderTruthContract.test.tsx"
-      }
+        "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/views/renderTruthContract.test.tsx",
+        "bindingNote": "unbound 2026-10-07: the first version of the binder accepted a commit whose promised regression script is not in that tree (ERR-124 named node_modules/vitest/vitest.mjs), and read a cutover merge as adding one record because `git show <c> -- <path>` was written with the commit after `--`. Both guards now live in the binder."
+      },
+      "regressionRepointNote": "a substitution was attempted 2026-10-07 but the operand still does not resolve, so no re-point is claimed and the promise stays where it was",
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-125",
@@ -3464,7 +3753,9 @@
         "affectedCapability": "AG-19/AG-20 recovered-source registry digest claims; CI workflow-assistance job",
         "regressionCommand": "python tests/workflow-assistance/test_recovered_source_registry.py",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-125 is e0b296d, and its tree contains the promised tests/workflow-assistance/test_recovered_source_registry.py. verifiedCommit stays null until an exact-SHA readback names a green head."
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-126",
@@ -3491,7 +3782,9 @@
         "affectedCapability": "Open-source candidate pool decisions; the registry integrity gate",
         "regressionCommand": "python scripts/ci/verify_future_candidate_registry.py",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-126 is 08ca2e6, and its tree contains the promised scripts/ci/verify_future_candidate_registry.py. verifiedCommit stays null until an exact-SHA readback names a green head."
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-127",
@@ -3505,7 +3798,7 @@
       "observed_error": "Reproduced: against the committed verifier the injected-lie harness reports FALSIFIED=0 NOT-CAUGHT=14 and exits 1, while `MODEL_REGISTRY_INTEGRITY_PASS providers=9 models=10` prints happily over a registry whose nine 64-hex `sha256` values recorded nothing about what they were digests of or when they were last recomputed. Two of those models were labelled RETIRED_PENDING_DECISION with no size attached, when in fact 5,225,374,496 B and 18,556,688,736 B of weights sat in the ollama store; one `candidateOrphans` row asserted 3,389,971,840 B of retained fragments behind a path written with an ellipsis, which no tool can open; and a 5,969,233,408 B weight layer belonging to the qwen2.5vl/7b family appeared in no entry at all.",
       "root_cause": "The registry was validated for digest *shape* (64 lowercase hex, or TRUNCATED with a reason) and never for digest *provenance*, so a locally recomputed hash and a hash copied back from an upstream page were the same object to every consumer, including the health words DOWNLOADED_HASH_VERIFIED and VERIFIED_OK that readers trust. Leftover-file rows had the same hole: they recorded a claim about the disk at registration time with no field for whether the disk still said that, and the path field was free prose, so it could contain an ellipsis and a count instead of a name.",
       "fix": "Added `scripts/audit/model_library_readback.py` (fail-closed: a missing weight root exits 2, a digest that does not match exits 1, and it is deliberately NOT wired into the aggregate gate because the runner has no weights and a required job that can only skip would fail the gate by AGENTS.md own rule). It re-hashed 48,531,408,516 B over ten entries: nine digests matched their records, and the directory-backed zipformer entry now carries twelve per-file digests instead of one truncated prefix claim. Each model gained a `localVerification` block (presence, digestState, bytesObserved, checkedAt, basis, tool, receipt); the two pending-retirement entries gained `bytesRetained` so the open decision shows its cost; the orphan rows gained `recheck` states PRESENT / UNRESOLVABLE_AS_WRITTEN, and the reranker leftover is now recorded as NOT deletable because it shares a byte length with the registered weight but a different full digest, so duplication is unproven. The unregistered 5.97 GB blob is registered with its content address verified and left in place: it is another runtime's store, outside the project root.",
-      "regression_test": "Tracked regression: tests/workflow-assistance/nf22_registry_and_acp_honesty_gates.py now carries thirteen named cases for AG-05g (a digest claim with no verification basis, a recomputed digest contradicting the record, a match claim without observed bytes, a VERIFIED health word without recomputation, an undated readback, a retiring model without a cost, zero retained bytes beside a verified presence, a directory model without a manifest, an orphan with no recheck, an orphan whose prose path is asserted PRESENT, a stale prefix claim, a present orphan with no duplicate test, plus a positive case proving a released weight recorded as ABSENT with bytesRetained=0 still passes); 49 tests OK, and the module is discovered by run_quality_gate.py governance so CI runs it. The same cases injected through the ad-hoc harness (.project-local/runs/convergence-20261007-d/falsify_model_claims.py) report 14/14 FALSIFIED against the repaired verifier and 0/14 against the committed one, which is the reproduced original failure.",
+      "regression_test": "Tracked regression: tests/workflow-assistance/nf22_registry_and_acp_honesty_gates.py now carries thirteen named cases for AG-05g (a digest claim with no verification basis, a recomputed digest contradicting the record, a match claim without observed bytes, a VERIFIED health word without recomputation, an undated readback, a retiring model without a cost, zero retained bytes beside a verified presence, a directory model without a manifest, an orphan with no recheck, an orphan whose prose path is asserted PRESENT, a stale prefix claim, a present orphan with no duplicate test, plus a positive case proving a released weight recorded as ABSENT with bytesRetained=0 still passes); 49 tests OK, and the module is discovered by services/orchestration/run_quality_gate.py governance so CI runs it. The same cases injected through the ad-hoc harness (.project-local/runs/convergence-20261007-d/falsify_model_claims.py) report 14/14 FALSIFIED against the repaired verifier and 0/14 against the committed one, which is the reproduced original failure.",
       "evidence_level": "local-full",
       "repeat_prevention": "Never accept a digest as evidence unless the record says what it was computed over, when, and by which command; a shape check on a hash proves spelling, not provenance. Require every disk-state row to carry its own recheck state, and refuse a path field that is prose — if a tool cannot open it, the row must state UNRESOLVABLE_AS_WRITTEN rather than implying retained bytes. When a weight or leftover is left in place, record the bytes it occupies so an open decision is never free. And run the readback only where the root exists: a verification that silently skips on a runner is worse than no verification, so the CI-side gate checks claim consistency while the on-machine tool produces the numbers.",
       "remaining_boundary": "Nothing in the library was moved, renamed, downloaded or deleted, and the readback depends on this machine owning `D:\\All projects\\Model library`; a future run on another machine must re-execute the tool rather than trust these dates. The zipformer manifest lists twelve files but the entry still has no single artifact digest, so `digestState` stays NOT_RECOMPUTED for it by design. Whether the two pending-retirement weights (5,225,374,496 B and 18,556,688,736 B) and the newly registered 5,969,233,408 B store layer should be released is an owner decision with those byte counts now attached; the readback registers, it does not dispose. `source-ledger.json` rows still all carry `license: UNKNOWN`, and its `agent-skills` canonicalUrl could not be verified in the pool pass — that correction is owed there.",
@@ -3518,7 +3811,10 @@
         "affectedCapability": "AG-05 model registry integrity; model and tool intake (模型与工具入库)",
         "regressionCommand": "python scripts/ci/verify_model_registry_integrity.py && python scripts/audit/model_library_readback.py",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_remaining_ledger_fixes.py: the only commit message naming ERR-127 is 7627748, and its tree contains the promised scripts/ci/verify_model_registry_integrity.py. verifiedCommit stays null until an exact-SHA readback names a green head."
-      }
+      },
+      "regressionRepointNote": "a substitution was attempted 2026-10-07 but the operand still does not resolve, so no re-point is claimed and the promise stays where it was",
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-128",
@@ -3532,7 +3828,7 @@
       "observed_error": "After pushing 8c78b0d, the integration job failed in ~17 seconds on the step \"Verify source ledger readback\" with `jsonschema.exceptions.ValidationError: Additional properties are not allowed ('identityReadback' was unexpected)`, while every local check I had run said PASS. The agent-skills row had gained an `identityReadback` object holding the GitHub API readback, and the ledger schema declares additionalProperties: false.",
       "root_cause": "Two verifiers guard one file and I ran only one of them. `verify_source_ledger_v4.py` (the shape check I ran locally) does not enforce the closed property set, `verify_source_ledger.py` validates against the schema and does. My pre-push harness reproduced the 45 commands of the workflow-assistance STEP and treated that as the CI surface, so commands belonging to the integration job were never executed locally. This is the third time the same shape of mistake bit this session: ERR-109 (a pinned command count in a CI-only group), ERR-125 (a digest basis that only the runner contradicted), and now this. The recurring cause is not the specific field, it is validating a part of the CI command set and calling it the whole.",
       "fix": "The provenance text moved into `integrationNote`, which the contract already allows, keeping the previous URL and the readback command and date inside it rather than dropping them; canonicalUrl stays on the verified repository. Then `.project-local/runs/convergence-20261007-d/ci_workflow_repro.py` was written: it walks BOTH workflow files, extracts every python/node/npm/bash/pytest/cargo line from every run block in order, labels each with job and step, runs them, and prints SKIPPED for anything explicitly excluded instead of silently omitting it. The whole-workflow pass is what runs before the next push.",
-      "regression_test": "python scripts/ci/verify_source_ledger.py --root . (SOURCE_LEDGER_PASS entries=17 local_readback=0 blocked=2) plus verify_source_ledger_v4.py and tests/ci/test_source_ledger.py, all executed by the workflow-wide repro tool rather than by hand. The tool's own guarantee is coverage: it prints commands_seen for both workflows, so a job whose commands were not run is visible as an omission.",
+      "regression_test": "python scripts/ci/verify_source_ledger.py --root . (SOURCE_LEDGER_PASS entries=17 local_readback=0 blocked=2) plus scripts/ci/verify_source_ledger_v4.py and tests/ci/test_source_ledger.py, all executed by the workflow-wide repro tool rather than by hand. The tool's own guarantee is coverage: it prints commands_seen for both workflows, so a job whose commands were not run is visible as an omission.",
       "evidence_level": "local-full",
       "repeat_prevention": "Before pushing, reproduce every command in every job of the workflows that guard this repository, not the step of the job you touched; when a file has more than one verifier, run all of them. Never add a field to a governance file whose schema closes its property set without running that schema's validator afterwards. And when the same class of mistake recurs a third time, treat the workflow as the unit of verification rather than the change.",
       "remaining_boundary": "The repro tool runs commands, not actions: it cannot reproduce a clean checkout, a matrix, environment differences or the cargo/npm builds it is told to skip, so a local whole-workflow pass still does not equal exact-SHA CI. The deeper structural question this exposes — that two verifiers disagree about the same ledger, one lax and one strict — is a governance defect worth its own task: the v4 verifier should validate against the same schema, or the schema should be the single source both read.",
@@ -3544,7 +3840,10 @@
         "verifiedCommit": null,
         "affectedCapability": "CI integration job source-ledger guard; pre-push validation practice",
         "regressionCommand": "python scripts/ci/verify_source_ledger.py --root ."
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-129",
@@ -3558,7 +3857,7 @@
       "observed_error": "Two defects in one. (a) Four error-ledger entries and three register rows give a regressionCommand that begins `python .project-local/runs/<scratch>/…py` — durable records whose reproduce path lives in the git-ignored runtime root, which any future cleanup deletes. (b) The retained evidence trees were mostly not evidence: 116,216,094 B across 1,395 files of WebView2 and headless-Chrome user-data (EBWebView-cdp-*, EBWebView-final-*, l10b-verify/chrome-profile) sat inside directories kept only because tracked documents cite a screenshot or a JSON receipt in the same tree. Measured after release: p0c-oracle 154→112 MB, p0c-final 33→1 MB, ui-suite 71→34 MB.",
       "root_cause": "Retention was decided at directory granularity. A tree containing one cited artifact was kept whole, so every browser profile the probes wrote came with it; and the durable records recorded the command that happened to be running at the time, in the path where it happened to live, instead of promoting the instrument to a tracked location the record could keep pointing at.",
       "fix": "Five probes (62,484 B, 1,485 lines) were copied byte-for-byte into tracked `scripts/audit/` with the digest of both sides and the count of durable records naming the old path recorded in docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json; originals stay until the records are re-pointed, so no command is orphaned either way. The release then ran under four guards — browser-name pattern plus two profile markers, outermost-match only, no cited path inside the target, and a re-check of every tracked-referenced .project-local path after deletion — and it removed 0 cited paths, recorded in docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json together with the items deliberately retained and why (cargo target holding the U19 release binary, the only surviving copy of another agent's imported evidence tree, a DSH rollback point, the installed optional llama.cpp runtime, and the gate's own venv).",
-      "regression_test": "The release tool returns exit 1 if any cited path disappears, and the post-check found 37 absences of which 9 were trailing-punctuation artifacts of my own regex and 0 lay under a deleted directory, so the attribution is in the receipt rather than in prose. `python .project-local/runs/convergence-20261007-e/release_browser_state.py` without --apply is a dry run that prints the plan and touches nothing.",
+      "regression_test": "The release tool returns exit 1 if any cited path disappears, and the post-check found 37 absences of which 9 were trailing-punctuation artifacts of my own regex and 0 lay under a deleted directory, so the attribution is in the receipt rather than in prose. `python scripts/maintenance/release_browser_state.py` without --apply is a dry run that prints the plan and touches nothing.",
       "evidence_level": "local-full",
       "repeat_prevention": "Never keep a whole directory because one file inside it is cited — measure what the citation actually names and release the rest by class, with the guard that no cited path may lie inside a deletion target. Never let a durable record's regressionCommand point into the git-ignored runtime root: promote the instrument to a tracked path and record the mapping with digests. And state retention reasons as facts a later session can re-measure (bytes, what the file proves, what would rebuild it), because 'it was cited' is not a size.",
       "remaining_boundary": "The release covers only directories matching the browser user-data patterns; `toolchains/lambda/llama-b11221-bin-win-cuda-12.4-x64.zip` (253 MB) is a source archive of an installed runtime and a plausible next release, but only after confirming the extraction is complete and the runtime record still resolves. 28 tracked documents still cite .project-local paths that do not exist on this machine (pre-existing, some traceable to the six files lost to the ERR-123 bug); that is a traceability defect owed its own pass, not a deletion. Nothing in this round touched another project, the model library, or the tool library.",
@@ -3566,14 +3865,19 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "e0b296d",
-        "fixedCommit": null,
+        "fixedCommit": "5c6bfe9",
         "verifiedCommit": null,
         "affectedCapability": "Project-local footprint and traceability of durable regression commands",
         "regressionCommand": "python scripts/maintenance/release_browser_state.py",
         "regressionCommandPrior": "python .project-local/runs/convergence-20261007-e/release_browser_state.py",
         "regressionCommandCorrectedAt": "2026-10-07",
-        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
-      }
+        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root.",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: fix(records): a promise to reproduce must point at a tracked file. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
+        "bindingBasis": "regression-operand-introduction:scripts/maintenance/release_browser_state.py: this commit adds only 1 record(s), it changes docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json which the record names, and the promised scripts/maintenance/release_browser_state.py exists in it"
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-130",
@@ -3595,11 +3899,15 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "473a3f9",
-        "fixedCommit": null,
+        "fixedCommit": "5c6bfe9",
         "verifiedCommit": null,
         "affectedCapability": "Error-ledger reproducibility promises; scripts/audit and scripts/maintenance tool inventory",
-        "regressionCommand": "python tests/workflow-assistance/test_error_ledger_regression_commands.py"
-      }
+        "regressionCommand": "python tests/workflow-assistance/test_error_ledger_regression_commands.py",
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: fix(records): a promise to reproduce must point at a tracked file. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
+        "bindingBasis": "ledger-entry-introduction: this commit adds only 1 record(s), it changes docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json which the record names, and the promised tests/workflow-assistance/test_error_ledger_regression_commands.py exists in it"
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-131",
@@ -3626,7 +3934,9 @@
         "affectedCapability": "wlr-060-production-gates schema validation; portability of every recorded CI command",
         "regressionCommand": "python tests/workflow-assistance/test_workflow_locale_discipline_gate.py",
         "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-132",
@@ -3653,7 +3963,9 @@
         "affectedCapability": "Traceability of .project-local citations; the greening owed-item list itself",
         "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py",
         "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-133",
@@ -3680,7 +3992,9 @@
         "affectedCapability": "CI-discovered governance gates must pass on a clean checkout",
         "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py",
         "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-134",
@@ -3707,7 +4021,9 @@
         "affectedCapability": "Licence evidence in the source ledger and its readback audit",
         "regressionCommand": "python scripts/audit/prove_previous_licence_audit_miscounted_the_files.py HEAD",
         "bindingNote": "bound 2026-10-07: fix in 51c723d; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
-      }
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-135",
@@ -3734,7 +4050,9 @@
         "affectedCapability": "U02 path convergence in live instruction surfaces",
         "regressionCommand": "python tests/workflow-assistance/test_live_doc_command_targets.py",
         "bindingNote": "bound 2026-10-07: fix in e9875d7; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "error_id": "ERR-136",
@@ -3748,7 +4066,7 @@
       "observed_error": "CI went red at 51c723d in the integration job, step `Run current state tests`. Reproduced locally: `CURRENT_STATE_FRESHNESS_FAIL source-digest-mismatch`. The canonical-file digest recorded in the tracked snapshot `.project/governance/generated/CURRENT_STATE.{json,md}` still described `source-ledger.json` before I landed 13 licence values and 14 file hashes into it.",
       "root_cause": "I validated with the verifiers I expected to be affected (verify_source_ledger, verify_source_ledger_v4, the new licence-evidence gate, blueprint coverage, the ledger gate) and skipped `scripts/ci/reproduce_ci_commands.py`, the whole-workflow repro that ERR-128 established precisely because I had twice before validated a subset of CI and called it CI. A digest-pinned canonical file is not part of any verifier's own contract; it is caught only by the step that regenerates the snapshot and diffs. The instrument existed, the rule existed, and I did not execute it.",
       "fix": "Regenerated with `python scripts/ci/generate_current_state.py`; `--check-current` now reports CURRENT_STATE_FRESHNESS_PASS source_digest=8c5bc5079d7f2418a442fb8def4ede7373d95a8cec90e7bbaa0d099a71e5d5a7, and the two snapshot files are committed with the change that altered a canonical file. The corrective process change is behavioural, not code: `reproduce_ci_commands.py` runs before every push from now on, and its receipt — not a hand-picked list of relevant gates — is the pre-push verdict.",
-      "regression_test": "tests/ci/test_current_state.py plus the CI step's own `generate_current_state.py --check-current`, both run locally here; scripts/ci/reproduce_ci_commands.py is the pre-push gate that would have caught this before the push",
+      "regression_test": "tests/ci/test_current_state.py plus the CI step's own `scripts/ci/generate_current_state.py --check-current`, both run locally here; scripts/ci/reproduce_ci_commands.py is the pre-push gate that would have caught this before the push",
       "evidence_level": "local-full",
       "repeat_prevention": "Before every push, run scripts/ci/reproduce_ci_commands.py over both workflow files and read its receipt; expect only the known build-skip failures. Never infer the CI verdict from the subset of gates that seems relevant to the change — a canonical-file digest is invisible to every verifier except the one that regenerates it.",
       "remaining_boundary": "The repro run for this commit is in progress; until its receipt and the exact-SHA CI readback both report green, the fix is local-only evidence. README.md is also a CANONICAL_FILE, and the U02 round rewrote live documents, so the snapshot regenerated here carries that digest change too. DEVIATION the same day: I pushed fd57eeb BEFORE running the repro, breaking the rule this record establishes. The run afterwards showed only the three known build-skip failures, so no red state shipped, but the ordering was wrong and is recorded rather than omitted; cf2b7e5 was pushed only after its receipt read failures=3.",
@@ -3761,7 +4079,10 @@
         "affectedCapability": "Canonical-file freshness snapshot; the pre-push validation rule",
         "regressionCommand": "python scripts/ci/generate_current_state.py --check-current",
         "bindingNote": "bound 2026-10-07: fix in e6bb43c; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-137",
@@ -3775,7 +4096,7 @@
       "observed_error": "The whole-workflow pre-push repro (the one I had just promised to always run — ERR-136) turned two more reds that my hand-picked verifier list missed: `ValueError: source SHA drift: project-data-boundary` in the skill-provenance gate, and the same failure inside the governance batch. My U02 document re-point had edited a MANAGED skill's SKILL.md (project-data-boundary), and `config/skill-provenance.yaml` records that skill as live==source, so the deployed copy in Hermes Home and the repository source were no longer the same bytes.",
       "root_cause": "A managed asset has two identities and my re-point changed only one. AGENTS.md requires deployment through `sync_hermes_workflow_assets.py`, which updates the live hashes in the same change; editing the source in the repository without that deployment silently breaks the invariant the provenance manifest exists to hold. ERR-096 is the same class: skill source drift against stale provenance records.",
       "fix": "Attempted the sanctioned route first, not a hand-edit: `sync_hermes_workflow_assets.py --plan-json …` (plan only, no writes) returned the blast radius and then REFUSED to publish — `MANAGED_ASSET_LIVE_CHANGE_REFUSED` because `skills/software-development/requesting-code-review` has live content in Hermes Home (live=a219c2579a2e9864) that differs from the repository candidate (abf9ca1b3549dc41) with NO baseline recorded. Resolving that means `--adopt-baseline --adopt-target <target>@<reviewed-sha256> --adopt-operator <name>`, i.e. a named human attesting they reviewed content I did not write and cannot attribute. Owner directive says tasks needing a real person's confirmation are skipped, so I did not adopt. Instead the managed SKILL.md edit is held back (restored to its 51c723d content; the re-pointed version is preserved at `.project-local/runs/convergence-20261007-h/project-data-boundary.SKILL.repointed.md` and will be re-applied in the same change as the deployment), which returns `SKILL_PROVENANCE_PASS skills=13 live_checked=False`.",
-      "regression_test": "packages/client-neutral-core/scripts/security/check_skill_provenance.py --manifest config/skill-provenance.yaml is a required CI step in the governance batch; the held-back file is re-discovered by scripts/audit/live_doc_command_targets.py, which still lists bin/hermes-project-data.py as a re-pointable reference",
+      "regression_test": "packages/client-neutral-core/scripts/security/check_skill_provenance.py --manifest config/skill-provenance.yaml is a required CI step in the governance batch; the held-back file is re-discovered by scripts/audit/live_doc_command_targets.py, which still lists packages/client-neutral-core/bin/hermes-project-data.py as a re-pointable reference",
       "evidence_level": "local-full",
       "repeat_prevention": "Never edit a managed skill's SKILL.md (or any file under packages/client-neutral-core/skills/) without the sanctioned sync_hermes_workflow_assets.py deployment in the same change. When the deployment is blocked by unreviewed live content, stop and record the exact target and digest for the owner — do not adopt a baseline yourself. Run the repro before pushing; it found this, my hand-picked gates did not.",
       "remaining_boundary": "U02 publish is now pinned rather than vague: exactly one target blocks it (requesting-code-review live vs candidate, baseline=None), and the nine other managed skill targets report CLEAN_UPDATE. Whether the live Hermes copy of requesting-code-review should be adopted, overwritten or kept is an owner/operator decision about a running tool's state; I have not written to Hermes Home in this round. The other four skill-side edits I made are under references/ and did not drift the manifest, but they are part of the same undeployed delta.",
@@ -3788,7 +4109,10 @@
         "affectedCapability": "Managed Hermes skill provenance; U02 publish",
         "regressionCommand": "python packages/client-neutral-core/scripts/security/check_skill_provenance.py --manifest config/skill-provenance.yaml",
         "bindingNote": "bound 2026-10-07: fix in fe5d7a6; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
-      }
+      },
+      "regressionRepointNote": "operand re-pointed 2026-10-07 by scripts/audit/ledger_regression_command_targets.py: same basename, path changed by the 2026-09 module convergence; the command and what it tested are unchanged",
+      "regressionTestVerifiability": "REPOINTED_20261007",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-138",
@@ -3815,7 +4139,9 @@
         "verifiedCommit": null,
         "affectedCapability": "AG-16 super-entry chain capability gate; executor registration",
         "regressionCommand": "python tests/workflow-assistance/test_ag16_handback_evidence.py"
-      }
+      },
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename"
     },
     {
       "date": "2026-10-07",
@@ -3827,10 +4153,11 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null deliberately: the scanner gap predates this round, and the parameter-name bug was mine inside a file that did not exist before f33b784, so naming that commit as the introducing commit would attribute a long-standing upstream hole to this round",
         "fixedCommit": "f33b78470b108e70d91820a94c7e597010ecddfb",
-        "verifiedCommit": null,
+        "verifiedCommit": "c1b2997",
         "affectedCapability": "Shared-root recovery; artifact-flow screening",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_recover_shared_root_original.py",
-        "bindingNote": "bound 2026-10-07 against f33b784: the fix and its gate landed in the same commit, so no separate verifiedCommit is claimed until an exact-SHA CI readback covers it"
+        "bindingNote": "bound 2026-10-07 against f33b784: the fix and its gate landed in the same commit, so no separate verifiedCommit is claimed until an exact-SHA CI readback covers it",
+        "verifiedCommitNote": "exact-SHA Actions readback at c1b299757bcbf7d3fe986b4e298f4be67812a208: both workflows and the work-lab-gate job returned success (aggregate green, no non-green job), and this head descends from f33b784, the commit that carries the fix and its gate"
       },
       "error_id": "ERR-139",
       "classification": "contract_drift",
@@ -3843,7 +4170,9 @@
       "regression_test": "tests/workflow-assistance/test_recover_shared_root_original.py::UpstreamScannerGapTests::test_list_of_strings_is_invisible_but_keyed_lines_are_not",
       "repeat_prevention": "Never pass a keyword to a policy function without reading which key it reads; require an explicit ALLOW from a fail-closed classifier instead of refusing only the worst verdict; and must keep a negative control for every screen — a screen nobody falsifies is decoration. When a shared scanner is found defective, record it and pin it with a test rather than silently fixing another module's code.",
       "remaining_boundary": "The defect in artifact_flow_policy._walk_keys is unfixed and still live for every other caller in the repository; this round only proves the recovery tool is not fooled by it. One document, one planning-shaped fixture: no claim about scanner quality overall.",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "date": "2026-10-07",
@@ -3855,10 +4184,11 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the ref named by this file's history is e9875d7-era and the residue is a behaviour of the fixture, not of one commit; naming the observation head would be the false attribution ERR-134/136 exist to prevent",
         "fixedCommit": "f33b78470b108e70d91820a94c7e597010ecddfb",
-        "verifiedCommit": null,
+        "verifiedCommit": "c1b2997",
         "affectedCapability": "Project data boundary; spill governance; CI fixtures",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py",
-        "bindingNote": "bound 2026-10-07 against f33b784: fix, releaser, sweep adjudication and both gates landed together; verifiedCommit stays null until an exact-SHA CI readback covers this head"
+        "bindingNote": "bound 2026-10-07 against f33b784: fix, releaser, sweep adjudication and both gates landed together; verifiedCommit stays null until an exact-SHA CI readback covers this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at c1b299757bcbf7d3fe986b4e298f4be67812a208: both workflows and the work-lab-gate job returned success (aggregate green, no non-green job), and this head descends from f33b784, the commit that carries the fix and its gate"
       },
       "error_id": "ERR-140",
       "classification": "path_boundary",
@@ -3871,7 +4201,9 @@
       "regression_test": "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py::TempFixtureBoundaryTests::test_the_file_that_leaked_is_now_clean",
       "repeat_prevention": "Never swallow a removal error inside a fixture teardown; every temp fixture must pass dir= inside the declared runtime root; and a cleanup outside the repository must write its manifest and archive unique bytes before deleting anything. A sweep may not answer with one verb for hits of different authorship — each needs a rule with a tracked basis, and an unmatched hit must fail the run.",
       "remaining_boundary": "28 mkdtemp call sites in tracked code still pass no dir= (21 in 12 test files, 7 in 3 production files under client-neutral-core and services/session-federation, which need a cross-module card); their residue-forming status is NOT adjudicated — only auth-ref-* was proven to leak. TemporaryDirectory() self-cleans and is out of scope. The 7 archived contents live under .project-local, so CI cannot see them; the tracked claim is the manifest's structure and the gate, not the archive bytes.",
-      "status_after": "PASS"
+      "status_after": "PASS",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-142",
@@ -3888,17 +4220,48 @@
       "regression_test": "tests/workflow-assistance/test_project_local_citation_audit.py::CitationAuditGate::test_a_runtime_root_path_is_never_treated_as_checkout_verifiable",
       "evidence_level": "local-full",
       "repeat_prevention": "Any tracked instrument whose exit code a CI-discovered gate consumes must answer from the repository, never from local disk state; a machine-local path can only be called adjudicated when the record names how to re-measure it or what tracked observation replaces it. Before pushing a CI-visible gate, run it in a clean checkout (git worktree at the exact head, with an empty ignored root) as well as locally, and never assert a count the record itself declares machine-dependent.",
-      "remaining_boundary": "The clean-checkout simulation still cannot reproduce the Hermes-home and portable-install guards: 17 members (test_action_plan_sync, test_workflow_governance, test_machine_identity) fail inside a worktree for want of the live environment, exactly as ERR-133 recorded, so a worktree is a detector for machine-local-file bugs and not a full CI substitute. The real CI readback at the fixing head is still owed when this record is written; verifiedCommit stays null until it comes back green.",
+      "remaining_boundary": "The clean-checkout simulation still cannot reproduce the Hermes-home and portable-install guards: 17 members (test_action_plan_sync, test_workflow_governance, test_machine_identity) fail inside a worktree for want of the live environment, exactly as ERR-133 recorded, so a worktree is a detector for machine-local-file bugs and not a full CI substitute. Closed by the exact-SHA readback at c1b299757bcbf7d3fe986b4e298f4be67812a208: ALL_SUCCESS across both workflows, so the class is fixed and verified at that head. The clean-checkout worktree is now part of the pre-push routine for any gate that touches machine-local state.",
       "status_before": "PASS",
-      "status_after": "PARTIAL",
+      "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "f33b784",
         "fixedCommit": "9e518e2",
-        "verifiedCommit": null,
+        "verifiedCommit": "c1b2997",
         "affectedCapability": "CI gate determinism; citation-debt auditing",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_project_local_citation_audit.py",
         "introducedCommitNote": "f33b784 is where the idempotence test that asserted the exit code landed; the underlying exists() rule is older than that, so this names the commit that made the defect CI-visible rather than the one that created it",
-        "bindingNote": "bound 2026-10-07: the rule fix is 4950041, the test-count fix d2e0234 and the inventory re-measure 9e518e2; status_after is PARTIAL until an exact-SHA CI readback at 9e518e2 or later returns all-green"
+        "bindingNote": "bound 2026-10-07: the rule fix is 4950041, the test-count fix d2e0234 and the inventory re-measure 9e518e2; status_after is PARTIAL until an exact-SHA CI readback at 9e518e2 or later returns all-green",
+        "verifiedCommitNote": "exact-SHA Actions readback at c1b299757bcbf7d3fe986b4e298f4be67812a208: both workflows and the work-lab-gate job returned success (aggregate green, no non-green job), and this head descends from 9e518e2, the commit that carries the fix and its gate"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
+    },
+    {
+      "error_id": "ERR-143",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "evidence_state",
+      "entrypoint": "scripts/audit/ledger_regression_command_targets.py, scripts/audit/bind_ledger_fixes_with_guards.py, tests/workflow-assistance/test_ledger_regression_command_targets.py, tests/workflow-assistance/test_ledger_fix_commit_binding.py, docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json, docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
+      "command": "python -m pytest tests/workflow-assistance/test_ledger_fix_commit_binding.py",
+      "exit_code": 1,
+      "observed_error": "Two defects in my own traceability tooling, one caught by an existing gate and one caught by eyeballing an implausibly good number. (1) The first binder variant reported 99 of the 99 owed records as bindable across 17 commits, binding ERR-001..ERR-012 all to 6bd0bd5 — a branch cutover that imported the ledger. Its bulk guard counted '1 record added' because it ran `git show --format= --unified=0 -- <commit> -- taskpacks/current/error-ledger.json`, i.e. with the commit placed after the `--`, which reads an empty diff. The same commit really adds 86 records across 1,276 files. (2) After that fix, the binder still wrote ERR-124 with fixedCommit 7fc2cc7, and `test_ledger_fix_commit_binding` failed within seconds: the record's own lifecycle.regressionCommand promises `node_modules/vitest/vitest.mjs`, which no commit contains, so the binding asserted a provenance link the tree cannot support.",
+      "root_cause": "A provenance claim was being generated by a tool whose checks were weaker than the gate that already existed for the same property. The bulk guard trusted a git invocation that silently returns nothing instead of failing, and neither binder asked the question the binding gate asks: is the file the record promises present in the commit you are about to name?",
+      "fix": "One binder, `scripts/audit/bind_ledger_fixes_with_guards.py`, two bases and four guards, with the gate's own conditions moved upstream: bulk (the commit must add at most 3 records, counted from `git show <commit> -- <path>` in the correct argument order), promise (if lifecycle.regressionCommand names a script it must exist in that commit), semantics (the commit must change at least one path the record itself names in entrypoint or a resolving regression_test operand), collision (never bind to the record's own introducedCommit, the ERR-089 shape). Every refused record keeps the reason it was refused. The six bindings the unguarded version had made were unbound with a note explaining both defects rather than quietly deleted. Result: 4 records bound on evidence (28 bound in total, 95 refused with reasons), and the oldest records stay owed because a cutover import proves nothing about a fix.",
+      "regression_test": "tests/workflow-assistance/test_ledger_regression_command_targets.py::LedgerLabelTests::test_a_repoint_claim_requires_a_note_and_fully_resolving_operands",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A tool that writes provenance must implement the verifier's own checks before it writes, never after a gate reports it: re-check every git invocation that returns empty for argument order, and treat an implausibly clean result (99 of 99 bindable, 0 refused) as a broken detector rather than as progress. Never loosen a truth test to accommodate a new binding; unbind the record.",
+      "remaining_boundary": "95 PASS records still have no fixedCommit, and that is now a stated per-record reason rather than silence: most are undated imports from a branch cutover, so no evidence in this repository establishes their fix commit. `regressionTestVerifiability` labels 34 PATH_GONE and 44 NO_FILE_OPERAND records, which means those promises cannot be re-run at all here; the labels make that visible but do not restore the lost files. verifiedCommit for this record stays null until the next exact-SHA readback covers a head containing it.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "left null: the defect lived in a binder written earlier in this same session and superseded before commit, so naming a tracked commit as its origin would be false attribution",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Ledger traceability; regression-command verifiability",
+        "regressionCommand": "python -m pytest tests/workflow-assistance/test_ledger_regression_command_targets.py",
+        "bindingNote": "fixedCommit is filled by the follow-up step that reads the real commit sha; it is never typed here"
       }
     }
   ],
