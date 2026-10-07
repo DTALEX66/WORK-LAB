@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 150,
+    "total": 151,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 50,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 3,
       "path_boundary": 8,
-      "ci_tooling": 3,
+      "ci_tooling": 4,
       "sql_schema": 1,
       "regression_contract": 7
     },
@@ -4566,6 +4566,38 @@
         "bindingNote": "bound 2026-10-07 against 25e58c2: that commit adds --ledger to the tool, moves the controls onto a fixture ledger and adds the exit-2 path; verified by `git show` before writing",
         "bindingBasis": "fix-commit-introduction: the tool change and its controls land together",
         "verifiedCommitNote": "exact-SHA Actions readback at 5ee34f95a967e25d66b3f05c9d39164cdb6b0211: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
+    },
+    {
+      "error_id": "ERR-153",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/audit/tool_inventory_readback.py, tests/workflow-assistance/test_tool_inventory_coverage.py, docs/audits/TOOL_INVENTORY_2026-10-07.json",
+      "command": "python -m pytest tests/workflow-assistance/test_tool_inventory_coverage.py",
+      "exit_code": 1,
+      "observed_error": "Three pushed heads - 737dac2, 11042dd, 7595adb - were red in the workflow-assistance job on the same member, test_the_shipped_inventory_describes_the_tree, each reporting e.g. `inventory sha256 '975b63...' != current git-blob-at-HEAD '6168ab...'` and `inventory bytes 5242 != 8617` for scripts/audit/triage_unbound_ledger_records.py. Every local run of the same gate was green, including minutes before the push.",
+      "root_cause": "The readback resolved a digest as 'HEAD blob, else working tree'. That is right for a brand-new file, whose bytes are not in HEAD yet, and wrong for a file that is already committed: after editing it and staging, HEAD still holds the previous blob, so the inventory published the old bytes' digest while the very next commit carried new ones. The documented order (stage, re-measure, commit) was followed exactly and still produced a false record, which is why the defect is the resolution order and not the discipline.",
+      "fix": "digest() now reads the index first (git show :<path>) - the bytes the next commit will carry - then HEAD, then the working tree, and names the basis git-index. The gate resolves digests in the same order and accepts the new basis name. In a CI checkout the index equals HEAD, so comparability is unchanged; locally, stage-then-measure-then-commit is now correct for modified files as well as new ones.",
+      "regression_test": "tests/workflow-assistance/test_tool_inventory_coverage.py::ToolInventoryCoverageGate::test_the_shipped_inventory_describes_the_tree",
+      "evidence_level": "isolated-runtime",
+      "repeat_prevention": "A derived digest must be taken from the reference the publisher is about to commit, not from the last published state. When a tool hashes git objects, ask which object it names for a modified-but-uncommitted file, and treat 'HEAD or disk' as a bug: the index is the third thing, and it is the one that ships.",
+      "remaining_boundary": "The fix does not make the three red heads green retroactively; each head keeps its recorded failure, and the next head carries the corrected digest basis. A stale-but-committed inventory can still be produced by running the readback before staging, which the tool's own usage text warns about.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "left null: the resolution order has been HEAD-then-disk since the readback existed; it only became observable once an already-tracked instrument was modified in the same motion as its inventory",
+        "fixedCommit": "4303bf8a018a6b593181c825589aaee053eff24e",
+        "verifiedCommit": null,
+        "affectedCapability": "Tool inventory traceability; CI-surface reproducibility",
+        "regressionCommand": "python -m pytest tests/workflow-assistance/test_tool_inventory_coverage.py",
+        "bindingNote": "bound 2026-10-07 against 4303bf8: that commit changes digest() to resolve from the index and updates the gate's basis vocabulary and resolution order; both promised paths were checked with git cat-file before writing",
+        "bindingBasis": "fix-commit-introduction: the tool change and its gate land together",
+        "verifiedCommitNote": null
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
