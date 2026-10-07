@@ -4617,7 +4617,7 @@
       "regression_test": "tests/workflow-assistance/test_recovered_source_registry.py::RecoveredSourceRegistryTests::test_location_claims_agree_with_the_row_status",
       "evidence_level": "isolated-runtime",
       "repeat_prevention": "Any field that asserts where bytes live must be the same field the verifier reads, and a promotion must never leave a second location claim behind. When a record gains a 'tracked' marker, the gate must re-hash the versioned blob, not the ignored working copy; a row may not describe one document in two places.",
-      "remaining_boundary": "The guard inspects the location-claim fields of each row, not free prose, so a versioned path mentioned only inside notes or verificationCommand is still not a claim it can police. The nine pre-existing members stay green: the hole was in what they checked, not in a verdict they printed.",
+      "remaining_boundary": "The guard inspects the location-claim fields of each row, not free prose. Extending it to prose was measured before deciding against it: the two rows still labelled machine-local contain zero path-shaped tokens into the versioned tree at all, so a prose scanner would match nothing and its green would mean nothing. If a future machine-local row ever names a versioned file in prose, the right move is to give that row a location-claim field the guard already reads, not to widen the matcher. The nine pre-existing members stay green: the hole was in what they checked, not in a verdict they printed.",
       "status_before": "PASS",
       "status_after": "PASS",
       "lifecycle": {

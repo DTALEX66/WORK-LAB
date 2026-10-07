@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T09:10:59Z",
+  "generatedAt": "2026-10-07T09:13:26Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2080,
