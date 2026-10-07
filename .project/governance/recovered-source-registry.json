@@ -1,7 +1,7 @@
 {
   "schemaVersion": "work-lab/recovered-source-registry/v1",
   "generatedAt": "2026-10-07",
-  "generatedAgainstHead": "f33b78470b108e70d91820a94c7e597010ecddfb",
+  "generatedAgainstHead": "99c1107746d25ab3a5ef39a1b9a1c0e36561d8c7",
   "scope": "recovered originals, migrated assets and retired trees this repository must keep verifiable",
   "policy": {
     "tracked": "versioned here: the gate re-hashes the file and a drift fails",
@@ -190,9 +190,22 @@
       "observedAt": "2026-10-07",
       "originalLocation": "member WORK-LAB_MASTER_ATLAS_2026-09-29/sources/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md of WORK-LAB_MASTER_ATLAS_2026-09-29.zip under the owner's material root (D:/All projects/Record) — a second location holding the atlas export, independent of the atlas copy already in .project-local",
       "coverageRelation": "digest-identical to the atlas pin SRC-WL-HANDOFF-20260903 (dff24bed2857…), matched by normalized filename because the pin carries a digest but no expected_bytes: the pin's name ends in «(1).md» and the member in «.md»",
-      "verificationCommand": "python scripts/audit/ag19_record_root_pin_test.py",
-      "notes": "machine-local, so CI cannot see these bytes: the extracted member lives under the git-ignored run root and re-measures with the command above, which re-reads the archive from the material root on the machine that has it. Nothing was copied into the tracked tree and nothing outside the repository was modified — the archive was read, one member was written into .project-local for hashing, and the original stays as the owner left it"
+      "verificationCommand": "python scripts/maintenance/recover_shared_root_original.py --source-archive \"D:\\All projects\\Record\\WORK-LAB_MASTER_ATLAS_2026-09-29.zip\" --member \"WORK-LAB_MASTER_ATLAS_2026-09-29/sources/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md\" --expect-sha256 dff24bed285700d2b2c873d39e1356340f4599268449bbd6ab1e74ead525afce --dest docs/history/archive/recovered-originals/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md --actor <you> --kind user_published_audit --allow-owner-material",
+      "notes": "machine-local, so CI cannot see these bytes: the extracted member lives under the git-ignored run root and re-measures with the command above, which re-reads the archive from the material root on the machine that has it. Nothing was copied into the tracked tree and nothing outside the repository was modified — the archive was read, one member was written into .project-local for hashing, and the original stays as the owner left it",
+      "location": "tracked",
+      "trackedPath": "docs/history/archive/recovered-originals/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md",
+      "recoveryBasis": "owner-material-read-only: one archive member extracted by scripts/maintenance/recover_shared_root_original.py under the readOnlyInboundRoots declaration in .project/governance/project-data-boundary.json; the outside archive was read only, never moved",
+      "archiveProvenance": {
+        "archive": "D:\\All projects\\Record\\WORK-LAB_MASTER_ATLAS_2026-09-29.zip",
+        "archiveBytes": 6025824,
+        "archiveSha256": "92ebc5a3f1857f55525812122ec14e35b6d268cb4b153f9046edb9032412aa1c",
+        "member": "WORK-LAB_MASTER_ATLAS_2026-09-29/sources/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md",
+        "memberSize": 11876,
+        "memberCrc32": "1060a615",
+        "memberCompressedSize": 6033
+      }
     }
   ],
-  "digestBasis": "tracked entries: sha256 over the bytes of the blob at generatedAgainstHead (checkout-independent); machine-local entries: sha256 over the bytes on this machine"
+  "digestBasis": "tracked entries: sha256 over the bytes of the blob at generatedAgainstHead (checkout-independent); machine-local entries: sha256 over the bytes on this machine",
+  "notes": " | 2026-10-07: src-new-chat-handoff-20260903 promoted from machine-local to tracked by an owner-material read-only recovery whose digest pin matched; the entry's generatedAgainstHead is cleared because the recovery commit is not yet known and inventing it is ERR-125/ERR-134."
 }

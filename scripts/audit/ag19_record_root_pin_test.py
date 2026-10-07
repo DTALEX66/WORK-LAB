@@ -30,6 +30,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 import zipfile
@@ -160,11 +161,53 @@ def _basis_counts(hits: list[dict]) -> dict[str, int]:
     return out
 
 
+def recovered_in_repo(digest: str) -> dict | None:
+    """Is this pinned digest already held by the repository, verifiable from a clean checkout?
+
+    A recovery only counts when the bytes can be read out of git rather than off this disk — that is
+    the difference between the registry claiming a file is machine-local (ERR-142's complaint about
+    evidence nobody else can re-measure) and claiming it is tracked. `git show HEAD:<path>` is what
+    proves it, so the answer cannot be inflated by a leftover scratch copy.
+    """
+    registry = REPO / ".project" / "governance" / "recovered-source-registry.json"
+    if not registry.is_file():
+        return None
+    try:
+        doc = json.loads(registry.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    for entry in doc.get("entries", []):
+        if entry.get("sha256") != digest or entry.get("location") != "tracked":
+            continue
+        tracked_path = entry.get("trackedPath")
+        if not tracked_path:
+            continue
+        proc = subprocess.run(["git", "show", f"HEAD:{tracked_path}"], cwd=REPO,
+                              capture_output=True)
+        if proc.returncode != 0:
+            continue
+        blob = hashlib.sha256(proc.stdout).hexdigest()
+        if blob == digest:
+            return {"trackedPath": tracked_path, "blobSha256": blob, "blobBytes": len(proc.stdout),
+                    "recoveryBasis": entry.get("recoveryBasis")}
+    return None
+
+
 def verdict_for(targets: list[dict], present: bool, measured: dict) -> str:
     """What the data can actually support — the label that cannot be inflated."""
     if not present:
         return "SCOPE_NOT_AVAILABLE_ON_THIS_MACHINE"
     if measured["digestHits"]:
+        by_pin = {t["pinId"]: t for t in targets}
+        recovered = []
+        for hit in measured["digestHits"]:
+            pin = by_pin.get(hit.get("pinId")) or {}
+            recovered.append((hit, recovered_in_repo(pin.get("expectedSha256") or "")))
+        measured["recoveryState"] = [
+            {"pinId": hit.get("pinId"), "expectedSha256": (by_pin.get(hit.get("pinId")) or {}).get("expectedSha256"),
+             "recovered": state} for hit, state in recovered]
+        if all(state for _, state in recovered):
+            return "PIN_MATCH_FOUND_AND_RECOVERED_TRACKED"
         return "PIN_MATCH_FOUND_EXTRACTION_OWED"
     pinned = [t for t in targets if t["pinned"]]
     unpinned = [t for t in targets if not t["pinned"]]
@@ -257,7 +300,8 @@ def main() -> int:
     print(f"VERDICT {verdict}")
     print(f"record -> {Path(args.record).relative_to(REPO).as_posix()}")
     print(f"detail -> {detail.relative_to(REPO).as_posix()}")
-    return 1 if measured["digestHits"] else 0
+    owed = [h for h in (measured.get("recoveryState") or []) if not h["recovered"]]
+    return 1 if measured["digestHits"] and owed else 0
 
 
 if __name__ == "__main__":

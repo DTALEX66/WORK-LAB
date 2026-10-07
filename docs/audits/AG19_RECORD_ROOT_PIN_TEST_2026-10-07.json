@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/ag19-record-root-pin-test/v1",
-  "at": "2026-10-07T00:32:24Z",
+  "at": "2026-10-07T05:14:27Z",
   "tool": "scripts/audit/ag19_record_root_pin_test.py",
   "pinSource": "atlas-machine-local",
   "scope": {
     "root": "D:\\All projects\\Record",
     "rootPresent": true,
-    "filesEnumerated": 114,
-    "zipMembersEnumerated": 31382,
+    "filesEnumerated": 125,
+    "zipMembersEnumerated": 31468,
     "method": "two entry points into the hash test: a file whose size equals a pin's expected_bytes is hashed, and a file or archive member whose normalized filename equals a digest-pinned target that carries no pinned size is hashed (members extracted into the ignored run directory first); archive members are otherwise compared by the central directory only (name+size+CRC, bytes not inflated); nested zips listed but not entered",
     "namePinnedTargets": [
       "WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03"
@@ -63,9 +63,9 @@
       "normalized_filename": 1
     },
     "digestHits": 1,
-    "nameHits": 9,
+    "nameHits": 11,
     "nameHitsByAttribution": {
-      "unattributed": 2,
+      "unattributed": 4,
       "otherProject": 6,
       "worklab": 1
     },
@@ -124,6 +124,14 @@
     },
     {
       "kind": "zip-member",
+      "archive": "AAOS_02_未来延展_可持续架构_20261004.zip",
+      "member": "AAOS_02_未来延展_可持续架构_20261004/prompts/00_启动提示词.txt",
+      "bytes": 4154,
+      "crc": "85e7c9fb",
+      "attribution": "unattributed"
+    },
+    {
+      "kind": "zip-member",
       "archive": "AAOS_ArcheAxis_今日完整整合最终任务包_2026-09-28.zip",
       "member": "AAOS_最终任务包_2026-09-28/08_原始交接文件/01_AAOS_新会话启动提示词_2026-09-28_来源快照.docx",
       "bytes": 11998,
@@ -145,6 +153,14 @@
       "bytes": 20693,
       "crc": "e21b93d7",
       "attribution": "otherProject"
+    },
+    {
+      "kind": "zip-member",
+      "archive": "AAOS_完整执行任务包_20261004.zip",
+      "member": "AAOS_完整落地任务包_20261004/prompts/00_统一接管启动提示词.txt",
+      "bytes": 3814,
+      "crc": "f10f36a0",
+      "attribution": "unattributed"
     },
     {
       "kind": "zip-member",

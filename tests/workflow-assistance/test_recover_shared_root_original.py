@@ -20,6 +20,7 @@ import json
 import subprocess
 import sys
 import unittest
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -161,6 +162,110 @@ class RecoveryScreensTests(unittest.TestCase):
         evidence = json.loads((RUN / "evidence.json").read_text(encoding="utf-8"))
         self.assertEqual(evidence["flowDecision"]["decision"], "ALLOW")
         self.assertEqual(evidence["originalMeasure"]["sha256"], hashlib.sha256(DOC.encode()).hexdigest())
+
+
+class ArchiveMemberRecoveryTests(unittest.TestCase):
+    """The AG-19 additions: recover ONE member of an archive, only against a stated digest pin.
+
+    A pin is what turns "copy something out of 15 GB of owner material" into "restore this exact
+    document". Every refusal here is checked before any extraction, and the read-only inbound root
+    needs its own opt-in flag so a recovery from owner material can never happen by accident of a
+    caller forgetting to name the difference between a shared root and an inbound one.
+    """
+
+    def setUp(self) -> None:
+        # Two roots that do not nest. Declaring the inbound one as a parent of the shared one made
+        # every archive resolve to the shared root by longest prefix, and the opt-in guard then had
+        # nothing to refuse — a fixture that could not fail.
+        self.shared = RUN / "archive-owner"
+        self.shared.mkdir(parents=True, exist_ok=True)
+        self.inbound = RUN / "inbound-owner"
+        self.inbound.mkdir(parents=True, exist_ok=True)
+        self.zip = self.shared / "atlas.zip"
+        self.inbound_zip = self.inbound / "atlas.zip"
+        for target in (self.zip, self.inbound_zip):
+            with zipfile.ZipFile(target, "w") as zf:
+                zf.writestr("atlas/sources/doc.md", DOC)
+        self.index = write(RUN / "arch-external-index.json", json.dumps(
+            {"sharedRoots": {"fake-archive": str(self.shared)}, "libraries": []}, ensure_ascii=False))
+        self.boundary = write(RUN / "arch-boundary.json", json.dumps({
+            "forbiddenExternalRoots": ["E:/", "E:\\"],
+            "readOnlyInboundRoots": [{"id": "fake-inbound", "path": str(self.inbound),
+                                      "neverWrite": True}],
+        }, ensure_ascii=False))
+        self.ledger = RUN / "arch-spill-ledger.jsonl"
+        self.ledger.unlink(missing_ok=True)
+
+    def cli(self, argv, dest_name="arch-dest.md"):
+        dest = RUN / dest_name
+        dest.unlink(missing_ok=True)
+        full = ["--dest", str(dest.relative_to(ROOT)).replace("\\", "/"),
+                "--actor", "gate-fixture", "--evidence", str(RUN / "arch-evidence.json")] + argv
+        lines = [
+            "import sys, pathlib",
+            f"sys.path.insert(0, {str(TOOL.parent)!r})",
+            "import recover_shared_root_original as m",
+            f"m.EXTERNAL_INDEX = pathlib.Path({str(self.index)!r})",
+            f"m.BOUNDARY = pathlib.Path({str(self.boundary)!r})",
+            f"m.SPILL_LEDGER = pathlib.Path({str(self.ledger)!r})",
+            f"sys.argv = [str(m.__file__)] + {full!r}",
+            "raise SystemExit(m.main())",
+        ]
+        shim = write(RUN / "arch-shim.py", chr(10).join(lines) + chr(10))
+        return subprocess.run([sys.executable, str(shim)], capture_output=True, text=True,
+                              encoding="utf-8", errors="replace")
+
+    def member_args(self, pin=None, extra=(), archive=None):
+        argv = ["--source-archive", str(archive or self.zip), "--member", "atlas/sources/doc.md"]
+        if pin:
+            argv += ["--expect-sha256", pin]
+        return argv + list(extra)
+
+    def test_an_archive_source_without_a_digest_pin_is_refused(self) -> None:
+        proc = self.cli(self.member_args())
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        self.assertIn("ARCHIVE_SOURCE_WITHOUT_DIGEST_PIN", proc.stdout)
+
+    def test_a_member_that_does_not_match_the_pin_is_refused(self) -> None:
+        proc = self.cli(self.member_args(pin="0" * 64))
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        self.assertIn("DIGEST_PIN_MISMATCH", proc.stdout)
+
+    def test_a_member_is_mirrored_when_the_pin_matches(self) -> None:
+        digest = hashlib.sha256(DOC.encode("utf-8")).hexdigest()
+        # No --stage here: the fixture destination lives under the git-ignored runtime root, and
+        # `git add` rightly refuses it. Blob identity is asserted by the real recovery of the
+        # pinned original and by MirroredOriginalTests, not by staging a scratch file.
+        proc = self.cli(self.member_args(pin=digest))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("RECOVERED", proc.stdout)
+        line = json.loads(self.ledger.read_text(encoding="utf-8").splitlines()[-1])
+        self.assertEqual(line["rootBasis"], "shared-root")
+        self.assertEqual(line["archiveMember"]["member"], "atlas/sources/doc.md")
+        self.assertEqual(len(line["archiveMember"]["memberCrc32"]), 8)
+        self.assertTrue(line["verifications"]["originalUntouched"])
+
+    def test_an_inbound_owner_material_root_needs_its_own_opt_in(self) -> None:
+        digest = hashlib.sha256(DOC.encode("utf-8")).hexdigest()
+        blocked = self.cli(self.member_args(pin=digest, archive=self.inbound_zip))
+        self.assertEqual(blocked.returncode, 2, blocked.stdout + blocked.stderr)
+        self.assertIn("OWNER_MATERIAL_OPT_IN_MISSING", blocked.stdout)
+
+    def test_the_inbound_basis_is_recorded_when_the_opt_in_is_given(self) -> None:
+        # The same archive reached through the read-only inbound declaration rather than the shared
+        # one: the bytes are identical, so the only difference a reader can see is the basis.
+        digest = hashlib.sha256(DOC.encode("utf-8")).hexdigest()
+        proc = self.cli(self.member_args(pin=digest, archive=self.inbound_zip,
+                                        extra=["--allow-owner-material"]))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        line = json.loads(self.ledger.read_text(encoding="utf-8").splitlines()[-1])
+        self.assertEqual(line["rootBasis"], "owner-material-read-only")
+        self.assertEqual(line["declaredRoot"], "fake-inbound")
+
+    def test_no_source_named_at_all_is_refused(self) -> None:
+        proc = self.cli(["--actor", "gate-fixture"])
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        self.assertIn("NO_SOURCE_NAMED", proc.stdout)
 
 
 class UpstreamScannerGapTests(unittest.TestCase):
