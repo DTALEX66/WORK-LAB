@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "work-lab/executor-live-probe/v1",
+  "at": "2026-10-07T13:38:38+0800",
+  "tool": "scripts/audit/executor_live_probe.py",
+  "readOnly": true,
+  "registrySha256": "bc2b512230f46825252457824d3e382ad8b39705c2f1b5b9a773c3ffef06c1d7",
+  "counts": {
+    "PROBE_TIMEOUT": 2,
+    "MEASURED_NO_CLAIM_TO_COMPARE": 2,
+    "ENTRY_NOT_RESOLVED": 3,
+    "NOT_PROBED_DECLARATIVE_ONLY": 3
+  },
+  "results": [
+    {
+      "adapter": "hermes",
+      "command": [
+        "C:\\Users\\ALEX\\AppData\\Local\\hermes\\bin\\hermes.exe",
+        "--version"
+      ],
+      "state": "PROBE_TIMEOUT",
+      "detail": "exit=None PROBE_TIMEOUT_25s",
+      "probe": {
+        "invoked": true,
+        "exitCode": null,
+        "reason": "PROBE_TIMEOUT_25s"
+      },
+      "claimedVersion": "0.21.5+3115.g10938a7"
+    },
+    {
+      "adapter": "codex",
+      "command": [
+        "cmd.exe",
+        "/d",
+        "/c",
+        "D:\\All projects\\WORK-LAB\\packages\\client-neutral-core\\bin\\codex.cmd",
+        "--version"
+      ],
+      "state": "MEASURED_NO_CLAIM_TO_COMPARE",
+      "detail": "observed='0.160.1'; registry claims 'UNVERIFIED' which is not a version string",
+      "probe": {
+        "invoked": true,
+        "exitCode": 0,
+        "outputSha256": "eeecd3950ed2edf22e2f7ac0317480e921226b0a28df75a7f4af0f4bfe91fa49",
+        "versionLine": "codex-cli 0.160.1",
+        "observedVersion": "0.160.1"
+      },
+      "claimedVersion": "UNVERIFIED"
+    },
+    {
+      "adapter": "cc-switch",
+      "state": "ENTRY_NOT_RESOLVED",
+      "detail": "declared entry point not found on this machine"
+    },
+    {
+      "adapter": "github",
+      "command": [
+        "C:\\Program Files\\GitHub CLI\\gh.EXE",
+        "--version"
+      ],
+      "state": "MEASURED_NO_CLAIM_TO_COMPARE",
+      "detail": "observed='2.98.0'; registry claims 'UNVERIFIED' which is not a version string",
+      "probe": {
+        "invoked": true,
+        "exitCode": 0,
+        "outputSha256": "63737ad9f9a2bf673d515b80287e619712f744cc5373974fd043c5402ec80863",
+        "versionLine": "gh version 2.98.0 (2026-08-20)",
+        "observedVersion": "2.98.0"
+      },
+      "claimedVersion": "UNVERIFIED"
+    },
+    {
+      "adapter": "openhuman",
+      "state": "ENTRY_NOT_RESOLVED",
+      "detail": "declared entry point not found on this machine"
+    },
+    {
+      "adapter": "open-design",
+      "state": "ENTRY_NOT_RESOLVED",
+      "detail": "declared entry point not found on this machine"
+    },
+    {
+      "adapter": "deepseek-harness",
+      "command": [
+        "C:\\Users\\ALEX\\AppData\\Local\\Programs\\DeepSeek Harness\\DeepSeek Harness.exe",
+        "--version"
+      ],
+      "state": "PROBE_TIMEOUT",
+      "detail": "exit=None PROBE_TIMEOUT_25s",
+      "probe": {
+        "invoked": true,
+        "exitCode": null,
+        "reason": "PROBE_TIMEOUT_25s"
+      },
+      "claimedVersion": "0.2.0-rc.2"
+    },
+    {
+      "adapter": "cursor",
+      "state": "NOT_PROBED_DECLARATIVE_ONLY",
+      "detail": "no live entry point is declared for this support level"
+    },
+    {
+      "adapter": "claude-code",
+      "state": "NOT_PROBED_DECLARATIVE_ONLY",
+      "detail": "no live entry point is declared for this support level"
+    },
+    {
+      "adapter": "workbuddy",
+      "state": "NOT_PROBED_DECLARATIVE_ONLY",
+      "detail": "no live entry point is declared for this support level"
+    }
+  ],
+  "note": "LIVE_VERIFIED requires exit 0 and agreement with the version the registry already claims. This script mutates nothing: it reports, and a human or a follow-up change decides whether a registry entry's evidence_state moves."
+}
