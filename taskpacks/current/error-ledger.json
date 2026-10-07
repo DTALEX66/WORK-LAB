@@ -9,11 +9,11 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 141,
+    "total": 142,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 49,
-      "test_behavior_alignment": 15,
+      "test_behavior_alignment": 16,
       "working_directory_recovery": 2,
       "evidence_state": 24,
       "ci_configuration": 12,
@@ -4264,6 +4264,37 @@
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: record: every ledger promise now states whether it can still be re-run. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
         "bindingBasis": "ledger-entry-introduction: this commit adds only 1 record(s), it changes docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json which the record names, and the record promises no script",
         "verifiedCommitNote": "exact-SHA Actions readback at 285704a5f885bf76a64655082485f88b6c812bc8: ALL_SUCCESS, 3 runs, 7 jobs, no non-green job; that head descends from the bound fix commit and contains both the labeller and its gate"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
+    },
+    {
+      "error_id": "ERR-144",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "tests/workflow-assistance/test_project_local_citation_audit.py, scripts/audit/project_local_citation_audit.py",
+      "command": "python services/orchestration/run_quality_gate.py governance",
+      "exit_code": 1,
+      "observed_error": "The whole-workflow CI repro, run against the head that was about to be pushed, turned the governance group red inside the citation-audit gate I had written earlier the same day: AssertionError: 176 not greater than or equal to 177 : the shipped record should reflect the box that produced it. Local pytest on the file alone was green; only the repro surfaced it.",
+      "root_cause": "When ERR-142 removed the machine-dependence from this gate I deleted the equality assertion on counts.presentOnThisMachine and replaced it with an ordering assertion (shipped >= fresh scan). Any bound on that count is a decay, not an invariant: it counts citation tokens whose bytes this particular box happens to hold under the git-ignored runtime root, so it moves with the disk (a clean checkout showed 10 against 174 here). It also self-amplifies, because the gate's own idempotence test writes two records into that same root before re-scanning it, so the test was asserting against a number its own execution had raised.",
+      "fix": "The assertion now keeps the three checkout-deterministic counts compared against the shipped record (reviewQueue, unadjudicated, checkoutVerifiable) and treats presentOnThisMachine purely as a reported field: it must be present, an int and non-negative, and is never compared across runs or machines. The comment records both mechanisms — disk drift and self-amplification — so the next reader does not reintroduce a bound in a milder form.",
+      "regression_test": "tests/workflow-assistance/test_project_local_citation_audit.py::CitationAuditGate::test_regenerating_the_record_is_idempotent_apart_from_the_timestamp",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Never bound a CI-discovered gate on a value that is derived from the machine's git-ignored state, in any form — equality, >=, <= or a range. Report it, type-check it if it must exist, and assert only what is true from a clean checkout. When fixing a machine-dependence, list every remaining comparison of that field rather than only the one that failed; and run the whole-workflow repro before pushing, because a gate asserting on its own residue stays green when its file is run alone.",
+      "remaining_boundary": "The shipped audit record still carries the number 176 for this machine while the live count is higher; that is now a stated non-comparable field, not a claim. The deeper shape — a gate whose scratch output lands inside the root it measures — is still present in the audit's design, so a future pass may want a scratch dir outside the counted tree. fixedCommit names the commit that carries both the fix and its gate; verifiedCommit stays null until an exact-SHA CI readback covers a head containing it.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "left null: the bound was introduced by the ERR-142 fix commit earlier the same day, and naming it here would claim an origin that the record's own fix field already covers",
+        "fixedCommit": "87dcf6d575a6c91a8436dd8c5880dcc231c9e89f",
+        "verifiedCommit": null,
+        "affectedCapability": "Citation-audit gate; CI-surface reproducibility",
+        "regressionCommand": "python -m pytest tests/workflow-assistance/test_project_local_citation_audit.py",
+        "bindingNote": "bound 2026-10-07 against 87dcf6d: that commit's only source change is the assertion in tests/workflow-assistance/test_project_local_citation_audit.py that this record describes, so the fix and its gate landed together; verifiedCommit stays unclaimed until an exact-SHA CI readback covers a head containing this record",
+        "bindingBasis": "fix-commit-introduction: HEAD is the gate-fix commit when this record is written; the binding gate's own promise check (`git cat-file -e <fix>:<script>`) was run before stamping"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
