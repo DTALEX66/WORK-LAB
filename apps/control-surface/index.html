@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- Control Surface thin shell (P1-06 / AG-15). Dependency-free: no package manager, no build step,
+     no second copy of the Observer. It is served by the Control service itself, so its origin IS the
+     write boundary, and the Observer's own read-only UI stays where it is.
+     Hard boundary: there is no login, token, key, or account field here, and none will be added. -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; form-action 'none'">
+<title>WORK-LAB · Control Surface</title>
+<link rel="stylesheet" href="/control-shell.css">
+</head>
+<body>
+<header class="bar">
+  <h1>Control Surface</h1>
+  <p class="sub">唯一的写入口 · loopback-only · Observer 保持只读</p>
+  <p id="transport" class="tag" role="status" aria-live="polite">状态 UNKNOWN（尚未读到 descriptor）</p>
+</header>
+
+<main>
+  <section class="panel" aria-labelledby="ops-title">
+    <h2 id="ops-title">操作与真实支持度</h2>
+    <p class="hint">支持度来自后端 descriptor，不由界面推断。未实现的动作不可提交，并逐条给出原因与下一步。</p>
+    <ul id="operations" class="ops"></ul>
+  </section>
+
+  <section class="panel" aria-labelledby="form-title">
+    <h2 id="form-title">新建 Work Unit（唯一已接通的写路径）</h2>
+    <form id="create-form" autocomplete="off">
+      <label>项目 ID<input id="project-id" name="project-id" value="work-lab" required></label>
+      <label>任务 ID（确定性标识，幂等重放靠它）<input id="task-id" name="task-id" placeholder="WL-…" required></label>
+      <label>目标<input id="goal" name="goal" placeholder="这条工作单元要完成什么" required></label>
+      <label>边界（仓库内相对路径）<input id="boundary" name="boundary" value="services/control" required></label>
+      <label>授权来源（谁授予这次操作，文本即可）<input id="granted-by" name="granted-by" value="owner 2026-10-08 批次 C 授权" required></label>
+      <p class="hint">幂等身份由本页生成，重放同一个值才会得到同一条记录；目标正文只进后端账本，不回显到只读投影。</p>
+      <div class="row">
+        <span id="idem" class="mono">idempotency UNKNOWN</span>
+        <button type="submit" id="submit">提交</button>
+        <button type="button" id="regen">换一个幂等身份</button>
+      </div>
+    </form>
+    <div id="pending" class="pending" hidden>提交中 · 状态 RUNNING（这不是完成）</div>
+    <pre id="result" class="result mono" role="status" aria-live="assertive"></pre>
+    <p id="readback" class="readback" hidden></p>
+  </section>
+</main>
+
+<script src="/control-shell.js"></script>
+</body>
+</html>

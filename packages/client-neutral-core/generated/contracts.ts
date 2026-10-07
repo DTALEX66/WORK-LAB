@@ -17,6 +17,8 @@ export type ContractId =
   | "adapter-capability"
   | "action-plan"
   | "task-ledger-event"
+  | "control-operation"
+  | "control-operation-result"
   | "rule-asset"
   | "skill-package"
   | "growth-candidate"
@@ -212,6 +214,48 @@ export type TaskLedgerEvent = {
     checkpoint?: string,
     error_code?: string
   }
+  };
+
+// @contract control-operation
+// schema: packages/contracts/schemas/workflow/control-operation.schema.json
+export type ControlOperation = {
+    schema_version: unknown,
+    operation: ["work-unit.create", "work-unit.revise", "work-unit.dispatch", "approval.decide", "execution.cancel", "execution.retry", "execution.resume", "config.discover", "config.diff", "config.apply", "config.readback", "config.rollback"],
+    project_id: string,
+    task_id: string | null,
+    revision: number | null,
+    attempt: number | null,
+    scope: {
+    boundaries: string[],
+    granted_by: string
+  },
+    expected_version: string | null,
+    idempotency_key: string,
+    actor: string,
+    requested_at: string,
+    payload: Record<string, unknown>
+  };
+
+// @contract control-operation-result
+// schema: packages/contracts/schemas/workflow/control-operation-result.schema.json
+export type ControlOperationResult = {
+    schema_version: unknown,
+    operation: string,
+    idempotency_key: string,
+    status: ["ACCEPTED", "PLANNED", "REFUSED", "NEEDS_HUMAN", "NOT_IMPLEMENTED", "FAILED", "READBACK_MISMATCH"],
+    reason_code: string,
+    reason: string,
+    task_id: string | null,
+    receipt: {
+    receipt_id: string,
+    kind: string,
+    observed_at: string,
+    digest: string | null
+  } | null,
+    readback: Record<string, unknown> | null,
+    evidence_level: ["NO_EVIDENCE", "SIMULATED", "SYNTHETIC", "INTEGRATED", "REAL"],
+    observed_at: string,
+    next_action: string | null
   };
 
 // @contract rule-asset

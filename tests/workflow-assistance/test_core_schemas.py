@@ -50,6 +50,11 @@ EXPECTED = {
     "software-update-preflight.schema.json",
     "execution-parallel-dispatch.schema.json",
     "software-update-postflight.schema.json",
+    # P1-06 (2026-10-08): the Control Surface request/result pair. Registered here as well as in
+    # .project/governance/contracts/contract-catalog.json — this set is the review gate that makes a new
+    # cross-language contract an explicit decision instead of a file that appeared.
+    "control-operation.schema.json",
+    "control-operation-result.schema.json",
 }
 
 

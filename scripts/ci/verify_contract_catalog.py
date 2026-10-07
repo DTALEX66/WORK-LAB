@@ -21,6 +21,10 @@ EXPECTED = {
     "adapter-capability": "workflow",
     "action-plan": "workflow",
     "task-ledger-event": "workflow",
+    # P1-06 (2026-10-08): the Control Surface pair. Registering a contract here is the review gate that
+    # makes a new cross-language write boundary an explicit decision instead of a file that appeared.
+    "control-operation": "workflow",
+    "control-operation-result": "workflow",
     "rule-asset": "workflow",
     "skill-package": "workflow",
     "growth-candidate": "workflow",
@@ -62,6 +66,8 @@ CANONICAL_SCHEMA_PREFIXES = {
     "adapter-capability": ("packages/contracts/",),
     "action-plan": ("packages/contracts/",),
     "task-ledger-event": ("packages/contracts/",),
+    "control-operation": ("packages/contracts/",),
+    "control-operation-result": ("packages/contracts/",),
     "rule-asset": ("packages/contracts/",),
     "skill-package": ("packages/contracts/",),
     "growth-candidate": ("packages/contracts/",),

@@ -105,6 +105,24 @@
       ]
     },
     {
+      "id": "control-operation",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/control-operation.schema.json",
+      "consumers": [
+        "control",
+        "ci"
+      ]
+    },
+    {
+      "id": "control-operation-result",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/control-operation-result.schema.json",
+      "consumers": [
+        "control",
+        "ci"
+      ]
+    },
+    {
       "id": "rule-asset",
       "owner": "workflow",
       "schemaPath": "packages/contracts/schemas/workflow/rule-asset.schema.json",

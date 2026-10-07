@@ -125,6 +125,20 @@
         }
       ],
       "supersedes": "WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925 (only its 'does NOT authorize writing UI code' limit)"
+    },
+    {
+      "id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "path": "taskpacks/current/WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007.md",
+      "role": "subordinate cross-module execution task card: carries the owner's dated 2026-10-07 full-stack prompt (batches A-F, in-repo only) and the explicit-cross-task-only writes module-ownership.json requires; registers no new authority, grants no commit/push/PR/merge/release/install/global-write, keeps Observer strictly read-only",
+      "register_row": "QODER-FULLSTACK-20261007",
+      "sources_pinned": [
+        {
+          "file": ".project-local/artifacts/qoder-handoff-20261007/QODER_新规划前后端完整后续任务提示词.txt",
+          "bytes": 29230,
+          "sha256": "17e064354c0b7c2d3a1db2524b1db1b9150bd78cdd650a21ff1ca08ee50109c2",
+          "mtime": "2026-10-07T15:06:10+00:00"
+        }
+      ]
     }
   ],
   "acceptance": {
