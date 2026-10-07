@@ -47,6 +47,26 @@
   ERR-139（政策扫描器与我的参数名）、ERR-140（治理材料泄漏 %TEMP%，含根因修复与残留清理）。
 - 本轮三件新工具都由上述行与本文件引用，因此通过 `test_tool_inventory_coverage.py` 的“不得有无人引用的工具”。
 
+
+## AG-19：把缺失原件的检验推到 owner 材料根
+
+`scripts/audit/ag19_record_root_pin_test.py` 用 atlas 的 5 个 pin 去测 `D:\All projects\Record`
+（114 文件 / 39 zip / 31,382 成员 / 15,078,228,346 B）。两个有 `expected_bytes` 的 pin（时间线
+15,558,839 B、WORK-LAB-SUMMARY 164,397 B）在该根下**尺寸命中 0**；zip 只读中央目录，成员未解压，所以这
+个否定证明覆盖到归档内部。`SRC-WL-HANDOFF-20260903` 没有 pinned size，工具因此加了“按归一化文件名取名再哈希”
+的第二入口（pin 名带 `(1)`，成员名不带——纯精确名字匹配会漏掉范围内唯一真正匹配 pin 摘要的那一条），解包到
+`.project-local` 后 sha256 dff24bed285700d2b2c873d39e1356340f4599268449bbd6ab1e74ead525afce 与 pin 完全相同：一件**已恢复原件的第二处独立副本**，
+不是找回了丢失的东西，登记时按这个措辞写。
+
+- 名字命中 9 条按归属拆分：6 条属于 AAOS/ArcheAxis/DESIGN-LAB/三项目，2 条无归属，1 条 WORK-LAB（已做内容检验）。
+- `REQ-20260928-START` / `REQ-20260928-EXEC` 在 atlas 里没有 `expected_sha256` ⇒ 哈希级否定证明对它们结构性不可
+  能；记录与门禁都禁止把“没搜到名字”说成“不存在”。
+- 仓库外只读：只解包了一个成员到忽略目录，`D:\All projects\Record` 未被写入、移动或删除任何东西。
+- 在册：`AG19-RECORD-20261007`；`.project/governance/recovered-source-registry.json` 新增
+  `src-new-chat-handoff-20260903`（machine-local，含复测命令），并把时间线 `absent` 行的范围说明补宽。
+- 门禁：`tests/workflow-assistance/test_ag19_record_root_pin_test.py`（12 项）。
+
+
 ## 仍然未知 / 仍然欠（不伪装成已完成）
 
 - 28 处不带 `dir=` 的 `mkdtemp` 在册债务（12 测试文件 21 处 / 3 生产文件 7 处）；是否漏出残渣只对被实测的

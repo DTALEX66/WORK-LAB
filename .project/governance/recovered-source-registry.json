@@ -58,10 +58,10 @@
       "bytes": null,
       "sha256": null,
       "observedAt": "2026-10-07",
-      "originalLocation": "referenced by the atlas pin: 15,558,839 B / 432,344 lines",
+      "originalLocation": "referenced by the atlas pin: 15,558,839 B / 432,344 lines — additionally size-tested over D:/All projects/Record on 2026-10-07 with 0 hits",
       "coverageRelation": "no copy exists in this repository's reachable scope",
       "verificationCommand": "python .project-local/runs/convergence-20261007-c/scan_digest_refs.py",
-      "notes": "negatively proven absent on the machine (whole-tree digest scan), in git history (14,592 objects, largest 4,533,919 B, none of that size) and in 60 archives opened member-by-member. Reachable only from the source platform. 'Not found' is not 'deleted'."
+      "notes": "negatively proven absent on the machine (whole-tree digest scan), in git history (14,592 objects, largest 4,533,919 B, none of that size) and in 60 archives opened member-by-member. Reachable only from the source platform. 'Not found' is not 'deleted'. | SCOPE WIDENED 2026-10-07: beyond the repository tree, git objects and 60 archives, the owner's material root (114 files, 31,382 archive members across 39 zips, 15,078,228,346 B) was tested for this pin's exact byte count 15,558,839 with 0 size hits, so no byte-identical copy of the timeline is in that root either; still not 'deleted', and still unreachable from this repository's own sources."
     },
     {
       "id": "src-startup-prompt-2026-09-28",
@@ -179,6 +179,19 @@
       "coverageRelation": "byte-identical mirror: working tree, git blob at f33b784 and the outside original all hash to 3a71b7bedd04… over 3763 B, so the repository now holds the bytes while the declared root keeps the authoritative copy. Content is a 2026-08-15 dependency register and is STALE on cache paths — it names .hermes/task-runtime roots that the 2026-09 directory convergence superseded — so it is archived as history, not as current guidance",
       "verificationCommand": "git cat-file -p f33b78470b108e70d91820a94c7e597010ecddfb:docs/history/archive/recovered-originals/WORK-LAB-SHARED-DEPENDENCIES-2026-08-15.md | sha256sum",
       "notes": "recovered by scripts/maintenance/recover_shared_root_original.py, which mirrors in only from a root declared in .project/governance/external-libraries-index.json, refuses E:/ and F:/, refuses an existing or tracked destination, and requires artifact_flow_policy.classify_flow to return ALLOW; it predates the spill ledger (earliest line 2026-10-06), so no per-write record of its creation exists and the mirror-in itself is the first ledger line for it"
+    },
+    {
+      "id": "src-new-chat-handoff-20260903",
+      "kind": "recovered-original",
+      "status": "machine-local",
+      "path": ".project-local/runs/convergence-20261007-j/ag19_extraction/WORK-LAB_MASTER_ATLAS_2026-09-29.zip__WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md",
+      "bytes": 11876,
+      "sha256": "dff24bed285700d2b2c873d39e1356340f4599268449bbd6ab1e74ead525afce",
+      "observedAt": "2026-10-07",
+      "originalLocation": "member WORK-LAB_MASTER_ATLAS_2026-09-29/sources/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md of WORK-LAB_MASTER_ATLAS_2026-09-29.zip under the owner's material root (D:/All projects/Record) — a second location holding the atlas export, independent of the atlas copy already in .project-local",
+      "coverageRelation": "digest-identical to the atlas pin SRC-WL-HANDOFF-20260903 (dff24bed2857…), matched by normalized filename because the pin carries a digest but no expected_bytes: the pin's name ends in «(1).md» and the member in «.md»",
+      "verificationCommand": "python scripts/audit/ag19_record_root_pin_test.py",
+      "notes": "machine-local, so CI cannot see these bytes: the extracted member lives under the git-ignored run root and re-measures with the command above, which re-reads the archive from the material root on the machine that has it. Nothing was copied into the tracked tree and nothing outside the repository was modified — the archive was read, one member was written into .project-local for hashing, and the original stays as the owner left it"
     }
   ],
   "digestBasis": "tracked entries: sha256 over the bytes of the blob at generatedAgainstHead (checkout-independent); machine-local entries: sha256 over the bytes on this machine"
