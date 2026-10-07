@@ -88,7 +88,7 @@ def workflow_commands(path: Path) -> list[tuple[str, str, list[str]]]:
     return out
 
 
-def main() -> int:
+def main(head_at_start: str | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skip", action="append", default=[],
                         help="substring of a command line to mark SKIPPED (repeatable)")
@@ -99,6 +99,11 @@ def main() -> int:
                         default=REPO / ".project-local" / "runs" / "ci"
                         / "reproduce_ci_commands_receipt.json")
     args = parser.parse_args()
+    if head_at_start is None:
+        head_at_start = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO,
+                                        capture_output=True, text=True).stdout.strip()
+    if args.list:
+        head_at_start = ""
 
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     all_commands, non_interpreters = [], []
@@ -168,13 +173,26 @@ def main() -> int:
 
     head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True,
                           text=True).stdout.strip()
+    if args.list:
+        return 0
+    if head != head_at_start:
+        # A receipt whose rows were measured across two commits describes neither, so the head field
+        # would name a tree the failures did not see. Say which head the rows actually belong to and
+        # exit non-zero with a named condition instead of publishing an ambiguous proof.
+        print(f"CI_REPRO_HEAD_MOVED start={head_at_start[:9]} end={head[:9]} "
+              f"ran={len(results)} failures={len(failures)} :: the rows describe the tree at "
+              f"start={head_at_start[:9]}, not the head this receipt would otherwise claim")
     args.receipt.write_text(json.dumps(
-        {"head": head, "interpreter_commands": len(all_commands), "ran": len(results),
+        {"head": head, "headAtStart": head_at_start, "headAtEnd": head,
+         "headMovedDuringRun": head != head_at_start,
+         "interpreter_commands": len(all_commands), "ran": len(results),
          "not_reproduced_shell_lines": non_interpreters[:60], "skipped": skipped,
          "failures": failures, "results": results}, indent=2, ensure_ascii=False),
         encoding="utf-8")
     print(f"RESULT ran={len(results)} failures={len(failures)} skipped={len(skipped)} "
           f"receipt={args.receipt}")
+    if head != head_at_start:
+        return 3
     return 1 if failures else 0
 
 
