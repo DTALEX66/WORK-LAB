@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T05:54:05Z",
+  "generatedAt": "2026-10-07T05:59:56Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -501,8 +501,9 @@
       "lines": 157,
       "digestBasis": "git-blob-at-HEAD",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 1,
+      "citedByRecords": 2,
       "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "tests/workflow-assistance/test_stamp_record_verification.py"
       ]
     },

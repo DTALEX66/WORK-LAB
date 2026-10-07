@@ -12,6 +12,13 @@ signals that say whether anything actually depends on the file —
   citedByRecords         any other tracked file (docs, audits, handoffs, registries) naming it
 
 Usage: python scripts/audit/tool_inventory_readback.py [--out docs/audits/TOOL_INVENTORY_2026-10-07.json]
+
+Ordering rule, learned the expensive way (ERR-151): this tool discovers instruments from the git
+INDEX, so a newly added script is invisible to it until `git add` has run. Re-measure the inventory
+AFTER staging and BEFORE committing — the 2026-10-07 head 1b2a747 was red on the runner for exactly
+this reason (`tracked instruments absent from the inventory: ['scripts/audit/executor_live_probe.py']`)
+while passing locally, because the committed inventory had been computed a moment earlier against a
+file that was still untracked.
 """
 from __future__ import annotations
 
@@ -65,6 +72,23 @@ def main() -> int:
 
     all_files = tracked_files()
     tools = [f for f in all_files if f.startswith(DIRS)]
+
+    # The discovery set comes from the index, so a brand-new instrument is invisible until it is
+    # staged. Saying so loudly here is what turns a future red-on-the-runner into a message at the
+    # moment of the mistake (ERR-151).
+    untracked = []
+    proc = subprocess.run(["git", "status", "--porcelain", "--untracked-files=normal", "--"] +
+                          list(DIRS), cwd=REPO, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace")
+    for line in proc.stdout.splitlines():
+        if line.startswith("??") or line.startswith("A "):
+            path = line[3:].strip().replace("\\", "/")
+            if path.endswith(".py") and path.startswith(DIRS):
+                untracked.append(path)
+    if untracked:
+        print(f"WARNING untracked-or-just-staged instruments are not in the index yet, so the "
+              f"inventory cannot describe them: {untracked}. Stage first, then re-measure.")
+
     if not tools:
         print("NO_TRACKED_TOOLS under " + ", ".join(DIRS))
         return 2
