@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T22:04:04Z",
+  "generatedAt": "2026-10-07T22:23:38Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2128,
+    "trackedFilesScanned": 2129,
     "distinctProjectLocalTokens": 428,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 428,
-    "citationsToAbsentTokens": 1180
+    "citationsToAbsentTokens": 1181
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,7 +29,7 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 565,
+      "citations": 566,
       "distinctPaths": 326
     },
     "machine_local_runtime_pointer": {
@@ -2392,6 +2392,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 4217,
         "text": "\"fix\": \"Root cause: the fixture is now built with dir=_runtime_root() (.project-local/runs/, the convention test_machine_identity.py already used), so any residue lands inside the boundary and inside "
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 5468,
+        "text": "\"repeat_prevention\": \"A head may be pushed only after the string `GATE_EXIT=0` has been read from the receipt file that the gate itself writes (`grep -qx GATE_EXIT=0 .project-local/runs/<run>/gate-ver"
       },
       {
         "path": ".project-local/runs",

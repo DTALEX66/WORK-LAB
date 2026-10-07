@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-10-07T22:02:24Z",
+  "generated_at": "2026-10-07T22:22:00Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,12 +9,12 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 179,
+    "total": 180,
     "by_classification": {
       "ci_configuration": 18,
       "ci_tooling": 9,
       "config_downgrade": 3,
-      "contract_drift": 55,
+      "contract_drift": 56,
       "dead_entry": 3,
       "entrypoint": 6,
       "evidence_state": 30,
@@ -5481,6 +5481,37 @@
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_ledger_unbound_triage.py is tracked and is the gate that observed the unbound count move 94 -> 95; the recorded command reads a gate receipt, which is a run artifact rather than a file operand of the regression test"
+    },
+    {
+      "error_id": "ERR-182",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "scripts/ci/verify_contract_ssot.py",
+      "command": "bash -c \"python scripts/ci/verify_contract_ssot.py | grep -q unlisted_declared=\"",
+      "exit_code": 1,
+      "observed_error": "The contract SSOT gate computed the set of on-disk schema files that the catalogue does not reference and printed each one as `[advisory]`, then exited 0. It therefore already knew about twelve-to-thirteen schemas whose status in the cross-language SSOT was undecided, and no run could ever fail on that knowledge; the count also moved silently between sessions. One member of that set was a live collision: `packages/contracts/schemas/workflow/observer-event.schema.json` and the registered `apps/observer/schemas/observer-event.schema.json` are different documents -- the core one is a snake_case projection shape with `$id work-lab/observer-event/v1` validated by verify_core_schemas.py, the observer one is camelCase with 7 required keys -- and one filename was standing for both in the single source of truth.",
+      "root_cause": "A soft report was chosen so that registering a schema would stay a human decision, and the softness was then mistaken for the absence of a rule. The decision cost nothing to keep -- it only had to be written down per file -- while an undeclared residue with no failure path converges to nothing being reviewed at all.",
+      "fix": "The advisory became `DECLARED_HELPER_SCHEMAS`, a path-to-reason map whose every member is measured, and `unlisted_verdict()` fails on an undeclared new schema and on a declaration that no longer matches. `observer-event` was registered additively as `workflow-observer-event` following the ERR-173 precedent for `workflow-evidence-envelope` -- no `$id` rename, so no existing document holder breaks -- taking the catalogue 40 -> 41, with the TS projection and the current-state snapshot (which digests the contract count) regenerated in the same commit. `tests/ci/test_contract_ssot_helper_boundary.py` plants both faults and re-measures each declared reason, distinguishing 'loads the file' from 'declares the version string': my first reason said canonical-config-intent had no consumer and the test caught it; my second said config_compiler loads it, which is also false -- it declares `work-lab/canonical-config-intent/v1` and never opens the file. Measured: CONTRACT_CATALOG_PASS contracts=41 schemas=41; CONTRACT_SSOT_PASS contracts=41 disk_schemas=53 unlisted_declared=12; frontend tsc/vitest/build all exit 0.",
+      "regression_test": "tests/ci/test_contract_ssot_helper_boundary.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A finding a gate can compute must have a path to failure: either it fails, or it fails on an *undeclared* case and each tolerated case carries a reason that a test re-measures. And a reason that names a consumer must state the relation (opens the file / declares the version / cites the path), because 'has consumers' is not a measurable claim.",
+      "remaining_boundary": "Two declared members are honest dead weight -- `cloud-event-envelope` is reached only by the directory census, and `canonical-config-intent`'s schema file is opened by nothing -- and removing them is a separate decision from making their status visible. The rule also permits the same filename twice when both copies are registered under distinct ids, which is the ERR-173 precedent honoured rather than a belief that name collisions are good.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the advisory design predates this session; ERR-173 already surfaced the collision and registered one half of it",
+        "fixedCommit": "999d659aeb924e322e340e5fbbc2bd6442bd69b6",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 999d659a adds DECLARED_HELPER_SCHEMAS, unlisted_verdict, the workflow-observer-event registration and the falsification test",
+        "bindingNote": "bound 2026-10-08 at creation; verifiedCommit unset until exact-SHA CI",
+        "affectedCapability": "Completeness of the cross-language contract SSOT",
+        "regressionCommand": "python -m pytest -q tests/ci/test_contract_ssot_helper_boundary.py"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/ci/test_contract_ssot_helper_boundary.py is tracked"
     }
   ],
   "wlrReconciled": true,
