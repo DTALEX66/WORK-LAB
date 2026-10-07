@@ -240,3 +240,31 @@ command-palette/states/status/tag/toast/tooltip/progress/sparkline/list/page-hea
 ### 回滚
 
 本工作区全部改动可用 `git -C <worktree> checkout -- .` 回到 `285704a`，或删工作区+分支整面撤销；收敛线不受影响。
+
+
+## 12. UI 轮已并入收敛线（owner 2026-10-07：继续完成UI任务，不管是合并迁移等）
+
+`71b1ae8`（分支 `ui-commercial-polish-20261007`）合入收敛线 `85545b3`，交付纪律变更见
+`taskpacks/current/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md` 第 8 节与登记行
+`UI-PRODUCT-PROMPT-20261007` 的当日更新。合并后在本体继续补齐提示词验收门里剩下的两项可静默验证的门：
+
+- 每泳道诚实态穷举：`src/laneTruth.sweep.test.tsx` 用 `VIEW_REGISTRY` 逐泳道以 `snap=null` 挂载，
+  断言无 `.tag.ok` 成功徽标、KPI/metric 槽不出现 `0`/`0/0`/`0.0`、文本必含声明式缺失词
+  （UNKNOWN/无数据/暂无/不可用/未接入/STALE/PARTIAL/ERROR/OFFLINE）。同文件带一条正控：
+  手工渲染 `Badge variant="success"` + 假 `0`，证明探测器真的能看见被禁止的东西——
+  没有这条正控，"20 条泳道全绿"只是空选择器的假象。
+- 键盘/焦点回归：`components/ui/command-palette.tsx` 打开时记录 opener，关闭时把焦点交还给它
+  （此前焦点留在已卸载的对话框输入框里，下一次 Tab 从文档顶部重来）。
+  `src/keyboardFocus.contract.test.tsx` 3 项断言 Esc 关闭并返回焦点、Enter 执行后同样返回、
+  方向键在面板内移动选择。
+- `OfflineState` 由"有定义无消费者"变为有消费者：`App.tsx` 在 `error && !snap`（传输确证失败、
+  也没有 last-good）的面板里渲染它，与投影无数值的 UNKNOWN 区分开。
+
+合并后本体实测：`npm run build`（`tsc -b && vite build`）退出 0，`node node_modules/vitest/vitest.mjs run`
+＝ 22 files / 150 tests 全过；`python -m pytest tests/ci/test_desktop_only_shell.py tests/ci/test_topbar_geometry_gate.py`
+＝ 21 passed（桌面唯一性合同现在在收敛线上跑，不再只活在 worktree）。
+
+仍未闭合（不粉饰）：G3 的真实桌面几何读回——本机 Chrome 154 headless 的 `/json/list` 在本会话从不
+应答（同一实例旁测：urllib 与"裸 socket＋User-Agent＋无端口 Host"曾返回 200，u19 原形状超时；
+`--remote-debugging-port=0` 只公布 ws 端口不服务 HTTP），所以几何门禁仍未接入 CI 必需步骤；
+真实 Tauri 窗口的目测属需真人确认类，按指令跳过。

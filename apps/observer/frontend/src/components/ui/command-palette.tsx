@@ -56,15 +56,23 @@ export function CommandPalette({
   const [active, setActive] = React.useState(0)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const dialogRef = React.useRef<HTMLDivElement>(null)
+  const openerRef = React.useRef<HTMLElement | null>(null)
 
   const visible = React.useMemo(() => filterItems(items, query), [items, query])
 
-  // reset + focus on open
+  // reset + focus on open, and hand focus BACK on close. Opening from the top
+  // bar's search field or from Ctrl/Cmd+K left focus inside a dialog that no
+  // longer exists, so the next Tab restarted at the top of the document.
   React.useEffect(() => {
     if (open) {
+      openerRef.current = document.activeElement as HTMLElement | null
       setQuery('')
       setActive(0)
       inputRef.current?.focus()
+    } else {
+      const returnTo = openerRef.current
+      openerRef.current = null
+      if (returnTo && document.contains(returnTo)) returnTo.focus()
     }
   }, [open])
 

@@ -4,7 +4,7 @@ import { TopStatusBar } from '@/components/layout/TopStatusBar'
 import { CommandPalette, type PaletteItem } from '@/components/ui/command-palette'
 import { Drawer } from '@/components/ui/drawer'
 import { Toaster, useToaster } from '@/components/ui/toast'
-import { UnknownState } from '@/components/ui/states'
+import { UnknownState, OfflineState } from '@/components/ui/states'
 import { CompactHUD } from '@/views/CompactHUD'
 // L10 (2026-09-27): B10 overview landing surface (KPI grid + trends +
 // Observer Map + system status + alerts + recent task packs).
@@ -218,6 +218,10 @@ export default function App() {
     error && !snap ? (
       <div className="panel mx-auto mt-10 max-w-xl text-center" role="alert">
         <div className="mb-2 text-lg text-error">数据源不可用</div>
+        {/* The named offline affordance, not just prose: this is the one surface
+            where the transport is known-failed rather than merely unmeasured, and
+            OfflineState is what says so in the same vocabulary the lanes use. */}
+        <OfflineState />
         <p className="whitespace-pre-wrap text-xs text-muted">{error}</p>
         <p className="mt-3 text-[11px] text-muted">
           保持 UNKNOWN 真相 — 不伪造 Agent / 模型 / 成本 / 资源
