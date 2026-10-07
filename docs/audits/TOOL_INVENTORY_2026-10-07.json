@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T19:28:19Z",
+  "generatedAt": "2026-10-07T19:52:52Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 56,
+    "trackedTools": 57,
     "withLedgerPromise": 18,
-    "referencedSomewhere": 56,
+    "referencedSomewhere": 57,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -210,9 +210,10 @@
       "lines": 808,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 2,
+      "citedByRecords": 3,
       "citedBy": [
         "docs/audits/ENTRY_BASELINE_2026-10-08.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "tests/ci/test_entry_baseline_projection.py"
       ]
     },
@@ -495,6 +496,19 @@
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/prove_control_to_observer.py",
+      "sha256": "f0622d103f1c50d97557ab510522bf83b75dd3947a4cca23284b94450e9217fa",
+      "bytes": 8379,
+      "lines": 178,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "UI_IMPLEMENTATION_REPORT.md",
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
