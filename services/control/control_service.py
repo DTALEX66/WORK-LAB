@@ -96,6 +96,21 @@ _DIFFABLE_EXEMPTIONS = ("config.yaml", "config.yml")
 NON_DIFFABLE_ROOTS = (".project-local/", ".hermes/", "docs/", "tests/")
 
 
+def _inside_project(candidate: Path, project_root: Path) -> tuple[bool, str, str]:
+    """Decide containment lexically, and return the two normalised strings that made the answer.
+
+    `Path.resolve()` consults the operating system: existing parents, substitute drives, 8.3 short names,
+    junctions and the current directory. A control-plane authorisation decided that way can come out
+    differently on two machines for the same input string -- which is exactly what happened when the same
+    boundary assertions passed locally and flipped on the runner. Normalising and case-folding here makes
+    the verdict a property of the text, and the returned pair goes into the refusal so any future red
+    explains itself instead of being re-derived by whoever comes next.
+    """
+    root = os.path.normcase(os.path.normpath(str(project_root)))
+    lexical = os.path.normcase(os.path.normpath(str(candidate)))
+    return lexical == root or lexical.startswith(root + os.sep), root, lexical
+
+
 def _is_non_diffable_target(resolved: Path, project_root: Path) -> bool:
     if name_is_sensitive(resolved, exempt=_DIFFABLE_EXEMPTIONS):
         return True
@@ -409,13 +424,11 @@ class ControlPlane:
         candidate = Path(raw)
         if not candidate.is_absolute():
             candidate = self.project_root / raw
-        try:
-            resolved = candidate.resolve()
-        except OSError:
-            return str(raw).replace("\\", "/")
-        if resolved.is_relative_to(self.project_root):
-            return resolved.relative_to(self.project_root).as_posix()
-        return str(resolved).replace("\\", "/")
+        normalized = Path(os.path.normpath(str(candidate)))
+        inside, _root, lexical = _inside_project(normalized, self.project_root)
+        if inside:
+            return normalized.relative_to(self.project_root).as_posix()
+        return lexical.replace("\\", "/")
 
     def _scope_failure(self, request: dict[str, Any]) -> tuple[str, str] | None:
         """Every declared boundary must resolve inside this repository.
@@ -445,12 +458,16 @@ class ControlPlane:
                 # A relative boundary is legal, but only once it is anchored: it resolves against this
                 # project, never against whatever directory the service happened to start in.
                 candidate = self.project_root / candidate
-            try:
-                resolved = candidate.resolve()
-            except OSError:
-                return ("UNRESOLVABLE_BOUNDARY", f"边界 {text} 无法解析，按失败关闭处理。")
-            if not resolved.is_relative_to(self.project_root):
-                return ("OUT_OF_PROJECT_SCOPE", f"边界 {text} 在本仓库之外，控制服务不接受越界写。")
+            # Containment is decided LEXICALLY, not by Path.resolve(): resolve() consults the operating
+            # system -- existing parents, substitute drives, short (8.3) names, junctions and the current
+            # directory -- so the same boundary string can be judged differently on two machines. A
+            # control-plane authorisation must mean the same thing everywhere, so the comparison is
+            # normalised and case-folded here, and the normalised pair is named in the refusal.
+            inside, lexical_root, lexical = _inside_project(candidate, self.project_root)
+            if not inside:
+                return ("OUT_OF_PROJECT_SCOPE",
+                        f"边界 {text} 在本仓库之外（规范化后 {lexical} 不在 {lexical_root} 之内），"
+                        "控制服务不接受越界写。")
         return None
 
     def _ceiling(self, requested: str) -> str:
@@ -732,13 +749,13 @@ class ControlPlane:
         # the service from — a diff computed against the wrong file is a plan built on nothing.
         path = Path(target)
         candidate = path if path.is_absolute() else (self.project_root / path)
-        try:
-            resolved = candidate.resolve()
-        except OSError:
-            resolved = None
-        if resolved is None or not resolved.is_relative_to(self.project_root):
+        normalized = Path(os.path.normpath(str(candidate)))
+        inside, lexical_root, lexical = _inside_project(normalized, self.project_root)
+        if not inside:
             return self.result(spec, "REFUSED", "TARGET_OUT_OF_PROJECT",
-                               f"配置目标 {target} 不在本仓库内；本轮没有对它之外的写权或读权。", request=request)
+                               f"配置目标 {target} 不在本仓库内（规范化后 {lexical} 不在 {lexical_root} 之内）；"
+                               "本轮没有对它之外的写权或读权。", request=request)
+        resolved = normalized
         if _is_non_diffable_target(resolved, self.project_root):
             # The diff answers "does this document declare this key", which makes any file an oracle if the
             # answer is a substring test -- see ERR-166 for the same hole on the read side one commit

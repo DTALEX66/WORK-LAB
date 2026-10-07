@@ -198,6 +198,39 @@ class ControlPlaneTestCase(unittest.TestCase):
         row = {r["task_id"]: r for r in self.plane.store.list_tasks()}["WL-LEASE-2"]
         self.assertEqual(row["lease_holder"], "executor-8")
 
+    def test_containment_is_decoded_from_the_text_not_from_the_filesystem(self) -> None:
+        """The verdict must not depend on what the machine happens to have on disk.
+
+        Same boundary string, same project root, two machines: this passed locally and flipped on the CI
+        runner while the check went through `Path.resolve()`. resolve() consults existing parents,
+        substitute drives, short names, junctions and cwd, so an authorisation decision built on it is a
+        statement about the host. The helper is now pure string normalisation, and these rows pin it
+        against paths that exist nowhere.
+        """
+        inside = control_service._inside_project
+        root = Path("D:/a/WORK-LAB/WORK-LAB")
+        for candidate, expected in (
+                (Path("D:/a/WORK-LAB/WORK-LAB/services/control"), True),
+                (Path("D:/a/WORK-LAB/WORK-LAB"), True),
+                (Path("D:/a/WORK-LAB/WORK-LAB/../OTHER"), False),
+                (Path("D:/a/WORK-LAB"), False),
+                (Path("D:/a/WORK-LAB/WORK-LABX"), False),
+                (Path("D:/All projects/OTHER-PROJECT"), False),
+                (Path("C:/Users/anyone/config.yaml"), False),
+                (Path("d:/a/work-lab/work-lab/config"), True)):
+            with self.subTest(candidate=str(candidate)):
+                self.assertIs(inside(candidate, root)[0], expected)
+
+    def test_a_refusal_names_the_two_normalised_paths_it_compared(self) -> None:
+        """A red on another machine has to explain itself, not be re-derived by whoever comes next."""
+        result = self.plane.execute(request_payload(
+            scope={"boundaries": ["D:/Clearly-Outside-This-Project"], "granted_by": "owner"},
+            idempotency_key="idem-lexicon-1"))
+        self.assertEqual(result["status"], "REFUSED", result["reason"])
+        self.assertEqual(result["reason_code"], "OUT_OF_PROJECT_SCOPE")
+        self.assertIn("规范化后", result["reason"])
+        self.assertEqual(self.plane.store.list_tasks(), [])
+
     def test_replaying_the_same_key_returns_the_same_record(self) -> None:
         first = self.plane.execute(request_payload())
         again = self.plane.execute(request_payload())
