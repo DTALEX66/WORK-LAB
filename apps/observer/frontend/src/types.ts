@@ -111,6 +111,65 @@ export interface Execution {
   sourceRef: string | null
 }
 
+// P1-02: one task record projected from the canonical store by the unique Snapshot API
+// (packages/client-neutral-core/scripts/snapshot_api.py::project_task_record). checkpoint VALUES never
+// cross the read-only boundary — the projection carries whether a checkpoint exists, its key names,
+// and a digest that moves when it changes.
+export interface TaskRecord {
+  taskId: string | null
+  projectId: string | null
+  status: string | null
+  createdAt: string | null
+  updatedAt: string | null
+  leaseHolder: string | null
+  leaseExpiresAt: string | null
+  fencingToken: number | null
+  checkpointPresent: boolean
+  checkpointKeys: string[]
+  checkpointDigest: string | null
+}
+
+// P1-03 / F1: the seven-layer capability ladder, projected by
+// packages/client-neutral-core/scripts/adapter_capability_projection.py. Each layer is its own claim:
+// MET requires a named source, and anything unprobed arrives as NOT_PROBED carrying the reason for the
+// gap. A card may not promote a layer because a neighbouring layer succeeded.
+export type CapabilityLayer =
+  | 'REGISTERED' | 'INSTALLED' | 'LOADED_CONNECTED' | 'QUALIFIED'
+  | 'ENABLED_FOR_TASK' | 'NATIVE_PROJECTION' | 'OBSERVED_IN_EXECUTION'
+
+export interface CapabilityLayerState {
+  layer: CapabilityLayer
+  state: 'MET' | 'NOT_PROBED' | 'NOT_SUPPORTED'
+  evidenceLevel: 'NO_EVIDENCE' | 'SIMULATED' | 'SYNTHETIC' | 'INTEGRATED' | 'REAL'
+  source: string | null
+  reason: string
+}
+
+export interface AdapterCapabilityCard {
+  clientId: string
+  displayName: string
+  supportLevel: string
+  declaredOperations: string[]
+  matrixOperations: string[]
+  operationsDrift: boolean
+  registryStatus: string
+  writePolicy: string
+  risk: string
+  runtimeAdapter: string | null
+  configOwnershipDefault: { layer?: string, mode?: string, preserve_unknown?: boolean } | null
+  clientNote?: string | null
+  declaredVersion: string | null
+  versionReadbackMethod: string | null
+  versionObservedAt: string | null
+  versionSource: string | null
+  detectionMode: string | null
+  detectionEvidenceState: string
+  protocolConformance: Record<string, string>
+  observedAt: string | null
+  layers: CapabilityLayerState[]
+  nativeStatus: 'NOT_IMPLEMENTED' | 'NOT_PROBED' | 'NATIVELY_VERIFIED'
+}
+
 export interface TokenSummary {
   inputTokens: number | null
   outputTokens: number | null
@@ -182,4 +241,11 @@ export interface SnapshotV3 {
   // Optional install-identity projection (U17/P0-07) when the backend carries
   // it. Absent => the software panel shows UNKNOWN (never a fake Healthy).
   software?: SoftwareIdentity[]
+  // P1-02 deep-link target records. ABSENT means the producer did not query the task table, which is a
+  // different statement from an empty list (queried, nothing there). The Work lane renders the first as
+  // 后端未提供 and only the second as 无任务 — never a padded 0.
+  taskRecords?: TaskRecord[]
+  // P1-03: per-client capability cards with the seven-layer ladder. ABSENT (producer could not read the
+  // declared sources) is reported as a source gap, not as "no adapters".
+  adapterCapabilities?: AdapterCapabilityCard[]
 }

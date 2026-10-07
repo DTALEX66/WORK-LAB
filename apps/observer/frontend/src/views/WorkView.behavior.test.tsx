@@ -12,11 +12,12 @@
 //   5. WorkView is read-only: it renders no approve/dispatch/retry/rollback
 //      write affordances (the Observer §8 read-only law)
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { WorkView } from '@/views/WorkView'
-import type { SnapshotV3 } from '@/types'
+import type { SnapshotV3, TaskRecord } from '@/types'
 import { VIEW_REGISTRY, VIEW_BY_ID, OVERVIEW_ID } from '@/lib/viewRegistry'
 import { NAV_GROUPS } from '@/components/layout/Sidebar'
+import { EMPTY_FOCUS, readRecordFocus, type RecordFocus } from '@/lib/recordFocus'
 
 // Minimal real-shape v3 snapshot (only the fields WorkView reads; the rest
 // of the schema is irrelevant to this projection).
@@ -129,5 +130,113 @@ describe('D3 Work lane (read-only closed loop, honest source gaps)', () => {
     expect(container.innerHTML).not.toContain('<button')
     expect(container.innerHTML).not.toContain('<input')
     expect(container.innerHTML).not.toContain('<textarea')
+  })
+})
+
+// P1-02 · record-level deep links on the Work lane.
+//
+// The lane keeps its zero-control read-only law, so a record is addressed with links. These tests pin
+// the four things that separate a real deep link from a decoration: the record renders, a missing
+// record says so instead of quietly showing another one, "backend never queried" is not "no tasks",
+// and every href in the lane is the same-path query link the URL writer uses.
+describe('P1-02 · task and execution focus', () => {
+  function taskRecord(over: Partial<TaskRecord> = {}): TaskRecord {
+    return {
+      taskId: 'WL-777', projectId: 'work-lab', status: 'RUNNING',
+      createdAt: '2026-10-08T00:00:00Z', updatedAt: '2026-10-08T00:05:00Z',
+      leaseHolder: 'worker-A', leaseExpiresAt: '2026-10-08T00:10:00Z', fencingToken: 3,
+      checkpointPresent: true, checkpointKeys: ['cursor', 'stage'],
+      checkpointDigest: 'a'.repeat(64),
+      ...over,
+    }
+  }
+  const task = taskRecord()
+
+  function withTasks(records: NonNullable<SnapshotV3['taskRecords']>): SnapshotV3 {
+    const s = realSnap()
+    s.taskRecords = records
+    return s
+  }
+
+  it('a focused task renders the detail card from real fields, gaps stay gaps', () => {
+    render(<WorkView snap={withTasks([task])} focus={{ taskId: 'WL-777', executionId: null }} onFocus={() => {}} />)
+    expect(screen.getByText(/任务详情/)).toBeTruthy()
+    expect(screen.getByText('worker-A · fence 3 · 到期 2026-10-08T00:10:00Z')).toBeTruthy()
+    expect(screen.getByText(/键 cursor \/ stage/)).toBeTruthy()
+    // checkpoint values never cross the boundary; the digest is what renders
+    expect(screen.getByText(/digest aaaaaaaaaa/)).toBeTruthy()
+    // dimensions the contract does not carry stay explicit gaps
+    expect(screen.getAllByText(/来源缺口/).length).toBeGreaterThanOrEqual(6)
+  })
+
+  it('an unknown taskId says 记录不存在 and does not select another record', () => {
+    const { container } = render(
+      <WorkView snap={withTasks([task])} focus={{ taskId: 'WL-deleted', executionId: null }} onFocus={() => {}} />,
+    )
+    expect(screen.getByText('记录不存在')).toBeTruthy()
+    expect(container.textContent).toContain('WL-deleted')
+    expect(screen.queryByText(/任务详情/)).toBeNull()
+    expect(container.textContent).not.toContain('worker-A')
+  })
+
+  it('a snapshot without taskRecords is 后端未提供, never rendered as 无任务', () => {
+    render(<WorkView snap={realSnap()} focus={{ taskId: 'WL-777', executionId: null }} onFocus={() => {}} />)
+    expect(screen.getByText('后端未提供')).toBeTruthy()
+    expect(screen.queryByText('无任务记录')).toBeNull()
+    expect(screen.queryByText('记录不存在')).toBeNull()
+  })
+
+  it('queried-and-empty is the other statement: 无任务记录', () => {
+    render(<WorkView snap={withTasks([])} focus={{ taskId: null, executionId: null }} onFocus={() => {}} />)
+    expect(screen.getByText(/无任务记录/)).toBeTruthy()
+    expect(screen.queryByText('后端未提供')).toBeNull()
+  })
+
+  it('a rejected id is reported with its reason and is not looked up', () => {
+    const { container } = render(
+      <WorkView snap={withTasks([task])} focus={EMPTY_FOCUS} onFocus={() => {}}
+              focusRejected={['taskId · 定位标识包含非法字符，已拒绝']} />,
+    )
+    expect(screen.getByText('定位被拒绝')).toBeTruthy()
+    expect(container.textContent).toContain('非法字符')
+    expect(screen.queryByText(/任务详情/)).toBeNull()
+  })
+
+  it('the row link is the deep link, and clicking it navigates in place instead of reloading', () => {
+    const calls: RecordFocus[] = []
+    const onFocus = (next: RecordFocus) => calls.push(next)
+    const { container } = render(<WorkView snap={withTasks([task])} focus={EMPTY_FOCUS} onFocus={onFocus} />)
+    const rowLink = Array.from(container.querySelectorAll('a'))
+      .find((anchor) => (anchor.getAttribute('href') || '').includes('taskId=WL-777'))
+    expect(rowLink, 'the task row must carry its own addressable link').toBeTruthy()
+    expect(rowLink!.getAttribute('href')).toContain('view=work')
+    fireEvent.click(rowLink!)
+    expect(calls).toEqual([{ taskId: 'WL-777', executionId: null }])
+  })
+
+  it('a focused record still renders zero controls and only same-path query links', () => {
+    const { container } = render(
+      <WorkView snap={withTasks([task])} focus={{ taskId: 'WL-777', executionId: 'ex-1' }} onFocus={() => {}} />,
+    )
+    expect(container.innerHTML).not.toContain('<button')
+    expect(container.innerHTML).not.toContain('<input')
+    expect(container.innerHTML).not.toContain('<textarea')
+    const anchors = Array.from(container.querySelectorAll('a'))
+    expect(anchors.length).toBeGreaterThan(0)
+    for (const anchor of anchors) {
+      const href = anchor.getAttribute('href') || ''
+      expect(/^\/\?view=work(&|$)/.test(href), `link escaped the lane contract: ${href}`).toBe(true)
+      expect(href.startsWith('//'), `protocol-relative link is not a deep link: ${href}`).toBe(false)
+    }
+  })
+
+  it('an id with a slash round-trips through the link instead of becoming another id', () => {
+    const slashed = taskRecord({ taskId: 'WL.777/x' })
+    const { container } = render(
+      <WorkView snap={withTasks([slashed])} focus={{ taskId: 'WL.777/x', executionId: null }} onFocus={() => {}} />,
+    )
+    const href = Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href')).find((h) => h && h.includes('taskId='))
+    expect(href).toContain('taskId=WL.777%2Fx')
+    expect(readRecordFocus('?' + href!.split('?')[1]).focus.taskId).toBe('WL.777/x')
   })
 })

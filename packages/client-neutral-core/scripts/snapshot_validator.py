@@ -22,6 +22,10 @@ from typing import Any
 
 SNAPSHOT_SCHEMA_VERSION = "workflow/snapshot/v3"
 
+# The fixed evidence vocabulary (WORK-LAB-AUTHORITY.md §10). A projection may report a lower level than
+# a caller hopes for; it may never spell a higher one.
+EVIDENCE_LEVELS = frozenset({"NO_EVIDENCE", "SIMULATED", "SYNTHETIC", "INTEGRATED", "REAL"})
+
 RFC3339_RE = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"
 )
@@ -100,6 +104,116 @@ def validate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
             quality = token_summary.get("costQuality")
             if quality is not None and quality not in ("EXACT", "ESTIMATED", "UNKNOWN"):
                 errors.append(f"tokenSummary.costQuality must be EXACT|ESTIMATED|UNKNOWN|null, got {quality!r}")
+
+    task_records = snapshot.get("taskRecords")
+    if task_records is not None:
+        if not isinstance(task_records, list):
+            errors.append("taskRecords must be a list when present")
+        else:
+            seen_task_ids: set[str] = set()
+            for index, record in enumerate(task_records):
+                if not isinstance(record, dict):
+                    errors.append(f"taskRecords[{index}] must be an object")
+                    continue
+                tid = record.get("taskId")
+                if not isinstance(tid, str) or not tid:
+                    errors.append(f"taskRecords[{index}].taskId required (non-empty string)")
+                elif tid in seen_task_ids:
+                    errors.append(f"taskRecords[{index}].taskId duplicates {tid!r}")
+                else:
+                    seen_task_ids.add(tid)
+                for field in ("projectId", "status"):
+                    value = record.get(field)
+                    if not isinstance(value, str) or not value:
+                        errors.append(f"taskRecords[{index}].{field} required (non-empty string)")
+                fencing = record.get("fencingToken")
+                if fencing is not None and (not isinstance(fencing, int) or isinstance(fencing, bool)):
+                    errors.append(f"taskRecords[{index}].fencingToken must be int|null, got {fencing!r}")
+                present = record.get("checkpointPresent")
+                if not isinstance(present, bool):
+                    errors.append(f"taskRecords[{index}].checkpointPresent must be boolean, got {present!r}")
+                keys = record.get("checkpointKeys")
+                if not isinstance(keys, list) or any(not isinstance(item, str) for item in keys):
+                    errors.append(f"taskRecords[{index}].checkpointKeys must be a list of key names")
+                digest = record.get("checkpointDigest")
+                if present and not isinstance(digest, str):
+                    errors.append(
+                        f"taskRecords[{index}].checkpointDigest must be a digest when a checkpoint exists"
+                    )
+                if not present and digest is not None:
+                    errors.append(
+                        f"taskRecords[{index}].checkpointDigest must be null when no checkpoint exists"
+                    )
+
+    adapter_cards = snapshot.get("adapterCapabilities")
+    if adapter_cards is not None:
+        if not isinstance(adapter_cards, list):
+            errors.append("adapterCapabilities must be a list when present")
+        else:
+            for index, card in enumerate(adapter_cards):
+                if not isinstance(card, dict):
+                    errors.append(f"adapterCapabilities[{index}] must be an object")
+                    continue
+                client_id = card.get("clientId")
+                if not isinstance(client_id, str) or not client_id:
+                    errors.append(f"adapterCapabilities[{index}].clientId required")
+                layers = card.get("layers")
+                if not isinstance(layers, list):
+                    errors.append(f"adapterCapabilities[{index}].layers must be a list")
+                    continue
+                names = [str(layer.get("layer")) for layer in layers if isinstance(layer, dict)]
+                if len(names) != len(layers):
+                    errors.append(f"adapterCapabilities[{index}].layers contains a non-object entry")
+                if len(set(names)) != len(names):
+                    errors.append(f"adapterCapabilities[{index}].layers repeats a layer name")
+                for layer_index, layer in enumerate(layers):
+                    if not isinstance(layer, dict):
+                        continue
+                    state = layer.get("state")
+                    if state not in ("MET", "NOT_PROBED", "NOT_SUPPORTED"):
+                        errors.append(
+                            f"adapterCapabilities[{index}].layers[{layer_index}].state "
+                            f"must be MET|NOT_PROBED|NOT_SUPPORTED, got {state!r}"
+                        )
+                    evidence = layer.get("evidenceLevel")
+                    if evidence not in EVIDENCE_LEVELS:
+                        errors.append(
+                            f"adapterCapabilities[{index}].layers[{layer_index}].evidenceLevel "
+                            f"must be one of {sorted(EVIDENCE_LEVELS)}, got {evidence!r}"
+                        )
+                    reason = layer.get("reason")
+                    if not isinstance(reason, str) or not reason.strip():
+                        errors.append(
+                            f"adapterCapabilities[{index}].layers[{layer_index}].reason required — "
+                            "an unprobed layer must say what is missing"
+                        )
+                    source = layer.get("source")
+                    if state == "MET":
+                        if not isinstance(source, str) or not source.strip():
+                            errors.append(
+                                f"adapterCapabilities[{index}].layers[{layer_index}] claims MET "
+                                "without a named source"
+                            )
+                        if evidence == "NO_EVIDENCE":
+                            errors.append(
+                                f"adapterCapabilities[{index}].layers[{layer_index}] claims MET "
+                                "with NO_EVIDENCE"
+                            )
+                status = card.get("nativeStatus")
+                if status not in ("NOT_IMPLEMENTED", "NOT_PROBED", "NATIVELY_VERIFIED"):
+                    errors.append(
+                        f"adapterCapabilities[{index}].nativeStatus must be "
+                        f"NOT_IMPLEMENTED|NOT_PROBED|NATIVELY_VERIFIED, got {status!r}"
+                    )
+                elif status == "NATIVELY_VERIFIED":
+                    observed = next((layer for layer in layers
+                                    if isinstance(layer, dict)
+                                    and layer.get("layer") == "OBSERVED_IN_EXECUTION"), None)
+                    if not observed or observed.get("state") != "MET":
+                        errors.append(
+                            f"adapterCapabilities[{index}] claims NATIVELY_VERIFIED while "
+                            "OBSERVED_IN_EXECUTION is not MET — the ladder cannot be climbed from the top"
+                        )
 
     transport = snapshot.get("transport")
     if transport is not None and not isinstance(transport, dict):

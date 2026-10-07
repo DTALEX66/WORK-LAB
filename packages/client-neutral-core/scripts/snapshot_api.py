@@ -16,6 +16,8 @@ positive integers. Nothing is padded to zero.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 from datetime import datetime, timezone
 from typing import Any
 
@@ -44,6 +46,8 @@ def build_snapshot(
     git_map: dict[str, dict[str, Any]] | None = None,
     agent_map: dict[str, str] | None = None,
     software: list[dict[str, Any]] | None = None,
+    task_records: list[dict[str, Any]] | None = None,
+    adapter_capabilities: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build the v3 snapshot from canonical facts (all fields optional for tests)."""
     generated_at = generated_at or _now()
@@ -95,6 +99,44 @@ def build_snapshot(
         ],
         "sourceRefs": [e.get("sourceRef") for e in executions if e.get("sourceRef")],
         **({"software": software} if software is not None else {}),
+        **({"taskRecords": task_records} if task_records is not None else {}),
+        **({"adapterCapabilities": adapter_capabilities} if adapter_capabilities is not None else {}),
+    }
+
+
+def project_task_record(row: dict[str, Any]) -> dict[str, Any]:
+    """Project one canonical-store task row into the Observer snapshot.
+
+    The checkpoint column is workflow state that can quote a user's own text, so its VALUES never enter
+    a read-only projection (AGENTS.md: no prompt bodies). What a reader needs to locate and trust a task
+    is projected instead: the identifier, its owning project, the real status, the lease and fencing
+    identity, whether a checkpoint exists at all, its key names, and a digest that changes when the
+    checkpoint changes. A digest is an identity, not content.
+
+    Absent means absent: no field is padded to a zero or an empty string.
+    """
+    checkpoint = row.get("checkpoint")
+    if checkpoint is None:
+        checkpoint = {}
+    has_checkpoint = row.get("checkpoint") is not None and bool(checkpoint)
+    digest = None
+    if has_checkpoint:
+        canonical = json.dumps(checkpoint, ensure_ascii=False, sort_keys=True,
+                               separators=(",", ":")).encode("utf-8")
+        digest = hashlib.sha256(canonical).hexdigest()
+    fencing = row.get("fencing_token")
+    return {
+        "taskId": row.get("task_id"),
+        "projectId": row.get("project_id"),
+        "status": row.get("status"),
+        "createdAt": row.get("created_at"),
+        "updatedAt": row.get("updated_at"),
+        "leaseHolder": row.get("lease_holder"),
+        "leaseExpiresAt": row.get("lease_expires_at"),
+        "fencingToken": fencing if isinstance(fencing, int) and not isinstance(fencing, bool) else None,
+        "checkpointPresent": has_checkpoint,
+        "checkpointKeys": sorted(str(key) for key in checkpoint) if has_checkpoint else [],
+        "checkpointDigest": digest,
     }
 
 

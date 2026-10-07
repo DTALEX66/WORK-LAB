@@ -386,6 +386,7 @@ def build_v3_snapshot(
     except Exception:
         platform_map = {}
     git_states = _git_states(store)
+    software_rows = _build_software_projection()
     return build_snapshot(
         revision=revision,
         generated_at=generated_at,
@@ -410,5 +411,46 @@ def build_v3_snapshot(
         workspace=workspace_evidence,
         platform_map=platform_map,
         agent_map=_agent_platform_map(),
-        software=_build_software_projection(),
+        software=software_rows,
+        task_records=_task_rows(store),
+        adapter_capabilities=_adapter_capability_rows(software_rows),
     )
+
+
+def _adapter_capability_rows(software_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """P1-03: one capability card per managed client, seven layers each.
+
+    The projection lives in ``adapter_capability_projection`` (the single place that decides a layer's
+    state) so the read side cannot promote a declared capability into an observed one. If either declared
+    source is missing the card set is simply absent from the snapshot — the Agents lane then reports the
+    source gap instead of inventing a ladder.
+    """
+    try:
+        from adapter_capability_projection import (load_inputs, load_live_probe,
+                                                  project_adapter_capabilities)
+        from snapshot_api import _now as _snapshot_now
+        registry, conformance, matrix = load_inputs(_ROOT)
+        probe_rows, probe_at = load_live_probe(_ROOT)
+    except Exception:  # noqa: BLE001 - an absent source is a reported gap, not a fabricated card
+        return []
+    return project_adapter_capabilities(
+        registry=registry,
+        conformance=conformance,
+        matrix=matrix,
+        software_rows=software_rows,
+        live_probe_rows=probe_rows,
+        live_probe_at=probe_at,
+        observed_at=_snapshot_now(),
+    )
+
+
+def _task_rows(store: CanonicalStore) -> list[dict[str, Any]]:
+    """Task detail records for the Work lane, projected by the unique Snapshot API.
+
+    ``list_tasks()`` is the canonical store's own read; the projection lives in
+    ``snapshot_api.project_task_record`` so there is exactly one place that decides what a task looks
+    like on the read side. The checkpoint VALUES stay in the store — a read-only projection carries the
+    key names and a digest, never the workflow text.
+    """
+    from snapshot_api import project_task_record
+    return [project_task_record(row) for row in store.list_tasks()]

@@ -14,6 +14,12 @@ import {
   type ThemeMode, type LayoutMode,
 } from '@/lib/api'
 import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL } from '@/lib/viewRegistry'
+// P1-02: record-level deep links ride the SAME ?view= lane mechanism — a task or
+// execution is addressed by ?taskId= / ?executionId=, never by a second router.
+import {
+  readRecordFocus, writeRecordFocus, EMPTY_FOCUS,
+  type RecordFocus,
+} from '@/lib/recordFocus'
 import { LaneErrorBoundary } from '@/components/ui/lane-error-boundary'
 import { announce } from '@/lib/a11y'
 
@@ -76,12 +82,27 @@ function readInitialLayout(): LayoutMode {
   return 'full'
 }
 
+// P1-02: the record a deep link points at, read once from the URL. An id that fails validation is kept
+// as a reason to show, not dropped silently — a link that "did nothing" is indistinguishable from a
+// broken product unless the product says why.
+function readInitialFocus(): { focus: RecordFocus; rejected: string[] } {
+  try {
+    return readRecordFocus(window.location.search)
+  } catch {
+    return { focus: EMPTY_FOCUS, rejected: [] }
+  }
+}
+
 // WORK-LAB-FRONTEND-TASKPACK-20260930: Control/Observer contract enforcement.
 // Per taskpack authority: only Control Surface executes writes (through adapter/service contract); Observer projection never writes. All observer lanes (observer, rules-policy, audit, approvals as read-only projection) stay READ-ONLY; any approve/retry/cancel/rollback/install/apply must be blocked by backend contract and must not be reachable through hidden shortcuts/deep-links/shared components.
 export default function App() {
   const [view, setView] = useState<ViewId>(readInitialView)
   const [theme, setTheme] = useState<ThemeMode>(readInitialTheme)
   const [layout, setLayout] = useState<LayoutMode>(readInitialLayout)
+  // P1-02: the focused record (taskId / executionId) and any id the URL carried but the
+  // validator refused. Selecting a row in a lane updates this; the URL writer below persists it.
+  const [initialFocus] = useState(readInitialFocus)
+  const [focus, setFocus] = useState<RecordFocus>(initialFocus.focus)
   // U06/SSE: live snapshot — first poll + server-sent events, no fixed ports.
   const { snap, source, live, error } = useLiveSnapshot()
 
@@ -182,10 +203,12 @@ export default function App() {
     // vanish on the first lane switch.
     const shell = params.get('shell')
     if (shell) p.set('shell', shell)
+    // P1-02: the focused record survives refresh, back/forward and copy-paste exactly like the lane.
+    writeRecordFocus(p, focus)
     const qs = p.toString()
     const url = window.location.pathname + (qs ? '?' + qs : '')
     window.history.replaceState(null, '', url)
-  }, [view, theme, layout])
+  }, [view, theme, layout, focus])
 
   const isOverview = view === OVERVIEW_ID
 
@@ -240,7 +263,14 @@ export default function App() {
           return <UnknownLane onFallback={() => setView(OVERVIEW_ID)} requested={view} />
         }
         const C = entry.component
-        return <C snap={snap} />
+        return (
+          <C
+            snap={snap}
+            focus={focus}
+            onFocus={setFocus}
+            focusRejected={initialFocus.rejected}
+          />
+        )
       })()
     )
   )
@@ -272,10 +302,9 @@ export default function App() {
           <span className="tag warn">Read-only</span>
         </div>
         <div className="panel">
-          <h3>界面状态</h3>
+          <h3>界面与辅助功能</h3>
           <div className="list">
-            <div className="list-item"><span>Rendering</span><span className="tag ok">Ready</span></div>
-            <div className="list-item"><span>Motion Effects</span><span className="tag ok">Enabled</span></div>
+            <div className="list-item"><span>减少动态效果</span><span className="tag info">遵循系统设置</span></div>
             <div className="list-item"><span>Palette</span><span className="tag info">Ctrl/Cmd + K</span></div>
             <div className="list-item"><span>Snapshot revision</span><span className="tag info">{snap ? String(snap.revision) : 'UNKNOWN'}</span></div>
           </div>

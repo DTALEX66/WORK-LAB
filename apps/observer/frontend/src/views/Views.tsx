@@ -6,6 +6,7 @@ import type {
   SnapshotV3, Execution, Project,
 } from '@/types'
 import { fmtTokens, fmtCostQuality, fmtTimestamp, stateTone, activityTone } from '@/lib/api'
+import { AdapterCapabilityCards } from '@/views/AdapterCapabilityCards'
 
 type Snap = SnapshotV3 | null
 
@@ -117,6 +118,10 @@ export function AgentsView({ snap }: { snap: Snap }) {
   }
   return (
     <div className="flex flex-col gap-4">
+      {/* P1-03: declared / detected / available / invoked / natively verified are five different facts.
+          The execution table below only ever showed the fourth-ish; the cards show all seven layers with
+          the reason any layer is still unprobed. */}
+      <AdapterCapabilityCards snap={snap} />
       <Card>
         <CardHeader><span>Agent 实例</span><span className="text-[11px] text-muted">{byAgent.size} 个 agent · {exs.length} 条执行 · 真实投影</span></CardHeader>
         <CardContent>
