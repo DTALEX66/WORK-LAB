@@ -77,6 +77,60 @@ distant = [r for r in rows if r.get("state") == "RESOLVES"
 # The 2026-08 batch records carry no date field at all, so the window rule cannot be applied to them;
 # naming that reason keeps "ambiguous" from reading like "decided against".
 
+# The signal that actually identifies a binding candidate: the commit that BORN the record. When that same
+# commit also touches a path the record names and contains the script the record promises to run, the
+# cause is pinned by the repository itself rather than inferred from file proximity. This is how ERR-123
+# turned out to be bindable to 763a77f while its guard file pointed somewhere else.
+for r in rows:
+    eid = r["errorId"]
+    birth = subprocess.run(["git", "log", "--format=%h|%s", "--reverse",
+                            "-S", f'"{eid}"', "--", "taskpacks/current/error-ledger.json"],
+                           cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
+                           errors="replace").stdout.strip().splitlines()
+    if not birth:
+        r["birthCommit"] = None
+        continue
+    sha, subject = birth[0].split("|", 1)
+    r["birthCommit"] = sha
+    r["birthSubject"] = subject[:90]
+    # How many records did that commit bring in? Thirteen of these rows are born in the 2026-09 cutover
+    # import, which added the whole 2026-08-11 batch at once. An import commit is not a fix commit, so the
+    # count is published per row and a binding candidate must have added at most one record (ERR-16).
+    def total(rev: str):
+        text = subprocess.run(["git", "show", f"{rev}:taskpacks/current/error-ledger.json"],
+                              cwd=ROOT, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace").stdout
+        try:
+            return json.loads(text)["summary"]["total"]
+        except (json.JSONDecodeError, KeyError):
+            return -1
+    r["birthAddedRecords"] = total(sha) - total(f"{sha}^")
+    touched = set(subprocess.run(["git", "show", "--format=", "--name-only", sha],
+                                 cwd=ROOT, capture_output=True, text=True,
+                                 encoding="utf-8", errors="replace").stdout.split())
+    named = {r.get("operand")} - {None}
+    record = records[eid]
+    for key in ("regression_test", "entrypoint", "command"):
+        for token in str(record.get(key) or "").replace("&&", " ").split():
+            if "/" in token and not token.startswith("-"):
+                named.add(token.strip("`'\"(),"))
+    r["birthTouchesNamedPath"] = sorted(named & touched)
+    promised = (record.get("lifecycle") or {}).get("regressionCommand") or record.get("command") or ""
+    script = next((t for t in str(promised).split() if t.endswith((".py", ".js", ".ts", ".tsx", ".mjs"))), "")
+    if script:
+        r["birthContainsPromisedScript"] = subprocess.run(
+            ["git", "cat-file", "-e", f"{sha}:{script}"], cwd=ROOT,
+            capture_output=True).returncode == 0
+    else:
+        r["birthContainsPromisedScript"] = None
+
+bindable = [r for r in rows if r.get("birthTouchesNamedPath")
+            and r.get("birthContainsPromisedScript")
+            and 0 <= (r.get("birthAddedRecords") or 99) <= 1]
+
+born_in_import = [r for r in rows if r.get("birthCommit")
+                  and (r.get("birthAddedRecords") or 0) > 1]
+
 doc = {"schemaVersion": "work-lab/ledger-unbound-triage/v1",
        "tool": "scripts/audit/triage_unbound_ledger_records.py",
        "generatedByCommand": "python scripts/audit/triage_unbound_ledger_records.py",
@@ -90,15 +144,19 @@ doc = {"schemaVersion": "work-lab/ledger-unbound-triage/v1",
                   "resolvesGuardUndatedRecord": len(undated),
                   "resolvesGuardDistant": len(distant),
                   "noResolvableOperand": len(unbound) - sum(
-                      1 for r in rows if r.get("state") == "RESOLVES")},
+                      1 for r in rows if r.get("state") == "RESOLVES"),
+                  "bindableByBirthCommit": len(bindable),
+                  "bornInAnImportCommit": len(born_in_import)},
        "clearCandidates": [r["errorId"] for r in clear],
+       "bindableByBirthCommit": [r["errorId"] for r in bindable],
+       "bornInAnImportCommit": [r["errorId"] for r in born_in_import],
        "resolvesGuardUndatedRecord": [r["errorId"] for r in undated],
        "resolvesGuardDistant": [r["errorId"] for r in distant],
        "rows": rows}
 OUT.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 print("unboundPass", len(unbound), "byState", dict(kinds))
-print("clear", len(clear), "undated", len(undated), "distant", len(distant))
+print("clear", len(clear), "undated", len(undated), "distant", len(distant), "bindableByBirth", len(bindable))
 for r in clear[:12]:
     print(f"  {r['errorId']} record={r['date']} guard={r['guardFirstCommit']} "
           f"added={r['guardAddedAt']} delta={r['guardVsRecordDays']}d {r['operand']}")

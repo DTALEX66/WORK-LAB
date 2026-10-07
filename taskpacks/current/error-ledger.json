@@ -3697,11 +3697,13 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "5274199",
-        "fixedCommit": null,
-        "verifiedCommit": null,
+        "fixedCommit": "763a77f22dc43aedb3d12fa5507cad95500dd7f7",
+        "verifiedCommit": "8847cdc0f77f3832a19de65748fde5f7b1a063cd",
         "affectedCapability": "Observer responsive shell below the rail breakpoint",
         "regressionCommand": "cd apps/observer && node tests/test_production_surface_static_contract.js",
-        "bindingNote": "unbound 2026-10-07: the first version of the binder accepted a commit whose promised regression script is not in that tree (ERR-124 named node_modules/vitest/vitest.mjs), and read a cutover merge as adding one record because `git show <c> -- <path>` was written with the commit after `--`. Both guards now live in the binder."
+        "bindingNote": "bound 2026-10-07 by scripts/audit/bind_err123_with_supersession.py: 763a77f touches apps/observer/tests/test_production_surface_static_contract.js and apps/observer/frontend/src/skins/l10b-shell.css, and that tree contains the promised regression script. SUPERSESSION the gate cannot see: the mechanism this fix introduced - the two-track grid inside @media (min-width: 841px) - was deliberately removed by 71b1ae8 under the owner's 2026-10-07 desktop-only instruction. The invariant (the content column must shrink; the application column must never collapse to the rail width) is still enforced, now unconditionally: `.app { grid-template-columns: clamp(...) minmax(0, 1fr) }` asserted by the re-anchored contract test (line 303 records the change of basis) and by tests/ci/test_desktop_only_shell.py. status_after=PASS therefore means 'the defect is fixed and guarded', not 'this exact CSS still reads as written'.",
+        "bindingBasis": "record-and-fix-in-one-commit: 763a77f adds the CSS tier, extends the contract test and creates this record together",
+        "verifiedCommitNote": "exact-SHA Actions readback at 8847cdc0f77f3832a19de65748fde5f7b1a063cd: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"

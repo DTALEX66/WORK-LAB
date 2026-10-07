@@ -73,6 +73,21 @@ class LedgerUnboundTriageGate(unittest.TestCase):
         self.assertGreaterEqual(len(gone), 1,
                                 "a PASS claim whose recorded check no longer exists must stay visible")
 
+    def test_a_bindable_row_needs_a_single_record_birth_commit(self) -> None:
+        # The structural finding of this triage: 86 of the 94 unbound PASS records were born inside the
+        # 2026-09 cutover import, which added the whole 2026-08 batch at once. An import commit is not a
+        # fix commit, so no row on this branch may be bound by pointing at it (ERR-16).
+        rows = {r["errorId"]: r for r in self.doc["rows"]}
+        for eid in self.doc["bindableByBirthCommit"]:
+            row = rows[eid]
+            self.assertTrue(row["birthTouchesNamedPath"], eid)
+            self.assertIs(True, row["birthContainsPromisedScript"], eid)
+            self.assertLessEqual(row["birthAddedRecords"], 1, eid)
+        import_born = {r["errorId"] for r in self.doc["rows"]
+                       if (r.get("birthAddedRecords") or 0) > 1}
+        self.assertEqual(import_born, set(self.doc["bornInAnImportCommit"]))
+        self.assertEqual(set(self.doc["bindableByBirthCommit"]) & import_born, set())
+
     def test_the_debt_figure_is_reported_as_debt_not_progress(self) -> None:
         # 37 records have a resolvable guard but only one has a commit close enough to be a candidate
         # binding; the rest are ambiguous because their guard is far from the record date or because the
