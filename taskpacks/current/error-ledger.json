@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 143,
+    "total": 144,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 49,
       "test_behavior_alignment": 16,
       "working_directory_recovery": 2,
       "evidence_state": 25,
-      "ci_configuration": 12,
+      "ci_configuration": 13,
       "feature_gap": 10,
       "config_downgrade": 3,
       "dead_entry": 3,
@@ -4328,6 +4328,37 @@
         "bindingNote": "bound 2026-10-07 against f07ea67: that commit carries both the gate (scripts/audit/topbar_geometry_via_cdp.py) and its test (tests/ci/test_topbar_geometry_gate.py); the binding gate's promise check (`git cat-file -e <fix>:<script>`) was run before stamping, the bulk guard counted the records that commit adds to the ledger (0), and its subject is quoted. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
         "bindingBasis": "fix-and-gate-in-one-commit: f07ea67 (`feat(gates): the CDP geometry probe becomes a verdict, and E...`) is the commit whose source change is the instrument this record describes; ERR-145 itself is written in the following commit, so ledger-entry-introduction is explicitly NOT claimed as the basis",
         "verifiedCommitNote": "exact-SHA Actions readback at 926d0e36c142eab693ec472759a2539f383b6cd5: work-lab-gate success with 7 jobs (gate-plan, supply-chain-security, token-monitor, workflow-assistance, integration, observer, aggregate) and no non-green job, plus wlr-060-production-gates success on the same head. The observer job is the one that builds the desktop crate and runs the WebView E2E readback, so this head also covers the shell that ERR-145's sibling round changed; the geometry gate itself still has no live readback (see remaining_boundary)"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
+    },
+    {
+      "error_id": "ERR-146",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_configuration",
+      "entrypoint": ".github/workflows/work-lab-gate.yml, scripts/audit/topbar_geometry_via_cdp.py, tests/ci/test_topbar_geometry_gate.py, scripts/ci/generate_current_state.py",
+      "command": "python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json",
+      "exit_code": 1,
+      "observed_error": "I wired the geometry gate into the observer job as a required step (commit 02194c8). Actions run 37569221208 went red on exactly that step: `GEOMETRY_GATE_NOT_RUN MEASURE_FAILED full RuntimeError(\"no CDP page target on 127.0.0.1:63543; last_error=TimeoutError('timed out'); targets_seen=[]\")`. The identical refusal happens on this machine, so the instrument — not the runner — is what cannot drive Chrome's CDP here. Two independent fixes fell out of reading that message rather than re-running the pipeline: the status check inherited from u19's helper tested `status.endswith(\"200\")`, which rejects a real `HTTP/1.1 200 OK` line, and the raw reader waited for the socket to close instead of honouring Content-Length, so a multi-kilobyte /json/list was never parsed at all.",
+      "root_cause": "A required CI step was added for an instrument that had produced zero PASS readbacks on any host. The gate's own refusal semantics (exit 3, named precondition) were correct, and the pipeline faithfully reported them as a failure — the mistake was treating 'the gate is written' as 'the gate runs', and then wiring it before it had ever measured anything.",
+      "fix": "The step is removed from the observer job and replaced by a comment naming ERR-146 as the condition for re-wiring: one GEOMETRY_GATE_PASS readback. The gate, its unit checks and its two transport fixes stay tracked, and the HTTP reader now parses the status line as tokens and reads exactly Content-Length bytes, raising on a truncated body rather than guessing from a closed socket. CURRENT_STATE is regenerated in the same commit as the workflow edit, which is the ordering rule the repro had already caught me breaking once today.",
+      "regression_test": "tests/ci/test_topbar_geometry_gate.py::InstrumentTests::test_a_tree_without_the_built_bundle_refuses_instead_of_passing",
+      "evidence_level": "isolated-runtime",
+      "repeat_prevention": "Never make a CI step required before the instrument has produced one real PASS somewhere; wire it as a step only in the same change that carries its readback, and if it refuses, keep the refusal visible in a register row instead of shipping a permanent red. When a browser instrument says `targets_seen=[]`, read the HTTP layer before blaming the browser: an `endswith(\"200\")` status test and a read-until-EOF body are both silent liars.",
+      "remaining_boundary": "G3 is still owed, now with a cross-machine reproduction: this sandbox and a GitHub windows-latest runner both refuse with the same message, so the remaining defect is in the websocket leg (the page target is found after the two fixes and the connect to its port is then refused, which means Chrome had already exited — a launch/argv problem I have not isolated). The keyboard/focus and Reduced-Motion geometry assertions that depend on that readback stay owed too; the behavioural half of keyboard focus is landed and tested.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "left null: 02194c8 is the wiring commit and is quoted in observed_error; naming it as introducedCommit and as the fix's ancestor in the same pair of fields is how ERR-089 was mis-bound, so the origin is stated in prose instead",
+        "fixedCommit": "91c2c8aca4d43d4a5b88f53b82824950e389a607",
+        "verifiedCommit": null,
+        "affectedCapability": "CI step surface; desktop geometry evidence",
+        "regressionCommand": "python -m pytest tests/ci/test_topbar_geometry_gate.py",
+        "bindingNote": "bound 2026-10-07 against 91c2c8a: that commit removes the required step and carries both HTTP fixes plus the gate's test (tests/ci/test_topbar_geometry_gate.py); the promise check ran before stamping and the bulk guard counted the ledger rows it adds (0). verifiedCommit stays null until an exact-SHA readback covers a head containing this record",
+        "bindingBasis": "fix-and-revert-in-one-commit: the fix is the removal of the wiring that the record describes, so the same commit is both the change and its evidence"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
