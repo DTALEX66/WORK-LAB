@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ag19-record-root-pin-test/v1",
-  "at": "2026-10-07T05:14:27Z",
+  "at": "2026-10-07T05:14:44Z",
   "tool": "scripts/audit/ag19_record_root_pin_test.py",
   "pinSource": "atlas-machine-local",
   "scope": {
@@ -180,7 +180,7 @@
     }
   ],
   "unreadable": [],
-  "verdict": "PIN_MATCH_FOUND_EXTRACTION_OWED",
+  "verdict": "PIN_MATCH_FOUND_AND_RECOVERED_TRACKED",
   "whatThisDoesNotProve": [
     "an unpinned target (no expected_sha256 in the atlas) cannot be disproved by hash at all; for those this instrument can only report that no WORK-LAB-attributed exact name hit exists in the enumerated scope",
     "a zip member matched on SIZE alone is a lead, not a recovery: its bytes are only compared after extraction, and this sweep extracts only members whose normalized filename matches a digest-pinned target that has no pinned size",

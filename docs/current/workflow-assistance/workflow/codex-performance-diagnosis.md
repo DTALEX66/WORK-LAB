@@ -13,7 +13,8 @@
 
 ### L1：全局配置——WORK-LAB 增强模块
 
-由 `10-workflow/workflow-assistance` 管理的声明式 overlay：
+由 Workflow 模块 `packages/client-neutral-core`（2026-09 收敛前为 `10-workflow/workflow-assistance`）
+管理的声明式 overlay：
 
 - `~/.codex/AGENTS.md` 中的 marker-delimited 受管块；
 - `~/.codex/rules/workflow-assistance.rules`；

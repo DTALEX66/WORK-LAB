@@ -14,7 +14,7 @@ control plane.
 The machine-readable authority is:
 
 ```text
-10-workflow/workflow-assistance/config/codex-enhancement-boundary.json
+config/codex-enhancement-boundary.json
 ```
 
 ## Responsibility

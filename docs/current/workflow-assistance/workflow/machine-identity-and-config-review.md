@@ -34,7 +34,8 @@
 
 ## 操作
 
-从 WORK-LAB Git 根进入 `10-workflow/workflow-assistance` 后：
+在 WORK-LAB Git 根运行（`services/…` 本身就是仓库根相对路径，旧文档写作"先进入
+`10-workflow/workflow-assistance`"是该目录被拆分前的写法，按它执行会找不到路径）：
 
 ```powershell
 # 只读：查看当前项目副本状态；不写文件

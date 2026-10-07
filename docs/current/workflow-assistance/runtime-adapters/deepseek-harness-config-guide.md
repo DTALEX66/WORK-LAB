@@ -33,8 +33,9 @@ DSH（DeepSeek Harness）是一个 **Agent 运行时（agent runtime）**，不�
 
 DSH 会话会自动加载项目根与模块的 AGENTS.md。WORK-LAB 根 AGENTS.md 目前包含：
 
-- **Scope**：单根 monorepo，活跃模块仅 `10-workflow/workflow-assistance` 与
-  `30-observer/work-lab-observer`；Observer 严格只读。
+- **Scope**：单根 monorepo，规范模块根仅 `packages/client-neutral-core`（Workflow）与
+  `apps/observer`（Observer，严格只读）；`10-workflow/workflow-assistance` 与
+  `30-observer/work-lab-observer` 是 2026-09 目录收敛前的历史路径，已不再被跟踪。
 - **Ownership**：单写者；只读审查者不得编辑；跨模块变更需显式任务卡。
 - **Safety（2026-08-16 强化）**：
   - 凭据/`.env`/auth store/私钥/浏览器数据/token/prompt/response 正文禁读禁传；

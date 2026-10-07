@@ -93,7 +93,8 @@ project_doc_max_bytes  = 65536
 
 ## 同步、验证与回滚
 
-从 `10-workflow/workflow-assistance` 运行：
+从 WORK-LAB Git 根运行（`10-workflow/workflow-assistance` 已在 2026-09 目录收敛中拆分，不再是
+被跟踪路径；下面每条命令都是仓库根相对路径）：
 
 ```bash
 python integrations/executors/codex/sync_codex_global_assets.py plan \
