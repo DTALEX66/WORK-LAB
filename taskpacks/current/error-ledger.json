@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 148,
+    "total": 149,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 50,
       "test_behavior_alignment": 16,
       "working_directory_recovery": 2,
       "evidence_state": 26,
-      "ci_configuration": 13,
+      "ci_configuration": 14,
       "feature_gap": 10,
       "config_downgrade": 3,
       "dead_entry": 3,
@@ -4486,6 +4486,37 @@
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_superseded_path_instructions.py",
         "bindingNote": "bound 2026-10-07 against cd3533d: that commit carries the five re-pointed documents and the gate; verified from `git show` for each promised path before stamping",
         "bindingBasis": "fix-and-gate-in-one-commit: `deepseek-harness-config-guide.md` `codex-enhancement-boundary.md` … re-pointed in the same commit as test_superseded_path_instructions.py"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
+    },
+    {
+      "error_id": "ERR-151",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_configuration",
+      "entrypoint": "scripts/audit/tool_inventory_readback.py, tests/workflow-assistance/test_tool_inventory_coverage.py, .github/workflows/work-lab-gate.yml",
+      "command": "python -m pytest tests/workflow-assistance/test_tool_inventory_coverage.py",
+      "exit_code": 1,
+      "observed_error": "Head 1b2a747 was red on the runner — `tracked instruments absent from the inventory: ['scripts/audit/executor_live_probe.py']` — while every local run of the same gate passed, including a governance run minutes before the push. A clean-checkout worktree at that head reproduced it in one step, so it was neither the runner nor the file.",
+      "root_cause": "The inventory discovers instruments from the git index, so a script that exists on disk but has not been staged yet is not merely unstamped — it is invisible, and the inventory written in that state is then committed alongside it. The gate at the next commit compares against `git ls-files` and finds the omission. Every local check passed for the same reason: each was run against the index as it existed a step too early.",
+      "fix": "The readback now prints which instrument-looking files are untracked or freshly added and tells the operator to stage first, and the ordering rule is written into the tool's own usage text rather than into a note someone has to remember. Both the tool and its inventory were then re-measured after staging in the following commit, which moved the tool's own digest basis from working-tree-uncommitted to git-blob-at-HEAD — the basis the gate prefers.",
+      "regression_test": "tests/workflow-assistance/test_tool_inventory_coverage.py::ToolInventoryCoverageGate::test_the_shipped_inventory_describes_the_tree",
+      "evidence_level": "isolated-runtime",
+      "repeat_prevention": "Derive discovery-time state from the same reference the gate will use: stage, then re-measure, then commit — never measure a working tree and commit a different index. When a gate is green locally and red on the runner at the same head, reproduce in a clean checkout before touching the gate, and treat a self-referential inventory (a tool that records its own digest) as a two-commit affair by design.",
+      "remaining_boundary": "The warning names files under the instrument directories only; an instrument outside them would still be discovered by the gate at the next commit rather than warned about now. The inventory could be made to read HEAD^..HEAD directly, but that changes what the artifact means — it is a snapshot of the index at a point in time — so the ordering is documented instead of being worked around. verifiedCommit stays null until an exact-SHA readback covers a head containing this record.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "left null: the discovery source has been the index since the tool existed; the exposure came from adding an instrument and its inventory in one motion on 2026-10-07, and the red head is quoted above rather than attributed to a SHA nobody wrote",
+        "fixedCommit": "950ce65aeb6622247ed8eea82d94d5eff2292509",
+        "verifiedCommit": null,
+        "affectedCapability": "Tool inventory traceability; CI-surface reproducibility",
+        "regressionCommand": "python -m pytest tests/workflow-assistance/test_tool_inventory_coverage.py",
+        "bindingNote": "bound 2026-10-07 against 950ce65: that commit adds the warning and the ordering rule to the tool the record describes; verified from `git show` before stamping",
+        "bindingBasis": "fix-commit-introduction: the tool change and its gate are both tracked there"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
