@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T20:32:19Z",
+  "generatedAt": "2026-10-07T21:32:50Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2126,
-    "distinctProjectLocalTokens": 424,
+    "trackedFilesScanned": 2128,
+    "distinctProjectLocalTokens": 426,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 424,
-    "citationsToAbsentTokens": 1172
+    "tokensAbsent": 426,
+    "citationsToAbsentTokens": 1177
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,16 +21,16 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 244,
-      "distinctPaths": 87
+      "citations": 247,
+      "distinctPaths": 89
     },
     "machine_field_pointing_at_absent_path": {
       "citations": 14,
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 561,
-      "distinctPaths": 324
+      "citations": 563,
+      "distinctPaths": 325
     },
     "machine_local_runtime_pointer": {
       "citations": 149,
@@ -202,7 +202,7 @@
       {
         "path": ".project-local",
         "file": "services/control/control_service.py",
-        "line": 96,
+        "line": 97,
         "text": "NON_DIFFABLE_ROOTS = (\".project-local/\", \".hermes/\", \"docs/\", \"tests/\")"
       },
       {
@@ -298,7 +298,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "packages/client-neutral-core/scripts/artifact_handle_projection.py",
-        "line": 62,
+        "line": 71,
         "text": "# When one path is declared under two keys (this project declares `.project-local/artifacts` as both the"
       },
       {
@@ -400,14 +400,26 @@
       {
         "path": ".project-local/artifacts",
         "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
-        "line": 41,
+        "line": 42,
         "text": "ARTIFACTS = \".project-local/artifacts\""
       },
       {
         "path": ".project-local/artifacts/MANIFEST.json",
         "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
-        "line": 367,
+        "line": 372,
         "text": "\"digestSource\": \"record:.project-local/artifacts/MANIFEST.json\"}"
+      },
+      {
+        "path": ".project-local/artifacts/SECRET_SHAPE_SCAN_HEAD.json",
+        "file": "scripts/audit/tracked_secret_shape_scan.py",
+        "line": 96,
+        "text": "ap.add_argument(\"--out\", default=\".project-local/artifacts/SECRET_SHAPE_SCAN_HEAD.json\")"
+      },
+      {
+        "path": ".project-local/artifacts/SECRET_SHAPE_SCAN_HEAD.json",
+        "file": "tests/ci/test_no_home_credential_document_is_tracked.py",
+        "line": 43,
+        "text": "\"(.project-local/artifacts/SECRET_SHAPE_SCAN_HEAD.json), removal is owner-gated because \""
       },
       {
         "path": ".project-local/artifacts/ag16-handback/evidence.json",
@@ -424,7 +436,7 @@
       {
         "path": ".project-local/artifacts/backup/hermes/config.yaml",
         "file": "tests/workflow-assistance/test_control_service.py",
-        "line": 318,
+        "line": 348,
         "text": "\".project-local/artifacts/backup/hermes/config.yaml\","
       },
       {
@@ -976,7 +988,7 @@
       {
         "path": ".project-local/runs",
         "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
-        "line": 42,
+        "line": 43,
         "text": "RUNS = \".project-local/runs\""
       },
       {
@@ -1250,6 +1262,12 @@
         "text": "\".project-local/runs/pycache\", REL):"
       },
       {
+        "path": ".project-local/runs/qoder-20261007-a/secret_scan_from_test.json",
+        "file": "tests/ci/test_no_home_credential_document_is_tracked.py",
+        "line": 128,
+        "text": "\".project-local/runs/qoder-20261007-a/secret_scan_from_test.json\"],"
+      },
+      {
         "path": ".project-local/runs/qoder-agent-verbs",
         "file": "packages/client-neutral-core/scripts/adapter_verb_probe.py",
         "line": 62,
@@ -1336,7 +1354,7 @@
       {
         "path": ".project-local/runs/tmp/cookies.sqlite",
         "file": "tests/workflow-assistance/test_control_service.py",
-        "line": 319,
+        "line": 349,
         "text": "\".project-local/runs/tmp/cookies.sqlite\"):"
       },
       {
@@ -1696,6 +1714,18 @@
         "file": "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-H.md",
         "line": 92,
         "text": "cannot be re-run without it, and everything under `.project-local/artifacts/`, which is the evidence"
+      },
+      {
+        "path": ".project-local/artifacts/SECRET_SHAPE_SCAN_HEAD.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 256,
+        "text": "| SECURITY-PUBLIC-EXPOSURE-20261008 | P0 | OWNER DECISION NEEDED (measured, not assumed) | **一份属于用户 Home 的配置文档躺在公开仓库的受版本控制树里。** 仓库可见性由 `gh repo view --json visibility` 读回为 `PUBLIC`。2026-09-30 的 audit-"
+      },
+      {
+        "path": ".project-local/artifacts/SECRET_SHAPE_SCAN_HEAD.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 5341,
+        "text": "\"fix\": \"Measured rather than assumed: a secret-shape scanner was written and run over the committed tree -- 2,107 files scanned, 20 binary skipped, 6 pattern hits, every one adjudicated to a placehold"
       },
       {
         "path": ".project-local/artifacts/ag19-registry-backup-20261007",
@@ -3615,7 +3645,7 @@
         "path": ".project-local/runs/tmp",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 234,
-        "text": "| REQ-RANGE-20261007 | P2 | BACKEND_LANDED_LOCAL_TESTED / OBSERVER_ROUTE_READ_ONLY / UI_LANDING_BLOCKED_ON_HANDLE_PROJECTION | 从退役行里迁出的**内部**需求，不再伪装成外部候选：证据链已有 sha256 与成本预算，但大产物只能整读，代码里只有 `_truncate(l"
+        "text": "| REQ-RANGE-20261007 | P2 | BACKEND_LANDED_LOCAL_TESTED / OBSERVER_ROUTE_READ_ONLY / HANDLES_PROJECTED_CAP200_TRUNCATED / UI_CONSUMER_WIRED@0e95af85 / EXACT_SHA_CI_NOT_READ | 从退役行里迁出的**内部**需求，不再伪装成外部候"
       },
       {
         "path": ".project-local/runs/tmp",
@@ -3825,7 +3855,7 @@
         "path": ".project-local/runs/wl-layer/bh8/shell-hooks-allowlist.json.bak",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 49,
-        "text": "| D2 | USER AUTH | CLOSED-VACUOUS@2a1c7b2 | 2026-09-23 full-repo scan: 0 tracked .bak/.orig/.backup; the only untracked .bak is `.project-local/runs/wl-layer/bh8/shell-hooks-allowlist.json.bak` (insid"
+        "text": "| D2 | USER AUTH | OPEN (owner decision: delete the archived .bak or register it as an exception; the suffix class is now machine-checked) | 2026-09-23 full-repo scan: 0 tracked .bak/.orig/.backup; th"
       },
       {
         "path": ".project-local/task-artifacts",
@@ -5140,7 +5170,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
-        "line": 200,
+        "line": 205,
         "text": "``.project-local/artifacts`` — so a projection that listed it would leak by proxy."
       },
       {
@@ -6240,7 +6270,7 @@
       {
         "path": ".project-local/artifacts/x.txt",
         "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
-        "line": 387,
+        "line": 396,
         "text": "self.reject([dict(self.good(), handle=\".project-local/artifacts/x.txt\")], \"must be an absolute path\")"
       },
       {
@@ -7123,7 +7153,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 202
+    "presentOnThisMachine": 204
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

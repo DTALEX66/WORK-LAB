@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-07T11:16:55Z",
+  "generatedAt": "2026-10-07T21:32:35Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -8,7 +8,7 @@
     "null": "an unverified fix stays null, and a PASS record with no fixedCommit is listed as owed rather than left silently unbound"
   },
   "counts": {
-    "bound": 49,
+    "bound": 63,
     "unboundPassRecords": 94,
     "anomalies": 0
   },
@@ -501,6 +501,146 @@
       "promise": "tests/workflow-assistance/test_toolchain_declarations.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-163",
+      "statusAfter": "PASS",
+      "fixedCommit": "e70c04c9f236375ee7bc281711f051e8f9a97698",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-164",
+      "statusAfter": "PASS",
+      "fixedCommit": "a279f5432d2ab9c36fd8ffd463be07ae98865d98",
+      "verifiedCommit": null,
+      "promise": "services/orchestration/run_quality_gate.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-165",
+      "statusAfter": "PASS",
+      "fixedCommit": "efb6a19c6b88c514ce77ecae99095c1aa071e9ae",
+      "verifiedCommit": null,
+      "promise": "scripts/audit/topbar_geometry_via_cdp.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-166",
+      "statusAfter": "PASS",
+      "fixedCommit": "6d20d28e55dce4ad0fc5555652f95e77aaeb1d6b",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-167",
+      "statusAfter": "PASS",
+      "fixedCommit": "06908ae34ac7400b72a8377139cd4515ea60571c",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-168",
+      "statusAfter": "PASS",
+      "fixedCommit": "06908ae34ac7400b72a8377139cd4515ea60571c",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-169",
+      "statusAfter": "PASS",
+      "fixedCommit": "dcee507687809a1404ffd503bdf951adf0b067ee",
+      "verifiedCommit": null,
+      "promise": "scripts/ci/generate_current_state.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-170",
+      "statusAfter": "PASS",
+      "fixedCommit": "dcee507687809a1404ffd503bdf951adf0b067ee",
+      "verifiedCommit": null,
+      "promise": "scripts/ci/failfast_group.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-171",
+      "statusAfter": "PASS",
+      "fixedCommit": "97d0ede8bd6d33d420b5d609e599ea01596c10a9",
+      "verifiedCommit": null,
+      "promise": "scripts/audit/outside_root_spill_sweep.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-172",
+      "statusAfter": "PASS",
+      "fixedCommit": "051ecbc11c10b48d4ef019ec933d5fd11686a5b4",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-173",
+      "statusAfter": "PASS",
+      "fixedCommit": "27aa946a666042118e90aae9f3fdeab53a58a5d9",
+      "verifiedCommit": null,
+      "promise": "scripts/ci/verify_contract_catalog.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-174",
+      "statusAfter": "PASS",
+      "fixedCommit": "f9f38d6f92e41783fbca4eea8fc8dd30ae89aff6",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-175",
+      "statusAfter": "PASS",
+      "fixedCommit": "b4da0007b036048e607436cc46cb3b4cb0b3e3cb",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-176",
+      "statusAfter": "PASS",
+      "fixedCommit": "b4da0007b036048e607436cc46cb3b4cb0b3e3cb",
+      "verifiedCommit": null,
+      "promise": "tests/ci/test_no_home_credential_document_is_tracked.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
       "bindingNotePresent": true
     }
   ],
