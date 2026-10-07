@@ -241,6 +241,28 @@ class ControlPlaneTestCase(unittest.TestCase):
                     and node.value.value.id == "os" and node.value.attr == "path"):
                 offenders.append((node.lineno, node.attr))
         self.assertEqual(offenders, [], "host-dependent path calls in the control service: %s" % offenders)
+        # `relative_to` is the same class of fault one level up: it compares with the host's case rules, so a
+        # case-folded lexical path fails against an original-case root on Linux and succeeds on Windows. It
+        # raised ValueError in `_is_non_diffable_target`, which the diff read as "not ours to read" and turned
+        # into three refused config targets on the runner while the same tests passed locally.
+        relative_to_calls = [node.lineno for node in ast.walk(tree)
+                             if isinstance(node, ast.Attribute) and node.attr == "relative_to"
+                             and not (isinstance(node.value, ast.Constant))]
+        self.assertEqual(relative_to_calls, [],
+                         "Path.relative_to in the control service decides with the filesystem's case rules: "
+                         f"lines {relative_to_calls}")
+        # the third host query of this series: `Path.resolve()` inside the authorising class. It turned
+        # `/home/runner/...` into `D:/home/runner/...` on Windows, so a POSIX-shaped root and its own boundary
+        # stopped matching and every operation refused -- found by running the same decision against four root
+        # shapes on one machine, which is the only way a Windows-only check can ever see it.
+        planes = [node for node in ast.walk(tree)
+                  if isinstance(node, ast.ClassDef) and node.name == "ControlPlane"]
+        self.assertEqual(1, len(planes), "expected exactly one ControlPlane class to guard")
+        host_queries = [(node.lineno, node.func.attr) for node in ast.walk(planes[0])
+                        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                        and node.func.attr in {"resolve", "absolute", "cwd", "expanduser", "home"}]
+        self.assertEqual([], host_queries,
+                         f"the authorising class asks the host where it is: {host_queries}")
         self.assertEqual(control_service.normalise_path("D:\\A\\x\\..\\y"), "d:/a/y")
         self.assertEqual(control_service.normalise_path("/etc/../etc"), "/etc")
         self.assertEqual(control_service.normalise_path("D:/a/b/../.."), "d:/")
@@ -299,6 +321,45 @@ class ControlPlaneTestCase(unittest.TestCase):
         self.assertEqual(self.plane.store.list_tasks()[0]["checkpoint"]["boundaries"], ["services/control"])
 
     # -- 6 the plan-only config path ---------------------------------------
+    def test_config_diff_decides_the_same_under_every_root_shape(self) -> None:
+        """The exact CI refusal, reproduced on one machine: a case-folded target vs an original-case root.
+
+        The runner reported `TARGET_SENSITIVE` for `.project/governance/work-lab.project-profile.yaml`,
+        which is not a credential name at all: `_is_non_diffable_target` called `Path.relative_to` with the
+        lower-cased lexical path against `/home/runner/work/WORK-LAB/WORK-LAB`, that raised ValueError on a
+        case-sensitive filesystem, and the except branch means "refuse". Windows case-insensitivity hid it.
+        Roots here are strings, no filesystem is consulted for the decision, so all three must agree.
+        """
+        for root_text in ("D:/All projects/WORK-LAB", "/home/runner/work/WORK-LAB/WORK-LAB",
+                          "/github/workspace", str(ROOT)):
+            plane = control_service.build_plane(fixture_dir(prefix="cfg-diff-root-"), Path(root_text))
+            try:
+                result = plane.execute(request_payload(
+                    scope={"boundaries": [root_text], "granted_by": "owner 2026-10-08"},
+                    operation="config.diff",
+                    payload={"target_file": ".project/governance/work-lab.project-profile.yaml",
+                             "field": "schema_version", "value": "work-lab-project-profile/v2"}))
+                self.assertEqual("PLANNED", result["status"],
+                                 f"root {root_text}: {result['reason_code']} {result['reason']}")
+                self.assertEqual(".project/governance/work-lab.project-profile.yaml",
+                                 result["readback"]["target"], f"root {root_text}")
+                refused = plane.execute(request_payload(
+                    scope={"boundaries": [root_text], "granted_by": "owner 2026-10-08"},
+                    operation="config.diff",
+                    payload={"target_file": "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+                             "field": "trackedTools", "value": 1}))
+                self.assertEqual("REFUSED", refused["status"], f"root {root_text}")
+                self.assertEqual("TARGET_SENSITIVE", refused["reason_code"], f"root {root_text}")
+                outside = plane.execute(request_payload(
+                    scope={"boundaries": [root_text], "granted_by": "owner 2026-10-08"},
+                    operation="config.diff",
+                    payload={"target_file": "D:/Other Vendor App/config.yaml",
+                             "field": "model", "value": "x"}))
+                self.assertEqual("REFUSED", outside["status"], f"root {root_text}")
+                self.assertEqual("TARGET_OUT_OF_PROJECT", outside["reason_code"], f"root {root_text}")
+            finally:
+                plane.store.close()
+
     def test_config_diff_returns_a_plan_and_says_it_did_not_write(self) -> None:
         result = self.plane.execute(request_payload(
             operation="config.diff",
@@ -437,6 +498,16 @@ class TestFixturesDoNotAssumeTheAuthorMachine(unittest.TestCase):
                 scope={"boundaries": ["D:/All projects/OTHER-PROJECT"], "granted_by": "x"}))
             self.assertNotEqual("ACCEPTED", result["status"], result)
         finally:
+            plane.store.close()
+
+
+    def test_a_relative_project_root_is_refused_at_construction(self) -> None:
+        """Without `resolve()` a relative root would mean "whatever the cwd is" -- so refuse it outright."""
+        with self.assertRaises(ValueError) as caught:
+            control_service.build_plane(fixture_dir(prefix="relative-root-"), Path("some/relative/root"))
+        self.assertIn("not anchored", str(caught.exception))
+        for anchored in ("/srv/work-lab", "D:/All projects/WORK-LAB", str(ROOT)):
+            plane = control_service.build_plane(fixture_dir(prefix="anchored-root-"), Path(anchored))
             plane.store.close()
 
 

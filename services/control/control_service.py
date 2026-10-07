@@ -153,13 +153,24 @@ def _inside_project(candidate: Any, project_root: Any) -> tuple[bool, str, str]:
     return lexical == root or lexical.startswith(root + "/"), root, lexical
 
 
-def _is_non_diffable_target(resolved: Path, project_root: Path) -> bool:
+def relative_within_root(lexical: str, lexical_root: str) -> str | None:
+    """The path of the target relative to the project, computed as TEXT.
+
+    `Path.relative_to` is the third host query in this file's history: `normalise_path` case-folds so that
+    containment reads the same on every machine, and the lower-cased lexical path then fails to compare
+    against the original-case root on a case-SENSITIVE filesystem while succeeding on Windows. That raised
+    ValueError, which the diff treated as "not ours to read" -- so on the Linux runner every legitimate
+    config target was refused while the same assertions passed locally.
+    """
+    prefix = lexical_root.rstrip("/") + "/"
+    return lexical[len(prefix):] if lexical.startswith(prefix) else None
+
+
+def _is_non_diffable_target(resolved: Path, relative: str | None) -> bool:
+    if relative is None:
+        return True  # outside this project there is nothing for this operation to plan against
     if name_is_sensitive(resolved, exempt=_DIFFABLE_EXEMPTIONS):
         return True
-    try:
-        relative = resolved.relative_to(project_root).as_posix().lower()
-    except ValueError:
-        return True  # outside this project there is nothing for this operation to plan against
     return any(relative.startswith(prefix) for prefix in NON_DIFFABLE_ROOTS)
 
 
@@ -325,7 +336,14 @@ class ControlPlane:
                  receipts_path: Path | None = None, grants_path: Path | None = None,
                  capability_registry: Any | None = None) -> None:
         self.store = store
-        self.project_root = project_root.resolve()
+        # No `.resolve()` here: it consults the host, and the host invents a drive letter for a
+        # POSIX-shaped root on Windows, so the same (root, boundary) pair decided differently per machine.
+        # Callers pass an absolute checkout root; containment and relative paths are computed from text.
+        self.project_root = Path(project_root)
+        if not path_is_anchored(str(self.project_root)):
+            raise ValueError(
+                f"project_root {self.project_root} is not anchored: a root that depends on the current "
+                "working directory would make every boundary decision machine-relative")
         self.evidence_ceiling = evidence_ceiling
         self.receipts_path = receipts_path
         # Default: the authorization record sits next to the receipts in the same runtime root the
@@ -791,7 +809,8 @@ class ControlPlane:
                                f"配置目标 {target} 不在本仓库内（规范化后 {lexical} 不在 {lexical_root} 之内）；"
                                "本轮没有对它之外的写权或读权。", request=request)
         resolved = Path(lexical)
-        if _is_non_diffable_target(resolved, self.project_root):
+        relative_target = relative_within_root(lexical, lexical_root)
+        if _is_non_diffable_target(resolved, relative_target):
             # The diff answers "does this document declare this key", which makes any file an oracle if the
             # answer is a substring test -- see ERR-166 for the same hole on the read side one commit
             # earlier. Credential, session and database files are refused outright; a config document is the
@@ -813,7 +832,7 @@ class ControlPlane:
         # as a write that was verified by readback.
         return self.result(spec, "PLANNED", spec.reason_code, spec.reason, request=request,
                            receipt=None,
-                           readback={"plan_only": True, "target": resolved.relative_to(self.project_root).as_posix(),
+                           readback={"plan_only": True, "target": relative_within_root(lexical, lexical_root),
                                      "changes": changes,
                                      "written": False,
                                      "next": "config.apply 需要对该 exact target 的单独授权"},
