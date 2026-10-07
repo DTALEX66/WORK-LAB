@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 154,
+    "total": 155,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 51,
       "test_behavior_alignment": 17,
       "working_directory_recovery": 2,
       "evidence_state": 27,
-      "ci_configuration": 14,
+      "ci_configuration": 15,
       "feature_gap": 10,
       "config_downgrade": 3,
       "dead_entry": 3,
@@ -4697,6 +4697,38 @@
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "the command's file operand resolves in apps/observer/frontend"
+    },
+    {
+      "error_id": "ERR-157",
+      "date": "2026-10-07",
+      "task_id": "WORK-LAB-PRODUCT-CONVERGENCE-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_configuration",
+      "entrypoint": "apps/observer/tests/test_production_surface_static_contract.js, apps/observer/frontend/src/test/snapshotFixture.ts",
+      "command": "cd apps/observer && node tests/run_all_tests.js",
+      "exit_code": 1,
+      "observed_error": "work-lab-gate completed failure at 2c0afe5, cf94322 and 1e56058 on the observer job's step 'Verify Observer Web and desktop contracts': 'FAIL no v3 snapshot literal is embedded in the production source' then 'TOTAL: 25 passed, 1 failed', FAILFAST_GROUP_FAIL group=observer-web-contracts exit=1, while the identical local run of the same group and the whole vitest suite were green. The named file was src/test/snapshotFixture.ts, added in 9e13d80 to share one snapshot builder between two sweeps.",
+      "root_cause": "The scan's notion of production source is 'every .ts/.tsx under src except *.test.*', which was written when the only non-test helper directory under src was the app itself. A vitest-only helper is not shipped - nothing in the front imports it, so Vite never reaches it - but the filter could not see that distinction, so a legitimate test fixture read as an embedded literal and three heads carried a red that protected nothing. My own commit message had called the extraction 'one fixture' without asking which scanner treats a filename as a boundary.",
+      "fix": "The scanner now excludes the vitest-only directory and, in the same file, asserts that no production source imports anything inside it, so the narrowing cannot hide the failure the rule exists to catch: an exclusion without that companion claim would have been a quiet relaxation. Both directions are falsified (.project-local/runs/convergence-20261007-k/falsify_testdir_exclusion.py, 2/2): injecting an import into App.tsx fails the reachability assertion, and deleting the exclusion makes the literal rule name src/test/snapshotFixture.ts. The matcher itself needed a second pass - it required exactly one character before the slash, so './x' matched while '@/test/x' did not, and only the injected mutation revealed that.",
+      "regression_test": "apps/observer/tests/test_production_surface_static_contract.js",
+      "evidence_level": "isolated-runtime",
+      "repeat_prevention": "Before adding any non-*.test.* file under a source directory, ask which scanner treats that directory as production; when a static contract must be narrowed, the narrowing must ship with a claim that the excluded surface is unreachable from what the rule protects, and both directions must be mutated. A gate that fails on a file it cannot actually ship is a scope bug, not a defect.",
+      "remaining_boundary": "The reachability matcher reads static import syntax; a dynamic import() or require() of a src/test helper from production code would not be matched, and no build-output check is run in this group (the bundle is built in a different job and not grepped). The three red heads stay red in the record - this commit fixes forward, it does not retroactively turn them green.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "9e13d8026c89cfc64baa8a358fbccdd69f34c6e9",
+        "introducedCommitNote": "git log --diff-filter=A names 9e13d80 as the commit that added src/test/snapshotFixture.ts; the scanner's filter predates it",
+        "fixedCommit": "abc2578107bc9bf01b7c54a771e22d79109a5d28",
+        "verifiedCommit": null,
+        "affectedCapability": "Observer web contract gate; CI-surface reproducibility",
+        "regressionCommand": "cd apps/observer && node tests/run_all_tests.js",
+        "bindingNote": "bound 2026-10-07 against abc2578: that commit changes the promised scanner file, touches a path this record names, and adds zero ledger records; git cat-file confirmed both operands before writing",
+        "bindingBasis": "regression-operand-introduction: the scanner scope fix and its companion assertion land together",
+        "verifiedCommitNote": "left null: the record lands after the fix, so no head yet contains both the record and a green exact-SHA readback. Inventing one is ERR-125/ERR-134."
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "the command's cwd and script operand both resolve in the tree"
     }
   ],
   "wlrReconciled": true,

@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T09:44:32Z",
+  "generatedAt": "2026-10-07T09:46:10Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2083,
-    "distinctProjectLocalTokens": 402,
+    "distinctProjectLocalTokens": 403,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 402,
-    "citationsToAbsentTokens": 1098
+    "tokensAbsent": 403,
+    "citationsToAbsentTokens": 1099
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -37,8 +37,8 @@
       "distinctPaths": 60
     },
     "negative_assertion_or_removal_record": {
-      "citations": 113,
-      "distinctPaths": 47
+      "citations": 114,
+      "distinctPaths": 48
     },
     "path_pattern_or_truncated_token": {
       "citations": 9,
@@ -6028,6 +6028,12 @@
         "text": "\"notes\": \"promoted out of the ignored run root into the tracked tree, so the versioned bytes are now the checked ones; the row previously said machine-local while the recovered copy was already versio"
       },
       {
+        "path": ".project-local/runs/convergence-20261007-k/falsify_testdir_exclusion.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 4712,
+        "text": "\"fix\": \"The scanner now excludes the vitest-only directory and, in the same file, asserts that no production source imports anything inside it, so the narrowing cannot hide the failure the rule exists"
+      },
+      {
         "path": ".project-local/runs/frontend-baseline-vitest-only.py",
         "file": "reports/SESSION-CONSOLIDATION-20261001.md",
         "line": 75,
@@ -6679,7 +6685,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 188
+    "presentOnThisMachine": 189
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
