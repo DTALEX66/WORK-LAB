@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T08:35:57Z",
+  "generatedAt": "2026-10-07T08:58:48Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 54,
+    "trackedTools": 55,
     "withLedgerPromise": 17,
-    "referencedSomewhere": 54,
+    "referencedSomewhere": 55,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -599,9 +599,9 @@
     },
     {
       "path": "scripts/audit/tool_inventory_readback.py",
-      "sha256": "87ff541a5c7aedd8f85ceaa4eb368e1d207e7e02701c0a040faecd155b225b97",
-      "bytes": 8355,
-      "lines": 167,
+      "sha256": "99f24b79493f4def5774f20327ffc841af23ca33f38af2b022331243e21ddce4",
+      "bytes": 8527,
+      "lines": 169,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 4,
@@ -757,6 +757,21 @@
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/maintenance/promote_ignored_root_original.py",
+      "sha256": "46cb3f70ee4a5631fa05cdf71eeace344729711bca99ace50832bd657ca3bc14",
+      "bytes": 12749,
+      "lines": 256,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 4,
+      "citedBy": [
+        ".project/governance/recovered-source-registry.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "tests/workflow-assistance/test_promote_ignored_root_original.py"
       ]
     },
     {

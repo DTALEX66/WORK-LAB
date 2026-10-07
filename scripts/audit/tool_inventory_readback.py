@@ -82,21 +82,23 @@ def main() -> int:
     all_files = tracked_files()
     tools = [f for f in all_files if f.startswith(DIRS)]
 
-    # The discovery set comes from the index, so a brand-new instrument is invisible until it is
+    # The discovery set comes from the index, so a *still-untracked* instrument is invisible until it is
     # staged. Saying so loudly here is what turns a future red-on-the-runner into a message at the
-    # moment of the mistake (ERR-151).
+    # moment of the mistake (ERR-151). A staged-new file (`A `) is deliberately NOT warned about: it is
+    # already in the index, and `digest()` reads it from there — warning on it told a reader to stage a
+    # file they had just staged.
     untracked = []
     proc = subprocess.run(["git", "status", "--porcelain", "--untracked-files=normal", "--"] +
                           list(DIRS), cwd=REPO, capture_output=True, text=True,
                           encoding="utf-8", errors="replace")
     for line in proc.stdout.splitlines():
-        if line.startswith("??") or line.startswith("A "):
+        if line.startswith("??"):
             path = line[3:].strip().replace("\\", "/")
             if path.endswith(".py") and path.startswith(DIRS):
                 untracked.append(path)
     if untracked:
-        print(f"WARNING untracked-or-just-staged instruments are not in the index yet, so the "
-              f"inventory cannot describe them: {untracked}. Stage first, then re-measure.")
+        print(f"WARNING untracked instruments are not in the index yet, so the inventory cannot "
+              f"describe them: {untracked}. Stage first, then re-measure.")
 
     if not tools:
         print("NO_TRACKED_TOOLS under " + ", ".join(DIRS))

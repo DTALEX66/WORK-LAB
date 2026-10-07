@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-07T08:35:49Z",
+  "generatedAt": "2026-10-07T08:58:53Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2077,
-    "distinctProjectLocalTokens": 390,
+    "trackedFilesScanned": 2080,
+    "distinctProjectLocalTokens": 400,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 390,
-    "citationsToAbsentTokens": 1060
+    "tokensAbsent": 400,
+    "citationsToAbsentTokens": 1093
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,24 +21,24 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 202,
-      "distinctPaths": 77
+      "citations": 215,
+      "distinctPaths": 81
     },
     "machine_field_pointing_at_absent_path": {
       "citations": 14,
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 524,
-      "distinctPaths": 309
+      "citations": 538,
+      "distinctPaths": 314
     },
     "machine_local_runtime_pointer": {
-      "citations": 133,
-      "distinctPaths": 57
+      "citations": 136,
+      "distinctPaths": 59
     },
     "negative_assertion_or_removal_record": {
-      "citations": 108,
-      "distinctPaths": 42
+      "citations": 111,
+      "distinctPaths": 45
     },
     "path_pattern_or_truncated_token": {
       "citations": 9,
@@ -590,6 +590,12 @@
         "text": "\".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json\":"
       },
       {
+        "path": ".project-local/atlas-2026-09-29/.../WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "file": "scripts/maintenance/promote_ignored_root_original.py",
+        "line": 26,
+        "text": "--source .project-local/atlas-2026-09-29/.../WORK-LAB_MASTER_SOURCE_REGISTRY.json \\"
+      },
+      {
         "path": ".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29",
         "file": "scripts/audit/ag19_record_root_pin_test.py",
         "line": 40,
@@ -798,6 +804,12 @@
         "file": "scripts/ci/verify_project_data_boundary.py",
         "line": 70,
         "text": "print(\"PROJECT_DATA_BOUNDARY_PASS runtime=.project-local/runs evidence=.project-local/artifacts\")"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "scripts/maintenance/promote_ignored_root_original.py",
+        "line": 28,
+        "text": "--expect-sha256 79bf958a... --evidence .project-local/runs/<run>/promotion.json \\"
       },
       {
         "path": ".project-local/runs",
@@ -1016,6 +1028,36 @@
         "text": "runtime = ROOT / '.project-local/runs/native-effect-tests'"
       },
       {
+        "path": ".project-local/runs/none.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 73,
+        "text": "proc = run_cli(\"--source\", \"AGENTS.md\", \"--dest\", \".project-local/runs/none.json\","
+      },
+      {
+        "path": ".project-local/runs/none.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 102,
+        "text": "\".project-local/runs/none.json\", \"--expect-sha256\", \"0\" * 64, \"--evidence\","
+      },
+      {
+        "path": ".project-local/runs/nope.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 109,
+        "text": "proc = run_cli(\"--source\", src, \"--dest\", \".project-local/runs/nope.json\","
+      },
+      {
+        "path": ".project-local/runs/nope.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 117,
+        "text": "proc = run_cli(\"--source\", bad, \"--dest\", \".project-local/runs/nope.json\","
+      },
+      {
+        "path": ".project-local/runs/nope.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 126,
+        "text": "proc = run_cli(\"--source\", bsrc, \"--dest\", \".project-local/runs/nope.json\","
+      },
+      {
         "path": ".project-local/runs/observer",
         "file": "scripts/audit/project_local_citation_audit.py",
         "line": 142,
@@ -1038,6 +1080,42 @@
         "file": "scripts/audit/project_local_citation_audit.py",
         "line": 178,
         "text": "\"381e33ec/.project-local/runs/p0c-diag-20261006/` (per-file sha256: onlySrc=0, onlyDst=0, \""
+      },
+      {
+        "path": ".project-local/runs/promotion-gate-fixture/ev.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 75,
+        "text": "\".project-local/runs/promotion-gate-fixture/ev.json\", \"--actor\", \"gate-test\")"
+      },
+      {
+        "path": ".project-local/runs/promotion-gate-fixture/ev.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 103,
+        "text": "\".project-local/runs/promotion-gate-fixture/ev.json\", \"--actor\", \"gate-test\")"
+      },
+      {
+        "path": ".project-local/runs/promotion-gate-fixture/ev.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 111,
+        "text": "\".project-local/runs/promotion-gate-fixture/ev.json\", \"--actor\", \"gate-test\")"
+      },
+      {
+        "path": ".project-local/runs/promotion-gate-fixture/ev.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 119,
+        "text": "\".project-local/runs/promotion-gate-fixture/ev.json\", \"--actor\", \"gate-test\")"
+      },
+      {
+        "path": ".project-local/runs/promotion-gate-fixture/ev.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 128,
+        "text": "\".project-local/runs/promotion-gate-fixture/ev.json\", \"--actor\", \"gate-test\")"
+      },
+      {
+        "path": ".project-local/runs/promotion-gate-fixture/ev.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 138,
+        "text": "\"--evidence\", \".project-local/runs/promotion-gate-fixture/ev.json\","
       },
       {
         "path": ".project-local/runs/pycache",
@@ -1770,6 +1848,18 @@
         "text": "\".project-local/artifacts/work-lab-migration-v6\","
       },
       {
+        "path": ".project-local/atlas-2026-09-29",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 244,
+        "text": "| AG19-PROMOTION-20261007 | P0 | 2_ROWS_TRACKED_AND_GATED / HANDOFF_STATUS_CORRECTED / NEW_INSTRUMENT_FALSIFIED_8_OF_8 | AG-19 的 Source Registry 此前只是一条**本机断言**：`src-atlas-master-source-registry`（atlas"
+      },
+      {
+        "path": ".project-local/atlas-2026-09-29",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 244,
+        "text": "| AG19-PROMOTION-20261007 | P0 | 2_ROWS_TRACKED_AND_GATED / HANDOFF_STATUS_CORRECTED / NEW_INSTRUMENT_FALSIFIED_8_OF_8 | AG-19 的 Source Registry 此前只是一条**本机断言**：`src-atlas-master-source-registry`（atlas"
+      },
+      {
         "path": ".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
         "file": "taskpacks/current/error-ledger.json",
         "line": 3417,
@@ -2208,10 +2298,58 @@
         "text": "\"command\": \"python .project-local/runs/convergence-20261007-c/absorb_local_assets.py; …/fix_hf_measure.py; python services/orchestration/run_quality_gate.py model-registry-integrity\","
       },
       {
+        "path": ".project-local/runs/convergence-20261007-c/ag19-evidence.json",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "line": 17,
+        "text": "\"verified_by\": \"Measured 2026-10-07 by .project-local/runs/convergence-20261007-c/ag19_scan.py; evidence file .project-local/runs/convergence-20261007-c/ag19-evidence.json. Scope: project tree excludi"
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-c/ag19-evidence.json",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "line": 37,
+        "text": "\"verified_by\": \"Measured 2026-10-07 by .project-local/runs/convergence-20261007-c/ag19_scan.py; evidence file .project-local/runs/convergence-20261007-c/ag19-evidence.json. Scope: project tree excludi"
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-c/ag19-evidence.json",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "line": 8880,
+        "text": "\"path\": \".project-local/runs/convergence-20261007-c/ag19-evidence.json\","
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-c/ag19-evidence.json",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "line": 8938,
+        "text": "\"scanEvidence\": \".project-local/runs/convergence-20261007-c/ag19-evidence.json\","
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-c/ag19_register.py",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "line": 8937,
+        "text": "\"amendedBy\": \".project-local/runs/convergence-20261007-c/ag19_register.py\","
+      },
+      {
         "path": ".project-local/runs/convergence-20261007-c/ag19_scan.py",
         "file": "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
         "line": 88,
         "text": "\"promotedFrom\": \".project-local/runs/convergence-20261007-c/ag19_scan.py\","
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-c/ag19_scan.py",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "line": 17,
+        "text": "\"verified_by\": \"Measured 2026-10-07 by .project-local/runs/convergence-20261007-c/ag19_scan.py; evidence file .project-local/runs/convergence-20261007-c/ag19-evidence.json. Scope: project tree excludi"
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-c/ag19_scan.py",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "line": 37,
+        "text": "\"verified_by\": \"Measured 2026-10-07 by .project-local/runs/convergence-20261007-c/ag19_scan.py; evidence file .project-local/runs/convergence-20261007-c/ag19-evidence.json. Scope: project tree excludi"
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-c/ag19_scan.py",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "line": 8894,
+        "text": "\"path\": \".project-local/runs/convergence-20261007-c/ag19_scan.py\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/ag19_scan.py",
@@ -2616,6 +2754,12 @@
         "text": "| GEOMETRY-GATE-20261007 | P1 | 已落地＝判定逻辑＋拒绝语义（12 项单测）/ 未落地＝真实浏览器读回，故暂不接成 CI 必需步骤 | `scripts/audit/topbar_geometry_via_cdp.py` 原来只是一台会打印数字的仪器：`main()` 返回 None（永远退出 0），没有任何 CI 步骤或测试引用它——这就是提示词任务包 G3 的缺口"
       },
       {
+        "path": ".project-local/runs/convergence-20261007-k/promote-atlas-master-source-registry.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 244,
+        "text": "| AG19-PROMOTION-20261007 | P0 | 2_ROWS_TRACKED_AND_GATED / HANDOFF_STATUS_CORRECTED / NEW_INSTRUMENT_FALSIFIED_8_OF_8 | AG-19 的 Source Registry 此前只是一条**本机断言**：`src-atlas-master-source-registry`（atlas"
+      },
+      {
         "path": ".project-local/runs/convergence-20261007-k/uipack",
         "file": "taskpacks/current/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md",
         "line": 32,
@@ -2796,10 +2940,28 @@
         "text": "- 包完整性：ZIP SHA256 `76e31e94…`（6/6 SHA256SUMS OK）；解包仅到 `.project-local/runs/integrated-taskpack-20260916/`，未安装为全局规则。"
       },
       {
+        "path": ".project-local/runs/legacy-task-runtime/build-full.py",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "line": 35,
+        "text": "\"is_original_or_derived\": \"DERIVED, not the ChatGPT export: generated by .project-local/runs/legacy-task-runtime/build-full.py from DSH zstd session archives plus project configuration. It is content-"
+      },
+      {
         "path": ".project-local/runs/legacy-task-runtime/test_apply_safety.py",
         "file": "docs/audits/SCRATCH_PROMOTION_REDUNDANCY_2026-10-07.json",
         "line": 23,
         "text": "\"scratch\": \".project-local/runs/legacy-task-runtime/test_apply_safety.py\","
+      },
+      {
+        "path": ".project-local/runs/legacy-task-runtime/totals-full/WORK-LAB-SUMMARY.md",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "line": 28,
+        "text": "\"recovered_path\": \".project-local/runs/legacy-task-runtime/totals-full/WORK-LAB-SUMMARY.md\","
+      },
+      {
+        "path": ".project-local/runs/legacy-task-runtime/totals-full/WORK-LAB-SUMMARY.md",
+        "file": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "line": 8866,
+        "text": "\"path\": \".project-local/runs/legacy-task-runtime/totals-full/WORK-LAB-SUMMARY.md\","
       },
       {
         "path": ".project-local/runs/legacy-task-runtime/totals-full/WORK-LAB-SUMMARY.md",
@@ -4658,6 +4820,18 @@
         "text": "`.project-local/runs/` for transient state and `.project-local/artifacts/` for evidence."
       },
       {
+        "path": ".project-local/artifacts/ag19-registry-backup-20261007",
+        "file": ".project/governance/recovered-source-registry.json",
+        "line": 38,
+        "text": "\"notes\": \"tracked since the 2026-10-07 promotion, so CI re-hashes it and a drift fails the gate; this is NOT a pristine original — recoveryAmendment inside the document records the 2026-10-07 in-place"
+      },
+      {
+        "path": ".project-local/artifacts/ag19-registry-backup-20261007",
+        "file": ".project/governance/recovered-source-registry.json",
+        "line": 45,
+        "text": "\"backupDir\": \".project-local/artifacts/ag19-registry-backup-20261007\","
+      },
+      {
         "path": ".project-local/artifacts/context-pack.md",
         "file": "docs/current/workflow-assistance-README.md",
         "line": 707,
@@ -4768,7 +4942,7 @@
       {
         "path": ".project-local/artifacts/task-artifacts/r4/history-source-manifest.json",
         "file": ".project/governance/recovered-source-registry.json",
-        "line": 44,
+        "line": 53,
         "text": "\"path\": \".project-local/artifacts/task-artifacts/r4/history-source-manifest.json\","
       },
       {
@@ -4782,12 +4956,6 @@
         "file": ".project/governance/migration-status.json",
         "line": 28,
         "text": "\"legacyLocalArchiveManifest\": \".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json\","
-      },
-      {
-        "path": ".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
-        "file": ".project/governance/recovered-source-registry.json",
-        "line": 31,
-        "text": "\"path\": \".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json\","
       },
       {
         "path": ".project-local/cache",
@@ -5042,6 +5210,12 @@
         "text": "run: python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json"
       },
       {
+        "path": ".project-local/runs/convergence-20261007-c/ag19_register.py",
+        "file": ".project/governance/recovered-source-registry.json",
+        "line": 35,
+        "text": "\"originalLocation\": \"atlas 2026-09-29 export, amended in place on 2026-10-07 by .project-local/runs/convergence-20261007-c/ag19_register.py\","
+      },
+      {
         "path": ".project-local/runs/convergence-20261007-c/falsify_render_ports.py",
         "file": "apps/observer/parity-matrix-u03.md",
         "line": 267,
@@ -5068,20 +5242,26 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/scan_digest_refs.py",
         "file": ".project/governance/recovered-source-registry.json",
-        "line": 50,
+        "line": 59,
         "text": "\"verificationCommand\": \"python .project-local/runs/convergence-20261007-c/scan_digest_refs.py\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/scan_digest_refs.py",
         "file": ".project/governance/recovered-source-registry.json",
-        "line": 63,
+        "line": 72,
         "text": "\"verificationCommand\": \"python .project-local/runs/convergence-20261007-c/scan_digest_refs.py\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-j/ag19_extraction/WORK-LAB_MASTER_ATLAS_2026-09-29.zip__WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md",
         "file": ".project/governance/recovered-source-registry.json",
-        "line": 187,
-        "text": "\"path\": \".project-local/runs/convergence-20261007-j/ag19_extraction/WORK-LAB_MASTER_ATLAS_2026-09-29.zip__WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md\","
+        "line": 214,
+        "text": "\"extractionPath\": \".project-local/runs/convergence-20261007-j/ag19_extraction/WORK-LAB_MASTER_ATLAS_2026-09-29.zip__WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md\""
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-k/promote-atlas-master-source-registry.json",
+        "file": ".project/governance/recovered-source-registry.json",
+        "line": 40,
+        "text": "\"promotionEvidence\": \".project-local/runs/convergence-20261007-k/promote-atlas-master-source-registry.json\","
       },
       {
         "path": ".project-local/runs/deepseek-harness",
@@ -5668,6 +5848,18 @@
         "text": "| INSTRUMENT-FIXES-20261007 | P1 | AUDIT_SELF_SCAN_REMOVED_1.7MB_TO_130KB / POLICY_SCANNER_BLIND_TO_LIST_STRINGS_ERR-139 / 2_NEW_GATE_MODULES | 两处是自家仪器骗了自己。(1) `scripts/audit/project_local_citation_au"
       },
       {
+        "path": ".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+        "file": ".project/governance/recovered-source-registry.json",
+        "line": 41,
+        "text": "\"ignoredSourcePath\": \".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json\","
+      },
+      {
+        "path": ".project-local/atlas-2026-09-29/x.json",
+        "file": "tests/workflow-assistance/test_promote_ignored_root_original.py",
+        "line": 66,
+        "text": "self.assertTrue(tool.git_ignore_rule(\".project-local/atlas-2026-09-29/x.json\"),"
+      },
+      {
         "path": ".project-local/cache/vendor",
         "file": "reports/audit-archive/20260930/hermes/skills/software-development/repository-directory-restructuring/SKILL.md",
         "line": 157,
@@ -5798,6 +5990,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 4112,
         "text": "\"fix\": \"Attempted the sanctioned route first, not a hand-edit: `sync_hermes_workflow_assets.py --plan-json …` (plan only, no writes) returned the blast radius and then REFUSED to publish — `MANAGED_AS"
+      },
+      {
+        "path": ".project-local/runs/convergence-20261007-j/ag19_extraction",
+        "file": ".project/governance/recovered-source-registry.json",
+        "line": 203,
+        "text": "\"notes\": \"promoted out of the ignored run root into the tracked tree, so the versioned bytes are now the checked ones; the row previously said machine-local while the recovered copy was already versio"
       },
       {
         "path": ".project-local/runs/frontend-baseline-vitest-only.py",
@@ -6451,7 +6649,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 181
+    "presentOnThisMachine": 186
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

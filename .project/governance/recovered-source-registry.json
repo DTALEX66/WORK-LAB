@@ -1,7 +1,7 @@
 {
   "schemaVersion": "work-lab/recovered-source-registry/v1",
   "generatedAt": "2026-10-07",
-  "generatedAgainstHead": "99c1107746d25ab3a5ef39a1b9a1c0e36561d8c7",
+  "generatedAgainstHead": "96d06f49ef654701bc25e5cb61fe0c993aea400a",
   "scope": "recovered originals, migrated assets and retired trees this repository must keep verifiable",
   "policy": {
     "tracked": "versioned here: the gate re-hashes the file and a drift fails",
@@ -27,15 +27,24 @@
     {
       "id": "src-atlas-master-source-registry",
       "kind": "recovered-registry",
-      "status": "machine-local",
-      "path": ".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+      "status": "tracked",
+      "path": "docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
       "bytes": 446119,
       "sha256": "79bf958a6e92895299dd813bdf07ed4ac0d9e526d2af54560ed658dffa0190cf",
       "observedAt": "2026-10-07",
-      "originalLocation": "atlas 2026-09-29 export, amended in place on 2026-10-07",
-      "coverageRelation": "the source of truth this tracked mirror summarises; 642 sources after the AG-20 increments",
-      "verificationCommand": "python -c \"import hashlib;print(hashlib.sha256(open(r'%s','rb').read()).hexdigest())\"",
-      "notes": "a pristine backup was retained when it was amended; a rebuilt atlas must re-apply the amendment or the pins revert to BLOCKED_NOT_VISIBLE"
+      "originalLocation": "atlas 2026-09-29 export, amended in place on 2026-10-07 by .project-local/runs/convergence-20261007-c/ag19_register.py",
+      "coverageRelation": "the source of truth this repository now holds versioned: 642 sources and 5 AG-19 pins after the 2026-10-07 AG-20 increments, over 446,119 B",
+      "verificationCommand": "git show HEAD:docs/history/archive/recovered-originals/WORK-LAB_MASTER_SOURCE_REGISTRY.json | sha256sum",
+      "notes": "tracked since the 2026-10-07 promotion, so CI re-hashes it and a drift fails the gate; this is NOT a pristine original — recoveryAmendment inside the document records the 2026-10-07 in-place amendment, and the pre-amendment baseline (439,365 B, 4281e4818890…) is kept under .project-local/artifacts/ag19-registry-backup-20261007 only, so a rebuilt atlas must re-apply the amendment or its pins revert to BLOCKED_NOT_VISIBLE. The ignored-root copy stays on disk as the working original",
+      "recoveryBasis": "promotion from this project's own git-ignored runtime root by scripts/maintenance/promote_ignored_root_original.py: the source was read only, the digest pin was required and matched, the parsed document was walked for secret-shaped keys / prompt-body fields / credential values / E:/F: paths and carried none, and the staged index blob was compared to the source bytes before the row was rewritten",
+      "promotionEvidence": ".project-local/runs/convergence-20261007-k/promote-atlas-master-source-registry.json",
+      "ignoredSourcePath": ".project-local/atlas-2026-09-29/WORK-LAB_MASTER_ATLAS_2026-09-29/WORK-LAB_MASTER_SOURCE_REGISTRY.json",
+      "preAmendmentBaseline": {
+        "bytes": 439365,
+        "sha256": "4281e48188908ecf775d7bcd297fd40db4d2fbd45ef928a5992012abf0e06943",
+        "backupDir": ".project-local/artifacts/ag19-registry-backup-20261007",
+        "note": "the retained pre-amendment copy of the atlas export; the tracked bytes are the amended document, so the pinned digest names the amended content, not a pristine export"
+      }
     },
     {
       "id": "src-history-source-manifest-r4",
@@ -183,18 +192,16 @@
     {
       "id": "src-new-chat-handoff-20260903",
       "kind": "recovered-original",
-      "status": "machine-local",
-      "path": ".project-local/runs/convergence-20261007-j/ag19_extraction/WORK-LAB_MASTER_ATLAS_2026-09-29.zip__WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md",
+      "status": "tracked",
+      "path": "docs/history/archive/recovered-originals/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md",
       "bytes": 11876,
       "sha256": "dff24bed285700d2b2c873d39e1356340f4599268449bbd6ab1e74ead525afce",
       "observedAt": "2026-10-07",
       "originalLocation": "member WORK-LAB_MASTER_ATLAS_2026-09-29/sources/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md of WORK-LAB_MASTER_ATLAS_2026-09-29.zip under the owner's material root (D:/All projects/Record) — a second location holding the atlas export, independent of the atlas copy already in .project-local",
-      "coverageRelation": "digest-identical to the atlas pin SRC-WL-HANDOFF-20260903 (dff24bed2857…), matched by normalized filename because the pin carries a digest but no expected_bytes: the pin's name ends in «(1).md» and the member in «.md»",
-      "verificationCommand": "python scripts/maintenance/recover_shared_root_original.py --source-archive \"D:\\All projects\\Record\\WORK-LAB_MASTER_ATLAS_2026-09-29.zip\" --member \"WORK-LAB_MASTER_ATLAS_2026-09-29/sources/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md\" --expect-sha256 dff24bed285700d2b2c873d39e1356340f4599268449bbd6ab1e74ead525afce --dest docs/history/archive/recovered-originals/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md --actor <you> --kind user_published_audit --allow-owner-material",
-      "notes": "machine-local, so CI cannot see these bytes: the extracted member lives under the git-ignored run root and re-measures with the command above, which re-reads the archive from the material root on the machine that has it. Nothing was copied into the tracked tree and nothing outside the repository was modified — the archive was read, one member was written into .project-local for hashing, and the original stays as the owner left it",
-      "location": "tracked",
-      "trackedPath": "docs/history/archive/recovered-originals/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md",
-      "recoveryBasis": "owner-material-read-only: one archive member extracted by scripts/maintenance/recover_shared_root_original.py under the readOnlyInboundRoots declaration in .project/governance/project-data-boundary.json; the outside archive was read only, never moved",
+      "coverageRelation": "digest-identical to the atlas pin SRC-WL-HANDOFF-20260903 and now versioned: blob at 50f77d1 = blob at the index = the pin, over 11,876 B",
+      "verificationCommand": "git cat-file -p 50f77d175891ae8bd24c534498df7510a98946c7:docs/history/archive/recovered-originals/WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md | sha256sum",
+      "notes": "promoted out of the ignored run root into the tracked tree, so the versioned bytes are now the checked ones; the row previously said machine-local while the recovered copy was already versioned at 50f77d1, which left the tracked file unwatched by the gate and is the shape ERR-153 describes. archiveProvenance below records the member this came from; the extraction stays under .project-local/runs/convergence-20261007-j/ag19_extraction as the working copy",
+      "recoveryBasis": "owner-material read-only recovery by scripts/maintenance/recover_shared_root_original.py: one member extracted from the archive under the owner's material root, which was read only and never moved; the pin was supplied by the atlas and matched",
       "archiveProvenance": {
         "archive": "D:\\All projects\\Record\\WORK-LAB_MASTER_ATLAS_2026-09-29.zip",
         "archiveBytes": 6025824,
@@ -203,9 +210,10 @@
         "memberSize": 11876,
         "memberCrc32": "1060a615",
         "memberCompressedSize": 6033
-      }
+      },
+      "extractionPath": ".project-local/runs/convergence-20261007-j/ag19_extraction/WORK-LAB_MASTER_ATLAS_2026-09-29.zip__WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md"
     }
   ],
   "digestBasis": "tracked entries: sha256 over the bytes of the blob at generatedAgainstHead (checkout-independent); machine-local entries: sha256 over the bytes on this machine",
-  "notes": " | 2026-10-07: src-new-chat-handoff-20260903 promoted from machine-local to tracked by an owner-material read-only recovery whose digest pin matched; the entry's generatedAgainstHead is cleared because the recovery commit is not yet known and inventing it is ERR-125/ERR-134."
+  "notes": " | 2026-10-07: src-new-chat-handoff-20260903 promoted from machine-local to tracked by an owner-material read-only recovery whose digest pin matched; the entry's generatedAgainstHead is cleared because the recovery commit is not yet known and inventing it is ERR-125/ERR-134. | 2026-10-07 round L: src-atlas-master-source-registry promoted from the project's own git-ignored runtime root by scripts/maintenance/promote_ignored_root_original.py, and src-new-chat-handoff-20260903's status corrected to tracked because its recovered copy was already versioned while the row still claimed machine-local. The two records that must stay machine-local are src-worklab-summary-2026-09 (holds session UUIDs and prompt bodies) and the pre-amendment atlas baseline."
 }
