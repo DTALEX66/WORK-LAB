@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T19:20:14Z",
+  "generatedAt": "2026-10-07T19:28:19Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 55,
+    "trackedTools": 56,
     "withLedgerPromise": 18,
-    "referencedSomewhere": 55,
+    "referencedSomewhere": 56,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -204,20 +204,33 @@
       ]
     },
     {
+      "path": "scripts/audit/entry_baseline_readback.py",
+      "sha256": "a26856d0c3487e3141f34a1598d5b1a62b1f9fac7370967df1252f54c1bcc411",
+      "bytes": 41426,
+      "lines": 808,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/ENTRY_BASELINE_2026-10-08.json",
+        "tests/ci/test_entry_baseline_projection.py"
+      ]
+    },
+    {
       "path": "scripts/audit/executor_live_probe.py",
       "sha256": "70b6c991de76b3e22835b7c7d33d0cbbaa747c5a1320f298743d324a33d16d62",
       "bytes": 10761,
       "lines": 211,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 8,
+      "citedByRecords": 10,
       "citedBy": [
+        "docs/audits/ENTRY_BASELINE_2026-10-08.json",
         "docs/audits/EXECUTOR_LIVE_PROBE_2026-10-07.json",
         "docs/audits/EXECUTOR_LIVE_PROBE_2026-10-08.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "packages/client-neutral-core/scripts/adapter_capability_projection.py",
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "packages/client-neutral-core/scripts/adapter_capability_projection.py"
       ]
     },
     {
