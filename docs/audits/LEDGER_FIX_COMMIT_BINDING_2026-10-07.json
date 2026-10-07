@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-07T21:32:35Z",
+  "generatedAt": "2026-10-07T21:54:52Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -8,8 +8,8 @@
     "null": "an unverified fix stays null, and a PASS record with no fixedCommit is listed as owed rather than left silently unbound"
   },
   "counts": {
-    "bound": 63,
-    "unboundPassRecords": 94,
+    "bound": 64,
+    "unboundPassRecords": 95,
     "anomalies": 0
   },
   "bound": [
@@ -642,6 +642,16 @@
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": false,
       "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-178",
+      "statusAfter": "PASS",
+      "fixedCommit": "27c3e2172b9e307f5b5cbbab2d0c44bc821e187f",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
     }
   ],
   "unboundPassRecords": [
@@ -1207,6 +1217,12 @@
       "id": "ERR-128",
       "date": "2026-10-07",
       "promise": "scripts/ci/verify_source_ledger.py",
+      "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
+    },
+    {
+      "id": "ERR-179",
+      "date": "2026-10-08",
+      "promise": null,
       "reason": "fixed by an earlier session; the commit is not established by evidence in hand, and inventing a SHA is what ERR-125/ERR-134 forbid"
     }
   ],

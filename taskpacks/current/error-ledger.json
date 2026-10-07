@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-10-07T21:22:29Z",
+  "generated_at": "2026-10-07T21:54:15Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 175,
+    "total": 177,
     "by_classification": {
       "ci_configuration": 17,
       "ci_tooling": 9,
@@ -17,9 +17,9 @@
       "contract_drift": 55,
       "dead_entry": 3,
       "entrypoint": 6,
-      "evidence_state": 29,
+      "evidence_state": 30,
       "feature_gap": 10,
-      "path_boundary": 13,
+      "path_boundary": 14,
       "regression_contract": 8,
       "sql_schema": 1,
       "test_behavior_alignment": 19,
@@ -5357,6 +5357,68 @@
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/ci/test_no_home_credential_document_is_tracked.py is tracked"
+    },
+    {
+      "error_id": "ERR-178",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "path_boundary",
+      "entrypoint": "services/control/control_service.py",
+      "command": "python -m unittest -q test_control_service",
+      "exit_code": 1,
+      "observed_error": "CI at 678d4c2a refused three config.diff operations with TARGET_SENSITIVE for `.project/governance/work-lab.project-profile.yaml` -- a filename with nothing credential-like in it. `_is_non_diffable_target` compared the case-folded lexical target against `Path.relative_to(self.project_root)`; `normalise_path` folds case on purpose so containment is host-independent, so on a case-SENSITIVE filesystem the comparison raised ValueError, the except branch returned True, and the soundness rule failed closed on a Windows-only accident. Removing that call exposed a second host query in the same class -- `self.project_root = project_root.resolve()` -- which on Windows turns `/home/runner/work/WORK-LAB/WORK-LAB` into `D:/home/runner/...`, so a POSIX-shaped root no longer matched its own declared boundary and every operation refused.",
+      "root_cause": "ERR-174 fixed the containment comparison and left the two neighbours untouched, and its own remaining_boundary named exactly this: 'pathlib methods that consult the host (Path.resolve, Path.absolute, Path.cwd) are not yet banned by the same check'. I read the fifteen cleared failures as the class being closed rather than as the class moving on. A single host query inside a decision that is otherwise pure text is enough to make the whole decision host-dependent, and the failure looks like a policy refusal, not like an environment problem, which is why it took the runner to name it.",
+      "fix": "Relative paths come from `relative_within_root`, computed on the same normalised text containment uses, and the readback echoes that value. `ControlPlane` stores the root as given and raises at construction if it is not anchored, so a root that depends on the working directory is refused rather than guessed. The AST guard now forbids `os.path`, forbids `Path.relative_to` anywhere in the module, and forbids resolve/absolute/cwd/expanduser/home inside `ControlPlane`. `test_config_diff_decides_the_same_under_every_root_shape` drives one Windows drive root, two POSIX roots (one carrying the runner's mixed case) and the real checkout root through the same three decisions, so all four shapes are compared on one machine instead of hoping the other agrees. Measured: control 37 passed, control + handoff 68 passed.",
+      "regression_test": "tests/workflow-assistance/test_control_service.py",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "After a host-independence fix, grep the same class for every remaining host query rather than only the one that failed, and put the ban in the AST guard so the next convenience call is refused at review time; a decision path must be text end to end, because one filesystem call in it makes the whole verdict machine-dependent.",
+      "remaining_boundary": "This record is pushed to be measured by the runner, not to claim the result: the local host can only assert the four-shape table, and verifiedCommit stays null until the exact-SHA run at this head is green. Other services still call Path.resolve() (the sidecar and the CLI store path), which is legitimate for locating files but is not covered by the new guard.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "f9f38d6f92e41783fbca4eea8fc8dd30ae89aff6",
+        "introducedCommitNote": "the commit that made containment host-free also made the two remaining host queries in the same decision path observable",
+        "fixedCommit": "27c3e2172b9e307f5b5cbbab2d0c44bc821e187f",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 27c3e217 replaces relative_to with text, drops resolve() at the root, adds the anchored-root refusal and the three-way AST guard",
+        "bindingNote": "bound 2026-10-08 at creation; verifiedCommit deliberately unset",
+        "affectedCapability": "Host-independent config.diff authorisation",
+        "regressionCommand": "python -m unittest -q test_control_service"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+    },
+    {
+      "error_id": "ERR-179",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+      "command": "bash -c \"test $(git show --numstat --format= 245cf8bf -- docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json | awk '{s+=$1} END {print s+0}') -eq 0\"",
+      "exit_code": 1,
+      "observed_error": "My archive commit 245cf8bf stated that re-running the citation audit 'came out byte-identical'. It was not: the commit contains a 1-line change, `\"generatedAt\": \"2026-10-07T21:32:50Z\" -> \"...T21:44:49Z\"`. The substantive half of the claim held (no citation was reclassified by the two moves), but I wrote the weaker observation as a stronger one without looking at the diff, and a commit message is part of the record surface.",
+      "root_cause": "I compared the two files' *sizes* (both 406,737 bytes) and used 'byte-identical' for that. Size equality does not imply content equality, and here the generator's timestamp made the bytes differ while the size happened to match.",
+      "fix": "The claim is retracted here with the measured diff: one line, `generatedAt`. The accurate statement is that the zero-reference moves changed no citation record, which is what the numstat of that file shows. No file content is altered by this record; the audit artifact itself already carries the correct bytes.",
+      "regression_test": "tests/workflow-assistance/test_project_local_citation_audit.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A claim that a regenerated tracked artifact is unchanged must be written as a measured diff, not as an observation: before such a sentence runs `git show --numstat --format= <commit> -- <path>` and the claim is only allowed when the insertion count is 0; when it is not 0 the record names the changed field. File size equality is never evidence of content equality, because a generator writes a timestamp into every artifact it republishes.",
+      "remaining_boundary": "Commit 245cf8bf's message is already written and pushed-as-local; rewriting it would be history editing, which is not authorized, so the retraction lives in the ledger instead.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "245cf8bfa1083a77f67c025cfc3cfc2e73b8c1c4",
+        "introducedCommitNote": "the archive commit whose message asserted byte-identity",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "bindingBasis": "corrected-in-record: the claim is withdrawn here rather than by rewriting 245cf8bf, and the artifact bytes in that commit are accurate",
+        "bindingNote": "no fix commit exists for a wording defect; status_after refers to the record being corrected, not to a code change",
+        "affectedCapability": "Accuracy of delivery claims",
+        "regressionCommand": "git show --numstat 245cf8bf -- docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json"
+      },
+      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
+      "regressionTestVerifiabilityReason": "the command measures a commit diff, not a file operand in the tree"
     }
   ],
   "wlrReconciled": true,
