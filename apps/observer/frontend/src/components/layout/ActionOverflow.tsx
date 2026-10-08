@@ -31,6 +31,35 @@ export type ActionDef = {
 /** The trigger's own footprint plus the gap before it, so folding leaves room for itself. */
 const MORE_FOOTPRINT = 64
 
+/**
+ * Ask the band, not the row.
+ *
+ * `.top-actions` is `flex: 0 1 auto`, so the band shrinks it to whatever is left (measured 204px at a
+ * 1400px window while its four controls need 296px). Measuring `row.clientWidth` therefore asks
+ * "how wide did you end up?" after the fold already narrowed the row — a hysteresis loop where one
+ * control folds, the row gets narrower, and the next fold is justified by the space the first fold
+ * took away. The row can never widen back, and it folds at desktop widths where the band had room.
+ *
+ * So the probe forces the row to its intrinsic width for one layout pass and reads whether the band
+ * overflows as a result. That is the question the fold exists to answer.
+ */
+function bandOverflow(row: HTMLElement): { overflow: number; bar: HTMLElement } | null {
+  const bar = row.parentElement
+  if (!bar) return null
+  const previousRow = row.style.flex
+  const previousWrap = bar.style.flexWrap
+  // The band is `flex-wrap: wrap`, so an over-full band wraps onto a second row instead of reporting
+  // horizontal overflow — which is the exact "second row of controls floating with no boundary" the
+  // owner reported. Probe the single-line case the fold exists to prevent, then restore.
+  row.style.flex = '0 0 auto'
+  bar.style.flexWrap = 'nowrap'
+  const scrollWidth = (bar as HTMLElement).scrollWidth
+  const clientWidth = (bar as HTMLElement).clientWidth
+  row.style.flex = previousRow
+  bar.style.flexWrap = previousWrap
+  return { overflow: scrollWidth - clientWidth, bar }
+}
+
 export function ActionRow({ actions }: { actions: ActionDef[] }) {
   const rowRef = useRef<HTMLDivElement | null>(null)
   const sizerRef = useRef<HTMLDivElement | null>(null)
@@ -57,31 +86,27 @@ export function ActionRow({ actions }: { actions: ActionDef[] }) {
         setVisibleCount(actions.length)
         return
       }
-      const widths = Array.from(sizer.children).map((child) => (child as HTMLElement).offsetWidth)
-      const gap = 8
-      const pinned = actions.filter((action) => action.pinned)
-      const foldable = actions.filter((action) => !action.pinned)
-      const usedByPinned = pinned.reduce((sum, action) => sum + widths[actions.indexOf(action)] + gap, 0)
-      const available = row.clientWidth - usedByPinned
-      // Decide "does everything fit" BEFORE reserving room for the trigger. Measuring against a width
-      // the trigger already consumed is circular: the row folds one control, which shrinks the row,
-      // which justifies folding another, and a desktop width that visibly held all four controls ends
-      // up hiding one behind an ellipsis nobody asked for.
-      const allWidth = foldable.reduce((sum, action) => sum + widths[actions.indexOf(action)] + gap, 0)
-      if (allWidth <= available) {
+      const probe = bandOverflow(row)
+      if (!probe || probe.overflow <= 1) {
         setVisibleCount(actions.length)
         return
       }
-      let used = 0
-      let fitted = 0
-      for (const action of foldable) {
-        const width = widths[actions.indexOf(action)] + gap
-        const reserve = fitted + 1 < foldable.length ? MORE_FOOTPRINT : 0
-        if (used + width + reserve > available) break
-        used += width
-        fitted += 1
+      const widths = Array.from(sizer.children).map((child) => (child as HTMLElement).offsetWidth)
+      // Read the row's own gap instead of restating it: b10 declares `.top-actions{gap:10px}`, and a
+      // hardcoded 8 here would silently mis-price every fold if the skin ever changed it.
+      const gap = parseFloat(getComputedStyle(row).columnGap || getComputedStyle(row).gap || '0') || 0
+      const foldable = actions.filter((action) => !action.pinned)
+      // The last sizer child is the ellipsis probe: the first fold trades a control for the trigger,
+      // so it saves less than its own width. Later folds save the whole control.
+      const triggerCost = (widths[widths.length - 1] ?? MORE_FOOTPRINT) + gap
+      let saved = 0
+      let folded = 0
+      for (let index = foldable.length - 1; index >= 0 && saved < probe.overflow; index -= 1) {
+        const width = widths[actions.indexOf(foldable[index])] + gap
+        saved += width - (folded === 0 ? triggerCost : 0)
+        folded += 1
       }
-      setVisibleCount(fitted + pinned.length)
+      setVisibleCount(actions.length - folded)
     }
 
     measure()

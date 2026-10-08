@@ -96,6 +96,11 @@
  * below 840px, and this layer re-shows the rail (line 17) but not the actions. A width-based rail
  * collapse is the remaining half of the band contract. */
 .top-actions.top-actions-fit { flex-wrap: nowrap; overflow: visible; }
+/* The band must not starve its own controls. As `flex: 0 1 auto` the row was squeezed to 204px at a
+ * 1400px window while its four controls need 296px, and the search field kept 388px of a 320px
+ * flex-basis; the fold then measured the shrunken row and hid a control the band could have shown.
+ * Intrinsic width here means the row is either satisfied or visibly folded, never silently crushed. */
+.topbar .top-actions { flex: 0 0 auto; }
 .action-sizer {
   position: absolute;
   top: -9999px;
