@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 219,
+    "total": 220,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 66,
       "test_behavior_alignment": 27,
       "working_directory_recovery": 2,
-      "evidence_state": 41,
+      "evidence_state": 42,
       "ci_configuration": 22,
       "feature_gap": 10,
       "config_downgrade": 3,
@@ -6723,6 +6723,38 @@
         "bindingNote": "fixedCommit resolved with git rev-parse; verifiedCommit owed to the first head GitHub can actually run",
         "affectedCapability": "Exact-SHA CI verification and every ledger verifiedCommit bound to it",
         "regressionCommand": "cd tests/ci && python -m unittest -q test_ci_outage_is_not_a_code_red"
+      }
+    },
+    {
+      "error_id": "ERR-222",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "evidence_state",
+      "entrypoint": "tests/ci/test_shipped_projections_are_current.py",
+      "command": "cd tests/ci && python -m unittest -q test_shipped_projections_are_current   (run inside a detached worktree at the introduced head: git worktree add --detach <runs>/wt-head-20261008 <introduced>)",
+      "exit_code": 1,
+      "observed_error": "The canonical gate came back green at 7b5a4502 while two committed derived projections contradicted that same commit. Reproduced by running the new control inside a detached worktree at that head: 11 tests, 2 failures, exit 1, evidence at .project-local/artifacts/ERR222_PROJECTION_FRESHNESS_AT_7b5a4502.log. (1) docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json published `rows[113].operands[2].category GONE` for the operand `reports/audit-archive` and a `gone` list of 56 entries, where a fresh measurement of that identical tree yields DIR_NOT_FILE and 55 -- because that same commit added reports/audit-archive/FROZEN-MANIFEST.json, which is what makes the directory answer to git. (2) docs/audits/TOOL_INVENTORY_2026-10-07.json published citedBy=5 for scripts/audit/generate_frozen_surface_manifest.py where the tree yields 6; the sixth citing surface is the inventory's own file, which its citation scan reads.",
+      "root_cause": "Ordering plus a missing question. Each projection was measured before the bytes it describes were staged, and the gate has no check that re-measures a shipped artifact against the tree that carries it, so 'a file that once said OK' and 'the current measurement' were the same observable. This is the same class as ERR-151 (inventory digest taken before git add) and ERR-161 (a receipt stamping the head at write time) -- the third time in this repository, and each time it was found by a human re-running a generator rather than by a control. The second drift has an extra cause of its own: tool_inventory_readback.py scans its own output as a citing surface, so the first publication of a newly added tool is stale by exactly that self-citation and only converges when the artifact is republished.",
+      "fix": "tests/ci/test_shipped_projections_are_current.py re-measures the ledger-target projection, the tool inventory and both CURRENT_STATE renderings into a temporary directory and diffs them against the committed bytes, ignoring a pinned set of moment-only fields (at/apply/generatedAt/generated_at/generatedFromCommit/generatedFromTree) that one test asserts stays exactly that size. List drift is reported by index and by length, because the first real catch was a citation list that grew by one and a truncated head of the list named nobody. The module runs inside the canonical gate's root-governance-suite (tests/ci is discovered by name, so no gate id changed). Both stale artifacts were republished in the commits that made them true, and the register row and design documents that this round touched were staged before the generators ran.",
+      "regression_test": "tests/ci/test_shipped_projections_are_current.py",
+      "regressionCommand": "cd tests/ci && python -m unittest -q test_shipped_projections_are_current",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "Tracked at the head that carries the fix; eleven tests run green there, and the control was demonstrated against the defective commit itself (exit 1, two named failures) rather than argued from prose. Falsified forward too: 15/15 planted content mutations were caught across the three projections, and 3/3 moment-only changes produced no false red.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A derived artifact must never be trusted because it was regenerated at some point: it must be re-measured against the tree that carries it, in the same suite that decides green. Every generator whose output is committed therefore needs a freshness comparison with an explicitly named volatile-field set -- never a broad 'ignore timestamps' regex, which silently excuses whatever a generator later decides to publish under that name. And the ordering rule is now machine-enforced instead of remembered: stage the inputs, then run the generators, then commit; a stale artifact can no longer pass.",
+      "remaining_boundary": "Covered: the ledger-target projection, the tool inventory, CURRENT_STATE.json and CURRENT_STATE.md. Not covered by this record's fix and still owed: the inventory's self-citation (excluding its own output from the citation scan would make a first publication converge in one pass instead of two), the frozen-surface manifests (a different control, tests/ci/test_frozen_surfaces_are_intact.py, checks those bytes), and docs/audits/REGISTER_CI_CLAIMS_*.json, which needs the network and so cannot be re-measured offline. The exact-SHA CI verdict for this fix is unobtainable while the account's Actions runner is unavailable (ERR-221), so verifiedCommit stays owed.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "7b5a450288d4211bff208bc6afed4c07119f2a7b",
+        "introducedCommitNote": "the head where a shipped projection first contradicted its own commit under an all-green gate; the missing control and the ERR-151/ERR-161 ordering both predate it, and the earlier symptoms were caught by hand",
+        "fixedCommit": "2965e66b0b674a674cfd9e063776e84e2bc81a7d",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: HEAD carries the freshness control and the republished artifacts; the CI verdict for it cannot be taken while Actions cannot start a runner",
+        "bindingNote": "both commit fields resolved with git rev-parse in the writing script, never transcribed",
+        "affectedCapability": "Every claim carried by a committed derived projection: tool inventory, ledger regression targets, current-state projection",
+        "regressionCommand": "cd tests/ci && python -m unittest -q test_shipped_projections_are_current"
       }
     }
   ],

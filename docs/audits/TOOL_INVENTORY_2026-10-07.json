@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T22:03:17Z",
+  "generatedAt": "2026-10-08T22:07:20Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -300,14 +300,14 @@
       "lines": 111,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 7,
+      "citedByRecords": 8,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/DOCUMENT-CENSUS.md",
         "docs/history/archive/FROZEN.md",
         "knowledge-staging/FROZEN.md",
         "reports/audit-archive/FROZEN.md",
-        "tests/ci/test_frozen_surfaces_are_intact.py"
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
