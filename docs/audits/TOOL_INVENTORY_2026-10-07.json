@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T08:56:11Z",
+  "generatedAt": "2026-10-08T10:31:09Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -340,9 +340,9 @@
     },
     {
       "path": "scripts/audit/ledger_regression_command_targets.py",
-      "sha256": "6217e6725c0e171ebbfcbe5ec3c2dcb642bac3170e3da892380fa28e9d050e41",
-      "bytes": 21092,
-      "lines": 362,
+      "sha256": "db3b1971666aa6d4bdcb71931f0a139b9969b9ec3acf27a8a07c5a25424719c7",
+      "bytes": 22304,
+      "lines": 381,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 8,
