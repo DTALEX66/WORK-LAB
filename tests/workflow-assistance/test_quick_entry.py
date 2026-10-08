@@ -32,7 +32,7 @@ SCHEMA = json.loads(quick_entry.SCHEMA_PATH.read_text(encoding="utf-8"))
 
 def request(**overrides) -> dict:
     base = {
-        "schemaVersion": "work-lab/quick-entry-request/v1",
+        "schema_version": "work-lab/quick-entry-request/v1",
         "requestId": "req-1",
         "verb": "publish",
         "input": {"baseRevision": "r-7", "currentRevision": "r-7"},

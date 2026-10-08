@@ -758,7 +758,7 @@ export type ProjectProfile = {
 // @contract quick-entry-request
 // schema: packages/contracts/schemas/workflow/quick-entry-request.schema.json
 export type QuickEntryRequest = {
-    schemaVersion: unknown,
+    schema_version: unknown,
     requestId: string,
     verb: ["publish", "view", "resume", "adjust", "return"],
     input: {

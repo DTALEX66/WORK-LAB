@@ -5,9 +5,9 @@
   "description": "The field and permission spec for the thin unified entry (blueprint §15.2, coverage item OD05 said this mode had no spec anywhere in the source). One request carries everything the five release conditions are judged from: the input revision the caller actually holds, the permission the entry may exercise, whether the chosen client is available, the recovery attempt, and cancellation. It is a request envelope only -- the context it produces is the ContextBundle (scripts/context_bundle.py), and this contract deliberately does not restate those fields, so there is one owner per predicate.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "requestId", "verb", "input", "project", "permission", "client"],
+  "required": ["schema_version", "requestId", "verb", "input", "project", "permission", "client"],
   "properties": {
-    "schemaVersion": {
+    "schema_version": {
       "const": "work-lab/quick-entry-request/v1"
     },
     "requestId": {

@@ -16,6 +16,10 @@ EXPECTED = {
     "task-card.schema.json",
     "domain-pack.schema.json",
     "action-plan.schema.json",
+    # OD05 (2026-10-08): Quick Entry's field+permission contract. This set is an exact inventory of
+    # the directory, so adding a legitimate schema moves it -- the pin defends "nothing appears in the
+    # contract directory without being reviewed here", not a fixed number.
+    "quick-entry-request.schema.json",
     "run-event.schema.json",
     "evidence-envelope.schema.json",
     "error.schema.json",
