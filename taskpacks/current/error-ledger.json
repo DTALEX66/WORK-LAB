@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 218,
+    "total": 219,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 66,
       "test_behavior_alignment": 27,
       "working_directory_recovery": 2,
-      "evidence_state": 40,
+      "evidence_state": 41,
       "ci_configuration": 22,
       "feature_gap": 10,
       "config_downgrade": 3,
@@ -6691,6 +6691,38 @@
         "bindingNote": "fixedCommit resolved with git log -S 'push_permit' over the tree; verifiedCommit owed until every check-run at a head containing both is green",
         "affectedCapability": "Delivery ordering: commit -> verify at HEAD -> push",
         "regressionCommand": "cd tests/ci && python -m unittest -q test_push_permit"
+      }
+    },
+    {
+      "error_id": "ERR-221",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": "scripts/ci/verify_register_ci_claims_live.py",
+      "command": "python scripts/ci/verify_register_ci_claims_live.py",
+      "exit_code": 1,
+      "observed_error": "GitHub Actions cannot produce a verdict for any new head. Measured at 6c500d66 (pushed 2026-10-08 20:24Z): 19 check-runs, success=0, failure=9, skipped=10, pending=0, and every failed run completed within three seconds of starting with the annotation 'The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the Billing & plans section in your settings.' The same head passed the full canonical gate locally (GATE_EXIT=0, read from .project-local/runs/gate-6c500d66/gate-verify-6c500d66.log), so the red is not about the code. The last head with a real CI verdict is 0b004fbd: 24 check-runs, all completed/success, read at 20:2xZ — so the cutoff falls between those two pushes. Consequence: ERR-220's verifiedCommit cannot be stamped, and no future 'exact-SHA CI' claim can be made until the account's Actions runner is restored.",
+      "root_cause": "External: the account's payment method or Actions spending limit. Nothing in the repository caused it and no repository change can fix it. What IS ours is that conclusion=failure and 'never executed' were the same observable, so the outage was readable as a code defect: a session that trusts the rollup would go hunting a bug that does not exist, and a session that wants a green token could have written one over an unmeasurable head.",
+      "fix": "verify_register_ci_claims_live.py now asks the only source that distinguishes the two — the check-run annotations — whenever a head has failures and zero successes, publishes the count as notStarted, and returns its own exit code 4 with LIVE_CI_REFUSED CI_BILLING_BLOCKED stating that the head is neither green nor red. The annotation lookup is deliberately not paid for when any job succeeded, because a head with a success has demonstrably run and its reds are real. Two latent defects surfaced while making that branch testable and are fixed in the same commit (a376f1f5): main() accepted no argv, so no test could drive a verdict, and the publish line called relative_to(ROOT) on a caller-supplied --out, raising for any path outside the repo. Verified live: 6c500d66 -> runs=19 success=0 failure=9 notStarted=9; 0b004fbd -> runs=24 success=24 failure=0 notStarted=0.",
+      "regression_test": "tests/ci/test_ci_outage_is_not_a_code_red.py",
+      "regressionCommand": "cd tests/ci && python -m unittest -q test_ci_outage_is_not_a_code_red",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "Six tests, each mocking the API at a different level: only a run whose annotation carries the billing phrase is counted (a real AssertionError failure beside it is not); an API error while asking is never counted as started, so unknown stays unknown rather than becoming a code red; a head where nothing ran reports notStarted == failure; a partial red spends no annotation calls at all (asserted against the recorded call list); main() returns 4 with CI_BILLING_BLOCKED and publishes nothing for an unmeasurable head; and a genuine partial red still returns 1 with LIVE_CI_CONTRADICTION and still writes its measurement file.",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "A verdict must be able to say 'I could not measure'. When an external system reports a status code that conflates 'failed' with 'did not run', the guard has to consult the one field that separates them and emit its own named state, because a rollup that cannot express 'unmeasurable' will be read as a defect or, worse, as licence to write a green token. And an owed verifiedCommit stays owed: no local run substitutes for the exact-SHA verdict, and this record is where the reason is kept so the next session does not re-derive it from red check-runs.",
+      "remaining_boundary": "Owner action required: restore GitHub Actions (Billing & plans — payment method or spending limit). Until then ERR-220's verifiedCommit stays null, PR #162 cannot be CI-verified, and the register's EXACT_SHA_CI tokens for heads at or after 6c500d66 cannot be written truthfully. The tooling change does not depend on the outage being fixed, but its live behaviour on a restored account (a real partial red with notStarted=0) is covered only by mocks here; the first head CI can actually run will be the real check.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "external condition, not introduced by any commit in this repository; the first head whose CI verdict it destroyed is 6c500d66b9ed654d44c039aaa39f1a7a225defa3",
+        "fixedCommit": "a376f1f561059c26bd55e8eb83a1cc0c21a871ed",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: a376f1f5 carries the outage-aware verifier and its six tests; the CI verdict for that commit cannot be obtained while the account's Actions runner is unavailable, which is the subject of this record",
+        "bindingNote": "fixedCommit resolved with git rev-parse; verifiedCommit owed to the first head GitHub can actually run",
+        "affectedCapability": "Exact-SHA CI verification and every ledger verifiedCommit bound to it",
+        "regressionCommand": "cd tests/ci && python -m unittest -q test_ci_outage_is_not_a_code_red"
       }
     }
   ],
