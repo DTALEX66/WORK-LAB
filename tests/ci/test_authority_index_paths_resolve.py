@@ -88,6 +88,37 @@ class SurfaceChecks(unittest.TestCase):
                                               self.write("empty.md", "# Title\n\nprose only\n"))
         self.assertEqual([], broken, "check() has nothing to judge; main() must call that a failure")
 
+    def test_a_declaration_that_excuses_a_dead_name_is_counted_not_dropped(self) -> None:
+        text = ("- `web/` was retired; see the row.\n"
+                "  [no-tree-claim ILLUSTRATIVE ref=web/]\n")
+        rows, broken, problems = checker.check(self.dir_parent(), TRACKED, self.write("decl.md", text))
+        self.assertEqual([], broken, f"the declared name was still reported: {broken}")
+        self.assertEqual([], problems)
+        self.assertTrue(any(len(row) > 3 and row[3] for row in rows),
+                        f"nothing was marked exempt: {rows}")
+
+    def test_a_declaration_covering_a_live_path_is_a_failure(self) -> None:
+        """The moment the tree answers to the name, the excuse is hiding a real pointer."""
+        text = "- `config/config-ownership.json`\n  [no-tree-claim ILLUSTRATIVE ref=config/config-ownership.json]\n"
+        _rows, broken, problems = checker.check(self.dir_parent(), TRACKED,
+                                                self.write("live.md", text))
+        self.assertEqual([], broken)
+        self.assertEqual(1, len(problems), f"a live path was declared away silently: {problems}")
+
+    def test_an_unverifiable_deleted_claim_is_refused(self) -> None:
+        """DELETED has to be checkable in git; a temp root has no such history, so the claim fails."""
+        text = "- `gone/`\n  [no-tree-claim DELETED ref=gone/]\n"
+        _rows, broken, problems = checker.check(self.dir_parent(), TRACKED, self.write("gone.md", text))
+        self.assertEqual(1, len(broken), "an unverified DELETED claim must still be reported broken")
+        self.assertEqual(1, len(problems))
+        self.assertIn("no deletion or rename", problems[0][1])
+
+    def test_an_unknown_reason_code_is_refused(self) -> None:
+        text = "- `gone/`\n  [no-tree-claim PROBABLY_FINE ref=gone/]\n"
+        _rows, _broken, problems = checker.check(self.dir_parent(), TRACKED, self.write("code.md", text))
+        self.assertEqual(1, len(problems))
+        self.assertIn("unknown reason code", problems[0][1])
+
     def dir_parent(self) -> Path:
         return self.dir
 

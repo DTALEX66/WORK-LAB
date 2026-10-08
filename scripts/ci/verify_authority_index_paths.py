@@ -40,8 +40,18 @@ NAVIGATION_SURFACES = (
 # included eleven commands a reader would run and watch fail (`python scripts/workflow/...`) written
 # inside fenced blocks, which is the one place a doc stops being description and becomes an instruction.
 SCOPED_ROOT = "docs/current/"
+# The live open-task register is bootstrap step 6 of the authority chain -- a reader navigates from it --
+# so it is guarded too, even though it lives outside docs/current. Measured on 2026-10-08: 333 references,
+# 68 of them naming something the tracked tree does not have, across 26 rows. Unlike a prose page it cannot
+# simply be fixed: a register row cites deleted paths, client-home layouts and model-cache names on purpose,
+# because the sentence is about the thing that is not here. So the surface carries its own exemptions, in
+# the row, as `DECLARATION` tokens below.
+EXTRA_SURFACES = ("taskpacks/current/OPEN-TASK-REGISTER.md",)
 # Measured floor, not a snapshot: below this the extractor is broken, not the documentation.
 REFS_FLOOR = 300
+# 333 references measured on the register at 097320d0, floored at the same ~88% ratio the widened scan
+# uses, so a register rewrite that quietly stops parsing cannot report a clean table.
+REGISTER_REFS_FLOOR = 280
 EXTENSIONS = ("md", "json", "py", "ts", "tsx", "yml", "yaml", "example", "lock", "txt",
               "sh", "bash", "ps1")
 FILE_REF = re.compile(r"`([^`\s]*/[^`\s]*\.(?:%s))`" % "|".join(EXTENSIONS))
@@ -49,9 +59,23 @@ DIR_REF = re.compile(r"`([^`\s]+/)`")
 FENCE = re.compile(r"^```(\w*)")
 # a reference containing one of these is not a name the tree can answer to, so it is never even tried:
 # `<...>`/`~/...`/`$VAR/...` are placeholders this repo's prose already uses for client homes, `*` is a
-# glob, and `%` marks the Windows environment form (`%LOCALAPPDATA%\hermes`) that names an installed
-# per-user root rather than a repository path.
-PLACEHOLDER_MARKERS = ("<", ">", "*", "$", "~", "%")
+# glob, `%` marks the Windows environment form (`%LOCALAPPDATA%\hermes`) that names an installed per-user
+# root, `…` is how this project writes an elided path (`docs/current/…/examples/governance.yml`), and a
+# backslash means the literal is a regex source or a Windows path -- `/\bCPU\b/` in a parity row is a
+# pattern a test asserts on, never a file.
+PLACEHOLDER_MARKERS = ("<", ">", "*", "$", "~", "%", "…", "\\")
+DECLARATION = re.compile(r"\[no-tree-claim (?P<code>[A-Z_]+) ref=(?P<ref>[^\]]+?)\]")
+DECLARATION_CODES = {
+    "DELETED": "the row exists to name something that was deleted or moved; the removal is re-verified in git",
+    "NEVER_EXISTED": "the name was never tracked in any ref; the row exists to say that",
+    "CLIENT_HOME": "a per-user agent home outside the repository",
+    "INSTALLED_APP": "a file inside a vendor-installed application tree",
+    "BUILD_OUTPUT": "generated build or dependency output that is not tracked",
+    "UNTRACKED_LOCAL": "untracked and ignored by design, though it sits inside the repository boundary",
+    "MODEL_CACHE": "a shared model or toolchain library root, not this repository",
+    "CROSS_PROJECT": "a path owned by another project and quoted as such",
+    "ILLUSTRATIVE": "an operand in an example of what a checker must reject, not a claim about the tree",
+}
 LOWER_SEGMENT = re.compile(r"^[a-z0-9._-]+$")
 
 
@@ -186,31 +210,124 @@ def resolves(tracked: list[str], ref: str, kind: str) -> bool:
     return ref in tracked
 
 
+def declarations(text: str) -> list[tuple[int, str, str]]:
+    """(line, code, ref) for every in-row `no-tree-claim` token."""
+    return [(text[:match.start()].count("\n") + 1, match.group("code"), match.group("ref").strip())
+            for match in DECLARATION.finditer(text)]
+
+
+def _git_paths(root: Path, filter_: str, pattern: str) -> bool:
+    proc = subprocess.run(["git", "log", "--all", "-M", f"--diff-filter={filter_}", "--format=%H",
+                           "--", pattern], cwd=root, capture_output=True)
+    return proc.returncode == 0 and bool(proc.stdout.strip())
+
+
+def deleted_in_history(root: Path, ref: str) -> bool:
+    """A DELETED claim must be checkable: the name appears as a deletion or rename in some ref.
+
+    Three measured adjustments. `--diff-filter=D` alone is not enough -- 942b8e06 and 6bd0bd55 carried these
+    files as R100/R081 renames, so a rule looking only for D calls a real removal unverified. A register row
+    names the tail of a path (`web/`), which git will not match unless the pattern may start deeper in the
+    tree. And a row that names a directory (`scripts/workflow/`) is proven by its contents: history stores
+    files, never directory entries, so the `under it` form is tried last.
+    """
+    patterns = [ref, "*" + ref]
+    if ref.endswith("/"):
+        stem = ref.rstrip("/")
+        # measured: `git log -- '*web/'` finds nothing while `-- '*web/*'` finds five commits, because
+        # history names files, not directory entries -- the proof of a deleted directory is its contents
+        patterns += [f"{stem}/*", f"*{stem}/*", f"{stem}/**", f"*{stem}/**"]
+    return any(_git_paths(root, "DR", pattern) for pattern in patterns)
+
+
+def never_in_history(root: Path, ref: str) -> bool:
+    """NEVER_EXISTED is the stronger claim: no add, delete or rename of this name in any ref."""
+    patterns = [ref, "*" + ref]
+    if ref.endswith("/"):
+        stem = ref.rstrip("/")
+        patterns += [f"{stem}/*", f"*{stem}/*", f"{stem}/**", f"*{stem}/**"]
+    return not any(_git_paths(root, "ADRMTC", pattern) for pattern in patterns)
+
+
 def check(root: Path, tracked: list[str], target: str) -> tuple[list, list, list]:
-    """(considered rows, broken rows, stale declarations) for one surface, or ([], [], []) if absent."""
+    """(considered rows, unresolved rows, declaration problems) for one surface, empty if absent.
+
+    A considered row is `(line, ref, kind, exempt)` -- `exempt` means the surface itself carries a
+    `no-tree-claim` token for that reference, which is reported rather than silently dropped so a run can
+    always answer "how much did the exemptions swallow today".
+    """
     index = root / target
     if not index.is_file():
         return [], [], []
+    raw = index.read_text(encoding="utf-8")
+    tokens = declarations(raw)
+    # strip the tokens before extracting, so a declared name cannot be counted as a reference of its own
+    body = DECLARATION.sub("", raw)
     rows = []
-    for number, ref, kind in references(index.read_text(encoding="utf-8")):
+    for number, ref, kind in references(body):
         if is_placeholder(ref):
             continue
         rows.append((number, anchored(target, ref), kind))
     broken = [row for row in rows
               if declared(row[1]) is None and not resolves(tracked, row[1], row[2])]
-    # a declaration goes stale when the tree contradicts what it asserted, so the test is run on the
-    # declaration itself: ".project-local/" means "nothing under here is tracked", and one tracked file
+
+    exempt: set[str] = set()
+    problems: list[tuple[int, str]] = []
+    for line, code, ref in tokens:
+        anchored_ref = anchored(target, ref)
+        if code not in DECLARATION_CODES:
+            problems.append((line, f"unknown reason code {code!r}; the vocabulary is "
+                                   f"{'/'.join(sorted(DECLARATION_CODES))}"))
+            continue
+        kind = "directory" if anchored_ref.endswith("/") else "file"
+        if resolves(tracked, anchored_ref, kind) or declared(anchored_ref) is not None:
+            problems.append((line, f"declares `{ref}` as a non-tree claim, but the tree answers to it "
+                                   "-- the exemption now hides a live path; fix the sentence instead"))
+            continue
+        if not any(row[1] == anchored_ref for row in broken):
+            problems.append((line, f"declares `{ref}`, which this surface does not ask about at all "
+                                   "-- either the pointer was fixed and the token is residue, or the "
+                                   "spelling differs from the reference it excuses"))
+            continue
+        if code == "DELETED" and not deleted_in_history(root, anchored_ref):
+            problems.append((line, f"declares `{ref}` as deleted or moved, but no deletion or rename of "
+                                   "that name exists in any ref"))
+            continue
+        if code == "NEVER_EXISTED" and not never_in_history(root, anchored_ref):
+            problems.append((line, f"declares `{ref}` as never existing, but the name does appear in git "
+                                   "history -- it was tracked at some point, so say so and use DELETED"))
+            continue
+        exempt.add(anchored_ref)
+
+    unresolved = [row for row in broken if row[1] not in exempt]
+    rows = [(*row, row[1] in exempt) for row in rows]
+
+    # a global declaration goes stale when the tree contradicts what it asserted, so the test is run on
+    # the declaration itself: ".project-local/" means "nothing under here is tracked", and one tracked file
     # under it makes the whole entry false regardless of which child row mentioned it
-    stale = [(0, entry, "directory" if entry.endswith("/") else "file") for entry in DECLARED_NON_PATHS
-             if resolves(tracked, entry.rstrip("/") + "/" if entry.endswith("/") else entry,
-                         "directory" if entry.endswith("/") else "file")]
-    return rows, broken, stale
+    problems.extend(
+        (0, f"declared as non-repo but tracked now: {entry} -- drop the declaration")
+        for entry in DECLARED_NON_PATHS
+        if resolves(tracked, entry.rstrip("/") + "/" if entry.endswith("/") else entry,
+                    "directory" if entry.endswith("/") else "file"))
+    return rows, unresolved, problems
 
 
 def scanned_surfaces(tracked: list[str]) -> list[str]:
-    """Every tracked markdown under the current-documentation root, discovered from git, not disk."""
-    return sorted(path for path in tracked
-                  if path.startswith(SCOPED_ROOT) and path.endswith(".md"))
+    """Every tracked markdown under the current-documentation root, plus the named extras, from git."""
+    surfaces = [path for path in tracked
+                if path.startswith(SCOPED_ROOT) and path.endswith(".md")]
+    return sorted(set(surfaces) | set(EXTRA_SURFACES))
+
+
+def strict_surfaces() -> set[str]:
+    """Surfaces where "no references at all" is a broken checker rather than a prose page."""
+    return set(NAVIGATION_SURFACES) | set(EXTRA_SURFACES)
+
+
+def floors() -> dict[str, int]:
+    """Per-scope measured floors: a run whose extractor matched almost nothing is not a clean scan."""
+    return {SCOPED_ROOT: REFS_FLOOR, **{target: REGISTER_REFS_FLOOR for target in EXTRA_SURFACES}}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -229,7 +346,9 @@ def main(argv: list[str] | None = None) -> int:
     targets = scanned_surfaces(tracked) if widened else list(args.index)
 
     failed_targets = 0
-    total_refs = total_broken = silent_surfaces = 0
+    total_refs = total_broken = total_exempt = silent_surfaces = 0
+    refs_by_scope: dict[str, int] = {}
+    strict = strict_surfaces()
     for target in targets:
         if not (root / target).is_file():
             # a named surface that is gone is not "no references"; only the widened scan may answer
@@ -237,8 +356,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"AUTHORITY_INDEX_PATHS_FAIL {target} is not a tracked file in this checkout")
             failed_targets += 1
             continue
-        rows, broken, stale = check(root, tracked, target)
-        navigation = target in NAVIGATION_SURFACES
+        rows, broken, problems = check(root, tracked, target)
+        exempt = sum(1 for row in rows if len(row) > 3 and row[3])
+        navigation = target in strict
         if not rows and navigation:
             print(f"AUTHORITY_INDEX_PATHS_FAIL {target} yielded refs=0 -- a navigation surface with "
                   "nothing to check is either a rewritten page or a broken extractor, and neither is a "
@@ -247,29 +367,37 @@ def main(argv: list[str] | None = None) -> int:
             continue
         if not rows:
             silent_surfaces += 1
+        scope = target if target in EXTRA_SURFACES else SCOPED_ROOT
+        refs_by_scope[scope] = refs_by_scope.get(scope, 0) + len(rows)
         total_refs += len(rows)
         total_broken += len(broken)
+        total_exempt += exempt
         kinds: dict[str, int] = {}
-        for _, _, kind in rows:
-            kinds[kind] = kinds.get(kind, 0) + 1
-        flag = "FAIL" if broken or stale else "PASS"
+        for row in rows:
+            kinds[row[2]] = kinds.get(row[2], 0) + 1
+        flag = "FAIL" if broken or problems else "PASS"
         print(f"AUTHORITY_INDEX_PATHS_{flag} target={target} refs={len(rows)} "
               f"files={kinds.get('file', 0)} directories={kinds.get('directory', 0)} "
-              f"broken={len(broken)} declared={len(DECLARED_NON_PATHS)} "
-              f"declared_but_tracked={len(stale)} "
+              f"broken={len(broken)} declared_in_row={exempt} declaration_problems={len(problems)} "
+              f"global_declarations={len(DECLARED_NON_PATHS)} "
               f"navigation={'yes' if navigation else 'no'}")
         for number, ref, kind in broken:
             print(f"  line {number}: `{ref}` is not a tracked {kind}")
-        for _, ref, _ in stale:
-            print(f"  declared as non-repo but tracked now: {ref} -- drop the declaration")
-        failed_targets += 1 if (broken or stale) else 0
+        for line, message in problems:
+            print(f"  line {line}: {message}")
+        failed_targets += 1 if (broken or problems) else 0
 
     print(f"AUTHORITY_INDEX_PATHS_TOTAL targets={len(targets)} refs={total_refs} "
-          f"broken={total_broken} no_tree_claims={silent_surfaces} failed_targets={failed_targets}")
-    if widened and total_refs < REFS_FLOOR:
-        print(f"AUTHORITY_INDEX_PATHS_FAIL refs={total_refs} is below the measured floor {REFS_FLOOR} "
-              "-- an extractor that matches almost nothing reports a clean tree it never looked at")
-        return 1
+          f"broken={total_broken} declared_in_row={total_exempt} "
+          f"no_tree_claims={silent_surfaces} failed_targets={failed_targets}")
+    if widened:
+        for scope, floor in floors().items():
+            counted = refs_by_scope.get(scope, 0)
+            if counted < floor:
+                print(f"AUTHORITY_INDEX_PATHS_FAIL {scope} produced refs={counted}, below the measured "
+                      f"floor {floor} -- an extractor that matches almost nothing reports a clean tree "
+                      "it never looked at")
+                return 1
     if not widened and total_refs == 0:
         # The floor above only guards the default scan, so a named run had no capability check at all:
         # `--index <file>` on an extractor that matched nothing used to print zero broken and exit 0.

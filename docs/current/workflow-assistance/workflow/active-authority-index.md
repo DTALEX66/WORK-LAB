@@ -47,7 +47,9 @@
   保留历史，并在每条链接处逐行标明「已归档，非现行规范」。
   同一原因，归档件内部的前收敛路径（skills/model-switch/、docs/workflow/…、contracts/… 等，实测共 10 条）
   **不改写也不纳入引用门禁**：把它们改成今天的路径会让一份带日期的记录说假话；这些示意名称在此不加反引号，
-  理由与上面那条相同。`scripts/ci/verify_authority_index_paths.py` 的默认目标只覆盖四个现行文件面，
+  理由与上面那条相同。`scripts/ci/verify_authority_index_paths.py` 的默认目标自 2026-10-08 起是
+  `docs/current/` 下全部受跟踪的 markdown 加本 register（不是四个手点名面），不在树里的名称由所在行的
+  `[no-tree-claim <CODE> ref=<名字>]` 就地声明，且每条声明每次运行都要重新证伪；
   具体计数写进本轮台账记录而不写在这里——本文件正是被点数的那份文档，在这里报数会立刻失真。
 - `docs/history/archive/session-history/`：跨机迁移、旧产品（minigame）、历史状态清单。
 - `taskpacks/history/CODEX-DESKTOP-STORE-UPDATE-BEHAVIOR-20260812.md`：历史调查记录，部分表述已由
