@@ -6652,11 +6652,12 @@
       "lifecycle": {
         "introducedCommit": "bcae52a661b82e43fe0b06dec8b2f6909f3f5af9",
         "introducedCommitNote": "derived with git log -S \"icon rail or drawer\" and -S \"Minimum touch/click target 44\" over apps/observer/frontend/SCREEN_SPEC.md: bcae52a6 is the commit that wrote both rows, and it wrote them from the skin's media queries rather than from the window contract",
-        "fixedCommit": null,
+        "fixedCommit": "48f9e4d080df17147d32b3bdd5390c2876b2f71f",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: fixedCommit is the commit this record ships in, which is unknown at authoring time; it is stamped by the follow-up once the record commit exists",
         "affectedCapability": "Responsive-surface claims in the UI design contract; the geometry gate's third measurement pass",
-        "regressionCommand": "cd tests/ci && python -m unittest -q test_topbar_geometry_gate"
+        "regressionCommand": "cd tests/ci && python -m unittest -q test_topbar_geometry_gate",
+        "bindingNote": "stamped from the next commit, per the rule that a record cannot carry its own SHA: 48f9e4d0 is the commit whose tree holds the standard correction, the floor pass and this record"
       }
     }
   ],
