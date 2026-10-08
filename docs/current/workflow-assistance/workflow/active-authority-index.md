@@ -41,6 +41,13 @@
 
 ## 4. README 链接规则
 
-- README 只链接权威文件（上表 Active 列），不链接历史记录。
+- README 不得把历史记录当作当前规范来源：链接进 `docs/history/` 或 `taskpacks/history/` 的每一行，
+  要么在本行文字里、要么在它所隶属的标题里标明那是归档/历史/审计/证据；归档索引小节可以列历史件，
+  操作手册不可以「今日流程见某份归档交接」。可执行形式：
+  `python scripts/ci/verify_readme_history_labels.py`（由 `tests/ci/test_readme_history_links_are_labelled.py`
+  在 root-governance 套件里跑）。
+  2026-10-08 更正：本条原写作「README 只链接权威文件（上表 Active 列），不链接历史记录」——字面禁令与
+  树里实测的 14 条历史链接同时存在且无任何守卫，规则因此从未生效；改为可判定的形式而不是删除链接，
+  因为指向归档证据的索引本身是有用的，被误用的只是「把归档当作今日规范」这一种。
 - 新增权威文件时必须登记到本索引；历史文件不得回链为规范来源。
 - 归档操作：移入 `taskpacks/history/` 或 `docs/history/`（保留 Git 历史），不删除。

@@ -201,7 +201,8 @@ backup → staging → atomic promotion 流程；`config/.env.template` 只列�
 受管 apply/rollback → verify 与幂等 plan 回读”的顺序恢复本项目明确拥有的 Rules、Skills、
 字段级配置和已声明的 Hermes 受管文件映射。恢复绝不替代官方安装/更新，也不接管
 Provider、模型、认证、Token、会话、私有记忆、Desktop 内部状态、CC Switch 路由或 Open
-Design 的设计能力配置。今日基线结论、已处理事项和恢复流程见
+Design 的设计能力配置。上面那条恢复顺序就是当前的流程；下面这份是 2026-08-13 那一轮的
+基线结论与已处理事项记录，仅作归档参考，不是当前规范：
 [`docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md`](docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md)。
 
 ## 模型切换与路由诊断
