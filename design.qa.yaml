@@ -41,6 +41,20 @@ design:
 
 # Only screens with captured rendered evidence are listed. `src/lib/viewRegistry.ts` registers 22 view ids;
 # the rest stay unlisted rather than being declared as covered by a name nobody has rendered.
+# `shared/lib/config.mjs` defaults `code.include` to `src/**`, `app/**`, `pages/**`, `components/**`
+# resolved against this file's directory. In a monorepo that matches nothing, and the consequence is the
+# worst kind of green: `audit-design-debt.mjs` and `audit-components.mjs` both returned
+# `scannedFileCount: 0, findings: 0` -- a clean verdict from an empty scope. The globs are therefore
+# pinned to the real source root, and a zero-file scan must be read as "did not run", never as "no debt".
+code:
+  include:
+    - apps/observer/frontend/src/**/*.{ts,tsx,css}
+  exclude:
+    - apps/observer/frontend/node_modules/**
+    - apps/observer/frontend/dist/**
+    - '**/*.test.ts'
+    - '**/*.test.tsx'
+
 screens:
   - name: overview-offline-dark
     url: /?view=evidence
