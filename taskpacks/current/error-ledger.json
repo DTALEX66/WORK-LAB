@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 204,
+    "total": 205,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 63,
       "test_behavior_alignment": 25,
       "working_directory_recovery": 2,
-      "evidence_state": 37,
+      "evidence_state": 38,
       "ci_configuration": 21,
       "feature_gap": 10,
       "config_downgrade": 3,
@@ -6009,8 +6009,9 @@
         "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
         "introducedCommitNote": "the 2026-09-17 branch cutover that moved the archive roots and left these six dated records under docs/current; confirmed with git log --follow on the moved files and the commit is an ancestor of HEAD",
         "fixedCommit": "8d4a5c464046b1b078c499b3c511751889c4ad2a",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 8d4a5c46 carries the moves, the repointed links, the widened extractor and its tests; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
+        "bindingBasis": "commit-contains-fix: 8d4a5c46 carries the moves, the repointed links, the widened extractor and its tests; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at 970fef43da2eab22ecb5e2e49c8ce454c4d459b1: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6037,8 +6038,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "accumulated across squash-merged PRs since 2026-09; no single introducing commit is claimed",
         "fixedCommit": "54a3284e2daabf95ca94c63559bbb1546c675434",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 54a3284e carries the re-pinned rows, the reachability tool and its test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
+        "bindingBasis": "commit-contains-fix: 54a3284e carries the re-pinned rows, the reachability tool and its test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at 970fef43da2eab22ecb5e2e49c8ce454c4d459b1: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6065,8 +6067,9 @@
         "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
         "introducedCommitNote": "the 2026-09-17 branch cutover that brought both canonical_store.py's acquire_lease and the sidecar's aggregate fingerprint into the tracked tree in this shape; confirmed with git log -S on each and the commit is an ancestor of HEAD",
         "fixedCommit": "e64c5abed2f17b421f243848c5887c7fc6cc1d8b",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: e64c5abe carries the witness, the fast path, the updated_at stamps and the gate; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
+        "bindingBasis": "commit-contains-fix: e64c5abe carries the witness, the fast path, the updated_at stamps and the gate; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at 970fef43da2eab22ecb5e2e49c8ce454c4d459b1: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6093,8 +6096,9 @@
         "introducedCommit": "e64c5abed2f17b421f243848c5887c7fc6cc1d8b",
         "introducedCommitNote": "my own previous commit on this branch, which added the fast path this record removes",
         "fixedCommit": "dd3f35b1e09e228615b94d39cb8813ab454a5cda",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: dd3f35b1 reverts the fast path and keeps the witness; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
+        "bindingBasis": "commit-contains-fix: dd3f35b1 reverts the fast path and keeps the witness; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at 970fef43da2eab22ecb5e2e49c8ce454c4d459b1: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6121,8 +6125,9 @@
         "introducedCommit": "8b88bf5f56e2f3121d3f8ce4d09f0f06a8033ab8",
         "introducedCommitNote": "the commit that added the four-file whitelist form of this guard",
         "fixedCommit": "9b71827efeb2173477a4b4892d2c720ff0da83ec",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 9b71827e carries the widened scan, the sixty corrections and the tests; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
+        "bindingBasis": "commit-contains-fix: 9b71827e carries the widened scan, the sixty corrections and the tests; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at 970fef43da2eab22ecb5e2e49c8ce454c4d459b1: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6149,8 +6154,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "no single commit introduced this: each verifier entered CI on its own day and the gap is the absence of any relation between the two lists",
         "fixedCommit": "e4e77250f07848d8f51c30ab377815b34d538cb8",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: e4e77250 adds the reachability checker, its staleness rule and the local route for the eight verifiers; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
+        "bindingBasis": "commit-contains-fix: e4e77250 adds the reachability checker, its staleness rule and the local route for the eight verifiers; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at 970fef43da2eab22ecb5e2e49c8ce454c4d459b1: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6177,8 +6183,9 @@
         "introducedCommit": "e64c5abed2f17b421f243848c5887c7fc6cc1d8b",
         "introducedCommitNote": "the revision that added newest_changes() with updated_at as the only lease-bearing column witnessed",
         "fixedCommit": "6310bd4e21f643a9d509e556f630d21c66e3d091",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 6310bd4e adds lease_expires_at to the witness and the two deterministic renewal cases; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
+        "bindingBasis": "commit-contains-fix: 6310bd4e adds lease_expires_at to the witness and the two deterministic renewal cases; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at 970fef43da2eab22ecb5e2e49c8ce454c4d459b1: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6205,8 +6212,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "the mode and the local test drifted apart over several commits; no single change created the gap",
         "fixedCommit": "6310bd4e21f643a9d509e556f630d21c66e3d091",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 6310bd4e runs --check-current locally, regenerates the projection and names the moved sources; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
+        "bindingBasis": "commit-contains-fix: 6310bd4e runs --check-current locally, regenerates the projection and names the moved sources; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at 970fef43da2eab22ecb5e2e49c8ce454c4d459b1: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6233,8 +6241,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "the assertion predates this session's edits to the file; it passed by timing until a CI trigger landed in the other half of the window",
         "fixedCommit": "9d1fd1bfd4302ba3ed7d37597a3805e6b5330e54",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 9d1fd1bf rewrites the wait and the failure text; verifiedCommit is owed until every Actions run at a head containing it is green"
+        "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
+        "bindingBasis": "commit-contains-fix: 9d1fd1bf rewrites the wait and the failure text; verifiedCommit is owed until every Actions run at a head containing it is green",
+        "verifiedCommitNote": "exact-SHA Actions readback at 970fef43da2eab22ecb5e2e49c8ce454c4d459b1: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6261,8 +6270,37 @@
         "introducedCommit": null,
         "introducedCommitNote": "each stale claim entered on its own day; the defect is the absence of a re-measurement rule, not one commit",
         "fixedCommit": "009444f44e9f81d5a03fb804ebf0d1ed4c8b8180",
+        "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
+        "bindingBasis": "commit-contains-fix: 009444f4 rewrites the 22 literals and appends the dated corrections; verifiedCommit is owed until every Actions run at a head containing it is green",
+        "verifiedCommitNote": "exact-SHA Actions readback at 970fef43da2eab22ecb5e2e49c8ce454c4d459b1: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
+      }
+    },
+    {
+      "error_id": "ERR-207",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "evidence_state",
+      "entrypoint": "tests/ci/test_ignore_probe_shape_is_file_shaped.py",
+      "command": "python -m pytest -q tests/ci/test_ignore_probe_shape_is_file_shaped.py",
+      "exit_code": 1,
+      "observed_error": "`git check-ignore -v --no-index services/` exits 0 and reports the matching pattern as `.gitignore:44`, which is an EMPTY line; the same rc=0 comes back for docs/current/, tests/ and for totally-made-up-dir-8f2c/. Asked about a file instead, the same command is honest: services/orchestration/sidecar.py exits 1, apps/observer/web/index.html exits 1 (that directory is deleted, not ignored), .project-local/runs/x.json exits 0. Any 'is this ignored?' answer produced from a trailing-slash path is therefore meaningless, and directory-shaped claims are exactly what several records and register rows rely on.",
+      "root_cause": "git answers a directory-shaped ignore query by matching the blank line, so the verdict is a property of the question's shape rather than of the tree. Nothing in the repo said that, and the first version of the guard I wrote to enforce it compounded the problem: it regexed quoted strings out of a text window starting at the word check-ignore, but every real call site spells the argument list as [\"git\", \"check-ignore\", ...], so the window starts mid-list and quotes pair off by one -- it reported 'src/' for a planted 'build/' case.",
+      "fix": "tests/ci/test_ignore_probe_shape_is_file_shaped.py pins the trap (tracked directories and a made-up directory all answer rc=0), asserts the file-shaped probe still discriminates -- including today's new Cargo target rule -- and scans tracked call sites for directory-shaped operands using ast rather than a text window, with a planted case that proves the reader finds build/ and a runtime concatenation it honestly declines to judge. Measured: 5 tests pass; the repo's four check-ignore call sites are file-shaped by construction, so no product behaviour changed.",
+      "regression_test": "tests/ci/test_ignore_probe_shape_is_file_shaped.py",
+      "regressionCommand": "python -m pytest -q tests/ci/test_ignore_probe_shape_is_file_shaped.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "an ignore question must be asked about a file, never about a directory, because git answers the directory form from the blank line; and a source-scanning guard must parse the construct it cares about, since a text window that starts inside a quoted list silently shifts every match.",
+      "remaining_boundary": "The scan inspects literal elements of a list argument only: a path built at runtime (str(root) + \"/x.bin\") is not judged, which is stated in the test rather than pretended away. The trap is git behaviour, so if a future git answers directory queries honestly, the first assertion here goes red on purpose and the rule should be re-measured rather than deleted.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the trap is git's, not a commit; the defect was the absence of any note saying the probe is unusable in directory shape",
+        "fixedCommit": "73ed8857b292fc3ea2096fdc6a023d726d19db05",
         "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 009444f4 rewrites the 22 literals and appends the dated corrections; verifiedCommit is owed until every Actions run at a head containing it is green"
+        "bindingBasis": "commit-contains-fix: 73ed8857 adds the guard; verifiedCommit is owed until every Actions run at a head containing it is green across both triggers"
       }
     }
   ],

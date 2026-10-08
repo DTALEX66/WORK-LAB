@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-08T04:21:33Z",
+  "generatedAt": "2026-10-08T05:21:14Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2148,
+    "trackedFilesScanned": 2150,
     "distinctProjectLocalTokens": 436,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 436,
-    "citationsToAbsentTokens": 1227
+    "citationsToAbsentTokens": 1232
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,7 +21,7 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 281,
+      "citations": 283,
       "distinctPaths": 95
     },
     "machine_field_pointing_at_absent_path": {
@@ -37,8 +37,8 @@
       "distinctPaths": 66
     },
     "negative_assertion_or_removal_record": {
-      "citations": 125,
-      "distinctPaths": 53
+      "citations": 127,
+      "distinctPaths": 54
     },
     "path_pattern_or_truncated_token": {
       "citations": 11,
@@ -49,7 +49,7 @@
       "distinctPaths": 1
     },
     "unclassified_needs_human_read": {
-      "citations": 46,
+      "citations": 47,
       "distinctPaths": 3
     }
   },
@@ -1634,6 +1634,18 @@
         "text": "self.dir_parent(), [\".project-local/runs/x.json\"],"
       },
       {
+        "path": ".project-local/runs/x.json",
+        "file": "tests/ci/test_ignore_probe_shape_is_file_shaped.py",
+        "line": 7,
+        "text": "`.project-local/runs/x.json` exits 0."
+      },
+      {
+        "path": ".project-local/runs/x.json",
+        "file": "tests/ci/test_ignore_probe_shape_is_file_shaped.py",
+        "line": 70,
+        "text": "self.assertEqual(0, probe(\".project-local/runs/x.json\"),"
+      },
+      {
         "path": ".project-local/runs/x/receipt.json",
         "file": "scripts/audit/project_local_citation_audit.py",
         "line": 210,
@@ -1880,7 +1892,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 259,
+        "line": 262,
         "text": "| DOC-REFERENCE-WIDENING-20261008 | P1 | CLOSED_LOCAL / GATED_IN_CI / EXACT_SHA_CI_NOT_RUN(no push at this commit yet) | **reference gate widened from four hand-named pages to every tracked markdown u"
       },
       {
@@ -6862,6 +6874,18 @@
         "text": "| `.project-local/runs/ui-suite/l10b-verify/` | 本地（gitignored） | 验证 harness + 日志 + 17 张截图 |"
       },
       {
+        "path": ".project-local/runs/x.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 260,
+        "text": "| GITIGNORE-PROBE-SHAPE-20261008 | P1 | CLOSED_LOCAL / GUARDED | **`git check-ignore` 问目录时永远答「已忽略」**（ERR-207，提交 73ed8857）。实测：`git check-ignore -v --no-index services/` 返回 0 并指向 `.gitignore:44`——那是个空行；"
+      },
+      {
+        "path": ".project-local/runs/x.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 6286,
+        "text": "\"observed_error\": \"`git check-ignore -v --no-index services/` exits 0 and reports the matching pattern as `.gitignore:44`, which is an EMPTY line; the same rc=0 comes back for docs/current/, tests/ an"
+      },
+      {
         "path": ".project-local/sessions/index.sqlite",
         "file": "services/session-federation/index.py",
         "line": 32,
@@ -7338,7 +7362,13 @@
       {
         "path": ".project-local",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 259,
+        "line": 261,
+        "text": "| REGISTER-PATH-GUARD-20261008 | P1 | DESIGNED_MEASURED_NOT_YET_BUILT / OWNER_NOT_REQUIRED | **把引用门禁推到 register 本身：设计已定，数字已测，实现未做**（2026-10-08）。用现成提取器跑 `--index taskpacks/current/OPEN-TASK-REGISTER.md"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 262,
         "text": "| DOC-REFERENCE-WIDENING-20261008 | P1 | CLOSED_LOCAL / GATED_IN_CI / EXACT_SHA_CI_NOT_RUN(no push at this commit yet) | **reference gate widened from four hand-named pages to every tracked markdown u"
       },
       {

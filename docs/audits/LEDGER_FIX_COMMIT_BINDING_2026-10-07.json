@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-08T04:56:12Z",
+  "generatedAt": "2026-10-08T05:21:13Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -8,7 +8,7 @@
     "null": "an unverified fix stays null, and a PASS record with no fixedCommit is listed as owed rather than left silently unbound"
   },
   "counts": {
-    "bound": 91,
+    "bound": 92,
     "unboundPassRecords": 94,
     "anomalies": 0
   },
@@ -827,96 +827,106 @@
       "id": "ERR-197",
       "statusAfter": "PASS",
       "fixedCommit": "8d4a5c464046b1b078c499b3c511751889c4ad2a",
-      "verifiedCommit": null,
+      "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     },
     {
       "id": "ERR-198",
       "statusAfter": "PASS",
       "fixedCommit": "54a3284e2daabf95ca94c63559bbb1546c675434",
-      "verifiedCommit": null,
+      "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     },
     {
       "id": "ERR-199",
       "statusAfter": "PASS",
       "fixedCommit": "e64c5abed2f17b421f243848c5887c7fc6cc1d8b",
-      "verifiedCommit": null,
+      "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     },
     {
       "id": "ERR-200",
       "statusAfter": "PASS",
       "fixedCommit": "dd3f35b1e09e228615b94d39cb8813ab454a5cda",
-      "verifiedCommit": null,
+      "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     },
     {
       "id": "ERR-201",
       "statusAfter": "PASS",
       "fixedCommit": "9b71827efeb2173477a4b4892d2c720ff0da83ec",
-      "verifiedCommit": null,
+      "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     },
     {
       "id": "ERR-202",
       "statusAfter": "PASS",
       "fixedCommit": "e4e77250f07848d8f51c30ab377815b34d538cb8",
-      "verifiedCommit": null,
+      "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     },
     {
       "id": "ERR-203",
       "statusAfter": "PASS",
       "fixedCommit": "6310bd4e21f643a9d509e556f630d21c66e3d091",
-      "verifiedCommit": null,
+      "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     },
     {
       "id": "ERR-204",
       "statusAfter": "PASS",
       "fixedCommit": "6310bd4e21f643a9d509e556f630d21c66e3d091",
-      "verifiedCommit": null,
+      "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     },
     {
       "id": "ERR-205",
       "statusAfter": "PASS",
       "fixedCommit": "9d1fd1bfd4302ba3ed7d37597a3805e6b5330e54",
-      "verifiedCommit": null,
+      "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     },
     {
       "id": "ERR-206",
       "statusAfter": "PASS",
       "fixedCommit": "009444f44e9f81d5a03fb804ebf0d1ed4c8b8180",
+      "verifiedCommit": "970fef43da2eab22ecb5e2e49c8ce454c4d459b1",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-207",
+      "statusAfter": "PASS",
+      "fixedCommit": "73ed8857b292fc3ea2096fdc6a023d726d19db05",
       "verifiedCommit": null,
       "promise": null,
       "promisePresentInFixTree": true,
