@@ -27,7 +27,7 @@ describe("theme tokens", () => {
   });
 
   it("dark: shape/motion/density match L4 + L6", () => {
-    expect(DARK.radius).toEqual({ sm: "4px", md: "10px", lg: "16px", xl: "22px" });
+    expect(DARK.radius).toEqual({ sm: "12px", md: "10px", lg: "16px", xl: "22px" });
     expect(DARK.shadow).toBe("0 20px 80px rgba(0, 0, 0, 0.35)");
     expect(DARK.glassBlur).toBe("18px");
     expect(DARK.motion.fast).toBe("120ms");
@@ -42,7 +42,7 @@ describe("theme tokens", () => {
     expect(LIGHT.accents.secondary).toBe("14 147 165");
     expect(LIGHT.colors.bg).toBe("#F4F7FA");
     expect(LIGHT.colors.ink).toBe("#0B1420");
-    expect(LIGHT.colors.muted).toBe("#5A7184");
+    expect(LIGHT.colors.muted).toBe("#4A6172");
   });
 
   it("neither theme carries the legacy purple accent (#7C6CF0 = 124 108 240)", () => {

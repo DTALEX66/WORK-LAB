@@ -40,8 +40,11 @@ Default (:root) = the Dark design language. html.light inverts all of it
   --warning-rgb: 245 158 11;
   --error-rgb: 239 68 68;
   --info-rgb: 56 130 246;
-  /* shape / depth / motion / density (L4 + L6) */
-  --radius-sm: 4px;
+  /* shape / depth / motion / density (L4 + L6)
+     --radius-sm mirrors skins/b10.css, which declares the same name 12px and loads second, so 12px is what
+     renders; a value here that differs would be a rule the browser never applies. Enforced by
+     scripts/ci/verify_css_token_mirror.py. */
+  --radius-sm: 12px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 22px;

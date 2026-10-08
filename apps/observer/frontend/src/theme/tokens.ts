@@ -80,7 +80,9 @@ export const DARK: ThemeValues = {
     errorHex: "#EF4444",
     infoHex: "#3882F6",
   },
-  radius: { sm: "4px", md: "10px", lg: "16px", xl: "22px" },
+  // sm is the pinned skin's value: skins/b10.css declares --radius-sm:12px and loads after index.css, so
+  // 12px is what every consumer renders. scripts/ci/verify_css_token_mirror.py keeps the two in step.
+  radius: { sm: "12px", md: "10px", lg: "16px", xl: "22px" },
   shadow: "0 20px 80px rgba(0, 0, 0, 0.35)",
   glassBlur: "18px",
   motion: {
@@ -99,7 +101,9 @@ export const LIGHT: ThemeValues = {
     primary: "27 127 230",
     secondary: "14 147 165",
     success: "21 128 61",
-    warning: "180 83 9",
+    // index.css html.light moved this channel to 154 74 5 (#9A4A05) because amber as light text
+    // measured 4.48:1; the same channel feeds the text role, so the record has to carry the readable one.
+    warning: "154 74 5",
     error: "185 28 28",
     info: "29 78 216",
   },
@@ -110,11 +114,14 @@ export const LIGHT: ThemeValues = {
     panel2: "#EAF0F6",
     border: "#D5E2EC",
     ink: "#0B1420",
-    muted: "#5A7184",
+    // The AA value index.css and skins/l10b-shell.css both ship for the light muted role. #5A7184 lived here
+    // after that fix and still reached the DOM: TopStatusBar paints its status dot from THEMES[theme].colors,
+    // so the light theme showed one grey in the chrome and another in every label.
+    muted: "#4A6172",
     primaryHex: "#1B7FE6",
     secondaryHex: "#0E93A5",
     successHex: "#15803D",
-    warningHex: "#B45309",
+    warningHex: "#9A4A05",
     errorHex: "#B91C1C",
     infoHex: "#1D4ED8",
   },

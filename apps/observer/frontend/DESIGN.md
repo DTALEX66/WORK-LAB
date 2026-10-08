@@ -68,7 +68,7 @@ typography:
     letterSpacing: 0px
 rounded:
   none: 0px
-  sm: 4px
+  sm: 12px
   md: 10px
   lg: 16px
   xl: 22px
@@ -331,10 +331,17 @@ Tabular figures are required on every metric (`font-variant-numeric: tabular-num
 
 ## Shapes
 
-`{rounded.sm}` 4px chips and inline code, `{rounded.md}` 10px nav rows and small controls,
-`{rounded.lg}` 16px inputs and action buttons, `{rounded.xl}` 22px cards, `{rounded.full}` avatars.
-Rendered evidence also contains 12px, 14px, 18px and 20px radii that map to no token — those are drift,
-not a scale.
+`{rounded.sm}` is **12px**, not the 4px this file used to state: `src/skins/b10.css` declares `--radius-sm:12px`
+and `main.tsx` imports `index.css` before the skin, so 12px is what renders (measured by reading both sheets
+and the import order; `scripts/ci/verify_css_token_mirror.py` and
+`src/theme/tokensMirror.contract.test.ts` now keep the records in step). Its live consumer is the overflow-menu
+item (`.action-overflow-item`); Tailwind's `rounded-sm` utility is used **0** times. `{rounded.md}` 10px carries
+`.panel`, `.panel2` and the overflow menu itself, plus 2 `rounded-md` usages. `{rounded.lg}` 16px and
+`{rounded.xl}` 22px are declared and currently consumed by nothing — a scale step nobody uses is not a rule,
+so treat them as reserved rather than as guidance. Chips are **not** small-radius: `.tag` is `999px`
+(`{rounded.full}`, 14 usages), which is why "4px chips and inline code" could never have been true — no rule
+gave inline code a radius at all. The pinned skin also owns `--radius` 18px for its own cards; that is a
+different scale from this one and is named differently on purpose.
 
 ## Components
 
@@ -436,15 +443,27 @@ each one declared at the sentence rather than excused repo-wide:
    0 AA failures in either theme, lowest ratio 5.34:1 in light.
 5. ~~**Type floor violated**~~ — CLOSED 2026-10-08. 125 `text-[9px]/[10px]/[11px]` utilities across 30
    files and three shell micro roles were raised to 12px; see Typography for the two enforcement points.
-6. **Three token sources disagree** — radii: `src/theme/tokens.ts` 4/10/16/22 vs
-   `design-tokens.json` 11/20/30 vs rendered 12/14/18/20; glass blur 18px vs 34px. Decision needed on
-   whether `design-tokens.json` is a brand handoff artefact (then it must stop claiming to be the UI
-   token source) or the UI source (then `tokens.ts` changes).
-7. **Two parallel variable vocabularies** — the Tailwind layer reads `--color-*` / `--*-rgb` while the
-   B10 skin reads `--bg` / `--text` / `--muted` / `--border` / `--surface`. PARTIALLY CLOSED: `muted`
-   now carries one value in both, which is what removed gap 4's chip failure. The remaining pairs
-   (`border`, `surface`, `primary`) still name different values with the same word, so a theme change
-   can repaint one layer and not the other. Needs one canonical role set.
+6. **Closed: three token sources disagreed** — reconciled 2026-10-08 by measurement, not by decision. The UI scale is
+   `src/theme/tokens.ts` + the `:root` / `html.light` blocks in `src/index.css`, because those are what the
+   components and the sheets actually use; `src/assets/brand/design-tokens.json` is a **brand handoff
+   artefact** — no application code imports it (measured with `git grep`: the readers are
+   `apps/observer/tests/test_production_surface_static_contract.js`, which asserts its themes/views/
+   constraints, and its own entry in `.project/governance/recovered-source-registry.json`; everything else is
+   prose), so its 11/20/30 radii and 34px blur are not
+   claims about this product and are no longer treated as a conflict. What was wrong has been corrected to the
+   rendered value: `{rounded.sm}` and `tokens.ts` both said 4px while the pinned skin's `--radius-sm:12px`
+   wins the cascade. Two guards keep it that way — `scripts/ci/verify_css_token_mirror.py` (sheet vs sheet) and
+   `src/theme/tokensMirror.contract.test.ts` (tokens vs sheets).
+7. **Closed: two parallel variable vocabularies** — closed 2026-10-08 for the part that was real, corrected for the
+   part this file stated wrongly. Measured across both theme scopes: `--color-bg/-sidebar/-panel/-panel2/
+   -border/-ink/-muted` and `--bg/-sidebar/-surface/-surface2/-border/-text/-muted` carry **the same value per
+   theme** (84 scoped declarations, no cross-sheet collision once `--radius-sm` was fixed), and
+   `--color-surface` / `--color-primary` / `--color-text` do not exist at all — so "the same word names
+   different values" was never true of border/surface/primary as written here. The genuine instances were in
+   the *other* direction: `tokens.ts` holding values the sheets had already moved — light `muted` #5A7184
+   against #4A6172, light `warning` 180 83 9 against 154 74 5, `radius.sm` 4px against 12px — and all three
+   reached the DOM, because `TopStatusBar` paints its status dot from `THEMES[theme].colors`. That drift is now
+   a red test instead of a paragraph.
 8. **Closed: the micro-role allowlist now expires instead of accumulating.**
    `apps/observer/tests/test_production_surface_static_contract.js` used to permit sub-12px CSS in seven
    named roles (`.winctl-zoom`, `.load-strip`, `.brand small`, `.topbar-brand-word`, `.tag`, `.badge`,
@@ -477,3 +496,20 @@ each one declared at the sentence rather than excused repo-wide:
     floor. ERR-219 records it. What remains genuinely open is a design question the deleted row was
     papering over: the rail has no per-lane icon set, so it cannot be made narrow on purpose — only by
     removing information.
+11. **One role, two literals, kept equal by a guard rather than by one definition.**
+    `--color-bg / -sidebar / -panel / -panel2 / -border / -ink / -muted` in `src/index.css` repeat, character
+    for character, what `src/skins/b10.css` (`:root`) and `src/skins/l10b-shell.css` (`html.light`) declare for
+    `--bg / -sidebar / --surface / --surface2 / --border / --text / --muted` — measured 2026-10-08 across the
+    84 theme-scoped declarations of the three sheets. `scripts/ci/verify_css_token_mirror.py` now makes a
+    divergence red, which the pair never had, but the duplication remains: an edit that changes both files the
+    same way still passes. The owed change is to derive the Tailwind-facing set (`--color-border:
+    var(--border)`), so one literal per role exists — custom-property references resolve at use time, so the
+    import order does not matter. Deliberately not done in this round: it rewrites seven declarations in the
+    layer every contrast number in this file was measured against.
+12. **The status pills bypass the accent channels.** `.tag.ok`, `.tag.warn` and `.tag.bad` fill with literal
+    gradients (`#27c86a→#11a74d`, `#f2b541→#c98c00`, `#f86b6b→#cb3e3e`) while `.tag.info` uses
+    `var(--primary)`/`var(--secondary)` — read from `skins/b10.css:258-261`. A pill's green is therefore
+    neither `--success` in dark (`#22C55E`) nor in light (`#15803D`), in either theme, so a pill and a label
+    that name the same state are different colours; the pinned skin (D-11) cannot be edited to fix it, so the
+    override belongs in `src/skins/l10b-shell.css`. No contrast measurement exists for those literals on either
+    canvas — that is the first thing this gap needs, not a code change.
