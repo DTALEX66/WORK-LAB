@@ -43,8 +43,20 @@ export function ActionRow({ actions }: { actions: ActionDef[] }) {
     const row = rowRef.current
     const sizer = sizerRef.current
     if (!row || !sizer) return
+    // No ResizeObserver, or a container that reports no width, means there is no layout to reason
+    // about — a jsdom mount, or a first paint before the shell has sized itself. Folding on
+    // `available = 0` would hide every control from an accessibility tree that a test (and a screen
+    // reader) legitimately expects to contain them, so an unmeasurable row shows everything.
+    if (typeof ResizeObserver === 'undefined') {
+      setVisibleCount(actions.length)
+      return
+    }
 
     const measure = () => {
+      if (!row.clientWidth) {
+        setVisibleCount(actions.length)
+        return
+      }
       const widths = Array.from(sizer.children).map((child) => (child as HTMLElement).offsetWidth)
       const gap = 8
       const pinned = actions.filter((action) => action.pinned)
