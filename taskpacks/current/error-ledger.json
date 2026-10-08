@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 217,
+    "total": 218,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 66,
       "test_behavior_alignment": 27,
       "working_directory_recovery": 2,
       "evidence_state": 40,
-      "ci_configuration": 21,
+      "ci_configuration": 22,
       "feature_gap": 10,
       "config_downgrade": 3,
       "dead_entry": 3,
@@ -6659,6 +6659,38 @@
         "regressionCommand": "cd tests/ci && python -m unittest -q test_topbar_geometry_gate",
         "bindingNote": "stamped from the next commit, per the rule that a record cannot carry its own SHA: 48f9e4d0 is the commit whose tree holds the standard correction, the floor pass and this record",
         "verifiedCommitNote": "exact-SHA readback at 0b004fbdadffbacf4e3623a41b7c5c4ae8959f35: all 24 check-runs across both workflows (push and pull_request) completed with conclusion=success; this head contains ERR-219's fixedCommit, so the verdict covers the fix and not an ancestor"
+      }
+    },
+    {
+      "error_id": "ERR-220",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "ci_configuration",
+      "entrypoint": "services/orchestration/run_quality_gate.py",
+      "command": "git push origin task-decomposition/atlas-gap-archive-20261001",
+      "exit_code": 0,
+      "observed_error": "b4f8b0a3 was pushed after running only the governance group at HEAD, instead of the recorded ordering commit -> verify at HEAD -> read GATE_EXIT=0 from the receipt -> push. The push succeeded and the change itself was fine, which is exactly why the class recurs: nothing answered the question 'has THIS head been through the full gate'. This is the third instance of the same ordering failure in this repository's records — ERR-181 pushed a head whose own full-gate run had already printed GATE_EXIT=1, reading the wrapper's exit code instead of the file — and the durable rule had been restated in prose twice since. The follow-up run at 8e4d36a4 then went red on a real defect in the new tool (a text-mode pipe with no declared encoding, ERR-211's class), which is the outcome the ordering rule exists to catch before a push rather than after it.",
+      "root_cause": "The guard was a sentence, not an instrument. Worse, the receipts it would have needed to read were not self-identifying: `run_quality_gate.py` printed a verdict without printing the commit the verdict described, so 'verified at this head' was unanswerable from the artifacts even in principle. A rule that cannot be checked will be broken again by the same person, under time pressure, while believing they are following it.",
+      "fix": "`run_gate_sequence` now stamps `GATE_HEAD=<40hex> GATE_TREE=<40hex> GATE_FULL=yes|no gates=N` as its first output line — before any gate runs, so a red receipt identifies its head too — and GATE_FULL is derived by comparing the selected set against VERIFY_ORDER rather than passed in. `scripts/ci/push_permit.py --head <rev>` resolves the rev, scans .project-local/runs/**/*.log and answers with one of five named verdicts: PUSH_PERMIT_OK, NO_RECEIPT, PARTIAL_ONLY (a narrow run cannot stand in for a verified head), RECEIPT_RED, NO_EXIT_LINE (a file with no completion line is a killed or still-live run, not a pass). The permit's own first subprocess call was caught by the ERR-211 encoding guard on a full local gate run before any push, and fixed in the same sequence.",
+      "regression_test": "tests/ci/test_push_permit.py::DecideTests::test_a_green_receipt_for_another_head_does_not_permit_this_one",
+      "regressionCommand": "cd tests/ci && python -m unittest -q test_push_permit",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "Fifteen tests in that file each plant the shape they name: a green receipt for a DIFFERENT head must refuse (the decisive case — the previous head was verified, this one was not), a GATE_FULL=no receipt on the right head must refuse with PARTIAL_ONLY and then permit when --allow-partial is stated, a red receipt must name its exit, a receipt with no GATE_EXIT line must refuse rather than assume, and when one file holds two runs the LAST exit wins. test_the_stamp_precedes_the_first_gate_so_a_red_run_is_attributable asserts the source order inside run_gate_sequence, because RECEIPT_RED is unreachable if the stamp is only written on the pass path. Live proof on real artifacts: a single-gate receipt for b4f8b0a3 was refused with PARTIAL_ONLY (receipts=1, gates_run=['no']), and a full verify at 10861ff9 was permitted by path-named receipt.",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "When the same procedural rule breaks a third time, the fix is not a stronger sentence in a document: it is an instrument that answers the question the rule asks, plus a receipt format that makes the answer checkable (identity first — a log line that does not say which commit it describes cannot support any ordering claim). And a new guard must produce one real PASS on the machine that will enforce it before it is wired as required (ERR-146's rule), which here means the permit is a command I run, not a hook I silently install in a shared checkout.",
+      "remaining_boundary": "The permit is not installed as a git pre-push hook: local hooks are invisible to other writers sharing this checkout and are a per-machine change, so installing one is an owner call. It also records GATE_TREE but does not yet compare it, so a receipt taken at a head whose working tree changed afterwards still permits the push — the head identity is exact, the tree identity is advisory. Finally 8e4d36a4 (red, unpushed, superseded) still reports NO_RECEIPT rather than RECEIPT_RED, because its receipt predates the stamp; only heads verified from 0e19be9d onward get the full four-way distinction.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "b4f8b0a3",
+        "introducedCommitNote": "the push that deviated; the missing capability (self-identifying receipts) predates it, which is why the record is filed against the runner rather than the commit",
+        "fixedCommit": "b83eaaa3",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: b83eaaa3 adds scripts/ci/push_permit.py and the head stamp; 0e19be9d completes it by moving the stamp ahead of the gates",
+        "bindingNote": "fixedCommit resolved with git log -S 'push_permit' over the tree; verifiedCommit owed until every check-run at a head containing both is green",
+        "affectedCapability": "Delivery ordering: commit -> verify at HEAD -> push",
+        "regressionCommand": "cd tests/ci && python -m unittest -q test_push_permit"
       }
     }
   ],
