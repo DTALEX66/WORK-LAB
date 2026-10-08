@@ -64,7 +64,10 @@ DECLARED_HELPER_SCHEMAS: dict[str, str] = {
         "against it; python-side, no TypeScript consumer",
     "packages/contracts/schemas/workflow/cloud-event-envelope.schema.json":
         "reached only by the directory census in tests/workflow-assistance/test_core_schemas.py -- no "
-        "code path loads it, so it is an unimplemented delivery shape rather than a live contract",
+        "code path loads it, and the CloudEvents field it exists to pin, specversion, appears nowhere in "
+        "the tracked tree except this schema and one frozen release note, so it is an unimplemented "
+        "delivery shape rather than a live contract; with additionalProperties:true it would also accept "
+        "a key the registry has never named, so it is not yet a guard either",
     "packages/contracts/schemas/workflow/context-capsule.schema.json":
         "assembled by packages/client-neutral-core/scripts/plan_candidate.py and cited by "
         ".project/governance/future-candidate-registry.json; python-side handoff shape",
