@@ -118,14 +118,19 @@ defect.*
 
 `?view=compact` is a user density mode, not a breakpoint, and must never be cited as responsive evidence.
 
-Legibility is swept across the surviving surfaces rather than sampled at one width: `--all-views --sizes`
-drives all 23 lanes at 1280/900/700/430 in both themes — ~8,600 node measurements, 0 below the floor, 0 AA
-failures, 0 unreadable disabled labels, 0 empty views
-(receipt `.project-local/artifacts/LEGIBILITY_SIZES_D.json`). Reaching that clean result required a
-`secondary-ink` text role (DESIGN.md's text-accent rule) after `text-secondary` measured 3.49:1 in the
-task-packs table, and a `window_is_the_width_asked` assertion after the harness reported twelve confident
-measurements of one-pixel-wide windows. The 700/430 columns are kept as legibility stress only: they are
-not surfaces the shell can be resized into.
+Legibility is swept across the surfaces that exist rather than sampled at one width. Measured
+2026-10-08 against a **live backend** (`--all-views --live-backend --sizes 1280,900,440`): 23 lanes ×
+3 widths × 2 themes = 6 reports, **5,815 node measurements**, 0 below the floor, 0 AA failures, 0
+unreadable disabled labels, 0 empty views, 0 unparsable colours, and every report carries
+`window_is_the_width_asked` so the width claimed is the width measured (receipt
+`.project-local/artifacts/LEGIBILITY_REACHABLE_1.json`; the earlier 4-width sweep including the
+unreachable 700/430 columns is kept as `LEGIBILITY_SIZES_D.json` and superseded, not deleted).
+Per-lane node counts differ (1176 / 952 / 779 at the three widths, 47–70 nodes per lane) and the page
+text contains `LIVE` and not `OFFLINE`, which is what distinguishes this from re-measuring the offline
+card 46 times — the mistake ERR-218 was filed for. Reaching a clean result required a `secondary-ink`
+text role (DESIGN.md's text-accent rule) after `text-secondary` measured 3.49:1 in the task-packs
+table, and the width assertion after the harness once reported twelve confident measurements of
+one-pixel-wide windows.
 
 ## Degraded and offline states (normative)
 

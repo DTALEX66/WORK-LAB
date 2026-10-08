@@ -672,7 +672,10 @@ def main() -> int:
     ap.add_argument("--all-views", action="store_true",
                     help="click every rail lane and judge each view it produces, not just the landing view")
     ap.add_argument("--sizes", default="1280",
-                    help="comma-separated window widths in CSS px to sweep with --all-views (e.g. 1280,760,430)")
+                    help="comma-separated window widths in CSS px to sweep with --all-views. The "
+                         "surfaces the product can take are 1280 (main default), 900 (main "
+                         "minWidth/minHeight floor) and 440 (the HUD); narrower values are legal as "
+                         "text stress but are not product surfaces (SCREEN_SPEC: Window surfaces).")
     args = ap.parse_args()
     try:
         sizes = [int(token) for token in args.sizes.split(",") if token.strip()]

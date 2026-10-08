@@ -286,6 +286,16 @@ the segmented filter's selected tab was white on b10's primary→cyan gradient a
 light; light-theme `--warning` amber used as *text* measured 4.48:1; and the instrument itself could not
 parse the `oklab()` colours Chrome reports, which turned ten measurable nodes into UNKNOWN failures.
 
+**Every view, at every surface the product can take (`--all-views --live-backend --sizes`, 2026-10-08):**
+23 lanes × 3 widths (1280 / 900 / 440 — the main window's default, its `minWidth`/`minHeight` floor, and
+the HUD) × 2 themes = 6 reports and **5,815 node measurements**, 0 below floor, 0 AA failures, 0
+disabled-label failures, 0 unparsable colours, 0 thin views
+(receipt `.project-local/artifacts/LEGIBILITY_REACHABLE_1.json`). Per-lane node counts differ across
+lanes and widths (47–70 per lane; 1176 / 952 / 779 per report), and the rendered text contains `LIVE`
+and not `OFFLINE` — the two facts that make this a measurement of real screens rather than of the
+offline card repeated 46 times. Each report also asserts `window_is_the_width_asked`, so a claimed
+width is a measured one.
+
 **Type floor (normative).** No text a user must read below **12px**. Below 12px is permitted only for a
 decorative glyph that repeats information available elsewhere, and such a node must be `aria-hidden`.
 The floor is enforced twice: the rendered instrument fails any node under 12px whose role is not
