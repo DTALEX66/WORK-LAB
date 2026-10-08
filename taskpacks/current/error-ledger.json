@@ -9,11 +9,11 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 205,
+    "total": 206,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 63,
-      "test_behavior_alignment": 25,
+      "test_behavior_alignment": 26,
       "working_directory_recovery": 2,
       "evidence_state": 38,
       "ci_configuration": 21,
@@ -6301,6 +6301,34 @@
         "fixedCommit": "73ed8857b292fc3ea2096fdc6a023d726d19db05",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: 73ed8857 adds the guard; verifiedCommit is owed until every Actions run at a head containing it is green across both triggers"
+      }
+    },
+    {
+      "error_id": "ERR-208",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "scripts/ci/verify_authority_index_paths.py",
+      "command": "python scripts/ci/verify_authority_index_paths.py --index docs/current/workflow-assistance/workflow/github-delivery-accelerator.md",
+      "exit_code": 1,
+      "observed_error": "A named run of the reference checker exits 0 while judging nothing: `--index <one prose page>` printed `targets=1 refs=0 broken=0` and returned success, because the capability floor added this morning applies only to the default widened scan and the refs>0 requirement applies only to the four navigation surfaces. That output is indistinguishable from an extractor that stopped matching, which is the exact failure mode the floor exists to catch. 记法说明：缺陷自身的退出码是 0（下面再述）；本条记录的 1 是修复后同一条命令拒绝空判运行的实测值。原句：本条 exit_code=1 记录的是修复后 `--index` 空判被拒绝时该命令的真实退出码；缺陷本身的退出码是 0——「成功但没有判断任何东西」正是这类缺陷不可见的机制，两个数都以同一条命令实测。",
+      "root_cause": "Two strictness levels were designed for whole-scan semantics and the named-invocation path was never given its own check. Widening the scan moved the vacuity question from 'this file has no references' to 'this run judged nothing', and the named path kept the old answer of 'fine'.",
+      "fix": "main() refuses when a named run produced zero references in total, with a message saying nothing was judged. A prose page making no tree claim remains legitimate inside the widened scan, where the floor and the other surfaces carry the capability question; what is refused is an entire run that examined nothing. Measured: that exact page now exits 1 with refs=0, and the ci module is 24 tests green including the new case.",
+      "regression_test": "tests/ci/test_authority_index_paths_resolve.py",
+      "regressionCommand": "python -m pytest -q tests/ci/test_authority_index_paths_resolve.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "every entry point of a checker needs its own capability assertion, because a strictness rule designed for one invocation mode silently excuses the other; and 'nothing was examined' must be reported as a failure rather than as zero findings.",
+      "remaining_boundary": "The named-run rule refuses only at zero references. A named run that finds a handful of references while the extractor quietly lost its main pattern still passes; only the widened scan has a numeric floor, because the floor is a property of the whole corpus, not of one page.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "9b71827efeb2173477a4b4892d2c720ff0da83ec",
+        "introducedCommitNote": "the widening commit that added the floor to the default scan only",
+        "fixedCommit": "8d08cba2036d3ae117a45f13b3d312bf62622b71",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 8d08cba2 refuses a named run that judged nothing; verifiedCommit is owed until every Actions run at a head containing it is green"
       }
     }
   ],
