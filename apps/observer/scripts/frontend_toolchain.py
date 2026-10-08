@@ -107,7 +107,8 @@ def command(node: Path, args: list[str], env: dict) -> int:
 
 def cmd_resolve(_: argparse.Namespace) -> int:
     node = find_node()
-    version = subprocess.run([str(node), "--version"], capture_output=True, text=True).stdout.strip()
+    version = subprocess.run([str(node), "--version"], capture_output=True, text=True,
+                             encoding="utf-8", errors="replace").stdout.strip()
     print(f"NODE_BOUND node={node} version={version}")
     print(f"NPM_BOUND npm_cli={node.parent / 'node_modules' / 'npm' / 'bin' / 'npm-cli.js'} "
           f"exists={(node.parent / 'node_modules' / 'npm' / 'bin' / 'npm-cli.js').is_file()}")
