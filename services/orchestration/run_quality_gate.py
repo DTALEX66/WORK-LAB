@@ -550,6 +550,19 @@ def gate_policy_coverage() -> int:
     return run_python(["scripts/ci/verify_policy_coverage.py"])
 
 
+def gate_blueprint_projection() -> int:
+    """The blueprint coverage projection must equal what its mutable sources say now.
+
+    Measured cause: the CI integration job went red at d76deef0 and again at cdfd27d4 with
+    BLUEPRINT_COVERAGE_FAIL, while the canonical local gate printed PASS on the same tree. The
+    projection restates register cells verbatim, so rewriting 12 dangling register pins made it
+    stale -- and only CI could see it, because this check ran nowhere but the integration job. A
+    freshness rule a writer cannot run before pushing is a rule that will be broken by honest
+    edits to its source.
+    """
+    return run_python(["scripts/ci/verify_blueprint_coverage.py"])
+
+
 def gate_context_control_plane() -> int:
     """Context Control Plane: stable prefix, cache truth, drift guard tests."""
     return run_python(["tests/workflow-assistance/test_context_control_plane.py"])
@@ -1144,6 +1157,11 @@ GATES: dict[str, Gate] = {
         "U17.7/27: verify Global Agent Policy coverage + freshness (loss reports, matrix block, golden projections).",
         gate_policy_coverage,
     ),
+    "blueprint-projection": Gate(
+        "blueprint-projection",
+        "The blueprint coverage projection must match its mutable sources right now, not on CI only.",
+        gate_blueprint_projection,
+    ),
     "context-control-plane": Gate(
         "context-control-plane",
         "Context Control Plane: stable prefix + cache truth + drift guard.",
@@ -1256,6 +1274,7 @@ VERIFY_ORDER = (
     "evidence-tiering",
     "root-governance-suite",
     "policy-coverage",
+    "blueprint-projection",
     "context-control-plane",
     "external-libraries-index",
     "protected-drives-consistency",
