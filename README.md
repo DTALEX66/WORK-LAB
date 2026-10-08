@@ -14,6 +14,8 @@ plugins/MCP 声明、Portable Memory、Capabilities、workflow policy）收成�
 > `.project/governance/project-authority-index.json`（顶层机器权威）→ `AGENTS.md` →
 > `.project/governance/taskpack-authority-index.json` 指向的 current TaskPack →
 > `taskpacks/current/OPEN-TASK-REGISTER.md`（唯一在册开放任务账本，不建第二个）→ 范围内机器合同。
+> **找不到任务或文档时先读**：`docs/current/DOCUMENT-CENSUS.md`（文档与任务总索引：每个文档面的位置、
+> 数量、最后触碰时间、是否规范、由哪条门禁守着，以及从 `D:/All projects/Record` 收回来的唯一副本）。
 > 优先级：最新明确用户决定 ＞ Authority ＞ 机器索引 ＞ current TaskPack 与账本 ＞
 > `AGENTS.md` 与范围内合同 ＞ 当前精确提交代码与 CI/运行时读回 ＞ 历史记录（冻结、非规范）。
 > 审计入口：`python scripts/ci/verify_project_authority_reference.py`、

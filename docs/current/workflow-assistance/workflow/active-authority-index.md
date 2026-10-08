@@ -10,6 +10,7 @@
 
 | 领域 | 权威文件 | 角色 |
 |---|---|---|
+| 文档与任务定位 | `docs/current/DOCUMENT-CENSUS.md` | 非权威索引：每个文档面的位置、数量、状态、守卫与冻结候选；权威顺序仍由本索引上方各行与 `WORK-LAB-AUTHORITY.md` 决定 |
 | 字段级配置所有权 | `config/config-ownership.json` | 唯一字段权威（`single_authority: true`） |
 | 外部项目端点 | `config/project-profiles.json` | 只读端点声明（地址 + 协议元数据） |
 | 项目 profile 合同 | `packages/contracts/schemas/workflow/project-profile.schema.json` | 外部项目声明 schema |
