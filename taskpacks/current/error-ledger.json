@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 199,
+    "total": 200,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 63,
       "test_behavior_alignment": 23,
       "working_directory_recovery": 2,
       "evidence_state": 36,
-      "ci_configuration": 19,
+      "ci_configuration": 20,
       "feature_gap": 10,
       "config_downgrade": 3,
       "dead_entry": 3,
@@ -6123,6 +6123,34 @@
         "fixedCommit": "9b71827efeb2173477a4b4892d2c720ff0da83ec",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: 9b71827e carries the widened scan, the sixty corrections and the tests; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+      }
+    },
+    {
+      "error_id": "ERR-202",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_configuration",
+      "entrypoint": ".github/workflows/work-lab-gate.yml",
+      "command": "python scripts/ci/verify_ci_check_reachability.py",
+      "exit_code": 1,
+      "observed_error": "Eleven python operands invoked by the two CI workflows were reachable from no local route: eight scripts/ci verifiers (verify_cross_module_source_index, verify_future_candidate_registry, verify_observer_readonly, verify_regression_report, verify_skill_mcp_consistency, verify_source_governance, verify_source_health, verify_wl_inheritance_matrix), the generate_contract_types step whose committed contracts.ts CI regenerates, and the Observer WebView2 E2E. The local gate printed PASS over the same tree, so a writer could break any of them and learn about it only from a red job. The immediate cause was this branch's own history: verify_blueprint_coverage.py sat in exactly this position and the integration job was red at two pushed heads while every local run said green.",
+      "root_cause": "Rules accreted per job. A verifier is written, wired into the workflow step list, and never asked the question 'can the person editing this file run it?' -- the local gate and the CI step list are two hand-maintained lists with no relation between them, so any gap between them is invisible until it produces a red. Compounding it, the operand a step names is relative to that step's working-directory, so judging the literal string conflates apps/observer/scripts/u19_webview_e2e.py with a root-level file of the same words.",
+      "fix": "scripts/ci/verify_ci_check_reachability.py decides each workflow operand's route from repository text: NAMED_GATE when the runner names it, TEST_ROUTE when a test module does, SELF_RUN when the operand is itself a discovered test, DECLARED only for a step no local run can perform, and the declaration is re-tested for reachability so it cannot outlive its excuse and become a hiding place -- that staleness rule is what rejected three of my own draft exemptions after measuring (aggregate_gate, emit_gate_plan and failfast_group already have local routes). Steps with working-directory: are resolved before judging. tests/ci/test_ci_invoked_verifiers_have_a_local_route.py is the local route for the eight verifiers and checks the committed contracts.ts against a regeneration whose bytes are restored afterwards. Measured: operands=64, NAMED_GATE=3, TEST_ROUTE=24, SELF_RUN=34, DECLARED=2, ci_only=0, and the reachability run now passes by being satisfied rather than by being declared away.",
+      "regression_test": "tests/ci/test_ci_invoked_verifiers_have_a_local_route.py",
+      "regressionCommand": "python -m pytest -q tests/ci/test_ci_invoked_verifiers_have_a_local_route.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Every check a workflow runs must be reachable from a local run or be declared with a reason that is itself re-tested; a new CI step that names an unreachable script must fail the reachability gate rather than wait for a red job; and the declaration list must never grow by assumption -- measure the route first, because a wrong exemption hides a rule just as well as a missing one.",
+      "remaining_boundary": "The two declared exemptions are host-bound by nature (the artifact-receipt writer and the WebView2 E2E), so a local run still cannot see whether CI's desktop readback passed; that verdict arrives only from the exact-SHA run, which is why it is recorded as NOT_RUN rather than inferred. Reachability is judged from text: a test module that names a script but never executes it counts as a route, so a wrapper that asserts nothing would satisfy this gate while leaving the rule unrun -- the eight verifiers here are executed rather than cited, and that is the part a future reader should keep.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "no single commit introduced this: each verifier entered CI on its own day and the gap is the absence of any relation between the two lists",
+        "fixedCommit": "e4e77250f07848d8f51c30ab377815b34d538cb8",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: e4e77250 adds the reachability checker, its staleness rule and the local route for the eight verifiers; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
       }
     }
   ],
