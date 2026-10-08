@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-08T00:53:32Z",
+  "generatedAt": "2026-10-08T01:20:05Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2137,
+    "trackedFilesScanned": 2139,
     "distinctProjectLocalTokens": 434,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 434,
-    "citationsToAbsentTokens": 1207
+    "citationsToAbsentTokens": 1208
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,7 +21,7 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 272,
+      "citations": 273,
       "distinctPaths": 94
     },
     "machine_field_pointing_at_absent_path": {
@@ -222,6 +222,12 @@
         "file": "services/session-federation/provider.py",
         "line": 102,
         "text": "under ``directory`` (must be inside .project-local/).  Default writes"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/ci/test_config_compiler_conforms_to_its_contract.py",
+        "line": 35,
+        "text": "boundary), and the parent must be created because a fresh CI checkout has no `.project-local/` at"
       },
       {
         "path": ".project-local",

@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 189,
+    "total": 191,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 59,
+      "contract_drift": 60,
       "test_behavior_alignment": 22,
       "working_directory_recovery": 2,
       "evidence_state": 32,
-      "ci_configuration": 18,
+      "ci_configuration": 19,
       "feature_gap": 10,
       "config_downgrade": 3,
       "dead_entry": 3,
@@ -5835,6 +5835,62 @@
         "fixedCommit": "9d0112d95f9ed40950d346c7aa6622bc4e96ee67",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: 9d0112d9 carries the guard and the test that calls it directly; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+      }
+    },
+    {
+      "error_id": "ERR-192",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "contract_drift",
+      "entrypoint": "docs/current/workflow-assistance/workflow/active-authority-index.md",
+      "command": "python -m pytest -q tests/ci/test_authority_index_paths_resolve.py",
+      "exit_code": 1,
+      "observed_error": "The authority index sent readers to two directories that do not exist. Section 3 named docs/handoffs/ and docs/audit/ as where dated handoffs and audits live, and `ls` says neither path exists; the 2026-08-13 baseline-and-recovery handoff actually sits at docs/history/archive/workflow-assistance/handoffs/. Section 2 named official-plus-user-configuration-standard.md while the file on disk, and the name AGENTS.md itself uses, carries the -2026-08-11 date suffix. Measured by the new verifier before the fix: refs=31 files=21 directories=10 broken=2.",
+      "root_cause": "The 2026-09 directory convergence moved the archive roots and dated the config standard, but the index was written against the pre-convergence tree and no check resolved its references. project-authority-reference verification covers the machine index JSON, so a markdown surface whose whole job is navigation was the one surface nothing looked at.",
+      "fix": "Section 3 now names the real archive roots and gives the handoff's full path; section 2 uses the dated filename; both carry a dated 更正 saying what was written before and why the superseded paths are left unbackticked. scripts/ci/verify_authority_index_paths.py resolves every path-shaped reference -- files by suffix, directories by trailing slash -- against the repo root, the index's own directory, and docs/current; bare filenames are prose and deliberately not resolved. An index with zero references fails rather than passing an empty scan, and a DECLARED_NON_PATHS entry whose path later resolves is itself a fault, so the allowlist cannot become a hiding place. Measured after the fix: AUTHORITY_INDEX_PATHS_PASS refs=29 files=21 directories=8 broken=0 declared=0; tests/ci/test_authority_index_paths_resolve.py adds 8 cases that plant a dead file ref, a dead directory ref, an empty index, a declaration that now resolves, and a copy of the clean index in another directory to prove ../-style resolution is not a false red. The same rule run over the README as a measurement only, not yet wired: refs=130 broken=7 (apps/token-monitor-desktop/, skills/, bin/, .codex/AGENTS.md twice, two <project>/ placeholders), which is the next surface to bring under it.",
+      "regression_test": "tests/ci/test_authority_index_paths_resolve.py",
+      "regressionCommand": "python -m pytest -q tests/ci/test_authority_index_paths_resolve.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Every path-shaped reference in a navigation surface must resolve to a real file or directory, or be declared non-resolvable with a measured reason; and a checker must fail when it finds nothing to check, because an extractor that matches zero references is indistinguishable from a clean tree.",
+      "remaining_boundary": "The verifier covers only the active authority index. The README's 130 references, its normative ## 仓库结构 block that still lists scripts/workflow/, skills/ and bin/ as if they existed, and the 37 stale-path mentions across docs/current are measured but not yet guarded; wiring them needs the placeholder and client-home exclusion vocabulary (.codex/, ~/) to be declared with reasons first, or the gate fires 23 times on things that were never repo paths.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
+        "introducedCommitNote": "the 2026-09-17 branch cutover (BRANCH-CONVERGENCE-20260917, PR #124) that brought this file into the tracked tree already carrying the defect; confirmed with git log -S on the exact string and the commit is an ancestor of HEAD",
+        "fixedCommit": "8b88bf5f56e2f3121d3f8ce4d09f0f06a8033ab8",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 8b88bf5f carries the corrected index, the verifier and the test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+      }
+    },
+    {
+      "error_id": "ERR-193",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_configuration",
+      "entrypoint": ".github/workflows/wlr-060-gates.yml",
+      "command": "python services/policy/config_compiler.py create --client hermes --type field --target display.language --output intent.json",
+      "exit_code": 2,
+      "observed_error": "CI went red at 636394f3 in the config-compiler job with REFUSED_BY_CONTRACT: --type 'field' is not one of the contract types ['add-skill', 'custom', ...]. The workflow created an intent with --type field, a value the registered schema has never allowed, so the job passed for a month only because nothing validated the emitter's input; the moment ERR-190's refusal existed the caller itself was exposed. wlr060-aggregate then reported the expected failure.",
+      "root_cause": "Two vocabularies that never met: the workflow's example intent was written before the schema convergence and the CI job asserted downstream behaviour (approve succeeds, apply exits 3) without ever asserting the created document satisfies the contract it names.",
+      "fix": "The caller now passes --type set-field, the value the contract declares for a field change. The whole job was reproduced command for command locally with CC_TMP inside the project: SYNTAX OK, create, plan reporting 1 diff entry, approve, apply exit 3 with no fabricated applied status, IDEMPOTENCY_KEY_STABLE, CONFIG_COMPILER_BEHAVIOR_PASS, wrapper exit 0. This record is also the first real-world proof that ERR-190's refusal fires on a caller rather than only in tests.",
+      "regression_test": "tests/ci/test_config_compiler_conforms_to_its_contract.py",
+      "regressionCommand": "python -m pytest -q tests/ci/test_config_compiler_conforms_to_its_contract.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A CI job that exercises a declared document shape must assert the produced bytes against the registered contract, never only that the downstream stage exited as expected; and when a new guard turns a caller red, the caller is checked against the contract before the guard is loosened.",
+      "remaining_boundary": "The workflow still validates the shape only by behaviour (exit codes and a grep for a fabricated status), not by schema: the conformance assertion lives in tests/ci, which the other workflow runs. The job's own CC_TMP also stays outside the project boundary on the runner (runner.temp), which is GitHub's own temp root rather than a spill this project owns.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
+        "introducedCommitNote": "the 2026-09-17 branch cutover (BRANCH-CONVERGENCE-20260917, PR #124) that brought this file into the tracked tree already carrying the defect; confirmed with git log -S on the exact string and the commit is an ancestor of HEAD",
+        "fixedCommit": "7dda94cc51c14ed4a18db3cf32b6375d0a69822f",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 7dda94cc carries the corrected workflow step; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
       }
     }
   ],
