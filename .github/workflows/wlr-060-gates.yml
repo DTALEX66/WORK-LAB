@@ -96,7 +96,7 @@ jobs:
           mkdir -p "$CC_TMP"
           # positive chain up to approval: create -> plan -> approve
           python services/policy/config_compiler.py create \
-            --client hermes --type field --target display.language \
+            --client hermes --type set-field --target display.language \
             --value '"zh"' --output "$CC_TMP/intent.json"
           python services/policy/config_compiler.py plan --intent "$CC_TMP/intent.json"
           python services/policy/config_compiler.py approve --intent "$CC_TMP/intent.json"
