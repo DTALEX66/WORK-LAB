@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T02:44:11Z",
+  "generatedAt": "2026-10-08T03:03:04Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -576,8 +576,9 @@
       "lines": 136,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 2,
+      "citedByRecords": 3,
       "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/error-ledger.json",
         "tests/ci/test_register_pins_name_checkable_commits.py"
       ]

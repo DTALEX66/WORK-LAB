@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 196,
+    "total": 197,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 62,
       "test_behavior_alignment": 22,
       "working_directory_recovery": 2,
-      "evidence_state": 35,
+      "evidence_state": 36,
       "ci_configuration": 19,
       "feature_gap": 10,
       "config_downgrade": 3,
@@ -6039,6 +6039,34 @@
         "fixedCommit": "54a3284e2daabf95ca94c63559bbb1546c675434",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: 54a3284e carries the re-pinned rows, the reachability tool and its test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+      }
+    },
+    {
+      "error_id": "ERR-199",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "evidence_state",
+      "entrypoint": "services/orchestration/sidecar.py",
+      "command": "python -m pytest -q tests/workflow-assistance/test_sidecar_sees_inplace_task_update.py",
+      "exit_code": 1,
+      "observed_error": "A task that a worker had leased stayed QUEUED-looking on the Observer until something else moved. The canonical watcher decides 'changed' by comparing a fingerprint built from row counts, status tallies and aggregates, and acquire_lease changes none of those: measured directly, writing checkpoint='step-2-of-3', lease_holder='worker-A' and fencing_token=7 onto an existing task returned fingerprint_changed=False with differing_keys=[] and task_events still 0, because upsert_task appends no event row for a mutation. A second, quieter fault fell out of the same probe: acquire_lease, heartbeat and release_lease all UPDATE tasks without setting updated_at, so the row's own last-modified time kept the value from creation and any reader of that column was told the task had not been touched.",
+      "root_cause": "The fingerprint was written as an aggregate of what the snapshot renders, and the assumption that an aggregate is sensitive to every content change was never tested against the one mutation the worker performs constantly. Lease state is rendered (holder, expiry, fencing token) but is stored as columns on a row that does not grow, so counting rows cannot see it.",
+      "fix": "canonical_store.newest_changes() witnesses every tracked table as [count, max(rowid), MAX(newest timestamp)] with the timestamp column resolved from PRAGMA table_info rather than restated, plus a tasks_state witness of sum(fencing_token), sum(len(checkpoint)), sum(len(lease_holder)) and max(updated_at) -- timestamps alone are not a content witness because a renewal can land in the same second, which is exactly what the first version of this fix tripped over: its own regression test failed with the witness unchanged after acquire_lease. sidecar._canonical_fingerprint now carries that witness, and the watch loop gates the whole content read behind PRAGMA data_version -- probed on this store: another connection's commit moves it (1->2, then ->3), the same connection's own commit leaves it alone (2->2), so the sidecar cannot churn on the revisions it writes and the quiet path costs one pragma and no scan, with a forced full readback every half freshness window so LIVE cannot be held up by a stale cursor. acquire_lease, heartbeat and release_lease now set updated_at like every other writer does. Measured: 5 new tests pass (a lease taken on a second connection advances the revision and the stored holder is really worker-A; the witness moves while counts and status tallies provably do not; own-publish leaves data_version alone; a quiet store costs at most one readback over six intervals; one external write costs at least one and not a spin), and the store/worker/sidecar/control families still pass at 70 tests.",
+      "regression_test": "tests/workflow-assistance/test_sidecar_sees_inplace_task_update.py",
+      "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_sidecar_sees_inplace_task_update.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A change-detection witness must be sensitive to the mutation the system performs most often, and that is proven by mutating a row in place and asserting the witness moved -- not by asserting that some row was inserted; any UPDATE statement must stamp the row's updated_at, because a last-modified column that lies is worse than absent; and a polling watcher must keep a cheap fast path so that making it correct does not make it expensive.",
+      "remaining_boundary": "The fast path trusts PRAGMA data_version, which answers per connection: a change written through the sidecar's own connection is only seen at the next forced readback (half the 60 s freshness window) or when another connection commits. The lease heartbeat now advances the revision roughly once per worker tick, so a client following SSE is refetched at that cadence -- honest, since the lease countdown is on screen, but it is more traffic than before this change. The witness covers the tasks table exactly and the other ten only by count, rowid and timestamp, so an in-place rewrite of, say, action_plans text with no timestamp change would still be invisible. All of this is SYNTHETIC/INTEGRATED local evidence over two connections on one runtime root; the real desktop loop through WebView2 remains NOT_RUN here for want of a Rust toolchain.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
+        "introducedCommitNote": "the 2026-09-17 branch cutover that brought both canonical_store.py's acquire_lease and the sidecar's aggregate fingerprint into the tracked tree in this shape; confirmed with git log -S on each and the commit is an ancestor of HEAD",
+        "fixedCommit": "e64c5abed2f17b421f243848c5887c7fc6cc1d8b",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: e64c5abe carries the witness, the fast path, the updated_at stamps and the gate; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
       }
     }
   ],
