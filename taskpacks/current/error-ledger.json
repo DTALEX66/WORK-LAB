@@ -6387,8 +6387,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "the at-exit sweep has been per-process since project_temp was introduced at 34b324eb (2026-10-08 earlier batch), and no commit ever owned the orphan case; the read-only-bit half was already named in scripts/maintenance/finish_tmp_tree_cleanup.py the previous day",
         "fixedCommit": "9f644c48f42237496480f86172b2dedb5fd3b19f",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: HEAD (9f644c4) at the time this record was appended carries project_temp.force_release, the reclaim tool and the bound gate; verifiedCommit is owed until every Actions run at a head containing them is green"
+        "verifiedCommit": "840f9a281b9ce7a37b91619993348618595df90d",
+        "bindingBasis": "commit-contains-fix: HEAD (9f644c4) at the time this record was appended carries project_temp.force_release, the reclaim tool and the bound gate; verifiedCommit is owed until every Actions run at a head containing them is green",
+        "verifiedCommitNote": "exact-SHA Actions readback at 840f9a281b9ce7a37b91619993348618595df90d: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6415,8 +6416,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "the batch has decoded with the host locale since `_run_governance_batch` landed; it only became visible once mandatory modules printed Chinese under a pinned PYTHONIOENCODING",
         "fixedCommit": "950c4075fc82bbb967e9827b7801c4a91a849e51",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: HEAD (950c407) carries the encoding pins and the AST guard; verifiedCommit is owed until every Actions run at a head containing them is green"
+        "verifiedCommit": "840f9a281b9ce7a37b91619993348618595df90d",
+        "bindingBasis": "commit-contains-fix: HEAD (950c407) carries the encoding pins and the AST guard; verifiedCommit is owed until every Actions run at a head containing them is green",
+        "verifiedCommitNote": "exact-SHA Actions readback at 840f9a281b9ce7a37b91619993348618595df90d: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6443,8 +6445,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "the tokens were written as narrative at row creation; no commit introduced a contradiction -- the absence wording simply never carried a check",
         "fixedCommit": "3ba4346138314f12293bdcbf6b2b6295d8acc198",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: HEAD (3ba4346) carries the corrected rows, the offline agreement gate and the live measurement tool; verifiedCommit is owed until every Actions run at a head containing them is green"
+        "verifiedCommit": "840f9a281b9ce7a37b91619993348618595df90d",
+        "bindingBasis": "commit-contains-fix: HEAD (3ba4346) carries the corrected rows, the offline agreement gate and the live measurement tool; verifiedCommit is owed until every Actions run at a head containing them is green",
+        "verifiedCommitNote": "exact-SHA Actions readback at 840f9a281b9ce7a37b91619993348618595df90d: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6471,8 +6474,9 @@
         "introducedCommit": "111ac4070da7a2b053fe39172f1b58eb3d24b05b",
         "introducedCommitNote": "the duplicate keywords were written by the tree-wide sweep in 111ac407; the five-root compile scope itself predates this session and was exposed, not introduced, by that sweep",
         "fixedCommit": "bd4d6dead0991b7916b258cf27a2e2295804c0b0",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: HEAD (bd4d6de) carries the repairs, the tracked-set compile scope and its guard; verifiedCommit is owed until every Actions run at a head containing them is green"
+        "verifiedCommit": "840f9a281b9ce7a37b91619993348618595df90d",
+        "bindingBasis": "commit-contains-fix: HEAD (bd4d6de) carries the repairs, the tracked-set compile scope and its guard; verifiedCommit is owed until every Actions run at a head containing them is green",
+        "verifiedCommitNote": "exact-SHA Actions readback at 840f9a281b9ce7a37b91619993348618595df90d: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     }
   ],
