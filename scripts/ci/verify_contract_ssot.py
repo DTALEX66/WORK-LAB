@@ -57,10 +57,11 @@ DECLARED_HELPER_SCHEMAS: dict[str, str] = {
         "DSH adapter contract, python-side (verify_core_schemas.py + "
         "tests/workflow-assistance/test_deepseek_harness_adapter.py); no TypeScript consumer found",
     "packages/contracts/schemas/workflow/canonical-config-intent.schema.json":
-        "the FILE is loaded by packages/client-neutral-core/scripts/backup_restore_drill.py; "
-        "services/policy/config_compiler.py emits documents this schema describes (it declares "
-        "work-lab/canonical-config-intent/v1) but does not load the file; python-side, no TypeScript "
-        "consumer",
+        "the FILE is opened by services/policy/config_compiler.py, which takes its version const and "
+        "its client/type enums from this schema rather than restating them, and by "
+        "packages/client-neutral-core/scripts/backup_restore_drill.py as a backed-up critical file; "
+        "tests/ci/test_config_compiler_conforms_to_its_contract.py validates every lifecycle write "
+        "against it; python-side, no TypeScript consumer",
     "packages/contracts/schemas/workflow/cloud-event-envelope.schema.json":
         "reached only by the directory census in tests/workflow-assistance/test_core_schemas.py -- no "
         "code path loads it, so it is an unimplemented delivery shape rather than a live contract",

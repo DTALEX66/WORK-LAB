@@ -38,11 +38,16 @@ class HelperDeclarationsMatchTheTree(unittest.TestCase):
             self.assertTrue((REPO / path).is_file(), f"declared helper is not on disk: {path}")
             self.assertGreaterEqual(len(reason), 40, f"{path}: reason too thin to review")
 
-    # What each declared reason claims, stated as the two different kinds of consumer that exist.
+    # What each declared reason claims, stated as the different kinds of consumer that exist.
     LOADERS = {"packages/contracts/schemas/workflow/canonical-config-intent.schema.json":
-               ["packages/client-neutral-core/scripts/backup_restore_drill.py"]}
-    EMITTERS = {"packages/contracts/schemas/workflow/canonical-config-intent.schema.json":
-                [("services/policy/config_compiler.py", "work-lab/canonical-config-intent/v1")]}
+               ["packages/client-neutral-core/scripts/backup_restore_drill.py",
+                "services/policy/config_compiler.py",
+                "tests/ci/test_config_compiler_conforms_to_its_contract.py"]}
+    # `emits only, never opens` was the old shape and it shipped a non-conforming document; now the
+    # emitter is required to hold no second copy of the version it claims
+    DERIVES_VERSION_FROM_CONTRACT = {
+        "packages/contracts/schemas/workflow/canonical-config-intent.schema.json":
+            ("services/policy/config_compiler.py", "work-lab/canonical-config-intent/v1")}
     CENSUS_ONLY = ["packages/contracts/schemas/workflow/cloud-event-envelope.schema.json"]
 
     def test_declared_reasons_name_a_consumer_that_exists(self) -> None:
@@ -50,8 +55,10 @@ class HelperDeclarationsMatchTheTree(unittest.TestCase):
 
         This test exists because my first version of the reasons said "no consumer" for
         canonical-config-intent (services/policy/config_compiler.py disagreed), and my second version
-        said config_compiler "loads" it (it declares the version string but never opens the file).
-        Both errors were caught by measuring, which is the point of asserting the relation kind.
+        said config_compiler "loads" it (it declared the version string but never opened the file).
+        Both errors were caught by measuring, which is the point of asserting the relation kind. The
+        second version is the one that let a non-conforming document ship, so the relation is now
+        pinned in the stricter direction: the emitter must open the file and hold no copy of the value.
         """
         for path, loaders in self.LOADERS.items():
             name = Path(path).name
@@ -59,12 +66,15 @@ class HelperDeclarationsMatchTheTree(unittest.TestCase):
                                      capture_output=True, text=True).stdout.split()
             for loader in loaders:
                 self.assertIn(loader, by_path, f"{name}: {loader} does not reference the file")
-        for path, pairs in self.EMITTERS.items():
-            for emitter, version in pairs:
-                text = (REPO / emitter).read_text(encoding="utf-8")
-                self.assertIn(version, text, f"{emitter} does not declare {version}")
-                self.assertNotIn(Path(path).name, text,
-                                 f"{emitter} is claimed to emit only, but names the file")
+        for path, (emitter, version) in self.DERIVES_VERSION_FROM_CONTRACT.items():
+            text = (REPO / emitter).read_text(encoding="utf-8")
+            self.assertNotIn(version, text,
+                             f"{emitter} restates {version} instead of loading it from the contract")
+            self.assertIn(Path(path).name, text,
+                          f"{emitter} is claimed to open the contract, but never names the file")
+            schema = json.loads((REPO / path).read_text(encoding="utf-8"))
+            self.assertEqual(version, schema["properties"]["schema_version"]["const"],
+                             f"{path} no longer pins {version}")
         for path in self.CENSUS_ONLY:
             name = Path(path).name
             referrers = subprocess.run(["git", "grep", "-l", "-F", name], cwd=REPO,

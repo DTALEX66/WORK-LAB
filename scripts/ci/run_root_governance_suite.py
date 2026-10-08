@@ -62,6 +62,7 @@ def main() -> int:
 
     ran = 0
     failures: list[str] = []
+    failed_modules = 0
     for module in modules:
         if module.name in EXCLUSIONS:
             continue
@@ -73,13 +74,17 @@ def main() -> int:
         )
         ran += 1
         if completed.returncode != 0:
+            failed_modules += 1
             tail = (completed.stdout + completed.stderr).strip().splitlines()[-6:]
             failures.append(f"{module.name} (rc={completed.returncode})")
             for line in tail:
                 failures.append(f"    {line}")
 
     if failures:
-        print(f"CI_ROOT_GOVERNANCE_FAIL ran={ran} failed={len(failures)}")
+        # `failed=` used to count printed lines, so a two-module red read as "failed=14" and sent the
+        # reader chasing twelve faults that did not exist
+        print(f"CI_ROOT_GOVERNANCE_FAIL modules_ran={ran} modules_failed={failed_modules} "
+              f"detail_lines={len(failures)}")
         for line in failures:
             print(f"  {line}")
         return 1
