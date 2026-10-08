@@ -42,7 +42,7 @@ export function Sparkline({ values, height = 120, className }: SparklineProps) {
           />
         </svg>
       ) : (
-        <div className="grid h-full w-full place-items-center text-[11px] text-muted">
+        <div className="grid h-full w-full place-items-center text-[12px] text-muted">
           无趋势数据（UNKNOWN）
         </div>
       )}

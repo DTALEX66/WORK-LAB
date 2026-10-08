@@ -42,7 +42,7 @@ export function ApprovalsView({ snap }: { snap: any }) {
       <Card>
         <div className="mb-3.5 flex items-center justify-between gap-3">
           <h3 className="m-0">审批中心（只读投影）</h3>
-          <span className="text-[11px] text-muted">
+          <span className="text-[12px] text-muted">
             {approvals?.length ? `${approvals.length} 项审批记录` : '无审批数据'}
           </span>
         </div>

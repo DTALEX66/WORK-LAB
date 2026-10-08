@@ -7,7 +7,10 @@
     <!-- U05: theme is URL-driven (?theme=dark|light), NOT a hardcoded class.
          Pre-render script sets the class before React mounts so there is no
          theme flash. Default = dark (the design language). Read from the query
-         so the same static build serves both themes. -->
+         so the same static build serves both themes. Deliberately nothing is
+         stored: `apps/observer/tests/test_production_surface_static_contract.js`
+         forbids web storage in the UI layer, so the URL is the only state carrier
+         and any view this shell shows is reproducible from its address alone. -->
     <script>
       (function () {
         try {

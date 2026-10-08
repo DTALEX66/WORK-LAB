@@ -298,7 +298,7 @@ export function WorkflowCanvas({
         <p
           id={HINT_ID}
           role="note"
-          className={cn('text-[11px] text-muted', !(publishHint || runHint) && 'hidden')}
+          className={cn('text-[12px] text-muted', !(publishHint || runHint) && 'hidden')}
         >
           {publishHint || runHint}
         </p>

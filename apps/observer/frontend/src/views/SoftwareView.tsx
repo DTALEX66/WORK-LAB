@@ -46,8 +46,8 @@ function statusVariant(s: SoftwareLocationStatus): 'success' | 'warning' | 'erro
 function Row({ k, v, mono = false }: { k: string; v: React.ReactNode; mono?: boolean }) {
   return (
     <div className="list-item">
-      <span className="text-[11px] text-muted">{k}</span>
-      <span className={'ml-3 min-w-0 truncate text-right text-[11px] text-ink' + (mono ? ' font-mono' : '')}>{v}</span>
+      <span className="text-[12px] text-muted">{k}</span>
+      <span className={'ml-3 min-w-0 truncate text-right text-[12px] text-ink' + (mono ? ' font-mono' : '')}>{v}</span>
     </div>
   )
 }
@@ -59,7 +59,7 @@ export function SoftwareView({ snap }: { snap: any }) {
       <Card>
         <CardHeader>
           <span>软件安装身份（只读投影）</span>
-          <span className="text-[11px] text-muted">
+          <span className="text-[12px] text-muted">
             {software.length ? software.length + ' 项 · 真实' : '无数据（UNKNOWN）'}
           </span>
         </CardHeader>
@@ -93,14 +93,14 @@ export function SoftwareView({ snap }: { snap: any }) {
                     <Row k="发现源" v={s.discoverySource || '—'} />
                   </div>
                   {s.locationStatus === 'LOCATION_DRIFT' && s.expectedLocation && s.observedLocation && (
-                    <div className="mt-2 text-[10px] text-error">
+                    <div className="mt-2 text-[12px] text-error">
                       漂移：预期 <span className="font-mono">{s.expectedLocation}</span> · 观测
                       <span className="font-mono"> {s.observedLocation}</span> — 需明确 RELOCATION 授权，
                       Observer 不自动迁移
                     </div>
                   )}
                   {s.locationStatus === 'DUAL_INSTALLATION' && (
-                    <div className="mt-2 text-[10px] text-error">
+                    <div className="mt-2 text-[12px] text-error">
                       检测到多实例 — 先确定 canonical 实例；Observer 不自动删除任何实例
                     </div>
                   )}

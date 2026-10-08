@@ -41,7 +41,7 @@ export function TaskPacksView({ snap }: { snap: any }) {
             <div className="metric-row">
               {Object.entries(tasks).map(([family, count]) => (
                 <div key={family} className="metric-box">
-                  <div className="muted text-[11px]">{family}</div>
+                  <div className="muted text-[12px]">{family}</div>
                   <div className="big-number mt-1">{count}</div>
                 </div>
               ))}

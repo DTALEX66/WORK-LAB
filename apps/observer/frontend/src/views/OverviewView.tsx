@@ -164,7 +164,7 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
               shared Sparkline renders "无趋势数据（UNKNOWN）" rather than the
               B10 demo's fabricated sequence. */}
           <Sparkline values={[]} height={180} />
-          <div className="mt-3 text-[11px] text-muted">
+          <div className="mt-3 text-[12px] text-muted">
             {rows.length ? `${rows.length} 条执行记录（趋势序列未投影）` : '执行趋势序列未由快照投影 — 保持 UNKNOWN'}
           </div>
         </div>
@@ -172,21 +172,21 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
           <h3>系统状态</h3>
           <div className="metric-row">
             <div className="metric-box">
-              <div className="muted text-[11px]">传输</div>
+              <div className="muted text-[12px]">传输</div>
               <div className="text-[15px] font-bold tabular-nums text-ink">{tr?.transportState || 'UNKNOWN'}</div>
             </div>
             <div className="metric-box">
-              <div className="muted text-[11px]">新鲜度</div>
+              <div className="muted text-[12px]">新鲜度</div>
               <div className="text-[15px] font-bold tabular-nums text-ink">{tr?.freshnessState || 'UNKNOWN'}</div>
             </div>
             <div className="metric-box">
-              <div className="muted text-[11px]">覆盖</div>
+              <div className="muted text-[12px]">覆盖</div>
               <div className="text-[15px] font-bold tabular-nums text-ink">
                 {cov && cov.numerator != null ? `${cov.numerator}/${cov.denominator ?? '?'}` : 'UNKNOWN'}
               </div>
             </div>
             <div className="metric-box">
-              <div className="muted text-[11px]">修订</div>
+              <div className="muted text-[12px]">修订</div>
               <div className="text-[15px] font-bold tabular-nums text-ink">{snap ? String(snap.revision) : 'UNKNOWN'}</div>
             </div>
           </div>
@@ -262,7 +262,7 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
             <div className="metric-row" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
               {taskEntries.map(([family, count]) => (
                 <div key={family} className="metric-box">
-                  <div className="muted text-[11px]">{family}</div>
+                  <div className="muted text-[12px]">{family}</div>
                   <div className="big-number mt-1">{count}</div>
                 </div>
               ))}

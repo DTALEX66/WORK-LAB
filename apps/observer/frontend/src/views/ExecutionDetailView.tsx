@@ -33,8 +33,8 @@ function DetailRow({ k, v }: { k: string; v: React.ReactNode }) {
   const empty = v == null || v === ''
   return (
     <div className="list-item">
-      <span className="text-[11px] text-muted">{k}</span>
-      <span className="min-w-0 truncate text-right font-mono text-[11px] text-ink">{empty ? 'UNKNOWN' : v}</span>
+      <span className="text-[12px] text-muted">{k}</span>
+      <span className="min-w-0 truncate text-right font-mono text-[12px] text-ink">{empty ? 'UNKNOWN' : v}</span>
     </div>
   )
 }
@@ -63,7 +63,7 @@ export function ExecutionDetailView({ snap }: { snap: SnapshotV3 | null }) {
           <Card>
             <CardHeader>
               <span>执行列表</span>
-              <span className="text-[11px] text-muted">{exs.length} 条</span>
+              <span className="text-[12px] text-muted">{exs.length} 条</span>
             </CardHeader>
             <CardContent>
               <div className="list">
@@ -89,7 +89,7 @@ export function ExecutionDetailView({ snap }: { snap: SnapshotV3 | null }) {
                   )
                 })}
               </div>
-              <p className="mt-3 text-[10px] text-muted">
+              <p className="mt-3 text-[12px] text-muted">
                 选择执行以切换详情（当前：
                 <span className="font-mono text-ink">{sel?.executionId ?? '—'}</span>）
               </p>

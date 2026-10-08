@@ -64,10 +64,10 @@ function LayerRow({ layer }: { layer: CapabilityLayerState }) {
   return (
     <div className="list-item flex-col items-stretch gap-1">
       <div className="flex items-center gap-2">
-        <span className="text-[11px] text-ink">{LAYER_LABEL[layer.layer] || layer.layer}</span>
+        <span className="text-[12px] text-ink">{LAYER_LABEL[layer.layer] || layer.layer}</span>
         <Badge variant={layerVariant(layer.state)}>{STATE_TEXT[layer.state] || layer.state}</Badge>
       </div>
-      <div className="break-words text-[10px] text-muted">{evidence}</div>
+      <div className="break-words text-[12px] text-muted">{evidence}</div>
     </div>
   )
 }
@@ -87,16 +87,16 @@ function VerbRow({ row }: { row: AdapterVerbEvidenceRow }) {
   return (
     <div className="list-item flex-col items-stretch gap-1">
       <div className="flex items-center gap-2">
-        <span className="font-mono text-[11px] text-ink">{row.verb}</span>
+        <span className="font-mono text-[12px] text-ink">{row.verb}</span>
         <Badge variant={verbVariant(row)}>{verbLabel(row)}</Badge>
-        <span className="text-[10px] text-muted">{row.evidenceLevel}</span>
+        <span className="text-[12px] text-muted">{row.evidenceLevel}</span>
       </div>
-      <div className="break-words text-[10px] text-muted">{detail}</div>
+      <div className="break-words text-[12px] text-muted">{detail}</div>
       {proof.length > 0 && (
-        <div className="break-words font-mono text-[10px] text-muted">{proof.join(' · ')}</div>
+        <div className="break-words font-mono text-[12px] text-muted">{proof.join(' · ')}</div>
       )}
       {row.declaresDrift && (
-        <div className="break-words text-[10px] text-warning">声明矛盾：{row.declaresDrift}</div>
+        <div className="break-words text-[12px] text-warning">声明矛盾：{row.declaresDrift}</div>
       )}
     </div>
   )
@@ -108,7 +108,7 @@ function VerbEvidence({ card }: { card: AdapterCapabilityCard }) {
     // Absent probe record: NO verbEvidence key on the card. That is "I did not look", never "this client
     // declares nothing" — so it renders as the named source gap, not as zero rows and not as an empty list.
     return (
-      <div className="text-[10px] text-warning">
+      <div className="text-[12px] text-warning">
         动词证据来源缺口：本快照未携带 verbEvidence —— 生产者没有读取
         docs/audits/EXECUTOR_LIVE_PROBE_2026-10-08.json#verbProbe。未探测 ≠ 不支持任何动词。
       </div>
@@ -120,7 +120,7 @@ function VerbEvidence({ card }: { card: AdapterCapabilityCard }) {
     : `${rows.length} 行动词`
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted">
+      <div className="flex flex-wrap items-center gap-2 text-[12px] text-muted">
         <span>接口动词作答（与阶梯正交，动词行不晋级任何层）</span>
         <span className="font-mono">{summary}</span>
         {card.verbEvidenceProbedAt && <span>探测于 {card.verbEvidenceProbedAt}</span>}
@@ -136,8 +136,8 @@ function Fact({ label, value }: { label: string, value: React.ReactNode }) {
   const present = value !== null && value !== undefined && value !== '' && value !== false
   return (
     <div className="list-item flex-col items-stretch gap-1">
-      <div className="text-[10px] uppercase tracking-[0.12em] text-muted">{label}</div>
-      <div className="break-words text-[11px] text-ink">{present ? value : 'UNKNOWN'}</div>
+      <div className="text-[12px] uppercase tracking-[0.12em] text-muted">{label}</div>
+      <div className="break-words text-[12px] text-ink">{present ? value : 'UNKNOWN'}</div>
     </div>
   )
 }
@@ -147,8 +147,8 @@ function AdapterCard({ card }: { card: AdapterCapabilityCard }) {
   return (
     <Card>
       <CardHeader>
-        <span>{card.displayName} · <span className="font-mono text-[11px]">{card.clientId}</span></span>
-        <span className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted">
+        <span>{card.displayName} · <span className="font-mono text-[12px]">{card.clientId}</span></span>
+        <span className="flex flex-wrap items-center gap-1.5 text-[12px] text-muted">
           <Badge variant={card.supportLevel === 'deep' ? 'info' : 'muted'}>{card.supportLevel}</Badge>
           <Badge variant={card.registryStatus === 'active' ? 'success' : 'warning'}>
             {card.registryStatus}
@@ -157,7 +157,7 @@ function AdapterCard({ card }: { card: AdapterCapabilityCard }) {
         </span>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <div className="text-[10px] text-muted">
+        <div className="text-[12px] text-muted">
           声明 ≠ 检测 ≠ 可用 ≠ 调用 ≠ 原生验证；原生状态：
           <span className="ml-1 font-mono">{card.nativeStatus}</span>
         </div>

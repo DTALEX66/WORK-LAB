@@ -26,7 +26,7 @@ export function ExecutionTable({ rows, hasData }: { rows: AgentRow[]; hasData: b
   return (
     <div className="panel">
       <h3>执行</h3>
-      <div className="mb-3 text-[11px] text-muted">{hasData ? rows.length + ' 条 · 真实' : '等待数据'}</div>
+      <div className="mb-3 text-[12px] text-muted">{hasData ? rows.length + ' 条 · 真实' : '等待数据'}</div>
       <div className="table-wrap">
         {rows.length === 0 ? (
           <div className="empty py-10">
@@ -52,7 +52,7 @@ export function ExecutionTable({ rows, hasData }: { rows: AgentRow[]; hasData: b
                 <tr key={a.id}>
                   <td>
                     <strong className="block text-[12px] font-semibold text-ink">{a.name || a.id}</strong>
-                    <small className="font-mono text-[10px] text-muted">{a.id}</small>
+                    <small className="font-mono text-[12px] text-muted">{a.id}</small>
                   </td>
                   <td>
                     <Badge variant={tone(a)}>{STATE_TEXT[a.state] || a.state}</Badge>
@@ -60,7 +60,7 @@ export function ExecutionTable({ rows, hasData }: { rows: AgentRow[]; hasData: b
                   <td className="text-muted">{a.platform || 'UNKNOWN'}</td>
                   <td>{a.anchorProjectId || 'UNKNOWN'}</td>
                   <td className="tabular-nums" title="成本质量（后端权威）">
-                    {fmtTokens(a.totalTokens)} <span className="text-[10px] text-muted">{fmtCostQuality(a.costQuality)}</span>
+                    {fmtTokens(a.totalTokens)} <span className="text-[12px] text-muted">{fmtCostQuality(a.costQuality)}</span>
                   </td>
                 </tr>
               ))}

@@ -111,27 +111,54 @@ must never be cited as responsive evidence.*
    (re-read only; no side effects).
 4. A reconnect loop must not cause a visible flash: no region may repaint its background before its text
    colours, and theme/palette changes are excluded from colour transitions.
-   *Measured today: nav text passes through 1.22:1 for up to ~300ms after a theme switch.*
+   *Fixed 2026-10-08: `.theme-instant` holds colour transitions off for the two frames a theme swap
+   needs, so the switch lands in one frame. It previously eased through 1.22:1 for ~300ms.*
 
 ## States required per region
 
-- Rail item: default, hover, focus-visible, active/selected, disabled.
-- Action button: default, hover, focus-visible, pressed, disabled, loading (when it triggers a re-read).
+State lists here follow the repo's own truth rule — `UI_DECISIONS.md`: "UNKNOWN ≠ 0，不伪造 KPI" — so a
+lane that has not received a value renders `UNKNOWN`, and a skeleton would be a fabricated state. No
+region below "requires" one.
+
+- Rail item: default, hover, focus-visible, active/selected, disabled, collapsed-group and expanded
+  (the disclosure carries `aria-expanded`).
+- Action button: default, hover, focus-visible, pressed, disabled; folded into the overflow menu when
+  the band cannot hold it.
 - Search: empty, focused (visible ring, not colour-only), typing, no-result, cleared.
-- Main card: loading skeleton, populated, empty, degraded/offline, error with reason code.
+- Main card: populated, empty-with-reason, degraded/offline distinguishable per view, error with reason
+  code. Before the first snapshot the lane keeps rendering its `UNKNOWN` values and the first-frame strip
+  alone answers "still fetching?".
 
 ## Text and contrast (normative, restated from DESIGN.md)
 
-- No meaningful text below 12px. *Measured minimum today: 9px.*
-- Text contrast ≥ 4.5:1 below 18.66px (≥ 3:1 for large/bold). Measured in the settled state:
-  dark theme 0 of 52 nodes fail; light theme 3 of 52 fail — avatar glyph 1.13:1, brand sub-label
-  3.74:1, hint chip 4.43:1.
-- Theme selection persists across reload. *Measured today: `localStorage` is empty after selecting
-  light, so the choice is lost.*
+- No meaningful text below 12px. *Measured 2026-10-08 after the floor sweep: minimum 12px in both
+  themes, 33 leaf nodes at 1262×668. Enforced on screen by `scripts/audit/text_legibility_via_cdp.py`
+  and in source by `tests/workflow-assistance/test_no_sub_floor_text_in_the_observer_source.py`.*
+- Text contrast ≥ 4.5:1 below 18.66px (≥ 3:1 for large/bold). Measured in the settled state: 0 failures
+  in either theme; lowest 5.19:1 dark, 5.34:1 light. The three light-theme failures this spec recorded
+  (avatar glyph 1.13:1, brand sub-label 3.74:1, hint chip 4.43:1) are fixed and named in DESIGN.md
+  Known Gaps 4.
+- Theme and density state travels in the URL, never in web storage. `?theme=`/`?layout=` are rewritten
+  on every change, so reloading the address the app is showing restores what the user chose; a bare
+  address restores the design default (dark). *Measured 2026-10-08: after a click the address carries
+  `theme=light`, `localStorage` holds no key, and `?theme=light` loads with `html.class='light'`.*
+- A theme switch must not pass through an unreadable palette. *Fixed 2026-10-08 with `.theme-instant`;
+  it previously eased through 1.22:1 for ~300ms.*
 
 ## Gate coverage owed
 
-`scripts/audit/topbar_geometry_via_cdp.py` currently asserts 17 checks across two viewports
-(1262 and 482) and passes. It does **not** assert: rail reachability, band boundaries, action overflow,
-contrast, theme persistence, or the degraded-card-per-view rule. Those six assertion families are the
-acceptance list for this spec; each must include a planted-failure control proving it can go red.
+`scripts/audit/topbar_geometry_via_cdp.py` asserts 12 checks at 1262px and 8 at 482px and passes, and
+`scripts/audit/text_legibility_via_cdp.py` asserts 6 checks per theme. Delivered since this section was
+written: rail reachability (`nav_items_reachable`, `nav_groups_are_disclosures`), action folding
+(`action_row_does_not_stack`), the type floor and AA contrast (both themes, two instruments). Still
+asserted by nothing:
+
+1. **Region boundaries** — no instrument measures the topbar's bottom edge against `.main`'s top edge,
+   or the gap between a band and its content, so a boundary can vanish and every check stays green.
+2. **Theme persistence** — nothing reloads the page and reads the theme back.
+3. **Degraded state per view** — the rule that each lane's offline/degraded card must be distinguishable
+   by view is asserted nowhere; today every lane renders the same card, which is exactly the shape that
+   made the rail look dead to the owner while it was working.
+
+Each of the three needs a planted-failure control proving it can go red; an assertion that cannot fail
+guards nothing (ERR-143's rule, and the reason the geometry probe was rewritten).

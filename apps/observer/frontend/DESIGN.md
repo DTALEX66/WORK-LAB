@@ -217,9 +217,18 @@ alpha composited down the ancestor chain):
 | `{colors.danger}` | `#EF4444` | error, refused, offline | 5.19:1 on canvas |
 | `{colors.hairline}` | `#17435D` | borders | 1.23:1 vs canvas — **decorative only, never carries meaning alone** |
 
-Light theme re-binds the same role names (`src/index.css` `html.light` block): canvas `#F4F7FA`,
-ink `#0B1420` (17.21:1), muted `#5A7184` (4.73:1 on canvas, 5.08:1 on panel), primary `#1B7FE6`
-(3.74:1 on canvas), hairline `#D5E2EC`.
+Light theme re-binds the same role names (`src/index.css` `html.light` block plus the mirrored skin
+tokens in `src/skins/l10b-shell.css`): canvas `#F4F7FA`, ink `#0B1420` (17.21:1), muted `#4A6172`
+(5.64:1 on panel, 6.02:1 on canvas), hairline `#D5E2EC`.
+
+Muted is `#4A6172` and not `#5A7184` because the two token vocabularies in this shell disagreed (see
+Known Gaps): the B10 skin already carried `#4A6172`, and the Tailwind layer carried `#5A7184`, which
+measures 4.43:1 on `panel2` — under AA by a margin made entirely of one duplicated role name. One
+value per role removed the failure and the discrepancy at the same time.
+
+**Text-accent rule (normative).** A fill accent and an accent used as text are different roles.
+`{colors.primary}` `#1B7FE6` in light measures 3.74:1 on the rail, so text that wants the accent takes
+`--primary-text` `#1565C0` (5.34:1) instead of darkening every filled control.
 
 **Contrast rule (normative).** Text a user must read: ≥ 4.5:1 at sizes below 18.66px, ≥ 3:1 at
 ≥ 18.66px bold or ≥ 24px. Non-text UI and icons: ≥ 3:1. A hairline may be below 3:1 only if the
@@ -231,15 +240,21 @@ filled controls must use `#0B1420` ink on the accent, or a darker accent stop. S
 
 ## Typography
 
-Rendered census of the shipped screen (52 text-bearing nodes, both themes): the dominant level is
-`{typography.body-md}` 16px/400 (30 nodes); group captions are 10px/600 with 1.2px tracking; the search
-hint chip is 9px mono; the brand sub-label is 10px.
+Rendered census of the shipped Overview screen at 1262×668, both themes
+(`scripts/audit/text_legibility_via_cdp.py`, receipt `.project-local/artifacts/LEGIBILITY_AFTER_FLOOR.json`):
+33 leaf text nodes, **smallest 12px**, lowest measured ratio 5.19:1 in dark and 5.34:1 in light. Before
+the floor sweep the same instrument found 12 nodes below 12px (a 9px `{components.state-chip}`, the 10px
+`{typography.label-caps}` group captions, the brand caption, the first-frame strip, the zoom readout)
+and 3 AA failures in light.
 
 **Type floor (normative).** No text a user must read below **12px**. Below 12px is permitted only for a
 decorative glyph that repeats information available elsewhere, and such a node must be `aria-hidden`.
-The current 9px `{components.state-chip}` and 10px `{typography.label-caps}` usage violates this floor;
-the frontmatter above already states the corrected 12px values, so implementing the standard means
-raising them, not lowering the rule.
+The floor is enforced twice: the rendered instrument fails any node under 12px whose role is not
+declared (and the declaration list is empty — every role that claimed an exemption turned out to be
+text a user reads), and `tests/workflow-assistance/test_no_sub_floor_text_in_the_observer_source.py`
+fails the source for the views a single page load does not render. The pinned skin is the one place a
+sub-12 declaration may still be written, and only because `l10b-shell.css` restates that selector at
+12px or above — "we cannot change it" is not the same as "nobody did".
 
 Tabular figures are required on every metric (`font-variant-numeric: tabular-nums` on
 `{typography.kpi-value}`), so KPI columns do not jitter between polls.
@@ -329,26 +344,52 @@ consulted rather than copied wholesale, and each with one thing not to take.
 
 `needs-design-decision` unless marked otherwise (implementation deviation).
 
-1. **Dead rail scroll** — `.sidebar` grows to content (measured height 1707px in an 807px viewport,
-   `overflow-y: visible`), so `.nav { overflow-y: auto }` never engages
-   (`clientHeight == scrollHeight == 1496`) and the document cannot scroll either
-   (`scrollHeight 807 == clientHeight 807`). 23 nav items exist, 9 are reachable. Implementation
-   deviation; blocker.
-2. **Theme is not persisted** — after selecting light, `localStorage` keys are empty
-   (`lsKeys: ""`), so the choice is lost on reload. Needs a product decision on storage location
-   (this project forbids new credential/config layers, but a UI preference is not one).
-3. **Sub-AA frames during theme crossfade** — measured nav text passing through 1.22:1 for up to
-   ~300ms after a switch. Implementation deviation.
-4. **Light-theme contrast failures (settled state)** — 3 of 52 text nodes fail AA: avatar glyph 1.13:1,
-   brand sub-label 3.74:1, 9px hint chip 4.43:1. Dark theme: 0 failures.
-5. **Type floor violated** — 9px and 10px meaningful text in both themes.
+1. ~~**Dead rail scroll**~~ — CLOSED 2026-10-08. `.app` had no height, so the rail grew to its content
+   (1707px in an 807px viewport) and `.nav { overflow-y: auto }` never engaged; 9 of 23 items were
+   reachable. The shell layer now gives the column a real height and the rail scrolls and collapses:
+   measured `clientH 432 / scrollH 1554`, `overflow=True`, last item hit-testable, 7 group disclosures.
+   Enforced by `scripts/audit/topbar_geometry_via_cdp.py` (`nav_items_reachable`,
+   `nav_groups_are_disclosures`).
+2. **Theme is not persisted to web storage — by contract, not by accident.** I first recorded this as a
+   gap and built the storage fallback; `apps/observer/tests/test_production_surface_static_contract.js`
+   ("theme and layout state never persist to web storage") fails the build on any `localStorage` /
+   `sessionStorage` use in the UI layer, so the feature was reverted rather than the test relaxed: a
+   projection whose appearance depends on hidden client state cannot be reproduced from its URL, and this
+   project's evidence depends on exactly that. The sanctioned mechanism already works — toggling the
+   theme rewrites the address (`?theme=light`), so reloading *that* URL comes back light, measured by the
+   legibility instrument (`theme_actually_applied PASS asked=light html.class='light'`) and asserted by
+   `src/themeSwitch.contract.test.tsx`. Reloading the bare address returns to dark, which is the design
+   language, not a loss. If the owner wants the choice to survive a bare relaunch, the place that decides
+   is the desktop shell's launch URL, and that is an owner-level call, not a UI-layer storage exception.
+3. ~~**Sub-AA frames during theme crossfade**~~ — CLOSED 2026-10-08. The pinned skin eases colour over
+   ~200-300ms and nav text was measured passing through 1.22:1. `App.tsx` now holds `transition` and
+   `animation` off on `<html>` for the two frames the swap needs (`.theme-instant`), so the palette
+   changes in one frame and hover/press motion stays animated; the release is asserted on real
+   `requestAnimationFrame` boundaries, not on timers.
+4. ~~**Light-theme contrast failures (settled state)**~~ — CLOSED 2026-10-08. The three failures were
+   `.avatar` (white glyph on light `--surface2`, 1.13:1), `.brand small` (`var(--primary)` as text,
+   3.74:1) and the 9px hint chip (4.43:1). Fixed in the shell layer because b10 stays verbatim (D-11):
+   the avatar glyph takes ink in light, the brand caption takes `--primary-text`, and `--color-muted`
+   was aligned to the value the skin already carried. Same instrument, same viewport:
+   0 AA failures in either theme, lowest ratio 5.34:1 in light.
+5. ~~**Type floor violated**~~ — CLOSED 2026-10-08. 125 `text-[9px]/[10px]/[11px]` utilities across 30
+   files and three shell micro roles were raised to 12px; see Typography for the two enforcement points.
 6. **Three token sources disagree** — radii: `src/theme/tokens.ts` 4/10/16/22 vs
    `design-tokens.json` 11/20/30 vs rendered 12/14/18/20; glass blur 18px vs 34px. Decision needed on
    whether `design-tokens.json` is a brand handoff artefact (then it must stop claiming to be the UI
    token source) or the UI source (then `tokens.ts` changes).
 7. **Two parallel variable vocabularies** — the Tailwind layer reads `--color-*` / `--*-rgb` while the
-   B10 skin reads `--bg` / `--text` / `--muted` / `--border` / `--surface`. Both define "muted" and
-   "border" with different values, so a theme change can repaint one layer and not the other. This is
-   the root cause shape behind gaps 3 and 4 and needs one canonical role set.
-8. **No machine-readable contract existed before this file** — `verify_design_contract.py` reported
-   `DESIGN_CONTRACT_PASS` while touching no rendered value; passing it is not evidence of UI compliance.
+   B10 skin reads `--bg` / `--text` / `--muted` / `--border` / `--surface`. PARTIALLY CLOSED: `muted`
+   now carries one value in both, which is what removed gap 4's chip failure. The remaining pairs
+   (`border`, `surface`, `primary`) still name different values with the same word, so a theme change
+   can repaint one layer and not the other. Needs one canonical role set.
+8. **The static micro-role allowlist is now dead weight** —
+   `apps/observer/tests/test_production_surface_static_contract.js` permits sub-12px CSS in seven named
+   roles. After the floor sweep the skin declares sub-12px in one place only (`.brand small`, pinned by
+   b10 and overridden here), so six of its allowlist entries match nothing and nothing fails. It reports
+   "no offenders" without noticing its own list rotted; the staleness rule
+   `no_stale_floor_exception` in the legibility instrument is the model to copy.
+9. **The rendered proof does not run in CI** — both browser instruments need a Chromium binary, which
+   the Actions runner does not have, so they are run locally against `dist` and their receipts are cited
+   by hand. CI enforces the source-level guards. `verify_design_contract.py` still parses token files and
+   touches no rendered value, so its `DESIGN_CONTRACT_PASS` is not evidence of UI compliance.

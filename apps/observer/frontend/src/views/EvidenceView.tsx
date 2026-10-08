@@ -48,11 +48,11 @@ const PREVIEW_LIMIT = 1200
 function Field({ label, value, missing, field }: { label: string; value: string | null; missing: string; field?: string }) {
   return (
     <div className="list-item flex-col items-stretch gap-1" data-field={field ?? label}>
-      <div className="text-[10px] uppercase tracking-[0.12em] text-muted">{label}</div>
+      <div className="text-[12px] uppercase tracking-[0.12em] text-muted">{label}</div>
       {value !== null ? (
-        <div className="break-words font-mono text-[11px] text-ink">{value}</div>
+        <div className="break-words font-mono text-[12px] text-ink">{value}</div>
       ) : (
-        <div className="flex items-center gap-1.5 text-[11px] text-warning">
+        <div className="flex items-center gap-1.5 text-[12px] text-warning">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-secondary" aria-hidden="true" />
           未提供（{missing}）
         </div>
@@ -173,7 +173,7 @@ export function EvidenceView({
         <Card>
           <CardHeader>
             <span>证据产物 · 投影登记的来源</span>
-            <span className="text-[11px] text-muted">
+            <span className="text-[12px] text-muted">
               {shelf.kind === 'sources' ? `${shelf.items.length} 条 · 来自 workspace.sources` : '无投影'}
             </span>
           </CardHeader>
@@ -201,7 +201,7 @@ export function EvidenceView({
                   const active = handle !== null && address?.handle === handle
                   return (
                     <div key={`${handle ?? 'row'}-${index}`} className="list-item">
-                      <span className="min-w-0 break-words text-[11px] text-ink">
+                      <span className="min-w-0 break-words text-[12px] text-ink">
                         {handle
                           ? (
                             <a href={href} onClick={navigate(rowAddress)} className="font-mono" aria-current={active ? 'true' : undefined}>
@@ -209,9 +209,9 @@ export function EvidenceView({
                             </a>
                           )
                           : <span className="text-warning">来源缺口：该条目没有 path 字段，无法寻址</span>}
-                        {active ? <span className="ml-1.5 text-[10px] text-secondary">已寻址</span> : null}
+                        {active ? <span className="ml-1.5 text-[12px] text-secondary">已寻址</span> : null}
                       </span>
-                      <span className="text-right text-[10px] text-muted">
+                      <span className="text-right text-[12px] text-muted">
                         {item.evidenceKind || 'UNKNOWN'} · {item.loadedAt || 'UNKNOWN'}
                         {item.generatedAt ? ` · 生成 ${item.generatedAt}` : ''}
                       </span>
@@ -220,12 +220,12 @@ export function EvidenceView({
                 })}
               </div>
             )}
-            <p className="mt-2 text-[10px] text-muted">
+            <p className="mt-2 text-[12px] text-muted">
               投影登记的 path 是仓库相对路径，而区间读要求绝对句柄，并只在声明的证据面上提供内容。
               点开一条不在证据面上的来源，会得到后端的类型化拒绝，而不是一块空白。
             </p>
             {(focus.taskId || focus.executionId) && (
-              <p className="mt-2 text-[10px] text-warning" data-testid="evidence-record-binding">
+              <p className="mt-2 text-[12px] text-warning" data-testid="evidence-record-binding">
                 记录定位（{[focus.taskId && `taskId=${focus.taskId}`, focus.executionId && `executionId=${focus.executionId}`]
                   .filter(Boolean).join(' · ')}）不会自动变成产物清单：v3 快照没有 record↔artifact 外键，
                 绑定它就是把别人的字节挂到这条任务上。证据仍按自己的地址寻址。
@@ -237,7 +237,7 @@ export function EvidenceView({
         <Card>
           <CardHeader>
             <span>区间读 · 三列</span>
-            <span className="text-[11px] text-muted" data-testid="evidence-endpoint">
+            <span className="text-[12px] text-muted" data-testid="evidence-endpoint">
               {endpoint
                 ? `${endpoint.url} · ${endpoint.authoritative ? '权威注入端点' : '非权威 static-preview 端点'}`
                 : '端点不可信（未派生自环回描述符），不发起读取'}
@@ -394,13 +394,13 @@ function EvidenceColumns({
           <CardHeader><span>判定 · Verdict</span></CardHeader>
           <CardContent>
             <div className="list-item flex-col items-stretch gap-1">
-              <div className="text-[10px] uppercase tracking-[0.12em] text-muted">状态</div>
-              <div className="text-[11px] text-warning">
+              <div className="text-[12px] uppercase tracking-[0.12em] text-muted">状态</div>
+              <div className="text-[12px] text-warning">
                 无判定（读取未送达） · {detail}
                 {result.kind === 'UNREACHABLE' && result.httpStatus !== null ? ` · HTTP ${result.httpStatus}` : ''}
               </div>
             </div>
-            <div className="text-[10px] text-muted">
+            <div className="text-[12px] text-muted">
               后端没有给出判定码，所以这里不写拒绝码、不写判定结果，也不写字节计数。
             </div>
           </CardContent>
@@ -447,40 +447,40 @@ function EvidenceColumns({
         <CardHeader><span>判定 · Verdict</span></CardHeader>
         <CardContent>
           <div className="list-item flex-col items-stretch gap-1">
-            <div className="text-[10px] uppercase tracking-[0.12em] text-muted">状态 / 判定码</div>
+            <div className="text-[12px] uppercase tracking-[0.12em] text-muted">状态 / 判定码</div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={statusTone(item.status)}>{`${item.status} · ${item.reason_code}`}</Badge>
               {!isRegisteredReasonCode(item.reason_code) && (
-                <span className="text-[10px] text-warning">未登记的判定码（后端新增，UI 未镜像）</span>
+                <span className="text-[12px] text-warning">未登记的判定码（后端新增，UI 未镜像）</span>
               )}
             </div>
-            <div className="break-words text-[11px] text-ink">{item.reason || '后端未给出原因文本'}</div>
-            <div className="text-[10px] text-muted">
+            <div className="break-words text-[12px] text-ink">{item.reason || '后端未给出原因文本'}</div>
+            <div className="text-[12px] text-muted">
               传输层 HTTP {result.httpStatus} —— 判定取自响应体，不取自状态码
             </div>
           </div>
 
           <div className="list-item flex-col items-stretch gap-1" data-testid="evidence-digest-verdict">
-            <div className="text-[10px] uppercase tracking-[0.12em] text-muted">摘要一致性</div>
+            <div className="text-[12px] uppercase tracking-[0.12em] text-muted">摘要一致性</div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={DIGEST_TONE[digest.kind]}>{`${DIGEST_LABEL[digest.kind]} · ${digest.kind}`}</Badge>
             </div>
-            <div className="break-words text-[11px] text-ink">{digest.detail}</div>
+            <div className="break-words text-[12px] text-ink">{digest.detail}</div>
           </div>
 
           {isOk && typeof item.content === 'string' ? (
             <div className="list-item flex-col items-stretch gap-1" data-testid="evidence-content">
-              <div className="text-[10px] uppercase tracking-[0.12em] text-muted">
+              <div className="text-[12px] uppercase tracking-[0.12em] text-muted">
                 返回字节预览 · [{num(item.offset)}, {num(item.endOffset)})
               </div>
-              <pre className="m-0 max-h-40 overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] text-ink">
+              <pre className="m-0 max-h-40 overflow-auto whitespace-pre-wrap break-words font-mono text-[12px] text-ink">
                 {item.content.length > PREVIEW_LIMIT ? `${item.content.slice(0, PREVIEW_LIMIT)}…（预览截断，完整区间由 sliceDigest 署名）` : item.content}
               </pre>
             </div>
           ) : (
             <div className="list-item flex-col items-stretch gap-1" data-testid="evidence-no-content">
-              <div className="text-[10px] uppercase tracking-[0.12em] text-muted">内容</div>
-              <div className="text-[11px] text-warning">
+              <div className="text-[12px] uppercase tracking-[0.12em] text-muted">内容</div>
+              <div className="text-[12px] text-warning">
                 没有返回字节（{item.status === 'REFUSED' ? '后端拒绝携带内容' : '空区间'}），因此这里没有内容块可看。
                 拒绝是判定，不是空面板。
               </div>

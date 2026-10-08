@@ -151,7 +151,7 @@ export function CommandPalette({
                       aria-current={activeNow ? 'true' : undefined}
                     >
                       <span className="truncate">{it.label}</span>
-                      {it.group ? <small className="shrink-0 text-[10px] uppercase tracking-wide text-muted">{it.group}</small> : null}
+                      {it.group ? <small className="shrink-0 text-[12px] uppercase tracking-wide text-muted">{it.group}</small> : null}
                     </button>
                   )
                 })

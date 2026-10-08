@@ -13,7 +13,7 @@ export function ProjectPanel({ snap }: { snap: SnapshotV3 | null }) {
   return (
     <div className="panel">
       <h3>项目</h3>
-      <div className="mb-3 text-[11px] text-muted">{snap ? projects.length + ' 个 · 真实' : '等待数据'}</div>
+      <div className="mb-3 text-[12px] text-muted">{snap ? projects.length + ' 个 · 真实' : '等待数据'}</div>
       {projects.length === 0 ? (
         <div className="empty py-10">
           <div className="icon" aria-hidden="true">◇</div>

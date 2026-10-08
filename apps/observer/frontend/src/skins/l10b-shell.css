@@ -52,9 +52,8 @@
 /* The rail's group captions became disclosure buttons (ARIA APG). `.nav button` in B10 styles EVERY
  * button in the rail as a nav row — padding, height, surface, radius — so the toggle is re-declared
  * here at a specificity that beats it. The caption's OWN typography deliberately stays on the element
- * as Tailwind classes in Sidebar.tsx: `apps/observer/tests/test_production_surface_static_contract.js`
- * allows sub-12px type only for named micro roles and reads the CSS files, so moving `font-size: 10px`
- * into this sheet would fail CI for a role the design system already sanctions. */
+ * as Tailwind classes in Sidebar.tsx, at the 12px DESIGN.md floor: `text-[10px]` there is what the
+ * legibility instrument measured, and it is what this sheet must not silently re-narrow. */
 .nav .nav-group-toggle {
   display: flex;
   align-items: center;
@@ -216,7 +215,10 @@
 .winctl-close:hover { border-color: #7f1d1d; background: #7f1d1d; color: #fff; }
 .winctl-zoom {
   min-width: 38px;
-  font-size: 10px;
+  /* 10px read this role used to claim as a sanctioned micro part. The instrument measured it as text
+   * a user must read (it is the only place the zoom level appears) and DESIGN.md floors such text at
+   * 12px, so the role is no longer an exception and the legibility gate's allowlist is empty. */
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   text-align: center;
   color: var(--muted);
@@ -233,7 +235,7 @@
   border-radius: 10px;
   background: var(--panel2);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 /* Fluid shell: query the CONTAINER, not the viewport.
@@ -365,10 +367,23 @@ html.light {
   --text: #0B1420;
   --muted: #4A6172;
   --primary: #1B7FE6;
+  /* A text-role accent, distinct from --primary the fill. Material Blue 800: 4.78:1 on --sidebar,
+   * where --primary is 3.74:1. Darkening --primary itself would darken every filled control and the
+   * brand mark to fix one caption, so the role gets its own token instead. */
+  --primary-text: #1565C0;
   --success: #15803D;
   --warning: #B45309;
   --error: #B91C1C;
 }
+
+/* Two light-theme roles were unreadable because the pinned skin paints them with values that only
+ * work on a dark surface. b10.css is verbatim (D-11), so both are answered in this layer.
+ *   .avatar — `color:#fff` over `--surface2` measured 1.13:1, i.e. the glyph did not render visibly.
+ *   .brand small — `color:var(--primary)` measured 3.74:1, and it also carries b10's 10px, which the
+ *     DESIGN.md floor forbids for text that names the product. */
+html.light .avatar { color: var(--text); }
+html.light .brand small { color: var(--primary-text); }
+.brand small { font-size: 12px; }
 
 /* Status pills set white text at 12px/700 over #27c86a (2.2:1), #f2b541 (1.8:1),
  * #f86b6b (2.9:1) and #2A91FF (3.2:1) — every one fails AA. Darkening the
@@ -401,6 +416,18 @@ html.light {
  * layout ever applied. Everything that must win is therefore stated once, here,
  * at the end. b10.css remains untouched.
  * ------------------------------------------------------------------------- */
+
+/* A theme switch is a state change, not a performance. The pinned skin eases colour over ~200-300ms,
+ * and the intermediate palettes are colours nobody chose: nav text was measured passing through 1.22:1.
+ * App.tsx holds this class on <html> for exactly the frames the swap needs, so the change lands in one
+ * frame and hover/press motion keeps animating. `!important` is the point: it has to outrank b10's
+ * per-element `transition:.2s ease` without editing a file that is pinned verbatim (D-11). */
+.theme-instant *,
+.theme-instant *::before,
+.theme-instant *::after {
+  transition: none !important;
+  animation: none !important;
+}
 
 /* Paired / triple / split rows keep B10's proportions but can always shrink,
  * and collapse to one column inside a narrow content container. */
@@ -607,6 +634,6 @@ button[aria-disabled="true"]:hover {
   mask: url("../assets/brand/work-lab-mark.png") center / contain no-repeat;
 }
 .topbar-brand-word {
-  font-size: 10px; letter-spacing: .14em; color: var(--muted); white-space: nowrap;
+  font-size: 12px; letter-spacing: .14em; color: var(--muted); white-space: nowrap;
 }
 .app-compact .topbar-brand-word { display: none; }

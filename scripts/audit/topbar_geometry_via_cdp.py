@@ -445,14 +445,25 @@ def connect_with_retry(port: int, attempts: int = 6):
                        f"last_error={last_exc!r}")
 
 
-def measure(root: Path, view: str, browser: str, u19, shot: Path | None) -> dict:
+def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: str,
+                   u19, shot: Path | None = None) -> dict:
+    """Serve the built `dist` and evaluate one expression in a headless Chrome.
+
+    This is the browser bootstrap, not a topbar-specific step: a second instrument (the legibility
+    probe) needs the same silent headless session over the same bundle, and copying forty lines of
+    port-picking, log-parsing and profile-cleanup is how two instruments start disagreeing about
+    when the browser was ready. `measure()` below is one call to this function.
+
+    The caller passes a `path`, not a URL, because the port is chosen here — a caller that had to
+    guess the port would be guessing the measurement.
+    """
     port = u19.pick_free_port()
+    url = f"http://127.0.0.1:{port}{path}"
     srv = subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"],
                            cwd=str(root / "apps/observer/frontend/dist"),
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    udf = OUT_DIR / f"udf-{int(time.time())}"
-    log_path = OUT_DIR / f"chrome-{int(time.time())}.log"
-    url = f"http://127.0.0.1:{port}/index.html?view={view}&mode=UNKNOWN&theme=dark&shell=tauri"
+    udf = OUT_DIR / f"udf-{int(time.time())}-{os.getpid()}"
+    log_path = OUT_DIR / f"chrome-{int(time.time())}-{os.getpid()}.log"
     requested_cdp = u19.pick_free_port()
     # Request a specific port and then believe what Chrome announces. `--remote-debugging-port=0`
     # announces a websocket port but serves no /json HTTP endpoint there, so discovery times out;
@@ -463,7 +474,7 @@ def measure(root: Path, view: str, browser: str, u19, shot: Path | None) -> dict
             [browser, "--headless=new", "--disable-gpu", "--no-sandbox",
              # Without these the profile's first-run UI wins and no page target appears in time.
              "--no-first-run", "--no-default-browser-check", "--disable-extensions",
-             f"--user-data-dir={udf}", f"--window-size={WIN_SIZE[view]}",
+             f"--user-data-dir={udf}", f"--window-size={window_size}",
              f"--remote-debugging-port={requested_cdp}", "--remote-allow-origins=*", url],
             stdout=log, stderr=subprocess.STDOUT)
         cdp_port = None
@@ -488,7 +499,7 @@ def measure(root: Path, view: str, browser: str, u19, shot: Path | None) -> dict
             try:
                 cdp.send("Page.enable")
                 time.sleep(1.0)
-                raw = cdp.evaluate(EXPR.replace("SELECTORS", json.dumps(SELECTORS)))
+                raw = cdp.evaluate(expr)
                 if shot is not None:
                     data = cdp.send("Page.captureScreenshot", {"format": "png"}).get("data", "")
                     shot.write_bytes(base64.b64decode(data))
@@ -503,6 +514,12 @@ def measure(root: Path, view: str, browser: str, u19, shot: Path | None) -> dict
             except subprocess.TimeoutExpired:
                 RESIDUE.append(f"{udf} chrome did not exit within 10s")
             _release_profile(udf)
+
+
+def measure(root: Path, view: str, browser: str, u19, shot: Path | None) -> dict:
+    return serve_and_eval(
+        root, f"/index.html?view={view}&mode=UNKNOWN&theme=dark&shell=tauri",
+        WIN_SIZE[view], EXPR.replace("SELECTORS", json.dumps(SELECTORS)), browser, u19, shot)
 
 
 def _release_profile(udf: Path, attempts: int = 12, pause: float = 0.5) -> None:

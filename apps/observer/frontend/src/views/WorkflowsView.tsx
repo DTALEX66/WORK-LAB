@@ -112,7 +112,7 @@ export function WorkflowsView({ snap }: { snap: SnapshotV3 | null }) {
             </option>
           ))}
         </select>
-        <span className="ml-auto self-center text-[11px] text-muted tabular-nums">
+        <span className="ml-auto self-center text-[12px] text-muted tabular-nums">
           {workflows.length ? `${filtered.length} / ${workflows.length} 条` : '契约未投影'}
         </span>
       </div>
@@ -151,7 +151,7 @@ export function WorkflowsView({ snap }: { snap: SnapshotV3 | null }) {
                   <tr key={w.id}>
                     <td>
                       <strong className="block text-[13px] font-semibold text-ink">{w.name}</strong>
-                      <small className="font-mono text-[10px] text-muted">{w.id}</small>
+                      <small className="font-mono text-[12px] text-muted">{w.id}</small>
                     </td>
                     <td>
                       <Badge variant={stateVariant(w.state)}>{w.state ?? 'UNKNOWN'}</Badge>

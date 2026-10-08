@@ -39,7 +39,8 @@ design:
   designMd: apps/observer/frontend/DESIGN.md
   screenSpec: apps/observer/frontend/SCREEN_SPEC.md
 
-# Only screens with captured rendered evidence are listed. `src/lib/viewRegistry.ts` registers 22 view ids;
+# Only screens with captured rendered evidence are listed.
+# `apps/observer/frontend/src/lib/viewRegistry.ts` registers 22 view ids;
 # the rest stay unlisted rather than being declared as covered by a name nobody has rendered.
 # `shared/lib/config.mjs` defaults `code.include` to `src/**`, `app/**`, `pages/**`, `components/**`
 # resolved against this file's directory. In a monorepo that matches nothing, and the consequence is the

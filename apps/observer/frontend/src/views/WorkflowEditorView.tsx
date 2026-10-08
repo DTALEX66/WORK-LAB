@@ -112,16 +112,16 @@ export function WorkflowEditorView({ snap }: { snap: unknown }) {
         <Card>
           <CardHeader>
             <span>属性面板</span>
-            <span className="text-[11px] text-muted">{selected ? selected.kind : '未选中'}</span>
+            <span className="text-[12px] text-muted">{selected ? selected.kind : '未选中'}</span>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {selected ? (
               <>
-                <label className="flex flex-col gap-1 text-[11px] text-muted">
+                <label className="flex flex-col gap-1 text-[12px] text-muted">
                   节点名称
                   <Input value={selected.label} onChange={(e) => updateSelected({ label: e.target.value })} />
                 </label>
-                <label className="flex flex-col gap-1 text-[11px] text-muted">
+                <label className="flex flex-col gap-1 text-[12px] text-muted">
                   说明
                   <Input value={selected.meta ?? ''} onChange={(e) => updateSelected({ meta: e.target.value })} placeholder="节点说明" />
                 </label>
@@ -135,7 +135,7 @@ export function WorkflowEditorView({ snap }: { snap: unknown }) {
                     <span className="font-mono text-xs text-ink">{edgeCount}</span>
                   </div>
                 </div>
-                <p className="text-[11px] leading-relaxed text-muted">
+                <p className="text-[12px] leading-relaxed text-muted">
                   选中节点后在画布内拖动以移动；点节点右上 + 手柄向目标节点拖出即可连线；工具栏删除所选。
                 </p>
               </>

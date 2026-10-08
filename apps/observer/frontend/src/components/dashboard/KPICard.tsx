@@ -37,7 +37,7 @@ export function KPICard({
     <div className="panel kpi">
       <strong className="kpi-number">{value}</strong>
       <small>{title}</small>
-      {sub ? <small className="mt-1 block text-[10px]">{sub}</small> : null}
+      {sub ? <small className="mt-1 block text-[12px]">{sub}</small> : null}
       {trend ? <div className={cn('trend', trendTone)}>{trend}</div> : null}
     </div>
   )

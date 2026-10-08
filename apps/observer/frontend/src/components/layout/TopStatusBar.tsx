@@ -96,7 +96,7 @@ export function TopStatusBar({
         >
           <Search size={15} aria-hidden="true" />
           <span className="truncate">搜索或命令…</span>
-          <kbd className="ml-auto shrink-0 rounded border border-border bg-panel2 px-1.5 py-0.5 text-[9px] text-muted">
+          <kbd className="ml-auto shrink-0 rounded border border-border bg-panel2 px-1.5 py-0.5 text-[12px] text-muted">
             Ctrl K
           </kbd>
         </div>
@@ -104,7 +104,7 @@ export function TopStatusBar({
 
       {/* honest transport truth strip (REAL v3 fields only). Shrinks instead of
           forcing the action buttons into one-glyph columns. */}
-      <div className="truth-strip hidden items-center gap-3 text-[10px] text-muted lg:flex">
+      <div className="truth-strip hidden items-center gap-3 text-[12px] text-muted lg:flex">
         <span className="flex items-center gap-2">
           <span className="status-pulse shrink-0" style={dotStyle} aria-hidden="true" />
           <span className="font-medium text-ink">{stateText}</span>

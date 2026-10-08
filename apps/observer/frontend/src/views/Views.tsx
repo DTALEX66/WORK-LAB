@@ -16,8 +16,8 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
   const empty = v === null || v === undefined || v === ''
   return (
     <div className="list-item">
-      <span className="text-[11px] text-muted">{k}</span>
-      <span className="ml-3 min-w-0 truncate text-right font-mono text-[11px] text-ink">{empty ? 'UNKNOWN' : v}</span>
+      <span className="text-[12px] text-muted">{k}</span>
+      <span className="ml-3 min-w-0 truncate text-right font-mono text-[12px] text-ink">{empty ? 'UNKNOWN' : v}</span>
     </div>
   )
 }
@@ -60,16 +60,16 @@ export function ProjectsTable({ projects }: { projects: Project[] }) {
               <tr key={p.projectId}>
                 <td>
                   <strong className="block text-[12px] font-semibold text-ink">{p.displayName || p.projectId}</strong>
-                  <small className="font-mono text-[10px] text-muted">{p.identityState === 'RESOLVED' ? '已解析身份' : '身份未解析'}</small>
+                  <small className="font-mono text-[12px] text-muted">{p.identityState === 'RESOLVED' ? '已解析身份' : '身份未解析'}</small>
                 </td>
                 <td className="text-muted">{p.agentPlatform || 'UNKNOWN'}</td>
                 <td><Badge variant={tone === 'active' ? 'success' : 'muted'}>{p.activityState || 'UNKNOWN'}</Badge></td>
                 <td className="tabular-nums text-ink">{p.activeExecutionCount}</td>
                 <td className="tabular-nums text-ink" title="costQuality（后端权威）">
-                  {fmtTokens(p.token.totalTokens)} <span className="text-[10px] text-muted">{fmtCostQuality(p.token.costQuality)}</span>
+                  {fmtTokens(p.token.totalTokens)} <span className="text-[12px] text-muted">{fmtCostQuality(p.token.costQuality)}</span>
                 </td>
                 <td>
-                  <span className="font-mono text-[11px] text-muted">{p.git.branch || '—'}@{p.git.localSha ? p.git.localSha.slice(0, 7) : '—'}</span>{' '}
+                  <span className="font-mono text-[12px] text-muted">{p.git.branch || '—'}@{p.git.localSha ? p.git.localSha.slice(0, 7) : '—'}</span>{' '}
                   {dirty == null ? <Badge variant="muted">脏 UNKNOWN</Badge>
                     : dirty ? <Badge variant="warning">脏 {dirty}</Badge>
                     : <Badge variant="muted">干净</Badge>}
@@ -89,7 +89,7 @@ export function ProjectsView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader><span>项目平台</span><span className="text-[11px] text-muted">{projects.length} 个项目 · 真实 registry</span></CardHeader>
+        <CardHeader><span>项目平台</span><span className="text-[12px] text-muted">{projects.length} 个项目 · 真实 registry</span></CardHeader>
         <CardContent>
           {projects.length === 0 ? (
             <div className="empty py-10">
@@ -123,7 +123,7 @@ export function AgentsView({ snap }: { snap: Snap }) {
           the reason any layer is still unprobed. */}
       <AdapterCapabilityCards snap={snap} />
       <Card>
-        <CardHeader><span>Agent 实例</span><span className="text-[11px] text-muted">{byAgent.size} 个 agent · {exs.length} 条执行 · 真实投影</span></CardHeader>
+        <CardHeader><span>Agent 实例</span><span className="text-[12px] text-muted">{byAgent.size} 个 agent · {exs.length} 条执行 · 真实投影</span></CardHeader>
         <CardContent>
           {exs.length === 0 ? (
             <div className="empty py-10">
@@ -146,8 +146,8 @@ export function AgentsView({ snap }: { snap: Snap }) {
                     <tr key={e.executionId}>
                       <td className="font-mono text-ink">{e.agent || 'UNKNOWN'}</td>
                       <td><Badge variant={toneVariant(stateTone(e.state))}>{STATE_TEXT[e.state] || e.state}</Badge></td>
-                      <td className="font-mono text-[10px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
-                      <td className="font-mono text-[10px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
+                      <td className="font-mono text-[12px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
+                      <td className="font-mono text-[12px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -169,7 +169,7 @@ export function ExecutionsView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader><span>执行详情</span><span className="text-[11px] text-muted">{exs.length} 个执行 · 真实</span></CardHeader>
+        <CardHeader><span>执行详情</span><span className="text-[12px] text-muted">{exs.length} 个执行 · 真实</span></CardHeader>
         <CardContent>
           {exs.length === 0 ? (
             <div className="empty py-10">
@@ -196,8 +196,8 @@ export function ExecutionsView({ snap }: { snap: Snap }) {
                       <td>{e.agent || 'UNKNOWN'}</td>
                       <td><Badge variant={toneVariant(stateTone(e.state))}>{STATE_TEXT[e.state] || e.state}</Badge></td>
                       <td className="text-ink">{e.anchorProjectId || 'UNKNOWN'}</td>
-                      <td className="font-mono text-[10px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
-                      <td className="font-mono text-[10px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
+                      <td className="font-mono text-[12px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
+                      <td className="font-mono text-[12px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -245,7 +245,7 @@ export function ModelsView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader><span>Token 汇总</span><span className="text-[11px] text-muted">质量 {fmtCostQuality(ts?.costQuality)} · 后端权威 · 前端不估算金额</span></CardHeader>
+        <CardHeader><span>Token 汇总</span><span className="text-[12px] text-muted">质量 {fmtCostQuality(ts?.costQuality)} · 后端权威 · 前端不估算金额</span></CardHeader>
         <CardContent className="flex flex-col gap-4">
           {dist.map((d) => (
             <div key={d.name}>
@@ -322,8 +322,8 @@ export function MemoryView({ snap }: { snap: Snap }) {
             <Row k="总错误数" v={(hist.totalErrors != null ? String(hist.totalErrors) : 'UNKNOWN')} />
             {(hist.recentErrors || []).slice(0, 6).map((e: any, i: number) => (
               <div key={i} className="list-item">
-                <span className="font-mono text-[11px] text-muted">{e.errorId || 'UNKNOWN'}</span>
-                <span className="ml-3 min-w-0 truncate text-[11px] text-ink">{e.title || e.classification || ''}</span>
+                <span className="font-mono text-[12px] text-muted">{e.errorId || 'UNKNOWN'}</span>
+                <span className="ml-3 min-w-0 truncate text-[12px] text-ink">{e.title || e.classification || ''}</span>
               </div>
             ))}
           </div>

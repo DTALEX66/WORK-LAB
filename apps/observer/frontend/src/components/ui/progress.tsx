@@ -18,7 +18,7 @@ export function Progress({
   return (
     <div className={cn('w-full', className)}>
       {label ? (
-        <div className="mb-1 flex items-center justify-between text-[11px] text-muted">
+        <div className="mb-1 flex items-center justify-between text-[12px] text-muted">
           <span>{label}</span>
           <span className="tabular-nums">{value == null ? 'UNKNOWN' : `${pct}%`}</span>
         </div>

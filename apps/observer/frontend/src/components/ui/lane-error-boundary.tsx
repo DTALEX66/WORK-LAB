@@ -48,7 +48,7 @@ export class LaneErrorBoundary extends React.Component<LaneErrorBoundaryProps, S
         <p className="whitespace-pre-wrap text-xs text-muted">
           {this.props.lane}：{error.message || String(error)}
         </p>
-        <p className="mt-3 text-[11px] text-muted">
+        <p className="mt-3 text-[12px] text-muted">
           其余界面与窗口控件仍可用；这里只显示已发生的渲染错误，不伪造数据，也不在此重试读取。
         </p>
         {this.props.onReset ? (

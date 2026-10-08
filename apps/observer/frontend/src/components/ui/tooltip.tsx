@@ -47,7 +47,7 @@ export function Tooltip({ text, side = 'top', children, className }: TooltipProp
         role="tooltip"
         className={cn(
           'pointer-events-none absolute left-1/2 -translate-x-1/2 z-tooltip whitespace-nowrap',
-          'rounded-md border border-border bg-panel2 px-2.5 py-1.5 text-[11px] text-ink shadow-card',
+          'rounded-md border border-border bg-panel2 px-2.5 py-1.5 text-[12px] text-ink shadow-card',
           'opacity-0 transition-opacity duration-fast group-hover/tt:opacity-100',
           'group-focus-within/tt:opacity-100 group-focus/tt:opacity-100',
           side === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5',

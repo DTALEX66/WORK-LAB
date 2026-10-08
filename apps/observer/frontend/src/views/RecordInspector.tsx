@@ -26,11 +26,11 @@ export function Dim({ label, value, hint }: { label: string; value: React.ReactN
   const present = value !== null && value !== undefined && value !== '' && value !== false
   return (
     <div className="list-item flex-col items-stretch gap-1">
-      <div className="text-[10px] uppercase tracking-[0.12em] text-muted">{label}</div>
+      <div className="text-[12px] uppercase tracking-[0.12em] text-muted">{label}</div>
       {present ? (
-        <div className="whitespace-pre-wrap text-[11px] text-ink">{value}</div>
+        <div className="whitespace-pre-wrap text-[12px] text-ink">{value}</div>
       ) : (
-        <div className="flex items-center gap-1.5 text-[11px] text-warning">
+        <div className="flex items-center gap-1.5 text-[12px] text-warning">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-secondary" aria-hidden="true" />
           来源缺口（当前 v3 快照未携带{hint ? ` · ${hint}` : ''}）
         </div>
@@ -215,16 +215,16 @@ export function renderDimension(dimension: InspectorDimension): React.ReactNode 
   if (dimension.origin === 'PROJECTED') {
     return (
       <div className="list-item flex-col items-stretch gap-1" data-dim={dimension.key} data-origin="PROJECTED">
-        <div className="text-[10px] uppercase tracking-[0.12em] text-muted">{dimension.label}</div>
-        <div className="whitespace-pre-wrap break-words text-[11px] text-ink">{dimension.value}</div>
+        <div className="text-[12px] uppercase tracking-[0.12em] text-muted">{dimension.label}</div>
+        <div className="whitespace-pre-wrap break-words text-[12px] text-ink">{dimension.value}</div>
       </div>
     )
   }
   if (dimension.origin === 'NULL_FIELD') {
     return (
       <div className="list-item flex-col items-stretch gap-1" data-dim={dimension.key} data-origin="NULL_FIELD">
-        <div className="text-[10px] uppercase tracking-[0.12em] text-muted">{dimension.label}</div>
-        <div className="flex items-center gap-1.5 text-[11px] text-muted">
+        <div className="text-[12px] uppercase tracking-[0.12em] text-muted">{dimension.label}</div>
+        <div className="flex items-center gap-1.5 text-[12px] text-muted">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-zinc-500" aria-hidden="true" />
           投影为 null · {dimension.note}
         </div>
@@ -233,8 +233,8 @@ export function renderDimension(dimension: InspectorDimension): React.ReactNode 
   }
   return (
     <div className="list-item flex-col items-stretch gap-1" data-dim={dimension.key} data-origin="SOURCE_GAP">
-      <div className="text-[10px] uppercase tracking-[0.12em] text-muted">{dimension.label}</div>
-      <div className="flex items-center gap-1.5 text-[11px] text-warning">
+      <div className="text-[12px] uppercase tracking-[0.12em] text-muted">{dimension.label}</div>
+      <div className="flex items-center gap-1.5 text-[12px] text-warning">
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-secondary" aria-hidden="true" />
         来源缺口（当前 v3 快照未携带 · {dimension.note}）
       </div>
@@ -317,7 +317,7 @@ export function RecordInspector({
     <>
       {blocks}
       {addressed && (
-        <div className="mt-2 break-all font-mono text-[10px] text-muted" data-testid="inspector-focus-address">
+        <div className="mt-2 break-all font-mono text-[12px] text-muted" data-testid="inspector-focus-address">
           定位：{addressed} ·
           <a href={clearHref} onClick={onClearClick} className="ml-1" data-testid="inspector-clear">清除</a>
         </div>

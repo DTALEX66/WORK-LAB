@@ -161,7 +161,7 @@ export function WorkView({
           <Card>
             <CardHeader>
               <span>任务详情 · <span className="font-mono">{selectedTask.taskId || 'UNKNOWN'}</span></span>
-              <span className="flex items-center gap-2 text-[11px] text-muted">
+              <span className="flex items-center gap-2 text-[12px] text-muted">
                 {/* No clipboard button lives here: a read-only lane gets no control. The address below
                     is selectable text, and every link in this lane already points at exactly it. */}
                 <a href={laneHref(EMPTY_FOCUS)} onClick={linkClick(EMPTY_FOCUS, clearFocus)}>取消定位</a>
@@ -176,7 +176,7 @@ export function WorkView({
                 Attempt / Planner / Routes / Diff / Tests / CI / Receipts / Approval / Handoff /
                 Next Action）在右侧 Inspector 逐条投影；本卡片只保留定位与地址。
               </div>
-              <p className="mt-2 break-all font-mono text-[10px] text-muted" data-testid="work-focus-link">{origin}{shareUrl}</p>
+              <p className="mt-2 break-all font-mono text-[12px] text-muted" data-testid="work-focus-link">{origin}{shareUrl}</p>
             </CardContent>
           </Card>
         )}
@@ -184,7 +184,7 @@ export function WorkView({
         <Card>
           <CardHeader>
             <span>执行详情</span>
-            <span className="text-[11px] text-muted">
+            <span className="text-[12px] text-muted">
               {exs.length} 条 · 真实投影{snap ? '' : ' · 数据源未接入'}
             </span>
           </CardHeader>
@@ -226,16 +226,16 @@ export function WorkView({
                               {e.executionId}
                             </a>
                             {e.executionId === focus.executionId ? (
-                              <span className="ml-1.5 text-[10px] text-secondary">已定位</span>
+                              <span className="ml-1.5 text-[12px] text-secondary">已定位</span>
                             ) : null}
                           </td>
                           <td className="text-ink">{proj?.displayName || e.anchorProjectId || 'UNKNOWN'}</td>
                           <td>
                             <Badge variant={toneVariant(stateTone(e.state))}>{STATE_TEXT[e.state] || e.state}</Badge>
-                            {e.stateQuality ? <span className="ml-1.5 text-[10px] text-muted">{e.stateQuality}</span> : null}
+                            {e.stateQuality ? <span className="ml-1.5 text-[12px] text-muted">{e.stateQuality}</span> : null}
                           </td>
-                          <td className="font-mono text-[10px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
-                          <td className="font-mono text-[10px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
+                          <td className="font-mono text-[12px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
+                          <td className="font-mono text-[12px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
                         </tr>
                       )
                     })}
@@ -249,7 +249,7 @@ export function WorkView({
         <Card>
           <CardHeader>
             <span>任务记录</span>
-            <span className="text-[11px] text-muted">
+            <span className="text-[12px] text-muted">
               {taskRecords === undefined
                 ? '后端未提供（快照无 taskRecords 字段）'
                 : `${taskRecords.length} 条 · 真实投影${snap ? '' : ' · 数据源未接入'}`}
@@ -295,7 +295,7 @@ export function WorkView({
                               {record.taskId || 'UNKNOWN'}
                             </a>
                             {record.taskId && record.taskId === focus.taskId ? (
-                              <span className="ml-1.5 text-[10px] text-secondary">已定位</span>
+                              <span className="ml-1.5 text-[12px] text-secondary">已定位</span>
                             ) : null}
                           </td>
                           <td className="text-ink">{record.projectId || 'UNKNOWN'}</td>
@@ -304,8 +304,8 @@ export function WorkView({
                               {record.status || 'UNKNOWN'}
                             </Badge>
                           </td>
-                          <td className="font-mono text-[10px] text-muted">{record.updatedAt || 'UNKNOWN'}</td>
-                          <td className="font-mono text-[10px] text-muted">
+                          <td className="font-mono text-[12px] text-muted">{record.updatedAt || 'UNKNOWN'}</td>
+                          <td className="font-mono text-[12px] text-muted">
                             {record.checkpointPresent ? `digest ${record.checkpointDigest ? record.checkpointDigest.slice(0, 8) : 'UNKNOWN'}` : 'null'}
                           </td>
                         </tr>
@@ -326,7 +326,7 @@ export function WorkView({
                 <div className="mb-2 flex items-center gap-2 text-xs">
                   <span className="text-muted">计划</span>
                   <Badge variant={plan.status === 'done' ? 'info' : 'warning'}>{plan.status}</Badge>
-                  {plan.counts ? <span className="text-[10px] text-muted">
+                  {plan.counts ? <span className="text-[12px] text-muted">
                     {Object.entries(plan.counts).map(([k, v]) => `${k}=${v}`).join(' · ')}
                   </span> : null}
                 </div>
@@ -391,7 +391,7 @@ export function WorkView({
         <Card>
           <CardHeader>
             <span>Inspector · 记录维度</span>
-            <span className="text-[11px] text-muted">
+            <span className="text-[12px] text-muted">
               {taskState.kind === 'matched' ? '已定位任务'
                 : executionState.kind === 'matched' ? '已定位执行'
                 : '未定位记录'}

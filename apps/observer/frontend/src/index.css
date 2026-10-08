@@ -82,7 +82,11 @@ html.light {
   --color-panel2: #EAF0F6;
   --color-border: #D5E2EC;
   --color-ink: #0B1420;
-  --color-muted: #5A7184;
+  /* One "muted" per role, not two. The B10 skin already carried #4A6172 for --muted while this
+   * vocabulary held #5A7184, and the difference is measurable: 4.43:1 on --color-panel2 against
+   * 5.64:1. 4.43 is under AA, so every muted label on a panel2 surface failed in light only because
+   * two tokens named the same thing differently (DESIGN.md Known Gap 7). */
+  --color-muted: #4A6172;
   /* accents (deepened for light-surface contrast) */
   --primary-rgb: 27 127 230;
   --secondary-rgb: 14 147 165;

@@ -181,8 +181,14 @@ export default function App() {
   // Unify: toggle .light + colorScheme, exactly like index.html does.
   useEffect(() => {
     const root = document.documentElement
+    // The pinned skin animates `transition:.2s ease` on the rail rows, and an ease between two real
+    // palettes passes through colours nobody chose: nav text was measured at 1.22:1 for up to ~300ms
+    // after a switch. A theme change is a state change, not a performance, so it is applied with the
+    // transitions held off for exactly the frames the swap needs — hover motion stays animated.
+    root.classList.add('theme-instant')
     root.classList.toggle('light', theme === 'light')
     root.style.colorScheme = theme === 'light' ? 'light' : 'dark'
+    requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-instant')))
   }, [theme])
 
   // UI_SHELL (20260921): keep the deep-link (?view=/?theme=/?layout=) in sync
@@ -260,7 +266,7 @@ export default function App() {
             OfflineState is what says so in the same vocabulary the lanes use. */}
         <OfflineState />
         <p className="whitespace-pre-wrap text-xs text-muted">{error}</p>
-        <p className="mt-3 text-[11px] text-muted">
+        <p className="mt-3 text-[12px] text-muted">
           保持 UNKNOWN 真相 — 不伪造 Agent / 模型 / 成本 / 资源
         </p>
       </div>
