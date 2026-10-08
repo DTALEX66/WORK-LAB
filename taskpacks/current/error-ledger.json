@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 211,
+    "total": 212,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 64,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 3,
       "path_boundary": 15,
-      "ci_tooling": 12,
+      "ci_tooling": 13,
       "sql_schema": 1,
       "regression_contract": 8,
       "boundary_leak": 1
@@ -6477,6 +6477,34 @@
         "verifiedCommit": "840f9a281b9ce7a37b91619993348618595df90d",
         "bindingBasis": "commit-contains-fix: HEAD (bd4d6de) carries the repairs, the tracked-set compile scope and its guard; verifiedCommit is owed until every Actions run at a head containing them is green",
         "verifiedCommitNote": "exact-SHA Actions readback at 840f9a281b9ce7a37b91619993348618595df90d: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
+      }
+    },
+    {
+      "error_id": "ERR-214",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/ci/verify_contract_catalog.py",
+      "command": "python scripts/ci/verify_contract_catalog.py",
+      "exit_code": 1,
+      "observed_error": "Registering a new contract made the catalogue gate raise instead of report: `KeyError: 'quick-entry-request'` at verify_contract_catalog.py:157, because the id was added to the EXPECTED set but not to CANONICAL_SCHEMA_PREFIXES. A traceback produces no verdict line at all, so the run looked like a broken tool rather than a bookkeeping gap the tool could have named.",
+      "root_cause": "Two hand-maintained dictionaries keyed by the same set of contract ids, with the membership check reading one by subscript. The gate can therefore be defeated in the loudest possible way by the exact act it exists to police: adding a contract. The same shape of defect -- one predicate, two owners -- is what the new verb-agreement test exists to prevent on the schema side.",
+      "fix": "The lookup is now a `.get()` with a named failure: an id in EXPECTED without a canonical prefix entry is reported as `declared in EXPECTED but has no entry in CANONICAL_SCHEMA_PREFIXES`, and the gate still reaches its other checks and prints a verdict. The Quick Entry contract was registered in all three places the system requires (schema file, catalogue with a real consumer, generated TS projection via generate_contract_types.py), and `verify_contract_ssot.py` confirms unlisted_declared=12 equals helper_declarations=12, so no undeclared schema slipped in. tests/workflow-assistance/test_quick_entry.py asserts the schema enum equals entry_semantics.UNIFIED_VERBS so the two lists cannot drift silently.",
+      "regression_test": "tests/workflow-assistance/test_quick_entry.py",
+      "regressionCommand": "python tests/workflow-assistance/test_quick_entry.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "reads the schema, the catalogue, the code tuple and the module itself; no network, no ignored root",
+      "evidence_level": "local-full",
+      "repeat_prevention": "a gate must report its own bookkeeping gap rather than raise, because a crash yields no verdict and a missing verdict is read as a broken tool rather than as a missing declaration; and every predicate with two representations (a schema enum and a code tuple, an EXPECTED set and a prefix map) needs one assertion that they agree, checked on every run",
+      "remaining_boundary": "The gate now names a missing prefix entry, but it still keeps two id sets by hand; collapsing them into one structure keyed by id with (owner, prefixes) is the real repair and was not done here. The verb equality is asserted only for verbs; other duplicated vocabularies in the contract layer are not covered. And the Quick Entry consumer is exercised by tests only -- there is no user-facing surface calling it, which the register row states rather than the record pretending otherwise.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the subscript lookup predates this session; it became reachable the moment a contract was registered that was missing from the second dictionary",
+        "fixedCommit": "058842daca16de5a776e70d3080cc97c3c9cded0",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: HEAD (058842d) carries the clean-report lookup and the Quick Entry registration; verifiedCommit is owed until every Actions run at a head containing it is green"
       }
     }
   ],
