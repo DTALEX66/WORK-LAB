@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-08T01:19:02Z",
+  "generatedAt": "2026-10-08T01:52:44Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -8,7 +8,7 @@
     "null": "an unverified fix stays null, and a PASS record with no fixedCommit is listed as owed rather than left silently unbound"
   },
   "counts": {
-    "bound": 79,
+    "bound": 81,
     "unboundPassRecords": 94,
     "anomalies": 0
   },
@@ -797,6 +797,26 @@
       "id": "ERR-193",
       "statusAfter": "PASS",
       "fixedCommit": "7dda94cc51c14ed4a18db3cf32b6375d0a69822f",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-194",
+      "statusAfter": "PASS",
+      "fixedCommit": "7258c20ae8bfb94ba1a30c324cfd6f49453c5482",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-196",
+      "statusAfter": "PASS",
+      "fixedCommit": "53dbfb367d35181bd716b28ffc8442820f9c4174",
       "verifiedCommit": null,
       "promise": null,
       "promisePresentInFixTree": true,

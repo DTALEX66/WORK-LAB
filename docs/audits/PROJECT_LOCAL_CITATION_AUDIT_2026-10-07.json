@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-08T01:20:05Z",
+  "generatedAt": "2026-10-08T01:53:12Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2139,
-    "distinctProjectLocalTokens": 434,
+    "trackedFilesScanned": 2141,
+    "distinctProjectLocalTokens": 436,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 434,
-    "citationsToAbsentTokens": 1208
+    "tokensAbsent": 436,
+    "citationsToAbsentTokens": 1221
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,23 +21,23 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 273,
-      "distinctPaths": 94
+      "citations": 280,
+      "distinctPaths": 95
     },
     "machine_field_pointing_at_absent_path": {
       "citations": 14,
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 567,
-      "distinctPaths": 327
+      "citations": 569,
+      "distinctPaths": 328
     },
     "machine_local_runtime_pointer": {
       "citations": 149,
       "distinctPaths": 66
     },
     "negative_assertion_or_removal_record": {
-      "citations": 122,
+      "citations": 124,
       "distinctPaths": 52
     },
     "path_pattern_or_truncated_token": {
@@ -49,7 +49,7 @@
       "distinctPaths": 1
     },
     "unclassified_needs_human_read": {
-      "citations": 44,
+      "citations": 46,
       "distinctPaths": 3
     }
   },
@@ -165,6 +165,12 @@
       },
       {
         "path": ".project-local",
+        "file": "scripts/ci/verify_authority_index_paths.py",
+        "line": 143,
+        "text": "# declaration itself: \".project-local/\" means \"nothing under here is tracked\", and one tracked file"
+      },
+      {
+        "path": ".project-local",
         "file": "scripts/ci/verify_project_data_boundary.py",
         "line": 33,
         "text": "if not path.startswith(\".project-local/\"):"
@@ -222,6 +228,12 @@
         "file": "services/session-federation/provider.py",
         "line": 102,
         "text": "under ``directory`` (must be inside .project-local/).  Default writes"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/ci/test_authority_index_paths_resolve.py",
+        "line": 55,
+        "text": "self.assertEqual(\".project-local/\", checker.declared(\".project-local/artifacts/\"))"
       },
       {
         "path": ".project-local",
@@ -384,6 +396,24 @@
         "file": "scripts/ci/verify_project_data_boundary.py",
         "line": 70,
         "text": "print(\"PROJECT_DATA_BOUNDARY_PASS runtime=.project-local/runs evidence=.project-local/artifacts\")"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "tests/ci/test_authority_index_paths_resolve.py",
+        "line": 55,
+        "text": "self.assertEqual(\".project-local/\", checker.declared(\".project-local/artifacts/\"))"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "tests/ci/test_authority_index_paths_resolve.py",
+        "line": 74,
+        "text": "\"- `.project-local/artifacts/`: declared as the untracked evidence root\\n\")"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "tests/ci/test_authority_index_paths_resolve.py",
+        "line": 81,
+        "text": "self.write(\"decl.md\", \"- `.project-local/artifacts/`: x\\n\"))"
       },
       {
         "path": ".project-local/artifacts",
@@ -580,7 +610,7 @@
       {
         "path": ".project-local/artifacts/mcp-candidate.yaml",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 712,
+        "line": 717,
         "text": "python packages/client-neutral-core/scripts/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml"
       },
       {
@@ -966,6 +996,12 @@
         "file": "scripts/maintenance/release_source_tree_bytecode.py",
         "line": 100,
         "text": "\"entry points set PYTHONPYCACHEPREFIX into .project-local/runs, so \""
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/ci/test_authority_index_paths_resolve.py",
+        "line": 50,
+        "text": "for ref in (\"<project>/.project-local/runs/\", \"~/path/x.md\", \"$CODEX_HOME/AGENTS.md\","
       },
       {
         "path": ".project-local/runs",
@@ -1584,6 +1620,12 @@
         "file": "apps/observer/observer_live_server.py",
         "line": 35,
         "text": "\"--runtime-root .project-local/runs/workflow (serves \""
+      },
+      {
+        "path": ".project-local/runs/x.json",
+        "file": "tests/ci/test_authority_index_paths_resolve.py",
+        "line": 80,
+        "text": "self.dir_parent(), [\".project-local/runs/x.json\"],"
       },
       {
         "path": ".project-local/runs/x/receipt.json",
@@ -3285,7 +3327,7 @@
         "path": ".project-local/runs/gate-recheck-20261006",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 166,
-        "text": "| GATE-RECHECK-20261006 | REPRODUCED_AS_GREEN (local canonical) / EXACT_SHA_CI NOT_RUN | 复核 10/05 记录的全量门禁 FAIL（1903 tests / 22 failures / 12 errors）。在当前交付分支头 `6f323a3` 用声明工具链 `.project-local/toolchain"
+        "text": "| GATE-RECHECK-20261006 | UNKNOWN | REPRODUCED_AS_GREEN (local canonical) / EXACT_SHA_CI NOT_RUN | 复核 10/05 记录的全量门禁 FAIL（1903 tests / 22 failures / 12 errors）。在当前交付分支头 `6f323a3` 用声明工具链 `.project-local"
       },
       {
         "path": ".project-local/runs/gate-recheck-20261006",
@@ -3780,6 +3822,18 @@
         "text": "| CONTRACT-SHAPE-ADJUDICATION-20261008 | P1 | ONE_HALF_CLOSED_LOCAL / ONE_HALF_OWNER_DECISION_NEEDED | 上一轮点名的两个「没有消费者的合同形状」现在各有结论，两条都是测出来的。**canonical-config-intent —— 缺陷已修，不是决定**：先证伪再动手，发现它并不是死重量而是**"
       },
       {
+        "path": ".project-local/runs/qoder-20261008-a/unreachable_sha_map.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 258,
+        "text": "| TRACEABILITY-UNREACHABLE-SHA-20261008 | P1 | MEASURED_AND_MAPPED_NOT_YET_REPAIRED | register 声明 vs 代码 的一个具体形状：**24 行把状态钉在 13 个任何 ref 都不包含的 commit 上**。56 个状态 token 里 53 个是 SHA；用 `git for-each-ref --c"
+      },
+      {
+        "path": ".project-local/runs/qoder-20261008-a/unreachable_sha_map.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 5934,
+        "text": "\"fix\": \"No code fix yet, and deliberately no fixedCommit. This round measured the repair instead of guessing at it: `.project-local/runs/qoder-20261008-a/unreachable_sha_map.json` (6951 bytes, 13 entr"
+      },
+      {
         "path": ".project-local/runs/quality-gate-governance-fail.log",
         "file": "docs/history/archive/workflow-convergence-20261005.md",
         "line": 37,
@@ -3909,7 +3963,7 @@
         "path": ".project-local/runs/u19-msvc-20261006/retired-gnu",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 168,
-        "text": "| U19-MSVC-20261006 | BUILD_PASS + ARTIFACT_RUNS / DESKTOP_SURFACE_STILL_FAIL | 真实 MSVC 构建：`cargo tauri build --no-bundle -- --locked`，`BUILD_EXIT=0`，1m30s，产物 `app.exe` 9,779,712 B、sha256 前缀 `e659bbe9"
+        "text": "| U19-MSVC-20261006 | UNKNOWN | BUILD_PASS + ARTIFACT_RUNS / DESKTOP_SURFACE_STILL_FAIL | 真实 MSVC 构建：`cargo tauri build --no-bundle -- --locked`，`BUILD_EXIT=0`，1m30s，产物 `app.exe` 9,779,712 B、sha256 前缀"
       },
       {
         "path": ".project-local/runs/u19-msvc-20261006/retired-gnu",
@@ -5073,7 +5127,7 @@
         "path": ".project-local/toolchains/wl-py311",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 166,
-        "text": "| GATE-RECHECK-20261006 | REPRODUCED_AS_GREEN (local canonical) / EXACT_SHA_CI NOT_RUN | 复核 10/05 记录的全量门禁 FAIL（1903 tests / 22 failures / 12 errors）。在当前交付分支头 `6f323a3` 用声明工具链 `.project-local/toolchain"
+        "text": "| GATE-RECHECK-20261006 | UNKNOWN | REPRODUCED_AS_GREEN (local canonical) / EXACT_SHA_CI NOT_RUN | 复核 10/05 记录的全量门禁 FAIL（1903 tests / 22 failures / 12 errors）。在当前交付分支头 `6f323a3` 用声明工具链 `.project-local"
       },
       {
         "path": ".project-local/toolchains/wl-py311",
@@ -5368,7 +5422,7 @@
       {
         "path": ".project-local/artifacts/context-pack.md",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 708,
+        "line": 713,
         "text": "# 生成新会话 / Codex handoff 上下文包；输出到 .project-local/artifacts/context-pack.md"
       },
       {
@@ -5416,7 +5470,7 @@
       {
         "path": ".project-local/artifacts/mcp-candidate.yaml",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 713,
+        "line": 718,
         "text": "python packages/client-neutral-core/scripts/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml"
       },
       {
@@ -6260,6 +6314,18 @@
         "file": "scripts/audit/project_local_citation_audit.py",
         "line": 299,
         "text": "\"from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under \""
+      },
+      {
+        "path": ".project-local",
+        "file": "scripts/ci/verify_authority_index_paths.py",
+        "line": 7,
+        "text": "`.project-local/` exists on the machine that wrote the sentence and does not exist on a fresh checkout, so"
+      },
+      {
+        "path": ".project-local",
+        "file": "scripts/ci/verify_authority_index_paths.py",
+        "line": 41,
+        "text": "\".project-local/\": \"the git-ignored in-boundary runtime and evidence root; nothing under it is \""
       },
       {
         "path": ".project-local",
@@ -7259,6 +7325,12 @@
       },
       {
         "path": ".project-local",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 5904,
+        "text": "\"observed_error\": \"The README's Quick Start tells a new machine to run ./setup.sh and .\\\\setup.ps1. Neither file has ever existed in this repository: `git log --all -- setup.sh` returns nothing and th"
+      },
+      {
+        "path": ".project-local",
         "file": "taskpacks/history/DRIFT-AUDIT-CLOSURE-20260923.md",
         "line": 47,
         "text": "- `.project-local/` run-roots compliant (runs/artifacts/quarantine), quarantined = restore-class KEEP"
@@ -7300,6 +7372,12 @@
         "text": "- 修法是一条规则：`exists()` 只对仓库负责；`.project-local/` 在任何机器上都判为不可从检出验证；`checkoutVerifiable` 恒 0；`presentOnThisMachine` 只报数不参与跨机比较。"
       },
       {
+        "path": ".project-local",
+        "file": "tests/ci/test_authority_index_paths_resolve.py",
+        "line": 7,
+        "text": "verdict cannot depend on what a particular machine has in `.project-local/`."
+      },
+      {
         "path": ".project-local/artifacts",
         "file": "docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md",
         "line": 203,
@@ -7339,7 +7417,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 206
+    "presentOnThisMachine": 207
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
