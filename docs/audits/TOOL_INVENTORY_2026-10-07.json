@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T20:44:43Z",
+  "generatedAt": "2026-10-08T20:59:42Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 63,
+    "trackedTools": 64,
     "withLedgerPromise": 19,
-    "referencedSomewhere": 63,
+    "referencedSomewhere": 64,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -291,6 +291,22 @@
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ]
+    },
+    {
+      "path": "scripts/audit/generate_frozen_surface_manifest.py",
+      "sha256": "40fb4b26350205404159fd52241b85deccdfda70e7a074a39627c8fa06bebfbf",
+      "bytes": 5085,
+      "lines": 111,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 5,
+      "citedBy": [
+        "docs/current/DOCUMENT-CENSUS.md",
+        "docs/history/archive/FROZEN.md",
+        "knowledge-staging/FROZEN.md",
+        "reports/audit-archive/FROZEN.md",
+        "tests/ci/test_frozen_surfaces_are_intact.py"
       ]
     },
     {

@@ -94,6 +94,21 @@
    `FROZEN` 声明（现只有 `BOUNDARY.md`）；`taskpacks/history/` 无 README，`docs/history/archive/` 6 个子树
    只有 3 个有——统一补，并采用 `reports/audit-archive/20260930/ARCHIVE-INDEX.json` 那种**逐文件
    path+bytes+sha256** 清单（三套归档约定里只有它做到字节可核对）。
+   **已做（2026-10-08，第 3 项的清单部分）**：`knowledge-staging/`、`docs/history/archive/`、
+   `reports/audit-archive/` 各得一份 `FROZEN.md` 声明 + `FROZEN-MANIFEST.json` 逐文件清单
+   （225 / 137 / 480 条，字段沿用 `ARCHIVE-INDEX.json` 的 `path`/`bytes`/`sha256`，不另立新约定），
+   由 `scripts/audit/generate_frozen_surface_manifest.py` 生成、
+   `tests/ci/test_frozen_surfaces_are_intact.py` 每次复验并点名增删改；清单不能自摘要所以按名字排除自己，
+   该排除也被断言。已在真实文件上注入一次字节改动验证门禁会红（`CHANGED knowledge-staging/BOUNDARY.md
+   manifest=0c84bdef6151 now=ce0703307370`），随后按字节还原。
+   **`90-archive/` 不配清单**：它只剩 1 个边界标记文件（本文件第 34 行早就这么写），对单文件做逐文件
+   哈希清单是仪式而非控制，`BOUNDARY.md` 本身就是冻结声明——我一度以为本文件写错了，核对后是本判断错，
+   在此收回。
+   **实测更正一处**：`docs/history/archive/` 6 个子树里有 README 的是 **2 个**（`session-history`、
+   `superseded-current`），不是 3 个；缺的是 `recovered-originals`、`reports-history`、`scripts-history`、
+   `workflow-assistance`。另外该面字节数 38.5 MB（96% 是 2026-10-08 导入的一个 UI 资料原件包），
+   我用不带 `-z` 的 `git ls-files` 量到过 1.09 MB——git 会引号化非 ASCII 路径，那些"文件"根本不存在，
+   于是被静默跳过；清单类统计一律 `-z` 分割。
 4. **活引用要收敛**：§5 的退役根引用逐条改指现路径；把 `reports/`、根目录、`knowledge-staging/` 纳入
    引用门禁扫描面，否则"文档存在但没人能找到"仍会发生。
 
