@@ -234,6 +234,12 @@ def _run_governance_batch(members: list[str]) -> tuple[int, str]:
         pythonpath += os.pathsep + existing
     env = project_runtime_environment(ROOT)
     env["PYTHONPATH"] = pythonpath
+    # Both ends pinned: mandatory modules print Chinese in failure text, and a `text=True` pipe with no
+    # encoding decodes with the host locale. On this machine that is cp936, so a UTF-8 byte sequence
+    # killed subprocess's own reader thread, `communicate()` returned None for that stream, and the
+    # concatenation below raised TypeError -- which destroyed the whole gate receipt while CI (UTF-8
+    # locale) could never show it. See ERR-211.
+    env["PYTHONIOENCODING"] = "utf-8"
     unittest_modules = [member for member in members if not (ROOT / member).is_file()]
     script_files = [member for member in members if (ROOT / member).is_file()]
     combined: list[str] = []
@@ -244,6 +250,8 @@ def _run_governance_batch(members: list[str]) -> tuple[int, str]:
             cwd=ROOT,
             env=env,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             capture_output=True,
         )
         overall = result.returncode
@@ -254,6 +262,8 @@ def _run_governance_batch(members: list[str]) -> tuple[int, str]:
             cwd=ROOT,
             env=env,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             capture_output=True,
         )
         if result.returncode != 0 and overall == 0:
@@ -267,7 +277,8 @@ def _git_head_identity() -> tuple[str, str]:
     def _git(*args: str) -> str:
         try:
             return subprocess.run(
-                ["git", *args], cwd=ROOT, capture_output=True, text=True
+                ["git", *args], cwd=ROOT, capture_output=True, text=True,
+                encoding="utf-8", errors="replace"
             ).stdout.strip()
         except Exception:
             return ""
@@ -1025,7 +1036,8 @@ def _git_origin_repo_identity() -> str:
     """
     try:
         out = subprocess.run(["git", "config", "--get", "remote.origin.url"],
-                             cwd=ROOT, capture_output=True, text=True, timeout=30).stdout.strip()
+                             cwd=ROOT, capture_output=True, text=True, timeout=30,
+                             encoding="utf-8", errors="replace").stdout.strip()
     except Exception:
         out = ""
     if not out:
@@ -1509,13 +1521,13 @@ def canonical_impact_plan(changed_paths: list[str]) -> tuple[dict[str, Any] | No
 
 def _head_commit() -> str:
     result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
-                            capture_output=True, check=False)
+                            capture_output=True, check=False, encoding="utf-8", errors="replace")
     return result.stdout.strip() if result.returncode == 0 else "unresolved"
 
 
 def _head_tree() -> str:
     result = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True,
-                            capture_output=True, check=False)
+                            capture_output=True, check=False, encoding="utf-8", errors="replace")
     return result.stdout.strip() if result.returncode == 0 else "unresolved"
 
 
