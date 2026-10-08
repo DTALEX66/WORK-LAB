@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-07T23:47:41Z",
+  "generatedAt": "2026-10-08T00:01:47Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -8,7 +8,7 @@
     "null": "an unverified fix stays null, and a PASS record with no fixedCommit is listed as owed rather than left silently unbound"
   },
   "counts": {
-    "bound": 73,
+    "bound": 74,
     "unboundPassRecords": 94,
     "anomalies": 0
   },
@@ -16,7 +16,7 @@
     {
       "id": "ERR-058",
       "statusAfter": "PASS",
-      "fixedCommit": "2e36309",
+      "fixedCommit": "2e363092c5771dbaf2af2633df731698be937803",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": null,
       "promisePresentInFixTree": true,
@@ -26,8 +26,8 @@
     {
       "id": "ERR-084",
       "statusAfter": "PASS",
-      "fixedCommit": "d4d4d82",
-      "verifiedCommit": "8157484",
+      "fixedCommit": "d4d4d82b5110fc6eabffe72d9203920f76630aad",
+      "verifiedCommit": "8157484d9dc2611f85f028a03469f9c6b0461e0e",
       "promise": null,
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -36,7 +36,7 @@
     {
       "id": "ERR-085",
       "statusAfter": "PARTIAL",
-      "fixedCommit": "8157484",
+      "fixedCommit": "8157484d9dc2611f85f028a03469f9c6b0461e0e",
       "verifiedCommit": null,
       "promise": null,
       "promisePresentInFixTree": true,
@@ -46,7 +46,7 @@
     {
       "id": "ERR-097",
       "statusAfter": "PASS",
-      "fixedCommit": "a2eb028",
+      "fixedCommit": "a2eb02890e288080337c764a802a624696dc6185",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": "services/orchestration/run_quality_gate.py",
       "promisePresentInFixTree": true,
@@ -56,7 +56,7 @@
     {
       "id": "ERR-100",
       "statusAfter": "PASS",
-      "fixedCommit": "6c63218",
+      "fixedCommit": "6c63218163969360ecd654742dd6a69d2e5724fa",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": "scripts/ci/failfast_group.py",
       "promisePresentInFixTree": true,
@@ -66,8 +66,8 @@
     {
       "id": "ERR-103",
       "statusAfter": "PASS",
-      "fixedCommit": "c6d51a6",
-      "verifiedCommit": "6015f0b",
+      "fixedCommit": "c6d51a644aaaed8c21bfd669f1e0b9413fb9ba45",
+      "verifiedCommit": "6015f0ba1dc0c195a83e704bd73117b68f077347",
       "promise": null,
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -76,7 +76,7 @@
     {
       "id": "ERR-105",
       "statusAfter": "PASS",
-      "fixedCommit": "770d733",
+      "fixedCommit": "770d7331e99b666d9e4f47f254f95d18b44b6ebc",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": "apps/observer/scripts/u19_webview_e2e.py",
       "promisePresentInFixTree": true,
@@ -86,8 +86,8 @@
     {
       "id": "ERR-106",
       "statusAfter": "PASS",
-      "fixedCommit": "3abf1bf",
-      "verifiedCommit": "6015f0b",
+      "fixedCommit": "3abf1bfccb37863725c38c6d710fba147244865f",
+      "verifiedCommit": "6015f0ba1dc0c195a83e704bd73117b68f077347",
       "promise": null,
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -96,7 +96,7 @@
     {
       "id": "ERR-108",
       "statusAfter": "PASS",
-      "fixedCommit": "28afeaa",
+      "fixedCommit": "28afeaad1adba5e0444acf39f8ca920d99bc75ee",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": "apps/observer/tests/test_artifact_freshness.py",
       "promisePresentInFixTree": true,
@@ -106,7 +106,7 @@
     {
       "id": "ERR-109",
       "statusAfter": "PASS",
-      "fixedCommit": "4115d63",
+      "fixedCommit": "4115d6324ef0c7727fb65413adc6c25c966ed613",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": "tests/ci/test_failfast_group.py",
       "promisePresentInFixTree": true,
@@ -116,7 +116,7 @@
     {
       "id": "ERR-110",
       "statusAfter": "PASS",
-      "fixedCommit": "5348ba7",
+      "fixedCommit": "5348ba78fe01a8a6ab5407fd8eb6fa66023b203a",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": "apps/observer/tests/test_artifact_freshness.py",
       "promisePresentInFixTree": true,
@@ -126,7 +126,7 @@
     {
       "id": "ERR-113",
       "statusAfter": "PASS",
-      "fixedCommit": "90734c2",
+      "fixedCommit": "90734c2bd9e1f4b59d30dd244193bc399e9be06b",
       "verifiedCommit": "ee570da5eba803abad322d938adc069294ab20ae",
       "promise": "services/orchestration/run_quality_gate.py",
       "promisePresentInFixTree": true,
@@ -136,7 +136,7 @@
     {
       "id": "ERR-122",
       "statusAfter": "PASS",
-      "fixedCommit": "891c871",
+      "fixedCommit": "891c87146098b0a427ff5e995b5f851cafc5eec2",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": "tests/workflow-assistance/test_sidecar_ui_browser_entry.py",
       "promisePresentInFixTree": true,
@@ -156,7 +156,7 @@
     {
       "id": "ERR-125",
       "statusAfter": "PASS",
-      "fixedCommit": "e0b296d",
+      "fixedCommit": "e0b296dea46ed5bb752d6d8e565535ce1e9b588d",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": "tests/workflow-assistance/test_recovered_source_registry.py",
       "promisePresentInFixTree": true,
@@ -166,7 +166,7 @@
     {
       "id": "ERR-126",
       "statusAfter": "PASS",
-      "fixedCommit": "08ca2e6",
+      "fixedCommit": "08ca2e68484057492f140ed4aee2b6b55ba7008b",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": "scripts/ci/verify_future_candidate_registry.py",
       "promisePresentInFixTree": true,
@@ -176,7 +176,7 @@
     {
       "id": "ERR-127",
       "statusAfter": "PASS",
-      "fixedCommit": "7627748",
+      "fixedCommit": "76277485d7f97e051c55361a9c4685f222e77004",
       "verifiedCommit": "ee570da5eba803abad322d938adc069294ab20ae",
       "promise": "scripts/ci/verify_model_registry_integrity.py",
       "promisePresentInFixTree": true,
@@ -186,7 +186,7 @@
     {
       "id": "ERR-129",
       "statusAfter": "PASS",
-      "fixedCommit": "5c6bfe9",
+      "fixedCommit": "5c6bfe95a82eab01735087988b33e7e015b6fd70",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": "scripts/maintenance/release_browser_state.py",
       "promisePresentInFixTree": true,
@@ -196,7 +196,7 @@
     {
       "id": "ERR-130",
       "statusAfter": "PASS",
-      "fixedCommit": "5c6bfe9",
+      "fixedCommit": "5c6bfe95a82eab01735087988b33e7e015b6fd70",
       "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
       "promise": "tests/workflow-assistance/test_error_ledger_regression_commands.py",
       "promisePresentInFixTree": true,
@@ -206,8 +206,8 @@
     {
       "id": "ERR-131",
       "statusAfter": "PASS",
-      "fixedCommit": "30802cc",
-      "verifiedCommit": "41858fe",
+      "fixedCommit": "30802cc515adf39ac2117060ac19f7db40456877",
+      "verifiedCommit": "41858fe8ae6316239b85cbc554c73fa6bc3c43b6",
       "promise": "tests/workflow-assistance/test_workflow_locale_discipline_gate.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -216,8 +216,8 @@
     {
       "id": "ERR-132",
       "statusAfter": "PASS",
-      "fixedCommit": "30802cc",
-      "verifiedCommit": "41858fe",
+      "fixedCommit": "30802cc515adf39ac2117060ac19f7db40456877",
+      "verifiedCommit": "41858fe8ae6316239b85cbc554c73fa6bc3c43b6",
       "promise": "tests/workflow-assistance/test_project_local_citation_audit.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -226,8 +226,8 @@
     {
       "id": "ERR-133",
       "statusAfter": "UNVERIFIED",
-      "fixedCommit": "41858fe",
-      "verifiedCommit": "41858fe",
+      "fixedCommit": "41858fe8ae6316239b85cbc554c73fa6bc3c43b6",
+      "verifiedCommit": "41858fe8ae6316239b85cbc554c73fa6bc3c43b6",
       "promise": "tests/workflow-assistance/test_project_local_citation_audit.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -236,8 +236,8 @@
     {
       "id": "ERR-134",
       "statusAfter": "PASS",
-      "fixedCommit": "51c723d",
-      "verifiedCommit": "522fe80",
+      "fixedCommit": "51c723d03a425271bac1323817ba030904d55302",
+      "verifiedCommit": "522fe800f3fdeb7835168a1f034f26d9939ec73e",
       "promise": "scripts/audit/prove_previous_licence_audit_miscounted_the_files.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -246,8 +246,8 @@
     {
       "id": "ERR-135",
       "statusAfter": "PASS",
-      "fixedCommit": "e9875d7",
-      "verifiedCommit": "522fe80",
+      "fixedCommit": "e9875d7968bba74620230ccad407850462687b54",
+      "verifiedCommit": "522fe800f3fdeb7835168a1f034f26d9939ec73e",
       "promise": "tests/workflow-assistance/test_live_doc_command_targets.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -256,8 +256,8 @@
     {
       "id": "ERR-136",
       "statusAfter": "PASS",
-      "fixedCommit": "e6bb43c",
-      "verifiedCommit": "522fe80",
+      "fixedCommit": "e6bb43c2c39779cf2bd335cd06b1d56b8ef403d5",
+      "verifiedCommit": "522fe800f3fdeb7835168a1f034f26d9939ec73e",
       "promise": "scripts/ci/generate_current_state.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -266,8 +266,8 @@
     {
       "id": "ERR-137",
       "statusAfter": "PASS",
-      "fixedCommit": "fe5d7a6",
-      "verifiedCommit": "522fe80",
+      "fixedCommit": "fe5d7a6d65b53990dadf5309b64b0b63ca5f927f",
+      "verifiedCommit": "522fe800f3fdeb7835168a1f034f26d9939ec73e",
       "promise": "packages/client-neutral-core/scripts/security/check_skill_provenance.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -277,7 +277,7 @@
       "id": "ERR-139",
       "statusAfter": "PASS",
       "fixedCommit": "f33b78470b108e70d91820a94c7e597010ecddfb",
-      "verifiedCommit": "c1b2997",
+      "verifiedCommit": "c1b299757bcbf7d3fe986b4e298f4be67812a208",
       "promise": "tests/workflow-assistance/test_recover_shared_root_original.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -287,7 +287,7 @@
       "id": "ERR-140",
       "statusAfter": "PASS",
       "fixedCommit": "f33b78470b108e70d91820a94c7e597010ecddfb",
-      "verifiedCommit": "c1b2997",
+      "verifiedCommit": "c1b299757bcbf7d3fe986b4e298f4be67812a208",
       "promise": "tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -296,8 +296,8 @@
     {
       "id": "ERR-142",
       "statusAfter": "PASS",
-      "fixedCommit": "9e518e2",
-      "verifiedCommit": "c1b2997",
+      "fixedCommit": "9e518e24debc8d7cbcf390eca52f871a5b65a8a7",
+      "verifiedCommit": "c1b299757bcbf7d3fe986b4e298f4be67812a208",
       "promise": "tests/workflow-assistance/test_project_local_citation_audit.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -306,8 +306,8 @@
     {
       "id": "ERR-143",
       "statusAfter": "PASS",
-      "fixedCommit": "f49025c",
-      "verifiedCommit": "285704a",
+      "fixedCommit": "f49025c838d29c62c8b675122ba340e78f97339b",
+      "verifiedCommit": "285704a5f885bf76a64655082485f88b6c812bc8",
       "promise": "tests/workflow-assistance/test_ledger_regression_command_targets.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": true,
@@ -739,6 +739,16 @@
       "fixedCommit": "98df72c3d51d4da2b7e452a06f12c256feb76e54",
       "verifiedCommit": null,
       "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-188",
+      "statusAfter": "PASS",
+      "fixedCommit": "98140b2ac0431cb4c769472e3c0a2916a5a6594b",
+      "verifiedCommit": null,
+      "promise": "tests/ci/test_ledger_commit_field_shape.py",
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": false,
       "bindingNotePresent": true

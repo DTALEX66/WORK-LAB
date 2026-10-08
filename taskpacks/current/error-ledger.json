@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-10-07T23:47:20Z",
+  "generated_at": "2026-10-08T00:00:55Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 185,
+    "total": 186,
     "by_classification": {
       "ci_configuration": 18,
       "ci_tooling": 9,
@@ -17,7 +17,7 @@
       "contract_drift": 57,
       "dead_entry": 3,
       "entrypoint": 6,
-      "evidence_state": 31,
+      "evidence_state": 32,
       "feature_gap": 10,
       "path_boundary": 15,
       "regression_contract": 8,
@@ -5714,6 +5714,37 @@
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+    },
+    {
+      "error_id": "ERR-188",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": "taskpacks/current/error-ledger.json",
+      "command": "python scripts/audit/expand_record_commit_shas.py --check",
+      "exit_code": 1,
+      "observed_error": "85 commit-shaped fields in the authority ledger held 7-character abbreviations; ERR-116.introducedCommit held a sentence and ERR-119.introducedCommit held two SHAs split by a newline. verify_error_ledger.py accepted every one of them, so the ledger could describe the same kind of fact in two incompatible forms -- the machine-written 40-hex form that the stamping and binding tools produce, and a hand-typed prefix that resolves only in one object database and grows ambiguous over time.",
+      "root_cause": "The schema named the fields but no check constrained their shape, and there was no generator responsible for filling them after the early records were typed by hand. A field type that nothing enforces is documentation, not a type.",
+      "fix": "`scripts/audit/expand_record_commit_shas.py` resolves each abbreviation through `git rev-parse --verify <tok>^{commit}` and rewrites 83; the 2 that do not resolve in this repository are left and reported rather than invented, with ERR-116's prose moved into its `introducedCommitNote` and ERR-119's two commits both named there. `verify_error_ledger.py` now requires each of the three commit fields to be 40-hex or null, and gained `--ledger <path>` so a fault can be fed to it -- the first falsification of this rule passed silently because the verifier could only read the real file, which is the same trap as a gate that cannot be aimed at a synthetic input. All 202 commit-shaped fields verified as 40-hex or null after the rewrite, read back from the written bytes.",
+      "regression_test": "tests/ci/test_ledger_commit_field_shape.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Any field whose type is 'a commit' must be written by a tool that resolves it and checked by a rule that refuses other shapes; and no guard is believed until it has been handed a fault through an interface that accepts one (`--ledger`, `--check`, a temp root) and gone red.",
+      "remaining_boundary": "`expand_record_commit_shas.py --check` is not wired into the governance gate yet; the shape rule lives in verify_error_ledger, which the gate does run, so the residue cannot regrow silently -- but a newly unresolvable abbreviation would surface at the next record commit rather than at authoring time.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "accumulated across many earlier record commits typed by hand",
+        "fixedCommit": "98140b2ac0431cb4c769472e3c0a2916a5a6594b",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 98140b2a carries the expander, the shape rule, the --ledger flag and the rewritten ledger",
+        "bindingNote": "bound 2026-10-08; verifiedCommit awaits the next green exact-SHA run",
+        "affectedCapability": "Machine-readability of the ledger's commit references",
+        "regressionCommand": "python -m pytest -q tests/ci/test_ledger_commit_field_shape.py"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/ci/test_ledger_commit_field_shape.py is tracked"
     }
   ],
   "wlrReconciled": true,

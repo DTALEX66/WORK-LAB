@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-07T23:08:09Z",
+  "generatedAt": "2026-10-08T00:02:11Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 59,
+    "trackedTools": 60,
     "withLedgerPromise": 19,
-    "referencedSomewhere": 59,
+    "referencedSomewhere": 60,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -233,6 +233,19 @@
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "packages/client-neutral-core/scripts/adapter_capability_projection.py"
+      ]
+    },
+    {
+      "path": "scripts/audit/expand_record_commit_shas.py",
+      "sha256": "93ad6054d3e58a7662cb8949a5b1691ff588f712cf21826e3353a41ada5b0c7c",
+      "bytes": 4310,
+      "lines": 105,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "taskpacks/current/error-ledger.json",
+        "tests/ci/test_ledger_commit_field_shape.py"
       ]
     },
     {
