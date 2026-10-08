@@ -2685,6 +2685,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "model-registry-integrity",
                 "acp-adapter-honesty",
                 "observer-readonly-boundary",
+                # Added 2026-10-08: `verify` said GATE_EXIT=0 twice while the CI observer job went red,
+                # because the observer JS contract suite and vitest had no local route.
+                "observer-frontend-contracts",
                 "registry-closure-report",
                 "evidence-tiering",
                 "root-governance-suite",
