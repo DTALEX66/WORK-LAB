@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T22:01:29Z",
+  "generatedAt": "2026-10-08T22:03:17Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -300,7 +300,7 @@
       "lines": 111,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 6,
+      "citedByRecords": 7,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/DOCUMENT-CENSUS.md",
@@ -362,7 +362,7 @@
       "lines": 381,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 8,
+      "citedByRecords": 9,
       "citedBy": [
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
@@ -700,14 +700,14 @@
       "lines": 178,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 6,
+      "citedByRecords": 7,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json",
         "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007.md",
-        "tests/workflow-assistance/test_gate_compile_covers_all_tracked_python.py",
-        "tests/workflow-assistance/test_tool_inventory_coverage.py"
+        "tests/ci/test_shipped_projections_are_current.py",
+        "tests/workflow-assistance/test_gate_compile_covers_all_tracked_python.py"
       ]
     },
     {
