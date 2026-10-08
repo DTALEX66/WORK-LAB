@@ -28,10 +28,22 @@ SCHEMA_PATH = (REPO / "packages" / "contracts" / "schemas" / "workflow"
 VERSION = "work-lab/canonical-config-intent/v1"
 
 
+def _runtime_root() -> Path:
+    """The git-ignored in-boundary runtime root, auto-created.
+
+    `dir=` is mandatory (a bare mkdtemp lands in the user's system temp, outside the declared project
+    boundary), and the parent must be created because a fresh CI checkout has no `.project-local/` at
+    all -- on this machine the directory exists, so the omission would only go red there.
+    """
+    p = REPO / ".project-local" / "runs"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
 class Harness(unittest.TestCase):
     def setUp(self) -> None:
         self.workdir = Path(tempfile.mkdtemp(prefix="config-compiler-conformance-",
-                                            dir=str(REPO / ".project-local" / "runs")))
+                                            dir=str(_runtime_root())))
         self.addCleanup(shutil.rmtree, self.workdir, True)
         self.schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
