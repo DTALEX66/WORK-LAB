@@ -6622,10 +6622,10 @@
       "lifecycle": {
         "introducedCommit": "a36f58903fc46e0a603348fb6b959858e46469f4",
         "introducedCommitNote": "the commit whose DESIGN.md census paragraph stated a product-wide contrast result measured only on the offline card; instrument alpha handling in the same file was introduced there too",
-        "fixedCommit": null,
+        "fixedCommit": "c4daada5721f76a15fee5fe2c59240f9b7577e70",
         "verifiedCommit": null,
-        "bindingBasis": "not yet bound: the fix lands in the commit created immediately after this record, so fixedCommit is filled by the stamping step rather than guessed here",
-        "verifiedCommitNote": "owed: no exact-SHA Actions readback at the fixing head yet"
+        "bindingBasis": "commit-contains-fix: c4daada572 carries the live-backend census mode, the alpha-preserving gradient compositing, the `.tag.bg-panel2` ink fix and the neutral disabled fill; verifiedCommit is owed until every Actions run at a head containing it is green (ERR-205's rule)",
+        "verifiedCommitNote": "not yet stamped: no exact-SHA CI readback exists for c4daada572 at this writing"
       }
     }
   ],
