@@ -380,7 +380,7 @@ MIN_VIEW_NODES = 12      # a lane rendering fewer readable nodes than this drew 
 MIN_VIEWS = 20           # the rail carries 23 lanes; reaching a handful is not "every view"
 
 
-def views_expression() -> str:
+def views_expression(size_key: str) -> str:
     """Click every rail lane in one live session and harvest the screen each produces.
 
     The lane list is read from the rail itself rather than hardcoded here: the instrument then cannot
@@ -404,11 +404,13 @@ def views_expression() -> str:
             "        firstText: (result.nodes.length ? result.nodes[0].text : null),\n"
             "        pageBackground: result.pageBackground, nodes: result.nodes });\n"
             "  }\n"
-            "  return JSON.stringify({ pageBackground: harvest().pageBackground, views: views });\n"
+            "  return JSON.stringify({ pageBackground: harvest().pageBackground,\n"
+            "      sizes: { [" + json.dumps(size_key) + "]: window.innerWidth },\n"
+            "      views: views });\n"
             "})()")
 
 
-def views_verdict(theme: str, collected: dict) -> dict:
+def views_verdict(theme: str, collected: dict, size: int | None = None) -> dict:
     """Pure: judge every view the rail produced, naming the view in every offender."""
     page_background = collected.get("pageBackground") or "rgb(0,0,0)"
     views = collected.get("views") or []
@@ -419,6 +421,13 @@ def views_verdict(theme: str, collected: dict) -> dict:
     def add(name: str, ok: bool, detail: str) -> None:
         checks.append({"check": name, "pass": bool(ok), "detail": detail})
 
+    widths = collected.get("sizes") or {}
+    asked = f"{size}px" if size is not None else None
+    if asked is not None:
+        reported = widths.get(asked)
+        add("window_is_the_width_asked", reported is not None and abs(reported - size) <= 2,
+            f"asked={size}px innerWidth={reported} (Chrome clamps an invalid window size "
+            f"rather than refusing it: {json.dumps(sorted(widths))})")
     missing = [view["lane"] for view in views if view.get("error")]
     add("every_lane_is_reachable_from_the_rail", not missing,
         f"lanes={len(views)} missing={json.dumps(missing)}")
@@ -464,7 +473,7 @@ def views_verdict(theme: str, collected: dict) -> dict:
 
 
 def harvest_settled(root: Path, browser: str, u19, u19_geometry, theme: str,
-                    api: str | None = None) -> dict:
+                    api: str | None = None, window_size: str = WINDOW_SIZE) -> dict:
     """Load one theme and require two identical samples before reporting anything.
 
     `.nav button`, `.list-item`, `.panel` and the buttons carry `transition:.2s ease` in the pinned
@@ -478,8 +487,8 @@ def harvest_settled(root: Path, browser: str, u19, u19_geometry, theme: str,
     path = (f"/index.html?view=full&theme={theme}&api={api}" if api
             else f"/index.html?view=full&mode=UNKNOWN&theme={theme}&shell=tauri")
     label = "live" if api else "static"
-    first = u19_geometry.serve_and_eval(root, path, WINDOW_SIZE, HARVEST, browser, u19)
-    second = u19_geometry.serve_and_eval(root, path, WINDOW_SIZE, HARVEST, browser, u19)
+    first = u19_geometry.serve_and_eval(root, path, window_size, HARVEST, browser, u19)
+    second = u19_geometry.serve_and_eval(root, path, window_size, HARVEST, browser, u19)
     a = {(n["path"], n["text"]): (n["color"], n["size"]) for n in first["nodes"]}
     b = {(n["path"], n["text"]): (n["color"], n["size"]) for n in second["nodes"]}
     shared = set(a) & set(b)
@@ -662,7 +671,17 @@ def main() -> int:
                     help="serve a real v3 snapshot through the release line's sidecar instead of the static preview")
     ap.add_argument("--all-views", action="store_true",
                     help="click every rail lane and judge each view it produces, not just the landing view")
+    ap.add_argument("--sizes", default="1280",
+                    help="comma-separated window widths in CSS px to sweep with --all-views (e.g. 1280,760,430)")
     args = ap.parse_args()
+    try:
+        sizes = [int(token) for token in args.sizes.split(",") if token.strip()]
+    except ValueError:
+        print(f"LEGIBILITY_GATE_NOT_RUN BAD_SIZES {args.sizes!r}")
+        return 2
+    if not sizes or any(size < 320 or size > 2560 for size in sizes):
+        print(f"LEGIBILITY_GATE_NOT_RUN BAD_SIZES {args.sizes!r} (each must be 320..2560)")
+        return 2
 
     root = Path(args.root).resolve()
     if not (root / "apps/observer/frontend/dist/index.html").is_file():
@@ -696,17 +715,27 @@ def main() -> int:
         try:
             for theme in THEMES:
                 if args.all_views:
-                    path = (f"/index.html?view=overview&theme={theme}&api={api}" if api
-                            else f"/index.html?view=overview&mode=UNKNOWN&theme={theme}&shell=tauri")
-                    try:
-                        collected = geometry.serve_and_eval(root, path, WINDOW_SIZE,
-                                                            views_expression(), browser, u19)
-                    except Exception as exc:  # noqa: BLE001
-                        print(f"LEGIBILITY_GATE_NOT_RUN views/{theme} {exc!r}")
-                        return 3
-                    reports.append({"theme": f"{theme}-all-views",
-                                    "verdict": views_verdict(theme, collected),
-                                    "collected": collected, "browser": browser})
+                    # `sizes`, not `args.sizes`: iterating the raw "1280,700,430" string once per
+                    # character asked Chrome for a 1px, 2px, comma-wide window each, it clamped
+                    # silently, and the run reported twelve confident measurements of nothing.
+                    for size in sizes:
+                        # The outer window stays comfortably wide; the *layout* width is imposed by
+                        # device metrics, because Chrome clamps a narrow `--window-size` rather than
+                        # refusing it (430 asked, 482 delivered).
+                        window = f"{max(size, 1000)},900"
+                        path = (f"/index.html?view=overview&theme={theme}&api={api}" if api
+                                else f"/index.html?view=overview&mode=UNKNOWN&theme={theme}&shell=tauri")
+                        try:
+                            collected = geometry.serve_and_eval(root, path, window,
+                                                            views_expression(f"{size}px"),
+                                                            browser, u19,
+                                                            viewport=(size, 820))
+                        except Exception as exc:  # noqa: BLE001
+                            print(f"LEGIBILITY_GATE_NOT_RUN views/{theme}@{size} {exc!r}")
+                            return 3
+                        reports.append({"theme": f"{theme}-views@{size}",
+                                        "verdict": views_verdict(theme, collected, size),
+                                        "collected": collected, "browser": browser})
                     continue
                 try:
                     harvest = harvest_settled(root, browser, u19, geometry, theme, api=api)
@@ -727,7 +756,7 @@ def main() -> int:
     ok = all(r["verdict"]["passed"] for r in reports)
     for report in reports:
         v = report["verdict"]
-        print(f"{v['theme']:<12} viewport={v.get('viewport', '-')} "
+        print(f"{report['theme']:<18} viewport={v.get('viewport', '-')} "
               f"counts={json.dumps(v['counts'])}")
         for check in v["checks"]:
             print(f"  {check['check']:<34} {'PASS' if check['pass'] else 'FAIL'} {check['detail']}")

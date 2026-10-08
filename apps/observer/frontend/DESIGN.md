@@ -228,7 +228,11 @@ value per role removed the failure and the discrepancy at the same time.
 
 **Text-accent rule (normative).** A fill accent and an accent used as text are different roles.
 `{colors.primary}` `#1B7FE6` in light measures 3.74:1 on the rail, so text that wants the accent takes
-`--primary-text` `#1565C0` (5.34:1) instead of darkening every filled control.
+`--primary-text` `#1565C0` (5.34:1) instead of darkening every filled control. The secondary accent had
+the same defect one width-band further out: `text-secondary` (`#0E93A5`) measured **3.49:1** on a light
+panel in the task-packs table IDs and a work-view link, so it gains the same pair — `--secondary-ink-rgb`
+is `11 95 107` in light (6.4–7.3:1) and unchanged in dark, where the fill already reads. Darkening a
+fill to fix text, or accepting 3.49:1 because "it's only a link", are both wrong: the role decides.
 
 **Contrast rule (normative).** Text a user must read: ≥ 4.5:1 at sizes below 18.66px, ≥ 3:1 at
 ≥ 18.66px bold or ≥ 24px. Non-text UI and icons: ≥ 3:1. A hairline may be below 3:1 only if the
@@ -428,3 +432,10 @@ consulted rather than copied wholesale, and each with one thing not to take.
    the Actions runner does not have, so they are run locally against `dist` and their receipts are cited
    by hand. CI enforces the source-level guards. `verify_design_contract.py` still parses token files and
    touches no rendered value, so its `DESIGN_CONTRACT_PASS` is not evidence of UI compliance.
+10. **The `< 760px` band is declared and not built** (implementation deviation; see SCREEN_SPEC's
+   responsive bands). Measured at an exact 430px viewport: the rail stays **210px — 49% of the window**,
+   no labels are hidden (`hiddenLabels=0`), and the search field is squeezed to **76px** wide. What the
+   band already satisfies: no horizontal overflow (`scrollWidth == 430`), 23 lane buttons present and
+   scroll-reachable (9 in view, `nav` clientHeight 432 / scrollHeight 1554), and the smallest target is
+   50×50 ≥ the band's 44px floor. What is missing is the icon rail or drawer the row promises: half a
+   phone-width window currently belongs to navigation.

@@ -209,7 +209,7 @@ export function EvidenceView({
                             </a>
                           )
                           : <span className="text-warning">来源缺口：该条目没有 path 字段，无法寻址</span>}
-                        {active ? <span className="ml-1.5 text-[12px] text-secondary">已寻址</span> : null}
+                        {active ? <span className="ml-1.5 text-[12px] text-secondary-ink">已寻址</span> : null}
                       </span>
                       <span className="text-right text-[12px] text-muted">
                         {item.evidenceKind || 'UNKNOWN'} · {item.loadedAt || 'UNKNOWN'}

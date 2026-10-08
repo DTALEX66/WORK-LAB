@@ -59,7 +59,7 @@ export function IntegrationsView({ snap }: { snap: any }) {
               <div className="min-w-0">
                 <strong className="block text-[13px] font-semibold text-ink">适配器等价状态</strong>
                 <small>
-                  漂移项：<span className="font-mono text-secondary">{adapters.drift ?? '未知'}</span>
+                  漂移项：<span className="font-mono text-secondary-ink">{adapters.drift ?? '未知'}</span>
                 </small>
               </div>
               <Badge variant={stateVariant(adapters.state)}>

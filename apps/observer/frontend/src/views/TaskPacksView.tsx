@@ -67,7 +67,7 @@ export function TaskPacksView({ snap }: { snap: any }) {
                     const props = Object.entries(t).filter(([k]) => k !== 'taskId')
                     return (
                       <tr key={i}>
-                        <td className="font-mono text-secondary">{t.taskId ?? `task-${i + 1}`}</td>
+                        <td className="font-mono text-secondary-ink">{t.taskId ?? `task-${i + 1}`}</td>
                         <td className="text-muted">
                           {props.length ? props.map(([k, v]) => `${k}=${String(v)}`).join(' · ') : '—'}
                         </td>

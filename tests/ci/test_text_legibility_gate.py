@@ -404,10 +404,23 @@ class AllViewsVerdictTests(unittest.TestCase):
     def test_the_expression_reads_its_lane_list_from_the_rail(self) -> None:
         """Hardcoded lane names would let the product gain or lose a view and the census quietly not
         notice; the count is then checked against MIN_VIEWS by the verdict instead."""
-        expr = legibility.views_expression()
+        expr = legibility.views_expression("430px")
         self.assertIn("querySelectorAll('.nav button[data-lane]')", expr)
         self.assertIn("button.click()", expr)
         self.assertLessEqual(legibility.MIN_VIEWS, 23)
+
+    def test_a_width_the_browser_did_not_honour_is_reported(self) -> None:
+        """Chrome clamps a nonsense `--window-size` instead of refusing it, so a typo in the sweep
+        would otherwise produce confident measurements of a window that never existed."""
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        collected = self.collected(lanes)
+        collected["sizes"] = {"430px": 500}
+        v = legibility.views_verdict("dark", collected, size=430)
+        failed = checks_of(v)["window_is_the_width_asked"]
+        self.assertFalse(failed["pass"])
+        self.assertIn("innerWidth=500", failed["detail"])
+        self.assertTrue(legibility.views_verdict(
+            "dark", {**collected, "sizes": {"430px": 430}}, size=430)["passed"])
 
 
 class HarvestShapeTests(unittest.TestCase):

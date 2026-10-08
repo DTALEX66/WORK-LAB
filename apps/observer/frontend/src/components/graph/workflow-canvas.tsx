@@ -278,7 +278,7 @@ export function WorkflowCanvas({
                     onPointerUp={onPointerUp}
                     title="拖出连线"
                     aria-label={`从 ${n.label} 连线`}
-                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-secondary/50 bg-panel2 text-secondary hover:border-secondary"
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-secondary/50 bg-panel2 text-secondary-ink hover:border-secondary"
                   >
                     <Plus size={10} />
                   </button>

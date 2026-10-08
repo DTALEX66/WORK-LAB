@@ -519,7 +519,7 @@ def connect_with_retry(port: int, attempts: int = 6):
 
 
 def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: str,
-                   u19, shot: Path | None = None) -> dict:
+                   u19, shot: Path | None = None, viewport: tuple[int, int] | None = None) -> dict:
     """Serve the built `dist` and evaluate one expression in a headless Chrome.
 
     This is the browser bootstrap, not a topbar-specific step: a second instrument (the legibility
@@ -529,6 +529,11 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
 
     The caller passes a `path`, not a URL, because the port is chosen here — a caller that had to
     guess the port would be guessing the measurement.
+
+    `viewport` pins the *layout* viewport through CDP device metrics. `--window-size` is the outer
+    window: asking for 1280 yields an inner width of 1262, and asking for 430 yields 482, because
+    Chrome clamps a too-narrow window instead of refusing. A measurement taken at a width the browser
+    never had is not a measurement of that width.
     """
     port = u19.pick_free_port()
     url = f"http://127.0.0.1:{port}{path}"
@@ -571,6 +576,11 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
             cdp, _ws = connect_with_retry(cdp_port)
             try:
                 cdp.send("Page.enable")
+                if viewport is not None:
+                    cdp.send("Emulation.setDeviceMetricsOverride",
+                             {"width": viewport[0], "height": viewport[1],
+                              "deviceScaleFactor": 1, "mobile": False})
+                    time.sleep(0.4)   # the reflow has to land before anything is measured
                 time.sleep(1.0)
                 raw = cdp.evaluate(expr)
                 if shot is not None:

@@ -172,9 +172,12 @@ class InstrumentTests(unittest.TestCase):
         real = Path(sys.executable)
         with mock.patch.dict(os.environ, {"WL_CHROME": str(real)}):
             self.assertEqual(geometry.find_browser(), str(real))
-        # PATH discovery, with no env override and no vendor install dir on disk.
-        with mock.patch.dict(os.environ, {"PROGRAMFILES": str(ROOT / "nope"),
-                                          "PROGRAMFILES(X86)": str(ROOT / "nope")}), \
+        # PATH discovery, with no env override and no vendor install dir on disk. `clear=True` matters:
+        # the first block leaves WL_CHROME set in a developer's own environment, and an inherited
+        # WL_CHROME short-circuits discovery, so this case passed on CI and failed on my shell.
+        with mock.patch.dict(os.environ, {"PATH": "/usr/bin",
+                                          "PROGRAMFILES": str(ROOT / "nope"),
+                                          "PROGRAMFILES(X86)": str(ROOT / "nope")}, clear=True), \
                 mock.patch.object(geometry.shutil, "which", return_value=str(real)):
             self.assertEqual(geometry.find_browser(), str(real))
         env = {"PATH": str(ROOT / "definitely-not-a-bin")}

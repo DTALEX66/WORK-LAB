@@ -308,7 +308,7 @@ export function RecordInspector({
         未定位记录：地址里没有 taskId / executionId，因此下面只有快照级维度。
         记录级维度（Goal / Revision / Attempt / Planner / Routes / Timeline / Diff / Tests / CI /
         Receipts / Approval / Handoff / Next Action）需要一条记录才能回答，
-        <a href={recordLink('work', { taskId: null, executionId: null }, '')} className="text-secondary"> 从列表选择</a>。
+        <a href={recordLink('work', { taskId: null, executionId: null }, '')} className="text-secondary-ink"> 从列表选择</a>。
       </div>,
     )
   }

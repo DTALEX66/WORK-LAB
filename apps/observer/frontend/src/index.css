@@ -32,6 +32,10 @@ Default (:root) = the Dark design language. html.light inverts all of it
   /* accents (channel form for Tailwind alpha modifiers) */
   --primary-rgb: 42 145 255;
   --secondary-rgb: 32 205 225;
+  /* The text role of the secondary accent. In dark the fill is already bright
+   * enough to read, so the two share a value; the pair exists so light can differ
+   * without touching every gradient that uses the fill. */
+  --secondary-ink-rgb: 32 205 225;
   --success-rgb: 34 197 94;
   --warning-rgb: 245 158 11;
   --error-rgb: 239 68 68;
@@ -90,6 +94,9 @@ html.light {
   /* accents (deepened for light-surface contrast) */
   --primary-rgb: 27 127 230;
   --secondary-rgb: 14 147 165;
+  /* rgb(14 147 165) as *text* measured 3.49:1 on a light panel; this teal is
+   * 6.4-7.3:1 on the light surfaces and leaves the fill untouched. */
+  --secondary-ink-rgb: 11 95 107;
   --success-rgb: 21 128 61;
   /* Amber as *text* on a light surface measured 4.48:1 — a hundredth short of AA, in the one place
    * the UI says a value was not provided. The contract separates a fill accent from a text accent

@@ -226,7 +226,7 @@ export function WorkView({
                               {e.executionId}
                             </a>
                             {e.executionId === focus.executionId ? (
-                              <span className="ml-1.5 text-[12px] text-secondary">已定位</span>
+                              <span className="ml-1.5 text-[12px] text-secondary-ink">已定位</span>
                             ) : null}
                           </td>
                           <td className="text-ink">{proj?.displayName || e.anchorProjectId || 'UNKNOWN'}</td>
@@ -295,7 +295,7 @@ export function WorkView({
                               {record.taskId || 'UNKNOWN'}
                             </a>
                             {record.taskId && record.taskId === focus.taskId ? (
-                              <span className="ml-1.5 text-[12px] text-secondary">已定位</span>
+                              <span className="ml-1.5 text-[12px] text-secondary-ink">已定位</span>
                             ) : null}
                           </td>
                           <td className="text-ink">{record.projectId || 'UNKNOWN'}</td>

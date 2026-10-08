@@ -92,9 +92,22 @@ execution-detail|agents|projects|workflows|…>`, desktop WebView (Chromium) and
 | 760–1099px | 210px visible | overflow menu allowed | full width | no horizontal overflow; primary action visible |
 | < 760px | icon rail or drawer | overflow menu required | icon + shortcut chip | no horizontal overflow; every item reachable; targets ≥ 44px |
 
-*Measured today: the rail stays 210px at 1400/1100/900/700/560/430 — i.e. 49% of a 430px window — and
-`?view=compact` does not change with width. `compact` is a user density mode; it is not a breakpoint and
-must never be cited as responsive evidence.*
+*Measured 2026-10-08 at exact viewports (CDP device metrics, not `--window-size`, which Chrome clamps:
+430 asked → 482 delivered). The rail stays 210px at 1280/900/700/430 — **49% of a 430px window** — no
+label is hidden, and `.search` collapses to 76px. The band's other assertions do hold at that width:
+`scrollWidth == 430` (no horizontal overflow), 23 lane buttons present with the rail scrolling
+(`clientHeight 432 / scrollHeight 1554`, 9 in view), and the smallest target 50×50 ≥ 44px. So row three
+is an implementation gap, not a measurement failure: the icon rail or drawer it promises was never built.
+`?view=compact` does not change with width either — `compact` is a user density mode, not a breakpoint,
+and must never be cited as responsive evidence.*
+
+Legibility is now swept across these bands rather than sampled at one width: `--all-views --sizes` drives
+all 23 lanes at 1280/900/700/430 in both themes — ~8,600 node measurements, 0 below the floor, 0 AA
+failures, 0 unreadable disabled labels, 0 empty views
+(receipt `.project-local/artifacts/LEGIBILITY_SIZES_D.json`). Reaching that clean result required a
+`secondary-ink` text role (DESIGN.md's text-accent rule) after `text-secondary` measured 3.49:1 in the
+task-packs table, and a `window_is_the_width_asked` assertion after the harness reported twelve confident
+measurements of one-pixel-wide windows.
 
 ## Degraded and offline states (normative)
 
