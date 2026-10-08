@@ -49,10 +49,12 @@
 .nav { flex: 1 1 auto; min-height: 0; }
 .main { min-height: 0; }
 
-/* The rail's group captions became disclosure buttons (ARIA APG), and `.nav button` in B10 styles EVERY
- * button in the rail as a nav row — padding, height, surface, radius. So the toggle is re-declared here
- * with the caption's own B10 look (10px, 600, uppercase, .12em, muted) at a specificity that beats
- * `.nav button`, and it keeps no surface of its own so the rail still reads as captions over rows. */
+/* The rail's group captions became disclosure buttons (ARIA APG). `.nav button` in B10 styles EVERY
+ * button in the rail as a nav row — padding, height, surface, radius — so the toggle is re-declared
+ * here at a specificity that beats it. The caption's OWN typography deliberately stays on the element
+ * as Tailwind classes in Sidebar.tsx: `apps/observer/tests/test_production_surface_static_contract.js`
+ * allows sub-12px type only for named micro roles and reads the CSS files, so moving `font-size: 10px`
+ * into this sheet would fail CI for a role the design system already sanctions. */
 .nav .nav-group-toggle {
   display: flex;
   align-items: center;
@@ -66,12 +68,7 @@
   border-radius: 0;
   background: none;
   box-shadow: none;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
   line-height: 1.5;
-  text-transform: uppercase;
   text-align: left;
 }
 .nav .nav-group-toggle:hover { background: none; color: var(--ink); }

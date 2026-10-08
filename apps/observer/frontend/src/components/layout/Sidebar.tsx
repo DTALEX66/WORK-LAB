@@ -138,7 +138,7 @@ function Nav({
             <button
               type="button"
               ref={setToggleRef(g.key)}
-              className="nav-group-toggle"
+              className="nav-group-toggle px-3.5 pt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted"
               aria-expanded={open}
               aria-controls={`nav-group-${g.key}`}
               title={open ? `收起 ${g.label}` : `展开 ${g.label}`}
