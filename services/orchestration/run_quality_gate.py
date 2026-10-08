@@ -1424,6 +1424,11 @@ def run_gate_sequence(names: tuple[str, ...]) -> int:
         exit_code = gate.runner()
         if exit_code != 0:
             print(f"\nQUALITY_GATE_FAIL gate={gate.name} exit_code={exit_code}")
+            # Every path prints its own verdict line, including the red one. A token written only on the
+            # pass path makes `push_permit.py`'s RECEIPT_RED branch unreachable, and a receipt a call site
+            # has to complete by hand is a receipt that eventually isn't completed: this runner used to
+            # print no GATE_EXIT at all while its own comment claimed the permit reads it.
+            print(f"GATE_EXIT={exit_code}")
             return exit_code
     print("\nQUALITY_GATE_PASS gates=" + ",".join(names))
     # The GATE_HEAD/GATE_FULL stamp is emitted at the top of this function, before any gate runs, so a
@@ -1435,6 +1440,7 @@ def run_gate_sequence(names: tuple[str, ...]) -> int:
         "TAURI_WINDOWS_PENDING=yes(real desktop WebView2 E2E not executed in this run) "
         "EXACT_SHA_CI_UNVERIFIED=yes(local only, no exact-SHA Actions run)"
     )
+    print("GATE_EXIT=0")
     return 0
 
 

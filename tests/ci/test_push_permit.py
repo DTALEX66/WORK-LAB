@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import importlib.util
 import io
+import re
 import sys
 import tempfile
 import unittest
@@ -18,6 +19,10 @@ from pathlib import Path
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
+# Fixture directories stay inside the project boundary (the same rule test_temp_fixture_stays_inside_the_boundary
+# polices), so scratch receipts land under .project-local/runs rather than the machine temp root.
+RUNS = ROOT / ".project-local" / "runs"
+RUNS.mkdir(parents=True, exist_ok=True)
 spec = importlib.util.spec_from_file_location("push_permit", ROOT / "scripts" / "ci" / "push_permit.py")
 permit = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(permit)  # type: ignore[attr-defined]
@@ -172,6 +177,74 @@ class ReceiptIsStampedTests(unittest.TestCase):
         commit, tree = runner._git_head_identity()
         self.assertRegex(commit, r"^[0-9a-f]{40}$")
         self.assertRegex(tree, r"^[0-9a-f]{40}$")
+
+
+class RunnerWritesWhatThePermitReads(unittest.TestCase):
+    """The receipt and the permit are one contract; assert them together, not as two source greps.
+
+    Measured 2026-10-09: `run_quality_gate.py` carried a comment saying push_permit reads `GATE_EXIT`, while
+    the runner never printed it. Every receipt in this repository had therefore been completed by a wrapper
+    that echoed the token, and a run whose wrapper used a different label produced
+    `PUSH_PERMIT_REFUSE NO_EXIT_LINE` over an all-green gate. The two tests below are the pairing: a real
+    sequence, real stdout, judged by the real verdict function.
+    """
+
+    def setUp(self) -> None:
+        runner_spec = importlib.util.spec_from_file_location(
+            "rQG_pairing", ROOT / "services" / "orchestration" / "run_quality_gate.py")
+        self.runner = importlib.util.module_from_spec(runner_spec)
+        runner_spec.loader.exec_module(self.runner)  # type: ignore[attr-defined]
+        self.original_gates = self.runner.GATES
+        self.original_order = self.runner.VERIFY_ORDER
+        self.addCleanup(setattr, self.runner, "GATES", self.original_gates)
+        self.addCleanup(setattr, self.runner, "VERIFY_ORDER", self.original_order)
+
+    def capture(self, *exit_codes: int) -> tuple[str, int]:
+        names = tuple(f"fake{i}" for i in range(len(exit_codes)))
+        self.runner.GATES = {
+            name: type("Fake", (), {"name": name, "description": "planted for the pairing test",
+                                    "runner": staticmethod(lambda code=code: code)})()
+            for name, code in zip(names, exit_codes)}
+        # GATE_FULL is derived from the name set, so the fixture has to look full for the permit to judge it
+        self.runner.VERIFY_ORDER = names
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            returned = self.runner.run_gate_sequence(names)
+        return buffer.getvalue(), returned
+
+    def receipt(self, body: str) -> Path:
+        tmp = tempfile.TemporaryDirectory(prefix="push-permit-pairing-", dir=str(RUNS))
+        self.addCleanup(tmp.cleanup)
+        path = Path(tmp.name) / "gate-verify-pairing.log"
+        path.write_text(body, encoding="utf-8", newline="\n")
+        return path
+
+    def test_a_green_sequence_ends_with_the_line_the_permit_accepts(self) -> None:
+        body, returned = self.capture(0, 0)
+        commit = re.search(r"^GATE_HEAD=([0-9a-f]{40})\b", body, re.MULTILINE).group(1)
+        self.assertEqual(0, returned)
+        exits = re.findall(r"^GATE_EXIT=(-?\d+)\s*$", body, re.MULTILINE)
+        self.assertEqual(["0"], exits, "a green run must end its receipt with GATE_EXIT=0")
+        code, message = permit.decide(commit, [self.receipt(body)])
+        self.assertEqual(0, code, message)
+        self.assertIn("PUSH_PERMIT_OK", message)
+
+    def test_a_red_sequence_names_its_exit_so_red_is_not_read_as_never_ran(self) -> None:
+        body, returned = self.capture(0, 7)
+        commit = re.search(r"^GATE_HEAD=([0-9a-f]{40})\b", body, re.MULTILINE).group(1)
+        self.assertEqual(7, returned)
+        self.assertIn("QUALITY_GATE_FAIL gate=fake1 exit_code=7", body)
+        code, message = permit.decide(commit, [self.receipt(body)])
+        self.assertEqual(1, code, message)
+        self.assertIn("RECEIPT_RED", message)
+        self.assertIn("GATE_EXIT=7", message)
+
+    def test_no_verdict_path_leaves_a_receipt_without_a_completion_line(self) -> None:
+        """Both exits carry the token: an absent line is what makes a live run look finished and vice versa."""
+        for codes, expected in (((0,), "0"), ((3,), "3"), ((0, 0, 9), "9")):
+            body, _returned = self.capture(*codes)
+            found = re.findall(r"^GATE_EXIT=(-?\d+)\s*$", body, re.MULTILINE)
+            self.assertEqual([expected], found, f"exit path {codes} wrote {found}")
 
 
 if __name__ == "__main__":
