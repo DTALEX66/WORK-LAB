@@ -44,3 +44,11 @@ config/.backups/
 
 # UI design-reference assets (extracted from the UI kit; design reference, not shipped source)
 .ui-reference/
+
+# Git LFS writes these four into core.hooksPath (.githooks) when `git lfs install` runs.
+# They are per-clone tooling, not work product: .githooks/pre-commit stays tracked, and
+# committing the LFS stubs would bake one machine's LFS state into every other clone.
+.githooks/post-checkout
+.githooks/post-commit
+.githooks/post-merge
+.githooks/pre-push
