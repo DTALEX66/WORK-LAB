@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 200,
+    "total": 202,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 63,
-      "test_behavior_alignment": 23,
+      "test_behavior_alignment": 24,
       "working_directory_recovery": 2,
       "evidence_state": 36,
-      "ci_configuration": 20,
+      "ci_configuration": 21,
       "feature_gap": 10,
       "config_downgrade": 3,
       "dead_entry": 3,
@@ -6151,6 +6151,62 @@
         "fixedCommit": "e4e77250f07848d8f51c30ab377815b34d538cb8",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: e4e77250 adds the reachability checker, its staleness rule and the local route for the eight verifiers; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+      }
+    },
+    {
+      "error_id": "ERR-203",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "packages/client-neutral-core/scripts/canonical_store.py",
+      "command": "python -m unittest -v test_sidecar_sees_inplace_task_update",
+      "exit_code": 1,
+      "observed_error": "Red inside the full governance batch at 9fb20f24 and green when run alone: test_the_witness_is_blind_to_nothing_that_a_heartbeat_changes asserted the witness moved after a lease renewal and got byte-identical values, tasks_state [1, 1, 2, 8, '...04:07:20.929899Z'] before and after. A measurement of the store's own clock showed _now() returned only 2 distinct values across 2000 back-to-back calls, ~0.95 ms to the next tick.",
+      "root_cause": "The witness rolled up COUNT, SUM(fencing_token), checkpoint length, holder length and MAX(updated_at) -- so the one column a renewal necessarily moves, lease_expires_at, was not witnessed at all, and the assertion I wrote leaned entirely on updated_at, which acquire and heartbeat can stamp with the same value on a host whose clock has millisecond granularity. The test was measuring the clock, not the product, and it passed standalone only because the sequence happened to straddle a tick.",
+      "fix": "lease_expires_at joins the tasks_state witness. The renewal test is split in two: one case waits for a clock tick and asserts the witness moves; the other freezes the store clock before the lease is taken, so the only thing a heartbeat can change is the expiry, and it asserts the witness sees exactly that -- first four witness components equal, total different. The frozen case is the falsification: with the pre-fix witness it fails, which is what keeps the next reader from removing the column again.",
+      "regression_test": "tests/workflow-assistance/test_sidecar_sees_inplace_task_update.py",
+      "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_sidecar_sees_inplace_task_update.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A change-detection witness must cover the column the operation actually writes, and a test that depends on wall-clock granularity must control the clock rather than hope for a tick -- measure the host clock before asserting anything about same-tick writes, and always run such a test inside the full batch, not only alone.",
+      "remaining_boundary": "The witness still covers the other ten tables by count, max rowid and newest timestamp only, so an in-place rewrite of a text column that preserves its timestamp stays invisible there; tasks is exact because it is the hot table. Six consecutive module runs and one full batch are what this is backed by -- SYNTHETIC/INTEGRATED, two connections on one runtime root, not native executor evidence, and the real WebView2 loop is still NOT_RUN for want of a Rust toolchain.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "e64c5abed2f17b421f243848c5887c7fc6cc1d8b",
+        "introducedCommitNote": "the revision that added newest_changes() with updated_at as the only lease-bearing column witnessed",
+        "fixedCommit": "6310bd4e21f643a9d509e556f630d21c66e3d091",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 6310bd4e adds lease_expires_at to the witness and the two deterministic renewal cases; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+      }
+    },
+    {
+      "error_id": "ERR-204",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_configuration",
+      "entrypoint": ".github/workflows/work-lab-gate.yml",
+      "command": "python scripts/ci/generate_current_state.py --check-current",
+      "exit_code": 1,
+      "observed_error": "CURRENT_STATE_FRESHNESS_FAIL source-digest-mismatch at 6e6d4fbf in both the integration and the workflow-assistance jobs -- and the same command is red locally, while the canonical local gate printed GATE_EXIT=0 on the same tree. The message named nothing: one rolled digest over about forty source files, recorded against a projection still carrying the digests from before today's skill edits.",
+      "root_cause": "Two defects in one. The CI step runs the script with --check-current; the only local route to that file is tests/ci/test_current_state.py, which imports it and never runs that mode, so my new reachability rule counted it as covered while the mode itself was unreachable -- naming a file is not the same as executing the assertion. And the failure text could not say which source moved, because the projection stores one aggregate over the whole set.",
+      "fix": "The freshness mode now runs in the local batch as its own test case, so the projection cannot drift without a writer seeing it. On mismatch the checker prints recorded and recomputed digests and lists the sources that changed since the projection was last committed, resolved through git history rather than mtimes so the answer does not depend on which machine checked the tree out; measured on the live failure it named config/skill-provenance.yaml and packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md -- the two files today's work edited. The projection is regenerated at this commit (modules=2 skills=13 contracts=41).",
+      "regression_test": "tests/ci/test_ci_invoked_verifiers_have_a_local_route.py",
+      "regressionCommand": "python -m pytest -q tests/ci/test_ci_invoked_verifiers_have_a_local_route.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "Reachability must be judged per mode, not per file: a workflow step that runs a script with a specific flag needs a local route that runs that flag, and a freshness failure must name the source that moved rather than only the aggregate digest it disagreed with.",
+      "remaining_boundary": "The reachability checker still classifies a route by whether a test names the script, so a different unrun mode of an otherwise-covered script can still escape; the modes that matter are listed by hand in the local-route module, which makes adding a CI flag a silent gap until someone adds it there. CURRENT_STATE.json holds only the aggregate digest, so naming the mover is derived from git history at report time rather than recorded per file.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the mode and the local test drifted apart over several commits; no single change created the gap",
+        "fixedCommit": "6310bd4e21f643a9d509e556f630d21c66e3d091",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 6310bd4e runs --check-current locally, regenerates the projection and names the moved sources; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
       }
     }
   ],

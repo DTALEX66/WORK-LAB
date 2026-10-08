@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-08T04:03:43Z",
+  "generatedAt": "2026-10-08T04:21:33Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2148,
@@ -364,7 +364,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "scripts/ci/generate_current_state.py",
-        "line": 519,
+        "line": 545,
         "text": "raise SystemExit(\"runtime attestation output must stay under .project-local/artifacts\")"
       },
       {
