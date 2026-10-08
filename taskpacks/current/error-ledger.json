@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab/error-ledger/v1",
-  "generated_at": "2026-10-08T00:00:55Z",
+  "generated_at": "2026-10-08T00:19:50Z",
   "scope": "WORK-LAB local execution correctness",
   "privacy": {
     "raw_credentials_included": false,
@@ -9,12 +9,12 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 186,
+    "total": 187,
     "by_classification": {
       "ci_configuration": 18,
       "ci_tooling": 9,
       "config_downgrade": 3,
-      "contract_drift": 57,
+      "contract_drift": 58,
       "dead_entry": 3,
       "entrypoint": 6,
       "evidence_state": 32,
@@ -5745,6 +5745,37 @@
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "tests/ci/test_ledger_commit_field_shape.py is tracked"
+    },
+    {
+      "error_id": "ERR-189",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "contract_drift",
+      "entrypoint": "docs/current/workflow-assistance/workflow/active-authority-index.md",
+      "command": "python scripts/ci/verify_readme_history_labels.py",
+      "exit_code": 1,
+      "observed_error": "active-authority-index.md :44 states that the workflow README links authority files and not history. Measured: `docs/current/workflow-assistance-README.md` carries 14 links into docs/history/, and the only tests near the rule assert that two strings appear somewhere, so the rule was both false and unenforced. One link was materially wrong: the upgrade-recovery runbook said `今日基线结论、已处理事项和恢复流程见 <handoff archived 2026-08-13>` -- a current procedure delegated to a frozen record, which is the AG-10 history-as-present class this ledger already documents.",
+      "root_cause": "A written rule with no decidable form and no gate. The literal prohibition was also aimed at the wrong thing: an index of archived evidence is useful; presenting an archived round as today's guidance is the defect. Prohibiting the former is why nobody enforced the latter.",
+      "fix": "The rule is restated in decidable form (a history link must be labelled past by its own prose, the sentence introducing it, or its heading), enforced by `scripts/ci/verify_readme_history_labels.py` and pinned by `tests/ci/test_readme_history_links_are_labelled.py`, which runs inside the CI-discovered root governance suite. The runbook wording now states that the recovery order printed above it is current and the 2026-08-13 handoff is that round's record, 仅作归档参考. The checker's first version was vacuous: it searched the raw line for label words such as `archive`, and every policed path contains `docs/history/archive/`, so it matched its own URL and passed 14/14 including the violation -- hence stripping code spans and link targets, and `test_a_path_alone_is_not_a_label` as a permanent control.",
+      "regression_test": "tests/ci/test_readme_history_links_are_labelled.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A word list used to classify text must be run over prose, not over lines containing the artefact being classified -- otherwise a path or URL satisfies the rule by naming itself; and any newly written convention sentence in docs/current must name the command that decides it, or be amended into a decidable form rather than left as prose that the tree already contradicts.",
+      "remaining_boundary": "The gate checks labels, not whether the linked archive member is the right one, and it covers only the workflow README; other current-surface documents were not scanned for the same history-as-present delegation. 11 of the 14 links sit under a 「文档和审计」 heading, which the rule accepts as an archive index by design.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the rule sentence predates this session; the delegation line predates it too",
+        "fixedCommit": "0adda2377d7d67bdad9d5c2156d8729d148f6213",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 0adda237 restates the rule, adds the checker, its tests and the runbook wording fix",
+        "bindingNote": "bound 2026-10-08; verifiedCommit awaits the next green exact-SHA run",
+        "affectedCapability": "Current-surface documents cannot cite frozen records as today's procedure",
+        "regressionCommand": "python -m pytest -q tests/ci/test_readme_history_links_are_labelled.py"
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tests/ci/test_readme_history_links_are_labelled.py is tracked"
     }
   ],
   "wlrReconciled": true,

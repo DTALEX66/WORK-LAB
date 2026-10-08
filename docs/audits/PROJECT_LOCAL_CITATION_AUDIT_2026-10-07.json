@@ -1,9 +1,9 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-08T00:02:11Z",
+  "generatedAt": "2026-10-08T00:20:24Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2133,
+    "trackedFilesScanned": 2135,
     "distinctProjectLocalTokens": 433,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 433,
@@ -568,13 +568,13 @@
       {
         "path": ".project-local/artifacts/mcp-candidate.yaml",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 435,
+        "line": 436,
         "text": "python packages/client-neutral-core/scripts/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml"
       },
       {
         "path": ".project-local/artifacts/mcp-candidate.yaml",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 711,
+        "line": 712,
         "text": "python packages/client-neutral-core/scripts/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml"
       },
       {
@@ -616,7 +616,7 @@
       {
         "path": ".project-local/artifacts/provider-health.json",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 273,
+        "line": 274,
         "text": "--output .project-local/artifacts/provider-health.json"
       },
       {
@@ -5272,7 +5272,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 475,
+        "line": 476,
         "text": "该执行器以 Git 根为边界，要求 `.project-local/` 已被 Git 忽略，并在子进程启动前把 `TMP`、`TEMP`、`TMPDIR`、XDG/pip/uv/npm/yarn/Playwright/Cargo home+target/Rust/Ruff/mypy/pre-commit cache 与 Python bytecode 指向 `<project>/.project-"
       },
       {
@@ -5356,7 +5356,7 @@
       {
         "path": ".project-local/artifacts/context-pack.md",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 707,
+        "line": 708,
         "text": "# 生成新会话 / Codex handoff 上下文包；输出到 .project-local/artifacts/context-pack.md"
       },
       {
@@ -5398,13 +5398,13 @@
       {
         "path": ".project-local/artifacts/mcp-candidate.yaml",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 436,
+        "line": 437,
         "text": "python packages/client-neutral-core/scripts/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml"
       },
       {
         "path": ".project-local/artifacts/mcp-candidate.yaml",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 712,
+        "line": 713,
         "text": "python packages/client-neutral-core/scripts/mcp_candidate_audit.py .project-local/artifacts/mcp-candidate.yaml"
       },
       {
@@ -5500,7 +5500,7 @@
       {
         "path": ".project-local/kanban",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 475,
+        "line": 476,
         "text": "该执行器以 Git 根为边界，要求 `.project-local/` 已被 Git 忽略，并在子进程启动前把 `TMP`、`TEMP`、`TMPDIR`、XDG/pip/uv/npm/yarn/Playwright/Cargo home+target/Rust/Ruff/mypy/pre-commit cache 与 Python bytecode 指向 `<project>/.project-"
       },
       {
@@ -5608,19 +5608,19 @@
       {
         "path": ".project-local/runs",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 264,
+        "line": 265,
         "text": "`--live` 会实际调用 GPT、DeepSeek 和 Codex，并要求输出独立 marker。普通端口、HTTP 状态和结构检查不等于真实模型执行；只有 live marker 通过才能证明当前执行链路可用。`--live` 可能产生网络请求或模型用量，因此不会默认运行。必须从 Git 项目根目录运行：Codex smoke 的临时 Git 仓库默认只会创建在当前项目 `.project-"
       },
       {
         "path": ".project-local/runs",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 264,
+        "line": 265,
         "text": "`--live` 会实际调用 GPT、DeepSeek 和 Codex，并要求输出独立 marker。普通端口、HTTP 状态和结构检查不等于真实模型执行；只有 live marker 通过才能证明当前执行链路可用。`--live` 可能产生网络请求或模型用量，因此不会默认运行。必须从 Git 项目根目录运行：Codex smoke 的临时 Git 仓库默认只会创建在当前项目 `.project-"
       },
       {
         "path": ".project-local/runs",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 475,
+        "line": 476,
         "text": "该执行器以 Git 根为边界，要求 `.project-local/` 已被 Git 忽略，并在子进程启动前把 `TMP`、`TEMP`、`TMPDIR`、XDG/pip/uv/npm/yarn/Playwright/Cargo home+target/Rust/Ruff/mypy/pre-commit cache 与 Python bytecode 指向 `<project>/.project-"
       },
       {
@@ -7074,7 +7074,7 @@
       {
         "path": ".project-local",
         "file": "docs/current/workflow-assistance-README.md",
-        "line": 475,
+        "line": 476,
         "text": "该执行器以 Git 根为边界，要求 `.project-local/` 已被 Git 忽略，并在子进程启动前把 `TMP`、`TEMP`、`TMPDIR`、XDG/pip/uv/npm/yarn/Playwright/Cargo home+target/Rust/Ruff/mypy/pre-commit cache 与 Python bytecode 指向 `<project>/.project-"
       },
       {
