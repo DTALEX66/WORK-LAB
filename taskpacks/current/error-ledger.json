@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 194,
+    "total": 195,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 61,
+      "contract_drift": 62,
       "test_behavior_alignment": 22,
       "working_directory_recovery": 2,
       "evidence_state": 34,
@@ -5981,6 +5981,34 @@
         "fixedCommit": "53dbfb367d35181bd716b28ffc8442820f9c4174",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: 53dbfb36 carries the repaired register, the verifier and the test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+      }
+    },
+    {
+      "error_id": "ERR-197",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "contract_drift",
+      "entrypoint": "docs/current/workflow-assistance/workflow",
+      "command": "python -m pytest -q tests/ci/test_authority_index_paths_resolve.py",
+      "exit_code": 1,
+      "observed_error": "Six dated postmortems sat in the directory named current: error-fixes-2026-07-04.md, error-fixes-2026-07-28.md, error-fixes-2026-08-13-wlg.md, error-fixes-2026-08-14-guard.md, error-fixes-2026-08-14-r2.md and memory-compaction-2026-08-13.md, none of them registered as Active in the authority index, and two live documents pointed at them as procedure. Worse, TROUBLESHOOTING.md:3 cited docs/workflow/error-fixes-2026-07-28.md -- a pre-convergence path that has not resolved since 2026-09-17 -- and called it 本轮, and the README's own paragraph did the same, so a reader following the front door was told to consult a record of some past round as if it described the current one.",
+      "root_cause": "The 2026-09-17 cutover moved the archive roots and renamed directory prefixes, but these six files stayed where they were: the convergence moved the machinery and left the narrative behind, and no gate distinguished 'current' as a claim about currency rather than a directory name. The two 本轮 phrasings are the same defect as ERR-189 -- frozen wording handed to a reader as today's procedure, this time inside a live document instead of a link target.",
+      "fix": "git mv of all six into docs/history/archive/workflow-assistance/error-fixes/ (history preserved, nothing deleted), 9 inbound links repointed (README 7, project-definition 2), every archived bullet labelled line by line with （已归档：那一轮的记录，不是现行规范） rather than relying on a section heading -- the list interleaves live documents, so a heading that labels the archived rows would mislabel the live ones below it. Both 本轮 paragraphs now name their round. The archive root is registered in active-authority-index section 3, which also records the deliberate exception: the frozen files contain 10 pre-convergence paths (measured per file: 4 + 2 + 3 + 0 + 1 + 0) and they are neither rewritten nor guarded, because correcting a dated record to today's paths makes it say something that was never true at the time. The reference gate was widened from two surfaces to four (index, README, TROUBLESHOOTING, project-definition) and the widening taught the extractor two rules: a backticked term containing a slash is not a path (GUI/TUI is a mode pair), and a fenced map is only judged in an unlabelled or text fence, since a bash transcript's leading token is output like usr/bin/bash: rather than a pointer. One self-caught coverage loss on the way: the first version of that rule silently stopped matching /WORK-LAB-AUTHORITY.md, the top authority itself, because it required a lowercase first character -- the predicate is now a named looks_like_path() with a test for exactly that pointer. Measured: AUTHORITY_INDEX_PATHS_TOTAL targets=4 refs=213 broken=0, README_LABEL_PASS history_links=20, REGISTER_TABLE_SHAPE_PASS tables=8 rows=166 wrong_width=0, 25 tests pass across the two new ci modules, CI_ROOT_GOVERNANCE_PASS modules=34 discovered=35.",
+      "regression_test": "tests/ci/test_authority_index_paths_resolve.py",
+      "regressionCommand": "python -m pytest -q tests/ci/test_authority_index_paths_resolve.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A dated record must live under the history root, never under the directory whose name asserts currency; every link into history carries its own label instead of inheriting one from a heading that also covers live documents; and a reference checker must state which surfaces it judges, leaving excluded ones named with a measured reason rather than silently unguarded.",
+      "remaining_boundary": "The four guarded surfaces are the navigation front door, not all of docs/current: measured earlier, 384 references exist there with 105 broken (~48 live instructions), concentrated in absorption/ and runtime-adapters/, including apps/token-monitor-desktop/ inside token-monitor.md and docs/VERIFICATION_POLICY.md cited twice by codex-performance-diagnosis.md, a file that does not exist. Widening further needs the same treatment per surface, and the remaining candidates are current-role documents (design/context-pack/machine-identity), so their stale paths are defects to fix rather than exceptions to declare. Windows backslash paths are still skipped by the extractor, so .\\scripts\\setup-workflow.ps1 in the README is unjudged.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
+        "introducedCommitNote": "the 2026-09-17 branch cutover that moved the archive roots and left these six dated records under docs/current; confirmed with git log --follow on the moved files and the commit is an ancestor of HEAD",
+        "fixedCommit": "8d4a5c464046b1b078c499b3c511751889c4ad2a",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 8d4a5c46 carries the moves, the repointed links, the widened extractor and its tests; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
       }
     }
   ],

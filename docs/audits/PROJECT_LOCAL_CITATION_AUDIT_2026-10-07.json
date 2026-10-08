@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-08T02:03:16Z",
+  "generatedAt": "2026-10-08T02:21:45Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2141,
     "distinctProjectLocalTokens": 436,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 436,
-    "citationsToAbsentTokens": 1221
+    "citationsToAbsentTokens": 1222
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,7 +21,7 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 280,
+      "citations": 281,
       "distinctPaths": 95
     },
     "machine_field_pointing_at_absent_path": {
@@ -29,11 +29,11 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 569,
+      "citations": 571,
       "distinctPaths": 328
     },
     "machine_local_runtime_pointer": {
-      "citations": 149,
+      "citations": 148,
       "distinctPaths": 66
     },
     "negative_assertion_or_removal_record": {
@@ -49,7 +49,7 @@
       "distinctPaths": 1
     },
     "unclassified_needs_human_read": {
-      "citations": 46,
+      "citations": 45,
       "distinctPaths": 3
     }
   },
@@ -166,7 +166,7 @@
       {
         "path": ".project-local",
         "file": "scripts/ci/verify_authority_index_paths.py",
-        "line": 143,
+        "line": 171,
         "text": "# declaration itself: \".project-local/\" means \"nothing under here is tracked\", and one tracked file"
       },
       {
@@ -234,6 +234,12 @@
         "file": "tests/ci/test_authority_index_paths_resolve.py",
         "line": 55,
         "text": "self.assertEqual(\".project-local/\", checker.declared(\".project-local/artifacts/\"))"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/ci/test_authority_index_paths_resolve.py",
+        "line": 141,
+        "text": "self.assertEqual({\".project-local/\"}, set(checker.DECLARED_NON_PATHS))"
       },
       {
         "path": ".project-local",
@@ -1855,6 +1861,12 @@
       },
       {
         "path": ".project-local/artifacts",
+        "file": "docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-28.md",
+        "line": 203,
+        "text": "- 仓库未提交任何认证、profile、日志、session、数据库或恢复材料；任务证据位于 Git 忽略的 `.project-local/artifacts/`。"
+      },
+      {
+        "path": ".project-local/artifacts",
         "file": "docs/history/archive/workflow-assistance/handoffs/workflow-assistance-2026-07-23.md",
         "line": 85,
         "text": "- `.project-local/artifacts/` 是受忽略的项目内运行区。仅在证据不再被测试、发布、CI、恢复或活跃任务引用后，才可清理其中可再生产物。"
@@ -2470,6 +2482,12 @@
         "file": "docs/history/archive/workflow-assistance/audit/project-data-boundary-handoff-2026-08-02.md",
         "line": 85,
         "text": "- 不删除 `.project-local/runs` 中仍被活动任务使用的目录；失败任务现场需先交接再清理。"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-08-13-wlg.md",
+        "line": 76,
+        "text": "**修复：** 改用 `git commit --no-verify` 绕过 hook 全量 stage；跨分支前 `git stash -u` 或备份到 `.project-local/runs/`；冲突用 `git checkout <branch> -- <file>` 定向恢复。"
       },
       {
         "path": ".project-local/runs",
@@ -5703,12 +5721,6 @@
       },
       {
         "path": ".project-local/runs",
-        "file": "docs/current/workflow-assistance/workflow/error-fixes-2026-08-13-wlg.md",
-        "line": 76,
-        "text": "**修复：** 改用 `git commit --no-verify` 绕过 hook 全量 stage；跨分支前 `git stash -u` 或备份到 `.project-local/runs/`；冲突用 `git checkout <branch> -- <file>` 定向恢复。"
-      },
-      {
-        "path": ".project-local/runs",
         "file": "docs/current/workflow-assistance/workflow/local-quality-gates.md",
         "line": 60,
         "text": "`.project-local/runs/` paths."
@@ -6101,7 +6113,7 @@
         "path": ".project-local/sleep-mode",
         "file": "docs/current/workflow-assistance/workflow/project-definition.md",
         "line": 108,
-        "text": "| 技能 | `packages/client-neutral-core/skills/` | `skills/` | 仓库受控 skill 集（codex、五个 GitHub workflow skills、model-switch、agent-workflow-fortress、project-data-boundary、python-testing、sleep-mode、windows-de"
+        "text": "| 技能 | `packages/client-neutral-core/skills/` | `$HERMES_HOME/skills/` | 仓库受控 skill 集（codex、五个 GitHub workflow skills、model-switch、agent-workflow-fortress、project-data-boundary、python-testing、sleep-mo"
       },
       {
         "path": ".project-local/sleep-mode/activity.jsonl",
@@ -6324,7 +6336,7 @@
       {
         "path": ".project-local",
         "file": "scripts/ci/verify_authority_index_paths.py",
-        "line": 41,
+        "line": 62,
         "text": "\".project-local/\": \"the git-ignored in-boundary runtime and evidence root; nothing under it is \""
       },
       {
@@ -7376,12 +7388,6 @@
         "file": "tests/ci/test_authority_index_paths_resolve.py",
         "line": 7,
         "text": "verdict cannot depend on what a particular machine has in `.project-local/`."
-      },
-      {
-        "path": ".project-local/artifacts",
-        "file": "docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md",
-        "line": 203,
-        "text": "- 仓库未提交任何认证、profile、日志、session、数据库或恢复材料；任务证据位于 Git 忽略的 `.project-local/artifacts/`。"
       },
       {
         "path": ".project-local/artifacts",
