@@ -37,7 +37,7 @@ def check_1_current_state_attestation() -> dict:
     """
     result = subprocess.run(
         [sys.executable, "scripts/ci/generate_current_state.py", "--check-current", "--root", "."],
-        cwd=ROOT, text=True, capture_output=True, check=False,
+        cwd=ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False,
     )
     ok = "CURRENT_STATE_FRESHNESS_PASS" in result.stdout
     if ok:

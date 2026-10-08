@@ -20,7 +20,7 @@ def run_scanner_bytes(raw: bytes, name: str = "sample.md") -> subprocess.Complet
         sample.write_bytes(raw)
         return subprocess.run(
             [sys.executable, str(SCANNER), str(sample)],
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             capture_output=True,
             check=False,
         )

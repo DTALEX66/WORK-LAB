@@ -74,7 +74,7 @@ def _version_from_executable(executable: str) -> str | None:
     try:
         result = subprocess.run(
             [executable, "--version"],
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             capture_output=True,
             timeout=10,
             check=False,

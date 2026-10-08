@@ -50,7 +50,7 @@ class UserProfileExportTests(unittest.TestCase):
             result = subprocess.run(
                 [sys.executable, str(SCRIPT), "--output", str(output)],
                 cwd=ROOT,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -64,7 +64,7 @@ class UserProfileExportTests(unittest.TestCase):
             result = subprocess.run(
                 [sys.executable, str(SCRIPT), "--output", str(output), "--write"],
                 cwd=ROOT,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )

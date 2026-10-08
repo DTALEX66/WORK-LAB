@@ -31,7 +31,7 @@ def run_group(manifest: Path, group: str) -> tuple[int, str]:
     proc = subprocess.run(
         [sys.executable, str(RUNNER), "--manifest", str(manifest), "--group", group],
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
     )
     return proc.returncode, proc.stdout + proc.stderr
 

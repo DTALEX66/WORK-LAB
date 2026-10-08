@@ -33,7 +33,7 @@ FORBIDDEN_TRACKED = re.compile(
 def _git_tracked(root: Path) -> list[str]:
     try:
         out = subprocess.check_output(
-            ["git", "ls-files"], cwd=root, text=True, stderr=subprocess.DEVNULL,
+            ["git", "ls-files"], cwd=root, text=True, encoding="utf-8", errors="replace", stderr=subprocess.DEVNULL,
         )
         return [line for line in out.splitlines() if line]
     except (OSError, subprocess.CalledProcessError):
@@ -43,7 +43,7 @@ def _git_tracked(root: Path) -> list[str]:
 def _git_head(root: Path = ROOT) -> str:
     try:
         return subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=root, text=True, stderr=subprocess.DEVNULL,
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True, encoding="utf-8", errors="replace", stderr=subprocess.DEVNULL,
         ).strip()
     except (OSError, subprocess.CalledProcessError):
         return "UNKNOWN"

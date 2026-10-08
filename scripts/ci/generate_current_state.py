@@ -155,7 +155,7 @@ def projection_digest(state: dict[str, Any]) -> str:
 
 def _git(root: Path, *args: str) -> str:
     result = subprocess.run(
-        ["git", *args], cwd=root, text=True, capture_output=True, check=False
+        ["git", *args], cwd=root, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False
     )
     if result.returncode:
         return "unknown"

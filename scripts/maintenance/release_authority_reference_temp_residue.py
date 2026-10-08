@@ -58,7 +58,7 @@ def sha256_file(path: Path) -> str:
 def history_blob_commits(rel: str) -> list[str]:
     """Every commit that has a version of this path reachable from any ref."""
     proc = subprocess.run(["git", "log", "--all", "--format=%H", "--", rel], cwd=REPO,
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, encoding="utf-8", errors="replace")
     return [line for line in proc.stdout.splitlines() if line.strip()]
 
 

@@ -34,7 +34,7 @@ FORBIDDEN_DESIGN_PREFIXES = (
 def _git_head(root: Path = ROOT) -> str:
     try:
         return subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=root, text=True,
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True, encoding="utf-8", errors="replace",
             stderr=subprocess.DEVNULL,
         ).strip()
     except (OSError, subprocess.CalledProcessError):

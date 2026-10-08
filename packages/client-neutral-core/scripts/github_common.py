@@ -34,7 +34,7 @@ def git(repo_dir: Path, *args: str) -> str:
     child_env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="Never")
     try:
         result = subprocess.run(["git", "-C", str(repo_dir), *args], capture_output=True,
-                                text=True, timeout=60, env=child_env)
+                                text=True, encoding="utf-8", errors="replace", timeout=60, env=child_env)
     except subprocess.TimeoutExpired:
         raise RuntimeError(f"git {args[0]} timed out") from None
     except OSError:
@@ -68,7 +68,7 @@ def credential() -> str:
     child_env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="Never")
     try:
         result = subprocess.run(["git", "credential", "fill"],
-                                input="protocol=https\nhost=github.com\n\n", text=True,
+                                input="protocol=https\nhost=github.com\n\n", text=True, encoding="utf-8", errors="replace",
                                 capture_output=True, timeout=20, env=child_env)
     except (subprocess.TimeoutExpired, OSError):
         raise RuntimeError("Git credential lookup unavailable") from None

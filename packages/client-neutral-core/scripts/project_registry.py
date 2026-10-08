@@ -38,7 +38,7 @@ class DiscoveredProject:
 def _git(root: Path, *args: str) -> str | None:
     try:
         result = subprocess.run(
-            ["git", *args], cwd=root, text=True, capture_output=True, check=False, timeout=30
+            ["git", *args], cwd=root, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False, timeout=30
         )
     except (OSError, subprocess.SubprocessError):
         return None

@@ -151,7 +151,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
                     str(ROOT / "integrations" / "executors" / "codex"),
                 ],
                 cwd=ROOT,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -174,7 +174,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
                     "--codex-home", str(codex_home), "--agent-home", str(agent_home),
                     "--source-root", str(ROOT / "integrations" / "executors" / "codex"),
                 ],
-                cwd=ROOT, text=True, capture_output=True, check=False,
+                cwd=ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False,
             )
             self.assertEqual(blocked.returncode, 2, blocked.stdout + blocked.stderr)
             self.assertIn("ACTION_PLAN_DIGEST_REQUIRED", blocked.stdout)
@@ -187,7 +187,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
                     "--codex-home", str(codex_home), "--agent-home", str(agent_home),
                     "--source-root", str(ROOT / "integrations" / "executors" / "codex"),
                 ],
-                cwd=ROOT, text=True, capture_output=True, check=False,
+                cwd=ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False,
             )
             self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
             self.assertIn('"status": "APPLIED"', applied.stdout)
@@ -207,7 +207,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
                     "--codex-home", str(codex_home), "--agent-home", str(agent_home),
                     "--source-root", str(ROOT / "integrations" / "executors" / "codex"),
                 ],
-                cwd=ROOT, text=True, capture_output=True, check=False,
+                cwd=ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False,
             )
             self.assertEqual(stale.returncode, 2, stale.stdout + stale.stderr)
             self.assertIn("ACTION_PLAN_DIGEST_MISMATCH", stale.stdout)
@@ -219,7 +219,7 @@ class CodexGlobalAssetSyncTests(unittest.TestCase):
                     "--codex-home", str(codex_home), "--agent-home", str(other_agent_home),
                     "--source-root", str(ROOT / "integrations" / "executors" / "codex"),
                 ],
-                cwd=ROOT, text=True, capture_output=True, check=False,
+                cwd=ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False,
             )
             self.assertEqual(other_scope.returncode, 2, other_scope.stdout + other_scope.stderr)
             self.assertIn("ACTION_PLAN_DIGEST_MISMATCH", other_scope.stdout)

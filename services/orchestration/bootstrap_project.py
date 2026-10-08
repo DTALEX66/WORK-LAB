@@ -15,7 +15,7 @@ AGENT_RULES_TEMPLATE = Path(__file__).resolve().parents[2] / "packages" / "clien
 
 
 def git_root(target: Path) -> Path:
-    result = subprocess.run(["git", "-C", str(target), "rev-parse", "--show-toplevel"], text=True, capture_output=True, check=False)
+    result = subprocess.run(["git", "-C", str(target), "rev-parse", "--show-toplevel"], text=True, encoding="utf-8", errors="replace", capture_output=True, check=False)
     if result.returncode:
         raise RuntimeError(f"target is not inside a Git repository: {target}")
     return Path(result.stdout.strip()).resolve()

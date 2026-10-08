@@ -135,7 +135,7 @@ def main() -> int:
         "schema": "work-lab/tracked-secret-shape-scan/v1",
         "generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "head": subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO,
-                               capture_output=True, text=True).stdout.strip(),
+                               capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.strip(),
         "repoVisibility": "public (GitHub API read at scan time by the operator)",
         "scope": list(scopes) or ["<whole tracked tree>"],
         "filesScanned": scanned,

@@ -101,7 +101,7 @@ def main(head_at_start: str | None = None) -> int:
     args = parser.parse_args()
     if head_at_start is None:
         head_at_start = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO,
-                                        capture_output=True, text=True).stdout.strip()
+                                        capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.strip()
     if args.list:
         head_at_start = ""
 
@@ -172,7 +172,7 @@ def main(head_at_start: str | None = None) -> int:
             print("     " + record["tail"].strip().replace("\n", "\n     ")[:900])
 
     head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True,
-                          text=True).stdout.strip()
+                          text=True, encoding="utf-8", errors="replace").stdout.strip()
     if args.list:
         return 0
     if head != head_at_start:

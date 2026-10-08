@@ -20,7 +20,7 @@ def create_worktree(root: Path, owner: str, task: str, base: str = "main") -> di
     branch = f"{owner}-{task}"
     r = subprocess.run(
         ["git", "-C", str(root), "worktree", "add", str(wt_path), "-b", branch, base],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     if r.returncode != 0:
         return {"ok": False, "error": r.stderr.strip()[:200]}
@@ -40,18 +40,18 @@ def land(root: Path, owner: str, task: str, *, approved: bool = False,
         return {"ok": False, "status": "BLOCKED", "error": "CI-green evidence required before land"}
     branch = expected_branch or branch
     r = subprocess.run(
-        ["git", "-C", str(root), "checkout", "main"], capture_output=True, text=True)
+        ["git", "-C", str(root), "checkout", "main"], capture_output=True, text=True, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         return {"ok": False, "error": r.stderr.strip()[:200]}
     m = subprocess.run(
-        ["git", "-C", str(root), "merge", "--no-ff", branch], capture_output=True, text=True)
+        ["git", "-C", str(root), "merge", "--no-ff", branch], capture_output=True, text=True, encoding="utf-8", errors="replace")
     if m.returncode != 0:
         return {"ok": False, "error": m.stderr.strip()[:300]}
-    subprocess.run(["git", "-C", str(root), "worktree", "remove", str(root / ".hermes" / "task-runtime" / "worktrees" / f"{owner}-{task}")], capture_output=True, text=True)
-    subprocess.run(["git", "-C", str(root), "branch", "-d", branch], capture_output=True, text=True)
+    subprocess.run(["git", "-C", str(root), "worktree", "remove", str(root / ".hermes" / "task-runtime" / "worktrees" / f"{owner}-{task}")], capture_output=True, text=True, encoding="utf-8", errors="replace")
+    subprocess.run(["git", "-C", str(root), "branch", "-d", branch], capture_output=True, text=True, encoding="utf-8", errors="replace")
     return {"ok": True, "merged": branch}
 
 
 def list_worktrees(root: Path) -> list[str]:
-    r = subprocess.run(["git", "-C", str(root), "worktree", "list", "--porcelain"], capture_output=True, text=True)
+    r = subprocess.run(["git", "-C", str(root), "worktree", "list", "--porcelain"], capture_output=True, text=True, encoding="utf-8", errors="replace")
     return [l.split()[1] for l in r.stdout.splitlines() if l.startswith("worktree ")]

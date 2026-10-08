@@ -160,7 +160,7 @@ class AG03StableSessionAffinity(unittest.TestCase):
         for seed in ("0", "1", "2", "3", "random"):
             env = dict(os.environ, PYTHONHASHSEED=seed)
             out = subprocess.run([sys.executable, "-c", script], capture_output=True,
-                                 text=True, env=env, check=True)
+                                 text=True, encoding="utf-8", errors="replace", env=env, check=True)
             seen.append(out.stdout.strip())
         self.assertEqual(len(set(seen)), 1, f"affinity drifted across seeds: {seen}")
 

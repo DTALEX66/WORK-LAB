@@ -79,10 +79,10 @@ for i in manifest["items"]:
           f"du_kb={i.get('duKb'):>9,}")
 print(f"manifest total bytes={total:,} ({total / 2**30:.2f} GiB)")
 
-du = subprocess.run(["du", "-sk", ".project-local"], capture_output=True, text=True,
+du = subprocess.run(["du", "-sk", ".project-local"], capture_output=True, text=True, encoding="utf-8", errors="replace",
                     cwd=str(ROOT), check=False).stdout.split()
 print(".project-local now (KiB):", du[0] if du else "UNKNOWN")
 print("git content diff lines:", len([l for l in subprocess.run(
-    ["git", "diff", "--name-only"], capture_output=True, text=True, cwd=str(ROOT),
+    ["git", "diff", "--name-only"], capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(ROOT),
     check=False).stdout.splitlines() if l]))
 sys.exit(2 if bad else 0)

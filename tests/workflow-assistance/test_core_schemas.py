@@ -82,7 +82,7 @@ class CoreSchemaTests(unittest.TestCase):
             [sys.executable, str(VERIFY), "--schema-dir", str(SCHEMA_DIR)],
             cwd=ROOT,
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -102,7 +102,7 @@ class CoreSchemaTests(unittest.TestCase):
                 [sys.executable, str(VERIFY), "--schema-dir", str(temp)],
                 cwd=ROOT,
                 capture_output=True,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 check=False,
             )
             self.assertNotEqual(result.returncode, 0)

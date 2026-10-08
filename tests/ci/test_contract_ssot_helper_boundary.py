@@ -63,7 +63,7 @@ class HelperDeclarationsMatchTheTree(unittest.TestCase):
         for path, loaders in self.LOADERS.items():
             name = Path(path).name
             by_path = subprocess.run(["git", "grep", "-l", "-F", name], cwd=REPO,
-                                     capture_output=True, text=True).stdout.split()
+                                     capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.split()
             for loader in loaders:
                 self.assertIn(loader, by_path, f"{name}: {loader} does not reference the file")
         for path, (emitter, version) in self.DERIVES_VERSION_FROM_CONTRACT.items():
@@ -78,7 +78,7 @@ class HelperDeclarationsMatchTheTree(unittest.TestCase):
         for path in self.CENSUS_ONLY:
             name = Path(path).name
             referrers = subprocess.run(["git", "grep", "-l", "-F", name], cwd=REPO,
-                                       capture_output=True, text=True).stdout.split()
+                                       capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.split()
             # exclusions are measured, not convenient: this file itself names the schema (it is the
             # list under test), and so does the verifier -- both are harness references. The first
             # version of this assertion passed only because `git grep` cannot see an untracked file;

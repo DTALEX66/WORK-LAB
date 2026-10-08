@@ -33,7 +33,7 @@ def git(root: Path, *args: str) -> str:
     done = subprocess.run(
         ["git", "-C", str(root), "-c", "user.name=freshness-test",
          "-c", "user.email=freshness@test.invalid", *args],
-        capture_output=True, text=True, check=True)
+        capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
     return done.stdout.strip()
 
 

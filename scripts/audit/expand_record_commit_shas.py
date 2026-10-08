@@ -32,7 +32,7 @@ ABBREV = re.compile(r"^[0-9a-f]{7,39}$")
 
 def resolve(token: str) -> str | None:
     proc = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{token}^{{commit}}"],
-                          cwd=REPO, capture_output=True, text=True)
+                          cwd=REPO, capture_output=True, text=True, encoding="utf-8", errors="replace")
     sha = proc.stdout.strip()
     return sha if proc.returncode == 0 and FULL.match(sha) else None
 

@@ -166,7 +166,7 @@ class MachineIdentityTests(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "status"],
             cwd=ROOT,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             capture_output=True,
             check=False,
         )

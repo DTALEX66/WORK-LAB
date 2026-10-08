@@ -18,7 +18,7 @@ SCHEMA = Path(__file__).resolve().parents[2] / "contracts" / "schemas" / "workfl
 
 
 def _git(root: Path, *args: str) -> str:
-    result = subprocess.run(["git", *args], cwd=root, text=True, capture_output=True, check=False)
+    result = subprocess.run(["git", *args], cwd=root, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False)
     if result.returncode:
         raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
     return result.stdout.strip()

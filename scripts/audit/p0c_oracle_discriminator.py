@@ -199,7 +199,7 @@ def launch(exe: Path, api_url: str, extra_env: dict | None) -> subprocess.Popen:
 
 def kill(pid: int) -> None:
     subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)],
-                   capture_output=True, text=True, check=False)
+                   capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
 
 
 def observe(exe: Path, label: str, extra_env: dict | None,

@@ -201,7 +201,7 @@ class DurableWorkerTests(unittest.TestCase):
                     "cli-project",
                     "--once",
                 ],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
                 timeout=30,

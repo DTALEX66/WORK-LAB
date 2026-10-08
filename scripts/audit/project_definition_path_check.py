@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(os.environ.get("WORKLAB_ROOT", r"D:\All projects\WORK-LAB"))
 
 def tracked(patterns):
-    out = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True).stdout
+    out = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
     lines = [l for l in out.splitlines() if l.strip()]
     res = {}
     for name, pat in patterns.items():
@@ -44,7 +44,7 @@ res = tracked({
 })
 
 # also: does docs/current/workflow-assistance/workflow/ dir track other files
-dc = [l for l in subprocess.run(["git","ls-files","docs/current/"], cwd=ROOT, capture_output=True, text=True).stdout.splitlines() if l.strip()]
+dc = [l for l in subprocess.run(["git","ls-files","docs/current/"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.splitlines() if l.strip()]
 res["docs_current_all"] = dc
 
 print(json.dumps(res, indent=2, ensure_ascii=False))

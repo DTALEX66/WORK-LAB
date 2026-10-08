@@ -1,19 +1,22 @@
-"""Gate: the canonical gate runner must never decode a child with the host locale.
+"""Gate: no text-mode subprocess pipe in tracked Python may decode with the host locale.
 
-Measured 2026-10-08: the governance batch died with `TypeError: can only concatenate str (not "NoneType")`,
-which destroyed the whole gate receipt on the machine that produces the most receipts. The cause is two
-ends disagreeing. `subprocess.run(..., text=True)` with no `encoding=` decodes with the locale, and on this
-host that is cp936, while mandatory test modules print Chinese failure text through a `PYTHONIOENCODING`
-that the batch had pinned to UTF-8. On the invalid byte, subprocess's own `_readerthread` raises
-`UnicodeDecodeError` inside a thread, the exception is printed to the parent's stderr and *swallowed by the
-threading module*, and `communicate()` hands back `None` for that stream. So the crash was not the decode
-error anyone could read in the log -- it was the `None` that came out of it five frames away.
+Measured 2026-10-08: the canonical aggregate gate produced **no receipt at all**. It raised
+`TypeError: can only concatenate str (not "NoneType") to str` in `_run_governance_batch`, and the same
+mechanism one gate further down (`run_root_governance_suite.py`) would have followed. The chain:
+`subprocess.run(..., text=True)` with no `encoding=` decodes with the locale, which on this host is cp936,
+while mandatory modules print Chinese failure text under a pinned `PYTHONIOENCODING=utf-8`. On the invalid
+byte, subprocess's own `_readerthread` raised `UnicodeDecodeError`; the threading module printed it and the
+thread died, so `communicate()` returned **None** for that stream. The crash named neither codec nor module,
+and three sibling tests failed with `TypeError: argument of type 'NoneType' is not iterable`, looking like
+broken assertions when nothing was asserting anything. Measured in one healthy call: stdout a 100,374-char
+str, stderr None.
 
-CI on Ubuntu could never show this: its locale already matches the child. That is why the guard here is
-structural rather than behavioural -- it fails on any host.
+CI on Ubuntu could never show this -- its locale already matches the child -- so the guard is structural
+rather than behavioural and covers every tracked `.py` file, not just the ones that crashed: a gate's
+receipt is only as reliable as the pipes that read it.
 
 The sibling gate `test_workflow_locale_discipline_gate.py` polices the *recorded CI commands* for the same
-class; this one polices the pipes the harness itself opens. Different subject, same fault.
+class; this one polices the pipes the code itself opens.
 
 Discovered dynamically by `run_quality_gate.py governance`.
 """
@@ -25,20 +28,12 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-# Every file on the path that turns a batch run into a gate receipt. The set is closed and named: a new
-# member has to be added deliberately, and an entry whose file is gone fails the shape check below.
-ENFORCED = (
-    ROOT / "services" / "orchestration" / "run_quality_gate.py",
-    ROOT / "tests" / "workflow-assistance" / "test_wloss_gates.py",
-    ROOT / "tests" / "workflow-assistance" / "test_workflow_governance.py",
-)
-RUNNER = ENFORCED[0]
 PIPE_FUNCTIONS = {"run", "Popen", "check_output", "check_call", "call"}
 
-# Capability floor, measured 2026-10-08: the runner opens 8 text-mode pipes. The number only has to stay
-# above the level at which a matcher that finds nothing would still report "0 violations", so it is a floor
-# on the scanner's sight, not a photograph of the backlog.
-TEXT_PIPE_FLOOR = 6
+# Capability floor, measured 2026-10-08: the 642 tracked Python files open 223 text-mode pipes. The floor is
+# what makes "zero violations" mean "the rule holds" instead of "the scanner saw nothing"; it sits well below
+# the measured count so ordinary work can only raise it.
+TOTAL_PIPE_FLOOR = 150
 
 
 def text_mode_pipes(source: str) -> tuple[list[int], list[int]]:
@@ -51,8 +46,13 @@ def text_mode_pipes(source: str) -> tuple[list[int], list[int]]:
             continue
         if getattr(node.func, "attr", None) not in PIPE_FUNCTIONS:
             continue
-        keywords = {kw.arg for kw in node.keywords}
-        if "text" not in keywords and "universal_newlines" not in keywords:
+        keywords = {kw.arg: kw.value for kw in node.keywords}
+        mode = next((keywords[name] for name in ("text", "universal_newlines") if name in keywords), None)
+        if mode is None:
+            continue
+        # bytes mode decodes nothing, so it is not this rule's subject; a value the scan cannot read is
+        # treated as text mode, because a call that might decode must state what it decodes with.
+        if isinstance(mode, ast.Constant) and mode.value in (False, 0):
             continue
         every.append(node.lineno)
         if "encoding" not in keywords:
@@ -60,26 +60,43 @@ def text_mode_pipes(source: str) -> tuple[list[int], list[int]]:
     return sorted(undeclared), sorted(every)
 
 
-class GateRunnerEncodingTests(unittest.TestCase):
-    def test_the_enforced_set_is_the_files_that_are_really_there(self) -> None:
-        missing = [path.relative_to(ROOT).as_posix() for path in ENFORCED if not path.is_file()]
-        self.assertEqual(missing, [], f"the enforced set names files that no longer exist: {missing}")
+def tracked_python() -> list[str]:
+    raw = subprocess.run(["git", "-c", "core.quotePath=false", "ls-files", "-z", "*.py"],
+                         cwd=ROOT, capture_output=True).stdout.split(b"\0")
+    return [name.decode("utf-8", "replace") for name in raw if name]
 
-    def test_every_text_pipe_in_the_enforced_files_declares_an_encoding(self) -> None:
-        for path in ENFORCED:
-            with self.subTest(target=path.relative_to(ROOT).as_posix()):
+
+class PipeEncodingTests(unittest.TestCase):
+    def test_no_text_pipe_anywhere_decodes_with_the_locale(self) -> None:
+        offenders: list[str] = []
+        total = 0
+        unreadable: list[str] = []
+        for rel in tracked_python():
+            path = ROOT / rel
+            try:
                 undeclared, every = text_mode_pipes(path.read_text(encoding="utf-8"))
-                self.assertGreaterEqual(
-                    len(every), TEXT_PIPE_FLOOR if path is RUNNER else 1,
-                    f"{path.name}: the scanner saw {len(every)} text-mode pipes; at zero the "
-                    "no-violation verdict below is not evidence, only a blind matcher",
-                )
-                self.assertEqual(
-                    undeclared, [],
-                    f"subprocess text pipes without an explicit encoding at lines {undeclared}: a child "
-                    "that prints anything outside the host codepage kills the reader thread and returns "
-                    "None, which destroys the gate receipt (ERR-211)",
-                )
+            except (SyntaxError, UnicodeDecodeError, OSError) as error:
+                unreadable.append(f"{rel}: {type(error).__name__}")
+                continue
+            total += len(every)
+            if undeclared:
+                offenders.append(f"{rel}:{','.join(str(line) for line in undeclared)}")
+        self.assertEqual(
+            unreadable, [],
+            f"the scan could not parse {len(unreadable)} tracked file(s): a file it cannot read is a "
+            f"file it cannot convict -- {unreadable[:5]}",
+        )
+        self.assertGreaterEqual(
+            total, TOTAL_PIPE_FLOOR,
+            f"the scan saw {total} text-mode pipes across all tracked Python; below {TOTAL_PIPE_FLOOR} "
+            "the empty offender list is the scanner going blind, not the rule holding",
+        )
+        self.assertEqual(
+            offenders, [],
+            f"{len(offenders)} file(s) open a text-mode pipe without declaring an encoding: "
+            f"{offenders[:10]} -- on a cp936 host a child that prints non-ASCII kills the reader thread "
+            "and the stream comes back None, which destroys the caller's verdict (ERR-211)",
+        )
 
     def test_the_matcher_fires_on_the_bad_shape_and_not_on_the_good_one(self) -> None:
         bad, good = text_mode_pipes(
@@ -90,39 +107,27 @@ class GateRunnerEncodingTests(unittest.TestCase):
         self.assertEqual(bad, [2], "an undeclared text pipe was not detected -- the rule cannot hold")
         self.assertEqual(good, [2, 3], "the scan lost a pipe that already declares its encoding")
 
+    def test_a_bytes_call_and_a_non_subprocess_run_are_not_pipes(self) -> None:
+        # `Runner(repo=repo).run("repair the migration", risk="high")` is not a subprocess pipe, and an
+        # earlier draft of this matcher convicted it for ending in a literal; `text=False` is bytes mode,
+        # which decodes nothing, so it is not the rule's subject either. Both must be invisible, while the
+        # genuinely text-mode call on the last line must still be caught.
+        sample = (
+            "Runner(repo=repo).run('repair the migration', risk='high')\n"
+            "subprocess.run(['git', 'status'], text=False)\n"
+            "subprocess.run(['python', 'z.py'], capture_output=True, text=True)\n"
+        )
+        undeclared, every = text_mode_pipes(sample)
+        self.assertEqual(every, [3], f"a non-pipe or a bytes call was counted as a pipe: {every}")
+        self.assertEqual(undeclared, [3])
+
     def test_the_batch_child_env_pins_the_output_encoding(self) -> None:
-        source = RUNNER.read_text(encoding="utf-8")
+        source = (ROOT / "services" / "orchestration" / "run_quality_gate.py").read_text(encoding="utf-8")
         start = source.index("def _run_governance_batch")
         body = source[start:source.index("\ndef ", start + 1)]
         self.assertIn('env["PYTHONIOENCODING"]', body,
                       "the batch child writes with whatever locale it inherited while the parent reads "
                       "UTF-8; both ends have to be pinned or the two disagree on a Chinese failure line")
-
-
-class RepoWideNoticeTests(unittest.TestCase):
-    def test_the_rest_of_the_repository_is_reported_not_failed(self) -> None:
-        # Not every tool prints non-ASCII, so this is a visible number that may only shrink: the runner is
-        # the one file whose crash destroys a gate receipt, and that one is enforced above.
-        files = subprocess.run(["git", "-c", "core.quotePath=false", "ls-files", "*.py"],
-                               cwd=ROOT, capture_output=True, text=True,
-                               encoding="utf-8", errors="replace").stdout.split()
-        sites = 0
-        holders = 0
-        for rel in files:
-            path = ROOT / rel
-            if not path.is_file():
-                continue
-            try:
-                undeclared, _ = text_mode_pipes(path.read_text(encoding="utf-8"))
-            except (SyntaxError, UnicodeDecodeError, OSError):
-                continue
-            if undeclared:
-                holders += 1
-                sites += len(undeclared)
-        self.assertGreater(sites, 0, "the scan found no undeclared pipes anywhere, which means it is not "
-                                     "looking; widen it instead of trusting this notice")
-        print(f"NOTICE_ENCODING_DEBT files={holders} sites={sites} scope=tracked_python "
-              f"enforced_files={len(ENFORCED)}")
 
 
 if __name__ == "__main__":

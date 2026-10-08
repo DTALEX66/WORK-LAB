@@ -75,7 +75,7 @@ class TaskLedgerTests(unittest.TestCase):
     def test_cli_defaults_to_project_hermes_runtime_root(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             project = Path(raw)
-            result = subprocess.run([sys.executable, str(SCRIPT), "--project", str(project), "init"], capture_output=True, text=True, check=False)
+            result = subprocess.run([sys.executable, str(SCRIPT), "--project", str(project), "init"], capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertTrue((project / ".hermes" / "task-runtime" / "task-ledger" / "ledger.json").is_file())
 

@@ -90,7 +90,7 @@ def main() -> int:
             [sys.executable, str(module)],
             cwd=str(ROOT),
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
         )
         ran += 1
         output = completed.stdout + completed.stderr

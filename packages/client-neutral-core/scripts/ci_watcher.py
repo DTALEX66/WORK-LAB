@@ -161,7 +161,7 @@ def query_runs(repository: str, commit: str) -> list[dict[str, Any]]:
     result = subprocess.run(
         ["gh", "run", "list", "--repo", repository, "--commit", commit, "--limit", "20", "--json", "status,conclusion,workflowName,name,url,databaseId,headSha,attempt,createdAt"],
         check=False,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
         capture_output=True,
     )
     if result.returncode:

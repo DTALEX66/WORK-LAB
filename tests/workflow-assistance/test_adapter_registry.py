@@ -19,7 +19,7 @@ class AdapterRegistryTests(unittest.TestCase):
             [sys.executable, str(VERIFY), "--registry", str(registry), "--schema", str(SCHEMA), "--root", str(ROOT)],
             cwd=ROOT,
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             check=False,
         )
 

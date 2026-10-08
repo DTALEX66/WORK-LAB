@@ -24,7 +24,7 @@ def _git_head(root: Path = ROOT) -> str:
         return subprocess.check_output(
             ["git", "rev-parse", "HEAD"],
             cwd=root,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             stderr=subprocess.DEVNULL,
         ).strip()
     except (OSError, subprocess.CalledProcessError):
@@ -37,7 +37,7 @@ def _reviewed_scope_is_unchanged(root: Path, reviewed_commit: str | None, paths:
     result = subprocess.run(
         ["git", "diff", "--quiet", f"{reviewed_commit}..HEAD", "--", *paths],
         cwd=root,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,

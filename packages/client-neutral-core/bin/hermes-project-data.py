@@ -44,7 +44,7 @@ def discover_project_root(start: Path | str = ".") -> Path:
     result = subprocess.run(
         ["git", "-C", str(start_path), "rev-parse", "--show-toplevel"],
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
         check=False,
     )
     if result.returncode:
@@ -86,7 +86,7 @@ def is_git_ignored(project_root: Path, relative_path: Path) -> bool:
     result = subprocess.run(
         ["git", "-C", str(project_root), "check-ignore", "-q", "--no-index", relative_path.as_posix()],
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
         check=False,
     )
     return result.returncode == 0
@@ -303,7 +303,7 @@ def run_command(
         cwd=layout.project_root,
         env=env,
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
         check=False,
     )
 
@@ -324,7 +324,7 @@ def run_kanban_command(layout: RuntimeLayout, command: Sequence[str]) -> subproc
         cwd=layout.project_root,
         env=env,
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
         check=False,
     )
 

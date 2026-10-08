@@ -102,7 +102,7 @@ def frontend_chain_files(root: Path, obs: Path) -> list[Path]:
 
 def git_head(root: Path) -> str:
     done = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"],
-                          capture_output=True, text=True, errors="replace",
+                          capture_output=True, text=True, encoding="utf-8", errors="replace", errors="replace",
                           check=False)
     return done.stdout.strip() or "UNKNOWN"
 
