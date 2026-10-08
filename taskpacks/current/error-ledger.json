@@ -6593,9 +6593,9 @@
         "introducedCommit": "bcae52a661b82e43fe0b06dec8b2f6909f3f5af9",
         "introducedCommitNote": "the commit that added apps/observer/frontend/DESIGN.md with Known Gap 2 as an open decision; verified by `git log --diff-filter=A -1 -- apps/observer/frontend/DESIGN.md` at this writing",
         "fixedCommit": "a36f58903fc46e0a603348fb6b959858e46469f4",
-        "verifiedCommit": null,
+        "verifiedCommit": "0b004fbdadffbacf4e3623a41b7c5c4ae8959f35",
         "bindingBasis": "commit-contains-fix: a36f58903f carries the reverted persistence, the corrected DESIGN.md Known Gaps 2/3, the corrected SCREEN_SPEC state lists and the themeSwitch contract; verifiedCommit is owed until every Actions run at a head containing it is green (ERR-205's rule)",
-        "verifiedCommitNote": "not yet stamped: no exact-SHA CI readback exists for a36f58903f at this writing"
+        "verifiedCommitNote": "exact-SHA readback at 0b004fbdadffbacf4e3623a41b7c5c4ae8959f35: all 24 check-runs across both workflows (push and pull_request) completed with conclusion=success; this head contains ERR-217's fixedCommit, so the verdict covers the fix and not an ancestor"
       }
     },
     {
@@ -6623,9 +6623,9 @@
         "introducedCommit": "a36f58903fc46e0a603348fb6b959858e46469f4",
         "introducedCommitNote": "the commit whose DESIGN.md census paragraph stated a product-wide contrast result measured only on the offline card; instrument alpha handling in the same file was introduced there too",
         "fixedCommit": "c4daada5721f76a15fee5fe2c59240f9b7577e70",
-        "verifiedCommit": null,
+        "verifiedCommit": "0b004fbdadffbacf4e3623a41b7c5c4ae8959f35",
         "bindingBasis": "commit-contains-fix: c4daada572 carries the live-backend census mode, the alpha-preserving gradient compositing, the `.tag.bg-panel2` ink fix and the neutral disabled fill; verifiedCommit is owed until every Actions run at a head containing it is green (ERR-205's rule)",
-        "verifiedCommitNote": "not yet stamped: no exact-SHA CI readback exists for c4daada572 at this writing"
+        "verifiedCommitNote": "exact-SHA readback at 0b004fbdadffbacf4e3623a41b7c5c4ae8959f35: all 24 check-runs across both workflows (push and pull_request) completed with conclusion=success; this head contains ERR-218's fixedCommit, so the verdict covers the fix and not an ancestor"
       }
     },
     {
@@ -6653,11 +6653,12 @@
         "introducedCommit": "bcae52a661b82e43fe0b06dec8b2f6909f3f5af9",
         "introducedCommitNote": "derived with git log -S \"icon rail or drawer\" and -S \"Minimum touch/click target 44\" over apps/observer/frontend/SCREEN_SPEC.md: bcae52a6 is the commit that wrote both rows, and it wrote them from the skin's media queries rather than from the window contract",
         "fixedCommit": "48f9e4d080df17147d32b3bdd5390c2876b2f71f",
-        "verifiedCommit": null,
+        "verifiedCommit": "0b004fbdadffbacf4e3623a41b7c5c4ae8959f35",
         "bindingBasis": "commit-contains-fix: fixedCommit is the commit this record ships in, which is unknown at authoring time; it is stamped by the follow-up once the record commit exists",
         "affectedCapability": "Responsive-surface claims in the UI design contract; the geometry gate's third measurement pass",
         "regressionCommand": "cd tests/ci && python -m unittest -q test_topbar_geometry_gate",
-        "bindingNote": "stamped from the next commit, per the rule that a record cannot carry its own SHA: 48f9e4d0 is the commit whose tree holds the standard correction, the floor pass and this record"
+        "bindingNote": "stamped from the next commit, per the rule that a record cannot carry its own SHA: 48f9e4d0 is the commit whose tree holds the standard correction, the floor pass and this record",
+        "verifiedCommitNote": "exact-SHA readback at 0b004fbdadffbacf4e3623a41b7c5c4ae8959f35: all 24 check-runs across both workflows (push and pull_request) completed with conclusion=success; this head contains ERR-219's fixedCommit, so the verdict covers the fix and not an ancestor"
       }
     }
   ],
