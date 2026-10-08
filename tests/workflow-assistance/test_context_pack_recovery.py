@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import shutil
 import subprocess
 import sys
 import unittest
@@ -40,8 +39,8 @@ def _git(root: Path, *args: str) -> None:
 
 def _make_tmp_repo() -> Path:
     # A nested `git init` inside the ignored runtime root is still its own toplevel, which is what
-    # `build_context_pack.git_root()` resolves; `project_temp` additionally guarantees the release
-    # attempt, because these five fixtures used to depend on a rmtree that ignored its own errors.
+    # `build_context_pack.git_root()` resolves; the release goes through `project_temp` because these
+    # five fixtures used to depend on a rmtree that ignored its own WinError 5.
     tmp = project_temp.fixture_dir(prefix="wl-context-pack-")
     _git(tmp, "init", "-q")
     _git(tmp, "config", "user.email", "test@local")
@@ -84,7 +83,7 @@ class AuthorityMaterialsFromIndexTests(unittest.TestCase):
             ):
                 self.assertIn(declared, materials, f"index-declared material not resolved: {declared}")
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            project_temp.force_release(tmp)
 
 
 class MissingMaterialExplicitTests(unittest.TestCase):
@@ -115,7 +114,7 @@ class MissingMaterialExplicitTests(unittest.TestCase):
             self.assertIn("## Excerpt: `WORK-LAB-AUTHORITY.md`", pack)
             self.assertNotIn("## Excerpt: `taskpacks/current/CURRENT-TASKPACK.md`", pack)
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            project_temp.force_release(tmp)
 
 
 class RecoveryChecklistSentinelTests(unittest.TestCase):
@@ -137,7 +136,7 @@ class RecoveryChecklistSentinelTests(unittest.TestCase):
             self.assertIn("A historical or archived path is not a current path", pack)
             self.assertIn("without a receipt is not complete", pack)
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            project_temp.force_release(tmp)
 
 
 class CriticalConstraintSurvivalTests(unittest.TestCase):
@@ -169,7 +168,7 @@ class CriticalConstraintSurvivalTests(unittest.TestCase):
             self.assertIn("`F:`", pack)
             self.assertIn("`.project-local`", pack)
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            project_temp.force_release(tmp)
 
 
 class SkillCountLiveTests(unittest.TestCase):
@@ -193,7 +192,7 @@ class SkillCountLiveTests(unittest.TestCase):
             _write(tmp / "packages/client-neutral-core/skills/c/SKILL.md", "# c\n")
             self.assertEqual(len(module.skill_inventory(tmp)), 3)
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            project_temp.force_release(tmp)
 
 
 if __name__ == "__main__":

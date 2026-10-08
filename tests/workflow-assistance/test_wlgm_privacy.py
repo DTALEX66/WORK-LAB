@@ -1,6 +1,7 @@
 """WLGM-220 tests: privacy, security and adversarial controls."""
 from __future__ import annotations
 
+import gc
 import json
 import subprocess
 import unittest
@@ -42,8 +43,10 @@ class PrivacyAdversarialTests(unittest.TestCase):
 
     def test_unapproved_project_cannot_be_collected(self) -> None:
         # A nested `git init` under the ignored runtime root is still its own toplevel, so
-        # discovery sees the same shape it saw in system temp — and the root is now released.
+        # discovery sees the same shape it saw in system temp. The release has to clear git's 0444
+        # object bits or Windows keeps the whole fixture: `force_release` is the one implementation.
         root = project_temp.fixture_dir(prefix="wlgm-discovery-")
+        self.addCleanup(project_temp.force_release, root)
         repo = root / "secret-repo"
         repo.mkdir()
         subprocess.run(["git", "init", "-q", str(repo)], check=True)
@@ -103,6 +106,10 @@ class PrivacyAdversarialTests(unittest.TestCase):
 
     def test_sqlite_partial_migration_fails_closed(self) -> None:
         raw = project_temp.fixture_dir(prefix="wlgm-migration-")
+        # A constructor that raises leaves its SQLite connection inside a reference cycle, so the
+        # handle stays open and Windows refuses to delete the fixture (WinError 32). Collecting at
+        # cleanup releases it, which is what lets project_temp's sweeper remove the directory.
+        self.addCleanup(gc.collect)
         db = raw / "bad.sqlite"
         db.write_bytes(b"not a sqlite database at all")
         with self.assertRaises(Exception):

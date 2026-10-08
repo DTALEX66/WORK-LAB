@@ -13,6 +13,8 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "packages" / "client-neutral-core" / "bin" / "hermes-project-data.py"
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+import project_temp  # noqa: E402
 
 
 def load_module():
@@ -245,7 +247,7 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         runtime_root = ROOT / ".hermes" / "task-runtime"
         (runtime_root / "tmp").mkdir(parents=True, exist_ok=True)
         tmp_path = Path(tempfile.mkdtemp(dir=runtime_root / "tmp"))
-        self.addCleanup(lambda: shutil.rmtree(tmp_path, ignore_errors=True))
+        self.addCleanup(project_temp.force_release, tmp_path)
 
         self.assertTrue(tmp_path.resolve().is_relative_to(runtime_root.resolve()))
 

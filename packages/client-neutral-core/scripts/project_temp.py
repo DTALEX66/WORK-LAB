@@ -13,12 +13,26 @@ deliberately exposes one entry point named ``fixture_dir`` rather than ``mkdtemp
 ``tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py`` fails on any call whose
 name is ``mkdtemp`` without ``dir=``, so a bounded helper must not be able to masquerade as the leak it
 replaces.
+
+The other half is release. ``git`` writes ``.git/objects/xx/*`` with mode 0444, so a plain
+``shutil.rmtree`` of a fixture that ran ``git commit`` stops with WinError 5 on Windows, and
+``ignore_errors=True`` hid that completely: measured 2026-10-08, ``.project-local/runs/tmp`` held 4811
+leftover fixture roots / 531.7 MiB, 676 of them still containing a nested ``.git``. ``force_release``
+below is the one implementation that clears the read-only bits before deleting, and every fixture
+release goes through it.
+
+That still leaves orphans: the at-exit sweep only knows about the fixtures *this* process created, so a
+run that is killed, times out or crashes leaves its roots behind with no owner. Nothing reclaimed them
+until ``scripts/maintenance/release_temp_fixture_residue.py``, and the bound gate
+``tests/ci/test_temp_fixture_residue_is_bounded.py`` now refuses to let that pile up again.
 """
 from __future__ import annotations
 
 import atexit
+import gc
 import os
 import shutil
+import stat
 import tempfile
 from pathlib import Path
 
@@ -53,17 +67,49 @@ _TRACKED: list[Path] = []
 _SWEEP_REGISTERED = False
 
 
+def _clear_read_only_bits(root: Path) -> None:
+    """Make everything under ``root`` deletable without following links out of it.
+
+    Symlinks and junctions are skipped: clearing the bits on a target would write outside the
+    fixture, which is the opposite of what a cleanup is for.
+    """
+    for dirpath, dirnames, filenames in os.walk(root):
+        for name in [*dirnames, *filenames]:
+            target = Path(dirpath) / name
+            try:
+                if target.is_symlink() or os.access(target, os.W_OK):
+                    continue
+                target.chmod(stat.S_IWRITE)
+            except OSError:
+                pass  # the rmtree below reports whatever this leaves undeletable
+
+
+def force_release(path: Path) -> bool:
+    """Delete a fixture root, clearing git's read-only object bits first. True when it is gone.
+
+    Refuses any path outside the project Git root, and reports a release that still cannot finish
+    with the ``TEMP_RESIDUE_NOT_REMOVED`` token instead of ignoring it. An open handle (a store that
+    was never closed) is the caller's to fix — this cannot close it, and says so.
+    """
+    if not path.exists():
+        return True
+    if not inside_project(path):
+        print(f"TEMP_RESIDUE_NOT_REMOVED {path} RefusalError: fixture root is outside the project")
+        return False
+    _clear_read_only_bits(path)
+    gc.collect()  # a store left inside a reference cycle keeps its handle open (WinError 32)
+    try:
+        shutil.rmtree(path)
+    except OSError as error:  # reported, never ignored — residue must be visible
+        print(f"TEMP_RESIDUE_NOT_REMOVED {path} {type(error).__name__}: {error}")
+        return False
+    return True
+
+
 def _release_tracked() -> None:
     for leftover in list(_TRACKED):
-        if not leftover.exists():
+        if force_release(leftover):
             _TRACKED.remove(leftover)
-            continue
-        try:
-            shutil.rmtree(leftover)
-        except OSError as error:  # reported, never ignored — residue must be visible
-            print(f"TEMP_RESIDUE_NOT_REMOVED {leftover} {type(error).__name__}: {error}")
-            continue
-        _TRACKED.remove(leftover)
 
 
 def fixture_dir(prefix: str = "work-lab-") -> Path:
