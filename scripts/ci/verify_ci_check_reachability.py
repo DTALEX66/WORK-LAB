@@ -34,10 +34,12 @@ WORKFLOWS = REPO / ".github" / "workflows"
 # is reported instead of hiding behind the list. The three infrastructure steps first drafted here --
 # aggregate_gate, emit_gate_plan, failfast_group -- turned out to be reachable already, and the
 # staleness rule is what said so; they are not declared.
+#
+# `apps/observer/scripts/write_artifact_receipt.py` was declared here and the staleness rule removed it on
+# 2026-10-08: widening the canonical compile step to every tracked .py made the gate name that file, so by
+# this tool's definition it has a local route now. The route is syntactic only -- its behaviour is still
+# exercised by CI's receipt gates -- and that limit belongs in the record, not in a frozen exemption list.
 DECLARED_CI_ONLY = {
-    "apps/observer/scripts/write_artifact_receipt.py": "writes the artifact receipt the next step reads; "
-                                                       "its output is judged by the receipt gates, which "
-                                                       "are locally reachable",
     "apps/observer/scripts/u19_webview_e2e.py": "drives a built Tauri bundle through WebView2 on a "
                                                 "Windows runner (the step carries "
                                                 "working-directory: apps/observer); there is no "
