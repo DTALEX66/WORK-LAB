@@ -46,6 +46,28 @@ def good_measured(view="full") -> dict:
         ".kpi-grid": [element(300, 960, 120, 20)],
         "__elementsOverlappingRightEdge": [],
         "__actionsFit": {"children": 4, "rows": 1, "more": False},
+        # The numbers below are the shipped ones (receipt
+        # .project-local/artifacts/OFFLINE_VIEW_TEXT.json): the bar occupies 0→129 and `.content`
+        # starts at 129 — touching, not overlapping — with a painted 1px edge.
+        "__edges": {
+            "topbar": {"top": 0.0, "bottom": 129.0, "borderBottomWidth": "1px",
+                       "borderBottomStyle": "solid", "borderBottomColor": "rgb(23 67 93 / 0.6)",
+                       "boxShadow": "none"},
+            "content": {"top": 129.0, "bottom": 780.0, "borderBottomWidth": "0px",
+                        "borderBottomStyle": "none", "borderBottomColor": "rgb(0, 0, 0)",
+                        "boxShadow": "none"},
+            "main": {"top": 0.0, "bottom": 820.0, "borderBottomWidth": "0px",
+                     "borderBottomStyle": "none", "borderBottomColor": "rgb(0, 0, 0)",
+                     "boxShadow": "none"},
+        },
+        "__focusObscured": [
+            {"sel": '.search[role="button"], .search', "focused": True, "top": 12.0, "bottom": 62.0,
+             "visible": True, "hitIsSelfOrChild": True},
+            {"sel": ".top-actions button", "focused": True, "top": 70.0, "bottom": 116.0,
+             "visible": True, "hitIsSelfOrChild": True},
+            {"sel": ".winctl-btn", "focused": True, "top": 16.0, "bottom": 48.0,
+             "visible": True, "hitIsSelfOrChild": True},
+        ],
     }
     if view == "full":
         data[".sidebar"] = [element(0, 280, 820, 1000)]
@@ -68,7 +90,9 @@ class VerdictTests(unittest.TestCase):
                           "brand_mark_present", "actions_visible", "window_controls_reachable",
                           "action_row_inside_viewport", "rail_always_present",
                           "rail_at_left_edge", "nav_items_reachable",
-                          "nav_groups_are_disclosures", "action_row_does_not_stack"})
+                          "nav_groups_are_disclosures", "action_row_does_not_stack",
+                          "content_clears_topbar", "topbar_edge_is_painted",
+                          "focused_control_is_not_obscured", "every_visible_probe_takes_focus"})
 
     def test_the_rail_must_survive_every_width_the_main_window_can_take(self) -> None:
         # the desktop-only contract in geometry form: b10 used to hide `.sidebar` below 840px.
@@ -310,6 +334,71 @@ class NavReachabilityTests(unittest.TestCase):
         fits = self.check(self.verdict_for({"total": 4, "atTop": 4, "afterScroll": 4, "overflow": False,
                                             "lastHitInside": True, "disclosures": 4, "clientH": 300, "scrollH": 300}))
         self.assertTrue(fits["pass"], fits)
+
+
+class RegionBoundaryTests(unittest.TestCase):
+    """The last assertion family SCREEN_SPEC owed: where one region ends and the next begins, and
+    whether a keyboard user can actually reach what they can see."""
+
+    def _check(self, name: str, measured=None):
+        v = geometry.verdict(measured if measured is not None else good_measured("full"), "full")
+        return [c for c in v["checks"] if c["check"] == name][0]
+
+    def test_the_shipped_shape_passes_both_boundary_checks(self) -> None:
+        self.assertTrue(self._check("content_clears_topbar")["pass"])
+        self.assertTrue(self._check("topbar_edge_is_painted")["pass"])
+
+    def test_content_starting_under_the_bar_fails(self) -> None:
+        # The 128px overlap this project measured once: content scrolled beneath an opaque bar, and
+        # every container-level check stayed green because the containers were all "present".
+        measured = good_measured("full")
+        measured["__edges"]["content"]["top"] = 40.0
+        failed = self._check("content_clears_topbar", measured)
+        self.assertFalse(failed["pass"])
+        self.assertIn("overlap=89.0", failed["detail"])
+
+    def test_an_unpainted_and_unshadowed_edge_fails(self) -> None:
+        measured = good_measured("full")
+        measured["__edges"]["topbar"]["borderBottomWidth"] = "0px"
+        measured["__edges"]["topbar"]["boxShadow"] = "none"
+        self.assertFalse(self._check("topbar_edge_is_painted", measured)["pass"])
+
+    def test_a_shadow_alone_is_enough_to_count_as_an_edge(self) -> None:
+        # Not a loophole: the standard allows either, and a hairline at 60% alpha can be invisible on
+        # some panels while a shadow is not. What must fail is a boundary carried by nothing.
+        measured = good_measured("full")
+        measured["__edges"]["topbar"]["borderBottomWidth"] = "0px"
+        measured["__edges"]["topbar"]["boxShadow"] = "0 1px 0 rgb(23 67 93)"
+        self.assertTrue(self._check("topbar_edge_is_painted", measured)["pass"])
+
+    def test_a_focused_control_under_an_overlay_is_reported_obscured(self) -> None:
+        measured = good_measured("full")
+        measured["__focusObscured"][1]["hitIsSelfOrChild"] = False
+        failed = self._check("focused_control_is_not_obscured", measured)
+        self.assertFalse(failed["pass"])
+        self.assertIn(".top-actions button", failed["detail"])
+
+    def test_a_visible_control_that_refuses_focus_is_not_a_pass(self) -> None:
+        # The other way to be unreachable: nothing covers it, it simply never takes focus.
+        measured = good_measured("full")
+        measured["__focusObscured"][0]["focused"] = False
+        self.assertFalse(self._check("every_visible_probe_takes_focus", measured)["pass"])
+
+    def test_a_harvest_without_the_edge_data_fails_instead_of_passing(self) -> None:
+        """A key the page stopped producing must not read as "no problems found"."""
+        measured = good_measured("full")
+        del measured["__edges"]
+        measured["__focusObscured"] = []
+        self.assertFalse(self._check("content_clears_topbar", measured)["pass"])
+        self.assertFalse(self._check("topbar_edge_is_painted", measured)["pass"])
+        self.assertFalse(self._check("focused_control_is_not_obscured", measured)["pass"])
+
+    def test_px_parsing_handles_the_shapes_css_actually_returns(self) -> None:
+        self.assertEqual(geometry._px("1px"), 1.0)
+        self.assertEqual(geometry._px("0.8px"), 0.8)
+        self.assertEqual(geometry._px("calc(1px + 0.5px)"), 1.0)
+        self.assertEqual(geometry._px(None), 0.0)
+        self.assertEqual(geometry._px("none"), 0.0)
 
 
 if __name__ == "__main__":

@@ -112,6 +112,43 @@ EXPR = """JSON.stringify((()=>{
     out.__actionsFit = { children: kids.length, rows: tops.size,
                          more: !!actionsEl.querySelector('.action-more') };
   }
+  // Region boundaries. `.main` is a full-height column by design and the bar floats over its first
+  // rows, so "does main start below the bar" is the wrong question and would fail the intended
+  // layout. What a user needs is (a) the first content region clearing the bar, and (b) the bar
+  // actually drawing an edge — a boundary that is only implied by whitespace disappears the moment a
+  // panel scrolls under it.
+  const edgeOf = (sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return { absent: true };
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    return { top: Math.round(r.top * 10) / 10, bottom: Math.round(r.bottom * 10) / 10,
+             borderBottomWidth: cs.borderBottomWidth, borderBottomStyle: cs.borderBottomStyle,
+             borderBottomColor: cs.borderBottomColor, boxShadow: cs.boxShadow };
+  };
+  out.__edges = { topbar: edgeOf('.topbar'), content: edgeOf('.content'), main: edgeOf('.main') };
+  // 2.4.11 Focus Not Obscured (Minimum): focus a control and hit-test its own centre. A control that
+  // is visible but sits under an overlay fails "reachable" for a keyboard user, and no rect check on
+  // the container can see that. The search field is an ARIA button (`role=button tabIndex=0`), not an
+  // input — probing `.search input` found nothing and silently left the region's primary control out.
+  // The disclosure toggle is probed because group collapse means `.nav button[data-lane]` may render
+  // nothing at all at first paint, and an empty probe list must not read as "nothing obscured".
+  const probes = ['.search[role="button"], .search', '.top-actions button', '.winctl-btn',
+                  '.nav button[data-lane]', '.nav .nav-group-toggle'];
+  out.__focusObscured = [];
+  for (const sel of probes) {
+    const el = document.querySelector(sel);
+    if (!el) continue;
+    el.focus();
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    out.__focusObscured.push({
+      sel: sel, focused: document.activeElement === el,
+      top: Math.round(r.top * 10) / 10, bottom: Math.round(r.bottom * 10) / 10,
+      visible: r.width > 0 && r.height > 0,
+      hitIsSelfOrChild: !!(hit && (hit === el || el.contains(hit))),
+    });
+  }
   return out;
 })())"""
 
@@ -279,6 +316,12 @@ def _first(measured: dict, selector: str) -> dict | None:
     return None
 
 
+def _px(value: object) -> float:
+    """`'1px'`/`'0.8px'`/`'calc(1px + 2px)'` to a number; anything unreadable is 0, never a silent pass."""
+    match = re.search(r"[\d.]+", str(value or ""))
+    return float(match.group(0)) if match else 0.0
+
+
 def verdict(measured: dict, view: str) -> dict:
     """Pure: no browser, no filesystem. Every check is one line of the acceptance contract."""
     width = measured.get("__innerWidth") or 0
@@ -349,6 +392,36 @@ def verdict(measured: dict, view: str) -> dict:
                 f"disclosures={reach.get('disclosures')}")
     else:
         add("compact_has_no_rail", rail is None, f"rail={rail}")
+
+    # --- region boundaries: the last assertion family SCREEN_SPEC owed -------------------------
+    edges = measured.get("__edges") or {}
+    topbar_edge = edges.get("topbar") or {}
+    content_edge = edges.get("content") or {}
+    if not topbar_edge or topbar_edge.get("absent") or not content_edge or content_edge.get("absent"):
+        add("content_clears_topbar", False,
+            f"a region rendered nothing: topbar={json.dumps(topbar_edge)} content={json.dumps(content_edge)}")
+        add("topbar_edge_is_painted", False, "the topbar was not measured, so its edge cannot be either")
+    else:
+        overlap = round(topbar_edge["bottom"] - content_edge["top"], 1)
+        add("content_clears_topbar", overlap <= 1.0,
+            f"topbarBottom={topbar_edge['bottom']} contentTop={content_edge['top']} overlap={overlap}")
+        border = (_px(topbar_edge.get("borderBottomWidth")) > 0
+                  and str(topbar_edge.get("borderBottomStyle")) not in ("none", "hidden", "None"))
+        shadow = str(topbar_edge.get("boxShadow") or "none") not in ("none", "")
+        add("topbar_edge_is_painted", border or shadow,
+            f"border={topbar_edge.get('borderBottomWidth')} {topbar_edge.get('borderBottomStyle')} "
+            f"color={topbar_edge.get('borderBottomColor')} shadow={shadow}")
+
+    probes = measured.get("__focusObscured") or []
+    obscured = [p for p in probes if p.get("visible") and p.get("focused") and not p.get("hitIsSelfOrChild")]
+    unfocusable = [p for p in probes if p.get("visible") and not p.get("focused")]
+    add("focused_control_is_not_obscured", bool(probes) and not obscured,
+        f"probed={len(probes)} obscured={len(obscured)} "
+        + json.dumps([p.get("sel") for p in obscured], ensure_ascii=False))
+    # A visible control that refuses focus is the other half of the same claim: it is not obscured,
+    # it is simply unreachable, and reporting only the hit-test would call that a pass.
+    add("every_visible_probe_takes_focus", not unfocusable,
+        f"refused_focus={json.dumps([p.get('sel') for p in unfocusable], ensure_ascii=False)}")
 
     return {"view": view, "viewport": measured.get("__viewport"),
             "passed": all(c["pass"] for c in checks), "checks": checks,

@@ -147,22 +147,32 @@ region below "requires" one.
 
 ## Gate coverage owed
 
-`scripts/audit/topbar_geometry_via_cdp.py` asserts 12 checks at 1262px and 8 at 482px and passes, and
-`scripts/audit/text_legibility_via_cdp.py` asserts 6 checks per theme plus three more for the switch
-itself. Delivered since this section was written: rail reachability (`nav_items_reachable`,
-`nav_groups_are_disclosures`), action folding (`action_row_does_not_stack`), the type floor and AA
-contrast in both themes (two instruments), and the degraded-state-per-view rule — the offline surface
-now names the active view, asserted for all 22 registered lanes plus distinctness of the 22 headings by
-`src/offlineViewIdentity.contract.test.tsx`. Theme "persistence" is not an open gap: web storage is
-forbidden in the UI layer by `test_production_surface_static_contract.js`, and `?theme=` in the address
-is the sanctioned mechanism (DESIGN.md Known Gap 2).
+All six assertion families this section listed are now enforced. `topbar_geometry_via_cdp.py` asserts
+16 checks at 1262px and 13 at 482px, and `text_legibility_via_cdp.py` asserts 6 per theme plus three for
+the switch itself. Delivered: rail reachability (`nav_items_reachable`, `nav_groups_are_disclosures`),
+action folding (`action_row_does_not_stack`), the type floor and AA contrast in both themes, the
+degraded-state-per-view rule (the offline surface names the active view, asserted for all 22 registered
+lanes plus distinctness of the 22 headings by `src/offlineViewIdentity.contract.test.tsx`), and region
+boundaries:
 
-Still asserted by nothing:
+- `content_clears_topbar` — measured `topbarBottom=129 / contentTop=129` in the full shell and
+  `111 / 111` in the panel: the content region starts exactly at the bar's bottom edge, so nothing is
+  drawn under it. The check is deliberately **not** "`main` starts below the bar": `.main` is a
+  full-height 0→668 column by design with the bar floating over its first rows, and asking that
+  question would have failed the intended layout (measured, then re-framed).
+- `topbar_edge_is_painted` — the boundary must be carried by something: `1px solid` today, a shadow as
+  an accepted alternative, and neither is optional.
+- `focused_control_is_not_obscured` + `every_visible_probe_takes_focus` — WCAG 2.4.11 in the only form a
+  rect check can express: focus the control, hit-test its own centre. Five controls are probed in the
+  full shell (search ARIA button, action row, window control, rail item, group disclosure). Probing
+  `.search input` found nothing — the field is `role="button" tabIndex=0`, not an input — and an empty
+  probe list would have reported "nothing obscured".
 
-1. **Region boundaries** — no instrument measures the topbar's bottom edge against `.main`'s top edge,
-   or the gap between a band and its content, so a boundary can vanish and every check stays green.
-   This is the last of the six assertion families, and it needs the 2.4.11 focus-not-obscured framing:
-   focus region C's first and last controls and assert they are not covered.
+Theme "persistence" is not an open gap: web storage is forbidden in the UI layer by
+`test_production_surface_static_contract.js`, and `?theme=` in the address is the sanctioned mechanism
+(DESIGN.md Known Gap 2).
 
-Each new assertion must ship with a planted-failure control proving it can go red; an assertion that
-cannot fail guards nothing (ERR-143's rule, and the reason the geometry probe was rewritten).
+What remains unproven is not a missing assertion but a missing environment: neither browser instrument
+runs in CI (no Chromium on the runner), so these numbers are local receipts cited by hand while the
+source-level guards are what CI enforces. Each new assertion ships with a planted-failure control
+proving it can go red; an assertion that cannot fail guards nothing (ERR-143's rule).

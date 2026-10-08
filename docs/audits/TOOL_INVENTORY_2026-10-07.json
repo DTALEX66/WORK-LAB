@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T16:36:22Z",
+  "generatedAt": "2026-10-08T16:58:21Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -666,10 +666,12 @@
       "lines": 484,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 6,
       "citedBy": [
         "apps/observer/frontend/DESIGN.md",
         "apps/observer/frontend/SCREEN_SPEC.md",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
         "tests/ci/test_text_legibility_gate.py",
         "tests/workflow-assistance/test_no_sub_floor_text_in_the_observer_source.py"
       ]
@@ -710,9 +712,9 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "577ff34fcb4453e3092ae17566cdcc7b8bad4d1bf1cf73116d4db15f7514c45b",
-      "bytes": 28275,
-      "lines": 596,
+      "sha256": "4e8a81121d5b3edd1c3f06214f83e05c1c63ac6a2a64daab29a106c6f7bcf197",
+      "bytes": 32941,
+      "lines": 669,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 15,
