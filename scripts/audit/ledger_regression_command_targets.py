@@ -205,6 +205,22 @@ def measure(entries: list[dict]):
     return rows, mapping, ambiguous, gone, external
 
 
+def next_reason(previous_state: object, previous_reason: object, state: str, measured_reason: str) -> str:
+    """Keep a hand-authored explanation while the label it explains is unchanged; replace it when it moved.
+
+    One sentence per label is what `state_for` can measure, so an unconditional write turns a record's
+    specific reason into boilerplate. Measured 2026-10-08: publishing the audit for one new record rewrote
+    three hand-authored reasons -- ERR-215's plus two older ones -- into "every operand resolves against
+    git ls-files". Data that a re-run of the auditing tool destroys is not documentation, and the tool is
+    re-run every time a record is added. A reason that still describes the label it sits under is not
+    stale, so it survives; a label that changed must carry the reason it was measured with, because the old
+    sentence explains a state the record no longer claims.
+    """
+    if previous_state == state and isinstance(previous_reason, str) and previous_reason.strip():
+        return previous_reason
+    return measured_reason
+
+
 def apply_labels(data: dict) -> dict:
     """Rewrite commands, then stamp labels from the bytes that were actually written.
 
@@ -242,7 +258,10 @@ def apply_labels(data: dict) -> dict:
                     "a substitution was attempted 2026-10-07 but the operand still does not resolve, "
                     "so no re-point is claimed and the promise stays where it was")
         rec["regressionTestVerifiability"] = state
-        rec["regressionTestVerifiabilityReason"] = r["reason"]
+        rec["regressionTestVerifiabilityReason"] = next_reason(
+            rec.get("regressionTestVerifiability"), rec.get("regressionTestVerifiabilityReason"),
+            state, r["reason"],
+        )
     LEDGER.write_text(json.dumps(written, ensure_ascii=False, indent=2) + "\n",
                       encoding="utf-8", newline="\n")
     return json.loads(LEDGER.read_text(encoding="utf-8")), applied

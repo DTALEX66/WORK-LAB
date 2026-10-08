@@ -1,7 +1,7 @@
 """Gate: the error ledger must state, per record, whether its own proof can still be re-run.
 
 `scripts/audit/ledger_regression_command_targets.py` re-points stale operands and stamps
-`regressionTestVerifiability` on all 140 records. This gate protects four claims:
+`regressionTestVerifiability` on every record (213 at the 2026-10-08 count). This gate protects five claims:
 
 1. coverage — no record is left without a label, and the shipped record's counts equal the ledger's own
    distribution (derived from the structure, not from a number I typed);
@@ -10,7 +10,9 @@
 3. the map is not decorative — every re-point target is tracked and every re-point source is still
    absent, so the substitution moved something real;
 4. the matcher knows the difference between a path, a pytest node id, a markdown-wrapped path, a
-   directory fragment, a glob, a bare word and a live client home — each falsified with a fixture.
+   directory fragment, a glob, a bare word and a live client home — each falsified with a fixture;
+5. a re-publish cannot flatten a record's explanation — the tool writes one measured sentence per label,
+   and the tool is re-run whenever a record is added (ERR-216).
 
 Everything here reads tracked state only. The audit that found this class (ERR-142) failed CI because a
 verdict answered from local disk, so a gate over a verdict must not do the same thing.
@@ -193,6 +195,47 @@ class DeterminismTests(unittest.TestCase):
                          "the shipped record's stateDigest does not reproduce from the ledger labels")
         self.assertEqual([r["state"] for r in rows_a], [r["state"] for r in rows_b],
                          "two measurements of the same tree disagreed")
+
+
+class ReasonPreservationTests(unittest.TestCase):
+    """A record's explanation survives a re-publish; only a label that moved gets the measured sentence.
+
+    ERR-216: adding ERR-215 to the ledger and re-running the publisher with `--apply` rewrote three
+    hand-authored `regressionTestVerifiabilityReason` strings into the one boilerplate the tool knows how
+    to emit. The digest is keyed on (id, label) alone, so nothing downstream noticed -- the loss was
+    silent, and the tool is re-run for every new record.
+    """
+
+    BOILERPLATE = "every operand resolves against git ls-files"
+
+    def test_an_unchanged_label_keeps_the_sentence_that_explains_it(self) -> None:
+        hand = "reads the schema, the catalogue, the code tuple and the module itself; no network"
+        self.assertEqual(lrct.next_reason("RESOLVES", hand, "RESOLVES", self.BOILERPLATE), hand)
+
+    def test_a_label_that_moved_loses_the_sentence_about_the_old_state(self) -> None:
+        # Falsification: a blanket preserve would keep an explanation of a state the record no longer
+        # claims, which is the opposite of the honesty this field exists to provide.
+        self.assertEqual(
+            lrct.next_reason("PATH_GONE", "no tracked file carries this basename", "RESOLVES", self.BOILERPLATE),
+            self.BOILERPLATE,
+        )
+
+    def test_a_missing_or_blank_reason_is_filled_from_the_measurement(self) -> None:
+        for previous in (None, "", "   "):
+            self.assertEqual(lrct.next_reason("RESOLVES", previous, "RESOLVES", self.BOILERPLATE), self.BOILERPLATE,
+                             f"reason={previous!r} was not filled")
+
+    def test_the_ledger_really_carries_explanations_that_are_not_boilerplate(self) -> None:
+        # Without this, the preservation above could be guarding nothing: measured 2026-10-08, 213 records
+        # carry 14 distinct reasons and 11 of them belong to exactly one record.
+        errors = json.loads(LEDGER.read_text(encoding="utf-8"))["errors"]
+        reasons = [str(e.get("regressionTestVerifiabilityReason") or "") for e in errors]
+        counts = collections.Counter(reasons)
+        unique = [reason for reason in reasons if counts[reason] == 1 and reason != self.BOILERPLATE]
+        self.assertGreaterEqual(
+            len(unique), 10,
+            f"only {len(unique)} records carry a reason nobody else uses; a re-publish has flattened them",
+        )
 
 
 if __name__ == "__main__":
