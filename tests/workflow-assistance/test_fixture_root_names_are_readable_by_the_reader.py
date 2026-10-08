@@ -120,15 +120,24 @@ class FixtureDirRefusesItsOwnNameTests(unittest.TestCase):
         self.assertNotIn(fake.created[0], tracked, "the discarded root is registered for release")
 
     def test_an_unreadable_prefix_fails_loudly_and_releases_every_refused_root(self) -> None:
-        names = [f"auth-store-{index}_db_x" for index in range(project_temp._NAME_ATTEMPTS)]  # noqa: SLF001
+        names = [f"project-temp-discard-{index}" for index in range(project_temp._NAME_ATTEMPTS)]  # noqa: SLF001
         fake = self._patch(names)
-        with self.assertRaises(RuntimeError) as caught:
-            project_temp.fixture_dir(prefix="auth-store-")
+        # Exhaustion is a property of the prefix, so the control pins the rule to refuse every leaf instead
+        # of passing a credential-shaped prefix: a literal `auth-store-` call site here would be exactly the
+        # thing the census below forbids, and a gate must not plant its own false positive. The vocabulary
+        # that makes such a prefix unreadable is asserted directly, one line down.
+        with mock.patch.object(project_temp, "name_is_sensitive", return_value=True):
+            with self.assertRaises(RuntimeError) as caught:
+                project_temp.fixture_dir(prefix="project-temp-")
         message = str(caught.exception)
-        self.assertIn("auth-store-", message, "the failure does not name the prefix the caller must fix")
+        self.assertIn("project-temp-", message, "the failure does not name the prefix the caller must fix")
         self.assertEqual(len(fake.calls), project_temp._NAME_ATTEMPTS)  # noqa: SLF001
         for created in fake.created:
             self.assertFalse(created.exists(), f"a refused root survived the failure: {created}")
+        self.assertTrue(
+            err.name_is_sensitive(Path("auth-store-")),
+            "the rule no longer refuses an auth-named root, so the prefix census guards nothing",
+        )
 
     def test_the_name_rule_is_asked_about_the_generated_leaf_only(self) -> None:
         # The helper may only judge a name it minted itself. If it were handed the full path, one host's
