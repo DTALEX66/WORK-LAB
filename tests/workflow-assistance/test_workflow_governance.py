@@ -2689,6 +2689,9 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "evidence-tiering",
                 "root-governance-suite",
                 "policy-coverage",
+                # added 2026-10-08: the blueprint projection was a CI-only rule and went stale from an
+                # honest register edit that a local run could not see.
+                "blueprint-projection",
                 "context-control-plane",
                 "external-libraries-index",
                 "protected-drives-consistency",
@@ -2796,8 +2799,10 @@ class WorkflowGovernanceTests(unittest.TestCase):
             check=True,
         )
         self.assertIn(
-            "verify: Run governance, compile, skill-provenance, security, context-pack, "
-            "client-neutral-manifest, core-schemas, adapter-registry, capability-matrix, model-registry-integrity, acp-adapter-honesty, observer-readonly-boundary, registry-closure-report, evidence-tiering, root-governance-suite, policy-coverage, context-control-plane, external-libraries-index, protected-drives-consistency, three-project-boundary, github-delivery, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, memory-contamination, task-ledger-replay, portable-install, provider-inventory, plugin-inventory-honesty, mcp-audit",
+            # Derived rather than retyped: the tuple above is what pins the order, and this asserts the
+            # runner's own `list` output agrees with it. The literal this replaces had to be edited in
+            # two places on every gate addition and stopped matching after the first new gate.
+            "verify: Run " + ", ".join(module.VERIFY_ORDER),
             list_result.stdout,
         )
         self.assertTrue({"design-contract", "production-evidence", "standard-validators"}.isdisjoint(module.GATES))
