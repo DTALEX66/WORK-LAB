@@ -9,11 +9,11 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 197,
+    "total": 198,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 62,
-      "test_behavior_alignment": 22,
+      "test_behavior_alignment": 23,
       "working_directory_recovery": 2,
       "evidence_state": 36,
       "ci_configuration": 19,
@@ -6058,7 +6058,7 @@
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "evidence_level": "local-full",
       "repeat_prevention": "A change-detection witness must be sensitive to the mutation the system performs most often, and that is proven by mutating a row in place and asserting the witness moved -- not by asserting that some row was inserted; any UPDATE statement must stamp the row's updated_at, because a last-modified column that lies is worse than absent; and a polling watcher must keep a cheap fast path so that making it correct does not make it expensive.",
-      "remaining_boundary": "The fast path trusts PRAGMA data_version, which answers per connection: a change written through the sidecar's own connection is only seen at the next forced readback (half the 60 s freshness window) or when another connection commits. The lease heartbeat now advances the revision roughly once per worker tick, so a client following SSE is refetched at that cadence -- honest, since the lease countdown is on screen, but it is more traffic than before this change. The witness covers the tasks table exactly and the other ten only by count, rowid and timestamp, so an in-place rewrite of, say, action_plans text with no timestamp change would still be invisible. All of this is SYNTHETIC/INTEGRATED local evidence over two connections on one runtime root; the real desktop loop through WebView2 remains NOT_RUN here for want of a Rust toolchain.",
+      "remaining_boundary": "The fast path trusts PRAGMA data_version, which answers per connection: a change written through the sidecar's own connection is only seen at the next forced readback (half the 60 s freshness window) or when another connection commits. The lease heartbeat now advances the revision roughly once per worker tick, so a client following SSE is refetched at that cadence -- honest, since the lease countdown is on screen, but it is more traffic than before this change. The witness covers the tasks table exactly and the other ten only by count, rowid and timestamp, so an in-place rewrite of, say, action_plans text with no timestamp change would still be invisible. All of this is SYNTHETIC/INTEGRATED local evidence over two connections on one runtime root; the real desktop loop through WebView2 remains NOT_RUN here for want of a Rust toolchain. 2026-10-08 更正（本记录里有一句已经不成立）：上面写的 data_version 快速路径在提交后被撤掉，见 ERR-200——它让 test_sidecar_v3_snapshot.py 的三条既有守卫变红。仍然成立的部分是 newest_changes 见证与 acquire/heartbeat/release 补写 updated_at。",
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
@@ -6067,6 +6067,34 @@
         "fixedCommit": "e64c5abed2f17b421f243848c5887c7fc6cc1d8b",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: e64c5abe carries the witness, the fast path, the updated_at stamps and the gate; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+      }
+    },
+    {
+      "error_id": "ERR-200",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "services/orchestration/sidecar.py",
+      "command": "python -m pytest -q tests/workflow-assistance/test_sidecar_v3_snapshot.py",
+      "exit_code": 1,
+      "observed_error": "The canonical gate went red at cdfd27d4 on the commit I had just pushed: QUALITY_GATE_FAIL gate=governance exit_code=1 over Ran 2448 tests in 190.151s with FAILED (failures=2, errors=1, skipped=10). Three named members, all in test_sidecar_v3_snapshot.py: test_blocked_watcher_shutdown_retains_open_store (watcher did not enter its blocking read), test_failing_canonical_readback_removes_live ('SNAPSHOT' != 'STALE'), and test_watcher_publish_failure_rolls_back_watermark_and_retries (0 not greater than or equal to 2). The wrapper for my own background command reported exit code 0 while the receipt said GATE_EXIT=1 -- the tee pipeline, not the verdict.",
+      "root_cause": "I had gated the watcher's content read behind PRAGMA data_version so a quiet store would cost one pragma instead of a projection. That makes a watcher which never reads unable to fail: it cannot be observed entering the read that the shutdown guard needs to see, cannot drop to STALE when a readback raises, and advances its version cursor before publishing so a failed publish is never retried. The optimisation targeted a cost that had never been measured; the three guards it broke were measured, deliberate assertions about liveness honesty.",
+      "fix": "The fast path is removed and the loop reads the fingerprint every tick as before, keeping the part that was the actual defect: newest_changes() as a content witness and updated_at stamped by acquire_lease, heartbeat and release_lease. The store method data_version() is deleted rather than left unused, and the two timing tests that asserted the quiet path are gone, replaced by a same-second heartbeat test that the witness must pass -- which it does, because the fencing token and lease columns are witnessed directly rather than trusted to a timestamp. The docstring of test_sidecar_sees_inplace_task_update.py now records why there is no fast path, so the next reader does not reintroduce it. Measured: 32 tests pass across the three sidecar modules, including the three guards that were red.",
+      "regression_test": "tests/workflow-assistance/test_sidecar_sees_inplace_task_update.py",
+      "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_sidecar_sees_inplace_task_update.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A change that makes a component read less often must be tested against the guards that assert it does read -- blocked entry, failing readback, retry after a failed publish -- and never against only the new behaviour it enables; an unmeasured performance worry does not outweigh a deliberate liveness assertion; and a background command's own exit status is not the verdict, the GATE_EXIT= line in its receipt is.",
+      "remaining_boundary": "The full canonical gate has to be re-run at the head that carries this revert before the branch can be called green again, and the exact-SHA CI verdict at that head is the authority for verifiedCommit here. Nothing now bounds the per-tick projection cost except the existing tests: no latency assertion was added, because no cost was ever measured to assert against.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "e64c5abed2f17b421f243848c5887c7fc6cc1d8b",
+        "introducedCommitNote": "my own previous commit on this branch, which added the fast path this record removes",
+        "fixedCommit": "dd3f35b1e09e228615b94d39cb8813ab454a5cda",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: dd3f35b1 reverts the fast path and keeps the witness; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
       }
     }
   ],
