@@ -102,10 +102,16 @@ def find_node() -> Path:
 def env_for(node: Path) -> dict:
     (LOCAL_RUNS / "tmp").mkdir(parents=True, exist_ok=True)
     (LOCAL_RUNS / "cache" / "npm").mkdir(parents=True, exist_ok=True)
+    (LOCAL_RUNS / "cache" / "node-compile-cache").mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     env.update({
         "PATH": f"{node.parent}{os.pathsep}{env.get('PATH', '')}",
         "TMP": str(LOCAL_RUNS / "tmp"), "TEMP": str(LOCAL_RUNS / "tmp"), "TMPDIR": str(LOCAL_RUNS / "tmp"),
+        # Node 22 writes its module compile cache next to TMPDIR, and `runs/tmp` is the root the
+        # fixture-residue guard censuses — a build cache that ages past the floor shows up as an
+        # orphaned fixture. Measured: NODE_COMPILE_CACHE is honoured by the declared runtime
+        # (v22.11.0-x64-*), so the cache goes to the boundary's declared cacheRoot instead.
+        "NODE_COMPILE_CACHE": str(LOCAL_RUNS / "cache" / "node-compile-cache"),
         "npm_config_cache": str(LOCAL_RUNS / "cache" / "npm"),
         "npm_config_audit": "false", "npm_config_fund": "false", "npm_config_update_notifier": "false",
         "PYTHONIOENCODING": "utf-8",
