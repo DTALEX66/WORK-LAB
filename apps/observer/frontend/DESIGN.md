@@ -427,12 +427,18 @@ consulted rather than copied wholesale, and each with one thing not to take.
    now carries one value in both, which is what removed gap 4's chip failure. The remaining pairs
    (`border`, `surface`, `primary`) still name different values with the same word, so a theme change
    can repaint one layer and not the other. Needs one canonical role set.
-8. **The static micro-role allowlist is now dead weight** —
-   `apps/observer/tests/test_production_surface_static_contract.js` permits sub-12px CSS in seven named
-   roles. After the floor sweep the skin declares sub-12px in one place only (`.brand small`, pinned by
-   b10 and overridden here), so six of its allowlist entries match nothing and nothing fails. It reports
-   "no offenders" without noticing its own list rotted; the staleness rule
-   `no_stale_floor_exception` in the legibility instrument is the model to copy.
+8. **Closed: the micro-role allowlist now expires instead of accumulating.**
+   `apps/observer/tests/test_production_surface_static_contract.js` used to permit sub-12px CSS in seven
+   named roles (`.winctl-zoom`, `.load-strip`, `.brand small`, `.topbar-brand-word`, `.tag`, `.badge`,
+   `.kpi small`). After the floor sweep exactly **one** sub-12px declaration remains in the shipped
+   sheets — `.brand small → 10px`, pinned by `b10.css` and overridden to the floor by the shell — so six
+   of the seven were permissions nobody held, and the assertion printed "no offenders" while its own list
+   rotted. The check now answers two questions (`microRoleFindings`): a sub-floor rule no role claims is
+   an **offender**, and a role no sub-floor rule matches is **dead** — both fail. `ALLOWED` is one entry.
+   Falsified on the real file rather than in a fixture: adding a `.ghost-role` permission turns the run red
+   naming it, and the file is restored byte-identically
+   (`.project-local/runs/falsify_stale_permission.py`). The same pass also strips comments before reading
+   declarations, because these sheets quote the numbers they fix and a comment is not a rule.
 9. **The rendered proof does not run in CI** — both browser instruments need a Chromium binary, which
    the Actions runner does not have, so they are run locally against `dist` and their receipts are cited
    by hand. CI enforces the source-level guards. `verify_design_contract.py` still parses token files and

@@ -31,6 +31,40 @@ function walk(dir, out = []) {
   return out;
 }
 
+const SUB_FLOOR_RULE = /([^{}]+)\{([^}]*)\}/g;
+const FONT_SIZE_DECL = /font-size:\s*(\d+(?:\.\d+)?)px/;
+const TYPE_FLOOR_PX = 12;
+
+function subFloorRules(css) {
+  // Every rule in the sheet that sets text below the DESIGN.md floor. Comments are stripped first:
+  // these sheets document the numbers they fix (`b10 pins .brand small{font-size:10px}`), and an
+  // explanation is not a declaration. Without the strip the guard could report a rule that paints
+  // nothing, which is how a documentation edit reads as a legibility violation.
+  const stripped = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const found = [];
+  for (const [, selector, body] of stripped.matchAll(SUB_FLOOR_RULE)) {
+    const m = FONT_SIZE_DECL.exec(body);
+    if (m && parseFloat(m[1]) < TYPE_FLOOR_PX) {
+      found.push({ selector: selector.replace(/\s+/g, " ").trim(), px: parseFloat(m[1]) });
+    }
+  }
+  return found;
+}
+
+function microRoleFindings(css, allowed) {
+  // Two questions, because an allowlist answers only one of them today:
+  //   offenders — sub-floor text that no named role claims (a real violation), and
+  //   dead — named roles that no sub-floor text matches (a permission nobody granted and nobody
+  //           needs, which silently outlives the bug it was written for and exempts the next one).
+  const rules = subFloorRules(css);
+  return {
+    count: rules.length,
+    offenders: rules.filter((r) => !allowed.some((re) => re.test(r.selector)))
+                    .map((r) => r.selector + " → " + r.px + "px"),
+    dead: allowed.filter((re) => !rules.some((r) => re.test(r.selector))).map(String),
+  };
+}
+
 function run() {
   const html = read("index.html");
   const shell = read("src/skins/l10b-shell.css");
@@ -120,9 +154,11 @@ function run() {
   t("legibility: no rule sets the page or lane base text below 12px", () => {
     // The skins inherit the UA base (16px) and never shrink it; what the rule
     // has to catch is a future `body{font-size:10px}` or a container that drops
-    // the reading level of real content.
+    // the reading level of real content. Comments are stripped for the same reason
+    // as the micro-role check below: the sheets quote the numbers they fix.
+    const rules = skins.replace(/\/\*[\s\S]*?\*\//g, "");
     const offenders = [];
-    for (const [, selector, body] of skins.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+    for (const [, selector, body] of rules.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
       const m = /font-size:\s*(\d+(?:\.\d+)?)px/.exec(body);
       if (!m) continue;
       if (/^\s*(?:html|body)\s*$/.test(selector.trim()) && parseFloat(m[1]) < 12) {
@@ -130,28 +166,51 @@ function run() {
       }
     }
     assert(offenders.length === 0, "base text under 12px: " + offenders.join(", "));
-    const bodyDeclared = /(?:^|\})\s*(?:html|body)[^{}]*\{[^}]*font-size/.test(skins);
+    const bodyDeclared = /(?:^|\})\s*(?:html|body)[^{}]*\{[^}]*font-size/.test(rules);
     assert(!bodyDeclared || parseFloat(/(?:html|body)[^{}]*\{[^}]*font-size:\s*(\d+(?:\.\d+)?)/
-      .exec(skins)[1]) >= 12, "body base font-size dropped below 12px");
+      .exec(rules)[1]) >= 12, "body base font-size dropped below 12px");
   });
 
-  t("legibility: every sub-12px declaration is a named micro role", () => {
-    // Small type is allowed only where it is a chrome glyph or a spaced label:
-    // the window-control zoom percentage, the transient first-frame strip, the
-    // brand lockup caption and status chips. Any new 10px paragraph of real
-    // content fails here even though the base rule above would still pass.
-    const ALLOWED = [/\.winctl-zoom/, /\.load-strip/, /\.brand\s+small/,
-                     /\.topbar-brand-word/,
-                     /\.tag\b/, /\.badge\b/, /\.kpi\s+small\b/];
-    const offenders = [];
-    for (const [, selector, body] of skins.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
-      const m = /font-size:\s*(\d+(?:\.\d+)?)px/.exec(body);
-      if (!m || parseFloat(m[1]) >= 12) continue;
-      const clean = selector.replace(/\s+/g, " ").trim();
-      if (!ALLOWED.some((re) => re.test(clean))) offenders.push(clean + " → " + m[1] + "px");
-    }
-    assert(offenders.length === 0,
-      "small text outside the micro roles:\n        " + offenders.join("\n        "));
+  t("legibility: every sub-12px declaration is a named micro role, and every named role is real", () => {
+    // Small type survives in exactly one place: the brand lockup caption, which `b10.css` pins at
+    // 10px verbatim (decision D-11 forbids editing it) and which `l10b-shell.css` overrides to the
+    // floor. This used to carry seven roles — `.winctl-zoom`, `.load-strip`, `.topbar-brand-word`,
+    // `.tag`, `.badge`, `.kpi small` besides the brand caption — because each of them had once
+    // measured sub-floor. After the floor sweep none of them do, so six entries were permissions
+    // nobody held: the assertion still printed "no offenders" while the list rotted, and a new 10px
+    // paragraph inside any of those six selectors would have passed for the same reason.
+    // A permission that matches nothing is now as much a failure as a violation.
+    const ALLOWED = [/\.brand\s+small/];
+    const found = microRoleFindings(skins, ALLOWED);
+    assert(found.count > 0, "no sub-12px rule anywhere in the sheets: this test's premise is gone, "
+      + "retire it deliberately rather than letting it pass on an empty set");
+    assert(found.offenders.length === 0,
+      "small text outside the micro roles:\n        " + found.offenders.join("\n        "));
+    assert(found.dead.length === 0,
+      "stale micro-role permissions that no sub-12px declaration matches any more: "
+      + found.dead.join(", ") + " — drop them, or the next sub-floor rule under one of these "
+      + "selectors is exempted by a permission nobody granted");
+  });
+
+  t("the micro-role detector sees a planted violation, a stale permission, and a quoted number", () => {
+    // Negative controls for the assertion above: a check that cannot go red is not a check.
+    const planted = microRoleFindings(".prose{font-size:10px}", [/\.brand\s+small/]);
+    assert(planted.count === 1 && planted.offenders.length === 1 && planted.dead.length === 1,
+      "a 10px paragraph outside the roles was not reported: " + JSON.stringify(planted));
+
+    const permitted = microRoleFindings(".brand small{font-size:10px}", [/\.brand\s+small/]);
+    assert(permitted.offenders.length === 0 && permitted.dead.length === 0,
+      "the one legitimate role does not satisfy its own detector: " + JSON.stringify(permitted));
+
+    const stale = microRoleFindings(".brand small{font-size:10px}",
+                                   [/\.brand\s+small/, /\.badge\b/]);
+    assert(stale.offenders.length === 0 && stale.dead.length === 1 && stale.dead[0] === "/\\.badge\\b/",
+      "a permission matching nothing went unnoticed: " + JSON.stringify(stale));
+
+    // The sheets document the numbers they fix. A comment must never read as a declaration.
+    const quoted = microRoleFindings("/* b10 pins .old{font-size:9px} */ .x{color:red}", []);
+    assert(quoted.count === 0, "a number inside a comment was measured as a rule: "
+      + JSON.stringify(quoted));
   });
 
   // --- file-level halves of the projection-truth ports (U03 step 1b) ---
