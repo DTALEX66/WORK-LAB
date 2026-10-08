@@ -1,6 +1,6 @@
 # 部署排坑手册
 
-> 记录 DTALEX66/Workflow-assistance（Hermes Agent + CC Switch + Codex + GitHub 全局、可迁移、可审计工作流增强项目）部署和迁移过程中遇到的错误及解决方法。完整的本轮 GitHub workflow 错误总结见 [`docs/workflow/error-fixes-2026-07-28.md`](docs/workflow/error-fixes-2026-07-28.md)。
+> 记录 DTALEX66/Workflow-assistance（Hermes Agent + CC Switch + Codex + GitHub 全局、可迁移、可审计工作流增强项目）部署和迁移过程中遇到的错误及解决方法。2026-07-28 那一轮的 GitHub workflow 错误总结已归档在 [`docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-28.md`](docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-28.md)，仅作历史参考，不是现行规范。
 
 ---
 

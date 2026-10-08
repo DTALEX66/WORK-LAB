@@ -53,10 +53,10 @@ Workflow-assistance
 `repository-controlled` portable source，经过 provenance、repo → live atomic sync、隔离
 portable install、Linux/Windows CI 和 live runtime 回归。
 
-本轮复审修正了 GitHub skill 的 source ownership 缺口、未认证 curl/凭据持久化误导、PR
-changed-files 分页缺失、SSH 私钥无授权写入、PowerShell/POSIX 命令不兼容和文档定位不一致。
-完整的错误、根因、修复和证据记录见
-[`docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md`](docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md)。
+下面这段是 2026-07-28 那一轮的复审记录，仅作归档参考，不是当前规范：该轮修正了 GitHub skill 的 source
+ownership 缺口、未认证 curl/凭据持久化误导、PR changed-files 分页缺失、SSH 私钥无授权写入、
+PowerShell/POSIX 命令不兼容和文档定位不一致，完整的错误、根因、修复和证据记录见
+[`docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-28.md`](docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-28.md)。
 
 Token Monitor 本轮的交接、验证证据、错误根因、剩余事项和恢复顺序见
 [`docs/current/workflow-assistance/workflow/token-monitor-handoff.md`](docs/current/workflow-assistance/workflow/token-monitor-handoff.md)。
@@ -599,11 +599,11 @@ python packages/client-neutral-core/scripts/security/scan_agent_rules.py templat
 - `docs/current/workflow-assistance/workflow/codex-performance-diagnosis.md`：Codex 性能分层诊断（项目/全局/客户端配置）、审计状态与解决方案；
 - `docs/current/workflow-assistance/workflow/managed-software-and-assets.md`：受管软件与内容总清单（Hermes/Codex/CC Switch/GitHub/OpenHuman/Open Design 及未来客户端的管理面总账）；
 - `docs/current/workflow-assistance/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
-- `docs/current/workflow-assistance/workflow/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录；
-- `docs/current/workflow-assistance/workflow/error-fixes-2026-08-13-wlg.md`：WLG 治理 TaskPack 执行错误总结（CRLF provenance、force-push CI 陷阱、gh 卸载、多分支串扰等）；
-- `docs/current/workflow-assistance/workflow/memory-compaction-2026-08-13.md`：Hermes 记忆压缩与优化归档（合并策略、精简记录、记忆治理规则）；
-- `docs/current/workflow-assistance/workflow/error-fixes-2026-08-14-guard.md`：pre_tool_call 终端守卫正则防护三缺陷（路径穿越绕过、含空格路径误拦、scheme:// URL 误判）修复归档；
-- `docs/current/workflow-assistance/workflow/error-fixes-2026-08-14-r2.md`：R2 重审计修复批次错误归档（Guard 前缀两连坑、zizmor Docker action、schema 四方同步、SQL 表名、fail-closed 契约、验证脚本 bug、graphql 瞬断、cargo 检测）；
+- `docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录（已归档：那一轮的记录，不是现行规范）；
+- `docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-08-13-wlg.md`：WLG 治理 TaskPack 执行错误总结（CRLF provenance、force-push CI 陷阱、gh 卸载、多分支串扰等）（已归档：那一轮的记录，不是现行规范）；
+- `docs/history/archive/workflow-assistance/error-fixes/memory-compaction-2026-08-13.md`：Hermes 记忆压缩与优化归档（合并策略、精简记录、记忆治理规则）（已归档：那一轮的记录，不是现行规范）；
+- `docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-08-14-guard.md`：pre_tool_call 终端守卫正则防护三缺陷（路径穿越绕过、含空格路径误拦、scheme:// URL 误判）修复归档（已归档：那一轮的记录，不是现行规范）；
+- `docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-08-14-r2.md`：R2 重审计修复批次错误归档（Guard 前缀两连坑、zizmor Docker action、schema 四方同步、SQL 表名、fail-closed 契约、验证脚本 bug、graphql 瞬断、cargo 检测）（已归档：那一轮的记录，不是现行规范）；
 - `docs/history/archive/workflow-assistance/handoffs/audit-r2-fixes-handoff-2026-08-14.md`：R2 修复批次交接（PR #97~#101、验证证据、剩余事项与恢复顺序）；
 - `docs/current/workflow-assistance/workflow/wloss-reference-decisions.md`：WLOSS-100/300/510 开源能力处理决定（OPA/Conftest=REFERENCE、in-toto=DERIVE、Cosign/Promptfoo=REFERENCE、Superpowers=方法吸收）；
 - `docs/current/workflow-assistance/mcp/workflow-mcp-stack.md`：MCP 默认策略；

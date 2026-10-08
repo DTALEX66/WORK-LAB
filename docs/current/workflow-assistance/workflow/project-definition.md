@@ -105,10 +105,10 @@
 | Hermes 配置模板 | `config/config.yaml` | `config.yaml` | 新机器基线；同步脚本合并时保留 live provider/model，并管理已声明 overlay 字段（其余 Hermes 字段一律 OBSERVE，绝不全量覆盖） |
 | 环境变量模板 | `config/.env.template` | `.env.template` | 只放占位说明，不放真实密钥 |
 | MCP wrapper | `packages/client-neutral-core/bin/hermes-npx*` | `bin/hermes-npx*` | Windows live config 指向 `.cmd`；优先 bundled Node，缺失时可在用户信任且兼容的 PATH Node 环境中回退 |
-| 技能 | `packages/client-neutral-core/skills/` | `skills/` | 仓库受控 skill 集（codex、五个 GitHub workflow skills、model-switch、agent-workflow-fortress、project-data-boundary、python-testing、sleep-mode、windows-development-environment、requesting-code-review 等）；清单以 `config/skill-provenance.yaml` 为准；sleep-mode 通过项目 `.project-local/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
+| 技能 | `packages/client-neutral-core/skills/` | `$HERMES_HOME/skills/` | 仓库受控 skill 集（codex、五个 GitHub workflow skills、model-switch、agent-workflow-fortress、project-data-boundary、python-testing、sleep-mode、windows-development-environment、requesting-code-review 等）；清单以 `config/skill-provenance.yaml` 为准；sleep-mode 通过项目 `.project-local/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
 | 项目数据执行器 | `packages/client-neutral-core/bin/hermes-project-data.py` | `packages/client-neutral-core/bin/hermes-project-data.py` | fail-closed 验证 Git ignore，并把任务临时文件、缓存、日志、测试环境与产物锁到 `<project>/.project-local/runs/` |
 | 同步脚本 | `integrations/executors/hermes/sync_hermes_workflow_assets.py` | 手动运行 | repo ↔ live 定向同步；每次 apply 前备份可迁移资产 |
-| 排错记录 | `docs/current/workflow-assistance-TROUBLESHOOTING.md`、`docs/current/workflow-assistance/workflow/error-fixes-2026-07-04.md`、`docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md`、`docs/current/workflow-assistance/workflow/gateway-cron-delivery.md` | 仓库文档 | 记录 Windows MCP、路径、GitHub CLI、GitHub skill ownership、凭据安全、PowerShell、Gateway/cron delivery、验证等已踩坑 |
+| 排错记录 | `docs/current/workflow-assistance-TROUBLESHOOTING.md`、`docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-04.md`、`docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-28.md`、`docs/current/workflow-assistance/workflow/gateway-cron-delivery.md` | 仓库文档 | 记录 Windows MCP、路径、GitHub CLI、GitHub skill ownership、凭据安全、PowerShell、Gateway/cron delivery、验证等已踩坑 |
 
 ## 本地项目定义
 

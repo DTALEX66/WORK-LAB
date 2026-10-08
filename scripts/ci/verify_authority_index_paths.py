@@ -29,11 +29,32 @@ from posixpath import normpath
 DEFAULT_TARGETS = (
     "docs/current/workflow-assistance/workflow/active-authority-index.md",
     "docs/current/workflow-assistance-README.md",
+    "docs/current/workflow-assistance-TROUBLESHOOTING.md",
+    "docs/current/workflow-assistance/workflow/project-definition.md",
 )
 FILE_REF = re.compile(r"`([^`\s]*/[^`\s]*\.(?:md|json|py|ts|tsx|yml|yaml|example|lock|txt|sh|bash|ps1))`")
 DIR_REF = re.compile(r"`([^`\s]+/)`")
+FENCE = re.compile(r"^```(\w*)")
 # a reference containing one of these is not a name the tree can answer to, so it is never even tried
 PLACEHOLDER_MARKERS = ("<", ">", "*", "$", "~")
+LOWER_SEGMENT = re.compile(r"^[a-z0-9._-]+$")
+
+
+def looks_like_path(ref: str) -> bool:
+    """Reject backticked terms that merely contain a slash.
+
+    Two real cases decided this rule. `GUI/TUI` in the troubleshooting doc is a mode pair and would
+    otherwise fire as a missing file. `/WORK-LAB-AUTHORITY.md` is the top-level authority itself, written
+    root-absolute: a rule that required a lowercase first *character* dropped it silently, which is worse
+    than a false positive because the checker would then claim to guard a surface while excluding its most
+    important pointer.
+    """
+    if ref.startswith(("/", "./", "../")):
+        return True
+    if not ref or ref[0].isupper():
+        return False
+    first = ref.split("/", 1)[0]
+    return bool(LOWER_SEGMENT.match(first))
 
 # Declared non-repo references, each with the measured reason. A declaration whose path starts resolving
 # in the tracked tree is itself a failure, so this list cannot quietly become a hiding place.
@@ -64,33 +85,40 @@ def tracked_paths(root: Path) -> list[str]:
 
 
 def references(text: str) -> list[tuple[int, str, str]]:
-    """Backticked references, plus the first-column token inside fenced blocks.
+    """Backticked references, plus the first-column token of a language-less fenced map.
 
     A directory map written in a fenced block is normative prose -- the README's 仓库结构 listed `bin/`,
     `skills/` and `scripts/workflow/` as repository directories with no backticks around them, and a
     backtick-only reader would have called that clean. Only the leading token counts, because that is how
-    an aligned map writes its path; the rest of the line is description.
+    an aligned map writes its path, and only in an unlabelled or `text` fence: a ```bash transcript's first
+    token is a command or an output fragment (`usr/bin/bash:`, `d/All\`), not a claim about the tree.
     """
     rows: list[tuple[int, str, str]] = []
-    inside_fence = False
+    fence: str | None = None
     for number, line in enumerate(text.splitlines(), 1):
-        if line.lstrip().startswith("```"):
-            inside_fence = not inside_fence
+        opener = FENCE.match(line.strip())
+        if opener:
+            if fence is None:
+                fence = (opener.group(1) or "text").lower()
+            else:
+                fence = None
             continue
         for match in FILE_REF.finditer(line):
-            rows.append((number, match.group(1), "file"))
+            if looks_like_path(match.group(1)):
+                rows.append((number, match.group(1), "file"))
         for match in DIR_REF.finditer(line):
-            rows.append((number, match.group(1), "directory"))
-        if inside_fence:
-            fields = line.strip().split()
-            if not fields:
-                continue
-            token = fields[0]
-            if "/" not in token or token.startswith(("-", "|")):
-                continue
-            if token in {row[1] for row in rows if row[0] == number}:
-                continue
-            rows.append((number, token, "directory" if token.endswith("/") else "file"))
+            if looks_like_path(match.group(1)):
+                rows.append((number, match.group(1), "directory"))
+        if fence not in ("text", "markdown", "md") or not line.strip():
+            continue
+        token = line.strip().split()[0]
+        if "/" not in token or not looks_like_path(token):
+            continue
+        if token.endswith(":") or "\\" in token:
+            continue
+        if token in {row[1] for row in rows if row[0] == number}:
+            continue
+        rows.append((number, token, "directory" if token.endswith("/") else "file"))
     return rows
 
 

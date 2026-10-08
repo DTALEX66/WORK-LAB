@@ -39,6 +39,16 @@
   就不存在了（`ls` 实测两者皆无），索引因此把读者指向空路径；现改写为收敛后的真实归档根。旧写法在此
   不加反引号，因为反引号在本文件里就是「这是一条可解析的路径」的记号。
 - `taskpacks/history/`：完成 taskpack、旧 release、dated closure。
+- `docs/history/archive/workflow-assistance/error-fixes/`：2026-10-08 起收纳带日期的错误与压缩记录
+  （`error-fixes-2026-07-04.md`、`error-fixes-2026-07-28.md`、`error-fixes-2026-08-13-wlg.md`、
+  `error-fixes-2026-08-14-guard.md`、`error-fixes-2026-08-14-r2.md`、`memory-compaction-2026-08-13.md`）。
+  这六份原先位于 `docs/current/workflow-assistance/workflow/`，即「当前规范」目录里放着只描述过去某一轮
+  的记录；README 与 TROUBLESHOOTING 各有一段把它们写成「本轮」，读者会当成现行流程执行。现已 `git mv`
+  保留历史，并在每条链接处逐行标明「已归档，非现行规范」。
+  同一原因，归档件内部的前收敛路径（skills/model-switch/、docs/workflow/…、contracts/… 等，实测共 10 条）
+  **不改写也不纳入引用门禁**：把它们改成今天的路径会让一份带日期的记录说假话；这些示意名称在此不加反引号，
+  理由与上面那条相同。`scripts/ci/verify_authority_index_paths.py` 的默认目标只覆盖四个现行文件面，
+  具体计数写进本轮台账记录而不写在这里——本文件正是被点数的那份文档，在这里报数会立刻失真。
 - `docs/history/archive/session-history/`：跨机迁移、旧产品（minigame）、历史状态清单。
 - `taskpacks/history/CODEX-DESKTOP-STORE-UPDATE-BEHAVIOR-20260812.md`：历史调查记录，部分表述已由
   `docs/current/workflow-assistance/workflow/codex-desktop-update-state-investigation-2026-08-13.md`

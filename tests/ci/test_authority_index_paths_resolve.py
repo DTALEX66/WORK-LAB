@@ -109,12 +109,36 @@ class RealSurfaces(unittest.TestCase):
                               cwd=REPO, capture_output=True)
         return proc.returncode, (proc.stdout + proc.stderr).decode("utf-8", "replace")
 
-    def test_both_guarded_surfaces_resolve(self) -> None:
+    def test_every_default_surface_is_named_and_resolves(self) -> None:
         code, out = self.run_tool()
         self.assertEqual(0, code, out)
-        self.assertIn(f"target={INDEX} refs=", out)
-        self.assertIn(f"target={README} refs=", out)
+        for target in checker.DEFAULT_TARGETS:
+            self.assertIn(f"target={target} refs=", out, f"{target} is not judged by the default run")
         self.assertIn("broken=0", out)
+        self.assertIn(f"targets={len(checker.DEFAULT_TARGETS)}", out)
+
+    def test_each_surface_yields_references_so_none_is_guarded_in_name_only(self) -> None:
+        tracked = checker.tracked_paths(REPO)
+        for target in checker.DEFAULT_TARGETS:
+            rows, broken, stale = checker.check(REPO, tracked, target)
+            self.assertGreater(len(rows), 0, f"{target} yields no references at all")
+            self.assertEqual([], broken, f"{target} has unresolved references")
+            self.assertEqual([], stale, f"{target} has a stale declaration")
+
+    def test_a_backticked_term_with_a_slash_is_not_a_path(self) -> None:
+        """`GUI/TUI` in the troubleshooting doc is a mode pair, not a missing file."""
+        self.assertFalse(checker.looks_like_path("GUI/TUI"))
+        self.assertTrue(checker.looks_like_path("docs/current/x.md"))
+
+    def test_the_root_absolute_authority_pointer_is_still_covered(self) -> None:
+        """/WORK-LAB-AUTHORITY.md is the top authority; excluding it would be a silent blind spot."""
+        self.assertTrue(checker.looks_like_path("/WORK-LAB-AUTHORITY.md"))
+        index = (REPO / INDEX).read_text(encoding="utf-8")
+        self.assertIn("/WORK-LAB-AUTHORITY.md", [row[1] for row in checker.references(index)])
+
+    def test_only_the_untracked_runtime_root_is_declared(self) -> None:
+        """Measured 2026-10-08: everything else resolves, so a new declaration needs its own reason."""
+        self.assertEqual({".project-local/"}, set(checker.DECLARED_NON_PATHS))
 
     def test_the_tool_refuses_an_empty_tracked_set(self) -> None:
         """A checker that can resolve nothing must not report a clean tree."""
