@@ -91,12 +91,27 @@ export function ErrorState({ message, className }: ErrorStateProps) {
   )
 }
 
-export function OfflineState({ className }: { className?: string }) {
+export interface OfflineStateProps {
+  className?: string
+  /**
+   * WHAT is offline, in the user's own vocabulary — usually the active view's label.
+   *
+   * Without it the shell renders one identical card for all 22 views, and a user who clicks through
+   * the rail sees nothing change and concludes the navigation is dead. That is the shape this prop
+   * exists to break: the failure is global (the transport is down), but the report has to say which
+   * surface is being read, so the click has a visible consequence and the reader knows the rail works.
+   */
+  subject?: string
+}
+
+export function OfflineState({ className, subject }: OfflineStateProps) {
   return (
     <StateShell
       icon={<CloudOff size={26} strokeWidth={1.8} />}
-      title="连接中断"
-      description="后端快照不可达，正在等待重连…"
+      title={subject ? `「${subject}」读不到快照` : '连接中断'}
+      description={subject
+        ? `后端快照不可达，此视图的数值全部保持 UNKNOWN（不伪造）。其他视图同样读不到：切换后看到的是各自的名称，不是界面卡住。`
+        : '后端快照不可达，正在等待重连…'}
       action={<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
       className={className}
       role="status"

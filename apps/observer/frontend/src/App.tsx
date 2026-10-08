@@ -96,6 +96,13 @@ function readInitialFocus(): { focus: RecordFocus; rejected: string[] } {
   }
 }
 
+/** Which surface the user is looking at, in the same words the rail uses. Overview is not a registry
+ *  entry, so it is named here rather than being reported as an unknown id. */
+function viewIdentity(view: ViewId): { label: string; lane: string } {
+  const entry = VIEW_REGISTRY.find((e) => e.id === view)
+  return entry ? { label: entry.label, lane: entry.lane } : { label: OVERVIEW_LABEL, lane: 'overview' }
+}
+
 // WORK-LAB-FRONTEND-TASKPACK-20260930: Control/Observer contract enforcement.
 // Per taskpack authority: only Control Surface executes writes (through adapter/service contract); Observer projection never writes. All observer lanes (observer, rules-policy, audit, approvals as read-only projection) stay READ-ONLY; any approve/retry/cancel/rollback/install/apply must be blocked by backend contract and must not be reachable through hidden shortcuts/deep-links/shared components.
 export default function App() {
@@ -249,22 +256,25 @@ export default function App() {
     if (!snap && !error) {
       announce('投影加载中，首次快照未到达，数值保持 UNKNOWN')
     } else if (error && !snap) {
-      announce('实时数据不可用，界面显示 OFFLINE（不加载假数据）')
+      announce(`实时数据不可用，「${viewIdentity(view).label}」显示 OFFLINE（不加载假数据）`)
     } else if (live) {
       announce('已加载实时投影数据')
     } else if (snap && source === 'stale') {
       announce('实时数据不可用，已保留上次良好投影（last-good，标记为 STALE）')
     }
-  }, [snap, source, live, error])
+  }, [snap, source, live, error, view])
 
+  const active = viewIdentity(view)
   const mainContent = (
     error && !snap ? (
       <div className="panel mx-auto mt-10 max-w-xl text-center" role="alert">
-        <div className="mb-2 text-lg text-error">数据源不可用</div>
+        <div className="mb-2 text-lg text-error">数据源不可用 ·「{active.label}」</div>
         {/* The named offline affordance, not just prose: this is the one surface
             where the transport is known-failed rather than merely unmeasured, and
-            OfflineState is what says so in the same vocabulary the lanes use. */}
-        <OfflineState />
+            OfflineState is what says so in the same vocabulary the lanes use. It is
+            also the only proof a click had a consequence — with one identical card for
+            all 22 views the rail reads as dead while it is working. */}
+        <OfflineState subject={active.label} />
         <p className="whitespace-pre-wrap text-xs text-muted">{error}</p>
         <p className="mt-3 text-[12px] text-muted">
           保持 UNKNOWN 真相 — 不伪造 Agent / 模型 / 成本 / 资源

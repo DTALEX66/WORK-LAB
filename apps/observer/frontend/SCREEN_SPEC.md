@@ -148,17 +148,21 @@ region below "requires" one.
 ## Gate coverage owed
 
 `scripts/audit/topbar_geometry_via_cdp.py` asserts 12 checks at 1262px and 8 at 482px and passes, and
-`scripts/audit/text_legibility_via_cdp.py` asserts 6 checks per theme. Delivered since this section was
-written: rail reachability (`nav_items_reachable`, `nav_groups_are_disclosures`), action folding
-(`action_row_does_not_stack`), the type floor and AA contrast (both themes, two instruments). Still
-asserted by nothing:
+`scripts/audit/text_legibility_via_cdp.py` asserts 6 checks per theme plus three more for the switch
+itself. Delivered since this section was written: rail reachability (`nav_items_reachable`,
+`nav_groups_are_disclosures`), action folding (`action_row_does_not_stack`), the type floor and AA
+contrast in both themes (two instruments), and the degraded-state-per-view rule — the offline surface
+now names the active view, asserted for all 22 registered lanes plus distinctness of the 22 headings by
+`src/offlineViewIdentity.contract.test.tsx`. Theme "persistence" is not an open gap: web storage is
+forbidden in the UI layer by `test_production_surface_static_contract.js`, and `?theme=` in the address
+is the sanctioned mechanism (DESIGN.md Known Gap 2).
+
+Still asserted by nothing:
 
 1. **Region boundaries** — no instrument measures the topbar's bottom edge against `.main`'s top edge,
    or the gap between a band and its content, so a boundary can vanish and every check stays green.
-2. **Theme persistence** — nothing reloads the page and reads the theme back.
-3. **Degraded state per view** — the rule that each lane's offline/degraded card must be distinguishable
-   by view is asserted nowhere; today every lane renders the same card, which is exactly the shape that
-   made the rail look dead to the owner while it was working.
+   This is the last of the six assertion families, and it needs the 2.4.11 focus-not-obscured framing:
+   focus region C's first and last controls and assert they are not covered.
 
-Each of the three needs a planted-failure control proving it can go red; an assertion that cannot fail
-guards nothing (ERR-143's rule, and the reason the geometry probe was rewritten).
+Each new assertion must ship with a planted-failure control proving it can go red; an assertion that
+cannot fail guards nothing (ERR-143's rule, and the reason the geometry probe was rewritten).
