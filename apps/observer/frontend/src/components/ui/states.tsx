@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Loader2, CloudOff, Inbox, TriangleAlert, Lock } from 'lucide-react'
+import { CloudOff, Inbox, TriangleAlert, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
@@ -105,6 +105,10 @@ export interface OfflineStateProps {
 }
 
 export function OfflineState({ className, subject }: OfflineStateProps) {
+  // No action slot and no spinner here, deliberately: StateShell renders `action` as a left-aligned
+  // block, so an icon-only "still working" glyph in it reads as a stray mark rather than a status
+  // (it did — visible in the 2026-10-08 desktop screenshot), and SCREEN_SPEC assigns the
+  // "still fetching?" signal to the first-frame strip, which the shell already renders.
   return (
     <StateShell
       icon={<CloudOff size={26} strokeWidth={1.8} />}
@@ -112,7 +116,6 @@ export function OfflineState({ className, subject }: OfflineStateProps) {
       description={subject
         ? `后端快照不可达，此视图的数值全部保持 UNKNOWN（不伪造）。其他视图同样读不到：切换后看到的是各自的名称，不是界面卡住。`
         : '后端快照不可达，正在等待重连…'}
-      action={<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
       className={className}
       role="status"
     />

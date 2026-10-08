@@ -83,4 +83,14 @@ describe('the offline surface identifies its view', () => {
     expect(text).not.toMatch(/\b0\s*(次|个|tokens|¥|\$)/i)
     expect(text).toContain('保持 UNKNOWN 真相')
   })
+
+  it('shows no spinner of its own, because the strip already answers "still fetching?"', () => {
+    // The card used to pass an `animate-spin` icon into StateShell's `action` slot. That slot is a
+    // left-aligned block meant for a control, so the glyph rendered as a stray mark under the
+    // description — visible in the desktop screenshot while every text assertion stayed green.
+    // SCREEN_SPEC gives the first-frame strip that job; the card reports the failure, not the effort.
+    renderOffline('overview')
+    expect(document.querySelectorAll('[class*="animate-spin"]')).toHaveLength(0)
+    expect(screen.getAllByRole('status').length).toBeGreaterThan(0)
+  })
 })
