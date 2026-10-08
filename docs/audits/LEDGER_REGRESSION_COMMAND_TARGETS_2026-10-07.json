@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-08T20:32:35Z",
+  "at": "2026-10-08T22:01:29Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -273,11 +273,6 @@
     {
       "errorId": "ERR-115",
       "operand": "verify_no_stale_paths.py",
-      "statusAfter": "PARTIAL"
-    },
-    {
-      "errorId": "ERR-115",
-      "operand": "reports/audit-archive",
       "statusAfter": "PARTIAL"
     },
     {
@@ -2192,7 +2187,7 @@
         },
         {
           "operand": "reports/audit-archive",
-          "category": "GONE",
+          "category": "DIR_NOT_FILE",
           "candidates": []
         }
       ],

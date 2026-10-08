@@ -66,6 +66,7 @@ execution-detail|agents|projects|workflows|…>`, desktop WebView (Chromium) and
    Rancher's `shell/components/nav/Group.vue`), each group is a disclosure button with `aria-expanded`,
    Space/Enter toggling and Escape returning focus, so a long rail can be shortened as well as scrolled.
    Group collapse is **not implemented** — recorded as an open deviation, not as satisfied by the fix.
+   [no-tree-claim CROSS_PROJECT ref=shell/components/nav/]
 4. Group captions (`{typography.label-caps}`) are decorative duplicates of the item labels below them
    and must not be the only way to find a group by keyboard.
 5. Active item is marked by fill **plus** edge bar **plus** `aria-current="page"` — colour alone is

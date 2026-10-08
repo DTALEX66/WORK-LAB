@@ -46,14 +46,26 @@ SCOPED_ROOT = "docs/current/"
 # simply be fixed: a register row cites deleted paths, client-home layouts and model-cache names on purpose,
 # because the sentence is about the thing that is not here. So the surface carries its own exemptions, in
 # the row, as `DECLARATION` tokens below.
-EXTRA_SURFACES = ("taskpacks/current/OPEN-TASK-REGISTER.md",)
+EXTRA_SURFACES = ("taskpacks/current/OPEN-TASK-REGISTER.md",
+                  "apps/observer/frontend/DESIGN.md",
+                  "apps/observer/frontend/SCREEN_SPEC.md")
 # Measured floor, not a snapshot: below this the extractor is broken, not the documentation.
 REFS_FLOOR = 300
-# 333 references measured on the register at 097320d0, floored at the same ~88% ratio the widened scan
-# uses, so a register rewrite that quietly stops parsing cannot report a clean table.
-REGISTER_REFS_FLOOR = 280
+# Re-measured 2026-10-08 after the extension widening: the register yields 393 references (333 at
+# 097320d0, before the row rewrites of task #26). The floor moves with the measurement rather than with
+# the row count, so a row retirement is a decision and not a silent shrink of the scan.
+REGISTER_REFS_FLOOR = 300
+# Per-surface floors for the design contract, measured 2026-10-08 at 34 and 10 references (24 and 9 before
+# the stylesheet suffixes were recognised). Below these the extractor stopped reading the file; the
+# documents are short, so the register's floor would be instantly wrong for them.
+SURFACE_REF_FLOORS = {"apps/observer/frontend/DESIGN.md": 25,
+                      "apps/observer/frontend/SCREEN_SPEC.md": 8}
+# Widened 2026-10-08 to include the stylesheet and component-file suffixes. The design contract surfaces
+# cite `*.css`, `*.scss` and `*.vue` paths in their densest column, and a list without them guarded
+# DESIGN.md in name only: measured, adding them takes the judged references over the scanned surfaces from
+# 837 to 854 and convicted 6 real claims that had never been looked at.
 EXTENSIONS = ("md", "json", "py", "ts", "tsx", "yml", "yaml", "example", "lock", "txt",
-              "sh", "bash", "ps1")
+              "sh", "bash", "ps1", "css", "scss", "sass", "less", "vue", "svelte")
 FILE_REF = re.compile(r"`([^`\s]*/[^`\s]*\.(?:%s))`" % "|".join(EXTENSIONS))
 DIR_REF = re.compile(r"`([^`\s]+/)`")
 FENCE = re.compile(r"^```(\w*)")
@@ -75,6 +87,9 @@ DECLARATION_CODES = {
     "MODEL_CACHE": "a shared model or toolchain library root, not this repository",
     "CROSS_PROJECT": "a path owned by another project and quoted as such",
     "ILLUSTRATIVE": "an operand in an example of what a checker must reject, not a claim about the tree",
+    "SERVED_ROUTE": "an HTTP path a running process answers (`GET /control-shell.css`), written the way "
+                    "the server documents it; the identical spelling with a leading slash is also how "
+                    "this checker reads a repository-root file claim, so the sentence has to say which",
 }
 LOWER_SEGMENT = re.compile(r"^[a-z0-9._-]+$")
 
@@ -101,13 +116,20 @@ DECLARED_NON_PATHS: dict[str, str] = {
     ".project-local/": "the git-ignored in-boundary runtime and evidence root; nothing under it is "
                        "tracked by design, so it must never be judged against git ls-files",
 }
-# This list is deliberately one entry long. It used to also declare `skills/`, `bin/` and
+# This list stays one entry long on purpose. It used to also declare `skills/`, `bin/` and
 # `.codex/AGENTS.md`, and that turned out to be a bug in the checker rather than in the docs: the README
 # wrote those bare names for the user's Hermes Home and Codex home, while the same spellings appeared in
 # 仓库结构 meaning repository directories. One string-keyed declaration cannot tell the two referents
 # apart, so it hid the stale map entry. The prose now says `$HERMES_HOME/skills/`, `$HERMES_HOME/bin/` and
 # `$CODEX_HOME/AGENTS.md` -- the notation this repo already uses elsewhere -- and a placeholder is skipped
 # rather than excused.
+#
+# Anything else belongs in the sentence that cites it, as an in-row `[no-tree-claim CROSS_PROJECT ref=…]`
+# token: measured 2026-10-08, DESIGN.md's reference-systems table cites five paths inside *other* projects'
+# repositories, and a global declaration would have muted those five spellings in every surface forever --
+# `frontend/src/styles/` is exactly the kind of name this repo's own frontend could be mis-written as. An
+# in-row token is scoped to the page, must excuse a reference the page actually makes, and goes stale the
+# day the tree answers to the name.
 
 
 def repo_root() -> Path:
@@ -124,7 +146,7 @@ def tracked_paths(root: Path) -> list[str]:
 
 
 def references(text: str) -> list[tuple[int, str, str]]:
-    """Backticked references, plus the first-column token of a language-less fenced map.
+    r"""Backticked references, plus the first-column token of a language-less fenced map.
 
     A directory map written in a fenced block is normative prose -- the README's 仓库结构 listed `bin/`,
     `skills/` and `scripts/workflow/` as repository directories with no backticks around them, and a
@@ -194,14 +216,40 @@ def anchored(target: str, ref: str) -> str:
     return normpath(PurePosixPath(PurePosixPath(target).parent / rel).as_posix())
 
 
+def candidates(target: str, ref: str) -> list[str]:
+    """Every repo-relative form a reference could legitimately mean, root form first.
+
+    `anchored()` folds `../` but leaves a bare `src/...` at the repository root, which is wrong for a
+    document that lives in a subdirectory: `apps/observer/frontend/DESIGN.md` citing
+    `src/theme/tokens.ts` means the file beside itself, and that file exists. The document-relative
+    form is tried only when the root form fails, so this can never excuse a reference that used to
+    resolve — a root-anchored path that stops existing still reports broken.
+    """
+    primary = anchored(target, ref)
+    sibling = (PurePosixPath(PurePosixPath(target).parent) / primary).as_posix()
+    return [primary] if primary == sibling else [primary, sibling]
+
+
 def declared(ref: str) -> str | None:
-    """The declaration covering this reference: exact, or an untracked directory prefix."""
+    """The global declaration covering this reference: exact, or an untracked directory prefix."""
     if ref in DECLARED_NON_PATHS:
         return ref
     for entry in DECLARED_NON_PATHS:
         if entry.endswith("/") and (ref == entry or ref.startswith(entry)):
             return entry
     return None
+
+
+def covered(ref: str, exemption: str) -> bool:
+    """Whether an in-row declaration answers this reference: exact, or a declared directory's child.
+
+    A page that cites one file deep inside another project's tree (`packages/grafana-data/src/themes/…`)
+    is making one claim about one foreign root, so the token is written at the directory. The scope is the
+    surface that carries the token, which is what makes this safe where the global list is not: a stale or
+    over-broad exemption here can only hide rot inside one document, and the residue rule below still
+    refuses a token that excuses nothing in that document.
+    """
+    return ref == exemption or (exemption.endswith("/") and ref.startswith(exemption))
 
 
 def resolves(tracked: list[str], ref: str, kind: str) -> bool:
@@ -267,7 +315,10 @@ def check(root: Path, tracked: list[str], target: str) -> tuple[list, list, list
     for number, ref, kind in references(body):
         if is_placeholder(ref):
             continue
-        rows.append((number, anchored(target, ref), kind))
+        options = candidates(target, ref)
+        hit = next((c for c in options
+                    if resolves(tracked, c, kind) or declared(c) is not None), None)
+        rows.append((number, hit if hit is not None else options[0], kind))
     broken = [row for row in rows
               if declared(row[1]) is None and not resolves(tracked, row[1], row[2])]
 
@@ -280,11 +331,12 @@ def check(root: Path, tracked: list[str], target: str) -> tuple[list, list, list
                                    f"{'/'.join(sorted(DECLARATION_CODES))}"))
             continue
         kind = "directory" if anchored_ref.endswith("/") else "file"
-        if resolves(tracked, anchored_ref, kind) or declared(anchored_ref) is not None:
+        token_options = candidates(target, ref)
+        if any(resolves(tracked, c, kind) or declared(c) is not None for c in token_options):
             problems.append((line, f"declares `{ref}` as a non-tree claim, but the tree answers to it "
                                    "-- the exemption now hides a live path; fix the sentence instead"))
             continue
-        if not any(row[1] == anchored_ref for row in broken):
+        if not any(covered(row[1], token_options[0]) for row in broken):
             problems.append((line, f"declares `{ref}`, which this surface does not ask about at all "
                                    "-- either the pointer was fixed and the token is residue, or the "
                                    "spelling differs from the reference it excuses"))
@@ -299,8 +351,9 @@ def check(root: Path, tracked: list[str], target: str) -> tuple[list, list, list
             continue
         exempt.add(anchored_ref)
 
-    unresolved = [row for row in broken if row[1] not in exempt]
-    rows = [(*row, row[1] in exempt) for row in rows]
+    unresolved = [row for row in broken
+                  if not any(covered(row[1], e) for e in exempt)]
+    rows = [(*row, any(covered(row[1], e) for e in exempt)) for row in rows]
 
     # a global declaration goes stale when the tree contradicts what it asserted, so the test is run on
     # the declaration itself: ".project-local/" means "nothing under here is tracked", and one tracked file
@@ -327,7 +380,9 @@ def strict_surfaces() -> set[str]:
 
 def floors() -> dict[str, int]:
     """Per-scope measured floors: a run whose extractor matched almost nothing is not a clean scan."""
-    return {SCOPED_ROOT: REFS_FLOOR, **{target: REGISTER_REFS_FLOOR for target in EXTRA_SURFACES}}
+    return {SCOPED_ROOT: REFS_FLOOR,
+            **{target: SURFACE_REF_FLOORS.get(target, REGISTER_REFS_FLOOR)
+               for target in EXTRA_SURFACES}}
 
 
 def main(argv: list[str] | None = None) -> int:

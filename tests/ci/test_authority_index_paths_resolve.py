@@ -56,6 +56,35 @@ class ResolutionAgainstTheTrackedTree(unittest.TestCase):
         self.assertEqual(".project-local/", checker.declared(".project-local/artifacts/"))
         self.assertIsNone(checker.declared("scripts/workflow/"))
 
+    def test_a_reference_written_against_its_own_document_resolves_as_a_sibling(self) -> None:
+        """DESIGN.md lives in apps/observer/frontend/ and writes `src/…` paths that live beside it.
+
+        Before 2026-10-08 the checker only ever tried the repository-root form, so real pointers in the
+        design contract reported as dead. The sibling form is tried second, which is what keeps this a
+        widening rather than an excuse: a root-anchored name that stops existing still convicts.
+        """
+        self.assertEqual(["src/styles/x.css", "apps/observer/frontend/src/styles/x.css"],
+                         checker.candidates("apps/observer/frontend/DESIGN.md", "src/styles/x.css"))
+        # a reference that is already written from the repository root keeps that root form as its first
+        # candidate; the document-relative form is only ever the fallback
+        self.assertEqual("docs/current/x.md",
+                         checker.candidates("docs/current/y.md", "docs/current/x.md")[0])
+
+    def test_a_root_anchored_name_is_tried_at_the_root_first(self) -> None:
+        """Ordering is the safety property: the sibling form is a fallback, never a substitute."""
+        options = checker.candidates("apps/observer/frontend/DESIGN.md", "scripts/setup-workflow.sh")
+        self.assertEqual("scripts/setup-workflow.sh", options[0])
+        self.assertTrue(TRACKED.count(options[0]) == 1, "the fixture must keep a root-form hit available")
+
+    def test_a_stylesheet_reference_is_extracted_at_all(self) -> None:
+        """Measured 2026-10-08: DESIGN.md's densest column cites .css/.scss/.vue, and the extractor saw none.
+
+        The widening added 17 judged references over the scanned surfaces and convicted 6 claims that had
+        never been looked at. This assertion is the difference between guarding a document and naming it.
+        """
+        for ref in ("`apps/x/y.css`", "`apps/x/y.scss`", "`apps/x/y.vue`"):
+            self.assertEqual(1, len(checker.references(f"- {ref}\n")), ref)
+
 
 class SurfaceChecks(unittest.TestCase):
     def setUp(self) -> None:
@@ -119,6 +148,55 @@ class SurfaceChecks(unittest.TestCase):
         self.assertEqual(1, len(problems))
         self.assertIn("unknown reason code", problems[0][1])
 
+    def test_a_document_relative_reference_resolves_and_a_dead_one_still_fires(self) -> None:
+        """`src/styles/x.css` inside apps/observer/frontend/DESIGN.md means the file beside it.
+
+        Both halves are asserted because the fallback is only safe if it is a fallback: the same page
+        writing a name that exists in neither form must still be convicted.
+        """
+        tracked = ["apps/observer/frontend/src/styles/x.css", "apps/observer/frontend/DESIGN.md"]
+        target = "apps/observer/frontend/DESIGN.md"
+        _rows, broken, _p = checker.check(self.dir, tracked,
+                                          self.write_at(target, "- `src/styles/x.css`: the shell sheet\n"))
+        self.assertEqual([], broken, f"a sibling pointer was reported dead: {broken}")
+        _rows, broken, _p = checker.check(self.dir, tracked,
+                                          self.write_at(target, "- `src/styles/gone.css`: x\n"))
+        self.assertEqual(["src/styles/gone.css"], [row[1] for row in broken])
+
+    def test_an_in_row_directory_declaration_covers_a_deep_foreign_file(self) -> None:
+        """The design contract cites `packages/grafana-data/src/themes/createTypography.ts` as Grafana's.
+
+        The token is written at the foreign root, so one declaration covers the paths quoted under it,
+        and it stays scoped to the page that carries it rather than muting the spelling repo-wide.
+        """
+        text = ("- `packages/grafana-data/src/themes/createTypography.ts` is Grafana's own file.\n"
+                "  [no-tree-claim CROSS_PROJECT ref=packages/grafana-data/]\n")
+        rows, broken, problems = checker.check(self.dir_parent(), TRACKED, self.write("foreign.md", text))
+        self.assertEqual([], broken, f"the declared foreign tree did not cover its child: {broken}")
+        self.assertEqual([], problems)
+        self.assertTrue(any(len(row) > 3 and row[3] for row in rows), f"nothing marked exempt: {rows}")
+
+    def test_a_declaration_that_covers_nothing_is_residue(self) -> None:
+        text = ("- `scripts/workflow/gone.py`: x\n"
+                "  [no-tree-claim CROSS_PROJECT ref=nowhere/at/all/]\n")
+        _rows, broken, problems = checker.check(self.dir_parent(), TRACKED, self.write("residue.md", text))
+        self.assertEqual(["scripts/workflow/gone.py"], [row[1] for row in broken])
+        self.assertEqual(1, len(problems), f"an exemption excusing nothing must be reported: {problems}")
+        self.assertIn("does not ask about", problems[0][1])
+
+    def test_a_served_route_is_declared_as_a_route_not_as_a_file(self) -> None:
+        """`/control-shell.css` is a GET endpoint whose real file lives under apps/control-surface/.
+
+        A leading slash is how this checker reads a repository-root file claim, so the sentence has to
+        say which of the two it is; this code is what lets the register list endpoints honestly.
+        """
+        self.assertIn("SERVED_ROUTE", checker.DECLARATION_CODES)
+        text = ("- GET 只暴露 `/control-shell.css`\n"
+                "  [no-tree-claim SERVED_ROUTE ref=/control-shell.css]\n")
+        _rows, broken, problems = checker.check(self.dir_parent(), TRACKED, self.write("route.md", text))
+        self.assertEqual([], broken, f"the declared route still reported a missing file: {broken}")
+        self.assertEqual([], problems)
+
     def dir_parent(self) -> Path:
         return self.dir
 
@@ -126,6 +204,14 @@ class SurfaceChecks(unittest.TestCase):
         (self.dir / name).write_text(text, encoding="utf-8", newline="\n")
         self.assertEqual(text, (self.dir / name).read_text(encoding="utf-8"))
         return name
+
+    def write_at(self, target: str, text: str) -> str:
+        """Write a page at a nested path, for the cases where the document's own directory matters."""
+        page = self.dir / target
+        page.parent.mkdir(parents=True, exist_ok=True)
+        page.write_text(text, encoding="utf-8", newline="\n")
+        self.assertEqual(text, page.read_text(encoding="utf-8"))
+        return target
 
 
 def _runtime_root() -> Path:
@@ -259,6 +345,25 @@ class RealSurfaces(unittest.TestCase):
     def test_only_the_untracked_runtime_root_is_declared(self) -> None:
         """Measured 2026-10-08: everything else resolves, so a new declaration needs its own reason."""
         self.assertEqual({".project-local/"}, set(checker.DECLARED_NON_PATHS))
+        for entry, reason in checker.DECLARED_NON_PATHS.items():
+            self.assertGreater(len(reason), 40, f"{entry} is declared with a shrug")
+
+    def test_the_design_contract_surfaces_are_guarded_not_just_named(self) -> None:
+        """Adding a surface to EXTRA_SURFACES has to buy measurement, not a line in a tuple.
+
+        DESIGN.md and SCREEN_SPEC.md joined the scan on 2026-10-08 with the extension widening, because
+        before it they were strict in name and blind in fact: their densest column cited .css/.scss/.vue
+        paths the extractor never read. The floor assertion is what keeps that from quietly regressing.
+        """
+        tracked = checker.tracked_paths(REPO)
+        for target in ("apps/observer/frontend/DESIGN.md", "apps/observer/frontend/SCREEN_SPEC.md"):
+            self.assertIn(target, checker.scanned_surfaces(tracked), f"{target} is not scanned")
+            self.assertIn(target, checker.strict_surfaces(), f"{target} is scanned but not held strict")
+            rows, broken, problems = checker.check(REPO, tracked, target)
+            self.assertGreaterEqual(len(rows), checker.SURFACE_REF_FLOORS[target],
+                                    f"{target} yields {len(rows)} references, below its floor")
+            self.assertEqual([], broken, f"{target} has unresolved references")
+            self.assertEqual([], problems, f"{target} has a stale or residue declaration")
 
     def test_a_map_entry_is_a_path_claim_only_in_file_or_directory_shape(self) -> None:
         """`origin/main SHA/tree` and `/interrupt` are a ref and a command, not missing files.

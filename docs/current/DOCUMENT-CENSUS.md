@@ -12,7 +12,7 @@
 | 新任务卡放哪 | `taskpacks/current/README.md`：任务权威模型是 `CURRENT TaskPack -> OPEN Register + currentTaskCards`； subordinate 卡片是"本目录内的规划记录，不是第二个 CURRENT taskpack"，其机器权威在 `.project/governance/taskpack-authority-index.json` 的 `currentTaskCards[]` |
 | 唯一开放任务账本 | `README.md:16`：`taskpacks/current/OPEN-TASK-REGISTER.md`（唯一在册开放任务账本，不建第二个） |
 | 归档怎么做 | `docs/current/workflow-assistance/workflow/active-authority-index.md:69-70`：新增权威文件必须登记到索引；归档操作＝移入 `taskpacks/history/` 或 `docs/history/`（保留 Git 历史），**不删除** |
-| 移动会被谁拦 | `scripts/ci/verify_authority_index_paths.py` 默认扫 `docs/current/*.md`（实测 38 个）∪ 唯一 register；4 个导航面（`NAVIGATION_SURFACES`）refs=0 即 FAIL；解析只对着 `git ls-files` |
+| 移动会被谁拦 | `scripts/ci/verify_authority_index_paths.py` 默认扫 `docs/current/` 下全部受跟踪 md ∪ `EXTRA_SURFACES`（register + 两份设计合同面，实测 42 面）；7 个严格面（`NAVIGATION_SURFACES` ∪ `EXTRA_SURFACES`）refs=0 即 FAIL，每个面另有 refs 下限防扫描面自己缩水报绿；解析只对着 `git ls-files` |
 
 ## 2. 文档面全景（实测）
 
@@ -111,6 +111,26 @@
    于是被静默跳过；清单类统计一律 `-z` 分割。
 4. **活引用要收敛**：§5 的退役根引用逐条改指现路径；把 `reports/`、根目录、`knowledge-staging/` 纳入
    引用门禁扫描面，否则"文档存在但没人能找到"仍会发生。
+   **已做（2026-10-08，第 4 项的设计合同部分）**：`apps/observer/frontend/DESIGN.md` 与
+   `SCREEN_SPEC.md` 进 `EXTRA_SURFACES`（受严格面规则），每个面配实测下限（`DESIGN.md` 25 / 34、
+   `SCREEN_SPEC.md` 8 / 10、register 300 / 393、`docs/current/` 300 / 396），下限的作用是**缩水必须被
+   决定一次**，不是装饰。同一轮把提取器补上样式与组件后缀（css/scss/sass/less/vue/svelte）：此前
+   `DESIGN.md` 引用最密的那一列它一条都读不到。实测两个口径都写清楚——原始匹配 837→854，去掉示意名后
+   真正被判定的引用 817→833；新增判定里 6 条落在外树或路由上，5 条需要各自的就地声明
+   （`DESIGN.md` 3、`SCREEN_SPEC.md` 1、register 1），第 6 条被同面已有的目录级声明顺带覆盖。都按所在句
+   声明，不改成仓库级静音。引用解析加了"先根、后同目录"两级候选：设计文档里的 `src/…` 写法指的是自己
+   旁边的文件（示意名按本仓约定带省略号，才不会被当成一次死链断言——我第一版把示例直接写成反引号路径，
+   引用门禁当场把这一句判红，这是它在正常工作）；顺序就是安全性——根形式永远先试，
+   原本能在根上解析的名字断了仍报 broken。新增 8 条断言（`tests/ci/test_authority_index_paths_resolve`
+   由 28 例到 36 例全绿），5 个关键特性各做一次"把实现拿掉必须变红"的反证。反证脚本的第一版是**假通过**：
+   加载器名写错，五条全部在到达断言之前就报错，而判据只看"有失败或错误"，于是统一打印 CAUGHT。
+   认出它的特征是五条形状完全一致（`errors=1 failures=0`，真实断言失败应是 `failures=1 errors=0`）；
+   修正判据为"必须是 failures 且 errors=0"并重跑，才是真的 5/5。
+   **未做（第 4 项剩余部分，含明确理由）**：`reports/`、`knowledge-staging/`、根目录**没有**并入扫描面。
+   先量了代价：naive 并入会一次抛出 **3,492** 条断链，那是一个无人认领的队列而不是一个控制。这三面是
+   逐文件冻结面（第 3 项），改内容会被冻结门禁判红，所以正确的形状是**棘轮**：把当前断链集合发布成一份
+   基线工件，门禁要求条数不得超过基线、且基线里每一条今天仍须断（修好一条就必须重发基线），随后按目录
+   分批把基线压到 0。这一步未做，登记在此而不是静默丢弃。
 
 ## 8. 未测 / 不确定（不假装）
 

@@ -397,6 +397,11 @@ consulted rather than copied wholesale, and each with one thing not to take.
 | Langfuse | `web/src/styles/globals.css`, `fonts.ts` | one CSS-variable token set driving both themes — which is exactly the shape of the light-theme failures recorded below | doc-site prose typography leaking into app chrome |
 | SigNoz | `frontend/src/styles/`, antd theme tokens | log/trace table density | theme values left inline instead of tokenised |
 
+Every value in the `Token source` column is a path inside *that project's own* repository. This tree does
+not contain them and must not be read as if it did, so `scripts/ci/verify_authority_index_paths.py` needs
+each one declared at the sentence rather than excused repo-wide:
+[no-tree-claim CROSS_PROJECT ref=packages/grafana-data/][no-tree-claim CROSS_PROJECT ref=packages/eui/][no-tree-claim CROSS_PROJECT ref=public/sass/][no-tree-claim CROSS_PROJECT ref=app/assets/css/][no-tree-claim CROSS_PROJECT ref=shell/assets/styles/][no-tree-claim CROSS_PROJECT ref=shell/components/nav/][no-tree-claim CROSS_PROJECT ref=web/src/styles/][no-tree-claim CROSS_PROJECT ref=frontend/src/styles/]
+
 ## Known Gaps
 
 `needs-design-decision` unless marked otherwise (implementation deviation).
