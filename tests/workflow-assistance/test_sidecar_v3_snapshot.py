@@ -482,11 +482,20 @@ class SidecarV3SnapshotTests(unittest.TestCase):
                 return CollectorResult(kind="quality", ok=True, records=[])
             try:
                 sidecar.start_worker(tick_seconds=0.05, collectors=[healthy_collector])
-                deadline = time.time() + 2.0
-                while not sidecar.store.list_collector_health() and time.time() < deadline:
+                # run_forever writes the collector rows inside run_once() and only stamps `worker_loop`
+                # after that tick returns, so a health table with "something in it" is a legal intermediate
+                # state, not a finished one. Wait for the set the sidecar itself declares as expected.
+                deadline = time.time() + 5.0
+                while time.time() < deadline:
+                    names = {row["name"] for row in sidecar.store.list_collector_health()}
+                    if names >= sidecar._expected_collector_names:
+                        break
                     time.sleep(0.02)
                 self.assertTrue(sidecar.worker_running())
                 health_names = {row["name"] for row in sidecar.store.list_collector_health()}
+                missing = sidecar._expected_collector_names - health_names
+                self.assertFalse(missing,
+                                 f"these collectors never reported health within 5s: {sorted(missing)}")
                 self.assertIn("healthy_collector", health_names)
                 self.assertIn("worker_loop", health_names)
                 self.assertEqual(sidecar.store.list_projects()[0]["project_id"], "work-lab")
