@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-08T00:19:54Z",
+  "generatedAt": "2026-10-08T00:31:12Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -727,20 +727,20 @@
       "id": "ERR-186",
       "statusAfter": "PASS",
       "fixedCommit": "5d8bf3c248eb0a973832e15810ed2115377d0207",
-      "verifiedCommit": null,
+      "verifiedCommit": "f29fdbc41ea1398060caeb9112dca8b8a47444f3",
       "promise": "tests/workflow-assistance/test_project_terminal_guard.py",
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": true
     },
     {
       "id": "ERR-187",
       "statusAfter": "PASS",
       "fixedCommit": "98df72c3d51d4da2b7e452a06f12c256feb76e54",
-      "verifiedCommit": null,
+      "verifiedCommit": "f29fdbc41ea1398060caeb9112dca8b8a47444f3",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": true
     },
     {

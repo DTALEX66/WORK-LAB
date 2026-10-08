@@ -4701,7 +4701,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at 9d4297d94c0b80d3c749f23e957af2a547dbe7f3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "the command's file operand resolves in apps/observer/frontend"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-157",
@@ -4733,7 +4733,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at 9d4297d94c0b80d3c749f23e957af2a547dbe7f3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "the command's cwd and script operand both resolve in the tree"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-158",
@@ -4765,7 +4765,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at 01798ebb55c23786e440ab88cd0fcf8b7602a2e4: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "the recorded npm contract is the CI-invoked one and its test-file operand resolves in the tree"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-159",
@@ -4797,7 +4797,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at 01798ebb55c23786e440ab88cd0fcf8b7602a2e4: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "the recorded npm contract is the CI-invoked one and its test-file operand resolves in the tree"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-160",
@@ -4861,7 +4861,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at 9f587aba737417608ca2bdf5b281d2b8cf1504a9: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "the command's script operand resolves against git ls-files"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-162",
@@ -4893,7 +4893,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at ee570da5eba803abad322d938adc069294ab20ae: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "the command's test-file operand resolves against git ls-files"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-163",
@@ -4926,7 +4926,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "the named test file exists and is tracked by git ls-files"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-164",
@@ -4959,7 +4959,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "named test file is tracked and discoverable"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-165",
@@ -4992,7 +4992,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/ci/test_topbar_geometry_gate.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-166",
@@ -5025,7 +5025,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_evidence_range_reader.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-167",
@@ -5058,7 +5058,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-168",
@@ -5091,7 +5091,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-169",
@@ -5124,7 +5124,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "scripts/ci/generate_current_state.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-170",
@@ -5157,7 +5157,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "apps/observer/tests/test_production_surface_static_contract.js is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-171",
@@ -5190,7 +5190,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "scripts/audit/outside_root_spill_sweep.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-172",
@@ -5223,7 +5223,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-173",
@@ -5256,7 +5256,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/ci/test_governance_gate.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-174",
@@ -5289,7 +5289,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-175",
@@ -5322,7 +5322,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-176",
@@ -5355,7 +5355,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/ci/test_no_home_credential_document_is_tracked.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-177",
@@ -5386,7 +5386,7 @@
         "regressionCommand": "python -m pytest -q tests/ci/test_no_home_credential_document_is_tracked.py"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/ci/test_no_home_credential_document_is_tracked.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-178",
@@ -5419,7 +5419,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-179",
@@ -5451,8 +5451,8 @@
         "pendingHead": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
-      "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
-      "regressionTestVerifiabilityReason": "the command measures a commit diff, not a file operand in the tree"
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-180",
@@ -5485,7 +5485,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-181",
@@ -5518,7 +5518,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_ledger_unbound_triage.py is tracked and is the gate that observed the unbound count move 94 -> 95; the recorded command reads a gate receipt, which is a run artifact rather than a file operand of the regression test"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-182",
@@ -5551,7 +5551,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at c0d8e9b4e2b11055549d8171994562ea9abc94a3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/ci/test_contract_ssot_helper_boundary.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-183",
@@ -5562,7 +5562,7 @@
       "entrypoint": "services/control/control_service.py",
       "regression_test": "tests/workflow-assistance/test_control_service.py",
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "status_before": "FAIL",
       "status_after": "PASS",
       "evidence_level": "local-focused",
@@ -5595,7 +5595,7 @@
       "entrypoint": "tests/ci/test_contract_ssot_helper_boundary.py",
       "regression_test": "tests/workflow-assistance/test_control_service.py",
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "status_before": "FAIL",
       "status_after": "PASS",
       "evidence_level": "local-focused",
@@ -5650,7 +5650,7 @@
         "verifiedCommitNote": "exact-SHA Actions readback at df6d60733f20d1db8c0f5378229142bbeab46130: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_tool_inventory_coverage.py is tracked",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_tool_inventory_coverage.py"
     },
     {
@@ -5675,14 +5675,16 @@
         "introducedCommit": null,
         "introducedCommitNote": "the guard and its tests predate this session; the coverage gap is original",
         "fixedCommit": "5d8bf3c248eb0a973832e15810ed2115377d0207",
-        "verifiedCommit": null,
+        "verifiedCommit": "f29fdbc41ea1398060caeb9112dca8b8a47444f3",
         "bindingBasis": "commit-contains-fix: 5d8bf3c2 adds the four forced-branch tests",
         "bindingNote": "bound 2026-10-08; verifiedCommit awaits the next green exact-SHA run",
         "affectedCapability": "Cross-platform coverage of the project terminal guard",
-        "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_project_terminal_guard.py"
+        "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_project_terminal_guard.py",
+        "pendingHead": "f29fdbc41ea1398060caeb9112dca8b8a47444f3",
+        "verifiedCommitNote": "exact-SHA Actions readback at f29fdbc41ea1398060caeb9112dca8b8a47444f3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_project_terminal_guard.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-187",
@@ -5706,14 +5708,16 @@
         "introducedCommit": null,
         "introducedCommitNote": "the 405 paths predate this session; the unread-body behaviour came with them",
         "fixedCommit": "98df72c3d51d4da2b7e452a06f12c256feb76e54",
-        "verifiedCommit": null,
+        "verifiedCommit": "f29fdbc41ea1398060caeb9112dca8b8a47444f3",
         "bindingBasis": "commit-contains-fix: 98df72c3 adds the single-read body accessor, the drain on refusals and the raw-socket assertion",
         "bindingNote": "bound 2026-10-08; verifiedCommit awaits the next green exact-SHA run",
         "affectedCapability": "Read-only denial is parseable by every client",
-        "regressionCommand": "python -m unittest -q test_control_service"
+        "regressionCommand": "python -m unittest -q test_control_service",
+        "pendingHead": "f29fdbc41ea1398060caeb9112dca8b8a47444f3",
+        "verifiedCommitNote": "exact-SHA Actions readback at f29fdbc41ea1398060caeb9112dca8b8a47444f3: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/workflow-assistance/test_control_service.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-188",
@@ -5744,7 +5748,7 @@
         "regressionCommand": "python -m pytest -q tests/ci/test_ledger_commit_field_shape.py"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/ci/test_ledger_commit_field_shape.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-189",
@@ -5775,7 +5779,7 @@
         "regressionCommand": "python -m pytest -q tests/ci/test_readme_history_links_are_labelled.py"
       },
       "regressionTestVerifiability": "RESOLVES",
-      "regressionTestVerifiabilityReason": "tests/ci/test_readme_history_links_are_labelled.py is tracked"
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     }
   ],
   "wlrReconciled": true,
