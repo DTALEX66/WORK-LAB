@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-08T02:21:45Z",
+  "generatedAt": "2026-10-08T02:30:35Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2141,
@@ -3848,7 +3848,7 @@
       {
         "path": ".project-local/runs/qoder-20261008-a/unreachable_sha_map.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 5940,
+        "line": 5941,
         "text": "\"fix\": \"No code fix yet, and deliberately no fixedCommit. This round measured the repair instead of guessing at it: `.project-local/runs/qoder-20261008-a/unreachable_sha_map.json` (6951 bytes, 13 entr"
       },
       {

@@ -5923,8 +5923,9 @@
         "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
         "introducedCommitNote": "the 2026-09-17 branch cutover (PR #124) that brought this file into the tracked tree already carrying the text; confirmed with git log -S on the exact string and the commit is an ancestor of HEAD",
         "fixedCommit": "7258c20ae8bfb94ba1a30c324cfd6f49453c5482",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 7258c20a carries the corrected README, the rewritten verifier and the widened test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "7143cce4a56da70c4bea96205040c4db8aebc680",
+        "bindingBasis": "commit-contains-fix: 7258c20a carries the corrected README, the rewritten verifier and the widened test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at 7143cce4a56da70c4bea96205040c4db8aebc680: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -5979,8 +5980,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "the stray pipes accumulated across many commits and two of the nine rows were written during this session; no single introducing commit is claimed",
         "fixedCommit": "53dbfb367d35181bd716b28ffc8442820f9c4174",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 53dbfb36 carries the repaired register, the verifier and the test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "7143cce4a56da70c4bea96205040c4db8aebc680",
+        "bindingBasis": "commit-contains-fix: 53dbfb36 carries the repaired register, the verifier and the test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at 7143cce4a56da70c4bea96205040c4db8aebc680: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
