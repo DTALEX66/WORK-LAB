@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T18:37:19Z",
+  "generatedAt": "2026-10-08T18:45:24Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -661,8 +661,8 @@
     },
     {
       "path": "scripts/audit/text_legibility_via_cdp.py",
-      "sha256": "3a8affc45425363c9607b079ddfac12e1449f1f2a22cf48e6efbf17b639980c1",
-      "bytes": 40064,
+      "sha256": "2dee5e208d4ddbc48efc9862f8bece38ae85feb39c25141c63556681f423174a",
+      "bytes": 40071,
       "lines": 770,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,

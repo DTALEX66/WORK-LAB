@@ -731,9 +731,9 @@ def main() -> int:
                                                             browser, u19,
                                                             viewport=(size, 820))
                         except Exception as exc:  # noqa: BLE001
-                            print(f"LEGIBILITY_GATE_NOT_RUN views/{theme}@{size} {exc!r}")
+                            print(f"LEGIBILITY_GATE_NOT_RUN views/{theme} at {size}px {exc!r}")
                             return 3
-                        reports.append({"theme": f"{theme}-views@{size}",
+                        reports.append({"theme": f"{theme}-views-{size}px",
                                         "verdict": views_verdict(theme, collected, size),
                                         "collected": collected, "browser": browser})
                     continue
