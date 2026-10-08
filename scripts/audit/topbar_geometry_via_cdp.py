@@ -70,6 +70,31 @@ EXPR = """JSON.stringify((()=>{
         return r.width>0 && r.right > innerWidth - 2 && r.left < innerWidth - 2;})
       .slice(0,12).map(e=>e.tagName+'.'+(typeof e.className==='string'?e.className:'')
         +' right='+Math.round(e.getBoundingClientRect().right));
+  const nav = document.querySelector('.nav');
+  if (nav) {
+    // Reachability, not presence. A rail that declares `overflow:auto` but is as tall as its content
+    // cannot scroll, so everything past the fold is unreachable by pointer, keyboard or wheel -- the
+    // shape the shipped skin had for a week while every "is it in the DOM" check stayed green.
+    const buttons = Array.from(nav.querySelectorAll('button'));
+    const inView = (list) => list.filter((b) => {
+      const r = b.getBoundingClientRect();
+      return r.top >= 0 && r.bottom <= innerHeight;
+    }).length;
+    const atTop = inView(buttons);
+    const overflow = nav.scrollHeight > nav.clientHeight + 1;
+    nav.scrollTop = nav.scrollHeight;
+    const afterScroll = inView(buttons);
+    let lastHitInside = false;
+    const last = buttons[buttons.length - 1];
+    if (last) {
+      const r = last.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      lastHitInside = !!(hit && last.contains(hit)) && r.top >= 0 && r.bottom <= innerHeight;
+    }
+    nav.scrollTop = 0;
+    out.__navReach = { total: buttons.length, atTop, afterScroll, overflow, lastHitInside,
+                       clientH: nav.clientHeight, scrollH: nav.scrollHeight };
+  }
   return out;
 })())"""
 
@@ -280,6 +305,19 @@ def verdict(measured: dict, view: str) -> dict:
         add("rail_always_present", bool(rail) and rail["width"] >= RAIL_MIN_WIDTH,
             f"rail={rail and rail['width']} min={RAIL_MIN_WIDTH}")
         add("rail_at_left_edge", bool(rail) and rail["left"] <= 1, f"left={rail and rail['left']}")
+
+        reach = measured.get("__navReach") or {}
+        total = reach.get("total") or 0
+        if not total:
+            add("nav_items_reachable", False, "no .nav button measured; the rail rendered nothing")
+        else:
+            fits = reach.get("atTop") == total
+            scrolls = bool(reach.get("overflow"))
+            last_reachable = reach.get("lastHitInside") is True
+            add("nav_items_reachable", fits or (scrolls and last_reachable),
+                f"total={total} atTop={reach.get('atTop')} afterScroll={reach.get('afterScroll')} "
+                f"overflow={scrolls} clientH={reach.get('clientH')} scrollH={reach.get('scrollH')} "
+                f"lastHitInside={last_reachable}")
     else:
         add("compact_has_no_rail", rail is None, f"rail={rail}")
 

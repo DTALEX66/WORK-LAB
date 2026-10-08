@@ -48,6 +48,10 @@ def good_measured(view="full") -> dict:
     }
     if view == "full":
         data[".sidebar"] = [element(0, 280, 820, 1000)]
+        # The healthy shape: everything fits at the top, so no scrolling is required at all. The
+        # scrollable-and-last-hit-testable branch is exercised separately below.
+        data["__navReach"] = {"total": 9, "atTop": 9, "afterScroll": 9, "overflow": False,
+                              "lastHitInside": True, "clientH": 620, "scrollH": 620}
     return data
 
 
@@ -61,7 +65,7 @@ class VerdictTests(unittest.TestCase):
                          {"no_horizontal_overflow", "topbar_measured", "topbar_not_stacked",
                           "brand_mark_present", "actions_visible", "window_controls_reachable",
                           "action_row_inside_viewport", "rail_always_present",
-                          "rail_at_left_edge"})
+                          "rail_at_left_edge", "nav_items_reachable"})
 
     def test_the_rail_must_survive_every_width_the_main_window_can_take(self) -> None:
         # the desktop-only contract in geometry form: b10 used to hide `.sidebar` below 840px.
@@ -215,6 +219,55 @@ class InstrumentTests(unittest.TestCase):
             # ERR-140 rule (never swallow the failure) applied to my own scratch root.
             shutil.rmtree(scratch)
             self.assertFalse(scratch.exists())
+
+
+class NavReachabilityTests(unittest.TestCase):
+    """The check that was missing while the rail was silently clipped 14 of its 23 items.
+
+    Each case is a shape the shipped skin actually produced, so the guard cannot be satisfied by a
+    fixture nobody ever renders: `overflow-y:auto` on a box as tall as its content is the dead
+    container, and it is the only failure mode a "is the nav in the DOM" test would have passed.
+    """
+
+    def verdict_for(self, reach: dict) -> dict:
+        measured = good_measured("full")
+        measured["__navReach"] = reach
+        return geometry.verdict(measured, "full")
+
+    def check(self, verdict: dict) -> dict:
+        return next(c for c in verdict["checks"] if c["check"] == "nav_items_reachable")
+
+    def test_the_dead_container_that_shipped_fails_the_check(self) -> None:
+        # Measured 2026-10-08 at 1386x807: clientH == scrollH == 1496 with 23 buttons and 9 visible.
+        dead = self.check(self.verdict_for({"total": 23, "atTop": 9, "afterScroll": 9, "overflow": False,
+                                            "lastHitInside": False, "clientH": 1496, "scrollH": 1496}))
+        self.assertFalse(dead["pass"], dead)
+        self.assertIn("overflow=False", dead["detail"])
+
+    def test_a_live_scroll_container_that_reveals_the_last_item_passes(self) -> None:
+        # The shape after the fix: clientH 595 < scrollH 1505, and the last item is hit-testable once
+        # the rail is scrolled to its end.
+        live = self.check(self.verdict_for({"total": 23, "atTop": 9, "afterScroll": 11, "overflow": True,
+                                            "lastHitInside": True, "clientH": 595, "scrollH": 1505}))
+        self.assertTrue(live["pass"], live)
+
+    def test_scrolling_that_still_never_reveals_the_last_item_fails(self) -> None:
+        # A box that reports overflow but whose last row cannot be brought under the pointer -- clipped
+        # by an ancestor, or covered by the top bar -- is the failure the hit-test exists to catch.
+        covered = self.check(self.verdict_for({"total": 23, "atTop": 9, "afterScroll": 11, "overflow": True,
+                                              "lastHitInside": False, "clientH": 595, "scrollH": 1505}))
+        self.assertFalse(covered["pass"], covered)
+
+    def test_a_rail_that_renders_nothing_cannot_claim_reachability(self) -> None:
+        empty = self.check(self.verdict_for({"total": 0, "atTop": 0, "afterScroll": 0, "overflow": False,
+                                             "lastHitInside": False, "clientH": 0, "scrollH": 0}))
+        self.assertFalse(empty["pass"], empty)
+        self.assertIn("rendered nothing", empty["detail"])
+
+    def test_a_short_rail_passes_without_needing_to_scroll(self) -> None:
+        fits = self.check(self.verdict_for({"total": 4, "atTop": 4, "afterScroll": 4, "overflow": False,
+                                            "lastHitInside": True, "clientH": 300, "scrollH": 300}))
+        self.assertTrue(fits["pass"], fits)
 
 
 if __name__ == "__main__":
