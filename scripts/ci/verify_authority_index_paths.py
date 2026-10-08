@@ -270,6 +270,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"AUTHORITY_INDEX_PATHS_FAIL refs={total_refs} is below the measured floor {REFS_FLOOR} "
               "-- an extractor that matches almost nothing reports a clean tree it never looked at")
         return 1
+    if not widened and total_refs == 0:
+        # The floor above only guards the default scan, so a named run had no capability check at all:
+        # `--index <file>` on an extractor that matched nothing used to print zero broken and exit 0.
+        print("AUTHORITY_INDEX_PATHS_FAIL the named surfaces produced no references at all; nothing was "
+              "judged, which is not a pass")
+        return 1
     return 1 if failed_targets else 0
 
 

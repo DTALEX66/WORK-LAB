@@ -207,6 +207,24 @@ class RealSurfaces(unittest.TestCase):
             checker.repo_root, checker.tracked_paths, checker.REFS_FLOOR = original
         self.assertEqual(1, code, "a dead pointer in an ordinary current page passed the widened scan")
 
+    def test_a_named_run_that_judged_nothing_does_not_pass(self) -> None:
+        """The floor guards the default scan; a named run needed its own capability check.
+
+        Before this, `--index <one prose page>` printed refs=0 broken=0 and exited 0 -- which is exactly
+        what a broken extractor looks like from the outside. A page legitimately making no tree claim is
+        still allowed inside the widened scan, where the other surfaces carry the floor. Measured:
+        docs/current/workflow-assistance/workflow/github-delivery-accelerator.md yields refs=0.
+        """
+        proc = subprocess.run([sys.executable, str(REPO / "scripts" / "ci"
+                                                    / "verify_authority_index_paths.py"),
+                               "--index",
+                               "docs/current/workflow-assistance/workflow/github-delivery-accelerator.md"],
+                              cwd=REPO, capture_output=True)
+        out = (proc.stdout + proc.stderr).decode("utf-8", "replace")
+        self.assertIn("refs=0", out, out)
+        self.assertEqual(1, proc.returncode,
+                         "a named run that judged nothing still reported a clean result")
+
     def test_only_the_untracked_runtime_root_is_declared(self) -> None:
         """Measured 2026-10-08: everything else resolves, so a new declaration needs its own reason."""
         self.assertEqual({".project-local/"}, set(checker.DECLARED_NON_PATHS))
