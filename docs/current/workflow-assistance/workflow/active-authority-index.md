@@ -25,19 +25,24 @@
 
 ## 2. 兼容/参考（Compatible — 引用权威，不重复定义）
 
-- `docs/current/workflow-assistance/workflow/official-plus-user-configuration-standard.md`：只解释 `config-ownership.json`，不重复字段表。
+- `docs/current/workflow-assistance/workflow/official-plus-user-configuration-standard-2026-08-11.md`：只解释 `config/config-ownership.json`，不重复字段表。
 - `docs/current/workflow-assistance/workflow/managed-software-and-assets.md`：受管软件/资产清单，引用字段权威。
 - `docs/current/workflow-assistance/workflow/examples/governance.yml.example`：documented example，非活跃 CI（WLG-080）。
 
 ## 3. 已取代/历史（Superseded / Archive）
 
-- 历史 handoff 与审计：`docs/handoffs/`、`docs/audit/` 中带日期的交接文档（如
-  `workflow-baseline-and-recovery-handoff-2026-08-13.md`）记录当时状态，**不构成当前规范**，
-  仅作归档。
+- 历史 handoff 与审计：`docs/history/archive/workflow-assistance/handoffs/`、
+  `docs/history/archive/workflow-assistance/audit/` 中带日期的交接文档（如
+  `docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md`）
+  记录当时状态，**不构成当前规范**，仅作归档。
+  2026-10-08 更正：本条原写作 docs/handoffs/ 与 docs/audit/ 两个裸路径，而它们在 2026-09 目录收敛后
+  就不存在了（`ls` 实测两者皆无），索引因此把读者指向空路径；现改写为收敛后的真实归档根。旧写法在此
+  不加反引号，因为反引号在本文件里就是「这是一条可解析的路径」的记号。
 - `taskpacks/history/`：完成 taskpack、旧 release、dated closure。
 - `docs/history/archive/session-history/`：跨机迁移、旧产品（minigame）、历史状态清单。
-- `CODEX-DESKTOP-STORE-UPDATE-BEHAVIOR-20260812.md`：历史调查记录，部分表述已由
-  `codex-desktop-update-state-investigation-2026-08-13.md` 降级，仅作归档。
+- `taskpacks/history/CODEX-DESKTOP-STORE-UPDATE-BEHAVIOR-20260812.md`：历史调查记录，部分表述已由
+  `docs/current/workflow-assistance/workflow/codex-desktop-update-state-investigation-2026-08-13.md`
+  降级，仅作归档。
 
 ## 4. README 链接规则
 
