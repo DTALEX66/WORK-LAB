@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-08T05:21:14Z",
+  "generatedAt": "2026-10-08T06:16:56Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2150,
-    "distinctProjectLocalTokens": 436,
+    "distinctProjectLocalTokens": 438,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 436,
-    "citationsToAbsentTokens": 1232
+    "tokensAbsent": 438,
+    "citationsToAbsentTokens": 1237
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,8 +29,8 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 572,
-      "distinctPaths": 328
+      "citations": 577,
+      "distinctPaths": 330
     },
     "machine_local_runtime_pointer": {
       "citations": 150,
@@ -166,8 +166,8 @@
       {
         "path": ".project-local",
         "file": "scripts/ci/verify_authority_index_paths.py",
-        "line": 202,
-        "text": "# declaration itself: \".project-local/\" means \"nothing under here is tracked\", and one tracked file"
+        "line": 306,
+        "text": "# the declaration itself: \".project-local/\" means \"nothing under here is tracked\", and one tracked file"
       },
       {
         "path": ".project-local",
@@ -238,7 +238,7 @@
       {
         "path": ".project-local",
         "file": "tests/ci/test_authority_index_paths_resolve.py",
-        "line": 212,
+        "line": 261,
         "text": "self.assertEqual({\".project-local/\"}, set(checker.DECLARED_NON_PATHS))"
       },
       {
@@ -2564,6 +2564,12 @@
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 214,
+        "text": "| U02-PATHS-20261007 | P0 | FIXED_IN_REPO / PUBLISH_DEFERRED / U02_STILL_PARTIAL | 台账 **ERR-115**。两个 bootstrap 脚本与在册技能、`docs/current` 一直在调用 `scripts/workflow/sync_hermes_workflow_assets.py`——该路径在 2026"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 223,
         "text": "| GREENING-20261007-E | P1 | 116,216,094_B_RELEASED_0_CITED_LOST / PROBES_PROMOTED_TO_TRACKED_5 / RETAIN_LIST_WITH_SIZES / ERR-129 | 绿色化第二轮：按**类**释放而不是按目录保留。四条 ledger 记录与三条在册行的 regressionCommand 都写着 `"
       },
@@ -2752,6 +2758,12 @@
         "file": "reports/EXTERNAL-AUDIT-PACK-CLIENT-ASSETS-20260930.md",
         "line": 279,
         "text": "python .project-local/runs/build_asset_inventory.py      # 全量清点"
+      },
+      {
+        "path": ".project-local/runs/ci/geometry_gate.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 233,
+        "text": "| GREENING-20261007-I | P1 | 27_PYCACHE_DIRS_9,740,083_B_RELEASED / 0_TRACKED_FILES_TOUCHED / MANIFEST_BEFORE_DELETE / TOOL scripts/maintenance/release_source_tree_bytecode.py | 源码树里积了 27 个 `__pycache"
       },
       {
         "path": ".project-local/runs/ci/geometry_gate.json",
@@ -3321,7 +3333,7 @@
         "path": ".project-local/runs/frontend-baseline-vitest-only.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 128,
-        "text": "| AG-06o | P1 | FIXED@9464ca7 (audit F04) | **F04 — CONFIRMED and the missing content is real.** Diffing the deployed `windows-development-environment/SKILL.md` against the repository source: **145 li"
+        "text": "| AG-06o | P1 | FIXED@9464ca7 (audit F04) | **F04 — CONFIRMED and the missing content is real.** Diffing the deployed `packages/client-neutral-core/skills/software-development/windows-development-envi"
       },
       {
         "path": ".project-local/runs/frontend-baseline.failed-attempt-20260930.json",
@@ -3666,6 +3678,12 @@
         "text": "handoff sent a reader to `.project-local/runs/p0c-diag-20261006` while the bytes live in the"
       },
       {
+        "path": ".project-local/runs/p0c-diag-20261006/p0c-gpu-vs-swiftshader.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 171,
+        "text": "| WB-IMPORT-20261006 | P1 | MIGRATED_VERIFIED / SOURCE_RETIRED | 用户指示把 WorkBuddy 工作树迁入本仓库并清理原件。`C:\\Users\\ALEX\\WorkBuddy\\Worktrees\\WORK-LAB\\task-decomposition-...-381e33ec` 的唯一不可再生内容是 `.project-local`（"
+      },
+      {
         "path": ".project-local/runs/p0c-final-20261006/EBWebView-final-1791293904",
         "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
         "line": 42,
@@ -3811,6 +3829,12 @@
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 233,
+        "text": "| GREENING-20261007-I | P1 | 27_PYCACHE_DIRS_9,740,083_B_RELEASED / 0_TRACKED_FILES_TOUCHED / MANIFEST_BEFORE_DELETE / TOOL scripts/maintenance/release_source_tree_bytecode.py | 源码树里积了 27 个 `__pycache"
+      },
+      {
+        "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "taskpacks/current/error-ledger.json",
         "line": 3122,
         "text": "\"entrypoint\": \"apps/observer/scripts/u19_webview_e2e.py (_gdi_render_proof: screen BitBlt + PrintWindow), .project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
@@ -3940,6 +3964,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 4907,
         "text": "\"observed_error\": \"QUALITY_GATE_FAIL gate=governance exit_code=1: three boundary cases in test_evidence_range_reader failed inside the batch with 'READ_OK' != 'OUT_OF_BOUNDARY', while the identical fi"
+      },
+      {
+        "path": ".project-local/runs/topbar-measure-20261006/geometry.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 233,
+        "text": "| GREENING-20261007-I | P1 | 27_PYCACHE_DIRS_9,740,083_B_RELEASED / 0_TRACKED_FILES_TOUCHED / MANIFEST_BEFORE_DELETE / TOOL scripts/maintenance/release_source_tree_bytecode.py | 源码树里积了 27 个 `__pycache"
       },
       {
         "path": ".project-local/runs/topbar-measure-20261006/measure.py",
@@ -6366,7 +6396,7 @@
       {
         "path": ".project-local",
         "file": "scripts/ci/verify_authority_index_paths.py",
-        "line": 77,
+        "line": 101,
         "text": "\".project-local/\": \"the git-ignored in-boundary runtime and evidence root; nothing under it is \""
       },
       {
@@ -7363,7 +7393,7 @@
         "path": ".project-local",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 261,
-        "text": "| REGISTER-PATH-GUARD-20261008 | P1 | DESIGNED_MEASURED_NOT_YET_BUILT / OWNER_NOT_REQUIRED | **把引用门禁推到 register 本身：设计已定，数字已测，实现未做**（2026-10-08）。用现成提取器跑 `--index taskpacks/current/OPEN-TASK-REGISTER.md"
+        "text": "| REGISTER-PATH-GUARD-20261008 | P1 | BUILT_LOCAL / GUARDED_IN_CI_LOCAL / EXACT_SHA_CI_NOT_AT_THIS_COMMIT | **把引用门禁推到 register 本身：设计已定，数字已测，实现未做**（2026-10-08）。用现成提取器跑 `--index taskpacks/current/OPEN-T"
       },
       {
         "path": ".project-local",
@@ -7483,7 +7513,7 @@
     "reviewQueue": 6,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 207
+    "presentOnThisMachine": 208
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

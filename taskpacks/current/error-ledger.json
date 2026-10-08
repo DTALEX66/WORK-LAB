@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 206,
+    "total": 207,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 63,
+      "contract_drift": 64,
       "test_behavior_alignment": 26,
       "working_directory_recovery": 2,
       "evidence_state": 38,
@@ -6331,6 +6331,34 @@
         "verifiedCommit": "72900749ca5461458aa5bcfd53d74b5cab70f2d4",
         "bindingBasis": "commit-contains-fix: 8d08cba2 refuses a named run that judged nothing; verifiedCommit is owed until every Actions run at a head containing it is green",
         "verifiedCommitNote": "exact-SHA Actions readback at 72900749ca5461458aa5bcfd53d74b5cab70f2d4: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
+      }
+    },
+    {
+      "error_id": "ERR-209",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "scripts/ci/verify_authority_index_paths.py",
+      "command": "python scripts/ci/verify_authority_index_paths.py",
+      "exit_code": 1,
+      "observed_error": "The widened reference gate stopped at docs/current/ and let the one document the authority chain makes readers navigate first -- the live open-task register -- carry 65 unresolved path references out of 330. Running the shipped extractor over it by hand printed `targets=1 refs=330 broken=65`, and the default scan exited 0 on the same tree.",
+      "root_cause": "A navigation surface outside the scanned root, and a class of reference a prose-page rule cannot judge: register rows deliberately name deleted paths, client-home layouts, model-cache directories and other projects' files, because the sentence is about the thing that is not in the tree. Without a scoped exemption the only alternatives are to leave the register unguarded or to rewrite history records into present-tense falsehoods.",
+      "fix": "The register joins the default scan as an EXTRA_SURFACE and is held to the strict refs>0 rule with its own measured floor (280 against 333 observed). Exemptions live in the row that needs them as `[no-tree-claim <CODE> ref=<name>]`, over nine reason codes, and every declaration is re-falsified each run: a declared name that resolves in the tracked tree fails, a declared name the surface never asked about fails, an unknown code fails, and DELETED / NEVER_EXISTED are settled against git history -- where a directory claim must be proved by its contents, because `git log -- '*web/'` finds nothing while `-- '*web/*'` finds five commits. Reconciled: 14 literals rewritten to unique tracked successors (each proved before use, including `integrations/executors/hermes/sync_hermes_workflow_assets.py` and the three archived AGENTS.md copies), 40 declarations covering 50 reference occurrences. Measured after: targets=39 refs=690 broken=0 declared_in_row=50, and 28 tests pass in the ci module including four planted-failure cases.",
+      "regression_test": "tests/ci/test_authority_index_paths_resolve.py",
+      "regressionCommand": "python -m pytest -q tests/ci/test_authority_index_paths_resolve.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "a guard over prose truth must reach every surface the authority chain tells a reader to navigate, and its exemptions must be declared next to the claim they excuse and re-tested on every run; a declaration that can silence a live path or outlive its row is a hiding place, which is why the checker fails on both.",
+      "remaining_boundary": "Declarations are per-name, not per-sentence: a row that declares `web/` excuses every occurrence of that literal in the row, so a genuinely new claim spelled identically would be excused too. The reason codes are judged by git existence checks only for DELETED and NEVER_EXISTED -- CLIENT_HOME, BUILD_OUTPUT, MODEL_CACHE, CROSS_PROJECT, INSTALLED_APP, UNTRACKED_LOCAL and ILLUSTRATIVE are attested by their detail text and by review, not disproved mechanically. And the DELETED proof uses the whole-object history, so a name that reappeared later still passes the deletion check.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the scanned root was drawn at docs/current/ and the register sits outside it by design; no commit moved it",
+        "fixedCommit": "837c52b9eb4360b8c4c8b08a7621a469e1054058",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 837c52b9 adds the register surface, the in-row declaration vocabulary and its falsification tests; verifiedCommit is owed until every Actions run at a head containing it is green"
       }
     }
   ],
