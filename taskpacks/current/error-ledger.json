@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 220,
+    "total": 221,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 66,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 3,
       "path_boundary": 15,
-      "ci_tooling": 14,
+      "ci_tooling": 15,
       "sql_schema": 1,
       "regression_contract": 8,
       "boundary_leak": 1
@@ -6755,6 +6755,38 @@
         "bindingNote": "both commit fields resolved with git rev-parse in the writing script, never transcribed",
         "affectedCapability": "Every claim carried by a committed derived projection: tool inventory, ledger regression targets, current-state projection",
         "regressionCommand": "cd tests/ci && python -m unittest -q test_shipped_projections_are_current"
+      }
+    },
+    {
+      "error_id": "ERR-223",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "services/orchestration/run_quality_gate.py",
+      "command": "python scripts/ci/push_permit.py --head c8c2a78f   (against the receipt of a full GATE_FULL=yes gates=50 QUALITY_GATE_PASS run)",
+      "exit_code": 1,
+      "observed_error": "An all-green full gate produced a receipt the push permit refused: `PUSH_PERMIT_REFUSE NO_EXIT_LINE head=c8c2a78f receipt=gate-verify-c8c2a78f.log — the file records no completion line`. The receipt did carry GATE_HEAD=818116e948f0… GATE_TREE=… GATE_FULL=yes gates=50 and QUALITY_GATE_PASS; it carried no GATE_EXIT because run_quality_gate.py has never printed that token -- `git grep GATE_EXIT` over the tracked tree found only push_permit's own regex, a comment in the runner asserting that the permit reads the line, an unrelated OLD_GATE_EXIT in an audit script, and prose mentions. The earlier receipts that did end in `GATE_EXIT=0` had it written by a wrapper echo, so the property the permit turns on lived in each call site's habit. This round's wrapper used a different label (`NAME_EXIT=0`) and the green head looked unverifiable.",
+      "root_cause": "A component documented a contract it did not implement, and the test for the pairing (test_push_permit's ReceiptIsStampedTests) asserted the runner's SOURCE TEXT contains a format string, never that the produced output parses as a verdict. A comment is not a producer: three lines above the offending comment the same function applies the rule 'GATE_FULL is derived, never passed in, so a new call site cannot forget to set it', and GATE_EXIT was left as exactly the opposite -- an expectation on the caller.",
+      "fix": "run_gate_sequence now prints its own completion line on both verdict paths: the red path emits GATE_EXIT=<exit code> so push_permit's RECEIPT_RED branch stays reachable (a token written only on the pass path makes 'ran and failed' indistinguishable from 'never ran', which is the confusion ERR-181 was recorded for), and the green path emits GATE_EXIT=0 last. tests/ci/test_push_permit.py gained RunnerWritesWhatThePermitReads: real run_gate_sequence calls with planted gates, stdout captured, judged by the real decide() -- green yields PUSH_PERMIT_OK, an exit-7 gate yields RECEIPT_RED quoting GATE_EXIT=7, and a loop over one/two/three-gate sequences asserts exactly one completion line per run. Falsified by deleting each print in turn: 3/3 CAUGHT with failures attributed to those tests, no errors, component restored byte-identical. Verified outside the fixture: a real single-gate run wrote GATE_HEAD=… GATE_FULL=no gates=1 at line 2 and GATE_EXIT=0 at line 42 of .project-local/runs/gate-exit-probe/probe.log with no wrapper echo, and push_permit then returned PUSH_PERMIT_OK at 139cbfda from a receipt no hand ever edited.",
+      "regression_test": "tests/ci/test_push_permit.py",
+      "regressionCommand": "cd tests/ci && python -m unittest -q test_push_permit",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "Eighteen tests run green at the head that carries the fix (fifteen pre-existing plus the three pairing cases); the file is tracked, and the module is discovered by scripts/ci/run_root_governance_suite.py, which globs tests/ci/test_*.py rather than taking a list.",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A completion token must be written by the process that is being judged, never by the shell that launches it; every verdict path has to emit it, including the red one, because a receipt that can only say 'OK' cannot distinguish failure from absence. And an assertion about a tool's output must be made by running the tool and feeding the result to its consumer: source-text assertions ('the format string is present') go green while the produced file is unreadable, which is how this survived until a wrapper happened to change its label.",
+      "remaining_boundary": "The red path is proven with planted gates inside the process, not by a real red full run: manufacturing a failure in the tracked tree to watch the token appear would have polluted the receipt history, so the pairing test stands in and the first genuinely red head will be the real confirmation. The ad-hoc wrapper echoes used in this session's scratch scripts are untracked and were not swept; they are harmless now because the runner writes the line itself and push_permit reads the last GATE_EXIT match. verifiedCommit is owed for the same reason as ERR-220/221/222: the account's Actions runner cannot start jobs.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "97279746fa0e0b81298ee21acaf73dfefad00d1a",
+        "introducedCommitNote": "the commit that added the comment claiming push_permit reads GATE_EXIT while adding only the GATE_HEAD stamp; the wrapper-echo habit predates it",
+        "fixedCommit": "139cbfdaa1156e2f484daeb55519e6d68dec7a55",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: that commit carries both prints and the pairing tests; its CI verdict cannot be taken while Actions cannot start a runner",
+        "bindingNote": "both commit fields resolved by git rev-parse / a message-subject lookup in the writing script; HEAD is never used as a proxy in a shared checkout",
+        "affectedCapability": "Every push decision made from a gate receipt, i.e. the commit -> verify -> permit -> push ordering itself",
+        "regressionCommand": "cd tests/ci && python -m unittest -q test_push_permit"
       }
     }
   ],

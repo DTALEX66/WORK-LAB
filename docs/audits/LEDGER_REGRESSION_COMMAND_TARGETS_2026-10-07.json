@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-08T22:06:46Z",
+  "at": "2026-10-08T22:59:03Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -45,22 +45,22 @@
     }
   },
   "counts": {
-    "RESOLVES": 105,
+    "RESOLVES": 106,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
-    "RESOLVES": 138,
+    "RESOLVES": 139,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "PATH_GONE": 34,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
-  "resolvedAfterApply": 138,
-  "records": 220,
-  "stateDigest": "a8d5e25c9198ff064c67419f5e8e5441bfc9492b44260bc1da160dd08bbb380d",
+  "resolvedAfterApply": 139,
+  "records": 221,
+  "stateDigest": "4336ed18cf26d14275ee47bb0cb061f82da0b9faf31fd6e275ef936a92aa78fd",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -4209,6 +4209,23 @@
           "category": "RESOLVES",
           "candidates": [
             "tests/ci/test_shipped_projections_are_current.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-223",
+      "statusAfter": "PARTIAL",
+      "hasFixedCommit": true,
+      "command": "tests/ci/test_push_permit.py",
+      "operands": [
+        {
+          "operand": "tests/ci/test_push_permit.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/ci/test_push_permit.py"
           ]
         }
       ],

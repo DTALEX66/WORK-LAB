@@ -65,7 +65,14 @@ execution-detail|agents|projects|workflows|…>`, desktop WebView (Chromium) and
 3. Scrolling is necessary but not sufficient. Per the ARIA APG **Disclosure Navigation** pattern (and
    Rancher's `shell/components/nav/Group.vue`), each group is a disclosure button with `aria-expanded`,
    Space/Enter toggling and Escape returning focus, so a long rail can be shortened as well as scrolled.
-   Group collapse is **not implemented** — recorded as an open deviation, not as satisfied by the fix.
+   ~~Group collapse is **not implemented** — recorded as an open deviation, not as satisfied by the fix.~~
+   **追正（2026-10-09，实测）**：这句话与本文件自己的门禁覆盖段（`nav_groups_are_disclosures`）互相矛盾，
+   而且实现早在代码里。`src/components/layout/Sidebar.tsx` 的每个组标题是 `type="button"` 的披露按钮，带
+   `aria-expanded` 与 `aria-controls`；收起时该组的项**从文档中移除**（不是靠样式隐藏，所以键盘与读屏都拿不到）；
+   Escape 从当前视图所在组收起并把焦点交回该组按钮，焦点已在按钮上时不重复动作；折叠状态只存在组件里，
+   既不写 URL 也不写 web storage。本轮补上 `src/navDisclosure.contract.test.tsx`（7 例）并逐属性反证：
+   删掉 `aria-controls`、让收起后的项仍留在文档里、去掉 Escape 的焦点回交、把折叠状态写进 localStorage——
+   4/4 判红，组件按字节还原。这条"未实现"能活到今天，正是因为没有任何测试问过它。
    [no-tree-claim CROSS_PROJECT ref=shell/components/nav/]
 4. Group captions (`{typography.label-caps}`) are decorative duplicates of the item labels below them
    and must not be the only way to find a group by keyboard.
@@ -197,7 +204,9 @@ region below "requires" one.
 All six assertion families this section listed are now enforced. `topbar_geometry_via_cdp.py` runs three
 passes over the shipped bundle — 20 checks at the 1280×820 default, 14 at the 440×780 HUD, 21 at the
 900×600 window floor — and `text_legibility_via_cdp.py` asserts 6 per theme plus three for the switch
-itself. Delivered: rail reachability (`nav_items_reachable`, `nav_groups_are_disclosures`),
+itself. Delivered: rail reachability (`nav_items_reachable`, `nav_groups_are_disclosures` — and since
+2026-10-09 the disclosure *behaviour* rather than only its markup, 7 cases in
+`src/navDisclosure.contract.test.tsx`, each property falsified by removing it),
 action folding (`action_row_does_not_stack`), the type floor and AA contrast in both themes, the
 degraded-state-per-view rule (the offline surface names the active view, asserted for all 22 registered
 lanes plus distinctness of the 22 headings by `src/offlineViewIdentity.contract.test.tsx`), and region
