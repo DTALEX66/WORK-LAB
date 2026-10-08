@@ -38,8 +38,15 @@ execution-detail|agents|projects|workflows|…>`, desktop WebView (Chromium) and
 2. Region C must not start underneath region A. If overlap is used for a glass effect, the reserved
    padding must be ≥ A's height and the assertion must check both numbers.
    *Violation today (measured): `main.top` is 128px above `topbar.bottom` at every width, in both themes.*
+   This is not only a visual grouping problem: WCAG 2.2 **2.4.11 Focus Not Obscured (Minimum)** forbids
+   author content entirely hiding the focused component, so an overlapping bar must be proven not to cover
+   a focused control — asserted by focusing the first and last focusable element of region C and checking
+   their rects against region A's, not by eyeballing a screenshot.
 3. The rail's right edge may use `{colors.hairline}`, but the rail must also be a distinct surface
    (`{colors.surface-sidebar}` ≠ `{colors.canvas}`) so the boundary survives a hairline being invisible.
+4. Every interactive target is ≥ **24×24 CSS px** (WCAG 2.5.8 AA, including its Spacing exception) and any
+   repeated primary control ≥ 32px on its shortest side; see DESIGN.md `External standards` for the
+   conflicting vendor numbers and why 24 was chosen over 40/44/48.
 
 ## Navigation reachability (normative)
 
@@ -51,16 +58,26 @@ execution-detail|agents|projects|workflows|…>`, desktop WebView (Chromium) and
    `.nav` `clientHeight == scrollHeight == 1496`; document `scrollHeight == clientHeight == 807`;
    23 nav items, 9 reachable, the rest permanently clipped.*
 2. The rail is height-bounded to the viewport (`100dvh` or grid row sizing) so rule 1 can be satisfied
-   at any window height, including the smallest supported 600px.
-3. Group captions (`{typography.label-caps}`) are decorative duplicates of the item labels below them
+   at any window height, including the smallest supported 600px. **Fixed by `36f9a297`** — measured after
+   the change: `.nav` clientHeight 1505 → 595 against scrollHeight 1505, `scrollTop` reaches 910, the last
+   item (设置) is visible with `elementFromPoint` landing inside its own button, and clicking it moves
+   `.active`.
+3. Scrolling is necessary but not sufficient. Per the ARIA APG **Disclosure Navigation** pattern (and
+   Rancher's `shell/components/nav/Group.vue`), each group is a disclosure button with `aria-expanded`,
+   Space/Enter toggling and Escape returning focus, so a long rail can be shortened as well as scrolled.
+   Group collapse is **not implemented** — recorded as an open deviation, not as satisfied by the fix.
+4. Group captions (`{typography.label-caps}`) are decorative duplicates of the item labels below them
    and must not be the only way to find a group by keyboard.
-4. Active item is marked by fill **plus** edge bar **plus** `aria-current="page"` — colour alone is
+5. Active item is marked by fill **plus** edge bar **plus** `aria-current="page"` — colour alone is
    insufficient, and the active state must be distinguishable in the light theme too.
 
 ## Action row and overflow (normative)
 
 1. The action row never stacks vertically. When the band cannot fit all controls, controls beyond the
-   primary action and the theme toggle collapse into a `更多` menu button.
+   primary action and the theme toggle collapse into a `更多` menu button. This is the named pattern in
+   Fluent **CommandBar** (a "see more" button; primary commands move to the secondary area when space is
+   limited) and Carbon **OverflowMenu** ("additional options… but there is a space constraint") — a
+   wrapping column satisfies neither.
    *Violation today (measured): `.top-actions { flex-wrap: wrap }`, 4 children, no overflow control;
    at 430px the row's usable width is 76px and the buttons stack into a column.*
 2. The overflow menu is a real menu: `aria-expanded`, keyboard operable, focus returned to the trigger on

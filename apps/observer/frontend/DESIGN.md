@@ -164,6 +164,45 @@ Two orthogonal axes exist and must not be confused:
 - **Density view**: `?view=full` / `?view=compact`. Layout density only. **This is a user-selected mode,
   not a responsive breakpoint** — see Responsive Behavior.
 
+## External standards this contract is measured against
+
+Every numeric clause below cites a primary source. Where two authorities conflict the clause names both
+and picks one with a reason; it never averages them.
+
+**Text size.** WCAG 2.2 sets **no** minimum font size — small text is policed by contrast (1.4.3), by
+200% zoom (1.4.4), by reflow at 320 CSS px (1.4.10) and by text spacing (1.4.12). The floors below come
+from design systems, and they are product rules, not WCAG claims: Apple's "UI Design Dos" says text should
+be at least **11pt**; Material 3's smallest role is `label-small` **11sp/16**; IBM Carbon's scale bottoms
+out at **12px/16**; PatternFly's `--pf-t--global--font--size--100` is **12px**; Grafana's
+`createTypography.ts` uses base **14** with **12** as the small step. No authoritative source endorses
+9px, so this contract's floor is **12px** for any text a user must read.
+
+**Contrast.** WCAG 1.4.3 AA: **4.5:1** normal, **3:1** large, where "large" is 18pt (≈24px) or 14pt bold
+(≈18.66px bold); AAA is 7:1 / 4.5:1. 1.4.11 AA: **3:1** for UI-component states, boundaries and graphical
+objects, exempting purely decorative ones. 1.4.1 A: colour is never the only carrier — a status surface
+needs a label or glyph plus shape/weight/position, and must not rely on red-vs-green alone.
+
+**Targets.** WCAG 2.5.8 AA is the hard floor: **24×24 CSS px**, with the Spacing exception permitting a
+smaller visible control if a 24×24 clearance surrounds it. Apple asks **44×44pt**, Microsoft **7.5mm ≈
+40×40px at 135 PPI**, Google commonly 48dp, NN/g 1cm² — these conflict and are *not* averaged. For a
+mouse-driven desktop WebView the defensible floor is 2.5.8's 24×24, and this product additionally requires
+**≥32px** for a repeated primary control because the rail row is the highest-frequency target.
+
+**Focus.** WCAG 2.2 adds 2.4.11 **Focus Not Obscured (Minimum)** (AA) — the focused component may not be
+entirely hidden by author content, which is a direct constraint on an overlapping top bar — and 2.4.13
+Focus Appearance (AAA: indicator area of a 2px perimeter, 3:1 focused-vs-unfocused).
+
+**Rail behaviour.** No design system mandates a scrollable rail; the binding rules are 2.1.1 Keyboard,
+2.4.11 and the ARIA APG **Disclosure Navigation** pattern (each group is a disclosure button,
+`aria-expanded`, Space/Enter toggles, Escape returns focus). The expectation is therefore **both**: the
+rail is its own keyboard-reachable scroll container *and* its groups collapse. Rancher's
+`shell/components/nav/Group.vue` implements the per-group form.
+
+**Toolbar overflow.** Fluent **CommandBar** specifies a "see more" overflow button with primary commands
+moving to the secondary area when space is limited; Carbon **OverflowMenu** is the named pattern for
+"more options exist but space is constrained". A toolbar that wraps into a vertical column satisfies
+neither.
+
 ## Colors
 
 Semantic roles, dark theme (measured contrast against the role it sits on, WCAG 2.1 relative luminance,
@@ -269,6 +308,22 @@ Normative bands, to be asserted by `scripts/audit/topbar_geometry_via_cdp.py`:
   layout. The rail must be height-bounded (`100dvh` or grid row sizing) so its `overflow-y` is live.
 - Overflow收纳: when the action row cannot fit, controls collapse into a `更多` menu; they must not
   stack vertically forever.
+
+## Reference systems
+
+Closest analogues to a dark, dense, read-only control plane, with where their tokens actually live —
+consulted rather than copied wholesale, and each with one thing not to take.
+
+| System | Token source | Take | Don't take |
+|---|---|---|---|
+| Grafana | `packages/grafana-data/src/themes/createTypography.ts`, `createSpacing.ts`, `public/sass/grafana.dark.scss` | 14px base / 12px floor, even-pixel discipline for size and line-height | variable-density panels and plugin theme overrides |
+| EUI (Kibana) | `packages/eui/src/global_styling/variables/`, `eui-theme-common/…/size.ts` | the 8-step spacing ramp and the `EuiSideNav` group model | light-first defaults |
+| PatternFly (Keycloak admin UI) | `patternfly:src/patternfly/base/tokens/tokens-dark.scss` | a paired dark token set and the 12/14px ramp | a 16px base body |
+| Portainer | `app/assets/css/theme.css`, `colors.json` | a JSON colour token file feeding a dark admin shell | Bootstrap/RDash 11–12px legacy chrome |
+| Rancher Dashboard | `shell/assets/styles/`, `shell/components/nav/`, `HeaderPageActionMenu.vue` | collapsible + pinned nav groups and a page-action overflow menu | mixed Element-Plus sizing |
+| Jaeger UI | `packages/jaeger-ui/src` (no token file found) | waterfall row density and the left rail | inline-styled MUI with no token layer |
+| Langfuse | `web/src/styles/globals.css`, `fonts.ts` | one CSS-variable token set driving both themes — which is exactly the shape of the light-theme failures recorded below | doc-site prose typography leaking into app chrome |
+| SigNoz | `frontend/src/styles/`, antd theme tokens | log/trace table density | theme values left inline instead of tokenised |
 
 ## Known Gaps
 
