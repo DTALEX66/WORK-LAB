@@ -6503,8 +6503,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "the subscript lookup predates this session; it became reachable the moment a contract was registered that was missing from the second dictionary",
         "fixedCommit": "058842daca16de5a776e70d3080cc97c3c9cded0",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: HEAD (058842d) carries the clean-report lookup and the Quick Entry registration; verifiedCommit is owed until every Actions run at a head containing it is green"
+        "verifiedCommit": "784b0a23016803f350c55dd463adb0a49b875f76",
+        "bindingBasis": "commit-contains-fix: HEAD (058842d) carries the clean-report lookup and the Quick Entry registration; verifiedCommit is owed until every Actions run at a head containing it is green",
+        "verifiedCommitNote": "exact-SHA Actions readback at 784b0a23016803f350c55dd463adb0a49b875f76: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6532,8 +6533,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "the delimited matcher and the mkdtemp character set both predate this session; the collision became observable when a test asserted a refusal code against its own fixture root, so this record names an exposed latent class rather than a regression introduced by one commit",
         "fixedCommit": "5e74a07151e3602caf462a54f93ae704307b4515",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: HEAD (5e74a07) carries the leaf-name guard, the discard-with-release and the gate that pins all of it; verifiedCommit is owed until every Actions run at a head containing it is green"
+        "verifiedCommit": "784b0a23016803f350c55dd463adb0a49b875f76",
+        "bindingBasis": "commit-contains-fix: HEAD (5e74a07) carries the leaf-name guard, the discard-with-release and the gate that pins all of it; verifiedCommit is owed until every Actions run at a head containing it is green",
+        "verifiedCommitNote": "exact-SHA Actions readback at 784b0a23016803f350c55dd463adb0a49b875f76: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6561,8 +6563,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "the unconditional write predates this session -- it is in the publisher as first shipped; it became observable the moment a record with a specific hand-authored reason was added and the audit republished over it",
         "fixedCommit": "780b5947aeb2aafc1aa78a1a72f8920203b10894",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: HEAD (780b594) carries next_reason, the restored reasons and ReasonPreservationTests; verifiedCommit is owed until every Actions run at a head containing them is green"
+        "verifiedCommit": "784b0a23016803f350c55dd463adb0a49b875f76",
+        "bindingBasis": "commit-contains-fix: HEAD (780b594) carries next_reason, the restored reasons and ReasonPreservationTests; verifiedCommit is owed until every Actions run at a head containing them is green",
+        "verifiedCommitNote": "exact-SHA Actions readback at 784b0a23016803f350c55dd463adb0a49b875f76: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     }
   ],
