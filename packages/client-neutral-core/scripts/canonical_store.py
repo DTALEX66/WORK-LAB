@@ -443,9 +443,9 @@ class CanonicalStore:
                 "SELECT COUNT(*), COALESCE(SUM(fencing_token),0), "
                 "COALESCE(SUM(LENGTH(COALESCE(checkpoint,''))),0), "
                 "COALESCE(SUM(LENGTH(COALESCE(lease_holder,''))),0), "
-                "COALESCE(MAX(updated_at),'') FROM tasks"
+                "COALESCE(MAX(updated_at),''), COALESCE(MAX(lease_expires_at),'') FROM tasks"
             ).fetchone()
-            witness["tasks_state"] = [tasks[0], tasks[1], tasks[2], tasks[3], tasks[4]]
+            witness["tasks_state"] = [tasks[0], tasks[1], tasks[2], tasks[3], tasks[4], tasks[5]]
             return witness
 
     def register_project(self, project_id: str, root_path: str, display_name: str | None = None) -> None:

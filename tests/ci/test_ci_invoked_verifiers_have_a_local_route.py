@@ -62,6 +62,20 @@ class CiInvokedVerifiers(unittest.TestCase):
             self.assertEqual(0, code, f"{script} exited {code}:\n{out[-600:]}")
             self.assertIn("PASS", out, f"{script} exited 0 without a PASS verdict:\n{out[-400:]}")
 
+    def test_the_current_state_freshness_mode_runs_here_too(self) -> None:
+        """A route that names a script but not the mode CI runs is not a route.
+
+        Measured the hard way: `tests/ci/test_current_state.py` imports generate_current_state and passes,
+        while the CI step also runs `--check-current`, which was red locally and in CI at 6e6d4fbf because
+        the projection still recorded the digests from before today's skill edits. No local run executed
+        that mode, so the canonical gate said PASS.
+        """
+        proc = subprocess.run([sys.executable, "scripts/ci/generate_current_state.py", "--check-current"],
+                              cwd=REPO, capture_output=True)
+        out = (proc.stdout + proc.stderr).decode("utf-8", "replace")
+        self.assertEqual(0, proc.returncode, out)
+        self.assertIn("CURRENT_STATE_FRESHNESS_PASS", out)
+
     def test_no_check_exists_only_in_ci(self) -> None:
         code, out = 0, ""
         proc = subprocess.run([sys.executable, "scripts/ci/verify_ci_check_reachability.py"],

@@ -30,6 +30,7 @@ for entry in (ROOT / "services" / "orchestration", ROOT / "services" / "authorit
     sys.path.insert(0, str(entry))
 
 import sidecar as sidecar_module  # noqa: E402
+import canonical_store as canonical_store_module  # noqa: E402
 from canonical_store import CanonicalStore  # noqa: E402
 from project_temp import fixture_dir  # noqa: E402
 
@@ -108,15 +109,57 @@ class InPlaceUpdateReachesTheObserver(unittest.TestCase):
         self.assertNotEqual(before["newest"], after["newest"],
                             "an in-place update must move the newest-changes witness")
 
-    def test_the_witness_is_blind_to_nothing_that_a_heartbeat_changes(self) -> None:
-        """A renewal can land in the same second, so a timestamp alone would miss it."""
+    def _await_next_tick(self, timeout: float = 1.0) -> None:
+        """The host clock moves in ~1 ms steps here, so wait for a tick instead of asserting on it."""
+        started = canonical_store_module._now()
+        deadline = time.time() + timeout
+        while canonical_store_module._now() == started:
+            if time.time() > deadline:
+                self.fail(f"_now() did not advance within {timeout}s; the clock itself is stuck")
+            time.sleep(0.0002)
+
+    def test_a_renewal_that_moves_the_expiry_moves_the_witness(self) -> None:
+        """A heartbeat in a later clock tick changes lease_expires_at, and the witness must notice."""
         self.sidecar.store.upsert_task({"task_id": TASK, "project_id": "work-lab", "status": "QUEUED"})
         self.sidecar.store.acquire_lease(TASK, "worker-C", ttl_seconds=30)
         before = json.loads(self.sidecar._canonical_fingerprint())["newest"]
-        self.sidecar.store.heartbeat(TASK, "worker-C", ttl_seconds=30)
+        self._await_next_tick()
+        self.assertTrue(self.sidecar.store.heartbeat(TASK, "worker-C", ttl_seconds=30))
         after = json.loads(self.sidecar._canonical_fingerprint())["newest"]
         self.assertNotEqual(before, after,
-                            "the lease expiry moved and no witness noticed; this is the same-second case")
+                            "the lease expiry and updated_at moved and no witness noticed")
+
+    def test_a_renewal_is_witnessed_by_the_expiry_even_when_the_timestamp_is_not(self) -> None:
+        """Pinned because this host's `_now()` returned one value across 2000 back-to-back calls.
+
+        The first version of the renewal test compared `before` and `after` with no clock movement of its
+        own and went red at 9fb20f24 in the full batch while passing standalone: acquire and heartbeat had
+        written byte-identical values. The witness has to key on the thing a renewal actually changes --
+        the expiry -- not only on the column that happens to be stamped in the same statement. Here the
+        store's timestamp is frozen before the lease is taken, so the only thing the renewal can move is
+        `lease_expires_at`, and the witness must still see it.
+        """
+        frozen = "2026-10-08T00:00:00.000000Z"
+        original = canonical_store_module._now
+        try:
+            canonical_store_module._now = lambda: frozen
+            self.sidecar.store.upsert_task({"task_id": TASK, "project_id": "work-lab", "status": "QUEUED"})
+            self.sidecar.store.acquire_lease(TASK, "worker-C", ttl_seconds=30)
+            before = json.loads(self.sidecar._canonical_fingerprint())["newest"]
+            time.sleep(0.01)  # the expiry is computed from the real clock; one granularity step is enough
+            self.assertTrue(self.sidecar.store.heartbeat(TASK, "worker-C", ttl_seconds=30))
+        finally:
+            canonical_store_module._now = original
+        row = self.sidecar.store._conn.execute(
+            "SELECT lease_expires_at, updated_at FROM tasks WHERE task_id=?", (TASK,)).fetchone()
+        self.assertEqual(frozen, row["updated_at"],
+                         "the frozen clock did not reach the write, so this case proves nothing")
+        after = json.loads(self.sidecar._canonical_fingerprint())["newest"]
+        self.assertEqual(before["tasks_state"][:5], after["tasks_state"][:5],
+                         "something other than the expiry moved; the frozen clock did not hold")
+        self.assertNotEqual(before, after,
+                            "the expiry moved and the witness did not see it -- updated_at was the only "
+                            "lease column in the witness")
 
     def test_the_witness_column_is_discovered_not_restatement(self) -> None:
         """A schema rename must not leave the witness silently watching nothing."""

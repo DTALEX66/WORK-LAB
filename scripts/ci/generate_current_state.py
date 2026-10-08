@@ -117,6 +117,28 @@ def source_digest(root: Path) -> str:
     return digest.hexdigest()
 
 
+def _changed_sources(root: Path, projection: Path) -> list[str]:
+    """Name the sources that moved since the projection was last committed.
+
+    A single rolled digest over ~40 files cannot say which one moved, and "just regenerate it" is not a
+    diagnosis when the mover is something nobody meant to fold into the current-state picture. Answered
+    from git history rather than mtimes, so the verdict does not depend on which machine checked out
+    the tree last.
+    """
+    try:
+        relative = projection.relative_to(root).as_posix()
+        commit = subprocess.run(["git", "log", "-1", "--format=%H", "--", relative], cwd=root,
+                                capture_output=True, check=True).stdout.decode("utf-8", "replace").strip()
+        if not commit:
+            return []
+        names = [relative_name for relative_name, _ in _source_files(root)]
+        out = subprocess.run(["git", "diff", "--name-only", commit, "HEAD", "--", *names],
+                             cwd=root, capture_output=True, check=True).stdout
+        return [line.decode("utf-8", "replace").strip() for line in out.splitlines() if line.strip()][:10]
+    except (OSError, ValueError, subprocess.CalledProcessError):
+        return []
+
+
 def content_digest(state: dict[str, Any]) -> str:
     payload = {key: value for key, value in state.items() if key != "generated_at"}
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -476,7 +498,11 @@ def main(argv: list[str] | None = None) -> int:
         ci_evidence = default_ci.resolve() if default_ci.is_file() else None
         expected = build_state(root, ci_evidence=ci_evidence)
         if tracked.get("source_digest") != expected["source_digest"]:
-            print("CURRENT_STATE_FRESHNESS_FAIL source-digest-mismatch")
+            print("CURRENT_STATE_FRESHNESS_FAIL source-digest-mismatch: "
+                  f"recorded={str(tracked.get('source_digest'))[:12]} "
+                  f"recomputed={expected['source_digest'][:12]}")
+            for name in _changed_sources(root, markdown_path):
+                print(f"  changed since the projection was last written: {name}")
             return 1
         if projection_digest(tracked) != projection_digest(expected):
             print("CURRENT_STATE_FRESHNESS_FAIL projection-digest-mismatch")
