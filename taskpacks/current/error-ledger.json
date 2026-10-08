@@ -6299,8 +6299,9 @@
         "introducedCommit": null,
         "introducedCommitNote": "the trap is git's, not a commit; the defect was the absence of any note saying the probe is unusable in directory shape",
         "fixedCommit": "73ed8857b292fc3ea2096fdc6a023d726d19db05",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 73ed8857 adds the guard; verifiedCommit is owed until every Actions run at a head containing it is green across both triggers"
+        "verifiedCommit": "72900749ca5461458aa5bcfd53d74b5cab70f2d4",
+        "bindingBasis": "commit-contains-fix: 73ed8857 adds the guard; verifiedCommit is owed until every Actions run at a head containing it is green across both triggers",
+        "verifiedCommitNote": "exact-SHA Actions readback at 72900749ca5461458aa5bcfd53d74b5cab70f2d4: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -6327,8 +6328,9 @@
         "introducedCommit": "9b71827efeb2173477a4b4892d2c720ff0da83ec",
         "introducedCommitNote": "the widening commit that added the floor to the default scan only",
         "fixedCommit": "8d08cba2036d3ae117a45f13b3d312bf62622b71",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 8d08cba2 refuses a named run that judged nothing; verifiedCommit is owed until every Actions run at a head containing it is green"
+        "verifiedCommit": "72900749ca5461458aa5bcfd53d74b5cab70f2d4",
+        "bindingBasis": "commit-contains-fix: 8d08cba2 refuses a named run that judged nothing; verifiedCommit is owed until every Actions run at a head containing it is green",
+        "verifiedCommitNote": "exact-SHA Actions readback at 72900749ca5461458aa5bcfd53d74b5cab70f2d4: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     }
   ],
