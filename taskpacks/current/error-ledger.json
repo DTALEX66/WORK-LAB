@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 202,
+    "total": 204,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 63,
-      "test_behavior_alignment": 24,
+      "test_behavior_alignment": 25,
       "working_directory_recovery": 2,
-      "evidence_state": 36,
+      "evidence_state": 37,
       "ci_configuration": 21,
       "feature_gap": 10,
       "config_downgrade": 3,
@@ -6207,6 +6207,62 @@
         "fixedCommit": "6310bd4e21f643a9d509e556f630d21c66e3d091",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: 6310bd4e runs --check-current locally, regenerates the projection and names the moved sources; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+      }
+    },
+    {
+      "error_id": "ERR-205",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "tests/workflow-assistance/test_sidecar_v3_snapshot.py",
+      "command": "python -m pytest -q tests/workflow-assistance/test_sidecar_v3_snapshot.py",
+      "exit_code": 1,
+      "observed_error": "The push-triggered work-lab-gate run at 048e616a (tree bd3a678d) concluded success while the pull-request-triggered run at the identical SHA and tree failed the governance batch on test_embedded_worker_lifecycle_writes_health_and_stops_cleanly: 'worker_loop' not found in {'healthy_collector'}, FAILED (failures=1, skipped=11). I had already stamped ERR-197..204 verifiedCommit from the green run and had to withdraw all eight with git restore.",
+      "root_cause": "run_forever() writes the collector health rows inside run_once() and stamps the worker_loop row only after that tick returns, so a health table containing the collector but not the loop is a legal intermediate state. The test polled until the table was non-empty and then asserted the loop row was present, so its verdict depended on where the poll landed in that window; the other four health tests in the same file already waited for the full expected count, which is what marked this one out.",
+      "fix": "The wait is on the set the sidecar itself declares (_expected_collector_names), the deadline is raised from 2s to 5s, and the failure names the collectors that stayed silent instead of reporting a bare membership miss. Falsified rather than assumed: suppressing the worker_loop write makes the rewritten test fail in 5.3s and print worker_loop as the missing entry, and the module is green five runs in a row with 41 tests passing across the four sidecar/worker modules. The write order itself is left alone -- stamping the loop row before the tick finished would record a success that has not happened yet.",
+      "regression_test": "tests/workflow-assistance/test_sidecar_v3_snapshot.py",
+      "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_sidecar_v3_snapshot.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "a test must wait for the condition it asserts, never for a weaker signal that merely precedes it; a head is only verified when every Actions run at that SHA is green, including both the push and the pull_request triggers, so never stamp verifiedCommit from one run; and the deadline in a threaded test belongs to the slowest legitimate path, not to a guessed latency.",
+      "remaining_boundary": "No guard yet stops a future test from polling a weaker condition than it asserts -- this is fixed per case, and the falsification (suppress the write, watch it go red) is the only repeat pressure. The flake was visible on CI only in the sense that timing differs there; locally the module passed before and after, which is why five consecutive local runs plus the suppression control are what this record rests on rather than a single green.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the assertion predates this session's edits to the file; it passed by timing until a CI trigger landed in the other half of the window",
+        "fixedCommit": "9d1fd1bfd4302ba3ed7d37597a3805e6b5330e54",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 9d1fd1bf rewrites the wait and the failure text; verifiedCommit is owed until every Actions run at a head containing it is green"
+      }
+    },
+    {
+      "error_id": "ERR-206",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "evidence_state",
+      "entrypoint": "taskpacks/current/OPEN-TASK-REGISTER.md",
+      "command": "python scripts/ci/verify_register_table_shape.py",
+      "exit_code": 1,
+      "observed_error": "Three register cells assert things the tracked tree contradicts. AG-06o calls references/frontend-baseline-contract.md 'confirmed absent from the repository source' while it is tracked under packages/client-neutral-core/skills/software-development/windows-development-environment/references/ and cited by that skill's own SKILL.md:130-131. AG-14 records b10.css at 21,002 B and l10b-shell.css at 2,907 B 'verified against main@cd4daa83' where git cat-file -s at that commit returns 20,469 B and 2,832 B. U03-PARITY-20261007 says the observer JS suites are '退役仍未做' while 891c8714, cited in the same cell, deleted all six. Plus two wrong anchors in that row: required_groups.json contains no web/scripts/*.js glob at all (its :22 group runs node tests/run_all_tests.js) and the observer-no-business-write watch list is at run_quality_gate.py:1381 protecting frontend/src, not :1362 protecting apps/observer/web/.",
+      "root_cause": "The register is written as a running narrative: each round appends what it measured at the time and the table shape guard keeps rows rectangular, so a cell stays syntactically valid long after its facts age out. Nothing compared the register's own factual claims to the tree, so a deletion commit and a claim that the deletion is outstanding can coexist in one cell and both look citations.",
+      "fix": "22 root-prefixed path literals across 11 rows rewritten to the unique tracked successor (20/20 re-checked with git ls-files --error-unmatch), and the three false claims given dated corrections that keep the original judgement as evidence rather than erasing it -- the U03 retirement paragraph is now labelled as the pre-891c8714 determination, AG-14's sizes are the measured ones with today's 22,012 B noted alongside, and the two anchors point at the lines that actually hold those entries. AG-20's claim that generate_source_registry.py produced a tracked registry is left as an owner ask: no script in the repository writes that file, and choosing between 'hand-maintained plus reader asserts' and 'add a producer' is not mine to make.",
+      "regression_test": "scripts/ci/verify_register_table_shape.py",
+      "regressionCommand": "python scripts/ci/verify_register_table_shape.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "a record that cites a path or a size must be re-measured when the tree moves, and a correction must carry the command that produced the new number; register prose is allowed to be historical only when it is labelled as historical, because an unlabelled past-tense claim reads as a present one.",
+      "remaining_boundary": "There is still no machine guard over the register's factual claims -- applying the docs/current reference rule to it produced 321 references with 61 unresolved, and almost all of those are legitimate: client-home paths, generated build outputs, cross-project references and the names of files a deletion record exists to name. Gating it needs a scoped exemption design (per-row declarations with reasons, the way DECLARED_NON_PATHS refuses to be global), which is the open next step, not a claim of closure here. The size and anchor corrections are backed by the four quoted git commands run at this head.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "each stale claim entered on its own day; the defect is the absence of a re-measurement rule, not one commit",
+        "fixedCommit": "009444f44e9f81d5a03fb804ebf0d1ed4c8b8180",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 009444f4 rewrites the 22 literals and appends the dated corrections; verifiedCommit is owed until every Actions run at a head containing it is green"
       }
     }
   ],
