@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 195,
+    "total": 196,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 62,
       "test_behavior_alignment": 22,
       "working_directory_recovery": 2,
-      "evidence_state": 34,
+      "evidence_state": 35,
       "ci_configuration": 19,
       "feature_gap": 10,
       "config_downgrade": 3,
@@ -5945,7 +5945,7 @@
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "evidence_level": "local-full",
       "repeat_prevention": "A status cell must pin to a commit reachable from the branch a reader can check out, and reachability is judged by `merge-base --is-ancestor` against origin/main rather than by whether the object parses or by how many local scratch refs contain it; a claim of an exact-SHA CI pass must cite a run at a commit that survives the merge.",
-      "remaining_boundary": "24 rows and 13 tokens remain unrepaired at the time of writing -- this record is intentionally left at status_after=FAIL so the debt is visible rather than closed by description. The reachability tool it names is not written yet, so today nothing prevents a new row from pinning to a dangling head. Squash history also means the 11 mapped tokens cannot be recovered as checkouts at all; only the mergeCommit is a real target.",
+      "remaining_boundary": "24 rows and 13 tokens remain unrepaired at the time of writing -- this record is intentionally left at status_after=FAIL so the debt is visible rather than closed by description. The reachability tool it names is not written yet, so today nothing prevents a new row from pinning to a dangling head. Squash history also means the 11 mapped tokens cannot be recovered as checkouts at all; only the mergeCommit is a real target. 2026-10-08 更正（本记录自身的断言也要被复核）：判定口径改成「是否被任一 ref 包含」之后重测，结果是 distinct_tokens=37、ON_MAIN=33、OTHER_REF=34、ZERO_REFS=12 tokens / 23 rows，不是本条最初写的 13 tokens / 24 rows——0d18764 现被某个 ref 包含，而 87618d1（U08）此前漏计，净差一名；行数按含 pin 的行归并后是 23。更要紧的是判据本身：本条初稿用「不是 origin/main 的祖先」，于是把 40 个 pin 都说成缺陷，而其中 34 个其实在本条开放分支上，今天完全可 checkout、squash 合并后才会消失——那是正常状态不是债。真正的债只有零 ref 的那 12 个，其中 656e7d2、8114d8e、09c6dd2 连 GitHub 都没有（422）。修复与门禁见 ERR-198。",
       "status_before": "FAIL",
       "status_after": "FAIL",
       "lifecycle": {
@@ -6011,6 +6011,34 @@
         "fixedCommit": "8d4a5c464046b1b078c499b3c511751889c4ad2a",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: 8d4a5c46 carries the moves, the repointed links, the widened extractor and its tests; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+      }
+    },
+    {
+      "error_id": "ERR-198",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "evidence_state",
+      "entrypoint": "taskpacks/current/OPEN-TASK-REGISTER.md",
+      "command": "python -m pytest -q tests/ci/test_register_pins_name_checkable_commits.py",
+      "exit_code": 1,
+      "observed_error": "Twelve distinct hashes pinned by 23 register rows were contained by zero refs, so a reader could not check the claim out on any branch: nine were PR #127's pre-squash heads (0600d6f f0926e2 2a3756b 04a25f4 f510516 25158bf 9a6ea95 bc3fe85 656e7d2), one more for the same squash came from U08 (87618d1), and 09c6dd2 plus 8114d8e (P1-C/D/E/F, P2-05) belong to PR #133's pre-squash history. Three of the twelve -- 656e7d2, 8114d8e, 09c6dd2 -- return HTTP 422 from GET /repos/DTALEX66/WORK-LAB/commits/<sha>/pulls: GitHub never received them, so they exist only in this machine's object database. Every check that asked 'does the object resolve?' said yes.",
+      "root_cause": "Rows were written from whatever head the author stood on and PRs were squash-merged, which leaves the branch heads dangling while the objects stay locally readable; containment by a ref was never asked. The register also uses '@' as the pin marker with no convention distinguishing a landed commit from a head a note explicitly labels merge_main=false, so the 2026-09-20 note pinned two heads as if they were verifiable CI locations.",
+      "fix": "scripts/audit/register_pin_reachability.py classifies every @token as ON_MAIN, OTHER_REF, ZERO_REFS or UNRESOLVABLE by containment plus merge-base --is-ancestor against origin/main and writes docs/audits/REGISTER_PIN_REACHABILITY_2026-10-08.json; --check exits 1 on a dangling pin. All twelve were re-pinned to the commit that actually carries the work -- 62f666e for PR #127's ten, 4d059c7 for PR #133's two -- with the superseded hash kept in the cell without its '@' so the old claim stays auditable and is not mistaken for a pin. The 2026-09-20 note's two head mentions lost the marker for the same reason, and the note now says why. Measured: PIN_REACHABILITY_PASS pins=67 distinct_tokens=37 ON_MAIN=33 OTHER_REF=34 (zero dangling), REGISTER_TABLE_SHAPE_PASS tables=8 rows=166 wrong_width=0, 10 new tests pass including a planted dead pin and a pin-free register, and the object-existence trap is pinned directly: the test asserts the dead commit still passes git cat-file -e while being contained by no ref.",
+      "regression_test": "tests/ci/test_register_pins_name_checkable_commits.py",
+      "regressionCommand": "python -m pytest -q tests/ci/test_register_pins_name_checkable_commits.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A pin must name a commit contained by a ref, and reachability is judged by containment plus merge-base against origin/main -- never by whether the object parses, because a squashed branch head answers to git cat-file forever on the machine that made it; a hash mentioned in prose is written bare, since the marker is what makes it a promise; and a checker whose subject file contains no pins at all must fail rather than pass.",
+      "remaining_boundary": "The 34 OTHER_REF pins are correct today and become dangling the moment PR #162 is squash-merged, which is exactly how the twelve got here -- the gate will catch it then, but only if someone runs it after the merge; nothing rewrites them automatically. Nine CI run ids cited in rows still point at runs whose head is unreachable, so the runs are real by id and unverifiable by checkout, and the register keeps them as history rather than as evidence. UNRESOLVABLE tokens are reported but none exist today, so that branch of the checker is exercised only by planted input.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "accumulated across squash-merged PRs since 2026-09; no single introducing commit is claimed",
+        "fixedCommit": "54a3284e2daabf95ca94c63559bbb1546c675434",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 54a3284e carries the re-pinned rows, the reachability tool and its test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
       }
     }
   ],

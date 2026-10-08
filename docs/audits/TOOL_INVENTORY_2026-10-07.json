@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T02:30:35Z",
+  "generatedAt": "2026-10-08T02:44:11Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 60,
+    "trackedTools": 61,
     "withLedgerPromise": 19,
-    "referencedSomewhere": 60,
+    "referencedSomewhere": 61,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -567,6 +567,19 @@
       "citedBy": [
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/register_pin_reachability.py",
+      "sha256": "9bb64fe04f2932bcb3327dbb2939a660cbe71e72a8a0a433ebe7290fe6e2499e",
+      "bytes": 5655,
+      "lines": 136,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "taskpacks/current/error-ledger.json",
+        "tests/ci/test_register_pins_name_checkable_commits.py"
       ]
     },
     {
