@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T10:31:09Z",
+  "generatedAt": "2026-10-08T12:42:43Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -695,19 +695,19 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "b24e40d052b3a61caac3c64aa0088ffa54de1e1c0f9ac6b828a774abb3ceff8b",
-      "bytes": 23518,
-      "lines": 512,
+      "sha256": "7810b147244f1069279879bce068b06b1c7570c20ae51b20eaf1ca5261227ad9",
+      "bytes": 25513,
+      "lines": 550,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 12,
+      "citedByRecords": 15,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "UI_IMPLEMENTATION_REPORT.md",
+        "apps/observer/frontend/DESIGN.md",
+        "apps/observer/frontend/SCREEN_SPEC.md",
         "apps/observer/scripts/window_state_readback.py",
-        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
-        "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
-        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json"
+        "design.qa.yaml"
       ]
     },
     {
