@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T05:21:23Z",
+  "generatedAt": "2026-10-08T07:11:56Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 61,
+    "trackedTools": 62,
     "withLedgerPromise": 19,
-    "referencedSomewhere": 61,
+    "referencedSomewhere": 62,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -716,10 +716,12 @@
       "lines": 160,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 2,
+      "citedByRecords": 4,
       "citedBy": [
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
-        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
@@ -950,6 +952,21 @@
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-H.md"
+      ]
+    },
+    {
+      "path": "scripts/maintenance/release_temp_fixture_residue.py",
+      "sha256": "daaedcabd3b63a572a1993a67c9df5330043addd6c3dd7f2b67c588f779a8631",
+      "bytes": 6504,
+      "lines": 149,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 4,
+      "citedBy": [
+        "packages/client-neutral-core/scripts/project_temp.py",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json",
+        "tests/workflow-assistance/test_temp_fixture_residue_is_bounded.py"
       ]
     }
   ]
