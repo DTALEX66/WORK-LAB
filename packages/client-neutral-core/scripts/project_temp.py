@@ -33,8 +33,14 @@ import gc
 import os
 import shutil
 import stat
+import sys
 import tempfile
 from pathlib import Path
+
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from evidence_range_reader import name_is_sensitive  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_TMP = REPO_ROOT / ".project-local" / "runs" / "tmp"
@@ -65,6 +71,9 @@ def temp_root() -> Path:
 
 _TRACKED: list[Path] = []
 _SWEEP_REGISTERED = False
+
+# Consecutive refused names mean the prefix itself is a sensitive kind, not that luck has run out.
+_NAME_ATTEMPTS = 5
 
 
 def _clear_read_only_bits(root: Path) -> None:
@@ -120,11 +129,31 @@ def fixture_dir(prefix: str = "work-lab-") -> Path:
     fails is reported rather than swallowed. On Windows a fixture whose store is still open cannot be
     removed, so a caller that opens a database must close it — the report names the directory instead
     of hiding it.
+
+    The name is checked before the root is handed out. ``mkdtemp`` appends eight random characters drawn
+    from ``[a-z0-9_]``, and the evidence reader splits every path component on the non-alphanumerics, so a
+    suffix shaped like ``_db_`` makes the fixture root *itself* a ``SENSITIVE_NAME`` handle — and because
+    the reader judges every ancestor too, everything created under that root is refused with it. Measured
+    2026-10-08: one generated root in 20,000 collides, all of them through the two-letter token ``db``.
+    The reader's rule is the law and is not loosened for convenience; the helper that mints the name asks
+    it, discards a refused root through ``force_release``, and tries again.
     """
     global _SWEEP_REGISTERED
-    path = Path(tempfile.mkdtemp(prefix=prefix, dir=str(temp_root())))
-    if not path.is_relative_to(REPO_ROOT):
-        raise RuntimeError(f"fixture root escaped the project boundary: {path}")
+    root = temp_root()
+    for _ in range(_NAME_ATTEMPTS):
+        path = Path(tempfile.mkdtemp(prefix=prefix, dir=str(root)))
+        if not path.is_relative_to(REPO_ROOT):
+            raise RuntimeError(f"fixture root escaped the project boundary: {path}")
+        if not name_is_sensitive(Path(path.name)):
+            break
+        if not force_release(path):
+            raise RuntimeError(f"a refused fixture root could not be released: {path}")
+    else:
+        raise RuntimeError(
+            f"{_NAME_ATTEMPTS} consecutive fixture names under {root} were refused by the evidence reader, "
+            f"so the prefix {prefix!r} itself names a sensitive kind; the reader cannot read anything created "
+            f"under it and the caller must choose a prefix it accepts."
+        )
     _TRACKED.append(path)
     if not _SWEEP_REGISTERED:
         atexit.register(_release_tracked)
