@@ -32,6 +32,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import math
 import re
 import sys
 import time
@@ -79,6 +80,42 @@ def load_geometry():
 
 _COLOR_RE = re.compile(r"rgba?\(([^)]+)\)")
 _SRGB_RE = re.compile(r"color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*/\s*([\d.]+))?\)")
+_OKLAB_RE = re.compile(r"oklab\(\s*([\d.]+%?|0*\.\d+)\s+(-?[\d.]+%?|0*\.\d+|0)\s+(-?[\d.]+%?|0*\.\d+|0)(?:\s*/\s*([\d.]+%?))?\)")
+_OKLCH_RE = re.compile(r"oklch\(\s*([\d.]+%?|0*\.\d+)\s+([\d.]+%?|0*\.\d+|0)\s+(-?[\d.]+)(?:deg)?(?:\s*/\s*([\d.]+%?))?\)")
+
+# Chrome serialises some computed colours as `oklab(...)`/`oklch(...)` even though the source never
+# names that space, so a parser limited to rgb()/color(srgb) marks those nodes UNKNOWN. An UNKNOWN is
+# (correctly) a gate failure — which means ten perfectly measurable nodes reported "cannot compute"
+# and the census could never go green for reasons that had nothing to do with the UI. Conversion is
+# Ottosson's published oklab -> linear-sRGB matrix; out-of-gamut results clamp.
+def _channel_gamma(value: float) -> float:
+    v = max(0.0, min(1.0, value))
+    return 12.92 * v if v <= 0.0031308 else 1.055 * (v ** (1 / 2.4)) - 0.055
+
+
+def _oknum(token: str, scale: float = 1.0) -> float:
+    text = str(token)
+    if text.endswith("%"):
+        return float(text[:-1]) / 100.0 * scale
+    return float(text) * scale
+
+
+def oklab_to_srgb(lightness: float, a: float, b: float) -> tuple[float, float, float]:
+    l_ = lightness + 0.3963377774 * a + 0.2158037573 * b
+    m_ = lightness - 0.1055613458 * a - 0.0638541728 * b
+    s_ = lightness - 0.0894841775 * a - 1.2914855480 * b
+    lin = (l_ ** 3, m_ ** 3, s_ ** 3)
+    r = 4.0767416621 * lin[0] - 1.5376030856 * lin[1] - 0.4985357996 * lin[2]
+    g = -1.2684380046 * lin[0] + 2.6097574011 * lin[1] - 0.3413193965 * lin[2]
+    bl = -0.0041960863 * lin[0] - 0.7034186147 * lin[1] + 1.7076147010 * lin[2]
+    return (_channel_gamma(r) * 255.0, _channel_gamma(g) * 255.0, _channel_gamma(bl) * 255.0)
+
+
+def _ok_alpha(token: object, default: float = 1.0) -> float:
+    if token is None:
+        return default
+    text = str(token)
+    return float(text[:-1]) / 100.0 if text.endswith("%") else float(text)
 
 
 def parse_color(value: str) -> tuple[float, float, float, float] | None:
@@ -99,6 +136,17 @@ def parse_color(value: str) -> tuple[float, float, float, float] | None:
     if srgb:
         alpha = 1.0 if srgb[4] is None else float(srgb[4])
         return tuple(float(srgb[i]) * 255.0 for i in (1, 2, 3)) + (alpha,)  # type: ignore[return-value]
+    lab = _OKLAB_RE.search(text)
+    if lab:
+        rgb = oklab_to_srgb(_oknum(lab.group(1), 1.0), _oknum(lab.group(2), 1.0), _oknum(lab.group(3), 1.0))
+        return tuple(rgb) + (_ok_alpha(lab.group(4)),)                    # type: ignore[return-value]
+    lch = _OKLCH_RE.search(text)
+    if lch:
+        chroma = _oknum(lch.group(2), 0.4)          # CSS: 100% == 0.4 in the C axis
+        hue = math.radians(float(lch.group(3)))
+        rgb = oklab_to_srgb(_oknum(lch.group(1), 1.0), chroma * math.cos(hue),
+                            chroma * math.sin(hue))
+        return tuple(rgb) + (_ok_alpha(lch.group(4)),)                    # type: ignore[return-value]
     plain = _COLOR_RE.search(text)
     if not plain:
         return None
@@ -270,7 +318,7 @@ def exception_matches(path: str) -> str | None:
 # --------------------------------------------------------------------------- harvest
 
 
-HARVEST = """JSON.stringify((()=>{
+HARVEST_BODY = """(() => {
   const nodes = [];
   const pathOf = (el) => {
     const bits = [];
@@ -322,7 +370,97 @@ HARVEST = """JSON.stringify((()=>{
     htmlBackground: getComputedStyle(document.documentElement).backgroundColor,
     nodes: nodes,
   };
-})())"""
+})()
+"""
+
+
+HARVEST = "JSON.stringify(" + HARVEST_BODY + ")"
+
+MIN_VIEW_NODES = 12      # a lane rendering fewer readable nodes than this drew nothing but chrome
+MIN_VIEWS = 20           # the rail carries 23 lanes; reaching a handful is not "every view"
+
+
+def views_expression() -> str:
+    """Click every rail lane in one live session and harvest the screen each produces.
+
+    The lane list is read from the rail itself rather than hardcoded here: the instrument then cannot
+    quietly "pass" a subset while the product gained or lost a view. A single page load can only ever
+    show one view, so the shipped census measured Overview and was described as the product (ERR-218);
+    and a view that renders nothing is reported as a failure rather than as a silence an average hides.
+    """
+    return ("(async () => {\n"
+            "  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\n"
+            "  const harvest = () => (" + HARVEST_BODY + ");\n"
+            "  const lanes = Array.from(document.querySelectorAll('.nav button[data-lane]'))\n"
+            "      .map((b) => b.getAttribute('data-lane'));\n"
+            "  const views = [];\n"
+            "  for (const lane of lanes) {\n"
+            "    const button = document.querySelector('.nav button[data-lane=\"' + lane + '\"]');\n"
+            "    if (!button) { views.push({ lane: lane, error: 'NO_RAIL_BUTTON', nodes: [] }); continue; }\n"
+            "    button.click();\n"
+            "    await sleep(80);\n"
+            "    const result = harvest();\n"
+            "    views.push({ lane: lane, error: null, theme: result.theme,\n"
+            "        firstText: (result.nodes.length ? result.nodes[0].text : null),\n"
+            "        pageBackground: result.pageBackground, nodes: result.nodes });\n"
+            "  }\n"
+            "  return JSON.stringify({ pageBackground: harvest().pageBackground, views: views });\n"
+            "})()")
+
+
+def views_verdict(theme: str, collected: dict) -> dict:
+    """Pure: judge every view the rail produced, naming the view in every offender."""
+    page_background = collected.get("pageBackground") or "rgb(0,0,0)"
+    views = collected.get("views") or []
+    scored = {view["lane"]: [node_contrast(n, page_background) for n in view.get("nodes") or []]
+              for view in views}
+    checks: list[dict] = []
+
+    def add(name: str, ok: bool, detail: str) -> None:
+        checks.append({"check": name, "pass": bool(ok), "detail": detail})
+
+    missing = [view["lane"] for view in views if view.get("error")]
+    add("every_lane_is_reachable_from_the_rail", not missing,
+        f"lanes={len(views)} missing={json.dumps(missing)}")
+    add("registered_views_were_all_attempted", len(views) >= MIN_VIEWS,
+        f"views={len(views)} floor={MIN_VIEWS}")
+    thin = [lane for lane, rows in scored.items() if len(rows) < MIN_VIEW_NODES]
+    add("every_view_rendered_readable_text", not thin,
+        "thin_views=" + json.dumps([f"{lane}={len(scored[lane])}" for lane in thin])[:400])
+
+    def across(predicate):
+        return [(lane, n) for lane, rows in scored.items() for n in rows if predicate(n)]
+
+    below = across(lambda n: not n["floorOk"] and exception_matches(n["path"]) is None)
+    add("no_text_below_the_type_floor", not below,
+        f"offenders={len(below)} "
+        + json.dumps([f"{lane}:{n['size']}px {n['text'][:16]!r}" for lane, n in below[:6]],
+                     ensure_ascii=False))
+    unknown = across(lambda n: n["status"] == "unknown-colour")
+    add("no_unparsable_colour", not unknown,
+        f"unknown={len(unknown)} "
+        + json.dumps([f"{lane}:{n['path'][:30]}" for lane, n in unknown[:5]], ensure_ascii=False))
+    failed = across(lambda n: n["status"] == "ok" and not n["disabled"] and not n["pass"])
+    invisible = across(lambda n: n["status"] == "invisible-foreground")
+    add("every_text_node_meets_AA", not failed and not invisible,
+        f"aa_failures={len(failed)} invisible={len(invisible)} worst="
+        + json.dumps([f"{lane} {n['renderedRatio']}:1 need {n['requiredRatio']} {n['size']}px "
+                      f"{n['text'][:18]!r}"
+                      for lane, n in sorted(failed, key=lambda pair: pair[1]["renderedRatio"])[:6]],
+                     ensure_ascii=False))
+    disabled_bad = across(lambda n: n["status"] == "ok" and n["disabled"] and not n["pass"])
+    add("disabled_text_is_still_legible", not disabled_bad,
+        f"disabled={len(disabled_bad)} worst="
+        + json.dumps([f"{lane} {n['renderedRatio']}:1 {n['text'][:18]!r}"
+                      for lane, n in sorted(disabled_bad, key=lambda pair: pair[1]["renderedRatio"])[:5]],
+                     ensure_ascii=False))
+
+    total = sum(len(rows) for rows in scored.values())
+    return {"theme": theme, "mode": "views", "passed": all(c["pass"] for c in checks),
+            "checks": checks,
+            "counts": {"views": len(views), "nodes": total, "aaFailures": len(failed),
+                       "disabledFailures": len(disabled_bad), "belowFloor": len(below),
+                       "thinViews": len(thin)}}
 
 
 def harvest_settled(root: Path, browser: str, u19, u19_geometry, theme: str,
@@ -522,6 +660,8 @@ def main() -> int:
                     help="click the theme control and judge the frames it produces, not the settled page")
     ap.add_argument("--live-backend", action="store_true",
                     help="serve a real v3 snapshot through the release line's sidecar instead of the static preview")
+    ap.add_argument("--all-views", action="store_true",
+                    help="click every rail lane and judge each view it produces, not just the landing view")
     args = ap.parse_args()
 
     root = Path(args.root).resolve()
@@ -555,6 +695,19 @@ def main() -> int:
             print(f"LEGIBILITY_BACKEND {api}")
         try:
             for theme in THEMES:
+                if args.all_views:
+                    path = (f"/index.html?view=overview&theme={theme}&api={api}" if api
+                            else f"/index.html?view=overview&mode=UNKNOWN&theme={theme}&shell=tauri")
+                    try:
+                        collected = geometry.serve_and_eval(root, path, WINDOW_SIZE,
+                                                            views_expression(), browser, u19)
+                    except Exception as exc:  # noqa: BLE001
+                        print(f"LEGIBILITY_GATE_NOT_RUN views/{theme} {exc!r}")
+                        return 3
+                    reports.append({"theme": f"{theme}-all-views",
+                                    "verdict": views_verdict(theme, collected),
+                                    "collected": collected, "browser": browser})
+                    continue
                 try:
                     harvest = harvest_settled(root, browser, u19, geometry, theme, api=api)
                 except Exception as exc:  # noqa: BLE001 — a failed measurement is NOT_RUN, never a silent pass

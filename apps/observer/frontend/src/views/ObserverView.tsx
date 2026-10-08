@@ -12,7 +12,7 @@
 import * as React from 'react'
 import { PageHeader } from '@/components/ui/page-header'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
-import { NodeGraph, type GraphNode } from '@/components/graph/node-graph'
+import { GraphLegend, NodeGraph, type GraphNode } from '@/components/graph/node-graph'
 import { Sparkline } from '@/components/ui/sparkline'
 import { StatusPill } from '@/components/ui/status'
 import { Drawer } from '@/components/ui/drawer'
@@ -92,6 +92,13 @@ export function ObserverView({ snap }: { snap: SnapshotV3 | null }) {
           </CardHeader>
           <CardContent>
             <NodeGraph
+              core="Observer"
+              nodes={nodes}
+              selected={selected}
+              onSelect={setSelected}
+            />
+            <GraphLegend
+              className="mt-2"
               core="Observer"
               nodes={nodes}
               selected={selected}

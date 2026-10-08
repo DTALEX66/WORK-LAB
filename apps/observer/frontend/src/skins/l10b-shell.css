@@ -393,6 +393,11 @@ html.light .brand small { color: var(--primary-text); }
 .tag.warn { background: #7A4A00; }
 .tag.bad { background: #A11D1D; }
 .tag.info { background: #1B6CC4; }
+/* The segmented filter's selected state had the same shape as the pills: b10 paints it with a
+ * primary→cyan gradient and keeps `color:#fff`, which measured 2.56:1 in dark and 2.88:1 in light on
+ * a 16px label — the tab the user just chose was the least readable word in the toolbar, in both
+ * themes. One solid fill answers both because it does not depend on the theme's accent. */
+.toolbar .seg button.active { background: #1B6CC4; }
 
 /* There was no global focus indicator anywhere except .winctl-btn, and
  * b10.css:381 `.palette{overflow:hidden}` clips the UA ring. */

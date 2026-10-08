@@ -71,6 +71,38 @@ class ColourParsingTests(unittest.TestCase):
         alpha = legibility.parse_color("color(srgb 0.5 0.5 0.5 / 0.72)")
         self.assertAlmostEqual(alpha[3], 0.72)
 
+    def test_chromes_oklab_serialisations_are_not_unknowns(self) -> None:
+        """Chrome hands back `oklab(...)` for some computed colours the source never wrote that way.
+        Ten measurable nodes reported \"cannot compute\" until this was handled — and an UNKNOWN is a
+        gate failure, so the census could not go green for reasons that had nothing to do with the UI."""
+        black = legibility.parse_color("oklab(0 0 0)")
+        white = legibility.parse_color("oklab(1 0 0)")
+        dim = legibility.parse_color("oklab(0.3 0 0)")
+        bright = legibility.parse_color("oklab(0.7 0 0)")
+        assert black is not None and white is not None and dim is not None and bright is not None
+        self.assertEqual(black[:3], (0.0, 0.0, 0.0))
+        self.assertAlmostEqual(white[0], 255.0, delta=0.6)
+        self.assertLess(legibility.relative_luminance(dim[:3]),
+                        legibility.relative_luminance(bright[:3]))
+        # The value the shipped page actually reported, as a dark translucent surface.
+        surface = legibility.parse_color("oklab(0.217044 -0.0124847 -0.0339877 / 0.68)")
+        assert surface is not None
+        self.assertAlmostEqual(surface[3], 0.68)
+        self.assertLess(legibility.relative_luminance(surface[:3]), 0.05)
+        # `oklab(L 0 0)` is not a neutral grey — the LMS white point is not equal-channel — so no
+        # "should be 128" assertion belongs here. Round-tripping oklch against oklab is the check
+        # that the two share one inverse.
+        warm = legibility.parse_color("oklab(0.6 0 0)")
+        assert warm is not None
+        self.assertGreater(warm[0], warm[1])
+
+    def test_oklch_round_trips_to_the_same_grey_as_oklab(self) -> None:
+        from_chroma = legibility.parse_color("oklch(0.6 0 0deg)")
+        from_square = legibility.parse_color("oklab(0.6 0 0)")
+        assert from_chroma is not None and from_square is not None
+        for index in range(3):
+            self.assertAlmostEqual(from_chroma[index], from_square[index], delta=0.6)
+
     def test_unreadable_values_return_none_instead_of_a_guess(self) -> None:
         self.assertIsNone(legibility.parse_color("hsl(12, 50%, 50%)"))
         self.assertIsNone(legibility.parse_color(""))
@@ -296,6 +328,86 @@ class CrossfadeVerdictTests(unittest.TestCase):
         v = legibility.crossfade_verdict("dark->light", {"pageBackground": WHITE, "samples": []})
         self.assertFalse(v["passed"])
         self.assertFalse(checks_of(v)["switch_was_observed"]["pass"])
+
+
+class AllViewsVerdictTests(unittest.TestCase):
+    """Driving the rail is what turns "0 AA failures" from a claim about one screen into a claim about
+    all of them (ERR-218). These cases exist because a per-view loop can fail by measuring nothing."""
+
+    @staticmethod
+    def view(lane: str, count: int = 14, extra: dict | None = None) -> dict:
+        nodes = [node(path=f"div.view-{lane} > span.body", text=f"{lane} label {i}")
+                 for i in range(count)]
+        if extra is not None:
+            nodes.append(extra)
+        return {"lane": lane, "error": None, "theme": "dark", "pageBackground": WHITE, "nodes": nodes}
+
+    @staticmethod
+    def collected(lanes: list[str], **overrides) -> dict:
+        views = overrides.pop("views", None) or [AllViewsVerdictTests.view(lane) for lane in lanes]
+        return {"pageBackground": WHITE, "views": views, **overrides}
+
+    def test_every_view_clean_passes_and_reports_reach(self) -> None:
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        v = legibility.views_verdict("dark", self.collected(lanes))
+        self.assertTrue(v["passed"], json.dumps(v["checks"], ensure_ascii=False))
+        self.assertEqual(v["counts"]["views"], legibility.MIN_VIEWS)
+
+    def test_a_view_that_renders_almost_nothing_is_a_failure_not_a_small_average(self) -> None:
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        views = [self.view(lane) for lane in lanes]
+        views[7] = self.view(views[7]["lane"], count=2)
+        v = legibility.views_verdict("dark", self.collected(lanes, views=views))
+        failed = checks_of(v)["every_view_rendered_readable_text"]
+        self.assertFalse(failed["pass"])
+        self.assertIn("lane7=2", failed["detail"])
+
+    def test_an_offender_names_the_view_it_belongs_to(self) -> None:
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        views = [self.view(lane) for lane in lanes]
+        views[3] = self.view(views[3]["lane"], extra=node(path="p.copy", text="成本质量说明", size=10.0))
+        views[5] = self.view(views[5]["lane"], extra=node(path="span.tag", text="DELAYED",
+                                                          color="rgb(120, 120, 120)"))
+        v = legibility.views_verdict("dark", self.collected(lanes, views=views))
+        floor = checks_of(v)["no_text_below_the_type_floor"]
+        aa = checks_of(v)["every_text_node_meets_AA"]
+        self.assertFalse(floor["pass"])
+        self.assertIn("lane3", floor["detail"])
+        self.assertFalse(aa["pass"])
+        self.assertIn("lane5", aa["detail"])
+
+    def test_a_lane_with_no_rail_button_is_reported_as_unreachable(self) -> None:
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        views = [self.view(lane) for lane in lanes]
+        views[1] = {"lane": "lane1", "error": "NO_RAIL_BUTTON", "nodes": []}
+        v = legibility.views_verdict("dark", self.collected(lanes, views=views))
+        self.assertFalse(checks_of(v)["every_lane_is_reachable_from_the_rail"]["pass"])
+
+    def test_a_short_run_is_not_the_whole_rail(self) -> None:
+        v = legibility.views_verdict("dark", self.collected(["a", "b", "c"]))
+        self.assertFalse(checks_of(v)["registered_views_were_all_attempted"]["pass"])
+
+    def test_no_views_at_all_cannot_pass(self) -> None:
+        v = legibility.views_verdict("dark", {"pageBackground": WHITE, "views": []})
+        self.assertFalse(v["passed"])
+        self.assertFalse(checks_of(v)["registered_views_were_all_attempted"]["pass"])
+
+    def test_a_disabled_offender_is_reported_by_the_disabled_check(self) -> None:
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        views = [self.view(lane) for lane in lanes]
+        views[2] = self.view(views[2]["lane"], extra={**node(path="button.primary-btn", text="新建执行",
+                                                            color="rgb(210, 210, 210)"), "disabled": True})
+        v = legibility.views_verdict("dark", self.collected(lanes, views=views))
+        self.assertTrue(checks_of(v)["every_text_node_meets_AA"]["pass"])
+        self.assertFalse(checks_of(v)["disabled_text_is_still_legible"]["pass"])
+
+    def test_the_expression_reads_its_lane_list_from_the_rail(self) -> None:
+        """Hardcoded lane names would let the product gain or lose a view and the census quietly not
+        notice; the count is then checked against MIN_VIEWS by the verdict instead."""
+        expr = legibility.views_expression()
+        self.assertIn("querySelectorAll('.nav button[data-lane]')", expr)
+        self.assertIn("button.click()", expr)
+        self.assertLessEqual(legibility.MIN_VIEWS, 23)
 
 
 class HarvestShapeTests(unittest.TestCase):

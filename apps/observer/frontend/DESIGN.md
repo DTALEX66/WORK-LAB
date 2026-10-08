@@ -272,6 +272,16 @@ census reads 61 nodes, 0 below floor, 0 AA failures, 0 disabled-label failures i
 (receipt `.project-local/artifacts/LEGIBILITY_LIVE2.json`). Ledger ERR-218 records the over-broad claim
 so the next measured sentence states what it measured.
 
+**Every view, with data (`--all-views`, 2026-10-08):** the census now clicks all 23 rail lanes and
+scores each screen it produces — 1023 text nodes per theme, **0 below floor, 0 AA failures, 0
+disabled-label failures, 0 thin views** in both themes
+(receipt `.project-local/artifacts/LEGIBILITY_ALLVIEWS2.json`). Reaching that took four fixes the
+single-view census could not see: the observer topology's node names were `fontSize="5"` inside a
+100-unit viewBox (5 CSS px — they now live in `GraphLegend` at 12px, selectable, state named in words);
+the segmented filter's selected tab was white on b10's primary→cyan gradient at 2.56:1 dark / 2.88:1
+light; light-theme `--warning` amber used as *text* measured 4.48:1; and the instrument itself could not
+parse the `oklab()` colours Chrome reports, which turned ten measurable nodes into UNKNOWN failures.
+
 **Type floor (normative).** No text a user must read below **12px**. Below 12px is permitted only for a
 decorative glyph that repeats information available elsewhere, and such a node must be `aria-hidden`.
 The floor is enforced twice: the rendered instrument fails any node under 12px whose role is not

@@ -66,17 +66,12 @@ export function NodeGraph({ core, nodes, edges, className, onSelect, selected }:
           const b = e.to === '__core__' || e.to === core ? [50, 50] : RING[shown.findIndex((n) => n.id === e.to)] ?? [50, 50]
           return <line key={i} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="var(--border)" strokeWidth="0.6" opacity={0.8} />
         })}
-        {/* core — the B10 pulsing halo */}
+        {/* core — the B10 pulsing halo. Its name is not painted here either: at `fontSize="5"` in a
+         * 100-unit viewBox it rendered at 5 CSS px. `GraphLegend` names the core at 12px. */}
         <circle className="core" cx={50} cy={50} r={8} />
-        <text x={50} y={52} textAnchor="middle" fontSize="5" fill="#fff" fontWeight={700}>{core}</text>
         {shown.map((n, i) => {
           const [cx, cy] = RING[i]
           const isSel = selected === n.id
-          // Label anchor: B10 prints the satellite name at the ring centre with
-          // a 3.8px glyph. At the real container size that overlaps the dot, so
-          // the label is kept on the SAME node-dot ring but placed just OUTSIDE
-          // the circle along the radial direction (readable, still B10-styled).
-          const labelY = cy < 50 ? cy - 8 : cy + 10.5
           return (
             <g
               key={n.id}
@@ -101,15 +96,10 @@ export function NodeGraph({ core, nodes, edges, className, onSelect, selected }:
                 cy={cy}
                 r={isSel ? 5.6 : 5}
               />
-              <text
-                x={cx}
-                y={labelY}
-                textAnchor="middle"
-                fontSize="5"
-                fill={STATE_FILL[n.state ?? 'idle']}
-              >
-                {n.label}
-              </text>
+              {/* No name is painted here. The label used to be `fontSize="5"` inside a 100-unit
+                  viewBox, which renders at 5 CSS px — measured, in both themes, and below the
+                  contract's floor by 7px. The graphic keeps its shapes; the names live in
+                  `GraphLegend`, at a size a person can read and with the same select handler. */}
               {n.state === 'active' ? (
                 <circle cx={cx + 6.4} cy={cy - 4.2} r={1.2} fill="rgb(var(--success-rgb))" className="wl-core-pulse" />
               ) : null}
@@ -121,5 +111,44 @@ export function NodeGraph({ core, nodes, edges, className, onSelect, selected }:
         })}
       </svg>
     </div>
+  )
+}
+
+/**
+ * The names the topology graphic can no longer carry.
+ *
+ * `NodeGraph` renders in a ~100 CSS px stage from a 100-unit viewBox, so any text inside it renders at
+ * its literal unit size — the labels were `fontSize="5"`, i.e. 5px, which the legibility instrument
+ * measured in both themes and the design contract forbids. This list is where the names live now: 12px,
+ * real buttons, the same `onSelect` the dots use, and the state carried by a shape plus a word rather
+ * than by colour alone (SC 1.4.1).
+ */
+export function GraphLegend({ core, nodes, selected, onSelect, className }: NodeGraphProps) {
+  const entries = [{ id: core, label: core, state: 'active' as const }, ...nodes.slice(0, 6)]
+  return (
+    <ul className={cn('flex flex-wrap gap-x-3 gap-y-1.5', className)} aria-label="拓扑图例">
+      {entries.map((entry) => {
+        const isSelected = selected === entry.id
+        return (
+          <li key={entry.id}>
+            <button
+              type="button"
+              className={cn('inline-flex items-center gap-1.5 text-[12px]',
+                isSelected && 'font-semibold')}
+              aria-pressed={isSelected}
+              onClick={() => onSelect?.(isSelected ? null : entry.id)}
+            >
+              <span
+                aria-hidden="true"
+                className="inline-block h-2 w-2 rounded-full border border-border"
+                style={{ background: STATE_FILL[entry.state ?? 'idle'] }}
+              />
+              {entry.label}
+              <span className="text-muted">{entry.state ?? 'idle'}</span>
+            </button>
+          </li>
+        )
+      })}
+    </ul>
   )
 }

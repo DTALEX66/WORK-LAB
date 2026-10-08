@@ -91,7 +91,11 @@ html.light {
   --primary-rgb: 27 127 230;
   --secondary-rgb: 14 147 165;
   --success-rgb: 21 128 61;
-  --warning-rgb: 180 83 9;
+  /* Amber as *text* on a light surface measured 4.48:1 — a hundredth short of AA, in the one place
+   * the UI says a value was not provided. The contract separates a fill accent from a text accent
+   * (DESIGN.md, text-accent rule), and here the same channel feeds both, so the light value is the
+   * readable one; the filled pills already carry their own literals in the skin layer. */
+  --warning-rgb: 154 74 5;
   --error-rgb: 185 28 28;
   --info-rgb: 29 78 216;
 }
