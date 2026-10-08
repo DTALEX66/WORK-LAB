@@ -531,9 +531,9 @@
         "docs/future/WORK-LAB-BLUEPRINT-20261006.md#14"
       ],
       "status": "PARTIAL",
-      "evidence": "SOURCE_GAP: Lite, tray HUD and Quick Entry have no field or permission spec anywhere in the source; only Control and Observer are defined",
+      "evidence": "SPEC_AND_RUNTIME_ADDED 2026-10-08 for Quick Entry: the field and permission spec exists at packages/contracts/schemas/workflow/quick-entry-request.schema.json, is declared in .project/governance/contracts/contract-catalog.json, is projected into packages/client-neutral-core/generated/contracts.ts, and has a runtime consumer at packages/client-neutral-core/scripts/quick_entry.py whose five outcomes are tested in tests/workflow-assistance/test_quick_entry.py. SOURCE_GAP still holds for Lite and the tray HUD: neither has a field or permission spec anywhere in the source.",
       "disposition": "RETAINED",
-      "nextOrBlocked": "must not be presented as implemented modes"
+      "nextOrBlocked": "Quick Entry has a contract and a consumer but no user-facing surface yet (nothing a person invokes), so the mode must not be presented as shipped; Lite and the tray HUD must not be presented as implemented modes at all."
     },
     {
       "id": "W01",

@@ -34,6 +34,7 @@ export type ContractId =
   | "policy-projection-contract"
   | "policy-projection-loss-report"
   | "project-profile"
+  | "quick-entry-request"
   | "release-manifest"
   | "rule-asset"
   | "rule-drift"
@@ -751,6 +752,38 @@ export type ProjectProfile = {
     watcher_policy?: Record<string, unknown>,
     exact_sha_required_for: string[],
     outage_blocks: string[]
+  }
+  };
+
+// @contract quick-entry-request
+// schema: packages/contracts/schemas/workflow/quick-entry-request.schema.json
+export type QuickEntryRequest = {
+    schemaVersion: unknown,
+    requestId: string,
+    verb: ["publish", "view", "resume", "adjust", "return"],
+    input: {
+    baseRevision: string,
+    currentRevision: string
+  },
+    project: {
+    projectId: string
+  },
+    permission: {
+    mode: ["observe", "propose", "execute"],
+    reason?: string
+  },
+    client: {
+    hostId: string,
+    declaredAvailable?: boolean
+  },
+    recovery?: {
+    attempt: number,
+    previousOutcome?: ["FAILED", "TIMED_OUT", "PARTIAL", "ABANDONED"],
+    carriedForward?: string[]
+  },
+    cancellation?: {
+    requested: boolean,
+    sideEffectsAlreadyMade?: boolean
   }
   };
 

@@ -259,6 +259,14 @@
       ]
     },
     {
+      "id": "quick-entry-request",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/quick-entry-request.schema.json",
+      "consumers": [
+        "workflow"
+      ]
+    },
+    {
       "id": "release-manifest",
       "owner": "root-governance",
       "schemaPath": ".project/governance/contracts/release-manifest.schema.json",

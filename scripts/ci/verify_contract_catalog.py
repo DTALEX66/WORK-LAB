@@ -26,6 +26,11 @@ EXPECTED = {
     # makes a new cross-language write boundary an explicit decision instead of a file that appeared.
     "control-operation": "workflow",
     "control-operation-result": "workflow",
+    # OD05 (2026-10-08): Quick Entry finally gets a field and permission spec. Blueprint coverage recorded
+    # the mode as having "no field or permission spec anywhere in the source ... must not be presented as
+    # implemented"; registering the contract here is the review gate, and the consumer is
+    # packages/client-neutral-core/scripts/quick_entry.py.
+    "quick-entry-request": "workflow",
     # ERR-173 precedent: the packages/.../workflow copy of an observer-event name is a DIFFERENT
     # document from apps/observer/schemas/observer-event.schema.json (snake_case projection-event shape,
     # $id work-lab/observer-event/v1, validated by verify_core_schemas.py). Registered additively under
@@ -75,6 +80,7 @@ CANONICAL_SCHEMA_PREFIXES = {
     "task-ledger-event": ("packages/contracts/",),
     "control-operation": ("packages/contracts/",),
     "control-operation-result": ("packages/contracts/",),
+    "quick-entry-request": ("packages/contracts/",),
     "workflow-observer-event": ("packages/contracts/",),
     "rule-asset": ("packages/contracts/",),
     "skill-package": ("packages/contracts/",),
@@ -149,7 +155,14 @@ def verify_catalog(root: Path) -> list[str]:
         if normalized in seen_paths:
             errors.append(f"duplicate schemaPath: {normalized}")
         seen_paths.add(normalized)
-        if not normalized.startswith(CANONICAL_SCHEMA_PREFIXES[contract_id]):
+        canonical_prefixes = CANONICAL_SCHEMA_PREFIXES.get(contract_id)
+        if canonical_prefixes is None:
+            # A new id added to EXPECTED without a canonical boundary used to raise KeyError here, which
+            # destroys the whole verdict the same way a crashed gate always does. Name the missing entry
+            # instead: this gate has to be able to report its own bookkeeping gap.
+            errors.append(f"{contract_id}: declared in EXPECTED but has no entry in "
+                          "CANONICAL_SCHEMA_PREFIXES -- state which module boundary its schema lives behind")
+        elif not normalized.startswith(canonical_prefixes):
             errors.append(f"{contract_id}: schemaPath is outside its canonical module boundary: {schema_path}")
         path = root / Path(normalized)
         if not path.is_file():
