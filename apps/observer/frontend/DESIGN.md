@@ -347,6 +347,9 @@ it; the glow lives on the unmasked parent, because a mask applied after a filter
 - **Don't** let a theme crossfade pass through a sub-AA frame; colour changes on theme switch are
   instant, motion is reserved for state, not for repainting the palette.
 - **Don't** put meaningful text below 12px, and never make a hairline the only separator.
+- **Don't** let a box ellipsise a fact. If `text-overflow: ellipsis` eats characters, the complete
+  string must still be reachable (`title`, or an ancestor's `aria-label`). `UNKNO…` is not a value and
+  must never be mistaken for one — see SCREEN_SPEC's clipped-text rule for the HUD measurement.
 
 ## Responsive Behavior
 

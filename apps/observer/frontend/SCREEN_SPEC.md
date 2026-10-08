@@ -165,6 +165,16 @@ region below "requires" one.
 - No meaningful text below 12px. *Measured 2026-10-08 after the floor sweep: minimum 12px in both
   themes, 33 leaf nodes at 1262×668. Enforced on screen by `scripts/audit/text_legibility_via_cdp.py`
   and in source by `tests/workflow-assistance/test_no_sub_floor_text_in_the_observer_source.py`.*
+- **A box may not ellipsise a fact.** Any painted element that clips its own text with
+  `text-overflow: ellipsis` must carry the whole string somewhere a reader can reach (`title`, or an
+  ancestor's `aria-label`); otherwise it is a violation of the assertion
+  `no_text_is_clipped_without_a_fallback`. *Found by looking at the 440px HUD on 2026-10-08: all four
+  KPI cards rendered `UNKNO…`. The component asked for 22px, b10's unlayered `.kpi strong` gave it
+  35px, and 35px "UNKNOWN" measures 193px against the 184px a two-up card gets in that window — 9px
+  lost per card. A truncated UNKNOWN is the worst possible truncation in this product: it reads as the
+  prefix of a value, which is exactly the guess the token exists to refuse. Fixed in the shell with
+  `.compact-hud .kpi strong { font-size: 22px }` (121px, 63px of headroom). The HUD's search label
+  still loses 11px and is allowed to, because the field carries `aria-label="搜索或命令"`.*
 - Text contrast ≥ 4.5:1 below 18.66px (≥ 3:1 for large/bold). Measured in the settled state: 0 failures
   in either theme; lowest 5.19:1 dark, 5.34:1 light. The three light-theme failures this spec recorded
   (avatar glyph 1.13:1, brand sub-label 3.74:1, hint chip 4.43:1) are fixed and named in DESIGN.md

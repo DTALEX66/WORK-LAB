@@ -153,6 +153,28 @@ EXPR = """JSON.stringify((()=>{
   // The deleted phone surface, looked for by the names it used and the names a rewrite would pick.
   // This is the check that exists because I built the thing it forbids: an icon rail, then a drawer,
   // both chasing a standard row that contradicted an owner decision.
+  // Every painted element that ellipsises its own text, with how much it loses and whether the whole
+  // string survives somewhere a reader can reach. A rect check cannot see this class at all: the box
+  // is present, sized and inside the viewport, it simply says less than it means.
+  out.__clippedText = (() => {
+    const list = [];
+    for (const el of document.querySelectorAll('body *')) {
+      if (!el.getClientRects().length) continue;
+      const cs = getComputedStyle(el);
+      if (cs.textOverflow !== 'ellipsis' || cs.overflow === 'visible') continue;
+      const lost = el.scrollWidth - el.clientWidth;
+      if (lost <= 1) continue;
+      const raw = (el.textContent || '').trim().replace(/[….]+$/g, '').trim();
+      let fallback = (el.getAttribute('title') || '').trim();
+      for (let a = el.parentElement; a && !fallback; a = a.parentElement) {
+        fallback = (a.getAttribute('aria-label') || a.getAttribute('title') || '').trim();
+      }
+      list.push({ tag: el.tagName, cls: String(el.className).slice(0, 60), text: raw.slice(0, 28),
+                  lostPx: Math.round(lost), fontSize: cs.fontSize,
+                  carried: !!fallback && fallback.indexOf(raw) >= 0 });
+    }
+    return list;
+  })();
   out.__mobileNav = Array.from(document.querySelectorAll(
       '.mobile-nav, .topbar-mobile, .rail-toggle, .rail-scrim, .rail-close, [data-mobile-nav]'))
     .filter((e) => e.getClientRects().length > 0)
@@ -482,6 +504,10 @@ def verdict(measured: dict, view: str) -> dict:
         add("topbar_edge_is_painted", border or shadow,
             f"border={topbar_edge.get('borderBottomWidth')} {topbar_edge.get('borderBottomStyle')} "
             f"color={topbar_edge.get('borderBottomColor')} shadow={shadow}")
+
+    clipped_text = [c for c in (measured.get("__clippedText") or []) if not c.get("carried")]
+    add("no_text_is_clipped_without_a_fallback", not clipped_text,
+        f"clipped={json.dumps(clipped_text, ensure_ascii=False)[:300]}")
 
     probes = measured.get("__focusObscured") or []
     # A probe that never reported `inViewport` is treated as being in it: absence must convict, not

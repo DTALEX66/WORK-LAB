@@ -70,6 +70,10 @@ def good_measured(view="full") -> dict:
         ],
     }
     data["__mobileNav"] = []
+    # The HUD's search label really is ellipsised (11px lost) and really is carried by the field's own
+    # aria-label, so the healthy fixture models a clip that is allowed rather than an empty list.
+    data["__clippedText"] = [{"tag": "SPAN", "cls": "truncate", "text": "搜索或命令",
+                              "lostPx": 11, "fontSize": "16px", "carried": True}]
     data["__barTargets"] = [
         {"sel": ".top-actions button", "painted": True, "w": 62.0, "h": 32.0},
         {"sel": ".top-actions button", "painted": True, "w": 74.0, "h": 32.0},
@@ -128,7 +132,8 @@ class VerdictTests(unittest.TestCase):
                           "content_clears_topbar", "topbar_edge_is_painted",
                           "focused_control_is_not_obscured", "every_visible_probe_takes_focus",
                           "no_mobile_navigation_surface_is_painted", "every_lane_is_named",
-                          "lane_labels_are_distinguishable", "lane_targets_meet_the_floor"})
+                          "lane_labels_are_distinguishable", "lane_targets_meet_the_floor",
+                          "no_text_is_clipped_without_a_fallback"})
 
     def test_the_rail_must_survive_every_width_the_main_window_can_take(self) -> None:
         # the desktop-only contract in geometry form: b10 used to hide `.sidebar` below 840px.
@@ -373,6 +378,42 @@ class NavReachabilityTests(unittest.TestCase):
         fits = self.check(self.verdict_for({"total": 4, "atTop": 4, "afterScroll": 4, "overflow": False,
                                             "lastHitInside": True, "disclosures": 4, "clientH": 300, "scrollH": 300}))
         self.assertTrue(fits["pass"], fits)
+
+
+class ClippedTextTests(unittest.TestCase):
+    """A box that ellipsises its own text is invisible to every rect check.
+
+    Found by looking at the HUD: four KPI cards rendered `UNKNO…` because b10's 35px display size
+    needs 193px and the 440px window leaves a two-up card 184px. The value was `UNKNOWN` — the token
+    the product uses to say it will not guess — truncated into looking like the prefix of a number.
+    """
+
+    def test_a_clip_the_page_does_not_elsewhere_state_fails_by_name(self) -> None:
+        measured = good_measured("compact")
+        measured["__clippedText"] = [{"tag": "STRONG", "cls": "truncate text-[22px]",
+                                      "text": "UNKNOWN", "lostPx": 9, "fontSize": "35px",
+                                      "carried": False}]
+        v = geometry.verdict(measured, "compact")
+        bad = [c for c in v["checks"] if c["check"] == "no_text_is_clipped_without_a_fallback"][0]
+        self.assertFalse(bad["pass"])
+        self.assertIn("UNKNOWN", bad["detail"])
+        self.assertIn("text-[22px]", bad["detail"])
+        self.assertFalse(v["passed"])
+
+    def test_a_clip_whole_string_survives_in_an_aria_label_is_allowed(self) -> None:
+        # The search field loses 11px of its placeholder to the ellipsis and says the same words in
+        # `aria-label`; that is a cosmetic truncation, not a lost fact, and failing it would push
+        # toward widening boxes for the wrong reason.
+        v = geometry.verdict(good_measured("compact"), "compact")
+        ok = [c for c in v["checks"] if c["check"] == "no_text_is_clipped_without_a_fallback"][0]
+        self.assertTrue(ok["pass"], ok["detail"])
+
+    def test_the_desktop_shell_reports_no_clipped_text_at_all(self) -> None:
+        measured = good_measured("full")
+        measured["__clippedText"] = []
+        ok = [c for c in geometry.verdict(measured, "full")["checks"]
+              if c["check"] == "no_text_is_clipped_without_a_fallback"][0]
+        self.assertTrue(ok["pass"])
 
 
 class WindowFloorTests(unittest.TestCase):

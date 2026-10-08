@@ -546,6 +546,13 @@ html, body, #root { max-width: 100vw; overflow-x: hidden; }
  * push a card past the container edge. */
 .kpi-grid > * { min-width: 0; }
 .kpi strong, .kpi .truncate { max-width: 100%; }
+/* `max-width:100%` above stopped the card overflowing and, without noticing, moved the failure into
+ * the text: the HUD's KPI value renders at b10's 35px display size, and "UNKNOWN" needs 193px inside
+ * the 184px the 440px window leaves a two-up card. All four read `UNKNO…`. A truncated UNKNOWN is
+ * worse than an absent one — it looks like the prefix of a real value, which is precisely the guess
+ * this product refuses to make — so the HUD gets the size the component itself asked for (22px,
+ * measured 121px wide: fits with 63px to spare). The desktop is untouched: 0 clipped nodes at 1262px. */
+.compact-hud .kpi strong { font-size: 22px; }
 
 /* The caption cluster is fixed to the viewport, so the top bar has to reserve its
  * width by hand - and 210px was a guess that was only right when the zoom group was
