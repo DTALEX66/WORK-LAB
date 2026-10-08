@@ -9,11 +9,11 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 212,
+    "total": 213,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 64,
-      "test_behavior_alignment": 26,
+      "test_behavior_alignment": 27,
       "working_directory_recovery": 2,
       "evidence_state": 39,
       "ci_configuration": 21,
@@ -6505,6 +6505,35 @@
         "fixedCommit": "058842daca16de5a776e70d3080cc97c3c9cded0",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: HEAD (058842d) carries the clean-report lookup and the Quick Entry registration; verifiedCommit is owed until every Actions run at a head containing it is green"
+      }
+    },
+    {
+      "error_id": "ERR-215",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "packages/client-neutral-core/scripts/project_temp.py",
+      "command": "python tests/workflow-assistance/test_evidence_range_reader.py",
+      "exit_code": 1,
+      "observed_error": "With every other gate green at 3700cb53, the canonical governance batch reported `FAIL: test_every_refusal_is_typed_and_carries_no_content (test_evidence_range_reader.RefusalTests) -- AssertionError: 'SENSITIVE_NAME' != 'NOT_A_FILE'`, and the same module's `test_a_directory_handle_is_refused_as_not_a_file` shares the assertion. Both ask the evidence reader for the refusal code of the *fixture root itself*. The tree under test had not changed; the fixture name had. Reproduced by constructing the colliding root (`.project-local/runs/qoder-20261008-d/probe_refusal_name_flake.py`) and measured at one generated root in 20,000.",
+      "root_cause": "Three individually-correct pieces made a random refusal. `tempfile.mkdtemp` appends eight characters drawn from `[a-z0-9_]`; `evidence_range_reader.name_is_sensitive` splits every path component on `[^a-z0-9]+` and refuses a component that is or contains a whole sensitive word; and `SENSITIVE_WORDS` contains two- and three-letter tokens -- measured, only `db` is reachable from eight random characters, which is what the collision census returned. Because the matcher walks *every* ancestor, the refusal is not confined to the root: everything created under such a fixture is refused with it, so the exposure is the whole 53-call-site population of literal-prefix `fixture_dir` calls (44 distinct prefixes, counted at this commit), not one directory-handle test. The assertion that surfaced it was also wrong in kind: it asked for a specific refusal code from a name the test does not control.",
+      "fix": "The reader's law stays, because it is the owner's no-read rule and loosening it to make a fixture readable would trade a real guard for a green suite. `project_temp.fixture_dir` now asks that same law about the leaf name it minted, before handing the root out: a refused root is discarded through `force_release` (so it cannot become residue) and the generator is asked again; after `_NAME_ATTEMPTS` consecutive refusals the helper raises and names the prefix, because that is a caller bug no retry can fix. The guard judges only the leaf, deliberately: judging the full path would turn a host directory spelling into a fixture-creation failure on every run. The new gate pins the collision shape and its delimiter requirement, proves the collision is reachable from the real character set with a fixed seed, asserts the retry discards and releases, asserts an unreadable prefix fails loudly with no surviving root, and enumerates every literal prefix in the tracked tree. Separately, 15 orphaned fixture roots (1,184,413 bytes, 6.6h old) left by earlier killed runs were reclaimed through `scripts/maintenance/release_temp_fixture_residue.py --apply` with a manifest, which is the residue gate's own route rather than a manual delete.",
+      "regression_test": "tests/workflow-assistance/test_fixture_root_names_are_readable_by_the_reader.py",
+      "regressionCommand": "python tests/workflow-assistance/test_fixture_root_names_are_readable_by_the_reader.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "mints the collision name itself, stubs the generator so the retry is observed rather than waited for, and enumerates tracked files through `git ls-files`; no network, no ignored root",
+      "evidence_level": "local-full",
+      "repeat_prevention": "a helper that mints a random name must consult the rule that will later judge that name before returning it, and a test must never assert a specific refusal code against a name it does not control; the sensitive-name law must not be loosened to make a fixture readable, because the fixture is the thing being read and the law is the owner's",
+      "remaining_boundary": "The guard covers the one minting site this repository treats as canonical. 15 `mkstemp`/`NamedTemporaryFile` sites and 360 `TemporaryDirectory(` sites in tracked Python also mint random names and are unchecked (counted at this commit with `git grep -c`); the sibling boundary gate leaves `TemporaryDirectory` out of scope on the grounds that it deletes itself, which is true of residue but not of readability. The new environment test reports a repository path the reader refuses rather than fixing it, so a clone under such a directory name still fails, loudly and in one place. `fixedCommit` is the commit carrying the repair; `verifiedCommit` is owed until every Actions run at a head containing it is green.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the delimited matcher and the mkdtemp character set both predate this session; the collision became observable when a test asserted a refusal code against its own fixture root, so this record names an exposed latent class rather than a regression introduced by one commit",
+        "fixedCommit": "5e74a07151e3602caf462a54f93ae704307b4515",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: HEAD (5e74a07) carries the leaf-name guard, the discard-with-release and the gate that pins all of it; verifiedCommit is owed until every Actions run at a head containing it is green"
       }
     }
   ],
