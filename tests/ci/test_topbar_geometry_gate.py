@@ -69,13 +69,47 @@ def good_measured(view="full") -> dict:
              "visible": True, "hitIsSelfOrChild": True},
         ],
     }
+    data["__mobileNav"] = []
+    data["__barTargets"] = [
+        {"sel": ".top-actions button", "painted": True, "w": 62.0, "h": 32.0},
+        {"sel": ".top-actions button", "painted": True, "w": 74.0, "h": 32.0},
+        {"sel": ".winctl-btn", "painted": True, "w": 32.0, "h": 32.0},
+        {"sel": ".search", "painted": True, "w": 600.0, "h": 40.0},
+    ]
+    if view in ("full", "floor"):
+        lanes = 9 if view == "full" else 23
+        data["__navReach"] = {
+            "total": lanes, "atTop": lanes, "afterScroll": lanes, "overflow": False,
+            "lastHitInside": True, "disclosures": 7, "clientH": 620, "scrollH": 620,
+            "nameless": [],
+            "labels": [f"车道{i}" for i in range(lanes)],
+            "targets": [{"lane": f"lane{i}", "w": 228.0, "h": 40.0} for i in range(lanes)],
+        }
     if view == "full":
         data[".sidebar"] = [element(0, 280, 820, 1000)]
         # The healthy shape: everything fits at the top, so no scrolling is required at all. The
         # scrollable-and-last-hit-testable branch is exercised separately below.
-        data["__navReach"] = {"total": 9, "atTop": 9, "afterScroll": 9, "overflow": False,
-                              "lastHitInside": True, "disclosures": 7,
-                              "clientH": 620, "scrollH": 620}
+        data["__navReach"].update({"atTop": 9, "afterScroll": 9, "overflow": False})
+    if view == "floor":
+        # Measured 2026-10-08 at the pinned 900x600 layout viewport
+        # (receipt .project-local/artifacts/GEOMETRY_FLOOR_1.json): the rail keeps its 210px text
+        # width, the bar is 125px tall, and the 23-lane rail is a 345px scroll box over 1554px.
+        data.update({"__viewport": "900x600", "__innerWidth": 900, "__docScrollWidth": 900})
+        data[".app"] = [element(0, 900, 600, 0)]
+        data[".sidebar"] = [element(0, 210, 600, 690)]
+        data[".topbar"] = [element(210, 690, 125, 210)]
+        data[".search"] = [element(230, 420, 40, 250)]
+        data[".top-actions"] = [element(650, 200, 40, 50)]
+        data[".topbar-brand"] = [element(220, 120, 22, 680)]
+        data[".winctl"] = [element(770, 120, 32, 10)]
+        data[".winctl-btn"] = [element(780, 32, 32, 88), element(816, 32, 32, 52),
+                               element(852, 32, 32, 16)]
+        data[".main"] = [element(210, 690, 475, 0)]
+        data[".kpi-grid"] = [element(230, 650, 120, 20)]
+        data["__navReach"].update({"atTop": 6, "afterScroll": 8, "overflow": True,
+                                   "clientH": 345, "scrollH": 1554})
+        data["__edges"]["topbar"]["bottom"] = 125.0
+        data["__edges"]["content"]["top"] = 125.0
     return data
 
 
@@ -92,7 +126,9 @@ class VerdictTests(unittest.TestCase):
                           "rail_at_left_edge", "nav_items_reachable",
                           "nav_groups_are_disclosures", "action_row_does_not_stack",
                           "content_clears_topbar", "topbar_edge_is_painted",
-                          "focused_control_is_not_obscured", "every_visible_probe_takes_focus"})
+                          "focused_control_is_not_obscured", "every_visible_probe_takes_focus",
+                          "no_mobile_navigation_surface_is_painted", "every_lane_is_named",
+                          "lane_labels_are_distinguishable", "lane_targets_meet_the_floor"})
 
     def test_the_rail_must_survive_every_width_the_main_window_can_take(self) -> None:
         # the desktop-only contract in geometry form: b10 used to hide `.sidebar` below 840px.
@@ -337,6 +373,111 @@ class NavReachabilityTests(unittest.TestCase):
         fits = self.check(self.verdict_for({"total": 4, "atTop": 4, "afterScroll": 4, "overflow": False,
                                             "lastHitInside": True, "disclosures": 4, "clientH": 300, "scrollH": 300}))
         self.assertTrue(fits["pass"], fits)
+
+
+class WindowFloorTests(unittest.TestCase):
+    """The third pass measures the smallest window the shipped product can be resized into.
+
+    It exists because the standard once promised a "< 760px: icon rail or drawer" band. That band is
+    unreachable: tauri.conf.json floors the main window at 900x600 and the 440x780 surface renders no
+    rail at all. Building for the invented row produced first an icon rail whose 23 lanes measured as
+    23 identical dots, then a drawer — both of which the owner decision of 2026-10-07 had already
+    deleted. So the gate now measures the real floor and refuses any phone surface.
+    """
+
+    def setUp(self) -> None:
+        self.v = geometry.verdict(good_measured("floor"), "floor")
+
+    def test_the_floor_measurement_passes_and_adds_the_bar_target_check(self) -> None:
+        self.assertTrue(self.v["passed"], json.dumps(self.v["checks"], indent=1))
+        names = {c["check"] for c in self.v["checks"]}
+        self.assertIn("top_bar_targets_meet_the_floor", names)
+        self.assertIn("rail_always_present", names)
+        self.assertNotIn("compact_has_no_rail", names)
+
+    def test_the_floor_the_gate_measures_is_the_floor_the_window_config_declares(self) -> None:
+        # Bound to the machine authority rather than restated: if tauri.conf.json ever lowers the main
+        # window below 900x600, this fails and the band question gets re-opened on purpose instead of
+        # silently re-appearing as a CSS media query.
+        conf = json.loads((ROOT / "apps/observer/src-tauri/tauri.conf.json")
+                          .read_text(encoding="utf-8"))
+        main = {w["label"]: w for w in conf["app"]["windows"]}["main"]
+        self.assertEqual(geometry.VIEWPORT["floor"], (main["minWidth"], main["minHeight"]))
+        self.assertGreaterEqual(main["minWidth"], 900, "the phone shape this gate forbids is back")
+
+    def test_a_rail_that_collapses_at_the_floor_fails(self) -> None:
+        measured = good_measured("floor")
+        measured[".sidebar"] = [element(0, 60, 600, 1000)]
+        v = geometry.verdict(measured, "floor")
+        self.assertFalse(v["passed"])
+        self.assertFalse([c for c in v["checks"] if c["check"] == "rail_always_present"][0]["pass"])
+
+    def test_a_painted_mobile_surface_fails_every_window_including_the_hud(self) -> None:
+        for view in ("full", "compact", "floor"):
+            measured = good_measured(view)
+            measured["__mobileNav"] = ["rail-toggle"]
+            v = geometry.verdict(measured, view)
+            bad = [c for c in v["checks"] if c["check"] == "no_mobile_navigation_surface_is_painted"]
+            self.assertTrue(bad, f"{view} did not assert the mobile sweep at all")
+            self.assertFalse(bad[0]["pass"], view)
+            self.assertFalse(v["passed"])
+
+    def test_two_lanes_spelling_the_same_thing_are_reported_by_name(self) -> None:
+        measured = good_measured("floor")
+        measured["__navReach"]["labels"][7] = measured["__navReach"]["labels"][6]
+        v = geometry.verdict(measured, "floor")
+        bad = [c for c in v["checks"] if c["check"] == "lane_labels_are_distinguishable"][0]
+        self.assertFalse(bad["pass"])
+        self.assertIn("车道6", bad["detail"])
+
+    def test_an_unnamed_lane_is_convicted_by_its_lane_id(self) -> None:
+        measured = good_measured("floor")
+        measured["__navReach"]["nameless"] = ["evidence"]
+        bad = [c for c in geometry.verdict(measured, "floor")["checks"]
+               if c["check"] == "every_lane_is_named"][0]
+        self.assertFalse(bad["pass"])
+        self.assertIn("evidence", bad["detail"])
+
+    def test_a_lane_target_below_the_floor_names_the_lane_and_keeps_hidden_lanes_out(self) -> None:
+        measured = good_measured("floor")
+        measured["__navReach"]["targets"][3] = {"lane": "lane3", "w": 240.0, "h": 18.0}
+        bad = [c for c in geometry.verdict(measured, "floor")["checks"]
+               if c["check"] == "lane_targets_meet_the_floor"][0]
+        self.assertFalse(bad["pass"])
+        self.assertIn("lane3", bad["detail"])
+
+        # A lane inside a collapsed group measures 0x0: it renders nothing, so it cannot be an offender.
+        measured = good_measured("floor")
+        measured["__navReach"]["targets"][3] = {"lane": "lane3", "w": 0, "h": 0}
+        self.assertTrue([c for c in geometry.verdict(measured, "floor")["checks"]
+                         if c["check"] == "lane_targets_meet_the_floor"][0]["pass"])
+
+    def test_a_bar_control_below_the_floor_is_named_by_selector(self) -> None:
+        measured = good_measured("floor")
+        measured["__barTargets"][0] = {"sel": ".top-actions button", "painted": True,
+                                       "w": 22.0, "h": 30.0}
+        bad = [c for c in geometry.verdict(measured, "floor")["checks"]
+               if c["check"] == "top_bar_targets_meet_the_floor"][0]
+        self.assertFalse(bad["pass"])
+        self.assertIn(".top-actions button", bad["detail"])
+
+    def test_a_bar_that_painted_nothing_cannot_report_a_clean_target_bill(self) -> None:
+        measured = good_measured("floor")
+        measured["__barTargets"] = []
+        self.assertFalse([c for c in geometry.verdict(measured, "floor")["checks"]
+                          if c["check"] == "top_bar_targets_meet_the_floor"][0]["pass"])
+
+    def test_off_screen_is_not_reported_as_obscured_but_a_covered_control_still_is(self) -> None:
+        measured = good_measured("floor")
+        measured["__focusObscured"].append(
+            {"sel": ".nav button[data-lane]", "focused": True, "visible": True,
+             "inViewport": False, "top": 640.0, "bottom": 690.0, "hitIsSelfOrChild": False})
+        self.assertTrue([c for c in geometry.verdict(measured, "floor")["checks"]
+                         if c["check"] == "focused_control_is_not_obscured"][0]["pass"])
+
+        measured["__focusObscured"][0].update({"inViewport": True, "hitIsSelfOrChild": False})
+        self.assertFalse([c for c in geometry.verdict(measured, "floor")["checks"]
+                          if c["check"] == "focused_control_is_not_obscured"][0]["pass"])
 
 
 class RegionBoundaryTests(unittest.TestCase):

@@ -78,36 +78,54 @@ execution-detail|agents|projects|workflows|…>`, desktop WebView (Chromium) and
    Fluent **CommandBar** (a "see more" button; primary commands move to the secondary area when space is
    limited) and Carbon **OverflowMenu** ("additional options… but there is a space constraint") — a
    wrapping column satisfies neither.
-   *Violation today (measured): `.top-actions { flex-wrap: wrap }`, 4 children, no overflow control;
-   at 430px the row's usable width is 76px and the buttons stack into a column.*
+   *Was a violation, fixed 2026-10-08: `.top-actions { flex-wrap: wrap }` with 4 children and no overflow
+   control stacked the row into a column at narrow widths. Measured now, `action_row_does_not_stack`
+   reports `children=4 rows=1` at the 1280 default and `children=4 rows=1` at the 900×600 floor, with the
+   fold trigger present when the band needs it.*
 2. The overflow menu is a real menu: `aria-expanded`, keyboard operable, focus returned to the trigger on
    close, and it must not be clipped by region A's bounds.
-3. Minimum touch/click target 44×44px for every control in A and B.
+3. Minimum click target **24×24px** (WCAG 2.5.8 Target Size (Minimum)) for every control in A and B.
+   *This row previously demanded 44×44px. That figure belonged to the phone row deleted under "Window
+   surfaces": on a
+   desktop product with no touch surface, 44px is not a standard anyone wrote down, and the shipped
+   window controls measure 32×32. The enforced number is now the one the gate measures
+   (`top_bar_targets_meet_the_floor`, 16 controls harvested, 0 offenders). If the product ever targets
+   touch input, 44×44 returns as a new decision, not a reverted edit.*
 
-## Responsive bands (normative)
+## Window surfaces (normative)
 
-| Band | Rail | Action row | Search | Required assertions |
-|---|---|---|---|---|
-| ≥ 1100px | 210px visible | inline | full width | no horizontal overflow; no wrap |
-| 760–1099px | 210px visible | overflow menu allowed | full width | no horizontal overflow; primary action visible |
-| < 760px | icon rail or drawer | overflow menu required | icon + shortcut chip | no horizontal overflow; every item reachable; targets ≥ 44px |
+The product has exactly two windows, and both sizes are declared in `apps/observer/src-tauri/tauri.conf.json`:
 
-*Measured 2026-10-08 at exact viewports (CDP device metrics, not `--window-size`, which Chrome clamps:
-430 asked → 482 delivered). The rail stays 210px at 1280/900/700/430 — **49% of a 430px window** — no
-label is hidden, and `.search` collapses to 76px. The band's other assertions do hold at that width:
-`scrollWidth == 430` (no horizontal overflow), 23 lane buttons present with the rail scrolling
-(`clientHeight 432 / scrollHeight 1554`, 9 in view), and the smallest target 50×50 ≥ 44px. So row three
-is an implementation gap, not a measurement failure: the icon rail or drawer it promises was never built.
-`?view=compact` does not change with width either — `compact` is a user density mode, not a breakpoint,
-and must never be cited as responsive evidence.*
+| Surface | Size | Rail | Action row | Search | Required assertions |
+|---|---|---|---|---|---|
+| `main`, default | 1280×820, resizable | 210px visible | inline, overflow menu when the band cannot hold it | full width | no horizontal overflow; no wrap; every lane reachable |
+| `main`, at its floor | ≥ 900×600 (`minWidth`/`minHeight`) | 210px visible, text labels | overflow menu allowed | full width | the same set, re-measured at 900×600 |
+| `panel` (HUD) | 440×780, `resizable: false` | none by design | inline | icon + shortcut chip | no rail; no horizontal overflow |
 
-Legibility is now swept across these bands rather than sampled at one width: `--all-views --sizes` drives
-all 23 lanes at 1280/900/700/430 in both themes — ~8,600 node measurements, 0 below the floor, 0 AA
+**There is no narrow band.** Owner decision 2026-10-07 (优先跑通全量执行桌面端电脑端 UI，先删除手机端其他端)
+deleted the phone shell, and `tests/ci/test_desktop_only_shell.py` pins both the absence of a mobile
+navigation surface in source and `main.minWidth >= 900`. A rail at 760px is therefore not a state this
+product can enter, and no CSS breakpoint may reintroduce one.
+
+*How the row three claim was tested, 2026-10-08: an icon rail was actually built for it and measured at
+a pinned 430px viewport — 60px rail, 23 lane targets of 45×44, `scrollWidth == 430`, every lane still
+`aria-label`led, all numbers green. The screenshot then showed the failure the numbers could not see:
+23 lanes rendered as 23 identical dots, because `.nav-dot` is a status marker and not an icon, and
+hiding `.truncate` removed the only thing that distinguished them. A drawer was then built, which is
+the second half of the deleted decision. Both attempts are archived at
+`.project-local/artifacts/NARROW_BAND_ATTEMPT_20261008.diff`; neither shipped. The standard was the
+defect.*
+
+`?view=compact` is a user density mode, not a breakpoint, and must never be cited as responsive evidence.
+
+Legibility is swept across the surviving surfaces rather than sampled at one width: `--all-views --sizes`
+drives all 23 lanes at 1280/900/700/430 in both themes — ~8,600 node measurements, 0 below the floor, 0 AA
 failures, 0 unreadable disabled labels, 0 empty views
 (receipt `.project-local/artifacts/LEGIBILITY_SIZES_D.json`). Reaching that clean result required a
 `secondary-ink` text role (DESIGN.md's text-accent rule) after `text-secondary` measured 3.49:1 in the
 task-packs table, and a `window_is_the_width_asked` assertion after the harness reported twelve confident
-measurements of one-pixel-wide windows.
+measurements of one-pixel-wide windows. The 700/430 columns are kept as legibility stress only: they are
+not surfaces the shell can be resized into.
 
 ## Degraded and offline states (normative)
 
@@ -160,9 +178,10 @@ region below "requires" one.
 
 ## Gate coverage owed
 
-All six assertion families this section listed are now enforced. `topbar_geometry_via_cdp.py` asserts
-16 checks at 1262px and 13 at 482px, and `text_legibility_via_cdp.py` asserts 6 per theme plus three for
-the switch itself. Delivered: rail reachability (`nav_items_reachable`, `nav_groups_are_disclosures`),
+All six assertion families this section listed are now enforced. `topbar_geometry_via_cdp.py` runs three
+passes over the shipped bundle — 20 checks at the 1280×820 default, 14 at the 440×780 HUD, 21 at the
+900×600 window floor — and `text_legibility_via_cdp.py` asserts 6 per theme plus three for the switch
+itself. Delivered: rail reachability (`nav_items_reachable`, `nav_groups_are_disclosures`),
 action folding (`action_row_does_not_stack`), the type floor and AA contrast in both themes, the
 degraded-state-per-view rule (the offline surface names the active view, asserted for all 22 registered
 lanes plus distinctness of the 22 headings by `src/offlineViewIdentity.contract.test.tsx`), and region
@@ -179,7 +198,27 @@ boundaries:
   rect check can express: focus the control, hit-test its own centre. Five controls are probed in the
   full shell (search ARIA button, action row, window control, rail item, group disclosure). Probing
   `.search input` found nothing — the field is `role="button" tabIndex=0`, not an input — and an empty
-  probe list would have reported "nothing obscured".
+  probe list would have reported "nothing obscured". A control below the rail's fold is now excluded by
+  `inViewport`, because off-screen is not obscured; a probe that never reported the field is still
+  treated as in-viewport, so an older harvest shape cannot disarm the check by absence.
+- Per lane, in both main-window passes: `every_lane_is_named` (text or `aria-label`/`title`),
+  `lane_labels_are_distinguishable` (no blank, no two lanes spelling the same thing — the failure mode
+  the icon-rail attempt reached: 23 identical dots), and `lane_targets_meet_the_floor`. Lanes measuring
+  0×0 are excluded as unrendered, and the count of lanes actually measured is printed next to the count
+  that exist, so the exclusion cannot hide a rail that painted nothing.
+- `top_bar_targets_meet_the_floor` measures regions A and B against the 24px rule above: 16 controls
+  harvested, 0 offenders at the floor. An empty harvest fails rather than passing vacuously.
+- `no_mobile_navigation_surface_is_painted` sweeps `.mobile-nav`, `.topbar-mobile`, `.rail-toggle`,
+  `.rail-scrim`, `.rail-close` and `[data-mobile-nav]` in all three windows. It exists because the
+  implementation this round first shipped and then discarded was exactly that surface; the positive
+  control (same expression, selector swapped for `.topbar-brand`) reports `["topbar-brand"]`, so `[]` on
+  the real page means absent rather than unchecked
+  (`.project-local/runs/falsify_mobile_sweep.py`).
+- The floor the gate measures is bound to the window config, not restated:
+  `test_the_floor_the_gate_measures_is_the_floor_the_window_config_declares` reads
+  `tauri.conf.json` and asserts `VIEWPORT["floor"] == (main.minWidth, main.minHeight)`. Lower the floor
+  in the config and this test goes red, which is the point — the band question has to be re-opened on
+  purpose.
 
 Theme "persistence" is not an open gap: web storage is forbidden in the UI layer by
 `test_production_surface_static_contract.js`, and `?theme=` in the address is the sanctioned mechanism

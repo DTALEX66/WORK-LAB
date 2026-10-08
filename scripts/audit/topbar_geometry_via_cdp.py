@@ -93,9 +93,25 @@ EXPR = """JSON.stringify((()=>{
       lastHitInside = !!(hit && last.contains(hit)) && r.top >= 0 && r.bottom <= innerHeight;
     }
     nav.scrollTop = 0;
+    // Three things a container-level check cannot see, per lane: whether it carries a name at all,
+    // how big its target is, and what it actually spells. A rail of 23 identical labels is one button
+    // short of navigation, and a 0x0 lane inside a collapsed group must not be convicted for a state
+    // that renders nothing -- so the boxes go out raw and the floor is applied in Python.
+    const nameless = buttons.filter((b) => {
+      const text = (b.textContent || '').trim();
+      const named = (b.getAttribute('aria-label') || '').trim() || (b.getAttribute('title') || '').trim();
+      return !text && !named;
+    }).map((b) => b.getAttribute('data-lane'));
+    const labels = buttons.map((b) => (b.textContent || '').trim());
+    const targets = buttons.map((b) => {
+      const r = b.getBoundingClientRect();
+      return { lane: b.getAttribute('data-lane'),
+               w: Math.round(r.width * 10) / 10, h: Math.round(r.height * 10) / 10 };
+    });
     out.__navReach = { total: buttons.length, atTop, afterScroll, overflow, lastHitInside,
                        disclosures: disclosures.length,
-                       clientH: nav.clientHeight, scrollH: nav.scrollHeight };
+                       clientH: nav.clientHeight, scrollH: nav.scrollHeight,
+                       nameless, labels, targets };
   }
   const actionsEl = document.querySelector('.top-actions');
   if (actionsEl) {
@@ -127,6 +143,20 @@ EXPR = """JSON.stringify((()=>{
              borderBottomColor: cs.borderBottomColor, boxShadow: cs.boxShadow };
   };
   out.__edges = { topbar: edgeOf('.topbar'), content: edgeOf('.content'), main: edgeOf('.main') };
+  // Region A and B controls: SCREEN_SPEC's target rule is about these, and it has never been measured.
+  const boxOf = (sel) => Array.from(document.querySelectorAll(sel)).map((e) => {
+    const r = e.getBoundingClientRect();
+    return { sel: sel, painted: e.getClientRects().length > 0,
+             w: Math.round(r.width * 10) / 10, h: Math.round(r.height * 10) / 10 };
+  });
+  out.__barTargets = [...boxOf('.top-actions button'), ...boxOf('.winctl-btn'), ...boxOf('.search')];
+  // The deleted phone surface, looked for by the names it used and the names a rewrite would pick.
+  // This is the check that exists because I built the thing it forbids: an icon rail, then a drawer,
+  // both chasing a standard row that contradicted an owner decision.
+  out.__mobileNav = Array.from(document.querySelectorAll(
+      '.mobile-nav, .topbar-mobile, .rail-toggle, .rail-scrim, .rail-close, [data-mobile-nav]'))
+    .filter((e) => e.getClientRects().length > 0)
+    .map((e) => String(e.className));
   // 2.4.11 Focus Not Obscured (Minimum): focus a control and hit-test its own centre. A control that
   // is visible but sits under an overlay fails "reachable" for a keyboard user, and no rect check on
   // the container can see that. The search field is an ARIA button (`role=button tabIndex=0`), not an
@@ -146,6 +176,10 @@ EXPR = """JSON.stringify((()=>{
       sel: sel, focused: document.activeElement === el,
       top: Math.round(r.top * 10) / 10, bottom: Math.round(r.bottom * 10) / 10,
       visible: r.width > 0 && r.height > 0,
+      // Off-screen is not obscured. A lane below the rail's fold has nothing at its centre because the
+      // centre is outside the window; calling that a focus violation would convict the one control
+      // class `nav_items_reachable` exists to protect.
+      inViewport: r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth,
       hitIsSelfOrChild: !!(hit && (hit === el || el.contains(hit))),
     });
   }
@@ -158,9 +192,19 @@ TOPBAR_MAX_HEIGHT = 140.0
 # non-resizable size tauri.conf.json gives it. Measuring the compact layout at desktop width would
 # have proved nothing about the panel — the first PASS this script produced did exactly that, and
 # the per-view height bound below is what a 440px bar actually needs.
-WIN_SIZE = {"full": "1280,820", "compact": "440,780"}
-MAX_HEIGHT = {"full": 140.0, "compact": 260.0}
+WIN_SIZE = {"full": "1280,820", "compact": "440,780", "floor": "1280,820"}
+MAX_HEIGHT = {"full": 140.0, "compact": 260.0, "floor": 140.0}
 RAIL_MIN_WIDTH = 200.0
+# `floor` is the MAIN shell at the smallest size the shipped product can be resized into. tauri.conf.json
+# gives that window minWidth 900 / minHeight 600 and the 440x780 surface is the rail-less HUD, so there
+# is no narrow rail state to design for: SCREEN_SPEC's old "< 760px: icon rail or drawer" row described
+# a phone shape the owner deleted on 2026-10-07, and tests/ci/test_desktop_only_shell.py pins the floor.
+SHELL_VIEW = {"full": "full", "compact": "compact", "floor": "full"}
+# `--window-size` sizes the OUTER window, so the LAYOUT viewport is pinned through CDP device metrics.
+VIEWPORT = {"full": None, "compact": None, "floor": (900, 600)}
+# WCAG 2.5.8 Target Size (Minimum). The desktop product has no touch band, so 24x24 is the normative
+# floor; the larger 44px figure SCREEN_SPEC once carried belonged to the deleted phone row.
+MIN_TARGET_PX = 24.0
 RESIDUE: list[str] = []
 ANNOUNCED_MISMATCH: list[str] = []
 
@@ -366,14 +410,20 @@ def verdict(measured: dict, view: str) -> dict:
             f"children={fit.get('children')} rows={fit.get('rows')} foldTrigger={fit.get('more')}")
 
     rail = _first(measured, ".sidebar")
-    if view == "full":
-        # The desktop-only contract: the rail is the only navigation surface, so it must exist
-        # at every width the main window can take — including a 125%-scaled narrow window.
+    reach = measured.get("__navReach") or {}
+    # Asserted for EVERY window including the 440px HUD — that is the width at which a phone
+    # navigation surface would most plausibly come back.
+    add("no_mobile_navigation_surface_is_painted",
+        measured.get("__mobileNav") == [],
+        f"view={view} painted={json.dumps(measured.get('__mobileNav') or [], ensure_ascii=False)[:220]}")
+    if view == "compact":
+        add("compact_has_no_rail", rail is None, f"rail={rail}")
+    else:
+        # The desktop-only contract, asserted at BOTH sizes the main window can take: the rail is the
+        # only navigation surface, so it must survive the minimum window as a text rail.
         add("rail_always_present", bool(rail) and rail["width"] >= RAIL_MIN_WIDTH,
             f"rail={rail and rail['width']} min={RAIL_MIN_WIDTH}")
         add("rail_at_left_edge", bool(rail) and rail["left"] <= 1, f"left={rail and rail['left']}")
-
-        reach = measured.get("__navReach") or {}
         total = reach.get("total") or 0
         if not total:
             add("nav_items_reachable", False, "no .nav button measured; the rail rendered nothing")
@@ -390,8 +440,29 @@ def verdict(measured: dict, view: str) -> dict:
             # aria-expanded, so the rail can be shortened as well as scrolled.
             add("nav_groups_are_disclosures", (reach.get("disclosures") or 0) > 0,
                 f"disclosures={reach.get('disclosures')}")
-    else:
-        add("compact_has_no_rail", rail is None, f"rail={rail}")
+            # Identity, per lane: a name in the accessibility tree, a string on screen that no other
+            # lane spells, and a target the pointer can land on.
+            add("every_lane_is_named", not reach.get("nameless"),
+                f"total={total} nameless={json.dumps(reach.get('nameless'), ensure_ascii=False)}")
+            labels = list(reach.get("labels") or [])
+            blank = [i for i, s in enumerate(labels) if not s]
+            dupes = sorted({s for s in labels if labels.count(s) > 1})
+            add("lane_labels_are_distinguishable", bool(labels) and not blank and not dupes,
+                f"lanes={len(labels)} blank={blank} "
+                f"duplicated={json.dumps(dupes, ensure_ascii=False)}")
+            boxes = [t for t in (reach.get("targets") or []) if t.get("w") and t.get("h")]
+            small = [{"lane": t["lane"], "min": round(min(t["w"], t["h"]), 1)}
+                     for t in boxes if min(t["w"], t["h"]) < MIN_TARGET_PX]
+            add("lane_targets_meet_the_floor", bool(boxes) and not small,
+                f"measured={len(boxes)} of {total} offenders="
+                f"{json.dumps(small, ensure_ascii=False)} min={MIN_TARGET_PX}")
+        if view == "floor":
+            bar = [t for t in (measured.get("__barTargets") or []) if t.get("painted")]
+            small_bar = [{"sel": t["sel"], "w": t["w"], "h": t["h"]} for t in bar
+                         if min(t["w"], t["h"]) < MIN_TARGET_PX]
+            add("top_bar_targets_meet_the_floor", bool(bar) and not small_bar,
+                f"controls={len(bar)} offenders={json.dumps(small_bar, ensure_ascii=False)[:220]} "
+                f"min={MIN_TARGET_PX}")
 
     # --- region boundaries: the last assertion family SCREEN_SPEC owed -------------------------
     edges = measured.get("__edges") or {}
@@ -413,7 +484,10 @@ def verdict(measured: dict, view: str) -> dict:
             f"color={topbar_edge.get('borderBottomColor')} shadow={shadow}")
 
     probes = measured.get("__focusObscured") or []
-    obscured = [p for p in probes if p.get("visible") and p.get("focused") and not p.get("hitIsSelfOrChild")]
+    # A probe that never reported `inViewport` is treated as being in it: absence must convict, not
+    # excuse, or an older harvest shape would silently disarm the whole check.
+    obscured = [p for p in probes if p.get("visible") and p.get("inViewport", True) and p.get("focused")
+                and not p.get("hitIsSelfOrChild")]
     unfocusable = [p for p in probes if p.get("visible") and not p.get("focused")]
     add("focused_control_is_not_obscured", bool(probes) and not obscured,
         f"probed={len(probes)} obscured={len(obscured)} "
@@ -601,8 +675,9 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
 
 def measure(root: Path, view: str, browser: str, u19, shot: Path | None) -> dict:
     return serve_and_eval(
-        root, f"/index.html?view={view}&mode=UNKNOWN&theme=dark&shell=tauri",
-        WIN_SIZE[view], EXPR.replace("SELECTORS", json.dumps(SELECTORS)), browser, u19, shot)
+        root, f"/index.html?view={SHELL_VIEW[view]}&mode=UNKNOWN&theme=dark&shell=tauri",
+        WIN_SIZE[view], EXPR.replace("SELECTORS", json.dumps(SELECTORS)), browser, u19, shot,
+        viewport=VIEWPORT[view])
 
 
 def _release_profile(udf: Path, attempts: int = 12, pause: float = 0.5) -> None:
@@ -627,7 +702,7 @@ def _release_profile(udf: Path, attempts: int = 12, pause: float = 0.5) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=str(ROOT))
-    ap.add_argument("--view", choices=("full", "compact"), action="append")
+    ap.add_argument("--view", choices=("full", "compact", "floor"), action="append")
     ap.add_argument("--json-out", default=None)
     ap.add_argument("--screenshot", action="store_true")
     args = ap.parse_args()
@@ -642,7 +717,7 @@ def main() -> int:
               "set WL_CHROME to a Chrome/Edge binary; a named category is not a pass")
         return 3
 
-    views = args.view or ["full", "compact"]
+    views = args.view or ["full", "compact", "floor"]
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     u19 = load_u19()
     reports = []

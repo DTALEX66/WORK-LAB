@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 216,
+    "total": 217,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 65,
+      "contract_drift": 66,
       "test_behavior_alignment": 27,
       "working_directory_recovery": 2,
       "evidence_state": 40,
@@ -6626,6 +6626,37 @@
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: c4daada572 carries the live-backend census mode, the alpha-preserving gradient compositing, the `.tag.bg-panel2` ink fix and the neutral disabled fill; verifiedCommit is owed until every Actions run at a head containing it is green (ERR-205's rule)",
         "verifiedCommitNote": "not yet stamped: no exact-SHA CI readback exists for c4daada572 at this writing"
+      }
+    },
+    {
+      "error_id": "ERR-219",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "contract_drift",
+      "entrypoint": "apps/observer/frontend/SCREEN_SPEC.md",
+      "command": "python scripts/audit/topbar_geometry_via_cdp.py --view floor",
+      "exit_code": 1,
+      "observed_error": "A standard row demanded a surface the product cannot enter, and implementing it produced two discarded features. bcae52a6 wrote SCREEN_SPEC's responsive band table with row three reading \"< 760px | icon rail or drawer | ... | targets >= 44px\", and DESIGN.md Known Gap 10 recorded that row as unbuilt work owed. Building it: the icon rail measured clean on every number the gate had (60px rail, 23 lane targets of 45x44, scrollWidth == 430, nameless=[], receipts GEOMETRY_NARROW_2.json / GEOMETRY_NARROW_3.json) and the rendered screenshot showed 23 lanes as 23 identical dots -- .nav-dot is a status marker, not an icon, and hiding .truncate had removed the only content that distinguished the destinations. A drawer was then implemented (scrim, in-panel close, aria-expanded toggle, lane-select closes it) and the geometry gate went red on it for a reason nobody had checked: apps/observer/src-tauri/tauri.conf.json floors the main window at minWidth 900 / minHeight 600 and the only 440px surface is the panel, which renders no rail at all. tests/ci/test_desktop_only_shell.py already asserted main.minWidth >= 900 with the comment \"a 320px main window is the phone shape this round removed\", and its MOBILE_TRACE sweep forbids a mobile navigation surface in production source. Both trace to the owner decision of 2026-10-07 (优先跑通全量执行桌面端电脑端 UI，先删除手机端其他端). So the row described a state that is unreachable by design and forbidden by an enforced gate.",
+      "root_cause": "The band table was written from the skin layer's own media queries (b10.css carries @media (max-width:840px)) instead of from the window contract, so it documented what the CSS could switch between rather than what the product could be resized into. Nothing in the standard cited tauri.conf.json, and no test connected a SCREEN_SPEC number to the window config, so the contradiction was invisible until something was built to satisfy the row. My own instrument then reinforced the error: every number it could measure said the icon rail passed, and I did not open the screenshot until after the second implementation.",
+      "fix": "Both implementations were discarded before commit (git checkout of the four touched source files; the full diff is archived at .project-local/artifacts/NARROW_BAND_ATTEMPT_20261008.diff). SCREEN_SPEC's \"Responsive bands\" section is replaced by \"Window surfaces\", which states the two declared windows with their exact sizes, says there is no narrow band and why, and cites the owner decision plus the enforcing test. The 44x44 target rule becomes 24x24 (WCAG 2.5.8 Target Size (Minimum)), because 44px arrived with the deleted phone row and the shipped window controls measure 32x32. The geometry instrument's third pass becomes `floor`: the layout viewport is pinned to 900x600 through CDP device metrics and asserts the rail survives as a text rail, 23 lanes are named, distinguishable and >= 24px, 16 region-A/B controls meet the target floor, and no mobile navigation surface is painted in any window. Per-lane identity fields (nameless, labels, targets) and __mobileNav were added to the harvest; focused-control hit-testing now excludes off-screen probes via inViewport, treating an absent field as in-viewport so an older shape cannot disarm the check by silence. DESIGN.md Known Gap 10 is closed with the reversal recorded, including the finding that the rail has no per-lane icon set.",
+      "regression_test": "tests/ci/test_topbar_geometry_gate.py::WindowFloorTests::test_the_floor_the_gate_measures_is_the_floor_the_window_config_declares",
+      "regressionCommand": "cd tests/ci && python -m unittest -q test_topbar_geometry_gate",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "The test opens apps/observer/src-tauri/tauri.conf.json, reads main.minWidth/minHeight and asserts equality with geometry.VIEWPORT[\"floor\"], so it fails if either side moves; it also asserts minWidth >= 900, which fails outright if the phone shape is restored. The nine sibling tests in WindowFloorTests each plant the fault they name (a 60px rail at the floor, a painted .rail-toggle in each of the three windows, two lanes spelling the same label, an unnamed lane, an 18px lane target, a 22px bar control, an empty bar harvest, an off-screen probe) and assert the named check goes red and the detail names the offender.",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "A size, breakpoint or window shape written into a design standard must cite the machine authority that declares it (for this product, tauri.conf.json), and a test must compare the standard's number against that file rather than against a restatement. Before implementing any row that a document marks as owed work, ask first whether the state is reachable at all: read the window/config contract, and grep for another component that already answers the same question. And when a gate reports every number green for a visual feature, open the rendered screenshot before believing the band is satisfied -- a measurement with no field for \"distinguishable\" will happily certify a rail of identical dots.",
+      "remaining_boundary": "The legibility sweep still measures 1280/900/700/430 (LEGIBILITY_SIZES_D.json); the two narrow columns are retained as text-contrast stress and are explicitly NOT surfaces the shell can be resized into, which is now stated in SCREEN_SPEC. Whether the rail should grow a per-lane icon set is an open design question with no source of truth in the repo -- it is the precondition for ever making the rail narrow on purpose, and it needs an owner decision. The `floor` pass is not yet run in CI (Known Gap 9: no Chromium on the runner), so the numbers in this record are local receipts cited by hand.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "bcae52a661b82e43fe0b06dec8b2f6909f3f5af9",
+        "introducedCommitNote": "derived with git log -S \"icon rail or drawer\" and -S \"Minimum touch/click target 44\" over apps/observer/frontend/SCREEN_SPEC.md: bcae52a6 is the commit that wrote both rows, and it wrote them from the skin's media queries rather than from the window contract",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: fixedCommit is the commit this record ships in, which is unknown at authoring time; it is stamped by the follow-up once the record commit exists",
+        "affectedCapability": "Responsive-surface claims in the UI design contract; the geometry gate's third measurement pass",
+        "regressionCommand": "cd tests/ci && python -m unittest -q test_topbar_geometry_gate"
       }
     }
   ],

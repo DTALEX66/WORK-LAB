@@ -350,16 +350,21 @@ it; the glow lives on the unmasked parent, because a mask applied after a filter
 
 ## Responsive Behavior
 
-Normative bands, to be asserted by `scripts/audit/topbar_geometry_via_cdp.py`:
+Normative sizes, to be asserted by `scripts/audit/topbar_geometry_via_cdp.py`:
 
 - **≥ 1100px**: rail 210px, action row inline, no wrapping.
-- **760–1099px**: rail 210px, action row may drop secondary controls into an overflow menu; the primary
+- **900–1099px**: rail 210px, action row may drop secondary controls into an overflow menu; the primary
   action and the theme toggle stay visible.
-- **< 760px**: rail collapses to an icon rail or a drawer; the action row becomes an overflow menu; no
-  horizontal page overflow; every control ≥ 44px tall.
-- **Vertical reachability (all bands)**: every item in `{components.nav-item}` is either visible in the
+- **Below 900px there is no rail state to design.** The main window is floored at `minWidth: 900` /
+  `minHeight: 600` in `apps/observer/src-tauri/tauri.conf.json`, the 440×780 surface is the rail-less
+  HUD, and the owner decision of 2026-10-07 deleted the phone shell. This document once carried a
+  "**< 760px**: rail collapses to an icon rail or a drawer; every control ≥ 44px tall" row; see
+  Known Gap 10 for what building it produced and why the row, not the implementation, was the defect.
+- **Vertical reachability (every size)**: every item in `{components.nav-item}` is either visible in the
   viewport or reachable by scrolling the rail. A scroll container that cannot scroll is a defect, not a
   layout. The rail must be height-bounded (`100dvh` or grid row sizing) so its `overflow-y` is live.
+  Measured at the 900×600 floor: the rail is a 345px scroll box over 1554px of content, 23 lanes, 7
+  group disclosures.
 - Overflow收纳: when the action row cannot fit, controls collapse into a `更多` menu; they must not
   stack vertically forever.
 
@@ -432,10 +437,19 @@ consulted rather than copied wholesale, and each with one thing not to take.
    the Actions runner does not have, so they are run locally against `dist` and their receipts are cited
    by hand. CI enforces the source-level guards. `verify_design_contract.py` still parses token files and
    touches no rendered value, so its `DESIGN_CONTRACT_PASS` is not evidence of UI compliance.
-10. **The `< 760px` band is declared and not built** (implementation deviation; see SCREEN_SPEC's
-   responsive bands). Measured at an exact 430px viewport: the rail stays **210px — 49% of the window**,
-   no labels are hidden (`hiddenLabels=0`), and the search field is squeezed to **76px** wide. What the
-   band already satisfies: no horizontal overflow (`scrollWidth == 430`), 23 lane buttons present and
-   scroll-reachable (9 in view, `nav` clientHeight 432 / scrollHeight 1554), and the smallest target is
-   50×50 ≥ the band's 44px floor. What is missing is the icon rail or drawer the row promises: half a
-   phone-width window currently belongs to navigation.
+10. **Closed by deleting the requirement, not by building it.** This gap read "the `< 760px` band is
+    declared and not built", and the fix looked like an icon rail. It was built, and every number passed
+    at a pinned 430px viewport — 60px rail, 23 lane targets of 45×44, `scrollWidth == 430`, no lane
+    unnamed — and then the screenshot showed what the numbers had no field for: 23 lanes as 23 identical
+    dots, because `.nav-dot` is a status marker rather than an icon and hiding `.truncate` had removed
+    the only distinguishing content. A drawer was built next, which is when the contradiction surfaced:
+    `tauri.conf.json` floors the main window at 900×600, the 440×780 surface renders no rail, and
+    `tests/ci/test_desktop_only_shell.py` pins both that floor and the absence of a mobile navigation
+    surface (owner decision 2026-10-07, 优先跑通全量执行桌面端电脑端 UI，先删除手机端其他端). Both
+    attempts were discarded before commit; the diff is archived at
+    `.project-local/artifacts/NARROW_BAND_ATTEMPT_20261008.diff`. **The standard row was the defect**, so
+    SCREEN_SPEC now states window surfaces instead of a phone band, the target rule reads 24×24 (WCAG
+    2.5.8) rather than the 44px figure that came with the deleted row, and the gate measures the real
+    floor. ERR-219 records it. What remains genuinely open is a design question the deleted row was
+    papering over: the rail has no per-lane icon set, so it cannot be made narrow on purpose — only by
+    removing information.
