@@ -29,7 +29,8 @@ GATE_FULL = re.compile(r"GATE_FULL=(\w+)")
 def resolve(head: str, cwd: Path) -> str | None:
     """Expand a short sha to the 40-hex form receipts carry, or None if git refuses it."""
     out = subprocess.run(["git", "rev-parse", "--verify", f"{head}^{{commit}}"],
-                         cwd=cwd, capture_output=True, text=True)
+                         cwd=cwd, capture_output=True, text=True,
+                         encoding="utf-8", errors="replace")
     value = (out.stdout or "").strip()
     return value if out.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", value) else None
 
