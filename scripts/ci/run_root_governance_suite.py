@@ -20,12 +20,32 @@ Read-only. Exit 0 = all pass, 1 = a failure, 2 = discovery problem.
 """
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 TESTS_CI = ROOT / "tests" / "ci"
+RAN_LINE = re.compile(r"^Ran (\d+) tests", re.M)
+
+
+def vacuity_reason(returncode: int, output: str) -> str | None:
+    """Why a green exit cannot be trusted, or None when the module showed it ran.
+
+    A module with no ``unittest.main()`` entry point executes zero tests and exits 0, so discovery
+    alone would report it as coverage. Measured on the current suite: every one of the 31 executed
+    modules prints something and none prints ``Ran 0 tests``, so this refuses nothing today.
+    """
+    if returncode != 0:
+        return None
+    if not output.strip():
+        return "SILENT_MODULE(Exited 0 without printing anything -- no evidence it ran a test)"
+    match = RAN_LINE.search(output)
+    if match is not None and int(match.group(1)) == 0:
+        return "ZERO_TESTS(Ran 0 tests is not coverage)"
+    return None
+
 
 # Modules that assert POST-MERGE repository state and therefore cannot pass on an
 # unpublished branch. Each entry must carry a reason naming the state it asserts.
@@ -73,11 +93,15 @@ def main() -> int:
             text=True,
         )
         ran += 1
+        output = completed.stdout + completed.stderr
         if completed.returncode != 0:
+            verdict = f"rc={completed.returncode}"
+        else:
+            verdict = vacuity_reason(completed.returncode, output)
+        if verdict is not None:
             failed_modules += 1
-            tail = (completed.stdout + completed.stderr).strip().splitlines()[-6:]
-            failures.append(f"{module.name} (rc={completed.returncode})")
-            for line in tail:
+            failures.append(f"{module.name} ({verdict})")
+            for line in output.strip().splitlines()[-6:]:
                 failures.append(f"    {line}")
 
     if failures:
