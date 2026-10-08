@@ -75,7 +75,7 @@ GAPS = [
 
 def git(*args: str) -> str:
     return subprocess.run(["git", "-C", str(REPO), *args], capture_output=True,
-                          text=True, encoding="utf-8", errors="replace", errors="replace", check=False).stdout.strip()
+                          text=True, encoding="utf-8", errors="replace", check=False).stdout.strip()
 
 
 def sha256(path: Path) -> str:
@@ -88,7 +88,7 @@ def sha256(path: Path) -> str:
 
 def run_check(argv: list[str]) -> dict:
     done = subprocess.run([sys.executable, str(REPO / argv[0]), *argv[1:]],
-                          capture_output=True, text=True, encoding="utf-8", errors="replace", errors="replace",
+                          capture_output=True, text=True, encoding="utf-8", errors="replace", 
                           cwd=str(REPO), check=False)
     out = (done.stdout or "") + (done.stderr or "")
     tail = [line for line in out.splitlines() if line.strip()][-1:] or [""]
@@ -100,7 +100,7 @@ def collect_about() -> dict:
     """GitHub About is metadata outside Git: read it back, never infer it."""
     done = subprocess.run(["gh", "repo", "view", "DTALEX66/WORK-LAB", "--json",
                            "description,homepageUrl"],
-                          capture_output=True, text=True, encoding="utf-8", errors="replace", errors="replace",
+                          capture_output=True, text=True, encoding="utf-8", errors="replace", 
                           check=False)
     try:
         live = json.loads(done.stdout)
@@ -117,7 +117,7 @@ def collect_ci(head_sha: str) -> dict:
     if not head_sha or head_sha == "UNKNOWN":
         return {"note": "no pushed head SHA to bind checks to"}
     done = subprocess.run(["gh", "pr", "checks", "162", "--json", "name,state,bucket"],
-                          capture_output=True, text=True, encoding="utf-8", errors="replace", errors="replace",
+                          capture_output=True, text=True, encoding="utf-8", errors="replace", 
                           check=False)
     try:
         checks = json.loads(done.stdout)
@@ -226,7 +226,7 @@ def main() -> int:
     }
     pr = subprocess.run(["gh", "pr", "view", "162", "--json", "state,headRefOid,"
                          "baseRefName,mergeable,url"],
-                        capture_output=True, text=True, encoding="utf-8", errors="replace", errors="replace", check=False)
+                        capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     facts["pr162"] = json.loads(pr.stdout) if pr.returncode == 0 else {
         "error": (pr.stderr or "gh unavailable").strip()[:200]}
     facts["about"] = collect_about()

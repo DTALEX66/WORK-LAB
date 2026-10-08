@@ -16,7 +16,7 @@ TARGET.write_bytes(mutated)
 try:
     done = subprocess.run(
         [sys.executable, "apps/observer/tests/test_artifact_freshness.py"],
-        capture_output=True, text=True, encoding="utf-8", errors="replace", errors="replace")
+        capture_output=True, text=True, encoding="utf-8", errors="replace")
 finally:
     TARGET.write_bytes(original)
 

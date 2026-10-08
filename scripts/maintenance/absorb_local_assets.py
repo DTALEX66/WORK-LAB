@@ -33,7 +33,7 @@ def digest(path: pathlib.Path) -> str:
 
 
 def readback(argv):
-    done = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8", errors="replace", errors="replace", check=False)
+    done = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     return ((done.stdout or "") + (done.stderr or "")).splitlines()[:1] or [""]
 
 

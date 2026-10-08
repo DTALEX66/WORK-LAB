@@ -47,7 +47,7 @@ for label, needle, replacement in CASES:
     SIDECAR.write_bytes(original.replace(needle, replacement, 1))
     env = dict(os.environ, **ENV_EXTRA)
     done = subprocess.run([sys.executable, TEST], capture_output=True, text=True, encoding="utf-8", errors="replace",
-                          errors="replace", cwd=str(ROOT), env=env, check=False)
+                          cwd=str(ROOT), env=env, check=False)
     SIDECAR.write_bytes(original)
     restored = SIDECAR.read_bytes() == original
     out = (done.stdout or "") + (done.stderr or "")

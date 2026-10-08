@@ -21,7 +21,7 @@ REGISTRY_TS = ROOT / "apps/observer/frontend/src/lib/viewRegistry.ts"
 
 def git(*args):
     out = subprocess.run(["git", *args], capture_output=True, text=True, encoding="utf-8", errors="replace",
-                         errors="replace", cwd=str(ROOT), check=False)
+                         cwd=str(ROOT), check=False)
     return out.stdout.strip()
 
 
@@ -141,5 +141,5 @@ back = json.loads(LEDGER.read_text(encoding="utf-8"))
 print("ledger entries:", len(back["errors"]))
 print("row present:", "RECORD-DRIFT-20261007" in REGISTER.read_text(encoding="utf-8"))
 done = subprocess.run([sys.executable, "scripts/ci/verify_error_ledger.py"],
-                      capture_output=True, text=True, encoding="utf-8", errors="replace", errors="replace", check=False)
+                      capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
 print("verifier:", done.returncode, (done.stdout or done.stderr).strip()[:120])

@@ -166,14 +166,22 @@ def run_python(args: list[str], *, env_updates: dict[str, str] | None = None) ->
 
 
 def tracked_python_files() -> list[str]:
-    roots = [
-        ROOT / "packages" / "client-neutral-core" / "bin",
-        ROOT / "packages" / "client-neutral-core" / "scripts",
-        ROOT / "services" / "orchestration",
-        ROOT / "scripts" / "security",
-        ROOT / "tests" / "workflow-assistance",
-    ]
-    return [path.relative_to(ROOT).as_posix() for root in roots for path in sorted(root.glob("*.py"))]
+    """Every tracked Python file.
+
+    This used to enumerate five roots (`packages/client-neutral-core/{bin,scripts}`,
+    `services/orchestration`, `scripts/security`, `tests/workflow-assistance`) and call the result the
+    repository's compile check. A mechanical edit that put `keyword argument repeated` into
+    `apps/observer/scripts/write_artifact_receipt.py` -- which no local suite imports -- shipped as a green
+    local gate and a red CI, because that path was simply not in the list. Syntax is a property of every
+    tracked file, so the input set is now exactly `git ls-files *.py`.
+    """
+    raw = subprocess.run(
+        ["git", "-c", "core.quotePath=false", "ls-files", "-z", "*.py"],
+        cwd=ROOT,
+        capture_output=True,
+        check=True,
+    ).stdout
+    return sorted(name.decode("utf-8", "replace") for name in raw.split(b"\0") if name)
 
 
 MANDATORY_TEST_GLOBS = ("test_*.py", "nf*.py")
@@ -401,7 +409,17 @@ def gate_governance() -> int:
 
 
 def gate_compile() -> int:
-    return run_python(["-m", "py_compile", *tracked_python_files()])
+    # Chunked, not one argv: the tracked set is 644 files, which is ~29 KB of command line against the
+    # 32,767-character CreateProcess ceiling. A repository that grows 10% would otherwise fail to start the
+    # compiler at all -- and a gate that cannot launch reports nothing, which reads as no defects.
+    files = tracked_python_files()
+    worst = 0
+    batches = 0
+    for start in range(0, len(files), 80):
+        batches += 1
+        worst = max(worst, run_python(["-m", "py_compile", *files[start:start + 80]]))
+    print(f"COMPILE_SCOPE files={len(files)} batches={batches} exit={worst}")
+    return worst
 
 
 def gate_security() -> int:

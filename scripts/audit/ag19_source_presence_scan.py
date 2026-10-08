@@ -72,7 +72,7 @@ for size in sorted(wanted, reverse=True):
 
 timeline = wanted[15558839]
 done = subprocess.run(["git", "cat-file", "--batch-all-objects", "--batch-check"],
-                      capture_output=True, text=True, encoding="utf-8", errors="replace", errors="replace", cwd=str(ROOT),
+                      capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(ROOT),
                       check=False)
 obj_sizes = {}
 largest = 0
