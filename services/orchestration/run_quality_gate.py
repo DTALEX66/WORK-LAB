@@ -517,6 +517,23 @@ def gate_observer_readonly_boundary() -> int:
     return run_python(["scripts/ci/verify_observer_readonly_boundary.py"])
 
 
+def gate_observer_frontend_contracts() -> int:
+    """Run the two front-end suites CI runs and this gate did not.
+
+    Measured twice in one day: `run_quality_gate.py verify` printed GATE_EXIT=0 while the CI `observer`
+    job went red — first on the legibility micro-role rule in
+    `apps/observer/tests/run_all_tests.js`, then on a vitest failure in `src/App.behavior.test.tsx`.
+    Both suites are authoritative about the shipped surface, and neither had a local route, which is
+    the ERR-151 class in a new costume: a check that only exists in CI cannot protect the commit you
+    are about to push.
+
+    The route resolves Node from `.project/governance/toolchain-declarations.json` rather than from
+    PATH, and a host where that resolution fails prints `OBSERVER_FRONTEND_CONTRACTS_NOT_RUN` and
+    returns non-zero — a skipped required check is a failure, not a pass with a shrug.
+    """
+    return run_python(["apps/observer/scripts/frontend_toolchain.py", "contracts"])
+
+
 def gate_registry_closure_report() -> int:
     """AG-05: produce the field-level closure report for the three registries.
 
@@ -1162,6 +1179,12 @@ GATES: dict[str, Gate] = {
         "handler, no write verb, no unguarded authoritative write control).",
         gate_observer_readonly_boundary,
     ),
+    "observer-frontend-contracts": Gate(
+        "observer-frontend-contracts",
+        "Run the observer JS static contract suite and vitest locally, so a green verify "
+        "cannot disagree with the CI observer job (ERR-151 class, front-end edition).",
+        gate_observer_frontend_contracts,
+    ),
     "registry-closure-report": Gate(
         "registry-closure-report",
         "AG-05: field-level closure report for provider/model/runtime registries "
@@ -1300,6 +1323,7 @@ VERIFY_ORDER = (
     "model-registry-integrity",
     "acp-adapter-honesty",
     "observer-readonly-boundary",
+    "observer-frontend-contracts",
     "registry-closure-report",
     "evidence-tiering",
     "root-governance-suite",

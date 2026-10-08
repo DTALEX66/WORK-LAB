@@ -195,12 +195,42 @@ def cmd_preview(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_contracts(args: argparse.Namespace) -> int:
+    """Run the two front-end contract suites CI runs, so a local PASS means the same thing.
+
+    Both are CI-only today: `apps/observer/tests/run_all_tests.js` and the vitest suite. That gap has
+    produced two reds on a green local gate — the legibility micro-role rule, and an action row that
+    folded every control away under jsdom. A host where the declared runtime cannot be resolved prints
+    a named NOT_RUN and exits non-zero, because a silently skipped required check is the defect this
+    project keeps having to re-learn.
+    """
+    try:
+        node = find_node()
+    except SystemExit as unresolved:
+        print(f"OBSERVER_FRONTEND_CONTRACTS_NOT_RUN {unresolved}")
+        return 1
+    env = env_for(node)
+    print(f"CONTRACTS_NODE node={node} version="
+          f"{subprocess.run([str(node), '--version'], capture_output=True, text=True, encoding='utf-8', errors='replace').stdout.strip()}")
+    js_code = subprocess.run([str(node), "tests/run_all_tests.js"],
+                             cwd=str(REPO / "apps" / "observer"), env=env).returncode
+    vitest_code = subprocess.run([str(node), "node_modules/vitest/vitest.mjs", "run"],
+                                 cwd=str(FRONTEND), env=env).returncode
+    print(f"OBSERVER_JS_CONTRACTS exit={js_code}")
+    print(f"OBSERVER_VITEST exit={vitest_code}")
+    verdict = 0 if js_code == 0 and vitest_code == 0 else 1
+    print(f"OBSERVER_FRONTEND_CONTRACTS_{'PASS' if verdict == 0 else 'FAIL'} "
+          f"js={js_code} vitest={vitest_code}")
+    return verdict
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="mode", required=True)
     sub.add_parser("resolve").set_defaults(func=cmd_resolve)
     sub.add_parser("install").set_defaults(func=cmd_install)
     sub.add_parser("build").set_defaults(func=cmd_build)
+    sub.add_parser("contracts").set_defaults(func=cmd_contracts)
     preview = sub.add_parser("preview")
     preview.add_argument("--host", default=PREVIEW_HOST)
     preview.add_argument("--port", type=int, default=PREVIEW_PORT)
