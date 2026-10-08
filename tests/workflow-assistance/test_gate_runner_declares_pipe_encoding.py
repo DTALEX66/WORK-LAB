@@ -66,6 +66,30 @@ def tracked_python() -> list[str]:
     return [name.decode("utf-8", "replace") for name in raw if name]
 
 
+def bytes_mode_with_encoding(source: str) -> list[int]:
+    """Lines where a call asks for BYTES mode and also declares a text encoding.
+
+    The reverse half of the rule, and the half I broke: a mechanical sweep anchored on the presence of the
+    `text` keyword without reading its value flipped `subprocess.run([...], text=False)` -- a deliberate raw
+    read of `git ls-files -z`, split on b"\\0" -- into text mode, and the caller died with
+    `TypeError: must be str or None, not bytes`. A bytes call must not carry an encoding.
+    """
+    tree = ast.parse(source)
+    hits = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        if getattr(node.func, "attr", None) not in PIPE_FUNCTIONS:
+            continue
+        keywords = {kw.arg: kw.value for kw in node.keywords}
+        mode = next((keywords[name] for name in ("text", "universal_newlines") if name in keywords), None)
+        if mode is None or "encoding" not in keywords:
+            continue
+        if isinstance(mode, ast.Constant) and mode.value in (False, 0):
+            hits.append(node.lineno)
+    return sorted(hits)
+
+
 class PipeEncodingTests(unittest.TestCase):
     def test_no_text_pipe_anywhere_decodes_with_the_locale(self) -> None:
         offenders: list[str] = []
@@ -97,6 +121,32 @@ class PipeEncodingTests(unittest.TestCase):
             f"{offenders[:10]} -- on a cp936 host a child that prints non-ASCII kills the reader thread "
             "and the stream comes back None, which destroys the caller's verdict (ERR-211)",
         )
+
+    def test_no_bytes_mode_call_carries_a_text_encoding(self) -> None:
+        offenders: list[str] = []
+        for rel in tracked_python():
+            try:
+                hits = bytes_mode_with_encoding((ROOT / rel).read_text(encoding="utf-8"))
+            except (SyntaxError, UnicodeDecodeError, OSError):
+                continue  # the pass above already fails the suite on an unreadable file
+            if hits:
+                offenders.append(f"{rel}:{','.join(str(line) for line in hits)}")
+        self.assertEqual(
+            offenders, [],
+            f"bytes-mode pipes that also declare a text encoding: {offenders} -- encoding= silently turns "
+            "the call into text mode and the caller's `b\"\\0\"` split then dies (ERR-211's own sweep made "
+            "exactly this mistake at scripts/ci/regression_report.py:62)",
+        )
+
+    def test_the_bytes_control_shape_is_recognised(self) -> None:
+        # Without this, the test above could pass because the matcher lost the shape entirely.
+        source = (
+            "import subprocess\n"
+            "subprocess.run(['git', 'ls-files', '-z'], text=False, encoding='utf-8')\n"
+            "subprocess.run(['git', 'ls-files'], text=False)\n"
+        )
+        self.assertEqual(bytes_mode_with_encoding(source), [2])
+        self.assertEqual(text_mode_pipes(source)[0], [], "a bytes call was counted as needing an encoding")
 
     def test_the_matcher_fires_on_the_bad_shape_and_not_on_the_good_one(self) -> None:
         bad, good = text_mode_pipes(

@@ -60,7 +60,7 @@ def benchmark(fn: Callable[[], Any], repeats: int = 25) -> dict[str, float]:
 
 def tracked_tree_stats() -> dict[str, Any]:
     result = subprocess.run(
-        ["git", "ls-files", "-z"], cwd=ROOT, text=False, encoding="utf-8", errors="replace", capture_output=True, check=True,
+        ["git", "ls-files", "-z"], cwd=ROOT, text=False, capture_output=True, check=True,
     )
     paths = [Path(item.decode("utf-8")) for item in result.stdout.split(b"\0") if item]
     files = []
