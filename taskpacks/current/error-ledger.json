@@ -5741,11 +5741,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "accumulated across many earlier record commits typed by hand",
         "fixedCommit": "98140b2ac0431cb4c769472e3c0a2916a5a6594b",
-        "verifiedCommit": null,
+        "verifiedCommit": "b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9",
         "bindingBasis": "commit-contains-fix: 98140b2a carries the expander, the shape rule, the --ledger flag and the rewritten ledger",
         "bindingNote": "bound 2026-10-08; verifiedCommit awaits the next green exact-SHA run",
         "affectedCapability": "Machine-readability of the ledger's commit references",
-        "regressionCommand": "python -m pytest -q tests/ci/test_ledger_commit_field_shape.py"
+        "regressionCommand": "python -m pytest -q tests/ci/test_ledger_commit_field_shape.py",
+        "verifiedCommitNote": "exact-SHA Actions readback at b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
@@ -5772,11 +5773,12 @@
         "introducedCommit": null,
         "introducedCommitNote": "the rule sentence predates this session; the delegation line predates it too",
         "fixedCommit": "0adda2377d7d67bdad9d5c2156d8729d148f6213",
-        "verifiedCommit": null,
+        "verifiedCommit": "b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9",
         "bindingBasis": "commit-contains-fix: 0adda237 restates the rule, adds the checker, its tests and the runbook wording fix",
         "bindingNote": "bound 2026-10-08; verifiedCommit awaits the next green exact-SHA run",
         "affectedCapability": "Current-surface documents cannot cite frozen records as today's procedure",
-        "regressionCommand": "python -m pytest -q tests/ci/test_readme_history_links_are_labelled.py"
+        "regressionCommand": "python -m pytest -q tests/ci/test_readme_history_links_are_labelled.py",
+        "verifiedCommitNote": "exact-SHA Actions readback at b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       },
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
@@ -5805,8 +5807,9 @@
         "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
         "introducedCommitNote": "the 2026-09-17 branch cutover that brought services/policy/config_compiler.py into the tracked tree already writing schemaVersion; confirmed with git log -S schemaVersion on the file, and the commit is an ancestor of HEAD",
         "fixedCommit": "beabc63ad3291063e0d1c5abe245515d90977956",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: beabc63a carries the emitter change together with the test that measures it; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9",
+        "bindingBasis": "commit-contains-fix: beabc63a carries the emitter change together with the test that measures it; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -5833,8 +5836,9 @@
         "introducedCommit": "bee807ac372245a00fe7e2ac7c6936c08e2ef680",
         "introducedCommitNote": "the 2026-10-02 commit that added the discovery-driven runner together with the line-counting FAIL header; confirmed as an ancestor of HEAD with git merge-base",
         "fixedCommit": "9d0112d95f9ed40950d346c7aa6622bc4e96ee67",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 9d0112d9 carries the guard and the test that calls it directly; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9",
+        "bindingBasis": "commit-contains-fix: 9d0112d9 carries the guard and the test that calls it directly; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -5861,8 +5865,9 @@
         "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
         "introducedCommitNote": "the 2026-09-17 branch cutover (BRANCH-CONVERGENCE-20260917, PR #124) that brought this file into the tracked tree already carrying the defect; confirmed with git log -S on the exact string and the commit is an ancestor of HEAD",
         "fixedCommit": "8b88bf5f56e2f3121d3f8ce4d09f0f06a8033ab8",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 8b88bf5f carries the corrected index, the verifier and the test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9",
+        "bindingBasis": "commit-contains-fix: 8b88bf5f carries the corrected index, the verifier and the test; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {
@@ -5889,8 +5894,9 @@
         "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
         "introducedCommitNote": "the 2026-09-17 branch cutover (BRANCH-CONVERGENCE-20260917, PR #124) that brought this file into the tracked tree already carrying the defect; confirmed with git log -S on the exact string and the commit is an ancestor of HEAD",
         "fixedCommit": "7dda94cc51c14ed4a18db3cf32b6375d0a69822f",
-        "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 7dda94cc carries the corrected workflow step; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+        "verifiedCommit": "b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9",
+        "bindingBasis": "commit-contains-fix: 7dda94cc carries the corrected workflow step; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head",
+        "verifiedCommitNote": "exact-SHA Actions readback at b02d8262a0b6b319b90ef5adf0a21ffcfc7576b9: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
       }
     },
     {

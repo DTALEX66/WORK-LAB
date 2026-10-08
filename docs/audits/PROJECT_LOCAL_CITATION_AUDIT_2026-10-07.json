@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-08T01:53:12Z",
+  "generatedAt": "2026-10-08T02:03:16Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2141,
@@ -3830,7 +3830,7 @@
       {
         "path": ".project-local/runs/qoder-20261008-a/unreachable_sha_map.json",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 5934,
+        "line": 5940,
         "text": "\"fix\": \"No code fix yet, and deliberately no fixedCommit. This round measured the repair instead of guessing at it: `.project-local/runs/qoder-20261008-a/unreachable_sha_map.json` (6951 bytes, 13 entr"
       },
       {
@@ -7326,7 +7326,7 @@
       {
         "path": ".project-local",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 5904,
+        "line": 5910,
         "text": "\"observed_error\": \"The README's Quick Start tells a new machine to run ./setup.sh and .\\\\setup.ps1. Neither file has ever existed in this repository: `git log --all -- setup.sh` returns nothing and th"
       },
       {
