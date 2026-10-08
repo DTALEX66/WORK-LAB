@@ -59,6 +59,26 @@ def gh(*args: str) -> tuple[int, str, str]:
     return done.returncode, done.stdout or "", done.stderr or ""
 
 
+# A job that never got a runner reports conclusion=failure, which is indistinguishable from "the code
+# is red" if only the rollup is read. The annotation text is the only signal that separates them, and
+# conflating the two sends a reader hunting a defect that does not exist (measured 2026-10-08: all 19
+# check-runs at 6c500d66 were skipped or never started, with zero jobs executed).
+BILLING_PHRASES = ("was not started because", "spending limit", "payments have failed")
+
+
+def failure_annotations(run_id: str) -> str:
+    code, out, _err = gh("api", f"repos/{REPO}/check-runs/{run_id}/annotations",
+                         "--jq", '[.[] | select(.annotation_level == "failure") | .message] | join("\n")')
+    return out if code == 0 else ""
+
+
+def never_started(runs: list[dict]) -> int:
+    """How many of the failed runs were never executed? Only called when nothing succeeded."""
+    return sum(1 for r in runs
+               if r.get("conclusion") in ("failure", "cancelled", "timed_out")
+               and any(phrase in failure_annotations(str(r.get("id"))) for phrase in BILLING_PHRASES))
+
+
 def resolve(abbrev: str) -> str | None:
     # `git`, not the `gh` wrapper above: an abbreviation is resolved locally, and a tool that asked GitHub
     # to expand a SHA would be slow, rate-limited and wrong offline.
@@ -71,25 +91,31 @@ def resolve(abbrev: str) -> str | None:
 
 def check_runs(sha: str) -> dict | None:
     code, out, err = gh("api", f"repos/{REPO}/commits/{sha}/check-runs?per_page=100",
-                        "--jq", '.check_runs[] | {status, conclusion, name}')
+                        "--jq", '.check_runs[] | {status, conclusion, name, id}')
     if code != 0:
         print(f"LIVE_CI_REFUSED api_error {err.strip()[:140]}")
         return None
     runs = [json.loads(line) for line in out.splitlines() if line.strip()]
+    success = sum(1 for r in runs if r.get("conclusion") == "success")
+    failure = sum(1 for r in runs if r.get("conclusion") in ("failure", "timed_out", "cancelled"))
+    # The annotation fetch is one API call per failed run, so it is only spent where it can change the
+    # answer: a head with any success has genuinely run and is a real partial red, not a runner outage.
+    blocked = never_started(runs) if failure and not success else 0
     return {
         "runs": len(runs),
-        "success": sum(1 for r in runs if r.get("conclusion") == "success"),
-        "failure": sum(1 for r in runs if r.get("conclusion") in ("failure", "timed_out", "cancelled")),
+        "success": success,
+        "failure": failure,
+        "notStarted": blocked,
         "pending": sum(1 for r in runs if r.get("status") in ("queued", "in_progress")),
         "byName": [{"name": r.get("name"), "status": r.get("status"),
                     "conclusion": r.get("conclusion")} for r in runs],
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", default=None)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     rows = claim_rows()
     if not rows:
@@ -117,6 +143,12 @@ def main() -> int:
                 measured[sha] = verdict
                 time.sleep(0.2)
             verdict = measured[sha]
+            if verdict.get("notStarted") and verdict["notStarted"] == verdict["failure"]:
+                print(f"LIVE_CI_REFUSED CI_BILLING_BLOCKED head={pin} runs={verdict['runs']} "
+                      f"success=0 not_started={verdict['notStarted']} — no job was executed at this "
+                      f"head, so it is neither green nor red; the account's Actions runner is "
+                      f"unavailable and no code change can move this verdict")
+                return 4
             if claim == "green" and (verdict["runs"] == 0 or verdict["success"] != verdict["runs"]):
                 problems.append(f"line {row['line']} {row['rowId']}: claims green at {pin[:7]} but GitHub "
                                 f"reports runs={verdict['runs']} success={verdict['success']} "
@@ -140,7 +172,13 @@ def main() -> int:
     }
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"LIVE_CI_PUBLISH file={out_path.relative_to(ROOT)} shas={len(measured)} rows={len(rows)} "
+    # `--out` accepts any path, so the display must not assume it lies inside the repo: a ValueError
+    # here would destroy an otherwise valid verdict.
+    try:
+        shown = str(out_path.relative_to(ROOT))
+    except ValueError:
+        shown = str(out_path)
+    print(f"LIVE_CI_PUBLISH file={shown} shas={len(measured)} rows={len(rows)} "
           f"problems={len(problems)}")
     for problem in problems:
         print(f"  LIVE_CI_CONTRADICTION {problem}")
