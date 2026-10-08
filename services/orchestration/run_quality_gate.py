@@ -358,6 +358,34 @@ def _report_governance_failure(members: list[str], exit_code: int, output: str) 
         print(f"    | {line}")
 
 
+GOVERNANCE_SKIP_LINE = re.compile(r"^(?P<case>.*?) \.\.\. skipped (?P<reason>.+)$", re.MULTILINE)
+
+
+def governance_skip_identities(output: str) -> list[tuple[str, str]]:
+    """Every skip the batch reported, as (case, reason) pairs.
+
+    Until now a PASS discarded the captured batch output and printed only ``skipped=N``, which reads
+    identically whether the N are environment boundaries or checks that quietly stopped being
+    collected. The reason is the actionable half, and it was thrown away.
+    """
+    found = []
+    for match in GOVERNANCE_SKIP_LINE.finditer(output):
+        case = match.group("case").strip().split("\n")[-1].strip()
+        found.append((case or "<unnamed-case>", match.group("reason").strip()))
+    return found
+
+
+def _governance_skip_truth(execution: str, identities: list[tuple[str, str]]) -> tuple[int, bool]:
+    """(reported, agrees): does the number of named skips equal the banner's count?
+
+    Disagreement is a failure, not a notice: a skip nobody can name is indistinguishable from a check
+    that stopped running, and the whole point of the count was to tell those two apart.
+    """
+    m = re.search(r"skipped=(\d+)", execution)
+    reported = int(m.group(1)) if m else 0
+    return reported, reported == len(identities)
+
+
 def _governance_execution_truth(output: str, has_unittest: bool) -> tuple[bool, str]:
     """C4: required tests ACTUALLY ran, per the tool's real semantics.
 
@@ -404,7 +432,22 @@ def gate_governance() -> int:
     if exit_code != 0:
         _report_governance_failure(members, exit_code, output)
         return exit_code
+    identities = governance_skip_identities(output)
+    reported, agrees = _governance_skip_truth(execution, identities)
+    if not agrees:
+        print(f"QUALITY_GATE_GOVERNANCE_FAIL skip_identity_unproven reported={reported} "
+              f"named={len(identities)} — a skip that cannot be named is indistinguishable from a "
+              f"check that stopped being collected")
+        return 1
     print(f"QUALITY_GATE_GOVERNANCE_PASS modules={len(members)} {execution}")
+    if reported:
+        by_reason: dict[str, int] = {}
+        for _, reason in identities:
+            by_reason[reason] = by_reason.get(reason, 0) + 1
+        print(f"GOVERNANCE_SKIPS named={len(identities)} reasons={len(by_reason)}")
+        for reason, count in sorted(by_reason.items(), key=lambda kv: (-kv[1], kv[0])):
+            cases = ", ".join(sorted(c for c, r in identities if r == reason)[:4])
+            print(f"  SKIPPED x{count} {reason} :: {cases}")
     return 0
 
 

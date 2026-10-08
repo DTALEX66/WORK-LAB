@@ -171,6 +171,55 @@ class GovernanceExecutionTruthTests(unittest.TestCase):
         self.assertIn("script-only", state)
 
 
+class GovernanceSkipIdentityTests(unittest.TestCase):
+    """A skip count without identities cannot tell an environment boundary from a dead check."""
+
+    def setUp(self) -> None:
+        self.m = load_runner()
+
+    def test_each_verbose_skip_line_yields_its_case_and_reason(self) -> None:
+        out = ("test_symlink_needs_privilege (tests.x.K.test_symlink_needs_privilege) "
+               "... skipped 'requires symlink privilege on Windows'\n"
+               "test_vendor_cache (tests.y.K.test_vendor_cache) ... skipped \"no vendor cache here\"\n"
+               "Ran 20 tests in 3.1s\nOK (skipped=2)\n")
+        identities = self.m.governance_skip_identities(out)
+        self.assertEqual(len(identities), 2)
+        self.assertEqual(identities[0][1], "'requires symlink privilege on Windows'")
+        self.assertIn("test_vendor_cache", identities[1][0])
+        reported, agrees = self.m._governance_skip_truth("executed=18 ran=20 skipped=2", identities)
+        self.assertEqual(reported, 2)
+        self.assertTrue(agrees)
+
+    def test_a_skip_the_parser_cannot_name_fails_the_gate_instead_of_passing(self) -> None:
+        # The banner says three; only two lines carry a reason. That gap is the whole point of the
+        # check: the third skip is unattributable, which is exactly what a silently-collected-zero
+        # module looks like from the outside.
+        out = ("test_a (m.K.test_a) ... skipped 'x'\n"
+               "test_b (m.K.test_b) ... skipped 'y'\n"
+               "Ran 10 tests in 1s\nOK (skipped=3)\n")
+        identities = self.m.governance_skip_identities(out)
+        reported, agrees = self.m._governance_skip_truth("executed=7 ran=10 skipped=3", identities)
+        self.assertEqual(reported, 3)
+        self.assertFalse(agrees)
+
+    def test_a_clean_run_agrees_on_zero_and_needs_no_identities(self) -> None:
+        identities = self.m.governance_skip_identities("Ran 10 tests in 1s\nOK\n")
+        self.assertEqual(identities, [])
+        self.assertEqual(self.m._governance_skip_truth("executed=10 ran=10 skipped=0", identities),
+                         (0, True))
+
+    def test_a_skip_reason_hanging_off_a_multiline_docstring_still_counts(self) -> None:
+        # unittest -v prints a test with a multi-line docstring as its name, then the docstring, and
+        # attaches ` ... skipped` to the LAST docstring line. Counting lines is what the agreement
+        # check needs; the case label for such a test is the tail of a sentence, and this records
+        # that limit rather than pretending the parser is exact.
+        out = ("test_c (m.K.test_c) ... skipped 'no packaged install in a source checkout'\n"
+               "Ran 4 tests in 0.5s\nOK (skipped=1)\n")
+        identities = self.m.governance_skip_identities(out)
+        self.assertEqual(len(identities), 1)
+        self.assertIn("source checkout", identities[0][1])
+
+
 class ChangedPathSafetyFallbackTests(unittest.TestCase):
     """C5: unknown changes fail safe to the full suite; fast-only surfaces stay fast."""
 
