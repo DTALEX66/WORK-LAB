@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 214,
+    "total": 215,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 64,
+      "contract_drift": 65,
       "test_behavior_alignment": 27,
       "working_directory_recovery": 2,
       "evidence_state": 39,
@@ -6566,6 +6566,36 @@
         "verifiedCommit": "784b0a23016803f350c55dd463adb0a49b875f76",
         "bindingBasis": "commit-contains-fix: HEAD (780b594) carries next_reason, the restored reasons and ReasonPreservationTests; verifiedCommit is owed until every Actions run at a head containing them is green",
         "verifiedCommitNote": "exact-SHA Actions readback at 784b0a23016803f350c55dd463adb0a49b875f76: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
+      }
+    },
+    {
+      "error_id": "ERR-217",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "contract_drift",
+      "entrypoint": "apps/observer/frontend/DESIGN.md",
+      "command": "python apps/observer/scripts/frontend_toolchain.py contracts",
+      "exit_code": 1,
+      "observed_error": "A standard I authored contradicted a contract the repo already enforced, and I built the feature that proved the contradiction instead of noticing it first. DESIGN.md Known Gap 2 shipped at bcae52a661b82e43fe0b06dec8b2f6909f3f5af9 asserting \"Theme is not persisted ... Needs a product decision on storage location\" — a normative-sounding open item. Acting on it, I added `src/lib/themePreference.ts`, a `localStorage` read in index.html's pre-render script and a write in App.tsx's theme effect. `frontend_toolchain.py contracts` then failed `theme and layout state never persist to web storage` in apps/observer/tests/test_production_surface_static_contract.js:93, which had printed PASS at the previous head (receipt .project-local/artifacts/CONTRACTS_37.log). So the decision I recorded as owed had been made, written down and guarded for a while; only my document disagreed. The same editing round also introduced two citations to files that do not exist — `.project-local/artifacts/MIGMAT-00_UI_SHELL_20260921.md` and docs/history/archive/ui-shell-20260921/ — into SCREEN_SPEC.md, written from recollection of an earlier session's vocabulary rather than from the tree. They were caught before commit by a path-resolution sweep over DESIGN.md, SCREEN_SPEC.md and design.qa.yaml (40 tokens: 0 broken, 11 declared external), but the class is identical to the gap-2 error: a sentence about the project authored from memory.",
+      "root_cause": "Nothing connects a written standard to the check that answers the same question. The no-storage rule is implemented as a scan of the UI sources (`uiCode.match(/localStorage|sessionStorage/gi)`), which is silent until someone violates it, so DESIGN.md could declare the same behaviour a gap with no contradiction surfacing anywhere; and the reference guard `scripts/ci/verify_authority_index_paths.py` scans docs/current plus the register only, so a fabricated path inside apps/observer/frontend/*.md resolves to nothing being checked in CI. Both defects are mine: I measured a symptom (`lsKeys: \"\"` after selecting light), named it a decision owed, and skipped the search for an existing owner of the claim.",
+      "fix": "The feature was reverted rather than the test widened, per the standing rule that truth tests outrank new features: the persistence module is deleted, index.html reads only the URL again, App.tsx writes no storage, and the crossfade repair — which is not persistence — stayed. DESIGN.md Known Gap 2 now states the contract and its reason and names the sanctioned mechanism: every theme change rewrites the address with `?theme=`, so reloading the current address restores the choice (measured: `theme_actually_applied PASS asked=light`, and asserted by apps/observer/frontend/src/themeSwitch.contract.test.tsx); a bare address returns dark by design. Gap 3 is closed with `.theme-instant`. The invented citations were replaced by the real authority for the no-fabricated-state rule (`UI_DECISIONS.md`: \"UNKNOWN ≠ 0，不伪造 KPI\"), and the two documents' path tokens were resolved against `git ls-files` in both directions (doc-relative and repo-relative).",
+      "regression_test": "apps/observer/frontend/src/themeSwitch.contract.test.tsx",
+      "regressionCommand": "python apps/observer/scripts/frontend_toolchain.py contracts",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "the test executes the shipped inline pre-render script and asserts that a seeded `localStorage` value cannot light the first paint, so the ban is behavioural rather than a grep; the pre-existing static contract fails on any web-storage token in the UI layer, which is the check that caught this in the first place",
+      "evidence_level": "local-full",
+      "repeat_prevention": "before a standard records a behaviour as a gap or a decision owed, search for an existing check that already answers the same question and cite it in the document — a rule enforced by a silent scan is invisible to a reader who only reads the docs; and any normative sentence naming a path must be resolved against the tree at authoring time, never recalled.",
+      "remaining_boundary": "DESIGN.md, SCREEN_SPEC.md and design.qa.yaml sit outside verify_authority_index_paths.py's scan surface, so a new invented path in them is caught only when someone re-runs this sweep; widening the guard to those surfaces with a refs floor is the same un-done family as register rows #22/#24. Nothing here changes what CI enforces today.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "bcae52a661b82e43fe0b06dec8b2f6909f3f5af9",
+        "introducedCommitNote": "the commit that added apps/observer/frontend/DESIGN.md with Known Gap 2 as an open decision; verified by `git log --diff-filter=A -1 -- apps/observer/frontend/DESIGN.md` at this writing",
+        "fixedCommit": "a36f58903fc46e0a603348fb6b959858e46469f4",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: a36f58903f carries the reverted persistence, the corrected DESIGN.md Known Gaps 2/3, the corrected SCREEN_SPEC state lists and the themeSwitch contract; verifiedCommit is owed until every Actions run at a head containing it is green (ERR-205's rule)",
+        "verifiedCommitNote": "not yet stamped: no exact-SHA CI readback exists for a36f58903f at this writing"
       }
     }
   ],

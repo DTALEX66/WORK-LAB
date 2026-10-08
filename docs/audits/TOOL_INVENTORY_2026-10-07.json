@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T13:07:43Z",
+  "generatedAt": "2026-10-08T16:36:22Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 62,
+    "trackedTools": 63,
     "withLedgerPromise": 19,
-    "referencedSomewhere": 62,
+    "referencedSomewhere": 63,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -660,6 +660,21 @@
       ]
     },
     {
+      "path": "scripts/audit/text_legibility_via_cdp.py",
+      "sha256": "0a014ff7988865ebfb9fc7ff95dcc00ba975ce8173401bd367d69782b9ddc4e1",
+      "bytes": 23254,
+      "lines": 484,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 4,
+      "citedBy": [
+        "apps/observer/frontend/DESIGN.md",
+        "apps/observer/frontend/SCREEN_SPEC.md",
+        "tests/ci/test_text_legibility_gate.py",
+        "tests/workflow-assistance/test_no_sub_floor_text_in_the_observer_source.py"
+      ]
+    },
+    {
       "path": "scripts/audit/tool_inventory_readback.py",
       "sha256": "40ba1603634115820fe9fb2e718ba8e342e6711e43a807a3df84f3667cd56604",
       "bytes": 8810,
@@ -695,9 +710,9 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "c394ad11c0968ea24afad10813d555d0e749e4ea7cb84811d6550ae18aa12913",
-      "bytes": 27383,
-      "lines": 579,
+      "sha256": "577ff34fcb4453e3092ae17566cdcc7b8bad4d1bf1cf73116d4db15f7514c45b",
+      "bytes": 28275,
+      "lines": 596,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 15,
@@ -732,10 +747,11 @@
       "lines": 164,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 5,
       "citedBy": [
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/DOCUMENT-CENSUS.md",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "tests/ci/test_no_home_credential_document_is_tracked.py"
       ]
@@ -896,7 +912,7 @@
       "lines": 273,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 2,
-      "citedByRecords": 12,
+      "citedByRecords": 13,
       "citedBy": [
         ".project/governance/recovered-source-registry.json",
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
