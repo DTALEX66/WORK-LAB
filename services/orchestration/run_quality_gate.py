@@ -1215,13 +1215,13 @@ GATES: dict[str, Gate] = {
         gate_plugin_inventory_honesty,
     ),
     "mcp-audit": Gate("mcp-audit", "Smoke the MCP candidate audit template generator.", gate_mcp_audit),
-    "shell": Gate("shell", "Parse setup.sh with bash -n when bash is available.", gate_shell),
+    "shell": Gate("shell", "Parse scripts/setup-workflow.sh with bash -n when bash is available.", gate_shell),
     "runtime-convergence": Gate(
         "runtime-convergence",
         "WL3 Wave 1: canonical store, durable worker, registry, collectors, SSE.",
         gate_runtime_convergence,
     ),
-    "powershell": Gate("powershell", "Parse setup.ps1 with PowerShell AST when pwsh/powershell.exe is available.", gate_powershell),
+    "powershell": Gate("powershell", "Parse scripts/setup-workflow.ps1 with PowerShell AST when pwsh/powershell.exe is available.", gate_powershell),
     # WLGM §7 named gates.
     "project-identity-contract": Gate("project-identity-contract", "WLGM §7: product project identity + resolver contracts.", gate_project_identity_contract),
     "agent-adapter-readonly-contract": Gate("agent-adapter-readonly-contract", "WLGM §7: adapters read-only, capabilities explicit.", gate_agent_adapter_readonly_contract),

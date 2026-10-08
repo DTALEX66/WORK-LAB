@@ -80,7 +80,7 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 || Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/current/workflow-assistance/workflow/gateway-cron-delivery.md` |
 | 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `packages/client-neutral-core/bin/hermes-project-data.py`、`packages/client-neutral-core/skills/software-development/project-data-boundary/` |
 | 执行预检 | 只读分离当前分支/upstream/main、解释器与可选依赖、Markdown 相对链接；输出无密 JSON，不读取 auth/session/memory | `packages/client-neutral-core/scripts/execution_preflight.py`、`docs/current/workflow-assistance/workflow/codex-execution-reliability.md`、`docs/current/workflow-assistance/workflow/codex-performance-diagnosis.md` |
-| Token 监视器 | Windows Tauri 2 Dashboard，实时扫描本地 JSON/JSONL usage，按 GPT/Codex、DeepSeek 和模型显示输入/输出/缓存/reasoning/总 token；无 usage 时不估算 | `apps/token-monitor-desktop/`、`packages/client-neutral-core/scripts/token_monitor.py`、`docs/current/workflow-assistance/workflow/token-monitor.md` |
+| Token 监视器 | Windows Tauri 2 Dashboard，实时扫描本地 JSON/JSONL usage，按 GPT/Codex、DeepSeek 和模型显示输入/输出/缓存/reasoning/总 token；无 usage 时不估算 | `apps/token-monitor/`、`packages/client-neutral-core/scripts/token_monitor.py`、`docs/current/workflow-assistance/workflow/token-monitor.md` |
 | MCP | 默认固定 Context7 包版本；候选 MCP 另行执行 pinned provenance 审计 | `docs/current/workflow-assistance/mcp/workflow-mcp-stack.md`、`docs/current/workflow-assistance/mcp/mcp-catalog-governance.md`、`packages/client-neutral-core/scripts/mcp_candidate_audit.py` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
 | Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.project-local/artifacts/`，用于新会话与 Codex handoff | `packages/client-neutral-core/scripts/build_context_pack.py`、`docs/current/workflow-assistance/workflow/context-pack.md` |
@@ -109,14 +109,14 @@ git clone git@github.com:DTALEX66/WORK-LAB.git
 cd WORK-LAB
 
 # Linux / macOS / Git Bash
-./setup.sh
+bash scripts/setup-workflow.sh
 
 # Windows PowerShell
-.\setup.ps1
+.\scripts\setup-workflow.ps1
 ```
 
 两个 setup 入口默认只生成 ActionPlan，不写 live Home。显式传入
-`setup.sh --apply` 或 `setup.ps1 -Apply` 后才会调用：
+`scripts/setup-workflow.sh --apply` 或 `setup-workflow.ps1 -Apply` 后才会调用：
 
 ```bash
 python integrations/executors/hermes/sync_hermes_workflow_assets.py --apply --approved
@@ -137,8 +137,8 @@ python integrations/executors/hermes/sync_hermes_workflow_assets.py --apply --ap
 实际行为：
 
 - 在 Hermes Home 下创建时间戳备份；
-- 从 `config/managed-config-schema.yaml` 读取精确的 13 个 managed skill 根并逐根事务替换，删除这些子树中已不在权威源里的旧附件；不提升整个 `skills/` 根，因此 staging 后新增的 Hermes bundled 或用户 skill 也会保留；
-- 逐文件部署 schema 声明的 6 个 managed launcher/guard，保留 live `bin/` 中其它 Hermes 官方或用户入口；同时部署无密钥 `.env.template`；
+- 从 `config/managed-config-schema.yaml` 读取精确的 13 个 managed skill 根并逐根事务替换，删除这些子树中已不在权威源里的旧附件；不提升整个 `$HERMES_HOME/skills/` 根，因此 staging 后新增的 Hermes bundled 或用户 skill 也会保留；
+- 逐文件部署 schema 声明的 6 个 managed launcher/guard，保留 live `$HERMES_HOME/bin/` 中其它 Hermes 官方或用户入口；同时部署无密钥 `.env.template`；
 - **绝不 promotion live `config.yaml`**：它同时包含用户的 provider/model、认证、MCP、plugin、hook、会话与未来字段，无法对外部写入实现可移植的原子 compare-and-replace。同步器只输出“skip mixed-ownership live config.yaml”；用户若要调整这些设置，必须明确使用官方 Hermes 配置入口并自行复核；
 - `config/config.yaml` 只作为无密钥 portable baseline，由空的 isolated Home verifier 构造并验证，不能据此声称已部署到真实 profile；
 - `mcp_servers.owned_names` 仅定义 baseline 的结构所有权与 isolated 验证范围，不授权同步器替换或删除真实 Home 中的 MCP；历史或用户 MCP（例如 `public-apis`、`sequential-thinking`）不受同步器影响；
@@ -278,7 +278,7 @@ python packages/client-neutral-core/scripts/provider_health.py \
 
 ## Codex 编码执行器
 
-Codex 会在新任务启动时读取用户目录 `.codex/AGENTS.md`，再由项目内更具体的
+Codex 会在新任务启动时读取用户目录 `$CODEX_HOME/AGENTS.md`，再由项目内更具体的
 `AGENTS.md` 继续约束；Codex 原生用户 skill 目录是 `$HOME/.agents/skills`，项目 skill
 目录是 `<project>/.agents/skills`，命令规则位于 `$CODEX_HOME/rules/*.rules`。不要把
 `.codex/skills` 当成当前官方 skill 发现根。
@@ -308,7 +308,7 @@ python integrations/executors/codex/sync_codex_global_assets.py rollback \
 
 同步器只拥有：
 
-- `.codex/AGENTS.md` 中带开始/结束标记的 Workflow Assistance block；
+- `$CODEX_HOME/AGENTS.md` 中带开始/结束标记的 Workflow Assistance block；
 - `.codex/config.toml` 中带标记的三个默认字段：`approval_policy=on-request`、
   `sandbox_mode=workspace-write`、`project_doc_max_bytes=65536`；
 - `.codex/rules/workflow-assistance.rules`；
@@ -670,15 +670,20 @@ WORK-LAB 根目录的 `../../.github/workflows/work-lab-gate.yml` 在每次 push
 
 ```text
 .github/workflows/   Linux/Windows 治理 CI
-bin/                 Hermes Node 与 Codex 定位 wrapper
-config/              无密钥 Hermes 基线、环境变量模板、SOUL
-scripts/workflow/    安全同步、模型切换、全链路 doctor
-scripts/security/    Agent 规则与秘密扫描
-skills/              Portable Hermes Skills 单一仓库源
-packages/client-neutral-core/templates/           Agent 规则和 Task Ticket 模板
-docs/                工作流、MCP、吸收记录和审计证据
-tests/               仓库治理回归测试
-setup.sh / setup.ps1 跨平台部署入口
+apps/                Observer 只读投影、Token 监视器、桌面入口
+config/              无密钥 Hermes 基线、环境变量模板、SOUL、字段级所有权
+integrations/        受管客户端执行器（Hermes/Codex 同步与切换）
+packages/            client-neutral-core：账本、sidecar、适配器、合同、技能与 launcher 源
+projections/         对外只读投影产物
+reports/             审计与证据归档
+scripts/             audit（读回与证伪）、ci（治理门禁）、maintenance、security、setup-workflow.sh/.ps1
+services/            编排、策略、回执与控制面
+taskpacks/           当前任务包、错误台账、开放任务登记
+tests/               仓库治理与模块回归测试
+docs/                当前规范、历史归档与审计记录
+
+scripts/setup-workflow.sh                       plan-first 安装入口（bash / Git Bash）
+scripts/setup-workflow.ps1                      plan-first 安装入口（Windows PowerShell）
 docs/current/workflow-assistance-TROUBLESHOOTING.md   故障排查
 ```
 

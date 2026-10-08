@@ -8,7 +8,7 @@ WORK-LAB 增强模块存在多套安装/同步入口，历史上被批准清单�
 
 | 入口 | 目标运行时 | 角色 | 何时使用 |
 |---|---|---|---|
-| `setup.sh` / `setup.ps1` | Hermes | plan-first 安装入口 | 新机器部署 Hermes 侧增强；默认只生成 ActionPlan，显式 `--apply`/`-Apply` 才写 live Home |
+| `scripts/setup-workflow.sh` / `scripts/setup-workflow.ps1` | Hermes | plan-first 安装入口 | 新机器部署 Hermes 侧增强；默认只生成 ActionPlan，显式 `--apply`/`-Apply` 才写 live Home |
 | `integrations/executors/hermes/sync_hermes_workflow_assets.py` | Hermes | **Hermes 侧 canonical 同步器** | 仓库 → live Hermes Home 的单向同步（managed skill 根、launcher/guard、.env.template）；setup 脚本最终调用它 |
 | `integrations/executors/codex/sync_codex_global_assets.py` | Codex | **Codex 侧 canonical 同步器** | plan/apply/verify/rollback Codex overlay（AGENTS.md 块、3 个 config 缺省字段、rules、5 个 skill 根） |
 | `integrations/executors/codex/install_codex_global_guidance.py` | Codex | **legacy 最小引导（bootstrap）** | 仅在公开目标**完全不存在**时原子发布缺失的 `AGENTS.md`；有同名文件/override/竞态则 fail-closed |
@@ -21,7 +21,7 @@ WORK-LAB 增强模块存在多套安装/同步入口，历史上被批准清单�
 
 ## 迁移关系
 
-- 新安装统一走 canonical：Hermes 侧 `setup.* → sync_hermes_workflow_assets`；Codex 侧直接 `sync_codex_global_assets.py plan/apply/verify`；
+- 新安装统一走 canonical：Hermes 侧 `scripts/setup-workflow.sh|ps1 → sync_hermes_workflow_assets`；Codex 侧直接 `sync_codex_global_assets.py plan/apply/verify`；
 - `install_codex_global_guidance.py` 保留为历史/边缘场景（公开目标从未初始化的全新 Codex Home）的最小引导，不视为并行安装面；
 - 无「双安装卸载」问题：两套入口写同一组受管表面（managed block/字段/rules/skills），verify 回读统一以 `sync_codex_global_assets.py verify` 为准。
 
@@ -29,7 +29,7 @@ WORK-LAB 增强模块存在多套安装/同步入口，历史上被批准清单�
 
 ```text
 sync_codex_global_assets.py plan/apply/verify   当前受管集合为 5 skills；逐机结果以 plan/verify readback 为准
-setup.sh / setup.ps1                            PowerShell AST + bash -n 门禁 PASS
+scripts/setup-workflow.sh|ps1                   PowerShell AST + bash -n 门禁 PASS
 install_codex_global_guidance.py                边缘引导，目标存在时 fail-closed（由治理测试覆盖）
 ```
 

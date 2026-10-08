@@ -1,9 +1,10 @@
-"""The authority-index path rule must be able to go red, and must not pass by being empty.
+"""The reference-resolution rule must be able to go red, and must not pass on an empty scan.
 
-Section 3 of the index sent readers to two directories that have not existed since the 2026-09
-convergence, and nothing noticed until a tool was written to look. That is the shape of failure this
-file exists for: a navigation surface whose pointers are believed because no one can check them. The
-assertions plant the faults rather than trusting that the real index happens to be clean.
+The rule exists because the authority index sent readers to two directories that have not existed since
+the 2026-09 convergence, and because the README's normative 仓库结构 block advertised `bin/`, `skills/`
+and `scripts/workflow/` as repository directories. Resolution is against `git ls-files` rather than the
+filesystem, so these assertions plant tracked-path sets instead of touching disk -- which is also why the
+verdict cannot depend on what a particular machine has in `.project-local/`.
 """
 
 from __future__ import annotations
@@ -20,87 +21,115 @@ sys.path.insert(0, str(REPO / "scripts" / "ci"))
 
 import verify_authority_index_paths as checker  # noqa: E402
 
-INDEX = REPO / "docs/current/workflow-assistance/workflow/active-authority-index.md"
+INDEX = "docs/current/workflow-assistance/workflow/active-authority-index.md"
+README = "docs/current/workflow-assistance-README.md"
+# a synthetic tracked set that is enough to answer the references these fixtures write
+TRACKED = ["WORK-LAB-AUTHORITY.md", "config/config-ownership.json",
+           "docs/current/workflow-assistance-README.md", INDEX,
+           "scripts/setup-workflow.sh", "scripts/setup-workflow.ps1",
+           "docs/current/workflow-assistance/workflow/managed-software-and-assets.md",
+           "packages/client-neutral-core/skills/one/SKILL.md",
+           "packages/client-neutral-core/bin/codex"]
+
+
+class ResolutionAgainstTheTrackedTree(unittest.TestCase):
+    def test_a_directory_counts_as_real_only_when_a_tracked_file_sits_under_it(self) -> None:
+        self.assertTrue(checker.resolves(TRACKED, "config/", "directory"))
+        self.assertFalse(checker.resolves(TRACKED, "scripts/workflow/", "directory"))
+
+    def test_a_file_reference_must_be_tracked_exactly(self) -> None:
+        self.assertTrue(checker.resolves(TRACKED, "scripts/setup-workflow.sh", "file"))
+        self.assertFalse(checker.resolves(TRACKED, "setup.sh", "file"))
+
+    def test_relative_links_are_folded_before_judging(self) -> None:
+        """The README writes `../../.github/workflows/work-lab-gate.yml`, which is a real tracked file."""
+        folded = checker.anchored(README, "../../.github/workflows/work-lab-gate.yml")
+        self.assertEqual(".github/workflows/work-lab-gate.yml", folded)
+
+    def test_placeholders_are_never_tried(self) -> None:
+        for ref in ("<project>/.project-local/runs/", "~/path/x.md", "$CODEX_HOME/AGENTS.md",
+                    "docs/workflow/*.md"):
+            self.assertTrue(checker.is_placeholder(ref), ref)
+
+    def test_a_declared_prefix_covers_its_children(self) -> None:
+        self.assertEqual(".project-local/", checker.declared(".project-local/artifacts/"))
+        self.assertIsNone(checker.declared("scripts/workflow/"))
+
+
+class SurfaceChecks(unittest.TestCase):
+    def setUp(self) -> None:
+        self.dir = Path(tempfile.mkdtemp(prefix="reference-paths-", dir=str(_runtime_root())))
+        self.addCleanup(shutil.rmtree, self.dir, True)
+
+    def test_a_dead_directory_in_a_fenced_map_is_caught(self) -> None:
+        """The 仓库结构 block is written without backticks; a backtick-only reader would call it clean."""
+        text = "```text\nbin/                 wrapper\nconfig/              baseline\n```\n"
+        rows, broken, stale = checker.check(self.dir_parent(), TRACKED, self.write("map.md", text))
+        self.assertEqual(1, len(broken), f"expected bin/ to fire, got {broken}")
+        self.assertEqual("bin/", broken[0][1])
+        self.assertEqual([], stale)
+
+    def test_a_dead_backticked_file_is_caught_and_a_declared_one_is_not(self) -> None:
+        text = ("- `scripts/workflow/gone.py`: x\n"
+                "- `.project-local/artifacts/`: declared as the untracked evidence root\n")
+        _rows, broken, _stale = checker.check(self.dir_parent(), TRACKED, self.write("refs.md", text))
+        self.assertEqual(["scripts/workflow/gone.py"], [row[1] for row in broken])
+
+    def test_a_declaration_whose_path_becomes_tracked_is_stale(self) -> None:
+        rows, broken, stale = checker.check(
+            self.dir_parent(), [".project-local/runs/x.json"],
+            self.write("decl.md", "- `.project-local/artifacts/`: x\n"))
+        self.assertEqual([], broken)
+        self.assertEqual(1, len(stale), f"a live path declared as non-repo must be reported: {rows}")
+
+    def test_a_surface_with_no_references_fails_instead_of_passing(self) -> None:
+        _rows, broken, _stale = checker.check(self.dir_parent(), TRACKED,
+                                              self.write("empty.md", "# Title\n\nprose only\n"))
+        self.assertEqual([], broken, "check() has nothing to judge; main() must call that a failure")
+
+    def dir_parent(self) -> Path:
+        return self.dir
+
+    def write(self, name: str, text: str) -> str:
+        (self.dir / name).write_text(text, encoding="utf-8", newline="\n")
+        self.assertEqual(text, (self.dir / name).read_text(encoding="utf-8"))
+        return name
 
 
 def _runtime_root() -> Path:
-    """The git-ignored in-boundary runtime root, auto-created: a fresh CI checkout has no .project-local."""
     p = REPO / ".project-local" / "runs"
     p.mkdir(parents=True, exist_ok=True)
     return p
 
 
-class AuthorityIndexPaths(unittest.TestCase):
-    def setUp(self) -> None:
-        self.dir = Path(tempfile.mkdtemp(prefix="authority-index-paths-", dir=str(_runtime_root())))
-        self.addCleanup(shutil.rmtree, self.dir, True)
-
-    def run_tool(self, index: Path) -> tuple[int, str]:
+class RealSurfaces(unittest.TestCase):
+    def run_tool(self, *extra: str) -> tuple[int, str]:
         proc = subprocess.run([sys.executable, str(REPO / "scripts" / "ci"
-                                                    / "verify_authority_index_paths.py"),
-                               "--index", str(index)],
+                                                    / "verify_authority_index_paths.py"), *extra],
                               cwd=REPO, capture_output=True)
         return proc.returncode, (proc.stdout + proc.stderr).decode("utf-8", "replace")
 
-    def plant(self, text: str) -> Path:
-        copy = self.dir / "planted-index.md"
-        copy.write_text(text, encoding="utf-8", newline="\n")
-        self.assertEqual(text, copy.read_text(encoding="utf-8"), "the planted bytes were rewritten")
-        return copy
-
-    def test_the_real_index_passes_and_reports_a_bounded_count(self) -> None:
-        code, out = self.run_tool(INDEX)
+    def test_both_guarded_surfaces_resolve(self) -> None:
+        code, out = self.run_tool()
         self.assertEqual(0, code, out)
+        self.assertIn(f"target={INDEX} refs=", out)
+        self.assertIn(f"target={README} refs=", out)
         self.assertIn("broken=0", out)
-        self.assertIn("refs=", out)
 
-    def test_a_dead_file_reference_is_caught(self) -> None:
-        copy = self.plant("- `docs/current/workflow-assistance/workflow/zz-does-not-exist.md`: x\n")
-        code, out = self.run_tool(copy)
-        self.assertEqual(1, code, out)
-        self.assertIn("is not a file", out)
-
-    def test_a_dead_directory_reference_is_caught(self) -> None:
-        copy = self.plant("- 历史归档：`docs/handoffs/` 里的东西\n")
-        code, out = self.run_tool(copy)
-        self.assertEqual(1, code, out)
-        self.assertIn("is not a directory", out)
-
-    def test_an_index_with_no_references_fails_instead_of_passing(self) -> None:
-        copy = self.plant("# Index\n\nNo paths here at all.\n")
-        code, out = self.run_tool(copy)
-        self.assertEqual(1, code, out)
-        self.assertIn("refs=0", out)
-
-    def test_a_reference_relative_to_the_index_own_directory_resolves(self) -> None:
-        """The real index lives beside the docs it lists, and `../`-style refs must not be false reds."""
-        shutil.copyfile(INDEX, self.dir / "mirror-index.md")
-        copy = self.dir / "mirror-index.md"
-        code, out = self.run_tool(copy)
-        self.assertEqual(0, code, f"a copy of the clean index in another directory went red: {out}")
-
-    def test_a_bare_filename_is_not_treated_as_a_path(self) -> None:
-        copy = self.plant("- 只解释 `config-ownership.json`，不重复字段表。\n")
-        code, out = self.run_tool(copy)
-        self.assertIn("refs=0", out)
-        self.assertEqual(1, code, out)
-
-    def test_a_declaration_that_now_resolves_is_reported(self) -> None:
-        """The allowlist cannot become a hiding place: declaring a live path is itself a fault."""
-        rows = [(1, "config/config-ownership.json", "file")]
-        original = dict(checker.DECLARED_NON_PATHS)
+    def test_the_tool_refuses_an_empty_tracked_set(self) -> None:
+        """A checker that can resolve nothing must not report a clean tree."""
+        original = checker.tracked_paths
         try:
-            checker.DECLARED_NON_PATHS["config/config-ownership.json"] = "declared while absent"
-            broken, stale = checker.verdict(REPO, INDEX, rows)
-            self.assertEqual([], broken)
-            self.assertEqual([(1, "config/config-ownership.json", "file")], stale)
+            checker.tracked_paths = lambda root: []
+            code = checker.main([])
         finally:
-            checker.DECLARED_NON_PATHS.clear()
-            checker.DECLARED_NON_PATHS.update(original)
+            checker.tracked_paths = original
+        self.assertEqual(1, code)
 
-    def test_the_current_index_declares_nothing(self) -> None:
-        """Measured on 2026-10-08: every pointer resolves, so an exclusion here needs a new reason."""
-        self.assertEqual({}, dict(checker.DECLARED_NON_PATHS))
+    def test_git_ls_files_returns_a_usable_set(self) -> None:
+        tracked = checker.tracked_paths(REPO)
+        self.assertGreater(len(tracked), 1000, f"only {len(tracked)} tracked paths; suspicious")
+        self.assertIn("scripts/setup-workflow.sh", tracked)
 
 
 if __name__ == "__main__":
