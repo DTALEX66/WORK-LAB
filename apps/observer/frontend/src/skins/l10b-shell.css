@@ -592,6 +592,31 @@ button[aria-disabled="true"]:hover {
   box-shadow: none;
 }
 
+/* …but opacity alone is not enough for a FILLED control. `.primary-btn` keeps b10's bright two-stop
+ * gradient, so white text at 55% over it measured 1.62:1 in dark and 1.71:1 in light — the label that
+ * carries the refusal ("新建执行") became the least readable thing on the screen. The disabled state is
+ * now signalled by a neutral surface instead of by see-through ink, which also clears the contract's
+ * own floor for disabled text (≥3:1, DESIGN.md). */
+button.primary-btn:disabled,
+button.danger-btn:disabled,
+button[aria-disabled="true"].primary-btn,
+button[aria-disabled="true"].danger-btn {
+  opacity: 1;
+  background: var(--surface2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+/* b10's `.tag` sets `color:#fff` for the filled status pills, and because the skin sheet is unlayered
+ * it beats the Tailwind `text-muted` utility on the neutral chips that also carry `.tag` for its shape.
+ * The result was white text on a light panel: "Transport DELAYED" and "Freshness UNKNOWN" measured
+ * 1.15:1 in light — status text nobody could read, in the one strip that reports whether the data is
+ * trustworthy. The chip keeps its pill shape; its ink comes from the role it declares. */
+.tag.bg-panel2,
+.tag.bg-panel {
+  color: var(--muted);
+}
+
 /* G2 — the brand mark the top bar never had. It now carries the real cut-out artwork instead of a
  * gradient square: the mark's own ratio is 1.9033:1 (measured 1043x548 ink box), so the 22px line height
  * gives it 42px of width rather than the old 22px chip. Painted through a mask from the skin's accent

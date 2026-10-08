@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 215,
+    "total": 216,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 65,
       "test_behavior_alignment": 27,
       "working_directory_recovery": 2,
-      "evidence_state": 39,
+      "evidence_state": 40,
       "ci_configuration": 21,
       "feature_gap": 10,
       "config_downgrade": 3,
@@ -6596,6 +6596,36 @@
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: a36f58903f carries the reverted persistence, the corrected DESIGN.md Known Gaps 2/3, the corrected SCREEN_SPEC state lists and the themeSwitch contract; verifiedCommit is owed until every Actions run at a head containing it is green (ERR-205's rule)",
         "verifiedCommitNote": "not yet stamped: no exact-SHA CI readback exists for a36f58903f at this writing"
+      }
+    },
+    {
+      "error_id": "ERR-218",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "evidence_state",
+      "entrypoint": "scripts/audit/text_legibility_via_cdp.py",
+      "command": "python scripts/audit/text_legibility_via_cdp.py --live-backend",
+      "exit_code": 1,
+      "observed_error": "A measured claim shipped in a design contract was narrower than its wording. a36f5890 wrote into apps/observer/frontend/DESIGN.md: \"0 AA failures, lowest measured ratio ... 5.34:1 in light\", citing `.project-local/artifacts/LEGIBILITY_AFTER_FLOOR.json`. The instrument had only ever loaded /index.html?view=full&mode=UNKNOWN&theme=<t>&shell=tauri -- the static preview, i.e. the offline card. That census is 33 nodes and contains no filled status pill, no disabled primary action and no KPI numeral. Pointing the same census at a real v3 snapshot (`--live-backend`, reusing the release line's `u19.start_sidecar()` on a dynamic loopback port) raised it to 64 nodes and produced four failures the green receipt had never been able to see: `span.tag.bg-panel2.text-muted` at 1.15:1 in light (\"Transport DELAYED\", \"Freshness UNKNOWN\"), the disabled `新建执行` button at 1.62:1 dark and 1.71:1 light, and `button.primary-btn` white-on-gradient. Two of the four are text whose only purpose is to state a transport condition or a refusal, so the failure was worst exactly where the product is honest by design. A third defect was in my instrument, not the UI: `parse_gradient_stops` returned RGB triples and `backdrop_candidates` composited every stop at alpha 1.0, turning `.nav button.active`'s `linear-gradient(180deg, color-mix(in srgb, var(--primary) 26%, transparent), ...)` into solid #2A91FF and reporting a ~11:1 selected row as a 2.92:1 AA failure.",
+      "root_cause": "Two habits compounded. (1) I treated \"the instrument ran and passed\" as coverage, without asking which UI states the instrument is capable of reaching: with no backend the shell renders one card, so the census was measuring the least informative screen in the product and I described it as the product. (2) When I added gradient support I converted stops to opaque triples because the compositing helper took a 4-tuple and truncating was easier than threading alpha -- the same \"drop the alpha\" bug that produced the retracted 3.23:1 claim earlier in this session, recurring in a new code path, which is the signature of a rule I had not yet written down as a contract clause.",
+      "fix": "The instrument now carries `--live-backend`, composites each gradient stop with its own alpha, and documents both rules in its docstring; the verdict gained `disabled_text_is_still_legible` so a disabled label is judged at 3:1 (a refusal you cannot read is not a refusal) instead of being silently exempted the way WCAG exempts it. The product fixes are in the overlay sheet only, since b10 is verbatim (D-11): `.tag.bg-panel2 { color: var(--muted) }` because an unlayered skin declaration was beating a Tailwind text utility, and disabled filled buttons now take a neutral surface with muted ink instead of `opacity: .55` over a bright gradient. DESIGN.md's census paragraph states which screen each number came from and cites ERR-218; SCREEN_SPEC.md's degraded state section now requires the offline surface to name its view, which is enforced by apps/observer/frontend/src/offlineViewIdentity.contract.test.tsx.",
+      "regression_test": "tests/ci/test_text_legibility_gate.py",
+      "regressionCommand": "python -m pytest tests/ci/test_text_legibility_gate.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "the suite asserts the alpha case directly: a 26%-primary gradient wash over a dark row must stay dark (max blue < 120) and must yield > 8:1 for the ink-on-canvas pair, and the page background is asserted absent from the candidate list whenever a gradient decides, so both instrument regressions fail the test rather than returning a plausible wrong number",
+      "evidence_level": "local-full",
+      "repeat_prevention": "a measured claim must name the state it measured (offline card vs live snapshot vs populated lane), and a coverage claim is only as wide as the harness's reachability; an instrument that converts one colour form at a time must be tested on every form it can meet, because alpha bugs reappear per path, not per file.",
+      "remaining_boundary": "the live census still exercises one view (Overview) at one window size: the other 21 lanes render behind navigation that the instrument does not drive, so a lane-local sub-AA colour would still pass. Driving the rail between views and widening the size set is owed before the live numbers are quoted as the product's contrast state. The static-preview census remains the only mode that runs without a backend, and neither mode runs in CI.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "a36f58903fc46e0a603348fb6b959858e46469f4",
+        "introducedCommitNote": "the commit whose DESIGN.md census paragraph stated a product-wide contrast result measured only on the offline card; instrument alpha handling in the same file was introduced there too",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "bindingBasis": "not yet bound: the fix lands in the commit created immediately after this record, so fixedCommit is filled by the stamping step rather than guessed here",
+        "verifiedCommitNote": "owed: no exact-SHA Actions readback at the fixing head yet"
       }
     }
   ],

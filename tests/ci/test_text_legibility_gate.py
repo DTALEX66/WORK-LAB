@@ -159,7 +159,8 @@ class VerdictTests(unittest.TestCase):
         self.assertTrue(self.v["passed"], json.dumps(self.v["checks"], ensure_ascii=False))
         self.assertEqual(set(self.checks), {"harvest_is_dense_enough", "theme_actually_applied",
                                             "no_text_below_the_type_floor", "no_unparsable_colour",
-                                            "every_text_node_meets_AA", "no_stale_floor_exception"})
+                                            "every_text_node_meets_AA", "disabled_text_is_still_legible",
+                                            "no_stale_floor_exception"})
 
     def test_a_sub_floor_paragraph_fails_the_floor_check_and_names_it(self) -> None:
         harvest = clean_harvest()
@@ -312,6 +313,86 @@ class HarvestShapeTests(unittest.TestCase):
     def test_the_instrument_shares_the_geometry_probe_launcher(self) -> None:
         """Two browser bootstraps is two definitions of "the page was ready". One is kept."""
         self.assertIn("serve_and_eval", legibility.load_geometry().__dict__)
+
+
+class GradientBackdropTests(unittest.TestCase):
+    """The populated screen is where this model earned its keep: b10 paints pills and filled buttons
+    with two-stop gradients, and the solid-only composite scored white text on a green pill against
+    the page behind it. The first failure this found was real; the second was the instrument's own."""
+
+    PILL = {"text": "OK", "path": "span.tag.ok", "size": 12.0, "weight": "700",
+            "color": "rgb(255, 255, 255)", "opacity": 1, "gradient": True,
+            "bg": ["rgba(0, 0, 0, 0)", "rgb(244, 247, 250)"],
+            "bgImage": ["linear-gradient(135deg, rgb(39, 200, 106), rgb(17, 167, 77))", "none"]}
+
+    def test_a_gradient_is_judged_at_its_least_favourable_stop(self) -> None:
+        scored = legibility.node_contrast(self.PILL, "rgb(244, 247, 250)")
+        self.assertEqual(scored["renderedRatio"], 2.2)      # white on #27c86a
+        self.assertFalse(scored["pass"])
+
+    def test_the_page_colour_is_not_offered_when_a_gradient_decides(self) -> None:
+        """The planted regression: if the solid stack is listed as a candidate again, this node reads
+        1.04:1 "on white" — a number that looks like a failure but describes a backdrop the glyph
+        never touches, and it sends the fix to the wrong file."""
+        candidates, ok = legibility.backdrop_candidates(
+            self.PILL["bg"], "rgb(244, 247, 250)", self.PILL["bgImage"])
+        self.assertTrue(ok)
+        self.assertNotIn((244.0, 247.0, 250.0), candidates)
+        self.assertEqual(len(candidates), 2)
+
+    def test_a_translucent_layer_between_text_and_an_opaque_decider_still_tints_it(self) -> None:
+        candidates, _ = legibility.backdrop_candidates(
+            ["rgba(255, 0, 0, 0.5)", "rgb(255, 255, 255)"], "rgb(255, 255, 255)")
+        self.assertAlmostEqual(candidates[0][0], 255.0, delta=0.01)
+        self.assertAlmostEqual(candidates[0][1], 127.5, delta=0.01)
+
+    def test_a_translucent_gradient_wash_is_not_read_as_an_opaque_fill(self) -> None:
+        """The false finding this guard caught. `.nav button.active` is 26% primary over a 68% surface2
+        row, and with the stop's alpha dropped it scored as solid #2A91FF — a 2.92:1 AA failure on a
+        selected row that really measures ~11:1. An instrument that loses alpha in one place and keeps
+        it in another is worse than one that has no gradient support at all."""
+        candidates, ok = legibility.backdrop_candidates(
+            ["rgba(0, 0, 0, 0)", "rgba(0, 0, 0, 0)", "rgb(7, 17, 28)"], "rgb(5, 13, 22)",
+            ["linear-gradient(180deg, rgba(42, 145, 255, 0.26), rgba(42, 145, 255, 0.16))",
+             "none", "none"])
+        self.assertTrue(ok)
+        self.assertEqual(len(candidates), 2)
+        self.assertLess(max(candidate[2] for candidate in candidates), 120.0)
+        worst = min(candidates, key=legibility.relative_luminance)
+        self.assertGreater(legibility.contrast_ratio((238, 246, 252), worst), 8.0)
+
+    def test_gradient_stops_are_read_from_the_forms_css_actually_returns(self) -> None:
+        stops = legibility.parse_gradient_stops(
+            "linear-gradient(135deg, color(srgb 0.15 0.78 0.42), rgb(17, 167, 77))")
+        self.assertEqual(len(stops), 2)
+        self.assertAlmostEqual(stops[0][1], 198.9, delta=0.6)
+        self.assertEqual(legibility.parse_gradient_stops("none"), [])
+
+
+class DisabledControlTests(unittest.TestCase):
+    """WCAG exempts inactive text from 1.4.3. This product does not, because a disabled button is how
+    the read-only shell explains a refusal — an unreadable explanation is not an explanation."""
+
+    def test_a_disabled_label_below_three_to_one_fails_the_disabled_rule(self) -> None:
+        faded = {**node(color="rgb(210, 210, 210)"), "disabled": True}
+        scored = legibility.node_contrast(faded, WHITE)
+        self.assertEqual(scored["requiredRatio"], legibility.AA_DISABLED)
+        self.assertFalse(scored["pass"])
+        # Planted into a clean harvest: the AA check must stay quiet about it and the disabled check
+        # must be the one that goes red. Two claims, two checks, no silent exemption.
+        harvest = clean_harvest()
+        harvest["nodes"][4] = faded
+        verdict = legibility.verdict("dark", harvest)
+        self.assertTrue(checks_of(verdict)["every_text_node_meets_AA"]["pass"])
+        self.assertFalse(checks_of(verdict)["disabled_text_is_still_legible"]["pass"])
+
+    def test_a_disabled_label_at_3_15_is_accepted(self) -> None:
+        harvest = clean_harvest()
+        harvest["nodes"][4] = {**node(color="rgb(145, 145, 145)"), "disabled": True}
+        scored = legibility.node_contrast(harvest["nodes"][4], WHITE)
+        self.assertAlmostEqual(scored["renderedRatio"], 3.15, delta=0.02)
+        self.assertTrue(scored["pass"])
+        self.assertTrue(legibility.verdict("dark", harvest)["passed"])
 
 
 if __name__ == "__main__":

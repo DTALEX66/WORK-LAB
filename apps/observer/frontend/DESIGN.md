@@ -234,6 +234,21 @@ value per role removed the failure and the discrepancy at the same time.
 ≥ 18.66px bold or ≥ 24px. Non-text UI and icons: ≥ 3:1. A hairline may be below 3:1 only if the
 information it separates is also conveyed by spacing or a label.
 
+**How a ratio is computed (normative).** The instrument composites the ancestor stack root-first, but
+the *decider* is the first layer from the text outward that carries a gradient or is opaque — and a
+gradient is evaluated at every colour stop, with each stop's own alpha preserved. Two reasons, both
+measured here: listing the page background as a candidate scored white text on a green pill at 1.04:1
+"against white", a backdrop the glyph never touches; and dropping a stop's alpha turned
+`.nav button.active`'s 26%-primary wash into solid `#2A91FF` and reported an 11:1 selected row as a
+2.92:1 failure. A wrong number in the instrument sends the fix to the wrong file.
+
+**Disabled text (normative).** WCAG 1.4.3 exempts inactive controls. This contract does not, at the
+lower bar: a disabled label must clear **3:1**. The reason is specific to a read-only projection — the
+disabled button *is* the message ("执行由 Task Protocol 创建，Observer 不发起执行"), so a control whose
+label cannot be read has lost the only thing it was there to say. `opacity: 0.55` over b10's bright
+filled gradient measured 1.62:1 in dark and 1.71:1 in light; the disabled state is now carried by a
+neutral surface with `--muted` ink, which clears 5:1 in both themes. Opacity is not a contrast strategy.
+
 **On-primary rule.** `{colors.on-primary}` is `{colors.canvas}` in dark (6.13:1 on `{colors.primary}`).
 In light theme white-on-primary measures **4.02:1** and therefore fails the text rule: light-theme
 filled controls must use `#0B1420` ink on the accent, or a darker accent stop. See Known Gaps.
@@ -246,6 +261,16 @@ Rendered census of the shipped Overview screen at 1262×668, both themes
 the floor sweep the same instrument found 12 nodes below 12px (a 9px `{components.state-chip}`, the 10px
 `{typography.label-caps}` group captions, the brand caption, the first-frame strip, the zoom readout)
 and 3 AA failures in light.
+
+**That census was scoped to the degraded state, and said so too broadly.** With no backend the shell
+renders the offline card, so the 33 nodes never included a filled status pill, a disabled primary action
+or a KPI numeral — precisely where the light theme was still failing. Run against a live v3 snapshot
+(`--live-backend`, the release line's own sidecar on a dynamic loopback port) the same screen yields 61
+nodes and found three more defects: `.tag` pills at 1.15:1, the disabled `新建执行` at 1.62:1 dark /
+1.71:1 light, and the gradient-backdrop arithmetic in the instrument itself. After those fixes the live
+census reads 61 nodes, 0 below floor, 0 AA failures, 0 disabled-label failures in **both** themes
+(receipt `.project-local/artifacts/LEGIBILITY_LIVE2.json`). Ledger ERR-218 records the over-broad claim
+so the next measured sentence states what it measured.
 
 **Type floor (normative).** No text a user must read below **12px**. Below 12px is permitted only for a
 decorative glyph that repeats information available elsewhere, and such a node must be `aria-hidden`.

@@ -45,8 +45,14 @@ WINDOW_SIZE = "1280,820"
 THEMES = ("dark", "light")
 
 FLOOR_PX = 12.0          # DESIGN.md: no text a user must read below 12px
-AA_NORMAL = 4.5          # WCAG 2.2 SC 1.4.3
+AA_NORMAL = 4.5          # SC 1.4.3
 AA_LARGE = 3.0           # SC 1.4.3 large-text exemption
+# WCAG 1.4.3 exempts inactive controls outright. This product does not: a disabled button is how the
+# read-only shell explains a refusal ("执行由 Task Protocol 创建，Observer 不发起执行"), and an
+# explanation the user cannot see is not an explanation. 3:1 is the level at which an object becomes
+# discernible (SC 1.4.11), so that is the bar a disabled label must clear here — not the 4.5:1 body
+# text rule, and not zero.
+AA_DISABLED = 3.0
 LARGE_PX = 24.0          # 18pt
 LARGE_BOLD_PX = 18.66    # 14pt bold
 MIN_NODES = 30           # a harvest thinner than this measured nothing
@@ -134,25 +140,85 @@ def over(fg: tuple[float, float, float, float], bg: tuple[float, float, float]) 
     return tuple(fg[i] * alpha + bg[i] * (1.0 - alpha) for i in range(3))  # type: ignore[return-value]
 
 
-def composite_backdrop(layers: list[str], page_background: str) -> tuple[tuple[float, float, float] | None, bool]:
-    """Composite the ancestor background stack from the page root down to the element.
+def parse_gradient_stops(value: str) -> list[tuple[float, float, float, float]]:
+    """The colour stops of a `linear-gradient(...)` / `radial-gradient(...)`, with their alpha kept.
 
-    Returns (rgb, ok). `ok=False` means one layer could not be parsed, which the caller must report as
-    UNKNOWN rather than treat as absent — a dropped layer silently moves the answer by several points.
+    b10 paints its filled controls and status pills with two-stop gradients, so "the backdrop is the
+    solid layer underneath" is not an approximation worth keeping: white text on a bright cyan end can
+    read 1.04:1 against a page that is nowhere near that colour.
+
+    The stop's alpha is part of the answer, not decoration. `.nav button.active` is
+    `linear-gradient(180deg, color-mix(in srgb, var(--primary) 26%, transparent), …)` — a 26% wash, not
+    a solid fill — and reading it as opaque turns a ~13:1 selected row into a false 2.92:1 failure that
+    would send a fix to the wrong file.
     """
-    stack = list(reversed(layers)) + [page_background]
-    base = parse_color(stack[-1])
+    if not isinstance(value, str) or "gradient(" not in value:
+        return []
+    stops: list[tuple[float, float, float, float]] = []
+    for match in re.finditer(r"(rgba?\([^)]+\)|color\(srgb[^)]+\))", value):
+        parsed = parse_color(match.group(1))
+        if parsed is not None:
+            stops.append(parsed)
+    return stops
+
+
+def backdrop_candidates(layers: list[str], page_background: str,
+                        images: list[str] | None = None) -> tuple[list[tuple[float, float, float]], bool]:
+    """Every colour the glyph could actually be painted on, plus whether all of them were readable.
+
+    Walking element-first, the *decider* is the first layer with a gradient, or the first opaque solid;
+    whatever sits below it is composited, the decider's own colour(s) are placed on top, and any
+    translucent layers between the text and the decider are blended last. A gradient yields its stops,
+    not the page colour underneath: an earlier version listed every layer and scored white text on a
+    green pill as 1.0:1 "against white", a backdrop that glyph never touches.
+    """
+    paints = list(images or [])
+    while len(paints) < len(layers):
+        paints.append("none")
+    order = list(zip(layers, paints))            # element-first
+    base = parse_color(page_background)
     if base is None:
-        return None, False
+        return [], False
+    parsed: list[tuple[float, float, float, float] | None] = [parse_color(raw) for raw, _ in order]
+    if any(item is None for item in parsed):
+        return [], False
+
+    decider: tuple[int, str, object] | None = None
+    for index, (raw_color, raw_image) in enumerate(order):
+        stops = parse_gradient_stops(raw_image)
+        if stops:
+            decider = (index, "gradient", stops)
+            break
+        if parsed[index][3] >= 1:                 # type: ignore[index]
+            decider = (index, "solid", parsed[index])
+            break
+
+    if decider is None:
+        current = (base[0], base[1], base[2])
+        for entry in reversed(parsed):
+            if entry is not None and entry[3] > 0:
+                current = over(entry, current)
+        return [current], True
+
+    index, kind, payload = decider
     current = (base[0], base[1], base[2])
-    for raw in stack[:-1]:
-        layer = parse_color(raw)
-        if layer is None:
-            return None, False
-        if layer[3] <= 0:
-            continue
-        current = over(layer, current)
-    return current, True
+    for entry in reversed(parsed[index + 1:]):    # what lies beneath the decider, root-first
+        if entry is not None and entry[3] > 0:
+            current = over(entry, current)
+    if kind == "solid":
+        candidates = [over(payload, current)]     # type: ignore[arg-type]
+    else:
+        candidates = [over(stop, current) for stop in payload]  # type: ignore[union-attr]
+    for entry in parsed[:index]:                  # translucent layers between text and decider
+        if entry is not None and entry[3] > 0:
+            candidates = [over(entry, candidate) for candidate in candidates]
+    return candidates, True
+
+
+def composite_backdrop(layers: list[str], page_background: str) -> tuple[tuple[float, float, float] | None, bool]:
+    """The solid-only backdrop, kept for callers that have no gradient information."""
+    candidates, ok = backdrop_candidates(layers, page_background)
+    return (candidates[-1] if candidates else None), ok
 
 
 def required_ratio(size_px: float, weight: str) -> float:
@@ -171,20 +237,25 @@ def node_contrast(node: dict, page_background: str) -> dict:
 
     Every branch sets `floorOk`: a node whose colour cannot be read still has a font size, and an
     unreadable node must not slip out of the floor census as well as the contrast one.
+
+    The reported ratio is the WORST candidate backdrop (see `backdrop_candidates`), so a glyph painted
+    across a gradient is judged at its least favourable pixel rather than at a colour it never sits on.
     """
     size = float(node.get("size") or 0)
-    base = {**node, "floorOk": size >= FLOOR_PX}
+    disabled = bool(node.get("disabled"))
+    base = {**node, "floorOk": size >= FLOOR_PX, "disabled": disabled}
     fg = parse_color(node.get("color") or "")
-    bg, ok = composite_backdrop(node.get("bg") or [], page_background)
-    if fg is None or not ok:
+    candidates, ok = backdrop_candidates(node.get("bg") or [], page_background, node.get("bgImage"))
+    if fg is None or not ok or not candidates:
         return {**base, "status": "unknown-colour", "pass": False}
     if fg[3] <= 0:
         return {**base, "status": "invisible-foreground", "pass": False}
-    need = required_ratio(size, str(node.get("weight") or ""))
+    need = AA_DISABLED if disabled else required_ratio(size, str(node.get("weight") or ""))
     # Ancestor `opacity` multiplies into the painted glyph's alpha; the browser composites the whole
     # subtree, and folding it here is the same arithmetic seen a pixel further down.
     effective_alpha = fg[3] * float(node.get("opacity") or 1)
-    ratio = contrast_ratio(over((fg[0], fg[1], fg[2], effective_alpha), bg), bg)
+    painted = (fg[0], fg[1], fg[2], effective_alpha)
+    ratio = min(contrast_ratio(over(painted, bg), bg) for bg in candidates)
     return {**base, "status": "ok", "renderedRatio": ratio, "requiredRatio": need,
             "pass": ratio >= need}
 
@@ -224,18 +295,21 @@ HARVEST = """JSON.stringify((()=>{
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;
     const bg = [];
+    const bgImage = [];
     let gradient = false;
     let opacity = 1;
     for (let node = el; node; node = node.parentElement) {
       const style = getComputedStyle(node);
       bg.push(style.backgroundColor);
+      bgImage.push(style.backgroundImage || 'none');
       if (style.backgroundImage && style.backgroundImage !== 'none') gradient = true;
       opacity *= parseFloat(style.opacity || '1');
     }
     const hiddenByAria = !!(el.closest && el.closest('[aria-hidden="true"]'));
     nodes.push({
       text: own[0].slice(0, 60), size: Math.round(parseFloat(cs.fontSize) * 100) / 100,
-      weight: cs.fontWeight, color: cs.color, bg: bg, gradient: gradient,
+      weight: cs.fontWeight, color: cs.color, bg: bg, bgImage: bgImage, gradient: gradient,
+      disabled: el.disabled === true || el.getAttribute('aria-disabled') === 'true',
       opacity: Math.round(opacity * 1000) / 1000, path: pathOf(el),
       ariaHidden: hiddenByAria ? 'true' : null, role: el.getAttribute('role') || null,
       rect: { w: Math.round(r.width), h: Math.round(r.height) },
@@ -251,25 +325,34 @@ HARVEST = """JSON.stringify((()=>{
 })())"""
 
 
-def harvest_settled(root: Path, browser: str, u19, u19_geometry, theme: str) -> dict:
+def harvest_settled(root: Path, browser: str, u19, u19_geometry, theme: str,
+                    api: str | None = None) -> dict:
     """Load one theme and require two identical samples before reporting anything.
 
     `.nav button`, `.list-item`, `.panel` and the buttons carry `transition:.2s ease` in the pinned
     skin, so the first sample after load can still be interpolating. Two equal samples is the minimum
     evidence that what was read is what a user sees.
+
+    `api` points the page at a live v3 snapshot. Without it the shell renders only the offline card —
+    33 text nodes — and every filled pill, disabled action button and KPI numeral stays unmeasured.
+    A legibility gate that can only see the degraded state is measuring the one screen nobody reads.
     """
-    path = f"/index.html?view=full&mode=UNKNOWN&theme={theme}&shell=tauri"
+    path = (f"/index.html?view=full&theme={theme}&api={api}" if api
+            else f"/index.html?view=full&mode=UNKNOWN&theme={theme}&shell=tauri")
+    label = "live" if api else "static"
     first = u19_geometry.serve_and_eval(root, path, WINDOW_SIZE, HARVEST, browser, u19)
     second = u19_geometry.serve_and_eval(root, path, WINDOW_SIZE, HARVEST, browser, u19)
     a = {(n["path"], n["text"]): (n["color"], n["size"]) for n in first["nodes"]}
     b = {(n["path"], n["text"]): (n["color"], n["size"]) for n in second["nodes"]}
     shared = set(a) & set(b)
     moved = sorted(str(key) + f" {a[key]} vs {b[key]}" for key in shared if a[key] != b[key])
-    if moved:
-        raise RuntimeError(f"NOT_SETTLED {len(moved)} of {len(shared)} nodes changed colour between "
-                           f"samples: {moved[:3]}")
     if len(second["nodes"]) < MIN_NODES:
-        raise RuntimeError(f"THIN_HARVEST only {len(second['nodes'])} text nodes (need {MIN_NODES})")
+        raise RuntimeError(f"THIN_HARVEST({label}) only {len(second['nodes'])} text nodes "
+                           f"(need {MIN_NODES}); api={api or 'static-preview'} rendered nothing readable")
+    if moved:
+        raise RuntimeError(f"NOT_SETTLED({label}) {len(moved)} of {len(shared)} nodes changed colour "
+                           f"between samples: {moved[:3]}")
+    second["backend"] = api or "static-preview"
     return second
 
 
@@ -303,14 +386,20 @@ def verdict(theme: str, harvest: dict) -> dict:
         + json.dumps([f"{n['path'][:40]} color={n.get('color')} bg={(n.get('bg') or [None])[0]}"
                       for n in unknown[:5]], ensure_ascii=False))
 
-    failed_aa = [n for n in scored if n["status"] != "unknown-colour"
-                 and n["status"] != "invisible-foreground" and not n["pass"]]
+    failed_aa = [n for n in scored if n["status"] == "ok" and not n["disabled"] and not n["pass"]]
+    failed_disabled = [n for n in scored if n["status"] == "ok" and n["disabled"] and not n["pass"]]
     invisible = [n for n in scored if n["status"] == "invisible-foreground"]
     add("every_text_node_meets_AA", not failed_aa and not invisible,
         f"aa_failures={len(failed_aa)} invisible={len(invisible)} worst="
         + json.dumps([f"{n['renderedRatio']}:1 need {n['requiredRatio']} {n['size']}px "
                       f"{n['path'][:44]} {n['text'][:20]!r}"
                       for n in sorted(failed_aa, key=lambda x: x["renderedRatio"])[:6]],
+                     ensure_ascii=False))
+    add("disabled_text_is_still_legible", not failed_disabled,
+        f"disabled={len(failed_disabled)} (WCAG exempts inactive controls; a refusal this shell "
+        f"deliberately displays must still be seen) worst="
+        + json.dumps([f"{n['renderedRatio']}:1 {n['size']}px {n['path'][:40]} {n['text'][:18]!r}"
+                      for n in sorted(failed_disabled, key=lambda x: x["renderedRatio"])[:5]],
                      ensure_ascii=False))
 
     stale = [(pattern, reason) for pattern, reason in FLOOR_EXCEPTIONS
@@ -324,6 +413,7 @@ def verdict(theme: str, harvest: dict) -> dict:
         "passed": all(c["pass"] for c in checks), "checks": checks,
         "counts": {"nodes": len(scored), "belowFloor": len(below),
                    "unexceptedBelowFloor": len(unexcepted), "aaFailures": len(failed_aa),
+                   "disabledFailures": len(failed_disabled),
                    "unknownColour": len(unknown), "gradientBackdrop": len(gradient),
                    "floorExceptions": len(below) - len(unexcepted)},
         "worst": [{"text": n["text"], "path": n["path"], "size": n["size"],
@@ -430,6 +520,8 @@ def main() -> int:
     ap.add_argument("--json-out", default=None)
     ap.add_argument("--crossfade", action="store_true",
                     help="click the theme control and judge the frames it produces, not the settled page")
+    ap.add_argument("--live-backend", action="store_true",
+                    help="serve a real v3 snapshot through the release line's sidecar instead of the static preview")
     args = ap.parse_args()
 
     root = Path(args.root).resolve()
@@ -453,14 +545,26 @@ def main() -> int:
                     "samples": raw, "browser": browser}]
     else:
         reports = []
-        for theme in THEMES:
-            try:
-                harvest = harvest_settled(root, browser, u19, geometry, theme)
-            except Exception as exc:  # noqa: BLE001 — a failed measurement is NOT_RUN, never a silent pass
-                print(f"LEGIBILITY_GATE_NOT_RUN {theme} {exc!r}")
-                return 3
-            reports.append({"theme": theme, "verdict": verdict(theme, harvest),
-                            "harvest": harvest, "browser": browser})
+        api = None
+        server = None
+        if args.live_backend:
+            # The release line's own sidecar starter, on a dynamic loopback port, serving the real v3
+            # snapshot. Read-only: this is the projection the Observer is allowed to read.
+            _sidecar, port, _thread, server = u19.start_sidecar()
+            api = f"http://127.0.0.1:{port}"
+            print(f"LEGIBILITY_BACKEND {api}")
+        try:
+            for theme in THEMES:
+                try:
+                    harvest = harvest_settled(root, browser, u19, geometry, theme, api=api)
+                except Exception as exc:  # noqa: BLE001 — a failed measurement is NOT_RUN, never a silent pass
+                    print(f"LEGIBILITY_GATE_NOT_RUN {theme} {exc!r}")
+                    return 3
+                reports.append({"theme": theme, "verdict": verdict(theme, harvest),
+                                "harvest": harvest, "browser": browser})
+        finally:
+            if server is not None:
+                server.shutdown()
 
     out = Path(args.json_out) if args.json_out else (
         OUT_DIR / f"legibility_{int(time.time())}.json")
