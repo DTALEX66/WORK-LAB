@@ -57,7 +57,17 @@ def walk_strings(value: Any):
 
 
 def main() -> int:
+    # `--ledger <path>` exists so the gate can be pointed at a synthetic ledger and PROVED to fire.
+    # Without it, every claim about what this verifier refuses rests on the real file being healthy,
+    # which is not evidence that the check works -- my first falsification attempt today passed for
+    # exactly this reason: it wrote a bad copy and the verifier read the good one.
+    argv = sys.argv[1:]
     path = repo_root() / LEDGER_REL
+    if "--ledger" in argv:
+        index = argv.index("--ledger")
+        if index + 1 >= len(argv):
+            return fail("--ledger requires a path")
+        path = Path(argv[index + 1])
     if not path.is_file():
         return fail(f"missing {LEDGER_REL.as_posix()}")
     try:
@@ -102,6 +112,13 @@ def main() -> int:
             return fail(f"{error_id} original failure exit_code cannot be zero")
         if not re.search(r"(?:python|node|git|assessment|test|verify)", item["command"], re.I):
             return fail(f"{error_id} command is not an executable record")
+        for field in ("introducedCommit", "fixedCommit", "verifiedCommit"):
+            value = (item.get("lifecycle") or {}).get(field)
+            if value is None or (isinstance(value, str) and not value.strip()):
+                continue
+            if not re.fullmatch(r"[0-9a-f]{40}", value):
+                return fail(f"{error_id} {field} must be a full 40-hex commit or null, "
+                            f"got {value[:24]!r}")
         if not any(token in item["repeat_prevention"].lower() for token in ("must", "require", "never", "每", "必须")):
             return fail(f"{error_id} repeat_prevention is not enforceable")
         for value in walk_strings(item):

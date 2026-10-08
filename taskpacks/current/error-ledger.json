@@ -1687,7 +1687,7 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": null,
-        "fixedCommit": "2e36309",
+        "fixedCommit": "2e363092c5771dbaf2af2633df731698be937803",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": null,
         "regressionCommand": null,
@@ -2549,9 +2549,9 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "d528a03",
-        "fixedCommit": "d4d4d82",
-        "verifiedCommit": "8157484",
+        "introducedCommit": "d528a03b27a84a3b701275a3d2fe79c011a15c8b",
+        "fixedCommit": "d4d4d82b5110fc6eabffe72d9203920f76630aad",
+        "verifiedCommit": "8157484d9dc2611f85f028a03469f9c6b0461e0e",
         "affectedCapability": "workflow-assistance CI governance gate",
         "regressionCommand": "python -m pytest tests/workflow-assistance/ -q",
         "currentApplicability": "VERIFIED_CURRENT_TREE"
@@ -2582,8 +2582,8 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "lifecycle": {
-        "introducedCommit": "c49d254",
-        "fixedCommit": "8157484",
+        "introducedCommit": "c49d254b423771a8e95005f1bc9493032b36e979",
+        "fixedCommit": "8157484d9dc2611f85f028a03469f9c6b0461e0e",
         "verifiedCommit": null,
         "affectedCapability": "workflow-assistance governance gate",
         "regressionCommand": null,
@@ -2616,7 +2616,7 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "d01f59f",
+        "introducedCommit": "d01f59fc90cc81064d63c61ff1619042b5abe5bb",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "agent task-scope discipline",
@@ -2923,7 +2923,7 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": null,
-        "fixedCommit": "a2eb028",
+        "fixedCommit": "a2eb02890e288080337c764a802a624696dc6185",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "adapter registry honesty: implementation maturity vs deployment observation",
         "regressionCommand": "python services/orchestration/run_quality_gate.py verify plus python -c \"read config/adapter-registry.json policy_projection.deployment_observation\"",
@@ -3015,7 +3015,7 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": "c1983621353ca9db7297b7cf91b0a76cecb9d320",
-        "fixedCommit": "6c63218",
+        "fixedCommit": "6c63218163969360ecd654742dd6a69d2e5724fa",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Exact-SHA CI truth for the Observer desktop contract",
         "regressionCommand": "python scripts/ci/failfast_group.py --group observer-web-contracts",
@@ -3103,9 +3103,9 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "c198362",
-        "fixedCommit": "c6d51a6",
-        "verifiedCommit": "6015f0b",
+        "introducedCommit": "c1983621353ca9db7297b7cf91b0a76cecb9d320",
+        "fixedCommit": "c6d51a644aaaed8c21bfd669f1e0b9413fb9ba45",
+        "verifiedCommit": "6015f0ba1dc0c195a83e704bd73117b68f077347",
         "affectedCapability": "Observer borderless shell window controls",
         "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
       },
@@ -3132,9 +3132,9 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "b0fc828",
+        "introducedCommit": "b0fc8284d91eb341ef36d5b149a74582a304309f",
         "fixedCommit": null,
-        "verifiedCommit": "6015f0b",
+        "verifiedCommit": "6015f0ba1dc0c195a83e704bd73117b68f077347",
         "affectedCapability": "U19 desktop surface evidence quality",
         "regressionCommand": "python scripts/audit/p0c_oracle_discriminator.py",
         "regressionCommandPrior": "python .project-local/runs/p0c-oracle-20261006/probe_oracle.py",
@@ -3163,8 +3163,8 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "f3b5dec",
-        "fixedCommit": "770d733",
+        "introducedCommit": "f3b5decf31ac6094d23dc4b77cec27a040b23d99",
+        "fixedCommit": "770d7331e99b666d9e4f47f254f95d18b44b6ebc",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "U19 release binary provenance gate",
         "regressionCommand": "python apps/observer/scripts/u19_webview_e2e.py",
@@ -3192,9 +3192,9 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "6bd0bd5",
-        "fixedCommit": "3abf1bf",
-        "verifiedCommit": "6015f0b",
+        "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
+        "fixedCommit": "3abf1bfccb37863725c38c6d710fba147244865f",
+        "verifiedCommit": "6015f0ba1dc0c195a83e704bd73117b68f077347",
         "affectedCapability": "Observer frameless shell top row",
         "regressionCommand": "node apps/observer/tests/test_desktop_component_contract.js"
       },
@@ -3220,7 +3220,7 @@
       "status_before": "PASS",
       "status_after": "FAIL",
       "lifecycle": {
-        "introducedCommit": "b0fc828",
+        "introducedCommit": "b0fc8284d91eb341ef36d5b149a74582a304309f",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "U19 desktop surface instrumentation",
@@ -3252,7 +3252,7 @@
       "status_after": "PASS",
       "lifecycle": {
         "introducedCommit": null,
-        "fixedCommit": "28afeaa",
+        "fixedCommit": "28afeaad1adba5e0444acf39f8ca920d99bc75ee",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "U19 artifact provenance receipt",
         "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py",
@@ -3281,8 +3281,8 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "770d733",
-        "fixedCommit": "4115d63",
+        "introducedCommit": "770d7331e99b666d9e4f47f254f95d18b44b6ebc",
+        "fixedCommit": "4115d6324ef0c7727fb65413adc6c25c966ed613",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "required-group manifest completeness guard",
         "regressionCommand": "python tests/ci/test_failfast_group.py",
@@ -3312,8 +3312,8 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "28afeaa",
-        "fixedCommit": "5348ba7",
+        "introducedCommit": "28afeaad1adba5e0444acf39f8ca920d99bc75ee",
+        "fixedCommit": "5348ba78fe01a8a6ab5407fd8eb6fa66023b203a",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "U19 release binary provenance gate",
         "regressionCommand": "python apps/observer/tests/test_artifact_freshness.py",
@@ -3342,7 +3342,7 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "8003980",
+        "introducedCommit": "80039800b6e51ce8cad42df13690b09bcba5b939",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Future candidate pool coverage",
@@ -3370,7 +3370,7 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "lifecycle": {
-        "introducedCommit": "b0fc828",
+        "introducedCommit": "b0fc8284d91eb341ef36d5b149a74582a304309f",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Observer overlay accessibility and narrow-screen operability",
@@ -3399,8 +3399,8 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "d4f9723",
-        "fixedCommit": "90734c2",
+        "introducedCommit": "d4f9723798ad987d64f6d1ad4f851e190ae6dead",
+        "fixedCommit": "90734c2bd9e1f4b59d30dd244193bc399e9be06b",
         "verifiedCommit": "ee570da5eba803abad322d938adc069294ab20ae",
         "affectedCapability": "Model and external-library registry truth",
         "regressionCommand": "python services/orchestration/run_quality_gate.py model-registry-integrity",
@@ -3429,7 +3429,7 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "lifecycle": {
-        "introducedCommit": "35045a0",
+        "introducedCommit": "35045a07e23a7aeaadb68c81948515b31f328f79",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Historical source registry and AG-19 recovery",
@@ -3460,7 +3460,7 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "lifecycle": {
-        "introducedCommit": "6bd0bd5",
+        "introducedCommit": "6bd0bd55dd85ba201106d9a834153bd611ec7a10",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Bootstrap, skill guidance and current-state attestation paths",
@@ -3491,14 +3491,15 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "lifecycle": {
-        "introducedCommit": "not a repository commit — the script that lost the files is untracked scratch tooling under .project-local",
+        "introducedCommit": null,
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Audited cleanup retention",
         "regressionCommand": "python scripts/maintenance/finish_tmp_tree_cleanup.py",
         "regressionCommandPrior": "python .project-local/runs/convergence-20261007-c/finish_cleanup.py",
         "regressionCommandCorrectedAt": "2026-10-07",
-        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root."
+        "regressionCommandNote": "The original string is kept above in regressionCommandPrior: it records what was actually run at the time. The live field now names a tracked file so the promise stays executable after a cleanup of the ignored runtime root.",
+        "introducedCommitNote": "not a repository commit — the script that lost the files is untracked scratch tooling under .project-local -- kept as prose in the note field, because a commit-shaped field must hold a commit or nothing at all: ERR-116's cause was an untracked scratch script, so there is no introducing commit to cite."
       },
       "regressionTestVerifiability": "PATH_GONE",
       "regressionTestVerifiabilityReason": "no tracked file carries this basename"
@@ -3522,7 +3523,7 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "d10a42c",
+        "introducedCommit": "d10a42c85730f52d0a0adda08f4ff8d68cf37254",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Register and atlas accuracy",
@@ -3554,7 +3555,7 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "lifecycle": {
-        "introducedCommit": "62f666e",
+        "introducedCommit": "62f666ef36999b846ea1c9bcb075a0970be18933",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Observer browser read-only entry and legacy surface retirement",
@@ -3583,11 +3584,12 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "lifecycle": {
-        "introducedCommit": "62f666e\n6bd0bd5",
+        "introducedCommit": "62f666ef36999b846ea1c9bcb075a0970be18933",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Observer v3 timestamp rendering and projection degradation",
-        "regressionCommand": "cd apps/observer && node tests/run_all_tests.js && cd frontend && node node_modules/vitest/vitest.mjs run src/lib/projectionTruthContract.test.ts"
+        "regressionCommand": "cd apps/observer && node tests/run_all_tests.js && cd frontend && node node_modules/vitest/vitest.mjs run src/lib/projectionTruthContract.test.ts",
+        "introducedCommitNote": "two commits together introduced the defect: 62f666ef, 6bd0bd55 -- only one may occupy introducedCommit, so both are named here"
       },
       "regressionRepointNote": "a substitution was attempted 2026-10-07 but the operand still does not resolve, so no re-point is claimed and the promise stays where it was",
       "regressionTestVerifiability": "PATH_GONE",
@@ -3612,7 +3614,7 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "lifecycle": {
-        "introducedCommit": "62f666e",
+        "introducedCommit": "62f666ef36999b846ea1c9bcb075a0970be18933",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Observer render truth: dirty state, compact transport status",
@@ -3640,7 +3642,7 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "lifecycle": {
-        "introducedCommit": "62f666e",
+        "introducedCommit": "62f666ef36999b846ea1c9bcb075a0970be18933",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Observer read-only transport: endpoint trust, payload validation, revision ordering, LIVE semantics",
@@ -3668,8 +3670,8 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "977040b",
-        "fixedCommit": "891c871",
+        "introducedCommit": "977040b4aac5fd77968f7aa9d1929eb7bb7d62f1",
+        "fixedCommit": "891c87146098b0a427ff5e995b5f851cafc5eec2",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Observer browser-entry regression runnability",
         "regressionCommand": "python tests/workflow-assistance/test_sidecar_ui_browser_entry.py",
@@ -3698,7 +3700,7 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "5274199",
+        "introducedCommit": "52741990a2c4371fb845464f3d2672b87f6b1d6b",
         "fixedCommit": "763a77f22dc43aedb3d12fa5507cad95500dd7f7",
         "verifiedCommit": "8847cdc0f77f3832a19de65748fde5f7b1a063cd",
         "affectedCapability": "Observer responsive shell below the rail breakpoint",
@@ -3729,7 +3731,7 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "f95baef",
+        "introducedCommit": "f95baefec55e098a1a5cb39281d078637e355f8c",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "Overview alert status chip; disabled-control affordance",
@@ -3759,8 +3761,8 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "1cffd9f",
-        "fixedCommit": "e0b296d",
+        "introducedCommit": "1cffd9f0f9d7277338b1ef9acf2be79a4175785c",
+        "fixedCommit": "e0b296dea46ed5bb752d6d8e565535ce1e9b588d",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "AG-19/AG-20 recovered-source registry digest claims; CI workflow-assistance job",
         "regressionCommand": "python tests/workflow-assistance/test_recovered_source_registry.py",
@@ -3789,8 +3791,8 @@
       "status_before": "PARTIAL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "4d059c7",
-        "fixedCommit": "08ca2e6",
+        "introducedCommit": "4d059c7ec0761c40b7e9bb77a8fc2507ad31551a",
+        "fixedCommit": "08ca2e68484057492f140ed4aee2b6b55ba7008b",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Open-source candidate pool decisions; the registry integrity gate",
         "regressionCommand": "python scripts/ci/verify_future_candidate_registry.py",
@@ -3819,8 +3821,8 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "90734c2",
-        "fixedCommit": "7627748",
+        "introducedCommit": "90734c2bd9e1f4b59d30dd244193bc399e9be06b",
+        "fixedCommit": "76277485d7f97e051c55361a9c4685f222e77004",
         "verifiedCommit": "ee570da5eba803abad322d938adc069294ab20ae",
         "affectedCapability": "AG-05 model registry integrity; model and tool intake (模型与工具入库)",
         "regressionCommand": "python scripts/ci/verify_model_registry_integrity.py && python scripts/audit/model_library_readback.py",
@@ -3850,7 +3852,7 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "8c78b0d",
+        "introducedCommit": "8c78b0d66eceeac00f498550897796e49ac4ac40",
         "fixedCommit": null,
         "verifiedCommit": null,
         "affectedCapability": "CI integration job source-ledger guard; pre-push validation practice",
@@ -3879,8 +3881,8 @@
       "status_before": "PARTIAL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "e0b296d",
-        "fixedCommit": "5c6bfe9",
+        "introducedCommit": "e0b296dea46ed5bb752d6d8e565535ce1e9b588d",
+        "fixedCommit": "5c6bfe95a82eab01735087988b33e7e015b6fd70",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Project-local footprint and traceability of durable regression commands",
         "regressionCommand": "python scripts/maintenance/release_browser_state.py",
@@ -3914,8 +3916,8 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "473a3f9",
-        "fixedCommit": "5c6bfe9",
+        "introducedCommit": "473a3f98f25df3e5d6fa551a62ae0fb95b2053ef",
+        "fixedCommit": "5c6bfe95a82eab01735087988b33e7e015b6fd70",
         "verifiedCommit": "17eb5b68e562109973c8bb0e3c01f6a10183d041",
         "affectedCapability": "Error-ledger reproducibility promises; scripts/audit and scripts/maintenance tool inventory",
         "regressionCommand": "python tests/workflow-assistance/test_error_ledger_regression_commands.py",
@@ -3945,9 +3947,9 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "5c6bfe9",
-        "fixedCommit": "30802cc",
-        "verifiedCommit": "41858fe",
+        "introducedCommit": "5c6bfe95a82eab01735087988b33e7e015b6fd70",
+        "fixedCommit": "30802cc515adf39ac2117060ac19f7db40456877",
+        "verifiedCommit": "41858fe8ae6316239b85cbc554c73fa6bc3c43b6",
         "affectedCapability": "wlr-060-production-gates schema validation; portability of every recorded CI command",
         "regressionCommand": "python tests/workflow-assistance/test_workflow_locale_discipline_gate.py",
         "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
@@ -3974,9 +3976,9 @@
       "status_before": "PARTIAL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "5c6bfe9",
-        "fixedCommit": "30802cc",
-        "verifiedCommit": "41858fe",
+        "introducedCommit": "5c6bfe95a82eab01735087988b33e7e015b6fd70",
+        "fixedCommit": "30802cc515adf39ac2117060ac19f7db40456877",
+        "verifiedCommit": "41858fe8ae6316239b85cbc554c73fa6bc3c43b6",
         "affectedCapability": "Traceability of .project-local citations; the greening owed-item list itself",
         "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py",
         "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
@@ -4003,9 +4005,9 @@
       "status_before": "FAIL",
       "status_after": "UNVERIFIED",
       "lifecycle": {
-        "introducedCommit": "30802cc",
-        "fixedCommit": "41858fe",
-        "verifiedCommit": "41858fe",
+        "introducedCommit": "30802cc515adf39ac2117060ac19f7db40456877",
+        "fixedCommit": "41858fe8ae6316239b85cbc554c73fa6bc3c43b6",
+        "verifiedCommit": "41858fe8ae6316239b85cbc554c73fa6bc3c43b6",
         "affectedCapability": "CI-discovered governance gates must pass on a clean checkout",
         "regressionCommand": "python tests/workflow-assistance/test_project_local_citation_audit.py",
         "bindingNote": "2026-10-07: fixedCommit names the commit that carries the fix; verifiedCommit names the head whose exact-SHA Actions readback came back ALL_SUCCESS. Left null where the fix has not yet been CI-verified — an unverified fix is recorded as unverified, not assumed."
@@ -4032,9 +4034,9 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "4a1d81a",
-        "fixedCommit": "51c723d",
-        "verifiedCommit": "522fe80",
+        "introducedCommit": "4a1d81adc4901aa0a2b30a8ea98c0cb47bd7aa6b",
+        "fixedCommit": "51c723d03a425271bac1323817ba030904d55302",
+        "verifiedCommit": "522fe800f3fdeb7835168a1f034f26d9939ec73e",
         "affectedCapability": "Licence evidence in the source ledger and its readback audit",
         "regressionCommand": "python scripts/audit/prove_previous_licence_audit_miscounted_the_files.py HEAD",
         "bindingNote": "bound 2026-10-07: fix in 51c723d; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
@@ -4061,9 +4063,9 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "51c723d",
-        "fixedCommit": "e9875d7",
-        "verifiedCommit": "522fe80",
+        "introducedCommit": "51c723d03a425271bac1323817ba030904d55302",
+        "fixedCommit": "e9875d7968bba74620230ccad407850462687b54",
+        "verifiedCommit": "522fe800f3fdeb7835168a1f034f26d9939ec73e",
         "affectedCapability": "U02 path convergence in live instruction surfaces",
         "regressionCommand": "python tests/workflow-assistance/test_live_doc_command_targets.py",
         "bindingNote": "bound 2026-10-07: fix in e9875d7; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
@@ -4090,9 +4092,9 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "51c723d",
-        "fixedCommit": "e6bb43c",
-        "verifiedCommit": "522fe80",
+        "introducedCommit": "51c723d03a425271bac1323817ba030904d55302",
+        "fixedCommit": "e6bb43c2c39779cf2bd335cd06b1d56b8ef403d5",
+        "verifiedCommit": "522fe800f3fdeb7835168a1f034f26d9939ec73e",
         "affectedCapability": "Canonical-file freshness snapshot; the pre-push validation rule",
         "regressionCommand": "python scripts/ci/generate_current_state.py --check-current",
         "bindingNote": "bound 2026-10-07: fix in e6bb43c; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
@@ -4120,9 +4122,9 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "e9875d7",
-        "fixedCommit": "fe5d7a6",
-        "verifiedCommit": "522fe80",
+        "introducedCommit": "e9875d7968bba74620230ccad407850462687b54",
+        "fixedCommit": "fe5d7a6d65b53990dadf5309b64b0b63ca5f927f",
+        "verifiedCommit": "522fe800f3fdeb7835168a1f034f26d9939ec73e",
         "affectedCapability": "Managed Hermes skill provenance; U02 publish",
         "regressionCommand": "python packages/client-neutral-core/scripts/security/check_skill_provenance.py --manifest config/skill-provenance.yaml",
         "bindingNote": "bound 2026-10-07: fix in fe5d7a6; verifiedCommit 522fe80 is the head whose exact-SHA Actions readback returned ALL_SUCCESS across 24 runs, and it contains both this record's fix and the file its regressionCommand promises to run."
@@ -4170,7 +4172,7 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null deliberately: the scanner gap predates this round, and the parameter-name bug was mine inside a file that did not exist before f33b784, so naming that commit as the introducing commit would attribute a long-standing upstream hole to this round",
         "fixedCommit": "f33b78470b108e70d91820a94c7e597010ecddfb",
-        "verifiedCommit": "c1b2997",
+        "verifiedCommit": "c1b299757bcbf7d3fe986b4e298f4be67812a208",
         "affectedCapability": "Shared-root recovery; artifact-flow screening",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_recover_shared_root_original.py",
         "bindingNote": "bound 2026-10-07 against f33b784: the fix and its gate landed in the same commit, so no separate verifiedCommit is claimed until an exact-SHA CI readback covers it",
@@ -4201,7 +4203,7 @@
         "introducedCommit": null,
         "introducedCommitNote": "left null: the ref named by this file's history is e9875d7-era and the residue is a behaviour of the fixture, not of one commit; naming the observation head would be the false attribution ERR-134/136 exist to prevent",
         "fixedCommit": "f33b78470b108e70d91820a94c7e597010ecddfb",
-        "verifiedCommit": "c1b2997",
+        "verifiedCommit": "c1b299757bcbf7d3fe986b4e298f4be67812a208",
         "affectedCapability": "Project data boundary; spill governance; CI fixtures",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py",
         "bindingNote": "bound 2026-10-07 against f33b784: fix, releaser, sweep adjudication and both gates landed together; verifiedCommit stays null until an exact-SHA CI readback covers this head",
@@ -4241,9 +4243,9 @@
       "status_before": "PASS",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "f33b784",
-        "fixedCommit": "9e518e2",
-        "verifiedCommit": "c1b2997",
+        "introducedCommit": "f33b78470b108e70d91820a94c7e597010ecddfb",
+        "fixedCommit": "9e518e24debc8d7cbcf390eca52f871a5b65a8a7",
+        "verifiedCommit": "c1b299757bcbf7d3fe986b4e298f4be67812a208",
         "affectedCapability": "CI gate determinism; citation-debt auditing",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_project_local_citation_audit.py",
         "introducedCommitNote": "f33b784 is where the idempotence test that asserted the exit code landed; the underlying exists() rule is older than that, so this names the commit that made the defect CI-visible rather than the one that created it",
@@ -4274,8 +4276,8 @@
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "left null: the defect lived in a binder written earlier in this same session and superseded before commit, so naming a tracked commit as its origin would be false attribution",
-        "fixedCommit": "f49025c",
-        "verifiedCommit": "285704a",
+        "fixedCommit": "f49025c838d29c62c8b675122ba340e78f97339b",
+        "verifiedCommit": "285704a5f885bf76a64655082485f88b6c812bc8",
         "affectedCapability": "Ledger traceability; regression-command verifiability",
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_ledger_regression_command_targets.py",
         "bindingNote": "bound 2026-10-07 by scripts/audit/bind_ledger_fixes_with_guards.py; commit subject: record: every ledger promise now states whether it can still be re-run. verifiedCommit stays null until an exact-SHA CI readback covers a head containing this record",
@@ -5374,7 +5376,7 @@
       "status_before": "FAIL",
       "status_after": "FAIL",
       "lifecycle": {
-        "introducedCommit": "d43d07a7",
+        "introducedCommit": "d43d07a75ef8c556344e9b3a99f9257dd2db7b5c",
         "introducedCommitNote": "the 2026-09-30 audit-archive import that brought the hermes config and the openhuman user tree into the tracked surface",
         "fixedCommit": null,
         "verifiedCommit": null,
@@ -5471,7 +5473,7 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "27c3e217",
+        "introducedCommit": "27c3e2172b9e307f5b5cbbab2d0c44bc821e187f",
         "introducedCommitNote": "the anchored-root guard this session added, placed after the store open",
         "fixedCommit": "ec2d726227e49b2b5a9b31b70f08c7df222bdd8e",
         "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
@@ -5572,7 +5574,7 @@
       "repeat_prevention": "When a value is normalised for comparison, check every consumer of that normalised value: any consumer that performs I/O, or that a human must recognise, needs the original text. And prefer a falsifier whose failure does not depend on the host's case rules, because a case-insensitive machine cannot demonstrate a case-sensitivity bug by opening the file.",
       "remaining_boundary": "CI at 7ca2fd45 was red for this reason and is fixed at f2c7a702; the exact-SHA verdict for f2c7a702 is not yet read, so verifiedCommit is null by rule. The same folded-then-read pattern still exists in the three modules listed in ERR-178's neighbouring task (evidence_range_reader, hermes-project-terminal-guard, artifact_handle_projection), which resolve() and then use the resolved value.",
       "lifecycle": {
-        "introducedCommit": "27c3e217",
+        "introducedCommit": "27c3e2172b9e307f5b5cbbab2d0c44bc821e187f",
         "introducedCommitNote": "the containment rewrite that folded the path and then used it for I/O",
         "fixedCommit": "f2c7a702d7a6955d65943fa7f3a7111c2bde95e5",
         "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
@@ -5605,7 +5607,7 @@
       "repeat_prevention": "Any test that greps the tracked tree for a literal must exclude its own path, and any claim of the form 'nothing references X' must be run once against the committed tree, because the assertion changes truth value at the moment it is committed.",
       "remaining_boundary": "Other tests in tests/ci grep the tree the same way and were not audited for self-reference in this record; the suite is green at this head, which is the only evidence available that they do not.",
       "lifecycle": {
-        "introducedCommit": "f8ffc138",
+        "introducedCommit": "f8ffc13807904452413112b94984319e57e2a7e1",
         "introducedCommitNote": "the commit that added the census test",
         "fixedCommit": "867f1903811b8708f3e1e6260c6d04ed3a250f45",
         "verifiedCommit": "c0d8e9b4e2b11055549d8171994562ea9abc94a3",
@@ -5636,7 +5638,7 @@
       "status_before": "FAIL",
       "status_after": "PASS",
       "lifecycle": {
-        "introducedCommit": "a8df7bdb",
+        "introducedCommit": "a8df7bdbae7861b814ec9189be5ecae55fb6ee06",
         "introducedCommitNote": "the commit whose message overstated what the republish changed",
         "fixedCommit": "25235f7de1fe7306221484485d3bd82c599da272",
         "verifiedCommit": "df6d60733f20d1db8c0f5378229142bbeab46130",
