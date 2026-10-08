@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-08T07:47:39Z",
+  "generatedAt": "2026-10-08T08:15:01Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -86,8 +86,8 @@
     },
     {
       "path": "scripts/audit/ag19_source_presence_scan.py",
-      "sha256": "8eca44d5db6bfd91983cb4db74a3f4a48f46211829f04f228a966a947576cd47",
-      "bytes": 4618,
+      "sha256": "5ca70fc8fdac865050e52377bba98f2d086876b31a028b65b3bd961f188ea415",
+      "bytes": 4600,
       "lines": 112,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
@@ -264,8 +264,8 @@
     },
     {
       "path": "scripts/audit/falsify_browser_entry.py",
-      "sha256": "1d1296914d696a9070c3ec5c2e8e19366446c2861e8ecaba9bfa04cb7f8d3f26",
-      "bytes": 2973,
+      "sha256": "da88561f3b55738751eacc75873d65715b357493ab04a1ce8d88f295dc020ec3",
+      "bytes": 2955,
       "lines": 67,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
@@ -407,8 +407,8 @@
     },
     {
       "path": "scripts/audit/mutation_probe_pathspec.py",
-      "sha256": "f565a48a4e654fe4a08d72df217477c19332bf855164e7346743b68f68f5f333",
-      "bytes": 1187,
+      "sha256": "41eddeeab6ffdeefd410008f7c0fd789a9cabae2732c796b88f427ad46061ae9",
+      "bytes": 1169,
       "lines": 30,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
@@ -666,12 +666,13 @@
       "lines": 178,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 5,
+      "citedByRecords": 6,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json",
         "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007.md",
+        "tests/workflow-assistance/test_gate_compile_covers_all_tracked_python.py",
         "tests/workflow-assistance/test_tool_inventory_coverage.py"
       ]
     },
@@ -812,8 +813,8 @@
     },
     {
       "path": "scripts/maintenance/absorb_local_assets.py",
-      "sha256": "2c17d9ca8841a0e350d4797df59cb22e8e04d008de87fd7c808749f3c26b8720",
-      "bytes": 9824,
+      "sha256": "40b3b364403dc49144622933e2f23e40497253c6ae2923d998d15622be2e49db",
+      "bytes": 9806,
       "lines": 213,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
@@ -874,8 +875,8 @@
     },
     {
       "path": "scripts/maintenance/record_documentation_drifts.py",
-      "sha256": "3ef812a8831472d99fd1b868e6c0b3cad494fe432b43720c9897060a090a39d8",
-      "bytes": 9060,
+      "sha256": "cf8a257ef7714d2d24ee8f83f38af81d54c20142b0321c50072b251998c40066",
+      "bytes": 9024,
       "lines": 145,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
@@ -961,12 +962,13 @@
       "lines": 149,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 5,
+      "citedByRecords": 6,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "packages/client-neutral-core/scripts/project_temp.py",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json",
+        "tests/workflow-assistance/test_gate_compile_covers_all_tracked_python.py",
         "tests/workflow-assistance/test_temp_fixture_residue_is_bounded.py"
       ]
     }

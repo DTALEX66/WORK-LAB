@@ -7,7 +7,7 @@ import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL } from '@/lib/viewRegistry'
  *
  *   <aside class="sidebar">
  *     <div class="brand">
- *       <div class="brand-mark">WL</div>
+ *       <div class="brand-mark"></div>
  *       <div><h1>WORK-LAB</h1><small>AI WORKFLOW CONTROL PLANE</small></div>
  *     </div>
  *     <div class="nav">
@@ -20,8 +20,9 @@ import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL } from '@/lib/viewRegistry'
  *     </div>
  *   </aside>
  *
- * `.sidebar` (280px gradient rail) / `.brand` / `.brand-mark` (48px gradient
- * tile) / `.nav button` (+ `.active` gradient + `::before` cyan→blue edge bar) /
+ * `.sidebar` (280px gradient rail) / `.brand` / `.brand-mark` (B10's 48px gradient
+ * tile, overridden in src/skins/l10b-shell.css to the 91x48 cut-out logo mark — the
+ * pinned skin itself stays verbatim per decision D-11) / `.nav button` (+ `.active` gradient + `::before` cyan→blue edge bar) /
  * `.nav-dot` / `.sidebar-footer` / `.avatar` are all B10-verbatim in
  * src/skins/b10.css. This component only supplies the data (the lanes) — the
  * seven NAV_GROUPS (P1-01 invariant) render as the B10 buttons, each group with
@@ -70,7 +71,11 @@ export interface SidebarProps {
 function Brand() {
   return (
     <div className="brand">
-      <div className="brand-mark">WL</div>
+      {/* Decorative on purpose: the h1 below already spells WORK-LAB, so an aria-label here would make
+          a screen reader announce the brand twice per render. The glyph is the artwork cut from the
+          project logo (see src/assets/brand/work-lab-mark.png); it replaces the "WL" text the pinned
+          skin used to show, and the override that sizes it lives in skins/l10b-shell.css. */}
+      <div className="brand-mark" aria-hidden="true" />
       <div>
         <h1>WORK-LAB</h1>
         <small>AI WORKFLOW CONTROL PLANE</small>
