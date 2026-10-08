@@ -27,7 +27,7 @@ hermes mcp test context7
 
 如果具体任务证明原生能力不足，先用 `packages/client-neutral-core/scripts/mcp_candidate_audit.py` 记录候选边界，再使用 `hermes mcp add/configure/test` 按需启用，并在新会话验证；不要把临时选择重新写回默认 portable config。
 
-候选审计细则见 `docs/mcp/mcp-catalog-governance.md`。
+候选审计细则见 `docs/current/workflow-assistance/mcp/mcp-catalog-governance.md`。
 
 ## 变更门禁
 

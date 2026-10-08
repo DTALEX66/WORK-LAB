@@ -46,13 +46,13 @@ UI/Skin 增强覆盖的是全局工作流体验，不是只美化本仓库：
 机器可读 token 在：
 
 ```text
-templates/ui/skin-presets.yaml
+packages/client-neutral-core/templates/ui/skin-presets.yaml
 ```
 
 Windows Terminal 示例在：
 
 ```text
-templates/windows-terminal/catppuccin-mocha.json
+packages/client-neutral-core/templates/windows-terminal/catppuccin-mocha.json
 ```
 
 ## Agent UI 必须表达的状态
@@ -71,7 +71,7 @@ templates/windows-terminal/catppuccin-mocha.json
 
 ## 应用规则
 
-1. 主题 token 可以进入 `templates/`；运行时应用必须由用户或具体项目显式执行。
+1. 主题 token 可以进入 `packages/client-neutral-core/templates/`；运行时应用必须由用户或具体项目显式执行。
 2. 不把 UI 框架写入 `config/config.yaml`、默认 MCP、全局 plugin 或 setup 脚本。
 3. 不自动修改 Windows Terminal、VS Code、Hermes live config、用户 dashboard 或 desktop app。
 4. 任何 UI 改动都要区分：主题 token、终端色彩、Hermes skin、Web dashboard、Agent chat thread。
@@ -82,8 +82,8 @@ templates/windows-terminal/catppuccin-mocha.json
 ```bash
 python - <<'PY'
 import json, yaml
-json.load(open('templates/windows-terminal/catppuccin-mocha.json', encoding='utf-8'))
-yaml.safe_load(open('templates/ui/skin-presets.yaml', encoding='utf-8'))
+json.load(open('packages/client-neutral-core/templates/windows-terminal/catppuccin-mocha.json', encoding='utf-8'))
+yaml.safe_load(open('packages/client-neutral-core/templates/ui/skin-presets.yaml', encoding='utf-8'))
 PY
 python tests/workflow-assistance/test_workflow_governance.py -v
 python packages/client-neutral-core/scripts/security/scan_agent_rules.py templates skills docs scripts README.md

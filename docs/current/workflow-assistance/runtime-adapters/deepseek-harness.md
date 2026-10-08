@@ -6,6 +6,8 @@ Git worktree. It is **not** a WORK-LAB core module, not a model gateway, not a
 Hermes replacement, and it never writes client config or completes a Task Ledger
 task.
 
+> **SUPERSEDED (2026-10-08).** The identity below is the community DSH Desktop 2.0.x build at `D:\All projects\DSH`. AGENTS.md now records the managed entry as the official DeepSeek Harness 0.2.0-rc.2 installed at the vendor default per-user path, with the install root resolved from the uninstall registry entry or the shortcut TargetPath and never hardcoded. Read this page as the record of that migration and of the retired 0.1.x contract, not as current launch instructions.
+
 ## Deployed identity (2026-09-02 verified)
 
 The machine DSH switched from the 0.1.x source-checkout lineage to the **2.0.x
@@ -20,7 +22,7 @@ community desktop build** (see upgrade records in the DSH handoff + skill
 | Config root | `C:\Users\<user>\.dsh\` (settings/profiles/sessions/memory/skin-center/task-board/storages) |
 | Web | loopback `http://127.0.0.1:43120` (community build port; legacy 0.1.x used 3080) |
 | Sessions | 94 UUID dirs preserved under `~/.dsh/sessions/<project>/<uuid>/` (4 project dirs) |
-| Legacy 0.1.x | `deepseek-ai/deepseek-harness` pinned `47f94385` — retired; full body backed up under `.hermes/task-runtime/dsh-011-removed-20260824/` (rollback baseline, do not touch) |
+| Legacy 0.1.x | `deepseek-ai/deepseek-harness` pinned `47f94385` — retired; full body backed up under the then-git-ignored .hermes/task-runtime/dsh-011-removed-20260824/ quarantine, relocated to `.project-local/quarantine/` and deleted under authorization 2026-10-07 (SPILL-20261006); no rollback baseline remains |
 
 The adapter module (`integrations/executors/dsh/deepseek_harness_adapter.py`)
 reports `detect()`/`observe()` against this community-desktop identity; the
@@ -46,7 +48,7 @@ retired isolated-checkout contract.
 
 Community desktop keeps its own data under `~/.dsh` (outside the repo). The
 legacy isolated-checkout layout `.project-local/runs/deepseek-harness/`
-(`source/` + `dsh-home/`) is retained only as the historical/rollback surface of
+(under it source/ and dsh-home/) is retained only as the historical/rollback surface of
 the retired 0.1.x contract and must not be treated as live state.
 
 ## Start / stop / health (approval-gated)
@@ -58,7 +60,7 @@ These are **not** performed by the adapter by default; each is an approval item.
   control — service is up, not a fault.
 - **Stop**: quit the app process tree (no `taskkill /F` on unknown PIDs).
 - **Health**: loopback readback on `127.0.0.1:43120` + process presence;
-  version read from `resources/app.asar.unpacked/package.json` (no side
+  version read from `<dshInstallRoot>/resources/app.asar.unpacked/package.json` (no side
   effects). Never a screenshot as proof of binding.
 
 ## Configuration location (no values)
@@ -87,7 +89,7 @@ raw session ids, private paths, provider-private headers, unredacted logs.
 ## Failure classes and rollback
 
 - **Version/install drift** (expected version vs installed) → verify
-  `app.asar.unpacked/package.json`; reinstall the official release on mismatch.
+  `<dshInstallRoot>/app.asar.unpacked/package.json`; reinstall the official release on mismatch.
 - **Non-loopback listener** → stop and report immediately.
 - **Web won't boot after app launch** → app is alive but `:43120` not listening:
   check `~/.dsh` integrity (task-board ledger lock etc. — see skill

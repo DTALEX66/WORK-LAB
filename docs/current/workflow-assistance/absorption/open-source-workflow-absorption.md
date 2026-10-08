@@ -9,17 +9,17 @@
 | public-apis-mcp | 历史评估记录 | ⛔ 已退役 | 低频目录型能力由 `web_search` / GitHub 公共目录覆盖，不作为默认 MCP。 |
 | `@modelcontextprotocol/server-sequential-thinking` | 历史评估记录 | ⛔ 已退役 | 与模型原生推理、plan/TDD/debug skills 重复，不再默认启用。 |
 | Hermes skill system | 新增 `agent-workflow-fortress` skill | ✅ 已吸收 | 把“证据优先、自循环、技能主动使用、验证闭环、开源吸收筛选”固化为工作流。 |
-| Codex / AGENTS.md 规则思路 | 新增 `templates/agent-rules/AGENTS.md` / `CODEX.md` | ✅ 已吸收 | 作为每个项目可复制的 Agent 协作规则模板。 |
-| 安全规则模板 | 新增 `templates/agent-rules/SECURITY.md` + 扫描脚本 | ✅ 已吸收 | 约束密钥、跨目录、第三方提示词、危险命令。 |
-| DESIGN.md / design-token 思路 | 新增 `templates/agent-rules/DESIGN.md` | ✅ 已吸收 | 用于 UI/UX 项目，避免“只实现功能、不打磨体验”。 |
-| CC Switch 执行票据 | 新增 `templates/task-tickets/cc-switch-agent-task.md` | ✅ 已吸收 | 把 Hermes 规划转成 Claude/Codex/OpenClaw 可执行任务单。 |
+| Codex / AGENTS.md 规则思路 | 新增 `packages/client-neutral-core/templates/agent-rules/AGENTS.md` / `CODEX.md` | ✅ 已吸收 | 作为每个项目可复制的 Agent 协作规则模板。 |
+| 安全规则模板 | 新增 `packages/client-neutral-core/templates/agent-rules/SECURITY.md` + 扫描脚本 | ✅ 已吸收 | 约束密钥、跨目录、第三方提示词、危险命令。 |
+| DESIGN.md / design-token 思路 | 新增 `packages/client-neutral-core/templates/agent-rules/DESIGN.md` | ✅ 已吸收 | 用于 UI/UX 项目，避免“只实现功能、不打磨体验”。 |
+| CC Switch 执行票据 | 新增 `packages/client-neutral-core/templates/task-tickets/cc-switch-agent-task.md` | ✅ 已吸收 | 把 Hermes 规划转成 Claude/Codex/OpenClaw 可执行任务单。 |
 | Aether-Radar 项目方法 | 写入 workflow skill | ✅ 已吸收 | 吸收“选型/发现/对比/导出/验证”的雷达式工作法，不复制项目数据。 |
 | MINIGAME 自循环经验 | 写入 workflow skill | ✅ 已吸收 | 吸收“技能先加载 → 真实缺口 → 实现 → npm verify → git 同步”的循环。 |
 | Star-Trails-Log 开源对标经验 | 写入 workflow skill | ✅ 已吸收 | 吸收 RSSHub/FreshRSS/Karakeep 等“借鉴设计，不盲目引入依赖”的原则。 |
-| `promptfoo/promptfoo` | 新增 `docs/workflow/agent-evaluation.md` 与 `templates/evals/agent-behavior-smoke.yaml` | ✅ 已吸收方法 | 吸收声明式 eval cases、assertions 和 CI-friendly 布局；不安装 runner、不配置 provider、不保存真实 trace。 |
-| `yamadashy/repomix` / `coderamp-labs/gitingest` | 新增 `packages/client-neutral-core/scripts/build_context_pack.py` 与 `docs/workflow/context-pack.md` | ✅ 已吸收方法 | 吸收 repo → LLM-friendly context pack 思路；输出锁定项目 `.project-local/artifacts/`，不读取密钥、会话、日志或缓存。 |
-| `catppuccin/catppuccin` / `catppuccin/windows-terminal` | 新增 `docs/workflow/ui-skin-system.md`、`templates/ui/skin-presets.yaml`、`templates/windows-terminal/catppuccin-mocha.json` | ✅ 已吸收方法 | 吸收主题 token、语义色和终端 scheme 结构；不自动修改 Hermes live config、Windows Terminal 或 VS Code 设置。 |
-| `shadcn-ui/ui` / `assistant-ui/assistant-ui` | 新增 `templates/ui/agent-chat-ui-patterns.md` 与 `templates/ui/terminal-theme-checklist.md` | ✅ 已吸收方法 | 吸收组件信息架构、command palette、Agent thread 和 tool-call timeline patterns；不安装 React/Next.js/UI runtime。 |
+| `promptfoo/promptfoo` | 新增 `docs/current/workflow-assistance/workflow/agent-evaluation.md` 与 `packages/client-neutral-core/templates/evals/agent-behavior-smoke.yaml` | ✅ 已吸收方法 | 吸收声明式 eval cases、assertions 和 CI-friendly 布局；不安装 runner、不配置 provider、不保存真实 trace。 |
+| `yamadashy/repomix` / `coderamp-labs/gitingest` | 新增 `packages/client-neutral-core/scripts/build_context_pack.py` 与 `docs/current/workflow-assistance/workflow/context-pack.md` | ✅ 已吸收方法 | 吸收 repo → LLM-friendly context pack 思路；输出锁定项目 `.project-local/artifacts/`，不读取密钥、会话、日志或缓存。 |
+| `catppuccin/catppuccin` / `catppuccin/windows-terminal` | 新增 `docs/current/workflow-assistance/workflow/ui-skin-system.md`、`packages/client-neutral-core/templates/ui/skin-presets.yaml`、`packages/client-neutral-core/templates/windows-terminal/catppuccin-mocha.json` | ✅ 已吸收方法 | 吸收主题 token、语义色和终端 scheme 结构；不自动修改 Hermes live config、Windows Terminal 或 VS Code 设置。 |
+| `shadcn-ui/ui` / `assistant-ui/assistant-ui` | 新增 `packages/client-neutral-core/templates/ui/agent-chat-ui-patterns.md` 与 `packages/client-neutral-core/templates/ui/terminal-theme-checklist.md` | ✅ 已吸收方法 | 吸收组件信息架构、command palette、Agent thread 和 tool-call timeline patterns；不安装 React/Next.js/UI runtime。 |
 
 ## 已识别但暂不默认启用
 

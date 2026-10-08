@@ -36,7 +36,10 @@ class LiveDocCommandTargetsGate(unittest.TestCase):
         self.assertTrue(any(f.startswith("docs/current/") for f in
                             [h["file"] for h in self.hits]),
                         "no hit landed in docs/current — the scope is probably wrong")
-        self.assertGreaterEqual(len(self.hits), 20,
+        # A not-blind floor, deliberately below the debt count (19 dead references measured 2026-10-08).
+        # The floor was previously pinned to that count, so re-pointing one honest reference made the
+        # guard go red for having done its job: a debt number is not a capability number.
+        self.assertGreaterEqual(len(self.hits), 10,
                                 "a scan that finds nothing is a scan that looks at nothing")
 
     def test_no_live_document_instructs_an_unexplained_dead_path(self) -> None:

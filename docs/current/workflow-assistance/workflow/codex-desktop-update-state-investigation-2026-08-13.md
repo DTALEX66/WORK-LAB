@@ -2,7 +2,7 @@
 
 > 状态：当前调查权威摘要 + 另一台电脑只读采样清单<br>
 > 范围：登录、外观、项目索引、线程权限、`config.toml`、Windows MSIX/AppX、Codex CLI 与 CC Switch 路由<br>
-> 历史来源：`50-taskpacks/CODEX-DESKTOP-STORE-UPDATE-BEHAVIOR-20260812.md` 仅作为 2026-08-12 的历史假设，不再作为当前事实依据。
+> 历史来源：`taskpacks/history/CODEX-DESKTOP-STORE-UPDATE-BEHAVIOR-20260812.md` 仅作为 2026-08-12 的历史假设，不再作为当前事实依据。
 
 ## 一页结论
 
@@ -108,20 +108,20 @@ Overlay 只管理：
 恢复受管字段时，从模块目录执行：
 
 ```bash
-python scripts/workflow/sync_codex_global_assets.py plan \
+python integrations/executors/codex/sync_codex_global_assets.py plan \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 
-python scripts/workflow/sync_codex_global_assets.py verify \
+python integrations/executors/codex/sync_codex_global_assets.py verify \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 ```
 
 只有 `plan` 明确显示本模块自己的受管字段或 Skills 漂移，且用户批准后，才执行：
 
 ```bash
-python scripts/workflow/sync_codex_global_assets.py apply \
+python integrations/executors/codex/sync_codex_global_assets.py apply \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 
-python scripts/workflow/sync_codex_global_assets.py verify \
+python integrations/executors/codex/sync_codex_global_assets.py verify \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 ```
 
@@ -197,11 +197,11 @@ while ($repo.Path -and -not (Test-Path (Join-Path $repo.Path '.git'))) {
 if (-not $repo.Path) { throw 'WORK-LAB Git root not found; stop without running overlay commands.' }
 Set-Location (Join-Path $repo.Path '10-workflow\workflow-assistance')
 
-python scripts/workflow/sync_codex_global_assets.py plan `
+python integrations/executors/codex/sync_codex_global_assets.py plan `
   --codex-home "$env:USERPROFILE\.codex" `
   --agent-home "$env:USERPROFILE\.agents"
 
-python scripts/workflow/sync_codex_global_assets.py verify `
+python integrations/executors/codex/sync_codex_global_assets.py verify `
   --codex-home "$env:USERPROFILE\.codex" `
   --agent-home "$env:USERPROFILE\.agents"
 ```

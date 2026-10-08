@@ -31,7 +31,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- python -m py
 - 用 `git check-ignore --no-index` 验证 `.project-local/runs/` 被忽略，不满足则 fail-closed；
 - 拒绝解析后落在项目根外的 helper 路径及符号链接逃逸；
 - 在子进程启动前创建并注入项目内 `TMP`/`TEMP`/`TMPDIR`、Python bytecode、pip、uv、npm/yarn、Playwright、Cargo home/target、Rust target、Ruff/mypy/pre-commit cache 位置；
-- 提供受控的 `logs/`、`artifacts/` 目录供脚本显式使用；
+- 提供受控的 `.project-local/runs/logs/`、`.project-local/artifacts/` 目录供脚本显式使用；
 - 将 `HERMES_KANBAN_HOME` 固定到 `<project>/.project-local/`。
 
 ```bash
@@ -73,4 +73,4 @@ Kanban 是例外：Hermes 原生支持 `HERMES_KANBAN_HOME`，因此所有项目
 
 ## 项目模板要求
 
-新项目的 `.gitignore` 必须含 `.project-local/`；`templates/agent-rules/AGENTS.md` 与 `CODEX.md` 要求 Agent 在产生运行数据时使用上述 wrapper。
+新项目的 `.gitignore` 必须含 `.project-local/`；`packages/client-neutral-core/templates/agent-rules/AGENTS.md` 与 `CODEX.md` 要求 Agent 在产生运行数据时使用上述 wrapper。

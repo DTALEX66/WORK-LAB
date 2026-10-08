@@ -29,7 +29,8 @@ WORK-LAB 增强模块存在多套安装/同步入口，历史上被批准清单�
 
 ```text
 sync_codex_global_assets.py plan/apply/verify   当前受管集合为 5 skills；逐机结果以 plan/verify readback 为准
-scripts/setup-workflow.sh|ps1                   PowerShell AST + bash -n 门禁 PASS
+scripts/setup-workflow.sh                      bash -n 门禁 PASS
+scripts/setup-workflow.ps1                     PowerShell AST 门禁 PASS
 install_codex_global_guidance.py                边缘引导，目标存在时 fail-closed（由治理测试覆盖）
 ```
 

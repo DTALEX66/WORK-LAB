@@ -4,7 +4,7 @@
 
 本项目提供两个层次的本地监视器：
 
-- `apps/token-monitor-desktop/`：主版本，Windows Tauri 2 Dashboard，按 Provider/模型实时展示；
+- `apps/token-monitor/`：主版本，Windows Tauri 2 Dashboard，按 Provider/模型实时展示；
 - `packages/client-neutral-core/scripts/token_monitor.py`：兼容性探针和无 GUI 自检工具。
 
 主版本默认面向 Codex session JSON/JSONL，也可以扫描多个本地 JSON/JSONL 目录。多个目录使用分号分隔，适合分别接入 GPT/Codex、DeepSeek、Kimi 或本地 Router 导出的 usage 文件。

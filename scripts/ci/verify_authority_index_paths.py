@@ -14,8 +14,11 @@ Measured on 2026-10-08 before the fix, section 3 sent readers to `docs/handoffs/
 directories that have not existed since the 2026-09 convergence, and section 2 named the config standard
 without the date suffix that both the file on disk and AGENTS.md carry.
 
-`--index` may be repeated and defaults to both guarded surfaces, so a new one joins by being named and a
-planted copy is how the rule is shown firing without editing real files.
+`--index` may be repeated to judge named surfaces only. With no argument the scan is widened to every
+tracked markdown file under `docs/current/`; the four navigation surfaces in NAVIGATION_SURFACES are
+held to a stricter rule (a navigation surface that yields no references is a broken checker, while an
+ordinary prose page that makes no tree claim is allowed and counted in `no_tree_claims`), and the whole
+run refuses to pass below a measured reference floor.
 """
 from __future__ import annotations
 
@@ -26,17 +29,29 @@ import sys
 from pathlib import Path, PurePosixPath
 from posixpath import normpath
 
-DEFAULT_TARGETS = (
+NAVIGATION_SURFACES = (
     "docs/current/workflow-assistance/workflow/active-authority-index.md",
     "docs/current/workflow-assistance-README.md",
     "docs/current/workflow-assistance-TROUBLESHOOTING.md",
     "docs/current/workflow-assistance/workflow/project-definition.md",
 )
-FILE_REF = re.compile(r"`([^`\s]*/[^`\s]*\.(?:md|json|py|ts|tsx|yml|yaml|example|lock|txt|sh|bash|ps1))`")
+# Widened 2026-10-08 from those four files to every tracked markdown under the current-documentation
+# root: 38 surfaces, 359 references, and 60 of them pointed at something the tree does not have. That
+# included eleven commands a reader would run and watch fail (`python scripts/workflow/...`) written
+# inside fenced blocks, which is the one place a doc stops being description and becomes an instruction.
+SCOPED_ROOT = "docs/current/"
+# Measured floor, not a snapshot: below this the extractor is broken, not the documentation.
+REFS_FLOOR = 300
+EXTENSIONS = ("md", "json", "py", "ts", "tsx", "yml", "yaml", "example", "lock", "txt",
+              "sh", "bash", "ps1")
+FILE_REF = re.compile(r"`([^`\s]*/[^`\s]*\.(?:%s))`" % "|".join(EXTENSIONS))
 DIR_REF = re.compile(r"`([^`\s]+/)`")
 FENCE = re.compile(r"^```(\w*)")
-# a reference containing one of these is not a name the tree can answer to, so it is never even tried
-PLACEHOLDER_MARKERS = ("<", ">", "*", "$", "~")
+# a reference containing one of these is not a name the tree can answer to, so it is never even tried:
+# `<...>`/`~/...`/`$VAR/...` are placeholders this repo's prose already uses for client homes, `*` is a
+# glob, and `%` marks the Windows environment form (`%LOCALAPPDATA%\hermes`) that names an installed
+# per-user root rather than a repository path.
+PLACEHOLDER_MARKERS = ("<", ">", "*", "$", "~", "%")
 LOWER_SEGMENT = re.compile(r"^[a-z0-9._-]+$")
 
 
@@ -116,10 +131,26 @@ def references(text: str) -> list[tuple[int, str, str]]:
             continue
         if token.endswith(":") or "\\" in token:
             continue
+        if not claims_a_path(token):
+            continue
         if token in {row[1] for row in rows if row[0] == number}:
             continue
         rows.append((number, token, "directory" if token.endswith("/") else "file"))
     return rows
+
+
+def claims_a_path(token: str) -> bool:
+    """A fenced map entry is a tree claim only when it is written as a file or a directory.
+
+    Measured on the widened scan: `origin/main SHA/tree` and `/interrupt` were the only two entries that
+    fired with neither a trailing slash nor a known extension, and neither is a path -- one is a git ref,
+    the other a command the user types. Requiring the same shape a backticked reference needs is not a
+    widening of the blind spot either: the extension list already bounds what a backtick can claim, and
+    the two rules cannot drift because both are built from EXTENSIONS.
+    """
+    if token.endswith("/"):
+        return True
+    return token.endswith(tuple("." + ext for ext in EXTENSIONS))
 
 
 def is_placeholder(ref: str) -> bool:
@@ -176,29 +207,46 @@ def check(root: Path, tracked: list[str], target: str) -> tuple[list, list, list
     return rows, broken, stale
 
 
+def scanned_surfaces(tracked: list[str]) -> list[str]:
+    """Every tracked markdown under the current-documentation root, discovered from git, not disk."""
+    return sorted(path for path in tracked
+                  if path.startswith(SCOPED_ROOT) and path.endswith(".md"))
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--index", action="append", default=None,
-                    help="repo-relative markdown surface to check; repeatable")
+                    help="repo-relative markdown surface to check; repeatable, defaults to the widened scan")
     args = ap.parse_args(argv)
 
     root = repo_root()
-    targets = args.index or list(DEFAULT_TARGETS)
+    widened = args.index is None
     tracked = tracked_paths(root)
     if not tracked:
         print("AUTHORITY_INDEX_PATHS_FAIL git ls-files returned nothing -- nothing can resolve against "
               "an empty tracked set, which is a broken checker, not a clean tree")
         return 1
+    targets = scanned_surfaces(tracked) if widened else list(args.index)
 
     failed_targets = 0
-    total_refs = total_broken = 0
+    total_refs = total_broken = silent_surfaces = 0
     for target in targets:
-        rows, broken, stale = check(root, tracked, target)
-        if not rows:
-            print(f"AUTHORITY_INDEX_PATHS_FAIL {target} yielded refs=0 -- either the file is missing or "
-                  "the extractor matched nothing; neither is a pass")
+        if not (root / target).is_file():
+            # a named surface that is gone is not "no references"; only the widened scan may answer
+            # "this file exists and makes no tree claim" as a pass
+            print(f"AUTHORITY_INDEX_PATHS_FAIL {target} is not a tracked file in this checkout")
             failed_targets += 1
             continue
+        rows, broken, stale = check(root, tracked, target)
+        navigation = target in NAVIGATION_SURFACES
+        if not rows and navigation:
+            print(f"AUTHORITY_INDEX_PATHS_FAIL {target} yielded refs=0 -- a navigation surface with "
+                  "nothing to check is either a rewritten page or a broken extractor, and neither is a "
+                  "pass")
+            failed_targets += 1
+            continue
+        if not rows:
+            silent_surfaces += 1
         total_refs += len(rows)
         total_broken += len(broken)
         kinds: dict[str, int] = {}
@@ -208,7 +256,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"AUTHORITY_INDEX_PATHS_{flag} target={target} refs={len(rows)} "
               f"files={kinds.get('file', 0)} directories={kinds.get('directory', 0)} "
               f"broken={len(broken)} declared={len(DECLARED_NON_PATHS)} "
-              f"declared_but_tracked={len(stale)}")
+              f"declared_but_tracked={len(stale)} "
+              f"navigation={'yes' if navigation else 'no'}")
         for number, ref, kind in broken:
             print(f"  line {number}: `{ref}` is not a tracked {kind}")
         for _, ref, _ in stale:
@@ -216,7 +265,11 @@ def main(argv: list[str] | None = None) -> int:
         failed_targets += 1 if (broken or stale) else 0
 
     print(f"AUTHORITY_INDEX_PATHS_TOTAL targets={len(targets)} refs={total_refs} "
-          f"broken={total_broken} failed_targets={failed_targets}")
+          f"broken={total_broken} no_tree_claims={silent_surfaces} failed_targets={failed_targets}")
+    if widened and total_refs < REFS_FLOOR:
+        print(f"AUTHORITY_INDEX_PATHS_FAIL refs={total_refs} is below the measured floor {REFS_FLOOR} "
+              "-- an extractor that matches almost nothing reports a clean tree it never looked at")
+        return 1
     return 1 if failed_targets else 0
 
 

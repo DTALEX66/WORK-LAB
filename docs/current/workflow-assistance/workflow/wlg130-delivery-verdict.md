@@ -21,9 +21,9 @@
 
 ## 2. Active / Superseded / Archive 清单
 
-- Active：`docs/workflow/active-authority-index.md` 第 1 节列表。
-- Superseded：嵌套 `governance.yml` → `docs/workflow/examples/governance.yml.example`（WLG-080）。
-- Archive：`90-archive-manifests/`、`docs/handoffs/`、`docs/audit/`、`50-taskpacks/` 历史记录。
+- Active：`docs/current/workflow-assistance/workflow/active-authority-index.md` 第 1 节列表。
+- Superseded：嵌套 `governance.yml` → `docs/current/workflow-assistance/workflow/examples/governance.yml.example`（WLG-080）。
+- Archive：90-archive-manifests → `docs/history/archive-manifests/`、docs/handoffs → `docs/history/archive/workflow-assistance/handoffs/`、docs/audit → `docs/history/archive/workflow-assistance/audit/`、50-taskpacks → `taskpacks/history/` 历史记录。
 
 ## 3. ArcheAxis 外部端点 pointer（仅地址 + 协议元数据）
 

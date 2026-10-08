@@ -43,13 +43,13 @@
 入口：
 
 ```text
-scripts/workflow/execution_preflight.py
+packages/client-neutral-core/scripts/execution_preflight.py
 ```
 
 示例：
 
 ```bash
-python scripts/workflow/execution_preflight.py \
+python packages/client-neutral-core/scripts/execution_preflight.py \
   --project D:/All-projects/Target \
   --main-ref origin/main \
   --compare-ref origin/feature \
@@ -152,8 +152,8 @@ squash merge 应使用：
 相对链接必须从当前文档的父目录解析：
 
 ```text
-docs/truth/handoff.md + ../taskpacks/task.md
-→ docs/taskpacks/task.md
+<project>/docs/truth/handoff.md + ../taskpacks/task.md
+→ <project>/docs/taskpacks/task.md
 ```
 
 不能从 shell cwd 或仓库根解析。对已知 handoff/status 文件使用 preflight 的

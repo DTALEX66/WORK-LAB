@@ -9,6 +9,7 @@ verdict cannot depend on what a particular machine has in `.project-local/`.
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import sys
@@ -109,17 +110,18 @@ class RealSurfaces(unittest.TestCase):
                               cwd=REPO, capture_output=True)
         return proc.returncode, (proc.stdout + proc.stderr).decode("utf-8", "replace")
 
-    def test_every_default_surface_is_named_and_resolves(self) -> None:
+    def test_every_navigation_surface_is_named_and_resolves(self) -> None:
         code, out = self.run_tool()
         self.assertEqual(0, code, out)
-        for target in checker.DEFAULT_TARGETS:
+        for target in checker.NAVIGATION_SURFACES:
             self.assertIn(f"target={target} refs=", out, f"{target} is not judged by the default run")
+            self.assertNotIn(f"target={target} refs=0 ", out, f"{target} is guarded in name only")
         self.assertIn("broken=0", out)
-        self.assertIn(f"targets={len(checker.DEFAULT_TARGETS)}", out)
+        self.assertIn(f"targets={len(checker.scanned_surfaces(checker.tracked_paths(REPO)))}", out)
 
-    def test_each_surface_yields_references_so_none_is_guarded_in_name_only(self) -> None:
+    def test_each_navigation_surface_actually_yields_references(self) -> None:
         tracked = checker.tracked_paths(REPO)
-        for target in checker.DEFAULT_TARGETS:
+        for target in checker.NAVIGATION_SURFACES:
             rows, broken, stale = checker.check(REPO, tracked, target)
             self.assertGreater(len(rows), 0, f"{target} yields no references at all")
             self.assertEqual([], broken, f"{target} has unresolved references")
@@ -136,10 +138,6 @@ class RealSurfaces(unittest.TestCase):
         index = (REPO / INDEX).read_text(encoding="utf-8")
         self.assertIn("/WORK-LAB-AUTHORITY.md", [row[1] for row in checker.references(index)])
 
-    def test_only_the_untracked_runtime_root_is_declared(self) -> None:
-        """Measured 2026-10-08: everything else resolves, so a new declaration needs its own reason."""
-        self.assertEqual({".project-local/"}, set(checker.DECLARED_NON_PATHS))
-
     def test_the_tool_refuses_an_empty_tracked_set(self) -> None:
         """A checker that can resolve nothing must not report a clean tree."""
         original = checker.tracked_paths
@@ -149,6 +147,83 @@ class RealSurfaces(unittest.TestCase):
         finally:
             checker.tracked_paths = original
         self.assertEqual(1, code)
+
+    def test_the_widened_scan_covers_every_tracked_current_document(self) -> None:
+        """The scan is discovered from git, so a new page under docs/current is guarded on arrival."""
+        tracked = checker.tracked_paths(REPO)
+        scanned = checker.scanned_surfaces(tracked)
+        self.assertGreaterEqual(len(scanned), 30, f"only {len(scanned)} surfaces scanned")
+        for target in checker.NAVIGATION_SURFACES:
+            self.assertIn(target, scanned, f"{target} is not inside the scanned root")
+        self.assertIn("docs/current/workflow-assistance/workflow/token-monitor.md", scanned)
+
+    def test_no_reference_in_the_scanned_set_is_unresolved(self) -> None:
+        code, out = self.run_tool()
+        self.assertEqual(0, code, out)
+        self.assertIn("broken=0", out)
+
+    def test_a_surface_that_makes_no_tree_claim_passes_and_is_counted(self) -> None:
+        """Measured 2026-10-08: seven prose pages under docs/current name no path at all.
+
+        Requiring references everywhere would have made the widened scan refuse honest prose; requiring
+        them on the four navigation surfaces stays, because a navigation surface with nothing to click
+        is the defect that rule was written for.
+        """
+        code, out = self.run_tool()
+        self.assertEqual(0, code, out)
+        self.assertGreaterEqual(int(re.search(r"no_tree_claims=(\d+)", out).group(1)), 1)
+        self.assertIn("navigation=no", out)
+
+    def test_the_run_refuses_when_the_extracted_reference_count_collapses(self) -> None:
+        """A checker that stopped matching must not report the cleanest tree it ever claimed."""
+        original = checker.references
+        try:
+            checker.references = lambda text: []
+            code = checker.main([])
+        finally:
+            checker.references = original
+        self.assertEqual(1, code)
+
+    def test_a_broken_reference_outside_the_navigation_surfaces_fails_the_default_run(self) -> None:
+        """The widening is only real if a page nobody named can go red.
+
+        Run against a synthetic root rather than an edited document: the tool takes its root from
+        repo_root(), which is patchable, so the rule can be shown firing without writing into the tree
+        the rest of the suite is reading.
+        """
+        root = _runtime_root() / "planted-scan"
+        page = root / "docs/current/workflow-assistance/workflow/ordinary-page.md"
+        page.parent.mkdir(parents=True, exist_ok=True)
+        page.write_text("- See `scripts/gone/gone.py` for the detail.\n", encoding="utf-8", newline="\n")
+        self.addCleanup(shutil.rmtree, root, True)
+
+        original = (checker.repo_root, checker.tracked_paths, checker.REFS_FLOOR)
+        try:
+            checker.repo_root = lambda: root
+            checker.tracked_paths = lambda r: ["docs/current/workflow-assistance/workflow/ordinary-page.md"]
+            checker.REFS_FLOOR = 1  # this fixture has one reference; the floor is tested separately
+            code = checker.main([])
+        finally:
+            checker.repo_root, checker.tracked_paths, checker.REFS_FLOOR = original
+        self.assertEqual(1, code, "a dead pointer in an ordinary current page passed the widened scan")
+
+    def test_only_the_untracked_runtime_root_is_declared(self) -> None:
+        """Measured 2026-10-08: everything else resolves, so a new declaration needs its own reason."""
+        self.assertEqual({".project-local/"}, set(checker.DECLARED_NON_PATHS))
+
+    def test_a_map_entry_is_a_path_claim_only_in_file_or_directory_shape(self) -> None:
+        """`origin/main SHA/tree` and `/interrupt` are a ref and a command, not missing files.
+
+        The relaxation is bounded on purpose: the same shape test is what a backticked reference has to
+        pass, so neither rule can excuse a path the other one would have caught.
+        """
+        self.assertFalse(checker.claims_a_path("origin/main"))
+        self.assertFalse(checker.claims_a_path("/interrupt"))
+        self.assertTrue(checker.claims_a_path("scripts/workflow/"))
+        self.assertTrue(checker.claims_a_path("scripts/workflow/gone.py"))
+
+    def test_a_windows_environment_root_is_never_a_repository_path(self) -> None:
+        self.assertTrue(checker.is_placeholder("%LOCALAPPDATA%/hermes/state.db"))
 
     def test_git_ls_files_returns_a_usable_set(self) -> None:
         tracked = checker.tracked_paths(REPO)

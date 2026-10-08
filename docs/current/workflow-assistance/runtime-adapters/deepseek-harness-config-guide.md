@@ -42,7 +42,7 @@ DSH 会话会自动加载项目根与模块的 AGENTS.md。WORK-LAB 根 AGENTS.m
   - **`E:\` 读或写一律禁止**，除非逐路径逐操作显式授权；
   - **本项目产生的构建/缓存/临时文件/证据/下载全部锁定在项目 Git 根内**
     （TMP、npm/uv/pip 缓存、node_modules → `.project-local/runs/`；证据 →
-    `.project-local/artifacts/` 或 `80-evidence/`），不外溢到用户目录/其他项目/共用库；
+    `.project-local/artifacts/` 或 `reports/`），不外溢到用户目录/其他项目/共用库；
   - 任何外溢必须可追溯、可定位、可清理、可迁移（project-data-boundary.json）；
   - 禁止破坏性 reset/clean/force-push。
 - **Managed global configuration (Hermes)**：WORK-LAB 管理的 Hermes overlay 字段、
@@ -56,7 +56,7 @@ DSH 会话会自动加载项目根与模块的 AGENTS.md。WORK-LAB 根 AGENTS.m
 - **项目级规则**：写在 DSH 会打开的项目根 `AGENTS.md`（如 WORK-LAB 根）。DSH
   自动注入，无需在 DSH 里额外注册。
 - **模块级规则**：`<模块>/AGENTS.md`，DSH 在对应模块工作区自动注入。
-- **不要做**：不要试图把 Hermes 的 `config.yaml` / `SOUL.md` / `bin/` 复制成
+- **不要做**：不要试图把 Hermes 的 `config.yaml` / `SOUL.md` / `$HERMES_HOME/bin/` 复制成
   DSH 的配置——DSH 不消费它们。Hermes 的 SOUL.md 是 Hermes 专属机制。
 - **DSH 自身**：`~/.dsh/settings.yaml` 只应含 DSH 自己的用户设置（当前：
   `ui-onboarding` + `locale.preference: zh`）。其他软件不得改写它。

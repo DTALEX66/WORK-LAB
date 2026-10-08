@@ -61,9 +61,9 @@ workflow-assistance-windows-development
 | 部署清单 | `workflow-manifest.yaml` |
 | 同步器 | `integrations/executors/codex/sync_codex_global_assets.py`、`sync_hermes_workflow_assets.py` |
 | 边界合同 | `config/codex-enhancement-boundary.json` |
-| 性能诊断 | `docs/workflow/codex-performance-diagnosis.md` |
-| 执行可靠性 | `docs/workflow/codex-execution-reliability.md` |
-| 配置标准 | `docs/workflow/official-plus-user-configuration-standard-2026-08-11.md` |
+| 性能诊断 | `docs/current/workflow-assistance/workflow/codex-performance-diagnosis.md` |
+| 执行可靠性 | `docs/current/workflow-assistance/workflow/codex-execution-reliability.md` |
+| 配置标准 | `docs/current/workflow-assistance/workflow/official-plus-user-configuration-standard-2026-08-11.md` |
 
 ## 3. 硬边界（所有软件一律适用）
 

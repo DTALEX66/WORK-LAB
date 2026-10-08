@@ -26,7 +26,7 @@
 ### L2：项目配置——Cognitive-Loop-OS
 
 - 根 `AGENTS.md`：6,468 bytes / 117 行；
-- `docs/VERIFICATION_POLICY.md`：5,698 bytes / 81 行；
+- `<Cognitive-Loop-OS>/docs/VERIFICATION_POLICY.md`：5,698 bytes / 81 行；
 - 当前没有项目 `.codex/config.toml`；
 - 项目已在 Codex `[projects]` 中标为 `trusted`。
 
@@ -139,7 +139,7 @@ turn.completed              14.861s
 
 1. **持续会话**：一个 TaskPack 使用一个持续 writer，避免重复 `codex exec` 冷启动和约 20k token 上下文装载。
 2. **批量读取/搜索/状态检查**：独立信息一次并行获取；避免“读一个文件→模型一轮→再读一个文件”。
-3. **定向验证优先**：严格执行 `docs/VERIFICATION_POLICY.md`：开发中定向 RED→GREEN，最终聚合树只跑一次完整门禁。
+3. **定向验证优先**：严格执行 `<Cognitive-Loop-OS>/docs/VERIFICATION_POLICY.md`：开发中定向 RED→GREEN，最终聚合树只跑一次完整门禁。
 4. **失败门禁只重跑失败项**：修根因后先跑受影响 gate；最终树变化后才执行一次完整聚合门禁。
 5. **减少无意义汇报回合**：中间进度不触发额外 agent 重启或 reviewer；高风险边界才独立审查。
 

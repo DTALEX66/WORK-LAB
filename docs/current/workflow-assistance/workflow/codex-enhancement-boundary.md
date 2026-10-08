@@ -119,5 +119,5 @@ The only supported outcomes are read-only review states such as
 `CONFIGURATION_REVIEW_REQUIRED`. A new machine or changed profile may trigger
 `plan/verify`, but never automatic `apply`, authentication changes, Reset/Repair,
 provider routing changes, or writes to OBSERVE/SECRET fields. See
-`docs/workflow/machine-identity-and-config-review.md` and
+`docs/current/workflow-assistance/workflow/machine-identity-and-config-review.md` and
 `services/authority/machine_identity.py`.

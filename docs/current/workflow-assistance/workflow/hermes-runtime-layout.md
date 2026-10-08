@@ -2,14 +2,14 @@
 
 ## 不可替代的数据边界
 
-`%LOCALAPPDATA%\\hermes` 是本机 Hermes 服务根，不是项目临时目录。以下内容是
+`%LOCALAPPDATA%\\hermes` （下文记作 `$HERMES_HOME`）是本机 Hermes 服务根，不是项目临时目录。以下内容是
 跨项目共享状态，迁移或清理前必须停止 Hermes，并使用官方命令或已验证的备份；不得
 由同步脚本、清理脚本或手工批量删除处理：
 
 - `config.yaml`、`.env`、`auth.json`：运行配置和认证；仓库只保存无密钥模板。
-- `state.db`、`sessions/`：全部会话索引和会话内容；不可按项目拆分或直接删库。
-- `skills/`：已安装技能；可由本仓库同步的部分有版本来源，其余用户技能必须保留。
-- `state-snapshots/`、显式 `pre-update-*` 备份：恢复证据，除非已完成新的可验证备份。
+- `state.db`、`$HERMES_HOME/sessions/`：全部会话索引和会话内容；不可按项目拆分或直接删库。
+- `$HERMES_HOME/skills/`：已安装技能；可由本仓库同步的部分有版本来源，其余用户技能必须保留。
+- `$HERMES_HOME/state-snapshots/`、显式 `pre-update-*` 备份：恢复证据，除非已完成新的可验证备份。
 
 项目任务数据必须留在 `<project>/.project-local/`，并通过
 `hermes-project-data.py --project . run -- <command>` 产生。收尾只清理
@@ -21,9 +21,9 @@
 | --- | --- | --- |
 | 便携源 | `Workflow-assistance` Git 仓库 | 唯一可提交、可复制的工作流定义；不含密钥或会话。 |
 | 活动运行时 | Hermes Python 环境和当前桌面包 | 保持单一活动版本；桌面快捷方式只指向当前包。 |
-| 用户状态 | Hermes Home 的配置、认证、会话、用户技能与运行入口 | 配置/认证/会话、非仓库负责的 skills 和非仓库负责的 `bin/` 入口原样保留；仓库负责的 13 个 skill 子树和 6 个 binary 按权威源逐项替换。 |
+| 用户状态 | Hermes Home 的配置、认证、会话、用户技能与运行入口 | 配置/认证/会话、非仓库负责的 `$HERMES_HOME/skills/` 和非仓库负责的 `$HERMES_HOME/bin/` 入口原样保留；仓库负责的 13 个 skill 子树和 6 个 binary 按权威源逐项替换。 |
 | 同步回滚 | `backups/workflow-assistance-sync-*` | 同步器只保留最近两份，并且只会清理自己创建的目录。 |
-| 人工升级备份 | `pre-update-*`、`state-snapshots/` | 不自动删除；完成恢复演练后再由用户决定保留期。 |
+| 人工升级备份 | `pre-update-*`、`$HERMES_HOME/state-snapshots/` | 不自动删除；完成恢复演练后再由用户决定保留期。 |
 
 源代码检出、Python venv、Node modules 和桌面构建包是可再生运行物，但不能在
 桌面仍使用它们时删除。升级完成且新快捷方式、会话打开、模型调用三项均验证通过后，
@@ -41,7 +41,7 @@
 ## 迁移与恢复
 
 迁移到新机器时，先复制 Git 仓库并执行隔离安装验证，再迁移 Hermes Home 的受保护数据。
-迁移时保持配置、认证、`state.db`、`sessions/` 和用户技能的相对关系；凭据不得进入
+迁移时保持配置、认证、`state.db`、`$HERMES_HOME/sessions/` 和用户技能的相对关系；凭据不得进入
 Git、压缩日志或项目文档。恢复后先运行 `hermes config check`、`hermes auth list` 和
 workflow doctor，再启动桌面。
 
