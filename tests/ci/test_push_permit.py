@@ -79,6 +79,16 @@ class DecideTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("PARTIAL_ONLY", msg)
 
+    def test_a_full_receipt_that_recorded_red_is_named_as_red(self) -> None:
+        # Reachable only because the stamp is written before the first gate runs: a failed full verify
+        # must be distinguishable from a head nobody ever tested.
+        write(self.runs, "gate.log", f"GATE_HEAD={HEAD} GATE_TREE=x GATE_FULL=yes gates=50\n"
+                                     "### gate: governance\nQUALITY_GATE_FAIL gate=governance exit_code=1\n"
+                                     "GATE_EXIT=1\n")
+        code, msg = permit.decide(HEAD, [self.runs / "gate.log"])
+        self.assertEqual(code, 1)
+        self.assertIn("RECEIPT_RED", msg)
+
     def test_a_receipt_with_no_exit_line_is_not_a_pass(self) -> None:
         # A killed or still-running batch leaves a file that mentions the head and says nothing else.
         write(self.runs, "gate.log", f"GATE_HEAD={HEAD} GATE_TREE=x GATE_FULL=yes\n### gate: governance\n")
@@ -144,6 +154,15 @@ class ReceiptIsStampedTests(unittest.TestCase):
     def test_the_gate_stamps_the_head_its_verdict_belongs_to(self) -> None:
         source = (ROOT / "services" / "orchestration" / "run_quality_gate.py").read_text(encoding="utf-8")
         self.assertIn("GATE_HEAD={commit} GATE_TREE={tree} GATE_FULL={full} gates={len(names)}", source)
+
+    def test_the_stamp_precedes_the_first_gate_so_a_red_run_is_attributable(self) -> None:
+        # The whole point of RECEIPT_RED is unreachable if the stamp is only printed on the pass path:
+        # "ran and failed" would then look exactly like "never ran", which is the confusion this tool
+        # was written to remove.
+        source = (ROOT / "services" / "orchestration" / "run_quality_gate.py").read_text(encoding="utf-8")
+        body = source.split("def run_gate_sequence(", 1)[1].split("\ndef ", 1)[0]
+        self.assertLess(body.index("GATE_HEAD="), body.index("### gate:"),
+                        "the head stamp is emitted after the gates run")
 
     def test_the_head_helper_returns_a_full_sha_here(self) -> None:
         runner_spec = importlib.util.spec_from_file_location(

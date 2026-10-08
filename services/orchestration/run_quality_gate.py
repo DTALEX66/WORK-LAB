@@ -1409,6 +1409,15 @@ VERIFY_ORDER = (
 
 
 def run_gate_sequence(names: tuple[str, ...]) -> int:
+    # Stamp the head FIRST, before any gate runs. A receipt that never says which commit it describes
+    # cannot distinguish "verified and red" from "never verified", and the second one is not evidence
+    # about the first. `scripts/ci/push_permit.py` reads this line; the verdict comes from GATE_EXIT.
+    commit, tree = _git_head_identity()
+    # GATE_FULL is the property a push decision actually turns on: a receipt from one cheap gate must
+    # not be readable as "the head was verified". Derived, never passed in, so a new call site cannot
+    # forget to set it.
+    full = "yes" if set(names) == set(VERIFY_ORDER) else "no"
+    print(f"GATE_HEAD={commit} GATE_TREE={tree} GATE_FULL={full} gates={len(names)}")
     for name in names:
         gate = GATES[name]
         print(f"\n### gate: {gate.name} — {gate.description}")
@@ -1417,16 +1426,8 @@ def run_gate_sequence(names: tuple[str, ...]) -> int:
             print(f"\nQUALITY_GATE_FAIL gate={gate.name} exit_code={exit_code}")
             return exit_code
     print("\nQUALITY_GATE_PASS gates=" + ",".join(names))
-    # Stamp the head this verdict belongs to. Without it a receipt is just a file that once said OK:
-    # `git push` has been run against a head whose own full-gate receipt was never taken (ERR-181),
-    # and a red one was read as green because the wrapper's exit code was consulted instead of the
-    # file. `scripts/ci/push_permit.py` matches this line against the sha being pushed.
-    commit, tree = _git_head_identity()
-    # GATE_FULL is the property a push decision actually turns on: a receipt from one cheap gate must
-    # not be readable as "the head was verified". Derived, never passed in, so a new call site cannot
-    # forget to set it.
-    full = "yes" if set(names) == set(VERIFY_ORDER) else "no"
-    print(f"GATE_HEAD={commit} GATE_TREE={tree} GATE_FULL={full} gates={len(names)}")
+    # The GATE_HEAD/GATE_FULL stamp is emitted at the top of this function, before any gate runs, so a
+    # red receipt identifies its head too.
     # P1-3: never present an environment-limited local pass as full completion.
     print(
         "GATE_SEMANTICS STRUCTURAL_LOCAL_PASS=yes "
