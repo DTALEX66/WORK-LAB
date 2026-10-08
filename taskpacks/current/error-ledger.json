@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 207,
+    "total": 208,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 64,
@@ -23,7 +23,8 @@
       "path_boundary": 15,
       "ci_tooling": 10,
       "sql_schema": 1,
-      "regression_contract": 8
+      "regression_contract": 8,
+      "boundary_leak": 1
     },
     "repeat_prevention_required": true,
     "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer); 2026-09-30: ERR-093 (asset-inventory boundary spill), ERR-094 (audit-package digest basis: CRLF vs repository bytes), ERR-095 (codex global overlay/skill targets absent in live CODEX_HOME while the registry claims READBACK_VERIFIED), ERR-096 (Hermes managed skill live drift + stale skill-provenance records); ERR-092 is reserved by the unmerged branch g15-dsh-codex-registry-reconcile-20260930) 2026-10-06: ERR-101 (U19 GDI capture rectangle exceeded the measured client area by 25% and photographed the desktop, forging 375-722 colours on a blank window); ERR-102 (release binary paints only #08090a while the identical dist renders fully in Chrome: 3387 colours, 0.00% near-black, versus 41 colours, 100% near-black; root cause still open)."
@@ -6357,8 +6358,37 @@
         "introducedCommit": null,
         "introducedCommitNote": "the scanned root was drawn at docs/current/ and the register sits outside it by design; no commit moved it",
         "fixedCommit": "837c52b9eb4360b8c4c8b08a7621a469e1054058",
+        "verifiedCommit": "5ef54c88584018c25a35ad7ec31d0ce08b32f18b",
+        "bindingBasis": "commit-contains-fix: 837c52b9 adds the register surface, the in-row declaration vocabulary and its falsification tests; verifiedCommit is owed until every Actions run at a head containing it is green",
+        "verifiedCommitNote": "exact-SHA Actions readback at 5ef54c88584018c25a35ad7ec31d0ce08b32f18b: every workflow on this head (wlr-060-production-gates, work-lab-gate) completed success, and this head contains the record itself, so the verdict covers it rather than an ancestor"
+      }
+    },
+    {
+      "error_id": "ERR-210",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "boundary_leak",
+      "entrypoint": "packages/client-neutral-core/scripts/project_temp.py",
+      "command": "python scripts/maintenance/release_temp_fixture_residue.py",
+      "exit_code": 1,
+      "observed_error": "The boundary was gated on one half only. `test_temp_fixture_stays_inside_the_boundary` refuses a throwaway directory created outside the project root, and `project_temp.fixture_dir()` releases the directories its own process created from an at-exit hook, so a run that exits normally leaves nothing. Nothing in the repository ever looked at the orphans a killed, timed-out or crashed run leaves behind: measured on 2026-10-08, `.project-local/runs/tmp` held 4811 fixture roots totalling 531.7 MiB (556,311,265 bytes over the 4796 older than the reclaim floor), and 676 of them still contained a nested `.git`.",
+      "root_cause": "Two independent holes behind the same pile. (1) The at-exit sweep tracks a per-process list, so a process that never reaches atexit orphans its fixtures permanently, and no owned-by-nobody reclaim path existed. (2) `git` writes `.git/objects/xx/*` with mode 0444, which makes even an explicit `shutil.rmtree` fail on Windows with WinError 5; call sites that passed `ignore_errors=True` therefore reported a successful cleanup while leaving the whole repository behind. Probed in three states on this host: plain rmtree raised and left the fixture, `ignore_errors=True` returned silently with 8 entries still present, and clearing the write bit first removed it completely.",
+      "fix": "`project_temp.force_release()` is now the one release implementation: it clears the write bit while skipping symlinks and junctions (so a cleanup cannot write outside the fixture), collects garbage first because a SQLite handle parked in a reference cycle keeps the file open (WinError 32), refuses any path outside the project Git root, and prints `TEMP_RESIDUE_NOT_REMOVED` for what it still cannot delete instead of hiding it. The at-exit sweeper and four test fixtures now go through it, which also collapsed two unattributed working-tree copies of a duplicated 12-line helper into calls to the single implementation. `scripts/maintenance/release_temp_fixture_residue.py` reclaims orphans: it writes a manifest of every candidate (path, bytes, file count, age, whether it holds a nested .git) before deleting anything, honours `--older-than-hours` (default 6) so a session running right now keeps its working directories, and refuses a root outside the project with exit 2. Measured run: 4796 directories, 556,311,265 bytes freed, failures=0, zero TEMP_RESIDUE_NOT_REMOVED lines. `tests/workflow-assistance/test_temp_fixture_residue_is_bounded.py` gates the effect rather than the pattern, importing the tool's own census and floor so the two cannot drift, with planted fixtures proving the floor counts an 8h orphan and ignores a fixture seconds old.",
+      "regression_test": "tests/workflow-assistance/test_temp_fixture_residue_is_bounded.py",
+      "regressionCommand": "python tests/workflow-assistance/test_temp_fixture_residue_is_bounded.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "planted old and new fixtures in the real root; refusal probe against a path outside the Git root",
+      "evidence_level": "local-full",
+      "repeat_prevention": "a boundary rule must cover both halves of the lifecycle it names -- creating a fixture somewhere and releasing it -- and the release half has to be measured on the effect (an orphan that survives) rather than trusted from a cleanup call that can silently fail; never let a delete swallow its own error, because on Windows a read-only object bit or an open handle turns a swallowed refusal into permanent residue that the next reader cannot distinguish from a clean tree",
+      "remaining_boundary": "The bound gate watches only the declared throwaway root `.project-local/runs/tmp`; named task-ledger and runtime evidence directories under `runs` are out of scope by design and are never reclaimed. Four call sites still delete staging or build trees with `ignore_errors=True` (`integrations/executors/hermes/sync_hermes_workflow_assets.py`, `packages/client-neutral-core/scripts/backup_restore_drill.py`, `apps/observer/scripts/u19_chromium_readback.py`, `scripts/audit/topbar_geometry_via_dump_dom.py`); their targets sit outside the gated root and their ownership needs measuring before they are changed. A fixture whose handle is still open cannot be released on Windows by anything short of closing it, so the gate reports those rather than force-killing them. And the 6-hour floor means a crashed job turns the gate red up to six hours later -- reclaiming is deliberately a separate, manifest-first step.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the at-exit sweep has been per-process since project_temp was introduced at 34b324eb (2026-10-08 earlier batch), and no commit ever owned the orphan case; the read-only-bit half was already named in scripts/maintenance/finish_tmp_tree_cleanup.py the previous day",
+        "fixedCommit": "9f644c48f42237496480f86172b2dedb5fd3b19f",
         "verifiedCommit": null,
-        "bindingBasis": "commit-contains-fix: 837c52b9 adds the register surface, the in-row declaration vocabulary and its falsification tests; verifiedCommit is owed until every Actions run at a head containing it is green"
+        "bindingBasis": "commit-contains-fix: HEAD (9f644c4) at the time this record was appended carries project_temp.force_release, the reclaim tool and the bound gate; verifiedCommit is owed until every Actions run at a head containing them is green"
       }
     }
   ],
