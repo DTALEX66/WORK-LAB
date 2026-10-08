@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 213,
+    "total": 214,
     "by_classification": {
       "entrypoint": 6,
       "contract_drift": 64,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 3,
       "path_boundary": 15,
-      "ci_tooling": 13,
+      "ci_tooling": 14,
       "sql_schema": 1,
       "regression_contract": 8,
       "boundary_leak": 1
@@ -6534,6 +6534,35 @@
         "fixedCommit": "5e74a07151e3602caf462a54f93ae704307b4515",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: HEAD (5e74a07) carries the leaf-name guard, the discard-with-release and the gate that pins all of it; verifiedCommit is owed until every Actions run at a head containing it is green"
+      }
+    },
+    {
+      "error_id": "ERR-216",
+      "date": "2026-10-08",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_IMPLEMENTATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/audit/ledger_regression_command_targets.py",
+      "command": "python services/orchestration/run_quality_gate.py governance",
+      "exit_code": 1,
+      "observed_error": "Republishing the derived audit for ERR-215 destroyed record content that no check reported. `git diff` after `ledger_regression_command_targets.py --apply` showed three `regressionTestVerifiabilityReason` values replaced by the single boilerplate \"every operand resolves against git ls-files\": ERR-215's freshly written specific reason (\"mints the collision name itself, stubs the generator ...\"), plus two earlier hand-authored ones. The tool exited 0, `verify_error_ledger.py` still printed PASS, and the audit's `stateDigest` is keyed on (error_id, label) only -- so a label that did not change carries a digest that does not notice its explanation being overwritten. The governance batch went red at the same moment, but for the *expected* reason (212 vs 213 counts); nothing about the clobbering was in those four failures.",
+      "root_cause": "`apply_labels` writes the measured reason unconditionally (line 245: `rec[\"regressionTestVerifiabilityReason\"] = r[\"reason\"]`), while the reason it can measure is one sentence per label from `state_for`. The field therefore has two authors with different resolution: a human states what a particular record's proof actually reads, the tool states only which label applied, and the tool runs on every added record, so the lower-resolution author wins by schedule. The same tool already refuses to let a re-point claim what did not happen and refuses to rewrite `status_after` -- it just never applied that discipline to the reason field, and no digest, count or verifier covers free text, so the loss is silent by construction.",
+      "fix": "`next_reason(previous_state, previous_reason, state, measured_reason)` decides the field: while the label is unchanged and a non-blank reason exists, that sentence is kept; when the label moved, the measured reason replaces it, because a sentence explaining a state the record no longer claims is not documentation but drift. Blank or absent reasons are still filled from the measurement, so coverage cannot regress. Restored the three flattened values by reverting the ledger to HEAD and re-running the publisher: the diff is now one line (ERR-215's own amendment) instead of seven. The new gate class `ReasonPreservationTests` pins all four branches (keep, replace on label change, fill when blank or missing) and adds a census assertion that the ledger really carries at least 10 reasons no other record shares -- measured 2026-10-08: 213 records, 14 distinct reasons, 11 of them unique -- so the preservation is not guarding an empty set. ERR-215's row was amended in the same commit to state the wider impact the predicate actually has: `artifact_handle_projection._is_sensitive_name` skips the component during descent (artifact_handle_projection.py:191) and `services/control/control_service.py:125` refuses the same name as a diff target, so a colliding fixture root disappears from an inventory rather than only failing a read.",
+      "regression_test": "tests/workflow-assistance/test_ledger_regression_command_targets.py",
+      "regressionCommand": "python tests/workflow-assistance/test_ledger_regression_command_targets.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "calls next_reason directly on all four branches and censuses the ledger's own reason strings; the publisher's --apply path is never invoked from a test, because it writes the real ledger",
+      "evidence_level": "local-full",
+      "repeat_prevention": "a tool that regenerates a derived field must never overwrite a higher-resolution hand-authored value while the thing it explains is unchanged; every re-runnable publisher must be tested on its preserve-branch as well as its write-branch, because a silent flatten shows up in no digest, no count and no exit code",
+      "remaining_boundary": "Preservation is keyed on the label, so a hand-authored reason that is *wrong* for a correct label survives too -- the gate asserts the sentence is not boilerplate, not that it is true. The publisher still runs against the live ledger file when invoked with --apply, which is why the new tests call the predicate rather than the tool; a dry-run mode that prints the would-be diff would let the whole apply path be gated, and was not built here. `stateDigest` still covers only (id, label), so a reason change is not detectable from the audit alone. `fixedCommit` is the commit carrying `next_reason` and the restored values; `verifiedCommit` is owed until every Actions run at a head containing it is green.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": null,
+        "introducedCommitNote": "the unconditional write predates this session -- it is in the publisher as first shipped; it became observable the moment a record with a specific hand-authored reason was added and the audit republished over it",
+        "fixedCommit": "780b5947aeb2aafc1aa78a1a72f8920203b10894",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: HEAD (780b594) carries next_reason, the restored reasons and ReasonPreservationTests; verifiedCommit is owed until every Actions run at a head containing them is green"
       }
     }
   ],
