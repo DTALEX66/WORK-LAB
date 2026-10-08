@@ -92,34 +92,82 @@ function Nav({
   onSelect: (id: string) => void
 }) {
   const lanes = React.useMemo(buildLanes, [])
+  const groups = React.useMemo(
+    () =>
+      NAV_GROUPS.map((g) => ({
+        ...g,
+        items: g.ids.map((id) => lanes.get(id)).filter(Boolean) as LaneDef[],
+      })).filter((g) => g.items.length > 0),
+    [lanes],
+  )
+  // Scrolling makes a long rail reachable; collapsing is what keeps it short enough to read. The rail is
+  // its own scroll box since `36f9a297`, which is necessary but not sufficient — ARIA APG Disclosure
+  // Navigation expects each section to be a disclosure button as well, which is the shape Rancher's
+  // per-group nav implements and the shape the 23-item rail needs at a 600px-tall window.
+  const [collapsed, setCollapsed] = React.useState<ReadonlySet<string>>(() => new Set())
+  const toggles = React.useRef<Record<string, HTMLButtonElement | null>>({})
+  const setToggleRef = (key: string) => (node: HTMLButtonElement | null) => {
+    toggles.current[key] = node
+  }
+  const toggleGroup = (key: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key !== 'Escape') return
+    const group = groups.find((g) => g.ids.some((id) => id === activeView))
+    const target = event.target as HTMLElement | null
+    if (!group || !target || !event.currentTarget.contains(target)) return
+    if (target === toggles.current[group.key]) return
+    setCollapsed((prev) => (prev.has(group.key) ? prev : new Set(prev).add(group.key)))
+    toggles.current[group.key]?.focus()
+  }
+
   return (
-    <nav className="nav">
-      {NAV_GROUPS.map((g) => {
-        const items = g.ids.map((id) => lanes.get(id)).filter(Boolean) as LaneDef[]
-        if (items.length === 0) return null
+    <nav className="nav" onKeyDown={onKeyDown}>
+      {groups.map((g) => {
+        const open = !collapsed.has(g.key)
         return (
           <div key={g.key} className="flex flex-col gap-1.5 pb-1.5">
-            {/* group label (B07 IA matrix) — a muted caption above its B10 buttons */}
-            <span className="px-3.5 pt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-              {g.label}
-            </span>
-            {items.map((l) => {
-              const active = activeView === l.id
-              return (
-                <button
-                  key={l.id}
-                  type="button"
-                  onClick={() => onSelect(l.id)}
-                  data-lane={l.id}
-                  title={l.label}
-                  aria-current={active ? 'page' : undefined}
-                  className={cn(active && 'active')}
-                >
-                  <span className="nav-dot" aria-hidden="true" />
-                  <span className="truncate">{l.label}</span>
-                </button>
-              )
-            })}
+            {/* group label (B07 IA matrix) — a disclosure button, so the caption is also the control
+                that hides its own items; the muted B10 caption styling is kept in the skin layer */}
+            <button
+              type="button"
+              ref={setToggleRef(g.key)}
+              className="nav-group-toggle"
+              aria-expanded={open}
+              aria-controls={`nav-group-${g.key}`}
+              title={open ? `收起 ${g.label}` : `展开 ${g.label}`}
+              onClick={() => toggleGroup(g.key)}
+            >
+              <span className="nav-group-caret" aria-hidden="true" />
+              <span className="truncate">{g.label}</span>
+            </button>
+            {open && (
+              <div id={`nav-group-${g.key}`} className="flex flex-col gap-1.5">
+                {g.items.map((l) => {
+                  const active = activeView === l.id
+                  return (
+                    <button
+                      key={l.id}
+                      type="button"
+                      onClick={() => onSelect(l.id)}
+                      data-lane={l.id}
+                      title={l.label}
+                      aria-current={active ? 'page' : undefined}
+                      className={cn(active && 'active')}
+                    >
+                      <span className="nav-dot" aria-hidden="true" />
+                      <span className="truncate">{l.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )
       })}

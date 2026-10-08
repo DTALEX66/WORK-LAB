@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react'
+import { ActionRow } from '@/components/layout/ActionOverflow'
 import { WindowControls } from '@/components/layout/WindowControls'
 import { THEMES } from '@/theme/tokens'
 import type { SnapshotV3 } from '@/types'
@@ -125,32 +126,29 @@ export function TopStatusBar({
           the only drag surface the shell has. */}
       <div className="drag-region" data-tauri-drag-region aria-hidden="true" />
 
-      <div className="top-actions">
-        <button type="button" className="ghost-btn" onClick={onNotify}>
-          通知
-        </button>
-        <button type="button" className="ghost-btn" onClick={onOpenDrawer}>
-          工作区
-        </button>
-        <button
-          type="button"
-          className="ghost-btn"
-          onClick={onCycleLayout}
-          title={layout === 'full' ? '紧凑布局' : '完整布局'}
-          aria-label={layout === 'full' ? '切换到紧凑布局' : '切换到完整布局'}
-        >
-          {layout === 'full' ? '紧凑' : '完整'}
-        </button>
-        <button
-          type="button"
-          className="ghost-btn"
-          onClick={onCycleTheme}
-          title={theme === 'dark' ? '浅色主题' : '深色主题'}
-          aria-label={theme === 'dark' ? '切换到浅色主题' : '切换到深色主题'}
-        >
-          {theme === 'dark' ? '浅色' : '深色'}
-        </button>
-      </div>
+      <ActionRow
+        actions={[
+          { key: 'notify', label: '通知', run: onNotify },
+          { key: 'workspace', label: '工作区', run: onOpenDrawer },
+          {
+            key: 'layout',
+            label: layout === 'full' ? '紧凑' : '完整',
+            title: layout === 'full' ? '紧凑布局' : '完整布局',
+            ariaLabel: layout === 'full' ? '切换到紧凑布局' : '切换到完整布局',
+            run: onCycleLayout,
+          },
+          {
+            key: 'theme',
+            label: theme === 'dark' ? '浅色' : '深色',
+            title: theme === 'dark' ? '浅色主题' : '深色主题',
+            ariaLabel: theme === 'dark' ? '切换到浅色主题' : '切换到深色主题',
+            run: onCycleTheme,
+            // Pinned: the theme control must never be the thing that folds away, or a user can be
+            // trapped in a palette that stopped making sense with no visible way out.
+            pinned: true,
+          },
+        ]}
+      />
 
       <WindowControls />
     </header>

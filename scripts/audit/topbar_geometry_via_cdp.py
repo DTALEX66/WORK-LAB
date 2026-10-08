@@ -75,7 +75,8 @@ EXPR = """JSON.stringify((()=>{
     // Reachability, not presence. A rail that declares `overflow:auto` but is as tall as its content
     // cannot scroll, so everything past the fold is unreachable by pointer, keyboard or wheel -- the
     // shape the shipped skin had for a week while every "is it in the DOM" check stayed green.
-    const buttons = Array.from(nav.querySelectorAll('button'));
+    const buttons = Array.from(nav.querySelectorAll('button[data-lane]'));
+    const disclosures = nav.querySelectorAll('.nav-group-toggle[aria-expanded]');
     const inView = (list) => list.filter((b) => {
       const r = b.getBoundingClientRect();
       return r.top >= 0 && r.bottom <= innerHeight;
@@ -93,7 +94,23 @@ EXPR = """JSON.stringify((()=>{
     }
     nav.scrollTop = 0;
     out.__navReach = { total: buttons.length, atTop, afterScroll, overflow, lastHitInside,
+                       disclosures: disclosures.length,
                        clientH: nav.clientHeight, scrollH: nav.scrollHeight };
+  }
+  const actionsEl = document.querySelector('.top-actions');
+  if (actionsEl) {
+    // One band, one row. A wrapping action row is the shape that hid the fold entirely: the controls
+    // were all present, all "visible", and stacked into a column nobody designed. The off-screen
+    // measuring sizer is excluded — it lives at top:-9999px by design, and counting it invented a
+    // second row on every measurement.
+    const kids = Array.from(actionsEl.children).filter((c) => {
+      if (c.classList.contains('action-sizer')) return false;
+      const r = c.getBoundingClientRect();
+      return r.width > 0 || r.height > 0;
+    });
+    const tops = new Set(kids.map((c) => Math.round(c.getBoundingClientRect().top)));
+    out.__actionsFit = { children: kids.length, rows: tops.size,
+                         more: !!actionsEl.querySelector('.action-more') };
   }
   return out;
 })())"""
@@ -298,6 +315,13 @@ def verdict(measured: dict, view: str) -> dict:
     add("action_row_inside_viewport", not clipped_actions,
         f"gap={measured.get('.top-actions') and measured['.top-actions'][0].get('gapToViewportRight')}")
 
+    fit = measured.get("__actionsFit") or {}
+    if fit:
+        # A band that paints nothing is not "one row" — that is the pinned skin's `display:none` branch,
+        # and an empty action band must not be reported as a folded one.
+        add("action_row_does_not_stack", bool(fit.get("children")) and fit.get("rows") == 1,
+            f"children={fit.get('children')} rows={fit.get('rows')} foldTrigger={fit.get('more')}")
+
     rail = _first(measured, ".sidebar")
     if view == "full":
         # The desktop-only contract: the rail is the only navigation surface, so it must exist
@@ -318,6 +342,11 @@ def verdict(measured: dict, view: str) -> dict:
                 f"total={total} atTop={reach.get('atTop')} afterScroll={reach.get('afterScroll')} "
                 f"overflow={scrolls} clientH={reach.get('clientH')} scrollH={reach.get('scrollH')} "
                 f"lastHitInside={last_reachable}")
+            # A scroll box alone still leaves a 600px-tall window showing a third of the rail. APG
+            # Disclosure Navigation is the other half: every group caption is a button that carries
+            # aria-expanded, so the rail can be shortened as well as scrolled.
+            add("nav_groups_are_disclosures", (reach.get("disclosures") or 0) > 0,
+                f"disclosures={reach.get('disclosures')}")
     else:
         add("compact_has_no_rail", rail is None, f"rail={rail}")
 

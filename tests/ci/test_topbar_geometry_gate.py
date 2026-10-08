@@ -45,13 +45,15 @@ def good_measured(view="full") -> dict:
         ".main": [element(280, 1000, 742, 0)],
         ".kpi-grid": [element(300, 960, 120, 20)],
         "__elementsOverlappingRightEdge": [],
+        "__actionsFit": {"children": 4, "rows": 1, "more": False},
     }
     if view == "full":
         data[".sidebar"] = [element(0, 280, 820, 1000)]
         # The healthy shape: everything fits at the top, so no scrolling is required at all. The
         # scrollable-and-last-hit-testable branch is exercised separately below.
         data["__navReach"] = {"total": 9, "atTop": 9, "afterScroll": 9, "overflow": False,
-                              "lastHitInside": True, "clientH": 620, "scrollH": 620}
+                              "lastHitInside": True, "disclosures": 7,
+                              "clientH": 620, "scrollH": 620}
     return data
 
 
@@ -65,7 +67,8 @@ class VerdictTests(unittest.TestCase):
                          {"no_horizontal_overflow", "topbar_measured", "topbar_not_stacked",
                           "brand_mark_present", "actions_visible", "window_controls_reachable",
                           "action_row_inside_viewport", "rail_always_present",
-                          "rail_at_left_edge", "nav_items_reachable"})
+                          "rail_at_left_edge", "nav_items_reachable",
+                          "nav_groups_are_disclosures", "action_row_does_not_stack"})
 
     def test_the_rail_must_survive_every_width_the_main_window_can_take(self) -> None:
         # the desktop-only contract in geometry form: b10 used to hide `.sidebar` below 840px.
@@ -221,6 +224,34 @@ class InstrumentTests(unittest.TestCase):
             self.assertFalse(scratch.exists())
 
 
+class ActionRowFoldingTests(unittest.TestCase):
+    """The action band must stay one row and fold, never wrap into a column."""
+
+    def verdict_for(self, fit: dict) -> dict:
+        measured = good_measured("full")
+        measured["__actionsFit"] = fit
+        return geometry.verdict(measured, "full")
+
+    def check(self, verdict: dict) -> dict:
+        return next(c for c in verdict["checks"] if c["check"] == "action_row_does_not_stack")
+
+    def test_a_wrapped_action_row_fails_the_check(self) -> None:
+        # Measured at 430px before the fold existed: four controls, two distinct rows.
+        stacked = self.check(self.verdict_for({"children": 4, "rows": 2, "more": False}))
+        self.assertFalse(stacked["pass"], stacked)
+        self.assertIn("rows=2", stacked["detail"])
+
+    def test_a_single_row_passes(self) -> None:
+        flat = self.check(self.verdict_for({"children": 4, "rows": 1, "more": False}))
+        self.assertTrue(flat["pass"], flat)
+
+    def test_a_folded_row_that_hid_everything_still_fails(self) -> None:
+        # Zero painted children is not "one row"; it is the pinned skin's `display:none` branch, and a
+        # band that renders nothing cannot claim its controls are reachable.
+        empty = self.check(self.verdict_for({"children": 0, "rows": 0, "more": False}))
+        self.assertFalse(empty["pass"], empty)
+
+
 class NavReachabilityTests(unittest.TestCase):
     """The check that was missing while the rail was silently clipped 14 of its 23 items.
 
@@ -240,7 +271,7 @@ class NavReachabilityTests(unittest.TestCase):
     def test_the_dead_container_that_shipped_fails_the_check(self) -> None:
         # Measured 2026-10-08 at 1386x807: clientH == scrollH == 1496 with 23 buttons and 9 visible.
         dead = self.check(self.verdict_for({"total": 23, "atTop": 9, "afterScroll": 9, "overflow": False,
-                                            "lastHitInside": False, "clientH": 1496, "scrollH": 1496}))
+                                            "lastHitInside": False, "disclosures": 7, "clientH": 1496, "scrollH": 1496}))
         self.assertFalse(dead["pass"], dead)
         self.assertIn("overflow=False", dead["detail"])
 
@@ -248,15 +279,26 @@ class NavReachabilityTests(unittest.TestCase):
         # The shape after the fix: clientH 595 < scrollH 1505, and the last item is hit-testable once
         # the rail is scrolled to its end.
         live = self.check(self.verdict_for({"total": 23, "atTop": 9, "afterScroll": 11, "overflow": True,
-                                            "lastHitInside": True, "clientH": 595, "scrollH": 1505}))
+                                            "lastHitInside": True, "disclosures": 7, "clientH": 595, "scrollH": 1505}))
         self.assertTrue(live["pass"], live)
 
     def test_scrolling_that_still_never_reveals_the_last_item_fails(self) -> None:
         # A box that reports overflow but whose last row cannot be brought under the pointer -- clipped
         # by an ancestor, or covered by the top bar -- is the failure the hit-test exists to catch.
         covered = self.check(self.verdict_for({"total": 23, "atTop": 9, "afterScroll": 11, "overflow": True,
-                                              "lastHitInside": False, "clientH": 595, "scrollH": 1505}))
+                                              "lastHitInside": False, "disclosures": 7, "clientH": 595, "scrollH": 1505}))
         self.assertFalse(covered["pass"], covered)
+
+    def test_captions_that_are_not_disclosures_fail_the_group_check(self) -> None:
+        # The shipped shape before APG was applied: every group caption was a <span>, so the rail could
+        # scroll but a short window still showed a third of it and nothing could shorten it.
+        verdict = self.verdict_for({"total": 23, "atTop": 9, "afterScroll": 11, "overflow": True,
+                                    "lastHitInside": True, "disclosures": 0,
+                                    "clientH": 595, "scrollH": 1505})
+        self.assertTrue(self.check(verdict)["pass"], "reachability itself is fine here; only the disclosure is missing")
+        disclosure = next(c for c in verdict["checks"] if c["check"] == "nav_groups_are_disclosures")
+        self.assertFalse(disclosure["pass"], disclosure)
+        self.assertIn("disclosures=0", disclosure["detail"])
 
     def test_a_rail_that_renders_nothing_cannot_claim_reachability(self) -> None:
         empty = self.check(self.verdict_for({"total": 0, "atTop": 0, "afterScroll": 0, "overflow": False,
@@ -266,7 +308,7 @@ class NavReachabilityTests(unittest.TestCase):
 
     def test_a_short_rail_passes_without_needing_to_scroll(self) -> None:
         fits = self.check(self.verdict_for({"total": 4, "atTop": 4, "afterScroll": 4, "overflow": False,
-                                            "lastHitInside": True, "clientH": 300, "scrollH": 300}))
+                                            "lastHitInside": True, "disclosures": 4, "clientH": 300, "scrollH": 300}))
         self.assertTrue(fits["pass"], fits)
 
 
