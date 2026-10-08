@@ -60,18 +60,43 @@ def declared_manager() -> dict:
     raise SystemExit(f"RESOLVE_FAIL manager {MANAGER_ID!r} is not declared in {DECLARATIONS.name}")
 
 
-def find_node() -> Path:
-    """A node.exe under a declared root. Presence here is a candidate, and `resolve` prints which one."""
-    roots = []
+def _candidate_roots() -> list[Path]:
+    """Paths named by the tracked declaration, then the machine-level defaults.
+
+    The `knownGap` prose is mined for a Windows path token, and the token is normalised: an earlier
+    version here took the sentence's `.../node-runtime.` with its trailing period, which Win32 happily
+    resolves for `node.exe` while Node's own module loader will not traverse it for `npm-cli.js`. A
+    half-bound runtime is worse than none, because the failure surfaces three calls later.
+    """
     gap = declared_manager().get("knownGap") or ""
-    roots += [Path(part.strip()) for part in gap.replace(",", " ").split() if ":" in part and "\\" in part or "/" in part and ":" in part]
-    roots += list(DEFAULT_NODE_ROOTS)
+    roots: list[Path] = []
+    for token in gap.replace(",", " ").split():
+        if ":" in token and ("/" in token or "\\" in token):
+            cleaned = token.rstrip(".,;").replace("\\", "/")
+            candidate = Path(cleaned)
+            if candidate not in roots:
+                roots.append(candidate)
+    return roots + list(DEFAULT_NODE_ROOTS)
+
+
+def _bound(root: Path) -> Path | None:
+    """A root is bound only when both the interpreter and the npm CLI it must drive are present."""
+    for directory in (root, *sorted(root.glob("node-*"))):
+        node = directory / "node.exe"
+        npm_cli = directory / "node_modules" / "npm" / "bin" / "npm-cli.js"
+        if node.is_file() and npm_cli.is_file():
+            return node
+    return None
+
+
+def find_node() -> Path:
+    """A node.exe under a declared root, accepted only together with its npm CLI."""
+    roots = _candidate_roots()
     for root in roots:
-        for candidate in (root, *sorted(root.glob("node-*"))):
-            exe = candidate / "node.exe"
-            if exe.is_file():
-                return exe
-    raise SystemExit(f"RESOLVE_FAIL no node.exe under the declared roots: {[str(r) for r in roots]}")
+        bound = _bound(root)
+        if bound is not None:
+            return bound
+    raise SystemExit(f"RESOLVE_FAIL no root with both node.exe and npm-cli.js among: {[str(r) for r in roots]}")
 
 
 def env_for(node: Path) -> dict:

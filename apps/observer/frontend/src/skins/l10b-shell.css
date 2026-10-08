@@ -28,6 +28,27 @@
  * line — same 280px rail, same B10 lockup, no shrunk type. */
 .sidebar { padding-left: 16px; padding-right: 16px; }
 
+/* The rail's scroll container was dead, and nothing in the skin looks wrong until you count what you
+ * can reach. B10 declares `.nav{overflow:auto}` (b10.css:98), but `.app` is laid out with
+ * `min-height:100vh` (b10.css:36), so the grid row grows to whatever the nav asks for: measured in a real
+ * browser at a 1386x807 viewport, `.sidebar` was 1707px tall with `overflow-y: visible`, `.nav` reported
+ * `clientHeight == scrollHeight == 1496` (a scroll box that has nothing to scroll), and
+ * `body{overflow:hidden}` (b10.css:27) removed the document as a fallback. 14 of 23 nav items were
+ * unreachable by pointer, keyboard or wheel — the last group simply ended at the window edge.
+ *
+ * Pinning the shell to the viewport height is what lets the existing `overflow:auto` engage;
+ * `min-height:0` is required because a flex/grid item's default minimum is its content size, which is
+ * exactly the assumption that produced the bug. The brand block and the footer keep their height and the
+ * nav absorbs the rest. `dvh` is the primary unit so a resized window reflows, with `vh` behind it for
+ * any engine that predates it. */
+.app { height: 100dvh; height: 100vh; min-height: 0; }
+@supports (height: 100dvh) { .app { height: 100dvh; } }
+.sidebar.sidebar-slot { min-height: 0; }
+.sidebar .brand { flex: 0 0 auto; }
+.sidebar .sidebar-footer { flex: 0 0 auto; }
+.nav { flex: 1 1 auto; min-height: 0; }
+.main { min-height: 0; }
+
 /* B10 `.toast` is a single fixed element (right/bottom 18px). The repo keeps a
  * small stack, so the container is a transparent flex column anchored to the
  * same corner; each child is the verbatim B10 `.toast.show` element. */
