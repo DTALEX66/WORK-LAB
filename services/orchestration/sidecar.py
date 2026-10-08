@@ -96,31 +96,14 @@ class WorkflowSidecar:
             return
         self._watch_stop.clear()
         last_fingerprint = self._canonical_fingerprint()
-        last_version = self.store.data_version()
-        last_full_read = time.time()
-        self._last_canonical_ok_at = last_full_read
+        self._last_canonical_ok_at = time.time()
         # P0-4: LIVE only comes from the live gate; the watcher must not
         # declare LIVE by itself.
         self.live.set_mode(SNAPSHOT)
 
         def _watch() -> None:
-            nonlocal last_fingerprint, last_version, last_full_read
+            nonlocal last_fingerprint
             while not self._watch_stop.wait(interval_seconds):
-                try:
-                    version = self.store.data_version()
-                except Exception:  # the store is not answering at all
-                    self._last_canonical_ok_at = None
-                    if self.live.mode() != STALE:
-                        self.live.set_mode(STALE)
-                    continue
-                overdue = (time.time() - last_full_read
-                           >= CANONICAL_READBACK_FRESHNESS_SECONDS / 2.0)
-                if version == last_version and not overdue:
-                    # nothing committed elsewhere since the last look, and the last full readback is
-                    # still inside the freshness window: the quiet path costs one PRAGMA and no scan.
-                    # The sidecar's own writes do not move its own data_version, so this cannot churn.
-                    continue
-                last_version = version
                 try:
                     current = self._canonical_fingerprint()
                 except Exception:  # fail closed if canonical readback is unavailable
@@ -128,8 +111,7 @@ class WorkflowSidecar:
                     if self.live.mode() != STALE:
                         self.live.set_mode(STALE)
                     continue
-                last_full_read = time.time()
-                self._last_canonical_ok_at = last_full_read
+                self._last_canonical_ok_at = time.time()
                 if current != last_fingerprint:
                     previous_write_at = self._last_write_at
                     self._last_write_at = time.time()

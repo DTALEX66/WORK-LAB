@@ -1,21 +1,24 @@
 """Gate: a lease taken on an existing task must reach the Observer, not just a task that appears.
 
-The live watcher decided "something changed" from row counts, status tallies and aggregates. A lease
-acquisition changes none of those: it rewrites `lease_holder`, bumps `fencing_token` and moves
-`updated_at` on a row that already exists. Measured before this gate existed, writing a checkpoint,
-holder and fencing token onto a live task left the sidecar's canonical fingerprint byte-identical
-(`fingerprint_changed=False`, `differing_keys=[]`), so a desktop user watched a run they thought was
-queued. The quiet-path tests below hold the other half: `PRAGMA data_version` is what makes watching
-cheap without making it blind.
+The live watcher decided "changed" from row counts, status tallies and aggregates. A lease acquisition
+changes none of those: it rewrites `lease_holder`, bumps `fencing_token` and moves `lease_expires_at` on a
+row that already exists. Measured before this gate existed, writing a checkpoint, holder and fencing token
+onto a live task left the sidecar's canonical fingerprint byte-identical (`fingerprint_changed=False`,
+`differing_keys=[]`), so a desktop user watched a run they believed was queued.
 
-Evidence level: SYNTHETIC/INTEGRATED locally (two `CanonicalStore` connections on one runtime root),
-not native executor evidence.
+An earlier revision of the fix also gated the whole content read behind `PRAGMA data_version`, and three
+deliberate guards in `test_sidecar_v3_snapshot.py` went red: a watcher that only reads when some other
+connection commits cannot prove that its readback works, cannot notice its own failure to publish, and
+cannot be seen entering the read it is supposed to block in. That optimisation was measured as unnecessary
+cost and has been removed; the witness below is the fix.
+
+Evidence level: SYNTHETIC/INTEGRATED locally (two `CanonicalStore` connections on one runtime root), not
+native executor evidence.
 """
 from __future__ import annotations
 
 import json
 import sys
-import threading
 import time
 import unittest
 from pathlib import Path
@@ -73,78 +76,56 @@ class InPlaceUpdateReachesTheObserver(unittest.TestCase):
 
         moved = self._await_revision(appeared)
         self.assertGreater(moved, appeared)
-        row = self.sidecar.store.list_tasks()
-        taken = next(task for task in row if task["task_id"] == TASK)
+        taken = next(task for task in self.sidecar.store.list_tasks() if task["task_id"] == TASK)
         self.assertEqual("worker-A", taken["lease_holder"],
                          "the revision moved without the lease actually being stored")
         self.assertGreaterEqual(int(taken["fencing_token"] or 0), 1)
 
+    def test_a_lease_released_on_an_existing_task_advances_the_revision(self) -> None:
+        """Releasing is the same class of change and was equally invisible."""
+        self._write_from_elsewhere(lambda store: store.upsert_task(
+            {"task_id": TASK, "project_id": "work-lab", "status": "QUEUED"}))
+        self.sidecar.start_live_updates(interval_seconds=0.2)
+        seen = self._await_revision(self._revision() - 1)
+        self._write_from_elsewhere(lambda store: store.release_lease(TASK, "nobody"))
+        self._write_from_elsewhere(lambda store: store.acquire_lease(TASK, "worker-B"))
+        held = self._await_revision(seen)
+        self._write_from_elsewhere(lambda store: store.release_lease(TASK, "worker-B"))
+        released = self._await_revision(held)
+        self.assertGreater(released, held)
+        row = next(task for task in self.sidecar.store.list_tasks() if task["task_id"] == TASK)
+        self.assertIsNone(row["lease_holder"])
+
     def test_the_witness_sees_an_update_that_changes_no_count_and_no_status(self) -> None:
         """Unit level: the fingerprint itself, with no thread and no timing in the way."""
         self.sidecar.store.upsert_task({"task_id": TASK, "project_id": "work-lab", "status": "QUEUED"})
-        before = self.sidecar._canonical_fingerprint()
-        payload_before = json.loads(before)
+        before = json.loads(self.sidecar._canonical_fingerprint())
         self.sidecar.store.acquire_lease(TASK, "worker-B")
         after = json.loads(self.sidecar._canonical_fingerprint())
-        self.assertEqual(payload_before["tables"], after["tables"],
+        self.assertEqual(before["tables"], after["tables"],
                          "row counts moved; this is not the case the witness exists for")
-        self.assertEqual(payload_before["tasks_by_status"], after["tasks_by_status"])
-        self.assertNotEqual(payload_before["newest"], after["newest"],
+        self.assertEqual(before["tasks_by_status"], after["tasks_by_status"])
+        self.assertNotEqual(before["newest"], after["newest"],
                             "an in-place update must move the newest-changes witness")
 
-    def test_the_sidecars_own_publish_does_not_retrigger_the_watcher(self) -> None:
-        """data_version answers per connection: writing myself must not look like an external change."""
+    def test_the_witness_is_blind_to_nothing_that_a_heartbeat_changes(self) -> None:
+        """A renewal can land in the same second, so a timestamp alone would miss it."""
         self.sidecar.store.upsert_task({"task_id": TASK, "project_id": "work-lab", "status": "QUEUED"})
-        before = self.sidecar.store.data_version()
-        self.sidecar.publish_observed()
-        self.assertEqual(before, self.sidecar.store.data_version(),
-                         "the sidecar's own write moved its own data_version, so the quiet path is gone")
+        self.sidecar.store.acquire_lease(TASK, "worker-C", ttl_seconds=30)
+        before = json.loads(self.sidecar._canonical_fingerprint())["newest"]
+        self.sidecar.store.heartbeat(TASK, "worker-C", ttl_seconds=30)
+        after = json.loads(self.sidecar._canonical_fingerprint())["newest"]
+        self.assertNotEqual(before, after,
+                            "the lease expiry moved and no witness noticed; this is the same-second case")
 
-    def test_a_quiet_store_costs_content_scans_only_when_another_connection_writes(self) -> None:
-        calls = []
-        original = self.sidecar._canonical_fingerprint
-
-        def counting() -> str:
-            calls.append(time.time())
-            return original()
-
-        self.sidecar._canonical_fingerprint = counting
-        try:
-            self.sidecar.start_live_updates(interval_seconds=0.05)
-            first = len(calls)
-            time.sleep(0.05 * 6)
-            quiet_growth = len(calls) - first
-        finally:
-            self.sidecar.stop_live_updates()
-            self.sidecar._canonical_fingerprint = original
-        self.assertLessEqual(quiet_growth, 1,
-                             f"{quiet_growth} full readbacks over a quiet store: the fast path is not taken")
-
-    def test_an_external_write_does_cost_exactly_one_readback_per_change(self) -> None:
-        calls = []
-        original = self.sidecar._canonical_fingerprint
-
-        def counting() -> str:
-            calls.append(time.time())
-            return original()
-
-        self.sidecar._canonical_fingerprint = counting
-        try:
-            self.sidecar.start_live_updates(interval_seconds=0.05)
-            baseline = len(calls)
-            time.sleep(0.2)
-            settled = len(calls) - baseline
-            self._write_from_elsewhere(lambda store: store.upsert_task(
-                {"task_id": TASK, "project_id": "work-lab", "status": "QUEUED"}))
-            deadline = time.time() + 5.0
-            while time.time() < deadline and len(calls) <= baseline + settled:
-                time.sleep(0.05)
-            detected = len(calls) - baseline - settled
-        finally:
-            self.sidecar.stop_live_updates()
-            self.sidecar._canonical_fingerprint = original
-        self.assertGreaterEqual(detected, 1, "an external write never triggered a readback")
-        self.assertLess(detected, 20, f"{detected} readbacks for one write; the watcher is spinning")
+    def test_the_witness_column_is_discovered_not_restatement(self) -> None:
+        """A schema rename must not leave the witness silently watching nothing."""
+        witness = self.sidecar.store.newest_changes()
+        self.assertIn("tasks", witness)
+        self.assertIn("tasks_state", witness)
+        self.assertEqual(3, len(witness["tasks"]), "expected [count, max rowid, newest timestamp]")
+        for table in ("projects", "telemetry_events", "schema_migrations"):
+            self.assertIn(table, witness, f"{table} left the witness set")
 
 
 if __name__ == "__main__":

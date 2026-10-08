@@ -414,17 +414,6 @@ class CanonicalStore:
             row = self._conn.execute("PRAGMA integrity_check").fetchone()
             return str(row[0]) if row else "unknown"
 
-    def data_version(self) -> int:
-        """SQLite's own counter, bumped when some other connection commits.
-
-        Probed on this store: a second connection's commit moves it, this connection's own commit does
-        not. That is what makes it usable as the live-watch trigger without the sidecar churning on the
-        revisions it writes itself.
-        """
-        with self._lock:
-            row = self._conn.execute("PRAGMA data_version").fetchone()
-        return int(row[0]) if row else 0
-
     def newest_changes(self) -> dict[str, list[object]]:
         """Per tracked table: row count, highest rowid and newest timestamp.
 
