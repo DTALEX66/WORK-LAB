@@ -33,6 +33,22 @@ WAL_TABLES = (
     "schema_migrations",
 )
 
+# Preference order for the "newest timestamp" witness; the column is resolved per table from
+# PRAGMA table_info, so a table that renames or drops one is not silently left unwatched.
+_NEWEST_COLUMNS = (
+    "updated_at",
+    "occurred_at",
+    "observed_at",
+    "generated_at",
+    "last_run_at",
+    "discovered_at",
+    "approved_at",
+    "registered_at",
+    "created_at",
+    "applied_at",
+    "started_at",
+)
+
 USAGE_TOKEN_ALLOWLIST = {
     "input_tokens",
     "output_tokens",
@@ -398,6 +414,51 @@ class CanonicalStore:
             row = self._conn.execute("PRAGMA integrity_check").fetchone()
             return str(row[0]) if row else "unknown"
 
+    def data_version(self) -> int:
+        """SQLite's own counter, bumped when some other connection commits.
+
+        Probed on this store: a second connection's commit moves it, this connection's own commit does
+        not. That is what makes it usable as the live-watch trigger without the sidecar churning on the
+        revisions it writes itself.
+        """
+        with self._lock:
+            row = self._conn.execute("PRAGMA data_version").fetchone()
+        return int(row[0]) if row else 0
+
+    def newest_changes(self) -> dict[str, list[object]]:
+        """Per tracked table: row count, highest rowid and newest timestamp.
+
+        The sidecar's live gate compared counts and status tallies, so an in-place update -- a lease
+        acquired, a checkpoint advanced -- moved nothing it could see, and the Observer kept rendering
+        the previous state until some row happened to be inserted. Measured: writing a checkpoint,
+        lease holder and fencing token onto an existing task left the fingerprint byte-identical.
+
+        The timestamp column is read out of the table rather than restated here, so a schema change
+        cannot silently leave the witness blind, and the highest rowid still catches a mutation whose
+        author forgot to bump a timestamp.
+        """
+        with self._lock:
+            witness: dict[str, list[object]] = {}
+            for table in WAL_TABLES:
+                columns = [row[1] for row in
+                           self._conn.execute(f"PRAGMA table_info({table})").fetchall()]
+                stamp = next((name for name in _NEWEST_COLUMNS if name in columns), None)
+                select = "COUNT(*), COALESCE(MAX(rowid), 0)"
+                select += f", MAX({stamp})" if stamp else ", NULL"
+                row = self._conn.execute(f"SELECT {select} FROM {table}").fetchone()
+                witness[table] = [row[0], row[1], row[2]]
+            # timestamps alone are not a content witness: a lease renewal can land in the same second and
+            # a fencing token can bump without any text column changing, so the mutable hot table is
+            # witnessed by what it actually holds
+            tasks = self._conn.execute(
+                "SELECT COUNT(*), COALESCE(SUM(fencing_token),0), "
+                "COALESCE(SUM(LENGTH(COALESCE(checkpoint,''))),0), "
+                "COALESCE(SUM(LENGTH(COALESCE(lease_holder,''))),0), "
+                "COALESCE(MAX(updated_at),'') FROM tasks"
+            ).fetchone()
+            witness["tasks_state"] = [tasks[0], tasks[1], tasks[2], tasks[3], tasks[4]]
+            return witness
+
     def register_project(self, project_id: str, root_path: str, display_name: str | None = None) -> None:
         with self._lock:
             self._conn.execute(
@@ -694,10 +755,10 @@ class CanonicalStore:
             expires_at = datetime.now(timezone.utc).timestamp() + ttl_seconds
             self._conn.execute(
                 """
-                UPDATE tasks SET lease_holder=?, lease_expires_at=?, fencing_token=?
+                UPDATE tasks SET lease_holder=?, lease_expires_at=?, fencing_token=?, updated_at=?
                 WHERE task_id=?
                 """,
-                (holder, _now_for_expiry(expires_at), token, task_id),
+                (holder, _now_for_expiry(expires_at), token, now, task_id),
             )
             self._conn.commit()
             return True
@@ -712,8 +773,8 @@ class CanonicalStore:
                 return False
             expires_at = datetime.now(timezone.utc).timestamp() + ttl_seconds
             self._conn.execute(
-                "UPDATE tasks SET lease_expires_at=? WHERE task_id=?",
-                (_now_for_expiry(expires_at), task_id),
+                "UPDATE tasks SET lease_expires_at=?, updated_at=? WHERE task_id=?",
+                (_now_for_expiry(expires_at), _now(), task_id),
             )
             self._conn.commit()
             return True
@@ -727,8 +788,8 @@ class CanonicalStore:
             if row is None or row["lease_holder"] != holder:
                 return False
             self._conn.execute(
-                "UPDATE tasks SET lease_holder=NULL, lease_expires_at=NULL WHERE task_id=?",
-                (task_id,),
+                "UPDATE tasks SET lease_holder=NULL, lease_expires_at=NULL, updated_at=? WHERE task_id=?",
+                (_now(), task_id),
             )
             self._conn.commit()
             return True
