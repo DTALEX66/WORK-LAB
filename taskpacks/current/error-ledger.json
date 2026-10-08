@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 198,
+    "total": 199,
     "by_classification": {
       "entrypoint": 6,
-      "contract_drift": 62,
+      "contract_drift": 63,
       "test_behavior_alignment": 23,
       "working_directory_recovery": 2,
       "evidence_state": 36,
@@ -6095,6 +6095,34 @@
         "fixedCommit": "dd3f35b1e09e228615b94d39cb8813ab454a5cda",
         "verifiedCommit": null,
         "bindingBasis": "commit-contains-fix: dd3f35b1 reverts the fast path and keeps the witness; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
+      }
+    },
+    {
+      "error_id": "ERR-201",
+      "task_id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "scripts/ci/verify_authority_index_paths.py",
+      "command": "python scripts/ci/verify_authority_index_paths.py",
+      "exit_code": 1,
+      "observed_error": "The reference gate named four documents and judged nothing else. Run over every tracked markdown under docs/current it reported AUTHORITY_INDEX_PATHS_TOTAL targets=38 refs=359 broken=60, and six of those surfaces yielded refs=0, which under the old rule meant the tool would have called an honest prose page a broken extractor. The dead pointers included eleven commands inside fenced blocks -- python scripts/workflow/sync_codex_global_assets.py, scripts/workflow/execution_preflight.py, scripts/workflow/user_profile_export.py and two open('templates/...') one-liners -- all dead since the 2026-09 convergence and all invisible to a gate that reads normative prose but not instructions.",
+      "root_cause": "The guard was written against the surfaces that had just failed (the authority index and the README) instead of against the class of claim those surfaces make. A navigation pointer is a claim about the tree wherever it is written, so a whitelist of files silently made 34 current pages unguarded, and the fence rule that already existed for maps was scoped to first tokens of text fences, leaving bash and python transcripts -- exactly where instructions live -- unchecked. Separately the checker's own first-token rule mistook a git ref (origin/main) and a slash command (/interrupt) for missing files, which is the kind of false positive that gets a rule switched off.",
+      "fix": "The scan is discovered from git ls-files over docs/current/ rather than hand-named, so a new page is guarded on arrival; the refs=0 refusal is kept for the four navigation surfaces and reported as no_tree_claims for the rest; a measured floor of 300 references refuses a run whose extractor collapsed. A fenced-map entry is judged as a path only in file or directory shape, the same shape a backticked reference must have, so the two rules cannot drift apart. Sixty broken references were adjudicated line by line against git ls-files with a unique tracked successor or refused a replacement: sixteen got their root prefix back, three dated pages name where the material lives now, and the client-home and installed-app references took the notation the repo already standardises ($HERMES_HOME/, ~/, <dshInstallRoot>/, <Cognitive-Loop-OS>/) instead of a new allowlist entry, which stays exactly one item and is tested for that. The DSH adapter page gained a dated SUPERSEDED banner because its whole identity is the build AGENTS.md retired. Measured after: targets=38 refs=340 broken=0 no_tree_claims=7 failed_targets=0, 23 tests pass in the ci module, and the loosening was audited rather than assumed -- no originally-broken literal survives as a bare backticked path.",
+      "regression_test": "tests/ci/test_authority_index_paths_resolve.py",
+      "regressionCommand": "python -m pytest -q tests/ci/test_authority_index_paths_resolve.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A gate over document truth must enumerate its surfaces from the repository, never from a list of files that happened to fail; instructions inside fenced code blocks are the most load-bearing references in a document and must be in scope; and a relaxation of an extractor must be accompanied by a floor that fails when the extractor stops matching anything.",
+      "remaining_boundary": "The floor is a measured number, not a proof: a future page could be added whose references all match the extension list while the total stays above 300. Command-shaped references inside bash fences are covered by scripts/audit/live_doc_command_targets.py, a separate tool with its own MAP and ALLOW tables; this gate judges path-shaped claims, and the two overlap without either being complete. The widened scan still only judges docs/current -- docs/future, docs/decisions and the managed skill references carry their own stale pointers and are not in this rule's scope.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "lifecycle": {
+        "introducedCommit": "8b88bf5f56e2f3121d3f8ce4d09f0f06a8033ab8",
+        "introducedCommitNote": "the commit that added the four-file whitelist form of this guard",
+        "fixedCommit": "9b71827efeb2173477a4b4892d2c720ff0da83ec",
+        "verifiedCommit": null,
+        "bindingBasis": "commit-contains-fix: 9b71827e carries the widened scan, the sixty corrections and the tests; verifiedCommit is owed until an exact-SHA Actions run lands green at or after this head"
       }
     }
   ],

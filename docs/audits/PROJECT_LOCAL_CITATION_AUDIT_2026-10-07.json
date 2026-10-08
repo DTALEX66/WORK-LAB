@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-08T03:03:04Z",
+  "generatedAt": "2026-10-08T03:50:16Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2145,
+    "trackedFilesScanned": 2146,
     "distinctProjectLocalTokens": 436,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 436,
-    "citationsToAbsentTokens": 1222
+    "citationsToAbsentTokens": 1227
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,16 +29,16 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 571,
+      "citations": 572,
       "distinctPaths": 328
     },
     "machine_local_runtime_pointer": {
-      "citations": 148,
+      "citations": 150,
       "distinctPaths": 66
     },
     "negative_assertion_or_removal_record": {
-      "citations": 124,
-      "distinctPaths": 52
+      "citations": 125,
+      "distinctPaths": 53
     },
     "path_pattern_or_truncated_token": {
       "citations": 11,
@@ -49,7 +49,7 @@
       "distinctPaths": 1
     },
     "unclassified_needs_human_read": {
-      "citations": 45,
+      "citations": 46,
       "distinctPaths": 3
     }
   },
@@ -166,7 +166,7 @@
       {
         "path": ".project-local",
         "file": "scripts/ci/verify_authority_index_paths.py",
-        "line": 171,
+        "line": 202,
         "text": "# declaration itself: \".project-local/\" means \"nothing under here is tracked\", and one tracked file"
       },
       {
@@ -232,13 +232,13 @@
       {
         "path": ".project-local",
         "file": "tests/ci/test_authority_index_paths_resolve.py",
-        "line": 55,
+        "line": 56,
         "text": "self.assertEqual(\".project-local/\", checker.declared(\".project-local/artifacts/\"))"
       },
       {
         "path": ".project-local",
         "file": "tests/ci/test_authority_index_paths_resolve.py",
-        "line": 141,
+        "line": 212,
         "text": "self.assertEqual({\".project-local/\"}, set(checker.DECLARED_NON_PATHS))"
       },
       {
@@ -406,19 +406,19 @@
       {
         "path": ".project-local/artifacts",
         "file": "tests/ci/test_authority_index_paths_resolve.py",
-        "line": 55,
+        "line": 56,
         "text": "self.assertEqual(\".project-local/\", checker.declared(\".project-local/artifacts/\"))"
       },
       {
         "path": ".project-local/artifacts",
         "file": "tests/ci/test_authority_index_paths_resolve.py",
-        "line": 74,
+        "line": 75,
         "text": "\"- `.project-local/artifacts/`: declared as the untracked evidence root\\n\")"
       },
       {
         "path": ".project-local/artifacts",
         "file": "tests/ci/test_authority_index_paths_resolve.py",
-        "line": 81,
+        "line": 82,
         "text": "self.write(\"decl.md\", \"- `.project-local/artifacts/`: x\\n\"))"
       },
       {
@@ -604,7 +604,7 @@
       {
         "path": ".project-local/artifacts/mcp-candidate-template.yaml",
         "file": "services/orchestration/run_quality_gate.py",
-        "line": 682,
+        "line": 695,
         "text": "\".project-local/artifacts/mcp-candidate-template.yaml\","
       },
       {
@@ -664,7 +664,7 @@
       {
         "path": ".project-local/artifacts/provider-health.json",
         "file": "services/orchestration/run_quality_gate.py",
-        "line": 672,
+        "line": 685,
         "text": "\".project-local/artifacts/provider-health.json\","
       },
       {
@@ -1006,7 +1006,7 @@
       {
         "path": ".project-local/runs",
         "file": "tests/ci/test_authority_index_paths_resolve.py",
-        "line": 50,
+        "line": 51,
         "text": "for ref in (\"<project>/.project-local/runs/\", \"~/path/x.md\", \"$CODEX_HOME/AGENTS.md\","
       },
       {
@@ -1630,7 +1630,7 @@
       {
         "path": ".project-local/runs/x.json",
         "file": "tests/ci/test_authority_index_paths_resolve.py",
-        "line": 80,
+        "line": 81,
         "text": "self.dir_parent(), [\".project-local/runs/x.json\"],"
       },
       {
@@ -1876,6 +1876,12 @@
         "file": "reports/audit-archive/20260930/projects/ArcheAxis-Knowledge-OS/DIRECTORY_AUTHORITY.yaml",
         "line": 568,
         "text": "- .project-local/artifacts/"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 259,
+        "text": "| DOC-REFERENCE-WIDENING-20261008 | P1 | CLOSED_LOCAL / GATED_IN_CI / EXACT_SHA_CI_NOT_RUN(no push at this commit yet) | **reference gate widened from four hand-named pages to every tracked markdown u"
       },
       {
         "path": ".project-local/artifacts",
@@ -5363,13 +5369,13 @@
         "path": ".project-local/artifacts",
         "file": "docs/current/workflow-assistance/absorption/open-source-workflow-absorption.md",
         "line": 20,
-        "text": "| `yamadashy/repomix` / `coderamp-labs/gitingest` | 新增 `packages/client-neutral-core/scripts/build_context_pack.py` 与 `docs/workflow/context-pack.md` | ✅ 已吸收方法 | 吸收 repo → LLM-friendly context pack 思路"
+        "text": "| `yamadashy/repomix` / `coderamp-labs/gitingest` | 新增 `packages/client-neutral-core/scripts/build_context_pack.py` 与 `docs/current/workflow-assistance/workflow/context-pack.md` | ✅ 已吸收方法 | 吸收 repo → "
       },
       {
         "path": ".project-local/artifacts",
         "file": "docs/current/workflow-assistance/runtime-adapters/deepseek-harness-config-guide.md",
         "line": 45,
-        "text": "`.project-local/artifacts/` 或 `80-evidence/`），不外溢到用户目录/其他项目/共用库；"
+        "text": "`.project-local/artifacts/` 或 `reports/`），不外溢到用户目录/其他项目/共用库；"
       },
       {
         "path": ".project-local/artifacts",
@@ -5388,6 +5394,12 @@
         "file": "docs/current/workflow-assistance/workflow/project-data-boundary.md",
         "line": 11,
         "text": "此目录必须被 Git 忽略。长期恢复证据使用同项目的 `.project-local/artifacts/`，而不是另建用户目录。"
+      },
+      {
+        "path": ".project-local/artifacts",
+        "file": "docs/current/workflow-assistance/workflow/project-data-boundary.md",
+        "line": 34,
+        "text": "- 提供受控的 `.project-local/runs/logs/`、`.project-local/artifacts/` 目录供脚本显式使用；"
       },
       {
         "path": ".project-local/artifacts",
@@ -5471,7 +5483,7 @@
         "path": ".project-local/artifacts/evals",
         "file": "docs/current/workflow-assistance/workflow/agent-evaluation.md",
         "line": 51,
-        "text": "1. 先复制模板到当前项目 `.project-local/artifacts/evals/` 或项目自己的 `tests/evals/`；"
+        "text": "1. 先复制模板到当前项目 `.project-local/artifacts/evals/` 或项目自己的 `<project>/tests/evals/`；"
       },
       {
         "path": ".project-local/artifacts/handoff-stage-e-20260930.md",
@@ -5884,7 +5896,7 @@
       {
         "path": ".project-local/runs/deepseek-harness",
         "file": "docs/current/workflow-assistance/runtime-adapters/deepseek-harness.md",
-        "line": 48,
+        "line": 50,
         "text": "legacy isolated-checkout layout `.project-local/runs/deepseek-harness/`"
       },
       {
@@ -5934,6 +5946,12 @@
         "file": ".project/governance/project-data-boundary.json",
         "line": 6,
         "text": "\"logsRoot\": \".project-local/runs/logs\","
+      },
+      {
+        "path": ".project-local/runs/logs",
+        "file": "docs/current/workflow-assistance/workflow/project-data-boundary.md",
+        "line": 34,
+        "text": "- 提供受控的 `.project-local/runs/logs/`、`.project-local/artifacts/` 目录供脚本显式使用；"
       },
       {
         "path": ".project-local/runs/model-governance-20260928/e2e-results.json",
@@ -6211,7 +6229,7 @@
         "path": ".project-local",
         "file": "docs/current/workflow-assistance/workflow/project-data-boundary.md",
         "line": 76,
-        "text": "新项目的 `.gitignore` 必须含 `.project-local/`；`templates/agent-rules/AGENTS.md` 与 `CODEX.md` 要求 Agent 在产生运行数据时使用上述 wrapper。"
+        "text": "新项目的 `.gitignore` 必须含 `.project-local/`；`packages/client-neutral-core/templates/agent-rules/AGENTS.md` 与 `CODEX.md` 要求 Agent 在产生运行数据时使用上述 wrapper。"
       },
       {
         "path": ".project-local",
@@ -6336,7 +6354,7 @@
       {
         "path": ".project-local",
         "file": "scripts/ci/verify_authority_index_paths.py",
-        "line": 62,
+        "line": 77,
         "text": "\".project-local/\": \"the git-ignored in-boundary runtime and evidence root; nothing under it is \""
       },
       {
@@ -6560,6 +6578,12 @@
         "file": "reports/audit-archive/20260930/hermes/skills/software-development/repository-directory-restructuring/SKILL.md",
         "line": 157,
         "text": "2. **Copy to the ignored cache BEFORE git rm** (fidelity backup): `shutil.copytree(src, .project-local/cache/vendor/<key>)`, record a manifest (src → cache key, file count). Deletions are only safe af"
+      },
+      {
+        "path": ".project-local/quarantine",
+        "file": "docs/current/workflow-assistance/runtime-adapters/deepseek-harness.md",
+        "line": 25,
+        "text": "| Legacy 0.1.x | `deepseek-ai/deepseek-harness` pinned `47f94385` — retired; full body backed up under the then-git-ignored .hermes/task-runtime/dsh-011-removed-20260824/ quarantine, relocated to `.pr"
       },
       {
         "path": ".project-local/runs",
@@ -7310,6 +7334,12 @@
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 248,
         "text": "| GREENING-20261007-J | P1 | ELIGIBLE_BYTES_1,460,600_OF_4.19_GB / NOTHING_MORE_SAFELY_RELEASABLE / MEASURED_NOT_ASSUMED | 本轮不再猜哪块缓存能删，而是量「**删除合法性**」：对 `.project-local` 每个一级子目录求 apparent bytes，并统计受版本控"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 259,
+        "text": "| DOC-REFERENCE-WIDENING-20261008 | P1 | CLOSED_LOCAL / GATED_IN_CI / EXACT_SHA_CI_NOT_RUN(no push at this commit yet) | **reference gate widened from four hand-named pages to every tracked markdown u"
       },
       {
         "path": ".project-local",
