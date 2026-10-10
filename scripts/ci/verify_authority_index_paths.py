@@ -145,8 +145,18 @@ def repo_root() -> Path:
 
 
 def tracked_paths(root: Path) -> list[str]:
-    out = subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, check=True).stdout
-    return [line.decode("utf-8", "replace").strip() for line in out.splitlines() if line.strip()]
+    """The tracked tree as git names it, with non-ASCII paths left intact.
+
+    Plain `git ls-files` quotes and octal-escapes any path outside ASCII and wraps it in double quotes, so
+    every Chinese-named file arrived as `"docs/history/…/WORK-LAB_UI_\\346\\267\\261…_v2/verification/
+    model_tests.txt"` -- a name no reference in a document can spell, which made the checker convict a
+    correct citation to a real tracked file as an unresolved one. `-c core.quotePath=false` with `-z` is
+    what this repository's other index readers already do; splitting on NUL and never stripping keeps a
+    path whose real name has leading or trailing spaces a path.
+    """
+    raw = subprocess.run(["git", "-c", "core.quotePath=false", "ls-files", "-z"],
+                         cwd=root, capture_output=True, check=True).stdout
+    return [entry.decode("utf-8", "replace") for entry in raw.split(b"\0") if entry]
 
 
 def references(text: str) -> list[tuple[int, str, str]]:

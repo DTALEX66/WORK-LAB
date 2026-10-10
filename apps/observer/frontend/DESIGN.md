@@ -400,9 +400,9 @@ Normative sizes, to be asserted by `scripts/audit/topbar_geometry_via_cdp.py`:
   source names — the channels it does not specify (secondary/info) keep the shipped value rather than
   being invented.
 - **A utility that must beat the pinned skin needs a two-class rule in the last layer.** `src/main.tsx`
-  loads `index.css` (Tailwind utilities) before `skins/b10.css`, so equal-specificity skin declarations
+  loads `index.css` (Tailwind utilities) before `apps/observer/frontend/src/skins/b10.css`, so equal-specificity skin declarations
   win over utilities; `.list-item{align-items:center}` silently centred every stacked detail row while
-  all text and contrast assertions stayed green. Overrides belong in `skins/l10b-shell.css` (b10 is
+  all text and contrast assertions stayed green. Overrides belong in `apps/observer/frontend/src/skins/l10b-shell.css` (b10 is
   pinned verbatim by D-11) and must carry a test that pins both the override and the conflict.
 - Overflow收纳: when the action row cannot fit, controls collapse into a `更多` menu; they must not
   stack vertically forever.
